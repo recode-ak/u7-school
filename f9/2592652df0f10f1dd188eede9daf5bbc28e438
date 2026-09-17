@@ -1,0 +1,10 @@
+Задача: Green — реализация read-слоя API исходов (Фаза Green TDD)
+
+Сводка: Реализованы чистые функции в packages/stream/src/domain/student/outcome.ts:
+- studentOutcomeCategory: advanced/not_advanced→COMPLETED, abandoned→ABANDONED, enrolled/active→IN_PROGRESS;
+- studentNeverStarted: abandoned И нет завершённых шагов (ФР-4, потребитель peer-review);
+- studentOutcomeSigns: признаки завершения (passed/not_passed); признаки ухода — never_started (выводимый) + left_voluntarily (cause=voluntary) / removed_by_mentor (cause=by_mentor|inactivity); легаси abandoned без деталей не падает.
+Исправление собственного Red-теста (819ad2b): ожидание для легаси без abandonDetails было противоречиво спеке — «не начал» выводимый и независим от причины ухода (модель исходов spec.md). Легаси без деталей + без шагов → [never_started]; легаси с шагами → [] (без признаков ухода, не падает). Красных чужих тестов не касались.
+Прогон: 22 pass / 0 fail; покрытие outcome.ts 100% funcs/lines; biome и tsc --noEmit чисто.
+
+Файлы: packages/stream/src/domain/student/outcome.ts (функции), outcome.test.ts (правка легаси-кейса), plan.md (статус).
