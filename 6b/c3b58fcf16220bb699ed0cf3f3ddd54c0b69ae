@@ -1,0 +1,13 @@
+Задача: Инвариант терминальности (ФР-2) через StreamDs (Фаза 1, Задача 3 трека peer-review-domain).
+
+Исправленный баг: CompleteStreamUc фильтровал только status='active' — студент в 'enrolled' не блокировал завершение потока и зависал в нетерминальном статусе навсегда.
+
+Архитектурное решение (владелец, сессия 2026-09-17): инвариант — пересечение двух агрегатов модуля (Stream+Student), поэтому координация в StreamDs, а не в StreamAr/UC:
+- StudentAr.isTerminal() — read-API терминальности (через outcomeCategory трека student-status)
+- StreamDs.completeStream(stream, students): гвард нетерминальности -> errConflict STREAM_CONFLICT со списком { userId, status }[] в payload; затем stream.complete() (переход + событие)
+- CompleteStreamUc — чистая оркестрация: права -> репо студентов -> агрегаты -> DS -> save -> publishEvents; доменной логики в UC больше нет
+- StreamConflictUcError.payload расширен pending-списком; StreamArMeta.events — юнион StreamCreatedEvent | StreamCompletedEvent
+
+Тесты: isTerminal (терминальные/нетерминальные), completeStream (успех, пустой список, active блокирует, enrolled блокирует — дыра), UC (enrolled -> rejects, save не вызван).
+
+Файлы: packages/stream/src/domain/{student/a-root.ts(+test), stream-ds.ts(+test), stream/entity.ts}, packages/stream/src/api/{stream/complete-stream-uc.ts(+test), errors.ts}
