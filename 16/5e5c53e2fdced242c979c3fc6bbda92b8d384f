@@ -1,0 +1,13 @@
+Задача: Схемы и типы — ReviewCampaign, CampaignParticipant, Review, константы окна, доменные ошибки (Фаза 3, задача 1 трека peer-review-domain)
+
+Сводка:
+- ReviewCampaignSchema — вариантная схема по дискриминанту context (v.variant), каркас: uuid/scopeId/createdAt/expiresAt/participants/payload; единственный контекст stream_completed с пустым payload (точка расширения будущих контекстов)
+- CampaignParticipant: userId (uuid), role (student|mentor), outcome — опциональная проекция модуля (completed/dropped/never_started); ментор — роль без исхода
+- ReviewSchema: campaignId, authorId, authorRole, authorOutcome (снапшоты кампании), recipientId, recipientRole, text (10–3500), createdAt/updatedAt
+- REVIEW_WINDOW_DAYS = 7 (константа домена пакета)
+- Ошибки: ReviewWindowClosedUcError (REVIEW_WINDOW_CLOSED, conflict), ReviewDuplicateUcError (REVIEW_DUPLICATE, conflict), ReviewTextInvalidUcError (REVIEW_TEXT_INVALID, validation)
+- Тип события CampaignCreatedEvent (campaign.created) — публикация в Фазе 4
+
+Файлы: packages/peer-review/src/domain/review-campaign/{constants,entity,errors,events,index}.ts, review/{entity,errors,index}.ts + тесты entity.test.ts (22 теста)
+
+Причина: ФР-3/ФР-4 трека peer-review-domain — доменная основа системы отзывов
