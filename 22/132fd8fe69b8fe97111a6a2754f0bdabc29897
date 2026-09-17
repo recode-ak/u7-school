@@ -1,0 +1,10 @@
+Задача: Миграция клиентов — категориальные проверки C5–C8
+
+Сводка: Закрыты 4 находки findings.md:
+- C5 view-stream-mentor.ts: isActive → IN_PROGRESS, кнопка 🔄 → COMPLETED; попутно заменён обрубающий каст list-stream-students Array<{uuid,userId,status}> → Student[] (UC возвращает полный Student по StudentSchema — каст мешал типизации StudentOutcomeInput);
+- C6 hub.ts: isFinished (терминальность) → category !== IN_PROGRESS;
+- C7 step-view.ts: та же терминальность → category !== IN_PROGRESS;
+- C8 group-handler.ts: isActive в фильтре группы → IN_PROGRESS.
+Прогон: tslint 0 ошибок, biome чисто, bun test apps/u7-bot 695 pass / 0 fail.
+
+Файлы: view-stream-mentor.ts, hub.ts, step-view.ts, group-handler.ts.
