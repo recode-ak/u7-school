@@ -1,0 +1,9 @@
+Задача: Домен stream на read-API (Фаза 2 трека peer-review-domain, ФР-10).
+
+Изменения:
+- domain/stream/a-root.ts: StreamAr.enroll() — конфликт активных записей через new StudentAr(s).isInProgress() вместо разбора 'active'/'enrolled'.
+- domain/stream/policy.ts: canEnrollNextModule() — фильтр «прошёл» через StudentAr.isPassed() вместо status === 'advanced'.
+- domain/stream-ds.ts: categorizeStudents() — живые записи (медиана/отставание) через isInProgress() (Set id), вместо сравнения литералов.
+- Тестовые фикстуры policy.test.ts и enroll-student-uc.test.ts дополнены до валидных сущностей (UUID, формат дат isoDateTime): агрегат теперь валидирует состояние при оборачивании; сценарии тестов не изменены.
+
+Причина: словарь статусов студента знает только зона Student (ФР-10 трека peer-review-domain); домен stream спрашивает признаки агрегата. Поведение не изменилось — все 292 теста пакета зелёные.
