@@ -1,0 +1,7 @@
+Задача: Read-API StudentAr — isInProgress(), isEnrolled(), isPassed() (Фаза 2 трека peer-review-domain, ФР-10).
+
+Изменения:
+- packages/stream/src/domain/student/a-root.ts: три новых метода чтения рядом с isTerminal() — isInProgress() (живая запись: active/enrolled, через категорию IN_PROGRESS), isEnrolled() (зачислен, не начал), isPassed() (advanced, основание записи на следующий модуль).
+- packages/stream/src/domain/student/a-root.test.ts: тесты по всем пяти статусам для каждого признака.
+
+Причина: вычистка разбора сырых статусов студента из чужих зон (ФР-10) — словарь статусов знает только зона Student; клиенты дальше будут переведены на эти признаки (задачи 2–4 фазы 2).
