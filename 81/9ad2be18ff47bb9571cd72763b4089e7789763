@@ -1,0 +1,8 @@
+Задача: Red — тесты API исходов (Фаза Red TDD)
+
+Сводка: Создан packages/stream/src/domain/student/outcome.test.ts.
+Матрица веток: advanced/not_advanced/enrolled/active; abandoned × (voluntary, inactivity, by_mentor) × (шаги завершены / выдан без завершения / нет); легаси abandoned без abandonDetails (не падает, без признаков ухода).
+Отдельный describe для studentNeverStarted (ФР-4, потребитель peer-review): abandoned без завершённых шагов → true, с завершённым шагом → false, только issued-шаги → true, не-abandoned → false.
+Прогон: CI=true bun test outcome.test.ts → 0 pass, 1 fail (Export not found) — Red подтверждён.
+
+Файлы: packages/stream/src/domain/student/outcome.test.ts (создан), plan.md (статус).
