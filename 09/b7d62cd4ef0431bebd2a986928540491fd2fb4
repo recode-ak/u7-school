@@ -1,0 +1,10 @@
+Задача: ReviewAr — create() со снапшотами и overwrite(text) (Фаза 3, задача 4 трека peer-review-domain)
+
+Сводка:
+- ReviewAr.create({campaignId, author, recipient, text, now}): автор — CampaignParticipant (снапшот роли+исхода), адресат — {userId, role}; автор-ментор без исхода; createdAt из now (минутная точность)
+- overwrite(text): safeUpdate текста; длина 10–3500 — доменная ошибка REVIEW_TEXT_INVALID (kind=validation, payload: min/max/length); при отказе состояние не тронуто
+- Живость окна НЕ проверяется отзывом — это кампания (ensureLive в UC, Фаза 4)
+
+Файлы: packages/peer-review/src/domain/review/{a-root.ts,a-root.test.ts,index.ts}
+
+Причина: ФР-4 трека — агрегат текстового отзыва
