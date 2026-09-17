@@ -1,0 +1,10 @@
+Задача: ReviewCampaignFactory — createStreamCompleted + restore по дискриминанту (Фаза 3, задача 3 трека peer-review-domain)
+
+Сводка:
+- createStreamCompleted(scopeId, participants, now): uuid генерируется, createdAt из now (минутная точность), expiresAt = now + 7 дней из константы REVIEW_WINDOW_DAYS; участники — structuredClone (снапшот изолирован от мутаций вызывающего)
+- restore(state): switch по context; все контексты в одном классе агрегата (решение 1 — каркас + payload, не подклассы), поэтому ветка одна — точка расширения; повреждённый контекст прогоняется через схему варианта → AR_INVARIANT_ERROR (не молчаливый undefined — найдено Red-тестом)
+- Окно сразу согласовано с агрегатом: isExpired(now)=false, daysLeft(now)=7
+
+Файлы: packages/peer-review/src/domain/review-campaign/{review-campaign-factory.ts,review-campaign-factory.test.ts,index.ts}
+
+Причина: ФР-3 трека — фабрика доменных кампаний по образцу анкет; решения 4/8 спеки (фабрика — доменный объект, now явно)
