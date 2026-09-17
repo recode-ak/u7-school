@@ -1,0 +1,8 @@
+Задача: API stream на read-API (Фаза 2 трека peer-review-domain, ФР-10).
+
+Изменения:
+- api/student/get-student-by-user-uc.ts: выбор записи через признаки StudentAr — живая isInProgress() приоритетнее, fallback терминальная isTerminal(); вместо перечисления литералов статусов.
+- api/stream/activate-stream-uc.ts: активация зачисленных через studentAr.isEnrolled() (агрегат уже обёрнут выше) вместо entity.status === 'enrolled'.
+- api/student/get-student-by-user-uc.test.ts: фикстура streamId приведена к валидному UUID (агрегат валидирует состояние при оборачивании); сценарии не изменены.
+
+Причина: словарь статусов знает только зона Student (ФР-10). Поведение UC не изменилось — все ветки покрыты существующими тестами (292 pass пакета, lint/tslint чисто).
