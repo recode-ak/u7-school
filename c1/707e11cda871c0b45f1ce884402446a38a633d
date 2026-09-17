@@ -1,0 +1,11 @@
+Задача: Словарь продуктовых меток (ФР-2)
+
+Сводка: Создан packages/stream/src/domain/student/outcome-labels.ts:
+- STUDENT_OUTCOME_SIGN_LABELS — канонические строки спеки: «окончил», «окончил, не прошёл», «не начал», «покинул сам», «снят ментором» + «забросил» (abandoned без признаков) и «учится» (нетерминальные; решение реализации — иначе клиенты захардкодят);
+- studentOutcomeLabel — главный лейбл с приоритетом «не начал» (спека: лейбл выбирает приоритет);
+- studentOutcomeDetailLabel — составные лейблы «не начал · покинул сам» через словарь и разделитель « · », клиенты не дублируют строки.
+TDD: Red (модуля нет, 1 fail) → Green (17 pass / 0 fail). Покрытие outcome-labels.ts 100%.
+Нюанс TS: строковые enum'ы номинальны — вызовы signLabel через enum-члены (CompletionSign.PASSED), а не литералы; biome type-only импорты исправлены на value (использование как значений).
+Проверки: tsc --noEmit 0 ошибок, biome чисто, 122 pass по student-домену.
+
+Файлы: packages/stream/src/domain/student/outcome-labels.ts (создан), outcome-labels.test.ts (создан), domain/index.ts (экспорт), plan.md (статус).
