@@ -1,0 +1,17 @@
+Задача: Замечание владельца на верификацию Фазы 2 — логика исходов в агрегате
+
+Сводка: По замечанию владельца свободные функции (outcome.ts, outcome-labels.ts) устранены; логика исходов — методы чтения агрегата StudentAr:
+- outcomeCategory(), outcomeSigns(), neverStarted(), outcomeLabel(), outcomeDetailLabel();
+- static outcomeLabel(sign) — словарь канонических строк (ФР-2) как приватная статическая карта агрегата;
+- enum'ы StudentOutcomeCategory / CompletionSign / AbandonSign (+ схемы, StudentOutcomeSignSchema) перенесены в domain/status.ts рядом со StudentStatus;
+- outcome.ts и outcome-labels.ts удалены, exports в domain/index.ts почищены.
+
+Клиенты (6 файлов) вызывают new StudentAr(student).outcomeX(); в списках AR создаётся один раз на строку (StudentRow.ar). Иконки/эмодзи — прежнее оформление клиентов, тексты — из словаря агрегата.
+
+Попутно: тестовые моки студентов приведены к валидному Student (uuid/isoDateTime до минут, issuedAt у шагов) — восстановление AR валидирует схему, и невалидные моки перестали проходить незаметно. Затронуты view-stream.story.test.ts, monitor.test.ts (массовая замена коротких id на v4-uuid), view-stream-mentor.test.ts, hub.test.ts, step-view.test.ts, group-handler.test.ts.
+
+Обновлены spec.md (ФР-1: решение владельца v3.2 — методы агрегата) и plan.md (переоткрыта верификация Фазы 2).
+
+Прогон: packages/stream 287 pass, apps/u7-bot 695 pass, biome и tsc --noEmit чисто по обоим пакетам.
+
+Файлы: см. git show --stat.
