@@ -1,0 +1,9 @@
+Задача: Публикация события stream.completed (Фаза 1, Задача 2 трека peer-review-domain).
+
+Изменения:
+- CompleteStreamUc.execute: publishEvents(streamAr) после успешного save
+- Тест: событие доходит до шины (eventName, aggregateName, aggregateId, payload.streamId)
+
+Файлы: packages/stream/src/api/stream/{complete-stream-uc.ts, complete-stream-uc.test.ts}
+
+Причина: подписчики (ER peer-review stream-completed-er) получают факт завершения потока через шину.
