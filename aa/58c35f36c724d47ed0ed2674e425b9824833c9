@@ -1,0 +1,13 @@
+Задача: Проверка grep-аудита Фазы 1 — закрытие позиций
+
+Сводка: Повторный grep по паттернам findings.md. В ходе проверки найден и закрыт недосмотр коммита 6ef1737: в сортировке monitor.ts мигрирован только bDone, aDone оставался на сравнении статусов. Исправлено.
+
+Остатки вне скоупа (осознанно, соответствуют разделу D findings.md):
+- monitor.ts ~201 (isActive='active') и monitor.ts ~500 / view-stream.story.ts ~670 (показ метрик отставания при 'active') — семантика «студент сейчас идёт по шагам», не категория исхода (IN_PROGRESS включал бы enrolled); этих позиций нет в findings;
+- my-streams.ts:68 — статусы потока (StreamStatus), не студента;
+- view-stream.story.ts:183 — карта лейблов статусов потока;
+- monitor.ts:657 outcomeLabels — мост «команда UC → ключ словаря», значения из словаря stream;
+- questionnaire — собственный домен со своими abandoned.
+abandonDetails вне packages/stream — 0 вхождений.
+
+Прогон: tslint 0, biome чисто, bun test apps/u7-bot 695 pass / 0 fail.
