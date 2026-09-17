@@ -1,0 +1,8 @@
+Задача: Grep-контроль ФР-10 (Фаза 2 трека peer-review-domain).
+
+Проверено: вне зоны packages/stream/src/domain/student/ не осталось сравнений статуса студента с литералами ('active'/'enrolled'/'advanced'/'not_advanced'/'abandoned') ни в домене, ни в api, ни в UI. Оставшиеся вхождения — легальные контракты входа:
+- complete-student-uc.ts: switch по command.outcome (дискриминанта входной команды CompleteStudentCmd);
+- monitor.ts:707-709: валидация raw callback-ввода перед отправкой в команду UC;
+- stream-ds.ts:39: payload ошибки STREAM_CONFLICT { userId, status } (контракт выхода).
+
+Дока: conductor/code_styleguides/domain-boundaries.md §3 — пример StreamPolicy.canEnrollNextModule обновлён под реальный код (new StudentAr(s).isPassed()), добавлен пункт «словарь статусов студента знает только зона Student».
