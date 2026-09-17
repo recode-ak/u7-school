@@ -1,0 +1,11 @@
+Задача: ReviewCampaignAr — isExpired/daysLeft/ensureLive, доступ к участникам; expiresAt только при создании (Фаза 3, задача 2 трека peer-review-domain)
+
+Сводка:
+- Окно жизни читается из сохранённого expiresAt (не вычисляется на лету): isExpired(now) с границей включительно, daysLeft(now) — округление вверх (основа строки «ещё N дн.»), ensureLive(now) — доменная ошибка REVIEW_WINDOW_CLOSED (kind=conflict, payload: campaignId, expiresAt)
+- Доступ к участникам: геттер participants (клон), findParticipant(userId)
+- Инварианты агрегата: студент обязан иметь исход-проекцию; ментор не имеет исхода (роль, не исход); уникальность userId участников
+- safeAttrs переопределён: uuid/createdAt/context/scopeId/expiresAt/participants/payload — неизменяемы через safeUpdate
+
+Файлы: packages/peer-review/src/domain/review-campaign/{a-root.ts,a-root.test.ts,index.ts}
+
+Причина: ФР-3 трека — агрегат кампании; решения 2/7/8 спеки (expiresAt хранится, живость подтверждает агрегат, now явно)
