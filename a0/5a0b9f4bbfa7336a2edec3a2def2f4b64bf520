@@ -1,0 +1,12 @@
+Задача: Схемы и типы API исходов: категория, признаки завершения/ухода; вход — состояние студента (ФР-1)
+
+Сводка: Создан read-слой типов API исходов в packages/stream/src/domain/student/outcome.ts:
+- StudentOutcomeCategory (completed/abandoned/in_progress) + picklist-схема;
+- CompletionSign (passed/not_passed) — признаки завершения;
+- AbandonSign (never_started/left_voluntarily/removed_by_mentor) — признаки ухода, независимые (могут сочетаться);
+- StudentOutcomeSign — union признаков + union-схема для снапшотов peer-review;
+- StudentOutcomeInput — Pick<Student, status|abandonDetails|steps>: вход — данные состояния, без репозиториев.
+Маппинг по спеке: cause voluntary → покинул сам; by_mentor/inactivity → снят ментором; никогда не закреплён — инициатива словаря меток.
+Экспорт добавлен в domain/index.ts. tsc --noEmit чисто. Функции вычисления — задача Green (TDD).
+
+Файлы: packages/stream/src/domain/student/outcome.ts (создан), packages/stream/src/domain/index.ts (экспорт), plan.md (статус).
