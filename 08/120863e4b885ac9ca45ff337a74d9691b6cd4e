@@ -1,0 +1,10 @@
+Задача: Событие stream.completed в агрегате потока (Фаза 1, Задача 1 трека peer-review-domain).
+
+Изменения:
+- StreamAr.complete() кладёт доменное событие stream.completed (payload: streamId) после перехода ACTIVE -> COMPLETED
+- Тип StreamCompletedEvent в events.ts по образцу StreamCreatedEvent
+- Тесты: событие кладётся при завершении; из неверного статуса событие не кладётся
+
+Файлы: packages/stream/src/domain/stream/{a-root.ts, a-root.test.ts, events.ts}
+
+Причина: триггер кампаний сбора отзывов (peer-review) — событие завершения потока; публикуется CompleteStreamUc (следующая задача).
