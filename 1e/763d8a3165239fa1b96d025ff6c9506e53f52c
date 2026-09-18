@@ -1,0 +1,12 @@
+Задача: create-campaign-uc (Фаза 4, задача 2).
+
+Stream-фасад расширен методом getMembers(streamId): состав потока (ментор + студенты) с категориями исходов и признаком «не начал» через read-API StudentAr (типы StreamMembers/StreamMemberOutcome экспортированы из @u7-scl/stream/domain); реализация в StreamInProcFacade (get-stream + list-stream-students).
+
+peer-review:
+- ReviewCampaignAr.announceCreated(): событие campaign.created (payload: campaignId, context, scopeId), вызывается фабрикой.
+- ReviewCampaignFactory.createStreamCompleted кладёт событие через агрегат.
+- Команда create-campaign-cmd (context, scopeId) + ошибки: REVIEW_SCOPE_NOT_FOUND, CAMPAIGN_SCOPE_NOT_TERMINAL (нетерминальные студенты противоречат ФР-2), union PeerReviewModuleError.
+- CreateCampaignUc: идемпотентность (findByScope → существующая), сбор участников фасадом, проекция исходов (completed/never_started/dropped — тройка peer-review), фабрика с now от UC, save → publishEvents.
+- Регистрация UC в модуле; тест модуля: команда доходит.
+
+Тесты: UC (снапшот+окно 7 дней, событие, идемпотентность, не найден, нетерминальный), фабрика (событие), фасад getMembers (факты, не найден).
