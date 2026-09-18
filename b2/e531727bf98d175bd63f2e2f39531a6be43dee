@@ -1,0 +1,16 @@
+Задача: create-review-uc (ФР-7)
+
+Сводка: Command-UC «написать отзыв»: загрузка кампании по id, живость
+окна гвардит агрегат — ar.ensureLive(now) бросает REVIEW_WINDOW_CLOSED;
+автор обязан быть участником, адресат — проходить ReviewPolicy.canReview
+(включая запрет «о себе») иначе PEER_REVIEW_RECIPIENT_NOT_ALLOWED
+(conflict); дубль пары — перезапись через ReviewAr.overwrite: uuid и
+createdAt пары сохраняются, меняется только текст; иначе ReviewAr.create
+со снапшотами роли/исхода автора и scopeId кампании. Длина текста —
+доменная валидация (REVIEW_TEXT_INVALID). Пара-уникальность — инвариант
+репо (фаза 5).
+
+Файлы: cmd-схема (type: command), UC+тест (9 кейсов).
+
+TDD: Red → Green; peer-review 118 pass; tslint 0; biome чисто;
+UC: строки 100%, ветки 100%.
