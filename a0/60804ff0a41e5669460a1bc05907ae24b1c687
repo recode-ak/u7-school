@@ -1,0 +1,25 @@
+Задача: Рефакторинг по ревью фазы 4 (домен вместо логики в UC)
+
+1. Схемы: domain/shared/schema.ts — uuidField/isoMinuteField; entity и
+   cmd-схемы собираются из них + CampaignRoleSchema/ParticipantOutcomeSchema
+   (дублей валидации больше нет).
+
+2. Домен вместо UC:
+   - AR ReviewCampaign: authorshipOf(userId) — роль+адресаты;
+     assertCanWrite(authorId, recipientId) — проверка права (policy
+     canReview, запрет «о себе») с ошибками домена
+     PEER_REVIEW_NOT_PARTICIPANT / PEER_REVIEW_RECIPIENT_NOT_ALLOWED
+     (типы перенесены в domain/review-campaign/errors.ts);
+   - DS CampaignFactsDs (два агрегата): myCampaignFacts — роль, дни,
+     прогресс M/K; recipientsWithMyReview — ✅-признаки;
+   - DS ScopeReviewsDs: groupByRecipient — проекция отзывов скоупа;
+   - доменные DTO-типы для UI: MyCampaignCard, MyRecipientsView,
+     ScopeReviewsProjection (меты UC ссылаются на них).
+
+3. UC — только оркестрация: fetch (репо) → restore → вызов AR/DS →
+   сборка ответа. Логика фильтров ввода (onlyLives/context/scopeId) — UC.
+   N+1 findByPair заменён на ReviewRepo.findByCampaignAndAuthor
+   (имплементация — в фазе 5).
+
+TDD: Red (AR/DS) → Green → UC переехали; 140 pass (пакет),
+2293 pass / 0 fail (root), tslint 0, biome чисто; DS 100%/100%.
