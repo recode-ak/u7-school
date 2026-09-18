@@ -1,0 +1,19 @@
+Задача: ER create-student-campaign-er (ФР-6)
+
+Сводка: Мультисобытийная реакция CreateStudentCampaignEr — подписка на
+student.completed + student.abandoned (юнион в CreateStudentCampaignErMeta,
+eventNames). handle: идемпотентность findBySubject(scopeId, subjectId);
+состав через streamFacade.getMembers (нет — лог-warn, без throw);
+проекция исходов в 4 значения (COMPLETED→completed, IN_PROGRESS→in_progress,
+ABANDONED→neverStarted?never_started:dropped) — in_progress больше не
+ошибка, а адресат-соученик; фабрика createStudentCampaign; save;
+публикация flushEvents через eventBus. Инъекция UC — нет (решение 4).
+
+Файлы:
+- packages/peer-review/src/api/er/create-student-campaign-er.ts
+- packages/peer-review/src/api/er/create-student-campaign-er.test.ts
+
+TDD: Red (модуль отсутствует) → Green 7 pass. Покрытие 100% строк.
+Нарвание: subjectId = event.payload.userId, scopeId = streamId.
+Сужение по eventName не требуется — payload обоих событий содержит
+одни и те же поля (userId, streamId); «при необходимости» (ФР-6).
