@@ -1,0 +1,18 @@
+Задача: get-my-campaigns-uc (ФР-7)
+
+Сводка: Query-UC «мои кампании»: субъект/ментор через раздельные выборки
+репо (myRole — выводится, не параметр); onlyLives (isExpired); фильтры
+context/scopeId; прогресс M/K — M = мои отзывы в кампании, K = адресаты
+политики; daysLeft из агрегата.
+
+Попутные доменные контракты под фазу 4 (без данных — миграции бесплатные):
+- ReviewSchema + scopeId (денормализация для выборок по скоупу, ФР-9);
+  ReviewAr.create(scopeId, ...).
+- ReviewRepo: findByPair / findByCampaign / findByScope.
+- api/errors.ts: CampaignNotFound / NotParticipant / RecipientNotAllowed +
+  объединение PeerReviewUcErrors с доменными ошибками окна и текста.
+
+Файлы: cmd-схема, UC+тест, api/errors.ts, review/{entity,a-root,repo},
+тесты entity/a-root (scopeId в фикстурах).
+
+TDD: Red → Green; peer-review 103 pass; tslint 0; biome чисто.
