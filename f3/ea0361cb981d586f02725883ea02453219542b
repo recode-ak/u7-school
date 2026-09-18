@@ -1,0 +1,15 @@
+Задача: Интеграционный тест вертикали — Фаза 5
+
+Сводка: сквозной тест на настоящих компонентах (без моков домена):
+- InProcEventBus + module.init() (подписка ER на student.completed/student.abandoned)
+- ER create-student-campaign: publish события → кампания в json-репо, снапшот 3 участников (completed/in_progress/ментор), публикация student-campaign.created на шину
+- create-review: субъект → соученик, ментор → субъект
+- Чтение: get-my-campaigns (myRole subject/mentor, прогресс 1/2 и 1/1), get-campaign-recipients (hasMyReview), list-scope-reviews (группировка по адресатам)
+- Идемпотентность вертикали: повтор события — кампания остаётся одна
+
+Особенность: шина InProcEventBus — fire-and-forget для async-обработчиков (документированный контракт), поэтому тест ждёт состояние поллингом (waitUntil), а не спит.
+
+Файлы:
+- packages/peer-review/src/api/peer-review-vertical.test.ts (новый, 2 теста, 18 expect)
+
+Причина: Фаза 5 — проверка сборки вертикали целиком. Продакшн-код не менялся — вертикаль собралась корректно. Пакет: 154 pass, biome/tsc чисто.
