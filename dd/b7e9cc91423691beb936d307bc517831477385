@@ -1,0 +1,14 @@
+Архивация трека peer-review-campaign_20260918
+
+Статус: завершён (все 6 фаз). Итоги — summary.md в папке трека.
+
+- Трек перемещён: conductor/tracks/ → conductor/archive/
+- tracks.md: трек помечен [x], ссылка на archive/
+- metadata.json: status=completed
+- Ссылки из трека UI отзывов обновлены на ../../archive/
+- Концепция peer-review-system.md §5: работа 2b — «завершён»
+
+Примечание: conductor/archive/ в .gitignore, но файлы архива исторически
+отслеживаются (430 файлов) — новые файлы добавлены с -f, как остальные.
+
+Следующий шаг по концепции v4: трек peer-review-ui (экраны S01–S07).
