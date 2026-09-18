@@ -1,0 +1,14 @@
+Задача (доп. к миграции ER): stream-completed-er на eventNames
+
+Сводка: Механическая миграция ER модуля peer-review на новый контракт
+(та же, что у wish ER): eventName → eventNames. Без неё репозиторий
+не компилируется (tsc TS2515: не реализован абстрактный eventNames)
+и падают 2 теста авто-подписки модуля peer-review. Поведение и тесты
+не меняются. Фаза 3 трека удалит этот ER целиком (заменён на
+мультисобытийный create-student-campaign-er).
+
+Файл: packages/peer-review/src/api/er/stream-completed-er.ts
+
+Отклонение от плана: задача упоминнула только 4 ER модуля wish —
+мигрирован и 5-й существующий ER (peer-review), чтобы выдержать
+ворота качества фазы (bun run check).
