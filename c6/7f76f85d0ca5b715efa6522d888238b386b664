@@ -1,0 +1,23 @@
+Задача: EventReaction.eventNames (ФР-1)
+
+Сводка: Перевёл каркас EventReaction на мультисобытийную подписку.
+- event-reaction.ts: абстрактный член eventName → eventNames (readonly-массив
+  имён юниона TMeta['event']['eventName']); getEventName() → getEventNames();
+  ErDocType.eventName → ErDocType.eventNames: string[].
+- api-module.ts: авто-подписка модуля на каждое имя из getEventNames().
+- Тесты: новая тест-реакция по юниону двух событий (ErMeta<A | B>),
+  сужение по дискриминанту eventName с exhaustive never-веткой;
+  тесты авто-подписки модуля на каждое имя юниона (2 подписки).
+- Тесты EventReaction с одним событием мигрированы на новый контракт
+  (смена контракта — суть задачи).
+
+Файлы:
+- packages/core/src/api/er/event-reaction.ts
+- packages/core/src/api/er/event-reaction.test.ts
+- packages/core/src/api/module/api-module.ts
+- packages/core/src/api/module/api-module.test.ts
+
+Причина: ФР-1 спеки — ER может подписываться на несколько событий
+(student.completed + student.abandoned) с точной типизацией без деградации
+до DomainEvent. TDD: Red (5 падающих) → Green (348 pass в core).
+Покрытие: event-reaction.ts 100% строк, api-module.ts 100%.
