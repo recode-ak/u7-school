@@ -1,0 +1,23 @@
+Отчёт о верификации — Фаза 1 (Core: мультисобытийная подписка ER)
+
+Автоматические тесты: CI=true bun test — 2240 pass, 0 fail (219 файлов).
+Типобезопасность: bun run tslint (tsc --noEmit) — чисто.
+Линтер: bun run lint (biome) — чисто (2 pre-existing infos, не ошибки).
+Покрытие новых файлов: event-reaction.ts 100% строк, api-module.ts 100%.
+
+Содержание фазы:
+- ФР-1: EventReaction → eventNames (юнион в ErMeta, подписка на каждое имя,
+  ErDocType.eventNames); ApiModule.init() — мультисобытийная подписка.
+- Миграция 4 ER wish + stream-completed-er (механическая, доп. к плану).
+- Styleguide event-reaction.md — правило мультисобытийности.
+
+Ручная верификация (каркасная фаза, UI нет):
+1. bun run check — все три проверки зелёные.
+2. grep -rn 'readonly eventName\b' packages/*/src/api --include='*.er.ts' —
+   пусто (все ER на eventNames).
+3. Новые тесты: packages/core/src/api/er/event-reaction.test.ts —
+   юнион двух событий, сужение по дискриминанту, exhaustive-ветка;
+   api-module.test.ts — подписка на каждое имя юниона.
+
+Подтверждение пользователя: заранее выдано в чате (инструкция
+«делай фазы 1–3, сжатие после каждой, стоп после 3»).
