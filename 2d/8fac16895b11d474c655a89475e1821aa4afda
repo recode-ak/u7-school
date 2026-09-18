@@ -1,0 +1,10 @@
+Рефакторинг по ревью: растворение peer-review-bootstrap
+
+Причина: решение владельца. Фабрика — не паттерн кодовой базы (5 модулей собираются инлайн в create-api-app.ts), подписку ER выполняет core ApiModule.init(), второго потребителя нет. Перевод всех модулей на фабрики отклонён: зависимости модулей переплетены (userFacade → course → stream → peer-review), композиционный корень нелинеен, изменение — вне скоупа трека.
+
+Изменения:
+- create-api-app.ts: инлайн-сборка peer-review (репо → резолвер-литерал → модуль → фасад)
+- удалены peer-review-bootstrap.ts и peer-review-bootstrap.test.ts
+- infra/index.ts: экспорты фабрики убраны
+
+Проверки: peer-review 154 pass, u7-bot 697 pass, lint/tsc чисто.
