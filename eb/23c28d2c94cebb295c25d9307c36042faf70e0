@@ -1,0 +1,14 @@
+Задача: Миграция 4 ER модуля wish на eventNames
+
+Сводка: Механическая миграция четырёх реакций wish на новый контракт
+мультисобытийной подписки (ФР-1): eventName → eventNames (массив из одного
+имени). Поведение и тесты не меняются — 107 pass.
+
+Файлы:
+- packages/wish/src/api/er/abandon-wish-er.ts
+- packages/wish/src/api/er/confirm-wish-er.ts
+- packages/wish/src/api/er/fulfill-wish-er.ts
+- packages/wish/src/api/er/invite-wishers-er.ts
+
+Проверки: CI=true bun test packages/wish (107 pass), bun run check:p wish —
+lint/tslint/tests чисто.
