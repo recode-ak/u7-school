@@ -1,0 +1,16 @@
+Задача: entity (ФР-2) — subjectId; контекст stream_ended; + in_progress
+
+Сводка: Каркас кампании v4 (ФР-2): + subjectId (студент, чьё событие
+открыло окно); контекст stream_completed → stream_ended (переименование,
+данных нет); ParticipantOutcome + in_progress («ещё учился на момент
+события субъекта»). Событие creation переименовано в
+student-campaign.created (ФР-5) — payload {campaignId, context, scopeId,
+subjectId}; events.ts: CampaignCreatedEvent → StudentCampaignCreatedEvent.
+
+Файлы:
+- packages/peer-review/src/domain/review-campaign/entity.ts
+- packages/peer-review/src/domain/review-campaign/events.ts
+- packages/peer-review/src/domain/review-campaign/entity.test.ts
+
+TDD: Red 5 fail → Green 17 pass. Инварианты субъекта — в задаче a-root
+(следующий шаг фазы).
