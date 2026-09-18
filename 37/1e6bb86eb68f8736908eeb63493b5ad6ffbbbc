@@ -1,0 +1,12 @@
+Задача: Styleguide event-reaction.md — правило мультисобытийности
+
+Сводка: Добавил в styleguide ER раздел «Мультисобытийная подписка (правило)»:
+юнион событий в ErMeta (без деградации до DomainEvent), явный список
+eventNames (ApiModule подписывает на каждое имя), сужение по дискриминанту
+eventName с exhaustive never-веткой. Обновил раздел тестирования
+(сценарий на каждое имя подписки).
+
+Файл: conductor/code_styleguides/skills/event-reaction.md
+
+Причина: ФР-1 — зафиксировать новый контракт ER для будущих реакций
+(канон — create-student-campaign-er трека peer-review-campaign).
