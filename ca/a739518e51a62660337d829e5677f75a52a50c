@@ -1,0 +1,8 @@
+Задача: покрытие bootstrap (протокол контрольной точки Фазы 5)
+
+Сводка: тест peer-review-bootstrap — сборка модуля из фабрики (репозитории, ER, фасад), module.init() подписывает ER, publish student.completed через шину → фасад фиксирует живое окно у субъекта и ментора (hasLiveCampaigns). Шина fire-and-forget — ожидание поллингом.
+
+Файлы:
+- packages/peer-review/src/infra/peer-review-bootstrap.test.ts (новый)
+
+Покрытие: все файлы src/infra — 100% (funcs/lines). Пакет: 155 pass.
