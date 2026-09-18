@@ -1,0 +1,15 @@
+Задача: get-campaign-recipients-uc (ФР-7)
+
+Сводка: Query-UC «адресаты кампании»: роль автора выводится из кампании
+(субъект/ментор; соученик — не автор чужого окна, доступ запрещён);
+адресаты — ReviewPolicy по роли/исходу; ✅ hasMyReview — findByPair по
+(кампания, автор, адресат); daysLeft из агрегата. Ошибки:
+PEER_REVIEW_CAMPAIGN_NOT_FOUND, PEER_REVIEW_NOT_PARTICIPANT.
+
+Контракт: ReviewCampaignRepo.findById(uuid) — UI приходит с campaignId.
+У ментора-адресата ключа outcome нет (роль без исхода).
+
+Файлы: cmd-схема, UC+тест (6 кейсов: ветки политики, ✅, доступ, not-found).
+
+TDD: Red → Green; peer-review 109 pass; tslint 0; biome чисто;
+новые файлы: строки 100%, ветки 100%.
