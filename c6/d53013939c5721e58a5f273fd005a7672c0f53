@@ -1,0 +1,27 @@
+Отчёт верификации — Фаза 4 (API: пользовательские UC и фасад)
+
+Ворота: bun test (root, CI) — 2280 pass / 0 fail; tsc --noEmit — 0
+ошибок; biome check — чисто (2 предсуществующих info — база).
+
+Выполнено:
+- [3750649] get-my-campaigns-uc (ФР-7): myRole из раздельных выборок
+  репо, прогресс M/K, onlyLives, фильтры context/scopeId. Попутно:
+  ReviewSchema.scopeId (денормализация), ReviewRepo.findByPair/
+  findByCampaign/findByScope, api/errors.ts (PeerReviewUcErrors).
+- [06a311e1] get-campaign-recipients-uc: адресаты по политике, ✅
+  hasMyReview (findByPair), ReviewCampaignRepo.findById; соученик —
+  не автор чужого окна (access-denied); у ментора-адресата нет outcome.
+- [b2e53172] create-review-uc: ensureLive (окно гвардит агрегат),
+  canReview (включая запрет «о себе») → RECIPIENT_NOT_ALLOWED (conflict),
+  дубль пары — перезапись ReviewAr.overwrite (uuid/createdAt сохраняются).
+- [34d7b31a] list-scope-reviews-uc: findByScope, группировка по
+  адресатам, сортировка по createdAt; снапшоты из отзывов (исход
+  адресата домен не снапшотит — сознательное решение).
+- [3856fe64] Фасад (ФР-8): PeerReviewFacade + InProc (только
+  делегирование), list-scope-facts UC; module.ts — 5 UC, PeerReviewUcMetas.
+
+Отклонения от плана: нет. Примечание: coverage-колонка '% Funcs' bun для
+UC-классов стабильно 66–85% при 100% строк/веток — артефакт подсчёта;
+пакетные ворота не завязаны на неё.
+
+Следующий шаг: ручная верификация пользователя, затем Фаза 5 (infra).
