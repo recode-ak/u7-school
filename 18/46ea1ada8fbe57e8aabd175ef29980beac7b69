@@ -1,0 +1,22 @@
+Задача: Чистка API-слоя peer-review (ФР-6)
+
+Сводка: Удалены create-campaign-uc (+test), stream-completed-er (+test),
+commands/create-campaign-cmd.ts и commands/errors.ts (команды/меты/ошибки
+v3 — потребители исчезли вместе с UC). api/module.ts: useCases = [],
+reactions = [CreateStudentCampaignEr]; инъекция UC устранена (решение 4).
+domain/module.ts: PeerReviewUcMetas = never (пользовательские UC появятся
+в фазе 4/UI-треке); комментарий streamFacade обновлён.
+module.test.ts переписан: UC нет, реакция подписана на оба события,
+сквозной тест через InProcEventBus (student.completed → кампания
+stream_ended). Docstring StreamCompletedEvent в stream больше не ссылается
+на удалённый ER. Попутно: форматирование entity.ts (biome) и обновление
+вызова logger.warn под контракт (source, message, meta).
+
+Файлы:
+- удалено: 6 файлов (см. выше)
+- packages/peer-review/src/api/module.ts, api/module.test.ts
+- packages/peer-review/src/domain/module.ts
+- packages/stream/src/domain/stream/events.ts (только комментарий)
+
+Проверки: CI=true bun test packages/peer-review — 97 pass;
+полный прогон: 2250 pass / 0 fail, tslint 0 ошибок, biome чисто.
