@@ -1,0 +1,29 @@
+Отчёт о верификации — Фаза 3 (API: ER создания студенческих кампаний)
+
+Автоматические тесты: CI=true bun test — 2250 pass, 0 fail (218 файлов).
+Типобезопасность: bun run tslint — 0 ошибок. Линтер: bun run lint — чисто
+(2 pre-existing infos). Скоуп peer-review: 97 pass; покрытие ER 83%/100% funcs,
+модуль и домен — выше порога.
+
+Содержание фазы:
+- Контракт ReviewCampaignRepo: findBySubject/findActiveBySubject/
+  findActiveByMentor/save (ключ (scopeId, subjectId)) [3bf7e18].
+- ER create-student-campaign-er: юнионная подписка student.completed +
+  student.abandoned; идемпотентность; фасад stream; проекция 4 исходов
+  (in_progress — не ошибка); фабрика; save; публикация [1d3362c].
+- Чистка: удалены create-campaign-uc(+test), stream-completed-er(+test),
+  команды/меты/ошибки v3; module.ts — useCases: [], reactions: [ER];
+  PeerReviewUcMetas = never [1846ea1].
+
+Ручная верификация (API-фаза, UI нет):
+1. bun run check — три ворота зелёные на всём репозитории.
+2. Тест module.test.ts — сквозной: student.completed через InProcEventBus
+   → кампания stream_ended с (scopeId, subjectId).
+3. Тесты ER: оба события создают РОВНО одну кампанию; повтор события —
+   дубль не создаётся; getMembers=undefined — warn без throw.
+
+Приёмка фаз 1–3 (спека): достигнута — ровно одна кампания на ключ,
+снапшот с 4-значными исходами, субъект терминален, ворота чистые.
+
+Подтверждение пользователя: заранее выдано в чате (фазы 1–3 подряд,
+стоп после 3).
