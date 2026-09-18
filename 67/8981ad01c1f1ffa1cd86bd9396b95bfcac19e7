@@ -1,0 +1,13 @@
+Задача: review-campaign-json-repo (ФР-9) — Фаза 5
+
+Сводка: JSON-файловая реализация доменного интерфейса ReviewCampaignRepo.
+- Уникальность ключа окна (scopeId, subjectId): save новой кампании с занятым ключом бросает ReviewCampaignJsonRepoError; обновление по uuid разрешено.
+- findBySubject — основа идемпотентности ER.
+- findActiveBySubject / findActiveByMentor — раздельные выборки активных (неистёкших) кампаний; граница expiresAt включительно, как в AR.isExpired.
+- findById — для UI (campaignId из команды).
+
+Файлы:
+- packages/peer-review/src/infra/db/review-campaign-json-repo.ts (новый)
+- packages/peer-review/src/infra/db/review-campaign-json-repo.test.ts (новый, 6 тестов)
+
+Причина: Фаза 5 плана трека — инфраструктура (ФР-9). TDD: Red (6 падающих) → Green (6 pass), покрытие нового файла 100%, biome и tsc --noEmit чисто.
