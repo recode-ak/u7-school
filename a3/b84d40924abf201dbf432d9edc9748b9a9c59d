@@ -1,0 +1,12 @@
+Задача: review-json-repo (ФР-9) — Фаза 5
+
+Сводка: JSON-файловая реализация доменного интерфейса ReviewRepo.
+- Уникальность пары (campaignId, authorId, recipientId): дубль пары с другим uuid — ReviewJsonRepoError; перезапись — save с тем же uuid (инвариант репо из ФР-7).
+- findByPair — перезапись и признак «мой отзыв уже есть».
+- findByCampaign — прогресс M/K; findByCampaignAndAuthor — прогресс M и чек-марки; findByScope — чтение скоупа и факты фасада (денормализация scopeId).
+
+Файлы:
+- packages/peer-review/src/infra/db/review-json-repo.ts (новый)
+- packages/peer-review/src/infra/db/review-json-repo.test.ts (новый, 6 тестов)
+
+Причина: Фаза 5 плана трека — инфраструктура (ФР-9). TDD: Red → Green (6 pass), покрытие 100%, biome и tsc чисто. Попутно исправлена ошибка типов в тесте (noUncheckedIndexedAccess — индексация массива).
