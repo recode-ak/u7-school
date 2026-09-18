@@ -1,0 +1,13 @@
+Задача: Контракт ReviewCampaignRepo
+
+Сводка: Интерфейс переведён на ключ кампании (scopeId, subjectId):
+findBySubject(scopeId, subjectId) — идемпотентность ER; новые раздельные
+выборки findActiveBySubject(userId) / findActiveByMentor(userId)
+(решение 5 спеки); findByScope(context, scopeId) удалён — потребители
+(create-campaign-uc) удаляются задачей чистки фазы 3. Инфра-реализаций
+пока нет (фаза 5 создаёт json-репо по новому контракту).
+
+Файл: packages/peer-review/src/domain/review-campaign/repo.ts
+
+Проверка: grep по репозиторию — внешних потребителя findByScope нет,
+кроме файлов в зоне удаления фазы 3.
