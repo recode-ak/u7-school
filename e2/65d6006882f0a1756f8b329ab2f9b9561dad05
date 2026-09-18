@@ -1,0 +1,15 @@
+Задача: peer-review-bootstrap + регистрация в create-api-app — Фаза 5
+
+Сводка:
+- peerReviewBootstrap() — сборка модуля peer-review: json-репозитории (campaigns.json, reviews.json), резолвер (streamFacade, appResolver), API-модуль, фасад. Подписка ER create-student-campaign на student.completed/abandoned выполняется в module.init() при apiApp.init().
+- Пакет @u7-scl/peer-review: добавлен export ./infra (индекс инфраструктуры).
+- create-api-app.ts: модуль peer-review зарегистрирован в ApiApp, фасад — в бандле; U7BotAppMeta дополнен PeerReviewApiModuleMeta; зависимость @u7-scl/peer-review добавлена в apps/u7-bot.
+- Smoke-тест create-api-app.test.ts: сборка приложения, регистрация модуля, init() с подпиской ER, ответ query-UC get-my-campaigns через единый вход (InProcJobScheduler, актёр-заглушка).
+- Попутно: biome-форматирование review-json-repo.test.ts (порядок импортов, перенос).
+
+Файлы:
+- packages/peer-review/src/infra/peer-review-bootstrap.ts (новый)
+- packages/peer-review/src/infra/index.ts (новый)
+- packages/peer-review/src/index.ts, apps/u7-bot/{package.json, src/core/u7-bot-app-meta.ts, src/create-api-app.ts, src/create-api-app.test.ts}, bun.lock
+
+Причина: Фаза 5 плана — сборка вертикали. Проверки: peer-review 152 pass, u7-bot 697 pass, biome/tsc чисто.
