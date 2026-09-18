@@ -1,0 +1,18 @@
+Задача (внеплановая, по запросу владельца): updatedAt в схеме кампании
+
+Сводка: Единственный агрегат репозитория без updatedAt в схеме —
+ReviewCampaign. v.object валит неизвестные ключи вырезанием, поэтому
+штамп updateState/safeUpdate молча терялся бы при будущих мутациях.
+Добавлен updatedAt: v.optional(...) (тип выводится через InferOutput);
+регресс-тест: штамп переживает restore. Аудит остальных 10 агрегатов —
+поле объявлено у всех (user — в канонической UserSchema @u7-scl/app);
+strictObject нигде нет, других случаев проблемы не найдено.
+Попутно убраны избыточные комментарии (entity, module, тест).
+
+Файлы:
+- packages/peer-review/src/domain/review-campaign/entity.ts
+- packages/peer-review/src/domain/review-campaign/review-campaign-factory.test.ts
+- packages/peer-review/src/domain/module.ts
+
+Проверки: peer-review 98 pass; полный CI=true bun test 2251 pass / 0 fail;
+tslint 0; biome чисто.
