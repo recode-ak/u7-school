@@ -1,0 +1,21 @@
+Задача: Фабрика (ФР-3) + инварианты субъекта
+
+Сводка: ReviewCampaignFactory.createStreamCompleted → createStudentCampaign
+({scopeId, subjectId, participants, now}) — окно 7 дней от now
+(REVIEW_WINDOW_DAYS.streamEnded, переименован из streamCompleted);
+restore(state) по дискриминанту stream_ended. a-root: инварианты субъекта
+(присутствует в participants, роль студент, исход терминален
+completed|dropped|never_started — не in_progress); safeAttrs + subjectId;
+геттеры subjectId/isSubject(); announceCreated → student-campaign.created
+с payload {campaignId, context, scopeId, subjectId} (ФР-5).
+
+Файлы:
+- packages/peer-review/src/domain/review-campaign/review-campaign-factory.ts
+- packages/peer-review/src/domain/review-campaign/review-campaign-factory.test.ts
+- packages/peer-review/src/domain/review-campaign/a-root.ts
+- packages/peer-review/src/domain/review-campaign/a-root.test.ts
+- packages/peer-review/src/domain/review-campaign/constants.ts
+
+TDD: Red 15 fail → Green 53 pass (вся папка review-campaign).
+Задача «Событие student-campaign.created (ФР-5)» покрыта здесь:
+тест события в review-campaign-factory.test.ts.
