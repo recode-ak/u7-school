@@ -1,0 +1,11 @@
+Задача: PeerReviewApiModuleMeta + резолвер (Фаза 4, задача 1).
+
+Создан каркас API-модуля peer-review:
+- domain/module.ts: PeerReviewApiModuleMeta (ucMetas — каркас, заполняется по мере UC) и PeerReviewApiModuleResolver (reviewCampaignRepo, reviewRepo, streamFacade + ModuleResolver: eventBus, appResolver).
+- domain/review-campaign/repo.ts: интерфейс ReviewCampaignRepo (save, findByScope — основа идемпотентности ER).
+- domain/review/repo.ts: интерфейс ReviewRepo (save).
+- api/module.ts: PeerReviewApiModule (U7ApiModule, пустые useCases/reactions/jobs).
+- api/module.test.ts: тест инициализации каркаса.
+- Экспорты (domain/index.ts, api/index.ts, src/index.ts), package.json: + @u7-scl/stream, imports #api/*.
+
+Регистрация модуля в приложении — Фаза 5 (peer-review-bootstrap).
