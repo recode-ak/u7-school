@@ -1,0 +1,15 @@
+Задача: ReviewPolicy (ФР-4)
+
+Сводка: Политика адресации v4. Сигнатура recipientsOf/canReview扩展ена
+параметром subjectId (субъект окна, ФР-2) — ментору нужно знать, кому
+писать. Ветки: субъект completed → ментор + соученики
+completed/in_progress (dropped/never_started исключены); субъект
+dropped/never_started → только ментор; ментор → только субъект; запрет
+«о себе»; посторонний автор → пусто.
+
+Файлы:
+- packages/peer-review/src/domain/review/policy.ts
+- packages/peer-review/src/domain/review/policy.test.ts
+
+TDD: Red 5 fail → Green: все 88 доменных тестов pass. Внешних
+потребителей старой сигнатуры нет (проверено grep по репозиторию).
