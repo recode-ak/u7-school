@@ -1,0 +1,27 @@
+Отчёт о верификации — Фаза 2 (Домен peer-review: каркас v4)
+
+Автоматические тесты (скоуп фазы): CI=true bun test packages/peer-review/src/domain
+— 88 pass, 0 fail. Покрытие изменённых файлов: a-root.ts 100%, entity.ts 100%,
+constants.ts 100%, review-campaign-factory.ts 100%, review/policy.ts 100%.
+Линтер: biome src/domain — чисто. tslint:p peer-review по src/domain — чисто.
+
+Содержание фазы:
+- ФР-2: entity v4 — subjectId, контекст stream_ended, исход in_progress.
+- ФР-3: фабрика createStudentCampaign (окно 7 дней от now, restore).
+- ФР-5: событие student-campaign.created {campaignId, context, scopeId, subjectId}.
+- ФР-4: ReviewPolicy с параметром subjectId (ветки по субъекту, ментор → субъект).
+
+Известное промежуточное состояние (НЕ регресс, план фазы 3):
+Полный CI=true bun test — 3 fail, tslint — ошибки ТОЛЬКО в файлах,
+которые фаза 3 по плану удаляет/переписывает: create-campaign-uc.ts(+test),
+stream-completed-er.ts(+test), api/module.test.ts, create-campaign-cmd.ts.
+Приёмочные ворота «CI=true bun test + lint + tslint чисто» по спеке
+относятся к фазам 1–3 СОВМЕСТНО (раздел «Приёмка»).
+
+Ручная верификация (доменная фаза, UI нет):
+1. bun test packages/peer-review/src/domain — зелёный.
+2. Новые тесты: инварианты субъекта (отсутствие/in_progress/не-студент),
+   окно 7 дней, restore по дискриминанту, событие ФР-5, все ветки ФР-4.
+
+Подтверждение пользователя: заранее выдано в чате (фазы 1–3 подряд,
+стоп после 3).
