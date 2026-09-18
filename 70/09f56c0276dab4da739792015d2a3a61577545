@@ -1,0 +1,7 @@
+Задача: stream-completed-er (Фаза 4, задача 3, ФР-7).
+
+- api/er/stream-completed-er.ts: StreamCompletedEr — подписка на stream.completed, вызывает CreateCampaignUc (контекст stream_completed, scopeId = streamId). UC передаётся конструктором из useCases модуля — общий инстанс с единым резолвером. Ошибки UC не выплёскиваются из ER (шина изолирует) — лог-предупреждение appResolver.logger.warn.
+- Регистрация в PeerReviewApiModule.reactions; createCampaignUc — приватное поле модуля, общее для useCases и ER.
+- Тесты: интеграционная связка ER→UC (создание кампании, повтор события — не дубль, ошибка UC не выплёскивается), авто-подписка на уровне модуля (publish stream.completed → кампания сохранена).
+
+87 тестов пакета зелёные, lint/tslint чисто.
