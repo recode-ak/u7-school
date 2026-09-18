@@ -1,0 +1,18 @@
+Задача: Фасад (ФР-8)
+
+Сводка: PeerReviewFacade (domain/facade.ts) — интерфейс для внешних
+модулей/UI-трека; PeerReviewInProcFacade (infra) — единственная
+реализация, только делегирование в query-UC API-модуля (как
+StreamInProcFacade). hasLiveCampaigns — переиспользует get-my-campaigns
+(onlyLives, length>0); hasReviews/listScopeFacts — новый query-UC
+list-scope-facts (findByScope → hasReviews/reviewsCount).
+
+Подключение: api/module.ts — useCases из 5 UC (ФР-7); domain/module.ts —
+PeerReviewUcMetas = union 5 мет (вместо never); module.test — имена UC;
+domain/index.ts — реэкспорт фасада.
+
+Файлы: facade.ts, InProc-фасад+тест, list-scope-facts cmd/UC/тест,
+module.ts/domain.module.ts/module.test.ts/domain index.
+
+TDD: Red → Green; peer-review 127 pass; tslint 0; biome чисто;
+фасад: 100%/100%.
