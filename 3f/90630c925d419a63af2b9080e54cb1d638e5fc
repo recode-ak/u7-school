@@ -1,0 +1,7 @@
+Удаление assessment.ts (решение владельца при ревью Фазы 3)
+
+- Удалена папка packages/peer-review/src/domain/peer-review/ (assessment.ts, assessment.test.ts, index.ts)
+- Типы PeerReviewAssessment/Context/Role никем не импортировались; понятие поглощено ReviewCampaign (context — дискриминант, роли+исходы — снапшот участников, triggerEvent — зона ER/UC)
+- peer-review-question-pool.ts остался — реальные данные вопросов для будущего этапа анкет
+- ФР-8 спеки трека обновлён: удаление зафиксировано с обоснованием
+- При этапе анкет ownerInfo анкеты формируется из кампании (campaignId, context, targetId)
