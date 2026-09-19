@@ -1,0 +1,17 @@
+Задача: каркас контроллера peer-review + S03 (Фаза 1, трек peer-review-ui)
+
+TDD: Red — 5 тестов против несуществующей стори; Green — CampaignStory
+(name 'campaign', вход list:<campaignId>) + PeerReviewController
+('peer-review') + регистрация в createUiApp.
+
+Решения:
+- адресаты/✅ — UC get-campaign-recipients (campaignId + authorId=actor.uuid),
+  имена кнопок — get-user по каждому адресату (паттерн view-stream.story),
+  заголовок — get-my-campaigns → карточка кампании → get-stream(scopeId)
+- отдельного UC для title не заводили (peer-review UC — за рамками трека)
+- подписи ролей: «Ментор»/«Студент» — локальная функция recipientLabel;
+  словарь исходов в кнопки не проникает (решение спеки)
+- клавиатура: ряд на адресата + mainMenu последним; код адресата
+  campaign:open:<campaignId>:<userId> — задел под S04/S05
+
+Тесты: +5 (S03), check:a u7-bot — 718 зелёных.
