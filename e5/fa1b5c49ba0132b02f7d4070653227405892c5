@@ -1,0 +1,11 @@
+Задача: Системный кеш DialogCache (ФР-3, Фаза 1)
+
+Сводка: DialogCache в packages/core/src/ui/bot/dialog-cache.ts — эпохальный кеш стори, НЕ персистная BotSession (чистая память процесса). set(tgId, key, data, session) пишет с эпохой path+seq; get(tgId, key, session) — miss при чужой эпохе (тихая пересборка, защита и от обходного проактива-якоря); drop(tgId) — физический сброс записей одного пользователя. set без диалога — no-op.
+
+Решение по tgId: у стори в handleCallback нет tgId — прикладная стори берёт его из actor (User.telegramId), сигнатуры handleCallback не менялись.
+
+Интеграция: BotUiApp инстанцирует dialogCache и доставляет каскадом init (как transport): controller.init(resolve, proactiveSender, dialogCache) → story.init(...). enterDialog получил tgId: (session, tgId, path, mode), при переходе в новую эпоху — dialogCache.drop(tgId) только текущего пользователя. dispatch получил tgId (dispatch(data, tgId, actor, session)). Обновлены: 3 вызова enterDialog в apps/u7-bot (start, cancel, mainMenu-кнопка), сигнатура U7BotUiApp.dispatch, U7BotController.init, U7BotUiStory.init, вызов enterDialog в bot-transport.test.ts.
+
+Файлы: dialog-cache.ts (+11 тестов: hit/miss по эпохе, изоляция пользователей, no-op без диалога, drop только текущего, каскад init, drop при мосте в чужую стори, продолжение без drop), ui-app.ts, bot-controller.ts, bot-ui-story.ts, ui/index.ts, apps/u7-bot: ui-app.ts, u7-bot-controller.ts, u7-bot-ui-story.ts, bot-transport.test.ts.
+
+Тесты: core 380 pass, u7-bot 697 pass; покрытие dialog-cache 100% строк.
