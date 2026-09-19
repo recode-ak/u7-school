@@ -1,0 +1,26 @@
+Задача: streams S03 «Программа курса» (ФР-4 трека pagination)
+
+Сводка: перенос молчаливой обрезки #truncate(4000) на универсальный
+пагинатор. handleProgramView собирает блоки «проект с уроками» через
+новый renderTreeBlocks и рендерит через общий хелпер U7BotUiStory.pagedScreen:
+страницы из целых блоков, кеш Paged в DialogCache по эпохе диалога
+(тыки навигации не перечитывают домен), кнопки ‹ Пред/След › одним
+рядом над «Назад», индикатор · Стр. N/M — суффикс шапки, листание —
+edit на месте (seq не растёт), clamp номера страницы.
+
+Файлы:
+- packages/core/src/ui/bot/bot-ui-story.ts — dialogCache с дефолтным
+  инстансом (юнит-тесты стори без каскада init получают рабочий кеш)
+- apps/u7-bot/src/core/u7-bot-ui-story.ts — pagedScreen (ленивая build,
+  emptyScreen, кеш по (tgId, cacheKey), botLimit с запасом индикатора)
+- apps/u7-bot/src/shared/tree-renderer.ts — renderTreeBlocks: блок =
+  корневой узел со всеми детьми (renderTree = join блоков)
+- apps/u7-bot/src/controllers/streams/stories/view-stream.story.ts —
+  handleProgramView на пагинаторе, #truncate удалён, роутинг
+  program:<id>:<page>
+- apps/u7-bot/src/controllers/mentor/stories/view-stream-mentor.ts —
+  делегирование program с номером страницы
+- тесты: 6 новых кейсов пагинации S03 + 2 кейса renderTreeBlocks
+
+Причина: молчаливая обрезка теряла контент; UX согласован с владельцем
+(ui-spec S03: постраничность, суффикс шапки, edit на месте).
