@@ -1,0 +1,12 @@
+Задача: экран-заглушка истёкшего окна (Фаза 1 трека peer-review-ui)
+
+TDD: Red — тест на AppException REVIEW_WINDOW_CLOSED в моке;
+Green — ветка instanceof AppException в catch handleMessage.
+
+Решения:
+- проверка по error.name (единственная доменная ошибка, которой
+  нужен отдельный экран; остальные — реплики errorNotify)
+- ensureLive гвардит только create-review → обработка только в
+  handleMessage; списки UC не кидают окно (фильтруют live)
+
+Тесты: +1, check:a u7-bot — 732 зелёных.
