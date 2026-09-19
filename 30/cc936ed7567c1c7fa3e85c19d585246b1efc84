@@ -1,0 +1,25 @@
+Задача: courses S00 уровни 0–4 (ФР-5 трека pagination)
+
+Сводка: перенос последней обрезки #truncate каталога курсов на пагинатор.
+Все 5 уровней (курсы/этапы/модули/проекты/уроки) рендерятся через
+U7BotUiStory.pagedScreen: блок = элемент уровня с inline-детьми, страницы
+из целых блоков, кнопки ‹ Пред/След › над контентными, индикатор
+· Стр. N/M — суффикс шапки. Кеш {header, paged, payload} в DialogCache:
+ленивая build читает домен только при промахе (list-courses, get-course,
+N×get-module, get-module-snapshot, get-steps-by-lessons), кнопки уровней —
+чистая функция payload (titles не перечитываются при листании).
+
+Файлы:
+- apps/u7-bot/src/core/u7-bot-ui-story.ts — pagedScreen дженерик: build
+  возвращает payload; кеш хранит payload; rows(payload) — кнопки,
+  emptyScreen(payload) — заглушка пустого набора
+- apps/u7-bot/src/controllers/courses/stories/course-catalog.story.ts —
+  уровни 0–4 на пagedScreen, #pageSeg-парсинг, #truncate удалён,
+  not-found семантика уровней 3/4 сохранена (catch-all как раньше)
+- apps/u7-bot/src/controllers/streams/stories/view-stream.story.ts —
+  адаптация к payload-контракту build
+- тесты: 4 новых кейса пагинации каталога; тест «обрезаются на ~4000»
+  переименован в «компактность урока» (сценарий сохранён, ассерты те же)
+
+Причина: ФР-5 — обрезка теряла контент; уровень 0 включён (риск
+переполнения без обрезки), UX согласован (ui-spec S00: постраничность).
