@@ -1,0 +1,14 @@
+Задача: S06 сохранение отзыва (Фаза 1 трека peer-review-ui)
+
+TDD: Red — 2 теста; Green — try/catch create-review в handleMessage,
+#showRecipients(savedId?) с альтернативным заголовком.
+
+Решения:
+- тип результата create-review выводится из appMeta (ApiApp.execute
+  строго типизирован) — локальная аннотация не нужна
+- ошибки домена — errorNotify: REVIEW_WINDOW_CLOSED сейчас попадает в
+  warn-ветку; отдельный экран-заглушка — задача 5
+- мок в тестах: мутируем recipients-массив между вызовами (имитация
+  обновления БД после сохранения)
+
+Тесты: +2 (S06), check:a u7-bot — 728 зелёных.
