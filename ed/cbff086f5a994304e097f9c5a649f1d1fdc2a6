@@ -1,0 +1,17 @@
+Задача: S04 перезапись отзыва (Фаза 1 трека peer-review-ui)
+
+TDD: Red — тест экрана перезаписи; Green — ветка hasMyReview в
+#askReview + новый query UC get-my-review.
+
+Решения:
+- для текста текущего отзыва нужен UC по паре (author, recipient) —
+  добавлен get-my-review (query, errors: never); альтернатива —
+  тянуть весь скоуп через list-scope-reviews — избыточно
+- заметка по типам: findByPair возвращает entity Review (без .state —
+  он у AR), текст — review.text
+- пользовательский текст в экране: md-тег экранирует интерполяции сам
+  (escapeMarkdown в core) — ручное экранирование не нужно
+- формально UC «за рамками» плана задачи (как myOutcome в задаче 2) —
+  отметить в сводке фазы
+
+Тесты: +5 (3 стори + 2 UC), check:a u7-bot — 731 зелёных.
