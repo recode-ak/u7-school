@@ -1,0 +1,9 @@
+Задача: Ядро Paginator (ФР-1, Фаза 1)
+
+Сводка: создан транспорт-независимый пагинатор в packages/core/src/ui/pagination/ — объект-сервис без состояния. paginate(blocks, opts) разбивает блоки на страницы из целых элементов (элемент не рвём никогда: одинокий блок длиннее лимита — страница с флагом oversized). Page: text (готовая склейка), items, index/total, курсоры start/prevStart/nextStart, hasPrev/hasNext. Paged: pages/isEmpty/isSingle. page(paged, n) — доступ с clamp. opts: limit (обязателен), measure (дефолт — символы; web — по количеству элементов), separator (только склейка text, в меру не входит).
+
+Решение: разделитель НЕ входит в меру страницы — иначе web-мера «по количеству элементов» ломалась бы на дефолтном '\n'; длину разделителей покрывает резерв лимита (см. BotPaginator).
+
+Файлы: paginator.ts, paginator.test.ts (11 тестов), ui/index.ts (экспорт).
+
+Тесты: 11 pass, покрытие 100% строк / 80% функций.
