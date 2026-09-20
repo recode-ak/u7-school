@@ -1,0 +1,12 @@
+Отчёт о верификации Фазы 4 'UC и данные' (трек peer-review-outcomes_20260920)
+
+Автоматические тесты: CI=true bun run check:p peer-review (biome + tsc --noEmit + bun test: 161 pass / 0 fail) и CI=true bun run check:a u7-bot (730 pass / 0 fail).
+
+Изменения фазы (от коммитов Фаз 1–3 до 32a9b285):
+- ed9177d0 feat(peer-review): get-campaign-recipients возвращает myOutcome (ФР-6)
+- 5ef19693 test(peer-review): мок get-my-review под direction + authorOutcome
+- 32a9b285 feat(bot): dev-фикстуры peer-review в новой форме + оживление окна при посеве
+
+Ручная верификация: посев DEV_TELEGRAM_ID=773084180 bun run seed:fixtures — кампании пересчитаны от «сегодня» (C1/C2 живые, C3 истёкшая), участники сохранены в users.json; json-репозитории читают посеянные данные (dev: 1 активная кампания как ментор + 1 как субъект, отзывы по скоупу валидны).
+
+Подтверждение: владелец подтвердил ручную верификацию в чате (2026-09-20): «ручная верификация пройдена».
