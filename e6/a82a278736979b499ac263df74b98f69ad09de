@@ -1,0 +1,16 @@
+Задача: Проекция исходов 4 значения + форма кампании (schema/entity/factory) — Фаза 1 трека peer-review-outcomes_20260920
+
+Сводка: домен peer-review переведён на форму сессии 2026-09-20.
+- 4-значная проекция StudentOutcome (completed_passed/completed_not_passed/dropped/never_started), in_progress удалён
+- Контекст stream_fate: participants — uuid[] адресуемых соучеников, payload { subjectOutcome, mentorId }, инварианты (дубли/субъект/ментор вне participants)
+- Review: direction вместо пары ролей, authorOutcome — 4-значный снапшот
+- ReviewPolicy удалён (адресация в агрегате), сценарии перенесены в a-root.test.ts
+- ER: фильтрация participants + проекция subjectOutcome
+- UC get-campaign-recipients: mentorId для лейблов S03, recipients без ролей
+- Адаптированы зависимые UC/DS/команды/репо/стори и все тесты
+
+Файлы: entity/factory/a-root/constants/campaign-facts-ds (review-campaign); entity/a-root/scope-reviews-ds/list-scope-reviews-cmd (review); policy.* удалены; ER; get-campaign-recipients-uc/cmd; create-review-uc; json-репо + тесты; сторя кампании бота + тесты.
+
+Причина: тотальная смена формы по спецификации трека (ФР-1..ФР-4); компиляционная целостность потребовала адаптации смежных файлов отзыва/адресации в рамках задачи 1 (задачи 2-3 фазы закроют тестовую полноту отдельными коммитами).
+
+Проверки: bun run check — 2375 тестов pass, 0 fail; lint/tsc чисты.
