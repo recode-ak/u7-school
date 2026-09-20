@@ -1,0 +1,11 @@
+Задача: Стори кампании бота — тексты S05 (4 варианта «о менторе»), использование myOutcome — Фаза 7 трека peer-review-outcomes_20260920
+
+Сводка: reviewPrompt стори кампании принимает myOutcome (4-значный исход автора из UC get-campaign-recipients, ФР-6/Фаза 4) и выбирает текст-подсказку «о менторе» по исходу: completed_passed (базовый, был ранее), completed_not_passed («даже если итог не тот» — финализация черновика ui-spec), never_started («почему так и не начали учёбу»), dropped («почему забросили учёбу»). Тексты направления «о студенте» не менялись. Fallback при недоступном исходе — текст passed (защита от рассинхрона).
+
+Висящие файлы Фазы 1 UI-трека: уже закоммичены ранее (e6a82a27 и серия S04–S06 + 5ef19693) в рамках Фаз 1–6 — рабочий дерево чистое, досводка не требовалась.
+
+Файлы:
+- apps/u7-bot/src/controllers/peer-review/stories/campaign.story.ts — AuthorOutcome-тип, reviewPrompt(myRole, recipientRole, name, myOutcome)
+- apps/u7-bot/src/controllers/peer-review/stories/campaign.story.test.ts — мок myOutcome (только субъекту) + 3 новых теста текстов (not_passed/never_started/dropped) + уточнение passed-теста
+
+Тесты: 21/21 стори; check:a u7-bot — 740 тестов, biome и tsc чисто.
