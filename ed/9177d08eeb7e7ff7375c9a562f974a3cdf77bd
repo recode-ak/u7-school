@@ -1,0 +1,11 @@
+Задача: get-campaign-recipients — вернуть myOutcome; удалить deliverables (Фаза 4, ФР-6)
+
+Сводка: UC get-campaign-recipients отдаёт myOutcome — 4-значный исход автора-субъекта (completed_passed / completed_not_passed / dropped / never_started) для выбора текстов-подсказок S05 «о менторе». Ментору исхода нет — свойство не пишется (optional). deliverables удалены ещё в Фазе 1 (e6a82a2), в коде их не осталось — проверено грепом.
+
+Изменённые файлы:
+- packages/peer-review/src/domain/review-campaign/campaign-facts-ds.ts — MyRecipientsView.myOutcome?: StudentOutcome
+- packages/peer-review/src/domain/review-campaign/commands/get-campaign-recipients-cmd.ts — CampaignRecipientsSchema + optional myOutcome
+- packages/peer-review/src/api/review-campaign/get-campaign-recipients-uc.ts — сборка myOutcome по роли (subject → ar.subjectOutcome)
+- packages/peer-review/src/api/review-campaign/get-campaign-recipients-uc.test.ts — 3 новых теста (субъект passed/dropped, ментор без свойства)
+
+Причина: ФР-6 спеки трека peer-review-outcomes — UI-сторя S05 выбирает текст «о менторе» по исходу автора, включая «завершил, но не прошел»; исход в UI нигде не отображается.
