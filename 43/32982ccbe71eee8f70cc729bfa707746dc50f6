@@ -1,0 +1,9 @@
+Правка по решению владельца (Фаза 2 трека peer-review-ui): фасад peer-review без клиентов — удалён.
+
+Сводка:
+- Удалены: domain/facade.ts (интерфейс PeerReviewFacade: hasLiveCampaigns/hasReviews/listScopeFacts), infra/peer-review-in-proc-facade.ts (реализация), infra/peer-review-in-proc-facade.test.ts (4 теста), экспорты из domain/index.ts и infra/index.ts.
+- Доступ UI к домену peer-review — только через appApi (UC): видимость «💬 Отзывы» — get-my-campaigns + onlyLives, Фаза 4 (кнопка в карточке потока) — list-scope-facts.
+- spec/plan трека peer-review-ui синхронизированы (ФР-3, ФР-5, задачи Фаз 2 и 4); архивы треков campaign/outcomes не тронуты (история).
+- При появлении межмодульного клиента фасад воссоздаётся по материалам архивного трека peer-review-campaign (ФР-8).
+
+Проверки: peer-review — 157 тестов чисто, u7-bot — 748 тестов чисто, lint/tslint зелёные.
