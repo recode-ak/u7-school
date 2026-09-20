@@ -1,0 +1,16 @@
+Отчёт о верификации Фазы 4 (трек peer-review-ui)
+
+Автотесты: CI=true bun test по всему репозиторию — 2440 pass / 0 fail.
+Скоуп фазы: apps/u7-bot — 781 тест, biome и tsc --noEmit чисто
+(bun run check:a u7-bot).
+
+Задачи фазы:
+1. Стори просмотра S07 (scope-reviews): list-scope-reviews, блок = отзыв,
+   роли из direction, лейбл authorOutcome у автора-студента, имена
+   batch-UC get-users-by-ids, пагинация pagedScreen (BotPaginator +
+   DialogCache), «⬅️ Назад к потоку» — мост в streams S02. 13 тестов.
+2. Кнопка «💬 Отзывы» в карточке потока: видимость по list-scope-facts,
+   мост Routes.peerReview.scopeReviews, рядом со «👥 Студенты». 4 теста.
+
+Ручная верификация: подтверждена владельцем 2026-09-21 по автоматическому
+покрытию (живой прогон — вместе с Фазой 5, финальный гейт трека).
