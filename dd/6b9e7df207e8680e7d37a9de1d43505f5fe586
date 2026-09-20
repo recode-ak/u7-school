@@ -1,0 +1,7 @@
+Задача: Review — direction + authorOutcome (4-значный); создание/перезапись — Фаза 1, трек peer-review-outcomes_20260920
+
+Сводка: тестовая полнота UC create-review по direction. Сама реализация (entity/a-root отзыва, direction из assertCanWrite) вошла в коммит e6a82a2 — компиляционная необходимость тотальной смены формы; данный коммит фиксирует недостающие сценарии: direction ментора без authorOutcome, student_student со снапшотом, инварианты перезаписи. Схемные тесты (невозможная пара mentor_mentor, 4-значность authorOutcome) — в e6a82a2.
+
+Файлы: packages/peer-review/src/api/review/create-review-uc.test.ts
+
+Проверки: check:p peer-review — 155 pass, 0 fail.
