@@ -1,0 +1,13 @@
+Задача Фазы 3 трека peer-review-outcomes_20260920: ER create-student-campaign + событие student-campaign.created.
+
+Сводка:
+- Событие student-campaign.created (ФР-5): payload пополняется mentorId и subjectOutcome — агрегат владелец данных, UI-приглашения получают полные данные без дозагрузки (заголовок потока UI берёт сам через get-stream).
+- Дозакрыто покрытие ER (ФР-1/ФР-2): тест проекции never_started (abandoned-событие + субъект neverStarted в составе потока). Фильтрация участников (completed → завершившиеся+учащиеся без субъекта; abandoned → пусто) и проекция completed_passed/completed_not_passed/dropped уже были реализованы в e6a82a2/b948be83 и покрыты тестами — план Фазы 3 синхронизирован с фактом.
+
+Файлы:
+- packages/peer-review/src/domain/review-campaign/events.ts — тип payload + mentorId, subjectOutcome
+- packages/peer-review/src/domain/review-campaign/a-root.ts — announceCreated() добавляет поля
+- packages/peer-review/src/domain/review-campaign/review-campaign-factory.test.ts — payload события toEqual + тест исхода never_started
+- packages/peer-review/src/api/er/create-student-campaign-er.test.ts — проверка payload опубликованного события + тест never_started в ER
+
+Проверки: bun run check:p peer-review — чисто (biome, tsc, 158 тестов); CI=true bun test — 2380 pass / 0 fail.
