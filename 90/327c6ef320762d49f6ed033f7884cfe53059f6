@@ -1,0 +1,16 @@
+Задача: Кнопка «💬 Отзывы» в карточке потока streams S02 (Фаза 4, трек peer-review-ui)
+
+Сводка: в карточке потока (view-stream.story) появилась кнопка «💬 Отзывы»,
+видимая при наличии хотя бы одного отзыва по потоку — проверка UC
+list-scope-facts через appApi (scopeId = uuid потока), ошибки домена
+ловятся и не ломают карточку (кнопки просто нет). Кнопка стоит одним
+рядом со «👥 Студенты», ведёт кросс-контроллерным мостом
+Routes.peerReview.scopeReviews в стори scope-reviews (S07 peer-review).
+buildKeyboard(stream, actor, opts?) — опциональный третий параметр;
+переопределение менторской S02m не затронуто (скоуп по спеке — curious-режим).
+
+Файлы:
+- apps/u7-bot/src/controllers/streams/stories/view-stream.story.ts
+- apps/u7-bot/src/controllers/streams/stories/view-stream.story.test.ts (4 новых теста)
+
+Причина: спека трека ФР-5, план Фаза 4 задача 2.
