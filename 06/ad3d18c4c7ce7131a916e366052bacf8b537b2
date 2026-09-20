@@ -1,0 +1,9 @@
+Задача: фикс сквозного дефекта read-API (подзадача задачи 1 Фазы 6 трека peer-review-ui_20260916).
+
+Проблема: StreamInProcFacade.getMembers зовёт list-stream-students без актора (системный read из ER создания кампании peer-review), UC требовал актора → ER падал UNAUTHORIZED, кампании не создавались ни в бою, ни на e2e-стенде. Аналогично get-users-by-ids из InviteStory.
+
+Решение: read-UC переведены в публичные (requiresAuth=false) по конвенции фасадных read-API проекта. Гейт требовал лишь наличие актора (не роль) — фактическая защита не ослаблена: все входы бота уже акторы.
+
+Файлы: list-stream-students-uc.ts (+мета-команда, +тест без актора через handle), get-users-by-ids-uc.ts (+мета, тест 'требует авторизацию' → 'публичный read', +новый тест).
+
+Проверка: bun run check — 2445 pass / 0 fail.
