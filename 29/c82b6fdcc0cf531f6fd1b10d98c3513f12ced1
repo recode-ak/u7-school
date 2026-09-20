@@ -1,0 +1,13 @@
+Задачи Фазы 5 трека peer-review-outcomes (ФР-7: core async menuButtons).
+
+Сводка: контракт menuButtons переведён на Promise<MenuButton[]> — проверки видимости кнопок главного меню могут звать асинхронные фасады (предусловие кнопки «💬 Отзывы» peer-review через hasLiveCampaigns). U7BotController.menuButtons собирает кнопки стори ПАРАЛЛЕЛЬНО (Promise.all); упавшая стори скрывает только свои кнопки + warn-лог (меню в целом живо). U7BotUiApp.collectMenuButtons — параллельный сбор контроллеров с try/catch-страховкой. Обновлены все реализации: AppController, CommunityStory, CourseCatalogStory, StreamCatalogStory, SubmenuStory (mentor), HubStory (learning) — async-сигнатуры без изменения логики видимости.
+
+Изменённые файлы:
+- apps/u7-bot/src/core/u7-menu.ts — jsdoc асинхронного контракта
+- apps/u7-bot/src/core/u7-bot-ui-story.ts — async menuButtons (дефолт [])
+- apps/u7-bot/src/core/u7-bot-controller.ts — параллельный сбор + политика ошибок + warn
+- apps/u7-bot/src/core/ui-app.ts — Promise.all по контроллерам, страховка
+- apps/u7-bot/src/controllers/{app,courses,streams,mentor,learning}/... — async-сигнатуры
+- тесты ядра (u7-bot-controller/ui-app/u7-bot-ui-story) + тесты всех контроллеров/стори
+
+Причина: сбор меню был строго синхронным, видимость «💬 Отзывы» требует асинхронного фасада (спека ФР-7 трека peer-review-outcomes).
