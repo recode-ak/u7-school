@@ -1,0 +1,14 @@
+Задача: Фикстуры/dev-данные кампаний и отзывов — миграция под новую форму (Фаза 4)
+
+Сводка: фикстур peer-review в проекте не существовало вовсе (проверено git-историей и обходом data/ + templates), поэтому «миграция» выполнена созданием с нуля сразу в новой форме (ФР-3/ФР-4: participants uuid[], payload {subjectOutcome, mentorId}, direction, authorOutcome). Состав шаблона: C1 живая — dev-ментор, субъект «Студент» (completed_passed), участники Advanced/NotAdvanced; C2 живая — dev-субъект (dropped, пустой participants → адресат только ментор); C3 истёкшая (completed_not_passed) — для заглушки и onlyLives. Отзывы покрывают все три direction (+ authorOutcome-снапшоты).
+
+seed-fixtures.ts: (1) peer-review/campaigns.json и reviews.json копируются в data/fixtures/peer-review/ с пересчётом окна от «сегодня» (живые — открыты вчера, 6 дней остатка; истёкшая — закрыта 23 дня назад; отзывы — первые часы окна), иначе шаблонные даты протухают через 7 дней; (2) patchUsers сохраняет пользователей, на которых ссылаются кампании (субъект/ментор/участники) — иначе адресаты фикстур остаются без карточек.
+
+Проверено: шаблоны валидны ReviewCampaignSchema/ReviewSchema + инварианты агрегата; посев (DEV_TELEGRAM_ID владельца) даёт живые/истёкшую кампании; json-репозитории читают данные (dev: 1 активная как ментор + 1 как субъект); check:p peer-review и check:a u7-bot зелёные (730 pass).
+
+Созданные/изменённые файлы:
+- apps/u7-bot/tests/fixtures/templates/peer-review/campaigns.json (новый)
+- apps/u7-bot/tests/fixtures/templates/peer-review/reviews.json (новый)
+- apps/u7-bot/scripts/seed-fixtures.ts
+
+Причина: НФ-требование спеки трека (миграция dev-данных под новую форму) — данные для ручной верификации Фазы 4 и предстоящего UI-трека (S02/S03/S05 на живых кампаниях).
