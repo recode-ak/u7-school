@@ -1,0 +1,8 @@
+Задача: адаптация UC create-review / get-my-campaigns / list-scope-reviews / get-my-review под direction и новую форму (Фаза 4)
+
+Сводка: основная адаптация всех четырёх UC и их тестов выполнена в Фазах 1–3 (e6a82a2, dd6b9e7, edd739e8) — тесты зелёные, следов authorRole/recipientRole в API не осталось. Единственный остаток: мок отзыва в get-my-review-uc.test.ts всё ещё создавался со старыми полями authorRole/recipientRole (проходил из-за cast as unknown as Review). Мок переведён на direction + authorOutcome и укреплён satisfies Review вместо каста — типобезопасность тестовых данных.
+
+Изменённые файлы:
+- packages/peer-review/src/api/review/get-my-review-uc.test.ts
+
+Причина: ФР-4 спеки — пара authorRole/recipientRole заменена на direction; тестовые данные обязаны отражать новую форму, иначе моки тихо рассинхронизируются со схемой.
