@@ -1,0 +1,11 @@
+Задача: Фаза 6 задача 1 — инфраструктура e2e-стенда peer-review (Red: smoke → Green: подключение).
+
+Red: peer-review-smoke.e2e.test.ts — 3 теста падали (NO_COMMAND_FOUND, репозиторий undefined, приглашения не доходили). Попутно вскрыт сквозной дефект read-API (отдельный коммит fix).
+
+Green: createTestApp подключает PeerReviewApiModule зеркально create-api-app.ts (репо на фикстурах peer-review/*, общий eventBus), FixturePaths/copyTemplates копируют peer-review/{campaigns,reviews}.json, reviewCampaignRepo/reviewRepo возвращены в TestApp для ассертов. PeerReviewController передаётся в TestBotTransport напрямую (хелперу правка не нужна).
+
+Smoke-покрытие: (1) модуль зарегистрирован — get-my-campaigns отвечает; (2) student.completed → ER создаёт кампанию формата v4 (subjectOutcome=completed_passed, mentorId, participants без abandoned и субъекта) + UC видит кампанию субъекту и ментору; (3) student-campaign.created → приглашения субъекту (текст по исходу) и ментору (с именем субъекта) с полным кодом кнопки peer-review:campaign:list.
+
+Файлы: apps/u7-bot/tests/{e2e/peer-review-smoke.e2e.test.ts (новый), helpers/{test-app.ts, fixture-loader.ts}}.
+
+Проверка: apps/u7-bot CI=true bun test — 784 pass / 0 fail; корневой bun run check — 2445 pass / 0 fail.
