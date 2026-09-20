@@ -1,0 +1,11 @@
+Отчёт о верификации Фазы 1 'Контроллер и стори кампании (S03–S06)' (трек peer-review-ui_20260916, протокол workflow.md)
+
+Автоматические проверки: CI=true bun test — 2403 pass / 0 fail (236 файлов); bun run lint:a u7-bot и lint:p peer-review (biome) — чисто; bun run tslint:a u7-bot и tslint:p peer-review (tsc --noEmit) — чисто.
+
+Покрытие файлов фазы: campaign.story.ts — 94% строк; get-campaign-recipients-uc.ts, get-my-review-uc.ts, campaign-facts-ds.ts, типы команд — 100%.
+
+Состав фазы (коммиты): ac9d3ae6 (контроллер + S03), 424c0127 (S05), 30a2ac00 (S06), edcbff08 (S04), e291a7d5 (заглушка истёкшего окна). Адаптации трека outcomes: ed9177d0 (myOutcome в UC), 79b89aac (4 текста S05).
+
+Сверка ФР-2: S03 адресация v4/✅/шапка — 6 тестов; S04 перезапись — 3; S05 подсказки и валидация 10–3500 — 11; S06 — 2; заглушка REVIEW_WINDOW_CLOSED — 1; /cancel — глобальная механика U7BotUiStory. Всего 21 сценарий campaign.story.test.ts + тесты UC/DS.
+
+Ручная верификация: подтверждена владельцем (2026-09-21) по автоматическому покрытию — живой прогон экранов невозможен до Фаз 2–3 (входы S01/S02 не реализованы, callback campaign:list:<id> пока не достижим из UI). Живую проверку полного пути выполнить после Фазы 3 (критерий приёмки трека).
