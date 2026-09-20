@@ -1,0 +1,11 @@
+Задача: StreamFacade.getMembers — статус студента + neverStarted вместо outcomeCategory — Фаза 2, трек peer-review-outcomes_20260920
+
+Сводка: контракт read-API stream сменён с outcomeCategory (completed/abandoned/in_progress — склейка «прошёл»/«не прошёл») на сырой статус Student['status'] (литеральный юнион: advanced/not_advanced/enrolled/active/abandoned) + neverStarted. Тип StreamMemberOutcome переименован в StreamMember (больше не «исход», а статус участника). Выбор литерального юниона вместо enum StudentStatus: entity-схема и весь домен работают литералами, enum нигде не используется. ER create-student-campaign peer-review адаптирован компиляционно: фильтр участников s.status !== 'abandoned' (семантика прежняя — завершившиеся и учащиеся). Red-тест: различение advanced/not_advanced + neverStarted (true только для abandoned без завершённых шагов).
+
+Файлы:
+- packages/stream/src/domain/facade.ts — новый контракт
+- packages/stream/src/domain/index.ts — экспорт StreamMember
+- packages/stream/src/infra/stream-in-proc-facade.ts — маппинг статуса
+- packages/stream/src/infra/stream-in-proc-facade.test.ts — Red/Green тест
+- packages/peer-review/src/api/er/create-student-campaign-er.ts — адаптация фильтра
+- packages/peer-review/src/api/er/create-student-campaign-er.test.ts, module.test.ts, peer-review-vertical.test.ts — моки под новую форму
