@@ -1,0 +1,12 @@
+Исправление ревью владельца (Фаза 2 трека peer-review-ui).
+
+Проблема: peerReviewFacade был прокинут в U7BotUiAppResolve и читался сторей через this.resolver — нарушение границы: фасады в resolve доступны только самому uiApp (как userFacade для гост-регистрации), стори работают с доменом исключительно через this.appApi (UC).
+
+Сводка:
+- U7BotUiAppResolve: поле peerReviewFacade удалено (вернулись к исходному составу).
+- create-ui-app.ts: прокидка удалена.
+- test-bot-transport.ts: опция и заглушка фасада удалены (стенд вернулся к исходному виду).
+- MyReviewsStory.menuButtons: видимость «💬 Отзывы» — UC get-my-campaigns { userId, onlyLives: true } → непустой список (та же семантика, что PeerReviewFacade.hasLiveCampaigns — фасад остаётся для внешних модулей).
+- Тесты переписаны под appApi-мок (get-my-campaigns с onlyLives), вытаскивание resolver из стори убрано.
+
+Проверки: bun run check чист (748 тестов), покрытие my-reviews.story.ts 100% строк / 94% функций.
