@@ -1,0 +1,11 @@
+Задача: Подписка на student-campaign.created → два приглашения (Фаза 3, трек peer-review-ui_20260916)
+
+Сводка: InviteStory в контроллере peer-review — подписка на событие создания кампании отзывов; два проактивных приглашения каналом invite (ProactiveSender, ФР-6): субъекту с текстом по его исходу (completed_* → «об одногруппниках и менторе», dropped/never_started → «о менторе и учёбе»), ментору — «Выдайте свой отзыв для {Имя}» (имя субъекта из batch-UC get-users-by-ids; fallback «студента»). Кнопка «💬 Отзывы» у обоих — полный код peer-review:campaign:list:{campaignId} (Routes.peerReview.campaignList) → S03 кампании. Недоступность потока (get-stream) или профилей — молчаливый пропуск; без telegramId — пропуск соответствующего приглашения.
+
+Файлы:
+- apps/u7-bot/src/controllers/peer-review/stories/invite.story.ts (новый)
+- apps/u7-bot/src/controllers/peer-review/stories/invite.story.test.ts (новый, 14 тестов: подписка, адресация, тексты по всем 4 исходам, кнопки, batch-запрос, пропуски, MarkdownV2-безопасность)
+- apps/u7-bot/src/controllers/peer-review/controller.ts (регистрация стори)
+- apps/u7-bot/src/controllers/shared/routes.ts (Routes.peerReview.campaignList)
+
+Причина: ФР-4 спеки трека peer-review-ui; TDD Red→Green; покрытие invite.story.ts 83% строк / 87% веток; check:a u7-bot чисто (762 теста).
