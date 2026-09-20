@@ -1,0 +1,11 @@
+Задача: menuButtons «💬 Отзывы» — видимость по фасаду hasLiveCampaigns (Фаза 2 трека peer-review-ui).
+
+Сводка:
+- Новая стори MyReviewsStory (stories/my-reviews.story.ts): декларативная menuButtons — кнопка «💬 Отзывы» (action my-reviews:hub, priority 25) видна только при наличии живых кампаний; асинхронная проверка через фасад PeerReviewFacade.hasLiveCampaigns(userId). Экран S02 — заглушка до следующей задачи.
+- U7BotUiAppResolve расширен полем peerReviewFacade (прецедент userFacade); прокинуто в create-ui-app.ts из ApiAppBundle.
+- Стори зарегистрирована в PeerReviewController (первой — мост campaign:list пойдёт из неё).
+- Тест-хелпер tests/helpers/test-bot-transport.ts: опциональный peerReviewFacade в opts + заглушка по умолчанию (нет кампаний).
+
+Файлы: my-reviews.story.ts, my-reviews.story.test.ts, controller.ts, u7-bot-app-meta.ts, create-ui-app.ts, test-bot-transport.ts.
+
+Причина: ФР-3 спеки трека — хаб S02 входит из главного меню, видимость асинхронная (фасад), контракт Promise<MenuButton[]> уже в core (трек outcomes ФР-7).
