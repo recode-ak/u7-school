@@ -1,0 +1,9 @@
+Задача: Обновить ui-spec peer-review (✅-пометки) и ui-spec streams (кнопка S02); удалить tactics-draft.md; обновить §5 концепции.
+
+Изменения:
+- apps/u7-bot/src/controllers/peer-review/ui-spec.md: S01 (приглашения), S02 (хаб), S07 (просмотр) — статус ✅ по факту реализации Фаз 1–4; формат кнопок S02 сверен с кодом (субъект «🏁 Поток «{title}» · {M}/{K} · {N} дн.», ментор «🏁 Поток «{title}» · отзыв о {Имя} · {N} дн.»); индикатор страницы S07 исправлен на «Стр. N/M» (реальный формат BotPaginator); секция «Изменения в других контроллерах» — ✅ с описанием реализации.
+- apps/u7-bot/src/controllers/streams/ui-spec.md: в S02 и S02m кнопка «💬 Отзывы» (ряд «👥 Студенты», видимость по list-scope-facts → hasReviews); доменная логика карточки дополнена list-scope-facts.
+- apps/u7-bot/src/controllers/peer-review/tactics-draft.md: удалён (решения разнесены по концепции и трекам).
+- conductor/roadmap/metrics/peer-review-system.md: §5 — трек «UI отзывов» отмечен завершённым.
+
+Причина: финальная фаза трека peer-review-ui — синхронизация спеков с реальным кодом (workflow: ui-spec обязателен при изменении экранов).
