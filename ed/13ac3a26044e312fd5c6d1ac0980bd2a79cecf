@@ -1,0 +1,6 @@
+Отчёт о верификации Фазы 1 трека peer-review-outcomes_20260920
+
+Автотесты: CI=true bun run test:p peer-review — 156 pass, 0 fail (20 файлов).
+Скоуп фазы: проекция исходов 4 значения, форма кампании (participants uuid[], payload subjectOutcome/mentorId), direction+authorOutcome в отзыве, адресация в агрегате (ReviewPolicy удалён).
+Коммиты фазы: e6a82a2, dd6b9e7, 5e071ac, 350aba1.
+Ручная верификация: пользователь подтвердил готовность продолжать («продолжай со второй фазы») после сводки фазы в предыдущей сессии.
