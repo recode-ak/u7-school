@@ -1,0 +1,20 @@
+Задача: Стори просмотра S07 (Фаза 4, трек peer-review-ui)
+
+Сводка: новая стори scope-reviews в контроллере peer-review — постраничный
+просмотр отзывов потока (только чтение). Контент — UC list-scope-reviews
+(группировка по адресатам от ScopeReviewsDs), блок пагинации = отзыв
+(строка адресата с ролью из direction + «текст» — автор с ролью и лейблом
+authorOutcome у автора-студента; автор-ментор без лейбла). Имена — один
+batch-запрос get-users-by-ids до нарезки страниц (fallback «неизвестно»).
+Пагинация — готовый пагинатор трека pagination через pagedScreen
+(BotPaginator + DialogCache, листание не перечитывает домен). Кнопка
+«⬅️ Назад к потоку» — кросс-контроллерный мост Routes.stream.view.
+
+Файлы:
+- apps/u7-bot/src/controllers/peer-review/stories/scope-reviews.story.ts (новая)
+- apps/u7-bot/src/controllers/peer-review/stories/scope-reviews.story.test.ts (новая, 13 тестов)
+- apps/u7-bot/src/controllers/peer-review/controller.ts (регистрация стори)
+- apps/u7-bot/src/controllers/peer-review/controller.test.ts (реестр: 4 стори)
+- apps/u7-bot/src/controllers/shared/routes.ts (маршрут scopeReviews)
+
+Причина: спека трека ФР-5, план Фаза 4 задача 1.
