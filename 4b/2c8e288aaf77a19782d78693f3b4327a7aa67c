@@ -1,0 +1,12 @@
+Задача: UC get-users-by-ids (uuid[], лимит ~100, дедуп, пропуск ненайденных) — Фаза 6 трека peer-review-outcomes_20260920 (ФР-8).
+
+Сводка: пакетный query-UC для решения N+1 одиночных get-user из стори.
+- packages/user/src/domain/user/commands/get-users-by-ids-cmd.ts (новый): схема { userIds: uuid[] } с maxLength 100 (GET_USERS_BY_IDS_MAX), requiresAuth: true, type: query, errors: never (ненайденные — не ошибка).
+- packages/user/src/api/user/get-users-by-ids-uc.ts (новый): дедуп с сохранением порядка первого вхождения, пустой вход — пустой выход без похода в репо, сборка результата в порядке запроса, ненайденные — пропуск + warn-лог (appResolver.logger).
+- packages/user/src/domain/user/repo.ts: порт UserRepo.getByUuids(uuids) — пакетное чтение одним запросом.
+- packages/user/src/infra/db/user-json-repo.ts: реализация getByUuids — один readAll + Set-фильтр.
+- packages/user/src/domain/module.ts, api/module.ts, domain/index.ts, api/index.ts: мета, регистрация, экспорты.
+- Тесты: get-users-by-ids-uc.test.ts (новый, 6 сценариев: норм/пусто/лимит/дубли/частично не найдены/без авторизации), user-json-repo.test.ts (+describe getByUuids), module.test.ts (+тест доставки команды).
+- Моки 5 существующих UC-тестов дополнены полем getByUuids — механическое следствие расширения интерфейса UserRepo, сценарии не менялись (notify/register используют частичные моки/реальный репо — не тронуты).
+
+Проверки: bun run check:p user — чисто (145 pass); bun run tslint по всему репо — чисто. Покрытие нового кода: cmd 100%, json-repo 100%, UC — ветки 97.6% (единственная непокрытая строка — импорт-артефакт lcov).
