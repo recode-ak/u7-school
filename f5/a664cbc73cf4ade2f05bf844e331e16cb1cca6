@@ -1,0 +1,10 @@
+Задача: Обновить conductor-документы (spec/plan UI-трека, концепция §2/§5, ✅-пометки ui-spec) — Фаза 7 трека peer-review-outcomes_20260920
+
+Сводка:
+- spec/plan трека peer-review-ui_20260916: снята ⛔-приостановка (предусловия готовы), формулировки S01/S02/S05/S07 дополнены direction/subjectOutcome/myOutcome/authorOutcome, async-menuButtons (Фаза 5), batch get-users-by-ids (Фаза 6); решение 5 переписано под 4-значный словарь (in_progress-оговорка снята); фактически выполненные подзадачи Фазы 1 закрыты SHA-коммитами (S04 edcbff08, S06 30a2ac00, заглушка e291a7d5)
+- peer-review-system.md: шапка v4.1 (2026-09-20); §2.2 stream_fate + payload + participants-фильтрация ER; §2.3 direction/authorOutcome/адресация в агрегате; §2.4 окно 7 дней для stream_fate; §5 — строка 3b (outcomes, завершён), 3 — готов к продолжению
+- ui-spec.md: пометка «черновик» текста S05 «завершил и не прошел» снята (финализирован в 79b89aac без изменения формулировки)
+
+Вне скоупа (по задаче — §2/§5): устаревший абзац v3.1 в §3 концепции (старая проекция completed/in_progress/dropped/never_started) — предложен владельцу отдельной правкой.
+
+Файлы: conductor/tracks/peer-review-ui_20260916/{spec.md,plan.md}, conductor/roadmap/metrics/peer-review-system.md, apps/u7-bot/src/controllers/peer-review/ui-spec.md
