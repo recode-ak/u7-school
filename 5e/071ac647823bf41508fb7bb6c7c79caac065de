@@ -1,0 +1,7 @@
+Задача: ReviewPolicy/assertCanWrite/reviewTargets под новую форму — Фаза 1, трек peer-review-outcomes_20260920
+
+Сводка: ReviewPolicy удалён (e6a82a2) — адресация целиком в агрегате ReviewCampaignAr (там payload.mentorId/participants/subjectId). Сценарии policy.test.ts перенесены: субъект → participants+ментор, пустой список → только ментор, ментор → субъект, соученик/посторонний → access-denied, о себе/чужой адресат → conflict, direction-матрица (student_mentor/student_student/mentor_student + authorOutcome). Данный коммит закрывает последний перенесённый сценарий «автора нет в его же списке адресатов».
+
+Файлы: packages/peer-review/src/domain/review-campaign/a-root.test.ts
+
+Проверки: check:p peer-review — 156 pass, 0 fail.
