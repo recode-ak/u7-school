@@ -1,0 +1,8 @@
+Правка по решению владельца (Фаза 2 трека peer-review-ui).
+
+Сводка:
+- ApiAppBundle: поле peerReviewFacade и создание инстанса PeerReviewInProcFacade в create-api-app.ts убраны — реальных потребителей нет (сторя проверяет видимость через appApi: UC get-my-campaigns onlyLives).
+- create-api-app.test.ts: соответствующее ожидание убрано.
+- Интерфейс PeerReviewFacade и реализация PeerReviewInProcFacade в пакете peer-review ОСТАЮТСЯ (покрыты тестами трека campaign, ФР-8) — API-точка модуля для внешних доменных клиентов; инстанс вернётся в сборку при появлении первого межмодульного клиента.
+
+Проверки: bun run check по u7-bot чист (748 тестов), пакет peer-review — 161 тест зелёный.
