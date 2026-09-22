@@ -1,0 +1,3 @@
+Вынос dev-подмены из прод-пути, ae374525.
+
+Ключ: main.ts связан с dev-модулём только type-import контракта (в рантайм-бандл не попадает) + динамический import за guard. Composer<BotContext> вместо Bot — privateBot это bot.filter() → Composer. Bun test подхватывает scripts/*.test.ts (2473 → 2476).
