@@ -1,0 +1,12 @@
+Задача: Разработать инструмент укладки/правки контента
+
+Создан scripts/deliver-m2.ts:
+- --create pN (П6–П8): создание проектов через UC add-project → create-lesson → create-step, затем публикация draft→published прямой правкой JSON + манифест data/backup/deliver-m2-manifest-pN.json.
+- --update pN (П9–П14): обновление существующих уроков/шагов прямой правкой JSON по маппингу старых uuid (OLD_PROJECT_UUID), статус archived→published.
+- --check pN: сверка md ↔ json (состав и текст шагов).
+- dry-run по умолчанию, --apply для записи. Проверка числа уроков/шагов md↔json — стоп при расхождении.
+- Шаблон вызова UC и протокол безопасности (бэкап + остановка бота) — в docstring.
+
+Проверка: dry-run create p6 (12/31), update p9 (нашёл реальное расхождение md↔json — правки в старом steps.md), check p9. biome и tsc — чисто.
+
+Файлы: scripts/deliver-m2.ts (новый).
