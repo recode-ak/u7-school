@@ -1,0 +1,11 @@
+Фаза 2 «П1–П5» — контрольная точка.
+
+Автоматические тесты: CI=true bun test → 2532 pass / 0 fail.
+Сверка: bun run scripts/deliver-m2.ts --check p1,p2,p3,p4,p5 → 0 расхождений.
+Ручная вычитка Нурболатом — подтверждена.
+
+Артефакты фазы:
+- data/fullstack-js/m2-algorithm/ — 45 уроков П1–П5 (135 файлов: lesson.md + steps.md + summary.md).
+- scripts/generate-m2-sources.ts, scripts/deliver-m2.ts — фикс однозначного парсера steps.md (8ae9b51).
+
+Метрики: 45 уроков / 147 шагов, совпадает с json (steps — истина из БД).
