@@ -1,0 +1,7 @@
+Фаза 7 трека m2-content-sync: П11 «Объекты: методы и глубокая обработка» уложен в json + md (6 уроков / 24 шага, старые uuid 4da5dc6c, archived → published). Папка object-utils/, термины, финалы-напоминания.
+
+Автоматические тесты: CI=true bun test → 2532 pass / 0 fail.
+Линтер: bun run lint — чисто (по ходу закрытия починен формат JSON после укладки: JSON.stringify vs biome).
+Типы: bun run tslint — чисто.
+Сверка: bun run scripts/deliver-m2.ts --check p11 → 0 расхождений.
+Ручная верификация Нурболатом — ПРОЙДЕНА (подтверждено в чате).
