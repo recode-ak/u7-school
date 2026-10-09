@@ -1,0 +1,8 @@
+Задача 1.4: Реализовать рендерер, раннер и эталонную логику «Черепашки» (render/turtle.js, games/turtle/run.js, games/turtle/turtle.js) + тесты.
+Созданы файлы:
+- arcade/render/turtle.js — рендерер поля и адаптер WASD/стрелок
+- arcade/render/turtle.test.js — тесты рендера и адаптера черепашки
+- arcade/games/turtle/turtle.js — чистая логика робота на сетке (движение, поворот, перо, след)
+- arcade/games/turtle/turtle.test.js — TDD тесты черепашки
+- arcade/games/turtle/run.js — точка запуска для первого PR студента
+Покрытие тестами >97%.
