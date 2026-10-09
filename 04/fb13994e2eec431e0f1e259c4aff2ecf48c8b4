@@ -1,0 +1,7 @@
+Задача 1.2: Реализовать рендерер и словарь виселицы render/hangman.js + games/hangman/words.js (двуязычный RU/EN словарь в base64).
+Созданы файлы:
+- arcade/games/hangman/words.js — база терминов курса (RU/EN, base64)
+- arcade/games/hangman/words.test.js — тесты словаря
+- arcade/render/hangman.js — рендерер и адаптер ввода виселицы
+- arcade/render/hangman.test.js — тесты рендера и адаптера
+Покрытие >96%.
