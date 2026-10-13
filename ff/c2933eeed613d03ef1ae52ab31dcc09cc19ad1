@@ -1,0 +1,7 @@
+Task: world:check — валидатор мира (CLI-функция + скрипт)
+Изменения:
+- Реализована функция checkWorld для комплексной валидации мира
+- Реализован реестр миров registry (registerWorld, getWorld, listWorlds)
+- Реализован CLI-скрипт apps/u7-bot/scripts/world-check.ts с поддержкой WORLD=... и аргументов
+- Добавлена команда 'world:check' в package.json
+- Покрыто unit- и subprocess-тестами в world-check.test.ts
