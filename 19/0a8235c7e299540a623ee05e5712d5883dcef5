@@ -1,0 +1,9 @@
+Task: Фазы 5 и 6: Миграция тестов на миры, удаление ручных templates, финальный гейт
+Изменения:
+- fixture-loader и test-app переведены на использование getWorldFixtures
+- Канонический мир core-education дополнен до полной эквивалентности всем тестовым сценариям
+- Согласованы даты в формате isoMinute (YYYY-MM-DDTHH:mm) для поддержки Valibot схем
+- Ручной каталог фикстур apps/u7-bot/tests/fixtures/templates/ полностью удалён
+- Документация conductor/code_styleguides/bot-test.md обновлена
+- Сформирован итоговый отчет conductor/tracks/test-worlds_20260923/summary.md
+- Финальный гейт bun run check полностью зелёный (2692 pass / 0 fail, lint clean, tsc clean)
