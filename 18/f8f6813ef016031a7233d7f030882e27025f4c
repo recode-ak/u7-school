@@ -1,0 +1,3 @@
+Задача: generic ModuleResolver в core
+Файлы: packages/core/src/domain/types.ts, packages/core/src/domain/types.test.ts
+Изменения: Добавлен дженерик-параметр TAppResolver extends AppResolver = AppResolver в интерфейс ModuleResolver, написаны тесты типов и проверено отсутствие регрессий.
