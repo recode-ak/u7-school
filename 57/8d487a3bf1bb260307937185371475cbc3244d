@@ -1,0 +1,7 @@
+Task: Каркас kit: типы WorldState, конструкторы person/course/stream/student/campaign, детерминированные UUID, относительное время
+Изменения:
+- Реализованы типы WorldState и декларативного описания мира (PersonDef, CourseDef, StreamDef, StudentDef, CampaignDef, ReviewDef)
+- Реализована детерминированная генерация UUID (deterministicUuid) на базе SHA-256
+- Реализован парсер относительного времени resolveRelativeTime (T-2d, T-2д, T-2h, T-30m и т.д.)
+- Реализован сборщик buildWorldState с инвариантом согласованности 'судьба кампании == исход студента'
+- Покрыто тестами kit-framework.test.ts
