@@ -1,0 +1,7 @@
+Task: Мир minimal (только dev-персона, пустые модульные данные) для дымовых прогонов
+Изменения:
+- Реализован мир minimal (apps/u7-bot/tests/worlds/minimal.ts)
+- Ленивая загрузка реестра миров registry.ts для устранения циклических импортов
+- Экспорт типа RegisteredWorld в types.ts
+- Покрыто тестами minimal.test.ts, проверка через bun run world:check
+- Фаза 4 полностью завершена
