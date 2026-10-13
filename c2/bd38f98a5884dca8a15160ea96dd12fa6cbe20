@@ -1,0 +1,7 @@
+Task: Манифест world.json (имя, хеш) в data/fixtures/ + world:list; seed: WORLD=<имя> (дефолт core-education), бот логирует мир при старте
+Изменения:
+- Реализована функция seedWorldFixtures с генерацией world.json в data/fixtures
+- Реализована команда bun run world:list (apps/u7-bot/scripts/world-list.ts)
+- Реализовано логирование активного мира в apps/u7-bot/src/main.ts при старте бота
+- Покрыто unit-тестами в manifest-and-seed.test.ts
+- Фаза 2 полностью завершена
