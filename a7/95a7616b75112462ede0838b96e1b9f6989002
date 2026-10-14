@@ -1,0 +1,3 @@
+Задача: Потребители — убрать прямые config.schoolGroup*
+Файлы: apps/u7-bot/src/controllers/app/app-controller.ts, apps/u7-bot/src/controllers/app/stories/community.story.ts, apps/u7-bot/src/handlers/group-handler.ts, apps/u7-bot/src/main.ts, apps/u7-bot/src/create-ui-app.ts
+Изменения: AppController и CommunityStory берут school.communityGroup.url из resolve, group-handler берёт communityGroup.id из deps.school, полностью убраны прямые обращения к config.schoolGroup*.
