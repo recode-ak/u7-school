@@ -1,0 +1,3 @@
+Задача: apps/u7-bot — env → config → резолвер, mode
+Файлы: apps/u7-bot/src/config.ts, apps/u7-bot/src/config.test.ts, apps/u7-bot/src/create-api-app.ts, apps/u7-bot/src/create-ui-app.ts, apps/u7-bot/src/core/u7-bot-app-meta.ts, apps/u7-bot/src/main.ts
+Изменения: BotConfig читает COMMUNITY_GROUP_*, STUDENT_GROUP_*, NODE_ENV как mode, create-api-app собирает School и кладёт в appResolver.school, create-ui-app больше не зависит от BotConfig, обновлены моки и тесты.
