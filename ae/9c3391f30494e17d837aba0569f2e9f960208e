@@ -1,0 +1,3 @@
+Задача: Wizard — pre-fill студенческой группы
+Файлы: apps/u7-bot/src/controllers/mentor/stories/create-stream.ts, apps/u7-bot/src/controllers/mentor/stories/create-stream.test.ts
+Изменения: Шаги 9 и 10 предзаполняются значениями из school.studentGroup (ID и инвайт-ссылка), добавлены кнопки accept-group и accept-invite («Оставить»), сохранены пропуск и ручной ввод, написаны тесты.
