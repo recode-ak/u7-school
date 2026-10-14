@@ -1,0 +1,3 @@
+Задача: Тесты меню: 🏫 Школа=priority 10, 📖 Курсы=priority 12; нет 📚 Потоки курсов и 💬 Сообщество школы; личные 💬 Отзывы (25) остаются.
+Сводка изменений: Добавлены TDD-проверки в course-catalog.story.test.ts, controller.test.ts и main-menu.e2e.test.ts на текст кнопки «📖 Курсы», priority 12, описание help и структуру меню.
+Файлы: apps/u7-bot/src/controllers/courses/stories/course-catalog.story.test.ts, apps/u7-bot/src/controllers/courses/controller.test.ts, apps/u7-bot/tests/e2e/main-menu.e2e.test.ts
