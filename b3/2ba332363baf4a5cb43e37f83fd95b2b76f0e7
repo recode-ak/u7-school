@@ -1,0 +1,5 @@
+Задачи:
+1. Скрипт scripts/migrate-streams-school-id.ts (идемпотентный) — проставляет schoolId существующим потокам.
+2. Migration-секция в CHANGELOG для релиза: порядок действий на проде (остановить бота, бэкап data/streams/, запуск миграции, старт с --env production).
+Сводка изменений: Создан скрипт scripts/migrate-streams-school-id.ts, протестирован в scripts/migrate-streams-school-id.test.ts, добавлен npm-скрипт migrate:streams-school-id в package.json. В CHANGELOG.md добавлена секция Migration с детальным описанием шагов выполнения на проде.
+Файлы: scripts/migrate-streams-school-id.ts, scripts/migrate-streams-school-id.test.ts, package.json, CHANGELOG.md
