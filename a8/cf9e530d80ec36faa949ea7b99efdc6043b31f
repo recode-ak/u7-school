@@ -1,0 +1,3 @@
+Задача: Обновить e2e-тесты меню (tests/e2e/main-menu.e2e.test.ts, tests/e2e/curious-showcase.e2e.test.ts) под 🏫 Школа / 📖 Курсы и перенесённые входы.
+Сводка изменений: В curious-showcase.e2e.test.ts, main-menu.e2e.test.ts, pagination.e2e.test.ts, questionnaire-ux.e2e.test.ts и wish-questionnaire.e2e.test.ts обновлены клики и проверки меню под новое имя «Курсы» и «Школа».
+Файлы: apps/u7-bot/tests/e2e/curious-showcase.e2e.test.ts, apps/u7-bot/tests/e2e/main-menu.e2e.test.ts, apps/u7-bot/tests/e2e/pagination.e2e.test.ts, apps/u7-bot/tests/e2e/questionnaire-ux.e2e.test.ts, apps/u7-bot/tests/e2e/wish-questionnaire.e2e.test.ts
