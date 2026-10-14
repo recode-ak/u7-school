@@ -1,0 +1,3 @@
+Задача: Тесты: кнопка 📚 Потоки открывает каталог потоков; возврат «⬅️ Назад в школу»
+Сводка изменений: Добавлены тесты в school-hub.story.test.ts (кнопка «📚 Потоки» имеет код stream:catalog:list, колбэк streams возвращает delegate на stream:catalog:list). В stream-catalog.story.test.ts обновлены тесты: menuButtons пустой, возврат из каталога ведёт в school:hub:open («⬅️ Назад в школу»).
+Файлы: apps/u7-bot/src/controllers/school/stories/school-hub.story.test.ts, apps/u7-bot/src/controllers/streams/stories/stream-catalog.story.test.ts
