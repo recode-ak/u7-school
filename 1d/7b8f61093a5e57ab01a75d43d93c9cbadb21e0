@@ -1,0 +1,3 @@
+Задача: Тесты: кнопка сообщества в хабе ведёт по school.communityGroup.url
+Сводка изменений: Добавлен тест в SchoolHubStory проверяющий, что кнопка «💬 Сообщество» на карточке школы SH01 ведёт по URL school.communityGroup.url.
+Файлы: apps/u7-bot/src/controllers/school/stories/school-hub.story.test.ts
