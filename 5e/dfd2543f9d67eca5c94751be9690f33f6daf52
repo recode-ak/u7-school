@@ -1,0 +1,3 @@
+Задача: Тесты SH02: имя, описание, адрес, телефон; сайт задан/не задан (заглушка)
+Сводка изменений: Добавлены модульные тесты для SchoolInfoStory (экран SH02 «Инфо»), проверяющие имя школы, описание, адрес, телефон, ветвление по наличию сайта (ссылка либо заглушка), возврат в хаб по school:hub:open и menuButtons=пусто.
+Файлы: apps/u7-bot/src/controllers/school/stories/school-info.story.test.ts, apps/u7-bot/src/controllers/school/stories/school-info.story.ts
