@@ -1,0 +1,12 @@
+Задача: Зарегистрировать SchoolController в сборке приложения (create-ui-app).
+
+Изменения:
+- SchoolController подключен в createUiApp и добавлен в массив контроллеров U7BotUiApp.
+- UiAppBundle расширен полем schoolController.
+- Добавлен интеграционный тест apps/u7-bot/src/create-ui-app.test.ts, проверяющий регистрацию SchoolController и доступность school в resolve.
+
+Затронутые файлы:
+- apps/u7-bot/src/create-ui-app.ts
+- apps/u7-bot/src/create-ui-app.test.ts
+
+Причина: Интеграция SchoolController в приложение u7-bot.
