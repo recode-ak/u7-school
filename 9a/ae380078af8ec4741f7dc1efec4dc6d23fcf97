@@ -1,0 +1,3 @@
+Задача: Env-файлы, CHANGELOG, документация
+Файлы: .env.development, CHANGELOG.md, conductor/code_styleguides/architecture.md, conductor/code_styleguides/domain-boundaries.md
+Изменения: Обновлён .env.development (удалены legacy SCHOOL_GROUP_*), в CHANGELOG добавлена секция Migration с пошаговой инструкцией, обновлены архитектурные руководства по резолверам и AppResolver.school.
