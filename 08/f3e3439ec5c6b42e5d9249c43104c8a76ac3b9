@@ -1,0 +1,3 @@
+Задача: Кнопка хаба делегирует в CatalogStory; убрать вход из главного меню; скорректировать кнопку возврата каталога
+Сводка изменений: Кнопка «📚 Потоки» в хабе школы ведёт в CatalogStory (код stream:catalog:list, экшен streams возвращает delegate). Кнопка «📚 Потоки курсов» убрана из главного меню (menuButtons пуст). Возврат из каталога потоков настроен на «⬅️ Назад в школу» (school:hub:open). Обновлены интеграционные и e2e тесты под новый маршрут.
+Файлы: apps/u7-bot/src/controllers/school/stories/school-hub.story.ts, apps/u7-bot/src/controllers/streams/stories/stream-catalog.story.ts, apps/u7-bot/src/controllers/shared/buttons.ts, apps/u7-bot/src/controllers/shared/routes.ts, tsconfig.json
