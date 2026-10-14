@@ -1,0 +1,12 @@
+Задача: Создать apps/u7-bot/src/controllers/school/ — SchoolController и SchoolHubStory (карточка SH01, кнопки 📚 Потоки · 💬 Отзывы · ℹ️ Инфо · 💬 Сообщество · ↩️ Главное меню).
+
+Изменения:
+- Реализован класс SchoolController, наследующийся от U7BotController, с регистрацией SchoolHubStory.
+- Покрыты тестами свойства SchoolController: имя 'school', наличие SchoolHubStory, агрегация menuButtons ('🏫 Школа', priority 10), форвардинг handleCallback 'hub:open' и состав кнопок клавиатуры SH01.
+
+Затронутые файлы:
+- apps/u7-bot/src/controllers/school/controller.ts
+- apps/u7-bot/src/controllers/school/controller.test.ts
+- apps/u7-bot/src/controllers/school/school-controller.ts
+
+Причина: Контроллер школы для роутинга сценариев хаба SH01.
