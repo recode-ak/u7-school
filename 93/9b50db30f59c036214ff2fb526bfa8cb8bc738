@@ -1,0 +1,3 @@
+Задача: Реализовать экран «Инфо» и возврат в хаб
+Сводка изменений: Реализован экран SH02 в SchoolInfoStory с информацией о школе (название, описание, адрес, телефон, сайт или заглушка). В SchoolHubStory кнопка «ℹ️ Инфо» переведена на school:info:view. SchoolInfoStory зарегистрирована в SchoolController. Обновлена спецификация ui-spec.md и тесты контроллера и стори.
+Файлы: apps/u7-bot/src/controllers/school/stories/school-info.story.ts, apps/u7-bot/src/controllers/school/stories/school-hub.story.ts, apps/u7-bot/src/controllers/school/controller.ts, apps/u7-bot/src/controllers/school/controller.test.ts, apps/u7-bot/src/controllers/school/stories/school-info.story.test.ts, apps/u7-bot/src/controllers/school/ui-spec.md
