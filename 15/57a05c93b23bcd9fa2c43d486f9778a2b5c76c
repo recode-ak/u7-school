@@ -1,0 +1,11 @@
+Задача: Тесты SchoolHubStory: карточка показывает имя, описание и менторов (резолв uuid → имена); пустой список менторов — строка не выводится.
+
+Изменения:
+- Написаны unit-тесты для SchoolHubStory (SH01): имя школы, описание, резолв менторов через batch get-users-by-ids, случай пустого списка менторов, menuButtons, обработка неизвестного action.
+- Создана базовая реализация SchoolHubStory с кнопками хаба и карточкой школы.
+
+Затронутые файлы:
+- apps/u7-bot/src/controllers/school/stories/school-hub.story.test.ts
+- apps/u7-bot/src/controllers/school/stories/school-hub.story.ts
+
+Причина: TDD реализация карточки SH01 для трека school-hub.
