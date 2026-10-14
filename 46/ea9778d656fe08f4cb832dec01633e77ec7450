@@ -1,0 +1,3 @@
+Задача: Обновить тексты путей записи (wish-invite.story.ts, streams/ui-spec.md S11) на 🏫 Школа → 📚 Потоки + тесты
+Сводка изменений: В подсказках записи проактива wish-invite обновлён путь: «Запись: /start → 🏫 Школа → 📚 Потоки → «{поток}» → 📝 Записаться». Обновлены тесты wish-invite.story.test.ts и спецификация streams/ui-spec.md (S11).
+Файлы: apps/u7-bot/src/controllers/courses/stories/wish-invite.story.ts, apps/u7-bot/src/controllers/courses/stories/wish-invite.story.test.ts, apps/u7-bot/src/controllers/streams/ui-spec.md
