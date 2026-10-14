@@ -1,0 +1,3 @@
+Задача: Stream.schoolId — тесты схемы, создания потока, фильтра list-streams
+Сводка изменений: Написаны тесты (TDD Red) для валидации schoolId в StreamSchema (entity.test.ts), сохранения schoolId в StreamAr.create (a-root.test.ts), проставления schoolId из appResolver.school.id в CreateStreamUc (create-stream-uc.test.ts), валидации и фильтрации schoolId в ListStreamsUc/ListStreamsCmdSchema (list-streams-uc.test.ts) и фильтрации в StreamJsonRepo (stream-json-repo.test.ts).
+Файлы: packages/stream/src/domain/stream/entity.test.ts, packages/stream/src/domain/stream/a-root.test.ts, packages/stream/src/api/stream/create-stream-uc.test.ts, packages/stream/src/api/stream/list-streams-uc.test.ts, packages/stream/src/infra/db/stream-json-repo.test.ts
