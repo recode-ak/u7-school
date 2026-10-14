@@ -1,0 +1,3 @@
+Задача: Обновить conductor-документацию (schools-system.md, tracks.md, streams/ui-spec.md — новый вход).
+Сводка изменений: В schools-system.md шаг 2 school-hub переведен в статус 'завершён'. В streams/ui-spec.md обновлен вход на экран S01 (через Школа -> Потоки) и кнопка возврата (Назад в школу).
+Файлы: conductor/roadmap/schools-system.md, apps/u7-bot/src/controllers/streams/ui-spec.md
