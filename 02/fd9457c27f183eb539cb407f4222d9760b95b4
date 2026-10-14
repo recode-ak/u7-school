@@ -1,0 +1,3 @@
+Задача: Обновить courses/ui-spec.md и courses/content-nav.md под новый маршрут и название «Курсы».
+Сводка изменений: Заменено старое название «Программы курсов» на «Курсы» в спецификациях экранов и руководстве content-nav.
+Файлы: apps/u7-bot/src/controllers/courses/ui-spec.md, apps/u7-bot/src/controllers/courses/content-nav.md
