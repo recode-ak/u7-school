@@ -1,0 +1,3 @@
+Задача: App — тип School и резолверы
+Файлы: packages/app/src/domain/school.ts, packages/app/src/domain/api.ts, packages/app/src/domain/index.ts, apps/u7-bot/src/core/u7-bot-app-meta.ts, packages/*/src/domain/module.ts
+Изменения: Реализована сущность School и Valibot-схема, U7AppResolver с полем school, U7ModuleResolver, закрыты дефолты U7UseCase/U7ApiModule, все доменные модули переведены на U7ModuleResolver, написаны тесты.
