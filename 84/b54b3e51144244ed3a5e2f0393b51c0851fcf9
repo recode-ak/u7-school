@@ -1,0 +1,6 @@
+Task: Перевести nav-tree на ядро — карточки уровней (TDD) + Доступность шагов и карточка шага (TDD)
+Изменения:
+- apps/u7-bot/src/controllers/learning/stories/nav-tree.ts: переписан на единый presentNavLevel + resolveStudentNavLevel. Старый плоский рендер удален.
+- Режим карточек root, project, lesson, step с правилами доступности шагов.
+- presenter.ts / types.ts: экранирование номеров списков 1\. для MarkdownV2, поддержка двучленных адресов level:id в parseNavAddress.
+- Полное сохранение поведения 'Продолжить учёбу' (step-view).
