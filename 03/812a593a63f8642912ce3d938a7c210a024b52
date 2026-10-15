@@ -1,0 +1,4 @@
+Task: Обновить ui-spec.md — зафиксировать целевые экраны и кнопки (spec-first, ДО кода)
+Изменения:
+- apps/u7-bot/src/controllers/learning/ui-spec.md: статус S05b переведён в drill-down 📋, подтверждены хлебные крошки и уровни.
+- apps/u7-bot/src/controllers/streams/ui-spec.md: S03 переписан под drill-down карточки с шагами и хлебными крошками, зафиксирована кнопка «📖 Программа модуля» в S02 и S02m.
