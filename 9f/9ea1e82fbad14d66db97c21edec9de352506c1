@@ -1,0 +1,9 @@
+Task: Уровень «урок» — шаги только заголовками (TDD)
+- Реализован закрытый уровень 'lesson' в CourseNavResolver
+- Шаги отображаются только заголовками (emoji 🔹, enterable: false, address: undefined)
+- Вход в шаг отсутствует, кнопки шагов на клавиатуре не создаются
+- Добавлено листание уроков внутри проекта (◀️ Пред. урок / След. урок ▶️) и возврат назад к проекту
+- Проверено TDD тестами (Red -> Green), покрытие файла 98.8%
+Файлы:
+- apps/u7-bot/src/controllers/courses/course-nav-resolver.ts
+- apps/u7-bot/src/controllers/courses/course-nav-resolver.test.ts
