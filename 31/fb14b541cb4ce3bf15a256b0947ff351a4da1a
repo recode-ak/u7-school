@@ -1,0 +1,5 @@
+Отчет о верификации Фазы 1: Курс и этап на общем ядре
+- Автоматические тесты: CI=true bun test packages/core/src/ui/content-nav/ apps/u7-bot/src/controllers/courses/course-nav-resolver.test.ts (23 pass, 0 fail)
+- Проверены карточки курса и этапа с multilineBreadcrumbs, подзаголовками, подуровнями, wish-кнопками и листанием соседей
+- Линтер и tsc чистые: biome check и tsc --noEmit без ошибок
+- Подтверждено пользователем
