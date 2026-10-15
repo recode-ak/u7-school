@@ -1,0 +1,1 @@
+Переименована кнопка в S02m на «📖 Программа модуля», handleProgramView переведён на карточную drill-down навигацию без статусов через presenter и stream-nav-resolver, проверена безопасность и доступ StreamPolicy.canEdit.
