@@ -1,0 +1,11 @@
+Task: Удалить inline-поддеревья и pagedScreen из course-catalog
+- Переписан CourseCatalogStory на базе CourseNavResolver и presentNavLevel
+- Удалены pagedScreen, cacheKey, ручная нарезка страниц
+- Полностью удален tree-renderer (shared/tree-renderer.ts и tree-renderer.test.ts)
+- Обновлены тесты course-catalog.story.test.ts под drill-down навигацию и листание соседей
+- Линтер и tsc чистые, 73 pass в тестах courses
+Файлы:
+- apps/u7-bot/README.md
+- apps/u7-bot/src/controllers/courses/stories/course-catalog.story.ts
+- apps/u7-bot/src/controllers/courses/stories/course-catalog.story.test.ts
+- conductor/code_styleguides/skills/bot-ui-story.md
