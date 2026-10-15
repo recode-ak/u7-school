@@ -1,0 +1,7 @@
+Task: Сохранить wish-сценарии на карточке курса (регресс)
+- Покрыты все состояния wish на карточке курса: без желания, pending, expressed, confirmed, fulfilled
+- Проверен рендеринг кнопок в presenter: правильный порядок рядов, тексты и коды кнопок (apply, cancel, questionnaire:fill:resume)
+- Проверена изоляция желаний чужих пользователей
+- 17 pass в course-nav-resolver.test.ts, 42 pass в course-catalog.story.test.ts
+Файлы:
+- apps/u7-bot/src/controllers/courses/course-nav-resolver.test.ts
