@@ -1,0 +1,6 @@
+Task: Спроектировать модель карточки уровня (NavLevel) и единый формат адреса уровня
+Изменения:
+- packages/core/src/ui/content-nav/types.ts: добавлены NavLevel, NavChild, NavSubChild, NavTarget, NavNodeStatus, а также formatNavAddress и parseNavAddress со стабильными id.
+- packages/core/src/ui/content-nav/index.ts: реэкспорт типов и функций.
+- packages/core/src/ui/index.ts: экспорт content-nav.
+- packages/core/src/ui/content-nav/nav-level.test.ts: тесты модели и адресных хелперов.
