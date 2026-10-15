@@ -1,0 +1,5 @@
+Task: Реализовать единый рендер тела шага с режимами student / readOnly (TDD)
+Изменения:
+- packages/core/src/ui/content-nav/step-render.ts: чистая функция formatStepBody для MarkdownV2-экранирования текста и кода.
+- apps/u7-bot/src/controllers/learning/shared.ts: обобщение formatStepMessage с поддержкой режимов 'student', 'readOnly', 'study'.
+- apps/u7-bot/src/controllers/learning/step-message.test.ts: TDD-тесты режимов.
