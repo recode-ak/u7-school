@@ -1,0 +1,4 @@
+Task: Реализовать единый presenter NavLevel → текст MarkdownV2 + клавиатура (TDD)
+Изменения:
+- packages/core/src/ui/content-nav/presenter.ts: реализованы чистые функции formatNavLevelText, buildNavLevelKeyboard, presentNavLevel.
+- packages/core/src/ui/content-nav/presenter.test.ts: TDD-покрытие (хлебные крошки, спецсимволы, вложенные списки, кнопки, соседи, Назад).
