@@ -1,0 +1,5 @@
+Task: Резолвер контекста потока для студента (TDD)
+Изменения:
+- apps/u7-bot/src/controllers/learning/student-nav-resolver.ts: resolveStudentNavLevel строит NavLevel по уровням root, project, lesson, step на базе ContentSnapshot и Student.
+- Листание шагов строго по доступным (completed / current), locked шаги недоступны.
+- apps/u7-bot/src/controllers/learning/student-nav-resolver.test.ts: TDD-тесты всех уровней и прав доступа.
