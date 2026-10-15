@@ -1,0 +1,12 @@
+Task: Обновить e2e-тесты каталога под новую drill-down навигацию и порядок уровней
+- Обновлены тесты curious-showcase.e2e.test.ts под 5-уровневый drill-down (курс -> этап -> модуль -> проект -> урок)
+- Сокращен callback_data для project и lesson (гарантирует длину < 64 байт для Telegram с учетом штампа)
+- Исправлен маршрут возврата в главное меню на Routes.app.mainMenu
+- Проверен полный цикл обратной навигации (drill-up 4 уровня обратно до Главного меню)
+- 18 pass в e2e-тестах, 107 pass в общем сьюте
+Файлы:
+- apps/u7-bot/src/controllers/courses/course-nav-resolver.ts
+- apps/u7-bot/src/controllers/courses/course-nav-resolver.test.ts
+- apps/u7-bot/src/controllers/courses/stories/course-catalog.story.ts
+- apps/u7-bot/src/controllers/courses/stories/course-catalog.story.test.ts
+- apps/u7-bot/tests/e2e/curious-showcase.e2e.test.ts
