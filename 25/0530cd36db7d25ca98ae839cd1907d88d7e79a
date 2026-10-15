@@ -1,0 +1,8 @@
+Task: Уровни «модуль» и «проект» (TDD)
+- Реализованы уровни 'module' и 'project' в CourseNavResolver на основе ContentSnapshot
+- Подуровнем для модуля отображаются уроки (emoji 📝), для проекта — шаги (emoji 🔹)
+- Добавлено листание модулей и проектов в пределах родителя, возврат назад
+- Покрытие тестами TDD (Red -> Green), покрытие файла 98.6%
+Файлы:
+- apps/u7-bot/src/controllers/courses/course-nav-resolver.ts
+- apps/u7-bot/src/controllers/courses/course-nav-resolver.test.ts
