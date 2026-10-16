@@ -1,0 +1,8 @@
+Задача: Маппинг chat_member и my_chat_member в MessengerEvent в BotTransport
+Изменения:
+- Реализованы методы handleChatMember и handleMyChatMember в BotTransport с фильтрацией технических изменений прав и маппингом в member_joined, member_left, bot_membership.
+- Расширен интерфейс DialogUiAppPort и BotUpdateHandler.
+- Добавлены всесторонние unit-тесты маппинга в apps/u7-bot/src/infra/bot-transport.test.ts.
+Файлы:
+- apps/u7-bot/src/infra/bot-transport.ts
+- apps/u7-bot/src/infra/bot-transport.test.ts
