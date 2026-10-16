@@ -1,0 +1,12 @@
+Задача: Поддержка handleMessengerEvent (цепочка stop/pass, гост-регистрация) и execute в BotController и BotUiApp
+Изменения:
+- В BotController добавлен хук handleMessengerEvent и метод execute (делегирующий в proactiveSender.execute).
+- В BotUiApp реализована цепочка опроса контроллеров handleMessengerEvent до первого ответа 'stop' и делегирование execute в transport.execute.
+- В U7BotUiApp переопределен handleMessengerEvent с централизованной гост-регистрацией участника через ensureRegisteredGuest.
+- Добавлены тесты в packages/core/src/ui/bot/ui-app.test.ts и apps/u7-bot/src/core/ui-app.test.ts.
+Файлы:
+- packages/core/src/ui/bot/bot-controller.ts
+- packages/core/src/ui/bot/ui-app.ts
+- apps/u7-bot/src/core/ui-app.ts
+- packages/core/src/ui/bot/ui-app.test.ts
+- apps/u7-bot/src/core/ui-app.test.ts
