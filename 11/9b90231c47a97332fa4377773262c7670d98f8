@@ -1,0 +1,12 @@
+Задача: Добавить типы MessengerEvent, MessengerAction, MessengerEventReaction, ChatMemberUser в packages/core/src/ui/bot/types.ts
+Изменения:
+- Объявлен ChatMemberUser с полями id, firstName, lastName, username.
+- Объявлен MessengerEvent (member_joined, member_left, bot_membership).
+- Объявлен MessengerEventReaction ('pass' | 'stop').
+- Объявлен MessengerAction (kick_member, restrict_member, pin_message, approve_join).
+- В ProactiveSender добавлен метод execute(action: MessengerAction): Promise<void>.
+- Метод kickFromGroup помечен как @deprecated.
+- Добавлен тест packages/core/src/ui/bot/types.test.ts.
+Файлы:
+- packages/core/src/ui/bot/types.ts
+- packages/core/src/ui/bot/types.test.ts
