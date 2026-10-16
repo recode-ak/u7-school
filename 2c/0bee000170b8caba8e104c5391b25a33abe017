@@ -1,0 +1,10 @@
+Задача: Реализовать реакцию на события школьной группы в SchoolController
+Изменения:
+- Реализован метод handleMessengerEvent в SchoolController:
+  - Выдача роли SUBSCRIBER при bot_membership(status: 'added') и member_joined в группе школы.
+  - Снятие роли SUBSCRIBER при member_left в группе школы.
+  - Возврат 'stop' для событий группы школы и 'pass' для чужих групп.
+- Добавлены unit-тесты в apps/u7-bot/src/controllers/school/controller.test.ts.
+Файлы:
+- apps/u7-bot/src/controllers/school/controller.ts
+- apps/u7-bot/src/controllers/school/controller.test.ts
