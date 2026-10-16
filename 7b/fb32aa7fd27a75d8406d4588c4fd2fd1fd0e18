@@ -1,0 +1,4 @@
+Задача: Актуализировать e2e-тесты
+Изменения:
+- apps/u7-bot/tests/e2e/inactivity.e2e.test.ts: переведён с вызова мока chatMemberHandlers на прямой вызов uiApp.handleMessengerEvent({ kind: 'member_left', ... }).
+- Убраны лишние импорты и обвязка мока bot.on.
