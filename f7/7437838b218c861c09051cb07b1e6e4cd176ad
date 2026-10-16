@@ -1,0 +1,4 @@
+Задача: Перевести InactivityStory на вызов proactiveSender.execute({ kind: 'kick_member', ... })
+Изменения:
+- apps/u7-bot/src/controllers/streams/stories/inactivity.story.ts: заменён прямой вызов deprecated kickFromGroup на proactiveSender.execute({ kind: 'kick_member', chatId: groupId, userId: telegramId }).
+- apps/u7-bot/src/controllers/streams/stories/inactivity.story.test.ts: мок proactiveSender теперь поддерживает execute.
