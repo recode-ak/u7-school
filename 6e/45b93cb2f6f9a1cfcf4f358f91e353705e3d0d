@@ -1,0 +1,5 @@
+Задача: Удалить процедурный group-handler.ts и group-handler.test.ts
+Изменения:
+- Убран вызов registerGroupHandlers и его импорт из apps/u7-bot/src/main.ts (события обрабатываются в BotTransport -> U7BotUiApp).
+- Удалены файлы apps/u7-bot/src/handlers/group-handler.ts и apps/u7-bot/src/handlers/group-handler.test.ts.
+- Удалена пустая директория handlers, обновлена структура в README.md.
