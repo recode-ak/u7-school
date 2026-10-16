@@ -1,0 +1,11 @@
+Задача: Реализовать реакцию на вход и выход участников в учебную группу в StreamController
+Изменения:
+- Реализован метод handleMessengerEvent в StreamsController:
+  - member_joined в группе потока (telegramGroupId): если вошедший не числится активным студентом потока, ментор получает предупреждение, возвращается 'stop'.
+  - member_left в группе потока (telegramGroupId): если вышедший студент активен в потоке, ментор получает уведомление (FR-7), возвращается 'stop'.
+  - Неактивные/отчисленные студенты при выходе не тревожат ментора.
+  - Чужие группы возвращают 'pass'.
+- Добавлены всесторонние unit-тесты в apps/u7-bot/src/controllers/streams/controller.test.ts.
+Файлы:
+- apps/u7-bot/src/controllers/streams/controller.ts
+- apps/u7-bot/src/controllers/streams/controller.test.ts
