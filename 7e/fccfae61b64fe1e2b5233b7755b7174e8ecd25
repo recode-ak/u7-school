@@ -1,0 +1,8 @@
+Задача: Реализовать execute(action: MessengerAction) в BotTransport
+Изменения:
+- Реализован метод execute в BotTransport с обработкой 'kick_member' (banChatMember + unbanChatMember с перехватом ошибок).
+- Метод kickFromGroup переписан через делегирование в this.execute({ kind: 'kick_member', chatId: groupId, userId }).
+- Добавлены unit-тесты execute в apps/u7-bot/src/infra/bot-transport.test.ts.
+Файлы:
+- apps/u7-bot/src/infra/bot-transport.ts
+- apps/u7-bot/src/infra/bot-transport.test.ts
