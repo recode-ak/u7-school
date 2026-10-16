@@ -1,0 +1,7 @@
+Задача: Разрешить управление ролью SUBSCRIBER администратору
+Изменения:
+- Зафиксированы тесты canAddRole и canRemoveRole для SUBSCRIBER: ADMIN имеет полные права, обычные пользователи и менторы не могут управлять ролью SUBSCRIBER.
+- Удален неактуальный пункт о роли SUBSCRIBER из TODO.md.
+Файлы:
+- packages/user/src/domain/user/policy.test.ts
+- TODO.md
