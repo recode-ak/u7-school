@@ -246,26 +246,6 @@
       "last_shown_at": "2026-10-14",
       "last_used_at": null
     },
-    "R-pi-antigravity-verify-account-403": {
-      "kind": "problem",
-      "tags": ["pi-antigravity", "google", "oauth", "403", "antigravity"],
-      "description": "403 VALIDATION_REQUIRED у Antigravity: Google требует верификацию аккаунта; достать validation_url и пройти проверку",
-      "symptoms": [
-        "verify your account to continue",
-        "validation_required",
-        "antigravity denied this request",
-        "403 permission_denied",
-        "antigravity api error"
-      ],
-      "file": "R-pi-antigravity-verify-account-403.md",
-      "created_at": "2026-10-07",
-      "updated_at": "2026-10-07",
-      "shown": 2,
-      "opened": 0,
-      "helped": 0,
-      "last_shown_at": "2026-10-14",
-      "last_used_at": null
-    },
     "R-pi-edit-bash-race-empty-commit": {
       "kind": "problem",
       "tags": ["pi", "git", "race"],
@@ -426,20 +406,6 @@
       "last_shown_at": null,
       "last_used_at": null
     },
-    "R-20261015-1624-17": {
-      "kind": "practice",
-      "tags": ["telegram", "bot", "navigation", "drill-down", "markdownv2"],
-      "description": "Drill-down навигация и хлебные крошки в Telegram-ботах",
-      "symptoms": [],
-      "file": "R-20261015-1624-17.md",
-      "created_at": "2026-10-15T11:24:35.951Z",
-      "updated_at": "2026-10-15T11:24:35.951Z",
-      "shown": 0,
-      "opened": 0,
-      "helped": 0,
-      "last_shown_at": null,
-      "last_used_at": null
-    },
     "R-20261015-1756-20": {
       "kind": "decision",
       "tags": ["drilldown", "presenter", "bot-ui", "breadcrumbs"],
@@ -456,12 +422,20 @@
     },
     "R-20261015-2304-64": {
       "kind": "decision",
-      "tags": ["drill-down", "bot", "navigation", "ui", "architecture"],
+      "tags": [
+        "drill-down",
+        "bot",
+        "navigation",
+        "ui",
+        "architecture",
+        "telegram",
+        "markdownv2"
+      ],
       "description": "Унификация drill-down навигации телеграм-бота на общем ядре content-nav",
       "symptoms": [],
       "file": "R-20261015-2304-64.md",
       "created_at": "2026-10-15T18:04:10.520Z",
-      "updated_at": "2026-10-15T18:04:10.520Z",
+      "updated_at": "2026-10-17",
       "shown": 0,
       "opened": 0,
       "helped": 0,
