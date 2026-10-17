@@ -15,7 +15,7 @@
 | # | Трек | Суть | Исполнитель |
 |---|---|---|---|
 | 0 | **agents-setup** | роли агентов для Claude Code и pi из одного источника, хук гейта в обеих средах, режим оркестратора и передача между средами в `conductor-implement` ([agents.md](./agents.md) §8) | orchestrator |
-| 1 | **core-dmg** | `Result`, `define*`, `F.*`, `Timestamp`, `ReadonlyAr`, Aggregate v2, UoW, `Caller` и `callers`, `*FromDef`, `appApi.run`, граф-движок, `arch:check`, линт-правила ARC/DOM/CODE | orchestrator + Нурболат |
+| 1 | **core-dmg** | `Result`, `define*`, `F.*`, `Timestamp`, `ReadonlyAr`, Aggregate v2, UoW, `Caller` и `callers`, `normalize(def)`, `*FromDef`, `appApi.run`, граф-движок, `arch:check`, линт-правила ARC/DOM/CODE | orchestrator + Нурболат |
 | 2 | **generators** | `bun run gen` для всех видов артефактов по [naming.md](./naming.md) | orchestrator + Нурболат |
 | 3 | **domain-package** | создать `@u7-scl/domain`, механически перенести domain-слои снизу вверх: user (+ `User` из app) → course → questionnaire → stream → wish → peer-review → dossier. Старые пути `@u7-scl/<m>/domain` временно реэкспортируют | migrator |
 | 4 | **golden-wish** | перевести `wish` на Def, `Result`, Policy, entity-правило, UoW, Timestamp. Эталон; по нему пишутся гайды артефактов | orchestrator + Нурболат |
@@ -24,7 +24,7 @@
 | 7 | **timestamp-data** | пакетная миграция живых данных, удаление «чтения строки» | orchestrator, с подтверждением |
 | 8 | **delegation** | агрегат `Delegation` в user, построение `delegate` в транспорте ([caller.md](./caller.md) §3) | агенты |
 | 9 | **ui-manifests** | `define*` UI, эталонный UI-срез, генерация спецификации экранов; `ui-spec.md` удаляются по мере перевода контроллеров ([ui-manifests.md](./ui-manifests.md)) | orchestrator + Нурболат |
-| 10+ | потребители графа | CLI `domain`, `docs:domain`/`docs:tech`, http + OPTIONS, mcp | по roadmap |
+| 10+ | потребители графа | CLI `domain`, `docs:domain`/`docs:tech`, `docs:llm`, http + OPTIONS, mcp | по roadmap |
 
 Треки 1 и 3 независимы; 2 — после 1.
 
