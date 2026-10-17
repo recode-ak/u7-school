@@ -135,7 +135,7 @@ Wizard (пошаговый ввод) — конечный автомат на `a
 
 ## 7. Тестирование
 
-См. [bot-test.md](../bot-test.md) — уровни и правила. Специфика unit-тестов сторис:
+См. [bot-test.md](./bot-test.md) — уровни и правила. Специфика unit-тестов сторис:
 
 - **Актор:** полный объект `User`, роли через enum `Role` из `@u7-scl/user/domain`.
 - **Моки API:** `as unknown as <реальный тип>` (`StreamApiModule`, `U7BotApp`). Никаких `as any` и общих `test-helpers.ts` — каждый тест самодостаточен.
@@ -163,7 +163,7 @@ apps/u7-bot/tests/e2e/
 ## Связанные styleguide-файлы
 
 - [BotController](./bot-controller.md) — реестр сторис, префиксация кнопок, handleError
-- [Ошибки](./errors.md) — AppError, хелперы
-- [Тестирование бота](../bot-test.md)
-- [Архитектура bot-level](../bot-architecture.md)
-- [DDD API](./api.md) — UseCase, Module
+- [Ошибки](../errors-result.md) — AppError, хелперы
+- [Тестирование бота](./bot-test.md)
+- [Архитектура bot-level](./bot-architecture.md)
+- [DDD API](../layers.md) — UseCase, Module

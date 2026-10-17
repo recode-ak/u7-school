@@ -487,6 +487,6 @@ sинхронная запись после каждого апдейта, resto
 
 - [tasks-system-architecture.md](./tasks-system-architecture.md) — этап B: задачи как замена кнопочных проактивов.
 - [tasks-system-layers.md](./tasks-system-layers.md) — TaskRenderInfo/TaskKindRenderer, ложатся на мосты и штампы.
-- [code_styleguides/bot-architecture.md](../code_styleguides/bot-architecture.md) — актуальный as-is разрез (обновить после трека 5).
-- [code_styleguides/skills/bot-ui-story.md](../code_styleguides/skills/bot-ui-story.md) — стильгайд стори (обновить после трека 1).
-- [code_styleguides/skills/bot-controller.md](../code_styleguides/skills/bot-controller.md) — стильгайд контроллера (обновить после трека 1).
+- [architecture/ui/bot-architecture.md](../architecture/ui/bot-architecture.md) — актуальный as-is разрез (обновить после трека 5).
+- [architecture/ui/bot-ui-story.md](../architecture/ui/bot-ui-story.md) — стильгайд стори (обновить после трека 1).
+- [architecture/ui/bot-controller.md](../architecture/ui/bot-controller.md) — стильгайд контроллера (обновить после трека 1).

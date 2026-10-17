@@ -31,7 +31,7 @@
 Один генератор, два потребителя:
 
 - **Ручной прогон бота:** `WORLD=<имя> bun run dev:fixtures` (без `WORLD` — дефолтный мир). В `data/fixtures/` кладётся манифест `world.json` (имя, хеш исходников) — бот при старте пишет, какой мир заряжен.
-- **Автотесты (integration/E2E):** `buildWorld('<имя>')` в `beforeAll` — мир строится в память или временный каталог; заменяет текущий `loadFixtures()` (см. `conductor/code_styleguides/bot-test.md`).
+- **Автотесты (integration/E2E):** `buildWorld('<имя>')` в `beforeAll` — мир строится в память или временный каталог; заменяет текущий `loadFixtures()` (см. `conductor/architecture/ui/bot-test.md`).
 
 Граница: юнит-тестам домена миры не нужны — там in-memory стабы дешевле.
 
@@ -57,5 +57,5 @@
 
 - `apps/u7-bot/scripts/seed-fixtures.ts` — текущий сид (замещается генератором миров)
 - `apps/u7-bot/scripts/dev-persona.ts` — персоны (переходят на реестр персон мира)
-- `conductor/code_styleguides/bot-test.md` — уровни тестов, fixture-loader
+- `conductor/architecture/ui/bot-test.md` — уровни тестов, fixture-loader
 - `conductor/guides/lesson-design.md` — правила наполнения уроков

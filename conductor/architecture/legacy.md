@@ -1,0 +1,52 @@
+# Паттерны немигрированного кода (legacy)
+
+**Назначение:** как устроен и как сопровождать код модулей, ещё не переведённых на Def. Удаляется по завершении перехода ([migration.md](./migration.md) §5). Полные старые гайды — в истории git (`conductor/code_styleguides/`, до коммита удаления).
+
+---
+
+## 1. Как сопровождать
+
+- Правка в немигрированном модуле делается **по образцу соседнего кода этого модуля**, а не по новой архитектуре: смешение двух стилей в одном модуле хуже любого из них.
+- Новые нарушения направления не добавляются: domain не импортирует api, entity не читается в новых местах, где можно спросить Ar.
+- Новый модуль или крупная фича — сразу по новой архитектуре (после трека core); до него — согласовать с Нурболатом.
+
+## 2. Структура модуля
+
+```
+packages/<m>/src/
+  domain/   entity.ts (схемы), <entity>/a-root.ts, policy.ts, events.ts,
+            <entity>/commands/<name>-cmd.ts (Schema + Cmd + CmdMeta + CmdError),
+            <m>-ds.ts, facade.ts (интерфейс), module.ts (ModuleMeta, UcMeta-union)
+  api/      <entity>/<name>-uc.ts, er/<name>-er.ts, job/<name>-job.ts,
+            errors.ts (атомарные <Name>UcError, union <M>ModuleError), module.ts (ApiModule)
+  infra/    <entity>-json-repo.ts, <m>-in-proc-facade.ts
+```
+
+Пакеты экспортируют слои (`@u7-scl/<m>/domain`, `/api`, `/infra`), внутри — `#`-импорты, flat-импорты запрещены.
+
+## 3. Объекты
+
+| Объект | Как устроен |
+|---|---|
+| Aggregate | `new XxxAr(state)` валидирует схему; мутации через `updateState`/`safeUpdate` (обновляют `updatedAt`); геттер `state` — копия |
+| Command | `<name>-cmd.ts`: схема из `Schema.entries`, `CmdMeta` (`ucName`, `title`, `type`, `errors`, `requiresAuth`), union ошибок |
+| UseCase | дублирует поля `CmdMeta`; права — инлайн `Policy.canX()` + `throwAccessDenied()`; ошибки — `throw*`; `resolve.<name>` для репо и фасадов |
+| Domain Service (Ds) | один на модуль, stateless, без репозиториев; возвращает изменённые агрегаты, UC их сохраняет |
+| Policy | plain-object, синхронные методы `(actor, target?) → boolean` |
+| Errors | `AppError { name, kind, level, message, payload }`, `kind → HTTP` |
+| EventReaction | `ErMeta` + `eventNames`; ошибки не бросаются (шина гасит `console.error`); мультиподписка — exhaustive `switch` + `never` |
+| Facade | интерфейс в domain (минимальный, удобный клиенту, отдаёт entity), `InProc`-реализация в infra через `ApiModule.execute` |
+| Repo | interface, `Promise`/`MaybePromise`, `undefined` вместо `null`, только CRUD |
+| Module | domain: `ModuleMeta`; api: `ApiModule` со списком UC; сборка — `createApiApp` |
+
+## 4. Платформенные механизмы, которые сохраняются
+
+- **Job-планировщик:** `JobSchedule` (UTC: `interval`, `dailyAt`, `weeklyAt`, `monthlyAt`), порты `JobScheduler` / `JobExecutor` / `JobRunRepo` (персистентность `lastRunAt`, догон пропущенного прогона). Правила Job — API-06.
+- **Резолверы:** двухуровневые `AppResolver` / `ModuleResolver`, замыкаются в `app`.
+- **Тестовые миры:** `conductor/guides/test-worlds.md`.
+
+## 5. Тесты legacy
+
+- Ошибки проверяются по `e.error.name` и `kind`, не только по классу `AppException`.
+- Моки зависимостей — `as unknown as <реальный тип>`.
+- Модуль — smoke-тест на реальных JSON-репозиториях.

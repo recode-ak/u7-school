@@ -110,7 +110,7 @@ CommandReaction // pass | continue{notice} | stop{response}   (pipe команд
 
 Стори/контроллеры возвращают `DialogResponse`; `delegate` до транспорта не
 доходит — его исполняет uiApp. Тексты — `MdText` (`md`/`mdRaw`/`mdConcat` —
-см. [bot-ui-story.md](./skills/bot-ui-story.md), §4).
+см. [bot-ui-story.md](./bot-ui-story.md), §4).
 
 ---
 
@@ -203,8 +203,8 @@ Grammy callback_query.data
 
 ## 6. Связанные документы
 
-- [BotController Styleguide](./skills/bot-controller.md)
-- [BotUiStory Styleguide](./skills/bot-ui-story.md)
+- [BotController Styleguide](./bot-controller.md)
+- [BotUiStory Styleguide](./bot-ui-story.md)
 - [Тестирование бота](./bot-test.md)
-- [Границы архитектуры](./architecture.md), [Domain boundaries](./domain-boundaries.md)
+- [Границы архитектуры](../layers.md), [Domain boundaries](../domain-modeling.md)
 - Материнский документ контракта: `conductor/roadmap/bot-ui-session-architecture.md`

@@ -12,7 +12,7 @@
 > - [`conductor/development-roadmap.md`](./development-roadmap.md) — **дорожная карта:** порядок релизов, миграции, зависимости между инициативами
 > - `conductor/workflow.md` — процесс работы conductor (создание треков, генерация планов)
 > - `conductor/architecture-evolution.md` — архитектурные правила (domain boundaries, зависимости пакетов)
-> - `conductor/code_styleguides/domain-boundaries.md` — где размещать логику
+> - `conductor/architecture/domain-modeling.md` — где размещать логику
 > - `conductor/index.md` — индекс всех документов
 >
 > **Главные изменения от v6:** добавлены мета-поля (`planMd`, `lessonMd`, `summaryMd`) в entity; добавлен файловый Import/Export (папка ↔ JSON) с dry-run; `steps.md` генерируется из Step[] (не хранится); `.content-meta.json` для точного сопоставления при импорте; `AUTHOR_GUIDE.md` — единый промпт для ИИ-агентов; порядок треков перестроен: Import/Export до форка.
@@ -945,11 +945,7 @@ data/courses/      # JSON-хранилище (в будущем — БД)
 ### 11.7. Скиллы (PI skills) для реализации
 
 При реализации треков используй скиллы:
-- `arch-boundary-design` — **первым**, перед созданием ЛЮБЫХ методов/классов (определяет ГДЕ)
-- `ddd-domain` — для domain-слоя (Entity, Aggregate, Repo, Policy)
-- `ddd-api` — для API-слоя (UseCase, Command, Module)
-- `ddd-infra` — для Infra-слоя (реализация репозиториев)
-- `ddd-naming` — для именования файлов/папок/классов
+- `architecture` — **первым**, перед созданием ЛЮБЫХ методов/классов (где размещать, как называть, правила)
 - `conductor-docs` — при создании/перемещении файлов в conductor/
 - `recall` — при неожиданных ошибках и перед сложными задачами
 

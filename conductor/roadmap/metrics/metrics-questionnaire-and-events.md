@@ -275,6 +275,6 @@ abandon(): void
 - [Система сбора метрик (родитель)](./metrics-system.md)
 - [1. Концепция метрик](./metrics-conception.md) — структура likertMapping
 - [3. Пайплайн + модули](./metrics-pipeline-and-modules.md) — Invite-паттерн, peer-review, metrics
-- [DDD Domain](../../../.pi/skills/ddd-domain/SKILL.md) — правила для Aggregate, Policy
-- [DDD Naming](../../../.pi/skills/ddd-naming/SKILL.md) — именование пакетов, файлов
-- [Границы доменной логики](../../code_styleguides/domain-boundaries.md)
+- [Архитектура](../../architecture/index.md) — слои, доменный API, правила
+- [Именование](../../architecture/naming.md) — структура и имена
+- [Границы доменной логики](../../architecture/domain-modeling.md)

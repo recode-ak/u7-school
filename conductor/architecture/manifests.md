@@ -1,57 +1,63 @@
 # Манифесты
 
-**Назначение:** семейство `define*`, обязательные поля и механизм проверки соответствия кода декларациям. API функций окончательно фиксируется в треке core (см. [migration.md](./migration.md)).
+**Назначение:** семейство `define*`, обязательные поля, граф и механизм проверки соответствия кода декларациям. API функций окончательно фиксируется в треке core (см. [migration.md](./migration.md)).
 
 ---
 
 ## 1. Семейство
 
-| Функция | Слой (где лежит) | Что декларирует |
+| Функция | Где | Что декларирует |
 |---|---|---|
-| `defineError` | domain | `code`, `kind`, `label`, `description`, схема `payload` |
-| `defineEvent` | domain | `name` (`student.completed`), `label`, `description`, схема payload |
-| `defineAggregate` | domain | схема entity, статусы и переходы, `events`, `errors` |
+| `defineModule` | domain | `name`, `label`, `description`, `dependsOn`, состав (агрегаты, UC, ER, Job, фасад) |
+| `defineFacade` | domain | runtime-API модуля: методы с `label`/`description`, вход, возврат (`Result`, `ReadonlyAr`), ошибки |
+| `defineAggregate` | domain | схема entity, статусы и переходы, группы событий и ошибок |
+| `defineEvents` | domain | группа событий агрегата: FQN-префикс `module.aggregate`, на событие — `label`, `description`, схема payload |
+| `defineErrors` | domain | группа ошибок агрегата: `code`, `kind`, `label`, `description`, схема payload |
 | `definePolicy` / `rule` | domain | именованные правила с `label` и `denyMessage`, композиция |
-| `defineUseCase` | domain (контракт) | `type` (command/query), `aggregate`, `policy`, `auth`, `input`, `output`, `errors`, `emits` |
-| `defineEventReaction` | domain (контракт) | `on` (событие), `touches` (агрегаты), `calls` (фасады), `emits` |
+| `defineUseCase` | domain (контракт) | `type` (command/query), агрегат, `policy`, `auth`, `input`, `output`, `errors`, `emits` |
+| `defineEventReaction` | domain (контракт) | `on` (события), `touches` (агрегаты), `calls` (фасады), `emits` |
 | `defineJob` | domain (контракт) | `schedule`, `scans`, `emits` |
-| `defineFacade` | domain (контракт) | методы с `label`/`description` |
-| `defineModule` | domain | `dependsOn`, состав (aggregates, useCases, reactions, jobs, facades) |
 | `defineStory` | ui (позже) | цель пользователя, роли, вызываемые UC, слушаемые события |
 
-Реализации подключают манифест через базовые классы: `UseCaseFromManifest`, `ReactionFromManifest`, `JobFromManifest`. Свойства (имя, схемы, тип) в классах **не дублируются**.
+Реализации подключают Def через базовые классы (`UseCaseFromDef`, `ReactionFromDef`, `JobFromDef`, модуль — карта `Def → класс`, типизированная Def: пропуск реализации — ошибка компиляции). Свойства Def в классах **не дублируются**.
 
-Обратные связи (какие UC управляют агрегатом, кто слушает событие) в манифестах **не пишутся** — их вычисляет граф-движок.
+**Ссылки, не строки:** `on: StudentEvents.completed`, `errors: [StudentErrors.NOT_ACTIVE]`. Строковые имена (FQN) вычисляются для шины, логов и документации.
+
+**Обратные связи** (какие UC управляют агрегатом, кто слушает событие) не пишутся — их вычисляет граф.
 
 ## 2. Обязательные описания
 
-Без них уровни «PO» и «LLM» получаются бедными:
-
 - `label` — короткое имя (кнопка, заголовок, строка таблицы);
-- `description` — объяснение для аналитика и LLM: что делает, когда применять. Обязательно для UC, ER, Job, Event, Error, Aggregate;
-- `v.description()` на **каждом поле** схем input/output/entity (базовые `F.*` ставят его сами из метки).
+- `description` — для PO и LLM: что делает, когда применять. Обязательно для всех Def;
+- `v.description()` на **каждом поле** схем input/output/entity/payload (базовые `F.*` ставят его сами из метки).
 
 ## 3. Схемы
 
 - Базовые поля — только через `F.*` (core) и `shared/` (domain): `F.uuid('студента')`, `F.timestamp('зачисления')`, `BaseEntityFields`. Новые валидаторы для тех же полей не создаются.
-- Схемы input/output **обязаны конвертироваться в JSON Schema** (`@valibot/to-json-schema`): без непереводимых `transform`/`custom` либо с явным fallback. Это основа OPTIONS и MCP.
+- Схемы input/output/payload **конвертируются в JSON Schema** (`@valibot/to-json-schema`): без непереводимых `transform`/`custom` либо с явным fallback. Основа OPTIONS и MCP.
+- DTO-схемы выводятся из схемы entity (`v.pick`, `Schema.entries.x`), а не пишутся заново.
 
-## 4. Декларация + верификация (D-09)
+## 4. Граф
+
+| Уровень | Узлы | Связи |
+|---|---|---|
+| **L0** — карта модулей | модули | `dependsOn`, вызовы фасадов, потоки событий между модулями |
+| **L1** — модуль | агрегаты, UC, ER, Job, события, ошибки | UC → агрегат, UC/ER/Job → событие → ER |
+| **L2** — агрегат | статусы, операции | переходы, ошибки операций |
+
+Каскад «потянуть за верёвочку» (UI → UC → агрегат → событие → ER → …) проходит сквозь уровни и модули.
+
+## 5. Декларация + верификация (D-12)
 
 | Декларация | Проверка |
 |---|---|
-| `errors` UC | тип: `this.err()` принимает только заявленные коды |
+| `errors` UC/фасада | тип: `this.err()` принимает только заявленные коды |
 | `input` / `output` | тип + рантайм-валидация в `handle()` |
-| `emits` UC/ER/Job | рантайм-ассерт в test/dev: публикация незаявленного события — ошибка |
+| `emits` UC/ER/Job | рантайм-ассерт в test/dev: незаявленное событие — ошибка |
 | `touches` / `calls` ER | рантайм-ассерт через прокси резолвера в тестах |
-| `dependsOn` модуля | контрактный тест по фактическим импортам и ссылкам манифестов |
-| связность графа | контрактный тест: висячие подписчики, неопубликованные события, UC вне модуля |
+| `dependsOn` | контрактный тест: фактические импорты и ссылки Def ⊆ `dependsOn`; граф — DAG |
+| FQN событий | контрактный тест: префикс совпадает с модулем и агрегатом |
+| связность | контрактный тест: нет висячих подписчиков, неопубликованных событий, Def вне модуля |
 | описания | контрактный тест: непустые `label`/`description`, описания полей |
-| JSON Schema | контрактный тест: все input/output конвертируются |
-
-## 5. Потребители графа (позже, отдельные треки)
-
-- CLI `bun run domain` — `ar <name>`, `uc <name>`, `cascade <uc>`, `context-map`, `errors`.
-- doc-gen — Mermaid (`stateDiagram-v2`, `sequenceDiagram`, `graph TD`) и таблицы ошибок.
-- http — автороутинг (`POST` command, `GET` query), OPTIONS.
-- mcp — tools из UC, resources из графа (D-11).
+| JSON Schema | контрактный тест: все input/output/payload конвертируются |
+| пары контракт ↔ реализация | контрактный тест: одинаковые пути (см. [naming.md](./naming.md)) |

@@ -91,7 +91,6 @@
 
 - [Определение продукта](../../product.md) — роли пользователей, ключевые функции
 - [Технологический стек](../../tech-stack.md)
-- [Границы доменной логики](../../code_styleguides/domain-boundaries.md)
-- [DDD Domain](../../../.pi/skills/ddd-domain/SKILL.md)
-- [DDD API](../../../.pi/skills/ddd-api/SKILL.md)
-- [DDD Naming](../../../.pi/skills/ddd-naming/SKILL.md)
+- [Границы доменной логики](../../architecture/domain-modeling.md)
+- [Архитектура](../../architecture/index.md) — слои, доменный API, правила
+- [Именование](../../architecture/naming.md) — структура и имена

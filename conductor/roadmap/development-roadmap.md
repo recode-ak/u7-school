@@ -259,5 +259,5 @@ session-persist → tasks (этап B) → sessions → metrics → contribution
 
 - [conductor/index.md](../index.md) — индекс всех документов
 - [conductor/workflow.md](../workflow.md) — процесс работы conductor
-- [conductor/code_styleguides/bot-architecture.md](../code_styleguides/bot-architecture.md) — актуальное устройство bot-level
-- [conductor/code_styleguides/domain-boundaries.md](../code_styleguides/domain-boundaries.md) — архитектурные правила
+- [conductor/architecture/ui/bot-architecture.md](../architecture/ui/bot-architecture.md) — актуальное устройство bot-level
+- [conductor/architecture/domain-modeling.md](../architecture/domain-modeling.md) — архитектурные правила

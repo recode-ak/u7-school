@@ -3,7 +3,7 @@
 **Назначение:** контроллер Telegram-бота — реестр сторис, диспетчер callback/message, владелец префиксации кнопок и обработки ошибок. Базовый класс: `packages/core/src/ui/bot/controller/bot-controller.ts`.
 
 > Сжатие/разжатие UUID живёт не здесь, а в `BotTransport`. Общий разрез слоёв —
-> см. [bot-architecture.md](../bot-architecture.md).
+> см. [bot-architecture.md](./bot-architecture.md).
 
 ---
 
@@ -83,7 +83,7 @@ reset(): void                  // сброс временного состоян
 
 Сжатие UUID до ≤ 64 байт происходит позже, в `BotTransport` (`compressCommand`/
 `shrink` на отправке, `expandAction` на входе callback). См.
-[bot-architecture.md](../bot-architecture.md), §4.
+[bot-architecture.md](./bot-architecture.md), §4.
 
 ---
 
@@ -97,19 +97,19 @@ reset(): void                  // сброс временного состоян
 | `not-found`, `conflict`, `access-denied`, `bad-request` | Текст ошибки |
 | `internal`, `unauthorized`, default | Логирует через `logger.error` + общее сообщение |
 
-`handleError` возвращает `DialogResponse`-экран; тексты — `MdText` через `md` (см. [bot-ui-story.md](./bot-ui-story.md), §4). См. [errors.md](./errors.md) для контракта `AppError`.
+`handleError` возвращает `DialogResponse`-экран; тексты — `MdText` через `md` (см. [bot-ui-story.md](./bot-ui-story.md), §4). См. [errors.md](../errors-result.md) для контракта `AppError`.
 
 ---
 
 ## 7. Тестирование
 
-См. [bot-test.md](../bot-test.md) — уровни тестирования (unit сторис, интеграционные через BotTransport, E2E).
+См. [bot-test.md](./bot-test.md) — уровни тестирования (unit сторис, интеграционные через BotTransport, E2E).
 
 ---
 
 ## Связанные файлы
 
 - [BotUiStory](./bot-ui-story.md) — стиль написания сторис
-- [Ошибки](./errors.md) — `AppError`, `fromError()`
-- [Тестирование бота](../bot-test.md)
-- [Архитектура bot-level](../bot-architecture.md)
+- [Ошибки](../errors-result.md) — `AppError`, `fromError()`
+- [Тестирование бота](./bot-test.md)
+- [Архитектура bot-level](./bot-architecture.md)

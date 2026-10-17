@@ -16,7 +16,7 @@ u7-school — это современная LMS (Learning Management System), п
     -   [Определение продукта](./conductor/product.md).
     -   [Технологический стек](./conductor/tech-stack.md).
     -   [Рабочий процесс (Workflow)](./conductor/workflow.md).
-3.  **Styleguides (`./conductor/code_styleguides/`)**: Подробные руководства по реализации различных слоев системы (Aggregate, UseCase, Repo и др.).
+3.  **Styleguides (`./conductor/architecture/`)**: Подробные руководства по реализации различных слоев системы (Aggregate, UseCase, Repo и др.).
 
 ## Модули проекта
 

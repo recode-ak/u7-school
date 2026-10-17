@@ -88,4 +88,4 @@
 - [streams/ui-spec.md](../streams/ui-spec.md) — S03 (поток: ментор/зритель)
 - [courses/ui-spec.md](./ui-spec.md) — S00 (каталог)
 - [Bot-UI «Диалог и Экран»](../../../../../conductor/guides/bot-ui-concept.md)
-- [Styleguide BotUiStory](../../../../../conductor/code_styleguides/skills/bot-ui-story.md)
+- [Styleguide BotUiStory](../../../../../conductor/architecture/ui/bot-ui-story.md)

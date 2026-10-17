@@ -1,7 +1,7 @@
 # U7 Bot — Telegram-бот школы
 
 Telegram-бот платформы u7-school на grammy. Работает на контракте
-**«Диалог и Экран»** (см. [bot-architecture.md](../../conductor/code_styleguides/bot-architecture.md)
+**«Диалог и Экран»** (см. [bot-architecture.md](../../conductor/architecture/ui/bot-architecture.md)
 и материнский [bot-ui-session-architecture.md](../../conductor/roadmap/bot-ui-session-architecture.md)):
 Grammy-слой — тонкий адаптер апдейтов, состоянием диалогов владеет `BotTransport`,
 сценарии отвечают `DialogResponse`, транспорт исполняет его по рендер-политике §5.
@@ -102,8 +102,8 @@ bun test apps/u7-bot/tests/streams/
 
 ## Связанные документы
 
-- [Архитектура bot-level](../../conductor/code_styleguides/bot-architecture.md)
-- [BotController Styleguide](../../conductor/code_styleguides/skills/bot-controller.md) — иерархия, API
-- [BotUiStory Styleguide](../../conductor/code_styleguides/skills/bot-ui-story.md) — написание стори
-- [Тестирование бота](../../conductor/code_styleguides/bot-test.md) — уровни и правила
+- [Архитектура bot-level](../../conductor/architecture/ui/bot-architecture.md)
+- [BotController Styleguide](../../conductor/architecture/ui/bot-controller.md) — иерархия, API
+- [BotUiStory Styleguide](../../conductor/architecture/ui/bot-ui-story.md) — написание стори
+- [Тестирование бота](../../conductor/architecture/ui/bot-test.md) — уровни и правила
 - [UI Specs](./src/controllers/) — спецификации экранов по модулям

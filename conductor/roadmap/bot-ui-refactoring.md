@@ -6,10 +6,10 @@
 > `BotRouter`, `connectRouter`, `connectUiApp`, `executeResponses`, `ui-utils.ts`,
 > `removePrevKeyboard` (теперь `keepPrevKeyboard`).
 > **Актуальное состояние см. в:**
-> - [bot-architecture.md](../code_styleguides/bot-architecture.md) — устройство bot-level;
-> - [skills/bot-controller.md](../code_styleguides/skills/bot-controller.md);
-> - [skills/bot-ui-story.md](../code_styleguides/skills/bot-ui-story.md);
-> - [bot-test.md](../code_styleguides/bot-test.md).
+> - [bot-architecture.md](../architecture/ui/bot-architecture.md) — устройство bot-level;
+> - [skills/bot-controller.md](../architecture/ui/bot-controller.md);
+> - [skills/bot-ui-story.md](../architecture/ui/bot-ui-story.md);
+> - [bot-test.md](../architecture/ui/bot-test.md).
 
 > v2 (2026-08-07). Объединяющий документ для серии треков.
 > **Этот документ содержит ПОЛНЫЙ контекст для генерации треков в другой сессии.**
@@ -21,8 +21,8 @@
 > **Связанные conductor-документы:**
 > - [`conductor/development-roadmap.md`](./development-roadmap.md) — **дорожная карта:** порядок релизов, миграции, зависимости между инициативами
 > - `conductor/workflow.md` — процесс работы conductor
-> - `conductor/code_styleguides/architecture.md` — архитектурные правила (слои, импорты)
-> - `conductor/code_styleguides/domain-boundaries.md` — где размещать логику
+> - `conductor/architecture/layers.md` — архитектурные правила (слои, импорты)
+> - `conductor/architecture/domain-modeling.md` — где размещать логику
 > - `conductor/index.md` — индекс всех документов
 
 ---
@@ -253,9 +253,9 @@ code: `view-stream:view:${streamId}`  // всегда в публичный view
 ### 4.9. Документация обновляется
 
 7 файлов требуют изменений:
-- `conductor/code_styleguides/architecture.md` — убрать `ui/` из структуры доменных модулей
-- `conductor/code_styleguides/skills/bot-controller.md` — новая иерархия, `UiApp`, `publicActions`
-- `conductor/code_styleguides/skills/bot-user-story.md` — новые пути, `uiApp.getAction<T>()`
+- `conductor/architecture/layers.md` — убрать `ui/` из структуры доменных модулей
+- `conductor/architecture/ui/bot-controller.md` — новая иерархия, `UiApp`, `publicActions`
+- `conductor/architecture/ui/bot-ui-story.md` — новые пути, `uiApp.getAction<T>()`
 - `conductor/index.md` — обновить ссылки
 - `packages/core/src/ui/bot/README.md` — правила навигации
 - `packages/stream/src/ui/bot/ui-spec.md` → разделить на 4 файла в `apps/u7-bot/src/{courses,streams,learning,mentor}/ui-spec.md`

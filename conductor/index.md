@@ -6,24 +6,12 @@
 - [Технологический стек](./tech-stack.md)
 
 ## Архитектура
-- [Архитектура DMG](./architecture/index.md) — **целевая архитектура domain/api на манифестах**: решения, слои, каталог правил, агентный процесс, план перехода
+- [Архитектура](./architecture/index.md) — **единое место технической документации**: целевая архитектура DMG, слои, именование, каталог правил, тестирование, агентный процесс, план перехода, UI-гайды бота, паттерны немигрированного кода (legacy)
 
 ## Процесс разработки (Workflow)
 - [Roadmap — порядок работ](./roadmap.md) — **текущая последовательность инициатив и статус**; детальные документы инициатив — в папке [roadmap/](./roadmap/)
 - [Рабочий процесс](./workflow.md)
 - [conductor-docs](../.pi/skills/conductor-docs/SKILL.md) — правила создания и ведения документации в conductor/
-- [Руководства по стилю кода](./code_styleguides/)
-  - [DDD Domain](../.pi/skills/ddd-domain/SKILL.md) — Entity, Aggregate, Repo, Policy, Errors
-  - [DDD API](../.pi/skills/ddd-api/SKILL.md) — UseCase, Command, Module, BotUiStory
-  - [DDD Infra](../.pi/skills/ddd-infra/SKILL.md) — реализации репозиториев
-  - [DDD Naming](../.pi/skills/ddd-naming/SKILL.md) — соглашения об именовании
-  - [EventReaction (ER)](./code_styleguides/skills/event-reaction.md) — реакция модуля на доменное событие
-  - [Job (периодическое задание)](./code_styleguides/skills/job.md) — фоновая задача планировщика
-  - [Границы доменной логики](./code_styleguides/domain-boundaries.md) — ⚠️ ВАЖНО: куда помещать логику, как не допустить утечек между модулями
-  - [Тестирование](./code_styleguides/testing.md) — общие правила
-  - [Тестирование Telegram-бота](./code_styleguides/bot-test.md) — unit, интеграционные, E2E
-- [Архитектура Telegram-бота](./code_styleguides/bot-architecture.md) — слои, объекты, поток данных (Grammy → BotTransport → UiApp → Controller → Story)
-- [BotController](./code_styleguides/skills/bot-controller.md) — иерархия контроллеров бота (BotController → U7BotController → доменные/AppController)
 
 ## Гайды по контенту курса
 - [Наполнение уроков шагами](./guides/lesson-design.md)
@@ -40,5 +28,5 @@
 - **[Определение продукта](./product.md)**: при изменении видения, целевой аудитории или ключевых функций.
 - **[Технологический стек](./tech-stack.md)**: при добавлении новых библиотек, фреймворков или изменении версии основных инструментов.
 - **[Рабочий процесс](./workflow.md)**: при изменении процедур разработки, тестирования или развертывания.
-- **[Styleguides](./code_styleguides/)**: при введении новых архитектурных паттернов или соглашений по коду.
+- **[Архитектура](./architecture/index.md)**: при введении новых архитектурных паттернов или соглашений по коду — через [реестр решений](./architecture/decisions.md).
 - **[Реестр треков](./tracks.md)**: при создании нового трека или изменении статуса существующего.
