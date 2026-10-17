@@ -17,3 +17,8 @@ function formatJsonFiles(files: string[]): void {
 ```
 
 Уже испорченные файлы чинятся `bunx biome format --write <файлы>` (семантически no-op, можно сверить `json.load` до/после).
+
+- **Подводные камни:** ручная правка JSON без последующего `biome format`/lint гарантированно роняет гейт.
+
+## История
+- 2026-10-17: слита дублирующая запись R-20261014-2252-7 (тот же симптом на lessons.json/modules.json/registry.json).

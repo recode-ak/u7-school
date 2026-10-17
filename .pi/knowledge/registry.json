@@ -7,14 +7,24 @@
   "entries": {
     "R-20261014-1813": {
       "kind": "fact",
-      "tags": ["контент", "снапшот", "архив", "бд", "uuid"],
+      "tags": [
+        "контент",
+        "снапшот",
+        "архив",
+        "бд",
+        "uuid",
+        "architecture",
+        "courses",
+        "migration",
+        "legacy"
+      ],
       "description": "Снапшоты потоков ссылаются на uuid уроков/шагов — контент нельзя удалять физически",
       "symptoms": ["физически удалённый шаг молча выпадает из пути студента"],
       "file": "R-20261014-1813.md",
       "created_at": "2026-10-14",
-      "updated_at": "2026-10-14",
-      "shown": 1,
-      "opened": 0,
+      "updated_at": "2026-10-17",
+      "shown": 42,
+      "opened": 1,
       "helped": 0,
       "last_shown_at": "2026-10-14",
       "last_used_at": null
@@ -85,7 +95,7 @@
     },
     "R-biome-json-stringify-expand": {
       "kind": "problem",
-      "tags": ["biome", "json", "format", "scripts"],
+      "tags": ["biome", "json", "format", "scripts", "lint", "formatting"],
       "description": "JSON.stringify(…,2) разворачивает массивы — biome схлопывает, lint падает на JSON",
       "symptoms": [
         "formatter would have printed the following content",
@@ -93,9 +103,9 @@
       ],
       "file": "R-biome-json-stringify-expand.md",
       "created_at": "2026-10-02",
-      "updated_at": "2026-10-02",
-      "shown": 1,
-      "opened": 2,
+      "updated_at": "2026-10-17",
+      "shown": 38,
+      "opened": 4,
       "helped": 2,
       "last_shown_at": "2026-10-14",
       "last_used_at": "2026-10-06"
@@ -466,6 +476,142 @@
       "file": "R-20261016-1624-10.md",
       "created_at": "2026-10-16T11:24:21.905Z",
       "updated_at": "2026-10-16T11:24:21.905Z",
+      "shown": 0,
+      "opened": 0,
+      "helped": 0,
+      "last_shown_at": null,
+      "last_used_at": null
+    },
+    "R-20261014-2252-8": {
+      "kind": "practice",
+      "tags": ["serialization", "json", "csv", "types"],
+      "description": "Проектирование собственного формата сериализации без потери типов",
+      "symptoms": [
+        "стандартный csv теряет типы данных (строка '25' и число 25 выглядят одинаково)",
+        "а стандартный json громоздкий для табличных структур."
+      ],
+      "file": "R-20261014-2252-8.md",
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "shown": 34,
+      "opened": 3,
+      "helped": 0,
+      "last_shown_at": "2026-10-14",
+      "last_used_at": "2026-10-14"
+    },
+    "R-20261014-2252-9": {
+      "kind": "practice",
+      "tags": ["git", "commits", "convention", "education"],
+      "description": "Использование инфинитива в Git-коммитах учебных заданий",
+      "symptoms": [
+        "студенты путаются в формах прошедшего времени («добавил»",
+        "«реализована»",
+        "«исправлено») и нарушают единый стиль; материалы курса и студенты смешивают разные наклонения."
+      ],
+      "file": "R-20261014-2252-9.md",
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "shown": 33,
+      "opened": 1,
+      "helped": 0,
+      "last_shown_at": "2026-10-14",
+      "last_used_at": "2026-10-14"
+    },
+    "R-20261014-2252-11": {
+      "kind": "practice",
+      "tags": ["nodejs", "sync", "education", "bun"],
+      "description": "Использование синхронных API файловой системы для начальных курсов",
+      "symptoms": [
+        "студенты на ранних этапах обучения еще не знакомы с промисами",
+        "async/await и event loop",
+        "поэтому асинхронные файловые функции вызывают ступор."
+      ],
+      "file": "R-20261014-2252-11.md",
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "shown": 31,
+      "opened": 0,
+      "helped": 0,
+      "last_shown_at": "2026-10-14",
+      "last_used_at": null
+    },
+    "R-20261014-2255-3": {
+      "kind": "practice",
+      "tags": ["bot", "ui", "telegram", "architecture"],
+      "description": "Разделение edit-in-place иnewMessage в ботах на базе диалоговых экранов",
+      "symptoms": [
+        "все переключения шагов или экранов редактируют существующее сообщение (edit-in-place)",
+        "стирая историю прохождения.",
+        "невозможно просмотреть цепочку пройденных шагов в чате."
+      ],
+      "file": "R-20261014-2255-3.md",
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "shown": 16,
+      "opened": 0,
+      "helped": 0,
+      "last_shown_at": "2026-10-14",
+      "last_used_at": null
+    },
+    "R-20261014-2256-2": {
+      "kind": "decision",
+      "tags": ["school", "domain", "resolver", "architecture"],
+      "description": "Интеграция конфигурации школы как сущности приложения",
+      "symptoms": [
+        "компоненты ui и домена зависели от глобального конфига бота при получении параметров школы."
+      ],
+      "file": "R-20261014-2256-2.md",
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "shown": 11,
+      "opened": 0,
+      "helped": 0,
+      "last_shown_at": "2026-10-14",
+      "last_used_at": null
+    },
+    "R-20261014-2256-3": {
+      "kind": "decision",
+      "tags": ["testing", "architecture", "fixtures", "typescript"],
+      "description": "Декларативные тестовые миры с детерминированными UUID и Copy-on-Write кешированием",
+      "symptoms": [
+        "медленные и хрупкие интеграционные тесты с ручными json-финкстурами",
+        "рассинхронизация данных между тестами."
+      ],
+      "file": "R-20261014-2256-3.md",
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "shown": 10,
+      "opened": 0,
+      "helped": 0,
+      "last_shown_at": "2026-10-14",
+      "last_used_at": null
+    },
+    "R-20261014-2257": {
+      "kind": "practice",
+      "tags": ["peer-review", "events", "er", "notifications"],
+      "description": "Уведомления о новых отзывах через доменные события (EventReaction)",
+      "symptoms": [
+        "адресат отзыва не узнает о том",
+        "что ему написали рецензию",
+        "пока вручную не зайдет в хаб."
+      ],
+      "file": "R-20261014-2257.md",
+      "created_at": "2026-10-14",
+      "updated_at": "2026-10-14",
+      "shown": 0,
+      "opened": 0,
+      "helped": 0,
+      "last_shown_at": null,
+      "last_used_at": null
+    },
+    "R-20261015-0911-18": {
+      "kind": "problem",
+      "tags": ["fixtures", "test-worlds", "seed"],
+      "description": "Ошибка seed:fixtures после удаления ручных шаблонов тестов",
+      "symptoms": [],
+      "file": "R-20261015-0911-18.md",
+      "created_at": "2026-10-15T04:11:17.291Z",
+      "updated_at": "2026-10-15T04:11:17.291Z",
       "shown": 0,
       "opened": 0,
       "helped": 0,
