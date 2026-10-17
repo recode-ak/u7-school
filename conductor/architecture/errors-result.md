@@ -19,7 +19,7 @@
 | kind | Смысл | Примеры |
 |---|---|---|
 | `validation` | вход не прошёл схему | `INPUT_VALIDATION` |
-| `unauthorized` | актор не опознан | `UNAUTHORIZED` |
+| `unauthorized` | `kind` вызывающего не входит в `callers` UC | `UNAUTHORIZED` |
 | `access` | политика отказала (+ правило и `denyMessage`) | `ACCESS_DENIED` |
 | `not_found` | сущности нет | `STUDENT_NOT_FOUND` |
 | `conflict` | состояние не допускает операцию | `STUDENT_NOT_ACTIVE` |
@@ -43,7 +43,7 @@
 
 ## 4. Совместимость на время перехода
 
-- `appApi.run(uc, input, actor)` возвращает `Result`.
+- `appApi.run(uc, input, caller)` возвращает `Result`.
 - `appApi.execute` сохраняет поведение «бросить при ошибке» (для новых UC разворачивает `Err` в исключение), чтобы не переписывать все stories разом.
 - Story переводится на `run` вместе с миграцией UC, который она вызывает.
 

@@ -41,10 +41,10 @@
 - UC → **tool**: `name` (`<module>.<uc>`), `description` из Def, `inputSchema` из JSON Schema; аннотации: query → `readOnlyHint`, command → `destructiveHint` по необходимости.
 - Граф → **resources**: карта модулей (L0), страницы модулей (L1) и агрегатов (L2), каталоги событий и ошибок — чтобы LLM понимала модель, а не только список ручек.
 - `Err` → результат tool с `isError` и текстом из `label`/`denyMessage`.
-- Актор: старт — только query, dev-окружение, явно заданный пользователь (D-18). Мутации и авторизация по токену — позже.
+- Caller: старт — только query, dev-окружение, явно заданный `user` (D-18). Мутации и авторизация по токену — позже.
 
 ## 4. In-proc
 
-- **UI (бот)** — `appApi.run(uc, input, actor)` → `Result`; story обрабатывает `Err` по `code`, презентер решает, как показать.
+- **UI (бот)** — `appApi.run(uc, input, caller)` → `Result`; story обрабатывает `Err` по `code`, презентер решает, как показать.
 - **Фасады** — синхронный вызов в процессе; возвращают `Result` и `ReadonlyAr`. При выносе модуля в сервис тот же контракт идёт по HTTP, агрегаты — снапшотом.
 - **CLI** (`scripts/call-uc.ts`) — тот же `appApi.run`.

@@ -14,10 +14,10 @@
 | `defineEvents` | domain | группа событий агрегата: FQN-префикс `module.aggregate`, на событие — `label`, `description`, схема payload |
 | `defineErrors` | domain | группа ошибок агрегата: `code`, `kind`, `label`, `description`, схема payload |
 | `definePolicy` / `rule` | domain | именованные правила с `label` и `denyMessage`, композиция |
-| `defineUseCase` | domain (контракт) | `type` (command/query), агрегат, `policy`, `auth`, `input`, `output`, `errors`, `emits` |
+| `defineUseCase` | domain (контракт) | `type` (command/query), агрегат, `policy`, `callers` ([caller.md](./caller.md)), `input`, `output`, `errors`, `emits` |
 | `defineEventReaction` | domain (контракт) | `on` (события), `touches` (агрегаты), `calls` (фасады), `emits` |
 | `defineJob` | domain (контракт) | `schedule`, `scans`, `emits` |
-| `defineStory` | ui (позже) | цель пользователя, роли, вызываемые UC, слушаемые события |
+| `defineUiApp` / `defineUiModule` / `defineStory` / `defineScreen` | ui (позже) | матрёшка UI — [ui-manifests.md](./ui-manifests.md) |
 
 Реализации подключают Def через базовые классы (`UseCaseFromDef`, `ReactionFromDef`, `JobFromDef`, модуль — карта `Def → класс`, типизированная Def: пропуск реализации — ошибка компиляции). Свойства Def в классах **не дублируются**.
 
