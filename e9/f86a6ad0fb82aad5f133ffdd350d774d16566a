@@ -1,0 +1,5 @@
+Задача: модель субагентов pi (запрос Нурболата: всё делает deepseek/flash, легко менять).
+- Одна точка смены: .pi/subagent.json { model }. Значение — deepseek/deepseek-flash (id из pi --list-models).
+- readSubagentModel: тесты (Red → Green) — модель, нет файла/поля, битый файл (ошибка с путём).
+- Роль может переопределить модель полем model.pi в .agents-core/roles.
+- Полный check: 2869 pass, 0 fail.
