@@ -14,7 +14,7 @@
     - [x] Шапка сгенерированных файлов «не править, источник `.agents-core/roles/<role>.md`» (сделана в a9a4095: по ней sync отличает свои копии)
 - [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
-## Фаза 2: Тексты ролей
+## Фаза 2: Тексты ролей [checkpoint: 3210d3f]
 
 - [x] Task: `reviewer` — только чтение; diff среза по правилам с проверкой `review` из `rules.md`; отчёт `ID | файл:строка | суть | severity`; код не исправляет [93aec10]
 - [x] Task: `migrator` — перенос с сохранением поведения; `legacy.md`, `migration.md`; тесты переносятся, не удаляются [0c04a1a]
@@ -22,7 +22,7 @@
 - [x] Task: `api-author` — UC/ER/Job, репозитории, фасады, wiring; пометка «доработать на golden-wish» [c10518a]
 - [x] Task: Общий блок ролей: условия остановки (agents.md §7), запрет коммитов и правки `plan.md`, формат отчёта, загрузка скилла `architecture` [c1ccb56]
 - [x] Task: `bun run agents:sync`; роли видны в `/agents` Claude Code [c10518a]
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Гейт по затронутым пакетам и хук Claude Code
 
