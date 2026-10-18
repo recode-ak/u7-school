@@ -1,0 +1,5 @@
+Задача: хук SubagentStop (фаза 3).
+Сделано: .claude/settings.json — SubagentStop, matcher migrator|domain-author|api-author, команда cd $CLAUDE_PROJECT_DIR && bun run scripts/agent-gate.ts, timeout 300 с.
+Проверки: jq-валидация схемы; команда вручную — exit 0 на зелёном; заведомо красная правка в w3school — exit 2 и ошибки biome в stderr.
+Попутно: исправлен разбор git status (коммит перед этим), +1 тест, покрытие 94,5%.
+Reviewer и встроенные агенты гейт не запускают — только читают.
