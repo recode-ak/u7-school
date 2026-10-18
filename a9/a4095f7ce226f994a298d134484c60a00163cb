@@ -1,0 +1,3 @@
+Задача: Генератор scripts/agents-sync.ts (agents-setup, фаза 1).
+Файлы: scripts/agents-sync.ts, scripts/agents-sync.test.ts (18 тестов, покрытие строк 93%).
+Чистые функции parseRole/renderRole/buildCopies/compareCopies + runSync(root, sync|check). YAML — встроенный Bun.YAML, без зависимостей. Шапка «не править» добавлена в renderRole сразу: по ней sync отличает свои копии от ручных файлов.
