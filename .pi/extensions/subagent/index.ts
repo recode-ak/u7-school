@@ -13,7 +13,9 @@
  *
  * Перенесено из официального примера pi (@earendil-works/pi-coding-agent 1.3.0,
  * examples/extensions/subagent, лицензия MIT). Отличия от оригинала:
- * область агентов по умолчанию — "project" (роли из .pi/agents/).
+ * область агентов по умолчанию — "project" (роли из .pi/agents/); после
+ * успешной работы ролей, меняющих код, запускается гейт проекта
+ * (scripts/subagent-gate.ts → scripts/agent-gate.ts).
  */
 
 import { spawn } from 'node:child_process';
@@ -36,6 +38,11 @@ import {
 } from '@earendil-works/pi-coding-agent';
 import { Container, Markdown, Spacer, Text } from '@earendil-works/pi-tui';
 import { Type } from 'typebox';
+import {
+  needsGate,
+  runAgentGate,
+  withGate,
+} from '../../../scripts/subagent-gate.ts';
 import { type AgentConfig, type AgentScope, discoverAgents } from './agents.ts';
 
 const MAX_PARALLEL_TASKS = 8;
@@ -179,6 +186,28 @@ interface SubagentDetails {
   agentScope: AgentScope;
   projectAgentsDir: string | null;
   results: SingleResult[];
+}
+
+/**
+ * Успешный итог субагентов + гейт проекта. Корень проекта — над .pi/agents;
+ * без проектных ролей или без ролей, меняющих код, гейт не запускается.
+ */
+async function gatedResult(
+  text: string,
+  agentNames: string[],
+  projectAgentsDir: string | null,
+  details: SubagentDetails,
+) {
+  if (!projectAgentsDir || !needsGate(agentNames)) {
+    return { content: [{ type: 'text' as const, text }], details };
+  }
+  const root = path.dirname(path.dirname(projectAgentsDir));
+  const gated = withGate(text, await runAgentGate(root));
+  return {
+    content: [{ type: 'text' as const, text: gated.text }],
+    details,
+    isError: gated.isError,
+  };
 }
 
 function getFinalOutput(messages: Message[]): string {
@@ -702,17 +731,12 @@ export default function (pi: ExtensionAPI) {
           }
           previousOutput = getFinalOutput(result.messages);
         }
-        return {
-          content: [
-            {
-              type: 'text',
-              text:
-                getFinalOutput(results[results.length - 1].messages) ||
-                '(no output)',
-            },
-          ],
-          details: makeDetails('chain')(results),
-        };
+        return gatedResult(
+          getFinalOutput(results[results.length - 1].messages) || '(no output)',
+          params.chain.map((step) => step.agent),
+          discovery.projectAgentsDir,
+          makeDetails('chain')(results),
+        );
       }
 
       if (params.tasks && params.tasks.length > 0) {
@@ -803,15 +827,12 @@ export default function (pi: ExtensionAPI) {
             : 'completed';
           return `### [${r.agent}] ${status}\n\n${output}`;
         });
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Parallel: ${successCount}/${results.length} succeeded\n\n${summaries.join('\n\n---\n\n')}`,
-            },
-          ],
-          details: makeDetails('parallel')(results),
-        };
+        return gatedResult(
+          `Parallel: ${successCount}/${results.length} succeeded\n\n${summaries.join('\n\n---\n\n')}`,
+          results.filter((r) => !isFailedResult(r)).map((r) => r.agent),
+          discovery.projectAgentsDir,
+          makeDetails('parallel')(results),
+        );
       }
 
       if (params.agent && params.task) {
@@ -841,15 +862,12 @@ export default function (pi: ExtensionAPI) {
             isError: true,
           };
         }
-        return {
-          content: [
-            {
-              type: 'text',
-              text: getFinalOutput(result.messages) || '(no output)',
-            },
-          ],
-          details: makeDetails('single')([result]),
-        };
+        return gatedResult(
+          getFinalOutput(result.messages) || '(no output)',
+          [result.agent],
+          discovery.projectAgentsDir,
+          makeDetails('single')([result]),
+        );
       }
 
       const available =

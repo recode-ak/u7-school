@@ -1,0 +1,93 @@
+import { describe, expect, test } from 'bun:test';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import {
+  type GateRun,
+  needsGate,
+  runAgentGate,
+  withGate,
+} from './subagent-gate';
+
+describe('needsGate', () => {
+  test('роли, меняющие код, — гейт нужен', () => {
+    expect(needsGate(['migrator'])).toBe(true);
+    expect(needsGate(['reviewer', 'api-author'])).toBe(true);
+  });
+
+  test('только reviewer или чужие агенты — гейт не нужен', () => {
+    expect(needsGate(['reviewer'])).toBe(false);
+    expect(needsGate(['scout'])).toBe(false);
+    expect(needsGate([])).toBe(false);
+  });
+});
+
+describe('withGate', () => {
+  const answer = 'Срез готов.';
+
+  test('зелёный — ответ субагента и строка гейта, не ошибка', () => {
+    const gate: GateRun = {
+      code: 0,
+      stdout: 'agent-gate: check в packages/user — зелёный\n',
+      stderr: '',
+    };
+    const res = withGate(answer, gate);
+    expect(res.isError).toBe(false);
+    expect(res.text).toStartWith(answer);
+    expect(res.text).toContain('agent-gate: check в packages/user — зелёный');
+  });
+
+  test('пропуск — ответ и причина пропуска, не ошибка', () => {
+    const gate: GateRun = {
+      code: 0,
+      stdout: 'agent-gate: пропуск — изменены только .md-файлы\n',
+      stderr: '',
+    };
+    const res = withGate(answer, gate);
+    expect(res.isError).toBe(false);
+    expect(res.text).toContain('пропуск — изменены только .md-файлы');
+  });
+
+  test('красный — ошибка, в ответе вывод гейта и указание передать на исправление', () => {
+    const gate: GateRun = {
+      code: 2,
+      stdout: 'agent-gate: check в packages/user\n',
+      stderr:
+        'agent-gate: красный в packages/user.\n\n── packages/user ──\nTS2322',
+    };
+    const res = withGate(answer, gate);
+    expect(res.isError).toBe(true);
+    expect(res.text).toStartWith(answer);
+    expect(res.text).toContain('TS2322');
+    expect(res.text).toContain('красный в packages/user');
+    expect(res.text).toContain('на исправление');
+  });
+
+  test('сбой самого гейта — ошибка с кодом и выводом', () => {
+    const gate: GateRun = { code: 1, stdout: '', stderr: 'git status упал' };
+    const res = withGate(answer, gate);
+    expect(res.isError).toBe(true);
+    expect(res.text).toContain('код 1');
+    expect(res.text).toContain('git status упал');
+  });
+});
+
+describe('runAgentGate', () => {
+  test('запускает scripts/agent-gate.ts в каталоге и отдаёт код и вывод', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'subagent-gate-'));
+    try {
+      await mkdir(join(root, 'scripts'));
+      await writeFile(
+        join(root, 'scripts/agent-gate.ts'),
+        'console.log("из гейта " + process.cwd()); console.error("err"); process.exit(2);',
+      );
+      const res = await runAgentGate(root);
+      expect(res.code).toBe(2);
+      expect(res.stdout).toContain('из гейта');
+      expect(res.stdout).toContain(root);
+      expect(res.stderr).toContain('err');
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
