@@ -1,0 +1,2 @@
+Задача: domain-author
+Сделано: .agents-core/roles/domain-author.md + копии. Зона — packages/domain, все Def среза (включая контракты для api-author). Таблица документов, применимые ID, правила (чистота, Result, Policy с тестами allowed/denied, dependsOn, полнота контрактов). Пометка «доработать на golden-wish».
