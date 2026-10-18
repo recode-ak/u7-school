@@ -1,0 +1,3 @@
+Задача: Режим оркестратора в conductor-implement (agents-setup, фаза 5).
+Изменено: .pi/skills/conductor-implement/SKILL.md (.claude/skills — симлинк).
+Суть: новый раздел 4.0 — выбор режима (новая архитектура → субагенты; legacy/доки/инфра → текущая сессия), бриф среза slices/<slice>.md, таблица шаг→роль, вызов Agent (Claude Code) / subagent (pi), гейт agent-gate.ts оркестратором, эскалации, reviewer, единственный писатель, полный check перед коммитом. Шаги 3.0.4b и 3.0.5c ссылаются на 4.0.
