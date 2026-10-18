@@ -1,0 +1,3 @@
+Верификация фазы 2 «Тексты ролей».
+Автотесты: CI=true bun run check — agents:check, biome, tsc зелёные; 2836 pass, 0 fail. После правки domain-author (41fbf9e) — agents:check и тесты agents-sync зелёные.
+Ручная верификация: свежая сессия Claude Code (claude -p) видит reviewer, migrator, domain-author, api-author с верными инструментами. Нурболат прочитал тексты ролей; по его замечанию уточнена формулировка ARC-03/ARC-09 в domain-author. Подтверждение: «ставь контрольную точку».
