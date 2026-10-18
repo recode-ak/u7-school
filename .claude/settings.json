@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SubagentStop": [
+      {
+        "matcher": "migrator|domain-author|api-author",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && bun run scripts/agent-gate.ts",
+            "timeout": 300,
+            "statusMessage": "agent-gate: проверка затронутых пакетов"
+          }
+        ]
+      }
+    ]
+  }
+}
