@@ -1,0 +1,6 @@
+Задача: перенос subagent-расширения pi.
+- index.ts, agents.ts скопированы из примера pi 1.3.0 (лицензия MIT, указана в шапке index.ts).
+- agentScope по умолчанию: project (схема, execute, renderCall, описание инструмента).
+- Пример агентов и prompts не переносились — роли свои, в .pi/agents/.
+- .pi/ не входит в tsc проекта (скрытый каталог) и в bun test; типы проверены вручную временным tsconfig с типами глобального pi (без noUncheckedIndexedAccess — стиль upstream).
+- biome: 3 предупреждения noExplicitAny из оригинала оставлены.
