@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   buildCopies,
+  COMMON_FILE,
   compareCopies,
   parseRole,
   renderRole,
@@ -126,6 +127,11 @@ describe('renderRole', () => {
     expect(renderRole('claude', noModel)).not.toContain('model:');
   });
 
+  test('общий блок дописывается после тела роли', () => {
+    const text = renderRole('pi', role, '## Общее\n\nТекст.\n');
+    expect(text.endsWith('Промпт роли.\n\n## Общее\n\nТекст.\n')).toBe(true);
+  });
+
   test('description экранируется и разбирается обратно', () => {
     const tricky = { ...role, description: 'a: "b" # c' };
     const text = renderRole('claude', tricky);
@@ -225,6 +231,17 @@ describe('runSync', () => {
       expect(result.messages).toContain(
         'лишний файл (не сгенерирован, удали или перенеси в .agents-core/roles): .claude/agents/manual.md',
       );
+    });
+  });
+
+  test('общий блок попадает во все копии, его правка ломает check', async () => {
+    await withRepo(async (root) => {
+      await Bun.write(join(root, COMMON_FILE), 'Общее правило.\n');
+      await runSync(root, 'sync');
+      const pi = await readFile(join(root, '.pi/agents/reviewer.md'), 'utf8');
+      expect(pi).toContain('Общее правило.');
+      await writeFile(join(root, COMMON_FILE), 'Другое правило.\n');
+      expect((await runSync(root, 'check')).ok).toBe(false);
     });
   });
 

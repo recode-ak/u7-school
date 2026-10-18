@@ -28,6 +28,8 @@ const ENVS: readonly Env[] = ['claude', 'pi'];
 const FIELDS = ['name', 'description', 'tools', 'model'];
 
 export const SOURCE_DIR = '.agents-core/roles';
+/** Общий блок, дописываемый в конец каждой роли (необязателен) */
+export const COMMON_FILE = '.agents-core/common.md';
 export const TARGET_DIRS: Record<Env, string> = {
   claude: '.claude/agents',
   pi: '.pi/agents',
@@ -128,8 +130,8 @@ export function parseRole(path: string, text: string): Role {
   };
 }
 
-/** Собирает текст копии роли для среды */
-export function renderRole(env: Env, role: Role): string {
+/** Собирает текст копии роли для среды; common — общий блок всех ролей */
+export function renderRole(env: Env, role: Role, common = ''): string {
   const lines = [
     '---',
     `name: ${role.name}`,
@@ -146,16 +148,23 @@ export function renderRole(env: Env, role: Role): string {
     role.body,
     '',
   );
+  if (common.trim()) lines.push(common.trim(), '');
   return lines.join('\n');
 }
 
 /** Ожидаемые копии всех ролей: путь от корня → содержимое */
-export function buildCopies(sources: SourceFile[]): Map<string, string> {
+export function buildCopies(
+  sources: SourceFile[],
+  common = '',
+): Map<string, string> {
   const copies = new Map<string, string>();
   for (const { path, text } of sources) {
     const role = parseRole(path, text);
     for (const env of ENVS) {
-      copies.set(`${TARGET_DIRS[env]}/${role.name}.md`, renderRole(env, role));
+      copies.set(
+        `${TARGET_DIRS[env]}/${role.name}.md`,
+        renderRole(env, role, common),
+      );
     }
   }
   return copies;
@@ -205,9 +214,12 @@ export async function runSync(
   const sources = [...(await readMarkdown(root, SOURCE_DIR))].map(
     ([path, text]) => ({ path, text }),
   );
+  const common = await readFile(join(root, COMMON_FILE), 'utf8').catch(
+    () => '',
+  );
   let expected: Map<string, string>;
   try {
-    expected = buildCopies(sources);
+    expected = buildCopies(sources, common);
   } catch (error) {
     return { ok: false, messages: [(error as Error).message] };
   }
