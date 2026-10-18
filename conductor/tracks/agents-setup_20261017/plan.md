@@ -34,7 +34,7 @@
 - [x] Task: Пробный прогон: субагенту — заведомо красная правка; гейт возвращает ошибку, субагент исправляет (2026-10-18, без коммита: пробный файл удалён)
 - [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
-## Фаза 4: pi — субагенты и гейт
+## Фаза 4: pi — субагенты и гейт [checkpoint: 39405f15]
 
 - [x] Task: Перенести официальный пример subagent-расширения в `.pi/extensions/subagent/` (проверить лицензию), по умолчанию `agentScope: "project"` [681b3c2]
 - [x] Task: Гейт после субагента [6e72a59]
@@ -43,7 +43,7 @@
 - [x] Task: Модель субагентов в `.pi/subagent.json` (по умолчанию `deepseek/deepseek-flash`) [e9f86a6a]
 - [x] Task: Пробный прогон в pi (выполняет Нурболат): субагент запускается, результат гейта виден в ответе (2026-10-18: красный TS2322 → исправление migrator → зелёный; пробный файл удалён)
 - [x] Task: Правило о `$T`-сокращениях pi в `.agents-core/common.md` (по итогам прогона) [24e215cd]
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 ## Фаза 5: Оркестратор и передача между средами
 
