@@ -1,6 +1,6 @@
 # Plan: agents-setup_20261017
 
-## Фаза 1: Единый источник ролей и генератор
+## Фаза 1: Единый источник ролей и генератор [checkpoint: ddcacf5]
 
 - [x] Task: Формат источника и таблицы соответствия [f75cca9]
     - [x] Формат frontmatter `.agents-core/roles/<role>.md`: `name`, `description`, `tools` (нейтральные имена), `model: { claude?, pi? }`
@@ -12,7 +12,7 @@
 - [x] Task: Подключение [d44d0c4]
     - [x] `agents:sync` и `agents:check` в `package.json`; `agents:check` — в `check`
     - [x] Шапка сгенерированных файлов «не править, источник `.agents-core/roles/<role>.md`» (сделана в a9a4095: по ней sync отличает свои копии)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Тексты ролей
 
