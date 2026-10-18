@@ -205,17 +205,21 @@ export async function exec(cmd: string[], cwd: string): Promise<RunOutput> {
   return { ok: code === 0, output: `${stdout}\n${stderr}` };
 }
 
+/** Изменённые пути рабочего дерева; разбирается только stdout git */
+export function changedPaths(root: string): string[] {
+  const proc = Bun.spawnSync(
+    ['git', 'status', '--porcelain', '-z', '--untracked-files=all'],
+    { cwd: root },
+  );
+  if (proc.exitCode !== 0) {
+    throw new Error(`git status упал: ${proc.stderr.toString()}`);
+  }
+  return parseStatus(proc.stdout.toString());
+}
+
 if (import.meta.main) {
   const root = process.cwd();
-  const status = await exec(
-    ['git', 'status', '--porcelain', '-z', '--untracked-files=all'],
-    root,
-  );
-  if (!status.ok) {
-    console.error(`agent-gate: git status упал\n${status.output}`);
-    process.exit(2);
-  }
-  const plan = planGate(parseStatus(status.output), await loadWorkspaces(root));
+  const plan = planGate(changedPaths(root), await loadWorkspaces(root));
   const result = await runGate(plan, (dir) =>
     exec(['bun', 'run', 'check'], join(root, dir)),
   );

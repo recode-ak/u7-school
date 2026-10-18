@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+  changedPaths,
   exec,
   type GatePlan,
   loadWorkspaces,
@@ -218,6 +219,21 @@ describe('exec', () => {
     );
     expect(bad.ok).toBe(false);
     expect(bad.output).toContain('сбой');
+  });
+});
+
+describe('changedPaths', () => {
+  test('чистое дерево — пусто, новый файл — его путь', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'agent-gate-git-'));
+    try {
+      await exec(['git', 'init', '-q'], root);
+      expect(changedPaths(root)).toEqual([]);
+      await mkdir(join(root, 'packages/a'), { recursive: true });
+      await writeFile(join(root, 'packages/a/x.ts'), '');
+      expect(changedPaths(root)).toEqual(['packages/a/x.ts']);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });
 
