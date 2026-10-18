@@ -16,12 +16,12 @@
 
 ## Фаза 2: Тексты ролей
 
-- [ ] Task: `reviewer` — только чтение; diff среза по правилам с проверкой `review` из `rules.md`; отчёт `ID | файл:строка | суть | severity`; код не исправляет
-- [ ] Task: `migrator` — перенос с сохранением поведения; `legacy.md`, `migration.md`; тесты переносятся, не удаляются
-- [ ] Task: `domain-author` — Ar, Policy, DCS/DQS, Def, unit-тесты домена; пометка «доработать на golden-wish»
-- [ ] Task: `api-author` — UC/ER/Job, репозитории, фасады, wiring; пометка «доработать на golden-wish»
-- [ ] Task: Общий блок ролей: условия остановки (agents.md §7), запрет коммитов и правки `plan.md`, формат отчёта, загрузка скилла `architecture`
-- [ ] Task: `bun run agents:sync`; роли видны в `/agents` Claude Code
+- [x] Task: `reviewer` — только чтение; diff среза по правилам с проверкой `review` из `rules.md`; отчёт `ID | файл:строка | суть | severity`; код не исправляет [93aec10]
+- [x] Task: `migrator` — перенос с сохранением поведения; `legacy.md`, `migration.md`; тесты переносятся, не удаляются [0c04a1a]
+- [x] Task: `domain-author` — Ar, Policy, DCS/DQS, Def, unit-тесты домена; пометка «доработать на golden-wish» [55ebb3f]
+- [x] Task: `api-author` — UC/ER/Job, репозитории, фасады, wiring; пометка «доработать на golden-wish» [c10518a]
+- [x] Task: Общий блок ролей: условия остановки (agents.md §7), запрет коммитов и правки `plan.md`, формат отчёта, загрузка скилла `architecture` [c1ccb56]
+- [x] Task: `bun run agents:sync`; роли видны в `/agents` Claude Code [c10518a]
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Гейт по затронутым пакетам и хук Claude Code
