@@ -1,0 +1,5 @@
+Задача: скрипт scripts/agent-gate.ts (фаза 3).
+Сделано: чистые функции parseStatus, planGate, tail; runGate с внедряемым Runner; loadWorkspaces по workspaces корневого package.json; exec через Bun.spawn с CI=true.
+Тесты: 22, покрытие строк 89,7% (не покрыт только блок import.meta.main).
+Замер: w3school 0,6 с; user → 8 пакетов 9,7 с; полный check 8,8 с.
+Найдено: apps/u7-cli без тестов — его check красный (bun test без файлов), вопрос Нурболату.
