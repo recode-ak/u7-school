@@ -5,13 +5,13 @@
 - [x] Task: Формат источника и таблицы соответствия [f75cca9]
     - [x] Формат frontmatter `.agents-core/roles/<role>.md`: `name`, `description`, `tools` (нейтральные имена), `model: { claude?, pi? }`
     - [x] Соответствие инструментов: `read→Read`, `edit→Edit`, `write→Write`, `bash→Bash`, `grep→Grep`, `find→Glob` (Claude Code); pi — как есть
-- [~] Task: Генератор `scripts/agents-sync.ts`
-    - [ ] Тесты (Red): разбор frontmatter; перевод инструментов и модели под каждую среду; неизвестный инструмент — ошибка с именем файла; `--check` находит расхождение, лишний и недостающий файл
-    - [ ] Реализация (Green): чистые функции «источник → текст копии» + тонкий слой записи/сравнения; без новых зависимостей
-    - [ ] Рефакторинг, покрытие >80%
-- [ ] Task: Подключение
-    - [ ] `agents:sync` и `agents:check` в `package.json`; `agents:check` — в `check`
-    - [ ] Шапка сгенерированных файлов «не править, источник `.agents-core/roles/<role>.md`»
+- [x] Task: Генератор `scripts/agents-sync.ts` [a9a4095]
+    - [x] Тесты (Red): разбор frontmatter; перевод инструментов и модели под каждую среду; неизвестный инструмент — ошибка с именем файла; `--check` находит расхождение, лишний и недостающий файл
+    - [x] Реализация (Green): чистые функции «источник → текст копии» + тонкий слой записи/сравнения; без новых зависимостей
+    - [x] Рефакторинг, покрытие >80% (93%)
+- [x] Task: Подключение [d44d0c4]
+    - [x] `agents:sync` и `agents:check` в `package.json`; `agents:check` — в `check`
+    - [x] Шапка сгенерированных файлов «не править, источник `.agents-core/roles/<role>.md`» (сделана в a9a4095: по ней sync отличает свои копии)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Тексты ролей
