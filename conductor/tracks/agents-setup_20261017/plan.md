@@ -30,7 +30,7 @@
     - [x] Тесты (Red): изменённые пути → пакеты; транзитивные зависимые по workspace-зависимостям; корневые конфиги → полный `check`; только `.md` → пропуск; нет изменений → пропуск; зелёный → exit 0; красный → exit 2 и хвост вывода в stderr
     - [x] Реализация (Green): чистые функции (пути → план прогона) + тонкий слой запуска
     - [x] Рефакторинг, покрытие >80% (89,7%)
-- [ ] Task: Хук `SubagentStop` в `.claude/settings.json` (через скилл `update-config`)
+- [x] Task: Хук `SubagentStop` в `.claude/settings.json` (через скилл `update-config`) [9b252cd]
 - [ ] Task: Пробный прогон: субагенту — заведомо красная правка; гейт возвращает ошибку, субагент исправляет
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
