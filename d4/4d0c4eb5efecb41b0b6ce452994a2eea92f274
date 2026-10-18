@@ -1,0 +1,3 @@
+Задача: Подключение (agents-setup, фаза 1).
+package.json: agents:sync, agents:check; agents:check первым шагом в check. Шапка «не править» уже есть в копиях (renderRole, коммит a9a4095).
+Проверено: сквозной прогон на временной роли (правка копии → check exit 1; удаление источника → sync убирает копию); bun run check зелёный, 2834 pass.
