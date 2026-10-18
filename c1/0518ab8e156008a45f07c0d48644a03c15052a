@@ -1,0 +1,2 @@
+Задача: api-author
+Сделано: .agents-core/roles/api-author.md + копии. Зона — packages/<m>, домен не меняет. Таблица документов, применимые ID, правила (API-01, *FromDef, UoW, фасады, Job, тесты ошибок UC по code, smoke во временном каталоге). Пометка «доработать на golden-wish».
