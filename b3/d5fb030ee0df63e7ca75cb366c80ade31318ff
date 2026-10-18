@@ -1,0 +1,1 @@
+Пробный прогон: claude -p --permission-mode acceptEdits, субагент migrator. Первое завершение — гейт красный (noUnusedImports, TS2322 в packages/w3school), один возврат, затем исправление; ручной прогон agent-gate после — 'check в packages/w3school — зелёный'. Ограничение: роли и хук из .claude/ подхватываются только новой сессией.
