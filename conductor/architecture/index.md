@@ -49,7 +49,7 @@
 - [testing.md](./testing.md) — тестирование
 - [typescript.md](./typescript.md) — стиль TypeScript
 - [docs-strategy.md](./docs-strategy.md) — доменная и техническая документация
-- [agents.md](./agents.md) — роли агентов, контуры качества, связь с conductor
+- [agents.md](./agents.md) — роли агентов, контуры качества, связь с conductor, среды Claude Code и pi, передача между ними
 - [migration.md](./migration.md) — треки перехода, что исправляется, сосуществование
 - [legacy.md](./legacy.md) — паттерны немигрированного кода (удаляется после перехода)
 
