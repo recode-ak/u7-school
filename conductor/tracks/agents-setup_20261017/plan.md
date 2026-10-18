@@ -2,7 +2,7 @@
 
 ## Фаза 1: Единый источник ролей и генератор
 
-- [ ] Task: Формат источника и таблицы соответствия
+- [~] Task: Формат источника и таблицы соответствия
     - [ ] Формат frontmatter `.agents-core/roles/<role>.md`: `name`, `description`, `tools` (нейтральные имена), `model: { claude?, pi? }`
     - [ ] Соответствие инструментов: `read→Read`, `edit→Edit`, `write→Write`, `bash→Bash`, `grep→Grep`, `find→Glob` (Claude Code); pi — как есть
 - [ ] Task: Генератор `scripts/agents-sync.ts`
