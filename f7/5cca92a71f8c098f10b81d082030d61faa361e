@@ -1,0 +1,3 @@
+Задача: Формат источника и таблицы соответствия (agents-setup, фаза 1).
+Создан .agents-core/README.md: формат frontmatter roles/<role>.md (name, description, tools, model{claude,pi}), таблица соответствия нейтральных инструментов Claude Code и pi. Трек отмечен [~].
+Причина: единый источник ролей для двух сред (spec п.1).
