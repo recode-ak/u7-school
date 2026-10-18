@@ -45,11 +45,11 @@
 - [x] Task: Правило о `$T`-сокращениях pi (по итогам прогона) [24e215cd, перенесено в `~/.pi/agent/AGENTS.md`: a8b95561]
 - [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
-## Фаза 5: Оркестратор и передача между средами
+## Фаза 5: Оркестратор и передача между средами [checkpoint: 1f575fc8]
 
 - [x] Task: Режим оркестратора в `conductor-implement`: бриф среза, раздача ролям, гейт сам, единственный писатель `plan.md` и коммитов; простые legacy-задачи — без субагентов; полный `check` перед коммитом [9b446117]
 - [x] Task: Передача: шаг старта (`plan.md` + `git log`, приёмка чужой работы); шаг остановки (коммит + состояние незавершённой задачи в `plan.md`) [7cae8787]
 - [x] Task: Обновить `agents.md` §8 и `index.md` по факту; `tech-stack.md` — агентная инфраструктура [9e2957b7]
 - [x] Task: Пробная передача: задача начата в одной среде, принята в другой [e7b56ec]
     - Начата в Claude Code (2026-10-18, `706552ab`: тест `pluralRu` Red + заглушка), принята в pi (2026-10-18): `git status` пуст, пометка передачи найдена, `git log` — 2 коммита; полный `check` дал ровно 3 падающих теста пробы → реализован Green → пробные файлы удалены → `check` зелёный (2869 pass, 0 fail)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
