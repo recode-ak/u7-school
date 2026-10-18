@@ -1,0 +1,3 @@
+Задача: Обновить agents.md §8, index.md, tech-stack.md (agents-setup, фаза 5).
+agents.md: §2 — хук гейта как факт; §4 — ссылка на раздел 4.0 скилла; §8 — хук SubagentStop, расширение pi и .pi/subagent.json, гейт по пакетам (видит только незакоммиченное), передача по разделу 4.1 conductor-implement, приёмка полным check + reviewer, симлинк скиллов и .agents-core.
+index.md — описание agents.md. tech-stack.md — раздел «Агентная инфраструктура».
