@@ -13,7 +13,8 @@
  *
  * Перенесено из официального примера pi (@earendil-works/pi-coding-agent 1.3.0,
  * examples/extensions/subagent, лицензия MIT). Отличия от оригинала:
- * область агентов по умолчанию — "project" (роли из .pi/agents/); после
+ * область агентов по умолчанию — "project" (роли из .pi/agents/); модель
+ * субагентов по умолчанию — из .pi/subagent.json (scripts/subagent-config.ts); после
  * успешной работы ролей, меняющих код, запускается гейт проекта
  * (scripts/subagent-gate.ts → scripts/agent-gate.ts).
  */
@@ -38,6 +39,7 @@ import {
 } from '@earendil-works/pi-coding-agent';
 import { Container, Markdown, Spacer, Text } from '@earendil-works/pi-tui';
 import { Type } from 'typebox';
+import { readSubagentModel } from '../../../scripts/subagent-config.ts';
 import {
   needsGate,
   runAgentGate,
@@ -600,11 +602,17 @@ export default function (pi: ExtensionAPI) {
 
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
       const agentScope: AgentScope = params.agentScope ?? 'project';
+      const discovery = discoverAgents(ctx.cwd, agentScope);
+      const sessionModel = ctx.model
+        ? `${ctx.model.provider}/${ctx.model.id}`
+        : undefined;
       const dispatchDefaults: DispatchDefaults = {
-        model: ctx.model ? `${ctx.model.provider}/${ctx.model.id}` : undefined,
+        model:
+          (discovery.projectAgentsDir &&
+            readSubagentModel(path.dirname(discovery.projectAgentsDir))) ||
+          sessionModel,
         thinkingLevel: ctx.thinkingLevel,
       };
-      const discovery = discoverAgents(ctx.cwd, agentScope);
       const agents = discovery.agents;
       const confirmProjectAgents = params.confirmProjectAgents ?? true;
 
