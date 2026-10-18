@@ -1,0 +1,2 @@
+Задача: reviewer
+Сделано: .agents-core/roles/reviewer.md + копии. Инструменты read, grep, find, bash (bash — для git diff). Только diff среза и только правила с review; legacy.md для немигрированных модулей; проверка сохранения поведения у migrator; severity blocker/major/minor/question; строка «Кандидат в машинную проверку» для ratchet. Модель не задана — модель среды.
