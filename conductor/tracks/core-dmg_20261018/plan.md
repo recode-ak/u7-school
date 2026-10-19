@@ -68,9 +68,10 @@
     - [x] Тесты: `register` + `commit` сохраняют последовательно через репозитории; события публикуются только после успешного `commit`; при сбое сохранения публикации нет
     - [x] Реализация (на существующей шине событий)
     - Решения: `emits` сверяется до записи (незаявленное событие — не пишется ничего); без `emits` проверки нет (прод). Шина DMG — адаптер `legacyEventBus`: legacy-подписчики видят события DMG в старой форме, подписчики DMG — только конверты DMG.
-- [ ] Task: `UseCaseFromDef`
-    - [ ] Тесты: недопустимый `callers` → `UNAUTHORIZED`; невалидный вход → `INPUT_VALIDATION`; отказ Policy → `ACCESS_DENIED` с правилом; `Ok` → commit → publish; незаявленное событие → ассерт в test/dev; невалидный выход → `OUTPUT_VALIDATION`; исключение → `SERVER_INTERNAL` с логом; `this.err()` типом принимает только заявленные коды
-    - [ ] Реализация
+- [x] Task: `UseCaseFromDef` cc7701c
+    - [x] Тесты: недопустимый `callers` → `UNAUTHORIZED`; невалидный вход → `INPUT_VALIDATION`; отказ Policy → `ACCESS_DENIED` с правилом; `Ok` → commit → publish; незаявленное событие → ассерт в test/dev; невалидный выход → `OUTPUT_VALIDATION`; исключение → `SERVER_INTERNAL` с логом; `this.err()` типом принимает только заявленные коды
+    - [x] Реализация
+    - Решения: наследник пишет `load` (контекст Policy) и `execute`; Policy вычисляет база — пропустить её нельзя. `system` допускается через `callers`, Policy для него не вычисляется (в `decisions.md` в Фазе 6). Отдельного `this.err()` нет: тип возврата `load`/`execute` пропускает только ошибки из `errors` Def (`@ts-expect-error` в тесте).
 - [ ] Task: `ReactionFromDef` и `JobFromDef`
     - [ ] Тесты: `Result`; сбой логируется, не гасится молча; вызов UC как `system` с `onBehalfOf`; ассерты `touches`/`calls` через прокси резолвера; Job — на существующем планировщике
     - [ ] Реализация
