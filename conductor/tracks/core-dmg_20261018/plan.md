@@ -30,10 +30,11 @@
 
 ## Фаза 2: Манифесты домена и агрегат v2
 
-- [ ] Task: `defineEvents`
-    - [ ] Тесты: FQN `module.aggregate.event` из префикса группы; схема payload; ссылка на событие — объект
-    - [ ] Реализация
-- [ ] Task: Агрегат v2 и `defineAggregate`
+- [x] Task: `defineEvents` 0cf130e
+    - [x] Тесты: FQN `module.aggregate.event` из префикса группы; схема payload; ссылка на событие — объект
+    - [x] Реализация
+    - Событие в домене — `{ name, payload }`; конверт (eventId, occurredAt, aggregateId, caller) добавит UoW в Фазе 3
+- [~] Task: Агрегат v2 и `defineAggregate`
     - [ ] Тесты: `create(): Result<Ar>` с событием; `restore()` без событий; `snapshot()`; мутация «черновик → валидация → фиксация» (при `Err` и при невалидном черновике состояние не меняется); накопление и выдача событий; статусы и переходы в Def
     - [ ] Реализация
 - [ ] Task: `ReadonlyAr<T>`
