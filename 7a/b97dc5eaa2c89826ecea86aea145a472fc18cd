@@ -1,0 +1,5 @@
+Задача: Учебный модуль todo — прикладная часть (Фаза 3)
+Сделано: реализации UC/ER/Job, TaskRepo + TaskJsonRepo, фасад, todoMap/createTodoModule, ExampleUser, UseCaseFromDef.subject.
+Попутно (отдельные коммиты): e3d2f75 — имена Def по naming.md (XxxDef); 0e3a91b + 95d7f55 — параметр субъекта U (0e3a91b прошёл при красном check: ApiApp стал инвариантным по актору; исправлено в 95d7f55).
+Открыто для Фазы 6: layers.md §4 «репозиторий без разбора полей» расходится с запросами по полям (findActiveByOwner) — уточнить формулировку.
+Тесты: todo.module.test (8) + subject (2). check зелёный, 3040 pass.
