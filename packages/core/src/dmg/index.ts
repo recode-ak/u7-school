@@ -19,6 +19,44 @@ export {
 } from './domain/aggregate/define-aggregate';
 export type { ReadonlyAr } from './domain/aggregate/readonly-ar';
 export {
+  type AnyEventReactionDef,
+  defineEventReaction,
+  type EventReactionDef,
+  type EventReactionSpec,
+  type ReactionEventOf,
+} from './domain/contracts/define-event-reaction';
+export {
+  type AnyFacadeDef,
+  type AnyFacadeMethodDef,
+  defineFacade,
+  type FacadeApi,
+  type FacadeDef,
+  type FacadeMethodDef,
+  type FacadeSpec,
+  method,
+} from './domain/contracts/define-facade';
+export {
+  type AnyJobDef,
+  defineJob,
+  type JobDef,
+  type JobSpec,
+} from './domain/contracts/define-job';
+export {
+  type AnyModuleDef,
+  defineModule,
+  type ModuleDef,
+  type ModuleSpec,
+} from './domain/contracts/define-module';
+export {
+  type AnyUseCaseDef,
+  defineUseCase,
+  type InputOf,
+  type OutputOf,
+  type UseCaseDef,
+  type UseCaseErrorOf,
+  type UseCaseSpec,
+} from './domain/contracts/define-use-case';
+export {
   type AnyEventDef,
   type DomainEvent,
   defineEvents,
