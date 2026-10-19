@@ -87,6 +87,21 @@ export {
   rule,
 } from './domain/policy/policy';
 export {
+  type AnyDef,
+  type NormalizedAggregate,
+  type NormalizedDef,
+  type NormalizedError,
+  type NormalizedEvent,
+  type NormalizedEventReaction,
+  type NormalizedFacade,
+  type NormalizedJob,
+  type NormalizedModule,
+  type NormalizedPolicy,
+  type NormalizedRule,
+  type NormalizedUseCase,
+  normalize,
+} from './graph/normalize';
+export {
   type Caller,
   type CallerKind,
   type DelegateCaller,

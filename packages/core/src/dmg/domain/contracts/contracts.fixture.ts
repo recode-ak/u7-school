@@ -1,0 +1,143 @@
+// Фикстура контрактов для тестов dmg: по Def каждого вида.
+import * as v from 'valibot';
+import { defineErrors } from '../../kernel/errors/define-errors';
+import { BaseEntityFields, F } from '../../kernel/fields/fields';
+import { defineAggregate } from '../aggregate/define-aggregate';
+import { defineEvents } from '../events/define-events';
+import { definePolicy } from '../policy/define-policy';
+import { rule } from '../policy/policy';
+import { defineEventReaction } from './define-event-reaction';
+import { defineFacade, method } from './define-facade';
+import { defineJob } from './define-job';
+import { defineModule } from './define-module';
+import { defineUseCase } from './define-use-case';
+
+export const TaskEvents = defineEvents('todo.task', {
+  created: {
+    label: 'Задача создана',
+    description: 'Появилась новая задача.',
+    payload: v.object({ taskId: v.string() }),
+  },
+  completed: {
+    label: 'Задача выполнена',
+    description: 'Задача отмечена выполненной.',
+    payload: v.object({ taskId: v.string() }),
+  },
+});
+
+export const TaskErrors = defineErrors('TASK', {
+  NOT_FOUND: {
+    kind: 'not_found',
+    label: 'Задача не найдена',
+    description: 'Задачи с таким идентификатором нет.',
+  },
+  ALREADY_DONE: {
+    kind: 'conflict',
+    label: 'Задача уже выполнена',
+    description: 'Повторно завершить задачу нельзя.',
+  },
+});
+
+export const TaskDef = defineAggregate({
+  name: 'task',
+  label: 'Задача',
+  description: 'Пункт списка дел.',
+  state: v.object({ ...BaseEntityFields, title: F.string('Название') }),
+  events: TaskEvents,
+  errors: TaskErrors,
+});
+
+export const TaskPolicy = definePolicy({
+  name: 'task',
+  label: 'Права на задачи',
+  description: 'Кто может менять задачи.',
+  rules: {
+    canComplete: rule({
+      name: 'isOwner',
+      label: 'Владелец',
+      denyMessage: 'Только владелец.',
+      check: (subject: { id: string }, ctx: { ownerId: string }) =>
+        subject.id === ctx.ownerId,
+    }),
+  },
+});
+
+export const CompleteTaskUc = defineUseCase({
+  name: 'completeTask',
+  label: 'Завершить задачу',
+  description: 'Отмечает задачу выполненной.',
+  type: 'command',
+  aggregate: TaskDef,
+  callers: ['user', 'delegate'],
+  policy: TaskPolicy.rules.canComplete,
+  input: v.object({ taskId: F.uuid('задачи') }),
+  output: v.object({ completedAt: F.timestamp('выполнения') }),
+  errors: [TaskErrors.NOT_FOUND, TaskErrors.ALREADY_DONE],
+  emits: [TaskEvents.completed],
+});
+
+export const ListTasksUc = defineUseCase({
+  name: 'listTasks',
+  label: 'Список задач',
+  description: 'Все задачи пользователя.',
+  type: 'query',
+  aggregate: TaskDef,
+  callers: ['user'],
+  input: v.object({}),
+  output: v.array(v.object({ taskId: F.uuid('задачи') })),
+  errors: [],
+});
+
+export const TodoFacade = defineFacade({
+  name: 'todo',
+  label: 'Фасад задач',
+  description: 'API задач для других модулей.',
+  methods: {
+    isDone: method<[taskId: string], boolean>()({
+      label: 'Задача выполнена?',
+      description: 'Проверяет, выполнена ли задача.',
+      errors: [TaskErrors.NOT_FOUND],
+    }),
+  },
+});
+
+export const ArchiveDoneEr = defineEventReaction({
+  name: 'archiveDone',
+  label: 'Архивировать выполненную',
+  description: 'Переносит выполненную задачу в архив.',
+  on: [TaskEvents.completed, TaskEvents.created],
+  touches: [TaskDef],
+  calls: [TodoFacade],
+});
+
+export const RemindJob = defineJob({
+  name: 'remind',
+  label: 'Напоминание',
+  description: 'Ежедневно напоминает о задачах.',
+  schedule: { kind: 'dailyAt', hour: 6, minute: 0 },
+  scans: [TaskDef],
+  emits: [],
+});
+
+export const UsersModule = defineModule({
+  name: 'users',
+  label: 'Пользователи',
+  description: 'Учётные записи.',
+  dependsOn: [],
+  aggregates: [],
+  useCases: [],
+  reactions: [],
+  jobs: [],
+});
+
+export const TodoModule = defineModule({
+  name: 'todo',
+  label: 'Задачи',
+  description: 'Список дел.',
+  dependsOn: [UsersModule],
+  aggregates: [TaskDef],
+  useCases: [CompleteTaskUc, ListTasksUc],
+  reactions: [ArchiveDoneEr],
+  jobs: [RemindJob],
+  facade: TodoFacade,
+});
