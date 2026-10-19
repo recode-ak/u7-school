@@ -1,0 +1,5 @@
+Task: Timestamp, now(), F.*
+- dmg/time: Timestamp (number, мс UTC), now() поверх legacy shared/now (spyOn тоже работает), freezeClock/unfreezeClock
+- dmg/testing/clock.ts: setNow/resetNow
+- dmg/fields/fields.ts: F.uuid/timestamp/string/int/boolean/picklist с description из метки; F.timestamp читает число, legacy ISO без зоны (как UTC) и ISO с зоной, пишет число; BaseEntityFields
+- dmg/schema/json-schema.ts: toJsonSchema (typeMode input, errorMode throw) — основа MAN-03
