@@ -82,21 +82,23 @@ export const allowAll: Rule<unknown, unknown> = {
   evaluate: () => allowed,
 };
 
-type SubjectOf<R> = R extends Rule<infer U, infer _C> ? U : never;
-type ContextOf<R> = R extends Rule<infer _U, infer C> ? C : never;
+/** Субъект правила — кого принимает `evaluate`. */
+export type RuleSubjectOf<R> = R extends Rule<infer U, infer _C> ? U : never;
+/** Контекст правила — что прикладной слой загружает перед проверкой. */
+export type RuleContextOf<R> = R extends Rule<infer _U, infer C> ? C : never;
 
 // Рекурсия по кортежу, а не union: `unknown | Ctx` схлопнулся бы в `unknown`.
 type Subjects<R extends readonly unknown[]> = R extends readonly [
   infer H,
   ...infer T,
 ]
-  ? SubjectOf<H> & Subjects<T>
+  ? RuleSubjectOf<H> & Subjects<T>
   : unknown;
 type Contexts<R extends readonly unknown[]> = R extends readonly [
   infer H,
   ...infer T,
 ]
-  ? ContextOf<H> & Contexts<T>
+  ? RuleContextOf<H> & Contexts<T>
   : unknown;
 
 /**
