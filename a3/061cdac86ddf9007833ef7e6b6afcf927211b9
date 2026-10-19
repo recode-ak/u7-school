@@ -1,0 +1,4 @@
+Задача: UoW (Фаза 3)
+Сделано: EventEnvelope, порт EventBus DMG, адаптер legacyEventBus (WeakMap конвертов по объекту события), UnitOfWork (emits до записи → последовательный save → publish).
+Решения: проверка emits до сохранения (при баге не пишется ничего); emits не передан — без проверки (прод); aggregateName для legacy — префикс FQN события.
+Тесты: legacy-event-bus.test (4), unit-of-work.test (6). check зелёный, 2985 pass.
