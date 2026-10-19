@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { normalize } from '../../../graph/normalize';
+import { TaskDef } from './task/task.ar';
 import { TodoModule } from './todo.module';
 
 describe('TodoModule', () => {
@@ -11,6 +12,27 @@ describe('TodoModule', () => {
       reactions: ['archiveRemovedUserTasks'],
       jobs: ['archiveDoneTasks'],
       facade: 'todo',
+    });
+  });
+
+  it('агрегат: статусы, переходы, события и ошибки', () => {
+    expect(normalize(TaskDef)).toMatchObject({
+      name: 'task',
+      statuses: {
+        open: { label: 'Открыта' },
+        done: { label: 'Выполнена' },
+        archived: { label: 'В архиве' },
+      },
+      transitions: {
+        complete: { from: ['open'], to: 'done' },
+        archive: { from: ['open', 'done'], to: 'archived' },
+      },
+      events: [
+        'todo.task.created',
+        'todo.task.completed',
+        'todo.task.archived',
+      ],
+      errors: ['TASK_NOT_FOUND', 'TASK_ALREADY_DONE', 'TASK_ARCHIVED'],
     });
   });
 
