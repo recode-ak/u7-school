@@ -17,13 +17,14 @@
     - [x] Тесты: группа ошибок с `code`/`kind`/`label`/`description`/схемой payload; фабрика ошибки с типизированным payload; базовые ошибки ядра (`UNAUTHORIZED`, `INPUT_VALIDATION`, `ACCESS_DENIED`, `OUTPUT_VALIDATION`, `SERVER_INTERNAL`); `kind` — закрытый набор
     - [x] Реализация
     - Заметка: `defineErrors('TODO', { NOT_FOUND: … })` → код `TODO_NOT_FOUND`; Def даёт `make(payload)` и `err(payload)`
-- [x] Task: `Timestamp`, `now()`, `F.*` 2aaee2a1
+- [x] Task: `Timestamp`, `now()`, `F.*` 2aaee2a
     - [x] Тесты: управляемый `now()`; `F.timestamp` читает ISO и число, выдаёт число; `F.uuid`/`F.string`/… ставят `description` из метки; `BaseEntityFields`; поля конвертируются в JSON Schema
     - [x] Реализация (переиспользовать `shared/now`, если подходит)
     - Заметка: `now()` поверх legacy `shared/now`; заморозка — `setNow`/`resetNow` из `@u7-scl/core/dmg/testing`; `toJsonSchema` в режиме `input`
-- [~] Task: `Caller`
-    - [ ] Тесты: четыре подтипа с дженериком пользователя; `subjectOf` (user → он сам, delegate → замещаемый, guest/system → нет); `system.onBehalfOf`
-    - [ ] Реализация
+- [x] Task: `Caller` 35c7604
+    - [x] Тесты: четыре подтипа с дженериком пользователя; `subjectOf` (user → он сам, delegate → замещаемый, guest/system → нет); `system.onBehalfOf`
+    - [x] Реализация
+    - Заметка: `delegate` — `{ subject, actor, delegationId }`, `system` — `{ source, onBehalfOf? }`, `guest` — `{ channelId }`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Манифесты домена и агрегат v2
