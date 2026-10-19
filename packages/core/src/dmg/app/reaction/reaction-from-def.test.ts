@@ -156,6 +156,28 @@ describe('ReactionFromDef.handle', () => {
   });
 });
 
+describe('ReactionFromDef — production', () => {
+  test('фасад вне calls и агрегат вне touches — warn, реакция проходит', async () => {
+    const prod = testAppContext('production');
+    er = new ArchiveRemovedUserTasks({
+      app: prod.app,
+      tasks,
+      todo: todoFacade(),
+    });
+    er.step = async (_e, uow, _caller, deps) => {
+      await deps.todo.getTask(TASK);
+      const task = TaskAr.restore(taskRow(TASK));
+      uow.register(task, { aggregate: UserArDef, save: async () => {} });
+      return ok();
+    };
+    expectOk(await er.handle(removed()));
+    expect(prod.logs.map((l) => [l.level, l.message])).toEqual([
+      ['warn', 'archiveRemovedUserTasks: фасад todo не заявлен в calls'],
+      ['warn', 'UoW: агрегат user не заявлен в touches'],
+    ]);
+  });
+});
+
 describe('ReactionFromDef.subscribe', () => {
   test('реагирует на событие из шины', async () => {
     const bus = legacyEventBus(new InProcEventBus());

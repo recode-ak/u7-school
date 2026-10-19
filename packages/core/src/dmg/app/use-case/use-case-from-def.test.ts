@@ -165,13 +165,20 @@ describe('UseCaseFromDef.handle — операция', () => {
     expect(tasks.rows.get(TASK)?.status).toBe('open');
   });
 
-  test('незаявленное событие в production — без проверки', async () => {
+  test('незаявленное событие в production — warn, операция проходит', async () => {
     const prod = testAppContext('production');
     uc = new CompleteTask({ app: prod.app, tasks });
     uc.mutate = (task) => task.archive();
     expectOk(await uc.handle({ taskId: TASK }, user(OWNER)));
     expect(prod.published.map((e) => e.name)).toEqual([
       TaskEvents.archived.name,
+    ]);
+    expect(prod.logs).toEqual([
+      {
+        level: 'warn',
+        source: 'completeTask',
+        message: 'UoW: событие todo.task.archived не заявлено в emits',
+      },
     ]);
   });
 

@@ -23,6 +23,8 @@ export type UnitOfWorkContext = {
   readonly emits?: readonly AnyEventDef[];
   /** Агрегаты, которые операции разрешено менять; без поля — любые. */
   readonly touches?: readonly AnyAggregateDef[];
+  /** Что делать с расхождением с контрактом; по умолчанию — `throw`. */
+  readonly onViolation?: (message: string) => void;
 };
 
 type Entry = { readonly ar: Committable; readonly save: () => Promise<void> };
@@ -71,7 +73,7 @@ export class UnitOfWork {
   private assertTouches(aggregate: AnyAggregateDef): void {
     const { touches } = this.ctx;
     if (touches === undefined || touches.includes(aggregate)) return;
-    throw new Error(`UoW: агрегат ${aggregate.name} не заявлен в touches`);
+    this.violate(`UoW: агрегат ${aggregate.name} не заявлен в touches`);
   }
 
   private assertDeclared(envelope: EventEnvelope): void {
@@ -79,6 +81,12 @@ export class UnitOfWork {
     if (emits === undefined || emits.some((d) => d.name === envelope.name)) {
       return;
     }
-    throw new Error(`UoW: событие ${envelope.name} не заявлено в emits`);
+    this.violate(`UoW: событие ${envelope.name} не заявлено в emits`);
+  }
+
+  private violate(message: string): void {
+    const { onViolation } = this.ctx;
+    if (onViolation === undefined) throw new Error(message);
+    onViolation(message);
   }
 }

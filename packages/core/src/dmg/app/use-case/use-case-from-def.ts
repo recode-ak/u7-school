@@ -162,6 +162,7 @@ export abstract class UseCaseFromDef<
       }
     }
     const uow = contractUnitOfWork(this.resolve.app, {
+      source: this.def.name,
       caller,
       causationId: meta.causationId,
       emits: this.def.emits ?? [],

@@ -5,6 +5,8 @@ import type { AppContext } from '../context';
 import { UnitOfWork } from './unit-of-work';
 
 export type OperationContract = {
+  /** Имя операции — источник записи в логе. */
+  readonly source: string;
   readonly caller: Caller<unknown>;
   readonly causationId?: string | undefined;
   readonly emits: readonly AnyEventDef[];
@@ -12,21 +14,24 @@ export type OperationContract = {
 };
 
 /**
- * UoW операции со сверкой `emits`/`touches` по Def — в test и development.
- * В production сверки нет: расхождение с контрактом — баг, и ловить его
- * должны тесты, а не отказ пользователю.
+ * UoW операции со сверкой `emits`/`touches` по Def. Расхождение — баг
+ * реализации: в test и development — исключение, в production — `warn`
+ * в лог, а операция завершается (отказ пользователю из-за описания
+ * контракта хуже, чем запись для разбора).
  */
 export function contractUnitOfWork(
   app: AppContext,
   contract: OperationContract,
 ): UnitOfWork {
-  const { caller, causationId, emits, touches } = contract;
-  const strict = app.mode !== 'production';
+  const { source, caller, causationId, emits, touches } = contract;
   return new UnitOfWork({
     bus: app.bus,
     caller,
+    emits,
     ...(causationId === undefined ? {} : { causationId }),
-    ...(strict ? { emits } : {}),
-    ...(strict && touches !== undefined ? { touches } : {}),
+    ...(touches === undefined ? {} : { touches }),
+    ...(app.mode === 'production'
+      ? { onViolation: (message: string) => app.logger.warn(source, message) }
+      : {}),
   });
 }

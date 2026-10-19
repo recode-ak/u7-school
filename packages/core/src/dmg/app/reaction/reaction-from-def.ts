@@ -21,9 +21,9 @@ export type ReactionEnvelopeOf<D extends AnyEventReactionDef> = EnvelopeOf<
  * `Ok`, лог отказа и перехват исключений делает база.
  *
  * Вызывающий — `system` с `onBehalfOf` автора события-причины (caller.md
- * §2 п. 5); `causationId` событий реакции — `eventId` причины. Вне
- * production обращение к фасаду вне `calls` и регистрация агрегата вне
- * `touches` — исключение.
+ * §2 п. 5); `causationId` событий реакции — `eventId` причины. Обращение
+ * к фасаду вне `calls` и регистрация агрегата вне `touches` — исключение,
+ * в production — `warn` в лог.
  */
 export abstract class ReactionFromDef<
   D extends AnyEventReactionDef,
@@ -35,9 +35,12 @@ export abstract class ReactionFromDef<
     readonly def: D,
     resolve: R,
   ) {
+    const { app } = resolve;
     this.resolve =
-      resolve.app.mode === 'production'
-        ? resolve
+      app.mode === 'production'
+        ? guardCalls(def.name, def.calls, resolve, (message) =>
+            app.logger.warn(def.name, message),
+          )
         : guardCalls(def.name, def.calls, resolve);
   }
 
@@ -52,6 +55,7 @@ export abstract class ReactionFromDef<
     return runLogged(app, this.def.name, async () => {
       const caller = systemCaller(this.def.name, event.caller);
       const uow = contractUnitOfWork(app, {
+        source: this.def.name,
         caller,
         causationId: event.eventId,
         emits: this.def.emits,

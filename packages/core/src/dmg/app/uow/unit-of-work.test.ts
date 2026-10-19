@@ -132,6 +132,24 @@ describe('UnitOfWork.commit', () => {
     );
   });
 
+  test('с onViolation нарушения сообщаются, работа не прерывается', async () => {
+    const violations: string[] = [];
+    const lenient = new UnitOfWork({
+      bus: recordingBus(published, log),
+      caller: CALLER,
+      emits: [],
+      touches: [UserArDef],
+      onViolation: (message) => violations.push(message),
+    });
+    lenient.register(task(A), slowRepo(log));
+    await lenient.commit();
+    expect(violations).toEqual([
+      'UoW: агрегат task не заявлен в touches',
+      'UoW: событие todo.task.created не заявлено в emits',
+    ]);
+    expect(published).toHaveLength(1);
+  });
+
   test('без регистраций — ничего не делает', async () => {
     await uow.commit();
     expect(log).toEqual([]);

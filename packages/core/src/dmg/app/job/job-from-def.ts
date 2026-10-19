@@ -16,8 +16,8 @@ type Step<T> = (item: T, uow: UnitOfWork) => Promise<Result<void, DomainError>>;
  * Реализация Job по Def (API-05). Наследник пишет `run`: загрузить записи и
  * пройти их через `forEach` — у каждой своя UoW, отказ или исключение
  * записи пишется в лог и не прерывает обход (API-06). Вызывающий —
- * `system` с источником = имя Job; вне production регистрация агрегата
- * вне `scans` — исключение.
+ * `system` с источником = имя Job; регистрация агрегата вне `scans` —
+ * исключение, в production — `warn` в лог.
  */
 export abstract class JobFromDef<D extends AnyJobDef, R extends ModuleDeps> {
   protected readonly caller: SystemCaller<unknown>;
@@ -57,6 +57,7 @@ export abstract class JobFromDef<D extends AnyJobDef, R extends ModuleDeps> {
     step: Step<T>,
   ): Promise<Result<void, DomainError>> {
     const uow = contractUnitOfWork(this.resolve.app, {
+      source: this.def.name,
       caller: this.caller,
       emits: this.def.emits,
       touches: this.def.scans,
