@@ -38,10 +38,11 @@
     - [x] Тесты: `create(): Result<Ar>` с событием; `restore()` без событий; `snapshot()`; мутация «черновик → валидация → фиксация» (при `Err` и при невалидном черновике состояние не меняется); накопление и выдача событий; статусы и переходы в Def
     - [x] Реализация
     - Невалидное состояние и необъявленный переход — `throw` (нарушение инварианта); `updatedAt` ставит ядро
-- [~] Task: `ReadonlyAr<T>`
-    - [ ] Тесты типов (`@ts-expect-error`): методы с `Result` недоступны, вопросы и идентификаторы доступны
-    - [ ] Реализация
-- [ ] Task: `definePolicy` / `rule` / `anyOf` / `allOf` / `hasRole`
+- [x] Task: `ReadonlyAr<T>` a3576e7
+    - [x] Тесты типов (`@ts-expect-error`): методы с `Result` недоступны, вопросы и идентификаторы доступны
+    - [x] Реализация
+    - Также скрыты `snapshot` (entity, DOM-01) и `pullEvents` (только UoW)
+- [~] Task: `definePolicy` / `rule` / `anyOf` / `allOf` / `hasRole`
     - [ ] Тесты: `allowed`/`denied(rule, denyMessage)`; композиция; `delegable: false` отказывает `delegate`; правило работает с субъектом
     - [ ] Реализация
 - [ ] Task: Контракты `defineUseCase`, `defineEventReaction`, `defineJob`, `defineFacade`, `defineModule`
