@@ -1,0 +1,5 @@
+Задача: Команда bun run arch:check (Фаза 4)
+Что: archCheck/ArchApp (core), ExampleArch (dmg/testing), scripts/arch-check.ts (runArchCheck, ARCH_APPS), arch:check в package.json и в check (после tslint, перед тестами).
+Нарушения, найденные в примере и исправленные: MAN-02 (userId без description), MAN-06 (users.user.removed никто не публиковал), ARC-04 (импорт users мимо index.ts), ARC-06 (нет прикладного пакета users; интеграционный тест в пакете todo импортировал users).
+Решения: users — минимальный полный модуль (removeUser, callers system); интеграционный тест приложения — example/app/example-app.test.ts.
+Тесты: arch-check.test.ts (2), scripts/arch-check.test.ts (3). arch:check EXIT=0, check EXIT=0, 3090 pass.
