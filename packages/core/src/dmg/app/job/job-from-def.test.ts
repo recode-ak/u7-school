@@ -5,7 +5,7 @@ import { ok, type Result } from '../../kernel/result/result';
 import { expectErr, expectOk, resetNow, setNow } from '../../testing';
 import { testAppContext } from '../../testing/app-context';
 import {
-  ArchiveDoneTasksJob,
+  ArchiveDoneTasksJobDef,
   type TaskAr,
   TaskEvents,
 } from '../../testing/example/todo';
@@ -17,9 +17,9 @@ import { legacyJob } from './legacy-job';
 
 type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
 
-class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJob, Deps> {
+class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps) {
-    super(ArchiveDoneTasksJob, deps);
+    super(ArchiveDoneTasksJobDef, deps);
   }
 
   protected async run(): Promise<JobReport> {

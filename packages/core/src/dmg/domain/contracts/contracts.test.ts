@@ -4,17 +4,17 @@ import { CoreErrors } from '../../kernel/errors/core-errors';
 import type { EventOf } from '../events/define-events';
 import { allowAll } from '../policy/policy';
 import {
-  ArchiveDoneEr,
-  CompleteTaskUc,
-  ListTasksUc,
-  RemindJob,
-  TaskDef,
+  ArchiveDoneErDef,
+  CompleteTaskUcDef,
+  ListTasksUcDef,
+  RemindJobDef,
+  TaskArDef,
   TaskErrors,
   TaskEvents,
   TaskPolicy,
-  TodoFacade,
-  TodoModule,
-  UsersModule,
+  TodoFacadeDef,
+  TodoModuleDef,
+  UsersModuleDef,
 } from './contracts.fixture';
 import type { ReactionEventOf } from './define-event-reaction';
 import type { FacadeApi } from './define-facade';
@@ -27,28 +27,28 @@ import {
 
 describe('defineUseCase', () => {
   it('Def несёт дискриминатор и ссылки объектами', () => {
-    expect(CompleteTaskUc.dmg).toBe('useCase');
-    expect(CompleteTaskUc.aggregate).toBe(TaskDef);
-    expect(CompleteTaskUc.policy).toBe(TaskPolicy.rules.canComplete);
-    expect(CompleteTaskUc.errors).toEqual([
+    expect(CompleteTaskUcDef.dmg).toBe('useCase');
+    expect(CompleteTaskUcDef.aggregate).toBe(TaskArDef);
+    expect(CompleteTaskUcDef.policy).toBe(TaskPolicy.rules.canComplete);
+    expect(CompleteTaskUcDef.errors).toEqual([
       TaskErrors.NOT_FOUND,
       TaskErrors.ALREADY_DONE,
     ]);
-    expect(CompleteTaskUc.emits).toEqual([TaskEvents.completed]);
+    expect(CompleteTaskUcDef.emits).toEqual([TaskEvents.completed]);
   });
 
   it('input, output и ошибки выводятся из Def', () => {
-    const input: InputOf<typeof CompleteTaskUc> = { taskId: 'x' };
-    const output: OutputOf<typeof CompleteTaskUc> = { completedAt: 1 };
-    const code: UseCaseErrorOf<typeof CompleteTaskUc>['code'] =
+    const input: InputOf<typeof CompleteTaskUcDef> = { taskId: 'x' };
+    const output: OutputOf<typeof CompleteTaskUcDef> = { completedAt: 1 };
+    const code: UseCaseErrorOf<typeof CompleteTaskUcDef>['code'] =
       'TASK_NOT_FOUND';
-    const core: UseCaseErrorOf<typeof CompleteTaskUc> =
+    const core: UseCaseErrorOf<typeof CompleteTaskUcDef> =
       CoreErrors.SERVER_INTERNAL.make();
     // @ts-expect-error чужой код
-    const alien: UseCaseErrorOf<typeof CompleteTaskUc>['code'] =
+    const alien: UseCaseErrorOf<typeof CompleteTaskUcDef>['code'] =
       'USER_NOT_FOUND';
     // @ts-expect-error неверный тип входа
-    const bad: InputOf<typeof CompleteTaskUc> = { taskId: 1 };
+    const bad: InputOf<typeof CompleteTaskUcDef> = { taskId: 1 };
     expect([input, output, code, core, alien, bad]).toHaveLength(6);
   });
 
@@ -59,7 +59,7 @@ describe('defineUseCase', () => {
       label: 'X',
       description: 'X',
       type: 'command',
-      aggregate: TaskDef,
+      aggregate: TaskArDef,
       callers: ['user'],
       input: v.object({}),
       output: v.object({}),
@@ -70,7 +70,7 @@ describe('defineUseCase', () => {
       name: 'x',
       label: 'X',
       type: 'query',
-      aggregate: TaskDef,
+      aggregate: TaskArDef,
       callers: ['user'],
       policy: allowAll,
       input: v.object({}),
@@ -83,7 +83,7 @@ describe('defineUseCase', () => {
       label: 'X',
       description: 'X',
       type: 'query',
-      aggregate: TaskDef,
+      aggregate: TaskArDef,
       callers: ['user'],
       policy: allowAll,
       input: v.object({}),
@@ -91,32 +91,34 @@ describe('defineUseCase', () => {
       errors: [],
       emits: [TaskEvents.created],
     });
-    expect(ListTasksUc.type).toBe('query');
+    expect(ListTasksUcDef.type).toBe('query');
   });
 });
 
 describe('defineEventReaction', () => {
   it('Def несёт on/touches/calls ссылками; emits по умолчанию пуст', () => {
-    expect(ArchiveDoneEr.dmg).toBe('eventReaction');
-    expect(ArchiveDoneEr.on).toEqual([
+    expect(ArchiveDoneErDef.dmg).toBe('eventReaction');
+    expect(ArchiveDoneErDef.on).toEqual([
       TaskEvents.completed,
       TaskEvents.created,
     ]);
-    expect(ArchiveDoneEr.touches).toEqual([TaskDef]);
-    expect(ArchiveDoneEr.calls).toEqual([TodoFacade]);
-    expect(ArchiveDoneEr.emits).toEqual([]);
+    expect(ArchiveDoneErDef.touches).toEqual([TaskArDef]);
+    expect(ArchiveDoneErDef.calls).toEqual([TodoFacadeDef]);
+    expect(ArchiveDoneErDef.emits).toEqual([]);
   });
 
   it('тип события реакции — union событий из on', () => {
-    const e: ReactionEventOf<typeof ArchiveDoneEr> = TaskEvents.created.make({
-      taskId: 't1',
-    });
+    const e: ReactionEventOf<typeof ArchiveDoneErDef> = TaskEvents.created.make(
+      {
+        taskId: 't1',
+      },
+    );
     const name: 'todo.task.completed' | 'todo.task.created' = e.name;
     const completed: EventOf<typeof TaskEvents.completed> = {
       name: 'todo.task.completed',
       payload: { taskId: 't1' },
     };
-    const also: ReactionEventOf<typeof ArchiveDoneEr> = completed;
+    const also: ReactionEventOf<typeof ArchiveDoneErDef> = completed;
     expect([name, also.name]).toEqual([
       'todo.task.created',
       'todo.task.completed',
@@ -126,26 +128,30 @@ describe('defineEventReaction', () => {
 
 describe('defineJob', () => {
   it('Def несёт расписание и ссылки', () => {
-    expect(RemindJob.dmg).toBe('job');
-    expect(RemindJob.schedule).toEqual({ kind: 'dailyAt', hour: 6, minute: 0 });
-    expect(RemindJob.scans).toEqual([TaskDef]);
+    expect(RemindJobDef.dmg).toBe('job');
+    expect(RemindJobDef.schedule).toEqual({
+      kind: 'dailyAt',
+      hour: 6,
+      minute: 0,
+    });
+    expect(RemindJobDef.scans).toEqual([TaskArDef]);
   });
 });
 
 describe('defineFacade', () => {
   it('методы с label/description и ошибками', () => {
-    expect(TodoFacade.dmg).toBe('facade');
-    expect(TodoFacade.methods.isDone.dmg).toBe('facadeMethod');
-    expect(TodoFacade.methods.isDone.errors).toEqual([TaskErrors.NOT_FOUND]);
+    expect(TodoFacadeDef.dmg).toBe('facade');
+    expect(TodoFacadeDef.methods.isDone.dmg).toBe('facadeMethod');
+    expect(TodoFacadeDef.methods.isDone.errors).toEqual([TaskErrors.NOT_FOUND]);
   });
 
   it('тип API фасада выводится из Def', async () => {
-    const api: FacadeApi<typeof TodoFacade> = {
+    const api: FacadeApi<typeof TodoFacadeDef> = {
       isDone: async () => TaskErrors.NOT_FOUND.err(),
     };
     const res = await api.isDone('t1');
     expect(res.ok ? res.value : res.error.code).toBe('TASK_NOT_FOUND');
-    const wrong: FacadeApi<typeof TodoFacade> = {
+    const wrong: FacadeApi<typeof TodoFacadeDef> = {
       // @ts-expect-error ошибка не объявлена в контракте фасада
       isDone: async () => TaskErrors.ALREADY_DONE.err(),
     };
@@ -155,12 +161,12 @@ describe('defineFacade', () => {
 
 describe('defineModule', () => {
   it('Def несёт состав и зависимости ссылками', () => {
-    expect(TodoModule.dmg).toBe('module');
-    expect(TodoModule.dependsOn).toEqual([UsersModule]);
-    expect(TodoModule.aggregates).toEqual([TaskDef]);
-    expect(TodoModule.useCases).toEqual([CompleteTaskUc, ListTasksUc]);
-    expect(TodoModule.reactions).toEqual([ArchiveDoneEr]);
-    expect(TodoModule.jobs).toEqual([RemindJob]);
-    expect(TodoModule.facade).toBe(TodoFacade);
+    expect(TodoModuleDef.dmg).toBe('module');
+    expect(TodoModuleDef.dependsOn).toEqual([UsersModuleDef]);
+    expect(TodoModuleDef.aggregates).toEqual([TaskArDef]);
+    expect(TodoModuleDef.useCases).toEqual([CompleteTaskUcDef, ListTasksUcDef]);
+    expect(TodoModuleDef.reactions).toEqual([ArchiveDoneErDef]);
+    expect(TodoModuleDef.jobs).toEqual([RemindJobDef]);
+    expect(TodoModuleDef.facade).toBe(TodoFacadeDef);
   });
 });

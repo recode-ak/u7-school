@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { type Caller, systemCaller } from '../../kernel/caller/caller';
 import { expectOk, resetNow, setNow } from '../../testing';
-import { TaskAr, TaskDef, TaskEvents } from '../../testing/example/todo';
-import { UserDef } from '../../testing/example/users/user/user.ar';
+import { TaskAr, TaskArDef, TaskEvents } from '../../testing/example/todo';
+import { UserArDef } from '../../testing/example/users/user/user.ar';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
 import type { Repository } from './repository';
@@ -29,7 +29,7 @@ function recordingBus(published: EventEnvelope[], log: Log): EventBus {
 /** Репозиторий, который пишет в журнал начало и конец сохранения. */
 function slowRepo(log: Log, fail = false): Repository<TaskAr> {
   return {
-    aggregate: TaskDef,
+    aggregate: TaskArDef,
     async save(ar) {
       log.push(`save ${ar.uuid}`);
       await Promise.resolve();
@@ -125,7 +125,7 @@ describe('UnitOfWork.commit', () => {
     const narrow = new UnitOfWork({
       bus: recordingBus(published, log),
       caller: CALLER,
-      touches: [UserDef],
+      touches: [UserArDef],
     });
     expect(() => narrow.register(task(A), slowRepo(log))).toThrow(
       'агрегат task не заявлен в touches',

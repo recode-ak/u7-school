@@ -19,7 +19,7 @@ import {
   testAppContext,
 } from '../../testing';
 import {
-  CompleteTaskUc,
+  CompleteTaskUcDef,
   type TaskAr,
   TaskErrors,
   TaskEvents,
@@ -49,9 +49,13 @@ async function loadTask(tasks: MemoryTasks, input: { taskId: string }) {
 }
 
 /** Эталонный UC: загрузить → (Policy в базе) → операция Ar → UoW. */
-class CompleteTask extends UseCaseFromDef<typeof CompleteTaskUc, Deps, Loaded> {
+class CompleteTask extends UseCaseFromDef<
+  typeof CompleteTaskUcDef,
+  Deps,
+  Loaded
+> {
   constructor(deps: Deps) {
-    super(CompleteTaskUc, deps);
+    super(CompleteTaskUcDef, deps);
   }
 
   protected load(input: { taskId: string }) {
@@ -116,13 +120,17 @@ describe('UseCaseFromDef.handle — отказы до операции', () => {
   });
 
   test('system из callers Policy не проверяет', async () => {
-    const SystemUc = defineUseCase({
-      ...CompleteTaskUc,
+    const SystemUcDef = defineUseCase({
+      ...CompleteTaskUcDef,
       callers: ['system'],
     });
-    class SystemComplete extends UseCaseFromDef<typeof SystemUc, Deps, Loaded> {
+    class SystemComplete extends UseCaseFromDef<
+      typeof SystemUcDef,
+      Deps,
+      Loaded
+    > {
       constructor() {
-        super(SystemUc, { app: ctx.app, tasks });
+        super(SystemUcDef, { app: ctx.app, tasks });
       }
       protected load = (i: { taskId: string }) => loadTask(tasks, i);
       protected execute = async () => ok({});
@@ -177,13 +185,17 @@ describe('UseCaseFromDef.handle — операция', () => {
   });
 
   test('невалидный выход → OUTPUT_VALIDATION', async () => {
-    const BadOutputUc = defineUseCase({
-      ...CompleteTaskUc,
+    const BadOutputUcDef = defineUseCase({
+      ...CompleteTaskUcDef,
       output: v.object({ taskId: v.pipe(v.string(), v.uuid()) }),
     });
-    class BadOutput extends UseCaseFromDef<typeof BadOutputUc, Deps, Loaded> {
+    class BadOutput extends UseCaseFromDef<
+      typeof BadOutputUcDef,
+      Deps,
+      Loaded
+    > {
       constructor() {
-        super(BadOutputUc, { app: ctx.app, tasks });
+        super(BadOutputUcDef, { app: ctx.app, tasks });
       }
       protected load = (i: { taskId: string }) => loadTask(tasks, i);
       protected execute = async () => ok({ taskId: 'не uuid' });
@@ -196,22 +208,22 @@ describe('UseCaseFromDef.handle — операция', () => {
 describe('UseCaseFromDef — типы', () => {
   test('execute не может вернуть незаявленную ошибку (ERR-02)', () => {
     class Undeclared extends UseCaseFromDef<
-      typeof CompleteTaskUc,
+      typeof CompleteTaskUcDef,
       Deps,
       Loaded
     > {
       constructor() {
-        super(CompleteTaskUc, { app: ctx.app, tasks });
+        super(CompleteTaskUcDef, { app: ctx.app, tasks });
       }
       protected load = (i: { taskId: string }) => loadTask(tasks, i);
-      // @ts-expect-error: OTHER_FAILED нет в errors CompleteTaskUc
+      // @ts-expect-error: OTHER_FAILED нет в errors CompleteTaskUcDef
       protected execute = async () => OtherErrors.FAILED.err();
     }
     expect(Undeclared).toBeDefined();
   });
 
   test('загруженный контекст обязан подходить Policy', () => {
-    type Uc = typeof CompleteTaskUc;
+    type Uc = typeof CompleteTaskUcDef;
     // @ts-expect-error: { title } не TaskCtx — Policy нечего проверять
     type WrongCtx = UseCaseFromDef<Uc, Deps, { title: string }>;
     expectTypeOf<WrongCtx>().not.toBeNever();

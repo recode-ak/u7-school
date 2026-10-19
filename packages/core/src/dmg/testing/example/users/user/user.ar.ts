@@ -13,7 +13,7 @@ export const UserEvents = defineEvents('users.user', {
   },
 });
 
-export const UserDef = defineAggregate({
+export const UserArDef = defineAggregate({
   name: 'user',
   label: 'Пользователь',
   description: 'Учётная запись.',

@@ -45,7 +45,7 @@ const TaskErrors = defineErrors('TASK', {
   },
 });
 
-const TaskDef = defineAggregate({
+const TaskArDef = defineAggregate({
   name: 'task',
   label: 'Задача',
   description: 'Пункт списка дел.',
@@ -56,14 +56,14 @@ const TaskDef = defineAggregate({
   errors: TaskErrors,
 });
 
-type TaskError = ErrorsOf<typeof TaskDef>;
+type TaskError = ErrorsOf<typeof TaskArDef>;
 
-class TaskAr extends Aggregate<typeof TaskDef> {
+class TaskAr extends Aggregate<typeof TaskArDef> {
   private constructor(
-    state: StateOf<typeof TaskDef>,
-    events?: readonly EventsOf<typeof TaskDef>[],
+    state: StateOf<typeof TaskArDef>,
+    events?: readonly EventsOf<typeof TaskArDef>[],
   ) {
-    super(TaskDef, state, events);
+    super(TaskArDef, state, events);
   }
 
   static create(uuid: string, title: string): Result<TaskAr, TaskError> {
@@ -73,7 +73,7 @@ class TaskAr extends Aggregate<typeof TaskDef> {
     return ok(new TaskAr({ ...state, status: 'open' }, [created]));
   }
 
-  static restore(snapshot: StateOf<typeof TaskDef>): TaskAr {
+  static restore(snapshot: StateOf<typeof TaskArDef>): TaskAr {
     return new TaskAr(snapshot);
   }
 
@@ -123,16 +123,16 @@ const stored = (status: 'open' | 'done') => ({
 
 describe('defineAggregate', () => {
   it('Def несёт метаданные, статусы, переходы и ссылки на группы', () => {
-    expect(TaskDef.dmg).toBe('aggregate');
-    expect(TaskDef.name).toBe('task');
-    expect(TaskDef.label).toBe('Задача');
-    expect(TaskDef.statuses.done.label).toBe('Выполнена');
-    expect(TaskDef.transitions.complete).toEqual({
+    expect(TaskArDef.dmg).toBe('aggregate');
+    expect(TaskArDef.name).toBe('task');
+    expect(TaskArDef.label).toBe('Задача');
+    expect(TaskArDef.statuses.done.label).toBe('Выполнена');
+    expect(TaskArDef.transitions.complete).toEqual({
       from: ['open'],
       to: 'done',
     });
-    expect(TaskDef.events).toBe(TaskEvents);
-    expect(TaskDef.errors).toBe(TaskErrors);
+    expect(TaskArDef.events).toBe(TaskEvents);
+    expect(TaskArDef.errors).toBe(TaskErrors);
   });
 
   it('статусы обязаны покрыть все значения `status` состояния', () => {

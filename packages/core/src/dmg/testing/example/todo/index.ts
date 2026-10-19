@@ -1,17 +1,17 @@
 // Публичный API учебного модуля todo.
-export { ArchiveRemovedUserTasksEr } from './task/er/archive-removed-user-tasks.er';
-export { ArchiveDoneTasksJob } from './task/job/archive-done-tasks.job';
+export { ArchiveRemovedUserTasksErDef } from './task/er/archive-removed-user-tasks.er';
+export { ArchiveDoneTasksJobDef } from './task/job/archive-done-tasks.job';
 export {
   type CreateTask,
   TaskAr,
-  TaskDef,
+  TaskArDef,
   type TaskError,
 } from './task/task.ar';
 export { TaskErrors } from './task/task.errors';
 export { TaskEvents } from './task/task.events';
 export { type TaskCtx, TaskPolicy } from './task/task.policy';
-export { CompleteTaskUc } from './task/uc/complete-task.uc';
-export { CreateTaskUc } from './task/uc/create-task.uc';
-export { ListTasksUc } from './task/uc/list-tasks.uc';
-export { TodoFacade } from './todo.facade';
-export { TodoModule } from './todo.module';
+export { CompleteTaskUcDef } from './task/uc/complete-task.uc';
+export { CreateTaskUcDef } from './task/uc/create-task.uc';
+export { ListTasksUcDef } from './task/uc/list-tasks.uc';
+export { TodoFacadeDef } from './todo.facade';
+export { TodoModuleDef } from './todo.module';

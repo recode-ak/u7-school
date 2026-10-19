@@ -10,7 +10,7 @@ import { TaskErrors } from './task.errors';
 import { TaskEvents } from './task.events';
 import { TaskState } from './task.state';
 
-export const TaskDef = defineAggregate({
+export const TaskArDef = defineAggregate({
   name: 'task',
   label: 'Задача',
   description:
@@ -29,8 +29,8 @@ export const TaskDef = defineAggregate({
   errors: TaskErrors,
 });
 
-export type TaskError = ErrorsOf<typeof TaskDef>;
-type TaskEvent = EventsOf<typeof TaskDef>;
+export type TaskError = ErrorsOf<typeof TaskArDef>;
+type TaskEvent = EventsOf<typeof TaskArDef>;
 
 export type CreateTask = {
   readonly uuid: string;
@@ -38,9 +38,9 @@ export type CreateTask = {
   readonly title: string;
 };
 
-export class TaskAr extends Aggregate<typeof TaskDef> {
+export class TaskAr extends Aggregate<typeof TaskArDef> {
   private constructor(state: TaskState, events?: readonly TaskEvent[]) {
-    super(TaskDef, state, events);
+    super(TaskArDef, state, events);
   }
 
   static create(input: CreateTask): Result<TaskAr, never> {

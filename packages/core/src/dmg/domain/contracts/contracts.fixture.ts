@@ -38,7 +38,7 @@ export const TaskErrors = defineErrors('TASK', {
   },
 });
 
-export const TaskDef = defineAggregate({
+export const TaskArDef = defineAggregate({
   name: 'task',
   label: 'Задача',
   description: 'Пункт списка дел.',
@@ -62,12 +62,12 @@ export const TaskPolicy = definePolicy({
   },
 });
 
-export const CompleteTaskUc = defineUseCase({
+export const CompleteTaskUcDef = defineUseCase({
   name: 'completeTask',
   label: 'Завершить задачу',
   description: 'Отмечает задачу выполненной.',
   type: 'command',
-  aggregate: TaskDef,
+  aggregate: TaskArDef,
   callers: ['user', 'delegate'],
   policy: TaskPolicy.rules.canComplete,
   input: v.object({ taskId: F.uuid('задачи') }),
@@ -76,12 +76,12 @@ export const CompleteTaskUc = defineUseCase({
   emits: [TaskEvents.completed],
 });
 
-export const ListTasksUc = defineUseCase({
+export const ListTasksUcDef = defineUseCase({
   name: 'listTasks',
   label: 'Список задач',
   description: 'Все задачи пользователя.',
   type: 'query',
-  aggregate: TaskDef,
+  aggregate: TaskArDef,
   callers: ['user'],
   policy: allowAll,
   input: v.object({}),
@@ -89,7 +89,7 @@ export const ListTasksUc = defineUseCase({
   errors: [],
 });
 
-export const TodoFacade = defineFacade({
+export const TodoFacadeDef = defineFacade({
   name: 'todo',
   label: 'Фасад задач',
   description: 'API задач для других модулей.',
@@ -102,25 +102,25 @@ export const TodoFacade = defineFacade({
   },
 });
 
-export const ArchiveDoneEr = defineEventReaction({
+export const ArchiveDoneErDef = defineEventReaction({
   name: 'archiveDone',
   label: 'Архивировать выполненную',
   description: 'Переносит выполненную задачу в архив.',
   on: [TaskEvents.completed, TaskEvents.created],
-  touches: [TaskDef],
-  calls: [TodoFacade],
+  touches: [TaskArDef],
+  calls: [TodoFacadeDef],
 });
 
-export const RemindJob = defineJob({
+export const RemindJobDef = defineJob({
   name: 'remind',
   label: 'Напоминание',
   description: 'Ежедневно напоминает о задачах.',
   schedule: { kind: 'dailyAt', hour: 6, minute: 0 },
-  scans: [TaskDef],
+  scans: [TaskArDef],
   emits: [],
 });
 
-export const UsersModule = defineModule({
+export const UsersModuleDef = defineModule({
   name: 'users',
   label: 'Пользователи',
   description: 'Учётные записи.',
@@ -131,14 +131,14 @@ export const UsersModule = defineModule({
   jobs: [],
 });
 
-export const TodoModule = defineModule({
+export const TodoModuleDef = defineModule({
   name: 'todo',
   label: 'Задачи',
   description: 'Список дел.',
-  dependsOn: [UsersModule],
-  aggregates: [TaskDef],
-  useCases: [CompleteTaskUc, ListTasksUc],
-  reactions: [ArchiveDoneEr],
-  jobs: [RemindJob],
-  facade: TodoFacade,
+  dependsOn: [UsersModuleDef],
+  aggregates: [TaskArDef],
+  useCases: [CompleteTaskUcDef, ListTasksUcDef],
+  reactions: [ArchiveDoneErDef],
+  jobs: [RemindJobDef],
+  facade: TodoFacadeDef,
 });

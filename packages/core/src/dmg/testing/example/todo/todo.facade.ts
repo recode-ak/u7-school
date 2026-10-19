@@ -3,7 +3,7 @@ import { defineFacade, method } from '../../../domain/contracts/define-facade';
 import type { TaskAr } from './task/task.ar';
 import { TaskErrors } from './task/task.errors';
 
-export const TodoFacade = defineFacade({
+export const TodoFacadeDef = defineFacade({
   name: 'todo',
   label: 'Задачи',
   description: 'Runtime-API модуля задач для других модулей.',

@@ -2,16 +2,16 @@ import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { defineAggregate } from '../domain/aggregate/define-aggregate';
 import {
-  ArchiveDoneEr,
-  CompleteTaskUc,
-  ListTasksUc,
-  RemindJob,
-  TaskDef,
+  ArchiveDoneErDef,
+  CompleteTaskUcDef,
+  ListTasksUcDef,
+  RemindJobDef,
+  TaskArDef,
   TaskErrors,
   TaskEvents,
   TaskPolicy,
-  TodoFacade,
-  TodoModule,
+  TodoFacadeDef,
+  TodoModuleDef,
 } from '../domain/contracts/contracts.fixture';
 import { allOf, anyOf, hasRole } from '../domain/policy/policy';
 import { BaseEntityFields, F } from '../kernel/fields/fields';
@@ -42,7 +42,7 @@ describe('normalize', () => {
   });
 
   it('агрегат: схема состояния, группы — FQN и коды', () => {
-    expect(normalize(TaskDef)).toEqual({
+    expect(normalize(TaskArDef)).toEqual({
       dmg: 'aggregate',
       name: 'task',
       label: 'Задача',
@@ -96,7 +96,7 @@ describe('normalize', () => {
   });
 
   it('UC: ссылки — имена, FQN и коды; схемы — JSON Schema', () => {
-    expect(normalize(CompleteTaskUc)).toEqual({
+    expect(normalize(CompleteTaskUcDef)).toEqual({
       dmg: 'useCase',
       name: 'completeTask',
       label: 'Завершить задачу',
@@ -110,7 +110,7 @@ describe('normalize', () => {
       errors: ['TASK_NOT_FOUND', 'TASK_ALREADY_DONE'],
       emits: ['todo.task.completed'],
     });
-    expect(normalize(ListTasksUc)).toMatchObject({
+    expect(normalize(ListTasksUcDef)).toMatchObject({
       policy: { dmg: 'rule', op: 'allowAll' },
       output: expect.objectContaining({ type: 'array' }),
       emits: [],
@@ -118,7 +118,7 @@ describe('normalize', () => {
   });
 
   it('ER и Job: ссылки — имена', () => {
-    expect(normalize(ArchiveDoneEr)).toEqual({
+    expect(normalize(ArchiveDoneErDef)).toEqual({
       dmg: 'eventReaction',
       name: 'archiveDone',
       label: 'Архивировать выполненную',
@@ -128,7 +128,7 @@ describe('normalize', () => {
       calls: ['todo'],
       emits: [],
     });
-    expect(normalize(RemindJob)).toEqual({
+    expect(normalize(RemindJobDef)).toEqual({
       dmg: 'job',
       name: 'remind',
       label: 'Напоминание',
@@ -140,7 +140,7 @@ describe('normalize', () => {
   });
 
   it('фасад и модуль', () => {
-    expect(normalize(TodoFacade)).toEqual({
+    expect(normalize(TodoFacadeDef)).toEqual({
       dmg: 'facade',
       name: 'todo',
       label: 'Фасад задач',
@@ -153,7 +153,7 @@ describe('normalize', () => {
         },
       },
     });
-    expect(normalize(TodoModule)).toEqual({
+    expect(normalize(TodoModuleDef)).toEqual({
       dmg: 'module',
       name: 'todo',
       label: 'Задачи',

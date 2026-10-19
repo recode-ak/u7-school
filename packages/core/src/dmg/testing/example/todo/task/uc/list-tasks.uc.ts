@@ -1,15 +1,15 @@
 import * as v from 'valibot';
 import { defineUseCase } from '../../../../../domain/contracts/define-use-case';
 import { allowAll } from '../../../../../domain/policy/policy';
-import { TaskDef } from '../task.ar';
+import { TaskArDef } from '../task.ar';
 import { TaskState } from '../task.state';
 
-export const ListTasksUc = defineUseCase({
+export const ListTasksUcDef = defineUseCase({
   name: 'listTasks',
   label: 'Мои задачи',
   description: 'Неархивные задачи вызывающего: открытые и выполненные.',
   type: 'query',
-  aggregate: TaskDef,
+  aggregate: TaskArDef,
   callers: ['user', 'delegate'],
   policy: allowAll,
   input: v.object({}),

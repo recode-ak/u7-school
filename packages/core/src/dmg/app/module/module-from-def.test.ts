@@ -4,12 +4,12 @@ import { defineModule } from '../../domain/contracts/define-module';
 import { ok } from '../../kernel/result/result';
 import { testAppContext } from '../../testing/app-context';
 import {
-  ArchiveDoneTasksJob,
-  ArchiveRemovedUserTasksEr,
-  CompleteTaskUc,
-  CreateTaskUc,
+  ArchiveDoneTasksJobDef,
+  ArchiveRemovedUserTasksErDef,
+  CompleteTaskUcDef,
+  CreateTaskUcDef,
   TaskErrors,
-  TodoFacade,
+  TodoFacadeDef,
 } from '../../testing/example/todo';
 import { UserEvents } from '../../testing/example/users/user/user.ar';
 import { T0 } from '../app.fixture';
@@ -21,34 +21,38 @@ import { ReactionFromDef } from '../reaction/reaction-from-def';
 import { UseCaseFromDef } from '../use-case/use-case-from-def';
 import { ModuleFromDef, type ModuleMap } from './module-from-def';
 
-const MiniModule = defineModule({
+const MiniModuleDef = defineModule({
   name: 'mini',
   label: 'Мини',
   description: 'Модуль для проверки карты Def → класс.',
   dependsOn: [],
   aggregates: [],
-  useCases: [CompleteTaskUc],
-  reactions: [ArchiveRemovedUserTasksEr],
-  jobs: [ArchiveDoneTasksJob],
-  facade: TodoFacade,
+  useCases: [CompleteTaskUcDef],
+  reactions: [ArchiveRemovedUserTasksErDef],
+  jobs: [ArchiveDoneTasksJobDef],
+  facade: TodoFacadeDef,
 });
 
 type Deps = { readonly app: AppContext; reacted: string[] };
 
-class CompleteTask extends UseCaseFromDef<typeof CompleteTaskUc, Deps, never> {
+class CompleteTask extends UseCaseFromDef<
+  typeof CompleteTaskUcDef,
+  Deps,
+  never
+> {
   constructor(deps: Deps) {
-    super(CompleteTaskUc, deps);
+    super(CompleteTaskUcDef, deps);
   }
   protected load = async () => TaskErrors.NOT_FOUND.err({ taskId: 'x' });
   protected execute = async () => ok({});
 }
 
 class ArchiveRemoved extends ReactionFromDef<
-  typeof ArchiveRemovedUserTasksEr,
+  typeof ArchiveRemovedUserTasksErDef,
   Deps
 > {
   constructor(deps: Deps) {
-    super(ArchiveRemovedUserTasksEr, deps);
+    super(ArchiveRemovedUserTasksErDef, deps);
   }
   protected async react() {
     this.resolve.reacted.push(this.def.name);
@@ -56,9 +60,9 @@ class ArchiveRemoved extends ReactionFromDef<
   }
 }
 
-class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJob, Deps> {
+class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps) {
-    super(ArchiveDoneTasksJob, deps);
+    super(ArchiveDoneTasksJobDef, deps);
   }
   protected run = () => this.forEach([], async () => ok());
 }
@@ -68,23 +72,23 @@ const map = {
   reactions: { archiveRemovedUserTasks: ArchiveRemoved },
   jobs: { archiveDoneTasks: ArchiveDone },
   facade: () =>
-    implementFacade(TodoFacade, {
+    implementFacade(TodoFacadeDef, {
       getTask: async (taskId) => TaskErrors.NOT_FOUND.err({ taskId }),
     }),
-} satisfies ModuleMap<typeof MiniModule, Deps>;
+} satisfies ModuleMap<typeof MiniModuleDef, Deps>;
 
 let deps: Deps;
-let mini: ModuleFromDef<typeof MiniModule, Deps>;
+let mini: ModuleFromDef<typeof MiniModuleDef, Deps>;
 
 beforeEach(() => {
   deps = { app: testAppContext().app, reacted: [] };
-  mini = new ModuleFromDef(MiniModule, map, deps);
+  mini = new ModuleFromDef(MiniModuleDef, map, deps);
 });
 
 describe('ModuleFromDef', () => {
   test('реализация UC — по его Def; чужой Def — undefined', () => {
-    expect(mini.useCase(CompleteTaskUc)?.def).toBe(CompleteTaskUc);
-    expect(mini.useCase(CreateTaskUc)).toBeUndefined();
+    expect(mini.useCase(CompleteTaskUcDef)?.def).toBe(CompleteTaskUcDef);
+    expect(mini.useCase(CreateTaskUcDef)).toBeUndefined();
   });
 
   test('реакции подписываются на шину рядом с legacy-подписчиками', async () => {
@@ -95,7 +99,7 @@ describe('ModuleFromDef', () => {
     });
     const bus = legacyEventBus(legacy);
     deps = { app: { ...testAppContext().app, bus }, reacted: [] };
-    new ModuleFromDef(MiniModule, map, deps).subscribe();
+    new ModuleFromDef(MiniModuleDef, map, deps).subscribe();
     bus.publish({
       ...UserEvents.removed.make({ userId: 'u' }),
       eventId: 'e',
@@ -123,7 +127,7 @@ describe('ModuleFromDef', () => {
 
 describe('ModuleMap — полнота проверяется компилятором', () => {
   test('пропуск реализации UC', () => {
-    const missing: ModuleMap<typeof MiniModule, Deps> = {
+    const missing: ModuleMap<typeof MiniModuleDef, Deps> = {
       ...map,
       // @ts-expect-error: нет completeTask
       useCases: {},
@@ -132,7 +136,7 @@ describe('ModuleMap — полнота проверяется компилято
   });
 
   test('класс чужого Def под именем UC', () => {
-    const wrong: ModuleMap<typeof MiniModule, Deps> = {
+    const wrong: ModuleMap<typeof MiniModuleDef, Deps> = {
       ...map,
       // @ts-expect-error: ArchiveRemoved реализует ER, а не completeTask
       useCases: { completeTask: ArchiveRemoved },
@@ -143,8 +147,8 @@ describe('ModuleMap — полнота проверяется компилято
   test('пропуск фасада, объявленного в Def', () => {
     const { useCases, reactions, jobs } = map;
     const noFacade = { useCases, reactions, jobs };
-    // @ts-expect-error: TodoFacade объявлен — реализация обязательна
-    const missing: ModuleMap<typeof MiniModule, Deps> = noFacade;
+    // @ts-expect-error: TodoFacadeDef объявлен — реализация обязательна
+    const missing: ModuleMap<typeof MiniModuleDef, Deps> = noFacade;
     expect(missing).toBeDefined();
   });
 });

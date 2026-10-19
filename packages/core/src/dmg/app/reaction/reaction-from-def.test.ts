@@ -11,13 +11,16 @@ import {
   testAppContext,
 } from '../../testing';
 import {
-  ArchiveRemovedUserTasksEr,
+  ArchiveRemovedUserTasksErDef,
   TaskAr,
   TaskErrors,
   TaskEvents,
-  TodoFacade,
+  TodoFacadeDef,
 } from '../../testing/example/todo';
-import { UserDef, UserEvents } from '../../testing/example/users/user/user.ar';
+import {
+  UserArDef,
+  UserEvents,
+} from '../../testing/example/users/user/user.ar';
 import { MemoryTasks, OWNER, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
 import type { EnvelopeOf } from '../events/event-envelope';
@@ -43,12 +46,12 @@ type Deps = {
 };
 
 const todoFacade = () =>
-  implementFacade(TodoFacade, {
+  implementFacade(TodoFacadeDef, {
     getTask: async (taskId) => TaskErrors.NOT_FOUND.err({ taskId }),
   });
 
 class ArchiveRemovedUserTasks extends ReactionFromDef<
-  typeof ArchiveRemovedUserTasksEr,
+  typeof ArchiveRemovedUserTasksErDef,
   Deps
 > {
   /** Тесты подменяют шаг, чтобы получить нужный сбой или вызов. */
@@ -69,7 +72,7 @@ class ArchiveRemovedUserTasks extends ReactionFromDef<
   seen: SystemCaller<unknown> | undefined;
 
   constructor(deps: Deps) {
-    super(ArchiveRemovedUserTasksEr, deps);
+    super(ArchiveRemovedUserTasksErDef, deps);
   }
 
   protected react(
@@ -138,7 +141,7 @@ describe('ReactionFromDef.handle', () => {
   test('агрегат вне touches → SERVER_INTERNAL', async () => {
     er.step = async (_e, uow) => {
       const task = TaskAr.restore(taskRow(TASK));
-      uow.register(task, { aggregate: UserDef, save: async () => {} });
+      uow.register(task, { aggregate: UserArDef, save: async () => {} });
       return ok();
     };
     expectErr(await er.handle(removed()), 'SERVER_INTERNAL');

@@ -10,9 +10,9 @@ import type { Caller } from '../../dmg/kernel/caller/caller';
 import { ok } from '../../dmg/kernel/result/result';
 import { expectErr, expectOk, testAppContext } from '../../dmg/testing';
 import {
-  ArchiveDoneTasksJob,
-  CompleteTaskUc,
-  CreateTaskUc,
+  ArchiveDoneTasksJobDef,
+  CompleteTaskUcDef,
+  CreateTaskUcDef,
   type TaskAr,
   TaskErrors,
 } from '../../dmg/testing/example/todo';
@@ -21,23 +21,27 @@ import type { AppMeta } from '../../domain/types';
 import type { Job } from '../job/job';
 import { ApiApp } from './api-app';
 
-const MiniModule = defineModule({
+const MiniModuleDef = defineModule({
   name: 'mini',
   label: 'Мини',
   description: 'DMG-модуль рядом с legacy в ApiApp.',
   dependsOn: [],
   aggregates: [],
-  useCases: [CompleteTaskUc],
+  useCases: [CompleteTaskUcDef],
   reactions: [],
-  jobs: [ArchiveDoneTasksJob],
+  jobs: [ArchiveDoneTasksJobDef],
 });
 
 type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
 type Loaded = { task: TaskAr };
 
-class CompleteTask extends UseCaseFromDef<typeof CompleteTaskUc, Deps, Loaded> {
+class CompleteTask extends UseCaseFromDef<
+  typeof CompleteTaskUcDef,
+  Deps,
+  Loaded
+> {
   constructor(deps: Deps) {
-    super(CompleteTaskUc, deps);
+    super(CompleteTaskUcDef, deps);
   }
   protected async load(input: { taskId: string }) {
     const task = await this.resolve.tasks.findById(input.taskId);
@@ -51,9 +55,9 @@ class CompleteTask extends UseCaseFromDef<typeof CompleteTaskUc, Deps, Loaded> {
   }
 }
 
-class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJob, Deps> {
+class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps) {
-    super(ArchiveDoneTasksJob, deps);
+    super(ArchiveDoneTasksJobDef, deps);
   }
   protected run = () => this.forEach([], async () => ok());
 }
@@ -72,7 +76,7 @@ beforeEach(() => {
   tasks.rows.set(TASK, taskRow(TASK));
   const deps = { app: testAppContext().app, tasks };
   const mini = new ModuleFromDef(
-    MiniModule,
+    MiniModuleDef,
     {
       useCases: { completeTask: CompleteTask },
       reactions: {},
@@ -85,19 +89,19 @@ beforeEach(() => {
 
 describe('ApiApp.run — UC DMG', () => {
   test('возвращает Result: Ok с выходом', async () => {
-    const res = await app.run(CompleteTaskUc, { taskId: TASK }, user(OWNER));
+    const res = await app.run(CompleteTaskUcDef, { taskId: TASK }, user(OWNER));
     expect(expectOk(res)).toEqual({});
   });
 
   test('возвращает Result: отказ — значение, не исключение', async () => {
     tasks.rows.clear();
-    const res = await app.run(CompleteTaskUc, { taskId: TASK }, user(OWNER));
+    const res = await app.run(CompleteTaskUcDef, { taskId: TASK }, user(OWNER));
     expectErr(res, 'TASK_NOT_FOUND');
   });
 
   test('UC вне зарегистрированных модулей — исключение (баг сборки)', async () => {
     await expect(
-      app.run(CreateTaskUc, { title: 'x' }, user(OWNER)),
+      app.run(CreateTaskUcDef, { title: 'x' }, user(OWNER)),
     ).rejects.toThrow('UC createTask не зарегистрирован');
   });
 });
@@ -105,14 +109,14 @@ describe('ApiApp.run — UC DMG', () => {
 describe('ApiApp.execute — UC DMG', () => {
   test('Ok — возвращает выход', async () => {
     expect(
-      await app.execute(CompleteTaskUc, { taskId: TASK }, user(OWNER)),
+      await app.execute(CompleteTaskUcDef, { taskId: TASK }, user(OWNER)),
     ).toEqual({});
   });
 
   test('Err — AppException с кодом и legacy-kind', async () => {
     tasks.rows.clear();
     const error = await app
-      .execute(CompleteTaskUc, { taskId: TASK }, user(OWNER))
+      .execute(CompleteTaskUcDef, { taskId: TASK }, user(OWNER))
       .catch((e: unknown) => e);
     expect(error).toBeInstanceOf(AppException);
     expect(error instanceof AppException && error.error).toMatchObject({
@@ -124,7 +128,7 @@ describe('ApiApp.execute — UC DMG', () => {
 
   test('ACCESS_DENIED — текст отказа правила в message', async () => {
     const error = await app
-      .execute(CompleteTaskUc, { taskId: TASK }, user('чужой'))
+      .execute(CompleteTaskUcDef, { taskId: TASK }, user('чужой'))
       .catch((e: unknown) => e);
     expect(error instanceof AppException && error.error).toMatchObject({
       name: 'ACCESS_DENIED',

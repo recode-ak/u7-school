@@ -1,21 +1,21 @@
 import { defineModule } from '../../../domain/contracts/define-module';
-import { UsersModule } from '../users/users.module';
-import { ArchiveRemovedUserTasksEr } from './task/er/archive-removed-user-tasks.er';
-import { ArchiveDoneTasksJob } from './task/job/archive-done-tasks.job';
-import { TaskDef } from './task/task.ar';
-import { CompleteTaskUc } from './task/uc/complete-task.uc';
-import { CreateTaskUc } from './task/uc/create-task.uc';
-import { ListTasksUc } from './task/uc/list-tasks.uc';
-import { TodoFacade } from './todo.facade';
+import { UsersModuleDef } from '../users/users.module';
+import { ArchiveRemovedUserTasksErDef } from './task/er/archive-removed-user-tasks.er';
+import { ArchiveDoneTasksJobDef } from './task/job/archive-done-tasks.job';
+import { TaskArDef } from './task/task.ar';
+import { CompleteTaskUcDef } from './task/uc/complete-task.uc';
+import { CreateTaskUcDef } from './task/uc/create-task.uc';
+import { ListTasksUcDef } from './task/uc/list-tasks.uc';
+import { TodoFacadeDef } from './todo.facade';
 
-export const TodoModule = defineModule({
+export const TodoModuleDef = defineModule({
   name: 'todo',
   label: 'Задачи',
   description: 'Учебный модуль DMG: личный список дел. Эталон для тестов core.',
-  dependsOn: [UsersModule],
-  aggregates: [TaskDef],
-  useCases: [CreateTaskUc, CompleteTaskUc, ListTasksUc],
-  reactions: [ArchiveRemovedUserTasksEr],
-  jobs: [ArchiveDoneTasksJob],
-  facade: TodoFacade,
+  dependsOn: [UsersModuleDef],
+  aggregates: [TaskArDef],
+  useCases: [CreateTaskUcDef, CompleteTaskUcDef, ListTasksUcDef],
+  reactions: [ArchiveRemovedUserTasksErDef],
+  jobs: [ArchiveDoneTasksJobDef],
+  facade: TodoFacadeDef,
 });

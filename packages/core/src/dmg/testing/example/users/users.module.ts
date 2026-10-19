@@ -1,12 +1,12 @@
 import { defineModule } from '../../../domain/contracts/define-module';
-import { UserDef } from './user/user.ar';
+import { UserArDef } from './user/user.ar';
 
-export const UsersModule = defineModule({
+export const UsersModuleDef = defineModule({
   name: 'users',
   label: 'Пользователи',
   description: 'Учётные записи (заглушка для учебного модуля todo).',
   dependsOn: [],
-  aggregates: [UserDef],
+  aggregates: [UserArDef],
   useCases: [],
   reactions: [],
   jobs: [],

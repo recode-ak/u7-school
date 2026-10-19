@@ -1,5 +1,5 @@
 // Общие фикстуры тестов прикладного слоя DMG.
-import { TaskAr, TaskDef } from '../testing/example/todo';
+import { TaskAr, TaskArDef } from '../testing/example/todo';
 import type { TaskState } from '../testing/example/todo/task/task.state';
 
 export const TASK = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
@@ -23,7 +23,7 @@ export function taskRow(
 
 /** Репозиторий задач в памяти; `failOnFind` — имитация сбоя диска. */
 export class MemoryTasks {
-  readonly aggregate = TaskDef;
+  readonly aggregate = TaskArDef;
   readonly rows = new Map<string, TaskState>();
   failOnFind = false;
 
