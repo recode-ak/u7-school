@@ -1,0 +1,5 @@
+Контрольная точка Фазы 2 «Манифесты домена и агрегат v2».
+Автотесты: bun run check зелёный (2975 pass); dmg — 105 тестов, покрытие новых файлов 100% строк.
+Ручная проверка: bun test packages/core/src/dmg; просмотр dmg/testing/example/todo/; normalize(TodoModule).
+Замечания Нурболата учтены (11cbafa, 7e96178): policy обязательна (allowAll), description UC без прав доступа, EntityBase из BaseEntityFields, свой JobSchedule, тест нормализации статусов.
+Подтверждение пользователя: «Ручная проверка пройдена».
