@@ -80,9 +80,10 @@
     - [x] Тесты: пропуск реализации — ошибка компиляции (`@ts-expect-error`); сборка модуля в приложение рядом с legacy-модулями
     - [x] Реализация
     - Рядом с legacy: реакции — на общей legacy-шине с legacy-подписчиками, задания — в форме legacy `Job` для существующего планировщика. Подключение к `ApiApp` — в задаче `appApi.run`.
-- [ ] Task: `appApi.run` и `execute` для новых UC
-    - [ ] Тесты: `run` возвращает `Result`; `execute` разворачивает `Err` в исключение для нового UC; legacy-тесты `ApiApp` не тронуты и зелёные
-    - [ ] Реализация (минимальная правка `api/app/api-app.ts`)
+- [x] Task: `appApi.run` и `execute` для новых UC cd33b09
+    - [x] Тесты: `run` возвращает `Result`; `execute` разворачивает `Err` в исключение для нового UC; legacy-тесты `ApiApp` не тронуты и зелёные
+    - [x] Реализация (минимальная правка `api/app/api-app.ts`)
+    - `execute(def, input, caller)` — перегрузка; `Err` → `AppException` в legacy-форме (`toLegacyError`). Модули DMG подключаются `addDmgModules`: реакции — в `init`, задания — в `start`.
 - [ ] Task: Учебный модуль `todo` — прикладная часть
     - [ ] Реализации UC/ER/Job, JSON-репозиторий, in-proc фасад, wiring
     - [ ] Интеграционные тесты: сквозной сценарий через `appApi.run`, событие → ER, smoke модуля на JSON-репозитории (временный каталог)
