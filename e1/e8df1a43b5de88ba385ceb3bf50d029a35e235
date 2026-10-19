@@ -1,0 +1,4 @@
+Задача: Контрактные проверки (Фаза 4)
+Что: arch/check-defs.ts (MAN-01/02/03/06/08, ARC-04 ссылки, ARC-05, ERR-04), arch/check-files.ts (ARC-06, MAN-10, MAN-06 файлы, ARC-04 импорты), arch/violation.ts, arch/described-defs.ts.
+Решения: MAN-03 провал — MAN-02 для схемы молчит; UC/ER/Job трогают и публикуют только своё (MAN-06); ARC-04 по импортам — и для домена, и для прикладного слоя; ER/Job без touches/scans — файл в папке любого агрегата; префикс ошибки = UPPER_SNAKE имени агрегата; импорты — регулярным выражением (type-импорты тоже).
+Тесты: check-defs.test.ts (16), check-files.test.ts (7). check EXIT=0, 3085 pass.
