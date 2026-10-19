@@ -16,12 +16,14 @@
     "./api": "./src/api/index.ts",
     "./ui": "./src/ui/index.ts",
     "./shared": "./src/shared/index.ts",
-    "./infra": "./src/infra/index.ts"
+    "./infra": "./src/infra/index.ts",
+    "./dmg": "./src/dmg/index.ts"
   },
   "imports": {
     "#domain/*": "./src/domain/*.ts",
     "#api/*": "./src/api/*.ts",
     "#ui/*": "./src/ui/*.ts",
-    "#shared/*": "./src/shared/*.ts"
+    "#shared/*": "./src/shared/*.ts",
+    "#dmg/*": "./src/dmg/*.ts"
   }
 }
