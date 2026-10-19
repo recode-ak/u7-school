@@ -10,8 +10,8 @@ export {
   subjectOf,
   systemCaller,
   type UserCaller,
-} from './caller/caller';
-export { type CoreError, CoreErrors } from './errors/core-errors';
+} from './kernel/caller/caller';
+export { type CoreError, CoreErrors } from './kernel/errors/core-errors';
 export {
   type AnyErrorDef,
   defineErrors,
@@ -19,10 +19,20 @@ export {
   type ErrorGroup,
   type ErrorOf,
   type ErrorSpec,
-} from './errors/define-errors';
-export { type DomainError, ERROR_KINDS, type ErrorKind } from './errors/error';
-export { BaseEntityFields, F } from './fields/fields';
-export { type Err, err, type Ok, ok, type Result } from './result/result';
-export { toJsonSchema } from './schema/json-schema';
-export { now } from './time/now';
-export type { Timestamp } from './time/timestamp';
+} from './kernel/errors/define-errors';
+export {
+  type DomainError,
+  ERROR_KINDS,
+  type ErrorKind,
+} from './kernel/errors/error';
+export { BaseEntityFields, F } from './kernel/fields/fields';
+export {
+  type Err,
+  err,
+  type Ok,
+  ok,
+  type Result,
+} from './kernel/result/result';
+export { toJsonSchema } from './kernel/schema/json-schema';
+export { now } from './kernel/time/now';
+export type { Timestamp } from './kernel/time/timestamp';

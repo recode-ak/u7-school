@@ -1,5 +1,5 @@
-import { freezeClock, unfreezeClock } from '../time/now';
-import type { Timestamp } from '../time/timestamp';
+import { freezeClock, unfreezeClock } from '../kernel/time/now';
+import type { Timestamp } from '../kernel/time/timestamp';
 
 /** Заморозить `now()` на моменте `at`. */
 export function setNow(at: Timestamp): void {

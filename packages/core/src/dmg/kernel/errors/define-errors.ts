@@ -12,6 +12,12 @@ export type ErrorSpec = {
   readonly payload?: PayloadSchema;
 };
 
+type SchemaOf<S extends ErrorSpec> = S extends {
+  readonly payload: infer P extends PayloadSchema;
+}
+  ? P
+  : undefined;
+
 type PayloadOf<S extends ErrorSpec> = S['payload'] extends PayloadSchema
   ? v.InferOutput<S['payload']>
   : undefined;
@@ -27,7 +33,7 @@ export type ErrorDef<C extends string, S extends ErrorSpec> = {
   readonly kind: S['kind'];
   readonly label: string;
   readonly description: string;
-  readonly payload?: PayloadSchema;
+  readonly payload: SchemaOf<S>;
   make(...args: PayloadArgs<S>): DomainError<C, S['kind'], PayloadOf<S>>;
   err(...args: PayloadArgs<S>): Err<DomainError<C, S['kind'], PayloadOf<S>>>;
 };

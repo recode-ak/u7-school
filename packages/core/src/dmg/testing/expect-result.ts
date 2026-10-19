@@ -1,4 +1,4 @@
-import type { Result } from '../result/result';
+import type { Result } from '../kernel/result/result';
 
 type Coded = { readonly code: string };
 
@@ -24,4 +24,12 @@ function hasCode<E extends Coded, C extends E['code']>(
   code: C,
 ): error is Extract<E, { readonly code: C }> {
   return error.code === code;
+}
+
+/** Проверяет, что `res` — успех, и возвращает значение. Не зависит от раннера. */
+export function expectOk<T>(res: Result<T, Coded>): T {
+  if (!res.ok) {
+    throw new Error(`ожидался Ok, получена ошибка ${res.error.code}`);
+  }
+  return res.value;
 }

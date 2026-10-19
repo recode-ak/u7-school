@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { err, ok, type Result } from '../result/result';
-import { expectErr } from './expect-err';
+import { err, ok, type Result } from '../kernel/result/result';
+import { expectErr, expectOk } from './expect-result';
 
 type Failure = { code: 'A_FAILED' } | { code: 'B_FAILED'; reason: string };
 
@@ -31,5 +31,18 @@ describe('expectErr', () => {
   it('не принимает код вне union ошибок', () => {
     // @ts-expect-error код не объявлен в Failure
     expect(() => expectErr(failed, 'C_FAILED')).toThrow();
+  });
+});
+
+describe('expectOk', () => {
+  it('возвращает значение Ok', () => {
+    const value: number = expectOk(attempt(false));
+    expect(value).toBe(1);
+  });
+
+  it('падает на Err с кодом ошибки', () => {
+    expect(() => expectOk(attempt(true))).toThrow(
+      'ожидался Ok, получена ошибка B_FAILED',
+    );
   });
 });

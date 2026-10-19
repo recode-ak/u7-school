@@ -31,6 +31,13 @@ describe('defineErrors', () => {
     expect(def.payload).toBeDefined();
   });
 
+  it('тип схемы payload привязан к объявлению', () => {
+    const schema: v.GenericSchema = TodoErrors.NOT_FOUND.payload;
+    const none: undefined = TodoErrors.ALREADY_DONE.payload;
+    expect(schema).toBeDefined();
+    expect(none).toBeUndefined();
+  });
+
   it('make() строит ошибку с типизированным payload', () => {
     const error = TodoErrors.NOT_FOUND.make({ todoId: 't1' });
     expect(error).toEqual({
