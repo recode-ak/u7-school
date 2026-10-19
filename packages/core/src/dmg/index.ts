@@ -137,6 +137,18 @@ export {
   rule,
 } from './domain/policy/policy';
 export {
+  type AggregateNode,
+  buildGraph,
+  type DomainGraph,
+  type ErrorNode,
+  type EventNode,
+  type JobNode,
+  type ModuleLink,
+  type ModuleNode,
+  type ReactionNode,
+  type UseCaseNode,
+} from './graph/domain-graph';
+export {
   type AnyDef,
   type NormalizedAggregate,
   type NormalizedDef,
