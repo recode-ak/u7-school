@@ -63,10 +63,12 @@ export abstract class Aggregate<D extends AnyAggregateDef> {
   /**
    * Мутация: черновик → `apply` → проверка перехода и схемы → фиксация.
    * При `Err` черновик и события отбрасываются; `updatedAt` ставит ядро.
+   * Дженерик по всему `Result`: при `<T, E>` TS вывел бы `E` из первого
+   * `return` и отверг бы второй код ошибки.
    */
-  protected change<T, E>(
-    apply: (draft: StateOf<D>, emit: Emit<D>) => Result<T, E>,
-  ): Result<T, E> {
+  protected change<R extends Result<unknown, unknown>>(
+    apply: (draft: StateOf<D>, emit: Emit<D>) => R,
+  ): R {
     const draft = structuredClone(this.current);
     const emitted: EventsOf<D>[] = [];
     const res = apply(draft, (event) => {
