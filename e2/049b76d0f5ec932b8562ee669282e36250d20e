@@ -1,0 +1,1 @@
+Исправление к задаче 'Агрегат v2': change<R extends Result<unknown, unknown>>(apply: … => R): R — union всех return колбэка.
