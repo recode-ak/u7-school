@@ -1,0 +1,7 @@
+Task: Каркас dmg/
+- packages/core/package.json: exports ./dmg, imports #dmg/*
+- tsconfig.json: path @u7-scl/core/dmg
+- packages/core/src/dmg/index.ts: точка входа платформы DMG
+- packages/app/src/core-dmg.smoke.test.ts: smoke-импорт из другого пакета
+- conductor/tracks.md: трек core-dmg в работе
+Причина: отдельный подпуть исключает конфликт имён с legacy core.
