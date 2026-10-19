@@ -72,9 +72,10 @@
     - [x] Тесты: недопустимый `callers` → `UNAUTHORIZED`; невалидный вход → `INPUT_VALIDATION`; отказ Policy → `ACCESS_DENIED` с правилом; `Ok` → commit → publish; незаявленное событие → ассерт в test/dev; невалидный выход → `OUTPUT_VALIDATION`; исключение → `SERVER_INTERNAL` с логом; `this.err()` типом принимает только заявленные коды
     - [x] Реализация
     - Решения: наследник пишет `load` (контекст Policy) и `execute`; Policy вычисляет база — пропустить её нельзя. `system` допускается через `callers`, Policy для него не вычисляется (в `decisions.md` в Фазе 6). Отдельного `this.err()` нет: тип возврата `load`/`execute` пропускает только ошибки из `errors` Def (`@ts-expect-error` в тесте).
-- [ ] Task: `ReactionFromDef` и `JobFromDef`
-    - [ ] Тесты: `Result`; сбой логируется, не гасится молча; вызов UC как `system` с `onBehalfOf`; ассерты `touches`/`calls` через прокси резолвера; Job — на существующем планировщике
-    - [ ] Реализация
+- [x] Task: `ReactionFromDef` и `JobFromDef` a1a6ba9
+    - [x] Тесты: `Result`; сбой логируется, не гасится молча; вызов UC как `system` с `onBehalfOf`; ассерты `touches`/`calls` через прокси резолвера; Job — на существующем планировщике
+    - [x] Реализация
+    - Решения: `calls` — прокси резолвера (фасад распознаётся по `implementFacade`); `touches` (ER) и `scans` (Job) проверяет `UoW.register` по `Repository.aggregate` — так точнее прокси (репозиторий читают и без изменения). Job обходит записи через `forEach`: своя UoW на запись (API-06). Журнал сбоев пока = `logger.error`.
 - [ ] Task: Модуль — карта `Def → класс`
     - [ ] Тесты: пропуск реализации — ошибка компиляции (`@ts-expect-error`); сборка модуля в приложение рядом с legacy-модулями
     - [ ] Реализация
