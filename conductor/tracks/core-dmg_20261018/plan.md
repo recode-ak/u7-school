@@ -6,10 +6,10 @@
 
 ## Фаза 1: Каркас и примитивы
 
-- [ ] Task: Каркас `dmg/`
-    - [ ] Подпуть `./dmg` в `exports` и `#dmg/*` в `imports` `packages/core/package.json`, `dmg/index.ts`
-    - [ ] Smoke-тест импорта `@u7-scl/core/dmg` из другого пакета
-- [ ] Task: `Result<T, E>`
+- [x] Task: Каркас `dmg/` 40f2be1
+    - [x] Подпуть `./dmg` в `exports` и `#dmg/*` в `imports` `packages/core/package.json`, `dmg/index.ts`
+    - [x] Smoke-тест импорта `@u7-scl/core/dmg` из другого пакета
+- [~] Task: `Result<T, E>`
     - [ ] Тесты: `ok`/`err`, сужение по `res.ok`, `map`/`andThen` (только если нужны дальше), `expectErr(res, code)` — проходит на нужном коде, падает на чужом и на `Ok`
     - [ ] Реализация
 - [ ] Task: Модель ошибки и `defineErrors`
