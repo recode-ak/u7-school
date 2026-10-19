@@ -1,0 +1,4 @@
+Замечания Нурболата по Фазе 1:
+- ErrorDef.payload привязан к объявлению (SchemaOf<S>): схема или undefined, без лишней необязательности
+- testing: expectOk (возвращает value, падает на Err с кодом); expect-err.ts → expect-result.ts
+- result/errors/time/fields/schema/caller перенесены в dmg/kernel/ (дальше: domain/, app/, graph/)
