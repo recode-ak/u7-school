@@ -9,10 +9,11 @@
 - [x] Task: Каркас `dmg/` 40f2be1
     - [x] Подпуть `./dmg` в `exports` и `#dmg/*` в `imports` `packages/core/package.json`, `dmg/index.ts`
     - [x] Smoke-тест импорта `@u7-scl/core/dmg` из другого пакета
-- [~] Task: `Result<T, E>`
-    - [ ] Тесты: `ok`/`err`, сужение по `res.ok`, `map`/`andThen` (только если нужны дальше), `expectErr(res, code)` — проходит на нужном коде, падает на чужом и на `Ok`
-    - [ ] Реализация
-- [ ] Task: Модель ошибки и `defineErrors`
+- [x] Task: `Result<T, E>` 5dc380c
+    - [x] Тесты: `ok`/`err`, сужение по `res.ok`, `map`/`andThen` (только если нужны дальше), `expectErr(res, code)` — проходит на нужном коде, падает на чужом и на `Ok`
+    - [x] Реализация
+    - Заметка: `map`/`andThen` не добавлены (пока не нужны); `expectErr` — в подпути `@u7-scl/core/dmg/testing`, не зависит от раннера
+- [~] Task: Модель ошибки и `defineErrors`
     - [ ] Тесты: группа ошибок с `code`/`kind`/`label`/`description`/схемой payload; фабрика ошибки с типизированным payload; базовые ошибки ядра (`UNAUTHORIZED`, `INPUT_VALIDATION`, `ACCESS_DENIED`, `OUTPUT_VALIDATION`, `SERVER_INTERNAL`); `kind` — закрытый набор
     - [ ] Реализация
 - [ ] Task: `Timestamp`, `now()`, `F.*`
