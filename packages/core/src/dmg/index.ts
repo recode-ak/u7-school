@@ -17,6 +17,7 @@ export {
   type StatusOf,
   type Transition,
 } from './domain/aggregate/define-aggregate';
+export type { ReadonlyAr } from './domain/aggregate/readonly-ar';
 export {
   type AnyEventDef,
   type DomainEvent,
