@@ -1,0 +1,6 @@
+Задача: normalize(def)
+- dmg/graph/normalize.ts: normalize для error/event/aggregate/rule/policy/useCase/eventReaction/job/facade/module (перегрузки → точный Normalized*; общий AnyDef → NormalizedDef).
+- Ссылки → имена (агрегат, фасад, модуль, UC/ER/Job), FQN событий, коды ошибок; схемы → JSON Schema (toJsonSchema, ошибка конвертации — throw, ловит arch:check); функции отброшены; порядок ключей фиксирован.
+- Фикстура контрактов вынесена в domain/contracts/contracts.fixture.ts.
+- Попутно fix 54f7d2e: пересечение субъектов/контекстов в allOf/anyOf.
+- check: зелёный (2959 pass).
