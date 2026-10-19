@@ -112,6 +112,19 @@ describe('композиция', () => {
     );
   });
 
+  it('субъект композиции — пересечение субъектов правил (тип)', () => {
+    const both = allOf(hasRole('admin'), hasRole('author'), isOwner);
+    expect(both.evaluate(as(user('u1', 'admin', 'author')), ctx)).toEqual(
+      allowed,
+    );
+    const roleOnly: Caller<{ hasRole(role: Role): boolean }> = {
+      kind: 'user',
+      user: { hasRole: () => true },
+    };
+    // @ts-expect-error у субъекта нет id, нужного isOwner
+    both.evaluate(roleOnly, ctx);
+  });
+
   it('контекст композиции — объединение контекстов правил (тип)', () => {
     const both = allOf(isOwner, hasRole('admin'));
     // @ts-expect-error нет ownerId
