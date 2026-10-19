@@ -1,6 +1,15 @@
 // Платформа DMG (Domain Manifest Graph) — новый фреймворк @u7-scl/core.
 // Живёт рядом с legacy-слоями (strangler), см. conductor/architecture/migration.md.
 
+export type { EventBus } from './app/events/event-bus';
+export type { EnvelopeOf, EventEnvelope } from './app/events/event-envelope';
+export { legacyEventBus } from './app/events/legacy-event-bus';
+export type { Repository } from './app/uow/repository';
+export {
+  type Committable,
+  UnitOfWork,
+  type UnitOfWorkContext,
+} from './app/uow/unit-of-work';
 export {
   Aggregate,
   type ErrorsOf,

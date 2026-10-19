@@ -37,8 +37,14 @@ export type AnyEventDef = {
   make(payload: never): DomainEvent;
 };
 
-/** Тип значения события по его Def. */
-export type EventOf<D extends AnyEventDef> = ReturnType<D['make']>;
+/**
+ * Тип значения события по его Def. Структурно, а не `ReturnType<D['make']>`:
+ * для дженерика `D` TS не сводит `ReturnType` к `DomainEvent`.
+ */
+export type EventOf<D extends AnyEventDef> = DomainEvent<
+  D['name'],
+  v.InferOutput<D['payload']>
+>;
 
 /** FQN-префикс группы: `module.aggregate` (D-10). */
 export type EventPrefix = `${string}.${string}`;
