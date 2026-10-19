@@ -1,0 +1,5 @@
+Task: Result<T, E>
+- dmg/result/result.ts: Ok/Err/Result, ok() (в т.ч. Ok<void>), err()
+- dmg/testing/expect-err.ts: expectErr(res, code) — сужает ошибку по коду, бросает на чужом коде и Ok; код вне union — ошибка типа
+- подпуть @u7-scl/core/dmg/testing (хелперы не попадают в прод-индекс)
+- map/andThen не добавлены: пока не нужны
