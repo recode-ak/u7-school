@@ -1,0 +1,2 @@
+Task: Caller
+- dmg/caller/caller.ts: Caller<U> = guest | user | delegate | system; subjectOf (user → он сам, delegate → замещаемый subject, guest/system → undefined); systemCaller(source, onBehalfOf?)
