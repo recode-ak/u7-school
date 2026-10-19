@@ -13,7 +13,8 @@ type Common = {
   readonly aggregate: AnyAggregateDef;
   /** Допустимые вызывающие (MAN-11); остальные получают `UNAUTHORIZED`. */
   readonly callers: readonly [CallerKind, ...CallerKind[]];
-  readonly policy?: AnyRule;
+  /** Право на действие; без ограничений — явно `allowAll`. */
+  readonly policy: AnyRule;
   readonly input: v.GenericSchema;
   readonly output: v.GenericSchema;
   /** Собственные ошибки и ошибки зависимостей; базовые подмешивает ядро. */

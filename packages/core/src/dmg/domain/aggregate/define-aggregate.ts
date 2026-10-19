@@ -1,13 +1,13 @@
 import type * as v from 'valibot';
 import type { AnyErrorDef } from '../../kernel/errors/define-errors';
-import type { Timestamp } from '../../kernel/time/timestamp';
+import type { BaseEntityFields } from '../../kernel/fields/fields';
 import type { AnyEventDef } from '../events/define-events';
 
-/** Поля, без которых нет entity: идентичность и метки времени. */
+/** Поля, без которых нет entity, — выводятся из `BaseEntityFields`. */
 export type EntityBase = {
-  uuid: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  [K in keyof typeof BaseEntityFields]: v.InferOutput<
+    (typeof BaseEntityFields)[K]
+  >;
 };
 
 /** Схема состояния агрегата: entity поверх `BaseEntityFields`. */

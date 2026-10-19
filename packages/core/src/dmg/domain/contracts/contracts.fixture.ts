@@ -5,7 +5,7 @@ import { BaseEntityFields, F } from '../../kernel/fields/fields';
 import { defineAggregate } from '../aggregate/define-aggregate';
 import { defineEvents } from '../events/define-events';
 import { definePolicy } from '../policy/define-policy';
-import { rule } from '../policy/policy';
+import { allowAll, rule } from '../policy/policy';
 import { defineEventReaction } from './define-event-reaction';
 import { defineFacade, method } from './define-facade';
 import { defineJob } from './define-job';
@@ -83,6 +83,7 @@ export const ListTasksUc = defineUseCase({
   type: 'query',
   aggregate: TaskDef,
   callers: ['user'],
+  policy: allowAll,
   input: v.object({}),
   output: v.array(v.object({ taskId: F.uuid('задачи') })),
   errors: [],

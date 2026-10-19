@@ -39,6 +39,7 @@ export {
   type AnyJobDef,
   defineJob,
   type JobDef,
+  type JobSchedule,
   type JobSpec,
 } from './domain/contracts/define-job';
 export {
@@ -75,6 +76,7 @@ export {
 export {
   type AnyRule,
   allOf,
+  allowAll,
   allowed,
   anyOf,
   type Decision,

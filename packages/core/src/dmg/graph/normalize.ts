@@ -1,9 +1,8 @@
 import type * as v from 'valibot';
-import type { JobSchedule } from '#api/job/job';
 import type { AnyAggregateDef } from '../domain/aggregate/define-aggregate';
 import type { AnyEventReactionDef } from '../domain/contracts/define-event-reaction';
 import type { AnyFacadeDef } from '../domain/contracts/define-facade';
-import type { AnyJobDef } from '../domain/contracts/define-job';
+import type { AnyJobDef, JobSchedule } from '../domain/contracts/define-job';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyUseCaseDef } from '../domain/contracts/define-use-case';
 import type { AnyEventDef } from '../domain/events/define-events';
@@ -66,7 +65,8 @@ export type NormalizedRule =
       readonly dmg: 'rule';
       readonly op: 'allOf';
       readonly rules: readonly NormalizedRule[];
-    };
+    }
+  | { readonly dmg: 'rule'; readonly op: 'allowAll' };
 
 export type NormalizedPolicy = Texts & {
   readonly dmg: 'policy';
@@ -78,7 +78,7 @@ export type NormalizedUseCase = Texts & {
   readonly type: 'command' | 'query';
   readonly aggregate: string;
   readonly callers: readonly CallerKind[];
-  readonly policy: NormalizedRule | undefined;
+  readonly policy: NormalizedRule;
   readonly input: JsonSchema;
   readonly output: JsonSchema;
   readonly errors: readonly string[];
@@ -201,7 +201,7 @@ export function normalize(def: AnyDef): NormalizedDef {
         type: def.type,
         aggregate: def.aggregate.name,
         callers: def.callers,
-        policy: def.policy && normalizeRule(def.policy),
+        policy: normalizeRule(def.policy),
         input: schema(def.input),
         output: schema(def.output),
         errors: def.errors.map((e) => e.code),
@@ -283,5 +283,7 @@ function normalizeRule(r: AnyRule): NormalizedRule {
       };
     case 'allOf':
       return { dmg: 'rule', op: 'allOf', rules: r.rules.map(normalizeRule) };
+    case 'allowAll':
+      return { dmg: 'rule', op: 'allowAll' };
   }
 }

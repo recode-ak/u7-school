@@ -25,7 +25,8 @@ type Named = {
 export type RuleNode =
   | (Named & { readonly op: 'rule'; readonly delegable: boolean })
   | (Named & { readonly op: 'anyOf'; readonly rules: readonly AnyRule[] })
-  | { readonly op: 'allOf'; readonly rules: readonly AnyRule[] };
+  | { readonly op: 'allOf'; readonly rules: readonly AnyRule[] }
+  | { readonly op: 'allowAll' };
 
 /** Правило над субъектом `U` в контексте `C` (DOM-05). */
 export type Rule<U, C> = RuleNode & {
@@ -69,6 +70,17 @@ export function rule<U, C = unknown>(spec: RuleSpec<U, C>): Rule<U, C> {
     },
   };
 }
+
+/**
+ * Явное «доступно всем, кого пропустил `callers`» — для UC без ограничений.
+ * Политика в Def UC обязательна, чтобы её не забыли; отсутствие ограничений
+ * тоже решение, и оно видно в контракте и графе.
+ */
+export const allowAll: Rule<unknown, unknown> = {
+  dmg: 'rule',
+  op: 'allowAll',
+  evaluate: () => allowed,
+};
 
 type SubjectOf<R> = R extends Rule<infer U, infer _C> ? U : never;
 type ContextOf<R> = R extends Rule<infer _U, infer C> ? C : never;

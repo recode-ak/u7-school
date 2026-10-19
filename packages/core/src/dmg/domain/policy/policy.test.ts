@@ -2,7 +2,15 @@ import { describe, expect, it } from 'bun:test';
 import type { Caller } from '../../kernel/caller/caller';
 import { systemCaller } from '../../kernel/caller/caller';
 import { definePolicy } from './define-policy';
-import { allOf, allowed, anyOf, denied, hasRole, rule } from './policy';
+import {
+  allOf,
+  allowAll,
+  allowed,
+  anyOf,
+  denied,
+  hasRole,
+  rule,
+} from './policy';
 
 type Role = 'admin' | 'author';
 type User = { id: string; hasRole(role: Role): boolean };
@@ -66,6 +74,15 @@ describe('rule', () => {
   it('без субъекта (guest, system) — отказ', () => {
     expect(isOwner.evaluate({ kind: 'guest' }, ctx).allowed).toBe(false);
     expect(isOwner.evaluate(systemCaller('todo.job'), ctx).allowed).toBe(false);
+  });
+});
+
+describe('allowAll', () => {
+  it('пропускает любого вызывающего, включая guest и system', () => {
+    expect(allowAll.evaluate({ kind: 'guest' }, undefined)).toEqual(allowed);
+    expect(allowAll.evaluate(systemCaller('todo.job'), undefined)).toEqual(
+      allowed,
+    );
   });
 });
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { CoreErrors } from '../../kernel/errors/core-errors';
 import type { EventOf } from '../events/define-events';
+import { allowAll } from '../policy/policy';
 import {
   ArchiveDoneEr,
   CompleteTaskUc,
@@ -51,7 +52,19 @@ describe('defineUseCase', () => {
     expect([input, output, code, core, alien, bad]).toHaveLength(6);
   });
 
-  it('label и description обязательны, query не публикует события (тип)', () => {
+  it('label, description и policy обязательны, query не публикует события (тип)', () => {
+    // @ts-expect-error policy обязательна (без ограничений — allowAll)
+    defineUseCase({
+      name: 'x',
+      label: 'X',
+      description: 'X',
+      type: 'command',
+      aggregate: TaskDef,
+      callers: ['user'],
+      input: v.object({}),
+      output: v.object({}),
+      errors: [],
+    });
     // @ts-expect-error нет description
     defineUseCase({
       name: 'x',
@@ -59,6 +72,7 @@ describe('defineUseCase', () => {
       type: 'query',
       aggregate: TaskDef,
       callers: ['user'],
+      policy: allowAll,
       input: v.object({}),
       output: v.object({}),
       errors: [],
@@ -71,6 +85,7 @@ describe('defineUseCase', () => {
       type: 'query',
       aggregate: TaskDef,
       callers: ['user'],
+      policy: allowAll,
       input: v.object({}),
       output: v.object({}),
       errors: [],

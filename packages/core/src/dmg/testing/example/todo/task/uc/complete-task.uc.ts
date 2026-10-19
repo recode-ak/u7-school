@@ -9,8 +9,7 @@ import { TaskState } from '../task.state';
 export const CompleteTaskUc = defineUseCase({
   name: 'completeTask',
   label: 'Выполнить задачу',
-  description:
-    'Отмечает задачу выполненной. Доступно владельцу и администратору.',
+  description: 'Отмечает открытую задачу выполненной.',
   type: 'command',
   aggregate: TaskDef,
   callers: ['user', 'delegate'],

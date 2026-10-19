@@ -111,7 +111,7 @@ describe('normalize', () => {
       emits: ['todo.task.completed'],
     });
     expect(normalize(ListTasksUc)).toMatchObject({
-      policy: undefined,
+      policy: { dmg: 'rule', op: 'allowAll' },
       output: expect.objectContaining({ type: 'array' }),
       emits: [],
     });
