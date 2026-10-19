@@ -1,0 +1,4 @@
+Задача: UseCaseFromDef (Фаза 3)
+Сделано: базовый класс UseCaseFromDef<D, R, L> с load/execute, handle с порядком из errors-result.md §3, testAppContext.
+Решения: Policy вычисляет база после load (UC не может её пропустить); system — без Policy (допуск через callers); this.err() не нужен — возвращаемый тип execute/load ограничен errors Def; causationId — третий параметр handle.
+Тесты: use-case-from-def.test (13), в т.ч. 2 @ts-expect-error (незаявленная ошибка, контекст не подходит Policy). check зелёный, 2998 pass.
