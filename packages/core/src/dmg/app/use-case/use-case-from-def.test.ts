@@ -20,18 +20,15 @@ import {
 } from '../../testing';
 import {
   CompleteTaskUc,
-  TaskAr,
+  type TaskAr,
   TaskErrors,
   TaskEvents,
 } from '../../testing/example/todo';
 import type { TaskState } from '../../testing/example/todo/task/task.state';
+import { MemoryTasks, OWNER, T0, TASK, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { UseCaseFromDef } from './use-case-from-def';
-
-const TASK = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
-const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
-const T0 = Date.UTC(2026, 9, 1);
 
 const OtherErrors = defineErrors('OTHER', {
   FAILED: { kind: 'conflict', label: 'Сбой', description: 'Чужая ошибка.' },
@@ -42,19 +39,6 @@ const user = (uuid: string): Caller<User> => ({
   kind: 'user',
   user: { uuid, hasRole: () => false },
 });
-
-class MemoryTasks {
-  readonly rows = new Map<string, TaskState>();
-  failOnFind = false;
-  async findById(id: string): Promise<TaskAr | undefined> {
-    if (this.failOnFind) throw new Error('диск недоступен');
-    const row = this.rows.get(id);
-    return row && TaskAr.restore(row);
-  }
-  async save(ar: TaskAr): Promise<void> {
-    this.rows.set(ar.uuid, ar.snapshot());
-  }
-}
 
 type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
 type Loaded = { task: TaskAr };
@@ -94,14 +78,7 @@ let tasks: MemoryTasks;
 let uc: CompleteTask;
 
 function seed(status: TaskState['status'] = 'open'): void {
-  tasks.rows.set(TASK, {
-    uuid: TASK,
-    ownerId: OWNER,
-    title: 'Купить хлеб',
-    status,
-    createdAt: T0,
-    updatedAt: T0,
-  });
+  tasks.rows.set(TASK, taskRow(TASK, status));
 }
 
 beforeEach(() => {

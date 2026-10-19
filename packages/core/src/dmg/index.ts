@@ -5,6 +5,18 @@ export type { AppContext, ModuleDeps } from './app/context';
 export type { EventBus } from './app/events/event-bus';
 export type { EnvelopeOf, EventEnvelope } from './app/events/event-envelope';
 export { legacyEventBus } from './app/events/legacy-event-bus';
+export { guardCalls } from './app/facade/guard-calls';
+export { facadeDefOf, implementFacade } from './app/facade/implement-facade';
+export { JobFromDef, type JobReport } from './app/job/job-from-def';
+export { legacyJob } from './app/job/legacy-job';
+export {
+  type ReactionEnvelopeOf,
+  ReactionFromDef,
+} from './app/reaction/reaction-from-def';
+export {
+  contractUnitOfWork,
+  type OperationContract,
+} from './app/uow/contract-unit-of-work';
 export type { Repository } from './app/uow/repository';
 export {
   type Committable,

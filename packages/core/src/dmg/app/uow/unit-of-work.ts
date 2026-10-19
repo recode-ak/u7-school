@@ -1,3 +1,4 @@
+import type { AnyAggregateDef } from '../../domain/aggregate/define-aggregate';
 import type {
   AnyEventDef,
   DomainEvent,
@@ -20,6 +21,8 @@ export type UnitOfWorkContext = {
   readonly causationId?: string;
   /** Заявленные события операции; без поля проверка не выполняется. */
   readonly emits?: readonly AnyEventDef[];
+  /** Агрегаты, которые операции разрешено менять; без поля — любые. */
+  readonly touches?: readonly AnyAggregateDef[];
 };
 
 type Entry = { readonly ar: Committable; readonly save: () => Promise<void> };
@@ -35,6 +38,7 @@ export class UnitOfWork {
   constructor(private readonly ctx: UnitOfWorkContext) {}
 
   register<A extends Committable>(ar: A, repo: Repository<A>): void {
+    this.assertTouches(repo.aggregate);
     if (this.entries.some((e) => e.ar === ar)) return;
     this.entries.push({ ar, save: () => repo.save(ar) });
   }
@@ -62,6 +66,12 @@ export class UnitOfWork {
       caller,
       ...(causationId === undefined ? {} : { causationId }),
     };
+  }
+
+  private assertTouches(aggregate: AnyAggregateDef): void {
+    const { touches } = this.ctx;
+    if (touches === undefined || touches.includes(aggregate)) return;
+    throw new Error(`UoW: агрегат ${aggregate.name} не заявлен в touches`);
   }
 
   private assertDeclared(envelope: EventEnvelope): void {

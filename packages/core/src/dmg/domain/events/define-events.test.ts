@@ -49,6 +49,15 @@ describe('defineEvents', () => {
     TaskEvents.completed.make({ id: 't1' });
   });
 
+  it('EventOf от union Def — размеченный union событий', () => {
+    type Either = EventOf<
+      typeof TaskEvents.created | typeof TaskEvents.completed
+    >;
+    const handle = (e: Either): string =>
+      e.name === 'todo.task.created' ? e.payload.title : e.payload.taskId;
+    expect(handle(TaskEvents.completed.make({ taskId: 't1' }))).toBe('t1');
+  });
+
   it('ссылка на событие — сам объект Def', () => {
     const on: readonly AnyEventDef[] = [TaskEvents.created];
     expect(on[0]).toBe(TaskEvents.created);

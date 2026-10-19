@@ -15,7 +15,8 @@ import { CoreErrors } from '../../kernel/errors/core-errors';
 import type { ErrorOf } from '../../kernel/errors/define-errors';
 import { ok, type Result } from '../../kernel/result/result';
 import type { ModuleDeps } from '../context';
-import { UnitOfWork } from '../uow/unit-of-work';
+import { contractUnitOfWork } from '../uow/contract-unit-of-work';
+import type { UnitOfWork } from '../uow/unit-of-work';
 
 /** Вход после схемы — то, что получают `load` и `execute`. */
 export type ParsedInputOf<D extends AnyUseCaseDef> = v.InferOutput<D['input']>;
@@ -121,7 +122,11 @@ export abstract class UseCaseFromDef<
         return CoreErrors.ACCESS_DENIED.err({ rule, denyMessage });
       }
     }
-    const uow = this.unitOfWork(caller, meta);
+    const uow = contractUnitOfWork(this.resolve.app, {
+      caller,
+      causationId: meta.causationId,
+      emits: this.def.emits ?? [],
+    });
     const res = await this.execute(parsed.output, loaded.value, uow, caller);
     if (!res.ok) return res;
     await uow.commit();
@@ -130,20 +135,6 @@ export abstract class UseCaseFromDef<
       return CoreErrors.OUTPUT_VALIDATION.err({ issues: issues(output) });
     }
     return ok(output.output);
-  }
-
-  /** Сверка `emits` — в test и development; в production не роняем UC. */
-  private unitOfWork(caller: Caller<unknown>, meta: HandleMeta): UnitOfWork {
-    const { bus, mode } = this.resolve.app;
-    const emits = mode === 'production' ? undefined : (this.def.emits ?? []);
-    return new UnitOfWork({
-      bus,
-      caller,
-      ...(meta.causationId === undefined
-        ? {}
-        : { causationId: meta.causationId }),
-      ...(emits === undefined ? {} : { emits }),
-    });
   }
 }
 
