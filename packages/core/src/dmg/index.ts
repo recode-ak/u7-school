@@ -2,6 +2,16 @@
 // Живёт рядом с legacy-слоями (strangler), см. conductor/architecture/migration.md.
 
 export {
+  type AnyEventDef,
+  type DomainEvent,
+  defineEvents,
+  type EventDef,
+  type EventGroup,
+  type EventOf,
+  type EventPrefix,
+  type EventSpec,
+} from './domain/events/define-events';
+export {
   type Caller,
   type CallerKind,
   type DelegateCaller,
