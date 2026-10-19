@@ -58,6 +58,7 @@
     - [x] Агрегат, state, события, ошибки, политика, контракты 2–3 UC (command + query), ER, Job, фасад, модуль
     - [x] Unit-тесты агрегата и политики по TST-01/02
     - Размещён в `dmg/testing/example/todo/` + заглушка `users` (ER на чужое событие, `dependsOn`). Попутно e2049b7: `Aggregate.change` — тип по всему `Result`
+- Замечания по фазе (11cbafa): `description` UC не описывает права доступа (это `policy`); `policy` обязательна для всех UC, без ограничений — явный `allowAll`; `EntityBase` выводится из `BaseEntityFields`; `JobSchedule` — своя копия в dmg (структурно совместима с legacy). `now()` остаётся на legacy-часах, третий параметр конструктора Ar — начальные события `create`. В Фазе 6 зафиксировать в `manifests.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Прикладной слой
