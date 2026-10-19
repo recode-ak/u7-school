@@ -1,6 +1,16 @@
 // Платформа DMG (Domain Manifest Graph) — новый фреймворк @u7-scl/core.
 // Живёт рядом с legacy-слоями (strangler), см. conductor/architecture/migration.md.
 
+export {
+  type Caller,
+  type CallerKind,
+  type DelegateCaller,
+  type GuestCaller,
+  type SystemCaller,
+  subjectOf,
+  systemCaller,
+  type UserCaller,
+} from './caller/caller';
 export { type CoreError, CoreErrors } from './errors/core-errors';
 export {
   type AnyErrorDef,
