@@ -8,10 +8,16 @@ import { InProcEventBus } from '../../../../../infra/in-proc-event-bus';
 import type { EventEnvelope } from '../../../../app/events/event-envelope';
 import { legacyEventBus } from '../../../../app/events/legacy-event-bus';
 import { legacyJob } from '../../../../app/job/legacy-job';
+import type { RequestMeta } from '../../../../app/trace';
 import type { Caller } from '../../../../kernel/caller/caller';
 import { type LogRecord, memoryLogger } from '../../../app-context';
 import { expectErr, expectOk } from '../../../expect-result';
-import { CompleteTaskUcDef, CreateTaskUcDef, ListTasksUcDef } from '../../todo';
+import {
+  CompleteTaskUcDef,
+  CreateTaskUcDef,
+  ListTasksUcDef,
+  TaskEvents,
+} from '../../todo';
 import { UserEvents } from '../../users/user/user.ar';
 import type { ExampleUser } from '../app-user';
 import { TaskJsonRepo } from './infra/task.json-repo';
@@ -53,14 +59,17 @@ beforeEach(async () => {
 afterEach(() => rm(dir, { recursive: true, force: true }));
 
 async function create(title: string, owner = ANNA): Promise<string> {
-  const res = await api.run(CreateTaskUcDef, { title }, caller(owner));
+  const res = await api.run(CreateTaskUcDef, { title }, caller(owner), req());
   return expectOk(res).taskId;
 }
 
 async function titles(owner = ANNA): Promise<string[]> {
-  const res = await api.run(ListTasksUcDef, {}, caller(owner));
+  const res = await api.run(ListTasksUcDef, {}, caller(owner), req());
   return expectOk(res).map((t) => `${t.title}:${t.status}`);
 }
+
+/** Мета запроса транспорта: в тестах — новый requestId на вызов. */
+const req = (): RequestMeta => ({ requestId: crypto.randomUUID() });
 
 /** Реакции legacy-шина вызывает без ожидания — дать им отработать. */
 const settle = () => new Promise((r) => setTimeout(r, 10));
@@ -68,7 +77,9 @@ const settle = () => new Promise((r) => setTimeout(r, 10));
 describe('todo: сквозной сценарий через appApi.run', () => {
   test('создать → выполнить → в списке выполнена', async () => {
     const id = await create('Купить хлеб');
-    expectOk(await api.run(CompleteTaskUcDef, { taskId: id }, caller(ANNA)));
+    expectOk(
+      await api.run(CompleteTaskUcDef, { taskId: id }, caller(ANNA), req()),
+    );
     expect(await titles()).toEqual(['Купить хлеб:done']);
   });
 
@@ -84,10 +95,11 @@ describe('todo: сквозной сценарий через appApi.run', () => 
       CompleteTaskUcDef,
       { taskId: id },
       caller(BORIS),
+      req(),
     );
     expectErr(foreign, 'ACCESS_DENIED');
     const admin = caller(BORIS, true);
-    expectOk(await api.run(CompleteTaskUcDef, { taskId: id }, admin));
+    expectOk(await api.run(CompleteTaskUcDef, { taskId: id }, admin, req()));
   });
 
   test('событие уходит в общую шину — legacy-подписчик его видит', async () => {
@@ -110,9 +122,16 @@ describe('todo: событие → ER', () => {
       occurredAt: Date.now(),
       aggregateId: ANNA,
       caller: { kind: 'system', source: 'users' },
+      cause: { kind: 'request', requestId: 'r-remove' },
+      correlationId: 'r-remove',
     };
+    const archived: string[] = [];
+    deps.app.bus.subscribe(TaskEvents.archived, async (e) => {
+      archived.push(e.correlationId);
+    });
     deps.app.bus.publish(removed);
     await settle();
+    expect(archived).toEqual(['r-remove']);
     expect([await titles(ANNA), await titles(BORIS)]).toEqual([
       [],
       ['Борис:open'],
@@ -125,7 +144,9 @@ describe('todo: Job на существующем планировщике', () 
   test('выполненные задачи уходят в архив', async () => {
     const id = await create('Купить хлеб');
     await create('Позвонить');
-    expectOk(await api.run(CompleteTaskUcDef, { taskId: id }, caller(ANNA)));
+    expectOk(
+      await api.run(CompleteTaskUcDef, { taskId: id }, caller(ANNA), req()),
+    );
     await legacyJob(new ArchiveDoneTasksJob(deps)).execute();
     expect(await titles()).toEqual(['Позвонить:open']);
   });

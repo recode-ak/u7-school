@@ -11,8 +11,9 @@ import {
 } from '../../testing/example/todo';
 import { MemoryTasks, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
+import type { Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
-import { JobFromDef, type JobReport } from './job-from-def';
+import { JobFromDef, type JobReport, type JobRun } from './job-from-def';
 import { legacyJob } from './legacy-job';
 
 type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
@@ -22,11 +23,14 @@ class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
     super(ArchiveDoneTasksJobDef, deps);
   }
 
-  protected async run(): Promise<JobReport> {
-    return this.forEach(await this.resolve.tasks.findDone(), this.step);
+  protected async run(job: JobRun): Promise<JobReport> {
+    this.runs.push(job.trace);
+    return job.forEach(await this.resolve.tasks.findDone(), this.step);
   }
 
   /** Шаг по одной задаче; тесты подменяют его, чтобы получить сбой. */
+  readonly runs: Trace[] = [];
+
   step = async (
     task: TaskAr,
     uow: UnitOfWork,
@@ -64,6 +68,25 @@ describe('JobFromDef.handle', () => {
       kind: 'system',
       source: 'archiveDoneTasks',
     });
+  });
+
+  test('прогон — причина и correlationId всех его событий', async () => {
+    await job.handle();
+    const [run] = job.runs;
+    if (run === undefined) throw new Error('прогона не было');
+    expect(run.cause.kind).toBe('job');
+    const traces = ctx.published.map(({ cause, correlationId }) => ({
+      cause,
+      correlationId,
+    }));
+    expect(traces).toEqual([run, run]);
+  });
+
+  test('у каждого прогона свой runId', async () => {
+    await job.handle();
+    await job.handle();
+    const [a, b] = job.runs;
+    expect(a?.correlationId).not.toBe(b?.correlationId);
   });
 
   test('сбой одной записи не прерывает обход и пишется в лог', async () => {

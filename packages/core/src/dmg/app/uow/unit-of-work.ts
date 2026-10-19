@@ -7,6 +7,7 @@ import type { Caller } from '../../kernel/caller/caller';
 import { now } from '../../kernel/time/now';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
+import type { Trace } from '../trace';
 import type { Repository } from './repository';
 
 /** Что UoW нужно от агрегата: идентификатор и накопленные события. */
@@ -18,7 +19,7 @@ export type Committable = {
 export type UnitOfWorkContext = {
   readonly bus: EventBus;
   readonly caller: Caller<unknown>;
-  readonly causationId?: string;
+  readonly trace: Trace;
   /** Заявленные события операции; без поля проверка не выполняется. */
   readonly emits?: readonly AnyEventDef[];
   /** Агрегаты, которые операции разрешено менять; без поля — любые. */
@@ -59,14 +60,15 @@ export class UnitOfWork {
   }
 
   private envelope(event: DomainEvent, aggregateId: string): EventEnvelope {
-    const { caller, causationId } = this.ctx;
+    const { caller, trace } = this.ctx;
     return {
       ...event,
       eventId: crypto.randomUUID(),
       occurredAt: now(),
       aggregateId,
       caller,
-      ...(causationId === undefined ? {} : { causationId }),
+      cause: trace.cause,
+      correlationId: trace.correlationId,
     };
   }
 

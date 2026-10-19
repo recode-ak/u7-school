@@ -31,7 +31,7 @@ type StrictHandler<D extends AnyUseCaseDef, U> = {
   readonly handle: (
     input: unknown,
     caller: Caller<U>,
-    meta?: HandleMeta,
+    meta: HandleMeta,
   ) => Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
 };
 

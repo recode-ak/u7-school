@@ -5,6 +5,7 @@ import type {
 } from '../../domain/events/define-events';
 import type { Caller } from '../../kernel/caller/caller';
 import type { Timestamp } from '../../kernel/time/timestamp';
+import type { Cause } from '../trace';
 
 /**
  * Опубликованное событие: доменный факт + конверт. Конверт добавляет UoW
@@ -16,8 +17,10 @@ export type EventEnvelope<E extends DomainEvent = DomainEvent> = E & {
   readonly aggregateId: string;
   /** Кто вызвал операцию, породившую событие. */
   readonly caller: Caller<unknown>;
-  /** `eventId` события-причины, если операция — реакция на него. */
-  readonly causationId?: string;
+  /** Что непосредственно вызвало операцию: запрос, событие, прогон Job. */
+  readonly cause: Cause;
+  /** Сквозной id цепочки от точки входа. */
+  readonly correlationId: string;
 };
 
 /** Конверт события по его Def. */

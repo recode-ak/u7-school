@@ -7,6 +7,7 @@ import type { EventBus } from '../events/event-bus';
 import type { EnvelopeOf } from '../events/event-envelope';
 import { guardCalls } from '../facade/guard-calls';
 import { runLogged } from '../system/run-logged';
+import type { Trace } from '../trace';
 import { contractUnitOfWork } from '../uow/contract-unit-of-work';
 import type { UnitOfWork } from '../uow/unit-of-work';
 
@@ -21,7 +22,8 @@ export type ReactionEnvelopeOf<D extends AnyEventReactionDef> = EnvelopeOf<
  * `Ok`, лог отказа и перехват исключений делает база.
  *
  * Вызывающий — `system` с `onBehalfOf` автора события-причины (caller.md
- * §2 п. 5); `causationId` событий реакции — `eventId` причины. Обращение
+ * §2 п. 5). След: причина — событие, `correlationId` — его же; `trace`
+ * передаётся в `react`, чтобы вызванный UC продолжил цепочку. Обращение
  * к фасаду вне `calls` и регистрация агрегата вне `touches` — исключение,
  * в production — `warn` в лог.
  */
@@ -48,20 +50,25 @@ export abstract class ReactionFromDef<
     event: ReactionEnvelopeOf<D>,
     uow: UnitOfWork,
     caller: SystemCaller<unknown>,
+    trace: Trace,
   ): Promise<Result<void, DomainError>>;
 
   handle(event: ReactionEnvelopeOf<D>): Promise<Result<void, DomainError>> {
     const { app } = this.resolve;
     return runLogged(app, this.def.name, async () => {
       const caller = systemCaller(this.def.name, event.caller);
+      const trace: Trace = {
+        cause: { kind: 'event', eventId: event.eventId },
+        correlationId: event.correlationId,
+      };
       const uow = contractUnitOfWork(app, {
         source: this.def.name,
         caller,
-        causationId: event.eventId,
+        trace,
         emits: this.def.emits,
         touches: this.def.touches,
       });
-      const res = await this.react(event, uow, caller);
+      const res = await this.react(event, uow, caller, trace);
       if (!res.ok) return res;
       await uow.commit();
       return ok();

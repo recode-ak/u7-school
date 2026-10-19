@@ -27,6 +27,7 @@ import {
 import type { TaskState } from '../../testing/example/todo/task/task.state';
 import { MemoryTasks, OWNER, T0, TASK, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
+import type { RequestMeta } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { UseCaseFromDef } from './use-case-from-def';
 
@@ -41,6 +42,8 @@ const user = (uuid: string): Caller<User> => ({
 });
 
 type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
+
+const REQ: RequestMeta = { requestId: 'r-1' };
 type Loaded = { task: TaskAr };
 
 async function loadTask(tasks: MemoryTasks, input: { taskId: string }) {
@@ -96,26 +99,26 @@ afterEach(resetNow);
 
 describe('UseCaseFromDef.handle — отказы до операции', () => {
   test('вид вызывающего не в callers → UNAUTHORIZED', async () => {
-    const res = await uc.handle({ taskId: TASK }, { kind: 'guest' });
+    const res = await uc.handle({ taskId: TASK }, { kind: 'guest' }, REQ);
     expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
       callerKind: 'guest',
     });
   });
 
   test('невалидный вход → INPUT_VALIDATION с путём поля', async () => {
-    const res = await uc.handle({ taskId: 'x' }, user(OWNER));
+    const res = await uc.handle({ taskId: 'x' }, user(OWNER), REQ);
     const issues = expectErr(res, 'INPUT_VALIDATION').payload.issues;
     expect(issues.map((i) => i.path)).toEqual(['taskId']);
   });
 
   test('ошибка загрузки возвращается как есть', async () => {
     tasks.rows.clear();
-    const res = await uc.handle({ taskId: TASK }, user(OWNER));
+    const res = await uc.handle({ taskId: TASK }, user(OWNER), REQ);
     expectErr(res, 'TASK_NOT_FOUND');
   });
 
   test('отказ Policy → ACCESS_DENIED с правилом', async () => {
-    const res = await uc.handle({ taskId: TASK }, user('чужой'));
+    const res = await uc.handle({ taskId: TASK }, user('чужой'), REQ);
     expect(expectErr(res, 'ACCESS_DENIED').payload.rule).toBe('canManage');
   });
 
@@ -136,31 +139,55 @@ describe('UseCaseFromDef.handle — отказы до операции', () => {
       protected execute = async () => ok({});
     }
     const system: Caller<User> = { kind: 'system', source: 'test' };
-    expectOk(await new SystemComplete().handle({ taskId: TASK }, system));
+    expectOk(await new SystemComplete().handle({ taskId: TASK }, system, REQ));
   });
 });
 
 describe('UseCaseFromDef.handle — операция', () => {
   test('Ok → сохранение, публикация, выход', async () => {
-    expect(expectOk(await uc.handle({ taskId: TASK }, user(OWNER)))).toEqual(
-      {},
-    );
+    expect(
+      expectOk(await uc.handle({ taskId: TASK }, user(OWNER), REQ)),
+    ).toEqual({});
     expect(tasks.rows.get(TASK)?.status).toBe('done');
     expect(ctx.published.map((e) => e.name)).toEqual([
       TaskEvents.completed.name,
     ]);
   });
 
+  test('событие несёт след запроса: причина и correlationId', async () => {
+    const meta = { requestId: 'r-1', correlationId: 'c-1' };
+    await uc.handle({ taskId: TASK }, user(OWNER), meta);
+    expect(ctx.published[0]).toMatchObject({
+      cause: { kind: 'request', requestId: 'r-1' },
+      correlationId: 'c-1',
+    });
+  });
+
+  test('без requestId — создаётся ядром, warn в лог', async () => {
+    const noId: RequestMeta = { requestId: undefined };
+    expectOk(await uc.handle({ taskId: TASK }, user(OWNER), noId));
+    const [event] = ctx.published;
+    const id = event?.correlationId ?? 'нет события';
+    expect(event?.cause).toEqual({ kind: 'request', requestId: id });
+    expect(ctx.logs).toEqual([
+      {
+        level: 'warn',
+        source: 'completeTask',
+        message: `Клиент не передал requestId — создан ${id}`,
+      },
+    ]);
+  });
+
   test('Err операции → без сохранения и публикации', async () => {
     seed('done');
-    const res = await uc.handle({ taskId: TASK }, user(OWNER));
+    const res = await uc.handle({ taskId: TASK }, user(OWNER), REQ);
     expectErr(res, 'TASK_ALREADY_DONE');
     expect(ctx.published).toEqual([]);
   });
 
   test('незаявленное событие в test → SERVER_INTERNAL, ничего не записано', async () => {
     uc.mutate = (task) => task.archive();
-    const res = await uc.handle({ taskId: TASK }, user(OWNER));
+    const res = await uc.handle({ taskId: TASK }, user(OWNER), REQ);
     expectErr(res, 'SERVER_INTERNAL');
     expect(tasks.rows.get(TASK)?.status).toBe('open');
   });
@@ -169,7 +196,7 @@ describe('UseCaseFromDef.handle — операция', () => {
     const prod = testAppContext('production');
     uc = new CompleteTask({ app: prod.app, tasks });
     uc.mutate = (task) => task.archive();
-    expectOk(await uc.handle({ taskId: TASK }, user(OWNER)));
+    expectOk(await uc.handle({ taskId: TASK }, user(OWNER), REQ));
     expect(prod.published.map((e) => e.name)).toEqual([
       TaskEvents.archived.name,
     ]);
@@ -184,7 +211,7 @@ describe('UseCaseFromDef.handle — операция', () => {
 
   test('исключение → SERVER_INTERNAL и запись в лог', async () => {
     tasks.failOnFind = true;
-    const res = await uc.handle({ taskId: TASK }, user(OWNER));
+    const res = await uc.handle({ taskId: TASK }, user(OWNER), REQ);
     expectErr(res, 'SERVER_INTERNAL');
     expect(ctx.logs).toContainEqual(
       expect.objectContaining({ level: 'error', source: 'completeTask' }),
@@ -207,7 +234,11 @@ describe('UseCaseFromDef.handle — операция', () => {
       protected load = (i: { taskId: string }) => loadTask(tasks, i);
       protected execute = async () => ok({ taskId: 'не uuid' });
     }
-    const res = await new BadOutput().handle({ taskId: TASK }, user(OWNER));
+    const res = await new BadOutput().handle(
+      { taskId: TASK },
+      user(OWNER),
+      REQ,
+    );
     expectErr(res, 'OUTPUT_VALIDATION');
   });
 });
@@ -236,7 +267,7 @@ describe('UseCaseFromDef.subject', () => {
 
   test('субъект вызывающего — для реализации', async () => {
     const uc = new WhoAmI();
-    expectOk(await uc.handle({ taskId: TASK }, user(OWNER)));
+    expectOk(await uc.handle({ taskId: TASK }, user(OWNER), REQ));
     expect(uc.seen).toBe(OWNER);
   });
 
@@ -244,6 +275,7 @@ describe('UseCaseFromDef.subject', () => {
     const res = await new WhoAmI().handle(
       { taskId: TASK },
       { kind: 'system', source: 'test' },
+      REQ,
     );
     expectErr(res, 'SERVER_INTERNAL');
     expect(ctx.logs).toHaveLength(1);

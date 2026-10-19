@@ -16,7 +16,7 @@ import { T0 } from '../app.fixture';
 import type { AppContext } from '../context';
 import { legacyEventBus } from '../events/legacy-event-bus';
 import { implementFacade } from '../facade/implement-facade';
-import { JobFromDef } from '../job/job-from-def';
+import { JobFromDef, type JobRun } from '../job/job-from-def';
 import { ReactionFromDef } from '../reaction/reaction-from-def';
 import { UseCaseFromDef } from '../use-case/use-case-from-def';
 import { ModuleFromDef, type ModuleMap } from './module-from-def';
@@ -67,7 +67,7 @@ class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps) {
     super(ArchiveDoneTasksJobDef, deps);
   }
-  protected run = () => this.forEach([], async () => ok());
+  protected run = (job: JobRun) => job.forEach([], async () => ok());
 }
 
 const map = {
@@ -117,6 +117,8 @@ describe('ModuleFromDef', () => {
       occurredAt: T0,
       aggregateId: 'u',
       caller: { kind: 'system', source: 'test' },
+      cause: { kind: 'request', requestId: 'r-1' },
+      correlationId: 'r-1',
     });
     await new Promise((r) => setTimeout(r, 0));
     expect([deps.reacted, legacySeen]).toEqual([

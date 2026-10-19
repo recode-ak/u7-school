@@ -26,6 +26,7 @@ import type { AppContext } from '../context';
 import type { EnvelopeOf } from '../events/event-envelope';
 import { legacyEventBus } from '../events/legacy-event-bus';
 import { implementFacade } from '../facade/implement-facade';
+import type { Cause, Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { ReactionFromDef } from './reaction-from-def';
 
@@ -37,6 +38,8 @@ const removed = (): EnvelopeOf<typeof UserEvents.removed> => ({
   occurredAt: T0,
   aggregateId: OWNER,
   caller: ADMIN,
+  cause: { kind: 'request', requestId: 'r-1' },
+  correlationId: 'c-1',
 });
 
 type Deps = {
@@ -79,9 +82,12 @@ class ArchiveRemovedUserTasks extends ReactionFromDef<
     event: EnvelopeOf<typeof UserEvents.removed>,
     uow: UnitOfWork,
     caller: SystemCaller<unknown>,
+    trace: Trace,
   ) {
+    this.seenTrace = trace;
     return this.step(event, uow, caller, this.resolve);
   }
+  seenTrace: Trace | undefined;
 }
 
 let ctx: ReturnType<typeof testAppContext>;
@@ -102,9 +108,12 @@ describe('ReactionFromDef.handle', () => {
   test('Ok → фиксация и события с причиной и system-вызывающим', async () => {
     expectOk(await er.handle(removed()));
     expect(tasks.rows.get(TASK)?.status).toBe('archived');
-    expect(ctx.published.map((e) => [e.name, e.causationId])).toEqual([
-      [TaskEvents.archived.name, 'e-removed'],
-      [TaskEvents.archived.name, 'e-removed'],
+    const event: Cause = { kind: 'event', eventId: 'e-removed' };
+    expect(
+      ctx.published.map((e) => [e.name, e.cause, e.correlationId]),
+    ).toEqual([
+      [TaskEvents.archived.name, event, 'c-1'],
+      [TaskEvents.archived.name, event, 'c-1'],
     ]);
     expect(ctx.published[0]?.caller).toEqual({
       kind: 'system',
@@ -113,9 +122,13 @@ describe('ReactionFromDef.handle', () => {
     });
   });
 
-  test('вызывающий для UC — system от имени автора события', async () => {
+  test('для вызова UC — system от имени автора и след цепочки', async () => {
     await er.handle(removed());
     expect(er.seen?.onBehalfOf).toEqual(ADMIN);
+    expect(er.seenTrace).toEqual({
+      cause: { kind: 'event', eventId: 'e-removed' },
+      correlationId: 'c-1',
+    });
   });
 
   test('Err → без фиксации, запись в лог', async () => {

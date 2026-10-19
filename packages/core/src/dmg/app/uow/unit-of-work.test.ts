@@ -5,6 +5,7 @@ import { TaskAr, TaskArDef, TaskEvents } from '../../testing/example/todo';
 import { UserArDef } from '../../testing/example/users/user/user.ar';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
+import type { Trace } from '../trace';
 import type { Repository } from './repository';
 import { UnitOfWork } from './unit-of-work';
 
@@ -13,6 +14,10 @@ const A = 'a1b2c3d4-0000-4000-8000-00000000000a';
 const B = 'a1b2c3d4-0000-4000-8000-00000000000b';
 const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
 const CALLER: Caller = systemCaller('test');
+const TRACE: Trace = {
+  cause: { kind: 'event', eventId: 'e-0' },
+  correlationId: 'c-0',
+};
 
 type Log = string[];
 
@@ -51,7 +56,11 @@ beforeEach(() => {
   setNow(AT);
   log = [];
   published = [];
-  uow = new UnitOfWork({ bus: recordingBus(published, log), caller: CALLER });
+  uow = new UnitOfWork({
+    bus: recordingBus(published, log),
+    caller: CALLER,
+    trace: TRACE,
+  });
 });
 afterEach(resetNow);
 
@@ -78,14 +87,9 @@ describe('UnitOfWork.commit', () => {
     expect(log.filter((l) => l.startsWith('saved'))).toEqual([`saved ${A}`]);
   });
 
-  test('событие уходит в конверте с вызывающим и причиной', async () => {
-    const caused = new UnitOfWork({
-      bus: recordingBus(published, log),
-      caller: CALLER,
-      causationId: 'e-0',
-    });
-    caused.register(task(A), slowRepo(log));
-    await caused.commit();
+  test('событие уходит в конверте с вызывающим и следом', async () => {
+    uow.register(task(A), slowRepo(log));
+    await uow.commit();
     expect(published).toEqual([
       {
         ...TaskEvents.created.make({
@@ -97,7 +101,8 @@ describe('UnitOfWork.commit', () => {
         occurredAt: AT,
         aggregateId: A,
         caller: CALLER,
-        causationId: 'e-0',
+        cause: { kind: 'event', eventId: 'e-0' },
+        correlationId: 'c-0',
       },
     ]);
   });
@@ -112,6 +117,7 @@ describe('UnitOfWork.commit', () => {
     const strict = new UnitOfWork({
       bus: recordingBus(published, log),
       caller: CALLER,
+      trace: TRACE,
       emits: [TaskEvents.completed],
     });
     strict.register(task(A), slowRepo(log));
@@ -125,6 +131,7 @@ describe('UnitOfWork.commit', () => {
     const narrow = new UnitOfWork({
       bus: recordingBus(published, log),
       caller: CALLER,
+      trace: TRACE,
       touches: [UserArDef],
     });
     expect(() => narrow.register(task(A), slowRepo(log))).toThrow(
@@ -137,6 +144,7 @@ describe('UnitOfWork.commit', () => {
     const lenient = new UnitOfWork({
       bus: recordingBus(published, log),
       caller: CALLER,
+      trace: TRACE,
       emits: [],
       touches: [UserArDef],
       onViolation: (message) => violations.push(message),

@@ -7,7 +7,11 @@ export type { EnvelopeOf, EventEnvelope } from './app/events/event-envelope';
 export { legacyEventBus } from './app/events/legacy-event-bus';
 export { guardCalls } from './app/facade/guard-calls';
 export { facadeDefOf, implementFacade } from './app/facade/implement-facade';
-export { JobFromDef, type JobReport } from './app/job/job-from-def';
+export {
+  JobFromDef,
+  type JobReport,
+  type JobRun,
+} from './app/job/job-from-def';
 export { legacyJob } from './app/job/legacy-job';
 export {
   type AnyModuleFromDef,
@@ -18,6 +22,12 @@ export {
   type ReactionEnvelopeOf,
   ReactionFromDef,
 } from './app/reaction/reaction-from-def';
+export {
+  type Cause,
+  type RequestMeta,
+  requestTrace,
+  type Trace,
+} from './app/trace';
 export {
   contractUnitOfWork,
   type OperationContract,

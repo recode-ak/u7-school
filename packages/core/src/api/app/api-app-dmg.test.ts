@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { MemoryTasks, OWNER, TASK, taskRow } from '../../dmg/app/app.fixture';
 import type { AppContext } from '../../dmg/app/context';
-import { JobFromDef } from '../../dmg/app/job/job-from-def';
+import { JobFromDef, type JobRun } from '../../dmg/app/job/job-from-def';
 import { ModuleFromDef } from '../../dmg/app/module/module-from-def';
+import type { RequestMeta } from '../../dmg/app/trace';
 import type { UnitOfWork } from '../../dmg/app/uow/unit-of-work';
 import { UseCaseFromDef } from '../../dmg/app/use-case/use-case-from-def';
 import { defineModule } from '../../dmg/domain/contracts/define-module';
@@ -59,8 +60,10 @@ class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps) {
     super(ArchiveDoneTasksJobDef, deps);
   }
-  protected run = () => this.forEach([], async () => ok());
+  protected run = (job: JobRun) => job.forEach([], async () => ok());
 }
+
+const REQ: RequestMeta = { requestId: 'r-1' };
 
 type User = { readonly uuid: string; hasRole(role: 'admin'): boolean };
 const user = (uuid: string): Caller<User> => ({
@@ -89,19 +92,29 @@ beforeEach(() => {
 
 describe('ApiApp.run — UC DMG', () => {
   test('возвращает Result: Ok с выходом', async () => {
-    const res = await app.run(CompleteTaskUcDef, { taskId: TASK }, user(OWNER));
+    const res = await app.run(
+      CompleteTaskUcDef,
+      { taskId: TASK },
+      user(OWNER),
+      REQ,
+    );
     expect(expectOk(res)).toEqual({});
   });
 
   test('возвращает Result: отказ — значение, не исключение', async () => {
     tasks.rows.clear();
-    const res = await app.run(CompleteTaskUcDef, { taskId: TASK }, user(OWNER));
+    const res = await app.run(
+      CompleteTaskUcDef,
+      { taskId: TASK },
+      user(OWNER),
+      REQ,
+    );
     expectErr(res, 'TASK_NOT_FOUND');
   });
 
   test('UC вне зарегистрированных модулей — исключение (баг сборки)', async () => {
     await expect(
-      app.run(CreateTaskUcDef, { title: 'x' }, user(OWNER)),
+      app.run(CreateTaskUcDef, { title: 'x' }, user(OWNER), REQ),
     ).rejects.toThrow('UC createTask не зарегистрирован');
   });
 });
@@ -109,14 +122,14 @@ describe('ApiApp.run — UC DMG', () => {
 describe('ApiApp.execute — UC DMG', () => {
   test('Ok — возвращает выход', async () => {
     expect(
-      await app.execute(CompleteTaskUcDef, { taskId: TASK }, user(OWNER)),
+      await app.execute(CompleteTaskUcDef, { taskId: TASK }, user(OWNER), REQ),
     ).toEqual({});
   });
 
   test('Err — AppException с кодом и legacy-kind', async () => {
     tasks.rows.clear();
     const error = await app
-      .execute(CompleteTaskUcDef, { taskId: TASK }, user(OWNER))
+      .execute(CompleteTaskUcDef, { taskId: TASK }, user(OWNER), REQ)
       .catch((e: unknown) => e);
     expect(error).toBeInstanceOf(AppException);
     expect(error instanceof AppException && error.error).toMatchObject({
@@ -128,7 +141,7 @@ describe('ApiApp.execute — UC DMG', () => {
 
   test('ACCESS_DENIED — текст отказа правила в message', async () => {
     const error = await app
-      .execute(CompleteTaskUcDef, { taskId: TASK }, user('чужой'))
+      .execute(CompleteTaskUcDef, { taskId: TASK }, user('чужой'), REQ)
       .catch((e: unknown) => e);
     expect(error instanceof AppException && error.error).toMatchObject({
       name: 'ACCESS_DENIED',

@@ -15,6 +15,8 @@ function completed(): EnvelopeOf<typeof TaskEvents.completed> {
     occurredAt: AT,
     aggregateId: 't-1',
     caller: systemCaller('test'),
+    cause: { kind: 'request', requestId: 'r-1' },
+    correlationId: 'r-1',
   };
 }
 

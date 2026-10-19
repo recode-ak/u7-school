@@ -1,6 +1,6 @@
 import { toLegacyError } from '#dmg/app/errors/legacy-error';
 import type { AnyModuleFromDef } from '#dmg/app/module/module-from-def';
-import type { HandleMeta } from '#dmg/app/use-case/use-case-from-def';
+import type { RequestMeta } from '#dmg/app/trace';
 import type {
   AnyUseCaseDef,
   InputOf,
@@ -83,12 +83,15 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     this.#scheduler.stop();
   }
 
-  /** Исполнение UC DMG по его Def: отказ — значение `Err`. */
+  /**
+   * Исполнение UC DMG по его Def: отказ — значение `Err`. `meta` строит
+   * транспорт (requestId от клиента); параметр обязателен.
+   */
   async run<D extends AnyUseCaseDef>(
     uc: D,
     input: InputOf<D>,
     caller: Caller<TActor>,
-    meta?: HandleMeta,
+    meta: RequestMeta,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
     return this.dmgUseCase(uc).handle(input, caller, meta);
   }
@@ -106,17 +109,19 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     uc: D,
     input: InputOf<D>,
     caller: Caller<TActor>,
+    meta: RequestMeta,
   ): Promise<OutputOf<D>>;
   async execute(
     uc: string | AnyUseCaseDef,
     attrs: unknown,
     who?: unknown,
+    meta: RequestMeta = { requestId: undefined },
   ): Promise<unknown> {
     if (typeof uc !== 'string') {
       if (!isCaller<TActor>(who)) {
         throw new Error(`ApiApp: для UC ${uc.name} нужен Caller`);
       }
-      const res = await this.dmgUseCase(uc).handle(attrs, who);
+      const res = await this.dmgUseCase(uc).handle(attrs, who, meta);
       if (!res.ok) throw new AppException(toLegacyError(res.error));
       return res.value;
     }

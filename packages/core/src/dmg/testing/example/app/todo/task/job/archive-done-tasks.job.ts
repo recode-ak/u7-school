@@ -1,6 +1,7 @@
 import {
   JobFromDef,
   type JobReport,
+  type JobRun,
 } from '../../../../../../app/job/job-from-def';
 import type { UnitOfWork } from '../../../../../../app/uow/unit-of-work';
 import { ok } from '../../../../../../kernel/result/result';
@@ -15,9 +16,9 @@ export class ArchiveDoneTasksJob extends JobFromDef<
     super(ArchiveDoneTasksJobDef, deps);
   }
 
-  protected async run(): Promise<JobReport> {
+  protected async run(job: JobRun): Promise<JobReport> {
     const done = await this.resolve.tasks.findDone();
-    return this.forEach(done, (task, uow) => this.archive(task, uow));
+    return job.forEach(done, (task, uow) => this.archive(task, uow));
   }
 
   private async archive(task: TaskAr, uow: UnitOfWork) {
