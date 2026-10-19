@@ -1,0 +1,5 @@
+Задача: Агрегат v2 и defineAggregate
+- define-aggregate.ts: defineAggregate({ name, label, description, state, statuses, transitions, events, errors }) → { ...spec, dmg:'aggregate' }. State обязан содержать EntityBase (uuid, createdAt, updatedAt); если в state есть status — statuses типом покрывают все значения, transitions { op: { from[], to } }.
+- aggregate.ts: abstract class Aggregate<D>: protected constructor(def, state, events?) валидирует схему (throw — нарушение инварианта); наследник — private constructor + static create(): Result / static restore(snapshot). change(apply(draft, emit) => Result): Err — откат черновика и событий; затем проверка объявленного перехода (throw), схема (throw), updatedAt = now(), фиксация. snapshot() — копия, pullEvents() — для UoW, get uuid, protected get state.
+- Типы StateOf/EventsOf/ErrorsOf.
+- check: 2 теста бота по таймауту (батарея).
