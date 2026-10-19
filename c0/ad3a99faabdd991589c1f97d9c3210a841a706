@@ -1,0 +1,1 @@
+Уточнение Нурболата: UC всегда получает след; requestId ставит тот, кто разбирает Request. Сделано: handle(…, trace: Trace), RequestMeta.requestId: string, incomingRequestId для адаптеров. Тесты trace.test (5). check зелёный, 3050 pass.
