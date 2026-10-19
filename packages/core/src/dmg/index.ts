@@ -29,6 +29,26 @@ export {
   type EventSpec,
 } from './domain/events/define-events';
 export {
+  type AnyPolicyDef,
+  definePolicy,
+  type PolicyDef,
+  type PolicySpec,
+} from './domain/policy/define-policy';
+export {
+  type AnyRule,
+  allOf,
+  allowed,
+  anyOf,
+  type Decision,
+  denied,
+  hasRole,
+  type RoleHolder,
+  type Rule,
+  type RuleNode,
+  type RuleSpec,
+  rule,
+} from './domain/policy/policy';
+export {
   type Caller,
   type CallerKind,
   type DelegateCaller,
