@@ -1,0 +1,1 @@
+Замечание Нурболата к Фазе 3: расхождение с контрактом в production логировать минимум в warn. Сделано: onViolation в UoW и guardCalls, warn в production. Тесты +3. check зелёный, 3042 pass.
