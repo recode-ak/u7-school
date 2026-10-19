@@ -1,0 +1,298 @@
+import { describe, expect, it } from 'bun:test';
+import * as v from 'valibot';
+import {
+  defineAggregate,
+  type StateSchema,
+} from '../domain/aggregate/define-aggregate';
+import { defineEventReaction } from '../domain/contracts/define-event-reaction';
+import {
+  type AnyModuleDef,
+  defineModule,
+} from '../domain/contracts/define-module';
+import { defineUseCase } from '../domain/contracts/define-use-case';
+import { type AnyEventDef, defineEvents } from '../domain/events/define-events';
+import { allowAll } from '../domain/policy/policy';
+import { indexDefs } from '../graph/def-index';
+import { defineErrors } from '../kernel/errors/define-errors';
+import { BaseEntityFields, F } from '../kernel/fields/fields';
+import {
+  AddNoteErDef,
+  AlphaModuleDef,
+  BetaModuleDef,
+  CreateItemUcDef,
+  ItemArDef,
+  ItemEvents,
+  NoteArDef,
+  NoteEvents,
+} from './arch.fixture';
+import { checkDefs } from './check-defs';
+import { formatViolation } from './violation';
+
+const report = (...roots: AnyModuleDef[]): string[] =>
+  checkDefs(indexDefs(roots)).map(formatViolation);
+
+const ThingEvents = defineEvents('gamma.thing', {
+  happened: {
+    label: 'Случилось',
+    description: 'Что-то случилось.',
+    payload: v.object({ thingId: F.uuid('вещи') }),
+  },
+});
+
+/** Модуль `gamma` с одним агрегатом и UC, который публикует его событие. */
+function gamma(
+  over: {
+    label?: string;
+    state?: StateSchema;
+    input?: v.GenericSchema;
+    events?: { readonly [key: string]: AnyEventDef };
+    errors?: Parameters<typeof defineErrors>[1];
+    errorPrefix?: string;
+  } = {},
+): AnyModuleDef {
+  const events = over.events ?? ThingEvents;
+  const ThingArDef = defineAggregate({
+    name: 'thing',
+    label: 'Вещь',
+    description: 'Вещь для негативных фикстур.',
+    state: v.object({ ...BaseEntityFields }),
+    ...(over.state ? { state: over.state } : {}),
+    events,
+    errors: defineErrors(over.errorPrefix ?? 'THING', over.errors ?? {}),
+  });
+  const DoItUcDef = defineUseCase({
+    name: 'doIt',
+    label: 'Сделать',
+    description: 'Делает дело.',
+    type: 'command',
+    aggregate: ThingArDef,
+    callers: ['user'],
+    policy: allowAll,
+    input: over.input ?? v.object({}),
+    output: v.object({}),
+    errors: [],
+    emits: Object.values(events),
+  });
+  return defineModule({
+    name: 'gamma',
+    label: over.label ?? 'Гамма',
+    description: 'Модуль негативных фикстур.',
+    dependsOn: [],
+    aggregates: [ThingArDef],
+    useCases: [DoItUcDef],
+    reactions: [],
+    jobs: [],
+  });
+}
+
+describe('checkDefs', () => {
+  it('чистые модули — без нарушений', () => {
+    expect(report(AlphaModuleDef)).toEqual([]);
+    expect(report(gamma())).toEqual([]);
+  });
+
+  describe('MAN-01 — описания Def', () => {
+    it('пустой label модуля', () => {
+      expect(report(gamma({ label: ' ' }))).toEqual([
+        'MAN-01: модуль gamma: пустой label',
+      ]);
+    });
+
+    it('пустой description события', () => {
+      const events = defineEvents('gamma.thing', {
+        happened: {
+          label: 'Случилось',
+          description: '',
+          payload: v.object({}),
+        },
+      });
+      expect(report(gamma({ events }))).toEqual([
+        'MAN-01: событие gamma.thing.happened: пустой description',
+      ]);
+    });
+  });
+
+  describe('MAN-02 — описания полей схем', () => {
+    it('поле без description, в том числе вложенное', () => {
+      const state = v.object({
+        ...BaseEntityFields,
+        title: v.string(),
+        meta: v.pipe(v.object({ tag: v.string() }), v.description('Мета')),
+      });
+      expect(report(gamma({ state }))).toEqual([
+        'MAN-02: агрегат gamma.thing state: поле title без description',
+        'MAN-02: агрегат gamma.thing state: поле meta.tag без description',
+      ]);
+    });
+
+    it('поля элементов массива объектов', () => {
+      const input = v.object({
+        rows: v.pipe(
+          v.array(v.object({ n: v.number() })),
+          v.description('Строки'),
+        ),
+      });
+      expect(report(gamma({ input }))).toEqual([
+        'MAN-02: UC gamma.doIt input: поле rows[].n без description',
+      ]);
+    });
+  });
+
+  describe('MAN-03 — JSON Schema', () => {
+    it('непереводимая схема — нарушение, MAN-02 для неё молчит', () => {
+      const input = v.object({ x: v.custom<string>(() => true) });
+      const [first, ...rest] = report(gamma({ input }));
+      expect(first).toStartWith(
+        'MAN-03: UC gamma.doIt input: не переводится в JSON Schema — ',
+      );
+      expect(rest).toEqual([]);
+    });
+  });
+
+  describe('MAN-06 — связность', () => {
+    it('неопубликованное событие и висячий подписчик', () => {
+      const beta = defineModule({ ...BetaModuleDef, useCases: [] });
+      const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [beta] });
+      expect(report(alpha)).toEqual([
+        'MAN-06: ER alpha.addNote слушает beta.item.created, которое никто не публикует',
+        'MAN-06: событие beta.item.created никто не публикует',
+      ]);
+    });
+
+    it('операция трогает агрегат и публикует событие чужого модуля', () => {
+      const er = defineEventReaction({
+        ...AddNoteErDef,
+        touches: [ItemArDef],
+        emits: [ItemEvents.created],
+      });
+      const alpha = defineModule({
+        ...AlphaModuleDef,
+        reactions: [er],
+      });
+      expect(report(alpha)).toEqual([
+        'MAN-06: ER alpha.addNote: агрегат beta.item другого модуля',
+        'MAN-06: ER alpha.addNote: публикует событие beta.item.created другого модуля',
+        'MAN-06: событие alpha.note.added никто не публикует',
+      ]);
+    });
+
+    it('Def вне модулей: агрегат UC, событие и ошибка', () => {
+      const LostErrors = defineErrors('LOST', {
+        GONE: { kind: 'not_found', label: 'Нет', description: 'Пропало.' },
+      });
+      const uc = defineUseCase({
+        ...CreateItemUcDef,
+        aggregate: NoteArDef,
+        errors: [LostErrors.GONE],
+      });
+      const beta = defineModule({ ...BetaModuleDef, useCases: [uc] });
+      expect(report(beta)).toEqual([
+        'MAN-06: UC beta.createItem: агрегат note не входит ни в один модуль',
+        'MAN-06: UC beta.createItem: ошибка LOST_GONE не входит ни в один модуль',
+      ]);
+    });
+
+    it('подписка на событие вне модулей', () => {
+      const er = defineEventReaction({
+        ...AddNoteErDef,
+        on: [NoteEvents.added],
+        emits: [],
+        calls: [],
+      });
+      const beta = defineModule({
+        ...BetaModuleDef,
+        aggregates: [ItemArDef],
+        reactions: [er],
+      });
+      expect(report(beta)).toContain(
+        'MAN-06: ER beta.addNote: событие alpha.note.added не входит ни в один модуль',
+      );
+    });
+  });
+
+  describe('MAN-08 — FQN событий', () => {
+    it('префикс не совпадает с модулем и агрегатом', () => {
+      const events = defineEvents('gamma.other', {
+        happened: {
+          label: 'Случилось',
+          description: 'Что-то случилось.',
+          payload: v.object({}),
+        },
+      });
+      expect(report(gamma({ events }))).toEqual([
+        'MAN-08: событие gamma.other.happened агрегата gamma.thing: ожидается префикс gamma.thing.',
+      ]);
+    });
+  });
+
+  describe('ARC-04 — ссылки Def ⊆ dependsOn', () => {
+    it('событие и фасад модуля вне dependsOn', () => {
+      const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [] });
+      expect(report(alpha, BetaModuleDef)).toEqual([
+        'ARC-04: ER alpha.addNote: событие beta.item.created модуля beta, которого нет в dependsOn alpha',
+        'ARC-04: ER alpha.addNote: фасад beta модуля beta, которого нет в dependsOn alpha',
+      ]);
+    });
+  });
+
+  describe('ARC-05 — dependsOn без циклов', () => {
+    it('цикл назван путём', () => {
+      const deps: AnyModuleDef[] = [];
+      const a = defineModule({ ...gamma(), name: 'a', dependsOn: deps });
+      const b = defineModule({ ...gamma(), name: 'b', dependsOn: [a] });
+      deps.push(b);
+      expect(report(a).filter((m) => m.startsWith('ARC-05'))).toEqual([
+        'ARC-05: цикл dependsOn: a → b → a',
+      ]);
+    });
+  });
+
+  describe('ERR-04 — коды ошибок', () => {
+    it('один код у разных Def', () => {
+      const Twin = defineErrors('ITEM', {
+        NOT_FOUND: { kind: 'not_found', label: 'Нет', description: 'Нет.' },
+      });
+      const twinAr = defineAggregate({
+        ...ItemArDef,
+        name: 'twin',
+        errors: Twin,
+      });
+      const beta = defineModule({
+        ...BetaModuleDef,
+        aggregates: [ItemArDef, twinAr],
+      });
+      expect(report(beta)).toContain(
+        'ERR-04: код ITEM_NOT_FOUND объявлен в 2 разных Def',
+      );
+    });
+
+    it('совпадение с базовой ошибкой ядра', () => {
+      const m = gamma({
+        errorPrefix: '',
+        errors: {
+          UNAUTHORIZED: {
+            kind: 'unauthorized',
+            label: 'Нельзя',
+            description: 'Нельзя.',
+          },
+        },
+      });
+      expect(report(m)).toEqual([
+        'ERR-04: ошибка UNAUTHORIZED агрегата gamma.thing: ожидается префикс THING_',
+        'ERR-04: код UNAUTHORIZED объявлен в 2 разных Def',
+      ]);
+    });
+
+    it('префикс не совпадает с агрегатом', () => {
+      const m = gamma({
+        errorPrefix: 'THINGS',
+        errors: {
+          LOST: { kind: 'not_found', label: 'Нет', description: 'Нет.' },
+        },
+      });
+      expect(report(m)).toEqual([
+        'ERR-04: ошибка THINGS_LOST агрегата gamma.thing: ожидается префикс THING_',
+      ]);
+    });
+  });
+});

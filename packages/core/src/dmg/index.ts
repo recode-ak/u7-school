@@ -47,6 +47,13 @@ export {
   UseCaseFromDef,
   type UseCaseSubjectOf,
 } from './app/use-case/use-case-from-def';
+export { checkDefs } from './arch/check-defs';
+export { checkFiles, type ModuleLayout } from './arch/check-files';
+export {
+  type ArchRule,
+  formatViolation,
+  type Violation,
+} from './arch/violation';
 export {
   Aggregate,
   type ErrorsOf,
@@ -136,6 +143,7 @@ export {
   type RuleSubjectOf,
   rule,
 } from './domain/policy/policy';
+export { type DefIndex, indexDefs } from './graph/def-index';
 export {
   type AggregateNode,
   buildGraph,
