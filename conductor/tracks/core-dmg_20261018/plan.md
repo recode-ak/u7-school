@@ -25,6 +25,7 @@
     - [x] Тесты: четыре подтипа с дженериком пользователя; `subjectOf` (user → он сам, delegate → замещаемый, guest/system → нет); `system.onBehalfOf`
     - [x] Реализация
     - Заметка: `delegate` — `{ subject, actor, delegationId }`, `system` — `{ source, onBehalfOf? }`, `guest` — `{ channelId }`
+- Замечания по фазе (b56fba5): примитивы перенесены в `dmg/kernel/`; `expectOk`; тип `ErrorDef.payload` выводится из объявления. Полный `check` на батарее (CPU 400 МГц) красный по таймаутам двух тестов бота — повторить до контрольной точки
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Манифесты домена и агрегат v2
