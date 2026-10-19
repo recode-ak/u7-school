@@ -87,7 +87,7 @@
 - [x] Task: Учебный модуль `todo` — прикладная часть 7ab97dc
     - [x] Реализации UC/ER/Job, JSON-репозиторий, in-proc фасад, wiring
     - [x] Интеграционные тесты: сквозной сценарий через `appApi.run`, событие → ER, smoke модуля на JSON-репозитории (временный каталог)
-    - Попутно: имена Def по `naming.md` (`XxxDef`, e3d2f75); субъект вызывающего `U` в `UseCaseFromDef`/модуле/`ApiApp` (0e3a91b, исправление 95d7f55) — при `allowAll` реализации нужен `uuid` вызывающего. Открыто для Фазы 6: `layers.md` §4 «репозиторий без разбора полей» vs запросы по полям.
+    - Попутно: имена Def по `naming.md` (`XxxDef`, e3d2f75); субъект вызывающего `U` в `UseCaseFromDef`/модуле/`ApiApp` (0e3a91b, исправление 95d7f55) — при `allowAll` реализации нужен `uuid` вызывающего. Решено (Нурболат): репозиторию разрешено обращаться к полям (запросы) — в Фазе 6 уточнить `layers.md` §4. Типизация `ModuleFromDef.facade` по Def — при переводе `wish` (пояснение в `example/app/todo/todo.facade.ts`).
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: Граф и `arch:check`
