@@ -69,13 +69,13 @@ const user = (uuid: string): Caller<User> => ({
 });
 
 let tasks: MemoryTasks;
-let app: ApiApp<AppMeta>;
+let app: ApiApp<AppMeta, User>;
 
 beforeEach(() => {
   tasks = new MemoryTasks();
   tasks.rows.set(TASK, taskRow(TASK));
   const deps = { app: testAppContext().app, tasks };
-  const mini = new ModuleFromDef(
+  const mini = new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
     MiniModuleDef,
     {
       useCases: { completeTask: CompleteTask },
@@ -84,7 +84,7 @@ beforeEach(() => {
     },
     deps,
   );
-  app = new ApiApp<AppMeta>([]).addDmgModules(mini);
+  app = new ApiApp<AppMeta, User>([]).addDmgModules(mini);
 });
 
 describe('ApiApp.run — UC DMG', () => {

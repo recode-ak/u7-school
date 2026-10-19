@@ -44,14 +44,19 @@ export type HandleMeta = { readonly causationId?: string };
  * Что видно снаружи у реализации UC: Def и исполнение. Для карт модуля и
  * приложения — без приватных полей и строго контравариантной Policy,
  * поэтому реализацию любого `L` можно хранить рядом с другими.
+ * `handle` — свойство, а не метод: параметры строго контравариантны, и
+ * реализация, которой нужен субъект богаче `U`, не пройдёт в карту.
  */
-export type UseCaseHandler<D extends AnyUseCaseDef = AnyUseCaseDef> = {
+export type UseCaseHandler<
+  D extends AnyUseCaseDef = AnyUseCaseDef,
+  U = UseCaseSubjectOf<D>,
+> = {
   readonly def: D;
-  handle(
+  readonly handle: (
     input: unknown,
-    caller: Caller<UseCaseSubjectOf<D>>,
+    caller: Caller<U>,
     meta?: HandleMeta,
-  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
+  ) => Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
 };
 
 /**
@@ -63,11 +68,16 @@ export type UseCaseHandler<D extends AnyUseCaseDef = AnyUseCaseDef> = {
  * `L` — загруженное: подтип контекста Policy (например, `{ task: TaskAr }`
  * для `{ task: ReadonlyAr<TaskAr> }`), поэтому Policy и операция видят
  * одни и те же агрегаты.
+ *
+ * `U` — субъект вызывающего, который знает реализация: тип пользователя
+ * замыкает приложение (D-04). Он не уже субъекта Policy; при `allowAll`
+ * Policy о субъекте молчит, а реализации нужен, например, его `uuid`.
  */
 export abstract class UseCaseFromDef<
   D extends AnyUseCaseDef,
   R extends ModuleDeps,
   L extends UseCaseContextOf<D>,
+  U extends UseCaseSubjectOf<D> = UseCaseSubjectOf<D>,
 > {
   private readonly policy: Rule<UseCaseSubjectOf<D>, UseCaseContextOf<D>>;
 
@@ -82,14 +92,14 @@ export abstract class UseCaseFromDef<
 
   protected abstract load(
     input: ParsedInputOf<D>,
-    caller: Caller<UseCaseSubjectOf<D>>,
+    caller: Caller<U>,
   ): Promise<Result<L, OwnErrorOf<D>>>;
 
   protected abstract execute(
     input: ParsedInputOf<D>,
     loaded: L,
     uow: UnitOfWork,
-    caller: Caller<UseCaseSubjectOf<D>>,
+    caller: Caller<U>,
   ): Promise<Result<RawOutputOf<D>, OwnErrorOf<D>>>;
 
   /**
@@ -98,7 +108,7 @@ export abstract class UseCaseFromDef<
    */
   async handle(
     input: unknown,
-    caller: Caller<UseCaseSubjectOf<D>>,
+    caller: Caller<U>,
     meta: HandleMeta = {},
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
     try {
@@ -115,7 +125,7 @@ export abstract class UseCaseFromDef<
 
   private async run(
     input: unknown,
-    caller: Caller<UseCaseSubjectOf<D>>,
+    caller: Caller<U>,
     meta: HandleMeta,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
     if (!this.def.callers.includes(caller.kind)) {

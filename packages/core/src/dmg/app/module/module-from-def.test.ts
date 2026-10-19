@@ -34,6 +34,9 @@ const MiniModuleDef = defineModule({
 });
 
 type Deps = { readonly app: AppContext; reacted: string[] };
+/** Субъект, которого даёт приложение. */
+type User = { readonly uuid: string; hasRole(role: 'admin'): boolean };
+type Map = ModuleMap<typeof MiniModuleDef, Deps, User>;
 
 class CompleteTask extends UseCaseFromDef<
   typeof CompleteTaskUcDef,
@@ -75,14 +78,18 @@ const map = {
     implementFacade(TodoFacadeDef, {
       getTask: async (taskId) => TaskErrors.NOT_FOUND.err({ taskId }),
     }),
-} satisfies ModuleMap<typeof MiniModuleDef, Deps>;
+} satisfies Map;
 
 let deps: Deps;
-let mini: ModuleFromDef<typeof MiniModuleDef, Deps>;
+let mini: ModuleFromDef<typeof MiniModuleDef, Deps, User>;
 
 beforeEach(() => {
   deps = { app: testAppContext().app, reacted: [] };
-  mini = new ModuleFromDef(MiniModuleDef, map, deps);
+  mini = new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
+    MiniModuleDef,
+    map,
+    deps,
+  );
 });
 
 describe('ModuleFromDef', () => {
@@ -99,7 +106,11 @@ describe('ModuleFromDef', () => {
     });
     const bus = legacyEventBus(legacy);
     deps = { app: { ...testAppContext().app, bus }, reacted: [] };
-    new ModuleFromDef(MiniModuleDef, map, deps).subscribe();
+    new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
+      MiniModuleDef,
+      map,
+      deps,
+    ).subscribe();
     bus.publish({
       ...UserEvents.removed.make({ userId: 'u' }),
       eventId: 'e',
@@ -127,7 +138,7 @@ describe('ModuleFromDef', () => {
 
 describe('ModuleMap — полнота проверяется компилятором', () => {
   test('пропуск реализации UC', () => {
-    const missing: ModuleMap<typeof MiniModuleDef, Deps> = {
+    const missing: Map = {
       ...map,
       // @ts-expect-error: нет completeTask
       useCases: {},
@@ -136,7 +147,7 @@ describe('ModuleMap — полнота проверяется компилято
   });
 
   test('класс чужого Def под именем UC', () => {
-    const wrong: ModuleMap<typeof MiniModuleDef, Deps> = {
+    const wrong: Map = {
       ...map,
       // @ts-expect-error: ArchiveRemoved реализует ER, а не completeTask
       useCases: { completeTask: ArchiveRemoved },
@@ -148,7 +159,18 @@ describe('ModuleMap — полнота проверяется компилято
     const { useCases, reactions, jobs } = map;
     const noFacade = { useCases, reactions, jobs };
     // @ts-expect-error: TodoFacadeDef объявлен — реализация обязательна
-    const missing: ModuleMap<typeof MiniModuleDef, Deps> = noFacade;
+    const missing: Map = noFacade;
     expect(missing).toBeDefined();
+  });
+
+  test('UC, которому нужен субъект богаче, чем даёт приложение', () => {
+    // Приложение даёт только uuid, а Policy completeTask спрашивает роли.
+    type Poor = { readonly uuid: string };
+    const poor: ModuleMap<typeof MiniModuleDef, Deps, Poor> = {
+      ...map,
+      // @ts-expect-error: Caller<Poor> не несёт hasRole
+      useCases: { completeTask: CompleteTask },
+    };
+    expect(poor).toBeDefined();
   });
 });

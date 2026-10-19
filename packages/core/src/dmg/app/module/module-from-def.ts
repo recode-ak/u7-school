@@ -23,13 +23,14 @@ type FacadePart<M extends AnyModuleDef, R> = M['facade'] extends AnyFacadeDef
 /**
  * Карта «Def → класс» модуля (API-05): ключ — имя Def, значение — класс
  * реализации именно этого Def. Пропуск реализации, лишний ключ или класс
- * чужого Def — ошибка компиляции.
+ * чужого Def — ошибка компиляции. `U` — субъект вызывающего, который даёт
+ * приложение: UC, которому нужен субъект богаче, в карту не пройдёт.
  */
-export type ModuleMap<M extends AnyModuleDef, R extends ModuleDeps> = {
+export type ModuleMap<M extends AnyModuleDef, R extends ModuleDeps, U> = {
   readonly useCases: {
-    readonly [U in M['useCases'][number] as U['name']]: Ctor<
+    readonly [C in M['useCases'][number] as C['name']]: Ctor<
       R,
-      UseCaseHandler<U>
+      UseCaseHandler<C, U>
     >;
   };
   readonly reactions: {
@@ -44,8 +45,10 @@ export type ModuleMap<M extends AnyModuleDef, R extends ModuleDeps> = {
 } & FacadePart<M, R>;
 
 /** Та же карта без привязки к конкретному модулю — для обхода в рантайме. */
-type RuntimeMap<R> = {
-  readonly useCases: Readonly<Record<string, Ctor<R, UseCaseHandler>>>;
+type RuntimeMap<R, U> = {
+  readonly useCases: Readonly<
+    Record<string, Ctor<R, UseCaseHandler<AnyUseCaseDef, U>>>
+  >;
   readonly reactions: Readonly<
     Record<string, Ctor<R, ReactionFromDef<AnyEventReactionDef, ModuleDeps>>>
   >;
@@ -56,14 +59,17 @@ type RuntimeMap<R> = {
 };
 
 /** Любой модуль DMG — для списка модулей приложения. */
-export type AnyModuleFromDef = ModuleFromDef<AnyModuleDef, ModuleDeps>;
+export type AnyModuleFromDef<U> = ModuleFromDef<AnyModuleDef, ModuleDeps, U>;
 
 /**
  * Модуль DMG в рантайме: экземпляры реализаций по карте, подписка реакций,
  * задания для планировщика, фасад для других модулей.
  */
-export class ModuleFromDef<M extends AnyModuleDef, R extends ModuleDeps> {
-  private readonly useCases = new Map<AnyUseCaseDef, UseCaseHandler>();
+export class ModuleFromDef<M extends AnyModuleDef, R extends ModuleDeps, U> {
+  private readonly useCases = new Map<
+    AnyUseCaseDef,
+    UseCaseHandler<AnyUseCaseDef, U>
+  >();
   private readonly reactions: ReactionFromDef<
     AnyEventReactionDef,
     ModuleDeps
@@ -73,12 +79,12 @@ export class ModuleFromDef<M extends AnyModuleDef, R extends ModuleDeps> {
   private readonly bus: EventBus;
 
   /**
-   * `map` типизирован дважды: `ModuleMap<M, R>` проверяет полноту по Def,
-   * `RuntimeMap<R>` даёт обход значений без утверждений типов.
+   * `map` типизирован дважды: `ModuleMap` проверяет полноту по Def,
+   * `RuntimeMap` даёт обход значений без утверждений типов.
    */
   constructor(
     readonly def: M,
-    map: ModuleMap<M, R> & RuntimeMap<R>,
+    map: ModuleMap<M, R, U> & RuntimeMap<R, U>,
     deps: R,
   ) {
     for (const Impl of Object.values(map.useCases)) {
@@ -92,7 +98,7 @@ export class ModuleFromDef<M extends AnyModuleDef, R extends ModuleDeps> {
   }
 
   /** Реализация UC по его Def; `undefined` — UC не из этого модуля. */
-  useCase<D extends AnyUseCaseDef>(def: D): UseCaseHandler<D> | undefined {
+  useCase<D extends AnyUseCaseDef>(def: D): UseCaseHandler<D, U> | undefined {
     const uc = this.useCases.get(def);
     return uc !== undefined && implementsDef(uc, def) ? uc : undefined;
   }
@@ -112,9 +118,9 @@ export class ModuleFromDef<M extends AnyModuleDef, R extends ModuleDeps> {
 }
 
 /** Def — ключ карты, поэтому совпадение объекта гарантирует тип `D`. */
-function implementsDef<D extends AnyUseCaseDef>(
-  uc: UseCaseHandler,
+function implementsDef<D extends AnyUseCaseDef, U>(
+  uc: UseCaseHandler<AnyUseCaseDef, U>,
   def: D,
-): uc is UseCaseHandler<D> {
+): uc is UseCaseHandler<D, U> {
   return uc.def === def;
 }

@@ -1,9 +1,6 @@
 import { toLegacyError } from '#dmg/app/errors/legacy-error';
 import type { AnyModuleFromDef } from '#dmg/app/module/module-from-def';
-import type {
-  HandleMeta,
-  UseCaseSubjectOf,
-} from '#dmg/app/use-case/use-case-from-def';
+import type { HandleMeta } from '#dmg/app/use-case/use-case-from-def';
 import type {
   AnyUseCaseDef,
   InputOf,
@@ -38,11 +35,11 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
 
   // Модули DMG живут рядом с legacy (strangler): их UC — через run/execute
   // по Def, реакции — на общей шине, задания — в общем планировщике.
-  private readonly dmgModules: AnyModuleFromDef[] = [];
+  private readonly dmgModules: AnyModuleFromDef<TActor>[] = [];
   private dmgUnsubscribes: Array<() => void> = [];
 
   /** Подключает модули DMG; вызывать до init(). */
-  addDmgModules(...modules: AnyModuleFromDef[]): this {
+  addDmgModules(...modules: AnyModuleFromDef<TActor>[]): this {
     this.dmgModules.push(...modules);
     return this;
   }
@@ -90,7 +87,7 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
   async run<D extends AnyUseCaseDef>(
     uc: D,
     input: InputOf<D>,
-    caller: Caller<UseCaseSubjectOf<D>>,
+    caller: Caller<TActor>,
     meta?: HandleMeta,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
     return this.dmgUseCase(uc).handle(input, caller, meta);
@@ -108,7 +105,7 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
   execute<D extends AnyUseCaseDef>(
     uc: D,
     input: InputOf<D>,
-    caller: Caller<UseCaseSubjectOf<D>>,
+    caller: Caller<TActor>,
   ): Promise<OutputOf<D>>;
   async execute(
     uc: string | AnyUseCaseDef,
@@ -116,7 +113,7 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     who?: unknown,
   ): Promise<unknown> {
     if (typeof uc !== 'string') {
-      if (!isCaller(who)) {
+      if (!isCaller<TActor>(who)) {
         throw new Error(`ApiApp: для UC ${uc.name} нужен Caller`);
       }
       const res = await this.dmgUseCase(uc).handle(attrs, who);
@@ -150,11 +147,10 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
 }
 
 /**
- * Перегрузка `execute` для Def гарантирует `Caller` типом; реализации
- * перегрузок TS этого не передаёт, поэтому — проверка вида. Тип субъекта
- * стёрт (`never`): реализация UC получена по тому же Def.
+ * Перегрузка `execute` для Def гарантирует `Caller<TActor>` типом;
+ * реализации перегрузок TS этого не передаёт, поэтому — проверка вида.
  */
-function isCaller(value: unknown): value is Caller<never> {
+function isCaller<U>(value: unknown): value is Caller<U> {
   return (
     typeof value === 'object' &&
     value !== null &&
