@@ -46,10 +46,11 @@
     - [x] Тесты: `allowed`/`denied(rule, denyMessage)`; композиция; `delegable: false` отказывает `delegate`; правило работает с субъектом
     - [x] Реализация
     - Без субъекта (guest, system) правило отказывает; `anyOf` — со своим `name`/`denyMessage`, `allOf` — отказ первого правила. Политика для `system` в `handle()` — решить в Фазе 3
-- [~] Task: Контракты `defineUseCase`, `defineEventReaction`, `defineJob`, `defineFacade`, `defineModule`
-    - [ ] Тесты: обязательные `label`/`description` (тип); ссылки объектами; вывод типов input/output/errors из Def
-    - [ ] Реализация
-- [ ] Task: `normalize(def)`
+- [x] Task: Контракты `defineUseCase`, `defineEventReaction`, `defineJob`, `defineFacade`, `defineModule` 831c1b8
+    - [x] Тесты: обязательные `label`/`description` (тип); ссылки объектами; вывод типов input/output/errors из Def
+    - [x] Реализация
+    - Сигнатура метода фасада — `method<Args, T>()({ … })` (фантомные поля типа); `schedule` — legacy `JobSchedule`; `check` полностью зелёный
+- [~] Task: `normalize(def)`
     - [ ] Тесты: сериализуемое представление каждого вида Def; ссылки → FQN/коды; стабильность (одинаковый Def → одинаковый результат)
     - [ ] Реализация
 - [ ] Task: Учебный модуль `todo` — доменная часть
