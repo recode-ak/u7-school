@@ -13,10 +13,11 @@
     - [x] Тесты: `ok`/`err`, сужение по `res.ok`, `map`/`andThen` (только если нужны дальше), `expectErr(res, code)` — проходит на нужном коде, падает на чужом и на `Ok`
     - [x] Реализация
     - Заметка: `map`/`andThen` не добавлены (пока не нужны); `expectErr` — в подпути `@u7-scl/core/dmg/testing`, не зависит от раннера
-- [~] Task: Модель ошибки и `defineErrors`
-    - [ ] Тесты: группа ошибок с `code`/`kind`/`label`/`description`/схемой payload; фабрика ошибки с типизированным payload; базовые ошибки ядра (`UNAUTHORIZED`, `INPUT_VALIDATION`, `ACCESS_DENIED`, `OUTPUT_VALIDATION`, `SERVER_INTERNAL`); `kind` — закрытый набор
-    - [ ] Реализация
-- [ ] Task: `Timestamp`, `now()`, `F.*`
+- [x] Task: Модель ошибки и `defineErrors` bed6603
+    - [x] Тесты: группа ошибок с `code`/`kind`/`label`/`description`/схемой payload; фабрика ошибки с типизированным payload; базовые ошибки ядра (`UNAUTHORIZED`, `INPUT_VALIDATION`, `ACCESS_DENIED`, `OUTPUT_VALIDATION`, `SERVER_INTERNAL`); `kind` — закрытый набор
+    - [x] Реализация
+    - Заметка: `defineErrors('TODO', { NOT_FOUND: … })` → код `TODO_NOT_FOUND`; Def даёт `make(payload)` и `err(payload)`
+- [~] Task: `Timestamp`, `now()`, `F.*`
     - [ ] Тесты: управляемый `now()`; `F.timestamp` читает ISO и число, выдаёт число; `F.uuid`/`F.string`/… ставят `description` из метки; `BaseEntityFields`; поля конвертируются в JSON Schema
     - [ ] Реализация (переиспользовать `shared/now`, если подходит)
 - [ ] Task: `Caller`
