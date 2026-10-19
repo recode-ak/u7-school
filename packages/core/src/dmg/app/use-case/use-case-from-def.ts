@@ -10,7 +10,7 @@ import type {
   RuleContextOf,
   RuleSubjectOf,
 } from '../../domain/policy/policy';
-import type { Caller } from '../../kernel/caller/caller';
+import { type Caller, subjectOf } from '../../kernel/caller/caller';
 import { CoreErrors } from '../../kernel/errors/core-errors';
 import type { ErrorOf } from '../../kernel/errors/define-errors';
 import { ok, type Result } from '../../kernel/result/result';
@@ -101,6 +101,21 @@ export abstract class UseCaseFromDef<
     uow: UnitOfWork,
     caller: Caller<U>,
   ): Promise<Result<RawOutputOf<D>, OwnErrorOf<D>>>;
+
+  /**
+   * Субъект вызывающего — для UC, которому он нужен (владелец новой
+   * записи, «мои» записи). Без субъекта — `throw`: `callers` такого UC
+   * не должен допускать guest/system, это баг Def.
+   */
+  protected subject(caller: Caller<U>): U {
+    const subject = subjectOf(caller);
+    if (subject === undefined) {
+      throw new Error(
+        `UC ${this.def.name}: у вызывающего ${caller.kind} нет субъекта — проверьте callers`,
+      );
+    }
+    return subject;
+  }
 
   /**
    * callers → вход → load → Policy → execute → commit (с публикацией) →

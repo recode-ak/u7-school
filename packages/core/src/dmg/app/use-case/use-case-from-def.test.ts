@@ -205,6 +205,44 @@ describe('UseCaseFromDef.handle — операция', () => {
   });
 });
 
+describe('UseCaseFromDef.subject', () => {
+  const WhoAmIUcDef = defineUseCase({
+    ...CompleteTaskUcDef,
+    callers: ['user', 'system'],
+  });
+  class WhoAmI extends UseCaseFromDef<typeof WhoAmIUcDef, Deps, Loaded, User> {
+    constructor() {
+      super(WhoAmIUcDef, { app: ctx.app, tasks });
+    }
+    protected load = (i: { taskId: string }) => loadTask(tasks, i);
+    protected execute = async (
+      _: unknown,
+      __: Loaded,
+      ___: UnitOfWork,
+      caller: Caller<User>,
+    ) => {
+      this.seen = this.subject(caller).uuid;
+      return ok({});
+    };
+    seen: string | undefined;
+  }
+
+  test('субъект вызывающего — для реализации', async () => {
+    const uc = new WhoAmI();
+    expectOk(await uc.handle({ taskId: TASK }, user(OWNER)));
+    expect(uc.seen).toBe(OWNER);
+  });
+
+  test('без субъекта — баг callers: SERVER_INTERNAL', async () => {
+    const res = await new WhoAmI().handle(
+      { taskId: TASK },
+      { kind: 'system', source: 'test' },
+    );
+    expectErr(res, 'SERVER_INTERNAL');
+    expect(ctx.logs).toHaveLength(1);
+  });
+});
+
 describe('UseCaseFromDef — типы', () => {
   test('execute не может вернуть незаявленную ошибку (ERR-02)', () => {
     class Undeclared extends UseCaseFromDef<
