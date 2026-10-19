@@ -1,0 +1,5 @@
+Задача: appApi.run и execute (Фаза 3)
+Сделано: ApiApp.addDmgModules/run/execute(Def), toLegacyError, UseCaseHandler.
+Решения: execute по Def бросает AppException в legacy-форме — stories ловят её как раньше; UC не зарегистрирован — исключение (баг сборки), run async — отказ промиса, а не синхронный throw; isCaller в реализации перегрузки — TS не передаёт тип перегрузки в реализацию.
+Найдено: карта модуля с UseCaseFromDef<U,R,never> не принимала UC с конкретным L — заменено на структурный UseCaseHandler.
+Тесты: api-app-dmg.test (7); legacy api-app.test не тронут. check зелёный, 3029 pass.
