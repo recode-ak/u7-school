@@ -1,0 +1,5 @@
+Задача: ReactionFromDef и JobFromDef (Фаза 3)
+Сделано: базы ER/Job, legacyJob, implementFacade+guardCalls, touches в UoW (Repository.aggregate), contractUnitOfWork, runLogged; фикстура app.fixture (MemoryTasks).
+Решения: scans Job служит и списком изменяемых агрегатов; Err/исключение системной операции — logger.error (журнал сбоев = лог до появления отдельного); legacyJob бросает при Err, чтобы планировщик записал сбой прогона.
+Исправлено: EventOf стал недистрибутивным после прошлой задачи — вернул дистрибутивность, добавил тест.
+Тесты: reaction (7), job (6), guard-calls (2), uow +1. check зелёный, 3015 pass.
