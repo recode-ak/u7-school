@@ -24,6 +24,7 @@ export {
 } from './app/reaction/reaction-from-def';
 export {
   type Cause,
+  incomingRequestId,
   type RequestMeta,
   requestTrace,
   type Trace,
@@ -39,7 +40,6 @@ export {
   type UnitOfWorkContext,
 } from './app/uow/unit-of-work';
 export {
-  type HandleMeta,
   type OwnErrorOf,
   type ParsedInputOf,
   type RawOutputOf,

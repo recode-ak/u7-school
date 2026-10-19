@@ -18,7 +18,8 @@ import type { EventBus } from '../events/event-bus';
 import type { JobFromDef } from '../job/job-from-def';
 import { legacyJob } from '../job/legacy-job';
 import type { ReactionFromDef } from '../reaction/reaction-from-def';
-import type { HandleMeta, UseCaseHandler } from '../use-case/use-case-from-def';
+import type { Trace } from '../trace';
+import type { UseCaseHandler } from '../use-case/use-case-from-def';
 
 type Ctor<R, T> = new (deps: R) => T;
 
@@ -31,7 +32,7 @@ type StrictHandler<D extends AnyUseCaseDef, U> = {
   readonly handle: (
     input: unknown,
     caller: Caller<U>,
-    meta: HandleMeta,
+    trace: Trace,
   ) => Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
 };
 

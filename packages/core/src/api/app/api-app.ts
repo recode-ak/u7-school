@@ -1,6 +1,6 @@
 import { toLegacyError } from '#dmg/app/errors/legacy-error';
 import type { AnyModuleFromDef } from '#dmg/app/module/module-from-def';
-import type { RequestMeta } from '#dmg/app/trace';
+import { type RequestMeta, requestTrace } from '#dmg/app/trace';
 import type {
   AnyUseCaseDef,
   InputOf,
@@ -85,7 +85,8 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
 
   /**
    * Исполнение UC DMG по его Def: отказ — значение `Err`. `meta` строит
-   * транспорт (requestId от клиента); параметр обязателен.
+   * адаптер транспорта: `requestId` от клиента, а если его нет — сам
+   * (`incomingRequestId`, с `warn`).
    */
   async run<D extends AnyUseCaseDef>(
     uc: D,
@@ -93,7 +94,7 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     caller: Caller<TActor>,
     meta: RequestMeta,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    return this.dmgUseCase(uc).handle(input, caller, meta);
+    return this.dmgUseCase(uc).handle(input, caller, requestTrace(meta));
   }
 
   execute<N extends GetUcNamesFromMeta<TMeta>>(
@@ -115,13 +116,17 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     uc: string | AnyUseCaseDef,
     attrs: unknown,
     who?: unknown,
-    meta: RequestMeta = { requestId: undefined },
+    meta?: RequestMeta,
   ): Promise<unknown> {
     if (typeof uc !== 'string') {
-      if (!isCaller<TActor>(who)) {
-        throw new Error(`ApiApp: для UC ${uc.name} нужен Caller`);
+      if (!isCaller<TActor>(who) || meta === undefined) {
+        throw new Error(`ApiApp: для UC ${uc.name} нужны Caller и meta`);
       }
-      const res = await this.dmgUseCase(uc).handle(attrs, who, meta);
+      const res = await this.dmgUseCase(uc).handle(
+        attrs,
+        who,
+        requestTrace(meta),
+      );
       if (!res.ok) throw new AppException(toLegacyError(res.error));
       return res.value;
     }

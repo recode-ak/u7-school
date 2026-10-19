@@ -27,7 +27,7 @@ import {
 import type { TaskState } from '../../testing/example/todo/task/task.state';
 import { MemoryTasks, OWNER, T0, TASK, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
-import type { RequestMeta } from '../trace';
+import { requestTrace, type Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { UseCaseFromDef } from './use-case-from-def';
 
@@ -43,7 +43,7 @@ const user = (uuid: string): Caller<User> => ({
 
 type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
 
-const REQ: RequestMeta = { requestId: 'r-1' };
+const REQ: Trace = requestTrace({ requestId: 'r-1' });
 type Loaded = { task: TaskAr };
 
 async function loadTask(tasks: MemoryTasks, input: { taskId: string }) {
@@ -155,27 +155,12 @@ describe('UseCaseFromDef.handle — операция', () => {
   });
 
   test('событие несёт след запроса: причина и correlationId', async () => {
-    const meta = { requestId: 'r-1', correlationId: 'c-1' };
-    await uc.handle({ taskId: TASK }, user(OWNER), meta);
+    const trace = requestTrace({ requestId: 'r-1', correlationId: 'c-1' });
+    await uc.handle({ taskId: TASK }, user(OWNER), trace);
     expect(ctx.published[0]).toMatchObject({
       cause: { kind: 'request', requestId: 'r-1' },
       correlationId: 'c-1',
     });
-  });
-
-  test('без requestId — создаётся ядром, warn в лог', async () => {
-    const noId: RequestMeta = { requestId: undefined };
-    expectOk(await uc.handle({ taskId: TASK }, user(OWNER), noId));
-    const [event] = ctx.published;
-    const id = event?.correlationId ?? 'нет события';
-    expect(event?.cause).toEqual({ kind: 'request', requestId: id });
-    expect(ctx.logs).toEqual([
-      {
-        level: 'warn',
-        source: 'completeTask',
-        message: `Клиент не передал requestId — создан ${id}`,
-      },
-    ]);
   });
 
   test('Err операции → без сохранения и публикации', async () => {

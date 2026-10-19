@@ -15,7 +15,7 @@ import { CoreErrors } from '../../kernel/errors/core-errors';
 import type { ErrorOf } from '../../kernel/errors/define-errors';
 import { ok, type Result } from '../../kernel/result/result';
 import type { ModuleDeps } from '../context';
-import { type RequestMeta, requestTrace, type Trace } from '../trace';
+import type { Trace } from '../trace';
 import { contractUnitOfWork } from '../uow/contract-unit-of-work';
 import type { UnitOfWork } from '../uow/unit-of-work';
 
@@ -40,12 +40,6 @@ export type UseCaseContextOf<D extends AnyUseCaseDef> = RuleContextOf<
 
 /** Метаданные вызова: причина, если UC вызван реакцией на событие. */
 /**
- * След вызова: от транспорта — мета запроса (`appApi.run`), от ER/Job —
- * готовый `Trace` с причиной-событием или прогоном.
- */
-export type HandleMeta = Trace | RequestMeta;
-
-/**
  * Что видно снаружи у реализации UC: Def и исполнение. Для хранения в модуле
  * и приложении — без приватных полей и строго контравариантной Policy,
  * поэтому реализации с разным `L` лежат рядом. `handle` — метод: хранилище
@@ -60,7 +54,7 @@ export type UseCaseHandler<
   handle(
     input: unknown,
     caller: Caller<U>,
-    meta: HandleMeta,
+    trace: Trace,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
 };
 
@@ -122,13 +116,6 @@ export abstract class UseCaseFromDef<
     return subject;
   }
 
-  private trace(meta: HandleMeta): Trace {
-    if ('cause' in meta) return meta;
-    return requestTrace(meta, (message) =>
-      this.resolve.app.logger.warn(this.def.name, message),
-    );
-  }
-
   /**
    * callers → вход → load → Policy → execute → commit (с публикацией) →
    * выход. Непредвиденное исключение — `SERVER_INTERNAL` с записью в лог.
@@ -136,10 +123,10 @@ export abstract class UseCaseFromDef<
   async handle(
     input: unknown,
     caller: Caller<U>,
-    meta: HandleMeta,
+    trace: Trace,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
     try {
-      return await this.run(input, caller, this.trace(meta));
+      return await this.run(input, caller, trace);
     } catch (error) {
       this.resolve.app.logger.error(
         this.def.name,
