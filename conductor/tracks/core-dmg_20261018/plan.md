@@ -62,7 +62,7 @@
 - Разделение полей «бизнесовые / технические» (для `details` в документации) — таблица по виду Def в генераторе документации (вне трека, D-27), не в `normalize`: не раздувает хеш
 - [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
-## Фаза 3: Прикладной слой
+## Фаза 3: Прикладной слой [checkpoint: dd71c72]
 
 - [x] Task: UoW a3061cd
     - [x] Тесты: `register` + `commit` сохраняют последовательно через репозитории; события публикуются только после успешного `commit`; при сбое сохранения публикации нет
@@ -90,7 +90,7 @@
     - Попутно: имена Def по `naming.md` (`XxxDef`, e3d2f75); субъект вызывающего `U` в `UseCaseFromDef`/модуле/`ApiApp` (0e3a91b, исправление 95d7f55) — при `allowAll` реализации нужен `uuid` вызывающего. Решено (Нурболат): репозиторию разрешено обращаться к полям (запросы) — в Фазе 6 уточнить `layers.md` §4. Типизация `ModuleFromDef.facade` по Def — при переводе `wish` (пояснение в `example/app/todo/todo.facade.ts`).
 - Замечания по фазе (3ef6df7): расхождение с `emits`/`touches`/`calls` в production — `warn` в лог (было — без проверки); в test/dev — исключение.
 - Замечания по фазе (fe5123b): след операции — `cause` (request | event | job) и `correlationId` вместо `causationId`; `appApi.run(uc, input, caller, meta)` — `meta` с обязательным `requestId`; клиент не передал — адаптер транспорта создаёт его (`incomingRequestId`) и пишет `warn`, UC всегда получает готовый `Trace`. В Фазе 6 — сигнатуры `run`/`execute` в `errors-result.md`, `transport.md`. Правило ERR-07 добавлено (295dee5).
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: Граф и `arch:check`
 
