@@ -10,7 +10,7 @@ export { facadeDefOf, implementFacade } from './app/facade/implement-facade';
 export { JobFromDef, type JobReport } from './app/job/job-from-def';
 export { legacyJob } from './app/job/legacy-job';
 export {
-  type AnyUseCaseImpl,
+  type AnyModuleFromDef,
   ModuleFromDef,
   type ModuleMap,
 } from './app/module/module-from-def';

@@ -94,7 +94,8 @@ describe('ModuleFromDef', () => {
       legacySeen.push(e.eventName);
     });
     const bus = legacyEventBus(legacy);
-    mini.subscribe(bus);
+    deps = { app: { ...testAppContext().app, bus }, reacted: [] };
+    new ModuleFromDef(MiniModule, map, deps).subscribe();
     bus.publish({
       ...UserEvents.removed.make({ userId: 'u' }),
       eventId: 'e',

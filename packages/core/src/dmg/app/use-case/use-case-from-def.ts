@@ -41,6 +41,20 @@ export type UseCaseContextOf<D extends AnyUseCaseDef> = RuleContextOf<
 export type HandleMeta = { readonly causationId?: string };
 
 /**
+ * Что видно снаружи у реализации UC: Def и исполнение. Для карт модуля и
+ * приложения — без приватных полей и строго контравариантной Policy,
+ * поэтому реализацию любого `L` можно хранить рядом с другими.
+ */
+export type UseCaseHandler<D extends AnyUseCaseDef = AnyUseCaseDef> = {
+  readonly def: D;
+  handle(
+    input: unknown,
+    caller: Caller<UseCaseSubjectOf<D>>,
+    meta?: HandleMeta,
+  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
+};
+
+/**
  * Реализация UC по Def (API-05). Наследник пишет только `load` (загрузить
  * то, что нужно Policy и операции) и `execute` (операция домена +
  * `uow.register`). Порядок, Policy, ошибки ядра, фиксация и публикация —
