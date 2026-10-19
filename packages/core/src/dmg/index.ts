@@ -2,6 +2,22 @@
 // Живёт рядом с legacy-слоями (strangler), см. conductor/architecture/migration.md.
 
 export {
+  Aggregate,
+  type ErrorsOf,
+  type EventsOf,
+  type StateOf,
+} from './domain/aggregate/aggregate';
+export {
+  type AggregateDef,
+  type AggregateSpec,
+  type AnyAggregateDef,
+  defineAggregate,
+  type EntityBase,
+  type StateSchema,
+  type StatusOf,
+  type Transition,
+} from './domain/aggregate/define-aggregate';
+export {
   type AnyEventDef,
   type DomainEvent,
   defineEvents,
