@@ -1,0 +1,5 @@
+Задача: Граф-движок (Фаза 4)
+Что: buildGraph (graph/domain-graph.ts) и indexDefs (graph/def-index.ts).
+L0: modules + links (dependsOn, event, calls); L1: aggregates/useCases/reactions/jobs/events/errors с обратными связями; L2: statuses/transitions/errors в def агрегата, ошибки операций — у UC.
+Id: module.name для агрегатов и операций, FQN событий, код ошибки; Def вне модулей — '?.<имя>'.
+Тесты: graph/domain-graph.test.ts (11). check EXIT=0, 3062 pass.
