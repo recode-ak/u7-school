@@ -1,0 +1,4 @@
+Задача: ReadonlyAr<T>
+- readonly-ar.ts: ReadonlyAr<T> = Omit<T, методы, возвращающие Result | 'snapshot' | 'pullEvents'>. Снимок (entity, DOM-01) и выдача событий (UoW) тоже исключены — сверх спецификации.
+- Типовые тесты @ts-expect-error; Red подтверждён подменой ReadonlyAr = T.
+- check: 2 теста бота по таймауту (батарея).
