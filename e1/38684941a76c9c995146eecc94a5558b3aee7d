@@ -1,0 +1,5 @@
+Задача: Модуль — карта Def → класс (Фаза 3)
+Сделано: ModuleMap (ключи — имена Def, key remapping), ModuleFromDef (useCase по Def, subscribe, legacyJobs, facade).
+Решения: карта типизирована дважды (ModuleMap & RuntimeMap) — полнота проверяется по Def, обход в рантайме без as; useCase(def) восстанавливает тип через предикат по идентичности Def.
+Рядом с legacy: реакции на общей legacy-шине вместе с legacy-подписчиком, задания — в форме legacy Job; включение в ApiApp — следующая задача (appApi.run).
+Тесты: module-from-def.test (7, из них 3 @ts-expect-error). check зелёный, 3022 pass.
