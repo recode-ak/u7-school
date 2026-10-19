@@ -1,23 +1,51 @@
-import * as v from 'valibot';
+import {
+  Aggregate,
+  type ErrorsOf,
+  type EventsOf,
+} from '../../../../domain/aggregate/aggregate';
 import { defineAggregate } from '../../../../domain/aggregate/define-aggregate';
-import { defineEvents } from '../../../../domain/events/define-events';
-import { BaseEntityFields } from '../../../../kernel/fields/fields';
+import { ok, type Result } from '../../../../kernel/result/result';
+import { UserErrors } from './user.errors';
+import { UserEvents } from './user.events';
+import { UserState } from './user.state';
 
-// Заглушка чужого модуля для учебного `todo`: только Def, без реализации.
-
-export const UserEvents = defineEvents('users.user', {
-  removed: {
-    label: 'Пользователь удалён',
-    description: 'Учётная запись пользователя удалена.',
-    payload: v.object({ userId: v.string() }),
-  },
-});
+// Минимальный второй модуль учебного примера: источник события, на которое
+// реагирует `todo`.
 
 export const UserArDef = defineAggregate({
   name: 'user',
   label: 'Пользователь',
-  description: 'Учётная запись.',
-  state: v.object({ ...BaseEntityFields }),
+  description: 'Учётная запись: активна, пока её не удалят.',
+  state: UserState,
+  statuses: {
+    active: { label: 'Активна' },
+    removed: { label: 'Удалена' },
+  },
+  transitions: {
+    remove: { from: ['active'], to: 'removed' },
+  },
   events: UserEvents,
-  errors: {},
+  errors: UserErrors,
 });
+
+type UserError = ErrorsOf<typeof UserArDef>;
+type UserEvent = EventsOf<typeof UserArDef>;
+
+export class UserAr extends Aggregate<typeof UserArDef> {
+  private constructor(state: UserState, events?: readonly UserEvent[]) {
+    super(UserArDef, state, events);
+  }
+
+  static restore(snapshot: UserState): UserAr {
+    return new UserAr(snapshot);
+  }
+
+  remove(): Result<void, UserError> {
+    return this.change((draft, emit) => {
+      if (draft.status === 'removed') return UserErrors.ALREADY_REMOVED.err();
+      draft.status = 'removed';
+      emit(UserEvents.removed.make({ userId: this.uuid }));
+      return ok();
+    });
+  }
+}

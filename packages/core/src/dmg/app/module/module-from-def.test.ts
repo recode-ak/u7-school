@@ -11,7 +11,7 @@ import {
   TaskErrors,
   TodoFacadeDef,
 } from '../../testing/example/todo';
-import { UserEvents } from '../../testing/example/users/user/user.ar';
+import { UserEvents } from '../../testing/example/users';
 import { T0 } from '../app.fixture';
 import type { AppContext } from '../context';
 import { legacyEventBus } from '../events/legacy-event-bus';

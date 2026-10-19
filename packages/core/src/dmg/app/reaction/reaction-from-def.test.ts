@@ -17,10 +17,7 @@ import {
   TaskEvents,
   TodoFacadeDef,
 } from '../../testing/example/todo';
-import {
-  UserArDef,
-  UserEvents,
-} from '../../testing/example/users/user/user.ar';
+import { UserArDef, UserEvents } from '../../testing/example/users';
 import { MemoryTasks, OWNER, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
 import type { EnvelopeOf } from '../events/event-envelope';

@@ -2,28 +2,29 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { ApiApp } from '../../../../../api/app/api-app';
-import type { AppMeta } from '../../../../../domain/types';
-import { InProcEventBus } from '../../../../../infra/in-proc-event-bus';
-import type { EventEnvelope } from '../../../../app/events/event-envelope';
-import { legacyEventBus } from '../../../../app/events/legacy-event-bus';
-import { legacyJob } from '../../../../app/job/legacy-job';
-import type { RequestMeta } from '../../../../app/trace';
-import type { Caller } from '../../../../kernel/caller/caller';
-import { type LogRecord, memoryLogger } from '../../../app-context';
-import { expectErr, expectOk } from '../../../expect-result';
+import { ApiApp } from '../../../../api/app/api-app';
+import type { AppMeta } from '../../../../domain/types';
+import { InProcEventBus } from '../../../../infra/in-proc-event-bus';
+import { legacyEventBus } from '../../../app/events/legacy-event-bus';
+import { legacyJob } from '../../../app/job/legacy-job';
+import type { RequestMeta } from '../../../app/trace';
+import type { Caller } from '../../../kernel/caller/caller';
+import { type LogRecord, memoryLogger } from '../../app-context';
+import { expectErr, expectOk } from '../../expect-result';
 import {
   CompleteTaskUcDef,
   CreateTaskUcDef,
   ListTasksUcDef,
   TaskEvents,
-} from '../../todo';
-import { UserEvents } from '../../users/user/user.ar';
-import type { ExampleUser } from '../app-user';
-import { TaskJsonRepo } from './infra/task.json-repo';
-import { ArchiveDoneTasksJob } from './task/job/archive-done-tasks.job';
-import { todoFacade } from './todo.facade';
-import { createTodoModule, type TodoDeps } from './todo.module';
+} from '../todo';
+import { RemoveUserUcDef } from '../users';
+import type { ExampleUser } from './app-user';
+import { TaskJsonRepo } from './todo/infra/task.json-repo';
+import { ArchiveDoneTasksJob } from './todo/task/job/archive-done-tasks.job';
+import { todoFacade } from './todo/todo.facade';
+import { createTodoModule, type TodoDeps } from './todo/todo.module';
+import { UserMemoryRepo } from './users/infra/user.memory-repo';
+import { createUsersModule } from './users/users.module';
 
 const ANNA = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
 const BORIS = '6f4e2d3c-8b7a-4f9e-8a1b-b2c3d4e5f6a7';
@@ -51,7 +52,11 @@ beforeEach(async () => {
     },
     tasks: new TaskJsonRepo(path.join(dir, 'tasks.json')),
   };
+  const users = new UserMemoryRepo([
+    { uuid: ANNA, createdAt: 0, updatedAt: 0, status: 'active' },
+  ]);
   api = new ApiApp<AppMeta, ExampleUser>([]).addDmgModules(
+    createUsersModule({ app: deps.app, users }),
     createTodoModule(deps),
   );
   api.init({ start: () => {}, stop: () => {} });
@@ -113,23 +118,16 @@ describe('todo: сквозной сценарий через appApi.run', () => 
 });
 
 describe('todo: событие → ER', () => {
-  test('удаление пользователя архивирует его задачи', async () => {
+  test('удаление пользователя в users архивирует его задачи в todo', async () => {
     await create('Анна 1');
     await create('Борис', BORIS);
-    const removed: EventEnvelope = {
-      ...UserEvents.removed.make({ userId: ANNA }),
-      eventId: 'e-removed',
-      occurredAt: Date.now(),
-      aggregateId: ANNA,
-      caller: { kind: 'system', source: 'users' },
-      cause: { kind: 'request', requestId: 'r-remove' },
-      correlationId: 'r-remove',
-    };
     const archived: string[] = [];
     deps.app.bus.subscribe(TaskEvents.archived, async (e) => {
       archived.push(e.correlationId);
     });
-    deps.app.bus.publish(removed);
+    const admin = { kind: 'system', source: 'admin' } as const;
+    const meta = { requestId: 'r-remove' };
+    expectOk(await api.run(RemoveUserUcDef, { userId: ANNA }, admin, meta));
     await settle();
     expect(archived).toEqual(['r-remove']);
     expect([await titles(ANNA), await titles(BORIS)]).toEqual([

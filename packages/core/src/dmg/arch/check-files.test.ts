@@ -111,7 +111,7 @@ describe('checkFiles', () => {
         "export { x } from '../../../beta/beta.module';\n",
       );
       expect(report()).toEqual([
-        'ARC-06: alpha/note/er/add-note.er.ts импортирует прикладной пакет beta',
+        'ARC-06: alpha/note/er/add-note.er.ts импортирует прикладной пакет beta: ../../../beta/beta.module',
       ]);
     });
 

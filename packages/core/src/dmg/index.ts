@@ -47,6 +47,7 @@ export {
   UseCaseFromDef,
   type UseCaseSubjectOf,
 } from './app/use-case/use-case-from-def';
+export { type ArchApp, archCheck } from './arch/arch-check';
 export { checkDefs } from './arch/check-defs';
 export { checkFiles, type ModuleLayout } from './arch/check-files';
 export {

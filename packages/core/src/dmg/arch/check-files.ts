@@ -79,7 +79,10 @@ export function checkFiles(
             if (x === m) continue;
             const where = `${m.name}/${f}`;
             if (isApp && inside(target, xDir.app)) {
-              add('ARC-06', `${where} импортирует прикладной пакет ${x.name}`);
+              add(
+                'ARC-06',
+                `${where} импортирует прикладной пакет ${x.name}: ${spec}`,
+              );
             }
             if (!inside(target, xDir.domain)) continue;
             if (stripIndex(target) !== xDir.domain) {

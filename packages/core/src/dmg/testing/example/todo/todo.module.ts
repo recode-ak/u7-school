@@ -1,5 +1,5 @@
 import { defineModule } from '../../../domain/contracts/define-module';
-import { UsersModuleDef } from '../users/users.module';
+import { UsersModuleDef } from '../users';
 import { ArchiveRemovedUserTasksErDef } from './task/er/archive-removed-user-tasks.er';
 import { ArchiveDoneTasksJobDef } from './task/job/archive-done-tasks.job';
 import { TaskArDef } from './task/task.ar';

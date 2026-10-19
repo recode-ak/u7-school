@@ -1,5 +1,5 @@
 import { defineEventReaction } from '../../../../../domain/contracts/define-event-reaction';
-import { UserEvents } from '../../../users/user/user.ar';
+import { UserEvents } from '../../../users';
 import { TaskArDef } from '../task.ar';
 import { TaskEvents } from '../task.events';
 
