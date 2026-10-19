@@ -42,10 +42,11 @@
     - [x] Тесты типов (`@ts-expect-error`): методы с `Result` недоступны, вопросы и идентификаторы доступны
     - [x] Реализация
     - Также скрыты `snapshot` (entity, DOM-01) и `pullEvents` (только UoW)
-- [~] Task: `definePolicy` / `rule` / `anyOf` / `allOf` / `hasRole`
-    - [ ] Тесты: `allowed`/`denied(rule, denyMessage)`; композиция; `delegable: false` отказывает `delegate`; правило работает с субъектом
-    - [ ] Реализация
-- [ ] Task: Контракты `defineUseCase`, `defineEventReaction`, `defineJob`, `defineFacade`, `defineModule`
+- [x] Task: `definePolicy` / `rule` / `anyOf` / `allOf` / `hasRole` e8d9eb7
+    - [x] Тесты: `allowed`/`denied(rule, denyMessage)`; композиция; `delegable: false` отказывает `delegate`; правило работает с субъектом
+    - [x] Реализация
+    - Без субъекта (guest, system) правило отказывает; `anyOf` — со своим `name`/`denyMessage`, `allOf` — отказ первого правила. Политика для `system` в `handle()` — решить в Фазе 3
+- [~] Task: Контракты `defineUseCase`, `defineEventReaction`, `defineJob`, `defineFacade`, `defineModule`
     - [ ] Тесты: обязательные `label`/`description` (тип); ссылки объектами; вывод типов input/output/errors из Def
     - [ ] Реализация
 - [ ] Task: `normalize(def)`
