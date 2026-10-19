@@ -41,22 +41,22 @@ export type UseCaseContextOf<D extends AnyUseCaseDef> = RuleContextOf<
 export type HandleMeta = { readonly causationId?: string };
 
 /**
- * Что видно снаружи у реализации UC: Def и исполнение. Для карт модуля и
- * приложения — без приватных полей и строго контравариантной Policy,
- * поэтому реализацию любого `L` можно хранить рядом с другими.
- * `handle` — свойство, а не метод: параметры строго контравариантны, и
- * реализация, которой нужен субъект богаче `U`, не пройдёт в карту.
+ * Что видно снаружи у реализации UC: Def и исполнение. Для хранения в модуле
+ * и приложении — без приватных полей и строго контравариантной Policy,
+ * поэтому реализации с разным `L` лежат рядом. `handle` — метод: хранилище
+ * не должно делать `ApiApp` инвариантным по актору; строгую проверку
+ * субъекта делает карта модуля (`ModuleMap`).
  */
 export type UseCaseHandler<
   D extends AnyUseCaseDef = AnyUseCaseDef,
   U = UseCaseSubjectOf<D>,
 > = {
   readonly def: D;
-  readonly handle: (
+  handle(
     input: unknown,
     caller: Caller<U>,
     meta?: HandleMeta,
-  ) => Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
+  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
 };
 
 /**

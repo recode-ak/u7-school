@@ -6,15 +6,34 @@ import type {
 } from '../../domain/contracts/define-facade';
 import type { AnyJobDef } from '../../domain/contracts/define-job';
 import type { AnyModuleDef } from '../../domain/contracts/define-module';
-import type { AnyUseCaseDef } from '../../domain/contracts/define-use-case';
+import type {
+  AnyUseCaseDef,
+  OutputOf,
+  UseCaseErrorOf,
+} from '../../domain/contracts/define-use-case';
+import type { Caller } from '../../kernel/caller/caller';
+import type { Result } from '../../kernel/result/result';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { JobFromDef } from '../job/job-from-def';
 import { legacyJob } from '../job/legacy-job';
 import type { ReactionFromDef } from '../reaction/reaction-from-def';
-import type { UseCaseHandler } from '../use-case/use-case-from-def';
+import type { HandleMeta, UseCaseHandler } from '../use-case/use-case-from-def';
 
 type Ctor<R, T> = new (deps: R) => T;
+
+/**
+ * Реализация UC для проверки карты: `handle` — свойство, параметры строго
+ * контравариантны, и UC, которому нужен субъект богаче `U`, не пройдёт.
+ */
+type StrictHandler<D extends AnyUseCaseDef, U> = {
+  readonly def: D;
+  readonly handle: (
+    input: unknown,
+    caller: Caller<U>,
+    meta?: HandleMeta,
+  ) => Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
+};
 
 type FacadePart<M extends AnyModuleDef, R> = M['facade'] extends AnyFacadeDef
   ? { readonly facade: (deps: R) => FacadeApi<M['facade']> }
@@ -30,7 +49,7 @@ export type ModuleMap<M extends AnyModuleDef, R extends ModuleDeps, U> = {
   readonly useCases: {
     readonly [C in M['useCases'][number] as C['name']]: Ctor<
       R,
-      UseCaseHandler<C, U>
+      StrictHandler<C, U>
     >;
   };
   readonly reactions: {
