@@ -17,10 +17,11 @@
     - [x] Тесты: группа ошибок с `code`/`kind`/`label`/`description`/схемой payload; фабрика ошибки с типизированным payload; базовые ошибки ядра (`UNAUTHORIZED`, `INPUT_VALIDATION`, `ACCESS_DENIED`, `OUTPUT_VALIDATION`, `SERVER_INTERNAL`); `kind` — закрытый набор
     - [x] Реализация
     - Заметка: `defineErrors('TODO', { NOT_FOUND: … })` → код `TODO_NOT_FOUND`; Def даёт `make(payload)` и `err(payload)`
-- [~] Task: `Timestamp`, `now()`, `F.*`
-    - [ ] Тесты: управляемый `now()`; `F.timestamp` читает ISO и число, выдаёт число; `F.uuid`/`F.string`/… ставят `description` из метки; `BaseEntityFields`; поля конвертируются в JSON Schema
-    - [ ] Реализация (переиспользовать `shared/now`, если подходит)
-- [ ] Task: `Caller`
+- [x] Task: `Timestamp`, `now()`, `F.*` 2aaee2a1
+    - [x] Тесты: управляемый `now()`; `F.timestamp` читает ISO и число, выдаёт число; `F.uuid`/`F.string`/… ставят `description` из метки; `BaseEntityFields`; поля конвертируются в JSON Schema
+    - [x] Реализация (переиспользовать `shared/now`, если подходит)
+    - Заметка: `now()` поверх legacy `shared/now`; заморозка — `setNow`/`resetNow` из `@u7-scl/core/dmg/testing`; `toJsonSchema` в режиме `input`
+- [~] Task: `Caller`
     - [ ] Тесты: четыре подтипа с дженериком пользователя; `subjectOf` (user → он сам, delegate → замещаемый, guest/system → нет); `system.onBehalfOf`
     - [ ] Реализация
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
