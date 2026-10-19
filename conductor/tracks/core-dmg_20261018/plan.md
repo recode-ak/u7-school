@@ -28,7 +28,7 @@
 - Замечания по фазе (b56fba5): примитивы перенесены в `dmg/kernel/`; `expectOk`; тип `ErrorDef.payload` выводится из объявления; `GuestCaller` — необязательные `channel`/`channelId` (0f5116e). Полный `check` на батарее (CPU 400 МГц) красный по таймаутам двух тестов бота — повторить до контрольной точки
 - [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
-## Фаза 2: Манифесты домена и агрегат v2
+## Фаза 2: Манифесты домена и агрегат v2 [checkpoint: a3909e1]
 
 - [x] Task: `defineEvents` 0cf130e
     - [x] Тесты: FQN `module.aggregate.event` из префикса группы; схема payload; ссылка на событие — объект
@@ -60,7 +60,7 @@
     - Размещён в `dmg/testing/example/todo/` + заглушка `users` (ER на чужое событие, `dependsOn`). Попутно e2049b7: `Aggregate.change` — тип по всему `Result`
 - Замечания по фазе (11cbafa): `description` UC не описывает права доступа (это `policy`); `policy` обязательна для всех UC, без ограничений — явный `allowAll`; `EntityBase` выводится из `BaseEntityFields`; `JobSchedule` — своя копия в dmg (структурно совместима с legacy). `now()` остаётся на legacy-часах, третий параметр конструктора Ar — начальные события `create`. В Фазе 6 зафиксировать в `manifests.md`
 - Разделение полей «бизнесовые / технические» (для `details` в документации) — таблица по виду Def в генераторе документации (вне трека, D-27), не в `normalize`: не раздувает хеш
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Прикладной слой
 
