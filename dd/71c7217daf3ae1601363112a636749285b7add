@@ -1,0 +1,5 @@
+Контрольная точка Фазы 3 «Прикладной слой».
+Сделано: UoW и шина DMG поверх legacy; UseCaseFromDef (load → Policy → execute → commit/publish → выход); ReactionFromDef, JobFromDef (+legacyJob); ModuleFromDef и ModuleMap (Def → класс, проверка полноты и субъекта); ApiApp.addDmgModules/run/execute(def); учебный todo — прикладная часть на JSON-репозитории.
+Замечания Нурболата учтены: warn в production при расхождении с контрактом (ERR-07 в rules.md и errors-result.md); след операции cause + correlationId; requestId ставит адаптер транспорта (incomingRequestId), UC получает готовый Trace; репозиторию разрешены запросы по полям; пояснение о потребителях фасада в примере.
+Автоматическая проверка: bun run check — EXIT=0, 3050 pass.
+Ручная проверка: Нурболат — «ручная проверка пройдена».
