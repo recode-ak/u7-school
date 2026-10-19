@@ -84,9 +84,10 @@
     - [x] Тесты: `run` возвращает `Result`; `execute` разворачивает `Err` в исключение для нового UC; legacy-тесты `ApiApp` не тронуты и зелёные
     - [x] Реализация (минимальная правка `api/app/api-app.ts`)
     - `execute(def, input, caller)` — перегрузка; `Err` → `AppException` в legacy-форме (`toLegacyError`). Модули DMG подключаются `addDmgModules`: реакции — в `init`, задания — в `start`.
-- [ ] Task: Учебный модуль `todo` — прикладная часть
-    - [ ] Реализации UC/ER/Job, JSON-репозиторий, in-proc фасад, wiring
-    - [ ] Интеграционные тесты: сквозной сценарий через `appApi.run`, событие → ER, smoke модуля на JSON-репозитории (временный каталог)
+- [x] Task: Учебный модуль `todo` — прикладная часть 7ab97dc
+    - [x] Реализации UC/ER/Job, JSON-репозиторий, in-proc фасад, wiring
+    - [x] Интеграционные тесты: сквозной сценарий через `appApi.run`, событие → ER, smoke модуля на JSON-репозитории (временный каталог)
+    - Попутно: имена Def по `naming.md` (`XxxDef`, e3d2f75); субъект вызывающего `U` в `UseCaseFromDef`/модуле/`ApiApp` (0e3a91b, исправление 95d7f55) — при `allowAll` реализации нужен `uuid` вызывающего. Открыто для Фазы 6: `layers.md` §4 «репозиторий без разбора полей» vs запросы по полям.
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: Граф и `arch:check`
