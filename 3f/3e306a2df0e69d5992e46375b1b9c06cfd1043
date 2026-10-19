@@ -1,0 +1,7 @@
+Задача: Учебный модуль todo — доменная часть
+- dmg/testing/example/todo/ по naming.md: task/{task.state, task.events, task.errors, task.ar (Def + TaskAr), task.policy, uc/{create-task, complete-task, list-tasks}.uc, er/archive-removed-user-tasks.er, job/archive-done-tasks.job}, todo.facade, todo.module, index.
+- dmg/testing/example/users/ — заглушка чужого модуля (UserDef + UserEvents.removed, UsersModule) для ER на чужое событие и dependsOn.
+- Task: open → done (complete) → archived (archive из open|done); ошибки TASK_NOT_FOUND/ALREADY_DONE/ARCHIVED; политика canManage = anyOf(isOwner, hasRole('admin')); фасад getTask → ReadonlyAr<TaskAr>; DTO из TaskState.entries / v.pick.
+- Тесты: каждая ветка Ok/Err Ar (TST-01), правило allowed/denied: свой/чужой/роль/гость (TST-02), дымовой тест модуля (normalize всех Def).
+- Попутно fix e2049b7: Aggregate.change.
+- check: зелёный (2973 pass).
