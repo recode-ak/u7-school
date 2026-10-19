@@ -11,4 +11,8 @@ export {
   type ErrorSpec,
 } from './errors/define-errors';
 export { type DomainError, ERROR_KINDS, type ErrorKind } from './errors/error';
+export { BaseEntityFields, F } from './fields/fields';
 export { type Err, err, type Ok, ok, type Result } from './result/result';
+export { toJsonSchema } from './schema/json-schema';
+export { now } from './time/now';
+export type { Timestamp } from './time/timestamp';
