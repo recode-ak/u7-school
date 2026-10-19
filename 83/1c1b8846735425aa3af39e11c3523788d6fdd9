@@ -1,0 +1,7 @@
+Задача: Контракты UC/ER/Job/фасада/модуля
+- defineUseCase({ name, label, description, type: command|query, aggregate, callers (непустой), policy?, input, output, errors, emits? }); у query emits — только []. InputOf = InferInput (вход вызывающего), OutputOf = InferOutput, UseCaseErrorOf = ошибки errors + CoreError.
+- defineEventReaction({ …, on: [события] (непустой, мультиподписка как в legacy), touches?, calls? (фасады), emits? }) — пустые массивы по умолчанию; ReactionEventOf = union событий on.
+- defineJob({ …, schedule: JobSchedule (legacy-тип, существующий планировщик), scans?, emits? }).
+- defineFacade({ …, methods }) + method<Args, T>()({ label, description, errors }) — сигнатура в фантомных полях ~args/~returns (без as); FacadeApi<D> — Promise<Result<T, ошибки контракта>>.
+- defineModule({ …, dependsOn, aggregates, useCases, reactions, jobs, facade? }) — коллекции обязательны (явно, даже пустые).
+- check: полностью зелёный (2950 pass).
