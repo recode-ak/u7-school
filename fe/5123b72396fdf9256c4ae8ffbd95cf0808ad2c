@@ -1,0 +1,1 @@
+Замечание Нурболата к Фазе 3: вместо causationId — типизированная причина + сквозной id. Сделано: Trace/Cause/RequestMeta, мета запроса — отдельный обязательный параметр транспорта (не поле input: бизнес-схемы чисты); нет requestId — генерация + warn. Тесты +6 (след UC, warn без requestId, след ER, runId Job, сквозной correlationId event→ER). check зелёный, 3046 pass.
