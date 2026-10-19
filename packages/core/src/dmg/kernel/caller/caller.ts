@@ -1,7 +1,11 @@
-/** Не зарегистрирован: известен только канал (например, tgId). */
+/**
+ * Не зарегистрирован. Известно не больше, чем канал (`telegram`, `web`, …)
+ * и идентификатор посетителя в нём (tgId, id анонимной сессии).
+ */
 export type GuestCaller = {
   readonly kind: 'guest';
-  readonly channelId: string;
+  readonly channel?: string;
+  readonly channelId?: string;
 };
 
 /** Авторизованный пользователь — сам себе субъект. */

@@ -28,7 +28,11 @@ describe('subjectOf', () => {
   });
 
   it('guest и system — без субъекта', () => {
-    const guest: Caller<User> = { kind: 'guest', channelId: 'tg:1' };
+    const guest: Caller<User> = {
+      kind: 'guest',
+      channel: 'telegram',
+      channelId: '1',
+    };
     expect(subjectOf(guest)).toBeUndefined();
     expect(
       subjectOf(systemCaller<User>('todo.todo.completed')),
@@ -45,6 +49,13 @@ describe('systemCaller', () => {
       source: 'todo.todo.completed',
       onBehalfOf: origin,
     });
+  });
+});
+
+describe('GuestCaller', () => {
+  it('канал и идентификатор в нём необязательны', () => {
+    const anonymous: Caller<User> = { kind: 'guest' };
+    expect(subjectOf(anonymous)).toBeUndefined();
   });
 });
 
