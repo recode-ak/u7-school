@@ -17,7 +17,8 @@
     "./ui": "./src/ui/index.ts",
     "./shared": "./src/shared/index.ts",
     "./infra": "./src/infra/index.ts",
-    "./dmg": "./src/dmg/index.ts"
+    "./dmg": "./src/dmg/index.ts",
+    "./dmg/testing": "./src/dmg/testing/index.ts"
   },
   "imports": {
     "#domain/*": "./src/domain/*.ts",
