@@ -1,0 +1,8 @@
+Задача: definePolicy / rule / anyOf / allOf / hasRole
+- policy.ts: Decision = allowed | denied(rule, denyMessage). rule({ name, label, denyMessage, delegable?, check(subject, ctx) }) — субъект через subjectOf; нет субъекта (guest/system) → отказ; delegable:false → отказ delegate («Недоступно по делегированию: <label>.»).
+- allOf(...rules) — отказ первого не прошедшего; anyOf(meta {name,label,denyMessage}, ...rules) — отказ со своим текстом.
+- hasRole(role) над RoleHolder { hasRole(role) } (как UserAr). Rule.evaluate — свойство (строгая контравариантность → контекст композиции = пересечение).
+- RuleNode (op: rule/anyOf/allOf) — структура для normalize/графа.
+- definePolicy({ name, label, description, rules }) → { ...spec, dmg:'policy' }.
+- Открыто до Фазы 3: политика для system-вызова в handle().
+- check: 2 теста бота по таймауту (батарея).
