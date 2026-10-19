@@ -1,0 +1,5 @@
+Задача: defineEvents
+- dmg/domain/events/define-events.ts: defineEvents(prefix 'module.aggregate', specs) → EventDef { dmg:'event', name (FQN), label, description, payload, make() }.
+- DomainEvent = { name, payload }; конверт (eventId, occurredAt, aggregateId, caller) — в UoW (Фаза 3).
+- Префикс типизирован как `${string}.${string}`; соответствие модулю/агрегату — arch:check (MAN-08).
+- check: biome/tsc зелёные; 2 теста бота по таймауту (батарея, известная проблема Фазы 1).
