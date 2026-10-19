@@ -4,7 +4,7 @@
 
 План утверждён предварительно: Нурболат комментирует по ходу реализации.
 
-## Фаза 1: Каркас и примитивы
+## Фаза 1: Каркас и примитивы [checkpoint: 24fe914]
 
 - [x] Task: Каркас `dmg/` 40f2be1
     - [x] Подпуть `./dmg` в `exports` и `#dmg/*` в `imports` `packages/core/package.json`, `dmg/index.ts`
@@ -25,8 +25,8 @@
     - [x] Тесты: четыре подтипа с дженериком пользователя; `subjectOf` (user → он сам, delegate → замещаемый, guest/system → нет); `system.onBehalfOf`
     - [x] Реализация
     - Заметка: `delegate` — `{ subject, actor, delegationId }`, `system` — `{ source, onBehalfOf? }`, `guest` — `{ channelId }`
-- Замечания по фазе (b56fba5): примитивы перенесены в `dmg/kernel/`; `expectOk`; тип `ErrorDef.payload` выводится из объявления. Полный `check` на батарее (CPU 400 МГц) красный по таймаутам двух тестов бота — повторить до контрольной точки
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- Замечания по фазе (b56fba5): примитивы перенесены в `dmg/kernel/`; `expectOk`; тип `ErrorDef.payload` выводится из объявления; `GuestCaller` — необязательные `channel`/`channelId` (0f5116e). Полный `check` на батарее (CPU 400 МГц) красный по таймаутам двух тестов бота — повторить до контрольной точки
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Манифесты домена и агрегат v2
 
