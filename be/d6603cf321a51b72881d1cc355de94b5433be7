@@ -1,0 +1,5 @@
+Task: Модель ошибки и defineErrors
+- dmg/errors/error.ts: ERROR_KINDS (закрытый набор), DomainError {code, kind, label, description, payload}
+- dmg/errors/define-errors.ts: defineErrors(prefix, specs) → группа ErrorDef; код PREFIX_KEY; make()/err() с типизированным payload; ErrorOf
+- dmg/errors/core-errors.ts: CoreErrors (UNAUTHORIZED, INPUT_VALIDATION, ACCESS_DENIED, OUTPUT_VALIDATION, SERVER_INTERNAL), CoreError
+- одно обоснованное 'as' в buildErrors (mapped type из Object.entries)
