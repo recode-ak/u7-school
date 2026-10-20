@@ -203,7 +203,7 @@ describe('UseCaseFromDef.handle — операция', () => {
     );
   });
 
-  test('невалидный выход → OUTPUT_VALIDATION', async () => {
+  test('невалидный выход → OUTPUT_VALIDATION до фиксации: ничего не сохранено и не опубликовано', async () => {
     const BadOutputUcDef = defineUseCase({
       ...CompleteTaskUcDef,
       output: v.object({ taskId: v.pipe(v.string(), v.uuid()) }),
@@ -217,7 +217,15 @@ describe('UseCaseFromDef.handle — операция', () => {
         super(BadOutputUcDef, { app: ctx.app, tasks });
       }
       protected load = (i: { taskId: string }) => loadTask(tasks, i);
-      protected execute = async () => ok({ taskId: 'не uuid' });
+      protected execute = async (
+        _: unknown,
+        { task }: Loaded,
+        uow: UnitOfWork,
+      ) => {
+        task.complete();
+        uow.register(task, tasks);
+        return ok({ taskId: 'не uuid' });
+      };
     }
     const res = await new BadOutput().handle(
       { taskId: TASK },
@@ -225,6 +233,8 @@ describe('UseCaseFromDef.handle — операция', () => {
       REQ,
     );
     expectErr(res, 'OUTPUT_VALIDATION');
+    expect(tasks.rows.get(TASK)?.status).toBe('open');
+    expect(ctx.published).toEqual([]);
   });
 });
 

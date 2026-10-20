@@ -38,7 +38,6 @@ export type UseCaseContextOf<D extends AnyUseCaseDef> = RuleContextOf<
   D['policy']
 >;
 
-/** Метаданные вызова: причина, если UC вызван реакцией на событие. */
 /**
  * Что видно снаружи у реализации UC: Def и исполнение. Для хранения в модуле
  * и приложении — без приватных полей и строго контравариантной Policy,
@@ -117,8 +116,9 @@ export abstract class UseCaseFromDef<
   }
 
   /**
-   * callers → вход → load → Policy → execute → commit (с публикацией) →
-   * выход. Непредвиденное исключение — `SERVER_INTERNAL` с записью в лог.
+   * callers → вход → load → Policy → execute → выход → commit (с
+   * публикацией). Непредвиденное исключение — `SERVER_INTERNAL` с записью
+   * в лог.
    */
   async handle(
     input: unknown,
@@ -168,11 +168,13 @@ export abstract class UseCaseFromDef<
     });
     const res = await this.execute(parsed.output, loaded.value, uow, caller);
     if (!res.ok) return res;
-    await uow.commit();
+    // Выход сверяется до фиксации: невалидный ответ — баг реализации, и
+    // тогда операция не оставляет следов (клиент может безопасно повторить).
     const output = v.safeParse(this.def.output, res.value);
     if (!output.success) {
       return CoreErrors.OUTPUT_VALIDATION.err({ issues: issues(output) });
     }
+    await uow.commit();
     return ok(output.output);
   }
 }
