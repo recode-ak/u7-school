@@ -1,0 +1,4 @@
+// expect: ARC-08 warning
+import { x } from '@u7-scl/user/infra';
+
+export const a = x;

@@ -1,0 +1,5 @@
+// expect: CODE-02 error
+export class Hidden {
+  #secret = 1;
+  public open = 2;
+}

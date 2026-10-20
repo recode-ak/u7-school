@@ -1,0 +1,4 @@
+// expect: ARC-06 warning
+import { x } from '@u7-scl/course/domain';
+
+export const a = x;

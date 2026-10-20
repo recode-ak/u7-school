@@ -1,0 +1,9 @@
+// DOM-11: базовые поля entity — только ...BaseEntityFields / F.*; свои `v.uuid()` и ключи uuid/createdAt/updatedAt запрещены.
+or {
+  `v.uuid()`,
+  `uuid: $x`,
+  `createdAt: $x`,
+  `updatedAt: $x`
+} as $m where {
+  register_diagnostic(span=$m, message="DOM-11: базовые поля — только ...BaseEntityFields / F.* (rules.md)", severity="error")
+}

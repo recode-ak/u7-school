@@ -1,0 +1,16 @@
+// expect: none
+import * as v from 'valibot';
+import { TaskState } from './task.state';
+import { Err, Ok } from '@u7-scl/core/dmg';
+
+export class TaskAr {
+  private constructor(private readonly state: v.InferOutput<typeof TaskState>) {}
+
+  static restore(raw: v.InferOutput<typeof TaskState>): TaskAr {
+    return new TaskAr(raw);
+  }
+
+  complete() {
+    return this.state ? Ok(undefined) : Err('TASK_EMPTY');
+  }
+}

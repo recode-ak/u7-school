@@ -1,0 +1,4 @@
+// expect: none
+import type { TaskState } from '../../todo/task/task.state';
+
+export type Row = TaskState;

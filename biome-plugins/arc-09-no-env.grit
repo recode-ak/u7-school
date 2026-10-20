@@ -1,0 +1,7 @@
+// ARC-09: в domain и UI-компонентах нет process.env / Bun.env — конфигурацию передаёт приложение.
+or {
+  `process.env`,
+  `Bun.env`
+} as $m where {
+  register_diagnostic(span=$m, message="ARC-09: process.env / Bun.env запрещены в domain и UI (rules.md)", severity="error")
+}

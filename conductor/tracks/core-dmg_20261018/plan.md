@@ -109,14 +109,21 @@
 
 ## Фаза 5: Линт-правила
 
-- [ ] Task: `noRestrictedImports` для ARC-01, 02, 06, 07, 08, 09
-    - [ ] Фикстуры-нарушители (вне `check`) и скрипт-тест: biome выдаёт ошибку с нужным ID
-    - [ ] Конфиг: `error` для `packages/domain/**`, `packages/core/src/dmg/**`; на legacy — `warn` или исключения
-- [ ] Task: GritQL-плагины для DOM-01, DOM-11, DOM-12, ERR-01, API-02, CODE-02
-    - [ ] Фикстуры и тест по каждому правилу
-    - [ ] Плагины и подключение с той же областью действия
-- [ ] Task: Проверка: `bun run check` зелёный на всём репозитории; количество предупреждений на legacy — в summary
+- [x] Task: `noRestrictedImports` для ARC-01, 02, 06, 07, 08, 09
+    - [x] Фикстуры-нарушители (вне `check`) и скрипт-тест: biome выдаёт ошибку с нужным ID
+    - [x] Конфиг: `error` для `packages/domain/**`, `packages/core/src/dmg/**`; на legacy — `warn` или исключения
+- [x] Task: GritQL-плагины для DOM-01, DOM-11, DOM-12, ERR-01, API-02, CODE-02
+    - [x] Фикстуры и тест по каждому правилу
+    - [x] Плагины и подключение с той же областью действия
+- [x] Task: Проверка: `bun run check` зелёный на всём репозитории; количество предупреждений на legacy — в summary
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
+
+Заметки по факту (для Фазы 6):
+- Плагины — `biome-plugins/*.grit`, правила и области — `overrides` в `biome.json`; фикстуры — `lint-fixtures/` (`.txt`), тест — `scripts/lint-rules.test.ts` (16 кейсов, в составе `bun test`).
+- Legacy: ARC-06 — `warn` (110), ARC-08 — `warn` (13); остальные правила действуют только на новые пути (`packages/domain/**`, `packages/core/src/dmg/**`), на legacy исключены. ARC-01 (весь `packages/core`) и ARC-07 (`packages/app`) чисты и блокирующие.
+- DOM-01: проверяется для `*.policy|dcs|dqs|facade.ts` в domain и реализаций `dmg/testing/example/app` (кроме `infra`); Def-контракты и репозитории `.state` импортировать могут. Рендереры UI и stories — вне области до миграции UI.
+- DOM-11: автоматизирована только часть «базовые поля — `...BaseEntityFields`/`F.*`»; «DTO выводятся из схемы» остаётся в review.
+
 
 ## Фаза 6: Документация
 

@@ -1,0 +1,4 @@
+// expect: DOM-12 error
+import * as v from 'valibot';
+
+export const a = v.pipe(v.string(), v.isoDateTime());

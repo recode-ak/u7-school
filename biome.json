@@ -111,6 +111,546 @@
           }
         }
       }
+    },
+    {
+      "includes": ["packages/core/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@u7-scl/**",
+                      "!@u7-scl/core",
+                      "!@u7-scl/core/**"
+                    ],
+                    "message": "ARC-01: core не импортирует domain, app и модули"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/domain/**", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**",
+                      "!@u7-scl/core",
+                      "!@u7-scl/core/**",
+                      "!valibot",
+                      "!.",
+                      "!./**",
+                      "!../**",
+                      "!#dmg/**"
+                    ],
+                    "message": "ARC-02: domain импортирует только core и valibot"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "packages/core/src/dmg/testing/example/app/**",
+        "!**/*.test.ts",
+        "!**/infra/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@u7-scl/**",
+                      "!@u7-scl/core",
+                      "!@u7-scl/core/**"
+                    ],
+                    "message": "ARC-01: core не импортирует domain, app и модули"
+                  },
+                  {
+                    "group": ["**/*.state", "**/state"],
+                    "message": "DOM-01: entity видят только Ar своего агрегата и рендереры UI; используй доменный API"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "packages/domain/**/*.policy.ts",
+        "packages/domain/**/*.dcs.ts",
+        "packages/domain/**/*.dqs.ts",
+        "packages/domain/**/*.facade.ts",
+        "!**/*.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**",
+                      "!@u7-scl/core",
+                      "!@u7-scl/core/**",
+                      "!valibot",
+                      "!.",
+                      "!./**",
+                      "!../**",
+                      "!#dmg/**"
+                    ],
+                    "message": "ARC-02: domain импортирует только core и valibot"
+                  },
+                  {
+                    "group": ["**/*.state", "**/state"],
+                    "message": "DOM-01: entity видят только Ar своего агрегата и рендереры UI; используй доменный API"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/course/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "warn",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@u7-scl/dossier", "@u7-scl/dossier/**"],
+                    "message": "ARC-06: пакет course не импортирует пакет dossier; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/peer-review", "@u7-scl/peer-review/**"],
+                    "message": "ARC-06: пакет course не импортирует пакет peer-review; связь — через фасад домена"
+                  },
+                  {
+                    "group": [
+                      "@u7-scl/questionnaire",
+                      "@u7-scl/questionnaire/**"
+                    ],
+                    "message": "ARC-06: пакет course не импортирует пакет questionnaire; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/stream", "@u7-scl/stream/**"],
+                    "message": "ARC-06: пакет course не импортирует пакет stream; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/user", "@u7-scl/user/**"],
+                    "message": "ARC-06: пакет course не импортирует пакет user; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/wish", "@u7-scl/wish/**"],
+                    "message": "ARC-06: пакет course не импортирует пакет wish; связь — через фасад домена"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/dossier/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "warn",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@u7-scl/course", "@u7-scl/course/**"],
+                    "message": "ARC-06: пакет dossier не импортирует пакет course; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/peer-review", "@u7-scl/peer-review/**"],
+                    "message": "ARC-06: пакет dossier не импортирует пакет peer-review; связь — через фасад домена"
+                  },
+                  {
+                    "group": [
+                      "@u7-scl/questionnaire",
+                      "@u7-scl/questionnaire/**"
+                    ],
+                    "message": "ARC-06: пакет dossier не импортирует пакет questionnaire; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/stream", "@u7-scl/stream/**"],
+                    "message": "ARC-06: пакет dossier не импортирует пакет stream; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/user", "@u7-scl/user/**"],
+                    "message": "ARC-06: пакет dossier не импортирует пакет user; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/wish", "@u7-scl/wish/**"],
+                    "message": "ARC-06: пакет dossier не импортирует пакет wish; связь — через фасад домена"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/peer-review/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "warn",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@u7-scl/course", "@u7-scl/course/**"],
+                    "message": "ARC-06: пакет peer-review не импортирует пакет course; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/dossier", "@u7-scl/dossier/**"],
+                    "message": "ARC-06: пакет peer-review не импортирует пакет dossier; связь — через фасад домена"
+                  },
+                  {
+                    "group": [
+                      "@u7-scl/questionnaire",
+                      "@u7-scl/questionnaire/**"
+                    ],
+                    "message": "ARC-06: пакет peer-review не импортирует пакет questionnaire; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/stream", "@u7-scl/stream/**"],
+                    "message": "ARC-06: пакет peer-review не импортирует пакет stream; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/user", "@u7-scl/user/**"],
+                    "message": "ARC-06: пакет peer-review не импортирует пакет user; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/wish", "@u7-scl/wish/**"],
+                    "message": "ARC-06: пакет peer-review не импортирует пакет wish; связь — через фасад домена"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/questionnaire/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "warn",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@u7-scl/course", "@u7-scl/course/**"],
+                    "message": "ARC-06: пакет questionnaire не импортирует пакет course; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/dossier", "@u7-scl/dossier/**"],
+                    "message": "ARC-06: пакет questionnaire не импортирует пакет dossier; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/peer-review", "@u7-scl/peer-review/**"],
+                    "message": "ARC-06: пакет questionnaire не импортирует пакет peer-review; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/stream", "@u7-scl/stream/**"],
+                    "message": "ARC-06: пакет questionnaire не импортирует пакет stream; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/user", "@u7-scl/user/**"],
+                    "message": "ARC-06: пакет questionnaire не импортирует пакет user; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/wish", "@u7-scl/wish/**"],
+                    "message": "ARC-06: пакет questionnaire не импортирует пакет wish; связь — через фасад домена"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/stream/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "warn",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@u7-scl/course", "@u7-scl/course/**"],
+                    "message": "ARC-06: пакет stream не импортирует пакет course; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/dossier", "@u7-scl/dossier/**"],
+                    "message": "ARC-06: пакет stream не импортирует пакет dossier; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/peer-review", "@u7-scl/peer-review/**"],
+                    "message": "ARC-06: пакет stream не импортирует пакет peer-review; связь — через фасад домена"
+                  },
+                  {
+                    "group": [
+                      "@u7-scl/questionnaire",
+                      "@u7-scl/questionnaire/**"
+                    ],
+                    "message": "ARC-06: пакет stream не импортирует пакет questionnaire; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/user", "@u7-scl/user/**"],
+                    "message": "ARC-06: пакет stream не импортирует пакет user; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/wish", "@u7-scl/wish/**"],
+                    "message": "ARC-06: пакет stream не импортирует пакет wish; связь — через фасад домена"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/user/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "warn",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@u7-scl/course", "@u7-scl/course/**"],
+                    "message": "ARC-06: пакет user не импортирует пакет course; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/dossier", "@u7-scl/dossier/**"],
+                    "message": "ARC-06: пакет user не импортирует пакет dossier; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/peer-review", "@u7-scl/peer-review/**"],
+                    "message": "ARC-06: пакет user не импортирует пакет peer-review; связь — через фасад домена"
+                  },
+                  {
+                    "group": [
+                      "@u7-scl/questionnaire",
+                      "@u7-scl/questionnaire/**"
+                    ],
+                    "message": "ARC-06: пакет user не импортирует пакет questionnaire; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/stream", "@u7-scl/stream/**"],
+                    "message": "ARC-06: пакет user не импортирует пакет stream; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/wish", "@u7-scl/wish/**"],
+                    "message": "ARC-06: пакет user не импортирует пакет wish; связь — через фасад домена"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/wish/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "warn",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@u7-scl/course", "@u7-scl/course/**"],
+                    "message": "ARC-06: пакет wish не импортирует пакет course; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/dossier", "@u7-scl/dossier/**"],
+                    "message": "ARC-06: пакет wish не импортирует пакет dossier; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/peer-review", "@u7-scl/peer-review/**"],
+                    "message": "ARC-06: пакет wish не импортирует пакет peer-review; связь — через фасад домена"
+                  },
+                  {
+                    "group": [
+                      "@u7-scl/questionnaire",
+                      "@u7-scl/questionnaire/**"
+                    ],
+                    "message": "ARC-06: пакет wish не импортирует пакет questionnaire; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/stream", "@u7-scl/stream/**"],
+                    "message": "ARC-06: пакет wish не импортирует пакет stream; связь — через фасад домена"
+                  },
+                  {
+                    "group": ["@u7-scl/user", "@u7-scl/user/**"],
+                    "message": "ARC-06: пакет wish не импортирует пакет user; связь — через фасад домена"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/app/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@u7-scl/**",
+                      "!@u7-scl/core",
+                      "!@u7-scl/core/**",
+                      "!@u7-scl/domain",
+                      "!@u7-scl/domain/**"
+                    ],
+                    "message": "ARC-07: app импортирует только core и domain"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "warn",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@u7-scl/*/infra",
+                      "@u7-scl/*/infra/**",
+                      "**/*.repo",
+                      "**/*-repo",
+                      "!@u7-scl/core",
+                      "!@u7-scl/core/**",
+                      "!@u7-scl/core/infra",
+                      "!@u7-scl/core/infra/**",
+                      "!@u7-scl/app/infra",
+                      "!@u7-scl/app/infra/**"
+                    ],
+                    "message": "ARC-08: apps работают через appApi; репозитории и реализации модулей не импортируют"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "packages/core/src/dmg/**",
+        "packages/domain/**",
+        "!**/*.test.ts"
+      ],
+      "plugins": [
+        "./biome-plugins/arc-09-no-env.grit",
+        "./biome-plugins/code-02-class-members.grit"
+      ]
+    },
+    {
+      "includes": [
+        "packages/core/src/dmg/**",
+        "packages/domain/**",
+        "!**/*.test.ts",
+        "!packages/core/src/dmg/kernel/fields/fields.ts"
+      ],
+      "plugins": ["./biome-plugins/dom-12-no-iso-dates.grit"]
+    },
+    {
+      "includes": [
+        "packages/domain/**/*.state.ts",
+        "packages/core/src/dmg/testing/example/**/*.state.ts"
+      ],
+      "plugins": ["./biome-plugins/dom-11-base-fields.grit"]
+    },
+    {
+      "includes": [
+        "packages/domain/**/*.ar.ts",
+        "packages/domain/**/*.dcs.ts",
+        "packages/domain/**/*.facade.ts",
+        "packages/domain/**/*.uc.ts",
+        "packages/domain/**/*.er.ts",
+        "packages/core/src/dmg/testing/example/**/*.ar.ts",
+        "packages/core/src/dmg/testing/example/**/*.dcs.ts",
+        "packages/core/src/dmg/testing/example/**/*.facade.ts",
+        "packages/core/src/dmg/testing/example/**/*.uc.ts",
+        "packages/core/src/dmg/testing/example/**/*.er.ts",
+        "!**/*.test.ts"
+      ],
+      "plugins": ["./biome-plugins/err-01-no-throw.grit"]
+    },
+    {
+      "includes": [
+        "packages/domain/**/*.ar.ts",
+        "packages/domain/**/*.dcs.ts",
+        "packages/domain/**/*.facade.ts",
+        "packages/domain/**/*.uc.ts",
+        "packages/domain/**/*.er.ts",
+        "packages/domain/**/*.job.ts",
+        "packages/core/src/dmg/testing/example/**/*.ar.ts",
+        "packages/core/src/dmg/testing/example/**/*.dcs.ts",
+        "packages/core/src/dmg/testing/example/**/*.facade.ts",
+        "packages/core/src/dmg/testing/example/**/*.uc.ts",
+        "packages/core/src/dmg/testing/example/**/*.er.ts",
+        "packages/core/src/dmg/testing/example/**/*.job.ts",
+        "!**/*.test.ts"
+      ],
+      "plugins": ["./biome-plugins/api-02-no-manual-publish.grit"]
     }
   ]
 }

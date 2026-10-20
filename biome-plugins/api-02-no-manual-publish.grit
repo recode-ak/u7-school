@@ -1,0 +1,4 @@
+// API-02: события публикует UoW при сохранении; ручной publish запрещён.
+`$bus.publish($args)` as $m where {
+  register_diagnostic(span=$m, message="API-02: ручной publish запрещён — события публикует UoW (rules.md)", severity="error")
+}

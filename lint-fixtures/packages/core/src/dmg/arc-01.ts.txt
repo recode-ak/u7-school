@@ -1,0 +1,4 @@
+// expect: ARC-01 error
+import { x } from '@u7-scl/domain';
+
+export const a = x;

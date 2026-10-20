@@ -1,0 +1,9 @@
+// DOM-12: даты — F.timestamp / Timestamp; ISO-схемы valibot в новых схемах запрещены.
+or {
+  `v.isoDateTime($_)`,
+  `v.isoTimestamp($_)`,
+  `v.isoDate($_)`,
+  `v.isoTime($_)`
+} as $m where {
+  register_diagnostic(span=$m, message="DOM-12: даты — F.timestamp / Timestamp, ISO-строки в схемах запрещены (rules.md)", severity="error")
+}

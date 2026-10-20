@@ -1,0 +1,4 @@
+// expect: API-02 error
+export function run(bus: { publish(e: unknown): void }): void {
+  bus.publish({});
+}
