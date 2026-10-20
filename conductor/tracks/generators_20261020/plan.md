@@ -24,9 +24,9 @@
 
 ## Фаза 3: Пары контракт ↔ реализация
 
-- [ ] Task: `gen uc` — пара `domain/<m>/<agg>/uc/<name>.uc.ts` + `packages/<m>/src/<agg>/uc/<name>.uc.ts` (одинаковый относительный путь, `XxxDef`/`Xxx`) + тесты
-- [ ] Task: `gen er` и `gen job` — пары по тому же правилу, константы Job экспортируются + тесты
-- [ ] Task: `gen module <m>` в прикладном слое (`packages/<m>`: `<m>.module.ts` с картой Def → класс, `<m>.facade.ts`, каркас)
+- [x] Task: `gen uc` — пара `domain/<m>/<agg>/uc/<name>.uc.ts` + `packages/<m>/src/<agg>/uc/<name>.uc.ts` (одинаковый относительный путь, `XxxDef`/`Xxx`) + тесты f265ac69
+- [x] Task: `gen er` и `gen job` — пары по тому же правилу, константы Job экспортируются + тесты f265ac69
+- [x] Task: `gen module <m>` в прикладном слое (`packages/<m>`: `<m>.module.ts` с картой Def → класс, `<m>.facade.ts`, каркас) f265ac69
 - [ ] Task: `gen aggregate` в прикладном слое: порт `repo` + `infra/<agg>.json-repo.ts`
 - [ ] Task: Тест правила пары: путь контракта и реализации совпадает, иначе падает
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
