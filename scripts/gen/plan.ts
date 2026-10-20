@@ -6,14 +6,25 @@ export interface PlannedFile {
   content: string;
 }
 
-/** Строка, которую автор вставляет сам, если в файле нет маркера. */
-export interface ManualHint {
+/**
+ * Правка существующего файла по маркеру: строка `line` вставляется перед
+ * строкой с `marker` (маркер остаётся для следующих вставок).
+ */
+export interface PlannedEdit {
   path: string;
+  /** Например `// gen:exports`. */
   marker: string;
   line: string;
 }
 
 export interface GenPlan {
   files: PlannedFile[];
-  hints: ManualHint[];
+  edits: PlannedEdit[];
+}
+
+export interface ApplyResult {
+  written: string[];
+  edited: string[];
+  /** Правки, которые не удалось применить (нет файла или маркера) — вставить вручную. */
+  hints: PlannedEdit[];
 }

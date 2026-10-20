@@ -1,0 +1,71 @@
+/** Применение плана: сначала всё проверяем, затем пишем; перезаписей нет. */
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { GenError } from './cli.ts';
+import type { ApplyResult, GenPlan, PlannedEdit } from './plan.ts';
+
+/** Результат правки одного маркера: новый текст или причина отказа. */
+function insertBeforeMarker(
+  text: string,
+  edit: PlannedEdit,
+): { text: string } | { skipped: 'present' | 'no-marker' } {
+  const lines = text.split('\n');
+  if (lines.some((l) => l.trim() === edit.line.trim())) {
+    return { skipped: 'present' };
+  }
+  const at = lines.findIndex((l) => l.trim() === edit.marker);
+  if (at === -1) return { skipped: 'no-marker' };
+  lines.splice(at, 0, edit.line);
+  return { text: lines.join('\n') };
+}
+
+export function applyPlan(
+  plan: GenPlan,
+  options: { write: boolean },
+): ApplyResult {
+  const paths = plan.files.map((f) => f.path);
+  const dupes = paths.filter((path, i) => paths.indexOf(path) !== i);
+  if (dupes.length > 0) {
+    throw new GenError(`Файл дважды в плане: ${dupes.join(', ')}`);
+  }
+  const taken = paths.filter((path) => existsSync(path));
+  if (taken.length > 0) {
+    throw new GenError(
+      `Файлы уже существуют, ничего не записано (перезапись запрещена):\n` +
+        taken.map((path) => `  ${path}`).join('\n'),
+    );
+  }
+
+  // Правки считаем целиком до записи: сбой чтения не оставит половину результата.
+  const pending = new Map<string, string>();
+  const edited: string[] = [];
+  const hints: PlannedEdit[] = [];
+  for (const edit of plan.edits) {
+    const planned = plan.files.find((f) => f.path === edit.path);
+    const source =
+      pending.get(edit.path) ??
+      planned?.content ??
+      (existsSync(edit.path) ? readFileSync(edit.path, 'utf8') : undefined);
+    if (source === undefined) {
+      hints.push(edit);
+      continue;
+    }
+    const result = insertBeforeMarker(source, edit);
+    if ('skipped' in result) {
+      if (result.skipped === 'no-marker') hints.push(edit);
+      continue;
+    }
+    if (planned) planned.content = result.text;
+    else pending.set(edit.path, result.text);
+    if (!edited.includes(edit.path) && !planned) edited.push(edit.path);
+  }
+
+  if (options.write) {
+    for (const file of plan.files) {
+      mkdirSync(dirname(file.path), { recursive: true });
+      writeFileSync(file.path, file.content, { flag: 'wx' });
+    }
+    for (const [path, text] of pending) writeFileSync(path, text);
+  }
+  return { written: paths, edited, hints };
+}
