@@ -25,6 +25,7 @@
     "agents:sync": "bun run scripts/agents-sync.ts",
     "agents:check": "bun run scripts/agents-sync.ts --check",
     "arch:check": "bun run scripts/arch-check.ts",
+    "gen": "bun run scripts/gen/main.ts",
     "extract:check": "bash scripts/extract-check.sh",
     "deploy": "bash scripts/deploy.sh",
     "migrate:streams-school-id": "bun run scripts/migrate-streams-school-id.ts",
