@@ -36,6 +36,7 @@ function contract(c: Ctx): string {
       return `import { allowAll, defineUseCase } from 'dmg-core';
 import * as v from 'valibot';
 import { ${A}ArDef } from '../${c.a}.ar';
+import { ${A}Events } from '../${c.a}.events';
 
 export const ${c.defName} = defineUseCase({
   name: '${camel}',
@@ -48,7 +49,7 @@ export const ${c.defName} = defineUseCase({
   input: v.object({}),
   output: v.object({}),
   errors: [],
-  emits: [],
+  emits: [${A}Events.created],
 });
 `;
     case 'er':
@@ -90,7 +91,9 @@ import { ${c.defName} } from './${c.base}';
 
 describe('${c.defName}', () => {
   it('нормализуется', () => {
-    expect(normalize(${c.defName})).toMatchObject({ name: '${toCamel(c.name)}' });
+    expect(normalize(${c.defName})).toMatchObject({
+      name: '${toCamel(c.name)}',
+    });
   });
 });
 `;

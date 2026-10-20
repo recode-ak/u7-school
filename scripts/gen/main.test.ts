@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runGen } from './main.ts';
@@ -86,4 +94,38 @@ test('нет маркера: печатает строку для ручной �
   expect(gen('aggregate', 'stream.student', '--write')).toBe(0);
   expect(out.join('\n')).toContain('Вставь вручную');
   expect(out.join('\n')).toContain('StudentArDef');
+});
+
+const snapshot = (dir: string) =>
+  Object.fromEntries(
+    readdirSync(dir, { recursive: true, encoding: 'utf8' })
+      .filter((f) => statSync(join(dir, f)).isFile())
+      .sort()
+      .map((f) => [f, readFileSync(join(dir, f), 'utf8')]),
+  );
+
+const slice = [
+  ['module', 'stream'],
+  ['aggregate', 'stream.student'],
+  ['uc', 'stream.student', 'complete-student'],
+  ['er', 'stream.student', 'react-student'],
+  ['job', 'stream.student', 'sweep-students'],
+  ['dcs', 'stream', 'progress'],
+  ['dqs', 'stream', 'navigation'],
+];
+
+test('детерминизм: два прогона среза дают побайтно одинаковые деревья', () => {
+  for (const step of slice) gen(...step, '--write');
+  const first = snapshot(root);
+  rmSync(root, { recursive: true, force: true });
+  mkdirSync(root);
+  for (const step of slice) gen(...step, '--write');
+  expect(snapshot(root)).toEqual(first);
+});
+
+test('повтор команды не меняет файлы: код 1 и дерево прежнее', () => {
+  for (const step of slice) gen(...step, '--write');
+  const before = snapshot(root);
+  for (const step of slice) expect(gen(...step, '--write')).toBe(1);
+  expect(snapshot(root)).toEqual(before);
 });

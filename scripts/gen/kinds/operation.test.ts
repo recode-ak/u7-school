@@ -121,3 +121,22 @@ test('job: контракт defineJob со scans, константа экспо�
     line: '    inactivitySweep: InactivitySweepJob,',
   });
 });
+
+test('uc: заявляет created, чтобы реакция на него не висела без издателя (MAN-06)', () => {
+  const src = content(
+    plan('uc', 'complete-student'),
+    '/d/stream/student/uc/complete-student.uc.ts',
+  );
+  expect(src).toContain("import { StudentEvents } from '../student.events';");
+  expect(src).toContain('emits: [StudentEvents.created]');
+});
+
+test('тест контракта: длинное имя разбито по строкам, как требует biome', () => {
+  const src = content(
+    plan('uc', 'complete-student'),
+    '/d/stream/student/uc/complete-student.uc.test.ts',
+  );
+  expect(src).toContain(
+    "toMatchObject({\n      name: 'completeStudent',\n    });",
+  );
+});
