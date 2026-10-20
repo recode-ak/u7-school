@@ -38,4 +38,4 @@
 - [x] Task: Скрипт `gen` в `package.json`; тесты `scripts/gen` входят в `check` 8132a7a
 - [x] Task: Документация: раздел «Генераторы» в `naming.md`, правка `agents.md` §2; в ролях `.agents-core/roles` (`domain-author`, `api-author`, `migrator`) — «создавай через `gen`»; `bun run agents:sync` 5ef872b
 - [x] Task: Обновить `migration.md` (трек 2 ✅) и spec/plan `domain-package` (каркас пакета создан здесь) 5ef872b
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md) (автотесты E2E, пробная генерация; ручной приёмки нет — по просьбе «заверши трек»)
