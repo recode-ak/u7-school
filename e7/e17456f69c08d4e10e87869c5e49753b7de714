@@ -1,0 +1,1 @@
+Tasks: gen aggregate в прикладном слое (kinds/app-aggregate.ts: порт repo, infra json-repo, тест) и тест правила пары (pair-rule.test.ts). Проба: biome/tsc/test зелёные.
