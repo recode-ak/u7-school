@@ -16,7 +16,7 @@ beforeAll(() => {
     applyPlan(plan(parseArgs([...argv, '--domain-root', root])), {
       write: true,
     });
-  run(['module', 'stream'], planDomainModule);
+  run(['module', 'stream', '--facade'], planDomainModule);
   run(['aggregate', 'stream.student'], planDomainAggregate);
   run(['dcs', 'stream', 'stream-progress'], planDomainService);
   run(['dqs', 'stream', 'stream-navigation'], planDomainService);

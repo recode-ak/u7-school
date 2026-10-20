@@ -3,12 +3,18 @@ import { parseArgs } from '../cli.ts';
 import { planDomainModule } from './module.ts';
 
 const plan = planDomainModule(
-  parseArgs(['module', 'stream', '--domain-root', '/d']),
+  parseArgs(['module', 'stream', '--facade', '--domain-root', '/d']),
 );
 const file = (path: string) =>
   plan.files.find((f) => f.path === `/d/stream/${path}`)?.content ?? '';
 
-test('домен модуля: паспорт, фасад, публичный API и тест — по naming.md §2', () => {
+const bare = planDomainModule(
+  parseArgs(['module', 'stream', '--domain-root', '/d']),
+);
+const bareFile = (path: string) =>
+  bare.files.find((f) => f.path === `/d/stream/${path}`)?.content ?? '';
+
+test('--facade: паспорт, фасад, публичный API и тест — по naming.md §2', () => {
   expect(plan.files.map((f) => f.path)).toEqual([
     '/d/stream/stream.module.ts',
     '/d/stream/stream.facade.ts',
@@ -16,6 +22,21 @@ test('домен модуля: паспорт, фасад, публичный AP
     '/d/stream/stream.module.test.ts',
   ]);
   expect(plan.edits).toEqual([]);
+});
+
+test('без --facade: фасада нет нигде (D-38 — только по потребителю)', () => {
+  expect(bare.files.map((f) => f.path)).toEqual([
+    '/d/stream/stream.module.ts',
+    '/d/stream/index.ts',
+    '/d/stream/stream.module.test.ts',
+  ]);
+  for (const path of [
+    'stream.module.ts',
+    'index.ts',
+    'stream.module.test.ts',
+  ]) {
+    expect(bareFile(path)).not.toContain('acade');
+  }
 });
 
 test('паспорт: defineModule с маркерами для Def', () => {

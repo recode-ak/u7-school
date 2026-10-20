@@ -11,7 +11,18 @@ beforeEach(() => {
 });
 afterEach(() => rmSync(root, { recursive: true, force: true }));
 
-const plan = () =>
+const plan = (...flags: string[]) =>
+  planAppModule(
+    parseArgs([
+      'module',
+      'stream',
+      '--facade',
+      ...flags,
+      '--packages-root',
+      root,
+    ]),
+  );
+const bare = () =>
   planAppModule(parseArgs(['module', 'stream', '--packages-root', root]));
 const content = (p: ReturnType<typeof plan>, rel: string) =>
   p.files.find((f) => f.path === join(root, 'stream', rel))?.content ?? '';
@@ -75,4 +86,16 @@ test('index нового пакета публикует фабрику моду
   expect(content(plan(), 'src/index.ts')).toContain(
     "export { createStreamModule, type StreamDeps } from './stream.module';",
   );
+});
+
+test('без --facade: файла фасада и ключа facade в карте нет (D-38)', () => {
+  const p = bare();
+  expect(p.files.map((f) => f.path.slice(root.length + 1))).toEqual([
+    'stream/package.json',
+    'stream/tsconfig.json',
+    'stream/src/index.ts',
+    'stream/src/stream.module.ts',
+    'stream/src/stream.module.test.ts',
+  ]);
+  expect(content(p, 'src/stream.module.ts')).not.toContain('acade');
 });
