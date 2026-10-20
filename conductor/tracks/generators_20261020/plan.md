@@ -17,8 +17,8 @@
 ## Фаза 2: Генераторы домена
 
 - [x] Task: `gen module <m>` (домен: `<m>.module.ts`, `<m>.facade.ts`, `index.ts` с маркерами) + заготовка теста b3ee4f4b
-- [ ] Task: `gen aggregate <m>.<agg>` (`state`, `ar`, `policy`, `events`, `errors`) + заготовки тестов
-- [ ] Task: `gen dcs` и `gen dqs` (`<topic>.dcs.ts` / `.dqs.ts`) + заготовки тестов
+- [x] Task: `gen aggregate <m>.<agg>` (`state`, `ar`, `policy`, `events`, `errors`) + заготовки тестов 0446d689
+- [~] Task: `gen dcs` и `gen dqs` (`<topic>.dcs.ts` / `.dqs.ts`) + заготовки тестов
 - [ ] Task: Тест на снапшотах: пути и имена совпадают с `naming.md` §2, результат проходит biome без правок
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
