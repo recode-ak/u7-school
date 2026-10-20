@@ -63,7 +63,7 @@
 - [x] Task: Порт `WishRepo` на Ar/`Result`, `WishJsonRepo` с `F.timestamp` (чтение строки и числа), UoW; DQS для чтения списка, если решено в Фазе 0 `9639fe8`
 - [x] Task: Тест репозитория на `DB_DIR=./data/fixtures`: ISO-строка читается, число пишется `87149fa`
 - [x] Task: Генератор по D-38: `gen module` создаёт фасад (домен и пакет) только с `--facade`; тесты `scripts/gen` (red → green); у `wish` фасада нет — потребителей нет `8fbced5`
-- [ ] Task: Гайды «repo / dcs / dqs» и «facade» (критерий «только по потребителю», эталон — пример `dmg-core`)
+- [x] Task: Гайды «repo / dcs / dqs» и «facade» (критерий «только по потребителю», эталон — пример `dmg-core`) `f3f69a8`
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 6–7' (автономно, workflow.md)
 
