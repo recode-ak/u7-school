@@ -3,5 +3,9 @@
 
 export { legacyClock } from './legacy-clock';
 export { toLegacyError } from './legacy-error';
-export { legacyEventBus } from './legacy-event-bus';
+export {
+  type LegacyEventBusOptions,
+  type LegacyInbound,
+  legacyEventBus,
+} from './legacy-event-bus';
 export { legacyJob, legacyJobsOf } from './legacy-job';

@@ -61,8 +61,10 @@
 ## Открытые вопросы (решаются с Нурболатом до соответствующей фазы)
 
 1. **Ф3/Ф12. Имена событий.** FQN по naming.md — `wish.wish.invited`, а stories подписаны на `'wish.invited'`/`'wish.confirmed'`. Мост `legacyEventBus` передаёт legacy-подписчикам FQN как `eventName` — без решения stories перестанут получать события.
-2. **Ф10–11. Входящие события legacy.** ER `wish` слушают `student.enrolled`, `stream.created` (stream) и `questionnaire:complete`/`questionnaire:abandon` — это legacy-события без Def; `legacyEventBus` **не доставляет** legacy-события подписчикам DMG. `defineEventReaction.on` требует Def события. Нужен мост «legacy → DMG» или Def событий зависимостей (их модули не мигрированы).
-3. **Ф12. `dependsOn`.** У `user`, `course`, `questionnaire`, `stream` нет `ModuleDef`; `defineModule.dependsOn` ждёт Def. Варианты: stub-Def зависимостей (долг) или временное ослабление.
+2. ✅ **Решено (D-37):** события зависимостей описываются в их `contract.ts`, модуль-зависимость — внешний `defineModule({ external: true })`, legacy-события доставляет карта `inbound` в `legacyEventBus` (payload проверяет схема Def). Задача — Фаза 0 плана.
+   **Было: Ф10–11. Входящие события legacy.** ER `wish` слушают `student.enrolled`, `stream.created` (stream) и `questionnaire:complete`/`questionnaire:abandon` — это legacy-события без Def; `legacyEventBus` **не доставляет** legacy-события подписчикам DMG. `defineEventReaction.on` требует Def события. Нужен мост «legacy → DMG» или Def событий зависимостей (их модули не мигрированы).
+3. ✅ **Решено (D-37):** `dependsOn` ссылается на внешние `ModuleDef` зависимостей (тот же контракт, что в п. 2); при миграции зависимости `external` снимается.
+   **Было: Ф12. `dependsOn`.** У `user`, `course`, `questionnaire`, `stream` нет `ModuleDef`; `defineModule.dependsOn` ждёт Def. Варианты: stub-Def зависимостей (долг) или временное ослабление.
 4. **Ф7. Содержимое фасада.** Сейчас у `wish` нет фасада и внешних потребителей фасада (UI ходит через `appApi`). Что выставить в `WishFacadeDef` без спекулятивного API.
 5. **Фасады зависимостей** (`CourseFacade` и др.) — legacy: `boolean`/`undefined`, без `Result`. UC `wish` вызывает их как есть; перевод — в их треках.
 

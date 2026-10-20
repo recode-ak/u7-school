@@ -85,3 +85,68 @@ describe('legacyEventBus', () => {
     expect(calls).toBe(0);
   });
 });
+
+describe('legacyEventBus — входящие legacy-события (D-37)', () => {
+  const TASK = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
+  const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
+  const legacyDone = (payload: Record<string, unknown>): LegacyEvent => ({
+    eventId: 'L-1',
+    eventName: 'task:done',
+    occurredAt: '2026-10-18T12:00:00.000Z',
+    aggregateName: 'Task',
+    aggregateId: TASK,
+    payload,
+  });
+  const inbound = [
+    {
+      legacy: 'task:done',
+      def: TaskEvents.completed,
+      payload: (e: LegacyEvent) => ({
+        taskId: e.aggregateId,
+        ownerId: e.payload.owner,
+      }),
+    },
+  ];
+
+  test('событие по карте приходит подписчику DMG в конверте Def', async () => {
+    const legacy = new InProcEventBus();
+    const got: EnvelopeOf<typeof TaskEvents.completed>[] = [];
+    legacyEventBus(legacy, { inbound }).subscribe(
+      TaskEvents.completed,
+      async (e) => {
+        got.push(e);
+      },
+    );
+    legacy.publish(legacyDone({ owner: OWNER }));
+    await tick();
+    expect(got).toEqual([
+      {
+        name: 'todo.task.completed',
+        payload: { taskId: TASK, ownerId: OWNER },
+        eventId: 'L-1',
+        occurredAt: AT,
+        aggregateId: TASK,
+        caller: systemCaller('legacy:task:done'),
+        cause: { kind: 'event', eventId: 'L-1' },
+        correlationId: 'L-1',
+      },
+    ]);
+  });
+
+  test('payload не прошёл схему Def — onInvalid, подписчик не вызван', async () => {
+    const legacy = new InProcEventBus();
+    const invalid: string[] = [];
+    let calls = 0;
+    legacyEventBus(legacy, {
+      inbound,
+      onInvalid: (m) => invalid.push(m),
+    }).subscribe(TaskEvents.completed, async () => {
+      calls++;
+    });
+    legacy.publish(legacyDone({}));
+    await tick();
+    expect(calls).toBe(0);
+    expect(invalid).toHaveLength(1);
+    expect(invalid[0]).toContain('task:done');
+  });
+});

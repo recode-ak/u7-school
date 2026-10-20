@@ -109,6 +109,15 @@ function checkLinks(index: DefIndex): Violation[] {
   for (const op of index.operationOwner.keys()) {
     for (const e of op.emits ?? []) published.add(e);
   }
+  // События внешнего модуля публикует внешняя сторона (D-37).
+  for (const m of index.modules.filter((m) => m.external)) {
+    if (operationsOf(m).length > 0) {
+      add(`модуль ${m.name} внешний — UC, ER и Job у него не объявляются`);
+    }
+    for (const a of m.aggregates) {
+      for (const e of Object.values(a.events)) published.add(e);
+    }
+  }
   const eventModule = (e: AnyEventDef): AnyModuleDef | undefined => {
     const a = index.eventOwner.get(e);
     return a && index.aggregateOwner.get(a);

@@ -340,4 +340,66 @@ describe('checkDefs', () => {
       ]);
     });
   });
+
+  describe('MAN-06 — внешний модуль (только контракт)', () => {
+    const OuterEvents = defineEvents('outer.item', {
+      appeared: {
+        label: 'Появилась',
+        description: 'Запись появилась во внешней системе.',
+        payload: v.object({ itemId: F.uuid('записи') }),
+      },
+    });
+    const OuterItemArDef = defineAggregate({
+      name: 'item',
+      label: 'Запись',
+      description: 'Запись внешнего модуля.',
+      state: v.object({ ...BaseEntityFields }),
+      events: OuterEvents,
+      errors: defineErrors('ITEM', {}),
+    });
+    const outer = (over: Partial<AnyModuleDef> = {}) =>
+      defineModule({
+        name: 'outer',
+        label: 'Внешний',
+        description: 'Модуль вне приложения: известен только контракт.',
+        external: true,
+        dependsOn: [],
+        aggregates: [OuterItemArDef],
+        useCases: [],
+        reactions: [],
+        jobs: [],
+        ...over,
+      });
+
+    it('события внешнего модуля публикует внешняя сторона — подписка допустима', () => {
+      const Outer = outer();
+      const WatchErDef = defineEventReaction({
+        name: 'watchOuter',
+        label: 'Следить',
+        description: 'Реагирует на внешнее событие.',
+        on: [OuterEvents.appeared],
+        touches: [],
+        calls: [],
+        emits: [],
+      });
+      const inner = defineModule({
+        name: 'inner',
+        label: 'Внутренний',
+        description: 'Слушает внешний модуль.',
+        dependsOn: [Outer],
+        aggregates: [],
+        useCases: [],
+        reactions: [WatchErDef],
+        jobs: [],
+      });
+      expect(report(inner).filter((l) => l.startsWith('MAN-06'))).toEqual([]);
+    });
+
+    it('у внешнего модуля нет реализаций UC/ER/Job', () => {
+      const m = outer({ useCases: [CreateItemUcDef] });
+      expect(report(m)).toContain(
+        'MAN-06: модуль outer внешний — UC, ER и Job у него не объявляются',
+      );
+    });
+  });
 });

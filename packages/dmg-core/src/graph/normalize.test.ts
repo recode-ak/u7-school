@@ -159,6 +159,7 @@ describe('normalize', () => {
       name: 'todo',
       label: 'Задачи',
       description: 'Список дел.',
+      external: false,
       dependsOn: ['users'],
       aggregates: ['task'],
       useCases: ['completeTask', 'listTasks'],

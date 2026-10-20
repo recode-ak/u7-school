@@ -122,6 +122,8 @@ export type NormalizedFacade = Texts & {
 
 export type NormalizedModule = Texts & {
   readonly dmg: 'module';
+  /** Реализован вне приложения — только контракт (D-37). */
+  readonly external: boolean;
   readonly dependsOn: readonly string[];
   readonly aggregates: readonly string[];
   readonly useCases: readonly string[];
@@ -252,6 +254,7 @@ export function normalize(def: AnyDef): NormalizedDef {
       return {
         dmg: 'module',
         ...texts(def),
+        external: def.external ?? false,
         dependsOn: def.dependsOn.map((m) => m.name),
         aggregates: def.aggregates.map((a) => a.name),
         useCases: def.useCases.map((u) => u.name),

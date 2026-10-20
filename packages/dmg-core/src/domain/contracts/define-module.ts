@@ -8,6 +8,12 @@ export type ModuleSpec = {
   readonly name: string;
   readonly label: string;
   readonly description: string;
+  /**
+   * Модуль реализован вне приложения (legacy-код или другой сервис): здесь
+   * только его контракт — агрегаты с событиями, фасад. События публикует
+   * внешняя сторона; UC, ER и Job не объявляются (D-37).
+   */
+  readonly external?: boolean;
   /** Модули, от которых этот зависит (ARC: DAG, проверяет `arch:check`). */
   readonly dependsOn: readonly AnyModuleDef[];
   readonly aggregates: readonly AnyAggregateDef[];
