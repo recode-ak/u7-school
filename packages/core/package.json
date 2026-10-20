@@ -16,7 +16,8 @@
     "./api": "./src/api/index.ts",
     "./ui": "./src/ui/index.ts",
     "./shared": "./src/shared/index.ts",
-    "./infra": "./src/infra/index.ts"
+    "./infra": "./src/infra/index.ts",
+    "./legacy-bridge": "./src/legacy-bridge/index.ts"
   },
   "imports": {
     "#domain-legacy/*": "./src/domain/*.ts",

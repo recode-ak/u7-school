@@ -1,8 +1,9 @@
-/** Контракт модуля course: фасад, ошибки. */
+/** Контракт модуля course: паспорт внешнего модуля (D-37), фасад, ошибки. */
 export type {
   CourseAccessDeniedUcError,
   CourseNotFoundUcError,
 } from './course/commands/errors';
+export { CourseModuleDef } from './course.module';
 export type { CourseFacade, CourseProgram, ModulePlace } from './facade';
 export type {
   LessonAccessDeniedUcError,
