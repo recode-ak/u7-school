@@ -7,7 +7,7 @@
 - Фазы 4–6 — **после** `golden-wish`: контракты модуля (`domain/<m>/contract`) требуют `domain-package`, outbox и идемпотентность реакций проверяются на реальном модуле, документация пакета (Фаза 5) включает гайды, написанные по эталону.
 - Мосты к legacy (Фаза 1) должны остаться рабочими для `golden-wish`: `wish` до миграции живёт на legacy-шине и legacy-`Job`.
 
-## Фаза 1: Развязка от legacy
+## Фаза 1: Развязка от legacy [checkpoint: 26891c7]
 
 Заметки для старта (на 2026-10-20, `packages/core/src/dmg`):
 - Импорты legacy внутри `dmg` (не тесты): `app/context.ts` (`#domain-legacy/types`, `#shared-legacy/logger`), `app/errors/legacy-error.ts`, `app/events/legacy-event-bus.ts`, `app/job/legacy-job.ts`, `app/module/module-from-def.ts` (`#api-legacy/job/job`), `app/system/run-logged.ts` и `app/use-case/use-case-from-def.ts` (`#shared-legacy/serialize-error`), `kernel/time/now.ts` (`#shared-legacy/now`), `testing/app-context.ts`.
