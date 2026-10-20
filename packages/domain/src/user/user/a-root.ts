@@ -1,4 +1,6 @@
+// DEBT(D-1)
 import { Aggregate } from '@u7-scl/core/domain';
+// DEBT(D-1)
 import { isoNow } from '@u7-scl/core/shared';
 import type { CreateUserCmd } from './commands/create-user-cmd';
 import type { RegisterGuestCmd } from './commands/register-guest-cmd';

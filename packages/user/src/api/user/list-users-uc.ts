@@ -1,15 +1,15 @@
-import * as v from 'valibot';
-import { UserUseCase } from '#api-legacy/user-uc';
-import { RoleSchema } from '#domain-legacy/index';
-import { UserAr } from '#domain-legacy/user/a-root';
+import type { User } from '@u7-scl/domain/user';
 import {
   type ListUsersCmd,
   type ListUsersCmdMeta,
   ListUsersCmdSchema,
   type ListUsersResult,
-} from '#domain-legacy/user/commands/list-users-cmd';
-import type { User } from '#domain-legacy/user/entity';
-import { UserSchema } from '#domain-legacy/user/entity';
+  RoleSchema,
+  UserAr,
+  UserSchema,
+} from '@u7-scl/domain/user';
+import * as v from 'valibot';
+import { UserUseCase } from '#api-legacy/user-uc';
 
 /**
  * Use-case получения списка пользователей с фильтрацией и сортировкой.

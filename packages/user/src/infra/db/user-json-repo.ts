@@ -1,9 +1,8 @@
 import type { BaseJsonDb } from '@u7-scl/core/infra';
 import { JsonFileRepo } from '@u7-scl/core/infra';
 import { getGlobalLogger } from '@u7-scl/core/shared';
-import type { User } from '#domain-legacy/user/entity';
-import { UserSchema } from '#domain-legacy/user/entity';
-import type { UserListFilter, UserRepo } from '#domain-legacy/user/repo';
+import type { User, UserListFilter, UserRepo } from '@u7-scl/domain/user';
+import { UserSchema } from '@u7-scl/domain/user';
 
 /**
  * JSON-файловая реализация репозитория пользователей.

@@ -37,6 +37,7 @@ import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app/domain';
 import { ApiApp } from '@u7-scl/core/api';
 import type { AppMeta } from '@u7-scl/core/domain';
 import { type Logger, LogLevel } from '@u7-scl/core/shared';
+import type { UserApiModuleMeta } from '@u7-scl/domain/user';
 import {
   InProcEventBus,
   InProcJobScheduler,
@@ -48,7 +49,6 @@ import { LessonJsonRepo } from '../packages/course/src/infra/db/lesson-json-repo
 import { ModuleJsonRepo } from '../packages/course/src/infra/db/module-json-repo.ts';
 import { StepJsonRepo } from '../packages/course/src/infra/db/step-json-repo.ts';
 import { UserApiModule } from '../packages/user/src/api/index.ts';
-import type { UserApiModuleMeta } from '../packages/user/src/domain/module.ts';
 import { UserJsonRepo } from '../packages/user/src/infra/db/user-json-repo.ts';
 import { UserInProcFacade } from '../packages/user/src/infra/user-in-proc-facade.ts';
 

@@ -20,11 +20,11 @@
 
 ## Фаза 2: user (+ `User` из `app`)
 
-- [ ] Task: Инвентаризация: `domain/` модуля `user` (21 + 2 теста), `User` в `app`, внешние потребители; зафиксировать в `debt.md`
-- [ ] Task: Перенести `domain/` в `packages/domain/src/user/`; подпути `.`, `./state`; barrel в `packages/user/src/domain`
-- [ ] Task: Перенести `User` из `app` в `domain/user`; в `app` реэкспорт (долг)
-- [ ] Task: Каркас `@u7-scl/domain/user/contract` (реэкспорт фасада, событий, ошибок, если они есть)
-- [ ] Task: Записать долги модуля, `bun run check` зелёный
+- [x] Task: Инвентаризация: `domain/` модуля `user` (21 + 2 теста), `User` в `app`, внешние потребители; зафиксировать в `debt.md`
+- [x] Task: Перенести `domain/` в `packages/domain/src/user/`; подпути `.`, `./state`; barrel в `packages/user/src/domain`
+- [x] Task: Перенести `User` из `app` в `domain/user`; в `app` реэкспорт (долг)
+- [x] Task: Каркас `@u7-scl/domain/user/contract` (реэкспорт фасада, событий, ошибок, если они есть)
+- [x] Task: Записать долги модуля, `bun run check` зелёный
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: course и questionnaire

@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { Role } from '#domain-legacy/user/roles';
+import { Role } from '@u7-scl/domain/user';
 import { UserInProcFacade } from './user-in-proc-facade';
 
 const userId = '550e8400-e29b-41d4-a716-446655440000';

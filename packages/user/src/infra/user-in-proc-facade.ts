@@ -1,9 +1,7 @@
 import type { NotifyKind } from '@u7-scl/core/domain';
 import { AppException } from '@u7-scl/core/domain';
+import type { Role, User, UserFacade } from '@u7-scl/domain/user';
 import type { UserApiModule } from '#api-legacy/module';
-import type { UserFacade } from '#domain-legacy/facade';
-import type { User } from '#domain-legacy/user/entity';
-import type { Role } from '#domain-legacy/user/roles';
 
 /**
  * Фасад модуля пользователей.

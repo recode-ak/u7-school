@@ -9,7 +9,7 @@ import {
   InProcJobScheduler,
 } from '@u7-scl/core/infra';
 import { ConsoleLogger } from '@u7-scl/core/shared';
-import { Role } from '#domain-legacy/user/roles';
+import { Role } from '@u7-scl/domain/user';
 import { UserJsonRepo } from '#infra-legacy/db/user-json-repo';
 import { UserApiModule } from '../module';
 

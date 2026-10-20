@@ -12,11 +12,14 @@
     "check": "bun run lint && bun run tslint && bun test"
   },
   "dependencies": {
+    "@u7-scl/app": "workspace:*",
+    "@u7-scl/core": "workspace:*",
     "dmg-core": "workspace:*"
   },
   "exports": {
     ".": "./src/index.ts",
     "./*/state": "./src/*/state.ts",
+    "./*/contract": "./src/*/contract.ts",
     "./*": "./src/*/index.ts"
   }
 }

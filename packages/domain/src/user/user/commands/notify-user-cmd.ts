@@ -1,7 +1,8 @@
+// DEBT(D-1)
 import { NotifyKindSchema } from '@u7-scl/core/domain';
 import * as v from 'valibot';
-import type { UserArMeta } from '#domain-legacy/user/entity';
-import { UserSchema } from '#domain-legacy/user/entity';
+import type { UserArMeta } from '../entity';
+import { UserSchema } from '../entity';
 
 /** Схема валидации команды уведомления пользователя */
 export const NotifyUserCmdSchema = v.object({

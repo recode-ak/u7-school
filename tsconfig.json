@@ -35,6 +35,7 @@
       "@u7-scl/stream": ["./packages/stream/src/index.ts"],
       "@u7-scl/domain": ["./packages/domain/src/index.ts"],
       "@u7-scl/domain/*/state": ["./packages/domain/src/*/state.ts"],
+      "@u7-scl/domain/*/contract": ["./packages/domain/src/*/contract.ts"],
       "@u7-scl/domain/*": ["./packages/domain/src/*/index.ts"],
       "@u7-scl/wish": ["./packages/wish/src/index.ts"],
       "@u7-scl/wish/domain": ["./packages/wish/src/domain/index.ts"],

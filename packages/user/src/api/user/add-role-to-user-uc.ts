@@ -1,13 +1,13 @@
-import { UserUseCase } from '#api-legacy/user-uc';
-import { UserAr } from '#domain-legacy/user/a-root';
+import type { User } from '@u7-scl/domain/user';
 import {
   type AddRoleToUserCmd,
   type AddRoleToUserCmdMeta,
   AddRoleToUserCmdSchema,
-} from '#domain-legacy/user/commands/add-role-to-user-cmd';
-import type { User } from '#domain-legacy/user/entity';
-import { UserSchema } from '#domain-legacy/user/entity';
-import { UserPolicy } from '#domain-legacy/user/policy';
+  UserAr,
+  UserPolicy,
+  UserSchema,
+} from '@u7-scl/domain/user';
+import { UserUseCase } from '#api-legacy/user-uc';
 
 /**
  * Use-case добавления роли пользователю.

@@ -4,7 +4,13 @@
  * `conductor/tracks/domain-package_20261020/debt.md` и маркером
  * `// DEBT(<id>)` в коде. Сверку делает `bun run arch:check`.
  */
-export const DOMAIN_DEBT_ALLOWLIST: readonly string[] = [];
+export const DOMAIN_DEBT_ALLOWLIST: readonly string[] = [
+  'D-1',
+  'D-2',
+  'D-3',
+  'D-4',
+  'D-5',
+];
 
 /** Граф `dependsOn` модулей домена; порядок переноса — снизу вверх. */
 export const DOMAIN_GRAPH: Readonly<Record<string, readonly string[]>> = {

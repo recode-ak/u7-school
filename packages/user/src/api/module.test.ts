@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app/domain';
-import type { User } from '#domain-legacy/user/entity';
-import { Role } from '#domain-legacy/user/roles';
+import type { User } from '@u7-scl/domain/user';
+import { Role } from '@u7-scl/domain/user';
 import { UserJsonRepo } from '#infra-legacy/db/user-json-repo';
 import { UserApiModule } from './module';
 

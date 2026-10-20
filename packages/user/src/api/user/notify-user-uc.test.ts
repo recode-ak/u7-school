@@ -1,7 +1,9 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { EventBus } from '@u7-scl/core/domain';
-import type { UserApiModuleResolver } from '#domain-legacy/module';
-import type { UserNotifiedEvent } from '#domain-legacy/user/events';
+import type {
+  UserApiModuleResolver,
+  UserNotifiedEvent,
+} from '@u7-scl/domain/user';
 import { NotifyUserUc } from './notify-user-uc';
 
 const userId = '550e8400-e29b-41d4-a716-446655440000';

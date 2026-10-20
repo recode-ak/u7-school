@@ -1,12 +1,12 @@
-import { UserAr } from '#domain-legacy/user/a-root';
+import type { User } from '@u7-scl/domain/user';
 import {
   type RegisterGuestCmd,
   type RegisterGuestCmdMeta,
   RegisterGuestCmdSchema,
-} from '#domain-legacy/user/commands/register-guest-cmd';
-import type { User } from '#domain-legacy/user/entity';
-import { UserSchema } from '#domain-legacy/user/entity';
-import { Role } from '#domain-legacy/user/roles';
+  Role,
+  UserAr,
+  UserSchema,
+} from '@u7-scl/domain/user';
 import { UserUseCase } from '../user-uc';
 
 /**

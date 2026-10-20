@@ -1,8 +1,10 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { UserApiModuleResolver } from '#domain-legacy/module';
-import type { User } from '#domain-legacy/user/entity';
-import type { UserRepo } from '#domain-legacy/user/repo';
-import { Role } from '#domain-legacy/user/roles';
+import type {
+  User,
+  UserApiModuleResolver,
+  UserRepo,
+} from '@u7-scl/domain/user';
+import { Role } from '@u7-scl/domain/user';
 import { GetUsersByIdsUc } from './get-users-by-ids-uc';
 
 function makeUser(overrides: Partial<User> = {}): User {

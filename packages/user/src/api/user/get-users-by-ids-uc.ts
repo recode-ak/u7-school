@@ -1,13 +1,13 @@
-import * as v from 'valibot';
-import { UserUseCase } from '#api-legacy/user-uc';
-import { UserAr } from '#domain-legacy/user/a-root';
+import type { User } from '@u7-scl/domain/user';
 import {
   type GetUsersByIdsCmd,
   type GetUsersByIdsCmdMeta,
   GetUsersByIdsCmdSchema,
-} from '#domain-legacy/user/commands/get-users-by-ids-cmd';
-import type { User } from '#domain-legacy/user/entity';
-import { UserSchema } from '#domain-legacy/user/entity';
+  UserAr,
+  UserSchema,
+} from '@u7-scl/domain/user';
+import * as v from 'valibot';
+import { UserUseCase } from '#api-legacy/user-uc';
 
 /**
  * Use-case пакетного получения пользователей по списку UUID.
