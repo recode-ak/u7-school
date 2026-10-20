@@ -5,7 +5,7 @@ import type {
   CreateModuleWishCmdMeta,
   ModuleNotFoundUcError,
   WishAlreadyExistsUcError,
-  WishTarget,
+  WishTargetVo,
 } from '@u7-scl/domain/wish';
 import {
   CreateModuleWishCmdSchema,
@@ -55,7 +55,7 @@ export class CreateModuleWishUc extends WishUseCase<CreateModuleWishCmdMeta> {
     //    Проверяем ВСЕ желания на цель, а не «последнее»: при равных createdAt
     //    порядок сортировки недетерминирован и активное желание может
     //    оказаться не первым.
-    const target: WishTarget = { kind: 'module', moduleId: command.moduleId };
+    const target: WishTargetVo = { kind: 'module', moduleId: command.moduleId };
     const active = (
       await this.repo.findAllByUserAndTarget(actor.uuid, target)
     ).find((w) => WishPolicy.isActive(w.status));

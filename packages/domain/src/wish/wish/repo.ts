@@ -1,4 +1,4 @@
-import type { WishState, WishStatus, WishTarget } from './wish.state';
+import type { WishState, WishStatus, WishTargetVo } from './wish.state';
 
 /** Интерфейс репозитория желаний. */
 export interface WishRepo {
@@ -11,13 +11,13 @@ export interface WishRepo {
   /** Получить последнее желание пользователя по цели. */
   getByUserAndTarget(
     userId: string,
-    target: WishTarget,
+    target: WishTargetVo,
   ): Promise<WishState | undefined>;
 
   /** Получить все желания пользователя по цели (в любом статусе). */
   findAllByUserAndTarget(
     userId: string,
-    target: WishTarget,
+    target: WishTargetVo,
   ): Promise<WishState[]>;
 
   /** Получить все желания пользователя. */

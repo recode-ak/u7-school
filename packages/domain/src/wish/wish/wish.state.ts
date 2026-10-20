@@ -7,7 +7,7 @@ import * as v from 'valibot';
  * - `course` — желание пройти курс (вся программа, начиная со стартового модуля);
  * - `module` — желание пройти конкретный модуль (следующий/тот же).
  */
-export const WishTarget = v.pipe(
+export const WishTargetVo = v.pipe(
   v.variant('kind', [
     v.object({
       kind: v.pipe(v.literal('course'), v.description('Цель — курс')),
@@ -21,7 +21,7 @@ export const WishTarget = v.pipe(
   v.description('Цель желания'),
 );
 
-export type WishTarget = v.InferOutput<typeof WishTarget>;
+export type WishTargetVo = v.InferOutput<typeof WishTargetVo>;
 
 /**
  * Статус желания.
@@ -44,7 +44,7 @@ export const WishState = v.object({
   // biome-ignore lint/plugin: базовые поля без BaseEntityFields до Ф2 — DEBT-24
   uuid: v.pipe(v.string(), v.uuid('Некорректный формат UUID')),
   userId: F.uuid('пользователя'),
-  target: WishTarget,
+  target: WishTargetVo,
   status: WishStatus,
   // biome-ignore lint/plugin: базовые поля без BaseEntityFields до Ф2 — DEBT-24
   createdAt: v.pipe(

@@ -4,7 +4,7 @@ import type {
   CancelWishCmd,
   CancelWishCmdMeta,
   WishNotFoundUcError,
-  WishTarget,
+  WishTargetVo,
 } from '@u7-scl/domain/wish';
 import { CancelWishCmdSchema, WishAr } from '@u7-scl/domain/wish';
 import * as v from 'valibot';
@@ -14,7 +14,7 @@ import { WishUseCase } from '../wish-uc';
  * Use-case отмены желания.
  *
  * Цель отмены явна в команде (дискриминированный вариант по kind:
- * course | module) — резолвится в WishTarget без изменения имени UC.
+ * course | module) — резолвится в WishTargetVo без изменения имени UC.
  */
 export class CancelWishUc extends WishUseCase<CancelWishCmdMeta> {
   protected readonly ucName = 'cancel-wish' as const;
@@ -29,7 +29,7 @@ export class CancelWishUc extends WishUseCase<CancelWishCmdMeta> {
   protected readonly outputSchema = v.undefined();
 
   async execute(command: CancelWishCmd, actor: User): Promise<undefined> {
-    const target: WishTarget =
+    const target: WishTargetVo =
       command.kind === 'course'
         ? { kind: 'course', courseId: command.courseId }
         : { kind: 'module', moduleId: command.moduleId };

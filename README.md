@@ -30,7 +30,7 @@ u7-school — это современная LMS (Learning Management System), п
 - **[core](./packages/core/)**: Ядро платформы. Содержит базовые абстракции DDD (`Aggregate`, `UseCase`, `ApiModule`), UI-компоненты для ботов (`BotController`, `BotUserStory`, `BotRouter`) и общие утилиты.
 - **[app](./packages/app/)**: Связующий слой приложения. Определяет `U7BotController`, `U7BotUserStory`, общие типы (`User`, `Role`, `U7BotAppMeta`) для Telegram-бота.
 - **[user](./packages/user/)**: Модуль управления пользователями (роли, авторизация, профили, `UserFacade` для других модулей).
-- **[wish](./packages/wish/)**: Модуль желаний. Универсальная цель `WishTarget` (сейчас — курс), полный жизненный цикл: мгновенная фиксация (`expressed`) или через анкету (`pending → confirmed | abandoned`), отмена (`cancelled`), реализация при зачислении (`fulfilled`, трек C2).
+- **[wish](./packages/wish/)**: Модуль желаний. Универсальная цель `WishTargetVo` (сейчас — курс), полный жизненный цикл: мгновенная фиксация (`expressed`) или через анкету (`pending → confirmed | abandoned`), отмена (`cancelled`), реализация при зачислении (`fulfilled`, трек C2).
 - **[course](./packages/course/)**: Конструктор учебного контента. Управление модулями, проектами, уроками и шагами. Предоставляет `CourseFacade` для получения снимков контента.
 - **[stream](./packages/stream/)**: Жизненный цикл потоков обучения. Запись на потоки, выдача шагов, отслеживание прогресса студентов, мониторинг группы ментором.
 - **[w3school](./packages/w3school/)**: Контент курсов и уроков из ресурса W3Schools. Позволяет планировать уроки ведущие на этот ресурс, все данные находятся в папке `output`.

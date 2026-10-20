@@ -1,9 +1,9 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type { WishRepo, WishStatus, WishTarget } from '@u7-scl/domain/wish';
+import type { WishRepo, WishStatus, WishTargetVo } from '@u7-scl/domain/wish';
 import { WishPolicy, WishState } from '@u7-scl/domain/wish';
 
 /** Проверяет равенство целей желания (сравнение по варианту и его ключам). */
-function isSameTarget(a: WishTarget, b: WishTarget): boolean {
+function isSameTarget(a: WishTargetVo, b: WishTargetVo): boolean {
   if (a.kind !== b.kind) {
     return false;
   }
@@ -45,7 +45,7 @@ export class WishJsonRepo implements WishRepo {
 
   async findAllByUserAndTarget(
     userId: string,
-    target: WishTarget,
+    target: WishTargetVo,
   ): Promise<WishState[]> {
     const all = await this.#repo.readAll();
     return all.filter(
@@ -55,7 +55,7 @@ export class WishJsonRepo implements WishRepo {
 
   async getByUserAndTarget(
     userId: string,
-    target: WishTarget,
+    target: WishTargetVo,
   ): Promise<WishState | undefined> {
     const matches = await this.findAllByUserAndTarget(userId, target);
     // При равных createdAt порядок записей недетерминирован, поэтому

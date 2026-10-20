@@ -1,6 +1,6 @@
 import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
-import type { WishApiModuleResolver, WishTarget } from '@u7-scl/domain/wish';
+import type { WishApiModuleResolver, WishTargetVo } from '@u7-scl/domain/wish';
 import { WishAr } from '@u7-scl/domain/wish';
 import type { QuestionnaireAbandonEvent } from '@u7-scl/questionnaire/domain';
 
@@ -24,7 +24,7 @@ export class AbandonWishEr extends EventReaction<
   protected readonly erLabel = 'Бросить желание при прерывании анкеты' as const;
 
   async handle(event: AbandonWishErMeta['event']): Promise<void> {
-    const target: WishTarget = {
+    const target: WishTargetVo = {
       kind: 'course',
       courseId: event.ownerInfo.courseId,
     };

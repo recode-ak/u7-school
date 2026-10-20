@@ -4,7 +4,7 @@ import { isoNow } from '@u7-scl/core/shared';
 import type {
   WishApiModuleResolver,
   WishConfirmedEvent,
-  WishTarget,
+  WishTargetVo,
 } from '@u7-scl/domain/wish';
 import { WishAr } from '@u7-scl/domain/wish';
 import type { QuestionnaireCompleteEvent } from '@u7-scl/questionnaire/domain';
@@ -34,7 +34,7 @@ export class ConfirmWishEr extends EventReaction<
     'Подтвердить желание по завершении анкеты' as const;
 
   async handle(event: ConfirmWishErMeta['event']): Promise<void> {
-    const target: WishTarget = {
+    const target: WishTargetVo = {
       kind: 'course',
       courseId: event.ownerInfo.courseId,
     };

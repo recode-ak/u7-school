@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import type { WishState, WishTarget } from '@u7-scl/domain/wish';
+import type { WishState, WishTargetVo } from '@u7-scl/domain/wish';
 import { WishJsonRepo } from './wish-json-repo';
 
 const tmpDir = mkdtempSync('/tmp/wish-json-repo-test-');
@@ -10,7 +10,7 @@ function filePath(filename = 'wishes.json'): string {
   return join(tmpDir, filename);
 }
 
-function makeTarget(courseId = crypto.randomUUID()): WishTarget {
+function makeTarget(courseId = crypto.randomUUID()): WishTargetVo {
   return { kind: 'course', courseId };
 }
 

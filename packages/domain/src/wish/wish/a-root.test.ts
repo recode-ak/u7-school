@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test';
 import { WishAr } from './a-root';
-import type { WishState, WishTarget } from './wish.state';
+import type { WishState, WishTargetVo } from './wish.state';
 
 describe('WishAr', () => {
   const userId = crypto.randomUUID();
-  const courseTarget: WishTarget = {
+  const courseTarget: WishTargetVo = {
     kind: 'course',
     courseId: crypto.randomUUID(),
   };

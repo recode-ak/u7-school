@@ -9,7 +9,7 @@
 ## 1. Когда применять
 
 - Описываешь, из чего состоит агрегат: поля, статус, value object (VO).
-- VO, который нужен только этому агрегату (у `wish` это `WishTarget`), лежит в том же файле. VO, общий для модуля, лежит в `<m>/shared/`, общий для школы — в `domain/src/shared/` ([naming.md](../naming.md) §2).
+- VO, который нужен только этому агрегату (у `wish` это `WishTargetVo`), лежит в том же файле. VO, общий для модуля, лежит в `<m>/shared/`, общий для школы — в `domain/src/shared/` ([naming.md](../naming.md) §2).
 - Правила переходов и запреты сюда не пишутся: им место в Ar и Policy (гайды «aggregate» и «policy»).
 - Для вывода UC схему не копируй: DTO выводится из state через `v.pick`/`v.omit` (DOM-11).
 
@@ -19,7 +19,7 @@
 
 ## 3. Эталон
 
-- [wish.state.ts](../../../packages/domain/src/wish/wish/wish.state.ts): `WishState`, `WishTarget` и `WishStatus`, у каждого одно имя и для схемы, и для типа. `target` — это `v.variant` по `kind`, описания стоят на всём `variant` и на `kind` каждой ветки.
+- [wish.state.ts](../../../packages/domain/src/wish/wish/wish.state.ts): `WishState`, `WishTargetVo` и `WishStatus`, у каждого одно имя и для схемы, и для типа. `target` — это `v.variant` по `kind`, описания стоят на всём `variant` и на `kind` каждой ветки.
 - [wish.state.test.ts](../../../packages/domain/src/wish/wish/wish.state.test.ts): проверки «принимает / отклоняет» и проверка описаний у собственных полей.
 - [state.ts](../../../packages/domain/src/wish/state.ts): подпуть `@u7-scl/domain/<m>/state`, только для рендереров UI.
 

@@ -4,7 +4,7 @@ import type { ArMeta } from '@u7-scl/core/domain';
 import { Aggregate } from '@u7-scl/core/domain';
 // DEBT-21
 import { isoNow } from '@u7-scl/core/shared';
-import type { WishTarget } from './wish.state';
+import type { WishTargetVo } from './wish.state';
 import { WishState } from './wish.state';
 
 /** Метаданные агрегата Wish. */
@@ -33,7 +33,7 @@ export class WishAr extends Aggregate<WishArMeta> {
   }
 
   /** Фиксирует желание мгновенно — курс без анкеты (статус expressed). */
-  static express(userId: string, target: WishTarget): WishAr {
+  static express(userId: string, target: WishTargetVo): WishAr {
     const candidate: WishState = {
       uuid: crypto.randomUUID(),
       userId,
@@ -45,7 +45,7 @@ export class WishAr extends Aggregate<WishArMeta> {
   }
 
   /** Фиксирует желание в ожидании анкеты (статус pending). */
-  static pending(userId: string, target: WishTarget): WishAr {
+  static pending(userId: string, target: WishTargetVo): WishAr {
     const candidate: WishState = {
       uuid: crypto.randomUUID(),
       userId,

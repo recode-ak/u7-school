@@ -1,19 +1,19 @@
 import { describe, expect, test } from 'bun:test';
 import * as v from 'valibot';
-import { WishState, WishStatus, WishTarget } from './wish.state';
+import { WishState, WishStatus, WishTargetVo } from './wish.state';
 
-const validCourseTarget: WishTarget = {
+const validCourseTarget: WishTargetVo = {
   kind: 'course',
   courseId: crypto.randomUUID(),
 };
 
-describe('WishTarget', () => {
+describe('WishTargetVo', () => {
   test('принимает валидную цель module', () => {
-    const validModuleTarget: WishTarget = {
+    const validModuleTarget: WishTargetVo = {
       kind: 'module',
       moduleId: crypto.randomUUID(),
     };
-    const result = v.safeParse(WishTarget, validModuleTarget);
+    const result = v.safeParse(WishTargetVo, validModuleTarget);
 
     expect(result.success).toBe(true);
     if (result.success) {
@@ -22,7 +22,7 @@ describe('WishTarget', () => {
   });
 
   test('отклоняет module-цель с некорректным moduleId', () => {
-    const result = v.safeParse(WishTarget, {
+    const result = v.safeParse(WishTargetVo, {
       kind: 'module',
       moduleId: 'not-a-uuid',
     });
@@ -31,7 +31,7 @@ describe('WishTarget', () => {
   });
 
   test('принимает валидную цель course', () => {
-    const result = v.safeParse(WishTarget, validCourseTarget);
+    const result = v.safeParse(WishTargetVo, validCourseTarget);
 
     expect(result.success).toBe(true);
     if (result.success) {
@@ -40,7 +40,7 @@ describe('WishTarget', () => {
   });
 
   test('отклоняет неизвестный kind цели', () => {
-    const result = v.safeParse(WishTarget, {
+    const result = v.safeParse(WishTargetVo, {
       kind: 'mentorship',
       mentorId: 'x',
     });
@@ -49,13 +49,13 @@ describe('WishTarget', () => {
   });
 
   test('отклоняет цель course без courseId', () => {
-    const result = v.safeParse(WishTarget, { kind: 'course' });
+    const result = v.safeParse(WishTargetVo, { kind: 'course' });
 
     expect(result.success).toBe(false);
   });
 
   test('отклоняет цель с невалидным форматом courseId', () => {
-    const result = v.safeParse(WishTarget, {
+    const result = v.safeParse(WishTargetVo, {
       kind: 'course',
       courseId: 'not-a-uuid',
     });
@@ -64,7 +64,7 @@ describe('WishTarget', () => {
   });
 
   test('у полей обеих веток есть описание', () => {
-    for (const branch of WishTarget.options) {
+    for (const branch of WishTargetVo.options) {
       for (const field of Object.values(branch.entries)) {
         expect(v.getDescription(field)).toBeString();
       }

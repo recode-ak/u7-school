@@ -5,7 +5,7 @@ import type { WishNotFoundUcError } from '../errors';
 
 /**
  * Схема команды отмены желания.
- * Дискриминированный вариант по `kind` (зеркально WishTarget):
+ * Дискриминированный вариант по `kind` (зеркально WishTargetVo):
  * цель отмены явна в команде.
  */
 export const CancelWishCmdSchema = v.variant('kind', [

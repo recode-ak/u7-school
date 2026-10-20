@@ -6,7 +6,7 @@ import type {
   CreateCourseWishCmdMeta,
   CreateCourseWishOutput,
   WishAlreadyExistsUcError,
-  WishTarget,
+  WishTargetVo,
 } from '@u7-scl/domain/wish';
 import {
   CreateCourseWishCmdSchema,
@@ -62,7 +62,7 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
     //    Проверяем ВСЕ желания на цель, а не «последнее»: при равных createdAt
     //    порядок сортировки недетерминирован и активное желание может
     //    оказаться не первым.
-    const target: WishTarget = { kind: 'course', courseId: command.courseId };
+    const target: WishTargetVo = { kind: 'course', courseId: command.courseId };
     const active = (
       await this.repo.findAllByUserAndTarget(actor.uuid, target)
     ).find((w) => WishPolicy.isActive(w.status));
