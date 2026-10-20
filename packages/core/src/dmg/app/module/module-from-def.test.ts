@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { defineModule } from '#dmg/domain/contracts/define-module';
 import { ok } from '#dmg/kernel/result/result';
-import { testAppContext } from '#dmg/testing/app-context';
+import { memoryBus, testAppContext } from '#dmg/testing/app-context';
 import {
   ArchiveDoneTasksJobDef,
   ArchiveRemovedUserTasksErDef,
@@ -11,10 +11,8 @@ import {
   TodoFacadeDef,
 } from '#dmg/testing/example/todo/index';
 import { UserEvents } from '#dmg/testing/example/users/index';
-import { InProcEventBus } from '../../../infra/in-proc-event-bus';
 import { T0 } from '../app.fixture';
 import type { AppContext } from '../context';
-import { legacyEventBus } from '../events/legacy-event-bus';
 import { implementFacade } from '../facade/implement-facade';
 import { JobFromDef, type JobRun } from '../job/job-from-def';
 import { ReactionFromDef } from '../reaction/reaction-from-def';
@@ -98,20 +96,15 @@ describe('ModuleFromDef', () => {
     expect(mini.useCase(CreateTaskUcDef)).toBeUndefined();
   });
 
-  test('реакции подписываются на шину рядом с legacy-подписчиками', async () => {
-    const legacy = new InProcEventBus();
-    const legacySeen: string[] = [];
-    legacy.subscribe('users.user.removed', async (e) => {
-      legacySeen.push(e.eventName);
-    });
-    const bus = legacyEventBus(legacy);
+  test('реакции подписываются на шину приложения; отписка снимает их', async () => {
+    const bus = memoryBus();
     deps = { app: { ...testAppContext().app, bus }, reacted: [] };
-    new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
+    const off = new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
       MiniModuleDef,
       map,
       deps,
     ).subscribe();
-    bus.publish({
+    const removed = {
       ...UserEvents.removed.make({ userId: 'u' }),
       eventId: 'e',
       occurredAt: T0,
@@ -119,18 +112,18 @@ describe('ModuleFromDef', () => {
       caller: { kind: 'system', source: 'test' },
       cause: { kind: 'request', requestId: 'r-1' },
       correlationId: 'r-1',
-    });
+    } as const;
+    bus.publish(removed);
     await new Promise((r) => setTimeout(r, 0));
-    expect([deps.reacted, legacySeen]).toEqual([
-      ['archiveRemovedUserTasks'],
-      ['users.user.removed'],
-    ]);
+    expect(deps.reacted).toEqual(['archiveRemovedUserTasks']);
+    off();
+    bus.publish(removed);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(deps.reacted).toEqual(['archiveRemovedUserTasks']);
   });
 
-  test('задания отдаются в форме legacy для планировщика', () => {
-    expect(mini.legacyJobs().map((j) => j.jobName)).toEqual([
-      'archiveDoneTasks',
-    ]);
+  test('задания модуля доступны для планировщика', () => {
+    expect(mini.jobs.map((j) => j.def.name)).toEqual(['archiveDoneTasks']);
   });
 
   test('фасад собирается из карты', () => {

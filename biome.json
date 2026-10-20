@@ -166,6 +166,38 @@
       }
     },
     {
+      "includes": ["packages/core/src/dmg/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@u7-scl/**",
+                      "!@u7-scl/core",
+                      "!@u7-scl/core/**"
+                    ],
+                    "message": "ARC-01: core не импортирует domain, app и модули"
+                  },
+                  {
+                    "group": [
+                      "#*-legacy/**",
+                      "@u7-scl/core",
+                      "@u7-scl/core/**"
+                    ],
+                    "message": "ARC-10: платформа DMG не импортирует legacy и @u7-scl/* — мосты живут в legacy-bridge"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": [
         "packages/core/src/dmg/testing/example/app/**",
         "!**/*.test.ts",
@@ -189,6 +221,14 @@
                   {
                     "group": ["**/*.state", "**/state"],
                     "message": "DOM-01: entity видят только Ar своего агрегата и рендереры UI; используй доменный API"
+                  },
+                  {
+                    "group": [
+                      "#*-legacy/**",
+                      "@u7-scl/core",
+                      "@u7-scl/core/**"
+                    ],
+                    "message": "ARC-10: платформа DMG не импортирует legacy и @u7-scl/* — мосты живут в legacy-bridge"
                   }
                 ]
               }

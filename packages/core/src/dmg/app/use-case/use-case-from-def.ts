@@ -12,8 +12,8 @@ import type {
 import { type Caller, subjectOf } from '#dmg/kernel/caller/caller';
 import { CoreErrors } from '#dmg/kernel/errors/core-errors';
 import type { ErrorOf } from '#dmg/kernel/errors/define-errors';
+import { serializeError } from '#dmg/kernel/errors/serialize-error';
 import { ok, type Result } from '#dmg/kernel/result/result';
-import { serializeError } from '#shared-legacy/serialize-error';
 import type { ModuleDeps } from '../context';
 import type { Trace } from '../trace';
 import { contractUnitOfWork } from '../uow/contract-unit-of-work';

@@ -1,4 +1,3 @@
-import type { Job } from '#api-legacy/job/job';
 import type { AnyEventReactionDef } from '#dmg/domain/contracts/define-event-reaction';
 import type {
   AnyFacadeDef,
@@ -16,7 +15,6 @@ import type { Result } from '#dmg/kernel/result/result';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { JobFromDef } from '../job/job-from-def';
-import { legacyJob } from '../job/legacy-job';
 import type { ReactionFromDef } from '../reaction/reaction-from-def';
 import type { Trace } from '../trace';
 import type { UseCaseHandler } from '../use-case/use-case-from-def';
@@ -94,7 +92,7 @@ export class ModuleFromDef<M extends AnyModuleDef, R extends ModuleDeps, U> {
     AnyEventReactionDef,
     ModuleDeps
   >[];
-  private readonly jobs: JobFromDef<AnyJobDef, ModuleDeps>[];
+  readonly jobs: readonly JobFromDef<AnyJobDef, ModuleDeps>[];
   readonly facade: object | undefined;
   private readonly bus: EventBus;
 
@@ -129,11 +127,6 @@ export class ModuleFromDef<M extends AnyModuleDef, R extends ModuleDeps, U> {
     return () => {
       for (const off of offs) off();
     };
-  }
-
-  /** Задания модуля в форме legacy — для существующего планировщика. */
-  legacyJobs(): Job[] {
-    return this.jobs.map(legacyJob);
   }
 }
 

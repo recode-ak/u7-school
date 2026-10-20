@@ -2,29 +2,31 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { legacyEventBus } from '#dmg/app/events/legacy-event-bus';
-import { legacyJob } from '#dmg/app/job/legacy-job';
 import type { RequestMeta } from '#dmg/app/trace';
 import type { Caller } from '#dmg/kernel/caller/caller';
 import { type LogRecord, memoryLogger } from '#dmg/testing/app-context';
-import { expectErr, expectOk } from '#dmg/testing/expect-result';
-import { ApiApp } from '../../../../api/app/api-app';
-import type { AppMeta } from '../../../../domain/types';
-import { InProcEventBus } from '../../../../infra/in-proc-event-bus';
+import type { ExampleUser } from '#dmg/testing/example/app/app-user';
+import { TaskJsonRepo } from '#dmg/testing/example/app/todo/infra/task.json-repo';
+import { ArchiveDoneTasksJob } from '#dmg/testing/example/app/todo/task/job/archive-done-tasks.job';
+import { todoFacade } from '#dmg/testing/example/app/todo/todo.facade';
+import {
+  createTodoModule,
+  type TodoDeps,
+} from '#dmg/testing/example/app/todo/todo.module';
+import { UserMemoryRepo } from '#dmg/testing/example/app/users/infra/user.memory-repo';
+import { createUsersModule } from '#dmg/testing/example/app/users/users.module';
 import {
   CompleteTaskUcDef,
   CreateTaskUcDef,
   ListTasksUcDef,
   TaskEvents,
-} from '../todo';
-import { RemoveUserUcDef } from '../users';
-import type { ExampleUser } from './app-user';
-import { TaskJsonRepo } from './todo/infra/task.json-repo';
-import { ArchiveDoneTasksJob } from './todo/task/job/archive-done-tasks.job';
-import { todoFacade } from './todo/todo.facade';
-import { createTodoModule, type TodoDeps } from './todo/todo.module';
-import { UserMemoryRepo } from './users/infra/user.memory-repo';
-import { createUsersModule } from './users/users.module';
+} from '#dmg/testing/example/todo/index';
+import { RemoveUserUcDef } from '#dmg/testing/example/users/index';
+import { expectErr, expectOk } from '#dmg/testing/expect-result';
+import { ApiApp } from '../api/app/api-app';
+import type { AppMeta } from '../domain/types';
+import { InProcEventBus } from '../infra/in-proc-event-bus';
+import { legacyEventBus, legacyJob } from './index';
 
 const ANNA = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
 const BORIS = '6f4e2d3c-8b7a-4f9e-8a1b-b2c3d4e5f6a7';

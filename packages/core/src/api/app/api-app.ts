@@ -1,4 +1,3 @@
-import { toLegacyError } from '#dmg/app/errors/legacy-error';
 import type { AnyModuleFromDef } from '#dmg/app/module/module-from-def';
 import { type RequestMeta, requestTrace } from '#dmg/app/trace';
 import type {
@@ -20,6 +19,11 @@ import type {
   ExtractUcMetaFromMeta,
   GetUcNamesFromMeta,
 } from '#domain-legacy/types';
+import {
+  legacyJobsOf,
+  toLegacyError,
+  useLegacyClock,
+} from '../../legacy-bridge';
 import type { JobScheduler } from '../job/job-scheduler';
 import { App } from './app';
 
@@ -43,6 +47,7 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
 
   /** Подключает модули DMG; вызывать до init(). */
   addDmgModules(...modules: AnyModuleFromDef<TActor>[]): this {
+    useLegacyClock();
     this.dmgModules.push(...modules);
     return this;
   }
@@ -72,7 +77,7 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     }
     const jobs = [
       ...this.getModules().flatMap((module) => module.jobs),
-      ...this.dmgModules.flatMap((module) => module.legacyJobs()),
+      ...this.dmgModules.flatMap((module) => legacyJobsOf(module)),
     ];
     this.#scheduler.start(jobs);
   }

@@ -1,6 +1,4 @@
-import type { AppEnvMode } from '#domain-legacy/types';
-import { type Logger, LogLevel } from '#shared-legacy/logger';
-import type { AppContext } from '../app/context';
+import type { AppContext, AppMode, Logger } from '../app/context';
 import type { EventBus } from '../app/events/event-bus';
 import type { EventEnvelope } from '../app/events/event-envelope';
 
@@ -21,9 +19,6 @@ export function memoryLogger(records: LogRecord[]): Logger {
     info: write('info'),
     warn: write('warn'),
     error: write('error'),
-    setLogLevel: () => {},
-    getLogLevel: () => LogLevel.DEBUG,
-    setSourceLevel: () => {},
   };
 }
 
@@ -37,8 +32,37 @@ export function recordingBus(published: EventEnvelope[]): EventBus {
   };
 }
 
+/**
+ * Шина в памяти: доставляет конверт подписчикам по имени события,
+ * не дожидаясь обработчиков (как боевая шина).
+ */
+export function memoryBus(): EventBus {
+  const handlers = new Map<
+    string,
+    Set<(envelope: EventEnvelope) => Promise<void>>
+  >();
+  return {
+    publish: (envelope) => {
+      for (const handler of handlers.get(envelope.name) ?? []) {
+        void handler(envelope);
+      }
+    },
+    subscribe: (def, handler) => {
+      // Имя события уникально (D-10): конверт под этим именем имеет тип def.
+      const wrapped = (envelope: EventEnvelope) =>
+        handler(envelope as Parameters<typeof handler>[0]);
+      const set = handlers.get(def.name) ?? new Set();
+      set.add(wrapped);
+      handlers.set(def.name, set);
+      return () => {
+        set.delete(wrapped);
+      };
+    },
+  };
+}
+
 /** Контекст приложения для тестов прикладного слоя: всё видно в массивах. */
-export function testAppContext(mode: AppEnvMode = 'test') {
+export function testAppContext(mode: AppMode = 'test') {
   const published: EventEnvelope[] = [];
   const logs: LogRecord[] = [];
   const app: AppContext = {

@@ -13,15 +13,14 @@ import { UserArDef, UserEvents } from '#dmg/testing/example/users/index';
 import {
   expectErr,
   expectOk,
+  memoryBus,
   resetNow,
   setNow,
   testAppContext,
 } from '#dmg/testing/index';
-import { InProcEventBus } from '../../../infra/in-proc-event-bus';
 import { MemoryTasks, OWNER, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
 import type { EnvelopeOf } from '../events/event-envelope';
-import { legacyEventBus } from '../events/legacy-event-bus';
 import { implementFacade } from '../facade/implement-facade';
 import type { Cause, Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
@@ -190,7 +189,7 @@ describe('ReactionFromDef — production', () => {
 
 describe('ReactionFromDef.subscribe', () => {
   test('реагирует на событие из шины', async () => {
-    const bus = legacyEventBus(new InProcEventBus());
+    const bus = memoryBus();
     er.subscribe(bus);
     bus.publish(removed());
     await new Promise((r) => setTimeout(r, 0));

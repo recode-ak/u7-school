@@ -19,6 +19,7 @@
 | ARC-07 | `app` импортирует только core и domain | lint |
 | ARC-08 | apps вызывают операции только через `appApi`; репозитории и реализации модулей не импортируют | lint |
 | ARC-09 | Нет `process.env` / глобального `config` в domain и UI-компонентах | lint |
+| ARC-10 | Платформа DMG (`packages/core/src/dmg`) не импортирует `*-legacy` и `@u7-scl/*`; мосты — в `packages/core/src/legacy-bridge` | lint |
 
 ## DOM — домен
 

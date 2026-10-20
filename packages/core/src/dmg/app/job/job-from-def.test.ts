@@ -8,13 +8,11 @@ import {
   TaskEvents,
 } from '#dmg/testing/example/todo/index';
 import { expectErr, expectOk, resetNow, setNow } from '#dmg/testing/index';
-import { InProcJobExecutor } from '../../../infra/in-proc-job-executor';
 import { MemoryTasks, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
 import type { Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { JobFromDef, type JobReport, type JobRun } from './job-from-def';
-import { legacyJob } from './legacy-job';
 
 type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
 
@@ -108,28 +106,5 @@ describe('JobFromDef.handle', () => {
     };
     expectErr(await job.handle(), 'SERVER_INTERNAL');
     expect(ctx.logs).toHaveLength(1);
-  });
-});
-
-describe('legacyJob', () => {
-  test('несёт имя, метку и расписание из Def', () => {
-    const legacy = legacyJob(job);
-    expect([legacy.jobName, legacy.jobLabel, legacy.schedule]).toEqual([
-      'archiveDoneTasks',
-      'Архивировать выполненные задачи',
-      { kind: 'dailyAt', hour: 3, minute: 0 },
-    ]);
-  });
-
-  test('исполняется legacy-исполнителем планировщика', async () => {
-    await new InProcJobExecutor().execute(legacyJob(job));
-    expect(tasks.rows.get(TASK)?.status).toBe('archived');
-  });
-
-  test('сбой прогона виден планировщику как исключение', async () => {
-    tasks.findDone = async () => {
-      throw new Error('диск недоступен');
-    };
-    await expect(legacyJob(job).execute()).rejects.toThrow('SERVER_INTERNAL');
   });
 });

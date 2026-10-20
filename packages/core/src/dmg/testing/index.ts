@@ -2,6 +2,7 @@
 
 export {
   type LogRecord,
+  memoryBus,
   memoryLogger,
   recordingBus,
   testAppContext,

@@ -1,10 +1,14 @@
 // Платформа DMG (Domain Manifest Graph) — новый фреймворк @u7-scl/core.
 // Живёт рядом с legacy-слоями (strangler), см. conductor/architecture/migration.md.
 
-export type { AppContext, ModuleDeps } from './app/context';
+export type {
+  AppContext,
+  AppMode,
+  Logger,
+  ModuleDeps,
+} from './app/context';
 export type { EventBus } from './app/events/event-bus';
 export type { EnvelopeOf, EventEnvelope } from './app/events/event-envelope';
-export { legacyEventBus } from './app/events/legacy-event-bus';
 export { guardCalls } from './app/facade/guard-calls';
 export { facadeDefOf, implementFacade } from './app/facade/implement-facade';
 export {
@@ -12,7 +16,6 @@ export {
   type JobReport,
   type JobRun,
 } from './app/job/job-from-def';
-export { legacyJob } from './app/job/legacy-job';
 export {
   type AnyModuleFromDef,
   ModuleFromDef,
@@ -196,6 +199,7 @@ export {
   ERROR_KINDS,
   type ErrorKind,
 } from './kernel/errors/error';
+export { serializeError } from './kernel/errors/serialize-error';
 export { BaseEntityFields, F } from './kernel/fields/fields';
 export {
   type Err,
@@ -205,5 +209,5 @@ export {
   type Result,
 } from './kernel/result/result';
 export { toJsonSchema } from './kernel/schema/json-schema';
-export { now } from './kernel/time/now';
+export { now, useClockSource } from './kernel/time/now';
 export type { Timestamp } from './kernel/time/timestamp';

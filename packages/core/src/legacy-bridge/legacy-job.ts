@@ -1,7 +1,5 @@
 import { Job, type JobSchedule } from '#api-legacy/job/job';
-import type { AnyJobDef } from '#dmg/domain/contracts/define-job';
-import type { ModuleDeps } from '../context';
-import type { JobFromDef } from './job-from-def';
+import type { AnyJobDef, JobFromDef, ModuleDeps } from '#dmg/index';
 
 /**
  * Job DMG в форме legacy `Job` — для существующего планировщика
@@ -12,6 +10,13 @@ export function legacyJob<D extends AnyJobDef>(
   job: JobFromDef<D, ModuleDeps>,
 ): Job {
   return new LegacyJob(job);
+}
+
+/** Задания модуля DMG в форме legacy — для `JobScheduler`. */
+export function legacyJobsOf(module: {
+  readonly jobs: readonly JobFromDef<AnyJobDef, ModuleDeps>[];
+}): Job[] {
+  return module.jobs.map(legacyJob);
 }
 
 class LegacyJob<D extends AnyJobDef> extends Job {
