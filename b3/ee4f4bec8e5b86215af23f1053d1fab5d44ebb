@@ -1,0 +1,1 @@
+Task: gen module (домен). kinds/module.ts planDomainModule + тест (red→green). Маркеры gen:defs:{imports,aggregates,useCases,reactions,jobs} и gen:exports. Сгенерированное проходит biome/tsc/test.
