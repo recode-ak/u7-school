@@ -28,8 +28,21 @@
 - [ ] Task: Подпуть контрактов модуля `domain/<m>/contract` (проект; реализация — трек domain-package)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
-## Фаза 5: Вынос и публикация
+## Фаза 5: Документация и инструменты в пакете
+
+Цель: каждый, кто берёт `dmg-core` за основу, получает полную документацию и инструменты — для разработчика и для агента (D-30).
+
+- [ ] Task: Разметка «что в пакет, что остаётся в проекте» по `conductor/architecture/*.md`, скилам и ролям; результат — таблица в `spec.md`, проектные ссылки в перенесённых файлах заменены на нейтральные
+- [ ] Task: Сборка артефактов пакета: `docs/` (платформа DMG + справочник ID правил `rules.md`), `skills/dmg-architecture` (обобщённый `architecture`), `agents/` (`domain-author`, `api-author`, `reviewer` из `.agents-core/roles` для Claude Code и pi), `llms.txt` в корне; всё в `files`
+    - [ ] Источник правды один — в репозитории пакета; в проекте копий нет (кроме вставок `init`)
+- [ ] Task: CLI `dmg-core init` (копирует скилы и роли в `.claude/`, `.pi/`, добавляет в `AGENTS.md` вставку со ссылкой на `node_modules/dmg-core/llms.txt`, ставит версию-метку) и `dmg-core sync` / `sync --check` (обновляет; в `check` потребителя падает при устаревших копиях)
+    - [ ] Тесты на временном проекте; идемпотентность `init`
+- [ ] Task: Сообщения `arch:check` ссылаются на правило по ID с путём к `docs/rules.md` в пакете; README пакета: установка, быстрый старт на учебном модуле, ссылки на документацию
+- [ ] Task: Проверка в `extract-check.sh`: установка tarball в пустой проект → `init` → `llms.txt`, документация и скилы на месте и валидны, битых ссылок нет
+- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
+
+## Фаза 6: Вынос и публикация
 
 - [ ] Task: Проверить свободное имя `dmg-core` на npm; репозиторий, CI, публикация по тегу
-- [ ] Task: Перевести монорепо на версию из npm; удалить `packages/dmg-core`; обновить документацию (`layers.md`, `migration.md`, `tech-stack.md`)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
+- [ ] Task: Перевести монорепо на версию из npm; удалить `packages/dmg-core`; обновить документацию проекта (`layers.md`, `migration.md`, `tech-stack.md`); документация платформы живёт только в пакете, проект ссылается на неё
+- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
