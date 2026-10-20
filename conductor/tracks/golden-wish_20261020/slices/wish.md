@@ -74,6 +74,27 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 
 **Шаг 3 — гайд «aggregate»** (оркестратор / domain-author) и дополнение гайда «state» (`BaseEntityFields`, `F.timestamp`, фолбэк `updatedAt`).
 
+## Ф3–4: События и ошибки
+
+Образец — `packages/dmg-core/src/testing/example/todo/task/task.{events,errors,ar}.ts` (событие порождает переход Ar через `emit`). Решения: открытые вопросы 1 (FQN, stories переписываются) и 6 (TR-3, `conflict`). UC/ER остаются legacy-классами до Ф8/Ф10, UoW — Ф6: **`Result` до вызывающих UC не доходит**, legacy-исключения поднимаются из ошибок `WishErrors` (код, `kind`, текст `label`, `payload`).
+
+**Шаг 1 — domain-author** (`packages/domain/src/wish/**`):
+- `wish.events.ts` — `WishEvents.invited` (`wish.wish.invited`), `WishEvents.confirmed` (`wish.wish.confirmed`); payload — поля нынешних интерфейсов `WishInvitedEvent`/`WishConfirmedEvent` (`events.ts`) через `F.*`, `v.description()` на каждом, label/description у событий. Прошедшее время — уже так.
+- `confirmed` порождает переход `WishAr.confirm` (`emit`, как `TaskEvents.completed`). `invited` состояние не меняет: метод Ar без перехода, порождающий событие, или событие строит ER — выбор с обоснованием в отчёте (критерий — `domain-modeling.md`, где решение «пригласить»; telegramId — адресация, домен его не знает? решить, оставить ли поле в payload: stories на нём держат отправку — поведение UI сохраняется).
+- `wish.errors.ts` — к 4 ошибкам переходов добавить ошибки UC: `WISH_ALREADY_EXISTS` (`conflict`, payload `{ userId, courseId?, moduleId?, status }`), `WISH_NOT_FOUND` (`not_found`), отказы «курс/модуль недоступен для записи» — `COURSE_NOT_FOUND`/`MODULE_NOT_FOUND` заняты модулем `course` (коды уникальны в приложении, errors-result.md §2) → `WISH_COURSE_NOT_FOUND`/`WISH_MODULE_NOT_FOUND` (или точнее по смыслу — с обоснованием), `kind: 'not_found'`, payload из legacy-типов. `label` — прежние тексты исключений UC.
+- Legacy `events.ts`, `errors.ts` удалить; `contract.ts`, `index.ts` реэкспортируют группы, без алиасов. Маркеры DEBT-21 снимаются вместе с импортами `core`.
+- TDD: Ar — событие `confirmed` в результате `confirm` (и нет событий при отказе); схемы payload — допустимый/недопустимый payload; коды групп уникальны (контрактный тест, если платформа его даёт).
+- Потребители — шаг 2, гейт по `packages/wish`, `apps/u7-bot` красный ожидаемо.
+
+**Шаг 2 — migrator** (`packages/wish/src/**`, `apps/u7-bot` stories `wish-invite`, `wish-confirmed`, `course-catalog` и их тесты, e2e `user-notify`, `scripts`):
+- UC: `throwError(errNotFound<…>/errConflict<…>)` → исключение из ошибки `WishErrors` одной функцией-мостом (обобщить `api/legacy-reject.ts`; переиспользовать конвертер `Err → AppException`, которым пользуется `appApi.execute`, если он доступен прикладному слою, — не писать второй). Отказ переходов больше не `BAD_REQUEST`: код `WISH_NOT_*`, `kind` из Def (TR-3).
+- ER `confirm-wish`, `invite-wishers`: события строятся из Def (`WishEvents.*.make` или события Ar) и публикуются через `legacyEventBus(legacy)` (`@u7-scl/core/legacy-bridge`) — legacy-подписчики получают FQN как `eventName`. Шину DMG ER получают из резолвера/wiring без нового контракта; если без правки `app`/`core` нельзя — эскалация.
+- Stories `wish-invite`, `wish-confirmed`: подписка на FQN (`WishEvents.*.name`), тип события — из Def, интерфейсы legacy удалены. Тексты и адресация — без изменений.
+- Видимое пользователю не меняется: бот ветвится по `kind` (`conflict` у create, `not-found` у cancel), отказ перехода в `cancel-wish` и раньше уходил в `errorNotify`. Если `errorNotify` или иной вызывающий различает `kind`/код так, что текст сменится, — эскалация.
+- Базовая линия: `bun run check` зелёный, тестов wish не меньше 123.
+
+**Шаг 3 — гайды «events» и «errors»** (оркестратор): форма Def, кто порождает событие, FQN и подписка legacy, коды и `kind`, мост в legacy-исключение.
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
@@ -176,3 +197,12 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ревью Ф2 (reviewer, diff `c978c439..ce7e32e3`)
 `error` нет. Поведение сохранено: `from`/`rejects` = прежние `can*`, код `BAD_REQUEST` и тексты исключений прежние, legacy-записи читаются через `WishArDef.state` (ISO без зоны → UTC верно). Решения оркестратора: `warn` TST-05 — тест «legacy-запись не теряется после `save` другой» добавлен (зелёный сразу, фиксирует поведение); `warn` CODE-02 — `#create` убран, распаковка `create` одной формой `unwrapInfallible` в `legacy-reject.ts`; `info` — тип `Result` из `dmg-core` (`dmg-core` в `dependencies` `wish`), мост `legacy-reject.ts` вписан в TR-1; `minor` — ловушка «фабрики» в гайде переписана как критерий; `question` `kind: conflict` vs `BAD_REQUEST` — открытый вопрос 6 (Ф4).
+
+### Ф3–4 шаг 1 — domain-author
+`WishEvents.invited`/`.confirmed` (FQN, `F.*`, описания; payload `invited` — `v.variant('targetKind')`, ветка требует свой id); `WishErrors` + `WISH_ALREADY_EXISTS` (`conflict`), `WISH_NOT_FOUND`, `WISH_COURSE_NOT_FOUND`, `WISH_MODULE_NOT_FOUND` (`not_found`), `label` — прежние тексты, payload обязателен. `confirm` порождает `confirmed`; module-желание в `pending` → `Err WISH_NOT_CONFIRMABLE` (в домене нельзя `throw`, курса для payload нет; ветка недостижима — module-желания создаются `expressed`). Legacy `events.ts`/`errors.ts` удалены; `commands/legacy-uc-error.ts` — тип `LegacyWishUcError<K>` (Def → legacy-ошибка для мет команд, до Ф8, DEBT-21 переехал сюда). Вне брифа: `invited` строит ER (`WishEvents.invited.make`) — решение на фасадах, состояние не меняется, а метод Ar без перехода только через `change` (растит `version`); риск Ф10 — у ER нет своего канала публикации. `telegramId` оставлен (адресация stories). В пробе `checkDefs` отфильтрован MAN-06 (нет `emits` до Ф8/Ф10). Тесты домена wish 55 → 67, `packages/domain` 770 pass.
+
+### Ф3–4 шаг 2 — migrator
+Мост `legacy-reject.ts`: `throwWishError` и обобщённый `throwIfRejected` бросают `AppException(toLegacyError(err))` — конвертер тот же, что у `appApi.execute`; отказ перехода теперь `WISH_NOT_*`/`conflict` (TR-3), тексты прежние. UC бросают `WishErrors.*.make(payload)` через мост. ER: `confirm-wish` берёт `pullEvents()`, `invite-wishers` — `WishEvents.invited.make`; публикация — `legacy-publish.ts` (`publishWishEvents`, конверт по образцу UoW) в `legacyEventBus(resolve.eventBus)` (TR-4). Stories подписаны на `WishEvents.*.name`, тип из схемы Def, `courseId`/`moduleId` по ветке `variant`. Вне брифа: реэкспорт `@u7-scl/domain/wish/contract` в barrel DEBT-23 (у бота нет зависимости от домена). Видимое пользователю не изменилось: бот ветвится по `kind`, `errorNotify` для `conflict`/`bad-request` показывает тот же `message`, отказ перехода в `cancel-wish` недостижим (раньше срабатывает `WISH_NOT_FOUND`); в legacy-событиях сменились `eventName` (FQN) и `aggregateName` (`wish.wish`) — stories читают только payload. Тесты wish 148 (домен 67 + пакет 81), `check` 3325 pass.
+
+### Ревью Ф3–4 (reviewer, незакоммиченный diff)
+`error` нет, поведение сохранено (бот ветвится по `kind`, подписчики `wish.*` — только две stories, `make` payload не валидирует). Решения оркестратора: `warn` ERR-02 — `WishUseCase.throwWishError` с кодом из `errors` меты (`@ts-expect-error`-тест); `warn` DOM-09 — условие course-желания в одном `confirmableCourseId`; `warn` payload `ALREADY_EXISTS`/`NOT_FOUND` — `v.union` двух `strictObject`; `warn` гайд «aggregate» — ловушка `can*` переписана; `info` — ручной тип в `invite-wishers-er.test.ts` выведен из Def; оговорки в гайдах (TST-04 для теста конверта, DOM-14 только `occurredAt`, ERR-04 — `checkDefs` не видит legacy-коды, ERR-03 «через фасад»); `question` TR-3 — `validation`, а не `bad-request`. Принято как есть: текст `NOT_CONFIRMABLE` у недостижимой ветки (TR-5), дубль типа legacy-события в двух stories. `check` 3326 pass.

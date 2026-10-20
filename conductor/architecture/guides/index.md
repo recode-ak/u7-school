@@ -8,8 +8,8 @@
 |---|---|---|
 | state | [state.md](./state.md) | 1 |
 | aggregate | [aggregate.md](./aggregate.md) | 2 |
-| events | — | 3 |
-| errors | — | 4 |
+| events | [events.md](./events.md) | 3 |
+| errors | [errors.md](./errors.md) | 4 |
 | policy | — | 5 |
 | repo / dcs / dqs | — | 6 |
 | facade | — | 7 |

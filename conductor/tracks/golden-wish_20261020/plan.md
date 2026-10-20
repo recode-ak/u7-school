@@ -37,8 +37,8 @@
 
 > Объединены ради экономии: один прогон reviewer, одна контрольная точка; гайды — по видам.
 
-- [ ] Task: `WishEvents` (FQN по модулю и агрегату, прошедшее время), схемы payload; перевод потребителей событий
-- [ ] Task: `WishErrors` с кодами `WISH_*`, `kind`, схемой payload; замена `throw*` на ошибки `Result`
+- [~] Task: `WishEvents` (FQN по модулю и агрегату, прошедшее время), схемы payload; перевод потребителей событий
+- [~] Task: `WishErrors` с кодами `WISH_*`, `kind`, схемой payload; замена `throw*` на ошибки `Result`
 - [ ] Task: Гайды «events» и «errors»
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 3–4' (автономно, workflow.md)

@@ -89,7 +89,7 @@
 - **Критерий снятия:** маркер `DEBT-17` удалён, перенесённые файлы не импортируют `@u7-scl/app`
 
 ### DEBT-21: импорты `@u7-scl/core` в domain/wish
-- **Место:** `packages/domain/src/wish/**` (`module.ts`, legacy `wish/{errors,events}.ts`; подпути `core/domain`, `core/shared`)
+- **Место:** `packages/domain/src/wish/**` (`module.ts`, `wish/commands/legacy-uc-error.ts`; подпути `core/domain`, `core/shared`)
 - **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `ConflictError`, `NotFoundError`, `ApiModuleMeta`, `isoNow` живут в `core`; механический перенос не меняет базовые классы.
 - **Погашает:** `dmg-core-extract` (Ф4) и `golden-wish`
 - **Критерий снятия:** в `packages/domain/src/wish/**` нет маркеров `DEBT-21` и импортов `@u7-scl/core`
@@ -238,7 +238,8 @@
 - **Трек / фаза:** `golden-wish`, Ф2
 - **Контекст:** `defineAggregate` требует `events` и `errors` (у переходов — `rejects`), а события и ошибки `wish` — Ф3–4. Варианты: объединить Ф2 с Ф3–4 (большая фаза, эталон Ar смешан с событиями); оставить Ar на legacy до Ф3–4; завести минимальные группы сейчас.
 - **Решение:** в Ф2 `wish.errors.ts` содержит только ошибки отказов переходов, `wish.events.ts` — минимум, который требует `defineAggregate`; legacy `errors.ts`/`events.ts` живут параллельно. В UC/ER `err` переходов временно превращается в прежнее legacy-исключение — поведение не меняется.
-- **Пересмотреть:** после Ф3–4 параллельных групп нет, обёртки `err → throw` в UC/ER сняты, файл-мост `packages/wish/src/api/legacy-reject.ts` (`throwIfRejected`, вне naming.md §3) удалён. Код ошибок: `WishErrors` — `kind: 'conflict'` (TR-3), мост поднимает прежний `BAD_REQUEST`; при снятии моста код для вызывающих сменится.
+- **Состояние после Ф3–4:** параллельных групп нет (legacy `errors.ts`/`events.ts` удалены). Мост `packages/wish/src/api/legacy-reject.ts` (вне naming.md §3) остался и обобщён: `throwWishError` поднимает любую ошибку `WishErrors` через `toLegacyError` (код `WISH_*`, `kind` из Def) — UC/ER остаются legacy-классами до Ф8/Ф10. Тип `LegacyWishUcError` (`domain/wish/wish/commands/legacy-uc-error.ts`) — для `errors` legacy-мет команд.
+- **Пересмотреть:** в Ф8–11 (`UseCaseFromDef`/`ReactionFromDef`, `Result` через `appApi.execute`) `legacy-reject.ts` и `legacy-uc-error.ts` удалены.
 
 ### TR-2: legacy-репозиторий `wish` на `WishArDef.state` через приведение типа
 - **Трек / фаза:** `golden-wish`, Ф2
@@ -249,5 +250,17 @@
 ### TR-3: `kind: 'conflict'` у ошибок отказа переходов `wish`
 - **Трек / фаза:** `golden-wish`, Ф2 (решение для Ф3–4; выбор поручен оркестратору Нурболатом)
 - **Контекст:** legacy поднимал `BAD_REQUEST` (400) на недопустимый переход; в `WishErrors.WISH_NOT_*` — `conflict`. Варианты: сохранить `bad-request` ради совместимости или `conflict`.
-- **Решение:** `conflict` — вход валиден, операция несовместима с текущим статусом агрегата (семантика 409). Код для вызывающих сменится в Ф3–4 вместе со снятием моста TR-1; тексты ошибок прежние. Ориентир для остальных модулей: отказ перехода жизненного цикла — `conflict`, невалидный вход — `bad-request`.
+- **Решение:** `conflict` — вход валиден, операция несовместима с текущим статусом агрегата (семантика 409). Код для вызывающих сменится в Ф3–4 вместе со снятием моста TR-1; тексты ошибок прежние. Ориентир для остальных модулей: отказ перехода жизненного цикла — `conflict`, невалидный вход — `validation` (legacy `bad-request`).
 - **Пересмотреть:** на ревизии — согласованность `kind` отказов переходов во всех модулях; нет ли клиентов, различающих 400/409.
+
+### TR-4: публикация событий `wish` из legacy-ER через `legacyEventBus`
+- **Трек / фаза:** `golden-wish`, Ф3–4
+- **Контекст:** события стали Def с FQN, а UoW (Ф6) и `ReactionFromDef` (Ф10) ещё нет; legacy-ER получают из резолвера только legacy-шину. Варианты: новый контракт резолвера с шиной DMG (правка `app`/`core`) или обёртка на месте.
+- **Решение:** `packages/wish/src/api/legacy-publish.ts` (`publishWishEvents`, вне naming.md §3) строит конверт по образцу UoW (`systemCaller(<ER>)`, причина и `correlationId` — событие-причина) и публикует в `legacyEventBus(resolve.eventBus)`, который каждый ER создаёт сам. Legacy-подписчики (stories) получают FQN как `eventName`, `aggregateName` — `wish.wish`. Barrel `packages/wish/src/domain/index.ts` (DEBT-23) реэкспортирует `@u7-scl/domain/wish/contract`: у бота нет прямой зависимости от `@u7-scl/domain`.
+- **Пересмотреть:** в Ф10–12 конверт строит UoW, wiring раздаёт **один** экземпляр шины DMG — сейчас конверт живёт в экземпляре моста конкретного ER, и подписчики DMG других модулей событий `wish` не увидят (таких пока нет). `legacy-publish.ts` удалён.
+
+### TR-5: решения модели событий и ошибок `wish`
+- **Трек / фаза:** `golden-wish`, Ф3–4
+- **Контекст:** `invited` не меняет состояние; у module-желания нет курса для payload `confirmed`; коды `COURSE_NOT_FOUND`/`MODULE_NOT_FOUND` заняты модулем `course`.
+- **Решение:** `invited` строит ER через `WishEvents.invited.make` (решение — на фасадах курсов и пользователей; метод Ar без перехода растил бы `version`), `telegramId` в payload оставлен — по нему UI отправляет карточку. `confirm` у module-желания в `pending` — `Err WISH_NOT_CONFIRMABLE` (ветка недостижима: module-желания создаются `expressed`). Отказы цели — `WISH_COURSE_NOT_FOUND`/`WISH_MODULE_NOT_FOUND` (`not_found`). Видимое пользователю не изменилось: бот ветвится по `kind`.
+- **Пересмотреть:** на ревизии — не протекает ли адресация (`telegramId`) в домен; не нужна ли ER своя публикация событий (риск для Ф10: UoW публикует только события агрегатов).
