@@ -1,0 +1,2 @@
+// expect: DOM-14 error
+export const at = Date.now();

@@ -1,0 +1,7 @@
+// DOM-14: домен не читает часы — момент операции приходит аргументом (`at`), D-34.
+or {
+  `Date.now()`,
+  `new Date()`
+} as $m where {
+  register_diagnostic(span=$m, message="DOM-14: домен не читает часы — передайте момент аргументом операции (rules.md, D-34)", severity="error")
+}

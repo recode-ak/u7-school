@@ -78,7 +78,7 @@
 
 **D-31. Платформа DMG — пакет `dmg-core`.** Сначала жила подпутём `@u7-scl/core/dmg` рядом с legacy (strangler); в треке dmg-core-extract вынесена в workspace-пакет `packages/dmg-core` (импорт `dmg-core`, `dmg-core/testing`, алиас внутри — `#core/*`). Legacy-алиасы получили суффикс `-legacy`.
 
-**D-32. Архитектурные правила — в biome.** Импортные границы (ARC) — `noRestrictedImports`, остальные (DOM-01/11/12, ERR-01, API-02, CODE-02) — GritQL-плагины в `overrides`. Блокируют только новые пути; legacy исключён или `warn` (ARC-06, ARC-08). Правила проверяются тестом на фикстурах-нарушителях (`scripts/lint-rules.test.ts`), поэтому ослабить правило незаметно нельзя.
+**D-32. Архитектурные правила — в biome.** Импортные границы (ARC) — `noRestrictedImports`, остальные (DOM-01/11/12/14, ERR-01, API-02, CODE-02) — GritQL-плагины в `overrides`. Блокируют только новые пути; legacy исключён или `warn` (ARC-06, ARC-08). Правила проверяются тестом на фикстурах-нарушителях (`scripts/lint-rules.test.ts`), поэтому ослабить правило незаметно нельзя.
 
 **D-33. Подпути `dmg-core` по слоям.** Корень — ядро и манифесты домена (`Result`, ошибки, `F`, `define*`, `Aggregate`, Policy): чистый код, единственное, что видит домен. `dmg-core/app` — исполнение (UC/ER/Job по Def, модуль, UoW, шина, след), `dmg-core/graph` — нормализация и граф, `dmg-core/arch` — проверки, `dmg-core/testing` — хелперы. Граница проверяется lint (ARC-02 для домена, ARC-11 внутри пакета). UI-манифесты (D-26) — отдельным пакетом, не подпутём.
 

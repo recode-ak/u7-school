@@ -1,0 +1,2 @@
+// expect: none
+export const at = new Date(0).getTime();

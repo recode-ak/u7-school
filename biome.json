@@ -671,6 +671,17 @@
     },
     {
       "includes": [
+        "packages/domain/**",
+        "packages/dmg-core/src/kernel/**",
+        "packages/dmg-core/src/domain/**",
+        "packages/dmg-core/src/testing/example/todo/**",
+        "packages/dmg-core/src/testing/example/users/**",
+        "!**/*.test.ts"
+      ],
+      "plugins": ["./biome-plugins/dom-14-no-clock.grit"]
+    },
+    {
+      "includes": [
         "packages/dmg-core/src/**",
         "packages/domain/**",
         "!**/*.test.ts"
