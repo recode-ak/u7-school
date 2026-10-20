@@ -1,12 +1,12 @@
 import type { User } from '@u7-scl/app/domain';
-import { ModuleAr } from '#domain/module/a-root';
+import { ModuleAr } from '#domain-legacy/module/a-root';
 import type {
   GetModuleCmd,
   GetModuleCmdMeta,
-} from '#domain/module/commands/get-module-cmd';
-import { GetModuleCmdSchema } from '#domain/module/commands/get-module-cmd';
-import type { Module } from '#domain/module/entity';
-import { ModuleSchema } from '#domain/module/entity';
+} from '#domain-legacy/module/commands/get-module-cmd';
+import { GetModuleCmdSchema } from '#domain-legacy/module/commands/get-module-cmd';
+import type { Module } from '#domain-legacy/module/entity';
+import { ModuleSchema } from '#domain-legacy/module/entity';
 import { CourseUseCase } from '../course-uc';
 
 /**

@@ -1,10 +1,10 @@
 import { AppException } from '@u7-scl/core/domain';
-import type { ContentSnapshot } from '#domain/content-snapshot';
-import type { CourseProgram } from '#domain/course/commands/get-course-program-cmd';
-import type { Course } from '#domain/course/entity';
-import type { CourseFacade, ModulePlace } from '#domain/facade';
-import { CoursePolicy } from '#domain/index';
-import type { Module } from '#domain/module/entity';
+import type { ContentSnapshot } from '#domain-legacy/content-snapshot';
+import type { CourseProgram } from '#domain-legacy/course/commands/get-course-program-cmd';
+import type { Course } from '#domain-legacy/course/entity';
+import type { CourseFacade, ModulePlace } from '#domain-legacy/facade';
+import { CoursePolicy } from '#domain-legacy/index';
+import type { Module } from '#domain-legacy/module/entity';
 import type { CourseApiModule } from '../api/module';
 
 /**

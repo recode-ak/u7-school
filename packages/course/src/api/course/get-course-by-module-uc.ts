@@ -4,10 +4,10 @@ import {
   type GetCourseByModuleCmd,
   type GetCourseByModuleCmdMeta,
   GetCourseByModuleCmdSchema,
-} from '#domain/course/commands/get-course-by-module-cmd';
-import type { Course } from '#domain/course/entity';
-import { CourseSchema } from '#domain/course/entity';
-import { CourseDs } from '#domain/course-ds';
+} from '#domain-legacy/course/commands/get-course-by-module-cmd';
+import type { Course } from '#domain-legacy/course/entity';
+import { CourseSchema } from '#domain-legacy/course/entity';
+import { CourseDs } from '#domain-legacy/course-ds';
 import { CourseUseCase } from '../course-uc';
 
 /**

@@ -1,6 +1,6 @@
-import type { ApiApp } from '#api/index';
-import type { AppMeta } from '#domain/types';
-import type { UiAppResolve } from '#ui/types';
+import type { ApiApp } from '#api-legacy/index';
+import type { AppMeta } from '#domain-legacy/types';
+import type { UiAppResolve } from '#ui-legacy/types';
 
 /**
  * Зависимости UI-слоя бота.

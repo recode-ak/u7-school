@@ -5,10 +5,10 @@ import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app/domain';
 import type { NotifyKind } from '@u7-scl/core/domain';
 import type { User, UserFacade } from '@u7-scl/user/domain';
 import { Role } from '@u7-scl/user/domain';
-import { Status } from '#domain/status';
-import { LessonJsonRepo } from '#infra/db/lesson-json-repo';
-import { ModuleJsonRepo } from '#infra/db/module-json-repo';
-import { StepJsonRepo } from '#infra/db/step-json-repo';
+import { Status } from '#domain-legacy/status';
+import { LessonJsonRepo } from '#infra-legacy/db/lesson-json-repo';
+import { ModuleJsonRepo } from '#infra-legacy/db/module-json-repo';
+import { StepJsonRepo } from '#infra-legacy/db/step-json-repo';
 import { CourseApiModule } from './module';
 
 const tmpDir = mkdtempSync('/tmp/course-api-module-test-');

@@ -9,14 +9,17 @@ import type {
 } from '#dmg/domain/contracts/define-use-case';
 import type { Caller } from '#dmg/kernel/caller/caller';
 import type { Result } from '#dmg/kernel/result/result';
-import { errBadRequest, throwError } from '#domain/errors/error-helpers';
-import { AppException, type NoCommandFoundError } from '#domain/errors/errors';
+import { errBadRequest, throwError } from '#domain-legacy/errors/error-helpers';
+import {
+  AppException,
+  type NoCommandFoundError,
+} from '#domain-legacy/errors/errors';
 import type {
   ApiExecutor,
   AppMeta,
   ExtractUcMetaFromMeta,
   GetUcNamesFromMeta,
-} from '#domain/types';
+} from '#domain-legacy/types';
 import type { JobScheduler } from '../job/job-scheduler';
 import { App } from './app';
 

@@ -1,7 +1,7 @@
 import { NotifyKindSchema } from '@u7-scl/core/domain';
 import * as v from 'valibot';
-import type { UserArMeta } from '#domain/user/entity';
-import { UserSchema } from '#domain/user/entity';
+import type { UserArMeta } from '#domain-legacy/user/entity';
+import { UserSchema } from '#domain-legacy/user/entity';
 
 /** Схема валидации команды уведомления пользователя */
 export const NotifyUserCmdSchema = v.object({

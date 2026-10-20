@@ -1,6 +1,9 @@
 import { U7ApiModule } from '@u7-scl/app/domain';
 import type { ErMeta, EventReaction } from '@u7-scl/core/api';
-import type { UserApiModuleMeta, UserApiModuleResolver } from '#domain/module';
+import type {
+  UserApiModuleMeta,
+  UserApiModuleResolver,
+} from '#domain-legacy/module';
 import { AddRoleToUserUc } from './user/add-role-to-user-uc';
 import { CreateUserUc } from './user/create-user-uc';
 import { GetUserByTelegramIdUc } from './user/get-user-by-telegram-id-uc';

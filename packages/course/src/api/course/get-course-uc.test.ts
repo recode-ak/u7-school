@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { Course } from '#domain/course/entity';
-import type { CourseApiModuleResolver } from '#domain/module';
-import { Status } from '#domain/status';
+import type { Course } from '#domain-legacy/course/entity';
+import type { CourseApiModuleResolver } from '#domain-legacy/module';
+import { Status } from '#domain-legacy/status';
 import { GetCourseUc } from './get-course-uc';
 
 function makeCourse(overrides: Partial<Course> = {}): Course {

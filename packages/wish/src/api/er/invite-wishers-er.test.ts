@@ -1,8 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { StreamCreatedEvent } from '@u7-scl/stream/domain';
-import type { WishApiModuleResolver } from '#domain/module';
-import type { Wish } from '#domain/wish/entity';
-import type { WishInvitedEvent } from '#domain/wish/events';
+import type { WishApiModuleResolver } from '#domain-legacy/module';
+import type { Wish } from '#domain-legacy/wish/entity';
+import type { WishInvitedEvent } from '#domain-legacy/wish/events';
 import { InviteWishersEr } from './invite-wishers-er';
 
 const streamId = '11111111-1111-4111-8111-111111111111';

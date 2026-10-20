@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { Student } from '#domain/student/entity';
+import type { Student } from '#domain-legacy/student/entity';
 import { StudentJsonRepo } from './student-json-repo';
 
 /** Студент с минимумом полей для тестов выборки по статусам. */

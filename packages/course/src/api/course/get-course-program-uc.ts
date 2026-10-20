@@ -1,16 +1,16 @@
 import type { User } from '@u7-scl/app/domain';
 import { errNotFound } from '@u7-scl/core/domain';
 import type * as v from 'valibot';
-import type { ContentSnapshot } from '#domain/content-snapshot';
-import type { CourseNotFoundUcError } from '#domain/course/commands/errors';
+import type { ContentSnapshot } from '#domain-legacy/content-snapshot';
+import type { CourseNotFoundUcError } from '#domain-legacy/course/commands/errors';
 import {
   CourseProgramSchema,
   type GetCourseProgramCmd,
   type GetCourseProgramCmdMeta,
   GetCourseProgramCmdSchema,
-} from '#domain/course/commands/get-course-program-cmd';
-import { CourseDs } from '#domain/course-ds';
-import type { Lesson } from '#domain/lesson/entity';
+} from '#domain-legacy/course/commands/get-course-program-cmd';
+import { CourseDs } from '#domain-legacy/course-ds';
+import type { Lesson } from '#domain-legacy/lesson/entity';
 import { CourseUseCase } from '../course-uc';
 
 /**

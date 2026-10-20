@@ -25,7 +25,7 @@ import type {
  */
 export abstract class BotUiApp<
     TAppMeta extends
-      import('#domain/types').AppMeta = import('#domain/types').AppMeta,
+      import('#domain-legacy/types').AppMeta = import('#domain-legacy/types').AppMeta,
     TActor = unknown,
     TResolve extends BotUiAppResolve<TAppMeta, TActor> = BotUiAppResolve<
       TAppMeta,

@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { Role, type User } from '@u7-scl/app/domain';
 import { isoNow } from '@u7-scl/core/shared';
-import { StreamStatus } from '#domain/status';
+import { StreamStatus } from '#domain-legacy/status';
 import { ListStreamStudentsUc } from './list-stream-students-uc';
 
 function makeActor(uuid: string): User {

@@ -21,10 +21,10 @@
     "./dmg/testing": "./src/dmg/testing/index.ts"
   },
   "imports": {
-    "#domain/*": "./src/domain/*.ts",
-    "#api/*": "./src/api/*.ts",
-    "#ui/*": "./src/ui/*.ts",
-    "#shared/*": "./src/shared/*.ts",
+    "#domain-legacy/*": "./src/domain/*.ts",
+    "#api-legacy/*": "./src/api/*.ts",
+    "#ui-legacy/*": "./src/ui/*.ts",
+    "#shared-legacy/*": "./src/shared/*.ts",
     "#dmg/*": "./src/dmg/*.ts"
   }
 }

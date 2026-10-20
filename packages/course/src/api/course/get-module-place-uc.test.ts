@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { Course } from '#domain/course/entity';
-import type { CourseApiModuleResolver } from '#domain/module';
-import { Status } from '#domain/status';
+import type { Course } from '#domain-legacy/course/entity';
+import type { CourseApiModuleResolver } from '#domain-legacy/module';
+import { Status } from '#domain-legacy/status';
 import { GetModulePlaceUc } from './get-module-place-uc';
 
 const m1 = '11111111-1111-4111-8111-111111111111';

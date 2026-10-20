@@ -13,7 +13,7 @@ import { type Caller, subjectOf } from '#dmg/kernel/caller/caller';
 import { CoreErrors } from '#dmg/kernel/errors/core-errors';
 import type { ErrorOf } from '#dmg/kernel/errors/define-errors';
 import { ok, type Result } from '#dmg/kernel/result/result';
-import { serializeError } from '#shared/serialize-error';
+import { serializeError } from '#shared-legacy/serialize-error';
 import type { ModuleDeps } from '../context';
 import type { Trace } from '../trace';
 import { contractUnitOfWork } from '../uow/contract-unit-of-work';

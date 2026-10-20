@@ -1,10 +1,10 @@
 import type { User } from '@u7-scl/app/domain';
 import * as v from 'valibot';
-import type { GetQuestionnairesByUserCmdMeta } from '#domain/questionnaire/commands/get-questionnaires-by-user-cmd';
+import type { GetQuestionnairesByUserCmdMeta } from '#domain-legacy/questionnaire/commands/get-questionnaires-by-user-cmd';
 import {
   type GetQuestionnairesByUserCmd,
   GetQuestionnairesByUserCmdSchema,
-} from '#domain/questionnaire/commands/get-questionnaires-by-user-cmd';
+} from '#domain-legacy/questionnaire/commands/get-questionnaires-by-user-cmd';
 import type { QuestionnaireState } from '../../domain/questionnaire/repo';
 import { QuestionnaireStateSchema } from '../../domain/questionnaire/repo';
 import { QuestionnaireUseCase } from '../questionnaire-uc';

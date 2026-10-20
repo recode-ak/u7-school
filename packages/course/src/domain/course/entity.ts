@@ -1,6 +1,6 @@
 import { UserSchema } from '@u7-scl/user/domain';
 import * as v from 'valibot';
-import { ModuleSchema } from '#domain/module/entity';
+import { ModuleSchema } from '#domain-legacy/module/entity';
 import { StatusSchema } from '../status';
 
 /** Схема фазы курса (value-object внутри Course) */

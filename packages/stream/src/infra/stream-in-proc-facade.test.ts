@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { AppException } from '@u7-scl/core/domain';
-import type { StreamApiModule } from '#api/module';
-import type { Student } from '#domain/student/entity';
+import type { StreamApiModule } from '#api-legacy/module';
+import type { Student } from '#domain-legacy/student/entity';
 import { StreamInProcFacade } from './stream-in-proc-facade';
 
 const STREAM_ID = '11111111-1111-4111-8111-111111111111';

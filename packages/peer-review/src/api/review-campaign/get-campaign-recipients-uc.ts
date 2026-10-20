@@ -1,15 +1,15 @@
 import { U7UseCase } from '@u7-scl/app/domain';
 import { errNotFound } from '@u7-scl/core/domain';
 import { now } from '@u7-scl/core/shared';
-import type { PeerReviewApiModuleResolver } from '#domain/module';
-import { CampaignFactsDs } from '#domain/review-campaign/campaign-facts-ds';
+import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
+import { CampaignFactsDs } from '#domain-legacy/review-campaign/campaign-facts-ds';
 import {
   CampaignRecipientsSchema,
   type GetCampaignRecipientsCmd,
   type GetCampaignRecipientsCmdMeta,
   GetCampaignRecipientsCmdSchema,
-} from '#domain/review-campaign/commands/get-campaign-recipients-cmd';
-import { ReviewCampaignFactory } from '#domain/review-campaign/review-campaign-factory';
+} from '#domain-legacy/review-campaign/commands/get-campaign-recipients-cmd';
+import { ReviewCampaignFactory } from '#domain-legacy/review-campaign/review-campaign-factory';
 import type { CampaignNotFoundUcError } from '../errors';
 
 /**

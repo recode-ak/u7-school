@@ -1,4 +1,4 @@
-import { Job, type JobSchedule } from '#api/job/job';
+import { Job, type JobSchedule } from '#api-legacy/job/job';
 import type { AnyJobDef } from '#dmg/domain/contracts/define-job';
 import type { ModuleDeps } from '../context';
 import type { JobFromDef } from './job-from-def';

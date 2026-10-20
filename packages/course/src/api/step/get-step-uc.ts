@@ -1,15 +1,15 @@
 import type { User } from '@u7-scl/app/domain';
 import { errNotFound } from '@u7-scl/core/domain';
-import { StepAr } from '#domain/step/a-root';
-import type { StepNotFoundUcError } from '#domain/step/commands/errors';
+import { StepAr } from '#domain-legacy/step/a-root';
+import type { StepNotFoundUcError } from '#domain-legacy/step/commands/errors';
 import {
   type GetStepCmd,
   type GetStepCmdMeta,
   GetStepCmdSchema,
-} from '#domain/step/commands/get-step-cmd';
-import type { Step } from '#domain/step/entity';
-import { StepSchema } from '#domain/step/entity';
-import type { StepRepo } from '#domain/step/repo';
+} from '#domain-legacy/step/commands/get-step-cmd';
+import type { Step } from '#domain-legacy/step/entity';
+import { StepSchema } from '#domain-legacy/step/entity';
+import type { StepRepo } from '#domain-legacy/step/repo';
 import { CourseUseCase } from '../course-uc';
 
 /**

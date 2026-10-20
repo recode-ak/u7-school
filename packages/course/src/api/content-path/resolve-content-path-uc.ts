@@ -5,7 +5,7 @@ import * as v from 'valibot';
 import {
   parse as parseContentPath,
   serialize as serializeContentPath,
-} from '#domain/content-path';
+} from '#domain-legacy/content-path';
 import type {
   LessonNotFoundInPathUcError,
   ModuleNotFoundInPathUcError,
@@ -13,12 +13,12 @@ import type {
   ResolveContentPathCmd,
   ResolveContentPathCmdMeta,
   StepNotFoundInPathUcError,
-} from '#domain/content-path/commands/resolve-content-path-cmd';
-import { ResolveContentPathSchema } from '#domain/content-path/commands/resolve-content-path-cmd';
-import type { ContentSnapshot } from '#domain/content-snapshot';
-import { CourseDs } from '#domain/course-ds';
-import type { Lesson } from '#domain/lesson/entity';
-import type { Step } from '#domain/step/entity';
+} from '#domain-legacy/content-path/commands/resolve-content-path-cmd';
+import { ResolveContentPathSchema } from '#domain-legacy/content-path/commands/resolve-content-path-cmd';
+import type { ContentSnapshot } from '#domain-legacy/content-snapshot';
+import { CourseDs } from '#domain-legacy/course-ds';
+import type { Lesson } from '#domain-legacy/lesson/entity';
+import type { Step } from '#domain-legacy/step/entity';
 import { CourseUseCase } from '../course-uc';
 
 // ============================================================

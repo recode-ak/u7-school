@@ -1,6 +1,6 @@
 import * as v from 'valibot';
-import type { User, UserArMeta } from '#domain/user/entity';
-import { type Role, RoleSchema } from '#domain/user/roles';
+import type { User, UserArMeta } from '#domain-legacy/user/entity';
+import { type Role, RoleSchema } from '#domain-legacy/user/roles';
 
 /** Схема валидации команды списка пользователей */
 export const ListUsersCmdSchema = v.object({

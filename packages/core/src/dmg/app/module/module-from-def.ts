@@ -1,4 +1,4 @@
-import type { Job } from '#api/job/job';
+import type { Job } from '#api-legacy/job/job';
 import type { AnyEventReactionDef } from '#dmg/domain/contracts/define-event-reaction';
 import type {
   AnyFacadeDef,

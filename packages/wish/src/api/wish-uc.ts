@@ -1,7 +1,7 @@
 import { U7UseCase } from '@u7-scl/app/domain';
 import type { UcMeta } from '@u7-scl/core/api';
-import type { WishApiModuleResolver } from '#domain/module';
-import type { WishRepo } from '#domain/wish/repo';
+import type { WishApiModuleResolver } from '#domain-legacy/module';
+import type { WishRepo } from '#domain-legacy/wish/repo';
 
 /**
  * Базовый класс для всех use-case'ов модуля wish.

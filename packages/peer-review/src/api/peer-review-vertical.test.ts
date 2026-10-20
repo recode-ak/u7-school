@@ -10,7 +10,7 @@ import type {
   StreamMembers,
   StudentCompletedEvent,
 } from '@u7-scl/stream/domain';
-import type { PeerReviewApiModuleResolver } from '#domain/module';
+import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
 import { ReviewCampaignJsonRepo } from '../infra/db/review-campaign-json-repo';
 import { ReviewJsonRepo } from '../infra/db/review-json-repo';
 import { PeerReviewApiModule } from './module';

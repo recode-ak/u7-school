@@ -1,5 +1,8 @@
 import type { DomainError, ErrorKind } from '#dmg/kernel/errors/error';
-import type { AppError, ErrorKind as LegacyKind } from '#domain/errors/errors';
+import type {
+  AppError,
+  ErrorKind as LegacyKind,
+} from '#domain-legacy/errors/errors';
 
 const KINDS: Readonly<Record<ErrorKind, LegacyKind>> = {
   validation: 'validation',

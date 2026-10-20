@@ -1,6 +1,6 @@
 /** Общие типы для UI-слоя Telegram-бота */
 
-import type { NotifyKind } from '#domain/common/notify-kind';
+import type { NotifyKind } from '#domain-legacy/common/notify-kind';
 import type { MdText } from '../../shared/markdown';
 
 /**

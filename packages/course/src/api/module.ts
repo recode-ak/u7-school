@@ -3,7 +3,7 @@ import type { ErMeta, EventReaction } from '@u7-scl/core/api';
 import type {
   CourseApiModuleMeta,
   CourseApiModuleResolver,
-} from '#domain/module';
+} from '#domain-legacy/module';
 import { ResolveContentPathUc } from './content-path/resolve-content-path-uc';
 import { AddModuleToCourseUc } from './course/add-module-to-course-uc';
 import { AddPhaseToCourseUc } from './course/add-phase-to-course-uc';

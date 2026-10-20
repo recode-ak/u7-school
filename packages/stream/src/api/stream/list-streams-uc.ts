@@ -3,8 +3,8 @@ import {
   type ListStreamsCmd,
   type ListStreamsCmdMeta,
   ListStreamsCmdSchema,
-} from '#domain/stream/commands/list-streams-cmd';
-import { type Stream, StreamSchema } from '#domain/stream/entity';
+} from '#domain-legacy/stream/commands/list-streams-cmd';
+import { type Stream, StreamSchema } from '#domain-legacy/stream/entity';
 import { StreamUseCase } from '../stream-uc';
 
 export class ListStreamsUc extends StreamUseCase<ListStreamsCmdMeta> {

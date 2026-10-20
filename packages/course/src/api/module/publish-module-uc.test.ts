@@ -1,10 +1,10 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/user/domain';
 import { Role } from '@u7-scl/user/domain';
-import type { CourseApiModuleResolver } from '#domain/module';
-import type { Module } from '#domain/module/entity';
-import type { ModuleRepo } from '#domain/module/repo';
-import { Status } from '#domain/status';
+import type { CourseApiModuleResolver } from '#domain-legacy/module';
+import type { Module } from '#domain-legacy/module/entity';
+import type { ModuleRepo } from '#domain-legacy/module/repo';
+import { Status } from '#domain-legacy/status';
 import { PublishModuleUc } from './publish-module-uc';
 
 function makeUser(overrides: Partial<User> = {}): User {

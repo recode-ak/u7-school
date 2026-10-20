@@ -1,5 +1,5 @@
-import type { DomainEvent } from '#domain/events/domain-event';
-import type { ModuleResolver } from '#domain/types';
+import type { DomainEvent } from '#domain-legacy/events/domain-event';
+import type { ModuleResolver } from '#domain-legacy/types';
 
 /**
  * Расписание запуска периодического задания. Все времена — UTC.

@@ -1,5 +1,5 @@
 import { type User, UserPolicy } from '@u7-scl/user/domain';
-import { StreamPolicy } from '#domain/stream/policy';
+import { StreamPolicy } from '#domain-legacy/stream/policy';
 import type { Stream } from '../stream/entity';
 import type { Student } from './entity';
 

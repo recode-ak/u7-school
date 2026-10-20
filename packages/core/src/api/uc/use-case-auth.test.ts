@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import * as v from 'valibot';
-import type { ArMeta } from '#domain/ar/aggregate';
-import { Aggregate } from '#domain/ar/aggregate';
-import type { AccessDeniedError } from '#domain/errors/errors';
-import { AppException } from '#domain/errors/errors';
-import type { EventBus } from '#domain/events/event-bus';
-import type { AppResolver, ModuleResolver } from '#domain/types';
+import type { ArMeta } from '#domain-legacy/ar/aggregate';
+import { Aggregate } from '#domain-legacy/ar/aggregate';
+import type { AccessDeniedError } from '#domain-legacy/errors/errors';
+import { AppException } from '#domain-legacy/errors/errors';
+import type { EventBus } from '#domain-legacy/events/event-bus';
+import type { AppResolver, ModuleResolver } from '#domain-legacy/types';
 import { UseCase } from './use-case';
 
 // ══ Хелперы ══

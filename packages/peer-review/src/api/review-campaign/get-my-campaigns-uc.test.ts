@@ -9,11 +9,11 @@ import {
 } from 'bun:test';
 import { InProcEventBus } from '@u7-scl/core/infra';
 import * as Shared from '@u7-scl/core/shared';
-import type { PeerReviewApiModuleResolver } from '#domain/module';
-import type { Review } from '#domain/review/entity';
-import type { ReviewRepo } from '#domain/review/repo';
-import type { ReviewCampaignRepo } from '#domain/review-campaign/repo';
-import { ReviewCampaignFactory } from '#domain/review-campaign/review-campaign-factory';
+import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
+import type { Review } from '#domain-legacy/review/entity';
+import type { ReviewRepo } from '#domain-legacy/review/repo';
+import type { ReviewCampaignRepo } from '#domain-legacy/review-campaign/repo';
+import { ReviewCampaignFactory } from '#domain-legacy/review-campaign/review-campaign-factory';
 import { GetMyCampaignsUc } from './get-my-campaigns-uc';
 
 const SCOPE = '11111111-1111-4111-8111-111111111111';

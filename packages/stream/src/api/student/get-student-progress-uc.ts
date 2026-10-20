@@ -1,12 +1,12 @@
 import type { User } from '@u7-scl/app/domain';
-import { StudentAr } from '#domain/student/a-root';
+import { StudentAr } from '#domain-legacy/student/a-root';
 import {
   type GetStudentProgressCmd,
   type GetStudentProgressCmdMeta,
   GetStudentProgressCmdSchema,
-} from '#domain/student/commands/get-student-progress-cmd';
-import type { Student } from '#domain/student/entity';
-import { StudentSchema } from '#domain/student/entity';
+} from '#domain-legacy/student/commands/get-student-progress-cmd';
+import type { Student } from '#domain-legacy/student/entity';
+import { StudentSchema } from '#domain-legacy/student/entity';
 import { StreamUseCase } from '../stream-uc';
 
 export class GetStudentProgressUc extends StreamUseCase<GetStudentProgressCmdMeta> {

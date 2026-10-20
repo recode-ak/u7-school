@@ -2,12 +2,12 @@ import type { NotFoundError } from '@u7-scl/core/domain';
 import type {
   ReviewDuplicateUcError,
   ReviewTextInvalidUcError,
-} from '#domain/review/errors';
+} from '#domain-legacy/review/errors';
 import type {
   PeerReviewNotParticipantUcError,
   RecipientNotAllowedUcError,
   ReviewWindowClosedUcError,
-} from '#domain/review-campaign/errors';
+} from '#domain-legacy/review-campaign/errors';
 
 /** Кампания отзывов не найдена. */
 export type CampaignNotFoundUcError = NotFoundError<

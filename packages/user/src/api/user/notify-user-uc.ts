@@ -1,12 +1,12 @@
 import { now } from '@u7-scl/core/shared';
 import * as v from 'valibot';
-import { UserUseCase } from '#api/user-uc';
+import { UserUseCase } from '#api-legacy/user-uc';
 import {
   type NotifyUserCmd,
   type NotifyUserCmdMeta,
   NotifyUserCmdSchema,
-} from '#domain/user/commands/notify-user-cmd';
-import type { UserNotifiedEvent } from '#domain/user/events';
+} from '#domain-legacy/user/commands/notify-user-cmd';
+import type { UserNotifiedEvent } from '#domain-legacy/user/events';
 
 /**
  * Use-case уведомления пользователя — единый механизм для всех отправителей.

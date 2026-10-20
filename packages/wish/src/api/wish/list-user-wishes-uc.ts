@@ -1,13 +1,13 @@
 import type { User } from '@u7-scl/app/domain';
 import * as v from 'valibot';
-import { WishAr } from '#domain/wish/a-root';
+import { WishAr } from '#domain-legacy/wish/a-root';
 import type {
   ListUserWishesCmd,
   ListUserWishesCmdMeta,
-} from '#domain/wish/commands/list-user-wishes-cmd';
-import { ListUserWishesCmdSchema } from '#domain/wish/commands/list-user-wishes-cmd';
-import type { Wish } from '#domain/wish/entity';
-import { WishSchema } from '#domain/wish/entity';
+} from '#domain-legacy/wish/commands/list-user-wishes-cmd';
+import { ListUserWishesCmdSchema } from '#domain-legacy/wish/commands/list-user-wishes-cmd';
+import type { Wish } from '#domain-legacy/wish/entity';
+import { WishSchema } from '#domain-legacy/wish/entity';
 import { WishUseCase } from '../wish-uc';
 
 const WishesOutputSchema = v.array(WishSchema);

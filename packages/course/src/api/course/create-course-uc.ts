@@ -1,13 +1,13 @@
 import type { User } from '@u7-scl/app/domain';
-import { CourseAr } from '#domain/course/a-root';
+import { CourseAr } from '#domain-legacy/course/a-root';
 import {
   type CreateCourseCmd,
   type CreateCourseCmdMeta,
   CreateCourseCmdSchema,
-} from '#domain/course/commands/create-course-cmd';
-import type { Course } from '#domain/course/entity';
-import { CourseSchema } from '#domain/course/entity';
-import { CoursePolicy } from '#domain/course/policy';
+} from '#domain-legacy/course/commands/create-course-cmd';
+import type { Course } from '#domain-legacy/course/entity';
+import { CourseSchema } from '#domain-legacy/course/entity';
+import { CoursePolicy } from '#domain-legacy/course/policy';
 import { CourseUseCase } from '../course-uc';
 
 /**

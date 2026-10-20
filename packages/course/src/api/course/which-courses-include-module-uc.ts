@@ -4,8 +4,8 @@ import {
   type WhichCoursesIncludeModuleCmd,
   type WhichCoursesIncludeModuleCmdMeta,
   WhichCoursesIncludeModuleCmdSchema,
-} from '#domain/course/commands/which-courses-include-module-cmd';
-import { CourseDs } from '#domain/course-ds';
+} from '#domain-legacy/course/commands/which-courses-include-module-cmd';
+import { CourseDs } from '#domain-legacy/course-ds';
 import { CourseUseCase } from '../course-uc';
 
 /**

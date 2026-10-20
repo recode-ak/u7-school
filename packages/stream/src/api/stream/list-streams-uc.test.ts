@@ -1,9 +1,9 @@
 import { describe, expect, mock, test } from 'bun:test';
 import * as v from 'valibot';
-import type { StreamApiModuleResolver } from '#domain/module';
-import { StreamStatus } from '#domain/status';
-import { ListStreamsCmdSchema } from '#domain/stream/commands/list-streams-cmd';
-import type { Stream } from '#domain/stream/entity';
+import type { StreamApiModuleResolver } from '#domain-legacy/module';
+import { StreamStatus } from '#domain-legacy/status';
+import { ListStreamsCmdSchema } from '#domain-legacy/stream/commands/list-streams-cmd';
+import type { Stream } from '#domain-legacy/stream/entity';
 import { ListStreamsUc } from './list-streams-uc';
 
 describe('ListStreamsCmdSchema', () => {

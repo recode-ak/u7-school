@@ -1,10 +1,10 @@
-import type { ApiApp } from '#api/app/api-app';
-import { fromError } from '#domain/errors/error-helpers';
-import type { AppMeta } from '#domain/types';
-import type { Logger } from '#shared/logger';
-import { getGlobalLogger } from '#shared/logger';
-import { type MdText, md, mdConcat, mdJoin } from '#shared/markdown';
-import { serializeError } from '#shared/serialize-error';
+import type { ApiApp } from '#api-legacy/app/api-app';
+import { fromError } from '#domain-legacy/errors/error-helpers';
+import type { AppMeta } from '#domain-legacy/types';
+import type { Logger } from '#shared-legacy/logger';
+import { getGlobalLogger } from '#shared-legacy/logger';
+import { type MdText, md, mdConcat, mdJoin } from '#shared-legacy/markdown';
+import { serializeError } from '#shared-legacy/serialize-error';
 import { UiStory } from '../ui-story';
 import type { BotUiAppResolve } from './app-types';
 import { DialogCache } from './dialog-cache';

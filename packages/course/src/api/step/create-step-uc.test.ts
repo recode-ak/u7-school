@@ -1,13 +1,13 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/user/domain';
 import { Role } from '@u7-scl/user/domain';
-import type { Lesson, LessonRepo } from '#domain/index';
-import type { CourseApiModuleResolver } from '#domain/module';
-import type { Module } from '#domain/module/entity';
-import type { ModuleRepo } from '#domain/module/repo';
-import { Status } from '#domain/status';
-import type { Step } from '#domain/step/entity';
-import type { StepRepo } from '#domain/step/repo';
+import type { Lesson, LessonRepo } from '#domain-legacy/index';
+import type { CourseApiModuleResolver } from '#domain-legacy/module';
+import type { Module } from '#domain-legacy/module/entity';
+import type { ModuleRepo } from '#domain-legacy/module/repo';
+import { Status } from '#domain-legacy/status';
+import type { Step } from '#domain-legacy/step/entity';
+import type { StepRepo } from '#domain-legacy/step/repo';
 import { CreateStepUc } from './create-step-uc';
 
 function makeUser(r: Role[] = [Role.ADMIN]): User {

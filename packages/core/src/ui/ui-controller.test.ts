@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { DomainEvent } from '#domain/events/domain-event';
+import type { DomainEvent } from '#domain-legacy/events/domain-event';
 import type { UiEventSubscription } from './event-subscription';
 import { eventSubscription } from './event-subscription';
 import { UiController } from './ui-controller';

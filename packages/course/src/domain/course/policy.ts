@@ -1,6 +1,6 @@
 import type { User } from '@u7-scl/user/domain';
 import { UserPolicy } from '@u7-scl/user/domain';
-import { Status } from '#domain/status';
+import { Status } from '#domain-legacy/status';
 import { CourseAr } from './a-root';
 import type { Course } from './entity';
 

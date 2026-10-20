@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import type { DomainEvent } from '#domain/events/domain-event';
-import type { ModuleResolver } from '#domain/types';
+import type { DomainEvent } from '#domain-legacy/events/domain-event';
+import type { ModuleResolver } from '#domain-legacy/types';
 import type { ErMeta } from './event-reaction';
 import { EventReaction } from './event-reaction';
 

@@ -1,13 +1,13 @@
-import { UserUseCase } from '#api/user-uc';
-import { UserAr } from '#domain/user/a-root';
+import { UserUseCase } from '#api-legacy/user-uc';
+import { UserAr } from '#domain-legacy/user/a-root';
 import {
   type RemoveRoleToUserCmd,
   type RemoveRoleToUserCmdMeta,
   RemoveRoleToUserCmdSchema,
-} from '#domain/user/commands/remove-role-to-user-cmd';
-import type { User } from '#domain/user/entity';
-import { UserSchema } from '#domain/user/entity';
-import { UserPolicy } from '#domain/user/policy';
+} from '#domain-legacy/user/commands/remove-role-to-user-cmd';
+import type { User } from '#domain-legacy/user/entity';
+import { UserSchema } from '#domain-legacy/user/entity';
+import { UserPolicy } from '#domain-legacy/user/policy';
 
 /**
  * Use-case удаления роли у пользователя.

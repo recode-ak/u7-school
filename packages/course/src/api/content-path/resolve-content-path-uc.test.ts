@@ -5,9 +5,9 @@ import * as v from 'valibot';
 import {
   type ResolveContentPathCmd,
   ResolveContentPathSchema,
-} from '#domain/content-path/commands/resolve-content-path-cmd';
-import type { CourseApiModuleResolver } from '#domain/module';
-import { Status } from '#domain/status';
+} from '#domain-legacy/content-path/commands/resolve-content-path-cmd';
+import type { CourseApiModuleResolver } from '#domain-legacy/module';
+import { Status } from '#domain-legacy/status';
 import { ResolveContentPathUc } from './resolve-content-path-uc';
 
 // ============================================================

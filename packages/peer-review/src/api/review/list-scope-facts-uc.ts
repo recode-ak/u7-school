@@ -1,11 +1,11 @@
 import { U7UseCase } from '@u7-scl/app/domain';
-import type { PeerReviewApiModuleResolver } from '#domain/module';
+import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
 import {
   type ListScopeFactsCmd,
   type ListScopeFactsCmdMeta,
   ListScopeFactsCmdSchema,
   ScopeFactsSchema,
-} from '#domain/review/commands/list-scope-facts-cmd';
+} from '#domain-legacy/review/commands/list-scope-facts-cmd';
 
 /** Факты отзывов скоупа — под фасад hasReviews/listScopeFacts (ФР-8). */
 export class ListScopeFactsUc extends U7UseCase<

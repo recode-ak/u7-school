@@ -2,9 +2,9 @@ import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
 import { isoNow } from '@u7-scl/core/shared';
 import type { StreamCreatedEvent } from '@u7-scl/stream/domain';
-import type { WishApiModuleResolver } from '#domain/module';
-import type { Wish } from '#domain/wish/entity';
-import type { WishInvitedEvent } from '#domain/wish/events';
+import type { WishApiModuleResolver } from '#domain-legacy/module';
+import type { Wish } from '#domain-legacy/wish/entity';
+import type { WishInvitedEvent } from '#domain-legacy/wish/events';
 
 /** Метаданные реакции приглашения желающих при открытии набора. */
 export interface InviteWishersErMeta extends ErMeta<StreamCreatedEvent> {

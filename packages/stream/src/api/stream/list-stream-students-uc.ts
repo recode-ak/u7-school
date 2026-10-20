@@ -4,8 +4,8 @@ import {
   type ListStreamStudentsCmd,
   type ListStreamStudentsCmdMeta,
   ListStreamStudentsCmdSchema,
-} from '#domain/stream/commands/list-stream-students-cmd';
-import { StudentSchema } from '#domain/student/entity';
+} from '#domain-legacy/stream/commands/list-stream-students-cmd';
+import { StudentSchema } from '#domain-legacy/student/entity';
 import { StreamUseCase } from '../stream-uc';
 
 export class ListStreamStudentsUc extends StreamUseCase<ListStreamStudentsCmdMeta> {

@@ -2,13 +2,13 @@ import type { User } from '@u7-scl/app/domain';
 import { errNotFound } from '@u7-scl/core/domain';
 import { Role } from '@u7-scl/user/domain';
 import * as v from 'valibot';
-import { StudentAr } from '#domain/student/a-root';
+import { StudentAr } from '#domain-legacy/student/a-root';
 import {
   type DropStudentCmd,
   type DropStudentCmdMeta,
   DropStudentCmdSchema,
-} from '#domain/student/commands/drop-student-cmd';
-import type { Student } from '#domain/student/entity';
+} from '#domain-legacy/student/commands/drop-student-cmd';
+import type { Student } from '#domain-legacy/student/entity';
 import type { StreamNotFoundUcError, StreamUcErrors } from '../errors';
 import { StreamUseCase } from '../stream-uc';
 

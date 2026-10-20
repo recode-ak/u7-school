@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { InProcEventBus } from '@u7-scl/core/infra';
 import type { User, UserFacade } from '@u7-scl/user/domain';
-import { QuestionnaireApiModule } from '#api/module';
-import type { LikertQuestionPool } from '#domain/questionnaire/likert/likert-question';
-import type { QuestionnairePool } from '#domain/questionnaire/question';
-import { QuestionnaireFactory } from '#domain/questionnaire/questionnaire-factory';
-import type { QuestionnaireRepo } from '#domain/questionnaire/repo';
+import { QuestionnaireApiModule } from '#api-legacy/module';
+import type { LikertQuestionPool } from '#domain-legacy/questionnaire/likert/likert-question';
+import type { QuestionnairePool } from '#domain-legacy/questionnaire/question';
+import { QuestionnaireFactory } from '#domain-legacy/questionnaire/questionnaire-factory';
+import type { QuestionnaireRepo } from '#domain-legacy/questionnaire/repo';
 
 // Мок-репозиторий
 function mockRepo(

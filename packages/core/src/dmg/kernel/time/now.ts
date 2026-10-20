@@ -1,4 +1,4 @@
-import { now as systemNow } from '#shared/now';
+import { now as systemNow } from '#shared-legacy/now';
 import type { Timestamp } from './timestamp';
 
 let frozen: Timestamp | undefined;

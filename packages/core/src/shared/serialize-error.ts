@@ -1,4 +1,4 @@
-import { AppException } from '#domain/errors/errors';
+import { AppException } from '#domain-legacy/errors/errors';
 
 /**
  * Сериализует любую ошибку в плоский Record<string, unknown>,

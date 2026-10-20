@@ -4,16 +4,16 @@ import {
   errUnauthorized,
   errValidation,
   throwError,
-} from '#domain/errors/error-helpers';
+} from '#domain-legacy/errors/error-helpers';
 import type {
   AppError,
   AuthError,
   BaseUcErrors,
   InputValidationError,
   OutputValidationError,
-} from '#domain/errors/errors';
-import type { DomainEvent } from '#domain/events/domain-event';
-import type { ModuleResolver } from '#domain/types';
+} from '#domain-legacy/errors/errors';
+import type { DomainEvent } from '#domain-legacy/events/domain-event';
+import type { ModuleResolver } from '#domain-legacy/types';
 
 type UseCaseType = 'command' | 'query';
 

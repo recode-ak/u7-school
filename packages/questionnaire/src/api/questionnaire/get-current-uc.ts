@@ -1,9 +1,9 @@
 import type { User } from '@u7-scl/app/domain';
-import type { GetCurrentCmdMeta } from '#domain/questionnaire/commands/get-current-cmd';
+import type { GetCurrentCmdMeta } from '#domain-legacy/questionnaire/commands/get-current-cmd';
 import {
   type GetCurrentCmd,
   GetCurrentCmdSchema,
-} from '#domain/questionnaire/commands/get-current-cmd';
+} from '#domain-legacy/questionnaire/commands/get-current-cmd';
 import { QuestionnaireFactory } from '../../domain/questionnaire/questionnaire-factory';
 import type { QuestionnaireActionResponse } from '../../domain/questionnaire/types';
 import { QuestionnaireActionResponseSchema } from '../../domain/questionnaire/types';

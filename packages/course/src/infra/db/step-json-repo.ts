@@ -1,7 +1,7 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type { Step } from '#domain/step/entity';
-import { StepSchema } from '#domain/step/entity';
-import type { StepRepo } from '#domain/step/repo';
+import type { Step } from '#domain-legacy/step/entity';
+import { StepSchema } from '#domain-legacy/step/entity';
+import type { StepRepo } from '#domain-legacy/step/repo';
 
 /**
  * JSON-реализация репозитория шагов.

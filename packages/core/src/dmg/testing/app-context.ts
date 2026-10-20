@@ -1,5 +1,5 @@
-import type { AppEnvMode } from '#domain/types';
-import { type Logger, LogLevel } from '#shared/logger';
+import type { AppEnvMode } from '#domain-legacy/types';
+import { type Logger, LogLevel } from '#shared-legacy/logger';
 import type { AppContext } from '../app/context';
 import type { EventBus } from '../app/events/event-bus';
 import type { EventEnvelope } from '../app/events/event-envelope';

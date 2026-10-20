@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { AppMeta } from '#domain/types';
+import type { AppMeta } from '#domain-legacy/types';
 import { BotController } from './bot-controller';
 import { BotUiStory } from './bot-ui-story';
 import { DialogCache } from './dialog-cache';

@@ -1,11 +1,11 @@
 import { U7UseCase } from '@u7-scl/app/domain';
-import type { PeerReviewApiModuleResolver } from '#domain/module';
+import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
 import {
   type GetMyReviewCmd,
   type GetMyReviewCmdMeta,
   GetMyReviewCmdSchema,
   MyReviewSchema,
-} from '#domain/review/commands/get-my-review-cmd';
+} from '#domain-legacy/review/commands/get-my-review-cmd';
 
 /**
  * Мой отзыв на адресата (ФР-7, S04): текст для экрана перезаписи.

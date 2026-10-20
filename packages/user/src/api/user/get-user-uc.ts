@@ -1,12 +1,12 @@
-import { UserUseCase } from '#api/user-uc';
-import { UserAr } from '#domain/user/a-root';
+import { UserUseCase } from '#api-legacy/user-uc';
+import { UserAr } from '#domain-legacy/user/a-root';
 import {
   type GetUserCmd,
   type GetUserCmdMeta,
   GetUserCmdSchema,
-} from '#domain/user/commands/get-user-cmd';
-import type { User } from '#domain/user/entity';
-import { UserSchema } from '#domain/user/entity';
+} from '#domain-legacy/user/commands/get-user-cmd';
+import type { User } from '#domain-legacy/user/entity';
+import { UserSchema } from '#domain-legacy/user/entity';
 
 /**
  * Use-case получения пользователя по UUID.

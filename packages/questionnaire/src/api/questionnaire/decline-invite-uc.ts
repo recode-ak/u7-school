@@ -1,10 +1,10 @@
 import type { User } from '@u7-scl/app/domain';
 import * as v from 'valibot';
-import type { DeclineInviteCmdMeta } from '#domain/questionnaire/commands/decline-invite-cmd';
+import type { DeclineInviteCmdMeta } from '#domain-legacy/questionnaire/commands/decline-invite-cmd';
 import {
   type DeclineInviteCmd,
   DeclineInviteCmdSchema,
-} from '#domain/questionnaire/commands/decline-invite-cmd';
+} from '#domain-legacy/questionnaire/commands/decline-invite-cmd';
 import { QuestionnaireFactory } from '../../domain/questionnaire/questionnaire-factory';
 import { QuestionnaireUseCase } from '../questionnaire-uc';
 

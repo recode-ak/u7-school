@@ -4,12 +4,12 @@ import {
   errBadRequest,
   errDomain,
   throwError,
-} from '#domain/errors/error-helpers';
+} from '#domain-legacy/errors/error-helpers';
 import type {
   AppError,
   BadRequestError,
   DomainError,
-} from '#domain/errors/errors';
+} from '#domain-legacy/errors/errors';
 import type { DomainEvent } from '../events/domain-event';
 
 export interface ArMeta {

@@ -1,9 +1,9 @@
 import type { User } from '@u7-scl/app/domain';
-import type { StartByInviteCmdMeta } from '#domain/questionnaire/commands/start-by-invite-cmd';
+import type { StartByInviteCmdMeta } from '#domain-legacy/questionnaire/commands/start-by-invite-cmd';
 import {
   type StartByInviteCmd,
   StartByInviteCmdSchema,
-} from '#domain/questionnaire/commands/start-by-invite-cmd';
+} from '#domain-legacy/questionnaire/commands/start-by-invite-cmd';
 import { QuestionnaireFactory } from '../../domain/questionnaire/questionnaire-factory';
 import type { QuestionnaireActionResponse } from '../../domain/questionnaire/types';
 import { QuestionnaireActionResponseSchema } from '../../domain/questionnaire/types';

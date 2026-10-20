@@ -1,8 +1,8 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type { Wish, WishStatus, WishTarget } from '#domain/wish/entity';
-import { WishSchema } from '#domain/wish/entity';
-import { WishPolicy } from '#domain/wish/policy';
-import type { WishRepo } from '#domain/wish/repo';
+import type { Wish, WishStatus, WishTarget } from '#domain-legacy/wish/entity';
+import { WishSchema } from '#domain-legacy/wish/entity';
+import { WishPolicy } from '#domain-legacy/wish/policy';
+import type { WishRepo } from '#domain-legacy/wish/repo';
 
 /** Проверяет равенство целей желания (сравнение по варианту и его ключам). */
 function isSameTarget(a: WishTarget, b: WishTarget): boolean {

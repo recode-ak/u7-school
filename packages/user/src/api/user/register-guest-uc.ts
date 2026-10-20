@@ -1,12 +1,12 @@
-import { UserAr } from '#domain/user/a-root';
+import { UserAr } from '#domain-legacy/user/a-root';
 import {
   type RegisterGuestCmd,
   type RegisterGuestCmdMeta,
   RegisterGuestCmdSchema,
-} from '#domain/user/commands/register-guest-cmd';
-import type { User } from '#domain/user/entity';
-import { UserSchema } from '#domain/user/entity';
-import { Role } from '#domain/user/roles';
+} from '#domain-legacy/user/commands/register-guest-cmd';
+import type { User } from '#domain-legacy/user/entity';
+import { UserSchema } from '#domain-legacy/user/entity';
+import { Role } from '#domain-legacy/user/roles';
 import { UserUseCase } from '../user-uc';
 
 /**

@@ -1,17 +1,17 @@
 import { U7UseCase } from '@u7-scl/app/domain';
 import { now } from '@u7-scl/core/shared';
 import * as v from 'valibot';
-import type { PeerReviewApiModuleResolver } from '#domain/module';
-import type { ReviewCampaignAr } from '#domain/review-campaign/a-root';
-import type { MyCampaignCard } from '#domain/review-campaign/campaign-facts-ds';
-import { CampaignFactsDs } from '#domain/review-campaign/campaign-facts-ds';
+import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
+import type { ReviewCampaignAr } from '#domain-legacy/review-campaign/a-root';
+import type { MyCampaignCard } from '#domain-legacy/review-campaign/campaign-facts-ds';
+import { CampaignFactsDs } from '#domain-legacy/review-campaign/campaign-facts-ds';
 import {
   type GetMyCampaignsCmd,
   type GetMyCampaignsCmdMeta,
   GetMyCampaignsCmdSchema,
   MyCampaignSchema,
-} from '#domain/review-campaign/commands/get-my-campaigns-cmd';
-import { ReviewCampaignFactory } from '#domain/review-campaign/review-campaign-factory';
+} from '#domain-legacy/review-campaign/commands/get-my-campaigns-cmd';
+import { ReviewCampaignFactory } from '#domain-legacy/review-campaign/review-campaign-factory';
 
 /**
  * Список «моих кампаний» (ФР-7): репо добывает, домен считает

@@ -4,10 +4,10 @@ import {
   type ListCoursesCmd,
   type ListCoursesCmdMeta,
   ListCoursesCmdSchema,
-} from '#domain/course/commands/list-courses-cmd';
-import type { Course } from '#domain/course/entity';
-import { CourseSchema } from '#domain/course/entity';
-import { Status } from '#domain/status';
+} from '#domain-legacy/course/commands/list-courses-cmd';
+import type { Course } from '#domain-legacy/course/entity';
+import { CourseSchema } from '#domain-legacy/course/entity';
+import { Status } from '#domain-legacy/status';
 import { CourseUseCase } from '../course-uc';
 
 const CoursesListOutputSchema = v.array(CourseSchema);

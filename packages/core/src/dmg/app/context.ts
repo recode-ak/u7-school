@@ -1,5 +1,5 @@
-import type { AppEnvMode } from '#domain/types';
-import type { Logger } from '#shared/logger';
+import type { AppEnvMode } from '#domain-legacy/types';
+import type { Logger } from '#shared-legacy/logger';
 import type { EventBus } from './events/event-bus';
 
 /** Платформенные зависимости приложения, общие для всех модулей DMG. */

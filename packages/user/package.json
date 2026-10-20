@@ -22,9 +22,9 @@
     "./infra": "./src/infra/index.ts"
   },
   "imports": {
-    "#domain/*": "./src/domain/*.ts",
-    "#api/*": "./src/api/*.ts",
-    "#ui/*": "./src/ui/*.ts",
-    "#infra/*": "./src/infra/*.ts"
+    "#domain-legacy/*": "./src/domain/*.ts",
+    "#api-legacy/*": "./src/api/*.ts",
+    "#ui-legacy/*": "./src/ui/*.ts",
+    "#infra-legacy/*": "./src/infra/*.ts"
   }
 }

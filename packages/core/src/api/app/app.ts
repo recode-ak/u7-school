@@ -1,4 +1,4 @@
-import type { ApiModuleMeta, ModuleResolver } from '#domain/types';
+import type { ApiModuleMeta, ModuleResolver } from '#domain-legacy/types';
 import type { ApiModule } from '../module/api-module';
 
 /**

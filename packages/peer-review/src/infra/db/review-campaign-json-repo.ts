@@ -1,8 +1,8 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
 import { now } from '@u7-scl/core/shared';
-import type { ReviewCampaign } from '#domain/review-campaign/entity';
-import { ReviewCampaignSchema } from '#domain/review-campaign/entity';
-import type { ReviewCampaignRepo } from '#domain/review-campaign/repo';
+import type { ReviewCampaign } from '#domain-legacy/review-campaign/entity';
+import { ReviewCampaignSchema } from '#domain-legacy/review-campaign/entity';
+import type { ReviewCampaignRepo } from '#domain-legacy/review-campaign/repo';
 
 /**
  * Ошибка репозитория кампаний: попытка сохранить вторую кампанию

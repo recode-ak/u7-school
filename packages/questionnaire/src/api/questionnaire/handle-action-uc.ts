@@ -1,9 +1,9 @@
 import type { User } from '@u7-scl/app/domain';
-import type { HandleActionCmdMeta } from '#domain/questionnaire/commands/handle-action-cmd';
+import type { HandleActionCmdMeta } from '#domain-legacy/questionnaire/commands/handle-action-cmd';
 import {
   type HandleActionCmd,
   HandleActionCmdSchema,
-} from '#domain/questionnaire/commands/handle-action-cmd';
+} from '#domain-legacy/questionnaire/commands/handle-action-cmd';
 import { QuestionnaireFactory } from '../../domain/questionnaire/questionnaire-factory';
 import type { QuestionnaireActionResponse } from '../../domain/questionnaire/types';
 import { QuestionnaireActionResponseSchema } from '../../domain/questionnaire/types';

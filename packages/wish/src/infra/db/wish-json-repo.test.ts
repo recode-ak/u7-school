@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Wish, WishTarget } from '#domain/wish/entity';
+import type { Wish, WishTarget } from '#domain-legacy/wish/entity';
 import { WishJsonRepo } from './wish-json-repo';
 
 const tmpDir = mkdtempSync('/tmp/wish-json-repo-test-');

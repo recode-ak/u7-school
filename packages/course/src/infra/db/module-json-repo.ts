@@ -1,7 +1,7 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type { Module } from '#domain/module/entity';
-import { ModuleSchema } from '#domain/module/entity';
-import type { ModuleListFilter, ModuleRepo } from '#domain/module/repo';
+import type { Module } from '#domain-legacy/module/entity';
+import { ModuleSchema } from '#domain-legacy/module/entity';
+import type { ModuleListFilter, ModuleRepo } from '#domain-legacy/module/repo';
 
 /**
  * JSON-файловая реализация репозитория модулей.

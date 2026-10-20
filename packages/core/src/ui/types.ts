@@ -1,4 +1,4 @@
-import type { EventBus } from '#domain/events/event-bus';
+import type { EventBus } from '#domain-legacy/events/event-bus';
 
 /**
  * Разрешает зависимости уровня UI-приложения.

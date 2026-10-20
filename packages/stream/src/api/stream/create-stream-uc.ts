@@ -1,12 +1,12 @@
 import type { User } from '@u7-scl/app/domain';
-import { StreamAr } from '#domain/stream/a-root';
+import { StreamAr } from '#domain-legacy/stream/a-root';
 import {
   type CreateStreamCmd,
   type CreateStreamCmdMeta,
   CreateStreamCmdSchema,
-} from '#domain/stream/commands/create-stream-cmd';
-import { type Stream, StreamSchema } from '#domain/stream/entity';
-import { StreamPolicy } from '#domain/stream/policy';
+} from '#domain-legacy/stream/commands/create-stream-cmd';
+import { type Stream, StreamSchema } from '#domain-legacy/stream/entity';
+import { StreamPolicy } from '#domain-legacy/stream/policy';
 import { StreamUseCase } from '../stream-uc';
 
 /**

@@ -1,13 +1,13 @@
 import { Job, type JobMeta, type JobSchedule } from '@u7-scl/core/api';
 import type { DomainEvent } from '@u7-scl/core/domain';
 import { isoNow, now } from '@u7-scl/core/shared';
-import type { StreamApiModuleResolver } from '#domain/module';
-import { StudentAr } from '#domain/student/a-root';
-import type { Student } from '#domain/student/entity';
+import type { StreamApiModuleResolver } from '#domain-legacy/module';
+import { StudentAr } from '#domain-legacy/student/a-root';
+import type { Student } from '#domain-legacy/student/entity';
 import type {
   StudentInactivityRemoveCandidateEvent,
   StudentInactivityWarningEvent,
-} from '#domain/student/events';
+} from '#domain-legacy/student/events';
 
 // ══ Пороги и периодичность (spec FR-2): именованные константы ══
 // Задел на будущее: значения могут уехать в конфиг или поле потока

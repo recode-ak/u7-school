@@ -1,16 +1,16 @@
 import type { User } from '@u7-scl/app/domain';
-import { CourseDs } from '#domain/course-ds';
-import { LessonAr } from '#domain/lesson/a-root';
+import { CourseDs } from '#domain-legacy/course-ds';
+import { LessonAr } from '#domain-legacy/lesson/a-root';
 import {
   type CreateLessonCmd,
   type CreateLessonCmdMeta,
   CreateLessonCmdSchema,
-} from '#domain/lesson/commands/create-lesson-cmd';
-import type { Lesson } from '#domain/lesson/entity';
-import { LessonSchema } from '#domain/lesson/entity';
-import { LessonPolicy } from '#domain/lesson/policy';
-import { ModuleAr } from '#domain/module/a-root';
-import { ModulePolicy } from '#domain/module/policy';
+} from '#domain-legacy/lesson/commands/create-lesson-cmd';
+import type { Lesson } from '#domain-legacy/lesson/entity';
+import { LessonSchema } from '#domain-legacy/lesson/entity';
+import { LessonPolicy } from '#domain-legacy/lesson/policy';
+import { ModuleAr } from '#domain-legacy/module/a-root';
+import { ModulePolicy } from '#domain-legacy/module/policy';
 import { CourseUseCase } from '../course-uc';
 
 /**

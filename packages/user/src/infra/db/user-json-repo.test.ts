@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import type { User } from '#domain/user/entity';
-import { Role } from '#domain/user/roles';
+import type { User } from '#domain-legacy/user/entity';
+import { Role } from '#domain-legacy/user/roles';
 import { UserJsonRepo } from './user-json-repo';
 
 // Хелперы для создания тестовых данных

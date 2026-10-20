@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { QuestionnaireAbandonEvent } from '@u7-scl/questionnaire/domain';
-import type { WishApiModuleResolver } from '#domain/module';
-import type { Wish } from '#domain/wish/entity';
+import type { WishApiModuleResolver } from '#domain-legacy/module';
+import type { Wish } from '#domain-legacy/wish/entity';
 import { AbandonWishEr } from './abandon-wish-er';
 
 type AbandonEvent = QuestionnaireAbandonEvent<{ courseId: string }>;

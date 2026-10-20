@@ -1,6 +1,9 @@
 import { U7ApiModule } from '@u7-scl/app/domain';
 import type { ErMeta, EventReaction } from '@u7-scl/core/api';
-import type { WishApiModuleMeta, WishApiModuleResolver } from '#domain/module';
+import type {
+  WishApiModuleMeta,
+  WishApiModuleResolver,
+} from '#domain-legacy/module';
 import { AbandonWishEr } from './er/abandon-wish-er';
 import { ConfirmWishEr } from './er/confirm-wish-er';
 import { FulfillWishEr } from './er/fulfill-wish-er';

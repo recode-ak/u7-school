@@ -1,10 +1,10 @@
 import type { User } from '@u7-scl/app/domain';
 import * as v from 'valibot';
-import type { AbandonCmdMeta } from '#domain/questionnaire/commands/abandon-cmd';
+import type { AbandonCmdMeta } from '#domain-legacy/questionnaire/commands/abandon-cmd';
 import {
   type AbandonCmd,
   AbandonCmdSchema,
-} from '#domain/questionnaire/commands/abandon-cmd';
+} from '#domain-legacy/questionnaire/commands/abandon-cmd';
 import { QuestionnaireFactory } from '../../domain/questionnaire/questionnaire-factory';
 import { QuestionnaireUseCase } from '../questionnaire-uc';
 

@@ -1,12 +1,12 @@
 import type { User } from '@u7-scl/app/domain';
 import { errNotFound } from '@u7-scl/core/domain';
 import * as v from 'valibot';
-import { StudentAr } from '#domain/student/a-root';
+import { StudentAr } from '#domain-legacy/student/a-root';
 import {
   type SetNextPreferenceCmd,
   type SetNextPreferenceCmdMeta,
   SetNextPreferenceCmdSchema,
-} from '#domain/student/commands/set-next-preference-cmd';
+} from '#domain-legacy/student/commands/set-next-preference-cmd';
 import type { StreamNotFoundUcError, StreamUcErrors } from '../errors';
 import { StreamUseCase } from '../stream-uc';
 

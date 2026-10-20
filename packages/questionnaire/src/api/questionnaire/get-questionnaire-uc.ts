@@ -1,9 +1,9 @@
 import type { User } from '@u7-scl/app/domain';
-import type { GetQuestionnaireCmdMeta } from '#domain/questionnaire/commands/get-questionnaire-cmd';
+import type { GetQuestionnaireCmdMeta } from '#domain-legacy/questionnaire/commands/get-questionnaire-cmd';
 import {
   type GetQuestionnaireCmd,
   GetQuestionnaireCmdSchema,
-} from '#domain/questionnaire/commands/get-questionnaire-cmd';
+} from '#domain-legacy/questionnaire/commands/get-questionnaire-cmd';
 import type { QuestionnaireState } from '../../domain/questionnaire/repo';
 import { QuestionnaireStateSchema } from '../../domain/questionnaire/repo';
 import { QuestionnaireUseCase } from '../questionnaire-uc';

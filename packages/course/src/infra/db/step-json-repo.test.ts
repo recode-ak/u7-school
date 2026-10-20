@@ -1,8 +1,8 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { Status } from '#domain/status';
-import type { Step } from '#domain/step/entity';
+import { Status } from '#domain-legacy/status';
+import type { Step } from '#domain-legacy/step/entity';
 import { StepJsonRepo } from './step-json-repo';
 
 const tmpDir = mkdtempSync('/tmp/step-repo-test-');

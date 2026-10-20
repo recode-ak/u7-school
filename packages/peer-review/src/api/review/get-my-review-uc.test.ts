@@ -1,8 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { InProcEventBus } from '@u7-scl/core/infra';
-import type { PeerReviewApiModuleResolver } from '#domain/module';
-import type { Review } from '#domain/review/entity';
-import type { ReviewRepo } from '#domain/review/repo';
+import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
+import type { Review } from '#domain-legacy/review/entity';
+import type { ReviewRepo } from '#domain-legacy/review/repo';
 import { GetMyReviewUc } from './get-my-review-uc';
 
 const CAMPAIGN_ID = '3aaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';

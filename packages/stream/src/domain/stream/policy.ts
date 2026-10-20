@@ -1,6 +1,6 @@
 import { type Course, CoursePolicy } from '@u7-scl/course/domain';
 import { type User, UserPolicy } from '@u7-scl/user/domain';
-import { StreamStatus } from '#domain/status';
+import { StreamStatus } from '#domain-legacy/status';
 import { StudentAr } from '../student/a-root';
 import type { Student } from '../student/entity';
 import type { Stream } from './entity';

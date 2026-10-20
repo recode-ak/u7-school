@@ -1,15 +1,15 @@
 import { errConflict } from '@u7-scl/core/domain';
-import { UserUseCase } from '#api/user-uc';
-import { UserAr } from '#domain/user/a-root';
+import { UserUseCase } from '#api-legacy/user-uc';
+import { UserAr } from '#domain-legacy/user/a-root';
 import {
   type CreateUserCmd,
   type CreateUserCmdMeta,
   CreateUserCmdSchema,
-} from '#domain/user/commands/create-user-cmd';
-import type { TelegramIdTakenUcError } from '#domain/user/commands/errors';
-import type { User } from '#domain/user/entity';
-import { UserSchema } from '#domain/user/entity';
-import { UserPolicy } from '#domain/user/policy';
+} from '#domain-legacy/user/commands/create-user-cmd';
+import type { TelegramIdTakenUcError } from '#domain-legacy/user/commands/errors';
+import type { User } from '#domain-legacy/user/entity';
+import { UserSchema } from '#domain-legacy/user/entity';
+import { UserPolicy } from '#domain-legacy/user/policy';
 
 /**
  * Use-case создания пользователя.

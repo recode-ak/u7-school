@@ -1,7 +1,7 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type { Student } from '#domain/student/entity';
-import { StudentSchema } from '#domain/student/entity';
-import type { StudentRepo } from '#domain/student/repo';
+import type { Student } from '#domain-legacy/student/entity';
+import { StudentSchema } from '#domain-legacy/student/entity';
+import type { StudentRepo } from '#domain-legacy/student/repo';
 
 /**
  * JSON-файловая реализация репозитория студентов потока.

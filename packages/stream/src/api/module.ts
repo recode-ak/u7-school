@@ -3,7 +3,7 @@ import type { ErMeta, EventReaction } from '@u7-scl/core/api';
 import type {
   StreamApiModuleMeta,
   StreamApiModuleResolver,
-} from '#domain/module';
+} from '#domain-legacy/module';
 import { ActivateStreamUc } from './stream/activate-stream-uc';
 import { ArchiveStreamUc } from './stream/archive-stream-uc';
 import { CompleteStreamUc } from './stream/complete-stream-uc';

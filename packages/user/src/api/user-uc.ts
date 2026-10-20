@@ -1,11 +1,11 @@
 import { U7UseCase } from '@u7-scl/app/domain';
 import type { UcMeta } from '@u7-scl/core/api';
 import { errAccessDenied, errNotFound } from '@u7-scl/core/domain';
-import type { UserApiModuleResolver } from '#domain/module';
+import type { UserApiModuleResolver } from '#domain-legacy/module';
 import type {
   AccessDeniedUcError,
   UserNotFoundUcError,
-} from '#domain/user/commands/errors';
+} from '#domain-legacy/user/commands/errors';
 
 /**
  * Базовый абстрактный класс для всех use-case'ов модуля пользователей.

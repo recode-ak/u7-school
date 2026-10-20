@@ -3,7 +3,7 @@ import path from 'node:path';
 import { isoNow } from '@u7-scl/core/shared';
 import type { GenericSchema } from 'valibot';
 import * as v from 'valibot';
-import { getGlobalLogger } from '#shared/logger';
+import { getGlobalLogger } from '#shared-legacy/logger';
 import type { BaseJsonDb } from './base-json-db';
 
 /**

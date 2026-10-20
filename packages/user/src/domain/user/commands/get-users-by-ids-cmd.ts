@@ -1,6 +1,6 @@
 import * as v from 'valibot';
-import type { User, UserArMeta } from '#domain/user/entity';
-import { UserSchema } from '#domain/user/entity';
+import type { User, UserArMeta } from '#domain-legacy/user/entity';
+import { UserSchema } from '#domain-legacy/user/entity';
 
 /** Максимум идентификаторов в одном пакетном запросе */
 export const GET_USERS_BY_IDS_MAX = 100;

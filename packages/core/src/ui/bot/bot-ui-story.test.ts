@@ -7,11 +7,11 @@ import {
   errNotFound,
   errUnauthorized,
   errValidation,
-} from '#domain/errors/error-helpers';
-import { AppException } from '#domain/errors/errors';
-import type { AppMeta } from '#domain/types';
-import type { Logger } from '#shared/logger';
-import { setGlobalLogger } from '#shared/logger';
+} from '#domain-legacy/errors/error-helpers';
+import { AppException } from '#domain-legacy/errors/errors';
+import type { AppMeta } from '#domain-legacy/types';
+import type { Logger } from '#shared-legacy/logger';
+import { setGlobalLogger } from '#shared-legacy/logger';
 import { md, type mdRaw } from '../../shared/markdown';
 import { assertMarkdownV2Safe } from '../../shared/markdown-validator';
 import { BotUiStory } from './bot-ui-story';

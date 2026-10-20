@@ -1,18 +1,18 @@
 import type { User } from '@u7-scl/app/domain';
 import { errNotFound } from '@u7-scl/core/domain';
-import { CourseDs } from '#domain/course-ds';
-import { LessonAr } from '#domain/lesson/a-root';
-import type { LessonNotFoundUcError } from '#domain/lesson/commands/errors';
-import { ModulePolicy } from '#domain/module/policy';
-import { StepAr } from '#domain/step/a-root';
+import { CourseDs } from '#domain-legacy/course-ds';
+import { LessonAr } from '#domain-legacy/lesson/a-root';
+import type { LessonNotFoundUcError } from '#domain-legacy/lesson/commands/errors';
+import { ModulePolicy } from '#domain-legacy/module/policy';
+import { StepAr } from '#domain-legacy/step/a-root';
 import {
   type CreateStepCmd,
   type CreateStepCmdMeta,
   CreateStepCmdSchema,
-} from '#domain/step/commands/create-step-cmd';
-import type { Step } from '#domain/step/entity';
-import { StepSchema } from '#domain/step/entity';
-import { StepPolicy } from '#domain/step/policy';
+} from '#domain-legacy/step/commands/create-step-cmd';
+import type { Step } from '#domain-legacy/step/entity';
+import { StepSchema } from '#domain-legacy/step/entity';
+import { StepPolicy } from '#domain-legacy/step/policy';
 import { CourseUseCase } from '../course-uc';
 
 /**

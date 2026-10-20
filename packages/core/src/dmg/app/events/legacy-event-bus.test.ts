@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { systemCaller } from '#dmg/kernel/caller/caller';
 import { TaskEvents } from '#dmg/testing/example/todo/index';
-import type { DomainEvent as LegacyEvent } from '#domain/events/domain-event';
+import type { DomainEvent as LegacyEvent } from '#domain-legacy/events/domain-event';
 import { InProcEventBus } from '../../../infra/in-proc-event-bus';
 import type { EnvelopeOf } from './event-envelope';
 import { legacyEventBus } from './legacy-event-bus';

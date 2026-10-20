@@ -1,7 +1,7 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type { Review } from '#domain/review/entity';
-import { ReviewSchema } from '#domain/review/entity';
-import type { ReviewRepo } from '#domain/review/repo';
+import type { Review } from '#domain-legacy/review/entity';
+import { ReviewSchema } from '#domain-legacy/review/entity';
+import type { ReviewRepo } from '#domain-legacy/review/repo';
 
 /**
  * Ошибка репозитория отзывов: попытка сохранить второй отзыв

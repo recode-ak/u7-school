@@ -9,8 +9,8 @@ import {
   InProcJobScheduler,
 } from '@u7-scl/core/infra';
 import { ConsoleLogger } from '@u7-scl/core/shared';
-import { Role } from '#domain/user/roles';
-import { UserJsonRepo } from '#infra/db/user-json-repo';
+import { Role } from '#domain-legacy/user/roles';
+import { UserJsonRepo } from '#infra-legacy/db/user-json-repo';
 import { UserApiModule } from '../module';
 
 describe('RegisterGuestUc', () => {

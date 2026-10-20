@@ -1,13 +1,13 @@
 import { U7UseCase } from '@u7-scl/app/domain';
-import type { PeerReviewApiModuleResolver } from '#domain/module';
+import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
 import {
   type ListScopeReviewsCmd,
   type ListScopeReviewsCmdMeta,
   ListScopeReviewsCmdSchema,
   ScopeReviewsSchema,
-} from '#domain/review/commands/list-scope-reviews-cmd';
-import type { ScopeReviewsProjection } from '#domain/review/scope-reviews-ds';
-import { ScopeReviewsDs } from '#domain/review/scope-reviews-ds';
+} from '#domain-legacy/review/commands/list-scope-reviews-cmd';
+import type { ScopeReviewsProjection } from '#domain-legacy/review/scope-reviews-ds';
+import { ScopeReviewsDs } from '#domain-legacy/review/scope-reviews-ds';
 
 /**
  * Отзывы скоупа, сгруппированные по адресатам (ФР-7):

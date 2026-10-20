@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import type { DomainEvent } from '#domain/events/domain-event';
-import type { AppResolver } from '#domain/types';
+import type { DomainEvent } from '#domain-legacy/events/domain-event';
+import type { AppResolver } from '#domain-legacy/types';
 import { InProcEventBus } from '../../infra/in-proc-event-bus';
 import { UseCase } from './use-case';
 

@@ -2,8 +2,8 @@ import {
   type GetStreamCmd,
   type GetStreamCmdMeta,
   GetStreamCmdSchema,
-} from '#domain/stream/commands/get-stream-cmd';
-import { StreamSchema } from '#domain/stream/entity';
+} from '#domain-legacy/stream/commands/get-stream-cmd';
+import { StreamSchema } from '#domain-legacy/stream/entity';
 import { StreamUseCase } from '../stream-uc';
 
 export class GetStreamUc extends StreamUseCase<GetStreamCmdMeta> {

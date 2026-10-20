@@ -1,11 +1,11 @@
 import { errNotFound } from '@u7-scl/core/domain';
-import { StudentAr } from '#domain/student/a-root';
+import { StudentAr } from '#domain-legacy/student/a-root';
 import {
   type GetStudentByUserCmd,
   type GetStudentByUserCmdMeta,
   GetStudentByUserCmdSchema,
-} from '#domain/student/commands/get-student-by-user-cmd';
-import { StudentSchema } from '#domain/student/entity';
+} from '#domain-legacy/student/commands/get-student-by-user-cmd';
+import { StudentSchema } from '#domain-legacy/student/entity';
 import type { StreamNotFoundUcError, StreamUcErrors } from '../errors';
 import { StreamUseCase } from '../stream-uc';
 

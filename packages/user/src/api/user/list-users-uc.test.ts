@@ -1,8 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { UserApiModuleResolver } from '#domain/module';
-import type { User } from '#domain/user/entity';
-import type { UserRepo } from '#domain/user/repo';
-import { Role } from '#domain/user/roles';
+import type { UserApiModuleResolver } from '#domain-legacy/module';
+import type { User } from '#domain-legacy/user/entity';
+import type { UserRepo } from '#domain-legacy/user/repo';
+import { Role } from '#domain-legacy/user/roles';
 import { ListUsersUc } from './list-users-uc';
 
 function setupUc() {

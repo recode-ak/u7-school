@@ -7,9 +7,9 @@ import type {
   StudentAbandonedEvent,
   StudentCompletedEvent,
 } from '@u7-scl/stream/domain';
-import type { PeerReviewApiModuleResolver } from '#domain/module';
-import type { StudentOutcome } from '#domain/review-campaign/entity';
-import { ReviewCampaignFactory } from '#domain/review-campaign/review-campaign-factory';
+import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
+import type { StudentOutcome } from '#domain-legacy/review-campaign/entity';
+import { ReviewCampaignFactory } from '#domain-legacy/review-campaign/review-campaign-factory';
 
 /**
  * Метаданные реакции создания студенческой кампании

@@ -5,9 +5,9 @@ import {
   type GetModulePlaceCmdMeta,
   GetModulePlaceCmdSchema,
   ModulePlaceSchema,
-} from '#domain/course/commands/get-module-place-cmd';
-import { CourseDs } from '#domain/course-ds';
-import { Status } from '#domain/status';
+} from '#domain-legacy/course/commands/get-module-place-cmd';
+import { CourseDs } from '#domain-legacy/course-ds';
+import { Status } from '#domain-legacy/status';
 import { CourseUseCase } from '../course-uc';
 
 /**

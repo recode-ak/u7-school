@@ -3,10 +3,10 @@ import * as v from 'valibot';
 import type {
   ListModulesCmd,
   ListModulesCmdMeta,
-} from '#domain/module/commands/list-modules-cmd';
-import { ListModulesCmdSchema } from '#domain/module/commands/list-modules-cmd';
-import type { Module } from '#domain/module/entity';
-import { ModuleSchema } from '#domain/module/entity';
+} from '#domain-legacy/module/commands/list-modules-cmd';
+import { ListModulesCmdSchema } from '#domain-legacy/module/commands/list-modules-cmd';
+import type { Module } from '#domain-legacy/module/entity';
+import { ModuleSchema } from '#domain-legacy/module/entity';
 import { CourseUseCase } from '../course-uc';
 
 const ModulesListOutputSchema = v.array(ModuleSchema);

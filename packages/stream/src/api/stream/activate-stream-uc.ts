@@ -1,13 +1,13 @@
 import type { User } from '@u7-scl/app/domain';
 import * as v from 'valibot';
-import { StreamAr } from '#domain/stream/a-root';
+import { StreamAr } from '#domain-legacy/stream/a-root';
 import {
   type ActivateStreamCmd,
   type ActivateStreamCmdMeta,
   ActivateStreamCmdSchema,
-} from '#domain/stream/commands/activate-stream-cmd';
-import { StreamPolicy } from '#domain/stream/policy';
-import { StudentAr } from '#domain/student/a-root';
+} from '#domain-legacy/stream/commands/activate-stream-cmd';
+import { StreamPolicy } from '#domain-legacy/stream/policy';
+import { StudentAr } from '#domain-legacy/student/a-root';
 import { StreamUseCase } from '../stream-uc';
 
 export class ActivateStreamUc extends StreamUseCase<ActivateStreamCmdMeta> {

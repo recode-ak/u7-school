@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { Role, type User } from '@u7-scl/app/domain';
 import { isoNow } from '@u7-scl/core/shared';
-import type { StreamApiModuleResolver } from '#domain/module';
+import type { StreamApiModuleResolver } from '#domain-legacy/module';
 import { CreateStreamUc } from './create-stream-uc';
 
 function makeActor(uuid: string): User {

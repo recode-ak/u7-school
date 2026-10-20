@@ -1,8 +1,8 @@
 import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
-import type { PeerReviewApiModuleResolver } from '#domain/module';
-import type { ReviewDirection } from '#domain/review/entity';
-import type { ReviewCreatedEvent } from '#domain/review/events';
+import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
+import type { ReviewDirection } from '#domain-legacy/review/entity';
+import type { ReviewCreatedEvent } from '#domain-legacy/review/events';
 
 /**
  * Метаданные реакции уведомления адресата о новом отзыве

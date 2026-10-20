@@ -1,8 +1,8 @@
-import type { ErMeta, EventReaction } from '#api/er/event-reaction';
-import type { Job } from '#api/job/job';
-import type { UcDocType, UseCase } from '#api/uc/use-case';
-import { errBadRequest, throwError } from '#domain/errors/error-helpers';
-import type { NoCommandFoundError } from '#domain/errors/errors';
+import type { ErMeta, EventReaction } from '#api-legacy/er/event-reaction';
+import type { Job } from '#api-legacy/job/job';
+import type { UcDocType, UseCase } from '#api-legacy/uc/use-case';
+import { errBadRequest, throwError } from '#domain-legacy/errors/error-helpers';
+import type { NoCommandFoundError } from '#domain-legacy/errors/errors';
 import type {
   ApiExecutor,
   ApiModuleMeta,
@@ -10,8 +10,8 @@ import type {
   ExtractUcMetaFromMeta,
   GetUcNamesFromMeta,
   ModuleResolver,
-} from '#domain/types';
-import type { Logger } from '#shared/logger';
+} from '#domain-legacy/types';
+import type { Logger } from '#shared-legacy/logger';
 
 /**
  * Абстрактный API-модуль.

@@ -1,4 +1,4 @@
-import type { DomainEvent } from '#domain/events/domain-event';
+import type { DomainEvent } from '#domain-legacy/events/domain-event';
 
 /**
  * Подписка UI на доменное событие.

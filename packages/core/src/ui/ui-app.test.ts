@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import type { DomainEvent } from '#domain/events/domain-event';
-import type { EventBus } from '#domain/events/event-bus';
+import type { DomainEvent } from '#domain-legacy/events/domain-event';
+import type { EventBus } from '#domain-legacy/events/event-bus';
 import type { UiEventSubscription } from './event-subscription';
 import { eventSubscription } from './event-subscription';
 import { UiApp } from './ui-app';
