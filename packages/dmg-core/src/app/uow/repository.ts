@@ -26,23 +26,35 @@ export class VersionConflict extends Error {
   }
 }
 
-/** Что нужно для сверки версии: идентификатор и версия при загрузке. */
+/**
+ * Что нужно для сверки версии: идентификатор и версия при загрузке;
+ * `storedVersion: undefined` — агрегат новый, ещё не записан.
+ */
 export type Versioned = {
   readonly uuid: string;
-  readonly storedVersion: number;
+  readonly storedVersion: number | undefined;
 };
 
+/** Запись в хранилище для сверки; legacy-запись без `version` — версия 0. */
+export type StoredRecord = { readonly version?: number };
+
 /**
- * Оптимистичная блокировка (D-36): в хранилище должна лежать версия, с
- * которой агрегат загружен (новой записи нет — версия 0). Иначе запись
- * изменили параллельно — `VersionConflict`.
+ * Оптимистичная блокировка (D-36). `stored` — запись с uuid агрегата в
+ * хранилище или `undefined`, если её нет:
+ * - новый агрегат — записи быть не должно (иначе `create` перезаписал бы
+ *   чужую запись, в т. ч. legacy без `version`);
+ * - восстановленный — запись есть, и её версия (без поля — 0) равна той,
+ *   с которой агрегат загружен.
+ * Иначе запись изменили параллельно — `VersionConflict`.
  */
 export function assertVersion(
   aggregate: AnyAggregateDef,
   ar: Versioned,
-  stored: number | undefined,
+  stored: StoredRecord | undefined,
 ): void {
-  if ((stored ?? 0) !== ar.storedVersion) {
-    throw new VersionConflict(aggregate, ar.uuid);
-  }
+  const ok =
+    ar.storedVersion === undefined
+      ? stored === undefined
+      : stored !== undefined && (stored.version ?? 0) === ar.storedVersion;
+  if (!ok) throw new VersionConflict(aggregate, ar.uuid);
 }

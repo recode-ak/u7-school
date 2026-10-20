@@ -135,6 +135,12 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 
 **Шаг 3 — migrator** (`packages/wish/src/**`): `create-course-wish-uc.ts`, `create-module-wish-uc.ts` зовут `WishRules.rules.unique.check({ userId, target, wishes })` вместо `new WishDcs().checkUnique(…)`; отказ — тот же мост `throwWishError` (TR-1). UC — legacy-классы до Ф8, `rules` в Def UC подключается там. Видимое поведение не меняется; тестов `wish` не меньше, чем до шага.
 
+**Шаг 4 — domain-author, платформа** (`packages/dmg-core/src/**`; замечания `warn` приёмки правок платформы, §«Отчёты агентов»):
+- `assertVersion` (`app/uow/repository.ts`) не отличает новый агрегат от записи версии 0: `create` с занятым uuid перезапишет legacy-запись без `version` (их много в `data/wish`). Нужно: агрегат знает, новый ли он (`create` → новый, `restore` → нет; форма — на твой выбор, например `isNew` в `Versioned`); новый + запись есть → `VersionConflict`; восстановленный + записи нет или версия иная → `VersionConflict`; восстановленный legacy без `version` (0) + запись без `version` → ок. Сигнатуру `assertVersion` можно менять (вызывающие — `app.fixture.ts`, `task.json-repo.ts` примера; в `packages/*` пока нет). После успешной записи агрегат больше не «новый» (повторный `save` в том же UoW, если возможен, — не конфликт; проверь, бывает ли).
+- События при `VERSION_CONFLICT` на N-м агрегате UoW: записанные до него агрегаты остаются (D-15), их события не публикуются. Исправь, если это делается без отката записанных и без нарушения D-15 (например, публиковать события записанных), иначе — не меняй и опиши в отчёте точное поведение: документ `errors-result.md` §3 правит оркестратор.
+- TDD: каждая ветка сверки; UoW — create с занятым uuid → `VERSION_CONFLICT`, legacy-запись не изменена.
+- Не трогать: `packages/domain`, `packages/wish`, `conductor/`.
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
@@ -267,3 +273,6 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ф6–7 шаг 3 — migrator (Sonnet)
 `create-{course,module}-wish-uc.ts`: `WishRules.rules.unique.check(…)`, отказ — `throwWishError` (TR-1). Тесты без изменений, поведение прежнее.
+
+### Ф6–7 шаг 4 — domain-author (платформа, Opus)
+Новизна — `storedVersion: number | undefined` (`undefined` — создан, не записан; `markStored()` после записи); признак ставит `newEntity()` символьной меткой, её отбрасывают схема, `snapshot()` и JSON — `restore` всегда «не новый», конструкторы наследников не меняются. `assertVersion(aggregate, ar, stored: StoredRecord | undefined)` — запись целиком: «нет записи» ≠ «legacy без version». UoW: события публикуются только у записанных агрегатов (в `finally`) — и при `VERSION_CONFLICT`, и при исключении; D-36 и errors-result.md §3 поправил оркестратор. Ограничение: `create` обязан строить базу через `newEntity` — иначе первая запись падает `VersionConflict` (не тихая перезапись).

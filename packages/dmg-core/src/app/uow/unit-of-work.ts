@@ -56,28 +56,36 @@ export class UnitOfWork {
 
   /**
    * События собираются и сверяются с `emits` до записи: незаявленное
-   * событие — баг реализации, и тогда не сохраняется ничего. Конфликт
-   * версии — `VERSION_CONFLICT` без публикации; уже записанные агрегаты
-   * не откатываются (D-15).
+   * событие — баг реализации, и тогда не сохраняется ничего. Агрегаты
+   * пишутся по порядку регистрации; публикуются события только записанных
+   * агрегатов — после записи всех или на первом сбое. Сбой N-го агрегата
+   * (`VersionConflict` → `VERSION_CONFLICT`, иное исключение — пробрасывается):
+   * записанные до него остаются (отката нет, D-15) и их события уходят,
+   * события N-го и следующих — нет.
    */
   async commit(): Promise<Result<void, CommitError>> {
-    const envelopes = this.entries.flatMap(({ ar }) =>
+    const batches = this.entries.map(({ ar }) =>
       ar.pullEvents().map((event) => this.envelope(event, ar.uuid)),
     );
-    for (const envelope of envelopes) this.assertDeclared(envelope);
-    for (const entry of this.entries) {
-      try {
+    for (const envelope of batches.flat()) this.assertDeclared(envelope);
+    let written = 0;
+    try {
+      for (const entry of this.entries) {
         await entry.save();
-      } catch (error) {
-        if (!(error instanceof VersionConflict)) throw error;
-        return CoreErrors.VERSION_CONFLICT.err({
-          aggregate: error.aggregate.name,
-          uuid: error.uuid,
-        });
+        entry.ar.markStored();
+        written++;
       }
-      entry.ar.markStored();
+    } catch (error) {
+      if (!(error instanceof VersionConflict)) throw error;
+      return CoreErrors.VERSION_CONFLICT.err({
+        aggregate: error.aggregate.name,
+        uuid: error.uuid,
+      });
+    } finally {
+      for (const envelope of batches.slice(0, written).flat()) {
+        this.ctx.bus.publish(envelope);
+      }
     }
-    for (const envelope of envelopes) this.ctx.bus.publish(envelope);
     return ok();
   }
 

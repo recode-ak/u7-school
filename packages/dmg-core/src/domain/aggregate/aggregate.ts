@@ -18,9 +18,27 @@ export type ErrorsOf<D extends AnyAggregateDef> = {
   [K in keyof D['errors']]: ErrorOf<D['errors'][K]>;
 }[keyof D['errors']];
 
-/** Базовые поля новой entity: создана и изменена в `at`, версия 0. */
+/**
+ * Метка «агрегат создан, а не восстановлен». Символьный ключ переживает
+ * spread (`{ ...newEntity(…), … }` в `create`), но не схему state, не
+ * `snapshot()` (structuredClone) и не JSON — восстановленная запись её
+ * не несёт. Так база отличает `create` от `restore` без флага в
+ * конструкторе наследника.
+ */
+const NEW_ENTITY: unique symbol = Symbol('dmg.newEntity');
+
+/**
+ * Базовые поля новой entity: создана и изменена в `at`, версия 0. `create`
+ * агрегата обязан строить базу через неё — иначе агрегат считается
+ * восстановленным, и первая запись даст `VersionConflict` (записи нет).
+ */
 export function newEntity(uuid: string, at: Timestamp): EntityBase {
-  return { uuid, createdAt: at, updatedAt: at, version: 0 };
+  const base: EntityBase = { uuid, createdAt: at, updatedAt: at, version: 0 };
+  return Object.assign(base, { [NEW_ENTITY]: true });
+}
+
+function isNewEntity(state: object): boolean {
+  return NEW_ENTITY in state;
 }
 
 type Emit<D extends AnyAggregateDef> = (event: EventsOf<D>) => void;
@@ -53,7 +71,7 @@ export type RejectOf<
 export abstract class Aggregate<D extends AnyAggregateDef> {
   private current: StateOf<D>;
   private pending: EventsOf<D>[];
-  private stored: number;
+  private stored: number | undefined;
 
   protected constructor(
     private readonly def: D,
@@ -62,7 +80,7 @@ export abstract class Aggregate<D extends AnyAggregateDef> {
   ) {
     this.current = this.validate(state);
     this.pending = [...events];
-    this.stored = this.current.version;
+    this.stored = isNewEntity(state) ? undefined : this.current.version;
   }
 
   get uuid(): string {
@@ -77,8 +95,10 @@ export abstract class Aggregate<D extends AnyAggregateDef> {
   /**
    * Версия, с которой агрегат загружен или последний раз сохранён, — её
    * репозиторий сверяет с хранилищем перед записью (`VersionConflict`).
+   * `undefined` — агрегат создан (`create`) и ещё не записан: записи с его
+   * uuid в хранилище быть не должно.
    */
-  get storedVersion(): number {
+  get storedVersion(): number | undefined {
     return this.stored;
   }
 

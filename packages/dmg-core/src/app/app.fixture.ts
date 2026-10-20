@@ -44,7 +44,7 @@ export class MemoryTasks {
   }
 
   async save(ar: TaskAr): Promise<void> {
-    assertVersion(this.aggregate, ar, this.rows.get(ar.uuid)?.version);
+    assertVersion(this.aggregate, ar, this.rows.get(ar.uuid));
     this.rows.set(ar.uuid, ar.snapshot());
   }
 

@@ -289,10 +289,28 @@ describe('Aggregate', () => {
   });
 
   describe('версия (оптимистичная блокировка)', () => {
-    it('новый агрегат — версия 0, ещё не сохранён', () => {
+    it('новый агрегат — версия 0, сохранённой версии нет', () => {
       const ar = expectOk(TaskAr.create(ID, 'Купить хлеб', T0));
       expect(ar.version).toBe(0);
-      expect(ar.storedVersion).toBe(0);
+      expect(ar.storedVersion).toBeUndefined();
+    });
+
+    it('новый после markStored — сохранённой считается текущая версия', () => {
+      const ar = expectOk(TaskAr.create(ID, 'Купить хлеб', T0));
+      expectOk(ar.complete(T1));
+      ar.markStored();
+      expect(ar.storedVersion).toBe(1);
+    });
+
+    it('restore снимка нового агрегата — уже не новый (версия 0)', () => {
+      const created = expectOk(TaskAr.create(ID, 'Купить хлеб', T0));
+      expect(TaskAr.restore(created.snapshot()).storedVersion).toBe(0);
+    });
+
+    it('restore записи, прошедшей через JSON, — не новый', () => {
+      const created = expectOk(TaskAr.create(ID, 'Купить хлеб', T0));
+      const row = JSON.parse(JSON.stringify(created.snapshot()));
+      expect(TaskAr.restore(row).storedVersion).toBe(0);
     });
 
     it('снимок без версии (данные до D-36) читается как версия 0', () => {

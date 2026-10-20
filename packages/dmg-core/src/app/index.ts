@@ -42,6 +42,7 @@ export { createLock, type Lock } from './uow/lock';
 export {
   assertVersion,
   type Repository,
+  type StoredRecord,
   VersionConflict,
   type Versioned,
 } from './uow/repository';

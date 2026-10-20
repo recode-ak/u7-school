@@ -10,7 +10,7 @@ import { expectErr, expectOk } from '#core/testing/index';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
 import type { Trace } from '../trace';
-import { type Repository, VersionConflict } from './repository';
+import { assertVersion, type Repository, VersionConflict } from './repository';
 import { UnitOfWork } from './unit-of-work';
 
 const AT = Date.UTC(2026, 9, 18, 12, 0);
@@ -130,6 +130,71 @@ describe('UnitOfWork.commit', () => {
       uuid: A,
     });
     expect(published).toEqual([]);
+  });
+
+  test('create с занятым uuid — VERSION_CONFLICT, legacy-запись не изменена', async () => {
+    const { version: _, ...legacy } = task(A).snapshot();
+    const rows = new Map<string, object>([[A, { ...legacy, title: 'Старая' }]]);
+    const before = structuredClone(rows.get(A));
+    const repo: Repository<TaskAr> = {
+      aggregate: TaskArDef,
+      async save(ar) {
+        assertVersion(TaskArDef, ar, rows.get(ar.uuid));
+        rows.set(ar.uuid, ar.snapshot());
+      },
+    };
+    uow.register(task(A), repo);
+    const res = await uow.commit();
+    expect(expectErr(res, 'VERSION_CONFLICT').payload).toEqual({
+      aggregate: 'task',
+      uuid: A,
+    });
+    expect(rows.get(A)).toEqual(before);
+    expect(published).toEqual([]);
+  });
+
+  test('конфликт на N-м агрегате — события записанных до него публикуются', async () => {
+    const conflicting: Repository<TaskAr> = {
+      aggregate: TaskArDef,
+      async save(ar) {
+        throw new VersionConflict(TaskArDef, ar.uuid);
+      },
+    };
+    uow.register(task(A), slowRepo(log));
+    uow.register(task(B), conflicting);
+    const res = await uow.commit();
+    expectErr(res, 'VERSION_CONFLICT');
+    expect(published.map((e) => e.aggregateId)).toEqual([A]);
+  });
+
+  test('сбой сохранения N-го агрегата — события записанных публикуются, исключение', async () => {
+    uow.register(task(A), slowRepo(log));
+    uow.register(task(B), slowRepo(log, true));
+    await expect(uow.commit()).rejects.toThrow('диск недоступен');
+    expect(published.map((e) => e.aggregateId)).toEqual([A]);
+  });
+
+  test('новый агрегат после записи сохраняется повторно без конфликта', async () => {
+    const rows = new Map<string, object>();
+    const repo: Repository<TaskAr> = {
+      aggregate: TaskArDef,
+      async save(ar) {
+        assertVersion(TaskArDef, ar, rows.get(ar.uuid));
+        rows.set(ar.uuid, ar.snapshot());
+      },
+    };
+    const ar = task(A);
+    uow.register(ar, repo);
+    expectOk(await uow.commit());
+    expectOk(ar.complete(AT));
+    const next = new UnitOfWork({
+      bus: recordingBus(published, log),
+      caller: CALLER,
+      trace: TRACE,
+      clock: () => AT,
+    });
+    next.register(ar, repo);
+    expectOk(await next.commit());
   });
 
   test('после записи сохранённой версией считается текущая', async () => {

@@ -18,7 +18,7 @@ export class UserMemoryRepo implements UserRepo {
   }
 
   async save(ar: UserAr): Promise<void> {
-    assertVersion(this.aggregate, ar, this.rows.get(ar.uuid)?.version);
+    assertVersion(this.aggregate, ar, this.rows.get(ar.uuid));
     this.rows.set(ar.uuid, ar.snapshot());
   }
 }

@@ -47,7 +47,7 @@ export class ${P}JsonRepo implements ${P}Repo {
     return this.lock(async () => {
       const rows = await this.rows();
       const stored = rows.find((r) => r.uuid === ar.uuid);
-      assertVersion(this.aggregate, ar, stored?.version);
+      assertVersion(this.aggregate, ar, stored);
       const next = rows.filter((r) => r.uuid !== ar.uuid);
       next.push(ar.snapshot());
       await Bun.write(this.filePath, JSON.stringify(next, undefined, 2));
