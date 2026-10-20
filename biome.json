@@ -159,6 +159,13 @@
                       "!dmg-core"
                     ],
                     "message": "ARC-02: domain импортирует только корень dmg-core (ядро и define*), core по долгу и valibot"
+                  },
+                  {
+                    "group": [
+                      "@u7-scl/domain/*/state",
+                      "@u7-scl/domain/**/*.state"
+                    ],
+                    "message": "DOM-01: state чужого модуля не импортируется — только его доменный API (D-39)"
                   }
                 ]
               }
@@ -170,9 +177,8 @@
     {
       "includes": [
         "packages/domain/**/*.policy.ts",
+        "packages/domain/**/*.rules.ts",
         "packages/domain/**/*.dcs.ts",
-        "packages/domain/**/*.dqs.ts",
-        "packages/domain/**/*.facade.ts",
         "!**/*.test.ts"
       ],
       "linter": {
@@ -198,7 +204,7 @@
                   },
                   {
                     "group": ["**/*.state", "**/state"],
-                    "message": "DOM-01: entity видят только Ar своего агрегата и рендереры UI; используй доменный API"
+                    "message": "DOM-01: entity видят только Ar своего агрегата, Def контрактов своего модуля и рендереры UI (D-39); используй доменный API"
                   }
                 ]
               }

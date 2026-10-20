@@ -1,0 +1,4 @@
+// expect: DOM-01 error
+import type { UserState } from '@u7-scl/domain/user/state';
+
+export const a = (s: UserState) => s;

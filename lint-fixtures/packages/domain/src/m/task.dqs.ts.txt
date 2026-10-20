@@ -1,0 +1,4 @@
+// expect: none
+import type { TaskState } from './task.state';
+
+export const a = (s: TaskState) => s;

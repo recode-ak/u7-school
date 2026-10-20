@@ -1,0 +1,4 @@
+// expect: DOM-01 error
+import type { TaskState } from './task.state';
+
+export const a = (s: TaskState) => s;
