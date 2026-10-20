@@ -1,0 +1,1 @@
+Task: ядро scripts/gen. cli.ts (parseArgs, GenError), naming.ts (toPascal, kindNames, isKebab), plan.ts (GenPlan); тесты cli/naming. check зелёный.
