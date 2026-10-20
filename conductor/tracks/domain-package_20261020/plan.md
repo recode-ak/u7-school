@@ -25,7 +25,7 @@
 - [x] Task: Перенести `User` из `app` в `domain/user`; в `app` реэкспорт (долг)
 - [x] Task: Каркас `@u7-scl/domain/user/contract` (реэкспорт фасада, событий, ошибок, если они есть)
 - [x] Task: Записать долги модуля, `bun run check` зелёный
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: course и questionnaire
 
