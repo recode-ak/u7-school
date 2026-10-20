@@ -1,0 +1,1 @@
+golden-wish Ф0: --adopt генератора. Файлы: scripts/gen/{cli,validate,apply,plan,main}.ts + тесты; naming.md §5. Тесты gen 89 pass, check 3217 pass.
