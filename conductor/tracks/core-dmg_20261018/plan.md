@@ -92,7 +92,7 @@
 - Замечания по фазе (fe5123b): след операции — `cause` (request | event | job) и `correlationId` вместо `causationId`; `appApi.run(uc, input, caller, meta)` — `meta` с обязательным `requestId`; клиент не передал — адаптер транспорта создаёт его (`incomingRequestId`) и пишет `warn`, UC всегда получает готовый `Trace`. В Фазе 6 — сигнатуры `run`/`execute` в `errors-result.md`, `transport.md`. Правило ERR-07 добавлено (295dee5).
 - [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
-## Фаза 4: Граф и `arch:check`
+## Фаза 4: Граф и `arch:check` [checkpoint: fb8a146]
 
 - [x] Task: Граф-движок [1ec4d36]
     - [x] Тесты: L0 (модули, `dependsOn`, вызовы фасадов, межмодульные события), L1 (UC/ER/Job → агрегат/события), L2 (статусы, переходы, ошибки операций); обратные связи (кто управляет агрегатом, кто слушает событие)
@@ -104,7 +104,8 @@
     - [x] Скрипт собирает граф по зарегистрированным модулям (сейчас — учебный) и запускает проверки; на пустом домене не падает
     - [x] Подключение в `check` (TST-06)
     - Попутно: `users` в примере — минимальный полный модуль (UC `removeUser`), интеграционный тест — на уровне приложения (`example/app/example-app.test.ts`)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- Замечания по фазе (b22d6d2, b54c9187): внутри `dmg` глубокие относительные импорты заменены на `#dmg/*`; legacy-алиасы переименованы в `#<слой>-legacy/*` (legacy.md §6). Вынос в `dmg-core` — трек dmg-core-extract.
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 ## Фаза 5: Линт-правила
 
