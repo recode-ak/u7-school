@@ -13,6 +13,7 @@ import {
   WishPolicy,
 } from '@u7-scl/domain/wish';
 import * as v from 'valibot';
+import { unwrapInfallible } from '../legacy-reject';
 import { WishUseCase } from '../wish-uc';
 
 /**
@@ -75,18 +76,18 @@ export class CreateModuleWishUc extends WishUseCase<CreateModuleWishCmdMeta> {
 
     // 3. Мгновенная фиксация — без анкеты (студент уже верифицирован).
     // uuid и время — прикладного слоя, не домена.
-    const created = WishAr.create(
-      {
-        uuid: crypto.randomUUID(),
-        userId: actor.uuid,
-        target,
-        status: 'expressed',
-      },
-      Date.now(),
+    const wish = unwrapInfallible(
+      WishAr.create(
+        {
+          uuid: crypto.randomUUID(),
+          userId: actor.uuid,
+          target,
+          status: 'expressed',
+        },
+        Date.now(),
+      ),
     );
-    // `create` без отказов: ветка Err недостижима (тип ошибки — never).
-    if (!created.ok) return created.error;
-    await this.repo.save(created.value.snapshot());
+    await this.repo.save(wish.snapshot());
 
     return undefined;
   }

@@ -15,6 +15,7 @@ import {
   WishAr,
   WishPolicy,
 } from '@u7-scl/domain/wish';
+import { unwrapInfallible } from '../legacy-reject';
 import { WishUseCase } from '../wish-uc';
 
 /**
@@ -84,7 +85,17 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
     // 3. Курс с пулом анкеты — анкетная ветка: pending + запуск анкеты.
     const pool = findCoursePool(command.courseId);
     if (pool) {
-      const wish = this.#create(actor.uuid, target, 'pending');
+      const wish = unwrapInfallible(
+        WishAr.create(
+          {
+            uuid: crypto.randomUUID(),
+            userId: actor.uuid,
+            target,
+            status: 'pending',
+          },
+          Date.now(),
+        ),
+      );
       await this.repo.save(wish.snapshot());
       await this.resolve.questionnaireFacade.startStandard<{
         courseId: string;
@@ -93,24 +104,19 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
     }
 
     // 4. Курс без пула — мгновенная фиксация.
-    const wish = this.#create(actor.uuid, target, 'expressed');
+    const wish = unwrapInfallible(
+      WishAr.create(
+        {
+          uuid: crypto.randomUUID(),
+          userId: actor.uuid,
+          target,
+          status: 'expressed',
+        },
+        Date.now(),
+      ),
+    );
     await this.repo.save(wish.snapshot());
 
     return { outcome: 'instant' };
-  }
-
-  /** Новое желание: uuid и время — прикладного слоя, не домена. */
-  #create(
-    userId: string,
-    target: WishTargetVo,
-    status: 'expressed' | 'pending',
-  ): WishAr {
-    const created = WishAr.create(
-      { uuid: crypto.randomUUID(), userId, target, status },
-      Date.now(),
-    );
-    // `create` без отказов: ветка Err недостижима (тип ошибки — never).
-    if (!created.ok) return created.error;
-    return created.value;
   }
 }

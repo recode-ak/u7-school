@@ -122,6 +122,7 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
    **Было: Ф12. `dependsOn`.** У `user`, `course`, `questionnaire`, `stream` нет `ModuleDef`; `defineModule.dependsOn` ждёт Def. Варианты: stub-Def зависимостей (долг) или временное ослабление.
 4. **Ф7. Содержимое фасада.** Сейчас у `wish` нет фасада и внешних потребителей фасада (UI ходит через `appApi`). Что выставить в `WishFacadeDef` без спекулятивного API.
 5. **Фасады зависимостей** (`CourseFacade` и др.) — legacy: `boolean`/`undefined`, без `Result`. UC `wish` вызывает их как есть; перевод — в их треках.
+6. **Ф4. `kind` ошибок переходов.** `WishErrors.WISH_NOT_*` — `conflict`, legacy отдавал `BAD_REQUEST`. Когда `Result` дойдёт до вызывающих, код/статус сменится (400 → 409?) — решить явно (TR-1).
 
 ## Правила (ID rules.md)
 
@@ -170,3 +171,6 @@ ARC-02, ARC-04, ARC-06; DOM-01…05, DOM-09…12; MAN-01…11; ERR-01…06; API-
 
 ### Ф2 шаг 2 — migrator
 UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` переходов → `throwIfRejected` (`api/legacy-reject.ts`: `errBadRequest('BAD_REQUEST', error.label)` — код и текст прежние); `arMeta` UC — литералы `'Wish'`/`'Желание'`. `wish-json-repo.ts` разбирает `WishArDef.state` (TR-2), сортировка по числовому `createdAt`; тест legacy-записи (ISO без зоны, без `updatedAt`/`version`) red → green. Фикстуры 8 тестов UC/ER — числовые даты, `updatedAt`, `version`; ожидания не менялись; `apps/u7-bot` правок не потребовал. Видимого пользователю изменения нет (даты wish в UI и событиях не выводятся). wish 123 pass, `check` 3300 pass.
+
+### Ревью Ф2 (reviewer, diff `c978c439..ce7e32e3`)
+`error` нет. Поведение сохранено: `from`/`rejects` = прежние `can*`, код `BAD_REQUEST` и тексты исключений прежние, legacy-записи читаются через `WishArDef.state` (ISO без зоны → UTC верно). Решения оркестратора: `warn` TST-05 — тест «legacy-запись не теряется после `save` другой» добавлен (зелёный сразу, фиксирует поведение); `warn` CODE-02 — `#create` убран, распаковка `create` одной формой `unwrapInfallible` в `legacy-reject.ts`; `info` — тип `Result` из `dmg-core` (`dmg-core` в `dependencies` `wish`), мост `legacy-reject.ts` вписан в TR-1; `minor` — ловушка «фабрики» в гайде переписана как критерий; `question` `kind: conflict` vs `BAD_REQUEST` — открытый вопрос 6 (Ф4).

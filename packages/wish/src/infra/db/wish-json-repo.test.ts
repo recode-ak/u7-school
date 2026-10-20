@@ -92,6 +92,38 @@ describe('WishJsonRepo', () => {
     });
   });
 
+  describe('legacy-запись и save другой записи', () => {
+    test('legacy-запись читается после save другой записи', async () => {
+      const path = filePath('wishes-legacy-save.json');
+      const uuid = crypto.randomUUID();
+      const target = makeTarget();
+      await Bun.write(
+        path,
+        JSON.stringify([
+          {
+            uuid,
+            userId: crypto.randomUUID(),
+            target,
+            status: 'expressed',
+            createdAt: '2026-05-01T12:00',
+          },
+        ]),
+      );
+      const repo = new WishJsonRepo(path);
+      const other = makeWish();
+
+      await repo.save(other);
+      const found = await repo.getByUuid(uuid);
+
+      expect(found?.target).toEqual(target);
+      expect(found?.status).toBe('expressed');
+      expect(found?.createdAt).toBe(Date.UTC(2026, 4, 1, 12));
+      expect(found?.updatedAt).toBe(Date.UTC(2026, 4, 1, 12));
+      expect(found?.version).toBe(0);
+      expect((await repo.getByUuid(other.uuid))?.uuid).toBe(other.uuid);
+    });
+  });
+
   describe('getByUserAndTarget', () => {
     test('возвращает последнее желание пользователя по target', async () => {
       const repo = new WishJsonRepo(filePath('wishes-by-user-target.json'));
