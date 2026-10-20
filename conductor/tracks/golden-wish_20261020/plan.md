@@ -15,13 +15,13 @@
 - [x] Task: Контракты зависимостей (D-37, бриф §«Открытые вопросы» п. 2–3): в `domain/{user,course,questionnaire,stream}/contract.ts` — Def событий, на которые реагирует `wish` (`student.enrolled`, `stream.created`, `questionnaire:complete`, `questionnaire:abandon`), и внешние `ModuleDef` (`external: true`); карта `inbound` для `legacyEventBus` с переводом legacy-payload; тест доставки на реальном legacy-событии. Учитывает изменения платформы по ревью — [review-fixes.md](./review-fixes.md) `21109e88`
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
-## Фаза 1: State (схема entity)
+## Фаза 1: State (схема entity) [checkpoint: c978c43]
 
 - [x] Task: Платформа: запись без `updatedAt` читается как `updatedAt = createdAt` (по образцу `version`, D-36) `9048034a`
 - [x] Task: Перенос структуры по naming.md (`wish/wish.state.ts`, вручную по шаблону gen), имена `WishState`/`WishTarget`/`WishStatus`, поля через `F.*`, `v.description()` на каждом поле; базовые поля и даты — Ф2 `65a148a2`
 - [x] Task: Гайд «state» `24259803`
 - [x] Task: Ревью reviewer → обзор `2aaeb230` (VO с суффиксом `Vo` — решение Нурболата)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Агрегат (`defineAggregate` + Ar)
 
