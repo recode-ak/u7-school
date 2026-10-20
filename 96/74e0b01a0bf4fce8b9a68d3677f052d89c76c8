@@ -1,0 +1,5 @@
+Контрольная точка Ф2 golden-wish «Агрегат» — автономно (agents.md §9).
+check: 3304 pass / 0 fail; reviewer: error нет, warn/info исправлены (e558b5c3), question kind ошибок → открытый вопрос 6 (Ф4).
+Сделано: WishArDef/WishAr (create/restore/snapshot, переходы → Result), state на BaseEntityFields + F.timestamp (DEBT-24 погашен), минимальные WishErrors/WishEvents, UC/ER и legacy-репозиторий на новом Ar, гайды aggregate/state.
+TR: TR-1 (минимальные группы, мост err → throw), TR-2 (приведение схемы в legacy-репозитории, часы в UC/ER, числовые даты при первой записи data/wish).
+Данные data/ не тронуты.
