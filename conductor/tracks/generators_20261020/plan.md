@@ -36,6 +36,6 @@
 - [x] Task: E2E `gen-e2e`: во временном каталоге генерируется срез (module → aggregate → uc → er → job → dcs → dqs), на нём зелёные `check` и `arch:check` без ручных правок 773d059
 - [x] Task: Идемпотентность и детерминизм: повторный запуск ничего не ломает, порядок и форматирование стабильны 773d059
 - [x] Task: Скрипт `gen` в `package.json`; тесты `scripts/gen` входят в `check` 8132a7a
-- [ ] Task: Документация: раздел «Генераторы» в `naming.md`, правка `agents.md` §2; в ролях `.agents-core/roles` (`domain-author`, `api-author`, `migrator`) — «создавай через `gen`»; `bun run agents:sync`
-- [ ] Task: Обновить `migration.md` (трек 2 ✅) и spec/plan `domain-package` (каркас пакета создан здесь)
+- [x] Task: Документация: раздел «Генераторы» в `naming.md`, правка `agents.md` §2; в ролях `.agents-core/roles` (`domain-author`, `api-author`, `migrator`) — «создавай через `gen`»; `bun run agents:sync` 5ef872b
+- [x] Task: Обновить `migration.md` (трек 2 ✅) и spec/plan `domain-package` (каркас пакета создан здесь) 5ef872b
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
