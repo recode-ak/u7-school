@@ -3,7 +3,7 @@ import type { ErMeta, EventReaction } from '@u7-scl/core/api';
 import type {
   QuestionnaireApiModuleMeta,
   QuestionnaireApiModuleResolver,
-} from '../domain/module';
+} from '@u7-scl/domain/questionnaire';
 import { AbandonUc } from './questionnaire/abandon-uc';
 import { DeclineInviteUc } from './questionnaire/decline-invite-uc';
 import { GetCurrentUc } from './questionnaire/get-current-uc';

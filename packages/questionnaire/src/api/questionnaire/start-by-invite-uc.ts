@@ -1,12 +1,14 @@
 import type { User } from '@u7-scl/app/domain';
-import type { StartByInviteCmdMeta } from '#domain-legacy/questionnaire/commands/start-by-invite-cmd';
+import type {
+  QuestionnaireActionResponse,
+  StartByInviteCmdMeta,
+} from '@u7-scl/domain/questionnaire';
 import {
+  QuestionnaireActionResponseSchema,
+  QuestionnaireFactory,
   type StartByInviteCmd,
   StartByInviteCmdSchema,
-} from '#domain-legacy/questionnaire/commands/start-by-invite-cmd';
-import { QuestionnaireFactory } from '../../domain/questionnaire/questionnaire-factory';
-import type { QuestionnaireActionResponse } from '../../domain/questionnaire/types';
-import { QuestionnaireActionResponseSchema } from '../../domain/questionnaire/types';
+} from '@u7-scl/domain/questionnaire';
 import { QuestionnaireUseCase } from '../questionnaire-uc';
 
 export class StartByInviteUc extends QuestionnaireUseCase<StartByInviteCmdMeta> {

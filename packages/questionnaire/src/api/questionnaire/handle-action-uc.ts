@@ -1,12 +1,14 @@
 import type { User } from '@u7-scl/app/domain';
-import type { HandleActionCmdMeta } from '#domain-legacy/questionnaire/commands/handle-action-cmd';
+import type {
+  HandleActionCmdMeta,
+  QuestionnaireActionResponse,
+} from '@u7-scl/domain/questionnaire';
 import {
   type HandleActionCmd,
   HandleActionCmdSchema,
-} from '#domain-legacy/questionnaire/commands/handle-action-cmd';
-import { QuestionnaireFactory } from '../../domain/questionnaire/questionnaire-factory';
-import type { QuestionnaireActionResponse } from '../../domain/questionnaire/types';
-import { QuestionnaireActionResponseSchema } from '../../domain/questionnaire/types';
+  QuestionnaireActionResponseSchema,
+  QuestionnaireFactory,
+} from '@u7-scl/domain/questionnaire';
 import { QuestionnaireUseCase } from '../questionnaire-uc';
 
 export class HandleActionUc extends QuestionnaireUseCase<HandleActionCmdMeta> {

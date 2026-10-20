@@ -1,13 +1,13 @@
 import { Job, type JobMeta, type JobSchedule } from '@u7-scl/core/api';
 import type { DomainEvent } from '@u7-scl/core/domain';
 import { isoNow, now } from '@u7-scl/core/shared';
-import type { QuestionnaireApiModuleResolver } from '../../domain/module';
-import type { Questionnaire } from '../../domain/questionnaire/entity';
 import type {
+  Questionnaire,
   QuestionnaireAbandonWarningEvent,
+  QuestionnaireApiModuleResolver,
   QuestionnaireContinueInviteEvent,
-} from '../../domain/questionnaire/events';
-import { QuestionnaireAr } from '../../domain/questionnaire/standard/questionnaire-ar';
+} from '@u7-scl/domain/questionnaire';
+import { QuestionnaireAr } from '@u7-scl/domain/questionnaire';
 
 // ══ Пороги и интервал (spec FR-4): только именованные константы ══
 

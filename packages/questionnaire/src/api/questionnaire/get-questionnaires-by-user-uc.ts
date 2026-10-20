@@ -1,12 +1,14 @@
 import type { User } from '@u7-scl/app/domain';
-import * as v from 'valibot';
-import type { GetQuestionnairesByUserCmdMeta } from '#domain-legacy/questionnaire/commands/get-questionnaires-by-user-cmd';
+import type {
+  GetQuestionnairesByUserCmdMeta,
+  QuestionnaireState,
+} from '@u7-scl/domain/questionnaire';
 import {
   type GetQuestionnairesByUserCmd,
   GetQuestionnairesByUserCmdSchema,
-} from '#domain-legacy/questionnaire/commands/get-questionnaires-by-user-cmd';
-import type { QuestionnaireState } from '../../domain/questionnaire/repo';
-import { QuestionnaireStateSchema } from '../../domain/questionnaire/repo';
+  QuestionnaireStateSchema,
+} from '@u7-scl/domain/questionnaire';
+import * as v from 'valibot';
 import { QuestionnaireUseCase } from '../questionnaire-uc';
 
 export class GetQuestionnairesByUserUc extends QuestionnaireUseCase<GetQuestionnairesByUserCmdMeta> {

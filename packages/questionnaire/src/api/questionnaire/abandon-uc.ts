@@ -1,11 +1,11 @@
 import type { User } from '@u7-scl/app/domain';
-import * as v from 'valibot';
-import type { AbandonCmdMeta } from '#domain-legacy/questionnaire/commands/abandon-cmd';
+import type { AbandonCmdMeta } from '@u7-scl/domain/questionnaire';
 import {
   type AbandonCmd,
   AbandonCmdSchema,
-} from '#domain-legacy/questionnaire/commands/abandon-cmd';
-import { QuestionnaireFactory } from '../../domain/questionnaire/questionnaire-factory';
+  QuestionnaireFactory,
+} from '@u7-scl/domain/questionnaire';
+import * as v from 'valibot';
 import { QuestionnaireUseCase } from '../questionnaire-uc';
 
 export class AbandonUc extends QuestionnaireUseCase<AbandonCmdMeta> {

@@ -1,13 +1,15 @@
 import type { User } from '@u7-scl/app/domain';
 import { isoNow } from '@u7-scl/core/shared';
-import * as v from 'valibot';
-import type { SendLikertInviteCmdMeta } from '../../domain/questionnaire/commands/send-likert-invite-cmd';
+import type {
+  QuestionnaireInviteEvent,
+  SendLikertInviteCmdMeta,
+} from '@u7-scl/domain/questionnaire';
 import {
+  QuestionnaireFactory,
   type SendLikertInviteCmd,
   SendLikertInviteCmdSchema,
-} from '../../domain/questionnaire/commands/send-likert-invite-cmd';
-import type { QuestionnaireInviteEvent } from '../../domain/questionnaire/events';
-import { QuestionnaireFactory } from '../../domain/questionnaire/questionnaire-factory';
+} from '@u7-scl/domain/questionnaire';
+import * as v from 'valibot';
 import { QuestionnaireUseCase } from '../questionnaire-uc';
 
 export class SendLikertInviteUc extends QuestionnaireUseCase<SendLikertInviteCmdMeta> {

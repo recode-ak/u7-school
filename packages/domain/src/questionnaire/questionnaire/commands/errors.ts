@@ -4,7 +4,7 @@ import type {
   ConflictError,
   InternalError,
   NotFoundError,
-} from '@u7-scl/core/domain';
+} from '@u7-scl/core/domain'; // DEBT(D-11)
 
 /** Анкета не найдена */
 export type QuestionnaireNotFoundUcError = NotFoundError<

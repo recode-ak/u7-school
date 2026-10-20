@@ -1,15 +1,2 @@
-export * from './facade';
-export * from './module';
-export * from './questionnaire/a-root';
-export * from './questionnaire/entity';
-export * from './questionnaire/errors';
-export * from './questionnaire/events';
-export * from './questionnaire/likert/likert-question';
-export * from './questionnaire/likert/likert-questionnaire';
-export * from './questionnaire/likert/likert-questionnaire-ar';
-export * from './questionnaire/policy';
-export * from './questionnaire/question';
-export * from './questionnaire/questionnaire-engine';
-export * from './questionnaire/repo';
-export * from './questionnaire/standard/questionnaire-ar';
-export * from './questionnaire/types';
+// DEBT(D-13)
+export * from '@u7-scl/domain/questionnaire';

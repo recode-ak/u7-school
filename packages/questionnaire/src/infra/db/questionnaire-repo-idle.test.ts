@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Questionnaire } from '../../domain/questionnaire/entity';
-import type { QuestionnaireState } from '../../domain/questionnaire/repo';
+import type {
+  Questionnaire,
+  QuestionnaireState,
+} from '@u7-scl/domain/questionnaire';
 import { QuestionnaireJsonRepo } from './questionnaire-json-repo';
 
 describe('QuestionnaireRepo.getIdle (брошенные анкеты)', () => {

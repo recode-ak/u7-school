@@ -1,4 +1,4 @@
-import { type User, UserPolicy } from '@u7-scl/user/domain';
+import { type User, UserPolicy } from '@u7-scl/domain/user';
 import type { QuestionnaireState } from './repo';
 
 /**

@@ -1,13 +1,15 @@
 import type { User } from '@u7-scl/app/domain';
 import { isoNow } from '@u7-scl/core/shared';
-import * as v from 'valibot';
-import type { StartCmdMeta } from '../../domain/questionnaire/commands/start-cmd';
+import type {
+  QuestionnaireStartEvent,
+  StartCmdMeta,
+} from '@u7-scl/domain/questionnaire';
 import {
+  QuestionnaireFactory,
   type StartCmd,
   StartCmdSchema,
-} from '../../domain/questionnaire/commands/start-cmd';
-import type { QuestionnaireStartEvent } from '../../domain/questionnaire/events';
-import { QuestionnaireFactory } from '../../domain/questionnaire/questionnaire-factory';
+} from '@u7-scl/domain/questionnaire';
+import * as v from 'valibot';
 import { QuestionnaireUseCase } from '../questionnaire-uc';
 
 export class StartUc extends QuestionnaireUseCase<StartCmdMeta> {

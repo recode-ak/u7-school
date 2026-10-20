@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app/domain';
+import type { User } from '@u7-scl/domain/user';
 import type { LikertQuestionPool } from './questionnaire/likert/likert-question';
 import type { QuestionnairePool } from './questionnaire/question';
 

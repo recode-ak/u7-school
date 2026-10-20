@@ -1,3 +1,4 @@
+// DEBT(D-11)
 import type { DomainEvent } from '@u7-scl/core/domain';
 import type { BaseQuestionnaireArMeta } from './entity';
 import type { LikertScore } from './likert/likert-question';

@@ -1,12 +1,14 @@
 import type { User } from '@u7-scl/app/domain';
-import type { GetCurrentCmdMeta } from '#domain-legacy/questionnaire/commands/get-current-cmd';
+import type {
+  GetCurrentCmdMeta,
+  QuestionnaireActionResponse,
+} from '@u7-scl/domain/questionnaire';
 import {
   type GetCurrentCmd,
   GetCurrentCmdSchema,
-} from '#domain-legacy/questionnaire/commands/get-current-cmd';
-import { QuestionnaireFactory } from '../../domain/questionnaire/questionnaire-factory';
-import type { QuestionnaireActionResponse } from '../../domain/questionnaire/types';
-import { QuestionnaireActionResponseSchema } from '../../domain/questionnaire/types';
+  QuestionnaireActionResponseSchema,
+  QuestionnaireFactory,
+} from '@u7-scl/domain/questionnaire';
 import { QuestionnaireUseCase } from '../questionnaire-uc';
 
 export class GetCurrentUc extends QuestionnaireUseCase<GetCurrentCmdMeta> {

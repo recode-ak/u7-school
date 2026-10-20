@@ -1,14 +1,14 @@
 import { U7UseCase, type User } from '@u7-scl/app/domain';
 import type { UcMeta } from '@u7-scl/core/api';
 import { errAccessDenied, errNotFound } from '@u7-scl/core/domain';
-import type { UserFacade } from '@u7-scl/user/domain';
-import type { QuestionnaireApiModuleResolver } from '../domain/module';
-import type { QuestionnaireNotFoundUcError } from '../domain/questionnaire/errors';
-import { QuestionnairePolicy } from '../domain/questionnaire/policy';
 import type {
+  QuestionnaireApiModuleResolver,
+  QuestionnaireNotFoundUcError,
   QuestionnaireRepo,
   QuestionnaireState,
-} from '../domain/questionnaire/repo';
+} from '@u7-scl/domain/questionnaire';
+import { QuestionnairePolicy } from '@u7-scl/domain/questionnaire';
+import type { UserFacade } from '@u7-scl/user/domain';
 
 /**
  * Абстрактный UseCase для модуля questionnaire.

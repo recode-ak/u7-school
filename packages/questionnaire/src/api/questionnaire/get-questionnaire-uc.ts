@@ -1,11 +1,13 @@
 import type { User } from '@u7-scl/app/domain';
-import type { GetQuestionnaireCmdMeta } from '#domain-legacy/questionnaire/commands/get-questionnaire-cmd';
+import type {
+  GetQuestionnaireCmdMeta,
+  QuestionnaireState,
+} from '@u7-scl/domain/questionnaire';
 import {
   type GetQuestionnaireCmd,
   GetQuestionnaireCmdSchema,
-} from '#domain-legacy/questionnaire/commands/get-questionnaire-cmd';
-import type { QuestionnaireState } from '../../domain/questionnaire/repo';
-import { QuestionnaireStateSchema } from '../../domain/questionnaire/repo';
+  QuestionnaireStateSchema,
+} from '@u7-scl/domain/questionnaire';
 import { QuestionnaireUseCase } from '../questionnaire-uc';
 
 export class GetQuestionnaireUc extends QuestionnaireUseCase<GetQuestionnaireCmdMeta> {

@@ -53,6 +53,18 @@
 - **Погашает:** `dmg-core-extract` / перевод `course` на Def
 - **Критерий снятия:** маркер `DEBT(D-7)` удалён, `module.ts` не импортирует `@u7-scl/app`
 
+### D-11: импорты `@u7-scl/core` в domain/questionnaire
+- **Место:** `packages/domain/src/questionnaire/**` (`module.ts`, `questionnaire/{a-root,entity,events,questionnaire-factory}.ts`, `questionnaire/{likert,standard}/*-ar.ts`, `questionnaire/commands/errors.ts`; подпути `core/domain`, `core/shared`, `core/infra`)
+- **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, ошибки, `isoNow`, `ApiModuleMeta`, `BaseJsonDb` живут в `core`; механический перенос не меняет базовые классы.
+- **Погашает:** `dmg-core-extract` (Ф4) и последующие треки перевода на Def
+- **Критерий снятия:** в `packages/domain/src/questionnaire/**` нет маркеров `DEBT(D-11)` и импортов `@u7-scl/core`
+
+### D-12: импорт `@u7-scl/app/domain` в domain/questionnaire/module.ts
+- **Место:** `packages/domain/src/questionnaire/module.ts` (тип `U7ModuleResolver`)
+- **Причина:** тип резолвера модулей определён в `app` (см. D-2).
+- **Погашает:** `dmg-core-extract` / перевод `questionnaire` на Def
+- **Критерий снятия:** маркер `DEBT(D-12)` удалён, `module.ts` не импортирует `@u7-scl/app`
+
 ## 2. Реэкспорты старых путей
 
 ### D-3: barrel `packages/user/src/domain/index.ts`
@@ -66,6 +78,12 @@
 - **Причина:** потребители импортируют `@u7-scl/course/domain`; переписывать их не входит в трек.
 - **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
 - **Критерий снятия:** потребители импортируют `@u7-scl/domain/course`; barrel удалён
+
+### D-13: barrel `packages/questionnaire/src/domain/index.ts`
+- **Место:** `packages/questionnaire/src/domain/index.ts`
+- **Причина:** потребители импортируют `@u7-scl/questionnaire/domain`; переписывать их не входит в трек.
+- **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
+- **Критерий снятия:** потребители импортируют `@u7-scl/domain/questionnaire`; barrel удалён
 
 ## 3. `User` в `app`
 
@@ -85,6 +103,18 @@
 
 ### D-10: приватный метод `#filterPublished` (CODE-02)
 - **Место:** `packages/domain/src/course/module/a-root.ts` (`#filterPublished`; `biome-ignore lint/plugin`)
-- **Причина:** перенос без изменения кода; CODE-02 запрещает приватные методы в Ar.
+- **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
 - **Погашает:** перевод `course` на Def (фильтрация — в Policy/DQS)
 - **Критерий снятия:** маркер `DEBT(D-10)` и `biome-ignore` удалены, метод вынесен по правилам
+
+### D-14: `v.isoDateTime` в схемах domain/questionnaire (DOM-12)
+- **Место:** `packages/domain/src/questionnaire/questionnaire/{entity.ts,likert/likert-questionnaire.ts}` (`biome-ignore lint/plugin`)
+- **Причина:** схемы перенесены без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что D-5, D-9).
+- **Погашает:** перевод `questionnaire` на Def (`F.timestamp`)
+- **Критерий снятия:** маркеры `DEBT(D-14)` и `biome-ignore` удалены, даты описаны через поля Def
+
+### D-15: приватные члены `#…` в QuestionnaireAr (CODE-02)
+- **Место:** `packages/domain/src/questionnaire/questionnaire/a-root.ts` (10 методов и поле `#engine`; `biome-ignore lint/plugin`)
+- **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
+- **Погашает:** перевод `questionnaire` на Def (логика — в Policy/DQS)
+- **Критерий снятия:** маркеры `DEBT(D-15)` и `biome-ignore` удалены, методы вынесены по правилам

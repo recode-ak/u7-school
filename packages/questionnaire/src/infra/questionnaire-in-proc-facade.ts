@@ -1,8 +1,10 @@
 import type { User } from '@u7-scl/app/domain';
+import type {
+  LikertQuestionPool,
+  QuestionnaireFacade,
+  QuestionnairePool,
+} from '@u7-scl/domain/questionnaire';
 import type { QuestionnaireApiModule } from '../api/module';
-import type { QuestionnaireFacade } from '../domain/facade';
-import type { LikertQuestionPool } from '../domain/questionnaire/likert/likert-question';
-import type { QuestionnairePool } from '../domain/questionnaire/question';
 
 /**
  * In-proc реализация фасада questionnaire.

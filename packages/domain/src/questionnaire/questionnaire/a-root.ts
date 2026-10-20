@@ -1,4 +1,6 @@
+// DEBT(D-11)
 import { Aggregate } from '@u7-scl/core/domain';
+// DEBT(D-11)
 import { isoNow } from '@u7-scl/core/shared';
 import * as v from 'valibot';
 import type {
@@ -26,6 +28,7 @@ const NEXT_BUTTON_PREFIX = 'next:';
 export abstract class BaseQuestionnaireAr<
   TMeta extends BaseQuestionnaireArMeta = BaseQuestionnaireArMeta,
 > extends Aggregate<TMeta> {
+  // biome-ignore lint/plugin: перенос без изменений, CODE-02 (#private) DEBT(D-15)
   #engine: QuestionnaireEngine;
 
   constructor(state: TMeta['state'], schema: v.GenericSchema<TMeta['state']>) {
@@ -183,6 +186,7 @@ export abstract class BaseQuestionnaireAr<
     return `${NEXT_BUTTON_PREFIX}${questionCode}`;
   }
 
+  // biome-ignore lint/plugin: перенос без изменений, CODE-02 (#private) DEBT(D-15)
   #isValidNextButtonText(value: string): boolean {
     return (
       value === BaseQuestionnaireAr.getNextButtonText(this.currentQuestionCode)
@@ -307,6 +311,7 @@ export abstract class BaseQuestionnaireAr<
   // Черновики (multiple choice)
   // ═════════════════════════════════════════════════════════════
 
+  // biome-ignore lint/plugin: перенос без изменений, CODE-02 (#private) DEBT(D-15)
   #toggleDraftAnswer(
     question: Question,
     answerCode: string,
@@ -361,6 +366,7 @@ export abstract class BaseQuestionnaireAr<
   // Сабмит вопроса
   // ═════════════════════════════════════════════════════════════
 
+  // biome-ignore lint/plugin: перенос без изменений, CODE-02 (#private) DEBT(D-15)
   #submitCurrentQuestion(
     question: Question,
     explicitValue?: string,
@@ -442,6 +448,7 @@ export abstract class BaseQuestionnaireAr<
   // Переход к следующему вопросу
   // ═════════════════════════════════════════════════════════════
 
+  // biome-ignore lint/plugin: перенос без изменений, CODE-02 (#private) DEBT(D-15)
   #findAndSetNextQuestion(
     lastSelectedAnswers: string[],
   ): QuestionnaireActionResponse {
@@ -505,6 +512,7 @@ export abstract class BaseQuestionnaireAr<
   // Приватные хелперы
   // ═════════════════════════════════════════════════════════════
 
+  // biome-ignore lint/plugin: перенос без изменений, CODE-02 (#private) DEBT(D-15)
   #cancelWarning(): string | undefined {
     return this.state.questionPool.cancelWarning;
   }
@@ -513,6 +521,7 @@ export abstract class BaseQuestionnaireAr<
    * Ответ на неактуальное действие: актуальный вопрос + причина,
    * состояние анкеты не меняется (spec FR-1).
    */
+  // biome-ignore lint/plugin: перенос без изменений, CODE-02 (#private) DEBT(D-15)
   #staleAnswerResponse(
     question: Question,
     reason: StaleReason,
@@ -541,6 +550,7 @@ export abstract class BaseQuestionnaireAr<
   }
 
   /** Прогресс вопроса — для шапки «Вопрос N из M» в UI. Считается по активному маршруту (spec FR-4). */
+  // biome-ignore lint/plugin: перенос без изменений, CODE-02 (#private) DEBT(D-15)
   #progress(
     questionCode: string,
   ): { questionIndex: number; poolSize: number } | undefined {
@@ -549,6 +559,7 @@ export abstract class BaseQuestionnaireAr<
     return { questionIndex: progress.index, poolSize: progress.total };
   }
 
+  // biome-ignore lint/plugin: перенос без изменений, CODE-02 (#private) DEBT(D-15)
   #checkIsInProgress(): void {
     if (this.state.status !== 'in_progress') {
       this.throwBadRequest('Анкета уже завершена');
@@ -556,11 +567,13 @@ export abstract class BaseQuestionnaireAr<
   }
 
   /** Сброс флагов простоя — пользователь проявил активность (возобновление сбрасывает цепочку ступеней). */
+  // biome-ignore lint/plugin: перенос без изменений, CODE-02 (#private) DEBT(D-15)
   #resetIdleFlags(): void {
     delete this._state.warnedAt;
     delete this._state.continueInvitedAt;
   }
 
+  // biome-ignore lint/plugin: перенос без изменений, CODE-02 (#private) DEBT(D-15)
   #getQuestion(questionCode: string): Question {
     const question = this.#engine.getByCode(questionCode);
     if (!question) {

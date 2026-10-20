@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
-import type { QuestionnaireApiModuleResolver } from '../../domain/module';
-import type { Questionnaire } from '../../domain/questionnaire/entity';
-import type { GetIdleQuestionnairesParams } from '../../domain/questionnaire/repo';
+import type {
+  GetIdleQuestionnairesParams,
+  Questionnaire,
+  QuestionnaireApiModuleResolver,
+} from '@u7-scl/domain/questionnaire';
 import { SweepAbandonedJob } from './sweep-abandoned-job';
 
 // ══ Помощники ══

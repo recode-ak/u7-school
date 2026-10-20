@@ -15,6 +15,11 @@ export const DOMAIN_DEBT_ALLOWLIST: readonly string[] = [
   'D-8',
   'D-9',
   'D-10',
+  'D-11',
+  'D-12',
+  'D-13',
+  'D-14',
+  'D-15',
 ];
 
 /** Граф `dependsOn` модулей домена; порядок переноса — снизу вверх. */

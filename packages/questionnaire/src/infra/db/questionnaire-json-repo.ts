@@ -1,13 +1,13 @@
 import type { BaseJsonDb } from '@u7-scl/core/infra';
 import { JsonFileRepo } from '@u7-scl/core/infra';
 import { now } from '@u7-scl/core/shared';
-import type { QuestionnaireStatus } from '#domain-legacy/questionnaire/entity';
 import type {
   GetIdleQuestionnairesParams,
   QuestionnaireRepo,
   QuestionnaireState,
-} from '#domain-legacy/questionnaire/repo';
-import { QuestionnaireStateSchema } from '#domain-legacy/questionnaire/repo';
+  QuestionnaireStatus,
+} from '@u7-scl/domain/questionnaire';
+import { QuestionnaireStateSchema } from '@u7-scl/domain/questionnaire';
 
 /**
  * JSON-реализация репозитория анкет модуля questionnaire.
