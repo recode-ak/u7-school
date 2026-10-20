@@ -18,8 +18,8 @@
 
 - [x] Task: `gen module <m>` (домен: `<m>.module.ts`, `<m>.facade.ts`, `index.ts` с маркерами) + заготовка теста b3ee4f4b
 - [x] Task: `gen aggregate <m>.<agg>` (`state`, `ar`, `policy`, `events`, `errors`) + заготовки тестов 0446d689
-- [~] Task: `gen dcs` и `gen dqs` (`<topic>.dcs.ts` / `.dqs.ts`) + заготовки тестов
-- [ ] Task: Тест на снапшотах: пути и имена совпадают с `naming.md` §2, результат проходит biome без правок
+- [x] Task: `gen dcs` и `gen dqs` (`<topic>.dcs.ts` / `.dqs.ts`) + заготовки тестов 67ff3a0e
+- [~] Task: Тест на снапшотах: пути и имена совпадают с `naming.md` §2, результат проходит biome без правок
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Пары контракт ↔ реализация
