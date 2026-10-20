@@ -1,0 +1,1 @@
+Task: gen dcs/dqs. kinds/service.ts + тест (red→green). Доп.: apply.ts вставляет import/export в порядке biome (пакеты раньше относительных, '.' раньше '-'), в index.ts пустая строка после шапки.
