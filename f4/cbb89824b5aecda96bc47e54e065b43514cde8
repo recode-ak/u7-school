@@ -1,0 +1,6 @@
+Контрольная точка Фазы 3 (dmg-core-extract): пакет dmg-core самодостаточен.
+- tsconfig/biome.json/скрипты в пакете; files без *.test.ts
+- scripts/extract-check.sh (копия → install → check; pack → установка tarball → smoke), входит в bun run check
+- bun run check: 3108 pass, 0 fail
+- Ручная верификация: пройдена пользователем
+Конец части А: трек на паузе до generators/domain-package/golden-wish.
