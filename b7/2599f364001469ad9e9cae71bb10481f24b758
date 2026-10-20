@@ -1,0 +1,9 @@
+Контрольная точка Фазы 6–7 (golden-wish) — автономно (agents.md §9).
+
+Область: 1a12024..b72599f3.
+Задачи: доменное правило в dmg-core (e55292c); lint DOM-01 по D-39 (f47aa38); wish по D-39/D-40 (43ee307); assertVersion и события UoW (18d2930); порт WishRepo на WishAr и WishJsonRepo по шаблону gen (9639fe8); тест legacy-записей на копии фикстур (87149fa); gen module --facade (8fbced5); гайды repo и facade (f3f69a8); правки по ревью (67d4ca6).
+Автотесты: CI=true bun run check — 3415 pass / 0 fail; bun run arch:check — нарушений нет.
+Покрытие: кодовые файлы фазы без парного теста — barrel, типы, фикстуры, скрипт; логика покрыта соседними тестами.
+Ревью: reviewer (Opus) — error нет; warn исправлены (шаги 8–9), остальное — TR-7, TR-8.
+Решения Нурболата в фазе: форма API доменного правила (domainRule + .rules.ts, UseCaseFromDef, checkDefs); строгий разбор WishJsonRepo.
+Ручная верификация: пропущена (автономный режим). Открыто для Нурболата: dry-run разбора data/wish/wishes.json перед релизом; DQS и полный запрет DOM-01 при первом DQS (TR-8).
