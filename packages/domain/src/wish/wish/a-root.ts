@@ -1,9 +1,18 @@
 // DEBT-21
+import type { ArMeta } from '@u7-scl/core/domain';
+// DEBT-21
 import { Aggregate } from '@u7-scl/core/domain';
 // DEBT-21
 import { isoNow } from '@u7-scl/core/shared';
-import type { Wish, WishArMeta, WishTarget } from './entity';
-import { WishSchema } from './entity';
+import type { WishTarget } from './wish.state';
+import { WishState } from './wish.state';
+
+/** Метаданные агрегата Wish. */
+export interface WishArMeta extends ArMeta {
+  name: 'Wish';
+  label: 'Желание';
+  state: WishState;
+}
 
 /**
  * Агрегат Wish — фиксирует желание пользователя в отношении цели (target).
@@ -19,13 +28,13 @@ export class WishAr extends Aggregate<WishArMeta> {
   static readonly arName = 'Wish';
   static readonly arLabel = 'Желание';
 
-  constructor(state: Wish) {
-    super(state, WishSchema);
+  constructor(state: WishState) {
+    super(state, WishState);
   }
 
   /** Фиксирует желание мгновенно — курс без анкеты (статус expressed). */
   static express(userId: string, target: WishTarget): WishAr {
-    const candidate: Wish = {
+    const candidate: WishState = {
       uuid: crypto.randomUUID(),
       userId,
       target,
@@ -37,7 +46,7 @@ export class WishAr extends Aggregate<WishArMeta> {
 
   /** Фиксирует желание в ожидании анкеты (статус pending). */
   static pending(userId: string, target: WishTarget): WishAr {
-    const candidate: Wish = {
+    const candidate: WishState = {
       uuid: crypto.randomUUID(),
       userId,
       target,

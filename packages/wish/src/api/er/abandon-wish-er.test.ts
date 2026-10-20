@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { Wish, WishApiModuleResolver } from '@u7-scl/domain/wish';
+import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
 import type { QuestionnaireAbandonEvent } from '@u7-scl/questionnaire/domain';
 import { AbandonWishEr } from './abandon-wish-er';
 
@@ -20,13 +20,13 @@ function makeEvent(): AbandonEvent {
   };
 }
 
-function setupEr(wish?: Wish) {
-  const save = mock(async (_wish: Wish): Promise<void> => {});
+function setupEr(wish?: WishState) {
+  const save = mock(async (_wish: WishState): Promise<void> => {});
   const getByUserAndTarget = mock(
     async (
       _userId: string,
-      _target: Wish['target'],
-    ): Promise<Wish | undefined> => wish,
+      _target: WishState['target'],
+    ): Promise<WishState | undefined> => wish,
   );
 
   const er = new AbandonWishEr();
@@ -37,7 +37,7 @@ function setupEr(wish?: Wish) {
   return { save, getByUserAndTarget, er };
 }
 
-function makePendingWish(event: AbandonEvent): Wish {
+function makePendingWish(event: AbandonEvent): WishState {
   return {
     uuid: crypto.randomUUID(),
     userId: event.payload.respondentId,
@@ -56,7 +56,8 @@ describe('AbandonWishEr', () => {
     await er.handle(event);
 
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as ReturnType<typeof mock>).mock.calls[0]![0] as Wish;
+    const saved = (save as ReturnType<typeof mock>).mock
+      .calls[0]![0] as WishState;
     expect(saved.uuid).toBe(wish.uuid);
     expect(saved.status).toBe('abandoned');
   });

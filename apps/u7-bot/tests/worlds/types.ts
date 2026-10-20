@@ -8,7 +8,7 @@ import type {
 import type { Questionnaire } from '@u7-scl/questionnaire/domain';
 import type { Stream, StreamStatus, Student } from '@u7-scl/stream/domain';
 import type { Role, User } from '@u7-scl/user/domain';
-import type { Wish } from '@u7-scl/wish/domain';
+import type { WishState } from '@u7-scl/wish/domain';
 
 /**
  * WorldState — центральный объект состояния мира.
@@ -24,7 +24,7 @@ export interface WorldState {
   steps: Step[];
   campaigns: ReviewCampaign[];
   reviews: Review[];
-  wishes: Wish[];
+  wishes: WishState[];
   questionnaires: Questionnaire[];
   sessions: unknown[];
   shortIds: unknown[];
@@ -187,7 +187,7 @@ export interface WorldDefinition {
   students?: StudentDef[];
   campaigns?: CampaignDef[];
   reviews?: ReviewDef[];
-  wishes?: Wish[];
+  wishes?: WishState[];
   questionnaires?: Questionnaire[];
 }
 

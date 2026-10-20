@@ -1,11 +1,6 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type {
-  Wish,
-  WishRepo,
-  WishStatus,
-  WishTarget,
-} from '@u7-scl/domain/wish';
-import { WishPolicy, WishSchema } from '@u7-scl/domain/wish';
+import type { WishRepo, WishStatus, WishTarget } from '@u7-scl/domain/wish';
+import { WishPolicy, WishState } from '@u7-scl/domain/wish';
 
 /** Проверяет равенство целей желания (сравнение по варианту и его ключам). */
 function isSameTarget(a: WishTarget, b: WishTarget): boolean {
@@ -26,13 +21,13 @@ function isSameTarget(a: WishTarget, b: WishTarget): boolean {
  * Хранит данные в JSON-файле через {@link JsonFileRepo}.
  */
 export class WishJsonRepo implements WishRepo {
-  readonly #repo: JsonFileRepo<Wish>;
+  readonly #repo: JsonFileRepo<WishState>;
 
   constructor(filePath = 'data/wish/wishes.json') {
-    this.#repo = new JsonFileRepo(WishSchema, filePath);
+    this.#repo = new JsonFileRepo(WishState, filePath);
   }
 
-  async save(wish: Wish): Promise<void> {
+  async save(wish: WishState): Promise<void> {
     const all = await this.#repo.readAll();
     const idx = all.findIndex((w) => w.uuid === wish.uuid);
     if (idx !== -1) {
@@ -43,7 +38,7 @@ export class WishJsonRepo implements WishRepo {
     await this.#repo.writeAll(all);
   }
 
-  async getByUuid(uuid: string): Promise<Wish | undefined> {
+  async getByUuid(uuid: string): Promise<WishState | undefined> {
     const all = await this.#repo.readAll();
     return all.find((w) => w.uuid === uuid);
   }
@@ -51,7 +46,7 @@ export class WishJsonRepo implements WishRepo {
   async findAllByUserAndTarget(
     userId: string,
     target: WishTarget,
-  ): Promise<Wish[]> {
+  ): Promise<WishState[]> {
     const all = await this.#repo.readAll();
     return all.filter(
       (w) => w.userId === userId && isSameTarget(w.target, target),
@@ -61,7 +56,7 @@ export class WishJsonRepo implements WishRepo {
   async getByUserAndTarget(
     userId: string,
     target: WishTarget,
-  ): Promise<Wish | undefined> {
+  ): Promise<WishState | undefined> {
     const matches = await this.findAllByUserAndTarget(userId, target);
     // При равных createdAt порядок записей недетерминирован, поэтому
     // сначала сужаем выборку до активных желаний (релевантных для
@@ -73,7 +68,7 @@ export class WishJsonRepo implements WishRepo {
     return pool[0];
   }
 
-  async getByUser(userId: string): Promise<Wish[]> {
+  async getByUser(userId: string): Promise<WishState[]> {
     const all = await this.#repo.readAll();
     return all.filter((w) => w.userId === userId);
   }
@@ -81,7 +76,7 @@ export class WishJsonRepo implements WishRepo {
   async findAllByKind(
     kind: 'course' | 'module',
     statuses?: WishStatus[],
-  ): Promise<Wish[]> {
+  ): Promise<WishState[]> {
     const all = await this.#repo.readAll();
     return all.filter(
       (w) =>

@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { Wish, WishApiModuleResolver } from '@u7-scl/domain/wish';
+import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
 import type { QuestionnaireCompleteEvent } from '@u7-scl/questionnaire/domain';
 import { ConfirmWishEr } from './confirm-wish-er';
 
@@ -20,14 +20,14 @@ function makeEvent(): CompleteEvent {
   };
 }
 
-function setupEr(wish?: Wish) {
-  const save = mock(async (_wish: Wish): Promise<void> => {});
+function setupEr(wish?: WishState) {
+  const save = mock(async (_wish: WishState): Promise<void> => {});
   const publish = mock(async (_event: unknown): Promise<void> => {});
   const getByUserAndTarget = mock(
     async (
       _userId: string,
-      _target: Wish['target'],
-    ): Promise<Wish | undefined> => wish,
+      _target: WishState['target'],
+    ): Promise<WishState | undefined> => wish,
   );
 
   const er = new ConfirmWishEr();
@@ -41,7 +41,7 @@ function setupEr(wish?: Wish) {
   return { save, getByUserAndTarget, publish, er };
 }
 
-function makePendingWish(event: CompleteEvent): Wish {
+function makePendingWish(event: CompleteEvent): WishState {
   return {
     uuid: crypto.randomUUID(),
     userId: event.payload.respondentId,
@@ -60,7 +60,8 @@ describe('ConfirmWishEr', () => {
     await er.handle(event);
 
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as ReturnType<typeof mock>).mock.calls[0]![0] as Wish;
+    const saved = (save as ReturnType<typeof mock>).mock
+      .calls[0]![0] as WishState;
     expect(saved.uuid).toBe(wish.uuid);
     expect(saved.status).toBe('confirmed');
   });

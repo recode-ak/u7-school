@@ -9,7 +9,7 @@ import {
   presentNavLevel,
 } from '@u7-scl/core/ui';
 import type { ContentSnapshot, Course } from '@u7-scl/course/domain';
-import type { Wish } from '@u7-scl/wish/domain';
+import type { WishState } from '@u7-scl/wish/domain';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
 import { resolveCourseNavLevel } from '../course-nav-resolver';
@@ -172,7 +172,7 @@ export class CourseCatalogStory extends U7BotUiStory {
       'list-user-wishes',
       {},
       actor,
-    )) ?? []) as Wish[];
+    )) ?? []) as WishState[];
     const wishStatus = wishes.find(
       (w) =>
         w.target.kind === 'course' && w.target.courseId === currentCourse.uuid,

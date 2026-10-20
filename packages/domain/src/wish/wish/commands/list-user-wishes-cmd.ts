@@ -1,5 +1,6 @@
 import * as v from 'valibot';
-import type { Wish, WishArMeta } from '../entity';
+import type { WishArMeta } from '../a-root';
+import type { WishState } from '../wish.state';
 
 /** Схема запроса списка желаний пользователя (батч для каталога курсов). */
 export const ListUserWishesCmdSchema = v.object({});
@@ -12,7 +13,7 @@ export interface ListUserWishesCmdMeta {
   ucName: 'list-user-wishes';
   arMeta: WishArMeta;
   input: ListUserWishesCmd;
-  output: Wish[];
+  output: WishState[];
   errors: never;
   requiresAuth: true;
   type: 'query';

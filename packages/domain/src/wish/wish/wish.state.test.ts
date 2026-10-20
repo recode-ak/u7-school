@@ -1,20 +1,19 @@
 import { describe, expect, test } from 'bun:test';
 import * as v from 'valibot';
-import type { WishTarget } from './entity';
-import { WishSchema, WishStatusSchema, WishTargetSchema } from './entity';
+import { WishState, WishStatus, WishTarget } from './wish.state';
 
 const validCourseTarget: WishTarget = {
   kind: 'course',
   courseId: crypto.randomUUID(),
 };
 
-describe('WishTargetSchema', () => {
+describe('WishTarget', () => {
   test('принимает валидную цель module', () => {
     const validModuleTarget: WishTarget = {
       kind: 'module',
       moduleId: crypto.randomUUID(),
     };
-    const result = v.safeParse(WishTargetSchema, validModuleTarget);
+    const result = v.safeParse(WishTarget, validModuleTarget);
 
     expect(result.success).toBe(true);
     if (result.success) {
@@ -23,7 +22,7 @@ describe('WishTargetSchema', () => {
   });
 
   test('отклоняет module-цель с некорректным moduleId', () => {
-    const result = v.safeParse(WishTargetSchema, {
+    const result = v.safeParse(WishTarget, {
       kind: 'module',
       moduleId: 'not-a-uuid',
     });
@@ -32,7 +31,7 @@ describe('WishTargetSchema', () => {
   });
 
   test('принимает валидную цель course', () => {
-    const result = v.safeParse(WishTargetSchema, validCourseTarget);
+    const result = v.safeParse(WishTarget, validCourseTarget);
 
     expect(result.success).toBe(true);
     if (result.success) {
@@ -41,7 +40,7 @@ describe('WishTargetSchema', () => {
   });
 
   test('отклоняет неизвестный kind цели', () => {
-    const result = v.safeParse(WishTargetSchema, {
+    const result = v.safeParse(WishTarget, {
       kind: 'mentorship',
       mentorId: 'x',
     });
@@ -50,22 +49,30 @@ describe('WishTargetSchema', () => {
   });
 
   test('отклоняет цель course без courseId', () => {
-    const result = v.safeParse(WishTargetSchema, { kind: 'course' });
+    const result = v.safeParse(WishTarget, { kind: 'course' });
 
     expect(result.success).toBe(false);
   });
 
   test('отклоняет цель с невалидным форматом courseId', () => {
-    const result = v.safeParse(WishTargetSchema, {
+    const result = v.safeParse(WishTarget, {
       kind: 'course',
       courseId: 'not-a-uuid',
     });
 
     expect(result.success).toBe(false);
   });
+
+  test('у полей обеих веток есть описание', () => {
+    for (const branch of WishTarget.options) {
+      for (const field of Object.values(branch.entries)) {
+        expect(v.getDescription(field)).toBeString();
+      }
+    }
+  });
 });
 
-describe('WishStatusSchema', () => {
+describe('WishStatus', () => {
   test.each([
     'expressed',
     'pending',
@@ -74,15 +81,15 @@ describe('WishStatusSchema', () => {
     'abandoned',
     'fulfilled',
   ])('принимает статус %s', (status) => {
-    expect(v.safeParse(WishStatusSchema, status).success).toBe(true);
+    expect(v.safeParse(WishStatus, status).success).toBe(true);
   });
 
   test('отклоняет неизвестный статус', () => {
-    expect(v.safeParse(WishStatusSchema, 'unknown').success).toBe(false);
+    expect(v.safeParse(WishStatus, 'unknown').success).toBe(false);
   });
 });
 
-describe('WishSchema', () => {
+describe('WishState', () => {
   test('принимает желание с target вместо courseId', () => {
     const wish = {
       uuid: crypto.randomUUID(),
@@ -92,7 +99,7 @@ describe('WishSchema', () => {
       createdAt: '2026-08-26T10:00',
     };
 
-    const result = v.safeParse(WishSchema, wish);
+    const result = v.safeParse(WishState, wish);
 
     expect(result.success).toBe(true);
     if (result.success) {
@@ -109,6 +116,14 @@ describe('WishSchema', () => {
       createdAt: '2026-08-26T10:00',
     };
 
-    expect(v.safeParse(WishSchema, legacyWish).success).toBe(false);
+    expect(v.safeParse(WishState, legacyWish).success).toBe(false);
+  });
+
+  test('у полей userId, target, status есть описание', () => {
+    const { userId, target, status } = WishState.entries;
+
+    for (const field of [userId, target, status]) {
+      expect(v.getDescription(field)).toBeString();
+    }
   });
 });

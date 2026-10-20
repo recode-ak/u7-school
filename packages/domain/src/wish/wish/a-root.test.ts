@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { WishAr } from './a-root';
-import type { Wish, WishTarget } from './entity';
+import type { WishState, WishTarget } from './wish.state';
 
 describe('WishAr', () => {
   const userId = crypto.randomUUID();
@@ -10,7 +10,7 @@ describe('WishAr', () => {
   };
 
   /** Собирает желание в заданном статусе (для тестов переходов). */
-  function makeWish(status: Wish['status']): WishAr {
+  function makeWish(status: WishState['status']): WishAr {
     return new WishAr({
       uuid: crypto.randomUUID(),
       userId,

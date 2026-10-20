@@ -1,8 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type {
-  Wish,
   WishApiModuleResolver,
   WishInvitedEvent,
+  WishState,
 } from '@u7-scl/domain/wish';
 import type { StreamCreatedEvent } from '@u7-scl/stream/domain';
 import { InviteWishersEr } from './invite-wishers-er';
@@ -33,9 +33,9 @@ function makeEvent(mid = moduleId): StreamCreatedEvent {
 }
 
 function makeWish(
-  overrides: Partial<Wish> = {},
+  overrides: Partial<WishState> = {},
   targetCourseId = courseId,
-): Wish {
+): WishState {
   return {
     uuid: crypto.randomUUID(),
     userId,
@@ -47,9 +47,9 @@ function makeWish(
 }
 
 function makeModuleWish(
-  overrides: Partial<Wish> = {},
+  overrides: Partial<WishState> = {},
   targetModuleId = moduleId,
-): Wish {
+): WishState {
   return {
     uuid: crypto.randomUUID(),
     userId,
@@ -61,8 +61,8 @@ function makeModuleWish(
 }
 
 interface ErDeps {
-  courseWishes: Wish[];
-  moduleWishes: Wish[];
+  courseWishes: WishState[];
+  moduleWishes: WishState[];
   place?: { courseId: string; isFirst: boolean; isLast: boolean };
   matchedCourseIds?: string[];
   sameModuleIds?: string[];

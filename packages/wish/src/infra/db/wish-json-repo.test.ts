@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Wish, WishTarget } from '@u7-scl/domain/wish';
+import type { WishState, WishTarget } from '@u7-scl/domain/wish';
 import { WishJsonRepo } from './wish-json-repo';
 
 const tmpDir = mkdtempSync('/tmp/wish-json-repo-test-');
@@ -14,7 +14,7 @@ function makeTarget(courseId = crypto.randomUUID()): WishTarget {
   return { kind: 'course', courseId };
 }
 
-function makeWish(overrides: Partial<Wish> = {}): Wish {
+function makeWish(overrides: Partial<WishState> = {}): WishState {
   return {
     uuid: crypto.randomUUID(),
     userId: crypto.randomUUID(),

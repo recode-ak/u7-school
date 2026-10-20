@@ -2,17 +2,16 @@ import type { User } from '@u7-scl/app/domain';
 import type {
   ListUserWishesCmd,
   ListUserWishesCmdMeta,
-  Wish,
 } from '@u7-scl/domain/wish';
 import {
   ListUserWishesCmdSchema,
   WishAr,
-  WishSchema,
+  WishState,
 } from '@u7-scl/domain/wish';
 import * as v from 'valibot';
 import { WishUseCase } from '../wish-uc';
 
-const WishesOutputSchema = v.array(WishSchema);
+const WishesOutputSchema = v.array(WishState);
 
 /**
  * Use-case списка желаний пользователя (query).
@@ -34,7 +33,10 @@ export class ListUserWishesUc extends WishUseCase<ListUserWishesCmdMeta> {
   protected readonly inputSchema = ListUserWishesCmdSchema;
   protected readonly outputSchema = WishesOutputSchema;
 
-  async execute(_command: ListUserWishesCmd, actor: User): Promise<Wish[]> {
+  async execute(
+    _command: ListUserWishesCmd,
+    actor: User,
+  ): Promise<WishState[]> {
     return this.repo.getByUser(actor.uuid);
   }
 }

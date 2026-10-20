@@ -87,7 +87,7 @@
 - **Критерий снятия:** маркер `DEBT-17` удалён, перенесённые файлы не импортируют `@u7-scl/app`
 
 ### DEBT-21: импорты `@u7-scl/core` в domain/wish
-- **Место:** `packages/domain/src/wish/**` (`module.ts`, `wish/{a-root,entity,errors,events}.ts`; подпути `core/domain`, `core/shared`)
+- **Место:** `packages/domain/src/wish/**` (`module.ts`, `wish/{a-root,errors,events}.ts`; подпути `core/domain`, `core/shared`; `WishArMeta` — в `a-root.ts`)
 - **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `ConflictError`, `NotFoundError`, `ApiModuleMeta`, `isoNow` живут в `core`; механический перенос не меняет базовые классы.
 - **Погашает:** `dmg-core-extract` (Ф4) и `golden-wish`
 - **Критерий снятия:** в `packages/domain/src/wish/**` нет маркеров `DEBT-21` и импортов `@u7-scl/core`
@@ -194,11 +194,11 @@
 - **Погашает:** перевод `stream` на Def (логика — в Policy/DQS)
 - **Критерий снятия:** маркеры `DEBT-20` и `biome-ignore` удалены, методы вынесены по правилам
 
-### DEBT-24: `v.isoDateTime` в схеме domain/wish (DOM-12)
-- **Место:** `packages/domain/src/wish/wish/entity.ts` (`createdAt`, `updatedAt`; `biome-ignore lint/plugin`)
-- **Причина:** схема перенесена без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что DEBT-5, DEBT-9, DEBT-14, DEBT-19).
+### DEBT-24: базовые поля и `v.isoDateTime` в схеме domain/wish (DOM-11, DOM-12)
+- **Место:** `packages/domain/src/wish/wish/wish.state.ts` (`uuid`, `createdAt`, `updatedAt`; `biome-ignore lint/plugin`)
+- **Причина:** схема перенесена без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что DEBT-5, DEBT-9, DEBT-14, DEBT-19); DOM-11 — базовые поля только через `BaseEntityFields`. Переход на `BaseEntityFields` и `F.timestamp` — Ф2 golden-wish (вместе с `WishArDef`: фолбэк `updatedAt` и числовые даты требуют Ar на `dmg-core`).
 - **Погашает:** `golden-wish` (перевод `wish` на Def, `F.timestamp`)
-- **Критерий снятия:** маркеры `DEBT-24` и `biome-ignore` удалены, даты описаны через поля Def
+- **Критерий снятия:** маркеры `DEBT-24` и `biome-ignore` удалены, базовые поля — `...BaseEntityFields`, даты описаны через поля Def
 
 ### DEBT-28: `v.isoDateTime` в схеме domain/peer-review (DOM-12)
 - **Место:** `packages/domain/src/peer-review/shared/schema.ts` (`isoMinuteField`; `biome-ignore lint/plugin`)

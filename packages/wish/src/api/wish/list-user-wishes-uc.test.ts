@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { Role, type User } from '@u7-scl/app/domain';
-import type { Wish, WishApiModuleResolver } from '@u7-scl/domain/wish';
+import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
 import { ListUserWishesUc } from './list-user-wishes-uc';
 
 function makeUser(uuid: string): User {
@@ -13,8 +13,10 @@ function makeUser(uuid: string): User {
   };
 }
 
-function setupUc(states: Wish[] = []) {
-  const getByUser = mock(async (_userId: string): Promise<Wish[]> => states);
+function setupUc(states: WishState[] = []) {
+  const getByUser = mock(
+    async (_userId: string): Promise<WishState[]> => states,
+  );
 
   const uc = new ListUserWishesUc();
   uc.init({ wishRepo: { getByUser } } as unknown as WishApiModuleResolver);
@@ -23,9 +25,9 @@ function setupUc(states: Wish[] = []) {
 }
 
 function makeWish(
-  overrides: Partial<Wish> = {},
+  overrides: Partial<WishState> = {},
   targetCourseId = crypto.randomUUID(),
-): Wish {
+): WishState {
   return {
     uuid: crypto.randomUUID(),
     userId: crypto.randomUUID(),

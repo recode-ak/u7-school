@@ -1,24 +1,27 @@
-import type { Wish, WishStatus, WishTarget } from './entity';
+import type { WishState, WishStatus, WishTarget } from './wish.state';
 
 /** Интерфейс репозитория желаний. */
 export interface WishRepo {
   /** Сохранить желание. */
-  save(state: Wish): Promise<void>;
+  save(state: WishState): Promise<void>;
 
   /** Получить желание по UUID. */
-  getByUuid(uuid: string): Promise<Wish | undefined>;
+  getByUuid(uuid: string): Promise<WishState | undefined>;
 
   /** Получить последнее желание пользователя по цели. */
   getByUserAndTarget(
     userId: string,
     target: WishTarget,
-  ): Promise<Wish | undefined>;
+  ): Promise<WishState | undefined>;
 
   /** Получить все желания пользователя по цели (в любом статусе). */
-  findAllByUserAndTarget(userId: string, target: WishTarget): Promise<Wish[]>;
+  findAllByUserAndTarget(
+    userId: string,
+    target: WishTarget,
+  ): Promise<WishState[]>;
 
   /** Получить все желания пользователя. */
-  getByUser(userId: string): Promise<Wish[]>;
+  getByUser(userId: string): Promise<WishState[]>;
 
   /**
    * Все желания по виду цели (независимо от пользователя).
@@ -28,5 +31,5 @@ export interface WishRepo {
   findAllByKind(
     kind: 'course' | 'module',
     statuses?: WishStatus[],
-  ): Promise<Wish[]>;
+  ): Promise<WishState[]>;
 }

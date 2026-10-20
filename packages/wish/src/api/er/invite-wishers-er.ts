@@ -2,9 +2,9 @@ import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
 import { isoNow } from '@u7-scl/core/shared';
 import type {
-  Wish,
   WishApiModuleResolver,
   WishInvitedEvent,
+  WishState,
 } from '@u7-scl/domain/wish';
 import type { StreamCreatedEvent } from '@u7-scl/stream/domain';
 
@@ -50,7 +50,9 @@ export class InviteWishersEr extends EventReaction<
         'confirmed',
       ]);
       const courseCandidates = candidates.filter(
-        (w): w is Wish & { target: { kind: 'course'; courseId: string } } =>
+        (
+          w,
+        ): w is WishState & { target: { kind: 'course'; courseId: string } } =>
           w.target.kind === 'course',
       );
       const matched = new Set(
@@ -74,7 +76,9 @@ export class InviteWishersEr extends EventReaction<
     ]);
     if (candidates.length > 0) {
       const moduleCandidates = candidates.filter(
-        (w): w is Wish & { target: { kind: 'module'; moduleId: string } } =>
+        (
+          w,
+        ): w is WishState & { target: { kind: 'module'; moduleId: string } } =>
           w.target.kind === 'module',
       );
       const matched = new Set(
@@ -93,7 +97,7 @@ export class InviteWishersEr extends EventReaction<
   }
 
   /** Публикация события приглашения. Поток недоступен — пропуск. */
-  async #invite(wish: Wish, streamId: string): Promise<void> {
+  async #invite(wish: WishState, streamId: string): Promise<void> {
     const stream = await this.resolve.streamFacade.getStream(streamId);
     if (!stream) return;
 

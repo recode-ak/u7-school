@@ -1,6 +1,6 @@
 import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
-import type { Wish, WishApiModuleResolver } from '@u7-scl/domain/wish';
+import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
 import { WishAr } from '@u7-scl/domain/wish';
 import type { StudentEnrolledEvent } from '@u7-scl/stream/domain';
 
@@ -39,11 +39,11 @@ export class FulfillWishEr extends EventReaction<
     }
 
     const courseCandidates = active.filter(
-      (w): w is Wish & { target: { kind: 'course'; courseId: string } } =>
+      (w): w is WishState & { target: { kind: 'course'; courseId: string } } =>
         w.target.kind === 'course',
     );
     const moduleCandidates = active.filter(
-      (w): w is Wish & { target: { kind: 'module'; moduleId: string } } =>
+      (w): w is WishState & { target: { kind: 'module'; moduleId: string } } =>
         w.target.kind === 'module',
     );
 
@@ -76,7 +76,7 @@ export class FulfillWishEr extends EventReaction<
     }
   }
 
-  async #fulfill(wish: Wish): Promise<void> {
+  async #fulfill(wish: WishState): Promise<void> {
     const ar = new WishAr(wish);
     ar.fulfill();
     await this.resolve.wishRepo.save(ar.state);

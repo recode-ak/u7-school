@@ -1,4 +1,4 @@
-import type { WishStatus } from './entity';
+import type { WishStatus } from './wish.state';
 
 /** Активные статусы желания — блокируют повторное создание на тот же target. */
 const ACTIVE_WISH_STATUSES: readonly WishStatus[] = [

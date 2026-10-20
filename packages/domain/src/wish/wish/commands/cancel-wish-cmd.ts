@@ -1,11 +1,11 @@
 import { CourseSchema, ModuleSchema } from '@u7-scl/domain/course';
 import * as v from 'valibot';
-import type { WishArMeta } from '../entity';
+import type { WishArMeta } from '../a-root';
 import type { WishNotFoundUcError } from '../errors';
 
 /**
  * Схема команды отмены желания.
- * Дискриминированный вариант по `kind` (зеркально WishTargetSchema):
+ * Дискриминированный вариант по `kind` (зеркально WishTarget):
  * цель отмены явна в команде.
  */
 export const CancelWishCmdSchema = v.variant('kind', [

@@ -2,8 +2,8 @@ import { describe, expect, mock, test } from 'bun:test';
 import { Role, type User } from '@u7-scl/app/domain';
 import { AppException } from '@u7-scl/core/domain';
 import type {
-  Wish,
   WishApiModuleResolver,
+  WishState,
   WishStatus,
 } from '@u7-scl/domain/wish';
 import coursePools from '../../../../domain/src/wish/wish/pools/course.json';
@@ -24,14 +24,17 @@ const pooledCoursePool =
   coursePools[pooledCourseId as keyof typeof coursePools];
 
 function makeWishRepo() {
-  const save = mock(async (_wish: Wish): Promise<void> => {});
+  const save = mock(async (_wish: WishState): Promise<void> => {});
   const getByUuid = mock(
-    async (_uuid: string): Promise<Wish | undefined> => undefined,
+    async (_uuid: string): Promise<WishState | undefined> => undefined,
   );
   const findAllByUserAndTarget = mock(
-    async (_userId: string, _target: Wish['target']): Promise<Wish[]> => [],
+    async (
+      _userId: string,
+      _target: WishState['target'],
+    ): Promise<WishState[]> => [],
   );
-  const getByUser = mock(async (_userId: string): Promise<Wish[]> => []);
+  const getByUser = mock(async (_userId: string): Promise<WishState[]> => []);
 
   return { save, getByUuid, findAllByUserAndTarget, getByUser };
 }
@@ -74,7 +77,7 @@ function makeActiveWish(
   userId: string,
   courseId: string,
   status: WishStatus,
-): Wish {
+): WishState {
   return {
     uuid: crypto.randomUUID(),
     userId,
@@ -98,7 +101,7 @@ describe('CreateCourseWishUc', () => {
       expect(result).toEqual({ outcome: 'instant' });
       expect(wishRepo.save).toHaveBeenCalledTimes(1);
       const saved = (wishRepo.save as ReturnType<typeof mock>).mock
-        .calls[0]![0] as Wish;
+        .calls[0]![0] as WishState;
       expect(saved.status).toBe('expressed');
       expect(saved.target).toEqual({
         kind: 'course',
@@ -117,7 +120,7 @@ describe('CreateCourseWishUc', () => {
       expect(result).toEqual({ outcome: 'questionnaire' });
       expect(wishRepo.save).toHaveBeenCalledTimes(1);
       const saved = (wishRepo.save as ReturnType<typeof mock>).mock
-        .calls[0]![0] as Wish;
+        .calls[0]![0] as WishState;
       expect(saved.status).toBe('pending');
       expect(startStandard).toHaveBeenCalledTimes(1);
       const [calledActor, calledPool, calledOwner] = (
@@ -165,7 +168,7 @@ describe('CreateCourseWishUc', () => {
     test('активное желание на другой курс не блокирует', async () => {
       const { wishRepo, uc } = setupUc();
       wishRepo.findAllByUserAndTarget.mockImplementationOnce(
-        async (_userId: string, target: Wish['target']) =>
+        async (_userId: string, target: WishState['target']) =>
           target.kind === 'course' &&
           target.courseId !== plainCourseId &&
           target.courseId !== pooledCourseId

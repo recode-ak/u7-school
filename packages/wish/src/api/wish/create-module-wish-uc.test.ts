@@ -1,8 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { Role, type User } from '@u7-scl/app/domain';
 import type {
-  Wish,
   WishApiModuleResolver,
+  WishState,
   WishStatus,
 } from '@u7-scl/domain/wish';
 import { CreateModuleWishUc } from './create-module-wish-uc';
@@ -20,21 +20,23 @@ function makeUser(uuid: string): User {
 const moduleId = '33333333-3333-4333-8333-333333333333';
 const courseId = '44444444-4444-4444-8444-444444444444';
 
-function makeWishRepo(existing?: Wish) {
-  const save = mock(async (_wish: Wish): Promise<void> => {});
+function makeWishRepo(existing?: WishState) {
+  const save = mock(async (_wish: WishState): Promise<void> => {});
   const getByUuid = mock(
-    async (_uuid: string): Promise<Wish | undefined> => undefined,
+    async (_uuid: string): Promise<WishState | undefined> => undefined,
   );
   const findAllByUserAndTarget = mock(
-    async (_userId: string, _target: Wish['target']): Promise<Wish[]> =>
-      existing ? [existing] : [],
+    async (
+      _userId: string,
+      _target: WishState['target'],
+    ): Promise<WishState[]> => (existing ? [existing] : []),
   );
-  const getByUser = mock(async (_userId: string): Promise<Wish[]> => []);
+  const getByUser = mock(async (_userId: string): Promise<WishState[]> => []);
   return { save, getByUuid, findAllByUserAndTarget, getByUser };
 }
 
 function setupUc(
-  opts: { existing?: Wish; place?: { courseId: string } | undefined } = {},
+  opts: { existing?: WishState; place?: { courseId: string } | undefined } = {},
 ) {
   const wishRepo = makeWishRepo(opts.existing);
   const getModulePlace = mock(
@@ -56,7 +58,7 @@ function setupUc(
   return { wishRepo, getModulePlace, startStandard, uc };
 }
 
-function makeActiveWish(status: WishStatus): Wish {
+function makeActiveWish(status: WishStatus): WishState {
   return {
     uuid: crypto.randomUUID(),
     userId: crypto.randomUUID(),
@@ -79,7 +81,7 @@ describe('CreateModuleWishUc', () => {
 
     expect(wishRepo.save).toHaveBeenCalledTimes(1);
     const saved = (wishRepo.save as ReturnType<typeof mock>).mock
-      .calls[0]![0] as Wish;
+      .calls[0]![0] as WishState;
     expect(saved.status).toBe('expressed');
     expect(saved.target).toEqual({ kind: 'module', moduleId });
     expect(saved.userId).toBe(actorId);

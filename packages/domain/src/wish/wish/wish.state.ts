@@ -1,7 +1,4 @@
-// DEBT-21
-import type { ArMeta } from '@u7-scl/core/domain';
-import { CourseSchema, ModuleSchema } from '@u7-scl/domain/course';
-import { UserSchema } from '@u7-scl/domain/user';
+import { F } from 'dmg-core';
 import * as v from 'valibot';
 
 /**
@@ -10,12 +7,21 @@ import * as v from 'valibot';
  * - `course` — желание пройти курс (вся программа, начиная со стартового модуля);
  * - `module` — желание пройти конкретный модуль (следующий/тот же).
  */
-export const WishTargetSchema = v.variant('kind', [
-  v.object({ kind: v.literal('course'), courseId: CourseSchema.entries.uuid }),
-  v.object({ kind: v.literal('module'), moduleId: ModuleSchema.entries.uuid }),
-]);
+export const WishTarget = v.pipe(
+  v.variant('kind', [
+    v.object({
+      kind: v.pipe(v.literal('course'), v.description('Цель — курс')),
+      courseId: F.uuid('курса'),
+    }),
+    v.object({
+      kind: v.pipe(v.literal('module'), v.description('Цель — модуль')),
+      moduleId: F.uuid('модуля'),
+    }),
+  ]),
+  v.description('Цель желания'),
+);
 
-export type WishTarget = v.InferOutput<typeof WishTargetSchema>;
+export type WishTarget = v.InferOutput<typeof WishTarget>;
 
 /**
  * Статус желания.
@@ -26,35 +32,31 @@ export type WishTarget = v.InferOutput<typeof WishTargetSchema>;
  * - `abandoned` — анкета брошена (из pending);
  * - `fulfilled` — реализовано (трек C2).
  */
-export const WishStatusSchema = v.picklist(
+export const WishStatus = F.picklist(
   ['expressed', 'pending', 'confirmed', 'cancelled', 'abandoned', 'fulfilled'],
-  'Некорректный статус желания',
+  'Статус желания',
 );
 
-export type WishStatus = v.InferOutput<typeof WishStatusSchema>;
+export type WishStatus = v.InferOutput<typeof WishStatus>;
 
-/** Схема желания. */
-export const WishSchema = v.object({
+/** Entity желания — единственное место структуры состояния. */
+export const WishState = v.object({
+  // biome-ignore lint/plugin: базовые поля без BaseEntityFields до Ф2 — DEBT-24
   uuid: v.pipe(v.string(), v.uuid('Некорректный формат UUID')),
-  userId: UserSchema.entries.uuid,
-  target: WishTargetSchema,
-  status: WishStatusSchema,
+  userId: F.uuid('пользователя'),
+  target: WishTarget,
+  status: WishStatus,
+  // biome-ignore lint/plugin: базовые поля без BaseEntityFields до Ф2 — DEBT-24
   createdAt: v.pipe(
     v.string(),
     // biome-ignore lint/plugin: перенос без изменения схем, ISO-даты — DEBT-24
     v.isoDateTime('Некорректный формат даты создания'),
   ),
+  // biome-ignore lint/plugin: базовые поля без BaseEntityFields до Ф2 — DEBT-24
   updatedAt: v.optional(
     // biome-ignore lint/plugin: перенос без изменения схем, ISO-даты — DEBT-24
     v.pipe(v.string(), v.isoDateTime('Некорректный формат даты обновления')),
   ),
 });
 
-export type Wish = v.InferOutput<typeof WishSchema>;
-
-/** Метаданные агрегата Wish. */
-export interface WishArMeta extends ArMeta {
-  name: 'Wish';
-  label: 'Желание';
-  state: Wish;
-}
+export type WishState = v.InferOutput<typeof WishState>;

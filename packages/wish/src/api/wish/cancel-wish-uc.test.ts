@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { Role, type User } from '@u7-scl/app/domain';
-import type { Wish, WishApiModuleResolver } from '@u7-scl/domain/wish';
+import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
 import { CancelWishUc } from './cancel-wish-uc';
 
 function makeUser(uuid: string): User {
@@ -14,12 +14,12 @@ function makeUser(uuid: string): User {
 }
 
 function setupUc() {
-  const save = mock(async (_wish: Wish): Promise<void> => {});
+  const save = mock(async (_wish: WishState): Promise<void> => {});
   const getByUserAndTarget = mock(
     async (
       _userId: string,
-      _target: Wish['target'],
-    ): Promise<Wish | undefined> => undefined,
+      _target: WishState['target'],
+    ): Promise<WishState | undefined> => undefined,
   );
 
   const wishRepo = { save, getByUserAndTarget };
@@ -30,7 +30,7 @@ function setupUc() {
   return { save, getByUserAndTarget, uc };
 }
 
-function makeExpressedWish(userId: string, courseId: string): Wish {
+function makeExpressedWish(userId: string, courseId: string): WishState {
   return {
     uuid: crypto.randomUUID(),
     userId,
@@ -54,7 +54,8 @@ describe('CancelWishUc', () => {
     await uc.handle({ kind: 'course', courseId }, actor);
 
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as ReturnType<typeof mock>).mock.calls[0]![0] as Wish;
+    const saved = (save as ReturnType<typeof mock>).mock
+      .calls[0]![0] as WishState;
     expect(saved.status).toBe('cancelled');
   });
 
@@ -68,7 +69,8 @@ describe('CancelWishUc', () => {
     await uc.handle({ kind: 'course', courseId }, actor);
 
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as ReturnType<typeof mock>).mock.calls[0]![0] as Wish;
+    const saved = (save as ReturnType<typeof mock>).mock
+      .calls[0]![0] as WishState;
     expect(saved.status).toBe('cancelled');
   });
 
@@ -122,7 +124,8 @@ describe('CancelWishUc', () => {
       moduleId,
     });
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as ReturnType<typeof mock>).mock.calls[0]![0] as Wish;
+    const saved = (save as ReturnType<typeof mock>).mock
+      .calls[0]![0] as WishState;
     expect(saved.status).toBe('cancelled');
   });
 

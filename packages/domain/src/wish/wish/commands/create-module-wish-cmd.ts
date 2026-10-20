@@ -1,6 +1,6 @@
 import { ModuleSchema } from '@u7-scl/domain/course';
 import * as v from 'valibot';
-import type { WishArMeta } from '../entity';
+import type { WishArMeta } from '../a-root';
 import type {
   ModuleNotFoundUcError,
   WishAlreadyExistsUcError,
