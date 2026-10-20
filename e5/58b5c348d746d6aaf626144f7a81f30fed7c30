@@ -1,0 +1,1 @@
+Ф2 golden-wish: ревью reviewer без error; правки warn/info: тест сохранности legacy-записи (wish-json-repo.test.ts), unwrapInfallible в legacy-reject.ts, Result из dmg-core (+dependency), гайд aggregate, TR-1.
