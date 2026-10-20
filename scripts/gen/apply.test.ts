@@ -143,3 +143,104 @@ test('dry-run не меняет файл с маркером', () => {
   expect(r.edited).toEqual([p('index.ts')]);
   expect(readFileSync(p('index.ts'), 'utf8')).toBe('// gen:exports\n');
 });
+
+test('строки import/export вставляются в порядке путей источника (как biome)', () => {
+  writeFileSync(
+    p('index.ts'),
+    [
+      "export { A } from './a/a';",
+      "export { T } from './t/t';",
+      '// gen:exports',
+      '',
+    ].join('\n'),
+  );
+  const mk = (line: string) => ({
+    path: p('index.ts'),
+    marker: '// gen:exports',
+    line,
+  });
+  applyPlan(
+    {
+      files: [],
+      edits: [
+        mk("export { P } from './p';"),
+        mk("export { Z } from './z/z';"),
+        mk("export { B } from '../b';"),
+      ],
+    },
+    { write: true },
+  );
+  expect(readFileSync(p('index.ts'), 'utf8')).toBe(
+    [
+      "export { B } from '../b';",
+      "export { A } from './a/a';",
+      "export { P } from './p';",
+      "export { T } from './t/t';",
+      "export { Z } from './z/z';",
+      '// gen:exports',
+      '',
+    ].join('\n'),
+  );
+});
+
+test('импорты: пакет раньше относительных; блок отделён комментарием выше', () => {
+  writeFileSync(
+    p('m.ts'),
+    [
+      "import { d } from 'dmg-core';",
+      "import { f } from './f';",
+      '// gen:defs:imports',
+      '',
+    ].join('\n'),
+  );
+  const edit = (line: string) => ({
+    path: p('m.ts'),
+    marker: '// gen:defs:imports',
+    line,
+  });
+  applyPlan(
+    {
+      files: [],
+      edits: [
+        edit("import { a } from './a/a';"),
+        edit("import { v } from 'valibot';"),
+      ],
+    },
+    { write: true },
+  );
+  expect(readFileSync(p('m.ts'), 'utf8')).toBe(
+    [
+      "import { d } from 'dmg-core';",
+      "import { v } from 'valibot';",
+      "import { a } from './a/a';",
+      "import { f } from './f';",
+      '// gen:defs:imports',
+      '',
+    ].join('\n'),
+  );
+});
+
+test('порядок путей: точка раньше дефиса, как у biome', () => {
+  writeFileSync(p('i.ts'), "export { F } from './s.facade';\n// gen:exports\n");
+  applyPlan(
+    {
+      files: [],
+      edits: [
+        {
+          path: p('i.ts'),
+          marker: '// gen:exports',
+          line: "export { N } from './s-nav.dqs';",
+        },
+        {
+          path: p('i.ts'),
+          marker: '// gen:exports',
+          line: "export { M } from './s.module';",
+        },
+      ],
+    },
+    { write: true },
+  );
+  expect(readFileSync(p('i.ts'), 'utf8')).toBe(
+    "export { F } from './s.facade';\nexport { M } from './s.module';\nexport { N } from './s-nav.dqs';\n// gen:exports\n",
+  );
+});

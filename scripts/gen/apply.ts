@@ -4,6 +4,39 @@ import { dirname } from 'node:path';
 import { GenError } from './cli.ts';
 import type { ApplyResult, GenPlan, PlannedEdit } from './plan.ts';
 
+const SOURCE_LINE = /^(?:import|export)\b.*\bfrom '([^']+)';$/;
+
+/** Порядок biome: пакеты раньше относительных путей, дальше по строке пути. */
+function sourceOrder(line: string): [number, string] | undefined {
+  const source = SOURCE_LINE.exec(line.trim())?.[1];
+  return source === undefined
+    ? undefined
+    : [source.startsWith('.') ? 1 : 0, source];
+}
+
+/** Биом ставит `.` раньше `-` в путях (`./a.facade` < `./a-b.dcs`). */
+const pathKey = (path: string) =>
+  path.replaceAll('.', '\u0001').replaceAll('-', '\u0002');
+
+function isBefore(a: [number, string], b: [number, string]): boolean {
+  if (a[0] !== b[0]) return a[0] < b[0];
+  return pathKey(a[1]) < pathKey(b[1]);
+}
+
+/** Куда вставить `line`: в отсортированный блок import/export над маркером. */
+function insertionIndex(lines: string[], marker: number, line: string): number {
+  const order = sourceOrder(line);
+  if (order === undefined) return marker;
+  let start = marker;
+  while (start > 0 && sourceOrder(lines[start - 1] ?? '') !== undefined)
+    start--;
+  for (let i = start; i < marker; i++) {
+    const other = sourceOrder(lines[i] ?? '');
+    if (other && isBefore(order, other)) return i;
+  }
+  return marker;
+}
+
 /** Результат правки одного маркера: новый текст или причина отказа. */
 function insertBeforeMarker(
   text: string,
@@ -15,7 +48,7 @@ function insertBeforeMarker(
   }
   const at = lines.findIndex((l) => l.trim() === edit.marker);
   if (at === -1) return { skipped: 'no-marker' };
-  lines.splice(at, 0, edit.line);
+  lines.splice(insertionIndex(lines, at, edit.line), 0, edit.line);
   return { text: lines.join('\n') };
 }
 

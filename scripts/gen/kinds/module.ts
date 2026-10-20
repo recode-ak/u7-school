@@ -45,6 +45,7 @@ export const ${P}FacadeDef = defineFacade({
 `;
 
   const indexSrc = `// Публичный API модуля ${m}.
+
 export { ${P}FacadeDef } from './${m}.facade';
 export { ${P}ModuleDef } from './${m}.module';
 // gen:exports
