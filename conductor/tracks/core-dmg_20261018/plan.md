@@ -125,13 +125,13 @@
 - DOM-11: автоматизирована только часть «базовые поля — `...BaseEntityFields`/`F.*`»; «DTO выводятся из схемы» остаётся в review.
 
 
-## Фаза 6: Документация
+## Фаза 6: Документация [checkpoint: 00fa90ce]
 
 - [x] Task: Зафиксировать API по факту: `manifests.md`, `errors-result.md`, `caller.md`, `testing.md` (`expectErr`, `now()`), `layers.md` (подпуть `dmg`)
 - [x] Task: `rules.md` — проверки переведены из `review` в фактические `lint`/`test`; убрать «до трека core всё фактически review»
 - [x] Task: `decisions.md` — новые решения (подпуть `@u7-scl/core/dmg` и его переименование после legacy, прочие по ходу); `tech-stack.md` — GritQL-плагины biome
 - [x] Task: `migration.md` — трек 1 отмечен; что разблокировано (generators, golden-wish)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
 ## Фаза 7: Вынос платформы в `dmg-core`
 
