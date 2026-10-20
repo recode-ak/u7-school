@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { defineUseCase } from '../../../../../domain/contracts/define-use-case';
+import { defineUseCase } from '#dmg/domain/contracts/define-use-case';
 import { TaskArDef } from '../task.ar';
 import { TaskErrors } from '../task.errors';
 import { TaskEvents } from '../task.events';

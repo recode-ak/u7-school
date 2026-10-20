@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { normalize } from '../../../graph/normalize';
+import { normalize } from '#dmg/graph/normalize';
 import { TaskArDef } from './task/task.ar';
 import { TodoModuleDef } from './todo.module';
 

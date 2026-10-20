@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { InProcJobExecutor } from '../../../infra/in-proc-job-executor';
-import type { DomainError } from '../../kernel/errors/error';
-import { ok, type Result } from '../../kernel/result/result';
-import { expectErr, expectOk, resetNow, setNow } from '../../testing';
-import { testAppContext } from '../../testing/app-context';
+import type { DomainError } from '#dmg/kernel/errors/error';
+import { ok, type Result } from '#dmg/kernel/result/result';
+import { testAppContext } from '#dmg/testing/app-context';
 import {
   ArchiveDoneTasksJobDef,
   type TaskAr,
   TaskEvents,
-} from '../../testing/example/todo';
+} from '#dmg/testing/example/todo/index';
+import { expectErr, expectOk, resetNow, setNow } from '#dmg/testing/index';
+import { InProcJobExecutor } from '../../../infra/in-proc-job-executor';
 import { MemoryTasks, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
 import type { Trace } from '../trace';

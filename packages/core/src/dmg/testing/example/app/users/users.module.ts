@@ -1,9 +1,6 @@
-import type { ModuleDeps } from '../../../../app/context';
-import {
-  ModuleFromDef,
-  type ModuleMap,
-} from '../../../../app/module/module-from-def';
-import { UsersModuleDef } from '../../users';
+import type { ModuleDeps } from '#dmg/app/context';
+import { ModuleFromDef, type ModuleMap } from '#dmg/app/module/module-from-def';
+import { UsersModuleDef } from '#dmg/testing/example/users/index';
 import type { ExampleUser } from '../app-user';
 import { RemoveUserUc } from './user/uc/remove-user.uc';
 import type { UserRepo } from './user/user.repo';

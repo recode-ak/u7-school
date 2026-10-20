@@ -1,4 +1,4 @@
-import type { AnyAggregateDef } from '../../domain/aggregate/define-aggregate';
+import type { AnyAggregateDef } from '#dmg/domain/aggregate/define-aggregate';
 
 /**
  * Минимальный контракт репозитория для UoW. Порт репозитория модуля

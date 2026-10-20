@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test';
-import { resetNow, setNow } from '../../testing/clock';
+import { resetNow, setNow } from '#dmg/testing/clock';
 import { now } from './now';
 
 afterEach(() => resetNow());

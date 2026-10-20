@@ -1,6 +1,6 @@
-import { implementFacade } from '../../../../app/facade/implement-facade';
-import { ok } from '../../../../kernel/result/result';
-import { TaskErrors, TodoFacadeDef } from '../../todo';
+import { implementFacade } from '#dmg/app/facade/implement-facade';
+import { ok } from '#dmg/kernel/result/result';
+import { TaskErrors, TodoFacadeDef } from '#dmg/testing/example/todo/index';
 import type { TodoDeps } from './todo.module';
 
 /**

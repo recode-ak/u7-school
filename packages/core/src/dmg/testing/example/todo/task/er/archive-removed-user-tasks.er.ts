@@ -1,5 +1,5 @@
-import { defineEventReaction } from '../../../../../domain/contracts/define-event-reaction';
-import { UserEvents } from '../../../users';
+import { defineEventReaction } from '#dmg/domain/contracts/define-event-reaction';
+import { UserEvents } from '#dmg/testing/example/users/index';
 import { TaskArDef } from '../task.ar';
 import { TaskEvents } from '../task.events';
 

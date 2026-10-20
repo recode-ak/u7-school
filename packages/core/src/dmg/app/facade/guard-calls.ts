@@ -1,4 +1,4 @@
-import type { AnyFacadeDef } from '../../domain/contracts/define-facade';
+import type { AnyFacadeDef } from '#dmg/domain/contracts/define-facade';
 import { facadeDefOf } from './implement-facade';
 
 /**

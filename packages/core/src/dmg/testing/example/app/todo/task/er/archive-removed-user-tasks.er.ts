@@ -1,11 +1,11 @@
 import {
   type ReactionEnvelopeOf,
   ReactionFromDef,
-} from '../../../../../../app/reaction/reaction-from-def';
-import type { UnitOfWork } from '../../../../../../app/uow/unit-of-work';
-import { ok } from '../../../../../../kernel/result/result';
-import { ArchiveRemovedUserTasksErDef } from '../../../../todo';
-import type { TodoDeps } from '../../todo.module';
+} from '#dmg/app/reaction/reaction-from-def';
+import type { UnitOfWork } from '#dmg/app/uow/unit-of-work';
+import { ok } from '#dmg/kernel/result/result';
+import type { TodoDeps } from '#dmg/testing/example/app/todo/todo.module';
+import { ArchiveRemovedUserTasksErDef } from '#dmg/testing/example/todo/index';
 
 type Def = typeof ArchiveRemovedUserTasksErDef;
 

@@ -1,4 +1,4 @@
-import { type Caller, subjectOf } from '../../kernel/caller/caller';
+import { type Caller, subjectOf } from '#dmg/kernel/caller/caller';
 
 /** Решение политики: разрешено или отказ с именем правила и текстом. */
 export type Decision =

@@ -1,4 +1,4 @@
-import type { Result } from '../../kernel/result/result';
+import type { Result } from '#dmg/kernel/result/result';
 
 type MutatingKeys<T> = {
   [K in keyof T]: T[K] extends (...args: never[]) => Result<unknown, unknown>

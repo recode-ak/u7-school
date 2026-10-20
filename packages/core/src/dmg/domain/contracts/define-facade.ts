@@ -1,5 +1,5 @@
-import type { AnyErrorDef, ErrorOf } from '../../kernel/errors/define-errors';
-import type { Result } from '../../kernel/result/result';
+import type { AnyErrorDef, ErrorOf } from '#dmg/kernel/errors/define-errors';
+import type { Result } from '#dmg/kernel/result/result';
 
 /**
  * Метод фасада. Сигнатура (`~args`, `~returns`) живёт только в типе —

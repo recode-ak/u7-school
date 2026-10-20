@@ -1,8 +1,12 @@
-import type { UnitOfWork } from '../../../../../../app/uow/unit-of-work';
-import { UseCaseFromDef } from '../../../../../../app/use-case/use-case-from-def';
-import { ok } from '../../../../../../kernel/result/result';
-import { RemoveUserUcDef, type UserAr, UserErrors } from '../../../../users';
-import type { UsersDeps } from '../../users.module';
+import type { UnitOfWork } from '#dmg/app/uow/unit-of-work';
+import { UseCaseFromDef } from '#dmg/app/use-case/use-case-from-def';
+import { ok } from '#dmg/kernel/result/result';
+import type { UsersDeps } from '#dmg/testing/example/app/users/users.module';
+import {
+  RemoveUserUcDef,
+  type UserAr,
+  UserErrors,
+} from '#dmg/testing/example/users/index';
 
 type Loaded = { readonly user: UserAr };
 

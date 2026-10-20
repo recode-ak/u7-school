@@ -1,6 +1,6 @@
 import * as v from 'valibot';
-import { defineErrors } from '../../../../kernel/errors/define-errors';
-import { F } from '../../../../kernel/fields/fields';
+import { defineErrors } from '#dmg/kernel/errors/define-errors';
+import { F } from '#dmg/kernel/fields/fields';
 
 export const UserErrors = defineErrors('USER', {
   NOT_FOUND: {

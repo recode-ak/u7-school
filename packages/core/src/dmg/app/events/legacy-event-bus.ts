@@ -1,6 +1,6 @@
+import type { AnyEventDef } from '#dmg/domain/events/define-events';
 import type { DomainEvent as LegacyEvent } from '#domain/events/domain-event';
 import type { EventBus as LegacyBus } from '#domain/events/event-bus';
-import type { AnyEventDef } from '../../domain/events/define-events';
 import type { EventBus } from './event-bus';
 import type { EnvelopeOf, EventEnvelope } from './event-envelope';
 

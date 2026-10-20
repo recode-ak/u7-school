@@ -1,6 +1,6 @@
 import type * as v from 'valibot';
-import type { AnyErrorDef } from '../../kernel/errors/define-errors';
-import type { BaseEntityFields } from '../../kernel/fields/fields';
+import type { AnyErrorDef } from '#dmg/kernel/errors/define-errors';
+import type { BaseEntityFields } from '#dmg/kernel/fields/fields';
 import type { AnyEventDef } from '../events/define-events';
 
 /** Поля, без которых нет entity, — выводятся из `BaseEntityFields`. */

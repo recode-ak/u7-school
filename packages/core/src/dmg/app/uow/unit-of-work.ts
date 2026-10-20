@@ -1,10 +1,10 @@
-import type { AnyAggregateDef } from '../../domain/aggregate/define-aggregate';
+import type { AnyAggregateDef } from '#dmg/domain/aggregate/define-aggregate';
 import type {
   AnyEventDef,
   DomainEvent,
-} from '../../domain/events/define-events';
-import type { Caller } from '../../kernel/caller/caller';
-import { now } from '../../kernel/time/now';
+} from '#dmg/domain/events/define-events';
+import type { Caller } from '#dmg/kernel/caller/caller';
+import { now } from '#dmg/kernel/time/now';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
 import type { Trace } from '../trace';

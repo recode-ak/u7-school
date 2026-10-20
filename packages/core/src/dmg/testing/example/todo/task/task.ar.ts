@@ -2,10 +2,10 @@ import {
   Aggregate,
   type ErrorsOf,
   type EventsOf,
-} from '../../../../domain/aggregate/aggregate';
-import { defineAggregate } from '../../../../domain/aggregate/define-aggregate';
-import { ok, type Result } from '../../../../kernel/result/result';
-import { now } from '../../../../kernel/time/now';
+} from '#dmg/domain/aggregate/aggregate';
+import { defineAggregate } from '#dmg/domain/aggregate/define-aggregate';
+import { ok, type Result } from '#dmg/kernel/result/result';
+import { now } from '#dmg/kernel/time/now';
 import { TaskErrors } from './task.errors';
 import { TaskEvents } from './task.events';
 import { TaskState } from './task.state';

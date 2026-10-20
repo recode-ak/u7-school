@@ -2,11 +2,14 @@ import {
   JobFromDef,
   type JobReport,
   type JobRun,
-} from '../../../../../../app/job/job-from-def';
-import type { UnitOfWork } from '../../../../../../app/uow/unit-of-work';
-import { ok } from '../../../../../../kernel/result/result';
-import { ArchiveDoneTasksJobDef, type TaskAr } from '../../../../todo';
-import type { TodoDeps } from '../../todo.module';
+} from '#dmg/app/job/job-from-def';
+import type { UnitOfWork } from '#dmg/app/uow/unit-of-work';
+import { ok } from '#dmg/kernel/result/result';
+import type { TodoDeps } from '#dmg/testing/example/app/todo/todo.module';
+import {
+  ArchiveDoneTasksJobDef,
+  type TaskAr,
+} from '#dmg/testing/example/todo/index';
 
 export class ArchiveDoneTasksJob extends JobFromDef<
   typeof ArchiveDoneTasksJobDef,

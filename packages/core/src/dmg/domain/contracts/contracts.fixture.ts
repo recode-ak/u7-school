@@ -1,7 +1,7 @@
 // Фикстура контрактов для тестов dmg: по Def каждого вида.
 import * as v from 'valibot';
-import { defineErrors } from '../../kernel/errors/define-errors';
-import { BaseEntityFields, F } from '../../kernel/fields/fields';
+import { defineErrors } from '#dmg/kernel/errors/define-errors';
+import { BaseEntityFields, F } from '#dmg/kernel/fields/fields';
 import { defineAggregate } from '../aggregate/define-aggregate';
 import { defineEvents } from '../events/define-events';
 import { definePolicy } from '../policy/define-policy';

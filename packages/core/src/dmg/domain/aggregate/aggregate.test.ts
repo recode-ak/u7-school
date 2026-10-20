@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
-import { defineErrors } from '../../kernel/errors/define-errors';
-import { BaseEntityFields, F } from '../../kernel/fields/fields';
-import { ok, type Result } from '../../kernel/result/result';
-import { expectErr, expectOk, resetNow, setNow } from '../../testing';
+import { defineErrors } from '#dmg/kernel/errors/define-errors';
+import { BaseEntityFields, F } from '#dmg/kernel/fields/fields';
+import { ok, type Result } from '#dmg/kernel/result/result';
+import { expectErr, expectOk, resetNow, setNow } from '#dmg/testing/index';
 import { defineEvents } from '../events/define-events';
 import {
   Aggregate,

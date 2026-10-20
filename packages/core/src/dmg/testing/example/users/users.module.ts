@@ -1,4 +1,4 @@
-import { defineModule } from '../../../domain/contracts/define-module';
+import { defineModule } from '#dmg/domain/contracts/define-module';
 import { RemoveUserUcDef } from './user/uc/remove-user.uc';
 import { UserArDef } from './user/user.ar';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { allowed, type Caller, denied } from '../../../../index';
+import { allowed, type Caller, denied } from '#dmg/index';
 import { TaskAr } from './task.ar';
 import { type TaskCtx, TaskPolicy } from './task.policy';
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { expectErr, expectOk, resetNow, setNow } from '../../../index';
+import { expectErr, expectOk, resetNow, setNow } from '#dmg/testing/index';
 import { TaskAr } from './task.ar';
 import type { TaskState } from './task.state';
 

@@ -1,6 +1,6 @@
-import type { ReadonlyAr } from '../../../../domain/aggregate/readonly-ar';
-import { definePolicy } from '../../../../domain/policy/define-policy';
-import { anyOf, hasRole, rule } from '../../../../domain/policy/policy';
+import type { ReadonlyAr } from '#dmg/domain/aggregate/readonly-ar';
+import { definePolicy } from '#dmg/domain/policy/define-policy';
+import { anyOf, hasRole, rule } from '#dmg/domain/policy/policy';
 import type { TaskAr } from './task.ar';
 
 /** Контекст правил задачи: задача, над которой действие. */

@@ -1,10 +1,10 @@
-import type { UnitOfWork } from '../../../../../../app/uow/unit-of-work';
-import { UseCaseFromDef } from '../../../../../../app/use-case/use-case-from-def';
-import type { Caller } from '../../../../../../kernel/caller/caller';
-import { ok } from '../../../../../../kernel/result/result';
-import { CreateTaskUcDef, TaskAr } from '../../../../todo';
-import type { ExampleUser } from '../../../app-user';
-import type { TodoDeps } from '../../todo.module';
+import type { UnitOfWork } from '#dmg/app/uow/unit-of-work';
+import { UseCaseFromDef } from '#dmg/app/use-case/use-case-from-def';
+import type { Caller } from '#dmg/kernel/caller/caller';
+import { ok } from '#dmg/kernel/result/result';
+import type { ExampleUser } from '#dmg/testing/example/app/app-user';
+import type { TodoDeps } from '#dmg/testing/example/app/todo/todo.module';
+import { CreateTaskUcDef, TaskAr } from '#dmg/testing/example/todo/index';
 
 export class CreateTaskUc extends UseCaseFromDef<
   typeof CreateTaskUcDef,

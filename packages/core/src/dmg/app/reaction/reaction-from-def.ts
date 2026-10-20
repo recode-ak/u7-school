@@ -1,7 +1,7 @@
-import type { AnyEventReactionDef } from '../../domain/contracts/define-event-reaction';
-import { type SystemCaller, systemCaller } from '../../kernel/caller/caller';
-import type { DomainError } from '../../kernel/errors/error';
-import { ok, type Result } from '../../kernel/result/result';
+import type { AnyEventReactionDef } from '#dmg/domain/contracts/define-event-reaction';
+import { type SystemCaller, systemCaller } from '#dmg/kernel/caller/caller';
+import type { DomainError } from '#dmg/kernel/errors/error';
+import { ok, type Result } from '#dmg/kernel/result/result';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { EnvelopeOf } from '../events/event-envelope';

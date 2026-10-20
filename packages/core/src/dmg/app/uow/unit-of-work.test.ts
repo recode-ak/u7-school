@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { type Caller, systemCaller } from '../../kernel/caller/caller';
-import { expectOk, resetNow, setNow } from '../../testing';
-import { TaskAr, TaskArDef, TaskEvents } from '../../testing/example/todo';
-import { UserArDef } from '../../testing/example/users/user/user.ar';
+import { type Caller, systemCaller } from '#dmg/kernel/caller/caller';
+import { TaskAr, TaskArDef, TaskEvents } from '#dmg/testing/example/todo/index';
+import { UserArDef } from '#dmg/testing/example/users/user/user.ar';
+import { expectOk, resetNow, setNow } from '#dmg/testing/index';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
 import type { Trace } from '../trace';

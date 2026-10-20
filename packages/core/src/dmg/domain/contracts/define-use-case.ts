@@ -1,7 +1,7 @@
 import type * as v from 'valibot';
-import type { CallerKind } from '../../kernel/caller/caller';
-import type { CoreError } from '../../kernel/errors/core-errors';
-import type { AnyErrorDef, ErrorOf } from '../../kernel/errors/define-errors';
+import type { CallerKind } from '#dmg/kernel/caller/caller';
+import type { CoreError } from '#dmg/kernel/errors/core-errors';
+import type { AnyErrorDef, ErrorOf } from '#dmg/kernel/errors/define-errors';
 import type { AnyAggregateDef } from '../aggregate/define-aggregate';
 import type { AnyEventDef } from '../events/define-events';
 import type { AnyRule } from '../policy/policy';

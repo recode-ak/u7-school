@@ -1,9 +1,13 @@
-import type { UnitOfWork } from '../../../../../../app/uow/unit-of-work';
-import { UseCaseFromDef } from '../../../../../../app/use-case/use-case-from-def';
-import { ok } from '../../../../../../kernel/result/result';
-import { CompleteTaskUcDef, type TaskAr, TaskErrors } from '../../../../todo';
-import type { ExampleUser } from '../../../app-user';
-import type { TodoDeps } from '../../todo.module';
+import type { UnitOfWork } from '#dmg/app/uow/unit-of-work';
+import { UseCaseFromDef } from '#dmg/app/use-case/use-case-from-def';
+import { ok } from '#dmg/kernel/result/result';
+import type { ExampleUser } from '#dmg/testing/example/app/app-user';
+import type { TodoDeps } from '#dmg/testing/example/app/todo/todo.module';
+import {
+  CompleteTaskUcDef,
+  type TaskAr,
+  TaskErrors,
+} from '#dmg/testing/example/todo/index';
 
 type Loaded = { readonly task: TaskAr };
 

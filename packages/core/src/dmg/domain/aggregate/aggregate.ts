@@ -1,7 +1,7 @@
 import * as v from 'valibot';
-import type { ErrorOf } from '../../kernel/errors/define-errors';
-import type { Result } from '../../kernel/result/result';
-import { now } from '../../kernel/time/now';
+import type { ErrorOf } from '#dmg/kernel/errors/define-errors';
+import type { Result } from '#dmg/kernel/result/result';
+import { now } from '#dmg/kernel/time/now';
 import type { EventOf } from '../events/define-events';
 import type { AnyAggregateDef } from './define-aggregate';
 

@@ -2,9 +2,9 @@ import {
   Aggregate,
   type ErrorsOf,
   type EventsOf,
-} from '../../../../domain/aggregate/aggregate';
-import { defineAggregate } from '../../../../domain/aggregate/define-aggregate';
-import { ok, type Result } from '../../../../kernel/result/result';
+} from '#dmg/domain/aggregate/aggregate';
+import { defineAggregate } from '#dmg/domain/aggregate/define-aggregate';
+import { ok, type Result } from '#dmg/kernel/result/result';
 import { UserErrors } from './user.errors';
 import { UserEvents } from './user.events';
 import { UserState } from './user.state';

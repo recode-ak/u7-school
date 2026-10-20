@@ -1,5 +1,5 @@
-import { UserAr, UserArDef } from '../../../users';
-import type { UserState } from '../../../users/user/user.state';
+import { UserAr, UserArDef } from '#dmg/testing/example/users/index';
+import type { UserState } from '#dmg/testing/example/users/user/user.state';
 import type { UserRepo } from '../user/user.repo';
 
 /** Пользователи в памяти: снапшоты по uuid. */

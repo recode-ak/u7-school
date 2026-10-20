@@ -1,5 +1,5 @@
-import type { ReadonlyAr } from '../../../domain/aggregate/readonly-ar';
-import { defineFacade, method } from '../../../domain/contracts/define-facade';
+import type { ReadonlyAr } from '#dmg/domain/aggregate/readonly-ar';
+import { defineFacade, method } from '#dmg/domain/contracts/define-facade';
 import type { TaskAr } from './task/task.ar';
 import { TaskErrors } from './task/task.errors';
 

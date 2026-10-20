@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
-import { CoreErrors } from '../../kernel/errors/core-errors';
+import { CoreErrors } from '#dmg/kernel/errors/core-errors';
 import type { EventOf } from '../events/define-events';
 import { allowAll } from '../policy/policy';
 import {

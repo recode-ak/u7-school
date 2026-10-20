@@ -2,15 +2,15 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { legacyEventBus } from '#dmg/app/events/legacy-event-bus';
+import { legacyJob } from '#dmg/app/job/legacy-job';
+import type { RequestMeta } from '#dmg/app/trace';
+import type { Caller } from '#dmg/kernel/caller/caller';
+import { type LogRecord, memoryLogger } from '#dmg/testing/app-context';
+import { expectErr, expectOk } from '#dmg/testing/expect-result';
 import { ApiApp } from '../../../../api/app/api-app';
 import type { AppMeta } from '../../../../domain/types';
 import { InProcEventBus } from '../../../../infra/in-proc-event-bus';
-import { legacyEventBus } from '../../../app/events/legacy-event-bus';
-import { legacyJob } from '../../../app/job/legacy-job';
-import type { RequestMeta } from '../../../app/trace';
-import type { Caller } from '../../../kernel/caller/caller';
-import { type LogRecord, memoryLogger } from '../../app-context';
-import { expectErr, expectOk } from '../../expect-result';
 import {
   CompleteTaskUcDef,
   CreateTaskUcDef,

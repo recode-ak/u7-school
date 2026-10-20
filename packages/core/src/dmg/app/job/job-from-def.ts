@@ -1,7 +1,7 @@
-import type { AnyJobDef } from '../../domain/contracts/define-job';
-import { type SystemCaller, systemCaller } from '../../kernel/caller/caller';
-import type { DomainError } from '../../kernel/errors/error';
-import { ok, type Result } from '../../kernel/result/result';
+import type { AnyJobDef } from '#dmg/domain/contracts/define-job';
+import { type SystemCaller, systemCaller } from '#dmg/kernel/caller/caller';
+import type { DomainError } from '#dmg/kernel/errors/error';
+import { ok, type Result } from '#dmg/kernel/result/result';
 import type { ModuleDeps } from '../context';
 import { runLogged } from '../system/run-logged';
 import type { Trace } from '../trace';

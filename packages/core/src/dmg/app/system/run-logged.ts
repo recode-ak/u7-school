@@ -1,7 +1,7 @@
+import { CoreErrors } from '#dmg/kernel/errors/core-errors';
+import type { DomainError } from '#dmg/kernel/errors/error';
+import type { Result } from '#dmg/kernel/result/result';
 import { serializeError } from '#shared/serialize-error';
-import { CoreErrors } from '../../kernel/errors/core-errors';
-import type { DomainError } from '../../kernel/errors/error';
-import type { Result } from '../../kernel/result/result';
 import type { AppContext } from '../context';
 
 /**

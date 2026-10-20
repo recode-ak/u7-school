@@ -7,24 +7,24 @@ import {
   test,
 } from 'bun:test';
 import * as v from 'valibot';
-import { defineUseCase } from '../../domain/contracts/define-use-case';
-import type { Caller } from '../../kernel/caller/caller';
-import { defineErrors } from '../../kernel/errors/define-errors';
-import { ok } from '../../kernel/result/result';
+import { defineUseCase } from '#dmg/domain/contracts/define-use-case';
+import type { Caller } from '#dmg/kernel/caller/caller';
+import { defineErrors } from '#dmg/kernel/errors/define-errors';
+import { ok } from '#dmg/kernel/result/result';
+import {
+  CompleteTaskUcDef,
+  type TaskAr,
+  TaskErrors,
+  TaskEvents,
+} from '#dmg/testing/example/todo/index';
+import type { TaskState } from '#dmg/testing/example/todo/task/task.state';
 import {
   expectErr,
   expectOk,
   resetNow,
   setNow,
   testAppContext,
-} from '../../testing';
-import {
-  CompleteTaskUcDef,
-  type TaskAr,
-  TaskErrors,
-  TaskEvents,
-} from '../../testing/example/todo';
-import type { TaskState } from '../../testing/example/todo/task/task.state';
+} from '#dmg/testing/index';
 import { MemoryTasks, OWNER, T0, TASK, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
 import { requestTrace, type Trace } from '../trace';

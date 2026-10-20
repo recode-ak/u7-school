@@ -1,6 +1,6 @@
 import * as v from 'valibot';
-import { TaskAr, TaskArDef } from '../../../todo';
-import { TaskState } from '../../../todo/task/task.state';
+import { TaskAr, TaskArDef } from '#dmg/testing/example/todo/index';
+import { TaskState } from '#dmg/testing/example/todo/task/task.state';
 import type { TaskRepo } from '../task/task.repo';
 
 const Rows = v.array(TaskState);

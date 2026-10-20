@@ -1,4 +1,4 @@
-import type { AnyEventDef } from '../../domain/events/define-events';
+import type { AnyEventDef } from '#dmg/domain/events/define-events';
 import type { EnvelopeOf, EventEnvelope } from './event-envelope';
 
 /** Шина событий DMG: публикует конверты, подписка — по Def события. */

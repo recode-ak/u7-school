@@ -1,4 +1,4 @@
-import { defineJob } from '../../../../../domain/contracts/define-job';
+import { defineJob } from '#dmg/domain/contracts/define-job';
 import { TaskArDef } from '../task.ar';
 import { TaskEvents } from '../task.events';
 

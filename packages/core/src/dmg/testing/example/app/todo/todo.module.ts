@@ -1,9 +1,6 @@
-import type { ModuleDeps } from '../../../../app/context';
-import {
-  ModuleFromDef,
-  type ModuleMap,
-} from '../../../../app/module/module-from-def';
-import { TodoModuleDef } from '../../todo';
+import type { ModuleDeps } from '#dmg/app/context';
+import { ModuleFromDef, type ModuleMap } from '#dmg/app/module/module-from-def';
+import { TodoModuleDef } from '#dmg/testing/example/todo/index';
 import type { ExampleUser } from '../app-user';
 import { ArchiveRemovedUserTasksEr } from './task/er/archive-removed-user-tasks.er';
 import { ArchiveDoneTasksJob } from './task/job/archive-done-tasks.job';

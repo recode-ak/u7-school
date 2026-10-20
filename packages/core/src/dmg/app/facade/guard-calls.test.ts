@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { defineFacade } from '../../domain/contracts/define-facade';
-import { TaskErrors, TodoFacadeDef } from '../../testing/example/todo';
+import { defineFacade } from '#dmg/domain/contracts/define-facade';
+import { TaskErrors, TodoFacadeDef } from '#dmg/testing/example/todo/index';
 import { guardCalls } from './guard-calls';
 import { implementFacade } from './implement-facade';
 

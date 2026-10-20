@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { InProcEventBus } from '../../../infra/in-proc-event-bus';
-import { defineModule } from '../../domain/contracts/define-module';
-import { ok } from '../../kernel/result/result';
-import { testAppContext } from '../../testing/app-context';
+import { defineModule } from '#dmg/domain/contracts/define-module';
+import { ok } from '#dmg/kernel/result/result';
+import { testAppContext } from '#dmg/testing/app-context';
 import {
   ArchiveDoneTasksJobDef,
   ArchiveRemovedUserTasksErDef,
@@ -10,8 +9,9 @@ import {
   CreateTaskUcDef,
   TaskErrors,
   TodoFacadeDef,
-} from '../../testing/example/todo';
-import { UserEvents } from '../../testing/example/users';
+} from '#dmg/testing/example/todo/index';
+import { UserEvents } from '#dmg/testing/example/users/index';
+import { InProcEventBus } from '../../../infra/in-proc-event-bus';
 import { T0 } from '../app.fixture';
 import type { AppContext } from '../context';
 import { legacyEventBus } from '../events/legacy-event-bus';

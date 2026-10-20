@@ -1,6 +1,6 @@
-import type { AnyAggregateDef } from '../../domain/aggregate/define-aggregate';
-import type { AnyEventDef } from '../../domain/events/define-events';
-import type { Caller } from '../../kernel/caller/caller';
+import type { AnyAggregateDef } from '#dmg/domain/aggregate/define-aggregate';
+import type { AnyEventDef } from '#dmg/domain/events/define-events';
+import type { Caller } from '#dmg/kernel/caller/caller';
 import type { AppContext } from '../context';
 import type { Trace } from '../trace';
 import { UnitOfWork } from './unit-of-work';

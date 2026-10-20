@@ -1,7 +1,7 @@
 import type {
   AnyFacadeDef,
   FacadeApi,
-} from '../../domain/contracts/define-facade';
+} from '#dmg/domain/contracts/define-facade';
 
 const implemented = new WeakMap<object, AnyFacadeDef>();
 

@@ -2,9 +2,9 @@ import type {
   AnyEventDef,
   DomainEvent,
   EventOf,
-} from '../../domain/events/define-events';
-import type { Caller } from '../../kernel/caller/caller';
-import type { Timestamp } from '../../kernel/time/timestamp';
+} from '#dmg/domain/events/define-events';
+import type { Caller } from '#dmg/kernel/caller/caller';
+import type { Timestamp } from '#dmg/kernel/time/timestamp';
 import type { Cause } from '../trace';
 
 /**

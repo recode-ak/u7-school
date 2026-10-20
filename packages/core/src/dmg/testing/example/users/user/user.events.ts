@@ -1,6 +1,6 @@
 import * as v from 'valibot';
-import { defineEvents } from '../../../../domain/events/define-events';
-import { F } from '../../../../kernel/fields/fields';
+import { defineEvents } from '#dmg/domain/events/define-events';
+import { F } from '#dmg/kernel/fields/fields';
 
 export const UserEvents = defineEvents('users.user', {
   removed: {

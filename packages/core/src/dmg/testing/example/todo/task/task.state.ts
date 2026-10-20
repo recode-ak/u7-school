@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { BaseEntityFields, F } from '../../../../kernel/fields/fields';
+import { BaseEntityFields, F } from '#dmg/kernel/fields/fields';
 
 /** Entity задачи — единственное место структуры состояния. */
 export const TaskState = v.object({

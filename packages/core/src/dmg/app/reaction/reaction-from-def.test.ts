@@ -1,23 +1,23 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { InProcEventBus } from '../../../infra/in-proc-event-bus';
-import type { Caller, SystemCaller } from '../../kernel/caller/caller';
-import type { DomainError } from '../../kernel/errors/error';
-import { ok, type Result } from '../../kernel/result/result';
-import {
-  expectErr,
-  expectOk,
-  resetNow,
-  setNow,
-  testAppContext,
-} from '../../testing';
+import type { Caller, SystemCaller } from '#dmg/kernel/caller/caller';
+import type { DomainError } from '#dmg/kernel/errors/error';
+import { ok, type Result } from '#dmg/kernel/result/result';
 import {
   ArchiveRemovedUserTasksErDef,
   TaskAr,
   TaskErrors,
   TaskEvents,
   TodoFacadeDef,
-} from '../../testing/example/todo';
-import { UserArDef, UserEvents } from '../../testing/example/users';
+} from '#dmg/testing/example/todo/index';
+import { UserArDef, UserEvents } from '#dmg/testing/example/users/index';
+import {
+  expectErr,
+  expectOk,
+  resetNow,
+  setNow,
+  testAppContext,
+} from '#dmg/testing/index';
+import { InProcEventBus } from '../../../infra/in-proc-event-bus';
 import { MemoryTasks, OWNER, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
 import type { EnvelopeOf } from '../events/event-envelope';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import type { Caller } from '../../kernel/caller/caller';
-import { systemCaller } from '../../kernel/caller/caller';
+import type { Caller } from '#dmg/kernel/caller/caller';
+import { systemCaller } from '#dmg/kernel/caller/caller';
 import { definePolicy } from './define-policy';
 import {
   allOf,

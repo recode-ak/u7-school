@@ -1,18 +1,18 @@
 import type { Job } from '#api/job/job';
-import type { AnyEventReactionDef } from '../../domain/contracts/define-event-reaction';
+import type { AnyEventReactionDef } from '#dmg/domain/contracts/define-event-reaction';
 import type {
   AnyFacadeDef,
   FacadeApi,
-} from '../../domain/contracts/define-facade';
-import type { AnyJobDef } from '../../domain/contracts/define-job';
-import type { AnyModuleDef } from '../../domain/contracts/define-module';
+} from '#dmg/domain/contracts/define-facade';
+import type { AnyJobDef } from '#dmg/domain/contracts/define-job';
+import type { AnyModuleDef } from '#dmg/domain/contracts/define-module';
 import type {
   AnyUseCaseDef,
   OutputOf,
   UseCaseErrorOf,
-} from '../../domain/contracts/define-use-case';
-import type { Caller } from '../../kernel/caller/caller';
-import type { Result } from '../../kernel/result/result';
+} from '#dmg/domain/contracts/define-use-case';
+import type { Caller } from '#dmg/kernel/caller/caller';
+import type { Result } from '#dmg/kernel/result/result';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { JobFromDef } from '../job/job-from-def';
