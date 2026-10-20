@@ -8,9 +8,9 @@
 
 ## Фаза 0: Бриф и база
 
-- [ ] Task: Бриф среза `slices/wish.md`: границы, перечень Def и реализаций, сохраняемое поведение, ID правил, список файлов «было → станет» по [naming.md](../../architecture/naming.md); решение, нужен ли DCS/DQS (запрос `list-user-wishes` → DQS?); Job нет
-- [ ] Task: Зафиксировать базовую линию тестов (`bun test`: 3211 pass) и тестов `wish`
-- [ ] Task: Режим `--adopt` генератора для legacy-модуля: `gen module|aggregate … --adopt` создаёт недостающие файлы рядом с legacy, существующие (`index.ts`, `package.json`, `tsconfig.json`, `src/index.ts`) пропускает с подсказкой «Вставь вручную»; коллизия остальных файлов — по-прежнему ошибка; строка в naming.md §5
+- [x] Task: Бриф среза `slices/wish.md`: границы, перечень Def и реализаций, сохраняемое поведение, ID правил, список файлов «было → станет» по [naming.md](../../architecture/naming.md); решение, нужен ли DCS/DQS (запрос `list-user-wishes` → DQS?); Job нет `e3a6f222`
+- [x] Task: Зафиксировать базовую линию тестов (`bun test`: 3211 pass) и тестов `wish` — 3211 pass / 0 fail; `wish` (домен + пакет): 107 pass / 14 файлов (в брифе)
+- [x] Task: Режим `--adopt` генератора для legacy-модуля: `gen module|aggregate … --adopt` создаёт недостающие файлы рядом с legacy, существующий `index.ts` пропускает и печатает шаблон (пакетные `package.json`/`tsconfig.json` генератор и так не пересоздаёт); коллизия остальных файлов — по-прежнему ошибка; строка в naming.md §5 `ef2a3c41`
 - [ ] Task: Каркас гайда (шаблон по Ф4 спеки) в `conductor/architecture/guides/` и контрактный тест живости ссылок гайдов (в `check`); ссылка из `architecture/index.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
