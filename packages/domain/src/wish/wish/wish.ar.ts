@@ -80,6 +80,8 @@ export const WishArDef = defineAggregate({
 
 export type WishError = ErrorsOf<typeof WishArDef>;
 
+type WishTransition = TransitionOf<typeof WishArDef>;
+
 /**
  * Активные статусы — желание ещё в работе и занимает цель: второе активное
  * на ту же пару (user, target) не создаётся (`WishDcs.checkUnique`).
@@ -89,7 +91,6 @@ const ACTIVE_STATUSES: readonly (keyof typeof WishArDef.statuses)[] = [
   'pending',
   'confirmed',
 ];
-type WishTransition = TransitionOf<typeof WishArDef>;
 
 /**
  * Вход создания: начальный статус выбирает UC — `pending`, если у цели
@@ -147,6 +148,15 @@ export class WishAr extends Aggregate<typeof WishArDef> {
   /** Принадлежит ли желание пользователю. */
   isOwnedBy(userId: string): boolean {
     return this.state.userId === userId;
+  }
+
+  /** Желание на эту цель (тот же курс или тот же модуль). */
+  isFor(target: CreateWish['target']): boolean {
+    const mine = this.state.target;
+    if (target.kind === 'course') {
+      return mine.kind === 'course' && mine.courseId === target.courseId;
+    }
+    return mine.kind === 'module' && mine.moduleId === target.moduleId;
   }
 
   // ── Предикаты переходов ──

@@ -58,10 +58,10 @@ function setupUc(
   return { wishRepo, getModulePlace, startStandard, uc };
 }
 
-function makeActiveWish(status: WishStatus): WishState {
+function makeActiveWish(userId: string, status: WishStatus): WishState {
   return {
     uuid: crypto.randomUUID(),
-    userId: crypto.randomUUID(),
+    userId,
     target: { kind: 'module', moduleId },
     status,
     createdAt: Date.UTC(2026, 0, 1, 10),
@@ -116,7 +116,7 @@ describe('CreateModuleWishUc', () => {
   test('дедуп: код WISH_ALREADY_EXISTS, kind conflict, status существующего', async () => {
     const { uc } = setupUc({
       place: { courseId },
-      existing: makeActiveWish('expressed'),
+      existing: makeActiveWish(actorId, 'expressed'),
     });
 
     await expect(uc.handle({ moduleId }, actor)).rejects.toMatchObject({
@@ -132,7 +132,7 @@ describe('CreateModuleWishUc', () => {
   test('дедуп: активное желание на тот же модуль → WISH_ALREADY_EXISTS', async () => {
     const { wishRepo, uc } = setupUc({
       place: { courseId },
-      existing: makeActiveWish('expressed'),
+      existing: makeActiveWish(actorId, 'expressed'),
     });
 
     await expect(uc.handle({ moduleId }, actor)).rejects.toThrow(
@@ -144,7 +144,7 @@ describe('CreateModuleWishUc', () => {
   test('дедуп: неактивное желание не мешает создать новое', async () => {
     const { wishRepo, uc } = setupUc({
       place: { courseId },
-      existing: makeActiveWish('fulfilled'),
+      existing: makeActiveWish(actorId, 'fulfilled'),
     });
 
     await uc.handle({ moduleId }, actor);

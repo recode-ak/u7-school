@@ -11,10 +11,15 @@ const course: WishTargetVo = { kind: 'course', courseId: COURSE };
 const module: WishTargetVo = { kind: 'module', moduleId: MODULE };
 
 let seq = 0;
-const wish = (status: WishStatus, target: WishTargetVo = course) =>
+const OTHER = 'a1b2c3d4-0000-4000-8000-000000000001';
+const wish = (
+  status: WishStatus,
+  target: WishTargetVo = course,
+  userId = USER,
+) =>
   WishAr.restore({
     uuid: `0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f${String(10 + seq++).padStart(2, '0')}`,
-    userId: USER,
+    userId,
     target,
     status,
     createdAt: 0,
@@ -56,5 +61,22 @@ describe('WishDcs.checkUnique', () => {
       moduleId: MODULE,
       status: 'expressed',
     });
+  });
+
+  it('чужое активное желание не мешает', () => {
+    expectOk(dcs.checkUnique(USER, course, [wish('expressed', course, OTHER)]));
+  });
+
+  it('активное желание на другой курс не мешает', () => {
+    const another: WishTargetVo = {
+      kind: 'course',
+      courseId: '9d8c7b6a-5e4f-4a3b-8c2d-1e0f9a8b7c6d',
+    };
+    expectOk(dcs.checkUnique(USER, course, [wish('expressed', another)]));
+  });
+
+  it('активное желание на модуль не мешает желанию на курс и наоборот', () => {
+    expectOk(dcs.checkUnique(USER, course, [wish('expressed', module)]));
+    expectOk(dcs.checkUnique(USER, module, [wish('expressed', course)]));
   });
 });

@@ -239,7 +239,8 @@
 - **Контекст:** `defineAggregate` требует `events` и `errors` (у переходов — `rejects`), а события и ошибки `wish` — Ф3–4. Варианты: объединить Ф2 с Ф3–4 (большая фаза, эталон Ar смешан с событиями); оставить Ar на legacy до Ф3–4; завести минимальные группы сейчас.
 - **Решение:** в Ф2 `wish.errors.ts` содержит только ошибки отказов переходов, `wish.events.ts` — минимум, который требует `defineAggregate`; legacy `errors.ts`/`events.ts` живут параллельно. В UC/ER `err` переходов временно превращается в прежнее legacy-исключение — поведение не меняется.
 - **Состояние после Ф3–4:** параллельных групп нет (legacy `errors.ts`/`events.ts` удалены). Мост `packages/wish/src/api/legacy-reject.ts` (вне naming.md §3) остался и обобщён: `throwWishError` поднимает любую ошибку `WishErrors` через `toLegacyError` (код `WISH_*`, `kind` из Def) — UC/ER остаются legacy-классами до Ф8/Ф10. Тип `LegacyWishUcError` (`domain/wish/wish/commands/legacy-uc-error.ts`) — для `errors` legacy-мет команд.
-- **Пересмотреть:** в Ф8–11 (`UseCaseFromDef`/`ReactionFromDef`, `Result` через `appApi.execute`) `legacy-reject.ts` и `legacy-uc-error.ts` удалены.
+- **Состояние после Ф5:** отказ Policy в `cancel-wish-uc.ts` (`CoreErrors.ACCESS_DENIED`) поднимается свободной функцией `throwWishError` мимо типизированного `WishUseCase.throwWishError`: `LegacyWishUcError` не описывает базовые ошибки. Ветка недостижима (желание ищется по актору). Там же остался `if` по статусу перед `cancel` (API-01) — legacy UC.
+- **Пересмотреть:** в Ф8–11 (`UseCaseFromDef`/`ReactionFromDef`, `Result` через `appApi.execute`) `legacy-reject.ts` и `legacy-uc-error.ts` удалены. Policy подключается полем `policy` Def UC, `if` по статусу из `cancel-wish` уходит.
 
 ### TR-2: legacy-репозиторий `wish` на `WishArDef.state` через приведение типа
 - **Трек / фаза:** `golden-wish`, Ф2
@@ -264,3 +265,9 @@
 - **Контекст:** `invited` не меняет состояние; у module-желания нет курса для payload `confirmed`; коды `COURSE_NOT_FOUND`/`MODULE_NOT_FOUND` заняты модулем `course`.
 - **Решение:** `invited` строит ER через `WishEvents.invited.make` (решение — на фасадах курсов и пользователей; метод Ar без перехода растил бы `version`), `telegramId` в payload оставлен — по нему UI отправляет карточку. `confirm` у module-желания в `pending` — `Err WISH_NOT_CONFIRMABLE` (ветка недостижима: module-желания создаются `expressed`). Отказы цели — `WISH_COURSE_NOT_FOUND`/`WISH_MODULE_NOT_FOUND` (`not_found`). Видимое пользователю не изменилось: бот ветвится по `kind`.
 - **Пересмотреть:** на ревизии — не протекает ли адресация (`telegramId`) в домен; не нужна ли ER своя публикация событий (риск для Ф10: UoW публикует только события агрегатов).
+
+### TR-6: Policy, DCS и метод-вопрос Ar в `wish`
+- **Трек / фаза:** `golden-wish`, Ф5
+- **Контекст:** ревью Ф5: `WishDcs.checkUnique` доверял вызывающему, что желания — этого пользователя на эту цель; геттер `WishAr.status` против DOM-04; право на создание.
+- **Решение:** DCS сам отбрасывает чужие желания и желания на другую цель (`isOwnedBy`, метод-вопрос цели Ar `isFor`) — эталон не опирается на неявный контракт выборки. Фикстура дедуп-тестов `create-module-wish-uc.test.ts` строила «дубль» чужому пользователю — исправлена на актёра, сценарии и ожидания прежние. Геттер `status` оставлен: поле уходит в payload `WISH_ALREADY_EXISTS`, по нему ветвится UI, решения на нём не строятся; критерий исключения — в [domain-modeling.md](./domain-modeling.md) §5. Право на создание не заводится (всегда за вызывающего) — с Ф8 UC создания ссылаются на `allowAll`.
+- **Пересмотреть:** на ревизии — не стал ли геттер `status` прецедентом для решений вне Ar.

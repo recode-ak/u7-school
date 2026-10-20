@@ -11,8 +11,10 @@ type AlreadyExists = ErrorOf<typeof WishErrors.ALREADY_EXISTS>;
 export class WishDcs {
   /**
    * Не более одного активного желания на пару (user, target).
-   * `wishes` — **все** желания пользователя на цель (не «последнее»):
-   * при равных `createdAt` активное может оказаться не первым.
+   * `wishes` — желания, загруженные UC (любой набор, например все желания
+   * пользователя): DCS сам отбирает желания этого `userId` на эту `target`
+   * и не доверяет фильтру вызывающего. Нужны **все** такие желания
+   * (не «последнее»): при равных `createdAt` активное может оказаться не первым.
    * Отказ несёт статус существующего — по нему ветвится UI.
    */
   checkUnique(
@@ -20,7 +22,9 @@ export class WishDcs {
     target: CreateWish['target'],
     wishes: readonly ReadonlyAr<WishAr>[],
   ): Result<void, AlreadyExists> {
-    const active = wishes.find((wish) => wish.isActive());
+    const active = wishes.find(
+      (wish) => wish.isOwnedBy(userId) && wish.isFor(target) && wish.isActive(),
+    );
     if (active === undefined) return ok();
     const { status } = active;
     return err(
