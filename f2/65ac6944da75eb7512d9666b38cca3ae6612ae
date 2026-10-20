@@ -1,0 +1,1 @@
+Tasks: gen uc; gen er/job; app-модуль. kinds/operation.ts (planOperation), kinds/app-module.ts (planAppModule) + тесты (red→green). Проба на реальной генерации: biome, tsc, bun test в domain и прикладном пакете зелёные, arch:check ок. Для legacy-пакетов package.json/tsconfig/index не создаются.
