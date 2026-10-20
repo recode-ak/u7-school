@@ -168,113 +168,6 @@
       }
     },
     {
-      "includes": ["packages/dmg-core/src/**"],
-      "linter": {
-        "rules": {
-          "style": {
-            "noRestrictedImports": {
-              "level": "error",
-              "options": {
-                "patterns": [
-                  {
-                    "group": [
-                      "@u7-scl/**",
-                      "!@u7-scl/core",
-                      "!@u7-scl/core/**"
-                    ],
-                    "message": "ARC-01: core не импортирует domain, app и модули"
-                  },
-                  {
-                    "group": [
-                      "#*-legacy/**",
-                      "@u7-scl/core",
-                      "@u7-scl/core/**"
-                    ],
-                    "message": "ARC-10: платформа DMG не импортирует legacy и @u7-scl/* — мосты живут в legacy-bridge"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "includes": [
-        "packages/dmg-core/src/kernel/**",
-        "packages/dmg-core/src/domain/**",
-        "packages/dmg-core/src/testing/example/todo/**",
-        "packages/dmg-core/src/testing/example/users/**",
-        "!**/*.test.ts"
-      ],
-      "linter": {
-        "rules": {
-          "style": {
-            "noRestrictedImports": {
-              "level": "error",
-              "options": {
-                "patterns": [
-                  {
-                    "group": ["#*-legacy/**", "@u7-scl/**"],
-                    "message": "ARC-10: платформа DMG не импортирует legacy и @u7-scl/* — мосты живут в legacy-bridge"
-                  },
-                  {
-                    "group": [
-                      "#core/app/**",
-                      "#core/graph/**",
-                      "#core/arch/**",
-                      "dmg-core/*"
-                    ],
-                    "message": "ARC-11: ядро и домен DMG не импортируют исполнение (app), граф и проверки (arch)"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "includes": [
-        "packages/dmg-core/src/testing/example/app/**",
-        "!**/*.test.ts",
-        "!**/infra/**"
-      ],
-      "linter": {
-        "rules": {
-          "style": {
-            "noRestrictedImports": {
-              "level": "error",
-              "options": {
-                "patterns": [
-                  {
-                    "group": [
-                      "@u7-scl/**",
-                      "!@u7-scl/core",
-                      "!@u7-scl/core/**"
-                    ],
-                    "message": "ARC-01: core не импортирует domain, app и модули"
-                  },
-                  {
-                    "group": ["**/*.state", "**/state"],
-                    "message": "DOM-01: entity видят только Ar своего агрегата и рендереры UI; используй доменный API"
-                  },
-                  {
-                    "group": [
-                      "#*-legacy/**",
-                      "@u7-scl/core",
-                      "@u7-scl/core/**"
-                    ],
-                    "message": "ARC-10: платформа DMG не импортирует legacy и @u7-scl/* — мосты живут в legacy-bridge"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "includes": [
         "packages/domain/**/*.policy.ts",
         "packages/domain/**/*.dcs.ts",
@@ -670,42 +563,23 @@
       }
     },
     {
-      "includes": [
-        "packages/domain/**",
-        "packages/dmg-core/src/kernel/**",
-        "packages/dmg-core/src/domain/**",
-        "packages/dmg-core/src/testing/example/todo/**",
-        "packages/dmg-core/src/testing/example/users/**",
-        "!**/*.test.ts"
-      ],
-      "plugins": ["./biome-plugins/dom-14-no-clock.grit"]
+      "includes": ["packages/domain/**", "!**/*.test.ts"],
+      "plugins": ["./packages/dmg-core/biome-plugins/dom-14-no-clock.grit"]
     },
     {
-      "includes": [
-        "packages/dmg-core/src/**",
-        "packages/domain/**",
-        "!**/*.test.ts"
-      ],
+      "includes": ["packages/domain/**", "!**/*.test.ts"],
       "plugins": [
-        "./biome-plugins/arc-09-no-env.grit",
-        "./biome-plugins/code-02-class-members.grit"
+        "./packages/dmg-core/biome-plugins/arc-09-no-env.grit",
+        "./packages/dmg-core/biome-plugins/code-02-class-members.grit"
       ]
     },
     {
-      "includes": [
-        "packages/dmg-core/src/**",
-        "packages/domain/**",
-        "!**/*.test.ts",
-        "!packages/dmg-core/src/kernel/fields/fields.ts"
-      ],
-      "plugins": ["./biome-plugins/dom-12-no-iso-dates.grit"]
+      "includes": ["packages/domain/**", "!**/*.test.ts"],
+      "plugins": ["./packages/dmg-core/biome-plugins/dom-12-no-iso-dates.grit"]
     },
     {
-      "includes": [
-        "packages/domain/**/*.state.ts",
-        "packages/dmg-core/src/testing/example/**/*.state.ts"
-      ],
-      "plugins": ["./biome-plugins/dom-11-base-fields.grit"]
+      "includes": ["packages/domain/**/*.state.ts"],
+      "plugins": ["./packages/dmg-core/biome-plugins/dom-11-base-fields.grit"]
     },
     {
       "includes": [
@@ -714,14 +588,9 @@
         "packages/domain/**/*.facade.ts",
         "packages/domain/**/*.uc.ts",
         "packages/domain/**/*.er.ts",
-        "packages/dmg-core/src/testing/example/**/*.ar.ts",
-        "packages/dmg-core/src/testing/example/**/*.dcs.ts",
-        "packages/dmg-core/src/testing/example/**/*.facade.ts",
-        "packages/dmg-core/src/testing/example/**/*.uc.ts",
-        "packages/dmg-core/src/testing/example/**/*.er.ts",
         "!**/*.test.ts"
       ],
-      "plugins": ["./biome-plugins/err-01-no-throw.grit"]
+      "plugins": ["./packages/dmg-core/biome-plugins/err-01-no-throw.grit"]
     },
     {
       "includes": [
@@ -731,15 +600,11 @@
         "packages/domain/**/*.uc.ts",
         "packages/domain/**/*.er.ts",
         "packages/domain/**/*.job.ts",
-        "packages/dmg-core/src/testing/example/**/*.ar.ts",
-        "packages/dmg-core/src/testing/example/**/*.dcs.ts",
-        "packages/dmg-core/src/testing/example/**/*.facade.ts",
-        "packages/dmg-core/src/testing/example/**/*.uc.ts",
-        "packages/dmg-core/src/testing/example/**/*.er.ts",
-        "packages/dmg-core/src/testing/example/**/*.job.ts",
         "!**/*.test.ts"
       ],
-      "plugins": ["./biome-plugins/api-02-no-manual-publish.grit"]
+      "plugins": [
+        "./packages/dmg-core/biome-plugins/api-02-no-manual-publish.grit"
+      ]
     }
   ]
 }

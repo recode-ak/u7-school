@@ -2,7 +2,7 @@
 
 **Назначение:** проверяемые правила архитектуры. Агенты и ревьюер ссылаются на ID; каждая машинная проверка выводит ID в сообщении (`DOM-01: …`). Правило меняется только через [decisions.md](./decisions.md).
 
-Проверка: **lint** — biome (`noRestrictedImports`, GritQL-плагины; видно в IDE); **type** — компилятор; **test** — контрактный или рантайм-тест (`bun run arch:check`); **review** — агент-ревьюер. Состояние: lint — `biome.json` (`overrides`) и `biome-plugins/*.grit`, тест правил — `scripts/lint-rules.test.ts` на фикстурах `lint-fixtures/`; блокируют только новые пути (`packages/domain/**`, `packages/dmg-core/src/**`), на legacy действуют ARC-01, ARC-07, а ARC-06 и ARC-08 — `warn`. Ограничения: DOM-01 не охватывает рендереры UI и stories (до миграции UI), в DOM-11 автоматизированы базовые поля, а «DTO из схемы» — `review`. Повторяющееся замечание ревьюера переводится в машинную проверку (ratchet).
+Проверка: **lint** — biome (`noRestrictedImports`, GritQL-плагины; видно в IDE); **type** — компилятор; **test** — контрактный или рантайм-тест (`bun run arch:check`); **review** — агент-ревьюер. Состояние: lint — `biome.json` корня и `packages/dmg-core/biome.json` (`overrides`), плагины — `packages/dmg-core/biome-plugins/*.grit` (правила DMG принадлежат пакету; корень ссылается на них), тест правил — `scripts/lint-rules.test.ts` на фикстурах `lint-fixtures/`; блокируют только новые пути (`packages/domain/**`, `packages/dmg-core/src/**`), на legacy действуют ARC-01, ARC-07, а ARC-06 и ARC-08 — `warn`. Ограничения: DOM-01 не охватывает рендереры UI и stories (до миграции UI), в DOM-11 автоматизированы базовые поля, а «DTO из схемы» — `review`. Повторяющееся замечание ревьюера переводится в машинную проверку (ratchet).
 
 ---
 
