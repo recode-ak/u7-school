@@ -1,0 +1,1 @@
+Фаза 4: gen-e2e (biome, tsc, bun test, arch:check на срезе genprobe), детерминизм и идемпотентность.
