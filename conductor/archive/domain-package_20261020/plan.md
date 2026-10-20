@@ -52,4 +52,4 @@
 - [x] Task: Документация (Ф5): раздел «Состояние переноса» в `migration.md`, ссылка на `debt.md` в строке трека, правки `legacy.md` §6 при необходимости
 - [x] Task: Передача контекста: блок «Входной долг» в spec/plan `golden-wish` (если трек уже заведён) или пометка в `migration.md`; в `dmg-core-extract` Фаза 4 ссылка на готовые каркасы `contract`
 - [x] Task: Гейт закрытия трека по `workflow.md`: `CI=true bun test` по репозиторию, триаж красных, сверка числа тестов с исходным, `summary.md` трека (pass/fail, итоговый реестр долга с владельцами)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)

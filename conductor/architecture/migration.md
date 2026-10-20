@@ -18,7 +18,7 @@
 | 1 ✅ | **core-dmg** | `Result`, `define*`, `F.*`, `Timestamp`, `ReadonlyAr`, Aggregate v2, UoW, `Caller` и `callers`, `normalize(def)`, `*FromDef`, `appApi.run`, граф-движок, `arch:check`, линт-правила ARC/DOM/CODE | orchestrator + Нурболат |
 | 1б | **dmg-core-extract** | платформа DMG — отдельный пакет `dmg-core` (npm), развязка от legacy, самодостаточные конфиги, готовность модулей к выносу в сервисы ([D-28](./decisions.md)). Трек: `conductor/tracks/dmg-core-extract_20261020`. **Разделён:** Фазы 1–3 — до `generators`, Фазы 4–6 — после `golden-wish` (см. spec трека) | orchestrator + Нурболат |
 | 2 ✅ | **generators** | `bun run gen` для всех видов артефактов по [naming.md](./naming.md) | orchestrator + Нурболат |
-| 3 ✅ | **domain-package** | трек: `conductor/tracks/domain-package_20261020`, реестр долга — [debt.md](../tracks/domain-package_20261020/debt.md). Пакет-каркас `@u7-scl/domain` создан в треке generators; наполнить: механически перенести domain-слои снизу вверх: user (+ `User` из app) → course → questionnaire → stream → wish → peer-review → dossier. Старые пути `@u7-scl/<m>/domain` временно реэкспортируют | migrator |
+| 3 ✅ | **domain-package** | трек: `conductor/archive/domain-package_20261020`, реестр долга — [debt.md](../archive/domain-package_20261020/debt.md). Пакет-каркас `@u7-scl/domain` создан в треке generators; наполнить: механически перенести domain-слои снизу вверх: user (+ `User` из app) → course → questionnaire → stream → wish → peer-review → dossier. Старые пути `@u7-scl/<m>/domain` временно реэкспортируют | migrator |
 | 4 | **golden-wish** | перевести `wish` на Def, `Result`, Policy, entity-правило, UoW, Timestamp. Эталон; по нему пишутся гайды артефактов | orchestrator + Нурболат |
 | 5 | **stream-student** | первый срез конвейером агентов на сложном агрегате | агенты |
 | 6 | остальные модули | в порядке зависимостей | агенты |
@@ -58,7 +58,7 @@
 
 ## 6. Состояние переноса
 
-Трек 3 (`domain-package`): domain-слои всех семи модулей механически перенесены в `@u7-scl/domain` (`user`, `course`, `questionnaire`, `stream`, `wish`, `peer-review`, `dossier`; у каждого `index`, `state`, `contract`, кроме `dossier` без `contract`). Старые `packages/<m>/src/domain/index.ts` и `packages/dossier/src/index.ts` — barrel-реэкспорты с маркером `DEBT`. Временные нарушения чистоты учтены в [debt.md](../tracks/domain-package_20261020/debt.md) (D-1…D-30; маркер `// DEBT(D-<n>)` ↔ `scripts/domain-debt.ts`, сверяет `arch:check`).
+Трек 3 (`domain-package`): domain-слои всех семи модулей механически перенесены в `@u7-scl/domain` (`user`, `course`, `questionnaire`, `stream`, `wish`, `peer-review`, `dossier`; у каждого `index`, `state`, `contract`, кроме `dossier` без `contract`). Старые `packages/<m>/src/domain/index.ts` и `packages/dossier/src/index.ts` — barrel-реэкспорты с маркером `DEBT`. Временные нарушения чистоты учтены в [debt.md](../archive/domain-package_20261020/debt.md) (D-1…D-30; маркер `// DEBT(D-<n>)` ↔ `scripts/domain-debt.ts`, сверяет `arch:check`).
 
 ### Входной долг для следующих треков
 

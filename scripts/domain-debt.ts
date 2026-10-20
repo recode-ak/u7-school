@@ -1,7 +1,7 @@
 /**
  * Allowlist долга домена (трек domain-package). Только уменьшается:
  * новая запись допустима вместе с записью в
- * `conductor/tracks/domain-package_20261020/debt.md` и маркером
+ * `conductor/archive/domain-package_20261020/debt.md` и маркером
  * `// DEBT(<id>)` в коде. Сверку делает `bun run arch:check`.
  */
 export const DOMAIN_DEBT_ALLOWLIST: readonly string[] = [
@@ -48,4 +48,4 @@ export const DOMAIN_GRAPH: Readonly<Record<string, readonly string[]>> = {
   dossier: [],
 };
 
-export const DEBT_MD = 'conductor/tracks/domain-package_20261020/debt.md';
+export const DEBT_MD = 'conductor/archive/domain-package_20261020/debt.md';
