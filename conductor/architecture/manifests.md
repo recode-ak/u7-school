@@ -14,7 +14,8 @@
 | `defineEvents` | domain | группа событий агрегата: FQN-префикс `module.aggregate`, на событие — `label`, `description`, схема payload |
 | `defineErrors` | domain | группа ошибок агрегата: `code`, `kind`, `label`, `description`, схема payload |
 | `definePolicy` / `rule` | domain | именованные правила с `label` и `denyMessage`, композиция |
-| `defineUseCase` | domain (контракт) | `type` (command/query), агрегат, `policy`, `callers` ([caller.md](./caller.md)), `input`, `output`, `errors`, `emits` |
+| `defineRules` / `domainRule` | domain | доменные правила без субъекта (D-40): `name`, `label`, `description`, `error` (ErrorDef своей группы), `check(ctx) → Result` |
+| `defineUseCase` | domain (контракт) | `type` (command/query), агрегат, `policy`, `rules` (доменные правила; их ошибки — в `errors`), `callers` ([caller.md](./caller.md)), `input`, `output`, `errors`, `emits` |
 | `defineEventReaction` | domain (контракт) | `on` (события), `touches` (агрегаты), `calls` (фасады), `emits` |
 | `defineJob` | domain (контракт) | `schedule`, `scans`, `emits` |
 | `defineUiApp` / `defineUiModule` / `defineStory` / `defineScreen` | ui (позже) | матрёшка UI — [ui-manifests.md](./ui-manifests.md) |

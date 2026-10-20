@@ -1,7 +1,8 @@
 // Платформа DMG (Domain Manifest Graph) — пакет dmg-core.
-// Корень — ядро и манифесты домена (`define*`, `Aggregate`, `Result`, Policy):
-// чистый код без IO, его импортирует домен. Исполнение — `dmg-core/app`,
-// граф манифестов — `dmg-core/graph`, проверки архитектуры — `dmg-core/arch`.
+// Корень — ядро и манифесты домена (`define*`, `Aggregate`, `Result`, Policy,
+// доменные правила): чистый код без IO, его импортирует домен. Исполнение —
+// `dmg-core/app`, граф манифестов — `dmg-core/graph`, проверки архитектуры —
+// `dmg-core/arch`.
 
 export {
   Aggregate,
@@ -95,6 +96,19 @@ export {
   type RuleSubjectOf,
   rule,
 } from './domain/policy/policy';
+export {
+  type AnyRulesDef,
+  defineRules,
+  type RulesDef,
+  type RulesSpec,
+} from './domain/rules/define-rules';
+export {
+  type AnyDomainRule,
+  type DomainRule,
+  type DomainRuleContextOf,
+  type DomainRuleSpec,
+  domainRule,
+} from './domain/rules/domain-rule';
 export {
   type Caller,
   type CallerKind,

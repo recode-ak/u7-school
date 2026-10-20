@@ -1,4 +1,5 @@
 import type * as v from 'valibot';
+import type { AnyDomainRule } from '../domain/rules/domain-rule';
 import type { DefIndex } from '../graph/def-index';
 import { localId } from '../graph/def-index';
 
@@ -13,11 +14,13 @@ export type DescribedDef = {
 
 /**
  * Все Def приложения с описаниями: модули, фасады и их методы, агрегаты,
- * UC, ER, Job, события и ошибки агрегатов. Ошибки и события, на которые
- * только ссылаются, проверяются у владельца.
+ * UC, ER, Job, события и ошибки агрегатов, доменные правила UC. Ошибки и
+ * события, на которые только ссылаются, проверяются у владельца; правило,
+ * на которое ссылаются несколько UC, — один раз.
  */
 export function describedDefs(index: DefIndex): DescribedDef[] {
   const out: DescribedDef[] = [];
+  const rules = new Set<AnyDomainRule>();
   const add = (
     title: string,
     def: { label: string; description: string },
@@ -52,6 +55,11 @@ export function describedDefs(index: DefIndex): DescribedDef[] {
         ['input', uc.input],
         ['output', uc.output],
       ]);
+      for (const r of uc.rules ?? []) {
+        if (rules.has(r)) continue;
+        rules.add(r);
+        add(`правило ${localId(m, r)}`, r);
+      }
     }
     for (const er of m.reactions) add(`ER ${localId(m, er)}`, er);
     for (const job of m.jobs) add(`Job ${localId(m, job)}`, job);

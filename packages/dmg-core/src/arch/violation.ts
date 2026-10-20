@@ -3,6 +3,8 @@ export type ArchRule =
   | 'ARC-04'
   | 'ARC-05'
   | 'ARC-06'
+  | 'DOM-16'
+  | 'ERR-02'
   | 'ERR-04'
   | 'MAN-01'
   | 'MAN-02'

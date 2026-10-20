@@ -6,6 +6,7 @@ export {
   type AggregateNode,
   buildGraph,
   type DomainGraph,
+  type DomainRuleNode,
   type ErrorNode,
   type EventNode,
   type JobNode,
@@ -18,6 +19,7 @@ export {
   type AnyDef,
   type NormalizedAggregate,
   type NormalizedDef,
+  type NormalizedDomainRule,
   type NormalizedError,
   type NormalizedEvent,
   type NormalizedEventReaction,
@@ -26,6 +28,7 @@ export {
   type NormalizedModule,
   type NormalizedPolicy,
   type NormalizedRule,
+  type NormalizedRules,
   type NormalizedUseCase,
   normalize,
 } from './normalize';

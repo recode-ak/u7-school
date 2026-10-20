@@ -93,4 +93,10 @@ describe('вопросы', () => {
     expect(ar.isOwnedBy(TASK)).toBe(false);
     expect(ar.ownerId).toBe(OWNER);
   });
+
+  it('isOpen: только открытая задача', () => {
+    expect(TaskAr.restore(stored('open')).isOpen()).toBe(true);
+    expect(TaskAr.restore(stored('done')).isOpen()).toBe(false);
+    expect(TaskAr.restore(stored('archived')).isOpen()).toBe(false);
+  });
 });

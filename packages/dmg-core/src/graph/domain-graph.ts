@@ -1,10 +1,12 @@
 import type { AnyAggregateDef } from '../domain/aggregate/define-aggregate';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyEventDef } from '../domain/events/define-events';
+import type { AnyDomainRule } from '../domain/rules/domain-rule';
 import type { AnyErrorDef } from '../kernel/errors/define-errors';
 import { type DefIndex, indexDefs, localId } from './def-index';
 import {
   type NormalizedAggregate,
+  type NormalizedDomainRule,
   type NormalizedError,
   type NormalizedEvent,
   type NormalizedEventReaction,
@@ -53,6 +55,17 @@ export type AggregateNode = Owned<NormalizedAggregate> & {
 
 export type UseCaseNode = Owned<NormalizedUseCase> & {
   readonly aggregate: string;
+  /** Id доменных правил UC. */
+  readonly rules: readonly string[];
+};
+
+/**
+ * Доменное правило (D-40). Модуль — владелец ошибки правила (ошибка своей
+ * группы, DOM-16); `?` — ошибка вне модулей графа.
+ */
+export type DomainRuleNode = Owned<NormalizedDomainRule> & {
+  /** UC, которые ссылаются на правило. */
+  readonly usedBy: readonly string[];
 };
 
 export type ReactionNode = Owned<NormalizedEventReaction> & {
@@ -90,6 +103,7 @@ export type DomainGraph = {
   readonly links: readonly ModuleLink[];
   readonly aggregates: Readonly<Record<string, AggregateNode>>;
   readonly useCases: Readonly<Record<string, UseCaseNode>>;
+  readonly rules: Readonly<Record<string, DomainRuleNode>>;
   readonly reactions: Readonly<Record<string, ReactionNode>>;
   readonly jobs: Readonly<Record<string, JobNode>>;
   readonly events: Readonly<Record<string, EventNode>>;
@@ -110,6 +124,7 @@ class GraphBuilder {
   private readonly links: ModuleLink[] = [];
   private readonly aggregates: Record<string, Mutable<AggregateNode>> = {};
   private readonly useCases: Record<string, UseCaseNode> = {};
+  private readonly rules: Record<string, Mutable<DomainRuleNode>> = {};
   private readonly reactions: Record<string, ReactionNode> = {};
   private readonly jobs: Record<string, JobNode> = {};
   private readonly events: Record<string, Mutable<EventNode>> = {};
@@ -130,6 +145,7 @@ class GraphBuilder {
       links: this.links,
       aggregates: this.aggregates,
       useCases: this.useCases,
+      rules: this.rules,
       reactions: this.reactions,
       jobs: this.jobs,
       events: this.events,
@@ -161,7 +177,18 @@ class GraphBuilder {
     for (const uc of m.useCases) {
       const id = localId(m, uc);
       const aggregate = this.aggregateId(uc.aggregate);
-      this.useCases[id] = { id, module: m.name, def: normalize(uc), aggregate };
+      const rules = (uc.rules ?? []).map((r) => {
+        const node = this.rule(r);
+        node.usedBy.push(id);
+        return node.id;
+      });
+      this.useCases[id] = {
+        id,
+        module: m.name,
+        def: normalize(uc),
+        aggregate,
+        rules,
+      };
       this.aggregates[aggregate]?.useCases.push(id);
       for (const e of uc.emits ?? []) this.event(e).publishers.push(id);
       for (const e of uc.errors) this.error(e).usedBy.push(id);
@@ -220,6 +247,17 @@ class GraphBuilder {
   private eventModule(e: AnyEventDef): string | undefined {
     const a = this.index.eventOwner.get(e);
     return a && this.index.aggregateOwner.get(a)?.name;
+  }
+
+  private rule(r: AnyDomainRule): Mutable<DomainRuleNode> {
+    const owner = this.index.errorOwner.get(r.error);
+    const module = (owner && this.index.aggregateOwner.get(owner)?.name) ?? '?';
+    const id = `${module}.${r.name}`;
+    const known = this.rules[id];
+    if (known) return known;
+    const node = { id, module, def: normalize(r), usedBy: [] };
+    this.rules[id] = node;
+    return node;
   }
 
   private event(e: AnyEventDef): Mutable<EventNode> {

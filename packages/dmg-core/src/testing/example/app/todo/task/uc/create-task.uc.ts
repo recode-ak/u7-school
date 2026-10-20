@@ -6,23 +6,29 @@ import type { ExampleUser } from '#core/testing/example/app/app-user';
 import type { TodoDeps } from '#core/testing/example/app/todo/todo.module';
 import { CreateTaskUcDef, TaskAr } from '#core/testing/example/todo/index';
 
+/** Задачи владельца — контекст правила предела открытых задач. */
+type Loaded = { readonly ownerTasks: readonly TaskAr[] };
+
 export class CreateTaskUc extends UseCaseFromDef<
   typeof CreateTaskUcDef,
   TodoDeps,
-  undefined,
+  Loaded,
   ExampleUser
 > {
   constructor(deps: TodoDeps) {
     super(CreateTaskUcDef, deps);
   }
 
-  protected async load() {
-    return ok(undefined);
+  protected async load(_: unknown, caller: Caller<ExampleUser>) {
+    const ownerId = this.subject(caller).uuid;
+    return ok({
+      ownerTasks: await this.resolve.tasks.findActiveByOwner(ownerId),
+    });
   }
 
   protected async execute(
     input: { title: string },
-    _: undefined,
+    _: Loaded,
     uow: UnitOfWork,
     caller: Caller<ExampleUser>,
   ) {

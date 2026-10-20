@@ -2,6 +2,7 @@ import type { JsonSchema } from '@valibot/to-json-schema';
 import type { AnyAggregateDef } from '../domain/aggregate/define-aggregate';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyEventDef } from '../domain/events/define-events';
+import type { AnyDomainRule } from '../domain/rules/domain-rule';
 import {
   type AnyOperationDef,
   type DefIndex,
@@ -17,7 +18,8 @@ import type { ArchRule, Violation } from './violation';
 /**
  * Контрактные проверки по Def (без файлов): описания и схемы (MAN-01/02/03),
  * связность (MAN-06), FQN (MAN-08), ссылки ⊆ `dependsOn` (ARC-04), DAG
- * (ARC-05), коды ошибок (ERR-04), отказы переходов (MAN-12).
+ * (ARC-05), коды ошибок (ERR-04), отказы переходов (MAN-12), доменные
+ * правила UC (ERR-02, DOM-16).
  */
 export function checkDefs(index: DefIndex): Violation[] {
   return [
@@ -29,6 +31,7 @@ export function checkDefs(index: DefIndex): Violation[] {
     ...checkCycles(index),
     ...checkErrorCodes(index),
     ...checkRejects(index),
+    ...checkUseCaseRules(index),
   ];
 }
 
@@ -222,6 +225,42 @@ function checkRejects(index: DefIndex): Violation[] {
             violation(
               'MAN-12',
               `агрегат ${localId(m, a)}, переход ${op}: отказ ${e.code} не из ошибок агрегата`,
+            ),
+          );
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Доменные правила UC: ошибка правила — в `errors` UC (ERR-02: отказ
+ * правила — ответ UC, вызывающий должен знать его код); правило в `rules`
+ * не повторяется (DOM-16: декларация без дублей).
+ */
+function checkUseCaseRules(index: DefIndex): Violation[] {
+  const out: Violation[] = [];
+  for (const m of index.modules) {
+    for (const uc of m.useCases) {
+      const title = `UC ${localId(m, uc)}`;
+      const seen = new Set<AnyDomainRule>();
+      for (const r of uc.rules ?? []) {
+        if (seen.has(r)) {
+          out.push(
+            violation(
+              'DOM-16',
+              `${title}: правило ${r.name} указано в rules дважды`,
+            ),
+          );
+          continue;
+        }
+        seen.add(r);
+        if (!uc.errors.includes(r.error)) {
+          out.push(
+            violation(
+              'ERR-02',
+              `${title}: ошибка ${r.error.code} правила ${r.name} не объявлена в errors`,
             ),
           );
         }

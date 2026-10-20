@@ -13,9 +13,13 @@ import {
   TodoFacadeDef,
   TodoModuleDef,
 } from '../domain/contracts/contracts.fixture';
+import { defineUseCase } from '../domain/contracts/define-use-case';
 import { allOf, anyOf, hasRole } from '../domain/policy/policy';
+import { defineRules } from '../domain/rules/define-rules';
+import { domainRule } from '../domain/rules/domain-rule';
 import { defineErrors } from '../kernel/errors/define-errors';
 import { BaseEntityFields, F } from '../kernel/fields/fields';
+import { ok } from '../kernel/result/result';
 import { normalize } from './normalize';
 
 const objectSchema = expect.objectContaining({ type: 'object' });
@@ -109,6 +113,7 @@ describe('normalize', () => {
       input: objectSchema,
       output: objectSchema,
       errors: ['TASK_NOT_FOUND', 'TASK_ALREADY_DONE'],
+      rules: [],
       emits: ['todo.task.completed'],
     });
     expect(normalize(ListTasksUcDef)).toMatchObject({
@@ -116,6 +121,39 @@ describe('normalize', () => {
       output: expect.objectContaining({ type: 'array' }),
       emits: [],
     });
+  });
+
+  it('доменные правила: тексты и код ошибки; UC ссылается по имени', () => {
+    const notDone = domainRule({
+      name: 'notDone',
+      label: 'Задача не выполнена',
+      description: 'Действие допустимо только над невыполненной задачей.',
+      error: TaskErrors.ALREADY_DONE,
+      check: (_: unknown) => ok(),
+    });
+    const normalized = {
+      dmg: 'domainRule',
+      name: 'notDone',
+      label: 'Задача не выполнена',
+      description: 'Действие допустимо только над невыполненной задачей.',
+      error: 'TASK_ALREADY_DONE',
+    } as const;
+    expect(normalize(notDone)).toEqual(normalized);
+    const TaskRules = defineRules({
+      name: 'task',
+      label: 'Правила задачи',
+      description: 'Допустимость действий с задачей.',
+      rules: { notDone },
+    });
+    expect(normalize(TaskRules)).toEqual({
+      dmg: 'rules',
+      name: 'task',
+      label: 'Правила задачи',
+      description: 'Допустимость действий с задачей.',
+      rules: { notDone: normalized },
+    });
+    const uc = defineUseCase({ ...CompleteTaskUcDef, rules: [notDone] });
+    expect(normalize(uc)).toMatchObject({ rules: ['notDone'] });
   });
 
   it('ER и Job: ссылки — имена', () => {

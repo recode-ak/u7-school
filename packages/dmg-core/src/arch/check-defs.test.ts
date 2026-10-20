@@ -12,15 +12,18 @@ import {
 import { defineUseCase } from '../domain/contracts/define-use-case';
 import { type AnyEventDef, defineEvents } from '../domain/events/define-events';
 import { allowAll } from '../domain/policy/policy';
+import { domainRule } from '../domain/rules/domain-rule';
 import { indexDefs } from '../graph/def-index';
 import { defineErrors } from '../kernel/errors/define-errors';
 import { BaseEntityFields, F } from '../kernel/fields/fields';
+import { ok } from '../kernel/result/result';
 import {
   AddNoteErDef,
   AlphaModuleDef,
   BetaModuleDef,
   CreateItemUcDef,
   ItemArDef,
+  ItemErrors,
   ItemEvents,
   NoteArDef,
   NoteEvents,
@@ -400,6 +403,48 @@ describe('checkDefs', () => {
       expect(report(m)).toContain(
         'MAN-06: модуль outer внешний — UC, ER и Job у него не объявляются',
       );
+    });
+  });
+
+  describe('доменные правила UC', () => {
+    const itemExists = (label = 'Позиция есть') =>
+      domainRule({
+        name: 'itemExists',
+        label,
+        description: 'Действие допустимо только над существующей позицией.',
+        error: ItemErrors.NOT_FOUND,
+        check: (_: unknown) => ok(),
+      });
+    const withRules = (
+      rules: readonly ReturnType<typeof itemExists>[],
+      errors = [ItemErrors.NOT_FOUND],
+    ) =>
+      defineModule({
+        ...BetaModuleDef,
+        useCases: [defineUseCase({ ...CreateItemUcDef, errors, rules })],
+      });
+
+    it('объявленная ошибка правила — без нарушений', () => {
+      expect(report(withRules([itemExists()]))).toEqual([]);
+    });
+
+    it('ERR-02: ошибка правила не объявлена в errors UC', () => {
+      expect(report(withRules([itemExists()], []))).toEqual([
+        'ERR-02: UC beta.createItem: ошибка ITEM_NOT_FOUND правила itemExists не объявлена в errors',
+      ]);
+    });
+
+    it('DOM-16: одно правило дважды в rules UC', () => {
+      const rule = itemExists();
+      expect(report(withRules([rule, rule]))).toEqual([
+        'DOM-16: UC beta.createItem: правило itemExists указано в rules дважды',
+      ]);
+    });
+
+    it('MAN-01: пустой label правила', () => {
+      expect(report(withRules([itemExists(' ')]))).toEqual([
+        'MAN-01: правило beta.itemExists: пустой label',
+      ]);
     });
   });
 });

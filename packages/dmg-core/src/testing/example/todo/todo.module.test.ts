@@ -32,7 +32,12 @@ describe('TodoModuleDef', () => {
         'todo.task.completed',
         'todo.task.archived',
       ],
-      errors: ['TASK_NOT_FOUND', 'TASK_ALREADY_DONE', 'TASK_ARCHIVED'],
+      errors: [
+        'TASK_NOT_FOUND',
+        'TASK_ALREADY_DONE',
+        'TASK_ARCHIVED',
+        'TASK_TOO_MANY_OPEN',
+      ],
     });
   });
 
@@ -46,6 +51,6 @@ describe('TodoModuleDef', () => {
       ...TodoModuleDef.aggregates.flatMap((a) => Object.values(a.errors)),
     ];
     for (const def of defs) expect(() => normalize(def)).not.toThrow();
-    expect(defs).toHaveLength(12);
+    expect(defs).toHaveLength(13);
   });
 });

@@ -3,6 +3,7 @@ import {
   type ErrorsOf,
   type EventsOf,
   newEntity,
+  type RejectOf,
 } from '#core/domain/aggregate/aggregate';
 import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
 import { ok, type Result } from '#core/kernel/result/result';
@@ -79,6 +80,10 @@ export class TaskAr extends Aggregate<typeof TaskArDef> {
     return this.state.ownerId === userId;
   }
 
+  isOpen(): boolean {
+    return this.state.status === 'open';
+  }
+
   isDone(): boolean {
     return this.state.status === 'done';
   }
@@ -87,7 +92,11 @@ export class TaskAr extends Aggregate<typeof TaskArDef> {
     return this.state.status === 'archived';
   }
 
-  complete(at: Timestamp): Result<void, TaskError> {
+  // Отказы — только ошибки `rejects` перехода, а не вся группа: UC объявляет
+  // в `errors` то, что реально может вернуть (ERR-02).
+  complete(
+    at: Timestamp,
+  ): Result<void, RejectOf<typeof TaskArDef, 'complete'>> {
     return this.transition('complete', at, (draft, emit) => {
       draft.completedAt = at;
       emit(TaskEvents.completed.make(this.ref()));
@@ -95,7 +104,7 @@ export class TaskAr extends Aggregate<typeof TaskArDef> {
     });
   }
 
-  archive(at: Timestamp): Result<void, TaskError> {
+  archive(at: Timestamp): Result<void, RejectOf<typeof TaskArDef, 'archive'>> {
     return this.transition('archive', at, (_, emit) => {
       emit(TaskEvents.archived.make(this.ref()));
       return ok();

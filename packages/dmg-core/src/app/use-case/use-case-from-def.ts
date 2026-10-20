@@ -9,6 +9,10 @@ import type {
   RuleContextOf,
   RuleSubjectOf,
 } from '#core/domain/policy/policy';
+import type {
+  DomainRule,
+  DomainRuleContextOf,
+} from '#core/domain/rules/domain-rule';
 import { type Caller, subjectOf } from '#core/kernel/caller/caller';
 import { CoreErrors } from '#core/kernel/errors/core-errors';
 import type { ErrorOf } from '#core/kernel/errors/define-errors';
@@ -39,6 +43,26 @@ export type UseCaseContextOf<D extends AnyUseCaseDef> = RuleContextOf<
   D['policy']
 >;
 
+// Рекурсия по кортежу, а не union: `unknown | Ctx` схлопнулся бы в `unknown`.
+type RuleContexts<R> = R extends readonly [infer H, ...infer T]
+  ? DomainRuleContextOf<H> & RuleContexts<T>
+  : unknown;
+
+/** Контекст доменных правил UC — пересечение контекстов всех `rules`. */
+export type UseCaseRulesContextOf<D extends AnyUseCaseDef> = RuleContexts<
+  D['rules']
+>;
+
+/**
+ * Доменное правило UC так, как его видит исполнение: контекст — загруженное,
+ * ошибка — из `errors` UC (ERR-02). Правило с необъявленной ошибкой не
+ * подходит конструктору; рантайм-проверку того же делает `checkDefs`.
+ */
+type UseCaseRule<D extends AnyUseCaseDef> = DomainRule<
+  UseCaseRulesContextOf<D>,
+  D['errors'][number]
+>;
+
 /**
  * Что видно снаружи у реализации UC: Def и исполнение. Для хранения в модуле
  * и приложении — без приватных полей и строго контравариантной Policy,
@@ -64,9 +88,9 @@ export type UseCaseHandler<
  * `uow.register`). Порядок, Policy, ошибки ядра, фиксация и публикация —
  * здесь (errors-result.md §3); свойства Def в наследнике не повторяются.
  *
- * `L` — загруженное: подтип контекста Policy (например, `{ task: TaskAr }`
- * для `{ task: ReadonlyAr<TaskAr> }`), поэтому Policy и операция видят
- * одни и те же агрегаты.
+ * `L` — загруженное: подтип контекста Policy и контекстов всех доменных
+ * правил (например, `{ task: TaskAr }` для `{ task: ReadonlyAr<TaskAr> }`),
+ * поэтому Policy, правила и операция видят одни и те же агрегаты.
  *
  * `U` — субъект вызывающего, который знает реализация: тип пользователя
  * замыкает приложение (D-04). Он не уже субъекта Policy; при `allowAll`
@@ -75,18 +99,21 @@ export type UseCaseHandler<
 export abstract class UseCaseFromDef<
   D extends AnyUseCaseDef,
   R extends ModuleDeps,
-  L extends UseCaseContextOf<D>,
+  L extends UseCaseContextOf<D> & UseCaseRulesContextOf<D>,
   U extends UseCaseSubjectOf<D> = UseCaseSubjectOf<D>,
 > {
   private readonly policy: Rule<UseCaseSubjectOf<D>, UseCaseContextOf<D>>;
+  private readonly rules: readonly UseCaseRule<D>[];
 
   constructor(
     readonly def: D & {
       readonly policy: Rule<UseCaseSubjectOf<D>, UseCaseContextOf<D>>;
+      readonly rules?: readonly UseCaseRule<D>[];
     },
     protected readonly resolve: R,
   ) {
     this.policy = def.policy;
+    this.rules = def.rules ?? [];
   }
 
   protected abstract load(
@@ -122,8 +149,8 @@ export abstract class UseCaseFromDef<
   }
 
   /**
-   * callers → вход → load → Policy → execute → выход → commit (с
-   * публикацией). Непредвиденное исключение — `SERVER_INTERNAL` с записью
+   * callers → вход → load → Policy → правила → execute → выход → commit
+   * (с публикацией). Непредвиденное исключение — `SERVER_INTERNAL` с записью
    * в лог.
    */
   async handle(
@@ -165,6 +192,12 @@ export abstract class UseCaseFromDef<
         const { rule, denyMessage } = decision;
         return CoreErrors.ACCESS_DENIED.err({ rule, denyMessage });
       }
+    }
+    // Доменные правила субъекта не знают — проверяются для любого
+    // вызывающего, в том числе system. Отказ — до UoW: следов не остаётся.
+    for (const r of this.rules) {
+      const checked = r.check(loaded.value);
+      if (!checked.ok) return checked;
     }
     const uow = contractUnitOfWork(this.resolve.app, {
       source: this.def.name,

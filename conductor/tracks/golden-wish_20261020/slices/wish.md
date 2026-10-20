@@ -111,6 +111,21 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 
 **Шаг 3 — гайд «policy»** (оркестратор): критерий Policy vs DCS vs метод-вопрос Ar на примере уникальности.
 
+## Ф6–7: доменное правило, репозиторий, генератор фасада
+
+Решения: D-39 (доступ к state), D-40 (доменное правило без субъекта), D-38 (фасад по потребителю). Форма API — решение Нурболата (2026-10-20), ниже.
+
+**Шаг 1 — domain-author, платформа** (`packages/dmg-core/src/**`; выход за границы согласован с Нурболатом). Образец формы — `domain/policy/{policy,define-policy}.ts`.
+- `domain/rules/domain-rule.ts` — `domainRule({ name, label, description, error, check })`: `error` — `ErrorDef` группы (из `defineErrors`), `check(ctx: C) => Result<void, ErrorOf<E>>`; тип запрещает вернуть ошибку другого `ErrorDef` (DOM-16 машинно, тест на `@ts-expect-error`). Без субъекта: `check` получает только контекст. Возврат — `{ dmg: 'domainRule', name, label, description, error, check }` (свойство, а не метод — контравариантность, как у `Rule.evaluate`). Типы `AnyDomainRule`, `DomainRuleContextOf<R>`.
+- `domain/rules/define-rules.ts` — `defineRules({ name, label, description, rules: { <key>: domainRule(...) } })` → `RulesDef` (`dmg: 'rules'`), по образцу `definePolicy`. Файл в модуле — `<aggregate>/<aggregate>.rules.ts`, объект `<A>Rules`.
+- Def UC (`defineUseCase`): необязательное поле `rules?: readonly AnyDomainRule[]` рядом с `policy`. `UseCaseFromDef`: порядок `callers → вход → load → Policy → rules → execute → выход → commit`; правила исполняются над `loaded` (как Policy, в т. ч. для `system`), первое `err` — ответ UC, `execute` не вызывается, UoW не создаётся. Контекст: `L` расширяет контекст Policy **и** контексты всех правил (пересечение по кортежу, как `Contexts<R>` в `policy.ts`). Тип ошибок UC не расширяется автоматически.
+- `checkDefs`: ошибка каждого правила из `rules` UC объявлена в `errors` UC (новое нарушение с ID правила, по образцу соседних; ID — DOM-16 или MAN-*, выбери по смыслу `rules.md` и обоснуй). Дубли правил в `rules` UC — нарушение, если это дёшево.
+- Граф и манифест (`graph/normalize.ts`, `def-index.ts`, `described-defs.ts`): правило — узел с `name`/`label`/`description`/кодом ошибки; UC ссылается на правила; `defineRules` — описанный Def (label/description проверяются, как у Policy).
+- Экспорт: корень `dmg-core` (домен) — `domainRule`, `defineRules`, типы.
+- Учебный модуль `testing/example/`: одно правило без субъекта (например, «у пользователя не больше N открытых задач» или уникальность заголовка) в `<a>.rules.ts`, UC ссылается на него; тест UC: отказ правила возвращает его ошибку и ничего не фиксирует.
+- TDD (red → запуск → green по шагам): `domainRule` ok/err; тип ошибки чужого `ErrorDef` не компилируется; `UseCaseFromDef` — порядок (Policy отказала → правила не вызваны; правило отказало → `execute` не вызван); `checkDefs` — необъявленная ошибка правила; граф — узел правила и ссылка UC.
+- Не трогать: `packages/domain`, `packages/wish`, `conductor/` (naming.md, rules.md правит оркестратор). Генераторы — не в этом шаге.
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
@@ -234,3 +249,6 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ревью Ф5 (reviewer, `dea81f8` + гайд)
 `error` нет, поведение бота сохранено (`conflict`, `payload.status`). Решения оркестратора (TR-6): `warn` DCS доверял выборке — `isFor(target)` в Ar, DCS отбрасывает чужие желания и другие цели (тесты +3; фикстура `create-module-wish-uc.test.ts` строила дубль чужому пользователю — исправлена, ожидания прежние); `warn` гайд/JSDoc про `allowAll` — «с Ф8»; `info` DOM-04 геттер `status` — критерий исключения в `domain-modeling.md` §5; `info` ERR-02 обход меты и `if` по статусу в `cancel-wish` — в TR-1 (снять в Ф8); `info` TST-03 в гайде уточнён; `ACTIVE_STATUSES` после блока типов. `check` 3345 pass.
+
+### Ф6–7 шаг 1 — domain-author (платформа, Opus)
+`domain/rules/{domain-rule,define-rules}.ts`; `check` — `Result<void, ErrorOf<NoInfer<E>>>`, чужой ErrorDef — ошибка типа (`@ts-expect-error`, DOM-16). `UseCaseFromDef`: `load → Policy → rules → execute`, правила и для `system`, отказ до UoW; `L extends контекст Policy & контексты rules` (пересечение по кортежу); конструктор принимает только правила с ошибкой из `errors` UC — пропуск ловит и компилятор. `checkDefs`: ошибка правила не в `errors` UC → ERR-02, дубль правила → DOM-16, label/description правил — MAN-01. Граф: узел `rules[<модуль>.<имя>]` (`usedBy`), модуль — владелец ошибки правила. Пример: `TaskRules.withinOpenLimit` (< 3 открытых), `TASK_TOO_MANY_OPEN`, `TaskAr.isOpen()`, тест отказа без записей и событий. Отклонения: `RulesDef` сам в `checkDefs` не попадает (на него нет ссылки из модуля, как у Policy); `TaskAr.complete/archive` возвращают `RejectOf<…>`, а не всю группу ошибок (иначе ERR-02 в `CompleteTaskUc`).

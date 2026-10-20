@@ -10,6 +10,11 @@ export {
 export { TaskErrors } from './task/task.errors';
 export { TaskEvents } from './task/task.events';
 export { type TaskCtx, TaskPolicy } from './task/task.policy';
+export {
+  OPEN_TASKS_LIMIT,
+  type OwnerTasksCtx,
+  TaskRules,
+} from './task/task.rules';
 export { CompleteTaskUcDef } from './task/uc/complete-task.uc';
 export { CreateTaskUcDef } from './task/uc/create-task.uc';
 export { ListTasksUcDef } from './task/uc/list-tasks.uc';

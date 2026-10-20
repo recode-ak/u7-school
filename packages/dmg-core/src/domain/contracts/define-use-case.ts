@@ -5,6 +5,7 @@ import type { AnyErrorDef, ErrorOf } from '#core/kernel/errors/define-errors';
 import type { AnyAggregateDef } from '../aggregate/define-aggregate';
 import type { AnyEventDef } from '../events/define-events';
 import type { AnyRule } from '../policy/policy';
+import type { AnyDomainRule } from '../rules/domain-rule';
 
 type Common = {
   readonly name: string;
@@ -15,6 +16,12 @@ type Common = {
   readonly callers: readonly [CallerKind, ...CallerKind[]];
   /** Право на действие; без ограничений — явно `allowAll`. */
   readonly policy: AnyRule;
+  /**
+   * Доменные правила (D-40): допустимость действия при текущих состояниях,
+   * без субъекта. Проверяются после Policy; ошибка каждого правила
+   * объявляется в `errors`.
+   */
+  readonly rules?: readonly AnyDomainRule[];
   readonly input: v.GenericSchema;
   readonly output: v.GenericSchema;
   /** Собственные ошибки и ошибки зависимостей; базовые подмешивает ядро. */

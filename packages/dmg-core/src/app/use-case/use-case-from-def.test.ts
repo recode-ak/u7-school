@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, expectTypeOf, test } from 'bun:test';
 import * as v from 'valibot';
+import type { ReadonlyAr } from '#core/domain/aggregate/readonly-ar';
 import { defineUseCase } from '#core/domain/contracts/define-use-case';
+import { domainRule } from '#core/domain/rules/domain-rule';
 import type { Caller } from '#core/kernel/caller/caller';
 import { defineErrors } from '#core/kernel/errors/define-errors';
 import { ok } from '#core/kernel/result/result';
@@ -310,5 +312,116 @@ describe('UseCaseFromDef — типы', () => {
     // @ts-expect-error: { title } не TaskCtx — Policy нечего проверять
     type WrongCtx = UseCaseFromDef<Uc, Deps, { title: string }>;
     expectTypeOf<WrongCtx>().not.toBeNever();
+  });
+});
+
+describe('UseCaseFromDef — доменные правила', () => {
+  let calls: string[];
+
+  const notDone = domainRule({
+    name: 'notDone',
+    label: 'Задача не выполнена',
+    description: 'Действие допустимо только над невыполненной задачей.',
+    error: TaskErrors.ALREADY_DONE,
+    check: (c: { readonly task: ReadonlyAr<TaskAr> }) => {
+      calls.push('rule');
+      return c.task.isDone() ? TaskErrors.ALREADY_DONE.err() : ok();
+    },
+  });
+
+  const RuledUcDef = defineUseCase({
+    ...CompleteTaskUcDef,
+    callers: ['user', 'system'],
+    rules: [notDone],
+  });
+
+  class Ruled extends UseCaseFromDef<typeof RuledUcDef, Deps, Loaded> {
+    constructor() {
+      super(RuledUcDef, { app: ctx.app, tasks });
+    }
+    protected load = (i: { taskId: string }) => loadTask(tasks, i);
+    protected execute = async (
+      _: unknown,
+      { task }: Loaded,
+      uow: UnitOfWork,
+    ) => {
+      calls.push('execute');
+      task.complete(T0);
+      uow.register(task, tasks);
+      return ok({});
+    };
+  }
+
+  beforeEach(() => {
+    calls = [];
+  });
+
+  test('Policy отказала → правила не вызваны', async () => {
+    const res = await new Ruled().handle({ taskId: TASK }, user('чужой'), REQ);
+    expectErr(res, 'ACCESS_DENIED');
+    expect(calls).toEqual([]);
+  });
+
+  test('правило отказало → его ошибка, execute не вызван, ничего не зафиксировано', async () => {
+    seed('done');
+    const res = await new Ruled().handle({ taskId: TASK }, user(OWNER), REQ);
+    expectErr(res, 'TASK_ALREADY_DONE');
+    expect(calls).toEqual(['rule']);
+    expect(tasks.rows.get(TASK)?.status).toBe('done');
+    expect(ctx.published).toEqual([]);
+  });
+
+  test('правила прошли → execute', async () => {
+    expectOk(await new Ruled().handle({ taskId: TASK }, user(OWNER), REQ));
+    expect(calls).toEqual(['rule', 'execute']);
+  });
+
+  test('для system правила проверяются (Policy — нет)', async () => {
+    seed('done');
+    const system: Caller<User> = { kind: 'system', source: 'test' };
+    const res = await new Ruled().handle({ taskId: TASK }, system, REQ);
+    expectErr(res, 'TASK_ALREADY_DONE');
+    expect(calls).toEqual(['rule']);
+  });
+
+  test('ошибка правила обязана быть в errors UC (ERR-02)', () => {
+    const UndeclaredUcDef = defineUseCase({
+      ...RuledUcDef,
+      errors: [TaskErrors.NOT_FOUND],
+    });
+    class Undeclared extends UseCaseFromDef<
+      typeof UndeclaredUcDef,
+      Deps,
+      Loaded
+    > {
+      constructor() {
+        // @ts-expect-error: TASK_ALREADY_DONE правила нет в errors UC
+        super(UndeclaredUcDef, { app: ctx.app, tasks });
+      }
+      protected load = (i: { taskId: string }) => loadTask(tasks, i);
+      protected execute = async () => ok({});
+    }
+    expect(Undeclared).toBeDefined();
+  });
+
+  test('загруженный контекст обязан подходить каждому правилу', () => {
+    const fewOpen = domainRule({
+      name: 'fewOpen',
+      label: 'Мало открытых',
+      description: 'Открытых задач меньше предела.',
+      error: TaskErrors.ARCHIVED,
+      check: (c: { readonly openCount: number }) =>
+        c.openCount < 3 ? ok() : TaskErrors.ARCHIVED.err(),
+    });
+    const TwoRulesUcDef = defineUseCase({
+      ...CompleteTaskUcDef,
+      rules: [notDone, fewOpen],
+    });
+    type Uc = typeof TwoRulesUcDef;
+    // @ts-expect-error: нет openCount — правилу fewOpen нечего проверять
+    type Missing = UseCaseFromDef<Uc, Deps, Loaded>;
+    type Full = UseCaseFromDef<Uc, Deps, Loaded & { openCount: number }>;
+    expectTypeOf<Missing>().not.toBeNever();
+    expectTypeOf<Full>().not.toBeNever();
   });
 });

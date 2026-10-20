@@ -115,6 +115,26 @@ describe('buildGraph', () => {
       expect(graph.errors.TASK_ARCHIVED?.def.kind).toBe('conflict');
     });
 
+    it('доменное правило: узел с текстами и кодом ошибки, UC ссылается', () => {
+      expect(graph.rules['todo.withinOpenLimit']).toEqual({
+        id: 'todo.withinOpenLimit',
+        module: 'todo',
+        def: {
+          dmg: 'domainRule',
+          name: 'withinOpenLimit',
+          label: 'Открытых задач меньше предела',
+          description:
+            'Новая задача создаётся, только если у владельца меньше 3 открытых задач.',
+          error: 'TASK_TOO_MANY_OPEN',
+        },
+        usedBy: ['todo.createTask'],
+      });
+      expect(graph.useCases['todo.createTask']?.rules).toEqual([
+        'todo.withinOpenLimit',
+      ]);
+      expect(graph.useCases['todo.completeTask']?.rules).toEqual([]);
+    });
+
     it('узлы содержат нормализованные Def', () => {
       expect(graph.useCases['todo.listTasks']?.def).toMatchObject({
         dmg: 'useCase',

@@ -8,6 +8,8 @@ import type { AnyUseCaseDef } from '../domain/contracts/define-use-case';
 import type { AnyEventDef } from '../domain/events/define-events';
 import type { AnyPolicyDef } from '../domain/policy/define-policy';
 import type { AnyRule } from '../domain/policy/policy';
+import type { AnyRulesDef } from '../domain/rules/define-rules';
+import type { AnyDomainRule } from '../domain/rules/domain-rule';
 import type { CallerKind } from '../kernel/caller/caller';
 import type { AnyErrorDef } from '../kernel/errors/define-errors';
 import type { ErrorKind } from '../kernel/errors/error';
@@ -82,6 +84,17 @@ export type NormalizedPolicy = Texts & {
   readonly rules: { readonly [question: string]: NormalizedRule };
 };
 
+/** Доменное правило (D-40): тексты и код ошибки отказа. */
+export type NormalizedDomainRule = Texts & {
+  readonly dmg: 'domainRule';
+  readonly error: string;
+};
+
+export type NormalizedRules = Texts & {
+  readonly dmg: 'rules';
+  readonly rules: { readonly [key: string]: NormalizedDomainRule };
+};
+
 export type NormalizedUseCase = Texts & {
   readonly dmg: 'useCase';
   readonly type: 'command' | 'query';
@@ -91,6 +104,8 @@ export type NormalizedUseCase = Texts & {
   readonly input: JsonSchema;
   readonly output: JsonSchema;
   readonly errors: readonly string[];
+  /** Имена доменных правил UC. */
+  readonly rules: readonly string[];
   readonly emits: readonly string[];
 };
 
@@ -138,6 +153,8 @@ export type AnyDef =
   | AnyAggregateDef
   | AnyRule
   | AnyPolicyDef
+  | AnyDomainRule
+  | AnyRulesDef
   | AnyUseCaseDef
   | AnyEventReactionDef
   | AnyJobDef
@@ -150,6 +167,8 @@ export type NormalizedDef =
   | NormalizedAggregate
   | NormalizedRule
   | NormalizedPolicy
+  | NormalizedDomainRule
+  | NormalizedRules
   | NormalizedUseCase
   | NormalizedEventReaction
   | NormalizedJob
@@ -166,6 +185,8 @@ export function normalize(def: AnyEventDef): NormalizedEvent;
 export function normalize(def: AnyAggregateDef): NormalizedAggregate;
 export function normalize(def: AnyRule): NormalizedRule;
 export function normalize(def: AnyPolicyDef): NormalizedPolicy;
+export function normalize(def: AnyDomainRule): NormalizedDomainRule;
+export function normalize(def: AnyRulesDef): NormalizedRules;
 export function normalize(def: AnyUseCaseDef): NormalizedUseCase;
 export function normalize(def: AnyEventReactionDef): NormalizedEventReaction;
 export function normalize(def: AnyJobDef): NormalizedJob;
@@ -205,6 +226,19 @@ export function normalize(def: AnyDef): NormalizedDef {
           Object.entries(def.rules).map(([q, r]) => [q, normalizeRule(r)]),
         ),
       };
+    case 'domainRule':
+      return normalizeDomainRule(def);
+    case 'rules':
+      return {
+        dmg: 'rules',
+        ...texts(def),
+        rules: Object.fromEntries(
+          Object.entries(def.rules).map(([k, r]) => [
+            k,
+            normalizeDomainRule(r),
+          ]),
+        ),
+      };
     case 'useCase':
       return {
         dmg: 'useCase',
@@ -216,6 +250,7 @@ export function normalize(def: AnyDef): NormalizedDef {
         input: schema(def.input),
         output: schema(def.output),
         errors: def.errors.map((e) => e.code),
+        rules: (def.rules ?? []).map((r) => r.name),
         emits: (def.emits ?? []).map((e) => e.name),
       };
     case 'eventReaction':
@@ -271,6 +306,10 @@ function texts(def: Texts): Texts {
 
 function schema(s: v.GenericSchema): JsonSchema {
   return toJsonSchema(s);
+}
+
+function normalizeDomainRule(r: AnyDomainRule): NormalizedDomainRule {
+  return { dmg: 'domainRule', ...texts(r), error: r.error.code };
 }
 
 function normalizeRule(r: AnyRule): NormalizedRule {
