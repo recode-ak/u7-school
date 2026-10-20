@@ -53,6 +53,27 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 - `WishArMeta` (core `ArMeta`, DEBT-21) — в `a-root.ts`: это мета Ar, уходит в Ф2. Места DEBT-21 и DEBT-24 в `debt.md` — путь `wish.state.ts`.
 - Поведение и формат данных не меняются; логика Ar, Policy, UC, репозитория — не трогать.
 
+## Ф2: Агрегат
+
+Образец — `packages/dmg-core/src/testing/example/todo/task/task.ar.ts` (+ тест). Решение оркестратора — TR-1 (`debt.md` §6).
+
+**Шаг 1 — domain-author** (`packages/domain/src/wish/**`):
+- `wish.state.ts` — `v.object({ ...BaseEntityFields, … })`, даты через `F.timestamp` (читает ISO-строку, в т. ч. без зоны, и число; пишет число); маркеры DEBT-24 и `biome-ignore` DOM-11 под ним снять, запись DEBT-24 в `debt.md` удалить (гасится этой задачей).
+- `wish/wish.ar.ts`: `WishArDef = defineAggregate({ … })` — `statuses` (6), `transitions` `confirm/abandon/cancel/fulfill` с `from`/`to`/`rejects` по двум веткам (поведение — §«Сохраняемое поведение»); `WishAr extends Aggregate<typeof WishArDef>`: приватный конструктор, `static create(input, at: Timestamp): Result` (вход — `uuid`, `userId`, `target`, начальный статус `expressed | pending` или две фабрики — на твой выбор с обоснованием), `static restore(snapshot)`, `snapshot()` — только для репозитория; переходы возвращают `Result`. Предикаты `canConfirm/…` оставить, если платформа не даёт свой способ спросить «возможен ли переход» (ER на них держат идемпотентность).
+- **TR-1:** `wish/wish.errors.ts` — `WishErrors` только с ошибками отказов переходов (коды `WISH_*`, `kind`); `wish/wish.events.ts` — `WishEvents` минимально, сколько требует `defineAggregate` (Ar в legacy событий не порождает — новых событий не добавлять). Legacy `errors.ts`, `events.ts`, `contract.ts` и их экспорты не трогать — их переводит Ф3–4. Коллизия имён с legacy-экспортами — эскалация.
+- `a-root.ts` удалить (с ним `WishArMeta`, `isoNow`, импорты `core` из Ar; маркеры DEBT-21 остаются там, где ещё есть импорты `core`), тест — в `wish.ar.test.ts`; `uuid` и время приходят входом — в домене нет `crypto.randomUUID()`/часов (DOM-14).
+- Реэкспорты домена (`index.ts`, `state.ts`, `contract.ts`) — по необходимости, без алиасов старых имён.
+- TDD: тесты на каждый переход (успех + каждый `rejects`), `create`, `restore` записи без `updatedAt`/`version` (фолбэк D-36), `snapshot` — round trip.
+- Потребители в `packages/wish`, `apps/*`, `scripts` — **не трогать**, это шаг 2: гейт по ним будет красным, это ожидаемо. Пакет `packages/domain` — зелёный.
+
+**Шаг 2 — migrator** (`packages/wish/src/**`, вызывающие в `apps/u7-bot`, `scripts`):
+- Потребители `WishAr`: `create(…, at)` — `uuid` и время берутся в прикладном слое (порт/часы, как у соседних UC; без `Date.now()` в домене); `Result` переходов: `err` → прежнее legacy-исключение с тем же текстом/кодом, чтобы поведение UC/ER не изменилось (замена `throw*` на `Result` — Ф3–4).
+- `infra/db/wish-json-repo.ts`: разбор записи через `WishArDef.state` (фолбэк `updatedAt`, иначе `JsonFileRepo` теряет записи без `updatedAt`); восстановление — `WishAr.restore`, запись — `snapshot()`. Тест на legacy-записи: ISO без зоны, без `updatedAt`/`version` — читается, не теряется.
+- Где даты wish уходят наружу (output UC, stories, тексты) — числа вместо строк не должны изменить видимое пользователю. Если меняется — эскалация.
+- Базовая линия: `bun run check` зелёный, тестов wish не меньше, чем до фазы.
+
+**Шаг 3 — гайд «aggregate»** (оркестратор / domain-author) и дополнение гайда «state» (`BaseEntityFields`, `F.timestamp`, фолбэк `updatedAt`).
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
@@ -143,3 +164,9 @@ ARC-02, ARC-04, ARC-06; DOM-01…05, DOM-09…12; MAN-01…11; ERR-01…06; API-
 
 ### Ревью гайда «state» (reviewer)
 `error` нет. `warn` исправлены: описания у `kind` веток и `variant`, а не у веток; тест эталона проверяет описания только собственных полей (оговорка про DEBT-24/DOM-01 в шапке); `gen module` создаёт только паспорт — пофазный перевод ломает `gen aggregate`; обоснование про тексты ошибок (DTO выводятся из state). Вопрос к Нурболату: VO в naming.md — суффикс `Vo` (`StepRecordVo`), в эталоне — `WishTarget`. `info` учтены (DOM-12 все iso-*, `shared/` по naming §2, тест описаний до Def, дубль про генератор).
+
+### Ф2 шаг 1 — domain-author
+`wish.state.ts` на `BaseEntityFields` + `F.timestamp` (DEBT-24 погашен, запись удалена); `wish.ar.ts` — `WishArDef` (6 статусов, переходы с `rejects` по всем статусам вне `from`), `WishAr`: приватный конструктор, `create(input, at): Result<WishAr, never>` без событий, `restore`, `snapshot`, переходы `confirm/abandon/cancel/fulfill(at): Result`; `WishErrors` — 4 ошибки `WISH_NOT_{CONFIRMABLE,ABANDONABLE,CANCELLABLE,FULFILLABLE}` (`conflict`, `label` = прежний текст исключения); `WishEvents` — пустая группа (TR-1). `a-root.ts` удалён. Вне брифа: одна фабрика `create` со `status: 'expressed' | 'pending'` (ветку выбирает UC по пулу анкеты); предикаты `can*` оставлены и читают `from` из Def (своего способа платформа не даёт); `arMeta` legacy-команд — литерал `{ name: 'Wish'; label: 'Желание' }`. Тесты red → green, `packages/domain` 758 pass, `wish` в домене 55 pass. Гейт: красные `packages/wish`, `apps/u7-bot` — шаг 2.
+
+### Ф2 шаг 2 — migrator
+UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` переходов → `throwIfRejected` (`api/legacy-reject.ts`: `errBadRequest('BAD_REQUEST', error.label)` — код и текст прежние); `arMeta` UC — литералы `'Wish'`/`'Желание'`. `wish-json-repo.ts` разбирает `WishArDef.state` (TR-2), сортировка по числовому `createdAt`; тест legacy-записи (ISO без зоны, без `updatedAt`/`version`) red → green. Фикстуры 8 тестов UC/ER — числовые даты, `updatedAt`, `version`; ожидания не менялись; `apps/u7-bot` правок не потребовал. Видимого пользователю изменения нет (даты wish в UI и событиях не выводятся). wish 123 pass, `check` 3300 pass.

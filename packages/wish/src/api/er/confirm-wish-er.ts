@@ -8,6 +8,7 @@ import type {
 } from '@u7-scl/domain/wish';
 import { WishAr } from '@u7-scl/domain/wish';
 import type { QuestionnaireCompleteEvent } from '@u7-scl/questionnaire/domain';
+import { throwIfRejected } from '../legacy-reject';
 
 /** Метаданные реакции подтверждения желания. */
 export interface ConfirmWishErMeta
@@ -47,20 +48,20 @@ export class ConfirmWishEr extends EventReaction<
 
     // Идемпотентность: подтверждаем только ожидающее анкету желание
     // (вопрос «можно ли» решает агрегат — предикат, не статус-поле).
-    const wish = state ? new WishAr(state) : undefined;
+    const wish = state ? WishAr.restore(state) : undefined;
     if (!wish?.canConfirm()) {
       return;
     }
 
-    wish.confirm();
-    await this.resolve.wishRepo.save(wish.state);
+    throwIfRejected(wish.confirm(Date.now()));
+    await this.resolve.wishRepo.save(wish.snapshot());
 
     const confirmed: WishConfirmedEvent = {
       eventId: crypto.randomUUID(),
       eventName: 'wish.confirmed',
       occurredAt: isoNow(),
       aggregateName: 'Wish',
-      aggregateId: wish.state.uuid,
+      aggregateId: wish.uuid,
       payload: { userId, courseId: target.courseId },
     };
     this.resolve.eventBus.publish(confirmed);

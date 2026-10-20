@@ -20,7 +20,9 @@ function makeWish(overrides: Partial<WishState> = {}): WishState {
     userId: crypto.randomUUID(),
     target: makeTarget(),
     status: 'expressed',
-    createdAt: '2026-05-01T12:00',
+    createdAt: Date.UTC(2026, 4, 1, 12),
+    updatedAt: Date.UTC(2026, 4, 1, 12),
+    version: 0,
     ...overrides,
   };
 }
@@ -64,6 +66,32 @@ describe('WishJsonRepo', () => {
     });
   });
 
+  describe('legacy-записи', () => {
+    test('читает запись с ISO без зоны, без updatedAt и version', async () => {
+      const path = filePath('wishes-legacy.json');
+      const uuid = crypto.randomUUID();
+      await Bun.write(
+        path,
+        JSON.stringify([
+          {
+            uuid,
+            userId: crypto.randomUUID(),
+            target: makeTarget(),
+            status: 'expressed',
+            createdAt: '2026-05-01T12:00',
+          },
+        ]),
+      );
+      const repo = new WishJsonRepo(path);
+
+      const found = await repo.getByUuid(uuid);
+
+      expect(found?.createdAt).toBe(Date.UTC(2026, 4, 1, 12));
+      expect(found?.updatedAt).toBe(Date.UTC(2026, 4, 1, 12));
+      expect(found?.version).toBe(0);
+    });
+  });
+
   describe('getByUserAndTarget', () => {
     test('возвращает последнее желание пользователя по target', async () => {
       const repo = new WishJsonRepo(filePath('wishes-by-user-target.json'));
@@ -72,12 +100,12 @@ describe('WishJsonRepo', () => {
       const older = makeWish({
         userId,
         target,
-        createdAt: '2026-01-01T10:00',
+        createdAt: Date.UTC(2026, 0, 1, 10),
       });
       const newer = makeWish({
         userId,
         target,
-        createdAt: '2026-02-01T10:00',
+        createdAt: Date.UTC(2026, 1, 1, 10),
       });
 
       await repo.save(older);

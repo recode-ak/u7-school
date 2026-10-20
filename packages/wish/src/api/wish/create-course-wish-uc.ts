@@ -29,8 +29,8 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
   protected readonly ucName = 'create-course-wish' as const;
   protected readonly ucLabel = 'Создать желание пройти курс' as const;
   protected readonly arMeta = {
-    arName: WishAr.arName as 'Wish',
-    arLabel: WishAr.arLabel as 'Желание',
+    arName: 'Wish' as const,
+    arLabel: 'Желание' as const,
   };
   protected readonly type = 'command' as const;
   protected readonly requiresAuth = true as const;
@@ -84,8 +84,8 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
     // 3. Курс с пулом анкеты — анкетная ветка: pending + запуск анкеты.
     const pool = findCoursePool(command.courseId);
     if (pool) {
-      const wish = WishAr.pending(actor.uuid, target);
-      await this.repo.save(wish.state);
+      const wish = this.#create(actor.uuid, target, 'pending');
+      await this.repo.save(wish.snapshot());
       await this.resolve.questionnaireFacade.startStandard<{
         courseId: string;
       }>(actor, pool, { courseId: command.courseId });
@@ -93,9 +93,24 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
     }
 
     // 4. Курс без пула — мгновенная фиксация.
-    const wish = WishAr.express(actor.uuid, target);
-    await this.repo.save(wish.state);
+    const wish = this.#create(actor.uuid, target, 'expressed');
+    await this.repo.save(wish.snapshot());
 
     return { outcome: 'instant' };
+  }
+
+  /** Новое желание: uuid и время — прикладного слоя, не домена. */
+  #create(
+    userId: string,
+    target: WishTargetVo,
+    status: 'expressed' | 'pending',
+  ): WishAr {
+    const created = WishAr.create(
+      { uuid: crypto.randomUUID(), userId, target, status },
+      Date.now(),
+    );
+    // `create` без отказов: ветка Err недостижима (тип ошибки — never).
+    if (!created.ok) return created.error;
+    return created.value;
   }
 }

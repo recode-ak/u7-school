@@ -1,6 +1,5 @@
 import { CourseSchema } from '@u7-scl/domain/course';
 import * as v from 'valibot';
-import type { WishArMeta } from '../a-root';
 import type {
   CourseNotFoundUcError,
   WishAlreadyExistsUcError,
@@ -29,7 +28,7 @@ export type CreateCourseWishOutput = v.InferOutput<
 /** Мета команды создания желания пройти курс. */
 export interface CreateCourseWishCmdMeta {
   ucName: 'create-course-wish';
-  arMeta: WishArMeta;
+  arMeta: { name: 'Wish'; label: 'Желание' };
   input: CreateCourseWishCmd;
   output: CreateCourseWishOutput;
   errors: CreateCourseWishCmdError;

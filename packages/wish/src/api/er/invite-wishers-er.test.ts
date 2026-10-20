@@ -41,7 +41,9 @@ function makeWish(
     userId,
     target: { kind: 'course', courseId: targetCourseId },
     status: 'expressed',
-    createdAt: '2026-08-20T10:00',
+    createdAt: Date.UTC(2026, 7, 20, 10),
+    updatedAt: Date.UTC(2026, 7, 20, 10),
+    version: 0,
     ...overrides,
   };
 }
@@ -55,7 +57,9 @@ function makeModuleWish(
     userId,
     target: { kind: 'module', moduleId: targetModuleId },
     status: 'expressed',
-    createdAt: '2026-08-20T10:00',
+    createdAt: Date.UTC(2026, 7, 20, 10),
+    updatedAt: Date.UTC(2026, 7, 20, 10),
+    version: 0,
     ...overrides,
   };
 }

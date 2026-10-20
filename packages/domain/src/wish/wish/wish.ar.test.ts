@@ -1,0 +1,194 @@
+import { describe, expect, it } from 'bun:test';
+import { defineModule } from 'dmg-core';
+import { checkDefs, formatViolation } from 'dmg-core/arch';
+import { indexDefs } from 'dmg-core/graph';
+import { expectErr, expectOk } from 'dmg-core/testing';
+import * as v from 'valibot';
+import { WishAr, WishArDef } from './wish.ar';
+import type { WishState, WishStatus, WishTargetVo } from './wish.state';
+
+const WISH = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
+const USER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
+const target: WishTargetVo = {
+  kind: 'course',
+  courseId: '7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f',
+};
+const T0 = Date.UTC(2026, 7, 26, 10);
+const T1 = Date.UTC(2026, 7, 27);
+
+const stored = (status: WishStatus): WishState => ({
+  uuid: WISH,
+  userId: USER,
+  target,
+  status,
+  createdAt: T0,
+  updatedAt: T0,
+  version: 0,
+});
+
+const restore = (status: WishStatus) => WishAr.restore(stored(status));
+
+describe('WishArDef', () => {
+  it('шесть статусов и четыре перехода', () => {
+    expect(Object.keys(WishArDef.statuses)).toEqual([
+      'expressed',
+      'pending',
+      'confirmed',
+      'cancelled',
+      'abandoned',
+      'fulfilled',
+    ]);
+    expect(Object.keys(WishArDef.transitions)).toEqual([
+      'confirm',
+      'abandon',
+      'cancel',
+      'fulfill',
+    ]);
+  });
+
+  it('checkDefs — без нарушений', () => {
+    const probe = defineModule({
+      name: 'wish',
+      label: 'Желания',
+      description: 'Проба Def агрегата до паспорта модуля (Ф12).',
+      dependsOn: [],
+      aggregates: [WishArDef],
+      useCases: [],
+      reactions: [],
+      jobs: [],
+    });
+    expect(checkDefs(indexDefs([probe])).map(formatViolation)).toEqual([]);
+  });
+});
+
+describe('WishAr.create', () => {
+  it.each(['expressed', 'pending'] as const)(
+    'новое желание в статусе %s, без событий',
+    (status) => {
+      const ar = expectOk(
+        WishAr.create({ uuid: WISH, userId: USER, target, status }, T1),
+      );
+      expect(ar.snapshot()).toEqual({
+        ...stored(status),
+        createdAt: T1,
+        updatedAt: T1,
+      });
+      expect(ar.pullEvents()).toEqual([]);
+    },
+  );
+});
+
+describe('WishAr.restore', () => {
+  it('legacy-запись: ISO без зоны, без updatedAt и version', () => {
+    const legacy = {
+      uuid: WISH,
+      userId: USER,
+      target,
+      status: 'expressed',
+      createdAt: '2026-08-26T10:00',
+    };
+    const ar = WishAr.restore(v.parse(WishArDef.state, legacy));
+    expect(ar.snapshot()).toEqual(stored('expressed'));
+  });
+
+  it('snapshot — round trip', () => {
+    const snapshot = restore('confirmed').snapshot();
+    expect(WishAr.restore(snapshot).snapshot()).toEqual(stored('confirmed'));
+  });
+});
+
+/** Успешный переход: статус `to`, `updatedAt` = `at`, версия +1. */
+function expectMoved(ar: WishAr, to: WishStatus): void {
+  expect(ar.snapshot()).toEqual({
+    ...stored(to),
+    updatedAt: T1,
+    version: 1,
+  });
+  expect(ar.pullEvents()).toEqual([]);
+}
+
+describe('WishAr.confirm', () => {
+  it('pending → confirmed', () => {
+    const ar = restore('pending');
+    expectOk(ar.confirm(T1));
+    expectMoved(ar, 'confirmed');
+  });
+
+  it.each([
+    'expressed',
+    'confirmed',
+    'cancelled',
+    'abandoned',
+    'fulfilled',
+  ] as const)('из %s — WISH_NOT_CONFIRMABLE', (status) => {
+    const ar = restore(status);
+    expectErr(ar.confirm(T1), 'WISH_NOT_CONFIRMABLE');
+    expect(ar.snapshot()).toEqual(stored(status));
+  });
+});
+
+describe('WishAr.abandon', () => {
+  it('pending → abandoned', () => {
+    const ar = restore('pending');
+    expectOk(ar.abandon(T1));
+    expectMoved(ar, 'abandoned');
+  });
+
+  it.each([
+    'expressed',
+    'confirmed',
+    'cancelled',
+    'abandoned',
+    'fulfilled',
+  ] as const)('из %s — WISH_NOT_ABANDONABLE', (status) => {
+    expectErr(restore(status).abandon(T1), 'WISH_NOT_ABANDONABLE');
+  });
+});
+
+describe('WishAr.cancel', () => {
+  it.each(['expressed', 'confirmed'] as const)('%s → cancelled', (status) => {
+    const ar = restore(status);
+    expectOk(ar.cancel(T1));
+    expectMoved(ar, 'cancelled');
+  });
+
+  it.each(['pending', 'cancelled', 'abandoned', 'fulfilled'] as const)(
+    'из %s — WISH_NOT_CANCELLABLE',
+    (status) => {
+      expectErr(restore(status).cancel(T1), 'WISH_NOT_CANCELLABLE');
+    },
+  );
+});
+
+describe('WishAr.fulfill', () => {
+  it.each(['expressed', 'confirmed'] as const)('%s → fulfilled', (status) => {
+    const ar = restore(status);
+    expectOk(ar.fulfill(T1));
+    expectMoved(ar, 'fulfilled');
+  });
+
+  it.each(['pending', 'cancelled', 'abandoned', 'fulfilled'] as const)(
+    'из %s — WISH_NOT_FULFILLABLE',
+    (status) => {
+      expectErr(restore(status).fulfill(T1), 'WISH_NOT_FULFILLABLE');
+    },
+  );
+});
+
+describe('предикаты переходов — совпадают с from в Def', () => {
+  const statuses = Object.keys(WishArDef.statuses) as WishStatus[];
+  const cases = [
+    ['canConfirm', ['pending']],
+    ['canAbandon', ['pending']],
+    ['canCancel', ['expressed', 'confirmed']],
+    ['canFulfill', ['expressed', 'confirmed']],
+  ] as const;
+
+  it.each(cases)('%s — только %p', (predicate, allowed) => {
+    for (const status of statuses) {
+      expect(restore(status)[predicate]()).toBe(
+        (allowed as readonly WishStatus[]).includes(status),
+      );
+    }
+  });
+});

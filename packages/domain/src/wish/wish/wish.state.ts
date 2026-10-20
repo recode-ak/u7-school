@@ -1,4 +1,4 @@
-import { F } from 'dmg-core';
+import { BaseEntityFields, F } from 'dmg-core';
 import * as v from 'valibot';
 
 /**
@@ -41,22 +41,10 @@ export type WishStatus = v.InferOutput<typeof WishStatus>;
 
 /** Entity желания — единственное место структуры состояния. */
 export const WishState = v.object({
-  // biome-ignore lint/plugin: базовые поля без BaseEntityFields до Ф2 — DEBT-24
-  uuid: v.pipe(v.string(), v.uuid('Некорректный формат UUID')),
+  ...BaseEntityFields,
   userId: F.uuid('пользователя'),
   target: WishTargetVo,
   status: WishStatus,
-  // biome-ignore lint/plugin: базовые поля без BaseEntityFields до Ф2 — DEBT-24
-  createdAt: v.pipe(
-    v.string(),
-    // biome-ignore lint/plugin: перенос без изменения схем, ISO-даты — DEBT-24
-    v.isoDateTime('Некорректный формат даты создания'),
-  ),
-  // biome-ignore lint/plugin: базовые поля без BaseEntityFields до Ф2 — DEBT-24
-  updatedAt: v.optional(
-    // biome-ignore lint/plugin: перенос без изменения схем, ISO-даты — DEBT-24
-    v.pipe(v.string(), v.isoDateTime('Некорректный формат даты обновления')),
-  ),
 });
 
 export type WishState = v.InferOutput<typeof WishState>;

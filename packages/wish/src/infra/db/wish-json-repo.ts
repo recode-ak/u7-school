@@ -1,6 +1,12 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type { WishRepo, WishStatus, WishTargetVo } from '@u7-scl/domain/wish';
-import { WishPolicy, WishState } from '@u7-scl/domain/wish';
+import type {
+  WishRepo,
+  WishState,
+  WishStatus,
+  WishTargetVo,
+} from '@u7-scl/domain/wish';
+import { WishArDef, WishPolicy } from '@u7-scl/domain/wish';
+import type * as v from 'valibot';
 
 /** Проверяет равенство целей желания (сравнение по варианту и его ключам). */
 function isSameTarget(a: WishTargetVo, b: WishTargetVo): boolean {
@@ -24,7 +30,15 @@ export class WishJsonRepo implements WishRepo {
   readonly #repo: JsonFileRepo<WishState>;
 
   constructor(filePath = 'data/wish/wishes.json') {
-    this.#repo = new JsonFileRepo(WishState, filePath);
+    // Разбор через `WishArDef.state`: он дописывает `updatedAt = createdAt`
+    // у legacy-записей (D-36) — иначе запись без `updatedAt` не пройдёт схему
+    // и `JsonFileRepo` её пропустит. Даты на входе — ISO-строка или число,
+    // на выходе — число; legacy `JsonFileRepo` ждёт схему с одинаковыми
+    // входом и выходом, отсюда приведение.
+    this.#repo = new JsonFileRepo(
+      WishArDef.state as unknown as v.GenericSchema<WishState>,
+      filePath,
+    );
   }
 
   async save(wish: WishState): Promise<void> {
@@ -64,7 +78,7 @@ export class WishJsonRepo implements WishRepo {
     // них берём последнее созданное.
     const active = matches.filter((w) => WishPolicy.isActive(w.status));
     const pool = active.length > 0 ? active : matches;
-    pool.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    pool.sort((a, b) => b.createdAt - a.createdAt);
     return pool[0];
   }
 

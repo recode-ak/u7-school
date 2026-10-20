@@ -43,7 +43,9 @@ function makePendingWish(event: AbandonEvent): WishState {
     userId: event.payload.respondentId,
     target: { kind: 'course', courseId: event.ownerInfo.courseId },
     status: 'pending',
-    createdAt: '2026-08-20T10:00',
+    createdAt: Date.UTC(2026, 7, 20, 10),
+    updatedAt: Date.UTC(2026, 7, 20, 10),
+    version: 0,
   };
 }
 

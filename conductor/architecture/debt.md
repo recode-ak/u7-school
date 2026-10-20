@@ -89,7 +89,7 @@
 - **Критерий снятия:** маркер `DEBT-17` удалён, перенесённые файлы не импортируют `@u7-scl/app`
 
 ### DEBT-21: импорты `@u7-scl/core` в domain/wish
-- **Место:** `packages/domain/src/wish/**` (`module.ts`, `wish/{a-root,errors,events}.ts`; подпути `core/domain`, `core/shared`; `WishArMeta` — в `a-root.ts`)
+- **Место:** `packages/domain/src/wish/**` (`module.ts`, legacy `wish/{errors,events}.ts`; подпути `core/domain`, `core/shared`)
 - **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `ConflictError`, `NotFoundError`, `ApiModuleMeta`, `isoNow` живут в `core`; механический перенос не меняет базовые классы.
 - **Погашает:** `dmg-core-extract` (Ф4) и `golden-wish`
 - **Критерий снятия:** в `packages/domain/src/wish/**` нет маркеров `DEBT-21` и импортов `@u7-scl/core`
@@ -196,15 +196,9 @@
 - **Погашает:** перевод `stream` на Def (логика — в Policy/DQS)
 - **Критерий снятия:** маркеры `DEBT-20` и `biome-ignore` удалены, методы вынесены по правилам
 
-### DEBT-24: базовые поля и `v.isoDateTime` в схеме domain/wish (DOM-11, DOM-12)
-- **Место:** `packages/domain/src/wish/wish/wish.state.ts` (`uuid`, `createdAt`, `updatedAt`; `biome-ignore lint/plugin`)
-- **Причина:** схема перенесена без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что DEBT-5, DEBT-9, DEBT-14, DEBT-19); DOM-11 — базовые поля только через `BaseEntityFields`. Переход на `BaseEntityFields` и `F.timestamp` — Ф2 golden-wish (вместе с `WishArDef`: фолбэк `updatedAt` и числовые даты требуют Ar на `dmg-core`).
-- **Погашает:** `golden-wish` (перевод `wish` на Def, `F.timestamp`)
-- **Критерий снятия:** маркеры `DEBT-24` и `biome-ignore` удалены, базовые поля — `...BaseEntityFields`, даты описаны через поля Def
-
 ### DEBT-28: `v.isoDateTime` в схеме domain/peer-review (DOM-12)
 - **Место:** `packages/domain/src/peer-review/shared/schema.ts` (`isoMinuteField`; `biome-ignore lint/plugin`)
-- **Причина:** схема перенесена без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что DEBT-5, DEBT-9, DEBT-14, DEBT-19, DEBT-24).
+- **Причина:** схема перенесена без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что DEBT-5, DEBT-9, DEBT-14, DEBT-19; DEBT-24 погашен в `golden-wish` Ф2).
 - **Погашает:** перевод `peer-review` на Def (`F.timestamp`)
 - **Критерий снятия:** маркеры `DEBT-28` и `biome-ignore` удалены, даты описаны через поля Def
 
@@ -239,3 +233,15 @@
 - **Решение:** <что сделано>
 - **Пересмотреть:** <что проверить на ревизии; DEBT-<n>, если есть временный код>
 ```
+
+### TR-1: минимальные `WishErrors`/`WishEvents` в фазе агрегата
+- **Трек / фаза:** `golden-wish`, Ф2
+- **Контекст:** `defineAggregate` требует `events` и `errors` (у переходов — `rejects`), а события и ошибки `wish` — Ф3–4. Варианты: объединить Ф2 с Ф3–4 (большая фаза, эталон Ar смешан с событиями); оставить Ar на legacy до Ф3–4; завести минимальные группы сейчас.
+- **Решение:** в Ф2 `wish.errors.ts` содержит только ошибки отказов переходов, `wish.events.ts` — минимум, который требует `defineAggregate`; legacy `errors.ts`/`events.ts` живут параллельно. В UC/ER `err` переходов временно превращается в прежнее legacy-исключение — поведение не меняется.
+- **Пересмотреть:** после Ф3–4 параллельных групп нет, обёртки `err → throw` в UC/ER сняты.
+
+### TR-2: legacy-репозиторий `wish` на `WishArDef.state` через приведение типа
+- **Трек / фаза:** `golden-wish`, Ф2
+- **Контекст:** legacy `JsonFileRepo<T>` ждёт схему с одинаковым типом входа и выхода, а `F.timestamp` принимает строку или число и отдаёт число. Без разбора через `WishArDef.state` записи без `updatedAt` теряются (фолбэк D-36). Порт `WishRepo` в домене пока на `WishState`, поэтому `restore`/`snapshot()` вызывают UC/ER.
+- **Решение:** `WishArDef.state as unknown as v.GenericSchema<WishState>` в `wish-json-repo.ts`; `core` не меняется. Часы и uuid в UC/ER — `Date.now()`/`crypto.randomUUID()`, как у соседних legacy-UC. Первая запись перепишет `data/wish/wishes.json` с числовыми датами и полями `updatedAt`/`version` — это формат spec (`F.timestamp` пишет число), старые ISO-записи читаются.
+- **Пересмотреть:** в Ф6 (`WishJsonRepo`, порт на Ar/`Result`, UoW) приведения и `restore`/`snapshot` в UC/ER нет; часы — порт `Clock`.

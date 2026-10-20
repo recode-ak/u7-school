@@ -3,11 +3,7 @@ import type {
   ListUserWishesCmd,
   ListUserWishesCmdMeta,
 } from '@u7-scl/domain/wish';
-import {
-  ListUserWishesCmdSchema,
-  WishAr,
-  WishState,
-} from '@u7-scl/domain/wish';
+import { ListUserWishesCmdSchema, WishState } from '@u7-scl/domain/wish';
 import * as v from 'valibot';
 import { WishUseCase } from '../wish-uc';
 
@@ -25,8 +21,8 @@ export class ListUserWishesUc extends WishUseCase<ListUserWishesCmdMeta> {
   protected readonly ucName = 'list-user-wishes' as const;
   protected readonly ucLabel = 'Список желаний пользователя' as const;
   protected readonly arMeta = {
-    arName: WishAr.arName as 'Wish',
-    arLabel: WishAr.arLabel as 'Желание',
+    arName: 'Wish' as const,
+    arLabel: 'Желание' as const,
   };
   protected readonly type = 'query' as const;
   protected readonly requiresAuth = true as const;

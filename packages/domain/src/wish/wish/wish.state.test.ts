@@ -90,39 +90,37 @@ describe('WishStatus', () => {
 });
 
 describe('WishState', () => {
-  test('принимает желание с target вместо courseId', () => {
-    const wish = {
-      uuid: crypto.randomUUID(),
-      userId: crypto.randomUUID(),
-      target: validCourseTarget,
-      status: 'pending',
-      createdAt: '2026-08-26T10:00',
-    };
+  const base = {
+    uuid: crypto.randomUUID(),
+    userId: crypto.randomUUID(),
+    status: 'pending',
+    createdAt: '2026-08-26T10:00',
+    updatedAt: '2026-08-27T08:30:00.000Z',
+  };
 
-    const result = v.safeParse(WishState, wish);
+  test('принимает желание с target; ISO-даты (в т. ч. без зоны) — числа', () => {
+    const result = v.safeParse(WishState, {
+      ...base,
+      target: validCourseTarget,
+    });
 
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.output.target).toEqual(validCourseTarget);
+      expect(result.output.createdAt).toBe(Date.UTC(2026, 7, 26, 10));
+      expect(result.output.updatedAt).toBe(Date.UTC(2026, 7, 27, 8, 30));
+      expect(result.output.version).toBe(0);
     }
   });
 
   test('отклоняет желание с legacy-полем courseId вместо target', () => {
-    const legacyWish = {
-      uuid: crypto.randomUUID(),
-      userId: crypto.randomUUID(),
-      courseId: crypto.randomUUID(),
-      status: 'expressed',
-      createdAt: '2026-08-26T10:00',
-    };
+    const legacyWish = { ...base, courseId: crypto.randomUUID() };
 
     expect(v.safeParse(WishState, legacyWish).success).toBe(false);
   });
 
-  test('у полей userId, target, status есть описание', () => {
-    const { userId, target, status } = WishState.entries;
-
-    for (const field of [userId, target, status]) {
+  test('у каждого поля есть описание', () => {
+    for (const field of Object.values(WishState.entries)) {
       expect(v.getDescription(field)).toBeString();
     }
   });

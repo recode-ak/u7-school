@@ -3,6 +3,7 @@ import { EventReaction } from '@u7-scl/core/api';
 import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
 import { WishAr } from '@u7-scl/domain/wish';
 import type { StudentEnrolledEvent } from '@u7-scl/stream/domain';
+import { throwIfRejected } from '../legacy-reject';
 
 /** Метаданные реакции реализации желания при зачислении. */
 export interface FulfillWishErMeta extends ErMeta<StudentEnrolledEvent> {
@@ -33,7 +34,7 @@ export class FulfillWishEr extends EventReaction<
 
     // Кандидаты: желания, реализуемые зачислением (expressed | confirmed) —
     // вопрос «реализуемо ли» решает агрегат — предикат, не статус-поле.
-    const active = wishes.filter((w) => new WishAr(w).canFulfill());
+    const active = wishes.filter((w) => WishAr.restore(w).canFulfill());
     if (active.length === 0) {
       return;
     }
@@ -77,8 +78,8 @@ export class FulfillWishEr extends EventReaction<
   }
 
   async #fulfill(wish: WishState): Promise<void> {
-    const ar = new WishAr(wish);
-    ar.fulfill();
-    await this.resolve.wishRepo.save(ar.state);
+    const ar = WishAr.restore(wish);
+    throwIfRejected(ar.fulfill(Date.now()));
+    await this.resolve.wishRepo.save(ar.snapshot());
   }
 }

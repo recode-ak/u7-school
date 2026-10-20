@@ -8,6 +8,7 @@ import type {
 } from '@u7-scl/domain/wish';
 import { CancelWishCmdSchema, WishAr } from '@u7-scl/domain/wish';
 import * as v from 'valibot';
+import { throwIfRejected } from '../legacy-reject';
 import { WishUseCase } from '../wish-uc';
 
 /**
@@ -20,8 +21,8 @@ export class CancelWishUc extends WishUseCase<CancelWishCmdMeta> {
   protected readonly ucName = 'cancel-wish' as const;
   protected readonly ucLabel = 'Отменить желание' as const;
   protected readonly arMeta = {
-    arName: WishAr.arName as 'Wish',
-    arLabel: WishAr.arLabel as 'Желание',
+    arName: 'Wish' as const,
+    arLabel: 'Желание' as const,
   };
   protected readonly type = 'command' as const;
   protected readonly requiresAuth = true as const;
@@ -48,9 +49,9 @@ export class CancelWishUc extends WishUseCase<CancelWishCmdMeta> {
       );
     }
 
-    const ar = new WishAr(wish);
-    ar.cancel();
-    await this.repo.save(ar.state);
+    const ar = WishAr.restore(wish);
+    throwIfRejected(ar.cancel(Date.now()));
+    await this.repo.save(ar.snapshot());
 
     return undefined;
   }

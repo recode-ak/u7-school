@@ -3,6 +3,7 @@ import { EventReaction } from '@u7-scl/core/api';
 import type { WishApiModuleResolver, WishTargetVo } from '@u7-scl/domain/wish';
 import { WishAr } from '@u7-scl/domain/wish';
 import type { QuestionnaireAbandonEvent } from '@u7-scl/questionnaire/domain';
+import { throwIfRejected } from '../legacy-reject';
 
 /** Метаданные реакции бросания желания. */
 export interface AbandonWishErMeta
@@ -37,12 +38,12 @@ export class AbandonWishEr extends EventReaction<
 
     // Идемпотентность: бросаем только ожидающее анкету желание
     // (вопрос «можно ли» решает агрегат — предикат, не статус-поле).
-    const wish = state ? new WishAr(state) : undefined;
+    const wish = state ? WishAr.restore(state) : undefined;
     if (!wish?.canAbandon()) {
       return;
     }
 
-    wish.abandon();
-    await this.resolve.wishRepo.save(wish.state);
+    throwIfRejected(wish.abandon(Date.now()));
+    await this.resolve.wishRepo.save(wish.snapshot());
   }
 }

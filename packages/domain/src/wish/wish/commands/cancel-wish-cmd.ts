@@ -1,6 +1,5 @@
 import { CourseSchema, ModuleSchema } from '@u7-scl/domain/course';
 import * as v from 'valibot';
-import type { WishArMeta } from '../a-root';
 import type { WishNotFoundUcError } from '../errors';
 
 /**
@@ -19,7 +18,7 @@ export type CancelWishCmd = v.InferOutput<typeof CancelWishCmdSchema>;
 /** Мета команды отмены желания. */
 export interface CancelWishCmdMeta {
   ucName: 'cancel-wish';
-  arMeta: WishArMeta;
+  arMeta: { name: 'Wish'; label: 'Желание' };
   input: CancelWishCmd;
   output: undefined;
   errors: CancelWishCmdError;

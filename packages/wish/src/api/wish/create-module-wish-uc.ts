@@ -27,8 +27,8 @@ export class CreateModuleWishUc extends WishUseCase<CreateModuleWishCmdMeta> {
   protected readonly ucName = 'create-module-wish' as const;
   protected readonly ucLabel = 'Создать желание пройти модуль' as const;
   protected readonly arMeta = {
-    arName: WishAr.arName as 'Wish',
-    arLabel: WishAr.arLabel as 'Желание',
+    arName: 'Wish' as const,
+    arLabel: 'Желание' as const,
   };
   protected readonly type = 'command' as const;
   protected readonly requiresAuth = true as const;
@@ -74,8 +74,19 @@ export class CreateModuleWishUc extends WishUseCase<CreateModuleWishCmdMeta> {
     }
 
     // 3. Мгновенная фиксация — без анкеты (студент уже верифицирован).
-    const wish = WishAr.express(actor.uuid, target);
-    await this.repo.save(wish.state);
+    // uuid и время — прикладного слоя, не домена.
+    const created = WishAr.create(
+      {
+        uuid: crypto.randomUUID(),
+        userId: actor.uuid,
+        target,
+        status: 'expressed',
+      },
+      Date.now(),
+    );
+    // `create` без отказов: ветка Err недостижима (тип ошибки — never).
+    if (!created.ok) return created.error;
+    await this.repo.save(created.value.snapshot());
 
     return undefined;
   }

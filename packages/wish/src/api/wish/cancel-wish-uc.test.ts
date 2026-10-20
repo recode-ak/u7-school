@@ -36,7 +36,9 @@ function makeExpressedWish(userId: string, courseId: string): WishState {
     userId,
     target: { kind: 'course', courseId },
     status: 'expressed',
-    createdAt: '2026-01-01T10:00',
+    createdAt: Date.UTC(2026, 0, 1, 10),
+    updatedAt: Date.UTC(2026, 0, 1, 10),
+    version: 0,
   };
 }
 
