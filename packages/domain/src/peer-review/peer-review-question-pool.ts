@@ -3,7 +3,7 @@ import * as v from 'valibot';
 /**
  * Привязка вопроса к навыку: только структура (категория/подкатегория/вес).
  * Допустимые коды категорий и связь категория↔подкатегория — знание модуля
- * `dossier` (@u7-scl/dossier, SkillMappingSchema); пул хранит их как данные.
+ * `dossier` (@u7-scl/domain/dossier, SkillMappingSchema); пул хранит их как данные.
  */
 export const QuestionSkillMappingSchema = v.object({
   category: v.pipe(v.string(), v.nonEmpty('Категория не может быть пустой')),

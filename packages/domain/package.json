@@ -14,7 +14,8 @@
   "dependencies": {
     "@u7-scl/app": "workspace:*",
     "@u7-scl/core": "workspace:*",
-    "dmg-core": "workspace:*"
+    "dmg-core": "workspace:*",
+    "valibot": "^1.0.0"
   },
   "exports": {
     ".": "./src/index.ts",

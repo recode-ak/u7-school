@@ -34,6 +34,7 @@ export const DOMAIN_DEBT_ALLOWLIST: readonly string[] = [
   'D-27',
   'D-28',
   'D-29',
+  'D-30',
 ];
 
 /** Граф `dependsOn` модулей домена; порядок переноса — снизу вверх. */
