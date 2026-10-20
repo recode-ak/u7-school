@@ -1,0 +1,5 @@
+Задача Ф5 golden-wish: WishPolicy + WishDcs.
+Домен: wish.ar.ts (isActive, isOwnedBy, status), wish/wish.policy.ts (canCancel, isAuthor), wish.dcs.ts (WishDcs.checkUnique), удалён wish/policy.ts, index.ts.
+Пакет: create-course/module-wish-uc (WishDcs через WishAr.restore), cancel-wish-uc (WishPolicy.canCancel → ACCESS_DENIED, недостижимо), wish-json-repo (isActive через Ar).
+Решения: create-* — allowAll (Ф8); gen dcs неприменим без паспорта модуля (Ф12) — вручную по шаблону service.ts; цель типа CreateWish['target'] (DOM-01).
+check 3342 pass, arch:check 0.
