@@ -1,22 +1,32 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { MemoryTasks, OWNER, TASK, taskRow } from '../../dmg/app/app.fixture';
-import type { AppContext } from '../../dmg/app/context';
-import { JobFromDef, type JobRun } from '../../dmg/app/job/job-from-def';
-import { ModuleFromDef } from '../../dmg/app/module/module-from-def';
-import type { RequestMeta } from '../../dmg/app/trace';
-import type { UnitOfWork } from '../../dmg/app/uow/unit-of-work';
-import { UseCaseFromDef } from '../../dmg/app/use-case/use-case-from-def';
-import { defineModule } from '../../dmg/domain/contracts/define-module';
-import type { Caller } from '../../dmg/kernel/caller/caller';
-import { ok } from '../../dmg/kernel/result/result';
-import { expectErr, expectOk, testAppContext } from '../../dmg/testing';
+import {
+  type AppContext,
+  type Caller,
+  defineModule,
+  JobFromDef,
+  type JobRun,
+  ModuleFromDef,
+  ok,
+  type RequestMeta,
+  type UnitOfWork,
+  UseCaseFromDef,
+} from 'dmg-core';
+import {
+  expectErr,
+  expectOk,
+  MemoryTasks,
+  OWNER,
+  TASK,
+  taskRow,
+  testAppContext,
+} from 'dmg-core/testing';
 import {
   ArchiveDoneTasksJobDef,
   CompleteTaskUcDef,
   CreateTaskUcDef,
   type TaskAr,
   TaskErrors,
-} from '../../dmg/testing/example/todo';
+} from 'dmg-core/testing/example/todo/index';
 import { AppException } from '../../domain/errors/errors';
 import type { AppMeta } from '../../domain/types';
 import type { Job } from '../job/job';

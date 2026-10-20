@@ -2,7 +2,7 @@
 
 **Назначение:** проверяемые правила архитектуры. Агенты и ревьюер ссылаются на ID; каждая машинная проверка выводит ID в сообщении (`DOM-01: …`). Правило меняется только через [decisions.md](./decisions.md).
 
-Проверка: **lint** — biome (`noRestrictedImports`, GritQL-плагины; видно в IDE); **type** — компилятор; **test** — контрактный или рантайм-тест (`bun run arch:check`); **review** — агент-ревьюер. Состояние: lint — `biome.json` (`overrides`) и `biome-plugins/*.grit`, тест правил — `scripts/lint-rules.test.ts` на фикстурах `lint-fixtures/`; блокируют только новые пути (`packages/domain/**`, `packages/core/src/dmg/**`), на legacy действуют ARC-01, ARC-07, а ARC-06 и ARC-08 — `warn`. Ограничения: DOM-01 не охватывает рендереры UI и stories (до миграции UI), в DOM-11 автоматизированы базовые поля, а «DTO из схемы» — `review`. Повторяющееся замечание ревьюера переводится в машинную проверку (ratchet).
+Проверка: **lint** — biome (`noRestrictedImports`, GritQL-плагины; видно в IDE); **type** — компилятор; **test** — контрактный или рантайм-тест (`bun run arch:check`); **review** — агент-ревьюер. Состояние: lint — `biome.json` (`overrides`) и `biome-plugins/*.grit`, тест правил — `scripts/lint-rules.test.ts` на фикстурах `lint-fixtures/`; блокируют только новые пути (`packages/domain/**`, `packages/dmg-core/src/**`), на legacy действуют ARC-01, ARC-07, а ARC-06 и ARC-08 — `warn`. Ограничения: DOM-01 не охватывает рендереры UI и stories (до миграции UI), в DOM-11 автоматизированы базовые поля, а «DTO из схемы» — `review`. Повторяющееся замечание ревьюера переводится в машинную проверку (ratchet).
 
 ---
 
@@ -19,7 +19,7 @@
 | ARC-07 | `app` импортирует только core и domain | lint |
 | ARC-08 | apps вызывают операции только через `appApi`; репозитории и реализации модулей не импортируют | lint |
 | ARC-09 | Нет `process.env` / глобального `config` в domain и UI-компонентах | lint |
-| ARC-10 | Платформа DMG (`packages/core/src/dmg`) не импортирует `*-legacy` и `@u7-scl/*`; мосты — в `packages/core/src/legacy-bridge` | lint |
+| ARC-10 | Платформа DMG (`packages/dmg-core/src`) не импортирует `*-legacy` и `@u7-scl/*`; мосты — в `packages/core/src/legacy-bridge` | lint |
 
 ## DOM — домен
 

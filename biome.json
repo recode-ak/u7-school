@@ -154,7 +154,8 @@
                       "!.",
                       "!./**",
                       "!../**",
-                      "!#dmg/**"
+                      "!dmg-core",
+                      "!dmg-core/**"
                     ],
                     "message": "ARC-02: domain импортирует только core и valibot"
                   }
@@ -166,7 +167,7 @@
       }
     },
     {
-      "includes": ["packages/core/src/dmg/**"],
+      "includes": ["packages/dmg-core/src/**"],
       "linter": {
         "rules": {
           "style": {
@@ -199,7 +200,7 @@
     },
     {
       "includes": [
-        "packages/core/src/dmg/testing/example/app/**",
+        "packages/dmg-core/src/testing/example/app/**",
         "!**/*.test.ts",
         "!**/infra/**"
       ],
@@ -261,7 +262,8 @@
                       "!.",
                       "!./**",
                       "!../**",
-                      "!#dmg/**"
+                      "!dmg-core",
+                      "!dmg-core/**"
                     ],
                     "message": "ARC-02: domain импортирует только core и valibot"
                   },
@@ -633,7 +635,7 @@
     },
     {
       "includes": [
-        "packages/core/src/dmg/**",
+        "packages/dmg-core/src/**",
         "packages/domain/**",
         "!**/*.test.ts"
       ],
@@ -644,17 +646,17 @@
     },
     {
       "includes": [
-        "packages/core/src/dmg/**",
+        "packages/dmg-core/src/**",
         "packages/domain/**",
         "!**/*.test.ts",
-        "!packages/core/src/dmg/kernel/fields/fields.ts"
+        "!packages/dmg-core/src/kernel/fields/fields.ts"
       ],
       "plugins": ["./biome-plugins/dom-12-no-iso-dates.grit"]
     },
     {
       "includes": [
         "packages/domain/**/*.state.ts",
-        "packages/core/src/dmg/testing/example/**/*.state.ts"
+        "packages/dmg-core/src/testing/example/**/*.state.ts"
       ],
       "plugins": ["./biome-plugins/dom-11-base-fields.grit"]
     },
@@ -665,11 +667,11 @@
         "packages/domain/**/*.facade.ts",
         "packages/domain/**/*.uc.ts",
         "packages/domain/**/*.er.ts",
-        "packages/core/src/dmg/testing/example/**/*.ar.ts",
-        "packages/core/src/dmg/testing/example/**/*.dcs.ts",
-        "packages/core/src/dmg/testing/example/**/*.facade.ts",
-        "packages/core/src/dmg/testing/example/**/*.uc.ts",
-        "packages/core/src/dmg/testing/example/**/*.er.ts",
+        "packages/dmg-core/src/testing/example/**/*.ar.ts",
+        "packages/dmg-core/src/testing/example/**/*.dcs.ts",
+        "packages/dmg-core/src/testing/example/**/*.facade.ts",
+        "packages/dmg-core/src/testing/example/**/*.uc.ts",
+        "packages/dmg-core/src/testing/example/**/*.er.ts",
         "!**/*.test.ts"
       ],
       "plugins": ["./biome-plugins/err-01-no-throw.grit"]
@@ -682,12 +684,12 @@
         "packages/domain/**/*.uc.ts",
         "packages/domain/**/*.er.ts",
         "packages/domain/**/*.job.ts",
-        "packages/core/src/dmg/testing/example/**/*.ar.ts",
-        "packages/core/src/dmg/testing/example/**/*.dcs.ts",
-        "packages/core/src/dmg/testing/example/**/*.facade.ts",
-        "packages/core/src/dmg/testing/example/**/*.uc.ts",
-        "packages/core/src/dmg/testing/example/**/*.er.ts",
-        "packages/core/src/dmg/testing/example/**/*.job.ts",
+        "packages/dmg-core/src/testing/example/**/*.ar.ts",
+        "packages/dmg-core/src/testing/example/**/*.dcs.ts",
+        "packages/dmg-core/src/testing/example/**/*.facade.ts",
+        "packages/dmg-core/src/testing/example/**/*.uc.ts",
+        "packages/dmg-core/src/testing/example/**/*.er.ts",
+        "packages/dmg-core/src/testing/example/**/*.job.ts",
         "!**/*.test.ts"
       ],
       "plugins": ["./biome-plugins/api-02-no-manual-publish.grit"]

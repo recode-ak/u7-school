@@ -3,7 +3,7 @@ import type {
   EnvelopeOf,
   EventBus,
   EventEnvelope,
-} from '#dmg/index';
+} from 'dmg-core';
 import type { DomainEvent as LegacyEvent } from '#domain-legacy/events/domain-event';
 import type { EventBus as LegacyBus } from '#domain-legacy/events/event-bus';
 

@@ -1,13 +1,14 @@
-import type { AnyModuleFromDef } from '#dmg/app/module/module-from-def';
-import { type RequestMeta, requestTrace } from '#dmg/app/trace';
-import type {
-  AnyUseCaseDef,
-  InputOf,
-  OutputOf,
-  UseCaseErrorOf,
-} from '#dmg/domain/contracts/define-use-case';
-import type { Caller } from '#dmg/kernel/caller/caller';
-import type { Result } from '#dmg/kernel/result/result';
+import {
+  type AnyModuleFromDef,
+  type AnyUseCaseDef,
+  type Caller,
+  type InputOf,
+  type OutputOf,
+  type RequestMeta,
+  type Result,
+  requestTrace,
+  type UseCaseErrorOf,
+} from 'dmg-core';
 import { errBadRequest, throwError } from '#domain-legacy/errors/error-helpers';
 import {
   AppException,

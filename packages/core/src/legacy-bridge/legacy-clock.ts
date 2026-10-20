@@ -1,4 +1,4 @@
-import { useClockSource } from '#dmg/index';
+import { useClockSource } from 'dmg-core';
 import { now } from '#shared-legacy/now';
 
 /**

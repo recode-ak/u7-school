@@ -6,8 +6,8 @@
  * Каждое нарушение — строка, начинающаяся с ID правила из
  * `conductor/architecture/rules.md`. Код выхода 1, если нарушения есть.
  */
-import { type ArchApp, archCheck, formatViolation } from '@u7-scl/core/dmg';
-import { ExampleArch } from '@u7-scl/core/dmg/testing';
+import { type ArchApp, archCheck, formatViolation } from 'dmg-core';
+import { ExampleArch } from 'dmg-core/testing';
 
 /**
  * Приложения под проверкой. Домена школы ещё нет — пока только учебный

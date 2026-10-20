@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { MemoryTasks, T0, TASK, taskRow } from '#dmg/app/app.fixture';
 import {
   type DomainError,
   JobFromDef,
@@ -8,13 +7,20 @@ import {
   ok,
   type Result,
   type UnitOfWork,
-} from '#dmg/index';
-import { testAppContext } from '#dmg/testing/app-context';
+} from 'dmg-core';
+import {
+  MemoryTasks,
+  resetNow,
+  setNow,
+  T0,
+  TASK,
+  taskRow,
+  testAppContext,
+} from 'dmg-core/testing';
 import {
   ArchiveDoneTasksJobDef,
   type TaskAr,
-} from '#dmg/testing/example/todo/index';
-import { resetNow, setNow } from '#dmg/testing/index';
+} from 'dmg-core/testing/example/todo/index';
 import { InProcJobExecutor } from '../infra/in-proc-job-executor';
 import { legacyJob, legacyJobsOf } from './legacy-job';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { defineModule } from '@u7-scl/core/dmg';
+import { defineModule } from 'dmg-core';
 import { ARCH_APPS, runArchCheck } from './arch-check';
 
 function run(apps: Parameters<typeof runArchCheck>[0]) {

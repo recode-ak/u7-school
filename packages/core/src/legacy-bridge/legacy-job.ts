@@ -1,5 +1,5 @@
+import type { AnyJobDef, JobFromDef, ModuleDeps } from 'dmg-core';
 import { Job, type JobSchedule } from '#api-legacy/job/job';
-import type { AnyJobDef, JobFromDef, ModuleDeps } from '#dmg/index';
 
 /**
  * Job DMG в форме legacy `Job` — для существующего планировщика

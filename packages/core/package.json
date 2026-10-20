@@ -16,15 +16,15 @@
     "./api": "./src/api/index.ts",
     "./ui": "./src/ui/index.ts",
     "./shared": "./src/shared/index.ts",
-    "./infra": "./src/infra/index.ts",
-    "./dmg": "./src/dmg/index.ts",
-    "./dmg/testing": "./src/dmg/testing/index.ts"
+    "./infra": "./src/infra/index.ts"
   },
   "imports": {
     "#domain-legacy/*": "./src/domain/*.ts",
     "#api-legacy/*": "./src/api/*.ts",
     "#ui-legacy/*": "./src/ui/*.ts",
-    "#shared-legacy/*": "./src/shared/*.ts",
-    "#dmg/*": "./src/dmg/*.ts"
+    "#shared-legacy/*": "./src/shared/*.ts"
+  },
+  "dependencies": {
+    "dmg-core": "workspace:*"
   }
 }

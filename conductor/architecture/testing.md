@@ -22,7 +22,7 @@ expect(res.ok).toBe(false);
 expect(res.ok ? undefined : res.error.code).toBe('STUDENT_NOT_ACTIVE');
 ```
 
-Хелперы из `@u7-scl/core/dmg/testing`: `expectErr(res, 'STUDENT_NOT_ACTIVE')` возвращает ошибку, суженную по коду; `expectOk(res)` — значение. Не зависят от раннера, при несовпадении бросают. Для legacy-кода — см. [legacy.md](./legacy.md) §5.
+Хелперы из `dmg-core/testing`: `expectErr(res, 'STUDENT_NOT_ACTIVE')` возвращает ошибку, суженную по коду; `expectOk(res)` — значение. Не зависят от раннера, при несовпадении бросают. Для legacy-кода — см. [legacy.md](./legacy.md) §5.
 
 ## 3. Пирамида
 
@@ -41,7 +41,7 @@ expect(res.ok ? undefined : res.error.code).toBe('STUDENT_NOT_ACTIVE');
 
 - Домен не мокается: он чистый, тесты работают с настоящими агрегатами.
 - В прикладном слое мокаются порты (репозитории, фасады) — типизированно, без `any`.
-- Время — через `now()` из `@u7-scl/core/dmg`, не через `Date` напрямую. В тесте — `setNow(ts)` и `resetNow()` в `afterEach` (`.../dmg/testing`).
+- Время — через `now()` из `dmg-core`, не через `Date` напрямую. В тесте — `setNow(ts)` и `resetNow()` в `afterEach` (`dmg-core/testing`).
 - Готовые `testAppContext`, `recordingBus`, `memoryLogger` — для UC/ER без реального приложения; пример модуля — `dmg/testing/example`.
 
 ## 5. Защита от регресса и чистота правок

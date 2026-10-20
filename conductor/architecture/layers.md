@@ -17,7 +17,7 @@
 
 | Пакет | Может импортировать |
 |---|---|
-| core | — (подпуть `@u7-scl/core/dmg` — платформа DMG, `@u7-scl/core/dmg/testing` — тестовые хелперы) |
+| core | — (платформа DMG вынесена в пакет `dmg-core`, тестовые хелперы — `dmg-core/testing`) |
 | domain | core |
 | app | core, domain |
 | `packages/<m>` | core, domain, app. Другие модульные пакеты — **нет** (только фасады через резолвер) |

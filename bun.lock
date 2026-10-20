@@ -56,14 +56,26 @@
     "packages/core": {
       "name": "@u7-scl/core",
       "version": "0.1.0",
+      "dependencies": {
+        "dmg-core": "workspace:*",
+      },
     },
     "packages/course": {
       "name": "@u7-scl/course",
       "version": "0.1.0",
       "dependencies": {
+        "@u7-scl/app": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/user": "workspace:*",
         "valibot": "^1.0.0",
+      },
+    },
+    "packages/dmg-core": {
+      "name": "dmg-core",
+      "version": "0.1.0",
+      "peerDependencies": {
+        "@valibot/to-json-schema": "^1.7.1",
+        "valibot": "^1.5.0",
       },
     },
     "packages/dossier": {
@@ -77,6 +89,7 @@
       "name": "@u7-scl/peer-review",
       "version": "0.1.0",
       "dependencies": {
+        "@u7-scl/app": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/questionnaire": "workspace:*",
         "@u7-scl/stream": "workspace:*",
@@ -87,6 +100,7 @@
       "name": "@u7-scl/questionnaire",
       "version": "0.1.0",
       "dependencies": {
+        "@u7-scl/app": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/user": "workspace:*",
       },
@@ -95,6 +109,7 @@
       "name": "@u7-scl/stream",
       "version": "0.1.0",
       "dependencies": {
+        "@u7-scl/app": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/course": "workspace:*",
         "@u7-scl/user": "workspace:*",
@@ -128,6 +143,7 @@
       "name": "@u7-scl/wish",
       "version": "0.1.0",
       "dependencies": {
+        "@u7-scl/app": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/course": "workspace:*",
         "@u7-scl/questionnaire": "workspace:*",
@@ -316,6 +332,8 @@
     "dequal": ["dequal@2.0.3", "", {}, "sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA=="],
 
     "devlop": ["devlop@1.1.0", "", { "dependencies": { "dequal": "^2.0.0" } }, "sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA=="],
+
+    "dmg-core": ["dmg-core@workspace:packages/dmg-core"],
 
     "dom-serializer": ["dom-serializer@2.0.0", "", { "dependencies": { "domelementtype": "^2.3.0", "domhandler": "^5.0.2", "entities": "^4.2.0" } }, "sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg=="],
 

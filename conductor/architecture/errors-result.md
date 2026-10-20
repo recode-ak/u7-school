@@ -1,6 +1,6 @@
 # Ошибки и Result
 
-**Назначение:** как домен и прикладной слой сообщают об отказах. `Result` (`ok`/`err`), `defineErrors`, `CoreErrors` и UoW — в `@u7-scl/core/dmg`. Маппинг ошибок на транспорт — [transport.md](./transport.md).
+**Назначение:** как домен и прикладной слой сообщают об отказах. `Result` (`ok`/`err`), `defineErrors`, `CoreErrors` и UoW — в `dmg-core`. Маппинг ошибок на транспорт — [transport.md](./transport.md).
 
 ---
 

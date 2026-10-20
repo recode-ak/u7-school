@@ -1,4 +1,4 @@
-import type { DomainError, ErrorKind } from '#dmg/index';
+import type { DomainError, ErrorKind } from 'dmg-core';
 import type {
   AppError,
   ErrorKind as LegacyKind,

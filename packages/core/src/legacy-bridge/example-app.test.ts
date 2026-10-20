@@ -2,27 +2,30 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import type { RequestMeta } from '#dmg/app/trace';
-import type { Caller } from '#dmg/kernel/caller/caller';
-import { type LogRecord, memoryLogger } from '#dmg/testing/app-context';
-import type { ExampleUser } from '#dmg/testing/example/app/app-user';
-import { TaskJsonRepo } from '#dmg/testing/example/app/todo/infra/task.json-repo';
-import { ArchiveDoneTasksJob } from '#dmg/testing/example/app/todo/task/job/archive-done-tasks.job';
-import { todoFacade } from '#dmg/testing/example/app/todo/todo.facade';
+import type { Caller, RequestMeta } from 'dmg-core';
+import {
+  expectErr,
+  expectOk,
+  type LogRecord,
+  memoryLogger,
+} from 'dmg-core/testing';
+import type { ExampleUser } from 'dmg-core/testing/example/app/app-user';
+import { TaskJsonRepo } from 'dmg-core/testing/example/app/todo/infra/task.json-repo';
+import { ArchiveDoneTasksJob } from 'dmg-core/testing/example/app/todo/task/job/archive-done-tasks.job';
+import { todoFacade } from 'dmg-core/testing/example/app/todo/todo.facade';
 import {
   createTodoModule,
   type TodoDeps,
-} from '#dmg/testing/example/app/todo/todo.module';
-import { UserMemoryRepo } from '#dmg/testing/example/app/users/infra/user.memory-repo';
-import { createUsersModule } from '#dmg/testing/example/app/users/users.module';
+} from 'dmg-core/testing/example/app/todo/todo.module';
+import { UserMemoryRepo } from 'dmg-core/testing/example/app/users/infra/user.memory-repo';
+import { createUsersModule } from 'dmg-core/testing/example/app/users/users.module';
 import {
   CompleteTaskUcDef,
   CreateTaskUcDef,
   ListTasksUcDef,
   TaskEvents,
-} from '#dmg/testing/example/todo/index';
-import { RemoveUserUcDef } from '#dmg/testing/example/users/index';
-import { expectErr, expectOk } from '#dmg/testing/expect-result';
+} from 'dmg-core/testing/example/todo/index';
+import { RemoveUserUcDef } from 'dmg-core/testing/example/users/index';
 import { ApiApp } from '../api/app/api-app';
 import type { AppMeta } from '../domain/types';
 import { InProcEventBus } from '../infra/in-proc-event-bus';
