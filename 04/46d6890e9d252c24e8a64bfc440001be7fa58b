@@ -1,0 +1,1 @@
+Task: gen aggregate (домен). kinds/aggregate.ts + тест (red→green), toCamel/toUpperSnake. Правки module.ts/index.ts по маркерам. Проверено пробой: biome/tsc/test зелёные.
