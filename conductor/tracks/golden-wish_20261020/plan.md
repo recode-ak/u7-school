@@ -37,10 +37,10 @@
 
 > Объединены ради экономии: один прогон reviewer, одна контрольная точка; гайды — по видам.
 
-- [~] Task: `WishEvents` (FQN по модулю и агрегату, прошедшее время), схемы payload; перевод потребителей событий
-- [~] Task: `WishErrors` с кодами `WISH_*`, `kind`, схемой payload; замена `throw*` на ошибки `Result`
-- [ ] Task: Гайды «events» и «errors»
-- [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
+- [x] Task: `WishEvents` (FQN по модулю и агрегату, прошедшее время), схемы payload; перевод потребителей событий `4e6c7e9`
+- [x] Task: `WishErrors` с кодами `WISH_*`, `kind`, схемой payload; замена `throw*` на ошибки `Result` `4e6c7e9` (`Result` до вызывающих — Ф8/Ф10, мост TR-1)
+- [x] Task: Гайды «events» и «errors» `96c7993`
+- [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `4e6c7e9`
 - [ ] Task: Контрольная точка 'Фаза 3–4' (автономно, workflow.md)
 
 ## Фаза 5: Policy (`definePolicy` / `rule`)
