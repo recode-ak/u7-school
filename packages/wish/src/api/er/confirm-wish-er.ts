@@ -1,9 +1,9 @@
 import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
 import { legacyEventBus } from '@u7-scl/core/legacy-bridge';
-import type { WishApiModuleResolver, WishTargetVo } from '@u7-scl/domain/wish';
-import { WishAr } from '@u7-scl/domain/wish';
+import type { WishTargetVo } from '@u7-scl/domain/wish';
 import type { QuestionnaireCompleteEvent } from '@u7-scl/questionnaire/domain';
+import type { WishApiModuleResolver } from '../../wish';
 import { publishWishEvents } from '../legacy-publish';
 import { throwIfRejected } from '../legacy-reject';
 
@@ -39,21 +39,20 @@ export class ConfirmWishEr extends EventReaction<
     };
     const userId = event.payload.respondentId;
 
-    const state = await this.resolve.wishRepo.getByUserAndTarget(
+    const wish = await this.resolve.wishRepo.findCurrentByUserAndTarget(
       userId,
       target,
     );
 
     // Идемпотентность: подтверждаем только ожидающее анкету желание
     // (вопрос «можно ли» решает агрегат — предикат, не статус-поле).
-    const wish = state ? WishAr.restore(state) : undefined;
     if (!wish?.canConfirm()) {
       return;
     }
 
     const at = Date.now();
     throwIfRejected(wish.confirm(at));
-    await this.resolve.wishRepo.save(wish.snapshot());
+    await this.resolve.wishRepo.save(wish);
 
     publishWishEvents(legacyEventBus(this.resolve.eventBus), {
       events: wish.pullEvents(),

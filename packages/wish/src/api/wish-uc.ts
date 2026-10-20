@@ -1,7 +1,7 @@
 import { U7UseCase } from '@u7-scl/app/domain';
 import type { UcMeta } from '@u7-scl/core/api';
-import type { WishApiModuleResolver, WishRepo } from '@u7-scl/domain/wish';
 import type { DomainError } from 'dmg-core';
+import type { WishApiModuleResolver, WishRepo } from '../wish';
 import { throwWishError as rejectWith } from './legacy-reject';
 
 /**

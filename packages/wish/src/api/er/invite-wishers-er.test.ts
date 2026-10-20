@@ -1,9 +1,11 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { DomainEvent as LegacyEvent } from '@u7-scl/core/domain';
-import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
+import type { WishState } from '@u7-scl/domain/wish';
+import { WishAr } from '@u7-scl/domain/wish';
 import type { StreamCreatedEvent } from '@u7-scl/stream/domain';
 import type { WishEvents } from '@u7-scl/wish/domain';
 import type * as v from 'valibot';
+import type { WishApiModuleResolver } from '../../wish';
 import { InviteWishersEr } from './invite-wishers-er';
 
 const streamId = '11111111-1111-4111-8111-111111111111';
@@ -77,7 +79,9 @@ interface ErDeps {
 
 function setupEr(deps: ErDeps) {
   const findAllByKind = mock(async (kind: 'course' | 'module') =>
-    kind === 'course' ? deps.courseWishes : deps.moduleWishes,
+    (kind === 'course' ? deps.courseWishes : deps.moduleWishes).map(
+      WishAr.restore,
+    ),
   );
   const getModulePlace = mock(async () => deps.place);
   const whichCoursesIncludeModule = mock(

@@ -1,6 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
+import type { WishState } from '@u7-scl/domain/wish';
+import { WishAr } from '@u7-scl/domain/wish';
 import type { StudentEnrolledEvent } from '@u7-scl/stream/domain';
+import type { WishApiModuleResolver } from '../../wish';
 import { FulfillWishEr } from './fulfill-wish-er';
 
 const moduleId = '33333333-3333-4333-8333-333333333333';
@@ -56,9 +58,9 @@ function makeModuleWish(
 }
 
 function setupEr(wishes: WishState[], matchedCourseIds: string[] = []) {
-  const save = mock(async (_wish: WishState): Promise<void> => {});
-  const getByUser = mock(
-    async (_userId: string): Promise<WishState[]> => wishes,
+  const save = mock(async (_wish: WishAr): Promise<void> => {});
+  const findByUser = mock(
+    async (_userId: string): Promise<WishAr[]> => wishes.map(WishAr.restore),
   );
   const whichCoursesIncludeModule = mock(
     async (_moduleId: string, _courseIds: string[]): Promise<string[]> =>
@@ -70,11 +72,11 @@ function setupEr(wishes: WishState[], matchedCourseIds: string[] = []) {
 
   const er = new FulfillWishEr();
   er.init({
-    wishRepo: { save, getByUser },
+    wishRepo: { save, findByUser },
     courseFacade: { whichCoursesIncludeModule, isSameModule },
   } as unknown as WishApiModuleResolver);
 
-  return { save, getByUser, whichCoursesIncludeModule, isSameModule, er };
+  return { save, findByUser, whichCoursesIncludeModule, isSameModule, er };
 }
 
 describe('FulfillWishEr', () => {
@@ -86,7 +88,7 @@ describe('FulfillWishEr', () => {
     await er.handle(event);
 
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as any).mock.calls[0][0] as WishState;
+    const saved = ((save as any).mock.calls[0][0] as WishAr).snapshot();
     expect(saved.uuid).toBe(wish.uuid);
     expect(saved.status).toBe('fulfilled');
   });
@@ -99,7 +101,7 @@ describe('FulfillWishEr', () => {
     await er.handle(event);
 
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as any).mock.calls[0][0] as WishState;
+    const saved = ((save as any).mock.calls[0][0] as WishAr).snapshot();
     expect(saved.status).toBe('fulfilled');
   });
 
@@ -161,7 +163,7 @@ describe('FulfillWishEr', () => {
 
     expect(save).toHaveBeenCalledTimes(2);
     const saved = (save as any).mock.calls.map(
-      (c: unknown[]) => (c[0] as WishState).status,
+      (c: unknown[]) => (c[0] as WishAr).snapshot().status,
     );
     expect(saved).toEqual(['fulfilled', 'fulfilled']);
   });
@@ -178,7 +180,7 @@ describe('FulfillWishEr', () => {
     await er.handle(event);
 
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as any).mock.calls[0][0] as WishState;
+    const saved = ((save as any).mock.calls[0][0] as WishAr).snapshot();
     expect(saved.status).toBe('fulfilled');
     // матчинг — через isSameModule, а не прямое сравнение id
     expect(isSameModule).toHaveBeenCalledWith(moduleId, moduleId);

@@ -247,6 +247,7 @@
 - **Контекст:** legacy `JsonFileRepo<T>` ждёт схему с одинаковым типом входа и выхода, а `F.timestamp` принимает строку или число и отдаёт число. Без разбора через `WishArDef.state` записи без `updatedAt` теряются (фолбэк D-36). Порт `WishRepo` в домене пока на `WishState`, поэтому `restore`/`snapshot()` вызывают UC/ER.
 - **Решение:** `WishArDef.state as unknown as v.GenericSchema<WishState>` в `wish-json-repo.ts`; `core` не меняется. Часы и uuid в UC/ER — `Date.now()`/`crypto.randomUUID()`, как у соседних legacy-UC. Первая запись перепишет `data/wish/wishes.json` с числовыми датами и полями `updatedAt`/`version` — это формат spec (`F.timestamp` пишет число), старые ISO-записи читаются.
 - **Пересмотреть:** в Ф6 (`WishJsonRepo`, порт на Ar/`Result`, UoW) приведения и `restore`/`snapshot` в UC/ER нет; часы — порт `Clock`.
+- **Состояние после Ф6–7:** приведение и `JsonFileRepo` ушли (`infra/wish.json-repo.ts` по шаблону gen, строгий разбор — решение Нурболата), порт `WishRepo` в `packages/wish/src/wish/wish.repo.ts` принимает и возвращает `WishAr`. Остаток — часы (`Date.now()` в UC/ER) — в Ф8.
 
 ### TR-3: `kind: 'conflict'` у ошибок отказа переходов `wish`
 - **Трек / фаза:** `golden-wish`, Ф2 (решение для Ф3–4; выбор поручен оркестратору Нурболатом)
@@ -271,3 +272,9 @@
 - **Контекст:** ревью Ф5: `WishDcs.checkUnique` доверял вызывающему, что желания — этого пользователя на эту цель; геттер `WishAr.status` против DOM-04; право на создание.
 - **Решение:** DCS сам отбрасывает чужие желания и желания на другую цель (`isOwnedBy`, метод-вопрос цели Ar `isFor`) — эталон не опирается на неявный контракт выборки. Фикстура дедуп-тестов `create-module-wish-uc.test.ts` строила «дубль» чужому пользователю — исправлена на актёра, сценарии и ожидания прежние. Геттер `status` оставлен до Ф6–7: по D-39 его заменяет метод Ar `alreadyExists()`, строящий ошибку. Право на создание не заводится (всегда за вызывающего) — с Ф8 UC создания ссылаются на `allowAll`.
 - **Закрыто (Ф6–7, D-39/D-40):** `WishDcs` удалён — уникальность стала доменным правилом `WishRules.rules.unique`; геттер `status` заменён методом `WishAr.alreadyExists()`, строящим ошибку. Остаток — право на создание (`allowAll`) — в Ф8.
+
+### TR-7: выбор «текущего» желания в репозитории `wish`
+- **Трек / фаза:** `golden-wish`, Ф6–7
+- **Контекст:** legacy `getByUserAndTarget` выбирал среди желаний пользователя на цель «активное последнее созданное, иначе последнее» — решение в хранилище (API-03). Его зовут `cancel-wish` и ER `confirm`/`abandon`, которые остаются legacy-классами до Ф9–11.
+- **Решение:** порт `WishRepo.findCurrentByUserAndTarget` сохраняет выбор как есть (метод-вопрос Ar `isActive`); `WishAr` возвращается, `snapshot()` нужен репозиторию только для сортировки по `createdAt`. Резолвер `WishApiModuleResolver` (DEBT-22) переехал в `packages/wish/src/wish/wish.resolver.ts` — домен не импортирует порт прикладного слоя; подпуть `@u7-scl/wish/wish`.
+- **Пересмотреть:** в Ф9–11 выбор уходит из репозитория (UC/ER получают `findAllByUserAndTarget` и решают через Ar или доменное правило); резолвер заменяет `WishModuleDef` (Ф12).

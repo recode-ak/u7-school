@@ -1,6 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { Role, type User } from '@u7-scl/app/domain';
-import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
+import type { WishState } from '@u7-scl/domain/wish';
+import { WishAr } from '@u7-scl/domain/wish';
+import type { WishApiModuleResolver } from '../../wish';
 import { CancelWishUc } from './cancel-wish-uc';
 
 function makeUser(uuid: string): User {
@@ -14,20 +16,20 @@ function makeUser(uuid: string): User {
 }
 
 function setupUc() {
-  const save = mock(async (_wish: WishState): Promise<void> => {});
-  const getByUserAndTarget = mock(
+  const save = mock(async (_wish: WishAr): Promise<void> => {});
+  const findCurrentByUserAndTarget = mock(
     async (
       _userId: string,
       _target: WishState['target'],
-    ): Promise<WishState | undefined> => undefined,
+    ): Promise<WishAr | undefined> => undefined,
   );
 
-  const wishRepo = { save, getByUserAndTarget };
+  const wishRepo = { save, findCurrentByUserAndTarget };
 
   const uc = new CancelWishUc();
   uc.init({ wishRepo } as unknown as WishApiModuleResolver);
 
-  return { save, getByUserAndTarget, uc };
+  return { save, findCurrentByUserAndTarget, uc };
 }
 
 function makeExpressedWish(userId: string, courseId: string): WishState {
@@ -48,40 +50,46 @@ describe('CancelWishUc', () => {
   const courseId = crypto.randomUUID();
 
   test('отменяет выраженное желание', async () => {
-    const { save, getByUserAndTarget, uc } = setupUc();
-    getByUserAndTarget.mockResolvedValueOnce(
-      makeExpressedWish(actorId, courseId),
+    const { save, findCurrentByUserAndTarget, uc } = setupUc();
+    findCurrentByUserAndTarget.mockResolvedValueOnce(
+      WishAr.restore(makeExpressedWish(actorId, courseId)),
     );
 
     await uc.handle({ kind: 'course', courseId }, actor);
 
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as ReturnType<typeof mock>).mock
-      .calls[0]![0] as WishState;
+    const saved = (
+      (save as ReturnType<typeof mock>).mock.calls[0]![0] as WishAr
+    ).snapshot();
     expect(saved.status).toBe('cancelled');
   });
 
   test('отменяет подтверждённое желание', async () => {
-    const { save, getByUserAndTarget, uc } = setupUc();
-    getByUserAndTarget.mockResolvedValueOnce({
-      ...makeExpressedWish(actorId, courseId),
-      status: 'confirmed' as const,
-    });
+    const { save, findCurrentByUserAndTarget, uc } = setupUc();
+    findCurrentByUserAndTarget.mockResolvedValueOnce(
+      WishAr.restore({
+        ...makeExpressedWish(actorId, courseId),
+        status: 'confirmed' as const,
+      }),
+    );
 
     await uc.handle({ kind: 'course', courseId }, actor);
 
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as ReturnType<typeof mock>).mock
-      .calls[0]![0] as WishState;
+    const saved = (
+      (save as ReturnType<typeof mock>).mock.calls[0]![0] as WishAr
+    ).snapshot();
     expect(saved.status).toBe('cancelled');
   });
 
   test('выбрасывает WISH_NOT_FOUND для pending (отмена только через abandon)', async () => {
-    const { save, getByUserAndTarget, uc } = setupUc();
-    getByUserAndTarget.mockResolvedValueOnce({
-      ...makeExpressedWish(actorId, courseId),
-      status: 'pending' as const,
-    });
+    const { save, findCurrentByUserAndTarget, uc } = setupUc();
+    findCurrentByUserAndTarget.mockResolvedValueOnce(
+      WishAr.restore({
+        ...makeExpressedWish(actorId, courseId),
+        status: 'pending' as const,
+      }),
+    );
 
     await expect(
       uc.handle({ kind: 'course', courseId }, actor),
@@ -98,11 +106,13 @@ describe('CancelWishUc', () => {
   });
 
   test('выбрасывает WISH_NOT_FOUND если желание уже отменено', async () => {
-    const { getByUserAndTarget, uc } = setupUc();
-    getByUserAndTarget.mockResolvedValueOnce({
-      ...makeExpressedWish(actorId, courseId),
-      status: 'cancelled' as const,
-    });
+    const { findCurrentByUserAndTarget, uc } = setupUc();
+    findCurrentByUserAndTarget.mockResolvedValueOnce(
+      WishAr.restore({
+        ...makeExpressedWish(actorId, courseId),
+        status: 'cancelled' as const,
+      }),
+    );
 
     await expect(
       uc.handle({ kind: 'course', courseId }, actor),
@@ -113,32 +123,37 @@ describe('CancelWishUc', () => {
 
   test('отменяет module-желание по варианту { kind: module, moduleId }', async () => {
     const moduleId = crypto.randomUUID();
-    const { save, getByUserAndTarget, uc } = setupUc();
-    getByUserAndTarget.mockResolvedValueOnce({
-      ...makeExpressedWish(actorId, courseId),
-      target: { kind: 'module', moduleId },
-    });
+    const { save, findCurrentByUserAndTarget, uc } = setupUc();
+    findCurrentByUserAndTarget.mockResolvedValueOnce(
+      WishAr.restore({
+        ...makeExpressedWish(actorId, courseId),
+        target: { kind: 'module', moduleId },
+      }),
+    );
 
     await uc.handle({ kind: 'module', moduleId }, actor);
 
-    expect(getByUserAndTarget).toHaveBeenCalledWith(actorId, {
+    expect(findCurrentByUserAndTarget).toHaveBeenCalledWith(actorId, {
       kind: 'module',
       moduleId,
     });
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as ReturnType<typeof mock>).mock
-      .calls[0]![0] as WishState;
+    const saved = (
+      (save as ReturnType<typeof mock>).mock.calls[0]![0] as WishAr
+    ).snapshot();
     expect(saved.status).toBe('cancelled');
   });
 
   test('module-вариант: неактивное желание — WISH_NOT_FOUND', async () => {
     const moduleId = crypto.randomUUID();
-    const { save, getByUserAndTarget, uc } = setupUc();
-    getByUserAndTarget.mockResolvedValueOnce({
-      ...makeExpressedWish(actorId, courseId),
-      target: { kind: 'module', moduleId },
-      status: 'fulfilled' as const,
-    });
+    const { save, findCurrentByUserAndTarget, uc } = setupUc();
+    findCurrentByUserAndTarget.mockResolvedValueOnce(
+      WishAr.restore({
+        ...makeExpressedWish(actorId, courseId),
+        target: { kind: 'module', moduleId },
+        status: 'fulfilled' as const,
+      }),
+    );
 
     await expect(
       uc.handle({ kind: 'module', moduleId }, actor),
@@ -162,9 +177,9 @@ describe('CancelWishUc', () => {
   });
 
   test('чужое желание — отказ Policy: ACCESS_DENIED, kind access-denied, нет сохранения', async () => {
-    const { save, getByUserAndTarget, uc } = setupUc();
-    getByUserAndTarget.mockResolvedValueOnce(
-      makeExpressedWish(crypto.randomUUID(), courseId),
+    const { save, findCurrentByUserAndTarget, uc } = setupUc();
+    findCurrentByUserAndTarget.mockResolvedValueOnce(
+      WishAr.restore(makeExpressedWish(crypto.randomUUID(), courseId)),
     );
 
     await expect(

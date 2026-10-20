@@ -51,9 +51,7 @@ export class CreateModuleWishUc extends WishUseCase<CreateModuleWishCmdMeta> {
     //    порядок сортировки недетерминирован и активное желание может
     //    оказаться не первым.
     const target: WishTargetVo = { kind: 'module', moduleId: command.moduleId };
-    const wishes = (
-      await this.repo.findAllByUserAndTarget(actor.uuid, target)
-    ).map((w) => WishAr.restore(w));
+    const wishes = await this.repo.findAllByUserAndTarget(actor.uuid, target);
     const unique = WishRules.rules.unique.check({
       userId: actor.uuid,
       target,
@@ -76,7 +74,7 @@ export class CreateModuleWishUc extends WishUseCase<CreateModuleWishCmdMeta> {
         Date.now(),
       ),
     );
-    await this.repo.save(wish.snapshot());
+    await this.repo.save(wish);
 
     return undefined;
   }

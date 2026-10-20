@@ -1,10 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { Role, type User } from '@u7-scl/app/domain';
-import type {
-  WishApiModuleResolver,
-  WishState,
-  WishStatus,
-} from '@u7-scl/domain/wish';
+import type { WishState, WishStatus } from '@u7-scl/domain/wish';
+import { WishAr } from '@u7-scl/domain/wish';
+import type { WishApiModuleResolver } from '../../wish';
 import { CreateModuleWishUc } from './create-module-wish-uc';
 
 function makeUser(uuid: string): User {
@@ -21,18 +19,16 @@ const moduleId = '33333333-3333-4333-8333-333333333333';
 const courseId = '44444444-4444-4444-8444-444444444444';
 
 function makeWishRepo(existing?: WishState) {
-  const save = mock(async (_wish: WishState): Promise<void> => {});
-  const getByUuid = mock(
-    async (_uuid: string): Promise<WishState | undefined> => undefined,
+  const save = mock(async (_wish: WishAr): Promise<void> => {});
+  const findById = mock(
+    async (_uuid: string): Promise<WishAr | undefined> => undefined,
   );
   const findAllByUserAndTarget = mock(
-    async (
-      _userId: string,
-      _target: WishState['target'],
-    ): Promise<WishState[]> => (existing ? [existing] : []),
+    async (_userId: string, _target: WishState['target']): Promise<WishAr[]> =>
+      existing ? [WishAr.restore(existing)] : [],
   );
-  const getByUser = mock(async (_userId: string): Promise<WishState[]> => []);
-  return { save, getByUuid, findAllByUserAndTarget, getByUser };
+  const findByUser = mock(async (_userId: string): Promise<WishAr[]> => []);
+  return { save, findById, findAllByUserAndTarget, findByUser };
 }
 
 function setupUc(
@@ -82,8 +78,9 @@ describe('CreateModuleWishUc', () => {
     await uc.handle({ moduleId }, actor);
 
     expect(wishRepo.save).toHaveBeenCalledTimes(1);
-    const saved = (wishRepo.save as ReturnType<typeof mock>).mock
-      .calls[0]![0] as WishState;
+    const saved = (
+      (wishRepo.save as ReturnType<typeof mock>).mock.calls[0]![0] as WishAr
+    ).snapshot();
     expect(saved.status).toBe('expressed');
     expect(saved.target).toEqual({ kind: 'module', moduleId });
     expect(saved.userId).toBe(actorId);

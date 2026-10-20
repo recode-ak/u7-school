@@ -1,6 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
+import type { WishState } from '@u7-scl/domain/wish';
+import { WishAr } from '@u7-scl/domain/wish';
 import type { QuestionnaireAbandonEvent } from '@u7-scl/questionnaire/domain';
+import type { WishApiModuleResolver } from '../../wish';
 import { AbandonWishEr } from './abandon-wish-er';
 
 type AbandonEvent = QuestionnaireAbandonEvent<{ courseId: string }>;
@@ -21,20 +23,20 @@ function makeEvent(): AbandonEvent {
 }
 
 function setupEr(wish?: WishState) {
-  const save = mock(async (_wish: WishState): Promise<void> => {});
-  const getByUserAndTarget = mock(
+  const save = mock(async (_wish: WishAr): Promise<void> => {});
+  const findCurrentByUserAndTarget = mock(
     async (
       _userId: string,
       _target: WishState['target'],
-    ): Promise<WishState | undefined> => wish,
+    ): Promise<WishAr | undefined> => (wish ? WishAr.restore(wish) : undefined),
   );
 
   const er = new AbandonWishEr();
   er.init({
-    wishRepo: { save, getByUserAndTarget },
+    wishRepo: { save, findCurrentByUserAndTarget },
   } as unknown as WishApiModuleResolver);
 
-  return { save, getByUserAndTarget, er };
+  return { save, findCurrentByUserAndTarget, er };
 }
 
 function makePendingWish(event: AbandonEvent): WishState {
@@ -58,19 +60,22 @@ describe('AbandonWishEr', () => {
     await er.handle(event);
 
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as ReturnType<typeof mock>).mock
-      .calls[0]![0] as WishState;
+    const saved = (
+      (save as ReturnType<typeof mock>).mock.calls[0]![0] as WishAr
+    ).snapshot();
     expect(saved.uuid).toBe(wish.uuid);
     expect(saved.status).toBe('abandoned');
   });
 
   test('идемпотентность: не-pending желание — игнор без сохранения', async () => {
     const event = makeEvent();
-    const { save, getByUserAndTarget, er } = setupEr();
-    getByUserAndTarget.mockResolvedValueOnce({
-      ...makePendingWish(event),
-      status: 'cancelled' as const,
-    });
+    const { save, findCurrentByUserAndTarget, er } = setupEr();
+    findCurrentByUserAndTarget.mockResolvedValueOnce(
+      WishAr.restore({
+        ...makePendingWish(event),
+        status: 'cancelled' as const,
+      }),
+    );
 
     await er.handle(event);
 

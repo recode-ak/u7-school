@@ -1,1 +1,1 @@
-export { WishJsonRepo } from './db/wish-json-repo';
+export { WishJsonRepo } from './wish.json-repo';

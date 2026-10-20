@@ -57,8 +57,8 @@ import { UserApiModule } from '@u7-scl/user/api';
 import type { UserApiModuleResolver } from '@u7-scl/user/domain';
 import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
 import { WishApiModule } from '@u7-scl/wish/api';
-import type { WishApiModuleResolver } from '@u7-scl/wish/domain';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
+import type { WishApiModuleResolver } from '@u7-scl/wish/wish';
 import { resolveActor } from './_app-factory';
 
 const NUR_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';

@@ -120,7 +120,7 @@ describe('Wish: анкетная ветка (e2e)', () => {
         kind: 'course',
         courseId,
       })
-    ).map((w) => w.status);
+    ).map((w) => w.snapshot().status);
   }
 
   /** Ожидает появления статуса желания в репозитории (асинхронная ER). */

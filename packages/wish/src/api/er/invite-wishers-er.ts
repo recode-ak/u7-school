@@ -1,9 +1,10 @@
 import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
 import { legacyEventBus } from '@u7-scl/core/legacy-bridge';
-import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
+import type { WishAr } from '@u7-scl/domain/wish';
 import { WishEvents } from '@u7-scl/domain/wish/contract';
 import type { StreamCreatedEvent } from '@u7-scl/stream/domain';
+import type { WishApiModuleResolver } from '../../wish';
 import { publishWishEvents } from '../legacy-publish';
 
 /** Метаданные реакции приглашения желающих при открытии набора. */
@@ -48,23 +49,23 @@ export class InviteWishersEr extends EventReaction<
         'expressed',
         'confirmed',
       ]);
-      const courseCandidates = candidates.filter(
-        (
-          w,
-        ): w is WishState & { target: { kind: 'course'; courseId: string } } =>
-          w.target.kind === 'course',
-      );
+      const courseCandidates = candidates.flatMap((ar) => {
+        const { target } = ar.snapshot();
+        return target.kind === 'course'
+          ? [{ ar, courseId: target.courseId }]
+          : [];
+      });
       const matched = new Set(
         await this.resolve.courseFacade.whichCoursesIncludeModule(
           moduleId,
-          courseCandidates.map((w) => w.target.courseId),
+          courseCandidates.map((c) => c.courseId),
         ),
       );
-      for (const wish of courseCandidates) {
-        if (!matched.has(wish.target.courseId)) {
+      for (const { ar, courseId } of courseCandidates) {
+        if (!matched.has(courseId)) {
           continue;
         }
-        await this.#invite(wish, streamId, event);
+        await this.#invite(ar, streamId, event);
       }
     }
 
@@ -74,35 +75,37 @@ export class InviteWishersEr extends EventReaction<
       'confirmed',
     ]);
     if (candidates.length > 0) {
-      const moduleCandidates = candidates.filter(
-        (
-          w,
-        ): w is WishState & { target: { kind: 'module'; moduleId: string } } =>
-          w.target.kind === 'module',
-      );
+      const moduleCandidates = candidates.flatMap((ar) => {
+        const { target } = ar.snapshot();
+        return target.kind === 'module'
+          ? [{ ar, moduleId: target.moduleId }]
+          : [];
+      });
       const matched = new Set(
         await this.resolve.courseFacade.whichModulesAreSame(
           moduleId,
-          moduleCandidates.map((w) => w.target.moduleId),
+          moduleCandidates.map((c) => c.moduleId),
         ),
       );
-      for (const wish of moduleCandidates) {
-        if (!matched.has(wish.target.moduleId)) {
+      for (const { ar, moduleId: wishModuleId } of moduleCandidates) {
+        if (!matched.has(wishModuleId)) {
           continue;
         }
-        await this.#invite(wish, streamId, event);
+        await this.#invite(ar, streamId, event);
       }
     }
   }
 
   /** Публикация события приглашения. Поток недоступен — пропуск. */
   async #invite(
-    wish: WishState,
+    ar: WishAr,
     streamId: string,
     cause: InviteWishersErMeta['event'],
   ): Promise<void> {
     const stream = await this.resolve.streamFacade.getStream(streamId);
     if (!stream) return;
+
+    const wish = ar.snapshot();
 
     const addressee = await this.resolve.userFacade.getUserByUuid(wish.userId);
     if (!addressee?.telegramId) {

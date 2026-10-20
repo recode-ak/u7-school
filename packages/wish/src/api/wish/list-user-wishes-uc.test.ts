@@ -1,6 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { Role, type User } from '@u7-scl/app/domain';
-import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
+import type { WishState } from '@u7-scl/domain/wish';
+import { WishAr } from '@u7-scl/domain/wish';
+import type { WishApiModuleResolver } from '../../wish';
 import { ListUserWishesUc } from './list-user-wishes-uc';
 
 function makeUser(uuid: string): User {
@@ -14,14 +16,14 @@ function makeUser(uuid: string): User {
 }
 
 function setupUc(states: WishState[] = []) {
-  const getByUser = mock(
-    async (_userId: string): Promise<WishState[]> => states,
+  const findByUser = mock(
+    async (_userId: string): Promise<WishAr[]> => states.map(WishAr.restore),
   );
 
   const uc = new ListUserWishesUc();
-  uc.init({ wishRepo: { getByUser } } as unknown as WishApiModuleResolver);
+  uc.init({ wishRepo: { findByUser } } as unknown as WishApiModuleResolver);
 
-  return { getByUser, uc };
+  return { findByUser, uc };
 }
 
 function makeWish(
@@ -50,11 +52,11 @@ describe('ListUserWishesUc', () => {
       makeWish({ status: 'confirmed' as const }),
       makeWish({ target: { kind: 'module', moduleId: crypto.randomUUID() } }),
     ];
-    const { getByUser, uc } = setupUc(wishes);
+    const { findByUser, uc } = setupUc(wishes);
 
     const result = await uc.handle({}, actor);
 
-    expect(getByUser).toHaveBeenCalledWith(actorId);
+    expect(findByUser).toHaveBeenCalledWith(actorId);
     expect(result).toEqual(wishes);
   });
 

@@ -58,9 +58,7 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
     //    порядок сортировки недетерминирован и активное желание может
     //    оказаться не первым.
     const target: WishTargetVo = { kind: 'course', courseId: command.courseId };
-    const wishes = (
-      await this.repo.findAllByUserAndTarget(actor.uuid, target)
-    ).map((w) => WishAr.restore(w));
+    const wishes = await this.repo.findAllByUserAndTarget(actor.uuid, target);
     const unique = WishRules.rules.unique.check({
       userId: actor.uuid,
       target,
@@ -84,7 +82,7 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
           Date.now(),
         ),
       );
-      await this.repo.save(wish.snapshot());
+      await this.repo.save(wish);
       await this.resolve.questionnaireFacade.startStandard<{
         courseId: string;
       }>(actor, pool, { courseId: command.courseId });
@@ -103,7 +101,7 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
         Date.now(),
       ),
     );
-    await this.repo.save(wish.snapshot());
+    await this.repo.save(wish);
 
     return { outcome: 'instant' };
   }

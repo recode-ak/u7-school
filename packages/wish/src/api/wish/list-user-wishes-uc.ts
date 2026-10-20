@@ -33,6 +33,7 @@ export class ListUserWishesUc extends WishUseCase<ListUserWishesCmdMeta> {
     _command: ListUserWishesCmd,
     actor: User,
   ): Promise<WishState[]> {
-    return this.repo.getByUser(actor.uuid);
+    const wishes = await this.repo.findByUser(actor.uuid);
+    return wishes.map((w) => w.snapshot());
   }
 }

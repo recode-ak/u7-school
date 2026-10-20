@@ -4,7 +4,7 @@ import type {
   CancelWishCmdMeta,
   WishTargetVo,
 } from '@u7-scl/domain/wish';
-import { CancelWishCmdSchema, WishAr, WishPolicy } from '@u7-scl/domain/wish';
+import { CancelWishCmdSchema, WishPolicy } from '@u7-scl/domain/wish';
 import { WishErrors } from '@u7-scl/domain/wish/contract';
 import { CoreErrors } from 'dmg-core';
 import * as v from 'valibot';
@@ -35,9 +35,9 @@ export class CancelWishUc extends WishUseCase<CancelWishCmdMeta> {
         ? { kind: 'course', courseId: command.courseId }
         : { kind: 'module', moduleId: command.moduleId };
 
-    const wish = await this.repo.getByUserAndTarget(actor.uuid, target);
+    const ar = await this.repo.findCurrentByUserAndTarget(actor.uuid, target);
     // Отмена разрешена только из expressed|confirmed; для pending — только abandon.
-    if (!wish || (wish.status !== 'expressed' && wish.status !== 'confirmed')) {
+    if (!ar?.canCancel()) {
       this.throwWishError(
         WishErrors.NOT_FOUND.make(
           target.kind === 'course'
@@ -47,7 +47,6 @@ export class CancelWishUc extends WishUseCase<CancelWishCmdMeta> {
       );
     }
 
-    const ar = WishAr.restore(wish);
     // Право отмены — только у автора. Через UC недостижимо (желание ищется
     // по актору), но ветка Policy обязательна; отказ — мост TR-1.
     const decision = WishPolicy.rules.canCancel.evaluate(
@@ -63,7 +62,7 @@ export class CancelWishUc extends WishUseCase<CancelWishCmdMeta> {
       );
     }
     throwIfRejected(ar.cancel(Date.now()));
-    await this.repo.save(ar.snapshot());
+    await this.repo.save(ar);
 
     return undefined;
   }

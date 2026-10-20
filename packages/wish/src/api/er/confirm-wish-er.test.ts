@@ -1,6 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
+import type { WishState } from '@u7-scl/domain/wish';
+import { WishAr } from '@u7-scl/domain/wish';
 import type { QuestionnaireCompleteEvent } from '@u7-scl/questionnaire/domain';
+import type { WishApiModuleResolver } from '../../wish';
 import { ConfirmWishEr } from './confirm-wish-er';
 
 type CompleteEvent = QuestionnaireCompleteEvent<{ courseId: string }>;
@@ -21,24 +23,24 @@ function makeEvent(): CompleteEvent {
 }
 
 function setupEr(wish?: WishState) {
-  const save = mock(async (_wish: WishState): Promise<void> => {});
+  const save = mock(async (_wish: WishAr): Promise<void> => {});
   const publish = mock(async (_event: unknown): Promise<void> => {});
-  const getByUserAndTarget = mock(
+  const findCurrentByUserAndTarget = mock(
     async (
       _userId: string,
       _target: WishState['target'],
-    ): Promise<WishState | undefined> => wish,
+    ): Promise<WishAr | undefined> => (wish ? WishAr.restore(wish) : undefined),
   );
 
   const er = new ConfirmWishEr();
   er.init({
-    wishRepo: { save, getByUserAndTarget },
+    wishRepo: { save, findCurrentByUserAndTarget },
     userFacade: { getUserByUuid: mock() },
     eventBus: { publish },
     appResolver: { logger: { info: mock(), warn: mock(), error: mock() } },
   } as unknown as WishApiModuleResolver);
 
-  return { save, getByUserAndTarget, publish, er };
+  return { save, findCurrentByUserAndTarget, publish, er };
 }
 
 function makePendingWish(event: CompleteEvent): WishState {
@@ -62,19 +64,22 @@ describe('ConfirmWishEr', () => {
     await er.handle(event);
 
     expect(save).toHaveBeenCalledTimes(1);
-    const saved = (save as ReturnType<typeof mock>).mock
-      .calls[0]![0] as WishState;
+    const saved = (
+      (save as ReturnType<typeof mock>).mock.calls[0]![0] as WishAr
+    ).snapshot();
     expect(saved.uuid).toBe(wish.uuid);
     expect(saved.status).toBe('confirmed');
   });
 
   test('идемпотентность: не-pending желание — игнор без сохранения', async () => {
     const event = makeEvent();
-    const { save, getByUserAndTarget, er } = setupEr();
-    getByUserAndTarget.mockResolvedValueOnce({
-      ...makePendingWish(event),
-      status: 'confirmed' as const,
-    });
+    const { save, findCurrentByUserAndTarget, er } = setupEr();
+    findCurrentByUserAndTarget.mockResolvedValueOnce(
+      WishAr.restore({
+        ...makePendingWish(event),
+        status: 'confirmed' as const,
+      }),
+    );
 
     await er.handle(event);
 
@@ -116,11 +121,13 @@ describe('ConfirmWishEr', () => {
 
   test('игнор (не-pending) — событие не публикуется', async () => {
     const event = makeEvent();
-    const { publish, getByUserAndTarget, er } = setupEr();
-    getByUserAndTarget.mockResolvedValueOnce({
-      ...makePendingWish(event),
-      status: 'confirmed' as const,
-    });
+    const { publish, findCurrentByUserAndTarget, er } = setupEr();
+    findCurrentByUserAndTarget.mockResolvedValueOnce(
+      WishAr.restore({
+        ...makePendingWish(event),
+        status: 'confirmed' as const,
+      }),
+    );
 
     await er.handle(event);
 

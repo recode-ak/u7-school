@@ -148,9 +148,10 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
     // Желание в репозитории отменено
     const wishes = await app.wishRepo.findAllByKind('course', ['cancelled']);
     expect(
-      wishes.some(
-        (w) => w.userId === wisher.uuid && w.target.kind === 'course',
-      ),
+      wishes.some((ar) => {
+        const w = ar.snapshot();
+        return w.userId === wisher.uuid && w.target.kind === 'course';
+      }),
     ).toBe(true);
 
     // Ровно одно проактивное приглашение (дальнейшие экраны —

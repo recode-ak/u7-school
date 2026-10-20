@@ -18,6 +18,7 @@ import {
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import type { WishStatus } from '@u7-scl/wish/domain';
+import { WishAr } from '@u7-scl/wish/domain';
 
 /**
  * Интеграционный тест wish-флоу (ветка A — instant):
@@ -139,14 +140,15 @@ describe('Wish: жизненный цикл желания курса (инте�
         kind: 'course',
         courseId,
       })
-    ).map((w) => w.status);
+    ).map((w) => w.snapshot().status);
   }
 
   /** Изоляция тестов: гасит активные желания гостя (cancelled не мешает созданию). */
   async function deactivateWishes(): Promise<void> {
-    for (const w of await app.wishRepo.getByUser(guest.uuid)) {
+    for (const ar of await app.wishRepo.findByUser(guest.uuid)) {
+      const w = ar.snapshot();
       if (w.status !== 'cancelled' && w.status !== 'fulfilled') {
-        await app.wishRepo.save({ ...w, status: 'cancelled' });
+        await app.wishRepo.save(WishAr.restore({ ...w, status: 'cancelled' }));
       }
     }
   }
@@ -255,9 +257,13 @@ describe('Wish: жизненный цикл желания курса (инте�
       kind: 'course',
       courseId: INSTANT_COURSE_ID,
     });
-    const expressed = wishes.find((w) => w.status === 'expressed');
+    const expressed = wishes
+      .map((w) => w.snapshot())
+      .find((w) => w.status === 'expressed');
     expect(expressed).toBeDefined();
-    await app.wishRepo.save({ ...expressed!, status: 'confirmed' });
+    await app.wishRepo.save(
+      WishAr.restore({ ...expressed!, status: 'confirmed' }),
+    );
 
     const response = await apply(INSTANT_COURSE_ID);
     expect(response.screen?.text).toContain('обучаешься');

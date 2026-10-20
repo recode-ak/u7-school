@@ -35,8 +35,8 @@ import {
 import { UserApiModule } from '@u7-scl/user/api';
 import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
 import { WishApiModule } from '@u7-scl/wish/api';
-import type { WishApiModuleResolver } from '@u7-scl/wish/domain';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
+import type { WishApiModuleResolver } from '@u7-scl/wish/wish';
 import type { FixturePaths } from './fixture-loader';
 import { cleanupFixtures, loadFixtures } from './fixture-loader';
 

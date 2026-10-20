@@ -1,8 +1,8 @@
 import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
-import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
-import { WishAr } from '@u7-scl/domain/wish';
+import type { WishAr } from '@u7-scl/domain/wish';
 import type { StudentEnrolledEvent } from '@u7-scl/stream/domain';
+import type { WishApiModuleResolver } from '../../wish';
 import { throwIfRejected } from '../legacy-reject';
 
 /** Метаданные реакции реализации желания при зачислении. */
@@ -30,23 +30,27 @@ export class FulfillWishEr extends EventReaction<
   async handle(event: FulfillWishErMeta['event']): Promise<void> {
     const { userId, moduleId } = event.payload;
 
-    const wishes = await this.resolve.wishRepo.getByUser(userId);
+    const wishes = await this.resolve.wishRepo.findByUser(userId);
 
     // Кандидаты: желания, реализуемые зачислением (expressed | confirmed) —
     // вопрос «реализуемо ли» решает агрегат — предикат, не статус-поле.
-    const active = wishes.filter((w) => WishAr.restore(w).canFulfill());
+    const active = wishes.filter((w) => w.canFulfill());
     if (active.length === 0) {
       return;
     }
 
-    const courseCandidates = active.filter(
-      (w): w is WishState & { target: { kind: 'course'; courseId: string } } =>
-        w.target.kind === 'course',
-    );
-    const moduleCandidates = active.filter(
-      (w): w is WishState & { target: { kind: 'module'; moduleId: string } } =>
-        w.target.kind === 'module',
-    );
+    const courseCandidates = active.flatMap((ar) => {
+      const { target } = ar.snapshot();
+      return target.kind === 'course'
+        ? [{ ar, courseId: target.courseId }]
+        : [];
+    });
+    const moduleCandidates = active.flatMap((ar) => {
+      const { target } = ar.snapshot();
+      return target.kind === 'module'
+        ? [{ ar, moduleId: target.moduleId }]
+        : [];
+    });
 
     // Course-ветка: один батч-запрос — какие из курсов кандидатов
     // включают модуль потока (в т.ч. исторически).
@@ -54,32 +58,31 @@ export class FulfillWishEr extends EventReaction<
       const matched = new Set(
         await this.resolve.courseFacade.whichCoursesIncludeModule(
           moduleId,
-          courseCandidates.map((w) => w.target.courseId),
+          courseCandidates.map((c) => c.courseId),
         ),
       );
-      for (const wish of courseCandidates) {
-        if (!matched.has(wish.target.courseId)) {
+      for (const { ar, courseId } of courseCandidates) {
+        if (!matched.has(courseId)) {
           continue;
         }
-        await this.#fulfill(wish);
+        await this.#fulfill(ar);
       }
     }
 
     // Module-ветка: идентичность модулей решает модуль курсов (isSameModule).
-    for (const wish of moduleCandidates) {
+    for (const { ar, moduleId: wishModuleId } of moduleCandidates) {
       const same = await this.resolve.courseFacade.isSameModule(
         moduleId,
-        wish.target.moduleId,
+        wishModuleId,
       );
       if (same) {
-        await this.#fulfill(wish);
+        await this.#fulfill(ar);
       }
     }
   }
 
-  async #fulfill(wish: WishState): Promise<void> {
-    const ar = WishAr.restore(wish);
+  async #fulfill(ar: WishAr): Promise<void> {
     throwIfRejected(ar.fulfill(Date.now()));
-    await this.resolve.wishRepo.save(ar.snapshot());
+    await this.resolve.wishRepo.save(ar);
   }
 }
