@@ -9,7 +9,8 @@ export type ArchRule =
   | 'MAN-03'
   | 'MAN-06'
   | 'MAN-08'
-  | 'MAN-10';
+  | 'MAN-10'
+  | 'MAN-12';
 
 export type Violation = { readonly rule: ArchRule; readonly message: string };
 

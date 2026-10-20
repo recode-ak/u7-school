@@ -17,11 +17,39 @@ export type StateSchema = v.GenericSchema<unknown, EntityBase>;
 export type StatusOf<S extends StateSchema> =
   v.InferOutput<S> extends { status: infer X extends string } ? X : never;
 
-/** Переход статуса операцией агрегата (ключ — имя метода Ar). */
+/** Ошибка отказа перехода — без payload: её возвращает база агрегата. */
+export type RejectErrorDef = AnyErrorDef & { readonly payload: undefined };
+
+/**
+ * Переход статуса операцией агрегата (ключ — имя метода Ar). `rejects` —
+ * отказ для каждого статуса вне `from`: Def — единственное место правил
+ * жизненного цикла, метод Ar их не повторяет.
+ */
 export type Transition<X extends string> = {
   readonly from: readonly X[];
   readonly to: X;
+  readonly rejects: { readonly [K in X]?: RejectErrorDef };
 };
+
+/** Отказы каждого перехода покрывают все статусы вне его `from`. */
+type RejectsComplete<A> = A extends {
+  readonly statuses: infer St;
+  readonly transitions: infer T;
+}
+  ? {
+      readonly transitions: {
+        readonly [K in keyof T]: T[K] extends {
+          readonly from: readonly (infer F)[];
+        }
+          ? {
+              readonly rejects: {
+                readonly [X in Exclude<keyof St & string, F>]: RejectErrorDef;
+              };
+            }
+          : never;
+      };
+    }
+  : unknown;
 
 type Lifecycle<X extends string> = {
   readonly statuses: { readonly [K in X]: { readonly label: string } };
@@ -52,11 +80,12 @@ export type AnyAggregateDef = AggregateSpec & {
 
 /**
  * Манифест агрегата: схема entity, статусы и переходы (если в состоянии есть
- * `status`, статусы обязаны покрыть все его значения), группы событий и ошибок.
+ * `status`, статусы обязаны покрыть все его значения, а отказы перехода — все
+ * статусы вне `from`), группы событий и ошибок.
  */
 export function defineAggregate<
   const S extends StateSchema,
   const A extends AggregateSpec<S>,
->(spec: A & AggregateSpec<S>): AggregateDef<A> {
+>(spec: A & AggregateSpec<S> & RejectsComplete<A>): AggregateDef<A> {
   return { ...spec, dmg: 'aggregate' };
 }

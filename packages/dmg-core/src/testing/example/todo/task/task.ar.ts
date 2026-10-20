@@ -22,8 +22,16 @@ export const TaskArDef = defineAggregate({
     archived: { label: 'В архиве' },
   },
   transitions: {
-    complete: { from: ['open'], to: 'done' },
-    archive: { from: ['open', 'done'], to: 'archived' },
+    complete: {
+      from: ['open'],
+      to: 'done',
+      rejects: { done: TaskErrors.ALREADY_DONE, archived: TaskErrors.ARCHIVED },
+    },
+    archive: {
+      from: ['open', 'done'],
+      to: 'archived',
+      rejects: { archived: TaskErrors.ARCHIVED },
+    },
   },
   events: TaskEvents,
   errors: TaskErrors,
@@ -79,10 +87,7 @@ export class TaskAr extends Aggregate<typeof TaskArDef> {
   }
 
   complete(at: Timestamp): Result<void, TaskError> {
-    return this.change(at, (draft, emit) => {
-      if (draft.status === 'archived') return TaskErrors.ARCHIVED.err();
-      if (draft.status === 'done') return TaskErrors.ALREADY_DONE.err();
-      draft.status = 'done';
+    return this.transition('complete', at, (draft, emit) => {
       draft.completedAt = at;
       emit(TaskEvents.completed.make(this.ref()));
       return ok();
@@ -90,9 +95,7 @@ export class TaskAr extends Aggregate<typeof TaskArDef> {
   }
 
   archive(at: Timestamp): Result<void, TaskError> {
-    return this.change(at, (draft, emit) => {
-      if (draft.status === 'archived') return TaskErrors.ARCHIVED.err();
-      draft.status = 'archived';
+    return this.transition('archive', at, (_, emit) => {
       emit(TaskEvents.archived.make(this.ref()));
       return ok();
     });

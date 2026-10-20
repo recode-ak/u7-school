@@ -295,4 +295,49 @@ describe('checkDefs', () => {
       ]);
     });
   });
+
+  describe('MAN-12 — отказы переходов из группы ошибок агрегата', () => {
+    it('ошибка отказа чужой группы', () => {
+      const Foreign = defineErrors('OTHER', {
+        CLOSED: { kind: 'conflict', label: 'Закрыта', description: 'Чужая.' },
+      });
+      const Own = defineErrors('DOOR', {
+        OPEN: { kind: 'conflict', label: 'Открыта', description: 'Своя.' },
+      });
+      const DoorEvents = defineEvents('delta.door', {});
+      const DoorArDef = defineAggregate({
+        name: 'door',
+        label: 'Дверь',
+        description: 'Дверь для фикстуры переходов.',
+        state: v.object({
+          ...BaseEntityFields,
+          status: F.picklist(['open', 'closed'], 'Положение'),
+        }),
+        statuses: { open: { label: 'Открыта' }, closed: { label: 'Закрыта' } },
+        transitions: {
+          close: {
+            from: ['open'],
+            to: 'closed',
+            rejects: { closed: Foreign.CLOSED },
+          },
+          open: { from: ['closed'], to: 'open', rejects: { open: Own.OPEN } },
+        },
+        events: DoorEvents,
+        errors: Own,
+      });
+      const m = defineModule({
+        name: 'delta',
+        label: 'Дельта',
+        description: 'Модуль фикстуры переходов.',
+        dependsOn: [],
+        aggregates: [DoorArDef],
+        useCases: [],
+        reactions: [],
+        jobs: [],
+      });
+      expect(report(m).filter((l) => l.startsWith('MAN-12'))).toEqual([
+        'MAN-12: агрегат delta.door, переход close: отказ OTHER_CLOSED не из ошибок агрегата',
+      ]);
+    });
+  });
 });

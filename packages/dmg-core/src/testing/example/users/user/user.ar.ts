@@ -23,7 +23,11 @@ export const UserArDef = defineAggregate({
     removed: { label: 'Удалена' },
   },
   transitions: {
-    remove: { from: ['active'], to: 'removed' },
+    remove: {
+      from: ['active'],
+      to: 'removed',
+      rejects: { removed: UserErrors.ALREADY_REMOVED },
+    },
   },
   events: UserEvents,
   errors: UserErrors,
@@ -42,9 +46,7 @@ export class UserAr extends Aggregate<typeof UserArDef> {
   }
 
   remove(at: Timestamp): Result<void, UserError> {
-    return this.change(at, (draft, emit) => {
-      if (draft.status === 'removed') return UserErrors.ALREADY_REMOVED.err();
-      draft.status = 'removed';
+    return this.transition('remove', at, (_, emit) => {
       emit(UserEvents.removed.make({ userId: this.uuid }));
       return ok();
     });

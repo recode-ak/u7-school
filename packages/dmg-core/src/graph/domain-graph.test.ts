@@ -135,6 +135,7 @@ describe('buildGraph', () => {
       expect(task?.transitions?.complete).toEqual({
         from: ['open'],
         to: 'done',
+        rejects: { done: 'TASK_ALREADY_DONE', archived: 'TASK_ARCHIVED' },
       });
       expect(task?.errors).toContain('TASK_ALREADY_DONE');
     });

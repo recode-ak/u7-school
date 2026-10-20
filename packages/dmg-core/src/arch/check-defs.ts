@@ -17,7 +17,7 @@ import type { ArchRule, Violation } from './violation';
 /**
  * Контрактные проверки по Def (без файлов): описания и схемы (MAN-01/02/03),
  * связность (MAN-06), FQN (MAN-08), ссылки ⊆ `dependsOn` (ARC-04), DAG
- * (ARC-05), коды ошибок (ERR-04).
+ * (ARC-05), коды ошибок (ERR-04), отказы переходов (MAN-12).
  */
 export function checkDefs(index: DefIndex): Violation[] {
   return [
@@ -28,6 +28,7 @@ export function checkDefs(index: DefIndex): Violation[] {
     ...checkDependsOn(index),
     ...checkCycles(index),
     ...checkErrorCodes(index),
+    ...checkRejects(index),
   ];
 }
 
@@ -190,6 +191,28 @@ function checkFqn(index: DefIndex): Violation[] {
             violation(
               'MAN-08',
               `событие ${e.name} агрегата ${localId(m, a)}: ожидается префикс ${prefix}`,
+            ),
+          );
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/** MAN-12: отказы переходов — ошибки из группы самого агрегата. */
+function checkRejects(index: DefIndex): Violation[] {
+  const out: Violation[] = [];
+  for (const m of index.modules) {
+    for (const a of m.aggregates) {
+      const own = new Set(Object.values(a.errors));
+      for (const [op, t] of Object.entries(a.transitions ?? {})) {
+        for (const e of Object.values(t.rejects)) {
+          if (e === undefined || own.has(e)) continue;
+          out.push(
+            violation(
+              'MAN-12',
+              `агрегат ${localId(m, a)}, переход ${op}: отказ ${e.code} не из ошибок агрегата`,
             ),
           );
         }

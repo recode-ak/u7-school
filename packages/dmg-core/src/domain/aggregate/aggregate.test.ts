@@ -52,7 +52,13 @@ const TaskArDef = defineAggregate({
   description: 'Пункт списка дел.',
   state: TaskState,
   statuses: { open: { label: 'Открыта' }, done: { label: 'Выполнена' } },
-  transitions: { complete: { from: ['open'], to: 'done' } },
+  transitions: {
+    complete: {
+      from: ['open'],
+      to: 'done',
+      rejects: { done: TaskErrors.ALREADY_DONE },
+    },
+  },
   events: TaskEvents,
   errors: TaskErrors,
 });
@@ -82,10 +88,16 @@ class TaskAr extends Aggregate<typeof TaskArDef> {
   }
 
   complete(at: Timestamp): Result<void, TaskError> {
-    return this.change(at, (draft, emit) => {
-      if (draft.status === 'done') return TaskErrors.ALREADY_DONE.err();
-      draft.status = 'done';
+    return this.transition('complete', at, (draft, emit) => {
       emit(TaskEvents.completed.make({ taskId: draft.uuid }));
+      return ok();
+    });
+  }
+
+  // Переход, который пытается сам выставить другой статус.
+  completeWrongly(at: Timestamp): Result<void, TaskError> {
+    return this.transition('complete', at, (draft) => {
+      draft.status = 'open';
       return ok();
     });
   }
@@ -100,7 +112,7 @@ class TaskAr extends Aggregate<typeof TaskArDef> {
     });
   }
 
-  // Переход done → open не объявлен в Def.
+  // Статус меняется мимо transition.
   reopen(at: Timestamp): Result<void, TaskError> {
     return this.change(at, (draft) => {
       draft.status = 'open';
@@ -134,6 +146,7 @@ describe('defineAggregate', () => {
     expect(TaskArDef.transitions.complete).toEqual({
       from: ['open'],
       to: 'done',
+      rejects: { done: TaskErrors.ALREADY_DONE },
     });
     expect(TaskArDef.events).toBe(TaskEvents);
     expect(TaskArDef.errors).toBe(TaskErrors);
@@ -148,6 +161,23 @@ describe('defineAggregate', () => {
       // @ts-expect-error нет статуса `done`
       statuses: { open: { label: 'Открыта' } },
       transitions: {},
+      events: TaskEvents,
+      errors: TaskErrors,
+    });
+    expect(true).toBe(true);
+  });
+
+  it('переход объявляет отказ для каждого статуса вне `from`', () => {
+    defineAggregate({
+      name: 'task',
+      label: 'Задача',
+      description: 'Пункт списка дел.',
+      state: TaskState,
+      statuses: { open: { label: 'Открыта' }, done: { label: 'Выполнена' } },
+      transitions: {
+        // @ts-expect-error нет отказа для статуса `done`
+        complete: { from: ['open'], to: 'done', rejects: {} },
+      },
       events: TaskEvents,
       errors: TaskErrors,
     });
@@ -223,10 +253,25 @@ describe('Aggregate', () => {
       expect(ar.pullEvents()).toEqual([]);
     });
 
-    it('переход статуса, не объявленный в Def, — исключение', () => {
+    it('смена статуса через change — исключение: статус меняет только transition', () => {
       const ar = TaskAr.restore(stored('done'));
-      expect(() => ar.reopen(T1)).toThrow('done → open');
+      expect(() => ar.reopen(T1)).toThrow('transition');
       expect(ar.isDone()).toBe(true);
+    });
+  });
+
+  describe('transition', () => {
+    it('статус вне `from` — объявленный в Def отказ, состояние прежнее', () => {
+      const ar = TaskAr.restore(stored('done'));
+      expectErr(ar.complete(T1), 'TASK_ALREADY_DONE');
+      expect(ar.snapshot()).toEqual(stored('done'));
+      expect(ar.pullEvents()).toEqual([]);
+    });
+
+    it('статус `to` ставит база; apply не меняет его', () => {
+      const ar = TaskAr.restore(stored('open'));
+      expect(() => ar.completeWrongly(T1)).toThrow('done');
+      expect(ar.isDone()).toBe(false);
     });
   });
 });

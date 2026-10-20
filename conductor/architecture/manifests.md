@@ -10,7 +10,7 @@
 |---|---|---|
 | `defineModule` | domain | `name`, `label`, `description`, `dependsOn`, состав (агрегаты, UC, ER, Job, фасад) |
 | `defineFacade` | domain | runtime-API модуля: методы с `label`/`description`, вход, возврат (`Result`, `ReadonlyAr`), ошибки |
-| `defineAggregate` | domain | схема entity, статусы и переходы, группы событий и ошибок; класс `Aggregate` — база для Ar |
+| `defineAggregate` | domain | схема entity, статусы и переходы (`from`, `to`, `rejects` — отказ для каждого статуса вне `from`), группы событий и ошибок; класс `Aggregate` — база для Ar |
 | `defineEvents` | domain | группа событий агрегата: FQN-префикс `module.aggregate`, на событие — `label`, `description`, схема payload |
 | `defineErrors` | domain | группа ошибок агрегата: `code`, `kind`, `label`, `description`, схема payload |
 | `definePolicy` / `rule` | domain | именованные правила с `label` и `denyMessage`, композиция |
@@ -24,6 +24,8 @@
 **Ссылки, не строки:** `on: StudentEvents.completed`, `errors: [StudentErrors.NOT_ACTIVE]`. Строковые имена (FQN) вычисляются для шины, логов и документации.
 
 **Обратные связи** (какие UC управляют агрегатом, кто слушает событие) не пишутся — их вычисляет граф.
+
+**Жизненный цикл — только в Def.** Метод Ar меняет статус через `this.transition('<op>', at, apply)`: база проверяет `from`, возвращает отказ из `rejects` и ставит `to`; `apply` пишет только суть операции. `this.change(at, apply)` статус не меняет. Проверки статуса в методах Ar не дублируются (D-35, MAN-12).
 
 ## 2. Обязательные описания
 

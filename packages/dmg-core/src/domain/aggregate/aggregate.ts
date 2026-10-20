@@ -1,6 +1,6 @@
 import * as v from 'valibot';
-import type { ErrorOf } from '#core/kernel/errors/define-errors';
-import type { Result } from '#core/kernel/result/result';
+import type { AnyErrorDef, ErrorOf } from '#core/kernel/errors/define-errors';
+import type { Err, Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { EventOf } from '../events/define-events';
 import type { AnyAggregateDef } from './define-aggregate';
@@ -19,6 +19,25 @@ export type ErrorsOf<D extends AnyAggregateDef> = {
 }[keyof D['errors']];
 
 type Emit<D extends AnyAggregateDef> = (event: EventsOf<D>) => void;
+
+type Apply<D extends AnyAggregateDef, R> = (
+  draft: StateOf<D>,
+  emit: Emit<D>,
+) => R;
+
+type TransitionsOf<D extends AnyAggregateDef> = NonNullable<D['transitions']>;
+
+/** Имя перехода агрегата — ключ `transitions` в Def. */
+export type TransitionOf<D extends AnyAggregateDef> = keyof TransitionsOf<D> &
+  string;
+
+/** Отказы перехода `K`: ошибки из его `rejects`. */
+export type RejectOf<
+  D extends AnyAggregateDef,
+  K extends TransitionOf<D>,
+> = TransitionsOf<D>[K] extends { readonly rejects: infer J }
+  ? ErrorOf<Extract<J[keyof J], AnyErrorDef>>
+  : never;
 
 /**
  * Базовый класс агрегата v2. Наследник объявляет `private constructor`,
@@ -61,23 +80,62 @@ export abstract class Aggregate<D extends AnyAggregateDef> {
   }
 
   /**
-   * Мутация в момент `at`: черновик → `apply` → проверка перехода и схемы →
-   * фиксация. При `Err` черновик и события отбрасываются; `updatedAt` = `at`.
-   * Время — аргумент операции: домен не читает часы (D-34).
+   * Мутация без смены статуса в момент `at`: черновик → `apply` → проверка
+   * схемы → фиксация. При `Err` черновик и события отбрасываются;
+   * `updatedAt` = `at`. Время — аргумент операции: домен не читает часы
+   * (D-34). Статус меняет только `transition`.
    * Дженерик по всему `Result`: при `<T, E>` TS вывел бы `E` из первого
    * `return` и отверг бы второй код ошибки.
    */
   protected change<R extends Result<unknown, unknown>>(
     at: Timestamp,
-    apply: (draft: StateOf<D>, emit: Emit<D>) => R,
+    apply: Apply<D, R>,
+  ): R {
+    return this.mutate(at, apply, undefined);
+  }
+
+  /**
+   * Переход статуса `op` по Def: из статуса вне `from` — отказ из `rejects`,
+   * иначе черновик получает статус `to` и проходит `apply`, как в `change`.
+   * Правила жизненного цикла живут в Def; метод Ar пишет только сам переход.
+   */
+  protected transition<
+    K extends TransitionOf<D>,
+    R extends Result<unknown, unknown>,
+  >(op: K, at: Timestamp, apply: Apply<D, R>): R | Err<RejectOf<D, K>> {
+    const declared = this.def.transitions?.[op];
+    if (declared === undefined) {
+      throw new Error(`Агрегат ${this.def.name}: переход ${op} не объявлен`);
+    }
+    const from = statusOf(this.current);
+    if (from !== undefined && declared.from.includes(from)) {
+      return this.mutate(at, apply, declared.to);
+    }
+    const reject = from === undefined ? undefined : declared.rejects[from];
+    if (reject === undefined) {
+      throw new Error(
+        `Агрегат ${this.def.name}: у перехода ${op} нет отказа для статуса ${from}`,
+      );
+    }
+    // Ключ `rejects[from]` — ошибка перехода `op`: тип выводит сигнатура,
+    // рантайм-доступ по строке статуса его не сохраняет.
+    return reject.err() as Err<RejectOf<D, K>>;
+  }
+
+  private mutate<R extends Result<unknown, unknown>>(
+    at: Timestamp,
+    apply: Apply<D, R>,
+    to: string | undefined,
   ): R {
     const draft = structuredClone(this.current);
+    const before = statusOf(draft);
+    if (to !== undefined) Reflect.set(draft, 'status', to);
     const emitted: EventsOf<D>[] = [];
     const res = apply(draft, (event) => {
       emitted.push(event);
     });
     if (!res.ok) return res;
-    this.checkTransition(this.current, draft);
+    this.checkStatus(to ?? before, statusOf(draft));
     this.current = this.validate({ ...draft, updatedAt: at });
     this.pending.push(...emitted);
     return res;
@@ -93,18 +151,15 @@ export abstract class Aggregate<D extends AnyAggregateDef> {
     return parsed.output;
   }
 
-  private checkTransition(prev: StateOf<D>, next: StateOf<D>): void {
-    const from = statusOf(prev);
-    const to = statusOf(next);
-    if (from === to || from === undefined || to === undefined) return;
-    const declared = Object.values(this.def.transitions ?? {}).some(
-      (t) => t.to === to && t.from.includes(from),
+  /** Статус после `apply` — тот, что поставила база (или прежний). */
+  private checkStatus(
+    expected: string | undefined,
+    actual: string | undefined,
+  ): void {
+    if (expected === actual) return;
+    throw new Error(
+      `Агрегат ${this.def.name}: статус ${expected} → ${actual} изменён мимо transition — статус ставит база по Def`,
     );
-    if (!declared) {
-      throw new Error(
-        `Агрегат ${this.def.name}: переход ${from} → ${to} не объявлен в Def`,
-      );
-    }
   }
 }
 

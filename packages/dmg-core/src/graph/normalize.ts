@@ -35,11 +35,20 @@ export type NormalizedEvent = Texts & {
   readonly payload: JsonSchema;
 };
 
+/** Переход: отказы — коды ошибок по статусам вне `from`. */
+export type NormalizedTransition = {
+  readonly from: readonly string[];
+  readonly to: string;
+  readonly rejects: Readonly<Record<string, string>>;
+};
+
 export type NormalizedAggregate = Texts & {
   readonly dmg: 'aggregate';
   readonly state: JsonSchema;
   readonly statuses: AnyAggregateDef['statuses'];
-  readonly transitions: AnyAggregateDef['transitions'];
+  readonly transitions:
+    | Readonly<Record<string, NormalizedTransition>>
+    | undefined;
   readonly events: readonly string[];
   readonly errors: readonly string[];
 };
@@ -180,7 +189,7 @@ export function normalize(def: AnyDef): NormalizedDef {
         ...texts(def),
         state: schema(def.state),
         statuses: def.statuses,
-        transitions: def.transitions,
+        transitions: transitions(def),
         events: Object.values(def.events).map((e) => e.name),
         errors: Object.values(def.errors).map((e) => e.code),
       };
@@ -286,4 +295,24 @@ function normalizeRule(r: AnyRule): NormalizedRule {
     case 'allowAll':
       return { dmg: 'rule', op: 'allowAll' };
   }
+}
+
+function transitions(
+  def: AnyAggregateDef,
+): Readonly<Record<string, NormalizedTransition>> | undefined {
+  if (def.transitions === undefined) return undefined;
+  return Object.fromEntries(
+    Object.entries(def.transitions).map(([op, t]) => [
+      op,
+      {
+        from: t.from,
+        to: t.to,
+        rejects: Object.fromEntries(
+          Object.entries(t.rejects).flatMap(([status, e]) =>
+            e === undefined ? [] : [[status, e.code]],
+          ),
+        ),
+      },
+    ]),
+  );
 }

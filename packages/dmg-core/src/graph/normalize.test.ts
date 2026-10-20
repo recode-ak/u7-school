@@ -14,6 +14,7 @@ import {
   TodoModuleDef,
 } from '../domain/contracts/contracts.fixture';
 import { allOf, anyOf, hasRole } from '../domain/policy/policy';
+import { defineErrors } from '../kernel/errors/define-errors';
 import { BaseEntityFields, F } from '../kernel/fields/fields';
 import { normalize } from './normalize';
 
@@ -167,7 +168,14 @@ describe('normalize', () => {
     });
   });
 
-  it('стабильность: одинаковый Def — одинаковая сериализация', () => {
+  it('стабильность: одинаковый Def — одинаковая сериализация; отказы переходов — коды', () => {
+    const NoteErrors = defineErrors('NOTE', {
+      CLOSED: {
+        kind: 'conflict',
+        label: 'Закрыта',
+        description: 'Уже закрыта.',
+      },
+    });
     const build = () =>
       defineAggregate({
         name: 'note',
@@ -181,15 +189,27 @@ describe('normalize', () => {
           draft: { label: 'Черновик' },
           closed: { label: 'Закрыта' },
         },
-        transitions: { close: { from: ['draft'], to: 'closed' } },
+        transitions: {
+          close: {
+            from: ['draft'],
+            to: 'closed',
+            rejects: { closed: NoteErrors.CLOSED },
+          },
+        },
         events: {},
-        errors: {},
+        errors: NoteErrors,
       });
     const a = normalize(build());
     expect(JSON.stringify(a)).toBe(JSON.stringify(normalize(build())));
     expect(a).toMatchObject({
       statuses: { draft: { label: 'Черновик' }, closed: { label: 'Закрыта' } },
-      transitions: { close: { from: ['draft'], to: 'closed' } },
+      transitions: {
+        close: {
+          from: ['draft'],
+          to: 'closed',
+          rejects: { closed: 'NOTE_CLOSED' },
+        },
+      },
     });
   });
 });
