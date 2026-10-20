@@ -55,5 +55,6 @@ packages/<m>/src/
 
 - Legacy-алиасы переименованы: `#domain-legacy/*`, `#api-legacy/*`, `#ui-legacy/*`, `#shared-legacy/*`, `#infra-legacy/*` (в `imports` каждого пакета). Имена `#domain/*`, `#api/*` и т.д. свободны под новую архитектуру. Алиас платформы — `#core/*` (пакет `dmg-core`).
 - При миграции модуля его импорты переводятся с `#X-legacy/*` на новые пути; когда в пакете не осталось `-legacy`-импортов, запись удаляется из `imports`. Проверка: `grep -rn -- "-legacy/" packages/<m>/src` пусто.
+- Для перенесённых в `@u7-scl/domain` модулей алиас `#domain-legacy/*` удалён; старый `packages/<m>/src/domain` — только barrel с `DEBT` до последнего трека миграции (см. [migration.md](./migration.md) §6).
 - Мосты DMG↔legacy (`packages/core/src/legacy-bridge/`, трек `dmg-core-extract`) удаляются последними — вместе с legacy-шиной, `AppError`, legacy-`Job`.
 - Финал перехода: удалить `-legacy`-алиасы, legacy-слои `core`, мосты, этот файл (migration.md §5).
