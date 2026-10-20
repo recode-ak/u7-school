@@ -1,0 +1,1 @@
+golden-wish Ф0 «Контракты зависимостей»: domain-author (шаг 1, 12 тестов), api-author (шаг 2, 6 тестов), гейт зелёный, reviewer без error (warn: TST-04, deps в package.json, ERR-07 на Ф12). check зелёный.
