@@ -20,7 +20,7 @@
 - [x] Task: `gen aggregate <m>.<agg>` (`state`, `ar`, `policy`, `events`, `errors`) + заготовки тестов 0446d689
 - [x] Task: `gen dcs` и `gen dqs` (`<topic>.dcs.ts` / `.dqs.ts`) + заготовки тестов 67ff3a0e
 - [x] Task: Тест на снапшотах: пути и имена совпадают с `naming.md` §2, результат проходит biome без правок 5065a57f
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Пары контракт ↔ реализация
 
@@ -29,11 +29,11 @@
 - [x] Task: `gen module <m>` в прикладном слое (`packages/<m>`: `<m>.module.ts` с картой Def → класс, `<m>.facade.ts`, каркас) f265ac69
 - [x] Task: `gen aggregate` в прикладном слое: порт `repo` + `infra/<agg>.json-repo.ts` e7e17456
 - [x] Task: Тест правила пары: путь контракта и реализации совпадает, иначе падает e7e17456
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: Приёмка и интеграция
 
-- [ ] Task: E2E `gen-e2e`: во временном каталоге генерируется срез (module → aggregate → uc → er → job → dcs → dqs), на нём зелёные `check` и `arch:check` без ручных правок
+- [~] Task: E2E `gen-e2e`: во временном каталоге генерируется срез (module → aggregate → uc → er → job → dcs → dqs), на нём зелёные `check` и `arch:check` без ручных правок
 - [ ] Task: Идемпотентность и детерминизм: повторный запуск ничего не ломает, порядок и форматирование стабильны
 - [ ] Task: Скрипт `gen` в `package.json`; тесты `scripts/gen` входят в `check`
 - [ ] Task: Документация: раздел «Генераторы» в `naming.md`, правка `agents.md` §2; в ролях `.agents-core/roles` (`domain-author`, `api-author`, `migrator`) — «создавай через `gen`»; `bun run agents:sync`
