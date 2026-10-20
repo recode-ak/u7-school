@@ -10,11 +10,14 @@ import {
   CreateCourseWishOutputSchema,
   findCoursePool,
   WishAr,
-  WishPolicy,
+  WishDcs,
 } from '@u7-scl/domain/wish';
 import { WishErrors } from '@u7-scl/domain/wish/contract';
 import { unwrapInfallible } from '../legacy-reject';
 import { WishUseCase } from '../wish-uc';
+
+/** Доменные решения над желаниями: без состояния, один на модуль. */
+const wishDcs = new WishDcs();
 
 /**
  * Use-case создания желания пройти курс («запись на курс»).
@@ -58,18 +61,12 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
     //    порядок сортировки недетерминирован и активное желание может
     //    оказаться не первым.
     const target: WishTargetVo = { kind: 'course', courseId: command.courseId };
-    const active = (
+    const existing = (
       await this.repo.findAllByUserAndTarget(actor.uuid, target)
-    ).find((w) => WishPolicy.isActive(w.status));
-
-    if (active) {
-      this.throwWishError(
-        WishErrors.ALREADY_EXISTS.make({
-          userId: actor.uuid,
-          courseId: command.courseId,
-          status: active.status,
-        }),
-      );
+    ).map((w) => WishAr.restore(w));
+    const unique = wishDcs.checkUnique(actor.uuid, target, existing);
+    if (!unique.ok) {
+      this.throwWishError(unique.error);
     }
 
     // 3. Курс с пулом анкеты — анкетная ветка: pending + запуск анкеты.

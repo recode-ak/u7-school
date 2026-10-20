@@ -5,7 +5,7 @@ import type {
   WishStatus,
   WishTargetVo,
 } from '@u7-scl/domain/wish';
-import { WishArDef, WishPolicy } from '@u7-scl/domain/wish';
+import { WishAr, WishArDef } from '@u7-scl/domain/wish';
 import type * as v from 'valibot';
 
 /** Проверяет равенство целей желания (сравнение по варианту и его ключам). */
@@ -76,7 +76,7 @@ export class WishJsonRepo implements WishRepo {
     // сначала сужаем выборку до активных желаний (релевантных для
     // потребителей: отмена, экран W04, ER-реакции), и только среди
     // них берём последнее созданное.
-    const active = matches.filter((w) => WishPolicy.isActive(w.status));
+    const active = matches.filter((w) => WishAr.restore(w).isActive());
     const pool = active.length > 0 ? active : matches;
     pool.sort((a, b) => b.createdAt - a.createdAt);
     return pool[0];

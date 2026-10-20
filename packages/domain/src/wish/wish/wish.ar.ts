@@ -79,6 +79,16 @@ export const WishArDef = defineAggregate({
 });
 
 export type WishError = ErrorsOf<typeof WishArDef>;
+
+/**
+ * Активные статусы — желание ещё в работе и занимает цель: второе активное
+ * на ту же пару (user, target) не создаётся (`WishDcs.checkUnique`).
+ */
+const ACTIVE_STATUSES: readonly (keyof typeof WishArDef.statuses)[] = [
+  'expressed',
+  'pending',
+  'confirmed',
+];
 type WishTransition = TransitionOf<typeof WishArDef>;
 
 /**
@@ -100,7 +110,7 @@ export type CreateWish = {
  * - анкетная: pending → confirmed | abandoned, далее confirmed → cancelled | fulfilled.
  *
  * Инвариант «не более одного активного желания на пару (user, target)»
- * охватывает несколько агрегатов — его проверяет UC при создании.
+ * охватывает несколько агрегатов — его проверяет `WishDcs.checkUnique`.
  */
 export class WishAr extends Aggregate<typeof WishArDef> {
   private constructor(state: WishState) {
@@ -120,6 +130,23 @@ export class WishAr extends Aggregate<typeof WishArDef> {
   /** Восстановление из хранилища — запись разобрана `WishArDef.state`. */
   static restore(snapshot: WishState): WishAr {
     return new WishAr(snapshot);
+  }
+
+  /** Статус — для payload ошибок и ответов; решения — методами-вопросами. */
+  get status(): WishStatus {
+    return this.state.status;
+  }
+
+  // ── Вопросы ──
+
+  /** Активно ли желание (expressed | pending | confirmed) — занимает ли цель. */
+  isActive(): boolean {
+    return ACTIVE_STATUSES.includes(this.state.status);
+  }
+
+  /** Принадлежит ли желание пользователю. */
+  isOwnedBy(userId: string): boolean {
+    return this.state.userId === userId;
   }
 
   // ── Предикаты переходов ──

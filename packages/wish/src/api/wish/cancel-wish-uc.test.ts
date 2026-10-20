@@ -160,4 +160,23 @@ describe('CancelWishUc', () => {
       },
     });
   });
+
+  test('чужое желание — отказ Policy: ACCESS_DENIED, kind access-denied, нет сохранения', async () => {
+    const { save, getByUserAndTarget, uc } = setupUc();
+    getByUserAndTarget.mockResolvedValueOnce(
+      makeExpressedWish(crypto.randomUUID(), courseId),
+    );
+
+    await expect(
+      uc.handle({ kind: 'course', courseId }, actor),
+    ).rejects.toMatchObject({
+      error: {
+        name: 'ACCESS_DENIED',
+        kind: 'access-denied',
+        message: 'Отменить желание может только его автор.',
+        payload: { rule: 'isAuthor' },
+      },
+    });
+    expect(save).not.toHaveBeenCalled();
+  });
 });

@@ -7,12 +7,15 @@ import type {
 import {
   CreateModuleWishCmdSchema,
   WishAr,
-  WishPolicy,
+  WishDcs,
 } from '@u7-scl/domain/wish';
 import { WishErrors } from '@u7-scl/domain/wish/contract';
 import * as v from 'valibot';
 import { unwrapInfallible } from '../legacy-reject';
 import { WishUseCase } from '../wish-uc';
+
+/** Доменные решения над желаниями: без состояния, один на модуль. */
+const wishDcs = new WishDcs();
 
 /**
  * Use-case создания желания пройти модуль («запись на следующий/тот же модуль»).
@@ -51,17 +54,12 @@ export class CreateModuleWishUc extends WishUseCase<CreateModuleWishCmdMeta> {
     //    порядок сортировки недетерминирован и активное желание может
     //    оказаться не первым.
     const target: WishTargetVo = { kind: 'module', moduleId: command.moduleId };
-    const active = (
+    const existing = (
       await this.repo.findAllByUserAndTarget(actor.uuid, target)
-    ).find((w) => WishPolicy.isActive(w.status));
-    if (active) {
-      this.throwWishError(
-        WishErrors.ALREADY_EXISTS.make({
-          userId: actor.uuid,
-          moduleId: command.moduleId,
-          status: active.status,
-        }),
-      );
+    ).map((w) => WishAr.restore(w));
+    const unique = wishDcs.checkUnique(actor.uuid, target, existing);
+    if (!unique.ok) {
+      this.throwWishError(unique.error);
     }
 
     // 3. Мгновенная фиксация — без анкеты (студент уже верифицирован).

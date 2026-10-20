@@ -227,3 +227,26 @@ describe('предикаты переходов — совпадают с from �
     }
   });
 });
+
+describe('вопросы к желанию', () => {
+  it.each([
+    ['expressed', true],
+    ['pending', true],
+    ['confirmed', true],
+    ['cancelled', false],
+    ['abandoned', false],
+    ['fulfilled', false],
+  ] as const)('isActive: %s → %p', (status, active) => {
+    expect(restore(status).isActive()).toBe(active);
+  });
+
+  it('isOwnedBy — только пользователь-желающий', () => {
+    const wish = restore('expressed');
+    expect(wish.isOwnedBy(USER)).toBe(true);
+    expect(wish.isOwnedBy(WISH)).toBe(false);
+  });
+
+  it('status — текущий статус желания', () => {
+    expect(restore('confirmed').status).toBe('confirmed');
+  });
+});

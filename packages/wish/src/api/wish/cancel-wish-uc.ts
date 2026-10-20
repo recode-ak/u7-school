@@ -4,10 +4,11 @@ import type {
   CancelWishCmdMeta,
   WishTargetVo,
 } from '@u7-scl/domain/wish';
-import { CancelWishCmdSchema, WishAr } from '@u7-scl/domain/wish';
+import { CancelWishCmdSchema, WishAr, WishPolicy } from '@u7-scl/domain/wish';
 import { WishErrors } from '@u7-scl/domain/wish/contract';
+import { CoreErrors } from 'dmg-core';
 import * as v from 'valibot';
-import { throwIfRejected } from '../legacy-reject';
+import { throwIfRejected, throwWishError } from '../legacy-reject';
 import { WishUseCase } from '../wish-uc';
 
 /**
@@ -47,6 +48,20 @@ export class CancelWishUc extends WishUseCase<CancelWishCmdMeta> {
     }
 
     const ar = WishAr.restore(wish);
+    // Право отмены — только у автора. Через UC недостижимо (желание ищется
+    // по актору), но ветка Policy обязательна; отказ — мост TR-1.
+    const decision = WishPolicy.rules.canCancel.evaluate(
+      { kind: 'user', user: actor },
+      { wish: ar },
+    );
+    if (!decision.allowed) {
+      throwWishError(
+        CoreErrors.ACCESS_DENIED.make({
+          rule: decision.rule,
+          denyMessage: decision.denyMessage,
+        }),
+      );
+    }
     throwIfRejected(ar.cancel(Date.now()));
     await this.repo.save(ar.snapshot());
 

@@ -1,0 +1,60 @@
+import { describe, expect, it } from 'bun:test';
+import { expectErr, expectOk } from 'dmg-core/testing';
+import { WishAr } from './wish/wish.ar';
+import type { WishStatus, WishTargetVo } from './wish/wish.state';
+import { WishDcs } from './wish.dcs';
+
+const USER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
+const COURSE = '7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
+const MODULE = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
+const course: WishTargetVo = { kind: 'course', courseId: COURSE };
+const module: WishTargetVo = { kind: 'module', moduleId: MODULE };
+
+let seq = 0;
+const wish = (status: WishStatus, target: WishTargetVo = course) =>
+  WishAr.restore({
+    uuid: `0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f${String(10 + seq++).padStart(2, '0')}`,
+    userId: USER,
+    target,
+    status,
+    createdAt: 0,
+    updatedAt: 0,
+    version: 0,
+  });
+
+const dcs = new WishDcs();
+
+describe('WishDcs.checkUnique', () => {
+  it('желаний на цель нет — ok', () => {
+    expectOk(dcs.checkUnique(USER, course, []));
+  });
+
+  it('только неактивные — ok', () => {
+    const wishes = [wish('cancelled'), wish('abandoned'), wish('fulfilled')];
+    expectOk(dcs.checkUnique(USER, course, wishes));
+  });
+
+  it.each(['expressed', 'pending', 'confirmed'] as const)(
+    'есть активное %s — WISH_ALREADY_EXISTS со статусом существующего',
+    (status) => {
+      const error = expectErr(
+        dcs.checkUnique(USER, course, [wish('cancelled'), wish(status)]),
+        'WISH_ALREADY_EXISTS',
+      );
+      expect(error.kind).toBe('conflict');
+      expect(error.payload).toEqual({ userId: USER, courseId: COURSE, status });
+    },
+  );
+
+  it('цель-модуль — payload с moduleId', () => {
+    const error = expectErr(
+      dcs.checkUnique(USER, module, [wish('expressed', module)]),
+      'WISH_ALREADY_EXISTS',
+    );
+    expect(error.payload).toEqual({
+      userId: USER,
+      moduleId: MODULE,
+      status: 'expressed',
+    });
+  });
+});
