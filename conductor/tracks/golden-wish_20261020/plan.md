@@ -61,7 +61,7 @@
 - [x] Task: `wish` по D-39/D-40: `WishDcs.checkUnique` → доменное правило уникальности (`WISH_ALREADY_EXISTS`); геттер `WishAr.status` → метод `alreadyExists()`, строящий ошибку; UC — без изменений видимого поведения; гайд «policy» — третий уровень; TR-6 закрыть `43ee307`
 - [x] Task: Платформа по ревью приёмки (`slices/wish.md`, «Приёмка правок платформы»): `assertVersion` отличает новый агрегат от записи версии 0 (create с занятым uuid — конфликт, legacy-записи `data/wish` без `version` не перезаписываются); поведение событий записанных агрегатов при `VERSION_CONFLICT` — исправить или описать в errors-result.md §3 `18d2930`
 - [x] Task: Порт `WishRepo` на Ar/`Result`, `WishJsonRepo` с `F.timestamp` (чтение строки и числа), UoW; DQS для чтения списка, если решено в Фазе 0 `9639fe8`
-- [ ] Task: Тест репозитория на `DB_DIR=./data/fixtures`: ISO-строка читается, число пишется
+- [x] Task: Тест репозитория на `DB_DIR=./data/fixtures`: ISO-строка читается, число пишется `87149fa`
 - [ ] Task: Генератор по D-38: `gen module` создаёт фасад (домен и пакет) только с `--facade`; тесты `scripts/gen` (red → green); у `wish` фасада нет — потребителей нет
 - [ ] Task: Гайды «repo / dcs / dqs» и «facade» (критерий «только по потребителю», эталон — пример `dmg-core`)
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
