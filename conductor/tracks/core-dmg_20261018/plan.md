@@ -124,3 +124,7 @@
 - [ ] Task: `decisions.md` — новые решения (подпуть `@u7-scl/core/dmg` и его переименование после legacy, прочие по ходу); `tech-stack.md` — GritQL-плагины biome
 - [ ] Task: `migration.md` — трек 1 отмечен; что разблокировано (generators, golden-wish)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
+
+## Фаза 7: Вынос платформы в `dmg-core`
+
+Выделено в отдельный трек [dmg-core-extract_20261020](../dmg-core-extract_20261020/plan.md); здесь выполнять не нужно. Фаза 6 включает фиксацию D-28/D-29 в `decisions.md` (сделано заранее).

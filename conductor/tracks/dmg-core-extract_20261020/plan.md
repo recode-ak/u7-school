@@ -1,0 +1,35 @@
+# Plan: dmg-core-extract_20261020
+
+Каждая задача — TDD, `bun run check` зелёный после каждой. Предшествует трек core-dmg (завершён).
+
+## Фаза 1: Развязка от legacy
+
+- [ ] Task: Перенести мосты (`legacy-event-bus`, `legacy-error`, `legacy-job`, `run-logged`, `context`, часть `use-case-from-def`, `now`) в `packages/core/src/legacy-bridge/`, внутрь `dmg` оставить порты
+    - [ ] Тесты моста сохраняются; `dmg` получает логгер/режим/время через порты
+- [ ] Task: Правило и проверка: `dmg` не импортирует `*-legacy` и `@u7-scl/*` (biome `noRestrictedImports` + тест `arch:check`)
+- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+
+## Фаза 2: Выделение пакета `dmg-core`
+
+- [ ] Task: Создать `packages/dmg-core` (перенос `dmg/**` в `src/`), алиас `#core/*`, `core/dmg` временно реэкспортирует
+- [ ] Task: Перевести потребителей на `dmg-core`; убрать `paths` на `@u7-scl/core/dmg*` из корневого `tsconfig`
+- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+
+## Фаза 3: Самодостаточность
+
+- [ ] Task: Свои `tsconfig`, `biome.json`, скрипты; `package.json` публикуемого пакета (`exports`, `files`, `peerDependencies`, `engines`); `testing`-подпуть отделён
+- [ ] Task: `scripts/extract-check.sh` — копия в пустой каталог, install, check; `bun pm pack` и установка tarball в пустой проект; подключить в `check`
+- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+
+## Фаза 4: Готовность к распределённому запуску (D-28)
+
+- [ ] Task: Тесты «круг через JSON»: `Caller`, `Trace`, конверт события, снапшот Ar
+- [ ] Task: Порт outbox в `dmg-core`; контрактный тест идемпотентности реакций; правило «UoW — один модуль» в `arch:check`
+- [ ] Task: Подпуть контрактов модуля `domain/<m>/contract` (проект; реализация — трек domain-package)
+- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+
+## Фаза 5: Вынос и публикация
+
+- [ ] Task: Проверить свободное имя `dmg-core` на npm; репозиторий, CI, публикация по тегу
+- [ ] Task: Перевести монорепо на версию из npm; удалить `packages/dmg-core`; обновить документацию (`layers.md`, `migration.md`, `tech-stack.md`)
+- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
