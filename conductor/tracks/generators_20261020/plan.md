@@ -27,8 +27,8 @@
 - [x] Task: `gen uc` — пара `domain/<m>/<agg>/uc/<name>.uc.ts` + `packages/<m>/src/<agg>/uc/<name>.uc.ts` (одинаковый относительный путь, `XxxDef`/`Xxx`) + тесты f265ac69
 - [x] Task: `gen er` и `gen job` — пары по тому же правилу, константы Job экспортируются + тесты f265ac69
 - [x] Task: `gen module <m>` в прикладном слое (`packages/<m>`: `<m>.module.ts` с картой Def → класс, `<m>.facade.ts`, каркас) f265ac69
-- [ ] Task: `gen aggregate` в прикладном слое: порт `repo` + `infra/<agg>.json-repo.ts`
-- [ ] Task: Тест правила пары: путь контракта и реализации совпадает, иначе падает
+- [x] Task: `gen aggregate` в прикладном слое: порт `repo` + `infra/<agg>.json-repo.ts` e7e17456
+- [x] Task: Тест правила пары: путь контракта и реализации совпадает, иначе падает e7e17456
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: Приёмка и интеграция
