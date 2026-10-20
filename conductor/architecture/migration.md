@@ -27,7 +27,7 @@
 | 9 | **ui-manifests** | `define*` UI, эталонный UI-срез, генерация спецификации экранов; `ui-spec.md` удаляются по мере перевода контроллеров ([ui-manifests.md](./ui-manifests.md)) | orchestrator + Нурболат |
 | 10+ | потребители графа | CLI `domain`, `docs:domain`/`docs:tech`, `docs:llm`, http + OPTIONS, mcp | по roadmap |
 
-Треки 1 и 3 независимы; 1б и 2 — после 1; Фазы 1–3 трека 1б выполняются до 2 и 4, Фазы 4–6 — после 4 (golden-wish). Трек 1 выполнен (кроме выноса, он в 1б): 2 (generators) выполнен — `bun run gen` готов (naming.md §5); разблокированы 3 (domain-package) и 4 (golden-wish).
+Треки 1 и 3 независимы; 1б и 2 — после 1; Фазы 1–3 трека 1б выполняются до 2 и 4, Фазы 4–6 — после 4 (golden-wish). Трек 1 выполнен (кроме выноса, он в 1б): 2 (generators) выполнен — `bun run gen` готов (naming.md §5); 3 (domain-package) выполнен и заархивирован; разблокирован 4 (golden-wish).
 
 ## 3. Что исправляет переход
 
@@ -68,3 +68,11 @@
 | треки перевода остальных модулей | user D-5; course D-9, D-10; questionnaire D-14, D-15; stream D-19, D-20; peer-review D-28, D-29 |
 | `dmg-core-extract` Ф4 | импорты `core`/`app` в домене: D-1, D-2, D-6, D-7, D-11, D-12, D-16, D-17, D-21, D-22, D-25, D-26; каркасы `contract` модулей уже готовы (`domain/<m>/contract`) |
 | последний трек миграции | barrel-долги D-3, D-8, D-13, D-18, D-23, D-27, D-30 и `User` в `app` (D-4) |
+
+### Старт `golden-wish`
+
+- Трек заводится через `/conductor:newtrack` (в `conductor/tracks/` его пока нет); в spec/plan перенести «Входной долг» из таблицы выше.
+- Код `wish`: `packages/domain/src/wish/` (`index`, `state`, `contract`; 40 тестов), зависимости `user`, `course`, `questionnaire`, `stream` — `@u7-scl/domain/<dep>`. Старый `packages/wish/src/domain/index.ts` — barrel (D-23); `api/errors.ts` перенесён в `domain/wish/errors.ts`.
+- Базовая линия тестов репозитория на конец `domain-package`: 3211 pass, 0 fail; образцы брифов и приёмов — `conductor/archive/domain-package_20261020/slices/` и `summary.md`.
+- Реестр долга и проверка (`scripts/domain-debt.ts`, `arch:check`) живут: новые D-<n> — с D-31; погашенный долг удаляется из `debt.md`, allowlist и кода одновременно.
+- Эталон: после трека на каждый вид артефакта пишутся гайды ([agents.md](./agents.md)); Фазы 4–6 `dmg-core-extract` стартуют после него.
