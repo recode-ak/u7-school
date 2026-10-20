@@ -24,6 +24,7 @@
 |---|---|
 | Понять устройство | [layers.md](./layers.md) → [domain-modeling.md](./domain-modeling.md) |
 | Создать файл / объект | [naming.md](./naming.md) → [rules.md](./rules.md) |
+| Написать артефакт по эталону | [guides/](./guides/index.md) |
 | Объявить контракт | [manifests.md](./manifests.md), [errors-result.md](./errors-result.md) |
 | Править немигрированный модуль | [legacy.md](./legacy.md) |
 | Работать с ботом | [ui/](./ui/bot-architecture.md) |
@@ -47,6 +48,7 @@
 **Качество и процесс**
 - [rules.md](./rules.md) — **каталог правил с ID** и способом проверки
 - [testing.md](./testing.md) — тестирование
+- [guides/](./guides/index.md) — гайды по видам артефактов на эталоне `wish`
 - [typescript.md](./typescript.md) — стиль TypeScript
 - [docs-strategy.md](./docs-strategy.md) — доменная и техническая документация
 - [agents.md](./agents.md) — роли агентов, контуры качества, связь с conductor, среды Claude Code и pi, передача между ними
