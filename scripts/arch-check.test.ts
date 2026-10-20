@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { defineModule } from 'dmg-core';
-import { ARCH_APPS, runArchCheck } from './arch-check';
+import { ARCH_APPS, runArchCheck, runDomainCheck } from './arch-check';
 
 function run(apps: Parameters<typeof runArchCheck>[0]) {
   const lines: string[] = [];
@@ -45,5 +45,11 @@ describe('arch:check', () => {
       'ARC-06: модуль broken: нет /нет/пакета/broken.module.ts',
       'arch:check: нарушений — 3',
     ]);
+  });
+});
+
+describe('arch:check domain', () => {
+  it('репозиторий — без нарушений домена и долга', async () => {
+    expect(await runDomainCheck()).toEqual([]);
   });
 });
