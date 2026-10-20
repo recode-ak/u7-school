@@ -29,11 +29,16 @@
 
 ## Фаза 3: Самодостаточность
 
+> **Последняя фаза части А.** После её контрольной точки трек ставится на паузу (см. ниже Фазу 4).
+
 - [ ] Task: Свои `tsconfig`, `biome.json`, скрипты; `package.json` публикуемого пакета (`exports`, `files`, `peerDependencies`, `engines`); `testing`-подпуть отделён
 - [ ] Task: `scripts/extract-check.sh` — копия в пустой каталог, install, check; `bun pm pack` и установка tarball в пустой проект; подключить в `check`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: Готовность к распределённому запуску (D-28)
+
+> **Пауза до `golden-wish`.** Фазы 4–6 не начинать до завершения треков `generators`, `domain-package`, `golden-wish`. Обоснование — [spec.md](./spec.md) §«Порядок относительно других треков».
+
 
 - [ ] Task: Тесты «круг через JSON»: `Caller`, `Trace`, конверт события, снапшот Ar
 - [ ] Task: Порт outbox в `dmg-core`; контрактный тест идемпотентности реакций; правило «UoW — один модуль» в `arch:check`
