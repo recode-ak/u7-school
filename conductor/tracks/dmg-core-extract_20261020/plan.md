@@ -16,10 +16,10 @@
 - Блокирующие lint-правила на `dmg` уже есть (ARC-01/02, GritQL); правило «без `*-legacy`» добавляется рядом в `biome.json` (`overrides`), проверяется `scripts/lint-rules.test.ts` на фикстуре-нарушителе в `lint-fixtures/`.
 - Три теста с импортами `../../../infra/…` из legacy исчезнут в этой фазе.
 
-- [ ] Task: Перенести мосты (`legacy-event-bus`, `legacy-error`, `legacy-job`, `run-logged`, `context`, часть `use-case-from-def`, `now`) в `packages/core/src/legacy-bridge/`, внутрь `dmg` оставить порты
-    - [ ] Тесты моста сохраняются; `dmg` получает логгер/режим/время через порты
-- [ ] Task: Правило и проверка: `dmg` не импортирует `*-legacy` и `@u7-scl/*` (biome `noRestrictedImports` + тест `arch:check`)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Перенести мосты (`legacy-event-bus`, `legacy-error`, `legacy-job`, `run-logged`, `context`, часть `use-case-from-def`, `now`) в `packages/core/src/legacy-bridge/`, внутрь `dmg` оставить порты
+    - [x] Тесты моста сохраняются; `dmg` получает логгер/режим/время через порты
+- [x] Task: Правило и проверка: `dmg` не импортирует `*-legacy` и `@u7-scl/*` (biome `noRestrictedImports` + тест `arch:check`)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Выделение пакета `dmg-core`
 
