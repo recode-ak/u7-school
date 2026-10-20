@@ -1,16 +1,18 @@
 import { U7UseCase } from '@u7-scl/app/domain';
 import { errNotFound } from '@u7-scl/core/domain';
 import { now } from '@u7-scl/core/shared';
-import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
-import { ReviewAr } from '#domain-legacy/review/a-root';
+import type {
+  PeerReviewApiModuleResolver,
+  Review,
+} from '@u7-scl/domain/peer-review';
 import {
   type CreateReviewCmd,
   type CreateReviewCmdMeta,
   CreateReviewCmdSchema,
+  ReviewAr,
+  ReviewCampaignFactory,
   ReviewSavedSchema,
-} from '#domain-legacy/review/commands/create-review-cmd';
-import type { Review } from '#domain-legacy/review/entity';
-import { ReviewCampaignFactory } from '#domain-legacy/review-campaign/review-campaign-factory';
+} from '@u7-scl/domain/peer-review';
 import type { CampaignNotFoundUcError } from '../errors';
 
 /**

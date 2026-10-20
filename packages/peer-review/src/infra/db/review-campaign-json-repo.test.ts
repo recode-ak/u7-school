@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { ReviewCampaign } from '#domain-legacy/review-campaign/entity';
+import type { ReviewCampaign } from '@u7-scl/domain/peer-review';
 import { ReviewCampaignJsonRepo } from './review-campaign-json-repo';
 
 /** Даты-границы, независимые от момента запуска тестов. */

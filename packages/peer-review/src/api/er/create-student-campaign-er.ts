@@ -2,14 +2,16 @@ import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
 import { now } from '@u7-scl/core/shared';
 import type {
+  PeerReviewApiModuleResolver,
+  StudentOutcome,
+} from '@u7-scl/domain/peer-review';
+import { ReviewCampaignFactory } from '@u7-scl/domain/peer-review';
+import type {
   StreamMember,
   StreamMembers,
   StudentAbandonedEvent,
   StudentCompletedEvent,
 } from '@u7-scl/stream/domain';
-import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
-import type { StudentOutcome } from '#domain-legacy/review-campaign/entity';
-import { ReviewCampaignFactory } from '#domain-legacy/review-campaign/review-campaign-factory';
 
 /**
  * Метаданные реакции создания студенческой кампании

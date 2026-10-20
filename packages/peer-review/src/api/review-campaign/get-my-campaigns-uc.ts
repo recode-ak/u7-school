@@ -1,17 +1,19 @@
 import { U7UseCase } from '@u7-scl/app/domain';
 import { now } from '@u7-scl/core/shared';
-import * as v from 'valibot';
-import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
-import type { ReviewCampaignAr } from '#domain-legacy/review-campaign/a-root';
-import type { MyCampaignCard } from '#domain-legacy/review-campaign/campaign-facts-ds';
-import { CampaignFactsDs } from '#domain-legacy/review-campaign/campaign-facts-ds';
+import type {
+  MyCampaignCard,
+  PeerReviewApiModuleResolver,
+  ReviewCampaignAr,
+} from '@u7-scl/domain/peer-review';
 import {
+  CampaignFactsDs,
   type GetMyCampaignsCmd,
   type GetMyCampaignsCmdMeta,
   GetMyCampaignsCmdSchema,
   MyCampaignSchema,
-} from '#domain-legacy/review-campaign/commands/get-my-campaigns-cmd';
-import { ReviewCampaignFactory } from '#domain-legacy/review-campaign/review-campaign-factory';
+  ReviewCampaignFactory,
+} from '@u7-scl/domain/peer-review';
+import * as v from 'valibot';
 
 /**
  * Список «моих кампаний» (ФР-7): репо добывает, домен считает

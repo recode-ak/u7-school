@@ -1,3 +1,4 @@
+// DEBT(D-25)
 import type { AccessDeniedError, ConflictError } from '@u7-scl/core/domain';
 
 /** Окно кампании закрыто: писать и перезаписывать отзывы уже нельзя. */

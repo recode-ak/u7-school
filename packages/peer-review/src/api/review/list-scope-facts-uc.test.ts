@@ -1,8 +1,10 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { InProcEventBus } from '@u7-scl/core/infra';
-import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
-import type { Review } from '#domain-legacy/review/entity';
-import type { ReviewRepo } from '#domain-legacy/review/repo';
+import type {
+  PeerReviewApiModuleResolver,
+  Review,
+  ReviewRepo,
+} from '@u7-scl/domain/peer-review';
 import { ListScopeFactsUc } from './list-scope-facts-uc';
 
 const SCOPE = '11111111-1111-4111-8111-111111111111';

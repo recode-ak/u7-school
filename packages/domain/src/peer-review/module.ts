@@ -1,6 +1,8 @@
+// DEBT(D-26)
+// biome-ignore lint/style/noRestrictedImports: DEBT(D-26) — тип резолвера пока в app
 import type { U7ModuleResolver } from '@u7-scl/app/domain';
-import type { StreamFacade } from '@u7-scl/stream/domain';
-import type { UserFacade } from '@u7-scl/user/domain';
+import type { StreamFacade } from '@u7-scl/domain/stream';
+import type { UserFacade } from '@u7-scl/domain/user';
 import type { CreateReviewCmdMeta } from './review/commands/create-review-cmd';
 import type { GetMyReviewCmdMeta } from './review/commands/get-my-review-cmd';
 import type { ListMyReviewsCmdMeta } from './review/commands/list-my-reviews-cmd';

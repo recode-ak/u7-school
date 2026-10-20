@@ -1,12 +1,14 @@
 import { U7UseCase } from '@u7-scl/app/domain';
-import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
+import type {
+  PeerReviewApiModuleResolver,
+  Review,
+} from '@u7-scl/domain/peer-review';
 import {
   type ListMyReviewsCmd,
   type ListMyReviewsCmdMeta,
   ListMyReviewsCmdSchema,
   MyReviewsSchema,
-} from '#domain-legacy/review/commands/list-my-reviews-cmd';
-import type { Review } from '#domain-legacy/review/entity';
+} from '@u7-scl/domain/peer-review';
 
 /**
  * «Отзывы мне» (S08): все отзывы, адресованные пользователю,

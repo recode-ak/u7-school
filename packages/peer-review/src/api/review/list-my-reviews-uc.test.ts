@@ -1,8 +1,10 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { InProcEventBus } from '@u7-scl/core/infra';
-import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
-import type { Review } from '#domain-legacy/review/entity';
-import type { ReviewRepo } from '#domain-legacy/review/repo';
+import type {
+  PeerReviewApiModuleResolver,
+  Review,
+  ReviewRepo,
+} from '@u7-scl/domain/peer-review';
 import { ListMyReviewsUc } from './list-my-reviews-uc';
 
 const ME = '22222222-2222-4222-8222-222222222222';

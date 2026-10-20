@@ -1,4 +1,2 @@
-export * from './module';
-export * from './peer-review-question-pool';
-export * from './review';
-export * from './review-campaign';
+// DEBT(D-27)
+export * from '@u7-scl/domain/peer-review';

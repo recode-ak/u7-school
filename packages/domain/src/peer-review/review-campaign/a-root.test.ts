@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+// DEBT(D-25)
 import { AppException } from '@u7-scl/core/domain';
 import { ReviewCampaignAr } from './a-root';
 import type { ReviewCampaign } from './entity';

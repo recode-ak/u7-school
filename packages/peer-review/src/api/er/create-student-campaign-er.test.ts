@@ -1,13 +1,15 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type {
+  PeerReviewApiModuleResolver,
+  ReviewCampaign,
+  ReviewCampaignRepo,
+} from '@u7-scl/domain/peer-review';
+import type {
   StreamMember,
   StreamMembers,
   StudentAbandonedEvent,
   StudentCompletedEvent,
 } from '@u7-scl/stream/domain';
-import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
-import type { ReviewCampaign } from '#domain-legacy/review-campaign/entity';
-import type { ReviewCampaignRepo } from '#domain-legacy/review-campaign/repo';
 import { CreateStudentCampaignEr } from './create-student-campaign-er';
 
 const SCOPE = '11111111-1111-4111-8111-111111111111';

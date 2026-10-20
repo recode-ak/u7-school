@@ -10,11 +10,13 @@ import {
 import { AppException } from '@u7-scl/core/domain';
 import { InProcEventBus } from '@u7-scl/core/infra';
 import * as Shared from '@u7-scl/core/shared';
-import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
-import type { Review } from '#domain-legacy/review/entity';
-import type { ReviewRepo } from '#domain-legacy/review/repo';
-import type { ReviewCampaignRepo } from '#domain-legacy/review-campaign/repo';
-import { ReviewCampaignFactory } from '#domain-legacy/review-campaign/review-campaign-factory';
+import type {
+  PeerReviewApiModuleResolver,
+  Review,
+  ReviewCampaignRepo,
+  ReviewRepo,
+} from '@u7-scl/domain/peer-review';
+import { ReviewCampaignFactory } from '@u7-scl/domain/peer-review';
 import { CreateReviewUc } from './create-review-uc';
 
 const SCOPE = '11111111-1111-4111-8111-111111111111';

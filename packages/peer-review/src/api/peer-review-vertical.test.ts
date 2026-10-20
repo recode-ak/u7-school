@@ -6,11 +6,11 @@ import type { User } from '@u7-scl/app';
 import { TEST_SCHOOL } from '@u7-scl/app/domain';
 import { InProcEventBus } from '@u7-scl/core/infra';
 import type { Logger } from '@u7-scl/core/shared';
+import type { PeerReviewApiModuleResolver } from '@u7-scl/domain/peer-review';
 import type {
   StreamMembers,
   StudentCompletedEvent,
 } from '@u7-scl/stream/domain';
-import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
 import { ReviewCampaignJsonRepo } from '../infra/db/review-campaign-json-repo';
 import { ReviewJsonRepo } from '../infra/db/review-json-repo';
 import { PeerReviewApiModule } from './module';

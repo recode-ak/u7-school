@@ -3,7 +3,7 @@ import type { ErMeta, EventReaction } from '@u7-scl/core/api';
 import type {
   PeerReviewApiModuleMeta,
   PeerReviewApiModuleResolver,
-} from '../domain/module';
+} from '@u7-scl/domain/peer-review';
 import { CreateStudentCampaignEr } from './er/create-student-campaign-er';
 import { NotifyReviewRecipientEr } from './er/notify-review-recipient-er';
 import { CreateReviewUc } from './review/create-review-uc';

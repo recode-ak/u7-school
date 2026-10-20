@@ -1,6 +1,7 @@
+// DEBT(D-25)
 import type { UcMeta } from '@u7-scl/core/api';
 import * as v from 'valibot';
-import type { PeerReviewUcErrors } from '../../../api/errors';
+import type { PeerReviewUcErrors } from '../../errors';
 import { isoMinuteField, uuidField } from '../../shared/schema';
 import { AuthorRoleSchema, type MyCampaignCard } from '../campaign-facts-ds';
 import { CampaignContextSchema, StudentOutcomeSchema } from '../entity';

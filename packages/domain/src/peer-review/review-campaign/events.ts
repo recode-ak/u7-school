@@ -1,3 +1,4 @@
+// DEBT(D-25)
 import type { DomainEvent } from '@u7-scl/core/domain';
 import type { CampaignContext, StudentOutcome } from './entity';
 

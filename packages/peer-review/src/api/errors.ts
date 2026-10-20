@@ -1,24 +1,2 @@
-import type { NotFoundError } from '@u7-scl/core/domain';
-import type {
-  ReviewDuplicateUcError,
-  ReviewTextInvalidUcError,
-} from '#domain-legacy/review/errors';
-import type {
-  PeerReviewNotParticipantUcError,
-  RecipientNotAllowedUcError,
-  ReviewWindowClosedUcError,
-} from '#domain-legacy/review-campaign/errors';
-
-/** Кампания отзывов не найдена. */
-export type CampaignNotFoundUcError = NotFoundError<
-  'PEER_REVIEW_CAMPAIGN_NOT_FOUND',
-  { campaignId: string }
->;
-
-export type PeerReviewUcErrors =
-  | CampaignNotFoundUcError
-  | PeerReviewNotParticipantUcError
-  | RecipientNotAllowedUcError
-  | ReviewWindowClosedUcError
-  | ReviewDuplicateUcError
-  | ReviewTextInvalidUcError;
+// DEBT(D-27)
+export * from '@u7-scl/domain/peer-review/contract';

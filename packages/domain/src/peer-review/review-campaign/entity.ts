@@ -1,3 +1,4 @@
+// DEBT(D-25)
 import type { ArMeta } from '@u7-scl/core/domain';
 import * as v from 'valibot';
 import { isoMinuteField, uuidField } from '../shared/schema';

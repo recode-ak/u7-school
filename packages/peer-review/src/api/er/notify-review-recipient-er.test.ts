@@ -1,7 +1,9 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app';
-import type { PeerReviewApiModuleResolver } from '#domain-legacy/module';
-import type { ReviewCreatedEvent } from '#domain-legacy/review/events';
+import type {
+  PeerReviewApiModuleResolver,
+  ReviewCreatedEvent,
+} from '@u7-scl/domain/peer-review';
 import { NotifyReviewRecipientEr } from './notify-review-recipient-er';
 
 const SCOPE = '11111111-1111-4111-8111-111111111111';
