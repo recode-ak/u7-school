@@ -41,7 +41,7 @@ expect(res.ok ? undefined : res.error.code).toBe('STUDENT_NOT_ACTIVE');
 
 - Домен не мокается: он чистый, тесты работают с настоящими агрегатами.
 - В прикладном слое мокаются порты (репозитории, фасады) — типизированно, без `any`.
-- Время — через `now()` из `dmg-core`, не через `Date` напрямую. В тесте — `setNow(ts)` и `resetNow()` в `afterEach` (`dmg-core/testing`).
+- Время (D-34): домен получает момент аргументом операции (`ar.complete(at)`) — в тесте Ar это просто константа. Прикладной слой берёт его из часов приложения (`this.now()` в UC/ER/Job); в тесте — `testAppContext({ at })` и `ctx.setNow(ts)` (`dmg-core/testing`). Глобальных часов нет, `Date` напрямую не читается.
 - Готовые `testAppContext`, `recordingBus`, `memoryLogger` — для UC/ER без реального приложения; пример модуля — `dmg/testing/example`.
 
 ## 5. Защита от регресса и чистота правок

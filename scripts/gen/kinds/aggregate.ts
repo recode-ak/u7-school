@@ -54,9 +54,9 @@ export const ${P}Errors = defineErrors('${toUpperSnake(a)}', {
   Aggregate,
   defineAggregate,
   type EventsOf,
-  now,
   ok,
   type Result,
+  type Timestamp,
 } from 'dmg-core';
 import { ${P}Errors } from './${a}.errors';
 import { ${P}Events } from './${a}.events';
@@ -86,8 +86,7 @@ export class ${P}Ar extends Aggregate<typeof ${P}ArDef> {
     super(${P}ArDef, state, events);
   }
 
-  static create(input: Create${P}): Result<${P}Ar, never> {
-    const at = now();
+  static create(input: Create${P}, at: Timestamp): Result<${P}Ar, never> {
     const created = ${P}Events.created.make({ ${idField}: input.uuid });
     const state: ${P}State = {
       ...input,
@@ -125,19 +124,16 @@ export const ${P}Policy = definePolicy({
 });
 `;
 
-  const arTestSrc = `import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { expectOk, resetNow, setNow } from 'dmg-core/testing';
+  const arTestSrc = `import { describe, expect, it } from 'bun:test';
+import { expectOk } from 'dmg-core/testing';
 import { ${P}Ar } from './${a}.ar';
 
 const ID = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 const T0 = Date.UTC(2026, 9, 1);
 
-beforeEach(() => setNow(T0));
-afterEach(() => resetNow());
-
 describe('${P}Ar.create', () => {
   it('активный агрегат и событие created', () => {
-    const ar = expectOk(${P}Ar.create({ uuid: ID }));
+    const ar = expectOk(${P}Ar.create({ uuid: ID }, T0));
     expect(ar.snapshot()).toEqual({
       uuid: ID,
       status: 'active',

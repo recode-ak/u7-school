@@ -5,7 +5,7 @@ import {
 } from '#core/domain/aggregate/aggregate';
 import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
 import { ok, type Result } from '#core/kernel/result/result';
-import { now } from '#core/kernel/time/now';
+import type { Timestamp } from '#core/kernel/time/timestamp';
 import { TaskErrors } from './task.errors';
 import { TaskEvents } from './task.events';
 import { TaskState } from './task.state';
@@ -43,8 +43,7 @@ export class TaskAr extends Aggregate<typeof TaskArDef> {
     super(TaskArDef, state, events);
   }
 
-  static create(input: CreateTask): Result<TaskAr, never> {
-    const at = now();
+  static create(input: CreateTask, at: Timestamp): Result<TaskAr, never> {
     const created = TaskEvents.created.make({
       taskId: input.uuid,
       ownerId: input.ownerId,
@@ -79,19 +78,19 @@ export class TaskAr extends Aggregate<typeof TaskArDef> {
     return this.state.status === 'archived';
   }
 
-  complete(): Result<void, TaskError> {
-    return this.change((draft, emit) => {
+  complete(at: Timestamp): Result<void, TaskError> {
+    return this.change(at, (draft, emit) => {
       if (draft.status === 'archived') return TaskErrors.ARCHIVED.err();
       if (draft.status === 'done') return TaskErrors.ALREADY_DONE.err();
       draft.status = 'done';
-      draft.completedAt = now();
+      draft.completedAt = at;
       emit(TaskEvents.completed.make(this.ref()));
       return ok();
     });
   }
 
-  archive(): Result<void, TaskError> {
-    return this.change((draft, emit) => {
+  archive(at: Timestamp): Result<void, TaskError> {
+    return this.change(at, (draft, emit) => {
       if (draft.status === 'archived') return TaskErrors.ARCHIVED.err();
       draft.status = 'archived';
       emit(TaskEvents.archived.make(this.ref()));

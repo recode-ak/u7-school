@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import type { ErrorOf } from '#core/kernel/errors/define-errors';
 import type { Result } from '#core/kernel/result/result';
-import { now } from '#core/kernel/time/now';
+import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { EventOf } from '../events/define-events';
 import type { AnyAggregateDef } from './define-aggregate';
 
@@ -61,12 +61,14 @@ export abstract class Aggregate<D extends AnyAggregateDef> {
   }
 
   /**
-   * Мутация: черновик → `apply` → проверка перехода и схемы → фиксация.
-   * При `Err` черновик и события отбрасываются; `updatedAt` ставит ядро.
+   * Мутация в момент `at`: черновик → `apply` → проверка перехода и схемы →
+   * фиксация. При `Err` черновик и события отбрасываются; `updatedAt` = `at`.
+   * Время — аргумент операции: домен не читает часы (D-34).
    * Дженерик по всему `Result`: при `<T, E>` TS вывел бы `E` из первого
    * `return` и отверг бы второй код ошибки.
    */
   protected change<R extends Result<unknown, unknown>>(
+    at: Timestamp,
     apply: (draft: StateOf<D>, emit: Emit<D>) => R,
   ): R {
     const draft = structuredClone(this.current);
@@ -76,7 +78,7 @@ export abstract class Aggregate<D extends AnyAggregateDef> {
     });
     if (!res.ok) return res;
     this.checkTransition(this.current, draft);
-    this.current = this.validate({ ...draft, updatedAt: now() });
+    this.current = this.validate({ ...draft, updatedAt: at });
     this.pending.push(...emitted);
     return res;
   }

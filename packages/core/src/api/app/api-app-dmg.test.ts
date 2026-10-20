@@ -57,7 +57,7 @@ class CompleteTask extends UseCaseFromDef<
     return task ? ok({ task }) : TaskErrors.NOT_FOUND.err(input);
   }
   protected async execute(_: unknown, { task }: Loaded, uow: UnitOfWork) {
-    const res = task.complete();
+    const res = task.complete(this.now());
     if (!res.ok) return res;
     uow.register(task, this.resolve.tasks);
     return ok({});

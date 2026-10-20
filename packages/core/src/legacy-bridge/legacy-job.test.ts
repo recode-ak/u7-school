@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { type DomainError, ok, type Result } from 'dmg-core';
 import {
   JobFromDef,
@@ -8,8 +8,6 @@ import {
 } from 'dmg-core/app';
 import {
   MemoryTasks,
-  resetNow,
-  setNow,
   T0,
   TASK,
   taskRow,
@@ -39,7 +37,7 @@ class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
         task: TaskAr,
         uow: UnitOfWork,
       ): Promise<Result<void, DomainError>> => {
-        const res = task.archive();
+        const res = task.archive(this.now());
         if (!res.ok) return res;
         uow.register(task, this.resolve.tasks);
         return ok();
@@ -52,12 +50,10 @@ let tasks: MemoryTasks;
 let job: ArchiveDoneTasks;
 
 beforeEach(() => {
-  setNow(T0);
   tasks = new MemoryTasks();
   tasks.rows.set(TASK, taskRow(TASK, 'done'));
-  job = new ArchiveDoneTasks({ app: testAppContext().app, tasks });
+  job = new ArchiveDoneTasks({ app: testAppContext({ at: T0 }).app, tasks });
 });
-afterEach(resetNow);
 
 describe('legacyJob', () => {
   test('несёт имя, метку и расписание из Def', () => {

@@ -17,7 +17,7 @@ export class ArchiveRemovedUserTasksEr extends ReactionFromDef<Def, TodoDeps> {
   protected async react(event: ReactionEnvelopeOf<Def>, uow: UnitOfWork) {
     const { tasks } = this.resolve;
     for (const task of await tasks.findActiveByOwner(event.payload.userId)) {
-      const res = task.archive();
+      const res = task.archive(this.now());
       if (!res.ok) return res;
       uow.register(task, tasks);
     }

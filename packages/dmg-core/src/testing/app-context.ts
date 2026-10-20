@@ -1,6 +1,7 @@
 import type { AppContext, AppMode, Logger } from '../app/context';
 import type { EventBus } from '../app/events/event-bus';
 import type { EventEnvelope } from '../app/events/event-envelope';
+import type { Timestamp } from '../kernel/time/timestamp';
 
 export type LogRecord = {
   readonly level: 'debug' | 'info' | 'warn' | 'error';
@@ -61,14 +62,27 @@ export function memoryBus(): EventBus {
   };
 }
 
-/** Контекст приложения для тестов прикладного слоя: всё видно в массивах. */
-export function testAppContext(mode: AppMode = 'test') {
+/** Момент часов тестового контекста по умолчанию. */
+export const TEST_NOW: Timestamp = Date.UTC(2026, 0, 1);
+
+/**
+ * Контекст приложения для тестов прикладного слоя: всё видно в массивах,
+ * часы стоят на `at` и переводятся `setNow` — без глобального состояния.
+ */
+export function testAppContext(
+  options: { readonly mode?: AppMode; readonly at?: Timestamp } = {},
+) {
   const published: EventEnvelope[] = [];
   const logs: LogRecord[] = [];
+  let at = options.at ?? TEST_NOW;
   const app: AppContext = {
     bus: recordingBus(published),
+    clock: () => at,
     logger: memoryLogger(logs),
-    mode,
+    mode: options.mode ?? 'test',
   };
-  return { app, published, logs };
+  const setNow = (next: Timestamp): void => {
+    at = next;
+  };
+  return { app, published, logs, setNow };
 }

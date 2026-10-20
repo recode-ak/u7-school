@@ -1,11 +1,13 @@
 // dmg-core/app — исполнение манифестов: UC/ER/Job по Def, модуль, UoW,
 // шина событий, след операции. Импортируют прикладной слой и приложение.
 
-export type {
-  AppContext,
-  AppMode,
-  Logger,
-  ModuleDeps,
+export {
+  type AppContext,
+  type AppMode,
+  type Clock,
+  type Logger,
+  type ModuleDeps,
+  systemClock,
 } from './context';
 export type { EventBus } from './events/event-bus';
 export type { EnvelopeOf, EventEnvelope } from './events/event-envelope';

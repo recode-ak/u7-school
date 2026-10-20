@@ -1,9 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { defineErrors } from '#core/kernel/errors/define-errors';
 import { BaseEntityFields, F } from '#core/kernel/fields/fields';
 import { ok, type Result } from '#core/kernel/result/result';
-import { expectErr, expectOk, resetNow, setNow } from '#core/testing/index';
+import type { Timestamp } from '#core/kernel/time/timestamp';
+import { expectErr, expectOk } from '#core/testing/index';
 import { defineEvents } from '../events/define-events';
 import {
   Aggregate,
@@ -66,8 +67,11 @@ class TaskAr extends Aggregate<typeof TaskArDef> {
     super(TaskArDef, state, events);
   }
 
-  static create(uuid: string, title: string): Result<TaskAr, TaskError> {
-    const at = Date.UTC(2026, 0, 1);
+  static create(
+    uuid: string,
+    title: string,
+    at: Timestamp,
+  ): Result<TaskAr, TaskError> {
     const state = { uuid, createdAt: at, updatedAt: at, title };
     const created = TaskEvents.created.make({ taskId: uuid });
     return ok(new TaskAr({ ...state, status: 'open' }, [created]));
@@ -77,8 +81,8 @@ class TaskAr extends Aggregate<typeof TaskArDef> {
     return new TaskAr(snapshot);
   }
 
-  complete(): Result<void, TaskError> {
-    return this.change((draft, emit) => {
+  complete(at: Timestamp): Result<void, TaskError> {
+    return this.change(at, (draft, emit) => {
       if (draft.status === 'done') return TaskErrors.ALREADY_DONE.err();
       draft.status = 'done';
       emit(TaskEvents.completed.make({ taskId: draft.uuid }));
@@ -87,8 +91,8 @@ class TaskAr extends Aggregate<typeof TaskArDef> {
   }
 
   // Меняет черновик до проверки — чтобы показать откат при Err.
-  rename(title: string): Result<void, TaskError> {
-    return this.change((draft, emit) => {
+  rename(title: string, at: Timestamp): Result<void, TaskError> {
+    return this.change(at, (draft, emit) => {
       draft.title = title;
       emit(TaskEvents.completed.make({ taskId: draft.uuid }));
       if (title === 'резерв') return TaskErrors.TITLE_RESERVED.err();
@@ -97,8 +101,8 @@ class TaskAr extends Aggregate<typeof TaskArDef> {
   }
 
   // Переход done → open не объявлен в Def.
-  reopen(): Result<void, TaskError> {
-    return this.change((draft) => {
+  reopen(at: Timestamp): Result<void, TaskError> {
+    return this.change(at, (draft) => {
       draft.status = 'open';
       return ok();
     });
@@ -152,12 +156,9 @@ describe('defineAggregate', () => {
 });
 
 describe('Aggregate', () => {
-  beforeEach(() => setNow(T1));
-  afterEach(() => resetNow());
-
   describe('create', () => {
     it('создаёт агрегат и накапливает событие создания', () => {
-      const ar = expectOk(TaskAr.create(ID, 'Купить хлеб'));
+      const ar = expectOk(TaskAr.create(ID, 'Купить хлеб', T0));
       expect(ar.uuid).toBe(ID);
       expect(ar.pullEvents()).toEqual([
         { name: 'todo.task.created', payload: { taskId: ID } },
@@ -165,7 +166,7 @@ describe('Aggregate', () => {
     });
 
     it('pullEvents() выдаёт события один раз', () => {
-      const ar = expectOk(TaskAr.create(ID, 'Купить хлеб'));
+      const ar = expectOk(TaskAr.create(ID, 'Купить хлеб', T0));
       ar.pullEvents();
       expect(ar.pullEvents()).toEqual([]);
     });
@@ -193,9 +194,9 @@ describe('Aggregate', () => {
   });
 
   describe('change', () => {
-    it('Ok фиксирует черновик, ставит updatedAt и накапливает событие', () => {
+    it('Ok фиксирует черновик, ставит updatedAt моментом операции и накапливает событие', () => {
       const ar = TaskAr.restore(stored('open'));
-      expectOk(ar.complete());
+      expectOk(ar.complete(T1));
       expect(ar.snapshot()).toEqual({ ...stored('done'), updatedAt: T1 });
       expect(ar.pullEvents()).toEqual([
         { name: 'todo.task.completed', payload: { taskId: ID } },
@@ -204,27 +205,27 @@ describe('Aggregate', () => {
 
     it('Err не меняет состояние', () => {
       const ar = TaskAr.restore(stored('done'));
-      expectErr(ar.complete(), 'TASK_ALREADY_DONE');
+      expectErr(ar.complete(T1), 'TASK_ALREADY_DONE');
       expect(ar.snapshot()).toEqual(stored('done'));
     });
 
     it('Err отбрасывает изменённый черновик и его события', () => {
       const ar = TaskAr.restore(stored('open'));
-      expectErr(ar.rename('резерв'), 'TASK_TITLE_RESERVED');
+      expectErr(ar.rename('резерв', T1), 'TASK_TITLE_RESERVED');
       expect(ar.snapshot()).toEqual(stored('open'));
       expect(ar.pullEvents()).toEqual([]);
     });
 
     it('невалидный черновик — исключение, состояние и события прежние', () => {
       const ar = TaskAr.restore(stored('open'));
-      expect(() => ar.rename('')).toThrow('task');
+      expect(() => ar.rename('', T1)).toThrow('task');
       expect(ar.snapshot()).toEqual(stored('open'));
       expect(ar.pullEvents()).toEqual([]);
     });
 
     it('переход статуса, не объявленный в Def, — исключение', () => {
       const ar = TaskAr.restore(stored('done'));
-      expect(() => ar.reopen()).toThrow('done → open');
+      expect(() => ar.reopen(T1)).toThrow('done → open');
       expect(ar.isDone()).toBe(true);
     });
   });

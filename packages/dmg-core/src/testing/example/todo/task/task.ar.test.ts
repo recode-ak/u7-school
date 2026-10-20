@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { expectErr, expectOk, resetNow, setNow } from '#core/testing/index';
+import { describe, expect, it } from 'bun:test';
+import { expectErr, expectOk } from '#core/testing/index';
 import { TaskAr } from './task.ar';
 import type { TaskState } from './task.state';
 
@@ -17,13 +17,10 @@ const stored = (status: TaskState['status']): TaskState => ({
   updatedAt: T0,
 });
 
-beforeEach(() => setNow(T1));
-afterEach(() => resetNow());
-
 describe('TaskAr.create', () => {
   it('открытая задача владельца и событие created', () => {
     const ar = expectOk(
-      TaskAr.create({ uuid: TASK, ownerId: OWNER, title: 'Купить хлеб' }),
+      TaskAr.create({ uuid: TASK, ownerId: OWNER, title: 'Купить хлеб' }, T1),
     );
     expect(ar.snapshot()).toEqual({
       ...stored('open'),
@@ -42,7 +39,7 @@ describe('TaskAr.create', () => {
 describe('TaskAr.complete', () => {
   it('open → done, время выполнения и событие completed', () => {
     const ar = TaskAr.restore(stored('open'));
-    expectOk(ar.complete());
+    expectOk(ar.complete(T1));
     expect(ar.isDone()).toBe(true);
     expect(ar.snapshot().completedAt).toBe(T1);
     expect(ar.pullEvents()).toEqual([
@@ -55,13 +52,13 @@ describe('TaskAr.complete', () => {
 
   it('выполненная — TASK_ALREADY_DONE', () => {
     const ar = TaskAr.restore(stored('done'));
-    expectErr(ar.complete(), 'TASK_ALREADY_DONE');
+    expectErr(ar.complete(T1), 'TASK_ALREADY_DONE');
     expect(ar.pullEvents()).toEqual([]);
   });
 
   it('архивная — TASK_ARCHIVED', () => {
     const ar = TaskAr.restore(stored('archived'));
-    expectErr(ar.complete(), 'TASK_ARCHIVED');
+    expectErr(ar.complete(T1), 'TASK_ARCHIVED');
     expect(ar.isArchived()).toBe(true);
   });
 });
@@ -71,7 +68,7 @@ describe('TaskAr.archive', () => {
     '%s → archived и событие archived',
     (status) => {
       const ar = TaskAr.restore(stored(status));
-      expectOk(ar.archive());
+      expectOk(ar.archive(T1));
       expect(ar.isArchived()).toBe(true);
       expect(ar.pullEvents()).toEqual([
         {
@@ -84,7 +81,7 @@ describe('TaskAr.archive', () => {
 
   it('архивная — TASK_ARCHIVED', () => {
     const ar = TaskAr.restore(stored('archived'));
-    expectErr(ar.archive(), 'TASK_ARCHIVED');
+    expectErr(ar.archive(T1), 'TASK_ARCHIVED');
   });
 });
 

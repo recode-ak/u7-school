@@ -25,7 +25,7 @@ export class ArchiveDoneTasksJob extends JobFromDef<
   }
 
   private async archive(task: TaskAr, uow: UnitOfWork) {
-    const res = task.archive();
+    const res = task.archive(this.now());
     if (!res.ok) return res;
     uow.register(task, this.resolve.tasks);
     return ok();

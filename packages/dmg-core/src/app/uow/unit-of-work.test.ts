@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { type Caller, systemCaller } from '#core/kernel/caller/caller';
 import {
   TaskAr,
@@ -6,7 +6,7 @@ import {
   TaskEvents,
 } from '#core/testing/example/todo/index';
 import { UserArDef } from '#core/testing/example/users/user/user.ar';
-import { expectOk, resetNow, setNow } from '#core/testing/index';
+import { expectOk } from '#core/testing/index';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
 import type { Trace } from '../trace';
@@ -49,7 +49,7 @@ function slowRepo(log: Log, fail = false): Repository<TaskAr> {
 }
 
 function task(uuid: string): TaskAr {
-  return expectOk(TaskAr.create({ uuid, ownerId: OWNER, title: 'Задача' }));
+  return expectOk(TaskAr.create({ uuid, ownerId: OWNER, title: 'Задача' }, AT));
 }
 
 let log: Log;
@@ -57,16 +57,15 @@ let published: EventEnvelope[];
 let uow: UnitOfWork;
 
 beforeEach(() => {
-  setNow(AT);
   log = [];
   published = [];
   uow = new UnitOfWork({
     bus: recordingBus(published, log),
     caller: CALLER,
     trace: TRACE,
+    clock: () => AT,
   });
 });
-afterEach(resetNow);
 
 describe('UnitOfWork.commit', () => {
   test('сохраняет последовательно в порядке регистрации, затем публикует', async () => {
@@ -122,6 +121,7 @@ describe('UnitOfWork.commit', () => {
       bus: recordingBus(published, log),
       caller: CALLER,
       trace: TRACE,
+      clock: () => AT,
       emits: [TaskEvents.completed],
     });
     strict.register(task(A), slowRepo(log));
@@ -136,6 +136,7 @@ describe('UnitOfWork.commit', () => {
       bus: recordingBus(published, log),
       caller: CALLER,
       trace: TRACE,
+      clock: () => AT,
       touches: [UserArDef],
     });
     expect(() => narrow.register(task(A), slowRepo(log))).toThrow(
@@ -149,6 +150,7 @@ describe('UnitOfWork.commit', () => {
       bus: recordingBus(published, log),
       caller: CALLER,
       trace: TRACE,
+      clock: () => AT,
       emits: [],
       touches: [UserArDef],
       onViolation: (message) => violations.push(message),

@@ -24,8 +24,8 @@ class NoteAr extends Aggregate<typeof NoteDef> {
     return new NoteAr(snapshot);
   }
 
-  pin(): Result<void, never> {
-    return this.change((draft) => {
+  pin(at: number): Result<void, never> {
+    return this.change(at, (draft) => {
       draft.pinned = true;
       return ok();
     });

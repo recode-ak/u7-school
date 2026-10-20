@@ -27,6 +27,7 @@ export function contractUnitOfWork(
   const { source, caller, trace, emits, touches } = contract;
   return new UnitOfWork({
     bus: app.bus,
+    clock: app.clock,
     caller,
     trace,
     emits,

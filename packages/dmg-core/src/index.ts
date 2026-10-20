@@ -126,5 +126,4 @@ export {
   type Result,
 } from './kernel/result/result';
 export { toJsonSchema } from './kernel/schema/json-schema';
-export { now, useClockSource } from './kernel/time/now';
 export type { Timestamp } from './kernel/time/timestamp';

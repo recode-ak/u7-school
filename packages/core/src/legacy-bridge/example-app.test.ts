@@ -30,7 +30,7 @@ import { RemoveUserUcDef } from 'dmg-core/testing/example/users/index';
 import { ApiApp } from '../api/app/api-app';
 import type { AppMeta } from '../domain/types';
 import { InProcEventBus } from '../infra/in-proc-event-bus';
-import { legacyEventBus, legacyJob } from './index';
+import { legacyClock, legacyEventBus, legacyJob } from './index';
 
 const ANNA = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
 const BORIS = '6f4e2d3c-8b7a-4f9e-8a1b-b2c3d4e5f6a7';
@@ -53,6 +53,7 @@ beforeEach(async () => {
   deps = {
     app: {
       bus: legacyEventBus(legacy),
+      clock: legacyClock(),
       logger: memoryLogger(logs),
       mode: 'test',
     },

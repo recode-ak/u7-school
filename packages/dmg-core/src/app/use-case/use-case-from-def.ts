@@ -14,6 +14,7 @@ import { CoreErrors } from '#core/kernel/errors/core-errors';
 import type { ErrorOf } from '#core/kernel/errors/define-errors';
 import { serializeError } from '#core/kernel/errors/serialize-error';
 import { ok, type Result } from '#core/kernel/result/result';
+import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { ModuleDeps } from '../context';
 import type { Trace } from '../trace';
 import { contractUnitOfWork } from '../uow/contract-unit-of-work';
@@ -99,6 +100,11 @@ export abstract class UseCaseFromDef<
     uow: UnitOfWork,
     caller: Caller<U>,
   ): Promise<Result<RawOutputOf<D>, OwnErrorOf<D>>>;
+
+  /** Текущий момент по часам приложения — передаётся в операции домена. */
+  protected now(): Timestamp {
+    return this.resolve.app.clock();
+  }
 
   /**
    * Субъект вызывающего — для UC, которому он нужен (владелец новой

@@ -22,11 +22,7 @@ import type {
   ExtractUcMetaFromMeta,
   GetUcNamesFromMeta,
 } from '#domain-legacy/types';
-import {
-  legacyJobsOf,
-  toLegacyError,
-  useLegacyClock,
-} from '../../legacy-bridge';
+import { legacyJobsOf, toLegacyError } from '../../legacy-bridge';
 import type { JobScheduler } from '../job/job-scheduler';
 import { App } from './app';
 
@@ -50,7 +46,6 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
 
   /** Подключает модули DMG; вызывать до init(). */
   addDmgModules(...modules: AnyModuleFromDef<TActor>[]): this {
-    useLegacyClock();
     this.dmgModules.push(...modules);
     return this;
   }

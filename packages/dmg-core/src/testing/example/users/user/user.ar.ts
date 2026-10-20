@@ -5,6 +5,7 @@ import {
 } from '#core/domain/aggregate/aggregate';
 import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
 import { ok, type Result } from '#core/kernel/result/result';
+import type { Timestamp } from '#core/kernel/time/timestamp';
 import { UserErrors } from './user.errors';
 import { UserEvents } from './user.events';
 import { UserState } from './user.state';
@@ -40,8 +41,8 @@ export class UserAr extends Aggregate<typeof UserArDef> {
     return new UserAr(snapshot);
   }
 
-  remove(): Result<void, UserError> {
-    return this.change((draft, emit) => {
+  remove(at: Timestamp): Result<void, UserError> {
+    return this.change(at, (draft, emit) => {
       if (draft.status === 'removed') return UserErrors.ALREADY_REMOVED.err();
       draft.status = 'removed';
       emit(UserEvents.removed.make({ userId: this.uuid }));

@@ -74,7 +74,7 @@ afterEach(() => rmSync(dir, { recursive: true, force: true }));
 describe('${P}JsonRepo', () => {
   it('сохраняет агрегат и находит его по uuid', async () => {
     const repo = new ${P}JsonRepo(join(dir, '${a}.json'));
-    const ar = expectOk(${P}Ar.create({ uuid: ID }));
+    const ar = expectOk(${P}Ar.create({ uuid: ID }, Date.UTC(2026, 9, 1)));
     await repo.save(ar);
     expect((await repo.findById(ID))?.snapshot()).toEqual(ar.snapshot());
   });

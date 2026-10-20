@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import type { Caller, SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
@@ -14,8 +14,6 @@ import {
   expectErr,
   expectOk,
   memoryBus,
-  resetNow,
-  setNow,
   testAppContext,
 } from '#core/testing/index';
 import { MemoryTasks, OWNER, T0, TASK, TASK_2, taskRow } from '../app.fixture';
@@ -62,7 +60,7 @@ class ArchiveRemovedUserTasks extends ReactionFromDef<
   ): Promise<Result<void, DomainError>> => {
     this.seen = caller;
     for (const task of await deps.tasks.findByOwner(event.payload.userId)) {
-      const res = task.archive();
+      const res = task.archive(this.now());
       if (!res.ok) return res;
       uow.register(task, deps.tasks);
     }
@@ -91,14 +89,12 @@ let tasks: MemoryTasks;
 let er: ArchiveRemovedUserTasks;
 
 beforeEach(() => {
-  setNow(T0);
-  ctx = testAppContext();
+  ctx = testAppContext({ at: T0 });
   tasks = new MemoryTasks();
   tasks.rows.set(TASK, taskRow(TASK));
   tasks.rows.set(TASK_2, taskRow(TASK_2, 'done'));
   er = new ArchiveRemovedUserTasks({ app: ctx.app, tasks, todo: todoFacade() });
 });
-afterEach(resetNow);
 
 describe('ReactionFromDef.handle', () => {
   test('Ok → фиксация и события с причиной и system-вызывающим', async () => {
@@ -167,7 +163,7 @@ describe('ReactionFromDef.handle', () => {
 
 describe('ReactionFromDef — production', () => {
   test('фасад вне calls и агрегат вне touches — warn, реакция проходит', async () => {
-    const prod = testAppContext('production');
+    const prod = testAppContext({ mode: 'production', at: T0 });
     er = new ArchiveRemovedUserTasks({
       app: prod.app,
       tasks,

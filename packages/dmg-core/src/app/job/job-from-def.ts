@@ -2,6 +2,7 @@ import type { AnyJobDef } from '#core/domain/contracts/define-job';
 import { type SystemCaller, systemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
+import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { ModuleDeps } from '../context';
 import { runLogged } from '../system/run-logged';
 import type { Trace } from '../trace';
@@ -37,6 +38,11 @@ export abstract class JobFromDef<D extends AnyJobDef, R extends ModuleDeps> {
   }
 
   protected abstract run(job: JobRun): Promise<JobReport>;
+
+  /** Текущий момент по часам приложения — передаётся в операции домена. */
+  protected now(): Timestamp {
+    return this.resolve.app.clock();
+  }
 
   /**
    * Один прогон со своим `runId` — причиной и `correlationId` всех его

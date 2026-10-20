@@ -4,7 +4,7 @@ import type {
   DomainEvent,
 } from '#core/domain/events/define-events';
 import type { Caller } from '#core/kernel/caller/caller';
-import { now } from '#core/kernel/time/now';
+import type { Clock } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
 import type { Trace } from '../trace';
@@ -18,6 +18,7 @@ export type Committable = {
 
 export type UnitOfWorkContext = {
   readonly bus: EventBus;
+  readonly clock: Clock;
   readonly caller: Caller<unknown>;
   readonly trace: Trace;
   /** Заявленные события операции; без поля проверка не выполняется. */
@@ -64,7 +65,7 @@ export class UnitOfWork {
     return {
       ...event,
       eventId: crypto.randomUUID(),
-      occurredAt: now(),
+      occurredAt: this.ctx.clock(),
       aggregateId,
       caller,
       cause: trace.cause,

@@ -26,11 +26,14 @@ export class CreateTaskUc extends UseCaseFromDef<
     uow: UnitOfWork,
     caller: Caller<ExampleUser>,
   ) {
-    const created = TaskAr.create({
-      uuid: crypto.randomUUID(),
-      ownerId: this.subject(caller).uuid,
-      title: input.title,
-    });
+    const created = TaskAr.create(
+      {
+        uuid: crypto.randomUUID(),
+        ownerId: this.subject(caller).uuid,
+        title: input.title,
+      },
+      this.now(),
+    );
     if (!created.ok) return created;
     uow.register(created.value, this.resolve.tasks);
     return ok({ taskId: created.value.uuid });

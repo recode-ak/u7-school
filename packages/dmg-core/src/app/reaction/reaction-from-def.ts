@@ -2,6 +2,7 @@ import type { AnyEventReactionDef } from '#core/domain/contracts/define-event-re
 import { type SystemCaller, systemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
+import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { EnvelopeOf } from '../events/event-envelope';
@@ -52,6 +53,11 @@ export abstract class ReactionFromDef<
     caller: SystemCaller<unknown>,
     trace: Trace,
   ): Promise<Result<void, DomainError>>;
+
+  /** Текущий момент по часам приложения — передаётся в операции домена. */
+  protected now(): Timestamp {
+    return this.resolve.app.clock();
+  }
 
   handle(event: ReactionEnvelopeOf<D>): Promise<Result<void, DomainError>> {
     const { app } = this.resolve;

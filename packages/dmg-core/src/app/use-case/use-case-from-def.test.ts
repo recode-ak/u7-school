@@ -1,11 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  expectTypeOf,
-  test,
-} from 'bun:test';
+import { beforeEach, describe, expect, expectTypeOf, test } from 'bun:test';
 import * as v from 'valibot';
 import { defineUseCase } from '#core/domain/contracts/define-use-case';
 import type { Caller } from '#core/kernel/caller/caller';
@@ -18,14 +11,11 @@ import {
   TaskEvents,
 } from '#core/testing/example/todo/index';
 import type { TaskState } from '#core/testing/example/todo/task/task.state';
-import {
-  expectErr,
-  expectOk,
-  resetNow,
-  setNow,
-  testAppContext,
-} from '#core/testing/index';
+import { expectErr, expectOk, testAppContext } from '#core/testing/index';
 import { MemoryTasks, OWNER, T0, TASK, taskRow } from '../app.fixture';
+
+const T1 = T0 + 60_000;
+
 import type { AppContext } from '../context';
 import { requestTrace, type Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
@@ -77,7 +67,7 @@ class CompleteTask extends UseCaseFromDef<
   }
 
   /** Операция Ar; тесты подменяют её, чтобы получить нужный сбой. */
-  mutate = (task: TaskAr) => task.complete();
+  mutate = (task: TaskAr) => task.complete(this.now());
 }
 
 let ctx: ReturnType<typeof testAppContext>;
@@ -89,13 +79,11 @@ function seed(status: TaskState['status'] = 'open'): void {
 }
 
 beforeEach(() => {
-  setNow(T0);
-  ctx = testAppContext();
+  ctx = testAppContext({ at: T0 });
   tasks = new MemoryTasks();
   uc = new CompleteTask({ app: ctx.app, tasks });
   seed();
 });
-afterEach(resetNow);
 
 describe('UseCaseFromDef.handle — отказы до операции', () => {
   test('вид вызывающего не в callers → UNAUTHORIZED', async () => {
@@ -171,16 +159,16 @@ describe('UseCaseFromDef.handle — операция', () => {
   });
 
   test('незаявленное событие в test → SERVER_INTERNAL, ничего не записано', async () => {
-    uc.mutate = (task) => task.archive();
+    uc.mutate = (task) => task.archive(T0);
     const res = await uc.handle({ taskId: TASK }, user(OWNER), REQ);
     expectErr(res, 'SERVER_INTERNAL');
     expect(tasks.rows.get(TASK)?.status).toBe('open');
   });
 
   test('незаявленное событие в production — warn, операция проходит', async () => {
-    const prod = testAppContext('production');
+    const prod = testAppContext({ mode: 'production', at: T0 });
     uc = new CompleteTask({ app: prod.app, tasks });
-    uc.mutate = (task) => task.archive();
+    uc.mutate = (task) => task.archive(T0);
     expectOk(await uc.handle({ taskId: TASK }, user(OWNER), REQ));
     expect(prod.published.map((e) => e.name)).toEqual([
       TaskEvents.archived.name,
@@ -222,7 +210,7 @@ describe('UseCaseFromDef.handle — операция', () => {
         { task }: Loaded,
         uow: UnitOfWork,
       ) => {
-        task.complete();
+        task.complete(T0);
         uow.register(task, tasks);
         return ok({ taskId: 'не uuid' });
       };
@@ -235,6 +223,15 @@ describe('UseCaseFromDef.handle — операция', () => {
     expectErr(res, 'OUTPUT_VALIDATION');
     expect(tasks.rows.get(TASK)?.status).toBe('open');
     expect(ctx.published).toEqual([]);
+  });
+});
+
+describe('UseCaseFromDef — время операции', () => {
+  test('момент операции и событий — из часов приложения', async () => {
+    ctx.setNow(T1);
+    expectOk(await uc.handle({ taskId: TASK }, user(OWNER), REQ));
+    expect(tasks.rows.get(TASK)?.completedAt).toBe(T1);
+    expect(ctx.published.map((e) => e.occurredAt)).toEqual([T1]);
   });
 });
 

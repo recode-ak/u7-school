@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
 import { testAppContext } from '#core/testing/app-context';
@@ -7,7 +7,7 @@ import {
   type TaskAr,
   TaskEvents,
 } from '#core/testing/example/todo/index';
-import { expectErr, expectOk, resetNow, setNow } from '#core/testing/index';
+import { expectErr, expectOk } from '#core/testing/index';
 import { MemoryTasks, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
 import type { Trace } from '../trace';
@@ -33,7 +33,7 @@ class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
     task: TaskAr,
     uow: UnitOfWork,
   ): Promise<Result<void, DomainError>> => {
-    const res = task.archive();
+    const res = task.archive(this.now());
     if (!res.ok) return res;
     uow.register(task, this.resolve.tasks);
     return ok();
@@ -45,14 +45,12 @@ let tasks: MemoryTasks;
 let job: ArchiveDoneTasks;
 
 beforeEach(() => {
-  setNow(T0);
-  ctx = testAppContext();
+  ctx = testAppContext({ at: T0 });
   tasks = new MemoryTasks();
   tasks.rows.set(TASK, taskRow(TASK, 'done'));
   tasks.rows.set(TASK_2, taskRow(TASK_2, 'done'));
   job = new ArchiveDoneTasks({ app: ctx.app, tasks });
 });
-afterEach(resetNow);
 
 describe('JobFromDef.handle', () => {
   test('обход: каждая запись фиксируется и публикует события', async () => {

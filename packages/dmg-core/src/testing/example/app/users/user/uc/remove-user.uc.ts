@@ -25,7 +25,7 @@ export class RemoveUserUc extends UseCaseFromDef<
   }
 
   protected async execute(_: unknown, { user }: Loaded, uow: UnitOfWork) {
-    const res = user.remove();
+    const res = user.remove(this.now());
     if (!res.ok) return res;
     uow.register(user, this.resolve.users);
     return ok({});

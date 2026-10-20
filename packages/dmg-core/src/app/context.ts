@@ -1,3 +1,4 @@
+import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { EventBus } from './events/event-bus';
 
 /** Режим запуска приложения. */
@@ -11,9 +12,19 @@ export type Logger = {
   error(source: string, message: string, meta?: Record<string, unknown>): void;
 };
 
+/**
+ * Часы приложения: текущий момент (мс UTC). Читает только прикладной слой;
+ * домен получает время аргументом операции (D-34).
+ */
+export type Clock = () => Timestamp;
+
+/** Системные часы. */
+export const systemClock: Clock = () => Date.now();
+
 /** Платформенные зависимости приложения, общие для всех модулей DMG. */
 export type AppContext = {
   readonly bus: EventBus;
+  readonly clock: Clock;
   readonly logger: Logger;
   readonly mode: AppMode;
 };
