@@ -10,14 +10,11 @@ import {
   CreateCourseWishOutputSchema,
   findCoursePool,
   WishAr,
-  WishDcs,
+  WishRules,
 } from '@u7-scl/domain/wish';
 import { WishErrors } from '@u7-scl/domain/wish/contract';
 import { unwrapInfallible } from '../legacy-reject';
 import { WishUseCase } from '../wish-uc';
-
-/** Доменные решения над желаниями: без состояния, один на модуль. */
-const wishDcs = new WishDcs();
 
 /**
  * Use-case создания желания пройти курс («запись на курс»).
@@ -61,10 +58,14 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
     //    порядок сортировки недетерминирован и активное желание может
     //    оказаться не первым.
     const target: WishTargetVo = { kind: 'course', courseId: command.courseId };
-    const existing = (
+    const wishes = (
       await this.repo.findAllByUserAndTarget(actor.uuid, target)
     ).map((w) => WishAr.restore(w));
-    const unique = wishDcs.checkUnique(actor.uuid, target, existing);
+    const unique = WishRules.rules.unique.check({
+      userId: actor.uuid,
+      target,
+      wishes,
+    });
     if (!unique.ok) {
       this.throwWishError(unique.error);
     }

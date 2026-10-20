@@ -10,4 +10,4 @@ export * from './wish/pools/course-pool';
 export * from './wish/repo';
 export * from './wish/wish.ar';
 export * from './wish/wish.policy';
-export * from './wish.dcs';
+export * from './wish/wish.rules';

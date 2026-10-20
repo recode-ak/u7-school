@@ -17,7 +17,7 @@ const isAuthor = rule({
  * за вызывающего (`userId` берётся из субъекта, не из входа), поэтому с Ф8
  * (`defineUseCase`) UC создания сошлются на `allowAll`; сейчас legacy-UC
  * без Policy. Уникальность активного желания —
- * не право, а доменное решение: `WishDcs.checkUnique`.
+ * не право, а доменное правило: `WishRules.rules.unique` (D-40).
  */
 export const WishPolicy = definePolicy({
   name: 'wish',

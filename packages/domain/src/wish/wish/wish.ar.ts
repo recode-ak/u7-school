@@ -1,6 +1,7 @@
 import {
   Aggregate,
   defineAggregate,
+  type ErrorOf,
   type ErrorsOf,
   newEntity,
   ok,
@@ -13,8 +14,13 @@ import { WishErrors } from './wish.errors';
 import { WishEvents } from './wish.events';
 import { WishState, type WishStatus, type WishTargetVo } from './wish.state';
 
-const { NOT_CONFIRMABLE, NOT_ABANDONABLE, NOT_CANCELLABLE, NOT_FULFILLABLE } =
-  WishErrors;
+const {
+  NOT_CONFIRMABLE,
+  NOT_ABANDONABLE,
+  NOT_CANCELLABLE,
+  NOT_FULFILLABLE,
+  ALREADY_EXISTS,
+} = WishErrors;
 
 export const WishArDef = defineAggregate({
   name: 'wish',
@@ -84,7 +90,7 @@ type WishTransition = TransitionOf<typeof WishArDef>;
 
 /**
  * Активные статусы — желание ещё в работе и занимает цель: второе активное
- * на ту же пару (user, target) не создаётся (`WishDcs.checkUnique`).
+ * на ту же пару (user, target) не создаётся (`WishRules.rules.unique`).
  */
 const ACTIVE_STATUSES: readonly (keyof typeof WishArDef.statuses)[] = [
   'expressed',
@@ -111,7 +117,8 @@ export type CreateWish = {
  * - анкетная: pending → confirmed | abandoned, далее confirmed → cancelled | fulfilled.
  *
  * Инвариант «не более одного активного желания на пару (user, target)»
- * охватывает несколько агрегатов — его проверяет `WishDcs.checkUnique`.
+ * охватывает несколько агрегатов — его проверяет доменное правило
+ * `WishRules.rules.unique` (D-40).
  */
 export class WishAr extends Aggregate<typeof WishArDef> {
   private constructor(state: WishState) {
@@ -133,11 +140,6 @@ export class WishAr extends Aggregate<typeof WishArDef> {
     return new WishAr(snapshot);
   }
 
-  /** Статус — для payload ошибок и ответов; решения — методами-вопросами. */
-  get status(): WishStatus {
-    return this.state.status;
-  }
-
   // ── Вопросы ──
 
   /** Активно ли желание (expressed | pending | confirmed) — занимает ли цель. */
@@ -157,6 +159,20 @@ export class WishAr extends Aggregate<typeof WishArDef> {
       return mine.kind === 'course' && mine.courseId === target.courseId;
     }
     return mine.kind === 'module' && mine.moduleId === target.moduleId;
+  }
+
+  /**
+   * Ошибка «желание уже выражено» от лица этого (существующего активного)
+   * желания: цель и статус берутся из своего state — Ar владеет ошибками
+   * своей группы, статус наружу не отдаётся (D-39).
+   * Возвращает значение ошибки, а не `Result`: метод не мутирует и должен
+   * остаться в `ReadonlyAr` (там вырезаются методы, возвращающие `Result`).
+   */
+  alreadyExists(): ErrorOf<typeof ALREADY_EXISTS> {
+    const { userId, target, status } = this.state;
+    return target.kind === 'course'
+      ? ALREADY_EXISTS.make({ userId, courseId: target.courseId, status })
+      : ALREADY_EXISTS.make({ userId, moduleId: target.moduleId, status });
   }
 
   // ── Предикаты переходов ──

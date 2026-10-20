@@ -14,7 +14,7 @@
 
 ## Решения брифа
 
-- **DCS — правило уникальности (Ф5, вопрос 7); DQS нет.** `list-user-wishes` — query UC, читает один агрегат через репозиторий; output выводится из схемы entity. Гайд «dcs/dqs» описывает критерий выбора, эталон DCS/DQS — в `stream`.
+- **Уникальность — доменное правило `WishRules.unique` (Ф6–7, D-40; в Ф5 было DCS); DCS и DQS нет.** `list-user-wishes` — query UC, читает один агрегат через репозиторий; output выводится из схемы entity. Гайд «dcs/dqs» описывает критерий выбора, эталон DCS/DQS — в `stream`.
 - **Job нет.**
 - **Формат данных не меняется:** `F.timestamp` читает ISO-строку и число, пишет число. Репозиторий проверяется на `DB_DIR=./data/fixtures`.
 - **Пулы анкет** (`wish/pools/course-pool.ts`, `course.json`) остаются доменными данными модуля, путь не меняется.
@@ -125,6 +125,15 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 - Учебный модуль `testing/example/`: одно правило без субъекта (например, «у пользователя не больше N открытых задач» или уникальность заголовка) в `<a>.rules.ts`, UC ссылается на него; тест UC: отказ правила возвращает его ошибку и ничего не фиксирует.
 - TDD (red → запуск → green по шагам): `domainRule` ok/err; тип ошибки чужого `ErrorDef` не компилируется; `UseCaseFromDef` — порядок (Policy отказала → правила не вызваны; правило отказало → `execute` не вызван); `checkDefs` — необъявленная ошибка правила; граф — узел правила и ссылка UC.
 - Не трогать: `packages/domain`, `packages/wish`, `conductor/` (naming.md, rules.md правит оркестратор). Генераторы — не в этом шаге.
+
+**Шаг 2 — domain-author** (`packages/domain/src/wish/**`), по D-39/D-40. Образец — `packages/dmg-core/src/testing/example/todo/task/task.rules.ts`.
+- `wish/wish.rules.ts` — `WishRules = defineRules({ … rules: { unique: domainRule({ error: WishErrors.ALREADY_EXISTS, check }) } })`: логика `WishDcs.checkUnique` без изменений (все желания, `isOwnedBy` + `isFor` + `isActive`). Контекст — `{ userId, target, wishes: readonly ReadonlyAr<WishAr>[] }`; тип цели — из входа Ar (`CreateWish['target']`), не из state (DOM-01 для `*.rules.ts`).
+- `WishAr.alreadyExists(): Result<never, …ALREADY_EXISTS>` (или `ErrorOf<…>` — по образцу платформы, с обоснованием): строит ошибку с `userId`, `courseId | moduleId`, `status` из своего state. Геттер `status` удалить (DOM-04, D-39); при необходимости других потребителей геттера — эскалация.
+- `wish.dcs.ts` (+ тест) удалить — мутаций нескольких агрегатов нет (DOM-06); тесты переносятся в `wish.rules.test.ts` (нет активных / активное каждого статуса / только неактивные / чужие и на другую цель отбрасываются).
+- Реэкспорты (`index.ts`, `contract.ts`) — `WishRules` вместо `WishDcs`, без алиасов.
+- Потребители в `packages/wish` — шаг 3, гейт по ним красный ожидаемо.
+
+**Шаг 3 — migrator** (`packages/wish/src/**`): `create-course-wish-uc.ts`, `create-module-wish-uc.ts` зовут `WishRules.rules.unique.check({ userId, target, wishes })` вместо `new WishDcs().checkUnique(…)`; отказ — тот же мост `throwWishError` (TR-1). UC — legacy-классы до Ф8, `rules` в Def UC подключается там. Видимое поведение не меняется; тестов `wish` не меньше, чем до шага.
 
 ## Было → станет (naming.md §2–§3)
 
@@ -252,3 +261,9 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ф6–7 шаг 1 — domain-author (платформа, Opus)
 `domain/rules/{domain-rule,define-rules}.ts`; `check` — `Result<void, ErrorOf<NoInfer<E>>>`, чужой ErrorDef — ошибка типа (`@ts-expect-error`, DOM-16). `UseCaseFromDef`: `load → Policy → rules → execute`, правила и для `system`, отказ до UoW; `L extends контекст Policy & контексты rules` (пересечение по кортежу); конструктор принимает только правила с ошибкой из `errors` UC — пропуск ловит и компилятор. `checkDefs`: ошибка правила не в `errors` UC → ERR-02, дубль правила → DOM-16, label/description правил — MAN-01. Граф: узел `rules[<модуль>.<имя>]` (`usedBy`), модуль — владелец ошибки правила. Пример: `TaskRules.withinOpenLimit` (< 3 открытых), `TASK_TOO_MANY_OPEN`, `TaskAr.isOpen()`, тест отказа без записей и событий. Отклонения: `RulesDef` сам в `checkDefs` не попадает (на него нет ссылки из модуля, как у Policy); `TaskAr.complete/archive` возвращают `RejectOf<…>`, а не всю группу ошибок (иначе ERR-02 в `CompleteTaskUc`).
+
+### Ф6–7 шаг 2 — domain-author (Opus)
+`wish/wish.rules.ts` (`WishRules.rules.unique`, контекст `{ userId, target: CreateWish['target'], wishes }`), тесты DCS перенесены в `wish.rules.test.ts`; `WishAr.alreadyExists(): ErrorOf<…ALREADY_EXISTS>` — не `Result`: `ReadonlyAr` вырезает методы с `Result`, а правило работает над `ReadonlyAr`; в `err` оборачивает правило. Геттер `status` и `wish.dcs.ts` удалены. Эскалация: ссылки гайда «policy» на `wish.dcs.ts` — исправил оркестратор вместе с гайдом.
+
+### Ф6–7 шаг 3 — migrator (Sonnet)
+`create-{course,module}-wish-uc.ts`: `WishRules.rules.unique.check(…)`, отказ — `throwWishError` (TR-1). Тесты без изменений, поведение прежнее.

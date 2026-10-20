@@ -246,7 +246,31 @@ describe('вопросы к желанию', () => {
     expect(wish.isOwnedBy(WISH)).toBe(false);
   });
 
-  it('status — текущий статус желания', () => {
-    expect(restore('confirmed').status).toBe('confirmed');
+  it('alreadyExists — WISH_ALREADY_EXISTS с courseId и статусом желания', () => {
+    const error = restore('confirmed').alreadyExists();
+    expect(error.code).toBe('WISH_ALREADY_EXISTS');
+    expect(error.kind).toBe('conflict');
+    expect(error.payload).toEqual({
+      userId: USER,
+      courseId: target.courseId,
+      status: 'confirmed',
+    });
+  });
+
+  it('alreadyExists — цель-модуль даёт moduleId', () => {
+    const moduleId = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
+    const wish = WishAr.restore({
+      ...stored('expressed'),
+      target: { kind: 'module', moduleId },
+    });
+    expect(wish.alreadyExists().payload).toEqual({
+      userId: USER,
+      moduleId,
+      status: 'expressed',
+    });
+  });
+
+  it('статус не читается снаружи — только вопросы и alreadyExists (D-39)', () => {
+    expect('status' in restore('expressed')).toBe(false);
   });
 });

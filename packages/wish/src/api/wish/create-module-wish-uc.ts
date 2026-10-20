@@ -7,15 +7,12 @@ import type {
 import {
   CreateModuleWishCmdSchema,
   WishAr,
-  WishDcs,
+  WishRules,
 } from '@u7-scl/domain/wish';
 import { WishErrors } from '@u7-scl/domain/wish/contract';
 import * as v from 'valibot';
 import { unwrapInfallible } from '../legacy-reject';
 import { WishUseCase } from '../wish-uc';
-
-/** Доменные решения над желаниями: без состояния, один на модуль. */
-const wishDcs = new WishDcs();
 
 /**
  * Use-case создания желания пройти модуль («запись на следующий/тот же модуль»).
@@ -54,10 +51,14 @@ export class CreateModuleWishUc extends WishUseCase<CreateModuleWishCmdMeta> {
     //    порядок сортировки недетерминирован и активное желание может
     //    оказаться не первым.
     const target: WishTargetVo = { kind: 'module', moduleId: command.moduleId };
-    const existing = (
+    const wishes = (
       await this.repo.findAllByUserAndTarget(actor.uuid, target)
     ).map((w) => WishAr.restore(w));
-    const unique = wishDcs.checkUnique(actor.uuid, target, existing);
+    const unique = WishRules.rules.unique.check({
+      userId: actor.uuid,
+      target,
+      wishes,
+    });
     if (!unique.ok) {
       this.throwWishError(unique.error);
     }
