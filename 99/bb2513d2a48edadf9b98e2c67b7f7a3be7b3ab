@@ -1,0 +1,1 @@
+Ревью Ф5 golden-wish: error нет. Правки: WishAr.isFor, WishDcs фильтрует isOwnedBy+isFor+isActive (+3 теста), фикстура дедуп-тестов create-module-wish на актёра, JSDoc allowAll «с Ф8», ACTIVE_STATUSES после типов. Документы: TR-6, дополнение TR-1, критерий DOM-04 в domain-modeling §5, отчёты в бриф. check 3345 pass, arch:check 0.
