@@ -107,7 +107,7 @@
 - Замечания по фазе (b22d6d2, b54c9187): внутри `dmg` глубокие относительные импорты заменены на `#dmg/*`; legacy-алиасы переименованы в `#<слой>-legacy/*` (legacy.md §6). Вынос в `dmg-core` — трек dmg-core-extract.
 - [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
-## Фаза 5: Линт-правила
+## Фаза 5: Линт-правила [checkpoint: fa6b7e89]
 
 - [x] Task: `noRestrictedImports` для ARC-01, 02, 06, 07, 08, 09
     - [x] Фикстуры-нарушители (вне `check`) и скрипт-тест: biome выдаёт ошибку с нужным ID
@@ -116,7 +116,7 @@
     - [x] Фикстуры и тест по каждому правилу
     - [x] Плагины и подключение с той же областью действия
 - [x] Task: Проверка: `bun run check` зелёный на всём репозитории; количество предупреждений на legacy — в summary
-- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
 Заметки по факту (для Фазы 6):
 - Плагины — `biome-plugins/*.grit`, правила и области — `overrides` в `biome.json`; фикстуры — `lint-fixtures/` (`.txt`), тест — `scripts/lint-rules.test.ts` (16 кейсов, в составе `bun test`).
