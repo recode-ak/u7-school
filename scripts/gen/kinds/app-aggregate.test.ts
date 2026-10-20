@@ -1,0 +1,58 @@
+import { expect, test } from 'bun:test';
+import { parseArgs } from '../cli.ts';
+import { planAppAggregate } from './app-aggregate.ts';
+
+const plan = planAppAggregate(
+  parseArgs(['aggregate', 'stream.student', '--packages-root', '/p']),
+);
+const file = (rel: string) =>
+  plan.files.find((f) => f.path === `/p/stream/src/${rel}`)?.content ?? '';
+
+test('файлы: порт репозитория, JSON-репозиторий и его тест', () => {
+  expect(plan.files.map((f) => f.path)).toEqual([
+    '/p/stream/src/student/student.repo.ts',
+    '/p/stream/src/infra/student.json-repo.ts',
+    '/p/stream/src/infra/student.json-repo.test.ts',
+  ]);
+});
+
+test('порт: Repository<Ar> с поиском по uuid', () => {
+  const src = file('student/student.repo.ts');
+  expect(src).toContain('export type StudentRepo = Repository<StudentAr> & {');
+  expect(src).toContain(
+    'findById(uuid: string): Promise<StudentAr | undefined>',
+  );
+});
+
+test('JSON-репозиторий: реализует порт, состояние разбирает схема Def', () => {
+  const src = file('infra/student.json-repo.ts');
+  expect(src).toContain(
+    'export class StudentJsonRepo implements StudentRepo {',
+  );
+  expect(src).toContain('readonly aggregate = StudentArDef');
+  expect(src).toContain('v.array(StudentArDef.state)');
+  expect(src).toContain('StudentAr.restore');
+  expect(src).toContain("from '../student/student.repo'");
+});
+
+test('тест репозитория: сохранить и найти', () => {
+  expect(file('infra/student.json-repo.test.ts')).toContain(
+    "describe('StudentJsonRepo'",
+  );
+});
+
+test('правки: порт попадает в Deps модуля', () => {
+  const mod = '/p/stream/src/stream.module.ts';
+  expect(plan.edits).toEqual([
+    {
+      path: mod,
+      marker: '// gen:defs:imports',
+      line: "import type { StudentRepo } from './student/student.repo';",
+    },
+    {
+      path: mod,
+      marker: '// gen:deps',
+      line: '  readonly studentRepo: StudentRepo;',
+    },
+  ]);
+});
