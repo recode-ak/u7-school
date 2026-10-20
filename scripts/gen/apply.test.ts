@@ -244,3 +244,45 @@ test('порядок путей: точка раньше дефиса, как у
     "export { F } from './s.facade';\nexport { M } from './s.module';\nexport { N } from './s-nav.dqs';\n// gen:exports\n",
   );
 });
+
+test('adopt: существующий index.ts пропускается, правки идут в него', () => {
+  writeFileSync(p('index.ts'), '// legacy\n// gen:exports\n');
+  const r = applyPlan(
+    {
+      files: [
+        { path: p('index.ts'), content: 'new' },
+        { path: p('m.module.ts'), content: 'm' },
+      ],
+      edits: [
+        {
+          path: p('index.ts'),
+          marker: '// gen:exports',
+          line: "export * from './a';",
+        },
+      ],
+    },
+    { write: true, adopt: true },
+  );
+  expect(r.skipped.map((f) => f.path)).toEqual([p('index.ts')]);
+  expect(r.written).toEqual([p('m.module.ts')]);
+  expect(readFileSync(p('index.ts'), 'utf8')).toBe(
+    "// legacy\nexport * from './a';\n// gen:exports\n",
+  );
+});
+
+test('adopt: коллизия остальных файлов — по-прежнему ошибка', () => {
+  writeFileSync(p('m.module.ts'), 'old');
+  writeFileSync(p('package.json'), '{}');
+  expect(() =>
+    applyPlan(
+      {
+        files: [
+          { path: p('m.module.ts'), content: 'x' },
+          { path: p('package.json'), content: 'x' },
+        ],
+        edits: [],
+      },
+      { write: true, adopt: true },
+    ),
+  ).toThrow(GenError);
+});

@@ -25,6 +25,8 @@ export interface GenPlan {
 export interface ApplyResult {
   written: string[];
   edited: string[];
+  /** Существующие точки входа, не перезаписанные в режиме adopt. */
+  skipped: PlannedFile[];
   /** Правки, которые не удалось применить (нет файла или маркера) — вставить вручную. */
   hints: PlannedEdit[];
 }

@@ -8,6 +8,7 @@ test('uc: модуль.агрегат + имя; по умолчанию dry-run 
     aggregate: 'student',
     name: 'complete-student',
     write: false,
+    adopt: false,
     domainRoot: 'packages/domain/src',
     packagesRoot: 'packages',
   });
@@ -73,4 +74,9 @@ test('ошибки на русском', () => {
   expect(msg(['module', 'stream', '--bogus'])).toContain('Неизвестная опция');
   expect(msg(['module', 'stream', '--domain-root'])).toContain('значение');
   expect(msg(['module', 'a', 'b'])).toContain('лишний аргумент');
+});
+
+test('--adopt: режим для legacy-модуля, по умолчанию выключен', () => {
+  expect(parseArgs(['module', 'wish', '--adopt']).adopt).toBe(true);
+  expect(parseArgs(['module', 'wish']).adopt).toBe(false);
 });

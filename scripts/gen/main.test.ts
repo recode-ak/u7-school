@@ -7,6 +7,7 @@ import {
   readFileSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -128,4 +129,21 @@ test('повтор команды не меняет файлы: код 1 и де
   const before = snapshot(root);
   for (const step of slice) expect(gen(...step, '--write')).toBe(1);
   expect(snapshot(root)).toEqual(before);
+});
+
+test('module --adopt поверх legacy: точки входа не тронуты, паспорт создан', () => {
+  mkdirSync(join(root, 'd/wish'), { recursive: true });
+  mkdirSync(join(root, 'p/wish/src'), { recursive: true });
+  writeFileSync(join(root, 'd/wish/index.ts'), '// legacy\n');
+  writeFileSync(join(root, 'p/wish/package.json'), '{}');
+  expect(gen('module', 'wish', '--adopt', '--write')).toBe(0);
+  expect(existsSync(join(root, 'd/wish/wish.module.ts'))).toBe(true);
+  expect(existsSync(join(root, 'p/wish/src/wish.module.ts'))).toBe(true);
+  expect(readFileSync(join(root, 'd/wish/index.ts'), 'utf8')).toBe(
+    '// legacy\n',
+  );
+  expect(readFileSync(join(root, 'p/wish/package.json'), 'utf8')).toBe('{}');
+  expect(out.join('\n')).toContain(
+    `Пропущен: ${join(root, 'd/wish/index.ts')}`,
+  );
 });

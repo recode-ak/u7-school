@@ -40,9 +40,13 @@ export function runGen(
     const args = parseArgs(argv);
     validate(args);
     const plan = buildPlan(args);
-    const result = applyPlan(plan, { write: args.write });
+    const result = applyPlan(plan, { write: args.write, adopt: args.adopt });
     const verb = args.write ? 'Создан' : 'Будет создан';
-    for (const file of plan.files) print(`${verb}: ${file.path}`);
+    for (const path of result.written) print(`${verb}: ${path}`);
+    for (const file of result.skipped) {
+      print(`Пропущен: ${file.path} (уже есть) — сверь вручную с шаблоном:`);
+      for (const line of file.content.trimEnd().split('\n')) print(`  ${line}`);
+    }
     for (const path of args.write ? result.edited : editedPaths(plan)) {
       print(`${args.write ? 'Изменён' : 'Будет изменён'}: ${path}`);
     }

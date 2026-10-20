@@ -94,3 +94,21 @@ test('dcs/dqs: нужен модуль, топик уникален', () => {
   touch('stream/progress.dcs.ts');
   expect(message(['dcs', 'stream', 'progress'])).toContain('уже занято');
 });
+
+test('module --adopt: legacy-каталог без паспорта допустим, с паспортом — нет', () => {
+  touch('wish/index.ts');
+  validate(args(['module', 'wish', '--adopt']));
+  touch('wish/wish.module.ts');
+  expect(message(['module', 'wish', '--adopt'])).toContain('уже существует');
+});
+
+test('aggregate --adopt: legacy-каталог агрегата без state допустим', () => {
+  touch('wish/wish.module.ts');
+  touch('wish/wish/entity.ts');
+  expect(message(['aggregate', 'wish.wish'])).toContain('уже существует');
+  validate(args(['aggregate', 'wish.wish', '--adopt']));
+  touch('wish/wish/wish.state.ts');
+  expect(message(['aggregate', 'wish.wish', '--adopt'])).toContain(
+    'уже существует',
+  );
+});

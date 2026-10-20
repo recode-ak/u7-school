@@ -19,6 +19,8 @@ export interface GenArgs {
   aggregate?: string;
   name?: string;
   write: boolean;
+  /** Режим перевода legacy-модуля: существующие точки входа не перезаписываются. */
+  adopt: boolean;
   domainRoot: string;
   packagesRoot: string;
 }
@@ -39,7 +41,7 @@ const SHAPE: Record<
 
 const USAGE =
   'Использование: bun run gen <вид> <модуль>[.<агрегат>] [<имя>] [--write] ' +
-  '[--dry-run] [--domain-root <путь>] [--packages-root <путь>]\n' +
+  '[--dry-run] [--adopt] [--domain-root <путь>] [--packages-root <путь>]\n' +
   `Виды: ${Object.keys(SHAPE).join(', ')}`;
 
 const VALUE_OPTIONS = ['--domain-root', '--packages-root'] as const;
@@ -47,6 +49,7 @@ const VALUE_OPTIONS = ['--domain-root', '--packages-root'] as const;
 export function parseArgs(argv: readonly string[]): GenArgs {
   const positional: string[] = [];
   let write = false;
+  let adopt = false;
   let domainRoot = 'packages/domain/src';
   let packagesRoot = 'packages';
 
@@ -59,6 +62,7 @@ export function parseArgs(argv: readonly string[]): GenArgs {
     const [flag = '', inline] = arg.split(/=(.*)/s, 2);
     if (flag === '--write') write = true;
     else if (flag === '--dry-run') write = false;
+    else if (flag === '--adopt') adopt = true;
     else if ((VALUE_OPTIONS as readonly string[]).includes(flag)) {
       const value = inline ?? argv[++i];
       if (value === undefined || value.startsWith('--')) {
@@ -108,6 +112,7 @@ export function parseArgs(argv: readonly string[]): GenArgs {
     ...(aggregate !== undefined && { aggregate }),
     ...(shape.name && name !== undefined && { name }),
     write,
+    adopt,
     domainRoot,
     packagesRoot,
   };

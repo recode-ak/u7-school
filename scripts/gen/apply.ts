@@ -1,8 +1,11 @@
 /** Применение плана: сначала всё проверяем, затем пишем; перезаписей нет. */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { basename, dirname } from 'node:path';
 import { GenError } from './cli.ts';
-import type { ApplyResult, GenPlan, PlannedEdit } from './plan.ts';
+import type { ApplyResult, GenPlan, PlannedEdit, PlannedFile } from './plan.ts';
+
+/** Точка входа legacy-модуля: в режиме adopt не перезаписывается. */
+const ENTRY_FILE = 'index.ts';
 
 const SOURCE_LINE = /^(?:import|export)\b.*\bfrom '([^']+)';$/;
 
@@ -54,13 +57,20 @@ function insertBeforeMarker(
 
 export function applyPlan(
   plan: GenPlan,
-  options: { write: boolean },
+  options: { write: boolean; adopt?: boolean },
 ): ApplyResult {
-  const paths = plan.files.map((f) => f.path);
-  const dupes = paths.filter((path, i) => paths.indexOf(path) !== i);
+  const all = plan.files.map((f) => f.path);
+  const dupes = all.filter((path, i) => all.indexOf(path) !== i);
   if (dupes.length > 0) {
     throw new GenError(`Файл дважды в плане: ${dupes.join(', ')}`);
   }
+  const skipped: PlannedFile[] = options.adopt
+    ? plan.files.filter(
+        (f) => basename(f.path) === ENTRY_FILE && existsSync(f.path),
+      )
+    : [];
+  const files = plan.files.filter((f) => !skipped.includes(f));
+  const paths = files.map((f) => f.path);
   const taken = paths.filter((path) => existsSync(path));
   if (taken.length > 0) {
     throw new GenError(
@@ -74,7 +84,7 @@ export function applyPlan(
   const edited: string[] = [];
   const hints: PlannedEdit[] = [];
   for (const edit of plan.edits) {
-    const planned = plan.files.find((f) => f.path === edit.path);
+    const planned = files.find((f) => f.path === edit.path);
     const source =
       pending.get(edit.path) ??
       planned?.content ??
@@ -94,11 +104,11 @@ export function applyPlan(
   }
 
   if (options.write) {
-    for (const file of plan.files) {
+    for (const file of files) {
       mkdirSync(dirname(file.path), { recursive: true });
       writeFileSync(file.path, file.content, { flag: 'wx' });
     }
     for (const [path, text] of pending) writeFileSync(path, text);
   }
-  return { written: paths, edited, hints };
+  return { written: paths, edited, hints, skipped };
 }

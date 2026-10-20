@@ -27,7 +27,8 @@ export function validate(args: GenArgs): void {
   const moduleExists = existsSync(join(moduleDir, `${args.module}.module.ts`));
 
   if (args.kind === 'module') {
-    if (existsSync(moduleDir)) {
+    // adopt: legacy-каталог есть, паспорта ещё нет.
+    if (args.adopt ? moduleExists : existsSync(moduleDir)) {
       throw new GenError(
         `Модуль «${args.module}» уже существует: ${moduleDir}`,
       );
@@ -46,7 +47,10 @@ export function validate(args: GenArgs): void {
   if (aggregate !== undefined) {
     const aggDir = join(moduleDir, aggregate);
     if (args.kind === 'aggregate') {
-      if (existsSync(aggDir)) {
+      const taken = args.adopt
+        ? existsSync(join(aggDir, `${aggregate}.state.ts`))
+        : existsSync(aggDir);
+      if (taken) {
         throw new GenError(
           `Агрегат «${args.module}.${aggregate}» уже существует: ${aggDir}`,
         );
