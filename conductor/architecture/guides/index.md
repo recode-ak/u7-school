@@ -6,7 +6,7 @@
 
 | Вид | Гайд | Фаза трека |
 |---|---|---|
-| state | — | 1 |
+| state | [state.md](./state.md) | 1 |
 | aggregate | — | 2 |
 | events | — | 3 |
 | errors | — | 4 |
