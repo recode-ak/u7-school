@@ -9,6 +9,13 @@
 
 ## Фаза 1: Развязка от legacy
 
+Заметки для старта (на 2026-10-20, `packages/core/src/dmg`):
+- Импорты legacy внутри `dmg` (не тесты): `app/context.ts` (`#domain-legacy/types`, `#shared-legacy/logger`), `app/errors/legacy-error.ts`, `app/events/legacy-event-bus.ts`, `app/job/legacy-job.ts`, `app/module/module-from-def.ts` (`#api-legacy/job/job`), `app/system/run-logged.ts` и `app/use-case/use-case-from-def.ts` (`#shared-legacy/serialize-error`), `kernel/time/now.ts` (`#shared-legacy/now`), `testing/app-context.ts`.
+- `now()` читает legacy `shared/now`, чтобы `spyOn(Shared, 'now')` тоже действовал — при переносе сохранить это поведение в мосту.
+- `ApiApp.run/execute/addDmgModules` живут в `packages/core/src/api/app/api-app.ts` (legacy-слой) и остаются в монорепо.
+- Блокирующие lint-правила на `dmg` уже есть (ARC-01/02, GritQL); правило «без `*-legacy`» добавляется рядом в `biome.json` (`overrides`), проверяется `scripts/lint-rules.test.ts` на фикстуре-нарушителе в `lint-fixtures/`.
+- Три теста с импортами `../../../infra/…` из legacy исчезнут в этой фазе.
+
 - [ ] Task: Перенести мосты (`legacy-event-bus`, `legacy-error`, `legacy-job`, `run-logged`, `context`, часть `use-case-from-def`, `now`) в `packages/core/src/legacy-bridge/`, внутрь `dmg` оставить порты
     - [ ] Тесты моста сохраняются; `dmg` получает логгер/режим/время через порты
 - [ ] Task: Правило и проверка: `dmg` не импортирует `*-legacy` и `@u7-scl/*` (biome `noRestrictedImports` + тест `arch:check`)
