@@ -7,7 +7,7 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { type ArchApp, archCheck, formatViolation } from 'dmg-core';
+import { type ArchApp, archCheck, formatViolation } from 'dmg-core/arch';
 import { runGen } from './main.ts';
 
 const REPO = join(import.meta.dir, '../..');

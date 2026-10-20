@@ -18,7 +18,8 @@
 | Пакет | Может импортировать |
 |---|---|
 | core | — (платформа DMG вынесена в пакет `dmg-core`, тестовые хелперы — `dmg-core/testing`) |
-| domain | core |
+| `dmg-core` (подпути) | корень — ядро и `define*` (для домена); `/app` — исполнение (UC/ER/Job, модуль, UoW, шина); `/graph` — граф; `/arch` — проверки (D-33) |
+| domain | корень `dmg-core` (не `/app`, `/graph`, `/arch`) |
 | app | core, domain |
 | `packages/<m>` | core, domain, app. Другие модульные пакеты — **нет** (только фасады через резолвер) |
 | apps | core, domain, app; логику вызывает через `appApi` и доменный API |

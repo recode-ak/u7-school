@@ -1,0 +1,4 @@
+// expect: ARC-11 error
+import { UnitOfWork } from '#core/app/uow/unit-of-work';
+
+export const a = UnitOfWork;

@@ -1,14 +1,16 @@
+import type {
+  AnyUseCaseDef,
+  Caller,
+  InputOf,
+  OutputOf,
+  Result,
+  UseCaseErrorOf,
+} from 'dmg-core';
 import {
   type AnyModuleFromDef,
-  type AnyUseCaseDef,
-  type Caller,
-  type InputOf,
-  type OutputOf,
   type RequestMeta,
-  type Result,
   requestTrace,
-  type UseCaseErrorOf,
-} from 'dmg-core';
+} from 'dmg-core/app';
 import { errBadRequest, throwError } from '#domain-legacy/errors/error-helpers';
 import {
   AppException,

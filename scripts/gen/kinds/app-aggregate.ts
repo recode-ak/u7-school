@@ -12,7 +12,7 @@ export function planAppAggregate(args: GenArgs): GenPlan {
   const modulePath = join(src, `${m}.module.ts`);
 
   const repoSrc = `import type { ${P}Ar } from '${domain}';
-import type { Repository } from 'dmg-core';
+import type { Repository } from 'dmg-core/app';
 
 /** Порт репозитория: принимает и возвращает Ar (API-03). */
 export type ${P}Repo = Repository<${P}Ar> & {

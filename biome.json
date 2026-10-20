@@ -156,10 +156,9 @@
                       "!.",
                       "!./**",
                       "!../**",
-                      "!dmg-core",
-                      "!dmg-core/**"
+                      "!dmg-core"
                     ],
-                    "message": "ARC-02: domain импортирует только core и valibot"
+                    "message": "ARC-02: domain импортирует только корень dmg-core (ядро и define*), core по долгу и valibot"
                   }
                 ]
               }
@@ -192,6 +191,41 @@
                       "@u7-scl/core/**"
                     ],
                     "message": "ARC-10: платформа DMG не импортирует legacy и @u7-scl/* — мосты живут в legacy-bridge"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "packages/dmg-core/src/kernel/**",
+        "packages/dmg-core/src/domain/**",
+        "packages/dmg-core/src/testing/example/todo/**",
+        "packages/dmg-core/src/testing/example/users/**",
+        "!**/*.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["#*-legacy/**", "@u7-scl/**"],
+                    "message": "ARC-10: платформа DMG не импортирует legacy и @u7-scl/* — мосты живут в legacy-bridge"
+                  },
+                  {
+                    "group": [
+                      "#core/app/**",
+                      "#core/graph/**",
+                      "#core/arch/**",
+                      "dmg-core/*"
+                    ],
+                    "message": "ARC-11: ядро и домен DMG не импортируют исполнение (app), граф и проверки (arch)"
                   }
                 ]
               }
@@ -265,10 +299,9 @@
                       "!.",
                       "!./**",
                       "!../**",
-                      "!dmg-core",
-                      "!dmg-core/**"
+                      "!dmg-core"
                     ],
-                    "message": "ARC-02: domain импортирует только core и valibot"
+                    "message": "ARC-02: domain импортирует только корень dmg-core (ядро и define*), core по долгу и valibot"
                   },
                   {
                     "group": ["**/*.state", "**/state"],

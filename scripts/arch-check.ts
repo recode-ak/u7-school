@@ -8,7 +8,7 @@
  */
 
 import { Glob } from 'bun';
-import { type ArchApp, archCheck, formatViolation } from 'dmg-core';
+import { type ArchApp, archCheck, formatViolation } from 'dmg-core/arch';
 import { ExampleArch } from 'dmg-core/testing';
 import {
   checkDebt,

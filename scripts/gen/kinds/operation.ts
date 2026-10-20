@@ -86,7 +86,7 @@ export const ${c.defName} = defineJob({
 
 function contractTest(c: Ctx): string {
   return `import { describe, expect, it } from 'bun:test';
-import { normalize } from 'dmg-core';
+import { normalize } from 'dmg-core/graph';
 import { ${c.defName} } from './${c.base}';
 
 describe('${c.defName}', () => {
@@ -105,7 +105,8 @@ function implementation(c: Ctx): string {
   switch (c.kind) {
     case 'uc':
       return `import { ${c.defName} } from '${domain}';
-import { ok, UseCaseFromDef } from 'dmg-core';
+import { ok } from 'dmg-core';
+import { UseCaseFromDef } from 'dmg-core/app';
 ${deps}
 
 export class ${c.className} extends UseCaseFromDef<
@@ -129,7 +130,8 @@ export class ${c.className} extends UseCaseFromDef<
 `;
     case 'er':
       return `import { ${c.defName} } from '${domain}';
-import { ok, ReactionFromDef } from 'dmg-core';
+import { ok } from 'dmg-core';
+import { ReactionFromDef } from 'dmg-core/app';
 ${deps}
 
 export class ${c.className} extends ReactionFromDef<
@@ -148,7 +150,8 @@ export class ${c.className} extends ReactionFromDef<
 `;
     case 'job':
       return `import { ${c.defName} } from '${domain}';
-import { JobFromDef, type JobReport, type JobRun, ok } from 'dmg-core';
+import { ok } from 'dmg-core';
+import { JobFromDef, type JobReport, type JobRun } from 'dmg-core/app';
 ${deps}
 
 export class ${c.className} extends JobFromDef<
@@ -180,7 +183,7 @@ import { ${c.className} } from './${c.base}';
   switch (c.kind) {
     case 'uc':
       return `import { describe, it } from 'bun:test';
-import { requestTrace } from 'dmg-core';
+import { requestTrace } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import type { ${c.deps} } from '../../${c.m}.module';
 import { ${c.className} } from './${c.base}';

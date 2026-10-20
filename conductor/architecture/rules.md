@@ -11,7 +11,7 @@
 | ID | Правило | Проверка |
 |---|---|---|
 | ARC-01 | `core` не импортирует domain, app, модули | lint |
-| ARC-02 | `domain` импортирует только `core` и valibot | lint |
+| ARC-02 | `domain` импортирует только корень `dmg-core` (ядро и `define*`) и valibot; `@u7-scl/core` — только по долгу | lint |
 | ARC-03 | В `domain` нет IO и async (кроме вызова `Loader`) | lint + review |
 | ARC-04 | Модуль domain импортирует другой только через его `index.ts` и только из `dependsOn` | lint + test |
 | ARC-05 | Граф `dependsOn` — DAG | test |
@@ -20,6 +20,7 @@
 | ARC-08 | apps вызывают операции только через `appApi`; репозитории и реализации модулей не импортируют | lint |
 | ARC-09 | Нет `process.env` / глобального `config` в domain и UI-компонентах | lint |
 | ARC-10 | Платформа DMG (`packages/dmg-core/src`) не импортирует `*-legacy` и `@u7-scl/*`; мосты — в `packages/core/src/legacy-bridge` | lint |
+| ARC-11 | Внутри `dmg-core` ядро (`kernel`) и домен (`domain`, учебный домен `testing/example/{todo,users}`) не импортируют `app`, `graph`, `arch` | lint |
 
 ## DOM — домен
 

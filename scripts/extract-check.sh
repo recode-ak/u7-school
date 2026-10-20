@@ -29,7 +29,7 @@ cat >package.json <<JSON
 JSON
 bun add "$TARBALL" valibot @valibot/to-json-schema >/dev/null
 cat >smoke.ts <<'TS'
-import { archCheck } from 'dmg-core';
+import { archCheck } from 'dmg-core/arch';
 import { ExampleArch } from 'dmg-core/testing';
 
 const violations = archCheck(ExampleArch);

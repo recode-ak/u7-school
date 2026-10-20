@@ -52,7 +52,7 @@ export { ${P}ModuleDef } from './${m}.module';
 `;
 
   const testSrc = `import { describe, expect, it } from 'bun:test';
-import { normalize } from 'dmg-core';
+import { normalize } from 'dmg-core/graph';
 import { ${P}ModuleDef } from './${m}.module';
 
 describe('${P}ModuleDef', () => {

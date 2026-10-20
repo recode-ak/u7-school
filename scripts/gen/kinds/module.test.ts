@@ -47,7 +47,7 @@ test('index: экспорт модуля и фасада, маркер для о
 
 test('заготовка теста: паспорт нормализуется', () => {
   const src = file('stream.module.test.ts');
-  expect(src).toContain("import { normalize } from 'dmg-core';");
+  expect(src).toContain("import { normalize } from 'dmg-core/graph';");
   expect(src).toContain('normalize(StreamModuleDef)');
   expect(src).toContain("name: 'stream'");
 });

@@ -1,0 +1,4 @@
+// expect: ARC-11 error
+import { normalize } from '#core/graph/normalize';
+
+export const a = normalize;

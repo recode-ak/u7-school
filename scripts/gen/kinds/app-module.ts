@@ -47,7 +47,7 @@ export function planAppModule(args: GenArgs): GenPlan {
 `;
 
   const moduleSrc = `import { ${P}ModuleDef } from '@u7-scl/domain/${m}';
-import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core';
+import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { ${c}Facade } from './${m}.facade';
 // gen:defs:imports
 
@@ -81,7 +81,7 @@ export function create${P}Module(deps: ${P}Deps) {
 `;
 
   const facadeSrc = `import { ${P}FacadeDef } from '@u7-scl/domain/${m}';
-import { implementFacade } from 'dmg-core';
+import { implementFacade } from 'dmg-core/app';
 import type { ${P}Deps } from './${m}.module';
 
 /** In-proc реализация фасада модуля (API-04). */

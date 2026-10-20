@@ -1,63 +1,8 @@
 // Платформа DMG (Domain Manifest Graph) — пакет dmg-core.
-// Живёт рядом с legacy-слоями (strangler), см. conductor/architecture/migration.md.
+// Корень — ядро и манифесты домена (`define*`, `Aggregate`, `Result`, Policy):
+// чистый код без IO, его импортирует домен. Исполнение — `dmg-core/app`,
+// граф манифестов — `dmg-core/graph`, проверки архитектуры — `dmg-core/arch`.
 
-export type {
-  AppContext,
-  AppMode,
-  Logger,
-  ModuleDeps,
-} from './app/context';
-export type { EventBus } from './app/events/event-bus';
-export type { EnvelopeOf, EventEnvelope } from './app/events/event-envelope';
-export { guardCalls } from './app/facade/guard-calls';
-export { facadeDefOf, implementFacade } from './app/facade/implement-facade';
-export {
-  JobFromDef,
-  type JobReport,
-  type JobRun,
-} from './app/job/job-from-def';
-export {
-  type AnyModuleFromDef,
-  ModuleFromDef,
-  type ModuleMap,
-} from './app/module/module-from-def';
-export {
-  type ReactionEnvelopeOf,
-  ReactionFromDef,
-} from './app/reaction/reaction-from-def';
-export {
-  type Cause,
-  incomingRequestId,
-  type RequestMeta,
-  requestTrace,
-  type Trace,
-} from './app/trace';
-export {
-  contractUnitOfWork,
-  type OperationContract,
-} from './app/uow/contract-unit-of-work';
-export type { Repository } from './app/uow/repository';
-export {
-  type Committable,
-  UnitOfWork,
-  type UnitOfWorkContext,
-} from './app/uow/unit-of-work';
-export {
-  type OwnErrorOf,
-  type ParsedInputOf,
-  type RawOutputOf,
-  type UseCaseContextOf,
-  UseCaseFromDef,
-  type UseCaseSubjectOf,
-} from './app/use-case/use-case-from-def';
-export { type ArchApp, archCheck } from './arch/arch-check';
-export { checkDefs } from './arch/check-defs';
-export { checkFiles, type ModuleLayout } from './arch/check-files';
-export {
-  type ArchRule,
-  formatViolation,
-  type Violation,
-} from './arch/violation';
 export {
   Aggregate,
   type ErrorsOf,
@@ -147,34 +92,6 @@ export {
   type RuleSubjectOf,
   rule,
 } from './domain/policy/policy';
-export { type DefIndex, indexDefs } from './graph/def-index';
-export {
-  type AggregateNode,
-  buildGraph,
-  type DomainGraph,
-  type ErrorNode,
-  type EventNode,
-  type JobNode,
-  type ModuleLink,
-  type ModuleNode,
-  type ReactionNode,
-  type UseCaseNode,
-} from './graph/domain-graph';
-export {
-  type AnyDef,
-  type NormalizedAggregate,
-  type NormalizedDef,
-  type NormalizedError,
-  type NormalizedEvent,
-  type NormalizedEventReaction,
-  type NormalizedFacade,
-  type NormalizedJob,
-  type NormalizedModule,
-  type NormalizedPolicy,
-  type NormalizedRule,
-  type NormalizedUseCase,
-  normalize,
-} from './graph/normalize';
 export {
   type Caller,
   type CallerKind,

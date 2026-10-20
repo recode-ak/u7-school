@@ -1,0 +1,4 @@
+// expect: none
+import { defineErrors } from 'dmg-core';
+
+export const a = defineErrors;

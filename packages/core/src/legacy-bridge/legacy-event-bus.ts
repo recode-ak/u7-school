@@ -1,9 +1,5 @@
-import type {
-  AnyEventDef,
-  EnvelopeOf,
-  EventBus,
-  EventEnvelope,
-} from 'dmg-core';
+import type { AnyEventDef } from 'dmg-core';
+import type { EnvelopeOf, EventBus, EventEnvelope } from 'dmg-core/app';
 import type { DomainEvent as LegacyEvent } from '#domain-legacy/events/domain-event';
 import type { EventBus as LegacyBus } from '#domain-legacy/events/event-bus';
 

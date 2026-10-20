@@ -1,16 +1,14 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
+import { type Caller, defineModule, ok } from 'dmg-core';
 import {
   type AppContext,
-  type Caller,
-  defineModule,
   JobFromDef,
   type JobRun,
   ModuleFromDef,
-  ok,
   type RequestMeta,
   type UnitOfWork,
   UseCaseFromDef,
-} from 'dmg-core';
+} from 'dmg-core/app';
 import {
   expectErr,
   expectOk,

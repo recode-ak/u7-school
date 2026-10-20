@@ -1,4 +1,5 @@
-import type { AnyJobDef, JobFromDef, ModuleDeps } from 'dmg-core';
+import type { AnyJobDef } from 'dmg-core';
+import type { JobFromDef, ModuleDeps } from 'dmg-core/app';
 import { Job, type JobSchedule } from '#api-legacy/job/job';
 
 /**

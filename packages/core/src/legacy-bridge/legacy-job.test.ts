@@ -1,13 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { type DomainError, ok, type Result } from 'dmg-core';
 import {
-  type DomainError,
   JobFromDef,
   type JobReport,
   type JobRun,
-  ok,
-  type Result,
   type UnitOfWork,
-} from 'dmg-core';
+} from 'dmg-core/app';
 import {
   MemoryTasks,
   resetNow,
