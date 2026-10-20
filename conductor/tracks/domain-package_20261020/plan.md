@@ -14,9 +14,9 @@
 - [x] Task: Тесты-стражи Ф3 в `arch:check` (red на фикстурах-нарушителях): импорты между `domain/<m>` по `dependsOn` и без циклов; `domain` не импортирует `packages/<m>`, `ui`, `infra`, `apps`
     - [x] Реализовать проверки до green
 - [x] Task: Проверка долга: сверка маркеров `DEBT(<id>)` в коде ↔ allowlist `app`/`core` в домене ↔ `debt.md` (red на рассинхроне в обе стороны; allowlist только уменьшается)
-- [ ] Task: Подтвердить `dependsOn` графа модулей (user ← course, questionnaire ← stream ← wish, peer-review) и порядок переноса; расхождение — вопрос пользователю
+- [x] Task: Подтвердить `dependsOn` графа модулей (user ← course, questionnaire ← stream ← wish, peer-review) и порядок переноса; расхождение — вопрос пользователю
 - [x] Task: Шаблон брифа `migrator` на модуль (в `debt.md` или треке): правила переноса, чеклист, формат записи долга
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: user (+ `User` из `app`)
 
