@@ -150,6 +150,12 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 - TDD: тест репозитория по образцу шаблона gen (save/findById round trip; устаревшая версия → `VersionConflict`; `create` с занятым uuid → `VersionConflict`, запись не изменена; битая запись → исключение, файл не изменён; legacy-запись без `updatedAt`/`version`, ISO без зоны — читается и сохраняется с `version: 1` после перехода) + каждый `find*`. Тест на `DB_DIR=./data/fixtures` — следующая задача, не сейчас.
 - Не трогать: `data/`, `packages/dmg-core`, `conductor/`. Тестов `wish` не меньше, чем до шага.
 
+**Шаг 6 — api-author** (только тесты `apps/u7-bot/tests/**`). `DB_DIR=./data/fixtures` — материализация мира `core-education` (`tests/worlds/materializer.ts`, `seed:fixtures`); тесты работают с её копией через `loadFixtures`/`createTestApp` (`tests/helpers/`). В `data/fixtures` и `data/` не писать.
+- Интеграционный тест (рядом с `tests/courses/wish-flow.integration.test.ts`, имя — по соседям): в копию `${fixtures.dbDir}/wish/wishes.json` кладётся **сырая** legacy-запись (`createdAt` — ISO-строка без зоны, без `updatedAt`/`version`) на курс мира; затем путь через приложение, как у соседних тестов (`appApi`/story — по образцу), например `cancel-wish` или `list-user-wishes`:
+  - чтение: запись видна (ISO разобран, `createdAt` — ожидаемое число);
+  - запись после перехода (`cancel-wish`): в сыром файле `createdAt`/`updatedAt` — числа, `version: 1`, статус `cancelled`; соседняя legacy-запись после записи файла тоже с числами (формат spec, TR-2) и не потеряна.
+- TDD: тест сначала запускается; если он зелёный сразу (поведение уже есть) — так и отметь в отчёте, без подгонки кода. Прод-код не меняется; если без его правки тест не проходит — эскалация.
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
@@ -288,3 +294,6 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ф6–7 шаг 5 — migrator (Sonnet)
 Готово, гейт и `check` зелёные (3401 pass). Порт `WishRepo = Repository<WishAr> & {…}` — `packages/wish/src/wish/wish.repo.ts` (`findById`, `findAllByUserAndTarget`, `findCurrentByUserAndTarget`, `findByUser`, `findAllByKind`); резолвер — `wish/wish.resolver.ts`, подпуть `@u7-scl/wish/wish`; доменный `wish/repo.ts` удалён. `infra/wish.json-repo.ts` по шаблону gen (`createLock`, `assertVersion`, строгий `v.parse`), `JsonFileRepo` ушёл. UC/ER работают с `WishAr`, `save(ar)`; `cancel-wish` — `ar.canCancel()` вместо сравнения статусов (то же условие). Тесты `wish`: 171 → 178; репозиторий 12 → 19 (конфликт версии, `create` с занятым uuid, битая запись, legacy → `version: 1`). Отклонения, принятые оркестратором: правлены адаптеры трёх тестов бота (`wish-flow.integration`, e2e `user-notify`, `wish-questionnaire`) — чтение через `snapshot()`, подготовка состояния через `restore`, сценарии прежние; тест репозитория написан после реализации (red не зафиксирован) — замечание для ревью фазы. TR-7, TR-2 дополнен.
+
+### Ф6–7 шаг 6 — api-author (Sonnet)
+Готово, `check` зелёный (3403 pass). `apps/u7-bot/tests/courses/wish-legacy-records.integration.test.ts` (2 теста) на копии мира `core-education`: две сырые legacy-записи (ISO без зоны, без `updatedAt`/`version`) — `list-user-wishes` их видит с числовым `createdAt`; `cancel-wish` через `apiApp.execute` — в файле целевая `cancelled`, `version: 1`, даты числа, соседняя не потеряна и тоже с числами. Прод-код не менялся. Red при первом запуске — из-за фикстуры агента (`…T10:00:00`, секунды без зоны схема не принимает). Сверка оркестратора: legacy писал даты `isoNow()` = `toISOString().slice(0, 16)` (`YYYY-MM-DDTHH:mm`), `F.timestamp` принимает его и полный ISO с зоной — риска для `data/wish` нет.

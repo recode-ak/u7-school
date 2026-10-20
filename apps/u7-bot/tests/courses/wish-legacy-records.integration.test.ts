@@ -1,0 +1,89 @@
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import type { User } from '@u7-scl/app/domain';
+import type { TestApp } from '@u7-scl/test-helpers/test-app';
+import { createTestApp } from '@u7-scl/test-helpers/test-app';
+
+/**
+ * Интеграционный тест чтения и перезаписи legacy-записей желаний:
+ * сырой файл `wish/wishes.json` (createdAt — ISO без зоны, без updatedAt и
+ * version) → приложение разбирает запись схемой state, а после перехода
+ * (cancel-wish) переписывает весь файл в формате spec (числа, version).
+ */
+describe('Wish: legacy-записи в wishes.json (интеграционный)', () => {
+  let app: TestApp;
+  let guest: User;
+
+  const INSTANT_COURSE_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  const OTHER_COURSE_ID = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+  const TARGET_UUID = '11111111-1111-4111-8111-111111111111';
+  const NEIGHBOR_UUID = '22222222-2222-4222-8222-222222222222';
+  const CREATED_ISO = '2026-03-01T10:00';
+  const NEIGHBOR_ISO = '2026-03-02T11:30';
+
+  let wishesPath: string;
+
+  beforeAll(async () => {
+    app = await createTestApp('wish-legacy-records');
+    guest = (await app.userFacade.getUserByTelegramId(1001))!;
+    wishesPath = `${app.fixtures.dbDir}/wish/wishes.json`;
+
+    // Сырые legacy-записи: без updatedAt/version, createdAt — ISO без зоны
+    await Bun.write(
+      wishesPath,
+      JSON.stringify([
+        {
+          uuid: TARGET_UUID,
+          userId: guest.uuid,
+          target: { kind: 'course', courseId: INSTANT_COURSE_ID },
+          status: 'expressed',
+          createdAt: CREATED_ISO,
+        },
+        {
+          uuid: NEIGHBOR_UUID,
+          userId: guest.uuid,
+          target: { kind: 'course', courseId: OTHER_COURSE_ID },
+          status: 'expressed',
+          createdAt: NEIGHBOR_ISO,
+        },
+      ]),
+    );
+  });
+
+  afterAll(async () => {
+    await app.cleanup();
+  });
+
+  const rawRows = async (): Promise<Array<Record<string, unknown>>> =>
+    JSON.parse(await Bun.file(wishesPath).text());
+
+  test('чтение: legacy-запись видна, ISO разобран в число', async () => {
+    const wishes = await app.apiApp.execute('list-user-wishes', {}, guest);
+
+    const wish = wishes.find((w) => w.uuid === TARGET_UUID);
+    expect(wish).toBeDefined();
+    expect(wish!.status).toBe('expressed');
+    expect(wish!.createdAt).toBe(new Date(CREATED_ISO).getTime());
+  });
+
+  test('cancel-wish: файл переписан в формате spec, соседняя запись не потеряна', async () => {
+    await app.apiApp.execute(
+      'cancel-wish',
+      { kind: 'course', courseId: INSTANT_COURSE_ID },
+      guest,
+    );
+
+    const rows = await rawRows();
+    expect(rows).toHaveLength(2);
+
+    const target = rows.find((r) => r.uuid === TARGET_UUID)!;
+    expect(target.status).toBe('cancelled');
+    expect(target.version).toBe(1);
+    expect(target.createdAt).toBe(new Date(CREATED_ISO).getTime());
+    expect(typeof target.updatedAt).toBe('number');
+
+    const neighbor = rows.find((r) => r.uuid === NEIGHBOR_UUID)!;
+    expect(neighbor.status).toBe('expressed');
+    expect(neighbor.createdAt).toBe(new Date(NEIGHBOR_ISO).getTime());
+    expect(typeof neighbor.updatedAt).toBe('number');
+  });
+});
