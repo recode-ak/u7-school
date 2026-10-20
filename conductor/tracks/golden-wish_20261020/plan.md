@@ -10,6 +10,7 @@
 
 - [ ] Task: Бриф среза `slices/wish.md`: границы, перечень Def и реализаций, сохраняемое поведение, ID правил, список файлов «было → станет» по [naming.md](../../architecture/naming.md); решение, нужен ли DCS/DQS (запрос `list-user-wishes` → DQS?); Job нет
 - [ ] Task: Зафиксировать базовую линию тестов (`bun test`: 3211 pass) и тестов `wish`
+- [ ] Task: Режим `--adopt` генератора для legacy-модуля: `gen module|aggregate … --adopt` создаёт недостающие файлы рядом с legacy, существующие (`index.ts`, `package.json`, `tsconfig.json`, `src/index.ts`) пропускает с подсказкой «Вставь вручную»; коллизия остальных файлов — по-прежнему ошибка; строка в naming.md §5
 - [ ] Task: Каркас гайда (шаблон по Ф4 спеки) в `conductor/architecture/guides/` и контрактный тест живости ссылок гайдов (в `check`); ссылка из `architecture/index.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
