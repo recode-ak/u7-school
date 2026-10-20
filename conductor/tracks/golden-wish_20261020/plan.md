@@ -20,7 +20,7 @@
 - [x] Task: Платформа: запись без `updatedAt` читается как `updatedAt = createdAt` (по образцу `version`, D-36) `9048034a`
 - [x] Task: Перенос структуры по naming.md (`wish/wish.state.ts`, вручную по шаблону gen), имена `WishState`/`WishTarget`/`WishStatus`, поля через `F.*`, `v.description()` на каждом поле; базовые поля и даты — Ф2 `65a148a2`
 - [x] Task: Гайд «state» `24259803`
-- [~] Task: Ревью reviewer → обзор
+- [x] Task: Ревью reviewer → обзор `2aaeb230` (VO с суффиксом `Vo` — решение Нурболата)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Агрегат (`defineAggregate` + Ar)
