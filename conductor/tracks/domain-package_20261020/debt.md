@@ -89,6 +89,18 @@
 - **Погашает:** `dmg-core-extract` / `golden-wish`
 - **Критерий снятия:** маркер `DEBT(D-22)` удалён, `module.ts` не импортирует `@u7-scl/app`
 
+### D-25: импорты `@u7-scl/core` в domain/peer-review
+- **Место:** `packages/domain/src/peer-review/**` (`review/{a-root,entity,errors,events}.ts`, `review-campaign/{a-root,entity,errors,events}.ts`, `*/commands/*-cmd.ts`, `errors.ts`; подпути `core/domain`, `core/shared`, `core/api`)
+- **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, ошибки, `isoNow`, `UcMeta` живут в `core`; механический перенос не меняет базовые классы. `core/api` (`UcMeta`) — подпуть платформы.
+- **Погашает:** `dmg-core-extract` (Ф4) и последующие треки перевода на Def
+- **Критерий снятия:** в `packages/domain/src/peer-review/**` нет маркеров `DEBT(D-25)` и импортов `@u7-scl/core`
+
+### D-26: импорт `@u7-scl/app/domain` в domain/peer-review/module.ts
+- **Место:** `packages/domain/src/peer-review/module.ts` (тип `U7ModuleResolver`)
+- **Причина:** тип резолвера модулей определён в `app` (см. D-2).
+- **Погашает:** `dmg-core-extract` / перевод `peer-review` на Def
+- **Критерий снятия:** маркер `DEBT(D-26)` удалён, `module.ts` не импортирует `@u7-scl/app`
+
 ## 2. Реэкспорты старых путей
 
 ### D-3: barrel `packages/user/src/domain/index.ts`
@@ -120,6 +132,12 @@
 - **Причина:** потребители импортируют `@u7-scl/wish/domain`; переписывать их не входит в трек.
 - **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
 - **Критерий снятия:** потребители импортируют `@u7-scl/domain/wish`; barrel удалён
+
+### D-27: barrel `packages/peer-review/src/domain/index.ts`
+- **Место:** `packages/peer-review/src/domain/index.ts`, `packages/peer-review/src/api/errors.ts` (если ошибки перенесены в домен)
+- **Причина:** потребители импортируют `@u7-scl/peer-review/domain` и `../errors`; переписывать их не входит в трек.
+- **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
+- **Критерий снятия:** потребители импортируют `@u7-scl/domain/peer-review`; barrel удалён
 
 ## 3. `User` в `app`
 
@@ -172,3 +190,15 @@
 - **Причина:** схема перенесена без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что D-5, D-9, D-14, D-19).
 - **Погашает:** `golden-wish` (перевод `wish` на Def, `F.timestamp`)
 - **Критерий снятия:** маркеры `DEBT(D-24)` и `biome-ignore` удалены, даты описаны через поля Def
+
+### D-28: `v.isoDateTime` в схеме domain/peer-review (DOM-12)
+- **Место:** `packages/domain/src/peer-review/shared/schema.ts` (`isoMinuteField`; `biome-ignore lint/plugin`)
+- **Причина:** схема перенесена без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что D-5, D-9, D-14, D-19, D-24).
+- **Погашает:** перевод `peer-review` на Def (`F.timestamp`)
+- **Критерий снятия:** маркеры `DEBT(D-28)` и `biome-ignore` удалены, даты описаны через поля Def
+
+### D-29: приватный метод `#validateText` в ReviewAr (CODE-02)
+- **Место:** `packages/domain/src/peer-review/review/a-root.ts` (`static #validateText`; `biome-ignore lint/plugin`)
+- **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
+- **Погашает:** перевод `peer-review` на Def (валидация текста — в Policy)
+- **Критерий снятия:** маркер `DEBT(D-29)` и `biome-ignore` удалены, метод вынесен по правилам

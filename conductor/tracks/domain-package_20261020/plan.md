@@ -41,7 +41,7 @@
 
 - [x] Task: `stream` (31 + 10): перенос по правилам, barrel, `contract`, долги  <!-- 45149ee0 -->
 - [x] Task: `wish` (13 + 4): перенос по правилам, barrel, `contract`, долги. Блок «Входной долг» для `golden-wish` (Ф4 спеки) — какие записи он обязан погасить
-- [ ] Task: `peer-review` (27 + 8): перенос по правилам, barrel, `contract`, долги
+- [x] Task: `peer-review` (27 + 8): перенос по правилам, barrel, `contract`, долги
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 ## Фаза 5: dossier, документация, передача контекста
