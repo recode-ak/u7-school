@@ -45,6 +45,6 @@
 
 ## 4. In-proc
 
-- **UI (бот)** — `appApi.run(uc, input, caller)` → `Result`; story обрабатывает `Err` по `code`, презентер решает, как показать.
+- **UI (бот)** — `appApi.run(uc, input, caller, meta)` → `Result`; story обрабатывает `Err` по `code`, презентер решает, как показать.
 - **Фасады** — синхронный вызов в процессе; возвращают `Result` и `ReadonlyAr`. При выносе модуля в сервис тот же контракт идёт по HTTP, агрегаты — снапшотом.
 - **CLI** (`scripts/call-uc.ts`) — тот же `appApi.run`.

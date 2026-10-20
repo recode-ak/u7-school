@@ -11,7 +11,7 @@
 - **Telegram Conversations:** @grammyjs/conversations
 - **Валидация данных:** Valibot
 - **Интеграция ИИ:** Google GenAI / Gemini
-- **Линтинг и форматирование:** Biome
+- **Линтинг и форматирование:** Biome; архитектурные правила — `noRestrictedImports` и GritQL-плагины (`biome-plugins/*.grit`)
 
 ## Агентная инфраструктура
 - **Среды:** Claude Code (основная), pi (внешний исполнитель) — процесс в `conductor/architecture/agents.md`

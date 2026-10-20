@@ -1,6 +1,6 @@
 # Манифесты
 
-**Назначение:** семейство `define*`, обязательные поля, граф и механизм проверки соответствия кода декларациям. API функций окончательно фиксируется в треке core (см. [migration.md](./migration.md)).
+**Назначение:** семейство `define*`, обязательные поля, граф и механизм проверки соответствия кода декларациям. Реализация — `packages/core/src/dmg` (импорт `@u7-scl/core/dmg`, внутри — `#dmg/*`); экспорты перечислены в `index.ts`.
 
 ---
 
@@ -10,7 +10,7 @@
 |---|---|---|
 | `defineModule` | domain | `name`, `label`, `description`, `dependsOn`, состав (агрегаты, UC, ER, Job, фасад) |
 | `defineFacade` | domain | runtime-API модуля: методы с `label`/`description`, вход, возврат (`Result`, `ReadonlyAr`), ошибки |
-| `defineAggregate` | domain | схема entity, статусы и переходы, группы событий и ошибок |
+| `defineAggregate` | domain | схема entity, статусы и переходы, группы событий и ошибок; класс `Aggregate` — база для Ar |
 | `defineEvents` | domain | группа событий агрегата: FQN-префикс `module.aggregate`, на событие — `label`, `description`, схема payload |
 | `defineErrors` | domain | группа ошибок агрегата: `code`, `kind`, `label`, `description`, схема payload |
 | `definePolicy` / `rule` | domain | именованные правила с `label` и `denyMessage`, композиция |
@@ -19,7 +19,7 @@
 | `defineJob` | domain (контракт) | `schedule`, `scans`, `emits` |
 | `defineUiApp` / `defineUiModule` / `defineStory` / `defineScreen` | ui (позже) | матрёшка UI — [ui-manifests.md](./ui-manifests.md) |
 
-Реализации подключают Def через базовые классы (`UseCaseFromDef`, `ReactionFromDef`, `JobFromDef`, модуль — карта `Def → класс`, типизированная Def: пропуск реализации — ошибка компиляции). Свойства Def в классах **не дублируются**.
+Реализации подключают Def через базовые классы (`UseCaseFromDef`, `ReactionFromDef`, `JobFromDef`, `ModuleFromDef` — карта `Def → класс`, типизированная Def: пропуск реализации — ошибка компиляции; фасад — `implementFacade`). Свойства Def в классах **не дублируются**.
 
 **Ссылки, не строки:** `on: StudentEvents.completed`, `errors: [StudentErrors.NOT_ACTIVE]`. Строковые имена (FQN) вычисляются для шины, логов и документации.
 
@@ -48,6 +48,8 @@
 Каскад «потянуть за верёвочку» (UI → UC → агрегат → событие → ER → …) проходит сквозь уровни и модули.
 
 ## 5. Декларация + верификация (D-12)
+
+Контрактные проверки — `bun run arch:check` (`archCheck`: `checkDefs`, `checkFiles`, граф `dependsOn`); каждое сообщение начинается с ID правила ([rules.md](./rules.md)).
 
 | Декларация | Проверка |
 |---|---|

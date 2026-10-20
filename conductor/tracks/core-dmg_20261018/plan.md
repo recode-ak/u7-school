@@ -127,10 +127,10 @@
 
 ## Фаза 6: Документация
 
-- [ ] Task: Зафиксировать API по факту: `manifests.md`, `errors-result.md`, `caller.md`, `testing.md` (`expectErr`, `now()`), `layers.md` (подпуть `dmg`)
-- [ ] Task: `rules.md` — проверки переведены из `review` в фактические `lint`/`test`; убрать «до трека core всё фактически review»
-- [ ] Task: `decisions.md` — новые решения (подпуть `@u7-scl/core/dmg` и его переименование после legacy, прочие по ходу); `tech-stack.md` — GritQL-плагины biome
-- [ ] Task: `migration.md` — трек 1 отмечен; что разблокировано (generators, golden-wish)
+- [x] Task: Зафиксировать API по факту: `manifests.md`, `errors-result.md`, `caller.md`, `testing.md` (`expectErr`, `now()`), `layers.md` (подпуть `dmg`)
+- [x] Task: `rules.md` — проверки переведены из `review` в фактические `lint`/`test`; убрать «до трека core всё фактически review»
+- [x] Task: `decisions.md` — новые решения (подпуть `@u7-scl/core/dmg` и его переименование после legacy, прочие по ходу); `tech-stack.md` — GritQL-плагины biome
+- [x] Task: `migration.md` — трек 1 отмечен; что разблокировано (generators, golden-wish)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
 ## Фаза 7: Вынос платформы в `dmg-core`
