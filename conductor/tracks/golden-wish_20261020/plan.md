@@ -33,19 +33,15 @@
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 2' (автономно, workflow.md)
 
-## Фаза 3: События (`defineEvents`)
+## Фаза 3–4: События и ошибки (`defineEvents`, `defineErrors`)
+
+> Объединены ради экономии: один прогон reviewer, одна контрольная точка; гайды — по видам.
 
 - [ ] Task: `WishEvents` (FQN по модулю и агрегату, прошедшее время), схемы payload; перевод потребителей событий
-- [ ] Task: Гайд «events»
-- [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
-- [ ] Task: Контрольная точка 'Фаза 3' (автономно, workflow.md)
-
-## Фаза 4: Ошибки (`defineErrors`)
-
 - [ ] Task: `WishErrors` с кодами `WISH_*`, `kind`, схемой payload; замена `throw*` на ошибки `Result`
-- [ ] Task: Гайд «errors»
+- [ ] Task: Гайды «events» и «errors»
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
-- [ ] Task: Контрольная точка 'Фаза 4' (автономно, workflow.md)
+- [ ] Task: Контрольная точка 'Фаза 3–4' (автономно, workflow.md)
 
 ## Фаза 5: Policy (`definePolicy` / `rule`)
 
@@ -56,21 +52,17 @@
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 5' (автономно, workflow.md)
 
-## Фаза 6: Репозиторий и сервисы (Repo, DCS/DQS)
+## Фаза 6–7: Репозиторий, сервисы и фасад (Repo, DCS/DQS, `defineFacade`)
+
+> Объединены ради экономии: один прогон reviewer, одна контрольная точка; гайды — по видам.
 
 - [ ] Task: Платформа по ревью приёмки (`slices/wish.md`, «Приёмка правок платформы»): `assertVersion` отличает новый агрегат от записи версии 0 (create с занятым uuid — конфликт, legacy-записи `data/wish` без `version` не перезаписываются); поведение событий записанных агрегатов при `VERSION_CONFLICT` — исправить или описать в errors-result.md §3
 - [ ] Task: Порт `WishRepo` на Ar/`Result`, `WishJsonRepo` с `F.timestamp` (чтение строки и числа), UoW; DQS для чтения списка, если решено в Фазе 0
 - [ ] Task: Тест репозитория на `DB_DIR=./data/fixtures`: ISO-строка читается, число пишется
-- [ ] Task: Гайд «repo / dcs / dqs»
-- [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
-- [ ] Task: Контрольная точка 'Фаза 6' (автономно, workflow.md)
-
-## Фаза 7: Фасад (`defineFacade`)
-
 - [ ] Task: `WishFacadeDef` + `implementFacade`; `Result` и `ReadonlyAr`, без `try/catch` по `kind` и `as`
-- [ ] Task: Гайд «facade»
+- [ ] Task: Гайды «repo / dcs / dqs» и «facade»
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
-- [ ] Task: Контрольная точка 'Фаза 7' (автономно, workflow.md)
+- [ ] Task: Контрольная точка 'Фаза 6–7' (автономно, workflow.md)
 
 ## Фаза 8: Use Case — эталон (`create-course-wish`)
 
