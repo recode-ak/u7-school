@@ -80,3 +80,19 @@ infra/<aggregate>.json-repo.ts
 | Приватное | TS `private` / `protected`; `#private` запрещён | см. [typescript.md](./typescript.md) |
 
 Отсутствие значения — `undefined`, не `null`.
+
+## 5. Генераторы
+
+`bun run gen <вид> <модуль>[.<агрегат>] [<имя>] [--write]` создаёт файлы по §2–§4. Без `--write` — dry-run (печатает план). Существующие файлы не перезаписываются: коллизия — ошибка и ничего не записано.
+
+| Команда | Что создаёт |
+|---|---|
+| `gen module <m>` | домен: `<m>.module.ts`, `<m>.facade.ts`, `index.ts`, тест; прикладной пакет (для нового — `package.json`, `tsconfig.json`, `src/index.ts`), `<m>.module.ts`, фасад, тест |
+| `gen aggregate <m>.<a>` | домен: state, events, errors, Ar, Policy и тесты; прикладной слой: `<a>.repo.ts`, `infra/<a>.json-repo.ts` и тест |
+| `gen uc\|er\|job <m>.<a> <имя>` | пара: контракт в домене и реализация в `packages/<m>/src/<a>/<вид>/` по тому же относительному пути, плюс тесты |
+| `gen dcs\|dqs <m> <имя>` | сервис в домене с тестом |
+
+Генератор правит существующие файлы только по маркерам: `// gen:exports` (`index.ts`), `// gen:defs:imports\|aggregates\|useCases\|reactions\|jobs` (паспорт модуля), `// gen:deps` (`Deps` прикладного модуля). Нет файла или маркера — команда печатает строку «Вставь вручную …» и не падает. Заготовки содержат `TODO` (названия, описания, схемы): их заполняет автор; тесты прикладного слоя подставляют репозитории вручную.
+
+Опции `--domain-root` и `--packages-root` меняют корни (по умолчанию `packages/domain/src` и `packages`).
+
