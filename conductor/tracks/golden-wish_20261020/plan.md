@@ -47,8 +47,8 @@
 
 > После ошибок: `denyMessage` и ошибки Policy ссылаются на `WishErrors`.
 
-- [ ] Task: `WishPolicy` правилами с `label` и `denyMessage` (только права, `canCancel`); правило «не более одного активного wish на (user, target)» — DCS с `Result` `WISH_ALREADY_EXISTS`, `isActive` — метод Ar (бриф §Ф5, вопрос 7, вариант A)
-- [ ] Task: Гайд «policy»
+- [x] Task: `WishPolicy` правилами с `label` и `denyMessage` (только права, `canCancel`); правило «не более одного активного wish на (user, target)» — DCS с `Result` `WISH_ALREADY_EXISTS`, `isActive` — метод Ar (бриф §Ф5, вопрос 7, вариант A) `dea81f8`
+- [~] Task: Гайд «policy»
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 5' (автономно, workflow.md)
 
