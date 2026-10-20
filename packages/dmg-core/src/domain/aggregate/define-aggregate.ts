@@ -1,6 +1,9 @@
 import type * as v from 'valibot';
 import type { AnyErrorDef } from '#core/kernel/errors/define-errors';
-import type { BaseEntityFields } from '#core/kernel/fields/fields';
+import {
+  type BaseEntityFields,
+  withEntityDefaults,
+} from '#core/kernel/fields/fields';
 import type { AnyEventDef } from '../events/define-events';
 
 /** Поля, без которых нет entity, — выводятся из `BaseEntityFields`. */
@@ -81,11 +84,17 @@ export type AnyAggregateDef = AggregateSpec & {
 /**
  * Манифест агрегата: схема entity, статусы и переходы (если в состоянии есть
  * `status`, статусы обязаны покрыть все его значения, а отказы перехода — все
- * статусы вне `from`), группы событий и ошибок.
+ * статусы вне `from`), группы событий и ошибок. `state` Def читает запись
+ * без `updatedAt` как `updatedAt = createdAt` (`withEntityDefaults`).
  */
 export function defineAggregate<
   const S extends StateSchema,
   const A extends AggregateSpec<S>,
 >(spec: A & AggregateSpec<S> & RejectsComplete<A>): AggregateDef<A> {
-  return { ...spec, dmg: 'aggregate' };
+  // Через `Object.assign`: спред generic-`A` с переопределённым `state` TS
+  // не сводит к `AggregateDef<A>`.
+  const def: AggregateDef<A> = { ...spec, dmg: 'aggregate' };
+  return Object.assign(def, {
+    state: withEntityDefaults<A['state']>(def.state),
+  });
 }

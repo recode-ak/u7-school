@@ -154,6 +154,13 @@ describe('defineAggregate', () => {
     expect(TaskArDef.errors).toBe(TaskErrors);
   });
 
+  it('state Def читает запись без updatedAt как updatedAt = createdAt', () => {
+    const { updatedAt: _, ...legacy } = stored('open');
+    expect(v.parse(TaskArDef.state, legacy).updatedAt).toBe(T0);
+    expect(v.parse(TaskArDef.state, stored('open')).updatedAt).toBe(T0);
+    expect(TaskArDef.state.entries).toBe(TaskState.entries);
+  });
+
   it('статусы обязаны покрыть все значения `status` состояния', () => {
     defineAggregate({
       name: 'task',
@@ -291,6 +298,11 @@ describe('Aggregate', () => {
     it('снимок без версии (данные до D-36) читается как версия 0', () => {
       const { version: _, ...legacy } = stored('open');
       expect(TaskAr.restore(legacy as never).version).toBe(0);
+    });
+
+    it('снимок без updatedAt (legacy до первой мутации) — updatedAt = createdAt', () => {
+      const { updatedAt: _, ...legacy } = { ...stored('open'), createdAt: T1 };
+      expect(TaskAr.restore(legacy as never).snapshot().updatedAt).toBe(T1);
     });
 
     it('каждая мутация увеличивает версию; сохранённая — версия при загрузке', () => {

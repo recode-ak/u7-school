@@ -70,3 +70,57 @@ export const BaseEntityFields = {
   updatedAt: timestamp('изменения'),
   version: version(),
 };
+
+/**
+ * Значения `BaseEntityFields`, зависящие от соседних полей: запись без
+ * `updatedAt` (legacy: поле появлялось с первой мутацией) читается как
+ * `updatedAt = createdAt`. Поле само соседей не видит, поэтому фолбэк —
+ * на уровне схемы state; тип вывода и DOM-11 не меняются. Возвращает копию:
+ * вид, поля и JSON Schema — как у исходной, меняется только разбор.
+ *
+ * Производные схемы (`v.pipe`, `v.array`, `v.pick`, `v.omit`, `v.partial`)
+ * фолбэк наследуют: исходный разбор идёт с `this` производной схемы, и
+ * `updatedAt` подставляется, только если оно есть среди её `entries`.
+ *
+ * Ограничения: копия не равна исходной (`def.state !== spec.state`);
+ * схема, собранная заново из полей (`v.object({ ...state.entries })`),
+ * фолбэк теряет — разбирать сырые данные нужно самой копией.
+ */
+export function withEntityDefaults<S extends v.GenericSchema>(schema: S): S {
+  const original = schema['~run'];
+  const derived: S = {
+    ...schema,
+    '~run'(dataset, config) {
+      const value = hasUpdatedAt(this)
+        ? fillUpdatedAt(dataset.value)
+        : dataset.value;
+      return original.call(this, { ...dataset, value }, config);
+    },
+  };
+  return {
+    ...derived,
+    '~standard': {
+      ...schema['~standard'],
+      validate: (value: unknown) =>
+        derived['~run']({ value }, v.getGlobalConfig()) as ReturnType<
+          S['~standard']['validate']
+        >,
+    },
+  };
+}
+
+/** Есть ли `updatedAt` среди полей схемы; у схем без `entries` — да. */
+function hasUpdatedAt(schema: object): boolean {
+  if (!('entries' in schema)) return true;
+  const { entries } = schema;
+  return (
+    typeof entries === 'object' && entries !== null && 'updatedAt' in entries
+  );
+}
+
+function fillUpdatedAt(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null) return value;
+  if (!('createdAt' in value) || value.createdAt === undefined) return value;
+  if ('updatedAt' in value && value.updatedAt !== undefined) return value;
+  return { ...value, updatedAt: value.createdAt };
+}
