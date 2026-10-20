@@ -25,13 +25,13 @@
 - [x] Task: Ревью reviewer → обзор `2aaeb230` (VO с суффиксом `Vo` — решение Нурболата)
 - [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
-## Фаза 2: Агрегат (`defineAggregate` + Ar)
+## Фаза 2: Агрегат (`defineAggregate` + Ar) [checkpoint: 9674e0b0]
 
 - [x] Task: State на `BaseEntityFields` + `F.timestamp` (DEBT-24) вместе с `WishArDef`; legacy-репозиторий разбирает `WishArDef.state` (фолбэк `updatedAt`, иначе `JsonFileRepo` теряет записи без `updatedAt`) — тест на legacy-записи (ISO без зоны, без `updatedAt`/`version`); гайд «state» дополнить `8353be9` (гайд — в задаче «Гайд «aggregate»»)
 - [x] Task: `WishArDef`: статусы и переходы двух веток; `WishAr.create(): Result`, `restore()`, `snapshot()` только для репозитория; переходы `confirm/abandon/cancel/fulfill` возвращают `Result`; убрать `safeUpdate`/`throwBadRequest` и импорты `core` `8353be9`
 - [x] Task: Гайд «aggregate» `ce7e32e`
-- [~] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
-- [ ] Task: Контрольная точка 'Фаза 2' (автономно, workflow.md)
+- [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `e558b5c`
+- [x] Task: Контрольная точка 'Фаза 2' (автономно, workflow.md)
 
 ## Фаза 3–4: События и ошибки (`defineEvents`, `defineErrors`)
 
