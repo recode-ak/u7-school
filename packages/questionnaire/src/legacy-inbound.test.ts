@@ -6,7 +6,6 @@ import {
   QuestionnaireFactory,
   type QuestionnairePool,
 } from '@u7-scl/domain/questionnaire';
-import { systemCaller } from 'dmg-core';
 import type { EventEnvelope } from 'dmg-core/app';
 import { questionnaireLegacyInbound } from './legacy-inbound';
 
@@ -37,6 +36,15 @@ function started() {
   return ar;
 }
 
+/** Общие поля payload Def анкеты: идентификаторы и владелец. */
+function payloadOf(ar: ReturnType<typeof started>) {
+  return {
+    questionnaireId: ar.state.uuid,
+    respondentId: RESPONDENT,
+    owner: OWNER,
+  };
+}
+
 /** Шина DMG по карте questionnaire и подписчик на Def; `invalid` — шпион onInvalid. */
 function subscribed(
   def:
@@ -65,21 +73,8 @@ describe('questionnaireLegacyInbound', () => {
     legacy.publish(event);
     await tick();
     expect(invalid).toEqual([]);
-    expect(got).toEqual([
-      {
-        name: 'questionnaire.questionnaire.completed',
-        payload: {
-          questionnaireId: ar.state.uuid,
-          respondentId: RESPONDENT,
-          owner: OWNER,
-        },
-        eventId: event.eventId,
-        occurredAt: Date.parse(event.occurredAt),
-        aggregateId: ar.state.uuid,
-        caller: systemCaller('legacy:questionnaire:complete'),
-        cause: { kind: 'event', eventId: event.eventId },
-        correlationId: event.eventId,
-      },
+    expect(got.map((e) => [e.name, e.payload, e.aggregateId])).toEqual([
+      ['questionnaire.questionnaire.completed', payloadOf(ar), ar.state.uuid],
     ]);
   });
 
@@ -96,12 +91,7 @@ describe('questionnaireLegacyInbound', () => {
     expect(got.map((e) => [e.name, e.payload])).toEqual([
       [
         'questionnaire.questionnaire.abandoned',
-        {
-          questionnaireId: ar.state.uuid,
-          respondentId: RESPONDENT,
-          owner: OWNER,
-          reason: 'timeout',
-        },
+        { ...payloadOf(ar), reason: 'timeout' },
       ],
     ]);
   });

@@ -117,7 +117,9 @@
       "dependencies": {
         "@u7-scl/app": "workspace:*",
         "@u7-scl/core": "workspace:*",
+        "@u7-scl/domain": "workspace:*",
         "@u7-scl/user": "workspace:*",
+        "dmg-core": "workspace:*",
       },
     },
     "packages/stream": {
@@ -127,7 +129,9 @@
         "@u7-scl/app": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/course": "workspace:*",
+        "@u7-scl/domain": "workspace:*",
         "@u7-scl/user": "workspace:*",
+        "dmg-core": "workspace:*",
         "valibot": "^1.0.0",
       },
     },

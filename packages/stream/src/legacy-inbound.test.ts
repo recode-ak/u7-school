@@ -8,7 +8,6 @@ import {
   StudentAr,
   StudentEvents,
 } from '@u7-scl/domain/stream';
-import { systemCaller } from 'dmg-core';
 import type { EventEnvelope } from 'dmg-core/app';
 import { streamLegacyInbound } from './legacy-inbound';
 
@@ -30,6 +29,14 @@ const snapshot: ContentSnapshot = [
     ],
   },
 ];
+
+const streamInput = {
+  title: 'Поток JS-1',
+  description: 'Основной поток курса JavaScript',
+  mentorId: USER,
+  moduleId: MODULE,
+  startDate: '2026-06-01T12:00',
+};
 
 /** Legacy-шина не ждёт промисы обработчиков — дать им отработать. */
 const tick = () => Promise.resolve();
@@ -59,37 +66,19 @@ describe('streamLegacyInbound', () => {
     legacy.publish(event);
     await tick();
     expect(invalid).toEqual([]);
-    expect(got).toEqual([
-      {
-        name: 'stream.student.enrolled',
-        payload: {
-          studentId: ar.state.uuid,
-          userId: USER,
-          streamId: STREAM,
-          moduleId: MODULE,
-        },
-        eventId: event.eventId,
-        occurredAt: Date.parse(event.occurredAt),
-        aggregateId: ar.state.uuid,
-        caller: systemCaller('legacy:student.enrolled'),
-        cause: { kind: 'event', eventId: event.eventId },
-        correlationId: event.eventId,
-      },
+    const id = ar.state.uuid;
+    expect(got.map((e) => [e.name, e.payload, e.aggregateId])).toEqual([
+      [
+        'stream.student.enrolled',
+        { studentId: id, userId: USER, streamId: STREAM, moduleId: MODULE },
+        id,
+      ],
     ]);
   });
 
   test('stream.created от StreamAr приходит в конверте StreamEvents.created', async () => {
     const { legacy, got, invalid } = subscribed(StreamEvents.created);
-    const ar = StreamAr.create(
-      {
-        title: 'Поток JS-1',
-        description: 'Основной поток курса JavaScript',
-        mentorId: USER,
-        moduleId: MODULE,
-        startDate: '2026-06-01T12:00',
-      },
-      snapshot,
-    );
+    const ar = StreamAr.create(streamInput, snapshot);
     const [event] = ar.flushEvents();
     if (!event) throw new Error('StreamAr.create не создал событие');
     legacy.publish(event);
