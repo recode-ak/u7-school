@@ -65,6 +65,18 @@
 - **Погашает:** `dmg-core-extract` / перевод `questionnaire` на Def
 - **Критерий снятия:** маркер `DEBT(D-12)` удалён, `module.ts` не импортирует `@u7-scl/app`
 
+### D-16: импорты `@u7-scl/core` в domain/stream
+- **Место:** `packages/domain/src/stream/**` (`stream-ds.ts`, `{stream,student}/{a-root,entity,events}.ts`, `{stream,student}/commands/*-cmd.ts`; подпути `core/domain`, `core/shared`, `core/api`)
+- **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `errConflict`, `throwError`, `isoNow`, `now`, `UcMeta` живут в `core`; механический перенос не меняет базовые классы. `core/api` (`UcMeta`) — подпуть платформы, не входивший в долги user/course/questionnaire.
+- **Погашает:** `dmg-core-extract` (Ф4) и последующие треки перевода на Def
+- **Критерий снятия:** в `packages/domain/src/stream/**` нет маркеров `DEBT(D-16)` и импортов `@u7-scl/core`
+
+### D-17: импорты `@u7-scl/app/domain` в domain/stream
+- **Место:** `packages/domain/src/stream/module.ts` (тип `U7ModuleResolver`), `stream/stream/a-root.ts` (константа `U7_SCHOOL_ID`)
+- **Причина:** `U7ModuleResolver` и `U7_SCHOOL_ID` определены в `app` (см. D-2).
+- **Погашает:** `dmg-core-extract` / перевод `stream` на Def
+- **Критерий снятия:** маркер `DEBT(D-17)` удалён, перенесённые файлы не импортируют `@u7-scl/app`
+
 ## 2. Реэкспорты старых путей
 
 ### D-3: barrel `packages/user/src/domain/index.ts`
@@ -84,6 +96,12 @@
 - **Причина:** потребители импортируют `@u7-scl/questionnaire/domain`; переписывать их не входит в трек.
 - **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
 - **Критерий снятия:** потребители импортируют `@u7-scl/domain/questionnaire`; barrel удалён
+
+### D-18: barrel `packages/stream/src/domain/index.ts`
+- **Место:** `packages/stream/src/domain/index.ts`, `packages/stream/src/api/errors.ts` (ошибки перенесены в `domain/stream/errors.ts`, т.к. домен импортировал их из api)
+- **Причина:** потребители импортируют `@u7-scl/stream/domain` и `../errors`; переписывать их не входит в трек.
+- **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
+- **Критерий снятия:** потребители импортируют `@u7-scl/domain/stream`; barrel удалён
 
 ## 3. `User` в `app`
 
@@ -118,3 +136,15 @@
 - **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
 - **Погашает:** перевод `questionnaire` на Def (логика — в Policy/DQS)
 - **Критерий снятия:** маркеры `DEBT(D-15)` и `biome-ignore` удалены, методы вынесены по правилам
+
+### D-19: `v.isoDateTime` в схемах domain/stream (DOM-12)
+- **Место:** `packages/domain/src/stream/{stream,student}/entity.ts` (9 мест; `biome-ignore lint/plugin`)
+- **Причина:** схемы перенесены без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что D-5, D-9, D-14).
+- **Погашает:** перевод `stream` на Def (`F.timestamp`)
+- **Критерий снятия:** маркеры `DEBT(D-19)` и `biome-ignore` удалены, даты описаны через поля Def
+
+### D-20: приватные методы `#…` в StudentAr (CODE-02)
+- **Место:** `packages/domain/src/stream/student/a-root.ts` (2 метода; `biome-ignore lint/plugin`)
+- **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
+- **Погашает:** перевод `stream` на Def (логика — в Policy/DQS)
+- **Критерий снятия:** маркеры `DEBT(D-20)` и `biome-ignore` удалены, методы вынесены по правилам

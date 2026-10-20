@@ -39,7 +39,7 @@
 
 > Заметки к старту (по итогам Ф3): следующие ID долга — с D-16. Образцы брифов — `slices/course.md`, `slices/questionnaire.md`. Порядок: `stream` → `wish` → `peer-review` (peer-review зависит от stream). Замеры до переноса (`bun test packages/<m>/src/domain`): `stream` — 220 pass, 10 тест-файлов, 31 файл кода; `wish` — 40 pass, 4, 13; `peer-review` — 99 pass, 8, 27. Импорты: `stream` — `core/api` ×13 (новый подпуть: тоже D-<n>), `core/domain|shared`, `app/domain` ×3, `course/domain` ×12 и `user/domain` ×6 (→ `@u7-scl/domain/<dep>`), алиасы `#domain-legacy/stream/policy`, `#domain-legacy/status`; `wish` — `course|questionnaire|user|stream/domain` (→ `@u7-scl/domain/<dep>`), `core/domain|shared`, `app/domain`; `peer-review` — `core/api` ×7, `core/domain|shared`, `user`, `stream`, `app/domain`. Каждый долг ставит оркестратор до вызова агента; линтерные нарушения (DOM-12 `v.isoDateTime`, CODE-02 `#private`) мигратор помечает `biome-ignore … (долг не заведён)`, оркестратор заменяет на `DEBT(D-<n>)`. Маркер многострочного импорта — комментарием в конце строки `from`. После агента удалять пустые каталоги в старом `domain`. Правка `biome.json` (`!@u7-scl/domain/**`) уже сделана в Ф3.
 
-- [ ] Task: `stream` (31 + 10): перенос по правилам, barrel, `contract`, долги
+- [x] Task: `stream` (31 + 10): перенос по правилам, barrel, `contract`, долги  <!-- 45149ee0 -->
 - [ ] Task: `wish` (13 + 4): перенос по правилам, barrel, `contract`, долги. Блок «Входной долг» для `golden-wish` (Ф4 спеки) — какие записи он обязан погасить
 - [ ] Task: `peer-review` (27 + 8): перенос по правилам, barrel, `contract`, долги
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
