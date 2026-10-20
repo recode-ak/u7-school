@@ -1,8 +1,8 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Lesson } from '#domain-legacy/lesson/entity';
-import { Status } from '#domain-legacy/status';
+import type { Lesson } from '@u7-scl/domain/course';
+import { Status } from '@u7-scl/domain/course';
 import { LessonJsonRepo } from './lesson-json-repo';
 
 const tmpDir = mkdtempSync('/tmp/lesson-repo-test-');

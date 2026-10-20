@@ -1,7 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { Course } from '#domain-legacy/course/entity';
-import type { CourseApiModuleResolver } from '#domain-legacy/module';
-import { Status } from '#domain-legacy/status';
+import type { Course, CourseApiModuleResolver } from '@u7-scl/domain/course';
+import { Status } from '@u7-scl/domain/course';
 import { WhichCoursesIncludeModuleUc } from './which-courses-include-module-uc';
 
 const moduleId = '33333333-3333-4333-8333-333333333333';

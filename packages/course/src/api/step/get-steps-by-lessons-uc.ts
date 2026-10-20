@@ -1,14 +1,12 @@
 import type { User } from '@u7-scl/app/domain';
-import * as v from 'valibot';
-import type { LessonRepo } from '#domain-legacy/lesson/repo';
+import type { LessonRepo, Step, StepRepo } from '@u7-scl/domain/course';
 import {
   type GetStepsByLessonsCmd,
   type GetStepsByLessonsCmdMeta,
   GetStepsByLessonsCmdSchema,
   type StepsByLesson,
-} from '#domain-legacy/step/commands/get-steps-by-lessons-cmd';
-import type { Step } from '#domain-legacy/step/entity';
-import type { StepRepo } from '#domain-legacy/step/repo';
+} from '@u7-scl/domain/course';
+import * as v from 'valibot';
 import { CourseUseCase } from '../course-uc';
 
 /**

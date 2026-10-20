@@ -1,13 +1,13 @@
 import type { User } from '@u7-scl/app/domain';
-import * as v from 'valibot';
+import type { Course } from '@u7-scl/domain/course';
 import {
+  CourseDs,
+  CourseSchema,
   type GetCourseByModuleCmd,
   type GetCourseByModuleCmdMeta,
   GetCourseByModuleCmdSchema,
-} from '#domain-legacy/course/commands/get-course-by-module-cmd';
-import type { Course } from '#domain-legacy/course/entity';
-import { CourseSchema } from '#domain-legacy/course/entity';
-import { CourseDs } from '#domain-legacy/course-ds';
+} from '@u7-scl/domain/course';
+import * as v from 'valibot';
 import { CourseUseCase } from '../course-uc';
 
 /**

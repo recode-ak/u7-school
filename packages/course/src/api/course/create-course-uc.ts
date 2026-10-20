@@ -1,13 +1,13 @@
 import type { User } from '@u7-scl/app/domain';
-import { CourseAr } from '#domain-legacy/course/a-root';
+import type { Course } from '@u7-scl/domain/course';
 import {
+  CourseAr,
+  CoursePolicy,
+  CourseSchema,
   type CreateCourseCmd,
   type CreateCourseCmdMeta,
   CreateCourseCmdSchema,
-} from '#domain-legacy/course/commands/create-course-cmd';
-import type { Course } from '#domain-legacy/course/entity';
-import { CourseSchema } from '#domain-legacy/course/entity';
-import { CoursePolicy } from '#domain-legacy/course/policy';
+} from '@u7-scl/domain/course';
 import { CourseUseCase } from '../course-uc';
 
 /**

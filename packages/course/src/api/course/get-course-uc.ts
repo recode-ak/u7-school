@@ -1,13 +1,12 @@
 import type { User } from '@u7-scl/app/domain';
 import { errNotFound } from '@u7-scl/core/domain';
-import type { CourseNotFoundUcError } from '#domain-legacy/course/commands/errors';
+import type { Course, CourseNotFoundUcError } from '@u7-scl/domain/course';
 import {
+  CourseSchema,
   type GetCourseCmd,
   type GetCourseCmdMeta,
   GetCourseCmdSchema,
-} from '#domain-legacy/course/commands/get-course-cmd';
-import type { Course } from '#domain-legacy/course/entity';
-import { CourseSchema } from '#domain-legacy/course/entity';
+} from '@u7-scl/domain/course';
 import { CourseUseCase } from '../course-uc';
 
 /**

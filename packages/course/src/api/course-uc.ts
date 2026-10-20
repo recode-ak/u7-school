@@ -1,17 +1,15 @@
 import { U7UseCase, type User } from '@u7-scl/app/domain';
 import type { UcMeta } from '@u7-scl/core/api';
 import { errAccessDenied, errNotFound } from '@u7-scl/core/domain';
-import { LessonAr } from '#domain-legacy/lesson/a-root';
-import type { Lesson } from '#domain-legacy/lesson/entity';
-import type { CourseApiModuleResolver } from '#domain-legacy/module';
-import { ModuleAr } from '#domain-legacy/module/a-root';
 import type {
+  CourseApiModuleResolver,
+  Lesson,
+  Module,
   ModuleAccessDeniedUcError,
   ModuleNotFoundUcError,
-} from '#domain-legacy/module/commands/errors';
-import type { Module } from '#domain-legacy/module/entity';
-import { StepAr } from '#domain-legacy/step/a-root';
-import type { Step } from '#domain-legacy/step/entity';
+  Step,
+} from '@u7-scl/domain/course';
+import { LessonAr, ModuleAr, StepAr } from '@u7-scl/domain/course';
 
 /**
  * Базовый класс для всех use-case'ов модуля курсов.

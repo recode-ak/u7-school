@@ -37,13 +37,13 @@ import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app/domain';
 import { ApiApp } from '@u7-scl/core/api';
 import type { AppMeta } from '@u7-scl/core/domain';
 import { type Logger, LogLevel } from '@u7-scl/core/shared';
+import type { CourseApiModuleMeta } from '@u7-scl/domain/course';
 import type { UserApiModuleMeta } from '@u7-scl/domain/user';
 import {
   InProcEventBus,
   InProcJobScheduler,
 } from '../packages/core/src/infra/index.ts';
 import { CourseApiModule } from '../packages/course/src/api/module.ts';
-import type { CourseApiModuleMeta } from '../packages/course/src/domain/module.ts';
 import { CourseJsonRepo } from '../packages/course/src/infra/db/course-json-repo.ts';
 import { LessonJsonRepo } from '../packages/course/src/infra/db/lesson-json-repo.ts';
 import { ModuleJsonRepo } from '../packages/course/src/infra/db/module-json-repo.ts';

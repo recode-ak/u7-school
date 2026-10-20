@@ -1,7 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { Course } from '#domain-legacy/course/entity';
-import type { CourseApiModuleResolver } from '#domain-legacy/module';
-import { Status } from '#domain-legacy/status';
+import type { Course, CourseApiModuleResolver } from '@u7-scl/domain/course';
+import { Status } from '@u7-scl/domain/course';
 import { ListCoursesUc } from './list-courses-uc';
 
 function makeCourse(overrides: Partial<Course> = {}): Course {

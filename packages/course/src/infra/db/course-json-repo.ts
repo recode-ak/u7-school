@@ -1,7 +1,10 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type { Course } from '#domain-legacy/course/entity';
-import { CourseSchema } from '#domain-legacy/course/entity';
-import type { CourseListFilter, CourseRepo } from '#domain-legacy/course/repo';
+import type {
+  Course,
+  CourseListFilter,
+  CourseRepo,
+} from '@u7-scl/domain/course';
+import { CourseSchema } from '@u7-scl/domain/course';
 
 /**
  * JSON-файловая реализация репозитория курсов.

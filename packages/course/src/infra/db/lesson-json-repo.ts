@@ -1,7 +1,6 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type { Lesson } from '#domain-legacy/lesson/entity';
-import { LessonSchema } from '#domain-legacy/lesson/entity';
-import type { LessonRepo } from '#domain-legacy/lesson/repo';
+import type { Lesson, LessonRepo } from '@u7-scl/domain/course';
+import { LessonSchema } from '@u7-scl/domain/course';
 
 /**
  * JSON-реализация репозитория уроков.

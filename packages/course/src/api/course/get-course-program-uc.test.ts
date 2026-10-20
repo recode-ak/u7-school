@@ -1,9 +1,11 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { Course } from '#domain-legacy/course/entity';
-import type { Lesson } from '#domain-legacy/lesson/entity';
-import type { CourseApiModuleResolver } from '#domain-legacy/module';
-import type { Module } from '#domain-legacy/module/entity';
-import { Status } from '#domain-legacy/status';
+import type {
+  Course,
+  CourseApiModuleResolver,
+  Lesson,
+  Module,
+} from '@u7-scl/domain/course';
+import { Status } from '@u7-scl/domain/course';
 import { GetCourseProgramUc } from './get-course-program-uc';
 
 const courseId = '44444444-4444-4444-8444-444444444444';

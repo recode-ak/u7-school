@@ -1,15 +1,17 @@
 import type { User } from '@u7-scl/app/domain';
 import { errNotFound } from '@u7-scl/core/domain';
-import { LessonAr } from '#domain-legacy/lesson/a-root';
-import type { LessonNotFoundUcError } from '#domain-legacy/lesson/commands/errors';
+import type {
+  Lesson,
+  LessonNotFoundUcError,
+  LessonRepo,
+} from '@u7-scl/domain/course';
 import {
   type GetLessonCmd,
   type GetLessonCmdMeta,
   GetLessonCmdSchema,
-} from '#domain-legacy/lesson/commands/get-lesson-cmd';
-import type { Lesson } from '#domain-legacy/lesson/entity';
-import { LessonSchema } from '#domain-legacy/lesson/entity';
-import type { LessonRepo } from '#domain-legacy/lesson/repo';
+  LessonAr,
+  LessonSchema,
+} from '@u7-scl/domain/course';
 import { CourseUseCase } from '../course-uc';
 
 /**

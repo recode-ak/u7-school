@@ -1,9 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
+import type { Course, CourseApiModuleResolver } from '@u7-scl/domain/course';
+import { Status } from '@u7-scl/domain/course';
 import type { User } from '@u7-scl/user/domain';
 import { Role } from '@u7-scl/user/domain';
-import type { Course } from '#domain-legacy/course/entity';
-import type { CourseApiModuleResolver } from '#domain-legacy/module';
-import { Status } from '#domain-legacy/status';
 import { AddPhaseToCourseUc } from './add-phase-to-course-uc';
 
 function makeUser(overrides: Partial<User> = {}): User {

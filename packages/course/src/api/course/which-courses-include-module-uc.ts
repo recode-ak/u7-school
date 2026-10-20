@@ -1,11 +1,11 @@
 import type { User } from '@u7-scl/app/domain';
-import * as v from 'valibot';
 import {
+  CourseDs,
   type WhichCoursesIncludeModuleCmd,
   type WhichCoursesIncludeModuleCmdMeta,
   WhichCoursesIncludeModuleCmdSchema,
-} from '#domain-legacy/course/commands/which-courses-include-module-cmd';
-import { CourseDs } from '#domain-legacy/course-ds';
+} from '@u7-scl/domain/course';
+import * as v from 'valibot';
 import { CourseUseCase } from '../course-uc';
 
 /**

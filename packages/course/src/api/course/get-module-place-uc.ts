@@ -1,13 +1,13 @@
 import type { User } from '@u7-scl/app/domain';
-import * as v from 'valibot';
 import {
+  CourseDs,
   type GetModulePlaceCmd,
   type GetModulePlaceCmdMeta,
   GetModulePlaceCmdSchema,
   ModulePlaceSchema,
-} from '#domain-legacy/course/commands/get-module-place-cmd';
-import { CourseDs } from '#domain-legacy/course-ds';
-import { Status } from '#domain-legacy/status';
+  Status,
+} from '@u7-scl/domain/course';
+import * as v from 'valibot';
 import { CourseUseCase } from '../course-uc';
 
 /**

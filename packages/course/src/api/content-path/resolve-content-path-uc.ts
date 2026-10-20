@@ -1,24 +1,24 @@
 import type { User } from '@u7-scl/app/domain';
 import { errNotFound } from '@u7-scl/core/domain';
-import { Role } from '@u7-scl/user/domain';
-import * as v from 'valibot';
-import {
-  parse as parseContentPath,
-  serialize as serializeContentPath,
-} from '#domain-legacy/content-path';
 import type {
+  ContentSnapshot,
+  Lesson,
   LessonNotFoundInPathUcError,
   ModuleNotFoundInPathUcError,
   ProjectNotFoundInPathUcError,
   ResolveContentPathCmd,
   ResolveContentPathCmdMeta,
+  Step,
   StepNotFoundInPathUcError,
-} from '#domain-legacy/content-path/commands/resolve-content-path-cmd';
-import { ResolveContentPathSchema } from '#domain-legacy/content-path/commands/resolve-content-path-cmd';
-import type { ContentSnapshot } from '#domain-legacy/content-snapshot';
-import { CourseDs } from '#domain-legacy/course-ds';
-import type { Lesson } from '#domain-legacy/lesson/entity';
-import type { Step } from '#domain-legacy/step/entity';
+} from '@u7-scl/domain/course';
+import {
+  CourseDs,
+  parseContentPath,
+  ResolveContentPathSchema,
+  serializeContentPath,
+} from '@u7-scl/domain/course';
+import { Role } from '@u7-scl/user/domain';
+import * as v from 'valibot';
 import { CourseUseCase } from '../course-uc';
 
 // ============================================================

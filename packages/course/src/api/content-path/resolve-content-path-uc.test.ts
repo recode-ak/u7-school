@@ -1,13 +1,13 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/user/domain';
-import { Role } from '@u7-scl/user/domain';
-import * as v from 'valibot';
+import type { CourseApiModuleResolver } from '@u7-scl/domain/course';
 import {
   type ResolveContentPathCmd,
   ResolveContentPathSchema,
-} from '#domain-legacy/content-path/commands/resolve-content-path-cmd';
-import type { CourseApiModuleResolver } from '#domain-legacy/module';
-import { Status } from '#domain-legacy/status';
+  Status,
+} from '@u7-scl/domain/course';
+import type { User } from '@u7-scl/user/domain';
+import { Role } from '@u7-scl/user/domain';
+import * as v from 'valibot';
 import { ResolveContentPathUc } from './resolve-content-path-uc';
 
 // ============================================================

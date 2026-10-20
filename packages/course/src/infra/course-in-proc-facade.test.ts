@@ -1,7 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { CourseProgram } from '#domain-legacy/course/commands/get-course-program-cmd';
-import type { Course } from '#domain-legacy/course/entity';
-import { Status } from '#domain-legacy/status';
+import type { Course, CourseProgram } from '@u7-scl/domain/course';
+import { Status } from '@u7-scl/domain/course';
 import { CourseInProcFacade } from './course-in-proc-facade';
 
 describe('CourseInProcFacade', () => {

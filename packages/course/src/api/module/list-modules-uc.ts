@@ -1,12 +1,11 @@
 import type { User } from '@u7-scl/app/domain';
-import * as v from 'valibot';
 import type {
   ListModulesCmd,
   ListModulesCmdMeta,
-} from '#domain-legacy/module/commands/list-modules-cmd';
-import { ListModulesCmdSchema } from '#domain-legacy/module/commands/list-modules-cmd';
-import type { Module } from '#domain-legacy/module/entity';
-import { ModuleSchema } from '#domain-legacy/module/entity';
+  Module,
+} from '@u7-scl/domain/course';
+import { ListModulesCmdSchema, ModuleSchema } from '@u7-scl/domain/course';
+import * as v from 'valibot';
 import { CourseUseCase } from '../course-uc';
 
 const ModulesListOutputSchema = v.array(ModuleSchema);
