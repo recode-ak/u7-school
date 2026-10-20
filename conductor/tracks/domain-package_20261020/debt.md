@@ -77,6 +77,18 @@
 - **Погашает:** `dmg-core-extract` / перевод `stream` на Def
 - **Критерий снятия:** маркер `DEBT(D-17)` удалён, перенесённые файлы не импортируют `@u7-scl/app`
 
+### D-21: импорты `@u7-scl/core` в domain/wish
+- **Место:** `packages/domain/src/wish/**` (`module.ts`, `wish/{a-root,entity,errors,events}.ts`; подпути `core/domain`, `core/shared`)
+- **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `ConflictError`, `NotFoundError`, `ApiModuleMeta`, `isoNow` живут в `core`; механический перенос не меняет базовые классы.
+- **Погашает:** `dmg-core-extract` (Ф4) и `golden-wish`
+- **Критерий снятия:** в `packages/domain/src/wish/**` нет маркеров `DEBT(D-21)` и импортов `@u7-scl/core`
+
+### D-22: импорт `@u7-scl/app/domain` в domain/wish/module.ts
+- **Место:** `packages/domain/src/wish/module.ts` (тип `U7ModuleResolver`)
+- **Причина:** тип резолвера модулей определён в `app` (см. D-2).
+- **Погашает:** `dmg-core-extract` / `golden-wish`
+- **Критерий снятия:** маркер `DEBT(D-22)` удалён, `module.ts` не импортирует `@u7-scl/app`
+
 ## 2. Реэкспорты старых путей
 
 ### D-3: barrel `packages/user/src/domain/index.ts`
@@ -102,6 +114,12 @@
 - **Причина:** потребители импортируют `@u7-scl/stream/domain` и `../errors`; переписывать их не входит в трек.
 - **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
 - **Критерий снятия:** потребители импортируют `@u7-scl/domain/stream`; barrel удалён
+
+### D-23: barrel `packages/wish/src/domain/index.ts`
+- **Место:** `packages/wish/src/domain/index.ts`
+- **Причина:** потребители импортируют `@u7-scl/wish/domain`; переписывать их не входит в трек.
+- **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
+- **Критерий снятия:** потребители импортируют `@u7-scl/domain/wish`; barrel удалён
 
 ## 3. `User` в `app`
 
@@ -148,3 +166,9 @@
 - **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
 - **Погашает:** перевод `stream` на Def (логика — в Policy/DQS)
 - **Критерий снятия:** маркеры `DEBT(D-20)` и `biome-ignore` удалены, методы вынесены по правилам
+
+### D-24: `v.isoDateTime` в схеме domain/wish (DOM-12)
+- **Место:** `packages/domain/src/wish/wish/entity.ts` (`createdAt`, `updatedAt`; `biome-ignore lint/plugin`)
+- **Причина:** схема перенесена без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что D-5, D-9, D-14, D-19).
+- **Погашает:** `golden-wish` (перевод `wish` на Def, `F.timestamp`)
+- **Критерий снятия:** маркеры `DEBT(D-24)` и `biome-ignore` удалены, даты описаны через поля Def
