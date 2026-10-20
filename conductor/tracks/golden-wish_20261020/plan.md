@@ -27,9 +27,9 @@
 
 ## Фаза 2: Агрегат (`defineAggregate` + Ar)
 
-- [ ] Task: State на `BaseEntityFields` + `F.timestamp` (DEBT-24) вместе с `WishArDef`; legacy-репозиторий разбирает `WishArDef.state` (фолбэк `updatedAt`, иначе `JsonFileRepo` теряет записи без `updatedAt`) — тест на legacy-записи (ISO без зоны, без `updatedAt`/`version`); гайд «state» дополнить
-- [ ] Task: `WishArDef`: статусы и переходы двух веток; `WishAr.create(): Result`, `restore()`, `snapshot()` только для репозитория; переходы `confirm/abandon/cancel/fulfill` возвращают `Result`; убрать `safeUpdate`/`throwBadRequest` и импорты `core`
-- [ ] Task: Гайд «aggregate»
+- [x] Task: State на `BaseEntityFields` + `F.timestamp` (DEBT-24) вместе с `WishArDef`; legacy-репозиторий разбирает `WishArDef.state` (фолбэк `updatedAt`, иначе `JsonFileRepo` теряет записи без `updatedAt`) — тест на legacy-записи (ISO без зоны, без `updatedAt`/`version`); гайд «state» дополнить `8353be9` (гайд — в задаче «Гайд «aggregate»»)
+- [x] Task: `WishArDef`: статусы и переходы двух веток; `WishAr.create(): Result`, `restore()`, `snapshot()` только для репозитория; переходы `confirm/abandon/cancel/fulfill` возвращают `Result`; убрать `safeUpdate`/`throwBadRequest` и импорты `core` `8353be9`
+- [~] Task: Гайд «aggregate»
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 2' (автономно, workflow.md)
 
