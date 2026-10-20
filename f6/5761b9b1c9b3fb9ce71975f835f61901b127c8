@@ -1,0 +1,1 @@
+Tasks: атомарная запись + правки по маркерам. apply.ts (applyPlan: проверка коллизий до записи, wx, вставка перед маркером, идемпотентность, hints), plan.ts (PlannedEdit, ApplyResult), apply.test.ts. check зелёный.
