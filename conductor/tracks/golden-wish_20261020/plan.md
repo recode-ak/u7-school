@@ -18,13 +18,14 @@
 ## Фаза 1: State (схема entity)
 
 - [x] Task: Платформа: запись без `updatedAt` читается как `updatedAt = createdAt` (по образцу `version`, D-36) `9048034a`
-- [~] Task: Перенос структуры по naming.md (`wish/wish.state.ts`), поля через `F.*`, даты `F.timestamp` (DEBT-24), `v.description()` на каждом поле
-- [ ] Task: Гайд «state»
+- [x] Task: Перенос структуры по naming.md (`wish/wish.state.ts`, вручную по шаблону gen), имена `WishState`/`WishTarget`/`WishStatus`, поля через `F.*`, `v.description()` на каждом поле; базовые поля и даты — Ф2 `65a148a2`
+- [~] Task: Гайд «state»
 - [ ] Task: Ревью reviewer → обзор
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Агрегат (`defineAggregate` + Ar)
 
+- [ ] Task: State на `BaseEntityFields` + `F.timestamp` (DEBT-24) вместе с `WishArDef`; legacy-репозиторий разбирает `WishArDef.state` (фолбэк `updatedAt`, иначе `JsonFileRepo` теряет записи без `updatedAt`) — тест на legacy-записи (ISO без зоны, без `updatedAt`/`version`); гайд «state» дополнить
 - [ ] Task: `WishArDef`: статусы и переходы двух веток; `WishAr.create(): Result`, `restore()`, `snapshot()` только для репозитория; переходы `confirm/abandon/cancel/fulfill` возвращают `Result`; убрать `safeUpdate`/`throwBadRequest` и импорты `core`
 - [ ] Task: Гайд «aggregate»
 - [ ] Task: Ревью → обзор
