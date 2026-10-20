@@ -61,7 +61,7 @@ describe('простые поля', () => {
 });
 
 describe('BaseEntityFields', () => {
-  it('uuid, createdAt, updatedAt', () => {
+  it('uuid, createdAt, updatedAt; version без значения — 0', () => {
     const entity = v.object({ ...BaseEntityFields });
     const parsed = v.parse(entity, {
       uuid: UUID,
@@ -72,6 +72,7 @@ describe('BaseEntityFields', () => {
       uuid: UUID,
       createdAt: Date.UTC(2026, 9, 19, 10, 0),
       updatedAt: 5,
+      version: 0,
     });
   });
 });

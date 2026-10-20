@@ -44,6 +44,16 @@ export const CoreErrors = buildErrors('', {
     description: 'Выход операции не прошёл схему — баг реализации.',
     payload: Issues,
   },
+  VERSION_CONFLICT: {
+    kind: 'conflict',
+    label: 'Данные изменились',
+    description:
+      'Запись изменили параллельно, пока шла операция; повторите её с актуальными данными.',
+    payload: v.object({
+      aggregate: v.pipe(v.string(), v.description('Агрегат')),
+      uuid: v.pipe(v.string(), v.description('Идентификатор записи')),
+    }),
+  },
   SERVER_INTERNAL: {
     kind: 'internal',
     label: 'Внутренняя ошибка',

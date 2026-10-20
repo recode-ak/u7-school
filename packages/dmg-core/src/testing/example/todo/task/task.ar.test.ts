@@ -15,6 +15,7 @@ const stored = (status: TaskState['status']): TaskState => ({
   status,
   createdAt: T0,
   updatedAt: T0,
+  version: 0,
 });
 
 describe('TaskAr.create', () => {

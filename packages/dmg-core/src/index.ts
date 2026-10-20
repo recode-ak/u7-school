@@ -7,7 +7,10 @@ export {
   Aggregate,
   type ErrorsOf,
   type EventsOf,
+  newEntity,
+  type RejectOf,
   type StateOf,
+  type TransitionOf,
 } from './domain/aggregate/aggregate';
 export {
   type AggregateDef,

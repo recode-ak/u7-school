@@ -21,6 +21,7 @@ export type ${P}Repo = Repository<${P}Ar> & {
 `;
 
   const jsonRepoSrc = `import { ${P}Ar, ${P}ArDef } from '${domain}';
+import { assertVersion, createLock } from 'dmg-core/app';
 import * as v from 'valibot';
 import type { ${P}Repo } from '../${a}/${a}.repo';
 
@@ -28,10 +29,12 @@ const Rows = v.array(${P}ArDef.state);
 
 /**
  * Агрегаты в JSON-файле: массив снапшотов. Только хранение — состояние
- * разбирает схема Def, агрегат восстанавливает \`${P}Ar.restore\`.
+ * разбирает схема Def, агрегат восстанавливает \`${P}Ar.restore\`. Запись —
+ * под замком: чтение → сверка версии → запись атомарны в процессе (D-36).
  */
 export class ${P}JsonRepo implements ${P}Repo {
   readonly aggregate = ${P}ArDef;
+  private readonly lock = createLock();
 
   constructor(private readonly filePath: string) {}
 
@@ -40,10 +43,15 @@ export class ${P}JsonRepo implements ${P}Repo {
     return row && ${P}Ar.restore(row);
   }
 
-  async save(ar: ${P}Ar): Promise<void> {
-    const rows = (await this.rows()).filter((r) => r.uuid !== ar.uuid);
-    rows.push(ar.snapshot());
-    await Bun.write(this.filePath, JSON.stringify(rows, undefined, 2));
+  save(ar: ${P}Ar): Promise<void> {
+    return this.lock(async () => {
+      const rows = await this.rows();
+      const stored = rows.find((r) => r.uuid === ar.uuid);
+      assertVersion(this.aggregate, ar, stored?.version);
+      const next = rows.filter((r) => r.uuid !== ar.uuid);
+      next.push(ar.snapshot());
+      await Bun.write(this.filePath, JSON.stringify(next, undefined, 2));
+    });
   }
 
   private async rows() {
@@ -59,6 +67,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ${P}Ar } from '${domain}';
+import { VersionConflict } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import { ${P}JsonRepo } from './${a}.json-repo';
 
@@ -77,6 +86,14 @@ describe('${P}JsonRepo', () => {
     const ar = expectOk(${P}Ar.create({ uuid: ID }, Date.UTC(2026, 9, 1)));
     await repo.save(ar);
     expect((await repo.findById(ID))?.snapshot()).toEqual(ar.snapshot());
+  });
+
+  it('запись по устаревшей версии — VersionConflict', async () => {
+    const repo = new ${P}JsonRepo(join(dir, '${a}.json'));
+    const ar = expectOk(${P}Ar.create({ uuid: ID }, Date.UTC(2026, 9, 1)));
+    await repo.save(ar);
+    const stale = ${P}Ar.restore({ ...ar.snapshot(), version: 1 });
+    await expect(repo.save(stale)).rejects.toBeInstanceOf(VersionConflict);
   });
 
   it('нет записи — undefined', async () => {

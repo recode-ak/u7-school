@@ -1,3 +1,4 @@
+import { assertVersion } from '#core/app/uow/repository';
 import { UserAr, UserArDef } from '#core/testing/example/users/index';
 import type { UserState } from '#core/testing/example/users/user/user.state';
 import type { UserRepo } from '../user/user.repo';
@@ -17,6 +18,7 @@ export class UserMemoryRepo implements UserRepo {
   }
 
   async save(ar: UserAr): Promise<void> {
+    assertVersion(this.aggregate, ar, this.rows.get(ar.uuid)?.version);
     this.rows.set(ar.uuid, ar.snapshot());
   }
 }

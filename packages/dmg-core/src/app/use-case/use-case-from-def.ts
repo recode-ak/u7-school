@@ -180,7 +180,8 @@ export abstract class UseCaseFromDef<
     if (!output.success) {
       return CoreErrors.OUTPUT_VALIDATION.err({ issues: issues(output) });
     }
-    await uow.commit();
+    const committed = await uow.commit();
+    if (!committed.ok) return committed;
     return ok(output.output);
   }
 }

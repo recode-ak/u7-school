@@ -6,11 +6,11 @@ import {
   TaskEvents,
 } from '#core/testing/example/todo/index';
 import { UserArDef } from '#core/testing/example/users/user/user.ar';
-import { expectOk } from '#core/testing/index';
+import { expectErr, expectOk } from '#core/testing/index';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
 import type { Trace } from '../trace';
-import type { Repository } from './repository';
+import { type Repository, VersionConflict } from './repository';
 import { UnitOfWork } from './unit-of-work';
 
 const AT = Date.UTC(2026, 9, 18, 12, 0);
@@ -114,6 +114,30 @@ describe('UnitOfWork.commit', () => {
     uow.register(task(A), slowRepo(log, true));
     await expect(uow.commit()).rejects.toThrow('диск недоступен');
     expect(published).toEqual([]);
+  });
+
+  test('конфликт версии — VERSION_CONFLICT, публикации нет', async () => {
+    const conflicting: Repository<TaskAr> = {
+      aggregate: TaskArDef,
+      async save(ar) {
+        throw new VersionConflict(TaskArDef, ar.uuid);
+      },
+    };
+    uow.register(task(A), conflicting);
+    const res = await uow.commit();
+    expect(expectErr(res, 'VERSION_CONFLICT').payload).toEqual({
+      aggregate: 'task',
+      uuid: A,
+    });
+    expect(published).toEqual([]);
+  });
+
+  test('после записи сохранённой версией считается текущая', async () => {
+    const ar = TaskAr.restore({ ...task(A).snapshot(), version: 2 });
+    expectOk(ar.complete(AT));
+    uow.register(ar, slowRepo(log));
+    expectOk(await uow.commit());
+    expect(ar.storedVersion).toBe(3);
   });
 
   test('незаявленное событие при `emits` — исключение до сохранения', async () => {

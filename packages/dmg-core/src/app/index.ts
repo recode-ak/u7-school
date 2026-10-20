@@ -38,8 +38,15 @@ export {
   contractUnitOfWork,
   type OperationContract,
 } from './uow/contract-unit-of-work';
-export type { Repository } from './uow/repository';
+export { createLock, type Lock } from './uow/lock';
 export {
+  assertVersion,
+  type Repository,
+  VersionConflict,
+  type Versioned,
+} from './uow/repository';
+export {
+  type CommitError,
   type Committable,
   UnitOfWork,
   type UnitOfWorkContext,

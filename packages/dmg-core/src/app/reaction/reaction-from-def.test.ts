@@ -135,6 +135,19 @@ describe('ReactionFromDef.handle', () => {
     );
   });
 
+  test('конфликт версии → VERSION_CONFLICT, событий нет, запись в лог', async () => {
+    const archive = er.step;
+    er.step = async (event, uow, caller, deps) => {
+      const res = await archive(event, uow, caller, deps);
+      const row = tasks.rows.get(TASK);
+      if (row) tasks.rows.set(TASK, { ...row, version: row.version + 1 });
+      return res;
+    };
+    expectErr(await er.handle(removed()), 'VERSION_CONFLICT');
+    expect(ctx.published).toEqual([]);
+    expect(ctx.logs.map((l) => l.level)).toEqual(['error']);
+  });
+
   test('исключение → SERVER_INTERNAL и запись в лог', async () => {
     er.step = async () => {
       throw new Error('диск недоступен');

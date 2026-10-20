@@ -98,6 +98,20 @@ describe('JobFromDef.handle', () => {
     ]);
   });
 
+  test('конфликт версии записи — сбой этой записи, обход продолжается', async () => {
+    const archive = job.step;
+    job.step = async (task, uow) => {
+      const row = tasks.rows.get(task.uuid);
+      if (task.uuid === TASK && row) {
+        tasks.rows.set(TASK, { ...row, version: row.version + 1 });
+      }
+      return archive(task, uow);
+    };
+    expect(expectOk(await job.handle())).toEqual({ processed: 1, failed: 1 });
+    expect(tasks.rows.get(TASK)?.status).toBe('done');
+    expect(tasks.rows.get(TASK_2)?.status).toBe('archived');
+  });
+
   test('сбой загрузки → SERVER_INTERNAL и запись в лог', async () => {
     tasks.findDone = async () => {
       throw new Error('диск недоступен');

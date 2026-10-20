@@ -226,6 +226,20 @@ describe('UseCaseFromDef.handle — операция', () => {
   });
 });
 
+describe('UseCaseFromDef — параллельное изменение', () => {
+  test('запись изменили после загрузки → VERSION_CONFLICT, событий нет', async () => {
+    uc.mutate = (task) => {
+      const row = tasks.rows.get(TASK);
+      if (row) tasks.rows.set(TASK, { ...row, version: row.version + 1 });
+      return task.complete(T0);
+    };
+    const res = await uc.handle({ taskId: TASK }, user(OWNER), REQ);
+    expectErr(res, 'VERSION_CONFLICT');
+    expect(tasks.rows.get(TASK)?.status).toBe('open');
+    expect(ctx.published).toEqual([]);
+  });
+});
+
 describe('UseCaseFromDef — время операции', () => {
   test('момент операции и событий — из часов приложения', async () => {
     ctx.setNow(T1);

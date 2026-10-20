@@ -92,7 +92,6 @@ export abstract class JobFromDef<D extends AnyJobDef, R extends ModuleDeps> {
     });
     const res = await step(item, uow);
     if (!res.ok) return res;
-    await uow.commit();
-    return ok();
+    return uow.commit();
   }
 }

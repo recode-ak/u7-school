@@ -8,10 +8,11 @@ type MutatingKeys<T> = {
 
 /**
  * Агрегат только для чтения — так его видят другие модули (через фасад).
- * Остаются идентификаторы и методы-вопросы; убраны мутирующие методы
- * (возвращают `Result`, DOM-02), снимок entity (DOM-01) и выдача событий.
+ * Остаются идентификаторы, версия и методы-вопросы; убраны мутирующие
+ * методы (возвращают `Result`, DOM-02), снимок entity (DOM-01), выдача
+ * событий и служебные методы записи.
  */
 export type ReadonlyAr<T> = Omit<
   T,
-  MutatingKeys<T> | 'snapshot' | 'pullEvents'
+  MutatingKeys<T> | 'snapshot' | 'pullEvents' | 'storedVersion' | 'markStored'
 >;

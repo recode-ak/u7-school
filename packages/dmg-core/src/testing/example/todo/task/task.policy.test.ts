@@ -22,6 +22,7 @@ const ctx: TaskCtx = {
     status: 'open',
     createdAt: 0,
     updatedAt: 0,
+    version: 0,
   }),
 };
 

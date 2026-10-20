@@ -1,7 +1,7 @@
 import type { AnyEventReactionDef } from '#core/domain/contracts/define-event-reaction';
 import { type SystemCaller, systemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
-import { ok, type Result } from '#core/kernel/result/result';
+import type { Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
@@ -76,8 +76,7 @@ export abstract class ReactionFromDef<
       });
       const res = await this.react(event, uow, caller, trace);
       if (!res.ok) return res;
-      await uow.commit();
-      return ok();
+      return uow.commit();
     });
   }
 

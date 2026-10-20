@@ -9,6 +9,7 @@ describe('CoreErrors', () => {
       ['INPUT_VALIDATION', 'validation'],
       ['ACCESS_DENIED', 'access'],
       ['OUTPUT_VALIDATION', 'internal'],
+      ['VERSION_CONFLICT', 'conflict'],
       ['SERVER_INTERNAL', 'internal'],
     ]);
   });

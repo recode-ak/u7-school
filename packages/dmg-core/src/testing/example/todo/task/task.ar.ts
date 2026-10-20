@@ -2,6 +2,7 @@ import {
   Aggregate,
   type ErrorsOf,
   type EventsOf,
+  newEntity,
 } from '#core/domain/aggregate/aggregate';
 import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
 import { ok, type Result } from '#core/kernel/result/result';
@@ -58,10 +59,10 @@ export class TaskAr extends Aggregate<typeof TaskArDef> {
       title: input.title,
     });
     const state: TaskState = {
-      ...input,
+      ...newEntity(input.uuid, at),
+      ownerId: input.ownerId,
+      title: input.title,
       status: 'open',
-      createdAt: at,
-      updatedAt: at,
     };
     return ok(new TaskAr(state, [created]));
   }

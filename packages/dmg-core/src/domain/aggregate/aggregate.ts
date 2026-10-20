@@ -3,7 +3,7 @@ import type { AnyErrorDef, ErrorOf } from '#core/kernel/errors/define-errors';
 import type { Err, Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { EventOf } from '../events/define-events';
-import type { AnyAggregateDef } from './define-aggregate';
+import type { AnyAggregateDef, EntityBase } from './define-aggregate';
 
 /** Состояние агрегата по его Def. */
 export type StateOf<D extends AnyAggregateDef> = v.InferOutput<D['state']>;
@@ -17,6 +17,11 @@ export type EventsOf<D extends AnyAggregateDef> = {
 export type ErrorsOf<D extends AnyAggregateDef> = {
   [K in keyof D['errors']]: ErrorOf<D['errors'][K]>;
 }[keyof D['errors']];
+
+/** Базовые поля новой entity: создана и изменена в `at`, версия 0. */
+export function newEntity(uuid: string, at: Timestamp): EntityBase {
+  return { uuid, createdAt: at, updatedAt: at, version: 0 };
+}
 
 type Emit<D extends AnyAggregateDef> = (event: EventsOf<D>) => void;
 
@@ -48,6 +53,7 @@ export type RejectOf<
 export abstract class Aggregate<D extends AnyAggregateDef> {
   private current: StateOf<D>;
   private pending: EventsOf<D>[];
+  private stored: number;
 
   protected constructor(
     private readonly def: D,
@@ -56,10 +62,29 @@ export abstract class Aggregate<D extends AnyAggregateDef> {
   ) {
     this.current = this.validate(state);
     this.pending = [...events];
+    this.stored = this.current.version;
   }
 
   get uuid(): string {
     return this.current.uuid;
+  }
+
+  /** Текущая версия: растёт с каждой мутацией (D-36). */
+  get version(): number {
+    return this.current.version;
+  }
+
+  /**
+   * Версия, с которой агрегат загружен или последний раз сохранён, — её
+   * репозиторий сверяет с хранилищем перед записью (`VersionConflict`).
+   */
+  get storedVersion(): number {
+    return this.stored;
+  }
+
+  /** Отметить запись: вызывает UoW после успешного `repo.save`. */
+  markStored(): void {
+    this.stored = this.current.version;
   }
 
   /** Копия состояния для репозитория. */
@@ -136,7 +161,11 @@ export abstract class Aggregate<D extends AnyAggregateDef> {
     });
     if (!res.ok) return res;
     this.checkStatus(to ?? before, statusOf(draft));
-    this.current = this.validate({ ...draft, updatedAt: at });
+    this.current = this.validate({
+      ...draft,
+      updatedAt: at,
+      version: this.current.version + 1,
+    });
     this.pending.push(...emitted);
     return res;
   }

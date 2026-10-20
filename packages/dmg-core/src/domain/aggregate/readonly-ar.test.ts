@@ -41,6 +41,7 @@ const view: ReadonlyAr<NoteAr> = NoteAr.restore({
   uuid: ID,
   createdAt: 0,
   updatedAt: 0,
+  version: 0,
   pinned: false,
 });
 

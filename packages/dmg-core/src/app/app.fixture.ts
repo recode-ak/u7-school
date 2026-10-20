@@ -1,6 +1,7 @@
 // Общие фикстуры тестов прикладного слоя DMG.
 import { TaskAr, TaskArDef } from '../testing/example/todo';
 import type { TaskState } from '../testing/example/todo/task/task.state';
+import { assertVersion } from './uow/repository';
 
 export const TASK = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 export const TASK_2 = '1c7a3d2f-9b5e-4a4c-8d3f-2e6b8c0f4a21';
@@ -18,6 +19,7 @@ export function taskRow(
     status,
     createdAt: T0,
     updatedAt: T0,
+    version: 0,
   };
 }
 
@@ -42,6 +44,7 @@ export class MemoryTasks {
   }
 
   async save(ar: TaskAr): Promise<void> {
+    assertVersion(this.aggregate, ar, this.rows.get(ar.uuid)?.version);
     this.rows.set(ar.uuid, ar.snapshot());
   }
 

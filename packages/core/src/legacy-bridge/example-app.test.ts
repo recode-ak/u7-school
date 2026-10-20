@@ -60,7 +60,7 @@ beforeEach(async () => {
     tasks: new TaskJsonRepo(path.join(dir, 'tasks.json')),
   };
   const users = new UserMemoryRepo([
-    { uuid: ANNA, createdAt: 0, updatedAt: 0, status: 'active' },
+    { uuid: ANNA, createdAt: 0, updatedAt: 0, version: 0, status: 'active' },
   ]);
   api = new ApiApp<AppMeta, ExampleUser>([]).addDmgModules(
     createUsersModule({ app: deps.app, users }),

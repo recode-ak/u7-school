@@ -52,9 +52,21 @@ function picklist<const T extends readonly [string, ...string[]]>(
  */
 export const F = { uuid, timestamp, string, int, boolean, picklist };
 
+/**
+ * Версия entity для оптимистичной блокировки (D-36): растёт с каждой
+ * мутацией. Записи до появления поля читаются как версия 0.
+ */
+function version() {
+  return v.pipe(
+    v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)), 0),
+    v.description('Версия сущности (оптимистичная блокировка)'),
+  );
+}
+
 /** Поля, общие для всех entity. */
 export const BaseEntityFields = {
   uuid: uuid('сущности'),
   createdAt: timestamp('создания'),
   updatedAt: timestamp('изменения'),
+  version: version(),
 };

@@ -10,6 +10,7 @@ import {
   Aggregate,
   type ErrorsOf,
   type EventsOf,
+  newEntity,
   type StateOf,
 } from './aggregate';
 import { defineAggregate } from './define-aggregate';
@@ -78,9 +79,9 @@ class TaskAr extends Aggregate<typeof TaskArDef> {
     title: string,
     at: Timestamp,
   ): Result<TaskAr, TaskError> {
-    const state = { uuid, createdAt: at, updatedAt: at, title };
     const created = TaskEvents.created.make({ taskId: uuid });
-    return ok(new TaskAr({ ...state, status: 'open' }, [created]));
+    const state = { ...newEntity(uuid, at), title, status: 'open' as const };
+    return ok(new TaskAr(state, [created]));
   }
 
   static restore(snapshot: StateOf<typeof TaskArDef>): TaskAr {
@@ -133,6 +134,7 @@ const stored = (status: 'open' | 'done') => ({
   uuid: ID,
   createdAt: T0,
   updatedAt: T0,
+  version: 3,
   title: 'Купить хлеб',
   status,
 });
@@ -227,7 +229,11 @@ describe('Aggregate', () => {
     it('Ok фиксирует черновик, ставит updatedAt моментом операции и накапливает событие', () => {
       const ar = TaskAr.restore(stored('open'));
       expectOk(ar.complete(T1));
-      expect(ar.snapshot()).toEqual({ ...stored('done'), updatedAt: T1 });
+      expect(ar.snapshot()).toEqual({
+        ...stored('done'),
+        updatedAt: T1,
+        version: 4,
+      });
       expect(ar.pullEvents()).toEqual([
         { name: 'todo.task.completed', payload: { taskId: ID } },
       ]);
@@ -272,6 +278,40 @@ describe('Aggregate', () => {
       const ar = TaskAr.restore(stored('open'));
       expect(() => ar.completeWrongly(T1)).toThrow('done');
       expect(ar.isDone()).toBe(false);
+    });
+  });
+
+  describe('версия (оптимистичная блокировка)', () => {
+    it('новый агрегат — версия 0, ещё не сохранён', () => {
+      const ar = expectOk(TaskAr.create(ID, 'Купить хлеб', T0));
+      expect(ar.version).toBe(0);
+      expect(ar.storedVersion).toBe(0);
+    });
+
+    it('снимок без версии (данные до D-36) читается как версия 0', () => {
+      const { version: _, ...legacy } = stored('open');
+      expect(TaskAr.restore(legacy as never).version).toBe(0);
+    });
+
+    it('каждая мутация увеличивает версию; сохранённая — версия при загрузке', () => {
+      const ar = TaskAr.restore(stored('open'));
+      expectOk(ar.rename('Купить молоко', T1));
+      expectOk(ar.complete(T1));
+      expect(ar.version).toBe(5);
+      expect(ar.storedVersion).toBe(3);
+    });
+
+    it('Err версию не меняет', () => {
+      const ar = TaskAr.restore(stored('done'));
+      expectErr(ar.complete(T1), 'TASK_ALREADY_DONE');
+      expect(ar.version).toBe(3);
+    });
+
+    it('markStored — после записи сохранённой считается текущая версия', () => {
+      const ar = TaskAr.restore(stored('open'));
+      expectOk(ar.complete(T1));
+      ar.markStored();
+      expect(ar.storedVersion).toBe(4);
     });
   });
 });

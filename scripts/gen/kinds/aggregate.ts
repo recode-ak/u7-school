@@ -54,6 +54,7 @@ export const ${P}Errors = defineErrors('${toUpperSnake(a)}', {
   Aggregate,
   defineAggregate,
   type EventsOf,
+  newEntity,
   ok,
   type Result,
   type Timestamp,
@@ -89,10 +90,8 @@ export class ${P}Ar extends Aggregate<typeof ${P}ArDef> {
   static create(input: Create${P}, at: Timestamp): Result<${P}Ar, never> {
     const created = ${P}Events.created.make({ ${idField}: input.uuid });
     const state: ${P}State = {
-      ...input,
+      ...newEntity(input.uuid, at),
       status: 'active',
-      createdAt: at,
-      updatedAt: at,
     };
     return ok(new ${P}Ar(state, [created]));
   }
@@ -139,6 +138,7 @@ describe('${P}Ar.create', () => {
       status: 'active',
       createdAt: T0,
       updatedAt: T0,
+      version: 0,
     });
     expect(ar.pullEvents()).toEqual([
       { name: '${m}.${a}.created', payload: { ${idField}: ID } },
@@ -164,6 +164,7 @@ const ctx: ${P}Ctx = {
     status: 'active',
     createdAt: 0,
     updatedAt: 0,
+    version: 0,
   }),
 };
 

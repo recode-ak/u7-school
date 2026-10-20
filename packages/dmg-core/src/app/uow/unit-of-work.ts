@@ -4,17 +4,24 @@ import type {
   DomainEvent,
 } from '#core/domain/events/define-events';
 import type { Caller } from '#core/kernel/caller/caller';
+import { CoreErrors } from '#core/kernel/errors/core-errors';
+import type { ErrorOf } from '#core/kernel/errors/define-errors';
+import { ok, type Result } from '#core/kernel/result/result';
 import type { Clock } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
 import type { Trace } from '../trace';
-import type { Repository } from './repository';
+import { type Repository, VersionConflict } from './repository';
 
-/** Что UoW нужно от агрегата: идентификатор и накопленные события. */
+/** Что UoW нужно от агрегата: идентификатор, события, отметка записи. */
 export type Committable = {
   readonly uuid: string;
   pullEvents(): readonly DomainEvent[];
+  markStored(): void;
 };
+
+/** Ошибка фиксации: запись изменили параллельно. */
+export type CommitError = ErrorOf<typeof CoreErrors.VERSION_CONFLICT>;
 
 export type UnitOfWorkContext = {
   readonly bus: EventBus;
@@ -49,15 +56,29 @@ export class UnitOfWork {
 
   /**
    * События собираются и сверяются с `emits` до записи: незаявленное
-   * событие — баг реализации, и тогда не сохраняется ничего.
+   * событие — баг реализации, и тогда не сохраняется ничего. Конфликт
+   * версии — `VERSION_CONFLICT` без публикации; уже записанные агрегаты
+   * не откатываются (D-15).
    */
-  async commit(): Promise<void> {
+  async commit(): Promise<Result<void, CommitError>> {
     const envelopes = this.entries.flatMap(({ ar }) =>
       ar.pullEvents().map((event) => this.envelope(event, ar.uuid)),
     );
     for (const envelope of envelopes) this.assertDeclared(envelope);
-    for (const entry of this.entries) await entry.save();
+    for (const entry of this.entries) {
+      try {
+        await entry.save();
+      } catch (error) {
+        if (!(error instanceof VersionConflict)) throw error;
+        return CoreErrors.VERSION_CONFLICT.err({
+          aggregate: error.aggregate.name,
+          uuid: error.uuid,
+        });
+      }
+      entry.ar.markStored();
+    }
     for (const envelope of envelopes) this.ctx.bus.publish(envelope);
+    return ok();
   }
 
   private envelope(event: DomainEvent, aggregateId: string): EventEnvelope {
