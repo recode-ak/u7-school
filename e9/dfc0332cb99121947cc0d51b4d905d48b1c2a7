@@ -1,0 +1,1 @@
+Task: каркас packages/domain. Созданы package.json (подпути <m>, <m>/state), tsconfig, src/index.ts, smoke-тест; путь в корневом tsconfig; пометка в migration.md. check зелёный.
