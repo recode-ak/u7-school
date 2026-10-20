@@ -31,7 +31,7 @@
 
 > Заметки к старту (по итогам Ф2): `course` — 73 файла, импортирует `@u7-scl/user/domain` (28 раз → `@u7-scl/domain/user`), `core/domain|shared|infra`, `app/domain`, алиасы `#domain-legacy/status`, `#domain-legacy/module/entity`. `questionnaire` — 35 файлов, `user/domain` ×2, `core/*`, `app/domain` ×2. Следующие ID долга — с D-6. Бриф — по обновлённому `slices/_template.md`; потребители внутри пакета (`api`/`infra`) правятся по алиасу. Перед вызовом агента: `git status --short` и замер числа тестов модуля.
 
-- [~] Task: `course` (55 + 18): перенос по правилам, barrel, `contract`, долги
+- [x] Task: `course` (55 + 18): перенос по правилам, barrel, `contract`, долги (`7c61714c`)
 - [ ] Task: `questionnaire` (27 + 8): перенос по правилам, barrel, `contract`, долги
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
