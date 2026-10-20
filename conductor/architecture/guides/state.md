@@ -2,7 +2,7 @@
 
 **Назначение:** схема entity агрегата, то есть единственное место структуры его состояния: `packages/domain/src/<m>/<a>/<a>.state.ts`.
 
-> Эталон — модуль `wish`. Пока не пройдена Фаза 2, он неполон: базовые поля и даты ещё не переведены на `BaseEntityFields` и `F.timestamp` (DEBT-24), а state импортируют Policy, репозиторий и команды (legacy, DOM-01). Форма базовых полей — в [task.state.ts](../../../packages/dmg-core/src/testing/example/todo/task/task.state.ts).
+> Эталон — модуль `wish` после Ф2: базовые поля — `...BaseEntityFields`, даты — `F.timestamp` (читает ISO-строку, в т. ч. без зоны, и число; пишет число). State ещё импортируют legacy Policy, репозиторий и команды (DOM-01), это уходит в следующих фазах.
 
 ---
 
@@ -20,7 +20,8 @@
 ## 3. Эталон
 
 - [wish.state.ts](../../../packages/domain/src/wish/wish/wish.state.ts): `WishState`, `WishTargetVo` и `WishStatus`, у каждого одно имя и для схемы, и для типа. `target` — это `v.variant` по `kind`, описания стоят на всём `variant` и на `kind` каждой ветки.
-- [wish.state.test.ts](../../../packages/domain/src/wish/wish/wish.state.test.ts): проверки «принимает / отклоняет» и проверка описаний у собственных полей.
+- [wish.state.test.ts](../../../packages/domain/src/wish/wish/wish.state.test.ts): проверки «принимает / отклоняет», разбор ISO-дат (в т. ч. без зоны) в числа и описания у всех полей.
+- [wish.ar.test.ts](../../../packages/domain/src/wish/wish/wish.ar.test.ts): `checkDefs` по `WishArDef` и `restore` legacy-записи без `updatedAt`/`version` через `WishArDef.state`.
 - [state.ts](../../../packages/domain/src/wish/state.ts): подпуть `@u7-scl/domain/<m>/state`, только для рендереров UI.
 
 ## 4. Чеклист правил
@@ -39,4 +40,4 @@
 
 ## 6. Как тестировать
 
-Для каждого VO и статуса проверь через `v.safeParse`, что допустимое значение принимается, а недопустимое отклоняется. Тесты держи в пределах 10–20 строк ([testing.md](../testing.md), TST-04). Пока у агрегата нет Def, описания полей проверяет отдельный тест. Когда Def появится, это делает `arch:check` по `a.state`. Логику переходов тестируй в Ar, а не в state.
+Для каждого VO и статуса проверь через `v.safeParse`, что допустимое значение принимается, а недопустимое отклоняется. Тесты держи в пределах 10–20 строк ([testing.md](../testing.md), TST-04). Описания полей проверяет `checkDefs` по Def агрегата (тест Ar, `arch:check` по `a.state`); до паспорта модуля — через пробный `defineModule`, как в [wish.ar.test.ts](../../../packages/domain/src/wish/wish/wish.ar.test.ts). Фолбэк `updatedAt` проверяй разбором через `<A>ArDef.state`, а не `<A>State`. Логику переходов тестируй в Ar, а не в state.
