@@ -1,9 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
+import type { Stream, StreamApiModuleResolver } from '@u7-scl/domain/stream';
+import { ListStreamsCmdSchema, StreamStatus } from '@u7-scl/domain/stream';
 import * as v from 'valibot';
-import type { StreamApiModuleResolver } from '#domain-legacy/module';
-import { StreamStatus } from '#domain-legacy/status';
-import { ListStreamsCmdSchema } from '#domain-legacy/stream/commands/list-streams-cmd';
-import type { Stream } from '#domain-legacy/stream/entity';
 import { ListStreamsUc } from './list-streams-uc';
 
 describe('ListStreamsCmdSchema', () => {

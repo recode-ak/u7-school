@@ -1,14 +1,14 @@
 import type { User } from '@u7-scl/app/domain';
-import * as v from 'valibot';
-import { StreamAr } from '#domain-legacy/stream/a-root';
-import { StreamDs } from '#domain-legacy/stream-ds';
-import { StudentAr } from '#domain-legacy/student/a-root';
+import type { CompletionResult } from '@u7-scl/domain/stream';
 import {
   type CompleteStepCmd,
   type CompleteStepCmdMeta,
   CompleteStepCmdSchema,
-} from '#domain-legacy/student/commands/complete-step-cmd';
-import type { CompletionResult } from '#domain-legacy/types';
+  StreamAr,
+  StreamDs,
+  StudentAr,
+} from '@u7-scl/domain/stream';
+import * as v from 'valibot';
 import { StreamUseCase } from '../stream-uc';
 
 export class CompleteStepUc extends StreamUseCase<CompleteStepCmdMeta> {

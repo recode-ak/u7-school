@@ -1,16 +1,15 @@
 import type { User } from '@u7-scl/app/domain';
 import { errNotFound } from '@u7-scl/core/domain';
-import { Role } from '@u7-scl/user/domain';
-import * as v from 'valibot';
-import type { Stream } from '#domain-legacy/stream/entity';
-import { StudentAr } from '#domain-legacy/student/a-root';
+import type { Stream, Student } from '@u7-scl/domain/stream';
 import {
   type CompleteStudentCmd,
   type CompleteStudentCmdMeta,
   CompleteStudentCmdSchema,
-} from '#domain-legacy/student/commands/complete-student-cmd';
-import type { Student } from '#domain-legacy/student/entity';
-import { StudentPolicy } from '#domain-legacy/student/policy';
+  StudentAr,
+  StudentPolicy,
+} from '@u7-scl/domain/stream';
+import { Role } from '@u7-scl/user/domain';
+import * as v from 'valibot';
 import type { StreamNotFoundUcError, StreamUcErrors } from '../errors';
 import { StreamUseCase } from '../stream-uc';
 

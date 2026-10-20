@@ -1,14 +1,14 @@
 import type { User } from '@u7-scl/app/domain';
 import { CourseAr } from '@u7-scl/course/domain';
-import { Role } from '@u7-scl/user/domain';
-import * as v from 'valibot';
-import { StreamAr } from '#domain-legacy/stream/a-root';
-import { StudentAr } from '#domain-legacy/student/a-root';
 import {
   type EnrollStudentCmd,
   type EnrollStudentCmdMeta,
   EnrollStudentCmdSchema,
-} from '#domain-legacy/student/commands/enroll-student-cmd';
+  StreamAr,
+  StudentAr,
+} from '@u7-scl/domain/stream';
+import { Role } from '@u7-scl/user/domain';
+import * as v from 'valibot';
 import { StreamUseCase } from '../stream-uc';
 
 /**

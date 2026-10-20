@@ -1,11 +1,11 @@
 import type { User } from '@u7-scl/app/domain';
-import * as v from 'valibot';
 import {
   type ListStreamStudentsCmd,
   type ListStreamStudentsCmdMeta,
   ListStreamStudentsCmdSchema,
-} from '#domain-legacy/stream/commands/list-stream-students-cmd';
-import { StudentSchema } from '#domain-legacy/student/entity';
+  StudentSchema,
+} from '@u7-scl/domain/stream';
+import * as v from 'valibot';
 import { StreamUseCase } from '../stream-uc';
 
 export class ListStreamStudentsUc extends StreamUseCase<ListStreamStudentsCmdMeta> {

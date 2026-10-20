@@ -1,9 +1,6 @@
 import { isoNow } from '@u7-scl/core/shared';
 import type { ContentSnapshot } from '@u7-scl/course/domain';
-import type {
-  StepRecord,
-  Student,
-} from '../packages/stream/src/domain/student/entity';
+import type { StepRecord, Student } from '@u7-scl/domain/stream';
 
 /** Информация об опережающем студенте для отчёта */
 export interface AheadStudentInfo {

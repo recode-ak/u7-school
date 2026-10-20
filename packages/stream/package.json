@@ -23,7 +23,6 @@
     ".": "./src/index.ts"
   },
   "imports": {
-    "#domain-legacy/*": "./src/domain/*.ts",
     "#api-legacy/*": "./src/api/*.ts"
   }
 }

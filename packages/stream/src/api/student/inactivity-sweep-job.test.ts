@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import { ConsoleLogger } from '@u7-scl/core/shared';
-import type { StreamApiModuleResolver } from '#domain-legacy/module';
-import { StreamStatus } from '#domain-legacy/status';
-import type { Stream } from '#domain-legacy/stream/entity';
-import type { Student } from '#domain-legacy/student/entity';
+import type {
+  Stream,
+  StreamApiModuleResolver,
+  Student,
+} from '@u7-scl/domain/stream';
+import { StreamStatus } from '@u7-scl/domain/stream';
 import {
   InactivitySweepJob,
   NOTICE_EVERY_DAYS,

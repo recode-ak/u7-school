@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { Role, type User } from '@u7-scl/app/domain';
-import type { StreamApiModuleResolver } from '#domain-legacy/module';
+import type { StreamApiModuleResolver } from '@u7-scl/domain/stream';
 import { CompleteStreamUc } from './complete-stream-uc';
 
 function makeActor(uuid: string): User {

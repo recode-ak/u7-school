@@ -1,7 +1,6 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type { Stream } from '#domain-legacy/stream/entity';
-import { StreamSchema } from '#domain-legacy/stream/entity';
-import type { StreamRepo } from '#domain-legacy/stream/repo';
+import type { Stream, StreamRepo } from '@u7-scl/domain/stream';
+import { StreamSchema } from '@u7-scl/domain/stream';
 
 /**
  * JSON-файловая реализация репозитория потоков.

@@ -1,10 +1,11 @@
-import * as v from 'valibot';
 import {
   type ListStreamsCmd,
   type ListStreamsCmdMeta,
   ListStreamsCmdSchema,
-} from '#domain-legacy/stream/commands/list-streams-cmd';
-import { type Stream, StreamSchema } from '#domain-legacy/stream/entity';
+  type Stream,
+  StreamSchema,
+} from '@u7-scl/domain/stream';
+import * as v from 'valibot';
 import { StreamUseCase } from '../stream-uc';
 
 export class ListStreamsUc extends StreamUseCase<ListStreamsCmdMeta> {

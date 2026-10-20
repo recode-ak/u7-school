@@ -1,12 +1,12 @@
 import type { User } from '@u7-scl/app/domain';
-import * as v from 'valibot';
-import { StreamAr } from '#domain-legacy/stream/a-root';
 import {
   type ArchiveStreamCmd,
   type ArchiveStreamCmdMeta,
   ArchiveStreamCmdSchema,
-} from '#domain-legacy/stream/commands/archive-stream-cmd';
-import { StreamPolicy } from '#domain-legacy/stream/policy';
+  StreamAr,
+  StreamPolicy,
+} from '@u7-scl/domain/stream';
+import * as v from 'valibot';
 import { StreamUseCase } from '../stream-uc';
 
 export class ArchiveStreamUc extends StreamUseCase<ArchiveStreamCmdMeta> {

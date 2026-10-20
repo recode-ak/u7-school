@@ -1,8 +1,7 @@
 import { U7UseCase } from '@u7-scl/app/domain';
 import type { UcMeta } from '@u7-scl/core/api';
 import { errAccessDenied, errNotFound } from '@u7-scl/core/domain';
-import type { StreamApiModuleResolver } from '#domain-legacy/module';
-import type { Stream } from '#domain-legacy/stream/entity';
+import type { Stream, StreamApiModuleResolver } from '@u7-scl/domain/stream';
 import type {
   StreamAccessDeniedUcError,
   StreamNotFoundUcError,

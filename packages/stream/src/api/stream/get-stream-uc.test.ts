@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { isoNow } from '@u7-scl/core/shared';
-import type { StreamApiModuleResolver } from '#domain-legacy/module';
-import { StreamStatus } from '#domain-legacy/status';
+import type { StreamApiModuleResolver } from '@u7-scl/domain/stream';
+import { StreamStatus } from '@u7-scl/domain/stream';
 import { GetStreamUc } from './get-stream-uc';
 
 const streamId = '55555555-5555-4555-8555-555555555555';

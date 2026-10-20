@@ -1,14 +1,14 @@
 import type { User } from '@u7-scl/app/domain';
-import * as v from 'valibot';
-import { StreamAr } from '#domain-legacy/stream/a-root';
 import {
   type CompleteStreamCmd,
   type CompleteStreamCmdMeta,
   CompleteStreamCmdSchema,
-} from '#domain-legacy/stream/commands/complete-stream-cmd';
-import { StreamPolicy } from '#domain-legacy/stream/policy';
-import { StreamDs } from '#domain-legacy/stream-ds';
-import { StudentAr } from '#domain-legacy/student/a-root';
+  StreamAr,
+  StreamDs,
+  StreamPolicy,
+  StudentAr,
+} from '@u7-scl/domain/stream';
+import * as v from 'valibot';
 import { StreamUseCase } from '../stream-uc';
 
 /**

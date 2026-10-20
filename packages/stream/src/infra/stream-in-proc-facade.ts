@@ -1,10 +1,13 @@
 import type { User } from '@u7-scl/app/domain';
 import { AppException } from '@u7-scl/core/domain';
+import type {
+  Stream,
+  StreamFacade,
+  StreamMembers,
+  Student,
+} from '@u7-scl/domain/stream';
+import { StudentAr } from '@u7-scl/domain/stream';
 import type { StreamApiModule } from '#api-legacy/module';
-import type { StreamFacade, StreamMembers } from '#domain-legacy/facade';
-import type { Stream } from '#domain-legacy/stream/entity';
-import { StudentAr } from '#domain-legacy/student/a-root';
-import type { Student } from '#domain-legacy/student/entity';
 
 /**
  * In-process реализация фасада потоков.
