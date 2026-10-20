@@ -47,7 +47,7 @@
 
 > После ошибок: `denyMessage` и ошибки Policy ссылаются на `WishErrors`.
 
-- [ ] Task: `WishPolicy` правилами с `label` и `denyMessage` вместо `boolean` и текстов в UC; entity-правило «не более одного активного wish на (user, target)»
+- [ ] Task: `WishPolicy` правилами с `label` и `denyMessage` (только права, `canCancel`); правило «не более одного активного wish на (user, target)» — DCS с `Result` `WISH_ALREADY_EXISTS`, `isActive` — метод Ar (бриф §Ф5, вопрос 7, вариант A)
 - [ ] Task: Гайд «policy»
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 5' (автономно, workflow.md)
@@ -59,8 +59,8 @@
 - [ ] Task: Платформа по ревью приёмки (`slices/wish.md`, «Приёмка правок платформы»): `assertVersion` отличает новый агрегат от записи версии 0 (create с занятым uuid — конфликт, legacy-записи `data/wish` без `version` не перезаписываются); поведение событий записанных агрегатов при `VERSION_CONFLICT` — исправить или описать в errors-result.md §3
 - [ ] Task: Порт `WishRepo` на Ar/`Result`, `WishJsonRepo` с `F.timestamp` (чтение строки и числа), UoW; DQS для чтения списка, если решено в Фазе 0
 - [ ] Task: Тест репозитория на `DB_DIR=./data/fixtures`: ISO-строка читается, число пишется
-- [ ] Task: `WishFacadeDef` + `implementFacade`; `Result` и `ReadonlyAr`, без `try/catch` по `kind` и `as`
-- [ ] Task: Гайды «repo / dcs / dqs» и «facade»
+- [ ] Task: Генератор по D-38: `gen module` создаёт фасад (домен и пакет) только с `--facade`; тесты `scripts/gen` (red → green); у `wish` фасада нет — потребителей нет
+- [ ] Task: Гайды «repo / dcs / dqs» и «facade» (критерий «только по потребителю», эталон — пример `dmg-core`)
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 6–7' (автономно, workflow.md)
 

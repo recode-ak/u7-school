@@ -14,7 +14,7 @@
 
 ## Решения брифа
 
-- **DCS/DQS нет.** `list-user-wishes` — query UC, читает один агрегат через репозиторий; output выводится из схемы entity. Гайд «dcs/dqs» описывает критерий выбора, эталон DCS/DQS — в `stream`.
+- **DCS — правило уникальности (Ф5, вопрос 7); DQS нет.** `list-user-wishes` — query UC, читает один агрегат через репозиторий; output выводится из схемы entity. Гайд «dcs/dqs» описывает критерий выбора, эталон DCS/DQS — в `stream`.
 - **Job нет.**
 - **Формат данных не меняется:** `F.timestamp` читает ISO-строку и число, пишет число. Репозиторий проверяется на `DB_DIR=./data/fixtures`.
 - **Пулы анкет** (`wish/pools/course-pool.ts`, `course.json`) остаются доменными данными модуля, путь не меняется.
@@ -95,6 +95,22 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 
 **Шаг 3 — гайды «events» и «errors»** (оркестратор): форма Def, кто порождает событие, FQN и подписка legacy, коды и `kind`, мост в legacy-исключение.
 
+## Ф5: Policy
+
+Образец — `packages/dmg-core/src/testing/example/todo/task/task.policy.ts` (+ тест). Legacy `wish/policy.ts` — не политика прав, а вопрос о статусе (`isActive`), его зовут `create-*-wish` UC и `wish-json-repo`. Прав в UC сейчас нет: желание ищется по `userId` вызывающего, владение неявное.
+
+**Развилка (открытый вопрос 7):** где правило «не более одного активного желания на (user, target)». Policy отказывает `ACCESS_DENIED` (`kind: access`) с `denyMessage` — а бот ветвится по `conflict` и `payload.status` существующего желания (`course-catalog`, `#handleApply`), то есть перенос правила в Policy меняет поведение для пользователя. Решение Нурболата — вариант A.
+
+**Шаг 1 — domain-author** (`packages/domain/src/wish/**`), по варианту A:
+- `isActive` → метод-вопрос Ar (`WishAr.isActive()`), статусы — из Def; legacy `policy.ts` удалить.
+- Правило уникальности — доменное решение по нескольким агрегатам (DOM-06): функция DCS/доменного сервиса над активными желаниями пользователя на цель, `Result` с `WISH_ALREADY_EXISTS` (`conflict`, `status` существующего). Имя и файл — по naming.md; решение брифа «DCS нет» пересматривается этой задачей.
+- `WishPolicy = definePolicy(...)` — только права: `canCancel` (владелец желания, `rule` с `label`/`denyMessage`); для `create-*` — право «пользователь выражает желание за себя» или `allowAll`, с обоснованием. Без спекулятивных правил.
+- TDD: каждое правило — разрешение и отказ; DCS — нет активных / есть активное каждого статуса / есть только неактивные.
+
+**Шаг 2 — migrator** (`packages/wish/src/**`): UC зовут DCS и Policy вместо `WishPolicy.isActive`; отказ DCS — через мост `throwWishError` (TR-1); отказ Policy — ветка, которой сейчас нет (новых отказов в боте быть не должно — правила совпадают с текущим поведением). Видимое пользователю не меняется.
+
+**Шаг 3 — гайд «policy»** (оркестратор): критерий Policy vs DCS vs метод-вопрос Ar на примере уникальности.
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
@@ -107,7 +123,7 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 | `wish/errors.ts`, `contract.ts` | `wish/wish.errors.ts` (`WishErrors`) | 4 |
 | `wish/policy.ts` | `wish/wish.policy.ts` (`WishPolicy`) | 5 |
 | `wish/repo.ts` (порт в домене) | `packages/wish/src/wish/wish.repo.ts` | 6 |
-| — | `wish.facade.ts` (`WishFacadeDef`) | 7 |
+| — | фасада нет (D-38) | 7 |
 | `wish/commands/<n>-cmd.ts` | `wish/uc/<n>.uc.ts` (`<N>UcDef`) | 8–9 |
 | — (ER только в api) | `wish/er/<n>.er.ts` (`<N>ErDef`) | 10–11 |
 | `module.ts` (мета + резолвер) | `wish.module.ts` (`WishModuleDef`) | 12 |
@@ -117,7 +133,7 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 | Было | Станет | Фаза |
 |---|---|---|
 | `infra/db/wish-json-repo.ts` | `infra/wish.json-repo.ts` | 6 |
-| — | `wish.facade.ts` (`implementFacade`) | 7 |
+| — | фасада нет (D-38) | 7 |
 | `api/wish/<n>-uc.ts`, `api/wish-uc.ts` | `wish/uc/<n>.uc.ts` (`UseCaseFromDef`); базовый `WishUseCase` удаляется | 8–9 |
 | `api/er/<n>-er.ts` | `wish/er/<n>.er.ts` (`ReactionFromDef`) | 10–11 |
 | `api/module.ts` | `wish.module.ts` (`ModuleFromDef`, карта Def → класс) | 12 |
@@ -142,10 +158,13 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
    **Было: Ф10–11. Входящие события legacy.** ER `wish` слушают `student.enrolled`, `stream.created` (stream) и `questionnaire:complete`/`questionnaire:abandon` — это legacy-события без Def; `legacyEventBus` **не доставляет** legacy-события подписчикам DMG. `defineEventReaction.on` требует Def события. Нужен мост «legacy → DMG» или Def событий зависимостей (их модули не мигрированы).
 3. ✅ **Решено (D-37):** `dependsOn` ссылается на внешние `ModuleDef` зависимостей (тот же контракт, что в п. 2); при миграции зависимости `external` снимается.
    **Было: Ф12. `dependsOn`.** У `user`, `course`, `questionnaire`, `stream` нет `ModuleDef`; `defineModule.dependsOn` ждёт Def. Варианты: stub-Def зависимостей (долг) или временное ослабление.
-4. **Ф7. Содержимое фасада.** Сейчас у `wish` нет фасада и внешних потребителей фасада (UI ходит через `appApi`). Что выставить в `WishFacadeDef` без спекулятивного API.
+4. ✅ **Решено (Нурболат, 2026-10-20, D-38): фасад — только по потребителю.** У `wish` потребителей фасада нет (UI ходит через `appApi`) — `WishFacadeDef` не объявляется. `dmg-core` это уже допускает; `gen module` создаёт фасад только с `--facade` (задача Ф6–7). Гайд «facade» — критерий и эталон платформы (`dmg-core` example), без фасада `wish`.
+   **Было: Ф7. Содержимое фасада.** Что выставить в `WishFacadeDef` без спекулятивного API.
 5. **Фасады зависимостей** (`CourseFacade` и др.) — legacy: `boolean`/`undefined`, без `Result`. UC `wish` вызывает их как есть; перевод — в их треках.
 6. ✅ **Решено (оркестратор по поручению Нурболата, TR-3): `conflict`.** Отказ перехода — операция несовместима с текущим состоянием ресурса, а не некорректный запрос (вход валиден); общепринятое соответствие — 409 Conflict. Видимый код сменится в Ф3–4, когда `Result` дойдёт до вызывающих; тексты прежние.
    **Было: Ф4. `kind` ошибок переходов.** `WishErrors.WISH_NOT_*` — `conflict`, legacy отдавал `BAD_REQUEST`. Когда `Result` дойдёт до вызывающих, код/статус сменится (400 → 409?) — решить явно (TR-1).
+7. ✅ **Решено (Нурболат, 2026-10-20): вариант A.**
+   **Было: Ф5. Где правило «одно активное желание на (user, target)».** A — DCS/доменный сервис с `Result` `WISH_ALREADY_EXISTS` (`conflict` + `status`), Policy — только права (`canCancel` владельцем), `isActive` — метод Ar. B — правило Policy (`ACCESS_DENIED`, `access`): бот перестанет показывать «продолжи анкету / уже обучаешься» — меняется поведение. C — в UC через метод Ar: доменное решение в UC (API-01). Рекомендация — A.
 
 ## Правила (ID rules.md)
 

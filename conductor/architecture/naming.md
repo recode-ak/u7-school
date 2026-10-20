@@ -87,7 +87,7 @@ infra/<aggregate>.json-repo.ts
 
 | Команда | Что создаёт |
 |---|---|
-| `gen module <m>` | домен: `<m>.module.ts`, `<m>.facade.ts`, `index.ts`, тест; прикладной пакет (для нового — `package.json`, `tsconfig.json`, `src/index.ts`), `<m>.module.ts`, фасад, тест |
+| `gen module <m> [--facade]` | домен: `<m>.module.ts`, `index.ts`, тест; прикладной пакет (для нового — `package.json`, `tsconfig.json`, `src/index.ts`), `<m>.module.ts`, тест; с `--facade` — ещё `<m>.facade.ts` в домене и в пакете (фасад — только по потребителю, D-38) |
 | `gen aggregate <m>.<a>` | домен: state, events, errors, Ar, Policy и тесты; прикладной слой: `<a>.repo.ts`, `infra/<a>.json-repo.ts` и тест |
 | `gen uc\|er\|job <m>.<a> <имя>` | пара: контракт в домене и реализация в `packages/<m>/src/<a>/<вид>/` по тому же относительному пути, плюс тесты |
 | `gen dcs\|dqs <m> <имя>` | сервис в домене с тестом |
