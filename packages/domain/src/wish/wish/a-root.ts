@@ -1,6 +1,6 @@
-// DEBT(D-21)
+// DEBT-21
 import { Aggregate } from '@u7-scl/core/domain';
-// DEBT(D-21)
+// DEBT-21
 import { isoNow } from '@u7-scl/core/shared';
 import type { Wish, WishArMeta, WishTarget } from './entity';
 import { WishSchema } from './entity';

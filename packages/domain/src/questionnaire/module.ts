@@ -1,9 +1,9 @@
-// DEBT(D-12)
-// biome-ignore lint/style/noRestrictedImports: DEBT(D-12) — тип резолвера пока в app
+// DEBT-12
+// biome-ignore lint/style/noRestrictedImports: DEBT-12 — тип резолвера пока в app
 import type { U7ModuleResolver } from '@u7-scl/app/domain';
-// DEBT(D-11)
+// DEBT-11
 import type { ApiModuleMeta } from '@u7-scl/core/domain';
-// DEBT(D-11)
+// DEBT-11
 import type { BaseJsonDb } from '@u7-scl/core/infra';
 import type { UserFacade } from '@u7-scl/domain/user';
 import type { AbandonCmdMeta } from './questionnaire/commands/abandon-cmd';

@@ -1,5 +1,5 @@
-// DEBT(D-17)
-// biome-ignore lint/style/noRestrictedImports: DEBT(D-17) — тип резолвера/константа пока в app
+// DEBT-17
+// biome-ignore lint/style/noRestrictedImports: DEBT-17 — тип резолвера/константа пока в app
 import type { U7ModuleResolver } from '@u7-scl/app/domain';
 import type { CourseFacade } from '@u7-scl/domain/course';
 import type { UserFacade } from '@u7-scl/domain/user';

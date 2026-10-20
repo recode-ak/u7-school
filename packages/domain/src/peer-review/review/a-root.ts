@@ -1,6 +1,6 @@
-// DEBT(D-25)
+// DEBT-25
 import { Aggregate, errValidation, throwError } from '@u7-scl/core/domain';
-// DEBT(D-25)
+// DEBT-25
 import { isoNow } from '@u7-scl/core/shared';
 import type { StudentOutcome } from '../review-campaign/entity';
 import type { ReviewArMeta, ReviewDirection } from './entity';
@@ -85,7 +85,7 @@ export class ReviewAr extends Aggregate<ReviewArMeta> {
   }
 
   /** Валидация длины текста — REVIEW_TEXT_INVALID. */
-  // biome-ignore lint/plugin: перенос без изменения логики (#private — DEBT(D-29))
+  // biome-ignore lint/plugin: перенос без изменения логики (#private — DEBT-29)
   static #validateText(text: string): void {
     const length = text.length;
     if (length < REVIEW_TEXT_MIN_LENGTH || length > REVIEW_TEXT_MAX_LENGTH) {

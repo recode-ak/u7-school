@@ -1,4 +1,4 @@
-// DEBT(D-11)
+// DEBT-11
 import type { ArMeta } from '@u7-scl/core/domain';
 import * as v from 'valibot';
 import { QuestionnairePoolSchema } from './question';
@@ -14,7 +14,7 @@ export const AnswerSchema = v.object({
   answerText: v.optional(v.string()),
   answeredAt: v.pipe(
     v.string(),
-    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT(D-14)
+    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-14
     v.isoDateTime('Некорректный формат даты ответа'),
   ),
 });
@@ -60,18 +60,18 @@ export const QuestionnaireSchema = v.object({
   ownerInfo: v.record(v.string(), v.unknown()),
   createdAt: v.pipe(
     v.string(),
-    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT(D-14)
+    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-14
     v.isoDateTime('Некорректный формат даты создания'),
   ),
   updatedAt: v.optional(
-    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT(D-14)
+    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-14
     v.pipe(v.string(), v.isoDateTime('Некорректный формат даты обновления')),
   ),
   /** Когда анкете отправлено предупреждение о закрытии (брошенная анкета) */
   warnedAt: v.optional(
     v.pipe(
       v.string(),
-      // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT(D-14)
+      // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-14
       v.isoDateTime('Некорректный формат даты предупреждения'),
     ),
   ),
@@ -79,12 +79,12 @@ export const QuestionnaireSchema = v.object({
   continueInvitedAt: v.optional(
     v.pipe(
       v.string(),
-      // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT(D-14)
+      // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-14
       v.isoDateTime('Некорректный формат даты приглашения продолжить'),
     ),
   ),
   completedAt: v.nullable(
-    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT(D-14)
+    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-14
     v.pipe(v.string(), v.isoDateTime('Некорректный формат даты завершения')),
   ),
   /** Причина прерывания — персистируется вместе со статусом abandoned */

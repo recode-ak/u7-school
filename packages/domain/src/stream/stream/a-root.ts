@@ -1,9 +1,9 @@
-// DEBT(D-17)
-// biome-ignore lint/style/noRestrictedImports: DEBT(D-17) — тип резолвера/константа пока в app
+// DEBT-17
+// biome-ignore lint/style/noRestrictedImports: DEBT-17 — тип резолвера/константа пока в app
 import { U7_SCHOOL_ID } from '@u7-scl/app/domain';
-// DEBT(D-16)
+// DEBT-16
 import { Aggregate } from '@u7-scl/core/domain';
-// DEBT(D-16)
+// DEBT-16
 import { isoNow } from '@u7-scl/core/shared';
 import type { ContentSnapshot, Course } from '@u7-scl/domain/course';
 import { StreamStatus } from '../status';

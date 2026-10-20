@@ -1,5 +1,5 @@
-// DEBT(D-26)
-// biome-ignore lint/style/noRestrictedImports: DEBT(D-26) — тип резолвера пока в app
+// DEBT-26
+// biome-ignore lint/style/noRestrictedImports: DEBT-26 — тип резолвера пока в app
 import type { U7ModuleResolver } from '@u7-scl/app/domain';
 import type { StreamFacade } from '@u7-scl/domain/stream';
 import type { UserFacade } from '@u7-scl/domain/user';

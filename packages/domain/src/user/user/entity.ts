@@ -20,10 +20,10 @@ export const UserSchema = v.object({
     v.array(RoleSchema),
     v.minLength(1, 'Пользователь должен иметь хотя бы одну роль'),
   ),
-  // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT(D-5))
+  // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-5)
   createdAt: v.pipe(v.string(), v.isoDateTime('Некорректный формат даты')),
   updatedAt: v.optional(
-    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT(D-5))
+    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-5)
     v.pipe(v.string(), v.isoDateTime('Некорректный формат даты')),
   ),
   nick: v.optional(

@@ -16,7 +16,7 @@
 
 ## Фаза 1: State (схема entity)
 
-- [ ] Task: Перенос структуры по naming.md (`wish/wish.state.ts`), поля через `F.*`, даты `F.timestamp` (D-24), `v.description()` на каждом поле
+- [ ] Task: Перенос структуры по naming.md (`wish/wish.state.ts`), поля через `F.*`, даты `F.timestamp` (DEBT-24), `v.description()` на каждом поле
 - [ ] Task: Гайд «state»
 - [ ] Task: Ревью reviewer → обзор
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
@@ -96,15 +96,15 @@
 
 ## Фаза 12: Модуль (`defineModule`) и сосуществование
 
-- [ ] Task: `WishModuleDef` (`dependsOn`: user, course, questionnaire, stream), `ModuleFromDef` — карта Def → класс; тип резолвера из платформы (D-22), без `core`/`app` (D-21)
-- [ ] Task: Сосуществование: `appApi.run` и `appApi.execute` для wish; вызывающие stories и UI не сломаны; barrel D-23 сохранён
+- [ ] Task: `WishModuleDef` (`dependsOn`: user, course, questionnaire, stream), `ModuleFromDef` — карта Def → класс; тип резолвера из платформы (DEBT-22), без `core`/`app` (DEBT-21)
+- [ ] Task: Сосуществование: `appApi.run` и `appApi.execute` для wish; вызывающие stories и UI не сломаны; barrel DEBT-23 сохранён
 - [ ] Task: Гайд «module»; stub-гайд «job» (эталона нет)
 - [ ] Task: Ревью → обзор
 - [ ] Task: Conductor - User Manual Verification 'Фаза 12' (Protocol in workflow.md)
 
 ## Фаза 13: Закрытие
 
-- [ ] Task: Погасить D-21, D-22, D-24 (маркеры, allowlist, `debt.md` синхронно); новые долги — с D-31
+- [ ] Task: Погасить DEBT-21, DEBT-22, DEBT-24, DEBT-31 (маркеры и `debt.md` синхронно); новые долги — с DEBT-32
 - [ ] Task: Сводка гайдов: индекс в `architecture/index.md`, ссылки на эталон из [agents.md](../../architecture/agents.md) §6
 - [ ] Task: Обновить [migration.md](../../architecture/migration.md) (§2 пункт 4 ✅, §6 состояние переноса, снять блок с Фаз 4–6 `dmg-core-extract`), `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 13' (Protocol in workflow.md)

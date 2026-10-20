@@ -1,6 +1,6 @@
-// DEBT(D-16)
+// DEBT-16
 import { errConflict, throwError } from '@u7-scl/core/domain';
-// DEBT(D-16)
+// DEBT-16
 import { now } from '@u7-scl/core/shared';
 import type { ContentSnapshot, StepPosition } from '@u7-scl/domain/course';
 import { CourseDs } from '@u7-scl/domain/course';

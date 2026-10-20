@@ -3,8 +3,8 @@ import {
   errAccessDenied,
   errConflict,
   throwError,
-} from '@u7-scl/core/domain'; // DEBT(D-25)
-// DEBT(D-25)
+} from '@u7-scl/core/domain'; // DEBT-25
+// DEBT-25
 import { isoNow } from '@u7-scl/core/shared';
 import type { ReviewDirection } from '../review/entity';
 import type {

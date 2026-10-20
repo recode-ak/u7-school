@@ -45,7 +45,7 @@
 | `api/wish/<n>-uc.ts`, `api/wish-uc.ts` | `wish/uc/<n>.uc.ts` (`UseCaseFromDef`); базовый `WishUseCase` удаляется | 8–9 |
 | `api/er/<n>-er.ts` | `wish/er/<n>.er.ts` (`ReactionFromDef`) | 10–11 |
 | `api/module.ts` | `wish.module.ts` (`ModuleFromDef`, карта Def → класс) | 12 |
-| `domain/index.ts` (barrel D-23) | остаётся | — |
+| `domain/index.ts` (barrel DEBT-23) | остаётся | — |
 
 Тесты переезжают вместе с файлом (`<file>.test.ts` рядом).
 

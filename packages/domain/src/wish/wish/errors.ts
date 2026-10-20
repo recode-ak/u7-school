@@ -1,4 +1,4 @@
-// DEBT(D-21)
+// DEBT-21
 import type { ConflictError, NotFoundError } from '@u7-scl/core/domain';
 import type { WishStatus } from './entity';
 

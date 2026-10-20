@@ -1,4 +1,4 @@
-// DEBT(D-6)
+// DEBT-6
 import { FileMetadataSchema } from '@u7-scl/core/domain';
 import * as v from 'valibot';
 import { StatusSchema } from '../status';
@@ -14,10 +14,10 @@ export const StepCommonSchema = v.object({
   ),
   content: v.optional(v.string()),
   status: StatusSchema,
-  // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты, DOM-12; DEBT(D-9))
+  // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты, DOM-12; DEBT-9)
   createdAt: v.pipe(v.string(), v.isoDateTime('Некорректный формат даты')),
   updatedAt: v.optional(
-    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты, DOM-12; DEBT(D-9))
+    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты, DOM-12; DEBT-9)
     v.pipe(v.string(), v.isoDateTime('Некорректный формат даты')),
   ),
 });

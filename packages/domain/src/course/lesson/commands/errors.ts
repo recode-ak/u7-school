@@ -1,4 +1,4 @@
-// DEBT(D-6)
+// DEBT-6
 import type { AccessDeniedError, NotFoundError } from '@u7-scl/core/domain';
 import type {
   ModuleAccessDeniedUcError,

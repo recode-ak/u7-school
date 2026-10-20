@@ -1,6 +1,6 @@
-// DEBT(D-6)
+// DEBT-6
 import { Aggregate } from '@u7-scl/core/domain';
-// DEBT(D-6)
+// DEBT-6
 import { isoNow } from '@u7-scl/core/shared';
 import type { User } from '@u7-scl/domain/user';
 import { Status } from '../status';
@@ -128,7 +128,7 @@ export class ModuleAr extends Aggregate<ModuleArMeta> {
     return this.#filterPublished();
   }
 
-  // biome-ignore lint/plugin: перенос без изменения кода (CODE-02; DEBT(D-10))
+  // biome-ignore lint/plugin: перенос без изменения кода (CODE-02; DEBT-10)
   #filterPublished(): Module {
     return {
       ...this.state,

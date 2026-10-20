@@ -1,4 +1,4 @@
-// DEBT(D-25)
+// DEBT-25
 import type { ConflictError, ValidationError } from '@u7-scl/core/domain';
 
 /**

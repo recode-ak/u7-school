@@ -1,4 +1,4 @@
-// DEBT(D-21)
+// DEBT-21
 import type { ArMeta } from '@u7-scl/core/domain';
 import { CourseSchema, ModuleSchema } from '@u7-scl/domain/course';
 import { UserSchema } from '@u7-scl/domain/user';
@@ -41,11 +41,11 @@ export const WishSchema = v.object({
   status: WishStatusSchema,
   createdAt: v.pipe(
     v.string(),
-    // biome-ignore lint/plugin: перенос без изменения схем, ISO-даты — DEBT(D-24)
+    // biome-ignore lint/plugin: перенос без изменения схем, ISO-даты — DEBT-24
     v.isoDateTime('Некорректный формат даты создания'),
   ),
   updatedAt: v.optional(
-    // biome-ignore lint/plugin: перенос без изменения схем, ISO-даты — DEBT(D-24)
+    // biome-ignore lint/plugin: перенос без изменения схем, ISO-даты — DEBT-24
     v.pipe(v.string(), v.isoDateTime('Некорректный формат даты обновления')),
   ),
 });

@@ -4,7 +4,7 @@
  *   bun run arch:check
  *
  * Чистые функции над файлами в памяти; чтение диска — в `readDomainFiles`.
- * Долг: маркер `// DEBT(D-<n>)` в коде ↔ allowlist `domain-debt.ts` ↔ `debt.md`.
+ * Долг: маркер `// DEBT-<n>` в коде ↔ запись в `conductor/architecture/debt.md`.
  */
 import { posix } from 'node:path';
 
@@ -20,6 +20,7 @@ const DOMAIN_SRC = 'packages/domain/src/';
 const PLATFORM = /^@u7-scl\/(app|core)(\/|$)/;
 const DOMAIN_PKG = /^@u7-scl\/domain(?:\/([^/]+)(?:\/(.+))?)?$/;
 const PUBLIC_SUBPATHS = new Set(['state', 'contract']);
+const DEBT_RE = /\bDEBT-\d+\b/;
 const IMPORT_RE =
   /(?:\b(?:import|export)\b[^;'"]*?\bfrom\s*|\bimport\s*)(['"])([^'"\n]+)\1/g;
 
@@ -36,7 +37,7 @@ function importsOf(text: string): ImportRef[] {
     const at = (m.index ?? 0) + m[0].length;
     const line = text.slice(0, at).split('\n').length;
     const near = `${lines[line - 2] ?? ''}\n${lines[line - 1] ?? ''}`;
-    refs.push({ spec: m[2] ?? '', line, marked: /DEBT\(D-\d+\)/.test(near) });
+    refs.push({ spec: m[2] ?? '', line, marked: DEBT_RE.test(near) });
   }
   return refs;
 }
@@ -93,7 +94,7 @@ export function checkDomainImports(
             );
         } else crossModule(other, '', spec);
       } else if (PLATFORM.test(spec)) {
-        if (!marked) fail('ARC-02', `импорт '${spec}' без // DEBT(<id>)`);
+        if (!marked) fail('ARC-02', `импорт '${spec}' без // DEBT-<n>`);
       } else if (DOMAIN_PKG.test(spec)) {
         const m = DOMAIN_PKG.exec(spec);
         if (m?.[1]) crossModule(m[1], m[2] ?? '', spec);
@@ -136,35 +137,27 @@ export function checkDomainGraph(graph: DomainGraph): string[] {
   return out;
 }
 
-/** Сверка маркеров `DEBT(D-<n>)`, allowlist и `debt.md`. */
+/** Сверка маркеров `DEBT-<n>` в коде с записями `debt.md`. */
 export function checkDebt(input: {
   code: readonly DomainFile[];
-  allowlist: readonly string[];
   debtMd: string;
 }): string[] {
   const inCode = new Map<string, string>();
   for (const f of input.code)
-    for (const m of f.text.matchAll(/DEBT\((D-\d+)\)/g)) {
+    for (const m of f.text.matchAll(/\b(DEBT-\d+)\b/g)) {
       const id = m[1] ?? '';
       if (!inCode.has(id)) inCode.set(id, f.path);
     }
-  const allow = new Set(input.allowlist);
   const inMd = new Set(
-    [...input.debtMd.matchAll(/^###\s+(D-\d+)\b/gm)].map((m) => m[1] ?? ''),
+    [...input.debtMd.matchAll(/^###\s+(DEBT-\d+)\b/gm)].map((m) => m[1] ?? ''),
   );
 
   const out: string[] = [];
   for (const [id, path] of inCode)
-    if (!allow.has(id))
-      out.push(`DEBT: ${id} есть в коде (${path}), но не в allowlist`);
-  for (const id of allow) {
-    if (!inCode.has(id))
-      out.push(`DEBT: ${id} есть в allowlist, но нет маркера в коде`);
     if (!inMd.has(id))
-      out.push(`DEBT: ${id} есть в allowlist, но нет записи в debt.md`);
-  }
+      out.push(`DEBT: ${id} есть в коде (${path}), но нет записи в debt.md`);
   for (const id of inMd)
-    if (!allow.has(id))
-      out.push(`DEBT: ${id} есть в debt.md, но нет в allowlist`);
+    if (!inCode.has(id))
+      out.push(`DEBT: ${id} есть в debt.md, но нет маркера в коде`);
   return out;
 }

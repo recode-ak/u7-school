@@ -1,6 +1,6 @@
-// DEBT(D-16)
+// DEBT-16
 import { Aggregate } from '@u7-scl/core/domain';
-// DEBT(D-16)
+// DEBT-16
 import { isoNow, now } from '@u7-scl/core/shared';
 import {
   AbandonSign,
@@ -269,7 +269,7 @@ export class StudentAr extends Aggregate<StudentArMeta> {
   }
 
   /** Добавляет событие снятия с учёбы (student.abandoned). */
-  // biome-ignore lint/plugin: перенос без изменения кода (#private — DEBT(D-20))
+  // biome-ignore lint/plugin: перенос без изменения кода (#private — DEBT-20)
   #addAbandonedEvent(
     who: 'self' | 'mentor',
     cause: 'voluntary' | 'inactivity' | 'by_mentor',
@@ -335,7 +335,7 @@ export class StudentAr extends Aggregate<StudentArMeta> {
   }
 
   /** Добавляет событие завершения модуля (student.completed). */
-  // biome-ignore lint/plugin: перенос без изменения кода (#private — DEBT(D-20))
+  // biome-ignore lint/plugin: перенос без изменения кода (#private — DEBT-20)
   #addCompletedEvent(
     moduleId: string,
     outcome: 'advanced' | 'not_advanced',

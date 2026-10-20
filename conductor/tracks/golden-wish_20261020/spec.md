@@ -8,8 +8,8 @@
 
 - **Полный срез.** Домен и прикладной слой (4 UC, 4 ER, JSON-репозиторий) одним треком. Не делится на два: эталон требует единого набора решений, а [migration.md](../../architecture/migration.md) и `dmg-core-extract` ссылаются на один трек. **Размер контролируется фазами:** одна фаза — один вид артефакта, обзор и гайд до перехода к следующей; остановиться можно после любой.
 - **Формат данных не меняется.** Схемы на `F.timestamp` читают ISO-строку и число, пишут число ([migration.md](../../architecture/migration.md) §4). Пакетная миграция `data/wish/` и удаление «чтения строки» — трек 7. Трек не пишет в `data/` ни скриптами, ни вручную; репозиторий проверяется на `DB_DIR=./data/fixtures`.
-- **Долги.** Гасятся D-21, D-22, D-24. Общие D-1, D-2 остаются за `user`; для wish тип резолвера берётся из платформы. Barrel D-23 остаётся до последнего трека миграции. Нумерация: «долг D-31» (реестр `debt.md`) не то же, что решение D-31 в `decisions.md`; новые долги пишутся с D-31 по `debt.md`.
-- **Совместимость.** Остальные модули зависят от `wish` через `@u7-scl/domain/wish` и barrel `@u7-scl/wish/domain` (D-23). Публичное поведение фасада не меняется.
+- **Долги.** Гасятся DEBT-21, DEBT-22, DEBT-24. Общие DEBT-1, DEBT-2 остаются за `user`; для wish тип резолвера берётся из платформы. Barrel DEBT-23 остаётся до последнего трека миграции. Реестр — [debt.md](../../architecture/debt.md), ID `DEBT-<n>` (отдельно от решений `D-NN`).
+- **Совместимость.** Остальные модули зависят от `wish` через `@u7-scl/domain/wish` и barrel `@u7-scl/wish/domain` (DEBT-23). Публичное поведение фасада не меняется.
 - **Исполнители.** Orchestrator + Нурболат; срезы раздаются `migrator`/`domain-author`/`api-author`, `reviewer` проверяет перед коммитом ([agents.md](../../architecture/agents.md)).
 - **Гайды — вариант А.** В проекте гайды ведутся в `conductor/architecture/guides/` с эталоном `wish`. При выносе в `dmg-core` (Фаза 5 `dmg-core-extract`) они переезжают в `docs/guides/` пакета и ссылаются на учебный модуль пакета; `wish` остаётся эталоном проекта.
 
@@ -17,11 +17,11 @@
 
 | Долг | Что | Решение в треке |
 |---|---|---|
-| D-21 | импорты `@u7-scl/core` в `domain/wish` | гасится |
-| D-22 | импорт `@u7-scl/app/domain` в `domain/wish/module.ts` | гасится |
-| D-24 | `v.isoDateTime` в схеме wish (DOM-12) | гасится, `F.timestamp` |
-| D-23 | barrel `packages/wish/src/domain/index.ts` | остаётся |
-| D-1, D-2 | общие, в `domain/user` | остаются за `user` |
+| DEBT-21 | импорты `@u7-scl/core` в `domain/wish` | гасится |
+| DEBT-22 | импорт `@u7-scl/app/domain` в `domain/wish/module.ts` | гасится |
+| DEBT-24 | `v.isoDateTime` в схеме wish (DOM-12) | гасится, `F.timestamp` |
+| DEBT-23 | barrel `packages/wish/src/domain/index.ts` | остаётся |
+| DEBT-1, DEBT-2 | общие, в `domain/user` | остаются за `user` |
 
 ## Функциональные требования
 
@@ -52,7 +52,7 @@
 
 Контрактный тест (в `check`): ссылки гайдов на эталонные файлы и ID правил живые.
 
-**Ф5. Входной долг.** Погашение D-21, D-22, D-24 — маркеры, allowlist и `debt.md` синхронно (`scripts/domain-debt.ts`, `arch:check`). Новые долги — с D-31 в `debt.md`.
+**Ф5. Входной долг.** Погашение DEBT-21, DEBT-22, DEBT-24 и DEBT-31 — маркеры и записи [debt.md](../../architecture/debt.md) синхронно (`arch:check`). Новые долги — с DEBT-32.
 
 ## Нефункциональные требования
 
@@ -62,7 +62,7 @@
 ## Критерии приёмки
 
 - В `domain/wish` и `packages/wish` нет `throw*` для штатных отказов, нет `new Ar`, нет импортов `core`/`app`.
-- D-21, D-22, D-24 погашены.
+- DEBT-21, DEBT-22, DEBT-24 погашены.
 - Все применимые ID [rules.md](../../architecture/rules.md) проходят `arch:check`; правила `review` — отчёт reviewer без блокирующих замечаний.
 - Гайды Ф4 написаны, контрактный тест ссылок зелёный.
 - Данные не затронуты: `git status data/` чист.
@@ -71,7 +71,7 @@
 ## За рамками
 
 - Миграция живых данных и удаление чтения ISO-строки (трек 7).
-- D-1, D-2 в `user`; barrel D-23.
+- DEBT-1, DEBT-2 в `user`; barrel DEBT-23.
 - Фазы 4–6 `dmg-core-extract` (стартуют после).
 - Перенос гайдов в пакет и учебный модуль пакета (Фаза 5 `dmg-core-extract`).
 - UI-манифесты и перевод контроллеров ([ui-manifests](../../architecture/ui-manifests.md)).

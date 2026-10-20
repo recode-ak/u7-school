@@ -1,4 +1,4 @@
-// DEBT(D-1)
+// DEBT-1
 import { NotifyKindSchema } from '@u7-scl/core/domain';
 import * as v from 'valibot';
 import type { UserArMeta } from '../entity';

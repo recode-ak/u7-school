@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-// DEBT(D-25)
+// DEBT-25
 import { AppException } from '@u7-scl/core/domain';
 import type { StudentOutcome } from '../review-campaign/entity';
 import { ReviewAr } from './a-root';

@@ -1,7 +1,7 @@
-// DEBT(D-22)
-// biome-ignore lint/style/noRestrictedImports: DEBT(D-22) — тип резолвера пока в app
+// DEBT-22
+// biome-ignore lint/style/noRestrictedImports: DEBT-22 — тип резолвера пока в app
 import type { U7ModuleResolver } from '@u7-scl/app/domain';
-// DEBT(D-21)
+// DEBT-21
 import type { ApiModuleMeta } from '@u7-scl/core/domain';
 import type { CourseFacade } from '@u7-scl/domain/course';
 import type { QuestionnaireFacade } from '@u7-scl/domain/questionnaire';

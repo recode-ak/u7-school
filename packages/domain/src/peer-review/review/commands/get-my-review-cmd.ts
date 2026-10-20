@@ -1,4 +1,4 @@
-// DEBT(D-25)
+// DEBT-25
 import type { UcMeta } from '@u7-scl/core/api';
 import * as v from 'valibot';
 import { uuidField } from '../../shared/schema';

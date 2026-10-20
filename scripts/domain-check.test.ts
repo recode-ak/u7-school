@@ -86,8 +86,8 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
       ),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([
-      "ARC-02: packages/domain/src/user/a.ts: импорт '@u7-scl/app' без // DEBT(<id>)",
-      "ARC-02: packages/domain/src/user/a.ts: импорт '@u7-scl/core' без // DEBT(<id>)",
+      "ARC-02: packages/domain/src/user/a.ts: импорт '@u7-scl/app' без // DEBT-<n>",
+      "ARC-02: packages/domain/src/user/a.ts: импорт '@u7-scl/core' без // DEBT-<n>",
     ]);
   });
 
@@ -95,7 +95,7 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
     const files = [
       file(
         'packages/domain/src/user/a.ts',
-        "import { A } from '@u7-scl/app'; // DEBT(D-1)\n// DEBT(D-2)\nimport { C } from '@u7-scl/core';",
+        "import { A } from '@u7-scl/app'; // DEBT-1\n// DEBT-2\nimport { C } from '@u7-scl/core';",
       ),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([]);
@@ -135,50 +135,33 @@ describe('checkDomainGraph: ARC-05', () => {
   });
 });
 
-describe('checkDebt: сверка маркеров, allowlist и debt.md', () => {
+describe('checkDebt: сверка маркеров в коде и debt.md', () => {
   const md = (...ids: string[]) => ids.map((id) => `### ${id}: x\n`).join('\n');
   const at = (id: string) => [
-    file('packages/domain/src/user/a.ts', `// DEBT(${id})`),
+    file('packages/domain/src/user/a.ts', `// ${id}: причина`),
   ];
 
   it('всё согласовано — без нарушений', () => {
     const code = [
-      file('packages/domain/src/user/a.ts', '// DEBT(D-1)'),
-      file('packages/user/src/domain/index.ts', '// DEBT(D-2)'),
+      file('packages/domain/src/user/a.ts', '// DEBT-1'),
+      file('packages/user/src/domain/index.ts', '// DEBT-2 — barrel'),
     ];
-    expect(
-      checkDebt({ code, allowlist: ['D-1', 'D-2'], debtMd: md('D-1', 'D-2') }),
-    ).toEqual([]);
+    expect(checkDebt({ code, debtMd: md('DEBT-1', 'DEBT-2') })).toEqual([]);
   });
 
-  it('маркер в коде без allowlist', () => {
-    expect(
-      checkDebt({ code: at('D-1'), allowlist: [], debtMd: md('D-1') }),
-    ).toEqual([
-      'DEBT: D-1 есть в коде (packages/domain/src/user/a.ts), но не в allowlist',
-      'DEBT: D-1 есть в debt.md, но нет в allowlist',
+  it('маркер в коде без записи в debt.md', () => {
+    expect(checkDebt({ code: at('DEBT-3'), debtMd: md() })).toEqual([
+      'DEBT: DEBT-3 есть в коде (packages/domain/src/user/a.ts), но нет записи в debt.md',
     ]);
   });
 
-  it('allowlist без маркера в коде (долг погашен, запись осталась)', () => {
+  it('запись в debt.md без маркера (долг погашен, запись осталась)', () => {
     expect(
-      checkDebt({ code: [], allowlist: ['D-1'], debtMd: md('D-1') }),
-    ).toEqual(['DEBT: D-1 есть в allowlist, но нет маркера в коде']);
+      checkDebt({ code: at('DEBT-1'), debtMd: md('DEBT-1', 'DEBT-2') }),
+    ).toEqual(['DEBT: DEBT-2 есть в debt.md, но нет маркера в коде']);
   });
 
-  it('allowlist без записи в debt.md', () => {
-    expect(
-      checkDebt({ code: at('D-3'), allowlist: ['D-3'], debtMd: md() }),
-    ).toEqual(['DEBT: D-3 есть в allowlist, но нет записи в debt.md']);
-  });
-
-  it('запись в debt.md без allowlist', () => {
-    expect(
-      checkDebt({
-        code: at('D-1'),
-        allowlist: ['D-1'],
-        debtMd: md('D-1', 'D-2'),
-      }),
-    ).toEqual(['DEBT: D-2 есть в debt.md, но нет в allowlist']);
+  it('старый формат D-<n> не считается маркером', () => {
+    expect(checkDebt({ code: at('D-1'), debtMd: md() })).toEqual([]);
   });
 });

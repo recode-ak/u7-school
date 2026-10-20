@@ -16,11 +16,12 @@ import {
   checkDomainImports,
   type DomainFile,
 } from './domain-check';
-import { DEBT_MD, DOMAIN_DEBT_ALLOWLIST, DOMAIN_GRAPH } from './domain-debt';
+import { DEBT_MD, DOMAIN_GRAPH } from './domain-debt';
 
 /**
- * Приложения под проверкой. Домена школы ещё нет — пока только учебный
- * пример core; `@u7-scl/domain` добавится с первым мигрированным модулем.
+ * Приложения под проверкой по Def. Модули `@u7-scl/domain` ещё без
+ * `defineModule` (их импорты и граф проверяет `runDomainCheck`); приложение
+ * домена добавляется с первым модулем на Def (`golden-wish`, Ф12).
  */
 export const ARCH_APPS: readonly ArchApp[] = [ExampleArch];
 
@@ -44,11 +45,17 @@ export function runArchCheck(
   return total === 0 ? 0 : 1;
 }
 
-/** Прочитать исходники всех пакетов (для проверок домена и долга). */
+/**
+ * Исходники для проверок домена и долга: все пакеты и скрипты (без тестов
+ * скриптов — в них маркеры долга встречаются как данные).
+ */
 export async function readPackageSources(root = '.'): Promise<DomainFile[]> {
   const files: DomainFile[] = [];
-  for await (const path of new Glob('packages/*/src/**/*.ts').scan(root)) {
-    files.push({ path, text: await Bun.file(`${root}/${path}`).text() });
+  for (const pattern of ['packages/*/src/**/*.ts', 'scripts/**/*.ts']) {
+    for await (const path of new Glob(pattern).scan(root)) {
+      if (path.startsWith('scripts/') && path.endsWith('.test.ts')) continue;
+      files.push({ path, text: await Bun.file(`${root}/${path}`).text() });
+    }
   }
   return files;
 }
@@ -60,7 +67,7 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
   return [
     ...checkDomainGraph(DOMAIN_GRAPH),
     ...checkDomainImports(code, DOMAIN_GRAPH),
-    ...checkDebt({ code, allowlist: DOMAIN_DEBT_ALLOWLIST, debtMd }),
+    ...checkDebt({ code, debtMd }),
   ];
 }
 

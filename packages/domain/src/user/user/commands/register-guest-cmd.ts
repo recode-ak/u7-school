@@ -1,4 +1,4 @@
-// DEBT(D-1)
+// DEBT-1
 import type { AccessDeniedError } from '@u7-scl/core/domain';
 import * as v from 'valibot';
 import type { User, UserArMeta } from '../entity';
