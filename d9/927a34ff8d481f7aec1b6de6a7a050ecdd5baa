@@ -1,0 +1,1 @@
+golden-wish Ф0: исправление error ревью приёмки (DOM-14 не действовал в dmg-core). Red: lint-rules.test с конфигом пакета — dom-14, arc-01 fail; green: 26 pass; проверка на пакете Date.now() в src/domain → DOM-14. check 3264 pass.
