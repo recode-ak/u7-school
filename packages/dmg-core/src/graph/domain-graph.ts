@@ -3,7 +3,7 @@ import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyEventDef } from '../domain/events/define-events';
 import type { AnyDomainRule } from '../domain/rules/domain-rule';
 import type { AnyErrorDef } from '../kernel/errors/define-errors';
-import { type DefIndex, indexDefs, localId } from './def-index';
+import { type DefIndex, indexDefs, localId, ruleId } from './def-index';
 import {
   type NormalizedAggregate,
   type NormalizedDomainRule,
@@ -60,8 +60,9 @@ export type UseCaseNode = Owned<NormalizedUseCase> & {
 };
 
 /**
- * Доменное правило (D-40). Модуль — владелец ошибки правила (ошибка своей
- * группы, DOM-16); `?` — ошибка вне модулей графа.
+ * Доменное правило (D-40). Id — `module.aggregate.name`, модуль — по
+ * агрегату-владельцу ошибки правила (ошибка своей группы, DOM-16), а не по
+ * UC; `?` — ошибка вне модулей графа.
  */
 export type DomainRuleNode = Owned<NormalizedDomainRule> & {
   /** UC, которые ссылаются на правило. */
@@ -250,9 +251,7 @@ class GraphBuilder {
   }
 
   private rule(r: AnyDomainRule): Mutable<DomainRuleNode> {
-    const owner = this.index.errorOwner.get(r.error);
-    const module = (owner && this.index.aggregateOwner.get(owner)?.name) ?? '?';
-    const id = `${module}.${r.name}`;
+    const { id, module } = ruleId(this.index, r);
     const known = this.rules[id];
     if (known) return known;
     const node = { id, module, def: normalize(r), usedBy: [] };

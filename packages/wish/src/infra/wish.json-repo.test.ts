@@ -1,13 +1,15 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { WishState, WishTargetVo } from '@u7-scl/domain/wish';
 import { WishAr } from '@u7-scl/domain/wish';
 import { VersionConflict } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
+import { ValiError } from 'valibot';
 import { WishJsonRepo } from './wish.json-repo';
 
-const tmpDir = mkdtempSync('/tmp/wish-json-repo-test-');
+const tmpDir = mkdtempSync(join(tmpdir(), 'wish-json-repo-test-'));
 
 function filePath(filename = 'wishes.json'): string {
   return join(tmpDir, filename);
@@ -30,21 +32,30 @@ function makeState(overrides: Partial<WishState> = {}): WishState {
   };
 }
 
-/** Новый агрегат (ещё не записанный) с заданным состоянием. */
-function makeWish(overrides: Partial<WishState> = {}): WishAr {
+/**
+ * Новый агрегат (ещё не записанный): `expressed` или `pending` — через
+ * `WishAr.create`. Остальные статусы фабрика не подменяет: их строят
+ * переходами Ar или `WishAr.restore(makeState({ status }))` явно.
+ */
+function makeWish(
+  overrides: Partial<
+    Pick<WishState, 'uuid' | 'userId' | 'target' | 'createdAt'>
+  > & {
+    status?: 'expressed' | 'pending';
+  } = {},
+): WishAr {
   const s = makeState(overrides);
-  const ar = expectOk(
+  return expectOk(
     WishAr.create(
       {
         uuid: s.uuid,
         userId: s.userId,
         target: s.target,
-        status: s.status === 'pending' ? 'pending' : 'expressed',
+        status: overrides.status ?? 'expressed',
       },
       s.createdAt,
     ),
   );
-  return ar;
 }
 
 /** Записывает состояния «как есть» (не через агрегат) и возвращает репозиторий. */
@@ -130,6 +141,15 @@ describe('WishJsonRepo', () => {
       );
     });
 
+    test('восстановленный агрегат, записи нет — VersionConflict', async () => {
+      const path = filePath('wishes-restored-missing.json');
+      const repo = new WishJsonRepo(path);
+      const restored = WishAr.restore(makeState({ version: 1 }));
+
+      await expect(repo.save(restored)).rejects.toBeInstanceOf(VersionConflict);
+      expect(await Bun.file(path).exists()).toBe(false);
+    });
+
     test('параллельные записи разных желаний не теряют друг друга', async () => {
       const repo = new WishJsonRepo(filePath('wishes-parallel.json'));
       const userId = crypto.randomUUID();
@@ -210,7 +230,7 @@ describe('WishJsonRepo', () => {
   });
 
   describe('битая запись', () => {
-    test('чтение — исключение, файл не изменён', async () => {
+    test('невалидная запись — ValiError, файл не изменён', async () => {
       const path = filePath('wishes-broken.json');
       const text = JSON.stringify([
         makeState(),
@@ -219,8 +239,36 @@ describe('WishJsonRepo', () => {
       await Bun.write(path, text);
       const repo = new WishJsonRepo(path);
 
-      await expect(repo.findByUser(crypto.randomUUID())).rejects.toThrow();
+      await expect(repo.findByUser(crypto.randomUUID())).rejects.toBeInstanceOf(
+        ValiError,
+      );
+      await expect(repo.save(makeWish())).rejects.toBeInstanceOf(ValiError);
+
+      expect(await Bun.file(path).text()).toBe(text);
+    });
+
+    test('невалидный JSON — исключение, файл не изменён', async () => {
+      const path = filePath('wishes-bad-json.json');
+      const text = '[{"uuid": ';
+      await Bun.write(path, text);
+      const repo = new WishJsonRepo(path);
+
+      await expect(repo.findById(crypto.randomUUID())).rejects.toThrow();
       await expect(repo.save(makeWish())).rejects.toThrow();
+
+      expect(await Bun.file(path).text()).toBe(text);
+    });
+
+    test('корень файла не массив — ValiError, файл не изменён', async () => {
+      const path = filePath('wishes-not-array.json');
+      const text = JSON.stringify({ wishes: [] });
+      await Bun.write(path, text);
+      const repo = new WishJsonRepo(path);
+
+      await expect(repo.findById(crypto.randomUUID())).rejects.toBeInstanceOf(
+        ValiError,
+      );
+      await expect(repo.save(makeWish())).rejects.toBeInstanceOf(ValiError);
 
       expect(await Bun.file(path).text()).toBe(text);
     });
@@ -272,6 +320,65 @@ describe('WishJsonRepo', () => {
       expect(found?.uuid).toBe(active.uuid);
     });
 
+    test('несколько активных — берётся последнее созданное', async () => {
+      const userId = crypto.randomUUID();
+      const target = makeTarget();
+      const first = makeState({
+        userId,
+        target,
+        status: 'expressed',
+        createdAt: Date.UTC(2026, 0, 1, 10),
+      });
+      const last = makeState({
+        userId,
+        target,
+        status: 'confirmed',
+        createdAt: Date.UTC(2026, 2, 1, 10),
+      });
+      const middle = makeState({
+        userId,
+        target,
+        status: 'pending',
+        createdAt: Date.UTC(2026, 1, 1, 10),
+      });
+      const repo = await repoWith('wishes-current-many-active.json', [
+        middle,
+        last,
+        first,
+      ]);
+
+      const found = await repo.findCurrentByUserAndTarget(userId, target);
+      expect(found?.uuid).toBe(last.uuid);
+    });
+
+    test('цель module: находит своё желание, не путает с course', async () => {
+      const userId = crypto.randomUUID();
+      const id = crypto.randomUUID();
+      const asModule = makeState({
+        userId,
+        target: { kind: 'module', moduleId: id },
+      });
+      const asCourse = makeState({
+        userId,
+        target: { kind: 'course', courseId: id },
+      });
+      const repo = await repoWith('wishes-current-module.json', [
+        asCourse,
+        asModule,
+      ]);
+
+      const found = await repo.findCurrentByUserAndTarget(userId, {
+        kind: 'module',
+        moduleId: id,
+      });
+      expect(found?.uuid).toBe(asModule.uuid);
+      const none = await repo.findCurrentByUserAndTarget(userId, {
+        kind: 'module',
+        moduleId: crypto.randomUUID(),
+      });
+      expect(none).toBeUndefined();
+    });
+
     test('различает цели по courseId', async () => {
       const repo = new WishJsonRepo(filePath('wishes-diff-targets.json'));
       const userId = crypto.randomUUID();
@@ -304,6 +411,31 @@ describe('WishJsonRepo', () => {
       ]);
 
       expect(await repo.findAllByUserAndTarget(userId, target)).toHaveLength(2);
+    });
+  });
+
+  describe('findAllByUserAndTarget: module', () => {
+    test('цель module не смешивается с course того же id', async () => {
+      const userId = crypto.randomUUID();
+      const id = crypto.randomUUID();
+      const asModule = makeState({
+        userId,
+        target: { kind: 'module', moduleId: id },
+      });
+      const repo = await repoWith('wishes-all-module.json', [
+        asModule,
+        makeState({ userId, target: { kind: 'course', courseId: id } }),
+        makeState({
+          userId,
+          target: { kind: 'module', moduleId: crypto.randomUUID() },
+        }),
+      ]);
+
+      const found = await repo.findAllByUserAndTarget(userId, {
+        kind: 'module',
+        moduleId: id,
+      });
+      expect(found.map((w) => w.uuid)).toEqual([asModule.uuid]);
     });
   });
 

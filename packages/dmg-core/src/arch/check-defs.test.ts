@@ -443,7 +443,26 @@ describe('checkDefs', () => {
 
     it('MAN-01: пустой label правила', () => {
       expect(report(withRules([itemExists(' ')]))).toEqual([
-        'MAN-01: правило beta.itemExists: пустой label',
+        'MAN-01: правило beta.item.itemExists: пустой label',
+      ]);
+    });
+
+    it('MAN-01: правило чужого модуля — заголовок по владельцу ошибки', () => {
+      const m = defineModule({
+        ...AlphaModuleDef,
+        useCases: [
+          defineUseCase({
+            ...CreateItemUcDef,
+            name: 'noteItem',
+            aggregate: NoteArDef,
+            emits: [],
+            errors: [ItemErrors.NOT_FOUND],
+            rules: [itemExists(' ')],
+          }),
+        ],
+      });
+      expect(report(m).filter((l) => l.startsWith('MAN-01'))).toEqual([
+        'MAN-01: правило beta.item.itemExists: пустой label',
       ]);
     });
   });

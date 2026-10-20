@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'bun:test';
+import * as v from 'valibot';
+import { defineAggregate } from '../domain/aggregate/define-aggregate';
 import { defineEventReaction } from '../domain/contracts/define-event-reaction';
 import { defineModule } from '../domain/contracts/define-module';
+import { defineUseCase } from '../domain/contracts/define-use-case';
+import { allowAll } from '../domain/policy/policy';
+import { domainRule } from '../domain/rules/domain-rule';
+import { defineErrors } from '../kernel/errors/define-errors';
+import { BaseEntityFields } from '../kernel/fields/fields';
+import { ok } from '../kernel/result/result';
 import {
   TaskEvents,
   TodoFacadeDef,
@@ -25,6 +33,80 @@ const NotesModuleDef = defineModule({
   aggregates: [],
   useCases: [],
   reactions: [NotifyTodoErDef],
+  jobs: [],
+});
+
+/**
+ * Агрегат `name` с ошибкой `<PREFIX>_DUPLICATE`, правилом `unique` на неё и
+ * UC `<uc>`, который ссылается на `rules` (по умолчанию — на своё правило).
+ */
+function withUniqueRule(name: string, prefix: string) {
+  const errors = defineErrors(prefix, {
+    DUPLICATE: {
+      kind: 'conflict',
+      label: 'Дубль',
+      description: 'Такая запись уже есть.',
+    },
+  });
+  const ArDef = defineAggregate({
+    name,
+    label: name,
+    description: `Агрегат ${name}.`,
+    state: v.object({ ...BaseEntityFields }),
+    events: {},
+    errors,
+  });
+  const unique = domainRule({
+    name: 'unique',
+    label: 'Запись уникальна',
+    description: 'Дубль не создаётся.',
+    error: errors.DUPLICATE,
+    check: (_: unknown) => ok(),
+  });
+  return { ArDef, errors, unique };
+}
+
+const ruleUc = (
+  name: string,
+  a: ReturnType<typeof withUniqueRule>,
+  rule = a.unique,
+) =>
+  defineUseCase({
+    name,
+    label: name,
+    description: `UC ${name}.`,
+    type: 'command',
+    aggregate: a.ArDef,
+    callers: ['user'],
+    policy: allowAll,
+    input: v.object({}),
+    output: v.object({}),
+    errors: [rule.error],
+    rules: [rule],
+  });
+
+const shopItem = withUniqueRule('item', 'ITEM');
+const shopOrder = withUniqueRule('order', 'ORDER');
+const ShopModuleDef = defineModule({
+  name: 'shop',
+  label: 'Магазин',
+  description: 'Два агрегата с правилом unique.',
+  dependsOn: [],
+  aggregates: [shopItem.ArDef, shopOrder.ArDef],
+  useCases: [ruleUc('createItem', shopItem), ruleUc('createOrder', shopOrder)],
+  reactions: [],
+  jobs: [],
+});
+
+const cartLine = withUniqueRule('line', 'LINE');
+const CartModuleDef = defineModule({
+  name: 'cart',
+  label: 'Корзина',
+  description: 'UC с правилом чужого модуля.',
+  dependsOn: [ShopModuleDef],
+  aggregates: [cartLine.ArDef],
+  useCases: [ruleUc('addLine', cartLine, shopItem.unique)],
+  reactions: [],
   jobs: [],
 });
 
@@ -116,8 +198,8 @@ describe('buildGraph', () => {
     });
 
     it('доменное правило: узел с текстами и кодом ошибки, UC ссылается', () => {
-      expect(graph.rules['todo.withinOpenLimit']).toEqual({
-        id: 'todo.withinOpenLimit',
+      expect(graph.rules['todo.task.withinOpenLimit']).toEqual({
+        id: 'todo.task.withinOpenLimit',
         module: 'todo',
         def: {
           dmg: 'domainRule',
@@ -130,9 +212,38 @@ describe('buildGraph', () => {
         usedBy: ['todo.createTask'],
       });
       expect(graph.useCases['todo.createTask']?.rules).toEqual([
-        'todo.withinOpenLimit',
+        'todo.task.withinOpenLimit',
       ]);
       expect(graph.useCases['todo.completeTask']?.rules).toEqual([]);
+    });
+
+    it('правила с одним name у двух агрегатов модуля — два узла', () => {
+      const shop = buildGraph([ShopModuleDef]);
+      expect(Object.keys(shop.rules)).toEqual([
+        'shop.item.unique',
+        'shop.order.unique',
+      ]);
+      expect(shop.rules['shop.item.unique']?.usedBy).toEqual([
+        'shop.createItem',
+      ]);
+      expect(shop.rules['shop.order.unique']?.usedBy).toEqual([
+        'shop.createOrder',
+      ]);
+      expect(shop.useCases['shop.createOrder']?.rules).toEqual([
+        'shop.order.unique',
+      ]);
+    });
+
+    it('правило чужого модуля в UC — id и модуль по владельцу ошибки', () => {
+      const cart = buildGraph([CartModuleDef]);
+      expect(cart.useCases['cart.addLine']?.rules).toEqual([
+        'shop.item.unique',
+      ]);
+      expect(cart.rules['shop.item.unique']).toMatchObject({
+        module: 'shop',
+        usedBy: ['cart.addLine', 'shop.createItem'],
+      });
+      expect(cart.rules['cart.line.unique']).toBeUndefined();
     });
 
     it('узлы содержат нормализованные Def', () => {

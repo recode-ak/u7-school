@@ -5,6 +5,7 @@ import type { AnyJobDef } from '../domain/contracts/define-job';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyUseCaseDef } from '../domain/contracts/define-use-case';
 import type { AnyEventDef } from '../domain/events/define-events';
+import type { AnyDomainRule } from '../domain/rules/domain-rule';
 import type { AnyErrorDef } from '../kernel/errors/define-errors';
 
 /** Def операции модуля: UC, ER или Job. */
@@ -64,4 +65,23 @@ export function operationsOf(m: AnyModuleDef): readonly AnyOperationDef[] {
 /** Id агрегата и операции в графе: `module.name`. */
 export function localId(module: AnyModuleDef, def: { name: string }): string {
   return `${module.name}.${def.name}`;
+}
+
+/**
+ * Id доменного правила: `module.aggregate.name` по агрегату-владельцу его
+ * ошибки (D-40, DOM-16), а не по модулю ссылающегося UC. Правила с одним
+ * `name` у разных агрегатов модуля различаются. Ошибка вне модулей
+ * индекса — `?.?.name`.
+ */
+export function ruleId(
+  index: DefIndex,
+  rule: AnyDomainRule,
+): { readonly id: string; readonly module: string } {
+  const aggregate = index.errorOwner.get(rule.error);
+  const owner = aggregate && index.aggregateOwner.get(aggregate);
+  if (!aggregate || !owner) return { id: `?.?.${rule.name}`, module: '?' };
+  return {
+    id: `${localId(owner, aggregate)}.${rule.name}`,
+    module: owner.name,
+  };
 }

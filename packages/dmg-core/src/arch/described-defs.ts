@@ -1,7 +1,7 @@
 import type * as v from 'valibot';
 import type { AnyDomainRule } from '../domain/rules/domain-rule';
 import type { DefIndex } from '../graph/def-index';
-import { localId } from '../graph/def-index';
+import { localId, ruleId } from '../graph/def-index';
 
 /** Def с описаниями и схемами — в виде, общем для MAN-01/02/03. */
 export type DescribedDef = {
@@ -16,7 +16,8 @@ export type DescribedDef = {
  * Все Def приложения с описаниями: модули, фасады и их методы, агрегаты,
  * UC, ER, Job, события и ошибки агрегатов, доменные правила UC. Ошибки и
  * события, на которые только ссылаются, проверяются у владельца; правило,
- * на которое ссылаются несколько UC, — один раз.
+ * на которое ссылаются несколько UC, — один раз; заголовок правила — по
+ * владельцу его ошибки (`ruleId`), как в графе.
  */
 export function describedDefs(index: DefIndex): DescribedDef[] {
   const out: DescribedDef[] = [];
@@ -58,7 +59,7 @@ export function describedDefs(index: DefIndex): DescribedDef[] {
       for (const r of uc.rules ?? []) {
         if (rules.has(r)) continue;
         rules.add(r);
-        add(`правило ${localId(m, r)}`, r);
+        add(`правило ${ruleId(index, r).id}`, r);
       }
     }
     for (const er of m.reactions) add(`ER ${localId(m, er)}`, er);

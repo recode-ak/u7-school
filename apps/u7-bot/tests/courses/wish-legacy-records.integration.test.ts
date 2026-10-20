@@ -19,6 +19,9 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
   const NEIGHBOR_UUID = '22222222-2222-4222-8222-222222222222';
   const CREATED_ISO = '2026-03-01T10:00';
   const NEIGHBOR_ISO = '2026-03-02T11:30';
+  // ISO без зоны трактуется как UTC (D-36) — ожидания явно в UTC, не зависят от TZ
+  const CREATED_AT = Date.UTC(2026, 2, 1, 10, 0);
+  const NEIGHBOR_AT = Date.UTC(2026, 2, 2, 11, 30);
 
   let wishesPath: string;
 
@@ -62,7 +65,7 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
     const wish = wishes.find((w) => w.uuid === TARGET_UUID);
     expect(wish).toBeDefined();
     expect(wish!.status).toBe('expressed');
-    expect(wish!.createdAt).toBe(new Date(CREATED_ISO).getTime());
+    expect(wish!.createdAt).toBe(CREATED_AT);
   });
 
   test('cancel-wish: файл переписан в формате spec, соседняя запись не потеряна', async () => {
@@ -78,12 +81,12 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
     const target = rows.find((r) => r.uuid === TARGET_UUID)!;
     expect(target.status).toBe('cancelled');
     expect(target.version).toBe(1);
-    expect(target.createdAt).toBe(new Date(CREATED_ISO).getTime());
+    expect(target.createdAt).toBe(CREATED_AT);
     expect(typeof target.updatedAt).toBe('number');
 
     const neighbor = rows.find((r) => r.uuid === NEIGHBOR_UUID)!;
     expect(neighbor.status).toBe('expressed');
-    expect(neighbor.createdAt).toBe(new Date(NEIGHBOR_ISO).getTime());
+    expect(neighbor.createdAt).toBe(NEIGHBOR_AT);
     expect(typeof neighbor.updatedAt).toBe('number');
   });
 });
