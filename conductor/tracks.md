@@ -8,6 +8,6 @@
 
 ---
 
-- [ ] **Track: domain-package — наполнить `@u7-scl/domain`: механический перенос domain-слоёв модулей с реестром долга и проверками arch:check**
+- [~] **Track: domain-package — наполнить `@u7-scl/domain`: механический перенос domain-слоёв модулей с реестром долга и проверками arch:check**
 *Link: [./tracks/domain-package_20261020/](./tracks/domain-package_20261020/)*
 *Реестр временных костылей: [debt.md](./tracks/domain-package_20261020/debt.md) (создаётся в Фазе 1)*
