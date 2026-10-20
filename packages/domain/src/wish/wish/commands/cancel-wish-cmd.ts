@@ -1,6 +1,6 @@
 import { CourseSchema, ModuleSchema } from '@u7-scl/domain/course';
 import * as v from 'valibot';
-import type { WishNotFoundUcError } from '../errors';
+import type { LegacyWishUcError } from './legacy-uc-error';
 
 /**
  * Схема команды отмены желания.
@@ -27,4 +27,4 @@ export interface CancelWishCmdMeta {
 }
 
 /** Ошибки команды отмены желания. */
-export type CancelWishCmdError = WishNotFoundUcError;
+export type CancelWishCmdError = LegacyWishUcError<'NOT_FOUND'>;

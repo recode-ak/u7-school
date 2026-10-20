@@ -1,12 +1,11 @@
 import type { User } from '@u7-scl/app/domain';
-import { errNotFound } from '@u7-scl/core/domain';
 import type {
   CancelWishCmd,
   CancelWishCmdMeta,
-  WishNotFoundUcError,
   WishTargetVo,
 } from '@u7-scl/domain/wish';
 import { CancelWishCmdSchema, WishAr } from '@u7-scl/domain/wish';
+import { WishErrors } from '@u7-scl/domain/wish/contract';
 import * as v from 'valibot';
 import { throwIfRejected } from '../legacy-reject';
 import { WishUseCase } from '../wish-uc';
@@ -38,10 +37,8 @@ export class CancelWishUc extends WishUseCase<CancelWishCmdMeta> {
     const wish = await this.repo.getByUserAndTarget(actor.uuid, target);
     // Отмена разрешена только из expressed|confirmed; для pending — только abandon.
     if (!wish || (wish.status !== 'expressed' && wish.status !== 'confirmed')) {
-      this.throwError(
-        errNotFound<WishNotFoundUcError>(
-          'WISH_NOT_FOUND',
-          'Желание не найдено',
+      this.throwWishError(
+        WishErrors.NOT_FOUND.make(
           target.kind === 'course'
             ? { userId: actor.uuid, courseId: target.courseId }
             : { userId: actor.uuid, moduleId: target.moduleId },

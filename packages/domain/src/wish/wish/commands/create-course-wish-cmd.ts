@@ -1,9 +1,6 @@
 import { CourseSchema } from '@u7-scl/domain/course';
 import * as v from 'valibot';
-import type {
-  CourseNotFoundUcError,
-  WishAlreadyExistsUcError,
-} from '../errors';
+import type { LegacyWishUcError } from './legacy-uc-error';
 
 /** Схема команды создания желания пройти курс. */
 export const CreateCourseWishCmdSchema = v.object({
@@ -38,5 +35,5 @@ export interface CreateCourseWishCmdMeta {
 
 /** Ошибки команды создания желания пройти курс. */
 export type CreateCourseWishCmdError =
-  | CourseNotFoundUcError
-  | WishAlreadyExistsUcError;
+  | LegacyWishUcError<'COURSE_NOT_FOUND'>
+  | LegacyWishUcError<'ALREADY_EXISTS'>;

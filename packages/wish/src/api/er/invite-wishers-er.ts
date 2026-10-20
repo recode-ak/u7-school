@@ -1,12 +1,10 @@
 import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
-import { isoNow } from '@u7-scl/core/shared';
-import type {
-  WishApiModuleResolver,
-  WishInvitedEvent,
-  WishState,
-} from '@u7-scl/domain/wish';
+import { legacyEventBus } from '@u7-scl/core/legacy-bridge';
+import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
+import { WishEvents } from '@u7-scl/domain/wish/contract';
 import type { StreamCreatedEvent } from '@u7-scl/stream/domain';
+import { publishWishEvents } from '../legacy-publish';
 
 /** Метаданные реакции приглашения желающих при открытии набора. */
 export interface InviteWishersErMeta extends ErMeta<StreamCreatedEvent> {
@@ -22,7 +20,8 @@ export interface InviteWishersErMeta extends ErMeta<StreamCreatedEvent> {
  * (ретейкеры, «следующий модуль»).
  * Историческая идентичность (форки) решается только фасадом курсов.
  *
- * Приглашение — событие wish.invited с адресацией (userId, telegramId)
+ * Приглашение — событие `WishEvents.invited` (FQN `wish.wish.invited`,
+ * строит ER: состояние желания не меняется) с адресацией (userId, telegramId)
  * и целью желания; карточку с кнопкой отмены рендерит UI-сторя
  * wish-invite (контроллер courses, канал invite). Тексты карточки —
  * забота UI, ER только адресует. Поток недоступен или у желающего нет
@@ -65,7 +64,7 @@ export class InviteWishersEr extends EventReaction<
         if (!matched.has(wish.target.courseId)) {
           continue;
         }
-        await this.#invite(wish, streamId);
+        await this.#invite(wish, streamId, event);
       }
     }
 
@@ -91,13 +90,17 @@ export class InviteWishersEr extends EventReaction<
         if (!matched.has(wish.target.moduleId)) {
           continue;
         }
-        await this.#invite(wish, streamId);
+        await this.#invite(wish, streamId, event);
       }
     }
   }
 
   /** Публикация события приглашения. Поток недоступен — пропуск. */
-  async #invite(wish: WishState, streamId: string): Promise<void> {
+  async #invite(
+    wish: WishState,
+    streamId: string,
+    cause: InviteWishersErMeta['event'],
+  ): Promise<void> {
     const stream = await this.resolve.streamFacade.getStream(streamId);
     if (!stream) return;
 
@@ -110,22 +113,22 @@ export class InviteWishersEr extends EventReaction<
       return;
     }
 
-    const event: WishInvitedEvent = {
-      eventId: crypto.randomUUID(),
-      eventName: 'wish.invited',
-      occurredAt: isoNow(),
-      aggregateName: 'Wish',
-      aggregateId: wish.uuid,
-      payload: {
-        userId: wish.userId,
-        telegramId: addressee.telegramId,
-        streamId,
-        targetKind: wish.target.kind,
-        ...(wish.target.kind === 'course'
-          ? { courseId: wish.target.courseId }
-          : { moduleId: wish.target.moduleId }),
-      },
+    const to = {
+      userId: wish.userId,
+      telegramId: addressee.telegramId,
+      streamId,
     };
-    this.resolve.eventBus.publish(event);
+    const invited = WishEvents.invited.make(
+      wish.target.kind === 'course'
+        ? { ...to, targetKind: 'course', courseId: wish.target.courseId }
+        : { ...to, targetKind: 'module', moduleId: wish.target.moduleId },
+    );
+    publishWishEvents(legacyEventBus(this.resolve.eventBus), {
+      events: [invited],
+      aggregateId: wish.uuid,
+      source: this.erName,
+      cause,
+      at: Date.now(),
+    });
   }
 }

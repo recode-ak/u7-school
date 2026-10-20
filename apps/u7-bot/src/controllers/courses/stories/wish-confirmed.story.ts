@@ -1,4 +1,5 @@
 import type { User } from '@u7-scl/app/domain';
+import type { DomainEvent } from '@u7-scl/core/domain';
 import { md, mdJoin } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -6,8 +7,19 @@ import type {
   UiEventSubscription,
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
-import type { WishConfirmedEvent } from '@u7-scl/wish/domain';
+import { WishEvents } from '@u7-scl/wish/domain';
+import type * as v from 'valibot';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
+
+/**
+ * Подтверждение желания в legacy-форме, как его доставляет
+ * `legacyEventBus`: `eventName` — FQN Def, `payload` — по схеме
+ * `WishEvents.confirmed`.
+ */
+export type WishConfirmedEvent = DomainEvent & {
+  eventName: typeof WishEvents.confirmed.name;
+  payload: v.InferOutput<typeof WishEvents.confirmed.payload>;
+};
 
 /** Профиль ментора (telegramId может отсутствовать). */
 type Mentor = Omit<User, 'telegramId'> & {
@@ -17,7 +29,8 @@ type Mentor = Omit<User, 'telegramId'> & {
 /**
  * Уведомление менторам о подтверждённом желании (проактивное).
  *
- * Подписка на wish.confirmed (публикует ER confirm-wish после
+ * Подписка на `WishEvents.confirmed` (FQN `wish.wish.confirmed`;
+ * публикует ER confirm-wish после
  * анкетной ветки). Собирает имя пользователя, название курса и всех
  * менторов, которые когда-либо вели потоки этого курса, и рассылает
  * им notify-проактив (без кнопок). Автор желания и менторы без
@@ -31,8 +44,9 @@ export class WishConfirmedStory extends U7BotUiStory {
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<WishConfirmedEvent>('wish.confirmed', (event) =>
-        this.#handleConfirmed(event),
+      eventSubscription<WishConfirmedEvent>(
+        WishEvents.confirmed.name,
+        (event) => this.#handleConfirmed(event),
       ),
     ];
   }

@@ -100,6 +100,35 @@ describe('CreateModuleWishUc', () => {
     expect(wishRepo.save).not.toHaveBeenCalled();
   });
 
+  test('модуль не найден — код WISH_MODULE_NOT_FOUND, kind not-found', async () => {
+    const { uc } = setupUc({ place: undefined });
+
+    await expect(uc.handle({ moduleId }, actor)).rejects.toMatchObject({
+      error: {
+        name: 'WISH_MODULE_NOT_FOUND',
+        kind: 'not-found',
+        message: 'Модуль не найден',
+        payload: { moduleId },
+      },
+    });
+  });
+
+  test('дедуп: код WISH_ALREADY_EXISTS, kind conflict, status существующего', async () => {
+    const { uc } = setupUc({
+      place: { courseId },
+      existing: makeActiveWish('expressed'),
+    });
+
+    await expect(uc.handle({ moduleId }, actor)).rejects.toMatchObject({
+      error: {
+        name: 'WISH_ALREADY_EXISTS',
+        kind: 'conflict',
+        message: 'Желание уже выражено',
+        payload: { userId: actorId, moduleId, status: 'expressed' },
+      },
+    });
+  });
+
   test('дедуп: активное желание на тот же модуль → WISH_ALREADY_EXISTS', async () => {
     const { wishRepo, uc } = setupUc({
       place: { courseId },

@@ -145,4 +145,19 @@ describe('CancelWishUc', () => {
     ).rejects.toThrow('Желание не найдено');
     expect(save).not.toHaveBeenCalled();
   });
+
+  test('ошибка «не найдено» — код WISH_NOT_FOUND, kind not-found, payload цели', async () => {
+    const { uc } = setupUc();
+
+    await expect(
+      uc.handle({ kind: 'course', courseId }, actor),
+    ).rejects.toMatchObject({
+      error: {
+        name: 'WISH_NOT_FOUND',
+        kind: 'not-found',
+        message: 'Желание не найдено',
+        payload: { userId: actorId, courseId },
+      },
+    });
+  });
 });

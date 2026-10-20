@@ -1,8 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app/domain';
 import type { MdText } from '@u7-scl/core/shared';
-import type { WishInvitedEvent } from '@u7-scl/wish/domain';
-import { WishInviteStory } from './wish-invite.story';
+import { type WishInvitedEvent, WishInviteStory } from './wish-invite.story';
 
 // ══ Фикстуры ══
 
@@ -42,22 +41,26 @@ const mentor: TestMentor = {
   createdAt: '2026-01-01T00:00',
 };
 
+/** Цель приглашения: курс (по умолчанию) или модуль. */
+type InvitedTarget =
+  | { targetKind: 'course'; courseId: string }
+  | { targetKind: 'module'; moduleId: string };
+
+/** Приглашение в legacy-форме — как его доставляет legacyEventBus. */
 function makeInvitedEvent(
-  overrides: Partial<WishInvitedEvent['payload']> = {},
+  target: InvitedTarget = { targetKind: 'course', courseId: COURSE_ID },
 ): WishInvitedEvent {
   return {
     eventId: crypto.randomUUID(),
-    eventName: 'wish.invited',
+    eventName: 'wish.wish.invited',
     occurredAt: '2026-09-01T12:00',
-    aggregateName: 'Wish',
+    aggregateName: 'wish.wish',
     aggregateId: crypto.randomUUID(),
     payload: {
       userId: crypto.randomUUID(),
       telegramId: WISHER_TELEGRAM_ID,
       streamId: STREAM_ID,
-      targetKind: 'course',
-      courseId: COURSE_ID,
-      ...overrides,
+      ...target,
     },
   };
 }
@@ -149,15 +152,15 @@ function subHandler(
 }
 
 describe('WishInviteStory', () => {
-  test('подписана на wish.invited', () => {
+  test('подписана на wish.wish.invited (FQN Def)', () => {
     const { story } = setupStory();
     const names = story.getEventSubscriptions().map((s) => s.eventName);
-    expect(names).toContain('wish.invited');
+    expect(names).toContain('wish.wish.invited');
   });
 
   test('course-приглашение: структурированная карточка с курсом, потоком, датой, ментором', async () => {
     const { story, invites } = setupStory();
-    const handle = subHandler(story, 'wish.invited');
+    const handle = subHandler(story, 'wish.wish.invited');
 
     await handle(makeInvitedEvent() as never);
 
@@ -197,7 +200,7 @@ describe('WishInviteStory', () => {
     const { story, invites } = setupStory({
       stream: { ...stream, enrollmentKey: 'secret123' },
     });
-    const handle = subHandler(story, 'wish.invited');
+    const handle = subHandler(story, 'wish.wish.invited');
 
     await handle(makeInvitedEvent() as never);
 
@@ -210,7 +213,7 @@ describe('WishInviteStory', () => {
     const { story, invites } = setupStory({
       mentor: { ...mentor, nick: undefined },
     });
-    const handle = subHandler(story, 'wish.invited');
+    const handle = subHandler(story, 'wish.wish.invited');
 
     await handle(makeInvitedEvent() as never);
 
@@ -222,7 +225,7 @@ describe('WishInviteStory', () => {
     const { story, invites } = setupStory({
       mentor: { ...mentor, nick: undefined, telegramId: undefined },
     });
-    const handle = subHandler(story, 'wish.invited');
+    const handle = subHandler(story, 'wish.wish.invited');
 
     await handle(makeInvitedEvent() as never);
 
@@ -233,7 +236,7 @@ describe('WishInviteStory', () => {
 
   test('профиль ментора недоступен → строка «Ментор» опускается', async () => {
     const { story, invites } = setupStory({ mentor: undefined });
-    const handle = subHandler(story, 'wish.invited');
+    const handle = subHandler(story, 'wish.wish.invited');
 
     await handle(makeInvitedEvent() as never);
 
@@ -245,14 +248,10 @@ describe('WishInviteStory', () => {
 
   test('module-приглашение: «пройти модуль», кнопка W05-M', async () => {
     const { story, invites } = setupStory();
-    const handle = subHandler(story, 'wish.invited');
+    const handle = subHandler(story, 'wish.wish.invited');
 
     await handle(
-      makeInvitedEvent({
-        targetKind: 'module',
-        moduleId: MODULE_ID,
-        courseId: undefined,
-      }) as never,
+      makeInvitedEvent({ targetKind: 'module', moduleId: MODULE_ID }) as never,
     );
 
     const text = String(invites[0]!.payload.text);
@@ -268,7 +267,7 @@ describe('WishInviteStory', () => {
 
   test('поток не найден → приглашение не отправляется, ошибки нет', async () => {
     const { story, invites } = setupStory({ stream: undefined });
-    const handle = subHandler(story, 'wish.invited');
+    const handle = subHandler(story, 'wish.wish.invited');
 
     await handle(makeInvitedEvent() as never);
 

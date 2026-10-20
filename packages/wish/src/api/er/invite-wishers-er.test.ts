@@ -1,10 +1,9 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type {
-  WishApiModuleResolver,
-  WishInvitedEvent,
-  WishState,
-} from '@u7-scl/domain/wish';
+import type { DomainEvent as LegacyEvent } from '@u7-scl/core/domain';
+import type { WishApiModuleResolver, WishState } from '@u7-scl/domain/wish';
 import type { StreamCreatedEvent } from '@u7-scl/stream/domain';
+import type { WishEvents } from '@u7-scl/wish/domain';
+import type * as v from 'valibot';
 import { InviteWishersEr } from './invite-wishers-er';
 
 const streamId = '11111111-1111-4111-8111-111111111111';
@@ -119,13 +118,18 @@ function setupEr(deps: ErDeps) {
   };
 }
 
-/** Ожидаемое событие приглашения course-желания. */
-function expectedCourseEvent(wishUuid: string): WishInvitedEvent {
+/** Приглашение в legacy-форме — как его получает legacy-подписчик (сторя). */
+type InvitedLegacyEvent = LegacyEvent & {
+  payload: v.InferOutput<typeof WishEvents.invited.payload>;
+};
+
+/** Ожидаемое событие приглашения course-желания (FQN, решение 1 брифа). */
+function expectedCourseEvent(wishUuid: string): InvitedLegacyEvent {
   return {
     eventId: expect.any(String),
-    eventName: 'wish.invited',
+    eventName: 'wish.wish.invited',
     occurredAt: expect.any(String),
-    aggregateName: 'Wish',
+    aggregateName: 'wish.wish',
     aggregateId: wishUuid,
     payload: {
       userId,
@@ -140,7 +144,7 @@ function expectedCourseEvent(wishUuid: string): WishInvitedEvent {
 describe('InviteWishersEr', () => {
   // ── Course-ветка ──
 
-  test('поток на первый модуль курса: желающему публикуется wish.invited', async () => {
+  test('поток на первый модуль курса: желающему публикуется wish.wish.invited', async () => {
     const wish = makeWish();
     const { publish, er } = setupEr({
       courseWishes: [wish],
@@ -186,10 +190,10 @@ describe('InviteWishersEr', () => {
     await er.handle(makeEvent());
 
     expect(publish).toHaveBeenCalledTimes(1);
-    const event = publish.mock.calls[0]?.[0] as WishInvitedEvent;
+    const event = publish.mock.calls[0]?.[0] as InvitedLegacyEvent;
     expect(event.payload.targetKind).toBe('module');
-    expect(event.payload.moduleId).toBe(moduleId);
-    expect(event.payload.courseId).toBeUndefined();
+    expect(event.payload).toMatchObject({ moduleId });
+    expect(event.payload).not.toHaveProperty('courseId');
   });
 
   test('исторический матчинг: желание на форк курса получает приглашение', async () => {
@@ -207,8 +211,8 @@ describe('InviteWishersEr', () => {
     await er.handle(makeEvent());
 
     expect(publish).toHaveBeenCalledTimes(1);
-    const event = publish.mock.calls[0]?.[0] as WishInvitedEvent;
-    expect(event.payload.courseId).toBe(forkCourseId);
+    const event = publish.mock.calls[0]?.[0] as InvitedLegacyEvent;
+    expect(event.payload).toMatchObject({ courseId: forkCourseId });
   });
 
   test('не совпавшее с программой курса желание не зовётся', async () => {
@@ -240,8 +244,8 @@ describe('InviteWishersEr', () => {
     await er.handle(makeEvent());
 
     expect(publish).toHaveBeenCalledTimes(1);
-    const event = publish.mock.calls[0]?.[0] as WishInvitedEvent;
-    expect(event.payload.moduleId).toBe(forkModuleId);
+    const event = publish.mock.calls[0]?.[0] as InvitedLegacyEvent;
+    expect(event.payload).toMatchObject({ moduleId: forkModuleId });
   });
 
   test('только активные статусы: findAllByKind вызывается с expressed|confirmed', async () => {

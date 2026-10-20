@@ -1,13 +1,10 @@
 import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
-import { isoNow } from '@u7-scl/core/shared';
-import type {
-  WishApiModuleResolver,
-  WishConfirmedEvent,
-  WishTargetVo,
-} from '@u7-scl/domain/wish';
+import { legacyEventBus } from '@u7-scl/core/legacy-bridge';
+import type { WishApiModuleResolver, WishTargetVo } from '@u7-scl/domain/wish';
 import { WishAr } from '@u7-scl/domain/wish';
 import type { QuestionnaireCompleteEvent } from '@u7-scl/questionnaire/domain';
+import { publishWishEvents } from '../legacy-publish';
 import { throwIfRejected } from '../legacy-reject';
 
 /** Метаданные реакции подтверждения желания. */
@@ -21,7 +18,8 @@ export interface ConfirmWishErMeta
  * Желание в `pending` подтверждается (pending → confirmed);
  * любое другое состояние игнорируется (идемпотентность).
  *
- * После подтверждения публикует wish.confirmed — уведомление
+ * После подтверждения публикует события агрегата (`WishEvents.confirmed`,
+ * FQN `wish.wish.confirmed`) — уведомление
  * менторам курса рендерит UI-сторя wish-confirmed (контроллер
  * courses); ER только фиксирует факт и адресует по сущности.
  */
@@ -53,17 +51,16 @@ export class ConfirmWishEr extends EventReaction<
       return;
     }
 
-    throwIfRejected(wish.confirm(Date.now()));
+    const at = Date.now();
+    throwIfRejected(wish.confirm(at));
     await this.resolve.wishRepo.save(wish.snapshot());
 
-    const confirmed: WishConfirmedEvent = {
-      eventId: crypto.randomUUID(),
-      eventName: 'wish.confirmed',
-      occurredAt: isoNow(),
-      aggregateName: 'Wish',
+    publishWishEvents(legacyEventBus(this.resolve.eventBus), {
+      events: wish.pullEvents(),
       aggregateId: wish.uuid,
-      payload: { userId, courseId: target.courseId },
-    };
-    this.resolve.eventBus.publish(confirmed);
+      source: this.erName,
+      cause: event,
+      at,
+    });
   }
 }

@@ -1,17 +1,20 @@
-import { errBadRequest, throwError } from '@u7-scl/core/domain';
-import type { Result } from 'dmg-core';
+import { AppException } from '@u7-scl/core/domain';
+import { toLegacyError } from '@u7-scl/core/legacy-bridge';
+import type { DomainError, Result } from 'dmg-core';
 
 /**
- * Мост `Result` → legacy-исключение: отказ перехода `WishAr` поднимается
- * прежним `BAD_REQUEST` с текстом `label` ошибки — поведение UC/ER
- * не меняется, пока `Result` не дошёл до вызывающих (Ф3–4).
+ * Мост ошибки `WishErrors` → legacy-исключение: UC/ER остаются legacy-
+ * классами до Ф8/Ф10, `Result` до вызывающих не доходит. Перевод — тот же
+ * `toLegacyError`, что у `appApi.execute`: код → `name`, `kind` из Def,
+ * `label` → `message`, `payload` как есть.
  */
-export function throwIfRejected(
-  res: Result<unknown, { readonly label: string }>,
-): void {
-  if (!res.ok) {
-    throwError(errBadRequest('BAD_REQUEST', res.error.label, undefined));
-  }
+export function throwWishError(error: DomainError): never {
+  throw new AppException(toLegacyError(error));
+}
+
+/** `Err` перехода `WishAr` (`WISH_NOT_*`, `conflict`, TR-3) — исключением. */
+export function throwIfRejected(res: Result<unknown, DomainError>): void {
+  if (!res.ok) throwWishError(res.error);
 }
 
 /**

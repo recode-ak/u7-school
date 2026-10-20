@@ -650,7 +650,7 @@ describe('CourseCatalogStory', () => {
     test('другая ошибка: errorNotify — warn-реплика без захвата экрана', async () => {
       const { errNotFound, AppException } = await import('@u7-scl/core/domain');
       const error = new AppException(
-        errNotFound('MODULE_NOT_FOUND', 'Модуль не найден', undefined),
+        errNotFound('WISH_MODULE_NOT_FOUND', 'Модуль не найден', undefined),
       );
       const api = makeWishApi(error);
       const story = new CourseCatalogStory();
@@ -985,7 +985,7 @@ describe('CourseCatalogStory', () => {
     test('apply: другая ошибка (курс не найден) — errorNotify (warn-реплика)', async () => {
       const { errNotFound, AppException } = await import('@u7-scl/core/domain');
       const error = new AppException(
-        errNotFound('COURSE_NOT_FOUND', 'Курс не найден', { courseId }),
+        errNotFound('WISH_COURSE_NOT_FOUND', 'Курс не найден', { courseId }),
       );
       const appApi = makeApplyApi(undefined, error);
       const story = new CourseCatalogStory();

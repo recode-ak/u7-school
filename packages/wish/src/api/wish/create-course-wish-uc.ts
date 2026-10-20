@@ -1,11 +1,8 @@
 import type { User } from '@u7-scl/app/domain';
-import { errConflict, errNotFound } from '@u7-scl/core/domain';
 import type {
-  CourseNotFoundUcError,
   CreateCourseWishCmd,
   CreateCourseWishCmdMeta,
   CreateCourseWishOutput,
-  WishAlreadyExistsUcError,
   WishTargetVo,
 } from '@u7-scl/domain/wish';
 import {
@@ -15,6 +12,7 @@ import {
   WishAr,
   WishPolicy,
 } from '@u7-scl/domain/wish';
+import { WishErrors } from '@u7-scl/domain/wish/contract';
 import { unwrapInfallible } from '../legacy-reject';
 import { WishUseCase } from '../wish-uc';
 
@@ -50,12 +48,8 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
       ? await courseFacade.getCourseStartModuleId(command.courseId)
       : undefined;
     if (!enrollable || !startModuleId) {
-      this.throwError(
-        errNotFound<CourseNotFoundUcError>(
-          'COURSE_NOT_FOUND',
-          'Курс не найден',
-          { courseId: command.courseId },
-        ),
+      this.throwWishError(
+        WishErrors.COURSE_NOT_FOUND.make({ courseId: command.courseId }),
       );
     }
 
@@ -69,16 +63,12 @@ export class CreateCourseWishUc extends WishUseCase<CreateCourseWishCmdMeta> {
     ).find((w) => WishPolicy.isActive(w.status));
 
     if (active) {
-      this.throwError(
-        errConflict<WishAlreadyExistsUcError>(
-          'WISH_ALREADY_EXISTS',
-          'Желание уже выражено',
-          {
-            userId: actor.uuid,
-            courseId: command.courseId,
-            status: active.status,
-          },
-        ),
+      this.throwWishError(
+        WishErrors.ALREADY_EXISTS.make({
+          userId: actor.uuid,
+          courseId: command.courseId,
+          status: active.status,
+        }),
       );
     }
 

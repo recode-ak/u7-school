@@ -1,4 +1,5 @@
 import type { User } from '@u7-scl/app/domain';
+import type { DomainEvent } from '@u7-scl/core/domain';
 import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -6,9 +7,19 @@ import type {
   UiEventSubscription,
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
-import type { WishInvitedEvent } from '@u7-scl/wish/domain';
+import { WishEvents } from '@u7-scl/wish/domain';
+import type * as v from 'valibot';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
 import { Routes } from '../../shared/routes';
+
+/**
+ * Приглашение в legacy-форме, как его доставляет `legacyEventBus`:
+ * `eventName` — FQN Def, `payload` — по схеме `WishEvents.invited`.
+ */
+export type WishInvitedEvent = DomainEvent & {
+  eventName: typeof WishEvents.invited.name;
+  payload: v.InferOutput<typeof WishEvents.invited.payload>;
+};
 
 /** Профиль ментора в карточке приглашения (telegramId может отсутствовать). */
 type Mentor = Omit<User, 'telegramId'> & {
@@ -19,7 +30,8 @@ type Mentor = Omit<User, 'telegramId'> & {
 /**
  * S11 — приглашение желающему при открытии набора (проактивное, кнопочное).
  *
- * Подписка на wish.invited (публикует ER invite-wishers модуля wish).
+ * Подписка на `WishEvents.invited` (FQN `wish.wish.invited`; публикует
+ * ER invite-wishers модуля wish).
  * Собирает поток / курс (модуль) / ментора через appApi и доставляет
  * кнопочный проактив канала invite — с кнопкой «🗑️ Отменить желание»,
  * ведущей в существующие экраны отмены W05 / W05-M (course-catalog).
@@ -34,15 +46,19 @@ export class WishInviteStory extends U7BotUiStory {
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<WishInvitedEvent>('wish.invited', (event) =>
+      eventSubscription<WishInvitedEvent>(WishEvents.invited.name, (event) =>
         this.#handleInvited(event),
       ),
     ];
   }
 
   async #handleInvited(event: WishInvitedEvent): Promise<void> {
-    const { telegramId, streamId, targetKind, courseId, moduleId } =
-      event.payload;
+    const { payload } = event;
+    const { telegramId, streamId, targetKind } = payload;
+    const courseId =
+      payload.targetKind === 'course' ? payload.courseId : undefined;
+    const moduleId =
+      payload.targetKind === 'module' ? payload.moduleId : undefined;
 
     let stream: {
       title: string;

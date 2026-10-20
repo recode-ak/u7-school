@@ -1,8 +1,10 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app/domain';
 import { assertMarkdownV2Safe, type MdText } from '@u7-scl/core/shared';
-import type { WishConfirmedEvent } from '@u7-scl/wish/domain';
-import { WishConfirmedStory } from './wish-confirmed.story';
+import {
+  type WishConfirmedEvent,
+  WishConfirmedStory,
+} from './wish-confirmed.story';
 
 // ══ Фикстуры ══
 
@@ -32,9 +34,9 @@ const streams = [
 function makeConfirmedEvent(): WishConfirmedEvent {
   return {
     eventId: crypto.randomUUID(),
-    eventName: 'wish.confirmed',
+    eventName: 'wish.wish.confirmed',
     occurredAt: '2026-09-14T12:00',
-    aggregateName: 'Wish',
+    aggregateName: 'wish.wish',
     aggregateId: crypto.randomUUID(),
     payload: { userId: USER_ID, courseId: COURSE_ID },
   };
@@ -116,15 +118,15 @@ function subHandler(
 }
 
 describe('WishConfirmedStory', () => {
-  test('подписана на wish.confirmed', () => {
+  test('подписана на wish.wish.confirmed (FQN Def)', () => {
     const { story } = setupStory();
     const names = story.getEventSubscriptions().map((s) => s.eventName);
-    expect(names).toContain('wish.confirmed');
+    expect(names).toContain('wish.wish.confirmed');
   });
 
   test('рассылка всем менторам курса: имя, курс, дедупликация, фильтры', async () => {
     const { story, notifies } = setupStory();
-    const handle = subHandler(story, 'wish.confirmed');
+    const handle = subHandler(story, 'wish.wish.confirmed');
 
     await handle(makeConfirmedEvent() as never);
 
@@ -139,7 +141,7 @@ describe('WishConfirmedStory', () => {
 
   test('курс недоступен → уведомление с uuid курса, рассылка продолжается', async () => {
     const { story, notifies } = setupStory({ course: undefined });
-    const handle = subHandler(story, 'wish.confirmed');
+    const handle = subHandler(story, 'wish.wish.confirmed');
 
     await handle(makeConfirmedEvent() as never);
 
@@ -152,7 +154,7 @@ describe('WishConfirmedStory', () => {
 
   test('пользователь недоступен → молчаливый пропуск', async () => {
     const { story, notifies } = setupStory({ user: undefined });
-    const handle = subHandler(story, 'wish.confirmed');
+    const handle = subHandler(story, 'wish.wish.confirmed');
 
     await handle(makeConfirmedEvent() as never);
 

@@ -1,10 +1,7 @@
 import type { User } from '@u7-scl/app/domain';
-import { errConflict, errNotFound } from '@u7-scl/core/domain';
 import type {
   CreateModuleWishCmd,
   CreateModuleWishCmdMeta,
-  ModuleNotFoundUcError,
-  WishAlreadyExistsUcError,
   WishTargetVo,
 } from '@u7-scl/domain/wish';
 import {
@@ -12,6 +9,7 @@ import {
   WishAr,
   WishPolicy,
 } from '@u7-scl/domain/wish';
+import { WishErrors } from '@u7-scl/domain/wish/contract';
 import * as v from 'valibot';
 import { unwrapInfallible } from '../legacy-reject';
 import { WishUseCase } from '../wish-uc';
@@ -43,12 +41,8 @@ export class CreateModuleWishUc extends WishUseCase<CreateModuleWishCmdMeta> {
     const courseFacade = this.resolve.courseFacade;
     const place = await courseFacade.getModulePlace(command.moduleId);
     if (!place) {
-      this.throwError(
-        errNotFound<ModuleNotFoundUcError>(
-          'MODULE_NOT_FOUND',
-          'Модуль не найден',
-          { moduleId: command.moduleId },
-        ),
+      this.throwWishError(
+        WishErrors.MODULE_NOT_FOUND.make({ moduleId: command.moduleId }),
       );
     }
 
@@ -61,16 +55,12 @@ export class CreateModuleWishUc extends WishUseCase<CreateModuleWishCmdMeta> {
       await this.repo.findAllByUserAndTarget(actor.uuid, target)
     ).find((w) => WishPolicy.isActive(w.status));
     if (active) {
-      this.throwError(
-        errConflict<WishAlreadyExistsUcError>(
-          'WISH_ALREADY_EXISTS',
-          'Желание уже выражено',
-          {
-            userId: actor.uuid,
-            moduleId: command.moduleId,
-            status: active.status,
-          },
-        ),
+      this.throwWishError(
+        WishErrors.ALREADY_EXISTS.make({
+          userId: actor.uuid,
+          moduleId: command.moduleId,
+          status: active.status,
+        }),
       );
     }
 

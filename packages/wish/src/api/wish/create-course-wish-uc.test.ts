@@ -195,6 +195,37 @@ describe('CreateCourseWishUc', () => {
     });
   });
 
+  describe('коды ошибок', () => {
+    test('курс недоступен — код WISH_COURSE_NOT_FOUND, kind not-found', async () => {
+      const { isCourseEnrollable, uc } = setupUc();
+      isCourseEnrollable.mockResolvedValueOnce(false);
+
+      await expect(
+        uc.handle({ courseId: plainCourseId }, actor),
+      ).rejects.toMatchObject({
+        error: {
+          name: 'WISH_COURSE_NOT_FOUND',
+          kind: 'not-found',
+          message: 'Курс не найден',
+          payload: { courseId: plainCourseId },
+        },
+      });
+    });
+
+    test('дубль — код WISH_ALREADY_EXISTS, текст прежний', async () => {
+      const { wishRepo, uc } = setupUc();
+      wishRepo.findAllByUserAndTarget.mockResolvedValueOnce([
+        makeActiveWish(actorId, plainCourseId, 'expressed'),
+      ]);
+
+      await expect(
+        uc.handle({ courseId: plainCourseId }, actor),
+      ).rejects.toMatchObject({
+        error: { name: 'WISH_ALREADY_EXISTS', message: 'Желание уже выражено' },
+      });
+    });
+  });
+
   describe('курс не опубликован', () => {
     const cases = [
       ['draft', false],

@@ -126,9 +126,9 @@ export class WishAr extends Aggregate<typeof WishArDef> {
   // Отвечают по `from` в Def: ER спрашивают их ради идемпотентности,
   // не читая статус напрямую.
 
-  /** Подтверждаемо ли желание (только pending — анкетная ветка). */
+  /** Подтверждаемо ли желание (только pending курса — анкетная ветка). */
   canConfirm(): boolean {
-    return this.can('confirm');
+    return this.can('confirm') && this.confirmableCourseId() !== undefined;
   }
 
   /** Бросаемо ли желание (только pending — анкета прервана). */
@@ -148,9 +148,19 @@ export class WishAr extends Aggregate<typeof WishArDef> {
 
   // ── Переходы ──
 
-  /** Подтверждает желание: pending → confirmed (анкета завершена). */
+  /**
+   * Подтверждает желание: pending → confirmed (анкета завершена),
+   * событие `confirmed`.
+   */
   confirm(at: Timestamp): Result<void, RejectOf<typeof WishArDef, 'confirm'>> {
-    return this.transition('confirm', at, () => ok());
+    // Анкетная ветка — только у курса (пулы анкет курсовые): `confirmed`
+    // адресует менторов курса, у module-желания подтверждать нечего.
+    const courseId = this.confirmableCourseId();
+    if (courseId === undefined) return NOT_CONFIRMABLE.err();
+    return this.transition('confirm', at, (draft, emit) => {
+      emit(WishEvents.confirmed.make({ userId: draft.userId, courseId }));
+      return ok();
+    });
   }
 
   /** Помечает желание брошенным: pending → abandoned (анкета брошена). */
@@ -169,6 +179,12 @@ export class WishAr extends Aggregate<typeof WishArDef> {
    */
   fulfill(at: Timestamp): Result<void, RejectOf<typeof WishArDef, 'fulfill'>> {
     return this.transition('fulfill', at, () => ok());
+  }
+
+  /** Единственное место правила: подтверждать можно только course-желание. */
+  private confirmableCourseId(): string | undefined {
+    const { target } = this.state;
+    return target.kind === 'course' ? target.courseId : undefined;
   }
 
   private can(op: WishTransition): boolean {

@@ -1,9 +1,6 @@
 import { ModuleSchema } from '@u7-scl/domain/course';
 import * as v from 'valibot';
-import type {
-  ModuleNotFoundUcError,
-  WishAlreadyExistsUcError,
-} from '../errors';
+import type { LegacyWishUcError } from './legacy-uc-error';
 
 /** Схема команды создания желания пройти модуль. */
 export const CreateModuleWishCmdSchema = v.object({
@@ -28,5 +25,5 @@ export interface CreateModuleWishCmdMeta {
 
 /** Ошибки команды создания желания пройти модуль. */
 export type CreateModuleWishCmdError =
-  | ModuleNotFoundUcError
-  | WishAlreadyExistsUcError;
+  | LegacyWishUcError<'MODULE_NOT_FOUND'>
+  | LegacyWishUcError<'ALREADY_EXISTS'>;

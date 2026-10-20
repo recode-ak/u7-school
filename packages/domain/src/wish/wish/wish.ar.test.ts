@@ -1,16 +1,21 @@
 import { describe, expect, it } from 'bun:test';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
+import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { defineModule } from 'dmg-core';
 import { checkDefs, formatViolation } from 'dmg-core/arch';
 import { indexDefs } from 'dmg-core/graph';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { WishAr, WishArDef } from './wish.ar';
+import { WishEvents } from './wish.events';
 import type { WishState, WishStatus, WishTargetVo } from './wish.state';
 
 const WISH = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 const USER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
-const target: WishTargetVo = {
-  kind: 'course',
+const target = {
+  kind: 'course' as const,
   courseId: '7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f',
 };
 const T0 = Date.UTC(2026, 7, 26, 10);
@@ -46,18 +51,28 @@ describe('WishArDef', () => {
     ]);
   });
 
-  it('checkDefs — без нарушений', () => {
+  it('checkDefs с зависимостями — без нарушений (описания, FQN, уникальность кодов)', () => {
     const probe = defineModule({
       name: 'wish',
       label: 'Желания',
       description: 'Проба Def агрегата до паспорта модуля (Ф12).',
-      dependsOn: [],
+      dependsOn: [
+        UserModuleDef,
+        CourseModuleDef,
+        QuestionnaireModuleDef,
+        StreamModuleDef,
+      ],
       aggregates: [WishArDef],
       useCases: [],
       reactions: [],
       jobs: [],
     });
-    expect(checkDefs(indexDefs([probe])).map(formatViolation)).toEqual([]);
+    // MAN-06 «событие никто не публикует» — до контрактов UC/ER (Ф8–Ф11):
+    // `emits` появится у confirm-wish и invite-wishers.
+    const violations = checkDefs(indexDefs([probe])).filter(
+      (x) => x.rule !== 'MAN-06',
+    );
+    expect(violations.map(formatViolation)).toEqual([]);
   });
 });
 
@@ -97,21 +112,40 @@ describe('WishAr.restore', () => {
   });
 });
 
-/** Успешный переход: статус `to`, `updatedAt` = `at`, версия +1. */
-function expectMoved(ar: WishAr, to: WishStatus): void {
+/**
+ * Успешный переход: статус `to`, `updatedAt` = `at`, версия +1,
+ * накоплены события `events`.
+ */
+function expectMoved(
+  ar: WishAr,
+  to: WishStatus,
+  events: ReturnType<WishAr['pullEvents']> = [],
+): void {
   expect(ar.snapshot()).toEqual({
     ...stored(to),
     updatedAt: T1,
     version: 1,
   });
-  expect(ar.pullEvents()).toEqual([]);
+  expect(ar.pullEvents()).toEqual(events);
 }
 
 describe('WishAr.confirm', () => {
-  it('pending → confirmed', () => {
+  it('pending → confirmed, событие confirmed', () => {
     const ar = restore('pending');
     expectOk(ar.confirm(T1));
-    expectMoved(ar, 'confirmed');
+    expectMoved(ar, 'confirmed', [
+      WishEvents.confirmed.make({ userId: USER, courseId: target.courseId }),
+    ]);
+  });
+
+  it('module-желание в pending — WISH_NOT_CONFIRMABLE, без событий', () => {
+    const module: WishTargetVo = { kind: 'module', moduleId: target.courseId };
+    const pending = { ...stored('pending'), target: module };
+    const ar = WishAr.restore(pending);
+    expect(ar.canConfirm()).toBe(false);
+    expectErr(ar.confirm(T1), 'WISH_NOT_CONFIRMABLE');
+    expect(ar.snapshot()).toEqual(pending);
+    expect(ar.pullEvents()).toEqual([]);
   });
 
   it.each([
@@ -124,6 +158,7 @@ describe('WishAr.confirm', () => {
     const ar = restore(status);
     expectErr(ar.confirm(T1), 'WISH_NOT_CONFIRMABLE');
     expect(ar.snapshot()).toEqual(stored(status));
+    expect(ar.pullEvents()).toEqual([]);
   });
 });
 

@@ -90,7 +90,7 @@ describe('ConfirmWishEr', () => {
     expect(publish).toHaveBeenCalledTimes(0);
   });
 
-  test('при подтверждении публикует wish.confirmed с адресацией', async () => {
+  test('при подтверждении публикует wish.wish.confirmed (FQN) с адресацией', async () => {
     const event = makeEvent();
     const wish = makePendingWish(event);
     const { publish, er } = setupEr(wish);
@@ -105,8 +105,8 @@ describe('ConfirmWishEr', () => {
       aggregateId: string;
       payload: { userId: string; courseId: string };
     };
-    expect(published.eventName).toBe('wish.confirmed');
-    expect(published.aggregateName).toBe('Wish');
+    expect(published.eventName).toBe('wish.wish.confirmed');
+    expect(published.aggregateName).toBe('wish.wish');
     expect(published.aggregateId).toBe(wish.uuid);
     expect(published.payload).toEqual({
       userId: wish.userId,

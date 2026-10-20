@@ -18,7 +18,7 @@ import { UserController } from '../../src/controllers/user/controller';
  * E2E механизма уведомлений:
  *   1) открытие набора → желающий получает ОДНО кнопочное приглашение
  *      с контекстом (курс, поток, дата, ментор) — ER invite-wishers
- *      публикует wish.invited, карточку рендерит WishInviteStory
+ *      публикует wish.wish.invited, карточку рендерит WishInviteStory
  *      (канал invite), FR-6 #8;
  *   2) закрытие потока на последнем модуле → студенту «🎉 Курс завершён!»
  *      — UC complete-student, FR-6 #7c;
