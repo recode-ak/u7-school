@@ -1,0 +1,57 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+  "root": true,
+  "vcs": { "enabled": false },
+  "files": { "ignoreUnknown": true },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "linter": {
+    "enabled": true,
+    "rules": { "preset": "recommended" }
+  },
+  "javascript": {
+    "formatter": { "quoteStyle": "single" }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": { "source": { "organizeImports": "on" } }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "correctness": { "noUnusedVariables": "off" },
+          "suspicious": {
+            "noExplicitAny": "off",
+            "noNonNullAssertedOptionalChain": "off"
+          },
+          "style": { "noNonNullAssertion": "off" }
+        }
+      }
+    },
+    {
+      "includes": ["src/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@u7-scl/**", "#*-legacy/**"],
+                    "message": "ARC-10: платформа DMG не импортирует legacy и @u7-scl/* — мосты живут в legacy-bridge"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

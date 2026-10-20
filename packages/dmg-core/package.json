@@ -8,7 +8,8 @@
     "bun": ">=1.2"
   },
   "files": [
-    "src"
+    "src",
+    "!src/**/*.test.ts"
   ],
   "exports": {
     ".": "./src/index.ts",
@@ -24,6 +25,14 @@
   },
   "scripts": {
     "test": "bun test",
-    "tslint": "tsc --noEmit"
+    "lint": "biome check .",
+    "format": "biome check . --write",
+    "tslint": "tsc --noEmit",
+    "check": "bun run lint && bun run tslint && bun test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.13",
+    "@types/bun": "latest",
+    "typescript": "^7.0.2"
   }
 }

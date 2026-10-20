@@ -46,6 +46,8 @@ beforeAll(() => {
   work = mkdtempSync(join(tmpdir(), 'lint-rules-'));
   const config = JSON.parse(readFileSync(join(ROOT, 'biome.json'), 'utf8'));
   config.vcs = undefined;
+  // пакет dmg-core исключён из корневого линта (у него свой biome.json), но фикстурам нужны его override
+  config.files.includes = undefined;
   writeFileSync(join(work, 'biome.json'), JSON.stringify(config));
   cpSync(join(ROOT, 'biome-plugins'), join(work, 'biome-plugins'), {
     recursive: true,
