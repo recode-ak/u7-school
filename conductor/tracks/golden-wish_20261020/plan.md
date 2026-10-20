@@ -33,7 +33,7 @@
 - [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `e558b5c`
 - [x] Task: Контрольная точка 'Фаза 2' (автономно, workflow.md)
 
-## Фаза 3–4: События и ошибки (`defineEvents`, `defineErrors`)
+## Фаза 3–4: События и ошибки (`defineEvents`, `defineErrors`) [checkpoint: 9f13113]
 
 > Объединены ради экономии: один прогон reviewer, одна контрольная точка; гайды — по видам.
 
@@ -41,7 +41,7 @@
 - [x] Task: `WishErrors` с кодами `WISH_*`, `kind`, схемой payload; замена `throw*` на ошибки `Result` `4e6c7e9` (`Result` до вызывающих — Ф8/Ф10, мост TR-1)
 - [x] Task: Гайды «events» и «errors» `96c7993`
 - [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `4e6c7e9`
-- [ ] Task: Контрольная точка 'Фаза 3–4' (автономно, workflow.md)
+- [x] Task: Контрольная точка 'Фаза 3–4' (автономно, workflow.md)
 
 ## Фаза 5: Policy (`definePolicy` / `rule`)
 
