@@ -12,11 +12,11 @@
 - [x] Task: Валидация ввода (kebab, существование модуля/агрегата, уникальность имён и FQN) с понятными ошибками на русском 0d3b80fc
 - [x] Task: Атомарная запись: сначала план, коллизия → ошибка без единой записи; никаких перезаписей f65761b9
 - [x] Task: Правки по маркерам `// gen:exports` и `// gen:defs`; нет маркера → печать строки для ручной вставки f65761b9
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Генераторы домена
 
-- [ ] Task: `gen module <m>` (домен: `<m>.module.ts`, `<m>.facade.ts`, `index.ts` с маркерами) + заготовка теста
+- [x] Task: `gen module <m>` (домен: `<m>.module.ts`, `<m>.facade.ts`, `index.ts` с маркерами) + заготовка теста b3ee4f4b
 - [ ] Task: `gen aggregate <m>.<agg>` (`state`, `ar`, `policy`, `events`, `errors`) + заготовки тестов
 - [ ] Task: `gen dcs` и `gen dqs` (`<topic>.dcs.ts` / `.dqs.ts`) + заготовки тестов
 - [ ] Task: Тест на снапшотах: пути и имена совпадают с `naming.md` §2, результат проходит biome без правок
