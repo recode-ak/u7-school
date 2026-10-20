@@ -1,7 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
+import type { Wish, WishApiModuleResolver } from '@u7-scl/domain/wish';
 import type { StudentEnrolledEvent } from '@u7-scl/stream/domain';
-import type { WishApiModuleResolver } from '#domain-legacy/module';
-import type { Wish } from '#domain-legacy/wish/entity';
 import { FulfillWishEr } from './fulfill-wish-er';
 
 const moduleId = '33333333-3333-4333-8333-333333333333';

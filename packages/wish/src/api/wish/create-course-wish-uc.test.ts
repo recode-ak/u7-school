@@ -1,9 +1,12 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { Role, type User } from '@u7-scl/app/domain';
 import { AppException } from '@u7-scl/core/domain';
-import type { WishApiModuleResolver } from '#domain-legacy/module';
-import type { Wish, WishStatus } from '#domain-legacy/wish/entity';
-import coursePools from '../../domain/wish/pools/course.json';
+import type {
+  Wish,
+  WishApiModuleResolver,
+  WishStatus,
+} from '@u7-scl/domain/wish';
+import coursePools from '../../../../domain/src/wish/wish/pools/course.json';
 import { CreateCourseWishUc } from './create-course-wish-uc';
 
 function makeUser(uuid: string): User {

@@ -1,9 +1,8 @@
 import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
+import type { WishApiModuleResolver, WishTarget } from '@u7-scl/domain/wish';
+import { WishAr } from '@u7-scl/domain/wish';
 import type { QuestionnaireAbandonEvent } from '@u7-scl/questionnaire/domain';
-import type { WishApiModuleResolver } from '#domain-legacy/module';
-import { WishAr } from '#domain-legacy/wish/a-root';
-import type { WishTarget } from '#domain-legacy/wish/entity';
 
 /** Метаданные реакции бросания желания. */
 export interface AbandonWishErMeta

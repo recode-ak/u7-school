@@ -1,18 +1,18 @@
 import type { User } from '@u7-scl/app/domain';
 import { errConflict, errNotFound } from '@u7-scl/core/domain';
-import * as v from 'valibot';
-import { WishAr } from '#domain-legacy/wish/a-root';
 import type {
   CreateModuleWishCmd,
   CreateModuleWishCmdMeta,
-} from '#domain-legacy/wish/commands/create-module-wish-cmd';
-import { CreateModuleWishCmdSchema } from '#domain-legacy/wish/commands/create-module-wish-cmd';
-import type { WishTarget } from '#domain-legacy/wish/entity';
-import type {
   ModuleNotFoundUcError,
   WishAlreadyExistsUcError,
-} from '#domain-legacy/wish/errors';
-import { WishPolicy } from '#domain-legacy/wish/policy';
+  WishTarget,
+} from '@u7-scl/domain/wish';
+import {
+  CreateModuleWishCmdSchema,
+  WishAr,
+  WishPolicy,
+} from '@u7-scl/domain/wish';
+import * as v from 'valibot';
 import { WishUseCase } from '../wish-uc';
 
 /**

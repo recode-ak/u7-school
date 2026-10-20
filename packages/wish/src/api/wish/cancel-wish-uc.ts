@@ -1,14 +1,13 @@
 import type { User } from '@u7-scl/app/domain';
 import { errNotFound } from '@u7-scl/core/domain';
-import * as v from 'valibot';
-import { WishAr } from '#domain-legacy/wish/a-root';
 import type {
   CancelWishCmd,
   CancelWishCmdMeta,
-} from '#domain-legacy/wish/commands/cancel-wish-cmd';
-import { CancelWishCmdSchema } from '#domain-legacy/wish/commands/cancel-wish-cmd';
-import type { WishTarget } from '#domain-legacy/wish/entity';
-import type { WishNotFoundUcError } from '#domain-legacy/wish/errors';
+  WishNotFoundUcError,
+  WishTarget,
+} from '@u7-scl/domain/wish';
+import { CancelWishCmdSchema, WishAr } from '@u7-scl/domain/wish';
+import * as v from 'valibot';
 import { WishUseCase } from '../wish-uc';
 
 /**

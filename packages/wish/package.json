@@ -26,7 +26,6 @@
     "./infra": "./src/infra/index.ts"
   },
   "imports": {
-    "#domain-legacy/*": "./src/domain/*.ts",
     "#api-legacy/*": "./src/api/*.ts",
     "#infra-legacy/*": "./src/infra/*.ts"
   }

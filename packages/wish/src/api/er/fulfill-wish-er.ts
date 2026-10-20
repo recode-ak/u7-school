@@ -1,9 +1,8 @@
 import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
+import type { Wish, WishApiModuleResolver } from '@u7-scl/domain/wish';
+import { WishAr } from '@u7-scl/domain/wish';
 import type { StudentEnrolledEvent } from '@u7-scl/stream/domain';
-import type { WishApiModuleResolver } from '#domain-legacy/module';
-import { WishAr } from '#domain-legacy/wish/a-root';
-import type { Wish } from '#domain-legacy/wish/entity';
 
 /** Метаданные реакции реализации желания при зачислении. */
 export interface FulfillWishErMeta extends ErMeta<StudentEnrolledEvent> {

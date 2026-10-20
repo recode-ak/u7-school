@@ -1,22 +1,20 @@
 import type { User } from '@u7-scl/app/domain';
 import { errConflict, errNotFound } from '@u7-scl/core/domain';
-import { WishAr } from '#domain-legacy/wish/a-root';
 import type {
+  CourseNotFoundUcError,
   CreateCourseWishCmd,
   CreateCourseWishCmdMeta,
   CreateCourseWishOutput,
-} from '#domain-legacy/wish/commands/create-course-wish-cmd';
+  WishAlreadyExistsUcError,
+  WishTarget,
+} from '@u7-scl/domain/wish';
 import {
   CreateCourseWishCmdSchema,
   CreateCourseWishOutputSchema,
-} from '#domain-legacy/wish/commands/create-course-wish-cmd';
-import type { WishTarget } from '#domain-legacy/wish/entity';
-import type {
-  CourseNotFoundUcError,
-  WishAlreadyExistsUcError,
-} from '#domain-legacy/wish/errors';
-import { WishPolicy } from '#domain-legacy/wish/policy';
-import { findCoursePool } from '#domain-legacy/wish/pools/course-pool';
+  findCoursePool,
+  WishAr,
+  WishPolicy,
+} from '@u7-scl/domain/wish';
 import { WishUseCase } from '../wish-uc';
 
 /**

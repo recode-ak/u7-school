@@ -1,4 +1,4 @@
-import { CourseSchema } from '@u7-scl/course/domain';
+import { CourseSchema } from '@u7-scl/domain/course';
 import * as v from 'valibot';
 import type { WishArMeta } from '../entity';
 import type {

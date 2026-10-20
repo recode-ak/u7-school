@@ -1,11 +1,13 @@
 import type { ErMeta } from '@u7-scl/core/api';
 import { EventReaction } from '@u7-scl/core/api';
 import { isoNow } from '@u7-scl/core/shared';
+import type {
+  WishApiModuleResolver,
+  WishConfirmedEvent,
+  WishTarget,
+} from '@u7-scl/domain/wish';
+import { WishAr } from '@u7-scl/domain/wish';
 import type { QuestionnaireCompleteEvent } from '@u7-scl/questionnaire/domain';
-import type { WishApiModuleResolver } from '#domain-legacy/module';
-import { WishAr } from '#domain-legacy/wish/a-root';
-import type { WishTarget } from '#domain-legacy/wish/entity';
-import type { WishConfirmedEvent } from '#domain-legacy/wish/events';
 
 /** Метаданные реакции подтверждения желания. */
 export interface ConfirmWishErMeta

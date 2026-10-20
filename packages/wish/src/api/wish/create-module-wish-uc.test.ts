@@ -1,7 +1,10 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { Role, type User } from '@u7-scl/app/domain';
-import type { WishApiModuleResolver } from '#domain-legacy/module';
-import type { Wish, WishStatus } from '#domain-legacy/wish/entity';
+import type {
+  Wish,
+  WishApiModuleResolver,
+  WishStatus,
+} from '@u7-scl/domain/wish';
 import { CreateModuleWishUc } from './create-module-wish-uc';
 
 function makeUser(uuid: string): User {

@@ -309,7 +309,7 @@ describe('QuestionnaireEngine.getNextQuestion — any-of на multiple-вопр�
 });
 
 describe('QuestionnaireEngine.getProgress — динамический маршрут (реальный пул)', () => {
-  // Миниатюра реального пула курса (packages/wish/.../pools/course.json):
+  // Миниатюра реального пула курса (packages/domain/src/wish/wish/pools/course.json):
   // 11 вопросов, из них 3 условных от intensity. Полный пул — 11,
   // но активный маршрут зависит от ветки: base — 10, intensive — 9.
   const pool: Question[] = [
