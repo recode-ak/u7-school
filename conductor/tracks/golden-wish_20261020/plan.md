@@ -57,7 +57,7 @@
 > Объединены ради экономии: один прогон reviewer, одна контрольная точка; гайды — по видам.
 
 - [x] Task: Платформа по D-40: декларативное доменное правило в `dmg-core` (Def по образцу `rule`: имя, `label`, `description`, ссылка на `ErrorDef`, проверка → `Result`), поле правил в Def UC рядом с `policy`, видимость в манифесте/графе, `checkDefs`; имена API и файлов — в naming.md; DOM-16 машинно (type) `e55292c`
-- [ ] Task: Lint DOM-01 по D-39: импорт `…/state` разрешён Def контрактов своего модуля (`*.uc.ts`, `*.events.ts`, `*.dqs.ts`, `*.facade.ts`), фикстуры `lint-rules.test.ts` (red → green)
+- [x] Task: Lint DOM-01 по D-39: импорт `…/state` разрешён Def контрактов своего модуля (`*.uc.ts`, `*.events.ts`, `*.dqs.ts`, `*.facade.ts`), фикстуры `lint-rules.test.ts` (red → green) `f47aa38`
 - [ ] Task: `wish` по D-39/D-40: `WishDcs.checkUnique` → доменное правило уникальности (`WISH_ALREADY_EXISTS`); геттер `WishAr.status` → метод `alreadyExists()`, строящий ошибку; UC — без изменений видимого поведения; гайд «policy» — третий уровень; TR-6 закрыть
 - [ ] Task: Платформа по ревью приёмки (`slices/wish.md`, «Приёмка правок платформы»): `assertVersion` отличает новый агрегат от записи версии 0 (create с занятым uuid — конфликт, legacy-записи `data/wish` без `version` не перезаписываются); поведение событий записанных агрегатов при `VERSION_CONFLICT` — исправить или описать в errors-result.md §3
 - [ ] Task: Порт `WishRepo` на Ar/`Result`, `WishJsonRepo` с `F.timestamp` (чтение строки и числа), UoW; DQS для чтения списка, если решено в Фазе 0
