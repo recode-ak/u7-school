@@ -1,0 +1,104 @@
+import { expect, test } from 'bun:test';
+import { parseArgs } from '../cli.ts';
+import { planDomainAggregate } from './aggregate.ts';
+
+const plan = planDomainAggregate(
+  parseArgs(['aggregate', 'stream.student', '--domain-root', '/d']),
+);
+const file = (path: string) =>
+  plan.files.find((f) => f.path === `/d/stream/student/${path}`)?.content ?? '';
+
+test('файлы агрегата по naming.md §2', () => {
+  expect(plan.files.map((f) => f.path)).toEqual([
+    '/d/stream/student/student.state.ts',
+    '/d/stream/student/student.events.ts',
+    '/d/stream/student/student.errors.ts',
+    '/d/stream/student/student.ar.ts',
+    '/d/stream/student/student.policy.ts',
+    '/d/stream/student/student.ar.test.ts',
+    '/d/stream/student/student.policy.test.ts',
+  ]);
+});
+
+test('state: схема entity на BaseEntityFields', () => {
+  const src = file('student.state.ts');
+  expect(src).toContain('export const StudentState = v.object({');
+  expect(src).toContain('...BaseEntityFields');
+  expect(src).toContain('export type StudentState = v.InferOutput');
+});
+
+test('events: группа с FQN-префиксом модуль.агрегат', () => {
+  const src = file('student.events.ts');
+  expect(src).toContain(
+    "export const StudentEvents = defineEvents('stream.student', {",
+  );
+  expect(src).toContain('created: {');
+  expect(src).toContain('studentId: F.uuid(');
+});
+
+test('errors: префикс UPPER_SNAKE, NOT_FOUND', () => {
+  const src = file('student.errors.ts');
+  expect(src).toContain(
+    "export const StudentErrors = defineErrors('STUDENT', {",
+  );
+  expect(src).toContain('NOT_FOUND: {');
+});
+
+test('ar: Def, класс, create/restore', () => {
+  const src = file('student.ar.ts');
+  expect(src).toContain('export const StudentArDef = defineAggregate({');
+  expect(src).toContain("name: 'student'");
+  expect(src).toContain(
+    'export class StudentAr extends Aggregate<typeof StudentArDef>',
+  );
+  expect(src).toContain('static create(');
+  expect(src).toContain('static restore(');
+  expect(src).toContain('StudentEvents.created.make(');
+});
+
+test('policy: Def и правило', () => {
+  const src = file('student.policy.ts');
+  expect(src).toContain('export const StudentPolicy = definePolicy({');
+  expect(src).toContain('export type StudentCtx');
+  expect(src).toContain('canView');
+});
+
+test('тесты: создание агрегата и правило политики', () => {
+  expect(file('student.ar.test.ts')).toContain("describe('StudentAr.create'");
+  expect(file('student.policy.test.ts')).toContain(
+    "describe('StudentPolicy.canView'",
+  );
+});
+
+test('правки: Def в паспорт модуля и экспорты в index', () => {
+  const mod = '/d/stream/stream.module.ts';
+  const idx = '/d/stream/index.ts';
+  expect(plan.edits).toEqual([
+    {
+      path: mod,
+      marker: '// gen:defs:imports',
+      line: "import { StudentArDef } from './student/student.ar';",
+    },
+    { path: mod, marker: '// gen:defs:aggregates', line: '    StudentArDef,' },
+    {
+      path: idx,
+      marker: '// gen:exports',
+      line: "export { StudentAr, StudentArDef } from './student/student.ar';",
+    },
+    {
+      path: idx,
+      marker: '// gen:exports',
+      line: "export { StudentErrors } from './student/student.errors';",
+    },
+    {
+      path: idx,
+      marker: '// gen:exports',
+      line: "export { StudentEvents } from './student/student.events';",
+    },
+    {
+      path: idx,
+      marker: '// gen:exports',
+      line: "export { type StudentCtx, StudentPolicy } from './student/student.policy';",
+    },
+  ]);
+});

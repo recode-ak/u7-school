@@ -1,5 +1,11 @@
 import { expect, test } from 'bun:test';
-import { isKebab, kindNames, toPascal } from './naming.ts';
+import {
+  isKebab,
+  kindNames,
+  toCamel,
+  toPascal,
+  toUpperSnake,
+} from './naming.ts';
 
 test('kebab → PascalCase', () => {
   expect(toPascal('complete-student')).toBe('CompleteStudent');
@@ -36,4 +42,11 @@ test('kindNames: класс, Def и суффикс файла по таблиц�
     defName: 'StudentArDef',
     fileName: 'student.ar.ts',
   });
+});
+
+test('toCamel и toUpperSnake', () => {
+  expect(toCamel('stream-student')).toBe('streamStudent');
+  expect(toCamel('student')).toBe('student');
+  expect(toUpperSnake('stream-student')).toBe('STREAM_STUDENT');
+  expect(toUpperSnake('student')).toBe('STUDENT');
 });

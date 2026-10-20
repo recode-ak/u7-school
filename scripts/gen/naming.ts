@@ -43,3 +43,14 @@ export function kindNames(kind: NamedKind, kebab: string): KindNames {
     fileName: `${kebab}.${kind}.ts`,
   };
 }
+
+/** `stream-student` → `streamStudent`. */
+export function toCamel(kebab: string): string {
+  const pascal = toPascal(kebab);
+  return pascal.charAt(0).toLowerCase() + pascal.slice(1);
+}
+
+/** `stream-student` → `STREAM_STUDENT`. */
+export function toUpperSnake(kebab: string): string {
+  return kebab.toUpperCase().replaceAll('-', '_');
+}
