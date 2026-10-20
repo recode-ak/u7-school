@@ -17,7 +17,8 @@
 
 ## Фаза 1: State (схема entity)
 
-- [ ] Task: Перенос структуры по naming.md (`wish/wish.state.ts`), поля через `F.*`, даты `F.timestamp` (DEBT-24), `v.description()` на каждом поле
+- [x] Task: Платформа: запись без `updatedAt` читается как `updatedAt = createdAt` (по образцу `version`, D-36) `9048034a`
+- [~] Task: Перенос структуры по naming.md (`wish/wish.state.ts`), поля через `F.*`, даты `F.timestamp` (DEBT-24), `v.description()` на каждом поле
 - [ ] Task: Гайд «state»
 - [ ] Task: Ревью reviewer → обзор
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)

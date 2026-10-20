@@ -38,6 +38,21 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 - Тест доставки на **реальном** legacy-событии: событие строит legacy-агрегат (`StudentAr` зачисление, `StreamAr` создание, `QuestionnaireAr` завершение/прерывание), публикуется в `InProcEventBus`, подписчик DMG через `legacyEventBus(legacy, { inbound })` получает конверт Def с ожидаемым payload; payload вне схемы → `onInvalid`.
 - Подключение карты в `apps/u7-bot` — Ф12, не сейчас.
 
+## Ф1: State
+
+**Шаг 1 — domain-author, платформа** (`packages/dmg-core/src/kernel/fields`, `domain/aggregate`; выход за границы согласован с Нурболатом): запись без `updatedAt` читается как `updatedAt = createdAt` — по образцу `version` (D-36), миграция данных не нужна. В legacy `updatedAt` появляется только после первой мутации; так же у `user`, `course`.
+- Авторы state по-прежнему пишут `v.object({ ...BaseEntityFields, … })`; тип вывода `updatedAt` — обязательный `Timestamp`. DOM-11 не ослабляется.
+- Фолбэк работает при любом разборе сырых данных схемой state (репозиторий в Ф6 парсит `def.state`); граф (`graph/normalize`), JSON Schema и `checkDefs` не ломаются.
+- Место и способ — на твоё усмотрение, с обоснованием в отчёте. TDD: запись без `updatedAt` → `createdAt`; с `updatedAt` → без изменений.
+
+**Шаг 2 — migrator** (`packages/domain/src/wish/**`, потребители в `packages/wish`, `apps/u7-bot`, `scripts`):
+- `bun run gen aggregate wish.wish --adopt` (dry-run, затем `--write`); содержимое `wish/entity.ts` → `wish/wish.state.ts`, `entity.test.ts` → `wish.state.test.ts`, `entity.ts` удаляется; `state.ts` реэкспортирует `wish/wish.state`.
+- Имена по образцу `todo/task/task.state.ts`: `WishState` (схема и тип), `WishTarget`, `WishStatus`. Старые имена `WishSchema`/`Wish`/`*Schema` — переименовать у потребителей, без алиасов.
+- `v.object({ ...BaseEntityFields, … })`, поля через `F.*` (`F.uuid('пользователя')`, `F.picklist`), `v.description()` на каждом поле, включая ветки `target`. Цель — `F.uuid('курса')`/`F.uuid('модуля')` вместо схем `course`. Даты — `F.timestamp` (DEBT-24: маркеры и `biome-ignore` удалить, запись в `debt.md` удалить).
+- `WishArMeta` (core `ArMeta`, DEBT-21) — в `a-root.ts`: это мета Ar, уходит в Ф2. Место DEBT-21 в `debt.md` — без `entity`.
+- Тип дат меняется: строка → число. Минимальная адаптация потребителей: legacy Ar (`isoNow()` — до Ф2 допустимо, состояние проходить схему), сортировка в `wish-json-repo.ts` (числа), фикстуры тестов (ISO-строки во входе схемы допустимы, в типизированных литералах `WishState` — числа). Поведение не меняется; логика Ar, Policy, UC — не трогать (Ф2+).
+- Данные: репозиторий читает ISO-строки и числа, пишет числа. Проверка — тест репозитория на legacy-записи (ISO без зоны, без `updatedAt`, без `version`).
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
@@ -113,3 +128,9 @@ ARC-02, ARC-04, ARC-06; DOM-01…05, DOM-09…12; MAN-01…11; ERR-01…06; API-
 
 ### Ревью задачи «Контракты зависимостей» (reviewer)
 `error` нет. Контракты совпадают с реальными legacy-событиями (`owner` — record любого владельца, `reason` всегда из picklist, `telegramId` отбрасывается); решения вне брифа приняты. `warn`: TST-04 — тесты карт ~25 строк из-за литерала полного конверта (хватит `name` и `payload`); `dmg-core`/`@u7-scl/domain` не объявлены в `dependencies` пакетов `stream`/`questionnaire` (хойстинг); ERR-07 — в Ф12 передать `onInvalid` с `warn` (задача в плане). `info`: `legacy-inbound.ts` вне naming §3 (временный); picklist `reason` дублирует legacy `AbandonReasonSchema`.
+
+### Ф1 шаг 1 — domain-author (платформа)
+`withEntityDefaults(schema)` в `kernel/fields/fields.ts`: копия схемы state, которая перед разбором дописывает `updatedAt = createdAt` (если поле есть в `entries`); `~run` вызывает исходный разбор с `this` производной схемы — `v.pick`/`v.omit`/`v.partial` наследуют фолбэк и проверяют свои поля. `defineAggregate` кладёт копию в `def.state`; тип, `entries`, JSON Schema — как у исходной. Ограничения (JSDoc): `def.state !== spec.state`, фолбэк работает только при разборе через `def.state` — репозиторий Ф6 разбирает `WishArDef.state`; пример `TaskJsonRepo` разбирает `TaskState` напрямую — перевести в Ф6. Дополнение к D-36 в `decisions.md`. Тесты red → green, dmg-core 229 pass.
+
+### Ревью Ф1 шаг 1 (reviewer, 2 раунда)
+Раунд 1: `error` — `this` исходной схемы в обёртке, производные `pick/omit/partial` проверяли все поля; `warn` — тесты композиции, ограничения в JSDoc. Раунд 2: закрыто, новых `error`/`warn` нет. `info`: схемы без `entries` (union) подставляют всегда — для state недостижимо. `question`: `v.partial(def.state)` подставит `updatedAt` при наличии `createdAt` — принято: DTO-патчи строятся от экспортированной схемы state, не от `def.state`.
