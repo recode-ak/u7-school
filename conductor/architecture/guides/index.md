@@ -11,8 +11,8 @@
 | events | [events.md](./events.md) | 3 |
 | errors | [errors.md](./errors.md) | 4 |
 | policy | [policy.md](./policy.md) | 5 |
-| repo / dcs / dqs | — | 6 |
-| facade | — | 7 |
+| repo / dcs / dqs | [repo.md](./repo.md) | 6 |
+| facade | [facade.md](./facade.md) | 7 |
 | use case (command, query) | — | 8–9 |
 | event reaction | — | 10–11 |
 | module | — | 12 |
