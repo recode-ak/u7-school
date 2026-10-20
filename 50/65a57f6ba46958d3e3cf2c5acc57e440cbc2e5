@@ -1,0 +1,1 @@
+Task: тест на снапшотах домена. domain-snapshot.test.ts: генерирует module+aggregate+dcs+dqs во tmp, сверяет дерево с naming.md §2, прогоняет biome check. Характеризационный тест (реализация уже была).
