@@ -2,6 +2,11 @@
 
 Каждая задача — TDD, `bun run check` зелёный после каждой. Предшествует трек core-dmg (завершён).
 
+**Порядок относительно других треков ([migration.md](../../architecture/migration.md) §2):**
+- Фазы 1–3 — сразу, **до** `generators` и `golden-wish`: после них пути и import-спецификатор платформы (`dmg-core`) уже финальные, шаблоны генераторов и эталонный модуль пишутся без переименования.
+- Фазы 4–6 — **после** `golden-wish`: контракты модуля (`domain/<m>/contract`) требуют `domain-package`, outbox и идемпотентность реакций проверяются на реальном модуле, документация пакета (Фаза 5) включает гайды, написанные по эталону.
+- Мосты к legacy (Фаза 1) должны остаться рабочими для `golden-wish`: `wish` до миграции живёт на legacy-шине и legacy-`Job`.
+
 ## Фаза 1: Развязка от legacy
 
 - [ ] Task: Перенести мосты (`legacy-event-bus`, `legacy-error`, `legacy-job`, `run-logged`, `context`, часть `use-case-from-def`, `now`) в `packages/core/src/legacy-bridge/`, внутрь `dmg` оставить порты
