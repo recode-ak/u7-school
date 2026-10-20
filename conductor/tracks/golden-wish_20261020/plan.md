@@ -12,7 +12,7 @@
 - [x] Task: Зафиксировать базовую линию тестов (`bun test`: 3211 pass) и тестов `wish` — 3211 pass / 0 fail; `wish` (домен + пакет): 107 pass / 14 файлов (в брифе)
 - [x] Task: Режим `--adopt` генератора для legacy-модуля: `gen module|aggregate … --adopt` создаёт недостающие файлы рядом с legacy, существующий `index.ts` пропускает и печатает шаблон (пакетные `package.json`/`tsconfig.json` генератор и так не пересоздаёт); коллизия остальных файлов — по-прежнему ошибка; строка в naming.md §5 `ef2a3c41`
 - [x] Task: Каркас гайда (шаблон по Ф4 спеки) в `conductor/architecture/guides/` и контрактный тест живости ссылок гайдов (в `check`); ссылка из `architecture/index.md` `ffb2ddf9`
-- [ ] Task: Контракты зависимостей (D-37, бриф §«Открытые вопросы» п. 2–3): в `domain/{user,course,questionnaire,stream}/contract.ts` — Def событий, на которые реагирует `wish` (`student.enrolled`, `stream.created`, `questionnaire:complete`, `questionnaire:abandon`), и внешние `ModuleDef` (`external: true`); карта `inbound` для `legacyEventBus` с переводом legacy-payload; тест доставки на реальном legacy-событии. Учитывает изменения платформы по ревью — [review-fixes.md](./review-fixes.md)
+- [x] Task: Контракты зависимостей (D-37, бриф §«Открытые вопросы» п. 2–3): в `domain/{user,course,questionnaire,stream}/contract.ts` — Def событий, на которые реагирует `wish` (`student.enrolled`, `stream.created`, `questionnaire:complete`, `questionnaire:abandon`), и внешние `ModuleDef` (`external: true`); карта `inbound` для `legacyEventBus` с переводом legacy-payload; тест доставки на реальном legacy-событии. Учитывает изменения платформы по ревью — [review-fixes.md](./review-fixes.md) `21109e88`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 ## Фаза 1: State (схема entity)
@@ -54,6 +54,7 @@
 
 ## Фаза 6: Репозиторий и сервисы (Repo, DCS/DQS)
 
+- [ ] Task: Платформа по ревью приёмки (`slices/wish.md`, «Приёмка правок платформы»): `assertVersion` отличает новый агрегат от записи версии 0 (create с занятым uuid — конфликт, legacy-записи `data/wish` без `version` не перезаписываются); поведение событий записанных агрегатов при `VERSION_CONFLICT` — исправить или описать в errors-result.md §3
 - [ ] Task: Порт `WishRepo` на Ar/`Result`, `WishJsonRepo` с `F.timestamp` (чтение строки и числа), UoW; DQS для чтения списка, если решено в Фазе 0
 - [ ] Task: Тест репозитория на `DB_DIR=./data/fixtures`: ISO-строка читается, число пишется
 - [ ] Task: Гайд «repo / dcs / dqs»
@@ -98,6 +99,7 @@
 ## Фаза 12: Модуль (`defineModule`) и сосуществование
 
 - [ ] Task: `WishModuleDef` (`dependsOn`: user, course, questionnaire, stream), `ModuleFromDef` — карта Def → класс; тип резолвера из платформы (DEBT-22), без `core`/`app` (DEBT-21)
+- [ ] Task: Мост по ревью приёмки: `inbound` разбирается один раз на маршрут (без дублей `onInvalid`), `onInvalid` в приложении — `logger.warn`, дефолт и JSDoc согласованы с `InProcEventBus` (исключение глотается); `Date.parse` в конверте проверяется
 - [ ] Task: Сосуществование: `appApi.run` и `appApi.execute` для wish; вызывающие stories и UI не сломаны; barrel DEBT-23 сохранён
 - [ ] Task: Гайд «module»; stub-гайд «job» (эталона нет)
 - [ ] Task: Ревью → обзор
