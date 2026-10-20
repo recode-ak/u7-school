@@ -64,7 +64,7 @@
 - [x] Task: Тест репозитория на `DB_DIR=./data/fixtures`: ISO-строка читается, число пишется `87149fa`
 - [x] Task: Генератор по D-38: `gen module` создаёт фасад (домен и пакет) только с `--facade`; тесты `scripts/gen` (red → green); у `wish` фасада нет — потребителей нет `8fbced5`
 - [x] Task: Гайды «repo / dcs / dqs» и «facade» (критерий «только по потребителю», эталон — пример `dmg-core`) `f3f69a8`
-- [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
+- [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `67d4ca6` (TR-7, TR-8)
 - [ ] Task: Контрольная точка 'Фаза 6–7' (автономно, workflow.md)
 
 ## Фаза 8: Use Case — эталон (`create-course-wish`)
