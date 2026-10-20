@@ -8,5 +8,5 @@
 
 ---
 
-- [ ] **Track: generators — `bun run gen` для всех видов артефактов по naming.md (пары контракт↔реализация, заготовки тестов, каркас `packages/domain`)**
+- [~] **Track: generators — `bun run gen` для всех видов артефактов по naming.md (пары контракт↔реализация, заготовки тестов, каркас `packages/domain`)**
 *Link: [./tracks/generators_20261020/](./tracks/generators_20261020/)*

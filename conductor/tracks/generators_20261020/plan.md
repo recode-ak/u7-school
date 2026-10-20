@@ -4,9 +4,9 @@
 
 ## Фаза 1: Каркас `gen` и пакет `packages/domain`
 
-- [ ] Task: Минимальный пакет `packages/domain` (`@u7-scl/domain`: package.json, tsconfig, biome, пустой `src/index.ts`, подпути `<m>` и `<m>/state`), подключение к корневым конфигам и `check`
-    - [ ] Тест: пакет собирается, `tslint` и `arch:check` зелёные
-    - [ ] Отметить в spec/plan `domain-package`: пакет-каркас уже создан
+- [x] Task: Минимальный пакет `packages/domain` (`@u7-scl/domain`: package.json, tsconfig, biome, пустой `src/index.ts`, подпути `<m>` и `<m>/state`), подключение к корневым конфигам и `check` e9dfc033
+    - [x] Тест: пакет собирается, `tslint` и `arch:check` зелёные
+    - [x] Отметить в spec/plan `domain-package`: пакет-каркас уже создан (трека пока нет — пометка в `migration.md`, строка 3)
 - [ ] Task: Ядро `scripts/gen/`: разбор CLI (`gen <kind> <m>[.<agg>] <name>`, `--dry-run` по умолчанию, `--write`, `--domain-root`, `--packages-root`), модель «план файлов»
     - [ ] Тесты: разбор аргументов, kebab → PascalCase/Def/FQN по таблице `naming.md` §4
 - [ ] Task: Валидация ввода (kebab, существование модуля/агрегата, уникальность имён и FQN) с понятными ошибками на русском
