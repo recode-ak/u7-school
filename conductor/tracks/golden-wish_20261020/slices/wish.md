@@ -351,3 +351,6 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ф8 шаг 2a — domain-author (Opus)
 `course`: `CourseArDef` (минимальный), `GetCourseEnrollmentUcDef` (query, `callers: ['module']`, `allowAll`, выход — `variant('enrollable', [{ true, startModuleId }, { false }])`), тип `CourseModuleFacade` (`course.facade.ts`). `questionnaire`: `StartQuestionnaireUcDef` (command, вход `{ pool, owner }`, выход `{}`, `emits: [QuestionnaireEvents.started]`), событие `questionnaire.questionnaire.started`, тип `QuestionnaireModuleFacade`; `v.description` на полях пула (MAN-02). Отклонения — TR-11. `check`: 3449 pass / 0 fail.
+
+### Ф8 шаг 2b — api-author (Opus)
+Адаптеры `GetCourseEnrollmentUc`, `StartQuestionnaireUc` (`UseCaseFromDef` над legacy-фасадами), модули `createCourseModule`/`createQuestionnaireModule` (`ModuleFromDef`, ER/Job пустые), фасады `courseModuleFacade`/`questionnaireModuleFacade` через `callUseCase`; тесты 4 + 2 (в т. ч. `UNAUTHORIZED` вне `calls`). Маркеры TR-11, DEBT-21/22. Оркестратор: зависимости `dmg-core`/`@u7-scl/domain` в `packages/course/package.json`, «Место» DEBT-21/22. Сборка фасадов в приложении — Ф12: `courseModuleFacade(createCourseModule({ app, legacy }))`. `check`: 3455 pass / 0 fail.

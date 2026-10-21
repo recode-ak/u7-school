@@ -89,13 +89,13 @@
 - **Критерий снятия:** маркер `DEBT-17` удалён, перенесённые файлы не импортируют `@u7-scl/app`
 
 ### DEBT-21: импорты `@u7-scl/core` в domain/wish
-- **Место:** `packages/domain/src/wish/**` (`module.ts`, `wish/commands/legacy-uc-error.ts`; подпути `core/domain`, `core/shared`)
+- **Место:** `packages/domain/src/wish/**` (`module.ts`, `wish/commands/legacy-uc-error.ts`; подпути `core/domain`, `core/shared`); адаптер `packages/questionnaire/src/questionnaire/**` (legacy `User`, TR-11)
 - **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `ConflictError`, `NotFoundError`, `ApiModuleMeta`, `isoNow` живут в `core`; механический перенос не меняет базовые классы.
 - **Погашает:** `dmg-core-extract` (Ф4) и `golden-wish`
 - **Критерий снятия:** в `packages/domain/src/wish/**` нет маркеров `DEBT-21` и импортов `@u7-scl/core`
 
 ### DEBT-22: импорт `@u7-scl/app/domain` в domain/wish/module.ts
-- **Место:** `packages/domain/src/wish/module.ts` (тип `U7ModuleResolver`)
+- **Место:** `packages/domain/src/wish/module.ts` (тип `U7ModuleResolver`); адаптер `packages/questionnaire/src/questionnaire/**` (TR-11)
 - **Причина:** тип резолвера модулей определён в `app` (см. DEBT-2).
 - **Погашает:** `dmg-core-extract` / `golden-wish`
 - **Критерий снятия:** маркер `DEBT-22` удалён, `module.ts` не импортирует `@u7-scl/app`
@@ -310,4 +310,5 @@
 - **Контекст:** D-42 — межмодульный вызов идёт через Def UC владельца; `course` и `questionnaire` не мигрированы (D-37).
 - **Решение:** во внешних контрактах — Def UC (query «старт записи на курс», command «запуск анкеты»); реализации — `UseCaseFromDef`-адаптеры поверх legacy-фасадов в пакетах владельцев; новый тип фасада рядом с legacy.
 - **Детали 2a:** `CourseArDef` — минимальный (как `QuestionnaireArDef`); вход запуска — `owner` (как payload событий), адаптер переводит в legacy `ownerInfo`; `StartQuestionnaireUcDef.policy = allowAll` — респондент всегда субъект вызывающего, `origin` без субъекта — баг `callers` (`subject()` бросает); правило «только за себя» — при миграции (`QuestionnairePolicy` занято legacy). Типы фасадов — `CourseModuleFacade`/`QuestionnaireModuleFacade` (`<M>Facade` заняты legacy).
+- **Детали 2b:** адаптеры — `UseCaseFromDef` в `packages/{course,questionnaire}/src/<a>/uc/`, владелец — обычный `ModuleFromDef` (`createCourseModule`, `createQuestionnaireModule`), подключение — Ф12. `if` по ответам legacy в адаптере курса — перевод в контракт (уходит с адаптером). `emits: [started]` адаптер не публикует: `questionnaire:start` по-прежнему в legacy-шине, в `inbound` его нет — добавить, когда появится DMG-подписчик. Ошибки legacy `start` — `SERVER_INTERNAL`.
 - **Пересмотреть:** при миграции `course`/`questionnaire` — адаптеры заменяются настоящими UC, `external` снимается, legacy-фасады удаляются, типы фасадов переименовываются в `<M>Facade`.
