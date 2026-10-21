@@ -1,51 +1,138 @@
 # Открытые вопросы после Ф8 `golden-wish` (временный файл)
 
-Удалить после решения: решения переносятся в `conductor/architecture/decisions.md` (D-NN), правки — задачей в `conductor/tracks/golden-wish_20261020/plan.md` перед Ф9.
+Удалить после решения: решения переносятся в `conductor/architecture/decisions.md` (D-43), правки — фазой «Ф8а» в `conductor/tracks/golden-wish_20261020/plan.md` перед Ф9.
 
-Контекст: Ф8 закрыта (`6e2e7e9`). Платформа по D-42 сделана агентами в форме, которую Нурболат не обсуждал детально (TR-10, TR-12). Ниже — что из неё уже согласовано к переделке и что ещё нужно решить.
+Контекст: Ф8 закрыта (`6e2e7e9`). Платформа по D-42 сделана агентами в форме, которую Нурболат не обсуждал детально (TR-10, TR-12). Ниже — что решено (2026-10-21) и что ещё обсудить.
 
 ---
 
-## Что сейчас в коде (`packages/dmg-core`)
+## Что было в коде (`packages/dmg-core`) и почему переделываем
 
-- **Вызывающий `module`:** `{ kind: 'module', from, origin }`. `from` — Def вызвавшего UC/ER/Job, `origin` — исходный `Caller` целиком (рекурсивно). `subjectOf(module)` = субъект `origin` (`originOf` спускается по цепочке). Policy вызываемого UC пропускается, если `originOf(caller).kind === 'system'` (вызов из ER/Job).
-- **`CallContext = { from, caller, trace }`.** Вызывающий собирает его через `this.callContext(caller, trace)` и передаёт **первым аргументом** в каждый метод фасада: `this.resolve.course.getCourseEnrollment(this.callContext(caller, trace), courseId)`.
-- **Фасад:** тип в домене (`<m>.facade.ts`), реализация — `callUseCase(owner, Def, input, call)` + `asReadonlyAr(ArClass, res)`. Фасады лежат в `deps` модуля (`this.resolve.<m>`).
-- **Проверка `from → calls`:**
-  - `checkDefs` (тест / `arch:check`): UC в `calls` — из модуля в `dependsOn`, не свой; у вызываемого есть `module` в `callers`;
-  - рантайм `UseCaseFromDef`: вызывающий `module`, а Def вызываемого UC нет в `from.calls` → `UNAUTHORIZED`;
-  - тесты потребителя: `fakeFacadeCall` (`dmg-core/testing`) повторяет ту же проверку.
-- **Типизацией НЕ закрыто:** UC может вызвать метод фасада, чей UC не в его `calls`, — тип фасада не знает, какой UC за методом. Ловится только в рантайме или фейком в тесте.
-- **Проверки `UseCaseFromDef`** зашиты в приватный `run`.
+- Вызывающий `module` — матрёшка `{ from, origin }`, `originOf`/`subjectOf` рекурсивно спускаются по цепочке; Policy пропускалась при `originOf(caller).kind === 'system'`, `rule()` смотрел на `delegate`.
+- `ModuleFromDef.useCase(def)` раздаёт UC наружу: фасад (`callUseCase`) и `ApiApp` сами зовут `uc.handle` — у модуля нет своей точки входа.
+- Связь «UC → чужой UC» не закрыта типами: проверка `calls` трижды — `checkDefs`, рантайм в `UseCaseFromDef.run`, `fakeFacadeCall` в тестах.
+- Россыпь функций (`callUseCase`, `moduleCaller`, `systemCaller`, `subjectOf`, `originOf`, `fakeFacadeCall`) вместо классов с зоной ответственности.
 
-## Согласовано Нурболатом — сделать (задача перед Ф9)
+## Решено (Нурболат, 2026-10-21)
 
-1. **Упростить вызывающего `module`:** `{ kind: 'module', from, subject? }` без цепочки `origin`. Фасад кладёт в `subject` доменного субъекта пришедшего вызывающего (`subjectOf`: `user` → он сам, `delegate` → кого замещают, `system` → нет). У `Caller` — API: `kind` и `subjectOf`. UC объявляет в `callers`, откуда вызовы допустимы; Policy проверяет только конечного субъекта, не зная вида вызывающего. Субъекта нет (ER/Job) → Policy не проверяется, как у `system`. `originOf` и рекурсия уходят; `delegable: false` пересмотреть при треке делегирования (сейчас делегирования нет).
-2. **`CallContext`** — минимальный тип с тем, что реально нужно (`from`, `subject?`, `trace`), расширяется по потребителю.
-3. **Шаги проверок `UseCaseFromDef` — `protected`-методы** (callers/`calls`, вход, Policy, правила, выход), порядок в `run` не меняется; конкретный UC может переопределить.
-4. **Механизмы «как нужно на уровне»:** чужой модуль в рантайме — только через фасад; вызов соседнего UC своего модуля — пока не разрешён; приложение — только через `appApi`, не `handle` напрямую. Брендирование `CallContext` против подделки — не нужно.
+### Р1. `Caller` — иерархия классов
+```ts
+abstract class Caller<U extends { uuid: string }> {
+  abstract readonly kind: 'guest' | 'user' | 'delegate' | 'system';
+  abstract subject(): U | undefined;
+  abstract person(): PersonCaller<U> | undefined;
+  abstract toLog(): CallerLog;
+}
+type PersonCaller<U> = GuestCaller<U> | UserCaller<U> | DelegateCaller<U>;
 
-## Не решено — обсудить
+class GuestCaller<U>    extends Caller<U> {}                                                  // subject → undefined
+class UserCaller<U>     extends Caller<U> { constructor(user: U) }                            // → user
+class DelegateCaller<U> extends Caller<U> { constructor(subject: U, actor: U, delegationId: string) } // → subject
 
-### В1. Гарантия «вызван именно метод фасада, связанный с UC из `calls`» — типами
-Нурболат ожидал, что это закроется типизацией, без рантайм-проверок. Предложение оркестратора:
-- (а) тип метода фасада несёт Def своего UC (только тип, без рантайм-манифеста): `getCourseEnrollment: FacadeMethod<typeof GetCourseEnrollmentUcDef, [courseId: string], CourseEnrollment>`; реализация метода типом обязана вызвать именно этот Def;
-- (б) фасады не лежат «сырыми» в `this.resolve`: база отдаёт `this.facades(caller, trace)` — тип отфильтрован по `D['calls']`, незаявленный метод не компилируется; `CallContext` уходит из сигнатур методов (база привязывает сам);
-- (в) рантайм-проверку `calls` в `UseCaseFromDef` оставить как защиту границы на случай выхода модуля в сервис (по сети типам вызывающего доверять нельзя); `fakeFacadeCall` удалить.
+type OperationRef = {
+  readonly kind: 'useCase' | 'eventReaction' | 'job';
+  readonly module: string;   // свой/чужой — сравнением с модулем вызываемого
+  readonly name: string;
+};
+class SystemCaller<U> extends Caller<U> {
+  constructor(readonly from: OperationRef, readonly person?: PersonCaller<U>) {}
+  // subject() → person?.subject()
+}
+```
+- `ModuleCaller` нет; один `SystemCaller`. Матрёшки нет: `person` по типу не `SystemCaller`, при вложенном вызове передаётся `caller.person()` пришедшего.
+- Job и ER — `person = undefined`, `subject()` → `undefined` (Job — не гость: гость — реальный посетитель; аудит ER — через `trace.cause` к записи породившей операции).
+- `callers`: `('guest' | 'user' | 'delegate' | 'system')[]`.
+- `channel`/`channelId` уходят из `GuestCaller` в `Trace.channel?: { name; visitorId? }` (задаётся на входе, идёт по цепочке).
+- `toLog()`:
+  ```ts
+  type CallerLog =
+    | { kind: 'guest' }
+    | { kind: 'user'; subjectId: string }
+    | { kind: 'delegate'; subjectId: string; actorId: string; delegationId: string }
+    | { kind: 'system'; from: OperationRef; person?: CallerLog };
+  ```
+- Удаляются `subjectOf`, `originOf`, `moduleCaller`, `systemCaller`, `delegable`.
 
-Вопросы: подходит ли (а) как «фасад без манифеста»; (б) против передачи `CallContext` аргументом; нужна ли (в) или рантайм-проверок не должно быть вовсе.
+### Р2. Policy — только субъект, вызывается всегда
+- `Rule.evaluate(subject: U | undefined, ctx)`; `rule()` без субъекта — отказ. Вид вызывающего Policy не знает, делегирование не проверяет (это решение людей; приложение даёт право и возможность).
+- `callers` отсекает недопустимый вид (гость в UC для авторизованных → `UNAUTHORIZED`). Системный вызов без субъекта в UC с правилом субъекта → отказ Policy.
+- Системный вызов без актора разрешается только явно: отдельный UC (`callers: ['system']`, `allowAll`) или переопределение `checkPolicy` в наследнике.
+- Шаги `UseCaseFromDef` — `protected`: `checkCaller` → `parseInput` → `load` → `checkPolicy` → `checkRules` → `execute` → `parseOutput` → commit. Ослабление в наследнике — его право и ответственность.
 
-### В2. Policy при вызове из ER/Job
-Сейчас (и по п. 1 выше) — без субъекта Policy не проверяется. Альтернатива — у `system` есть `onBehalfOf` (пользователь, породивший событие): проверять Policy по нему. Строже, но ER, реагирующая на чужое событие, может получить отказ из-за прав пользователя, который этого не просил. Рекомендация — оставить «без субъекта — без Policy».
+### Р3. Модуль — единственная точка входа
+```ts
+class ModuleFromDef<M, R, U> {
+  readonly def: M;
+  readonly facade: ModuleFacade<M>;        // создаёт сам модуль
+  handle<D extends M['useCases'][number]>(def: D, input: unknown, caller: Caller<U>, trace: Trace)
+    : Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;   // ApiApp и фасад — только сюда
+  subscribe(): () => void;
+  runJob(def: M['jobs'][number], trace: Trace): Promise<Result<void, DomainError>>;
+  // useCase(def) — не публичный
+}
+```
 
-### В3. Переопределение шагов проверок (п. 3)
-Должно ли переопределение быть видимым (обоснование в комментарии, проверка reviewer по `review`-правилу) — иначе UC может молча ослабить гарантию.
+### Р4. Фасад — класс-обёртка над модулем, без `CallContext`
+```ts
+// domain/contracts
+/** UC модуля M, у которых 'system' ∈ callers. */
+type SystemCallable<M extends AnyModuleDef> = …;
+interface Facade<M extends AnyModuleDef> {
+  readonly def: M;
+  handle<D extends SystemCallable<M>>(def: D, input: InputOf<D>, caller: SystemCaller<unknown>, trace: Trace)
+    : Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
+}
+// app
+class ModuleFacade<M extends AnyModuleDef> implements Facade<M> {
+  constructor(protected readonly module: ModuleFromDef<M, ModuleDeps, unknown>) {}
+  serves(def: AnyUseCaseDef): boolean;
+  handle(…) // → this.module.handle(def, input, caller, trace)
+}
+```
+- Не абстрактный (абстрактных членов нет); наследник — только если модулю нужны удобные методы поверх `handle`.
+- Типы `CourseModuleFacade`/`QuestionnaireModuleFacade` и обёртки-методы уходят: в домене — `Facade<typeof CourseModuleDef>`.
+- Выход — как у UC; обёртку в `ReadonlyAr` делает вызывающий.
+- Удаляются `CallContext`, `callUseCase`, `asReadonlyAr` в фасаде, `fakeFacadeCall`; в `dmg-core/testing` — `StubFacade<M> implements Facade<M>` (ответы по Def).
 
-### В4. Принятые оркестратором решения Ф8 — на ревизию
-- TR-10: ошибки `load`/`execute` расширены до `UseCaseErrorOf` (с `CoreError`); `trace` — последний аргумент `load`/`execute`; `Trace`/`Cause`/`CallContext` в `kernel`; конверт события несёт `from` как Def целиком.
-- TR-11: UC-контракты и адаптеры внешних `course`/`questionnaire`; имена `CourseModuleFacade`/`QuestionnaireModuleFacade`; `StartQuestionnaireUcDef.policy = allowAll`.
-- TR-12: `createForCourse` → `{ wish, outcome, questionnaire? }`; принятые риски обхода `calls` (часть снимается п. 4 и В1).
+### Р5. Общая база операций и типизированный `call`
+```ts
+abstract class OperationFromDef<D extends AnyOperationDef, R extends ModuleDeps> {
+  constructor(readonly def: D, protected readonly resolve: R) {}
+  protected now(): Timestamp;
+  /** UC другого модуля — только из D['calls']; свой Def база подставляет сама. */
+  protected call<C extends D['calls'][number]>(def: C, input: InputOf<C>, caller: Caller<unknown>, trace: Trace)
+    : Promise<Result<OutputOf<C>, UseCaseErrorOf<C>>>;
+    // → this.resolve.facades.call(def, input, new SystemCaller(this.ref, caller.person()), trace)
+}
+// UseCaseFromDef, ReactionFromDef, JobFromDef extends OperationFromDef
+```
+- `caller` и `trace` передаются явно (экземпляр операции общий для параллельных вызовов); класса `Invocation` нет.
+- `ModuleFacades` (в `deps`) — фасады модулей из `dependsOn`, `call(def, …)` выбирает фасад по `serves(def)`.
+- Вызов: `await this.call(GetCourseEnrollmentUcDef, { courseId }, caller, trace)`; UC не из `calls` не компилируется.
+- Рантайм-проверка `calls` удаляется; `checkDefs` (`arch:check`) остаётся — согласованность Def/графа.
+
+### Р6. Персистентный лог операций
+```ts
+type OperationRecord = {
+  at: Timestamp; module: string; op: string; kind: 'useCase' | 'eventReaction' | 'job';
+  caller: CallerLog; trace: Trace; input: unknown;
+  result: { ok: true; output: unknown } | { ok: false; error: DomainError };
+  events: readonly { name: string; eventId: string }[];
+  durationMs: number;
+};
+interface OperationLog { append(record: OperationRecord): Promise<void> }  // в AppContext
+```
+- Пишет база операции (`OperationFromDef`) последним шагом — при успехе и отказе: только она знает вход, события и выход. `uow.commit()` возвращает опубликованные события.
+- `input`/`output` целиком с порогом размера (≈8 КБ, хвост обрезается с пометкой).
+- Хранение: JSONL по дням в `data/oplog/`; не в git (`.gitignore`), не в бэкап; в AGENTS.md — в список живых данных.
+
+## Не решено — обсудить после Ф8а
+
+### В4. Принятые оркестратором решения Ф8 — на ревизию (смотреть код явно)
+- TR-10: ошибки `load`/`execute` расширены до `UseCaseErrorOf` (с `CoreError`); `trace` — последний аргумент `load`/`execute`; `Trace`/`Cause`/`CallContext` в `kernel`; конверт события несёт `from` как Def целиком (и `caller` — после Р1 пересмотреть).
+- TR-11: UC-контракты и адаптеры внешних `course`/`questionnaire`; `StartQuestionnaireUcDef.policy = allowAll`.
+- TR-12: `createForCourse` → `{ wish, outcome, questionnaire? }`; принятые риски обхода `calls` (снимаются Р3–Р5).
 
 ## Решено в Ф8 (для справки)
 - D-41 — место межмодульного побочного эффекта выбирает Нурболат по каждому случаю; `create-course-wish` — вариант 1 (анкета в `execute` до фиксации).
-- D-42 — фасад без манифеста, связи «UC → UC» через `calls`, вызывающий `module`.
+- D-42 — фасад без манифеста, связи «UC → UC» через `calls`; вызывающий `module` заменяется Р1–Р5 (D-43).
