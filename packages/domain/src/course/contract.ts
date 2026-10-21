@@ -1,8 +1,14 @@
-/** Контракт модуля course: паспорт внешнего модуля (D-37), фасад, ошибки. */
+/**
+ * Контракт модуля course: паспорт внешнего модуля (D-37), Def UC для других
+ * модулей и тип фасада (D-42), legacy-фасад и ошибки.
+ */
 export type {
   CourseAccessDeniedUcError,
   CourseNotFoundUcError,
 } from './course/commands/errors';
+export { CourseArDef } from './course/course.ar';
+export { GetCourseEnrollmentUcDef } from './course/uc/get-course-enrollment.uc';
+export type { CourseEnrollment, CourseModuleFacade } from './course.facade';
 export { CourseModuleDef } from './course.module';
 export type { CourseFacade, CourseProgram, ModulePlace } from './facade';
 export type {

@@ -18,6 +18,12 @@ const ref = {
  * (legacy `ownerInfo` → `owner`). При миграции модуля контракт остаётся.
  */
 export const QuestionnaireEvents = defineEvents('questionnaire.questionnaire', {
+  started: {
+    label: 'Анкета запущена',
+    description:
+      'Анкета создана и показан первый вопрос. Legacy-событие несёт ещё ответ для UI — контракт его не включает.',
+    payload: v.object(ref),
+  },
   completed: {
     label: 'Анкета завершена',
     description: 'Респондент ответил на все вопросы анкеты.',

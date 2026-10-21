@@ -309,4 +309,5 @@
 - **Трек / фаза:** `golden-wish`, Ф8
 - **Контекст:** D-42 — межмодульный вызов идёт через Def UC владельца; `course` и `questionnaire` не мигрированы (D-37).
 - **Решение:** во внешних контрактах — Def UC (query «старт записи на курс», command «запуск анкеты»); реализации — `UseCaseFromDef`-адаптеры поверх legacy-фасадов в пакетах владельцев; новый тип фасада рядом с legacy.
-- **Пересмотреть:** при миграции `course`/`questionnaire` — адаптеры заменяются настоящими UC, `external` снимается, legacy-фасады удаляются.
+- **Детали 2a:** `CourseArDef` — минимальный (как `QuestionnaireArDef`); вход запуска — `owner` (как payload событий), адаптер переводит в legacy `ownerInfo`; `StartQuestionnaireUcDef.policy = allowAll` — респондент всегда субъект вызывающего, `origin` без субъекта — баг `callers` (`subject()` бросает); правило «только за себя» — при миграции (`QuestionnairePolicy` занято legacy). Типы фасадов — `CourseModuleFacade`/`QuestionnaireModuleFacade` (`<M>Facade` заняты legacy).
+- **Пересмотреть:** при миграции `course`/`questionnaire` — адаптеры заменяются настоящими UC, `external` снимается, legacy-фасады удаляются, типы фасадов переименовываются в `<M>Facade`.

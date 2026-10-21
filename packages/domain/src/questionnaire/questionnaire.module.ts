@@ -1,10 +1,13 @@
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { defineModule } from 'dmg-core';
 import { QuestionnaireArDef } from './questionnaire/questionnaire.ar';
+import { StartQuestionnaireUcDef } from './questionnaire/uc/start-questionnaire.uc';
 
 /**
  * Внешний модуль анкет (D-37): реализован legacy-кодом, здесь только
- * контракт — агрегат с событиями. При миграции `external` снимается.
+ * контракт — агрегат с событиями и Def UC без реализации, которые вызывают
+ * другие модули (D-42; исполняет адаптер над legacy-фасадом, TR-11). При
+ * миграции `external` снимается.
  */
 export const QuestionnaireModuleDef = defineModule({
   name: 'questionnaire',
@@ -13,7 +16,7 @@ export const QuestionnaireModuleDef = defineModule({
   external: true,
   dependsOn: [UserModuleDef],
   aggregates: [QuestionnaireArDef],
-  useCases: [],
+  useCases: [StartQuestionnaireUcDef],
   reactions: [],
   jobs: [],
 });
