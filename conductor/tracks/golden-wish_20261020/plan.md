@@ -84,7 +84,7 @@
 - [x] Task: Р1 — `Caller` иерархией классов (`subject()`, `person()`, `toLog()`), один `SystemCaller(from: OperationRef, person?)`; `channel` → `Trace.channel`; `callers` без `module`; удалить `subjectOf`/`originOf`/`moduleCaller`/`systemCaller` `ef8fc773`
 - [x] Task: Р2 — `Rule.evaluate(subject, ctx)`, без `delegable`; Policy всегда; шаги `UseCaseFromDef` — `protected` (`checkCaller` … `parseOutput`) `24f1210e`
 - [x] Task: Р3 — `ModuleFromDef.handle`/`runJob`, `useCase` не публичный; `ApiApp` — только через модуль `fe5d01a6`
-- [ ] Task: Р4–Р5 — `OperationFromDef` (база UC/ER/Job, типизированный `call` по `D['calls']`), `Facade<M>` в домене, `ModuleFacade<M>`, `ModuleFacades` в `deps`, `StubFacade<M>` в `dmg-core/testing`; удалить `CallContext`, `callUseCase`, `fakeFacadeCall`, рантайм-проверку `calls`
+- [x] Task: Р4–Р5 — `OperationFromDef` (база UC/ER/Job, типизированный `call` по `D['calls']`), `Facade<M>` в домене, `ModuleFacade<M>`, `ModuleFacades` в `deps`, `StubFacade<M>` в `dmg-core/testing`; удалить `CallContext`, `callUseCase`, `fakeFacadeCall`, рантайм-проверку `calls` `146bcda7`
 - [ ] Task: Р6 — `OperationLog` в `AppContext`, запись в `OperationFromDef`, `uow.commit()` возвращает события; JSONL в `data/oplog/` (порог размера `input`/`output`), `.gitignore`, AGENTS.md — список живых данных
 - [ ] Task: Р7 — `calls` по типу только UC с `'system'` в `callers`; `UNAUTHORIZED` без `from`; `Aggregate.readonly(state)` вместо `asReadonlyAr`; `caller` удалён из конверта события (и UoW); TR-10 в debt.md закрыть
 - [ ] Task: Р8 — `OperationFromDef.createUow` вместо `contractUnitOfWork`; класс `Trace` (`fromRequest`/`fromEvent`/`forJob`) вместо `requestTrace`/`incomingRequestId`; `Aggregate.newState` вместо `newEntity`
