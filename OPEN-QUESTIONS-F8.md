@@ -138,7 +138,7 @@ interface OperationLog { append(record: OperationRecord): Promise<void> }  // в
 - `contractUnitOfWork` → `protected createUow(caller, trace)` у `OperationFromDef`.
 - `requestTrace`/`incomingRequestId` и ручная сборка следа в ER/Job → класс `Trace` (`fromRequest`, `fromEvent`, `forJob`, `channel`, `toLog()`).
 - `newEntity` + символ-метка → `protected static newState(uuid, at)` у `Aggregate`.
-- Остальное (Def-классы, `Rule`-иерархия, `DefIndex`, `ArchChecker`, база репозитория с `Lock`/`assertVersion`, тестовые двойники) — отдельный трек `dmg-core-oop` (см. `conductor/tracks.md`), после `golden-wish`.
+- Остальное (Def-классы, `Rule`-иерархия, `DefIndex`, `ArchChecker`, база репозитория с `Lock`/`assertVersion`, тестовые двойники) — отдельный трек `dmg-core-oop` — бриф [TRACK-DMG-CORE-OOP.md](TRACK-DMG-CORE-OOP.md), после `golden-wish`.
 
 ### Р9. Ревизия TR-11
 - Подход принят: Def UC во внешнем контракте, адаптеры `UseCaseFromDef` над legacy в пакетах владельцев; после Ф8а — `callers: ['system']`, `Facade<typeof CourseModuleDef>` вместо `CourseModuleFacade`/`QuestionnaireModuleFacade`.
