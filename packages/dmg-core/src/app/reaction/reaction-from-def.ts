@@ -2,7 +2,7 @@ import type { AnyEventReactionDef } from '#core/domain/contracts/define-event-re
 import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
-import type { Result } from '#core/kernel/result/result';
+import { ok, type Result } from '#core/kernel/result/result';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { EnvelopeOf } from '../events/event-envelope';
@@ -47,25 +47,35 @@ export abstract class ReactionFromDef<
     trace: Trace,
   ): Promise<Result<void, DomainError>>;
 
+  /**
+   * Реакция на событие и запись в лог операций (вход — событие без
+   * вызывающего конверта: «кто» — в записи породившей операции).
+   */
   handle(event: ReactionEnvelopeOf<D>): Promise<Result<void, DomainError>> {
     const { app } = this.resolve;
-    return runLogged(app, this.def.name, async () => {
-      const caller = new SystemCaller(this.ref);
-      const trace: Trace = {
-        cause: { kind: 'event', eventId: event.eventId },
-        correlationId: event.correlationId,
-      };
-      const uow = contractUnitOfWork(app, {
-        source: this.def.name,
-        caller,
-        trace,
-        emits: this.def.emits,
-        touches: this.def.touches,
-      });
-      const res = await this.react(event, uow, caller, trace);
-      if (!res.ok) return res;
-      return uow.commit();
-    });
+    const caller = new SystemCaller(this.ref);
+    const trace: Trace = {
+      cause: { kind: 'event', eventId: event.eventId },
+      correlationId: event.correlationId,
+    };
+    const { caller: _origin, ...input } = event;
+    return this.journal({ input, caller, trace }, (run) =>
+      runLogged(app, this.def.name, async () => {
+        const uow = run.track(
+          contractUnitOfWork(app, {
+            source: this.def.name,
+            caller,
+            trace,
+            emits: this.def.emits,
+            touches: this.def.touches,
+          }),
+        );
+        const res = await this.react(event, uow, caller, trace);
+        if (!res.ok) return res;
+        const committed = await uow.commit();
+        return committed.ok ? ok() : committed;
+      }),
+    );
   }
 
   /** Подписка на все события `on`; возвращает отписку. */

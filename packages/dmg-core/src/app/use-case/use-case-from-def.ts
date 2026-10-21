@@ -20,6 +20,7 @@ import { serializeError } from '#core/kernel/errors/serialize-error';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { ModuleDeps } from '../context';
 import { OperationFromDef } from '../operation/operation-from-def';
+import type { OperationRun } from '../oplog/operation-run';
 import type { Trace } from '../trace';
 import { contractUnitOfWork } from '../uow/contract-unit-of-work';
 import type { UnitOfWork } from '../uow/unit-of-work';
@@ -161,24 +162,27 @@ export abstract class UseCaseFromDef<
 
   /**
    * Шаги: `checkCaller` → `parseInput` → `load` → `checkPolicy` →
-   * `checkRules` → `execute` → `parseOutput` → фиксация (с публикацией).
-   * Непредвиденное исключение — `SERVER_INTERNAL` с записью в лог.
+   * `checkRules` → `execute` → `parseOutput` → фиксация (с публикацией) →
+   * запись в лог операций (любой исход). Непредвиденное исключение —
+   * `SERVER_INTERNAL` с записью в лог.
    */
-  async handle(
+  handle(
     input: unknown,
     caller: Caller<U>,
     trace: Trace,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    try {
-      return await this.run(input, caller, trace);
-    } catch (error) {
-      this.resolve.app.logger.error(
-        this.def.name,
-        'Непредвиденный сбой UC',
-        serializeError(error),
-      );
-      return CoreErrors.SERVER_INTERNAL.err();
-    }
+    return this.journal({ input, caller, trace }, async (run) => {
+      try {
+        return await this.run(input, caller, trace, run);
+      } catch (error) {
+        this.resolve.app.logger.error(
+          this.def.name,
+          'Непредвиденный сбой UC',
+          serializeError(error),
+        );
+        return CoreErrors.SERVER_INTERNAL.err();
+      }
+    });
   }
 
   /** Вид вызывающего — из `callers` Def; иначе `UNAUTHORIZED`. */
@@ -249,6 +253,7 @@ export abstract class UseCaseFromDef<
     input: unknown,
     caller: Caller<U>,
     trace: Trace,
+    run: OperationRun,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
     const allowed = this.checkCaller(caller);
     if (!allowed.ok) return allowed;
@@ -260,12 +265,14 @@ export abstract class UseCaseFromDef<
     if (!permitted.ok) return permitted;
     const checked = this.checkRules(loaded.value);
     if (!checked.ok) return checked;
-    const uow = contractUnitOfWork(this.resolve.app, {
-      source: this.def.name,
-      caller,
-      trace,
-      emits: this.def.emits ?? [],
-    });
+    const uow = run.track(
+      contractUnitOfWork(this.resolve.app, {
+        source: this.def.name,
+        caller,
+        trace,
+        emits: this.def.emits ?? [],
+      }),
+    );
     const res = await this.execute(
       parsed.value,
       loaded.value,

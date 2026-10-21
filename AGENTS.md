@@ -63,7 +63,7 @@
 
 **Где данные.** Данные БД — JSON-файлы в `data/` (каталог задаётся переменной `DB_DIR`, по умолчанию `./data`).
 
-- **НЕ защищены git (живые данные, git их не хранит):** `data/users/`, `data/streams/`, `data/jobs/`, `data/wish/`, `data/questionnaires/`, `data/backup/`, `data/backup-adhoc/`. Удаление или перезапись = безвозвратная потеря.
+- **НЕ защищены git (живые данные, git их не хранит):** `data/users/`, `data/streams/`, `data/jobs/`, `data/wish/`, `data/questionnaires/`, `data/backup/`, `data/backup-adhoc/`, `data/oplog/` (лог операций DMG, JSONL по дням; в бэкап не входит, D-43). Удаление или перезапись = безвозвратная потеря.
 - **Защищены git (контент):** `data/courses/*.json`, `data/sources/`, `data/fullstack-js/` — с ними обычный gitflow, но не затирать незакоммиченные правки.
 - Если не уверен, отслеживается ли файл — проверь `git ls-files <путь>`; при сомнениях считай файл незащищённым.
 

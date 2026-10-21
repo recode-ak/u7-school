@@ -142,3 +142,55 @@ describe('JobFromDef.handle', () => {
     expect(ctx.logs).toHaveLength(1);
   });
 });
+
+describe('JobFromDef — лог операций (D-43, Р6)', () => {
+  test('прогон — одна запись: отчёт и события всех записей', async () => {
+    const report = expectOk(await job.handle(run));
+    expect(ctx.oplog.records).toEqual([
+      {
+        at: T0,
+        module: 'todo',
+        op: 'archiveDoneTasks',
+        kind: 'job',
+        caller: { kind: 'system', from: job.ref },
+        trace: run,
+        input: null,
+        result: { ok: true, output: report },
+        events: ctx.published.map(({ name, eventId }) => ({ name, eventId })),
+        durationMs: expect.any(Number),
+      },
+    ]);
+    expect(ctx.oplog.records[0]?.events).toHaveLength(2);
+  });
+
+  test('сбой записи — в отчёте, события остальных — в записи', async () => {
+    const archive = job.step;
+    job.step = async (task, uow) => {
+      if (task.uuid === TASK) throw new Error('диск недоступен');
+      return archive(task, uow);
+    };
+    await job.handle(run);
+    const [rec] = ctx.oplog.records;
+    expect(rec?.result).toEqual({
+      ok: true,
+      output: { processed: 1, failed: 1 },
+    });
+    expect(rec?.events).toHaveLength(1);
+  });
+
+  test('сбой загрузки — запись SERVER_INTERNAL', async () => {
+    tasks.findDone = async () => {
+      throw new Error('диск недоступен');
+    };
+    await job.handle(run);
+    expect(ctx.oplog.records).toEqual([
+      expect.objectContaining({
+        result: expect.objectContaining({
+          ok: false,
+          error: expect.objectContaining({ code: 'SERVER_INTERNAL' }),
+        }),
+        events: [],
+      }),
+    ]);
+  });
+});

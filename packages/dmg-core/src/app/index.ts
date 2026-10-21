@@ -10,7 +10,11 @@ export {
   systemClock,
 } from './context';
 export type { EventBus } from './events/event-bus';
-export type { EnvelopeOf, EventEnvelope } from './events/event-envelope';
+export type {
+  EnvelopeOf,
+  EventEnvelope,
+  PublishedEvent,
+} from './events/event-envelope';
 export { asReadonlyAr, type Restorable } from './facade/as-readonly-ar';
 export { type FacadeModule, ModuleFacade } from './facade/module-facade';
 export { ModuleFacades, type RoutableFacade } from './facade/module-facades';
@@ -29,6 +33,13 @@ export {
   type CallsOf,
   OperationFromDef,
 } from './operation/operation-from-def';
+export {
+  DEFAULT_OPLOG_MAX_BYTES,
+  JsonlOperationLog,
+  type TruncatedValue,
+} from './oplog/jsonl-operation-log';
+export type { OperationLog, OperationRecord } from './oplog/operation-record';
+export { type OperationCall, OperationRun } from './oplog/operation-run';
 export {
   type ReactionEnvelopeOf,
   ReactionFromDef,

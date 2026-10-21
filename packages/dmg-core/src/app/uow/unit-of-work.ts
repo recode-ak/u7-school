@@ -9,7 +9,7 @@ import type { ErrorOf } from '#core/kernel/errors/define-errors';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Clock } from '../context';
 import type { EventBus } from '../events/event-bus';
-import type { EventEnvelope } from '../events/event-envelope';
+import type { EventEnvelope, PublishedEvent } from '../events/event-envelope';
 import type { Trace } from '../trace';
 import { type Repository, VersionConflict } from './repository';
 
@@ -45,6 +45,7 @@ type Entry = { readonly ar: Committable; readonly save: () => Promise<void> };
  */
 export class UnitOfWork {
   private readonly entries: Entry[] = [];
+  private readonly sent: PublishedEvent[] = [];
 
   constructor(private readonly ctx: UnitOfWorkContext) {}
 
@@ -62,8 +63,11 @@ export class UnitOfWork {
    * (`VersionConflict` → `VERSION_CONFLICT`, иное исключение — пробрасывается):
    * записанные до него остаются (отката нет, D-15) и их события уходят,
    * события N-го и следующих — нет.
+   *
+   * `Ok` — опубликованные события (для лога операций). При отказе или
+   * исключении опубликованное до сбоя видно в `published`.
    */
-  async commit(): Promise<Result<void, CommitError>> {
+  async commit(): Promise<Result<readonly PublishedEvent[], CommitError>> {
     const batches = this.entries.map(({ ar }) =>
       ar.pullEvents().map((event) => this.envelope(event, ar.uuid)),
     );
@@ -84,9 +88,15 @@ export class UnitOfWork {
     } finally {
       for (const envelope of batches.slice(0, written).flat()) {
         this.ctx.bus.publish(envelope);
+        this.sent.push({ name: envelope.name, eventId: envelope.eventId });
       }
     }
-    return ok();
+    return ok(this.published);
+  }
+
+  /** События, опубликованные этой UoW (в том числе до сбоя фиксации). */
+  get published(): readonly PublishedEvent[] {
+    return [...this.sent];
   }
 
   private envelope(event: DomainEvent, aggregateId: string): EventEnvelope {

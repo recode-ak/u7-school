@@ -86,6 +86,17 @@ describe('UnitOfWork.commit', () => {
     ]);
   });
 
+  test('commit возвращает опубликованные события: имя и eventId', async () => {
+    uow.register(task(A), slowRepo(log));
+    uow.register(task(B), slowRepo(log));
+    const events = expectOk(await uow.commit());
+    expect(events).toEqual(
+      published.map(({ name, eventId }) => ({ name, eventId })),
+    );
+    expect(events).toHaveLength(2);
+    expect(uow.published).toEqual(events);
+  });
+
   test('повторная регистрация агрегата — одно сохранение', async () => {
     const a = task(A);
     uow.register(a, slowRepo(log));
@@ -169,6 +180,22 @@ describe('UnitOfWork.commit', () => {
     const res = await uow.commit();
     expectErr(res, 'VERSION_CONFLICT');
     expect(published.map((e) => e.aggregateId)).toEqual([A]);
+  });
+
+  test('конфликт на N-м агрегате — опубликованное до него видно в published', async () => {
+    const conflicting: Repository<TaskAr> = {
+      aggregate: TaskArDef,
+      async save(ar) {
+        throw new VersionConflict(TaskArDef, ar.uuid);
+      },
+    };
+    uow.register(task(A), slowRepo(log));
+    uow.register(task(B), conflicting);
+    expectErr(await uow.commit(), 'VERSION_CONFLICT');
+    expect(uow.published).toEqual(
+      published.map(({ name, eventId }) => ({ name, eventId })),
+    );
+    expect(uow.published).toHaveLength(1);
   });
 
   test('сбой сохранения N-го агрегата — события записанных публикуются, исключение', async () => {

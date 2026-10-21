@@ -25,3 +25,12 @@ export type EventEnvelope<E extends DomainEvent = DomainEvent> = E & {
 
 /** Конверт события по его Def. */
 export type EnvelopeOf<D extends AnyEventDef> = EventEnvelope<EventOf<D>>;
+
+/**
+ * Опубликованное событие в отчёте фиксации (`uow.commit()`) и в записи лога
+ * операций: имя и id конверта — полное событие ищется по `eventId`.
+ */
+export type PublishedEvent = {
+  readonly name: string;
+  readonly eventId: string;
+};

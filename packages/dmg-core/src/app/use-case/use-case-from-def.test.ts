@@ -600,3 +600,131 @@ describe('UseCaseFromDef — доменные правила', () => {
     expectTypeOf<Full>().not.toBeNever();
   });
 });
+
+describe('UseCaseFromDef — лог операций (D-43, Р6)', () => {
+  test('успех: запись с вызывающим, следом, входом, выходом и событиями', async () => {
+    ctx.setNow(T1);
+    expectOk(await uc.handle({ taskId: TASK }, user(OWNER), REQ));
+    expect(ctx.oplog.records).toEqual([
+      {
+        at: T1,
+        module: 'todo',
+        op: 'completeTask',
+        kind: 'useCase',
+        caller: { kind: 'user', subjectId: OWNER },
+        trace: REQ,
+        input: { taskId: TASK },
+        result: { ok: true, output: {} },
+        events: ctx.published.map(({ name, eventId }) => ({ name, eventId })),
+        durationMs: expect.any(Number),
+      },
+    ]);
+    expect(ctx.oplog.records[0]?.events).toHaveLength(1);
+    expect(ctx.oplog.records[0]?.durationMs).toBeGreaterThanOrEqual(0);
+  });
+
+  test('UNAUTHORIZED — запись отказа без событий', async () => {
+    const res = await uc.handle({ taskId: TASK }, new GuestCaller(), REQ);
+    const error = expectErr(res, 'UNAUTHORIZED');
+    expect(ctx.oplog.records).toEqual([
+      expect.objectContaining({
+        caller: { kind: 'guest' },
+        input: { taskId: TASK },
+        result: { ok: false, error },
+        events: [],
+      }),
+    ]);
+  });
+
+  test('INPUT_VALIDATION — вход в записи как пришёл', async () => {
+    await uc.handle({ taskId: 'x' }, user(OWNER), REQ);
+    const [rec] = ctx.oplog.records;
+    expect(rec?.input).toEqual({ taskId: 'x' });
+    expect(rec?.result).toMatchObject({
+      ok: false,
+      error: { code: 'INPUT_VALIDATION' },
+    });
+  });
+
+  test('ACCESS_DENIED — запись отказа', async () => {
+    await uc.handle({ taskId: TASK }, user('чужой'), REQ);
+    expect(ctx.oplog.records[0]?.result).toMatchObject({
+      ok: false,
+      error: { code: 'ACCESS_DENIED' },
+    });
+  });
+
+  test('VERSION_CONFLICT — запись отказа без событий', async () => {
+    uc.mutate = (task) => {
+      const row = tasks.rows.get(TASK);
+      if (row) tasks.rows.set(TASK, { ...row, version: row.version + 1 });
+      return task.complete(T0);
+    };
+    await uc.handle({ taskId: TASK }, user(OWNER), REQ);
+    expect(ctx.oplog.records).toEqual([
+      expect.objectContaining({
+        result: expect.objectContaining({
+          ok: false,
+          error: expect.objectContaining({ code: 'VERSION_CONFLICT' }),
+        }),
+        events: [],
+      }),
+    ]);
+  });
+
+  test('исключение — запись SERVER_INTERNAL (детали — в логгере)', async () => {
+    tasks.failOnFind = true;
+    await uc.handle({ taskId: TASK }, user(OWNER), REQ);
+    expect(ctx.oplog.records[0]?.result).toMatchObject({
+      ok: false,
+      error: { code: 'SERVER_INTERNAL' },
+    });
+  });
+
+  test('вызывающий system — с операцией и человеком в записи', async () => {
+    const SweepUcDef = defineUseCase({
+      ...CompleteTaskUcDef,
+      callers: ['system'],
+      policy: allowAll,
+    });
+    class Sweep extends UseCaseFromDef<typeof SweepUcDef, Deps, Loaded> {
+      constructor() {
+        super(
+          SweepUcDef,
+          { app: ctx.app, facades, tasks },
+          moduleOf(SweepUcDef),
+        );
+      }
+      protected load = (i: { taskId: string }) => loadTask(tasks, i);
+      protected execute = async () => ok({});
+    }
+    const caller = new SystemCaller<User>(JOB, user(OWNER));
+    await new Sweep().handle({ taskId: TASK }, caller, REQ);
+    expect(ctx.oplog.records[0]?.caller).toEqual({
+      kind: 'system',
+      from: JOB,
+      person: { kind: 'user', subjectId: OWNER },
+    });
+  });
+
+  test('сбой записи лога не ломает операцию — warn в логгер', async () => {
+    const broken = testAppContext({
+      at: T0,
+      oplog: {
+        append: async () => {
+          throw new Error('диск полон');
+        },
+      },
+    });
+    uc = new CompleteTask({ app: broken.app, facades, tasks });
+    expectOk(await uc.handle({ taskId: TASK }, user(OWNER), REQ));
+    expect(tasks.rows.get(TASK)?.status).toBe('done');
+    expect(broken.logs).toEqual([
+      {
+        level: 'warn',
+        source: 'completeTask',
+        message: 'Не удалось записать лог операции',
+      },
+    ]);
+  });
+});

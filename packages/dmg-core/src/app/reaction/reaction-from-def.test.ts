@@ -182,6 +182,50 @@ describe('ReactionFromDef.handle', () => {
   });
 });
 
+describe('ReactionFromDef — лог операций (D-43, Р6)', () => {
+  test('успех: вход — событие без вызывающего, события реакции', async () => {
+    expectOk(await er.handle(removed()));
+    const { caller: _, ...event } = removed();
+    expect(ctx.oplog.records).toEqual([
+      {
+        at: T0,
+        module: 'todo',
+        op: 'archiveRemovedUserTasks',
+        kind: 'eventReaction',
+        caller: { kind: 'system', from: er.ref },
+        trace: {
+          cause: { kind: 'event', eventId: 'e-removed' },
+          correlationId: 'c-1',
+        },
+        input: event,
+        result: { ok: true, output: null },
+        events: ctx.published.map(({ name, eventId }) => ({ name, eventId })),
+        durationMs: expect.any(Number),
+      },
+    ]);
+    expect(ctx.oplog.records[0]?.events).toHaveLength(2);
+  });
+
+  test('отказ — запись с ошибкой', async () => {
+    tasks.rows.set(TASK, taskRow(TASK, 'archived'));
+    const error = expectErr(await er.handle(removed()), 'TASK_ARCHIVED');
+    expect(ctx.oplog.records).toEqual([
+      expect.objectContaining({ result: { ok: false, error }, events: [] }),
+    ]);
+  });
+
+  test('исключение — запись SERVER_INTERNAL', async () => {
+    er.step = async () => {
+      throw new Error('диск недоступен');
+    };
+    await er.handle(removed());
+    expect(ctx.oplog.records[0]?.result).toMatchObject({
+      ok: false,
+      error: { code: 'SERVER_INTERNAL' },
+    });
+  });
+});
+
 describe('ReactionFromDef — production', () => {
   test('агрегат вне touches — warn, реакция проходит', async () => {
     const prod = testAppContext({ mode: 'production', at: T0 });

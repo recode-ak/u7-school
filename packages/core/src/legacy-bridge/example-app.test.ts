@@ -5,6 +5,7 @@ import path from 'node:path';
 import { SystemCaller, UserCaller } from 'dmg-core';
 import {
   asReadonlyAr,
+  JsonlOperationLog,
   ModuleFacade,
   ModuleFacades,
   type RequestMeta,
@@ -61,6 +62,8 @@ beforeEach(async () => {
       clock: legacyClock(),
       logger: memoryLogger(logs),
       mode: 'test',
+      // Как в приложении (`<DB_DIR>/oplog/`), но во временном каталоге.
+      oplog: new JsonlOperationLog(path.join(dir, 'oplog')),
     },
     facades: new ModuleFacades(),
     tasks: new TaskJsonRepo(path.join(dir, 'tasks.json')),

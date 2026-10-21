@@ -1,6 +1,7 @@
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { EventBus } from './events/event-bus';
 import type { ModuleFacades } from './facade/module-facades';
+import type { OperationLog } from './oplog/operation-record';
 
 /** Режим запуска приложения. */
 export type AppMode = 'test' | 'development' | 'production';
@@ -28,6 +29,8 @@ export type AppContext = {
   readonly clock: Clock;
   readonly logger: Logger;
   readonly mode: AppMode;
+  /** Лог операций UC/ER/Job (D-43, Р6); в приложении — JSONL по дням. */
+  readonly oplog: OperationLog;
 };
 
 /**

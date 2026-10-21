@@ -12,9 +12,13 @@ import {
   type OperationRef,
   SystemCaller,
 } from '#core/kernel/caller/caller';
+import type { DomainError } from '#core/kernel/errors/error';
+import { serializeError } from '#core/kernel/errors/serialize-error';
 import type { Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { ModuleDeps } from '../context';
+import type { OperationRecord } from '../oplog/operation-record';
+import { type OperationCall, OperationRun } from '../oplog/operation-run';
 import type { Trace } from '../trace';
 
 /** Def операции приложения: UC, ER или Job. */
@@ -41,7 +45,8 @@ const PLACE = {
  * Общая база UC, ER и Job по Def (D-43, Р5): ссылка на операцию (`ref` —
  * `from` её системных вызовов), часы приложения и типизированный вызов UC
  * другого модуля. Модуль-владелец передаёт себя при создании операции
- * (`ModuleFromDef`), база проверяет, что Def входит в модуль.
+ * (`ModuleFromDef`), база проверяет, что Def входит в модуль. Каждый вызов
+ * пишется в лог операций (`journal`, Р6).
  */
 export abstract class OperationFromDef<
   D extends AnyOperationDef,
@@ -89,5 +94,35 @@ export abstract class OperationFromDef<
       new SystemCaller(this.ref, caller.person()),
       trace,
     );
+  }
+
+  /**
+   * Вызов операции с записью в лог операций последним шагом — при успехе и
+   * при отказе (D-43, Р6). `body` не бросает: исключение наследник уже
+   * превратил в `SERVER_INTERNAL` (запись — с ним, детали — в логгере).
+   * UoW вызова регистрируются в `run.track` — их события попадают в запись.
+   * Сбой записи лога операцию не ломает: данные уже зафиксированы, отказ
+   * вызвал бы повтор и дубль — только `warn` в логгер.
+   */
+  protected async journal<T, E extends DomainError>(
+    call: OperationCall,
+    body: (run: OperationRun) => Promise<Result<T, E>>,
+  ): Promise<Result<T, E>> {
+    const run = new OperationRun(this.ref, this.now(), call);
+    const result = await body(run);
+    await this.append(run.record(result));
+    return result;
+  }
+
+  private async append(record: OperationRecord): Promise<void> {
+    try {
+      await this.resolve.app.oplog.append(record);
+    } catch (error) {
+      this.resolve.app.logger.warn(
+        this.def.name,
+        'Не удалось записать лог операции',
+        serializeError(error),
+      );
+    }
   }
 }
