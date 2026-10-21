@@ -386,3 +386,9 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 - Потребитель в `packages/wish` — шаг 5, его красный ожидаем.
 
 *Шаг 5 — api-author (Sonnet)* (`packages/wish/src/**`): `CreateCourseWishUc` — по новой форме `createForCourse`; тесты UC и smoke модуля — фасады через фейк шага 4, плюс тест «Def вызываемого UC убран из `calls` → `UNAUTHORIZED`» (через подмену `from`, без правки Def). Тестов не меньше.
+
+### Ф8 шаг 4 — domain-author (Opus)
+`fakeFacadeCall(def, answer)` в `dmg-core/testing`: та же сигнатура, что у метода фасада; `UNAUTHORIZED` без `module` в `callers` или вне `call.from.calls` (ответ не вызывается). `WishAr.createForCourse(…): Result<CourseWishCreated, never>` — размеченное объединение `{ wish, outcome: 'instant' } | { wish, outcome: 'questionnaire', questionnaire }`; транзиентное поле и `questionnaireToStart()` удалены. `QuestionnaireModuleFacade`: `pool`/`owner` — из `InputOf<StartQuestionnaireUcDef>`. Тест `todo.facade.test.ts` не переведён (проверяет настоящий фасад). Домен wish: 103 pass (−7 тестов удалённого метода, +1).
+
+### Ф8 шаг 5 — api-author (Sonnet)
+`CreateCourseWishUc.execute` — по `{ wish, outcome, questionnaire }`; тесты UC и smoke модуля — фасады через `fakeFacadeCall`; +2 теста «вызываемый UC убран из `calls` → `UNAUTHORIZED`, ничего не записано» (подмена `def` экземпляра). Отдельный red для нового теста не запускался (написан вместе с реализацией). `packages/wish`: 116 pass. `check`: 3494 pass / 0 fail.

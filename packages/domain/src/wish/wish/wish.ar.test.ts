@@ -98,72 +98,52 @@ describe('WishAr.create', () => {
 const POOLED = Object.keys(coursePools)[0] as string;
 
 describe('WishAr.createForCourse', () => {
-  it('у курса есть пул — pending, анкета к запуску: пул и { courseId }', () => {
-    const ar = expectOk(
+  it('у курса есть пул — pending, исход questionnaire, анкета: пул и { courseId }', () => {
+    const created = expectOk(
       WishAr.createForCourse(
         { uuid: WISH, userId: USER, courseId: POOLED },
         T1,
       ),
     );
-    expect(ar.snapshot()).toEqual({
+    expect(created.wish.snapshot()).toEqual({
       ...stored('pending'),
       target: { kind: 'course', courseId: POOLED },
       createdAt: T1,
       updatedAt: T1,
     });
-    const questionnaire = ar.questionnaireToStart();
-    expect(questionnaire?.pool).toBeDefined();
-    expect(questionnaire?.pool).toBe(findCoursePool(POOLED));
-    expect(questionnaire?.owner).toEqual({ courseId: POOLED });
-    expect(ar.pullEvents()).toEqual([]);
+    expect(created.outcome).toBe('questionnaire');
+    expect(created.questionnaire?.pool).toBeDefined();
+    expect(created.questionnaire?.pool).toBe(findCoursePool(POOLED));
+    expect(created.questionnaire?.owner).toEqual({ courseId: POOLED });
+    expect(created.wish.pullEvents()).toEqual([]);
   });
 
-  it('у курса нет пула — expressed, анкета не нужна', () => {
-    const ar = expectOk(
+  it('у курса нет пула — expressed, исход instant, анкеты нет', () => {
+    const created = expectOk(
       WishAr.createForCourse(
         { uuid: WISH, userId: USER, courseId: target.courseId },
         T1,
       ),
     );
-    expect(ar.snapshot()).toEqual({
+    expect(created.wish.snapshot()).toEqual({
       ...stored('expressed'),
       createdAt: T1,
       updatedAt: T1,
     });
-    expect(ar.questionnaireToStart()).toBeUndefined();
-    expect(ar.pullEvents()).toEqual([]);
-  });
-});
-
-describe('WishAr.questionnaireToStart', () => {
-  it.each([
-    'expressed',
-    'pending',
-    'confirmed',
-    'cancelled',
-    'abandoned',
-    'fulfilled',
-  ] as const)('восстановленное %s — запускать нечего', (status) => {
-    const ar = WishAr.restore({
-      ...stored(status),
-      target: { kind: 'course', courseId: POOLED },
-    });
-    expect(ar.questionnaireToStart()).toBeUndefined();
+    expect(created.outcome).toBe('instant');
+    expect(created.questionnaire).toBeUndefined();
+    expect(created.wish.pullEvents()).toEqual([]);
   });
 
-  it('create (legacy-вход со статусом) — запускать нечего', () => {
-    const ar = expectOk(
-      WishAr.create(
-        {
-          uuid: WISH,
-          userId: USER,
-          target: { kind: 'course', courseId: POOLED },
-          status: 'pending',
-        },
+  it('анкета — не свойство Ar: после restore снимка её нет', () => {
+    const { wish } = expectOk(
+      WishAr.createForCourse(
+        { uuid: WISH, userId: USER, courseId: POOLED },
         T1,
       ),
     );
-    expect(ar.questionnaireToStart()).toBeUndefined();
+    expect('questionnaireToStart' in wish).toBe(false);
+    expect(WishAr.restore(wish.snapshot()).snapshot()).toEqual(wish.snapshot());
   });
 });
 

@@ -81,17 +81,17 @@ export class CreateCourseWishUc extends UseCaseFromDef<
       this.now(),
     );
     if (!created.ok) return created;
-    const wish = created.value;
+    const { wish, outcome, questionnaire } = created.value;
     uow.register(wish, this.resolve.wishes);
 
-    const questionnaire = wish.questionnaireToStart();
-    if (questionnaire === undefined) return ok({ outcome: 'instant' as const });
-    const started = await this.resolve.questionnaire.startQuestionnaire(
-      this.callContext(caller, trace),
-      questionnaire.pool,
-      questionnaire.owner,
-    );
-    if (!started.ok) return started;
-    return ok({ outcome: 'questionnaire' as const });
+    if (questionnaire) {
+      const started = await this.resolve.questionnaire.startQuestionnaire(
+        this.callContext(caller, trace),
+        questionnaire.pool,
+        questionnaire.owner,
+      );
+      if (!started.ok) return started;
+    }
+    return ok({ outcome });
   }
 }

@@ -18,3 +18,4 @@ export {
 } from './app-context';
 export { ExampleArch } from './example/example.arch';
 export { expectErr, expectOk } from './expect-result';
+export { fakeFacadeCall } from './fake-facade-call';

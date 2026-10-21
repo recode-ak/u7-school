@@ -18,7 +18,7 @@
 ## 3. Эталон
 
 - [create-course-wish.uc.ts (Def)](../../../packages/domain/src/wish/wish/uc/create-course-wish.uc.ts): `rules: [courseEnrollable, unique]` — порядок правил = порядок отказов; `calls` на UC внешних `course`/`questionnaire`; вход — из state (`WishCourseTargetVo`, D-39); `emits` нет — события создания нет.
-- [create-course-wish.uc.ts (реализация)](../../../packages/wish/src/wish/uc/create-course-wish.uc.ts): `load` собирает контекст Policy и правил (`enrollment` из фасада, желания из репозитория), `execute` — `WishAr.createForCourse` → `uow.register` → `questionnaireToStart()` → запуск анкеты до фиксации (D-41, вариант 1).
+- [create-course-wish.uc.ts (реализация)](../../../packages/wish/src/wish/uc/create-course-wish.uc.ts): `load` собирает контекст Policy и правил (`enrollment` из фасада, желания из репозитория), `execute` — `WishAr.createForCourse` (результат `{ wish, outcome, questionnaire? }`) → `uow.register(wish)` → запуск анкеты, если она есть, до фиксации (D-41, вариант 1) → `outcome` из домена.
 - [wish.rules.ts](../../../packages/domain/src/wish/wish/wish.rules.ts): правило над ответом чужого модуля (`courseEnrollable`) и над агрегатами (`unique`).
 - [wish.module.ts (карта)](../../../packages/wish/src/wish.module.ts): `WishDeps` — репозиторий и фасады зависимостей; субъект модуля.
 
@@ -28,7 +28,7 @@
 - API-02 — сохранение через `uow.register`, ручного `save`/`publish` нет.
 - API-05 — реализация наследует `UseCaseFromDef`, свойства Def не повторяются (MAN-09).
 - MAN-04 — публикуются только события из `emits`.
-- MAN-05 — каждый вызов фасада покрыт `calls`; вызываемый UC объявляет `module` в `callers`.
+- MAN-05 — каждый вызов фасада покрыт `calls`; вызываемый UC объявляет `module` в `callers`; в тесте фасады — через `fakeFacadeCall` (сверяет `calls`).
 - MAN-11 — `callers` объявлены; субъект — через `this.subject(caller)`, не через `kind`.
 - ERR-02 — ошибки каждого правила и проброшенные ошибки зависимостей — в `errors`.
 - DOM-16 — правило возвращает ошибку своей группы.
@@ -37,7 +37,8 @@
 
 - Решение «курс недоступен → ошибка» в `load` через `if` → доменное правило в `rules`, `load` только кладёт ответ в контекст.
 - Выбор статуса по пулу в UC → фабрика Ar (`createForCourse`) решает сама.
-- UC знает, что передать в чужой контракт (`{ courseId }`) → вход строит метод Ar (`questionnaireToStart`).
+- UC знает, что передать в чужой контракт (`{ courseId }`) или какой `outcome` вернуть → это строит домен в результате создания (`CourseWishCreated`).
+- Данные «что сделать после создания» в поле Ar вне state → скрытое состояние; верни их результатом фабрики (ревью Ф8, TR-12).
 - Тест собирает реальные адаптеры чужих пакетов → ARC-06; в тесте UC — фейки типов фасадов из домена, связку проверяют тесты фасадов владельца.
 - Существующие записи в тесте сохраняются через `restore` + `save` → `VersionConflict`; пиши файл фикстуры или создавай через `create` + UoW.
 

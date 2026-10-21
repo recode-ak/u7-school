@@ -3,12 +3,18 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Role, type User } from '@u7-scl/app/domain';
-import type { CourseModuleFacade } from '@u7-scl/domain/course/contract';
-import type { QuestionnaireModuleFacade } from '@u7-scl/domain/questionnaire/contract';
+import {
+  type CourseModuleFacade,
+  GetCourseEnrollmentUcDef,
+} from '@u7-scl/domain/course/contract';
+import {
+  type QuestionnaireModuleFacade,
+  StartQuestionnaireUcDef,
+} from '@u7-scl/domain/questionnaire/contract';
 import { CreateCourseWishUcDef } from '@u7-scl/domain/wish';
 import { ok } from 'dmg-core';
 import { requestTrace } from 'dmg-core/app';
-import { expectOk, testAppContext } from 'dmg-core/testing';
+import { expectOk, fakeFacadeCall, testAppContext } from 'dmg-core/testing';
 import { WishJsonRepo } from './infra/wish.json-repo';
 import { createWishModule } from './wish.module';
 
@@ -28,14 +34,15 @@ afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 // Фасады зависимостей — фейки типов D-42 (ARC-06); репозиторий настоящий.
 const course: CourseModuleFacade = {
-  getCourseEnrollment: async () =>
+  getCourseEnrollment: fakeFacadeCall(GetCourseEnrollmentUcDef, () =>
     ok({
       enrollable: true,
       startModuleId: '11111111-1111-4111-8111-111111111111',
     }),
+  ),
 };
 const questionnaire: QuestionnaireModuleFacade = {
-  startQuestionnaire: async () => ok({}),
+  startQuestionnaire: fakeFacadeCall(StartQuestionnaireUcDef, () => ok({})),
 };
 
 /** Модуль на настоящем репозитории во временном каталоге. */
