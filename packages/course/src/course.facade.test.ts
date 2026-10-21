@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import {
+  CourseModuleDef,
   type CourseModuleFacade,
   GetCourseEnrollmentUcDef,
 } from '@u7-scl/domain/course/contract';
@@ -8,9 +9,11 @@ import {
   BaseEntityFields,
   type Caller,
   defineAggregate,
+  defineModule,
   defineUseCase,
   F,
   ok,
+  UserCaller,
 } from 'dmg-core';
 import {
   type AppContext,
@@ -54,6 +57,17 @@ const ProbeUcDef = defineUseCase({
 /** Тот же UC, но `getCourseEnrollment` в `calls` не объявлен. */
 const SneakyUcDef = defineUseCase({ ...probeSpec, name: 'sneaky' });
 
+const ProbeModuleDef = defineModule({
+  name: 'probe',
+  label: 'Проба',
+  description: 'Модуль-потребитель фасада курсов.',
+  dependsOn: [CourseModuleDef],
+  aggregates: [ProbeArDef],
+  useCases: [ProbeUcDef, SneakyUcDef],
+  reactions: [],
+  jobs: [],
+});
+
 type ProbeDeps = {
   readonly app: AppContext;
   readonly course: CourseModuleFacade;
@@ -69,7 +83,7 @@ class ProbeUc extends UseCaseFromDef<
     input: { courseId: string },
     _: undefined,
     __: unknown,
-    caller: Caller<unknown>,
+    caller: Caller,
     trace: Trace,
   ) {
     const call = this.callContext(caller, trace);
@@ -80,7 +94,7 @@ class ProbeUc extends UseCaseFromDef<
 const COURSE = '0b6c2f4e-3d1a-4c5b-9e8f-7a6b5c4d3e2f';
 const START = '1c7d3a5f-4e2b-4d6c-8f9a-8b7c6d5e4f3a';
 const REQ = requestTrace({ requestId: 'r-1' });
-const USER: Caller<unknown> = { kind: 'user', user: { uuid: 'u-1' } };
+const USER = new UserCaller({ uuid: 'u-1' });
 
 /** Legacy-фасад курсов с заданными ответами; запоминает спрошенные курсы. */
 function legacy(enrollable: boolean, startModuleId?: string) {
@@ -110,7 +124,7 @@ function probe(
   const course = courseModuleFacade(
     createCourseModule({ app, legacy: courseLegacy }),
   );
-  return new ProbeUc(def, { app, course });
+  return new ProbeUc(def, { app, course }, ProbeModuleDef);
 }
 
 describe('фасад курсов (D-42, адаптер TR-11)', () => {
@@ -153,7 +167,7 @@ describe('фасад курсов (D-42, адаптер TR-11)', () => {
       REQ,
     );
     expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
-      callerKind: 'module',
+      callerKind: 'system',
       from: 'sneaky',
     });
     expect(asked).toEqual([]);

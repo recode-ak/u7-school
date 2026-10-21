@@ -6,7 +6,7 @@ import type {
   OutputOf,
   UseCaseErrorOf,
 } from '#core/domain/contracts/define-use-case';
-import type { Caller } from '#core/kernel/caller/caller';
+import type { Caller, Identified } from '#core/kernel/caller/caller';
 import type { Result } from '#core/kernel/result/result';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
@@ -21,7 +21,7 @@ type Ctor<R, T> = new (deps: R) => T;
  * Реализация UC для проверки карты: `handle` — свойство, параметры строго
  * контравариантны, и UC, которому нужен субъект богаче `U`, не пройдёт.
  */
-type StrictHandler<D extends AnyUseCaseDef, U> = {
+type StrictHandler<D extends AnyUseCaseDef, U extends Identified> = {
   readonly def: D;
   readonly handle: (
     input: unknown,
@@ -36,7 +36,11 @@ type StrictHandler<D extends AnyUseCaseDef, U> = {
  * чужого Def — ошибка компиляции. `U` — субъект вызывающего, который даёт
  * приложение: UC, которому нужен субъект богаче, в карту не пройдёт.
  */
-export type ModuleMap<M extends AnyModuleDef, R extends ModuleDeps, U> = {
+export type ModuleMap<
+  M extends AnyModuleDef,
+  R extends ModuleDeps,
+  U extends Identified,
+> = {
   readonly useCases: {
     readonly [C in M['useCases'][number] as C['name']]: Ctor<
       R,
@@ -55,7 +59,7 @@ export type ModuleMap<M extends AnyModuleDef, R extends ModuleDeps, U> = {
 };
 
 /** Та же карта без привязки к конкретному модулю — для обхода в рантайме. */
-type RuntimeMap<R, U> = {
+type RuntimeMap<R, U extends Identified> = {
   readonly useCases: Readonly<
     Record<string, Ctor<R, UseCaseHandler<AnyUseCaseDef, U>>>
   >;
@@ -68,14 +72,22 @@ type RuntimeMap<R, U> = {
 };
 
 /** Любой модуль DMG — для списка модулей приложения. */
-export type AnyModuleFromDef<U> = ModuleFromDef<AnyModuleDef, ModuleDeps, U>;
+export type AnyModuleFromDef<U extends Identified> = ModuleFromDef<
+  AnyModuleDef,
+  ModuleDeps,
+  U
+>;
 
 /**
  * Модуль DMG в рантайме: экземпляры реализаций по карте, подписка реакций,
  * задания для планировщика. Фасад для других модулей собирает приложение
  * поверх модуля (`callUseCase`, D-42) — в карте его нет.
  */
-export class ModuleFromDef<M extends AnyModuleDef, R extends ModuleDeps, U> {
+export class ModuleFromDef<
+  M extends AnyModuleDef,
+  R extends ModuleDeps,
+  U extends Identified,
+> {
   private readonly useCases = new Map<
     AnyUseCaseDef,
     UseCaseHandler<AnyUseCaseDef, U>
@@ -121,7 +133,7 @@ export class ModuleFromDef<M extends AnyModuleDef, R extends ModuleDeps, U> {
 }
 
 /** Def — ключ карты, поэтому совпадение объекта гарантирует тип `D`. */
-function implementsDef<D extends AnyUseCaseDef, U>(
+function implementsDef<D extends AnyUseCaseDef, U extends Identified>(
   uc: UseCaseHandler<AnyUseCaseDef, U>,
   def: D,
 ): uc is UseCaseHandler<D, U> {

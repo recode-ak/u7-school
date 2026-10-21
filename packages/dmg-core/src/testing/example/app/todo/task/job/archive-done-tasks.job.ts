@@ -9,6 +9,7 @@ import type { TodoDeps } from '#core/testing/example/app/todo/todo.module';
 import {
   ArchiveDoneTasksJobDef,
   type TaskAr,
+  TodoModuleDef,
 } from '#core/testing/example/todo/index';
 
 export class ArchiveDoneTasksJob extends JobFromDef<
@@ -16,7 +17,7 @@ export class ArchiveDoneTasksJob extends JobFromDef<
   TodoDeps
 > {
   constructor(deps: TodoDeps) {
-    super(ArchiveDoneTasksJobDef, deps);
+    super(ArchiveDoneTasksJobDef, deps, TodoModuleDef);
   }
 
   protected async run(job: JobRun): Promise<JobReport> {

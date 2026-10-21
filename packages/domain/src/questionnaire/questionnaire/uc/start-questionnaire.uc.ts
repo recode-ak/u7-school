@@ -19,7 +19,7 @@ export const StartQuestionnaireUcDef = defineUseCase({
     'Создаёт обычную анкету по пулу вопросов за вызывающего и показывает первый вопрос.',
   type: 'command',
   aggregate: QuestionnaireArDef,
-  callers: ['module'],
+  callers: ['system'],
   policy: allowAll,
   input: v.object({
     pool: v.pipe(

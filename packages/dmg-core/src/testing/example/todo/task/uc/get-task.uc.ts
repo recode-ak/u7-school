@@ -16,7 +16,7 @@ export const GetTaskUcDef = defineUseCase({
     'Задача по идентификатору — для других модулей; видна только владельцу.',
   type: 'query',
   aggregate: TaskArDef,
-  callers: ['module'],
+  callers: ['system'],
   policy: TaskPolicy.rules.canManage,
   input: v.object({ taskId: TaskState.entries.uuid }),
   output: TaskState,

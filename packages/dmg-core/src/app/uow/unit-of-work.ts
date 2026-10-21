@@ -26,7 +26,7 @@ export type CommitError = ErrorOf<typeof CoreErrors.VERSION_CONFLICT>;
 export type UnitOfWorkContext = {
   readonly bus: EventBus;
   readonly clock: Clock;
-  readonly caller: Caller<unknown>;
+  readonly caller: Caller;
   readonly trace: Trace;
   /** Заявленные события операции; без поля проверка не выполняется. */
   readonly emits?: readonly AnyEventDef[];

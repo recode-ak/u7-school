@@ -18,7 +18,13 @@ import {
   type WishState,
   type WishStatus,
 } from '@u7-scl/domain/wish';
-import { type CallContext, type Caller, CoreErrors, ok } from 'dmg-core';
+import {
+  type CallContext,
+  CoreErrors,
+  GuestCaller,
+  ok,
+  UserCaller,
+} from 'dmg-core';
 import { requestTrace } from 'dmg-core/app';
 import {
   expectErr,
@@ -47,12 +53,12 @@ const ACTOR: User = {
   roles: [Role.STUDENT],
   createdAt: '2026-01-01T00:00',
 };
-const asActor: Caller<User> = { kind: 'user', user: ACTOR };
+const asActor = new UserCaller<User>(ACTOR);
 
 const plainCourseId = crypto.randomUUID();
 const pooledCourseId = Object.keys(coursePools)[0]!;
 
-/** Что фасад получил: от чьего имени и с какими аргументами. */
+/** Что фасад получил: от какой операции, от чьего имени и с какими аргументами. */
 type Called = { readonly from: string; readonly caller: unknown };
 
 let dir: string;
@@ -80,8 +86,8 @@ beforeEach(() => {
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 const called = (call: CallContext): Called => ({
-  from: call.from.name,
-  caller: call.caller,
+  from: call.caller.from.name,
+  caller: call.caller.person(),
 });
 
 const course: CourseModuleFacade = {
@@ -328,7 +334,7 @@ describe('CreateCourseWishUc', () => {
   it('вызывающий guest — UNAUTHORIZED, ничего не записано', async () => {
     const res = await makeUc().handle(
       { courseId: plainCourseId },
-      { kind: 'guest' },
+      new GuestCaller(),
       REQ,
     );
 

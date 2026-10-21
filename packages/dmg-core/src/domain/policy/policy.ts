@@ -1,4 +1,4 @@
-import { type Caller, originOf, subjectOf } from '#core/kernel/caller/caller';
+import type { Caller, Identified } from '#core/kernel/caller/caller';
 
 /** Решение политики: разрешено или отказ с именем правила и текстом. */
 export type Decision =
@@ -33,7 +33,7 @@ export type Rule<U, C> = RuleNode & {
   readonly dmg: 'rule';
   // Свойство, а не метод: параметры строго контравариантны (метод бивариантен
   // и пропустил бы правило с чужим субъектом или контекстом).
-  readonly evaluate: (caller: Caller<U>, ctx: C) => Decision;
+  readonly evaluate: (caller: Caller<U & Identified>, ctx: C) => Decision;
 };
 
 /** Любое правило — для композиции и ссылок `policy` в Def. */
@@ -46,9 +46,10 @@ export type RuleSpec<U, C> = Named & {
 };
 
 /**
- * Именованное правило. Проверяет субъекта (`subjectOf`): без субъекта
- * (guest, system) — отказ; `delegable: false` отказывает `delegate`, в том
- * числе пришедшему через фасад (`module` с таким `origin`).
+ * Именованное правило. Проверяет субъекта (`caller.subject()`): без
+ * субъекта (guest, system без человека) — отказ; `delegable: false`
+ * отказывает, если исходный человек (`caller.person()`) — `delegate`, в том
+ * числе пришедший через фасад (`SystemCaller` с таким человеком).
  */
 export function rule<U, C = unknown>(spec: RuleSpec<U, C>): Rule<U, C> {
   const delegable = spec.delegable ?? true;
@@ -60,12 +61,12 @@ export function rule<U, C = unknown>(spec: RuleSpec<U, C>): Rule<U, C> {
     denyMessage: spec.denyMessage,
     delegable,
     evaluate(caller, ctx) {
-      // Через фасад (`module`) действует исходный вызывающий: делегирование
-      // проверяется по нему (D-42).
-      if (originOf(caller).kind === 'delegate' && !delegable) {
+      // Через фасад (`SystemCaller`) действует исходный человек:
+      // делегирование проверяется по нему (до Р2, D-43).
+      if (caller.person()?.kind === 'delegate' && !delegable) {
         return denied(spec.name, `Недоступно по делегированию: ${spec.label}.`);
       }
-      const subject = subjectOf(caller);
+      const subject = caller.subject();
       if (subject === undefined || !spec.check(subject, ctx)) {
         return denied(spec.name, spec.denyMessage);
       }

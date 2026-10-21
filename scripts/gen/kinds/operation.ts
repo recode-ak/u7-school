@@ -99,12 +99,26 @@ describe('${c.defName}', () => {
 `;
 }
 
+/**
+ * Импорт Def операции и паспорта модуля (база берёт из него `ref`, D-43):
+ * имена по алфавиту, длинная строка — в столбик, как у biome.
+ */
+function domainImport(c: Ctx): string {
+  const names = [c.defName, `${toPascal(c.m)}ModuleDef`].sort();
+  const from = `'@u7-scl/domain/${c.m}'`;
+  const line = `import { ${names.join(', ')} } from ${from};`;
+  return line.length <= 80
+    ? line
+    : `import {\n${names.map((n) => `  ${n},`).join('\n')}\n} from ${from};`;
+}
+
 function implementation(c: Ctx): string {
-  const domain = `@u7-scl/domain/${c.m}`;
+  const imports = domainImport(c);
+  const moduleDef = `${toPascal(c.m)}ModuleDef`;
   const deps = `import type { ${c.deps} } from '../../${c.m}.module';`;
   switch (c.kind) {
     case 'uc':
-      return `import { ${c.defName} } from '${domain}';
+      return `${imports}
 import { ok } from 'dmg-core';
 import { UseCaseFromDef } from 'dmg-core/app';
 ${deps}
@@ -115,7 +129,7 @@ export class ${c.className} extends UseCaseFromDef<
   undefined
 > {
   constructor(deps: ${c.deps}) {
-    super(${c.defName}, deps);
+    super(${c.defName}, deps, ${moduleDef});
   }
 
   protected async load() {
@@ -129,7 +143,7 @@ export class ${c.className} extends UseCaseFromDef<
 }
 `;
     case 'er':
-      return `import { ${c.defName} } from '${domain}';
+      return `${imports}
 import { ok } from 'dmg-core';
 import { ReactionFromDef } from 'dmg-core/app';
 ${deps}
@@ -139,7 +153,7 @@ export class ${c.className} extends ReactionFromDef<
   ${c.deps}
 > {
   constructor(deps: ${c.deps}) {
-    super(${c.defName}, deps);
+    super(${c.defName}, deps, ${moduleDef});
   }
 
   protected async react() {
@@ -149,7 +163,7 @@ export class ${c.className} extends ReactionFromDef<
 }
 `;
     case 'job':
-      return `import { ${c.defName} } from '${domain}';
+      return `${imports}
 import { ok } from 'dmg-core';
 import { JobFromDef, type JobReport, type JobRun } from 'dmg-core/app';
 ${deps}
@@ -159,7 +173,7 @@ export class ${c.className} extends JobFromDef<
   ${c.deps}
 > {
   constructor(deps: ${c.deps}) {
-    super(${c.defName}, deps);
+    super(${c.defName}, deps, ${moduleDef});
   }
 
   protected async run(job: JobRun): Promise<JobReport> {
@@ -183,6 +197,7 @@ import { ${c.className} } from './${c.base}';
   switch (c.kind) {
     case 'uc':
       return `import { describe, it } from 'bun:test';
+import { UserCaller } from 'dmg-core';
 import { requestTrace } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import type { ${c.deps} } from '../../${c.m}.module';
@@ -194,7 +209,7 @@ ${deps}
     const uc = new ${c.className}(deps);
     const res = await uc.handle(
       {},
-      { kind: 'user', user: {} },
+      new UserCaller({ uuid: crypto.randomUUID() }),
       requestTrace({ requestId: 'r-1' }),
     );
     expectOk(res);

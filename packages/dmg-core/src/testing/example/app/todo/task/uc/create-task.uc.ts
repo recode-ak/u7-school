@@ -4,7 +4,11 @@ import type { Caller } from '#core/kernel/caller/caller';
 import { ok } from '#core/kernel/result/result';
 import type { ExampleUser } from '#core/testing/example/app/app-user';
 import type { TodoDeps } from '#core/testing/example/app/todo/todo.module';
-import { CreateTaskUcDef, TaskAr } from '#core/testing/example/todo/index';
+import {
+  CreateTaskUcDef,
+  TaskAr,
+  TodoModuleDef,
+} from '#core/testing/example/todo/index';
 
 /** Задачи владельца — контекст правила предела открытых задач. */
 type Loaded = { readonly ownerTasks: readonly TaskAr[] };
@@ -16,7 +20,7 @@ export class CreateTaskUc extends UseCaseFromDef<
   ExampleUser
 > {
   constructor(deps: TodoDeps) {
-    super(CreateTaskUcDef, deps);
+    super(CreateTaskUcDef, deps, TodoModuleDef);
   }
 
   protected async load(_: unknown, caller: Caller<ExampleUser>) {

@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import type {
   AnyUseCaseDef,
   OutputOf,
@@ -14,7 +15,12 @@ import type {
   DomainRuleContextOf,
 } from '#core/domain/rules/domain-rule';
 import type { CallContext } from '#core/kernel/caller/call-context';
-import { type Caller, originOf, subjectOf } from '#core/kernel/caller/caller';
+import {
+  type Caller,
+  type Identified,
+  type OperationRef,
+  SystemCaller,
+} from '#core/kernel/caller/caller';
 import { CoreErrors } from '#core/kernel/errors/core-errors';
 import { serializeError } from '#core/kernel/errors/serialize-error';
 import { ok, type Result } from '#core/kernel/result/result';
@@ -30,10 +36,11 @@ export type ParsedInputOf<D extends AnyUseCaseDef> = v.InferOutput<D['input']>;
 /** Выход до схемы — то, что возвращает `execute`. */
 export type RawOutputOf<D extends AnyUseCaseDef> = v.InferInput<D['output']>;
 
-/** Субъект Policy UC: `Caller` должен его нести. */
+/** Субъект Policy UC: `Caller` должен его нести (и `uuid` — для лога). */
 export type UseCaseSubjectOf<D extends AnyUseCaseDef> = RuleSubjectOf<
   D['policy']
->;
+> &
+  Identified;
 
 /** Контекст Policy UC: что `load` обязан загрузить. */
 export type UseCaseContextOf<D extends AnyUseCaseDef> = RuleContextOf<
@@ -69,7 +76,7 @@ type UseCaseRule<D extends AnyUseCaseDef> = DomainRule<
  */
 export type UseCaseHandler<
   D extends AnyUseCaseDef = AnyUseCaseDef,
-  U = UseCaseSubjectOf<D>,
+  U extends Identified = UseCaseSubjectOf<D>,
 > = {
   readonly def: D;
   handle(
@@ -101,16 +108,27 @@ export abstract class UseCaseFromDef<
 > {
   private readonly policy: Rule<UseCaseSubjectOf<D>, UseCaseContextOf<D>>;
   private readonly rules: readonly UseCaseRule<D>[];
+  /** Эта операция — `from` вызывающего, когда она зовёт другие модули. */
+  readonly ref: OperationRef;
 
+  /**
+   * `module` — Def модуля-владельца: даёт `ref` (D-43). UC не из его
+   * `useCases` — исключение (ошибка сборки).
+   */
   constructor(
     readonly def: D & {
       readonly policy: Rule<UseCaseSubjectOf<D>, UseCaseContextOf<D>>;
       readonly rules?: readonly UseCaseRule<D>[];
     },
     protected readonly resolve: R,
+    module: AnyModuleDef,
   ) {
+    if (!module.useCases.includes(def)) {
+      throw new Error(`UC ${def.name} не входит в модуль ${module.name}`);
+    }
     this.policy = def.policy;
     this.rules = def.rules ?? [];
+    this.ref = { kind: 'useCase', module: module.name, name: def.name };
   }
 
   /**
@@ -134,12 +152,16 @@ export abstract class UseCaseFromDef<
   ): Promise<Result<RawOutputOf<D>, UseCaseErrorOf<D>>>;
 
   /**
-   * Контекст вызова фасада другого модуля (D-42): этот UC — `from`, его
-   * вызывающий и след — дальше по цепочке. Вызываемый UC проверит, что
-   * его Def есть в `calls` этого UC.
+   * Контекст вызова фасада другого модуля (D-42): вызывающий —
+   * `SystemCaller` этого UC с исходным человеком, след — дальше по
+   * цепочке. Фасад проверит, что вызываемый UC есть в `calls` этого UC.
    */
   protected callContext(caller: Caller<U>, trace: Trace): CallContext {
-    return { from: this.def, caller, trace };
+    return {
+      caller: new SystemCaller(this.ref, caller.person()),
+      calls: this.def.calls ?? [],
+      trace,
+    };
   }
 
   /** Текущий момент по часам приложения — передаётся в операции домена. */
@@ -153,7 +175,7 @@ export abstract class UseCaseFromDef<
    * не должен допускать guest/system, это баг Def.
    */
   protected subject(caller: Caller<U>): U {
-    const subject = subjectOf(caller);
+    const subject = caller.subject();
     if (subject === undefined) {
       throw new Error(
         `UC ${this.def.name}: у вызывающего ${caller.kind} нет субъекта — проверьте callers`,
@@ -163,7 +185,7 @@ export abstract class UseCaseFromDef<
   }
 
   /**
-   * callers (и `calls` у `module`) → вход → load → Policy → правила →
+   * callers → вход → load → Policy → правила →
    * execute → выход → commit (с публикацией). Непредвиденное исключение —
    * `SERVER_INTERNAL` с записью в лог.
    */
@@ -192,25 +214,16 @@ export abstract class UseCaseFromDef<
     if (!this.def.callers.includes(caller.kind)) {
       return CoreErrors.UNAUTHORIZED.err({ callerKind: caller.kind });
     }
-    // Другой модуль вызывает только UC, объявленные в `calls` вызвавшей
-    // операции (D-42, MAN-05): граф не должен врать о связях модулей.
-    if (caller.kind === 'module' && !caller.from.calls?.includes(this.def)) {
-      return CoreErrors.UNAUTHORIZED.err({
-        callerKind: caller.kind,
-        from: caller.from.name,
-      });
-    }
     const parsed = v.safeParse(this.def.input, input);
     if (!parsed.success) {
       return CoreErrors.INPUT_VALIDATION.err({ issues: issues(parsed) });
     }
     const loaded = await this.load(parsed.output, caller, trace);
     if (!loaded.ok) return loaded;
-    // system допускается только через `callers`: его права — сам факт
-    // объявления в Def; Policy проверяет субъекта, которого у system нет.
-    // Через фасад (`module`) решает исходный вызывающий: от ER/Job — как
-    // system, от пользователя — Policy по его субъекту.
-    if (originOf(caller).kind !== 'system') {
+    // До Р2 (D-43): system без человека (ER, Job) допускается только через
+    // `callers` — его права — сам факт объявления в Def. С человеком
+    // (вызов через фасад от UC) — Policy по субъекту человека.
+    if (caller.kind !== 'system' || caller.person() !== undefined) {
       const decision = this.policy.evaluate(caller, loaded.value);
       if (!decision.allowed) {
         const { rule, denyMessage } = decision;

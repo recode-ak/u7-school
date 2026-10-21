@@ -16,6 +16,7 @@ import {
 import {
   ArchiveDoneTasksJobDef,
   type TaskAr,
+  TodoModuleDef,
 } from 'dmg-core/testing/example/todo/index';
 import { InProcJobExecutor } from '../infra/in-proc-job-executor';
 import { legacyJob, legacyJobsOf } from './legacy-job';
@@ -27,7 +28,7 @@ type Deps = {
 
 class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps) {
-    super(ArchiveDoneTasksJobDef, deps);
+    super(ArchiveDoneTasksJobDef, deps, TodoModuleDef);
   }
 
   protected async run(job: JobRun): Promise<JobReport> {

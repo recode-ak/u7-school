@@ -6,6 +6,7 @@ import {
   RemoveUserUcDef,
   type UserAr,
   UserErrors,
+  UsersModuleDef,
 } from '#core/testing/example/users/index';
 
 type Loaded = { readonly user: UserAr };
@@ -16,7 +17,7 @@ export class RemoveUserUc extends UseCaseFromDef<
   Loaded
 > {
   constructor(deps: UsersDeps) {
-    super(RemoveUserUcDef, deps);
+    super(RemoveUserUcDef, deps, UsersModuleDef);
   }
 
   protected async load({ userId }: { userId: string }) {

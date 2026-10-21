@@ -77,7 +77,7 @@ export const GetUserUcDef = defineUseCase({
   description: 'Учётная запись по идентификатору.',
   type: 'query',
   aggregate: UserArDef,
-  callers: ['module'],
+  callers: ['system'],
   policy: allowAll,
   input: v.object({ userId: F.uuid('пользователя') }),
   output: v.object({ userId: F.uuid('пользователя') }),

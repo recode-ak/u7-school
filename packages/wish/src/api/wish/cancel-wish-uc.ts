@@ -6,7 +6,7 @@ import type {
 } from '@u7-scl/domain/wish';
 import { CancelWishCmdSchema, WishPolicy } from '@u7-scl/domain/wish';
 import { WishErrors } from '@u7-scl/domain/wish/contract';
-import { CoreErrors } from 'dmg-core';
+import { CoreErrors, UserCaller } from 'dmg-core';
 import * as v from 'valibot';
 import { throwIfRejected, throwWishError } from '../legacy-reject';
 import { WishUseCase } from '../wish-uc';
@@ -50,7 +50,7 @@ export class CancelWishUc extends WishUseCase<CancelWishCmdMeta> {
     // Право отмены — только у автора. Через UC недостижимо (желание ищется
     // по актору), но ветка Policy обязательна; отказ — мост TR-1.
     const decision = WishPolicy.rules.canCancel.evaluate(
-      { kind: 'user', user: actor },
+      new UserCaller(actor),
       { wish: ar },
     );
     if (!decision.allowed) {

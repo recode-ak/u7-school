@@ -1,7 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 import type { AnyUseCaseDef } from '#core/domain/contracts/define-use-case';
 import type { CallContext } from '#core/kernel/caller/call-context';
-import type { Caller } from '#core/kernel/caller/caller';
+import {
+  type Caller,
+  type Identified,
+  type OperationRef,
+  SystemCaller,
+  UserCaller,
+} from '#core/kernel/caller/caller';
+import { CoreErrors } from '#core/kernel/errors/core-errors';
 import { ok } from '#core/kernel/result/result';
 import {
   CompleteTaskUcDef,
@@ -15,29 +22,26 @@ import type { UseCaseHandler } from '../use-case/use-case-from-def';
 import { callUseCase } from './call-use-case';
 
 const REQ = requestTrace({ requestId: 'r-1' });
-const origin: Caller = { kind: 'user', user: { uuid: OWNER } };
-const call: CallContext = {
-  from: { dmg: 'useCase', name: 'notify', calls: [GetTaskUcDef] },
-  caller: origin,
-  trace: REQ,
-};
+const from: OperationRef = { kind: 'useCase', module: 'notes', name: 'notify' };
+const caller = new SystemCaller(from, new UserCaller({ uuid: OWNER }));
+const call: CallContext = { caller, calls: [GetTaskUcDef], trace: REQ };
 
 type Seen = { input: unknown; caller: Caller; trace: unknown };
 
 /** Модуль-владелец с одной реализацией — `getTask`, которая запоминает вызов. */
 function todoOwner(seen: Seen[]) {
-  const getTask: UseCaseHandler<typeof GetTaskUcDef, unknown> = {
+  const getTask: UseCaseHandler<typeof GetTaskUcDef, Identified> = {
     def: GetTaskUcDef,
     handle: async (input, caller, trace) => {
       seen.push({ input, caller, trace });
       return ok(taskRow(TASK));
     },
   };
-  const known: UseCaseHandler<AnyUseCaseDef, unknown> = getTask;
+  const known: UseCaseHandler<AnyUseCaseDef, Identified> = getTask;
   const isFor = <D extends AnyUseCaseDef>(
-    h: UseCaseHandler<AnyUseCaseDef, unknown>,
+    h: UseCaseHandler<AnyUseCaseDef, Identified>,
     def: D,
-  ): h is UseCaseHandler<D, unknown> => h.def === def;
+  ): h is UseCaseHandler<D, Identified> => h.def === def;
   return {
     def: TodoModuleDef,
     useCase: <D extends AnyUseCaseDef>(def: D) =>
@@ -46,7 +50,7 @@ function todoOwner(seen: Seen[]) {
 }
 
 describe('callUseCase', () => {
-  test('вызывает UC владельца от module: from и origin — из контекста, след — тот же', async () => {
+  test('вызывает UC владельца от SystemCaller потребителя, след — тот же', async () => {
     const seen: Seen[] = [];
     const res = await callUseCase(
       todoOwner(seen),
@@ -58,10 +62,24 @@ describe('callUseCase', () => {
     expect(seen).toEqual([
       {
         input: { taskId: TASK },
-        caller: { kind: 'module', from: call.from, origin },
+        caller,
         trace: REQ,
       },
     ]);
+  });
+
+  test('UC нет в calls потребителя — UNAUTHORIZED, UC не вызывается', async () => {
+    const seen: Seen[] = [];
+    const res = await callUseCase(
+      todoOwner(seen),
+      GetTaskUcDef,
+      { taskId: TASK },
+      { ...call, calls: [] },
+    );
+    expect(res).toEqual(
+      CoreErrors.UNAUTHORIZED.err({ callerKind: 'system', from: 'notify' }),
+    );
+    expect(seen).toEqual([]);
   });
 
   test('UC не реализован владельцем — исключение сборки', async () => {

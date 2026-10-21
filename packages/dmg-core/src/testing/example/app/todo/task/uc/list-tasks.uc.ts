@@ -4,7 +4,10 @@ import type { Caller } from '#core/kernel/caller/caller';
 import { ok } from '#core/kernel/result/result';
 import type { ExampleUser } from '#core/testing/example/app/app-user';
 import type { TodoDeps } from '#core/testing/example/app/todo/todo.module';
-import { ListTasksUcDef } from '#core/testing/example/todo/index';
+import {
+  ListTasksUcDef,
+  TodoModuleDef,
+} from '#core/testing/example/todo/index';
 
 export class ListTasksUc extends UseCaseFromDef<
   typeof ListTasksUcDef,
@@ -13,7 +16,7 @@ export class ListTasksUc extends UseCaseFromDef<
   ExampleUser
 > {
   constructor(deps: TodoDeps) {
-    super(ListTasksUcDef, deps);
+    super(ListTasksUcDef, deps, TodoModuleDef);
   }
 
   protected async load() {

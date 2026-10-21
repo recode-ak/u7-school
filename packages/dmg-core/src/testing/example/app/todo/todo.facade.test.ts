@@ -7,9 +7,10 @@ import type { AppContext } from '#core/app/context';
 import { requestTrace, type Trace } from '#core/app/trace';
 import { UseCaseFromDef } from '#core/app/use-case/use-case-from-def';
 import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
+import { defineModule } from '#core/domain/contracts/define-module';
 import { defineUseCase } from '#core/domain/contracts/define-use-case';
 import { allowAll } from '#core/domain/policy/policy';
-import type { Caller } from '#core/kernel/caller/caller';
+import { type Caller, UserCaller } from '#core/kernel/caller/caller';
 import { BaseEntityFields, F } from '#core/kernel/fields/fields';
 import { ok } from '#core/kernel/result/result';
 import type { ExampleUser } from '#core/testing/example/app/app-user';
@@ -18,6 +19,7 @@ import {
   TaskAr,
   TaskErrors,
   type TodoFacade,
+  TodoModuleDef,
 } from '#core/testing/example/todo/index';
 import { expectErr, expectOk, testAppContext } from '#core/testing/index';
 import { TaskJsonRepo } from './infra/task.json-repo';
@@ -52,6 +54,17 @@ const ShowTaskUcDef = defineUseCase({ ...showTaskSpec, calls: [GetTaskUcDef] });
 /** Тот же UC, но `getTask` в `calls` не объявлен. */
 const SneakyUcDef = defineUseCase({ ...showTaskSpec, name: 'sneaky' });
 
+const DigestModuleDef = defineModule({
+  name: 'digest',
+  label: 'Сводки',
+  description: 'Модуль-потребитель фасада todo.',
+  dependsOn: [TodoModuleDef],
+  aggregates: [DigestArDef],
+  useCases: [ShowTaskUcDef, SneakyUcDef],
+  reactions: [],
+  jobs: [],
+});
+
 type DigestDeps = { readonly app: AppContext; readonly todo: TodoFacade };
 
 class ShowTask extends UseCaseFromDef<
@@ -77,10 +90,8 @@ class ShowTask extends UseCaseFromDef<
 
 const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
 const REQ = requestTrace({ requestId: 'r-1' });
-const as = (uuid: string): Caller<ExampleUser> => ({
-  kind: 'user',
-  user: { uuid, hasRole: () => false },
-});
+const as = (uuid: string) =>
+  new UserCaller<ExampleUser>({ uuid, hasRole: () => false });
 
 let dir: string;
 let taskId: string;
@@ -98,12 +109,12 @@ beforeEach(async () => {
   taskId = created.value.uuid;
   const { app } = testAppContext();
   const todo = todoFacade(createTodoModule({ app, tasks }));
-  show = (def) => new ShowTask(def, { app, todo });
+  show = (def) => new ShowTask(def, { app, todo }, DigestModuleDef);
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 describe('фасад todo (D-42)', () => {
-  it('вызов через фасад: UC todo от module, ответ — ReadonlyAr', async () => {
+  it('вызов через фасад: UC todo от SystemCaller, ответ — ReadonlyAr', async () => {
     const res = await show(ShowTaskUcDef).handle({ taskId }, as(OWNER), REQ);
     expect(expectOk(res)).toEqual({ done: false });
   });
@@ -128,7 +139,7 @@ describe('фасад todo (D-42)', () => {
   it('UC нет в calls потребителя — UNAUTHORIZED', async () => {
     const res = await show(SneakyUcDef).handle({ taskId }, as(OWNER), REQ);
     expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
-      callerKind: 'module',
+      callerKind: 'system',
       from: 'sneaky',
     });
   });

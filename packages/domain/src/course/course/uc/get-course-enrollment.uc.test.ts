@@ -12,7 +12,7 @@ describe('GetCourseEnrollmentUcDef', () => {
       name: 'getCourseEnrollment',
       type: 'query',
       aggregate: 'course',
-      callers: ['module'],
+      callers: ['system'],
       errors: [],
     });
     expect(GetCourseEnrollmentUcDef.policy.op).toBe('allowAll');

@@ -58,7 +58,7 @@ test('module: карта Def → класс с маркерами и фабри�
   }
   expect(src).not.toContain('acade');
   expect(src).toContain(
-    'satisfies ModuleMap<typeof StreamModuleDef, StreamDeps, unknown>',
+    'satisfies ModuleMap<typeof StreamModuleDef, StreamDeps, Identified>',
   );
   expect(src).toContain('export function createStreamModule(deps: StreamDeps)');
 });

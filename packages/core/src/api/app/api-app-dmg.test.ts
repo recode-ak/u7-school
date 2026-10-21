@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { type Caller, defineModule, ok } from 'dmg-core';
+import { defineModule, ok, UserCaller } from 'dmg-core';
 import {
   type AppContext,
   JobFromDef,
@@ -50,7 +50,7 @@ class CompleteTask extends UseCaseFromDef<
   Loaded
 > {
   constructor(deps: Deps) {
-    super(CompleteTaskUcDef, deps);
+    super(CompleteTaskUcDef, deps, MiniModuleDef);
   }
   protected async load(input: { taskId: string }) {
     const task = await this.resolve.tasks.findById(input.taskId);
@@ -66,7 +66,7 @@ class CompleteTask extends UseCaseFromDef<
 
 class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps) {
-    super(ArchiveDoneTasksJobDef, deps);
+    super(ArchiveDoneTasksJobDef, deps, MiniModuleDef);
   }
   protected run = (job: JobRun) => job.forEach([], async () => ok());
 }
@@ -74,10 +74,8 @@ class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
 const REQ: RequestMeta = { requestId: 'r-1' };
 
 type User = { readonly uuid: string; hasRole(role: 'admin'): boolean };
-const user = (uuid: string): Caller<User> => ({
-  kind: 'user',
-  user: { uuid, hasRole: () => false },
-});
+const user = (uuid: string) =>
+  new UserCaller<User>({ uuid, hasRole: () => false });
 
 let tasks: MemoryTasks;
 let app: ApiApp<AppMeta, User>;

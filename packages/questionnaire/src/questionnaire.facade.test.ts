@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import type { User } from '@u7-scl/app/domain';
 import type { QuestionnairePool } from '@u7-scl/domain/questionnaire';
 import {
+  QuestionnaireModuleDef,
   type QuestionnaireModuleFacade,
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
@@ -10,8 +11,10 @@ import {
   BaseEntityFields,
   type Caller,
   defineAggregate,
+  defineModule,
   defineUseCase,
   ok,
+  UserCaller,
 } from 'dmg-core';
 import {
   type AppContext,
@@ -57,6 +60,17 @@ const ProbeUcDef = defineUseCase({
 });
 /** Тот же UC, но `startQuestionnaire` в `calls` не объявлен. */
 const SneakyUcDef = defineUseCase({ ...probeSpec, name: 'sneaky' });
+
+const ProbeModuleDef = defineModule({
+  name: 'probe',
+  label: 'Проба',
+  description: 'Модуль-потребитель фасада анкет.',
+  dependsOn: [QuestionnaireModuleDef],
+  aggregates: [ProbeArDef],
+  useCases: [ProbeUcDef, SneakyUcDef],
+  reactions: [],
+  jobs: [],
+});
 
 type ProbeDeps = {
   readonly app: AppContext;
@@ -133,7 +147,7 @@ function probe(
   const questionnaire = questionnaireModuleFacade(
     createQuestionnaireModule({ app, legacy: questionnaireLegacy }),
   );
-  return new ProbeUc(def, { app, questionnaire });
+  return new ProbeUc(def, { app, questionnaire }, ProbeModuleDef);
 }
 
 describe('фасад анкет (D-42, адаптер TR-11)', () => {
@@ -141,7 +155,7 @@ describe('фасад анкет (D-42, адаптер TR-11)', () => {
     const { facade, calls } = legacy();
     const res = await probe(ProbeUcDef, facade).handle(
       { pool: POOL, owner: OWNER },
-      { kind: 'user', user: USER },
+      new UserCaller(USER),
       REQ,
     );
     expect(expectOk(res)).toEqual({});
@@ -152,11 +166,11 @@ describe('фасад анкет (D-42, адаптер TR-11)', () => {
     const { facade, calls } = legacy();
     const res = await probe(SneakyUcDef, facade).handle(
       { pool: POOL, owner: OWNER },
-      { kind: 'user', user: USER },
+      new UserCaller(USER),
       REQ,
     );
     expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
-      callerKind: 'module',
+      callerKind: 'system',
       from: 'sneaky',
     });
     expect(calls).toEqual([]);

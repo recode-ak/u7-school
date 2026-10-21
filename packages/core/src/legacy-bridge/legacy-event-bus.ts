@@ -1,4 +1,4 @@
-import { type AnyEventDef, systemCaller } from 'dmg-core';
+import { type AnyEventDef, SystemCaller } from 'dmg-core';
 import type { EnvelopeOf, EventBus, EventEnvelope } from 'dmg-core/app';
 import * as v from 'valibot';
 import type { DomainEvent as LegacyEvent } from '#domain-legacy/events/domain-event';
@@ -106,7 +106,13 @@ function fromLegacy(
     eventId: event.eventId,
     occurredAt: Date.parse(event.occurredAt),
     aggregateId: event.aggregateId,
-    caller: systemCaller(`legacy:${event.eventName}`),
+    // У legacy-события нет операции DMG: вызывающий — условная операция
+    // `legacy` по имени события (до удаления `caller` из конверта, D-43).
+    caller: new SystemCaller({
+      kind: 'useCase',
+      module: 'legacy',
+      name: event.eventName,
+    }),
     cause: { kind: 'event', eventId: event.eventId },
     correlationId: event.eventId,
   };

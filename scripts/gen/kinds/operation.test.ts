@@ -45,7 +45,7 @@ test('uc: реализация — класс XxxUc от UseCaseFromDef', () => 
     '/p/stream/src/student/uc/complete-student.uc.ts',
   );
   expect(src).toContain(
-    "import { CompleteStudentUcDef } from '@u7-scl/domain/stream';",
+    "import { CompleteStudentUcDef, StreamModuleDef } from '@u7-scl/domain/stream';",
   );
   expect(src).toContain(
     "import type { StreamDeps } from '../../stream.module';",
@@ -53,7 +53,7 @@ test('uc: реализация — класс XxxUc от UseCaseFromDef', () => 
   expect(src).toContain(
     'export class CompleteStudentUc extends UseCaseFromDef<',
   );
-  expect(src).toContain('super(CompleteStudentUcDef, deps)');
+  expect(src).toContain('super(CompleteStudentUcDef, deps, StreamModuleDef)');
 });
 
 test('uc: правки домена (module, index) и прикладного модуля', () => {

@@ -270,7 +270,7 @@ function checkUseCaseRules(index: DefIndex): Violation[] {
 
 /**
  * MAN-05 (D-42): `calls` — UC других модулей (свой модуль вызывает свой UC
- * напрямую, без фасада), и вызываемый UC допускает вызывающего `module` —
+ * напрямую, без фасада), и вызываемый UC допускает вызывающего `system` —
  * иначе вызов через фасад всегда получит `UNAUTHORIZED`. Принадлежность
  * `dependsOn` — ARC-04 (`checkDependsOn`), Def вне модулей — MAN-06.
  */
@@ -290,11 +290,11 @@ function checkCalls(index: DefIndex): Violation[] {
               `${title}: UC ${id} своего модуля — calls только для UC других модулей`,
             ),
           );
-        } else if (!uc.callers.includes('module')) {
+        } else if (!uc.callers.includes('system')) {
           out.push(
             violation(
               'MAN-05',
-              `${title}: UC ${id} не объявляет module в callers`,
+              `${title}: UC ${id} не объявляет system в callers`,
             ),
           );
         }

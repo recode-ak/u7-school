@@ -10,9 +10,10 @@ import type { Result } from '../kernel/result/result';
 /**
  * Фейк метода фасада для тестов модуля-потребителя (D-42, MAN-05): та же
  * сигнатура, что у метода фасада (`call` первым), но вместо вызова UC —
- * ответ теста. Проверку вызова повторяет за `UseCaseFromDef`: у UC нет
- * `module` в `callers` или операции-потребителя нет UC в `call.from.calls`
- * — `UNAUTHORIZED` с тем же payload, ответ теста не вызывается. Так тест
+ * ответ теста. Проверку вызова повторяет за `UseCaseFromDef` и
+ * `callUseCase`: у UC нет `system` в `callers` или операции-потребителя нет
+ * UC в `call.calls` — `UNAUTHORIZED` с тем же payload, ответ теста не
+ * вызывается. Так тест
  * потребителя ловит Def, забывший объявить вызываемый UC.
  *
  * Ответ (`T`) — не обязательно выход UC: фасад может отдать и `ReadonlyAr`.
@@ -36,13 +37,13 @@ export function fakeFacadeCall<
   ) => Result<T, UseCaseErrorOf<D>> | Promise<Result<T, UseCaseErrorOf<D>>>,
 ): (call: CallContext, ...args: A) => Promise<Result<T, UseCaseErrorOf<D>>> {
   return async (call, ...args) => {
-    if (!def.callers.includes('module')) {
-      return CoreErrors.UNAUTHORIZED.err({ callerKind: 'module' });
+    if (!def.callers.includes(call.caller.kind)) {
+      return CoreErrors.UNAUTHORIZED.err({ callerKind: call.caller.kind });
     }
-    if (!call.from.calls?.includes(def)) {
+    if (!call.calls.includes(def)) {
       return CoreErrors.UNAUTHORIZED.err({
-        callerKind: 'module',
-        from: call.from.name,
+        callerKind: call.caller.kind,
+        from: call.caller.from.name,
       });
     }
     return answer(call, ...args);

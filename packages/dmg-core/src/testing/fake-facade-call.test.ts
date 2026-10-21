@@ -2,9 +2,13 @@ import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { requestTrace } from '#core/app/trace';
 import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
-import { defineUseCase } from '#core/domain/contracts/define-use-case';
+import {
+  type AnyUseCaseDef,
+  defineUseCase,
+} from '#core/domain/contracts/define-use-case';
 import { allowAll } from '#core/domain/policy/policy';
 import type { CallContext } from '#core/kernel/caller/call-context';
+import { SystemCaller, UserCaller } from '#core/kernel/caller/caller';
 import { BaseEntityFields } from '#core/kernel/fields/fields';
 import { ok } from '#core/kernel/result/result';
 import {
@@ -44,9 +48,12 @@ const Declared = defineUseCase({
 });
 const Undeclared = defineUseCase({ ...spec, name: 'sneaky' });
 
-const callFrom = (from: CallContext['from']): CallContext => ({
-  from,
-  caller: { kind: 'user', user: { uuid: 'u-1' } },
+const callFrom = (from: AnyUseCaseDef): CallContext => ({
+  caller: new SystemCaller(
+    { kind: 'useCase', module: 'digest', name: from.name },
+    new UserCaller({ uuid: 'u-1' }),
+  ),
+  calls: from.calls ?? [],
   trace: requestTrace({ requestId: 'r-1' }),
 });
 
@@ -56,7 +63,7 @@ describe('fakeFacadeCall', () => {
     const getTask = fakeFacadeCall(
       GetTaskUcDef,
       (call: CallContext, taskId: string) => {
-        seen.push(call.from.name, taskId);
+        seen.push(call.caller.from.name, taskId);
         return ok({ taskId });
       },
     );
@@ -75,7 +82,7 @@ describe('fakeFacadeCall', () => {
     });
   });
 
-  it('UC не объявлен в calls — UNAUTHORIZED как у UseCaseFromDef, фейк не вызван', async () => {
+  it('UC не объявлен в calls — UNAUTHORIZED как у callUseCase, фейк не вызван', async () => {
     let called = false;
     const getTask = fakeFacadeCall(GetTaskUcDef, () => {
       called = true;
@@ -83,13 +90,13 @@ describe('fakeFacadeCall', () => {
     });
     const res = await getTask(callFrom(Undeclared));
     expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
-      callerKind: 'module',
+      callerKind: 'system',
       from: 'sneaky',
     });
     expect(called).toBe(false);
   });
 
-  it('у UC нет module в callers — UNAUTHORIZED без from, фейк не вызван', async () => {
+  it('у UC нет system в callers — UNAUTHORIZED без from, фейк не вызван', async () => {
     let called = false;
     const createTask = fakeFacadeCall(CreateTaskUcDef, () => {
       called = true;
@@ -97,7 +104,7 @@ describe('fakeFacadeCall', () => {
     });
     const res = await createTask(callFrom(Declared));
     expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
-      callerKind: 'module',
+      callerKind: 'system',
     });
     expect(called).toBe(false);
   });

@@ -12,7 +12,7 @@ import {
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import { CreateCourseWishUcDef } from '@u7-scl/domain/wish';
-import { ok } from 'dmg-core';
+import { ok, UserCaller } from 'dmg-core';
 import { requestTrace } from 'dmg-core/app';
 import { expectOk, fakeFacadeCall, testAppContext } from 'dmg-core/testing';
 import { WishJsonRepo } from './infra/wish.json-repo';
@@ -66,7 +66,7 @@ describe('createWishModule', () => {
       .useCase(CreateCourseWishUcDef)
       ?.handle(
         { courseId },
-        { kind: 'user', user: ACTOR },
+        new UserCaller(ACTOR),
         requestTrace({ requestId: 'r-1' }),
       );
 

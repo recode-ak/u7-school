@@ -16,7 +16,7 @@ export type EventEnvelope<E extends DomainEvent = DomainEvent> = E & {
   readonly occurredAt: Timestamp;
   readonly aggregateId: string;
   /** Кто вызвал операцию, породившую событие. */
-  readonly caller: Caller<unknown>;
+  readonly caller: Caller;
   /** Что непосредственно вызвало операцию: запрос, событие, прогон Job. */
   readonly cause: Cause;
   /** Сквозной id цепочки от точки входа. */

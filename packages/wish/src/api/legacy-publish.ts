@@ -1,5 +1,5 @@
 import type { DomainEvent as LegacyEvent } from '@u7-scl/core/domain';
-import { type DomainEvent, systemCaller, type Timestamp } from 'dmg-core';
+import { type DomainEvent, SystemCaller, type Timestamp } from 'dmg-core';
 import type { EventBus } from 'dmg-core/app';
 
 export type WishPublication = {
@@ -34,7 +34,11 @@ export function publishWishEvents(
       eventId: crypto.randomUUID(),
       occurredAt: at,
       aggregateId,
-      caller: systemCaller(source),
+      caller: new SystemCaller({
+        kind: 'eventReaction',
+        module: 'wish',
+        name: source,
+      }),
       cause: { kind: 'event', eventId: cause.eventId },
       correlationId: cause.eventId,
     });

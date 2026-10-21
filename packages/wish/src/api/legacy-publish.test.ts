@@ -3,6 +3,7 @@ import type { DomainEvent as LegacyEvent } from '@u7-scl/core/domain';
 import { InProcEventBus } from '@u7-scl/core/infra';
 import { legacyEventBus } from '@u7-scl/core/legacy-bridge';
 import { WishEvents } from '@u7-scl/domain/wish/contract';
+import { SystemCaller } from 'dmg-core';
 import type { EventBus, EventEnvelope } from 'dmg-core/app';
 import { publishWishEvents } from './legacy-publish';
 
@@ -76,7 +77,11 @@ describe('publishWishEvents', () => {
         eventId: expect.any(String),
         occurredAt: AT,
         aggregateId: wishId,
-        caller: { kind: 'system', source: 'confirm-wish' },
+        caller: new SystemCaller({
+          kind: 'eventReaction',
+          module: 'wish',
+          name: 'confirm-wish',
+        }),
         cause: { kind: 'event', eventId: 'cause-1' },
         correlationId: 'cause-1',
       },

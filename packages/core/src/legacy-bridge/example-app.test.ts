@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import type { CallContext, Caller } from 'dmg-core';
+import { type CallContext, SystemCaller, UserCaller } from 'dmg-core';
 import { type RequestMeta, requestTrace } from 'dmg-core/app';
 import {
   expectErr,
@@ -36,10 +36,8 @@ import { legacyClock, legacyEventBus, legacyJob } from './index';
 const ANNA = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
 const BORIS = '6f4e2d3c-8b7a-4f9e-8a1b-b2c3d4e5f6a7';
 
-const caller = (uuid: string, admin = false): Caller<ExampleUser> => ({
-  kind: 'user',
-  user: { uuid, hasRole: () => admin },
-});
+const caller = (uuid: string, admin = false) =>
+  new UserCaller<ExampleUser>({ uuid, hasRole: () => admin });
 
 let dir: string;
 let legacy: InProcEventBus;
@@ -133,7 +131,11 @@ describe('todo: событие → ER', () => {
     deps.app.bus.subscribe(TaskEvents.archived, async (e) => {
       archived.push(e.correlationId);
     });
-    const admin = { kind: 'system', source: 'admin' } as const;
+    const admin = new SystemCaller<ExampleUser>({
+      kind: 'job',
+      module: 'admin',
+      name: 'removeUsers',
+    });
     const meta = { requestId: 'r-remove' };
     expectOk(await api.run(RemoveUserUcDef, { userId: ANNA }, admin, meta));
     await settle();
@@ -161,8 +163,11 @@ describe('todo: Job на существующем планировщике', () 
 describe('todo: фасад', () => {
   // Операция другого модуля, объявившая getTask в calls (D-42).
   const call = (): CallContext => ({
-    from: { dmg: 'useCase', name: 'showTask', calls: [GetTaskUcDef] },
-    caller: caller(ANNA),
+    caller: new SystemCaller(
+      { kind: 'useCase', module: 'digest', name: 'showTask' },
+      caller(ANNA),
+    ),
+    calls: [GetTaskUcDef],
     trace: requestTrace(req()),
   });
   const facade = () => todoFacade(createTodoModule(deps));

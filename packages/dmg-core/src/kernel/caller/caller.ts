@@ -1,106 +1,157 @@
 /**
- * Не зарегистрирован. Известно не больше, чем канал (`telegram`, `web`, …)
- * и идентификатор посетителя в нём (tgId, id анонимной сессии).
+ * Пользователь так, как его видит ядро: только идентификатор — для записи
+ * вызывающего в лог (`toLog`). Полный тип замыкает приложение (D-04).
  */
-export type GuestCaller = {
-  readonly kind: 'guest';
-  readonly channel?: string;
-  readonly channelId?: string;
-};
+export type Identified = { readonly uuid: string };
 
-/** Авторизованный пользователь — сам себе субъект. */
-export type UserCaller<U> = { readonly kind: 'user'; readonly user: U };
+/** Вид вызывающего — то, что объявляет `callers` в Def UC (MAN-11). */
+export type CallerKind = 'guest' | 'user' | 'delegate' | 'system';
 
 /**
- * Заместитель действует от имени другого по делегированию.
- * Субъект — замещаемый; `actor` и `delegationId` — для аудита.
+ * Ссылка на операцию приложения: UC, ER или Job своего или другого модуля.
+ * Свой ли модуль — сравнение `module` с модулем вызываемого (D-43).
  */
-export type DelegateCaller<U> = {
-  readonly kind: 'delegate';
-  readonly subject: U;
-  readonly actor: U;
-  readonly delegationId: string;
-};
-
-/**
- * Def операции, которая вызвала другой модуль через фасад: UC, ER или Job.
- * Ядро видит только вид, имя и `calls` — проверку `calls` делает вызываемый
- * UC (D-42); полный тип Def — в `domain/contracts`.
- */
-export type CallingOperation = {
-  readonly dmg: 'useCase' | 'eventReaction' | 'job';
+export type OperationRef = {
+  readonly kind: 'useCase' | 'eventReaction' | 'job';
+  readonly module: string;
   readonly name: string;
-  readonly calls?: readonly object[];
 };
+
+/** Вызывающий в форме для лога операций. */
+export type CallerLog =
+  | { readonly kind: 'guest' }
+  | { readonly kind: 'user'; readonly subjectId: string }
+  | {
+      readonly kind: 'delegate';
+      readonly subjectId: string;
+      readonly actorId: string;
+      readonly delegationId: string;
+    }
+  | {
+      readonly kind: 'system';
+      readonly from: OperationRef;
+      readonly person?: CallerLog;
+    };
 
 /**
- * Другой модуль через фасад (D-42): `from` — Def вызвавшей операции,
- * `origin` — исходный вызывающий. Субъект — субъект `origin`.
- */
-export type ModuleCaller<U> = {
-  readonly kind: 'module';
-  readonly from: CallingOperation;
-  readonly origin: Caller<U>;
-};
-
-/** Job, ER; `source` — FQN источника. */
-export type SystemCaller<U> = {
-  readonly kind: 'system';
-  readonly source: string;
-  readonly onBehalfOf?: Caller<U>;
-};
-
-/**
- * Кто вызывает операцию (D-25). Дженерик пользователя замыкает `app`.
+ * Кто вызывает операцию (D-43). Policy и домен работают только с субъектом
+ * (`subject()`); вложенный вызов передаёт исходного человека (`person()`).
  * См. conductor/architecture/caller.md.
  */
-export type Caller<U = unknown> =
-  | GuestCaller
+export abstract class Caller<U extends Identified = Identified> {
+  abstract readonly kind: CallerKind;
+  /** От чьего имени действие; нет — гость или система без человека. */
+  abstract subject(): U | undefined;
+  /** Исходный человек — для вложенных вызовов; у системы без него — нет. */
+  abstract person(): PersonCaller<U> | undefined;
+  abstract toLog(): CallerLog;
+}
+
+/** Человек на входе — вызывающий, который может стоять за системным. */
+export type PersonCaller<U extends Identified = Identified> =
+  | GuestCaller<U>
   | UserCaller<U>
-  | DelegateCaller<U>
-  | ModuleCaller<U>
-  | SystemCaller<U>;
+  | DelegateCaller<U>;
 
-export type CallerKind = Caller['kind'];
+/** Не зарегистрирован. Канал и посетитель в нём — в `Trace.channel`. */
+export class GuestCaller<U extends Identified = Identified> extends Caller<U> {
+  readonly kind = 'guest';
 
-/** Субъект — от чьего имени действие; домен и Policy работают только с ним. */
-export function subjectOf<U>(caller: Caller<U>): U | undefined {
-  switch (caller.kind) {
-    case 'user':
-      return caller.user;
-    case 'delegate':
-      return caller.subject;
-    case 'module':
-      return subjectOf(caller.origin);
-    case 'guest':
-    case 'system':
-      return undefined;
+  subject(): undefined {
+    return undefined;
+  }
+
+  person(): GuestCaller<U> {
+    return this;
+  }
+
+  toLog(): CallerLog {
+    return { kind: 'guest' };
+  }
+}
+
+/** Авторизованный пользователь — сам себе субъект. */
+export class UserCaller<U extends Identified = Identified> extends Caller<U> {
+  readonly kind = 'user';
+
+  constructor(readonly user: U) {
+    super();
+  }
+
+  subject(): U {
+    return this.user;
+  }
+
+  person(): UserCaller<U> {
+    return this;
+  }
+
+  toLog(): CallerLog {
+    return { kind: 'user', subjectId: this.user.uuid };
   }
 }
 
 /**
- * Исходный вызывающий: у `module` — `origin` по всей цепочке модулей, у
- * остальных — он сам. По нему Policy решает, кто действует (`delegate`,
- * `system`), — межмодульный вызов вида вызывающего не меняет.
+ * Заместитель (`actor`) действует от имени другого по делегированию
+ * `delegationId`. Субъект — замещаемый; заместитель — для аудита.
  */
-export function originOf<U>(caller: Caller<U>): Caller<U> {
-  return caller.kind === 'module' ? originOf(caller.origin) : caller;
+export class DelegateCaller<
+  U extends Identified = Identified,
+> extends Caller<U> {
+  readonly kind = 'delegate';
+
+  constructor(
+    private readonly principal: U,
+    readonly actor: U,
+    readonly delegationId: string,
+  ) {
+    super();
+  }
+
+  subject(): U {
+    return this.principal;
+  }
+
+  person(): DelegateCaller<U> {
+    return this;
+  }
+
+  toLog(): CallerLog {
+    return {
+      kind: 'delegate',
+      subjectId: this.principal.uuid,
+      actorId: this.actor.uuid,
+      delegationId: this.delegationId,
+    };
+  }
 }
 
-/** Вызывающий `module`: операция `from` вызвала фасад от имени `origin`. */
-export function moduleCaller<U>(
-  from: CallingOperation,
-  origin: Caller<U>,
-): ModuleCaller<U> {
-  return { kind: 'module', from, origin };
-}
+/**
+ * Операция приложения (`from`) — UC, ER или Job своего или другого модуля.
+ * `origin` — исходный человек вызвавшей операции; у ER и Job его нет.
+ * Матрёшки нет: человек по типу не `SystemCaller`.
+ */
+export class SystemCaller<U extends Identified = Identified> extends Caller<U> {
+  readonly kind = 'system';
 
-/** Системный вызывающий; `onBehalfOf` — вызывающий события-причины. */
-export function systemCaller<U>(
-  source: string,
-  onBehalfOf?: Caller<U>,
-): SystemCaller<U> {
-  return onBehalfOf
-    ? { kind: 'system', source, onBehalfOf }
-    : { kind: 'system', source };
+  constructor(
+    readonly from: OperationRef,
+    private readonly origin?: PersonCaller<U>,
+  ) {
+    super();
+  }
+
+  subject(): U | undefined {
+    return this.origin?.subject();
+  }
+
+  person(): PersonCaller<U> | undefined {
+    return this.origin;
+  }
+
+  toLog(): CallerLog {
+    return this.origin === undefined
+      ? { kind: 'system', from: this.from }
+      : { kind: 'system', from: this.from, person: this.origin.toLog() };
+  }
 }

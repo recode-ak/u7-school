@@ -1,6 +1,7 @@
 // TR-11: DMG-модуль внешнего контракта курсов — адаптеры над legacy-фасадом.
 import type { CourseFacade } from '@u7-scl/domain/course';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import type { Identified } from 'dmg-core';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { GetCourseEnrollmentUc } from './course/uc/get-course-enrollment.uc';
 
@@ -27,7 +28,7 @@ export const courseModuleMap = {
   useCases: { getCourseEnrollment: GetCourseEnrollmentUc },
   reactions: {},
   jobs: {},
-} satisfies ModuleMap<typeof CourseModuleDef, CourseModuleDeps, unknown>;
+} satisfies ModuleMap<typeof CourseModuleDef, CourseModuleDeps, Identified>;
 
 /**
  * DMG-модуль курсов — владелец UC внешнего контракта (`UseCaseOwner`) для
@@ -35,9 +36,9 @@ export const courseModuleMap = {
  * `CourseInProcFacade` (TR-11).
  */
 export function createCourseModule(deps: CourseModuleDeps) {
-  return new ModuleFromDef<typeof CourseModuleDef, CourseModuleDeps, unknown>(
-    CourseModuleDef,
-    courseModuleMap,
-    deps,
-  );
+  return new ModuleFromDef<
+    typeof CourseModuleDef,
+    CourseModuleDeps,
+    Identified
+  >(CourseModuleDef, courseModuleMap, deps);
 }

@@ -19,7 +19,7 @@ export const GetCourseEnrollmentUcDef = defineUseCase({
     'Доступен ли курс для записи и с какого модуля она начинается — для других модулей.',
   type: 'query',
   aggregate: CourseArDef,
-  callers: ['module'],
+  callers: ['system'],
   policy: allowAll,
   input: v.object({ courseId: F.uuid('курса') }),
   output: v.variant('enrollable', [

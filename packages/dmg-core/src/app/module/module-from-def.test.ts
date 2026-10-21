@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { defineModule } from '#core/domain/contracts/define-module';
+import { SystemCaller } from '#core/kernel/caller/caller';
 import { ok } from '#core/kernel/result/result';
 import { memoryBus, testAppContext } from '#core/testing/app-context';
 import {
@@ -39,7 +40,7 @@ class CompleteTask extends UseCaseFromDef<
   never
 > {
   constructor(deps: Deps) {
-    super(CompleteTaskUcDef, deps);
+    super(CompleteTaskUcDef, deps, MiniModuleDef);
   }
   protected load = async () => TaskErrors.NOT_FOUND.err({ taskId: 'x' });
   protected execute = async () => ok({});
@@ -50,7 +51,7 @@ class ArchiveRemoved extends ReactionFromDef<
   Deps
 > {
   constructor(deps: Deps) {
-    super(ArchiveRemovedUserTasksErDef, deps);
+    super(ArchiveRemovedUserTasksErDef, deps, MiniModuleDef);
   }
   protected async react() {
     this.resolve.reacted.push(this.def.name);
@@ -60,7 +61,7 @@ class ArchiveRemoved extends ReactionFromDef<
 
 class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps) {
-    super(ArchiveDoneTasksJobDef, deps);
+    super(ArchiveDoneTasksJobDef, deps, MiniModuleDef);
   }
   protected run = (job: JobRun) => job.forEach([], async () => ok());
 }
@@ -102,7 +103,7 @@ describe('ModuleFromDef', () => {
       eventId: 'e',
       occurredAt: T0,
       aggregateId: 'u',
-      caller: { kind: 'system', source: 'test' },
+      caller: new SystemCaller({ kind: 'job', module: 'users', name: 'test' }),
       cause: { kind: 'request', requestId: 'r-1' },
       correlationId: 'r-1',
     } as const;

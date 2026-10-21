@@ -5,6 +5,7 @@ import type { CourseEnrollment } from '@u7-scl/domain/course/contract';
 import {
   CreateCourseWishUcDef,
   WishAr,
+  WishModuleDef,
   type WishTargetVo,
 } from '@u7-scl/domain/wish';
 import { type Caller, ok } from 'dmg-core';
@@ -39,7 +40,7 @@ export class CreateCourseWishUc extends UseCaseFromDef<
   User
 > {
   constructor(deps: WishDeps) {
-    super(CreateCourseWishUcDef, deps);
+    super(CreateCourseWishUcDef, deps, WishModuleDef);
   }
 
   /** Ответ курса — через фасад (D-42), желания — все на эту цель. */

@@ -47,6 +47,7 @@ export function planAppModule(args: GenArgs): GenPlan {
 `;
 
   const moduleSrc = `import { ${P}ModuleDef } from '@u7-scl/domain/${m}';
+import type { Identified } from 'dmg-core';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 // gen:defs:imports
 
@@ -66,11 +67,11 @@ export const ${c}Map = {
   jobs: {
     // gen:defs:jobs
   },
-} satisfies ModuleMap<typeof ${P}ModuleDef, ${P}Deps, unknown>;
+} satisfies ModuleMap<typeof ${P}ModuleDef, ${P}Deps, Identified>;
 
 /** Модуль ${m} с зависимостями — для сборки приложения. */
 export function create${P}Module(deps: ${P}Deps) {
-  return new ModuleFromDef<typeof ${P}ModuleDef, ${P}Deps, unknown>(
+  return new ModuleFromDef<typeof ${P}ModuleDef, ${P}Deps, Identified>(
     ${P}ModuleDef,
     ${c}Map,
     deps,

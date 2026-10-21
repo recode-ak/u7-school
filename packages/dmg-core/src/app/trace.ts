@@ -1,6 +1,6 @@
 import type { Trace } from '#core/kernel/trace/trace';
 
-export type { Cause, Trace } from '#core/kernel/trace/trace';
+export type { Cause, Trace, TraceChannel } from '#core/kernel/trace/trace';
 
 /** Мета запроса, которую адаптер транспорта передаёт в `appApi.run`. */
 export type RequestMeta = {

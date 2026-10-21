@@ -6,13 +6,14 @@ import type {
   UseCaseErrorOf,
 } from '#core/domain/contracts/define-use-case';
 import type { CallContext } from '#core/kernel/caller/call-context';
-import { moduleCaller } from '#core/kernel/caller/caller';
+import type { Identified } from '#core/kernel/caller/caller';
+import { CoreErrors } from '#core/kernel/errors/core-errors';
 import type { Result } from '#core/kernel/result/result';
 import type { UseCaseHandler } from '../use-case/use-case-from-def';
 
 /**
  * Модуль-владелец UC так, как его видит фасад: Def и реализации по Def
- * (`ModuleFromDef` подходит как есть). Субъект стёрт до `unknown`, как в
+ * (`ModuleFromDef` подходит как есть). Субъект стёрт до `Identified`, как в
  * `CallContext`: `handle` — метод, и реализация с субъектом приложения
  * сюда подходит.
  */
@@ -20,15 +21,17 @@ export type UseCaseOwner<M extends AnyModuleDef> = {
   readonly def: M;
   useCase<D extends AnyUseCaseDef>(
     def: D,
-  ): UseCaseHandler<D, unknown> | undefined;
+  ): UseCaseHandler<D, Identified> | undefined;
 };
 
 /**
- * Вызов UC своего модуля из фасада (D-42, API-04): вызывающий — `module`
- * (`from` и `origin` — из контекста вызова потребителя), след — тот же.
- * Отказы — ответ UC как есть, в том числе `UNAUTHORIZED`, если `from` не
- * объявил UC в `calls`. UC другого модуля — ошибка компиляции; UC, которого
- * нет среди реализаций владельца, — исключение (ошибка сборки приложения).
+ * Вызов UC своего модуля из фасада (D-42, API-04): вызывающий и след — из
+ * контекста вызова потребителя (`SystemCaller` его операции). Операция-
+ * потребитель вызывает только UC из своих `calls` (MAN-05) — иначе
+ * `UNAUTHORIZED`, UC не вызывается (мост до типизированного `call`, D-43).
+ * Отказы UC — его ответ как есть. UC другого модуля — ошибка компиляции;
+ * UC, которого нет среди реализаций владельца, — исключение (ошибка
+ * сборки приложения).
  */
 export function callUseCase<
   M extends AnyModuleDef,
@@ -45,5 +48,13 @@ export function callUseCase<
       new Error(`UC ${def.name} не реализован в модуле ${owner.def.name}`),
     );
   }
-  return uc.handle(input, moduleCaller(call.from, call.caller), call.trace);
+  if (!call.calls.includes(def)) {
+    return Promise.resolve(
+      CoreErrors.UNAUTHORIZED.err({
+        callerKind: call.caller.kind,
+        from: call.caller.from.name,
+      }),
+    );
+  }
+  return uc.handle(input, call.caller, call.trace);
 }

@@ -101,18 +101,16 @@ export {
 } from './domain/rules/domain-rule';
 export type { CallContext } from './kernel/caller/call-context';
 export {
-  type Caller,
+  Caller,
   type CallerKind,
-  type CallingOperation,
-  type DelegateCaller,
-  type GuestCaller,
-  type ModuleCaller,
-  moduleCaller,
-  originOf,
-  type SystemCaller,
-  subjectOf,
-  systemCaller,
-  type UserCaller,
+  type CallerLog,
+  DelegateCaller,
+  GuestCaller,
+  type Identified,
+  type OperationRef,
+  type PersonCaller,
+  SystemCaller,
+  UserCaller,
 } from './kernel/caller/caller';
 export { type CoreError, CoreErrors } from './kernel/errors/core-errors';
 export {

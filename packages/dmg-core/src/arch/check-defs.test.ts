@@ -294,9 +294,9 @@ describe('checkDefs', () => {
       ]);
     });
 
-    it('вызываемый UC не допускает module в callers — нарушение', () => {
+    it('вызываемый UC не допускает system в callers — нарушение', () => {
       expect(report(withCalls([CreateItemUcDef]))).toEqual([
-        'MAN-05: ER alpha.addNote: UC beta.createItem не объявляет module в callers',
+        'MAN-05: ER alpha.addNote: UC beta.createItem не объявляет system в callers',
       ]);
     });
 
@@ -474,7 +474,7 @@ describe('checkDefs', () => {
       description: 'Запись внешнего модуля — Def без реализации.',
       type: 'query',
       aggregate: OuterItemArDef,
-      callers: ['module'],
+      callers: ['system'],
       policy: allowAll,
       input: v.object({ itemId: F.uuid('записи') }),
       output: v.object({}),

@@ -17,7 +17,7 @@ describe('StartQuestionnaireUcDef', () => {
       name: 'startQuestionnaire',
       type: 'command',
       aggregate: 'questionnaire',
-      callers: ['module'],
+      callers: ['system'],
       errors: [],
       emits: ['questionnaire.questionnaire.started'],
     });

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'bun:test';
-import type { Caller } from '#core/kernel/caller/caller';
-import { moduleCaller, systemCaller } from '#core/kernel/caller/caller';
+import {
+  type Caller,
+  DelegateCaller,
+  GuestCaller,
+  type OperationRef,
+  SystemCaller,
+  UserCaller,
+} from '#core/kernel/caller/caller';
 import { definePolicy } from './define-policy';
 import {
   allOf,
@@ -13,20 +19,18 @@ import {
 } from './policy';
 
 type Role = 'admin' | 'author';
-type User = { id: string; hasRole(role: Role): boolean };
+type User = { uuid: string; id: string; hasRole(role: Role): boolean };
 type Ctx = { ownerId: string };
 
 const user = (id: string, ...roles: Role[]): User => ({
+  uuid: id,
   id,
   hasRole: (role) => roles.includes(role),
 });
-const as = (u: User): Caller<User> => ({ kind: 'user', user: u });
-const delegateOf = (subject: User): Caller<User> => ({
-  kind: 'delegate',
-  subject,
-  actor: user('zam'),
-  delegationId: 'd1',
-});
+const as = (u: User) => new UserCaller(u);
+const delegateOf = (subject: User) =>
+  new DelegateCaller(subject, user('zam'), 'd1');
+const job: OperationRef = { kind: 'job', module: 'todo', name: 'archive' };
 
 const isOwner = rule({
   name: 'isOwner',
@@ -71,29 +75,33 @@ describe('rule', () => {
     );
   });
 
-  it('module — субъект и делегирование по origin (D-42)', () => {
-    const from = { dmg: 'useCase', name: 'notify' } as const;
-    expect(isOwner.evaluate(moduleCaller(from, as(user('u1'))), ctx)).toEqual(
-      allowed,
-    );
+  it('system с человеком — субъект и делегирование по человеку (D-43)', () => {
+    const from: OperationRef = {
+      kind: 'useCase',
+      module: 'wish',
+      name: 'notify',
+    };
     expect(
-      isOwner.evaluate(moduleCaller(from, as(user('u2'))), ctx).allowed,
+      isOwner.evaluate(new SystemCaller(from, as(user('u1'))), ctx),
+    ).toEqual(allowed);
+    expect(
+      isOwner.evaluate(new SystemCaller(from, as(user('u2'))), ctx).allowed,
     ).toBe(false);
-    const viaDelegate = moduleCaller(from, delegateOf(user('u1')));
+    const viaDelegate = new SystemCaller(from, delegateOf(user('u1')));
     expect(isOwner.evaluate(viaDelegate, ctx)).toEqual(allowed);
     expect(ownPrivate.evaluate(viaDelegate, ctx).allowed).toBe(false);
   });
 
-  it('без субъекта (guest, system) — отказ', () => {
-    expect(isOwner.evaluate({ kind: 'guest' }, ctx).allowed).toBe(false);
-    expect(isOwner.evaluate(systemCaller('todo.job'), ctx).allowed).toBe(false);
+  it('без субъекта (guest, system без человека) — отказ', () => {
+    expect(isOwner.evaluate(new GuestCaller(), ctx).allowed).toBe(false);
+    expect(isOwner.evaluate(new SystemCaller(job), ctx).allowed).toBe(false);
   });
 });
 
 describe('allowAll', () => {
   it('пропускает любого вызывающего, включая guest и system', () => {
-    expect(allowAll.evaluate({ kind: 'guest' }, undefined)).toEqual(allowed);
-    expect(allowAll.evaluate(systemCaller('todo.job'), undefined)).toEqual(
+    expect(allowAll.evaluate(new GuestCaller(), undefined)).toEqual(allowed);
+    expect(allowAll.evaluate(new SystemCaller(job), undefined)).toEqual(
       allowed,
     );
   });
@@ -147,10 +155,8 @@ describe('композиция', () => {
     expect(both.evaluate(as(user('u1', 'admin', 'author')), ctx)).toEqual(
       allowed,
     );
-    const roleOnly: Caller<{ hasRole(role: Role): boolean }> = {
-      kind: 'user',
-      user: { hasRole: () => true },
-    };
+    const roleOnly: Caller<{ uuid: string; hasRole(role: Role): boolean }> =
+      new UserCaller({ uuid: 'r', hasRole: () => true });
     // @ts-expect-error у субъекта нет id, нужного isOwner
     both.evaluate(roleOnly, ctx);
   });

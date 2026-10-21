@@ -26,7 +26,7 @@ export const CoreErrors = buildErrors('', {
         v.pipe(
           v.string(),
           v.description(
-            'Операция другого модуля, не объявившая UC в `calls` (у `module`)',
+            'Операция другого модуля, не объявившая UC в `calls` (у `system`)',
           ),
         ),
       ),

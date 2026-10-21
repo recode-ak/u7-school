@@ -33,6 +33,7 @@ export {
   type RequestMeta,
   requestTrace,
   type Trace,
+  type TraceChannel,
 } from './trace';
 export {
   contractUnitOfWork,

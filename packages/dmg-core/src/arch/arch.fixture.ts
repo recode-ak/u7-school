@@ -58,7 +58,7 @@ export const GetItemUcDef = defineUseCase({
   description: 'Позиция по идентификатору — для других модулей.',
   type: 'query',
   aggregate: ItemArDef,
-  callers: ['module'],
+  callers: ['system'],
   policy: allowAll,
   input: v.object({ itemId: F.uuid('позиции') }),
   output: v.object({ title: F.string('Название') }),

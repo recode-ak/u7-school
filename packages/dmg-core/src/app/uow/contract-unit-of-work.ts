@@ -8,7 +8,7 @@ import { UnitOfWork } from './unit-of-work';
 export type OperationContract = {
   /** Имя операции — источник записи в логе. */
   readonly source: string;
-  readonly caller: Caller<unknown>;
+  readonly caller: Caller;
   readonly trace: Trace;
   readonly emits: readonly AnyEventDef[];
   readonly touches?: readonly AnyAggregateDef[];

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
+import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import type { CallContext } from '#core/kernel/caller/call-context';
-import { systemCaller } from '#core/kernel/caller/caller';
+import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
 import { testAppContext } from '#core/testing/app-context';
@@ -8,7 +9,9 @@ import {
   ArchiveDoneTasksJobDef,
   type TaskAr,
   TaskEvents,
+  TodoModuleDef,
 } from '#core/testing/example/todo/index';
+import { UsersModuleDef } from '#core/testing/example/users/index';
 import { expectErr, expectOk } from '#core/testing/index';
 import { MemoryTasks, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
@@ -19,8 +22,8 @@ import { JobFromDef, type JobReport, type JobRun } from './job-from-def';
 type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
 
 class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
-  constructor(deps: Deps) {
-    super(ArchiveDoneTasksJobDef, deps);
+  constructor(deps: Deps, module: AnyModuleDef = TodoModuleDef) {
+    super(ArchiveDoneTasksJobDef, deps, module);
   }
 
   protected async run(job: JobRun): Promise<JobReport> {
@@ -64,10 +67,7 @@ describe('JobFromDef.handle', () => {
       TaskEvents.archived.name,
       TaskEvents.archived.name,
     ]);
-    expect(ctx.published[0]?.caller).toEqual({
-      kind: 'system',
-      source: 'archiveDoneTasks',
-    });
+    expect(ctx.published[0]?.caller).toEqual(new SystemCaller(job.ref));
   });
 
   test('прогон — причина и correlationId всех его событий', async () => {
@@ -82,12 +82,27 @@ describe('JobFromDef.handle', () => {
     expect(traces).toEqual([run, run]);
   });
 
-  test('контекст вызова фасада: Def задания, system-вызывающий, след прогона', async () => {
+  test('ref — вид, модуль и имя задания', () => {
+    expect(job.ref).toEqual({
+      kind: 'job',
+      module: 'todo',
+      name: 'archiveDoneTasks',
+    });
+  });
+
+  test('Job не из модуля — исключение сборки', () => {
+    expect(
+      () => new ArchiveDoneTasks({ app: ctx.app, tasks }, UsersModuleDef),
+    ).toThrow('Job archiveDoneTasks не входит в модуль users');
+  });
+
+  test('контекст вызова фасада: SystemCaller задания без человека, calls, след прогона', async () => {
     await job.handle();
     const [call] = job.calls;
     expect(job.calls).toHaveLength(1);
-    expect(call?.from).toBe(ArchiveDoneTasksJobDef);
-    expect(call?.caller).toEqual(systemCaller('archiveDoneTasks'));
+    expect(call?.caller).toEqual(new SystemCaller(job.ref));
+    expect(call?.caller.person()).toBeUndefined();
+    expect(call?.calls).toBe(ArchiveDoneTasksJobDef.calls);
     expect(call?.trace).toBe(job.runs[0]);
   });
 

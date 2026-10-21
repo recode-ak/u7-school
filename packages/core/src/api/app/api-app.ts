@@ -1,10 +1,11 @@
-import type {
-  AnyUseCaseDef,
+import {
+  type AnyUseCaseDef,
   Caller,
-  InputOf,
-  OutputOf,
-  Result,
-  UseCaseErrorOf,
+  type Identified,
+  type InputOf,
+  type OutputOf,
+  type Result,
+  type UseCaseErrorOf,
 } from 'dmg-core';
 import {
   type AnyModuleFromDef,
@@ -41,11 +42,11 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
 
   // Модули DMG живут рядом с legacy (strangler): их UC — через run/execute
   // по Def, реакции — на общей шине, задания — в общем планировщике.
-  private readonly dmgModules: AnyModuleFromDef<TActor>[] = [];
+  private readonly dmgModules: AnyModuleFromDef<DmgActor<TActor>>[] = [];
   private dmgUnsubscribes: Array<() => void> = [];
 
   /** Подключает модули DMG; вызывать до init(). */
-  addDmgModules(...modules: AnyModuleFromDef<TActor>[]): this {
+  addDmgModules(...modules: AnyModuleFromDef<DmgActor<TActor>>[]): this {
     this.dmgModules.push(...modules);
     return this;
   }
@@ -97,7 +98,7 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
   async run<D extends AnyUseCaseDef>(
     uc: D,
     input: InputOf<D>,
-    caller: Caller<TActor>,
+    caller: Caller<DmgActor<TActor>>,
     meta: RequestMeta,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
     return this.dmgUseCase(uc).handle(input, caller, requestTrace(meta));
@@ -115,7 +116,7 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
   execute<D extends AnyUseCaseDef>(
     uc: D,
     input: InputOf<D>,
-    caller: Caller<TActor>,
+    caller: Caller<DmgActor<TActor>>,
     meta: RequestMeta,
   ): Promise<OutputOf<D>>;
   async execute(
@@ -125,7 +126,7 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     meta?: RequestMeta,
   ): Promise<unknown> {
     if (typeof uc !== 'string') {
-      if (!isCaller<TActor>(who) || meta === undefined) {
+      if (!isCaller<DmgActor<TActor>>(who) || meta === undefined) {
         throw new Error(`ApiApp: для UC ${uc.name} нужны Caller и meta`);
       }
       const res = await this.dmgUseCase(uc).handle(
@@ -163,17 +164,15 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
 }
 
 /**
- * Перегрузка `execute` для Def гарантирует `Caller<TActor>` типом;
- * реализации перегрузок TS этого не передаёт, поэтому — проверка вида.
+ * Актор так, как его видят модули DMG: с `uuid` для лога вызывающего
+ * (D-43). Legacy-часть `ApiApp` принимает актора как есть.
  */
-function isCaller<U>(value: unknown): value is Caller<U> {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'kind' in value &&
-    (value.kind === 'guest' ||
-      value.kind === 'user' ||
-      value.kind === 'delegate' ||
-      value.kind === 'system')
-  );
+type DmgActor<TActor> = TActor & Identified;
+
+/**
+ * Перегрузка `execute` для Def гарантирует `Caller<TActor>` типом;
+ * реализации перегрузок TS этого не передаёт, поэтому — проверка класса.
+ */
+function isCaller<U extends Identified>(value: unknown): value is Caller<U> {
+  return value instanceof Caller;
 }

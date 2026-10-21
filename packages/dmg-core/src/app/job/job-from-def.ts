@@ -1,6 +1,7 @@
 import type { AnyJobDef } from '#core/domain/contracts/define-job';
+import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import type { CallContext } from '#core/kernel/caller/call-context';
-import { type SystemCaller, systemCaller } from '#core/kernel/caller/caller';
+import { type OperationRef, SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
@@ -25,27 +26,35 @@ export type JobRun = {
  * Реализация Job по Def (API-05). Наследник пишет `run`: загрузить записи и
  * пройти их через `job.forEach` — у каждой своя UoW, отказ или исключение
  * записи пишется в лог и не прерывает обход (API-06). Вызывающий —
- * `system` с источником = имя Job; регистрация агрегата вне `scans` —
+ * `SystemCaller` этого Job без человека; регистрация агрегата вне `scans` —
  * исключение, в production — `warn` в лог.
  */
 export abstract class JobFromDef<D extends AnyJobDef, R extends ModuleDeps> {
-  protected readonly caller: SystemCaller<unknown>;
+  /** Это задание — `from` его вызывающего (D-43). */
+  readonly ref: OperationRef;
+  protected readonly caller: SystemCaller;
 
+  /** `module` — Def модуля-владельца; Job не из его `jobs` — исключение. */
   constructor(
     readonly def: D,
     protected readonly resolve: R,
+    module: AnyModuleDef,
   ) {
-    this.caller = systemCaller(def.name);
+    if (!module.jobs.includes(def)) {
+      throw new Error(`Job ${def.name} не входит в модуль ${module.name}`);
+    }
+    this.ref = { kind: 'job', module: module.name, name: def.name };
+    this.caller = new SystemCaller(this.ref);
   }
 
   protected abstract run(job: JobRun): Promise<JobReport>;
 
   /**
-   * Контекст вызова фасада другого модуля (D-42): это задание — `from`,
-   * вызывающий — его `system`, след — прогона (`job.trace`).
+   * Контекст вызова фасада другого модуля (D-42): вызывающий — его
+   * `SystemCaller`, след — прогона (`job.trace`).
    */
   protected callContext(trace: Trace): CallContext {
-    return { from: this.def, caller: this.caller, trace };
+    return { caller: this.caller, calls: this.def.calls, trace };
   }
 
   /** Текущий момент по часам приложения — передаётся в операции домена. */

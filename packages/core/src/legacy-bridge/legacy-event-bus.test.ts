@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { systemCaller } from 'dmg-core';
+import { SystemCaller } from 'dmg-core';
 import type { EnvelopeOf } from 'dmg-core/app';
 import { TaskEvents } from 'dmg-core/testing/example/todo/index';
 import type { DomainEvent as LegacyEvent } from '#domain-legacy/events/domain-event';
@@ -14,7 +14,7 @@ function completed(): EnvelopeOf<typeof TaskEvents.completed> {
     eventId: 'e-1',
     occurredAt: AT,
     aggregateId: 't-1',
-    caller: systemCaller('test'),
+    caller: new SystemCaller({ kind: 'job', module: 'todo', name: 'test' }),
     cause: { kind: 'request', requestId: 'r-1' },
     correlationId: 'r-1',
   };
@@ -126,7 +126,11 @@ describe('legacyEventBus — входящие legacy-события (D-37)', () 
         eventId: 'L-1',
         occurredAt: AT,
         aggregateId: TASK,
-        caller: systemCaller('legacy:task:done'),
+        caller: new SystemCaller({
+          kind: 'useCase',
+          module: 'legacy',
+          name: 'task:done',
+        }),
         cause: { kind: 'event', eventId: 'L-1' },
         correlationId: 'L-1',
       },

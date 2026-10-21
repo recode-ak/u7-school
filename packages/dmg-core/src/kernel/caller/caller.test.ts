@@ -2,112 +2,144 @@ import { describe, expect, it } from 'bun:test';
 import {
   type Caller,
   type CallerKind,
-  type CallingOperation,
-  moduleCaller,
-  originOf,
-  subjectOf,
-  systemCaller,
+  DelegateCaller,
+  GuestCaller,
+  type OperationRef,
+  type PersonCaller,
+  SystemCaller,
+  UserCaller,
 } from './caller';
 
-type User = { id: string };
+type User = { readonly uuid: string };
 
-const alice: User = { id: 'alice' };
-const bob: User = { id: 'bob' };
+const alice: User = { uuid: 'alice' };
+const bob: User = { uuid: 'bob' };
 
-describe('subjectOf', () => {
-  it('user — он сам', () => {
-    const caller: Caller<User> = { kind: 'user', user: alice };
-    expect(subjectOf(caller)).toBe(alice);
-  });
-
-  it('delegate — замещаемый, а не заместитель', () => {
-    const caller: Caller<User> = {
-      kind: 'delegate',
-      subject: alice,
-      actor: bob,
-      delegationId: 'd1',
-    };
-    expect(subjectOf(caller)).toBe(alice);
-  });
-
-  it('guest и system — без субъекта', () => {
-    const guest: Caller<User> = {
-      kind: 'guest',
-      channel: 'telegram',
-      channelId: '1',
-    };
-    expect(subjectOf(guest)).toBeUndefined();
-    expect(
-      subjectOf(systemCaller<User>('todo.todo.completed')),
-    ).toBeUndefined();
-  });
-});
-
-describe('module', () => {
-  const from: CallingOperation = { dmg: 'useCase', name: 'notify', calls: [] };
-  const user: Caller<User> = { kind: 'user', user: alice };
-  const delegate: Caller<User> = {
-    kind: 'delegate',
-    subject: alice,
-    actor: bob,
-    delegationId: 'd1',
-  };
-
-  it('moduleCaller несёт вызвавшую операцию и исходного вызывающего', () => {
-    expect(moduleCaller(from, user)).toEqual({
-      kind: 'module',
-      from,
-      origin: user,
-    });
-  });
-
-  it('субъект — субъект origin, в том числе через цепочку модулей', () => {
-    expect(subjectOf(moduleCaller(from, user))).toBe(alice);
-    expect(subjectOf(moduleCaller(from, delegate))).toBe(alice);
-    expect(subjectOf(moduleCaller(from, moduleCaller(from, user)))).toBe(alice);
-    expect(
-      subjectOf(moduleCaller(from, systemCaller<User>('job'))),
-    ).toBeUndefined();
-  });
-
-  it('originOf — исходный вызывающий цепочки модулей', () => {
-    expect(originOf(user)).toBe(user);
-    expect(originOf(moduleCaller(from, moduleCaller(from, delegate)))).toBe(
-      delegate,
-    );
-  });
-});
-
-describe('systemCaller', () => {
-  it('несёт источник и исходного вызывающего', () => {
-    const origin: Caller<User> = { kind: 'user', user: alice };
-    const caller = systemCaller('todo.todo.completed', origin);
-    expect(caller).toEqual({
-      kind: 'system',
-      source: 'todo.todo.completed',
-      onBehalfOf: origin,
-    });
-  });
-});
+const ucRef: OperationRef = {
+  kind: 'useCase',
+  module: 'wish',
+  name: 'createCourseWish',
+};
+const erRef: OperationRef = {
+  kind: 'eventReaction',
+  module: 'todo',
+  name: 'archiveRemovedUserTasks',
+};
 
 describe('GuestCaller', () => {
-  it('канал и идентификатор в нём необязательны', () => {
-    const anonymous: Caller<User> = { kind: 'guest' };
-    expect(subjectOf(anonymous)).toBeUndefined();
+  const guest = new GuestCaller<User>();
+
+  it('без субъекта, исходный человек — он сам', () => {
+    expect(guest.kind).toBe('guest');
+    expect(guest.subject()).toBeUndefined();
+    expect(guest.person()).toBe(guest);
+  });
+
+  it('toLog — только вид', () => {
+    expect(guest.toLog()).toEqual({ kind: 'guest' });
   });
 });
 
-describe('CallerKind', () => {
-  it('пять подтипов', () => {
-    const kinds: CallerKind[] = [
+describe('UserCaller', () => {
+  const user = new UserCaller(alice);
+
+  it('субъект и исходный человек — он сам', () => {
+    expect(user.kind).toBe('user');
+    expect(user.subject()).toBe(alice);
+    expect(user.person()).toBe(user);
+  });
+
+  it('toLog — uuid субъекта', () => {
+    expect(user.toLog()).toEqual({ kind: 'user', subjectId: 'alice' });
+  });
+});
+
+describe('DelegateCaller', () => {
+  const delegate = new DelegateCaller(alice, bob, 'd1');
+
+  it('субъект — замещаемый, а не заместитель', () => {
+    expect(delegate.kind).toBe('delegate');
+    expect(delegate.subject()).toBe(alice);
+    expect(delegate.actor).toBe(bob);
+    expect(delegate.delegationId).toBe('d1');
+    expect(delegate.person()).toBe(delegate);
+  });
+
+  it('toLog — субъект, заместитель и делегирование', () => {
+    expect(delegate.toLog()).toEqual({
+      kind: 'delegate',
+      subjectId: 'alice',
+      actorId: 'bob',
+      delegationId: 'd1',
+    });
+  });
+});
+
+describe('SystemCaller', () => {
+  it('без человека (ER, Job) — без субъекта', () => {
+    const system = new SystemCaller<User>(erRef);
+    expect(system.kind).toBe('system');
+    expect(system.from).toEqual(erRef);
+    expect(system.subject()).toBeUndefined();
+    expect(system.person()).toBeUndefined();
+    expect(system.toLog()).toEqual({ kind: 'system', from: erRef });
+  });
+
+  it('с человеком — его субъект, в том числе замещаемый', () => {
+    const user = new UserCaller(alice);
+    const delegate = new DelegateCaller(alice, bob, 'd1');
+    expect(new SystemCaller(ucRef, user).subject()).toBe(alice);
+    expect(new SystemCaller(ucRef, user).person()).toBe(user);
+    expect(new SystemCaller(ucRef, delegate).subject()).toBe(alice);
+    expect(new SystemCaller<User>(ucRef, new GuestCaller()).subject()).toBe(
+      undefined,
+    );
+  });
+
+  it('вложенный вызов передаёт исходного человека — матрёшки нет', () => {
+    const user = new UserCaller(alice);
+    const outer = new SystemCaller(ucRef, user);
+    const inner = new SystemCaller(erRef, outer.person());
+    expect(inner.person()).toBe(user);
+    expect(inner.subject()).toBe(alice);
+  });
+
+  it('человек по типу — не SystemCaller', () => {
+    // @ts-expect-error системный вызывающий не бывает исходным человеком
+    const _person: PersonCaller<User> = new SystemCaller<User>(erRef);
+    expect(_person).toBeInstanceOf(SystemCaller);
+  });
+
+  it('toLog — операция и запись человека', () => {
+    const caller = new SystemCaller(ucRef, new UserCaller(alice));
+    expect(caller.toLog()).toEqual({
+      kind: 'system',
+      from: ucRef,
+      person: { kind: 'user', subjectId: 'alice' },
+    });
+  });
+});
+
+describe('Caller', () => {
+  it('общий тип принимает все виды', () => {
+    const callers: Caller<User>[] = [
+      new GuestCaller(),
+      new UserCaller(alice),
+      new DelegateCaller(alice, bob, 'd1'),
+      new SystemCaller(erRef),
+    ];
+    expect(callers.map((c) => c.kind)).toEqual([
       'guest',
       'user',
       'delegate',
-      'module',
       'system',
-    ];
-    // @ts-expect-error неизвестный подтип
-    const bad: CallerKind = 'admin';
-    expect(kinds).toHaveLength(5);
+    ]);
+  });
+
+  it('CallerKind — четыре вида, module нет', () => {
+    const kinds: CallerKind[] = ['guest', 'user', 'delegate', 'system'];
+    // @ts-expect-error вызывающего module больше нет (D-43)
+    const _module: CallerKind = 'module';
+    expect(kinds).toHaveLength(4);
   });
 });

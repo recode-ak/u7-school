@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { type Caller, systemCaller } from '#core/kernel/caller/caller';
+import { type Caller, SystemCaller } from '#core/kernel/caller/caller';
 import {
   TaskAr,
   TaskArDef,
@@ -17,7 +17,11 @@ const AT = Date.UTC(2026, 9, 18, 12, 0);
 const A = 'a1b2c3d4-0000-4000-8000-00000000000a';
 const B = 'a1b2c3d4-0000-4000-8000-00000000000b';
 const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
-const CALLER: Caller = systemCaller('test');
+const CALLER: Caller = new SystemCaller({
+  kind: 'job',
+  module: 'todo',
+  name: 'test',
+});
 const TRACE: Trace = {
   cause: { kind: 'event', eventId: 'e-0' },
   correlationId: 'c-0',

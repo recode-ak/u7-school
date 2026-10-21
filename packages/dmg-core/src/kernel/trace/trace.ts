@@ -13,4 +13,15 @@ export type Cause =
 export type Trace = {
   readonly cause: Cause;
   readonly correlationId: string;
+  /**
+   * Канал входа (`telegram`, `web`, …) и посетитель в нём (tgId, id
+   * анонимной сессии): задаётся на входе и идёт по цепочке (D-43).
+   */
+  readonly channel?: TraceChannel;
+};
+
+/** Канал входа операции и посетитель в нём. */
+export type TraceChannel = {
+  readonly name: string;
+  readonly visitorId?: string;
 };

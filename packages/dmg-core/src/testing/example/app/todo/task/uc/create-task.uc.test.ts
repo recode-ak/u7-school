@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { requestTrace } from '#core/app/trace';
-import type { Caller } from '#core/kernel/caller/caller';
+import { UserCaller } from '#core/kernel/caller/caller';
 import type { ExampleUser } from '#core/testing/example/app/app-user';
 import { OPEN_TASKS_LIMIT } from '#core/testing/example/todo/task/task.rules';
 import { expectErr, expectOk, testAppContext } from '#core/testing/index';
@@ -13,10 +13,10 @@ import { CreateTaskUc } from './create-task.uc';
 const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
 const REQ = requestTrace({ requestId: 'r-1' });
 
-const owner: Caller<ExampleUser> = {
-  kind: 'user',
-  user: { uuid: OWNER, hasRole: () => false },
-};
+const owner = new UserCaller<ExampleUser>({
+  uuid: OWNER,
+  hasRole: () => false,
+});
 
 let dir: string;
 let tasks: TaskJsonRepo;

@@ -1,14 +1,24 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
+import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import type { CallContext } from '#core/kernel/caller/call-context';
-import type { Caller, SystemCaller } from '#core/kernel/caller/caller';
+import {
+  type Caller,
+  SystemCaller,
+  UserCaller,
+} from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
 import {
   ArchiveRemovedUserTasksErDef,
   TaskAr,
   TaskEvents,
+  TodoModuleDef,
 } from '#core/testing/example/todo/index';
-import { UserArDef, UserEvents } from '#core/testing/example/users/index';
+import {
+  UserArDef,
+  UserEvents,
+  UsersModuleDef,
+} from '#core/testing/example/users/index';
 import {
   expectErr,
   expectOk,
@@ -22,7 +32,7 @@ import type { Cause, Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { ReactionFromDef } from './reaction-from-def';
 
-const ADMIN: Caller = { kind: 'user', user: { uuid: 'admin' } };
+const ADMIN: Caller = new UserCaller({ uuid: 'admin' });
 
 const removed = (): EnvelopeOf<typeof UserEvents.removed> => ({
   ...UserEvents.removed.make({ userId: OWNER }),
@@ -44,7 +54,7 @@ class ArchiveRemovedUserTasks extends ReactionFromDef<
   step = async (
     event: EnvelopeOf<typeof UserEvents.removed>,
     uow: UnitOfWork,
-    caller: SystemCaller<unknown>,
+    caller: SystemCaller,
     deps: Deps,
   ): Promise<Result<void, DomainError>> => {
     this.seen = caller;
@@ -55,16 +65,16 @@ class ArchiveRemovedUserTasks extends ReactionFromDef<
     }
     return ok();
   };
-  seen: SystemCaller<unknown> | undefined;
+  seen: SystemCaller | undefined;
 
-  constructor(deps: Deps) {
-    super(ArchiveRemovedUserTasksErDef, deps);
+  constructor(deps: Deps, module: AnyModuleDef = TodoModuleDef) {
+    super(ArchiveRemovedUserTasksErDef, deps, module);
   }
 
   protected react(
     event: EnvelopeOf<typeof UserEvents.removed>,
     uow: UnitOfWork,
-    caller: SystemCaller<unknown>,
+    caller: SystemCaller,
     trace: Trace,
   ) {
     this.seenTrace = trace;
@@ -88,7 +98,7 @@ beforeEach(() => {
 });
 
 describe('ReactionFromDef.handle', () => {
-  test('Ok → фиксация и события с причиной и system-вызывающим', async () => {
+  test('Ok → фиксация и события с причиной и SystemCaller реакции', async () => {
     expectOk(await er.handle(removed()));
     expect(tasks.rows.get(TASK)?.status).toBe('archived');
     const event: Cause = { kind: 'event', eventId: 'e-removed' };
@@ -98,28 +108,40 @@ describe('ReactionFromDef.handle', () => {
       [TaskEvents.archived.name, event, 'c-1'],
       [TaskEvents.archived.name, event, 'c-1'],
     ]);
-    expect(ctx.published[0]?.caller).toEqual({
-      kind: 'system',
-      source: 'archiveRemovedUserTasks',
-      onBehalfOf: ADMIN,
+    expect(ctx.published[0]?.caller).toEqual(new SystemCaller(er.ref));
+  });
+
+  test('ref — вид, модуль и имя реакции', () => {
+    expect(er.ref).toEqual({
+      kind: 'eventReaction',
+      module: 'todo',
+      name: 'archiveRemovedUserTasks',
     });
   });
 
-  test('для вызова UC — system от имени автора и след цепочки', async () => {
+  test('ER не из модуля — исключение сборки', () => {
+    expect(
+      () =>
+        new ArchiveRemovedUserTasks({ app: ctx.app, tasks }, UsersModuleDef),
+    ).toThrow('ER archiveRemovedUserTasks не входит в модуль users');
+  });
+
+  test('для вызова UC — SystemCaller без человека (D-43) и след цепочки', async () => {
     await er.handle(removed());
-    expect(er.seen?.onBehalfOf).toEqual(ADMIN);
+    expect(er.seen).toEqual(new SystemCaller(er.ref));
+    expect(er.seen?.person()).toBeUndefined();
     expect(er.seenTrace).toEqual({
       cause: { kind: 'event', eventId: 'e-removed' },
       correlationId: 'c-1',
     });
   });
 
-  test('контекст вызова фасада: Def реакции, system-вызывающий, след', async () => {
+  test('контекст вызова фасада: SystemCaller реакции, её calls, след', async () => {
     await er.handle(removed());
-    const { from, caller, trace } = er.seenCall ?? {};
-    expect([from, caller, trace]).toEqual([
-      ArchiveRemovedUserTasksErDef,
+    const { caller, calls, trace } = er.seenCall ?? {};
+    expect([caller, calls, trace]).toEqual([
       er.seen,
+      ArchiveRemovedUserTasksErDef.calls,
       er.seenTrace,
     ]);
   });

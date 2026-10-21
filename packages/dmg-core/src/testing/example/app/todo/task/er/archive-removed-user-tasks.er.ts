@@ -5,13 +5,16 @@ import {
 import type { UnitOfWork } from '#core/app/uow/unit-of-work';
 import { ok } from '#core/kernel/result/result';
 import type { TodoDeps } from '#core/testing/example/app/todo/todo.module';
-import { ArchiveRemovedUserTasksErDef } from '#core/testing/example/todo/index';
+import {
+  ArchiveRemovedUserTasksErDef,
+  TodoModuleDef,
+} from '#core/testing/example/todo/index';
 
 type Def = typeof ArchiveRemovedUserTasksErDef;
 
 export class ArchiveRemovedUserTasksEr extends ReactionFromDef<Def, TodoDeps> {
   constructor(deps: TodoDeps) {
-    super(ArchiveRemovedUserTasksErDef, deps);
+    super(ArchiveRemovedUserTasksErDef, deps, TodoModuleDef);
   }
 
   protected async react(event: ReactionEnvelopeOf<Def>, uow: UnitOfWork) {

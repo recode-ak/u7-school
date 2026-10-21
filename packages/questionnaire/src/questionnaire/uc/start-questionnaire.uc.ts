@@ -2,7 +2,10 @@
 // DEBT-21, DEBT-22: субъект вызывающего — legacy `User` (`@u7-scl/app`):
 // его ждёт legacy `startStandard`; уйдёт при миграции модуля анкет.
 import type { User } from '@u7-scl/app/domain';
-import { StartQuestionnaireUcDef } from '@u7-scl/domain/questionnaire/contract';
+import {
+  QuestionnaireModuleDef,
+  StartQuestionnaireUcDef,
+} from '@u7-scl/domain/questionnaire/contract';
 import { type Caller, ok } from 'dmg-core';
 import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
 import type { QuestionnaireModuleDeps } from '../../questionnaire.module';
@@ -20,14 +23,14 @@ export class StartQuestionnaireUc extends UseCaseFromDef<
   User
 > {
   constructor(deps: QuestionnaireModuleDeps) {
-    super(StartQuestionnaireUcDef, deps);
+    super(StartQuestionnaireUcDef, deps, QuestionnaireModuleDef);
   }
 
   protected async load() {
     return ok(undefined);
   }
 
-  /** Респондент — субъект исходного вызывающего (`module` → `origin`). */
+  /** Респондент — субъект исходного человека (`SystemCaller.person()`). */
   protected async execute(
     { pool, owner }: ParsedInputOf<typeof StartQuestionnaireUcDef>,
     _: undefined,
