@@ -208,6 +208,32 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 - Не трогать: legacy-классы `api/**`, `apps/*`, `packages/{course,questionnaire,dmg-core}`, `conductor/`.
 
 
+## Ф8а: вызовы и граница модуля (платформа, D-43)
+
+**Источник формы:** D-43 в [decisions.md](../../../architecture/decisions.md), [caller.md](../../../architecture/caller.md) и детали Р1–Р10 в [OPEN-QUESTIONS-F8.md](../../../../OPEN-QUESTIONS-F8.md) (сигнатуры там — образец; расхождение с ними — в отчёт с обоснованием).
+
+**Порядок:** один шаг = одна задача плана Ф8а, по очереди (Р1 → Р2 → Р3 → Р4–Р5 → Р6 → Р7 → Р8 → Р9 → Р10 → перевод потребителей). Платформа — `domain-author`, Opus; Р10 в пакете и перевод потребителей — `api-author`.
+
+**Правила шага:**
+- TDD: сначала тест нового API в `dmg-core` и запуск (red), затем реализация (green) — по шагам, не одновременно.
+- Классы с зоной ответственности, не функции-хелперы (классы вместо россыпи функций — решение Нурболата); удаляемые функции удаляются, без алиасов и реэкспортов «для совместимости».
+- После шага `check` зелёный: платформенный шаг сам **механически** правит потребителей, чтобы компилировались и тесты проходили (учебный `dmg-core/src/testing/example`, `packages/domain/src/{course,questionnaire,wish}`, `packages/{course,questionnaire,wish}`, `packages/core/src/legacy-bridge`, `packages/core/src/api/app/api-app.ts`, шаблоны `scripts/gen`). Идиоматичный перевод потребителей и гайды «use case»/«facade» — последний шаг.
+- Тестов не меньше: удалённый API — его тесты переносятся на замену, а не удаляются молча.
+- `conductor/`, `data/` не трогать; тесты не пишут в `data/` (oplog в тестах — память или временный каталог).
+- Отклонения от D-43 и решения сверх него — в отчёт (оркестратор запишет в `TR-<n>`).
+
+**Шаги:**
+1. **Р1 `Caller`.** `kernel/caller`: абстрактный `Caller<U>` и `GuestCaller`/`UserCaller`/`DelegateCaller`/`SystemCaller(from: OperationRef, person?)`, `PersonCaller<U>`, `CallerLog`, `OperationRef`. `channel` — в `Trace.channel?: { name; visitorId? }`. `callers` — без `module`. Удалить `ModuleCaller`, `subjectOf`, `originOf`, `moduleCaller`, `systemCaller`. Временный мост для `from` фасада (до Р4–Р5) — `SystemCaller` с `OperationRef` вызвавшей операции.
+2. **Р2 Policy.** `Rule.evaluate(subject, ctx)`; `rule()` без субъекта — отказ; `delegable` удалить (и из `graph/normalize`). Policy в `UseCaseFromDef` вызывается всегда. Шаги `UseCaseFromDef` — `protected`: `checkCaller` → `parseInput` → `load` → `checkPolicy` → `checkRules` → `execute` → `parseOutput` → фиксация; тест наследника, ослабляющего `checkPolicy`.
+3. **Р3 модуль.** `ModuleFromDef.handle(def, input, caller, trace)`, `runJob(def, trace)`; `useCase(def)` не публичный; `ApiApp` и фасад — через `handle`.
+4. **Р4–Р5 `OperationFromDef` и фасад.** База UC/ER/Job (`now()`, типизированный `protected call` по `D['calls']`); `Facade<M>` и `SystemCallable<M>` в `dmg-core/domain` (контракты); `ModuleFacade<M>` (`serves`, `handle`) и `ModuleFacades` (в `ModuleDeps`, `call` выбирает фасад по `serves`) в `dmg-core/app`; `StubFacade<M>` в `dmg-core/testing`. Удалить `CallContext`, `callUseCase`, `fakeFacadeCall`, `this.callContext`, рантайм-проверку `calls` в `UseCaseFromDef`. `CourseModuleFacade`/`QuestionnaireModuleFacade` → `Facade<typeof CourseModuleDef>`/`Facade<typeof QuestionnaireModuleDef>`; их реализации в пакетах — `ModuleFacade`.
+5. **Р6 лог операций.** `OperationRecord`, `OperationLog` в `AppContext`; запись — последним шагом `OperationFromDef` при успехе и отказе; `uow.commit()` возвращает опубликованные события; JSONL-реализация по дням (каталог из конфигурации, в приложении — `data/oplog/`), порог размера `input`/`output` (≈8 КБ, обрезка с пометкой); тестовая реализация в памяти в `dmg-core/testing`. `.gitignore` и AGENTS.md — оркестратор.
+6. **Р7.** `calls` по типу — только UC с `'system'` в `callers`; `UNAUTHORIZED` без `from`; `Aggregate.readonly(state)` (полиморфный `this`) вместо `asReadonlyAr`; `caller` удалить из конверта события и из UoW, если больше не нужен (legacy-мост `legacyEventBus`, `legacy-publish.ts` — по месту).
+7. **Р8.** `protected createUow(caller, trace)` у `OperationFromDef` вместо `contractUnitOfWork`; класс `Trace` (`fromRequest`, `fromEvent`, `forJob`, `channel`, `toLog()`) вместо `requestTrace`/`incomingRequestId`; `protected static newState(uuid, at)` у `Aggregate` вместо `newEntity` (+ шаблон `gen aggregate`).
+8. **Р9.** `StartQuestionnaireUcDef.policy` — правило «респондент есть» (без субъекта — `ACCESS_DENIED`); тест адаптера.
+9. **Р10.** Домен: `WishAr.createForCourse → Result<WishAr, never>`, методы `questionnaire()` и `outcome()` из state, `CourseWishCreated` удалить (domain-author). Пакет: `create-course-wish` берёт ответ и анкету из них (api-author).
+10. **Перевод потребителей** (api-author): учебный модуль, `wish`, `course`, `questionnaire` — по идиоме D-43 (`this.call`, `ModuleFacade`, `StubFacade`, `Aggregate.readonly`); гайды «use case» и «facade» — оркестратор.
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
