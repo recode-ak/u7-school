@@ -1,3 +1,4 @@
+import type { CourseEnrollment } from '@u7-scl/domain/course/contract';
 import { defineRules, domainRule, err, ok, type ReadonlyAr } from 'dmg-core';
 import type { CreateWish, WishAr } from './wish.ar';
 import { WishErrors } from './wish.errors';
@@ -35,10 +36,37 @@ const unique = domainRule({
   },
 });
 
+/**
+ * Контекст допуска курса: курс из входа и ответ модуля курсов о записи
+ * на него (UC `getCourseEnrollment`, D-42) — делегирование минимумом.
+ */
+export type CourseEnrollableCtx = {
+  readonly courseId: string;
+  readonly enrollment: CourseEnrollment;
+};
+
+/**
+ * Желание на курс выражается, только если курс открыт для записи — допуск
+ * без субъекта (D-40). Решает модуль курсов (`enrollable`); здесь — перевод
+ * его ответа в ошибку желаний: «недоступен для записи» для студента
+ * неотличим от «нет курса» (`WISH_COURSE_NOT_FOUND`).
+ */
+const courseEnrollable = domainRule({
+  name: 'courseEnrollable',
+  label: 'Курс открыт для записи',
+  description:
+    'Желание пройти курс выражается, только если курс доступен для записи: опубликован, не в архиве и со стартовым модулем.',
+  error: WishErrors.COURSE_NOT_FOUND,
+  check: ({ courseId, enrollment }: CourseEnrollableCtx) =>
+    enrollment.enrollable
+      ? ok()
+      : WishErrors.COURSE_NOT_FOUND.err({ courseId }),
+});
+
 export const WishRules = defineRules({
   name: 'wish',
   label: 'Правила желаний',
   description:
     'Допустимость действий с желаниями при текущих состояниях желаний пользователя.',
-  rules: { unique },
+  rules: { courseEnrollable, unique },
 });

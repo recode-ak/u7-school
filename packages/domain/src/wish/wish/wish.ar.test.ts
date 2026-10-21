@@ -8,6 +8,8 @@ import { checkDefs, formatViolation } from 'dmg-core/arch';
 import { indexDefs } from 'dmg-core/graph';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import * as v from 'valibot';
+import coursePools from './pools/course.json';
+import { findCoursePool } from './pools/course-pool';
 import { WishAr, WishArDef } from './wish.ar';
 import { WishEvents } from './wish.events';
 import type { WishState, WishStatus, WishTargetVo } from './wish.state';
@@ -91,6 +93,78 @@ describe('WishAr.create', () => {
       expect(ar.pullEvents()).toEqual([]);
     },
   );
+});
+
+const POOLED = Object.keys(coursePools)[0] as string;
+
+describe('WishAr.createForCourse', () => {
+  it('у курса есть пул — pending, анкета к запуску: пул и { courseId }', () => {
+    const ar = expectOk(
+      WishAr.createForCourse(
+        { uuid: WISH, userId: USER, courseId: POOLED },
+        T1,
+      ),
+    );
+    expect(ar.snapshot()).toEqual({
+      ...stored('pending'),
+      target: { kind: 'course', courseId: POOLED },
+      createdAt: T1,
+      updatedAt: T1,
+    });
+    const questionnaire = ar.questionnaireToStart();
+    expect(questionnaire?.pool).toBeDefined();
+    expect(questionnaire?.pool).toBe(findCoursePool(POOLED));
+    expect(questionnaire?.owner).toEqual({ courseId: POOLED });
+    expect(ar.pullEvents()).toEqual([]);
+  });
+
+  it('у курса нет пула — expressed, анкета не нужна', () => {
+    const ar = expectOk(
+      WishAr.createForCourse(
+        { uuid: WISH, userId: USER, courseId: target.courseId },
+        T1,
+      ),
+    );
+    expect(ar.snapshot()).toEqual({
+      ...stored('expressed'),
+      createdAt: T1,
+      updatedAt: T1,
+    });
+    expect(ar.questionnaireToStart()).toBeUndefined();
+    expect(ar.pullEvents()).toEqual([]);
+  });
+});
+
+describe('WishAr.questionnaireToStart', () => {
+  it.each([
+    'expressed',
+    'pending',
+    'confirmed',
+    'cancelled',
+    'abandoned',
+    'fulfilled',
+  ] as const)('восстановленное %s — запускать нечего', (status) => {
+    const ar = WishAr.restore({
+      ...stored(status),
+      target: { kind: 'course', courseId: POOLED },
+    });
+    expect(ar.questionnaireToStart()).toBeUndefined();
+  });
+
+  it('create (legacy-вход со статусом) — запускать нечего', () => {
+    const ar = expectOk(
+      WishAr.create(
+        {
+          uuid: WISH,
+          userId: USER,
+          target: { kind: 'course', courseId: POOLED },
+          status: 'pending',
+        },
+        T1,
+      ),
+    );
+    expect(ar.questionnaireToStart()).toBeUndefined();
+  });
 });
 
 describe('WishAr.restore', () => {

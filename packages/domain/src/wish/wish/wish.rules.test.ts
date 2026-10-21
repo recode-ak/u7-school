@@ -117,3 +117,33 @@ describe('WishRules.unique', () => {
     );
   });
 });
+
+const { courseEnrollable } = WishRules.rules;
+
+describe('WishRules.courseEnrollable', () => {
+  it('описание правила ссылается на WISH_COURSE_NOT_FOUND', () => {
+    expect(courseEnrollable.dmg).toBe('domainRule');
+    expect(courseEnrollable.error.code).toBe('WISH_COURSE_NOT_FOUND');
+  });
+
+  it('курс открыт для записи — ok', () => {
+    expectOk(
+      courseEnrollable.check({
+        courseId: COURSE,
+        enrollment: { enrollable: true, startModuleId: MODULE },
+      }),
+    );
+  });
+
+  it('курс недоступен для записи — WISH_COURSE_NOT_FOUND с courseId', () => {
+    const error = expectErr(
+      courseEnrollable.check({
+        courseId: COURSE,
+        enrollment: { enrollable: false },
+      }),
+      'WISH_COURSE_NOT_FOUND',
+    );
+    expect(error.kind).toBe('not_found');
+    expect(error.payload).toEqual({ courseId: COURSE });
+  });
+});

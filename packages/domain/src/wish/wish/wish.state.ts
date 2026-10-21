@@ -1,23 +1,24 @@
 import { BaseEntityFields, F } from 'dmg-core';
 import * as v from 'valibot';
 
+/** Цель-курс: желание пройти курс (вся программа, начиная со стартового модуля). */
+export const WishCourseTargetVo = v.object({
+  kind: v.pipe(v.literal('course'), v.description('Цель — курс')),
+  courseId: F.uuid('курса'),
+});
+
+/** Цель-модуль: желание пройти конкретный модуль (следующий/тот же). */
+const WishModuleTargetVo = v.object({
+  kind: v.pipe(v.literal('module'), v.description('Цель — модуль')),
+  moduleId: F.uuid('модуля'),
+});
+
 /**
  * Цель желания — универсальная ссылка на объект желания.
- * Дискриминированный союз по `kind`:
- * - `course` — желание пройти курс (вся программа, начиная со стартового модуля);
- * - `module` — желание пройти конкретный модуль (следующий/тот же).
+ * Дискриминированный союз по `kind`: `course` или `module`.
  */
 export const WishTargetVo = v.pipe(
-  v.variant('kind', [
-    v.object({
-      kind: v.pipe(v.literal('course'), v.description('Цель — курс')),
-      courseId: F.uuid('курса'),
-    }),
-    v.object({
-      kind: v.pipe(v.literal('module'), v.description('Цель — модуль')),
-      moduleId: F.uuid('модуля'),
-    }),
-  ]),
+  v.variant('kind', [WishCourseTargetVo, WishModuleTargetVo]),
   v.description('Цель желания'),
 );
 
