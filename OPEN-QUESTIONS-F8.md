@@ -134,10 +134,20 @@ interface OperationLog { append(record: OperationRecord): Promise<void> }  // в
 - `asReadonlyAr` удаляется; в базе `Aggregate` — статический `readonly(state)` с полиморфным `this` (типизация — по `restore` конкретного Ar, без кода в каждом агрегате): `TaskAr.readonly(state): ReadonlyAr<TaskAr>`.
 - Из конверта события удаляется `caller` (и из контекста UoW, если больше не нужен): аудит — через oplog породившей операции (Р6).
 
+### Р8. Функции → объекты в рамках Ф8а
+- `contractUnitOfWork` → `protected createUow(caller, trace)` у `OperationFromDef`.
+- `requestTrace`/`incomingRequestId` и ручная сборка следа в ER/Job → класс `Trace` (`fromRequest`, `fromEvent`, `forJob`, `channel`, `toLog()`).
+- `newEntity` + символ-метка → `protected static newState(uuid, at)` у `Aggregate`.
+- Остальное (Def-классы, `Rule`-иерархия, `DefIndex`, `ArchChecker`, база репозитория с `Lock`/`assertVersion`, тестовые двойники) — отдельный трек `dmg-core-oop` (см. `conductor/tracks.md`), после `golden-wish`.
+
+### Р9. Ревизия TR-11
+- Подход принят: Def UC во внешнем контракте, адаптеры `UseCaseFromDef` над legacy в пакетах владельцев; после Ф8а — `callers: ['system']`, `Facade<typeof CourseModuleDef>` вместо `CourseModuleFacade`/`QuestionnaireModuleFacade`.
+- `GetCourseEnrollmentUcDef.policy = allowAll` — остаётся (ответ не зависит от субъекта).
+- `StartQuestionnaireUcDef.policy`: `allowAll` → правило «респондент есть» (без субъекта — `ACCESS_DENIED`, а не `SERVER_INTERNAL` из `subject()`).
+
 ## Не решено — обсудить после Ф8а
 
 ### В4. Принятые оркестратором решения Ф8 — на ревизию (смотреть код явно)
-- TR-11: UC-контракты и адаптеры внешних `course`/`questionnaire`; `StartQuestionnaireUcDef.policy = allowAll`.
 - TR-12: `createForCourse` → `{ wish, outcome, questionnaire? }`; принятые риски обхода `calls` (снимаются Р3–Р5).
 
 ## Решено в Ф8 (для справки)
