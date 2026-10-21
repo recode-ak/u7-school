@@ -1,47 +1,41 @@
 # Facade — гайд
 
-> ⚠️ **Устарел: D-42** (фасад без манифеста, связи «UC → UC» в `calls`, вызывающий `module`) и D-41 (место межмодульного эффекта). Переписывается в Ф8 `golden-wish` после платформы; до этого — читать D-41/D-42 в [decisions.md](../decisions.md).
-
-**Назначение:** runtime-API модуля для других модулей — контракт `<M>FacadeDef = defineFacade(...)` (`packages/domain/src/<m>/<m>.facade.ts`) и in-proc реализация `implementFacade` (`packages/<m>/src/<m>.facade.ts`). Заводится **только по потребителю** (D-38).
-
-> У `wish` фасада нет: другим модулям он не нужен, UI ходит через `appApi`. Эталон формы — учебный модуль `todo` платформы.
+**Назначение:** рантайм-граница модуля для других модулей без манифеста (D-42) — тип `<M>Facade` в домене владельца (`packages/domain/src/<m>/<m>.facade.ts`) и реализация над UC модуля (`packages/<m>/src/<m>.facade.ts`).
 
 ---
 
 ## 1. Когда применять
 
-- Есть потребитель: UC/ER/Job **другого** модуля, у которого этот модуль в `dependsOn`, вызывает его по `calls` (ARC-04, API-04). Нет такого потребителя — фасада нет.
+- Другой модуль (UC/ER/Job, у которого этот модуль в `dependsOn`) вызывает UC этого модуля. Связь объявляет вызывающий: Def вызываемого UC — в его `calls`; граф строит ребро «UC → UC», фасада в графе нет.
+- Метод фасада — обёртка над одним UC своего модуля: несложные преобразования входа и выхода допустимы, доменные решения — нет (их делают UC и домен владельца, API-04).
 - UI и внешние адаптеры фасад не используют: они вызывают UC через `appApi` (ARC-08).
-- Модуль не выставляет «на вырост» чтение всех агрегатов: метод появляется вместе с первым вызывающим и описывает его вопрос («задача по id»), а не таблицу.
-- Изменение состояния другого модуля — не через фасад-«сеттер», а событием и его ER ([events.md](./events.md)).
+- Вызов, меняющий чужой модуль (command), — место выбирает Нурболат по каждому случаю (D-41): в `execute` до фиксации или событием и ER.
+- Фасад отвязывает модули: in-proc сейчас, сетевой клиент при выходе в сервис — вызывающий код не меняется.
 
 ## 2. Команда
 
-`bun run gen module <m> --facade --write` создаёт `<m>.facade.ts` в домене и в пакете и подключает их к паспорту и карте модуля. Без `--facade` фасада нет нигде; добавить позже — те же два файла вручную по шаблону `scripts/gen/kinds/module.ts` и `app-module.ts`, поле `facade` в `defineModule` и в карте `ModuleFromDef`.
+Генератора фасада нет: тип и реализация пишутся по эталону. Вызываемый UC — `gen uc`, в его `callers` — `module`.
 
 ## 3. Эталон
 
-- [todo.facade.ts (контракт)](../../../packages/dmg-core/src/testing/example/todo/todo.facade.ts): `method<[args], Ret>()({ label, description, errors })`; возврат — `ReadonlyAr`, ошибки — ссылками на `ErrorDef` своей группы.
-- [todo.facade.ts (реализация)](../../../packages/dmg-core/src/testing/example/app/todo/todo.facade.ts): `implementFacade(TodoFacadeDef, { … })` над репозиторием из `deps`; отсутствие — `err` заявленной ошибки, а не `undefined`.
-- [todo.module.ts (паспорт)](../../../packages/dmg-core/src/testing/example/todo/todo.module.ts) — поле `facade`; [todo.module.ts (карта)](../../../packages/dmg-core/src/testing/example/app/todo/todo.module.ts) — `facade: todoFacade`.
-- [wish.module.ts](../../../packages/domain/src/wish/module.ts) — модуль без фасада (до Ф12 — legacy-мета).
+- [todo.facade.ts (тип)](../../../packages/dmg-core/src/testing/example/todo/todo.facade.ts): обычный TS-тип; первый аргумент метода — `CallContext`, ошибки — `UseCaseErrorOf` вызываемого UC.
+- [todo.facade.ts (реализация)](../../../packages/dmg-core/src/testing/example/app/todo/todo.facade.ts): `callUseCase(owner, Def, input, call)` подставляет вызывающего `module`; `asReadonlyAr(TaskAr, …)` превращает state в `ReadonlyAr`.
+- [course.facade.ts](../../../packages/course/src/course.facade.ts) и [questionnaire.facade.ts](../../../packages/questionnaire/src/questionnaire.facade.ts): фасады внешних модулей над временными UC-адаптерами (TR-11).
+- Потребитель: [create-course-wish.uc.ts](../../../packages/wish/src/wish/uc/create-course-wish.uc.ts) — `this.callContext(caller, trace)`, Def UC — в `calls` своего Def.
 
 ## 4. Чеклист правил
 
-- API-04 — межмодульно только фасады; метод возвращает `Result` и `ReadonlyAr`, не state и не изменяемый Ar.
-- ARC-04 — потребитель импортирует контракт через `index.ts` модуля и только по `dependsOn`.
-- ERR-02 — фасад возвращает только ошибки из `errors` метода и базовые.
-- ERR-03 — потребитель не переводит ошибки фасада без смены смысла.
-- MAN-01 — у фасада и каждого метода `label` и `description`.
-- MAN-05 — ER вызывает только фасады из своих `calls`.
+- API-04 — метод вызывает UC своего модуля, без доменных решений; `Result`, state — как `ReadonlyAr`.
+- MAN-05 — у вызывающего Def вызываемого UC в `calls`, у вызываемого — `module` в `callers`.
+- ARC-04 — вызывающий импортирует тип фасада через контракт модуля и только по `dependsOn`.
+- ARC-06 — пакет модуля не импортирует пакеты других модулей: фасад приходит через резолвер.
 
 ## 5. Типичные ловушки
 
-- **Фасад «на будущее».** Пустой или спекулятивный фасад — лишний контракт, который придётся сопровождать; `gen module` без `--facade` его не создаёт.
-- **Фасад для UI.** UI — через `appApi` и UC с `callers`, а не через фасад.
-- **Legacy-фасады зависимостей.** `CourseFacade` и др. возвращают `boolean`/`undefined` без `Result` — это не `defineFacade`; переводятся в треках своих модулей (бриф `wish`, вопрос 5).
-- **State наружу.** Метод отдаёт `ReadonlyAr`, а не снапшот: иначе потребитель читает поля, минуя вопросы Ar (D-39).
+- Логика в фасаде (ветвление по ответу UC) → в домен владельца или в его UC.
+- Вызов без `calls` → `UNAUTHORIZED` в рантайме и нарушение `checkDefs`; объявляй Def UC, а не фасад.
+- Ручная сборка `Caller` в фасаде → только через `callUseCase`.
 
 ## 6. Как тестировать
 
-Каждый метод — успех и каждая ошибка из `errors` (проверяется `code`); возвращаемый Ar — только для чтения (тип). Потребитель в тестах получает фасад-заглушку по `FacadeApi<typeof <M>FacadeDef>` ([testing.md](../testing.md)).
+У владельца: вызов через фасад проходит; ошибка UC приходит как есть; вызов не из `calls` — `UNAUTHORIZED` ([todo.facade.test.ts](../../../packages/dmg-core/src/testing/example/app/todo/todo.facade.test.ts), [course.facade.test.ts](../../../packages/course/src/course.facade.test.ts)). У потребителя — фейк типа фасада, проверка `from` в контексте вызова.
