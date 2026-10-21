@@ -62,15 +62,14 @@ describe('createWishModule', () => {
     const { module, wishes } = makeModule();
     const courseId = crypto.randomUUID();
 
-    const res = await module
-      .useCase(CreateCourseWishUcDef)
-      ?.handle(
-        { courseId },
-        new UserCaller(ACTOR),
-        requestTrace({ requestId: 'r-1' }),
-      );
+    const res = await module.handle(
+      CreateCourseWishUcDef,
+      { courseId },
+      new UserCaller(ACTOR),
+      requestTrace({ requestId: 'r-1' }),
+    );
 
-    expect(res && expectOk(res)).toEqual({ outcome: 'instant' });
+    expect(expectOk(res)).toEqual({ outcome: 'instant' });
     const stored = await wishes.findByUser(ACTOR.uuid);
     expect(stored.map((w) => w.snapshot().target)).toEqual([
       { kind: 'course', courseId },

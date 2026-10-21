@@ -101,7 +101,7 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     caller: Caller<DmgActor<TActor>>,
     meta: RequestMeta,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    return this.dmgUseCase(uc).handle(input, caller, requestTrace(meta));
+    return this.dmgModule(uc).handle(uc, input, caller, requestTrace(meta));
   }
 
   execute<N extends GetUcNamesFromMeta<TMeta>>(
@@ -129,7 +129,8 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
       if (!isCaller<DmgActor<TActor>>(who) || meta === undefined) {
         throw new Error(`ApiApp: для UC ${uc.name} нужны Caller и meta`);
       }
-      const res = await this.dmgUseCase(uc).handle(
+      const res = await this.dmgModule(uc).handle(
+        uc,
         attrs,
         who,
         requestTrace(meta),
@@ -154,12 +155,13 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     return module.execute(ucName, attrs, actor);
   }
 
-  private dmgUseCase<D extends AnyUseCaseDef>(uc: D) {
-    for (const module of this.dmgModules) {
-      const impl = module.useCase(uc);
-      if (impl !== undefined) return impl;
+  /** Модуль DMG, реализующий UC: вход в UC — только его `handle` (D-43). */
+  private dmgModule(uc: AnyUseCaseDef): AnyModuleFromDef<DmgActor<TActor>> {
+    const module = this.dmgModules.find((m) => m.serves(uc));
+    if (module === undefined) {
+      throw new Error(`ApiApp: UC ${uc.name} не зарегистрирован в модулях DMG`);
     }
-    throw new Error(`ApiApp: UC ${uc.name} не зарегистрирован в модулях DMG`);
+    return module;
   }
 }
 

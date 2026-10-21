@@ -227,6 +227,7 @@ ${deps}
 `;
     case 'job':
       return `import { describe, expect, it } from 'bun:test';
+import { jobTrace } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import type { ${c.deps} } from '../../${c.m}.module';
 import { ${c.className} } from './${c.base}';
@@ -234,7 +235,7 @@ import { ${c.className} } from './${c.base}';
 describe('${c.className}', () => {
   it('пустой прогон', async () => {
 ${deps}
-    const res = expectOk(await new ${c.className}(deps).handle());
+    const res = expectOk(await new ${c.className}(deps).handle(jobTrace()));
     expect(res).toEqual({ processed: 0, failed: 0 });
   });
 });

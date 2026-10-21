@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { incomingRequestId, requestTrace } from './trace';
+import { incomingRequestId, jobTrace, requestTrace } from './trace';
 
 describe('requestTrace', () => {
   test('причина — запрос, correlationId по умолчанию — requestId', () => {
@@ -12,6 +12,21 @@ describe('requestTrace', () => {
   test('correlationId клиента сохраняется', () => {
     const trace = requestTrace({ requestId: 'r-2', correlationId: 'c-1' });
     expect(trace.correlationId).toBe('c-1');
+  });
+});
+
+describe('jobTrace', () => {
+  test('причина — прогон Job, correlationId — его runId', () => {
+    const trace = jobTrace();
+    expect(trace.cause.kind).toBe('job');
+    expect(trace).toEqual({
+      cause: { kind: 'job', runId: trace.correlationId },
+      correlationId: trace.correlationId,
+    });
+  });
+
+  test('у каждого прогона свой runId', () => {
+    expect(jobTrace().correlationId).not.toBe(jobTrace().correlationId);
   });
 });
 

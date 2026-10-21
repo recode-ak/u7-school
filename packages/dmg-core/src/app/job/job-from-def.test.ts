@@ -15,7 +15,7 @@ import { UsersModuleDef } from '#core/testing/example/users/index';
 import { expectErr, expectOk } from '#core/testing/index';
 import { MemoryTasks, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
-import type { Trace } from '../trace';
+import { jobTrace, type Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { JobFromDef, type JobReport, type JobRun } from './job-from-def';
 
@@ -50,6 +50,8 @@ class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
 let ctx: ReturnType<typeof testAppContext>;
 let tasks: MemoryTasks;
 let job: ArchiveDoneTasks;
+/** След прогона — его передаёт вызывающий (модуль, планировщик). */
+let run: Trace;
 
 beforeEach(() => {
   ctx = testAppContext({ at: T0 });
@@ -57,11 +59,15 @@ beforeEach(() => {
   tasks.rows.set(TASK, taskRow(TASK, 'done'));
   tasks.rows.set(TASK_2, taskRow(TASK_2, 'done'));
   job = new ArchiveDoneTasks({ app: ctx.app, tasks });
+  run = jobTrace();
 });
 
 describe('JobFromDef.handle', () => {
   test('обход: каждая запись фиксируется и публикует события', async () => {
-    expect(expectOk(await job.handle())).toEqual({ processed: 2, failed: 0 });
+    expect(expectOk(await job.handle(run))).toEqual({
+      processed: 2,
+      failed: 0,
+    });
     expect(tasks.rows.get(TASK)?.status).toBe('archived');
     expect(ctx.published.map((e) => e.name)).toEqual([
       TaskEvents.archived.name,
@@ -70,11 +76,9 @@ describe('JobFromDef.handle', () => {
     expect(ctx.published[0]?.caller).toEqual(new SystemCaller(job.ref));
   });
 
-  test('прогон — причина и correlationId всех его событий', async () => {
-    await job.handle();
-    const [run] = job.runs;
-    if (run === undefined) throw new Error('прогона не было');
-    expect(run.cause.kind).toBe('job');
+  test('след вызывающего — причина и correlationId всех событий прогона', async () => {
+    await job.handle(run);
+    expect(job.runs).toEqual([run]);
     const traces = ctx.published.map(({ cause, correlationId }) => ({
       cause,
       correlationId,
@@ -97,7 +101,7 @@ describe('JobFromDef.handle', () => {
   });
 
   test('контекст вызова фасада: SystemCaller задания без человека, calls, след прогона', async () => {
-    await job.handle();
+    await job.handle(run);
     const [call] = job.calls;
     expect(job.calls).toHaveLength(1);
     expect(call?.caller).toEqual(new SystemCaller(job.ref));
@@ -106,20 +110,16 @@ describe('JobFromDef.handle', () => {
     expect(call?.trace).toBe(job.runs[0]);
   });
 
-  test('у каждого прогона свой runId', async () => {
-    await job.handle();
-    await job.handle();
-    const [a, b] = job.runs;
-    expect(a?.correlationId).not.toBe(b?.correlationId);
-  });
-
   test('сбой одной записи не прерывает обход и пишется в лог', async () => {
     const archive = job.step;
     job.step = async (task, uow) => {
       if (task.uuid === TASK) throw new Error('диск недоступен');
       return archive(task, uow);
     };
-    expect(expectOk(await job.handle())).toEqual({ processed: 1, failed: 1 });
+    expect(expectOk(await job.handle(run))).toEqual({
+      processed: 1,
+      failed: 1,
+    });
     expect(tasks.rows.get(TASK_2)?.status).toBe('archived');
     expect(ctx.logs.map((l) => [l.level, l.source])).toEqual([
       ['error', 'archiveDoneTasks'],
@@ -135,7 +135,10 @@ describe('JobFromDef.handle', () => {
       }
       return archive(task, uow);
     };
-    expect(expectOk(await job.handle())).toEqual({ processed: 1, failed: 1 });
+    expect(expectOk(await job.handle(run))).toEqual({
+      processed: 1,
+      failed: 1,
+    });
     expect(tasks.rows.get(TASK)?.status).toBe('done');
     expect(tasks.rows.get(TASK_2)?.status).toBe('archived');
   });
@@ -144,7 +147,7 @@ describe('JobFromDef.handle', () => {
     tasks.findDone = async () => {
       throw new Error('диск недоступен');
     };
-    expectErr(await job.handle(), 'SERVER_INTERNAL');
+    expectErr(await job.handle(run), 'SERVER_INTERNAL');
     expect(ctx.logs).toHaveLength(1);
   });
 });

@@ -7,10 +7,11 @@ import type {
   UseCaseErrorOf,
 } from '#core/domain/contracts/define-use-case';
 import type { Caller, Identified } from '#core/kernel/caller/caller';
+import type { DomainError } from '#core/kernel/errors/error';
 import type { Result } from '#core/kernel/result/result';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
-import type { JobFromDef } from '../job/job-from-def';
+import type { JobFromDef, JobReport } from '../job/job-from-def';
 import type { ReactionFromDef } from '../reaction/reaction-from-def';
 import type { Trace } from '../trace';
 import type { UseCaseHandler } from '../use-case/use-case-from-def';
@@ -79,9 +80,10 @@ export type AnyModuleFromDef<U extends Identified> = ModuleFromDef<
 >;
 
 /**
- * Модуль DMG в рантайме: экземпляры реализаций по карте, подписка реакций,
- * задания для планировщика. Фасад для других модулей собирает приложение
- * поверх модуля (`callUseCase`, D-42) — в карте его нет.
+ * Модуль DMG в рантайме — единственная точка входа в его операции (D-43):
+ * UC — через `handle`, Job — через `runJob`, реакции — `subscribe`.
+ * Реализации живут внутри и наружу не раздаются. Фасад для других модулей
+ * собирает приложение поверх `handle` (`callUseCase`, D-42) — в карте его нет.
  */
 export class ModuleFromDef<
   M extends AnyModuleDef,
@@ -96,7 +98,10 @@ export class ModuleFromDef<
     AnyEventReactionDef,
     ModuleDeps
   >[];
-  readonly jobs: readonly JobFromDef<AnyJobDef, ModuleDeps>[];
+  private readonly jobs = new Map<
+    AnyJobDef,
+    JobFromDef<AnyJobDef, ModuleDeps>
+  >();
   private readonly bus: EventBus;
 
   /**
@@ -113,14 +118,54 @@ export class ModuleFromDef<
       this.useCases.set(uc.def, uc);
     }
     this.reactions = Object.values(map.reactions).map((Er) => new Er(deps));
-    this.jobs = Object.values(map.jobs).map((J) => new J(deps));
+    for (const J of Object.values(map.jobs)) {
+      const job = new J(deps);
+      this.jobs.set(job.def, job);
+    }
     this.bus = deps.app.bus;
   }
 
-  /** Реализация UC по его Def; `undefined` — UC не из этого модуля. */
-  useCase<D extends AnyUseCaseDef>(def: D): UseCaseHandler<D, U> | undefined {
-    const uc = this.useCases.get(def);
-    return uc !== undefined && implementsDef(uc, def) ? uc : undefined;
+  /**
+   * Исполнение UC модуля по его Def: ответ реализации как есть (отказ —
+   * `Err`). UC другого модуля — ошибка компиляции; при стёртом типе модуля
+   * (`AnyModuleFromDef`) — исключение: это ошибка сборки приложения, а не
+   * отказ операции.
+   */
+  handle<D extends M['useCases'][number]>(
+    def: D,
+    input: unknown,
+    caller: Caller<U>,
+    trace: Trace,
+  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
+    const uc = this.useCase(def);
+    if (uc === undefined) {
+      return Promise.reject(
+        new Error(`UC ${def.name} не реализован в модуле ${this.def.name}`),
+      );
+    }
+    return uc.handle(input, caller, trace);
+  }
+
+  /** Реализован ли UC в этом модуле — выбор модуля по Def в приложении. */
+  serves(def: AnyUseCaseDef): boolean {
+    return this.useCase(def) !== undefined;
+  }
+
+  /**
+   * Прогон Job модуля со следом вызывающего (`jobTrace`). Job другого
+   * модуля — ошибка компиляции, при стёртом типе — исключение сборки.
+   */
+  runJob(
+    def: M['jobs'][number],
+    trace: Trace,
+  ): Promise<Result<JobReport, DomainError>> {
+    const job = this.jobs.get(def);
+    if (job === undefined) {
+      return Promise.reject(
+        new Error(`Job ${def.name} не реализован в модуле ${this.def.name}`),
+      );
+    }
+    return job.handle(trace);
   }
 
   /** Подписывает реакции модуля на шину приложения; возвращает отписку. */
@@ -129,6 +174,14 @@ export class ModuleFromDef<
     return () => {
       for (const off of offs) off();
     };
+  }
+
+  /** Реализация UC по его Def; `undefined` — UC не из этого модуля. */
+  private useCase<D extends AnyUseCaseDef>(
+    def: D,
+  ): UseCaseHandler<D, U> | undefined {
+    const uc = this.useCases.get(def);
+    return uc !== undefined && implementsDef(uc, def) ? uc : undefined;
   }
 }
 

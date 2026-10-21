@@ -1,9 +1,16 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { type DomainError, ok, type Result } from 'dmg-core';
+import {
+  type DomainError,
+  defineModule,
+  type Identified,
+  ok,
+  type Result,
+} from 'dmg-core';
 import {
   JobFromDef,
   type JobReport,
   type JobRun,
+  ModuleFromDef,
   type UnitOfWork,
 } from 'dmg-core/app';
 import {
@@ -16,10 +23,21 @@ import {
 import {
   ArchiveDoneTasksJobDef,
   type TaskAr,
-  TodoModuleDef,
 } from 'dmg-core/testing/example/todo/index';
 import { InProcJobExecutor } from '../infra/in-proc-job-executor';
 import { legacyJob, legacyJobsOf } from './legacy-job';
+
+/** Модуль с одним Job — мост работает через модуль, а не через Job. */
+const ArchiveModuleDef = defineModule({
+  name: 'archive',
+  label: 'Архив',
+  description: 'Модуль для проверки моста планировщика.',
+  dependsOn: [],
+  aggregates: [],
+  useCases: [],
+  reactions: [],
+  jobs: [ArchiveDoneTasksJobDef],
+});
 
 type Deps = {
   readonly app: ReturnType<typeof testAppContext>['app'];
@@ -28,7 +46,7 @@ type Deps = {
 
 class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps) {
-    super(ArchiveDoneTasksJobDef, deps, TodoModuleDef);
+    super(ArchiveDoneTasksJobDef, deps, ArchiveModuleDef);
   }
 
   protected async run(job: JobRun): Promise<JobReport> {
@@ -48,17 +66,26 @@ class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
 }
 
 let tasks: MemoryTasks;
-let job: ArchiveDoneTasks;
+let module: ModuleFromDef<typeof ArchiveModuleDef, Deps, Identified>;
+const job = () => legacyJob(module, ArchiveDoneTasksJobDef);
 
 beforeEach(() => {
   tasks = new MemoryTasks();
   tasks.rows.set(TASK, taskRow(TASK, 'done'));
-  job = new ArchiveDoneTasks({ app: testAppContext({ at: T0 }).app, tasks });
+  module = new ModuleFromDef<typeof ArchiveModuleDef, Deps, Identified>(
+    ArchiveModuleDef,
+    {
+      useCases: {},
+      reactions: {},
+      jobs: { archiveDoneTasks: ArchiveDoneTasks },
+    },
+    { app: testAppContext({ at: T0 }).app, tasks },
+  );
 });
 
 describe('legacyJob', () => {
   test('несёт имя, метку и расписание из Def', () => {
-    const legacy = legacyJob(job);
+    const legacy = job();
     expect([legacy.jobName, legacy.jobLabel, legacy.schedule]).toEqual([
       'archiveDoneTasks',
       'Архивировать выполненные задачи',
@@ -67,7 +94,7 @@ describe('legacyJob', () => {
   });
 
   test('исполняется legacy-исполнителем планировщика', async () => {
-    await new InProcJobExecutor().execute(legacyJob(job));
+    await new InProcJobExecutor().execute(job());
     expect(tasks.rows.get(TASK)?.status).toBe('archived');
   });
 
@@ -75,11 +102,11 @@ describe('legacyJob', () => {
     tasks.findDone = async () => {
       throw new Error('диск недоступен');
     };
-    await expect(legacyJob(job).execute()).rejects.toThrow('SERVER_INTERNAL');
+    await expect(job().execute()).rejects.toThrow('SERVER_INTERNAL');
   });
 
   test('задания модуля отдаются списком', () => {
-    expect(legacyJobsOf({ jobs: [job] }).map((j) => j.jobName)).toEqual([
+    expect(legacyJobsOf(module).map((j) => j.jobName)).toEqual([
       'archiveDoneTasks',
     ]);
   });

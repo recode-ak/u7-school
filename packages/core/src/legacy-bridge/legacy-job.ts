@@ -1,39 +1,54 @@
-import type { AnyJobDef } from 'dmg-core';
-import type { JobFromDef, ModuleDeps } from 'dmg-core/app';
+import type { AnyJobDef, AnyModuleDef, DomainError, Result } from 'dmg-core';
+import { type JobReport, jobTrace, type Trace } from 'dmg-core/app';
 import { Job, type JobSchedule } from '#api-legacy/job/job';
 
 /**
- * Job DMG в форме legacy `Job` — для существующего планировщика
- * (`InProcJobScheduler`). Отказ прогона бросается: планировщик пишет его
- * в журнал прогонов как сбой.
+ * Модуль DMG так, как его видит мост планировщика: Def и вход в его Job
+ * (`ModuleFromDef` подходит как есть, D-43: модуль — единственная точка
+ * входа).
  */
-export function legacyJob<D extends AnyJobDef>(
-  job: JobFromDef<D, ModuleDeps>,
+export type JobOwner<M extends AnyModuleDef> = {
+  readonly def: M;
+  runJob(
+    def: M['jobs'][number],
+    trace: Trace,
+  ): Promise<Result<JobReport, DomainError>>;
+};
+
+/**
+ * Job DMG в форме legacy `Job` — для существующего планировщика
+ * (`InProcJobScheduler`): прогон — `module.runJob` со своим `runId`. Отказ
+ * прогона бросается: планировщик пишет его в журнал прогонов как сбой.
+ */
+export function legacyJob<M extends AnyModuleDef>(
+  module: JobOwner<M>,
+  def: M['jobs'][number],
 ): Job {
-  return new LegacyJob(job);
+  return new LegacyJob(module, def);
 }
 
 /** Задания модуля DMG в форме legacy — для `JobScheduler`. */
-export function legacyJobsOf(module: {
-  readonly jobs: readonly JobFromDef<AnyJobDef, ModuleDeps>[];
-}): Job[] {
-  return module.jobs.map(legacyJob);
+export function legacyJobsOf(module: JobOwner<AnyModuleDef>): Job[] {
+  return module.def.jobs.map((def) => legacyJob(module, def));
 }
 
-class LegacyJob<D extends AnyJobDef> extends Job {
+class LegacyJob<M extends AnyModuleDef> extends Job {
   readonly jobName: string;
   readonly jobLabel: string;
   readonly schedule: JobSchedule;
 
-  constructor(private readonly job: JobFromDef<D, ModuleDeps>) {
+  constructor(
+    private readonly module: JobOwner<M>,
+    private readonly def: AnyJobDef & M['jobs'][number],
+  ) {
     super();
-    this.jobName = job.def.name;
-    this.jobLabel = job.def.label;
-    this.schedule = job.def.schedule;
+    this.jobName = def.name;
+    this.jobLabel = def.label;
+    this.schedule = def.schedule;
   }
 
   async execute(): Promise<void> {
-    const res = await this.job.handle();
+    const res = await this.module.runJob(this.def, jobTrace());
     if (!res.ok) {
       throw new Error(`Job ${this.jobName}: ${res.error.code}`);
     }

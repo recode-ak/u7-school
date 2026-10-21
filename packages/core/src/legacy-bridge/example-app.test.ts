@@ -12,7 +12,6 @@ import {
 } from 'dmg-core/testing';
 import type { ExampleUser } from 'dmg-core/testing/example/app/app-user';
 import { TaskJsonRepo } from 'dmg-core/testing/example/app/todo/infra/task.json-repo';
-import { ArchiveDoneTasksJob } from 'dmg-core/testing/example/app/todo/task/job/archive-done-tasks.job';
 import { todoFacade } from 'dmg-core/testing/example/app/todo/todo.facade';
 import {
   createTodoModule,
@@ -21,6 +20,7 @@ import {
 import { UserMemoryRepo } from 'dmg-core/testing/example/app/users/infra/user.memory-repo';
 import { createUsersModule } from 'dmg-core/testing/example/app/users/users.module';
 import {
+  ArchiveDoneTasksJobDef,
   CompleteTaskUcDef,
   CreateTaskUcDef,
   GetTaskUcDef,
@@ -155,7 +155,7 @@ describe('todo: Job на существующем планировщике', () 
     expectOk(
       await api.run(CompleteTaskUcDef, { taskId: id }, caller(ANNA), req()),
     );
-    await legacyJob(new ArchiveDoneTasksJob(deps)).execute();
+    await legacyJob(createTodoModule(deps), ArchiveDoneTasksJobDef).execute();
     expect(await titles()).toEqual(['Позвонить:open']);
   });
 });

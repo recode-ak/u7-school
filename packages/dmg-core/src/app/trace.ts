@@ -18,6 +18,14 @@ export function requestTrace(meta: RequestMeta): Trace {
 }
 
 /**
+ * След одного прогона Job: свой `runId` — причина и `correlationId` всех
+ * его событий. Создаёт вызывающий прогон (планировщик, мост legacy).
+ */
+export function jobTrace(runId: string = crypto.randomUUID()): Trace {
+  return { cause: { kind: 'job', runId }, correlationId: runId };
+}
+
+/**
  * `requestId` входящего запроса — для адаптера, который разбирает
  * `Request`: клиент обязан передать id; не передал — адаптер создаёт его
  * сам и сообщает через `onMissing` (минимум `warn`, ERR-07).

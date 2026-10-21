@@ -30,6 +30,7 @@ export {
 export {
   type Cause,
   incomingRequestId,
+  jobTrace,
   type RequestMeta,
   requestTrace,
   type Trace,

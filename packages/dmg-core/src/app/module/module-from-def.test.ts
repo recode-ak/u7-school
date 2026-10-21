@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { defineModule } from '#core/domain/contracts/define-module';
-import { SystemCaller } from '#core/kernel/caller/caller';
+import { SystemCaller, UserCaller } from '#core/kernel/caller/caller';
 import { ok } from '#core/kernel/result/result';
 import { memoryBus, testAppContext } from '#core/testing/app-context';
 import {
@@ -11,12 +11,18 @@ import {
   TaskErrors,
 } from '#core/testing/example/todo/index';
 import { UserEvents } from '#core/testing/example/users/index';
-import { T0 } from '../app.fixture';
+import { expectErr, expectOk } from '#core/testing/index';
+import { T0, TASK } from '../app.fixture';
 import type { AppContext } from '../context';
 import { JobFromDef, type JobRun } from '../job/job-from-def';
 import { ReactionFromDef } from '../reaction/reaction-from-def';
+import { jobTrace, requestTrace, type Trace } from '../trace';
 import { UseCaseFromDef } from '../use-case/use-case-from-def';
-import { ModuleFromDef, type ModuleMap } from './module-from-def';
+import {
+  type AnyModuleFromDef,
+  ModuleFromDef,
+  type ModuleMap,
+} from './module-from-def';
 
 const MiniModuleDef = defineModule({
   name: 'mini',
@@ -29,7 +35,12 @@ const MiniModuleDef = defineModule({
   jobs: [ArchiveDoneTasksJobDef],
 });
 
-type Deps = { readonly app: AppContext; reacted: string[] };
+type Deps = {
+  readonly app: AppContext;
+  reacted: string[];
+  /** След каждого прогона Job — то, что передал вызывающий `runJob`. */
+  ran: Trace[];
+};
 /** Субъект, которого даёт приложение. */
 type User = { readonly uuid: string; hasRole(role: 'admin'): boolean };
 type Map = ModuleMap<typeof MiniModuleDef, Deps, User>;
@@ -63,7 +74,10 @@ class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps) {
     super(ArchiveDoneTasksJobDef, deps, MiniModuleDef);
   }
-  protected run = (job: JobRun) => job.forEach([], async () => ok());
+  protected run = (job: JobRun) => {
+    this.resolve.ran.push(job.trace);
+    return job.forEach([], async () => ok());
+  };
 }
 
 const map = {
@@ -76,7 +90,7 @@ let deps: Deps;
 let mini: ModuleFromDef<typeof MiniModuleDef, Deps, User>;
 
 beforeEach(() => {
-  deps = { app: testAppContext().app, reacted: [] };
+  deps = { app: testAppContext().app, reacted: [], ran: [] };
   mini = new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
     MiniModuleDef,
     map,
@@ -84,15 +98,69 @@ beforeEach(() => {
   );
 });
 
-describe('ModuleFromDef', () => {
-  test('реализация UC — по его Def; чужой Def — undefined', () => {
-    expect(mini.useCase(CompleteTaskUcDef)?.def).toBe(CompleteTaskUcDef);
-    expect(mini.useCase(CreateTaskUcDef)).toBeUndefined();
+const REQ = requestTrace({ requestId: 'r-1' });
+const user: User = { uuid: 'u-1', hasRole: () => true };
+
+describe('ModuleFromDef.handle', () => {
+  test('UC своего модуля — ответ его реализации', async () => {
+    const res = await mini.handle(
+      CompleteTaskUcDef,
+      { taskId: TASK },
+      new UserCaller(user),
+      REQ,
+    );
+    expectErr(res, 'TASK_NOT_FOUND');
   });
 
+  test('UC другого модуля — ошибка компиляции', () => {
+    const wrong = () =>
+      // @ts-expect-error createTask не из модуля mini
+      mini.handle(CreateTaskUcDef, {}, new UserCaller(user), REQ);
+    expect(wrong).toBeDefined();
+  });
+
+  test('чужой Def при стёртом типе модуля — исключение сборки', async () => {
+    const any: AnyModuleFromDef<User> = mini;
+    await expect(
+      any.handle(CreateTaskUcDef, {}, new UserCaller(user), REQ),
+    ).rejects.toThrow('UC createTask не реализован в модуле mini');
+  });
+
+  test('serves — свой UC да, чужой нет', () => {
+    expect(mini.serves(CompleteTaskUcDef)).toBe(true);
+    expect(mini.serves(CreateTaskUcDef)).toBe(false);
+  });
+
+  test('реализации UC наружу не раздаются', () => {
+    // @ts-expect-error useCase — не публичный: вход только через handle
+    expect(mini.useCase).toBeDefined();
+  });
+});
+
+describe('ModuleFromDef.runJob', () => {
+  test('прогон Job своего модуля со следом вызывающего', async () => {
+    const trace = jobTrace();
+    expect(expectOk(await mini.runJob(ArchiveDoneTasksJobDef, trace))).toEqual({
+      processed: 0,
+      failed: 0,
+    });
+    expect(deps.ran).toEqual([trace]);
+  });
+
+  test('Job другого модуля — исключение сборки', async () => {
+    const any: AnyModuleFromDef<User> = mini;
+    const OtherJobDef = { ...ArchiveDoneTasksJobDef, name: 'other' };
+    await expect(any.runJob(OtherJobDef, jobTrace())).rejects.toThrow(
+      'Job other не реализован в модуле mini',
+    );
+    expect(deps.ran).toEqual([]);
+  });
+});
+
+describe('ModuleFromDef.subscribe', () => {
   test('реакции подписываются на шину приложения; отписка снимает их', async () => {
     const bus = memoryBus();
-    deps = { app: { ...testAppContext().app, bus }, reacted: [] };
+    deps = { app: { ...testAppContext().app, bus }, reacted: [], ran: [] };
     const off = new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
       MiniModuleDef,
       map,
@@ -114,10 +182,6 @@ describe('ModuleFromDef', () => {
     bus.publish(removed);
     await new Promise((r) => setTimeout(r, 0));
     expect(deps.reacted).toEqual(['archiveRemovedUserTasks']);
-  });
-
-  test('задания модуля доступны для планировщика', () => {
-    expect(mini.jobs.map((j) => j.def.name)).toEqual(['archiveDoneTasks']);
   });
 });
 

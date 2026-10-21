@@ -63,15 +63,11 @@ export abstract class JobFromDef<D extends AnyJobDef, R extends ModuleDeps> {
   }
 
   /**
-   * Один прогон со своим `runId` — причиной и `correlationId` всех его
-   * событий. Сбой вне записей (загрузка) — `SERVER_INTERNAL` + лог.
+   * Один прогон со следом вызывающего (`jobTrace` — свой `runId`): след —
+   * причина и `correlationId` всех его событий. Сбой вне записей
+   * (загрузка) — `SERVER_INTERNAL` + лог.
    */
-  handle(): Promise<Result<JobReport, DomainError>> {
-    const runId = crypto.randomUUID();
-    const trace: Trace = {
-      cause: { kind: 'job', runId },
-      correlationId: runId,
-    };
+  handle(trace: Trace): Promise<Result<JobReport, DomainError>> {
     const job: JobRun = {
       trace,
       forEach: (items, step) => this.forEach(items, step, trace),
