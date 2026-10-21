@@ -373,3 +373,16 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ф8 шаг 3b — api-author (Opus)
 `WishDeps = ModuleDeps & { wishes: WishRepo; course: CourseModuleFacade; questionnaire: QuestionnaireModuleFacade }`, субъект — legacy `User` (DEBT-21/22). `CreateCourseWishUc`: `load` — `course.getCourseEnrollment(this.callContext(caller, trace), …)` (ошибка — как есть) + `findAllByUserAndTarget` → `{ courseId, enrollment, userId, target, wishes }`; `execute` — `createForCourse` → `uow.register` → `questionnaireToStart()` → `startQuestionnaire` до фиксации (D-41). 16 тестов UC (все 13 случаев legacy; 4 случая курса слились в `enrollable: false` — различие в тестах адаптера 2b; фейки типов фасадов из-за ARC-06) + smoke модуля. `createWishModule` в приложение — Ф12. `check`: 3494 pass / 0 fail.
+
+### Ревью Ф8 (reviewer, Opus, diff `c4a31b7b..9774d353`)
+Ошибок нет. warn: facade.md о `checkDefs` (MAN-05); тесты потребителя не сверяют `calls` (MAN-05); транзиентное поле `questionnaireToStart` вне state — рекомендация: фабрика возвращает пару. info: структурный `from` и прямой `handle` — обходы проверки; `UseCaseOwner` стирает субъект; `outcome` выбирает UC; оговорка `OUTPUT_VALIDATION` к D-41; антипаттерн в domain-modeling; имя `<M>ModuleFacade`; тип `owner` вручную. Решения — TR-12.
+
+**Правки по ревью Ф8.**
+
+*Шаг 4 — domain-author (Opus)* (`packages/dmg-core/src/testing/**`, `packages/domain/src/{wish,questionnaire}/**`):
+- `dmg-core/testing`: фейк вызова фасада для тестов потребителя — например `fakeFacadeCall(def, answer)` или обёртка над функцией-ответом, которая по `call.from.calls` возвращает `UNAUTHORIZED` (тот же payload, что `UseCaseFromDef`), если Def UC не объявлен; экспорт из `dmg-core/testing`; тест (объявлен / не объявлен); переведи на него тест потребителя в учебном модуле, если он есть.
+- `WishAr.createForCourse(…, at): Result<{ wish: WishAr; questionnaire?: WishQuestionnaire }, never>` (или `Result<…>` с типом, который выберешь); транзиентное поле и `questionnaireToStart()` удалить; тесты Ar — по новой форме. Если `outcome` выводится из результата без `if` в UC — сделай (например, `questionnaire ? 'questionnaire' : 'instant'` в домене как поле результата), с обоснованием.
+- `questionnaire.facade.ts`: тип `owner` (и `pool`) выводится из входа `StartQuestionnaireUcDef` (`InputOf`), не вручную.
+- Потребитель в `packages/wish` — шаг 5, его красный ожидаем.
+
+*Шаг 5 — api-author (Sonnet)* (`packages/wish/src/**`): `CreateCourseWishUc` — по новой форме `createForCourse`; тесты UC и smoke модуля — фасады через фейк шага 4, плюс тест «Def вызываемого UC убран из `calls` → `UNAUTHORIZED`» (через подмену `from`, без правки Def). Тестов не меньше.
