@@ -418,3 +418,6 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ф8 шаг 5 — api-author (Sonnet)
 `CreateCourseWishUc.execute` — по `{ wish, outcome, questionnaire }`; тесты UC и smoke модуля — фасады через `fakeFacadeCall`; +2 теста «вызываемый UC убран из `calls` → `UNAUTHORIZED`, ничего не записано» (подмена `def` экземпляра). Отдельный red для нового теста не запускался (написан вместе с реализацией). `packages/wish`: 116 pass. `check`: 3494 pass / 0 fail.
+
+### Ф8а шаг 1 — domain-author (платформа, Opus)
+`kernel/caller`: абстрактный `Caller<U extends Identified>`, `GuestCaller`/`UserCaller`/`DelegateCaller`/`SystemCaller(from: OperationRef, person?)`, `PersonCaller`, `CallerLog`, `OperationRef`; TDD (13 тестов). Удалены `ModuleCaller`, `CallingOperation`, `subjectOf`, `originOf`, `moduleCaller`, `systemCaller`, вид `'module'` (Def, `check-defs` MAN-05, шаблоны — `'system'`). `Trace.channel`. Потребители — механически (учебный модуль, `domain`, `wish`/`course`/`questionnaire`, `core` `api-app`/`legacy-bridge`, `scripts/gen`). Отклонения и временные мосты до Р2/Р5/Р7 — TR-13. `check`: 3504 pass / 0 fail.

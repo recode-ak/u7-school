@@ -81,7 +81,7 @@
 > Решения Р1–Р10 — [OPEN-QUESTIONS-F8.md](../../../OPEN-QUESTIONS-F8.md) (Нурболат, 2026-10-21). Платформенный эталон: TDD (red → green по шагам), Opus. Классы с зоной ответственности, не функции-хелперы.
 
 - [x] Task: D-43 в decisions.md (Р1–Р10; D-42 — вызывающий `module` и рантайм-проверка `calls` заменены); `caller.md` и связанные документы `architecture/` `d625e982`
-- [ ] Task: Р1 — `Caller` иерархией классов (`subject()`, `person()`, `toLog()`), один `SystemCaller(from: OperationRef, person?)`; `channel` → `Trace.channel`; `callers` без `module`; удалить `subjectOf`/`originOf`/`moduleCaller`/`systemCaller`
+- [x] Task: Р1 — `Caller` иерархией классов (`subject()`, `person()`, `toLog()`), один `SystemCaller(from: OperationRef, person?)`; `channel` → `Trace.channel`; `callers` без `module`; удалить `subjectOf`/`originOf`/`moduleCaller`/`systemCaller` `ef8fc773`
 - [ ] Task: Р2 — `Rule.evaluate(subject, ctx)`, без `delegable`; Policy всегда; шаги `UseCaseFromDef` — `protected` (`checkCaller` … `parseOutput`)
 - [ ] Task: Р3 — `ModuleFromDef.handle`/`runJob`, `useCase` не публичный; `ApiApp` — только через модуль
 - [ ] Task: Р4–Р5 — `OperationFromDef` (база UC/ER/Job, типизированный `call` по `D['calls']`), `Facade<M>` в домене, `ModuleFacade<M>`, `ModuleFacades` в `deps`, `StubFacade<M>` в `dmg-core/testing`; удалить `CallContext`, `callUseCase`, `fakeFacadeCall`, рантайм-проверку `calls`
