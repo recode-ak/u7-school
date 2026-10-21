@@ -78,9 +78,9 @@
 
 ## Фаза 8а: Вызовы и граница модуля (платформа)
 
-> Решения Р1–Р9 — [OPEN-QUESTIONS-F8.md](../../../OPEN-QUESTIONS-F8.md) (Нурболат, 2026-10-21). Платформенный эталон: TDD (red → green по шагам), Opus. Классы с зоной ответственности, не функции-хелперы.
+> Решения Р1–Р10 — [OPEN-QUESTIONS-F8.md](../../../OPEN-QUESTIONS-F8.md) (Нурболат, 2026-10-21). Платформенный эталон: TDD (red → green по шагам), Opus. Классы с зоной ответственности, не функции-хелперы.
 
-- [ ] Task: D-43 в decisions.md (Р1–Р9; D-42 — вызывающий `module` и рантайм-проверка `calls` заменены); `caller.md` и связанные документы `architecture/`
+- [ ] Task: D-43 в decisions.md (Р1–Р10; D-42 — вызывающий `module` и рантайм-проверка `calls` заменены); `caller.md` и связанные документы `architecture/`
 - [ ] Task: Р1 — `Caller` иерархией классов (`subject()`, `person()`, `toLog()`), один `SystemCaller(from: OperationRef, person?)`; `channel` → `Trace.channel`; `callers` без `module`; удалить `subjectOf`/`originOf`/`moduleCaller`/`systemCaller`
 - [ ] Task: Р2 — `Rule.evaluate(subject, ctx)`, без `delegable`; Policy всегда; шаги `UseCaseFromDef` — `protected` (`checkCaller` … `parseOutput`)
 - [ ] Task: Р3 — `ModuleFromDef.handle`/`runJob`, `useCase` не публичный; `ApiApp` — только через модуль
@@ -89,13 +89,14 @@
 - [ ] Task: Р7 — `calls` по типу только UC с `'system'` в `callers`; `UNAUTHORIZED` без `from`; `Aggregate.readonly(state)` вместо `asReadonlyAr`; `caller` удалён из конверта события (и UoW); TR-10 в debt.md закрыть
 - [ ] Task: Р8 — `OperationFromDef.createUow` вместо `contractUnitOfWork`; класс `Trace` (`fromRequest`/`fromEvent`/`forJob`) вместо `requestTrace`/`incomingRequestId`; `Aggregate.newState` вместо `newEntity`
 - [ ] Task: Р9 — `StartQuestionnaireUcDef.policy`: правило «респондент есть» вместо `allowAll`; TR-11 в debt.md — пересмотр отметить
+- [ ] Task: Р10 — `WishAr.createForCourse` → `Result<WishAr, never>`, методы `questionnaire()` и `outcome()` из state (red → green в домене); `create-course-wish` берёт их; TR-12 в debt.md — пересмотр отметить
 - [ ] Task: Перевод потребителей: учебный модуль `dmg-core`, `wish` (`create-course-wish`), `course`, `questionnaire`; гайды «use case» и «facade»
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 8а' (автономно, workflow.md)
 
 ## Фаза 9: Остальные Use Case
 
-> **Перед стартом:** Фаза 8а закрыта; обсудить В4 (TR-12) из [OPEN-QUESTIONS-F8.md](../../../OPEN-QUESTIONS-F8.md) (Нурболат); затем удалить файл.
+> **Перед стартом:** Фаза 8а закрыта; `OPEN-QUESTIONS-F8.md` перенесён в D-43 и удалён.
 
 - [ ] Task: `create-module-wish`, `cancel-wish`, `list-user-wishes` по гайду Фазы 8 (по одному, отдельный TDD-цикл)
 - [ ] Task: Уточнить гайд «use case» (command и query, отличия)
