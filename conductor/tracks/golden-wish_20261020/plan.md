@@ -72,7 +72,7 @@
 - [x] Task: Платформа по D-42: фасад без манифеста (`defineFacade`/`method`/`facade` в модуле, узлы фасадов в графе, `gen --facade` уходят); `calls` (Def UC других модулей) у UC/ER/Job; вызывающий `module` (`from`, `origin`, субъект `origin`); отказ UC, если его нет в `calls` у `from` или `module` нет в `callers`; помощник фасада (вызов UC, state → `ReadonlyAr`); `checkDefs` (`calls` из `dependsOn`); граф «UC → UC»; Def UC у внешнего модуля (D-37); учебный модуль `dmg-core` переведён `7e05eca`
 - [x] Task: Контракты внешних зависимостей для `create-course-wish` (D-42): Def UC `course` (допуск к записи, стартовый модуль) и `questionnaire` (запуск анкеты) без реализации; адаптеры legacy-фасадов под них (TR) `d9fee2e6`
 - [x] Task: `CreateCourseWishUcDef` (`policy`, `rules`, `callers`, `calls`, `input`, `output`, `errors`, `emits`) + реализация `UseCaseFromDef`, UoW, `Result`; запуск анкеты — в `execute` до фиксации (D-41, вариант 1); выбор статуса по пулу — в домене (API-01) `f3dc5930`
-- [ ] Task: Гайд «use case»; гайд «facade» переписан по D-41/D-42
+- [x] Task: Гайд «use case»; гайд «facade» переписан по D-41/D-42 `acfe748b`
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 8' (автономно, workflow.md)
 
