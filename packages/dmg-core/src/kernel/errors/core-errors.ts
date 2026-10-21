@@ -18,9 +18,18 @@ export const CoreErrors = buildErrors('', {
   UNAUTHORIZED: {
     kind: 'unauthorized',
     label: 'Вызов не разрешён',
-    description: 'Вид вызывающего не входит в `callers` операции.',
+    description:
+      'Вид вызывающего не входит в `callers` операции, или другой модуль вызвал UC, которого нет в `calls` его операции.',
     payload: v.object({
       callerKind: v.pipe(v.string(), v.description('Вид вызывающего')),
+      from: v.optional(
+        v.pipe(
+          v.string(),
+          v.description(
+            'Операция другого модуля, не объявившая UC в `calls` (у `module`)',
+          ),
+        ),
+      ),
     }),
   },
   INPUT_VALIDATION: {

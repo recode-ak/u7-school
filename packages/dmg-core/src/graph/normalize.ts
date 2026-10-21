@@ -1,7 +1,6 @@
 import type * as v from 'valibot';
 import type { AnyAggregateDef } from '../domain/aggregate/define-aggregate';
 import type { AnyEventReactionDef } from '../domain/contracts/define-event-reaction';
-import type { AnyFacadeDef } from '../domain/contracts/define-facade';
 import type { AnyJobDef, JobSchedule } from '../domain/contracts/define-job';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyUseCaseDef } from '../domain/contracts/define-use-case';
@@ -106,6 +105,8 @@ export type NormalizedUseCase = Texts & {
   readonly errors: readonly string[];
   /** Имена доменных правил UC. */
   readonly rules: readonly string[];
+  /** Имена UC других модулей, которые UC вызывает (D-42). */
+  readonly calls: readonly string[];
   readonly emits: readonly string[];
 };
 
@@ -113,6 +114,7 @@ export type NormalizedEventReaction = Texts & {
   readonly dmg: 'eventReaction';
   readonly on: readonly string[];
   readonly touches: readonly string[];
+  /** Имена UC других модулей, которые реакция вызывает (D-42). */
   readonly calls: readonly string[];
   readonly emits: readonly string[];
 };
@@ -121,18 +123,9 @@ export type NormalizedJob = Texts & {
   readonly dmg: 'job';
   readonly schedule: JobSchedule;
   readonly scans: readonly string[];
+  /** Имена UC других модулей, которые задание вызывает (D-42). */
+  readonly calls: readonly string[];
   readonly emits: readonly string[];
-};
-
-export type NormalizedFacade = Texts & {
-  readonly dmg: 'facade';
-  readonly methods: {
-    readonly [method: string]: {
-      readonly label: string;
-      readonly description: string;
-      readonly errors: readonly string[];
-    };
-  };
 };
 
 export type NormalizedModule = Texts & {
@@ -144,7 +137,6 @@ export type NormalizedModule = Texts & {
   readonly useCases: readonly string[];
   readonly reactions: readonly string[];
   readonly jobs: readonly string[];
-  readonly facade: string | undefined;
 };
 
 export type AnyDef =
@@ -158,7 +150,6 @@ export type AnyDef =
   | AnyUseCaseDef
   | AnyEventReactionDef
   | AnyJobDef
-  | AnyFacadeDef
   | AnyModuleDef;
 
 export type NormalizedDef =
@@ -172,7 +163,6 @@ export type NormalizedDef =
   | NormalizedUseCase
   | NormalizedEventReaction
   | NormalizedJob
-  | NormalizedFacade
   | NormalizedModule;
 
 /**
@@ -190,7 +180,6 @@ export function normalize(def: AnyRulesDef): NormalizedRules;
 export function normalize(def: AnyUseCaseDef): NormalizedUseCase;
 export function normalize(def: AnyEventReactionDef): NormalizedEventReaction;
 export function normalize(def: AnyJobDef): NormalizedJob;
-export function normalize(def: AnyFacadeDef): NormalizedFacade;
 export function normalize(def: AnyModuleDef): NormalizedModule;
 export function normalize(def: AnyDef): NormalizedDef;
 export function normalize(def: AnyDef): NormalizedDef {
@@ -251,6 +240,7 @@ export function normalize(def: AnyDef): NormalizedDef {
         output: schema(def.output),
         errors: def.errors.map((e) => e.code),
         rules: (def.rules ?? []).map((r) => r.name),
+        calls: (def.calls ?? []).map((u) => u.name),
         emits: (def.emits ?? []).map((e) => e.name),
       };
     case 'eventReaction':
@@ -259,7 +249,7 @@ export function normalize(def: AnyDef): NormalizedDef {
         ...texts(def),
         on: def.on.map((e) => e.name),
         touches: def.touches.map((a) => a.name),
-        calls: def.calls.map((f) => f.name),
+        calls: def.calls.map((u) => u.name),
         emits: def.emits.map((e) => e.name),
       };
     case 'job':
@@ -268,22 +258,8 @@ export function normalize(def: AnyDef): NormalizedDef {
         ...texts(def),
         schedule: def.schedule,
         scans: def.scans.map((a) => a.name),
+        calls: def.calls.map((u) => u.name),
         emits: def.emits.map((e) => e.name),
-      };
-    case 'facade':
-      return {
-        dmg: 'facade',
-        ...texts(def),
-        methods: Object.fromEntries(
-          Object.entries(def.methods).map(([name, m]) => [
-            name,
-            {
-              label: m.label,
-              description: m.description,
-              errors: m.errors.map((e) => e.code),
-            },
-          ]),
-        ),
       };
     case 'module':
       return {
@@ -295,7 +271,6 @@ export function normalize(def: AnyDef): NormalizedDef {
         useCases: def.useCases.map((u) => u.name),
         reactions: def.reactions.map((r) => r.name),
         jobs: def.jobs.map((j) => j.name),
-        facade: def.facade?.name,
       };
   }
 }

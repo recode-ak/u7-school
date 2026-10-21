@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
+import type { CallContext } from '#core/kernel/caller/call-context';
+import { systemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
 import { testAppContext } from '#core/testing/app-context';
@@ -23,11 +25,13 @@ class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
 
   protected async run(job: JobRun): Promise<JobReport> {
     this.runs.push(job.trace);
+    this.calls.push(this.callContext(job.trace));
     return job.forEach(await this.resolve.tasks.findDone(), this.step);
   }
 
   /** Шаг по одной задаче; тесты подменяют его, чтобы получить сбой. */
   readonly runs: Trace[] = [];
+  readonly calls: CallContext[] = [];
 
   step = async (
     task: TaskAr,
@@ -76,6 +80,15 @@ describe('JobFromDef.handle', () => {
       correlationId,
     }));
     expect(traces).toEqual([run, run]);
+  });
+
+  test('контекст вызова фасада: Def задания, system-вызывающий, след прогона', async () => {
+    await job.handle();
+    const [call] = job.calls;
+    expect(job.calls).toHaveLength(1);
+    expect(call?.from).toBe(ArchiveDoneTasksJobDef);
+    expect(call?.caller).toEqual(systemCaller('archiveDoneTasks'));
+    expect(call?.trace).toBe(job.runs[0]);
   });
 
   test('у каждого прогона свой runId', async () => {

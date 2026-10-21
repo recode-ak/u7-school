@@ -1,23 +1,26 @@
-import { implementFacade } from '#core/app/facade/implement-facade';
-import { ok } from '#core/kernel/result/result';
-import { TaskErrors, TodoFacadeDef } from '#core/testing/example/todo/index';
-import type { TodoDeps } from './todo.module';
+import { asReadonlyAr } from '#core/app/facade/as-readonly-ar';
+import { callUseCase, type UseCaseOwner } from '#core/app/facade/call-use-case';
+import {
+  GetTaskUcDef,
+  TaskAr,
+  type TodoFacade,
+  type TodoModuleDef,
+} from '#core/testing/example/todo/index';
 
 /**
- * In-proc реализация фасада: задача только для чтения (API-04).
- *
- * В примере фасад никто не потребляет: `users` не зависит от `todo`.
- * В реальности модуль-потребитель (тот, у кого `todo` в `dependsOn` и
- * `TodoFacadeDef` в `calls` своих ER) получает фасад в своём резолвере как
- * `FacadeApi<typeof TodoFacadeDef>`, а сборка приложения передаёт туда
- * `todoModule.facade`. Для этого `ModuleFromDef.facade` придётся
- * типизировать по `M['facade']` — сделаем при переводе `wish` на DMG.
+ * In-proc реализация фасада todo (D-42, API-04): каждый метод — вызов UC
+ * модуля от вызывающего `module`, выход-state — `ReadonlyAr`. Доменных
+ * решений нет. Приложение собирает фасад поверх модуля и передаёт его в
+ * резолвер модуля-потребителя (у того `todo` в `dependsOn`, UC — в `calls`).
  */
-export function todoFacade(deps: TodoDeps) {
-  return implementFacade(TodoFacadeDef, {
-    getTask: async (taskId) => {
-      const task = await deps.tasks.findById(taskId);
-      return task ? ok(task) : TaskErrors.NOT_FOUND.err({ taskId });
-    },
-  });
+export function todoFacade(
+  todo: UseCaseOwner<typeof TodoModuleDef>,
+): TodoFacade {
+  return {
+    getTask: async (call, taskId) =>
+      asReadonlyAr(
+        TaskAr,
+        await callUseCase(todo, GetTaskUcDef, { taskId }, call),
+      ),
+  };
 }

@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
+import type { CallContext } from '#core/kernel/caller/call-context';
 import type { Caller, SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
 import {
   ArchiveRemovedUserTasksErDef,
   TaskAr,
-  TaskErrors,
   TaskEvents,
-  TodoFacadeDef,
 } from '#core/testing/example/todo/index';
 import { UserArDef, UserEvents } from '#core/testing/example/users/index';
 import {
@@ -19,7 +18,6 @@ import {
 import { MemoryTasks, OWNER, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { AppContext } from '../context';
 import type { EnvelopeOf } from '../events/event-envelope';
-import { implementFacade } from '../facade/implement-facade';
 import type { Cause, Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { ReactionFromDef } from './reaction-from-def';
@@ -36,16 +34,7 @@ const removed = (): EnvelopeOf<typeof UserEvents.removed> => ({
   correlationId: 'c-1',
 });
 
-type Deps = {
-  readonly app: AppContext;
-  readonly tasks: MemoryTasks;
-  readonly todo: ReturnType<typeof todoFacade>;
-};
-
-const todoFacade = () =>
-  implementFacade(TodoFacadeDef, {
-    getTask: async (taskId) => TaskErrors.NOT_FOUND.err({ taskId }),
-  });
+type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
 
 class ArchiveRemovedUserTasks extends ReactionFromDef<
   typeof ArchiveRemovedUserTasksErDef,
@@ -79,9 +68,11 @@ class ArchiveRemovedUserTasks extends ReactionFromDef<
     trace: Trace,
   ) {
     this.seenTrace = trace;
+    this.seenCall = this.callContext(caller, trace);
     return this.step(event, uow, caller, this.resolve);
   }
   seenTrace: Trace | undefined;
+  seenCall: CallContext | undefined;
 }
 
 let ctx: ReturnType<typeof testAppContext>;
@@ -93,7 +84,7 @@ beforeEach(() => {
   tasks = new MemoryTasks();
   tasks.rows.set(TASK, taskRow(TASK));
   tasks.rows.set(TASK_2, taskRow(TASK_2, 'done'));
-  er = new ArchiveRemovedUserTasks({ app: ctx.app, tasks, todo: todoFacade() });
+  er = new ArchiveRemovedUserTasks({ app: ctx.app, tasks });
 });
 
 describe('ReactionFromDef.handle', () => {
@@ -121,6 +112,16 @@ describe('ReactionFromDef.handle', () => {
       cause: { kind: 'event', eventId: 'e-removed' },
       correlationId: 'c-1',
     });
+  });
+
+  test('контекст вызова фасада: Def реакции, system-вызывающий, след', async () => {
+    await er.handle(removed());
+    const { from, caller, trace } = er.seenCall ?? {};
+    expect([from, caller, trace]).toEqual([
+      ArchiveRemovedUserTasksErDef,
+      er.seen,
+      er.seenTrace,
+    ]);
   });
 
   test('Err → без фиксации, запись в лог', async () => {
@@ -164,33 +165,19 @@ describe('ReactionFromDef.handle', () => {
     };
     expectErr(await er.handle(removed()), 'SERVER_INTERNAL');
   });
-
-  test('фасад вне calls → SERVER_INTERNAL', async () => {
-    er.step = async (_e, _uow, _caller, deps) => {
-      await deps.todo.getTask(TASK);
-      return ok();
-    };
-    expectErr(await er.handle(removed()), 'SERVER_INTERNAL');
-  });
 });
 
 describe('ReactionFromDef — production', () => {
-  test('фасад вне calls и агрегат вне touches — warn, реакция проходит', async () => {
+  test('агрегат вне touches — warn, реакция проходит', async () => {
     const prod = testAppContext({ mode: 'production', at: T0 });
-    er = new ArchiveRemovedUserTasks({
-      app: prod.app,
-      tasks,
-      todo: todoFacade(),
-    });
-    er.step = async (_e, uow, _caller, deps) => {
-      await deps.todo.getTask(TASK);
+    er = new ArchiveRemovedUserTasks({ app: prod.app, tasks });
+    er.step = async (_e, uow) => {
       const task = TaskAr.restore(taskRow(TASK));
       uow.register(task, { aggregate: UserArDef, save: async () => {} });
       return ok();
     };
     expectOk(await er.handle(removed()));
     expect(prod.logs.map((l) => [l.level, l.message])).toEqual([
-      ['warn', 'archiveRemovedUserTasks: фасад todo не заявлен в calls'],
       ['warn', 'UoW: агрегат user не заявлен в touches'],
     ]);
   });

@@ -7,7 +7,6 @@ import { defineEvents } from '../events/define-events';
 import { definePolicy } from '../policy/define-policy';
 import { allowAll, rule } from '../policy/policy';
 import { defineEventReaction } from './define-event-reaction';
-import { defineFacade, method } from './define-facade';
 import { defineJob } from './define-job';
 import { defineModule } from './define-module';
 import { defineUseCase } from './define-use-case';
@@ -62,6 +61,29 @@ export const TaskPolicy = definePolicy({
   },
 });
 
+export const UserArDef = defineAggregate({
+  name: 'user',
+  label: 'Пользователь',
+  description: 'Учётная запись.',
+  state: v.object({ ...BaseEntityFields }),
+  events: {},
+  errors: {},
+});
+
+/** UC другого модуля — цель `calls` (D-42). */
+export const GetUserUcDef = defineUseCase({
+  name: 'getUser',
+  label: 'Пользователь',
+  description: 'Учётная запись по идентификатору.',
+  type: 'query',
+  aggregate: UserArDef,
+  callers: ['module'],
+  policy: allowAll,
+  input: v.object({ userId: F.uuid('пользователя') }),
+  output: v.object({ userId: F.uuid('пользователя') }),
+  errors: [],
+});
+
 export const CompleteTaskUcDef = defineUseCase({
   name: 'completeTask',
   label: 'Завершить задачу',
@@ -70,6 +92,7 @@ export const CompleteTaskUcDef = defineUseCase({
   aggregate: TaskArDef,
   callers: ['user', 'delegate'],
   policy: TaskPolicy.rules.canComplete,
+  calls: [GetUserUcDef],
   input: v.object({ taskId: F.uuid('задачи') }),
   output: v.object({ completedAt: F.timestamp('выполнения') }),
   errors: [TaskErrors.NOT_FOUND, TaskErrors.ALREADY_DONE],
@@ -89,26 +112,12 @@ export const ListTasksUcDef = defineUseCase({
   errors: [],
 });
 
-export const TodoFacadeDef = defineFacade({
-  name: 'todo',
-  label: 'Фасад задач',
-  description: 'API задач для других модулей.',
-  methods: {
-    isDone: method<[taskId: string], boolean>()({
-      label: 'Задача выполнена?',
-      description: 'Проверяет, выполнена ли задача.',
-      errors: [TaskErrors.NOT_FOUND],
-    }),
-  },
-});
-
 export const ArchiveDoneErDef = defineEventReaction({
   name: 'archiveDone',
   label: 'Архивировать выполненную',
   description: 'Переносит выполненную задачу в архив.',
   on: [TaskEvents.completed, TaskEvents.created],
   touches: [TaskArDef],
-  calls: [TodoFacadeDef],
 });
 
 export const RemindJobDef = defineJob({
@@ -125,8 +134,8 @@ export const UsersModuleDef = defineModule({
   label: 'Пользователи',
   description: 'Учётные записи.',
   dependsOn: [],
-  aggregates: [],
-  useCases: [],
+  aggregates: [UserArDef],
+  useCases: [GetUserUcDef],
   reactions: [],
   jobs: [],
 });
@@ -140,5 +149,4 @@ export const TodoModuleDef = defineModule({
   useCases: [CompleteTaskUcDef, ListTasksUcDef],
   reactions: [ArchiveDoneErDef],
   jobs: [RemindJobDef],
-  facade: TodoFacadeDef,
 });

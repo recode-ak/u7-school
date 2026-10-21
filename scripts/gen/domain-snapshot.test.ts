@@ -16,7 +16,7 @@ beforeAll(() => {
     applyPlan(plan(parseArgs([...argv, '--domain-root', root])), {
       write: true,
     });
-  run(['module', 'stream', '--facade'], planDomainModule);
+  run(['module', 'stream'], planDomainModule);
   run(['aggregate', 'stream.student'], planDomainAggregate);
   run(['dcs', 'stream', 'stream-progress'], planDomainService);
   run(['dqs', 'stream', 'stream-navigation'], planDomainService);
@@ -33,7 +33,6 @@ test('дерево домена совпадает с naming.md §2', () => {
     'stream/stream-navigation.dqs.ts',
     'stream/stream-progress.dcs.test.ts',
     'stream/stream-progress.dcs.ts',
-    'stream/stream.facade.ts',
     'stream/stream.module.test.ts',
     'stream/stream.module.ts',
     'stream/student/student.ar.test.ts',

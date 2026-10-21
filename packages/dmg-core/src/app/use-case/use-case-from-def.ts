@@ -13,9 +13,9 @@ import type {
   DomainRule,
   DomainRuleContextOf,
 } from '#core/domain/rules/domain-rule';
-import { type Caller, subjectOf } from '#core/kernel/caller/caller';
+import type { CallContext } from '#core/kernel/caller/call-context';
+import { type Caller, originOf, subjectOf } from '#core/kernel/caller/caller';
 import { CoreErrors } from '#core/kernel/errors/core-errors';
-import type { ErrorOf } from '#core/kernel/errors/define-errors';
 import { serializeError } from '#core/kernel/errors/serialize-error';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
@@ -29,9 +29,6 @@ export type ParsedInputOf<D extends AnyUseCaseDef> = v.InferOutput<D['input']>;
 
 /** Выход до схемы — то, что возвращает `execute`. */
 export type RawOutputOf<D extends AnyUseCaseDef> = v.InferInput<D['output']>;
-
-/** Собственные ошибки UC — без базовых ядра: их подмешивает `handle`. */
-export type OwnErrorOf<D extends AnyUseCaseDef> = ErrorOf<D['errors'][number]>;
 
 /** Субъект Policy UC: `Caller` должен его нести. */
 export type UseCaseSubjectOf<D extends AnyUseCaseDef> = RuleSubjectOf<
@@ -116,17 +113,34 @@ export abstract class UseCaseFromDef<
     this.rules = def.rules ?? [];
   }
 
+  /**
+   * `trace` — для вызова фасада другого модуля (`callContext`). Ошибки —
+   * объявленные в `errors` и базовые ядра: отказ UC другого модуля
+   * (`ACCESS_DENIED`, `UNAUTHORIZED`, …) фасад отдаёт как есть, и UC
+   * возвращает его дальше (D-42).
+   */
   protected abstract load(
     input: ParsedInputOf<D>,
     caller: Caller<U>,
-  ): Promise<Result<L, OwnErrorOf<D>>>;
+    trace: Trace,
+  ): Promise<Result<L, UseCaseErrorOf<D>>>;
 
   protected abstract execute(
     input: ParsedInputOf<D>,
     loaded: L,
     uow: UnitOfWork,
     caller: Caller<U>,
-  ): Promise<Result<RawOutputOf<D>, OwnErrorOf<D>>>;
+    trace: Trace,
+  ): Promise<Result<RawOutputOf<D>, UseCaseErrorOf<D>>>;
+
+  /**
+   * Контекст вызова фасада другого модуля (D-42): этот UC — `from`, его
+   * вызывающий и след — дальше по цепочке. Вызываемый UC проверит, что
+   * его Def есть в `calls` этого UC.
+   */
+  protected callContext(caller: Caller<U>, trace: Trace): CallContext {
+    return { from: this.def, caller, trace };
+  }
 
   /** Текущий момент по часам приложения — передаётся в операции домена. */
   protected now(): Timestamp {
@@ -149,9 +163,9 @@ export abstract class UseCaseFromDef<
   }
 
   /**
-   * callers → вход → load → Policy → правила → execute → выход → commit
-   * (с публикацией). Непредвиденное исключение — `SERVER_INTERNAL` с записью
-   * в лог.
+   * callers (и `calls` у `module`) → вход → load → Policy → правила →
+   * execute → выход → commit (с публикацией). Непредвиденное исключение —
+   * `SERVER_INTERNAL` с записью в лог.
    */
   async handle(
     input: unknown,
@@ -178,15 +192,25 @@ export abstract class UseCaseFromDef<
     if (!this.def.callers.includes(caller.kind)) {
       return CoreErrors.UNAUTHORIZED.err({ callerKind: caller.kind });
     }
+    // Другой модуль вызывает только UC, объявленные в `calls` вызвавшей
+    // операции (D-42, MAN-05): граф не должен врать о связях модулей.
+    if (caller.kind === 'module' && !caller.from.calls?.includes(this.def)) {
+      return CoreErrors.UNAUTHORIZED.err({
+        callerKind: caller.kind,
+        from: caller.from.name,
+      });
+    }
     const parsed = v.safeParse(this.def.input, input);
     if (!parsed.success) {
       return CoreErrors.INPUT_VALIDATION.err({ issues: issues(parsed) });
     }
-    const loaded = await this.load(parsed.output, caller);
+    const loaded = await this.load(parsed.output, caller, trace);
     if (!loaded.ok) return loaded;
     // system допускается только через `callers`: его права — сам факт
     // объявления в Def; Policy проверяет субъекта, которого у system нет.
-    if (caller.kind !== 'system') {
+    // Через фасад (`module`) решает исходный вызывающий: от ER/Job — как
+    // system, от пользователя — Policy по его субъекту.
+    if (originOf(caller).kind !== 'system') {
       const decision = this.policy.evaluate(caller, loaded.value);
       if (!decision.allowed) {
         const { rule, denyMessage } = decision;
@@ -205,7 +229,13 @@ export abstract class UseCaseFromDef<
       trace,
       emits: this.def.emits ?? [],
     });
-    const res = await this.execute(parsed.output, loaded.value, uow, caller);
+    const res = await this.execute(
+      parsed.output,
+      loaded.value,
+      uow,
+      caller,
+      trace,
+    );
     if (!res.ok) return res;
     // Выход сверяется до фиксации: невалидный ответ — баг реализации, и
     // тогда операция не оставляет следов (клиент может безопасно повторить).

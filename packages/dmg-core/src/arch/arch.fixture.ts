@@ -1,10 +1,9 @@
 // Чистая пара модулей для контрактных проверок: `alpha` зависит от `beta`,
-// слушает его событие и вызывает его фасад. Негативные фикстуры — в тестах,
+// слушает его событие и вызывает его UC через фасад (`calls`, D-42). Негативные фикстуры — в тестах,
 // как варианты этих Def.
 import * as v from 'valibot';
 import { defineAggregate } from '../domain/aggregate/define-aggregate';
 import { defineEventReaction } from '../domain/contracts/define-event-reaction';
-import { defineFacade, method } from '../domain/contracts/define-facade';
 import { defineJob } from '../domain/contracts/define-job';
 import { defineModule } from '../domain/contracts/define-module';
 import { defineUseCase } from '../domain/contracts/define-use-case';
@@ -53,17 +52,17 @@ export const CreateItemUcDef = defineUseCase({
   emits: [ItemEvents.created],
 });
 
-export const BetaFacadeDef = defineFacade({
-  name: 'beta',
-  label: 'Каталог',
-  description: 'Runtime-API каталога.',
-  methods: {
-    getItem: method<[itemId: string], unknown>()({
-      label: 'Позиция',
-      description: 'Позиция по идентификатору.',
-      errors: [ItemErrors.NOT_FOUND],
-    }),
-  },
+export const GetItemUcDef = defineUseCase({
+  name: 'getItem',
+  label: 'Позиция',
+  description: 'Позиция по идентификатору — для других модулей.',
+  type: 'query',
+  aggregate: ItemArDef,
+  callers: ['module'],
+  policy: allowAll,
+  input: v.object({ itemId: F.uuid('позиции') }),
+  output: v.object({ title: F.string('Название') }),
+  errors: [ItemErrors.NOT_FOUND],
 });
 
 export const BetaModuleDef = defineModule({
@@ -72,10 +71,9 @@ export const BetaModuleDef = defineModule({
   description: 'Модуль-зависимость.',
   dependsOn: [],
   aggregates: [ItemArDef],
-  useCases: [CreateItemUcDef],
+  useCases: [CreateItemUcDef, GetItemUcDef],
   reactions: [],
   jobs: [],
-  facade: BetaFacadeDef,
 });
 
 export const NoteEvents = defineEvents('alpha.note', {
@@ -109,7 +107,7 @@ export const AddNoteErDef = defineEventReaction({
   description: 'К новой позиции добавляется заметка.',
   on: [ItemEvents.created],
   touches: [NoteArDef],
-  calls: [BetaFacadeDef],
+  calls: [GetItemUcDef],
   emits: [NoteEvents.added],
 });
 

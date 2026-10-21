@@ -3,7 +3,13 @@ import * as v from 'valibot';
 import type { ReadonlyAr } from '#core/domain/aggregate/readonly-ar';
 import { defineUseCase } from '#core/domain/contracts/define-use-case';
 import { domainRule } from '#core/domain/rules/domain-rule';
-import type { Caller } from '#core/kernel/caller/caller';
+import type { CallContext } from '#core/kernel/caller/call-context';
+import {
+  type Caller,
+  type CallingOperation,
+  moduleCaller,
+  systemCaller,
+} from '#core/kernel/caller/caller';
 import { defineErrors } from '#core/kernel/errors/define-errors';
 import { ok } from '#core/kernel/result/result';
 import {
@@ -248,6 +254,130 @@ describe('UseCaseFromDef — время операции', () => {
     expectOk(await uc.handle({ taskId: TASK }, user(OWNER), REQ));
     expect(tasks.rows.get(TASK)?.completedAt).toBe(T1);
     expect(ctx.published.map((e) => e.occurredAt)).toEqual([T1]);
+  });
+});
+
+describe('UseCaseFromDef — вызывающий module (D-42)', () => {
+  const ModuleUcDef = defineUseCase({
+    ...CompleteTaskUcDef,
+    callers: ['module'],
+  });
+  class ModuleComplete extends UseCaseFromDef<
+    typeof ModuleUcDef,
+    Deps,
+    Loaded
+  > {
+    loads = 0;
+    constructor() {
+      super(ModuleUcDef, { app: ctx.app, tasks });
+    }
+    protected load = (i: { taskId: string }) => {
+      this.loads++;
+      return loadTask(tasks, i);
+    };
+    protected execute = async () => ok({});
+  }
+  const declared: CallingOperation = {
+    dmg: 'useCase',
+    name: 'notify',
+    calls: [ModuleUcDef],
+  };
+  const undeclared: CallingOperation = {
+    dmg: 'eventReaction',
+    name: 'remind',
+    calls: [CompleteTaskUcDef],
+  };
+
+  test('module не в callers → UNAUTHORIZED', async () => {
+    const res = await uc.handle(
+      { taskId: TASK },
+      moduleCaller(declared, user(OWNER)),
+      REQ,
+    );
+    expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
+      callerKind: 'module',
+    });
+  });
+
+  test('Def UC нет в calls у from → UNAUTHORIZED с from, до load', async () => {
+    const uc = new ModuleComplete();
+    const res = await uc.handle(
+      { taskId: TASK },
+      moduleCaller(undeclared, user(OWNER)),
+      REQ,
+    );
+    expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
+      callerKind: 'module',
+      from: 'remind',
+    });
+    expect(uc.loads).toBe(0);
+  });
+
+  test('from без calls → UNAUTHORIZED', async () => {
+    const res = await new ModuleComplete().handle(
+      { taskId: TASK },
+      moduleCaller({ dmg: 'job', name: 'sweep' }, user(OWNER)),
+      REQ,
+    );
+    expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
+      callerKind: 'module',
+      from: 'sweep',
+    });
+  });
+
+  test('Def в calls → операция; Policy — по субъекту origin', async () => {
+    const uc = new ModuleComplete();
+    const own = moduleCaller(declared, user(OWNER));
+    expectOk(await uc.handle({ taskId: TASK }, own, REQ));
+    const alien = moduleCaller(declared, user('чужой'));
+    const res = await uc.handle({ taskId: TASK }, alien, REQ);
+    expect(expectErr(res, 'ACCESS_DENIED').payload.rule).toBe('canManage');
+  });
+
+  test('origin — system: Policy не проверяется, как у system', async () => {
+    const viaJob = moduleCaller(declared, systemCaller<User>('job'));
+    expectOk(await new ModuleComplete().handle({ taskId: TASK }, viaJob, REQ));
+  });
+});
+
+describe('UseCaseFromDef.callContext', () => {
+  const CallerUcDef = defineUseCase({
+    ...CompleteTaskUcDef,
+    callers: ['user'],
+  });
+  class Calling extends UseCaseFromDef<typeof CallerUcDef, Deps, Loaded, User> {
+    constructor() {
+      super(CallerUcDef, { app: ctx.app, tasks });
+    }
+    protected load = (
+      i: { taskId: string },
+      caller: Caller<User>,
+      trace: Trace,
+    ) => {
+      this.loaded = this.callContext(caller, trace);
+      return loadTask(tasks, i);
+    };
+    protected execute = async (
+      _: unknown,
+      __: Loaded,
+      ___: UnitOfWork,
+      caller: Caller<User>,
+      trace: Trace,
+    ) => {
+      this.executed = this.callContext(caller, trace);
+      return ok({});
+    };
+    loaded: CallContext | undefined;
+    executed: CallContext | undefined;
+  }
+
+  test('load и execute получают след; контекст — Def UC, вызывающий, след', async () => {
+    const uc = new Calling();
+    const caller = user(OWNER);
+    expectOk(await uc.handle({ taskId: TASK }, caller, REQ));
+    const expected: CallContext = { from: CallerUcDef, caller, trace: REQ };
+    expect(uc.loaded).toEqual(expected);
+    expect(uc.executed).toEqual(expected);
   });
 });
 

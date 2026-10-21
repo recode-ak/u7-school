@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { defineAggregate } from '../domain/aggregate/define-aggregate';
 import { defineEventReaction } from '../domain/contracts/define-event-reaction';
+import { defineJob } from '../domain/contracts/define-job';
 import { defineModule } from '../domain/contracts/define-module';
 import { defineUseCase } from '../domain/contracts/define-use-case';
 import { allowAll } from '../domain/policy/policy';
@@ -10,30 +11,62 @@ import { defineErrors } from '../kernel/errors/define-errors';
 import { BaseEntityFields } from '../kernel/fields/fields';
 import { ok } from '../kernel/result/result';
 import {
+  CompleteTaskUcDef,
+  GetTaskUcDef,
   TaskEvents,
-  TodoFacadeDef,
   TodoModuleDef,
 } from '../testing/example/todo';
 import { buildGraph } from './domain-graph';
 
-// Чужой модуль, который вызывает фасад todo, — для связи L0 «вызов фасада».
+// Чужой модуль, который вызывает UC todo через фасад, — для связей «UC → UC».
 const NotifyTodoErDef = defineEventReaction({
   name: 'notifyTodo',
   label: 'Сообщить о задаче',
-  description: 'Читает задачу через фасад todo.',
+  description: 'Читает задачу и завершает её через фасад todo.',
   on: [TaskEvents.created],
-  calls: [TodoFacadeDef],
+  calls: [GetTaskUcDef, CompleteTaskUcDef],
+});
+
+const NoteArDef = defineAggregate({
+  name: 'note',
+  label: 'Заметка',
+  description: 'Заметка к задаче.',
+  state: v.object({ ...BaseEntityFields }),
+  events: {},
+  errors: {},
+});
+
+const ShowTaskUcDef = defineUseCase({
+  name: 'showTask',
+  label: 'Показать задачу',
+  description: 'Задача к заметке — через фасад todo.',
+  type: 'query',
+  aggregate: NoteArDef,
+  callers: ['user'],
+  policy: allowAll,
+  calls: [GetTaskUcDef],
+  input: v.object({}),
+  output: v.object({}),
+  errors: [],
+});
+
+const SweepJobDef = defineJob({
+  name: 'sweep',
+  label: 'Чистка',
+  description: 'Проверяет задачи заметок.',
+  schedule: { kind: 'dailyAt', hour: 5, minute: 0 },
+  calls: [GetTaskUcDef],
 });
 
 const NotesModuleDef = defineModule({
   name: 'notes',
   label: 'Заметки',
-  description: 'Модуль для теста связей L0.',
+  description: 'Модуль для теста связей «UC → UC».',
   dependsOn: [TodoModuleDef],
-  aggregates: [],
-  useCases: [],
+  aggregates: [NoteArDef],
+  useCases: [ShowTaskUcDef],
   reactions: [NotifyTodoErDef],
-  jobs: [],
+  jobs: [SweepJobDef],
 });
 
 /**
@@ -117,8 +150,7 @@ describe('buildGraph', () => {
     it('модули — замыкание корней по dependsOn', () => {
       expect(Object.keys(graph.modules)).toEqual(['todo', 'users']);
       expect(graph.modules.todo?.def.dependsOn).toEqual(['users']);
-      expect(graph.modules.todo?.facade?.name).toBe('todo');
-      expect(graph.modules.users?.facade).toBeUndefined();
+      expect('facade' in (graph.modules.todo ?? {})).toBe(false);
     });
 
     it('связи: dependsOn и поток событий между модулями', () => {
@@ -134,15 +166,42 @@ describe('buildGraph', () => {
       ]);
     });
 
-    it('связь «вызов фасада» — от модуля реакции к владельцу фасада', () => {
+    it('связь calls — из «UC → UC»: от модуля операции к модулю UC, вид цели', () => {
       const withNotes = buildGraph([NotesModuleDef]);
-      expect(withNotes.links).toContainEqual({
-        kind: 'calls',
-        from: 'notes',
-        to: 'todo',
-        facade: 'todo',
-        reaction: 'notes.notifyTodo',
-      });
+      expect(withNotes.links.filter((l) => l.kind === 'calls')).toEqual([
+        {
+          kind: 'calls',
+          from: 'notes',
+          to: 'todo',
+          operation: 'notes.showTask',
+          useCase: 'todo.getTask',
+          type: 'query',
+        },
+        {
+          kind: 'calls',
+          from: 'notes',
+          to: 'todo',
+          operation: 'notes.notifyTodo',
+          useCase: 'todo.getTask',
+          type: 'query',
+        },
+        {
+          kind: 'calls',
+          from: 'notes',
+          to: 'todo',
+          operation: 'notes.notifyTodo',
+          useCase: 'todo.completeTask',
+          type: 'command',
+        },
+        {
+          kind: 'calls',
+          from: 'notes',
+          to: 'todo',
+          operation: 'notes.sweep',
+          useCase: 'todo.getTask',
+          type: 'query',
+        },
+      ]);
     });
 
     it('события внутри модуля не дают связи L0', () => {
@@ -162,7 +221,29 @@ describe('buildGraph', () => {
         'todo.createTask',
         'todo.completeTask',
         'todo.listTasks',
+        'todo.getTask',
       ]);
+    });
+
+    it('UC/ER/Job → UC из calls, обратная связь — calledBy у UC', () => {
+      const withNotes = buildGraph([NotesModuleDef]);
+      expect(withNotes.useCases['notes.showTask']?.calls).toEqual([
+        'todo.getTask',
+      ]);
+      expect(withNotes.reactions['notes.notifyTodo']?.calls).toEqual([
+        'todo.getTask',
+        'todo.completeTask',
+      ]);
+      expect(withNotes.jobs['notes.sweep']?.calls).toEqual(['todo.getTask']);
+      expect(withNotes.useCases['todo.getTask']?.calledBy).toEqual([
+        'notes.showTask',
+        'notes.notifyTodo',
+        'notes.sweep',
+      ]);
+      expect(withNotes.useCases['todo.completeTask']?.calledBy).toEqual([
+        'notes.notifyTodo',
+      ]);
+      expect(graph.useCases['todo.createTask']?.calledBy).toEqual([]);
     });
 
     it('ER и Job → агрегат, обратные связи у агрегата', () => {
@@ -192,7 +273,7 @@ describe('buildGraph', () => {
     it('ошибка: агрегат-владелец и кто её объявляет', () => {
       expect(graph.errors.TASK_NOT_FOUND).toMatchObject({
         aggregate: 'todo.task',
-        usedBy: ['todo.completeTask', 'todo'],
+        usedBy: ['todo.completeTask', 'todo.getTask'],
       });
       expect(graph.errors.TASK_ARCHIVED?.def.kind).toBe('conflict');
     });

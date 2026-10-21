@@ -1,4 +1,4 @@
-import { type Caller, subjectOf } from '#core/kernel/caller/caller';
+import { type Caller, originOf, subjectOf } from '#core/kernel/caller/caller';
 
 /** Решение политики: разрешено или отказ с именем правила и текстом. */
 export type Decision =
@@ -47,7 +47,8 @@ export type RuleSpec<U, C> = Named & {
 
 /**
  * Именованное правило. Проверяет субъекта (`subjectOf`): без субъекта
- * (guest, system) — отказ; `delegable: false` отказывает `delegate`.
+ * (guest, system) — отказ; `delegable: false` отказывает `delegate`, в том
+ * числе пришедшему через фасад (`module` с таким `origin`).
  */
 export function rule<U, C = unknown>(spec: RuleSpec<U, C>): Rule<U, C> {
   const delegable = spec.delegable ?? true;
@@ -59,7 +60,9 @@ export function rule<U, C = unknown>(spec: RuleSpec<U, C>): Rule<U, C> {
     denyMessage: spec.denyMessage,
     delegable,
     evaluate(caller, ctx) {
-      if (caller.kind === 'delegate' && !delegable) {
+      // Через фасад (`module`) действует исходный вызывающий: делегирование
+      // проверяется по нему (D-42).
+      if (originOf(caller).kind === 'delegate' && !delegable) {
         return denied(spec.name, `Недоступно по делегированию: ${spec.label}.`);
       }
       const subject = subjectOf(caller);

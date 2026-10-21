@@ -2,8 +2,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { defineModule } from '../domain/contracts/define-module';
 import { indexDefs } from '../graph/def-index';
-import { AlphaModuleDef } from './arch.fixture';
+import { AlphaModuleDef, BetaModuleDef } from './arch.fixture';
 import { checkFiles, type ModuleLayout } from './check-files';
 import { formatViolation } from './violation';
 
@@ -36,6 +37,7 @@ function cleanTree(): void {
     write(`${side}/alpha/note/job/purge-notes.job.ts`);
     write(`${side}/beta/beta.module.ts`);
     write(`${side}/beta/item/uc/create-item.uc.ts`);
+    write(`${side}/beta/item/uc/get-item.uc.ts`);
   }
   write('domain/beta/index.ts');
 }
@@ -121,7 +123,18 @@ describe('checkFiles', () => {
       expect(report()).toEqual([
         `ARC-06: модуль beta: нет ${join(root, 'app/beta/beta.module.ts')}`,
         'MAN-10: beta/item/uc/create-item.uc.ts есть в домене, нет в прикладном слое',
+        'MAN-10: beta/item/uc/get-item.uc.ts есть в домене, нет в прикладном слое',
       ]);
+    });
+
+    it('внешний модуль: только контракт в домене, прикладного пакета нет (D-37, D-42)', () => {
+      cleanTree();
+      rmSync(join(root, 'app/beta'), { recursive: true });
+      const beta = defineModule({ ...BetaModuleDef, external: true });
+      const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [beta] });
+      expect(
+        checkFiles(indexDefs([alpha]), layout).map(formatViolation),
+      ).toEqual([]);
     });
   });
 });

@@ -32,16 +32,6 @@ export {
   type ReactionEventOf,
 } from './domain/contracts/define-event-reaction';
 export {
-  type AnyFacadeDef,
-  type AnyFacadeMethodDef,
-  defineFacade,
-  type FacadeApi,
-  type FacadeDef,
-  type FacadeMethodDef,
-  type FacadeSpec,
-  method,
-} from './domain/contracts/define-facade';
-export {
   type AnyJobDef,
   defineJob,
   type JobDef,
@@ -109,11 +99,16 @@ export {
   type DomainRuleSpec,
   domainRule,
 } from './domain/rules/domain-rule';
+export type { CallContext } from './kernel/caller/call-context';
 export {
   type Caller,
   type CallerKind,
+  type CallingOperation,
   type DelegateCaller,
   type GuestCaller,
+  type ModuleCaller,
+  moduleCaller,
+  originOf,
   type SystemCaller,
   subjectOf,
   systemCaller,

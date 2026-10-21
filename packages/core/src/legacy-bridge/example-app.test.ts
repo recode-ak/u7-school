@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import type { Caller } from 'dmg-core';
-import type { RequestMeta } from 'dmg-core/app';
+import type { CallContext, Caller } from 'dmg-core';
+import { type RequestMeta, requestTrace } from 'dmg-core/app';
 import {
   expectErr,
   expectOk,
@@ -23,6 +23,7 @@ import { createUsersModule } from 'dmg-core/testing/example/app/users/users.modu
 import {
   CompleteTaskUcDef,
   CreateTaskUcDef,
+  GetTaskUcDef,
   ListTasksUcDef,
   TaskEvents,
 } from 'dmg-core/testing/example/todo/index';
@@ -158,15 +159,23 @@ describe('todo: Job на существующем планировщике', () 
 });
 
 describe('todo: фасад', () => {
+  // Операция другого модуля, объявившая getTask в calls (D-42).
+  const call = (): CallContext => ({
+    from: { dmg: 'useCase', name: 'showTask', calls: [GetTaskUcDef] },
+    caller: caller(ANNA),
+    trace: requestTrace(req()),
+  });
+  const facade = () => todoFacade(createTodoModule(deps));
+
   test('getTask отдаёт задачу только для чтения', async () => {
     const id = await create('Купить хлеб');
-    const task = expectOk(await todoFacade(deps).getTask(id));
+    const task = expectOk(await facade().getTask(call(), id));
     expect([task.uuid, task.isDone()]).toEqual([id, false]);
     // @ts-expect-error: ReadonlyAr — мутирующих методов нет (API-04)
     expect(task.complete).toBeDefined();
   });
 
   test('нет задачи — TASK_NOT_FOUND', async () => {
-    expectErr(await todoFacade(deps).getTask(ANNA), 'TASK_NOT_FOUND');
+    expectErr(await facade().getTask(call(), ANNA), 'TASK_NOT_FOUND');
   });
 });

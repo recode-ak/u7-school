@@ -1,6 +1,5 @@
 import type { AnyAggregateDef } from '../domain/aggregate/define-aggregate';
 import type { AnyEventReactionDef } from '../domain/contracts/define-event-reaction';
-import type { AnyFacadeDef } from '../domain/contracts/define-facade';
 import type { AnyJobDef } from '../domain/contracts/define-job';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyUseCaseDef } from '../domain/contracts/define-use-case';
@@ -21,7 +20,6 @@ export type DefIndex = {
   readonly aggregateOwner: ReadonlyMap<AnyAggregateDef, AnyModuleDef>;
   readonly eventOwner: ReadonlyMap<AnyEventDef, AnyAggregateDef>;
   readonly errorOwner: ReadonlyMap<AnyErrorDef, AnyAggregateDef>;
-  readonly facadeOwner: ReadonlyMap<AnyFacadeDef, AnyModuleDef>;
   readonly operationOwner: ReadonlyMap<AnyOperationDef, AnyModuleDef>;
 };
 
@@ -37,7 +35,6 @@ export function indexDefs(roots: readonly AnyModuleDef[]): DefIndex {
   const aggregateOwner = new Map<AnyAggregateDef, AnyModuleDef>();
   const eventOwner = new Map<AnyEventDef, AnyAggregateDef>();
   const errorOwner = new Map<AnyErrorDef, AnyAggregateDef>();
-  const facadeOwner = new Map<AnyFacadeDef, AnyModuleDef>();
   const operationOwner = new Map<AnyOperationDef, AnyModuleDef>();
   for (const m of modules) {
     for (const a of m.aggregates) {
@@ -45,7 +42,6 @@ export function indexDefs(roots: readonly AnyModuleDef[]): DefIndex {
       for (const e of Object.values(a.events)) eventOwner.set(e, a);
       for (const e of Object.values(a.errors)) errorOwner.set(e, a);
     }
-    if (m.facade) facadeOwner.set(m.facade, m);
     for (const op of operationsOf(m)) operationOwner.set(op, m);
   }
   return {
@@ -53,13 +49,17 @@ export function indexDefs(roots: readonly AnyModuleDef[]): DefIndex {
     aggregateOwner,
     eventOwner,
     errorOwner,
-    facadeOwner,
     operationOwner,
   };
 }
 
 export function operationsOf(m: AnyModuleDef): readonly AnyOperationDef[] {
   return [...m.useCases, ...m.reactions, ...m.jobs];
+}
+
+/** UC других модулей, которые операция вызывает через фасады (D-42). */
+export function callsOf(op: AnyOperationDef): readonly AnyUseCaseDef[] {
+  return op.dmg === 'useCase' ? (op.calls ?? []) : op.calls;
 }
 
 /** Id агрегата и операции в графе: `module.name`. */

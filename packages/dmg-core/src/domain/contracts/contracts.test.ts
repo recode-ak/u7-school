@@ -6,19 +6,22 @@ import { allowAll } from '../policy/policy';
 import {
   ArchiveDoneErDef,
   CompleteTaskUcDef,
+  GetUserUcDef,
   ListTasksUcDef,
   RemindJobDef,
   TaskArDef,
   TaskErrors,
   TaskEvents,
   TaskPolicy,
-  TodoFacadeDef,
   TodoModuleDef,
   UsersModuleDef,
 } from './contracts.fixture';
 import type { ReactionEventOf } from './define-event-reaction';
-import type { FacadeApi } from './define-facade';
+import { defineEventReaction } from './define-event-reaction';
+import { defineJob } from './define-job';
+import { defineModule } from './define-module';
 import {
+  type AnyUseCaseDef,
   defineUseCase,
   type InputOf,
   type OutputOf,
@@ -35,6 +38,17 @@ describe('defineUseCase', () => {
       TaskErrors.ALREADY_DONE,
     ]);
     expect(CompleteTaskUcDef.emits).toEqual([TaskEvents.completed]);
+    expect(CompleteTaskUcDef.calls).toEqual([GetUserUcDef]);
+  });
+
+  it('calls — только Def UC (MAN-07, D-42)', () => {
+    defineUseCase({
+      ...ListTasksUcDef,
+      // @ts-expect-error в calls — Def UC, а не агрегат или строка
+      calls: [TaskArDef],
+    });
+    const any: AnyUseCaseDef = ListTasksUcDef;
+    expect(any.calls).toBeUndefined();
   });
 
   it('input, output и ошибки выводятся из Def', () => {
@@ -96,15 +110,26 @@ describe('defineUseCase', () => {
 });
 
 describe('defineEventReaction', () => {
-  it('Def несёт on/touches/calls ссылками; emits по умолчанию пуст', () => {
+  it('Def несёт on/touches ссылками; calls и emits по умолчанию пусты', () => {
     expect(ArchiveDoneErDef.dmg).toBe('eventReaction');
     expect(ArchiveDoneErDef.on).toEqual([
       TaskEvents.completed,
       TaskEvents.created,
     ]);
     expect(ArchiveDoneErDef.touches).toEqual([TaskArDef]);
-    expect(ArchiveDoneErDef.calls).toEqual([TodoFacadeDef]);
+    expect(ArchiveDoneErDef.calls).toEqual([]);
     expect(ArchiveDoneErDef.emits).toEqual([]);
+  });
+
+  it('calls — Def UC других модулей', () => {
+    const er = defineEventReaction({
+      name: 'syncUser',
+      label: 'Сверить пользователя',
+      description: 'Читает пользователя через фасад.',
+      on: [TaskEvents.created],
+      calls: [GetUserUcDef],
+    });
+    expect(er.calls).toEqual([GetUserUcDef]);
   });
 
   it('тип события реакции — union событий из on', () => {
@@ -135,27 +160,12 @@ describe('defineJob', () => {
       minute: 0,
     });
     expect(RemindJobDef.scans).toEqual([TaskArDef]);
-  });
-});
-
-describe('defineFacade', () => {
-  it('методы с label/description и ошибками', () => {
-    expect(TodoFacadeDef.dmg).toBe('facade');
-    expect(TodoFacadeDef.methods.isDone.dmg).toBe('facadeMethod');
-    expect(TodoFacadeDef.methods.isDone.errors).toEqual([TaskErrors.NOT_FOUND]);
+    expect(RemindJobDef.calls).toEqual([]);
   });
 
-  it('тип API фасада выводится из Def', async () => {
-    const api: FacadeApi<typeof TodoFacadeDef> = {
-      isDone: async () => TaskErrors.NOT_FOUND.err(),
-    };
-    const res = await api.isDone('t1');
-    expect(res.ok ? res.value : res.error.code).toBe('TASK_NOT_FOUND');
-    const wrong: FacadeApi<typeof TodoFacadeDef> = {
-      // @ts-expect-error ошибка не объявлена в контракте фасада
-      isDone: async () => TaskErrors.ALREADY_DONE.err(),
-    };
-    expect(wrong).toBeDefined();
+  it('calls — Def UC других модулей', () => {
+    const job = defineJob({ ...RemindJobDef, calls: [GetUserUcDef] });
+    expect(job.calls).toEqual([GetUserUcDef]);
   });
 });
 
@@ -167,6 +177,11 @@ describe('defineModule', () => {
     expect(TodoModuleDef.useCases).toEqual([CompleteTaskUcDef, ListTasksUcDef]);
     expect(TodoModuleDef.reactions).toEqual([ArchiveDoneErDef]);
     expect(TodoModuleDef.jobs).toEqual([RemindJobDef]);
-    expect(TodoModuleDef.facade).toBe(TodoFacadeDef);
+    expect('facade' in TodoModuleDef).toBe(false);
+  });
+
+  it('внешний модуль объявляет Def UC без реализации (D-37, D-42)', () => {
+    const external = defineModule({ ...UsersModuleDef, external: true });
+    expect(external.useCases).toEqual([GetUserUcDef]);
   });
 });

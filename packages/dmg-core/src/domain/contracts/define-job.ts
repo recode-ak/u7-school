@@ -1,5 +1,6 @@
 import type { AnyAggregateDef } from '../aggregate/define-aggregate';
 import type { AnyEventDef } from '../events/define-events';
+import type { AnyUseCaseDef } from './define-use-case';
 
 /**
  * Расписание запуска, UTC. Структурно совпадает с legacy `JobSchedule`,
@@ -33,15 +34,19 @@ export type JobSpec = {
   readonly schedule: JobSchedule;
   /** Агрегаты, которые задание просматривает. */
   readonly scans?: readonly AnyAggregateDef[];
+  /** UC других модулей, которые задание вызывает через фасады (D-42). */
+  readonly calls?: readonly AnyUseCaseDef[];
   readonly emits?: readonly AnyEventDef[];
 };
 
 export type JobDef<S extends JobSpec> = S &
-  Required<Pick<JobSpec, 'scans' | 'emits'>> & { readonly dmg: 'job' };
+  Required<Pick<JobSpec, 'scans' | 'calls' | 'emits'>> & {
+    readonly dmg: 'job';
+  };
 
 export type AnyJobDef = JobDef<JobSpec>;
 
 /** Контракт периодического задания. */
 export function defineJob<const S extends JobSpec>(spec: S): JobDef<S> {
-  return { scans: [], emits: [], ...spec, dmg: 'job' };
+  return { scans: [], calls: [], emits: [], ...spec, dmg: 'job' };
 }

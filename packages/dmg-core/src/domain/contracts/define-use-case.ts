@@ -22,6 +22,12 @@ type Common = {
    * объявляется в `errors`.
    */
   readonly rules?: readonly AnyDomainRule[];
+  /**
+   * UC других модулей (из `dependsOn`), которые операция вызывает через их
+   * фасады (D-42, MAN-05). Вызываемый UC отказывает (`UNAUTHORIZED`), если
+   * его Def здесь нет.
+   */
+  readonly calls?: readonly AnyUseCaseDef[];
   readonly input: v.GenericSchema;
   readonly output: v.GenericSchema;
   /** Собственные ошибки и ошибки зависимостей; базовые подмешивает ядро. */

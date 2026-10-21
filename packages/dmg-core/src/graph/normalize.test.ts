@@ -4,15 +4,16 @@ import { defineAggregate } from '../domain/aggregate/define-aggregate';
 import {
   ArchiveDoneErDef,
   CompleteTaskUcDef,
+  GetUserUcDef,
   ListTasksUcDef,
   RemindJobDef,
   TaskArDef,
   TaskErrors,
   TaskEvents,
   TaskPolicy,
-  TodoFacadeDef,
   TodoModuleDef,
 } from '../domain/contracts/contracts.fixture';
+import { defineJob } from '../domain/contracts/define-job';
 import { defineUseCase } from '../domain/contracts/define-use-case';
 import { allOf, anyOf, hasRole } from '../domain/policy/policy';
 import { defineRules } from '../domain/rules/define-rules';
@@ -114,11 +115,13 @@ describe('normalize', () => {
       output: objectSchema,
       errors: ['TASK_NOT_FOUND', 'TASK_ALREADY_DONE'],
       rules: [],
+      calls: ['getUser'],
       emits: ['todo.task.completed'],
     });
     expect(normalize(ListTasksUcDef)).toMatchObject({
       policy: { dmg: 'rule', op: 'allowAll' },
       output: expect.objectContaining({ type: 'array' }),
+      calls: [],
       emits: [],
     });
   });
@@ -164,7 +167,7 @@ describe('normalize', () => {
       description: 'Переносит выполненную задачу в архив.',
       on: ['todo.task.completed', 'todo.task.created'],
       touches: ['task'],
-      calls: ['todo'],
+      calls: [],
       emits: [],
     });
     expect(normalize(RemindJobDef)).toEqual({
@@ -174,24 +177,15 @@ describe('normalize', () => {
       description: 'Ежедневно напоминает о задачах.',
       schedule: { kind: 'dailyAt', hour: 6, minute: 0 },
       scans: ['task'],
+      calls: [],
       emits: [],
     });
+    expect(
+      normalize(defineJob({ ...RemindJobDef, calls: [GetUserUcDef] })),
+    ).toMatchObject({ calls: ['getUser'] });
   });
 
-  it('фасад и модуль', () => {
-    expect(normalize(TodoFacadeDef)).toEqual({
-      dmg: 'facade',
-      name: 'todo',
-      label: 'Фасад задач',
-      description: 'API задач для других модулей.',
-      methods: {
-        isDone: {
-          label: 'Задача выполнена?',
-          description: 'Проверяет, выполнена ли задача.',
-          errors: ['TASK_NOT_FOUND'],
-        },
-      },
-    });
+  it('модуль: состав по именам, фасада нет (D-42)', () => {
     expect(normalize(TodoModuleDef)).toEqual({
       dmg: 'module',
       name: 'todo',
@@ -203,7 +197,6 @@ describe('normalize', () => {
       useCases: ['completeTask', 'listTasks'],
       reactions: ['archiveDone'],
       jobs: ['remind'],
-      facade: 'todo',
     });
   });
 

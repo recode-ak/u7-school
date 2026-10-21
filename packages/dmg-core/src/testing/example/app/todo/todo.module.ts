@@ -10,8 +10,8 @@ import { ArchiveDoneTasksJob } from './task/job/archive-done-tasks.job';
 import type { TaskRepo } from './task/task.repo';
 import { CompleteTaskUc } from './task/uc/complete-task.uc';
 import { CreateTaskUc } from './task/uc/create-task.uc';
+import { GetTaskUc } from './task/uc/get-task.uc';
 import { ListTasksUc } from './task/uc/list-tasks.uc';
-import { todoFacade } from './todo.facade';
 
 /** Резолвер модуля: платформа + репозитории. */
 export type TodoDeps = ModuleDeps & { readonly tasks: TaskRepo };
@@ -22,10 +22,10 @@ export const todoMap = {
     createTask: CreateTaskUc,
     completeTask: CompleteTaskUc,
     listTasks: ListTasksUc,
+    getTask: GetTaskUc,
   },
   reactions: { archiveRemovedUserTasks: ArchiveRemovedUserTasksEr },
   jobs: { archiveDoneTasks: ArchiveDoneTasksJob },
-  facade: todoFacade,
 } satisfies ModuleMap<typeof TodoModuleDef, TodoDeps, ExampleUser>;
 
 /** Модуль todo с зависимостями — для `ApiApp.addDmgModules`. */

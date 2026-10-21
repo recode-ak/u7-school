@@ -1,8 +1,4 @@
 import type { AnyEventReactionDef } from '#core/domain/contracts/define-event-reaction';
-import type {
-  AnyFacadeDef,
-  FacadeApi,
-} from '#core/domain/contracts/define-facade';
 import type { AnyJobDef } from '#core/domain/contracts/define-job';
 import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import type {
@@ -34,10 +30,6 @@ type StrictHandler<D extends AnyUseCaseDef, U> = {
   ) => Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
 };
 
-type FacadePart<M extends AnyModuleDef, R> = M['facade'] extends AnyFacadeDef
-  ? { readonly facade: (deps: R) => FacadeApi<M['facade']> }
-  : { readonly facade?: undefined };
-
 /**
  * Карта «Def → класс» модуля (API-05): ключ — имя Def, значение — класс
  * реализации именно этого Def. Пропуск реализации, лишний ключ или класс
@@ -60,7 +52,7 @@ export type ModuleMap<M extends AnyModuleDef, R extends ModuleDeps, U> = {
   readonly jobs: {
     readonly [J in M['jobs'][number] as J['name']]: Ctor<R, JobFromDef<J, R>>;
   };
-} & FacadePart<M, R>;
+};
 
 /** Та же карта без привязки к конкретному модулю — для обхода в рантайме. */
 type RuntimeMap<R, U> = {
@@ -73,7 +65,6 @@ type RuntimeMap<R, U> = {
   readonly jobs: Readonly<
     Record<string, Ctor<R, JobFromDef<AnyJobDef, ModuleDeps>>>
   >;
-  readonly facade?: ((deps: R) => object) | undefined;
 };
 
 /** Любой модуль DMG — для списка модулей приложения. */
@@ -81,7 +72,8 @@ export type AnyModuleFromDef<U> = ModuleFromDef<AnyModuleDef, ModuleDeps, U>;
 
 /**
  * Модуль DMG в рантайме: экземпляры реализаций по карте, подписка реакций,
- * задания для планировщика, фасад для других модулей.
+ * задания для планировщика. Фасад для других модулей собирает приложение
+ * поверх модуля (`callUseCase`, D-42) — в карте его нет.
  */
 export class ModuleFromDef<M extends AnyModuleDef, R extends ModuleDeps, U> {
   private readonly useCases = new Map<
@@ -93,7 +85,6 @@ export class ModuleFromDef<M extends AnyModuleDef, R extends ModuleDeps, U> {
     ModuleDeps
   >[];
   readonly jobs: readonly JobFromDef<AnyJobDef, ModuleDeps>[];
-  readonly facade: object | undefined;
   private readonly bus: EventBus;
 
   /**
@@ -111,7 +102,6 @@ export class ModuleFromDef<M extends AnyModuleDef, R extends ModuleDeps, U> {
     }
     this.reactions = Object.values(map.reactions).map((Er) => new Er(deps));
     this.jobs = Object.values(map.jobs).map((J) => new J(deps));
-    this.facade = map.facade?.(deps);
     this.bus = deps.app.bus;
   }
 

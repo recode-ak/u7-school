@@ -17,6 +17,7 @@ export {
 } from './task/task.rules';
 export { CompleteTaskUcDef } from './task/uc/complete-task.uc';
 export { CreateTaskUcDef } from './task/uc/create-task.uc';
+export { GetTaskUcDef } from './task/uc/get-task.uc';
 export { ListTasksUcDef } from './task/uc/list-tasks.uc';
-export { TodoFacadeDef } from './todo.facade';
+export type { TodoFacade } from './todo.facade';
 export { TodoModuleDef } from './todo.module';

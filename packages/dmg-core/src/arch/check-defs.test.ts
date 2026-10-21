@@ -9,7 +9,10 @@ import {
   type AnyModuleDef,
   defineModule,
 } from '../domain/contracts/define-module';
-import { defineUseCase } from '../domain/contracts/define-use-case';
+import {
+  type AnyUseCaseDef,
+  defineUseCase,
+} from '../domain/contracts/define-use-case';
 import { type AnyEventDef, defineEvents } from '../domain/events/define-events';
 import { allowAll } from '../domain/policy/policy';
 import { domainRule } from '../domain/rules/domain-rule';
@@ -22,11 +25,13 @@ import {
   AlphaModuleDef,
   BetaModuleDef,
   CreateItemUcDef,
+  GetItemUcDef,
   ItemArDef,
   ItemErrors,
   ItemEvents,
   NoteArDef,
   NoteEvents,
+  PurgeNotesJobDef,
 } from './arch.fixture';
 import { checkDefs } from './check-defs';
 import { formatViolation } from './violation';
@@ -157,6 +162,7 @@ describe('checkDefs', () => {
       const beta = defineModule({ ...BetaModuleDef, useCases: [] });
       const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [beta] });
       expect(report(alpha)).toEqual([
+        'MAN-06: ER alpha.addNote: UC getItem не входит ни в один модуль',
         'MAN-06: ER alpha.addNote слушает beta.item.created, которое никто не публикует',
         'MAN-06: событие beta.item.created никто не публикует',
       ]);
@@ -229,11 +235,75 @@ describe('checkDefs', () => {
   });
 
   describe('ARC-04 — ссылки Def ⊆ dependsOn', () => {
-    it('событие и фасад модуля вне dependsOn', () => {
+    it('событие и UC из calls модуля вне dependsOn', () => {
       const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [] });
       expect(report(alpha, BetaModuleDef)).toEqual([
         'ARC-04: ER alpha.addNote: событие beta.item.created модуля beta, которого нет в dependsOn alpha',
-        'ARC-04: ER alpha.addNote: фасад beta модуля beta, которого нет в dependsOn alpha',
+        'ARC-04: ER alpha.addNote: UC beta.getItem модуля beta, которого нет в dependsOn alpha',
+      ]);
+    });
+
+    it('calls UC и Job — тоже ⊆ dependsOn', () => {
+      const ShowUcDef = defineUseCase({
+        name: 'showNote',
+        label: 'Показать заметку',
+        description: 'Заметка с позицией каталога.',
+        type: 'query',
+        aggregate: NoteArDef,
+        callers: ['user'],
+        policy: allowAll,
+        calls: [GetItemUcDef],
+        input: v.object({}),
+        output: v.object({}),
+        errors: [],
+      });
+      const alpha = defineModule({
+        ...AlphaModuleDef,
+        dependsOn: [],
+        useCases: [ShowUcDef],
+        reactions: [],
+        jobs: [{ ...PurgeNotesJobDef, calls: [GetItemUcDef] }],
+      });
+      const arc04 = report(alpha, BetaModuleDef).filter((l) =>
+        l.startsWith('ARC-04'),
+      );
+      expect(arc04).toEqual([
+        'ARC-04: UC alpha.showNote: UC beta.getItem модуля beta, которого нет в dependsOn alpha',
+        'ARC-04: Job alpha.purgeNotes: UC beta.getItem модуля beta, которого нет в dependsOn alpha',
+      ]);
+    });
+  });
+
+  describe('MAN-05 — calls (D-42)', () => {
+    const withCalls = (calls: AnyUseCaseDef[], extra: AnyUseCaseDef[] = []) =>
+      defineModule({
+        ...AlphaModuleDef,
+        useCases: extra,
+        reactions: [defineEventReaction({ ...AddNoteErDef, calls })],
+      });
+
+    it('UC своего модуля в calls — нарушение', () => {
+      const OwnUcDef = defineUseCase({
+        ...GetItemUcDef,
+        name: 'getNote',
+        aggregate: NoteArDef,
+        errors: [],
+      });
+      expect(report(withCalls([OwnUcDef], [OwnUcDef]))).toEqual([
+        'MAN-05: ER alpha.addNote: UC alpha.getNote своего модуля — calls только для UC других модулей',
+      ]);
+    });
+
+    it('вызываемый UC не допускает module в callers — нарушение', () => {
+      expect(report(withCalls([CreateItemUcDef]))).toEqual([
+        'MAN-05: ER alpha.addNote: UC beta.createItem не объявляет module в callers',
+      ]);
+    });
+
+    it('UC вне модулей в calls — MAN-06', () => {
+      const LostUcDef = defineUseCase({ ...GetItemUcDef, name: 'lost' });
+      expect(report(withCalls([LostUcDef]))).toEqual([
+        'MAN-06: ER alpha.addNote: UC lost не входит ни в один модуль',
       ]);
     });
   });
@@ -398,10 +468,45 @@ describe('checkDefs', () => {
       expect(report(inner).filter((l) => l.startsWith('MAN-06'))).toEqual([]);
     });
 
-    it('у внешнего модуля нет реализаций UC/ER/Job', () => {
-      const m = outer({ useCases: [CreateItemUcDef] });
+    const OuterGetUcDef = defineUseCase({
+      name: 'getOuterItem',
+      label: 'Внешняя запись',
+      description: 'Запись внешнего модуля — Def без реализации.',
+      type: 'query',
+      aggregate: OuterItemArDef,
+      callers: ['module'],
+      policy: allowAll,
+      input: v.object({ itemId: F.uuid('записи') }),
+      output: v.object({}),
+      errors: [],
+    });
+
+    it('Def UC без реализации — контракт, на него ссылаются calls (D-42)', () => {
+      const Outer = outer({ useCases: [OuterGetUcDef] });
+      const WatchErDef = defineEventReaction({
+        name: 'watchOuter',
+        label: 'Следить',
+        description: 'Читает внешнюю запись через фасад.',
+        on: [OuterEvents.appeared],
+        calls: [OuterGetUcDef],
+      });
+      const inner = defineModule({
+        name: 'inner',
+        label: 'Внутренний',
+        description: 'Вызывает UC внешнего модуля.',
+        dependsOn: [Outer],
+        aggregates: [],
+        useCases: [],
+        reactions: [WatchErDef],
+        jobs: [],
+      });
+      expect(report(inner)).toEqual([]);
+    });
+
+    it('у внешнего модуля нет ER и Job', () => {
+      const m = outer({ jobs: [PurgeNotesJobDef] });
       expect(report(m)).toContain(
-        'MAN-06: модуль outer внешний — UC, ER и Job у него не объявляются',
+        'MAN-06: модуль outer внешний — ER и Job у него не объявляются',
       );
     });
   });

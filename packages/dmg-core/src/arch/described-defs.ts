@@ -13,8 +13,7 @@ export type DescribedDef = {
 };
 
 /**
- * Все Def приложения с описаниями: модули, фасады и их методы, агрегаты,
- * UC, ER, Job, события и ошибки агрегатов, доменные правила UC. Ошибки и
+ * Все Def приложения с описаниями: модули, агрегаты, UC, ER, Job, события и ошибки агрегатов, доменные правила UC. Ошибки и
  * события, на которые только ссылаются, проверяются у владельца; правило,
  * на которое ссылаются несколько UC, — один раз; заголовок правила — по
  * владельцу его ошибки (`ruleId`), как в графе.
@@ -36,12 +35,6 @@ export function describedDefs(index: DefIndex): DescribedDef[] {
   };
   for (const m of index.modules) {
     add(`модуль ${m.name}`, m);
-    if (m.facade) {
-      add(`фасад ${m.facade.name}`, m.facade);
-      for (const [name, method] of Object.entries(m.facade.methods)) {
-        add(`метод фасада ${m.facade.name}.${name}`, method);
-      }
-    }
     for (const a of m.aggregates) {
       add(`агрегат ${localId(m, a)}`, a, [['state', a.state]]);
       for (const e of Object.values(a.events)) {

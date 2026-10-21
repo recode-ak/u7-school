@@ -1,6 +1,6 @@
 import type { AnyAggregateDef } from '../aggregate/define-aggregate';
 import type { AnyEventDef, EventOf } from '../events/define-events';
-import type { AnyFacadeDef } from './define-facade';
+import type { AnyUseCaseDef } from './define-use-case';
 
 export type EventReactionSpec = {
   readonly name: string;
@@ -9,8 +9,8 @@ export type EventReactionSpec = {
   readonly on: readonly [AnyEventDef, ...AnyEventDef[]];
   /** Агрегаты, которые реакция меняет. */
   readonly touches?: readonly AnyAggregateDef[];
-  /** Фасады других модулей, которые реакция вызывает. */
-  readonly calls?: readonly AnyFacadeDef[];
+  /** UC других модулей, которые реакция вызывает через фасады (D-42). */
+  readonly calls?: readonly AnyUseCaseDef[];
   readonly emits?: readonly AnyEventDef[];
 };
 

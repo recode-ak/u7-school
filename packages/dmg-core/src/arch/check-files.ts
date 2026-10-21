@@ -14,7 +14,8 @@ export type ModuleLayout = { readonly domain: string; readonly app: string };
 /**
  * Проверки по файлам модулей: 1:1 домена и прикладного пакета (ARC-06),
  * пары контракт ↔ реализация и место ER/Job (MAN-10), файлы операций вне
- * модуля (MAN-06), импорты других модулей (ARC-04, ARC-06).
+ * модуля (MAN-06), импорты других модулей (ARC-04, ARC-06). У внешнего
+ * модуля (`external`) прикладной слой не проверяется.
  */
 export function checkFiles(
   index: DefIndex,
@@ -27,21 +28,26 @@ export function checkFiles(
   };
 
   for (const [m, dir] of dirs) {
-    for (const base of [dir.domain, dir.app]) {
+    // Внешний модуль реализован вне приложения: прикладного пакета у него
+    // нет, в домене — только контракт (D-37, D-42).
+    const sides = m.external ? [dir.domain] : [dir.domain, dir.app];
+    for (const base of sides) {
       const file = join(base, `${m.name}.module.ts`);
       if (!existsSync(file)) add('ARC-06', `модуль ${m.name}: нет ${file}`);
     }
 
     const domainOps = operationFiles(dir.domain);
-    const appOps = operationFiles(dir.app);
-    for (const f of appOps) {
-      if (!domainOps.includes(f)) {
-        add('MAN-10', `${m.name}/${f} есть в прикладном слое, нет в домене`);
+    if (!m.external) {
+      const appOps = operationFiles(dir.app);
+      for (const f of appOps) {
+        if (!domainOps.includes(f)) {
+          add('MAN-10', `${m.name}/${f} есть в прикладном слое, нет в домене`);
+        }
       }
-    }
-    for (const f of domainOps) {
-      if (!appOps.includes(f)) {
-        add('MAN-10', `${m.name}/${f} есть в домене, нет в прикладном слое`);
+      for (const f of domainOps) {
+        if (!appOps.includes(f)) {
+          add('MAN-10', `${m.name}/${f} есть в домене, нет в прикладном слое`);
+        }
       }
     }
 

@@ -1,4 +1,5 @@
 import type { AnyEventReactionDef } from '#core/domain/contracts/define-event-reaction';
+import type { CallContext } from '#core/kernel/caller/call-context';
 import { type SystemCaller, systemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import type { Result } from '#core/kernel/result/result';
@@ -6,7 +7,6 @@ import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { EnvelopeOf } from '../events/event-envelope';
-import { guardCalls } from '../facade/guard-calls';
 import { runLogged } from '../system/run-logged';
 import type { Trace } from '../trace';
 import { contractUnitOfWork } from '../uow/contract-unit-of-work';
@@ -24,28 +24,18 @@ export type ReactionEnvelopeOf<D extends AnyEventReactionDef> = EnvelopeOf<
  *
  * Вызывающий — `system` с `onBehalfOf` автора события-причины (caller.md
  * §2 п. 5). След: причина — событие, `correlationId` — его же; `trace`
- * передаётся в `react`, чтобы вызванный UC продолжил цепочку. Обращение
- * к фасаду вне `calls` и регистрация агрегата вне `touches` — исключение,
- * в production — `warn` в лог.
+ * передаётся в `react`, чтобы вызванный UC продолжил цепочку. Регистрация
+ * агрегата вне `touches` — исключение, в production — `warn` в лог; вызов
+ * UC другого модуля вне `calls` отклоняет сам вызываемый UC (D-42).
  */
 export abstract class ReactionFromDef<
   D extends AnyEventReactionDef,
   R extends ModuleDeps,
 > {
-  protected readonly resolve: R;
-
   constructor(
     readonly def: D,
-    resolve: R,
-  ) {
-    const { app } = resolve;
-    this.resolve =
-      app.mode === 'production'
-        ? guardCalls(def.name, def.calls, resolve, (message) =>
-            app.logger.warn(def.name, message),
-          )
-        : guardCalls(def.name, def.calls, resolve);
-  }
+    protected readonly resolve: R,
+  ) {}
 
   protected abstract react(
     event: ReactionEnvelopeOf<D>,
@@ -53,6 +43,17 @@ export abstract class ReactionFromDef<
     caller: SystemCaller<unknown>,
     trace: Trace,
   ): Promise<Result<void, DomainError>>;
+
+  /**
+   * Контекст вызова фасада другого модуля (D-42): эта реакция — `from`,
+   * вызывающий и след — те, что получил `react`.
+   */
+  protected callContext(
+    caller: SystemCaller<unknown>,
+    trace: Trace,
+  ): CallContext {
+    return { from: this.def, caller, trace };
+  }
 
   /** Текущий момент по часам приложения — передаётся в операции домена. */
   protected now(): Timestamp {

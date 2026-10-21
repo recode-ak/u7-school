@@ -8,12 +8,10 @@ import {
   CompleteTaskUcDef,
   CreateTaskUcDef,
   TaskErrors,
-  TodoFacadeDef,
 } from '#core/testing/example/todo/index';
 import { UserEvents } from '#core/testing/example/users/index';
 import { T0 } from '../app.fixture';
 import type { AppContext } from '../context';
-import { implementFacade } from '../facade/implement-facade';
 import { JobFromDef, type JobRun } from '../job/job-from-def';
 import { ReactionFromDef } from '../reaction/reaction-from-def';
 import { UseCaseFromDef } from '../use-case/use-case-from-def';
@@ -28,7 +26,6 @@ const MiniModuleDef = defineModule({
   useCases: [CompleteTaskUcDef],
   reactions: [ArchiveRemovedUserTasksErDef],
   jobs: [ArchiveDoneTasksJobDef],
-  facade: TodoFacadeDef,
 });
 
 type Deps = { readonly app: AppContext; reacted: string[] };
@@ -72,10 +69,6 @@ const map = {
   useCases: { completeTask: CompleteTask },
   reactions: { archiveRemovedUserTasks: ArchiveRemoved },
   jobs: { archiveDoneTasks: ArchiveDone },
-  facade: () =>
-    implementFacade(TodoFacadeDef, {
-      getTask: async (taskId) => TaskErrors.NOT_FOUND.err({ taskId }),
-    }),
 } satisfies Map;
 
 let deps: Deps;
@@ -125,10 +118,6 @@ describe('ModuleFromDef', () => {
   test('задания модуля доступны для планировщика', () => {
     expect(mini.jobs.map((j) => j.def.name)).toEqual(['archiveDoneTasks']);
   });
-
-  test('фасад собирается из карты', () => {
-    expect(mini.facade).toBeDefined();
-  });
 });
 
 describe('ModuleMap — полнота проверяется компилятором', () => {
@@ -150,12 +139,10 @@ describe('ModuleMap — полнота проверяется компилято
     expect(wrong).toBeDefined();
   });
 
-  test('пропуск фасада, объявленного в Def', () => {
-    const { useCases, reactions, jobs } = map;
-    const noFacade = { useCases, reactions, jobs };
-    // @ts-expect-error: TodoFacadeDef объявлен — реализация обязательна
-    const missing: Map = noFacade;
-    expect(missing).toBeDefined();
+  test('фасада в карте нет (D-42)', () => {
+    // @ts-expect-error: фасад собирает приложение, а не карта модуля
+    const extra: Map = { ...map, facade: () => ({}) };
+    expect(extra).toBeDefined();
   });
 
   test('UC, которому нужен субъект богаче, чем даёт приложение', () => {

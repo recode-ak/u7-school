@@ -11,8 +11,8 @@ export {
 } from './context';
 export type { EventBus } from './events/event-bus';
 export type { EnvelopeOf, EventEnvelope } from './events/event-envelope';
-export { guardCalls } from './facade/guard-calls';
-export { facadeDefOf, implementFacade } from './facade/implement-facade';
+export { asReadonlyAr, type Restorable } from './facade/as-readonly-ar';
+export { callUseCase, type UseCaseOwner } from './facade/call-use-case';
 export {
   JobFromDef,
   type JobReport,
@@ -53,7 +53,6 @@ export {
   type UnitOfWorkContext,
 } from './uow/unit-of-work';
 export {
-  type OwnErrorOf,
   type ParsedInputOf,
   type RawOutputOf,
   type UseCaseContextOf,

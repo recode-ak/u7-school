@@ -9,7 +9,6 @@ test('uc: модуль.агрегат + имя; по умолчанию dry-run 
     name: 'complete-student',
     write: false,
     adopt: false,
-    facade: false,
     domainRoot: 'packages/domain/src',
     packagesRoot: 'packages',
   });
@@ -82,10 +81,8 @@ test('--adopt: режим для legacy-модуля, по умолчанию в
   expect(parseArgs(['module', 'wish']).adopt).toBe(false);
 });
 
-test('--facade: только для module, по умолчанию выключен (D-38)', () => {
-  expect(parseArgs(['module', 'stream', '--facade']).facade).toBe(true);
-  expect(parseArgs(['module', 'stream']).facade).toBe(false);
-  expect(() => parseArgs(['aggregate', 'stream.student', '--facade'])).toThrow(
-    'только для module',
+test('--facade больше нет: фасад — рантайм-граница без манифеста (D-42)', () => {
+  expect(() => parseArgs(['module', 'stream', '--facade'])).toThrow(
+    'Неизвестная опция --facade',
   );
 });

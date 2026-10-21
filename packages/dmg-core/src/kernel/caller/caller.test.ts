@@ -2,6 +2,9 @@ import { describe, expect, it } from 'bun:test';
 import {
   type Caller,
   type CallerKind,
+  type CallingOperation,
+  moduleCaller,
+  originOf,
   subjectOf,
   systemCaller,
 } from './caller';
@@ -40,6 +43,41 @@ describe('subjectOf', () => {
   });
 });
 
+describe('module', () => {
+  const from: CallingOperation = { dmg: 'useCase', name: 'notify', calls: [] };
+  const user: Caller<User> = { kind: 'user', user: alice };
+  const delegate: Caller<User> = {
+    kind: 'delegate',
+    subject: alice,
+    actor: bob,
+    delegationId: 'd1',
+  };
+
+  it('moduleCaller несёт вызвавшую операцию и исходного вызывающего', () => {
+    expect(moduleCaller(from, user)).toEqual({
+      kind: 'module',
+      from,
+      origin: user,
+    });
+  });
+
+  it('субъект — субъект origin, в том числе через цепочку модулей', () => {
+    expect(subjectOf(moduleCaller(from, user))).toBe(alice);
+    expect(subjectOf(moduleCaller(from, delegate))).toBe(alice);
+    expect(subjectOf(moduleCaller(from, moduleCaller(from, user)))).toBe(alice);
+    expect(
+      subjectOf(moduleCaller(from, systemCaller<User>('job'))),
+    ).toBeUndefined();
+  });
+
+  it('originOf — исходный вызывающий цепочки модулей', () => {
+    expect(originOf(user)).toBe(user);
+    expect(originOf(moduleCaller(from, moduleCaller(from, delegate)))).toBe(
+      delegate,
+    );
+  });
+});
+
 describe('systemCaller', () => {
   it('несёт источник и исходного вызывающего', () => {
     const origin: Caller<User> = { kind: 'user', user: alice };
@@ -60,10 +98,16 @@ describe('GuestCaller', () => {
 });
 
 describe('CallerKind', () => {
-  it('четыре подтипа', () => {
-    const kinds: CallerKind[] = ['guest', 'user', 'delegate', 'system'];
+  it('пять подтипов', () => {
+    const kinds: CallerKind[] = [
+      'guest',
+      'user',
+      'delegate',
+      'module',
+      'system',
+    ];
     // @ts-expect-error неизвестный подтип
     const bad: CallerKind = 'admin';
-    expect(kinds).toHaveLength(4);
+    expect(kinds).toHaveLength(5);
   });
 });

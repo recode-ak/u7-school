@@ -3,14 +3,21 @@ import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyEventDef } from '../domain/events/define-events';
 import type { AnyDomainRule } from '../domain/rules/domain-rule';
 import type { AnyErrorDef } from '../kernel/errors/define-errors';
-import { type DefIndex, indexDefs, localId, ruleId } from './def-index';
+import {
+  type AnyOperationDef,
+  callsOf,
+  type DefIndex,
+  indexDefs,
+  localId,
+  operationsOf,
+  ruleId,
+} from './def-index';
 import {
   type NormalizedAggregate,
   type NormalizedDomainRule,
   type NormalizedError,
   type NormalizedEvent,
   type NormalizedEventReaction,
-  type NormalizedFacade,
   type NormalizedJob,
   type NormalizedModule,
   type NormalizedUseCase,
@@ -28,17 +35,21 @@ export type ModuleLink =
       readonly reaction: string;
     }
   | {
+      /**
+       * Вызов UC другого модуля через фасад (D-42): выводится из `calls`
+       * операции. `type: 'command'` — межмодульный побочный эффект (D-41).
+       */
       readonly kind: 'calls';
       readonly from: string;
       readonly to: string;
-      readonly facade: string;
-      readonly reaction: string;
+      /** Id вызывающей операции (UC, ER или Job). */
+      readonly operation: string;
+      /** Id вызываемого UC. */
+      readonly useCase: string;
+      readonly type: 'command' | 'query';
     };
 
-export type ModuleNode = {
-  readonly def: NormalizedModule;
-  readonly facade: NormalizedFacade | undefined;
-};
+export type ModuleNode = { readonly def: NormalizedModule };
 
 type Owned<N> = {
   readonly id: string;
@@ -53,11 +64,17 @@ export type AggregateNode = Owned<NormalizedAggregate> & {
   readonly jobs: readonly string[];
 };
 
-export type UseCaseNode = Owned<NormalizedUseCase> & {
-  readonly aggregate: string;
-  /** Id доменных правил UC. */
-  readonly rules: readonly string[];
-};
+/** Связи операции «→ UC» из `calls` (L1, D-42): id вызываемых UC. */
+type Calls = { readonly calls: readonly string[] };
+
+export type UseCaseNode = Owned<NormalizedUseCase> &
+  Calls & {
+    readonly aggregate: string;
+    /** Id доменных правил UC. */
+    readonly rules: readonly string[];
+    /** Операции других модулей, которые вызывают UC (обратная к `calls`). */
+    readonly calledBy: readonly string[];
+  };
 
 /**
  * Доменное правило (D-40). Id — `module.aggregate.name`, модуль — по
@@ -69,13 +86,11 @@ export type DomainRuleNode = Owned<NormalizedDomainRule> & {
   readonly usedBy: readonly string[];
 };
 
-export type ReactionNode = Owned<NormalizedEventReaction> & {
-  readonly touches: readonly string[];
-};
+export type ReactionNode = Owned<NormalizedEventReaction> &
+  Calls & { readonly touches: readonly string[] };
 
-export type JobNode = Owned<NormalizedJob> & {
-  readonly scans: readonly string[];
-};
+export type JobNode = Owned<NormalizedJob> &
+  Calls & { readonly scans: readonly string[] };
 
 export type EventNode = {
   readonly def: NormalizedEvent;
@@ -89,7 +104,7 @@ export type ErrorNode = {
   readonly def: NormalizedError;
   /** `undefined` — базовая ошибка ядра или ошибка вне модулей графа. */
   readonly aggregate: string | undefined;
-  /** UC и фасады (id = имя модуля), которые объявляют ошибку. */
+  /** UC, которые объявляют ошибку. */
   readonly usedBy: readonly string[];
 };
 
@@ -124,7 +139,7 @@ class GraphBuilder {
   private readonly modules: Record<string, ModuleNode> = {};
   private readonly links: ModuleLink[] = [];
   private readonly aggregates: Record<string, Mutable<AggregateNode>> = {};
-  private readonly useCases: Record<string, UseCaseNode> = {};
+  private readonly useCases: Record<string, Mutable<UseCaseNode>> = {};
   private readonly rules: Record<string, Mutable<DomainRuleNode>> = {};
   private readonly reactions: Record<string, ReactionNode> = {};
   private readonly jobs: Record<string, JobNode> = {};
@@ -141,6 +156,7 @@ class GraphBuilder {
       }
     }
     for (const m of this.index.modules) this.addOperations(m);
+    for (const m of this.index.modules) this.addCalls(m);
     return {
       modules: this.modules,
       links: this.links,
@@ -155,10 +171,7 @@ class GraphBuilder {
   }
 
   private addModule(m: AnyModuleDef): void {
-    this.modules[m.name] = {
-      def: normalize(m),
-      facade: m.facade && normalize(m.facade),
-    };
+    this.modules[m.name] = { def: normalize(m) };
     for (const a of m.aggregates) {
       const id = localId(m, a);
       this.aggregates[id] = {
@@ -189,20 +202,23 @@ class GraphBuilder {
         def: normalize(uc),
         aggregate,
         rules,
+        calls: (uc.calls ?? []).map((u) => this.operationId(u)),
+        calledBy: [],
       };
       this.aggregates[aggregate]?.useCases.push(id);
       for (const e of uc.emits ?? []) this.event(e).publishers.push(id);
       for (const e of uc.errors) this.error(e).usedBy.push(id);
     }
-    if (m.facade) {
-      for (const method of Object.values(m.facade.methods)) {
-        for (const e of method.errors) this.error(e).usedBy.push(m.name);
-      }
-    }
     for (const er of m.reactions) {
       const id = localId(m, er);
       const touches = er.touches.map((a) => this.aggregateId(a));
-      this.reactions[id] = { id, module: m.name, def: normalize(er), touches };
+      this.reactions[id] = {
+        id,
+        module: m.name,
+        def: normalize(er),
+        touches,
+        calls: er.calls.map((u) => this.operationId(u)),
+      };
       for (const a of touches) this.aggregates[a]?.reactions.push(id);
       for (const e of er.emits) this.event(e).publishers.push(id);
       for (const e of er.on) {
@@ -218,26 +234,51 @@ class GraphBuilder {
           });
         }
       }
-      for (const f of er.calls) {
-        const to = this.index.facadeOwner.get(f)?.name;
-        if (to !== undefined && to !== m.name) {
-          this.links.push({
-            kind: 'calls',
-            from: m.name,
-            to,
-            facade: f.name,
-            reaction: id,
-          });
-        }
-      }
     }
     for (const job of m.jobs) {
       const id = localId(m, job);
       const scans = job.scans.map((a) => this.aggregateId(a));
-      this.jobs[id] = { id, module: m.name, def: normalize(job), scans };
+      this.jobs[id] = {
+        id,
+        module: m.name,
+        def: normalize(job),
+        scans,
+        calls: job.calls.map((u) => this.operationId(u)),
+      };
       for (const a of scans) this.aggregates[a]?.jobs.push(id);
       for (const e of job.emits) this.event(e).publishers.push(id);
     }
+  }
+
+  /**
+   * «UC → UC» из `calls` (D-42): обратная связь `calledBy` у вызываемого UC
+   * и связь L0 между модулями. Вызов своего UC — нарушение (`checkDefs`),
+   * связи L0 не даёт.
+   */
+  private addCalls(m: AnyModuleDef): void {
+    for (const op of operationsOf(m)) {
+      const operation = localId(m, op);
+      for (const uc of callsOf(op)) {
+        const useCase = this.operationId(uc);
+        this.useCases[useCase]?.calledBy.push(operation);
+        const to = this.index.operationOwner.get(uc)?.name;
+        if (to === undefined || to === m.name) continue;
+        this.links.push({
+          kind: 'calls',
+          from: m.name,
+          to,
+          operation,
+          useCase,
+          type: uc.type,
+        });
+      }
+    }
+  }
+
+  /** Id операции: `module.name`; `?.<имя>` — Def вне модулей графа. */
+  private operationId(op: AnyOperationDef): string {
+    const owner = this.index.operationOwner.get(op);
+    return owner ? localId(owner, op) : `?.${op.name}`;
   }
 
   private aggregateId(a: AnyAggregateDef): string {

@@ -1,4 +1,5 @@
 import type { AnyJobDef } from '#core/domain/contracts/define-job';
+import type { CallContext } from '#core/kernel/caller/call-context';
 import { type SystemCaller, systemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
@@ -38,6 +39,14 @@ export abstract class JobFromDef<D extends AnyJobDef, R extends ModuleDeps> {
   }
 
   protected abstract run(job: JobRun): Promise<JobReport>;
+
+  /**
+   * Контекст вызова фасада другого модуля (D-42): это задание — `from`,
+   * вызывающий — его `system`, след — прогона (`job.trace`).
+   */
+  protected callContext(trace: Trace): CallContext {
+    return { from: this.def, caller: this.caller, trace };
+  }
 
   /** Текущий момент по часам приложения — передаётся в операции домена. */
   protected now(): Timestamp {

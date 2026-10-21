@@ -1,4 +1,4 @@
-/** `gen module <m> [--facade]` — прикладной слой `packages/<m>` (naming.md §3). */
+/** `gen module <m>` — прикладной слой `packages/<m>` (naming.md §3). */
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type { GenArgs } from '../cli.ts';
@@ -6,14 +6,9 @@ import { toCamel, toPascal } from '../naming.ts';
 import type { GenPlan, PlannedFile } from '../plan.ts';
 
 export function planAppModule(args: GenArgs): GenPlan {
-  const { module: m, facade } = args;
+  const { module: m } = args;
   const P = toPascal(m);
   const c = toCamel(m);
-  // Фасад — только по потребителю (D-38).
-  const facadeImport = facade
-    ? `import { ${c}Facade } from './${m}.facade';\n`
-    : '';
-  const facadeField = facade ? `  facade: ${c}Facade,\n` : '';
   const pkgDir = join(args.packagesRoot, m);
   const src = join(pkgDir, 'src');
   const isNewPackage = !existsSync(join(pkgDir, 'package.json'));
@@ -53,7 +48,7 @@ export function planAppModule(args: GenArgs): GenPlan {
 
   const moduleSrc = `import { ${P}ModuleDef } from '@u7-scl/domain/${m}';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
-${facadeImport}// gen:defs:imports
+// gen:defs:imports
 
 /** Резолвер модуля: платформа + репозитории. */
 export type ${P}Deps = ModuleDeps & {
@@ -71,7 +66,7 @@ export const ${c}Map = {
   jobs: {
     // gen:defs:jobs
   },
-${facadeField}} satisfies ModuleMap<typeof ${P}ModuleDef, ${P}Deps, unknown>;
+} satisfies ModuleMap<typeof ${P}ModuleDef, ${P}Deps, unknown>;
 
 /** Модуль ${m} с зависимостями — для сборки приложения. */
 export function create${P}Module(deps: ${P}Deps) {
@@ -80,16 +75,6 @@ export function create${P}Module(deps: ${P}Deps) {
     ${c}Map,
     deps,
   );
-}
-`;
-
-  const facadeSrc = `import { ${P}FacadeDef } from '@u7-scl/domain/${m}';
-import { implementFacade } from 'dmg-core/app';
-import type { ${P}Deps } from './${m}.module';
-
-/** In-proc реализация фасада модуля (API-04). */
-export function ${c}Facade(_deps: ${P}Deps) {
-  return implementFacade(${P}FacadeDef, {});
 }
 `;
 
@@ -120,7 +105,6 @@ describe('create${P}Module', () => {
           ]
         : []),
       file(join(src, `${m}.module.ts`), moduleSrc),
-      ...(facade ? [file(join(src, `${m}.facade.ts`), facadeSrc)] : []),
       file(join(src, `${m}.module.test.ts`), testSrc),
     ],
     edits: [],

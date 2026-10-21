@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import type { Caller } from '#core/kernel/caller/caller';
-import { systemCaller } from '#core/kernel/caller/caller';
+import { moduleCaller, systemCaller } from '#core/kernel/caller/caller';
 import { definePolicy } from './define-policy';
 import {
   allOf,
@@ -69,6 +69,19 @@ describe('rule', () => {
         'Недоступно по делегированию: Личное действие владельца.',
       ),
     );
+  });
+
+  it('module — субъект и делегирование по origin (D-42)', () => {
+    const from = { dmg: 'useCase', name: 'notify' } as const;
+    expect(isOwner.evaluate(moduleCaller(from, as(user('u1'))), ctx)).toEqual(
+      allowed,
+    );
+    expect(
+      isOwner.evaluate(moduleCaller(from, as(user('u2'))), ctx).allowed,
+    ).toBe(false);
+    const viaDelegate = moduleCaller(from, delegateOf(user('u1')));
+    expect(isOwner.evaluate(viaDelegate, ctx)).toEqual(allowed);
+    expect(ownPrivate.evaluate(viaDelegate, ctx).allowed).toBe(false);
   });
 
   it('без субъекта (guest, system) — отказ', () => {

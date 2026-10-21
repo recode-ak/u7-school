@@ -8,10 +8,9 @@ describe('TodoModuleDef', () => {
     expect(normalize(TodoModuleDef)).toMatchObject({
       dependsOn: ['users'],
       aggregates: ['task'],
-      useCases: ['createTask', 'completeTask', 'listTasks'],
+      useCases: ['createTask', 'completeTask', 'listTasks', 'getTask'],
       reactions: ['archiveRemovedUserTasks'],
       jobs: ['archiveDoneTasks'],
-      facade: 'todo',
     });
   });
 
@@ -51,6 +50,6 @@ describe('TodoModuleDef', () => {
       ...TodoModuleDef.aggregates.flatMap((a) => Object.values(a.errors)),
     ];
     for (const def of defs) expect(() => normalize(def)).not.toThrow();
-    expect(defs).toHaveLength(13);
+    expect(defs).toHaveLength(14);
   });
 });

@@ -9,6 +9,7 @@ export type ArchRule =
   | 'MAN-01'
   | 'MAN-02'
   | 'MAN-03'
+  | 'MAN-05'
   | 'MAN-06'
   | 'MAN-08'
   | 'MAN-10'

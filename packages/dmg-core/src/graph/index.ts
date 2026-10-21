@@ -23,7 +23,6 @@ export {
   type NormalizedError,
   type NormalizedEvent,
   type NormalizedEventReaction,
-  type NormalizedFacade,
   type NormalizedJob,
   type NormalizedModule,
   type NormalizedPolicy,

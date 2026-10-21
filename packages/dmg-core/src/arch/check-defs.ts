@@ -5,6 +5,7 @@ import type { AnyEventDef } from '../domain/events/define-events';
 import type { AnyDomainRule } from '../domain/rules/domain-rule';
 import {
   type AnyOperationDef,
+  callsOf,
   type DefIndex,
   localId,
   operationsOf,
@@ -19,7 +20,7 @@ import type { ArchRule, Violation } from './violation';
  * Контрактные проверки по Def (без файлов): описания и схемы (MAN-01/02/03),
  * связность (MAN-06), FQN (MAN-08), ссылки ⊆ `dependsOn` (ARC-04), DAG
  * (ARC-05), коды ошибок (ERR-04), отказы переходов (MAN-12), доменные
- * правила UC (ERR-02, DOM-16).
+ * правила UC (ERR-02, DOM-16), межмодульные вызовы `calls` (MAN-05).
  */
 export function checkDefs(index: DefIndex): Violation[] {
   return [
@@ -32,6 +33,7 @@ export function checkDefs(index: DefIndex): Violation[] {
     ...checkErrorCodes(index),
     ...checkRejects(index),
     ...checkUseCaseRules(index),
+    ...checkCalls(index),
   ];
 }
 
@@ -112,10 +114,11 @@ function checkLinks(index: DefIndex): Violation[] {
   for (const op of index.operationOwner.keys()) {
     for (const e of op.emits ?? []) published.add(e);
   }
-  // События внешнего модуля публикует внешняя сторона (D-37).
+  // События внешнего модуля публикует внешняя сторона (D-37); его UC —
+  // контракт без реализации, цель `calls` других модулей (D-42).
   for (const m of index.modules.filter((m) => m.external)) {
-    if (operationsOf(m).length > 0) {
-      add(`модуль ${m.name} внешний — UC, ER и Job у него не объявляются`);
+    if (m.reactions.length > 0 || m.jobs.length > 0) {
+      add(`модуль ${m.name} внешний — ER и Job у него не объявляются`);
     }
     for (const a of m.aggregates) {
       for (const e of Object.values(a.events)) published.add(e);
@@ -152,6 +155,11 @@ function checkLinks(index: DefIndex): Violation[] {
           add(`${title}: публикует событие ${e.name} другого модуля`);
         }
       }
+      for (const uc of callsOf(op)) {
+        if (!index.operationOwner.has(uc)) {
+          add(`${title}: UC ${uc.name} не входит ни в один модуль`);
+        }
+      }
       switch (op.dmg) {
         case 'useCase':
           checkErrors(title, op.errors);
@@ -164,19 +172,9 @@ function checkLinks(index: DefIndex): Violation[] {
               add(`${title} слушает ${e.name}, которое никто не публикует`);
             }
           }
-          for (const f of op.calls) {
-            if (!index.facadeOwner.has(f)) {
-              add(`${title}: фасад ${f.name} не входит ни в один модуль`);
-            }
-          }
           break;
         case 'job':
           break;
-      }
-    }
-    if (m.facade) {
-      for (const method of Object.values(m.facade.methods)) {
-        checkErrors(`фасад ${m.facade.name}`, method.errors);
       }
     }
   }
@@ -270,6 +268,42 @@ function checkUseCaseRules(index: DefIndex): Violation[] {
   return out;
 }
 
+/**
+ * MAN-05 (D-42): `calls` — UC других модулей (свой модуль вызывает свой UC
+ * напрямую, без фасада), и вызываемый UC допускает вызывающего `module` —
+ * иначе вызов через фасад всегда получит `UNAUTHORIZED`. Принадлежность
+ * `dependsOn` — ARC-04 (`checkDependsOn`), Def вне модулей — MAN-06.
+ */
+function checkCalls(index: DefIndex): Violation[] {
+  const out: Violation[] = [];
+  for (const m of index.modules) {
+    for (const op of operationsOf(m)) {
+      const title = operationTitle(m, op);
+      for (const uc of callsOf(op)) {
+        const owner = index.operationOwner.get(uc);
+        if (owner === undefined) continue;
+        const id = localId(owner, uc);
+        if (owner === m) {
+          out.push(
+            violation(
+              'MAN-05',
+              `${title}: UC ${id} своего модуля — calls только для UC других модулей`,
+            ),
+          );
+        } else if (!uc.callers.includes('module')) {
+          out.push(
+            violation(
+              'MAN-05',
+              `${title}: UC ${id} не объявляет module в callers`,
+            ),
+          );
+        }
+      }
+    }
+  }
+  return out;
+}
+
 function checkDependsOn(index: DefIndex): Violation[] {
   const out: Violation[] = [];
   for (const m of index.modules) {
@@ -300,17 +334,13 @@ function checkDependsOn(index: DefIndex): Violation[] {
             const a = index.eventOwner.get(e);
             check(title, `событие ${e.name}`, a && index.aggregateOwner.get(a));
           }
-          for (const f of op.calls) {
-            check(title, `фасад ${f.name}`, index.facadeOwner.get(f));
-          }
           break;
         case 'job':
           break;
       }
-    }
-    if (m.facade) {
-      for (const method of Object.values(m.facade.methods)) {
-        checkErrors(`фасад ${m.facade.name}`, method.errors);
+      for (const uc of callsOf(op)) {
+        const owner = index.operationOwner.get(uc);
+        if (owner) check(title, `UC ${localId(owner, uc)}`, owner);
       }
     }
   }
@@ -363,9 +393,6 @@ function checkErrorCodes(index: DefIndex): Violation[] {
       }
     }
     for (const uc of m.useCases) for (const e of uc.errors) add(e);
-    for (const method of Object.values(m.facade?.methods ?? {})) {
-      for (const e of method.errors) add(e);
-    }
   }
   for (const [code, defs] of byCode) {
     if (defs.size > 1) {

@@ -22,7 +22,28 @@ export type DelegateCaller<U> = {
   readonly delegationId: string;
 };
 
-/** Job, ER, межмодульный вызов; `source` — FQN источника. */
+/**
+ * Def операции, которая вызвала другой модуль через фасад: UC, ER или Job.
+ * Ядро видит только вид, имя и `calls` — проверку `calls` делает вызываемый
+ * UC (D-42); полный тип Def — в `domain/contracts`.
+ */
+export type CallingOperation = {
+  readonly dmg: 'useCase' | 'eventReaction' | 'job';
+  readonly name: string;
+  readonly calls?: readonly object[];
+};
+
+/**
+ * Другой модуль через фасад (D-42): `from` — Def вызвавшей операции,
+ * `origin` — исходный вызывающий. Субъект — субъект `origin`.
+ */
+export type ModuleCaller<U> = {
+  readonly kind: 'module';
+  readonly from: CallingOperation;
+  readonly origin: Caller<U>;
+};
+
+/** Job, ER; `source` — FQN источника. */
 export type SystemCaller<U> = {
   readonly kind: 'system';
   readonly source: string;
@@ -37,6 +58,7 @@ export type Caller<U = unknown> =
   | GuestCaller
   | UserCaller<U>
   | DelegateCaller<U>
+  | ModuleCaller<U>
   | SystemCaller<U>;
 
 export type CallerKind = Caller['kind'];
@@ -48,10 +70,29 @@ export function subjectOf<U>(caller: Caller<U>): U | undefined {
       return caller.user;
     case 'delegate':
       return caller.subject;
+    case 'module':
+      return subjectOf(caller.origin);
     case 'guest':
     case 'system':
       return undefined;
   }
+}
+
+/**
+ * Исходный вызывающий: у `module` — `origin` по всей цепочке модулей, у
+ * остальных — он сам. По нему Policy решает, кто действует (`delegate`,
+ * `system`), — межмодульный вызов вида вызывающего не меняет.
+ */
+export function originOf<U>(caller: Caller<U>): Caller<U> {
+  return caller.kind === 'module' ? originOf(caller.origin) : caller;
+}
+
+/** Вызывающий `module`: операция `from` вызвала фасад от имени `origin`. */
+export function moduleCaller<U>(
+  from: CallingOperation,
+  origin: Caller<U>,
+): ModuleCaller<U> {
+  return { kind: 'module', from, origin };
 }
 
 /** Системный вызывающий; `onBehalfOf` — вызывающий события-причины. */
