@@ -92,7 +92,7 @@
 - [ ] Task: Р10 — `WishAr.createForCourse` → `Result<WishAr, never>`, методы `questionnaire()` и `outcome()` из state (red → green в домене); `create-course-wish` берёт их; TR-12 в debt.md — пересмотр отметить
 - [ ] Task: Перевод потребителей: учебный модуль `dmg-core`, `wish` (`create-course-wish`), `course`, `questionnaire`; гайды «use case» и «facade»
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
-- [ ] Task: Контрольная точка 'Фаза 8а' (автономно, workflow.md)
+- [ ] Task: Контрольная точка 'Фаза 8а' (автономно, workflow.md); удалить `OPEN-QUESTIONS-F8.md` (решения — в D-43)
 
 ## Фаза 9: Остальные Use Case
 

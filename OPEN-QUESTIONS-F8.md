@@ -1,6 +1,6 @@
 # Открытые вопросы после Ф8 `golden-wish` (временный файл)
 
-Удалить после решения: решения переносятся в `conductor/architecture/decisions.md` (D-43), правки — фазой «Ф8а» в `conductor/tracks/golden-wish_20261020/plan.md` перед Ф9.
+Контекст Ф8а: решения переносятся в `conductor/architecture/decisions.md` (D-43) первой задачей, правки — фазой «Ф8а» в `conductor/tracks/golden-wish_20261020/plan.md`. Файл удаляется в контрольной точке Ф8а, не раньше: задачи фазы ссылаются на Р1–Р10.
 
 Контекст: Ф8 закрыта (`6e2e7e9`). Платформа по D-42 сделана агентами в форме, которую Нурболат не обсуждал детально (TR-10, TR-12). Ниже — что решено (2026-10-21).
 
@@ -150,7 +150,7 @@ interface OperationLog { append(record: OperationRecord): Promise<void> }  // в
 - Методы-вопросы из state: `wish.questionnaire(): WishQuestionnaire | undefined` (`pending` + курс → `{ pool: findCoursePool(courseId), owner: { courseId } }`), `wish.outcome(): 'instant' | 'questionnaire'`; UC берёт ответ и анкету из них.
 - Остальное в TR-12 снято: фейк фасада → `StubFacade` (Р4), проверка `calls` — типом (Р5), `owner` — из Def через `Facade<M>`, риски `from`/прямого `handle` — Р3/Р5. Остаётся: `SystemCaller<unknown>` на границе `Facade<M>` до миграции анкет (DEBT-21/22).
 
-Открытых вопросов нет. Файл удаляется после переноса Р1–Р10 в `decisions.md` (D-43) — первая задача Ф8а.
+Открытых вопросов нет. Файл удаляется в контрольной точке Ф8а.
 
 ## Решено в Ф8 (для справки)
 - D-41 — место межмодульного побочного эффекта выбирает Нурболат по каждому случаю; `create-course-wish` — вариант 1 (анкета в `execute` до фиксации).
