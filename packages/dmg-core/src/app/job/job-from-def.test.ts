@@ -73,7 +73,11 @@ describe('JobFromDef.handle', () => {
       TaskEvents.archived.name,
       TaskEvents.archived.name,
     ]);
-    expect(ctx.published[0]?.caller).toEqual(new SystemCaller(job.ref));
+    // Вызывающий — в записи прогона в логе операций, не в конверте (Р7).
+    expect(ctx.published[0]).not.toHaveProperty('caller');
+    expect(ctx.oplog.records[0]?.caller).toEqual(
+      new SystemCaller(job.ref).toLog(),
+    );
   });
 
   test('след вызывающего — причина и correlationId всех событий прогона', async () => {

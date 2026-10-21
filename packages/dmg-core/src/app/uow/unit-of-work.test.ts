@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { type Caller, SystemCaller } from '#core/kernel/caller/caller';
 import {
   TaskAr,
   TaskArDef,
@@ -17,11 +16,6 @@ const AT = Date.UTC(2026, 9, 18, 12, 0);
 const A = 'a1b2c3d4-0000-4000-8000-00000000000a';
 const B = 'a1b2c3d4-0000-4000-8000-00000000000b';
 const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
-const CALLER: Caller = new SystemCaller({
-  kind: 'job',
-  module: 'todo',
-  name: 'test',
-});
 const TRACE: Trace = {
   cause: { kind: 'event', eventId: 'e-0' },
   correlationId: 'c-0',
@@ -65,7 +59,6 @@ beforeEach(() => {
   published = [];
   uow = new UnitOfWork({
     bus: recordingBus(published, log),
-    caller: CALLER,
     trace: TRACE,
     clock: () => AT,
   });
@@ -105,7 +98,7 @@ describe('UnitOfWork.commit', () => {
     expect(log.filter((l) => l.startsWith('saved'))).toEqual([`saved ${A}`]);
   });
 
-  test('событие уходит в конверте с вызывающим и следом', async () => {
+  test('событие уходит в конверте со следом, без вызывающего (D-43, Р7)', async () => {
     uow.register(task(A), slowRepo(log));
     await uow.commit();
     expect(published).toEqual([
@@ -118,11 +111,12 @@ describe('UnitOfWork.commit', () => {
         eventId: expect.any(String),
         occurredAt: AT,
         aggregateId: A,
-        caller: CALLER,
         cause: { kind: 'event', eventId: 'e-0' },
         correlationId: 'c-0',
       },
     ]);
+    // «Кто вызвал» — в записи породившей операции в логе операций (Р6).
+    expect(published[0]).not.toHaveProperty('caller');
   });
 
   test('сбой сохранения — исключение, публикации нет', async () => {
@@ -220,7 +214,6 @@ describe('UnitOfWork.commit', () => {
     expectOk(ar.complete(AT));
     const next = new UnitOfWork({
       bus: recordingBus(published, log),
-      caller: CALLER,
       trace: TRACE,
       clock: () => AT,
     });
@@ -239,7 +232,6 @@ describe('UnitOfWork.commit', () => {
   test('незаявленное событие при `emits` — исключение до сохранения', async () => {
     const strict = new UnitOfWork({
       bus: recordingBus(published, log),
-      caller: CALLER,
       trace: TRACE,
       clock: () => AT,
       emits: [TaskEvents.completed],
@@ -254,7 +246,6 @@ describe('UnitOfWork.commit', () => {
   test('агрегат вне `touches` — исключение при регистрации', () => {
     const narrow = new UnitOfWork({
       bus: recordingBus(published, log),
-      caller: CALLER,
       trace: TRACE,
       clock: () => AT,
       touches: [UserArDef],
@@ -268,7 +259,6 @@ describe('UnitOfWork.commit', () => {
     const violations: string[] = [];
     const lenient = new UnitOfWork({
       bus: recordingBus(published, log),
-      caller: CALLER,
       trace: TRACE,
       clock: () => AT,
       emits: [],

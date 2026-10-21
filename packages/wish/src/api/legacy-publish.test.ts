@@ -3,7 +3,6 @@ import type { DomainEvent as LegacyEvent } from '@u7-scl/core/domain';
 import { InProcEventBus } from '@u7-scl/core/infra';
 import { legacyEventBus } from '@u7-scl/core/legacy-bridge';
 import { WishEvents } from '@u7-scl/domain/wish/contract';
-import { SystemCaller } from 'dmg-core';
 import type { EventBus, EventEnvelope } from 'dmg-core/app';
 import { publishWishEvents } from './legacy-publish';
 
@@ -38,7 +37,6 @@ describe('publishWishEvents', () => {
     publishWishEvents(legacyEventBus(legacy), {
       events: [WishEvents.confirmed.make(payload)],
       aggregateId: wishId,
-      source: 'confirm-wish',
       cause,
       at: AT,
     });
@@ -53,7 +51,7 @@ describe('publishWishEvents', () => {
     });
   });
 
-  test('конверт DMG: системный вызывающий ER, причина и цепочка — событие-причина', () => {
+  test('конверт DMG: причина и цепочка — событие-причина, без вызывающего', () => {
     const got: EventEnvelope[] = [];
     const bus: EventBus = {
       publish: (e) => {
@@ -65,7 +63,6 @@ describe('publishWishEvents', () => {
     publishWishEvents(bus, {
       events: [WishEvents.confirmed.make(payload)],
       aggregateId: wishId,
-      source: 'confirm-wish',
       cause,
       at: AT,
     });
@@ -77,15 +74,11 @@ describe('publishWishEvents', () => {
         eventId: expect.any(String),
         occurredAt: AT,
         aggregateId: wishId,
-        caller: new SystemCaller({
-          kind: 'eventReaction',
-          module: 'wish',
-          name: 'confirm-wish',
-        }),
         cause: { kind: 'event', eventId: 'cause-1' },
         correlationId: 'cause-1',
       },
     ]);
+    expect(got[0]).not.toHaveProperty('caller');
   });
 
   test('нет событий — ничего не публикуется', async () => {
@@ -98,7 +91,6 @@ describe('publishWishEvents', () => {
     publishWishEvents(legacyEventBus(legacy), {
       events: [],
       aggregateId: wishId,
-      source: 'confirm-wish',
       cause,
       at: AT,
     });

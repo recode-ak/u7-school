@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as v from 'valibot';
 import type { ModuleDeps } from '#core/app/context';
-import { asReadonlyAr } from '#core/app/facade/as-readonly-ar';
 import { ModuleFacade } from '#core/app/facade/module-facade';
 import { ModuleFacades } from '#core/app/facade/module-facades';
 import { requestTrace, type Trace } from '#core/app/trace';
@@ -86,9 +85,9 @@ class ShowTask extends UseCaseFromDef<
     trace: Trace,
   ) {
     const res = await this.call(GetTaskUcDef, input, caller, trace);
-    const task = asReadonlyAr(TaskAr, res);
-    if (!task.ok) return task;
-    return ok({ done: task.value.isDone() });
+    if (!res.ok) return res;
+    const task = TaskAr.readonly(res.value);
+    return ok({ done: task.isDone() });
   }
 }
 

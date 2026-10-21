@@ -2,9 +2,8 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { SystemCaller, UserCaller } from 'dmg-core';
+import { ok, SystemCaller, UserCaller } from 'dmg-core';
 import {
-  asReadonlyAr,
   JsonlOperationLog,
   ModuleFacade,
   ModuleFacades,
@@ -177,16 +176,15 @@ describe('todo: фасад', () => {
       { kind: 'useCase', module: 'digest', name: 'showTask' },
       caller(ANNA),
     );
-  const getTask = async (taskId: string) =>
-    asReadonlyAr(
-      TaskAr,
-      await new ModuleFacade(createTodoModule(deps)).handle(
-        GetTaskUcDef,
-        { taskId },
-        from(),
-        requestTrace(req()),
-      ),
+  const getTask = async (taskId: string) => {
+    const res = await new ModuleFacade(createTodoModule(deps)).handle(
+      GetTaskUcDef,
+      { taskId },
+      from(),
+      requestTrace(req()),
     );
+    return res.ok ? ok(TaskAr.readonly(res.value)) : res;
+  };
 
   test('getTask: ReadonlyAr строит вызывающий — задача только для чтения', async () => {
     const id = await create('Купить хлеб');

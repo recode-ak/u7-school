@@ -51,6 +51,15 @@ describe('defineUseCase', () => {
     expect(any.calls).toBeUndefined();
   });
 
+  it('calls — только UC с system в callers (D-43, Р7)', () => {
+    const def = defineUseCase({
+      ...ListTasksUcDef,
+      // @ts-expect-error ListTasks зовёт только user — система его не вызовет
+      calls: [GetUserUcDef, ListTasksUcDef],
+    });
+    expect(def.calls).toHaveLength(2);
+  });
+
   it('input, output и ошибки выводятся из Def', () => {
     const input: InputOf<typeof CompleteTaskUcDef> = { taskId: 'x' };
     const output: OutputOf<typeof CompleteTaskUcDef> = { completedAt: 1 };
@@ -132,6 +141,15 @@ describe('defineEventReaction', () => {
     expect(er.calls).toEqual([GetUserUcDef]);
   });
 
+  it('calls — только UC с system в callers (D-43, Р7)', () => {
+    const er = defineEventReaction({
+      ...ArchiveDoneErDef,
+      // @ts-expect-error ListTasks зовёт только user — система его не вызовет
+      calls: [ListTasksUcDef],
+    });
+    expect(er.calls).toEqual([ListTasksUcDef]);
+  });
+
   it('тип события реакции — union событий из on', () => {
     const e: ReactionEventOf<typeof ArchiveDoneErDef> = TaskEvents.created.make(
       {
@@ -166,6 +184,12 @@ describe('defineJob', () => {
   it('calls — Def UC других модулей', () => {
     const job = defineJob({ ...RemindJobDef, calls: [GetUserUcDef] });
     expect(job.calls).toEqual([GetUserUcDef]);
+  });
+
+  it('calls — только UC с system в callers (D-43, Р7)', () => {
+    // @ts-expect-error ListTasks зовёт только user — система его не вызовет
+    const job = defineJob({ ...RemindJobDef, calls: [ListTasksUcDef] });
+    expect(job.calls).toEqual([ListTasksUcDef]);
   });
 });
 

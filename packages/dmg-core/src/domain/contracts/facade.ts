@@ -6,20 +6,12 @@ import type {
   AnyUseCaseDef,
   InputOf,
   OutputOf,
+  SystemCallableUc,
   UseCaseErrorOf,
 } from './define-use-case';
 
-/** Def с `'system'` в `callers` — распределяется по union Def. */
-type SystemCallableDef<D> = D extends {
-  readonly callers: readonly (infer K)[];
-}
-  ? 'system' extends K
-    ? D
-    : never
-  : never;
-
 /** UC модуля M, которые может вызвать система: `'system'` в `callers`. */
-export type SystemCallable<M extends AnyModuleDef> = SystemCallableDef<
+export type SystemCallable<M extends AnyModuleDef> = SystemCallableUc<
   M['useCases'][number]
 >;
 

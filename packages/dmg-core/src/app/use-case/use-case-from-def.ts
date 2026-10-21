@@ -268,7 +268,6 @@ export abstract class UseCaseFromDef<
     const uow = run.track(
       contractUnitOfWork(this.resolve.app, {
         source: this.def.name,
-        caller,
         trace,
         emits: this.def.emits ?? [],
       }),

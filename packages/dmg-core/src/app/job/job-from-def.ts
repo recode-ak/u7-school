@@ -91,7 +91,6 @@ export abstract class JobFromDef<
     const uow = run.track(
       contractUnitOfWork(this.resolve.app, {
         source: this.def.name,
-        caller: this.caller,
         trace,
         emits: this.def.emits,
         touches: this.def.scans,

@@ -57,7 +57,6 @@ export class ConfirmWishEr extends EventReaction<
     publishWishEvents(legacyEventBus(this.resolve.eventBus), {
       events: wish.pullEvents(),
       aggregateId: wish.uuid,
-      source: this.erName,
       cause: event,
       at,
     });

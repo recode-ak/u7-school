@@ -1,6 +1,5 @@
 import type { AnyAggregateDef } from '#core/domain/aggregate/define-aggregate';
 import type { AnyEventDef } from '#core/domain/events/define-events';
-import type { Caller } from '#core/kernel/caller/caller';
 import type { AppContext } from '../context';
 import type { Trace } from '../trace';
 import { UnitOfWork } from './unit-of-work';
@@ -8,7 +7,6 @@ import { UnitOfWork } from './unit-of-work';
 export type OperationContract = {
   /** Имя операции — источник записи в логе. */
   readonly source: string;
-  readonly caller: Caller;
   readonly trace: Trace;
   readonly emits: readonly AnyEventDef[];
   readonly touches?: readonly AnyAggregateDef[];
@@ -24,11 +22,10 @@ export function contractUnitOfWork(
   app: AppContext,
   contract: OperationContract,
 ): UnitOfWork {
-  const { source, caller, trace, emits, touches } = contract;
+  const { source, trace, emits, touches } = contract;
   return new UnitOfWork({
     bus: app.bus,
     clock: app.clock,
-    caller,
     trace,
     emits,
     ...(touches === undefined ? {} : { touches }),

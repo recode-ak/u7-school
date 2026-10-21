@@ -24,8 +24,9 @@ type Common = {
   readonly rules?: readonly AnyDomainRule[];
   /**
    * UC других модулей (из `dependsOn`), которые операция вызывает через их
-   * фасады (D-42, MAN-05). Вызываемый UC отказывает (`UNAUTHORIZED`), если
-   * его Def здесь нет.
+   * фасады (D-42, MAN-05). Только UC с `'system'` в `callers` — тип
+   * (`SystemCalls` в `defineUseCase`), согласованность с графом —
+   * `checkDefs`.
    */
   readonly calls?: readonly AnyUseCaseDef[];
   readonly input: v.GenericSchema;
@@ -58,8 +59,31 @@ export type UseCaseErrorOf<D extends AnyUseCaseDef> =
   | ErrorOf<D['errors'][number]>
   | CoreError;
 
+/**
+ * Def с `'system'` в `callers` — его может вызвать операция другого модуля
+ * через фасад (D-43). Распределяется по union Def.
+ */
+export type SystemCallableUc<D> = D extends {
+  readonly callers: readonly (infer K)[];
+}
+  ? 'system' extends K
+    ? D
+    : never
+  : never;
+
+/**
+ * Проверка `calls` спецификации UC/ER/Job: UC, который система не может
+ * вызвать (нет `'system'` в `callers`), становится `never` на своём месте —
+ * ошибка компиляции указывает на него (D-43, Р7).
+ */
+export type SystemCalls<S> = S extends {
+  readonly calls: infer C extends readonly AnyUseCaseDef[];
+}
+  ? { readonly calls: { readonly [K in keyof C]: SystemCallableUc<C[K]> } }
+  : unknown;
+
 export function defineUseCase<const S extends UseCaseSpec>(
-  spec: S,
+  spec: S & SystemCalls<S>,
 ): UseCaseDef<S> {
   return { ...spec, dmg: 'useCase' };
 }

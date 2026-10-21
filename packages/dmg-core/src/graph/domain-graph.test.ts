@@ -4,7 +4,10 @@ import { defineAggregate } from '../domain/aggregate/define-aggregate';
 import { defineEventReaction } from '../domain/contracts/define-event-reaction';
 import { defineJob } from '../domain/contracts/define-job';
 import { defineModule } from '../domain/contracts/define-module';
-import { defineUseCase } from '../domain/contracts/define-use-case';
+import {
+  type AnyUseCaseDef,
+  defineUseCase,
+} from '../domain/contracts/define-use-case';
 import { allowAll } from '../domain/policy/policy';
 import { domainRule } from '../domain/rules/domain-rule';
 import { defineErrors } from '../kernel/errors/define-errors';
@@ -19,12 +22,20 @@ import {
 import { buildGraph } from './domain-graph';
 
 // Чужой модуль, который вызывает UC todo через фасад, — для связей «UC → UC».
+// `completeTask` система не вызывает (нет `'system'` в `callers`), и тип
+// `calls` его не пропустит; здесь он нужен как цель-command для графа —
+// список расширен до общего типа (граф строится и по таким Def, отказ —
+// забота `checkDefs`).
+const NOTIFY_CALLS: readonly AnyUseCaseDef[] = [
+  GetTaskUcDef,
+  CompleteTaskUcDef,
+];
 const NotifyTodoErDef = defineEventReaction({
   name: 'notifyTodo',
   label: 'Сообщить о задаче',
   description: 'Читает задачу и завершает её через фасад todo.',
   on: [TaskEvents.created],
-  calls: [GetTaskUcDef, CompleteTaskUcDef],
+  calls: NOTIFY_CALLS,
 });
 
 const NoteArDef = defineAggregate({

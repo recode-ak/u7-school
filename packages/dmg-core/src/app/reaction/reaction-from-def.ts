@@ -48,8 +48,8 @@ export abstract class ReactionFromDef<
   ): Promise<Result<void, DomainError>>;
 
   /**
-   * Реакция на событие и запись в лог операций (вход — событие без
-   * вызывающего конверта: «кто» — в записи породившей операции).
+   * Реакция на событие и запись в лог операций (вход — событие; «кто
+   * породил» — в записи породившей операции, D-43).
    */
   handle(event: ReactionEnvelopeOf<D>): Promise<Result<void, DomainError>> {
     const { app } = this.resolve;
@@ -58,13 +58,11 @@ export abstract class ReactionFromDef<
       cause: { kind: 'event', eventId: event.eventId },
       correlationId: event.correlationId,
     };
-    const { caller: _origin, ...input } = event;
-    return this.journal({ input, caller, trace }, (run) =>
+    return this.journal({ input: event, caller, trace }, (run) =>
       runLogged(app, this.def.name, async () => {
         const uow = run.track(
           contractUnitOfWork(app, {
             source: this.def.name,
-            caller,
             trace,
             emits: this.def.emits,
             touches: this.def.touches,

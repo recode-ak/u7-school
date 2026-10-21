@@ -1,6 +1,6 @@
 import type { AnyAggregateDef } from '../aggregate/define-aggregate';
 import type { AnyEventDef, EventOf } from '../events/define-events';
-import type { AnyUseCaseDef } from './define-use-case';
+import type { AnyUseCaseDef, SystemCalls } from './define-use-case';
 
 export type EventReactionSpec = {
   readonly name: string;
@@ -9,7 +9,7 @@ export type EventReactionSpec = {
   readonly on: readonly [AnyEventDef, ...AnyEventDef[]];
   /** Агрегаты, которые реакция меняет. */
   readonly touches?: readonly AnyAggregateDef[];
-  /** UC других модулей, которые реакция вызывает через фасады (D-42). */
+  /** UC других модулей (с `'system'` в `callers`), которые реакция вызывает через фасады (D-42, D-43). */
   readonly calls?: readonly AnyUseCaseDef[];
   readonly emits?: readonly AnyEventDef[];
 };
@@ -37,7 +37,7 @@ export type ReactionEventOf<D extends AnyEventReactionDef> = EventOf<
 
 /** Контракт ER: подписка на события, что трогает и вызывает, что публикует. */
 export function defineEventReaction<const S extends EventReactionSpec>(
-  spec: S,
+  spec: S & SystemCalls<S>,
 ): EventReactionDef<S> {
   return {
     touches: [],

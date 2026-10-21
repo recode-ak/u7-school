@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import type { AnyModuleDef } from '#core/domain/contracts/define-module';
-import {
-  type Caller,
-  SystemCaller,
-  UserCaller,
-} from '#core/kernel/caller/caller';
+import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
 import {
@@ -32,14 +28,11 @@ import type { Cause, Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { ReactionFromDef } from './reaction-from-def';
 
-const ADMIN: Caller = new UserCaller({ uuid: 'admin' });
-
 const removed = (): EnvelopeOf<typeof UserEvents.removed> => ({
   ...UserEvents.removed.make({ userId: OWNER }),
   eventId: 'e-removed',
   occurredAt: T0,
   aggregateId: OWNER,
-  caller: ADMIN,
   cause: { kind: 'request', requestId: 'r-1' },
   correlationId: 'c-1',
 });
@@ -108,7 +101,11 @@ describe('ReactionFromDef.handle', () => {
       [TaskEvents.archived.name, event, 'c-1'],
       [TaskEvents.archived.name, event, 'c-1'],
     ]);
-    expect(ctx.published[0]?.caller).toEqual(new SystemCaller(er.ref));
+    // Вызывающий — в записи реакции в логе операций, не в конверте (Р7).
+    expect(ctx.published[0]).not.toHaveProperty('caller');
+    expect(ctx.oplog.records[0]?.caller).toEqual(
+      new SystemCaller(er.ref).toLog(),
+    );
   });
 
   test('ref — вид, модуль и имя реакции', () => {
@@ -183,9 +180,9 @@ describe('ReactionFromDef.handle', () => {
 });
 
 describe('ReactionFromDef — лог операций (D-43, Р6)', () => {
-  test('успех: вход — событие без вызывающего, события реакции', async () => {
+  test('успех: вход — событие, события реакции', async () => {
     expectOk(await er.handle(removed()));
-    const { caller: _, ...event } = removed();
+    const event = removed();
     expect(ctx.oplog.records).toEqual([
       {
         at: T0,

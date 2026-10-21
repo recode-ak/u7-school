@@ -129,7 +129,6 @@ export class InviteWishersEr extends EventReaction<
     publishWishEvents(legacyEventBus(this.resolve.eventBus), {
       events: [invited],
       aggregateId: wish.uuid,
-      source: this.erName,
       cause,
       at: Date.now(),
     });

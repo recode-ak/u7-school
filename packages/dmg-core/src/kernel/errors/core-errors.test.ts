@@ -22,6 +22,19 @@ describe('CoreErrors', () => {
     expect(error.payload.rule).toBe('todo.owner');
   });
 
+  it('UNAUTHORIZED несёт только вид вызывающего (D-43, Р7)', () => {
+    const error = CoreErrors.UNAUTHORIZED.make({ callerKind: 'guest' });
+    expect(error.payload).toEqual({ callerKind: 'guest' });
+    expect(Object.keys(CoreErrors.UNAUTHORIZED.payload.entries)).toEqual([
+      'callerKind',
+    ]);
+    CoreErrors.UNAUTHORIZED.make({
+      callerKind: 'system',
+      // @ts-expect-error `calls` проверяет тип — `from` в отказе не нужен
+      from: 'notes.notifyTodo',
+    });
+  });
+
   it('INPUT_VALIDATION несёт список проблем', () => {
     const error = CoreErrors.INPUT_VALIDATION.make({
       issues: [{ path: 'title', message: 'обязательно' }],

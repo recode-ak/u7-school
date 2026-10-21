@@ -4,6 +4,7 @@ import type { Err, Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { EventOf } from '../events/define-events';
 import type { AnyAggregateDef, EntityBase } from './define-aggregate';
+import type { ReadonlyAr } from './readonly-ar';
 
 /** Состояние агрегата по его Def. */
 export type StateOf<D extends AnyAggregateDef> = v.InferOutput<D['state']>;
@@ -41,6 +42,13 @@ function isNewEntity(state: object): boolean {
   return NEW_ENTITY in state;
 }
 
+/**
+ * Класс агрегата с `static restore(snapshot)` — как его объявляет Ar.
+ * Свойство, а не метод: параметр строго контравариантен, и state другого
+ * агрегата не пройдёт.
+ */
+type Restorable<S, A> = { readonly restore: (snapshot: S) => A };
+
 type Emit<D extends AnyAggregateDef> = (event: EventsOf<D>) => void;
 
 type Apply<D extends AnyAggregateDef, R> = (
@@ -72,6 +80,21 @@ export abstract class Aggregate<D extends AnyAggregateDef> {
   private current: StateOf<D>;
   private pending: EventsOf<D>[];
   private stored: number | undefined;
+
+  /**
+   * Агрегат только для чтения из state — так потребитель фасада видит
+   * выход UC другого модуля (D-43, API-04): готовый Ar без мутаций, а не
+   * entity (DOM-01). Полиморфный `this`: тип и проверка state — по
+   * `restore` конкретного Ar (`TaskAr.readonly(state): ReadonlyAr<TaskAr>`),
+   * кода в наследнике не нужно; state не по схеме — исключение `restore`.
+   */
+  static readonly<S, A>(
+    this: Restorable<S, A>,
+    state: NoInfer<S>,
+  ): ReadonlyAr<A> {
+    // biome-ignore lint/complexity/noThisInStatic: полиморфный `this` — restore конкретного Ar, а не базы (D-43, Р7)
+    return this.restore(state);
+  }
 
   protected constructor(
     private readonly def: D,

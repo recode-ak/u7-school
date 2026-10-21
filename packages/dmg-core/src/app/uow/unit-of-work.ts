@@ -3,7 +3,6 @@ import type {
   AnyEventDef,
   DomainEvent,
 } from '#core/domain/events/define-events';
-import type { Caller } from '#core/kernel/caller/caller';
 import { CoreErrors } from '#core/kernel/errors/core-errors';
 import type { ErrorOf } from '#core/kernel/errors/define-errors';
 import { ok, type Result } from '#core/kernel/result/result';
@@ -26,7 +25,6 @@ export type CommitError = ErrorOf<typeof CoreErrors.VERSION_CONFLICT>;
 export type UnitOfWorkContext = {
   readonly bus: EventBus;
   readonly clock: Clock;
-  readonly caller: Caller;
   readonly trace: Trace;
   /** Заявленные события операции; без поля проверка не выполняется. */
   readonly emits?: readonly AnyEventDef[];
@@ -100,13 +98,12 @@ export class UnitOfWork {
   }
 
   private envelope(event: DomainEvent, aggregateId: string): EventEnvelope {
-    const { caller, trace } = this.ctx;
+    const { trace } = this.ctx;
     return {
       ...event,
       eventId: crypto.randomUUID(),
       occurredAt: this.ctx.clock(),
       aggregateId,
-      caller,
       cause: trace.cause,
       correlationId: trace.correlationId,
     };

@@ -19,17 +19,9 @@ export const CoreErrors = buildErrors('', {
     kind: 'unauthorized',
     label: 'Вызов не разрешён',
     description:
-      'Вид вызывающего не входит в `callers` операции, или другой модуль вызвал UC, которого нет в `calls` его операции.',
+      'Вид вызывающего не входит в `callers` операции. Вызов UC другого модуля вне `calls` отсекает тип (D-43).',
     payload: v.object({
       callerKind: v.pipe(v.string(), v.description('Вид вызывающего')),
-      from: v.optional(
-        v.pipe(
-          v.string(),
-          v.description(
-            'Операция другого модуля, не объявившая UC в `calls` (у `system`)',
-          ),
-        ),
-      ),
     }),
   },
   INPUT_VALIDATION: {

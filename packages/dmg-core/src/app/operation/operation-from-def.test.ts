@@ -4,15 +4,19 @@ import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
 import { defineEventReaction } from '#core/domain/contracts/define-event-reaction';
 import { defineJob } from '#core/domain/contracts/define-job';
 import { defineModule } from '#core/domain/contracts/define-module';
-import { defineUseCase } from '#core/domain/contracts/define-use-case';
+import {
+  defineUseCase,
+  type UseCaseErrorOf,
+} from '#core/domain/contracts/define-use-case';
 import { allowAll } from '#core/domain/policy/policy';
 import {
   type Caller,
   SystemCaller,
   UserCaller,
 } from '#core/kernel/caller/caller';
+import { CoreErrors } from '#core/kernel/errors/core-errors';
 import { BaseEntityFields, F } from '#core/kernel/fields/fields';
-import { ok } from '#core/kernel/result/result';
+import { err, ok } from '#core/kernel/result/result';
 import {
   GetTaskUcDef,
   TaskErrors,
@@ -58,6 +62,16 @@ const showSpec = {
 const ShowTaskUcDef = defineUseCase({ ...showSpec, calls: [GetTaskUcDef] });
 /** Тот же UC без `calls` — вызвать `getTask` ему нельзя по типу. */
 const SilentUcDef = defineUseCase({ ...showSpec, name: 'silent' });
+/**
+ * UC без доменных ошибок: `TASK_NOT_FOUND` вызванного UC не объявлен —
+ * переводит его в свой ответ, ошибки ядра отдаёт как есть (D-43, Р7).
+ */
+const TranslateUcDef = defineUseCase({
+  ...showSpec,
+  name: 'translate',
+  errors: [],
+  calls: [GetTaskUcDef],
+});
 
 const NoteRemovedErDef = defineEventReaction({
   name: 'noteRemoved',
@@ -95,7 +109,7 @@ const DigestModuleDef = defineModule({
   description: 'Модуль-потребитель фасада todo.',
   dependsOn: [TodoModuleDef],
   aggregates: [DigestArDef],
-  useCases: [ShowTaskUcDef, SilentUcDef],
+  useCases: [ShowTaskUcDef, SilentUcDef, TranslateUcDef],
   reactions: [NoteRemovedErDef, SilentErDef],
   jobs: [DigestJobDef, SilentJobDef],
 });
@@ -146,6 +160,32 @@ class Silent extends UseCaseFromDef<
     // @ts-expect-error getTask нет в calls UC silent
     await this.call(GetTaskUcDef, input, caller, trace);
     return ok({ status: 'никогда' });
+  }
+}
+
+class Translate extends UseCaseFromDef<
+  typeof TranslateUcDef,
+  ModuleDeps,
+  undefined,
+  User
+> {
+  constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
+    super(TranslateUcDef, deps, module);
+  }
+  protected load = async () => ok(undefined);
+  protected async execute(
+    input: { taskId: string },
+    _: undefined,
+    __: UnitOfWork,
+    caller: Caller<User>,
+    trace: Trace,
+  ) {
+    const task = await this.call(GetTaskUcDef, input, caller, trace);
+    if (task.ok) return ok({ status: task.value.status });
+    if (task.error.code === TaskErrors.NOT_FOUND.code) {
+      return ok({ status: 'нет задачи' });
+    }
+    return err(task.error);
   }
 }
 
@@ -211,7 +251,6 @@ const removed = (): EnvelopeOf<typeof UserEvents.removed> => ({
   eventId: 'e-removed',
   occurredAt: T0,
   aggregateId: OWNER,
-  caller: new UserCaller({ uuid: 'admin' }),
   cause: { kind: 'request', requestId: 'r-1' },
   correlationId: 'c-1',
 });
@@ -259,6 +298,43 @@ describe('OperationFromDef.call — UC (D-43, Р5)', () => {
       REQ,
     );
     expect(expectErr(res, 'TASK_NOT_FOUND').payload).toEqual({ taskId: TASK });
+  });
+
+  test('необъявленная доменная ошибка вызванного UC — ошибка типа, ядра — проходит', () => {
+    const notFound: UseCaseErrorOf<typeof GetTaskUcDef> =
+      TaskErrors.NOT_FOUND.make({ taskId: TASK });
+    const denied: UseCaseErrorOf<typeof GetTaskUcDef> =
+      CoreErrors.ACCESS_DENIED.make({ rule: 'r', denyMessage: 'нет' });
+    // @ts-expect-error TASK_NOT_FOUND нет в errors UC translate
+    const leaked: UseCaseErrorOf<typeof TranslateUcDef> = notFound;
+    const passed: UseCaseErrorOf<typeof TranslateUcDef> = denied;
+    const values: readonly unknown[] = [leaked, passed];
+    expect(values).toEqual([notFound, denied]);
+  });
+
+  test('доменная ошибка вызванного UC — перевод, ошибка ядра — как есть', async () => {
+    const user = new UserCaller<User>({ uuid: OWNER });
+    const answer = (error: UseCaseErrorOf<typeof GetTaskUcDef>) =>
+      new Translate(
+        {
+          ...deps,
+          facades: new ModuleFacades([
+            new StubFacade(TodoModuleDef).answer(GetTaskUcDef, () =>
+              err(error),
+            ),
+          ]),
+        },
+        DigestModuleDef,
+      ).handle({ taskId: TASK }, user, REQ);
+    const missing = await answer(TaskErrors.NOT_FOUND.make({ taskId: TASK }));
+    expect(expectOk(missing)).toEqual({ status: 'нет задачи' });
+    const denied = await answer(
+      CoreErrors.ACCESS_DENIED.make({ rule: 'r', denyMessage: 'нет' }),
+    );
+    expect(expectErr(denied, 'ACCESS_DENIED').payload).toEqual({
+      rule: 'r',
+      denyMessage: 'нет',
+    });
   });
 
   test('UC не из calls — ошибка типа (рантайм-проверки нет)', () => {

@@ -1,6 +1,6 @@
 import type { AnyAggregateDef } from '../aggregate/define-aggregate';
 import type { AnyEventDef } from '../events/define-events';
-import type { AnyUseCaseDef } from './define-use-case';
+import type { AnyUseCaseDef, SystemCalls } from './define-use-case';
 
 /**
  * Расписание запуска, UTC. Структурно совпадает с legacy `JobSchedule`,
@@ -34,7 +34,7 @@ export type JobSpec = {
   readonly schedule: JobSchedule;
   /** Агрегаты, которые задание просматривает. */
   readonly scans?: readonly AnyAggregateDef[];
-  /** UC других модулей, которые задание вызывает через фасады (D-42). */
+  /** UC других модулей (с `'system'` в `callers`), которые задание вызывает через фасады (D-42, D-43). */
   readonly calls?: readonly AnyUseCaseDef[];
   readonly emits?: readonly AnyEventDef[];
 };
@@ -56,6 +56,8 @@ export type JobDef<S extends JobSpec> = S &
 export type AnyJobDef = JobDef<JobSpec>;
 
 /** Контракт периодического задания. */
-export function defineJob<const S extends JobSpec>(spec: S): JobDef<S> {
+export function defineJob<const S extends JobSpec>(
+  spec: S & SystemCalls<S>,
+): JobDef<S> {
   return { scans: [], calls: [], emits: [], ...spec, dmg: 'job' };
 }

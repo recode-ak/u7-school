@@ -15,7 +15,6 @@ export type {
   EventEnvelope,
   PublishedEvent,
 } from './events/event-envelope';
-export { asReadonlyAr, type Restorable } from './facade/as-readonly-ar';
 export { type FacadeModule, ModuleFacade } from './facade/module-facade';
 export { ModuleFacades, type RoutableFacade } from './facade/module-facades';
 export {
