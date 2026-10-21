@@ -1,0 +1,6 @@
+Фаза 8 (golden-wish): эталонный UC create-course-wish — автономно (agents.md §9).
+Проверка: bun run check — 3494 pass / 0 fail (lint, tsc, test); agent-gate зелёный.
+Ревью: reviewer (Opus), diff c4a31b7b..9774d353 — error нет; warn/info решены в TR-12 (правки 9c0a7047).
+Решения Нурболата: D-41 (место межмодульного эффекта; create-course-wish — вариант 1), D-42 (фасад без манифеста, calls «UC → UC», вызывающий module). TR-9…TR-12.
+Покрытие: файлы без парного теста — удалённые, barrel/типы, адаптеры и Def под тестами фасадов/модулей/contracts.
+Ручная верификация: пропущена (автономный режим).
