@@ -8,19 +8,18 @@
 
 | Функция | Где | Что декларирует |
 |---|---|---|
-| `defineModule` | domain | `name`, `label`, `description`, `dependsOn`, состав (агрегаты, UC, ER, Job, фасад); `external: true` — модуль вне приложения (legacy, другой сервис): только контракт, события публикует внешняя сторона |
-| `defineFacade` | domain | runtime-API модуля: методы с `label`/`description`, вход, возврат (`Result`, `ReadonlyAr`), ошибки |
+| `defineModule` | domain | `name`, `label`, `description`, `dependsOn`, состав (агрегаты, UC, ER, Job); `external: true` — модуль вне приложения (legacy, другой сервис): только контракт (события, Def UC без реализации), события публикует внешняя сторона |
 | `defineAggregate` | domain | схема entity, статусы и переходы (`from`, `to`, `rejects` — отказ для каждого статуса вне `from`), группы событий и ошибок; класс `Aggregate` — база для Ar |
 | `defineEvents` | domain | группа событий агрегата: FQN-префикс `module.aggregate`, на событие — `label`, `description`, схема payload |
 | `defineErrors` | domain | группа ошибок агрегата: `code`, `kind`, `label`, `description`, схема payload |
 | `definePolicy` / `rule` | domain | именованные правила с `label` и `denyMessage`, композиция |
 | `defineRules` / `domainRule` | domain | доменные правила без субъекта (D-40): `name`, `label`, `description`, `error` (ErrorDef своей группы), `check(ctx) → Result` |
-| `defineUseCase` | domain (контракт) | `type` (command/query), агрегат, `policy`, `rules` (доменные правила; их ошибки — в `errors`), `callers` ([caller.md](./caller.md)), `input`, `output`, `errors`, `emits` |
-| `defineEventReaction` | domain (контракт) | `on` (события), `touches` (агрегаты), `calls` (фасады), `emits` |
-| `defineJob` | domain (контракт) | `schedule`, `scans`, `emits` |
+| `defineUseCase` | domain (контракт) | `type` (command/query), агрегат, `policy`, `rules` (доменные правила; их ошибки — в `errors`), `callers` ([caller.md](./caller.md)), `calls` (Def UC других модулей, D-42), `input`, `output`, `errors`, `emits` |
+| `defineEventReaction` | domain (контракт) | `on` (события), `touches` (агрегаты), `calls` (Def UC других модулей, D-42), `emits` |
+| `defineJob` | domain (контракт) | `schedule`, `scans`, `calls` (Def UC других модулей, D-42), `emits` |
 | `defineUiApp` / `defineUiModule` / `defineStory` / `defineScreen` | ui (позже) | матрёшка UI — [ui-manifests.md](./ui-manifests.md) |
 
-Реализации подключают Def через базовые классы (`UseCaseFromDef`, `ReactionFromDef`, `JobFromDef`, `ModuleFromDef` — карта `Def → класс`, типизированная Def: пропуск реализации — ошибка компиляции; фасад — `implementFacade`). Свойства Def в классах **не дублируются**.
+Реализации подключают Def через базовые классы (`UseCaseFromDef`, `ReactionFromDef`, `JobFromDef`, `ModuleFromDef` — карта `Def → класс`, типизированная Def: пропуск реализации — ошибка компиляции). Фасад — рантайм-граница без манифеста (D-42). Свойства Def в классах **не дублируются**.
 
 **Ссылки, не строки:** `on: StudentEvents.completed`, `errors: [StudentErrors.NOT_ACTIVE]`. Строковые имена (FQN) вычисляются для шины, логов и документации.
 
@@ -44,7 +43,7 @@
 
 | Уровень | Узлы | Связи |
 |---|---|---|
-| **L0** — карта модулей | модули | `dependsOn`, вызовы фасадов, потоки событий между модулями |
+| **L0** — карта модулей | модули | `dependsOn`, вызовы «UC → UC» (`calls`), потоки событий между модулями |
 | **L1** — модуль | агрегаты, UC, ER, Job, события, ошибки | UC → агрегат, UC/ER/Job → событие → ER |
 | **L2** — агрегат | статусы, операции | переходы, ошибки операций |
 
@@ -56,7 +55,7 @@
 
 | Декларация | Проверка |
 |---|---|
-| `errors` UC/фасада | тип: `this.err()` принимает только заявленные коды |
+| `errors` UC | тип: `this.err()` принимает только заявленные коды |
 | `input` / `output` | тип + рантайм-валидация в `handle()` |
 | `emits` UC/ER/Job | рантайм-ассерт в test/dev: незаявленное событие — ошибка |
 | `touches` / `calls` ER | рантайм-ассерт через прокси резолвера в тестах |

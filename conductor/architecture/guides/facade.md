@@ -1,5 +1,7 @@
 # Facade — гайд
 
+> ⚠️ **Устарел: D-42** (фасад без манифеста, связи «UC → UC» в `calls`, вызывающий `module`) и D-41 (место межмодульного эффекта). Переписывается в Ф8 `golden-wish` после платформы; до этого — читать D-41/D-42 в [decisions.md](../decisions.md).
+
 **Назначение:** runtime-API модуля для других модулей — контракт `<M>FacadeDef = defineFacade(...)` (`packages/domain/src/<m>/<m>.facade.ts`) и in-proc реализация `implementFacade` (`packages/<m>/src/<m>.facade.ts`). Заводится **только по потребителю** (D-38).
 
 > У `wish` фасада нет: другим модулям он не нужен, UI ходит через `appApi`. Эталон формы — учебный модуль `todo` платформы.
