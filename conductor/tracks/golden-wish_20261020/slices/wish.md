@@ -182,7 +182,18 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 - **TDD** (red → запуск → green по шагам): каждая ветка отказа `module`; `subjectOf`; `checkDefs` (`calls` вне `dependsOn`, свой модуль, внешний UC без реализации — не нарушение); граф (ребро и вид цели); помощник `ReadonlyAr` (один, массив); генератор без `--facade`.
 - **Не трогать:** `packages/domain`, `packages/wish`, остальные `packages/*`, `apps/*`, `conductor/` (документы правит оркестратор). Legacy-фасады модулей (`CourseFacade` и др.) — не `dmg-core`, не трогаются. Если что-то вне `dmg-core` и `scripts/gen` ломается от удаления — эскалация.
 
-**Шаг 2 — контракты внешних зависимостей** и **шаг 3 — сам UC** — бриф дописывается после шага 1 (форма помощника определит их).
+**Шаг 2 — контракты внешних зависимостей (D-42, D-37).** Образец формы — учебный `todo` после шага 1 (`todo/task/uc/get-task.uc.ts`, `todo/todo.facade.ts`, `app/todo/todo.facade.ts` + тест). Вызовы `create-course-wish`: курс доступен для записи + стартовый модуль (сейчас два вызова legacy `CourseFacade`), запуск анкеты (`QuestionnaireFacade.startStandard`).
+
+*2a — domain-author (Opus)* (`packages/domain/src/{course,questionnaire}/**`, выход за границы согласован):
+- `course`: query UC-контракт на один вопрос — «с какого модуля начинается запись на курс» (вход `courseId`, выход — стартовый модуль или признак «недоступен для записи»: курс не опубликован/архив/пустая программа неотличимы); имя по naming.md (например `getCourseEnrollment`), `callers: ['module']`, `policy: allowAll` (с обоснованием), агрегат — Def агрегата курса (если его нет во внешнем контракте — минимальный `defineAggregate` по образцу `QuestionnaireArDef` в Ф0; эскалация, если нужно больше). Путь — `course/course/uc/<имя>.uc.ts`, в `CourseModuleDef.useCases`.
+- `questionnaire`: command UC-контракт запуска анкеты (вход: пул и `ownerInfo`; выход — пустой/идентификатор анкеты по смыслу legacy), `callers: ['module']`, `emits` — Def события старта, если оно у внешнего модуля описывается дёшево (иначе без `emits`, отметь в отчёте); путь — `questionnaire/questionnaire/uc/<имя>.uc.ts`, в `QuestionnaireModuleDef.useCases`.
+- Тип фасада каждого модуля по D-42 — TS-тип в домене владельца (`<m>.facade.ts`; legacy `facade.ts` и `CourseFacade`/`QuestionnaireFacade` не трогать и не переименовывать — имя нового типа без коллизии, без алиасов). Ошибки — ошибки UC.
+- Тесты Def (normalize, `checkDefs` модулей зелёный). Схемы — `description` на каждом поле (MAN-02).
+
+*2b — api-author (Opus)* (`packages/{course,questionnaire}/src/**`): временные реализации этих UC — `UseCaseFromDef` поверх legacy-фасадов модуля (`course`: `isCourseEnrollable` + `getCourseStartModuleId`; `questionnaire`: `startStandard` с субъектом вызывающего как legacy `User` — маркер DEBT-21/22), плюс реализация нового типа фасада через `callUseCase` и владелец (`UseCaseOwner`). Где собирается владелец внешнего модуля — реши по образцу `createTodoModule` (возможно, минимальный объект `{ def, useCase }`, если `ModuleFromDef` для external неприменим). Маркер TR-11 на каждом файле адаптера. Тесты: ответ при доступном/недоступном курсе (оба legacy-случая), запуск анкеты вызывает legacy с теми же аргументами; вызов не из `calls` — `UNAUTHORIZED`.
+- Не трогать: legacy-классы и legacy-фасады модулей, `packages/wish`, `packages/dmg-core`, `apps/*`, `conductor/`.
+
+**Шаг 3 — сам UC** — бриф дописывается после шага 2.
 
 ## Было → станет (naming.md §2–§3)
 
