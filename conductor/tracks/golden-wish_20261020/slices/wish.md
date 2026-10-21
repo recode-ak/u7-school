@@ -165,6 +165,25 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 
 **Шаг 9 — domain-author, платформа** (`packages/dmg-core/src/**`): узел доменного правила в графе — id с агрегатом-владельцем ошибки (`<модуль>.<агрегат>.<name>`), чтобы правила с одинаковым `name` у двух агрегатов модуля не сливались; `describedDefs` строит заголовок правила от того же владельца (модуль ошибки, а не модуль UC). TDD: два агрегата одного модуля с правилом `unique` — два узла, `usedBy` раздельно; правило чужого модуля в UC — id и заголовок по владельцу ошибки. Не трогать `packages/domain`, `packages/wish`, `conductor/`.
 
+## Ф8: эталонный UC `create-course-wish`
+
+Решения: D-41 (место межмодульного эффекта — выбор Нурболата; здесь вариант 1: `startStandard` в `execute` после `uow.register`, до фиксации), D-42 (фасад без манифеста, `calls` — Def UC других модулей, вызывающий `module`), TR-9 (каркас модуля в Ф8, legacy-UC рядом до Ф12).
+
+**Шаг 1 — domain-author, платформа (Opus)** (`packages/dmg-core/src/**`, `scripts/gen/**` — шаблоны и тесты генератора, где они ссылаются на фасад). Образец переделки — шаг 1 Ф6–7 (доменное правило).
+- **Убрать фасад из манифестов:** `defineFacade`, `method`, `FacadeDef`/`FacadeApi`/`AnyFacadeDef`, поле `facade` в `defineModule`, `ModuleFromDef` и `ModuleMap`, `implementFacade`, `guard-calls` (заменяется проверкой ниже), узлы фасадов в графе (`normalize`, `def-index`, `described-defs`), экспорт из корня и `dmg-core/app`; `gen module --facade` и шаблоны фасада. Ничего «на всякий случай» не оставлять.
+- **`calls`:** необязательное поле `calls?: readonly AnyUseCaseDef[]` у `defineUseCase`, `defineEventReaction` (заменяет `calls: AnyFacadeDef[]`), `defineJob`. Ссылки — объектами (MAN-07).
+- **Вызывающий `module`** (`kernel/caller`): `{ kind: 'module', from, origin }` — `from` — Def вызвавшего UC/ER/Job, `origin` — исходный `Caller`; `subjectOf` — субъект `origin` (рекурсивно). Policy вызываемого UC проверяется (не как `system`). Транспорт его не строит.
+- **Отказ в `UseCaseFromDef`:** `module` не в `callers` — `UNAUTHORIZED` (как сейчас); `module`, но Def вызываемого UC нет в `from.calls` — тоже отказ до `load` (код и payload — по смыслу `CoreErrors`, обоснуй; MAN-05).
+- **Помощник для фасадов** (`dmg-core/app`): реализация фасада в пакете модуля вызывает UC своего модуля без ручной сборки `Caller` — например, контекст вызова `{ from, caller, trace }`, который вызывающий UC/ER/Job получает от базы (`this.callContext(caller)` или аналог; у `execute` сейчас нет `trace` — реши, как пробросить), и функция вызова UC модуля по Def с подстановкой `module`. Восстановление `ReadonlyAr` из выхода UC, который является state агрегата (один и массив), — по Def агрегата (`restore`). Форма и имена — твои, с обоснованием в отчёте; тип фасада — обычный TS-тип в домене владельца (не Def).
+- **Внешний модуль (D-37):** `defineModule({ external: true })` допускает `useCases` — Def без реализации; у внешнего — по-прежнему без ER/Job; MAN-06 и `checkDefs` это учитывают.
+- **`checkDefs`:** UC в `calls` принадлежит модулю из `dependsOn`, не своему (ID — MAN-05 или ARC-04, обоснуй); неизвестный Def в `calls` — нарушение.
+- **Граф:** ребро «UC/ER/Job → UC» из `calls` (L1), межмодульные связи L0 выводятся из них; command-цель различима от query (атрибут ребра или узла — на твой выбор).
+- **Учебный модуль** `testing/example/`: фасад `todo` переводится — тип в домене, реализация через помощник над query UC (возврат `ReadonlyAr`); вызывающий (сейчас по `calls` фасада) объявляет `calls: [<Def UC todo>]`; тест: вызов через фасад проходит, вызов UC, которого нет в `calls`, — отказ; `subjectOf` у `module` — субъект `origin`.
+- **TDD** (red → запуск → green по шагам): каждая ветка отказа `module`; `subjectOf`; `checkDefs` (`calls` вне `dependsOn`, свой модуль, внешний UC без реализации — не нарушение); граф (ребро и вид цели); помощник `ReadonlyAr` (один, массив); генератор без `--facade`.
+- **Не трогать:** `packages/domain`, `packages/wish`, остальные `packages/*`, `apps/*`, `conductor/` (документы правит оркестратор). Legacy-фасады модулей (`CourseFacade` и др.) — не `dmg-core`, не трогаются. Если что-то вне `dmg-core` и `scripts/gen` ломается от удаления — эскалация.
+
+**Шаг 2 — контракты внешних зависимостей** и **шаг 3 — сам UC** — бриф дописывается после шага 1 (форма помощника определит их).
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
