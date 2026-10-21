@@ -80,7 +80,6 @@ describe('normalize', () => {
           name: 'hasRole:admin',
           label: 'Роль admin',
           denyMessage: 'Нужна роль admin.',
-          delegable: true,
         },
         {
           dmg: 'rule',
@@ -92,6 +91,14 @@ describe('normalize', () => {
         },
       ],
     });
+    // Признака делегирования в правиле нет (D-43, Р2).
+    expect(Object.keys(normalize(hasRole('admin'))).sort()).toEqual([
+      'denyMessage',
+      'dmg',
+      'label',
+      'name',
+      'op',
+    ]);
     expect(normalize(TaskPolicy)).toEqual({
       dmg: 'policy',
       name: 'task',

@@ -148,7 +148,7 @@ describe('${P}Ar.create', () => {
 `;
 
   const policyTestSrc = `import { describe, expect, it } from 'bun:test';
-import { allowed, UserCaller } from 'dmg-core';
+import { allowed } from 'dmg-core';
 import { ${P}Ar } from './${a}.ar';
 import { type ${P}Ctx, ${P}Policy } from './${a}.policy';
 
@@ -156,7 +156,7 @@ type User = { uuid: string };
 
 const ID = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 
-const user = new UserCaller<User>({ uuid: ID });
+const user: User = { uuid: ID };
 
 const ctx: ${P}Ctx = {
   ${toCamel(a)}: ${P}Ar.restore({

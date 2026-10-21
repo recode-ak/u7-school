@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { allowed, denied, GuestCaller, UserCaller } from 'dmg-core';
+import { allowed, denied } from 'dmg-core';
 import { WishAr } from './wish.ar';
 import { type WishCtx, WishPolicy } from './wish.policy';
 
@@ -8,7 +8,7 @@ type User = { readonly uuid: string };
 const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
 const OTHER = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
 
-const user = (uuid: string) => new UserCaller<User>({ uuid });
+const user = (uuid: string): User => ({ uuid });
 
 const ctx: WishCtx = {
   wish: WishAr.restore({
@@ -38,7 +38,7 @@ describe('WishPolicy.canCancel', () => {
     );
   });
 
-  it('гость — denied', () => {
-    expect(canCancel.evaluate(new GuestCaller(), ctx).allowed).toBe(false);
+  it('без субъекта (гость, system без человека) — denied', () => {
+    expect(canCancel.evaluate(undefined, ctx).allowed).toBe(false);
   });
 });

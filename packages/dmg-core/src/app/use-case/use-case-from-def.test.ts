@@ -9,6 +9,7 @@ import {
   type AnyUseCaseDef,
   defineUseCase,
 } from '#core/domain/contracts/define-use-case';
+import { allowAll } from '#core/domain/policy/policy';
 import { domainRule } from '#core/domain/rules/domain-rule';
 import type { CallContext } from '#core/kernel/caller/call-context';
 import {
@@ -140,7 +141,7 @@ describe('UseCaseFromDef.handle — отказы до операции', () => {
     expect(expectErr(res, 'ACCESS_DENIED').payload.rule).toBe('canManage');
   });
 
-  test('system из callers Policy не проверяет', async () => {
+  test('system из callers без человека — Policy всё равно вызвана: ACCESS_DENIED (D-43)', async () => {
     const SystemUcDef = defineUseCase({
       ...CompleteTaskUcDef,
       callers: ['system'],
@@ -156,7 +157,28 @@ describe('UseCaseFromDef.handle — отказы до операции', () => {
       protected load = (i: { taskId: string }) => loadTask(tasks, i);
       protected execute = async () => ok({});
     }
-    expectOk(await new SystemComplete().handle({ taskId: TASK }, system, REQ));
+    const res = await new SystemComplete().handle(
+      { taskId: TASK },
+      system,
+      REQ,
+    );
+    expect(expectErr(res, 'ACCESS_DENIED').payload.rule).toBe('canManage');
+  });
+
+  test('системный UC с allowAll — без субъекта разрешён явно', async () => {
+    const SweepUcDef = defineUseCase({
+      ...CompleteTaskUcDef,
+      callers: ['system'],
+      policy: allowAll,
+    });
+    class Sweep extends UseCaseFromDef<typeof SweepUcDef, Deps, Loaded> {
+      constructor() {
+        super(SweepUcDef, { app: ctx.app, tasks }, moduleOf(SweepUcDef));
+      }
+      protected load = (i: { taskId: string }) => loadTask(tasks, i);
+      protected execute = async () => ok({});
+    }
+    expectOk(await new Sweep().handle({ taskId: TASK }, system, REQ));
   });
 });
 
@@ -347,8 +369,27 @@ describe('UseCaseFromDef — вызывающий system (D-43)', () => {
     expect(expectErr(res, 'ACCESS_DENIED').payload.rule).toBe('canManage');
   });
 
-  test('без человека (ER, Job) — Policy не проверяется', async () => {
-    expectOk(await new SystemComplete().handle({ taskId: TASK }, system, REQ));
+  test('без человека (ER, Job) — правило без субъекта: ACCESS_DENIED', async () => {
+    const res = await new SystemComplete().handle(
+      { taskId: TASK },
+      system,
+      REQ,
+    );
+    expect(expectErr(res, 'ACCESS_DENIED').payload.rule).toBe('canManage');
+  });
+
+  test('наследник ослабляет checkPolicy — его право и ответственность', async () => {
+    class SweepComplete extends SystemComplete {
+      protected override checkPolicy(loaded: Loaded, caller: Caller<User>) {
+        if (caller.person() === undefined) return ok();
+        return super.checkPolicy(loaded, caller);
+      }
+    }
+    const uc = new SweepComplete();
+    expectOk(await uc.handle({ taskId: TASK }, system, REQ));
+    const alien = new SystemCaller(from, user('чужой'));
+    const res = await uc.handle({ taskId: TASK }, alien, REQ);
+    expect(expectErr(res, 'ACCESS_DENIED').payload.rule).toBe('canManage');
   });
 
   test('с гостем — Policy по субъекту, которого нет: ACCESS_DENIED', async () => {
@@ -411,6 +452,7 @@ describe('UseCaseFromDef.subject', () => {
   const WhoAmIUcDef = defineUseCase({
     ...CompleteTaskUcDef,
     callers: ['user', 'system'],
+    policy: allowAll,
   });
   class WhoAmI extends UseCaseFromDef<typeof WhoAmIUcDef, Deps, Loaded, User> {
     constructor() {
@@ -528,9 +570,10 @@ describe('UseCaseFromDef — доменные правила', () => {
     expect(calls).toEqual(['rule', 'execute']);
   });
 
-  test('для system правила проверяются (Policy — нет)', async () => {
+  test('для system правила проверяются', async () => {
     seed('done');
-    const res = await new Ruled().handle({ taskId: TASK }, system, REQ);
+    const viaOwner = new SystemCaller<User>(JOB, user(OWNER));
+    const res = await new Ruled().handle({ taskId: TASK }, viaOwner, REQ);
     expectErr(res, 'TASK_ALREADY_DONE');
     expect(calls).toEqual(['rule']);
   });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { allowed, denied, GuestCaller, UserCaller } from '#core/index';
+import { allowed, denied } from '#core/index';
 import { TaskAr } from './task.ar';
 import { type TaskCtx, TaskPolicy } from './task.policy';
 
@@ -9,8 +9,10 @@ type User = { uuid: string; hasRole(role: Role): boolean };
 const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
 const OTHER = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
 
-const user = (uuid: string, ...roles: Role[]) =>
-  new UserCaller<User>({ uuid, hasRole: (role) => roles.includes(role) });
+const user = (uuid: string, ...roles: Role[]): User => ({
+  uuid,
+  hasRole: (role) => roles.includes(role),
+});
 
 const ctx: TaskCtx = {
   task: TaskAr.restore({
@@ -44,7 +46,7 @@ describe('TaskPolicy.canManage', () => {
     );
   });
 
-  it('гость — denied', () => {
-    expect(canManage.evaluate(new GuestCaller(), ctx).allowed).toBe(false);
+  it('без субъекта (гость, system без человека) — denied', () => {
+    expect(canManage.evaluate(undefined, ctx).allowed).toBe(false);
   });
 });

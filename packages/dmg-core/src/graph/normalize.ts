@@ -64,7 +64,6 @@ export type NormalizedRule =
   | (RuleTexts & {
       readonly dmg: 'rule';
       readonly op: 'rule';
-      readonly delegable: boolean;
     })
   | (RuleTexts & {
       readonly dmg: 'rule';
@@ -296,7 +295,6 @@ function normalizeRule(r: AnyRule): NormalizedRule {
         name: r.name,
         label: r.label,
         denyMessage: r.denyMessage,
-        delegable: r.delegable,
       };
     case 'anyOf':
       return {

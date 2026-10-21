@@ -1,5 +1,3 @@
-import type { Caller, Identified } from '#core/kernel/caller/caller';
-
 /** Решение политики: разрешено или отказ с именем правила и текстом. */
 export type Decision =
   | { readonly allowed: true }
@@ -23,50 +21,44 @@ type Named = {
 
 /** Структура правила — для нормализации и графа. */
 export type RuleNode =
-  | (Named & { readonly op: 'rule'; readonly delegable: boolean })
+  | (Named & { readonly op: 'rule' })
   | (Named & { readonly op: 'anyOf'; readonly rules: readonly AnyRule[] })
   | { readonly op: 'allOf'; readonly rules: readonly AnyRule[] }
   | { readonly op: 'allowAll' };
 
-/** Правило над субъектом `U` в контексте `C` (DOM-05). */
+/**
+ * Правило над субъектом `U` в контексте `C` (DOM-05). Получает субъекта
+ * (`caller.subject()`), а не вызывающего: вид вызывающего и делегирование
+ * Policy не знает (D-43, Р2). `undefined` — субъекта нет (guest, system
+ * без человека).
+ */
 export type Rule<U, C> = RuleNode & {
   readonly dmg: 'rule';
   // Свойство, а не метод: параметры строго контравариантны (метод бивариантен
   // и пропустил бы правило с чужим субъектом или контекстом).
-  readonly evaluate: (caller: Caller<U & Identified>, ctx: C) => Decision;
+  readonly evaluate: (subject: U | undefined, ctx: C) => Decision;
 };
 
 /** Любое правило — для композиции и ссылок `policy` в Def. */
 export type AnyRule = Rule<never, never>;
 
 export type RuleSpec<U, C> = Named & {
-  /** `false` — правило отказывает заместителю (`delegate`). По умолчанию `true`. */
-  readonly delegable?: boolean;
   check(subject: U, ctx: C): boolean;
 };
 
 /**
- * Именованное правило. Проверяет субъекта (`caller.subject()`): без
- * субъекта (guest, system без человека) — отказ; `delegable: false`
- * отказывает, если исходный человек (`caller.person()`) — `delegate`, в том
- * числе пришедший через фасад (`SystemCaller` с таким человеком).
+ * Именованное правило над субъектом. Без субъекта — отказ, `check` не
+ * вызывается: системный вызов без человека разрешается только явно
+ * (`allowAll` или переопределение `checkPolicy` в UC, D-43).
  */
 export function rule<U, C = unknown>(spec: RuleSpec<U, C>): Rule<U, C> {
-  const delegable = spec.delegable ?? true;
   return {
     dmg: 'rule',
     op: 'rule',
     name: spec.name,
     label: spec.label,
     denyMessage: spec.denyMessage,
-    delegable,
-    evaluate(caller, ctx) {
-      // Через фасад (`SystemCaller`) действует исходный человек:
-      // делегирование проверяется по нему (до Р2, D-43).
-      if (caller.person()?.kind === 'delegate' && !delegable) {
-        return denied(spec.name, `Недоступно по делегированию: ${spec.label}.`);
-      }
-      const subject = caller.subject();
+    evaluate(subject, ctx) {
       if (subject === undefined || !spec.check(subject, ctx)) {
         return denied(spec.name, spec.denyMessage);
       }
@@ -76,7 +68,8 @@ export function rule<U, C = unknown>(spec: RuleSpec<U, C>): Rule<U, C> {
 }
 
 /**
- * Явное «доступно всем, кого пропустил `callers`» — для UC без ограничений.
+ * Явное «доступно всем, кого пропустил `callers`», в том числе без субъекта —
+ * для UC без ограничений и системного UC (`callers: ['system']`).
  * Политика в Def UC обязательна, чтобы её не забыли; отсутствие ограничений
  * тоже решение, и оно видно в контракте и графе.
  */
@@ -121,9 +114,9 @@ export function allOf<U, C>(...rules: readonly Rule<U, C>[]): Rule<U, C> {
     dmg: 'rule',
     op: 'allOf',
     rules,
-    evaluate(caller, ctx) {
+    evaluate(subject, ctx) {
       for (const r of rules) {
-        const decision = r.evaluate(caller, ctx);
+        const decision = r.evaluate(subject, ctx);
         if (!decision.allowed) return decision;
       }
       return allowed;
@@ -145,8 +138,8 @@ export function anyOf<U, C>(
     op: 'anyOf',
     ...meta,
     rules,
-    evaluate(caller, ctx) {
-      const pass = rules.some((r) => r.evaluate(caller, ctx).allowed);
+    evaluate(subject, ctx) {
+      const pass = rules.some((r) => r.evaluate(subject, ctx).allowed);
       return pass ? allowed : denied(meta.name, meta.denyMessage);
     },
   };

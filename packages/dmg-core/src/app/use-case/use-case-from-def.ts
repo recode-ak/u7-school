@@ -91,6 +91,9 @@ export type UseCaseHandler<
  * то, что нужно Policy и операции) и `execute` (операция домена +
  * `uow.register`). Порядок, Policy, ошибки ядра, фиксация и публикация —
  * здесь (errors-result.md §3); свойства Def в наследнике не повторяются.
+ * Шаги — `protected`: наследник может их переопределить (например,
+ * ослабить `checkPolicy` для системного вызова, D-43) — под свою
+ * ответственность.
  *
  * `L` — загруженное: подтип контекста Policy и контекстов всех доменных
  * правил (например, `{ task: TaskAr }` для `{ task: ReadonlyAr<TaskAr> }`),
@@ -185,9 +188,9 @@ export abstract class UseCaseFromDef<
   }
 
   /**
-   * callers → вход → load → Policy → правила →
-   * execute → выход → commit (с публикацией). Непредвиденное исключение —
-   * `SERVER_INTERNAL` с записью в лог.
+   * Шаги: `checkCaller` → `parseInput` → `load` → `checkPolicy` →
+   * `checkRules` → `execute` → `parseOutput` → фиксация (с публикацией).
+   * Непредвиденное исключение — `SERVER_INTERNAL` с записью в лог.
    */
   async handle(
     input: unknown,
@@ -206,36 +209,85 @@ export abstract class UseCaseFromDef<
     }
   }
 
+  /** Вид вызывающего — из `callers` Def; иначе `UNAUTHORIZED`. */
+  protected checkCaller(caller: Caller<U>): Result<void, UseCaseErrorOf<D>> {
+    if (!this.def.callers.includes(caller.kind)) {
+      return CoreErrors.UNAUTHORIZED.err({ callerKind: caller.kind });
+    }
+    return ok();
+  }
+
+  /** Вход по схеме Def; иначе `INPUT_VALIDATION` с путями полей. */
+  protected parseInput(
+    input: unknown,
+  ): Result<ParsedInputOf<D>, UseCaseErrorOf<D>> {
+    const parsed = v.safeParse(this.def.input, input);
+    if (!parsed.success) {
+      return CoreErrors.INPUT_VALIDATION.err({ issues: issues(parsed) });
+    }
+    return ok(parsed.output);
+  }
+
+  /**
+   * Policy Def по субъекту вызывающего — вызывается всегда (D-43, Р2):
+   * правило без субъекта (guest, system без человека) — отказ
+   * `ACCESS_DENIED`. Системный вызов без человека разрешается явно:
+   * `allowAll` в Def системного UC или переопределение этого шага в
+   * наследнике — его право и ответственность.
+   */
+  protected checkPolicy(
+    loaded: L,
+    caller: Caller<U>,
+  ): Result<void, UseCaseErrorOf<D>> {
+    const decision = this.policy.evaluate(caller.subject(), loaded);
+    if (!decision.allowed) {
+      const { rule, denyMessage } = decision;
+      return CoreErrors.ACCESS_DENIED.err({ rule, denyMessage });
+    }
+    return ok();
+  }
+
+  /**
+   * Доменные правила Def: субъекта не знают — проверяются для любого
+   * вызывающего. Отказ — до UoW: следов не остаётся.
+   */
+  protected checkRules(loaded: L): Result<void, UseCaseErrorOf<D>> {
+    for (const r of this.rules) {
+      const checked = r.check(loaded);
+      if (!checked.ok) return checked;
+    }
+    return ok();
+  }
+
+  /**
+   * Выход по схеме Def — до фиксации: невалидный ответ — баг реализации, и
+   * тогда операция не оставляет следов (клиент может безопасно повторить).
+   */
+  protected parseOutput(
+    raw: RawOutputOf<D>,
+  ): Result<OutputOf<D>, UseCaseErrorOf<D>> {
+    const output = v.safeParse(this.def.output, raw);
+    if (!output.success) {
+      return CoreErrors.OUTPUT_VALIDATION.err({ issues: issues(output) });
+    }
+    return ok(output.output);
+  }
+
   private async run(
     input: unknown,
     caller: Caller<U>,
     trace: Trace,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    if (!this.def.callers.includes(caller.kind)) {
-      return CoreErrors.UNAUTHORIZED.err({ callerKind: caller.kind });
-    }
-    const parsed = v.safeParse(this.def.input, input);
-    if (!parsed.success) {
-      return CoreErrors.INPUT_VALIDATION.err({ issues: issues(parsed) });
-    }
-    const loaded = await this.load(parsed.output, caller, trace);
+    const allowed = this.checkCaller(caller);
+    if (!allowed.ok) return allowed;
+    const parsed = this.parseInput(input);
+    if (!parsed.ok) return parsed;
+    const loaded = await this.load(parsed.value, caller, trace);
     if (!loaded.ok) return loaded;
-    // До Р2 (D-43): system без человека (ER, Job) допускается только через
-    // `callers` — его права — сам факт объявления в Def. С человеком
-    // (вызов через фасад от UC) — Policy по субъекту человека.
-    if (caller.kind !== 'system' || caller.person() !== undefined) {
-      const decision = this.policy.evaluate(caller, loaded.value);
-      if (!decision.allowed) {
-        const { rule, denyMessage } = decision;
-        return CoreErrors.ACCESS_DENIED.err({ rule, denyMessage });
-      }
-    }
-    // Доменные правила субъекта не знают — проверяются для любого
-    // вызывающего, в том числе system. Отказ — до UoW: следов не остаётся.
-    for (const r of this.rules) {
-      const checked = r.check(loaded.value);
-      if (!checked.ok) return checked;
-    }
+    const permitted = this.checkPolicy(loaded.value, caller);
+    if (!permitted.ok) return permitted;
+    const checked = this.checkRules(loaded.value);
+    if (!checked.ok) return checked;
     const uow = contractUnitOfWork(this.resolve.app, {
       source: this.def.name,
       caller,
@@ -243,22 +295,18 @@ export abstract class UseCaseFromDef<
       emits: this.def.emits ?? [],
     });
     const res = await this.execute(
-      parsed.output,
+      parsed.value,
       loaded.value,
       uow,
       caller,
       trace,
     );
     if (!res.ok) return res;
-    // Выход сверяется до фиксации: невалидный ответ — баг реализации, и
-    // тогда операция не оставляет следов (клиент может безопасно повторить).
-    const output = v.safeParse(this.def.output, res.value);
-    if (!output.success) {
-      return CoreErrors.OUTPUT_VALIDATION.err({ issues: issues(output) });
-    }
+    const output = this.parseOutput(res.value);
+    if (!output.ok) return output;
     const committed = await uow.commit();
     if (!committed.ok) return committed;
-    return ok(output.output);
+    return output;
   }
 }
 
