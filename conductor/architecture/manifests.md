@@ -14,12 +14,12 @@
 | `defineErrors` | domain | группа ошибок агрегата: `code`, `kind`, `label`, `description`, схема payload |
 | `definePolicy` / `rule` | domain | именованные правила с `label` и `denyMessage`, композиция |
 | `defineRules` / `domainRule` | domain | доменные правила без субъекта (D-40): `name`, `label`, `description`, `error` (ErrorDef своей группы), `check(ctx) → Result` |
-| `defineUseCase` | domain (контракт) | `type` (command/query), агрегат, `policy`, `rules` (доменные правила; их ошибки — в `errors`), `callers` ([caller.md](./caller.md)), `calls` (Def UC других модулей, D-42), `input`, `output`, `errors`, `emits` |
-| `defineEventReaction` | domain (контракт) | `on` (события), `touches` (агрегаты), `calls` (Def UC других модулей, D-42), `emits` |
-| `defineJob` | domain (контракт) | `schedule`, `scans`, `calls` (Def UC других модулей, D-42), `emits` |
+| `defineUseCase` | domain (контракт) | `type` (command/query), агрегат, `policy`, `rules` (доменные правила; их ошибки — в `errors`), `callers` ([caller.md](./caller.md)), `calls` (Def UC других модулей с `'system'` в `callers`, D-42/D-43), `input`, `output`, `errors`, `emits` |
+| `defineEventReaction` | domain (контракт) | `on` (события), `touches` (агрегаты), `calls` (Def UC других модулей, D-43), `emits` |
+| `defineJob` | domain (контракт) | `schedule`, `scans`, `calls` (Def UC других модулей, D-43), `emits` |
 | `defineUiApp` / `defineUiModule` / `defineStory` / `defineScreen` | ui (позже) | матрёшка UI — [ui-manifests.md](./ui-manifests.md) |
 
-Реализации подключают Def через базовые классы (`UseCaseFromDef`, `ReactionFromDef`, `JobFromDef`, `ModuleFromDef` — карта `Def → класс`, типизированная Def: пропуск реализации — ошибка компиляции). Фасад — рантайм-граница без манифеста (D-42). Свойства Def в классах **не дублируются**.
+Реализации подключают Def через базовые классы (`UseCaseFromDef`, `ReactionFromDef`, `JobFromDef` — наследники `OperationFromDef` с типизированным `call`, D-43; `ModuleFromDef` — единственная точка входа модуля, `handle`/`runJob` — карта `Def → класс`, типизированная Def: пропуск реализации — ошибка компиляции). Фасад — рантайм-граница без манифеста (`Facade<M>`/`ModuleFacade<M>`, D-42, D-43). Свойства Def в классах **не дублируются**.
 
 **Ссылки, не строки:** `on: StudentEvents.completed`, `errors: [StudentErrors.NOT_ACTIVE]`. Строковые имена (FQN) вычисляются для шины, логов и документации.
 

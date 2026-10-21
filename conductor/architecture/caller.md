@@ -1,32 +1,46 @@
 # Caller — кто вызывает
 
-**Назначение:** абстракция вызывающей стороны для UC, Policy, событий и аудита. Тип, `subjectOf` и `systemCaller` — в `dmg-core` (дженерик пользователя замыкает `app`); функция делегирования — отдельный трек модуля user ([migration.md](./migration.md)).
+**Назначение:** абстракция вызывающей стороны для UC, Policy и аудита (D-43). Классы `Caller` и `Trace` — в `dmg-core` (дженерик пользователя замыкает `app`); функция делегирования — отдельный трек модуля user ([migration.md](./migration.md)).
 
 ---
 
-## 1. Подтипы
+## 1. Иерархия
 
-`Caller` — размеченное объединение по `kind`:
+`Caller<U>` — абстрактный класс; вид — `kind`, остальное — методы:
 
-| kind | Кто | Субъект для домена |
-|---|---|---|
-| `guest` | не зарегистрирован; есть только идентификатор канала (tgId) | нет |
-| `user` | авторизованный пользователь | он сам |
-| `delegate` | заместитель действует от имени другого по делегированию | **тот, кого замещают**; заместитель и `delegationId` — для аудита |
-| `module` | другой модуль через фасад (D-42); `from` — Def вызвавшего UC/ER/Job, `origin` — исходный вызывающий | **субъект `origin`** |
-| `system` | Job, ER; источник — FQN | нет; `onBehalfOf?: Caller` — исходный вызывающий, если действие порождено им |
+```ts
+abstract class Caller<U extends { uuid: string }> {
+  abstract readonly kind: 'guest' | 'user' | 'delegate' | 'system';
+  abstract subject(): U | undefined;          // от чьего имени — для Policy и домена
+  abstract person(): PersonCaller<U> | undefined; // исходный человек — для вложенных вызовов
+  abstract toLog(): CallerLog;                // форма для лога операций
+}
+type PersonCaller<U> = GuestCaller<U> | UserCaller<U> | DelegateCaller<U>;
+```
+
+| Класс | Кто | `subject()` | `person()` |
+|---|---|---|---|
+| `GuestCaller` | не зарегистрирован (канал — в `Trace.channel`) | нет | он сам |
+| `UserCaller(user)` | авторизованный пользователь | он сам | он сам |
+| `DelegateCaller(subject, actor, delegationId)` | заместитель действует от имени другого по делегированию | **тот, кого замещают** | он сам |
+| `SystemCaller(from, person?)` | операция приложения: UC/ER/Job своего или другого модуля; `from: OperationRef` — `{ kind, module, name }` вызвавшей операции | `person?.subject()` | `person` |
+
+- Матрёшки нет: `person` по типу не `SystemCaller`; вложенный вызов передаёт `caller.person()` пришедшего.
+- ER и Job — `SystemCaller` без `person`: субъекта нет. Job — не гость (гость — реальный посетитель); «кто породил» для ER — через `trace.cause` к записи операции-причины в логе.
+- Свой или чужой модуль — сравнение `from.module` с модулем вызываемого; отдельного вида `module` нет.
+- `toLog()`: `{ kind: 'guest' }` · `{ kind: 'user', subjectId }` · `{ kind: 'delegate', subjectId, actorId, delegationId }` · `{ kind: 'system', from, person? }`.
 
 Различие *субъект* (от чьего имени) и *исполнитель* (кто физически) — практика делегирования полномочий (ERP «замещение», OAuth Token Exchange RFC 8693 `act`). Это **не** impersonation: делегирование ограничено сроком и набором прав, отзывается, все действия видны в аудите.
 
 ## 2. Ключевые правила
 
-1. Def UC объявляет допустимых вызывающих: `callers: ['user', 'delegate']` (вместо `auth: boolean`). Недопустимый `kind` отсекается до запуска UC (`UNAUTHORIZED`/`ACCESS_DENIED`).
-2. Домен и Policy работают с **субъектом** (хелпер `subjectOf(caller)`), а не разбирают `kind` сами.
-3. Правило Policy может запретить делегирование: `delegable: false` (передать доверенность дальше, сменить свои персональные данные и т. п.).
-4. Конверт события (meta, не payload) несёт `caller`, `cause` (непосредственная причина: запрос, событие или прогон Job) и `correlationId` (вся цепочка от точки входа). Аудит «кто на самом деле» и «из-за чего» строится из meta — домен об этом не знает. `requestId` всегда есть в следе: его ставит адаптер транспорта, разбирающий входящий запрос (`appApi.run(uc, input, caller, meta)`); клиент не передал — адаптер создаёт сам (`incomingRequestId`) и пишет `warn` (ERR-07).
-5. ER/Job вызывают UC как `system` с `onBehalfOf` из события-причины; Policy видит, что вызов системный.
-6. Фасад вызывает UC своего модуля как `module` (`from`, `origin`); UC, доступный другим модулям, объявляет `module` в `callers`, а его Def должен быть в `calls` у `from` — иначе `UNAUTHORIZED` (D-42).
-7. Транспорт строит `Caller` на входе (бот — по tgId и активному делегированию, HTTP — по токену); внутрь UC он передаётся неизменным.
+1. Def UC объявляет допустимые виды: `callers: ('guest' | 'user' | 'delegate' | 'system')[]`. Недопустимый вид отсекается до запуска UC (`UNAUTHORIZED`).
+2. Policy и домен работают только с **субъектом** (`caller.subject()`): `Rule.evaluate(subject, ctx)`; вид вызывающего Policy не знает и делегирование не проверяет — право и возможность даёт приложение, решение — люди. Policy вызывается всегда; правило без субъекта — отказ (`ACCESS_DENIED`).
+3. Системный вызов без субъекта разрешается только явно: отдельный UC (`callers: ['system']`, `allowAll`) или переопределение `protected checkPolicy` в наследнике `UseCaseFromDef` — ответственность наследника.
+4. Межмодульный вызов — `this.call(def, input, caller, trace)` базы `OperationFromDef`: только Def из `calls` (по типу — UC с `'system'` в `callers`); база подставляет `SystemCaller(this.ref, caller.person())` и идёт через фасад модуля-владельца (`Facade<M>.handle`). Рантайм-проверки `calls` нет.
+5. След — класс `Trace`: `requestId` (вход транспорта: `Trace.fromRequest`; клиент не передал — создаётся с `warn`, ERR-07), `cause` (запрос, событие или прогон Job), `correlationId` (вся цепочка), `channel?: { name, visitorId? }` (задаётся на входе, идёт по цепочке). ER — `Trace.fromEvent`, Job — `Trace.forJob`.
+6. Конверт события несёт `cause` и `correlationId`, но не `caller`: аудит «кто» — лог операций (`OperationLog`, `toLog()` вызывающего), «из-за чего» — `trace.cause`.
+7. Транспорт строит `Caller` и `Trace` на входе (бот — по tgId и активному делегированию, HTTP — по токену) и вызывает `ModuleFromDef.handle`; внутрь UC они передаются неизменными.
 
 ## 3. Делегирование (позже)
 
@@ -34,6 +48,7 @@
 
 ## 4. Связанные файлы
 
+- [decisions.md](./decisions.md) — D-43
 - [manifests.md](./manifests.md) — поле `callers` в `defineUseCase`, `defineStory`
 - [errors-result.md](./errors-result.md) — `UNAUTHORIZED`, `ACCESS_DENIED`
 - [ui-manifests.md](./ui-manifests.md) — `callers` сторис и проверка согласованности с UC
