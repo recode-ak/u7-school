@@ -2,9 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { ModuleFacades } from '#core/app/facade/module-facades';
 import { requestTrace } from '#core/app/trace';
 import { UserCaller } from '#core/kernel/caller/caller';
 import type { ExampleUser } from '#core/testing/example/app/app-user';
+import { TodoModuleDef } from '#core/testing/example/todo/index';
 import { OPEN_TASKS_LIMIT } from '#core/testing/example/todo/task/task.rules';
 import { expectErr, expectOk, testAppContext } from '#core/testing/index';
 import { TaskJsonRepo } from '../../infra/task.json-repo';
@@ -27,7 +29,10 @@ beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'create-task-'));
   tasks = new TaskJsonRepo(join(dir, 'tasks.json'));
   ctx = testAppContext({ at: Date.UTC(2026, 9, 1) });
-  uc = new CreateTaskUc({ app: ctx.app, tasks });
+  uc = new CreateTaskUc(
+    { app: ctx.app, facades: new ModuleFacades(), tasks },
+    TodoModuleDef,
+  );
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 

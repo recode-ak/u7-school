@@ -1,6 +1,6 @@
 // TR-11: адаптер UC внешнего контракта над legacy-фасадом курсов.
 import {
-  CourseModuleDef,
+  type CourseModuleDef,
   GetCourseEnrollmentUcDef,
 } from '@u7-scl/domain/course/contract';
 import { ok } from 'dmg-core';
@@ -18,8 +18,8 @@ export class GetCourseEnrollmentUc extends UseCaseFromDef<
   CourseModuleDeps,
   undefined
 > {
-  constructor(deps: CourseModuleDeps) {
-    super(GetCourseEnrollmentUcDef, deps, CourseModuleDef);
+  constructor(deps: CourseModuleDeps, module: typeof CourseModuleDef) {
+    super(GetCourseEnrollmentUcDef, deps, module);
   }
 
   protected async load() {

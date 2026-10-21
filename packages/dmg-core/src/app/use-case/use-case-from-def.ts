@@ -14,18 +14,12 @@ import type {
   DomainRule,
   DomainRuleContextOf,
 } from '#core/domain/rules/domain-rule';
-import type { CallContext } from '#core/kernel/caller/call-context';
-import {
-  type Caller,
-  type Identified,
-  type OperationRef,
-  SystemCaller,
-} from '#core/kernel/caller/caller';
+import type { Caller, Identified } from '#core/kernel/caller/caller';
 import { CoreErrors } from '#core/kernel/errors/core-errors';
 import { serializeError } from '#core/kernel/errors/serialize-error';
 import { ok, type Result } from '#core/kernel/result/result';
-import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { ModuleDeps } from '../context';
+import { OperationFromDef } from '../operation/operation-from-def';
 import type { Trace } from '../trace';
 import { contractUnitOfWork } from '../uow/contract-unit-of-work';
 import type { UnitOfWork } from '../uow/unit-of-work';
@@ -108,36 +102,32 @@ export abstract class UseCaseFromDef<
   R extends ModuleDeps,
   L extends UseCaseContextOf<D> & UseCaseRulesContextOf<D>,
   U extends UseCaseSubjectOf<D> = UseCaseSubjectOf<D>,
-> {
+> extends OperationFromDef<D, R> {
   private readonly policy: Rule<UseCaseSubjectOf<D>, UseCaseContextOf<D>>;
   private readonly rules: readonly UseCaseRule<D>[];
-  /** Эта операция — `from` вызывающего, когда она зовёт другие модули. */
-  readonly ref: OperationRef;
 
   /**
-   * `module` — Def модуля-владельца: даёт `ref` (D-43). UC не из его
-   * `useCases` — исключение (ошибка сборки).
+   * `module` — Def модуля-владельца: его передаёт `ModuleFromDef` (D-43),
+   * наследник проксирует в `super`. UC не из его `useCases` — исключение
+   * (ошибка сборки).
    */
   constructor(
-    readonly def: D & {
+    def: D & {
       readonly policy: Rule<UseCaseSubjectOf<D>, UseCaseContextOf<D>>;
       readonly rules?: readonly UseCaseRule<D>[];
     },
-    protected readonly resolve: R,
+    resolve: R,
     module: AnyModuleDef,
   ) {
-    if (!module.useCases.includes(def)) {
-      throw new Error(`UC ${def.name} не входит в модуль ${module.name}`);
-    }
+    super(def, resolve, module, 'useCase');
     this.policy = def.policy;
     this.rules = def.rules ?? [];
-    this.ref = { kind: 'useCase', module: module.name, name: def.name };
   }
 
   /**
-   * `trace` — для вызова фасада другого модуля (`callContext`). Ошибки —
+   * `trace` — для вызова UC другого модуля (`this.call`). Ошибки —
    * объявленные в `errors` и базовые ядра: отказ UC другого модуля
-   * (`ACCESS_DENIED`, `UNAUTHORIZED`, …) фасад отдаёт как есть, и UC
+   * (`ACCESS_DENIED`, `UNAUTHORIZED`, …) приходит как есть, и UC
    * возвращает его дальше (D-42).
    */
   protected abstract load(
@@ -153,24 +143,6 @@ export abstract class UseCaseFromDef<
     caller: Caller<U>,
     trace: Trace,
   ): Promise<Result<RawOutputOf<D>, UseCaseErrorOf<D>>>;
-
-  /**
-   * Контекст вызова фасада другого модуля (D-42): вызывающий —
-   * `SystemCaller` этого UC с исходным человеком, след — дальше по
-   * цепочке. Фасад проверит, что вызываемый UC есть в `calls` этого UC.
-   */
-  protected callContext(caller: Caller<U>, trace: Trace): CallContext {
-    return {
-      caller: new SystemCaller(this.ref, caller.person()),
-      calls: this.def.calls ?? [],
-      trace,
-    };
-  }
-
-  /** Текущий момент по часам приложения — передаётся в операции домена. */
-  protected now(): Timestamp {
-    return this.resolve.app.clock();
-  }
 
   /**
    * Субъект вызывающего — для UC, которому он нужен (владелец новой

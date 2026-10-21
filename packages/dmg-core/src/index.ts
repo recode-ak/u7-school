@@ -53,6 +53,7 @@ export {
   type UseCaseErrorOf,
   type UseCaseSpec,
 } from './domain/contracts/define-use-case';
+export type { Facade, SystemCallable } from './domain/contracts/facade';
 export {
   type AnyEventDef,
   type DomainEvent,
@@ -99,7 +100,6 @@ export {
   type DomainRuleSpec,
   domainRule,
 } from './domain/rules/domain-rule';
-export type { CallContext } from './kernel/caller/call-context';
 export {
   Caller,
   type CallerKind,

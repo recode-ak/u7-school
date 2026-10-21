@@ -6,7 +6,7 @@ import type { ExampleUser } from '#core/testing/example/app/app-user';
 import type { TodoDeps } from '#core/testing/example/app/todo/todo.module';
 import {
   ListTasksUcDef,
-  TodoModuleDef,
+  type TodoModuleDef,
 } from '#core/testing/example/todo/index';
 
 export class ListTasksUc extends UseCaseFromDef<
@@ -15,8 +15,8 @@ export class ListTasksUc extends UseCaseFromDef<
   undefined,
   ExampleUser
 > {
-  constructor(deps: TodoDeps) {
-    super(ListTasksUcDef, deps, TodoModuleDef);
+  constructor(deps: TodoDeps, module: typeof TodoModuleDef) {
+    super(ListTasksUcDef, deps, module);
   }
 
   protected async load() {

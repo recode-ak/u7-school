@@ -5,31 +5,32 @@ import { join } from 'node:path';
 import { Role, type User } from '@u7-scl/app/domain';
 import {
   type CourseEnrollment,
-  type CourseModuleFacade,
+  CourseModuleDef,
   GetCourseEnrollmentUcDef,
 } from '@u7-scl/domain/course/contract';
 import {
-  type QuestionnaireModuleFacade,
+  QuestionnaireModuleDef,
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import {
   CreateCourseWishUcDef,
   findCoursePool,
+  WishModuleDef,
   type WishState,
   type WishStatus,
 } from '@u7-scl/domain/wish';
 import {
-  type CallContext,
   CoreErrors,
   GuestCaller,
   ok,
+  type SystemCaller,
   UserCaller,
 } from 'dmg-core';
-import { requestTrace } from 'dmg-core/app';
+import { ModuleFacades, requestTrace } from 'dmg-core/app';
 import {
   expectErr,
   expectOk,
-  fakeFacadeCall,
+  StubFacade,
   testAppContext,
 } from 'dmg-core/testing';
 import coursePools from '../../../../domain/src/wish/wish/pools/course.json';
@@ -37,7 +38,7 @@ import { WishJsonRepo } from '../../infra/wish.json-repo';
 import { CreateCourseWishUc } from './create-course-wish.uc';
 
 // Перенос случаев legacy `api/wish/create-course-wish-uc.test.ts` на UC по
-// Def. Фасады курсов и анкет — фейки типов D-42 из домена (ARC-06: пакеты
+// Def. Фасады курсов и анкет — `StubFacade` по Def из домена (ARC-06: пакеты
 // модулей друг друга не импортируют); ответы legacy-фасадов («не
 // опубликован», «без стартового модуля») сводит к `enrollable: false`
 // адаптер TR-11 — эти случаи проверяет `packages/course` (Ф8 шаг 2b).
@@ -85,46 +86,32 @@ beforeEach(() => {
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-const called = (call: CallContext): Called => ({
-  from: call.caller.from.name,
-  caller: call.caller.person(),
+const called = (caller: SystemCaller): Called => ({
+  from: caller.from.name,
+  caller: caller.person(),
 });
 
-const course: CourseModuleFacade = {
-  getCourseEnrollment: fakeFacadeCall(
-    GetCourseEnrollmentUcDef,
-    (call, courseId: string) => {
-      courseCalls.push({ ...called(call), courseId });
-      return courseFails ? CoreErrors.SERVER_INTERNAL.err() : ok(enrollment);
-    },
-  ),
-};
+const course = new StubFacade(CourseModuleDef).answer(
+  GetCourseEnrollmentUcDef,
+  ({ courseId }, caller) => {
+    courseCalls.push({ ...called(caller), courseId });
+    return courseFails ? CoreErrors.SERVER_INTERNAL.err() : ok(enrollment);
+  },
+);
 
-const questionnaire: QuestionnaireModuleFacade = {
-  startQuestionnaire: fakeFacadeCall(
-    StartQuestionnaireUcDef,
-    (call, pool: unknown, owner: unknown) => {
-      if (startFails) return CoreErrors.SERVER_INTERNAL.err();
-      startCalls.push({ ...called(call), pool, owner });
-      return ok({});
-    },
-  ),
-};
+const questionnaire = new StubFacade(QuestionnaireModuleDef).answer(
+  StartQuestionnaireUcDef,
+  ({ pool, owner }, caller) => {
+    if (startFails) return CoreErrors.SERVER_INTERNAL.err();
+    startCalls.push({ ...called(caller), pool, owner });
+    return ok({});
+  },
+);
 
 function makeUc() {
   const { app } = testAppContext();
-  return new CreateCourseWishUc({ app, wishes, course, questionnaire });
-}
-
-/** UC, чей Def без вызываемого UC в `calls` (подмена `from`, Def не правится). */
-function makeUcWithout(removed: unknown) {
-  const uc = makeUc();
-  const def = {
-    ...CreateCourseWishUcDef,
-    calls: CreateCourseWishUcDef.calls?.filter((c) => c !== removed),
-  };
-  Object.defineProperty(uc, 'def', { value: def });
-  return uc;
+  const facades = new ModuleFacades([course, questionnaire]);
+  return new CreateCourseWishUc({ app, facades, wishes }, WishModuleDef);
 }
 
 /** Уже записанное желание актора — запись в файл, как от прежних сессий. */
@@ -344,29 +331,10 @@ describe('CreateCourseWishUc', () => {
     expect(await storedFor(plainCourseId)).toEqual([]);
   });
 
-  describe('Def не объявляет вызываемый UC в calls', () => {
-    it('нет getCourseEnrollment → UNAUTHORIZED, ничего не записано', async () => {
-      const res = await makeUcWithout(GetCourseEnrollmentUcDef).handle(
-        { courseId: plainCourseId },
-        asActor,
-        REQ,
-      );
-
-      expectErr(res, 'UNAUTHORIZED');
-      expect(courseCalls).toEqual([]);
-      expect(await storedFor(plainCourseId)).toEqual([]);
-    });
-
-    it('нет startQuestionnaire → UNAUTHORIZED, желание не записано', async () => {
-      const res = await makeUcWithout(StartQuestionnaireUcDef).handle(
-        { courseId: pooledCourseId },
-        asActor,
-        REQ,
-      );
-
-      expectErr(res, 'UNAUTHORIZED');
-      expect(startCalls).toEqual([]);
-      expect(await storedFor(pooledCourseId)).toEqual([]);
-    });
+  it('calls Def — оба вызываемых UC: `this.call` пропускает только их (тип)', () => {
+    expect(CreateCourseWishUcDef.calls).toEqual([
+      GetCourseEnrollmentUcDef,
+      StartQuestionnaireUcDef,
+    ]);
   });
 });

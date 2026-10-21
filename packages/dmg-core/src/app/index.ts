@@ -12,7 +12,8 @@ export {
 export type { EventBus } from './events/event-bus';
 export type { EnvelopeOf, EventEnvelope } from './events/event-envelope';
 export { asReadonlyAr, type Restorable } from './facade/as-readonly-ar';
-export { callUseCase, type UseCaseOwner } from './facade/call-use-case';
+export { type FacadeModule, ModuleFacade } from './facade/module-facade';
+export { ModuleFacades, type RoutableFacade } from './facade/module-facades';
 export {
   JobFromDef,
   type JobReport,
@@ -23,6 +24,11 @@ export {
   ModuleFromDef,
   type ModuleMap,
 } from './module/module-from-def';
+export {
+  type AnyOperationDef,
+  type CallsOf,
+  OperationFromDef,
+} from './operation/operation-from-def';
 export {
   type ReactionEnvelopeOf,
   ReactionFromDef,

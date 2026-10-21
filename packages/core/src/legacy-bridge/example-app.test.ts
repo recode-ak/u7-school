@@ -2,8 +2,14 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { type CallContext, SystemCaller, UserCaller } from 'dmg-core';
-import { type RequestMeta, requestTrace } from 'dmg-core/app';
+import { SystemCaller, UserCaller } from 'dmg-core';
+import {
+  asReadonlyAr,
+  ModuleFacade,
+  ModuleFacades,
+  type RequestMeta,
+  requestTrace,
+} from 'dmg-core/app';
 import {
   expectErr,
   expectOk,
@@ -12,7 +18,6 @@ import {
 } from 'dmg-core/testing';
 import type { ExampleUser } from 'dmg-core/testing/example/app/app-user';
 import { TaskJsonRepo } from 'dmg-core/testing/example/app/todo/infra/task.json-repo';
-import { todoFacade } from 'dmg-core/testing/example/app/todo/todo.facade';
 import {
   createTodoModule,
   type TodoDeps,
@@ -25,6 +30,7 @@ import {
   CreateTaskUcDef,
   GetTaskUcDef,
   ListTasksUcDef,
+  TaskAr,
   TaskEvents,
 } from 'dmg-core/testing/example/todo/index';
 import { RemoveUserUcDef } from 'dmg-core/testing/example/users/index';
@@ -56,13 +62,14 @@ beforeEach(async () => {
       logger: memoryLogger(logs),
       mode: 'test',
     },
+    facades: new ModuleFacades(),
     tasks: new TaskJsonRepo(path.join(dir, 'tasks.json')),
   };
   const users = new UserMemoryRepo([
     { uuid: ANNA, createdAt: 0, updatedAt: 0, version: 0, status: 'active' },
   ]);
   api = new ApiApp<AppMeta, ExampleUser>([]).addDmgModules(
-    createUsersModule({ app: deps.app, users }),
+    createUsersModule({ app: deps.app, facades: deps.facades, users }),
     createTodoModule(deps),
   );
   api.init({ start: () => {}, stop: () => {} });
@@ -161,26 +168,32 @@ describe('todo: Job на существующем планировщике', () 
 });
 
 describe('todo: фасад', () => {
-  // Операция другого модуля, объявившая getTask в calls (D-42).
-  const call = (): CallContext => ({
-    caller: new SystemCaller(
+  // Вызов от операции другого модуля, объявившей getTask в calls (D-43).
+  const from = () =>
+    new SystemCaller(
       { kind: 'useCase', module: 'digest', name: 'showTask' },
       caller(ANNA),
-    ),
-    calls: [GetTaskUcDef],
-    trace: requestTrace(req()),
-  });
-  const facade = () => todoFacade(createTodoModule(deps));
+    );
+  const getTask = async (taskId: string) =>
+    asReadonlyAr(
+      TaskAr,
+      await new ModuleFacade(createTodoModule(deps)).handle(
+        GetTaskUcDef,
+        { taskId },
+        from(),
+        requestTrace(req()),
+      ),
+    );
 
-  test('getTask отдаёт задачу только для чтения', async () => {
+  test('getTask: ReadonlyAr строит вызывающий — задача только для чтения', async () => {
     const id = await create('Купить хлеб');
-    const task = expectOk(await facade().getTask(call(), id));
+    const task = expectOk(await getTask(id));
     expect([task.uuid, task.isDone()]).toEqual([id, false]);
     // @ts-expect-error: ReadonlyAr — мутирующих методов нет (API-04)
     expect(task.complete).toBeDefined();
   });
 
   test('нет задачи — TASK_NOT_FOUND', async () => {
-    expectErr(await facade().getTask(call(), ANNA), 'TASK_NOT_FOUND');
+    expectErr(await getTask(ANNA), 'TASK_NOT_FOUND');
   });
 });

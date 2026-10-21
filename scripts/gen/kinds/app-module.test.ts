@@ -63,6 +63,12 @@ test('module: карта Def → класс с маркерами и фабри�
   expect(src).toContain('export function createStreamModule(deps: StreamDeps)');
 });
 
+test('тест модуля: резолвер с пустыми фасадами (ModuleDeps, D-43)', () => {
+  const src = content(plan(), 'src/stream.module.test.ts');
+  expect(src).toContain("import { ModuleFacades } from 'dmg-core/app';");
+  expect(src).toContain('facades: new ModuleFacades()');
+});
+
 test('index нового пакета публикует фабрику модуля', () => {
   expect(content(plan(), 'src/index.ts')).toContain(
     "export { createStreamModule, type StreamDeps } from './stream.module';",

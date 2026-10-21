@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import {
   CourseModuleDef,
-  type CourseModuleFacade,
   GetCourseEnrollmentUcDef,
 } from '@u7-scl/domain/course/contract';
 import {
@@ -17,17 +16,21 @@ import {
 } from 'dmg-core';
 import {
   type AppContext,
+  type ModuleDeps,
+  ModuleFacade,
+  ModuleFacades,
   requestTrace,
   type Trace,
+  type UnitOfWork,
   UseCaseFromDef,
 } from 'dmg-core/app';
-import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
+import { expectOk, testAppContext } from 'dmg-core/testing';
 import * as v from 'valibot';
-import { courseModuleFacade } from './course.facade';
 import { type CourseLegacy, createCourseModule } from './course.module';
 
-// Потребитель фасада курсов — UC другого модуля: объявляет
-// `getCourseEnrollment` в `calls` и вызывает его через фасад (D-42).
+// Потребитель модуля курсов — UC другого модуля: объявляет
+// `getCourseEnrollment` в `calls` и вызывает его через `this.call` (D-43);
+// фасад — `ModuleFacade` над модулем курсов.
 const ProbeArDef = defineAggregate({
   name: 'probe',
   label: 'Проба',
@@ -54,7 +57,7 @@ const ProbeUcDef = defineUseCase({
   ...probeSpec,
   calls: [GetCourseEnrollmentUcDef],
 });
-/** Тот же UC, но `getCourseEnrollment` в `calls` не объявлен. */
+/** Тот же UC, но `getCourseEnrollment` в `calls` не объявлен — вызов не компилируется. */
 const SneakyUcDef = defineUseCase({ ...probeSpec, name: 'sneaky' });
 
 const ProbeModuleDef = defineModule({
@@ -68,26 +71,40 @@ const ProbeModuleDef = defineModule({
   jobs: [],
 });
 
-type ProbeDeps = {
-  readonly app: AppContext;
-  readonly course: CourseModuleFacade;
-};
-
-class ProbeUc extends UseCaseFromDef<
-  typeof ProbeUcDef | typeof SneakyUcDef,
-  ProbeDeps,
-  undefined
-> {
+class ProbeUc extends UseCaseFromDef<typeof ProbeUcDef, ModuleDeps, undefined> {
+  constructor(deps: ModuleDeps, module: typeof ProbeModuleDef) {
+    super(ProbeUcDef, deps, module);
+  }
   protected load = async () => ok(undefined);
   protected async execute(
     input: { courseId: string },
     _: undefined,
-    __: unknown,
+    __: UnitOfWork,
     caller: Caller,
     trace: Trace,
   ) {
-    const call = this.callContext(caller, trace);
-    return this.resolve.course.getCourseEnrollment(call, input.courseId);
+    return this.call(GetCourseEnrollmentUcDef, input, caller, trace);
+  }
+}
+
+class SneakyUc extends UseCaseFromDef<
+  typeof SneakyUcDef,
+  ModuleDeps,
+  undefined
+> {
+  constructor(deps: ModuleDeps, module: typeof ProbeModuleDef) {
+    super(SneakyUcDef, deps, module);
+  }
+  protected load = async () => ok(undefined);
+  protected async execute(
+    input: { courseId: string },
+    _: undefined,
+    __: UnitOfWork,
+    caller: Caller,
+    trace: Trace,
+  ) {
+    // @ts-expect-error getCourseEnrollment нет в calls UC sneaky
+    return this.call(GetCourseEnrollmentUcDef, input, caller, trace);
   }
 }
 
@@ -117,59 +134,57 @@ beforeEach(() => {
   app = testAppContext().app;
 });
 
-function probe(
-  def: typeof ProbeUcDef | typeof SneakyUcDef,
-  courseLegacy: CourseLegacy,
-) {
-  const course = courseModuleFacade(
-    createCourseModule({ app, legacy: courseLegacy }),
-  );
-  return new ProbeUc(def, { app, course }, ProbeModuleDef);
+/** Резолвер потребителя: фасад — модуль курсов над заданным legacy. */
+function depsWith(courseLegacy: CourseLegacy): ModuleDeps {
+  const course = createCourseModule({
+    app,
+    facades: new ModuleFacades(),
+    legacy: courseLegacy,
+  });
+  return { app, facades: new ModuleFacades([new ModuleFacade(course)]) };
 }
 
-describe('фасад курсов (D-42, адаптер TR-11)', () => {
+function probe(courseLegacy: CourseLegacy) {
+  return new ProbeUc(depsWith(courseLegacy), ProbeModuleDef);
+}
+
+describe('модуль курсов через фасад (D-43, адаптер TR-11)', () => {
   it('курс доступен и есть стартовый модуль — enrollable с модулем', async () => {
     const { facade, asked } = legacy(true, START);
-    const res = await probe(ProbeUcDef, facade).handle(
-      { courseId: COURSE },
-      USER,
-      REQ,
-    );
+    const res = await probe(facade).handle({ courseId: COURSE }, USER, REQ);
     expect(expectOk(res)).toEqual({ enrollable: true, startModuleId: START });
     expect(asked).toEqual([COURSE, COURSE]);
   });
 
   it('курс недоступен для записи — enrollable: false', async () => {
     const { facade } = legacy(false, START);
-    const res = await probe(ProbeUcDef, facade).handle(
-      { courseId: COURSE },
-      USER,
-      REQ,
-    );
+    const res = await probe(facade).handle({ courseId: COURSE }, USER, REQ);
     expect(expectOk(res)).toEqual({ enrollable: false });
   });
 
   it('курс доступен, но программа пуста — enrollable: false', async () => {
     const { facade } = legacy(true, undefined);
-    const res = await probe(ProbeUcDef, facade).handle(
-      { courseId: COURSE },
-      USER,
-      REQ,
-    );
+    const res = await probe(facade).handle({ courseId: COURSE }, USER, REQ);
     expect(expectOk(res)).toEqual({ enrollable: false });
   });
 
-  it('UC нет в calls потребителя — UNAUTHORIZED, legacy не вызван', async () => {
-    const { facade, asked } = legacy(true, START);
-    const res = await probe(SneakyUcDef, facade).handle(
-      { courseId: COURSE },
-      USER,
-      REQ,
+  it('UC нет в calls потребителя — ошибка типа (рантайм-проверки нет)', () => {
+    const { facade } = legacy(true, START);
+    expect(new SneakyUc(depsWith(facade), ProbeModuleDef).ref.name).toBe(
+      'sneaky',
     );
-    expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
-      callerKind: 'system',
-      from: 'sneaky',
-    });
-    expect(asked).toEqual([]);
+  });
+
+  it('модуль курсов обслуживает свой UC и только его', () => {
+    const facade = new ModuleFacade(
+      createCourseModule({
+        app,
+        facades: new ModuleFacades(),
+        legacy: legacy(true).facade,
+      }),
+    );
+    expect(facade.def).toBe(CourseModuleDef);
+    expect(facade.serves(GetCourseEnrollmentUcDef)).toBe(true);
+    expect(facade.serves(ProbeUcDef)).toBe(false);
   });
 });

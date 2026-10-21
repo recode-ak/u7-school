@@ -7,14 +7,14 @@ import { ok } from '#core/kernel/result/result';
 import type { TodoDeps } from '#core/testing/example/app/todo/todo.module';
 import {
   ArchiveRemovedUserTasksErDef,
-  TodoModuleDef,
+  type TodoModuleDef,
 } from '#core/testing/example/todo/index';
 
 type Def = typeof ArchiveRemovedUserTasksErDef;
 
 export class ArchiveRemovedUserTasksEr extends ReactionFromDef<Def, TodoDeps> {
-  constructor(deps: TodoDeps) {
-    super(ArchiveRemovedUserTasksErDef, deps, TodoModuleDef);
+  constructor(deps: TodoDeps, module: typeof TodoModuleDef) {
+    super(ArchiveRemovedUserTasksErDef, deps, module);
   }
 
   protected async react(event: ReactionEnvelopeOf<Def>, uow: UnitOfWork) {

@@ -32,9 +32,9 @@ export const questionnaireModuleMap = {
 >;
 
 /**
- * DMG-модуль анкет — владелец UC внешнего контракта (`UseCaseOwner`) для
- * фасада `questionnaireModuleFacade`. Приложение собирает его поверх legacy
- * `QuestionnaireInProcFacade` (TR-11).
+ * DMG-модуль анкет — владелец UC внешнего контракта; фасад для других
+ * модулей — `new ModuleFacade(createQuestionnaireModule(deps))` (D-43). Приложение
+ * собирает его поверх legacy `QuestionnaireInProcFacade` (TR-11).
  */
 export function createQuestionnaireModule(deps: QuestionnaireModuleDeps) {
   return new ModuleFromDef<

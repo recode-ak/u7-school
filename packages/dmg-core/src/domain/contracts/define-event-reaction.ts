@@ -14,8 +14,17 @@ export type EventReactionSpec = {
   readonly emits?: readonly AnyEventDef[];
 };
 
+/**
+ * `calls` Def: объявленные UC; не объявлены — пустой кортеж, чтобы
+ * `OperationFromDef.call` не пропускал ни одного UC (D-43). Общий тип
+ * (`Any*Def`) — любой список.
+ */
+type DeclaredCalls<S extends { readonly calls?: readonly AnyUseCaseDef[] }> =
+  'calls' extends keyof S ? NonNullable<S['calls']> : readonly [];
+
 export type EventReactionDef<S extends EventReactionSpec> = S &
-  Required<Pick<EventReactionSpec, 'touches' | 'calls' | 'emits'>> & {
+  Required<Pick<EventReactionSpec, 'touches' | 'emits'>> & {
+    readonly calls: DeclaredCalls<S>;
     readonly dmg: 'eventReaction';
   };
 

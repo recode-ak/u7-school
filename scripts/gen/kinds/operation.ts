@@ -100,11 +100,15 @@ describe('${c.defName}', () => {
 }
 
 /**
- * Импорт Def операции и паспорта модуля (база берёт из него `ref`, D-43):
- * имена по алфавиту, длинная строка — в столбик, как у biome.
+ * Импорт Def операции и типа паспорта модуля (его передаёт `ModuleFromDef`,
+ * база берёт из него `ref`, D-43): имена по алфавиту, длинная строка — в
+ * столбик, как у biome.
  */
 function domainImport(c: Ctx): string {
-  const names = [c.defName, `${toPascal(c.m)}ModuleDef`].sort();
+  const moduleDef = `${toPascal(c.m)}ModuleDef`;
+  const names = [c.defName, moduleDef]
+    .sort()
+    .map((n) => (n === moduleDef ? `type ${n}` : n));
   const from = `'@u7-scl/domain/${c.m}'`;
   const line = `import { ${names.join(', ')} } from ${from};`;
   return line.length <= 80
@@ -128,8 +132,8 @@ export class ${c.className} extends UseCaseFromDef<
   ${c.deps},
   undefined
 > {
-  constructor(deps: ${c.deps}) {
-    super(${c.defName}, deps, ${moduleDef});
+  constructor(deps: ${c.deps}, module: typeof ${moduleDef}) {
+    super(${c.defName}, deps, module);
   }
 
   protected async load() {
@@ -152,8 +156,8 @@ export class ${c.className} extends ReactionFromDef<
   typeof ${c.defName},
   ${c.deps}
 > {
-  constructor(deps: ${c.deps}) {
-    super(${c.defName}, deps, ${moduleDef});
+  constructor(deps: ${c.deps}, module: typeof ${moduleDef}) {
+    super(${c.defName}, deps, module);
   }
 
   protected async react() {
@@ -172,8 +176,8 @@ export class ${c.className} extends JobFromDef<
   typeof ${c.defName},
   ${c.deps}
 > {
-  constructor(deps: ${c.deps}) {
-    super(${c.defName}, deps, ${moduleDef});
+  constructor(deps: ${c.deps}, module: typeof ${moduleDef}) {
+    super(${c.defName}, deps, module);
   }
 
   protected async run(job: JobRun): Promise<JobReport> {
@@ -186,19 +190,17 @@ export class ${c.className} extends JobFromDef<
 }
 
 function implementationTest(c: Ctx): string {
-  const head = `import { describe, expect, it } from 'bun:test';
-import { testAppContext } from 'dmg-core/testing';
-import type { ${c.deps} } from '../../${c.m}.module';
-import { ${c.className} } from './${c.base}';
-`;
+  const moduleDef = `${toPascal(c.m)}ModuleDef`;
+  const domain = `import { ${moduleDef} } from '@u7-scl/domain/${c.m}';`;
   const deps = `    const { app } = testAppContext();
-    // TODO: подставьте репозитории, которые нужны операции
-    const deps = { app } as ${c.deps};`;
+    // TODO: подставьте репозитории и фасады, которые нужны операции
+    const deps = { app, facades: new ModuleFacades() } as ${c.deps};`;
   switch (c.kind) {
     case 'uc':
       return `import { describe, it } from 'bun:test';
+${domain}
 import { UserCaller } from 'dmg-core';
-import { requestTrace } from 'dmg-core/app';
+import { ModuleFacades, requestTrace } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import type { ${c.deps} } from '../../${c.m}.module';
 import { ${c.className} } from './${c.base}';
@@ -206,7 +208,7 @@ import { ${c.className} } from './${c.base}';
 describe('${c.className}', () => {
   it('успешный вызов пользователем', async () => {
 ${deps}
-    const uc = new ${c.className}(deps);
+    const uc = new ${c.className}(deps, ${moduleDef});
     const res = await uc.handle(
       {},
       new UserCaller({ uuid: crypto.randomUUID() }),
@@ -217,17 +219,25 @@ ${deps}
 });
 `;
     case 'er':
-      return `${head.replace('import { describe, expect, it }', 'import { describe, expect, it }')}
+      return `import { describe, expect, it } from 'bun:test';
+${domain}
+import { ModuleFacades } from 'dmg-core/app';
+import { testAppContext } from 'dmg-core/testing';
+import type { ${c.deps} } from '../../${c.m}.module';
+import { ${c.className} } from './${c.base}';
+
 describe('${c.className}', () => {
   it('привязана к своему Def', () => {
 ${deps}
-    expect(new ${c.className}(deps).def.name).toBe('${toCamel(c.name)}');
+    const er = new ${c.className}(deps, ${moduleDef});
+    expect(er.def.name).toBe('${toCamel(c.name)}');
   });
 });
 `;
     case 'job':
       return `import { describe, expect, it } from 'bun:test';
-import { jobTrace } from 'dmg-core/app';
+${domain}
+import { jobTrace, ModuleFacades } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import type { ${c.deps} } from '../../${c.m}.module';
 import { ${c.className} } from './${c.base}';
@@ -235,7 +245,8 @@ import { ${c.className} } from './${c.base}';
 describe('${c.className}', () => {
   it('пустой прогон', async () => {
 ${deps}
-    const res = expectOk(await new ${c.className}(deps).handle(jobTrace()));
+    const job = new ${c.className}(deps, ${moduleDef});
+    const res = expectOk(await job.handle(jobTrace()));
     expect(res).toEqual({ processed: 0, failed: 0 });
   });
 });

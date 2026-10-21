@@ -4,17 +4,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Role, type User } from '@u7-scl/app/domain';
 import {
-  type CourseModuleFacade,
+  CourseModuleDef,
   GetCourseEnrollmentUcDef,
 } from '@u7-scl/domain/course/contract';
 import {
-  type QuestionnaireModuleFacade,
+  QuestionnaireModuleDef,
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import { CreateCourseWishUcDef } from '@u7-scl/domain/wish';
 import { ok, UserCaller } from 'dmg-core';
-import { requestTrace } from 'dmg-core/app';
-import { expectOk, fakeFacadeCall, testAppContext } from 'dmg-core/testing';
+import { ModuleFacades, requestTrace } from 'dmg-core/app';
+import { expectOk, StubFacade, testAppContext } from 'dmg-core/testing';
 import { WishJsonRepo } from './infra/wish.json-repo';
 import { createWishModule } from './wish.module';
 
@@ -32,24 +32,26 @@ beforeEach(() => {
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-// Фасады зависимостей — фейки типов D-42 (ARC-06); репозиторий настоящий.
-const course: CourseModuleFacade = {
-  getCourseEnrollment: fakeFacadeCall(GetCourseEnrollmentUcDef, () =>
+// Фасады зависимостей — `StubFacade` по Def (ARC-06); репозиторий настоящий.
+const course = new StubFacade(CourseModuleDef).answer(
+  GetCourseEnrollmentUcDef,
+  () =>
     ok({
       enrollable: true,
       startModuleId: '11111111-1111-4111-8111-111111111111',
     }),
-  ),
-};
-const questionnaire: QuestionnaireModuleFacade = {
-  startQuestionnaire: fakeFacadeCall(StartQuestionnaireUcDef, () => ok({})),
-};
+);
+const questionnaire = new StubFacade(QuestionnaireModuleDef).answer(
+  StartQuestionnaireUcDef,
+  () => ok({}),
+);
 
 /** Модуль на настоящем репозитории во временном каталоге. */
 function makeModule() {
   const { app } = testAppContext();
   const wishes = new WishJsonRepo(join(dir, 'wishes.json'));
-  const module = createWishModule({ app, wishes, course, questionnaire });
+  const facades = new ModuleFacades([course, questionnaire]);
+  const module = createWishModule({ app, facades, wishes });
   return { module, wishes };
 }
 

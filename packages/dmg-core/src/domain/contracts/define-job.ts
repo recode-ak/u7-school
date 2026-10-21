@@ -39,8 +39,17 @@ export type JobSpec = {
   readonly emits?: readonly AnyEventDef[];
 };
 
+/**
+ * `calls` Def: объявленные UC; не объявлены — пустой кортеж, чтобы
+ * `OperationFromDef.call` не пропускал ни одного UC (D-43). Общий тип
+ * (`Any*Def`) — любой список.
+ */
+type DeclaredCalls<S extends { readonly calls?: readonly AnyUseCaseDef[] }> =
+  'calls' extends keyof S ? NonNullable<S['calls']> : readonly [];
+
 export type JobDef<S extends JobSpec> = S &
-  Required<Pick<JobSpec, 'scans' | 'calls' | 'emits'>> & {
+  Required<Pick<JobSpec, 'scans' | 'emits'>> & {
+    readonly calls: DeclaredCalls<S>;
     readonly dmg: 'job';
   };
 

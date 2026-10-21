@@ -9,15 +9,15 @@ import type { TodoDeps } from '#core/testing/example/app/todo/todo.module';
 import {
   ArchiveDoneTasksJobDef,
   type TaskAr,
-  TodoModuleDef,
+  type TodoModuleDef,
 } from '#core/testing/example/todo/index';
 
 export class ArchiveDoneTasksJob extends JobFromDef<
   typeof ArchiveDoneTasksJobDef,
   TodoDeps
 > {
-  constructor(deps: TodoDeps) {
-    super(ArchiveDoneTasksJobDef, deps, TodoModuleDef);
+  constructor(deps: TodoDeps, module: typeof TodoModuleDef) {
+    super(ArchiveDoneTasksJobDef, deps, module);
   }
 
   protected async run(job: JobRun): Promise<JobReport> {

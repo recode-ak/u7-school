@@ -1,13 +1,12 @@
 import type { AnyEventReactionDef } from '#core/domain/contracts/define-event-reaction';
 import type { AnyModuleDef } from '#core/domain/contracts/define-module';
-import type { CallContext } from '#core/kernel/caller/call-context';
-import { type OperationRef, SystemCaller } from '#core/kernel/caller/caller';
+import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import type { Result } from '#core/kernel/result/result';
-import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { EnvelopeOf } from '../events/event-envelope';
+import { OperationFromDef } from '../operation/operation-from-def';
 import { runLogged } from '../system/run-logged';
 import type { Trace } from '../trace';
 import { contractUnitOfWork } from '../uow/contract-unit-of-work';
@@ -26,26 +25,19 @@ export type ReactionEnvelopeOf<D extends AnyEventReactionDef> = EnvelopeOf<
  * Вызывающий — `SystemCaller` этой реакции без человека: субъекта нет,
  * «кто породил» — через `trace.cause` (caller.md §1). След: причина — событие, `correlationId` — его же; `trace`
  * передаётся в `react`, чтобы вызванный UC продолжил цепочку. Регистрация
- * агрегата вне `touches` — исключение, в production — `warn` в лог; вызов
- * UC другого модуля вне `calls` отклоняет фасад (D-42).
+ * агрегата вне `touches` — исключение, в production — `warn` в лог; UC
+ * другого модуля — `this.call` только из `calls` (тип, D-43).
  */
 export abstract class ReactionFromDef<
   D extends AnyEventReactionDef,
   R extends ModuleDeps,
-> {
-  /** Эта реакция — `from` её вызывающего (D-43). */
-  readonly ref: OperationRef;
-
-  /** `module` — Def модуля-владельца; ER не из его `reactions` — исключение. */
-  constructor(
-    readonly def: D,
-    protected readonly resolve: R,
-    module: AnyModuleDef,
-  ) {
-    if (!module.reactions.includes(def)) {
-      throw new Error(`ER ${def.name} не входит в модуль ${module.name}`);
-    }
-    this.ref = { kind: 'eventReaction', module: module.name, name: def.name };
+> extends OperationFromDef<D, R> {
+  /**
+   * `module` — Def модуля-владельца (передаёт `ModuleFromDef`); ER не из
+   * его `reactions` — исключение.
+   */
+  constructor(def: D, resolve: R, module: AnyModuleDef) {
+    super(def, resolve, module, 'eventReaction');
   }
 
   protected abstract react(
@@ -54,23 +46,6 @@ export abstract class ReactionFromDef<
     caller: SystemCaller,
     trace: Trace,
   ): Promise<Result<void, DomainError>>;
-
-  /**
-   * Контекст вызова фасада другого модуля (D-42): вызывающий —
-   * `SystemCaller` этой реакции, след — тот, что получил `react`.
-   */
-  protected callContext(caller: SystemCaller, trace: Trace): CallContext {
-    return {
-      caller: new SystemCaller(this.ref, caller.person()),
-      calls: this.def.calls,
-      trace,
-    };
-  }
-
-  /** Текущий момент по часам приложения — передаётся в операции домена. */
-  protected now(): Timestamp {
-    return this.resolve.app.clock();
-  }
 
   handle(event: ReactionEnvelopeOf<D>): Promise<Result<void, DomainError>> {
     const { app } = this.resolve;

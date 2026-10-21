@@ -3,8 +3,12 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as v from 'valibot';
-import type { AppContext } from '#core/app/context';
+import type { ModuleDeps } from '#core/app/context';
+import { asReadonlyAr } from '#core/app/facade/as-readonly-ar';
+import { ModuleFacade } from '#core/app/facade/module-facade';
+import { ModuleFacades } from '#core/app/facade/module-facades';
 import { requestTrace, type Trace } from '#core/app/trace';
+import type { UnitOfWork } from '#core/app/uow/unit-of-work';
 import { UseCaseFromDef } from '#core/app/use-case/use-case-from-def';
 import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
 import { defineModule } from '#core/domain/contracts/define-module';
@@ -18,16 +22,15 @@ import {
   GetTaskUcDef,
   TaskAr,
   TaskErrors,
-  type TodoFacade,
   TodoModuleDef,
 } from '#core/testing/example/todo/index';
 import { expectErr, expectOk, testAppContext } from '#core/testing/index';
 import { TaskJsonRepo } from './infra/task.json-repo';
-import { todoFacade } from './todo.facade';
 import { createTodoModule } from './todo.module';
 
 // Потребитель фасада todo — UC другого модуля: объявляет `getTask` в
-// `calls` и вызывает его через фасад от своего контекста вызова (D-42).
+// `calls` и вызывает его через `this.call` (D-43); фасад todo —
+// `ModuleFacade` над настоящим модулем.
 const DigestArDef = defineAggregate({
   name: 'digest',
   label: 'Сводка',
@@ -51,7 +54,7 @@ const showTaskSpec = {
 } as const;
 
 const ShowTaskUcDef = defineUseCase({ ...showTaskSpec, calls: [GetTaskUcDef] });
-/** Тот же UC, но `getTask` в `calls` не объявлен. */
+/** Тот же UC, но `getTask` в `calls` не объявлен — вызов не компилируется. */
 const SneakyUcDef = defineUseCase({ ...showTaskSpec, name: 'sneaky' });
 
 const DigestModuleDef = defineModule({
@@ -65,26 +68,50 @@ const DigestModuleDef = defineModule({
   jobs: [],
 });
 
-type DigestDeps = { readonly app: AppContext; readonly todo: TodoFacade };
-
 class ShowTask extends UseCaseFromDef<
-  typeof ShowTaskUcDef | typeof SneakyUcDef,
-  DigestDeps,
+  typeof ShowTaskUcDef,
+  ModuleDeps,
   undefined,
   ExampleUser
 > {
+  constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
+    super(ShowTaskUcDef, deps, module);
+  }
   protected load = async () => ok(undefined);
   protected async execute(
     input: { taskId: string },
     _: undefined,
-    __: unknown,
+    __: UnitOfWork,
     caller: Caller<ExampleUser>,
     trace: Trace,
   ) {
-    const call = this.callContext(caller, trace);
-    const task = await this.resolve.todo.getTask(call, input.taskId);
+    const res = await this.call(GetTaskUcDef, input, caller, trace);
+    const task = asReadonlyAr(TaskAr, res);
     if (!task.ok) return task;
     return ok({ done: task.value.isDone() });
+  }
+}
+
+class Sneaky extends UseCaseFromDef<
+  typeof SneakyUcDef,
+  ModuleDeps,
+  undefined,
+  ExampleUser
+> {
+  constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
+    super(SneakyUcDef, deps, module);
+  }
+  protected load = async () => ok(undefined);
+  protected async execute(
+    input: { taskId: string },
+    _: undefined,
+    __: UnitOfWork,
+    caller: Caller<ExampleUser>,
+    trace: Trace,
+  ) {
+    // @ts-expect-error getTask нет в calls UC sneaky
+    await this.call(GetTaskUcDef, input, caller, trace);
+    return ok({ done: false });
   }
 }
 
@@ -95,7 +122,8 @@ const as = (uuid: string) =>
 
 let dir: string;
 let taskId: string;
-let show: (def: typeof ShowTaskUcDef | typeof SneakyUcDef) => ShowTask;
+let show: ShowTask;
+let deps: ModuleDeps;
 
 beforeEach(async () => {
   dir = mkdtempSync(join(tmpdir(), 'todo-facade-'));
@@ -108,39 +136,32 @@ beforeEach(async () => {
   await tasks.save(created.value);
   taskId = created.value.uuid;
   const { app } = testAppContext();
-  const todo = todoFacade(createTodoModule({ app, tasks }));
-  show = (def) => new ShowTask(def, { app, todo }, DigestModuleDef);
+  const todo = createTodoModule({ app, facades: new ModuleFacades(), tasks });
+  deps = { app, facades: new ModuleFacades([new ModuleFacade(todo)]) };
+  show = new ShowTask(deps, DigestModuleDef);
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-describe('фасад todo (D-42)', () => {
+describe('фасад todo (D-43)', () => {
   it('вызов через фасад: UC todo от SystemCaller, ответ — ReadonlyAr', async () => {
-    const res = await show(ShowTaskUcDef).handle({ taskId }, as(OWNER), REQ);
+    const res = await show.handle({ taskId }, as(OWNER), REQ);
     expect(expectOk(res)).toEqual({ done: false });
   });
 
   it('Policy todo — по субъекту исходного вызывающего', async () => {
-    const res = await show(ShowTaskUcDef).handle({ taskId }, as('чужой'), REQ);
+    const res = await show.handle({ taskId }, as('чужой'), REQ);
     expectErr(res, 'ACCESS_DENIED');
   });
 
   it('ошибка UC todo — как есть', async () => {
     const missing = crypto.randomUUID();
-    const res = await show(ShowTaskUcDef).handle(
-      { taskId: missing },
-      as(OWNER),
-      REQ,
-    );
+    const res = await show.handle({ taskId: missing }, as(OWNER), REQ);
     expect(expectErr(res, 'TASK_NOT_FOUND').payload).toEqual({
       taskId: missing,
     });
   });
 
-  it('UC нет в calls потребителя — UNAUTHORIZED', async () => {
-    const res = await show(SneakyUcDef).handle({ taskId }, as(OWNER), REQ);
-    expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
-      callerKind: 'system',
-      from: 'sneaky',
-    });
+  it('UC нет в calls потребителя — ошибка типа (рантайм-проверки нет)', () => {
+    expect(new Sneaky(deps, DigestModuleDef).ref.name).toBe('sneaky');
   });
 });

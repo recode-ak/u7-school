@@ -45,7 +45,7 @@ test('uc: реализация — класс XxxUc от UseCaseFromDef', () => 
     '/p/stream/src/student/uc/complete-student.uc.ts',
   );
   expect(src).toContain(
-    "import { CompleteStudentUcDef, StreamModuleDef } from '@u7-scl/domain/stream';",
+    "import {\n  CompleteStudentUcDef,\n  type StreamModuleDef,\n} from '@u7-scl/domain/stream';",
   );
   expect(src).toContain(
     "import type { StreamDeps } from '../../stream.module';",
@@ -53,7 +53,23 @@ test('uc: реализация — класс XxxUc от UseCaseFromDef', () => 
   expect(src).toContain(
     'export class CompleteStudentUc extends UseCaseFromDef<',
   );
-  expect(src).toContain('super(CompleteStudentUcDef, deps, StreamModuleDef)');
+  // Модуль передаёт себя (D-43): наследник проксирует его в super.
+  expect(src).toContain(
+    'constructor(deps: StreamDeps, module: typeof StreamModuleDef)',
+  );
+  expect(src).toContain('super(CompleteStudentUcDef, deps, module)');
+});
+
+test('uc: тест реализации — модуль и пустые фасады в резолвере', () => {
+  const src = content(
+    plan('uc', 'complete-student'),
+    '/p/stream/src/student/uc/complete-student.uc.test.ts',
+  );
+  expect(src).toContain(
+    "import { StreamModuleDef } from '@u7-scl/domain/stream';",
+  );
+  expect(src).toContain('facades: new ModuleFacades()');
+  expect(src).toContain('new CompleteStudentUc(deps, StreamModuleDef)');
 });
 
 test('uc: правки домена (module, index) и прикладного модуля', () => {

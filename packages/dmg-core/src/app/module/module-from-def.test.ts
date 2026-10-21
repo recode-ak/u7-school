@@ -13,7 +13,8 @@ import {
 import { UserEvents } from '#core/testing/example/users/index';
 import { expectErr, expectOk } from '#core/testing/index';
 import { T0, TASK } from '../app.fixture';
-import type { AppContext } from '../context';
+import type { ModuleDeps } from '../context';
+import { ModuleFacades } from '../facade/module-facades';
 import { JobFromDef, type JobRun } from '../job/job-from-def';
 import { ReactionFromDef } from '../reaction/reaction-from-def';
 import { jobTrace, requestTrace, type Trace } from '../trace';
@@ -35,8 +36,10 @@ const MiniModuleDef = defineModule({
   jobs: [ArchiveDoneTasksJobDef],
 });
 
-type Deps = {
-  readonly app: AppContext;
+/** Модуль без зависимостей — фасадов нет. */
+const facades = new ModuleFacades();
+
+type Deps = ModuleDeps & {
   reacted: string[];
   /** След каждого прогона Job — то, что передал вызывающий `runJob`. */
   ran: Trace[];
@@ -50,8 +53,8 @@ class CompleteTask extends UseCaseFromDef<
   Deps,
   never
 > {
-  constructor(deps: Deps) {
-    super(CompleteTaskUcDef, deps, MiniModuleDef);
+  constructor(deps: Deps, module: typeof MiniModuleDef) {
+    super(CompleteTaskUcDef, deps, module);
   }
   protected load = async () => TaskErrors.NOT_FOUND.err({ taskId: 'x' });
   protected execute = async () => ok({});
@@ -61,8 +64,8 @@ class ArchiveRemoved extends ReactionFromDef<
   typeof ArchiveRemovedUserTasksErDef,
   Deps
 > {
-  constructor(deps: Deps) {
-    super(ArchiveRemovedUserTasksErDef, deps, MiniModuleDef);
+  constructor(deps: Deps, module: typeof MiniModuleDef) {
+    super(ArchiveRemovedUserTasksErDef, deps, module);
   }
   protected async react() {
     this.resolve.reacted.push(this.def.name);
@@ -71,8 +74,8 @@ class ArchiveRemoved extends ReactionFromDef<
 }
 
 class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
-  constructor(deps: Deps) {
-    super(ArchiveDoneTasksJobDef, deps, MiniModuleDef);
+  constructor(deps: Deps, module: typeof MiniModuleDef) {
+    super(ArchiveDoneTasksJobDef, deps, module);
   }
   protected run = (job: JobRun) => {
     this.resolve.ran.push(job.trace);
@@ -90,7 +93,7 @@ let deps: Deps;
 let mini: ModuleFromDef<typeof MiniModuleDef, Deps, User>;
 
 beforeEach(() => {
-  deps = { app: testAppContext().app, reacted: [], ran: [] };
+  deps = { app: testAppContext().app, facades, reacted: [], ran: [] };
   mini = new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
     MiniModuleDef,
     map,
@@ -131,6 +134,25 @@ describe('ModuleFromDef.handle', () => {
     expect(mini.serves(CreateTaskUcDef)).toBe(false);
   });
 
+  test('операции создаёт модуль и передаёт себя: ref — модуль-владелец (D-43)', () => {
+    const seen: unknown[] = [];
+    class Spy extends CompleteTask {
+      constructor(deps: Deps, module: typeof MiniModuleDef) {
+        super(deps, module);
+        seen.push(module, this.ref);
+      }
+    }
+    new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
+      MiniModuleDef,
+      { ...map, useCases: { completeTask: Spy } },
+      deps,
+    );
+    expect(seen).toEqual([
+      MiniModuleDef,
+      { kind: 'useCase', module: 'mini', name: 'completeTask' },
+    ]);
+  });
+
   test('реализации UC наружу не раздаются', () => {
     // @ts-expect-error useCase — не публичный: вход только через handle
     expect(mini.useCase).toBeDefined();
@@ -160,7 +182,12 @@ describe('ModuleFromDef.runJob', () => {
 describe('ModuleFromDef.subscribe', () => {
   test('реакции подписываются на шину приложения; отписка снимает их', async () => {
     const bus = memoryBus();
-    deps = { app: { ...testAppContext().app, bus }, reacted: [], ran: [] };
+    deps = {
+      app: { ...testAppContext().app, bus },
+      facades,
+      reacted: [],
+      ran: [],
+    };
     const off = new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
       MiniModuleDef,
       map,

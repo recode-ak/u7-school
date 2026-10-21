@@ -1,11 +1,15 @@
 // DEBT-21, DEBT-22: субъект вызывающего — legacy `User` (`@u7-scl/app`):
 // его ждёт адаптер анкет TR-11 (`startStandard`); уйдёт с миграцией анкет.
 import type { User } from '@u7-scl/app/domain';
-import type { CourseEnrollment } from '@u7-scl/domain/course/contract';
+import {
+  type CourseEnrollment,
+  GetCourseEnrollmentUcDef,
+} from '@u7-scl/domain/course/contract';
+import { StartQuestionnaireUcDef } from '@u7-scl/domain/questionnaire/contract';
 import {
   CreateCourseWishUcDef,
   WishAr,
-  WishModuleDef,
+  type WishModuleDef,
   type WishTargetVo,
 } from '@u7-scl/domain/wish';
 import { type Caller, ok } from 'dmg-core';
@@ -39,20 +43,21 @@ export class CreateCourseWishUc extends UseCaseFromDef<
   Loaded,
   User
 > {
-  constructor(deps: WishDeps) {
-    super(CreateCourseWishUcDef, deps, WishModuleDef);
+  constructor(deps: WishDeps, module: typeof WishModuleDef) {
+    super(CreateCourseWishUcDef, deps, module);
   }
 
-  /** Ответ курса — через фасад (D-42), желания — все на эту цель. */
+  /** Ответ курса — через фасад (D-43), желания — все на эту цель. */
   protected async load(
     { courseId }: Input,
     caller: Caller<User>,
     trace: Trace,
   ) {
-    const call = this.callContext(caller, trace);
-    const enrollment = await this.resolve.course.getCourseEnrollment(
-      call,
-      courseId,
+    const enrollment = await this.call(
+      GetCourseEnrollmentUcDef,
+      { courseId },
+      caller,
+      trace,
     );
     if (!enrollment.ok) return enrollment;
     const userId = this.subject(caller).uuid;
@@ -86,10 +91,11 @@ export class CreateCourseWishUc extends UseCaseFromDef<
     uow.register(wish, this.resolve.wishes);
 
     if (questionnaire) {
-      const started = await this.resolve.questionnaire.startQuestionnaire(
-        this.callContext(caller, trace),
-        questionnaire.pool,
-        questionnaire.owner,
+      const started = await this.call(
+        StartQuestionnaireUcDef,
+        { pool: questionnaire.pool, owner: questionnaire.owner },
+        caller,
+        trace,
       );
       if (!started.ok) return started;
     }

@@ -16,7 +16,11 @@ import type { ReactionFromDef } from '../reaction/reaction-from-def';
 import type { Trace } from '../trace';
 import type { UseCaseHandler } from '../use-case/use-case-from-def';
 
-type Ctor<R, T> = new (deps: R) => T;
+/**
+ * Класс реализации: резолвер и модуль-владелец (D-43) — модуль передаёт
+ * себя, наследник проксирует его в `super` (база строит `ref`).
+ */
+type Ctor<R, M, T> = new (deps: R, module: M) => T;
 
 /**
  * Реализация UC для проверки карты: `handle` — свойство, параметры строго
@@ -45,30 +49,36 @@ export type ModuleMap<
   readonly useCases: {
     readonly [C in M['useCases'][number] as C['name']]: Ctor<
       R,
+      M,
       StrictHandler<C, U>
     >;
   };
   readonly reactions: {
     readonly [E in M['reactions'][number] as E['name']]: Ctor<
       R,
+      M,
       ReactionFromDef<E, R>
     >;
   };
   readonly jobs: {
-    readonly [J in M['jobs'][number] as J['name']]: Ctor<R, JobFromDef<J, R>>;
+    readonly [J in M['jobs'][number] as J['name']]: Ctor<
+      R,
+      M,
+      JobFromDef<J, R>
+    >;
   };
 };
 
 /** Та же карта без привязки к конкретному модулю — для обхода в рантайме. */
-type RuntimeMap<R, U extends Identified> = {
+type RuntimeMap<M, R, U extends Identified> = {
   readonly useCases: Readonly<
-    Record<string, Ctor<R, UseCaseHandler<AnyUseCaseDef, U>>>
+    Record<string, Ctor<R, M, UseCaseHandler<AnyUseCaseDef, U>>>
   >;
   readonly reactions: Readonly<
-    Record<string, Ctor<R, ReactionFromDef<AnyEventReactionDef, ModuleDeps>>>
+    Record<string, Ctor<R, M, ReactionFromDef<AnyEventReactionDef, ModuleDeps>>>
   >;
   readonly jobs: Readonly<
-    Record<string, Ctor<R, JobFromDef<AnyJobDef, ModuleDeps>>>
+    Record<string, Ctor<R, M, JobFromDef<AnyJobDef, ModuleDeps>>>
   >;
 };
 
@@ -82,8 +92,9 @@ export type AnyModuleFromDef<U extends Identified> = ModuleFromDef<
 /**
  * Модуль DMG в рантайме — единственная точка входа в его операции (D-43):
  * UC — через `handle`, Job — через `runJob`, реакции — `subscribe`.
- * Реализации живут внутри и наружу не раздаются. Фасад для других модулей
- * собирает приложение поверх `handle` (`callUseCase`, D-42) — в карте его нет.
+ * Реализации живут внутри и наружу не раздаются; операции получают модуль
+ * при создании. Фасад для других модулей — `ModuleFacade` поверх `handle`,
+ * его собирает приложение — в карте его нет.
  */
 export class ModuleFromDef<
   M extends AnyModuleDef,
@@ -110,16 +121,18 @@ export class ModuleFromDef<
    */
   constructor(
     readonly def: M,
-    map: ModuleMap<M, R, U> & RuntimeMap<R, U>,
+    map: ModuleMap<M, R, U> & RuntimeMap<M, R, U>,
     deps: R,
   ) {
     for (const Impl of Object.values(map.useCases)) {
-      const uc = new Impl(deps);
+      const uc = new Impl(deps, def);
       this.useCases.set(uc.def, uc);
     }
-    this.reactions = Object.values(map.reactions).map((Er) => new Er(deps));
+    this.reactions = Object.values(map.reactions).map(
+      (Er) => new Er(deps, def),
+    );
     for (const J of Object.values(map.jobs)) {
-      const job = new J(deps);
+      const job = new J(deps, def);
       this.jobs.set(job.def, job);
     }
     this.bus = deps.app.bus;

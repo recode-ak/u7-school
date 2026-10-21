@@ -3,7 +3,6 @@ import type { User } from '@u7-scl/app/domain';
 import type { QuestionnairePool } from '@u7-scl/domain/questionnaire';
 import {
   QuestionnaireModuleDef,
-  type QuestionnaireModuleFacade,
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import {
@@ -18,20 +17,24 @@ import {
 } from 'dmg-core';
 import {
   type AppContext,
+  type ModuleDeps,
+  ModuleFacade,
+  ModuleFacades,
   requestTrace,
   type Trace,
+  type UnitOfWork,
   UseCaseFromDef,
 } from 'dmg-core/app';
-import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
+import { expectOk, testAppContext } from 'dmg-core/testing';
 import * as v from 'valibot';
-import { questionnaireModuleFacade } from './questionnaire.facade';
 import {
   createQuestionnaireModule,
   type QuestionnaireLegacy,
 } from './questionnaire.module';
 
-// Потребитель фасада анкет — UC другого модуля: объявляет
-// `startQuestionnaire` в `calls` и вызывает его через фасад (D-42).
+// Потребитель модуля анкет — UC другого модуля: объявляет
+// `startQuestionnaire` в `calls` и вызывает его через `this.call` (D-43);
+// фасад — `ModuleFacade` над модулем анкет.
 const ProbeArDef = defineAggregate({
   name: 'probe',
   label: 'Проба',
@@ -58,7 +61,7 @@ const ProbeUcDef = defineUseCase({
   ...probeSpec,
   calls: [StartQuestionnaireUcDef],
 });
-/** Тот же UC, но `startQuestionnaire` в `calls` не объявлен. */
+/** Тот же UC, но `startQuestionnaire` в `calls` не объявлен — вызов не компилируется. */
 const SneakyUcDef = defineUseCase({ ...probeSpec, name: 'sneaky' });
 
 const ProbeModuleDef = defineModule({
@@ -72,31 +75,48 @@ const ProbeModuleDef = defineModule({
   jobs: [],
 });
 
-type ProbeDeps = {
-  readonly app: AppContext;
-  readonly questionnaire: QuestionnaireModuleFacade;
-};
+type Input = { pool: QuestionnairePool; owner: Record<string, unknown> };
 
 class ProbeUc extends UseCaseFromDef<
-  typeof ProbeUcDef | typeof SneakyUcDef,
-  ProbeDeps,
+  typeof ProbeUcDef,
+  ModuleDeps,
   undefined,
   User
 > {
+  constructor(deps: ModuleDeps, module: typeof ProbeModuleDef) {
+    super(ProbeUcDef, deps, module);
+  }
   protected load = async () => ok(undefined);
   protected async execute(
-    input: { pool: QuestionnairePool; owner: Record<string, unknown> },
+    input: Input,
     _: undefined,
-    __: unknown,
+    __: UnitOfWork,
     caller: Caller<User>,
     trace: Trace,
   ) {
-    const call = this.callContext(caller, trace);
-    return this.resolve.questionnaire.startQuestionnaire(
-      call,
-      input.pool,
-      input.owner,
-    );
+    return this.call(StartQuestionnaireUcDef, input, caller, trace);
+  }
+}
+
+class SneakyUc extends UseCaseFromDef<
+  typeof SneakyUcDef,
+  ModuleDeps,
+  undefined,
+  User
+> {
+  constructor(deps: ModuleDeps, module: typeof ProbeModuleDef) {
+    super(SneakyUcDef, deps, module);
+  }
+  protected load = async () => ok(undefined);
+  protected async execute(
+    input: Input,
+    _: undefined,
+    __: UnitOfWork,
+    caller: Caller<User>,
+    trace: Trace,
+  ) {
+    // @ts-expect-error startQuestionnaire нет в calls UC sneaky
+    return this.call(StartQuestionnaireUcDef, input, caller, trace);
   }
 }
 
@@ -140,20 +160,23 @@ beforeEach(() => {
   app = testAppContext().app;
 });
 
-function probe(
-  def: typeof ProbeUcDef | typeof SneakyUcDef,
-  questionnaireLegacy: QuestionnaireLegacy,
-) {
-  const questionnaire = questionnaireModuleFacade(
-    createQuestionnaireModule({ app, legacy: questionnaireLegacy }),
-  );
-  return new ProbeUc(def, { app, questionnaire }, ProbeModuleDef);
+/** Резолвер потребителя: фасад — модуль анкет над заданным legacy. */
+function depsWith(questionnaireLegacy: QuestionnaireLegacy): ModuleDeps {
+  const questionnaire = createQuestionnaireModule({
+    app,
+    facades: new ModuleFacades(),
+    legacy: questionnaireLegacy,
+  });
+  return {
+    app,
+    facades: new ModuleFacades([new ModuleFacade(questionnaire)]),
+  };
 }
 
-describe('фасад анкет (D-42, адаптер TR-11)', () => {
+describe('модуль анкет через фасад (D-43, адаптер TR-11)', () => {
   it('запуск вызывает legacy startStandard: субъект, пул, owner как ownerInfo', async () => {
     const { facade, calls } = legacy();
-    const res = await probe(ProbeUcDef, facade).handle(
+    const res = await new ProbeUc(depsWith(facade), ProbeModuleDef).handle(
       { pool: POOL, owner: OWNER },
       new UserCaller(USER),
       REQ,
@@ -162,17 +185,10 @@ describe('фасад анкет (D-42, адаптер TR-11)', () => {
     expect(calls).toEqual([[USER, POOL, OWNER]]);
   });
 
-  it('UC нет в calls потребителя — UNAUTHORIZED, legacy не вызван', async () => {
-    const { facade, calls } = legacy();
-    const res = await probe(SneakyUcDef, facade).handle(
-      { pool: POOL, owner: OWNER },
-      new UserCaller(USER),
-      REQ,
+  it('UC нет в calls потребителя — ошибка типа (рантайм-проверки нет)', () => {
+    const { facade } = legacy();
+    expect(new SneakyUc(depsWith(facade), ProbeModuleDef).ref.name).toBe(
+      'sneaky',
     );
-    expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
-      callerKind: 'system',
-      from: 'sneaky',
-    });
-    expect(calls).toEqual([]);
   });
 });

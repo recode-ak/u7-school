@@ -1,5 +1,6 @@
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { EventBus } from './events/event-bus';
+import type { ModuleFacades } from './facade/module-facades';
 
 /** Режим запуска приложения. */
 export type AppMode = 'test' | 'development' | 'production';
@@ -29,5 +30,12 @@ export type AppContext = {
   readonly mode: AppMode;
 };
 
-/** Резолвер модуля DMG: модуль расширяет его репозиториями и фасадами. */
-export type ModuleDeps = { readonly app: AppContext };
+/**
+ * Резолвер модуля DMG: платформа и фасады модулей из `dependsOn` (у модуля
+ * без зависимостей — пустой `ModuleFacades`); модуль расширяет его
+ * репозиториями.
+ */
+export type ModuleDeps = {
+  readonly app: AppContext;
+  readonly facades: ModuleFacades;
+};

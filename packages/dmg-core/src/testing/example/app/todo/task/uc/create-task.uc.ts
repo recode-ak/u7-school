@@ -7,7 +7,7 @@ import type { TodoDeps } from '#core/testing/example/app/todo/todo.module';
 import {
   CreateTaskUcDef,
   TaskAr,
-  TodoModuleDef,
+  type TodoModuleDef,
 } from '#core/testing/example/todo/index';
 
 /** Задачи владельца — контекст правила предела открытых задач. */
@@ -19,8 +19,8 @@ export class CreateTaskUc extends UseCaseFromDef<
   Loaded,
   ExampleUser
 > {
-  constructor(deps: TodoDeps) {
-    super(CreateTaskUcDef, deps, TodoModuleDef);
+  constructor(deps: TodoDeps, module: typeof TodoModuleDef) {
+    super(CreateTaskUcDef, deps, module);
   }
 
   protected async load(_: unknown, caller: Caller<ExampleUser>) {

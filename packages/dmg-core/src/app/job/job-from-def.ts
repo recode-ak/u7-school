@@ -1,11 +1,10 @@
 import type { AnyJobDef } from '#core/domain/contracts/define-job';
 import type { AnyModuleDef } from '#core/domain/contracts/define-module';
-import type { CallContext } from '#core/kernel/caller/call-context';
-import { type OperationRef, SystemCaller } from '#core/kernel/caller/caller';
+import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
-import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { ModuleDeps } from '../context';
+import { OperationFromDef } from '../operation/operation-from-def';
 import { runLogged } from '../system/run-logged';
 import type { Trace } from '../trace';
 import { contractUnitOfWork } from '../uow/contract-unit-of-work';
@@ -29,38 +28,23 @@ export type JobRun = {
  * `SystemCaller` этого Job без человека; регистрация агрегата вне `scans` —
  * исключение, в production — `warn` в лог.
  */
-export abstract class JobFromDef<D extends AnyJobDef, R extends ModuleDeps> {
-  /** Это задание — `from` его вызывающего (D-43). */
-  readonly ref: OperationRef;
+export abstract class JobFromDef<
+  D extends AnyJobDef,
+  R extends ModuleDeps,
+> extends OperationFromDef<D, R> {
+  /** Вызывающий операций задания и его вызовов UC (`this.call`). */
   protected readonly caller: SystemCaller;
 
-  /** `module` — Def модуля-владельца; Job не из его `jobs` — исключение. */
-  constructor(
-    readonly def: D,
-    protected readonly resolve: R,
-    module: AnyModuleDef,
-  ) {
-    if (!module.jobs.includes(def)) {
-      throw new Error(`Job ${def.name} не входит в модуль ${module.name}`);
-    }
-    this.ref = { kind: 'job', module: module.name, name: def.name };
+  /**
+   * `module` — Def модуля-владельца (передаёт `ModuleFromDef`); Job не из
+   * его `jobs` — исключение.
+   */
+  constructor(def: D, resolve: R, module: AnyModuleDef) {
+    super(def, resolve, module, 'job');
     this.caller = new SystemCaller(this.ref);
   }
 
   protected abstract run(job: JobRun): Promise<JobReport>;
-
-  /**
-   * Контекст вызова фасада другого модуля (D-42): вызывающий — его
-   * `SystemCaller`, след — прогона (`job.trace`).
-   */
-  protected callContext(trace: Trace): CallContext {
-    return { caller: this.caller, calls: this.def.calls, trace };
-  }
-
-  /** Текущий момент по часам приложения — передаётся в операции домена. */
-  protected now(): Timestamp {
-    return this.resolve.app.clock();
-  }
 
   /**
    * Один прогон со следом вызывающего (`jobTrace` — свой `runId`): след —

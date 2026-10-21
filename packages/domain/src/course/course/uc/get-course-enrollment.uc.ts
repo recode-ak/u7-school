@@ -1,4 +1,4 @@
-import { allowAll, defineUseCase, F } from 'dmg-core';
+import { allowAll, defineUseCase, F, type OutputOf } from 'dmg-core';
 import * as v from 'valibot';
 import { CourseArDef } from '../course.ar';
 
@@ -43,3 +43,6 @@ export const GetCourseEnrollmentUcDef = defineUseCase({
   ]),
   errors: [],
 });
+
+/** Ответ о записи на курс: стартовый модуль или «недоступен для записи». */
+export type CourseEnrollment = OutputOf<typeof GetCourseEnrollmentUcDef>;

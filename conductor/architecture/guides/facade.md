@@ -18,9 +18,9 @@
 
 ## 3. Эталон
 
-- [todo.facade.ts (тип)](../../../packages/dmg-core/src/testing/example/todo/todo.facade.ts): обычный TS-тип; первый аргумент метода — `CallContext`, ошибки — `UseCaseErrorOf` вызываемого UC.
-- [todo.facade.ts (реализация)](../../../packages/dmg-core/src/testing/example/app/todo/todo.facade.ts): `callUseCase(owner, Def, input, call)` подставляет вызывающего `module`; `asReadonlyAr(TaskAr, …)` превращает state в `ReadonlyAr`.
-- [course.facade.ts](../../../packages/course/src/course.facade.ts) и [questionnaire.facade.ts](../../../packages/questionnaire/src/questionnaire.facade.ts): фасады внешних модулей над временными UC-адаптерами (TR-11).
+- [facade.ts](../../../packages/dmg-core/src/domain/contracts/facade.ts): `Facade<M>` — тип фасада модуля в домене, `handle` только UC с `'system'` в `callers` (D-43). Свои типы фасадов модули не заводят.
+- [module-facade.ts](../../../packages/dmg-core/src/app/facade/module-facade.ts): `ModuleFacade<M>` — обёртка над `ModuleFromDef.handle`; потребитель вызывает чужой UC `this.call(Def, input, caller, trace)` (`OperationFromDef`). Переписывается на шаге 10 Ф8а.
+- [course.module.ts](../../../packages/course/src/course.module.ts) и [questionnaire.module.ts](../../../packages/questionnaire/src/questionnaire.module.ts): модули внешних `course`/`questionnaire` над временными UC-адаптерами (TR-11); фасад — `new ModuleFacade(module)`.
 - Потребитель: [create-course-wish.uc.ts](../../../packages/wish/src/wish/uc/create-course-wish.uc.ts) — `this.callContext(caller, trace)`, Def UC — в `calls` своего Def.
 
 ## 4. Чеклист правил
@@ -38,4 +38,4 @@
 
 ## 6. Как тестировать
 
-У владельца: вызов через фасад проходит; ошибка UC приходит как есть; вызов не из `calls` — `UNAUTHORIZED` ([todo.facade.test.ts](../../../packages/dmg-core/src/testing/example/app/todo/todo.facade.test.ts), [course.facade.test.ts](../../../packages/course/src/course.facade.test.ts)). У потребителя — фейк типа фасада, проверка `from` в контексте вызова.
+У владельца: вызов через фасад проходит; ошибка UC приходит как есть; вызов не из `calls` — `UNAUTHORIZED` ([todo.facade.test.ts](../../../packages/dmg-core/src/testing/example/app/todo/todo.facade.test.ts), [course.module.test.ts](../../../packages/course/src/course.module.test.ts)); UC не из `calls` — ошибка типа (`@ts-expect-error`). У потребителя — `StubFacade<M>` из `dmg-core/testing`.

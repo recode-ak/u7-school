@@ -7,7 +7,7 @@ import {
   CompleteTaskUcDef,
   type TaskAr,
   TaskErrors,
-  TodoModuleDef,
+  type TodoModuleDef,
 } from '#core/testing/example/todo/index';
 
 type Loaded = { readonly task: TaskAr };
@@ -18,8 +18,8 @@ export class CompleteTaskUc extends UseCaseFromDef<
   Loaded,
   ExampleUser
 > {
-  constructor(deps: TodoDeps) {
-    super(CompleteTaskUcDef, deps, TodoModuleDef);
+  constructor(deps: TodoDeps, module: typeof TodoModuleDef) {
+    super(CompleteTaskUcDef, deps, module);
   }
 
   protected async load({ taskId }: { taskId: string }) {

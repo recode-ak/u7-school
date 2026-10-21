@@ -3,7 +3,7 @@
 // его ждёт legacy `startStandard`; уйдёт при миграции модуля анкет.
 import type { User } from '@u7-scl/app/domain';
 import {
-  QuestionnaireModuleDef,
+  type QuestionnaireModuleDef,
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import { type Caller, ok } from 'dmg-core';
@@ -22,8 +22,11 @@ export class StartQuestionnaireUc extends UseCaseFromDef<
   undefined,
   User
 > {
-  constructor(deps: QuestionnaireModuleDeps) {
-    super(StartQuestionnaireUcDef, deps, QuestionnaireModuleDef);
+  constructor(
+    deps: QuestionnaireModuleDeps,
+    module: typeof QuestionnaireModuleDef,
+  ) {
+    super(StartQuestionnaireUcDef, deps, module);
   }
 
   protected async load() {

@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import type { AnyModuleDef } from '#core/domain/contracts/define-module';
-import type { CallContext } from '#core/kernel/caller/call-context';
 import {
   type Caller,
   SystemCaller,
@@ -26,8 +25,9 @@ import {
   testAppContext,
 } from '#core/testing/index';
 import { MemoryTasks, OWNER, T0, TASK, TASK_2, taskRow } from '../app.fixture';
-import type { AppContext } from '../context';
+import type { ModuleDeps } from '../context';
 import type { EnvelopeOf } from '../events/event-envelope';
+import { ModuleFacades } from '../facade/module-facades';
 import type { Cause, Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { ReactionFromDef } from './reaction-from-def';
@@ -44,7 +44,9 @@ const removed = (): EnvelopeOf<typeof UserEvents.removed> => ({
   correlationId: 'c-1',
 });
 
-type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
+type Deps = ModuleDeps & { readonly tasks: MemoryTasks };
+/** Модули без зависимостей — фасадов нет. */
+const facades = new ModuleFacades();
 
 class ArchiveRemovedUserTasks extends ReactionFromDef<
   typeof ArchiveRemovedUserTasksErDef,
@@ -78,11 +80,9 @@ class ArchiveRemovedUserTasks extends ReactionFromDef<
     trace: Trace,
   ) {
     this.seenTrace = trace;
-    this.seenCall = this.callContext(caller, trace);
     return this.step(event, uow, caller, this.resolve);
   }
   seenTrace: Trace | undefined;
-  seenCall: CallContext | undefined;
 }
 
 let ctx: ReturnType<typeof testAppContext>;
@@ -94,7 +94,7 @@ beforeEach(() => {
   tasks = new MemoryTasks();
   tasks.rows.set(TASK, taskRow(TASK));
   tasks.rows.set(TASK_2, taskRow(TASK_2, 'done'));
-  er = new ArchiveRemovedUserTasks({ app: ctx.app, tasks });
+  er = new ArchiveRemovedUserTasks({ app: ctx.app, facades, tasks });
 });
 
 describe('ReactionFromDef.handle', () => {
@@ -122,7 +122,10 @@ describe('ReactionFromDef.handle', () => {
   test('ER не из модуля — исключение сборки', () => {
     expect(
       () =>
-        new ArchiveRemovedUserTasks({ app: ctx.app, tasks }, UsersModuleDef),
+        new ArchiveRemovedUserTasks(
+          { app: ctx.app, facades, tasks },
+          UsersModuleDef,
+        ),
     ).toThrow('ER archiveRemovedUserTasks не входит в модуль users');
   });
 
@@ -134,16 +137,6 @@ describe('ReactionFromDef.handle', () => {
       cause: { kind: 'event', eventId: 'e-removed' },
       correlationId: 'c-1',
     });
-  });
-
-  test('контекст вызова фасада: SystemCaller реакции, её calls, след', async () => {
-    await er.handle(removed());
-    const { caller, calls, trace } = er.seenCall ?? {};
-    expect([caller, calls, trace]).toEqual([
-      er.seen,
-      ArchiveRemovedUserTasksErDef.calls,
-      er.seenTrace,
-    ]);
   });
 
   test('Err → без фиксации, запись в лог', async () => {
@@ -192,7 +185,7 @@ describe('ReactionFromDef.handle', () => {
 describe('ReactionFromDef — production', () => {
   test('агрегат вне touches — warn, реакция проходит', async () => {
     const prod = testAppContext({ mode: 'production', at: T0 });
-    er = new ArchiveRemovedUserTasks({ app: prod.app, tasks });
+    er = new ArchiveRemovedUserTasks({ app: prod.app, facades, tasks });
     er.step = async (_e, uow) => {
       const task = TaskAr.restore(taskRow(TASK));
       uow.register(task, { aggregate: UserArDef, save: async () => {} });

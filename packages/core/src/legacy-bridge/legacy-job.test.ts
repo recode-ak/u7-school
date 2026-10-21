@@ -10,6 +10,8 @@ import {
   JobFromDef,
   type JobReport,
   type JobRun,
+  type ModuleDeps,
+  ModuleFacades,
   ModuleFromDef,
   type UnitOfWork,
 } from 'dmg-core/app';
@@ -39,14 +41,11 @@ const ArchiveModuleDef = defineModule({
   jobs: [ArchiveDoneTasksJobDef],
 });
 
-type Deps = {
-  readonly app: ReturnType<typeof testAppContext>['app'];
-  readonly tasks: MemoryTasks;
-};
+type Deps = ModuleDeps & { readonly tasks: MemoryTasks };
 
 class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
-  constructor(deps: Deps) {
-    super(ArchiveDoneTasksJobDef, deps, ArchiveModuleDef);
+  constructor(deps: Deps, module: typeof ArchiveModuleDef) {
+    super(ArchiveDoneTasksJobDef, deps, module);
   }
 
   protected async run(job: JobRun): Promise<JobReport> {
@@ -79,7 +78,11 @@ beforeEach(() => {
       reactions: {},
       jobs: { archiveDoneTasks: ArchiveDoneTasks },
     },
-    { app: testAppContext({ at: T0 }).app, tasks },
+    {
+      app: testAppContext({ at: T0 }).app,
+      facades: new ModuleFacades(),
+      tasks,
+    },
   );
 });
 

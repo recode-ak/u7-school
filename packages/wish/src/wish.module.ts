@@ -1,7 +1,5 @@
 // DEBT-21, DEBT-22: субъект модуля — legacy `User` (`@u7-scl/app`).
 import type { User } from '@u7-scl/app/domain';
-import type { CourseModuleFacade } from '@u7-scl/domain/course/contract';
-import type { QuestionnaireModuleFacade } from '@u7-scl/domain/questionnaire/contract';
 import { WishModuleDef } from '@u7-scl/domain/wish';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { CreateCourseWishUc } from './wish/uc/create-course-wish.uc';
@@ -9,13 +7,12 @@ import type { WishRepo } from './wish/wish.repo';
 // gen:defs:imports
 
 /**
- * Резолвер модуля: платформа, репозиторий желаний и фасады зависимостей
- * по D-42 (`dependsOn`; вызываемые UC — в `calls` операций).
+ * Резолвер модуля: платформа, фасады зависимостей (`facades` — курсы и
+ * анкеты из `dependsOn`; вызываемые UC — в `calls` операций, D-43) и
+ * репозиторий желаний.
  */
 export type WishDeps = ModuleDeps & {
   readonly wishes: WishRepo;
-  readonly course: CourseModuleFacade;
-  readonly questionnaire: QuestionnaireModuleFacade;
   // gen:deps
 };
 

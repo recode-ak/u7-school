@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { defineModule, ok, UserCaller } from 'dmg-core';
 import {
-  type AppContext,
   JobFromDef,
   type JobRun,
+  type ModuleDeps,
+  ModuleFacades,
   ModuleFromDef,
   type RequestMeta,
   type UnitOfWork,
@@ -41,7 +42,7 @@ const MiniModuleDef = defineModule({
   jobs: [ArchiveDoneTasksJobDef],
 });
 
-type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
+type Deps = ModuleDeps & { readonly tasks: MemoryTasks };
 type Loaded = { task: TaskAr };
 
 class CompleteTask extends UseCaseFromDef<
@@ -49,8 +50,8 @@ class CompleteTask extends UseCaseFromDef<
   Deps,
   Loaded
 > {
-  constructor(deps: Deps) {
-    super(CompleteTaskUcDef, deps, MiniModuleDef);
+  constructor(deps: Deps, module: typeof MiniModuleDef) {
+    super(CompleteTaskUcDef, deps, module);
   }
   protected async load(input: { taskId: string }) {
     const task = await this.resolve.tasks.findById(input.taskId);
@@ -65,8 +66,8 @@ class CompleteTask extends UseCaseFromDef<
 }
 
 class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
-  constructor(deps: Deps) {
-    super(ArchiveDoneTasksJobDef, deps, MiniModuleDef);
+  constructor(deps: Deps, module: typeof MiniModuleDef) {
+    super(ArchiveDoneTasksJobDef, deps, module);
   }
   protected run = (job: JobRun) => job.forEach([], async () => ok());
 }
@@ -83,7 +84,11 @@ let app: ApiApp<AppMeta, User>;
 beforeEach(() => {
   tasks = new MemoryTasks();
   tasks.rows.set(TASK, taskRow(TASK));
-  const deps = { app: testAppContext().app, tasks };
+  const deps = {
+    app: testAppContext().app,
+    facades: new ModuleFacades(),
+    tasks,
+  };
   const mini = new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
     MiniModuleDef,
     {

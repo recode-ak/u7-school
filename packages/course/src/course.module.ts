@@ -31,9 +31,9 @@ export const courseModuleMap = {
 } satisfies ModuleMap<typeof CourseModuleDef, CourseModuleDeps, Identified>;
 
 /**
- * DMG-модуль курсов — владелец UC внешнего контракта (`UseCaseOwner`) для
- * фасада `courseModuleFacade`. Приложение собирает его поверх legacy
- * `CourseInProcFacade` (TR-11).
+ * DMG-модуль курсов — владелец UC внешнего контракта; фасад для других
+ * модулей — `new ModuleFacade(createCourseModule(deps))` (D-43). Приложение
+ * собирает его поверх legacy `CourseInProcFacade` (TR-11).
  */
 export function createCourseModule(deps: CourseModuleDeps) {
   return new ModuleFromDef<

@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import type { AnyModuleDef } from '#core/domain/contracts/define-module';
-import type { CallContext } from '#core/kernel/caller/call-context';
 import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
@@ -14,12 +13,15 @@ import {
 import { UsersModuleDef } from '#core/testing/example/users/index';
 import { expectErr, expectOk } from '#core/testing/index';
 import { MemoryTasks, T0, TASK, TASK_2, taskRow } from '../app.fixture';
-import type { AppContext } from '../context';
+import type { ModuleDeps } from '../context';
+import { ModuleFacades } from '../facade/module-facades';
 import { jobTrace, type Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { JobFromDef, type JobReport, type JobRun } from './job-from-def';
 
-type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
+type Deps = ModuleDeps & { readonly tasks: MemoryTasks };
+/** Модули без зависимостей — фасадов нет. */
+const facades = new ModuleFacades();
 
 class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps, module: AnyModuleDef = TodoModuleDef) {
@@ -28,13 +30,11 @@ class ArchiveDoneTasks extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
 
   protected async run(job: JobRun): Promise<JobReport> {
     this.runs.push(job.trace);
-    this.calls.push(this.callContext(job.trace));
     return job.forEach(await this.resolve.tasks.findDone(), this.step);
   }
 
   /** Шаг по одной задаче; тесты подменяют его, чтобы получить сбой. */
   readonly runs: Trace[] = [];
-  readonly calls: CallContext[] = [];
 
   step = async (
     task: TaskAr,
@@ -58,7 +58,7 @@ beforeEach(() => {
   tasks = new MemoryTasks();
   tasks.rows.set(TASK, taskRow(TASK, 'done'));
   tasks.rows.set(TASK_2, taskRow(TASK_2, 'done'));
-  job = new ArchiveDoneTasks({ app: ctx.app, tasks });
+  job = new ArchiveDoneTasks({ app: ctx.app, facades, tasks });
   run = jobTrace();
 });
 
@@ -96,18 +96,9 @@ describe('JobFromDef.handle', () => {
 
   test('Job не из модуля — исключение сборки', () => {
     expect(
-      () => new ArchiveDoneTasks({ app: ctx.app, tasks }, UsersModuleDef),
+      () =>
+        new ArchiveDoneTasks({ app: ctx.app, facades, tasks }, UsersModuleDef),
     ).toThrow('Job archiveDoneTasks не входит в модуль users');
-  });
-
-  test('контекст вызова фасада: SystemCaller задания без человека, calls, след прогона', async () => {
-    await job.handle(run);
-    const [call] = job.calls;
-    expect(job.calls).toHaveLength(1);
-    expect(call?.caller).toEqual(new SystemCaller(job.ref));
-    expect(call?.caller.person()).toBeUndefined();
-    expect(call?.calls).toBe(ArchiveDoneTasksJobDef.calls);
-    expect(call?.trace).toBe(job.runs[0]);
   });
 
   test('сбой одной записи не прерывает обход и пишется в лог', async () => {

@@ -11,7 +11,6 @@ import {
 } from '#core/domain/contracts/define-use-case';
 import { allowAll } from '#core/domain/policy/policy';
 import { domainRule } from '#core/domain/rules/domain-rule';
-import type { CallContext } from '#core/kernel/caller/call-context';
 import {
   type Caller,
   GuestCaller,
@@ -34,7 +33,8 @@ import { MemoryTasks, OWNER, T0, TASK, taskRow } from '../app.fixture';
 
 const T1 = T0 + 60_000;
 
-import type { AppContext } from '../context';
+import type { ModuleDeps } from '../context';
+import { ModuleFacades } from '../facade/module-facades';
 import { requestTrace, type Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { UseCaseFromDef } from './use-case-from-def';
@@ -62,7 +62,9 @@ const moduleOf = (...useCases: AnyUseCaseDef[]): AnyModuleDef =>
     jobs: [],
   });
 
-type Deps = { readonly app: AppContext; readonly tasks: MemoryTasks };
+type Deps = ModuleDeps & { readonly tasks: MemoryTasks };
+/** Модули без зависимостей — фасадов нет. */
+const facades = new ModuleFacades();
 
 const REQ: Trace = requestTrace({ requestId: 'r-1' });
 type Loaded = { task: TaskAr };
@@ -112,7 +114,7 @@ function seed(status: TaskState['status'] = 'open'): void {
 beforeEach(() => {
   ctx = testAppContext({ at: T0 });
   tasks = new MemoryTasks();
-  uc = new CompleteTask({ app: ctx.app, tasks });
+  uc = new CompleteTask({ app: ctx.app, facades, tasks });
   seed();
 });
 
@@ -152,7 +154,11 @@ describe('UseCaseFromDef.handle — отказы до операции', () => {
       Loaded
     > {
       constructor() {
-        super(SystemUcDef, { app: ctx.app, tasks }, moduleOf(SystemUcDef));
+        super(
+          SystemUcDef,
+          { app: ctx.app, facades, tasks },
+          moduleOf(SystemUcDef),
+        );
       }
       protected load = (i: { taskId: string }) => loadTask(tasks, i);
       protected execute = async () => ok({});
@@ -173,7 +179,11 @@ describe('UseCaseFromDef.handle — отказы до операции', () => {
     });
     class Sweep extends UseCaseFromDef<typeof SweepUcDef, Deps, Loaded> {
       constructor() {
-        super(SweepUcDef, { app: ctx.app, tasks }, moduleOf(SweepUcDef));
+        super(
+          SweepUcDef,
+          { app: ctx.app, facades, tasks },
+          moduleOf(SweepUcDef),
+        );
       }
       protected load = (i: { taskId: string }) => loadTask(tasks, i);
       protected execute = async () => ok({});
@@ -218,7 +228,7 @@ describe('UseCaseFromDef.handle — операция', () => {
 
   test('незаявленное событие в production — warn, операция проходит', async () => {
     const prod = testAppContext({ mode: 'production', at: T0 });
-    uc = new CompleteTask({ app: prod.app, tasks });
+    uc = new CompleteTask({ app: prod.app, facades, tasks });
     uc.mutate = (task) => task.archive(T0);
     expectOk(await uc.handle({ taskId: TASK }, user(OWNER), REQ));
     expect(prod.published.map((e) => e.name)).toEqual([
@@ -255,7 +265,7 @@ describe('UseCaseFromDef.handle — операция', () => {
       constructor() {
         super(
           BadOutputUcDef,
-          { app: ctx.app, tasks },
+          { app: ctx.app, facades, tasks },
           moduleOf(BadOutputUcDef),
         );
       }
@@ -316,7 +326,7 @@ describe('UseCaseFromDef — ref', () => {
   test('UC не из модуля — исключение сборки', () => {
     class Alien extends UseCaseFromDef<typeof CompleteTaskUcDef, Deps, Loaded> {
       constructor() {
-        super(CompleteTaskUcDef, { app: ctx.app, tasks }, moduleOf());
+        super(CompleteTaskUcDef, { app: ctx.app, facades, tasks }, moduleOf());
       }
       protected load = (i: { taskId: string }) => loadTask(tasks, i);
       protected execute = async () => ok({});
@@ -338,7 +348,11 @@ describe('UseCaseFromDef — вызывающий system (D-43)', () => {
     Loaded
   > {
     constructor() {
-      super(SystemUcDef, { app: ctx.app, tasks }, moduleOf(SystemUcDef));
+      super(
+        SystemUcDef,
+        { app: ctx.app, facades, tasks },
+        moduleOf(SystemUcDef),
+      );
     }
     protected load = (i: { taskId: string }) => loadTask(tasks, i);
     protected execute = async () => ok({});
@@ -403,51 +417,6 @@ describe('UseCaseFromDef — вызывающий system (D-43)', () => {
   });
 });
 
-describe('UseCaseFromDef.callContext', () => {
-  const CallerUcDef = defineUseCase({
-    ...CompleteTaskUcDef,
-    callers: ['user'],
-  });
-  class Calling extends UseCaseFromDef<typeof CallerUcDef, Deps, Loaded, User> {
-    constructor() {
-      super(CallerUcDef, { app: ctx.app, tasks }, moduleOf(CallerUcDef));
-    }
-    protected load = (
-      i: { taskId: string },
-      caller: Caller<User>,
-      trace: Trace,
-    ) => {
-      this.loaded = this.callContext(caller, trace);
-      return loadTask(tasks, i);
-    };
-    protected execute = async (
-      _: unknown,
-      __: Loaded,
-      ___: UnitOfWork,
-      caller: Caller<User>,
-      trace: Trace,
-    ) => {
-      this.executed = this.callContext(caller, trace);
-      return ok({});
-    };
-    loaded: CallContext | undefined;
-    executed: CallContext | undefined;
-  }
-
-  test('load и execute получают след; контекст — SystemCaller UC с человеком, calls, след', async () => {
-    const uc = new Calling();
-    const caller = user(OWNER);
-    expectOk(await uc.handle({ taskId: TASK }, caller, REQ));
-    const expected: CallContext = {
-      caller: new SystemCaller(uc.ref, caller),
-      calls: [],
-      trace: REQ,
-    };
-    expect(uc.loaded).toEqual(expected);
-    expect(uc.executed).toEqual(expected);
-  });
-});
-
 describe('UseCaseFromDef.subject', () => {
   const WhoAmIUcDef = defineUseCase({
     ...CompleteTaskUcDef,
@@ -456,7 +425,11 @@ describe('UseCaseFromDef.subject', () => {
   });
   class WhoAmI extends UseCaseFromDef<typeof WhoAmIUcDef, Deps, Loaded, User> {
     constructor() {
-      super(WhoAmIUcDef, { app: ctx.app, tasks }, moduleOf(WhoAmIUcDef));
+      super(
+        WhoAmIUcDef,
+        { app: ctx.app, facades, tasks },
+        moduleOf(WhoAmIUcDef),
+      );
     }
     protected load = (i: { taskId: string }) => loadTask(tasks, i);
     protected execute = async (
@@ -492,7 +465,11 @@ describe('UseCaseFromDef — типы', () => {
       Loaded
     > {
       constructor() {
-        super(CompleteTaskUcDef, { app: ctx.app, tasks }, TodoModuleDef);
+        super(
+          CompleteTaskUcDef,
+          { app: ctx.app, facades, tasks },
+          TodoModuleDef,
+        );
       }
       protected load = (i: { taskId: string }) => loadTask(tasks, i);
       // @ts-expect-error: OTHER_FAILED нет в errors CompleteTaskUcDef
@@ -531,7 +508,7 @@ describe('UseCaseFromDef — доменные правила', () => {
 
   class Ruled extends UseCaseFromDef<typeof RuledUcDef, Deps, Loaded> {
     constructor() {
-      super(RuledUcDef, { app: ctx.app, tasks }, moduleOf(RuledUcDef));
+      super(RuledUcDef, { app: ctx.app, facades, tasks }, moduleOf(RuledUcDef));
     }
     protected load = (i: { taskId: string }) => loadTask(tasks, i);
     protected execute = async (
@@ -592,7 +569,7 @@ describe('UseCaseFromDef — доменные правила', () => {
         super(
           // @ts-expect-error: TASK_ALREADY_DONE правила нет в errors UC
           UndeclaredUcDef,
-          { app: ctx.app, tasks },
+          { app: ctx.app, facades, tasks },
           moduleOf(UndeclaredUcDef),
         );
       }

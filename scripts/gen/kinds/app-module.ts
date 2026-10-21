@@ -80,13 +80,14 @@ export function create${P}Module(deps: ${P}Deps) {
 `;
 
   const testSrc = `import { describe, expect, it } from 'bun:test';
+import { ModuleFacades } from 'dmg-core/app';
 import { testAppContext } from 'dmg-core/testing';
 import { create${P}Module, type ${P}Deps } from './${m}.module';
 
 describe('create${P}Module', () => {
   it('собирает модуль по карте Def', () => {
     const { app } = testAppContext();
-    const deps = { app } as ${P}Deps;
+    const deps = { app, facades: new ModuleFacades() } as ${P}Deps;
     expect(create${P}Module(deps).def.name).toBe('${m}');
   });
 });
