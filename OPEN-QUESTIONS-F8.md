@@ -126,10 +126,17 @@ interface OperationLog { append(record: OperationRecord): Promise<void> }  // в
 - `input`/`output` целиком с порогом размера (≈8 КБ, хвост обрезается с пометкой).
 - Хранение: JSONL по дням в `data/oplog/`; не в git (`.gitignore`), не в бэкап; в AGENTS.md — в список живых данных.
 
+### Р7. Ревизия TR-10
+- Ошибки ядра чужого UC (`CoreError`) проходят насквозь — `load`/`execute` возвращают `UseCaseErrorOf<D>`. Доменные ошибки чужого UC — явно в `errors` своего UC или перевод в свои (тип не пропустит необъявленную).
+- `calls` в Def UC/ER/Job по типу сужен до UC с `'system'` в `callers`; проверка `checkDefs` остаётся.
+- `UNAUTHORIZED.from` из payload удаляется (вместе с рантайм-проверкой `calls`).
+- `trace` — последний аргумент `load`/`execute` (как у `handle`); `Trace`/`Cause` — в `kernel`.
+- `asReadonlyAr` удаляется; в базе `Aggregate` — статический `readonly(state)` с полиморфным `this` (типизация — по `restore` конкретного Ar, без кода в каждом агрегате): `TaskAr.readonly(state): ReadonlyAr<TaskAr>`.
+- Из конверта события удаляется `caller` (и из контекста UoW, если больше не нужен): аудит — через oplog породившей операции (Р6).
+
 ## Не решено — обсудить после Ф8а
 
 ### В4. Принятые оркестратором решения Ф8 — на ревизию (смотреть код явно)
-- TR-10: ошибки `load`/`execute` расширены до `UseCaseErrorOf` (с `CoreError`); `trace` — последний аргумент `load`/`execute`; `Trace`/`Cause`/`CallContext` в `kernel`; конверт события несёт `from` как Def целиком (и `caller` — после Р1 пересмотреть).
 - TR-11: UC-контракты и адаптеры внешних `course`/`questionnaire`; `StartQuestionnaireUcDef.policy = allowAll`.
 - TR-12: `createForCourse` → `{ wish, outcome, questionnaire? }`; принятые риски обхода `calls` (снимаются Р3–Р5).
 
