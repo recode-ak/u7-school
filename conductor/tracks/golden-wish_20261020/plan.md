@@ -78,6 +78,8 @@
 
 ## Фаза 9: Остальные Use Case
 
+> **Перед стартом:** решить вопросы [OPEN-QUESTIONS-F8.md](../../../OPEN-QUESTIONS-F8.md) (Нурболат) и выполнить согласованную там задачу платформы; затем перенести решения в decisions.md и удалить файл.
+
 - [ ] Task: `create-module-wish`, `cancel-wish`, `list-user-wishes` по гайду Фазы 8 (по одному, отдельный TDD-цикл)
 - [ ] Task: Уточнить гайд «use case» (command и query, отличия)
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
