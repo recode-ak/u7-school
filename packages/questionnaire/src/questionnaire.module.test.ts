@@ -12,7 +12,9 @@ import {
   defineAggregate,
   defineModule,
   defineUseCase,
+  type OperationRef,
   ok,
+  SystemCaller,
   UserCaller,
 } from 'dmg-core';
 import {
@@ -24,8 +26,9 @@ import {
   type UnitOfWork,
   UseCaseFromDef,
 } from 'dmg-core/app';
-import { expectOk, testAppContext } from 'dmg-core/testing';
+import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
 import * as v from 'valibot';
+import { StartQuestionnaireUc } from './questionnaire/uc/start-questionnaire.uc';
 import {
   createQuestionnaireModule,
   type QuestionnaireLegacy,
@@ -189,5 +192,44 @@ describe('модуль анкет через фасад (D-43, адаптер TR
     expect(new SneakyUc(depsWith(facade), ProbeModuleDef).ref.name).toBe(
       'sneaky',
     );
+  });
+
+  describe('StartQuestionnaireUc: Policy «респондент есть»', () => {
+    const caller: OperationRef = {
+      kind: 'useCase',
+      module: 'probe',
+      name: 'probeQuestionnaire',
+    };
+    const startUc = (questionnaireLegacy: QuestionnaireLegacy) =>
+      new StartQuestionnaireUc(
+        {
+          app,
+          facades: new ModuleFacades(),
+          legacy: questionnaireLegacy,
+        },
+        QuestionnaireModuleDef,
+      );
+
+    it('системный вызов без человека — ACCESS_DENIED, ничего не запущено', async () => {
+      const { facade, calls } = legacy();
+      const res = await startUc(facade).handle(
+        { pool: POOL, owner: OWNER },
+        new SystemCaller<User>(caller),
+        REQ,
+      );
+      expectErr(res, 'ACCESS_DENIED');
+      expect(calls).toEqual([]);
+    });
+
+    it('системный вызов с человеком — запускает за его субъекта', async () => {
+      const { facade, calls } = legacy();
+      const res = await startUc(facade).handle(
+        { pool: POOL, owner: OWNER },
+        new SystemCaller<User>(caller, new UserCaller(USER)),
+        REQ,
+      );
+      expect(expectOk(res)).toEqual({});
+      expect(calls).toEqual([[USER, POOL, OWNER]]);
+    });
   });
 });

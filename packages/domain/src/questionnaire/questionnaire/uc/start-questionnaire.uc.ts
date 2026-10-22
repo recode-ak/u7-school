@@ -1,16 +1,18 @@
-import { allowAll, defineUseCase } from 'dmg-core';
+import { defineUseCase } from 'dmg-core';
 import * as v from 'valibot';
 import { QuestionnairePoolSchema } from '../question';
 import { QuestionnaireArDef } from '../questionnaire.ar';
 import { QuestionnaireEvents } from '../questionnaire.events';
+import { QuestionnaireRespondentPolicy } from '../questionnaire-respondent.policy';
 
 /**
  * Запуск обычной анкеты — для других модулей (D-42). Респондент — субъект
  * вызывающего; `owner` — данные владельца анкеты (legacy `ownerInfo`):
  * модуль анкет их не толкует и возвращает в событиях.
  *
- * `allowAll`: legacy `start` прав не проверяет — анкета запускается только
- * за самого вызывающего, чужого респондента во входе нет.
+ * Policy: респондент есть (`hasRespondent`) — анкета запускается только за
+ * самого вызывающего, чужого респондента во входе нет; системный вызов без
+ * человека получает `ACCESS_DENIED`.
  */
 export const StartQuestionnaireUcDef = defineUseCase({
   name: 'startQuestionnaire',
@@ -20,7 +22,7 @@ export const StartQuestionnaireUcDef = defineUseCase({
   type: 'command',
   aggregate: QuestionnaireArDef,
   callers: ['system'],
-  policy: allowAll,
+  policy: QuestionnaireRespondentPolicy.rules.hasRespondent,
   input: v.object({
     pool: v.pipe(
       QuestionnairePoolSchema,
