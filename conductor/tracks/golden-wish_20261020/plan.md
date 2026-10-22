@@ -91,7 +91,7 @@
 - [x] Task: Р9 — `StartQuestionnaireUcDef.policy`: правило «респондент есть» вместо `allowAll`; TR-11 в debt.md — пересмотр отметить `ce733b25`
 - [x] Task: Р10 — `WishAr.createForCourse` → `Result<WishAr, never>`, методы `questionnaire()` и `outcome()` из state (red → green в домене); `create-course-wish` берёт их; TR-12 в debt.md — пересмотр отметить `2133dc46`
 - [x] Task: Перевод потребителей: учебный модуль `dmg-core`, `wish` (`create-course-wish`), `course`, `questionnaire`; гайды «use case» и «facade» `fa8c8652`
-- [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
+- [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `e5d93978` (TR-14)
 - [ ] Task: Контрольная точка 'Фаза 8а' (автономно, workflow.md); удалить `OPEN-QUESTIONS-F8.md` (решения — в D-43)
 
 ## Фаза 9: Остальные Use Case
