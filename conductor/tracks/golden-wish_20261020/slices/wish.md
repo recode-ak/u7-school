@@ -442,3 +442,8 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ф8а шаг 8 — domain-author (Sonnet)
 `QuestionnaireRespondentPolicy` (`questionnaire-respondent.policy.ts`, правило `hasRespondent`; `QuestionnairePolicy` занято legacy) — `StartQuestionnaireUcDef.policy` вместо `allowAll`. Адаптер не менялся (субъект гарантирует Policy). Тесты: Policy (с человеком / без субъекта), модуль — `SystemCaller` без человека → `ACCESS_DENIED`, `startStandard` не вызван. TR-11 — пересмотр отмечен. `check`: 3565 pass / 0 fail.
+
+### Ф8а шаг 9 (Р10) — отчёт
+- domain-author (Sonnet): `createForCourse` → `Result<WishAr, never>` (статус `pending` при найденном пуле); `questionnaire()` — `pending` + курс + пул, `outcome()` — из `questionnaire()`; `CourseWishCreated` удалён; тест «анкета — не свойство Ar» заменён тестами методов после `restore`. red 5 fail → green 105 pass.
+- api-author (Sonnet): `create-course-wish` берёт `wish.questionnaire()`/`wish.outcome()`; тесты пакета без изменений, 115 pass.
+- Оркестратор: ловушка в гайде use case поправлена; TR-12 — блок «Пересмотрено». `check`: 3567 pass / 0 fail.

@@ -87,8 +87,9 @@ export class CreateCourseWishUc extends UseCaseFromDef<
       this.now(),
     );
     if (!created.ok) return created;
-    const { wish, outcome, questionnaire } = created.value;
+    const wish = created.value;
     uow.register(wish, this.resolve.wishes);
+    const questionnaire = wish.questionnaire();
 
     if (questionnaire) {
       const started = await this.call(
@@ -99,6 +100,6 @@ export class CreateCourseWishUc extends UseCaseFromDef<
       );
       if (!started.ok) return started;
     }
-    return ok({ outcome });
+    return ok({ outcome: wish.outcome() });
   }
 }

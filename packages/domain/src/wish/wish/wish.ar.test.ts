@@ -98,52 +98,80 @@ describe('WishAr.create', () => {
 const POOLED = Object.keys(coursePools)[0] as string;
 
 describe('WishAr.createForCourse', () => {
-  it('у курса есть пул — pending, исход questionnaire, анкета: пул и { courseId }', () => {
-    const created = expectOk(
+  it('у курса есть пул — pending, outcome questionnaire, анкета: пул и { courseId }', () => {
+    const wish = expectOk(
       WishAr.createForCourse(
         { uuid: WISH, userId: USER, courseId: POOLED },
         T1,
       ),
     );
-    expect(created.wish.snapshot()).toEqual({
+    expect(wish.snapshot()).toEqual({
       ...stored('pending'),
       target: { kind: 'course', courseId: POOLED },
       createdAt: T1,
       updatedAt: T1,
     });
-    expect(created.outcome).toBe('questionnaire');
-    expect(created.questionnaire?.pool).toBeDefined();
-    expect(created.questionnaire?.pool).toBe(findCoursePool(POOLED));
-    expect(created.questionnaire?.owner).toEqual({ courseId: POOLED });
-    expect(created.wish.pullEvents()).toEqual([]);
+    expect(wish.outcome()).toBe('questionnaire');
+    expect(wish.questionnaire()?.pool).toBeDefined();
+    expect(wish.questionnaire()?.pool).toBe(findCoursePool(POOLED));
+    expect(wish.questionnaire()?.owner).toEqual({ courseId: POOLED });
+    expect(wish.pullEvents()).toEqual([]);
   });
 
-  it('у курса нет пула — expressed, исход instant, анкеты нет', () => {
-    const created = expectOk(
+  it('у курса нет пула — expressed, outcome instant, анкеты нет', () => {
+    const wish = expectOk(
       WishAr.createForCourse(
         { uuid: WISH, userId: USER, courseId: target.courseId },
         T1,
       ),
     );
-    expect(created.wish.snapshot()).toEqual({
+    expect(wish.snapshot()).toEqual({
       ...stored('expressed'),
       createdAt: T1,
       updatedAt: T1,
     });
-    expect(created.outcome).toBe('instant');
-    expect(created.questionnaire).toBeUndefined();
-    expect(created.wish.pullEvents()).toEqual([]);
+    expect(wish.outcome()).toBe('instant');
+    expect(wish.questionnaire()).toBeUndefined();
+    expect(wish.pullEvents()).toEqual([]);
   });
+});
 
-  it('анкета — не свойство Ar: после restore снимка её нет', () => {
-    const { wish } = expectOk(
+describe('WishAr.questionnaire / outcome — вопросы из state', () => {
+  it('после restore pending-желание курса с пулом снова даёт анкету', () => {
+    const wish = expectOk(
       WishAr.createForCourse(
         { uuid: WISH, userId: USER, courseId: POOLED },
         T1,
       ),
     );
-    expect('questionnaireToStart' in wish).toBe(false);
-    expect(WishAr.restore(wish.snapshot()).snapshot()).toEqual(wish.snapshot());
+    const restored = WishAr.restore(wish.snapshot());
+    expect(restored.questionnaire()?.owner).toEqual({ courseId: POOLED });
+    expect(restored.outcome()).toBe('questionnaire');
+  });
+
+  it('не pending — анкеты нет, outcome instant', () => {
+    const confirmed = WishAr.restore({
+      ...stored('confirmed'),
+      target: { kind: 'course', courseId: POOLED },
+    });
+    expect(confirmed.questionnaire()).toBeUndefined();
+    expect(confirmed.outcome()).toBe('instant');
+  });
+
+  it('pending module-желания — анкеты нет', () => {
+    const wish = expectOk(
+      WishAr.create(
+        {
+          uuid: WISH,
+          userId: USER,
+          target: { kind: 'module', moduleId: crypto.randomUUID() },
+          status: 'pending',
+        },
+        T1,
+      ),
+    );
+    expect(wish.questionnaire()).toBeUndefined();
+    expect(wish.outcome()).toBe('instant');
   });
 });
 

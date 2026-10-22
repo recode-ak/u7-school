@@ -320,6 +320,7 @@
 - **Контекст:** ревью Ф8 — ошибок нет; warn: гайд facade о `checkDefs`, тесты потребителя не проверяют `calls` (фейки фасадов), транзиентное поле `WishAr.questionnaireToStart()` вне state; info — ниже.
 - **Решение:** (1) гайды и domain-modeling поправлены (оговорка D-41 у антипаттерна «скрытые мутации», имя `<M>ModuleFacade` у внешних). (2) Фейк фасада в `dmg-core/testing`, отказывающий, если Def UC нет в `call.from.calls`; тесты `wish` — через него. (3) Вместо транзиентного поля — `createForCourse` возвращает `{ wish, questionnaire? }` (анкета — результат создания, не свойство Ar). (4) Тип `owner` фасада анкет выводится из входа Def. Принятые риски: `CallingOperation` — структурный тип (можно собрать `from` вручную) и прямой `handle` с `user` у UC, принимающего `user` и `module`, — закрываются ARC-06 и in-proc вызовом; `UseCaseOwner` стирает субъект до `unknown` (DEBT-21/22, TR-11).
 - **Пересмотреть:** при выходе модуля в сервис — подпись `from` (не структурный тип); при миграции анкет — типизация субъекта в `UseCaseOwner`.
+- **Пересмотрено (Ф8а, Р10, D-43):** (3) снято — `createForCourse` → `Result<WishAr, never>`, анкета и ответ — методы-вопросы из state `questionnaire()`/`outcome()`, `CourseWishCreated` удалён; (2) — `StubFacade<M>` (Р4), проверка `calls` — типом (Р5); (4) — `owner` из Def через `Facade<M>`; риски `from`/прямого `handle` — сняты Р3/Р5. Остаётся: `SystemCaller<unknown>` на границе `Facade<M>` до миграции анкет (DEBT-21/22).
 
 ### TR-13: детали `Caller` по D-43 (Ф8а шаг 1)
 - **Трек / фаза:** `golden-wish`, Ф8а

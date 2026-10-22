@@ -128,25 +128,6 @@ export type WishQuestionnaire = {
 };
 
 /**
- * Результат создания желания на курс. Анкета — результат создания, а не
- * свойство Ar: она нужна только операции создания и не хранится (после
- * запуска живёт в модуле анкет). `outcome` — исход для вызывающего
- * (выход UC `createCourseWish`), выводится здесь вместе с веткой, чтобы
- * UC не сопоставлял наличие анкеты с исходом сам.
- */
-export type CourseWishCreated =
-  | {
-      readonly wish: WishAr;
-      readonly outcome: 'instant';
-      readonly questionnaire?: undefined;
-    }
-  | {
-      readonly wish: WishAr;
-      readonly outcome: 'questionnaire';
-      readonly questionnaire: WishQuestionnaire;
-    };
-
-/**
  * Агрегат Wish — желание пользователя в отношении цели (target).
  *
  * Жизненный цикл (правила — в `WishArDef.transitions`), две ветки:
@@ -174,29 +155,21 @@ export class WishAr extends Aggregate<typeof WishArDef> {
 
   /**
    * Желание пройти курс. Ветку выбирает пул анкеты курса (доменные данные
-   * модуля): пул есть — `pending` и анкета к запуску (`questionnaire`),
-   * нет — `expressed` (мгновенная фиксация).
+   * модуля): пул есть — `pending` (анкета — `questionnaire()`), нет —
+   * `expressed` (мгновенная фиксация).
    */
   static createForCourse(
     input: CreateCourseWish,
     at: Timestamp,
-  ): Result<CourseWishCreated, never> {
+  ): Result<WishAr, never> {
     const { uuid, userId, courseId } = input;
-    const pool = findCoursePool(courseId);
-    const wish = new WishAr({
-      ...WishAr.newState(uuid, at),
-      userId,
-      target: { kind: 'course', courseId },
-      status: pool ? 'pending' : 'expressed',
-    });
     return ok(
-      pool
-        ? {
-            wish,
-            outcome: 'questionnaire',
-            questionnaire: { pool, owner: { courseId } },
-          }
-        : { wish, outcome: 'instant' },
+      new WishAr({
+        ...WishAr.newState(uuid, at),
+        userId,
+        target: { kind: 'course', courseId },
+        status: findCoursePool(courseId) ? 'pending' : 'expressed',
+      }),
     );
   }
 
@@ -238,6 +211,23 @@ export class WishAr extends Aggregate<typeof WishArDef> {
     return target.kind === 'course'
       ? ALREADY_EXISTS.make({ userId, courseId: target.courseId, status })
       : ALREADY_EXISTS.make({ userId, moduleId: target.moduleId, status });
+  }
+
+  /**
+   * Анкета к запуску: у `pending`-желания на курс с пулом — пул и `owner`
+   * (`courseId` вернётся в событиях анкеты), иначе `undefined`. Выводится из
+   * state, не хранится.
+   */
+  questionnaire(): WishQuestionnaire | undefined {
+    const { status, target } = this.state;
+    if (status !== 'pending' || target.kind !== 'course') return undefined;
+    const pool = findCoursePool(target.courseId);
+    return pool ? { pool, owner: { courseId: target.courseId } } : undefined;
+  }
+
+  /** Исход создания для вызывающего: `questionnaire`, если нужна анкета. */
+  outcome(): 'instant' | 'questionnaire' {
+    return this.questionnaire() ? 'questionnaire' : 'instant';
   }
 
   // ── Предикаты переходов ──
