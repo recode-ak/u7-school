@@ -332,3 +332,10 @@
 (11) Р7: в `Aggregate.readonly` — `biome-ignore noThisInStatic` (полиморфный `this` — суть формы); фикстура графа с `calls: readonly AnyUseCaseDef[]` обходит проверку типа — Def с общим типом ловит только `checkDefs`; из `publishWishEvents` убраны `caller` и `source`; legacy-подписчики вызывающего и раньше не получали. (4) снято на Р7.
 (12) Р8: класс `Trace` (`fromRequest` — две перегрузки: без `onMissing` `requestId` обязателен, с ним — создаётся с сообщением, ERR-07; `fromEvent`, `forJob(def)` — причина Job получила поле `job`; `toLog()`, `toEnvelope()` сверх D-43); `createUow(trace)` без `caller`; `ApiApp.run`/`execute` принимают `Trace` (след строит транспорт); `fromEvent` не переносит `channel` (в конверте его нет); символ-метка `create` vs `restore` остаётся, ставит её `newState`. (8) `jobTrace` снято на Р8.
 - **Пересмотреть:** (10) подключение JSONL — Ф12; (12) `channel` в конверте события — когда ER понадобится канал.
+
+### TR-14: решения по ревью Ф8а
+- **Трек / фаза:** `golden-wish`, Ф8а
+- **Контекст:** ревью Ф8а (`c05ec0a3..HEAD`): error и warn нет, 8 info.
+- **Решение:** (1) ссылки doc `UseCaseFromDef.load` (D-42 → D-43) и `event-envelope` (caller.md п. 6) поправлены; (2) шаги `load`/`execute`/`react`/`run` полями-стрелками в тестах платформы → методы (эталон копируют); (3) `DeclaredCalls` — один тип в контрактах вместо копий в `define-job`/`define-event-reaction`; (4) Policy «респондент есть» — `rule<{ readonly uuid: string }>` без `_subject`; (5) гайды: `journal` — инвариант базы, наследник UC не вызывает (`protected` — ради ER/Job); нет фасада в `ModuleFacades` → `SERVER_INTERNAL` с `logger.error`, а не исключение до транспорта.
+- **Принятый риск:** порог размера JSONL — только `input`/`output`; `payload` ошибки и `events` без обрезки (по D-43).
+- **Пересмотреть:** порог для `events`/`payload` — при подключении JSONL в Ф12 (вместе с TR-13 п. 10); машинная проверка полей-стрелок шагов (GritQL-плагин biome) — когда появятся плагины правил.

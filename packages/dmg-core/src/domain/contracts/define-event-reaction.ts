@@ -1,6 +1,10 @@
 import type { AnyAggregateDef } from '../aggregate/define-aggregate';
 import type { AnyEventDef, EventOf } from '../events/define-events';
-import type { AnyUseCaseDef, SystemCalls } from './define-use-case';
+import type {
+  AnyUseCaseDef,
+  DeclaredCalls,
+  SystemCalls,
+} from './define-use-case';
 
 export type EventReactionSpec = {
   readonly name: string;
@@ -13,14 +17,6 @@ export type EventReactionSpec = {
   readonly calls?: readonly AnyUseCaseDef[];
   readonly emits?: readonly AnyEventDef[];
 };
-
-/**
- * `calls` Def: объявленные UC; не объявлены — пустой кортеж, чтобы
- * `OperationFromDef.call` не пропускал ни одного UC (D-43). Общий тип
- * (`Any*Def`) — любой список.
- */
-type DeclaredCalls<S extends { readonly calls?: readonly AnyUseCaseDef[] }> =
-  'calls' extends keyof S ? NonNullable<S['calls']> : readonly [];
 
 export type EventReactionDef<S extends EventReactionSpec> = S &
   Required<Pick<EventReactionSpec, 'touches' | 'emits'>> & {

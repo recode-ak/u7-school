@@ -452,3 +452,8 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 - api-author (Opus): прод-код без изменений поведения — комментарии к D-43 (`get-task` todo, `create-course-wish`); тесты: `load` методом вместо поля-стрелки (todo, course, questionnaire), `create-course-wish.uc.test.ts` — ручной учёт вызовов заменён `StubFacade.received`, `StubFacade` в `beforeEach`/`makeModule` (не копят `received`); questionnaire — без `as unknown as User`, Policy-тесты через `module.handle`; в todo добавлен тест «потребитель отдельно — `StubFacade`». 3568 pass (+1).
 - Оставлено: ссылки на D-42 про связь «UC → UC» (в силе); ручной `SystemCaller` в тесте вызываемого UC (системный вызов без человека); в платформе `dmg-core` — doc `UseCaseFromDef.load` с D-42 и поля-стрелки в `operation-from-def.test.ts` (вне границ шага → ревью).
 - Оркестратор: гайды «use case» (новый §3 «Устройство реализации») и «facade» переписаны по D-43.
+
+### Ф8а ревью — отчёт
+- reviewer (Opus), `c05ec0a3..HEAD`: error/warn нет, 8 info; проверены MAN-05, MAN-09, MAN-11, API-01, API-04, API-05, ERR-01, ERR-03, ERR-07, DOM-03, DOM-04, DOM-15, TST-02, TST-03, TST-05, CODE-03; остатков удалённого API нет.
+- api-author (Sonnet): ссылки D-43/caller.md п. 6; поля-стрелки шагов → методы (4 тестовых файла); `DeclaredCalls` — один тип в `define-use-case.ts`; `hasRespondent` — явный дженерик `rule`. 3568 pass.
+- Оркестратор: гайды (`journal`, нет фасада → `SERVER_INTERNAL`); TR-14.

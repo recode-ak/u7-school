@@ -1,6 +1,10 @@
 import type { AnyAggregateDef } from '../aggregate/define-aggregate';
 import type { AnyEventDef } from '../events/define-events';
-import type { AnyUseCaseDef, SystemCalls } from './define-use-case';
+import type {
+  AnyUseCaseDef,
+  DeclaredCalls,
+  SystemCalls,
+} from './define-use-case';
 
 /**
  * Расписание запуска, UTC. Структурно совпадает с legacy `JobSchedule`,
@@ -38,14 +42,6 @@ export type JobSpec = {
   readonly calls?: readonly AnyUseCaseDef[];
   readonly emits?: readonly AnyEventDef[];
 };
-
-/**
- * `calls` Def: объявленные UC; не объявлены — пустой кортеж, чтобы
- * `OperationFromDef.call` не пропускал ни одного UC (D-43). Общий тип
- * (`Any*Def`) — любой список.
- */
-type DeclaredCalls<S extends { readonly calls?: readonly AnyUseCaseDef[] }> =
-  'calls' extends keyof S ? NonNullable<S['calls']> : readonly [];
 
 export type JobDef<S extends JobSpec> = S &
   Required<Pick<JobSpec, 'scans' | 'emits'>> & {

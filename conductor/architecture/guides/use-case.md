@@ -19,7 +19,7 @@
 ## 3. Устройство реализации
 
 - Конструктор `(deps, module: typeof <M>ModuleDef)` → `super(<N>UcDef, deps, module)`: модуль передаёт себя (`ModuleMap` создаёт `new (deps, module)`), из него — `this.ref` для `SystemCaller` и лога операций.
-- Шаги базы — `protected`, порядок фиксирован: `checkCaller` → `parseInput` → `load` → `checkPolicy` → `checkRules` → `execute` → `parseOutput` → фиксация (приватная: `uow.commit()`, публикация, запись в `OperationLog`). Наследник пишет `load` и `execute` методами; переопределение `checkPolicy` — только для системного вызова без субъекта, ответственность наследника.
+- Шаги базы — `protected`, порядок фиксирован: `checkCaller` → `parseInput` → `load` → `checkPolicy` → `checkRules` → `execute` → `parseOutput` → фиксация (приватная: `uow.commit()`, публикация, запись в `OperationLog` через `journal` базы — инвариант, наследник UC его не вызывает). Наследник пишет `load` и `execute` методами; переопределение `checkPolicy` — только для системного вызова без субъекта, ответственность наследника.
 - `load(input, caller, trace)` собирает контекст Policy и правил; `execute(input, loaded, uow, caller, trace)` — домен и `uow.register`. `caller` и `trace` передаются в `this.call` как пришли.
 - Субъект — `this.subject(caller)`, время — `this.now()`; UoW создаёт база (`createUow(trace)`).
 

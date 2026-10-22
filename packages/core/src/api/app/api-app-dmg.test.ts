@@ -69,7 +69,9 @@ class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps, module: typeof MiniModuleDef) {
     super(ArchiveDoneTasksJobDef, deps, module);
   }
-  protected run = (job: JobRun) => job.forEach([], async () => ok());
+  protected run(job: JobRun) {
+    return job.forEach([], async () => ok());
+  }
 }
 
 const REQ = Trace.fromRequest({ requestId: 'r-1' });

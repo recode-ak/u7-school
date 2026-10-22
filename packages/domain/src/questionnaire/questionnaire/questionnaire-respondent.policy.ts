@@ -6,11 +6,11 @@ import { definePolicy, rule } from 'dmg-core';
  * `rule()` без субъекта сам возвращает отказ, `check` вызывается лишь
  * при наличии субъекта.
  */
-const hasRespondent = rule({
+const hasRespondent = rule<{ readonly uuid: string }>({
   name: 'hasRespondent',
   label: 'Есть респондент',
   denyMessage: 'Анкету можно запустить только за человека-респондента.',
-  check: (_subject: { readonly uuid: string }) => true,
+  check: () => true,
 });
 
 /**

@@ -128,7 +128,7 @@ export abstract class UseCaseFromDef<
    * `trace` — для вызова UC другого модуля (`this.call`). Ошибки —
    * объявленные в `errors` и базовые ядра: отказ UC другого модуля
    * (`ACCESS_DENIED`, `UNAUTHORIZED`, …) приходит как есть, и UC
-   * возвращает его дальше (D-42).
+   * возвращает его дальше (D-43).
    */
   protected abstract load(
     input: ParsedInputOf<D>,

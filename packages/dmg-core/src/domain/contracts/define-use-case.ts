@@ -82,6 +82,15 @@ export type SystemCalls<S> = S extends {
   ? { readonly calls: { readonly [K in keyof C]: SystemCallableUc<C[K]> } }
   : unknown;
 
+/**
+ * `calls` Def: объявленные UC; не объявлены — пустой кортеж, чтобы
+ * `OperationFromDef.call` не пропускал ни одного UC (D-43). Общий тип
+ * (`Any*Def`) — любой список.
+ */
+export type DeclaredCalls<
+  S extends { readonly calls?: readonly AnyUseCaseDef[] },
+> = 'calls' extends keyof S ? NonNullable<S['calls']> : readonly [];
+
 export function defineUseCase<const S extends UseCaseSpec>(
   spec: S & SystemCalls<S>,
 ): UseCaseDef<S> {

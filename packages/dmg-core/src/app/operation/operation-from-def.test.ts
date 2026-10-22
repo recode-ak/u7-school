@@ -127,7 +127,9 @@ class ShowTask extends UseCaseFromDef<
   constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
     super(ShowTaskUcDef, deps, module);
   }
-  protected load = async () => ok(undefined);
+  protected async load() {
+    return ok(undefined);
+  }
   protected async execute(
     input: { taskId: string },
     _: undefined,
@@ -150,7 +152,9 @@ class Silent extends UseCaseFromDef<
   constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
     super(SilentUcDef, deps, module);
   }
-  protected load = async () => ok(undefined);
+  protected async load() {
+    return ok(undefined);
+  }
   protected async execute(
     input: { taskId: string },
     _: undefined,
@@ -173,7 +177,9 @@ class Translate extends UseCaseFromDef<
   constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
     super(TranslateUcDef, deps, module);
   }
-  protected load = async () => ok(undefined);
+  protected async load() {
+    return ok(undefined);
+  }
   protected async execute(
     input: { taskId: string },
     _: undefined,
@@ -225,7 +231,7 @@ class DigestJob extends JobFromDef<typeof DigestJobDef, ModuleDeps> {
   constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
     super(DigestJobDef, deps, module);
   }
-  protected run = async (job: JobRun) => {
+  protected async run(job: JobRun) {
     const task = await this.call(
       GetTaskUcDef,
       { taskId: TASK },
@@ -233,18 +239,18 @@ class DigestJob extends JobFromDef<typeof DigestJobDef, ModuleDeps> {
       job.trace,
     );
     return { processed: task.ok ? 1 : 0, failed: task.ok ? 0 : 1 };
-  };
+  }
 }
 
 class SilentJob extends JobFromDef<typeof SilentJobDef, ModuleDeps> {
   constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
     super(SilentJobDef, deps, module);
   }
-  protected run = async (job: JobRun) => {
+  protected async run(job: JobRun) {
     // @ts-expect-error у задания silentJob нет calls
     await this.call(GetTaskUcDef, { taskId: TASK }, this.caller, job.trace);
     return { processed: 0, failed: 0 };
-  };
+  }
 }
 
 const removed = (): EnvelopeOf<typeof UserEvents.removed> => ({
@@ -392,8 +398,12 @@ class UowProbeUc extends UseCaseFromDef<
   constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
     super(SilentUcDef, deps, module);
   }
-  protected load = async () => ok(undefined);
-  protected execute = async () => ok({ status: 'нет' });
+  protected async load() {
+    return ok(undefined);
+  }
+  protected async execute() {
+    return ok({ status: 'нет' });
+  }
   uow(trace: Trace): UnitOfWork {
     return this.createUow(trace);
   }
@@ -403,7 +413,9 @@ class UowProbeEr extends ReactionFromDef<typeof SilentErDef, ModuleDeps> {
   constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
     super(SilentErDef, deps, module);
   }
-  protected react = async () => ok();
+  protected async react() {
+    return ok();
+  }
   uow(trace: Trace): UnitOfWork {
     return this.createUow(trace);
   }
@@ -413,7 +425,9 @@ class UowProbeJob extends JobFromDef<typeof SilentJobDef, ModuleDeps> {
   constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
     super(SilentJobDef, deps, module);
   }
-  protected run = async () => ({ processed: 0, failed: 0 });
+  protected async run() {
+    return { processed: 0, failed: 0 };
+  }
   uow(trace: Trace): UnitOfWork {
     return this.createUow(trace);
   }

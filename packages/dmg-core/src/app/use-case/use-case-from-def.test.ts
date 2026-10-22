@@ -160,8 +160,12 @@ describe('UseCaseFromDef.handle — отказы до операции', () => {
           moduleOf(SystemUcDef),
         );
       }
-      protected load = (i: { taskId: string }) => loadTask(tasks, i);
-      protected execute = async () => ok({});
+      protected load(i: { taskId: string }) {
+        return loadTask(tasks, i);
+      }
+      protected async execute() {
+        return ok({});
+      }
     }
     const res = await new SystemComplete().handle(
       { taskId: TASK },
@@ -185,8 +189,12 @@ describe('UseCaseFromDef.handle — отказы до операции', () => {
           moduleOf(SweepUcDef),
         );
       }
-      protected load = (i: { taskId: string }) => loadTask(tasks, i);
-      protected execute = async () => ok({});
+      protected load(i: { taskId: string }) {
+        return loadTask(tasks, i);
+      }
+      protected async execute() {
+        return ok({});
+      }
     }
     expectOk(await new Sweep().handle({ taskId: TASK }, system, REQ));
   });
@@ -269,16 +277,14 @@ describe('UseCaseFromDef.handle — операция', () => {
           moduleOf(BadOutputUcDef),
         );
       }
-      protected load = (i: { taskId: string }) => loadTask(tasks, i);
-      protected execute = async (
-        _: unknown,
-        { task }: Loaded,
-        uow: UnitOfWork,
-      ) => {
+      protected load(i: { taskId: string }) {
+        return loadTask(tasks, i);
+      }
+      protected async execute(_: unknown, { task }: Loaded, uow: UnitOfWork) {
         task.complete(T0);
         uow.register(task, tasks);
         return ok({ taskId: 'не uuid' });
-      };
+      }
     }
     const res = await new BadOutput().handle(
       { taskId: TASK },
@@ -328,8 +334,12 @@ describe('UseCaseFromDef — ref', () => {
       constructor() {
         super(CompleteTaskUcDef, { app: ctx.app, facades, tasks }, moduleOf());
       }
-      protected load = (i: { taskId: string }) => loadTask(tasks, i);
-      protected execute = async () => ok({});
+      protected load(i: { taskId: string }) {
+        return loadTask(tasks, i);
+      }
+      protected async execute() {
+        return ok({});
+      }
     }
     expect(() => new Alien()).toThrow(
       'UC completeTask не входит в модуль todo',
@@ -354,8 +364,12 @@ describe('UseCaseFromDef — вызывающий system (D-43)', () => {
         moduleOf(SystemUcDef),
       );
     }
-    protected load = (i: { taskId: string }) => loadTask(tasks, i);
-    protected execute = async () => ok({});
+    protected load(i: { taskId: string }) {
+      return loadTask(tasks, i);
+    }
+    protected async execute() {
+      return ok({});
+    }
   }
   const from: OperationRef = {
     kind: 'useCase',
@@ -431,16 +445,18 @@ describe('UseCaseFromDef.subject', () => {
         moduleOf(WhoAmIUcDef),
       );
     }
-    protected load = (i: { taskId: string }) => loadTask(tasks, i);
-    protected execute = async (
+    protected load(i: { taskId: string }) {
+      return loadTask(tasks, i);
+    }
+    protected async execute(
       _: unknown,
       __: Loaded,
       ___: UnitOfWork,
       caller: Caller<User>,
-    ) => {
+    ) {
       this.seen = this.subject(caller).uuid;
       return ok({});
-    };
+    }
     seen: string | undefined;
   }
 
@@ -471,9 +487,13 @@ describe('UseCaseFromDef — типы', () => {
           TodoModuleDef,
         );
       }
-      protected load = (i: { taskId: string }) => loadTask(tasks, i);
+      protected load(i: { taskId: string }) {
+        return loadTask(tasks, i);
+      }
       // @ts-expect-error: OTHER_FAILED нет в errors CompleteTaskUcDef
-      protected execute = async () => OtherErrors.FAILED.err();
+      protected async execute() {
+        return OtherErrors.FAILED.err();
+      }
     }
     expect(Undeclared).toBeDefined();
   });
@@ -510,17 +530,15 @@ describe('UseCaseFromDef — доменные правила', () => {
     constructor() {
       super(RuledUcDef, { app: ctx.app, facades, tasks }, moduleOf(RuledUcDef));
     }
-    protected load = (i: { taskId: string }) => loadTask(tasks, i);
-    protected execute = async (
-      _: unknown,
-      { task }: Loaded,
-      uow: UnitOfWork,
-    ) => {
+    protected load(i: { taskId: string }) {
+      return loadTask(tasks, i);
+    }
+    protected async execute(_: unknown, { task }: Loaded, uow: UnitOfWork) {
       calls.push('execute');
       task.complete(T0);
       uow.register(task, tasks);
       return ok({});
-    };
+    }
   }
 
   beforeEach(() => {
@@ -573,8 +591,12 @@ describe('UseCaseFromDef — доменные правила', () => {
           moduleOf(UndeclaredUcDef),
         );
       }
-      protected load = (i: { taskId: string }) => loadTask(tasks, i);
-      protected execute = async () => ok({});
+      protected load(i: { taskId: string }) {
+        return loadTask(tasks, i);
+      }
+      protected async execute() {
+        return ok({});
+      }
     }
     expect(Undeclared).toBeDefined();
   });
@@ -695,8 +717,12 @@ describe('UseCaseFromDef — лог операций (D-43, Р6)', () => {
           moduleOf(SweepUcDef),
         );
       }
-      protected load = (i: { taskId: string }) => loadTask(tasks, i);
-      protected execute = async () => ok({});
+      protected load(i: { taskId: string }) {
+        return loadTask(tasks, i);
+      }
+      protected async execute() {
+        return ok({});
+      }
     }
     const caller = new SystemCaller<User>(JOB, user(OWNER));
     await new Sweep().handle({ taskId: TASK }, caller, REQ);

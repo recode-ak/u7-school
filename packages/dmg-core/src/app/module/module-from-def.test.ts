@@ -56,8 +56,12 @@ class CompleteTask extends UseCaseFromDef<
   constructor(deps: Deps, module: typeof MiniModuleDef) {
     super(CompleteTaskUcDef, deps, module);
   }
-  protected load = async () => TaskErrors.NOT_FOUND.err({ taskId: 'x' });
-  protected execute = async () => ok({});
+  protected async load() {
+    return TaskErrors.NOT_FOUND.err({ taskId: 'x' });
+  }
+  protected async execute() {
+    return ok({});
+  }
 }
 
 class ArchiveRemoved extends ReactionFromDef<
@@ -77,10 +81,10 @@ class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   constructor(deps: Deps, module: typeof MiniModuleDef) {
     super(ArchiveDoneTasksJobDef, deps, module);
   }
-  protected run = (job: JobRun) => {
+  protected run(job: JobRun) {
     this.resolve.ran.push(job.trace);
     return job.forEach([], async () => ok());
-  };
+  }
 }
 
 const map = {
