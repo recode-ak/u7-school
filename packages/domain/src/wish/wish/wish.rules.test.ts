@@ -177,3 +177,36 @@ describe('WishRules.moduleEnrollable', () => {
     expect(error.payload).toEqual({ moduleId: MODULE });
   });
 });
+
+describe('WishRules.cancellable', () => {
+  const { cancellable } = WishRules.rules;
+
+  it('описание правила ссылается на WISH_NOT_FOUND', () => {
+    expect(cancellable.dmg).toBe('domainRule');
+    expect(cancellable.error.code).toBe('WISH_NOT_FOUND');
+  });
+
+  it.each(['expressed', 'confirmed'] as const)('%s — ok', (status) => {
+    expectOk(cancellable.check({ wish: wish(status) }));
+  });
+
+  it.each(['pending', 'cancelled', 'abandoned', 'fulfilled'] as const)(
+    '%s — WISH_NOT_FOUND с целью-курсом',
+    (status) => {
+      const error = expectErr(
+        cancellable.check({ wish: wish(status) }),
+        'WISH_NOT_FOUND',
+      );
+      expect(error.kind).toBe('not_found');
+      expect(error.payload).toEqual({ userId: USER, courseId: COURSE });
+    },
+  );
+
+  it('цель-модуль — payload с moduleId', () => {
+    const error = expectErr(
+      cancellable.check({ wish: wish('fulfilled', module) }),
+      'WISH_NOT_FOUND',
+    );
+    expect(error.payload).toEqual({ userId: USER, moduleId: MODULE });
+  });
+});

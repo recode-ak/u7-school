@@ -21,6 +21,7 @@ const {
   NOT_CANCELLABLE,
   NOT_FULFILLABLE,
   ALREADY_EXISTS,
+  NOT_FOUND,
 } = WishErrors;
 
 export const WishArDef = defineAggregate({
@@ -237,6 +238,20 @@ export class WishAr extends Aggregate<typeof WishArDef> {
     return target.kind === 'course'
       ? ALREADY_EXISTS.make({ userId, courseId: target.courseId, status })
       : ALREADY_EXISTS.make({ userId, moduleId: target.moduleId, status });
+  }
+
+  /**
+   * Ошибка «желание не найдено» от лица этого желания: для вызывающего
+   * неотменяемое/нереализуемое желание неотличимо от отсутствующего
+   * (сохраняемое поведение legacy). Цель и пользователь — из своего state,
+   * статус наружу не отдаётся (D-39). Значение ошибки, не `Result` — метод
+   * остаётся в `ReadonlyAr`.
+   */
+  notFound(): ErrorOf<typeof NOT_FOUND> {
+    const { userId, target } = this.state;
+    return target.kind === 'course'
+      ? NOT_FOUND.make({ userId, courseId: target.courseId })
+      : NOT_FOUND.make({ userId, moduleId: target.moduleId });
   }
 
   /**

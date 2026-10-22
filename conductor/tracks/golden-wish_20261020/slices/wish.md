@@ -502,3 +502,9 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ф9.1 пакет — api-author (Sonnet)
 Адаптер TR-11 `GetModuleEnrollmentUc` над legacy `getModulePlace` (`packages/course`), регистрация в `courseModuleMap`; `CreateModuleWishUc` (`load` — `this.call` + желания на цель, `execute` — `createForModule` + `uow.register`). Перенесены все случаи legacy (случай «модуль вне опубликованных» совпал с «недоступен»). `kind` ошибки `not_found` вместо legacy `not-found` — по платформе (мост TR-1). Адаптер `course` — код раньше теста. Гейт и `check` зелёные (3597 pass).
+
+### Ф9.2 домен — domain-author (Sonnet)
+`WishAr.notFound()` (по образцу `alreadyExists`); правило `WishRules.rules.cancellable` (`{ wish }`: `canCancel()` → ok, иначе `wish.notFound()`); `CancelWishUcDef` (`policy: canCancel`, `rules: [cancellable]`, вход `WishTargetVo`, выход `{}`). «Нет желания» → `NOT_FOUND` из `load` (отказ загрузки, образец `complete-task`/`get-task`; Policy требует `wish` в контексте); «не отменяемо» → правило после Policy. TDD соблюдён.
+
+### Ф9.2 пакет — api-author (Sonnet)
+`CancelWishUc`: `load` — `findCurrentByUserAndTarget`, нет → `NOT_FOUND`; `execute` — `cancel` → `uow.register`. 12 тестов (все случаи legacy + `ACCESS_DENIED` чужого желания подменой поиска, `UNAUTHORIZED`). Правка оркестратора: подмена ошибки перехода в UC (`err(wish.notFound())`) убрана — `return cancelled`, `WISH_NOT_CANCELLABLE` в `errors` Def (недостижим через UC, ERR-02). Гейт и `check` зелёные (3623 pass).

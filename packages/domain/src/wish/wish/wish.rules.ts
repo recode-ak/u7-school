@@ -92,10 +92,30 @@ const moduleEnrollable = domainRule({
       : WishErrors.MODULE_NOT_FOUND.err({ moduleId }),
 });
 
+/** Контекст правила отмены: желание, загруженное UC. */
+export type CancellableCtx = { readonly wish: ReadonlyAr<WishAr> };
+
+/**
+ * Отменяется только отменяемое желание (expressed | confirmed) — допуск без
+ * субъекта (D-40). Иное состояние (pending — для него `abandon`, финальные)
+ * для вызывающего неотличимо от отсутствия желания: `WISH_NOT_FOUND`
+ * (сохраняемое поведение legacy; `NOT_CANCELLABLE` через UC недостижим).
+ * Решение — здесь, в UC нет ветвления по статусу (API-01).
+ */
+const cancellable = domainRule({
+  name: 'cancellable',
+  label: 'Желание можно отменить',
+  description:
+    'Отмена доступна для выраженного или подтверждённого желания; ожидающее анкету и завершённые для вызывающего — «желание не найдено».',
+  error: WishErrors.NOT_FOUND,
+  check: ({ wish }: CancellableCtx) =>
+    wish.canCancel() ? ok() : err(wish.notFound()),
+});
+
 export const WishRules = defineRules({
   name: 'wish',
   label: 'Правила желаний',
   description:
     'Допустимость действий с желаниями при текущих состояниях желаний пользователя.',
-  rules: { courseEnrollable, moduleEnrollable, unique },
+  rules: { cancellable, courseEnrollable, moduleEnrollable, unique },
 });

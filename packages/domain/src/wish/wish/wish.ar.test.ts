@@ -374,6 +374,22 @@ describe('вопросы к желанию', () => {
     });
   });
 
+  it('notFound — WISH_NOT_FOUND с userId и courseId цели (без статуса)', () => {
+    const error = restore('pending').notFound();
+    expect(error.code).toBe('WISH_NOT_FOUND');
+    expect(error.kind).toBe('not_found');
+    expect(error.payload).toEqual({ userId: USER, courseId: target.courseId });
+  });
+
+  it('notFound — цель-модуль даёт moduleId', () => {
+    const moduleId = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
+    const wish = WishAr.restore({
+      ...stored('fulfilled'),
+      target: { kind: 'module', moduleId },
+    });
+    expect(wish.notFound().payload).toEqual({ userId: USER, moduleId });
+  });
+
   it('статус не читается снаружи — только вопросы и alreadyExists (D-39)', () => {
     expect('status' in restore('expressed')).toBe(false);
   });
