@@ -6,7 +6,6 @@ import * as v from 'valibot';
 import type { ModuleDeps } from '#core/app/context';
 import { ModuleFacade } from '#core/app/facade/module-facade';
 import { ModuleFacades } from '#core/app/facade/module-facades';
-import { requestTrace, type Trace } from '#core/app/trace';
 import type { UnitOfWork } from '#core/app/uow/unit-of-work';
 import { UseCaseFromDef } from '#core/app/use-case/use-case-from-def';
 import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
@@ -16,6 +15,7 @@ import { allowAll } from '#core/domain/policy/policy';
 import { type Caller, UserCaller } from '#core/kernel/caller/caller';
 import { BaseEntityFields, F } from '#core/kernel/fields/fields';
 import { ok } from '#core/kernel/result/result';
+import { Trace } from '#core/kernel/trace/trace';
 import type { ExampleUser } from '#core/testing/example/app/app-user';
 import {
   GetTaskUcDef,
@@ -115,7 +115,7 @@ class Sneaky extends UseCaseFromDef<
 }
 
 const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
-const REQ = requestTrace({ requestId: 'r-1' });
+const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const as = (uuid: string) =>
   new UserCaller<ExampleUser>({ uuid, hasRole: () => false });
 

@@ -17,21 +17,22 @@ import {
 import { CoreErrors } from '#core/kernel/errors/core-errors';
 import { BaseEntityFields, F } from '#core/kernel/fields/fields';
 import { err, ok } from '#core/kernel/result/result';
+import { Trace } from '#core/kernel/trace/trace';
 import {
   GetTaskUcDef,
+  TaskAr,
   TaskErrors,
   TodoModuleDef,
 } from '#core/testing/example/todo/index';
 import { UserEvents } from '#core/testing/example/users/index';
 import { expectErr, expectOk, testAppContext } from '#core/testing/index';
 import { StubFacade } from '#core/testing/stub-facade';
-import { OWNER, T0, TASK, taskRow } from '../app.fixture';
+import { MemoryTasks, OWNER, T0, TASK, taskRow } from '../app.fixture';
 import type { ModuleDeps } from '../context';
 import type { EnvelopeOf } from '../events/event-envelope';
 import { ModuleFacades } from '../facade/module-facades';
 import { JobFromDef, type JobRun } from '../job/job-from-def';
 import { ReactionFromDef } from '../reaction/reaction-from-def';
-import { jobTrace, requestTrace, type Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { UseCaseFromDef } from '../use-case/use-case-from-def';
 
@@ -115,7 +116,7 @@ const DigestModuleDef = defineModule({
 });
 
 type User = { readonly uuid: string };
-const REQ = requestTrace({ requestId: 'r-1' });
+const REQ = Trace.fromRequest({ requestId: 'r-1' });
 
 class ShowTask extends UseCaseFromDef<
   typeof ShowTaskUcDef,
@@ -358,15 +359,14 @@ describe('OperationFromDef.call — ER и Job', () => {
     const [call] = todo.received;
     expect(call?.caller).toEqual(new SystemCaller(er.ref));
     expect(call?.caller.person()).toBeUndefined();
-    expect(call?.trace).toEqual({
-      cause: { kind: 'event', eventId: 'e-removed' },
-      correlationId: 'c-1',
-    });
+    expect(call?.trace).toEqual(
+      Trace.fromEvent({ eventId: 'e-removed', correlationId: 'c-1' }),
+    );
   });
 
   test('задание — SystemCaller задания без человека, след прогона', async () => {
     const job = new DigestJob(deps, DigestModuleDef);
-    const run = jobTrace();
+    const run = Trace.forJob(DigestJobDef);
     expect(expectOk(await job.handle(run))).toEqual({
       processed: 1,
       failed: 0,
@@ -379,5 +379,75 @@ describe('OperationFromDef.call — ER и Job', () => {
   test('ER и Job без calls — вызов не компилируется', () => {
     expect(new SilentEr(deps, DigestModuleDef).ref.name).toBe('silentEr');
     expect(new SilentJob(deps, DigestModuleDef).ref.name).toBe('silentJob');
+  });
+});
+
+// Пробы `createUow`: UoW операции со сверкой по её Def (D-43, Р8).
+class UowProbeUc extends UseCaseFromDef<
+  typeof SilentUcDef,
+  ModuleDeps,
+  undefined,
+  User
+> {
+  constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
+    super(SilentUcDef, deps, module);
+  }
+  protected load = async () => ok(undefined);
+  protected execute = async () => ok({ status: 'нет' });
+  uow(trace: Trace): UnitOfWork {
+    return this.createUow(trace);
+  }
+}
+
+class UowProbeEr extends ReactionFromDef<typeof SilentErDef, ModuleDeps> {
+  constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
+    super(SilentErDef, deps, module);
+  }
+  protected react = async () => ok();
+  uow(trace: Trace): UnitOfWork {
+    return this.createUow(trace);
+  }
+}
+
+class UowProbeJob extends JobFromDef<typeof SilentJobDef, ModuleDeps> {
+  constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
+    super(SilentJobDef, deps, module);
+  }
+  protected run = async () => ({ processed: 0, failed: 0 });
+  uow(trace: Trace): UnitOfWork {
+    return this.createUow(trace);
+  }
+}
+
+const tasks = new MemoryTasks();
+
+describe('OperationFromDef.createUow (D-43, Р8)', () => {
+  test('UC — события сверяются с emits, агрегаты не ограничены', async () => {
+    const uow = new UowProbeUc(deps, DigestModuleDef).uow(REQ);
+    const task = expectOk(
+      TaskAr.create({ uuid: TASK, ownerId: OWNER, title: 'Хлеб' }, T0),
+    );
+    uow.register(task, tasks);
+    await expect(uow.commit()).rejects.toThrow(
+      'UoW: событие todo.task.created не заявлено в emits',
+    );
+  });
+
+  test('ER — агрегат вне touches — исключение', () => {
+    const uow = new UowProbeEr(deps, DigestModuleDef).uow(REQ);
+    expect(() => uow.register(TaskAr.restore(taskRow(TASK)), tasks)).toThrow(
+      'UoW: агрегат task не заявлен в touches',
+    );
+  });
+
+  test('Job — touches = scans; в production — warn от имени задания', () => {
+    const prod = testAppContext({ mode: 'production', at: T0 });
+    const job = new UowProbeJob({ ...deps, app: prod.app }, DigestModuleDef);
+    job
+      .uow(Trace.forJob(SilentJobDef))
+      .register(TaskAr.restore(taskRow(TASK)), tasks);
+    expect(prod.logs.map((l) => [l.level, l.source, l.message])).toEqual([
+      ['warn', 'silentJob', 'UoW: агрегат task не заявлен в touches'],
+    ]);
   });
 });

@@ -9,11 +9,11 @@ import type {
 import type { Caller, Identified } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import type { Result } from '#core/kernel/result/result';
+import type { Trace } from '#core/kernel/trace/trace';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { JobFromDef, JobReport } from '../job/job-from-def';
 import type { ReactionFromDef } from '../reaction/reaction-from-def';
-import type { Trace } from '../trace';
 import type { UseCaseHandler } from '../use-case/use-case-from-def';
 
 /**
@@ -165,7 +165,7 @@ export class ModuleFromDef<
   }
 
   /**
-   * Прогон Job модуля со следом вызывающего (`jobTrace`). Job другого
+   * Прогон Job модуля со следом вызывающего (`Trace.forJob`). Job другого
    * модуля — ошибка компиляции, при стёртом типе — исключение сборки.
    */
   runJob(

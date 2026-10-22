@@ -7,8 +7,7 @@ import {
   JsonlOperationLog,
   ModuleFacade,
   ModuleFacades,
-  type RequestMeta,
-  requestTrace,
+  Trace,
 } from 'dmg-core/app';
 import {
   expectErr,
@@ -88,8 +87,8 @@ async function titles(owner = ANNA): Promise<string[]> {
   return expectOk(res).map((t) => `${t.title}:${t.status}`);
 }
 
-/** Мета запроса транспорта: в тестах — новый requestId на вызов. */
-const req = (): RequestMeta => ({ requestId: crypto.randomUUID() });
+/** След запроса транспорта: в тестах — новый requestId на вызов. */
+const req = (): Trace => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
 /** Реакции legacy-шина вызывает без ожидания — дать им отработать. */
 const settle = () => new Promise((r) => setTimeout(r, 10));
@@ -145,8 +144,8 @@ describe('todo: событие → ER', () => {
       module: 'admin',
       name: 'removeUsers',
     });
-    const meta = { requestId: 'r-remove' };
-    expectOk(await api.run(RemoveUserUcDef, { userId: ANNA }, admin, meta));
+    const trace = Trace.fromRequest({ requestId: 'r-remove' });
+    expectOk(await api.run(RemoveUserUcDef, { userId: ANNA }, admin, trace));
     await settle();
     expect(archived).toEqual(['r-remove']);
     expect([await titles(ANNA), await titles(BORIS)]).toEqual([
@@ -181,7 +180,7 @@ describe('todo: фасад', () => {
       GetTaskUcDef,
       { taskId },
       from(),
-      requestTrace(req()),
+      req(),
     );
     return res.ok ? ok(TaskAr.readonly(res.value)) : res;
   };

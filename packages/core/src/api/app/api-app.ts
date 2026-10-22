@@ -7,11 +7,7 @@ import {
   type Result,
   type UseCaseErrorOf,
 } from 'dmg-core';
-import {
-  type AnyModuleFromDef,
-  type RequestMeta,
-  requestTrace,
-} from 'dmg-core/app';
+import type { AnyModuleFromDef, Trace } from 'dmg-core/app';
 import { errBadRequest, throwError } from '#domain-legacy/errors/error-helpers';
 import {
   AppException,
@@ -91,17 +87,17 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
   }
 
   /**
-   * Исполнение UC DMG по его Def: отказ — значение `Err`. `meta` строит
-   * адаптер транспорта: `requestId` от клиента, а если его нет — сам
-   * (`incomingRequestId`, с `warn`).
+   * Исполнение UC DMG по его Def: отказ — значение `Err`. След строит
+   * адаптер транспорта на входе (`Trace.fromRequest`: `requestId` от
+   * клиента, а если его нет — создаётся с `warn`, ERR-07; caller.md §2 п. 7).
    */
   async run<D extends AnyUseCaseDef>(
     uc: D,
     input: InputOf<D>,
     caller: Caller<DmgActor<TActor>>,
-    meta: RequestMeta,
+    trace: Trace,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    return this.dmgModule(uc).handle(uc, input, caller, requestTrace(meta));
+    return this.dmgModule(uc).handle(uc, input, caller, trace);
   }
 
   execute<N extends GetUcNamesFromMeta<TMeta>>(
@@ -117,24 +113,19 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     uc: D,
     input: InputOf<D>,
     caller: Caller<DmgActor<TActor>>,
-    meta: RequestMeta,
+    trace: Trace,
   ): Promise<OutputOf<D>>;
   async execute(
     uc: string | AnyUseCaseDef,
     attrs: unknown,
     who?: unknown,
-    meta?: RequestMeta,
+    trace?: Trace,
   ): Promise<unknown> {
     if (typeof uc !== 'string') {
-      if (!isCaller<DmgActor<TActor>>(who) || meta === undefined) {
-        throw new Error(`ApiApp: для UC ${uc.name} нужны Caller и meta`);
+      if (!isCaller<DmgActor<TActor>>(who) || trace === undefined) {
+        throw new Error(`ApiApp: для UC ${uc.name} нужны Caller и Trace`);
       }
-      const res = await this.dmgModule(uc).handle(
-        uc,
-        attrs,
-        who,
-        requestTrace(meta),
-      );
+      const res = await this.dmgModule(uc).handle(uc, attrs, who, trace);
       if (!res.ok) throw new AppException(toLegacyError(res.error));
       return res.value;
     }

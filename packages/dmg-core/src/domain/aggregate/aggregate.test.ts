@@ -10,7 +10,6 @@ import {
   Aggregate,
   type ErrorsOf,
   type EventsOf,
-  newEntity,
   type StateOf,
 } from './aggregate';
 import { defineAggregate } from './define-aggregate';
@@ -80,7 +79,11 @@ class TaskAr extends Aggregate<typeof TaskArDef> {
     at: Timestamp,
   ): Result<TaskAr, TaskError> {
     const created = TaskEvents.created.make({ taskId: uuid });
-    const state = { ...newEntity(uuid, at), title, status: 'open' as const };
+    const state = {
+      ...TaskAr.newState(uuid, at),
+      title,
+      status: 'open' as const,
+    };
     return ok(new TaskAr(state, [created]));
   }
 
@@ -289,6 +292,16 @@ describe('Aggregate', () => {
   });
 
   describe('версия (оптимистичная блокировка)', () => {
+    it('create на базе newState — создан и изменён в at, версия 0', () => {
+      const ar = expectOk(TaskAr.create(ID, 'Купить хлеб', T0));
+      expect(ar.snapshot()).toMatchObject({
+        uuid: ID,
+        createdAt: T0,
+        updatedAt: T0,
+        version: 0,
+      });
+    });
+
     it('новый агрегат — версия 0, сохранённой версии нет', () => {
       const ar = expectOk(TaskAr.create(ID, 'Купить хлеб', T0));
       expect(ar.version).toBe(0);

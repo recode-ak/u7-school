@@ -1,5 +1,5 @@
 import type { AnyJobDef, AnyModuleDef, DomainError, Result } from 'dmg-core';
-import { type JobReport, jobTrace, type Trace } from 'dmg-core/app';
+import { type JobReport, Trace } from 'dmg-core/app';
 import { Job, type JobSchedule } from '#api-legacy/job/job';
 
 /**
@@ -48,7 +48,7 @@ class LegacyJob<M extends AnyModuleDef> extends Job {
   }
 
   async execute(): Promise<void> {
-    const res = await this.module.runJob(this.def, jobTrace());
+    const res = await this.module.runJob(this.def, Trace.forJob(this.def));
     if (!res.ok) {
       throw new Error(`Job ${this.jobName}: ${res.error.code}`);
     }

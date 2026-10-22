@@ -8,7 +8,7 @@ import type {
 import type { Facade, SystemCallable } from '#core/domain/contracts/facade';
 import type { Caller, SystemCaller } from '#core/kernel/caller/caller';
 import type { Result } from '#core/kernel/result/result';
-import type { Trace } from '../trace';
+import type { Trace } from '#core/kernel/trace/trace';
 
 /**
  * Модуль так, как его видит фасад: Def и вход в его UC (`ModuleFromDef`

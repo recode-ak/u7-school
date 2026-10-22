@@ -7,6 +7,7 @@ import {
   UserCaller,
 } from '#core/kernel/caller/caller';
 import { ok } from '#core/kernel/result/result';
+import { Trace } from '#core/kernel/trace/trace';
 import {
   CompleteTaskUcDef,
   CreateTaskUcDef,
@@ -20,11 +21,10 @@ import {
 import { expectOk } from '#core/testing/expect-result';
 import { StubFacade } from '#core/testing/stub-facade';
 import { OWNER, TASK, taskRow } from '../app.fixture';
-import { requestTrace } from '../trace';
 import { type FacadeModule, ModuleFacade } from './module-facade';
 import { ModuleFacades } from './module-facades';
 
-const REQ = requestTrace({ requestId: 'r-1' });
+const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const from: OperationRef = { kind: 'useCase', module: 'notes', name: 'notify' };
 const caller = new SystemCaller(from, new UserCaller({ uuid: OWNER }));
 

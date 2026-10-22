@@ -3,8 +3,8 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ModuleFacades } from '#core/app/facade/module-facades';
-import { requestTrace } from '#core/app/trace';
 import { UserCaller } from '#core/kernel/caller/caller';
+import { Trace } from '#core/kernel/trace/trace';
 import type { ExampleUser } from '#core/testing/example/app/app-user';
 import { TodoModuleDef } from '#core/testing/example/todo/index';
 import { OPEN_TASKS_LIMIT } from '#core/testing/example/todo/task/task.rules';
@@ -13,7 +13,7 @@ import { TaskJsonRepo } from '../../infra/task.json-repo';
 import { CreateTaskUc } from './create-task.uc';
 
 const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
-const REQ = requestTrace({ requestId: 'r-1' });
+const REQ = Trace.fromRequest({ requestId: 'r-1' });
 
 const owner = new UserCaller<ExampleUser>({
   uuid: OWNER,

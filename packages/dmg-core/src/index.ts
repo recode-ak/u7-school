@@ -8,7 +8,6 @@ export {
   Aggregate,
   type ErrorsOf,
   type EventsOf,
-  newEntity,
   type RejectOf,
   type StateOf,
   type TransitionOf,

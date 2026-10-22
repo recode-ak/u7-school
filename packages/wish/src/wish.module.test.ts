@@ -13,7 +13,7 @@ import {
 } from '@u7-scl/domain/questionnaire/contract';
 import { CreateCourseWishUcDef } from '@u7-scl/domain/wish';
 import { ok, UserCaller } from 'dmg-core';
-import { ModuleFacades, requestTrace } from 'dmg-core/app';
+import { ModuleFacades, Trace } from 'dmg-core/app';
 import { expectOk, StubFacade, testAppContext } from 'dmg-core/testing';
 import { WishJsonRepo } from './infra/wish.json-repo';
 import { createWishModule } from './wish.module';
@@ -68,7 +68,7 @@ describe('createWishModule', () => {
       CreateCourseWishUcDef,
       { courseId },
       new UserCaller(ACTOR),
-      requestTrace({ requestId: 'r-1' }),
+      Trace.fromRequest({ requestId: 'r-1' }),
     );
 
     expect(expectOk(res)).toEqual({ outcome: 'instant' });

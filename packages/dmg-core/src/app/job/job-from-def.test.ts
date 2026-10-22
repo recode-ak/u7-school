@@ -3,6 +3,7 @@ import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
+import { Trace } from '#core/kernel/trace/trace';
 import { testAppContext } from '#core/testing/app-context';
 import {
   ArchiveDoneTasksJobDef,
@@ -15,7 +16,6 @@ import { expectErr, expectOk } from '#core/testing/index';
 import { MemoryTasks, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { ModuleDeps } from '../context';
 import { ModuleFacades } from '../facade/module-facades';
-import { jobTrace, type Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { JobFromDef, type JobReport, type JobRun } from './job-from-def';
 
@@ -59,7 +59,7 @@ beforeEach(() => {
   tasks.rows.set(TASK, taskRow(TASK, 'done'));
   tasks.rows.set(TASK_2, taskRow(TASK_2, 'done'));
   job = new ArchiveDoneTasks({ app: ctx.app, facades, tasks });
-  run = jobTrace();
+  run = Trace.forJob(ArchiveDoneTasksJobDef);
 });
 
 describe('JobFromDef.handle', () => {
@@ -87,7 +87,7 @@ describe('JobFromDef.handle', () => {
       cause,
       correlationId,
     }));
-    expect(traces).toEqual([run, run]);
+    expect(traces).toEqual([run.toEnvelope(), run.toEnvelope()]);
   });
 
   test('ref — вид, модуль и имя задания', () => {

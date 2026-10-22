@@ -1,5 +1,10 @@
 import type { AnyEventDef } from 'dmg-core';
-import type { EnvelopeOf, EventBus, EventEnvelope } from 'dmg-core/app';
+import {
+  type EnvelopeOf,
+  type EventBus,
+  type EventEnvelope,
+  Trace,
+} from 'dmg-core/app';
 import * as v from 'valibot';
 import type { DomainEvent as LegacyEvent } from '#domain-legacy/events/domain-event';
 import type { EventBus as LegacyBus } from '#domain-legacy/events/event-bus';
@@ -106,8 +111,10 @@ function fromLegacy(
     eventId: event.eventId,
     occurredAt: Date.parse(event.occurredAt),
     aggregateId: event.aggregateId,
-    cause: { kind: 'event', eventId: event.eventId },
-    correlationId: event.eventId,
+    ...Trace.fromEvent({
+      eventId: event.eventId,
+      correlationId: event.eventId,
+    }).toEnvelope(),
   };
 }
 

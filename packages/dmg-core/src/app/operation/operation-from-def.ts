@@ -1,3 +1,4 @@
+import type { AnyAggregateDef } from '#core/domain/aggregate/define-aggregate';
 import type { AnyEventReactionDef } from '#core/domain/contracts/define-event-reaction';
 import type { AnyJobDef } from '#core/domain/contracts/define-job';
 import type { AnyModuleDef } from '#core/domain/contracts/define-module';
@@ -16,10 +17,11 @@ import type { DomainError } from '#core/kernel/errors/error';
 import { serializeError } from '#core/kernel/errors/serialize-error';
 import type { Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
+import type { Trace } from '#core/kernel/trace/trace';
 import type { ModuleDeps } from '../context';
 import type { OperationRecord } from '../oplog/operation-record';
 import { type OperationCall, OperationRun } from '../oplog/operation-run';
-import type { Trace } from '../trace';
+import { UnitOfWork } from '../uow/unit-of-work';
 
 /** Def операции приложения: UC, ER или Job. */
 export type AnyOperationDef = AnyUseCaseDef | AnyEventReactionDef | AnyJobDef;
@@ -76,6 +78,33 @@ export abstract class OperationFromDef<
   }
 
   /**
+   * UoW вызова со сверкой по Def (D-43, Р8): события — по `emits`, агрегаты —
+   * по `touches` (ER) или `scans` (Job); у UC агрегаты не ограничены.
+   * Расхождение — баг реализации: в test и development — исключение, в
+   * production — `warn` в лог от имени операции, а операция завершается
+   * (отказ пользователю из-за описания контракта хуже, чем запись для
+   * разбора).
+   */
+  protected createUow(trace: Trace): UnitOfWork {
+    const { app } = this.resolve;
+    const def: AnyOperationDef = this.def;
+    const touches = touchesOf(def);
+    return new UnitOfWork({
+      bus: app.bus,
+      clock: app.clock,
+      trace,
+      emits: def.emits ?? [],
+      ...(touches === undefined ? {} : { touches }),
+      ...(app.mode === 'production'
+        ? {
+            onViolation: (message: string) =>
+              app.logger.warn(def.name, message),
+          }
+        : {}),
+    });
+  }
+
+  /**
    * UC другого модуля — только из `calls` Def (тип; согласованность с
    * графом — `checkDefs`). Вызывающий — `SystemCaller` этой операции с
    * человеком пришедшего (`caller.person()`, матрёшки нет), след — дальше
@@ -125,4 +154,13 @@ export abstract class OperationFromDef<
       );
     }
   }
+}
+
+/** Агрегаты, которые операции разрешено менять; у UC — без ограничения. */
+function touchesOf(
+  def: AnyOperationDef,
+): readonly AnyAggregateDef[] | undefined {
+  if (def.dmg === 'eventReaction') return def.touches;
+  if (def.dmg === 'job') return def.scans;
+  return undefined;
 }

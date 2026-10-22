@@ -200,7 +200,7 @@ function implementationTest(c: Ctx): string {
       return `import { describe, it } from 'bun:test';
 ${domain}
 import { UserCaller } from 'dmg-core';
-import { ModuleFacades, requestTrace } from 'dmg-core/app';
+import { ModuleFacades, Trace } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import type { ${c.deps} } from '../../${c.m}.module';
 import { ${c.className} } from './${c.base}';
@@ -212,7 +212,7 @@ ${deps}
     const res = await uc.handle(
       {},
       new UserCaller({ uuid: crypto.randomUUID() }),
-      requestTrace({ requestId: 'r-1' }),
+      Trace.fromRequest({ requestId: 'r-1' }),
     );
     expectOk(res);
   });
@@ -237,7 +237,7 @@ ${deps}
     case 'job':
       return `import { describe, expect, it } from 'bun:test';
 ${domain}
-import { jobTrace, ModuleFacades } from 'dmg-core/app';
+import { ModuleFacades, Trace } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import type { ${c.deps} } from '../../${c.m}.module';
 import { ${c.className} } from './${c.base}';
@@ -246,7 +246,7 @@ describe('${c.className}', () => {
   it('пустой прогон', async () => {
 ${deps}
     const job = new ${c.className}(deps, ${moduleDef});
-    const res = expectOk(await job.handle(jobTrace()));
+    const res = expectOk(await job.handle(Trace.forJob(job.def)));
     expect(res).toEqual({ processed: 0, failed: 0 });
   });
 });

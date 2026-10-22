@@ -4,7 +4,6 @@ import {
   defineAggregate,
   type ErrorOf,
   type ErrorsOf,
-  newEntity,
   ok,
   type RejectOf,
   type Result,
@@ -165,7 +164,7 @@ export class WishAr extends Aggregate<typeof WishArDef> {
 
   static create(input: CreateWish, at: Timestamp): Result<WishAr, never> {
     const state: WishState = {
-      ...newEntity(input.uuid, at),
+      ...WishAr.newState(input.uuid, at),
       userId: input.userId,
       target: input.target,
       status: input.status,
@@ -185,7 +184,7 @@ export class WishAr extends Aggregate<typeof WishArDef> {
     const { uuid, userId, courseId } = input;
     const pool = findCoursePool(courseId);
     const wish = new WishAr({
-      ...newEntity(uuid, at),
+      ...WishAr.newState(uuid, at),
       userId,
       target: { kind: 'course', courseId },
       status: pool ? 'pending' : 'expressed',

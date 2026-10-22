@@ -4,7 +4,7 @@ import type {
   EventOf,
 } from '#core/domain/events/define-events';
 import type { Timestamp } from '#core/kernel/time/timestamp';
-import type { Cause } from '../trace';
+import type { Cause } from '#core/kernel/trace/trace';
 
 /**
  * Опубликованное событие: доменный факт + конверт. Конверт добавляет UoW

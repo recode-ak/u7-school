@@ -6,7 +6,7 @@ import type {
 } from '#core/domain/contracts/define-use-case';
 import type { SystemCaller } from '#core/kernel/caller/caller';
 import type { Result } from '#core/kernel/result/result';
-import type { Trace } from '../trace';
+import type { Trace } from '#core/kernel/trace/trace';
 
 /**
  * Фасад так, как его видит маршрутизация: `serves` и вход в UC с типом

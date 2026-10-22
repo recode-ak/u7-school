@@ -20,23 +20,14 @@ export type ErrorsOf<D extends AnyAggregateDef> = {
 }[keyof D['errors']];
 
 /**
- * Метка «агрегат создан, а не восстановлен». Символьный ключ переживает
- * spread (`{ ...newEntity(…), … }` в `create`), но не схему state, не
- * `snapshot()` (structuredClone) и не JSON — восстановленная запись её
- * не несёт. Так база отличает `create` от `restore` без флага в
- * конструкторе наследника.
+ * Метка «агрегат создан, а не восстановлен» — её ставит
+ * `Aggregate.newState`. Символьный ключ переживает spread
+ * (`{ ...XAr.newState(…), … }` в `create`), но не схему state, не
+ * `snapshot()` (structuredClone) и не JSON — восстановленная запись её не
+ * несёт. Так база отличает `create` от `restore` без флага в конструкторе
+ * наследника.
  */
-const NEW_ENTITY: unique symbol = Symbol('dmg.newEntity');
-
-/**
- * Базовые поля новой entity: создана и изменена в `at`, версия 0. `create`
- * агрегата обязан строить базу через неё — иначе агрегат считается
- * восстановленным, и первая запись даст `VersionConflict` (записи нет).
- */
-export function newEntity(uuid: string, at: Timestamp): EntityBase {
-  const base: EntityBase = { uuid, createdAt: at, updatedAt: at, version: 0 };
-  return Object.assign(base, { [NEW_ENTITY]: true });
-}
+const NEW_ENTITY: unique symbol = Symbol('dmg.newState');
 
 function isNewEntity(state: object): boolean {
   return NEW_ENTITY in state;
@@ -94,6 +85,17 @@ export abstract class Aggregate<D extends AnyAggregateDef> {
   ): ReadonlyAr<A> {
     // biome-ignore lint/complexity/noThisInStatic: полиморфный `this` — restore конкретного Ar, а не базы (D-43, Р7)
     return this.restore(state);
+  }
+
+  /**
+   * Базовые поля state нового агрегата: создан и изменён в `at`, версия 0.
+   * `create` наследника обязан строить state через неё
+   * (`{ ...XAr.newState(uuid, at), … }`) — иначе агрегат считается
+   * восстановленным, и первая запись даст `VersionConflict` (записи нет).
+   */
+  protected static newState(uuid: string, at: Timestamp): EntityBase {
+    const base: EntityBase = { uuid, createdAt: at, updatedAt: at, version: 0 };
+    return Object.assign(base, { [NEW_ENTITY]: true });
   }
 
   protected constructor(

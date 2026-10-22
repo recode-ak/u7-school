@@ -1,6 +1,6 @@
 import type { DomainEvent as LegacyEvent } from '@u7-scl/core/domain';
 import type { DomainEvent, Timestamp } from 'dmg-core';
-import type { EventBus } from 'dmg-core/app';
+import { type EventBus, Trace } from 'dmg-core/app';
 
 export type WishPublication = {
   /** События Def: из `pullEvents()` агрегата или `WishEvents.*.make`. */
@@ -27,14 +27,17 @@ export function publishWishEvents(
   bus: EventBus,
   { events, aggregateId, cause, at }: WishPublication,
 ): void {
+  const trace = Trace.fromEvent({
+    eventId: cause.eventId,
+    correlationId: cause.eventId,
+  }).toEnvelope();
   for (const event of events) {
     bus.publish({
       ...event,
       eventId: crypto.randomUUID(),
       occurredAt: at,
       aggregateId,
-      cause: { kind: 'event', eventId: cause.eventId },
-      correlationId: cause.eventId,
+      ...trace,
     });
   }
 }

@@ -43,7 +43,7 @@ export class OperationRun {
       op: ref.name,
       kind: ref.kind,
       caller: call.caller.toLog(),
-      trace: call.trace,
+      trace: call.trace.toLog(),
       input: call.input ?? null,
       result: result.ok
         ? { ok: true, output: result.value ?? null }

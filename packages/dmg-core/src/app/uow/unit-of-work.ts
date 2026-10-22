@@ -6,10 +6,10 @@ import type {
 import { CoreErrors } from '#core/kernel/errors/core-errors';
 import type { ErrorOf } from '#core/kernel/errors/define-errors';
 import { ok, type Result } from '#core/kernel/result/result';
+import type { Trace } from '#core/kernel/trace/trace';
 import type { Clock } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope, PublishedEvent } from '../events/event-envelope';
-import type { Trace } from '../trace';
 import { type Repository, VersionConflict } from './repository';
 
 /** Что UoW нужно от агрегата: идентификатор, события, отметка записи. */
@@ -98,14 +98,12 @@ export class UnitOfWork {
   }
 
   private envelope(event: DomainEvent, aggregateId: string): EventEnvelope {
-    const { trace } = this.ctx;
     return {
       ...event,
       eventId: crypto.randomUUID(),
       occurredAt: this.ctx.clock(),
       aggregateId,
-      cause: trace.cause,
-      correlationId: trace.correlationId,
+      ...this.ctx.trace.toEnvelope(),
     };
   }
 

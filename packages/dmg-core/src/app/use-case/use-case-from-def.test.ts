@@ -33,9 +33,9 @@ import { MemoryTasks, OWNER, T0, TASK, taskRow } from '../app.fixture';
 
 const T1 = T0 + 60_000;
 
+import { Trace } from '#core/kernel/trace/trace';
 import type { ModuleDeps } from '../context';
 import { ModuleFacades } from '../facade/module-facades';
-import { requestTrace, type Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { UseCaseFromDef } from './use-case-from-def';
 
@@ -66,7 +66,7 @@ type Deps = ModuleDeps & { readonly tasks: MemoryTasks };
 /** Модули без зависимостей — фасадов нет. */
 const facades = new ModuleFacades();
 
-const REQ: Trace = requestTrace({ requestId: 'r-1' });
+const REQ: Trace = Trace.fromRequest({ requestId: 'r-1' });
 type Loaded = { task: TaskAr };
 
 async function loadTask(tasks: MemoryTasks, input: { taskId: string }) {
@@ -204,7 +204,7 @@ describe('UseCaseFromDef.handle — операция', () => {
   });
 
   test('событие несёт след запроса: причина и correlationId', async () => {
-    const trace = requestTrace({ requestId: 'r-1', correlationId: 'c-1' });
+    const trace = Trace.fromRequest({ requestId: 'r-1', correlationId: 'c-1' });
     await uc.handle({ taskId: TASK }, user(OWNER), trace);
     expect(ctx.published[0]).toMatchObject({
       cause: { kind: 'request', requestId: 'r-1' },

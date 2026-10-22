@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { requestTrace } from '#core/app/trace';
 import { SystemCaller, UserCaller } from '#core/kernel/caller/caller';
 import { ok } from '#core/kernel/result/result';
+import { Trace } from '#core/kernel/trace/trace';
 import {
   CreateTaskUcDef,
   GetTaskUcDef,
@@ -14,7 +14,7 @@ import { OWNER, TASK, taskRow } from '../app/app.fixture';
 import { expectErr, expectOk } from './expect-result';
 import { StubFacade } from './stub-facade';
 
-const REQ = requestTrace({ requestId: 'r-1' });
+const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const caller = new SystemCaller(
   { kind: 'useCase', module: 'digest', name: 'showTask' },
   new UserCaller({ uuid: OWNER }),

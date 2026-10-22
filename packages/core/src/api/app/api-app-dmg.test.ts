@@ -6,7 +6,7 @@ import {
   type ModuleDeps,
   ModuleFacades,
   ModuleFromDef,
-  type RequestMeta,
+  Trace,
   type UnitOfWork,
   UseCaseFromDef,
 } from 'dmg-core/app';
@@ -72,7 +72,7 @@ class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
   protected run = (job: JobRun) => job.forEach([], async () => ok());
 }
 
-const REQ: RequestMeta = { requestId: 'r-1' };
+const REQ = Trace.fromRequest({ requestId: 'r-1' });
 
 type User = { readonly uuid: string; hasRole(role: 'admin'): boolean };
 const user = (uuid: string) =>

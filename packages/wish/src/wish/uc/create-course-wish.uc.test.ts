@@ -26,7 +26,7 @@ import {
   type SystemCaller,
   UserCaller,
 } from 'dmg-core';
-import { ModuleFacades, requestTrace } from 'dmg-core/app';
+import { ModuleFacades, Trace } from 'dmg-core/app';
 import {
   expectErr,
   expectOk,
@@ -44,7 +44,7 @@ import { CreateCourseWishUc } from './create-course-wish.uc';
 // адаптер TR-11 — эти случаи проверяет `packages/course` (Ф8 шаг 2b).
 
 const START_MODULE = '11111111-1111-4111-8111-111111111111';
-const REQ = requestTrace({ requestId: 'r-1' });
+const REQ = Trace.fromRequest({ requestId: 'r-1' });
 
 const ACTOR_ID = crypto.randomUUID();
 const ACTOR: User = {

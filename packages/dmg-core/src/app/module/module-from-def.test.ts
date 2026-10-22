@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { defineModule } from '#core/domain/contracts/define-module';
 import { SystemCaller, UserCaller } from '#core/kernel/caller/caller';
 import { ok } from '#core/kernel/result/result';
+import { Trace } from '#core/kernel/trace/trace';
 import { memoryBus, testAppContext } from '#core/testing/app-context';
 import {
   ArchiveDoneTasksJobDef,
@@ -17,7 +18,6 @@ import type { ModuleDeps } from '../context';
 import { ModuleFacades } from '../facade/module-facades';
 import { JobFromDef, type JobRun } from '../job/job-from-def';
 import { ReactionFromDef } from '../reaction/reaction-from-def';
-import { jobTrace, requestTrace, type Trace } from '../trace';
 import { UseCaseFromDef } from '../use-case/use-case-from-def';
 import {
   type AnyModuleFromDef,
@@ -101,7 +101,7 @@ beforeEach(() => {
   );
 });
 
-const REQ = requestTrace({ requestId: 'r-1' });
+const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const user: User = { uuid: 'u-1', hasRole: () => true };
 
 describe('ModuleFromDef.handle', () => {
@@ -161,7 +161,7 @@ describe('ModuleFromDef.handle', () => {
 
 describe('ModuleFromDef.runJob', () => {
   test('прогон Job своего модуля со следом вызывающего', async () => {
-    const trace = jobTrace();
+    const trace = Trace.forJob(ArchiveDoneTasksJobDef);
     expect(expectOk(await mini.runJob(ArchiveDoneTasksJobDef, trace))).toEqual({
       processed: 0,
       failed: 0,
@@ -172,9 +172,9 @@ describe('ModuleFromDef.runJob', () => {
   test('Job другого модуля — исключение сборки', async () => {
     const any: AnyModuleFromDef<User> = mini;
     const OtherJobDef = { ...ArchiveDoneTasksJobDef, name: 'other' };
-    await expect(any.runJob(OtherJobDef, jobTrace())).rejects.toThrow(
-      'Job other не реализован в модуле mini',
-    );
+    await expect(
+      any.runJob(OtherJobDef, Trace.forJob(OtherJobDef)),
+    ).rejects.toThrow('Job other не реализован в модуле mini');
     expect(deps.ran).toEqual([]);
   });
 });

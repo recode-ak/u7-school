@@ -54,7 +54,6 @@ export const ${P}Errors = defineErrors('${toUpperSnake(a)}', {
   Aggregate,
   defineAggregate,
   type EventsOf,
-  newEntity,
   ok,
   type Result,
   type Timestamp,
@@ -90,7 +89,7 @@ export class ${P}Ar extends Aggregate<typeof ${P}ArDef> {
   static create(input: Create${P}, at: Timestamp): Result<${P}Ar, never> {
     const created = ${P}Events.created.make({ ${idField}: input.uuid });
     const state: ${P}State = {
-      ...newEntity(input.uuid, at),
+      ...${P}Ar.newState(input.uuid, at),
       status: 'active',
     };
     return ok(new ${P}Ar(state, [created]));

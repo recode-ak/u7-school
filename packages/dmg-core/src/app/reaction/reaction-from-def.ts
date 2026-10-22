@@ -3,13 +3,12 @@ import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
+import { Trace } from '#core/kernel/trace/trace';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { EnvelopeOf } from '../events/event-envelope';
 import { OperationFromDef } from '../operation/operation-from-def';
 import { runLogged } from '../system/run-logged';
-import type { Trace } from '../trace';
-import { contractUnitOfWork } from '../uow/contract-unit-of-work';
 import type { UnitOfWork } from '../uow/unit-of-work';
 
 /** Конверт любого события, на которое подписана реакция. */
@@ -54,20 +53,10 @@ export abstract class ReactionFromDef<
   handle(event: ReactionEnvelopeOf<D>): Promise<Result<void, DomainError>> {
     const { app } = this.resolve;
     const caller = new SystemCaller(this.ref);
-    const trace: Trace = {
-      cause: { kind: 'event', eventId: event.eventId },
-      correlationId: event.correlationId,
-    };
+    const trace = Trace.fromEvent(event);
     return this.journal({ input: event, caller, trace }, (run) =>
       runLogged(app, this.def.name, async () => {
-        const uow = run.track(
-          contractUnitOfWork(app, {
-            source: this.def.name,
-            trace,
-            emits: this.def.emits,
-            touches: this.def.touches,
-          }),
-        );
+        const uow = run.track(this.createUow(trace));
         const res = await this.react(event, uow, caller, trace);
         if (!res.ok) return res;
         const committed = await uow.commit();

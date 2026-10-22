@@ -19,8 +19,7 @@ import {
   type ModuleDeps,
   ModuleFacade,
   ModuleFacades,
-  requestTrace,
-  type Trace,
+  Trace,
   type UnitOfWork,
   UseCaseFromDef,
 } from 'dmg-core/app';
@@ -110,7 +109,7 @@ class SneakyUc extends UseCaseFromDef<
 
 const COURSE = '0b6c2f4e-3d1a-4c5b-9e8f-7a6b5c4d3e2f';
 const START = '1c7d3a5f-4e2b-4d6c-8f9a-8b7c6d5e4f3a';
-const REQ = requestTrace({ requestId: 'r-1' });
+const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const USER = new UserCaller({ uuid: 'u-1' });
 
 /** Legacy-фасад курсов с заданными ответами; запоминает спрошенные курсы. */

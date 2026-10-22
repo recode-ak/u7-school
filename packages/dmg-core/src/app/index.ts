@@ -2,6 +2,14 @@
 // шина событий, след операции. Импортируют прикладной слой и приложение.
 
 export {
+  type Cause,
+  type RequestMeta,
+  Trace,
+  type TraceChannel,
+  type TraceLog,
+  type TraceStamp,
+} from '../kernel/trace/trace';
+export {
   type AppContext,
   type AppMode,
   type Clock,
@@ -43,19 +51,6 @@ export {
   type ReactionEnvelopeOf,
   ReactionFromDef,
 } from './reaction/reaction-from-def';
-export {
-  type Cause,
-  incomingRequestId,
-  jobTrace,
-  type RequestMeta,
-  requestTrace,
-  type Trace,
-  type TraceChannel,
-} from './trace';
-export {
-  contractUnitOfWork,
-  type OperationContract,
-} from './uow/contract-unit-of-work';
 export { createLock, type Lock } from './uow/lock';
 export {
   assertVersion,

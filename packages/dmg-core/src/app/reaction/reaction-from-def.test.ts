@@ -3,6 +3,7 @@ import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
+import type { Cause, Trace } from '#core/kernel/trace/trace';
 import {
   ArchiveRemovedUserTasksErDef,
   TaskAr,
@@ -24,7 +25,6 @@ import { MemoryTasks, OWNER, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { ModuleDeps } from '../context';
 import type { EnvelopeOf } from '../events/event-envelope';
 import { ModuleFacades } from '../facade/module-facades';
-import type { Cause, Trace } from '../trace';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { ReactionFromDef } from './reaction-from-def';
 
@@ -130,7 +130,7 @@ describe('ReactionFromDef.handle', () => {
     await er.handle(removed());
     expect(er.seen).toEqual(new SystemCaller(er.ref));
     expect(er.seen?.person()).toBeUndefined();
-    expect(er.seenTrace).toEqual({
+    expect(er.seenTrace?.toLog()).toEqual({
       cause: { kind: 'event', eventId: 'e-removed' },
       correlationId: 'c-1',
     });

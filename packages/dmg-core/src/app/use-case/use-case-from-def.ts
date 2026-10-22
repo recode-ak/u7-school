@@ -18,11 +18,10 @@ import type { Caller, Identified } from '#core/kernel/caller/caller';
 import { CoreErrors } from '#core/kernel/errors/core-errors';
 import { serializeError } from '#core/kernel/errors/serialize-error';
 import { ok, type Result } from '#core/kernel/result/result';
+import type { Trace } from '#core/kernel/trace/trace';
 import type { ModuleDeps } from '../context';
 import { OperationFromDef } from '../operation/operation-from-def';
 import type { OperationRun } from '../oplog/operation-run';
-import type { Trace } from '../trace';
-import { contractUnitOfWork } from '../uow/contract-unit-of-work';
 import type { UnitOfWork } from '../uow/unit-of-work';
 
 /** Вход после схемы — то, что получают `load` и `execute`. */
@@ -265,13 +264,7 @@ export abstract class UseCaseFromDef<
     if (!permitted.ok) return permitted;
     const checked = this.checkRules(loaded.value);
     if (!checked.ok) return checked;
-    const uow = run.track(
-      contractUnitOfWork(this.resolve.app, {
-        source: this.def.name,
-        trace,
-        emits: this.def.emits ?? [],
-      }),
-    );
+    const uow = run.track(this.createUow(trace));
     const res = await this.execute(
       parsed.value,
       loaded.value,

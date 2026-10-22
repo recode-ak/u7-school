@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
+import { Trace } from '#core/kernel/trace/trace';
 import {
   TaskAr,
   TaskArDef,
@@ -8,7 +9,6 @@ import { UserArDef } from '#core/testing/example/users/user/user.ar';
 import { expectErr, expectOk } from '#core/testing/index';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
-import type { Trace } from '../trace';
 import { assertVersion, type Repository, VersionConflict } from './repository';
 import { UnitOfWork } from './unit-of-work';
 
@@ -16,10 +16,7 @@ const AT = Date.UTC(2026, 9, 18, 12, 0);
 const A = 'a1b2c3d4-0000-4000-8000-00000000000a';
 const B = 'a1b2c3d4-0000-4000-8000-00000000000b';
 const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
-const TRACE: Trace = {
-  cause: { kind: 'event', eventId: 'e-0' },
-  correlationId: 'c-0',
-};
+const TRACE = Trace.fromEvent({ eventId: 'e-0', correlationId: 'c-0' });
 
 type Log = string[];
 

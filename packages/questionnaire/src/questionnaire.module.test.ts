@@ -20,8 +20,7 @@ import {
   type ModuleDeps,
   ModuleFacade,
   ModuleFacades,
-  requestTrace,
-  type Trace,
+  Trace,
   type UnitOfWork,
   UseCaseFromDef,
 } from 'dmg-core/app';
@@ -140,7 +139,7 @@ const USER = {
   roles: [],
   createdAt: '2024-01-01T00:00:00.000Z',
 } as unknown as User;
-const REQ = requestTrace({ requestId: 'r-1' });
+const REQ = Trace.fromRequest({ requestId: 'r-1' });
 
 type StartCall = readonly [User, QuestionnairePool, Record<string, unknown>];
 

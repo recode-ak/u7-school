@@ -3,12 +3,11 @@ import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
+import type { Trace } from '#core/kernel/trace/trace';
 import type { ModuleDeps } from '../context';
 import { OperationFromDef } from '../operation/operation-from-def';
 import type { OperationRun } from '../oplog/operation-run';
 import { runLogged } from '../system/run-logged';
-import type { Trace } from '../trace';
-import { contractUnitOfWork } from '../uow/contract-unit-of-work';
 import type { UnitOfWork } from '../uow/unit-of-work';
 
 /** Итог прогона: сколько записей обработано и сколько сорвалось. */
@@ -49,7 +48,7 @@ export abstract class JobFromDef<
   protected abstract run(job: JobRun): Promise<JobReport>;
 
   /**
-   * Один прогон со следом вызывающего (`jobTrace` — свой `runId`): след —
+   * Один прогон со следом вызывающего (`Trace.forJob` — свой `runId`): след —
    * причина и `correlationId` всех его событий. Сбой вне записей
    * (загрузка) — `SERVER_INTERNAL` + лог.
    */
@@ -88,14 +87,7 @@ export abstract class JobFromDef<
     trace: Trace,
     run: OperationRun,
   ): Promise<Result<void, DomainError>> {
-    const uow = run.track(
-      contractUnitOfWork(this.resolve.app, {
-        source: this.def.name,
-        trace,
-        emits: this.def.emits,
-        touches: this.def.scans,
-      }),
-    );
+    const uow = run.track(this.createUow(trace));
     const res = await step(item, uow);
     if (!res.ok) return res;
     const committed = await uow.commit();

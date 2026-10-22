@@ -1,7 +1,7 @@
 import type { CallerLog, OperationRef } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import type { Timestamp } from '#core/kernel/time/timestamp';
-import type { Trace } from '#core/kernel/trace/trace';
+import type { TraceLog } from '#core/kernel/trace/trace';
 import type { PublishedEvent } from '../events/event-envelope';
 
 /**
@@ -17,7 +17,7 @@ export type OperationRecord = {
   readonly op: string;
   readonly kind: OperationRef['kind'];
   readonly caller: CallerLog;
-  readonly trace: Trace;
+  readonly trace: TraceLog;
   /** Вход как пришёл: UC — до схемы, ER — событие, Job — `null`. */
   readonly input: unknown;
   readonly result:
