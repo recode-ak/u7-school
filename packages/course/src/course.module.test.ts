@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
+import type { ModulePlace } from '@u7-scl/domain/course';
 import {
   CourseModuleDef,
   GetCourseEnrollmentUcDef,
+  GetModuleEnrollmentUcDef,
 } from '@u7-scl/domain/course/contract';
 import {
   allowAll,
@@ -12,6 +14,7 @@ import {
   defineUseCase,
   F,
   ok,
+  SystemCaller,
   UserCaller,
 } from 'dmg-core';
 import {
@@ -117,7 +120,11 @@ const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const USER = new UserCaller({ uuid: 'u-1' });
 
 /** Legacy-фасад курсов с заданными ответами; запоминает спрошенные курсы. */
-function legacy(enrollable: boolean, startModuleId?: string) {
+function legacy(
+  enrollable: boolean,
+  startModuleId?: string,
+  place?: ModulePlace,
+) {
   const asked: string[] = [];
   const facade: CourseLegacy = {
     isCourseEnrollable: async (courseId) => {
@@ -127,6 +134,10 @@ function legacy(enrollable: boolean, startModuleId?: string) {
     getCourseStartModuleId: async (courseId) => {
       asked.push(courseId);
       return startModuleId;
+    },
+    getModulePlace: async (moduleId) => {
+      asked.push(moduleId);
+      return place;
     },
   };
   return { facade, asked };
@@ -189,5 +200,57 @@ describe('модуль курсов через фасад (D-43, адаптер 
     expect(facade.def).toBe(CourseModuleDef);
     expect(facade.serves(GetCourseEnrollmentUcDef)).toBe(true);
     expect(facade.serves(ProbeUcDef)).toBe(false);
+  });
+
+  it('модуль обслуживает и getModuleEnrollment', () => {
+    const facade = new ModuleFacade(
+      createCourseModule({
+        app,
+        facades: new ModuleFacades(),
+        legacy: legacy(true).facade,
+      }),
+    );
+    expect(facade.serves(GetModuleEnrollmentUcDef)).toBe(true);
+  });
+});
+
+describe('getModuleEnrollment: адаптер над getModulePlace (TR-11)', () => {
+  const MODULE = '2d8e4b6a-5f3c-4e7d-9a0b-9c8d7e6f5a4b';
+  const PLACE: ModulePlace = {
+    courseId: COURSE,
+    isFirst: true,
+    isLast: true,
+  };
+
+  function uc(courseLegacy: CourseLegacy) {
+    const course = createCourseModule({
+      app,
+      facades: new ModuleFacades(),
+      legacy: courseLegacy,
+    });
+    return new ModuleFacade(course);
+  }
+
+  it('у модуля есть место в программе — enrollable: true', async () => {
+    const { facade, asked } = legacy(true, START, PLACE);
+    const res = await uc(facade).handle(
+      GetModuleEnrollmentUcDef,
+      { moduleId: MODULE },
+      new SystemCaller(probe(facade).ref, USER),
+      REQ,
+    );
+    expect(expectOk(res)).toEqual({ enrollable: true });
+    expect(asked).toEqual([MODULE]);
+  });
+
+  it('места нет — enrollable: false', async () => {
+    const { facade } = legacy(true, START, undefined);
+    const res = await uc(facade).handle(
+      GetModuleEnrollmentUcDef,
+      { moduleId: MODULE },
+      new SystemCaller(probe(facade).ref, USER),
+      REQ,
+    );
+    expect(expectOk(res)).toEqual({ enrollable: false });
   });
 });

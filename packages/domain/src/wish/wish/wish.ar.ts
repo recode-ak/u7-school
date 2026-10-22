@@ -117,6 +117,13 @@ export type CreateCourseWish = {
   readonly courseId: string;
 };
 
+/** Вход создания желания на модуль: статус — `expressed`, решает Ar. */
+export type CreateModuleWish = {
+  readonly uuid: string;
+  readonly userId: string;
+  readonly moduleId: string;
+};
+
 /**
  * Анкета к запуску для нового желания: вход UC запуска анкеты (D-42).
  * `owner` модуль анкет не толкует и возвращает в событиях — по `courseId`
@@ -169,6 +176,25 @@ export class WishAr extends Aggregate<typeof WishArDef> {
         userId,
         target: { kind: 'course', courseId },
         status: findCoursePool(courseId) ? 'pending' : 'expressed',
+      }),
+    );
+  }
+
+  /**
+   * Желание пройти модуль: всегда `expressed` — анкеты у модулей нет
+   * (студент уже верифицирован).
+   */
+  static createForModule(
+    input: CreateModuleWish,
+    at: Timestamp,
+  ): Result<WishAr, never> {
+    const { uuid, userId, moduleId } = input;
+    return ok(
+      new WishAr({
+        ...WishAr.newState(uuid, at),
+        userId,
+        target: { kind: 'module', moduleId },
+        status: 'expressed',
       }),
     );
   }

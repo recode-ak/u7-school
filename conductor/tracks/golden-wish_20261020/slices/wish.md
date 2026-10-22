@@ -234,6 +234,45 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 9. **Р10.** Домен: `WishAr.createForCourse → Result<WishAr, never>`, методы `questionnaire()` и `outcome()` из state, `CourseWishCreated` удалить (domain-author). Пакет: `create-course-wish` берёт ответ и анкету из них (api-author).
 10. **Перевод потребителей** (api-author): учебный модуль, `wish`, `course`, `questionnaire` — по идиоме D-43 (`this.call`, `ModuleFacade`, `StubFacade`, `Aggregate.readonly`); гайды «use case» и «facade» — оркестратор.
 
+## Ф9: остальные UC (`create-module-wish`, `cancel-wish`, `list-user-wishes`)
+
+**Образец:** гайд [use-case.md](../../../architecture/guides/use-case.md) и эталон `create-course-wish` (Def + реализация + тесты); query — учебный `dmg-core/src/testing/example/todo/task/uc/{get-task,list-tasks}.uc.ts`. Сохраняемое поведение — legacy `packages/wish/src/api/wish/<n>-uc.ts` и их тесты: **все случаи переносятся** на новый UC. Legacy-UC, `commands/*-cmd.ts`, бот не трогаются (TR-9, до Ф12).
+
+**Порядок:** один UC = домен (domain-author) → пакет (api-author) → гейт → коммит. Каркас — `bun run gen uc wish.wish <имя> --write` (оркестратор до шага домена). Модель — Sonnet (работа по эталону, agents.md §10); второй красный гейт по той же причине — Opus.
+
+**Общее:** `callers: ['user']`, вход — из state (`WishTargetVo` и его ветки, D-39), без копий схем; `description` на каждом поле (MAN-02); `emits` — нет (событий создания/отмены у `wish` нет). Выход «без данных» у command — как допускает платформа (смотри `defineUseCase`/учебный модуль; legacy возвращал `undefined`). Субъект — legacy `User` (DEBT-21/22), как у эталона.
+
+### 9.1 `create-module-wish`
+
+*Домен (domain-author):*
+- Внешний `course`: query UC-контракт `getModuleEnrollment` по образцу `GetCourseEnrollmentUcDef` — вход `{ moduleId }`, выход «модуль в программе опубликованного курса» (`enrollable: boolean`; места модуля в выходе не нужно — потребителя нет), `callers: ['system']`, `allowAll` (обоснование как у `getCourseEnrollment`); путь `course/course/uc/get-module-enrollment.uc.ts`, в `CourseModuleDef.useCases`. Выход за границы — как в Ф8 шаг 2a (TR).
+- `WishRules.rules.moduleEnrollable` → `WISH_MODULE_NOT_FOUND` по ответу (контекст `{ moduleId, enrollment }`).
+- `WishAr.createForModule({ uuid, userId, moduleId }, at): Result<WishAr, never>` — статус `expressed` решает фабрика (без анкеты: студент уже верифицирован).
+- `CreateModuleWishUcDef`: `allowAll`, `rules: [moduleEnrollable, unique]` (порядок legacy: модуль, затем дубль), `calls: [GetModuleEnrollmentUcDef]`, `errors: [MODULE_NOT_FOUND, ALREADY_EXISTS]`; в `WishModuleDef.useCases`.
+- TDD: тесты Def (normalize, `checkDefs`), правила (оба ответа), фабрики.
+
+*Пакет (api-author):*
+- `packages/course`: временная реализация `GetModuleEnrollmentUc` поверх legacy `getModulePlace` (маркер TR-11, по образцу адаптера `getCourseEnrollment`), регистрация в модуле/фасаде курса; тесты: модуль есть → `enrollable: true`, нет → `false`.
+- `CreateModuleWishUc`: `load` — ответ через `this.call`, все желания на цель; `execute` — `createForModule` → `uow.register`.
+- Тесты (все случаи legacy): модуль недоступен → `WISH_MODULE_NOT_FOUND`, ничего не записано; дубль каждого активного статуса → `WISH_ALREADY_EXISTS` со `status`; только неактивные → создаётся `expressed`; порядок правил; сбой вызова курса (`StubFacade.answer` с ошибкой); `received`; `guest` → `UNAUTHORIZED`.
+
+### 9.2 `cancel-wish`
+
+*Домен (domain-author):*
+- `CancelWishUcDef`: вход — `WishTargetVo` (вариант по `kind`), `policy: WishPolicy.rules.canCancel` (первый UC `wish` с реальной Policy над загруженным агрегатом), `errors` — `NOT_FOUND` + ошибка Policy по платформе; в `WishModuleDef.useCases`.
+- **Сохраняемое поведение:** нет текущего желания на цель **или** оно не отменяемо (`pending`, финальные) → `WISH_NOT_FOUND` с `{ userId, courseId | moduleId }` (как legacy; `NOT_CANCELLABLE` через UC недостижим). Решение «не отменяемо → NOT_FOUND» — в домене (правило в `rules` или метод Ar), не `if` по статусу в UC (API-01). Отсутствие агрегата при загрузке — где ему место по `errors-result.md`/платформе (`load` порядок `load → checkPolicy → checkRules`: Policy получает `wish` в контексте) — реши и обоснуй в отчёте.
+- TDD: тесты Def и доменного решения.
+
+*Пакет (api-author):*
+- `CancelWishUc`: `load` — текущее желание (`findCurrentByUserAndTarget`) → контекст Policy/правил; `execute` — `wish.cancel(this.now())` → `uow.register`.
+- Тесты (все случаи legacy): отмена `expressed` и `confirmed` (обе цели) → `cancelled` записано; `pending`/финальные/нет желания → `WISH_NOT_FOUND`, ничего не записано; чужое желание недостижимо (ищется по субъекту) — Policy проверяется тестом Policy в домене; `guest` → `UNAUTHORIZED`.
+
+### 9.3 `list-user-wishes`
+
+*Домен (domain-author):* `ListUserWishesUcDef` — `type: 'query'`, вход `{}`, выход — массив state желания (из `WishArDef.state`, без копии), `allowAll` (только свои: `userId` из субъекта), `errors: []`; в `WishModuleDef.useCases`. Тест Def.
+
+*Пакет (api-author):* `ListUserWishesUc` — желания субъекта (`findByUser`) → выход по идиоме query учебного модуля (как отдать state, не нарушая «`snapshot()` только для репозитория» — по образцу `list-tasks`; отклонение — в отчёт). Тесты legacy: все статусы и виды целей, только свои, пусто → `[]`; `guest` → `UNAUTHORIZED`; query не пишет (UoW пуст / лог операции).
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
@@ -457,3 +496,9 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 - reviewer (Opus), `c05ec0a3..HEAD`: error/warn нет, 8 info; проверены MAN-05, MAN-09, MAN-11, API-01, API-04, API-05, ERR-01, ERR-03, ERR-07, DOM-03, DOM-04, DOM-15, TST-02, TST-03, TST-05, CODE-03; остатков удалённого API нет.
 - api-author (Sonnet): ссылки D-43/caller.md п. 6; поля-стрелки шагов → методы (4 тестовых файла); `DeclaredCalls` — один тип в `define-use-case.ts`; `hasRespondent` — явный дженерик `rule`. 3568 pass.
 - Оркестратор: гайды (`journal`, нет фасада → `SERVER_INTERNAL`); TR-14.
+
+### Ф9.1 домен — domain-author (Sonnet)
+`GetModuleEnrollmentUcDef` (`course`, query, `system`, `allowAll`, выход `{ enrollable }`); `WishRules.rules.moduleEnrollable` (`WISH_MODULE_NOT_FOUND`); `WishAr.createForModule` (`expressed`); `CreateModuleWishUcDef`; `WishModuleTargetVo` экспортирован для входа. TDD wish соблюдён (red 9 → green); Def `course` — тест и код одним шагом (тривиально). Гейт красный по границе шага (реализации в пакетах) — ожидаемо.
+
+### Ф9.1 пакет — api-author (Sonnet)
+Адаптер TR-11 `GetModuleEnrollmentUc` над legacy `getModulePlace` (`packages/course`), регистрация в `courseModuleMap`; `CreateModuleWishUc` (`load` — `this.call` + желания на цель, `execute` — `createForModule` + `uow.register`). Перенесены все случаи legacy (случай «модуль вне опубликованных» совпал с «недоступен»). `kind` ошибки `not_found` вместо legacy `not-found` — по платформе (мост TR-1). Адаптер `course` — код раньше теста. Гейт и `check` зелёные (3597 pass).

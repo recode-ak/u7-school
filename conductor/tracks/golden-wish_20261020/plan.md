@@ -98,7 +98,7 @@
 
 > **Перед стартом:** Фаза 8а закрыта; `OPEN-QUESTIONS-F8.md` перенесён в D-43 и удалён.
 
-- [ ] Task: `create-module-wish`, `cancel-wish`, `list-user-wishes` по гайду Фазы 8 (по одному, отдельный TDD-цикл)
+- [~] Task: `create-module-wish`, `cancel-wish`, `list-user-wishes` по гайду Фазы 8 (по одному, отдельный TDD-цикл)
 - [ ] Task: Уточнить гайд «use case» (command и query, отличия)
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 9' (автономно, workflow.md)

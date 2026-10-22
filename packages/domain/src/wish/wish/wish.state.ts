@@ -8,7 +8,7 @@ export const WishCourseTargetVo = v.object({
 });
 
 /** Цель-модуль: желание пройти конкретный модуль (следующий/тот же). */
-const WishModuleTargetVo = v.object({
+export const WishModuleTargetVo = v.object({
   kind: v.pipe(v.literal('module'), v.description('Цель — модуль')),
   moduleId: F.uuid('модуля'),
 });

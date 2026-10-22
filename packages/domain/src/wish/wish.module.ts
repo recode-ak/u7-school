@@ -4,6 +4,7 @@ import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { defineModule } from 'dmg-core';
 import { CreateCourseWishUcDef } from './wish/uc/create-course-wish.uc';
+import { CreateModuleWishUcDef } from './wish/uc/create-module-wish.uc';
 import { WishArDef } from './wish/wish.ar';
 // gen:defs:imports
 
@@ -28,6 +29,7 @@ export const WishModuleDef = defineModule({
   ],
   useCases: [
     CreateCourseWishUcDef,
+    CreateModuleWishUcDef,
     // gen:defs:useCases
   ],
   reactions: [

@@ -1,4 +1,7 @@
-import type { CourseEnrollment } from '@u7-scl/domain/course/contract';
+import type {
+  CourseEnrollment,
+  ModuleEnrollment,
+} from '@u7-scl/domain/course/contract';
 import { defineRules, domainRule, err, ok, type ReadonlyAr } from 'dmg-core';
 import type { CreateWish, WishAr } from './wish.ar';
 import { WishErrors } from './wish.errors';
@@ -63,10 +66,36 @@ const courseEnrollable = domainRule({
       : WishErrors.COURSE_NOT_FOUND.err({ courseId }),
 });
 
+/**
+ * Контекст допуска модуля: модуль из входа и ответ модуля курсов о записи
+ * на него (UC `getModuleEnrollment`).
+ */
+export type ModuleEnrollableCtx = {
+  readonly moduleId: string;
+  readonly enrollment: ModuleEnrollment;
+};
+
+/**
+ * Желание на модуль выражается, только если модуль входит в программу
+ * опубликованного курса — допуск без субъекта (D-40). Решает модуль курсов
+ * (`enrollable`); здесь — перевод ответа в `WISH_MODULE_NOT_FOUND`.
+ */
+const moduleEnrollable = domainRule({
+  name: 'moduleEnrollable',
+  label: 'Модуль открыт для записи',
+  description:
+    'Желание пройти модуль выражается, только если модуль входит в программу опубликованного курса.',
+  error: WishErrors.MODULE_NOT_FOUND,
+  check: ({ moduleId, enrollment }: ModuleEnrollableCtx) =>
+    enrollment.enrollable
+      ? ok()
+      : WishErrors.MODULE_NOT_FOUND.err({ moduleId }),
+});
+
 export const WishRules = defineRules({
   name: 'wish',
   label: 'Правила желаний',
   description:
     'Допустимость действий с желаниями при текущих состояниях желаний пользователя.',
-  rules: { courseEnrollable, unique },
+  rules: { courseEnrollable, moduleEnrollable, unique },
 });

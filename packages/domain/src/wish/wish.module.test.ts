@@ -9,7 +9,7 @@ describe('WishModuleDef', () => {
       name: 'wish',
       dependsOn: ['user', 'course', 'questionnaire', 'stream'],
       aggregates: ['wish'],
-      useCases: ['createCourseWish'],
+      useCases: ['createCourseWish', 'createModuleWish'],
       reactions: [],
       jobs: [],
     });

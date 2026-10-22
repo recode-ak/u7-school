@@ -12,6 +12,10 @@ export {
   type CourseEnrollment,
   GetCourseEnrollmentUcDef,
 } from './course/uc/get-course-enrollment.uc';
+export {
+  GetModuleEnrollmentUcDef,
+  type ModuleEnrollment,
+} from './course/uc/get-module-enrollment.uc';
 export { CourseModuleDef } from './course.module';
 export type { CourseFacade, CourseProgram, ModulePlace } from './facade';
 export type {

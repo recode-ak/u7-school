@@ -2,6 +2,7 @@ import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { defineModule } from 'dmg-core';
 import { CourseArDef } from './course/course.ar';
 import { GetCourseEnrollmentUcDef } from './course/uc/get-course-enrollment.uc';
+import { GetModuleEnrollmentUcDef } from './course/uc/get-module-enrollment.uc';
 
 /**
  * Внешний модуль курсов (D-37): реализован legacy-кодом, здесь только
@@ -16,7 +17,7 @@ export const CourseModuleDef = defineModule({
   external: true,
   dependsOn: [UserModuleDef],
   aggregates: [CourseArDef],
-  useCases: [GetCourseEnrollmentUcDef],
+  useCases: [GetCourseEnrollmentUcDef, GetModuleEnrollmentUcDef],
   reactions: [],
   jobs: [],
 });

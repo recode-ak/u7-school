@@ -23,7 +23,7 @@ describe('CourseModuleDef — внешний модуль (D-37)', () => {
     expect(normalize(CourseModuleDef)).toMatchObject({
       dependsOn: ['user'],
       aggregates: ['course'],
-      useCases: ['getCourseEnrollment'],
+      useCases: ['getCourseEnrollment', 'getModuleEnrollment'],
       reactions: [],
       jobs: [],
     });

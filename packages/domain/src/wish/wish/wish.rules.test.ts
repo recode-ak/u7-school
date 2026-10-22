@@ -147,3 +147,33 @@ describe('WishRules.courseEnrollable', () => {
     expect(error.payload).toEqual({ courseId: COURSE });
   });
 });
+
+const { moduleEnrollable } = WishRules.rules;
+
+describe('WishRules.moduleEnrollable', () => {
+  it('описание правила ссылается на WISH_MODULE_NOT_FOUND', () => {
+    expect(moduleEnrollable.dmg).toBe('domainRule');
+    expect(moduleEnrollable.error.code).toBe('WISH_MODULE_NOT_FOUND');
+  });
+
+  it('модуль доступен для записи — ok', () => {
+    expectOk(
+      moduleEnrollable.check({
+        moduleId: MODULE,
+        enrollment: { enrollable: true },
+      }),
+    );
+  });
+
+  it('модуль недоступен — WISH_MODULE_NOT_FOUND с moduleId', () => {
+    const error = expectErr(
+      moduleEnrollable.check({
+        moduleId: MODULE,
+        enrollment: { enrollable: false },
+      }),
+      'WISH_MODULE_NOT_FOUND',
+    );
+    expect(error.kind).toBe('not_found');
+    expect(error.payload).toEqual({ moduleId: MODULE });
+  });
+});

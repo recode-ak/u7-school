@@ -136,6 +136,28 @@ describe('WishAr.createForCourse', () => {
   });
 });
 
+describe('WishAr.createForModule', () => {
+  const MODULE = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
+
+  it('всегда expressed (без анкеты), цель — модуль, событий нет', () => {
+    const wish = expectOk(
+      WishAr.createForModule(
+        { uuid: WISH, userId: USER, moduleId: MODULE },
+        T1,
+      ),
+    );
+    expect(wish.snapshot()).toEqual({
+      ...stored('expressed'),
+      target: { kind: 'module', moduleId: MODULE },
+      createdAt: T1,
+      updatedAt: T1,
+    });
+    expect(wish.outcome()).toBe('instant');
+    expect(wish.questionnaire()).toBeUndefined();
+    expect(wish.pullEvents()).toEqual([]);
+  });
+});
+
 describe('WishAr.questionnaire / outcome — вопросы из state', () => {
   it('после restore pending-желание курса с пулом снова даёт анкету', () => {
     const wish = expectOk(

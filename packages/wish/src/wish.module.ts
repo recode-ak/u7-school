@@ -3,6 +3,7 @@ import type { User } from '@u7-scl/app/domain';
 import { WishModuleDef } from '@u7-scl/domain/wish';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { CreateCourseWishUc } from './wish/uc/create-course-wish.uc';
+import { CreateModuleWishUc } from './wish/uc/create-module-wish.uc';
 import type { WishRepo } from './wish/wish.repo';
 // gen:defs:imports
 
@@ -20,6 +21,7 @@ export type WishDeps = ModuleDeps & {
 export const wishMap = {
   useCases: {
     createCourseWish: CreateCourseWishUc,
+    createModuleWish: CreateModuleWishUc,
     // gen:defs:useCases
   },
   reactions: {

@@ -4,6 +4,7 @@ import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import type { Identified } from 'dmg-core';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { GetCourseEnrollmentUc } from './course/uc/get-course-enrollment.uc';
+import { GetModuleEnrollmentUc } from './course/uc/get-module-enrollment.uc';
 
 /**
  * Что адаптеры TR-11 берут у legacy-фасада курсов: только вопросы,
@@ -11,7 +12,7 @@ import { GetCourseEnrollmentUc } from './course/uc/get-course-enrollment.uc';
  */
 export type CourseLegacy = Pick<
   CourseFacade,
-  'isCourseEnrollable' | 'getCourseStartModuleId'
+  'isCourseEnrollable' | 'getCourseStartModuleId' | 'getModulePlace'
 >;
 
 /**
@@ -25,7 +26,10 @@ export type CourseModuleDeps = ModuleDeps & { readonly legacy: CourseLegacy };
  * адаптеры над legacy (TR-11); ER и Job у внешнего модуля нет.
  */
 export const courseModuleMap = {
-  useCases: { getCourseEnrollment: GetCourseEnrollmentUc },
+  useCases: {
+    getCourseEnrollment: GetCourseEnrollmentUc,
+    getModuleEnrollment: GetModuleEnrollmentUc,
+  },
   reactions: {},
   jobs: {},
 } satisfies ModuleMap<typeof CourseModuleDef, CourseModuleDeps, Identified>;

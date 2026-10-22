@@ -8,6 +8,7 @@ export * from './wish/commands/create-module-wish-cmd';
 export * from './wish/commands/list-user-wishes-cmd';
 export * from './wish/pools/course-pool';
 export { CreateCourseWishUcDef } from './wish/uc/create-course-wish.uc';
+export { CreateModuleWishUcDef } from './wish/uc/create-module-wish.uc';
 export * from './wish/wish.ar';
 export * from './wish/wish.policy';
 export * from './wish/wish.rules';
