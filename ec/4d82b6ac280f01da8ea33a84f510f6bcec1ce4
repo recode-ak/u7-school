@@ -1,0 +1,5 @@
+Фаза 9а (golden-wish): view() вместо snapshot() вне репозитория — D-44 (решение Нурболата по TR-15), автономно.
+Проверка: bun run check — 3654 pass / 0 fail (lint, tsc, test); agent-gate зелёный.
+Ревью: reviewer (Opus), diff de44c108..e5983103 — error нет, 3 warning, 4 note; правки fb09bee2, решения TR-17.
+Новое: Aggregate<D, V>.view() (по умолчанию snapshot(), переопределяемый, проверка формы по типу и ключам); lint DOM-17 (GritQL) на packages/*/src и apps; get-task, list-tasks, listUserWishes → view(); legacy wish/api исключён (TR-16).
+Ручная верификация: пропущена (автономный режим).
