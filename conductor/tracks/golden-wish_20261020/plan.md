@@ -107,7 +107,7 @@
 
 > Решение Нурболата (2026-10-22) по TR-15: `view()` — состояние наружу (по умолчанию `snapshot()`, переопределяемо), `snapshot()` — только репозиторий.
 
-- [ ] Task: D-44 в decisions.md, DOM-17 в rules.md; TR-15 — пересмотр отметить
+- [x] Task: D-44 в decisions.md, DOM-17 в rules.md; TR-15 — пересмотр отметить `81d620e7`
 - [ ] Task: Платформа: `Aggregate.view()` (по умолчанию `snapshot()`, переопределяемый) в `dmg-core`; lint DOM-17 с фикстурами (red → green); учебный модуль (`get-task`, `list-tasks`), шаблоны `scripts/gen`; `listUserWishes` → `view()`
 - [ ] Task: Гайды «aggregate» и «use case» по D-44
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
