@@ -328,6 +328,8 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 7. ✅ **Решено (Нурболат, 2026-10-20): вариант A.**
    **Было: Ф5. Где правило «одно активное желание на (user, target)».** A — DCS/доменный сервис с `Result` `WISH_ALREADY_EXISTS` (`conflict` + `status`), Policy — только права (`canCancel` владельцем), `isActive` — метод Ar. B — правило Policy (`ACCESS_DENIED`, `access`): бот перестанет показывать «продолжи анкету / уже обучаешься» — меняется поведение. C — в UC через метод Ar: доменное решение в UC (API-01). Рекомендация — A.
 
+8. **Ф9 (TR-15), к контрольной точке.** Как query отдаёт state агрегата: сейчас `snapshot()` в UC (идиома учебного `list-tasks`) против D-05/D-39. Варианты: (а) метод Ar, строящий выход (например `view()` — по сути тот же state, но через доменный API); (б) разрешить `snapshot()` в query UC явной оговоркой D-05; (в) query читает через DQS/репозиторий, отдающий state. Рекомендация — (а): единообразно с D-39 и не расширяет доступ к entity.
+
 ## Правила (ID rules.md)
 
 ARC-02, ARC-04, ARC-06; DOM-01…05, DOM-09…12; MAN-01…11; ERR-01…06; API-01…05; CODE-01…03; TST-01…06.
@@ -511,3 +513,6 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ф9.3 — domain-author + api-author (Sonnet)
 `ListUserWishesUcDef`: query, `allowAll`, вход `{}`, выход `v.array(WishArDef.state)`, `errors: []`. `ListUserWishesUc`: `load` — `ok(undefined)`, `execute` — `findByUser(subject)` → `snapshot()` (идиома учебного `list-tasks`). Тесты: все случаи legacy + только свои, `UNAUTHORIZED`, query не пишет. TDD соблюдён; гейт и `check` зелёные (3630 pass).
+
+### Ревью Ф9 (reviewer, Sonnet, diff `6e542c7d..be6392c3`)
+error нет. warning: `snapshot()` в query UC и в гайде (D-05/D-39) — принятый риск TR-15, открытый вопрос п. 8; тернар payload `NOT_FOUND` в `CancelWishUc.load` (API-01) — исправлено: `WishAr.notFoundFor(userId, target)`, через неё `notFound()` (domain-author, Sonnet, TDD). note: `NOT_CANCELLABLE` в `errors` оправдан; разделение `load`/`cancellable` верно; адаптер курса — дописан в TR-11; избыточность `Loaded` в `createModuleWish` — поля нужны контексту правил, оставлено. Перенос legacy (TST-05) выполнен.

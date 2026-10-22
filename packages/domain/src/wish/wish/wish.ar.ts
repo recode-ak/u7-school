@@ -249,6 +249,17 @@ export class WishAr extends Aggregate<typeof WishArDef> {
    */
   notFound(): ErrorOf<typeof NOT_FOUND> {
     const { userId, target } = this.state;
+    return WishAr.notFoundFor(userId, target);
+  }
+
+  /**
+   * Ошибка «желание не найдено» для пары (пользователь, цель), когда самого
+   * желания нет (UC не загрузил агрегат). Единственное место сборки payload.
+   */
+  static notFoundFor(
+    userId: string,
+    target: WishTargetVo,
+  ): ErrorOf<typeof NOT_FOUND> {
     return target.kind === 'course'
       ? NOT_FOUND.make({ userId, courseId: target.courseId })
       : NOT_FOUND.make({ userId, moduleId: target.moduleId });

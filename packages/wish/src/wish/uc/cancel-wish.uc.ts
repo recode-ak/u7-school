@@ -2,11 +2,10 @@
 import type { User } from '@u7-scl/app/domain';
 import {
   CancelWishUcDef,
-  type WishAr,
-  WishErrors,
+  WishAr,
   type WishModuleDef,
 } from '@u7-scl/domain/wish';
-import { type Caller, ok } from 'dmg-core';
+import { type Caller, err, ok } from 'dmg-core';
 import {
   type ParsedInputOf,
   type UnitOfWork,
@@ -37,9 +36,7 @@ export class CancelWishUc extends UseCaseFromDef<
       target,
     );
     if (wish) return ok({ wish });
-    return target.kind === 'course'
-      ? WishErrors.NOT_FOUND.err({ userId, courseId: target.courseId })
-      : WishErrors.NOT_FOUND.err({ userId, moduleId: target.moduleId });
+    return err(WishAr.notFoundFor(userId, target));
   }
 
   protected async execute(_input: Input, { wish }: Loaded, uow: UnitOfWork) {

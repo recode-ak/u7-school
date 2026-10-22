@@ -390,6 +390,18 @@ describe('вопросы к желанию', () => {
     expect(wish.notFound().payload).toEqual({ userId: USER, moduleId });
   });
 
+  it('notFoundFor — ошибка от цели-курса без экземпляра', () => {
+    const error = WishAr.notFoundFor(USER, target);
+    expect(error.code).toBe('WISH_NOT_FOUND');
+    expect(error.payload).toEqual({ userId: USER, courseId: target.courseId });
+  });
+
+  it('notFoundFor — цель-модуль даёт moduleId', () => {
+    const moduleId = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
+    const error = WishAr.notFoundFor(USER, { kind: 'module', moduleId });
+    expect(error.payload).toEqual({ userId: USER, moduleId });
+  });
+
   it('статус не читается снаружи — только вопросы и alreadyExists (D-39)', () => {
     expect('status' in restore('expressed')).toBe(false);
   });
