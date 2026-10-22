@@ -1,8 +1,8 @@
-import {
-  Aggregate,
-  type ErrorsOf,
-  type EventsOf,
-} from '#core/domain/aggregate/aggregate';
+import { Aggregate } from '#core/domain/aggregate/aggregate';
+import type {
+  ErrorsOf,
+  EventsOf,
+} from '#core/domain/aggregate/aggregate.types';
 import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';

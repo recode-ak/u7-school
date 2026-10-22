@@ -2,7 +2,8 @@ import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { BaseEntityFields } from '#core/kernel/fields/fields';
 import { ok, type Result } from '#core/kernel/result/result';
-import { Aggregate, type StateOf } from './aggregate';
+import { Aggregate } from './aggregate';
+import type { StateOf } from './aggregate.types';
 import { defineAggregate } from './define-aggregate';
 import type { ReadonlyAr } from './readonly-ar';
 

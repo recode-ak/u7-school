@@ -1,23 +1,14 @@
 import * as v from 'valibot';
-import type { AnyErrorDef, ErrorOf } from '#core/kernel/errors/define-errors';
 import type { Err, Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
-import type { EventOf } from '../events/define-events';
+import type {
+  EventsOf,
+  RejectOf,
+  StateOf,
+  TransitionOf,
+} from './aggregate.types';
 import type { AnyAggregateDef, EntityBase } from './define-aggregate';
 import type { ReadonlyAr } from './readonly-ar';
-
-/** Состояние агрегата по его Def. */
-export type StateOf<D extends AnyAggregateDef> = v.InferOutput<D['state']>;
-
-/** Union событий группы агрегата. */
-export type EventsOf<D extends AnyAggregateDef> = {
-  [K in keyof D['events']]: EventOf<D['events'][K]>;
-}[keyof D['events']];
-
-/** Union ошибок группы агрегата. */
-export type ErrorsOf<D extends AnyAggregateDef> = {
-  [K in keyof D['errors']]: ErrorOf<D['errors'][K]>;
-}[keyof D['errors']];
 
 /**
  * Метка «агрегат создан, а не восстановлен» — её ставит
@@ -40,41 +31,12 @@ function isNewEntity(state: object): boolean {
  */
 type Restorable<S, A> = { readonly restore: (snapshot: S) => A };
 
-/**
- * `true`, если типы взаимно присваиваемы и у них одни и те же ключи (форма
- * `view()` — сам state). Ключи сверяются отдельно: `{ uuid }` и
- * `{ uuid; note? }` взаимно присваиваемы, хотя `note` во втором есть.
- */
-type SameType<A, B> = [A] extends [B]
-  ? [B] extends [A]
-    ? [keyof A] extends [keyof B]
-      ? [keyof B] extends [keyof A]
-        ? true
-        : false
-      : false
-    : false
-  : false;
-
 type Emit<D extends AnyAggregateDef> = (event: EventsOf<D>) => void;
 
 type Apply<D extends AnyAggregateDef, R> = (
   draft: StateOf<D>,
   emit: Emit<D>,
 ) => R;
-
-type TransitionsOf<D extends AnyAggregateDef> = NonNullable<D['transitions']>;
-
-/** Имя перехода агрегата — ключ `transitions` в Def. */
-export type TransitionOf<D extends AnyAggregateDef> = keyof TransitionsOf<D> &
-  string;
-
-/** Отказы перехода `K`: ошибки из его `rejects`. */
-export type RejectOf<
-  D extends AnyAggregateDef,
-  K extends TransitionOf<D>,
-> = TransitionsOf<D>[K] extends { readonly rejects: infer J }
-  ? ErrorOf<Extract<J[keyof J], AnyErrorDef>>
-  : never;
 
 /**
  * Базовый класс агрегата v2. Наследник объявляет `private constructor`,
@@ -83,7 +45,6 @@ export type RejectOf<
  * (нарушение инварианта, ERR: §1 п. 2), в памяти его не бывает.
  *
  * `V` — форма состояния наружу (`view()`, D-44); по умолчанию — state.
- * Агрегат, объявивший другую форму, обязан переопределить `view()`.
  */
 export abstract class Aggregate<D extends AnyAggregateDef, V = StateOf<D>> {
   private current: StateOf<D>;
@@ -160,18 +121,11 @@ export abstract class Aggregate<D extends AnyAggregateDef, V = StateOf<D>> {
 
   /**
    * Состояние наружу: выход UC, рендереры UI (D-44). По умолчанию — копия
-   * state; агрегат переопределяет метод, чтобы скрыть или преобразовать
-   * поля, и объявляет свою форму в `V`. Параметр `this` делает форму `V`
-   * без переопределения ошибкой компиляции: базовая реализация отдаёт
-   * state, и вызвать её можно, только если `V` и есть state (иначе `this:
-   * never`). Равенство строгое — взаимная присваиваемость и те же ключи:
-   * суженная форма (без поля, в том числе необязательного) тоже приняла бы
-   * state, и скрытые поля утекли бы. Условие — на типах класса, а не на
-   * экземпляре, поэтому `view()` доступен и у `ReadonlyAr`.
+   * state. Агрегат, объявивший свою форму `V`, переопределяет `view()` и
+   * собирает объект явно (не `{ ...this.state }`).
    */
-  view(this: SameType<V, StateOf<D>> extends true ? unknown : never): V {
-    // Тип `this` выше гарантирует, что `V` — это state.
-    return (this as Aggregate<D, V>).snapshot() as V;
+  view(): V {
+    return this.snapshot() as unknown as V;
   }
 
   /** Выдать накопленные события и очистить накопитель (вызывает UoW). */

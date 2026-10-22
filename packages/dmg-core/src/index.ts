@@ -4,14 +4,14 @@
 // `dmg-core/app`, граф манифестов — `dmg-core/graph`, проверки архитектуры —
 // `dmg-core/arch`.
 
-export {
-  Aggregate,
-  type ErrorsOf,
-  type EventsOf,
-  type RejectOf,
-  type StateOf,
-  type TransitionOf,
-} from './domain/aggregate/aggregate';
+export { Aggregate } from './domain/aggregate/aggregate';
+export type {
+  ErrorsOf,
+  EventsOf,
+  RejectOf,
+  StateOf,
+  TransitionOf,
+} from './domain/aggregate/aggregate.types';
 export {
   type AggregateDef,
   type AggregateSpec,
