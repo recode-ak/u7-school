@@ -100,7 +100,7 @@
 
 - [x] Task: `create-module-wish`, `cancel-wish`, `list-user-wishes` по гайду Фазы 8 (по одному, отдельный TDD-цикл) `0447fdae` `82874f54` `23d7983d`
 - [x] Task: Уточнить гайд «use case» (command и query, отличия) `18665228`
-- [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
+- [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `aaf5d63c` (TR-15)
 - [ ] Task: Контрольная точка 'Фаза 9' (автономно, workflow.md)
 
 ## Фаза 10: Event Reaction — эталон (`fulfill-wish`)
