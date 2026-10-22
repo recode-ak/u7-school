@@ -439,3 +439,6 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ф8а шаг 7 — domain-author (платформа, Opus)
 Класс `Trace` (`kernel/trace`, приватный конструктор): `fromRequest(meta, onMissing?)`, `fromEvent`, `forJob(def)`, `channel`, `toLog(): TraceLog`, `toEnvelope()`; `app/trace.ts` удалён, тесты — `kernel/trace/trace.test.ts`. `OperationFromDef.createUow(trace)` (`emits` из Def, `touches`/`scans`), `contractUnitOfWork`/`OperationContract` удалены. ER/UoW/`OperationRun`/мосты — через `Trace`. `Aggregate.newState` вместо `newEntity` (`task.ar.ts`, `wish.ar.ts`, шаблоны `gen`). `ApiApp.run`/`execute` — готовый `Trace`. Отклонения — TR-13 п. 12. `check`: 3561 pass / 0 fail.
+
+### Ф8а шаг 8 — domain-author (Sonnet)
+`QuestionnaireRespondentPolicy` (`questionnaire-respondent.policy.ts`, правило `hasRespondent`; `QuestionnairePolicy` занято legacy) — `StartQuestionnaireUcDef.policy` вместо `allowAll`. Адаптер не менялся (субъект гарантирует Policy). Тесты: Policy (с человеком / без субъекта), модуль — `SystemCaller` без человека → `ACCESS_DENIED`, `startStandard` не вызван. TR-11 — пересмотр отмечен. `check`: 3565 pass / 0 fail.

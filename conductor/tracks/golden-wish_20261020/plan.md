@@ -88,7 +88,7 @@
 - [x] Task: Р6 — `OperationLog` в `AppContext`, запись в `OperationFromDef`, `uow.commit()` возвращает события; JSONL в `data/oplog/` (порог размера `input`/`output`), `.gitignore`, AGENTS.md — список живых данных `39e4aa5f`
 - [x] Task: Р7 — `calls` по типу только UC с `'system'` в `callers`; `UNAUTHORIZED` без `from`; `Aggregate.readonly(state)` вместо `asReadonlyAr`; `caller` удалён из конверта события (и UoW); TR-10 в debt.md закрыть `3e8a7901`
 - [x] Task: Р8 — `OperationFromDef.createUow` вместо `contractUnitOfWork`; класс `Trace` (`fromRequest`/`fromEvent`/`forJob`) вместо `requestTrace`/`incomingRequestId`; `Aggregate.newState` вместо `newEntity` `56642358`
-- [ ] Task: Р9 — `StartQuestionnaireUcDef.policy`: правило «респондент есть» вместо `allowAll`; TR-11 в debt.md — пересмотр отметить
+- [x] Task: Р9 — `StartQuestionnaireUcDef.policy`: правило «респондент есть» вместо `allowAll`; TR-11 в debt.md — пересмотр отметить `ce733b25`
 - [ ] Task: Р10 — `WishAr.createForCourse` → `Result<WishAr, never>`, методы `questionnaire()` и `outcome()` из state (red → green в домене); `create-course-wish` берёт их; TR-12 в debt.md — пересмотр отметить
 - [ ] Task: Перевод потребителей: учебный модуль `dmg-core`, `wish` (`create-course-wish`), `course`, `questionnaire`; гайды «use case» и «facade»
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
