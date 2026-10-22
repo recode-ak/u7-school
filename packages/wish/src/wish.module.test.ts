@@ -32,24 +32,25 @@ beforeEach(() => {
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-// Фасады зависимостей — `StubFacade` по Def (ARC-06); репозиторий настоящий.
-const course = new StubFacade(CourseModuleDef).answer(
-  GetCourseEnrollmentUcDef,
-  () =>
-    ok({
-      enrollable: true,
-      startModuleId: '11111111-1111-4111-8111-111111111111',
-    }),
-);
-const questionnaire = new StubFacade(QuestionnaireModuleDef).answer(
-  StartQuestionnaireUcDef,
-  () => ok({}),
-);
-
-/** Модуль на настоящем репозитории во временном каталоге. */
+/**
+ * Модуль на настоящем репозитории во временном каталоге; фасады
+ * зависимостей — `StubFacade` по Def (ARC-06).
+ */
 function makeModule() {
   const { app } = testAppContext();
   const wishes = new WishJsonRepo(join(dir, 'wishes.json'));
+  const course = new StubFacade(CourseModuleDef).answer(
+    GetCourseEnrollmentUcDef,
+    () =>
+      ok({
+        enrollable: true,
+        startModuleId: '11111111-1111-4111-8111-111111111111',
+      }),
+  );
+  const questionnaire = new StubFacade(QuestionnaireModuleDef).answer(
+    StartQuestionnaireUcDef,
+    () => ok({}),
+  );
   const facades = new ModuleFacades([course, questionnaire]);
   const module = createWishModule({ app, facades, wishes });
   return { module, wishes };

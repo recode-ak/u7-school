@@ -447,3 +447,8 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 - domain-author (Sonnet): `createForCourse` → `Result<WishAr, never>` (статус `pending` при найденном пуле); `questionnaire()` — `pending` + курс + пул, `outcome()` — из `questionnaire()`; `CourseWishCreated` удалён; тест «анкета — не свойство Ar» заменён тестами методов после `restore`. red 5 fail → green 105 pass.
 - api-author (Sonnet): `create-course-wish` берёт `wish.questionnaire()`/`wish.outcome()`; тесты пакета без изменений, 115 pass.
 - Оркестратор: ловушка в гайде use case поправлена; TR-12 — блок «Пересмотрено». `check`: 3567 pass / 0 fail.
+
+### Ф8а шаг 10 (перевод потребителей) — отчёт
+- api-author (Opus): прод-код без изменений поведения — комментарии к D-43 (`get-task` todo, `create-course-wish`); тесты: `load` методом вместо поля-стрелки (todo, course, questionnaire), `create-course-wish.uc.test.ts` — ручной учёт вызовов заменён `StubFacade.received`, `StubFacade` в `beforeEach`/`makeModule` (не копят `received`); questionnaire — без `as unknown as User`, Policy-тесты через `module.handle`; в todo добавлен тест «потребитель отдельно — `StubFacade`». 3568 pass (+1).
+- Оставлено: ссылки на D-42 про связь «UC → UC» (в силе); ручной `SystemCaller` в тесте вызываемого UC (системный вызов без человека); в платформе `dmg-core` — doc `UseCaseFromDef.load` с D-42 и поля-стрелки в `operation-from-def.test.ts` (вне границ шага → ревью).
+- Оркестратор: гайды «use case» (новый §3 «Устройство реализации») и «facade» переписаны по D-43.

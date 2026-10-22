@@ -19,17 +19,12 @@ import {
   type WishState,
   type WishStatus,
 } from '@u7-scl/domain/wish';
-import {
-  CoreErrors,
-  GuestCaller,
-  ok,
-  type SystemCaller,
-  UserCaller,
-} from 'dmg-core';
+import { CoreErrors, GuestCaller, ok, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import {
   expectErr,
   expectOk,
+  type StubCall,
   StubFacade,
   testAppContext,
 } from 'dmg-core/testing';
@@ -59,54 +54,36 @@ const asActor = new UserCaller<User>(ACTOR);
 const plainCourseId = crypto.randomUUID();
 const pooledCourseId = Object.keys(coursePools)[0]!;
 
-/** Что фасад получил: от какой операции, от чьего имени и с какими аргументами. */
-type Called = { readonly from: string; readonly caller: unknown };
-
 let dir: string;
 let file: string;
 let wishes: WishJsonRepo;
-let enrollment: CourseEnrollment;
-let courseFails: boolean;
-let startFails: boolean;
-let courseCalls: (Called & { readonly courseId: string })[];
-let startCalls: (Called & {
-  readonly pool: unknown;
-  readonly owner: unknown;
-})[];
+let course: StubFacade<typeof CourseModuleDef>;
+let questionnaire: StubFacade<typeof QuestionnaireModuleDef>;
+
+/** Ответ модуля курсов на запрос о записи. */
+const enrollment = (answer: CourseEnrollment) =>
+  course.answer(GetCourseEnrollmentUcDef, () => ok(answer));
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'create-course-wish-'));
   file = join(dir, 'wishes.json');
   wishes = new WishJsonRepo(file);
-  enrollment = { enrollable: true, startModuleId: START_MODULE };
-  courseFails = false;
-  startFails = false;
-  courseCalls = [];
-  startCalls = [];
+  course = new StubFacade(CourseModuleDef);
+  enrollment({ enrollable: true, startModuleId: START_MODULE });
+  questionnaire = new StubFacade(QuestionnaireModuleDef).answer(
+    StartQuestionnaireUcDef,
+    () => ok({}),
+  );
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-const called = (caller: SystemCaller): Called => ({
-  from: caller.from.name,
-  caller: caller.person(),
-});
-
-const course = new StubFacade(CourseModuleDef).answer(
-  GetCourseEnrollmentUcDef,
-  ({ courseId }, caller) => {
-    courseCalls.push({ ...called(caller), courseId });
-    return courseFails ? CoreErrors.SERVER_INTERNAL.err() : ok(enrollment);
-  },
-);
-
-const questionnaire = new StubFacade(QuestionnaireModuleDef).answer(
-  StartQuestionnaireUcDef,
-  ({ pool, owner }, caller) => {
-    if (startFails) return CoreErrors.SERVER_INTERNAL.err();
-    startCalls.push({ ...called(caller), pool, owner });
-    return ok({});
-  },
-);
+/** Что получил фасад: от какой операции, от чьего имени и с каким входом. */
+const received = (facade: { readonly received: readonly StubCall[] }) =>
+  facade.received.map(({ caller, input }) => ({
+    from: caller.from.name,
+    person: caller.person(),
+    input,
+  }));
 
 function makeUc() {
   const { app } = testAppContext();
@@ -155,7 +132,7 @@ describe('CreateCourseWishUc', () => {
         target: { kind: 'course', courseId: plainCourseId },
         status: 'expressed',
       });
-      expect(startCalls).toEqual([]);
+      expect(questionnaire.received).toEqual([]);
     });
   });
 
@@ -171,18 +148,22 @@ describe('CreateCourseWishUc', () => {
       const stored = await storedFor(pooledCourseId);
       expect(stored).toHaveLength(1);
       expect(stored[0]?.status).toBe('pending');
-      expect(startCalls).toEqual([
+      expect(received(questionnaire)).toEqual([
         {
           from: CreateCourseWishUcDef.name,
-          caller: asActor,
-          pool: findCoursePool(pooledCourseId),
-          owner: { courseId: pooledCourseId },
+          person: asActor,
+          input: {
+            pool: findCoursePool(pooledCourseId),
+            owner: { courseId: pooledCourseId },
+          },
         },
       ]);
     });
 
     it('сбой анкеты — ошибка фасада как ответ UC, желание не записано', async () => {
-      startFails = true;
+      questionnaire.answer(StartQuestionnaireUcDef, () =>
+        CoreErrors.SERVER_INTERNAL.err(),
+      );
 
       const res = await makeUc().handle(
         { courseId: pooledCourseId },
@@ -263,7 +244,7 @@ describe('CreateCourseWishUc', () => {
 
   describe('курс недоступен для записи', () => {
     it('enrollable: false → WISH_COURSE_NOT_FOUND, ничего не записано', async () => {
-      enrollment = { enrollable: false };
+      enrollment({ enrollable: false });
 
       const res = await makeUc().handle(
         { courseId: plainCourseId },
@@ -276,12 +257,12 @@ describe('CreateCourseWishUc', () => {
       expect(error.label).toBe('Курс не найден');
       expect(error.payload).toEqual({ courseId: plainCourseId });
       expect(await storedFor(plainCourseId)).toEqual([]);
-      expect(startCalls).toEqual([]);
+      expect(questionnaire.received).toEqual([]);
     });
 
     it('сначала курс, затем дубль: при недоступном курсе — WISH_COURSE_NOT_FOUND', async () => {
       await seed(plainCourseId, 'expressed');
-      enrollment = { enrollable: false };
+      enrollment({ enrollable: false });
 
       const res = await makeUc().handle(
         { courseId: plainCourseId },
@@ -295,17 +276,19 @@ describe('CreateCourseWishUc', () => {
     it('курс спрашивается через фасад от имени UC и вызывающего', async () => {
       await makeUc().handle({ courseId: plainCourseId }, asActor, REQ);
 
-      expect(courseCalls).toEqual([
+      expect(received(course)).toEqual([
         {
           from: CreateCourseWishUcDef.name,
-          caller: asActor,
-          courseId: plainCourseId,
+          person: asActor,
+          input: { courseId: plainCourseId },
         },
       ]);
     });
 
     it('сбой фасада курсов — ошибка как есть, ничего не записано', async () => {
-      courseFails = true;
+      course.answer(GetCourseEnrollmentUcDef, () =>
+        CoreErrors.SERVER_INTERNAL.err(),
+      );
 
       const res = await makeUc().handle(
         { courseId: plainCourseId },

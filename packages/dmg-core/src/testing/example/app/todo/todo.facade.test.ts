@@ -23,13 +23,19 @@ import {
   TaskErrors,
   TodoModuleDef,
 } from '#core/testing/example/todo/index';
-import { expectErr, expectOk, testAppContext } from '#core/testing/index';
+import {
+  expectErr,
+  expectOk,
+  StubFacade,
+  testAppContext,
+} from '#core/testing/index';
 import { TaskJsonRepo } from './infra/task.json-repo';
 import { createTodoModule } from './todo.module';
 
 // Потребитель фасада todo — UC другого модуля: объявляет `getTask` в
-// `calls` и вызывает его через `this.call` (D-43); фасад todo —
-// `ModuleFacade` над настоящим модулем.
+// `calls` и вызывает его через `this.call` (D-43). Вместе с владельцем —
+// фасад `ModuleFacade` над настоящим модулем todo; потребитель отдельно —
+// `StubFacade` с ответом по Def.
 const DigestArDef = defineAggregate({
   name: 'digest',
   label: 'Сводка',
@@ -76,7 +82,9 @@ class ShowTask extends UseCaseFromDef<
   constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
     super(ShowTaskUcDef, deps, module);
   }
-  protected load = async () => ok(undefined);
+  protected async load() {
+    return ok(undefined);
+  }
   protected async execute(
     input: { taskId: string },
     _: undefined,
@@ -100,7 +108,9 @@ class Sneaky extends UseCaseFromDef<
   constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
     super(SneakyUcDef, deps, module);
   }
-  protected load = async () => ok(undefined);
+  protected async load() {
+    return ok(undefined);
+  }
   protected async execute(
     input: { taskId: string },
     _: undefined,
@@ -115,6 +125,7 @@ class Sneaky extends UseCaseFromDef<
 }
 
 const OWNER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
+const T0 = Date.UTC(2026, 9, 1);
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const as = (uuid: string) =>
   new UserCaller<ExampleUser>({ uuid, hasRole: () => false });
@@ -129,7 +140,7 @@ beforeEach(async () => {
   const tasks = new TaskJsonRepo(join(dir, 'tasks.json'));
   const created = TaskAr.create(
     { uuid: crypto.randomUUID(), ownerId: OWNER, title: 'Купить хлеб' },
-    Date.UTC(2026, 9, 1),
+    T0,
   );
   if (!created.ok) throw new Error('задача не создана');
   await tasks.save(created.value);
@@ -162,5 +173,31 @@ describe('фасад todo (D-43)', () => {
 
   it('UC нет в calls потребителя — ошибка типа (рантайм-проверки нет)', () => {
     expect(new Sneaky(deps, DigestModuleDef).ref.name).toBe('sneaky');
+  });
+});
+
+describe('потребитель фасада todo отдельно — StubFacade (D-43)', () => {
+  it('ответ по Def; вызов — от SystemCaller операции с человеком пришедшего', async () => {
+    const task = expectOk(
+      TaskAr.create({ uuid: taskId, ownerId: OWNER, title: 'Хлеб' }, T0),
+    );
+    expectOk(task.complete(T0));
+    const todo = new StubFacade(TodoModuleDef).answer(GetTaskUcDef, () =>
+      ok(task.snapshot()),
+    );
+    const consumer = new ShowTask(
+      { app: deps.app, facades: new ModuleFacades([todo]) },
+      DigestModuleDef,
+    );
+    const owner = as(OWNER);
+
+    const res = await consumer.handle({ taskId }, owner, REQ);
+
+    expect(expectOk(res)).toEqual({ done: true });
+    expect(todo.received).toHaveLength(1);
+    const [call] = todo.received;
+    expect(call?.input).toEqual({ taskId });
+    expect(call?.caller.from).toEqual(consumer.ref);
+    expect(call?.caller.person()).toBe(owner);
   });
 });

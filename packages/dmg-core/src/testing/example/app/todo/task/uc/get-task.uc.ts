@@ -11,7 +11,10 @@ import {
 
 type Loaded = { readonly task: TaskAr };
 
-/** Задача для фасада: Policy `canManage` — по субъекту `origin` (D-42). */
+/**
+ * Задача для других модулей: Policy `canManage` — по субъекту исходного
+ * человека (`SystemCaller.person()`, D-43).
+ */
 export class GetTaskUc extends UseCaseFromDef<
   typeof GetTaskUcDef,
   TodoDeps,
@@ -26,7 +29,7 @@ export class GetTaskUc extends UseCaseFromDef<
     return task ? ok({ task }) : TaskErrors.NOT_FOUND.err({ taskId });
   }
 
-  /** Выход — state агрегата: фасад вернёт его как `ReadonlyAr`. */
+  /** Выход — state агрегата: вызывающий соберёт `TaskAr.readonly`. */
   protected async execute(_: unknown, { task }: Loaded, __: UnitOfWork) {
     return ok(task.snapshot());
   }

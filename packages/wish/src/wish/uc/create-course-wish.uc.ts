@@ -47,7 +47,10 @@ export class CreateCourseWishUc extends UseCaseFromDef<
     super(CreateCourseWishUcDef, deps, module);
   }
 
-  /** Ответ курса — через фасад (D-43), желания — все на эту цель. */
+  /**
+   * Ответ курса — `this.call` (фасад модуля курсов, D-43), желания — все
+   * на эту цель.
+   */
   protected async load(
     { courseId }: Input,
     caller: Caller<User>,

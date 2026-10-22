@@ -74,7 +74,9 @@ class ProbeUc extends UseCaseFromDef<typeof ProbeUcDef, ModuleDeps, undefined> {
   constructor(deps: ModuleDeps, module: typeof ProbeModuleDef) {
     super(ProbeUcDef, deps, module);
   }
-  protected load = async () => ok(undefined);
+  protected async load() {
+    return ok(undefined);
+  }
   protected async execute(
     input: { courseId: string },
     _: undefined,
@@ -94,7 +96,9 @@ class SneakyUc extends UseCaseFromDef<
   constructor(deps: ModuleDeps, module: typeof ProbeModuleDef) {
     super(SneakyUcDef, deps, module);
   }
-  protected load = async () => ok(undefined);
+  protected async load() {
+    return ok(undefined);
+  }
   protected async execute(
     input: { courseId: string },
     _: undefined,

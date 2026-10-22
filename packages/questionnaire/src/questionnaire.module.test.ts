@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
-import type { User } from '@u7-scl/app/domain';
+import { Role, type User } from '@u7-scl/app/domain';
 import type { QuestionnairePool } from '@u7-scl/domain/questionnaire';
 import {
   QuestionnaireModuleDef,
@@ -22,13 +22,13 @@ import {
   type ModuleDeps,
   ModuleFacade,
   ModuleFacades,
+  type ParsedInputOf,
   Trace,
   type UnitOfWork,
   UseCaseFromDef,
 } from 'dmg-core/app';
 import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
 import * as v from 'valibot';
-import { StartQuestionnaireUc } from './questionnaire/uc/start-questionnaire.uc';
 import {
   createQuestionnaireModule,
   type QuestionnaireLegacy,
@@ -77,7 +77,7 @@ const ProbeModuleDef = defineModule({
   jobs: [],
 });
 
-type Input = { pool: QuestionnairePool; owner: Record<string, unknown> };
+type Input = ParsedInputOf<typeof ProbeUcDef>;
 
 class ProbeUc extends UseCaseFromDef<
   typeof ProbeUcDef,
@@ -88,7 +88,9 @@ class ProbeUc extends UseCaseFromDef<
   constructor(deps: ModuleDeps, module: typeof ProbeModuleDef) {
     super(ProbeUcDef, deps, module);
   }
-  protected load = async () => ok(undefined);
+  protected async load() {
+    return ok(undefined);
+  }
   protected async execute(
     input: Input,
     _: undefined,
@@ -109,7 +111,9 @@ class SneakyUc extends UseCaseFromDef<
   constructor(deps: ModuleDeps, module: typeof ProbeModuleDef) {
     super(SneakyUcDef, deps, module);
   }
-  protected load = async () => ok(undefined);
+  protected async load() {
+    return ok(undefined);
+  }
   protected async execute(
     input: Input,
     _: undefined,
@@ -135,13 +139,13 @@ const POOL: QuestionnairePool = {
   ],
 };
 const OWNER = { kind: 'wish', wishId: 'w-1' };
-const USER = {
+const USER: User = {
   uuid: '00000000-0000-0000-0000-000000000001',
   name: 'Test',
   telegramId: 123,
-  roles: [],
+  roles: [Role.STUDENT],
   createdAt: '2024-01-01T00:00:00.000Z',
-} as unknown as User;
+};
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
 
 type StartCall = readonly [User, QuestionnairePool, Record<string, unknown>];
@@ -194,39 +198,41 @@ describe('модуль анкет через фасад (D-43, адаптер TR
     );
   });
 
-  describe('StartQuestionnaireUc: Policy «респондент есть»', () => {
-    const caller: OperationRef = {
+  describe('startQuestionnaire: Policy «респондент есть»', () => {
+    // Вызывающий — `SystemCaller` операции другого модуля, как его строит
+    // `this.call`: с человеком пришедшего или без него (вызов из ER/Job).
+    const FROM: OperationRef = {
       kind: 'useCase',
       module: 'probe',
       name: 'probeQuestionnaire',
     };
-    const startUc = (questionnaireLegacy: QuestionnaireLegacy) =>
-      new StartQuestionnaireUc(
-        {
-          app,
-          facades: new ModuleFacades(),
-          legacy: questionnaireLegacy,
-        },
-        QuestionnaireModuleDef,
+    const start = (
+      questionnaireLegacy: QuestionnaireLegacy,
+      caller: Caller<User>,
+    ) =>
+      createQuestionnaireModule({
+        app,
+        facades: new ModuleFacades(),
+        legacy: questionnaireLegacy,
+      }).handle(
+        StartQuestionnaireUcDef,
+        { pool: POOL, owner: OWNER },
+        caller,
+        REQ,
       );
 
     it('системный вызов без человека — ACCESS_DENIED, ничего не запущено', async () => {
       const { facade, calls } = legacy();
-      const res = await startUc(facade).handle(
-        { pool: POOL, owner: OWNER },
-        new SystemCaller<User>(caller),
-        REQ,
-      );
+      const res = await start(facade, new SystemCaller(FROM));
       expectErr(res, 'ACCESS_DENIED');
       expect(calls).toEqual([]);
     });
 
     it('системный вызов с человеком — запускает за его субъекта', async () => {
       const { facade, calls } = legacy();
-      const res = await startUc(facade).handle(
-        { pool: POOL, owner: OWNER },
-        new SystemCaller<User>(caller, new UserCaller(USER)),
-        REQ,
+      const res = await start(
+        facade,
+        new SystemCaller(FROM, new UserCaller(USER)),
       );
       expect(expectOk(res)).toEqual({});
       expect(calls).toEqual([[USER, POOL, OWNER]]);
