@@ -5,6 +5,7 @@ import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { CancelWishUc } from './wish/uc/cancel-wish.uc';
 import { CreateCourseWishUc } from './wish/uc/create-course-wish.uc';
 import { CreateModuleWishUc } from './wish/uc/create-module-wish.uc';
+import { ListUserWishesUc } from './wish/uc/list-user-wishes.uc';
 import type { WishRepo } from './wish/wish.repo';
 // gen:defs:imports
 
@@ -24,6 +25,7 @@ export const wishMap = {
     createCourseWish: CreateCourseWishUc,
     createModuleWish: CreateModuleWishUc,
     cancelWish: CancelWishUc,
+    listUserWishes: ListUserWishesUc,
     // gen:defs:useCases
   },
   reactions: {

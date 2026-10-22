@@ -6,6 +6,7 @@ import { defineModule } from 'dmg-core';
 import { CancelWishUcDef } from './wish/uc/cancel-wish.uc';
 import { CreateCourseWishUcDef } from './wish/uc/create-course-wish.uc';
 import { CreateModuleWishUcDef } from './wish/uc/create-module-wish.uc';
+import { ListUserWishesUcDef } from './wish/uc/list-user-wishes.uc';
 import { WishArDef } from './wish/wish.ar';
 // gen:defs:imports
 
@@ -32,6 +33,7 @@ export const WishModuleDef = defineModule({
     CreateCourseWishUcDef,
     CreateModuleWishUcDef,
     CancelWishUcDef,
+    ListUserWishesUcDef,
     // gen:defs:useCases
   ],
   reactions: [

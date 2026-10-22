@@ -508,3 +508,6 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 
 ### Ф9.2 пакет — api-author (Sonnet)
 `CancelWishUc`: `load` — `findCurrentByUserAndTarget`, нет → `NOT_FOUND`; `execute` — `cancel` → `uow.register`. 12 тестов (все случаи legacy + `ACCESS_DENIED` чужого желания подменой поиска, `UNAUTHORIZED`). Правка оркестратора: подмена ошибки перехода в UC (`err(wish.notFound())`) убрана — `return cancelled`, `WISH_NOT_CANCELLABLE` в `errors` Def (недостижим через UC, ERR-02). Гейт и `check` зелёные (3623 pass).
+
+### Ф9.3 — domain-author + api-author (Sonnet)
+`ListUserWishesUcDef`: query, `allowAll`, вход `{}`, выход `v.array(WishArDef.state)`, `errors: []`. `ListUserWishesUc`: `load` — `ok(undefined)`, `execute` — `findByUser(subject)` → `snapshot()` (идиома учебного `list-tasks`). Тесты: все случаи legacy + только свои, `UNAUTHORIZED`, query не пишет. TDD соблюдён; гейт и `check` зелёные (3630 pass).
