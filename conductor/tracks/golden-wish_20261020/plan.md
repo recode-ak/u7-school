@@ -94,14 +94,14 @@
 - [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `e5d93978` (TR-14)
 - [x] Task: Контрольная точка 'Фаза 8а' (автономно, workflow.md); удалить `OPEN-QUESTIONS-F8.md` (решения — в D-43) `872fc49`
 
-## Фаза 9: Остальные Use Case
+## Фаза 9: Остальные Use Case [checkpoint: 998cf2d]
 
 > **Перед стартом:** Фаза 8а закрыта; `OPEN-QUESTIONS-F8.md` перенесён в D-43 и удалён.
 
 - [x] Task: `create-module-wish`, `cancel-wish`, `list-user-wishes` по гайду Фазы 8 (по одному, отдельный TDD-цикл) `0447fdae` `82874f54` `23d7983d`
 - [x] Task: Уточнить гайд «use case» (command и query, отличия) `18665228`
 - [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `aaf5d63c` (TR-15)
-- [ ] Task: Контрольная точка 'Фаза 9' (автономно, workflow.md)
+- [x] Task: Контрольная точка 'Фаза 9' (автономно, workflow.md) `998cf2d`
 
 ## Фаза 10: Event Reaction — эталон (`fulfill-wish`)
 
