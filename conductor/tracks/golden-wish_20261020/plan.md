@@ -76,7 +76,7 @@
 - [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `9c0a7047` (TR-12)
 - [x] Task: Контрольная точка 'Фаза 8' (автономно, workflow.md)
 
-## Фаза 8а: Вызовы и граница модуля (платформа)
+## Фаза 8а: Вызовы и граница модуля (платформа) [checkpoint: 872fc49]
 
 > Решения Р1–Р10 — D-43 в [decisions.md](../../architecture/decisions.md) (Нурболат, 2026-10-21; исходный `OPEN-QUESTIONS-F8.md` удалён в контрольной точке Ф8а). Платформенный эталон: TDD (red → green по шагам), Opus. Классы с зоной ответственности, не функции-хелперы.
 
@@ -92,7 +92,7 @@
 - [x] Task: Р10 — `WishAr.createForCourse` → `Result<WishAr, never>`, методы `questionnaire()` и `outcome()` из state (red → green в домене); `create-course-wish` берёт их; TR-12 в debt.md — пересмотр отметить `2133dc46`
 - [x] Task: Перевод потребителей: учебный модуль `dmg-core`, `wish` (`create-course-wish`), `course`, `questionnaire`; гайды «use case» и «facade» `fa8c8652`
 - [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `e5d93978` (TR-14)
-- [ ] Task: Контрольная точка 'Фаза 8а' (автономно, workflow.md); удалить `OPEN-QUESTIONS-F8.md` (решения — в D-43)
+- [x] Task: Контрольная точка 'Фаза 8а' (автономно, workflow.md); удалить `OPEN-QUESTIONS-F8.md` (решения — в D-43) `872fc49`
 
 ## Фаза 9: Остальные Use Case
 
