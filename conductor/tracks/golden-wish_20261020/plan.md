@@ -103,7 +103,7 @@
 - [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `aaf5d63c` (TR-15)
 - [x] Task: Контрольная точка 'Фаза 9' (автономно, workflow.md) `998cf2d`
 
-## Фаза 9а: `view()` вместо `snapshot()` вне репозитория (платформа, D-44)
+## Фаза 9а: `view()` вместо `snapshot()` вне репозитория (платформа, D-44) [checkpoint: ec4d82b]
 
 > Решение Нурболата (2026-10-22) по TR-15: `view()` — состояние наружу (по умолчанию `snapshot()`, переопределяемо), `snapshot()` — только репозиторий.
 
@@ -111,7 +111,7 @@
 - [x] Task: Платформа: `Aggregate.view()` (по умолчанию `snapshot()`, переопределяемый) в `dmg-core`; lint DOM-17 с фикстурами (red → green); учебный модуль (`get-task`, `list-tasks`), шаблоны `scripts/gen`; `listUserWishes` → `view()` `f4631bdf` (TR-16)
 - [x] Task: Гайды «aggregate» и «use case» по D-44 `e5983103`
 - [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `fb09bee2` (TR-17)
-- [ ] Task: Контрольная точка 'Фаза 9а' (автономно, workflow.md)
+- [x] Task: Контрольная точка 'Фаза 9а' (автономно, workflow.md) `ec4d82b`
 
 ## Фаза 10: Event Reaction — эталон (`fulfill-wish`)
 
