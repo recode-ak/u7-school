@@ -1,0 +1,7 @@
+Фаза 9 (golden-wish): остальные UC wish — createModuleWish, cancelWish, listUserWishes — автономно (agents.md §9).
+Проверка: bun run check — 3632 pass / 0 fail (lint, tsc, test); agent-gate зелёный.
+Ревью: reviewer (Sonnet), diff 6e542c7d..be6392c3 — error нет, 3 warning, 5 note; правки aaf5d63c, решения TR-15.
+Новое: внешний UC course getModuleEnrollment + адаптер TR-11; правила moduleEnrollable, cancellable; WishAr.createForModule, notFound/notFoundFor; гайд «use case» §4 «Command и query».
+Открытый вопрос к Нурболату: бриф wish п. 8 (TR-15) — как query отдаёт state агрегата (snapshot() в UC против D-05/D-39).
+Покрытие: без парного теста — адаптер get-module-enrollment (под course.module.test.ts), реэкспорты contract.ts/index.ts.
+Ручная верификация: пропущена (автономный режим).
