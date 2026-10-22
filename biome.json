@@ -589,8 +589,9 @@
         "apps/**",
         "!**/*.test.ts",
         "!**/*.repo.ts",
+        "!**/*-repo.ts",
         "!**/*.json-repo.ts",
-        "!**/infra/**",
+        "!**/*.memory-repo.ts",
         "!packages/wish/src/api/**"
       ],
       "plugins": [

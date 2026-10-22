@@ -529,3 +529,6 @@ error нет. warning: `snapshot()` в query UC и в гайде (D-05/D-39) —
 
 ### Ф9а шаг 1 — domain-author (платформа, Opus)
 `Aggregate<D, V = StateOf<D>>`: `view(this: SameType<V, StateOf<D>> extends true ? unknown : never): V`, по умолчанию `snapshot()`; объявить свою `V` без переопределения — ошибка типа; доступен у `ReadonlyAr`. Lint DOM-17 — GritQL-плагин `packages/dmg-core/biome-plugins/dom-17-snapshot-repo-only.grit` на `packages/*/src/**` и `apps/**` (расширено по указанию оркестратора), исключения: тесты, `*.repo.ts`, `*.json-repo.ts`, `infra/**`, `app.fixture.ts`, `aggregate.ts`, legacy `packages/wish/src/api/**` (TR-16). 14 фикстур (red → green). Переведены `get-task`, `list-tasks`, `listUserWishes`. Шаблоны `scripts/gen` без изменений: тест Ar проверяет `snapshot()` как контракт репозитория. `check` зелёный (3650 pass).
+
+### Ревью Ф9а (reviewer, Opus, diff `de44c108..e5983103`)
+error нет. warning: дыра `SameType` (форма без необязательного поля), `?.snapshot()` не ловится, `!**/infra/**` слишком широк — исправлены (domain-author, Opus, red → green). note: rules.md, TR-16, гайд «aggregate» — поправлены оркестратором. Решения — TR-17. `check` зелёный (3654 pass).

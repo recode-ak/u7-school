@@ -154,8 +154,9 @@
         "src/**",
         "!**/*.test.ts",
         "!**/*.repo.ts",
+        "!**/*-repo.ts",
         "!**/*.json-repo.ts",
-        "!**/infra/**",
+        "!**/*.memory-repo.ts",
         "!src/app/app.fixture.ts",
         "!src/domain/aggregate/aggregate.ts"
       ],

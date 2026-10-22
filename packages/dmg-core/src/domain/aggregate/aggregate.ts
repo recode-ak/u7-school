@@ -40,10 +40,18 @@ function isNewEntity(state: object): boolean {
  */
 type Restorable<S, A> = { readonly restore: (snapshot: S) => A };
 
-/** `true`, если типы взаимно присваиваемы (форма `view()` — сам state). */
+/**
+ * `true`, если типы взаимно присваиваемы и у них одни и те же ключи (форма
+ * `view()` — сам state). Ключи сверяются отдельно: `{ uuid }` и
+ * `{ uuid; note? }` взаимно присваиваемы, хотя `note` во втором есть.
+ */
 type SameType<A, B> = [A] extends [B]
   ? [B] extends [A]
-    ? true
+    ? [keyof A] extends [keyof B]
+      ? [keyof B] extends [keyof A]
+        ? true
+        : false
+      : false
     : false
   : false;
 
@@ -156,8 +164,9 @@ export abstract class Aggregate<D extends AnyAggregateDef, V = StateOf<D>> {
    * поля, и объявляет свою форму в `V`. Параметр `this` делает форму `V`
    * без переопределения ошибкой компиляции: базовая реализация отдаёт
    * state, и вызвать её можно, только если `V` и есть state (иначе `this:
-   * never`; строгое равенство — суженная форма тоже приняла бы state, но
-   * скрытые поля утекли бы). Условие — на типах класса, а не на
+   * never`). Равенство строгое — взаимная присваиваемость и те же ключи:
+   * суженная форма (без поля, в том числе необязательного) тоже приняла бы
+   * state, и скрытые поля утекли бы. Условие — на типах класса, а не на
    * экземпляре, поэтому `view()` доступен и у `ReadonlyAr`.
    */
   view(this: SameType<V, StateOf<D>> extends true ? unknown : never): V {

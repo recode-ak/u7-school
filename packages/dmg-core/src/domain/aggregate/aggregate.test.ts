@@ -170,6 +170,31 @@ class ForgetfulAr extends Aggregate<typeof SecretArDef, SecretView> {
   }
 }
 
+const MemoArDef = defineAggregate({
+  name: 'memo',
+  label: 'Памятка',
+  description: 'Памятка с необязательной заметкой.',
+  state: v.object({
+    ...BaseEntityFields,
+    note: v.optional(F.string('Заметка')),
+  }),
+  events: {},
+  errors: {},
+});
+
+type MemoView = Omit<StateOf<typeof MemoArDef>, 'note'>;
+
+// Форма без необязательного поля state, `view()` не переопределён.
+class SilentMemoAr extends Aggregate<typeof MemoArDef, MemoView> {
+  private constructor(state: StateOf<typeof MemoArDef>) {
+    super(MemoArDef, state);
+  }
+
+  static restore(snapshot: StateOf<typeof MemoArDef>): SilentMemoAr {
+    return new SilentMemoAr(snapshot);
+  }
+}
+
 const ID = '7b0c1f5e-4a5b-4c8e-9a51-2f6d3e8b9c10';
 const T0 = Date.UTC(2026, 0, 1);
 const T1 = Date.UTC(2026, 0, 2);
@@ -303,6 +328,13 @@ describe('Aggregate', () => {
     it('другая форма без переопределения — ошибка компиляции', () => {
       const ar = ForgetfulAr.restore({ ...secret, pin: '1234' });
       // @ts-expect-error база отдаёт state, а объявлена другая форма
+      const call = () => ar.view();
+      expect(call).toBeDefined();
+    });
+
+    it('форма без необязательного поля state без переопределения — ошибка компиляции', () => {
+      const ar = SilentMemoAr.restore({ ...secret, note: 'личное' });
+      // @ts-expect-error база отдала бы и `note`
       const call = () => ar.view();
       expect(call).toBeDefined();
     });
