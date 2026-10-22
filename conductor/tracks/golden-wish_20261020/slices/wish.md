@@ -210,7 +210,7 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 
 ## Ф8а: вызовы и граница модуля (платформа, D-43)
 
-**Источник формы:** D-43 в [decisions.md](../../../architecture/decisions.md), [caller.md](../../../architecture/caller.md) и детали Р1–Р10 в [OPEN-QUESTIONS-F8.md](../../../../OPEN-QUESTIONS-F8.md) (сигнатуры там — образец; расхождение с ними — в отчёт с обоснованием).
+**Источник формы:** D-43 в [decisions.md](../../../architecture/decisions.md), [caller.md](../../../architecture/caller.md) (детали Р1–Р10 были в `OPEN-QUESTIONS-F8.md`, удалён в контрольной точке Ф8а; решения — в D-43, отклонения — TR-13, TR-14).
 
 **Порядок:** один шаг = одна задача плана Ф8а, по очереди (Р1 → Р2 → Р3 → Р4–Р5 → Р6 → Р7 → Р8 → Р9 → Р10 → перевод потребителей). Платформа — `domain-author`, Opus; Р10 в пакете и перевод потребителей — `api-author`.
 
