@@ -584,6 +584,20 @@
       "plugins": ["./packages/dmg-core/biome-plugins/dom-12-no-iso-dates.grit"]
     },
     {
+      "includes": [
+        "packages/*/src/**",
+        "apps/**",
+        "!**/*.test.ts",
+        "!**/*.repo.ts",
+        "!**/*.json-repo.ts",
+        "!**/infra/**",
+        "!packages/wish/src/api/**"
+      ],
+      "plugins": [
+        "./packages/dmg-core/biome-plugins/dom-17-snapshot-repo-only.grit"
+      ]
+    },
+    {
       "includes": ["packages/domain/**/*.state.ts"],
       "plugins": ["./packages/dmg-core/biome-plugins/dom-11-base-fields.grit"]
     },

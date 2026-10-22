@@ -40,6 +40,13 @@ function isNewEntity(state: object): boolean {
  */
 type Restorable<S, A> = { readonly restore: (snapshot: S) => A };
 
+/** `true`, если типы взаимно присваиваемы (форма `view()` — сам state). */
+type SameType<A, B> = [A] extends [B]
+  ? [B] extends [A]
+    ? true
+    : false
+  : false;
+
 type Emit<D extends AnyAggregateDef> = (event: EventsOf<D>) => void;
 
 type Apply<D extends AnyAggregateDef, R> = (
@@ -66,8 +73,11 @@ export type RejectOf<
  * `static create(): Result<Ar>` (с событием) и `static restore(snapshot)`.
  * Состояние меняется только через `change()`; невалидное состояние — `throw`
  * (нарушение инварианта, ERR: §1 п. 2), в памяти его не бывает.
+ *
+ * `V` — форма состояния наружу (`view()`, D-44); по умолчанию — state.
+ * Агрегат, объявивший другую форму, обязан переопределить `view()`.
  */
-export abstract class Aggregate<D extends AnyAggregateDef> {
+export abstract class Aggregate<D extends AnyAggregateDef, V = StateOf<D>> {
   private current: StateOf<D>;
   private pending: EventsOf<D>[];
   private stored: number | undefined;
@@ -132,9 +142,27 @@ export abstract class Aggregate<D extends AnyAggregateDef> {
     this.stored = this.current.version;
   }
 
-  /** Копия состояния для репозитория. */
+  /**
+   * Копия состояния для записи — вызывает только репозиторий (DOM-17,
+   * D-44). Наружу состояние отдаёт `view()`.
+   */
   snapshot(): StateOf<D> {
     return structuredClone(this.current);
+  }
+
+  /**
+   * Состояние наружу: выход UC, рендереры UI (D-44). По умолчанию — копия
+   * state; агрегат переопределяет метод, чтобы скрыть или преобразовать
+   * поля, и объявляет свою форму в `V`. Параметр `this` делает форму `V`
+   * без переопределения ошибкой компиляции: базовая реализация отдаёт
+   * state, и вызвать её можно, только если `V` и есть state (иначе `this:
+   * never`; строгое равенство — суженная форма тоже приняла бы state, но
+   * скрытые поля утекли бы). Условие — на типах класса, а не на
+   * экземпляре, поэтому `view()` доступен и у `ReadonlyAr`.
+   */
+  view(this: SameType<V, StateOf<D>> extends true ? unknown : never): V {
+    // Тип `this` выше гарантирует, что `V` — это state.
+    return (this as Aggregate<D, V>).snapshot() as V;
   }
 
   /** Выдать накопленные события и очистить накопитель (вызывает UoW). */

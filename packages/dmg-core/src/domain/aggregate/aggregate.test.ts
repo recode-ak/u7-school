@@ -129,9 +129,57 @@ class TaskAr extends Aggregate<typeof TaskArDef> {
   }
 }
 
+const SecretArDef = defineAggregate({
+  name: 'secret',
+  label: 'Секрет',
+  description: 'Сейф с пин-кодом, который не отдаётся наружу.',
+  state: v.object({
+    ...BaseEntityFields,
+    label: F.string('Название'),
+    pin: F.string('Пин-код'),
+  }),
+  events: {},
+  errors: {},
+});
+
+type SecretView = { readonly uuid: string; readonly label: string };
+
+class SecretAr extends Aggregate<typeof SecretArDef, SecretView> {
+  private constructor(state: StateOf<typeof SecretArDef>) {
+    super(SecretArDef, state);
+  }
+
+  static restore(snapshot: StateOf<typeof SecretArDef>): SecretAr {
+    return new SecretAr(snapshot);
+  }
+
+  /** Пин-код наружу не уходит. */
+  override view(): SecretView {
+    return { uuid: this.state.uuid, label: this.state.label };
+  }
+}
+
+// Объявляет свою форму выхода, но `view()` не переопределяет.
+class ForgetfulAr extends Aggregate<typeof SecretArDef, SecretView> {
+  private constructor(state: StateOf<typeof SecretArDef>) {
+    super(SecretArDef, state);
+  }
+
+  static restore(snapshot: StateOf<typeof SecretArDef>): ForgetfulAr {
+    return new ForgetfulAr(snapshot);
+  }
+}
+
 const ID = '7b0c1f5e-4a5b-4c8e-9a51-2f6d3e8b9c10';
 const T0 = Date.UTC(2026, 0, 1);
 const T1 = Date.UTC(2026, 0, 2);
+const secret = {
+  uuid: ID,
+  createdAt: T0,
+  updatedAt: T0,
+  version: 0,
+  label: 'Сейф',
+};
 
 const stored = (status: 'open' | 'done') => ({
   uuid: ID,
@@ -233,6 +281,31 @@ describe('Aggregate', () => {
     const copy = ar.snapshot();
     copy.status = 'done';
     expect(ar.isDone()).toBe(false);
+  });
+
+  describe('view (D-44)', () => {
+    it('по умолчанию — копия состояния, как snapshot()', () => {
+      const ar = TaskAr.restore(stored('open'));
+      const view: StateOf<typeof TaskArDef> = ar.view();
+      expect(view).toEqual(stored('open'));
+      view.status = 'done';
+      expect(ar.isDone()).toBe(false);
+    });
+
+    it('переопределение — своя форма выхода со своим типом', () => {
+      const ar = SecretAr.restore({ ...secret, pin: '1234' });
+      const view: SecretView = ar.view();
+      expect(view).toEqual({ uuid: ID, label: 'Сейф' });
+      // @ts-expect-error скрытое поле не входит в тип выхода
+      expect(view.pin).toBeUndefined();
+    });
+
+    it('другая форма без переопределения — ошибка компиляции', () => {
+      const ar = ForgetfulAr.restore({ ...secret, pin: '1234' });
+      // @ts-expect-error база отдаёт state, а объявлена другая форма
+      const call = () => ar.view();
+      expect(call).toBeDefined();
+    });
   });
 
   describe('change', () => {

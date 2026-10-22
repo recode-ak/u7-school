@@ -29,8 +29,8 @@ export class GetTaskUc extends UseCaseFromDef<
     return task ? ok({ task }) : TaskErrors.NOT_FOUND.err({ taskId });
   }
 
-  /** Выход — state агрегата: вызывающий соберёт `TaskAr.readonly`. */
+  /** Выход — `view()` агрегата: вызывающий соберёт `TaskAr.readonly`. */
   protected async execute(_: unknown, { task }: Loaded, __: UnitOfWork) {
-    return ok(task.snapshot());
+    return ok(task.view());
   }
 }

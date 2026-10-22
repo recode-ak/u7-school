@@ -150,6 +150,18 @@
       ]
     },
     {
+      "includes": [
+        "src/**",
+        "!**/*.test.ts",
+        "!**/*.repo.ts",
+        "!**/*.json-repo.ts",
+        "!**/infra/**",
+        "!src/app/app.fixture.ts",
+        "!src/domain/aggregate/aggregate.ts"
+      ],
+      "plugins": ["./biome-plugins/dom-17-snapshot-repo-only.grit"]
+    },
+    {
       "includes": ["src/**", "!**/*.test.ts", "!src/kernel/fields/fields.ts"],
       "plugins": ["./biome-plugins/dom-12-no-iso-dates.grit"]
     },

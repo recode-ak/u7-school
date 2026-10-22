@@ -23,7 +23,7 @@ export class ListTasksUc extends UseCaseFromDef<
     return ok(undefined);
   }
 
-  /** Выход — снапшоты: лишние поля отбрасывает схема output (`v.pick`). */
+  /** Выход — `view()` задач: лишние поля отбрасывает схема output (`v.pick`). */
   protected async execute(
     _: unknown,
     __: undefined,
@@ -32,6 +32,6 @@ export class ListTasksUc extends UseCaseFromDef<
   ) {
     const owner = this.subject(caller).uuid;
     const tasks = await this.resolve.tasks.findActiveByOwner(owner);
-    return ok(tasks.map((task) => task.snapshot()));
+    return ok(tasks.map((task) => task.view()));
   }
 }

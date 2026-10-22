@@ -19,7 +19,7 @@ export class ListUserWishesUc extends UseCaseFromDef<
     return ok(undefined);
   }
 
-  /** Выход — снапшоты желаний субъекта (идиома list-tasks); ничего не пишет. */
+  /** Выход — `view()` желаний субъекта (D-44); ничего не пишет. */
   protected async execute(
     _: unknown,
     __: undefined,
@@ -29,6 +29,6 @@ export class ListUserWishesUc extends UseCaseFromDef<
     const wishes = await this.resolve.wishes.findByUser(
       this.subject(caller).uuid,
     );
-    return ok(wishes.map((wish) => wish.snapshot()));
+    return ok(wishes.map((wish) => wish.view()));
   }
 }

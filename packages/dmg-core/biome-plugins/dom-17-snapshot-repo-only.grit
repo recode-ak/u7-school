@@ -1,0 +1,7 @@
+// DOM-17: снимок state для записи берёт только репозиторий; наружу — `view()` (D-44).
+// Разрешено (overrides biome.json): репозитории (`*.repo.ts`, `*.json-repo.ts`, `infra/**`),
+// in-memory репозиторий фикстуры `app.fixture.ts`, сам `Aggregate`, тесты. Временное
+// исключение перехода — legacy `packages/wish/src/api/**` (ER и UC, уходят в Ф10–12 golden-wish, TR-16).
+`$ar.snapshot()` as $m where {
+  register_diagnostic(span=$m, message="DOM-17: snapshot() вызывает только репозиторий — состояние наружу отдаёт view() (rules.md, D-44)", severity="error")
+}

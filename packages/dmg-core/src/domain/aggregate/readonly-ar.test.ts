@@ -53,6 +53,10 @@ describe('ReadonlyAr', () => {
     expect(view.isPinned()).toBe(false);
   });
 
+  it('view() доступен — это чтение (D-44)', () => {
+    expect(view.view()).toEqual(note(ID));
+  });
+
   it('мутирующие методы, снимок и выдача событий недоступны', () => {
     // @ts-expect-error мутирующий метод (возвращает Result)
     view.pin;
