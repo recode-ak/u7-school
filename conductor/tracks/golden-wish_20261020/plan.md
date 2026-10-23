@@ -117,7 +117,7 @@
 
 - [x] Task: `defineEventReaction` (`on`, `touches`, `calls`, `emits`) + `ReactionFromDef`, идемпотентность, `Result`, журнал сбоев вместо `console.error` `7f18b70f` (TR-18)
 - [x] Task: Гайд «event reaction» `33018818`
-- [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
+- [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `33dc24fc` (TR-19)
 - [ ] Task: Контрольная точка 'Фаза 10' (автономно, workflow.md)
 
 ## Фаза 11: Остальные Event Reaction
