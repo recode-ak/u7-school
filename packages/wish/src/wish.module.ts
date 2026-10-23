@@ -2,6 +2,7 @@
 import type { User } from '@u7-scl/app/domain';
 import { WishModuleDef } from '@u7-scl/domain/wish';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
+import { FulfillWishEr } from './wish/er/fulfill-wish.er';
 import { CancelWishUc } from './wish/uc/cancel-wish.uc';
 import { CreateCourseWishUc } from './wish/uc/create-course-wish.uc';
 import { CreateModuleWishUc } from './wish/uc/create-module-wish.uc';
@@ -29,6 +30,7 @@ export const wishMap = {
     // gen:defs:useCases
   },
   reactions: {
+    fulfillWish: FulfillWishEr,
     // gen:defs:reactions
   },
   jobs: {

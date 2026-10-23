@@ -3,6 +3,7 @@ import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { defineModule } from 'dmg-core';
+import { FulfillWishErDef } from './wish/er/fulfill-wish.er';
 import { CancelWishUcDef } from './wish/uc/cancel-wish.uc';
 import { CreateCourseWishUcDef } from './wish/uc/create-course-wish.uc';
 import { CreateModuleWishUcDef } from './wish/uc/create-module-wish.uc';
@@ -37,6 +38,7 @@ export const WishModuleDef = defineModule({
     // gen:defs:useCases
   ],
   reactions: [
+    FulfillWishErDef,
     // gen:defs:reactions
   ],
   jobs: [

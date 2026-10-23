@@ -14,6 +14,7 @@ import { findCoursePool } from './pools/course-pool';
 import { WishErrors } from './wish.errors';
 import { WishEvents } from './wish.events';
 import { WishState, type WishStatus, type WishTargetVo } from './wish.state';
+import type { FulfillmentTargets } from './wish.types';
 
 const {
   NOT_CONFIRMABLE,
@@ -280,6 +281,32 @@ export class WishAr extends Aggregate<typeof WishArDef> {
   /** Исход создания для вызывающего: `questionnaire`, если нужна анкета. */
   outcome(): 'instant' | 'questionnaire' {
     return this.questionnaire() ? 'questionnaire' : 'instant';
+  }
+
+  /**
+   * О чём спросить модуль курсов при зачислении: реализуемое желание —
+   * о своей цели (курс или модуль), остальные — ни о чём. Выводится из
+   * state; батч по желаниям собирает `WishFulfillmentDcs`.
+   */
+  fulfillmentTargets(): FulfillmentTargets {
+    if (!this.canFulfill()) return { courseIds: [], moduleIds: [] };
+    const { target } = this.state;
+    return target.kind === 'course'
+      ? { courseIds: [target.courseId], moduleIds: [] }
+      : { courseIds: [], moduleIds: [target.moduleId] };
+  }
+
+  /**
+   * Реализует ли зачисление желание: оно реализуемо, и его цель среди
+   * целей, которые модуль курсов признал за модулем потока (`enrolled`).
+   * Нереализуемое — нет: повторное событие ничего не меняет.
+   */
+  isFulfilledBy(enrolled: FulfillmentTargets): boolean {
+    if (!this.canFulfill()) return false;
+    const { target } = this.state;
+    return target.kind === 'course'
+      ? enrolled.courseIds.includes(target.courseId)
+      : enrolled.moduleIds.includes(target.moduleId);
   }
 
   // ── Предикаты переходов ──

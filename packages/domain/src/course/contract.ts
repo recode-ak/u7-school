@@ -13,9 +13,17 @@ export {
   GetCourseEnrollmentUcDef,
 } from './course/uc/get-course-enrollment.uc';
 export {
+  type CoursesIncludingModule,
+  GetCoursesIncludingModuleUcDef,
+} from './course/uc/get-courses-including-module.uc';
+export {
   GetModuleEnrollmentUcDef,
   type ModuleEnrollment,
 } from './course/uc/get-module-enrollment.uc';
+export {
+  GetSameModulesUcDef,
+  type SameModules,
+} from './course/uc/get-same-modules.uc';
 export { CourseModuleDef } from './course.module';
 export type { CourseFacade, CourseProgram, ModulePlace } from './facade';
 export type {

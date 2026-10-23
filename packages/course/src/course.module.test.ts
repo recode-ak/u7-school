@@ -3,7 +3,9 @@ import type { ModulePlace } from '@u7-scl/domain/course';
 import {
   CourseModuleDef,
   GetCourseEnrollmentUcDef,
+  GetCoursesIncludingModuleUcDef,
   GetModuleEnrollmentUcDef,
+  GetSameModulesUcDef,
 } from '@u7-scl/domain/course/contract';
 import {
   allowAll,
@@ -139,6 +141,8 @@ function legacy(
       asked.push(moduleId);
       return place;
     },
+    whichCoursesIncludeModule: async () => [],
+    whichModulesAreSame: async () => [],
   };
   return { facade, asked };
 }
@@ -252,5 +256,61 @@ describe('getModuleEnrollment: адаптер над getModulePlace (TR-11)', ()
       REQ,
     );
     expect(expectOk(res)).toEqual({ enrollable: false });
+  });
+});
+
+describe('батч-вопросы о зачислении: ответ legacy как есть (TR-11)', () => {
+  const MODULE = '2d8e4b6a-5f3c-4e7d-9a0b-9c8d7e6f5a4b';
+  const OTHER = '3e9f5c7b-6a4d-4f8e-8b1c-0d9e8f7a6b5c';
+  const FORK = '4fa06d8c-7b5e-4a9f-9c2d-1e0f9a8b7c6d';
+  const asSystem = () =>
+    new SystemCaller({ kind: 'useCase', module: 'probe', name: 'probe' });
+
+  /** Модуль курсов над legacy с заданными батч-ответами; запоминает вопросы. */
+  function course(courseIds: string[], moduleIds: string[]) {
+    const asked: unknown[] = [];
+    const base = legacy(true).facade;
+    const facade = new ModuleFacade(
+      createCourseModule({
+        app,
+        facades: new ModuleFacades(),
+        legacy: {
+          ...base,
+          whichCoursesIncludeModule: async (moduleId, ids) => {
+            asked.push([moduleId, ids]);
+            return courseIds;
+          },
+          whichModulesAreSame: async (moduleId, ids) => {
+            asked.push([moduleId, ids]);
+            return moduleIds;
+          },
+        },
+      }),
+    );
+    return { facade, asked };
+  }
+
+  it('getCoursesIncludingModule — один вызов whichCoursesIncludeModule', async () => {
+    const { facade, asked } = course([FORK], []);
+    const res = await facade.handle(
+      GetCoursesIncludingModuleUcDef,
+      { moduleId: MODULE, courseIds: [COURSE, FORK] },
+      asSystem(),
+      REQ,
+    );
+    expect(expectOk(res)).toEqual({ courseIds: [FORK] });
+    expect(asked).toEqual([[MODULE, [COURSE, FORK]]]);
+  });
+
+  it('getSameModules — один вызов whichModulesAreSame', async () => {
+    const { facade, asked } = course([], [MODULE]);
+    const res = await facade.handle(
+      GetSameModulesUcDef,
+      { moduleId: MODULE, moduleIds: [MODULE, OTHER] },
+      asSystem(),
+      REQ,
+    );
+    expect(expectOk(res)).toEqual({ moduleIds: [MODULE] });
+    expect(asked).toEqual([[MODULE, [MODULE, OTHER]]]);
   });
 });

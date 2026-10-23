@@ -406,3 +406,60 @@ describe('вопросы к желанию', () => {
     expect('status' in restore('expressed')).toBe(false);
   });
 });
+
+describe('WishAr.fulfillmentTargets / isFulfilledBy — реализация зачислением', () => {
+  const moduleId = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
+  const forModule = (status: WishStatus) =>
+    WishAr.restore({ ...stored(status), target: { kind: 'module', moduleId } });
+  const none = { courseIds: [], moduleIds: [] };
+  const enrolled = { courseIds: [target.courseId], moduleIds: [moduleId] };
+
+  it.each(['expressed', 'confirmed'] as const)(
+    'реализуемое (%s) спрашивает о своей цели: курс или модуль',
+    (status) => {
+      expect(restore(status).fulfillmentTargets()).toEqual({
+        courseIds: [target.courseId],
+        moduleIds: [],
+      });
+      expect(forModule(status).fulfillmentTargets()).toEqual({
+        courseIds: [],
+        moduleIds: [moduleId],
+      });
+    },
+  );
+
+  it.each(['pending', 'cancelled', 'abandoned', 'fulfilled'] as const)(
+    'нереализуемое (%s) ни о чём не спрашивает',
+    (status) => {
+      expect(restore(status).fulfillmentTargets()).toEqual(none);
+      expect(forModule(status).fulfillmentTargets()).toEqual(none);
+    },
+  );
+
+  it.each(['expressed', 'confirmed'] as const)(
+    'реализуемое (%s) — реализовано, если его цель среди целей зачисления',
+    (status) => {
+      expect(restore(status).isFulfilledBy(enrolled)).toBe(true);
+      expect(forModule(status).isFulfilledBy(enrolled)).toBe(true);
+    },
+  );
+
+  it('цели нет среди целей зачисления — не реализовано', () => {
+    expect(restore('expressed').isFulfilledBy(none)).toBe(false);
+    expect(forModule('expressed').isFulfilledBy(none)).toBe(false);
+  });
+
+  it('вид цели важен: id курса среди модулей не реализует желание на курс', () => {
+    const swapped = { courseIds: [moduleId], moduleIds: [target.courseId] };
+    expect(restore('expressed').isFulfilledBy(swapped)).toBe(false);
+    expect(forModule('expressed').isFulfilledBy(swapped)).toBe(false);
+  });
+
+  it.each(['pending', 'cancelled', 'abandoned', 'fulfilled'] as const)(
+    'нереализуемое (%s) — не реализовано даже при совпадении цели (идемпотентность)',
+    (status) => {
+      expect(restore(status).isFulfilledBy(enrolled)).toBe(false);
+      expect(forModule(status).isFulfilledBy(enrolled)).toBe(false);
+    },
+  );
+});

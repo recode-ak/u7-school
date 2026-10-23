@@ -4,7 +4,9 @@ import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import type { Identified } from 'dmg-core';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { GetCourseEnrollmentUc } from './course/uc/get-course-enrollment.uc';
+import { GetCoursesIncludingModuleUc } from './course/uc/get-courses-including-module.uc';
 import { GetModuleEnrollmentUc } from './course/uc/get-module-enrollment.uc';
+import { GetSameModulesUc } from './course/uc/get-same-modules.uc';
 
 /**
  * Что адаптеры TR-11 берут у legacy-фасада курсов: только вопросы,
@@ -12,7 +14,11 @@ import { GetModuleEnrollmentUc } from './course/uc/get-module-enrollment.uc';
  */
 export type CourseLegacy = Pick<
   CourseFacade,
-  'isCourseEnrollable' | 'getCourseStartModuleId' | 'getModulePlace'
+  | 'isCourseEnrollable'
+  | 'getCourseStartModuleId'
+  | 'getModulePlace'
+  | 'whichCoursesIncludeModule'
+  | 'whichModulesAreSame'
 >;
 
 /**
@@ -29,6 +35,8 @@ export const courseModuleMap = {
   useCases: {
     getCourseEnrollment: GetCourseEnrollmentUc,
     getModuleEnrollment: GetModuleEnrollmentUc,
+    getCoursesIncludingModule: GetCoursesIncludingModuleUc,
+    getSameModules: GetSameModulesUc,
   },
   reactions: {},
   jobs: {},

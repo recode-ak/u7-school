@@ -115,7 +115,7 @@
 
 ## Фаза 10: Event Reaction — эталон (`fulfill-wish`)
 
-- [ ] Task: `defineEventReaction` (`on`, `touches`, `calls`, `emits`) + `ReactionFromDef`, идемпотентность, `Result`, журнал сбоев вместо `console.error`
+- [~] Task: `defineEventReaction` (`on`, `touches`, `calls`, `emits`) + `ReactionFromDef`, идемпотентность, `Result`, журнал сбоев вместо `console.error`
 - [ ] Task: Гайд «event reaction»
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 10' (автономно, workflow.md)

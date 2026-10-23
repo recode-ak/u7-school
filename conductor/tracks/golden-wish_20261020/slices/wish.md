@@ -14,7 +14,7 @@
 
 ## Решения брифа
 
-- **Уникальность — доменное правило `WishRules.unique` (Ф6–7, D-40; в Ф5 было DCS); DCS и DQS нет.** `list-user-wishes` — query UC, читает один агрегат через репозиторий; output выводится из схемы entity. Гайд «dcs/dqs» описывает критерий выбора, эталон DCS/DQS — в `stream`.
+- **Уникальность — доменное правило `WishRules.unique` (Ф6–7, D-40; в Ф5 было DCS); DQS нет; DCS — `WishFulfillmentDcs` (Ф10: батч по желаниям пользователя, DOM-06).** `list-user-wishes` — query UC, читает один агрегат через репозиторий; output выводится из схемы entity. Гайд «dcs/dqs» описывает критерий выбора, эталон DCS/DQS — в `stream`.
 - **Job нет.**
 - **Формат данных не меняется:** `F.timestamp` читает ISO-строку и число, пишет число. Репозиторий проверяется на `DB_DIR=./data/fixtures`.
 - **Пулы анкет** (`wish/pools/course-pool.ts`, `course.json`) остаются доменными данными модуля, путь не меняется.
@@ -282,6 +282,25 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 - TDD (red → запуск → green по шагам): `view()` по умолчанию, переопределение, lint-фикстуры.
 - Не трогать: `conductor/`, `data/`, legacy-код вне перечисленного.
 
+## Ф10: эталонная ER `fulfill-wish`
+
+**Платформа уже есть:** `defineEventReaction` (`on`, `touches`, `calls`, `emits`), `ReactionFromDef` (`react` → `Result`; фиксация UoW, лог отказа и исключения — `runLogged`, запись в `oplog` — база), учебный образец — `packages/dmg-core/src/testing/example/{todo,app/todo}/task/er/archive-removed-user-tasks.er.ts`. Правка платформы — только если без неё эталон не собрать (эскалация оркестратору). Сосуществование — как TR-9: новая ER живёт рядом с legacy `api/er/fulfill-wish-er.ts`, в приложение не подписывается до Ф12.
+
+**Сохраняемое поведение** (legacy `packages/wish/src/api/er/fulfill-wish-er.ts` и его тест — источник случаев): на `student.enrolled` (`StudentEvents.enrolled`: `userId`, `moduleId`) желания пользователя, реализуемые зачислением (`canFulfill`: `expressed | confirmed`), переходят в `fulfilled`: course-желание — если курс включает модуль потока (в т.ч. исторически, одним батч-запросом по всем курсам-кандидатам); module-желание — если модуль желания исторически тот же, что модуль потока. Остальные — игнор (идемпотентность: повторное событие ничего не меняет). Нет кандидатов — вызовов курса нет.
+
+**Шаг 1 — domain-author (Opus)** (`packages/domain/src/{course,wish}`):
+- Внешние Def UC курса (по образцу `GetModuleEnrollmentUcDef`: `type: 'query'`, `callers: ['system']`, `allowAll`, `description` на полях, MAN-02): «какие из курсов включают модуль» (`{ moduleId, courseIds }` → `{ courseIds }`, legacy `whichCoursesIncludeModule`) и «какие из модулей — тот же модуль» (`{ moduleId, moduleIds }` → `{ moduleIds }`, legacy `whichModulesAreSame`, батч-аналог `isSameModule`). Имена — по naming.md и соседям (`get…`); добавить в `CourseModuleDef.useCases`. Переход с `isSameModule` на батч — TR (поведение то же, контракт фасада это обещает).
+- `wish/wish/er/fulfill-wish.er.ts` — `FulfillWishErDef` через `bun run gen er wish.wish fulfill-wish` (если генератор не подходит под адаптированный модуль — вручную по шаблону, отметить в отчёте): `on: [StudentEvents.enrolled]`, `touches: [WishArDef]`, `calls` — два UC выше, `emits: []` (события реализации у `wish` нет). В `WishModuleDef.reactions`.
+- Доменное решение (API-01, DOM-04, DOM-17): ER не читает state (`snapshot()`/`view()` для решения не годится) и не ветвится по статусу/виду цели. Что именно спросить у курса и какие желания реализовать — методы Ar или доменный сервис, по образцу Р10 (`questionnaire()`/`outcome()`): например, метод, отдающий «вопрос к курсу» по цели, и переход, принимающий ответ. Форма — твоя, с обоснованием. Unit-тесты домена (red → green).
+
+**Шаг 2 — api-author (Opus)** (`packages/course/src/**`, `packages/wish/src/**`):
+- Адаптеры двух UC курса над legacy-фасадом (маркер TR-11, по образцу `get-module-enrollment.uc.ts`), регистрация в карте модуля курса; тесты: ответ legacy передаётся как есть.
+- `packages/wish/src/wish/er/fulfill-wish.er.ts` — `FulfillWishEr extends ReactionFromDef` (`gen er`), в `wishMap.reactions`. `react`: желания пользователя (`wishes.findByUser`) → вопросы к курсу через `this.call` (только если есть кандидаты; course — один батч) → доменный переход `fulfill(this.now())` → `uow.register`. Без `Date.now()`, без `throw`, без `console.*`.
+- Тесты (`StubFacade`, in-memory репозиторий, по образцу UC `wish` и учебной ER): все случаи legacy-теста; повторное событие — без изменений (идемпотентность); отказ/сбой вызова курса → `Result` с ошибкой, ничего не записано, отказ в логе (`logger.error`) и запись в `oplog`; доставка через `subscribe` на шине по событию `StudentEvents.enrolled`.
+- Legacy ER и её тест не трогать (удаление — Ф12).
+
+**Шаг 3 — оркестратор:** гайд «event reaction» (`conductor/architecture/guides/`, формат Ф4 спеки, 40–80 строк), эталон — файлы шагов 1–2.
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
@@ -528,7 +547,14 @@ UC/ER `packages/wish` на `WishAr.create/restore/snapshot`; `err` перехо�
 error нет. warning: `snapshot()` в query UC и в гайде (D-05/D-39) — принятый риск TR-15, открытый вопрос п. 8; тернар payload `NOT_FOUND` в `CancelWishUc.load` (API-01) — исправлено: `WishAr.notFoundFor(userId, target)`, через неё `notFound()` (domain-author, Sonnet, TDD). note: `NOT_CANCELLABLE` в `errors` оправдан; разделение `load`/`cancellable` верно; адаптер курса — дописан в TR-11; избыточность `Loaded` в `createModuleWish` — поля нужны контексту правил, оставлено. Перенос legacy (TST-05) выполнен.
 
 ### Ф9а шаг 1 — domain-author (платформа, Opus)
-`Aggregate<D, V = StateOf<D>>`: `view(this: SameType<V, StateOf<D>> extends true ? unknown : never): V`, по умолчанию `snapshot()`; объявить свою `V` без переопределения — ошибка типа; доступен у `ReadonlyAr`. Lint DOM-17 — GritQL-плагин `packages/dmg-core/biome-plugins/dom-17-snapshot-repo-only.grit` на `packages/*/src/**` и `apps/**` (расширено по указанию оркестратора), исключения: тесты, `*.repo.ts`, `*.json-repo.ts`, `infra/**`, `app.fixture.ts`, `aggregate.ts`, legacy `packages/wish/src/api/**` (TR-16). 14 фикстур (red → green). Переведены `get-task`, `list-tasks`, `listUserWishes`. Шаблоны `scripts/gen` без изменений: тест Ar проверяет `snapshot()` как контракт репозитория. `check` зелёный (3650 pass).
+`Aggregate<D, V = StateOf<D>>`: `view(): V`, по умолчанию `snapshot()` (исходно — `this: SameType…` с ошибкой типа без переопределения; упрощено в `23f27f3c`, TR-17); доступен у `ReadonlyAr`. Lint DOM-17 — GritQL-плагин `packages/dmg-core/biome-plugins/dom-17-snapshot-repo-only.grit` на `packages/*/src/**` и `apps/**` (расширено по указанию оркестратора), исключения: тесты, `*.repo.ts`, `*.json-repo.ts`, `infra/**`, `app.fixture.ts`, `aggregate.ts`, legacy `packages/wish/src/api/**` (TR-16). 14 фикстур (red → green). Переведены `get-task`, `list-tasks`, `listUserWishes`. Шаблоны `scripts/gen` без изменений: тест Ar проверяет `snapshot()` как контракт репозитория. `check` зелёный (3650 pass).
 
 ### Ревью Ф9а (reviewer, Opus, diff `de44c108..e5983103`)
 error нет. warning: дыра `SameType` (форма без необязательного поля), `?.snapshot()` не ловится, `!**/infra/**` слишком широк — исправлены (domain-author, Opus, red → green). note: rules.md, TR-16, гайд «aggregate» — поправлены оркестратором. Решения — TR-17. `check` зелёный (3654 pass).
+
+### Ф10 шаг 1 — domain-author (Opus)
+Def UC курса `GetCoursesIncludingModuleUcDef` (`{ moduleId, courseIds }` → `{ courseIds }`), `GetSameModulesUcDef` (`{ moduleId, moduleIds }` → `{ moduleIds }`) в `CourseModuleDef`; `FulfillWishErDef` (`gen er`) в `WishModuleDef.reactions`; `WishAr.fulfillmentTargets()`, `isFulfilledBy(enrolled)` (`wish.types.ts`); `WishFulfillmentDcs(moduleId, wishes)` (`gen dcs`): `question()` — по батчу на вид цели, только при кандидатах; `fulfill(answer, at)` → `Result<WishAr[]>`. Обоснование DCS: батч по нескольким агрегатам (DOM-06), иначе ER делит по виду цели (API-01). Заготовка `packages/wish/src/wish/er/fulfill-wish.er.ts` от генератора. Гейт красный только на карте модуля курса (адаптеры — шаг 2). TR-кандидаты: батч `getSameModules` вместо цикла `isSameModule`; первый `*.types.ts` в домене wish.
+
+### Ф10 шаг 2 — api-author (Opus)
+Адаптеры курса `get-courses-including-module.uc.ts`, `get-same-modules.uc.ts` (TR-11, над `whichCoursesIncludeModule`/`whichModulesAreSame`) в `courseModuleMap`; `FulfillWishEr` (`react`: `findByUser` → `WishFulfillmentDcs` → `this.call` только по вопросам домена → `fulfill` → `uow.register`). 13 тестов (red 8 → green): случаи legacy, повтор события, отказ/исключение курса → `SERVER_INTERNAL`, ничего не записано, `logger.error`, запись в oplog; доставка через `subscribe`. Тесты — `WishJsonRepo` во временном каталоге (как у UC). Отличие от legacy: сбой — атомарно (TR-18 п. 3). `check` 3696 pass, `arch:check` 0.
+
