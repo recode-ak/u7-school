@@ -1,0 +1,1 @@
+Задача Ф10: эталонная ER fulfill-wish. Домен: Def UC курса getCoursesIncludingModule/getSameModules, FulfillWishErDef, WishFulfillmentDcs (question → answer → fulfill), WishAr.fulfillmentTargets/isFulfilledBy. Пакет: адаптеры курса (TR-11), FulfillWishEr на ReactionFromDef, 13 тестов. Решения — TR-18. check 3696 pass, arch:check 0.
