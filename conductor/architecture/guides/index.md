@@ -14,7 +14,7 @@
 | repo / dcs / dqs | [repo.md](./repo.md) | 6 |
 | facade (без манифеста, D-42) | [facade.md](./facade.md) | 7, 8 |
 | use case (command, query) | [use-case.md](./use-case.md) | 8–9 |
-| event reaction | — | 10–11 |
+| event reaction | [event-reaction.md](./event-reaction.md) | 10–11 |
 | module | — | 12 |
 | job | — (эталона нет) | 12 |
 

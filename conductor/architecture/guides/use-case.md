@@ -8,7 +8,7 @@
 
 - Действие пользователя, транспорта или другого модуля над агрегатом модуля: command меняет состояние, query только читает (отличия — §4).
 - UC техничен (API-01, D-08): загрузить → отдать домену → `uow.register`. Решение по состоянию, входу или ответу чужого модуля — в домене: право субъекта — Policy ([policy.md](./policy.md)), допустимость без субъекта — доменное правило в `rules`, выбор статуса и данных — метод Ar ([aggregate.md](./aggregate.md)).
-- Реакция на событие — не UC, а ER (Ф10).
+- Реакция на событие — не UC, а ER ([event-reaction.md](./event-reaction.md)).
 - Вызов другого модуля — `this.call(Def, input, caller, trace)` базы `OperationFromDef`, Def вызываемого UC — в `calls` (D-43, [facade.md](./facade.md)). Побочный эффект в чужом модуле — место выбирает Нурболат по каждому случаю (D-41).
 - Вход снаружи — только `ModuleFromDef.handle(def, input, caller, trace)`: транспорт строит `Caller` и `Trace` ([caller.md](../caller.md)).
 
