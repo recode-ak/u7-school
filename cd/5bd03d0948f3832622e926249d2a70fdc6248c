@@ -1,0 +1,5 @@
+Фаза 10 (golden-wish): эталонная ER fulfill-wish на ReactionFromDef, автономно.
+Проверка: bun run check — 3696 pass / 0 fail (lint, tsc, test); arch:check 0; agent-gate зелёный.
+Ревью: reviewer (Opus), diff 23f27f3c..33018818 — error нет, 1 warning, 8 info; правки гайда 33dc24fc, решения TR-19.
+Новое: Def UC курса getCoursesIncludingModule/getSameModules + адаптеры TR-11; FulfillWishErDef; WishFulfillmentDcs (первый DCS wish); WishAr.fulfillmentTargets/isFulfilledBy; FulfillWishEr рядом с legacy до Ф12 (TR-18); гайд event-reaction.md.
+Ручная верификация: пропущена (автономный режим).
