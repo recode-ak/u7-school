@@ -18,11 +18,11 @@
 ## 3. Устройство реализации
 
 - Конструктор `(deps, module: typeof <M>ModuleDef)` → `super(<N>ErDef, deps, module)`.
-- Наследник пишет только `react(event, uow, caller, trace)` → `Result<void, DomainError>`. Фиксацию UoW после `Ok`, `logger.error` отказа, перехват исключения (`SERVER_INTERNAL`) и запись в лог операций делает база (`handle`, `runLogged`, `journal`) — `try/catch` и `console.*` в ER нет.
+- Из шагов базы наследник пишет только `react(event, uow, caller, trace)` (вспомогательные `private`-методы — по месту, как `ask` эталона) → `Result<void, DomainError>`. Фиксацию UoW после `Ok`, `logger.error` отказа, перехват исключения (`SERVER_INTERNAL`) и запись в лог операций делает база (`handle`, `runLogged`, `journal`) — `try/catch` и `console.*` в ER нет.
 - `caller` и `trace` передаются в `this.call` как пришли — цепочка следа продолжается.
 - Регистрация агрегата вне `touches` и событие вне `emits` — сверка UoW по Def (`createUow`): исключение, в production — `warn`.
 - Идемпотентность — из домена: повторное событие находит агрегаты уже в конечном статусе, предикат Ar (`canFulfill`) их отсекает; ER статусы не сравнивает.
-- Подписка — `ModuleFromDef.subscribe()` на шине приложения; ER в приложение не подписывают вручную.
+- Подписка — `ModuleFromDef.subscribe()` на шине приложения; `<N>Er.subscribe(bus)` напрямую — только в тестах.
 
 ## 4. Эталон
 

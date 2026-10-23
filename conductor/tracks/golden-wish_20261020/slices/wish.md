@@ -558,3 +558,6 @@ Def UC курса `GetCoursesIncludingModuleUcDef` (`{ moduleId, courseIds }` �
 ### Ф10 шаг 2 — api-author (Opus)
 Адаптеры курса `get-courses-including-module.uc.ts`, `get-same-modules.uc.ts` (TR-11, над `whichCoursesIncludeModule`/`whichModulesAreSame`) в `courseModuleMap`; `FulfillWishEr` (`react`: `findByUser` → `WishFulfillmentDcs` → `this.call` только по вопросам домена → `fulfill` → `uow.register`). 13 тестов (red 8 → green): случаи legacy, повтор события, отказ/исключение курса → `SERVER_INTERNAL`, ничего не записано, `logger.error`, запись в oplog; доставка через `subscribe`. Тесты — `WishJsonRepo` во временном каталоге (как у UC). Отличие от legacy: сбой — атомарно (TR-18 п. 3). `check` 3696 pass, `arch:check` 0.
 
+### Ревью Ф10 (reviewer, Opus, diff `23f27f3c..33018818`)
+error нет. warning: `*.types.ts` вне naming.md. info: раздел «Устройство реализации» вне шаблона, `ask` и прямой `subscribe` в гайде, двойной смысл `FulfillmentTargets`, JSDoc legacy в контракте курса, длина/опрос в тестах ER, виды id в фикстурах DCS, атомарность (TR-18 п. 3). Поведение legacy сохранено (11 случаев + новые). Решения — TR-19.
+
