@@ -113,12 +113,12 @@
 - [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `fb09bee2` (TR-17)
 - [x] Task: Контрольная точка 'Фаза 9а' (автономно, workflow.md) `ec4d82b`
 
-## Фаза 10: Event Reaction — эталон (`fulfill-wish`)
+## Фаза 10: Event Reaction — эталон (`fulfill-wish`) [checkpoint: cd5bd03]
 
 - [x] Task: `defineEventReaction` (`on`, `touches`, `calls`, `emits`) + `ReactionFromDef`, идемпотентность, `Result`, журнал сбоев вместо `console.error` `7f18b70f` (TR-18)
 - [x] Task: Гайд «event reaction» `33018818`
 - [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `33dc24fc` (TR-19)
-- [ ] Task: Контрольная точка 'Фаза 10' (автономно, workflow.md)
+- [x] Task: Контрольная точка 'Фаза 10' (автономно, workflow.md) `cd5bd03`
 
 ## Фаза 11: Остальные Event Reaction
 
