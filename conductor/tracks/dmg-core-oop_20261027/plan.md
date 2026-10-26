@@ -9,11 +9,11 @@
 - [x] Task: Зафиксировать базовую линию (`bun test` pass/fail по репо и по `dmg-core`) в черновике `summary.md` `eacb6b0b`
 - [x] Task: Тесты типов (`@ts-expect-error`) на требования спеки п.2: вывод `const S` (`D['calls'][number]`, `D['policy']`, `M['useCases'][number]`, `InputOf<D>`), структурная совместимость с `Any*Def` (нет `private`/`#`), сравнение по ссылке; прототип `XxxDef.define` с полиморфным `this` на одном виде — проверка, что вывод не теряется `ae249ce9`
     - Итог прототипа: `static define` базы с `this: new (spec: S) => D` теряет литералы (у TS нет higher-kinded типов: дженерик-конструктор инстанцируется ограничением) и несовместим со статикой вида (TS2417). Работает `static define<const S>` в каждом виде (одна строка `new XxxDef(spec)`), база `Def` без `define`. Необязательные списки (`calls`, `rules`, `emits`) дают условный тип поля → вариантность `S` неизмерима → `Any*Def` — структурный тип публичных членов, а не `XxxDef<Spec>`. Не сработали: аннотация `out S`, нормализация типа через `Omit`.
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 ## Фаза 1: База `Def` и простые виды
 
-- [ ] Task: Абстрактный `Def` (`name`, `label`, `description`, `static define`, `describe()`, `normalize()`) — тесты контракта базы
+- [ ] Task: Абстрактный `Def` (`name`, `label`, `description`, `describe()`, `normalize()`; `static define` — в каждом виде, не в базе) — тесты контракта базы
 - [ ] Task: `ErrorDef` (`defineErrors` → статика), перевод `normalize`/`describe` для вида
 - [ ] Task: `EventDef` (`defineEvents` → статика), то же
 - [ ] Task: `AggregateDef` (`defineAggregate` → статика), то же; `Aggregate.readonly`/`newState` не трогаем

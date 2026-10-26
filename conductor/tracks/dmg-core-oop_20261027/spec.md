@@ -15,7 +15,7 @@
 
    Даже тогда хелпера по возможности избегаем — часто подходит композиция с объектом-классом.
 3. **Полиморфизм вместо `switch` по виду.** Если код ветвится по `def.dmg` или `rule.op`, поведение живёт в классе этого вида.
-4. **Статические методы базы с полиморфным `this`, а не код в каждом наследнике.** Образец — `Aggregate.readonly(state)`: `static readonly<S, A>(this: { restore(s: S): A }, state: S): ReadonlyAr<A>`.
+4. **Статические методы базы с полиморфным `this`, а не код в каждом наследнике.** Образец — `Aggregate.readonly(state)`: `static readonly<S, A>(this: { restore(s: S): A }, state: S): ReadonlyAr<A>`. Исключение — `define` (решено 2026-10-27 по итогам прототипа Фазы 0): объявляется в каждом виде, см. п.1.
 
 ## Функциональные требования
 
@@ -25,7 +25,8 @@
 
 Иерархия: базовый `Def` (`name`, `label`, `description`, `describe()`, `normalize()`) → `OperationDef` (общая база UC/ER/Job: `calls`, `aggregates()`, `errors()`, `title(module)`, `fileKind`, `mainAggregate()`) → конкретные виды.
 
-- **DSL:** `UseCaseDef.define(spec)` — статика базы с полиморфным `this`. Функции `define*` удаляются; перевод `domain/` и `modules/<m>` входит в трек.
+- **DSL:** `UseCaseDef.define(spec)` — `static define<const S extends XxxSpec>(spec): XxxDef<S>` в каждом виде (одна строка `new XxxDef(spec)`); у базы `Def` метода `define` нет. Причина: `define` базы с полиморфным `this` теряет литеральные типы (у TS нет higher-kinded типов) и несовместим со статикой вида (TS2417) — показал прототип Фазы 0 (решено с Нурболатом 2026-10-27). Функции `define*` удаляются; перевод `domain/` и `modules/<m>` входит в трек.
+- **`Any*Def`** — структурный тип публичных членов класса (`{ readonly [K in keyof XxxDef]: XxxDef[K] }`), а не `XxxDef<Spec>`: необязательные списки спеки дают условный тип поля, и вариантность параметра `S` неизмерима.
 - **`calls`** — одно обязательное поле у всех операций, нормализуется в конструкторе.
 
 | Место | Сейчас | Станет |
