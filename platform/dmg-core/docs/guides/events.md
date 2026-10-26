@@ -1,6 +1,6 @@
 # Events — гайд
 
-**Назначение:** Def событий агрегата (`<A>Events = defineEvents('<m>.<a>', { … })`): имя, `label`, `description`, схема payload. Файл — `<domain>/<m>/<a>/<a>.events.ts`.
+**Назначение:** Def событий агрегата (`<A>Events = EventDef.define('<m>.<a>', { … })` — словарь `EventDef`): имя, `label`, `description`, схема payload. Файл — `<domain>/<m>/<a>/<a>.events.ts`.
 
 ---
 
@@ -36,6 +36,7 @@
 - **Интерфейс события рядом с Def.** Тип payload выводится из схемы (`v.InferOutput<typeof <A>Events.<e>.payload>`); ручной интерфейс разойдётся с Def.
 - **Событие, собранное вручную после перехода.** Бери события Ar (`pullEvents()`), не строй тот же payload в UC или ER.
 - **Необязательные поля вместо веток.** Если набор полей зависит от вида, payload — `v.variant`, а не несколько `optional`.
+- **`make` как колбэк.** Def — экземпляр класса: `ids.map(TaskEvents.completed.make)` теряет `this`. Передавай стрелку: `(p) => TaskEvents.completed.make(p)`.
 - **Лишние данные в контракте.** В payload — только поля, нужные подписчикам: событие — часть контракта модуля, его меняют осторожно.
 
 ## 6. Как тестировать

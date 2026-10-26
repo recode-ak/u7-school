@@ -1,6 +1,6 @@
 import type { ReadonlyAr } from '#core/domain/aggregate/readonly-ar';
-import { defineRules } from '#core/domain/rules/define-rules';
-import { domainRule } from '#core/domain/rules/domain-rule';
+import { DomainRuleDef } from '#core/domain/rules/domain-rule-def';
+import { RulesDef } from '#core/domain/rules/rules-def';
 import { ok } from '#core/kernel/result/result';
 import type { UserActivity } from '#core/testing/example/users/contract';
 import type { TaskAr } from './task.ar';
@@ -18,7 +18,7 @@ export type OwnerTasksCtx = {
  * Доменное правило без субъекта (D-40): ответ зависит только от задач
  * владельца, а не от того, кто спрашивает. Статус задачи решает Ar (D-39).
  */
-const withinOpenLimit = domainRule({
+const withinOpenLimit = DomainRuleDef.define({
   name: 'withinOpenLimit',
   label: 'Открытых задач меньше предела',
   description: `Новая задача создаётся, только если у владельца меньше ${OPEN_TASKS_LIMIT} открытых задач.`,
@@ -43,7 +43,7 @@ export type AssigneeCtx = { readonly assignee: UserActivity };
  * пользователя вовсе — отказ самого вызова (`USER_NOT_FOUND`, ERR-03), до
  * правила дело не доходит.
  */
-const assigneeActive = domainRule({
+const assigneeActive = DomainRuleDef.define({
   name: 'assigneeActive',
   label: 'Исполнитель активен',
   description:
@@ -55,7 +55,7 @@ const assigneeActive = domainRule({
       : TaskErrors.ASSIGNEE_INACTIVE.err({ assigneeId: assignee.userId }),
 });
 
-export const TaskRules = defineRules({
+export const TaskRules = RulesDef.define({
   name: 'task',
   label: 'Правила задач',
   description:

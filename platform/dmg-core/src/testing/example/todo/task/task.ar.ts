@@ -4,7 +4,7 @@ import type {
   EventsOf,
   RejectOf,
 } from '#core/domain/aggregate/aggregate.types';
-import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
+import { AggregateDef } from '#core/domain/aggregate/aggregate-def';
 import type { ErrorOf } from '#core/kernel/errors/error-def';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
@@ -12,7 +12,7 @@ import { TaskErrors } from './task.errors';
 import { TaskEvents } from './task.events';
 import { TaskState } from './task.state';
 
-export const TaskArDef = defineAggregate({
+export const TaskArDef = AggregateDef.define({
   name: 'task',
   label: 'Задача',
   description:

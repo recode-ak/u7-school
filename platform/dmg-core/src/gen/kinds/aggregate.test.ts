@@ -36,7 +36,7 @@ test('state: схема entity на BaseEntityFields', () => {
 test('events: группа с FQN-префиксом модуль.агрегат', () => {
   const src = file('student.events.ts');
   expect(src).toContain(
-    "export const StudentEvents = defineEvents('stream.student', {",
+    "export const StudentEvents = EventDef.define('stream.student', {",
   );
   expect(src).toContain('created: {');
   expect(src).toContain('studentId: F.uuid(');
@@ -45,14 +45,14 @@ test('events: группа с FQN-префиксом модуль.агрегат
 test('errors: префикс UPPER_SNAKE, NOT_FOUND', () => {
   const src = file('student.errors.ts');
   expect(src).toContain(
-    "export const StudentErrors = defineErrors('STUDENT', {",
+    "export const StudentErrors = ErrorDef.define('STUDENT', {",
   );
   expect(src).toContain('NOT_FOUND: {');
 });
 
 test('ar: Def, класс, create/restore', () => {
   const src = file('student.ar.ts');
-  expect(src).toContain('export const StudentArDef = defineAggregate({');
+  expect(src).toContain('export const StudentArDef = AggregateDef.define({');
   expect(src).toContain("name: 'student'");
   expect(src).toContain(
     'export class StudentAr extends Aggregate<typeof StudentArDef>',

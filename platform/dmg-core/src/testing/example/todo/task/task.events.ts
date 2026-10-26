@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { defineEvents } from '#core/domain/events/define-events';
+import { EventDef } from '#core/domain/events/event-def';
 import { F } from '#core/kernel/fields/fields';
 
 const ref = {
@@ -9,7 +9,7 @@ const ref = {
 
 const assignment = v.object({ ...ref, assigneeId: F.uuid('исполнителя') });
 
-export const TaskEvents = defineEvents('todo.task', {
+export const TaskEvents = EventDef.define('todo.task', {
   created: {
     label: 'Задача создана',
     description: 'Пользователь добавил задачу в свой список.',

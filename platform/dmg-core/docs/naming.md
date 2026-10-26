@@ -35,7 +35,7 @@
     <aggregate>.state.ts   схема entity и VO (единственное место структуры состояния)
     <aggregate>.ar.ts      агрегат + его Def (статусы, переходы)
     <aggregate>.policy.ts
-    <aggregate>.rules.ts   доменные правила без субъекта (`<A>Rules = defineRules`, D-40)
+    <aggregate>.rules.ts   доменные правила без субъекта (`<A>Rules = RulesDef.define`, D-40)
     <aggregate>.events.ts  группа событий агрегата (FQN-префикс задаётся один раз)
     <aggregate>.errors.ts  группа ошибок агрегата
     uc/<name>.uc.ts        контракт UC

@@ -1,8 +1,8 @@
 import * as v from 'valibot';
-import { defineEvents } from '#core/domain/events/define-events';
+import { EventDef } from '#core/domain/events/event-def';
 import { F } from '#core/kernel/fields/fields';
 
-export const UserEvents = defineEvents('users.user', {
+export const UserEvents = EventDef.define('users.user', {
   removed: {
     label: 'Пользователь удалён',
     description: 'Учётная запись пользователя удалена.',

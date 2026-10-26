@@ -26,10 +26,10 @@ export const ${P}State = v.object({
 export type ${P}State = v.InferOutput<typeof ${P}State>;
 `;
 
-  const eventsSrc = `import { defineEvents, F } from 'dmg-core';
+  const eventsSrc = `import { EventDef, F } from 'dmg-core';
 import * as v from 'valibot';
 
-export const ${P}Events = defineEvents('${m}.${a}', {
+export const ${P}Events = EventDef.define('${m}.${a}', {
   created: {
     label: 'TODO: событие создания',
     description: 'TODO: когда возникает событие',
@@ -38,10 +38,10 @@ export const ${P}Events = defineEvents('${m}.${a}', {
 });
 `;
 
-  const errorsSrc = `import { defineErrors, F } from 'dmg-core';
+  const errorsSrc = `import { ErrorDef, F } from 'dmg-core';
 import * as v from 'valibot';
 
-export const ${P}Errors = defineErrors('${toUpperSnake(a)}', {
+export const ${P}Errors = ErrorDef.define('${toUpperSnake(a)}', {
   NOT_FOUND: {
     kind: 'not_found',
     label: 'TODO: агрегат не найден',
@@ -53,7 +53,7 @@ export const ${P}Errors = defineErrors('${toUpperSnake(a)}', {
 
   const arSrc = `import {
   Aggregate,
-  defineAggregate,
+  AggregateDef,
   type EventsOf,
   ok,
   type Result,
@@ -63,7 +63,7 @@ import { ${P}Errors } from './${a}.errors';
 import { ${P}Events } from './${a}.events';
 import { ${P}State } from './${a}.state';
 
-export const ${P}ArDef = defineAggregate({
+export const ${P}ArDef = AggregateDef.define({
   name: '${a}',
   label: 'TODO: название агрегата',
   description: 'TODO: что это за агрегат и его жизненный цикл',

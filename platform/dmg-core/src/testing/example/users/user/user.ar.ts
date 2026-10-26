@@ -3,7 +3,7 @@ import type {
   ErrorsOf,
   EventsOf,
 } from '#core/domain/aggregate/aggregate.types';
-import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
+import { AggregateDef } from '#core/domain/aggregate/aggregate-def';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import { UserErrors } from './user.errors';
@@ -13,7 +13,7 @@ import { UserState } from './user.state';
 // Минимальный второй модуль учебного примера: источник события, на которое
 // реагирует `todo`.
 
-export const UserArDef = defineAggregate({
+export const UserArDef = AggregateDef.define({
   name: 'user',
   label: 'Пользователь',
   description: 'Учётная запись: активна, пока её не удалят.',

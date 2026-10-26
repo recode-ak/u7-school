@@ -1,6 +1,6 @@
 # Errors — гайд
 
-**Назначение:** Def ошибок агрегата (`<A>Errors = defineErrors('<PREFIX>', { … })`): код, `kind`, `label`, `description`, схема payload. Файл — `<domain>/<m>/<a>/<a>.errors.ts`. Модель ошибки и `Result` — [errors-result.md](../errors-result.md).
+**Назначение:** Def ошибок агрегата (`<A>Errors = ErrorDef.define('<PREFIX>', { … })` — словарь `ErrorDef`): код, `kind`, `label`, `description`, схема payload. Файл — `<domain>/<m>/<a>/<a>.errors.ts`. Модель ошибки и `Result` — [errors-result.md](../errors-result.md).
 
 ---
 
@@ -37,6 +37,7 @@
 - **Два `optional` вместо веток.** «Ровно один из двух идентификаторов» — `v.union` двух `strictObject`, иначе схема не проверяет инвариант.
 - **`payload | undefined`.** Payload объявленной ошибки обязателен по схеме: вызывающий ветвится по нему (`TASK_TOO_MANY_OPEN` несёт `limit`).
 - **Текст экрана в `label`.** `label` — короткое имя отказа, `description` — когда он возникает (ERR-05); формулировки экрана — дело UI.
+- **`err`/`make` как колбэк.** Def — экземпляр класса: `list.map(TaskErrors.NOT_FOUND.err)` теряет `this`. Передавай стрелку: `() => TaskErrors.NOT_FOUND.err()`.
 - **Смена кода как смена поведения.** Перед переименованием кодов проверь, по чему ветвятся вызывающие: код — часть контракта модуля.
 
 ## 6. Как тестировать

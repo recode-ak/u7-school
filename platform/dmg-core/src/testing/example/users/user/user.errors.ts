@@ -1,8 +1,8 @@
 import * as v from 'valibot';
-import { defineErrors } from '#core/kernel/errors/define-errors';
+import { ErrorDef } from '#core/kernel/errors/error-def';
 import { F } from '#core/kernel/fields/fields';
 
-export const UserErrors = defineErrors('USER', {
+export const UserErrors = ErrorDef.define('USER', {
   NOT_FOUND: {
     kind: 'not_found',
     label: 'Пользователь не найден',
