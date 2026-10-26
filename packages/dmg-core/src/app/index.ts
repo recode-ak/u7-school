@@ -6,6 +6,7 @@ export {
   type RequestMeta,
   Trace,
   type TraceChannel,
+  type TraceJson,
   type TraceLog,
   type TraceStamp,
 } from '../kernel/trace/trace';

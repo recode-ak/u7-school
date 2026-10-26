@@ -101,6 +101,7 @@ export {
 } from './domain/rules/domain-rule';
 export {
   Caller,
+  type CallerJson,
   type CallerKind,
   type CallerLog,
   DelegateCaller,
@@ -108,6 +109,7 @@ export {
   type Identified,
   type OperationRef,
   type PersonCaller,
+  type ReviveSubject,
   SystemCaller,
   UserCaller,
 } from './kernel/caller/caller';

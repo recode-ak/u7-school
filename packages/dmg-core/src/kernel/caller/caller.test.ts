@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import {
-  type Caller,
+  Caller,
   type CallerKind,
   DelegateCaller,
   GuestCaller,
@@ -141,5 +141,141 @@ describe('Caller', () => {
     // @ts-expect-error вызывающего module больше нет (D-43)
     const _module: CallerKind = 'module';
     expect(kinds).toHaveLength(4);
+  });
+});
+
+/** Граница процесса: JSON туда и обратно, как в транспорте. */
+const wire = (value: unknown): unknown => JSON.parse(JSON.stringify(value));
+
+describe('Caller.toJSON / fromJSON — круг через JSON (D-46)', () => {
+  const cases: readonly {
+    readonly name: string;
+    readonly caller: Caller<User>;
+    readonly type: abstract new (...args: never[]) => Caller<User>;
+  }[] = [
+    { name: 'guest', caller: new GuestCaller(), type: GuestCaller },
+    { name: 'user', caller: new UserCaller(alice), type: UserCaller },
+    {
+      name: 'delegate',
+      caller: new DelegateCaller(alice, bob, 'd1'),
+      type: DelegateCaller,
+    },
+    { name: 'system', caller: new SystemCaller(erRef), type: SystemCaller },
+    {
+      name: 'system + guest',
+      caller: new SystemCaller<User>(ucRef, new GuestCaller()),
+      type: SystemCaller,
+    },
+    {
+      name: 'system + user',
+      caller: new SystemCaller(ucRef, new UserCaller(alice)),
+      type: SystemCaller,
+    },
+    {
+      name: 'system + delegate',
+      caller: new SystemCaller(ucRef, new DelegateCaller(alice, bob, 'd1')),
+      type: SystemCaller,
+    },
+  ];
+
+  for (const { name, caller, type } of cases) {
+    it(`${name}: тот же класс, субъект, человек, toLog и toJSON`, () => {
+      const restored = Caller.fromJSON<User>(wire(caller.toJSON()));
+      expect(restored).toBeInstanceOf(type);
+      expect(restored.kind).toBe(caller.kind);
+      expect(restored.subject()).toEqual(caller.subject());
+      expect(restored.person()?.constructor).toBe(caller.person()?.constructor);
+      expect(restored.person()?.toLog()).toEqual(caller.person()?.toLog());
+      expect(restored.toLog()).toEqual(caller.toLog());
+      expect(restored.toJSON()).toEqual(caller.toJSON());
+    });
+  }
+
+  it('toJSON — субъект целиком, без undefined-полей', () => {
+    const rich = { uuid: 'alice', name: 'Алиса' };
+    expect(new GuestCaller().toJSON()).toStrictEqual({ kind: 'guest' });
+    expect(new UserCaller(rich).toJSON()).toStrictEqual({
+      kind: 'user',
+      user: rich,
+    });
+    expect(new DelegateCaller(alice, bob, 'd1').toJSON()).toStrictEqual({
+      kind: 'delegate',
+      principal: alice,
+      actor: bob,
+      delegationId: 'd1',
+    });
+    expect(new SystemCaller(erRef).toJSON()).toStrictEqual({
+      kind: 'system',
+      from: erRef,
+    });
+    expect(
+      new SystemCaller(ucRef, new UserCaller(alice)).toJSON(),
+    ).toStrictEqual({
+      kind: 'system',
+      from: ucRef,
+      person: { kind: 'user', user: alice },
+    });
+  });
+
+  it('system.person восстанавливается человеком, а не SystemCaller', () => {
+    const json = new SystemCaller(ucRef, new UserCaller(alice)).toJSON();
+    const restored = Caller.fromJSON<User>(wire(json));
+    expect(restored.person()).toBeInstanceOf(UserCaller);
+    expect(restored.subject()).toEqual(alice);
+  });
+
+  it('revive вызывается для каждого субъекта', () => {
+    class Person {
+      constructor(readonly uuid: string) {}
+    }
+    const seen: unknown[] = [];
+    const revive = (raw: unknown): Person => {
+      seen.push(raw);
+      return new Person((raw as User).uuid);
+    };
+    const caller = new SystemCaller(
+      ucRef,
+      new DelegateCaller(alice, bob, 'd1'),
+    );
+    const restored = Caller.fromJSON(wire(caller.toJSON()), revive);
+    expect(seen).toEqual([alice, bob]);
+    expect(restored.subject()).toBeInstanceOf(Person);
+    const delegate = restored.person();
+    if (!(delegate instanceof DelegateCaller)) throw new Error('не delegate');
+    expect(delegate.actor).toBeInstanceOf(Person);
+
+    seen.length = 0;
+    Caller.fromJSON(wire(new UserCaller(alice).toJSON()), revive);
+    expect(seen).toEqual([alice]);
+  });
+
+  it('без revive субъект — как есть', () => {
+    const rich = { uuid: 'alice', name: 'Алиса' };
+    const restored = Caller.fromJSON(wire(new UserCaller(rich).toJSON()));
+    expect(restored.subject()).toEqual(rich);
+  });
+
+  it('system внутри system — ошибка (матрёшки нет)', () => {
+    const nested = {
+      kind: 'system',
+      from: ucRef,
+      person: { kind: 'system', from: erRef },
+    };
+    expect(() => Caller.fromJSON(nested)).toThrow(/Caller\.fromJSON/);
+  });
+
+  it('невалидный JSON — Error с понятным текстом', () => {
+    for (const bad of [
+      null,
+      'user',
+      {},
+      { kind: 'module' },
+      { kind: 'user' },
+      { kind: 'user', user: { name: 'без uuid' } },
+      { kind: 'delegate', principal: alice, actor: bob },
+      { kind: 'system', from: { kind: 'useCase', module: 'wish' } },
+    ]) {
+      expect(() => Caller.fromJSON(bad)).toThrow(/Caller\.fromJSON/);
+    }
   });
 });

@@ -1,37 +1,60 @@
-/**
- * Пользователь так, как его видит ядро: только идентификатор — для записи
- * вызывающего в лог (`toLog`). Полный тип замыкает приложение (D-04).
- */
-export type Identified = { readonly uuid: string };
+import * as v from 'valibot';
+import type {
+  CallerJson,
+  CallerKind,
+  CallerLog,
+  DelegateCallerJson,
+  GuestCallerJson,
+  Identified,
+  OperationRef,
+  SystemCallerJson,
+  UserCallerJson,
+} from './caller.types';
 
-/** Вид вызывающего — то, что объявляет `callers` в Def UC (MAN-11). */
-export type CallerKind = 'guest' | 'user' | 'delegate' | 'system';
+export type {
+  CallerJson,
+  CallerKind,
+  CallerLog,
+  DelegateCallerJson,
+  GuestCallerJson,
+  Identified,
+  OperationRef,
+  PersonCallerJson,
+  SystemCallerJson,
+  UserCallerJson,
+} from './caller.types';
 
-/**
- * Ссылка на операцию приложения: UC, ER или Job своего или другого модуля.
- * Свой ли модуль — сравнение `module` с модулем вызываемого (D-43).
- */
-export type OperationRef = {
-  readonly kind: 'useCase' | 'eventReaction' | 'job';
-  readonly module: string;
-  readonly name: string;
-};
+/** Восстановление субъекта из JSON (D-46): нужно, если `U` — класс. */
+export type ReviveSubject<U> = (raw: unknown) => U;
 
-/** Вызывающий в форме для лога операций. */
-export type CallerLog =
-  | { readonly kind: 'guest' }
-  | { readonly kind: 'user'; readonly subjectId: string }
-  | {
-      readonly kind: 'delegate';
-      readonly subjectId: string;
-      readonly actorId: string;
-      readonly delegationId: string;
-    }
-  | {
-      readonly kind: 'system';
-      readonly from: OperationRef;
-      readonly person?: CallerLog;
-    };
+const OperationRefJson = v.object({
+  kind: v.picklist(['useCase', 'eventReaction', 'job']),
+  module: v.string(),
+  name: v.string(),
+});
+
+/** Субъект проверяет `revive`; здесь — только наличие поля. */
+const PersonJson = v.variant('kind', [
+  v.object({ kind: v.literal('guest') }),
+  v.object({ kind: v.literal('user'), user: v.unknown() }),
+  v.object({
+    kind: v.literal('delegate'),
+    principal: v.unknown(),
+    actor: v.unknown(),
+    delegationId: v.string(),
+  }),
+]);
+
+const CallerJsonSchema = v.variant('kind', [
+  ...PersonJson.options,
+  v.object({
+    kind: v.literal('system'),
+    from: OperationRefJson,
+    person: v.optional(PersonJson),
+  }),
+]);
+
+const IdentifiedJson = v.looseObject({ uuid: v.string() });
 
 /**
  * Кто вызывает операцию (D-43). Policy и домен работают только с субъектом
@@ -45,6 +68,60 @@ export abstract class Caller<U extends Identified = Identified> {
   /** Исходный человек — для вложенных вызовов; у системы без него — нет. */
   abstract person(): PersonCaller<U> | undefined;
   abstract toLog(): CallerLog;
+  /** Форма для границы процесса (D-46): субъект целиком. */
+  abstract toJSON(): CallerJson<U>;
+
+  /**
+   * Вызывающий из JSON другого процесса (D-46) — тот же класс, что у
+   * отправителя. Без `revive` субъект берётся как есть (простые данные с
+   * `uuid`). Невалидный JSON — `Error`: это дефект транспорта, не доменная
+   * ошибка.
+   */
+  static fromJSON<U extends Identified = Identified>(
+    json: unknown,
+    revive?: ReviveSubject<U>,
+  ): Caller<U> {
+    const parsed = v.safeParse(CallerJsonSchema, json);
+    if (!parsed.success) {
+      throw new Error(
+        `Caller.fromJSON: невалидный JSON — ${v.summarize(parsed.issues)}`,
+      );
+    }
+    const subject = revive ?? Caller.asIs<U>;
+    const { output } = parsed;
+    if (output.kind !== 'system') return Caller.personOf(output, subject);
+    const { from, person } = output;
+    return person === undefined
+      ? new SystemCaller<U>(from)
+      : new SystemCaller(from, Caller.personOf(person, subject));
+  }
+
+  private static personOf<U extends Identified>(
+    json: v.InferOutput<typeof PersonJson>,
+    subject: ReviveSubject<U>,
+  ): PersonCaller<U> {
+    switch (json.kind) {
+      case 'guest':
+        return new GuestCaller<U>();
+      case 'user':
+        return new UserCaller(subject(json.user));
+      case 'delegate':
+        return new DelegateCaller(
+          subject(json.principal),
+          subject(json.actor),
+          json.delegationId,
+        );
+    }
+  }
+
+  private static asIs<U extends Identified>(raw: unknown): U {
+    if (!v.is(IdentifiedJson, raw)) {
+      throw new Error(
+        'Caller.fromJSON: субъект без uuid — передайте revive или простые данные с uuid',
+      );
+    }
+    return raw as U;
+  }
 }
 
 /** Человек на входе — вызывающий, который может стоять за системным. */
@@ -68,6 +145,10 @@ export class GuestCaller<U extends Identified = Identified> extends Caller<U> {
   toLog(): CallerLog {
     return { kind: 'guest' };
   }
+
+  toJSON(): GuestCallerJson {
+    return { kind: 'guest' };
+  }
 }
 
 /** Авторизованный пользователь — сам себе субъект. */
@@ -88,6 +169,10 @@ export class UserCaller<U extends Identified = Identified> extends Caller<U> {
 
   toLog(): CallerLog {
     return { kind: 'user', subjectId: this.user.uuid };
+  }
+
+  toJSON(): UserCallerJson<U> {
+    return { kind: 'user', user: this.user };
   }
 }
 
@@ -124,6 +209,15 @@ export class DelegateCaller<
       delegationId: this.delegationId,
     };
   }
+
+  toJSON(): DelegateCallerJson<U> {
+    return {
+      kind: 'delegate',
+      principal: this.principal,
+      actor: this.actor,
+      delegationId: this.delegationId,
+    };
+  }
 }
 
 /**
@@ -153,5 +247,11 @@ export class SystemCaller<U extends Identified = Identified> extends Caller<U> {
     return this.origin === undefined
       ? { kind: 'system', from: this.from }
       : { kind: 'system', from: this.from, person: this.origin.toLog() };
+  }
+
+  toJSON(): SystemCallerJson<U> {
+    return this.origin === undefined
+      ? { kind: 'system', from: this.from }
+      : { kind: 'system', from: this.from, person: this.origin.toJSON() };
   }
 }

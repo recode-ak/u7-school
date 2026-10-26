@@ -106,3 +106,73 @@ describe('Trace.toLog / toEnvelope', () => {
     });
   });
 });
+
+/** Граница процесса: JSON туда и обратно, как в транспорте. */
+const wire = (value: unknown): unknown => JSON.parse(JSON.stringify(value));
+
+describe('Trace.toJSON / fromJSON — круг через JSON (D-46)', () => {
+  const cases: readonly { readonly name: string; readonly trace: Trace }[] = [
+    { name: 'запрос', trace: Trace.fromRequest({ requestId: 'r-1' }) },
+    {
+      name: 'запрос с каналом',
+      trace: Trace.fromRequest({
+        requestId: 'r-1',
+        correlationId: 'c-1',
+        channel: { name: 'telegram', visitorId: '42' },
+      }),
+    },
+    {
+      name: 'канал без посетителя',
+      trace: Trace.fromRequest({ requestId: 'r-1', channel: { name: 'web' } }),
+    },
+    {
+      name: 'событие',
+      trace: Trace.fromEvent({ eventId: 'e-1', correlationId: 'c-1' }),
+    },
+    { name: 'прогон Job', trace: Trace.forJob({ name: 'archiveDoneTasks' }) },
+  ];
+
+  for (const { name, trace } of cases) {
+    test(`${name}: тот же класс, toLog и toJSON`, () => {
+      const restored = Trace.fromJSON(wire(trace.toJSON()));
+      expect(restored).toBeInstanceOf(Trace);
+      expect(restored.toLog()).toStrictEqual(trace.toLog());
+      expect(restored.toJSON()).toStrictEqual(trace.toJSON());
+      expect(restored.toEnvelope()).toStrictEqual(trace.toEnvelope());
+    });
+  }
+
+  test('toJSON — причина, цепочка и канал; без канала — без поля', () => {
+    expect(Trace.fromRequest({ requestId: 'r-1' }).toJSON()).toStrictEqual({
+      cause: { kind: 'request', requestId: 'r-1' },
+      correlationId: 'r-1',
+    });
+    expect(
+      Trace.fromRequest({
+        requestId: 'r-1',
+        channel: { name: 'web' },
+      }).toJSON(),
+    ).toStrictEqual({
+      cause: { kind: 'request', requestId: 'r-1' },
+      correlationId: 'r-1',
+      channel: { name: 'web' },
+    });
+  });
+
+  test('невалидный JSON — Error с понятным текстом', () => {
+    for (const bad of [
+      null,
+      {},
+      { cause: { kind: 'request', requestId: 'r-1' } },
+      { cause: { kind: 'timer' }, correlationId: 'c-1' },
+      { cause: { kind: 'job', job: 'x' }, correlationId: 'c-1' },
+      {
+        cause: { kind: 'event', eventId: 'e-1' },
+        correlationId: 'c-1',
+        channel: { visitorId: '42' },
+      },
+    ]) {
+      expect(() => Trace.fromJSON(bad)).toThrow(/Trace\.fromJSON/);
+    }
+  });
+});

@@ -1,3 +1,5 @@
+import * as v from 'valibot';
+
 /** Непосредственная причина операции и её событий. */
 export type Cause =
   | { readonly kind: 'request'; readonly requestId: string }
@@ -25,6 +27,24 @@ export type TraceLog = {
   readonly correlationId: string;
   readonly channel?: TraceChannel;
 };
+
+/**
+ * След в JSON — для передачи через границу процесса (D-46): `toJSON()` у
+ * отправителя, `Trace.fromJSON()` у получателя. Без канала — без поля.
+ */
+export type TraceJson = TraceLog;
+
+const TraceJsonSchema = v.object({
+  cause: v.variant('kind', [
+    v.object({ kind: v.literal('request'), requestId: v.string() }),
+    v.object({ kind: v.literal('event'), eventId: v.string() }),
+    v.object({ kind: v.literal('job'), job: v.string(), runId: v.string() }),
+  ]),
+  correlationId: v.string(),
+  channel: v.optional(
+    v.object({ name: v.string(), visitorId: v.optional(v.string()) }),
+  ),
+});
 
 /** Часть следа в конверте события: причина и цепочка, без канала. */
 export type TraceStamp = {
@@ -89,8 +109,28 @@ export class Trace {
     return new Trace({ kind: 'job', job: def.name, runId }, runId);
   }
 
+  /**
+   * След из JSON другого процесса (D-46). Невалидный JSON — `Error`: это
+   * дефект транспорта, не доменная ошибка.
+   */
+  static fromJSON(json: unknown): Trace {
+    const parsed = v.safeParse(TraceJsonSchema, json);
+    if (!parsed.success) {
+      throw new Error(
+        `Trace.fromJSON: невалидный JSON — ${v.summarize(parsed.issues)}`,
+      );
+    }
+    const { cause, correlationId, channel } = parsed.output;
+    return new Trace(cause, correlationId, channel);
+  }
+
   /** След для записи лога операций; без канала — без поля. */
   toLog(): TraceLog {
+    return this.toJSON();
+  }
+
+  /** Форма для границы процесса (D-46); без канала — без поля. */
+  toJSON(): TraceJson {
     const { cause, correlationId, channel } = this;
     return channel === undefined
       ? { cause, correlationId }
