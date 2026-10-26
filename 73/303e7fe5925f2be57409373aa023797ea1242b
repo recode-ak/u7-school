@@ -1,0 +1,1 @@
+Задача: абстрактный Def (Фаза 1). Файлы: platform/dmg-core/src/kernel/def/def.ts, def.types.ts, def.test.ts. База в kernel (ErrorDef живёт в kernel). describe() = {label, description, schemas} без заголовка — заголовок даст title(module)/ArchChecker; схемы — переопределяемый schemas(). texts() — для normalize видов. check зелёный, 3996 pass.
