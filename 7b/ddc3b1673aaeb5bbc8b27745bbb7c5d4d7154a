@@ -1,0 +1,4 @@
+Задача Ф4 dmg-core-extract: круг через JSON (D-46).
+Caller.toJSON/fromJSON (U целиком, revive), Trace.toJSON/fromJSON, тесты круга для Caller, Trace, конверта события, снапшота Ar.
+Файлы: packages/dmg-core/src/kernel/caller/{caller.ts,caller.types.ts,caller.test.ts}, kernel/trace/{trace.ts,trace.test.ts}, app/events/event-envelope.test.ts, domain/aggregate/snapshot-json.test.ts, index.ts, app/index.ts.
+Причина: D-28 — модуль готов к выносу в сервис; удалённый вызов фасада передаёт caller и trace в JSON. check: 3764 pass.
