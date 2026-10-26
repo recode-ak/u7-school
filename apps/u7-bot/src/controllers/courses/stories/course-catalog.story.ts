@@ -9,7 +9,12 @@ import {
   presentNavLevel,
 } from '@u7-scl/core/ui';
 import type { ContentSnapshot, Course } from '@u7-scl/course/domain';
-import type { WishState } from '@u7-scl/wish/domain';
+import {
+  CancelWishUcDef,
+  CreateCourseWishUcDef,
+  CreateModuleWishUcDef,
+  ListUserWishesUcDef,
+} from '@u7-scl/domain/wish';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
 import { resolveCourseNavLevel } from '../course-nav-resolver';
@@ -168,11 +173,7 @@ export class CourseCatalogStory extends U7BotUiStory {
     const allModIds = currentCourse.phases.flatMap((p) => p.moduleIds ?? []);
     const modulesInfo = await this.#loadModulesInfo(allModIds);
 
-    const wishes = ((await this.appApi.execute(
-      'list-user-wishes',
-      {},
-      actor,
-    )) ?? []) as WishState[];
+    const wishes = await this.executeUc(ListUserWishesUcDef, {}, actor);
     const wishStatus = wishes.find(
       (w) =>
         w.target.kind === 'course' && w.target.courseId === currentCourse.uuid,
@@ -518,11 +519,11 @@ export class CourseCatalogStory extends U7BotUiStory {
     }
 
     try {
-      const { outcome } = (await this.appApi.execute(
-        'create-course-wish',
+      const { outcome } = await this.executeUc(
+        CreateCourseWishUcDef,
         { courseId },
         actor,
-      )) as { outcome: 'instant' | 'questionnaire' };
+      );
 
       if (outcome === 'questionnaire') {
         return {};
@@ -576,7 +577,7 @@ export class CourseCatalogStory extends U7BotUiStory {
     actor: User,
   ): Promise<DialogResponse> {
     try {
-      await this.appApi.execute('create-module-wish', { moduleId }, actor);
+      await this.executeUc(CreateModuleWishUcDef, { moduleId }, actor);
 
       return this.screen(
         md`✅ Записали\\! Мы сообщим, когда откроется набор на модуль\\.`,
@@ -600,8 +601,8 @@ export class CourseCatalogStory extends U7BotUiStory {
     actor: User,
   ): Promise<DialogResponse> {
     try {
-      await this.appApi.execute(
-        'cancel-wish',
+      await this.executeUc(
+        CancelWishUcDef,
         { kind: 'course', courseId },
         actor,
       );
@@ -628,8 +629,8 @@ export class CourseCatalogStory extends U7BotUiStory {
     actor: User,
   ): Promise<DialogResponse> {
     try {
-      await this.appApi.execute(
-        'cancel-wish',
+      await this.executeUc(
+        CancelWishUcDef,
         { kind: 'module', moduleId },
         actor,
       );

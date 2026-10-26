@@ -18,6 +18,11 @@
  *   bun run scripts/call-uc.ts get-current '{"userId":"<uuid>"}'
  *   bun run scripts/call-uc.ts create-course-wish '{"courseId":"<uuid>"}'
  *
+ * UC модуля wish — DMG (Ф12): вызываются по Def через ту же сборку DMG,
+ * что и в боте (`apps/u7-bot/src/create-dmg-modules.ts`); имя — kebab-case
+ * (`create-course-wish`) или имя Def (`createCourseWish`). Лог операций
+ * DMG пишется в `data/oplog/`, как у бота.
+ *
  * ⚠️ Команды (не query) пишут в боевые JSON-файлы: перед изменяющими
  * вызовами убедись, что бот остановлен (pm2 stop u7-school-bot).
  *
@@ -41,6 +46,7 @@ import {
   ModuleJsonRepo,
   StepJsonRepo,
 } from '@u7-scl/course/infra';
+import { WishModuleDef } from '@u7-scl/domain/wish';
 import { QuestionnaireApiModule } from '@u7-scl/questionnaire/api';
 import type { QuestionnaireApiModuleResolver } from '@u7-scl/questionnaire/domain';
 import {
@@ -50,18 +56,34 @@ import {
 import type { StreamApiModuleResolver } from '@u7-scl/stream';
 import {
   StreamApiModule,
+  StreamInProcFacade,
   StreamJsonRepo,
   StudentJsonRepo,
 } from '@u7-scl/stream';
 import { UserApiModule } from '@u7-scl/user/api';
 import type { UserApiModuleResolver } from '@u7-scl/user/domain';
 import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
-import { WishApiModule } from '@u7-scl/wish/api';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
-import type { WishApiModuleResolver } from '@u7-scl/wish/wish';
+import { type AnyUseCaseDef, UserCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
+import {
+  createDmgAppContext,
+  createDmgModules,
+} from '../apps/u7-bot/src/create-dmg-modules.ts';
 import { resolveActor } from './_app-factory';
 
 const NUR_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';
+
+/** `createCourseWish` → `create-course-wish`. */
+const kebab = (name: string) =>
+  name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+
+/** UC модуля wish (DMG) по имени: kebab-case или имя Def. */
+function wishUcDef(ucName: string): AnyUseCaseDef | undefined {
+  return WishModuleDef.useCases.find(
+    (def: AnyUseCaseDef) => def.name === ucName || kebab(def.name) === ucName,
+  );
+}
 
 function printHelp() {
   console.log(`
@@ -167,15 +189,6 @@ async function main() {
     questionnaireModule,
   );
 
-  const wishModule = new WishApiModule({
-    wishRepo: new WishJsonRepo('data/wish/wishes.json'),
-    courseFacade,
-    questionnaireFacade,
-    userFacade,
-    appResolver,
-    eventBus: appResolver.eventBus,
-  } as unknown as WishApiModuleResolver);
-
   const streamModule = new StreamApiModule({
     streamRepo,
     streamStudentRepo: studentRepo,
@@ -184,14 +197,31 @@ async function main() {
     appResolver,
     eventBus: appResolver.eventBus,
   } as unknown as StreamApiModuleResolver);
+  const streamFacade = new StreamInProcFacade(streamModule);
+
+  // DMG: wish и внешние модули зависимостей — как в create-api-app.ts
+  const dmgModules = createDmgModules(
+    createDmgAppContext({
+      legacyBus: appResolver.eventBus,
+      logger: appResolver.logger,
+      mode: appResolver.mode,
+      oplogDir: 'data/oplog',
+    }),
+    {
+      user: userFacade,
+      course: courseFacade,
+      questionnaire: questionnaireFacade,
+      stream: streamFacade,
+    },
+    new WishJsonRepo('data/wish/wishes.json'),
+  );
 
   const app = new ApiApp([
     userModule,
-    wishModule,
     streamModule,
     courseModule,
     questionnaireModule,
-  ]);
+  ]).addDmgModules(...dmgModules);
 
   // init() заполняет карты UC и подписки ER; start() НЕ вызываем —
   // таймеры job'ов в одноразовом скрипте не нужны (паттерн _app-factory)
@@ -202,7 +232,18 @@ async function main() {
 
   // ─── Вызов UseCase ────────────────────────────────
   try {
-    const result = await app.execute(ucName, params, actor);
+    const dmgUc = wishUcDef(ucName);
+    const result = dmgUc
+      ? await app.execute(
+          dmgUc,
+          params,
+          new UserCaller(actor),
+          Trace.fromRequest({
+            requestId: crypto.randomUUID(),
+            channel: { name: 'cli' },
+          }),
+        )
+      : await app.execute(ucName, params, actor);
     console.log(JSON.stringify(result, null, 2));
   } catch (e: unknown) {
     const err = e as {

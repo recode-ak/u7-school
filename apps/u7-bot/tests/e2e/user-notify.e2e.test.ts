@@ -3,6 +3,7 @@ import type { User } from '@u7-scl/app/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import { CreateCourseWishUcDef } from '@u7-scl/domain/wish';
 import type { Stream } from '@u7-scl/stream/domain';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
@@ -11,6 +12,8 @@ import {
   pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { UserCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
 import { CoursesController } from '../../src/controllers/courses/controller';
 import { UserController } from '../../src/controllers/user/controller';
 
@@ -92,9 +95,10 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
 
     // 1. Желающий выражает желание пройти курс
     await app.apiApp.execute(
-      'create-course-wish',
+      CreateCourseWishUcDef,
       { courseId: COURSE_ID },
-      wisher,
+      new UserCaller(wisher),
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
     );
 
     // 2. Ментор открывает набор на первый модуль курса

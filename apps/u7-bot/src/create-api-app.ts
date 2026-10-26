@@ -37,11 +37,10 @@ import {
 } from '@u7-scl/stream';
 import { UserApiModule } from '@u7-scl/user/api';
 import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
-import { WishApiModule } from '@u7-scl/wish/api';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
-import type { WishApiModuleResolver } from '@u7-scl/wish/wish';
 import type { BotConfig } from './config';
 import type { U7BotAppMeta } from './core/u7-bot-app-meta';
+import { createDmgAppContext, createDmgModules } from './create-dmg-modules';
 
 /**
  * Результат фабрики ApiApp — только доменный слой.
@@ -54,7 +53,6 @@ export interface ApiAppBundle {
   questionnaireFacade: QuestionnaireInProcFacade;
   streamModule: StreamApiModule;
   courseModule: CourseApiModule;
-  wishModule: WishApiModule;
   school: School;
   appResolver: U7AppResolver;
 }
@@ -161,20 +159,24 @@ export function createApiApp(config: BotConfig, logger: Logger): ApiAppBundle {
 
   const streamFacade = new StreamInProcFacade(streamModule);
 
-  // ══ Wish: репозиторий и модуль ══
-  const wishRepo = new WishJsonRepo(`${config.dbDir}/wish/wishes.json`);
-
-  const wishResolver: WishApiModuleResolver = {
-    wishRepo,
-    courseFacade,
-    streamFacade,
-    questionnaireFacade,
-    userFacade,
-    appResolver,
-    eventBus: appResolver.eventBus,
-  };
-
-  const wishModule = new WishApiModule(wishResolver);
+  // ══ DMG: wish и внешние модули зависимостей (адаптеры над legacy) ══
+  // Шина DMG — поверх общей legacy-шины: события wish видят stories,
+  // legacy-события stream/questionnaire доходят до ER wish (D-37).
+  const dmgModules = createDmgModules(
+    createDmgAppContext({
+      legacyBus: appResolver.eventBus,
+      logger: appLogger,
+      mode: config.mode,
+      oplogDir: `${config.dbDir}/oplog`,
+    }),
+    {
+      user: userFacade,
+      course: courseFacade,
+      questionnaire: questionnaireFacade,
+      stream: streamFacade,
+    },
+    new WishJsonRepo(`${config.dbDir}/wish/wishes.json`),
+  );
 
   // ══ Peer-review: репозитории, модуль и фасад ══
   // Подписка ER на события судьбы студента — в module.init() (apiApp.init).
@@ -194,15 +196,14 @@ export function createApiApp(config: BotConfig, logger: Logger): ApiAppBundle {
     eventBus: appResolver.eventBus,
   });
 
-  // ══ ApiApp: модули ══
+  // ══ ApiApp: модули (legacy + DMG) ══
   const apiApp = new ApiApp<U7BotAppMeta>([
     userModule,
-    wishModule,
     streamModule,
     courseModule,
     questionnaireModule,
     peerReviewModule,
-  ]);
+  ]).addDmgModules(...dmgModules);
 
   // Планировщик — техническая зависимость: передаётся через init(),
   // lastRunAt персистится — задания переживают перезагрузку (misfire-политика).
@@ -221,7 +222,6 @@ export function createApiApp(config: BotConfig, logger: Logger): ApiAppBundle {
     questionnaireFacade,
     streamModule,
     courseModule,
-    wishModule,
     school,
     appResolver,
   };

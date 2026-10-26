@@ -2,9 +2,24 @@ import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
+import {
+  CancelWishUcDef,
+  CreateCourseWishUcDef,
+  CreateModuleWishUcDef,
+  ListUserWishesUcDef,
+} from '@u7-scl/domain/wish';
 import { Role } from '@u7-scl/user/domain';
+import { UserCaller } from 'dmg-core';
 import { Routes } from '../../shared/routes';
 import { CourseCatalogStory } from './course-catalog.story';
+
+/** Актор UC DMG — субъект `UserCaller` третьего аргумента `execute`. */
+function subjectOf(caller: unknown): User {
+  if (!(caller instanceof UserCaller)) {
+    throw new Error('UC DMG вызван без UserCaller');
+  }
+  return caller.user as User;
+}
 
 describe('CourseCatalogStory', () => {
   const session: BotSession = {
@@ -69,13 +84,13 @@ describe('CourseCatalogStory', () => {
     return {
       execute: mock(
         async (
-          ucName: string,
+          ucName: unknown,
           attrs: Record<string, unknown>,
-          actor?: User,
+          who?: unknown,
         ) => {
           if (ucName === 'list-courses') return courses;
-          if (ucName === 'list-user-wishes') {
-            return wishes.filter((w) => w.userId === actor?.uuid);
+          if (ucName === ListUserWishesUcDef) {
+            return wishes.filter((w) => w.userId === subjectOf(who).uuid);
           }
           if (ucName === 'get-course') {
             const found = courses.find((c) => c.uuid === attrs.uuid);
@@ -532,7 +547,7 @@ describe('CourseCatalogStory', () => {
 
   test('projects: несуществующий модуль — ошибка', async () => {
     const appApi = {
-      execute: mock(async (ucName: string, _attrs: Record<string, unknown>) => {
+      execute: mock(async (ucName: unknown, _attrs: unknown) => {
         if (ucName === 'list-courses') {
           return [
             {
@@ -593,15 +608,13 @@ describe('CourseCatalogStory', () => {
 
     function makeWishApi(error?: unknown) {
       return {
-        execute: mock(
-          async (ucName: string, _attrs: Record<string, unknown>) => {
-            if (ucName === 'create-module-wish') {
-              if (error) throw error;
-              return undefined;
-            }
+        execute: mock(async (ucName: unknown, _attrs: unknown) => {
+          if (ucName === CreateModuleWishUcDef) {
+            if (error) throw error;
             return undefined;
-          },
-        ),
+          }
+          return undefined;
+        }),
       };
     }
 
@@ -618,11 +631,11 @@ describe('CourseCatalogStory', () => {
       assertDialogResponseMarkdownSafe(response);
 
       const call = (api.execute as ReturnType<typeof mock>).mock.calls.find(
-        (c) => c[0] === 'create-module-wish',
+        (c) => c[0] === CreateModuleWishUcDef,
       );
       expect(call).toBeDefined();
       expect(call![1]).toEqual({ moduleId });
-      expect(call![2]).toBe(actor);
+      expect(subjectOf(call![2])).toBe(actor);
 
       expect(String(response.screen?.text)).toContain('Записали');
     });
@@ -675,15 +688,13 @@ describe('CourseCatalogStory', () => {
 
     function makeApplyApi(result?: { outcome: string }, error?: unknown) {
       return {
-        execute: mock(
-          async (ucName: string, _attrs: Record<string, unknown>) => {
-            if (ucName === 'create-course-wish') {
-              if (error) throw error;
-              return result;
-            }
-            return undefined;
-          },
-        ),
+        execute: mock(async (ucName: unknown, _attrs: unknown) => {
+          if (ucName === CreateCourseWishUcDef) {
+            if (error) throw error;
+            return result;
+          }
+          return undefined;
+        }),
       };
     }
 
@@ -848,11 +859,11 @@ describe('CourseCatalogStory', () => {
       assertDialogResponseMarkdownSafe(response);
 
       const call = (appApi.execute as ReturnType<typeof mock>).mock.calls.find(
-        (c) => c[0] === 'create-course-wish',
+        (c) => c[0] === CreateCourseWishUcDef,
       );
       expect(call).toBeDefined();
       expect(call![1]).toEqual({ courseId });
-      expect(call![2]).toBe(actor);
+      expect(subjectOf(call![2])).toBe(actor);
 
       const text = String(response.screen?.text ?? '');
       expect(text).toContain('зафиксировано');
@@ -874,7 +885,7 @@ describe('CourseCatalogStory', () => {
       );
 
       const call = (appApi.execute as ReturnType<typeof mock>).mock.calls.find(
-        (c) => c[0] === 'create-course-wish',
+        (c) => c[0] === CreateCourseWishUcDef,
       );
       expect(call).toBeDefined();
       // Стори ничего не отправляет — анкету проактивно рендерит FillStory
@@ -1008,15 +1019,13 @@ describe('CourseCatalogStory', () => {
 
     function makeCancelApi(error?: unknown) {
       return {
-        execute: mock(
-          async (ucName: string, _attrs: Record<string, unknown>) => {
-            if (ucName === 'cancel-wish') {
-              if (error) throw error;
-              return undefined;
-            }
+        execute: mock(async (ucName: unknown, _attrs: unknown) => {
+          if (ucName === CancelWishUcDef) {
+            if (error) throw error;
             return undefined;
-          },
-        ),
+          }
+          return undefined;
+        }),
       };
     }
 
@@ -1055,11 +1064,11 @@ describe('CourseCatalogStory', () => {
       assertDialogResponseMarkdownSafe(response);
 
       const call = (appApi.execute as ReturnType<typeof mock>).mock.calls.find(
-        (c) => c[0] === 'cancel-wish',
+        (c) => c[0] === CancelWishUcDef,
       );
       expect(call).toBeDefined();
       expect(call![1]).toEqual({ kind: 'course', courseId });
-      expect(call![2]).toBe(actor);
+      expect(subjectOf(call![2])).toBe(actor);
 
       const text = String(response.screen?.text ?? '');
       expect(text).toContain('отменено');
@@ -1098,15 +1107,13 @@ describe('CourseCatalogStory', () => {
 
     function makeCancelApi(error?: unknown) {
       return {
-        execute: mock(
-          async (ucName: string, _attrs: Record<string, unknown>) => {
-            if (ucName === 'cancel-wish') {
-              if (error) throw error;
-              return undefined;
-            }
+        execute: mock(async (ucName: unknown, _attrs: unknown) => {
+          if (ucName === CancelWishUcDef) {
+            if (error) throw error;
             return undefined;
-          },
-        ),
+          }
+          return undefined;
+        }),
       };
     }
 
@@ -1145,11 +1152,11 @@ describe('CourseCatalogStory', () => {
       assertDialogResponseMarkdownSafe(response);
 
       const call = (appApi.execute as ReturnType<typeof mock>).mock.calls.find(
-        (c) => c[0] === 'cancel-wish',
+        (c) => c[0] === CancelWishUcDef,
       );
       expect(call).toBeDefined();
       expect(call![1]).toEqual({ kind: 'module', moduleId });
-      expect(call![2]).toBe(actor);
+      expect(subjectOf(call![2])).toBe(actor);
 
       const text = String(response.screen?.text ?? '');
       expect(text).toContain('отменено');

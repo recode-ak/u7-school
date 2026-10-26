@@ -34,9 +34,11 @@ import {
 } from '@u7-scl/stream';
 import { UserApiModule } from '@u7-scl/user/api';
 import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
-import { WishApiModule } from '@u7-scl/wish/api';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
-import type { WishApiModuleResolver } from '@u7-scl/wish/wish';
+import {
+  createDmgAppContext,
+  createDmgModules,
+} from '../../src/create-dmg-modules';
 import type { FixturePaths } from './fixture-loader';
 import { cleanupFixtures, loadFixtures } from './fixture-loader';
 
@@ -148,20 +150,24 @@ export async function createTestApp(tag?: string): Promise<TestApp> {
     questionnaireModule,
   );
 
-  // ══ Wish: репозиторий и модуль ══
+  // ══ DMG: wish и внешние модули зависимостей (зеркально create-api-app.ts) ══
+  // Лог операций — во временном каталоге фикстур, не в data/.
   const wishRepo = new WishJsonRepo(`${fixtures.dbDir}/wish/wishes.json`);
-
-  const wishResolver: WishApiModuleResolver = {
+  const dmgModules = createDmgModules(
+    createDmgAppContext({
+      legacyBus: eventBus,
+      logger,
+      mode: 'test',
+      oplogDir: `${fixtures.dbDir}/oplog`,
+    }),
+    {
+      user: userFacade,
+      course: courseFacade,
+      questionnaire: questionnaireFacade,
+      stream: streamFacade,
+    },
     wishRepo,
-    courseFacade,
-    streamFacade,
-    questionnaireFacade,
-    userFacade,
-    appResolver,
-    eventBus: appResolver.eventBus,
-  };
-
-  const wishModule = new WishApiModule(wishResolver);
+  );
 
   // ══ Peer-review: репозитории и модуль (зеркально create-api-app.ts) ══
   // Общий eventBus — ER создания кампании подписан на события судьбы студента
@@ -183,12 +189,11 @@ export async function createTestApp(tag?: string): Promise<TestApp> {
   // ══ ApiApp: все модули (состав как в боевом create-api-app.ts) ══
   const apiApp: U7BotApp = new ApiApp([
     userModule,
-    wishModule,
     streamModule,
     courseModule,
     questionnaireModule,
     peerReviewModule,
-  ]);
+  ]).addDmgModules(...dmgModules);
 
   apiApp.init(new InProcJobScheduler({ logger }));
 

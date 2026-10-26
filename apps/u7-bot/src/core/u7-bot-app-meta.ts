@@ -7,7 +7,6 @@ import type { PeerReviewApiModuleMeta } from '@u7-scl/peer-review/domain';
 import type { QuestionnaireApiModuleMeta } from '@u7-scl/questionnaire/domain';
 import type { StreamApiModuleMeta } from '@u7-scl/stream';
 import type { UserApiModuleMeta, UserFacade } from '@u7-scl/user/domain';
-import type { WishApiModuleMeta } from '@u7-scl/wish/domain';
 //
 // ================= UI layer ===================
 
@@ -34,7 +33,6 @@ export interface U7BotAppMeta extends AppMeta {
   name: 'u7-bot-app';
   moduleMetas:
     | UserApiModuleMeta
-    | WishApiModuleMeta
     | StreamApiModuleMeta
     | CourseApiModuleMeta
     | QuestionnaireApiModuleMeta

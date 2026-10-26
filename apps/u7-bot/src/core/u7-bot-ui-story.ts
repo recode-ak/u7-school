@@ -12,6 +12,13 @@ import type {
   ProactiveSender,
 } from '@u7-scl/core/ui';
 import { BotPaginator, BotUiStory } from '@u7-scl/core/ui';
+import {
+  type AnyUseCaseDef,
+  type InputOf,
+  type OutputOf,
+  UserCaller,
+} from 'dmg-core';
+import { Trace } from 'dmg-core/app';
 import { APP_CODES } from '../shared/app-codes';
 import type { U7BotAppMeta, U7BotUiAppResolve } from './u7-bot-app-meta';
 import type { MenuButton } from './u7-menu';
@@ -139,6 +146,30 @@ export abstract class U7BotUiStory extends BotUiStory<
    */
   async menuButtons(_actor: User): Promise<MenuButton[]> {
     return [];
+  }
+
+  // ── Вызов UC модулей DMG ──
+
+  /**
+   * UC DMG по Def от имени актора бота: отказ — `AppException`, как у
+   * строковых UC (`appApi.execute`). Единственное место, где UI строит
+   * субъект (`UserCaller` над актором) и след запроса (`Trace.fromRequest`,
+   * канал `telegram`, посетитель — `telegramId`).
+   *
+   * `requestId`: `update_id` Telegram до стори не доходит (контракт
+   * `handleCallback`/`handleMessage` ядра его не передаёт), поэтому id
+   * создаётся на каждый вызов с `warn` (ERR-07, caller.md §2 п. 5).
+   */
+  protected executeUc<D extends AnyUseCaseDef>(
+    uc: D,
+    input: InputOf<D>,
+    actor: User,
+  ): Promise<OutputOf<D>> {
+    const trace = Trace.fromRequest(
+      { channel: { name: 'telegram', visitorId: String(actor.telegramId) } },
+      (message) => this.logger?.warn(this.dialogPath, message, { uc: uc.name }),
+    );
+    return this.appApi.execute(uc, input, new UserCaller(actor), trace);
   }
 
   // ── Постраничные экраны (трек pagination) ──

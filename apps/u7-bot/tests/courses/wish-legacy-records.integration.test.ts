@@ -1,7 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app/domain';
+import { CancelWishUcDef, ListUserWishesUcDef } from '@u7-scl/domain/wish';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
+import { UserCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
 
 /**
  * Интеграционный тест чтения и перезаписи legacy-записей желаний:
@@ -56,11 +59,19 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
     await app.cleanup();
   });
 
+  /** След запроса: в тестах — новый requestId на вызов. */
+  const req = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
+
   const rawRows = async (): Promise<Array<Record<string, unknown>>> =>
     JSON.parse(await Bun.file(wishesPath).text());
 
   test('чтение: legacy-запись видна, ISO разобран в число', async () => {
-    const wishes = await app.apiApp.execute('list-user-wishes', {}, guest);
+    const wishes = await app.apiApp.execute(
+      ListUserWishesUcDef,
+      {},
+      new UserCaller(guest),
+      req(),
+    );
 
     const wish = wishes.find((w) => w.uuid === TARGET_UUID);
     expect(wish).toBeDefined();
@@ -70,9 +81,10 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
 
   test('cancel-wish: файл переписан в формате spec, соседняя запись не потеряна', async () => {
     await app.apiApp.execute(
-      'cancel-wish',
+      CancelWishUcDef,
       { kind: 'course', courseId: INSTANT_COURSE_ID },
-      guest,
+      new UserCaller(guest),
+      req(),
     );
 
     const rows = await rawRows();

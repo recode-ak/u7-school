@@ -31,7 +31,6 @@ function makeApiBundle(): ApiAppBundle {
     questionnaireFacade: {} as any,
     streamModule: {} as any,
     courseModule: {} as any,
-    wishModule: {} as any,
     school: TEST_SCHOOL,
     appResolver: {} as any,
   };

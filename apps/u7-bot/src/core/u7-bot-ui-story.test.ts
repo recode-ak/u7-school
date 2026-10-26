@@ -24,7 +24,10 @@ import type {
   CommandUpdate,
   DialogResponse,
 } from '@u7-scl/core/ui';
+import { ListUserWishesUcDef } from '@u7-scl/domain/wish';
 import { Role } from '@u7-scl/user/domain';
+import { UserCaller } from 'dmg-core';
+import type { Trace } from 'dmg-core/app';
 import { APP_CODES } from '../shared/app-codes';
 import { U7BotController } from './u7-bot-controller';
 import { U7BotUiStory } from './u7-bot-ui-story';
@@ -482,5 +485,67 @@ describe('U7BotUiStory — контракт handleCommand', () => {
     );
 
     expect(reaction).toEqual({ reaction: 'pass' });
+  });
+});
+
+// ── Вызов UC DMG от имени актора бота (Ф12) ──
+
+describe('U7BotUiStory.executeUc', () => {
+  class UcStory extends U7BotUiStory {
+    readonly name = 'wish';
+
+    override handleCallback(): Promise<DialogResponse> {
+      throw new Error('Не используется');
+    }
+
+    list() {
+      return this.executeUc(ListUserWishesUcDef, {}, actor);
+    }
+  }
+
+  function makeStory(execute: ReturnType<typeof mock>) {
+    const story = new UcStory();
+    story.init({
+      appApi: { execute },
+      eventBus: {},
+      actorResolver: async () => actor,
+    } as never);
+    return story;
+  }
+
+  test('UC по Def: субъект — актор, след — запрос канала telegram', async () => {
+    const execute = mock(async () => []);
+    setGlobalLogger(createMockLogger());
+
+    expect(await makeStory(execute).list()).toEqual([]);
+
+    const [def, input, caller, trace] = execute.mock.calls[0] as unknown as [
+      unknown,
+      unknown,
+      UserCaller<User>,
+      Trace,
+    ];
+    expect([def, input]).toEqual([ListUserWishesUcDef, {}]);
+    expect(caller).toBeInstanceOf(UserCaller);
+    expect(caller.user).toBe(actor);
+    expect(trace.cause.kind).toBe('request');
+    expect(trace.channel).toEqual({ name: 'telegram', visitorId: '1' });
+  });
+
+  test('requestId транспорт не передаёт — создаётся новый на вызов с warn', async () => {
+    const execute = mock(async () => []);
+    const logger = createMockLogger();
+    setGlobalLogger(logger);
+    const story = makeStory(execute);
+
+    await story.list();
+    await story.list();
+
+    const ids = execute.mock.calls.map(
+      (c) =>
+        (c as unknown as [unknown, unknown, unknown, Trace])[3].correlationId,
+    );
+    expect(new Set(ids).size).toBe(2);
+    expect(logger.warn).toHaveBeenCalledTimes(2);
   });
 });
