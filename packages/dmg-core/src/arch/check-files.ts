@@ -15,11 +15,18 @@ export type ModuleLayout = { readonly domain: string; readonly app: string };
  * Проверки по файлам модулей: 1:1 домена и прикладного пакета (ARC-06),
  * пары контракт ↔ реализация и место ER/Job (MAN-10), файлы операций вне
  * модуля (MAN-06), импорты других модулей (ARC-04, ARC-06). У внешнего
- * модуля (`external`) прикладной слой не проверяется.
+ * модуля (`external`) прикладной слой не проверяется — ни файлы, ни импорты.
+ *
+ * `entry` — вход модуля домена для других модулей: имя файла без `.ts`
+ * в корне каталога модуля (`index` — также сам каталог). Импорт чужого
+ * модуля мимо входа — ARC-04, кроме импорта между двумя внешними модулями:
+ * их связи реализованы вне приложения. `dependsOn` (ARC-04) проверяется
+ * для всех модулей.
  */
 export function checkFiles(
   index: DefIndex,
   layout: (module: string) => ModuleLayout,
+  entry = 'index',
 ): Violation[] {
   const dirs = new Map(index.modules.map((m) => [m, layout(m.name)]));
   const out: Violation[] = [];
@@ -72,10 +79,13 @@ export function checkFiles(
       }
     }
 
-    for (const [base, isApp] of [
-      [dir.domain, false],
-      [dir.app, true],
-    ] as const) {
+    const scanned: (readonly [string, boolean])[] = m.external
+      ? [[dir.domain, false]]
+      : [
+          [dir.domain, false],
+          [dir.app, true],
+        ];
+    for (const [base, isApp] of scanned) {
       for (const f of sourceFiles(base)) {
         const file = join(base, f);
         for (const spec of importsOf(file)) {
@@ -91,10 +101,13 @@ export function checkFiles(
               );
             }
             if (!inside(target, xDir.domain)) continue;
-            if (stripIndex(target) !== xDir.domain) {
+            // Связи двух внешних модулей реализованы вне приложения:
+            // вход платформа не проверяет, `dependsOn` — проверяет.
+            const bothExternal = m.external === true && x.external === true;
+            if (!bothExternal && !isEntry(target, xDir.domain, entry)) {
               add(
                 'ARC-04',
-                `${where} импортирует ${x.name} мимо index.ts: ${spec}`,
+                `${where} импортирует ${x.name} мимо ${entry}.ts: ${spec}`,
               );
             }
             if (!m.dependsOn.includes(x)) {
@@ -176,9 +189,13 @@ function inside(path: string, dir: string): boolean {
   return path === dir || path.startsWith(dir + sep);
 }
 
-/** `<dir>/index.ts`, `<dir>/index` и `<dir>` — один и тот же вход модуля. */
-function stripIndex(path: string): string {
-  return path.replace(/\.[jt]s$/, '').replace(/[/\\]index$/, '');
+/**
+ * Цель импорта — вход модуля: `<dir>/<entry>.ts` или `<dir>/<entry>`;
+ * для `index` — также сам `<dir>`.
+ */
+function isEntry(path: string, dir: string, entry: string): boolean {
+  const bare = path.replace(/\.[jt]s$/, '');
+  return bare === join(dir, entry) || (entry === 'index' && bare === dir);
 }
 
 /** `archiveDoneTasks` → `archive-done-tasks`. */

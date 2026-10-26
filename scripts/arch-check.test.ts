@@ -17,6 +17,12 @@ describe('arch:check', () => {
     expect(lines.at(-1)).toBe('arch:check: нарушений нет');
   });
 
+  it('домен подключён: модули по Def, вход для других — contract (D-45)', () => {
+    const domain = ARCH_APPS.find((a) => a.name === 'domain');
+    expect(domain?.modules).toEqual(DOMAIN_MODULES);
+    expect(domain?.entry).toBe('contract');
+  });
+
   it('пустой список приложений не падает', () => {
     expect(run([])).toEqual({ code: 0, lines: ['arch:check: нарушений нет'] });
   });

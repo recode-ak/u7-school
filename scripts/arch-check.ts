@@ -17,7 +17,7 @@ import {
 } from 'dmg-core/arch';
 import { indexDefs } from 'dmg-core/graph';
 import { ExampleArch } from 'dmg-core/testing';
-import { DEBT_MD, DOMAIN_MODULES } from './domain-arch';
+import { DEBT_MD, DOMAIN_MODULES, DomainArch } from './domain-arch';
 import {
   checkContractImports,
   checkDebt,
@@ -29,11 +29,10 @@ import {
 } from './domain-check';
 
 /**
- * Приложения под проверкой по Def. Модули `@u7-scl/domain` проверяет
- * `runDomainCheck`: Def — `checkDefs`, импорты и граф — правилами проекта
- * (DEBT-33).
+ * Приложения под проверкой по Def и файлам модулей. Правила проекта для
+ * домена (импорты D-45, каталоги, граф, долг) — в `runDomainCheck`.
  */
-export const ARCH_APPS: readonly ArchApp[] = [ExampleArch];
+export const ARCH_APPS: readonly ArchApp[] = [ExampleArch, DomainArch];
 
 /** Проверить приложения, напечатать отчёт; вернуть код выхода. */
 export function runArchCheck(
