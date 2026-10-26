@@ -8,7 +8,7 @@
     - [x] `bun run check`, коммит
 - [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
-## Фаза 2: Перенос пакетов
+## Фаза 2: Перенос пакетов [checkpoint: c66e0afd]
 
 - [x] Task: Тест-страж раскладки df7ea7c
     - [x] Тест (красный): `scripts/repo-layout.test.ts` — нет каталогов `packages/` и `apps/`, нет текстовых ссылок `packages/…` и `apps/…` вне `conductor/archive/` и `data/` (по `git ls-files`; исключения — явный список)
@@ -17,7 +17,7 @@
     - [x] `workspaces`, `tsconfig.json`, `biome.json`, `dmg-core.json` (`gen`), `pm2.config.cjs`, `scripts/*` (`deploy`, `release`, `backup`, `extract-check`, `lint-rules`, `arch-check`), `runners/u7-bot/scripts/*`, пути `lint-fixtures/`
     - [x] `bun install`; страж зелёный по коду и конфигам
     - [x] `bun run check` (не меньше 3974 pass), коммит — 3981 pass
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Скрипты и документация
 
