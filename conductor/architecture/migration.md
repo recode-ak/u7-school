@@ -17,10 +17,10 @@
 |---|---|---|---|
 | 0 | **agents-setup** | роли агентов для Claude Code и pi из одного источника, хук гейта в обеих средах, режим оркестратора и передача между средами в `conductor-implement` ([agents.md](./agents.md) §8) | orchestrator |
 | 1 ✅ | **core-dmg** | `Result`, `define*`, `F.*`, `Timestamp`, `ReadonlyAr`, Aggregate v2, UoW, `Caller` и `callers`, `normalize(def)`, `*FromDef`, `appApi.run`, граф-движок, `arch:check`, линт-правила ARC/DOM/CODE | orchestrator + Нурболат |
-| 1б | **dmg-core-extract** | платформа DMG — отдельный пакет `dmg-core` (npm), развязка от legacy, самодостаточные конфиги, готовность модулей к выносу в сервисы ([D-28](./decisions.md)). Трек: `conductor/tracks/dmg-core-extract_20261020`. **Разделён:** Фазы 1–3 — до `generators`, Фазы 4–6 — после `golden-wish` (см. spec трека) | orchestrator + Нурболат |
+| 1б | **dmg-core-extract** | платформа DMG — отдельный пакет `dmg-core` (npm), развязка от legacy, самодостаточные конфиги, готовность модулей к выносу в сервисы ([D-28](./decisions.md)). Трек: `conductor/tracks/dmg-core-extract_20261020`. **Разделён:** Фазы 1–3 — до `generators`, Фазы 4–6 — после `golden-wish` (разблокированы; см. spec трека) | orchestrator + Нурболат |
 | 2 ✅ | **generators** | `bun run gen` для всех видов артефактов по [naming.md](./naming.md) | orchestrator + Нурболат |
 | 3 ✅ | **domain-package** | трек: `conductor/archive/domain-package_20261020`, реестр долга — [debt.md](./debt.md). Пакет-каркас `@u7-scl/domain` создан в треке generators; наполнить: механически перенести domain-слои снизу вверх: user (+ `User` из app) → course → questionnaire → stream → wish → peer-review → dossier. Старые пути `@u7-scl/<m>/domain` временно реэкспортируют | migrator |
-| 4 | **golden-wish** | перевести `wish` на Def, `Result`, Policy, entity-правило, UoW, Timestamp. Эталон; по нему пишутся гайды артефактов | orchestrator + Нурболат |
+| 4 ✅ | **golden-wish** | перевести `wish` на Def, `Result`, Policy, entity-правило, UoW, Timestamp. Эталон; по нему написаны гайды артефактов — [guides/](./guides/index.md). Трек: `conductor/tracks/golden-wish_20261020` | orchestrator + Нурболат |
 | 5 | **stream-student** | первый срез конвейером агентов на сложном агрегате | агенты |
 | 6 | остальные модули | в порядке зависимостей | агенты |
 | 7 | **timestamp-data** | пакетная миграция живых данных, удаление «чтения строки» | orchestrator, с подтверждением |
@@ -28,7 +28,7 @@
 | 9 | **ui-manifests** | `define*` UI, эталонный UI-срез, генерация спецификации экранов; `ui-spec.md` удаляются по мере перевода контроллеров ([ui-manifests.md](./ui-manifests.md)) | orchestrator + Нурболат |
 | 10+ | потребители графа | CLI `domain`, `docs:domain`/`docs:tech`, `docs:llm`, http + OPTIONS, mcp | по roadmap |
 
-Треки 1 и 3 независимы; 1б и 2 — после 1; Фазы 1–3 трека 1б выполняются до 2 и 4, Фазы 4–6 — после 4 (golden-wish). Трек 1 выполнен (кроме выноса, он в 1б): 2 (generators) выполнен — `bun run gen` готов (naming.md §5); 3 (domain-package) выполнен и заархивирован; разблокирован 4 (golden-wish).
+Треки 1 и 3 независимы; 1б и 2 — после 1; Фазы 1–3 трека 1б выполняются до 2 и 4, Фазы 4–6 — после 4 (golden-wish). Трек 1 выполнен (кроме выноса, он в 1б): 2 (generators) выполнен — `bun run gen` готов (naming.md §5); 3 (domain-package) выполнен и заархивирован; 4 (golden-wish) выполнен — разблокированы Фазы 4–6 трека 1б и трек 5.
 
 ## 3. Что исправляет переход
 
@@ -59,21 +59,21 @@
 
 ## 6. Состояние переноса
 
-Трек 3 (`domain-package`): domain-слои всех семи модулей механически перенесены в `@u7-scl/domain` (`user`, `course`, `questionnaire`, `stream`, `wish`, `peer-review`, `dossier`; у каждого `index`, `state`, `contract`, кроме `dossier` без `contract`). Старые `packages/<m>/src/domain/index.ts` и `packages/dossier/src/index.ts` — barrel-реэкспорты с маркером `DEBT`. Временные нарушения чистоты учтены в [debt.md](./debt.md) (DEBT-1…DEBT-30; маркер `// DEBT-<n>` ↔ запись реестра, сверяет `arch:check`).
+- **На Def (DMG):** `wish` — домен `packages/domain/src/wish`, прикладной слой `packages/wish/src` (4 UC, 4 ER, JSON-репозиторий, `ModuleFromDef`); в приложении собран в `apps/u7-bot/src/create-dmg-modules.ts`, legacy `wish` удалён. Это эталон: гайды — [guides/](./guides/index.md).
+- **Внешние модули (D-37):** `user`, `course`, `questionnaire`, `stream`, `peer-review`, `dossier` — `defineModule({ external: true })` в домене; UC, которые зовёт `wish`, исполняют адаптеры над legacy-фасадами (TR-11), legacy-события входят через `legacyEventBus` (`inbound`).
+- **Механически перенесены** (трек 3): domain-слои всех модулей в `@u7-scl/domain`; старые `packages/<m>/src/domain/index.ts` и `packages/dossier/src/index.ts` — barrel-реэкспорты с маркером `DEBT`.
+- **Граф `dependsOn`** строится из `ModuleDef` (`scripts/domain-arch.ts`); `arch:check` сверяет маркеры `// DEBT-<n>` с [debt.md](./debt.md), тактические решения перехода — `TR-<n>` там же.
 
 ### Входной долг для следующих треков
 
 | Владелец | Долги |
 |---|---|
-| `golden-wish` (перевод на Def) | wish: D-21, D-22, D-23, D-24; общие по `core`: D-1, D-2 |
-| треки перевода остальных модулей | user D-5; course D-9, D-10; questionnaire D-14, D-15; stream D-19, D-20; peer-review D-28, D-29 |
-| `dmg-core-extract` Ф4 | импорты `core`/`app` в домене: D-1, D-2, D-6, D-7, D-11, D-12, D-16, D-17, D-21, D-22, D-25, D-26; каркасы `contract` модулей уже готовы (`domain/<m>/contract`) |
-| последний трек миграции | barrel-долги D-3, D-8, D-13, D-18, D-23, D-27, D-30 и `User` в `app` (D-4) |
+| `dmg-core-extract` Ф4–6 | импорты `core`/`app` в домене: DEBT-1, 2, 6, 7, 11, 12, 16, 17, 25, 26; `archCheck` домена и ARC-04 о подпутях `/contract`, `/state` — DEBT-33 |
+| треки перевода модулей на Def | user DEBT-5; course DEBT-9, 10; questionnaire DEBT-14, 15, 32; stream DEBT-19, 20; peer-review DEBT-28, 29 |
+| последний трек миграции | barrel-долги DEBT-3, 8, 13, 18, 23, 27, 30 и `User` в `app` (DEBT-4) |
 
-### Старт `golden-wish`
+### Старт следующих треков
 
-- Трек заводится через `/conductor:newtrack` (в `conductor/tracks/` его пока нет); в spec/plan перенести «Входной долг» из таблицы выше.
-- Код `wish`: `packages/domain/src/wish/` (`index`, `state`, `contract`; 40 тестов), зависимости `user`, `course`, `questionnaire`, `stream` — `@u7-scl/domain/<dep>`. Старый `packages/wish/src/domain/index.ts` — barrel (D-23); `api/errors.ts` перенесён в `domain/wish/errors.ts`.
-- Базовая линия тестов репозитория на конец `domain-package`: 3211 pass, 0 fail; образцы брифов и приёмов — `conductor/archive/domain-package_20261020/slices/` и `summary.md`.
-- Реестр долга [debt.md](./debt.md) живой: правила нумерации и закрытия — в нём; сверку делает `arch:check`.
-- Эталон: после трека на каждый вид артефакта пишутся гайды ([agents.md](./agents.md)); Фазы 4–6 `dmg-core-extract` стартуют после него.
+- **`dmg-core-extract` Ф4–6** — по spec трека; гайды переезжают в `docs/guides/` пакета (решение «вариант А» spec `golden-wish`).
+- **`stream-student`** (трек 5) — первый срез конвейером агентов по гайдам; бриф — по образцу `conductor/tracks/golden-wish_20261020/slices/wish.md`, итог эталона — `summary.md` трека.
+- Базовая линия тестов на конец `golden-wish`: 3734 pass, 0 fail.
