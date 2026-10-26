@@ -16,12 +16,11 @@ const ROOT = join(import.meta.dir, '..');
 const OLD_PATH = /(^|[^A-Za-z0-9_.-])(packages|apps)\/|\/(packages|apps)['"`]/;
 
 /**
- * Не проверяются: история (архив треков, CHANGELOG, сам трек перехода),
+ * Не проверяются: история (архив треков, CHANGELOG),
  * данные и внешний контент (скачанные уроки, шаблоны conductor-setup)
  */
 const SKIP_DIRS = [
   'conductor/archive/',
-  'conductor/tracks/repo-layout_20261026/',
   'CHANGELOG.md',
   'data/',
   'authoring/w3school/output/',
