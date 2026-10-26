@@ -47,3 +47,29 @@
 В проекте остаётся специфичное: `legacy.md`, `migration.md`, `agents.md` (процесс), conductor-скилы, `migrator`, решения по данным. Источник правды по платформе — один, в репозитории пакета.
 
 **Ф6. Вынос и публикация.** Репозиторий `dmg-core`, CI (check + публикация по тегу), перевод монорепо на версию из npm, удаление `packages/dmg-core` из монорепо; legacy-мост остаётся в `@u7-scl/core`.
+
+## Разметка: что в пакет, что остаётся в проекте (Фаза 5)
+
+Язык документации пакета — русский (Нурболат, 2026-10-26). Перенесённые файлы из `conductor/architecture/` удаляются, проект ссылается на `packages/dmg-core/docs/` (после Ф6 — `node_modules/dmg-core/docs/`). Образец в гайдах — учебный модуль `src/testing/example` (todo/users), обогащается задачей Ф5 по [slices/example-enrich.md](./slices/example-enrich.md).
+
+**Нейтрализация** при переносе: `packages/domain/src/<m>` → «пакет домена» (`<domain>/<m>`), `packages/<m>/src` → «прикладной пакет модуля», `apps/*` / бот → «входной адаптер», `wish` → `todo`/`users`, `@u7-scl/*` → «пакеты приложения», `bun run check` → «`check` проекта». Абзацы про legacy, strangler, переход и бота — остаются в проекте (в `legacy.md`, `migration.md`, `ui/`), в пакете их нет.
+
+| Источник | В пакете (`packages/dmg-core/…`) | В проекте остаётся |
+|---|---|---|
+| `architecture/index.md` | `docs/index.md` — вход: суть DMG, карта документов | `index.md`: проектные документы + ссылка на `dmg-core/docs/index.md` |
+| `layers.md` | `docs/layers.md` — оси, импорты, доменный API, доступ к entity, прикладной слой, адаптеры | — (раскладка `packages/*` и `@u7-scl/*` — абзац в `index.md` проекта) |
+| `manifests.md`, `errors-result.md`, `caller.md`, `domain-modeling.md`, `typescript.md`, `transport.md` | `docs/<то же имя>.md`; `errors-result` §4 «Совместимость на время перехода» — в `legacy.md`; кейс «гейтинг модулей курса» в `domain-modeling` §3 — переписать на `todo` или оставить в проекте (решает автор задачи сборки, TR) | — |
+| `testing.md` | `docs/testing.md` — §1–5 без бота и тестовых миров | ссылки на `ui/bot-test.md`, `guides/test-worlds.md` — в `index.md` проекта |
+| `naming.md` | `docs/naming.md` — сокращения, структура домена и прикладного слоя (через `ArchApp.layout`), имена | §5 «Генераторы» (`scripts/gen`) — проектный, пока генераторы не в пакете (открытый вопрос 1) |
+| `rules.md` | `docs/rules.md` — весь каталог ID, формулировки нейтральные | `rules.md` не нужен, если проектных правил нет; иначе — только проектные ID + ссылка |
+| `decisions.md` | `docs/decisions.md` — платформенные D-NN **с прежними номерами** (пропуски номеров допустимы): D-01, 02, 03, 04, 05–16, 17, 18, 25, 28, 32–40, 42–47 | проектные: D-19–24, 26, 27, 29–31, 41; заголовок — ссылка на платформенные |
+| `guides/*.md` | `docs/guides/*.md` — образец `example`; `_template.md` и `guides-check` (`scripts/guides-check.ts` → проверка ссылок в пакете) | — |
+| `caller.md` §3 «Делегирование» | общий принцип | ссылка на трек модуля user — в проекте |
+| `agents.md`, `migration.md`, `legacy.md`, `debt.md`, `docs-strategy.md`, `ui/`, `ui-manifests.md` | — | всё |
+| скил `architecture` | `skills/dmg-architecture/SKILL.md` — шаги 2–5 (размещение, имена, гайды, проверка, стоп-сигналы — «спроси владельца проекта») с путями на `node_modules/dmg-core/docs/` | `architecture` — режимы legacy/UI и вход в проектные документы, DMG-режим → `dmg-architecture` |
+| роли `.agents-core/roles/{domain-author,api-author,reviewer}.md` + `common.md` | `agents/` — роли и общий блок, ссылки на `docs/` пакета; формат сборки под Claude Code и pi — `dmg-core init` | `migrator`, проектные дополнения (gate, `conductor/`, автономный режим) — `.agents-core/` проекта поверх ролей пакета |
+| conductor-скилы, `agent-gate`, `agents-sync` | — | всё |
+
+**Открытые вопросы (стратегические, на контрольной точке Ф5):**
+1. Генераторы (`scripts/gen`) — тоже в пакет (`dmg-core gen` с раскладкой из `ArchApp.layout`)? Иначе потребитель без u7-school не получает D-20 «стандарт задаётся генераторами». Предложение — отдельной задачей Ф5 или Ф6.
+2. Проектные дополнения ролей: сейчас роли собираются из `roles/*.md` + `common.md`. Вариант — `init` копирует роли пакета, а `agents-sync` проекта дописывает проектный блок; либо проект целиком владеет ролями, а пакет даёт только базу. Предложение — первый вариант.
