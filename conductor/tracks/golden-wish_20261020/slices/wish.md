@@ -301,6 +301,45 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 
 **Шаг 3 — оркестратор:** гайд «event reaction» (`conductor/architecture/guides/`, формат Ф4 спеки, 40–80 строк), эталон — файлы шагов 1–2.
 
+## Ф11: остальные ER (`confirm-wish`, `abandon-wish`, `invite-wishers`)
+
+Гайд — `conductor/architecture/guides/event-reaction.md`, эталон — Ф10 (`fulfill-wish`). Каждая ER — отдельный TDD-цикл (red → green). Сосуществование — как Ф10: новые ER рядом с legacy `packages/wish/src/api/er/*-er.ts`, в приложение не подписываются до Ф12; legacy ER и их тесты не трогать.
+
+### 11.1 `confirm-wish` и `abandon-wish`
+
+**Сохраняемое поведение** (legacy `confirm-wish-er.ts`, `abandon-wish-er.ts` и их тесты — источник случаев): на `QuestionnaireEvents.completed` / `QuestionnaireEvents.abandoned` (`respondentId` — пользователь, `owner` — данные владельца анкеты; `wish` сам задал `owner: { courseId }` в `WishAr.questionnaire()`) желание пользователя на курс `owner.courseId` в `pending` переходит в `confirmed` (событие `WishEvents.confirmed`) / `abandoned`. Любое другое состояние или отсутствие желания — игнор (идемпотентность). Анкета чужого владельца (`owner` не разбирается как анкета `wish`) — игнор.
+
+**Шаг 1 — domain-author (Sonnet)** (`packages/domain/src/wish/**`):
+- `ConfirmWishErDef`, `AbandonWishErDef` через `bun run gen er wish.wish <имя>`: `on` — Def события анкеты из `@u7-scl/domain/questionnaire/contract`, `touches: [WishArDef]`, `calls: []`, `emits`: `[WishEvents.confirmed]` / `[]`. В `WishModuleDef.reactions`.
+- Разбор `owner` → цель желания — домен `wish` (формат `owner` задаёт он сам, `questionnaire()`): одно место правила рядом с `questionnaire()`, схема valibot, чужой/битый `owner` → «не наша анкета».
+- Выбор желания среди желаний пользователя на цель — домен, не ER и не репозиторий (`findCurrentByUserAndTarget` помечен TR «уйдёт из репозитория», новые ER его не используют; ER грузит `findAllByUserAndTarget`). ER не читает state, не сравнивает статусы и не выбирает агрегат сам (API-01, DOM-17). Форма (метод Ar / статический метод / `WishRules`) — твоя, с обоснованием в отчёте; помни, что активное желание на пару одно (`WishRules.unique`).
+- Unit-тесты домена (red → green).
+
+**Шаг 2 — api-author (Sonnet)** (`packages/wish/src/**`):
+- `ConfirmWishEr`, `AbandonWishEr` extends `ReactionFromDef` (заготовки `gen er`), в `wishMap.reactions`. `react`: разбор `owner` доменом → нет цели — `ok()` без загрузки; `findAllByUserAndTarget` → доменный выбор → переход с `this.now()` → `uow.register`.
+- Тесты по образцу `fulfill-wish.er.test.ts`: все случаи legacy-тестов; повтор события — без изменений; чужой `owner` — ничего не загружено/записано; `confirmed` опубликовано на шине с payload `{ userId, courseId }`; доставка через `subscribe` по Def события.
+
+### 11.2 `invite-wishers`
+
+**Сохраняемое поведение** (legacy `invite-wishers-er.ts` и его тест — источник 12 случаев): на `StreamEvents.created` (`streamId`, `moduleId`) приглашаются активные (`expressed | confirmed`) желания: course-желание — если модуль потока стартовый в опубликованном курсе (`getModulePlace(moduleId)?.isFirst`) и курс желания включает модуль (в т.ч. исторически, батч по кандидатам); module-желание — если модуль желания исторически тот же (батч). Приглашение — `WishEvents.invited` (`userId`, `telegramId`, `streamId` + цель желания) от агрегата. Поток не найден — никого не зовём, без ошибки. У адресата нет `telegramId` или профиль недоступен — пропуск с `warn`, без ошибки. Нет кандидатов — вызовов нет.
+
+**Решение (открытый вопрос 9, вариант а):** `WishAr.invite(at, to)` через `change` — событие `invited` строит Ar из своего state (цель), статус не меняется; ER регистрирует приглашённых в UoW (запись `version`/`updatedAt`).
+
+**Шаг 1 — domain-author (Sonnet)** (`packages/domain/src/{course,stream,user,wish}`):
+- Внешние Def UC по образцу `GetCoursesIncludingModuleUcDef` (`type: 'query'`, `callers: ['system']`, `allowAll`, `description` на полях), регистрация в `useCases` внешнего `ModuleDef`, экспорт из `contract.ts`:
+  - course: «какие из курсов начинаются с модуля» (`{ moduleId, courseIds }` → `{ courseIds }`): модуль стартовый в курсе и курс включает модуль — объединяет legacy `getModulePlace().isFirst` и `whichCoursesIncludeModule` в одном вопросе (один раунд вместо двух);
+  - stream: «есть ли поток» (`{ streamId }` → признак наличия; отсутствие — не ошибка) над legacy `getStream`;
+  - user: «адреса Telegram пользователей» батчем (`{ userIds }` → пары `userId`/`telegramId` только для тех, у кого он есть; недоступный профиль — просто нет в ответе). У `UserModuleDef` агрегатов нет — минимальный `UserArDef` по образцу `CourseArDef` (D-37).
+  - Имена — по naming.md и соседям (`get…`).
+- `InviteWishersErDef` (`gen er wish.wish invite-wishers`): `on: [StreamEvents.created]`, `touches: [WishArDef]`, `calls` — три UC выше, `emits: [WishEvents.invited]`; в `WishModuleDef.reactions`. Снять фильтр MAN-06 для `invited` в `wish.module.test.ts`, если он больше не нужен.
+- `WishAr.invite(at, to: { streamId, telegramId })` — `change`, payload по цели из state; только для приглашаемого (`expressed | confirmed`) — иначе отказ (форма ошибки — по образцу переходов).
+- Доменный батч — DCS по образцу `WishFulfillmentDcs` (DOM-06), «вопрос → ответ» в два раунда: (1) по кандидатам — вопросы к курсу (course — только при course-кандидатах, module — при module-кандидатах); (2) по совпавшим — вопрос о потоке и адресах пользователей (только если совпавшие есть); итог — приглашённые Ar и недостижимые `userId` (для `warn` в ER). Форма — твоя, с обоснованием; ER не читает state и не ветвится по виду цели (API-01, DOM-17). Unit-тесты домена.
+
+**Шаг 2 — api-author (Sonnet)** (`packages/{course,stream,user,wish}/src/**`):
+- Адаптеры трёх UC над legacy-фасадами (маркер TR-11, по образцу `packages/course/src/course/uc/get-courses-including-module.uc.ts`). Для `stream` и `user` — карта модуля и `create<M>Module` по образцу `packages/course/src/course.module.ts` (`<M>Legacy = Pick<…>`); адресам пользователей — цикл по legacy `getUserByUuid` внутри адаптера (батча в legacy нет, TR). Тесты адаптеров: ответ legacy передаётся как есть.
+- `InviteWishersEr extends ReactionFromDef` в `wishMap.reactions`: `findAllByKind` кандидатов → DCS → `this.call` только по вопросам домена → `invite` → `uow.register`; недостижимые — `warn` через логгер базы. Без `Date.now()`, `throw`, `console.*`, `snapshot()`.
+- Тесты по образцу `fulfill-wish.er.test.ts`: все 12 случаев legacy-теста; отказ/исключение вызова — `Result` с ошибкой, ничего не записано, `logger.error`, запись в oplog; доставка через `subscribe` по `StreamEvents.created`; `invited` опубликовано с payload legacy.
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
@@ -358,6 +397,9 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 
 8. ✅ **Решено (Нурболат, 2026-10-22, D-44): `view()`** — состояние наружу (UC, выход, рендереры UI), по умолчанию `snapshot()`, переопределяемо; `snapshot()` — только репозиторий (DOM-17). Задача — Ф9а.
    **Было: Ф9 (TR-15), к контрольной точке.** Как query отдаёт state агрегата: сейчас `snapshot()` в UC (идиома учебного `list-tasks`) против D-05/D-39. Варианты: (а) метод Ar, строящий выход (например `view()` — по сути тот же state, но через доменный API); (б) разрешить `snapshot()` в query UC явной оговоркой D-05; (в) query читает через DQS/репозиторий, отдающий state. Рекомендация — (а): единообразно с D-39 и не расширяет доступ к entity.
+
+9. ✅ **Решено (Нурболат, 2026-10-26): вариант (а)** — `WishAr.invite(at, …)` через `change`, событие от агрегата, платформа не меняется. Запись желания на приглашение и частичная публикация при `VERSION_CONFLICT` (D-15) — TR; приглашение в state (идемпотентность повторного `stream.created`) — долг, не в этом треке.
+   **Было: Ф11. Событие без смены состояния.** Legacy ER строит `WishEvents.invited` сама (`WishEvents.invited.make`), желание не меняется. В DMG события публикует только UoW из `pullEvents()` зарегистрированных агрегатов — ER опубликовать событие не может. Варианты: (а) метод Ar `invite(...)` через `change` — событие от агрегата, но запись желания (`version`/`updatedAt`) на каждое приглашение; (б) API `dmg-core`: событие ER без агрегата (например, `uow.emit`) — форма Def/API платформы.
 
 ## Правила (ID rules.md)
 
@@ -561,3 +603,8 @@ Def UC курса `GetCoursesIncludingModuleUcDef` (`{ moduleId, courseIds }` �
 ### Ревью Ф10 (reviewer, Opus, diff `23f27f3c..33018818`)
 error нет. warning: `*.types.ts` вне naming.md. info: раздел «Устройство реализации» вне шаблона, `ask` и прямой `subscribe` в гайде, двойной смысл `FulfillmentTargets`, JSDoc legacy в контракте курса, длина/опрос в тестах ER, виды id в фикстурах DCS, атомарность (TR-18 п. 3). Поведение legacy сохранено (11 случаев + новые). Решения — TR-19.
 
+### Ф11.1 шаг 1 — domain-author (Sonnet)
+`ConfirmWishErDef` (`on: QuestionnaireEvents.completed`, `emits: [WishEvents.confirmed]`), `AbandonWishErDef` (`on: QuestionnaireEvents.abandoned`, `emits: []`) через `gen er`, в `WishModuleDef.reactions`. `WishAr.questionnaireTarget(owner)` — разбор `owner` (valibot, обратен `questionnaire().owner`; чужой → `undefined`). `WishAr.current(wishes, userId, target)` — статический выбор активного желания (набор агрегатов; `WishRules` — проверки, не выбор). Гейт зелёный (домен wish 170 pass); заготовки реализаций в `packages/wish` от генератора.
+
+### Ф11.1 шаг 2 — api-author (Sonnet)
+`ConfirmWishEr`, `AbandonWishEr` (`react`: `questionnaireTarget` → нет цели — `ok()` без загрузки; `findAllByUserAndTarget` → `WishAr.current` → `canConfirm`/`canAbandon` → переход `this.now()` → `uow.register`). По 9 тестов: случаи legacy, выбор активного среди завершённых, изоляция курса/пользователя, повтор, чужой `owner`, `confirmed` на шине через UoW, доставка через `subscribe`. Red пропущен — добран мутацией (`react` → `ok()`): confirm 5/9 fail, abandon 4/9 fail (прошли только негативные). `check` 3729 pass.

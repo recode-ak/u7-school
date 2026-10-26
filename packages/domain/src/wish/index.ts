@@ -6,6 +6,8 @@ export * from './wish/commands/cancel-wish-cmd';
 export * from './wish/commands/create-course-wish-cmd';
 export * from './wish/commands/create-module-wish-cmd';
 export * from './wish/commands/list-user-wishes-cmd';
+export { AbandonWishErDef } from './wish/er/abandon-wish.er';
+export { ConfirmWishErDef } from './wish/er/confirm-wish.er';
 export { FulfillWishErDef } from './wish/er/fulfill-wish.er';
 export * from './wish/pools/course-pool';
 export { CancelWishUcDef } from './wish/uc/cancel-wish.uc';

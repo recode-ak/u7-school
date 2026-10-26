@@ -1,0 +1,220 @@
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { QuestionnaireEvents } from '@u7-scl/domain/questionnaire/contract';
+import {
+  WishModuleDef,
+  type WishState,
+  type WishStatus,
+  type WishTargetVo,
+} from '@u7-scl/domain/wish';
+import { type EnvelopeOf, ModuleFacades } from 'dmg-core/app';
+import {
+  expectOk,
+  memoryBus,
+  TEST_NOW,
+  testAppContext,
+} from 'dmg-core/testing';
+import { WishJsonRepo } from '../../infra/wish.json-repo';
+import { AbandonWishEr } from './abandon-wish.er';
+
+// Перенос случаев legacy `api/er/abandon-wish-er.test.ts` на ER по Def.
+
+const USER = '22222222-2222-4222-8222-222222222222';
+const OTHER_USER = '77777777-7777-4777-8777-777777777777';
+const COURSE = '44444444-4444-4444-8444-444444444444';
+const OTHER_COURSE = '55555555-5555-4555-8555-555555555555';
+const CREATED = Date.UTC(2025, 7, 20, 10);
+
+let dir: string;
+let file: string;
+let wishes: WishJsonRepo;
+let ctx: ReturnType<typeof testAppContext>;
+
+beforeEach(() => {
+  dir = mkdtempSync(join(tmpdir(), 'abandon-wish-'));
+  file = join(dir, 'wishes.json');
+  wishes = new WishJsonRepo(file);
+  ctx = testAppContext();
+});
+afterEach(() => rmSync(dir, { recursive: true, force: true }));
+
+function makeEr() {
+  return new AbandonWishEr(
+    { app: ctx.app, facades: new ModuleFacades([]), wishes },
+    WishModuleDef,
+  );
+}
+
+function abandoned(
+  owner: Record<string, unknown> = { courseId: COURSE },
+  respondentId = USER,
+): EnvelopeOf<typeof QuestionnaireEvents.abandoned> {
+  const payload = {
+    questionnaireId: crypto.randomUUID(),
+    respondentId,
+    owner,
+  };
+  return {
+    ...QuestionnaireEvents.abandoned.make(payload),
+    eventId: crypto.randomUUID(),
+    occurredAt: TEST_NOW,
+    aggregateId: payload.questionnaireId,
+    cause: { kind: 'request', requestId: 'r-1' },
+    correlationId: 'c-1',
+  };
+}
+
+function wish(
+  status: WishStatus,
+  target: WishTargetVo = { kind: 'course', courseId: COURSE },
+  userId = USER,
+): WishState {
+  return {
+    uuid: crypto.randomUUID(),
+    userId,
+    target,
+    status,
+    createdAt: CREATED,
+    updatedAt: CREATED,
+    version: 0,
+  };
+}
+
+async function seed(...states: WishState[]): Promise<void> {
+  await Bun.write(file, JSON.stringify(states));
+}
+
+async function statuses(): Promise<Record<string, WishStatus>> {
+  const stored = await wishes.findByUser(USER);
+  return Object.fromEntries(
+    stored.map((w) => [w.snapshot().uuid, w.snapshot().status]),
+  );
+}
+
+describe('AbandonWishEr', () => {
+  it('pending → abandoned на момент часов приложения', async () => {
+    const w = wish('pending');
+    await seed(w);
+
+    expectOk(await makeEr().handle(abandoned()));
+
+    const [stored] = await wishes.findByUser(USER);
+    expect(stored?.snapshot()).toMatchObject({
+      uuid: w.uuid,
+      status: 'abandoned',
+      updatedAt: TEST_NOW,
+    });
+  });
+
+  it('ничего не публикует (emits: [])', async () => {
+    await seed(wish('pending'));
+
+    expectOk(await makeEr().handle(abandoned()));
+
+    expect(ctx.published).toEqual([]);
+  });
+
+  it('желание не pending — игнор: ничего не записано и не опубликовано', async () => {
+    await seed(
+      wish('expressed'),
+      wish('abandoned', { kind: 'course', courseId: OTHER_COURSE }),
+    );
+    const before = await Bun.file(file).text();
+
+    expectOk(await makeEr().handle(abandoned()));
+    expectOk(await makeEr().handle(abandoned({ courseId: OTHER_COURSE })));
+
+    expect(await Bun.file(file).text()).toBe(before);
+    expect(ctx.published).toEqual([]);
+  });
+
+  it('желания нет — игнор без ошибок', async () => {
+    expectOk(await makeEr().handle(abandoned()));
+    expect(ctx.published).toEqual([]);
+  });
+
+  it('среди завершённых желаний на ту же цель выбирает активное pending', async () => {
+    const old = wish('cancelled');
+    const active = wish('pending');
+    await seed(old, active);
+
+    expectOk(await makeEr().handle(abandoned()));
+
+    expect(await statuses()).toEqual({
+      [old.uuid]: 'cancelled',
+      [active.uuid]: 'abandoned',
+    });
+  });
+
+  it('желания другого курса и другого пользователя не затрагиваются', async () => {
+    const otherCourse = wish('pending', {
+      kind: 'course',
+      courseId: OTHER_COURSE,
+    });
+    const otherUser = wish('pending', undefined, OTHER_USER);
+    const mine = wish('pending');
+    await seed(otherCourse, otherUser, mine);
+
+    expectOk(await makeEr().handle(abandoned()));
+
+    expect(await statuses()).toEqual({
+      [otherCourse.uuid]: 'pending',
+      [mine.uuid]: 'abandoned',
+    });
+    const [theirs] = await wishes.findByUser(OTHER_USER);
+    expect(theirs?.snapshot().status).toBe('pending');
+  });
+
+  it('повторное событие ничего не меняет', async () => {
+    await seed(wish('pending'));
+    const er = makeEr();
+    expectOk(await er.handle(abandoned()));
+    const after = await Bun.file(file).text();
+    const published = ctx.published.length;
+
+    expectOk(await er.handle(abandoned()));
+
+    expect(await Bun.file(file).text()).toBe(after);
+    expect(ctx.published).toHaveLength(published);
+  });
+
+  it('чужой owner — ничего не загружено, не записано, не опубликовано', async () => {
+    // Файла нет: любая загрузка желаний оставила бы след; репозиторий не должен вызываться.
+    let loads = 0;
+    const spy = Object.assign(Object.create(wishes), {
+      findAllByUserAndTarget: async () => {
+        loads++;
+        return [];
+      },
+    }) as WishJsonRepo;
+    const er = new AbandonWishEr(
+      { app: ctx.app, facades: new ModuleFacades([]), wishes: spy },
+      WishModuleDef,
+    );
+
+    expectOk(await er.handle(abandoned({ lessonId: 'x' })));
+    expectOk(await er.handle(abandoned({})));
+
+    expect(loads).toBe(0);
+    expect(await Bun.file(file).exists()).toBe(false);
+    expect(ctx.published).toEqual([]);
+  });
+});
+
+describe('AbandonWishEr.subscribe', () => {
+  it('реагирует на questionnaire.abandoned из шины', async () => {
+    const w = wish('pending');
+    await seed(w);
+    const bus = memoryBus();
+    makeEr().subscribe(bus);
+
+    bus.publish(abandoned());
+    for (let i = 0; i < 50 && ctx.oplog.records.length === 0; i++) {
+      await new Promise((r) => setTimeout(r, 5));
+    }
+
+    expect(await statuses()).toEqual({ [w.uuid]: 'abandoned' });
+  });
+});

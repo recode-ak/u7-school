@@ -463,3 +463,74 @@ describe('WishAr.fulfillmentTargets / isFulfilledBy — реализация з�
     },
   );
 });
+
+describe('WishAr.questionnaireTarget — разбор owner анкеты', () => {
+  it('owner из questionnaire() разбирается в цель-курс', () => {
+    const owner = { courseId: target.courseId };
+    expect(WishAr.questionnaireTarget(owner)).toEqual({
+      kind: 'course',
+      courseId: target.courseId,
+    });
+  });
+
+  it('согласован с questionnaire(): owner желания разбирается в его цель', () => {
+    const wish = WishAr.restore({
+      ...stored('pending'),
+      target: { kind: 'course', courseId: POOLED },
+    });
+    const owner = wish.questionnaire()?.owner;
+    expect(WishAr.questionnaireTarget(owner)).toEqual({
+      kind: 'course',
+      courseId: POOLED,
+    });
+  });
+
+  it.each([
+    ['пустой объект', {}],
+    ['не строка', { courseId: 42 }],
+    ['пустая строка', { courseId: '' }],
+    ['чужой формат', { lessonId: 'x' }],
+    ['null', null],
+    ['строка', 'x'],
+    ['undefined', undefined],
+  ])('чужой или битый owner (%s) — не наша анкета', (_, owner) => {
+    expect(WishAr.questionnaireTarget(owner)).toBeUndefined();
+  });
+});
+
+describe('WishAr.current — активное желание пользователя на цель', () => {
+  const OTHER_USER = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
+  const OTHER_TARGET: WishTargetVo = {
+    kind: 'course',
+    courseId: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+  };
+  const wish = (status: WishStatus, over: Partial<WishState> = {}): WishAr =>
+    WishAr.restore({ ...stored(status), uuid: crypto.randomUUID(), ...over });
+
+  it('нет желаний — нет текущего', () => {
+    expect(WishAr.current([], USER, target)).toBeUndefined();
+  });
+
+  it('находит активное, даже если оно не первое (завершённые раньше)', () => {
+    const active = wish('pending');
+    const found = WishAr.current(
+      [wish('abandoned'), wish('cancelled'), active, wish('fulfilled')],
+      USER,
+      target,
+    );
+    expect(found).toBe(active);
+  });
+
+  it('только завершённые — нет текущего', () => {
+    const all = [wish('abandoned'), wish('cancelled'), wish('fulfilled')];
+    expect(WishAr.current(all, USER, target)).toBeUndefined();
+  });
+
+  it('не доверяет фильтру вызывающего: чужой пользователь и чужая цель игнорируются', () => {
+    const all = [
+      wish('pending', { userId: OTHER_USER }),
+      wish('pending', { target: OTHER_TARGET }),
+    ];
+    expect(WishAr.current(all, USER, target)).toBeUndefined();
+  });
+});

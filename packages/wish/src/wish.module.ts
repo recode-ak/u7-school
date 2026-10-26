@@ -2,6 +2,8 @@
 import type { User } from '@u7-scl/app/domain';
 import { WishModuleDef } from '@u7-scl/domain/wish';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
+import { AbandonWishEr } from './wish/er/abandon-wish.er';
+import { ConfirmWishEr } from './wish/er/confirm-wish.er';
 import { FulfillWishEr } from './wish/er/fulfill-wish.er';
 import { CancelWishUc } from './wish/uc/cancel-wish.uc';
 import { CreateCourseWishUc } from './wish/uc/create-course-wish.uc';
@@ -31,6 +33,8 @@ export const wishMap = {
   },
   reactions: {
     fulfillWish: FulfillWishEr,
+    confirmWish: ConfirmWishEr,
+    abandonWish: AbandonWishEr,
     // gen:defs:reactions
   },
   jobs: {

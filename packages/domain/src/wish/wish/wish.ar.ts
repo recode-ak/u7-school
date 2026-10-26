@@ -10,6 +10,7 @@ import {
   type Timestamp,
   type TransitionOf,
 } from 'dmg-core';
+import * as v from 'valibot';
 import { findCoursePool } from './pools/course-pool';
 import { WishErrors } from './wish.errors';
 import { WishEvents } from './wish.events';
@@ -137,6 +138,14 @@ export type WishQuestionnaire = {
 };
 
 /**
+ * Формат `owner` анкеты желания — тот же, что строит `questionnaire()`.
+ * Единственное место разбора: события анкеты возвращают `owner` как есть.
+ */
+const QuestionnaireOwner = v.object({
+  courseId: v.pipe(v.string(), v.minLength(1)),
+});
+
+/**
  * Агрегат Wish — желание пользователя в отношении цели (target).
  *
  * Жизненный цикл (правила — в `WishArDef.transitions`), две ветки:
@@ -204,6 +213,34 @@ export class WishAr extends Aggregate<typeof WishArDef> {
   /** Восстановление из хранилища — запись разобрана `WishArDef.state`. */
   static restore(snapshot: WishState): WishAr {
     return new WishAr(snapshot);
+  }
+
+  /**
+   * Цель желания по `owner` события анкеты: обратное к `questionnaire().owner`.
+   * Чужой или битый `owner` (анкета не `wish`) — `undefined`, реакции
+   * такое событие игнорируют.
+   */
+  static questionnaireTarget(owner: unknown): WishTargetVo | undefined {
+    const parsed = v.safeParse(QuestionnaireOwner, owner);
+    return parsed.success
+      ? { kind: 'course', courseId: parsed.output.courseId }
+      : undefined;
+  }
+
+  /**
+   * Текущее (активное) желание пользователя на цель среди загруженных.
+   * Активное на пару одно (`WishRules.unique`), но не обязательно первое:
+   * завершённые желания той же пары остаются. Фильтр по пользователю и цели
+   * свой — не доверяет выборке вызывающего.
+   */
+  static current(
+    wishes: readonly WishAr[],
+    userId: string,
+    target: WishTargetVo,
+  ): WishAr | undefined {
+    return wishes.find(
+      (wish) => wish.isOwnedBy(userId) && wish.isFor(target) && wish.isActive(),
+    );
   }
 
   // ── Вопросы ──

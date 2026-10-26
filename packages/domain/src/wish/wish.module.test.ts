@@ -15,7 +15,7 @@ describe('WishModuleDef', () => {
         'cancelWish',
         'listUserWishes',
       ],
-      reactions: ['fulfillWish'],
+      reactions: ['fulfillWish', 'confirmWish', 'abandonWish'],
       jobs: [],
     });
   });
