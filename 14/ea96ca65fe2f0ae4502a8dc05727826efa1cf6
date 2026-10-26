@@ -1,0 +1,3 @@
+Задача Ф6 'Нейтрализовать проектные следы в конфиге пакета' (dmg-core-extract).
+Изменения: packages/dmg-core/biome.json (ARC-10 — белый список импортов в 3 overrides); packages/dmg-core/scripts/lint-rules.test.ts (тест: белый список содержит каждую peer-зависимость); lint-fixtures arc-10-u7scl → arc-10-undeclared (@acme/domain), arc-10 → arc-10-subpath (#app/…); biome-plugins/dom-17 и src/domain/contracts/define-job.ts — комментарии; conductor/architecture/rules.md — ARC-10, снят DOM-17 (TR-16 закрыт).
+Отступление от формулировки задачи: отдельный запрет @u7-scl/* в biome.json проекта не нужен — корень не линтует пакет, а белый список пакета отсекает любой код приложения.
