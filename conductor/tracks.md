@@ -2,7 +2,7 @@
 
 ---
 
-- [~] **Track: repo-layout — раскладка монорепо по осям: `platform/`, `domain/`, `modules/`, `runners/`, `authoring/`**
+- [x] **Track: repo-layout — раскладка монорепо по осям: `platform/`, `domain/`, `modules/`, `runners/`, `authoring/`**
 *Link: [./tracks/repo-layout_20261026/](./tracks/repo-layout_20261026/)*
 
 ---
