@@ -11,7 +11,11 @@
 - Тактические: TR-1…TR-23 ([debt.md](../../architecture/debt.md) §6) — что временно ради перехода.
 
 ## Гейт закрытия
-`bun run check` зелёный: 3734 pass, 0 fail; `arch:check`: нарушений нет. `data/` не затронут.
+`CI=true bun test`: 3734 pass, 0 fail (388 файлов); `bun run check` зелёный, `arch:check`: нарушений нет. Промежуточных состояний и регрессов нет. `data/` не затронут.
+
+## Отклонения от плана
+- Ф12: 67 legacy-тестов `wish` удалены вместе с legacy-кодом — их случаи покрыты тестами DMG UC/ER и домена (TR-21, TR-22).
+- Ф13: тест `checkDefs` по модулям домена перенесён из `packages/domain/src` в `arch:check` (TR-23); `archCheck` домена не подключён — DEBT-33.
 
 ## Долг
 - Погашены: DEBT-21, DEBT-22, DEBT-24, DEBT-31.
