@@ -10,19 +10,19 @@
 
 ## Фаза 2: Перенос пакетов
 
-- [ ] Task: Тест-страж раскладки
-    - [ ] Тест (красный): `scripts/repo-layout.test.ts` — нет каталогов `packages/` и `apps/`, нет текстовых ссылок `packages/…` и `apps/…` вне `conductor/archive/` и `data/` (по `git ls-files`; исключения — явный список)
-- [ ] Task: Перенос одним коммитом (промежуточное состояние не собирается)
-    - [ ] `git mv` по таблице spec
-    - [ ] `workspaces`, `tsconfig.json`, `biome.json`, `dmg-core.json` (`gen`), `pm2.config.cjs`, `scripts/*` (`deploy`, `release`, `backup`, `extract-check`, `lint-rules`, `arch-check`), `runners/u7-bot/scripts/*`, пути `lint-fixtures/`
-    - [ ] `bun install`; страж зелёный по коду и конфигам
-    - [ ] `bun run check` (не меньше 3974 pass), коммит
+- [x] Task: Тест-страж раскладки df7ea7c
+    - [x] Тест (красный): `scripts/repo-layout.test.ts` — нет каталогов `packages/` и `apps/`, нет текстовых ссылок `packages/…` и `apps/…` вне `conductor/archive/` и `data/` (по `git ls-files`; исключения — явный список)
+- [x] Task: Перенос одним коммитом (промежуточное состояние не собирается) df7ea7c
+    - [x] `git mv` по таблице spec
+    - [x] `workspaces`, `tsconfig.json`, `biome.json`, `dmg-core.json` (`gen`), `pm2.config.cjs`, `scripts/*` (`deploy`, `release`, `backup`, `extract-check`, `lint-rules`, `arch-check`), `runners/u7-bot/scripts/*`, пути `lint-fixtures/`
+    - [x] `bun install`; страж зелёный по коду и конфигам
+    - [x] `bun run check` (не меньше 3974 pass), коммит — 3981 pass
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Скрипты и документация
 
 - [ ] Task: Скрипты по пакетам
-    - [ ] Вместо `test:p`/`test:a`, `lint:*`, `tslint:*`, `check:*` — `test:w <путь>` и т. п. (`bun run test:w modules/wish`)
+    - [x] Вместо `test:p`/`test:a`, `lint:*`, `tslint:*`, `check:*` — `test:w <путь>` и т. п. (`bun run test:w modules/wish`) — сделано в Фазе 2 (df7ea7c): старые скрипты ломались переносом
     - [ ] `workflow.md`, раздел «Команды разработки»
 - [ ] Task: Живые документы
     - [ ] `AGENTS.md`, `conductor/` (`tech-stack.md`, `architecture/*`, `guides/*`, `product.md` — если есть пути), README пакетов, `TRACK-DMG-CORE-OOP.md`, `TODO.md`
