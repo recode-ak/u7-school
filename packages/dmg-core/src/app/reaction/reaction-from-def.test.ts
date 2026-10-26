@@ -224,7 +224,7 @@ describe('ReactionFromDef — лог операций (D-43, Р6)', () => {
 });
 
 describe('ReactionFromDef — production', () => {
-  test('агрегат вне touches — warn, реакция проходит', async () => {
+  test('агрегат чужого модуля вне touches — два warn, реакция проходит', async () => {
     const prod = testAppContext({ mode: 'production', at: T0 });
     er = new ArchiveRemovedUserTasks({ app: prod.app, facades, tasks });
     er.step = async (_e, uow) => {
@@ -234,6 +234,7 @@ describe('ReactionFromDef — production', () => {
     };
     expectOk(await er.handle(removed()));
     expect(prod.logs.map((l) => [l.level, l.message])).toEqual([
+      ['warn', 'UoW: MAN-13: агрегат user не из модуля todo'],
       ['warn', 'UoW: агрегат user не заявлен в touches'],
     ]);
   });

@@ -24,6 +24,7 @@ import {
   CompleteTaskUcDef,
   CreateTaskUcDef,
   type TaskAr,
+  TaskArDef,
   TaskErrors,
 } from 'dmg-core/testing/example/todo/index';
 import { AppException } from '../../domain/errors/errors';
@@ -36,7 +37,7 @@ const MiniModuleDef = defineModule({
   label: 'Мини',
   description: 'DMG-модуль рядом с legacy в ApiApp.',
   dependsOn: [],
-  aggregates: [],
+  aggregates: [TaskArDef],
   useCases: [CompleteTaskUcDef],
   reactions: [],
   jobs: [ArchiveDoneTasksJobDef],

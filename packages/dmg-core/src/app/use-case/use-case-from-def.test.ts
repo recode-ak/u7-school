@@ -23,6 +23,7 @@ import { ok } from '#core/kernel/result/result';
 import {
   CompleteTaskUcDef,
   type TaskAr,
+  TaskArDef,
   TaskErrors,
   TaskEvents,
   TodoModuleDef,
@@ -56,7 +57,7 @@ const moduleOf = (...useCases: AnyUseCaseDef[]): AnyModuleDef =>
     label: 'Задачи',
     description: 'Модуль-владелец UC теста.',
     dependsOn: [],
-    aggregates: [],
+    aggregates: [TaskArDef],
     useCases,
     reactions: [],
     jobs: [],

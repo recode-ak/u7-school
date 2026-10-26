@@ -4,6 +4,7 @@ import {
   TaskAr,
   TaskArDef,
   TaskEvents,
+  TodoModuleDef,
 } from '#core/testing/example/todo/index';
 import { UserArDef } from '#core/testing/example/users/user/user.ar';
 import { expectErr, expectOk } from '#core/testing/index';
@@ -270,6 +271,51 @@ describe('UnitOfWork.commit', () => {
       'UoW: событие todo.task.created не заявлено в emits',
     ]);
     expect(published).toHaveLength(1);
+  });
+
+  test('MAN-13: агрегат чужого модуля — исключение при регистрации', () => {
+    const own = new UnitOfWork({
+      outbox: new InProcOutbox(recordingBus(published, log)),
+      trace: TRACE,
+      clock: () => AT,
+      module: { ...TodoModuleDef, aggregates: [UserArDef] },
+    });
+    expect(() => own.register(task(A), slowRepo(log))).toThrow(
+      'UoW: MAN-13: агрегат task не из модуля todo',
+    );
+  });
+
+  test('MAN-13: агрегат своего модуля — регистрируется', async () => {
+    const own = new UnitOfWork({
+      outbox: new InProcOutbox(recordingBus(published, log)),
+      trace: TRACE,
+      clock: () => AT,
+      module: TodoModuleDef,
+    });
+    own.register(task(A), slowRepo(log));
+    expectOk(await own.commit());
+    expect(log).toEqual([
+      `save ${A}`,
+      `saved ${A}`,
+      'publish todo.task.created',
+    ]);
+  });
+
+  test('MAN-13 с onViolation — сообщается до проверки touches', () => {
+    const violations: string[] = [];
+    const lenient = new UnitOfWork({
+      outbox: new InProcOutbox(recordingBus(published, log)),
+      trace: TRACE,
+      clock: () => AT,
+      module: { ...TodoModuleDef, aggregates: [] },
+      touches: [UserArDef],
+      onViolation: (message) => violations.push(message),
+    });
+    lenient.register(task(A), slowRepo(log));
+    expect(violations).toEqual([
+      'UoW: MAN-13: агрегат task не из модуля todo',
+      'UoW: агрегат task не заявлен в touches',
+    ]);
   });
 
   test('без регистраций — ничего не делает', async () => {

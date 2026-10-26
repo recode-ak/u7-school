@@ -25,6 +25,7 @@ import {
 import {
   ArchiveDoneTasksJobDef,
   type TaskAr,
+  TaskArDef,
 } from 'dmg-core/testing/example/todo/index';
 import { InProcJobExecutor } from '../infra/in-proc-job-executor';
 import { legacyJob, legacyJobsOf } from './legacy-job';
@@ -35,7 +36,7 @@ const ArchiveModuleDef = defineModule({
   label: 'Архив',
   description: 'Модуль для проверки моста планировщика.',
   dependsOn: [],
-  aggregates: [],
+  aggregates: [TaskArDef],
   useCases: [],
   reactions: [],
   jobs: [ArchiveDoneTasksJobDef],

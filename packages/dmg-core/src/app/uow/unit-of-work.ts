@@ -1,4 +1,5 @@
 import type { AnyAggregateDef } from '#core/domain/aggregate/define-aggregate';
+import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import type {
   AnyEventDef,
   DomainEvent,
@@ -29,6 +30,11 @@ export type UnitOfWorkContext = {
   readonly trace: Trace;
   /** Заявленные события операции; без поля проверка не выполняется. */
   readonly emits?: readonly AnyEventDef[];
+  /**
+   * Модуль операции: UoW меняет только его агрегаты (MAN-13, D-28); без
+   * поля проверка не выполняется.
+   */
+  readonly module?: Pick<AnyModuleDef, 'name' | 'aggregates'>;
   /** Агрегаты, которые операции разрешено менять; без поля — любые. */
   readonly touches?: readonly AnyAggregateDef[];
   /** Что делать с расхождением с контрактом; по умолчанию — `throw`. */
@@ -50,6 +56,7 @@ export class UnitOfWork {
   constructor(private readonly ctx: UnitOfWorkContext) {}
 
   register<A extends Committable>(ar: A, repo: Repository<A>): void {
+    this.assertOwnModule(repo.aggregate);
     this.assertTouches(repo.aggregate);
     if (this.entries.some((e) => e.ar === ar)) return;
     this.entries.push({ ar, save: () => repo.save(ar) });
@@ -112,6 +119,14 @@ export class UnitOfWork {
       aggregateId,
       ...this.ctx.trace.toEnvelope(),
     };
+  }
+
+  private assertOwnModule(aggregate: AnyAggregateDef): void {
+    const { module } = this.ctx;
+    if (module === undefined || module.aggregates.includes(aggregate)) return;
+    this.violate(
+      `UoW: MAN-13: агрегат ${aggregate.name} не из модуля ${module.name}`,
+    );
   }
 
   private assertTouches(aggregate: AnyAggregateDef): void {

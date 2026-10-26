@@ -21,6 +21,7 @@ import { Trace } from '#core/kernel/trace/trace';
 import {
   GetTaskUcDef,
   TaskAr,
+  TaskArDef,
   TaskErrors,
   TodoModuleDef,
 } from '#core/testing/example/todo/index';
@@ -149,7 +150,7 @@ class Silent extends UseCaseFromDef<
   undefined,
   User
 > {
-  constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
+  constructor(deps: ModuleDeps, module: ProbeModule) {
     super(SilentUcDef, deps, module);
   }
   protected async load() {
@@ -212,7 +213,7 @@ class NoteRemoved extends ReactionFromDef<typeof NoteRemovedErDef, ModuleDeps> {
 }
 
 class SilentEr extends ReactionFromDef<typeof SilentErDef, ModuleDeps> {
-  constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
+  constructor(deps: ModuleDeps, module: ProbeModule) {
     super(SilentErDef, deps, module);
   }
   protected async react(
@@ -243,7 +244,7 @@ class DigestJob extends JobFromDef<typeof DigestJobDef, ModuleDeps> {
 }
 
 class SilentJob extends JobFromDef<typeof SilentJobDef, ModuleDeps> {
-  constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
+  constructor(deps: ModuleDeps, module: ProbeModule) {
     super(SilentJobDef, deps, module);
   }
   protected async run(job: JobRun) {
@@ -388,14 +389,28 @@ describe('OperationFromDef.call — ER и Job', () => {
   });
 });
 
-// Пробы `createUow`: UoW операции со сверкой по её Def (D-43, Р8).
+// Пробы `createUow`: UoW операции со сверкой по её Def (D-43, Р8). Модуль
+// проб владеет агрегатом task, чтобы проверять emits и touches отдельно от
+// MAN-13; чужой агрегат — та же проба в модуле digest.
+const ProbeModuleDef = defineModule({
+  name: 'probe',
+  label: 'Пробы',
+  description: 'Модуль проб UoW: владеет агрегатом задачи.',
+  dependsOn: [],
+  aggregates: [TaskArDef],
+  useCases: [SilentUcDef],
+  reactions: [SilentErDef],
+  jobs: [SilentJobDef],
+});
+type ProbeModule = typeof ProbeModuleDef | typeof DigestModuleDef;
+
 class UowProbeUc extends UseCaseFromDef<
   typeof SilentUcDef,
   ModuleDeps,
   undefined,
   User
 > {
-  constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
+  constructor(deps: ModuleDeps, module: ProbeModule) {
     super(SilentUcDef, deps, module);
   }
   protected async load() {
@@ -410,7 +425,7 @@ class UowProbeUc extends UseCaseFromDef<
 }
 
 class UowProbeEr extends ReactionFromDef<typeof SilentErDef, ModuleDeps> {
-  constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
+  constructor(deps: ModuleDeps, module: ProbeModule) {
     super(SilentErDef, deps, module);
   }
   protected async react() {
@@ -422,7 +437,7 @@ class UowProbeEr extends ReactionFromDef<typeof SilentErDef, ModuleDeps> {
 }
 
 class UowProbeJob extends JobFromDef<typeof SilentJobDef, ModuleDeps> {
-  constructor(deps: ModuleDeps, module: typeof DigestModuleDef) {
+  constructor(deps: ModuleDeps, module: ProbeModule) {
     super(SilentJobDef, deps, module);
   }
   protected async run() {
@@ -436,8 +451,8 @@ class UowProbeJob extends JobFromDef<typeof SilentJobDef, ModuleDeps> {
 const tasks = new MemoryTasks();
 
 describe('OperationFromDef.createUow (D-43, Р8)', () => {
-  test('UC — события сверяются с emits, агрегаты не ограничены', async () => {
-    const uow = new UowProbeUc(deps, DigestModuleDef).uow(REQ);
+  test('UC — события сверяются с emits, агрегаты своего модуля не ограничены', async () => {
+    const uow = new UowProbeUc(deps, ProbeModuleDef).uow(REQ);
     const task = expectOk(
       TaskAr.create({ uuid: TASK, ownerId: OWNER, title: 'Хлеб' }, T0),
     );
@@ -448,15 +463,29 @@ describe('OperationFromDef.createUow (D-43, Р8)', () => {
   });
 
   test('ER — агрегат вне touches — исключение', () => {
-    const uow = new UowProbeEr(deps, DigestModuleDef).uow(REQ);
+    const uow = new UowProbeEr(deps, ProbeModuleDef).uow(REQ);
     expect(() => uow.register(TaskAr.restore(taskRow(TASK)), tasks)).toThrow(
       'UoW: агрегат task не заявлен в touches',
     );
   });
 
+  test('MAN-13: агрегат чужого модуля — исключение у UC, ER и Job', () => {
+    const task = TaskAr.restore(taskRow(TASK));
+    const uows = [
+      new UowProbeUc(deps, DigestModuleDef).uow(REQ),
+      new UowProbeEr(deps, DigestModuleDef).uow(REQ),
+      new UowProbeJob(deps, DigestModuleDef).uow(Trace.forJob(SilentJobDef)),
+    ];
+    for (const uow of uows) {
+      expect(() => uow.register(task, tasks)).toThrow(
+        'UoW: MAN-13: агрегат task не из модуля digest',
+      );
+    }
+  });
+
   test('Job — touches = scans; в production — warn от имени задания', () => {
     const prod = testAppContext({ mode: 'production', at: T0 });
-    const job = new UowProbeJob({ ...deps, app: prod.app }, DigestModuleDef);
+    const job = new UowProbeJob({ ...deps, app: prod.app }, ProbeModuleDef);
     job
       .uow(Trace.forJob(SilentJobDef))
       .register(TaskAr.restore(taskRow(TASK)), tasks);

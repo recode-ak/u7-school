@@ -20,7 +20,8 @@ import type { ArchRule, Violation } from './violation';
  * Контрактные проверки по Def (без файлов): описания и схемы (MAN-01/02/03),
  * связность (MAN-06), FQN (MAN-08), ссылки ⊆ `dependsOn` (ARC-04), DAG
  * (ARC-05), коды ошибок (ERR-04), отказы переходов (MAN-12), доменные
- * правила UC (ERR-02, DOM-16), межмодульные вызовы `calls` (MAN-05).
+ * правила UC (ERR-02, DOM-16), межмодульные вызовы `calls` (MAN-05),
+ * агрегаты операции — своего модуля (MAN-13).
  */
 export function checkDefs(index: DefIndex): Violation[] {
   return [
@@ -34,6 +35,7 @@ export function checkDefs(index: DefIndex): Violation[] {
     ...checkRejects(index),
     ...checkUseCaseRules(index),
     ...checkCalls(index),
+    ...checkOwnAggregates(index),
   ];
 }
 
@@ -143,8 +145,6 @@ function checkLinks(index: DefIndex): Violation[] {
         const owner = index.aggregateOwner.get(a);
         if (owner === undefined) {
           add(`${title}: агрегат ${a.name} не входит ни в один модуль`);
-        } else if (owner !== m) {
-          add(`${title}: агрегат ${localId(owner, a)} другого модуля`);
         }
       }
       for (const e of op.emits ?? []) {
@@ -298,6 +298,30 @@ function checkCalls(index: DefIndex): Violation[] {
             ),
           );
         }
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * MAN-13 (D-28): один UoW — один модуль. `aggregate` UC, `touches` ER и
+ * `scans` Job — агрегаты своего модуля; чужой модуль меняется только через
+ * его фасад или событие. Агрегат вне модулей — MAN-06.
+ */
+function checkOwnAggregates(index: DefIndex): Violation[] {
+  const out: Violation[] = [];
+  for (const m of index.modules) {
+    for (const op of operationsOf(m)) {
+      for (const a of aggregatesOf(op)) {
+        const owner = index.aggregateOwner.get(a);
+        if (owner === undefined || owner === m) continue;
+        out.push(
+          violation(
+            'MAN-13',
+            `${operationTitle(m, op)}: агрегат ${localId(owner, a)} модуля ${owner.name}`,
+          ),
+        );
       }
     }
   }

@@ -56,6 +56,8 @@ export abstract class OperationFromDef<
 > {
   /** Эта операция — `from` вызывающего, когда она зовёт другие модули. */
   readonly ref: OperationRef;
+  /** Модуль-владелец: его агрегаты — единственные, что меняет UoW (MAN-13). */
+  private readonly module: AnyModuleDef;
 
   /** Def не из модуля — исключение (ошибка сборки). */
   protected constructor(
@@ -70,6 +72,7 @@ export abstract class OperationFromDef<
       throw new Error(`${label} ${def.name} не входит в модуль ${module.name}`);
     }
     this.ref = { kind, module: module.name, name: def.name };
+    this.module = module;
   }
 
   /** Текущий момент по часам приложения — передаётся в операции домена. */
@@ -79,7 +82,8 @@ export abstract class OperationFromDef<
 
   /**
    * UoW вызова со сверкой по Def (D-43, Р8): события — по `emits`, агрегаты —
-   * по `touches` (ER) или `scans` (Job); у UC агрегаты не ограничены.
+   * только своего модуля (MAN-13) и по `touches` (ER) или `scans` (Job); у
+   * UC в пределах модуля агрегаты не ограничены.
    * Расхождение — баг реализации: в test и development — исключение, в
    * production — `warn` в лог от имени операции, а операция завершается
    * (отказ пользователю из-за описания контракта хуже, чем запись для
@@ -93,6 +97,7 @@ export abstract class OperationFromDef<
       outbox: app.outbox,
       clock: app.clock,
       trace,
+      module: this.module,
       emits: def.emits ?? [],
       ...(touches === undefined ? {} : { touches }),
       ...(app.mode === 'production'

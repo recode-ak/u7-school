@@ -5,6 +5,7 @@ import {
   type StateSchema,
 } from '../domain/aggregate/define-aggregate';
 import { defineEventReaction } from '../domain/contracts/define-event-reaction';
+import { defineJob } from '../domain/contracts/define-job';
 import {
   type AnyModuleDef,
   defineModule,
@@ -179,9 +180,9 @@ describe('checkDefs', () => {
         reactions: [er],
       });
       expect(report(alpha)).toEqual([
-        'MAN-06: ER alpha.addNote: агрегат beta.item другого модуля',
         'MAN-06: ER alpha.addNote: публикует событие beta.item.created другого модуля',
         'MAN-06: событие alpha.note.added никто не публикует',
+        'MAN-13: ER alpha.addNote: агрегат beta.item модуля beta',
       ]);
     });
 
@@ -216,6 +217,39 @@ describe('checkDefs', () => {
       expect(report(beta)).toContain(
         'MAN-06: ER beta.addNote: событие alpha.note.added не входит ни в один модуль',
       );
+    });
+  });
+
+  describe('MAN-13 — один UoW — один модуль (D-28)', () => {
+    const man13 = (...roots: AnyModuleDef[]): string[] =>
+      report(...roots).filter((l) => l.startsWith('MAN-13'));
+
+    it('UC, ER и Job с агрегатом чужого модуля — нарушение', () => {
+      const uc = defineUseCase({
+        ...CreateItemUcDef,
+        name: 'createNote',
+        aggregate: ItemArDef,
+      });
+      const er = defineEventReaction({
+        ...AddNoteErDef,
+        touches: [NoteArDef, ItemArDef],
+      });
+      const job = defineJob({ ...PurgeNotesJobDef, scans: [ItemArDef] });
+      const alpha = defineModule({
+        ...AlphaModuleDef,
+        useCases: [uc],
+        reactions: [er],
+        jobs: [job],
+      });
+      expect(man13(alpha)).toEqual([
+        'MAN-13: UC alpha.createNote: агрегат beta.item модуля beta',
+        'MAN-13: ER alpha.addNote: агрегат beta.item модуля beta',
+        'MAN-13: Job alpha.purgeNotes: агрегат beta.item модуля beta',
+      ]);
+    });
+
+    it('агрегаты своего модуля — без нарушений', () => {
+      expect(man13(AlphaModuleDef)).toEqual([]);
     });
   });
 
