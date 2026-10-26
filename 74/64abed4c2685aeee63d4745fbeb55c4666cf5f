@@ -1,0 +1,3 @@
+Задача: DomainArch.layout по gen из dmg-core.json (repo-layout, фаза 1).
+Изменения: scripts/domain-arch.ts — domainArchFor(gen, root) строит ArchApp по шаблонам {m}; DomainArch читает gen из dmg-core.json, ручные пути убраны. scripts/domain-arch.test.ts — подстановка шаблонов и сверка с конфигом. conductor/tracks.md — трек [~].
+Причина: один источник путей перед переносом пакетов. check: 3978 pass.
