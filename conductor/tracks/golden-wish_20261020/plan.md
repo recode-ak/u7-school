@@ -136,9 +136,9 @@
 - [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `ffe43c9f` (TR-22)
 - [x] Task: Контрольная точка 'Фаза 12' (автономно, workflow.md)
 
-## Фаза 13: Закрытие
+## Фаза 13: Закрытие [checkpoint: 8832eb2]
 
 - [x] Task: Погасить DEBT-21, DEBT-22, DEBT-24, DEBT-31 (маркеры и `debt.md` синхронно); новые долги — с DEBT-32 `c7ddbed5` (DEBT-32/33, TR-23)
 - [x] Task: Сводка гайдов: индекс в `architecture/index.md`, ссылки на эталон из [agents.md](../../architecture/agents.md) §6 `3895ec64`
 - [x] Task: Обновить [migration.md](../../architecture/migration.md) (§2 пункт 4 ✅, §6 состояние переноса, снять блок с Фаз 4–6 `dmg-core-extract`), `summary.md` `ac83a82e`
-- [ ] Task: Контрольная точка 'Фаза 13' (автономно, workflow.md)
+- [x] Task: Контрольная точка 'Фаза 13' (автономно, workflow.md) `8832eb2`
