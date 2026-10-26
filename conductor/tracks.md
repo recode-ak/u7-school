@@ -2,7 +2,7 @@
 
 ---
 
-- [~] **Track: dmg-core-extract — платформа DMG как внешний пакет `dmg-core` (npm): развязка от legacy, самодостаточные конфиги, готовность к распределённому запуску**
+- [x] **Track: dmg-core-extract — платформа DMG как внешний пакет `dmg-core` (npm): развязка от legacy, самодостаточные конфиги, готовность к распределённому запуску**
 *Link: [./tracks/dmg-core-extract_20261020/](./tracks/dmg-core-extract_20261020/)*
 *Порядок: Фазы 1–3 до `generators`; Фазы 4–6 после `golden-wish` (разблокированы) — [spec.md](./tracks/dmg-core-extract_20261020/spec.md#порядок-относительно-других-треков)*
 
