@@ -30,7 +30,7 @@
     - [x] Страж зелёный полностью, без временных исключений
     - [x] `bun run check`, коммит
 - [ ] Task: Финал
-    - [ ] `bun run gen module x` без `--write` печатает новые пути
+    - [x] `bun run gen module x` без `--write` печатает новые пути
     - [ ] Ручная проверка: `bun run dev:fixtures` поднимает бота
-    - [ ] `summary.md`: триаж тестов по гейту workflow
+    - [x] `summary.md`: триаж тестов по гейту workflow
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
