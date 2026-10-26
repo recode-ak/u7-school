@@ -77,3 +77,18 @@ DEBT-1…26 переданы трекам перевода модулей (от�
 - Механически: `apps/u7-bot/src/create-dmg-modules.ts`, `packages/core/src/legacy-bridge/example-app.test.ts`.
 - Отклонения и открытые вопросы агента — решены оркестратором: TR-24.
 - Гейт оркестратора: `bun run check` — 3782 pass, 0 fail.
+
+### Шаг 3 — api-author (Sonnet), готово
+
+- Блок «идемпотентность (D-47)» с `expectIdempotentReaction` в тестах 4 ER `packages/wish/src/wish/er/` (`state` — текст `wishes.json`).
+- Идемпотентны: `abandon-wish`, `confirm-wish`, `fulfill-wish`. Не идемпотентен: `invite-wishers` (повторное `stream.created` снова публикует `wish.invited`) — `it.failing` + DEBT-35.
+- Прод-код не менялся.
+
+### Шаг 4 — domain-author (Opus), готово
+
+- `checkDefs`: `checkOwnAggregates` — `MAN-13: ER alpha.addNote: агрегат beta.item модуля beta`; ветка MAN-06 «агрегат другого модуля» снята (без дубля), агрегат вне модулей — по-прежнему MAN-06.
+- UoW: `UnitOfWorkContext.module?` (необязательное, как `emits`/`touches`), `register` → `assertOwnModule` до `assertTouches`; `OperationFromDef.createUow` передаёт модуль.
+- Механически поправлены фикстуры, нарушавшие MAN-13: `operation-from-def.test.ts` (модуль `probe`), `use-case-from-def.test.ts`, `reaction-from-def.test.ts`, `core/legacy-bridge/legacy-job.test.ts`, `core/api/app/api-app-dmg.test.ts`.
+- Реальный домен MAN-13 не нарушает: `arch:check` example 0, domain 0.
+- Открытый вопрос агента (обязательность `module`): оставлено необязательным — тактика, TR-25.
+- Гейт оркестратора: `bun run check` — 3792 pass, 0 fail; `arch:check` чист.
