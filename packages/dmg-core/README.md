@@ -57,3 +57,7 @@ bunx dmg-core init
 - [Каталог правил](docs/rules.md), [решения](docs/decisions.md), [тестирование](docs/testing.md), [стиль TypeScript](docs/typescript.md)
 - [Гайды по видам артефактов](docs/guides/index.md)
 - Для агентов: [`llms.txt`](llms.txt), скил [`dmg-architecture`](skills/dmg-architecture/SKILL.md), [роли](agents/README.md)
+
+## Лицензия
+
+MIT — [LICENSE](LICENSE).

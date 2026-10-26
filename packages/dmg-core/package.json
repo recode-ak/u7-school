@@ -2,6 +2,8 @@
   "name": "dmg-core",
   "version": "0.1.0",
   "description": "Платформа DMG (Domain Manifest Graph): манифесты, агрегаты, use-case, события, фасады и проверка архитектуры.",
+  "license": "MIT",
+  "author": "Nur",
   "type": "module",
   "sideEffects": false,
   "engines": {

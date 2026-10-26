@@ -22,12 +22,18 @@ if grep -q 'errors corrected' <<<"$PUBLISH"; then
   echo "e2e: npm исправил бы package.json при публикации" >&2
   exit 1
 fi
+for field in license author; do
+  if [ "$(jq -r ".$field // empty" "$PKG/package.json")" = "" ]; then
+    echo "e2e: в package.json нет $field" >&2
+    exit 1
+  fi
+done
 
 echo "e2e: bun pm pack и состав tarball"
 (cd "$PKG" && bun pm pack --destination "$WORK" >/dev/null)
 TARBALL="$(ls "$WORK"/dmg-core-*.tgz)"
 FILES="$(tar -tzf "$TARBALL")"
-for need in llms.txt README.md docs/index.md docs/rules.md \
+for need in LICENSE llms.txt README.md docs/index.md docs/rules.md \
   skills/dmg-architecture/SKILL.md agents/README.md \
   biome-plugins/dom-14-no-clock.grit src/index.ts src/cli/main.ts; do
   if ! grep -qx "package/$need" <<<"$FILES"; then
