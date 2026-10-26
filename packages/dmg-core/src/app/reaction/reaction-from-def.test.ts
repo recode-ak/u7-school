@@ -24,6 +24,7 @@ import {
 import { MemoryTasks, OWNER, T0, TASK, TASK_2, taskRow } from '../app.fixture';
 import type { ModuleDeps } from '../context';
 import type { EnvelopeOf } from '../events/event-envelope';
+import type { Inbox } from '../events/inbox';
 import { ModuleFacades } from '../facade/module-facades';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { ReactionFromDef } from './reaction-from-def';
@@ -297,5 +298,74 @@ describe('ReactionFromDef — повтор доставки (D-47)', () => {
     };
     expectOk(await er.handle({ ...removed(), eventId: 'e-removed-2' }));
     expect(ran).toBe(true);
+  });
+});
+
+describe('ReactionFromDef — сбой inbox (ERR-07)', () => {
+  /** Inbox с подменой `claim`/`release`; по умолчанию принимает всё. */
+  function inbox(over: Partial<Inbox>): Inbox {
+    return {
+      claim: async () => true,
+      release: async () => {},
+      ...over,
+    };
+  }
+
+  test('сбой claim → SERVER_INTERNAL, запись в лог операций и error в логгер', async () => {
+    const failing = inbox({
+      claim: async () => {
+        throw new Error('inbox недоступен');
+      },
+    });
+    er = new ArchiveRemovedUserTasks({
+      app: { ...ctx.app, inbox: failing },
+      facades,
+      tasks,
+    });
+    let ran = false;
+    er.step = async () => {
+      ran = true;
+      return ok();
+    };
+    expectErr(await er.handle(removed()), 'SERVER_INTERNAL');
+    expect(ran).toBe(false);
+    expect(ctx.oplog.records).toEqual([
+      expect.objectContaining({
+        result: {
+          ok: false,
+          error: expect.objectContaining({ code: 'SERVER_INTERNAL' }),
+        },
+        events: [],
+      }),
+    ]);
+    expect(ctx.logs).toEqual([
+      expect.objectContaining({
+        level: 'error',
+        source: 'archiveRemovedUserTasks',
+        message: 'Непредвиденный сбой',
+      }),
+    ]);
+  });
+
+  test('сбой release после отказа → исходный отказ и error в логгер', async () => {
+    const failing = inbox({
+      release: async () => {
+        throw new Error('inbox недоступен');
+      },
+    });
+    er = new ArchiveRemovedUserTasks({
+      app: { ...ctx.app, inbox: failing },
+      facades,
+      tasks,
+    });
+    tasks.rows.set(TASK, taskRow(TASK, 'archived'));
+    expectErr(await er.handle(removed()), 'TASK_ARCHIVED');
+    expect(ctx.logs).toContainEqual(
+      expect.objectContaining({
+        level: 'error',
+        source: 'archiveRemovedUserTasks',
+        message: 'Не удалось снять доставку e-removed',
+      }),
+    );
   });
 });

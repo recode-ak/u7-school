@@ -393,4 +393,44 @@ describe('UnitOfWork — outbox (D-47)', () => {
     await expect(out.commit()).rejects.toThrow('outbox недоступен');
     expect(out.published).toEqual([]);
   });
+
+  test('сбой сохранения, затем сбой outbox — исходное исключение, сбой outbox в cause', async () => {
+    const out = new UnitOfWork({
+      outbox: recordingOutbox([], true),
+      trace: TRACE,
+      clock: () => AT,
+    });
+    out.register(task(A), slowRepo(log));
+    out.register(task(B), slowRepo(log, true));
+    const error = await out.commit().catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe('диск недоступен');
+    expect((error as Error).cause).toEqual(new Error('outbox недоступен'));
+    expect(out.published).toEqual([]);
+  });
+
+  test('сбой сохранения с занятым cause, затем сбой outbox — AggregateError из обоих', async () => {
+    const out = new UnitOfWork({
+      outbox: recordingOutbox([], true),
+      trace: TRACE,
+      clock: () => AT,
+    });
+    const disk = new Error('диск недоступен', { cause: 'EIO' });
+    out.register(task(A), slowRepo(log));
+    out.register(task(B), {
+      aggregate: TaskArDef,
+      async save() {
+        throw disk;
+      },
+    });
+    const error = await out.commit().catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(AggregateError);
+    expect((error as AggregateError).message).toBe(
+      'UoW: сбой сохранения (диск недоступен), затем сбой outbox (outbox недоступен)',
+    );
+    expect((error as AggregateError).errors).toEqual([
+      disk,
+      new Error('outbox недоступен'),
+    ]);
+  });
 });

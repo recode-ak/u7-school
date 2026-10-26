@@ -428,15 +428,18 @@ describe('InviteWishersEr.subscribe', () => {
 
 describe('InviteWishersEr — идемпотентность (D-47)', () => {
   // DEBT-35: повторное stream.created (новый eventId) повторно публикует
-  // wish.invited — ER не идемпотентен (TR-20). Снять `.failing` после починки.
-  it.failing('повтор stream.created с новым eventId — без записей и событий', async () => {
+  // wish.invited — ER не идемпотентен (TR-20). Тест фиксирует текущее
+  // нарушение; после починки ожидание меняется на успех (`resolves`).
+  it('повтор stream.created с новым eventId — пока публикует событие (DEBT-35)', async () => {
     await seed(moduleWish('expressed'));
     const er = makeEr();
-    await expectIdempotentReaction({
-      event: created(),
-      deliver: (event) => er.handle(event),
-      published: ctx.published,
-      state: () => Bun.file(file).text(),
-    });
+    await expect(
+      expectIdempotentReaction({
+        event: created(),
+        deliver: (event) => er.handle(event),
+        published: ctx.published,
+        state: () => Bun.file(file).text(),
+      }),
+    ).rejects.toThrow('опубликовала событий');
   });
 });

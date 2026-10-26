@@ -87,7 +87,8 @@ export abstract class Caller<U extends Identified = Identified> {
         `Caller.fromJSON: невалидный JSON — ${v.summarize(parsed.issues)}`,
       );
     }
-    const subject = revive ?? Caller.asIs<U>;
+    const subject =
+      revive === undefined ? Caller.asIs<U> : Caller.checked(revive);
     const { output } = parsed;
     if (output.kind !== 'system') return Caller.personOf(output, subject);
     const { from, person } = output;
@@ -112,6 +113,32 @@ export abstract class Caller<U extends Identified = Identified> {
           json.delegationId,
         );
     }
+  }
+
+  /**
+   * `revive` под контролем: его исключение — `Error` с префиксом
+   * `Caller.fromJSON:` (`cause` — исходное), результат без `uuid: string` —
+   * `Error`, как у субъекта без `revive`.
+   */
+  private static checked<U extends Identified>(
+    revive: ReviveSubject<U>,
+  ): ReviveSubject<U> {
+    return (raw) => {
+      let subject: U;
+      try {
+        subject = revive(raw);
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        throw new Error(
+          `Caller.fromJSON: revive не восстановил субъект — ${reason}`,
+          { cause: error },
+        );
+      }
+      if (!v.is(IdentifiedJson, subject)) {
+        throw new Error('Caller.fromJSON: revive вернул субъект без uuid');
+      }
+      return subject;
+    };
   }
 
   private static asIs<U extends Identified>(raw: unknown): U {

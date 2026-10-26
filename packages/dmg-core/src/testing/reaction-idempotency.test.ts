@@ -77,33 +77,52 @@ describe('expectIdempotentReaction', () => {
     );
   });
 
-  test('отказ первой или второй доставки — ошибка', async () => {
+  test('отказ первой доставки — ошибка', async () => {
     const w = world();
-    let calls = 0;
-    const deliver = async () => {
-      calls++;
-      return calls === 2 ? CoreErrors.SERVER_INTERNAL.err() : ok();
-    };
     await expect(
       expectIdempotentReaction({
         event: EVENT,
         published: w.published,
         state: w.state,
-        deliver,
+        deliver: async () => CoreErrors.SERVER_INTERNAL.err(),
+      }),
+    ).rejects.toThrow(
+      'первая доставка users.user.removed: ожидался Ok, получена ошибка SERVER_INTERNAL',
+    );
+  });
+
+  test('отказ второй доставки — ошибка', async () => {
+    const w = world();
+    let calls = 0;
+    await expect(
+      expectIdempotentReaction({
+        event: EVENT,
+        published: w.published,
+        state: w.state,
+        deliver: async () => {
+          calls++;
+          return calls === 2 ? CoreErrors.SERVER_INTERNAL.err() : ok();
+        },
       }),
     ).rejects.toThrow(
       'повторная доставка users.user.removed: ожидался Ok, получена ошибка SERVER_INTERNAL',
     );
-    calls = 1;
+  });
+
+  test('асинхронный снимок хранилища — дожидается', async () => {
+    const w = world();
     await expect(
       expectIdempotentReaction({
         event: EVENT,
         published: w.published,
-        state: w.state,
-        deliver,
+        state: async () => [...w.rows],
+        deliver: async () => {
+          w.rows.push(1);
+          return ok();
+        },
       }),
     ).rejects.toThrow(
-      'первая доставка users.user.removed: ожидался Ok, получена ошибка SERVER_INTERNAL',
+      'повторная доставка users.user.removed изменила хранилище',
     );
   });
 });

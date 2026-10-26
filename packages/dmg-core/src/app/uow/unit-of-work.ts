@@ -66,14 +66,18 @@ export class UnitOfWork {
    * События собираются и сверяются с `emits` до записи: незаявленное
    * событие — баг реализации, и тогда не сохраняется ничего. Агрегаты
    * пишутся по порядку регистрации; в outbox одной партией уходят события
-   * только записанных агрегатов — после записи всех или на первом сбое. Сбой N-го агрегата
-   * (`VersionConflict` → `VERSION_CONFLICT`, иное исключение — пробрасывается):
-   * записанные до него остаются (отката нет, D-15) и их события уходят,
-   * события N-го и следующих — нет.
+   * только записанных агрегатов — после записи всех или на первом сбое.
+   * Сбой N-го агрегата (`VersionConflict` → `VERSION_CONFLICT`, иное
+   * исключение — пробрасывается): записанные до него остаются (отката нет,
+   * D-15) и их события уходят, события N-го и следующих — нет.
    *
    * `Ok` — опубликованные события (для лога операций). При отказе или
    * исключении опубликованное до сбоя видно в `published`. Сбой outbox —
    * исключение: записанное остаётся, опубликованным ничего не считается.
+   * Если сбой outbox случился после исключения сохранения, пробрасывается
+   * исходное исключение, а сбой outbox записывается в его `cause` (его
+   * печатает `serializeError`). Если `cause` уже занят или исходное — не
+   * `Error`, бросается `AggregateError` с обоими сбоями в `errors`.
    */
   async commit(): Promise<Result<readonly PublishedEvent[], CommitError>> {
     const batches = this.entries.map(({ ar }) =>
@@ -88,14 +92,20 @@ export class UnitOfWork {
         written++;
       }
     } catch (error) {
-      if (!(error instanceof VersionConflict)) throw error;
+      const stored = batches.slice(0, written).flat();
+      if (!(error instanceof VersionConflict)) {
+        await this.send(stored).catch((outboxError: unknown) => {
+          throw withOutboxFailure(error, outboxError);
+        });
+        throw error;
+      }
+      await this.send(stored);
       return CoreErrors.VERSION_CONFLICT.err({
         aggregate: error.aggregate.name,
         uuid: error.uuid,
       });
-    } finally {
-      await this.send(batches.slice(0, written).flat());
     }
+    await this.send(batches.flat());
     return ok(this.published);
   }
 
@@ -148,4 +158,23 @@ export class UnitOfWork {
     if (onViolation === undefined) throw new Error(message);
     onViolation(message);
   }
+}
+
+/**
+ * Исходное исключение сохранения со сбоем outbox после него: сбой outbox —
+ * в `cause`, если он свободен; иначе — `AggregateError` из обоих.
+ */
+function withOutboxFailure(error: unknown, outboxError: unknown): unknown {
+  if (error instanceof Error && error.cause === undefined) {
+    error.cause = outboxError;
+    return error;
+  }
+  return new AggregateError(
+    [error, outboxError],
+    `UoW: сбой сохранения (${messageOf(error)}), затем сбой outbox (${messageOf(outboxError)})`,
+  );
+}
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

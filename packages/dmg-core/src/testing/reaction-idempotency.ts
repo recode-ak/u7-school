@@ -11,8 +11,12 @@ export type ReactionIdempotencySpec<E extends EventEnvelope> = {
   readonly deliver: (event: E) => Promise<Result<void, Coded>>;
   /** Конверты, отданные в outbox (`testAppContext().published`). */
   readonly published: readonly EventEnvelope[];
-  /** Снимок хранилища, которое пишет реакция (сравнивается `Bun.deepEquals`). */
-  readonly state: () => unknown;
+  /**
+   * Снимок хранилища, которое пишет реакция: снимается после первой и после
+   * второй доставки и сравнивается `Bun.deepEquals`. Может быть асинхронным
+   * (например, `() => Bun.file(path).text()`) — хелпер его дожидается.
+   */
+  readonly state: () => unknown | Promise<unknown>;
 };
 
 /**

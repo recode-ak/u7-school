@@ -2,11 +2,13 @@ import type { AnyEventReactionDef } from '#core/domain/contracts/define-event-re
 import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
+import { serializeError } from '#core/kernel/errors/serialize-error';
 import { ok, type Result } from '#core/kernel/result/result';
 import { Trace } from '#core/kernel/trace/trace';
 import type { ModuleDeps } from '../context';
 import type { EventBus } from '../events/event-bus';
 import type { EnvelopeOf } from '../events/event-envelope';
+import type { Delivery } from '../events/inbox';
 import { OperationFromDef } from '../operation/operation-from-def';
 import { runLogged } from '../system/run-logged';
 import type { UnitOfWork } from '../uow/unit-of-work';
@@ -22,10 +24,11 @@ export type ReactionEnvelopeOf<D extends AnyEventReactionDef> = EnvelopeOf<
  * `Ok`, лог отказа и перехват исключений делает база.
  *
  * Вызывающий — `SystemCaller` этой реакции без человека: субъекта нет,
- * «кто породил» — через `trace.cause` (caller.md §1). След: причина — событие, `correlationId` — его же; `trace`
- * передаётся в `react`, чтобы вызванный UC продолжил цепочку. Регистрация
- * агрегата вне `touches` — исключение, в production — `warn` в лог; UC
- * другого модуля — `this.call` только из `calls` (тип, D-43).
+ * «кто породил» — через `trace.cause` (caller.md §1). След: причина —
+ * событие, `correlationId` — его же; `trace` передаётся в `react`, чтобы
+ * вызванный UC продолжил цепочку. Регистрация агрегата вне `touches` —
+ * исключение, в production — `warn` в лог; UC другого модуля — `this.call`
+ * только из `calls` (тип, D-43).
  */
 export abstract class ReactionFromDef<
   D extends AnyEventReactionDef,
@@ -54,26 +57,48 @@ export abstract class ReactionFromDef<
    * реакции отбрасывается (`Ok`, без записи в лог операций, `debug` в
    * логгер). После отказа или исключения доставка снимается — повтор того
    * же события исполнится снова.
+   *
+   * Сбой порта inbox наружу не выходит (ERR-07): сбой `claim` — как
+   * исключение операции (`SERVER_INTERNAL`, запись в лог операций, `error`
+   * в логгер), реакция не исполняется, доставка не снимается (занята ли
+   * она — неизвестно). Сбой `release` — `error` в логгер, результат
+   * обработки возвращается как есть.
    */
   async handle(
     event: ReactionEnvelopeOf<D>,
   ): Promise<Result<void, DomainError>> {
     const { app } = this.resolve;
     const delivery = { reaction: this.ref, eventId: event.eventId };
-    if (!(await app.inbox.claim(delivery))) {
+    let claimed: boolean;
+    try {
+      claimed = await app.inbox.claim(delivery);
+    } catch (error) {
+      return this.execute(event, async () => {
+        throw error;
+      });
+    }
+    if (!claimed) {
       app.logger.debug(
         this.def.name,
         `Повтор доставки ${event.eventId} отброшен`,
       );
       return ok();
     }
-    const res = await this.execute(event);
-    if (!res.ok) await app.inbox.release(delivery);
+    const res = await this.execute(event, (uow, caller, trace) =>
+      this.react(event, uow, caller, trace),
+    );
+    if (!res.ok) await this.release(delivery);
     return res;
   }
 
+  /** `body` — шаг реакции; фиксация после `Ok` и лог — здесь. */
   private execute(
     event: ReactionEnvelopeOf<D>,
+    body: (
+      uow: UnitOfWork,
+      caller: SystemCaller,
+      trace: Trace,
+    ) => Promise<Result<void, DomainError>>,
   ): Promise<Result<void, DomainError>> {
     const { app } = this.resolve;
     const caller = new SystemCaller(this.ref);
@@ -81,12 +106,25 @@ export abstract class ReactionFromDef<
     return this.journal({ input: event, caller, trace }, (run) =>
       runLogged(app, this.def.name, async () => {
         const uow = run.track(this.createUow(trace));
-        const res = await this.react(event, uow, caller, trace);
+        const res = await body(uow, caller, trace);
         if (!res.ok) return res;
         const committed = await uow.commit();
         return committed.ok ? ok() : committed;
       }),
     );
+  }
+
+  private async release(delivery: Delivery): Promise<void> {
+    const { app } = this.resolve;
+    try {
+      await app.inbox.release(delivery);
+    } catch (error) {
+      app.logger.error(
+        this.def.name,
+        `Не удалось снять доставку ${delivery.eventId}`,
+        serializeError(error),
+      );
+    }
   }
 
   /** Подписка на все события `on`; возвращает отписку. */

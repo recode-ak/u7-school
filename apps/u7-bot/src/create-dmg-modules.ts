@@ -45,7 +45,8 @@ export type DmgLegacyFacades = {
 /**
  * Контекст приложения для модулей DMG на время сосуществования: шина DMG
  * поверх legacy-шины (входящие legacy-события зависимостей — по картам
- * `inbound`, D-37), outbox и inbox в процессе (D-47), часы legacy, логгер приложения, JSONL-лог операций.
+ * `inbound`, D-37), outbox и inbox в процессе (D-47), часы legacy, логгер
+ * приложения, JSONL-лог операций.
  */
 export function createDmgAppContext(platform: DmgPlatform): AppContext {
   const { legacyBus, logger, mode, oplogDir } = platform;

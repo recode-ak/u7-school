@@ -99,3 +99,29 @@ DEBT-1…26 переданы трекам перевода модулей (от�
 - Эскалация: с `entry: 'contract'` — 52 импорта чужого `index` из домена legacy-модулей (DEBT-34). Решение оркестратора — TR-26 (по D-45 «пары legacy — по долгу»).
 - Проект: `DomainArch` (`scripts/domain-arch.ts`, `entry: 'contract'`) в `ARCH_APPS`; DEBT-33 погашен.
 - Гейт оркестратора: `bun run check` — 3800 pass, 0 fail; `arch:check` чист.
+
+### Ревью фазы — reviewer (Opus)
+
+| ID | файл:строка | суть | severity |
+|---|---|---|---|
+| ERR-07 | `app/reaction/reaction-from-def.ts:63,71` | сбой `inbox.claim/release` выходит из `handle` исключением мимо `runLogged`; сбой `release` оставляет доставку занятой | question |
+| D-15 | `app/uow/unit-of-work.ts:96-97` | сбой `outbox.put` в `finally` подменяет исключение сохранения | warn |
+| TST-04 | `wish/er/invite-wishers.er.test.ts:432` | `it.failing` проходит при любом падении, не закрепляет суть нарушения | info |
+| TST-04 | `testing/reaction-idempotency.test.ts:80` | два сценария в одном тесте | info |
+| CODE-03 | `testing/reaction-idempotency.ts:14-15` | `state` фактически асинхронный, по типу не видно | info |
+| CODE-03 | `kernel/trace/trace.ts:37` | `TraceJsonSchema` не связана с типами `Cause`/`TraceChannel` | info |
+| D-46 | `kernel/caller/caller.ts:107` | результат `revive` без проверки `uuid`, исключение без префикса | info |
+| CODE-01 | `app/uow/unit-of-work.ts:69`, `apps/u7-bot/src/create-dmg-modules.ts:48` | перенос JSDoc | info |
+
+Вывод: блокеров нет, код соответствует D-46, D-47, MAN-13, TR-24/25/26. Решение оркестратора: все пункты — в правки (дешевле сейчас, платформа).
+
+### Правки по ревью — domain-author (Opus), готово
+
+1. ERR-07: сбой `claim` — путь сбоя операции (`SERVER_INTERNAL`, лог операций, `error`), реакция не исполняется, доставка не снимается (неизвестно, занята ли); сбой `release` — `error`, исходный результат.
+2. D-15: `finally` убран; сбой `outbox.put` после не-`VersionConflict` — в `cause` исходного исключения (или `AggregateError`).
+3. `state: () => unknown | Promise<unknown>`; тест разбит; тест асинхронного `state`.
+4. `TraceJsonSchema` ↔ `TraceJson` — присваивания в обе стороны (удаление необязательного поля из схемы не ловится — без type-level трюков).
+5. `revive` через `Caller.checked`: префикс `Caller.fromJSON:`, `cause`, проверка `uuid`.
+6. `invite-wishers`: `it` + `rejects.toThrow('опубликовала событий')`, DEBT-35.
+7. Перенос JSDoc.
+- Гейт оркестратора: `bun run check` — 3808 pass, 0 fail; `arch:check` чист.

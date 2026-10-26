@@ -46,6 +46,13 @@ const TraceJsonSchema = v.object({
   ),
 });
 
+/**
+ * Разобранный `TraceJson`. Схема сверяется с `Cause`/`TraceChannel` на этапе
+ * компиляции присваиванием в обе стороны: схема → типы — в `fromJSON`
+ * (`new Trace` и `TraceJson`), типы → схема — в `toJSON`.
+ */
+type ParsedTraceJson = v.InferOutput<typeof TraceJsonSchema>;
+
 /** Часть следа в конверте события: причина и цепочка, без канала. */
 export type TraceStamp = {
   readonly cause: Cause;
@@ -120,7 +127,7 @@ export class Trace {
         `Trace.fromJSON: невалидный JSON — ${v.summarize(parsed.issues)}`,
       );
     }
-    const { cause, correlationId, channel } = parsed.output;
+    const { cause, correlationId, channel }: TraceJson = parsed.output;
     return new Trace(cause, correlationId, channel);
   }
 
@@ -132,9 +139,11 @@ export class Trace {
   /** Форма для границы процесса (D-46); без канала — без поля. */
   toJSON(): TraceJson {
     const { cause, correlationId, channel } = this;
-    return channel === undefined
-      ? { cause, correlationId }
-      : { cause, correlationId, channel };
+    const json: ParsedTraceJson =
+      channel === undefined
+        ? { cause, correlationId }
+        : { cause, correlationId, channel };
+    return json;
   }
 
   /** Поля следа в конверте события (UoW, мосты legacy). */

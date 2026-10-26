@@ -249,6 +249,31 @@ describe('Caller.toJSON / fromJSON — круг через JSON (D-46)', () => {
     expect(seen).toEqual([alice]);
   });
 
+  it('исключение revive — Error с префиксом Caller.fromJSON и исходным cause', () => {
+    const boom = new Error('нет такого пользователя');
+    const revive = (): User => {
+      throw boom;
+    };
+    let error: unknown;
+    try {
+      Caller.fromJSON(wire(new UserCaller(alice).toJSON()), revive);
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe(
+      'Caller.fromJSON: revive не восстановил субъект — нет такого пользователя',
+    );
+    expect((error as Error).cause).toBe(boom);
+  });
+
+  it('revive вернул субъект без uuid — Error, как без revive', () => {
+    const revive = (): User => ({ name: 'без uuid' }) as unknown as User;
+    expect(() =>
+      Caller.fromJSON(wire(new UserCaller(alice).toJSON()), revive),
+    ).toThrow('Caller.fromJSON: revive вернул субъект без uuid');
+  });
+
   it('без revive субъект — как есть', () => {
     const rich = { uuid: 'alice', name: 'Алиса' };
     const restored = Caller.fromJSON(wire(new UserCaller(rich).toJSON()));
