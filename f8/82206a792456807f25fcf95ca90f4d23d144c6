@@ -1,0 +1,4 @@
+Задача Ф4 dmg-core-extract: ARC-04 в checkFiles, DEBT-33.
+checkFiles(index, layout, entry='index'), ArchApp.entry; external→external мимо входа не проверяется (TR-26); прикладной слой external не сканируется. DomainArch (entry: contract) в ARCH_APPS; запись DEBT-33 снята.
+Файлы: packages/dmg-core/src/arch/{check-files,arch-check}.ts(+тесты), scripts/{domain-arch,arch-check}.ts, scripts/arch-check.test.ts, conductor/architecture/{debt,migration}.md.
+check: 3800 pass, arch:check чист.
