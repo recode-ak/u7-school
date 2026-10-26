@@ -70,7 +70,7 @@
 - [x] Task: Проверка в `extract-check.sh`: установка tarball в пустой проект → `init` → `llms.txt`, документация и скилы на месте и валидны, битых ссылок нет (61d202c)
 - [x] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md) (reviewer без error/major, минорные — 8baaa3a; переход к Ф6 — Нурболат, 2026-10-26)
 
-## Фаза 6: Готовность к выносу
+## Фаза 6: Готовность к выносу [checkpoint: f0b8488]
 
 > **Решение Нурболата (2026-10-26):** пакет сейчас не выносим и не публикуем — только убеждаемся, что вынос сводится к переносу каталога. Фактический вынос (репозиторий, CI, npm, удаление `packages/dmg-core`) — чек-лист в `spec.md`, отдельным треком после релиза. Раскладка монорепо (`platform/`, `domain/`, `modules/`, `runners/`, `authoring/`) — отдельный трек.
 >
@@ -83,4 +83,4 @@
 - [x] Task: Нейтрализовать проектные следы в конфиге пакета: ARC-10 в `biome.json` пакета без `@u7-scl/**` и `legacy-bridge` (общая формулировка: только объявленные зависимости); комментарий DOM-17 без `packages/wish`; проектный запрет `@u7-scl/*` — в `biome.json` проекта (14ea96c; отдельный запрет в корне не нужен — белый список пакета)
 - [x] Task: Сквозная проверка потребителя — в пакете: часть `extract-check.sh` «tarball → пустой проект → init/gen/consumer-check» становится скриптом пакета (его будущий CI); проект вызывает его; проверка состава tarball (нет тестов и временных каталогов, есть `docs`, `skills`, `agents`, `biome-plugins`); `npm publish --dry-run` (7d0522c)
 - [x] Task: Метаданные публикации и чек-лист выноса в `spec.md`: `license`, `repository`, `author` в `package.json` (по решению Нурболата), файл лицензии; шаги выноса (репозиторий, CI, публикация по тегу, перевод монорепо на npm, удаление `packages/dmg-core`, документация проекта) (304b3b7; `repository` — при выносе, репозитория пока нет)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md) (самопроверка diff, подтверждение — Нурболат, 2026-10-26)
