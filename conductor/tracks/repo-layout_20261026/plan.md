@@ -29,8 +29,8 @@
     - [x] Скилы и роли (`.claude`, `.pi`, `.agents-core`) → `bun run agents:sync`
     - [x] Страж зелёный полностью, без временных исключений
     - [x] `bun run check`, коммит
-- [ ] Task: Финал
+- [x] Task: Финал 76a4062f
     - [x] `bun run gen module x` без `--write` печатает новые пути
-    - [ ] Ручная проверка: `bun run dev:fixtures` поднимает бота
+    - [x] Ручная проверка: `bun run dev:fixtures` поднимает бота
     - [x] `summary.md`: триаж тестов по гейту workflow
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
