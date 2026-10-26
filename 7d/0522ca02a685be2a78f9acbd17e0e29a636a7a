@@ -1,0 +1,3 @@
+Задача Ф6 'Сквозная проверка потребителя — в пакете' (dmg-core-extract).
+Изменения: новый packages/dmg-core/scripts/consumer-e2e.sh, скрипт e2e в package.json; bin dmg-core → src/cli/main.ts (без ./ — иначе npm 11 удаляет bin при публикации); scripts/extract-check.sh — копия → install → check → e2e.
+Найдено проверкой: npm publish --dry-run 'bin[dmg-core] script name src/cli/main.ts was invalid and removed' — у потребителя из npm не было бы команды dmg-core.
