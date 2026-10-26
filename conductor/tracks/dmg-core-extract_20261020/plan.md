@@ -63,6 +63,7 @@
     - [ ] Источник правды один — в репозитории пакета; в проекте копий нет (кроме вставок `init`)
 - [ ] Task: CLI `dmg-core init` (копирует скилы и роли в `.claude/`, `.pi/`, добавляет в `AGENTS.md` вставку со ссылкой на `node_modules/dmg-core/llms.txt`, ставит версию-метку) и `dmg-core sync` / `sync --check` (обновляет; в `check` потребителя падает при устаревших копиях)
     - [ ] Тесты на временном проекте; идемпотентность `init`
+- [ ] Task: Генераторы в пакет: `dmg-core gen` (перенос `scripts/gen` с шаблонами; раскладка — `ArchApp.layout` проекта), тесты на временном проекте; `bun run gen` проекта вызывает CLI пакета, `scripts/gen` удалён; `naming.md` §5 — в `docs/` пакета
 - [ ] Task: Сообщения `arch:check` ссылаются на правило по ID с путём к `docs/rules.md` в пакете; README пакета: установка, быстрый старт на учебном модуле, ссылки на документацию
 - [ ] Task: Проверка в `extract-check.sh`: установка tarball в пустой проект → `init` → `llms.txt`, документация и скилы на месте и валидны, битых ссылок нет
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
