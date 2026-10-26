@@ -1,0 +1,5 @@
+Задача: Обогатить учебный модуль dmg-core (Фаза 5, dmg-core-extract).
+Оркестратор: domain-author (Opus) → api-author (Opus) → reviewer (Opus, error нет) → правки по warn/info.
+Итог: пример src/testing/example покрывает все гайды — VO/state, Ar (assign/unassign, round trip), events/errors с тестами, Rules над ответом чужого модуля, DCS task-release, UC с this.call (assignTask → users.getUser), query для system, ER через DCS + expectIdempotentReaction, contract.ts todo/users, тесты UC/Job/модуля.
+Отчёты и файлы — slices/example-enrich.md. TR-27 — вызов чужого UC в load до Policy.
+check: зелёный (полный).
