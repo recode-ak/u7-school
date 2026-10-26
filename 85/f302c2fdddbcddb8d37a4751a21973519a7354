@@ -1,0 +1,8 @@
+Фаза 12 (golden-wish): модуль wish и сосуществование, автономно.
+Проверка: bun run check — 3730 pass / 0 fail (lint, tsc, test); arch:check 0; agent-gate зелёный; git status data/ чист.
+Ревью: reviewer (Opus), diff 211dbdb3..adb81d37 — error 0, warning 0, info 8; решения TR-22 (гайд module поправлен).
+Новое: мост legacy-bridge (inbound один раз на маршрут, onInvalid без throw, проверка occurredAt) c886d328; сборка DMG в apps/u7-bot (create-dmg-modules.ts, oplog <DB_DIR>/oplog, stories по Def через U7BotUiStory.executeUc) e325339c; удалён legacy wish (api, резолвер, мета, команды домена; исключение DOM-17 снято, TR-16) df41ad91; гайды module.md, job.md adb81d37. TR-21.
+Порядок задач изменён (мост → сборка → удаление legacy), чтобы check был зелёным между задачами.
+Остаток: DEBT-21/22 в packages/wish (субъект User из @u7-scl/app) — Ф13; warn requestId на каждый вызов UC — трек ui-manifests.
+Покрытие: create-dmg-modules.ts — тест сборки create-api-app.test.ts; call-uc.ts — без теста (как раньше).
+Ручная верификация: пропущена (автономный режим).
