@@ -3,17 +3,19 @@
  *
  *   bun run arch:check
  *
- * Каждое нарушение — строка, начинающаяся с ID правила из
- * `packages/dmg-core/docs/rules.md`. Код выхода 1, если нарушения есть.
+ * Отчёт по приложениям — `reportArchCheck` пакета: каждое нарушение — строка
+ * с ID правила, при нарушениях — путь к каталогу правил пакета. Код выхода 1,
+ * если нарушения есть (по приложениям или проверкам домена).
  */
 
 import { readdirSync } from 'node:fs';
 import { Glob } from 'bun';
 import {
   type ArchApp,
-  archCheck,
   checkDefs,
   formatViolation,
+  RULES_DOC,
+  reportArchCheck,
 } from 'dmg-core/arch';
 import { indexDefs } from 'dmg-core/graph';
 import { ExampleArch } from 'dmg-core/testing';
@@ -33,26 +35,6 @@ import {
  * домена (импорты D-45, каталоги, граф, долг) — в `runDomainCheck`.
  */
 export const ARCH_APPS: readonly ArchApp[] = [ExampleArch, DomainArch];
-
-/** Проверить приложения, напечатать отчёт; вернуть код выхода. */
-export function runArchCheck(
-  apps: readonly ArchApp[],
-  print: (line: string) => void,
-): number {
-  let total = 0;
-  for (const app of apps) {
-    const violations = archCheck(app);
-    print(`arch:check ${app.name}: нарушений — ${violations.length}`);
-    for (const v of violations) print(formatViolation(v));
-    total += violations.length;
-  }
-  print(
-    total === 0
-      ? 'arch:check: нарушений нет'
-      : `arch:check: нарушений — ${total}`,
-  );
-  return total === 0 ? 0 : 1;
-}
 
 /**
  * Исходники для проверок домена и долга: все пакеты и скрипты (без тестов
@@ -111,9 +93,10 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
 }
 
 if (import.meta.main) {
-  const code = runArchCheck(ARCH_APPS, console.log);
+  const code = reportArchCheck(ARCH_APPS, console.log);
   const domain = await runDomainCheck();
   console.log(`arch:check domain: нарушений — ${domain.length}`);
   for (const line of domain) console.log(line);
+  if (domain.length > 0) console.log(`Правила по ID: ${RULES_DOC}`);
   process.exit(code === 0 && domain.length === 0 ? 0 : 1);
 }
