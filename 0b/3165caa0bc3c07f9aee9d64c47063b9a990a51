@@ -1,0 +1,1 @@
+Фаза 3 (repo-layout): документы на новых путях, страж проверяет и .md; bun run check — 3981 pass, 0 fail; gen module x печатает domain/src/x и modules/x/src. Ручная проверка Нурболатом: dev:fixtures поднимает бота, test:w modules/wish зелёный, README ок. CHANGELOG: [Unreleased] с шагами миграции прода.
