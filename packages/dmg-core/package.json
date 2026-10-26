@@ -9,7 +9,12 @@
   },
   "files": [
     "src",
-    "!src/**/*.test.ts"
+    "!src/{app,arch,domain,graph,kernel}/**/*.test.ts",
+    "!src/testing/*.test.ts",
+    "docs",
+    "skills",
+    "agents",
+    "llms.txt"
   ],
   "exports": {
     ".": "./src/index.ts",

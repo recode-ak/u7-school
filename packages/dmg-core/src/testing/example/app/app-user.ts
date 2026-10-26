@@ -1,6 +1,6 @@
 /**
  * Пользователь учебного приложения — им приложение замыкает дженерик
- * `Caller` (D-04). В u7-school это сделает `@u7-scl/app`.
+ * `Caller` (D-04). В приложении это делает его пакет `app`.
  */
 export type ExampleUser = {
   readonly uuid: string;

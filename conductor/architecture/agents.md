@@ -53,7 +53,7 @@ orchestrator: бриф среза
 
 ## 6. Эталон
 
-Агенты копируют паттерн из **эталонного среза** — модуль `wish` (домен `packages/domain/src/wish`, прикладной слой `packages/wish/src`, трек golden-wish). На каждый вид артефакта — гайд в [guides/](./guides/index.md): когда применять, команда `bun run gen`, ссылка на файл эталона, чеклист ID, ловушки из ревью, как тестировать. Роли агентов ссылаются на гайды своей зоны; ссылки гайдов на эталон и ID проверяет `scripts/guides-check.test.ts`. Эталона Job нет — [job.md](./guides/job.md) заготовка до первого модуля с Job.
+Агенты копируют паттерн из образцов двух уровней. **Учебный модуль пакета** `dmg-core` (`packages/dmg-core/src/testing/example`) — на каждый вид артефакта гайд в [guides/](../../packages/dmg-core/docs/guides/index.md): когда применять, команда генератора, ссылка на образец, чеклист ID, ловушки, как тестировать; ссылки и ID документации пакета проверяет `packages/dmg-core/scripts/docs-check.test.ts`. **Эталон проекта** — модуль `wish` (домен `packages/domain/src/wish`, прикладной слой `packages/wish/src`, трек golden-wish): реальные случаи, которых нет в учебном модуле (внешние модули над legacy, мосты, D-41). Роли платформы (`domain-author`, `api-author`, `reviewer`) — в пакете (`packages/dmg-core/agents/`), проектное дополнение — `.agents-core/common.md`.
 
 ## 7. Условия остановки (эскалация к orchestrator)
 
@@ -70,7 +70,7 @@ orchestrator: бриф среза
 - **Одна активная сессия-оркестратор.** Обе среды не ведут один трек одновременно: правило «единственного писателя» (§4) действует на ту, что сейчас открыта.
 - **Передача — через conductor** (протокол — скилл `conductor-implement`, раздел 4.1), обычно на границе фазы или трека. Посреди задачи (исключение) — остановка: коммит (красный `check` — `wip`) и пометка «Передача» под незавершённой задачей в `plan.md`. Старт: `git status`, `plan.md`, `git log` от последнего SHA из плана.
 - **Приёмка чужой работы** — как работы субагента: полный `bun run check` и reviewer по diff, затем продолжение.
-- **Один источник текстов.** Скиллы: `.claude/skills` — симлинк на `.pi/skills`. Роли — `.agents-core/roles/` + общий блок `common.md`; `bun run agents:sync` собирает копии под обе среды, `agents:check` (в `check`) ловит расхождение. Формат — `.agents-core/README.md`.
+- **Один источник текстов.** Скиллы: `.claude/skills` — симлинк на `.pi/skills`; скил платформы `dmg-architecture` — симлинк на `packages/dmg-core/skills/dmg-architecture` (до `dmg-core init`, TR-28). Роли — роли пакета `packages/dmg-core/agents/roles/` и проектная `.agents-core/roles/migrator.md`, общий блок — пакета, затем проекта (`.agents-core/common.md`); `bun run agents:sync` собирает копии под обе среды, `agents:check` (в `check`) ловит расхождение. Формат — `.agents-core/README.md`.
 - Скилл `architecture` — вход в эту папку для основной сессии.
 
 ## 9. Автономный режим перехода

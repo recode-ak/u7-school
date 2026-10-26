@@ -1,6 +1,6 @@
 # .agents-core — единый источник ролей агентов
 
-Роли пишутся один раз в `roles/<role>.md`; `bun run agents:sync` собирает из них копии под каждую среду:
+Роли платформы (`domain-author`, `api-author`, `reviewer`) и их общий блок живут в пакете — `packages/dmg-core/agents/` (формат — `packages/dmg-core/agents/README.md`). Здесь — только проектное: роль `migrator` в `roles/` и общий блок проекта `common.md`. `bun run agents:sync` собирает роли пакета и проекта в копии под каждую среду:
 
 - `.claude/agents/<role>.md` — Claude Code;
 - `.pi/agents/<role>.md` — pi.
@@ -9,7 +9,7 @@
 
 ## Общий блок
 
-`common.md` дописывается в конец каждой роли: условия остановки, запреты, формат отчёта. В роли — только её специфика.
+Копия роли = тело роли + общий блок пакета (`packages/dmg-core/agents/common.md`: остановка, запреты, отчёт) + `common.md` проекта (бриф conductor, `data/`, команды проекта, ревью legacy). В роли — только её специфика. Одноимённая роль в пакете и проекте — ошибка.
 
 ## Формат `roles/<role>.md`
 

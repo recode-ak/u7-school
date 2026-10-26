@@ -260,4 +260,4 @@ session-persist → tasks (этап B) → sessions → metrics → contribution
 - [conductor/index.md](../index.md) — индекс всех документов
 - [conductor/workflow.md](../workflow.md) — процесс работы conductor
 - [conductor/architecture/ui/bot-architecture.md](../architecture/ui/bot-architecture.md) — актуальное устройство bot-level
-- [conductor/architecture/domain-modeling.md](../architecture/domain-modeling.md) — архитектурные правила
+- [packages/dmg-core/docs/domain-modeling.md](../../packages/dmg-core/docs/domain-modeling.md) — архитектурные правила

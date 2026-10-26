@@ -163,7 +163,7 @@ apps/u7-bot/tests/e2e/
 ## Связанные styleguide-файлы
 
 - [BotController](./bot-controller.md) — реестр сторис, префиксация кнопок, handleError
-- [Ошибки](../errors-result.md) — AppError, хелперы
+- [Ошибки](../../../packages/dmg-core/docs/errors-result.md) — AppError, хелперы
 - [Тестирование бота](./bot-test.md)
 - [Архитектура bot-level](./bot-architecture.md)
-- [DDD API](../layers.md) — UseCase, Module
+- [DDD API](../../../packages/dmg-core/docs/layers.md) — UseCase, Module

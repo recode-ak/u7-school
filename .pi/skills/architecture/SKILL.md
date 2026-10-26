@@ -1,44 +1,41 @@
 ---
 name: architecture
-description: ЗАГРУЖАТЬ ПЕРВЫМ при создании или редактировании ЛЮБЫХ методов, классов, объектов, модулей или слоёв. Определяет, где размещать логику, как называть файлы и объекты, какие правила (ID из rules.md) проверить. Вход в conductor/architecture/.
+description: ЗАГРУЖАТЬ ПЕРВЫМ при создании или редактировании ЛЮБЫХ методов, классов, объектов, модулей или слоёв. Определяет режим (legacy, UI, DMG), где размещать логику, как называть файлы и объекты, какие правила (ID из rules.md) проверить. Вход в conductor/architecture/ и документацию dmg-core.
 ---
 
-# Архитектура: как работать с кодом
+# Архитектура u7-school: как работать с кодом
 
-Источник истины — `conductor/architecture/` (вход: `index.md`). Скилл — маршрутизатор: не дублирует документы, а говорит, что прочитать.
+Документация платформы DMG — пакет `dmg-core` (`packages/dmg-core/docs/`, вход — `index.md`). Проектные документы — `conductor/architecture/` (вход — `index.md`): переход, legacy, UI, процесс агентов, решения проекта. Скилл — маршрутизатор: не дублирует документы, а говорит, что прочитать.
 
 ## 1. Определи режим
 
 | Ситуация | Режим | Читай |
 |---|---|---|
-| Модуль ещё не в `@u7-scl/domain` (старая структура `packages/<m>/src/{domain,api,infra}`) | **legacy** | `legacy.md` — правь по образцу соседнего кода модуля |
-| Модуль уже мигрирован или создаётся новый | **DMG** | шаги 2–4 |
-| Telegram-бот (stories, controllers) | **UI** | `ui/bot-architecture.md`, `ui/bot-ui-story.md`, `ui/bot-controller.md`, `ui/bot-test.md` |
+| Модуль ещё не в `@u7-scl/domain` (старая структура `packages/<m>/src/{domain,api,infra}`) | **legacy** | `conductor/architecture/legacy.md` — правь по образцу соседнего кода модуля |
+| Модуль уже мигрирован или создаётся новый | **DMG** | скил `dmg-architecture`, затем §2 ниже |
+| Telegram-бот (stories, controllers) | **UI** | `conductor/architecture/ui/bot-architecture.md`, `ui/bot-ui-story.md`, `ui/bot-controller.md`, `ui/bot-test.md` |
 
 Сомневаешься в режиме — проверь, есть ли модуль в `packages/domain/src/`.
 
-## 2. Где разместить логику (DMG)
+## 2. DMG в этом проекте
 
-1. Модуль-владелец и объект — `domain-modeling.md` §1 (Ar / Policy / DCS / DQS / делегирование).
-2. Ось и пакет, разрешённые импорты, доступ к entity — `layers.md`.
-3. Контракт (Def) — `manifests.md`; ошибки и `Result` — `errors-result.md`.
-4. UC/ER/Job — только техническая оркестрация (API-01): никаких доменных решений.
+Скил `dmg-architecture` ведёт по документации пакета; здесь — привязка к монорепо:
 
-## 3. Как назвать и где положить
+- Раскладка: домен — `packages/domain/src/<m>` (`@u7-scl/domain/<m>`, контракт — `@u7-scl/domain/<m>/contract`), прикладной слой — `packages/<m>/src`, приложение — `@u7-scl/app`, входные адаптеры — `apps/*` (вызов операций — `appApi`). Как правила ложатся на пакеты — `conductor/architecture/rules.md`.
+- Генератор — `bun run gen …` (`conductor/architecture/naming.md`); в документации пакета он записан как `dmg-core gen …`.
+- Образцы: учебный модуль пакета (гайды `packages/dmg-core/docs/guides/`) и эталон проекта — модуль `wish` (внешние модули над legacy, мосты, межмодульный побочный эффект).
+- Модуль зависит от немигрированного — внешний модуль `external: true` и мост `packages/core/src/legacy-bridge` (`legacy.md` §6).
 
-`naming.md`: сокращения (Ar, Uc, Er, Job, Dcs, Dqs, Def), суффиксы файлов (`.ar.ts`, `.uc.ts`, …), зеркальная пара контракт ↔ реализация. Если есть генератор (`bun run gen …`) — используй его, а не создавай файлы руками.
+## 3. Проверь перед завершением
 
-Как написать артефакт конкретного вида (state, Ar, события, ошибки, Policy, репозиторий, фасад, UC, ER, модуль) — гайд `guides/<вид>.md` (индекс `guides/index.md`): эталон `wish`, команда `gen`, чеклист ID, ловушки.
+- Применимые ID из `packages/dmg-core/docs/rules.md`.
+- `bun run check` (включает `arch:check`, `agents:check`, `extract:check`) — зелёный. TDD.
 
-## 4. Проверь перед завершением
-
-- Пройди применимые ID из `rules.md` (ARC, DOM, MAN, ERR, API, CODE, TST).
-- `bun run check` (и `bun run arch:check`, когда появится) — зелёные.
-- Тесты — `testing.md`; TDD.
-
-## 5. Стоп-сигналы
+## 4. Стоп-сигналы
 
 Остановись и спроси Нурболата, если:
 - правило противоречит задаче или другому правилу;
 - нужно изменить чужой модуль или контракт, от которого зависят другие;
-- нужно нарушить `dependsOn` (новая связь модулей) — это решение уровня `decisions.md`.
+- нужно нарушить `dependsOn` (новая связь модулей) — это решение уровня `decisions.md`;
+- вызов фасада меняет чужой модуль — место выбирает Нурболат по каждому случаю (D-41, `conductor/architecture/decisions.md`);
+- нужно любое действие с `data/`.

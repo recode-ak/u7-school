@@ -1,63 +1,50 @@
 # Архитектура
 
-**Назначение:** единственное место технической документации проекта: целевая архитектура DMG (Domain Manifest Graph), правила, процессы агентов, план перехода, UI-гайды и паттерны немигрированного кода.
+**Назначение:** вход в техническую документацию u7-school. Платформа DMG (Domain Manifest Graph) документирована в пакете `dmg-core` — [packages/dmg-core/docs/index.md](../../packages/dmg-core/docs/index.md) (после выноса пакета — `node_modules/dmg-core/docs/`). Здесь — проектное: раскладка монорепо, переход, legacy, UI, процесс агентов, решения проекта.
 
-> Статус: **переход идёт.** Эталонный модуль `wish` переведён на DMG (трек golden-wish), гайды по видам артефактов — [guides/](./guides/index.md); состояние переноса — [migration.md](./migration.md) §6. Немигрированный код сопровождается по [legacy.md](./legacy.md). UI-слой — концепция в [ui-manifests.md](./ui-manifests.md), реализация позже.
+> Статус: **переход идёт.** Эталонный модуль `wish` переведён на DMG (трек golden-wish); гайды по видам артефактов — в пакете ([guides/](../../packages/dmg-core/docs/guides/index.md)), образец — учебный модуль пакета. Состояние переноса — [migration.md](./migration.md) §6. Немигрированный код сопровождается по [legacy.md](./legacy.md). UI-слой — концепция в [ui-manifests.md](./ui-manifests.md), реализация позже.
 
 ---
 
-## Суть
+## Раскладка монорепо
 
-Каждая доменная сущность описывается **один раз** манифестом (`*Def`). Из манифестов выводятся контракты для потребителей:
-
-| Потребитель | Что получает |
+| Ось ([layers.md](../../packages/dmg-core/docs/layers.md)) | Пакеты u7-school |
 |---|---|
-| **Программист (DX)** | типы, базовые классы без boilerplate, `Result` с исчерпывающими ошибками |
-| **Транспорт** (фронт↔бэк, сервис↔сервис) | автороутинг, автовалидация, OPTIONS с контрактом модуля |
-| **PO / аналитик** | генерируемая доменная документация: модули, агрегаты, статусы, каскады, ошибки |
-| **LLM (MCP)** | UC как tools, доменный граф как resources |
-| **Контрактные тесты** | проверка, что код соответствует декларациям |
+| Платформа | `dmg-core` (`packages/dmg-core`), приложение `@u7-scl/app`; legacy `@u7-scl/core` и мосты `packages/core/src/legacy-bridge` |
+| Домен | `@u7-scl/domain` (`packages/domain/src/<m>`; вход модуля — `@u7-scl/domain/<m>/contract`) |
+| Прикладной слой | `packages/<m>/src` (1:1 с модулем домена) |
+| Входные адаптеры | `apps/*`: бот `u7-bot`, позже web и транспорты; операции — через `appApi` |
+
+Правила с ID и их привязка к пакетам проекта — [rules.md](./rules.md).
 
 ## Начни отсюда
 
 | Задача | Читай |
 |---|---|
-| Понять устройство | [layers.md](./layers.md) → [domain-modeling.md](./domain-modeling.md) |
-| Создать файл / объект | [naming.md](./naming.md) → [rules.md](./rules.md) |
-| Написать артефакт по эталону | [guides/](./guides/index.md) |
-| Объявить контракт | [manifests.md](./manifests.md), [errors-result.md](./errors-result.md) |
+| Понять устройство DMG | [layers.md](../../packages/dmg-core/docs/layers.md) → [domain-modeling.md](../../packages/dmg-core/docs/domain-modeling.md) |
+| Создать файл / объект | [naming.md пакета](../../packages/dmg-core/docs/naming.md), генератор — [naming.md](./naming.md) → [rules.md](./rules.md) |
+| Написать артефакт по образцу | [guides/](../../packages/dmg-core/docs/guides/index.md) + эталон `wish` |
 | Править немигрированный модуль | [legacy.md](./legacy.md) |
 | Работать с ботом | [ui/](./ui/bot-architecture.md) |
-| Работать агентом | [agents.md](./agents.md) |
+| Работать агентом | [agents.md](./agents.md), скилы `architecture` и `dmg-architecture` |
 
-## Документы
+## Документы проекта
 
-**Решения и устройство**
-- [decisions.md](./decisions.md) — реестр решений D-NN
-- [layers.md](./layers.md) — оси, пакеты, импорты, доменный API, доступ к entity
-- [domain-modeling.md](./domain-modeling.md) — модуль-владелец, границы модулей, ошибки и данные между модулями
-- [naming.md](./naming.md) — сокращения, файловая структура, имена
+**Решения и правила**
+- [decisions.md](./decisions.md) — решения проекта D-NN (платформенные — [в пакете](../../packages/dmg-core/docs/decisions.md))
+- [rules.md](./rules.md) — как каталог правил пакета применяется в проекте
+- [naming.md](./naming.md) — генератор `bun run gen` (до переноса в пакет)
 
-**Контракты**
-- [manifests.md](./manifests.md) — семейство `define*`, граф L0/L1/L2, декларация + верификация
-- [errors-result.md](./errors-result.md) — `Result`, модель ошибок, UoW, исполнение UC
-- [transport.md](./transport.md) — HTTP (JSON-команда), MCP, in-proc
-- [caller.md](./caller.md) — кто вызывает: `guest`, `user`, `delegate`, `system`
-- [ui-manifests.md](./ui-manifests.md) — манифесты UI (концепция): матрёшка, спецификация экранов из кода, граф UI
-
-**Качество и процесс**
-- [rules.md](./rules.md) — **каталог правил с ID** и способом проверки
-- [testing.md](./testing.md) — тестирование
-- [guides/](./guides/index.md) — гайды по видам артефактов на эталоне `wish`
-- [typescript.md](./typescript.md) — стиль TypeScript
-- [docs-strategy.md](./docs-strategy.md) — доменная и техническая документация
-- [agents.md](./agents.md) — роли агентов, контуры качества, связь с conductor, среды Claude Code и pi, передача между ними
+**Переход и процесс**
 - [migration.md](./migration.md) — треки перехода, что исправляется, сосуществование
-- [debt.md](./debt.md) — реестр долга `DEBT-<n>`: временные нарушения и кто их гасит
 - [legacy.md](./legacy.md) — паттерны немигрированного кода (удаляется после перехода)
+- [debt.md](./debt.md) — реестр долга `DEBT-<n>` и тактических решений `TR-<n>`
+- [agents.md](./agents.md) — роли агентов, контуры качества, связь с conductor, среды Claude Code и pi
+- [docs-strategy.md](./docs-strategy.md) — доменная и техническая документация
 
 **UI (Telegram-бот)**
+- [ui-manifests.md](./ui-manifests.md) — манифесты UI (концепция): матрёшка, спецификация экранов из кода, граф UI
 - [ui/bot-architecture.md](./ui/bot-architecture.md) — архитектура бота
 - [ui/bot-ui-story.md](./ui/bot-ui-story.md) — Story
 - [ui/bot-controller.md](./ui/bot-controller.md) — Controller
-- [ui/bot-test.md](./ui/bot-test.md) — тестирование бота
+- [ui/bot-test.md](./ui/bot-test.md) — тестирование бота; тестовые миры — [../guides/test-worlds.md](../guides/test-worlds.md)

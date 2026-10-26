@@ -1,6 +1,6 @@
 # Бриф: Фаза 4 — готовность к распределённому запуску (D-28)
 
-Решения Нурболата (2026-10-26): [D-46](../../../architecture/decisions.md) (JSON `Caller`/`Trace`), [D-47](../../../architecture/decisions.md) (outbox и отсев повторов), правило [MAN-13](../../../architecture/rules.md) (один UoW — один модуль).
+Решения Нурболата (2026-10-26): [D-46](../../../../packages/dmg-core/docs/decisions.md) (JSON `Caller`/`Trace`), [D-47](../../../../packages/dmg-core/docs/decisions.md) (outbox и отсев повторов), правило [MAN-13](../../../../packages/dmg-core/docs/rules.md) (один UoW — один модуль).
 
 Базовая линия: `bun run check` зелёный, 3741 pass.
 

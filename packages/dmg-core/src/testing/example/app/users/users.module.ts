@@ -18,7 +18,7 @@ export const usersMap = {
   jobs: {},
 } satisfies ModuleMap<typeof UsersModuleDef, UsersDeps, ExampleUser>;
 
-/** Модуль users с зависимостями — для `ApiApp.addDmgModules`. */
+/** Модуль users с зависимостями — для сборки приложения. */
 export function createUsersModule(deps: UsersDeps) {
   return new ModuleFromDef<typeof UsersModuleDef, UsersDeps, ExampleUser>(
     UsersModuleDef,

@@ -6,6 +6,8 @@ import {
   buildCopies,
   COMMON_FILE,
   compareCopies,
+  PACKAGE_COMMON_FILE,
+  PACKAGE_ROLES_DIR,
   parseRole,
   renderRole,
   runSync,
@@ -242,6 +244,42 @@ describe('runSync', () => {
       expect(pi).toContain('Общее правило.');
       await writeFile(join(root, COMMON_FILE), 'Другое правило.\n');
       expect((await runSync(root, 'check')).ok).toBe(false);
+    });
+  });
+
+  test('роли пакета dmg-core собираются вместе с проектными; общий блок пакета — перед проектным', async () => {
+    await withRepo(async (root) => {
+      await Bun.write(
+        join(root, PACKAGE_ROLES_DIR, 'api-author.md'),
+        source('name: api-author\ndescription: d\ntools: [read]'),
+      );
+      await Bun.write(join(root, PACKAGE_COMMON_FILE), 'Правило пакета.\n');
+      await Bun.write(join(root, COMMON_FILE), 'Правило проекта.\n');
+      expect(await runSync(root, 'sync')).toEqual({ ok: true, messages: [] });
+      const claude = await readFile(
+        join(root, '.claude/agents/api-author.md'),
+        'utf8',
+      );
+      expect(claude).toContain(
+        `Сгенерировано из ${PACKAGE_ROLES_DIR}/api-author.md`,
+      );
+      expect(claude.indexOf('Правило пакета.')).toBeGreaterThan(0);
+      expect(claude.indexOf('Правило проекта.')).toBeGreaterThan(
+        claude.indexOf('Правило пакета.'),
+      );
+    });
+  });
+
+  test('одноимённая роль в пакете и проекте — не ok', async () => {
+    await withRepo(async (root) => {
+      await Bun.write(join(root, PACKAGE_ROLES_DIR, 'reviewer.md'), REVIEWER);
+      const result = await runSync(root, 'sync');
+      expect(result).toEqual({
+        ok: false,
+        messages: [
+          `${SRC}: роль reviewer уже задана в ${PACKAGE_ROLES_DIR}/reviewer.md`,
+        ],
+      });
     });
   });
 

@@ -59,7 +59,7 @@ const IdentifiedJson = v.looseObject({ uuid: v.string() });
 /**
  * Кто вызывает операцию (D-43). Policy и домен работают только с субъектом
  * (`subject()`); вложенный вызов передаёт исходного человека (`person()`).
- * См. conductor/architecture/caller.md.
+ * См. docs/caller.md пакета.
  */
 export abstract class Caller<U extends Identified = Identified> {
   abstract readonly kind: CallerKind;

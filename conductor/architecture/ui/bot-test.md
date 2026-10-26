@@ -136,8 +136,8 @@ KEEP_FIXTURES=1 bun test apps/u7-bot/tests/streams/catalog.integration.test.ts  
 
 ## Связанные документы
 
-- [Общие правила тестирования](../testing.md)
+- [Общие правила тестирования](../../../packages/dmg-core/docs/testing.md)
 - [BotController](./bot-controller.md) — префиксация кнопок, handleError
 - [BotUiStory](./bot-ui-story.md) — стиль сторис
 - [Архитектура bot-level](./bot-architecture.md)
-- [DDD принципы](../domain-modeling.md)
+- [DDD принципы](../../../packages/dmg-core/docs/domain-modeling.md)

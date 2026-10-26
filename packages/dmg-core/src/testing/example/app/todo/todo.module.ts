@@ -30,7 +30,7 @@ export const todoMap = {
   jobs: { archiveDoneTasks: ArchiveDoneTasksJob },
 } satisfies ModuleMap<typeof TodoModuleDef, TodoDeps, ExampleUser>;
 
-/** Модуль todo с зависимостями — для `ApiApp.addDmgModules`. */
+/** Модуль todo с зависимостями — для сборки приложения. */
 export function createTodoModule(deps: TodoDeps) {
   return new ModuleFromDef<typeof TodoModuleDef, TodoDeps, ExampleUser>(
     TodoModuleDef,

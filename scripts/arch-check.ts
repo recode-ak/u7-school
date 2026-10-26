@@ -4,7 +4,7 @@
  *   bun run arch:check
  *
  * Каждое нарушение — строка, начинающаяся с ID правила из
- * `conductor/architecture/rules.md`. Код выхода 1, если нарушения есть.
+ * `packages/dmg-core/docs/rules.md`. Код выхода 1, если нарушения есть.
  */
 
 import { readdirSync } from 'node:fs';

@@ -1,0 +1,41 @@
+# dmg-core
+
+> Платформа DMG (Domain Manifest Graph) для TypeScript и Bun: каждая доменная сущность объявляется один раз манифестом (`define*`), из него выводятся типы, базовые классы, проверки архитектуры, граф и транспорт. Домен чистый и синхронный, модули связаны только по `dependsOn` и готовы к выносу в отдельный сервис. Документация на русском; образец всех артефактов — учебный модуль `src/testing/example` (`todo`, `users`).
+
+Пути ниже — от корня пакета (`node_modules/dmg-core/`). Агентам: сначала скил `skills/dmg-architecture/SKILL.md`, затем гайд нужного вида.
+
+## Начало
+
+- [Вход в документацию](docs/index.md): суть DMG, карта документов
+- [Слои и пакеты](docs/layers.md): оси, импорты, доменный API, доступ к entity
+- [Моделирование домена](docs/domain-modeling.md): модуль-владелец, Ar / Policy / доменное правило / DCS / DQS, границы модулей
+- [Структура и имена](docs/naming.md): сокращения, файловая структура домена и прикладного слоя
+
+## Контракты
+
+- [Манифесты](docs/manifests.md): семейство `define*`, обязательные описания, схемы, граф L0/L1/L2
+- [Ошибки и Result](docs/errors-result.md): модель ошибки, `kind`, исполнение UC, UoW
+- [Caller и Trace](docs/caller.md): кто вызывает, субъект, след вызова
+- [Транспорт](docs/transport.md): HTTP (JSON-команда), MCP, in-proc
+
+## Правила и качество
+
+- [Каталог правил](docs/rules.md): ID правил (ARC, DOM, MAN, ERR, API, CODE, TST) и способ проверки
+- [Решения](docs/decisions.md): реестр решений платформы D-NN
+- [Тестирование](docs/testing.md): принципы, пирамида, хелперы `dmg-core/testing`
+- [Стиль TypeScript](docs/typescript.md)
+
+## Гайды по видам артефактов
+
+- [Индекс гайдов](docs/guides/index.md)
+- [State](docs/guides/state.md), [Aggregate](docs/guides/aggregate.md), [Events](docs/guides/events.md), [Errors](docs/guides/errors.md), [Policy](docs/guides/policy.md)
+- [Repo, DCS, DQS](docs/guides/repo.md), [Facade](docs/guides/facade.md), [Use case](docs/guides/use-case.md), [Event reaction](docs/guides/event-reaction.md), [Module](docs/guides/module.md), [Job](docs/guides/job.md)
+
+## Агенты
+
+- [Скил dmg-architecture](skills/dmg-architecture/SKILL.md): маршрутизатор по документации для агента
+- [Роли](agents/README.md): domain-author, api-author, reviewer и общий блок
+
+## Optional
+
+- [Учебный модуль](src/testing/example/example.arch.ts): `ArchApp` примера; домен — `src/testing/example/<m>`, прикладной слой — `src/testing/example/app/<m>`

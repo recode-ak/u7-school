@@ -277,4 +277,4 @@ abandon(): void
 - [3. Пайплайн + модули](./metrics-pipeline-and-modules.md) — Invite-паттерн, peer-review, metrics
 - [Архитектура](../../architecture/index.md) — слои, доменный API, правила
 - [Именование](../../architecture/naming.md) — структура и имена
-- [Границы доменной логики](../../architecture/domain-modeling.md)
+- [Границы доменной логики](../../../packages/dmg-core/docs/domain-modeling.md)

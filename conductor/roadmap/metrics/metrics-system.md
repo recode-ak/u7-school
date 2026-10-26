@@ -91,6 +91,6 @@
 
 - [Определение продукта](../../product.md) — роли пользователей, ключевые функции
 - [Технологический стек](../../tech-stack.md)
-- [Границы доменной логики](../../architecture/domain-modeling.md)
+- [Границы доменной логики](../../../packages/dmg-core/docs/domain-modeling.md)
 - [Архитектура](../../architecture/index.md) — слои, доменный API, правила
 - [Именование](../../architecture/naming.md) — структура и имена

@@ -21,8 +21,8 @@
 > **Связанные conductor-документы:**
 > - [`conductor/development-roadmap.md`](./development-roadmap.md) — **дорожная карта:** порядок релизов, миграции, зависимости между инициативами
 > - `conductor/workflow.md` — процесс работы conductor
-> - `conductor/architecture/layers.md` — архитектурные правила (слои, импорты)
-> - `conductor/architecture/domain-modeling.md` — где размещать логику
+> - `packages/dmg-core/docs/layers.md` — архитектурные правила (слои, импорты)
+> - `packages/dmg-core/docs/domain-modeling.md` — где размещать логику
 > - `conductor/index.md` — индекс всех документов
 
 ---
@@ -253,7 +253,7 @@ code: `view-stream:view:${streamId}`  // всегда в публичный view
 ### 4.9. Документация обновляется
 
 7 файлов требуют изменений:
-- `conductor/architecture/layers.md` — убрать `ui/` из структуры доменных модулей
+- `packages/dmg-core/docs/layers.md` — убрать `ui/` из структуры доменных модулей
 - `conductor/architecture/ui/bot-controller.md` — новая иерархия, `UiApp`, `publicActions`
 - `conductor/architecture/ui/bot-ui-story.md` — новые пути, `uiApp.getAction<T>()`
 - `conductor/index.md` — обновить ссылки

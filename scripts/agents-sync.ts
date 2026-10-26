@@ -1,5 +1,7 @@
 /**
- * Генератор ролей агентов: `.agents-core/roles/<role>.md` → копии под Claude Code и pi.
+ * Генератор ролей агентов: роли пакета `dmg-core` (`packages/dmg-core/agents/roles`)
+ * и проектные (`.agents-core/roles`) → копии под Claude Code и pi. Общий блок
+ * копии — общий блок пакета, затем проектный.
  *
  *   bun run agents:sync   — пересобрать копии
  *   bun run agents:check  — проверить, что копии совпадают с источником
@@ -28,8 +30,14 @@ const ENVS: readonly Env[] = ['claude', 'pi'];
 const FIELDS = ['name', 'description', 'tools', 'model'];
 
 export const SOURCE_DIR = '.agents-core/roles';
-/** Общий блок, дописываемый в конец каждой роли (необязателен) */
+/** Общий блок проекта, дописываемый в конец каждой роли (необязателен) */
 export const COMMON_FILE = '.agents-core/common.md';
+/**
+ * Роли и общий блок пакета `dmg-core`. Пока нет `dmg-core init`/`sync`,
+ * читаются из пакета напрямую (TR-28).
+ */
+export const PACKAGE_ROLES_DIR = 'packages/dmg-core/agents/roles';
+export const PACKAGE_COMMON_FILE = 'packages/dmg-core/agents/common.md';
 export const TARGET_DIRS: Record<Env, string> = {
   claude: '.claude/agents',
   pi: '.pi/agents',
@@ -158,8 +166,14 @@ export function buildCopies(
   common = '',
 ): Map<string, string> {
   const copies = new Map<string, string>();
+  const seen = new Map<string, string>();
   for (const { path, text } of sources) {
     const role = parseRole(path, text);
+    const first = seen.get(role.name);
+    if (first !== undefined) {
+      throw new Error(`${path}: роль ${role.name} уже задана в ${first}`);
+    }
+    seen.set(role.name, path);
     for (const env of ENVS) {
       copies.set(
         `${TARGET_DIRS[env]}/${role.name}.md`,
@@ -211,12 +225,21 @@ export async function runSync(
   root: string,
   mode: 'sync' | 'check',
 ): Promise<SyncResult> {
-  const sources = [...(await readMarkdown(root, SOURCE_DIR))].map(
-    ([path, text]) => ({ path, text }),
+  const sources: SourceFile[] = [];
+  for (const dir of [PACKAGE_ROLES_DIR, SOURCE_DIR]) {
+    for (const [path, text] of await readMarkdown(root, dir)) {
+      sources.push({ path, text });
+    }
+  }
+  const commons = await Promise.all(
+    [PACKAGE_COMMON_FILE, COMMON_FILE].map((file) =>
+      readFile(join(root, file), 'utf8').catch(() => ''),
+    ),
   );
-  const common = await readFile(join(root, COMMON_FILE), 'utf8').catch(
-    () => '',
-  );
+  const common = commons
+    .map((text) => text.trim())
+    .filter((text) => text !== '')
+    .join('\n\n');
   let expected: Map<string, string>;
   try {
     expected = buildCopies(sources, common);

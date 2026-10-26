@@ -1,107 +1,32 @@
-# Каталог правил
+# Правила в проекте
 
-**Назначение:** проверяемые правила архитектуры. Агенты и ревьюер ссылаются на ID; каждая машинная проверка выводит ID в сообщении (`DOM-01: …`). Правило меняется только через [decisions.md](./decisions.md).
-
-Проверка: **lint** — biome (`noRestrictedImports`, GritQL-плагины; видно в IDE); **type** — компилятор; **test** — контрактный или рантайм-тест (`bun run arch:check`); **review** — агент-ревьюер. Состояние: lint — `biome.json` корня и `packages/dmg-core/biome.json` (`overrides`), плагины — `packages/dmg-core/biome-plugins/*.grit` (правила DMG принадлежат пакету; корень ссылается на них), тест правил — `scripts/lint-rules.test.ts` на фикстурах `lint-fixtures/`; блокируют только новые пути (`packages/domain/**`, `packages/dmg-core/src/**`), на legacy действуют ARC-01, ARC-07, а ARC-06 и ARC-08 — `warn`. Ограничения: DOM-01 не охватывает рендереры UI и stories (до миграции UI), в DOM-11 автоматизированы базовые поля, а «DTO из схемы» — `review`. Повторяющееся замечание ревьюера переводится в машинную проверку (ratchet).
+**Назначение:** как каталог правил платформы применяется в u7-school. Сам каталог с ID (ARC, DOM, MAN, ERR, API, CODE, TST) — в пакете: [rules.md](../../packages/dmg-core/docs/rules.md). Своих ID у проекта нет; правило меняется через решение D-NN ([decisions.md](./decisions.md) проекта или пакета).
 
 ---
 
-## ARC — пакеты и границы
+## Где проверяется
 
-| ID | Правило | Проверка |
-|---|---|---|
-| ARC-01 | `core` не импортирует domain, app, модули | lint |
-| ARC-02 | `domain` импортирует только корень `dmg-core` (ядро и `define*`) и valibot; `@u7-scl/core` — только по долгу | lint |
-| ARC-03 | В `domain` нет IO и async (кроме вызова `Loader`) | lint + review |
-| ARC-04 | Чужой модуль — только через его `contract` (в domain — и только из `dependsOn`); `index` — для своего прикладного пакета (D-45). Блокирует для модулей на Def, legacy-пары — по долгу | lint + test + review (состав `contract.ts`) |
-| ARC-05 | Граф `dependsOn` — DAG | test |
-| ARC-06 | `packages/<m>` не импортирует другие модульные пакеты; 1:1 с `domain/src/<m>` | lint + test |
-| ARC-07 | `app` импортирует только core и domain | lint |
-| ARC-08 | apps вызывают операции только через `appApi`; репозитории и реализации модулей не импортируют | lint |
-| ARC-09 | Нет `process.env` / глобального `config` в domain и UI-компонентах | lint |
-| ARC-10 | Платформа DMG (`packages/dmg-core/src`) не импортирует `*-legacy` и `@u7-scl/*`; мосты — в `packages/core/src/legacy-bridge` | lint |
-| ARC-11 | Внутри `dmg-core` ядро (`kernel`) и домен (`domain`, учебный домен `testing/example/{todo,users}`) не импортируют `app`, `graph`, `arch` | lint |
+- **lint** — `biome.json` корня и `packages/dmg-core/biome.json` (`overrides`), плагины — `packages/dmg-core/biome-plugins/*.grit` (правила DMG принадлежат пакету; корень ссылается на них); тест правил — `scripts/lint-rules.test.ts` на фикстурах `lint-fixtures/`.
+- **test** — `bun run arch:check` (`scripts/arch-check.ts`, `ArchApp` проекта) и контрактные тесты; всё входит в `bun run check`.
+- **review** — роль `reviewer` (`packages/dmg-core/agents/roles/reviewer.md` + общий блок проекта).
 
-## DOM — домен
+## Что блокирует, что нет
 
-| ID | Правило | Проверка |
-|---|---|---|
-| DOM-01 | Entity (`…/state`) видят только Ar своего агрегата, Def контрактов своего модуля (вывод схемы) и репозиторий (`ArDef.state`); вне модуля — форма из контракта (D-39, D-45) | lint (полный запрет — `*.policy.ts`, `*.rules.ts`, `*.dcs.ts`; чужой state — весь домен) + review (`*.dqs.ts`, `*.facade.ts`: state — только для схем, без ветвления по полям) |
-| DOM-02 | Мутирующие методы Ar всегда возвращают `Result`; методы-вопросы — никогда | type + review |
-| DOM-03 | Ar не создаёт и не возвращает другой Ar; `create` и `restore` разделены | review |
-| DOM-04 | Ar отдаёт идентификаторы и методы-вопросы, не геттер на поле; данные для контракта ошибки/выхода — методом, который его строит (D-39) | review |
-| DOM-05 | Policy собрана из именованных `rule` с `label` и `denyMessage`; возвращает решение | type |
-| DOM-06 | DCS — мутация нескольких агрегатов и композиция правил с операциями; возвращает `Result`. Проверка без мутации — доменное правило (D-40) | review |
-| DOM-07 | DQS только читает и не зависит от транспорта | review |
-| DOM-08 | `Loader` — только для условной или дорогой загрузки | review |
-| DOM-09 | Логика у модуля-владельца, делегирование минимумом данных, без дублирования | review |
-| DOM-10 | Методы названы доменно (Policy — «можно ли?»), не по структуре данных | review |
-| DOM-11 | Базовые поля — только `F.*` / `shared`; DTO выводятся из схемы entity | lint |
-| DOM-12 | Даты — `Timestamp`; `isoDateTime` в новых схемах запрещён | lint |
-| DOM-13 | VO без `createdAt`/`updatedAt`; рассогласование данных не маскируется | review |
-| DOM-14 | Домен не читает часы: момент — аргумент операции Ar (`at`), статус меняет только `transition` (D-34, D-35) | lint + type |
-| DOM-15 | Policy — только права субъекта; правило, ответ которого не зависит от субъекта, — доменное правило (D-40) | review |
-| DOM-16 | Доменное правило декларативно: имя, `label`, `description`, ошибка своей группы; возвращает `Result`, не `Decision` (D-40); в `rules` UC не повторяется | type (`check` возвращает только свою ошибку) + test (дубль в `rules` UC; ошибка правила в `errors` UC — ERR-02) + review (ошибка — группы своего агрегата) |
-| DOM-17 | Состояние агрегата наружу — `view()`; `snapshot()` вызывает только репозиторий (D-44) | lint (`.snapshot()` и `?.snapshot()` в `packages/*/src`, `apps` — кроме `*.repo.ts`, `*-repo.ts`, `*.json-repo.ts`, `*.memory-repo.ts`, тестов, `aggregate.ts`, `app.fixture.ts`; временно — legacy `packages/wish/src/api/**`, TR-16) + review (переопределённый `view()` собирает объект явно) |
+Блокируют только новые пути (`packages/domain/**`, `packages/dmg-core/src/**`). На legacy действуют ARC-01 и ARC-07, а ARC-06 и ARC-08 — `warn` ([legacy.md](./legacy.md)). DOM-01 не охватывает рендереры UI и stories (до миграции UI).
 
-## MAN — манифесты
+## Привязка правил к пакетам проекта
 
-| ID | Правило | Проверка |
-|---|---|---|
-| MAN-01 | Все Def (модуль, фасад, Ar, UC, ER, Job, событие, ошибка) имеют `label` и `description` | type + test |
-| MAN-02 | Каждое поле схем имеет `description` | test |
-| MAN-03 | Схемы input/output/payload конвертируются в JSON Schema | test |
-| MAN-04 | UC/ER/Job публикуют только события из `emits` | test |
-| MAN-05 | ER трогает только `touches`; UC и ER вызывают только UC из `calls` (Def UC других модулей из `dependsOn` с `'system'` в `callers`; `call` типизирован по `calls`, D-43) | test |
-| MAN-06 | Граф связен: нет висячих подписчиков, неопубликованных событий, Def вне модуля; у внешнего модуля (`external`) нет ER/Job, его UC — только контракт (D-42), его события публикует внешняя сторона (D-37) | test |
-| MAN-07 | Ссылки между Def — объектами, не строками | type + review |
-| MAN-08 | FQN события = `module.aggregate.event` своего модуля и агрегата | test |
-| MAN-09 | Свойства Def не дублируются в реализации; обратные связи не пишутся вручную | type + review |
-| MAN-10 | Контракт и реализация — пара с одинаковым путём; ER/Job в папке основного агрегата | test + review |
-| MAN-11 | Def UC объявляет `callers`; домен и Policy работают с субъектом (`caller.subject()`), а не с `kind`; Policy вызывается всегда (D-43) | type + review |
-| MAN-12 | Переход в Def агрегата объявляет отказ (`rejects`) для каждого статуса вне `from` ошибкой из группы этого агрегата; статус Ar меняет только `transition` | type + test |
-| MAN-13 | Один UoW — один модуль: `aggregate` UC, `touches` ER и `scans` Job — агрегаты своего модуля; чужой модуль меняется только через его фасад или событие (D-28) | test |
+| ID | В проекте |
+|---|---|
+| ARC-01 | платформа — `dmg-core` и legacy `@u7-scl/core` |
+| ARC-02 | домен — `@u7-scl/domain` (`packages/domain`); импорт `@u7-scl/core` — только по долгу ([debt.md](./debt.md)) |
+| ARC-04 | контракт модуля — `@u7-scl/domain/<m>/contract`; пары legacy-модулей — по долгу до миграции |
+| ARC-06 | прикладной пакет модуля — `packages/<m>` |
+| ARC-07 | приложение — `@u7-scl/app` |
+| ARC-08 | входные адаптеры — `apps/*`, вызов операций — через `appApi` |
+| ARC-09 | данные школы — через резолвер (`resolve.school`) |
+| ARC-10 | код приложения — `@u7-scl/*` и `#*-legacy/*`; мосты — `packages/core/src/legacy-bridge` |
+| DOM-17 | временное исключение lint — legacy `packages/wish/src/api/**` (TR-16) |
+| TST-06 | `bun run check` и `bun run arch:check` |
 
-## ERR — ошибки
-
-| ID | Правило | Проверка |
-|---|---|---|
-| ERR-01 | Штатные отказы не бросаются (Ar, DCS, фасады, UC, ER) | lint + review |
-| ERR-02 | UC/фасад возвращают только ошибки из своего `errors` + базовые | type + test (ошибки доменных правил UC — в `errors`) |
-| ERR-03 | Ошибки зависимостей — по ссылке через фасад; перевод только при смене смысла | review |
-| ERR-04 | Коды ошибок уникальны в приложении, с префиксом сущности | test |
-| ERR-05 | Ошибка не знает транспорт (нет HTTP-статусов, текстов UI) | review |
-| ERR-06 | Вызывающий код обрабатывает `Err` явно, с веткой по умолчанию | review |
-| ERR-07 | Некорректное поведение, которое в production не должно ронять операцию, не замалчивается: test/dev — исключение, production — минимум `warn` с источником | review |
-
-## API — прикладной слой
-
-| ID | Правило | Проверка |
-|---|---|---|
-| API-01 | UC/ER/Job техничны: нет `if` по состоянию, статусам, входу; решение — в домене | review |
-| API-02 | Сохранение через UoW; ручной `publish` событий запрещён | type + lint |
-| API-03 | Репозиторий принимает и возвращает Ar, только хранение, `undefined` вместо `null`; `save` сверяет версию (`assertVersion`), чтение-сверка-запись атомарны (D-36) | type + review |
-| API-04 | Межмодульно — только фасады (`Facade<M>` → `ModuleFromDef.handle`), без доменных решений; вызывающий — `SystemCaller`; возвращает `Result` UC (D-42, D-43) | type + review |
-| API-05 | Реализации наследуют `*FromDef`; модуль — типизированная карта Def → класс | type |
-| API-06 | Job идемпотентен; ошибка одной записи не прерывает обход; пороги — экспортируемые константы; расписания UTC | review |
-
-## CODE — код
-
-| ID | Правило | Проверка |
-|---|---|---|
-| CODE-01 | Структура и имена по [naming.md](./naming.md) | test + review |
-| CODE-02 | TS `private`/`protected`; `#private` и `public` запрещены | lint |
-| CODE-03 | Остальное — [typescript.md](./typescript.md) | lint + review |
-
-## TST — тесты
-
-| ID | Правило | Проверка |
-|---|---|---|
-| TST-01 | Ветки `Ok`/`Err` мутирующих методов Ar покрыты тестами | review |
-| TST-02 | Каждое правило Policy — тест allowed и denied (роли, свой/чужой) | review |
-| TST-03 | Каждая собственная ошибка UC покрыта тестом; проверяется `code` | review |
-| TST-04 | Тесты изолированы, 10–20 строк; smoke-тест модуля на реальных репозиториях | review |
-| TST-05 | Правки не выходят за область задачи; регресс соседнего функционала запрещён | review |
-| TST-06 | `bun run check` и `bun run arch:check` зелёные после каждого шага | test |
-
-Детали тестирования — [testing.md](./testing.md), бота — [ui/bot-test.md](./ui/bot-test.md).
+Тестирование бота — [ui/bot-test.md](./ui/bot-test.md).
