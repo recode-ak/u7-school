@@ -127,7 +127,7 @@
 - [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `0cab8ab7` (TR-20)
 - [x] Task: Контрольная точка 'Фаза 11' (автономно, workflow.md) `2045b88`
 
-## Фаза 12: Модуль (`defineModule`) и сосуществование
+## Фаза 12: Модуль (`defineModule`) и сосуществование [checkpoint: 85f302c]
 
 - [x] Task: `WishModuleDef` (`dependsOn`: user, course, questionnaire, stream), `ModuleFromDef` — карта Def → класс; тип резолвера из платформы (DEBT-22), без `core`/`app` (DEBT-21) `df41ad91` (DEBT-21/22 в пакете — Ф13, TR-21)
 - [x] Task: Мост по ревью приёмки: `inbound` разбирается один раз на маршрут (без дублей `onInvalid`), `onInvalid` в приложении — `logger.warn`, дефолт и JSDoc согласованы с `InProcEventBus` (исключение глотается); `Date.parse` в конверте проверяется `c886d328`
