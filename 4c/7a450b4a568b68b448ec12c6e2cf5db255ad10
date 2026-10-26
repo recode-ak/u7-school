@@ -1,0 +1,4 @@
+Задача: Сборка артефактов пакета (dmg-core-extract, Ф5).
+Сделано: docs/ пакета (index, layers, manifests, errors-result, caller, domain-modeling, typescript, transport, testing, naming без §5, rules, decisions — платформенные D-NN, guides/* на учебном модуле), skills/dmg-architecture, agents/ (README, common, roles: domain-author, api-author, reviewer), llms.txt; files пакета (+ тесты учебного модуля); scripts/docs-check (+тест) в пакете вместо scripts/guides-check.
+Проект: conductor/architecture — index, rules (привязка к пакетам), decisions (проектные D-NN), naming (только генераторы), legacy (+совместимость appApi); скил architecture → dmg-architecture (симлинк); agents-sync читает роли пакета (+тест), .agents-core/common.md — проектное дополнение; ссылки по проекту перенаправлены; TR-28.
+Проверки: bun run check зелёный (dmg-core 537 pass, монорепо 3908 pass, extract:check ok).
