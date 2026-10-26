@@ -1,0 +1,3 @@
+Задача Ф6 'Метаданные публикации и чек-лист выноса' (dmg-core-extract).
+Изменения: packages/dmg-core/LICENSE (MIT, Nur), package.json (license, author), README (раздел «Лицензия»), scripts/consumer-e2e.sh (проверка license/author и LICENSE в tarball); spec.md трека — Ф6 переформулирована, «Чек-лист выноса».
+repository не заполнен — репозитория пока нет (пункт 2 чек-листа). Решение по лицензии и автору — Нурболат, 2026-10-26.
