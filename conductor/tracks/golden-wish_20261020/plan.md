@@ -139,6 +139,6 @@
 ## Фаза 13: Закрытие
 
 - [x] Task: Погасить DEBT-21, DEBT-22, DEBT-24, DEBT-31 (маркеры и `debt.md` синхронно); новые долги — с DEBT-32 `c7ddbed5` (DEBT-32/33, TR-23)
-- [ ] Task: Сводка гайдов: индекс в `architecture/index.md`, ссылки на эталон из [agents.md](../../architecture/agents.md) §6
+- [x] Task: Сводка гайдов: индекс в `architecture/index.md`, ссылки на эталон из [agents.md](../../architecture/agents.md) §6 `3895ec64`
 - [ ] Task: Обновить [migration.md](../../architecture/migration.md) (§2 пункт 4 ✅, §6 состояние переноса, снять блок с Фаз 4–6 `dmg-core-extract`), `summary.md`
 - [ ] Task: Контрольная точка 'Фаза 13' (автономно, workflow.md)
