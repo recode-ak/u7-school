@@ -18,6 +18,7 @@ import { CoreErrors, ok } from 'dmg-core';
 import { type EnvelopeOf, ModuleFacades } from 'dmg-core/app';
 import {
   expectErr,
+  expectIdempotentReaction,
   expectOk,
   memoryBus,
   StubFacade,
@@ -322,5 +323,19 @@ describe('FulfillWishEr.subscribe', () => {
     await handled();
 
     expect(await statuses()).toEqual({ [w.uuid]: 'fulfilled' });
+  });
+});
+
+describe('FulfillWishEr — идемпотентность (D-47)', () => {
+  it('повтор stream.student.enrolled с новым eventId — без записей и событий', async () => {
+    await seed(courseWish('expressed'), moduleWish('confirmed'));
+    courseAnswers([COURSE]);
+    const er = makeEr();
+    await expectIdempotentReaction({
+      event: enrolled(),
+      deliver: (event) => er.handle(event),
+      published: ctx.published,
+      state: () => Bun.file(file).text(),
+    });
   });
 });

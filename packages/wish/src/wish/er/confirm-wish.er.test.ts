@@ -12,6 +12,7 @@ import {
 } from '@u7-scl/domain/wish';
 import { type EnvelopeOf, ModuleFacades } from 'dmg-core/app';
 import {
+  expectIdempotentReaction,
   expectOk,
   memoryBus,
   TEST_NOW,
@@ -224,5 +225,18 @@ describe('ConfirmWishEr.subscribe', () => {
     await handled();
 
     expect(await statuses()).toEqual({ [w.uuid]: 'confirmed' });
+  });
+});
+
+describe('ConfirmWishEr — идемпотентность (D-47)', () => {
+  it('повтор questionnaire.completed с новым eventId — без записей и событий', async () => {
+    await seed(wish('pending'));
+    const er = makeEr();
+    await expectIdempotentReaction({
+      event: completed(),
+      deliver: (event) => er.handle(event),
+      published: ctx.published,
+      state: () => Bun.file(file).text(),
+    });
   });
 });

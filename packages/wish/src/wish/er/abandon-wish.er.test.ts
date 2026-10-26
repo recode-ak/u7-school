@@ -11,6 +11,7 @@ import {
 } from '@u7-scl/domain/wish';
 import { type EnvelopeOf, ModuleFacades } from 'dmg-core/app';
 import {
+  expectIdempotentReaction,
   expectOk,
   memoryBus,
   TEST_NOW,
@@ -217,5 +218,18 @@ describe('AbandonWishEr.subscribe', () => {
     await handled();
 
     expect(await statuses()).toEqual({ [w.uuid]: 'abandoned' });
+  });
+});
+
+describe('AbandonWishEr — идемпотентность (D-47)', () => {
+  it('повтор questionnaire.abandoned с новым eventId — без записей и событий', async () => {
+    await seed(wish('pending'));
+    const er = makeEr();
+    await expectIdempotentReaction({
+      event: abandoned(),
+      deliver: (event) => er.handle(event),
+      published: ctx.published,
+      state: () => Bun.file(file).text(),
+    });
   });
 });

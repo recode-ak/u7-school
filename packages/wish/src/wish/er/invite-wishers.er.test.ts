@@ -27,6 +27,7 @@ import { CoreErrors, ok } from 'dmg-core';
 import { type EnvelopeOf, ModuleFacades } from 'dmg-core/app';
 import {
   expectErr,
+  expectIdempotentReaction,
   expectOk,
   memoryBus,
   StubFacade,
@@ -422,5 +423,20 @@ describe('InviteWishersEr.subscribe', () => {
     await handled();
 
     expect(ctx.published).toHaveLength(1);
+  });
+});
+
+describe('InviteWishersEr — идемпотентность (D-47)', () => {
+  // DEBT-35: повторное stream.created (новый eventId) повторно публикует
+  // wish.invited — ER не идемпотентен (TR-20). Снять `.failing` после починки.
+  it.failing('повтор stream.created с новым eventId — без записей и событий', async () => {
+    await seed(moduleWish('expressed'));
+    const er = makeEr();
+    await expectIdempotentReaction({
+      event: created(),
+      deliver: (event) => er.handle(event),
+      published: ctx.published,
+      state: () => Bun.file(file).text(),
+    });
   });
 });
