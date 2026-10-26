@@ -123,7 +123,7 @@
 ## Фаза 11: Остальные Event Reaction
 
 - [x] Task: `confirm-wish`, `abandon-wish`, `invite-wishers` по гайду Фазы 10 (по одному, отдельный TDD-цикл) `1ac9d380`, `f547ad85`
-- [ ] Task: Уточнить гайд «event reaction»
+- [x] Task: Уточнить гайд «event reaction» `be43672a`
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 11' (автономно, workflow.md)
 
