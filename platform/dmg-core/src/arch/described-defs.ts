@@ -36,7 +36,7 @@ export function describedDefs(index: DefIndex): DescribedDef[] {
   for (const m of index.modules) {
     add(`модуль ${m.name}`, m);
     for (const a of m.aggregates) {
-      add(`агрегат ${localId(m, a)}`, a, [['state', a.state]]);
+      out.push({ title: `агрегат ${localId(m, a)}`, ...a.describe() });
       for (const e of Object.values(a.events)) {
         out.push({ title: `событие ${e.name}`, ...e.describe() });
       }

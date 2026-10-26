@@ -1,4 +1,4 @@
-import type { AnyAggregateDef } from '../domain/aggregate/define-aggregate';
+import type { AnyAggregateDef } from '../domain/aggregate/aggregate-def';
 import type { AnyEventReactionDef } from '../domain/contracts/define-event-reaction';
 import type { AnyJobDef } from '../domain/contracts/define-job';
 import type { AnyModuleDef } from '../domain/contracts/define-module';

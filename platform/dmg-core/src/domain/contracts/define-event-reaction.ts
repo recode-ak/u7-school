@@ -1,4 +1,4 @@
-import type { AnyAggregateDef } from '../aggregate/define-aggregate';
+import type { AnyAggregateDef } from '../aggregate/aggregate-def';
 import type { AnyEventDef, EventOf } from '../events/event-def';
 import type {
   AnyUseCaseDef,

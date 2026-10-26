@@ -1,5 +1,8 @@
 import type * as v from 'valibot';
-import type { AnyAggregateDef } from '../domain/aggregate/define-aggregate';
+import type {
+  AnyAggregateDef,
+  NormalizedAggregate,
+} from '../domain/aggregate/aggregate-def';
 import type { AnyEventReactionDef } from '../domain/contracts/define-event-reaction';
 import type { AnyJobDef, JobSchedule } from '../domain/contracts/define-job';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
@@ -15,6 +18,10 @@ import { toJsonSchema } from '../kernel/schema/json-schema';
 
 type JsonSchema = ReturnType<typeof toJsonSchema>;
 
+export type {
+  NormalizedAggregate,
+  NormalizedTransition,
+} from '../domain/aggregate/aggregate-def';
 export type { NormalizedEvent } from '../domain/events/event-def';
 export type { NormalizedError } from '../kernel/errors/error-def';
 
@@ -22,24 +29,6 @@ type Texts = {
   readonly name: string;
   readonly label: string;
   readonly description: string;
-};
-
-/** Переход: отказы — коды ошибок по статусам вне `from`. */
-export type NormalizedTransition = {
-  readonly from: readonly string[];
-  readonly to: string;
-  readonly rejects: Readonly<Record<string, string>>;
-};
-
-export type NormalizedAggregate = Texts & {
-  readonly dmg: 'aggregate';
-  readonly state: JsonSchema;
-  readonly statuses: AnyAggregateDef['statuses'];
-  readonly transitions:
-    | Readonly<Record<string, NormalizedTransition>>
-    | undefined;
-  readonly events: readonly string[];
-  readonly errors: readonly string[];
 };
 
 type RuleTexts = {
@@ -176,15 +165,7 @@ export function normalize(def: AnyDef): NormalizedDef {
     case 'event':
       return def.normalize();
     case 'aggregate':
-      return {
-        dmg: 'aggregate',
-        ...texts(def),
-        state: schema(def.state),
-        statuses: def.statuses,
-        transitions: transitions(def),
-        events: Object.values(def.events).map((e) => e.name),
-        errors: Object.values(def.errors).map((e) => e.code),
-      };
+      return def.normalize();
     case 'rule':
       return normalizeRule(def);
     case 'policy':
@@ -291,24 +272,4 @@ function normalizeRule(r: AnyRule): NormalizedRule {
     case 'allowAll':
       return { dmg: 'rule', op: 'allowAll' };
   }
-}
-
-function transitions(
-  def: AnyAggregateDef,
-): Readonly<Record<string, NormalizedTransition>> | undefined {
-  if (def.transitions === undefined) return undefined;
-  return Object.fromEntries(
-    Object.entries(def.transitions).map(([op, t]) => [
-      op,
-      {
-        from: t.from,
-        to: t.to,
-        rejects: Object.fromEntries(
-          Object.entries(t.rejects).flatMap(([status, e]) =>
-            e === undefined ? [] : [[status, e.code]],
-          ),
-        ),
-      },
-    ]),
-  );
 }

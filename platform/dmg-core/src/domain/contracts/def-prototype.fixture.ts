@@ -4,7 +4,7 @@
 import type * as v from 'valibot';
 import type { CallerKind } from '#core/kernel/caller/caller';
 import type { AnyErrorDef } from '#core/kernel/errors/error-def';
-import type { AnyAggregateDef } from '../aggregate/define-aggregate';
+import type { AnyAggregateDef } from '../aggregate/aggregate-def';
 import type { AnyEventDef } from '../events/event-def';
 import type { AnyRule } from '../policy/policy';
 import type { AnyDomainRule } from '../rules/domain-rule';

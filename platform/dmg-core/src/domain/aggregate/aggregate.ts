@@ -7,7 +7,7 @@ import type {
   StateOf,
   TransitionOf,
 } from './aggregate.types';
-import type { AnyAggregateDef, EntityBase } from './define-aggregate';
+import type { AnyAggregateDef, EntityBase } from './aggregate-def';
 import type { ReadonlyAr } from './readonly-ar';
 
 /**

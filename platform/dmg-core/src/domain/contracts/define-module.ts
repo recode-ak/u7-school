@@ -1,4 +1,4 @@
-import type { AnyAggregateDef } from '../aggregate/define-aggregate';
+import type { AnyAggregateDef } from '../aggregate/aggregate-def';
 import type { AnyEventReactionDef } from './define-event-reaction';
 import type { AnyJobDef } from './define-job';
 import type { AnyUseCaseDef } from './define-use-case';

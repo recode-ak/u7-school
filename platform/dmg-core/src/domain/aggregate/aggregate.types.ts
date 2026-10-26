@@ -1,7 +1,7 @@
 import type * as v from 'valibot';
 import type { AnyErrorDef, ErrorOf } from '#core/kernel/errors/error-def';
 import type { EventOf } from '../events/event-def';
-import type { AnyAggregateDef } from './define-aggregate';
+import type { AnyAggregateDef } from './aggregate-def';
 
 /** Состояние агрегата по его Def. */
 export type StateOf<D extends AnyAggregateDef> = v.InferOutput<D['state']>;
@@ -19,9 +19,12 @@ export type ErrorsOf<D extends AnyAggregateDef> = {
 /** Объявленные переходы агрегата (`transitions` в Def). */
 type TransitionsOf<D extends AnyAggregateDef> = NonNullable<D['transitions']>;
 
-/** Имя перехода агрегата — ключ `transitions` в Def. */
-export type TransitionOf<D extends AnyAggregateDef> = keyof TransitionsOf<D> &
-  string;
+/** Имя перехода агрегата — ключ `transitions` в Def; без статусов — `never`. */
+export type TransitionOf<D extends AnyAggregateDef> = [
+  TransitionsOf<D>,
+] extends [never]
+  ? never
+  : keyof TransitionsOf<D> & string;
 
 /** Отказы перехода `K`: ошибки из его `rejects`. */
 export type RejectOf<

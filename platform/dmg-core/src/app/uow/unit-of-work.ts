@@ -1,4 +1,4 @@
-import type { AnyAggregateDef } from '#core/domain/aggregate/define-aggregate';
+import type { AnyAggregateDef } from '#core/domain/aggregate/aggregate-def';
 import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import type { AnyEventDef, DomainEvent } from '#core/domain/events/event-def';
 import { CoreErrors } from '#core/kernel/errors/core-errors';

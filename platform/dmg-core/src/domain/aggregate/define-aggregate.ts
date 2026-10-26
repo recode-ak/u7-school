@@ -1,100 +1,28 @@
-import type * as v from 'valibot';
-import type { AnyErrorDef } from '#core/kernel/errors/error-def';
-import {
-  type BaseEntityFields,
-  withEntityDefaults,
-} from '#core/kernel/fields/fields';
-import type { AnyEventDef } from '../events/event-def';
+import { AggregateDef } from './aggregate-def';
+import type {
+  AggregateSpec,
+  RejectsComplete,
+  StateSchema,
+} from './aggregate-def.types';
 
-/** Поля, без которых нет entity, — выводятся из `BaseEntityFields`. */
-export type EntityBase = {
-  [K in keyof typeof BaseEntityFields]: v.InferOutput<
-    (typeof BaseEntityFields)[K]
-  >;
-};
-
-/** Схема состояния агрегата: entity поверх `BaseEntityFields`. */
-export type StateSchema = v.GenericSchema<unknown, EntityBase>;
-
-/** Значения поля `status` состояния; `never`, если статусов нет. */
-export type StatusOf<S extends StateSchema> =
-  v.InferOutput<S> extends { status: infer X extends string } ? X : never;
-
-/** Ошибка отказа перехода — без payload: её возвращает база агрегата. */
-export type RejectErrorDef = AnyErrorDef & { readonly payload: undefined };
+export { AggregateDef } from './aggregate-def';
+export type {
+  AggregateSpec,
+  AnyAggregateDef,
+  EntityBase,
+  RejectErrorDef,
+  StateSchema,
+  StatusOf,
+  Transition,
+} from './aggregate-def.types';
 
 /**
- * Переход статуса операцией агрегата (ключ — имя метода Ar). `rejects` —
- * отказ для каждого статуса вне `from`: Def — единственное место правил
- * жизненного цикла, метод Ar их не повторяет.
- */
-export type Transition<X extends string> = {
-  readonly from: readonly X[];
-  readonly to: X;
-  readonly rejects: { readonly [K in X]?: RejectErrorDef };
-};
-
-/** Отказы каждого перехода покрывают все статусы вне его `from`. */
-type RejectsComplete<A> = A extends {
-  readonly statuses: infer St;
-  readonly transitions: infer T;
-}
-  ? {
-      readonly transitions: {
-        readonly [K in keyof T]: T[K] extends {
-          readonly from: readonly (infer F)[];
-        }
-          ? {
-              readonly rejects: {
-                readonly [X in Exclude<keyof St & string, F>]: RejectErrorDef;
-              };
-            }
-          : never;
-      };
-    }
-  : unknown;
-
-type Lifecycle<X extends string> = {
-  readonly statuses: { readonly [K in X]: { readonly label: string } };
-  readonly transitions: { readonly [op: string]: Transition<X> };
-};
-
-/** Описание агрегата для `defineAggregate`. */
-export type AggregateSpec<S extends StateSchema = StateSchema> = {
-  readonly name: string;
-  readonly label: string;
-  readonly description: string;
-  readonly state: S;
-  readonly events: { readonly [key: string]: AnyEventDef };
-  readonly errors: { readonly [key: string]: AnyErrorDef };
-} & ([StatusOf<S>] extends [never] ? object : Lifecycle<StatusOf<S>>);
-
-/** Манифест агрегата. */
-export type AggregateDef<A extends AggregateSpec> = A & {
-  readonly dmg: 'aggregate';
-};
-
-/** Любой манифест агрегата — для модуля, UC и проверок графа. */
-export type AnyAggregateDef = AggregateSpec & {
-  readonly dmg: 'aggregate';
-  readonly statuses?: Lifecycle<string>['statuses'];
-  readonly transitions?: Lifecycle<string>['transitions'];
-};
-
-/**
- * Манифест агрегата: схема entity, статусы и переходы (если в состоянии есть
- * `status`, статусы обязаны покрыть все его значения, а отказы перехода — все
- * статусы вне `from`), группы событий и ошибок. `state` Def читает запись
- * без `updatedAt` как `updatedAt = createdAt` (`withEntityDefaults`).
+ * Манифест агрегата — обёртка над `AggregateDef.define` на время перевода
+ * потребителей (трек dmg-core-oop, Фаза 7 удаляет).
  */
 export function defineAggregate<
   const S extends StateSchema,
   const A extends AggregateSpec<S>,
 >(spec: A & AggregateSpec<S> & RejectsComplete<A>): AggregateDef<A> {
-  // Через `Object.assign`: спред generic-`A` с переопределённым `state` TS
-  // не сводит к `AggregateDef<A>`.
-  const def: AggregateDef<A> = { ...spec, dmg: 'aggregate' };
-  return Object.assign(def, {
-    state: withEntityDefaults<A['state']>(def.state),
-  });
+  return AggregateDef.define<S, A>(spec);
 }

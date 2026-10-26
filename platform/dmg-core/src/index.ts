@@ -13,15 +13,15 @@ export type {
   TransitionOf,
 } from './domain/aggregate/aggregate.types';
 export {
-  type AggregateDef,
+  AggregateDef,
   type AggregateSpec,
   type AnyAggregateDef,
-  defineAggregate,
   type EntityBase,
   type StateSchema,
   type StatusOf,
   type Transition,
-} from './domain/aggregate/define-aggregate';
+} from './domain/aggregate/aggregate-def';
+export { defineAggregate } from './domain/aggregate/define-aggregate';
 export type { ReadonlyAr } from './domain/aggregate/readonly-ar';
 export {
   type AnyEventReactionDef,
