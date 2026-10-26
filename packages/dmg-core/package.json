@@ -9,18 +9,22 @@
   },
   "files": [
     "src",
-    "!src/{app,arch,domain,graph,kernel}/**/*.test.ts",
+    "!src/{app,arch,cli,domain,graph,kernel}/**/*.test.ts",
     "!src/testing/*.test.ts",
     "docs",
     "skills",
     "agents",
     "llms.txt"
   ],
+  "bin": {
+    "dmg-core": "./src/cli/main.ts"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./app": "./src/app/index.ts",
     "./graph": "./src/graph/index.ts",
     "./arch": "./src/arch/index.ts",
+    "./cli": "./src/cli/index.ts",
     "./testing": "./src/testing/index.ts",
     "./testing/example/*": "./src/testing/example/*.ts"
   },

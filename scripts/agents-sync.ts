@@ -1,7 +1,7 @@
 /**
- * Генератор ролей агентов: роли пакета `dmg-core` (`packages/dmg-core/agents/roles`)
- * и проектные (`.agents-core/roles`) → копии под Claude Code и pi. Общий блок
- * копии — общий блок пакета, затем проектный.
+ * Генератор ролей агентов: роли из `.agents-core/roles` (проектные и роли
+ * пакета `dmg-core`, доставленные `bun run dmg:sync`) → копии под Claude Code
+ * и pi. Общий блок копии — общий блок пакета, затем проектный.
  *
  *   bun run agents:sync   — пересобрать копии
  *   bun run agents:check  — проверить, что копии совпадают с источником
@@ -10,6 +10,7 @@
  */
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
+import { Marker } from 'dmg-core/cli';
 
 /** Среда, под которую собирается копия роли */
 export type Env = 'claude' | 'pi';
@@ -32,12 +33,8 @@ const FIELDS = ['name', 'description', 'tools', 'model'];
 export const SOURCE_DIR = '.agents-core/roles';
 /** Общий блок проекта, дописываемый в конец каждой роли (необязателен) */
 export const COMMON_FILE = '.agents-core/common.md';
-/**
- * Роли и общий блок пакета `dmg-core`. Пока нет `dmg-core init`/`sync`,
- * читаются из пакета напрямую (TR-28).
- */
-export const PACKAGE_ROLES_DIR = 'packages/dmg-core/agents/roles';
-export const PACKAGE_COMMON_FILE = 'packages/dmg-core/agents/common.md';
+/** Общий блок пакета `dmg-core` — кладёт `dmg-core sync` (`dmg-core.json`) */
+export const DMG_COMMON_FILE = '.agents-core/dmg-core-common.md';
 export const TARGET_DIRS: Record<Env, string> = {
   claude: '.claude/agents',
   pi: '.pi/agents',
@@ -226,14 +223,12 @@ export async function runSync(
   mode: 'sync' | 'check',
 ): Promise<SyncResult> {
   const sources: SourceFile[] = [];
-  for (const dir of [PACKAGE_ROLES_DIR, SOURCE_DIR]) {
-    for (const [path, text] of await readMarkdown(root, dir)) {
-      sources.push({ path, text });
-    }
+  for (const [path, text] of await readMarkdown(root, SOURCE_DIR)) {
+    sources.push({ path, text: Marker.strip(text) });
   }
   const commons = await Promise.all(
-    [PACKAGE_COMMON_FILE, COMMON_FILE].map((file) =>
-      readFile(join(root, file), 'utf8').catch(() => ''),
+    [DMG_COMMON_FILE, COMMON_FILE].map(async (file) =>
+      Marker.strip(await readFile(join(root, file), 'utf8').catch(() => '')),
     ),
   );
   const common = commons

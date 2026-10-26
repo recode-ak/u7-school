@@ -1,6 +1,6 @@
 # .agents-core — единый источник ролей агентов
 
-Роли платформы (`domain-author`, `api-author`, `reviewer`) и их общий блок живут в пакете — `packages/dmg-core/agents/` (формат — `packages/dmg-core/agents/README.md`). Здесь — только проектное: роль `migrator` в `roles/` и общий блок проекта `common.md`. `bun run agents:sync` собирает роли пакета и проекта в копии под каждую среду:
+Роли платформы (`domain-author`, `api-author`, `reviewer`) и их общий блок — из пакета `dmg-core` (формат — `packages/dmg-core/agents/README.md`): `bun run dmg:sync` по `dmg-core.json` кладёт их в `roles/` и `dmg-core-common.md` с меткой версии (руками не править, `dmg:check` в `check`). Проектное — роль `roles/migrator.md` и общий блок проекта `common.md`. `bun run agents:sync` собирает все роли из `roles/` в копии под каждую среду:
 
 - `.claude/agents/<role>.md` — Claude Code;
 - `.pi/agents/<role>.md` — pi.
@@ -9,7 +9,7 @@
 
 ## Общий блок
 
-Копия роли = тело роли + общий блок пакета (`packages/dmg-core/agents/common.md`: остановка, запреты, отчёт) + `common.md` проекта (бриф conductor, `data/`, команды проекта, ревью legacy). В роли — только её специфика. Одноимённая роль в пакете и проекте — ошибка.
+Копия роли = тело роли + общий блок пакета (`dmg-core-common.md`: остановка, запреты, отчёт) + `common.md` проекта (бриф conductor, `data/`, команды проекта, ревью legacy). В роли — только её специфика. Метка `dmg-core sync` в копии среды не попадает.
 
 ## Формат `roles/<role>.md`
 

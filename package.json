@@ -13,7 +13,8 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.13",
     "@types/bun": "latest",
-    "@types/markdown-it": "^14.2.0"
+    "@types/markdown-it": "^14.2.0",
+    "dmg-core": "workspace:*"
   },
   "private": true,
   "scripts": {
@@ -22,6 +23,8 @@
     "backup": "bash scripts/backup.sh",
     "backup:adhoc": "bash scripts/backup-adhoc.sh",
     "release": "bash scripts/release.sh",
+    "dmg:sync": "dmg-core sync",
+    "dmg:check": "dmg-core sync --check",
     "agents:sync": "bun run scripts/agents-sync.ts",
     "agents:check": "bun run scripts/agents-sync.ts --check",
     "arch:check": "bun run scripts/arch-check.ts",
@@ -42,7 +45,7 @@
     "tslint": "tsc --noEmit",
     "tslint:p": "bash -c 'bun run --cwd \"packages/${0}\" tslint'",
     "tslint:a": "bash -c 'bun run --cwd \"apps/${0}\" tslint'",
-    "check": "bun run agents:check && bun run lint && bun run tslint && bun run arch:check && bun run extract:check && bun test",
+    "check": "bun run dmg:check && bun run agents:check && bun run lint && bun run tslint && bun run arch:check && bun run extract:check && bun test",
     "check:p": "bash -c 'bun run --cwd \"packages/${0}\" check'",
     "check:a": "bash -c 'bun run --cwd \"apps/${0}\" check'",
     "start:prod": "pm2 start pm2.config.cjs --env production",

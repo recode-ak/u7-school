@@ -4,7 +4,7 @@ description: "Пишет домен среза на dmg-core — state, Ar, Poli
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 
-<!-- Сгенерировано из packages/dmg-core/agents/roles/domain-author.md командой `bun run agents:sync` — не править. -->
+<!-- Сгенерировано из .agents-core/roles/domain-author.md командой `bun run agents:sync` — не править. -->
 
 # Роль: domain-author
 

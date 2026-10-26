@@ -4,7 +4,7 @@ description: "Ревью diff среза на dmg-core по правилам rul
 tools: read, grep, find, bash
 ---
 
-<!-- Сгенерировано из packages/dmg-core/agents/roles/reviewer.md командой `bun run agents:sync` — не править. -->
+<!-- Сгенерировано из .agents-core/roles/reviewer.md командой `bun run agents:sync` — не править. -->
 
 # Роль: reviewer
 

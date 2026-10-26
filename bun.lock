@@ -16,6 +16,7 @@
         "@biomejs/biome": "^2.5.13",
         "@types/bun": "latest",
         "@types/markdown-it": "^14.2.0",
+        "dmg-core": "workspace:*",
       },
     },
     "apps/u7-bot": {
@@ -77,6 +78,9 @@
     "packages/dmg-core": {
       "name": "dmg-core",
       "version": "0.1.0",
+      "bin": {
+        "dmg-core": "./src/cli/main.ts",
+      },
       "devDependencies": {
         "@biomejs/biome": "2.5.13",
         "@types/bun": "latest",

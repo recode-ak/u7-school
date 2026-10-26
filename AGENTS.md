@@ -102,3 +102,9 @@
 ## Контекст Conductor
 
 Если пользователь упоминает «план», «трек», «статус» или спрашивает о них и он использовал расширение conductor в текущей сессии, он, вероятно, имеет в виду файл `conductor/tracks.md` или один из планов треков (`conductor/tracks/<track_id>/plan.md`).
+
+<!-- dmg-core:begin -->
+## Платформа dmg-core
+
+Модули пишутся на `dmg-core@0.1.0`. Индекс документации для LLM — `node_modules/dmg-core/llms.txt`; перед работой с модулем загрузи скил `dmg-architecture`.
+<!-- dmg-core:end -->

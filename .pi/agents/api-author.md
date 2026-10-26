@@ -4,7 +4,7 @@ description: "Реализует прикладной слой среза на d
 tools: read, edit, write, bash, grep, find
 ---
 
-<!-- Сгенерировано из packages/dmg-core/agents/roles/api-author.md командой `bun run agents:sync` — не править. -->
+<!-- Сгенерировано из .agents-core/roles/api-author.md командой `bun run agents:sync` — не править. -->
 
 # Роль: api-author
 

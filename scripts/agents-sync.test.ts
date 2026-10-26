@@ -2,12 +2,12 @@ import { describe, expect, test } from 'bun:test';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Marker } from 'dmg-core/cli';
 import {
   buildCopies,
   COMMON_FILE,
   compareCopies,
-  PACKAGE_COMMON_FILE,
-  PACKAGE_ROLES_DIR,
+  DMG_COMMON_FILE,
   parseRole,
   renderRole,
   runSync,
@@ -247,13 +247,17 @@ describe('runSync', () => {
     });
   });
 
-  test('роли пакета dmg-core собираются вместе с проектными; общий блок пакета — перед проектным', async () => {
+  test('роль и общий блок от dmg-core sync: метка снимается, общий блок пакета — перед проектным', async () => {
     await withRepo(async (root) => {
+      const marker = new Marker('1.0.0');
       await Bun.write(
-        join(root, PACKAGE_ROLES_DIR, 'api-author.md'),
-        source('name: api-author\ndescription: d\ntools: [read]'),
+        join(root, '.agents-core/roles/api-author.md'),
+        marker.mark(source('name: api-author\ndescription: d\ntools: [read]')),
       );
-      await Bun.write(join(root, PACKAGE_COMMON_FILE), 'Правило пакета.\n');
+      await Bun.write(
+        join(root, DMG_COMMON_FILE),
+        marker.mark('Правило пакета.\n'),
+      );
       await Bun.write(join(root, COMMON_FILE), 'Правило проекта.\n');
       expect(await runSync(root, 'sync')).toEqual({ ok: true, messages: [] });
       const claude = await readFile(
@@ -261,25 +265,13 @@ describe('runSync', () => {
         'utf8',
       );
       expect(claude).toContain(
-        `Сгенерировано из ${PACKAGE_ROLES_DIR}/api-author.md`,
+        'Сгенерировано из .agents-core/roles/api-author.md',
       );
+      expect(claude).not.toContain('dmg-core@');
       expect(claude.indexOf('Правило пакета.')).toBeGreaterThan(0);
       expect(claude.indexOf('Правило проекта.')).toBeGreaterThan(
         claude.indexOf('Правило пакета.'),
       );
-    });
-  });
-
-  test('одноимённая роль в пакете и проекте — не ok', async () => {
-    await withRepo(async (root) => {
-      await Bun.write(join(root, PACKAGE_ROLES_DIR, 'reviewer.md'), REVIEWER);
-      const result = await runSync(root, 'sync');
-      expect(result).toEqual({
-        ok: false,
-        messages: [
-          `${SRC}: роль reviewer уже задана в ${PACKAGE_ROLES_DIR}/reviewer.md`,
-        ],
-      });
     });
   });
 

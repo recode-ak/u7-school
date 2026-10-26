@@ -1,0 +1,13 @@
+{
+  "skills": { "dirs": [".pi/skills"] },
+  "roles": {
+    "targets": [
+      {
+        "dir": ".agents-core/roles",
+        "format": "neutral",
+        "common": ".agents-core/dmg-core-common.md"
+      }
+    ]
+  },
+  "instructions": "AGENTS.md"
+}
