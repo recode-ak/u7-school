@@ -21,10 +21,10 @@
 
 ## Фаза 3: Скрипты и документация
 
-- [ ] Task: Скрипты по пакетам
+- [x] Task: Скрипты по пакетам f573f23d
     - [x] Вместо `test:p`/`test:a`, `lint:*`, `tslint:*`, `check:*` — `test:w <путь>` и т. п. (`bun run test:w modules/wish`) — сделано в Фазе 2 (df7ea7c): старые скрипты ломались переносом
     - [x] `workflow.md`, раздел «Команды разработки»
-- [ ] Task: Живые документы
+- [x] Task: Живые документы f573f23d
     - [x] `AGENTS.md`, `conductor/` (`tech-stack.md`, `architecture/*`, `guides/*`, `product.md` — если есть пути), README пакетов, `TRACK-DMG-CORE-OOP.md`, `TODO.md`
     - [x] Скилы и роли (`.claude`, `.pi`, `.agents-core`) → `bun run agents:sync`
     - [x] Страж зелёный полностью, без временных исключений
