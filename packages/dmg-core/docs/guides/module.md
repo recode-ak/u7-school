@@ -13,7 +13,7 @@
 
 ## 2. Команда
 
-`dmg-core gen module <m> --write` — паспорт и тест в домене, карта и тест в прикладном пакете. Строки в `useCases`/`reactions`/`jobs` и в карте дописывают `dmg-core gen uc|er|job` по маркерам `// gen:defs:*`; руками — только `dependsOn`, `label`, `description`.
+`dmg-core gen module <m> --write` — паспорт, контракт (только паспорт, D-45) и тест в домене, карта и тест в прикладном пакете. Строки в `useCases`/`reactions`/`jobs` и в карте дописывают `dmg-core gen uc|er|job` по маркерам `// gen:defs:*`; руками — только `dependsOn`, `label`, `description`.
 
 ## 3. Образец
 

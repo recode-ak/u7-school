@@ -5,8 +5,8 @@ import { GenError } from './cli';
 import { importBefore, isImportSource } from './import-order';
 import type { ApplyResult, GenPlan, PlannedEdit, PlannedFile } from './plan';
 
-/** Точка входа legacy-модуля: в режиме adopt не перезаписывается. */
-const ENTRY_FILE = 'index.ts';
+/** Входы модуля (D-45): в режиме adopt существующие не перезаписываются. */
+const ENTRY_FILES = ['index.ts', 'contract.ts'];
 
 /** Куда вставить `line`: в отсортированный блок import/export над маркером. */
 function insertionIndex(lines: string[], marker: number, line: string): number {
@@ -45,7 +45,7 @@ export function applyPlan(
   }
   const skipped: PlannedFile[] = options.adopt
     ? plan.files.filter(
-        (f) => basename(f.path) === ENTRY_FILE && existsSync(f.path),
+        (f) => ENTRY_FILES.includes(basename(f.path)) && existsSync(f.path),
       )
     : [];
   const files = plan.files.filter((f) => !skipped.includes(f));

@@ -37,6 +37,7 @@ test('дерево домена совпадает с naming.md §2', () => {
     .filter((f) => f.endsWith('.ts'))
     .sort();
   expect(files).toEqual([
+    'stream/contract.ts',
     'stream/index.ts',
     'stream/stream-navigation.dqs.test.ts',
     'stream/stream-navigation.dqs.ts',

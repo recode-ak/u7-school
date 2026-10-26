@@ -284,7 +284,7 @@ describe('gen', () => {
     );
     const result = await (await cli()).gen(root, ['module', 'todo', '--write']);
     expect(result.ok).toBe(true);
-    expect(await read('packages/domain/src/todo/index.ts')).toContain(
+    expect(await read('packages/domain/src/todo/contract.ts')).toContain(
       'TodoModuleDef',
     );
     expect(await read('packages/todo/src/todo.module.ts')).toContain(

@@ -12,9 +12,10 @@ const plan = planDomainModule(parseArgs(['module', 'stream'], layout));
 const file = (path: string) =>
   plan.files.find((f) => f.path === `/d/stream/${path}`)?.content ?? '';
 
-test('паспорт, публичный API и тест — по naming.md §2; фасада нет (D-42)', () => {
+test('паспорт, контракт, публичный API и тест — по naming.md §2; фасада нет (D-42)', () => {
   expect(plan.files.map((f) => f.path)).toEqual([
     '/d/stream/stream.module.ts',
+    '/d/stream/contract.ts',
     '/d/stream/index.ts',
     '/d/stream/stream.module.test.ts',
   ]);
@@ -32,9 +33,17 @@ test('паспорт: defineModule с маркерами для Def', () => {
   }
 });
 
-test('index: экспорт модуля, маркер для остального', () => {
-  const src = file('index.ts');
+test('контракт: только паспорт с «кто и зачем»; остальное — осознанно руками (D-45)', () => {
+  const src = file('contract.ts');
   expect(src).toContain("export { StreamModuleDef } from './stream.module';");
+  expect(src).toContain('Кто:');
+  expect(src).not.toContain('gen:');
+});
+
+test('index: контракт целиком, маркер для остального', () => {
+  const src = file('index.ts');
+  expect(src).toContain("export * from './contract';");
+  expect(src).not.toContain("from './stream.module'");
   expect(src).toContain('// gen:exports');
 });
 

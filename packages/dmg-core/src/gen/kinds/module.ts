@@ -35,9 +35,20 @@ export const ${P}ModuleDef = defineModule({
 });
 `;
 
-  const indexSrc = `// Публичный API модуля ${m}.
+  // Контракт пополняется руками: что видно снаружи — решение автора (D-45).
+  const contractSrc = `/**
+ * Контракт модуля ${m} (D-45) — вход для остального кода: паспорт модуля,
+ * Def внешних операций, события и ошибки. Ar, Policy, DCS/DQS, ArDef и
+ * схемы entity сюда не входят.
+ */
 
+/** Кто: сборка приложения и \`dependsOn\` других модулей. Зачем: паспорт модуля. */
 export { ${P}ModuleDef } from './${m}.module';
+`;
+
+  const indexSrc = `// API домена модуля ${m} для своего прикладного пакета (включая контракт).
+
+export * from './contract';
 // gen:exports
 `;
 
@@ -57,6 +68,7 @@ describe('${P}ModuleDef', () => {
   return {
     files: [
       { path: join(dir, `${m}.module.ts`), content: moduleSrc },
+      { path: join(dir, 'contract.ts'), content: contractSrc },
       { path: join(dir, 'index.ts'), content: indexSrc },
       { path: join(dir, `${m}.module.test.ts`), content: testSrc },
     ],

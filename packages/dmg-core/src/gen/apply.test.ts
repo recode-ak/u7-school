@@ -270,6 +270,22 @@ test('adopt: существующий index.ts пропускается, пра�
   );
 });
 
+test('adopt: существующий contract.ts пропускается (D-45)', () => {
+  writeFileSync(p('contract.ts'), '// legacy\n');
+  const r = applyPlan(
+    {
+      files: [
+        { path: p('contract.ts'), content: 'new' },
+        { path: p('m.module.ts'), content: 'm' },
+      ],
+      edits: [],
+    },
+    { write: true, adopt: true },
+  );
+  expect(r.skipped.map((f) => f.path)).toEqual([p('contract.ts')]);
+  expect(readFileSync(p('contract.ts'), 'utf8')).toBe('// legacy\n');
+});
+
 test('adopt: коллизия остальных файлов — по-прежнему ошибка', () => {
   writeFileSync(p('m.module.ts'), 'old');
   writeFileSync(p('package.json'), '{}');
