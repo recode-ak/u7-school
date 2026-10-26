@@ -1,0 +1,4 @@
+Задача Ф4 dmg-core-extract: хелпер идемпотентности к ER wish.
+expectIdempotentReaction в тестах abandon-wish, confirm-wish, fulfill-wish (идемпотентны), invite-wishers (нет — it.failing, DEBT-35).
+Файлы: packages/wish/src/wish/er/*.er.test.ts, conductor/architecture/debt.md (DEBT-35, TR-25).
+Причина: D-47 — реакции идемпотентны. check: 3792 pass.
