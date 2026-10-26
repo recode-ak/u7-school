@@ -19,7 +19,7 @@
     - [x] `bun run check` (не меньше 3974 pass), коммит — 3981 pass
 - [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
-## Фаза 3: Скрипты и документация
+## Фаза 3: Скрипты и документация [checkpoint: 0b3165ca]
 
 - [x] Task: Скрипты по пакетам f573f23d
     - [x] Вместо `test:p`/`test:a`, `lint:*`, `tslint:*`, `check:*` — `test:w <путь>` и т. п. (`bun run test:w modules/wish`) — сделано в Фазе 2 (df7ea7c): старые скрипты ломались переносом
@@ -33,4 +33,4 @@
     - [x] `bun run gen module x` без `--write` печатает новые пути
     - [x] Ручная проверка: `bun run dev:fixtures` поднимает бота
     - [x] `summary.md`: триаж тестов по гейту workflow
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
