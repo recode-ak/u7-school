@@ -1,0 +1,7 @@
+Задача: Проверка в extract-check.sh (трек dmg-core-extract, Фаза 5).
+
+Сделано:
+- packages/dmg-core/scripts/consumer-check.ts (+ тест): REQUIRED-файлы потребителя (dmg-core.json, AGENTS.md со ссылкой на llms.txt, скил dmg-architecture, llms.txt/README/docs пакета); checkDelivered — пути node_modules/dmg-core/… в доставленных копиях существуют; docs-check над установленным пакетом.
+- scripts/extract-check.sh: в проекте-потребителе init → sync --check → consumer-check → gen module/aggregate/uc → bun test src.
+
+Проверка: bun run check — зелёный (пакет 689 pass, потребитель 9 pass, проект 3971 pass).
