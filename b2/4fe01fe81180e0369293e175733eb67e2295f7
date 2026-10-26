@@ -1,0 +1,3 @@
+Задача Ф6 'Тест lint-правил пакета — в пакете' (dmg-core-extract).
+Изменения: git mv lint-fixtures/packages/dmg-core/src → packages/dmg-core/lint-fixtures/src (15 фикстур); новый packages/dmg-core/scripts/lint-rules.test.ts (biome из зависимостей пакета); scripts/lint-rules.test.ts — только корень (33 сценария, было 48 = 33 + 15 перенесённых); conductor/architecture/rules.md — пути.
+Причина: после выноса пакет потерял бы проверку собственных lint-правил.
