@@ -1,0 +1,5 @@
+Задача: CLI dmg-core init / sync / sync --check (dmg-core-extract, Ф5).
+Сделано: packages/dmg-core/src/cli (cli-config, package-source, role, marker, delivery, instructions-block, dmg-core-cli, main, index) с тестами (39, покрытие ~97%); bin dmg-core и подпуть dmg-core/cli в package.json пакета.
+Подключение в u7-school: dmg-core.json (скил → .pi/skills, роли neutral → .agents-core/roles, общий блок → .agents-core/dmg-core-common.md, вставка в AGENTS.md); симлинк .pi/skills/dmg-architecture снят; scripts/agents-sync.ts читает только .agents-core (Marker.strip), тест одноимённой роли пакета/проекта удалён — ситуация невозможна; dmg:sync/dmg:check, dmg:check в check; корень зависит от dmg-core workspace.
+Решения: spec решение 4 (Нурболат: dmg-core.json, цели с форматом, common отдельным файлом); TR-28 п.1–2 закрыт; TR-29 — два разборщика формата ролей.
+bun run check — зелёный (576 + 3946 pass).
