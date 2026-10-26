@@ -20,7 +20,7 @@
 | 1б | **dmg-core-extract** | платформа DMG — отдельный пакет `dmg-core` (npm), развязка от legacy, самодостаточные конфиги, готовность модулей к выносу в сервисы ([D-28](./decisions.md)). Трек: `conductor/tracks/dmg-core-extract_20261020`. **Разделён:** Фазы 1–3 — до `generators`, Фазы 4–6 — после `golden-wish` (разблокированы; см. spec трека) | orchestrator + Нурболат |
 | 2 ✅ | **generators** | `bun run gen` для всех видов артефактов по [naming.md](./naming.md) | orchestrator + Нурболат |
 | 3 ✅ | **domain-package** | трек: `conductor/archive/domain-package_20261020`, реестр долга — [debt.md](./debt.md). Пакет-каркас `@u7-scl/domain` создан в треке generators; наполнить: механически перенести domain-слои снизу вверх: user (+ `User` из app) → course → questionnaire → stream → wish → peer-review → dossier. Старые пути `@u7-scl/<m>/domain` временно реэкспортируют | migrator |
-| 4 ✅ | **golden-wish** | перевести `wish` на Def, `Result`, Policy, entity-правило, UoW, Timestamp. Эталон; по нему написаны гайды артефактов — [guides/](./guides/index.md). Трек: `conductor/tracks/golden-wish_20261020` | orchestrator + Нурболат |
+| 4 ✅ | **golden-wish** | перевести `wish` на Def, `Result`, Policy, entity-правило, UoW, Timestamp. Эталон; по нему написаны гайды артефактов — [guides/](./guides/index.md). Трек: `conductor/archive/golden-wish_20261020` | orchestrator + Нурболат |
 | 5 | **stream-student** | первый срез конвейером агентов на сложном агрегате | агенты |
 | 6 | остальные модули | в порядке зависимостей | агенты |
 | 7 | **timestamp-data** | пакетная миграция живых данных, удаление «чтения строки» | orchestrator, с подтверждением |
@@ -75,5 +75,5 @@
 ### Старт следующих треков
 
 - **`dmg-core-extract` Ф4–6** — по spec трека; гайды переезжают в `docs/guides/` пакета (решение «вариант А» spec `golden-wish`).
-- **`stream-student`** (трек 5) — первый срез конвейером агентов по гайдам; бриф — по образцу `conductor/tracks/golden-wish_20261020/slices/wish.md`, итог эталона — `summary.md` трека.
+- **`stream-student`** (трек 5) — первый срез конвейером агентов по гайдам; бриф — по образцу `conductor/archive/golden-wish_20261020/slices/wish.md`, итог эталона — `summary.md` трека.
 - Базовая линия тестов на конец `golden-wish`: 3734 pass, 0 fail.
