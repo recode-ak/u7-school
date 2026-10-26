@@ -1,0 +1,9 @@
+Задача: Сообщения arch:check со ссылкой на rules.md; README пакета (трек dmg-core-extract, Фаза 5).
+
+Сделано:
+- packages/dmg-core/src/arch/arch-report.ts: reportArchCheck(apps, print) — отчёт arch:check (перенос runArchCheck проекта) с итоговой строкой «Правила по ID: node_modules/dmg-core/docs/rules.md» при нарушениях; RULES_DOC; экспорт из dmg-core/arch. formatViolation не изменён (строка = ID: сообщение).
+- arch-report.test.ts: сценарии из scripts/arch-check.test.ts (пустой список, нарушения + код 1) и проверка, что RULES_DOC указывает на существующий каталог правил с ID.
+- scripts/arch-check.ts: вызывает reportArchCheck; при нарушениях проверок домена печатает ту же ссылку.
+- packages/dmg-core/README.md: установка, init/sync, быстрый старт на учебном модуле, подпути, документация (ссылки проверяет docs-check).
+
+Проверка: bun run check — зелёный (пакет 685 pass, проект 3967 pass).
