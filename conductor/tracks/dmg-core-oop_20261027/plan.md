@@ -13,8 +13,8 @@
 
 ## Фаза 1: База `Def` и простые виды
 
-- [ ] Task: Абстрактный `Def` (`name`, `label`, `description`, `describe()`, `normalize()`; `static define` — в каждом виде, не в базе) — тесты контракта базы
-- [ ] Task: `ErrorDef` (`defineErrors` → статика), перевод `normalize`/`describe` для вида
+- [x] Task: Абстрактный `Def` (`name`, `label`, `description`, `describe()`, `normalize()`; `static define` — в каждом виде, не в базе) — тесты контракта базы `73303e7f`
+- [~] Task: `ErrorDef` (`defineErrors` → статика), перевод `normalize`/`describe` для вида
 - [ ] Task: `EventDef` (`defineEvents` → статика), то же
 - [ ] Task: `AggregateDef` (`defineAggregate` → статика), то же; `Aggregate.readonly`/`newState` не трогаем
 - [ ] Task: `DomainRuleDef` и `RulesDef` (`defineRules` → статика), то же
