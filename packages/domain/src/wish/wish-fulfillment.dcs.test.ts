@@ -8,7 +8,9 @@ const USER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
 const MODULE = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 const COURSE_A = '7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
 const COURSE_B = '8d2e3f4a-5b6c-4d7e-9f8a-0b1c2d3e4f5a';
+const COURSE_C = '9e3f4a5b-6c7d-4e8f-8a9b-1c2d3e4f5a6b';
 const OTHER_MODULE = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
+const THIRD_MODULE = '4a3f2e1d-0c9b-4876-9543-210fedcba987';
 const T0 = Date.UTC(2026, 7, 26, 10);
 const T1 = Date.UTC(2026, 7, 27);
 
@@ -40,7 +42,7 @@ describe('WishFulfillmentDcs.question — что спросить у курса'
     const dcs = new WishFulfillmentDcs(MODULE, [
       wish('expressed', course(COURSE_A)),
       wish('confirmed', course(COURSE_B)),
-      wish('pending', course(OTHER_MODULE)),
+      wish('pending', course(COURSE_C)),
     ]);
     expect(dcs.question()).toEqual({
       courses: { moduleId: MODULE, courseIds: [COURSE_A, COURSE_B] },
@@ -51,7 +53,7 @@ describe('WishFulfillmentDcs.question — что спросить у курса'
     const dcs = new WishFulfillmentDcs(MODULE, [
       wish('expressed', module(MODULE)),
       wish('confirmed', module(OTHER_MODULE)),
-      wish('cancelled', module(COURSE_A)),
+      wish('cancelled', module(THIRD_MODULE)),
     ]);
     expect(dcs.question()).toEqual({
       modules: { moduleId: MODULE, moduleIds: [MODULE, OTHER_MODULE] },

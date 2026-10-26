@@ -34,6 +34,7 @@ import {
   testAppContext,
 } from 'dmg-core/testing';
 import { WishJsonRepo } from '../../infra/wish.json-repo';
+import { trackHandling } from './er.fixture';
 import { InviteWishersEr } from './invite-wishers.er';
 
 // Перенос случаев legacy `api/er/invite-wishers-er.test.ts` на ER по Def.
@@ -281,20 +282,24 @@ describe('InviteWishersEr — кого приглашать', () => {
     expect(ctx.published).toEqual([]);
   });
 
-  it('только expressed/confirmed: остальные статусы не приглашаются и не спрашиваются', async () => {
+  it('pending/cancelled/fulfilled/abandoned с совпавшей целью не приглашаются и не записываются', async () => {
     await seed(
       courseWish('fulfilled'),
       courseWish('cancelled'),
       courseWish('pending'),
+      courseWish('abandoned'),
       moduleWish('abandoned'),
       moduleWish('cancelled'),
+      moduleWish('pending'),
+      moduleWish('fulfilled'),
     );
+    courseAnswers([COURSE]);
     const before = await Bun.file(file).text();
 
     expectOk(await makeEr().handle(created()));
 
-    expect(asked()).toEqual([]);
     expect(ctx.published).toEqual([]);
+    expect(users.received).toEqual([]);
     expect(await Bun.file(file).text()).toBe(before);
   });
 
@@ -409,13 +414,12 @@ describe('InviteWishersEr.subscribe', () => {
   it('реагирует на stream.stream.created из шины', async () => {
     await seed(moduleWish('expressed'));
     const bus = memoryBus();
-    makeEr().subscribe(bus);
+    const er = makeEr();
+    const handled = trackHandling(er);
+    er.subscribe(bus);
 
     bus.publish(created());
-    // Шина не ждёт обработчик: даём реакции дочитать и записать oplog.
-    for (let i = 0; i < 50 && ctx.oplog.records.length === 0; i++) {
-      await new Promise((r) => setTimeout(r, 5));
-    }
+    await handled();
 
     expect(ctx.published).toHaveLength(1);
   });

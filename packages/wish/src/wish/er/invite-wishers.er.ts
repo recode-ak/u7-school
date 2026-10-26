@@ -44,8 +44,8 @@ export class InviteWishersEr extends ReactionFromDef<Def, WishDeps> {
     const { streamId, moduleId } = event.payload;
     const { wishes } = this.resolve;
     const invitation = new WishInvitationDcs(streamId, moduleId, [
-      ...(await wishes.findAllByKind('course', ['expressed', 'confirmed'])),
-      ...(await wishes.findAllByKind('module', ['expressed', 'confirmed'])),
+      ...(await wishes.findAllByKind('course')),
+      ...(await wishes.findAllByKind('module')),
     ]);
     const match = await this.askMatch(
       invitation.matchQuestion(),

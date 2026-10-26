@@ -25,6 +25,7 @@ import {
   testAppContext,
 } from 'dmg-core/testing';
 import { WishJsonRepo } from '../../infra/wish.json-repo';
+import { trackHandling } from './er.fixture';
 import { FulfillWishEr } from './fulfill-wish.er';
 
 // Перенос случаев legacy `api/er/fulfill-wish-er.test.ts` на ER по Def.
@@ -260,12 +261,26 @@ describe('FulfillWishEr — нереализуемые желания и иде�
   });
 });
 
+/** Два желания (course и module); курс отвечает на модули отказом. Возвращает файл до реакции. */
+async function seedWithModuleRefusal(): Promise<string> {
+  await seed(courseWish('expressed'), moduleWish('expressed'));
+  courseAnswers([COURSE]);
+  course.answer(GetSameModulesUcDef, () => CoreErrors.SERVER_INTERNAL.err());
+  return Bun.file(file).text();
+}
+
+/** Запись oplog о реакции, завершившейся ошибкой. */
+const failedRecord = (error: unknown) =>
+  expect.objectContaining({
+    module: 'wish',
+    op: 'fulfillWish',
+    kind: 'eventReaction',
+    result: { ok: false, error },
+  });
+
 describe('FulfillWishEr — отказ курса', () => {
   it('отказ вызова → ошибка, ничего не записано, лог и запись в oplog', async () => {
-    await seed(courseWish('expressed'), moduleWish('expressed'));
-    courseAnswers([COURSE]);
-    course.answer(GetSameModulesUcDef, () => CoreErrors.SERVER_INTERNAL.err());
-    const before = await Bun.file(file).text();
+    const before = await seedWithModuleRefusal();
 
     const error = expectErr(
       await makeEr().handle(enrolled()),
@@ -276,14 +291,7 @@ describe('FulfillWishEr — отказ курса', () => {
     expect(ctx.logs).toContainEqual(
       expect.objectContaining({ level: 'error', source: 'fulfillWish' }),
     );
-    expect(ctx.oplog.records).toEqual([
-      expect.objectContaining({
-        module: 'wish',
-        op: 'fulfillWish',
-        kind: 'eventReaction',
-        result: { ok: false, error },
-      }),
-    ]);
+    expect(ctx.oplog.records).toEqual([failedRecord(error)]);
   });
 
   it('сбой вызова (исключение) → SERVER_INTERNAL, ничего не записано', async () => {
@@ -306,13 +314,12 @@ describe('FulfillWishEr.subscribe', () => {
     await seed(w);
     courseAnswers([COURSE]);
     const bus = memoryBus();
-    makeEr().subscribe(bus);
+    const er = makeEr();
+    const handled = trackHandling(er);
+    er.subscribe(bus);
 
     bus.publish(enrolled());
-    // Шина не ждёт обработчик: даём реакции дочитать и записать файл.
-    for (let i = 0; i < 50 && ctx.oplog.records.length === 0; i++) {
-      await new Promise((r) => setTimeout(r, 5));
-    }
+    await handled();
 
     expect(await statuses()).toEqual({ [w.uuid]: 'fulfilled' });
   });

@@ -19,6 +19,7 @@ import {
 } from 'dmg-core/testing';
 import { WishJsonRepo } from '../../infra/wish.json-repo';
 import { ConfirmWishEr } from './confirm-wish.er';
+import { trackHandling } from './er.fixture';
 
 // Перенос случаев legacy `api/er/confirm-wish-er.test.ts` на ER по Def.
 
@@ -215,12 +216,12 @@ describe('ConfirmWishEr.subscribe', () => {
     const w = wish('pending');
     await seed(w);
     const bus = memoryBus();
-    makeEr().subscribe(bus);
+    const er = makeEr();
+    const handled = trackHandling(er);
+    er.subscribe(bus);
 
     bus.publish(completed());
-    for (let i = 0; i < 50 && ctx.oplog.records.length === 0; i++) {
-      await new Promise((r) => setTimeout(r, 5));
-    }
+    await handled();
 
     expect(await statuses()).toEqual({ [w.uuid]: 'confirmed' });
   });
