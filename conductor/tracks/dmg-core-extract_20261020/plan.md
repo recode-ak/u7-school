@@ -40,7 +40,7 @@
 > **Пауза снята (2026-10-26).** Треки `generators`, `domain-package`, `golden-wish` завершены — Фазы 4–6 можно начинать; входной долг — [migration.md](../../architecture/migration.md) §6. Обоснование — [spec.md](./spec.md) §«Порядок относительно других треков».
 
 
-Бриф: [slices/phase4.md](./slices/phase4.md). Решения: D-46, D-47, MAN-13.
+Бриф: [slices/phase4.md](./slices/phase4.md). Решения: D-46, D-47, MAN-13. DEBT-1, 2, 6, 7, 11, 12, 16, 17, 25, 26 переданы трекам перевода модулей (Нурболат, 2026-10-26): гасятся только переводом модуля на Def.
 
 - [x] Task: Круг через JSON (D-46): `Caller.toJSON/fromJSON` (субъект `U` целиком, `revive`), `Trace.toJSON/fromJSON`; тесты для всех видов `Caller`, `Trace`, конверта события, снапшота Ar (7bddc3b)
 - [~] Task: Порты `Outbox` (вместо `bus` в UoW) и `Inbox` (отсев повтора `eventId`) в `dmg-core`, in-proc по умолчанию; контрактный хелпер идемпотентности ER в `dmg-core/testing` (D-47)
@@ -48,7 +48,6 @@
 - [ ] Task: MAN-13 «UoW — один модуль»: `checkDefs` и рантайм-проверка в UoW
 - [ ] Task: Подпуть контрактов модуля `domain/<m>/contract` — сделан в D-45 (61322654): `exports` пакета домена `./*/contract`, `contract.ts` у всех 7 модулей; наполнение остальных модулей — в треках их перевода
 - [ ] Task: ARC-04 в `checkFiles`: вход для других модулей задаёт приложение (`contract`, D-45); прикладной слой внешнего модуля не проверяется (как обещает JSDoc); приложение домена в `ARCH_APPS` — погасить DEBT-33
-- [ ] Task: Долги импорта `core`/`app` в домене: DEBT-1, 2, 6, 7, 11, 12, 16, 17, 25, 26 (объём — открытый вопрос 1 брифа)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 ## Фаза 5: Документация и инструменты в пакете

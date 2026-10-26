@@ -68,8 +68,8 @@
 
 | Владелец | Долги |
 |---|---|
-| `dmg-core-extract` Ф4–6 | импорты `core`/`app` в домене: DEBT-1, 2, 6, 7, 11, 12, 16, 17, 25, 26; вход `contract` в `checkFiles` платформы и `archCheck` домена — DEBT-33 |
-| треки перевода модулей на Def | импорты чужого `index` legacy-модулями — DEBT-34; user DEBT-5; course DEBT-9, 10; questionnaire DEBT-14, 15, 32; stream DEBT-19, 20; peer-review DEBT-28, 29 |
+| `dmg-core-extract` Ф4–6 | вход `contract` в `checkFiles` платформы и `archCheck` домена — DEBT-33 |
+| треки перевода модулей на Def | импорты `core`/`app` в домене — user DEBT-1, 2; course DEBT-6, 7; questionnaire DEBT-11, 12; stream DEBT-16, 17; peer-review DEBT-25, 26; импорты чужого `index` legacy-модулями — DEBT-34; user DEBT-5; course DEBT-9, 10; questionnaire DEBT-14, 15, 32; stream DEBT-19, 20; peer-review DEBT-28, 29 |
 | последний трек миграции | barrel-долги DEBT-3, 8, 13, 18, 23, 27, 30 и `User` в `app` (DEBT-4) |
 
 ### Старт следующих треков

@@ -37,13 +37,13 @@
 ### DEBT-1: импорты `@u7-scl/core` в domain/user
 - **Место:** `packages/domain/src/user/**` (`facade.ts`, `module.ts`, `user/a-root.ts`, `user/events.ts`, `user/commands/{errors,notify-user-cmd,register-guest-cmd}.ts`)
 - **Причина:** `Aggregate`, `DomainEvent`, `NotifyKind`, `AccessDeniedError`, `isoNow` живут в `core`; механический перенос не меняет базовые классы.
-- **Погашает:** `dmg-core-extract` (Ф4) и последующие треки перевода на Def
+- **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
 - **Критерий снятия:** в `packages/domain/src/user/**` нет маркеров `DEBT-1` и импортов `@u7-scl/core`
 
 ### DEBT-2: импорт `@u7-scl/app/domain` в domain/user/module.ts
 - **Место:** `packages/domain/src/user/module.ts` (тип `U7ModuleResolver`)
 - **Причина:** тип резолвера модулей определён в `app`; создаёт циклическую зависимость пакетов `app` ↔ `domain` (только типы, в рантайме импорт стирается); сам цикл пакетов также снимается этим долгом.
-- **Погашает:** `dmg-core-extract` / перевод `user` на Def
+- **Погашает:** перевод `user` на Def
 - **Критерий снятия:** маркер `DEBT-2` удалён, `module.ts` не импортирует `@u7-scl/app`
 
 ### DEBT-5: `v.isoDateTime` в `UserSchema` (DOM-12)
@@ -55,49 +55,49 @@
 ### DEBT-6: импорты `@u7-scl/core` в domain/course
 - **Место:** `packages/domain/src/course/**` (`module.ts`, `*/a-root.ts`, `*/entity.ts`, `*/commands/errors.ts`, `content-path/commands/resolve-content-path-cmd.ts`; подпути `core/domain`, `core/shared`, `core/infra`)
 - **Причина:** `Aggregate`, `FileMetadataSchema`, `AccessDeniedError`, `NotFoundError`, `isoNow`, `ApiModuleMeta`, `BaseJsonDb` живут в `core`; механический перенос не меняет базовые классы.
-- **Погашает:** `dmg-core-extract` (Ф4) и последующие треки перевода на Def
+- **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
 - **Критерий снятия:** в `packages/domain/src/course/**` нет маркеров `DEBT-6` и импортов `@u7-scl/core`
 
 ### DEBT-7: импорт `@u7-scl/app/domain` в domain/course/module.ts
 - **Место:** `packages/domain/src/course/module.ts` (тип `U7ModuleResolver`)
 - **Причина:** тип резолвера модулей определён в `app` (см. DEBT-2).
-- **Погашает:** `dmg-core-extract` / перевод `course` на Def
+- **Погашает:** перевод `course` на Def
 - **Критерий снятия:** маркер `DEBT-7` удалён, `module.ts` не импортирует `@u7-scl/app`
 
 ### DEBT-11: импорты `@u7-scl/core` в domain/questionnaire
 - **Место:** `packages/domain/src/questionnaire/**` (`module.ts`, `questionnaire/{a-root,entity,events,questionnaire-factory}.ts`, `questionnaire/{likert,standard}/*-ar.ts`, `questionnaire/commands/errors.ts`; подпути `core/domain`, `core/shared`, `core/infra`)
 - **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, ошибки, `isoNow`, `ApiModuleMeta`, `BaseJsonDb` живут в `core`; механический перенос не меняет базовые классы.
-- **Погашает:** `dmg-core-extract` (Ф4) и последующие треки перевода на Def
+- **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
 - **Критерий снятия:** в `packages/domain/src/questionnaire/**` нет маркеров `DEBT-11` и импортов `@u7-scl/core`
 
 ### DEBT-12: импорт `@u7-scl/app/domain` в domain/questionnaire/module.ts
 - **Место:** `packages/domain/src/questionnaire/module.ts` (тип `U7ModuleResolver`)
 - **Причина:** тип резолвера модулей определён в `app` (см. DEBT-2).
-- **Погашает:** `dmg-core-extract` / перевод `questionnaire` на Def
+- **Погашает:** перевод `questionnaire` на Def
 - **Критерий снятия:** маркер `DEBT-12` удалён, `module.ts` не импортирует `@u7-scl/app`
 
 ### DEBT-16: импорты `@u7-scl/core` в domain/stream
 - **Место:** `packages/domain/src/stream/**` (`stream-ds.ts`, `{stream,student}/{a-root,entity,events}.ts`, `{stream,student}/commands/*-cmd.ts`; подпути `core/domain`, `core/shared`, `core/api`)
 - **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `errConflict`, `throwError`, `isoNow`, `now`, `UcMeta` живут в `core`; механический перенос не меняет базовые классы. `core/api` (`UcMeta`) — подпуть платформы, не входивший в долги user/course/questionnaire.
-- **Погашает:** `dmg-core-extract` (Ф4) и последующие треки перевода на Def
+- **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
 - **Критерий снятия:** в `packages/domain/src/stream/**` нет маркеров `DEBT-16` и импортов `@u7-scl/core`
 
 ### DEBT-17: импорты `@u7-scl/app/domain` в domain/stream
 - **Место:** `packages/domain/src/stream/module.ts` (тип `U7ModuleResolver`), `stream/stream/a-root.ts` (константа `U7_SCHOOL_ID`)
 - **Причина:** `U7ModuleResolver` и `U7_SCHOOL_ID` определены в `app` (см. DEBT-2).
-- **Погашает:** `dmg-core-extract` / перевод `stream` на Def
+- **Погашает:** перевод `stream` на Def
 - **Критерий снятия:** маркер `DEBT-17` удалён, перенесённые файлы не импортируют `@u7-scl/app`
 
 ### DEBT-25: импорты `@u7-scl/core` в domain/peer-review
 - **Место:** `packages/domain/src/peer-review/**` (`review/{a-root,entity,errors,events}.ts`, `review-campaign/{a-root,entity,errors,events}.ts`, `*/commands/*-cmd.ts`, `errors.ts`; подпути `core/domain`, `core/shared`, `core/api`)
 - **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, ошибки, `isoNow`, `UcMeta` живут в `core`; механический перенос не меняет базовые классы. `core/api` (`UcMeta`) — подпуть платформы.
-- **Погашает:** `dmg-core-extract` (Ф4) и последующие треки перевода на Def
+- **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
 - **Критерий снятия:** в `packages/domain/src/peer-review/**` нет маркеров `DEBT-25` и импортов `@u7-scl/core`
 
 ### DEBT-26: импорт `@u7-scl/app/domain` в domain/peer-review/module.ts
 - **Место:** `packages/domain/src/peer-review/module.ts` (тип `U7ModuleResolver`)
 - **Причина:** тип резолвера модулей определён в `app` (см. DEBT-2).
-- **Погашает:** `dmg-core-extract` / перевод `peer-review` на Def
+- **Погашает:** перевод `peer-review` на Def
 - **Критерий снятия:** маркер `DEBT-26` удалён, `module.ts` не импортирует `@u7-scl/app`
 
 ## 2. Реэкспорты старых путей
