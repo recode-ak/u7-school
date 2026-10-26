@@ -35,7 +35,7 @@
 - [x] Task: `scripts/extract-check.sh` — копия в пустой каталог, install, check; `bun pm pack` и установка tarball в пустой проект; подключить в `check`
 - [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
-## Фаза 4: Готовность к распределённому запуску (D-28)
+## Фаза 4: Готовность к распределённому запуску (D-28) [checkpoint: b469825]
 
 > **Пауза снята (2026-10-26).** Треки `generators`, `domain-package`, `golden-wish` завершены — Фазы 4–6 можно начинать; входной долг — [migration.md](../../architecture/migration.md) §6. Обоснование — [spec.md](./spec.md) §«Порядок относительно других треков».
 
@@ -48,7 +48,7 @@
 - [x] Task: MAN-13 «UoW — один модуль»: `checkDefs` и рантайм-проверка в UoW (c853e64)
 - [x] Task: Подпуть контрактов модуля `domain/<m>/contract` — сделан в D-45 (61322654): `exports` пакета домена `./*/contract`, `contract.ts` у всех 7 модулей; наполнение остальных модулей — в треках их перевода
 - [x] Task: ARC-04 в `checkFiles`: вход для других модулей задаёт приложение (`contract`, D-45); прикладной слой внешнего модуля не проверяется (как обещает JSDoc); приложение домена в `ARCH_APPS` — погасить DEBT-33 (f882206)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md) (автономно)
 
 ## Фаза 5: Документация и инструменты в пакете
 
