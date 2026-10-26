@@ -9,7 +9,7 @@
 
 ---
 
-- [~] **Track: golden-wish — эталонный перевод `wish` на Def, `Result`, Policy, UoW, `F.timestamp`; гайды по видам артефактов**
+- [x] **Track: golden-wish — эталонный перевод `wish` на Def, `Result`, Policy, UoW, `F.timestamp`; гайды по видам артефактов**
 *Link: [./tracks/golden-wish_20261020/](./tracks/golden-wish_20261020/)*
 *После него стартуют Фазы 4–6 `dmg-core-extract`*
 
