@@ -66,3 +66,14 @@ DEBT-1…26 переданы трекам перевода модулей (от�
 - Отклонения: тесты конверта и снапшота зелёные сразу (свойство уже выполнялось — тест закрепляет); `toStrictEqual` вместо `toEqual` (ловит `undefined`-поля); без `revive` субъект проверяется на `uuid: string`; `JSON.stringify(caller)` теперь даёт форму `toJSON()` (лог операций пишет `toLog()` — не затронут).
 - Открытый вопрос агента: экспорт вложенных JSON-типов (`UserCallerJson`…) из корня — пока нет (тактика оркестратора: по первому потребителю).
 - Гейт оркестратора: `bun run check` — 3764 pass, 0 fail.
+
+### Шаг 2 — domain-author (Opus), готово
+
+- Порты: `app/events/outbox.ts` (`Outbox.put`, `InProcOutbox(bus)`), `app/events/inbox.ts` (`Delivery`, `Inbox.claim/release`, `InProcInbox({ capacity })`, `DEFAULT_INBOX_CAPACITY`); `AppContext.outbox`, `AppContext.inbox` обязательные.
+- UoW: `bus` → `outbox`, партия конвертов записанных агрегатов, D-15 сохранён; сбой `put` — исключение, `published` пуст.
+- `ReactionFromDef.handle`: `claim` → повтор `Ok` без лога операций (`debug`); не-`Ok` → `release`.
+- `dmg-core/testing`: `expectIdempotentReaction({ event, deliver, published, state })` (вторая доставка с новым `eventId`: `Ok`, без новых конвертов, `state()` прежний); `testAppContext` собирает `InProcOutbox` + `InProcInbox`.
+- Учебная ER `archive-removed-user-tasks` — тест хелпера.
+- Механически: `apps/u7-bot/src/create-dmg-modules.ts`, `packages/core/src/legacy-bridge/example-app.test.ts`.
+- Отклонения и открытые вопросы агента — решены оркестратором: TR-24.
+- Гейт оркестратора: `bun run check` — 3782 pass, 0 fail.
