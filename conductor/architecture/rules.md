@@ -6,7 +6,7 @@
 
 ## Где проверяется
 
-- **lint** — `biome.json` корня и `packages/dmg-core/biome.json` (`overrides`), плагины — `packages/dmg-core/biome-plugins/*.grit` (правила DMG принадлежат пакету; корень ссылается на них); тест правил — `scripts/lint-rules.test.ts` на фикстурах `lint-fixtures/`.
+- **lint** — `biome.json` корня и `packages/dmg-core/biome.json` (`overrides`), плагины — `node_modules/dmg-core/biome-plugins/*.grit` (правила DMG принадлежат пакету; корень подключает их из установленного пакета); тест правил проекта — `scripts/lint-rules.test.ts` на фикстурах `lint-fixtures/`, правил на коде пакета — `packages/dmg-core/scripts/lint-rules.test.ts` на `packages/dmg-core/lint-fixtures/`.
 - **test** — `bun run arch:check` (`scripts/arch-check.ts`, `ArchApp` проекта) и контрактные тесты; всё входит в `bun run check`.
 - **review** — роль `reviewer` (`packages/dmg-core/agents/roles/reviewer.md` + общий блок проекта).
 
