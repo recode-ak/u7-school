@@ -129,10 +129,10 @@
 
 ## Фаза 12: Модуль (`defineModule`) и сосуществование
 
-- [ ] Task: `WishModuleDef` (`dependsOn`: user, course, questionnaire, stream), `ModuleFromDef` — карта Def → класс; тип резолвера из платформы (DEBT-22), без `core`/`app` (DEBT-21)
+- [x] Task: `WishModuleDef` (`dependsOn`: user, course, questionnaire, stream), `ModuleFromDef` — карта Def → класс; тип резолвера из платформы (DEBT-22), без `core`/`app` (DEBT-21) `df41ad91` (DEBT-21/22 в пакете — Ф13, TR-21)
 - [x] Task: Мост по ревью приёмки: `inbound` разбирается один раз на маршрут (без дублей `onInvalid`), `onInvalid` в приложении — `logger.warn`, дефолт и JSDoc согласованы с `InProcEventBus` (исключение глотается); `Date.parse` в конверте проверяется `c886d328`
 - [x] Task: Сосуществование: `appApi.run` и `appApi.execute` для wish; `AppContext.oplog` — `JsonlOperationLog(<DB_DIR>/oplog)` (TR-13 п. 10); вызывающие stories и UI не сломаны; barrel DEBT-23 сохранён `e325339c` (TR-21)
-- [ ] Task: Гайд «module»; stub-гайд «job» (эталона нет)
+- [x] Task: Гайд «module»; stub-гайд «job» (эталона нет) `adb81d37`
 - [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
 - [ ] Task: Контрольная точка 'Фаза 12' (автономно, workflow.md)
 
