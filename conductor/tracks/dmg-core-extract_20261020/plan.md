@@ -59,8 +59,8 @@
 - [x] Task: Разметка «что в пакет, что остаётся в проекте» по `conductor/architecture/*.md`, скилам и ролям; результат — таблица в `spec.md`, проектные ссылки в перенесённых файлах заменены на нейтральные (6e83c5f)
     - Правила нейтрализации — в `spec.md`; сама замена — при переносе файлов (задача «Сборка»)
 - [x] Task: Обогатить учебный модуль `src/testing/example` до образца для всех гайдов (DCS, `contract.ts`, VO, вызов чужого UC, тесты state/events/errors/Job/идемпотентности ER) — бриф [slices/example-enrich.md](./slices/example-enrich.md); отдельная сессия, Opus (ee7e68d)
-- [ ] Task: Сборка артефактов пакета: `docs/` (платформа DMG + справочник ID правил `rules.md`), `skills/dmg-architecture` (обобщённый `architecture`), `agents/` (`domain-author`, `api-author`, `reviewer` из `.agents-core/roles` для Claude Code и pi), `llms.txt` в корне; всё в `files`
-    - [ ] Источник правды один — в репозитории пакета; в проекте копий нет (кроме вставок `init`)
+- [x] Task: Сборка артефактов пакета: `docs/` (платформа DMG + справочник ID правил `rules.md`), `skills/dmg-architecture` (обобщённый `architecture`), `agents/` (`domain-author`, `api-author`, `reviewer` из `.agents-core/roles` для Claude Code и pi), `llms.txt` в корне; всё в `files` (4c7a450)
+    - [x] Источник правды один — в репозитории пакета; в проекте копий нет (кроме вставок `init`)
 - [ ] Task: CLI `dmg-core init` (копирует скилы и роли в `.claude/`, `.pi/`, добавляет в `AGENTS.md` вставку со ссылкой на `node_modules/dmg-core/llms.txt`, ставит версию-метку) и `dmg-core sync` / `sync --check` (обновляет; в `check` потребителя падает при устаревших копиях)
     - [ ] Тесты на временном проекте; идемпотентность `init`
 - [ ] Task: Генераторы в пакет: `dmg-core gen` (перенос `scripts/gen` с шаблонами; раскладка — `ArchApp.layout` проекта), тесты на временном проекте; `bun run gen` проекта вызывает CLI пакета, `scripts/gen` удалён; `naming.md` §5 — в `docs/` пакета
