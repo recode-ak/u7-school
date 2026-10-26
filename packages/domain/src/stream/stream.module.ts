@@ -2,6 +2,7 @@ import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { defineModule } from 'dmg-core';
 import { StreamArDef } from './stream/stream.ar';
+import { GetStreamPresenceUcDef } from './stream/uc/get-stream-presence.uc';
 import { StudentArDef } from './student/student.ar';
 
 /**
@@ -15,7 +16,7 @@ export const StreamModuleDef = defineModule({
   external: true,
   dependsOn: [UserModuleDef, CourseModuleDef],
   aggregates: [StreamArDef, StudentArDef],
-  useCases: [],
+  useCases: [GetStreamPresenceUcDef],
   reactions: [],
   jobs: [],
 });

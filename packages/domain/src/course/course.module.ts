@@ -3,6 +3,7 @@ import { defineModule } from 'dmg-core';
 import { CourseArDef } from './course/course.ar';
 import { GetCourseEnrollmentUcDef } from './course/uc/get-course-enrollment.uc';
 import { GetCoursesIncludingModuleUcDef } from './course/uc/get-courses-including-module.uc';
+import { GetCoursesStartingWithModuleUcDef } from './course/uc/get-courses-starting-with-module.uc';
 import { GetModuleEnrollmentUcDef } from './course/uc/get-module-enrollment.uc';
 import { GetSameModulesUcDef } from './course/uc/get-same-modules.uc';
 
@@ -24,6 +25,7 @@ export const CourseModuleDef = defineModule({
     GetModuleEnrollmentUcDef,
     GetCoursesIncludingModuleUcDef,
     GetSameModulesUcDef,
+    GetCoursesStartingWithModuleUcDef,
   ],
   reactions: [],
   jobs: [],

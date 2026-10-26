@@ -4,6 +4,7 @@ import {
   CourseModuleDef,
   GetCourseEnrollmentUcDef,
   GetCoursesIncludingModuleUcDef,
+  GetCoursesStartingWithModuleUcDef,
   GetModuleEnrollmentUcDef,
   GetSameModulesUcDef,
 } from '@u7-scl/domain/course/contract';
@@ -312,5 +313,70 @@ describe('батч-вопросы о зачислении: ответ legacy к�
     );
     expect(expectOk(res)).toEqual({ moduleIds: [MODULE] });
     expect(asked).toEqual([[MODULE, [MODULE, OTHER]]]);
+  });
+});
+
+describe('getCoursesStartingWithModule: адаптер над getModulePlace + whichCoursesIncludeModule (TR-11)', () => {
+  const MODULE = '2d8e4b6a-5f3c-4e7d-9a0b-9c8d7e6f5a4b';
+  const FORK = '4fa06d8c-7b5e-4a9f-9c2d-1e0f9a8b7c6d';
+  const asSystem = () =>
+    new SystemCaller({ kind: 'useCase', module: 'probe', name: 'probe' });
+
+  /** Модуль курсов над legacy: место модуля и курсы, включающие его. */
+  function course(place: ModulePlace | undefined, included: string[]) {
+    const asked: unknown[] = [];
+    const base = legacy(true).facade;
+    const facade = new ModuleFacade(
+      createCourseModule({
+        app,
+        facades: new ModuleFacades(),
+        legacy: {
+          ...base,
+          getModulePlace: async (moduleId) => {
+            asked.push(['place', moduleId]);
+            return place;
+          },
+          whichCoursesIncludeModule: async (moduleId, ids) => {
+            asked.push(['include', moduleId, ids]);
+            return included;
+          },
+        },
+      }),
+    );
+    return { facade, asked };
+  }
+  const ask = (facade: ModuleFacade<typeof CourseModuleDef>) =>
+    facade.handle(
+      GetCoursesStartingWithModuleUcDef,
+      { moduleId: MODULE, courseIds: [COURSE, FORK] },
+      asSystem(),
+      REQ,
+    );
+
+  it('модуль стартовый — ответ whichCoursesIncludeModule как есть', async () => {
+    const { facade, asked } = course(
+      { courseId: COURSE, isFirst: true, isLast: false },
+      [COURSE, FORK],
+    );
+    expect(expectOk(await ask(facade))).toEqual({ courseIds: [COURSE, FORK] });
+    expect(asked).toEqual([
+      ['place', MODULE],
+      ['include', MODULE, [COURSE, FORK]],
+    ]);
+  });
+
+  it('модуль не первый — пусто, курсы не спрашиваются', async () => {
+    const { facade, asked } = course(
+      { courseId: COURSE, isFirst: false, isLast: true },
+      [COURSE],
+    );
+    expect(expectOk(await ask(facade))).toEqual({ courseIds: [] });
+    expect(asked).toEqual([['place', MODULE]]);
+  });
+
+  it('модуль вне опубликованных программ — пусто', async () => {
+    const { facade, asked } = course(undefined, [COURSE]);
+    expect(expectOk(await ask(facade))).toEqual({ courseIds: [] });
+    expect(asked).toEqual([['place', MODULE]]);
   });
 });

@@ -6,6 +6,7 @@ import { defineModule } from 'dmg-core';
 import { AbandonWishErDef } from './wish/er/abandon-wish.er';
 import { ConfirmWishErDef } from './wish/er/confirm-wish.er';
 import { FulfillWishErDef } from './wish/er/fulfill-wish.er';
+import { InviteWishersErDef } from './wish/er/invite-wishers.er';
 import { CancelWishUcDef } from './wish/uc/cancel-wish.uc';
 import { CreateCourseWishUcDef } from './wish/uc/create-course-wish.uc';
 import { CreateModuleWishUcDef } from './wish/uc/create-module-wish.uc';
@@ -43,6 +44,7 @@ export const WishModuleDef = defineModule({
     FulfillWishErDef,
     ConfirmWishErDef,
     AbandonWishErDef,
+    InviteWishersErDef,
     // gen:defs:reactions
   ],
   jobs: [

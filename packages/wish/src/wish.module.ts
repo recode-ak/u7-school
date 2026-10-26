@@ -5,6 +5,7 @@ import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { AbandonWishEr } from './wish/er/abandon-wish.er';
 import { ConfirmWishEr } from './wish/er/confirm-wish.er';
 import { FulfillWishEr } from './wish/er/fulfill-wish.er';
+import { InviteWishersEr } from './wish/er/invite-wishers.er';
 import { CancelWishUc } from './wish/uc/cancel-wish.uc';
 import { CreateCourseWishUc } from './wish/uc/create-course-wish.uc';
 import { CreateModuleWishUc } from './wish/uc/create-module-wish.uc';
@@ -35,6 +36,7 @@ export const wishMap = {
     fulfillWish: FulfillWishEr,
     confirmWish: ConfirmWishEr,
     abandonWish: AbandonWishEr,
+    inviteWishers: InviteWishersEr,
     // gen:defs:reactions
   },
   jobs: {

@@ -314,6 +314,107 @@ describe('WishAr.fulfill', () => {
   );
 });
 
+describe('WishAr.invite — приглашение на поток', () => {
+  const STREAM = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
+  const moduleId = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
+  const to = { streamId: STREAM, telegramId: 42 };
+  const forModule = (status: WishStatus) =>
+    WishAr.restore({ ...stored(status), target: { kind: 'module', moduleId } });
+
+  it.each(['expressed', 'confirmed'] as const)(
+    '%s на курс: событие invited с целью-курсом, статус не меняется',
+    (status) => {
+      const ar = restore(status);
+      expectOk(ar.invite(T1, to));
+      expect(ar.snapshot()).toEqual({
+        ...stored(status),
+        updatedAt: T1,
+        version: 1,
+      });
+      expect(ar.pullEvents()).toEqual([
+        WishEvents.invited.make({
+          userId: USER,
+          telegramId: 42,
+          streamId: STREAM,
+          targetKind: 'course',
+          courseId: target.courseId,
+        }),
+      ]);
+    },
+  );
+
+  it('на модуль: событие invited с целью-модулем', () => {
+    const ar = forModule('expressed');
+    expectOk(ar.invite(T1, to));
+    expect(ar.pullEvents()).toEqual([
+      WishEvents.invited.make({
+        userId: USER,
+        telegramId: 42,
+        streamId: STREAM,
+        targetKind: 'module',
+        moduleId,
+      }),
+    ]);
+  });
+
+  it.each(['pending', 'cancelled', 'abandoned', 'fulfilled'] as const)(
+    'из %s — WISH_NOT_INVITABLE, без событий и изменений',
+    (status) => {
+      const ar = restore(status);
+      expectErr(ar.invite(T1, to), 'WISH_NOT_INVITABLE');
+      expect(ar.snapshot()).toEqual(stored(status));
+      expect(ar.pullEvents()).toEqual([]);
+    },
+  );
+});
+
+describe('WishAr.addresseeId — кому адресовано приглашение', () => {
+  it('пользователь-желающий', () => {
+    expect(restore('expressed').addresseeId()).toBe(USER);
+  });
+});
+
+describe('WishAr.invitationTargets / isInvitedBy — приглашение на поток', () => {
+  const moduleId = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
+  const forModule = (status: WishStatus) =>
+    WishAr.restore({ ...stored(status), target: { kind: 'module', moduleId } });
+  const none = { courseIds: [], moduleIds: [] };
+  const matched = { courseIds: [target.courseId], moduleIds: [moduleId] };
+
+  it.each(['expressed', 'confirmed'] as const)(
+    'приглашаемое (%s) спрашивает о своей цели: курс или модуль',
+    (status) => {
+      expect(restore(status).invitationTargets()).toEqual({
+        courseIds: [target.courseId],
+        moduleIds: [],
+      });
+      expect(forModule(status).invitationTargets()).toEqual({
+        courseIds: [],
+        moduleIds: [moduleId],
+      });
+    },
+  );
+
+  it.each(['pending', 'cancelled', 'abandoned', 'fulfilled'] as const)(
+    'неприглашаемое (%s) ни о чём не спрашивает и не приглашается',
+    (status) => {
+      expect(restore(status).invitationTargets()).toEqual(none);
+      expect(forModule(status).invitationTargets()).toEqual(none);
+      expect(restore(status).isInvitedBy(matched)).toBe(false);
+      expect(forModule(status).isInvitedBy(matched)).toBe(false);
+    },
+  );
+
+  it('приглашается, если цель среди совпавших; вид цели важен', () => {
+    expect(restore('expressed').isInvitedBy(matched)).toBe(true);
+    expect(forModule('confirmed').isInvitedBy(matched)).toBe(true);
+    expect(restore('expressed').isInvitedBy(none)).toBe(false);
+    const swapped = { courseIds: [moduleId], moduleIds: [target.courseId] };
+    expect(restore('expressed').isInvitedBy(swapped)).toBe(false);
+    expect(forModule('expressed').isInvitedBy(swapped)).toBe(false);
+  });
+});
+
 describe('предикаты переходов — совпадают с from в Def', () => {
   const statuses = Object.keys(WishArDef.statuses) as WishStatus[];
   const cases = [
@@ -321,6 +422,7 @@ describe('предикаты переходов — совпадают с from �
     ['canAbandon', ['pending']],
     ['canCancel', ['expressed', 'confirmed']],
     ['canFulfill', ['expressed', 'confirmed']],
+    ['canInvite', ['expressed', 'confirmed']],
   ] as const;
 
   it.each(cases)('%s — только %p', (predicate, allowed) => {

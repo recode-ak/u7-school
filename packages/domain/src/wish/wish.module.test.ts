@@ -15,17 +15,14 @@ describe('WishModuleDef', () => {
         'cancelWish',
         'listUserWishes',
       ],
-      reactions: ['fulfillWish', 'confirmWish', 'abandonWish'],
+      reactions: ['fulfillWish', 'confirmWish', 'abandonWish', 'inviteWishers'],
       jobs: [],
     });
   });
 
   it('checkDefs — без нарушений', () => {
-    // MAN-06 «событие никто не публикует» — до контрактов ER (Ф10–Ф11):
-    // `invited` и `confirmed` публикуют invite-wishers и confirm-wish.
-    const violations = checkDefs(indexDefs([WishModuleDef])).filter(
-      (x) => x.rule !== 'MAN-06',
+    expect(checkDefs(indexDefs([WishModuleDef])).map(formatViolation)).toEqual(
+      [],
     );
-    expect(violations.map(formatViolation)).toEqual([]);
   });
 });

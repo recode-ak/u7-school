@@ -17,7 +17,7 @@ describe('StreamModuleDef — внешний модуль (D-37)', () => {
     expect(normalize(StreamModuleDef)).toMatchObject({
       dependsOn: ['user', 'course'],
       aggregates: ['stream', 'student'],
-      useCases: [],
+      useCases: ['getStreamPresence'],
       reactions: [],
       jobs: [],
     });

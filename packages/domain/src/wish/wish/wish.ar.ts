@@ -22,6 +22,7 @@ const {
   NOT_ABANDONABLE,
   NOT_CANCELLABLE,
   NOT_FULFILLABLE,
+  NOT_INVITABLE,
   ALREADY_EXISTS,
   NOT_FOUND,
 } = WishErrors;
@@ -346,6 +347,36 @@ export class WishAr extends Aggregate<typeof WishArDef> {
       : enrolled.moduleIds.includes(target.moduleId);
   }
 
+  /**
+   * О чём спросить модуль курсов при открытии набора: приглашаемое желание —
+   * о своей цели (курс или модуль), остальные — ни о чём. Выводится из
+   * state; батч по желаниям собирает `WishInvitationDcs`.
+   */
+  invitationTargets(): FulfillmentTargets {
+    if (!this.canInvite()) return { courseIds: [], moduleIds: [] };
+    const { target } = this.state;
+    return target.kind === 'course'
+      ? { courseIds: [target.courseId], moduleIds: [] }
+      : { courseIds: [], moduleIds: [target.moduleId] };
+  }
+
+  /** Кому адресовано приглашение: пользователь-желающий. */
+  addresseeId(): string {
+    return this.state.userId;
+  }
+
+  /**
+   * Приглашает ли набор желание: оно приглашаемо, и его цель среди целей,
+   * которые модуль курсов признал за модулем потока (`matched`).
+   */
+  isInvitedBy(matched: FulfillmentTargets): boolean {
+    if (!this.canInvite()) return false;
+    const { target } = this.state;
+    return target.kind === 'course'
+      ? matched.courseIds.includes(target.courseId)
+      : matched.moduleIds.includes(target.moduleId);
+  }
+
   // ── Предикаты переходов ──
   // Отвечают по `from` в Def: ER спрашивают их ради идемпотентности,
   // не читая статус напрямую.
@@ -368,6 +399,13 @@ export class WishAr extends Aggregate<typeof WishArDef> {
   /** Реализуемо ли желание (expressed | confirmed — зачисление на поток). */
   canFulfill(): boolean {
     return this.can('fulfill');
+  }
+
+  /** Приглашаемо ли желание (expressed | confirmed — ждёт набора). */
+  canInvite(): boolean {
+    return (
+      this.state.status === 'expressed' || this.state.status === 'confirmed'
+    );
   }
 
   // ── Переходы ──
@@ -403,6 +441,30 @@ export class WishAr extends Aggregate<typeof WishArDef> {
    */
   fulfill(at: Timestamp): Result<void, RejectOf<typeof WishArDef, 'fulfill'>> {
     return this.transition('fulfill', at, () => ok());
+  }
+
+  /**
+   * Приглашает желающего на поток: событие `invited` с адресом и целью из
+   * своего state. Статус не меняется (идемпотентность повторного набора —
+   * долг, решение вопроса 9 брифа). Не приглашаемое — `NOT_INVITABLE`.
+   */
+  invite(
+    at: Timestamp,
+    to: { readonly streamId: string; readonly telegramId: number },
+  ): Result<void, ErrorOf<typeof NOT_INVITABLE>> {
+    if (!this.canInvite()) return NOT_INVITABLE.err();
+    return this.change(at, (draft, emit) => {
+      const { userId, target } = draft;
+      const addressee = { userId, ...to };
+      emit(
+        WishEvents.invited.make(
+          target.kind === 'course'
+            ? { ...addressee, targetKind: 'course', courseId: target.courseId }
+            : { ...addressee, targetKind: 'module', moduleId: target.moduleId },
+        ),
+      );
+      return ok();
+    });
   }
 
   /** Единственное место правила: подтверждать можно только course-желание. */

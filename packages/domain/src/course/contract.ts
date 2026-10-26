@@ -17,6 +17,10 @@ export {
   GetCoursesIncludingModuleUcDef,
 } from './course/uc/get-courses-including-module.uc';
 export {
+  type CoursesStartingWithModule,
+  GetCoursesStartingWithModuleUcDef,
+} from './course/uc/get-courses-starting-with-module.uc';
+export {
   GetModuleEnrollmentUcDef,
   type ModuleEnrollment,
 } from './course/uc/get-module-enrollment.uc';

@@ -57,6 +57,12 @@ export const WishErrors = defineErrors('WISH', {
     description:
       'Реализация доступна из expressed и confirmed; pending сначала подтверждается анкетой.',
   },
+  NOT_INVITABLE: {
+    kind: 'conflict',
+    label: 'Пригласить можно только выраженное или подтверждённое желание',
+    description:
+      'Приглашение на поток доступно из expressed и confirmed; остальные желания уже не ждут набора.',
+  },
   ALREADY_EXISTS: {
     kind: 'conflict',
     label: 'Желание уже выражено',

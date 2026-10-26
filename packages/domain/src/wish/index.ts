@@ -9,6 +9,7 @@ export * from './wish/commands/list-user-wishes-cmd';
 export { AbandonWishErDef } from './wish/er/abandon-wish.er';
 export { ConfirmWishErDef } from './wish/er/confirm-wish.er';
 export { FulfillWishErDef } from './wish/er/fulfill-wish.er';
+export { InviteWishersErDef } from './wish/er/invite-wishers.er';
 export * from './wish/pools/course-pool';
 export { CancelWishUcDef } from './wish/uc/cancel-wish.uc';
 export { CreateCourseWishUcDef } from './wish/uc/create-course-wish.uc';
@@ -24,4 +25,12 @@ export type {
   FulfillmentAnswer,
   FulfillmentQuestion,
 } from './wish-fulfillment.types';
+export { WishInvitationDcs } from './wish-invitation.dcs';
+export type {
+  InvitationMatchAnswer,
+  InvitationMatchQuestion,
+  InvitationOutcome,
+  InvitationReachAnswer,
+  InvitationReachQuestion,
+} from './wish-invitation.types';
 // gen:exports

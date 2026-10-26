@@ -28,6 +28,7 @@ describe('CourseModuleDef — внешний модуль (D-37)', () => {
         'getModuleEnrollment',
         'getCoursesIncludingModule',
         'getSameModules',
+        'getCoursesStartingWithModule',
       ],
       reactions: [],
       jobs: [],

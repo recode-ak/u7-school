@@ -1,4 +1,6 @@
 import { defineModule } from 'dmg-core';
+import { GetTelegramAddressesUcDef } from './user/uc/get-telegram-addresses.uc';
+import { UserArDef } from './user/user.ar';
 
 /**
  * Внешний модуль пользователей (D-37): реализован legacy-кодом, здесь только
@@ -10,8 +12,8 @@ export const UserModuleDef = defineModule({
   description: 'Учётные записи пользователей школы и их роли.',
   external: true,
   dependsOn: [],
-  aggregates: [],
-  useCases: [],
+  aggregates: [UserArDef],
+  useCases: [GetTelegramAddressesUcDef],
   reactions: [],
   jobs: [],
 });
