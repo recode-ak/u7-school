@@ -4,7 +4,7 @@ import type { AnyEventReactionDef } from '../domain/contracts/define-event-react
 import type { AnyJobDef, JobSchedule } from '../domain/contracts/define-job';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyUseCaseDef } from '../domain/contracts/define-use-case';
-import type { AnyEventDef } from '../domain/events/define-events';
+import type { AnyEventDef, NormalizedEvent } from '../domain/events/event-def';
 import type { AnyPolicyDef } from '../domain/policy/define-policy';
 import type { AnyRule } from '../domain/policy/policy';
 import type { AnyRulesDef } from '../domain/rules/define-rules';
@@ -15,17 +15,13 @@ import { toJsonSchema } from '../kernel/schema/json-schema';
 
 type JsonSchema = ReturnType<typeof toJsonSchema>;
 
+export type { NormalizedEvent } from '../domain/events/event-def';
 export type { NormalizedError } from '../kernel/errors/error-def';
 
 type Texts = {
   readonly name: string;
   readonly label: string;
   readonly description: string;
-};
-
-export type NormalizedEvent = Texts & {
-  readonly dmg: 'event';
-  readonly payload: JsonSchema;
 };
 
 /** Переход: отказы — коды ошибок по статусам вне `from`. */
@@ -178,7 +174,7 @@ export function normalize(def: AnyDef): NormalizedDef {
     case 'error':
       return def.normalize();
     case 'event':
-      return { dmg: 'event', ...texts(def), payload: schema(def.payload) };
+      return def.normalize();
     case 'aggregate':
       return {
         dmg: 'aggregate',

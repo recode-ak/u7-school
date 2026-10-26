@@ -53,16 +53,16 @@ export {
   type UseCaseSpec,
 } from './domain/contracts/define-use-case';
 export type { Facade, SystemCallable } from './domain/contracts/facade';
+export { defineEvents } from './domain/events/define-events';
 export {
   type AnyEventDef,
   type DomainEvent,
-  defineEvents,
-  type EventDef,
+  EventDef,
   type EventGroup,
   type EventOf,
   type EventPrefix,
   type EventSpec,
-} from './domain/events/define-events';
+} from './domain/events/event-def';
 export {
   type AnyPolicyDef,
   definePolicy,

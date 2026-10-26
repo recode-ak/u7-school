@@ -1,6 +1,6 @@
 import type * as v from 'valibot';
 import type { AnyErrorDef, ErrorOf } from '#core/kernel/errors/error-def';
-import type { EventOf } from '../events/define-events';
+import type { EventOf } from '../events/event-def';
 import type { AnyAggregateDef } from './define-aggregate';
 
 /** Состояние агрегата по его Def. */

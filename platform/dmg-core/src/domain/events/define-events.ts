@@ -1,85 +1,23 @@
-import type * as v from 'valibot';
+import { EventDef } from './event-def';
+import type { EventGroup, EventPrefix, EventSpec } from './event-def.types';
 
-type PayloadSchema = v.GenericSchema<unknown>;
-
-/** Доменное событие: факт, который накопил агрегат. Конверт добавляет UoW. */
-export type DomainEvent<N extends string = string, P = unknown> = {
-  readonly name: N;
-  readonly payload: P;
-};
-
-/** Описание одного события в группе `defineEvents`. */
-export type EventSpec = {
-  readonly label: string;
-  readonly description: string;
-  readonly payload: PayloadSchema;
-};
-
-/** Манифест события: декларация + фабрика значения. */
-export type EventDef<N extends string, S extends EventSpec> = {
-  readonly dmg: 'event';
-  readonly name: N;
-  readonly label: string;
-  readonly description: string;
-  readonly payload: S['payload'];
-  make(
-    payload: v.InferOutput<S['payload']>,
-  ): DomainEvent<N, v.InferOutput<S['payload']>>;
-};
-
-/** Любой манифест события — для `on`/`emits` и проверок графа. */
-export type AnyEventDef = {
-  readonly dmg: 'event';
-  readonly name: string;
-  readonly label: string;
-  readonly description: string;
-  readonly payload: PayloadSchema;
-  make(payload: never): DomainEvent;
-};
+export { EventDef } from './event-def';
+export type {
+  AnyEventDef,
+  DomainEvent,
+  EventGroup,
+  EventOf,
+  EventPrefix,
+  EventSpec,
+} from './event-def.types';
 
 /**
- * Тип значения события по его Def; для union Def — union событий.
- * Структурно, а не `ReturnType<D['make']>`: для дженерика `D` TS не сводит
- * `ReturnType` к `DomainEvent`.
- */
-export type EventOf<D extends AnyEventDef> = D extends AnyEventDef
-  ? DomainEvent<D['name'], v.InferOutput<D['payload']>>
-  : never;
-
-/** FQN-префикс группы: `module.aggregate` (D-10). */
-export type EventPrefix = `${string}.${string}`;
-
-export type EventGroup<
-  P extends EventPrefix,
-  M extends Record<string, EventSpec>,
-> = {
-  readonly [K in keyof M]: EventDef<`${P}.${K & string}`, M[K]>;
-};
-
-/**
- * Группа событий агрегата. Имя — `module.aggregate.event` (D-10, MAN-08:
- * совпадение префикса с модулем и агрегатом проверяет `arch:check`).
+ * Группа событий агрегата — обёртка над `EventDef.define` на время перевода
+ * потребителей (трек dmg-core-oop, Фаза 7 удаляет).
  */
 export function defineEvents<
   const P extends EventPrefix,
   const M extends Record<string, EventSpec>,
 >(prefix: P, specs: M): EventGroup<P, M> {
-  const group: Record<string, AnyEventDef> = {};
-  for (const [key, spec] of Object.entries(specs)) {
-    group[key] = eventDef(`${prefix}.${key}`, spec);
-  }
-  // Ключи и типы группы задаёт сигнатура: рантайм-сборка через Object.entries
-  // не выражается в mapped type без утверждения.
-  return group as EventGroup<P, M>;
-}
-
-function eventDef(name: string, spec: EventSpec): AnyEventDef {
-  return {
-    dmg: 'event',
-    name,
-    label: spec.label,
-    description: spec.description,
-    payload: spec.payload,
-    make: (payload: unknown): DomainEvent => ({ name, payload }),
-  };
+  return EventDef.define(prefix, specs);
 }

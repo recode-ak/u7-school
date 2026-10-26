@@ -1,5 +1,5 @@
 import type { AnyAggregateDef } from '../aggregate/define-aggregate';
-import type { AnyEventDef, EventOf } from '../events/define-events';
+import type { AnyEventDef, EventOf } from '../events/event-def';
 import type {
   AnyUseCaseDef,
   DeclaredCalls,

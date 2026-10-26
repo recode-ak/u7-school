@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { CoreErrors } from '#core/kernel/errors/core-errors';
-import type { EventOf } from '../events/define-events';
+import type { EventOf } from '../events/event-def';
 import { allowAll } from '../policy/policy';
 import {
   ArchiveDoneErDef,

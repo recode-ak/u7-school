@@ -1,9 +1,6 @@
 import type { AnyAggregateDef } from '#core/domain/aggregate/define-aggregate';
 import type { AnyModuleDef } from '#core/domain/contracts/define-module';
-import type {
-  AnyEventDef,
-  DomainEvent,
-} from '#core/domain/events/define-events';
+import type { AnyEventDef, DomainEvent } from '#core/domain/events/event-def';
 import { CoreErrors } from '#core/kernel/errors/core-errors';
 import type { ErrorOf } from '#core/kernel/errors/error-def';
 import { ok, type Result } from '#core/kernel/result/result';

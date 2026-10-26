@@ -2,7 +2,7 @@ import type {
   AnyEventDef,
   DomainEvent,
   EventOf,
-} from '#core/domain/events/define-events';
+} from '#core/domain/events/event-def';
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { Cause } from '#core/kernel/trace/trace';
 

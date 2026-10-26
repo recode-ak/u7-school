@@ -1,6 +1,6 @@
 import type { AnyAggregateDef } from '../domain/aggregate/define-aggregate';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
-import type { AnyEventDef } from '../domain/events/define-events';
+import type { AnyEventDef } from '../domain/events/event-def';
 import type { AnyDomainRule } from '../domain/rules/domain-rule';
 import type { AnyErrorDef } from '../kernel/errors/error-def';
 import {

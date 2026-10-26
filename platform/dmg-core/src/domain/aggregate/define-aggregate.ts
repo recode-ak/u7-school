@@ -4,7 +4,7 @@ import {
   type BaseEntityFields,
   withEntityDefaults,
 } from '#core/kernel/fields/fields';
-import type { AnyEventDef } from '../events/define-events';
+import type { AnyEventDef } from '../events/event-def';
 
 /** Поля, без которых нет entity, — выводятся из `BaseEntityFields`. */
 export type EntityBase = {
