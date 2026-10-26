@@ -1,0 +1,55 @@
+# Бриф: Фаза 4 — готовность к распределённому запуску (D-28)
+
+Решения Нурболата (2026-10-26): [D-46](../../../architecture/decisions.md) (JSON `Caller`/`Trace`), [D-47](../../../architecture/decisions.md) (outbox и отсев повторов), правило [MAN-13](../../../architecture/rules.md) (один UoW — один модуль), DEBT-1…26 входят в фазу.
+
+Базовая линия: `bun run check` зелёный, 3741 pass.
+
+## Общие границы
+
+- Платформа: `packages/dmg-core/src/**`. Публичная поверхность пакета меняется только так, как описано в шагах.
+- Потребители правятся **механически**, чтобы компилировались и проходили тесты: `packages/core/src/legacy-bridge`, `packages/core/src/api/app/api-app.ts`, `packages/{wish,…}/src`, `apps/u7-bot/src`, шаблоны `scripts/gen`, учебный модуль `dmg-core/src/testing/example`.
+- Не трогать: `conductor/`, `data/`, legacy-код модулей вне указанного в шаге.
+- Применимые ID: ARC-01/02/10, MAN-05, MAN-06, MAN-13, ERR-07, CODE-*, TST-*.
+- TDD: сначала тест, запуск (красный), затем реализация.
+
+## Шаг 1 — круг через JSON (domain-author, платформа, Opus)
+
+Файлы: `kernel/caller/caller.ts`, `kernel/trace/trace.ts` и их тесты; новый тест круга конверта и снапшота (`app/events/`, `domain/aggregate/`).
+
+- `Caller.toJSON(): CallerJson` для всех четырёх видов: `guest`; `user` с `user: U` целиком; `delegate` с `principal`, `actor` (оба `U`), `delegationId`; `system` с `from` и необязательным `person` (вложенный `CallerJson` человека). Тип `CallerJson<U>` — размеченное объединение по `kind`; типы — в отдельном файле (`caller.types.ts`), если `caller.ts` разрастается.
+- `Caller.fromJSON<U>(json, revive?: (raw: unknown) => U): Caller<U>`: восстанавливает тот же класс; без `revive` `U` берётся как есть. `system.person` восстанавливается как `PersonCaller` (не `SystemCaller` — матрёшки нет; JSON с `person.kind === 'system'` — ошибка `fromJSON`).
+- `Trace.toJSON(): TraceJson` и `Trace.fromJSON(json)`: `cause`, `correlationId`, `channel` (без поля, если нет). Приватный конструктор остаётся, `fromJSON` — ещё одна фабрика.
+- `toLog()` не меняется.
+- Тесты: `JSON.parse(JSON.stringify(x.toJSON()))` → `fromJSON` → тот же класс (`instanceof`), те же `kind`, `subject()`, `person()`, `toLog()`, `toJSON()`; `revive` вызывается для каждого `U`. Конверт события (`EventEnvelope`) и `snapshot()` Ar учебного модуля проходят `JSON.parse(JSON.stringify(...))` с `toEqual` (без `undefined`-полей, `Timestamp` — число).
+- Невалидный JSON на входе `fromJSON` — бросает `Error` с понятным текстом (это дефект транспорта, не доменная ошибка); схемы valibot — по усмотрению, если уже есть приём в ядре.
+
+## Шаг 2 — outbox и inbox (domain-author, платформа, Opus)
+
+- Порт `Outbox` в `AppContext` (рядом с `bus`): UoW после записи отдаёт конверты записанных агрегатов в outbox вместо `bus.publish`; порядок и семантика частичного сбоя (D-15) — как сейчас. In-proc реализация по умолчанию публикует в шину сразу.
+- Порт `Inbox`: доставка в реакцию (`ReactionFromDef` / модуль) отсеивает повтор того же `eventId` для той же реакции. In-proc реализация по умолчанию (в памяти).
+- `dmg-core/testing`: контрактный хелпер идемпотентности ER (событие доставлено дважды с разными `eventId` → второй прогон без новых записей и событий) + тест на учебном модуле.
+- Механически — потребители `AppContext`.
+
+## Шаг 3 — идемпотентность реальных ER (api-author, Sonnet)
+
+Хелпер шага 2 — к каждому ER `wish`. Нарушения не чинить: список оркестратору (уйдут в DEBT).
+
+## Шаг 4 — MAN-13 (domain-author, платформа, Opus)
+
+- `checkDefs`: агрегаты операции (`aggregatesOf`) — только своего модуля; сообщение `MAN-13: <операция>: агрегат <fqn> модуля <x>`.
+- UoW: `register` агрегата чужого модуля — нарушение (`violate`).
+- Добавить `MAN-13` в `arch/violation.ts`.
+
+## Шаг 5 — ARC-04 в `checkFiles`, DEBT-33 (domain-author, платформа, Opus; затем оркестратор — `scripts/`)
+
+- Вход модуля для других задаёт приложение (параметр, по умолчанию `index`; у нас — `contract`).
+- Прикладной слой внешнего модуля не проверяется (как обещает JSDoc) — найти, где цикл импортов его обходит.
+- Домен в `ARCH_APPS`, `arch:check` чист, маркер DEBT-33 снят.
+
+## Шаг 6 — DEBT-1…26 (по итогам вопроса 1)
+
+## Открытые вопросы
+
+1. **DEBT-1, 6, 11, 16, 25** — legacy-модули домена импортируют legacy-базовые классы `@u7-scl/core` (`Aggregate`, `DomainEvent`, ошибки, `isoNow`). Погасить их можно только переводом модуля на Def, а в `dmg-core` legacy не попадёт. **DEBT-2, 7, 12, 17, 26** — тип `U7ModuleResolver` и `U7_SCHOOL_ID` из `app` в legacy-`module.ts`; эти файлы исчезнут при переводе модуля. Предложение: перенести эти десять долгов в треки перевода модулей; в Ф4 — только если Нурболат хочет перенести `U7ModuleResolver` (разрыв цикла `app ↔ domain`).
+
+## Отчёты агентов
