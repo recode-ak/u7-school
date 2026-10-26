@@ -6,5 +6,7 @@ export type TaskRepo = Repository<TaskAr> & {
   findById(uuid: string): Promise<TaskAr | undefined>;
   /** Неархивные задачи владельца. */
   findActiveByOwner(ownerId: string): Promise<TaskAr[]>;
+  /** Неархивные задачи, где пользователь владелец или исполнитель. */
+  findActiveByParticipant(userId: string): Promise<TaskAr[]>;
   findDone(): Promise<TaskAr[]>;
 };

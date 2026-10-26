@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'bun:test';
+import { checkDefs } from '#core/arch/check-defs';
+import { formatViolation } from '#core/arch/violation';
+import { indexDefs } from '#core/graph/def-index';
 import { normalize } from '#core/graph/normalize';
 import { TaskArDef } from './task/task.ar';
 import { TodoModuleDef } from './todo.module';
@@ -8,8 +11,14 @@ describe('TodoModuleDef', () => {
     expect(normalize(TodoModuleDef)).toMatchObject({
       dependsOn: ['users'],
       aggregates: ['task'],
-      useCases: ['createTask', 'completeTask', 'listTasks', 'getTask'],
-      reactions: ['archiveRemovedUserTasks'],
+      useCases: [
+        'createTask',
+        'completeTask',
+        'listTasks',
+        'getTask',
+        'assignTask',
+      ],
+      reactions: ['releaseRemovedUserTasks'],
       jobs: ['archiveDoneTasks'],
     });
   });
@@ -30,12 +39,16 @@ describe('TodoModuleDef', () => {
         'todo.task.created',
         'todo.task.completed',
         'todo.task.archived',
+        'todo.task.assigned',
+        'todo.task.unassigned',
       ],
       errors: [
         'TASK_NOT_FOUND',
         'TASK_ALREADY_DONE',
         'TASK_ARCHIVED',
         'TASK_TOO_MANY_OPEN',
+        'TASK_NOT_ASSIGNABLE',
+        'TASK_ASSIGNEE_INACTIVE',
       ],
     });
   });
@@ -50,6 +63,12 @@ describe('TodoModuleDef', () => {
       ...TodoModuleDef.aggregates.flatMap((a) => Object.values(a.errors)),
     ];
     for (const def of defs) expect(() => normalize(def)).not.toThrow();
-    expect(defs).toHaveLength(14);
+    expect(defs).toHaveLength(19);
+  });
+
+  it('checkDefs вместе с users — без нарушений', () => {
+    expect(checkDefs(indexDefs([TodoModuleDef])).map(formatViolation)).toEqual(
+      [],
+    );
   });
 });

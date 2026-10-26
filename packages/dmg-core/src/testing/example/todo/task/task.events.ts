@@ -7,6 +7,8 @@ const ref = {
   ownerId: F.uuid('владельца'),
 };
 
+const assignment = v.object({ ...ref, assigneeId: F.uuid('исполнителя') });
+
 export const TaskEvents = defineEvents('todo.task', {
   created: {
     label: 'Задача создана',
@@ -22,5 +24,16 @@ export const TaskEvents = defineEvents('todo.task', {
     label: 'Задача в архиве',
     description: 'Задача убрана в архив и больше не меняется.',
     payload: v.object(ref),
+  },
+  // Назначение не меняет статус: событие порождает `change`, а не переход.
+  assigned: {
+    label: 'Задача назначена',
+    description: 'Открытой задаче назначен исполнитель.',
+    payload: assignment,
+  },
+  unassigned: {
+    label: 'Назначение снято',
+    description: 'С задачи снят исполнитель, которому она была назначена.',
+    payload: assignment,
   },
 });

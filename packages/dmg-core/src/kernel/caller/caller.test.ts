@@ -23,7 +23,7 @@ const ucRef: OperationRef = {
 const erRef: OperationRef = {
   kind: 'eventReaction',
   module: 'todo',
-  name: 'archiveRemovedUserTasks',
+  name: 'releaseRemovedUserTasks',
 };
 
 describe('GuestCaller', () => {

@@ -5,7 +5,7 @@ import { type Delivery, InProcInbox } from './inbox';
 const ER: OperationRef = {
   kind: 'eventReaction',
   module: 'todo',
-  name: 'archiveRemovedUserTasks',
+  name: 'releaseRemovedUserTasks',
 };
 const OTHER: OperationRef = { ...ER, module: 'stats' };
 const at = (eventId: string, reaction = ER): Delivery => ({

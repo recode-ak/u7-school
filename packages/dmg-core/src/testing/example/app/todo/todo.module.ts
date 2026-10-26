@@ -5,9 +5,10 @@ import {
 } from '#core/app/module/module-from-def';
 import { TodoModuleDef } from '#core/testing/example/todo/index';
 import type { ExampleUser } from '../app-user';
-import { ArchiveRemovedUserTasksEr } from './task/er/archive-removed-user-tasks.er';
+import { ReleaseRemovedUserTasksEr } from './task/er/release-removed-user-tasks.er';
 import { ArchiveDoneTasksJob } from './task/job/archive-done-tasks.job';
 import type { TaskRepo } from './task/task.repo';
+import { AssignTaskUc } from './task/uc/assign-task.uc';
 import { CompleteTaskUc } from './task/uc/complete-task.uc';
 import { CreateTaskUc } from './task/uc/create-task.uc';
 import { GetTaskUc } from './task/uc/get-task.uc';
@@ -23,8 +24,9 @@ export const todoMap = {
     completeTask: CompleteTaskUc,
     listTasks: ListTasksUc,
     getTask: GetTaskUc,
+    assignTask: AssignTaskUc,
   },
-  reactions: { archiveRemovedUserTasks: ArchiveRemovedUserTasksEr },
+  reactions: { releaseRemovedUserTasks: ReleaseRemovedUserTasksEr },
   jobs: { archiveDoneTasks: ArchiveDoneTasksJob },
 } satisfies ModuleMap<typeof TodoModuleDef, TodoDeps, ExampleUser>;
 

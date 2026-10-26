@@ -45,6 +45,10 @@ export class UserAr extends Aggregate<typeof UserArDef> {
     return new UserAr(snapshot);
   }
 
+  isActive(): boolean {
+    return this.state.status === 'active';
+  }
+
   remove(at: Timestamp): Result<void, UserError> {
     return this.transition('remove', at, (_, emit) => {
       emit(UserEvents.removed.make({ userId: this.uuid }));

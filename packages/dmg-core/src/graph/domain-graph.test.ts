@@ -172,7 +172,15 @@ describe('buildGraph', () => {
           from: 'users',
           to: 'todo',
           event: 'users.user.removed',
-          reaction: 'todo.archiveRemovedUserTasks',
+          reaction: 'todo.releaseRemovedUserTasks',
+        },
+        {
+          kind: 'calls',
+          from: 'todo',
+          to: 'users',
+          operation: 'todo.assignTask',
+          useCase: 'users.getUser',
+          type: 'query',
         },
       ]);
     });
@@ -212,6 +220,14 @@ describe('buildGraph', () => {
           useCase: 'todo.getTask',
           type: 'query',
         },
+        {
+          kind: 'calls',
+          from: 'todo',
+          to: 'users',
+          operation: 'todo.assignTask',
+          useCase: 'users.getUser',
+          type: 'query',
+        },
       ]);
     });
 
@@ -233,6 +249,7 @@ describe('buildGraph', () => {
         'todo.completeTask',
         'todo.listTasks',
         'todo.getTask',
+        'todo.assignTask',
       ]);
     });
 
@@ -258,11 +275,11 @@ describe('buildGraph', () => {
     });
 
     it('ER и Job → агрегат, обратные связи у агрегата', () => {
-      const er = graph.reactions['todo.archiveRemovedUserTasks'];
+      const er = graph.reactions['todo.releaseRemovedUserTasks'];
       expect(er?.touches).toEqual(['todo.task']);
       expect(graph.jobs['todo.archiveDoneTasks']?.scans).toEqual(['todo.task']);
       expect(graph.aggregates['todo.task']?.reactions).toEqual([
-        'todo.archiveRemovedUserTasks',
+        'todo.releaseRemovedUserTasks',
       ]);
       expect(graph.aggregates['todo.task']?.jobs).toEqual([
         'todo.archiveDoneTasks',
@@ -272,19 +289,19 @@ describe('buildGraph', () => {
     it('событие: агрегат-владелец, кто публикует и кто слушает', () => {
       expect(graph.events['todo.task.archived']).toMatchObject({
         aggregate: 'todo.task',
-        publishers: ['todo.archiveRemovedUserTasks', 'todo.archiveDoneTasks'],
+        publishers: ['todo.releaseRemovedUserTasks', 'todo.archiveDoneTasks'],
         subscribers: [],
       });
       expect(graph.events['users.user.removed']).toMatchObject({
         aggregate: 'users.user',
-        subscribers: ['todo.archiveRemovedUserTasks'],
+        subscribers: ['todo.releaseRemovedUserTasks'],
       });
     });
 
     it('ошибка: агрегат-владелец и кто её объявляет', () => {
       expect(graph.errors.TASK_NOT_FOUND).toMatchObject({
         aggregate: 'todo.task',
-        usedBy: ['todo.completeTask', 'todo.getTask'],
+        usedBy: ['todo.completeTask', 'todo.getTask', 'todo.assignTask'],
       });
       expect(graph.errors.TASK_ARCHIVED?.def.kind).toBe('conflict');
     });

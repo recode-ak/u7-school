@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import { createLock } from '#core/app/uow/lock';
 import { assertVersion } from '#core/app/uow/repository';
 import { TaskAr, TaskArDef } from '#core/testing/example/todo/index';
-import { TaskState } from '#core/testing/example/todo/task/task.state';
+import { TaskState } from '#core/testing/example/todo/state';
 import type { TaskRepo } from '../task/task.repo';
 
 const Rows = v.array(TaskState);
@@ -25,6 +25,14 @@ export class TaskJsonRepo implements TaskRepo {
 
   async findActiveByOwner(ownerId: string): Promise<TaskAr[]> {
     return this.where((r) => r.ownerId === ownerId && r.status !== 'archived');
+  }
+
+  async findActiveByParticipant(userId: string): Promise<TaskAr[]> {
+    return this.where(
+      (r) =>
+        (r.ownerId === userId || r.assignment?.assigneeId === userId) &&
+        r.status !== 'archived',
+    );
   }
 
   async findDone(): Promise<TaskAr[]> {

@@ -25,4 +25,17 @@ export const TaskErrors = defineErrors('TASK', {
     description: 'Новую задачу нельзя создать, пока открытых задач — предел.',
     payload: v.object({ limit: F.int('Предел открытых задач') }),
   },
+  NOT_ASSIGNABLE: {
+    kind: 'conflict',
+    label: 'Задачу нельзя назначить',
+    description: 'Назначить исполнителя можно только открытой задаче.',
+  },
+  // Своя ошибка, а не USER_*: смысл другой — пользователь есть, но
+  // исполнителем быть не может (ERR-03).
+  ASSIGNEE_INACTIVE: {
+    kind: 'conflict',
+    label: 'Исполнитель неактивен',
+    description: 'Назначить задачу можно только активному пользователю.',
+    payload: v.object({ assigneeId: F.uuid('исполнителя') }),
+  },
 });

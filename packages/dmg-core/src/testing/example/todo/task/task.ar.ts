@@ -5,6 +5,7 @@ import type {
   RejectOf,
 } from '#core/domain/aggregate/aggregate.types';
 import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
+import type { ErrorOf } from '#core/kernel/errors/define-errors';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import { TaskErrors } from './task.errors';
@@ -91,6 +92,10 @@ export class TaskAr extends Aggregate<typeof TaskArDef> {
     return this.state.status === 'archived';
   }
 
+  isAssignedTo(userId: string): boolean {
+    return this.state.assignment?.assigneeId === userId;
+  }
+
   // Отказы — только ошибки `rejects` перехода, а не вся группа: UC объявляет
   // в `errors` то, что реально может вернуть (ERR-02).
   complete(
@@ -106,6 +111,58 @@ export class TaskAr extends Aggregate<typeof TaskArDef> {
   archive(at: Timestamp): Result<void, RejectOf<typeof TaskArDef, 'archive'>> {
     return this.transition('archive', at, (_, emit) => {
       emit(TaskEvents.archived.make(this.ref()));
+      return ok();
+    });
+  }
+
+  /**
+   * Назначает исполнителя открытой задаче. Статус не меняется — мутация
+   * через `change`, события всё равно порождает агрегат. Тот же исполнитель
+   * — `ok` без изменений (повтор ничего не пишет). Смена исполнителя —
+   * одна мутация с двумя событиями: `unassigned` прежнего, затем `assigned`
+   * нового, — по событиям текущий исполнитель восстанавливается всегда.
+   * Активен ли исполнитель, решает правило UC над ответом `users`
+   * (`TaskRules.assigneeActive`), а не Ar: у Ar нет чужих данных.
+   */
+  assign(
+    assigneeId: string,
+    at: Timestamp,
+  ): Result<void, ErrorOf<typeof TaskErrors.NOT_ASSIGNABLE>> {
+    if (!this.isOpen()) return TaskErrors.NOT_ASSIGNABLE.err();
+    if (this.isAssignedTo(assigneeId)) return ok();
+    const previous = this.state.assignment;
+    return this.change(at, (draft, emit) => {
+      if (previous !== undefined) {
+        emit(
+          TaskEvents.unassigned.make({
+            ...this.ref(),
+            assigneeId: previous.assigneeId,
+          }),
+        );
+      }
+      draft.assignment = { assigneeId, assignedAt: at };
+      emit(TaskEvents.assigned.make({ ...this.ref(), assigneeId }));
+      return ok();
+    });
+  }
+
+  /**
+   * Снимает исполнителя: задача возвращается владельцу. Без назначения —
+   * `ok` без изменений (повторное событие ничего не пишет); архивную
+   * задачу не меняем.
+   */
+  unassign(at: Timestamp): Result<void, ErrorOf<typeof TaskErrors.ARCHIVED>> {
+    if (this.isArchived()) return TaskErrors.ARCHIVED.err();
+    const { assignment } = this.state;
+    if (assignment === undefined) return ok();
+    return this.change(at, (draft, emit) => {
+      delete draft.assignment;
+      emit(
+        TaskEvents.unassigned.make({
+          ...this.ref(),
+          assigneeId: assignment.assigneeId,
+        }),
+      );
       return ok();
     });
   }

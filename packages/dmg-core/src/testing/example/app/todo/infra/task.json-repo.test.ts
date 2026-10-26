@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { VersionConflict } from '#core/app/uow/repository';
 import { TaskAr } from '#core/testing/example/todo/index';
+import type { TaskState } from '#core/testing/example/todo/state';
 import { expectOk } from '#core/testing/index';
 import { TaskJsonRepo } from './task.json-repo';
 
@@ -54,5 +55,55 @@ describe('TaskJsonRepo — версия', () => {
     );
     await Promise.all([repo.save(create()), repo.save(other)]);
     expect(await repo.findActiveByOwner(OWNER)).toHaveLength(2);
+  });
+});
+
+describe('TaskJsonRepo — выборки', () => {
+  const ASSIGNEE = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
+  const row = (status: TaskState['status'], assigneeId?: string) => ({
+    uuid: crypto.randomUUID(),
+    ownerId: OWNER,
+    title: 'Задача',
+    status,
+    createdAt: T0,
+    updatedAt: T0,
+    version: 0,
+    ...(assigneeId && { assignment: { assigneeId, assignedAt: T0 } }),
+  });
+
+  it('findActiveByOwner — неархивные задачи владельца', async () => {
+    const open = row('open');
+    const done = row('done');
+    const other = { ...row('open'), ownerId: ASSIGNEE };
+    await Bun.write(
+      join(dir, 'tasks.json'),
+      JSON.stringify([open, done, row('archived'), other]),
+    );
+    const found = await repo.findActiveByOwner(OWNER);
+    expect(found.map((t) => t.uuid)).toEqual([open.uuid, done.uuid]);
+  });
+
+  it('findActiveByParticipant — неархивные задачи, где пользователь владелец или исполнитель, без дублей', async () => {
+    const own = { ...row('open'), ownerId: ASSIGNEE };
+    const ownSelf = { ...row('done', ASSIGNEE), ownerId: ASSIGNEE };
+    const assigned = row('open', ASSIGNEE);
+    await Bun.write(
+      join(dir, 'tasks.json'),
+      JSON.stringify([
+        own,
+        ownSelf,
+        assigned,
+        row('archived', ASSIGNEE),
+        { ...row('archived'), ownerId: ASSIGNEE },
+        row('open', OWNER),
+        row('open'),
+      ]),
+    );
+    const found = await repo.findActiveByParticipant(ASSIGNEE);
+    expect(found.map((t) => t.uuid)).toEqual([
+      own.uuid,
+      ownSelf.uuid,
+      assigned.uuid,
+    ]);
   });
 });

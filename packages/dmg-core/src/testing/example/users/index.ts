@@ -1,6 +1,4 @@
-// Публичный API учебного модуля users.
-export { RemoveUserUcDef } from './user/uc/remove-user.uc';
+// Публичный API учебного модуля users: контракт + Ar для своего
+// прикладного слоя (`example/app/users`).
+export * from './contract';
 export { UserAr, UserArDef } from './user/user.ar';
-export { UserErrors } from './user/user.errors';
-export { UserEvents } from './user/user.events';
-export { UsersModuleDef } from './users.module';

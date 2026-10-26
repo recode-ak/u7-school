@@ -5,7 +5,7 @@ import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Cause, Trace } from '#core/kernel/trace/trace';
 import {
-  ArchiveRemovedUserTasksErDef,
+  ReleaseRemovedUserTasksErDef,
   TaskAr,
   TaskEvents,
   TodoModuleDef,
@@ -42,8 +42,8 @@ type Deps = ModuleDeps & { readonly tasks: MemoryTasks };
 /** Модули без зависимостей — фасадов нет. */
 const facades = new ModuleFacades();
 
-class ArchiveRemovedUserTasks extends ReactionFromDef<
-  typeof ArchiveRemovedUserTasksErDef,
+class ReleaseRemovedUserTasks extends ReactionFromDef<
+  typeof ReleaseRemovedUserTasksErDef,
   Deps
 > {
   /** Тесты подменяют шаг, чтобы получить нужный сбой или вызов. */
@@ -64,7 +64,7 @@ class ArchiveRemovedUserTasks extends ReactionFromDef<
   seen: SystemCaller | undefined;
 
   constructor(deps: Deps, module: AnyModuleDef = TodoModuleDef) {
-    super(ArchiveRemovedUserTasksErDef, deps, module);
+    super(ReleaseRemovedUserTasksErDef, deps, module);
   }
 
   protected react(
@@ -81,14 +81,14 @@ class ArchiveRemovedUserTasks extends ReactionFromDef<
 
 let ctx: ReturnType<typeof testAppContext>;
 let tasks: MemoryTasks;
-let er: ArchiveRemovedUserTasks;
+let er: ReleaseRemovedUserTasks;
 
 beforeEach(() => {
   ctx = testAppContext({ at: T0 });
   tasks = new MemoryTasks();
   tasks.rows.set(TASK, taskRow(TASK));
   tasks.rows.set(TASK_2, taskRow(TASK_2, 'done'));
-  er = new ArchiveRemovedUserTasks({ app: ctx.app, facades, tasks });
+  er = new ReleaseRemovedUserTasks({ app: ctx.app, facades, tasks });
 });
 
 describe('ReactionFromDef.handle', () => {
@@ -113,18 +113,18 @@ describe('ReactionFromDef.handle', () => {
     expect(er.ref).toEqual({
       kind: 'eventReaction',
       module: 'todo',
-      name: 'archiveRemovedUserTasks',
+      name: 'releaseRemovedUserTasks',
     });
   });
 
   test('ER не из модуля — исключение сборки', () => {
     expect(
       () =>
-        new ArchiveRemovedUserTasks(
+        new ReleaseRemovedUserTasks(
           { app: ctx.app, facades, tasks },
           UsersModuleDef,
         ),
-    ).toThrow('ER archiveRemovedUserTasks не входит в модуль users');
+    ).toThrow('ER releaseRemovedUserTasks не входит в модуль users');
   });
 
   test('для вызова UC — SystemCaller без человека (D-43) и след цепочки', async () => {
@@ -144,7 +144,7 @@ describe('ReactionFromDef.handle', () => {
     expect(ctx.logs).toContainEqual(
       expect.objectContaining({
         level: 'error',
-        source: 'archiveRemovedUserTasks',
+        source: 'releaseRemovedUserTasks',
       }),
     );
   });
@@ -188,7 +188,7 @@ describe('ReactionFromDef — лог операций (D-43, Р6)', () => {
       {
         at: T0,
         module: 'todo',
-        op: 'archiveRemovedUserTasks',
+        op: 'releaseRemovedUserTasks',
         kind: 'eventReaction',
         caller: { kind: 'system', from: er.ref },
         trace: {
@@ -227,7 +227,7 @@ describe('ReactionFromDef — лог операций (D-43, Р6)', () => {
 describe('ReactionFromDef — production', () => {
   test('агрегат чужого модуля вне touches — два warn, реакция проходит', async () => {
     const prod = testAppContext({ mode: 'production', at: T0 });
-    er = new ArchiveRemovedUserTasks({ app: prod.app, facades, tasks });
+    er = new ReleaseRemovedUserTasks({ app: prod.app, facades, tasks });
     er.step = async (_e, uow) => {
       const task = TaskAr.restore(taskRow(TASK));
       uow.register(task, { aggregate: UserArDef, save: async () => {} });
@@ -266,7 +266,7 @@ describe('ReactionFromDef — повтор доставки (D-47)', () => {
     expect(ctx.oplog.records).toHaveLength(1);
     expect(ctx.logs).toContainEqual({
       level: 'debug',
-      source: 'archiveRemovedUserTasks',
+      source: 'releaseRemovedUserTasks',
       message: 'Повтор доставки e-removed отброшен',
     });
   });
@@ -317,7 +317,7 @@ describe('ReactionFromDef — сбой inbox (ERR-07)', () => {
         throw new Error('inbox недоступен');
       },
     });
-    er = new ArchiveRemovedUserTasks({
+    er = new ReleaseRemovedUserTasks({
       app: { ...ctx.app, inbox: failing },
       facades,
       tasks,
@@ -341,7 +341,7 @@ describe('ReactionFromDef — сбой inbox (ERR-07)', () => {
     expect(ctx.logs).toEqual([
       expect.objectContaining({
         level: 'error',
-        source: 'archiveRemovedUserTasks',
+        source: 'releaseRemovedUserTasks',
         message: 'Непредвиденный сбой',
       }),
     ]);
@@ -353,7 +353,7 @@ describe('ReactionFromDef — сбой inbox (ERR-07)', () => {
         throw new Error('inbox недоступен');
       },
     });
-    er = new ArchiveRemovedUserTasks({
+    er = new ReleaseRemovedUserTasks({
       app: { ...ctx.app, inbox: failing },
       facades,
       tasks,
@@ -363,7 +363,7 @@ describe('ReactionFromDef — сбой inbox (ERR-07)', () => {
     expect(ctx.logs).toContainEqual(
       expect.objectContaining({
         level: 'error',
-        source: 'archiveRemovedUserTasks',
+        source: 'releaseRemovedUserTasks',
         message: 'Не удалось снять доставку e-removed',
       }),
     );

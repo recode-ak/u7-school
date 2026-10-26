@@ -13,12 +13,24 @@ describe('archCheck', () => {
     expect(archCheck(empty)).toEqual([]);
   });
 
-  it('вход модуля для других — из приложения (`entry`)', () => {
-    const app = { ...ExampleArch, entry: 'contract' };
+  it('вход модуля для других — из приложения (`entry`, по умолчанию index)', () => {
+    // Пример входит через `contract.ts`; при входе `index` тот же импорт —
+    // нарушение ARC-04 в домене и прикладном слое.
+    const app = { ...ExampleArch, entry: undefined };
+    const arc04 = (file: string) =>
+      `ARC-04: ${file} импортирует users мимо index.ts: #core/testing/example/users/contract`;
     expect(archCheck(app).map(formatViolation)).toEqual([
-      'ARC-04: todo/task/er/archive-removed-user-tasks.er.ts импортирует users мимо contract.ts: #core/testing/example/users/index',
-      'ARC-04: todo/todo.module.ts импортирует users мимо contract.ts: ../users',
-      'ARC-04: todo/task/er/archive-removed-user-tasks.er.test.ts импортирует users мимо contract.ts: #core/testing/example/users/index',
+      // домен
+      arc04('todo/task/er/release-removed-user-tasks.er.ts'),
+      arc04('todo/task/task.rules.ts'),
+      arc04('todo/task/uc/assign-task.uc.test.ts'),
+      arc04('todo/task/uc/assign-task.uc.ts'),
+      arc04('todo/todo.module.ts'),
+      // прикладной слой (`app/`)
+      arc04('todo/task/er/release-removed-user-tasks.er.test.ts'),
+      arc04('todo/task/uc/assign-task.uc.test.ts'),
+      arc04('todo/task/uc/assign-task.uc.ts'),
+      arc04('todo/todo.module.test.ts'),
     ]);
   });
 });

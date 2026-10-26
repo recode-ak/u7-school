@@ -43,3 +43,20 @@ describe('TaskRules.withinOpenLimit', () => {
     );
   });
 });
+
+const { assigneeActive } = TaskRules.rules;
+const ASSIGNEE = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
+
+describe('TaskRules.assigneeActive — правило над ответом users', () => {
+  it('исполнитель активен — ok', () => {
+    const assignee = { userId: ASSIGNEE, active: true };
+    expect(assigneeActive.check({ assignee })).toEqual(ok());
+  });
+
+  it('учётная запись удалена — TASK_ASSIGNEE_INACTIVE с исполнителем', () => {
+    const assignee = { userId: ASSIGNEE, active: false };
+    expect(assigneeActive.check({ assignee })).toEqual(
+      TaskErrors.ASSIGNEE_INACTIVE.err({ assigneeId: ASSIGNEE }),
+    );
+  });
+});

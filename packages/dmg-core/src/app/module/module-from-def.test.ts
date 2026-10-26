@@ -6,9 +6,9 @@ import { Trace } from '#core/kernel/trace/trace';
 import { memoryBus, testAppContext } from '#core/testing/app-context';
 import {
   ArchiveDoneTasksJobDef,
-  ArchiveRemovedUserTasksErDef,
   CompleteTaskUcDef,
   CreateTaskUcDef,
+  ReleaseRemovedUserTasksErDef,
   TaskErrors,
 } from '#core/testing/example/todo/index';
 import { UserEvents } from '#core/testing/example/users/index';
@@ -32,7 +32,7 @@ const MiniModuleDef = defineModule({
   dependsOn: [],
   aggregates: [],
   useCases: [CompleteTaskUcDef],
-  reactions: [ArchiveRemovedUserTasksErDef],
+  reactions: [ReleaseRemovedUserTasksErDef],
   jobs: [ArchiveDoneTasksJobDef],
 });
 
@@ -64,12 +64,12 @@ class CompleteTask extends UseCaseFromDef<
   }
 }
 
-class ArchiveRemoved extends ReactionFromDef<
-  typeof ArchiveRemovedUserTasksErDef,
+class ReleaseRemoved extends ReactionFromDef<
+  typeof ReleaseRemovedUserTasksErDef,
   Deps
 > {
   constructor(deps: Deps, module: typeof MiniModuleDef) {
-    super(ArchiveRemovedUserTasksErDef, deps, module);
+    super(ReleaseRemovedUserTasksErDef, deps, module);
   }
   protected async react() {
     this.resolve.reacted.push(this.def.name);
@@ -89,7 +89,7 @@ class ArchiveDone extends JobFromDef<typeof ArchiveDoneTasksJobDef, Deps> {
 
 const map = {
   useCases: { completeTask: CompleteTask },
-  reactions: { archiveRemovedUserTasks: ArchiveRemoved },
+  reactions: { releaseRemovedUserTasks: ReleaseRemoved },
   jobs: { archiveDoneTasks: ArchiveDone },
 } satisfies Map;
 
@@ -208,11 +208,11 @@ describe('ModuleFromDef.subscribe', () => {
     } as const;
     bus.publish(removed);
     await new Promise((r) => setTimeout(r, 0));
-    expect(deps.reacted).toEqual(['archiveRemovedUserTasks']);
+    expect(deps.reacted).toEqual(['releaseRemovedUserTasks']);
     off();
     bus.publish(removed);
     await new Promise((r) => setTimeout(r, 0));
-    expect(deps.reacted).toEqual(['archiveRemovedUserTasks']);
+    expect(deps.reacted).toEqual(['releaseRemovedUserTasks']);
   });
 });
 
@@ -229,8 +229,8 @@ describe('ModuleMap — полнота проверяется компилято
   test('класс чужого Def под именем UC', () => {
     const wrong: Map = {
       ...map,
-      // @ts-expect-error: ArchiveRemoved реализует ER, а не completeTask
-      useCases: { completeTask: ArchiveRemoved },
+      // @ts-expect-error: ReleaseRemoved реализует ER, а не completeTask
+      useCases: { completeTask: ReleaseRemoved },
     };
     expect(wrong).toBeDefined();
   });

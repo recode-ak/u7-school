@@ -36,7 +36,7 @@
 - Внешние UC зависимостей и их адаптеры над legacy — [get-courses-including-module.uc.ts](../../../packages/domain/src/course/course/uc/get-courses-including-module.uc.ts), [адаптер](../../../packages/course/src/course/uc/get-courses-including-module.uc.ts) (TR-11).
 - Без вызовов, один агрегат: [confirm-wish.er.ts](../../../packages/wish/src/wish/er/confirm-wish.er.ts) (`emits: [WishEvents.confirmed]`), [abandon-wish.er.ts](../../../packages/wish/src/wish/er/abandon-wish.er.ts).
 - Два раунда «вопрос → ответ» и событие без смены статуса: [invite-wishers.er.ts](../../../packages/wish/src/wish/er/invite-wishers.er.ts), [wish-invitation.dcs.ts](../../../packages/domain/src/wish/wish-invitation.dcs.ts) — раунд 2 (поток, адреса) строится из ответа раунда 1, пустой раунд — без вызовов.
-- Учебный образец без вызовов — [archive-removed-user-tasks.er.ts](../../../packages/dmg-core/src/testing/example/app/todo/task/er/archive-removed-user-tasks.er.ts).
+- Учебный образец без вызовов — [release-removed-user-tasks.er.ts](../../../packages/dmg-core/src/testing/example/app/todo/task/er/release-removed-user-tasks.er.ts).
 
 ## 5. Чеклист правил
 
