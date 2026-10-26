@@ -42,8 +42,8 @@
 
 Бриф: [slices/phase4.md](./slices/phase4.md). Решения: D-46, D-47, MAN-13.
 
-- [~] Task: Круг через JSON (D-46): `Caller.toJSON/fromJSON` (субъект `U` целиком, `revive`), `Trace.toJSON/fromJSON`; тесты для всех видов `Caller`, `Trace`, конверта события, снапшота Ar
-- [ ] Task: Порты `Outbox` (вместо `bus` в UoW) и `Inbox` (отсев повтора `eventId`) в `dmg-core`, in-proc по умолчанию; контрактный хелпер идемпотентности ER в `dmg-core/testing` (D-47)
+- [x] Task: Круг через JSON (D-46): `Caller.toJSON/fromJSON` (субъект `U` целиком, `revive`), `Trace.toJSON/fromJSON`; тесты для всех видов `Caller`, `Trace`, конверта события, снапшота Ar (7bddc3b)
+- [~] Task: Порты `Outbox` (вместо `bus` в UoW) и `Inbox` (отсев повтора `eventId`) в `dmg-core`, in-proc по умолчанию; контрактный хелпер идемпотентности ER в `dmg-core/testing` (D-47)
 - [ ] Task: Хелпер идемпотентности — к ER `wish`; нарушения — в DEBT
 - [ ] Task: MAN-13 «UoW — один модуль»: `checkDefs` и рантайм-проверка в UoW
 - [ ] Task: Подпуть контрактов модуля `domain/<m>/contract` — сделан в D-45 (61322654): `exports` пакета домена `./*/contract`, `contract.ts` у всех 7 модулей; наполнение остальных модулей — в треках их перевода

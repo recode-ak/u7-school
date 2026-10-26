@@ -53,3 +53,14 @@
 1. **DEBT-1, 6, 11, 16, 25** — legacy-модули домена импортируют legacy-базовые классы `@u7-scl/core` (`Aggregate`, `DomainEvent`, ошибки, `isoNow`). Погасить их можно только переводом модуля на Def, а в `dmg-core` legacy не попадёт. **DEBT-2, 7, 12, 17, 26** — тип `U7ModuleResolver` и `U7_SCHOOL_ID` из `app` в legacy-`module.ts`; эти файлы исчезнут при переводе модуля. Предложение: перенести эти десять долгов в треки перевода модулей; в Ф4 — только если Нурболат хочет перенести `U7ModuleResolver` (разрыв цикла `app ↔ domain`).
 
 ## Отчёты агентов
+
+### Шаг 1 — domain-author (Opus), готово
+
+- `kernel/caller/caller.types.ts` (новый): `Identified`, `CallerKind`, `OperationRef`, `CallerLog` + `CallerJson<U>` и виды; `caller.ts` реэкспортирует.
+- `Caller.toJSON()` (узкий тип у каждого класса), `Caller.fromJSON(json, revive?)`, `ReviveSubject<U>`; вход проверяется valibot (`safeParse` + `summarize`, как в `aggregate.ts`), ошибка — `Error('Caller.fromJSON: …')`; `system.person` — только guest/user/delegate.
+- `Trace.toJSON()`, `Trace.fromJSON(json)`, `TraceJson` (= `TraceLog`); `toLog()` делегирует `toJSON()`.
+- Экспорт: `CallerJson`, `ReviveSubject` (корень), `TraceJson` (`/app`).
+- Тесты: круг для 7 вариантов `Caller`, `Trace` (запрос с каналом и без, событие, Job), конверты UoW (`app/events/event-envelope.test.ts`), снапшот `TaskAr` (`domain/aggregate/snapshot-json.test.ts`).
+- Отклонения: тесты конверта и снапшота зелёные сразу (свойство уже выполнялось — тест закрепляет); `toStrictEqual` вместо `toEqual` (ловит `undefined`-поля); без `revive` субъект проверяется на `uuid: string`; `JSON.stringify(caller)` теперь даёт форму `toJSON()` (лог операций пишет `toLog()` — не затронут).
+- Открытый вопрос агента: экспорт вложенных JSON-типов (`UserCallerJson`…) из корня — пока нет (тактика оркестратора: по первому потребителю).
+- Гейт оркестратора: `bun run check` — 3764 pass, 0 fail.
