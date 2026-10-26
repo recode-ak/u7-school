@@ -68,6 +68,7 @@ infra/<aggregate>.json-repo.ts
 |---|---|---|
 | Файлы, папки | kebab-case + суффикс вида | `complete-student.uc.ts` |
 | Тесты | рядом, `<file>.test.ts` | `student.ar.test.ts` |
+| Экспортируемые типы | рядом, `<file>.types.ts`; в файле класса — только приватные (TR-19) | `aggregate.types.ts`, `wish.types.ts` |
 | Классы, типы | PascalCase + сокращение | `StudentAr`, `StreamFacade` |
 | Def | `<Имя><Вид>Def` | `StudentArDef`, `CompleteStudentUcDef` |
 | Группы | `<Агрегат>Events`, `<Агрегат>Errors` | `StudentEvents.completed` |
