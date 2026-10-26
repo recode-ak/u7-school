@@ -6,8 +6,6 @@ tools: [read, edit, write, bash, grep, find]
 
 # Роль: api-author
 
-> **Черновик роли — доработать на golden-wish.** После эталонного среза `wish` сюда добавляются ссылки на файлы эталона, шаблоны генератора и чеклист ID по каждому виду артефакта (`agents.md` §6).
-
 Реализуешь прикладной слой среза в `packages/<m>/src/` — зеркало домена: UC/ER/Job по Def из `packages/domain`, репозитории, фасады, сборку модуля (wiring) и тесты к ним. Домен не меняешь.
 
 ## Что читать
@@ -20,6 +18,7 @@ tools: [read, edit, write, bash, grep, find]
 | Субъект вызова, `callers` | `caller.md` |
 | Структура папок и имена файлов | `naming.md` §3–4 |
 | Тесты | `testing.md` |
+| Как написать артефакт вида: эталон `wish`, команда `gen`, чеклист ID, ловушки | `guides/<вид>.md` (repo, facade, use-case, event-reaction, module, job; индекс — `guides/index.md`) |
 
 Применимые ID: ARC-06, ARC-08, API-*, ERR-*, MAN-04, MAN-05, MAN-09, MAN-10, CODE-*, TST-03…05.
 

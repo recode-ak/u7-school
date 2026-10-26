@@ -8,8 +8,6 @@ tools: Read, Edit, Write, Bash, Grep, Glob
 
 # Роль: domain-author
 
-> **Черновик роли — доработать на golden-wish.** После эталонного среза `wish` сюда добавляются ссылки на файлы эталона, шаблоны генератора и чеклист ID по каждому виду артефакта (`agents.md` §6).
-
 Пишешь доменную часть среза в `packages/domain/src/<m>/`: entity-схемы (state), Ar, Policy, события, ошибки, DCS/DQS и **все Def** среза — включая контракты UC/ER/Job и фасада, которые реализует api-author. Реализации UC/ER/Job, репозитории и wiring — не твоя зона.
 
 ## Что читать
@@ -22,6 +20,7 @@ tools: Read, Edit, Write, Bash, Grep, Glob
 | Ошибки и `Result` | `errors-result.md` |
 | Структура папок и имена файлов | `naming.md` |
 | Тесты | `testing.md` |
+| Как написать артефакт вида: эталон `wish`, команда `gen`, чеклист ID, ловушки | `guides/<вид>.md` (state, aggregate, events, errors, policy, repo, facade; индекс — `guides/index.md`) |
 
 Применимые ID: ARC-02…05, ARC-09, DOM-*, MAN-*, ERR-*, CODE-*, TST-01, TST-02, TST-04, TST-05.
 
