@@ -1,0 +1,7 @@
+Контрольная точка Фазы 5 (dmg-core-extract): документация и инструменты в пакете.
+
+Задачи фазы: разметка (6e83c5f), учебный модуль (ee7e68d), сборка артефактов (4c7a450), CLI init/sync (ee84adb), генераторы в пакет (bd51181), arch:check + README (f748998), extract-check потребителя (61d202c), правки ревью (8baaa3a).
+
+Автоматическая проверка: bun run check — зелёный (пакет 689 pass; потребитель tarball: init, sync --check, consumer-check, gen, 9 pass; проект 3971 pass; arch:check 0).
+Ревью: reviewer по diff 5a1dc840..HEAD — error/major нет; 6 minor исправлены в 8baaa3a; 3 question вынесены в plan.md (Ф6, «Открытые вопросы ревью Ф5»).
+Ручная верификация: шаги предложены в сессии (bun run gen module demo, bun run extract:check, README и naming.md §5); Нурболат дал переход к следующей фазе («подготовь все к следующей фазе в новой сессии», 2026-10-26).
