@@ -1,0 +1,11 @@
+Задача: Генераторы в пакет (трек dmg-core-extract, Фаза 5).
+
+Сделано:
+- scripts/gen перенесён в packages/dmg-core/src/gen; CLI пакета получил команду gen (DmgCoreCli.gen, main.ts).
+- GenLayout (src/gen/layout.ts): раскладка из секции gen в dmg-core.json (domain, app, domainImport) со значениями по умолчанию; CliConfig разбирает и проверяет секцию.
+- Шаблоны прикладного слоя импортируют домен по layout.domainImport (шаблон или относительный путь) и сортируют импорты по порядку biome (src/gen/import-order.ts, общий с apply.ts).
+- gen module больше не создаёт package.json/tsconfig/index.ts прикладного пакета (решение 5 spec).
+- Тесты: unit-тесты генераторов перенесены и переведены на GenLayout; e2e пакета на временном проекте (biome, tsc, bun test, archCheck); приёмка раскладки проекта — scripts/gen-e2e.test.ts через bun run gen.
+- Документация: docs/naming.md §5 пакета; проектный conductor/architecture/naming.md — раскладка и новый прикладной пакет; ссылки в ролях/скилах обновлены, копии пересобраны (dmg:sync, agents:sync).
+
+Проверка: bun run check — зелёный (пакет 681 pass, проект 3965 pass, arch:check 0).
