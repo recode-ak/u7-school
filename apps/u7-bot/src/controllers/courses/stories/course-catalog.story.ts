@@ -14,7 +14,7 @@ import {
   CreateCourseWishUcDef,
   CreateModuleWishUcDef,
   ListUserWishesUcDef,
-} from '@u7-scl/domain/wish';
+} from '@u7-scl/domain/wish/contract';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
 import { resolveCourseNavLevel } from '../course-nav-resolver';

@@ -1,6 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app/domain';
-import { CancelWishUcDef, ListUserWishesUcDef } from '@u7-scl/domain/wish';
+import {
+  CancelWishUcDef,
+  ListUserWishesUcDef,
+} from '@u7-scl/domain/wish/contract';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import { UserCaller } from 'dmg-core';

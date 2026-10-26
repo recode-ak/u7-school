@@ -26,7 +26,8 @@
 
 ```
 <m>/
-  index.ts                 публичный API модуля (единственная точка входа для других модулей)
+  contract.ts              вход для остального кода: ModuleDef, Def внешних операций, события, ошибки, VO контрактов (D-45)
+  index.ts                 API домена для своего прикладного пакета packages/<m> (включая contract)
   <m>.module.ts            defineModule — паспорт, dependsOn
   <m>.facade.ts            defineFacade — контракт runtime-API модуля
   <topic>.dcs.ts           DCS модуля (несколько агрегатов)
@@ -45,7 +46,7 @@
 packages/domain/src/shared/  поля и VO школы, общие для модулей
 ```
 
-Подпути экспорта: `@u7-scl/domain/<m>` — доменный API и Def; `@u7-scl/domain/<m>/state` — схемы entity, **только для рендереров UI**.
+Подпути экспорта: `@u7-scl/domain/<m>/contract` — для другого кода; `@u7-scl/domain/<m>` — для своего прикладного пакета. Подпути state нет: схемы entity наружу не выходят, форма данных — из контракта (D-45).
 
 ## 3. Прикладной слой: `packages/<m>/src/` (зеркало домена)
 

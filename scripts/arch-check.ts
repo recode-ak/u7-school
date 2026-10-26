@@ -19,6 +19,7 @@ import { indexDefs } from 'dmg-core/graph';
 import { ExampleArch } from 'dmg-core/testing';
 import { DEBT_MD, DOMAIN_MODULES } from './domain-arch';
 import {
+  checkContractImports,
   checkDebt,
   checkDomainDirs,
   checkDomainGraph,
@@ -69,6 +70,20 @@ export async function readPackageSources(root = '.'): Promise<DomainFile[]> {
   return files;
 }
 
+/** Исходники приложений для ARC-04 (D-45): код и тесты `apps/*`. */
+async function readAppSources(root: string): Promise<DomainFile[]> {
+  const files: DomainFile[] = [];
+  for (const pattern of [
+    'apps/*/src/**/*.{ts,tsx}',
+    'apps/*/tests/**/*.{ts,tsx}',
+  ]) {
+    for await (const path of new Glob(pattern).scan(root)) {
+      files.push({ path, text: await Bun.file(`${root}/${path}`).text() });
+    }
+  }
+  return files;
+}
+
 /** Проверки домена: Def, импорты, граф, долг. Возвращает строки нарушений. */
 export async function runDomainCheck(root = '.'): Promise<string[]> {
   const code = await readPackageSources(root);
@@ -79,8 +94,16 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
   })
     .filter((d) => d.isDirectory())
     .map((d) => d.name);
+  const modules = {
+    all: DOMAIN_MODULES.map((m) => m.name),
+    dmg: DOMAIN_MODULES.filter((m) => !m.external).map((m) => m.name),
+  };
   return [
     ...checkDefs(indexDefs(DOMAIN_MODULES)).map(formatViolation),
+    ...checkContractImports(
+      [...code, ...(await readAppSources(root))],
+      modules,
+    ),
     ...checkDomainDirs(dirs, graph),
     ...checkDomainGraph(graph),
     ...checkDomainImports(code, graph),

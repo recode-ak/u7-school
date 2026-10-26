@@ -7,7 +7,6 @@ export type {
   CourseAccessDeniedUcError,
   CourseNotFoundUcError,
 } from './course/commands/errors';
-export { CourseArDef } from './course/course.ar';
 export {
   type CourseEnrollment,
   GetCourseEnrollmentUcDef,

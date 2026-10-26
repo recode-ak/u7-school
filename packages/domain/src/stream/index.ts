@@ -15,6 +15,7 @@ export * from './stream/commands/list-streams-cmd';
 export * from './stream/events';
 export * from './stream/policy';
 export * from './stream/repo';
+export { StreamArDef } from './stream/stream.ar';
 export * from './stream-ds';
 export * from './student/a-root';
 export * from './student/commands/complete-step-cmd';

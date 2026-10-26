@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { QuestionnairePoolSchema } from '@u7-scl/domain/questionnaire';
+import { QuestionnairePoolSchema } from '@u7-scl/domain/questionnaire/contract';
 import * as v from 'valibot';
 import coursePools from './course.json';
 import { findCoursePool } from './course-pool';

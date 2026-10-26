@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { defineModule } from 'dmg-core';
 import {
+  checkContractImports,
   checkDebt,
   checkDomainDirs,
   checkDomainGraph,
@@ -41,11 +42,11 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
       ),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([
-      "ARC-04: packages/domain/src/course/a.ts: чужой модуль user только через index (import '../user/state')",
+      "ARC-04: packages/domain/src/course/a.ts: чужой модуль user — только через contract, index — по DEBT-34 (import '../user/state')",
     ]);
   });
 
-  it('подпути @u7-scl/domain/<m>/state и /contract разрешены публичными', () => {
+  it('подпуть @u7-scl/domain/<m>/contract разрешён публичным', () => {
     const files = [
       file(
         'packages/domain/src/course/a.ts',
@@ -53,6 +54,18 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
       ),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([]);
+  });
+
+  it('подпуть /state не публичный (D-45) — ARC-04', () => {
+    const files = [
+      file(
+        'packages/domain/src/course/a.ts',
+        "import { U } from '@u7-scl/domain/user/state';",
+      ),
+    ];
+    expect(checkDomainImports(files, DEPENDS)).toEqual([
+      "ARC-04: packages/domain/src/course/a.ts: чужой модуль user — только через contract, index — по DEBT-34 (import '@u7-scl/domain/user/state')",
+    ]);
   });
 
   it('импорт прикладного пакета модуля — ARC-06', () => {
@@ -171,6 +184,84 @@ describe('checkDomainDirs: ARC-05', () => {
     expect(checkDomainDirs(['user', 'billing'], DEPENDS)).toEqual([
       'ARC-05: packages/domain/src/billing: нет ModuleDef в графе домена',
     ]);
+  });
+});
+
+describe('checkContractImports: ARC-04 (D-45)', () => {
+  const MODULES = { all: ['user', 'wish'], dmg: ['wish'] };
+  const run = (path: string, text: string) =>
+    checkContractImports([file(path, text)], MODULES);
+
+  it('модуль на Def снаружи — только через contract', () => {
+    expect(
+      run(
+        'apps/bot/src/a.ts',
+        "import { D } from '@u7-scl/domain/wish/contract';",
+      ),
+    ).toEqual([]);
+    expect(
+      run('apps/bot/src/a.ts', "import { D } from '@u7-scl/domain/wish';"),
+    ).toEqual([
+      "ARC-04: apps/bot/src/a.ts: модуль wish — только через contract (import '@u7-scl/domain/wish')",
+    ]);
+  });
+
+  it('свой домен и свой прикладной пакет — через index', () => {
+    expect(
+      run('packages/wish/src/a.ts', "import { A } from '@u7-scl/domain/wish';"),
+    ).toEqual([]);
+    expect(
+      run(
+        'packages/domain/src/wish/a.ts',
+        "import { A } from '@u7-scl/domain/wish';",
+      ),
+    ).toEqual([]);
+  });
+
+  it('модуль на Def импортирует чужой legacy — тоже только contract', () => {
+    expect(
+      run(
+        'packages/domain/src/wish/a.ts',
+        "import { U } from '@u7-scl/domain/user';",
+      ),
+    ).toEqual([
+      "ARC-04: packages/domain/src/wish/a.ts: модуль user — только через contract (import '@u7-scl/domain/user')",
+    ]);
+    expect(
+      run('packages/wish/src/a.ts', "import { U } from '@u7-scl/domain/user';"),
+    ).toEqual([
+      "ARC-04: packages/wish/src/a.ts: модуль user — только через contract (import '@u7-scl/domain/user')",
+    ]);
+  });
+
+  it('state, export from и import() модуля на Def — ARC-04', () => {
+    expect(
+      run(
+        'apps/bot/src/a.ts',
+        "import { S } from '@u7-scl/domain/wish/state';\nexport { A } from '@u7-scl/domain/wish';\nawait import('@u7-scl/domain/wish');",
+      ),
+    ).toEqual([
+      "ARC-04: apps/bot/src/a.ts: модуль wish — только через contract (import '@u7-scl/domain/wish/state')",
+      "ARC-04: apps/bot/src/a.ts: модуль wish — только через contract (import '@u7-scl/domain/wish')",
+      "ARC-04: apps/bot/src/a.ts: модуль wish — только через contract (import '@u7-scl/domain/wish')",
+    ]);
+  });
+
+  it('общий код домена (shared) — тоже только contract', () => {
+    expect(
+      run(
+        'packages/domain/src/shared/a.ts',
+        "import { A } from '@u7-scl/domain/wish';",
+      ),
+    ).toEqual([
+      "ARC-04: packages/domain/src/shared/a.ts: модуль wish — только через contract (import '@u7-scl/domain/wish')",
+    ]);
+  });
+
+  it('пары legacy-модулей не проверяются (долг до миграции)', () => {
+    expect(
+      run('apps/bot/src/a.ts', "import { U } from '@u7-scl/domain/user';"),
+    ).toEqual([]);
   });
 });
 

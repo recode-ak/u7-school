@@ -7,7 +7,7 @@ import {
   CreateCourseWishUcDef,
   CreateModuleWishUcDef,
   ListUserWishesUcDef,
-} from '@u7-scl/domain/wish';
+} from '@u7-scl/domain/wish/contract';
 import { Role } from '@u7-scl/user/domain';
 import { UserCaller } from 'dmg-core';
 import { Routes } from '../../shared/routes';

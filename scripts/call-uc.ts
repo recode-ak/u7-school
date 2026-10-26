@@ -46,7 +46,7 @@ import {
   ModuleJsonRepo,
   StepJsonRepo,
 } from '@u7-scl/course/infra';
-import { WishModuleDef } from '@u7-scl/domain/wish';
+import { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import { QuestionnaireApiModule } from '@u7-scl/questionnaire/api';
 import type { QuestionnaireApiModuleResolver } from '@u7-scl/questionnaire/domain';
 import {

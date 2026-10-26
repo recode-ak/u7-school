@@ -34,7 +34,6 @@
       "@u7-scl/course/domain": ["./packages/course/src/domain/index.ts"],
       "@u7-scl/stream": ["./packages/stream/src/index.ts"],
       "@u7-scl/domain": ["./packages/domain/src/index.ts"],
-      "@u7-scl/domain/*/state": ["./packages/domain/src/*/state.ts"],
       "@u7-scl/domain/*/contract": ["./packages/domain/src/*/contract.ts"],
       "@u7-scl/domain/*": ["./packages/domain/src/*/index.ts"],
       "@u7-scl/wish": ["./packages/wish/src/index.ts"],

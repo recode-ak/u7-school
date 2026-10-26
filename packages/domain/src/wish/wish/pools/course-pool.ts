@@ -1,5 +1,5 @@
-import type { QuestionnairePool } from '@u7-scl/domain/questionnaire';
-import { QuestionnairePoolSchema } from '@u7-scl/domain/questionnaire';
+import type { QuestionnairePool } from '@u7-scl/domain/questionnaire/contract';
+import { QuestionnairePoolSchema } from '@u7-scl/domain/questionnaire/contract';
 import * as v from 'valibot';
 import coursePools from './course.json';
 

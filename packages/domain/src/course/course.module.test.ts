@@ -11,11 +11,8 @@ import {
 import { checkDefs, formatViolation } from 'dmg-core/arch';
 import { indexDefs, normalize } from 'dmg-core/graph';
 import * as v from 'valibot';
-import {
-  CourseArDef,
-  CourseModuleDef,
-  GetCourseEnrollmentUcDef,
-} from './contract';
+import { CourseModuleDef, GetCourseEnrollmentUcDef } from './contract';
+import { CourseArDef } from './course/course.ar';
 
 describe('CourseModuleDef — внешний модуль (D-37)', () => {
   it('паспорт: внешний, зависит от user, Def UC без реализации', () => {

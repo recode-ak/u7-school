@@ -21,10 +21,10 @@ export type DomainGraph = Readonly<Record<string, readonly string[]>>;
 const DOMAIN_SRC = 'packages/domain/src/';
 const PLATFORM = /^@u7-scl\/(app|core)(\/|$)/;
 const DOMAIN_PKG = /^@u7-scl\/domain(?:\/([^/]+)(?:\/(.+))?)?$/;
-const PUBLIC_SUBPATHS = new Set(['state', 'contract']);
+const PUBLIC_SUBPATHS = new Set(['contract']);
 const DEBT_RE = /\bDEBT-\d+\b/;
 const IMPORT_RE =
-  /(?:\b(?:import|export)\b[^;'"]*?\bfrom\s*|\bimport\s*)(['"])([^'"\n]+)\1/g;
+  /(?:\b(?:import|export)\b[^;'"]*?\bfrom\s*|\bimport\s*(?:\(\s*)?)(['"])([^'"\n]+)\1/g;
 
 interface ImportRef {
   spec: string;
@@ -67,7 +67,7 @@ export function checkDomainImports(
       } else if (sub && sub !== 'index' && !PUBLIC_SUBPATHS.has(sub)) {
         fail(
           'ARC-04',
-          `чужой модуль ${other} только через index (import '${spec}')`,
+          `чужой модуль ${other} — только через contract, index — по DEBT-34 (import '${spec}')`,
         );
       }
     };
@@ -92,7 +92,7 @@ export function checkDomainImports(
           else
             fail(
               'ARC-04',
-              `чужой модуль ${other} только через index (import '${spec}')`,
+              `чужой модуль ${other} — только через contract, index — по DEBT-34 (import '${spec}')`,
             );
         } else crossModule(other, '', spec);
       } else if (PLATFORM.test(spec)) {
@@ -106,6 +106,49 @@ export function checkDomainImports(
           `домен не импортирует прикладной слой (import '${spec}')`,
         );
       }
+    }
+  }
+  return out;
+}
+
+/** Модули домена для ARC-04 (D-45): все и переведённые на Def. */
+export interface DomainModules {
+  all: readonly string[];
+  dmg: readonly string[];
+}
+
+/** Модуль, которому принадлежит файл: домен `<m>` или пакет `packages/<m>`. */
+function ownerOf(path: string, all: readonly string[]): string | undefined {
+  const parts = path.split('/');
+  if (parts[0] !== 'packages') return undefined;
+  const m = parts[1] === 'domain' ? parts[3] : parts[1];
+  return m && all.includes(m) ? m : undefined;
+}
+
+// DEBT-34: пары legacy-модулей импортируют чужой `index` — проверка ждёт
+// их миграции на Def
+/**
+ * ARC-04 (D-45): чужой модуль — только через `contract`. Блокирует, если
+ * модуль на Def импортирует или импортируется; пары legacy-модулей — по
+ * долгу до миграции.
+ */
+export function checkContractImports(
+  files: readonly DomainFile[],
+  modules: DomainModules,
+): string[] {
+  const out: string[] = [];
+  for (const f of files) {
+    const own = ownerOf(f.path, modules.all);
+    for (const { spec } of importsOf(f.text)) {
+      const m = DOMAIN_PKG.exec(spec);
+      const other = m?.[1];
+      if (!other || other === own || m?.[2] === 'contract') continue;
+      const dmg =
+        modules.dmg.includes(other) || modules.dmg.includes(own ?? '');
+      if (dmg)
+        out.push(
+          `ARC-04: ${f.path}: модуль ${other} — только через contract (import '${spec}')`,
+        );
     }
   }
   return out;

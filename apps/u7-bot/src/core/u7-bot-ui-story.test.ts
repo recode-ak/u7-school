@@ -24,7 +24,7 @@ import type {
   CommandUpdate,
   DialogResponse,
 } from '@u7-scl/core/ui';
-import { ListUserWishesUcDef } from '@u7-scl/domain/wish';
+import { ListUserWishesUcDef } from '@u7-scl/domain/wish/contract';
 import { Role } from '@u7-scl/user/domain';
 import { UserCaller } from 'dmg-core';
 import type { Trace } from 'dmg-core/app';

@@ -42,7 +42,8 @@
 
 - [ ] Task: Тесты «круг через JSON»: `Caller`, `Trace`, конверт события, снапшот Ar
 - [ ] Task: Порт outbox в `dmg-core`; контрактный тест идемпотентности реакций; правило «UoW — один модуль» в `arch:check`
-- [ ] Task: Подпуть контрактов модуля `domain/<m>/contract` (проект; каркасы `domain/<m>/contract` готовы в треке domain-package — [migration.md](../../architecture/migration.md) §6)
+- [ ] Task: Подпуть контрактов модуля `domain/<m>/contract` (проект; каркасы `domain/<m>/contract` готовы в треке domain-package — [migration.md](../../architecture/migration.md) §6); вход для остального кода закреплён D-45 — остаётся содержимое `contract` остальных модулей по мере перевода
+- [ ] Task: ARC-04 в `checkFiles`: вход для других модулей задаёт приложение (`contract`, D-45); прикладной слой внешнего модуля не проверяется (как обещает JSDoc); приложение домена в `ARCH_APPS` — погасить DEBT-33
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 ## Фаза 5: Документация и инструменты в пакете

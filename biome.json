@@ -165,7 +165,7 @@
                       "@u7-scl/domain/*/state",
                       "@u7-scl/domain/**/*.state"
                     ],
-                    "message": "DOM-01: state чужого модуля не импортируется — только его доменный API (D-39)"
+                    "message": "DOM-01: state чужого модуля не импортируется — только его contract (D-39, D-45)"
                   }
                 ]
               }

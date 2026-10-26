@@ -22,7 +22,7 @@
 - [wish.state.ts](../../../packages/domain/src/wish/wish/wish.state.ts): `WishState`, `WishTargetVo` и `WishStatus`, у каждого одно имя и для схемы, и для типа. `target` — это `v.variant` по `kind`, описания стоят на всём `variant` и на `kind` каждой ветки.
 - [wish.state.test.ts](../../../packages/domain/src/wish/wish/wish.state.test.ts): проверки «принимает / отклоняет», разбор ISO-дат (в т. ч. без зоны) в числа и описания у всех полей.
 - [wish.ar.test.ts](../../../packages/domain/src/wish/wish/wish.ar.test.ts): `checkDefs` по `WishArDef` и `restore` legacy-записи без `updatedAt`/`version` через `WishArDef.state`.
-- [state.ts](../../../packages/domain/src/wish/state.ts): подпуть `@u7-scl/domain/<m>/state`, только для рендереров UI.
+- [state.ts](../../../packages/domain/src/wish/state.ts): реэкспорт схем в `index.ts` для своего прикладного пакета. Наружу модуля state не выходит: остальной код получает форму данных из контракта (D-45).
 
 ## 4. Чеклист правил
 

@@ -1,4 +1,4 @@
-import type { QuestionnairePool } from '@u7-scl/domain/questionnaire';
+import type { QuestionnairePool } from '@u7-scl/domain/questionnaire/contract';
 import {
   Aggregate,
   defineAggregate,

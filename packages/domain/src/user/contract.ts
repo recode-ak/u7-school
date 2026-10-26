@@ -11,5 +11,4 @@ export {
   GetTelegramAddressesUcDef,
   type TelegramAddresses,
 } from './user/uc/get-telegram-addresses.uc';
-export { UserArDef } from './user/user.ar';
 export { UserModuleDef } from './user.module';
