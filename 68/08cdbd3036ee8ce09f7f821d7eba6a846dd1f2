@@ -1,0 +1,1 @@
+Задача: EventDef (Фаза 1). Новые: domain/events/event-def.ts, event-def.types.ts, event-def.test.ts. Изменены: define-events.ts (обёртка+реэкспорт), normalize.ts (ветка event → def.normalize(), NormalizedEvent переехал), described-defs.ts (событие → e.describe()), index.ts (EventDef — значение), импорты типов внутри пакета → event-def. check зелёный, 4008 pass.
