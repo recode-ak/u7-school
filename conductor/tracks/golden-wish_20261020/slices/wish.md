@@ -644,3 +644,6 @@ error нет. warning: `*.types.ts` вне naming.md. info: раздел «Ус�
 
 ### Ревью Ф11 (reviewer, Sonnet, diff `cd5bd03..be43672a`)
 error нет. warning: литералы статусов в `findAllByKind` `invite-wishers.er.ts` (дубль `canInvite`) — убраны (api-author, рефакторинг без red). info: `askMatch`/`askReach` в ER, дубль `invitationTargets`/`fulfillment*`, запись на приглашение (вопрос 9), отличия пропусков от legacy (`telegramId: 0`), `@types/bun` в lock. Поведение legacy сохранено (5+3+12 случаев). Хвосты TR-19 п. 4: JSDoc `GetSameModulesUcDef`, виды id в фикстурах DCS, тест отказа `fulfill-wish`, детерминированное ожидание `subscribe` (`er.fixture.ts`, `trackHandling`). Решения — TR-20.
+
+### Ф12 шаг 1 — api-author (Opus)
+Мост: маршрут `inbound` подписывается на legacy-шину один раз (при первом подписчике Def), разбор и `onInvalid` — один раз на событие, раздача `Promise.allSettled` (сбой одного подписчика не мешает остальным, ошибки — legacy-шине, `AggregateError`); невалидный `occurredAt` → `onInvalid`. Дефолт `onInvalid` — `console.warn` вместо `throw` (`InProcEventBus` глотает исключение async-обработчика), JSDoc обновлён. Публичный API не менялся. Гейт и `check` зелёные (3799 pass).

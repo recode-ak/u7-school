@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, spyOn, test } from 'bun:test';
 import type { EnvelopeOf } from 'dmg-core/app';
 import { TaskEvents } from 'dmg-core/testing/example/todo/index';
 import type { DomainEvent as LegacyEvent } from '#domain-legacy/events/domain-event';
@@ -95,16 +95,15 @@ describe('legacyEventBus — входящие legacy-события (D-37)', () 
     aggregateId: TASK,
     payload,
   });
-  const inbound = [
-    {
-      legacy: 'task:done',
-      def: TaskEvents.completed,
-      payload: (e: LegacyEvent) => ({
-        taskId: e.aggregateId,
-        ownerId: e.payload.owner,
-      }),
-    },
-  ];
+  const route = {
+    legacy: 'task:done',
+    def: TaskEvents.completed,
+    payload: (e: LegacyEvent) => ({
+      taskId: e.aggregateId,
+      ownerId: e.payload.owner,
+    }),
+  };
+  const inbound = [route];
 
   test('событие по карте приходит подписчику DMG в конверте Def', async () => {
     const legacy = new InProcEventBus();
@@ -147,5 +146,129 @@ describe('legacyEventBus — входящие legacy-события (D-37)', () 
     expect(calls).toBe(0);
     expect(invalid).toHaveLength(1);
     expect(invalid[0]).toContain('task:done');
+  });
+
+  test('маршрут разбирается один раз: onInvalid один раз на два подписчика', async () => {
+    const legacy = new InProcEventBus();
+    const invalid: string[] = [];
+    let calls = 0;
+    const bus = legacyEventBus(legacy, {
+      inbound,
+      onInvalid: (m) => invalid.push(m),
+    });
+    for (let i = 0; i < 2; i++) {
+      bus.subscribe(TaskEvents.completed, async () => {
+        calls++;
+      });
+    }
+    legacy.publish(legacyDone({}));
+    await tick();
+    expect(calls).toBe(0);
+    expect(invalid).toHaveLength(1);
+  });
+
+  test('валидное событие — payload строится один раз, получают все подписчики', async () => {
+    const legacy = new InProcEventBus();
+    let mapped = 0;
+    const got: string[] = [];
+    const bus = legacyEventBus(legacy, {
+      inbound: [
+        {
+          ...route,
+          payload: (e: LegacyEvent) => {
+            mapped++;
+            return route.payload(e);
+          },
+        },
+      ],
+    });
+    bus.subscribe(TaskEvents.completed, async (e) => {
+      got.push(`a:${e.eventId}`);
+    });
+    bus.subscribe(TaskEvents.completed, async (e) => {
+      got.push(`b:${e.eventId}`);
+    });
+    legacy.publish(legacyDone({ owner: OWNER }));
+    await tick();
+    expect(mapped).toBe(1);
+    expect(got).toEqual(['a:L-1', 'b:L-1']);
+  });
+
+  test('ошибка одного подписчика не мешает другому', async () => {
+    const legacy = new InProcEventBus();
+    const error = spyOn(console, 'error').mockImplementation(() => {});
+    const got: string[] = [];
+    const bus = legacyEventBus(legacy, { inbound });
+    bus.subscribe(TaskEvents.completed, async () => {
+      throw new Error('сбой');
+    });
+    bus.subscribe(TaskEvents.completed, async (e) => {
+      got.push(e.eventId);
+    });
+    legacy.publish(legacyDone({ owner: OWNER }));
+    // Раздача ждёт всех подписчиков — дождаться макрозадачи.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(got).toEqual(['L-1']);
+    expect(error).toHaveBeenCalledTimes(1);
+    error.mockRestore();
+  });
+
+  test('отписка снимает обработчик входящего события', async () => {
+    const legacy = new InProcEventBus();
+    let calls = 0;
+    const off = legacyEventBus(legacy, { inbound }).subscribe(
+      TaskEvents.completed,
+      async () => {
+        calls++;
+      },
+    );
+    off();
+    legacy.publish(legacyDone({ owner: OWNER }));
+    await tick();
+    expect(calls).toBe(0);
+  });
+
+  test('невалидная дата legacy-события — onInvalid, подписчик не вызван', async () => {
+    const legacy = new InProcEventBus();
+    const invalid: string[] = [];
+    let calls = 0;
+    legacyEventBus(legacy, {
+      inbound,
+      onInvalid: (m) => invalid.push(m),
+    }).subscribe(TaskEvents.completed, async () => {
+      calls++;
+    });
+    legacy.publish({
+      ...legacyDone({ owner: OWNER }),
+      occurredAt: 'не дата',
+    });
+    await tick();
+    expect(calls).toBe(0);
+    expect(invalid).toHaveLength(1);
+    expect(invalid[0]).toContain('occurredAt');
+  });
+
+  describe('onInvalid по умолчанию', () => {
+    let restore: (() => void) | undefined;
+    afterEach(() => restore?.());
+
+    test('предупреждение в console.warn, без исключения', async () => {
+      const legacy = new InProcEventBus();
+      const warn = spyOn(console, 'warn').mockImplementation(() => {});
+      const error = spyOn(console, 'error').mockImplementation(() => {});
+      restore = () => {
+        warn.mockRestore();
+        error.mockRestore();
+      };
+      legacyEventBus(legacy, { inbound }).subscribe(
+        TaskEvents.completed,
+        async () => {},
+      );
+      legacy.publish(legacyDone({}));
+      await tick();
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0]?.join(' '))).toContain('task:done');
+      expect(error).not.toHaveBeenCalled();
+    });
   });
 });
