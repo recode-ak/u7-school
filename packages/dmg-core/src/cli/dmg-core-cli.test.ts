@@ -97,7 +97,7 @@ describe('init', () => {
         targets: [{ dir: '.claude/agents', format: 'claude' }],
       },
       instructions: 'AGENTS.md',
-      gen: { domain: 'src/domain/{m}', app: 'src/app/{m}', domainImport: null },
+      gen: { domain: 'src/domain/{m}', app: 'src/app/{m}' },
     });
     const skill = await read('.claude/skills/demo/SKILL.md');
     expect(Marker.versionOf(skill)).toBe('1.0.0');
@@ -301,7 +301,7 @@ describe('gen', () => {
       'dmg-core.json: gen.domain — шаблон пути с {m}',
     ]);
     expect(await message({ domainImport: 1 })).toEqual([
-      'dmg-core.json: gen.domainImport — шаблон с {m} или null',
+      'dmg-core.json: gen.domainImport — шаблон с {m}',
     ]);
     expect(await message({ root: '.' })).toEqual([
       'dmg-core.json: неизвестное поле «gen.root»',

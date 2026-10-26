@@ -17,7 +17,7 @@ bunx dmg-core init
 
 ## Быстрый старт
 
-1. **Модуль.** `dmg-core gen module todo --write` создаёт паспорт модуля в домене (`src/domain/todo/`) и прикладной слой (`src/app/todo/`). Без `--write` команда только печатает план. Каталоги и импорт домена задаёт секция `gen` в `dmg-core.json` ([naming.md](docs/naming.md) §5).
+1. **Модуль.** `bunx dmg-core gen module todo --write` создаёт паспорт модуля в домене (`src/domain/todo/`) и прикладной слой (`src/app/todo/`). Без `--write` команда только печатает план. Каталоги и импорт домена задаёт секция `gen` в `dmg-core.json` ([naming.md](docs/naming.md) §5).
 2. **Агрегат и операции.** `gen aggregate todo.task` добавляет state, события, ошибки, Ar, Policy и репозиторий. `gen uc todo.task complete-task` создаёт пару «контракт в домене ↔ реализация в прикладном слое», `er` и `job` работают так же, а `dcs` / `dqs` создают доменные сервисы. В заготовках остаются `TODO` — по ним видно, что заполнить. Как именно, подскажет гайд вида ([индекс](docs/guides/index.md)) и тот же артефакт в учебном модуле.
 3. **Проверка архитектуры.** Опиши приложение для `archCheck` — модули и их раскладку, как в [`example.arch.ts`](src/testing/example/example.arch.ts), — и вызови отчёт из `check` проекта:
 

@@ -49,3 +49,6 @@ data/fixtures/
 #   data/backup-adhoc/ — ручные «на всякий случай» (scripts/backup-adhoc.sh)
 data/backup/
 data/backup-adhoc/
+
+# временный проект приёмки генераторов (dmg-core/src/gen/e2e.test.ts)
+packages/dmg-core/tmp-gen-e2e-*/

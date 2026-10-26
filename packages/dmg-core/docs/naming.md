@@ -104,7 +104,7 @@ infra/<aggregate>.json-repo.ts
 |---|---|---|
 | `domain` | каталог модуля домена | `src/domain/{m}` |
 | `app` | каталог прикладного слоя модуля | `src/app/{m}` |
-| `domainImport` | спецификатор импорта домена из прикладного слоя (например, `@acme/domain/{m}`) | `null` — относительный путь |
+| `domainImport` | спецификатор импорта домена из прикладного слоя (например, `@acme/domain/{m}`) | не задан — относительный путь к каталогу модуля домена (его `index.ts`; нужен `moduleResolution: bundler`) |
 
 ```json
 { "gen": { "domain": "packages/domain/src/{m}", "app": "packages/{m}/src", "domainImport": "@acme/domain/{m}" } }

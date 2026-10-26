@@ -25,10 +25,7 @@ afterEach(() => rmSync(root, { recursive: true, force: true }));
 const gen = (...argv: string[]) =>
   runGen(
     argv,
-    new GenLayout(
-      { domain: 'd/{m}', app: 'p/{m}/src', domainImport: null },
-      root,
-    ),
+    new GenLayout({ domain: 'd/{m}', app: 'p/{m}/src' }, root),
     (line) => out.push(line),
   );
 

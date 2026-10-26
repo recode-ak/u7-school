@@ -5,11 +5,13 @@ import { GenLayout } from '../layout';
 import { planAppModule } from './app-module';
 
 const root = '/p';
-const plan = (domainImport: string | null = '@acme/domain/{m}') =>
+const plan = (
+  gen: { domainImport?: string } = { domainImport: '@acme/domain/{m}' },
+) =>
   planAppModule(
     parseArgs(
       ['module', 'stream'],
-      new GenLayout({ domain: '/d/{m}', app: '/p/{m}/src', domainImport }, '.'),
+      new GenLayout({ domain: '/d/{m}', app: '/p/{m}/src', ...gen }, '.'),
     ),
   );
 const content = (p: ReturnType<typeof plan>, rel: string) =>
@@ -23,7 +25,7 @@ test('только исходники модуля: заготовку паке�
 });
 
 test('без domainImport — относительный импорт домена', () => {
-  expect(content(plan(null), 'src/stream.module.ts')).toContain(
+  expect(content(plan({}), 'src/stream.module.ts')).toContain(
     "import { StreamModuleDef } from '../../../d/stream';",
   );
 });

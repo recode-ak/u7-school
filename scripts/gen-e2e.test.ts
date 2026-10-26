@@ -89,6 +89,7 @@ test('arch:check без нарушений (раскладка приложен�
     ...DomainArch,
     name: MODULE,
     modules: [domain.GenprobeModuleDef],
+    // contract.ts генератор не создаёт (D-45): вход заготовки — index.
     entry: 'index',
   };
   expect(archCheck(app).map(formatViolation)).toEqual([]);

@@ -73,5 +73,5 @@
       "@u7-scl/test-helpers/*": ["./apps/u7-bot/tests/helpers/*"]
     }
   },
-  "exclude": ["data/deploy/archive"]
+  "exclude": ["data/deploy/archive", "packages/dmg-core/tmp-gen-e2e-*"]
 }

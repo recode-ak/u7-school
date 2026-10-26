@@ -6,8 +6,8 @@ export interface GenLayoutSettings {
   domain: string;
   /** Каталог прикладного слоя модуля */
   app: string;
-  /** Спецификатор импорта домена из прикладного слоя; null — относительный путь */
-  domainImport: string | null;
+  /** Спецификатор импорта домена из прикладного слоя; нет — относительный путь */
+  domainImport?: string;
 }
 
 /**
@@ -19,7 +19,6 @@ export class GenLayout {
   static readonly defaults: GenLayoutSettings = {
     domain: 'src/domain/{m}',
     app: 'src/app/{m}',
-    domainImport: null,
   };
 
   /** root — корень проекта; «.» оставляет пути относительными */
@@ -38,7 +37,7 @@ export class GenLayout {
 
   /** Спецификатор импорта домена модуля из файла в каталоге fromDir */
   domainImport(module: string, fromDir: string): string {
-    if (this.settings.domainImport !== null) {
+    if (this.settings.domainImport !== undefined) {
       return this.fill(this.settings.domainImport, module);
     }
     const path = relative(fromDir, this.domainDir(module)).split(sep).join('/');

@@ -12,7 +12,7 @@ import { DmgCoreCli } from './dmg-core-cli';
 import { PackageSource } from './package-source';
 
 const USAGE =
-  'Использование: dmg-core init | sync [--check] | gen <вид> <модуль>[.<агрегат>] [<имя>] [--write]';
+  'Использование: dmg-core init | sync [--check] | gen <вид> <модуль>[.<агрегат>] [<имя>] [--write] [--dry-run] [--adopt]';
 
 const [command, ...flags] = process.argv.slice(2);
 const cli = new DmgCoreCli(
@@ -22,8 +22,10 @@ const root = process.cwd();
 
 // Генератор печатает план в stdout; пути — от корня проекта («.»).
 if (command === 'gen') {
+  // План — в stdout, ошибка ввода или коллизия — в stderr, как у init/sync.
   const result = await cli.gen('.', flags);
-  for (const message of result.messages) console.log(message);
+  const print = result.ok ? console.log : console.error;
+  for (const message of result.messages) print(message);
   process.exit(result.ok ? 0 : 1);
 }
 const check = flags.includes('--check');

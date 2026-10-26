@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { GenLayout } from './layout';
 
-const layout = (domainImport: string | null) =>
+const layout = (domainImport?: string) =>
   new GenLayout(
     {
       domain: 'packages/domain/src/{m}',
@@ -12,17 +12,12 @@ const layout = (domainImport: string | null) =>
   );
 
 test('каталоги модуля — шаблоны с {m} от корня проекта', () => {
-  expect(layout(null).domainDir('stream')).toBe(
-    '/repo/packages/domain/src/stream',
-  );
-  expect(layout(null).appDir('stream')).toBe('/repo/packages/stream/src');
+  expect(layout().domainDir('stream')).toBe('/repo/packages/domain/src/stream');
+  expect(layout().appDir('stream')).toBe('/repo/packages/stream/src');
 });
 
 test('абсолютный шаблон не зависит от корня', () => {
-  const abs = new GenLayout(
-    { domain: '/d/{m}', app: '/p/{m}/src', domainImport: null },
-    '/repo',
-  );
+  const abs = new GenLayout({ domain: '/d/{m}', app: '/p/{m}/src' }, '/repo');
   expect(abs.domainDir('stream')).toBe('/d/stream');
   expect(abs.appDir('stream')).toBe('/p/stream/src');
 });
@@ -53,9 +48,6 @@ test('domainImport не задан — относительный путь к к
 });
 
 test('относительный путь внутри каталога начинается с ./', () => {
-  const nested = new GenLayout(
-    { domain: 'm/{m}/domain', app: 'm/{m}', domainImport: null },
-    '.',
-  );
+  const nested = new GenLayout({ domain: 'm/{m}/domain', app: 'm/{m}' }, '.');
   expect(nested.domainImport('todo', 'm/todo')).toBe('./domain');
 });

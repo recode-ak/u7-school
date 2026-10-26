@@ -50,5 +50,5 @@ test('gen: план по умолчанию — dry-run, пути от корн�
 test('gen: ошибка ввода — код 1', () => {
   const result = run('gen', 'widget', 'todo');
   expect(result.code).toBe(1);
-  expect(result.stdout).toContain('Неизвестный вид «widget»');
+  expect(result.stderr).toContain('Неизвестный вид «widget»');
 });

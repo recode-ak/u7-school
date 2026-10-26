@@ -97,6 +97,8 @@ if (import.meta.main) {
   const domain = await runDomainCheck();
   console.log(`arch:check domain: нарушений — ${domain.length}`);
   for (const line of domain) console.log(line);
-  if (domain.length > 0) console.log(`Правила по ID: ${RULES_DOC}`);
+  // reportArchCheck уже напечатал ссылку, если нарушения были у приложений.
+  if (domain.length > 0 && code === 0)
+    console.log(`Правила по ID: ${RULES_DOC}`);
   process.exit(code === 0 && domain.length === 0 ? 0 : 1);
 }

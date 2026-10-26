@@ -109,13 +109,10 @@ export class CliConfig {
     }
     if (data.domainImport !== undefined) {
       const value = data.domainImport;
-      if (
-        value !== null &&
-        (typeof value !== 'string' || !value.includes('{m}'))
-      ) {
-        this.fail('gen.domainImport — шаблон с {m} или null');
+      if (typeof value !== 'string' || !value.includes('{m}')) {
+        this.fail('gen.domainImport — шаблон с {m}');
       }
-      gen.domainImport = value as string | null;
+      gen.domainImport = value as string;
     }
     return gen;
   }
