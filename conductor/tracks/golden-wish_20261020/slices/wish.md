@@ -340,6 +340,33 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 - `InviteWishersEr extends ReactionFromDef` в `wishMap.reactions`: `findAllByKind` кандидатов → DCS → `this.call` только по вопросам домена → `invite` → `uow.register`; недостижимые — `warn` через логгер базы. Без `Date.now()`, `throw`, `console.*`, `snapshot()`.
 - Тесты по образцу `fulfill-wish.er.test.ts`: все 12 случаев legacy-теста; отказ/исключение вызова — `Result` с ошибкой, ничего не записано, `logger.error`, запись в oplog; доставка через `subscribe` по `StreamEvents.created`; `invited` опубликовано с payload legacy.
 
+## Ф12: модуль и сосуществование
+
+`WishModuleDef` (домен) и `createWishModule`/`wishMap` (пакет) уже собраны в Ф8–11; модули-адаптеры зависимостей — `packages/{course,questionnaire,stream,user}/src/*.module.ts` (TR-11). Платформа подключения есть: `ApiApp.addDmgModules`, `run(Def…)`, `execute(Def, input, caller, trace)` (`Err` → `AppException` через `toLegacyError`). Образец сборки legacy + DMG — `packages/core/src/legacy-bridge/example-app.test.ts`. Фаза — переключить приложение на DMG-модуль `wish` и удалить legacy.
+
+**Порядок (TR):** шаг 1 (мост) → шаг 2 (сборка, stories) → шаг 3 (удаление legacy и DEBT-маркеров `wish`). Задача плана «`WishModuleDef` … DEBT-21/22» закрывается шагом 3: без шага 2 удаление legacy ломает приложение.
+
+**Шаг 1 — api-author (Opus)** (`packages/core/src/legacy-bridge/legacy-event-bus.ts` + тест), TDD:
+- `inbound` разбирается один раз на маршрут (на создании моста, не на каждый `subscribe`): payload вне схемы → `onInvalid` ровно один раз, сколько бы подписчиков ни было.
+- Дефолт `onInvalid` и JSDoc согласованы с `InProcEventBus` (исключение в async-обработчике шина глотает): дефолт не полагается на `throw`; форма — твоя, с обоснованием.
+- `Date.parse` в конверте проверяется: невалидная дата legacy-события → `onInvalid`, не `NaN` в `occurredAt`.
+- Публичный API моста не ломать без эскалации; потребители — `example-app.test.ts`, тесты `legacy-inbound` в `stream`/`questionnaire`.
+
+**Шаг 2 — api-author (Opus)** (`apps/u7-bot/**`, `scripts/call-uc.ts`):
+- `create-api-app.ts`: `AppContext` — `bus: legacyEventBus(appResolver.eventBus, { inbound: [...streamLegacyInbound, ...questionnaireLegacyInbound], onInvalid: <logger.warn> })`, `clock: legacyClock()`, `logger` приложения, `mode`, `oplog: new JsonlOperationLog(`${config.dbDir}/oplog`)` (TR-13 п. 10); DMG-модули `user`, `course`, `questionnaire`, `stream` (адаптеры над legacy-фасадами) и `wish` (`WishJsonRepo` на прежнем файле `${config.dbDir}/wish/wishes.json`), `ModuleFacades` по `dependsOn`; `apiApp.addDmgModules(...)` до `init`. `WishApiModule` из списка `ApiApp` убрать — legacy ER больше не подписаны (двойной обработки событий нет); `wishModule` из `ApiAppBundle` — по потребителям.
+- Stories `wish` (`course-catalog.story.ts` и др. вызовы `create-course-wish`, `create-module-wish`, `cancel-wish`, `list-user-wishes`): `execute(<Def>, input, caller, trace)` вместо строкового имени. `caller` — `UserCaller` над актором, `trace` — `Trace.fromRequest` с каналом бота; откуда `requestId` (update Telegram или генерация с `warn`) — твоё решение, одно место (метод/класс, не копипаста по stories), с обоснованием в отчёте. Видимое поведение stories (тексты, ветки по коду ошибки `WISH_ALREADY_EXISTS` со `status`, `COURSE_NOT_FOUND`) не меняется; на `run` переводить не обязательно.
+- `U7BotAppMeta` без `WishApiModuleMeta`. `tests/helpers/test-app.ts` — та же сборка; `oplog` тестов — во временном каталоге, **не** в `data/`. `scripts/call-uc.ts` — UC `wish` через DMG-модуль (или явный отказ с подсказкой, если скрипт рассчитан только на строковые имена — отметить в отчёте).
+- Тесты: stories и их unit-тесты, `tests/courses/wish-*.integration.test.ts`, `tests/e2e/wish-questionnaire.e2e.test.ts`, `tests/e2e/user-notify.e2e.test.ts` — зелёные; события `wish.wish.invited`/`confirmed` доходят до stories `wish-invite`/`wish-confirmed`; legacy-события `student.enrolled`, `stream.created`, `questionnaire:complete|abandon` доходят до DMG ER (интеграционный тест на сборке приложения).
+- Legacy-код `packages/wish/src/api/**` не удалять (шаг 3).
+
+**Шаг 3 — migrator (Sonnet)** (`packages/domain/src/wish/**`, `packages/wish/src/**`, `apps/u7-bot` — только импорты):
+- Удалить legacy: `packages/wish/src/api/**` (UC, ER, `module.ts`, `wish-uc.ts`, `legacy-publish`/`legacy-reject`, если потребителей нет), `packages/wish/src/wish/wish.resolver.ts` (DEBT-22), домен `wish/module.ts` (`WishApiModuleMeta`, DEBT-21) и `wish/commands/**`; экспорты `index.ts`, `package.json` (`exports`) — по потребителям.
+- Barrel DEBT-23 `packages/wish/src/domain/index.ts` сохраняется: убрать из него только удалённое.
+- Маркеры DEBT-21/22 в `packages/{domain,wish}/src/wish` — только там, где импорт `core`/`app` реально ушёл; `debt.md` не трогать (гасит оркестратор в Ф13). Если субъект модуля (`User` из `@u7-scl/app/domain` в `packages/wish/src/wish.module.ts`) нельзя заменить без смены контракта — оставить с маркером и описать в отчёте.
+- Нет `@u7-scl/core`/`@u7-scl/app` в `packages/domain/src/wish/**`; поведение не меняется — тесты удалённого legacy уходят вместе с ним, их случаи уже покрыты тестами DMG UC/ER (Ф8–11); если найдёшь непокрытый случай — эскалация.
+
+**Шаг 4 — оркестратор:** гайд «module» (эталон — `packages/domain/src/wish/wish.module.ts`, `packages/wish/src/wish.module.ts`, сборка `apps/u7-bot/src/create-api-app.ts`), stub-гайд «job».
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
