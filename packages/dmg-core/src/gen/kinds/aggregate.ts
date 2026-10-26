@@ -1,16 +1,17 @@
 /** `gen aggregate <m>.<agg>` — домен агрегата (naming.md §2). */
 import { join } from 'node:path';
-import type { GenArgs } from '../cli.ts';
-import { toCamel, toPascal, toUpperSnake } from '../naming.ts';
-import type { GenPlan } from '../plan.ts';
+import type { GenArgs } from '../cli';
+import { toCamel, toPascal, toUpperSnake } from '../naming';
+import type { GenPlan } from '../plan';
 
 export function planDomainAggregate(args: GenArgs): GenPlan {
   const { module: m, aggregate: a = '' } = args;
   const P = toPascal(a);
   const idField = `${toCamel(a)}Id`;
-  const dir = join(args.domainRoot, m, a);
-  const modulePath = join(args.domainRoot, m, `${m}.module.ts`);
-  const indexPath = join(args.domainRoot, m, 'index.ts');
+  const root = args.layout.domainDir(m);
+  const dir = join(root, a);
+  const modulePath = join(root, `${m}.module.ts`);
+  const indexPath = join(root, 'index.ts');
 
   const stateSrc = `import { BaseEntityFields, F } from 'dmg-core';
 import * as v from 'valibot';

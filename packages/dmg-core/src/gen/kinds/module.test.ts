@@ -1,10 +1,14 @@
 import { expect, test } from 'bun:test';
-import { parseArgs } from '../cli.ts';
-import { planDomainModule } from './module.ts';
+import { parseArgs } from '../cli';
+import { GenLayout } from '../layout';
+import { planDomainModule } from './module';
 
-const plan = planDomainModule(
-  parseArgs(['module', 'stream', '--domain-root', '/d']),
+const layout = new GenLayout(
+  { domain: '/d/{m}', app: '/p/{m}/src', domainImport: '@acme/domain/{m}' },
+  '.',
 );
+
+const plan = planDomainModule(parseArgs(['module', 'stream'], layout));
 const file = (path: string) =>
   plan.files.find((f) => f.path === `/d/stream/${path}`)?.content ?? '';
 

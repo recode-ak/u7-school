@@ -11,7 +11,8 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { runGen } from './main.ts';
+import { GenLayout } from './layout';
+import { runGen } from './main';
 
 let root: string;
 let out: string[];
@@ -23,13 +24,11 @@ afterEach(() => rmSync(root, { recursive: true, force: true }));
 
 const gen = (...argv: string[]) =>
   runGen(
-    [
-      ...argv,
-      '--domain-root',
-      join(root, 'd'),
-      '--packages-root',
-      join(root, 'p'),
-    ],
+    argv,
+    new GenLayout(
+      { domain: 'd/{m}', app: 'p/{m}/src', domainImport: null },
+      root,
+    ),
     (line) => out.push(line),
   );
 

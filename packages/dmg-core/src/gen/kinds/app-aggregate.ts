@@ -1,18 +1,21 @@
 /** `gen aggregate <m>.<agg>` — прикладной слой: порт `repo` и JSON-репозиторий. */
 import { join } from 'node:path';
-import type { GenArgs } from '../cli.ts';
-import { toCamel, toPascal } from '../naming.ts';
-import type { GenPlan } from '../plan.ts';
+import type { GenArgs } from '../cli';
+import { sortImports } from '../import-order';
+import { toCamel, toPascal } from '../naming';
+import type { GenPlan } from '../plan';
 
 export function planAppAggregate(args: GenArgs): GenPlan {
   const { module: m, aggregate: a = '' } = args;
   const P = toPascal(a);
-  const domain = `@u7-scl/domain/${m}`;
-  const src = join(args.packagesRoot, m, 'src');
+  const src = args.layout.appDir(m);
+  const domain = (dir: string) => args.layout.domainImport(m, join(src, dir));
   const modulePath = join(src, `${m}.module.ts`);
 
-  const repoSrc = `import type { ${P}Ar } from '${domain}';
-import type { Repository } from 'dmg-core/app';
+  const repoSrc = `${sortImports([
+    `import type { ${P}Ar } from '${domain(a)}';`,
+    "import type { Repository } from 'dmg-core/app';",
+  ])}
 
 /** Порт репозитория: принимает и возвращает Ar (API-03). */
 export type ${P}Repo = Repository<${P}Ar> & {
@@ -20,10 +23,12 @@ export type ${P}Repo = Repository<${P}Ar> & {
 };
 `;
 
-  const jsonRepoSrc = `import { ${P}Ar, ${P}ArDef } from '${domain}';
-import { assertVersion, createLock } from 'dmg-core/app';
-import * as v from 'valibot';
-import type { ${P}Repo } from '../${a}/${a}.repo';
+  const jsonRepoSrc = `${sortImports([
+    `import { ${P}Ar, ${P}ArDef } from '${domain('infra')}';`,
+    "import { assertVersion, createLock } from 'dmg-core/app';",
+    "import * as v from 'valibot';",
+    `import type { ${P}Repo } from '../${a}/${a}.repo';`,
+  ])}
 
 const Rows = v.array(${P}ArDef.state);
 
@@ -62,14 +67,16 @@ export class ${P}JsonRepo implements ${P}Repo {
 }
 `;
 
-  const testSrc = `import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { ${P}Ar } from '${domain}';
-import { VersionConflict } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
-import { ${P}JsonRepo } from './${a}.json-repo';
+  const testSrc = `${sortImports([
+    "import { afterEach, beforeEach, describe, expect, it } from 'bun:test';",
+    "import { mkdtempSync, rmSync } from 'node:fs';",
+    "import { tmpdir } from 'node:os';",
+    "import { join } from 'node:path';",
+    `import { ${P}Ar } from '${domain('infra')}';`,
+    "import { VersionConflict } from 'dmg-core/app';",
+    "import { expectOk } from 'dmg-core/testing';",
+    `import { ${P}JsonRepo } from './${a}.json-repo';`,
+  ])}
 
 const ID = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 const OTHER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';

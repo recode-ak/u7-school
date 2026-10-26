@@ -1,4 +1,5 @@
-/** Разбор аргументов `bun run gen <kind> <m>[.<agg>] <name> [опции]`. */
+/** Разбор аргументов `dmg-core gen <kind> <m>[.<agg>] <name> [опции]`. */
+import type { GenLayout } from './layout';
 
 export class GenError extends Error {
   override name = 'GenError';
@@ -21,8 +22,8 @@ export interface GenArgs {
   write: boolean;
   /** Режим перевода legacy-модуля: существующие точки входа не перезаписываются. */
   adopt: boolean;
-  domainRoot: string;
-  packagesRoot: string;
+  /** Раскладка проекта (`dmg-core.json`, `gen`) */
+  layout: GenLayout;
 }
 
 /** Что ожидает вид: цель (`m` или `m.agg`) и нужно ли имя. */
@@ -40,37 +41,24 @@ const SHAPE: Record<
 };
 
 const USAGE =
-  'Использование: bun run gen <вид> <модуль>[.<агрегат>] [<имя>] [--write] ' +
-  '[--dry-run] [--adopt] [--domain-root <путь>] [--packages-root <путь>]\n' +
+  'Использование: dmg-core gen <вид> <модуль>[.<агрегат>] [<имя>] [--write] ' +
+  '[--dry-run] [--adopt]\n' +
   `Виды: ${Object.keys(SHAPE).join(', ')}`;
 
-const VALUE_OPTIONS = ['--domain-root', '--packages-root'] as const;
-
-export function parseArgs(argv: readonly string[]): GenArgs {
+export function parseArgs(argv: readonly string[], layout: GenLayout): GenArgs {
   const positional: string[] = [];
   let write = false;
   let adopt = false;
-  let domainRoot = 'packages/domain/src';
-  let packagesRoot = 'packages';
 
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i] as string;
+  for (const arg of argv) {
     if (!arg.startsWith('--')) {
       positional.push(arg);
       continue;
     }
-    const [flag = '', inline] = arg.split(/=(.*)/s, 2);
-    if (flag === '--write') write = true;
-    else if (flag === '--dry-run') write = false;
-    else if (flag === '--adopt') adopt = true;
-    else if ((VALUE_OPTIONS as readonly string[]).includes(flag)) {
-      const value = inline ?? argv[++i];
-      if (value === undefined || value.startsWith('--')) {
-        throw new GenError(`Для опции ${flag} нужно значение`);
-      }
-      if (flag === '--domain-root') domainRoot = value;
-      else packagesRoot = value;
-    } else throw new GenError(`Неизвестная опция ${flag}\n${USAGE}`);
+    if (arg === '--write') write = true;
+    else if (arg === '--dry-run') write = false;
+    else if (arg === '--adopt') adopt = true;
+    else throw new GenError(`Неизвестная опция ${arg}\n${USAGE}`);
   }
 
   const [kind, target, name, ...rest] = positional;
@@ -113,7 +101,6 @@ export function parseArgs(argv: readonly string[]): GenArgs {
     ...(shape.name && name !== undefined && { name }),
     write,
     adopt,
-    domainRoot,
-    packagesRoot,
+    layout,
   };
 }

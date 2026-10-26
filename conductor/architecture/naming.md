@@ -1,23 +1,29 @@
-# Генераторы проекта
+# Генератор в проекте
 
-**Назначение:** команды `bun run gen` проекта. Сокращения, структура и имена — документация платформы [naming.md](../../packages/dmg-core/docs/naming.md); здесь — только генератор, пока он не переехал в пакет (`dmg-core gen`, трек dmg-core-extract, Ф5). В документации пакета `dmg-core gen …` до переноса читается как `bun run gen …`. Ссылки «`naming.md` §5» ведут сюда.
+**Назначение:** как генератор пакета работает в u7-school. Сокращения, структура, имена и сам генератор — документация платформы [naming.md](../../packages/dmg-core/docs/naming.md) (генератор — §5).
 
 ---
 
-## Генераторы
+## Команда и раскладка
 
-`bun run gen <вид> <модуль>[.<агрегат>] [<имя>] [--write]` создаёт файлы по [naming.md пакета](../../packages/dmg-core/docs/naming.md) §2–§4. Без `--write` — dry-run (печатает план). Существующие файлы не перезаписываются: коллизия — ошибка и ничего не записано.
+`bun run gen …` проекта — это `dmg-core gen …` из документации пакета. Раскладка — секция `gen` в [`dmg-core.json`](../../dmg-core.json):
 
-| Команда | Что создаёт |
+| Поле | Значение в проекте |
 |---|---|
-| `gen module <m> [--facade]` | домен: `<m>.module.ts`, `index.ts`, тест; прикладной пакет (для нового — `package.json`, `tsconfig.json`, `src/index.ts`), `<m>.module.ts`, тест; с `--facade` — ещё `<m>.facade.ts` в домене и в пакете (фасад — только по потребителю, D-38) |
-| `gen aggregate <m>.<a>` | домен: state, events, errors, Ar, Policy и тесты; прикладной слой: `<a>.repo.ts`, `infra/<a>.json-repo.ts` и тест |
-| `gen uc\|er\|job <m>.<a> <имя>` | пара: контракт в домене и реализация в `packages/<m>/src/<a>/<вид>/` по тому же относительному пути, плюс тесты |
-| `gen dcs\|dqs <m> <имя>` | сервис в домене с тестом |
+| `domain` | `packages/domain/src/{m}` |
+| `app` | `packages/{m}/src` |
+| `domainImport` | `@u7-scl/domain/{m}` |
 
-Генератор правит существующие файлы только по маркерам: `// gen:exports` (`index.ts`), `// gen:defs:imports\|aggregates\|useCases\|reactions\|jobs` (паспорт модуля), `// gen:deps` (`Deps` прикладного модуля). Нет файла или маркера — команда печатает строку «Вставь вручную …» и не падает. Заготовки содержат `TODO` (названия, описания, схемы): их заполняет автор; тесты прикладного слоя подставляют репозитории вручную.
+Она совпадает с `layout` приложения домена `DomainArch` (`scripts/domain-arch.ts`). Меняешь одно — меняй и другое; расхождение ловит приёмка `scripts/gen-e2e.test.ts` (срез `genprobe` в настоящих каталогах → biome, tsc, тесты, `archCheck`).
 
-`--adopt` — перевод legacy-модуля на Def: `gen module` допускает существующий каталог модуля без `<m>.module.ts`, `gen aggregate` — каталог агрегата без `<a>.state.ts`. Существующий `index.ts` не перезаписывается (печатается «Пропущен» с шаблоном, правки по маркерам идут в него); остальные коллизии — ошибка. Существующий прикладной пакет (`package.json`) генератор не пересоздаёт и без `--adopt`.
+## Новый прикладной пакет
 
-Опции `--domain-root` и `--packages-root` меняют корни (по умолчанию `packages/domain/src` и `packages`).
+Генератор пишет только исходники. Для нового модуля пакет `packages/<m>/` заводится руками до `gen module`:
 
+- `package.json`: `name` — `@u7-scl/<m>`, `private: true`, `type: module`, `module`/`exports` — `src/index.ts`, `scripts` как у соседних пакетов (`test`, `lint`, `tslint`, `format`, `check`), зависимости `@u7-scl/domain` и `dmg-core` — `workspace:*`;
+- `tsconfig.json`: `{ "extends": "../../tsconfig.json", "compilerOptions": {} }`;
+- `src/index.ts`: `export { create<M>Module, type <M>Deps } from './<m>.module';`.
+
+Затем `bun install` и `bun run gen module <m> --write`.
+
+Вход модуля домена для других — `contract.ts` (D-45): генератор его не создаёт, он пишется по образцу `packages/domain/src/wish/contract.ts`.

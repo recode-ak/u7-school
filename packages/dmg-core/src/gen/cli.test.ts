@@ -1,7 +1,11 @@
 import { expect, test } from 'bun:test';
-import { GenError, parseArgs } from './cli.ts';
+import { GenError, parseArgs as parse } from './cli';
+import { GenLayout } from './layout';
 
-test('uc: модуль.агрегат + имя; по умолчанию dry-run и корни по умолчанию', () => {
+const layout = new GenLayout(GenLayout.defaults, '.');
+const parseArgs = (argv: string[]) => parse(argv, layout);
+
+test('uc: модуль.агрегат + имя; по умолчанию dry-run, раскладка из настроек', () => {
   expect(parseArgs(['uc', 'stream.student', 'complete-student'])).toEqual({
     kind: 'uc',
     module: 'stream',
@@ -9,8 +13,7 @@ test('uc: модуль.агрегат + имя; по умолчанию dry-run 
     name: 'complete-student',
     write: false,
     adopt: false,
-    domainRoot: 'packages/domain/src',
-    packagesRoot: 'packages',
+    layout,
   });
 });
 
@@ -37,22 +40,16 @@ test('dcs/dqs: модуль + топик в name', () => {
   });
 });
 
-test('опции: --write, --dry-run, --domain-root, --packages-root', () => {
-  const a = parseArgs([
-    'module',
-    'stream',
-    '--write',
-    '--domain-root',
-    '/tmp/d',
-    '--packages-root=/tmp/p',
-  ]);
-  expect(a).toMatchObject({
-    write: true,
-    domainRoot: '/tmp/d',
-    packagesRoot: '/tmp/p',
-  });
+test('опции: --write, --dry-run', () => {
+  expect(parseArgs(['module', 'stream', '--write']).write).toBe(true);
   expect(parseArgs(['module', 'stream', '--write', '--dry-run']).write).toBe(
     false,
+  );
+});
+
+test('корни — в dmg-core.json (gen), не в опциях', () => {
+  expect(() => parseArgs(['module', 'stream', '--domain-root', '/d'])).toThrow(
+    'Неизвестная опция --domain-root',
   );
 });
 
@@ -72,7 +69,6 @@ test('ошибки на русском', () => {
   expect(msg(['uc', 'stream.student'])).toContain('имя');
   expect(msg(['module', 'stream.student'])).toContain('только имя модуля');
   expect(msg(['module', 'stream', '--bogus'])).toContain('Неизвестная опция');
-  expect(msg(['module', 'stream', '--domain-root'])).toContain('значение');
   expect(msg(['module', 'a', 'b'])).toContain('лишний аргумент');
 });
 

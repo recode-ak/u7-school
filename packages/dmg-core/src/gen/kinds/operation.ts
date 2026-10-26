@@ -1,8 +1,9 @@
 /** `gen uc|er|job <m>.<agg> <name>` — пара контракт ↔ реализация (naming.md §3). */
 import { join } from 'node:path';
-import type { GenArgs } from '../cli.ts';
-import { kindNames, toCamel, toPascal, toUpperSnake } from '../naming.ts';
-import type { GenPlan, PlannedFile } from '../plan.ts';
+import type { GenArgs } from '../cli';
+import { sortImports } from '../import-order';
+import { kindNames, toCamel, toPascal, toUpperSnake } from '../naming';
+import type { GenPlan, PlannedFile } from '../plan';
 
 type OpKind = 'uc' | 'er' | 'job';
 
@@ -26,6 +27,8 @@ interface Ctx {
   defName: string;
   /** `complete-student.uc` — без `.ts` */
   base: string;
+  /** Спецификатор импорта домена из каталога реализации */
+  domain: string;
 }
 
 function contract(c: Ctx): string {
@@ -109,7 +112,7 @@ function domainImport(c: Ctx): string {
   const names = [c.defName, moduleDef]
     .sort()
     .map((n) => (n === moduleDef ? `type ${n}` : n));
-  const from = `'@u7-scl/domain/${c.m}'`;
+  const from = `'${c.domain}'`;
   const line = `import { ${names.join(', ')} } from ${from};`;
   return line.length <= 80
     ? line
@@ -120,12 +123,11 @@ function implementation(c: Ctx): string {
   const imports = domainImport(c);
   const moduleDef = `${toPascal(c.m)}ModuleDef`;
   const deps = `import type { ${c.deps} } from '../../${c.m}.module';`;
+  const block = (...lines: string[]) =>
+    sortImports([imports, "import { ok } from 'dmg-core';", ...lines, deps]);
   switch (c.kind) {
     case 'uc':
-      return `${imports}
-import { ok } from 'dmg-core';
-import { UseCaseFromDef } from 'dmg-core/app';
-${deps}
+      return `${block("import { UseCaseFromDef } from 'dmg-core/app';")}
 
 export class ${c.className} extends UseCaseFromDef<
   typeof ${c.defName},
@@ -147,10 +149,7 @@ export class ${c.className} extends UseCaseFromDef<
 }
 `;
     case 'er':
-      return `${imports}
-import { ok } from 'dmg-core';
-import { ReactionFromDef } from 'dmg-core/app';
-${deps}
+      return `${block("import { ReactionFromDef } from 'dmg-core/app';")}
 
 export class ${c.className} extends ReactionFromDef<
   typeof ${c.defName},
@@ -167,10 +166,9 @@ export class ${c.className} extends ReactionFromDef<
 }
 `;
     case 'job':
-      return `${imports}
-import { ok } from 'dmg-core';
-import { JobFromDef, type JobReport, type JobRun } from 'dmg-core/app';
-${deps}
+      return `${block(
+        "import { JobFromDef, type JobReport, type JobRun } from 'dmg-core/app';",
+      )}
 
 export class ${c.className} extends JobFromDef<
   typeof ${c.defName},
@@ -191,19 +189,25 @@ export class ${c.className} extends JobFromDef<
 
 function implementationTest(c: Ctx): string {
   const moduleDef = `${toPascal(c.m)}ModuleDef`;
-  const domain = `import { ${moduleDef} } from '@u7-scl/domain/${c.m}';`;
+  const block = (test: string, ...lines: string[]) =>
+    sortImports([
+      `import { ${test} } from 'bun:test';`,
+      `import { ${moduleDef} } from '${c.domain}';`,
+      ...lines,
+      `import type { ${c.deps} } from '../../${c.m}.module';`,
+      `import { ${c.className} } from './${c.base}';`,
+    ]);
   const deps = `    const { app } = testAppContext();
     // TODO: подставьте репозитории и фасады, которые нужны операции
     const deps = { app, facades: new ModuleFacades() } as ${c.deps};`;
   switch (c.kind) {
     case 'uc':
-      return `import { describe, it } from 'bun:test';
-${domain}
-import { UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { expectOk, testAppContext } from 'dmg-core/testing';
-import type { ${c.deps} } from '../../${c.m}.module';
-import { ${c.className} } from './${c.base}';
+      return `${block(
+        'describe, it',
+        "import { UserCaller } from 'dmg-core';",
+        "import { ModuleFacades, Trace } from 'dmg-core/app';",
+        "import { expectOk, testAppContext } from 'dmg-core/testing';",
+      )}
 
 describe('${c.className}', () => {
   it('успешный вызов пользователем', async () => {
@@ -219,12 +223,11 @@ ${deps}
 });
 `;
     case 'er':
-      return `import { describe, expect, it } from 'bun:test';
-${domain}
-import { ModuleFacades } from 'dmg-core/app';
-import { testAppContext } from 'dmg-core/testing';
-import type { ${c.deps} } from '../../${c.m}.module';
-import { ${c.className} } from './${c.base}';
+      return `${block(
+        'describe, expect, it',
+        "import { ModuleFacades } from 'dmg-core/app';",
+        "import { testAppContext } from 'dmg-core/testing';",
+      )}
 
 describe('${c.className}', () => {
   it('привязана к своему Def', () => {
@@ -235,12 +238,11 @@ ${deps}
 });
 `;
     case 'job':
-      return `import { describe, expect, it } from 'bun:test';
-${domain}
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { expectOk, testAppContext } from 'dmg-core/testing';
-import type { ${c.deps} } from '../../${c.m}.module';
-import { ${c.className} } from './${c.base}';
+      return `${block(
+        'describe, expect, it',
+        "import { ModuleFacades, Trace } from 'dmg-core/app';",
+        "import { expectOk, testAppContext } from 'dmg-core/testing';",
+      )}
 
 describe('${c.className}', () => {
   it('пустой прогон', async () => {
@@ -258,6 +260,8 @@ export function planOperation(args: GenArgs): GenPlan {
   const kind = args.kind as OpKind;
   const { module: m, aggregate: a = '', name = '' } = args;
   const names = kindNames(kind, name);
+  const domainDir = args.layout.domainDir(m);
+  const appDir = args.layout.appDir(m);
   const c: Ctx = {
     m,
     a,
@@ -268,12 +272,11 @@ export function planOperation(args: GenArgs): GenPlan {
     className: names.className,
     defName: names.defName,
     base: names.fileName.replace(/\.ts$/, ''),
+    domain: args.layout.domainImport(m, join(appDir, a, kind)),
   };
 
   const rel = join(a, kind, names.fileName);
   const relBase = `./${a}/${kind}/${c.base}`;
-  const domainDir = join(args.domainRoot, m);
-  const appDir = join(args.packagesRoot, m, 'src');
   const domainModule = join(domainDir, `${m}.module.ts`);
   const appModule = join(appDir, `${m}.module.ts`);
   const list = LIST[kind];

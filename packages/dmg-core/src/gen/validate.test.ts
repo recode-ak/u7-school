@@ -2,8 +2,9 @@ import { afterEach, beforeEach, expect, test } from 'bun:test';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { type GenArgs, GenError, parseArgs } from './cli.ts';
-import { validate } from './validate.ts';
+import { type GenArgs, GenError, parseArgs } from './cli';
+import { GenLayout } from './layout';
+import { validate } from './validate';
 
 let root: string;
 
@@ -19,13 +20,13 @@ function touch(rel: string) {
 }
 
 function args(argv: string[]): GenArgs {
-  return parseArgs([
-    ...argv,
-    '--domain-root',
-    join(root, 'domain'),
-    '--packages-root',
-    join(root, 'packages'),
-  ]);
+  return parseArgs(
+    argv,
+    new GenLayout(
+      { domain: 'domain/{m}', app: 'packages/{m}/src', domainImport: null },
+      root,
+    ),
+  );
 }
 
 function message(argv: string[]): string {

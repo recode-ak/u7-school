@@ -8,8 +8,8 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { applyPlan } from './apply.ts';
-import { GenError } from './cli.ts';
+import { applyPlan } from './apply';
+import { GenError } from './cli';
 
 let dir: string;
 const p = (rel: string) => join(dir, rel);

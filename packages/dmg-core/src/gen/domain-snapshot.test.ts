@@ -2,20 +2,29 @@ import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { applyPlan } from './apply.ts';
-import { parseArgs } from './cli.ts';
-import { planDomainAggregate } from './kinds/aggregate.ts';
-import { planDomainModule } from './kinds/module.ts';
-import { planDomainService } from './kinds/service.ts';
+import { applyPlan } from './apply';
+import { parseArgs } from './cli';
+import { planDomainAggregate } from './kinds/aggregate';
+import { planDomainModule } from './kinds/module';
+import { planDomainService } from './kinds/service';
+import { GenLayout } from './layout';
 
 let root: string;
 
 beforeAll(() => {
   root = mkdtempSync(join(tmpdir(), 'gen-snapshot-'));
   const run = (argv: string[], plan: typeof planDomainModule) =>
-    applyPlan(plan(parseArgs([...argv, '--domain-root', root])), {
-      write: true,
-    });
+    applyPlan(
+      plan(
+        parseArgs(
+          argv,
+          new GenLayout({ ...GenLayout.defaults, domain: '{m}' }, root),
+        ),
+      ),
+      {
+        write: true,
+      },
+    );
   run(['module', 'stream'], planDomainModule);
   run(['aggregate', 'stream.student'], planDomainAggregate);
   run(['dcs', 'stream', 'stream-progress'], planDomainService);

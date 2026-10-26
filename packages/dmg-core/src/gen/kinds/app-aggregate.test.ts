@@ -1,9 +1,15 @@
 import { expect, test } from 'bun:test';
-import { parseArgs } from '../cli.ts';
-import { planAppAggregate } from './app-aggregate.ts';
+import { parseArgs } from '../cli';
+import { GenLayout } from '../layout';
+import { planAppAggregate } from './app-aggregate';
+
+const layout = new GenLayout(
+  { domain: '/d/{m}', app: '/p/{m}/src', domainImport: '@acme/domain/{m}' },
+  '.',
+);
 
 const plan = planAppAggregate(
-  parseArgs(['aggregate', 'stream.student', '--packages-root', '/p']),
+  parseArgs(['aggregate', 'stream.student'], layout),
 );
 const file = (rel: string) =>
   plan.files.find((f) => f.path === `/p/stream/src/${rel}`)?.content ?? '';

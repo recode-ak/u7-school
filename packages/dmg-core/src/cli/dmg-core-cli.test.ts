@@ -97,6 +97,7 @@ describe('init', () => {
         targets: [{ dir: '.claude/agents', format: 'claude' }],
       },
       instructions: 'AGENTS.md',
+      gen: { domain: 'src/domain/{m}', app: 'src/app/{m}', domainImport: null },
     });
     const skill = await read('.claude/skills/demo/SKILL.md');
     expect(Marker.versionOf(skill)).toBe('1.0.0');
@@ -253,4 +254,64 @@ describe('sync и check', () => {
       });
     },
   );
+});
+
+describe('gen', () => {
+  test('без dmg-core.json — раскладка по умолчанию, импорт домена относительный', async () => {
+    const result = await (await cli()).gen(root, ['module', 'todo', '--write']);
+    expect(result.ok).toBe(true);
+    expect(result.messages).toContain(
+      `Создан: ${join(root, 'src/app/todo/todo.module.ts')}`,
+    );
+    expect(await read('src/domain/todo/todo.module.ts')).toContain(
+      "name: 'todo'",
+    );
+    expect(await read('src/app/todo/todo.module.ts')).toContain(
+      "import { TodoModuleDef } from '../../domain/todo';",
+    );
+  });
+
+  test('секция gen в dmg-core.json задаёт каталоги и импорт домена', async () => {
+    await write(
+      'dmg-core.json',
+      JSON.stringify({
+        gen: {
+          domain: 'packages/domain/src/{m}',
+          app: 'packages/{m}/src',
+          domainImport: '@acme/domain/{m}',
+        },
+      }),
+    );
+    const result = await (await cli()).gen(root, ['module', 'todo', '--write']);
+    expect(result.ok).toBe(true);
+    expect(await read('packages/domain/src/todo/index.ts')).toContain(
+      'TodoModuleDef',
+    );
+    expect(await read('packages/todo/src/todo.module.ts')).toContain(
+      "import { TodoModuleDef } from '@acme/domain/todo';",
+    );
+  });
+
+  test('ошибки конфига gen — с полем', async () => {
+    const message = async (gen: unknown) => {
+      await write('dmg-core.json', JSON.stringify({ gen }));
+      return (await (await cli()).gen(root, ['module', 'todo'])).messages;
+    };
+    expect(await message({ domain: 'src/domain' })).toEqual([
+      'dmg-core.json: gen.domain — шаблон пути с {m}',
+    ]);
+    expect(await message({ domainImport: 1 })).toEqual([
+      'dmg-core.json: gen.domainImport — шаблон с {m} или null',
+    ]);
+    expect(await message({ root: '.' })).toEqual([
+      'dmg-core.json: неизвестное поле «gen.root»',
+    ]);
+  });
+
+  test('ошибка генератора — не ok, ничего не записано', async () => {
+    const result = await (await cli()).gen(root, ['uc', 'todo.task', 'add']);
+    expect(result.ok).toBe(false);
+    expect(result.messages[0]).toStartWith('Ошибка: Модуль «todo» не найден');
+    expect(await snapshot()).toEqual(new Map());
+  });
 });

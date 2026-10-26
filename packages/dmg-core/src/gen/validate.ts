@@ -1,8 +1,8 @@
 /** Проверка ввода до построения плана; ошибки — на русском. */
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { type GenArgs, GenError } from './cli.ts';
-import { isKebab, kindNames, type NamedKind } from './naming.ts';
+import { type GenArgs, GenError } from './cli';
+import { isKebab, kindNames, type NamedKind } from './naming';
 
 function requireKebab(label: string, value: string | undefined) {
   if (value !== undefined && !isKebab(value)) {
@@ -23,7 +23,7 @@ export function validate(args: GenArgs): void {
   requireKebab('Имя агрегата', args.aggregate);
   requireKebab('Имя', args.name);
 
-  const moduleDir = join(args.domainRoot, args.module);
+  const moduleDir = args.layout.domainDir(args.module);
   const moduleExists = existsSync(join(moduleDir, `${args.module}.module.ts`));
 
   if (args.kind === 'module') {
@@ -38,7 +38,7 @@ export function validate(args: GenArgs): void {
 
   if (!moduleExists) {
     throw new GenError(
-      `Модуль «${args.module}» не найден в ${args.domainRoot} ` +
+      `Модуль «${args.module}» не найден: ${moduleDir} ` +
         `(сначала: gen module ${args.module})`,
     );
   }

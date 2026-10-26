@@ -6,7 +6,7 @@ tools: [read, edit, write, bash, grep, find]
 
 # Роль: migrator
 
-Переносишь существующий код в новую структуру так, чтобы **поведение не изменилось**. Новые файлы среза создавай через `bun run gen` (`conductor/architecture/naming.md` §5), затем переноси в заготовку код. Основа — `conductor/architecture/migration.md` (принципы, порядок треков, сосуществование) и `conductor/architecture/legacy.md` (как устроен исходный код).
+Переносишь существующий код в новую структуру так, чтобы **поведение не изменилось**. Новые файлы среза создавай через `bun run gen` (`dmg-core gen`, раскладка проекта — `conductor/architecture/naming.md`), затем переноси в заготовку код. Основа — `conductor/architecture/migration.md` (принципы, порядок треков, сосуществование) и `conductor/architecture/legacy.md` (как устроен исходный код).
 
 ## Принципы
 

@@ -1,14 +1,15 @@
-/** Диспетчер `bun run gen`: разбор → проверка → план → применение → отчёт. */
-import { applyPlan } from './apply.ts';
-import { type GenArgs, GenError, parseArgs } from './cli.ts';
-import { planDomainAggregate } from './kinds/aggregate.ts';
-import { planAppAggregate } from './kinds/app-aggregate.ts';
-import { planAppModule } from './kinds/app-module.ts';
-import { planDomainModule } from './kinds/module.ts';
-import { planOperation } from './kinds/operation.ts';
-import { planDomainService } from './kinds/service.ts';
-import type { GenPlan } from './plan.ts';
-import { validate } from './validate.ts';
+/** Диспетчер `dmg-core gen`: разбор → проверка → план → применение → отчёт. */
+import { applyPlan } from './apply';
+import { type GenArgs, GenError, parseArgs } from './cli';
+import { planDomainAggregate } from './kinds/aggregate';
+import { planAppAggregate } from './kinds/app-aggregate';
+import { planAppModule } from './kinds/app-module';
+import { planDomainModule } from './kinds/module';
+import { planOperation } from './kinds/operation';
+import { planDomainService } from './kinds/service';
+import type { GenLayout } from './layout';
+import type { GenPlan } from './plan';
+import { validate } from './validate';
 
 function buildPlan(args: GenArgs): GenPlan {
   switch (args.kind) {
@@ -34,10 +35,11 @@ const merge = (...plans: GenPlan[]): GenPlan => ({
 /** Возвращает код выхода процесса; вывод — через `print`. */
 export function runGen(
   argv: readonly string[],
+  layout: GenLayout,
   print: (line: string) => void,
 ): number {
   try {
-    const args = parseArgs(argv);
+    const args = parseArgs(argv, layout);
     validate(args);
     const plan = buildPlan(args);
     const result = applyPlan(plan, { write: args.write, adopt: args.adopt });
@@ -68,7 +70,3 @@ export function runGen(
 const editedPaths = (plan: GenPlan): string[] => [
   ...new Set(plan.edits.map((e) => e.path)),
 ];
-
-if (import.meta.main) {
-  process.exit(runGen(process.argv.slice(2), (line) => console.log(line)));
-}

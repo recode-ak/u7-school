@@ -3,14 +3,14 @@
  * рантайм-граница, его тип пишется руками по потребителю (D-42).
  */
 import { join } from 'node:path';
-import type { GenArgs } from '../cli.ts';
-import { toPascal } from '../naming.ts';
-import type { GenPlan } from '../plan.ts';
+import type { GenArgs } from '../cli';
+import { toPascal } from '../naming';
+import type { GenPlan } from '../plan';
 
 export function planDomainModule(args: GenArgs): GenPlan {
   const { module: m } = args;
   const P = toPascal(m);
-  const dir = join(args.domainRoot, m);
+  const dir = args.layout.domainDir(m);
 
   const moduleSrc = `import { defineModule } from 'dmg-core';
 // gen:defs:imports

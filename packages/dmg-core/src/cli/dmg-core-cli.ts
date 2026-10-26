@@ -1,6 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { CliConfig } from './cli-config';
+import { GenLayout } from '../gen/layout';
+import { runGen } from '../gen/main';
+import { CliConfig, type CliSettings } from './cli-config';
 import { Delivery } from './delivery';
 import { InstructionsBlock } from './instructions-block';
 import type { PackageSource } from './package-source';
@@ -18,10 +20,12 @@ interface Prepared {
 }
 
 /**
- * Команды доставки пакета в проект:
+ * Команды пакета в проекте:
  *   init         — создать `dmg-core.json` (если нет) и выполнить sync;
  *   sync         — обновить копии скилов, ролей и вставку в инструкции;
- *   sync --check — сообщить о расхождениях, ничего не меняя.
+ *   sync --check — сообщить о расхождениях, ничего не меняя;
+ *   gen          — создать файлы модуля по раскладке `gen` (без конфига —
+ *                  раскладка по умолчанию).
  */
 export class DmgCoreCli {
   private readonly block: InstructionsBlock;
@@ -76,20 +80,51 @@ export class DmgCoreCli {
     return { ok: messages.length === 0, messages };
   }
 
+  /** Генератор; root — корень проекта, от него пути раскладки */
+  async gen(root: string, argv: readonly string[]): Promise<CliResult> {
+    const settings = await this.settings(root);
+    if (settings === undefined)
+      return this.generate(root, argv, this.config.defaults());
+    if (typeof settings === 'string')
+      return { ok: false, messages: [settings] };
+    return this.generate(root, argv, settings);
+  }
+
+  private generate(
+    root: string,
+    argv: readonly string[],
+    settings: CliSettings,
+  ): CliResult {
+    const messages: string[] = [];
+    const code = runGen(argv, new GenLayout(settings.gen, root), (line) =>
+      messages.push(line),
+    );
+    return { ok: code === 0, messages };
+  }
+
   /** Настройки проекта → доставка; строка — сообщение об ошибке конфига */
   private async prepare(root: string): Promise<Prepared | string> {
+    const settings = await this.settings(root);
+    if (settings === undefined) {
+      return `нет ${CliConfig.file} — запусти dmg-core init`;
+    }
+    if (typeof settings === 'string') return settings;
+    return {
+      delivery: new Delivery(this.pkg, settings),
+      instructions: settings.instructions ?? undefined,
+    };
+  }
+
+  /** Настройки из `dmg-core.json`; undefined — файла нет, строка — ошибка */
+  private async settings(
+    root: string,
+  ): Promise<CliSettings | string | undefined> {
     const text = await readFile(join(root, CliConfig.file), 'utf8').catch(
       () => undefined,
     );
-    if (text === undefined) {
-      return `нет ${CliConfig.file} — запусти dmg-core init`;
-    }
+    if (text === undefined) return undefined;
     try {
-      const settings = this.config.parse(JSON.parse(text));
-      return {
-        delivery: new Delivery(this.pkg, settings),
-        instructions: settings.instructions ?? undefined,
-      };
+      return this.config.parse(JSON.parse(text));
     } catch (error) {
       const message = (error as Error).message;
       return message.startsWith(CliConfig.file)

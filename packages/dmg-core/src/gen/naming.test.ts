@@ -1,11 +1,5 @@
 import { expect, test } from 'bun:test';
-import {
-  isKebab,
-  kindNames,
-  toCamel,
-  toPascal,
-  toUpperSnake,
-} from './naming.ts';
+import { isKebab, kindNames, toCamel, toPascal, toUpperSnake } from './naming';
 
 test('kebab → PascalCase', () => {
   expect(toPascal('complete-student')).toBe('CompleteStudent');

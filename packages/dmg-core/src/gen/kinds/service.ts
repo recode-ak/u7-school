@@ -1,8 +1,8 @@
 /** `gen dcs|dqs <m> <topic>` — доменные сервисы модуля (naming.md §2). */
 import { join } from 'node:path';
-import type { GenArgs } from '../cli.ts';
-import { kindNames } from '../naming.ts';
-import type { GenPlan } from '../plan.ts';
+import type { GenArgs } from '../cli';
+import { kindNames } from '../naming';
+import type { GenPlan } from '../plan';
 
 const NOTES = {
   dcs: '// TODO: операции над несколькими агрегатами; возвращают Result (DOM-06)',
@@ -13,7 +13,7 @@ export function planDomainService(args: GenArgs): GenPlan {
   const kind = args.kind as 'dcs' | 'dqs';
   const topic = args.name ?? '';
   const { className, fileName } = kindNames(kind, topic);
-  const dir = join(args.domainRoot, args.module);
+  const dir = args.layout.domainDir(args.module);
   const base = fileName.replace(/\.ts$/, '');
 
   const src = `export class ${className} {

@@ -22,7 +22,7 @@ description: ЗАГРУЖАТЬ ПЕРВЫМ при создании или ре
 Скил `dmg-architecture` ведёт по документации пакета; здесь — привязка к монорепо:
 
 - Раскладка: домен — `packages/domain/src/<m>` (`@u7-scl/domain/<m>`, контракт — `@u7-scl/domain/<m>/contract`), прикладной слой — `packages/<m>/src`, приложение — `@u7-scl/app`, входные адаптеры — `apps/*` (вызов операций — `appApi`). Как правила ложатся на пакеты — `conductor/architecture/rules.md`.
-- Генератор — `bun run gen …` (`conductor/architecture/naming.md`); в документации пакета он записан как `dmg-core gen …`.
+- Генератор — `bun run gen …` = `dmg-core gen …` пакета (`naming.md` §5 пакета); раскладка проекта — `conductor/architecture/naming.md`.
 - Образцы: учебный модуль пакета (гайды `packages/dmg-core/docs/guides/`) и эталон проекта — модуль `wish` (внешние модули над legacy, мосты, межмодульный побочный эффект).
 - Модуль зависит от немигрированного — внешний модуль `external: true` и мост `packages/core/src/legacy-bridge` (`legacy.md` §6).
 

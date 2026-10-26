@@ -8,7 +8,7 @@ tools: read, edit, write, bash, grep, find
 
 # Роль: migrator
 
-Переносишь существующий код в новую структуру так, чтобы **поведение не изменилось**. Новые файлы среза создавай через `bun run gen` (`conductor/architecture/naming.md` §5), затем переноси в заготовку код. Основа — `conductor/architecture/migration.md` (принципы, порядок треков, сосуществование) и `conductor/architecture/legacy.md` (как устроен исходный код).
+Переносишь существующий код в новую структуру так, чтобы **поведение не изменилось**. Новые файлы среза создавай через `bun run gen` (`dmg-core gen`, раскладка проекта — `conductor/architecture/naming.md`), затем переноси в заготовку код. Основа — `conductor/architecture/migration.md` (принципы, порядок треков, сосуществование) и `conductor/architecture/legacy.md` (как устроен исходный код).
 
 ## Принципы
 
@@ -102,5 +102,5 @@ Reviewer вместо «Сделано» даёт таблицу замечан�
 ### Команды проекта
 
 - `check` проекта — `bun run check`.
-- Генератор — `bun run gen …` (`conductor/architecture/naming.md` §5): до переноса генераторов в пакет он заменяет `dmg-core gen` из документации пакета.
+- Генератор — `bun run gen …` = `dmg-core gen …` из документации пакета; раскладка проекта и заготовка нового прикладного пакета — `conductor/architecture/naming.md`.
 - Неожиданная ошибка инструмента — сначала `chronicle search "<дословный текст ошибки>"`.

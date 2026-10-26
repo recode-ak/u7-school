@@ -1,41 +1,20 @@
 /** Применение плана: сначала всё проверяем, затем пишем; перезаписей нет. */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname } from 'node:path';
-import { GenError } from './cli.ts';
-import type { ApplyResult, GenPlan, PlannedEdit, PlannedFile } from './plan.ts';
+import { GenError } from './cli';
+import { importBefore, isImportSource } from './import-order';
+import type { ApplyResult, GenPlan, PlannedEdit, PlannedFile } from './plan';
 
 /** Точка входа legacy-модуля: в режиме adopt не перезаписывается. */
 const ENTRY_FILE = 'index.ts';
 
-const SOURCE_LINE = /^(?:import|export)\b.*\bfrom '([^']+)';$/;
-
-/** Порядок biome: пакеты раньше относительных путей, дальше по строке пути. */
-function sourceOrder(line: string): [number, string] | undefined {
-  const source = SOURCE_LINE.exec(line.trim())?.[1];
-  return source === undefined
-    ? undefined
-    : [source.startsWith('.') ? 1 : 0, source];
-}
-
-/** Биом ставит `.` раньше `-` в путях (`./a.facade` < `./a-b.dcs`). */
-const pathKey = (path: string) =>
-  path.replaceAll('.', '\u0001').replaceAll('-', '\u0002');
-
-function isBefore(a: [number, string], b: [number, string]): boolean {
-  if (a[0] !== b[0]) return a[0] < b[0];
-  return pathKey(a[1]) < pathKey(b[1]);
-}
-
 /** Куда вставить `line`: в отсортированный блок import/export над маркером. */
 function insertionIndex(lines: string[], marker: number, line: string): number {
-  const order = sourceOrder(line);
-  if (order === undefined) return marker;
+  if (!isImportSource(line)) return marker;
   let start = marker;
-  while (start > 0 && sourceOrder(lines[start - 1] ?? '') !== undefined)
-    start--;
+  while (start > 0 && isImportSource(lines[start - 1] ?? '')) start--;
   for (let i = start; i < marker; i++) {
-    const other = sourceOrder(lines[i] ?? '');
-    if (other && isBefore(order, other)) return i;
+    if (importBefore(line, lines[i] ?? '')) return i;
   }
   return marker;
 }

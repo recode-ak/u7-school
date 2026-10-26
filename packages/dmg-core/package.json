@@ -9,7 +9,7 @@
   },
   "files": [
     "src",
-    "!src/{app,arch,cli,domain,graph,kernel}/**/*.test.ts",
+    "!src/{app,arch,cli,domain,gen,graph,kernel}/**/*.test.ts",
     "!src/testing/*.test.ts",
     "docs",
     "skills",

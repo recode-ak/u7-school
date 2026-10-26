@@ -26,5 +26,5 @@
 ### Команды проекта
 
 - `check` проекта — `bun run check`.
-- Генератор — `bun run gen …` (`conductor/architecture/naming.md` §5): до переноса генераторов в пакет он заменяет `dmg-core gen` из документации пакета.
+- Генератор — `bun run gen …` = `dmg-core gen …` из документации пакета; раскладка проекта и заготовка нового прикладного пакета — `conductor/architecture/naming.md`.
 - Неожиданная ошибка инструмента — сначала `chronicle search "<дословный текст ошибки>"`.

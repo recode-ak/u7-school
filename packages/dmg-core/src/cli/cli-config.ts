@@ -1,3 +1,4 @@
+import { GenLayout, type GenLayoutSettings } from '../gen/layout';
 import type { PackageSource } from './package-source';
 import type { RoleFormat } from './role';
 
@@ -13,6 +14,8 @@ export interface CliSettings {
   roles: { names: string[]; targets: RoleTarget[] };
   /** Файл инструкций агентов для вставки; null — не вставлять */
   instructions: string | null;
+  /** Раскладка модулей для `dmg-core gen` */
+  gen: GenLayoutSettings;
 }
 
 const FORMATS: readonly RoleFormat[] = ['neutral', 'claude', 'pi'];
@@ -36,13 +39,14 @@ export class CliConfig {
         targets: [{ dir: '.claude/agents', format: 'claude' }],
       },
       instructions: 'AGENTS.md',
+      gen: { ...GenLayout.defaults },
     };
   }
 
   /** Разбирает конфиг поверх значений по умолчанию; бросает Error с полем */
   parse(json: unknown): CliSettings {
     const data = this.object(json, 'конфиг');
-    this.known(data, ['skills', 'roles', 'instructions'], '');
+    this.known(data, ['skills', 'roles', 'instructions', 'gen'], '');
     const settings = this.defaults();
 
     if (data.skills !== undefined) {
@@ -85,7 +89,35 @@ export class CliConfig {
       }
       settings.instructions = data.instructions as string | null;
     }
+
+    if (data.gen !== undefined) settings.gen = this.gen(data.gen);
     return settings;
+  }
+
+  /** Секция `gen`: шаблоны путей с `{m}` поверх значений по умолчанию */
+  private gen(json: unknown): GenLayoutSettings {
+    const data = this.object(json, 'gen');
+    this.known(data, ['domain', 'app', 'domainImport'], 'gen.');
+    const gen = { ...GenLayout.defaults };
+    for (const key of ['domain', 'app'] as const) {
+      const value = data[key];
+      if (value === undefined) continue;
+      if (typeof value !== 'string' || !value.includes('{m}')) {
+        this.fail(`gen.${key} — шаблон пути с {m}`);
+      }
+      gen[key] = value as string;
+    }
+    if (data.domainImport !== undefined) {
+      const value = data.domainImport;
+      if (
+        value !== null &&
+        (typeof value !== 'string' || !value.includes('{m}'))
+      ) {
+        this.fail('gen.domainImport — шаблон с {m} или null');
+      }
+      gen.domainImport = value as string | null;
+    }
+    return gen;
   }
 
   private target(json: unknown, field: string): RoleTarget {

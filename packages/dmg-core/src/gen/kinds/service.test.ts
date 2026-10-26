@@ -1,9 +1,15 @@
 import { expect, test } from 'bun:test';
-import { parseArgs } from '../cli.ts';
-import { planDomainService } from './service.ts';
+import { parseArgs } from '../cli';
+import { GenLayout } from '../layout';
+import { planDomainService } from './service';
+
+const layout = new GenLayout(
+  { domain: '/d/{m}', app: '/p/{m}/src', domainImport: '@acme/domain/{m}' },
+  '.',
+);
 
 const plan = (kind: 'dcs' | 'dqs', topic: string) =>
-  planDomainService(parseArgs([kind, 'stream', topic, '--domain-root', '/d']));
+  planDomainService(parseArgs([kind, 'stream', topic], layout));
 
 test('dcs: файл и тест по naming.md §2', () => {
   const p = plan('dcs', 'stream-progress');

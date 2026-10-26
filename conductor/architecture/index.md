@@ -22,7 +22,7 @@
 | Задача | Читай |
 |---|---|
 | Понять устройство DMG | [layers.md](../../packages/dmg-core/docs/layers.md) → [domain-modeling.md](../../packages/dmg-core/docs/domain-modeling.md) |
-| Создать файл / объект | [naming.md пакета](../../packages/dmg-core/docs/naming.md), генератор — [naming.md](./naming.md) → [rules.md](./rules.md) |
+| Создать файл / объект | [naming.md пакета](../../packages/dmg-core/docs/naming.md), генератор в проекте — [naming.md](./naming.md) → [rules.md](./rules.md) |
 | Написать артефакт по образцу | [guides/](../../packages/dmg-core/docs/guides/index.md) + эталон `wish` |
 | Править немигрированный модуль | [legacy.md](./legacy.md) |
 | Работать с ботом | [ui/](./ui/bot-architecture.md) |
@@ -33,7 +33,7 @@
 **Решения и правила**
 - [decisions.md](./decisions.md) — решения проекта D-NN (платформенные — [в пакете](../../packages/dmg-core/docs/decisions.md))
 - [rules.md](./rules.md) — как каталог правил пакета применяется в проекте
-- [naming.md](./naming.md) — генератор `bun run gen` (до переноса в пакет)
+- [naming.md](./naming.md) — генератор в проекте: раскладка `dmg-core.json`, новый прикладной пакет
 
 **Переход и процесс**
 - [migration.md](./migration.md) — треки перехода, что исправляется, сосуществование

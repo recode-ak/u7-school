@@ -1,16 +1,20 @@
 /**
- * Приёмка генераторов (`gen-e2e`): срез module → aggregate → uc → er → job →
- * dcs → dqs создаётся в настоящих каталогах репозитория (иначе не
- * разрешаются `dmg-core` и `@u7-scl/domain`) и проходит biome, tsc, bun test
- * и arch:check без ручных правок. Каталоги среза удаляются в конце.
+ * Приёмка генераторов на раскладке проекта (`dmg-core.json`, `gen`): срез
+ * module → aggregate → uc → er → job → dcs → dqs создаётся командой
+ * `bun run gen` в настоящих каталогах репозитория (иначе не разрешаются
+ * `@u7-scl/domain` и `dmg-core`) и проходит biome, tsc, bun test и
+ * arch:check без ручных правок. Каталоги среза удаляются в конце.
+ *
+ * Сами генераторы и их тесты — в пакете (`dmg-core/src/gen`); здесь — только
+ * проверка, что настройки проекта дают рабочий код.
  */
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { type ArchApp, archCheck, formatViolation } from 'dmg-core/arch';
-import { runGen } from './main.ts';
+import { DomainArch } from './domain-arch';
 
-const REPO = join(import.meta.dir, '../..');
+const REPO = join(import.meta.dir, '..');
 const MODULE = 'genprobe';
 const DOMAIN = join(REPO, 'packages/domain/src', MODULE);
 const APP = join(REPO, 'packages', MODULE);
@@ -29,7 +33,7 @@ async function sh(cmd: string[]): Promise<{ code: number; text: string }> {
   return { code: await proc.exited, text: out + err };
 }
 
-beforeAll(() => {
+beforeAll(async () => {
   cleanup();
   const steps = [
     ['module', MODULE],
@@ -41,12 +45,10 @@ beforeAll(() => {
     ['dqs', MODULE, 'navigation'],
   ];
   for (const step of steps) {
-    const lines: string[] = [];
-    const code = runGen([...step, '--write'], (l) => lines.push(l));
-    if (code !== 0)
-      throw new Error(`gen ${step.join(' ')}: ${lines.join('\n')}`);
+    const res = await sh(['bun', 'run', 'gen', ...step, '--write']);
+    if (res.code !== 0) throw new Error(`gen ${step.join(' ')}: ${res.text}`);
   }
-});
+}, 60_000);
 afterAll(cleanup);
 
 test('biome чист', async () => {
@@ -57,14 +59,15 @@ test('biome чист', async () => {
     `packages/domain/src/${MODULE}`,
     `packages/${MODULE}`,
   ]);
-  expect(res.text).toContain('No fixes');
-  expect(res.code).toBe(0);
+  expect(res).toMatchObject({
+    code: 0,
+    text: expect.stringContaining('No fixes'),
+  });
 }, 60_000);
 
 test('tsc чист', async () => {
   const res = await sh(['bunx', 'tsc', '--noEmit']);
-  expect(res.text).toBe('');
-  expect(res.code).toBe(0);
+  expect(res).toEqual({ code: 0, text: '' });
 }, 300_000);
 
 test('тесты заготовок зелёные', async () => {
@@ -74,19 +77,19 @@ test('тесты заготовок зелёные', async () => {
     `packages/domain/src/${MODULE}`,
     `packages/${MODULE}`,
   ]);
-  expect(res.text).toContain(' 0 fail');
-  expect(res.code).toBe(0);
+  expect(res).toMatchObject({
+    code: 0,
+    text: expect.stringContaining(' 0 fail'),
+  });
 }, 120_000);
 
-test('arch:check без нарушений', async () => {
+test('arch:check без нарушений (раскладка приложения домена)', async () => {
   const domain = await import(`@u7-scl/domain/${MODULE}`);
   const app: ArchApp = {
+    ...DomainArch,
     name: MODULE,
     modules: [domain.GenprobeModuleDef],
-    layout: (m) => ({
-      domain: join(REPO, 'packages/domain/src', m),
-      app: join(REPO, 'packages', m, 'src'),
-    }),
+    entry: 'index',
   };
   expect(archCheck(app).map(formatViolation)).toEqual([]);
 });

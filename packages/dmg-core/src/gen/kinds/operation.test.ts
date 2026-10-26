@@ -1,19 +1,15 @@
 import { expect, test } from 'bun:test';
-import { parseArgs } from '../cli.ts';
-import { planOperation } from './operation.ts';
+import { parseArgs } from '../cli';
+import { GenLayout } from '../layout';
+import { planOperation } from './operation';
+
+const layout = new GenLayout(
+  { domain: '/d/{m}', app: '/p/{m}/src', domainImport: '@acme/domain/{m}' },
+  '.',
+);
 
 const plan = (kind: 'uc' | 'er' | 'job', name: string) =>
-  planOperation(
-    parseArgs([
-      kind,
-      'stream.student',
-      name,
-      '--domain-root',
-      '/d',
-      '--packages-root',
-      '/p',
-    ]),
-  );
+  planOperation(parseArgs([kind, 'stream.student', name], layout));
 const content = (p: ReturnType<typeof plan>, path: string) =>
   p.files.find((f) => f.path === path)?.content ?? '';
 
@@ -45,7 +41,7 @@ test('uc: реализация — класс XxxUc от UseCaseFromDef', () => 
     '/p/stream/src/student/uc/complete-student.uc.ts',
   );
   expect(src).toContain(
-    "import {\n  CompleteStudentUcDef,\n  type StreamModuleDef,\n} from '@u7-scl/domain/stream';",
+    "import {\n  CompleteStudentUcDef,\n  type StreamModuleDef,\n} from '@acme/domain/stream';",
   );
   expect(src).toContain(
     "import type { StreamDeps } from '../../stream.module';",
@@ -66,7 +62,7 @@ test('uc: тест реализации — модуль и пустые фас�
     '/p/stream/src/student/uc/complete-student.uc.test.ts',
   );
   expect(src).toContain(
-    "import { StreamModuleDef } from '@u7-scl/domain/stream';",
+    "import { StreamModuleDef } from '@acme/domain/stream';",
   );
   expect(src).toContain('facades: new ModuleFacades()');
   expect(src).toContain('new CompleteStudentUc(deps, StreamModuleDef)');
