@@ -1,0 +1,3 @@
+Задача Ф6 'GritQL-плагины в поставке' (dmg-core-extract).
+Изменения: packages/dmg-core/package.json (files += biome-plugins); biome.json (пути плагинов → ./node_modules/dmg-core/biome-plugins); packages/dmg-core/scripts/consumer-check.ts(+test) — PLUGINS; scripts/extract-check.sh — biome потребителя ловит DOM-14 плагином из пакета; scripts/lint-rules.test.ts — плагины во временном node_modules; README, docs/rules.md — подключение.
+Причина: после выноса проект и потребители потеряли бы lint-правила DOM/ERR/API/CODE — каталог не попадал в tarball.
