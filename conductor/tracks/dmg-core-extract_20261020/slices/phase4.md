@@ -92,3 +92,10 @@ DEBT-1…26 переданы трекам перевода модулей (от�
 - Реальный домен MAN-13 не нарушает: `arch:check` example 0, domain 0.
 - Открытый вопрос агента (обязательность `module`): оставлено необязательным — тактика, TR-25.
 - Гейт оркестратора: `bun run check` — 3792 pass, 0 fail; `arch:check` чист.
+
+### Шаг 5 — domain-author (Opus), готово
+
+- `checkFiles(index, layout, entry = 'index')`, `ArchApp.entry?`; импорт мимо входа не проверяется только между двумя `external`; прикладной слой внешнего модуля не сканируется (цикл импортов не учитывал `external` — причина 92 нарушений TR-23).
+- Эскалация: с `entry: 'contract'` — 52 импорта чужого `index` из домена legacy-модулей (DEBT-34). Решение оркестратора — TR-26 (по D-45 «пары legacy — по долгу»).
+- Проект: `DomainArch` (`scripts/domain-arch.ts`, `entry: 'contract'`) в `ARCH_APPS`; DEBT-33 погашен.
+- Гейт оркестратора: `bun run check` — 3800 pass, 0 fail; `arch:check` чист.
