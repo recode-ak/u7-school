@@ -656,3 +656,6 @@ error нет. warning: литералы статусов в `findAllByKind` `inv
 
 ### Ф12 шаг 4 — оркестратор
 Гайды `module.md`, `job.md` (заготовка), индекс гайдов.
+
+### Ревью Ф12 (reviewer, Opus, diff `211dbdb3..adb81d37`)
+error 0, warning 0, info 8: шум `warn` в `executeUc` (TR-21 п. 4); мелочи моста (пустой `Set`, лишний `isOf`); шпион `console.error` не в `afterEach`; повтор `UserCaller`/`Trace` в тестах; гайд «module» — место внешнего `defineModule` и предупреждение о субъекте `User` (поправлено); зависимость `u7-bot` от `@u7-scl/domain` vs barrel DEBT-23. Решения — TR-22. Сохраняемое поведение не нарушено.

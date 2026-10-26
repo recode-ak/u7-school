@@ -7,7 +7,7 @@
 ## 1. Когда применять
 
 - Модуль есть всегда: в паспорте — `dependsOn`, агрегаты, UC, ER, Job; всё, что не перечислено, в граф и приложение не попадает (MAN-06).
-- Зависимость ещё не мигрирована — внешний модуль `defineModule({ external: true })` в её `contract.ts` (D-37); если ей нужны UC для `calls` — карта-адаптер над legacy-фасадом в её пакете (TR-11).
+- Зависимость ещё не мигрирована — внешний модуль `defineModule({ external: true })` в её `<m>.module.ts`, экспорт — из `contract.ts` (D-37); если ей нужны UC для `calls` — карта-адаптер над legacy-фасадом в её пакете (TR-11).
 - Фасад — только по потребителю ([facade.md](./facade.md), D-38): другим модулям `wish` не нужен — фасада нет.
 
 ## 2. Команда
@@ -17,7 +17,7 @@
 ## 3. Эталон
 
 - [wish.module.ts (Def)](../../../packages/domain/src/wish/wish.module.ts): `dependsOn` — внешние `ModuleDef` из `contract.ts` зависимостей, четыре UC, четыре ER, `jobs: []`.
-- [wish.module.ts (реализация)](../../../packages/wish/src/wish.module.ts): `WishDeps = ModuleDeps & { wishes }` (тип резолвера — платформа, без `app`), `wishMap … satisfies ModuleMap<…>`, `createWishModule(deps)` → `ModuleFromDef`.
+- [wish.module.ts (реализация)](../../../packages/wish/src/wish.module.ts): `WishDeps = ModuleDeps & { wishes }` (тип резолвера — платформа; субъект пока legacy `User` из `@u7-scl/app` — DEBT-21/22, не копировать), `wishMap … satisfies ModuleMap<…>`, `createWishModule(deps)` → `ModuleFromDef`.
 - Внешний модуль-адаптер: [course.module.ts (Def)](../../../packages/domain/src/course/course.module.ts), [course.module.ts (карта)](../../../packages/course/src/course.module.ts) — `<M>Legacy = Pick<…>` над legacy-фасадом.
 - Сборка приложения: [create-dmg-modules.ts](../../../apps/u7-bot/src/create-dmg-modules.ts) — `AppContext` (мост `legacyEventBus` с картами `inbound`, `onInvalid` → `logger.warn`, `legacyClock`, `JsonlOperationLog(<DB_DIR>/oplog)`), фасады `ModuleFacades` по `dependsOn`; подключение — `ApiApp.addDmgModules` до `init` в [create-api-app.ts](../../../apps/u7-bot/src/create-api-app.ts).
 - Вызов из UI: `U7BotUiStory.executeUc(Def, input, actor)` — [u7-bot-ui-story.ts](../../../apps/u7-bot/src/core/u7-bot-ui-story.ts) (`UserCaller`, `Trace.fromRequest`).
