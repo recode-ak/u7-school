@@ -6,7 +6,7 @@
 
 ## Фаза 0: Базовая линия и типы
 
-- [~] Task: Зафиксировать базовую линию (`bun test` pass/fail по репо и по `dmg-core`) в черновике `summary.md`
+- [x] Task: Зафиксировать базовую линию (`bun test` pass/fail по репо и по `dmg-core`) в черновике `summary.md` `eacb6b0b`
 - [ ] Task: Тесты типов (`@ts-expect-error`) на требования спеки п.2: вывод `const S` (`D['calls'][number]`, `D['policy']`, `M['useCases'][number]`, `InputOf<D>`), структурная совместимость с `Any*Def` (нет `private`/`#`), сравнение по ссылке; прототип `XxxDef.define` с полиморфным `this` на одном виде — проверка, что вывод не теряется
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
