@@ -14,10 +14,7 @@ import { ListUserWishesUcDef } from './wish/uc/list-user-wishes.uc';
 import { WishArDef } from './wish/wish.ar';
 // gen:defs:imports
 
-/**
- * Паспорт модуля желаний. Legacy-мета `module.ts` (`WishApiModuleMeta`)
- * живёт рядом до Ф12 (TR-9).
- */
+/** Паспорт модуля желаний. */
 export const WishModuleDef = defineModule({
   name: 'wish',
   label: 'Желания',

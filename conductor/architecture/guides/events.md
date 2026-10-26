@@ -22,7 +22,6 @@
 - [wish.events.ts](../../../packages/domain/src/wish/wish/wish.events.ts): `confirmed` (из перехода) и `invited` (строит ER); payload через `F.*`, общие поля вынесены в константу, ветки по `targetKind` — `v.variant`.
 - [wish.ar.ts](../../../packages/domain/src/wish/wish/wish.ar.ts): `confirm` порождает `confirmed` через `emit`.
 - [wish.events.test.ts](../../../packages/domain/src/wish/wish/wish.events.test.ts): FQN, допустимый и недопустимый payload.
-- [legacy-publish.ts](../../../packages/wish/src/api/legacy-publish.ts): временная публикация из legacy-ER (TR-4).
 - Подписчик UI: [wish-invite.story.ts](../../../apps/u7-bot/src/controllers/courses/stories/wish-invite.story.ts) — имя `WishEvents.invited.name`, тип payload из схемы Def.
 - Образец платформы: [task.events.ts](../../../packages/dmg-core/src/testing/example/todo/task/task.events.ts).
 
@@ -44,4 +43,4 @@
 
 ## 6. Как тестировать
 
-Ar: событие в результате успешного перехода и отсутствие событий при отказе. Def: имя-FQN, разбор допустимого и отказ недопустимого payload (по ветке на `variant`). Публикация из ER — по имени и payload, без литерала полного конверта (TST-04, [testing.md](../testing.md)); полный конверт сверяет только тест самой функции, которая его строит ([legacy-publish.test.ts](../../../packages/wish/src/api/legacy-publish.test.ts)).
+Ar: событие в результате успешного перехода и отсутствие событий при отказе. Def: имя-FQN, разбор допустимого и отказ недопустимого payload (по ветке на `variant`). Публикация из ER — по имени и payload, без литерала полного конверта (TST-04, [testing.md](../testing.md)); полный конверт сверяет только тест самой функции, которая его строит.

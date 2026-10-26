@@ -39,7 +39,6 @@
       "@u7-scl/domain/*": ["./packages/domain/src/*/index.ts"],
       "@u7-scl/wish": ["./packages/wish/src/index.ts"],
       "@u7-scl/wish/domain": ["./packages/wish/src/domain/index.ts"],
-      "@u7-scl/wish/api": ["./packages/wish/src/api/index.ts"],
       "@u7-scl/wish/infra": ["./packages/wish/src/infra/index.ts"],
       "@u7-scl/questionnaire": ["./packages/questionnaire/src/index.ts"],
       "@u7-scl/questionnaire/domain": [

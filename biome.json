@@ -591,8 +591,7 @@
         "!**/*.repo.ts",
         "!**/*-repo.ts",
         "!**/*.json-repo.ts",
-        "!**/*.memory-repo.ts",
-        "!packages/wish/src/api/**"
+        "!**/*.memory-repo.ts"
       ],
       "plugins": [
         "./packages/dmg-core/biome-plugins/dom-17-snapshot-repo-only.grit"

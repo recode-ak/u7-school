@@ -20,8 +20,7 @@
 
 - [wish.errors.ts](../../../packages/domain/src/wish/wish/wish.errors.ts): 4 отказа переходов (`conflict`) и 4 ошибки UC; payload через `F.*`.
 - [wish.errors.test.ts](../../../packages/domain/src/wish/wish/wish.errors.test.ts): коды с префиксом, `kind`, разбор payload.
-- [legacy-reject.ts](../../../packages/wish/src/api/legacy-reject.ts): мост `Err` → legacy-исключение через `toLegacyError` — тот же перевод, что у `appApi.execute` (TR-1). UC бросают через `WishUseCase.throwWishError` ([wish-uc.ts](../../../packages/wish/src/api/wish-uc.ts)): код обязан быть в `errors` меты (ERR-02, тест — `@ts-expect-error`).
-- [legacy-uc-error.ts](../../../packages/domain/src/wish/wish/commands/legacy-uc-error.ts): тип legacy-ошибки из Def для мет legacy-команд (до Ф8).
+- [legacy-error.ts](../../../packages/core/src/legacy-bridge/legacy-error.ts): `toLegacyError` — перевод `Err` в legacy-исключение для stories, вызывающих `appApi.execute(Def, …)` (TR-1); новый вызывающий код берёт `Result` из `appApi.run`.
 - Образец платформы: [task.errors.ts](../../../packages/dmg-core/src/testing/example/todo/task/task.errors.ts).
 
 ## 4. Чеклист правил

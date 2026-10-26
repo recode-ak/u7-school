@@ -30,7 +30,7 @@
 - [wish.policy.test.ts](../../../packages/domain/src/wish/wish/wish.policy.test.ts): автор — разрешено, чужой — отказ с `denyMessage`.
 - [wish.rules.ts](../../../packages/domain/src/wish/wish/wish.rules.ts) и [тест](../../../packages/domain/src/wish/wish/wish.rules.test.ts): `domainRule` `unique` со ссылкой на `WISH_ALREADY_EXISTS`; ошибку со статусом существующего строит Ar — `alreadyExists()` (D-39), правило оборачивает её в `err`.
 - [wish.ar.ts](../../../packages/domain/src/wish/wish/wish.ar.ts): методы-вопросы `isActive`, `isOwnedBy`, `isFor`; `alreadyExists()` возвращает `ErrorOf`, а не `Result` — иначе `ReadonlyAr` его вырежет; активные статусы типизированы ключами `WishArDef.statuses`.
-- [cancel-wish-uc.ts](../../../packages/wish/src/api/wish/cancel-wish-uc.ts): `canCancel.evaluate` → `CoreErrors.ACCESS_DENIED` через мост.
+- [cancel-wish.uc.ts](../../../packages/wish/src/wish/uc/cancel-wish.uc.ts): Policy `canCancel` из Def проверяет база `UseCaseFromDef` — отказ `ACCESS_DENIED` в `Result`, в UC проверки нет.
 - Образец платформы: [task.policy.ts](../../../packages/dmg-core/src/testing/example/todo/task/task.policy.ts), [task.rules.ts](../../../packages/dmg-core/src/testing/example/todo/task/task.rules.ts).
 
 ## 4. Чеклист правил

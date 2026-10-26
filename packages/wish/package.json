@@ -24,11 +24,9 @@
     ".": "./src/index.ts",
     "./domain": "./src/domain/index.ts",
     "./wish": "./src/wish/index.ts",
-    "./api": "./src/api/index.ts",
     "./infra": "./src/infra/index.ts"
   },
   "imports": {
-    "#api-legacy/*": "./src/api/*.ts",
     "#infra-legacy/*": "./src/infra/*.ts"
   }
 }

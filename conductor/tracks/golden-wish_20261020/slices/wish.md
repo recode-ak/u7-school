@@ -650,3 +650,9 @@ error нет. warning: литералы статусов в `findAllByKind` `inv
 
 ### Ф12 шаг 2 — api-author (Opus)
 Сборка: `apps/u7-bot/src/create-dmg-modules.ts` (контекст: мост с inbound stream+questionnaire, `onInvalid` → `logger.warn`, `legacyClock`, `JsonlOperationLog`; модули user/course/questionnaire/stream — адаптеры, `wish` — `ModuleFacades` по `dependsOn`); `create-api-app.ts` без `WishApiModule`, `addDmgModules` до `init`, oplog `${dbDir}/oplog`; `U7BotAppMeta` без `WishApiModuleMeta`; `wishModule` из bundle убран. Stories — `U7BotUiStory.executeUc(Def, input, actor)` (`UserCaller`, `Trace.fromRequest`, `requestId` генерируется с `warn` — `update_id` до стори не доходит). Тест доставки legacy-событий до ER на сборке `createApiApp` (red → green). test-app — oplog в /tmp; `call-uc` — UC `wish` через DMG. Отклонения: экспорт `"."` у `@u7-scl/user`, `./wish.module` у `@u7-scl/wish`, workspace-зависимости у `u7-bot`. Гейт зелёный (полный check), `u7-bot` 969 pass. TR-21.
+
+### Ф12 шаг 3 — migrator (Sonnet)
+Удалён legacy `wish`: `packages/wish/src/api/**` (UC, ER, модуль, `legacy-publish`/`legacy-reject`, 67 тестов — случаи покрыты DMG-тестами), `wish.resolver.ts`, домен `module.ts` и `commands/**`, экспорты (`index.ts`, `package.json`, `tsconfig.json`). Barrel DEBT-23 сохранён. В `packages/domain/src/wish` импортов `core`/`app` нет; DEBT-21/22 остаются в `packages/wish/src/{wish.module.ts,wish/uc/*.uc.ts}` (субъект `User`). Оркестратор: снято исключение `packages/wish/src/api/**` в `biome.json` и его фикстура `lint-fixtures`, ссылки гайдов на legacy заменены. `check` 3730 pass, `arch:check` чист.
+
+### Ф12 шаг 4 — оркестратор
+Гайды `module.md`, `job.md` (заготовка), индекс гайдов.
