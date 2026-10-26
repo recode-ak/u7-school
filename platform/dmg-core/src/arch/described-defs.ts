@@ -1,5 +1,5 @@
 import type * as v from 'valibot';
-import type { AnyDomainRule } from '../domain/rules/domain-rule';
+import type { AnyDomainRule } from '../domain/rules/domain-rule-def';
 import type { DefIndex } from '../graph/def-index';
 import { localId, ruleId } from '../graph/def-index';
 
@@ -52,7 +52,7 @@ export function describedDefs(index: DefIndex): DescribedDef[] {
       for (const r of uc.rules ?? []) {
         if (rules.has(r)) continue;
         rules.add(r);
-        add(`правило ${ruleId(index, r).id}`, r);
+        out.push({ title: `правило ${ruleId(index, r).id}`, ...r.describe() });
       }
     }
     for (const er of m.reactions) add(`ER ${localId(m, er)}`, er);

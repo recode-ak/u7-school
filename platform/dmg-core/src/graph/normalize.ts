@@ -10,8 +10,11 @@ import type { AnyUseCaseDef } from '../domain/contracts/define-use-case';
 import type { AnyEventDef, NormalizedEvent } from '../domain/events/event-def';
 import type { AnyPolicyDef } from '../domain/policy/define-policy';
 import type { AnyRule } from '../domain/policy/policy';
-import type { AnyRulesDef } from '../domain/rules/define-rules';
-import type { AnyDomainRule } from '../domain/rules/domain-rule';
+import type {
+  AnyDomainRule,
+  NormalizedDomainRule,
+} from '../domain/rules/domain-rule-def';
+import type { AnyRulesDef, NormalizedRules } from '../domain/rules/rules-def';
 import type { CallerKind } from '../kernel/caller/caller';
 import type { AnyErrorDef, NormalizedError } from '../kernel/errors/error-def';
 import { toJsonSchema } from '../kernel/schema/json-schema';
@@ -23,6 +26,8 @@ export type {
   NormalizedTransition,
 } from '../domain/aggregate/aggregate-def';
 export type { NormalizedEvent } from '../domain/events/event-def';
+export type { NormalizedDomainRule } from '../domain/rules/domain-rule-def';
+export type { NormalizedRules } from '../domain/rules/rules-def';
 export type { NormalizedError } from '../kernel/errors/error-def';
 
 type Texts = {
@@ -57,17 +62,6 @@ export type NormalizedRule =
 export type NormalizedPolicy = Texts & {
   readonly dmg: 'policy';
   readonly rules: { readonly [question: string]: NormalizedRule };
-};
-
-/** Доменное правило (D-40): тексты и код ошибки отказа. */
-export type NormalizedDomainRule = Texts & {
-  readonly dmg: 'domainRule';
-  readonly error: string;
-};
-
-export type NormalizedRules = Texts & {
-  readonly dmg: 'rules';
-  readonly rules: { readonly [key: string]: NormalizedDomainRule };
 };
 
 export type NormalizedUseCase = Texts & {
@@ -177,18 +171,8 @@ export function normalize(def: AnyDef): NormalizedDef {
         ),
       };
     case 'domainRule':
-      return normalizeDomainRule(def);
     case 'rules':
-      return {
-        dmg: 'rules',
-        ...texts(def),
-        rules: Object.fromEntries(
-          Object.entries(def.rules).map(([k, r]) => [
-            k,
-            normalizeDomainRule(r),
-          ]),
-        ),
-      };
+      return def.normalize();
     case 'useCase':
       return {
         dmg: 'useCase',
@@ -242,10 +226,6 @@ function texts(def: Texts): Texts {
 
 function schema(s: v.GenericSchema): JsonSchema {
   return toJsonSchema(s);
-}
-
-function normalizeDomainRule(r: AnyDomainRule): NormalizedDomainRule {
-  return { dmg: 'domainRule', ...texts(r), error: r.error.code };
 }
 
 function normalizeRule(r: AnyRule): NormalizedRule {

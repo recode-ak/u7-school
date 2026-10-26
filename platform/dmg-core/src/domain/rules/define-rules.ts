@@ -1,18 +1,13 @@
-import type { AnyDomainRule } from './domain-rule';
+import { RulesDef } from './rules-def';
+import type { RulesSpec } from './rules-def.types';
 
-export type RulesSpec = {
-  readonly name: string;
-  readonly label: string;
-  readonly description: string;
-  /** Доменные правила агрегата: ключ — имя, значение — правило. */
-  readonly rules: { readonly [key: string]: AnyDomainRule };
-};
+export { RulesDef } from './rules-def';
+export type { AnyRulesDef, RulesSpec } from './rules-def.types';
 
-export type RulesDef<S extends RulesSpec> = S & { readonly dmg: 'rules' };
-
-export type AnyRulesDef = RulesDef<RulesSpec>;
-
-/** Доменные правила агрегата (D-40), на которые ссылаются UC. */
+/**
+ * Доменные правила агрегата — обёртка над `RulesDef.define` на время
+ * перевода потребителей (трек dmg-core-oop, Фаза 7 удаляет).
+ */
 export function defineRules<const S extends RulesSpec>(spec: S): RulesDef<S> {
-  return { ...spec, dmg: 'rules' };
+  return RulesDef.define(spec);
 }

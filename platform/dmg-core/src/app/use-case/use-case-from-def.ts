@@ -11,9 +11,9 @@ import type {
   RuleSubjectOf,
 } from '#core/domain/policy/policy';
 import type {
-  DomainRule,
   DomainRuleContextOf,
-} from '#core/domain/rules/domain-rule';
+  DomainRuleDef,
+} from '#core/domain/rules/domain-rule-def';
 import type { Caller, Identified } from '#core/kernel/caller/caller';
 import { CoreErrors } from '#core/kernel/errors/core-errors';
 import { serializeError } from '#core/kernel/errors/serialize-error';
@@ -56,7 +56,7 @@ export type UseCaseRulesContextOf<D extends AnyUseCaseDef> = RuleContexts<
  * ошибка — из `errors` UC (ERR-02). Правило с необъявленной ошибкой не
  * подходит конструктору; рантайм-проверку того же делает `checkDefs`.
  */
-type UseCaseRule<D extends AnyUseCaseDef> = DomainRule<
+type UseCaseRule<D extends AnyUseCaseDef> = DomainRuleDef<
   UseCaseRulesContextOf<D>,
   D['errors'][number]
 >;

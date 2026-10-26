@@ -2,7 +2,7 @@ import type { JsonSchema } from '@valibot/to-json-schema';
 import type { AnyAggregateDef } from '../domain/aggregate/aggregate-def';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyEventDef } from '../domain/events/event-def';
-import type { AnyDomainRule } from '../domain/rules/domain-rule';
+import type { AnyDomainRule } from '../domain/rules/domain-rule-def';
 import {
   type AnyOperationDef,
   callsOf,

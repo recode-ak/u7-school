@@ -86,19 +86,19 @@ export {
   type RuleSubjectOf,
   rule,
 } from './domain/policy/policy';
-export {
-  type AnyRulesDef,
-  defineRules,
-  type RulesDef,
-  type RulesSpec,
-} from './domain/rules/define-rules';
+export { defineRules } from './domain/rules/define-rules';
+export { type DomainRule, domainRule } from './domain/rules/domain-rule';
 export {
   type AnyDomainRule,
-  type DomainRule,
   type DomainRuleContextOf,
+  DomainRuleDef,
   type DomainRuleSpec,
-  domainRule,
-} from './domain/rules/domain-rule';
+} from './domain/rules/domain-rule-def';
+export {
+  type AnyRulesDef,
+  RulesDef,
+  type RulesSpec,
+} from './domain/rules/rules-def';
 export {
   Caller,
   type CallerJson,

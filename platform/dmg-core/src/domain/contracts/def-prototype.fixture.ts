@@ -7,7 +7,7 @@ import type { AnyErrorDef } from '#core/kernel/errors/error-def';
 import type { AnyAggregateDef } from '../aggregate/aggregate-def';
 import type { AnyEventDef } from '../events/event-def';
 import type { AnyRule } from '../policy/policy';
-import type { AnyDomainRule } from '../rules/domain-rule';
+import type { AnyDomainRule } from '../rules/domain-rule-def';
 
 type DefSpec = {
   readonly name: string;
