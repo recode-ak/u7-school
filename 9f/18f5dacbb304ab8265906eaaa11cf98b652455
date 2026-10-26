@@ -1,0 +1,4 @@
+Задача Ф4 dmg-core-extract: порты Outbox/Inbox (D-47).
+UoW публикует через Outbox (InProcOutbox по умолчанию), ReactionFromDef отсеивает повтор eventId через Inbox (InProcInbox), dmg-core/testing — expectIdempotentReaction.
+Файлы: packages/dmg-core/src/app/events/{outbox,inbox}.ts(+тесты), app/context.ts, app/uow/unit-of-work.ts(+тест), app/operation/operation-from-def.ts, app/reaction/reaction-from-def.ts(+тест), testing/{app-context,index,reaction-idempotency}.ts, учебная ER archive-removed-user-tasks тест; механически apps/u7-bot/src/create-dmg-modules.ts, packages/core/src/legacy-bridge/example-app.test.ts.
+Причина: D-28/D-47 — готовность к распределённому запуску. Тактика — TR-24. check: 3782 pass.
