@@ -1,0 +1,1 @@
+Ф13, задача «Сводка гайдов». Индекс guides/index.md уже был (Ф12) и подключён в architecture/index.md; обновлены статус перехода в index.md, agents.md §6 (эталон wish, guides/, guides-check), роли (.agents-core → agents:sync) и скилл architecture — ссылки на гайды по видам. check 3734 pass.
