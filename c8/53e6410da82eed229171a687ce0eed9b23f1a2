@@ -1,0 +1,4 @@
+Задача Ф4 dmg-core-extract: MAN-13.
+checkDefs.checkOwnAggregates (aggregate UC, touches ER, scans Job — свой модуль), UoW.assertOwnModule по UnitOfWorkContext.module (передаёт OperationFromDef); ветка MAN-06 о чужом агрегате снята.
+Файлы: packages/dmg-core/src/arch/{violation,check-defs}.ts(+тест), app/uow/unit-of-work.ts(+тест), app/operation/operation-from-def.ts(+тест), app/use-case/use-case-from-def.test.ts, app/reaction/reaction-from-def.test.ts, packages/core/src/legacy-bridge/legacy-job.test.ts, packages/core/src/api/app/api-app-dmg.test.ts.
+Причина: D-28. Тактика — TR-25. check: 3792 pass, arch:check чист.
