@@ -18,6 +18,8 @@ import type { WishRepo } from '@u7-scl/wish/wish';
 import {
   type AppContext,
   type AppMode,
+  InProcInbox,
+  InProcOutbox,
   JsonlOperationLog,
   ModuleFacade,
   ModuleFacades,
@@ -43,15 +45,18 @@ export type DmgLegacyFacades = {
 /**
  * Контекст приложения для модулей DMG на время сосуществования: шина DMG
  * поверх legacy-шины (входящие legacy-события зависимостей — по картам
- * `inbound`, D-37), часы legacy, логгер приложения, JSONL-лог операций.
+ * `inbound`, D-37), outbox и inbox в процессе (D-47), часы legacy, логгер приложения, JSONL-лог операций.
  */
 export function createDmgAppContext(platform: DmgPlatform): AppContext {
   const { legacyBus, logger, mode, oplogDir } = platform;
+  const bus = legacyEventBus(legacyBus, {
+    inbound: [...streamLegacyInbound, ...questionnaireLegacyInbound],
+    onInvalid: (message) => logger.warn('legacy-event-bus', message),
+  });
   return {
-    bus: legacyEventBus(legacyBus, {
-      inbound: [...streamLegacyInbound, ...questionnaireLegacyInbound],
-      onInvalid: (message) => logger.warn('legacy-event-bus', message),
-    }),
+    bus,
+    outbox: new InProcOutbox(bus),
+    inbox: new InProcInbox(),
     clock: legacyClock(),
     logger,
     mode,

@@ -90,7 +90,7 @@ export abstract class OperationFromDef<
     const def: AnyOperationDef = this.def;
     const touches = touchesOf(def);
     return new UnitOfWork({
-      bus: app.bus,
+      outbox: app.outbox,
       clock: app.clock,
       trace,
       emits: def.emits ?? [],

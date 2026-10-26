@@ -24,6 +24,13 @@ export type {
   EventEnvelope,
   PublishedEvent,
 } from './events/event-envelope';
+export {
+  DEFAULT_INBOX_CAPACITY,
+  type Delivery,
+  type Inbox,
+  InProcInbox,
+} from './events/inbox';
+export { InProcOutbox, type Outbox } from './events/outbox';
 export { type FacadeModule, ModuleFacade } from './facade/module-facade';
 export { ModuleFacades, type RoutableFacade } from './facade/module-facades';
 export {

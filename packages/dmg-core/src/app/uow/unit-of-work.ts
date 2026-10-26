@@ -8,8 +8,8 @@ import type { ErrorOf } from '#core/kernel/errors/define-errors';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Trace } from '#core/kernel/trace/trace';
 import type { Clock } from '../context';
-import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope, PublishedEvent } from '../events/event-envelope';
+import type { Outbox } from '../events/outbox';
 import { type Repository, VersionConflict } from './repository';
 
 /** Что UoW нужно от агрегата: идентификатор, события, отметка записи. */
@@ -23,7 +23,8 @@ export type Committable = {
 export type CommitError = ErrorOf<typeof CoreErrors.VERSION_CONFLICT>;
 
 export type UnitOfWorkContext = {
-  readonly bus: EventBus;
+  /** Куда уходят конверты записанных агрегатов (D-47). */
+  readonly outbox: Outbox;
   readonly clock: Clock;
   readonly trace: Trace;
   /** Заявленные события операции; без поля проверка не выполняется. */
@@ -38,8 +39,9 @@ type Entry = { readonly ar: Committable; readonly save: () => Promise<void> };
 
 /**
  * Единица работы одной операции (D-15): зарегистрированные агрегаты
- * сохраняются последовательно, затем публикуются их события. Отката нет —
- * JSON-хранилище не атомарно; сбой сохранения отменяет публикацию.
+ * сохраняются последовательно, затем их события уходят в outbox (D-47).
+ * Отката нет — JSON-хранилище не атомарно; сбой сохранения отменяет
+ * публикацию.
  */
 export class UnitOfWork {
   private readonly entries: Entry[] = [];
@@ -56,14 +58,15 @@ export class UnitOfWork {
   /**
    * События собираются и сверяются с `emits` до записи: незаявленное
    * событие — баг реализации, и тогда не сохраняется ничего. Агрегаты
-   * пишутся по порядку регистрации; публикуются события только записанных
-   * агрегатов — после записи всех или на первом сбое. Сбой N-го агрегата
+   * пишутся по порядку регистрации; в outbox одной партией уходят события
+   * только записанных агрегатов — после записи всех или на первом сбое. Сбой N-го агрегата
    * (`VersionConflict` → `VERSION_CONFLICT`, иное исключение — пробрасывается):
    * записанные до него остаются (отката нет, D-15) и их события уходят,
    * события N-го и следующих — нет.
    *
    * `Ok` — опубликованные события (для лога операций). При отказе или
-   * исключении опубликованное до сбоя видно в `published`.
+   * исключении опубликованное до сбоя видно в `published`. Сбой outbox —
+   * исключение: записанное остаётся, опубликованным ничего не считается.
    */
   async commit(): Promise<Result<readonly PublishedEvent[], CommitError>> {
     const batches = this.entries.map(({ ar }) =>
@@ -84,10 +87,7 @@ export class UnitOfWork {
         uuid: error.uuid,
       });
     } finally {
-      for (const envelope of batches.slice(0, written).flat()) {
-        this.ctx.bus.publish(envelope);
-        this.sent.push({ name: envelope.name, eventId: envelope.eventId });
-      }
+      await this.send(batches.slice(0, written).flat());
     }
     return ok(this.published);
   }
@@ -95,6 +95,13 @@ export class UnitOfWork {
   /** События, опубликованные этой UoW (в том числе до сбоя фиксации). */
   get published(): readonly PublishedEvent[] {
     return [...this.sent];
+  }
+
+  private async send(envelopes: readonly EventEnvelope[]): Promise<void> {
+    if (envelopes.length === 0) return;
+    await this.ctx.outbox.put(envelopes);
+    for (const { name, eventId } of envelopes)
+      this.sent.push({ name, eventId });
   }
 
   private envelope(event: DomainEvent, aggregateId: string): EventEnvelope {

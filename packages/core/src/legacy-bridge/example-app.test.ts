@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { ok, SystemCaller, UserCaller } from 'dmg-core';
 import {
+  InProcInbox,
+  InProcOutbox,
   JsonlOperationLog,
   ModuleFacade,
   ModuleFacades,
@@ -54,9 +56,12 @@ beforeEach(async () => {
   dir = await mkdtemp(path.join(tmpdir(), 'dmg-todo-'));
   legacy = new InProcEventBus();
   logs = [];
+  const bus = legacyEventBus(legacy);
   deps = {
     app: {
-      bus: legacyEventBus(legacy),
+      bus,
+      outbox: new InProcOutbox(bus),
+      inbox: new InProcInbox(),
       clock: legacyClock(),
       logger: memoryLogger(logs),
       mode: 'test',

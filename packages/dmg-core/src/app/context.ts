@@ -1,5 +1,7 @@
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { EventBus } from './events/event-bus';
+import type { Inbox } from './events/inbox';
+import type { Outbox } from './events/outbox';
 import type { ModuleFacades } from './facade/module-facades';
 import type { OperationLog } from './oplog/operation-record';
 
@@ -25,7 +27,12 @@ export const systemClock: Clock = () => Date.now();
 
 /** Платформенные зависимости приложения, общие для всех модулей DMG. */
 export type AppContext = {
+  /** Шина: подписка реакций; публикует в неё outbox (relay). */
   readonly bus: EventBus;
+  /** Куда UoW отдаёт конверты записанных агрегатов (D-47); in-proc — `InProcOutbox`. */
+  readonly outbox: Outbox;
+  /** Отсев повторной доставки событий реакциям (D-47); in-proc — `InProcInbox`. */
+  readonly inbox: Inbox;
   readonly clock: Clock;
   readonly logger: Logger;
   readonly mode: AppMode;

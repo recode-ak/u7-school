@@ -248,3 +248,53 @@ describe('ReactionFromDef.subscribe', () => {
     expect(tasks.rows.get(TASK)?.status).toBe('archived');
   });
 });
+
+describe('ReactionFromDef — повтор доставки (D-47)', () => {
+  test('тот же eventId — второй раз реакция не исполняется', async () => {
+    expectOk(await er.handle(removed()));
+    const published = ctx.published.length;
+    let ran = false;
+    er.step = async () => {
+      ran = true;
+      return ok();
+    };
+    expectOk(await er.handle(removed()));
+    expect(ran).toBe(false);
+    expect(ctx.published).toHaveLength(published);
+    expect(ctx.oplog.records).toHaveLength(1);
+    expect(ctx.logs).toContainEqual({
+      level: 'debug',
+      source: 'archiveRemovedUserTasks',
+      message: 'Повтор доставки e-removed отброшен',
+    });
+  });
+
+  test('после отказа тот же eventId доставляется снова', async () => {
+    tasks.rows.set(TASK, taskRow(TASK, 'archived'));
+    expectErr(await er.handle(removed()), 'TASK_ARCHIVED');
+    tasks.rows.set(TASK, taskRow(TASK));
+    expectOk(await er.handle(removed()));
+    expect(tasks.rows.get(TASK)?.status).toBe('archived');
+  });
+
+  test('после исключения тот же eventId доставляется снова', async () => {
+    const archive = er.step;
+    er.step = async () => {
+      throw new Error('диск недоступен');
+    };
+    expectErr(await er.handle(removed()), 'SERVER_INTERNAL');
+    er.step = archive;
+    expectOk(await er.handle(removed()));
+  });
+
+  test('новый eventId — реакция исполняется', async () => {
+    expectOk(await er.handle(removed()));
+    let ran = false;
+    er.step = async () => {
+      ran = true;
+      return ok();
+    };
+    expectOk(await er.handle({ ...removed(), eventId: 'e-removed-2' }));
+    expect(ran).toBe(true);
+  });
+});

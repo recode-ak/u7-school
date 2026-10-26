@@ -49,8 +49,32 @@ export abstract class ReactionFromDef<
   /**
    * Реакция на событие и запись в лог операций (вход — событие; «кто
    * породил» — в записи породившей операции, D-43).
+   *
+   * Доставка — через `app.inbox` (D-47): повтор того же `eventId` этой
+   * реакции отбрасывается (`Ok`, без записи в лог операций, `debug` в
+   * логгер). После отказа или исключения доставка снимается — повтор того
+   * же события исполнится снова.
    */
-  handle(event: ReactionEnvelopeOf<D>): Promise<Result<void, DomainError>> {
+  async handle(
+    event: ReactionEnvelopeOf<D>,
+  ): Promise<Result<void, DomainError>> {
+    const { app } = this.resolve;
+    const delivery = { reaction: this.ref, eventId: event.eventId };
+    if (!(await app.inbox.claim(delivery))) {
+      app.logger.debug(
+        this.def.name,
+        `Повтор доставки ${event.eventId} отброшен`,
+      );
+      return ok();
+    }
+    const res = await this.execute(event);
+    if (!res.ok) await app.inbox.release(delivery);
+    return res;
+  }
+
+  private execute(
+    event: ReactionEnvelopeOf<D>,
+  ): Promise<Result<void, DomainError>> {
     const { app } = this.resolve;
     const caller = new SystemCaller(this.ref);
     const trace = Trace.fromEvent(event);

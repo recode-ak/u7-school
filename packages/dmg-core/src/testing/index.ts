@@ -19,4 +19,8 @@ export {
 export { ExampleArch } from './example/example.arch';
 export { expectErr, expectOk } from './expect-result';
 export { MemoryOperationLog } from './memory-operation-log';
+export {
+  expectIdempotentReaction,
+  type ReactionIdempotencySpec,
+} from './reaction-idempotency';
 export { type StubCall, StubFacade } from './stub-facade';

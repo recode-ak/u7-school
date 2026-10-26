@@ -1,6 +1,8 @@
 import type { AppContext, AppMode, Logger } from '../app/context';
 import type { EventBus } from '../app/events/event-bus';
 import type { EventEnvelope } from '../app/events/event-envelope';
+import { InProcInbox } from '../app/events/inbox';
+import { InProcOutbox } from '../app/events/outbox';
 import type { OperationLog } from '../app/oplog/operation-record';
 import type { Timestamp } from '../kernel/time/timestamp';
 import { MemoryOperationLog } from './memory-operation-log';
@@ -69,7 +71,8 @@ export const TEST_NOW: Timestamp = Date.UTC(2026, 0, 1);
 
 /**
  * Контекст приложения для тестов прикладного слоя: всё видно в массивах
- * (`oplog.records` — лог операций в памяти), часы стоят на `at` и
+ * (`published` — отданное в outbox, `oplog.records` — лог операций в
+ * памяти; outbox и inbox — in-proc), часы стоят на `at` и
  * переводятся `setNow` — без глобального состояния. `options.oplog` —
  * подмена лога операций (например, сбойного); тогда `oplog` пуст.
  */
@@ -84,8 +87,11 @@ export function testAppContext(
   const logs: LogRecord[] = [];
   const oplog = new MemoryOperationLog();
   let at = options.at ?? TEST_NOW;
+  const bus = recordingBus(published);
   const app: AppContext = {
-    bus: recordingBus(published),
+    bus,
+    outbox: new InProcOutbox(bus),
+    inbox: new InProcInbox(),
     clock: () => at,
     logger: memoryLogger(logs),
     mode: options.mode ?? 'test',

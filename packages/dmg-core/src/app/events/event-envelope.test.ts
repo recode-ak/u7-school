@@ -5,6 +5,7 @@ import { expectOk, recordingBus } from '#core/testing/index';
 import type { Repository } from '../uow/repository';
 import { UnitOfWork } from '../uow/unit-of-work';
 import type { EventEnvelope } from './event-envelope';
+import { InProcOutbox } from './outbox';
 
 const AT = Date.UTC(2026, 9, 18, 12, 0);
 const TASK = 'a1b2c3d4-0000-4000-8000-00000000000a';
@@ -16,7 +17,7 @@ const repo: Repository<TaskAr> = { aggregate: TaskArDef, save: async () => {} };
 async function envelopes(trace: Trace): Promise<EventEnvelope[]> {
   const published: EventEnvelope[] = [];
   const uow = new UnitOfWork({
-    bus: recordingBus(published),
+    outbox: new InProcOutbox(recordingBus(published)),
     clock: () => AT,
     trace,
   });

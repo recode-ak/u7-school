@@ -9,6 +9,7 @@ import { UserArDef } from '#core/testing/example/users/user/user.ar';
 import { expectErr, expectOk } from '#core/testing/index';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
+import { InProcOutbox, type Outbox } from '../events/outbox';
 import { assertVersion, type Repository, VersionConflict } from './repository';
 import { UnitOfWork } from './unit-of-work';
 
@@ -55,7 +56,7 @@ beforeEach(() => {
   log = [];
   published = [];
   uow = new UnitOfWork({
-    bus: recordingBus(published, log),
+    outbox: new InProcOutbox(recordingBus(published, log)),
     trace: TRACE,
     clock: () => AT,
   });
@@ -210,7 +211,7 @@ describe('UnitOfWork.commit', () => {
     expectOk(await uow.commit());
     expectOk(ar.complete(AT));
     const next = new UnitOfWork({
-      bus: recordingBus(published, log),
+      outbox: new InProcOutbox(recordingBus(published, log)),
       trace: TRACE,
       clock: () => AT,
     });
@@ -228,7 +229,7 @@ describe('UnitOfWork.commit', () => {
 
   test('незаявленное событие при `emits` — исключение до сохранения', async () => {
     const strict = new UnitOfWork({
-      bus: recordingBus(published, log),
+      outbox: new InProcOutbox(recordingBus(published, log)),
       trace: TRACE,
       clock: () => AT,
       emits: [TaskEvents.completed],
@@ -242,7 +243,7 @@ describe('UnitOfWork.commit', () => {
 
   test('агрегат вне `touches` — исключение при регистрации', () => {
     const narrow = new UnitOfWork({
-      bus: recordingBus(published, log),
+      outbox: new InProcOutbox(recordingBus(published, log)),
       trace: TRACE,
       clock: () => AT,
       touches: [UserArDef],
@@ -255,7 +256,7 @@ describe('UnitOfWork.commit', () => {
   test('с onViolation нарушения сообщаются, работа не прерывается', async () => {
     const violations: string[] = [];
     const lenient = new UnitOfWork({
-      bus: recordingBus(published, log),
+      outbox: new InProcOutbox(recordingBus(published, log)),
       trace: TRACE,
       clock: () => AT,
       emits: [],
@@ -274,5 +275,76 @@ describe('UnitOfWork.commit', () => {
   test('без регистраций — ничего не делает', async () => {
     await uow.commit();
     expect(log).toEqual([]);
+  });
+});
+
+describe('UnitOfWork — outbox (D-47)', () => {
+  /** Outbox, который пишет в журнал каждую принятую партию. */
+  function recordingOutbox(batches: string[][], fail = false): Outbox {
+    return {
+      async put(envelopes) {
+        log.push(`put ${envelopes.length}`);
+        if (fail) throw new Error('outbox недоступен');
+        batches.push(envelopes.map((e) => e.aggregateId));
+      },
+    };
+  }
+
+  test('конверты записанных агрегатов — одной партией после записи', async () => {
+    const batches: string[][] = [];
+    const out = new UnitOfWork({
+      outbox: recordingOutbox(batches),
+      trace: TRACE,
+      clock: () => AT,
+    });
+    out.register(task(A), slowRepo(log));
+    out.register(task(B), slowRepo(log));
+    const sent = expectOk(await out.commit());
+    expect(log).toEqual([
+      `save ${A}`,
+      `saved ${A}`,
+      `save ${B}`,
+      `saved ${B}`,
+      'put 2',
+    ]);
+    expect(batches).toEqual([[A, B]]);
+    expect(sent).toHaveLength(2);
+  });
+
+  test('сбой N-го агрегата — в outbox только записанные до него', async () => {
+    const batches: string[][] = [];
+    const out = new UnitOfWork({
+      outbox: recordingOutbox(batches),
+      trace: TRACE,
+      clock: () => AT,
+    });
+    out.register(task(A), slowRepo(log));
+    out.register(task(B), slowRepo(log, true));
+    await expect(out.commit()).rejects.toThrow('диск недоступен');
+    expect(batches).toEqual([[A]]);
+  });
+
+  test('ничего не записано — outbox не вызывается', async () => {
+    const batches: string[][] = [];
+    const out = new UnitOfWork({
+      outbox: recordingOutbox(batches),
+      trace: TRACE,
+      clock: () => AT,
+    });
+    out.register(task(A), slowRepo(log, true));
+    await expect(out.commit()).rejects.toThrow('диск недоступен');
+    expect(log).not.toContain('put 0');
+    expect(batches).toEqual([]);
+  });
+
+  test('сбой outbox — исключение фиксации, опубликованным ничего не считается', async () => {
+    const out = new UnitOfWork({
+      outbox: recordingOutbox([], true),
+      trace: TRACE,
+      clock: () => AT,
+    });
+    out.register(task(A), slowRepo(log));
+    await expect(out.commit()).rejects.toThrow('outbox недоступен');
+    expect(out.published).toEqual([]);
   });
 });
