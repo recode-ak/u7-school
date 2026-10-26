@@ -10,25 +10,17 @@ import type { AnyRule } from '../domain/policy/policy';
 import type { AnyRulesDef } from '../domain/rules/define-rules';
 import type { AnyDomainRule } from '../domain/rules/domain-rule';
 import type { CallerKind } from '../kernel/caller/caller';
-import type { AnyErrorDef } from '../kernel/errors/define-errors';
-import type { ErrorKind } from '../kernel/errors/error';
+import type { AnyErrorDef, NormalizedError } from '../kernel/errors/error-def';
 import { toJsonSchema } from '../kernel/schema/json-schema';
 
 type JsonSchema = ReturnType<typeof toJsonSchema>;
+
+export type { NormalizedError } from '../kernel/errors/error-def';
 
 type Texts = {
   readonly name: string;
   readonly label: string;
   readonly description: string;
-};
-
-export type NormalizedError = {
-  readonly dmg: 'error';
-  readonly code: string;
-  readonly kind: ErrorKind;
-  readonly label: string;
-  readonly description: string;
-  readonly payload: JsonSchema | undefined;
 };
 
 export type NormalizedEvent = Texts & {
@@ -184,14 +176,7 @@ export function normalize(def: AnyDef): NormalizedDef;
 export function normalize(def: AnyDef): NormalizedDef {
   switch (def.dmg) {
     case 'error':
-      return {
-        dmg: 'error',
-        code: def.code,
-        kind: def.kind,
-        label: def.label,
-        description: def.description,
-        payload: def.payload && schema(def.payload),
-      };
+      return def.normalize();
     case 'event':
       return { dmg: 'event', ...texts(def), payload: schema(def.payload) };
     case 'aggregate':

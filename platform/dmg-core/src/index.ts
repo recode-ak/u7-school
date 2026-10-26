@@ -114,19 +114,19 @@ export {
   UserCaller,
 } from './kernel/caller/caller';
 export { type CoreError, CoreErrors } from './kernel/errors/core-errors';
-export {
-  type AnyErrorDef,
-  defineErrors,
-  type ErrorDef,
-  type ErrorGroup,
-  type ErrorOf,
-  type ErrorSpec,
-} from './kernel/errors/define-errors';
+export { defineErrors } from './kernel/errors/define-errors';
 export {
   type DomainError,
   ERROR_KINDS,
   type ErrorKind,
 } from './kernel/errors/error';
+export {
+  type AnyErrorDef,
+  ErrorDef,
+  type ErrorGroup,
+  type ErrorOf,
+  type ErrorSpec,
+} from './kernel/errors/error-def';
 export { serializeError } from './kernel/errors/serialize-error';
 export { BaseEntityFields, F } from './kernel/fields/fields';
 export {

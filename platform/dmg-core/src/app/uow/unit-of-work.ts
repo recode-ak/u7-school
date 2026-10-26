@@ -5,7 +5,7 @@ import type {
   DomainEvent,
 } from '#core/domain/events/define-events';
 import { CoreErrors } from '#core/kernel/errors/core-errors';
-import type { ErrorOf } from '#core/kernel/errors/define-errors';
+import type { ErrorOf } from '#core/kernel/errors/error-def';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Trace } from '#core/kernel/trace/trace';
 import type { Clock } from '../context';

@@ -7,6 +7,7 @@ import type {
 
 export type {
   DefDescription,
+  DefOf,
   DefSchemas,
   DefTexts,
   NormalizedForm,

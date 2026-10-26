@@ -41,7 +41,7 @@ export function describedDefs(index: DefIndex): DescribedDef[] {
         add(`событие ${e.name}`, e, [['payload', e.payload]]);
       }
       for (const e of Object.values(a.errors)) {
-        add(`ошибка ${e.code}`, e, e.payload ? [['payload', e.payload]] : []);
+        out.push({ title: `ошибка ${e.code}`, ...e.describe() });
       }
     }
     for (const uc of m.useCases) {

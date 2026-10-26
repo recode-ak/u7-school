@@ -11,7 +11,7 @@ import {
   operationsOf,
 } from '../graph/def-index';
 import { CoreErrors } from '../kernel/errors/core-errors';
-import type { AnyErrorDef } from '../kernel/errors/define-errors';
+import type { AnyErrorDef } from '../kernel/errors/error-def';
 import { toJsonSchema } from '../kernel/schema/json-schema';
 import { describedDefs } from './described-defs';
 import type { ArchRule, Violation } from './violation';

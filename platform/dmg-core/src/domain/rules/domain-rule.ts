@@ -1,4 +1,4 @@
-import type { AnyErrorDef, ErrorOf } from '#core/kernel/errors/define-errors';
+import type { AnyErrorDef, ErrorOf } from '#core/kernel/errors/error-def';
 import type { Result } from '#core/kernel/result/result';
 
 type Texts = {

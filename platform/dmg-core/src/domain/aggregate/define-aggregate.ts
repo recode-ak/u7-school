@@ -1,5 +1,5 @@
 import type * as v from 'valibot';
-import type { AnyErrorDef } from '#core/kernel/errors/define-errors';
+import type { AnyErrorDef } from '#core/kernel/errors/error-def';
 import {
   type BaseEntityFields,
   withEntityDefaults,

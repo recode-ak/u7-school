@@ -3,7 +3,7 @@
 // заменяется настоящим `Def` в Фазе 1.
 import type * as v from 'valibot';
 import type { CallerKind } from '#core/kernel/caller/caller';
-import type { AnyErrorDef } from '#core/kernel/errors/define-errors';
+import type { AnyErrorDef } from '#core/kernel/errors/error-def';
 import type { AnyAggregateDef } from '../aggregate/define-aggregate';
 import type { AnyEventDef } from '../events/define-events';
 import type { AnyRule } from '../policy/policy';

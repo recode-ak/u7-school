@@ -5,7 +5,7 @@ import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyUseCaseDef } from '../domain/contracts/define-use-case';
 import type { AnyEventDef } from '../domain/events/define-events';
 import type { AnyDomainRule } from '../domain/rules/domain-rule';
-import type { AnyErrorDef } from '../kernel/errors/define-errors';
+import type { AnyErrorDef } from '../kernel/errors/error-def';
 
 /** Def операции модуля: UC, ER или Job. */
 export type AnyOperationDef = AnyUseCaseDef | AnyEventReactionDef | AnyJobDef;

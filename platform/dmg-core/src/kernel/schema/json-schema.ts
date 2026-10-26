@@ -4,6 +4,8 @@ import {
 } from '@valibot/to-json-schema';
 import type * as v from 'valibot';
 
+export type { JsonSchema };
+
 /**
  * JSON Schema входа (MAN-03): основа OPTIONS и MCP.
  * Режим `input` — `transform` (например `F.timestamp`) описывается тем,

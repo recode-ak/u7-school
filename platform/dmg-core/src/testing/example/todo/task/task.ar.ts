@@ -5,7 +5,7 @@ import type {
   RejectOf,
 } from '#core/domain/aggregate/aggregate.types';
 import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
-import type { ErrorOf } from '#core/kernel/errors/define-errors';
+import type { ErrorOf } from '#core/kernel/errors/error-def';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import { TaskErrors } from './task.errors';

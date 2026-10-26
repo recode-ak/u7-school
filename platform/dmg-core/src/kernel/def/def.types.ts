@@ -1,4 +1,5 @@
 import type * as v from 'valibot';
+import type { Def } from './def';
 
 /** Тексты любого Def: имя, метка и описание (MAN-01). */
 export type DefTexts<N extends string = string> = {
@@ -19,3 +20,15 @@ export type DefDescription = {
 
 /** Сериализуемая форма Def — основа графа и хеша (D-27). */
 export type NormalizedForm = { readonly dmg: string };
+
+/**
+ * Любой Def вида — для `Any*Def`: публичные члены базы со своим
+ * дискриминатором и формой `normalize()` вида.
+ */
+export type DefOf<D extends string, F extends NormalizedForm> = Omit<
+  Def,
+  'dmg' | 'normalize'
+> & {
+  readonly dmg: D;
+  normalize(): F;
+};

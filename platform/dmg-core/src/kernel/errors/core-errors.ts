@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { buildErrors } from './define-errors';
+import { ErrorDef } from './error-def';
 
 const Issues = v.object({
   issues: v.pipe(
@@ -14,7 +14,7 @@ const Issues = v.object({
 });
 
 /** Базовые ошибки ядра: подмешиваются к `errors` каждого UC. */
-export const CoreErrors = buildErrors('', {
+export const CoreErrors = ErrorDef.define('', {
   UNAUTHORIZED: {
     kind: 'unauthorized',
     label: 'Вызов не разрешён',

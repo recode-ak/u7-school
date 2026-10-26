@@ -1,4 +1,4 @@
-import type { ErrorOf } from '#core/kernel/errors/define-errors';
+import type { ErrorOf } from '#core/kernel/errors/error-def';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import type { TaskAr } from './task/task.ar';

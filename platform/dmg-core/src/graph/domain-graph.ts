@@ -2,7 +2,7 @@ import type { AnyAggregateDef } from '../domain/aggregate/define-aggregate';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyEventDef } from '../domain/events/define-events';
 import type { AnyDomainRule } from '../domain/rules/domain-rule';
-import type { AnyErrorDef } from '../kernel/errors/define-errors';
+import type { AnyErrorDef } from '../kernel/errors/error-def';
 import {
   type AnyOperationDef,
   callsOf,
