@@ -18,7 +18,7 @@
     "biome-plugins"
   ],
   "bin": {
-    "dmg-core": "./src/cli/main.ts"
+    "dmg-core": "src/cli/main.ts"
   },
   "exports": {
     ".": "./src/index.ts",
@@ -41,7 +41,8 @@
     "lint": "biome check .",
     "format": "biome check . --write",
     "tslint": "tsc --noEmit",
-    "check": "bun run lint && bun run tslint && bun test"
+    "check": "bun run lint && bun run tslint && bun test",
+    "e2e": "bash scripts/consumer-e2e.sh"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.13",
