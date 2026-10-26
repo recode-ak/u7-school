@@ -5,6 +5,9 @@
 #
 # 1. Копия пакета в пустой каталог → install → check (lint, tslint, тесты).
 # 2. bun pm pack → установка tarball в пустой проект → импорт и archCheck.
+# 3. В том же проекте: dmg-core init → sync --check; документация, скилы и
+#    ссылки на месте (scripts/consumer-check.ts пакета); gen создаёт модуль,
+#    тесты заготовок зелёные на установленном пакете.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -40,4 +43,15 @@ if (violations.length > 0) {
 console.log('consumer: dmg-core импортируется, archCheck чист');
 TS
 bun run smoke.ts
+
+echo "extract:check: init и документация в проекте-потребителе"
+bunx dmg-core init
+bunx dmg-core sync --check
+bun "$WORK/copy/scripts/consumer-check.ts" "$WORK/consumer"
+
+echo "extract:check: gen на установленном пакете"
+bunx dmg-core gen module todo --write >/dev/null
+bunx dmg-core gen aggregate todo.task --write >/dev/null
+bunx dmg-core gen uc todo.task complete-task --write >/dev/null
+bun test src
 echo "extract:check: ok"
