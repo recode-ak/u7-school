@@ -1,0 +1,1 @@
+Верификация фазы 1 repo-layout: bun run check — 3978 pass, 0 fail. Ручная проверка: arch:check без нарушений, scripts/domain-arch.test.ts — 2 pass. Подтверждено пользователем (да).
