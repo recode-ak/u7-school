@@ -2,8 +2,8 @@
  * Проверка проекта-потребителя после установки tarball и `dmg-core init`
  * (`extract-check.sh`): документация пакета на месте и без битых ссылок
  * (`docs-check` над установленным пакетом — ловит файлы, не попавшие в
- * `files`), init доставил конфиг, скил и вставку, пути
- * `node_modules/dmg-core/…` в доставленных копиях существуют.
+ * `files`), GritQL-плагины поставлены, init доставил конфиг, скил и
+ * вставку, пути `node_modules/dmg-core/…` в доставленных копиях существуют.
  *
  *   bun scripts/consumer-check.ts <корень потребителя>
  */
@@ -23,6 +23,12 @@ export const REQUIRED = [
   `${PKG}/docs/index.md`,
   `${PKG}/docs/rules.md`,
 ];
+
+/** GritQL-плагины пакета (lint-правила) — в установленном пакете */
+export const PLUGINS = readdirSync(join(import.meta.dir, '../biome-plugins'))
+  .filter((name) => name.endsWith('.grit'))
+  .sort()
+  .map((name) => `${PKG}/biome-plugins/${name}`);
 
 /** Упоминание пути пакета: до пробела, кавычки, скобки или обратной кавычки */
 const PACKAGE_PATH = /node_modules\/dmg-core\/[^\s`'")\]]*/g;
@@ -73,9 +79,9 @@ if (import.meta.main) {
     process.exit(2);
   }
   const exists = (path: string) => existsSync(join(root, path));
-  const violations = REQUIRED.filter((path) => !exists(path)).map(
-    (path) => `нет ${path}`,
-  );
+  const violations = [...REQUIRED, ...PLUGINS]
+    .filter((path) => !exists(path))
+    .map((path) => `нет ${path}`);
   const delivered = readDelivered(root);
   const agents = delivered.find((file) => file.path === 'AGENTS.md');
   if (agents && !agents.text.includes(`${PKG}/llms.txt`)) {

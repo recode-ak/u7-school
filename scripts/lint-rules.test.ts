@@ -78,6 +78,12 @@ beforeAll(() => {
   work = mkdtempSync(join(tmpdir(), 'lint-rules-'));
   // Корень линтует всё, кроме dmg-core, как настоящий biome.json.
   copyConfig(ROOT, work, () => {});
+  // Плагины корень берёт из установленного пакета (node_modules/dmg-core).
+  cpSync(
+    join(ROOT, DMG_CORE, 'biome-plugins'),
+    join(work, 'node_modules/dmg-core/biome-plugins'),
+    { recursive: true },
+  );
   // dmg-core — самостоятельный пакет: его фикстуры проверяет конфиг пакета.
   copyConfig(join(ROOT, DMG_CORE), join(work, DMG_CORE), () => {});
   for (const f of fixtures) {

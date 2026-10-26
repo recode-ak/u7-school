@@ -49,6 +49,29 @@ bunx dmg-core init
 bunx dmg-core sync --check
 bun "$WORK/copy/scripts/consumer-check.ts" "$WORK/consumer"
 
+echo "extract:check: biome потребителя загружает плагины пакета"
+bun add -d "@biomejs/biome@$(jq -r '.devDependencies["@biomejs/biome"]' "$PKG/package.json")" >/dev/null
+mkdir -p lint
+echo 'export const at = Date.now();' >lint/clock.ts
+cat >biome.json <<'JSON'
+{
+  "files": { "includes": ["lint/**"] },
+  "overrides": [
+    {
+      "includes": ["lint/**"],
+      "plugins": ["./node_modules/dmg-core/biome-plugins/dom-14-no-clock.grit"]
+    }
+  ]
+}
+JSON
+# biome с найденным нарушением выходит с кодом 1 — это ожидаемо.
+LINT="$(bunx biome lint --reporter=json lint 2>/dev/null || true)"
+if ! grep -q 'DOM-14:' <<<"$LINT"; then
+  echo "extract:check: плагин DOM-14 из node_modules/dmg-core не сработал" >&2
+  exit 1
+fi
+rm -r lint biome.json
+
 echo "extract:check: gen на установленном пакете"
 bunx dmg-core gen module todo --write >/dev/null
 bunx dmg-core gen aggregate todo.task --write >/dev/null

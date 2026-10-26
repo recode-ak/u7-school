@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { checkDelivered, REQUIRED } from './consumer-check';
+import { checkDelivered, PLUGINS, REQUIRED } from './consumer-check';
 
 const EXISTING = new Set([
   'node_modules/dmg-core/llms.txt',
@@ -62,5 +62,18 @@ it('REQUIRED: init доставляет конфиг, скил и вставку
     'node_modules/dmg-core/README.md',
     'node_modules/dmg-core/docs/index.md',
     'node_modules/dmg-core/docs/rules.md',
+  ]);
+});
+
+it('PLUGINS: все GritQL-плагины пакета — в установленном пакете', () => {
+  expect(PLUGINS).toEqual([
+    'node_modules/dmg-core/biome-plugins/api-02-no-manual-publish.grit',
+    'node_modules/dmg-core/biome-plugins/arc-09-no-env.grit',
+    'node_modules/dmg-core/biome-plugins/code-02-class-members.grit',
+    'node_modules/dmg-core/biome-plugins/dom-11-base-fields.grit',
+    'node_modules/dmg-core/biome-plugins/dom-12-no-iso-dates.grit',
+    'node_modules/dmg-core/biome-plugins/dom-14-no-clock.grit',
+    'node_modules/dmg-core/biome-plugins/dom-17-snapshot-repo-only.grit',
+    'node_modules/dmg-core/biome-plugins/err-01-no-throw.grit',
   ]);
 });

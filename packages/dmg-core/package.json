@@ -14,7 +14,8 @@
     "docs",
     "skills",
     "agents",
-    "llms.txt"
+    "llms.txt",
+    "biome-plugins"
   ],
   "bin": {
     "dmg-core": "./src/cli/main.ts"

@@ -570,18 +570,20 @@
     },
     {
       "includes": ["packages/domain/**", "!**/*.test.ts"],
-      "plugins": ["./packages/dmg-core/biome-plugins/dom-14-no-clock.grit"]
+      "plugins": ["./node_modules/dmg-core/biome-plugins/dom-14-no-clock.grit"]
     },
     {
       "includes": ["packages/domain/**", "!**/*.test.ts"],
       "plugins": [
-        "./packages/dmg-core/biome-plugins/arc-09-no-env.grit",
-        "./packages/dmg-core/biome-plugins/code-02-class-members.grit"
+        "./node_modules/dmg-core/biome-plugins/arc-09-no-env.grit",
+        "./node_modules/dmg-core/biome-plugins/code-02-class-members.grit"
       ]
     },
     {
       "includes": ["packages/domain/**", "!**/*.test.ts"],
-      "plugins": ["./packages/dmg-core/biome-plugins/dom-12-no-iso-dates.grit"]
+      "plugins": [
+        "./node_modules/dmg-core/biome-plugins/dom-12-no-iso-dates.grit"
+      ]
     },
     {
       "includes": [
@@ -594,12 +596,14 @@
         "!**/*.memory-repo.ts"
       ],
       "plugins": [
-        "./packages/dmg-core/biome-plugins/dom-17-snapshot-repo-only.grit"
+        "./node_modules/dmg-core/biome-plugins/dom-17-snapshot-repo-only.grit"
       ]
     },
     {
       "includes": ["packages/domain/**/*.state.ts"],
-      "plugins": ["./packages/dmg-core/biome-plugins/dom-11-base-fields.grit"]
+      "plugins": [
+        "./node_modules/dmg-core/biome-plugins/dom-11-base-fields.grit"
+      ]
     },
     {
       "includes": [
@@ -610,7 +614,7 @@
         "packages/domain/**/*.er.ts",
         "!**/*.test.ts"
       ],
-      "plugins": ["./packages/dmg-core/biome-plugins/err-01-no-throw.grit"]
+      "plugins": ["./node_modules/dmg-core/biome-plugins/err-01-no-throw.grit"]
     },
     {
       "includes": [
@@ -623,7 +627,7 @@
         "!**/*.test.ts"
       ],
       "plugins": [
-        "./packages/dmg-core/biome-plugins/api-02-no-manual-publish.grit"
+        "./node_modules/dmg-core/biome-plugins/api-02-no-manual-publish.grit"
       ]
     }
   ]

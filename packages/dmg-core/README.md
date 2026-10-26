@@ -29,7 +29,14 @@ bunx dmg-core init
    ```
 
    Каждое нарушение начинается с ID правила (`ARC-06: …`). Расшифровка ID — в [каталоге правил](docs/rules.md); путь к нему отчёт печатает сам.
-4. **Тесты.** Хелперы — в `dmg-core/testing`: `testAppContext`, `expectOk`, контракт идемпотентности реакций и другие ([testing.md](docs/testing.md)).
+4. **Lint-правила.** Правила DOM, ERR, API и CODE — GritQL-плагины biome в [`biome-plugins/`](biome-plugins). Подключи их в `biome.json` проекта на свои каталоги, например домен не читает часы:
+
+   ```json
+   { "overrides": [{ "includes": ["src/domain/**", "!**/*.test.ts"], "plugins": ["./node_modules/dmg-core/biome-plugins/dom-14-no-clock.grit"] }] }
+   ```
+
+   Какой плагин на какие пути — по каталогу правил ([rules.md](docs/rules.md)).
+5. **Тесты.** Хелперы — в `dmg-core/testing`: `testAppContext`, `expectOk`, контракт идемпотентности реакций и другие ([testing.md](docs/testing.md)).
 
 ## Подпути
 
