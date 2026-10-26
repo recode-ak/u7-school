@@ -18,7 +18,7 @@ export interface DomainFile {
 /** Граф `dependsOn` модулей домена (прямые зависимости). */
 export type DomainGraph = Readonly<Record<string, readonly string[]>>;
 
-const DOMAIN_SRC = 'packages/domain/src/';
+const DOMAIN_SRC = 'domain/src/';
 const PLATFORM = /^@u7-scl\/(app|core)(\/|$)/;
 const DOMAIN_PKG = /^@u7-scl\/domain(?:\/([^/]+)(?:\/(.+))?)?$/;
 const PUBLIC_SUBPATHS = new Set(['contract']);
@@ -44,7 +44,7 @@ function importsOf(text: string): ImportRef[] {
   return refs;
 }
 
-/** ARC-02/04/06: импорты файлов `packages/domain/src/<m>/**`. */
+/** ARC-02/04/06: импорты файлов `domain/src/<m>/**`. */
 export function checkDomainImports(
   files: readonly DomainFile[],
   graph: DomainGraph,
@@ -117,11 +117,15 @@ export interface DomainModules {
   dmg: readonly string[];
 }
 
-/** Модуль, которому принадлежит файл: домен `<m>` или пакет `packages/<m>`. */
+/** Модуль, которому принадлежит файл: домен `domain/src/<m>` или пакет `modules/<m>`. */
 function ownerOf(path: string, all: readonly string[]): string | undefined {
   const parts = path.split('/');
-  if (parts[0] !== 'packages') return undefined;
-  const m = parts[1] === 'domain' ? parts[3] : parts[1];
+  const m =
+    parts[0] === 'domain'
+      ? parts[2]
+      : parts[0] === 'modules'
+        ? parts[1]
+        : undefined;
   return m && all.includes(m) ? m : undefined;
 }
 
@@ -161,7 +165,7 @@ export function domainGraphOf(modules: readonly AnyModuleDef[]): DomainGraph {
   );
 }
 
-/** ARC-05: каждый каталог `packages/domain/src/<m>/` — модуль графа. */
+/** ARC-05: каждый каталог `domain/src/<m>/` — модуль графа. */
 export function checkDomainDirs(
   dirs: readonly string[],
   graph: DomainGraph,

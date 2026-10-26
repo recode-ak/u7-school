@@ -4,7 +4,7 @@
  * Собирает полный стек ApiApp со всеми модулями приложения
  * (user, course, stream, questionnaire, wish) — в том же порядке
  * и с теми же зависимостями, что и живое приложение бота
- * (apps/u7-bot/src/create-api-app.ts), но без Telegram-интерфейса.
+ * (runners/u7-bot/src/create-api-app.ts), но без Telegram-интерфейса.
  *
  * Использование:
  *   bun run scripts/call-uc.ts <usecase> '<json-params>' [actorId]
@@ -19,7 +19,7 @@
  *   bun run scripts/call-uc.ts create-course-wish '{"courseId":"<uuid>"}'
  *
  * UC модуля wish — DMG (Ф12): вызываются по Def через ту же сборку DMG,
- * что и в боте (`apps/u7-bot/src/create-dmg-modules.ts`); имя — kebab-case
+ * что и в боте (`runners/u7-bot/src/create-dmg-modules.ts`); имя — kebab-case
  * (`create-course-wish`) или имя Def (`createCourseWish`). Лог операций
  * DMG пишется в `data/oplog/`, как у бота.
  *
@@ -69,7 +69,7 @@ import { Trace } from 'dmg-core/app';
 import {
   createDmgAppContext,
   createDmgModules,
-} from '../apps/u7-bot/src/create-dmg-modules.ts';
+} from '../runners/u7-bot/src/create-dmg-modules.ts';
 import { resolveActor } from './_app-factory';
 
 const NUR_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';

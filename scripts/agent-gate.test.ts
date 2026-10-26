@@ -20,29 +20,29 @@ function ws(name: string, dir: string, deps: string[] = []): Workspace {
 }
 
 const WORKSPACES: Workspace[] = [
-  ws('core', 'packages/core'),
-  ws('user', 'packages/user', ['@u7-scl/core']),
-  ws('course', 'packages/course', ['@u7-scl/core', '@u7-scl/user']),
-  ws('stream', 'packages/stream', ['@u7-scl/user', '@u7-scl/course']),
-  ws('w3school', 'packages/w3school'),
-  ws('bot', 'apps/u7-bot', ['@u7-scl/stream']),
+  ws('core', 'platform/core'),
+  ws('user', 'modules/user', ['@u7-scl/core']),
+  ws('course', 'modules/course', ['@u7-scl/core', '@u7-scl/user']),
+  ws('stream', 'modules/stream', ['@u7-scl/user', '@u7-scl/course']),
+  ws('w3school', 'authoring/w3school'),
+  ws('bot', 'runners/u7-bot', ['@u7-scl/stream']),
 ];
 
 describe('parseStatus', () => {
   test('пути из git status -z, включая новые и удалённые', () => {
-    const out = ' M packages/user/a.ts\0?? packages/core/b.ts\0 D x.md\0';
+    const out = ' M modules/user/a.ts\0?? platform/core/b.ts\0 D x.md\0';
     expect(parseStatus(out)).toEqual([
-      'packages/user/a.ts',
-      'packages/core/b.ts',
+      'modules/user/a.ts',
+      'platform/core/b.ts',
       'x.md',
     ]);
   });
 
   test('переименование даёт оба пути', () => {
-    const out = 'R  packages/user/new.ts\0packages/core/old.ts\0';
+    const out = 'R  modules/user/new.ts\0platform/core/old.ts\0';
     expect(parseStatus(out)).toEqual([
-      'packages/user/new.ts',
-      'packages/core/old.ts',
+      'modules/user/new.ts',
+      'platform/core/old.ts',
     ]);
   });
 
@@ -58,44 +58,44 @@ describe('planGate', () => {
 
   test('только .md — пропуск', () => {
     const plan = planGate(
-      ['conductor/tracks/x/plan.md', 'packages/user/README.md'],
+      ['conductor/tracks/x/plan.md', 'modules/user/README.md'],
       WORKSPACES,
     );
     expect(plan.kind).toBe('skip');
   });
 
   test('листовой пакет — только он', () => {
-    const plan = planGate(['packages/w3school/src/a.ts'], WORKSPACES);
-    expect(plan).toEqual({ kind: 'packages', dirs: ['packages/w3school'] });
+    const plan = planGate(['authoring/w3school/src/a.ts'], WORKSPACES);
+    expect(plan).toEqual({ kind: 'packages', dirs: ['authoring/w3school'] });
   });
 
   test('пакет и транзитивно зависимые', () => {
-    const plan = planGate(['packages/user/src/a.ts'], WORKSPACES);
+    const plan = planGate(['modules/user/src/a.ts'], WORKSPACES);
     expect(plan).toEqual({
       kind: 'packages',
       dirs: [
-        'apps/u7-bot',
-        'packages/course',
-        'packages/stream',
-        'packages/user',
+        'modules/course',
+        'modules/stream',
+        'modules/user',
+        'runners/u7-bot',
       ],
     });
   });
 
   test('несколько пакетов — объединение без повторов', () => {
     const plan = planGate(
-      ['packages/stream/a.ts', 'packages/course/b.ts', 'packages/stream/c.ts'],
+      ['modules/stream/a.ts', 'modules/course/b.ts', 'modules/stream/c.ts'],
       WORKSPACES,
     );
     expect(plan).toEqual({
       kind: 'packages',
-      dirs: ['apps/u7-bot', 'packages/course', 'packages/stream'],
+      dirs: ['modules/course', 'modules/stream', 'runners/u7-bot'],
     });
   });
 
   test('корневой конфиг — полный check', () => {
     const plan = planGate(
-      ['packages/w3school/a.ts', 'tsconfig.json'],
+      ['authoring/w3school/a.ts', 'tsconfig.json'],
       WORKSPACES,
     );
     expect(plan.kind).toBe('full');
@@ -118,18 +118,18 @@ describe('planGate', () => {
 
   test('пакет без скрипта check — полный check', () => {
     const plan = planGate(
-      ['packages/tool/a.ts'],
-      [{ ...ws('tool', 'packages/tool'), hasCheck: false }],
+      ['modules/tool/a.ts'],
+      [{ ...ws('tool', 'modules/tool'), hasCheck: false }],
     );
     expect(plan.kind).toBe('full');
   });
 
   test('зависимый пакет без скрипта check — полный check', () => {
     const plan = planGate(
-      ['packages/core/a.ts'],
+      ['platform/core/a.ts'],
       [
-        ws('core', 'packages/core'),
-        { ...ws('tool', 'packages/tool', ['@u7-scl/core']), hasCheck: false },
+        ws('core', 'platform/core'),
+        { ...ws('tool', 'modules/tool', ['@u7-scl/core']), hasCheck: false },
       ],
     );
     expect(plan.kind).toBe('full');
@@ -137,8 +137,8 @@ describe('planGate', () => {
 
   test('префикс имени пакета не путается с другим пакетом', () => {
     const plan = planGate(
-      ['packages/user-extra/a.ts'],
-      [ws('user', 'packages/user')],
+      ['modules/user-extra/a.ts'],
+      [ws('user', 'modules/user')],
     );
     expect(plan.kind).toBe('full');
   });
@@ -187,25 +187,25 @@ describe('runGate', () => {
     const { run, calls } = fakeRunner();
     const plan: GatePlan = {
       kind: 'packages',
-      dirs: ['packages/core', 'packages/user'],
+      dirs: ['platform/core', 'modules/user'],
     };
     const res = await runGate(plan, run);
     expect(res.code).toBe(0);
-    expect(calls.sort()).toEqual(['packages/core', 'packages/user']);
+    expect(calls.sort()).toEqual(['modules/user', 'platform/core']);
     expect(res.stderr).toBe('');
   });
 
   test('красный пакет — exit 2, в stderr имя и хвост вывода', async () => {
-    const { run } = fakeRunner(['packages/user']);
+    const { run } = fakeRunner(['modules/user']);
     const plan: GatePlan = {
       kind: 'packages',
-      dirs: ['packages/core', 'packages/user'],
+      dirs: ['platform/core', 'modules/user'],
     };
     const res = await runGate(plan, run);
     expect(res.code).toBe(2);
-    expect(res.stderr).toContain('packages/user');
-    expect(res.stderr).toContain('ошибка в packages/user');
-    expect(res.stderr).not.toContain('ошибка в packages/core');
+    expect(res.stderr).toContain('modules/user');
+    expect(res.stderr).toContain('ошибка в modules/user');
+    expect(res.stderr).not.toContain('ошибка в platform/core');
   });
 });
 
@@ -228,9 +228,9 @@ describe('changedPaths', () => {
     try {
       await exec(['git', 'init', '-q'], root);
       expect(changedPaths(root)).toEqual([]);
-      await mkdir(join(root, 'packages/a'), { recursive: true });
-      await writeFile(join(root, 'packages/a/x.ts'), '');
-      expect(changedPaths(root)).toEqual(['packages/a/x.ts']);
+      await mkdir(join(root, 'modules/a'), { recursive: true });
+      await writeFile(join(root, 'modules/a/x.ts'), '');
+      expect(changedPaths(root)).toEqual(['modules/a/x.ts']);
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -245,12 +245,12 @@ describe('loadWorkspaces', () => {
         await mkdir(join(root, dir), { recursive: true });
         await writeFile(join(root, dir, 'package.json'), JSON.stringify(json));
       };
-      await pkg('.', { workspaces: ['packages/*', 'apps/*'] });
-      await pkg('packages/core', {
+      await pkg('.', { workspaces: ['platform/*', 'runners/*'] });
+      await pkg('platform/core', {
         name: '@u7-scl/core',
         scripts: { check: 'x' },
       });
-      await pkg('apps/bot', {
+      await pkg('runners/bot', {
         name: '@u7-scl/bot',
         dependencies: { '@u7-scl/core': 'workspace:*', valibot: '^1' },
         devDependencies: { '@u7-scl/dev': 'workspace:*' },
@@ -259,16 +259,16 @@ describe('loadWorkspaces', () => {
       const list = await loadWorkspaces(root);
       expect(list.sort((a, b) => a.dir.localeCompare(b.dir))).toEqual([
         {
-          name: '@u7-scl/bot',
-          dir: 'apps/bot',
-          deps: ['@u7-scl/core', '@u7-scl/dev', 'valibot'],
-          hasCheck: false,
-        },
-        {
           name: '@u7-scl/core',
-          dir: 'packages/core',
+          dir: 'platform/core',
           deps: [],
           hasCheck: true,
+        },
+        {
+          name: '@u7-scl/bot',
+          dir: 'runners/bot',
+          deps: ['@u7-scl/core', '@u7-scl/dev', 'valibot'],
+          hasCheck: false,
         },
       ]);
     } finally {

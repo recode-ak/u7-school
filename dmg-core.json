@@ -13,8 +13,8 @@
   },
   "instructions": "AGENTS.md",
   "gen": {
-    "domain": "packages/domain/src/{m}",
-    "app": "packages/{m}/src",
+    "domain": "domain/src/{m}",
+    "app": "modules/{m}/src",
     "domainImport": "@u7-scl/domain/{m}"
   }
 }

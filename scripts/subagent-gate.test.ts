@@ -28,13 +28,13 @@ describe('withGate', () => {
   test('зелёный — ответ субагента и строка гейта, не ошибка', () => {
     const gate: GateRun = {
       code: 0,
-      stdout: 'agent-gate: check в packages/user — зелёный\n',
+      stdout: 'agent-gate: check в modules/user — зелёный\n',
       stderr: '',
     };
     const res = withGate(answer, gate);
     expect(res.isError).toBe(false);
     expect(res.text).toStartWith(answer);
-    expect(res.text).toContain('agent-gate: check в packages/user — зелёный');
+    expect(res.text).toContain('agent-gate: check в modules/user — зелёный');
   });
 
   test('пропуск — ответ и причина пропуска, не ошибка', () => {
@@ -51,15 +51,15 @@ describe('withGate', () => {
   test('красный — ошибка, в ответе вывод гейта и указание передать на исправление', () => {
     const gate: GateRun = {
       code: 2,
-      stdout: 'agent-gate: check в packages/user\n',
+      stdout: 'agent-gate: check в modules/user\n',
       stderr:
-        'agent-gate: красный в packages/user.\n\n── packages/user ──\nTS2322',
+        'agent-gate: красный в modules/user.\n\n── modules/user ──\nTS2322',
     };
     const res = withGate(answer, gate);
     expect(res.isError).toBe(true);
     expect(res.text).toStartWith(answer);
     expect(res.text).toContain('TS2322');
-    expect(res.text).toContain('красный в packages/user');
+    expect(res.text).toContain('красный в modules/user');
     expect(res.text).toContain('на исправление');
   });
 

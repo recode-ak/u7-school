@@ -1,0 +1,78 @@
+import { describe, expect, it } from 'bun:test';
+import { lstatSync } from 'node:fs';
+import { join } from 'node:path';
+
+/**
+ * Страж раскладки монорепо по осям (трек repo-layout): каталогов
+ * `packages/` и `apps/` нет, ссылок на них — тоже. История
+ * (`conductor/archive/`) и данные (`data/`) не проверяются.
+ */
+const ROOT = join(import.meta.dir, '..');
+
+/**
+ * Ссылка на старый каталог: `packages/…` или `apps/…` не внутри другого
+ * имени, либо последний сегмент пути в строке (`'../packages'`)
+ */
+const OLD_PATH = /(^|[^A-Za-z0-9_.-])(packages|apps)\/|\/(packages|apps)['"`]/;
+
+/** Не проверяются: история и данные */
+const SKIP_DIRS = ['conductor/archive/', 'data/'];
+
+/**
+ * Исключения с причиной: сам страж называет старые каталоги; тесты пакета
+ * `dmg-core` берут произвольные шаблоны раскладки — это примеры
+ * конфигурации, а не пути монорепо.
+ */
+const EXCEPTIONS = [
+  'scripts/repo-layout.test.ts',
+  'platform/dmg-core/src/cli/dmg-core-cli.test.ts',
+  'platform/dmg-core/src/gen/layout.test.ts',
+  'platform/dmg-core/src/gen/validate.test.ts',
+];
+
+/** Документы обновляет Фаза 3 трека; до неё страж проверяет код и конфиги */
+const isDoc = (file: string) => file.endsWith('.md');
+
+function trackedFiles(): string[] {
+  const out = Bun.spawnSync(['git', 'ls-files', '-z'], { cwd: ROOT });
+  return out.stdout.toString().split('\0').filter(Boolean);
+}
+
+/** Обычный файл: удалённые из рабочего дерева и симлинки не читаются */
+function isFile(path: string): boolean {
+  return lstatSync(path, { throwIfNoEntry: false })?.isFile() ?? false;
+}
+
+describe('раскладка монорепо', () => {
+  it('нет каталогов packages/ и apps/', () => {
+    expect(lstatSync(join(ROOT, 'packages'), { throwIfNoEntry: false })).toBe(
+      undefined,
+    );
+    expect(lstatSync(join(ROOT, 'apps'), { throwIfNoEntry: false })).toBe(
+      undefined,
+    );
+  });
+
+  it('нет файлов по старым путям (фикстуры повторяют раскладку)', () => {
+    const offenders = trackedFiles().filter(
+      (file) =>
+        !SKIP_DIRS.some((dir) => file.startsWith(dir)) && OLD_PATH.test(file),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it('нет ссылок на packages/ и apps/ в коде и конфигах', async () => {
+    const offenders: string[] = [];
+    for (const file of trackedFiles()) {
+      if (SKIP_DIRS.some((dir) => file.startsWith(dir))) continue;
+      if (EXCEPTIONS.includes(file) || isDoc(file)) continue;
+      const path = join(ROOT, file);
+      if (!isFile(path)) continue;
+      const lines = (await Bun.file(path).text()).split('\n');
+      lines.forEach((line, i) => {
+        if (OLD_PATH.test(line)) offenders.push(`${file}:${i + 1}`);
+      });
+    }
+    expect(offenders).toEqual([]);
+  });
+});

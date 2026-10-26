@@ -1,4 +1,4 @@
 node_modules/
-packages/w3school/output/
-packages/w3school/www.w3schools.com/
+authoring/w3school/output/
+authoring/w3school/www.w3schools.com/
 bun.lock

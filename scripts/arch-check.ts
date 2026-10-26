@@ -42,7 +42,11 @@ export const ARCH_APPS: readonly ArchApp[] = [ExampleArch, DomainArch];
  */
 export async function readPackageSources(root = '.'): Promise<DomainFile[]> {
   const files: DomainFile[] = [];
-  for (const pattern of ['packages/*/src/**/*.ts', 'scripts/**/*.ts']) {
+  for (const pattern of [
+    '{platform,modules,authoring}/*/src/**/*.ts',
+    'domain/src/**/*.ts',
+    'scripts/**/*.ts',
+  ]) {
     for await (const path of new Glob(pattern).scan(root)) {
       if (path.startsWith('scripts/') && path.endsWith('.test.ts')) continue;
       files.push({ path, text: await Bun.file(`${root}/${path}`).text() });
@@ -51,12 +55,12 @@ export async function readPackageSources(root = '.'): Promise<DomainFile[]> {
   return files;
 }
 
-/** Исходники приложений для ARC-04 (D-45): код и тесты `apps/*`. */
+/** Исходники приложений для ARC-04 (D-45): код и тесты `runners/*`. */
 async function readAppSources(root: string): Promise<DomainFile[]> {
   const files: DomainFile[] = [];
   for (const pattern of [
-    'apps/*/src/**/*.{ts,tsx}',
-    'apps/*/tests/**/*.{ts,tsx}',
+    'runners/*/src/**/*.{ts,tsx}',
+    'runners/*/tests/**/*.{ts,tsx}',
   ]) {
     for await (const path of new Glob(pattern).scan(root)) {
       files.push({ path, text: await Bun.file(`${root}/${path}`).text() });
@@ -70,7 +74,7 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
   const code = await readPackageSources(root);
   const debtMd = await Bun.file(`${root}/${DEBT_MD}`).text();
   const graph = domainGraphOf(DOMAIN_MODULES);
-  const dirs = readdirSync(`${root}/packages/domain/src`, {
+  const dirs = readdirSync(`${root}/domain/src`, {
     withFileTypes: true,
   })
     .filter((d) => d.isDirectory())

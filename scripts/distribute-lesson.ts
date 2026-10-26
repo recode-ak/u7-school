@@ -60,7 +60,7 @@
  *   не с mentorStepIds. Когда менторские шаги будут интегрированы,
  *   добавится флаг `--mentor` для их рассылки.
  */
-import { safeConvert } from '../packages/core/src/shared/markdown.ts';
+import { safeConvert } from '../platform/core/src/shared/markdown.ts';
 import { createApp, NUR_UUID, resolveActor } from './_app-factory';
 
 // Токен и группа — из окружения (.env.production), чтобы не хардкодить секреты

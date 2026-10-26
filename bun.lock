@@ -19,7 +19,139 @@
         "dmg-core": "workspace:*",
       },
     },
-    "apps/u7-bot": {
+    "authoring/video-summarizer": {
+      "name": "@u7-scl/video-summarizer",
+      "version": "0.1.0",
+    },
+    "authoring/w3school": {
+      "name": "@u7-scl/w3school",
+      "version": "0.1.0",
+      "bin": {
+        "w3s": "./src/cli/index.ts",
+      },
+      "dependencies": {
+        "cheerio": "^1.2.0",
+        "turndown": "^7.2.4",
+      },
+    },
+    "domain": {
+      "name": "@u7-scl/domain",
+      "version": "0.1.0",
+      "dependencies": {
+        "@u7-scl/app": "workspace:*",
+        "@u7-scl/core": "workspace:*",
+        "dmg-core": "workspace:*",
+        "valibot": "^1.0.0",
+      },
+    },
+    "modules/course": {
+      "name": "@u7-scl/course",
+      "version": "0.1.0",
+      "dependencies": {
+        "@u7-scl/app": "workspace:*",
+        "@u7-scl/core": "workspace:*",
+        "@u7-scl/domain": "workspace:*",
+        "@u7-scl/user": "workspace:*",
+        "dmg-core": "workspace:*",
+        "valibot": "^1.0.0",
+      },
+    },
+    "modules/dossier": {
+      "name": "@u7-scl/dossier",
+      "version": "0.1.0",
+      "dependencies": {
+        "valibot": "^1.0.0",
+      },
+    },
+    "modules/peer-review": {
+      "name": "@u7-scl/peer-review",
+      "version": "0.1.0",
+      "dependencies": {
+        "@u7-scl/app": "workspace:*",
+        "@u7-scl/core": "workspace:*",
+        "@u7-scl/questionnaire": "workspace:*",
+        "@u7-scl/stream": "workspace:*",
+        "valibot": "^1.0.0",
+      },
+    },
+    "modules/questionnaire": {
+      "name": "@u7-scl/questionnaire",
+      "version": "0.1.0",
+      "dependencies": {
+        "@u7-scl/app": "workspace:*",
+        "@u7-scl/core": "workspace:*",
+        "@u7-scl/domain": "workspace:*",
+        "@u7-scl/user": "workspace:*",
+        "dmg-core": "workspace:*",
+      },
+    },
+    "modules/stream": {
+      "name": "@u7-scl/stream",
+      "version": "0.1.0",
+      "dependencies": {
+        "@u7-scl/app": "workspace:*",
+        "@u7-scl/core": "workspace:*",
+        "@u7-scl/course": "workspace:*",
+        "@u7-scl/domain": "workspace:*",
+        "@u7-scl/user": "workspace:*",
+        "dmg-core": "workspace:*",
+        "valibot": "^1.0.0",
+      },
+    },
+    "modules/user": {
+      "name": "@u7-scl/user",
+      "version": "0.1.0",
+      "dependencies": {
+        "@u7-scl/app": "workspace:*",
+        "@u7-scl/core": "workspace:*",
+        "@u7-scl/domain": "workspace:*",
+        "dmg-core": "workspace:*",
+      },
+    },
+    "modules/wish": {
+      "name": "@u7-scl/wish",
+      "version": "0.1.0",
+      "dependencies": {
+        "@u7-scl/app": "workspace:*",
+        "@u7-scl/core": "workspace:*",
+        "@u7-scl/course": "workspace:*",
+        "@u7-scl/questionnaire": "workspace:*",
+        "@u7-scl/stream": "workspace:*",
+        "@u7-scl/user": "workspace:*",
+        "dmg-core": "workspace:*",
+      },
+    },
+    "platform/app": {
+      "name": "@u7-scl/app",
+      "version": "0.1.0",
+      "dependencies": {
+        "@u7-scl/core": "workspace:*",
+      },
+    },
+    "platform/core": {
+      "name": "@u7-scl/core",
+      "version": "0.1.0",
+      "dependencies": {
+        "dmg-core": "workspace:*",
+      },
+    },
+    "platform/dmg-core": {
+      "name": "dmg-core",
+      "version": "0.1.0",
+      "bin": {
+        "dmg-core": "src/cli/main.ts",
+      },
+      "devDependencies": {
+        "@biomejs/biome": "2.5.13",
+        "@types/bun": "latest",
+        "typescript": "^7.0.2",
+      },
+      "peerDependencies": {
+        "@valibot/to-json-schema": "^1.7.1",
+        "valibot": "^1.5.0",
+      },
+    },
+    "runners/u7-bot": {
       "name": "@u7-scl/bot",
       "version": "0.1.0",
       "dependencies": {
@@ -39,7 +171,7 @@
         "valibot": "^1.2.0",
       },
     },
-    "apps/u7-cli": {
+    "runners/u7-cli": {
       "name": "@u7-scl/cli",
       "version": "0.1.0",
       "dependencies": {
@@ -47,138 +179,6 @@
         "@u7-scl/course": "workspace:*",
         "@u7-scl/user": "workspace:*",
         "valibot": "^1.2.0",
-      },
-    },
-    "packages/app": {
-      "name": "@u7-scl/app",
-      "version": "0.1.0",
-      "dependencies": {
-        "@u7-scl/core": "workspace:*",
-      },
-    },
-    "packages/core": {
-      "name": "@u7-scl/core",
-      "version": "0.1.0",
-      "dependencies": {
-        "dmg-core": "workspace:*",
-      },
-    },
-    "packages/course": {
-      "name": "@u7-scl/course",
-      "version": "0.1.0",
-      "dependencies": {
-        "@u7-scl/app": "workspace:*",
-        "@u7-scl/core": "workspace:*",
-        "@u7-scl/domain": "workspace:*",
-        "@u7-scl/user": "workspace:*",
-        "dmg-core": "workspace:*",
-        "valibot": "^1.0.0",
-      },
-    },
-    "packages/dmg-core": {
-      "name": "dmg-core",
-      "version": "0.1.0",
-      "bin": {
-        "dmg-core": "./src/cli/main.ts",
-      },
-      "devDependencies": {
-        "@biomejs/biome": "2.5.13",
-        "@types/bun": "latest",
-        "typescript": "^7.0.2",
-      },
-      "peerDependencies": {
-        "@valibot/to-json-schema": "^1.7.1",
-        "valibot": "^1.5.0",
-      },
-    },
-    "packages/domain": {
-      "name": "@u7-scl/domain",
-      "version": "0.1.0",
-      "dependencies": {
-        "@u7-scl/app": "workspace:*",
-        "@u7-scl/core": "workspace:*",
-        "dmg-core": "workspace:*",
-        "valibot": "^1.0.0",
-      },
-    },
-    "packages/dossier": {
-      "name": "@u7-scl/dossier",
-      "version": "0.1.0",
-      "dependencies": {
-        "valibot": "^1.0.0",
-      },
-    },
-    "packages/peer-review": {
-      "name": "@u7-scl/peer-review",
-      "version": "0.1.0",
-      "dependencies": {
-        "@u7-scl/app": "workspace:*",
-        "@u7-scl/core": "workspace:*",
-        "@u7-scl/questionnaire": "workspace:*",
-        "@u7-scl/stream": "workspace:*",
-        "valibot": "^1.0.0",
-      },
-    },
-    "packages/questionnaire": {
-      "name": "@u7-scl/questionnaire",
-      "version": "0.1.0",
-      "dependencies": {
-        "@u7-scl/app": "workspace:*",
-        "@u7-scl/core": "workspace:*",
-        "@u7-scl/domain": "workspace:*",
-        "@u7-scl/user": "workspace:*",
-        "dmg-core": "workspace:*",
-      },
-    },
-    "packages/stream": {
-      "name": "@u7-scl/stream",
-      "version": "0.1.0",
-      "dependencies": {
-        "@u7-scl/app": "workspace:*",
-        "@u7-scl/core": "workspace:*",
-        "@u7-scl/course": "workspace:*",
-        "@u7-scl/domain": "workspace:*",
-        "@u7-scl/user": "workspace:*",
-        "dmg-core": "workspace:*",
-        "valibot": "^1.0.0",
-      },
-    },
-    "packages/user": {
-      "name": "@u7-scl/user",
-      "version": "0.1.0",
-      "dependencies": {
-        "@u7-scl/app": "workspace:*",
-        "@u7-scl/core": "workspace:*",
-        "@u7-scl/domain": "workspace:*",
-        "dmg-core": "workspace:*",
-      },
-    },
-    "packages/video-summarizer": {
-      "name": "@u7-scl/video-summarizer",
-      "version": "0.1.0",
-    },
-    "packages/w3school": {
-      "name": "@u7-scl/w3school",
-      "version": "0.1.0",
-      "bin": {
-        "w3s": "./src/cli/index.ts",
-      },
-      "dependencies": {
-        "cheerio": "^1.2.0",
-        "turndown": "^7.2.4",
-      },
-    },
-    "packages/wish": {
-      "name": "@u7-scl/wish",
-      "version": "0.1.0",
-      "dependencies": {
-        "@u7-scl/app": "workspace:*",
-        "@u7-scl/core": "workspace:*",
-        "@u7-scl/course": "workspace:*",
-        "@u7-scl/questionnaire": "workspace:*",
-        "@u7-scl/stream": "workspace:*",
-        "@u7-scl/user": "workspace:*",
-        "dmg-core": "workspace:*",
       },
     },
   },
@@ -295,33 +295,33 @@
 
     "@typescript/typescript-win32-x64": ["@typescript/typescript-win32-x64@7.0.2", "", { "os": "win32", "cpu": "x64" }, "sha512-0BQ3HkAHHlKLSp1qRvf3SUhGpGsDuhB/jgFw75guyqbxJqEaS0Cw/VFO8i2nHglJUzQCRtMMR/IBAKE3ETMC4g=="],
 
-    "@u7-scl/app": ["@u7-scl/app@workspace:packages/app"],
+    "@u7-scl/app": ["@u7-scl/app@workspace:platform/app"],
 
-    "@u7-scl/bot": ["@u7-scl/bot@workspace:apps/u7-bot"],
+    "@u7-scl/bot": ["@u7-scl/bot@workspace:runners/u7-bot"],
 
-    "@u7-scl/cli": ["@u7-scl/cli@workspace:apps/u7-cli"],
+    "@u7-scl/cli": ["@u7-scl/cli@workspace:runners/u7-cli"],
 
-    "@u7-scl/core": ["@u7-scl/core@workspace:packages/core"],
+    "@u7-scl/core": ["@u7-scl/core@workspace:platform/core"],
 
-    "@u7-scl/course": ["@u7-scl/course@workspace:packages/course"],
+    "@u7-scl/course": ["@u7-scl/course@workspace:modules/course"],
 
-    "@u7-scl/domain": ["@u7-scl/domain@workspace:packages/domain"],
+    "@u7-scl/domain": ["@u7-scl/domain@workspace:domain"],
 
-    "@u7-scl/dossier": ["@u7-scl/dossier@workspace:packages/dossier"],
+    "@u7-scl/dossier": ["@u7-scl/dossier@workspace:modules/dossier"],
 
-    "@u7-scl/peer-review": ["@u7-scl/peer-review@workspace:packages/peer-review"],
+    "@u7-scl/peer-review": ["@u7-scl/peer-review@workspace:modules/peer-review"],
 
-    "@u7-scl/questionnaire": ["@u7-scl/questionnaire@workspace:packages/questionnaire"],
+    "@u7-scl/questionnaire": ["@u7-scl/questionnaire@workspace:modules/questionnaire"],
 
-    "@u7-scl/stream": ["@u7-scl/stream@workspace:packages/stream"],
+    "@u7-scl/stream": ["@u7-scl/stream@workspace:modules/stream"],
 
-    "@u7-scl/user": ["@u7-scl/user@workspace:packages/user"],
+    "@u7-scl/user": ["@u7-scl/user@workspace:modules/user"],
 
-    "@u7-scl/video-summarizer": ["@u7-scl/video-summarizer@workspace:packages/video-summarizer"],
+    "@u7-scl/video-summarizer": ["@u7-scl/video-summarizer@workspace:authoring/video-summarizer"],
 
-    "@u7-scl/w3school": ["@u7-scl/w3school@workspace:packages/w3school"],
+    "@u7-scl/w3school": ["@u7-scl/w3school@workspace:authoring/w3school"],
 
-    "@u7-scl/wish": ["@u7-scl/wish@workspace:packages/wish"],
+    "@u7-scl/wish": ["@u7-scl/wish@workspace:modules/wish"],
 
     "@valibot/to-json-schema": ["@valibot/to-json-schema@1.7.1", "", { "peerDependencies": { "valibot": "^1.4.0" } }, "sha512-3qkmU6KXWh8GIThEAW3kuRHPQBMjWkKy+Ppz3WkUucx53DTpOa6siMn4xDGSOhlVyMrDaJTCTMLYPZVAIk1P0A=="],
 
@@ -365,7 +365,7 @@
 
     "devlop": ["devlop@1.1.0", "", { "dependencies": { "dequal": "^2.0.0" } }, "sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA=="],
 
-    "dmg-core": ["dmg-core@workspace:packages/dmg-core"],
+    "dmg-core": ["dmg-core@workspace:platform/dmg-core"],
 
     "dom-serializer": ["dom-serializer@2.0.0", "", { "dependencies": { "domelementtype": "^2.3.0", "domhandler": "^5.0.2", "entities": "^4.2.0" } }, "sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg=="],
 

@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!packages/dmg-core"],
+    "includes": ["**", "!platform/dmg-core"],
     "maxSize": 5242880
   },
   "formatter": {
@@ -53,7 +53,7 @@
       }
     },
     {
-      "includes": ["apps/u7-bot/src/**"],
+      "includes": ["runners/u7-bot/src/**"],
       "linter": {
         "rules": {
           "style": {
@@ -99,8 +99,8 @@
     },
     {
       "includes": [
-        "packages/w3school/src/**",
-        "packages/video-summarizer/src/**"
+        "authoring/w3school/src/**",
+        "authoring/video-summarizer/src/**"
       ],
       "linter": {
         "rules": {
@@ -114,7 +114,7 @@
       }
     },
     {
-      "includes": ["packages/core/**"],
+      "includes": ["platform/core/**"],
       "linter": {
         "rules": {
           "style": {
@@ -138,7 +138,7 @@
       }
     },
     {
-      "includes": ["packages/domain/**", "!**/*.test.ts"],
+      "includes": ["domain/**", "!**/*.test.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -176,9 +176,9 @@
     },
     {
       "includes": [
-        "packages/domain/**/*.policy.ts",
-        "packages/domain/**/*.rules.ts",
-        "packages/domain/**/*.dcs.ts",
+        "domain/**/*.policy.ts",
+        "domain/**/*.rules.ts",
+        "domain/**/*.dcs.ts",
         "!**/*.test.ts"
       ],
       "linter": {
@@ -214,7 +214,7 @@
       }
     },
     {
-      "includes": ["packages/course/**"],
+      "includes": ["modules/course/**"],
       "linter": {
         "rules": {
           "style": {
@@ -257,7 +257,7 @@
       }
     },
     {
-      "includes": ["packages/dossier/**"],
+      "includes": ["modules/dossier/**"],
       "linter": {
         "rules": {
           "style": {
@@ -300,7 +300,7 @@
       }
     },
     {
-      "includes": ["packages/peer-review/**"],
+      "includes": ["modules/peer-review/**"],
       "linter": {
         "rules": {
           "style": {
@@ -343,7 +343,7 @@
       }
     },
     {
-      "includes": ["packages/questionnaire/**"],
+      "includes": ["modules/questionnaire/**"],
       "linter": {
         "rules": {
           "style": {
@@ -383,7 +383,7 @@
       }
     },
     {
-      "includes": ["packages/stream/**"],
+      "includes": ["modules/stream/**"],
       "linter": {
         "rules": {
           "style": {
@@ -426,7 +426,7 @@
       }
     },
     {
-      "includes": ["packages/user/**"],
+      "includes": ["modules/user/**"],
       "linter": {
         "rules": {
           "style": {
@@ -469,7 +469,7 @@
       }
     },
     {
-      "includes": ["packages/wish/**"],
+      "includes": ["modules/wish/**"],
       "linter": {
         "rules": {
           "style": {
@@ -512,7 +512,7 @@
       }
     },
     {
-      "includes": ["packages/app/**"],
+      "includes": ["platform/app/**"],
       "linter": {
         "rules": {
           "style": {
@@ -538,7 +538,7 @@
       }
     },
     {
-      "includes": ["apps/**"],
+      "includes": ["runners/**"],
       "linter": {
         "rules": {
           "style": {
@@ -569,26 +569,29 @@
       }
     },
     {
-      "includes": ["packages/domain/**", "!**/*.test.ts"],
+      "includes": ["domain/**", "!**/*.test.ts"],
       "plugins": ["./node_modules/dmg-core/biome-plugins/dom-14-no-clock.grit"]
     },
     {
-      "includes": ["packages/domain/**", "!**/*.test.ts"],
+      "includes": ["domain/**", "!**/*.test.ts"],
       "plugins": [
         "./node_modules/dmg-core/biome-plugins/arc-09-no-env.grit",
         "./node_modules/dmg-core/biome-plugins/code-02-class-members.grit"
       ]
     },
     {
-      "includes": ["packages/domain/**", "!**/*.test.ts"],
+      "includes": ["domain/**", "!**/*.test.ts"],
       "plugins": [
         "./node_modules/dmg-core/biome-plugins/dom-12-no-iso-dates.grit"
       ]
     },
     {
       "includes": [
-        "packages/*/src/**",
-        "apps/**",
+        "platform/*/src/**",
+        "domain/src/**",
+        "modules/*/src/**",
+        "authoring/*/src/**",
+        "runners/**",
         "!**/*.test.ts",
         "!**/*.repo.ts",
         "!**/*-repo.ts",
@@ -600,30 +603,30 @@
       ]
     },
     {
-      "includes": ["packages/domain/**/*.state.ts"],
+      "includes": ["domain/**/*.state.ts"],
       "plugins": [
         "./node_modules/dmg-core/biome-plugins/dom-11-base-fields.grit"
       ]
     },
     {
       "includes": [
-        "packages/domain/**/*.ar.ts",
-        "packages/domain/**/*.dcs.ts",
-        "packages/domain/**/*.facade.ts",
-        "packages/domain/**/*.uc.ts",
-        "packages/domain/**/*.er.ts",
+        "domain/**/*.ar.ts",
+        "domain/**/*.dcs.ts",
+        "domain/**/*.facade.ts",
+        "domain/**/*.uc.ts",
+        "domain/**/*.er.ts",
         "!**/*.test.ts"
       ],
       "plugins": ["./node_modules/dmg-core/biome-plugins/err-01-no-throw.grit"]
     },
     {
       "includes": [
-        "packages/domain/**/*.ar.ts",
-        "packages/domain/**/*.dcs.ts",
-        "packages/domain/**/*.facade.ts",
-        "packages/domain/**/*.uc.ts",
-        "packages/domain/**/*.er.ts",
-        "packages/domain/**/*.job.ts",
+        "domain/**/*.ar.ts",
+        "domain/**/*.dcs.ts",
+        "domain/**/*.facade.ts",
+        "domain/**/*.uc.ts",
+        "domain/**/*.er.ts",
+        "domain/**/*.job.ts",
         "!**/*.test.ts"
       ],
       "plugins": [

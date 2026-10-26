@@ -39,18 +39,18 @@ import type { AppMeta } from '@u7-scl/core/domain';
 import { type Logger, LogLevel } from '@u7-scl/core/shared';
 import type { CourseApiModuleMeta } from '@u7-scl/domain/course';
 import type { UserApiModuleMeta } from '@u7-scl/domain/user';
+import { CourseApiModule } from '../modules/course/src/api/module.ts';
+import { CourseJsonRepo } from '../modules/course/src/infra/db/course-json-repo.ts';
+import { LessonJsonRepo } from '../modules/course/src/infra/db/lesson-json-repo.ts';
+import { ModuleJsonRepo } from '../modules/course/src/infra/db/module-json-repo.ts';
+import { StepJsonRepo } from '../modules/course/src/infra/db/step-json-repo.ts';
+import { UserApiModule } from '../modules/user/src/api/index.ts';
+import { UserJsonRepo } from '../modules/user/src/infra/db/user-json-repo.ts';
+import { UserInProcFacade } from '../modules/user/src/infra/user-in-proc-facade.ts';
 import {
   InProcEventBus,
   InProcJobScheduler,
-} from '../packages/core/src/infra/index.ts';
-import { CourseApiModule } from '../packages/course/src/api/module.ts';
-import { CourseJsonRepo } from '../packages/course/src/infra/db/course-json-repo.ts';
-import { LessonJsonRepo } from '../packages/course/src/infra/db/lesson-json-repo.ts';
-import { ModuleJsonRepo } from '../packages/course/src/infra/db/module-json-repo.ts';
-import { StepJsonRepo } from '../packages/course/src/infra/db/step-json-repo.ts';
-import { UserApiModule } from '../packages/user/src/api/index.ts';
-import { UserJsonRepo } from '../packages/user/src/infra/db/user-json-repo.ts';
-import { UserInProcFacade } from '../packages/user/src/infra/user-in-proc-facade.ts';
+} from '../platform/core/src/infra/index.ts';
 
 /** UUID автора-ментора (Нур) */
 export const NUR_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';

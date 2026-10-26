@@ -7,7 +7,7 @@
  * фикстуры и настоящий `biome.json` во временный каталог (плагины — как из
  * установленного `dmg-core`) и запускает biome: сообщение должно начинаться
  * с ID правила. Правила на коде самого пакета — его тест
- * `packages/dmg-core/scripts/lint-rules.test.ts`.
+ * `platform/dmg-core/scripts/lint-rules.test.ts`.
  */
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import {
@@ -41,7 +41,7 @@ const fixtures = [...new Bun.Glob('**/*.txt').scanSync(FIXTURES)].map(
   },
 );
 
-const DMG_CORE = 'packages/dmg-core';
+const DMG_CORE = 'platform/dmg-core';
 
 let work: string;
 let diagnostics: Diagnostic[];

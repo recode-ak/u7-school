@@ -30,8 +30,8 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .DS_Store
 
 # w3school downloaded course files (generated, should not be committed)
-packages/w3school/www.w3schools.com/
-packages/w3school/w3schools.com/
+authoring/w3school/www.w3schools.com/
+authoring/w3school/w3schools.com/
 conductor/archive/
 
 # data — whitelist: по умолчанию всё игнорируется, явно разрешены только папки ниже.
@@ -51,4 +51,4 @@ data/backup/
 data/backup-adhoc/
 
 # временный проект приёмки генераторов (dmg-core/src/gen/e2e.test.ts)
-packages/dmg-core/tmp-gen-e2e-*/
+platform/dmg-core/tmp-gen-e2e-*/

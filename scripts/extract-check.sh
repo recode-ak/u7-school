@@ -10,7 +10,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PKG="$ROOT/packages/dmg-core"
+PKG="$ROOT/platform/dmg-core"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 

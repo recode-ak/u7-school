@@ -16,8 +16,8 @@ import { DomainArch } from './domain-arch';
 
 const REPO = join(import.meta.dir, '..');
 const MODULE = 'genprobe';
-const DOMAIN = join(REPO, 'packages/domain/src', MODULE);
-const APP = join(REPO, 'packages', MODULE);
+const DOMAIN = join(REPO, 'domain/src', MODULE);
+const APP = join(REPO, 'modules', MODULE);
 
 const cleanup = () => {
   rmSync(DOMAIN, { recursive: true, force: true });
@@ -56,8 +56,8 @@ test('biome чист', async () => {
     'bunx',
     'biome',
     'check',
-    `packages/domain/src/${MODULE}`,
-    `packages/${MODULE}`,
+    `domain/src/${MODULE}`,
+    `modules/${MODULE}`,
   ]);
   expect(res).toMatchObject({
     code: 0,
@@ -74,8 +74,8 @@ test('тесты заготовок зелёные', async () => {
   const res = await sh([
     'bun',
     'test',
-    `packages/domain/src/${MODULE}`,
-    `packages/${MODULE}`,
+    `domain/src/${MODULE}`,
+    `modules/${MODULE}`,
   ]);
   expect(res).toMatchObject({
     code: 0,
