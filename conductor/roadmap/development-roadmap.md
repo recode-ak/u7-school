@@ -46,12 +46,12 @@
 
 2. **Onboarding не стал заглушкой — вместо него полноценный questionnaire-контроллер.**
    По плану (Трек 7) `OnboardingController` переносился «как есть» с отключённой кнопкой.
-   Фактически: движок анкет выделен в `packages/questionnaire` (Релиз 3), в
-   `apps/u7-bot/src/controllers/questionnaire/` — полноценный контроллер со сторями
+   Фактически: движок анкет выделен в `modules/questionnaire` (Релиз 3), в
+   `runners/u7-bot/src/controllers/questionnaire/` — полноценный контроллер со сторями
    (включая owner-info и предупреждение о брошенных анкетах). Пакет `onboarding` удалён.
 
 3. **Переезд onboarding → wish (инициатива IV).** Домен мотиваций/желаний вынесен в
-   `packages/wish` (связан с questionnaire через фасад). Завершённые треки:
+   `modules/wish` (связан с questionnaire через фасад). Завершённые треки:
    `wish-module`, `wish-ui`, `wish-fulfillment`, `wish-lifecycle`, `wish-invite`,
    `wish-module` (v2), `wish-e2e`.
 
@@ -78,14 +78,14 @@
 | Трек | Содержание | Статус |
 |------|-----------|--------|
 | Трек 0 | `UiApp` в core + удаление `BotRouter` | ✅ |
-| Трек 1 | Перенос базовых классов и `U7BotAppMeta` в `apps/u7-bot`, разрыв цикла `app ↔ onboarding` | ✅ |
+| Трек 1 | Перенос базовых классов и `U7BotAppMeta` в `runners/u7-bot`, разрыв цикла `app ↔ onboarding` | ✅ |
 | Трек 2 | `AppController` + `CommunityStory` | ✅ |
 | Трек 3 | Контроллер `courses` — «Программы курсов», общий `tree-renderer.ts` | ✅ |
 | Трек 4 | Контроллер `streams` — «Потоки курсов» | ✅ |
 
 **Фактическое состояние:** контроллеры `app`, `courses`, `streams` в
-`apps/u7-bot/src/controllers/`; старые `ui/`-директории `course` и `stream` удалены;
-тесты перенесены в `apps/u7-bot/tests/`. Архивы: `bot_ui_courses_20260807`,
+`runners/u7-bot/src/controllers/`; старые `ui/`-директории `course` и `stream` удалены;
+тесты перенесены в `runners/u7-bot/tests/`. Архивы: `bot_ui_courses_20260807`,
 `bot_ui_streams_20260807`.
 
 ---
@@ -101,15 +101,15 @@
 | Трек 7 | Onboarding — заглушка | ✅ перевыполнен: полноценный questionnaire-контроллер (см. отклонение 2) |
 | Трек 8 | Зачистка старого кода, документация | ✅ (см. отклонение про `core/src/ui/bot/README.md` ниже) |
 
-**Фактическое состояние:** все контроллеры в `apps/u7-bot/src/controllers/`
+**Фактическое состояние:** все контроллеры в `runners/u7-bot/src/controllers/`
 (`app`, `courses`, `streams`, `learning`, `mentor`, `questionnaire`); старые
-`ui/`-директории удалены из всех пакетов (осталась только `packages/core/src/ui` —
-по плану); `u7-bot-app-meta.ts` в `apps/u7-bot/src/core/`; `tests/bot/` →
-`apps/u7-bot/tests/`; документация обновлена (`architecture.md`, `bot-controller.md`,
-`bot-ui-story.md`, `apps/u7-bot/README.md`, ui-spec'и по контроллерам).
+`ui/`-директории удалены из всех пакетов (осталась только `platform/core/src/ui` —
+по плану); `u7-bot-app-meta.ts` в `runners/u7-bot/src/core/`; `tests/bot/` →
+`runners/u7-bot/tests/`; документация обновлена (`architecture.md`, `bot-controller.md`,
+`bot-ui-story.md`, `runners/u7-bot/README.md`, ui-spec'и по контроллерам).
 Архивы: `learning_20260807`, `mentor_20260807`, `onboarding_20260807`, `cleanup_20260807`.
 
-**Единственный невыполненный пункт §4.9 плана:** `packages/core/src/ui/bot/README.md`
+**Единственный невыполненный пункт §4.9 плана:** `platform/core/src/ui/bot/README.md`
 не создан (документ-план помечен историческим — пункт считаем отменённым).
 
 **Критерий готовности к проду:** подтверждён — все кнопки работают, `tsc --noEmit`
@@ -123,9 +123,9 @@
 
 | Компонент | Статус |
 |-----------|--------|
-| EventBus в `core` | ✅ `packages/core/src/domain/events` |
-| `Questionnaire` модуль (движок анкет) | ✅ `packages/questionnaire` (domain/api/infra) |
-| UC слой, контроллер | ✅ `apps/u7-bot/src/controllers/questionnaire/` |
+| EventBus в `core` | ✅ `platform/core/src/domain/events` |
+| `Questionnaire` модуль (движок анкет) | ✅ `modules/questionnaire` (domain/api/infra) |
+| UC слой, контроллер | ✅ `runners/u7-bot/src/controllers/questionnaire/` |
 | AR анкеты (`QuestionnaireAr`) | ✅ |
 | Онбординг-анкета на новом движке | ✅ (через wish + questionnaire, см. отклонение 3) |
 
@@ -143,9 +143,9 @@
 
 | Компонент | Статус |
 |-----------|--------|
-| Домен `peer-review` | ✅ `packages/peer-review` (assessment, categories, scores, question-pool) |
+| Домен `peer-review` | ✅ `modules/peer-review` (assessment, categories, scores, question-pool) |
 | AR метрик | ✅ (`metrics-metric-ar_20260810`) |
-| Модуль `metrics` (агрегация) | ⬜ `packages/metrics` отсутствует |
+| Модуль `metrics` (агрегация) | ⬜ `modules/metrics` отсутствует |
 | Витрина профиля студента | ⬜ в UI бота не найдена |
 
 **Осталось сделать:** модуль `metrics`, витрина профиля студента (студент + ментор),
@@ -179,7 +179,7 @@
 - Ментор видит группу без изменений
 
 **⚠️ Техдолг, возникающий в этом релизе:**
-После Трека 2 contentSnapshot становится чистым UUID-деревом — title'ы больше не хранятся в snapshot, а грузятся live по UUID через DS callbacks. UI (в `apps/u7-bot`) должен быть адаптирован:
+После Трека 2 contentSnapshot становится чистым UUID-деревом — title'ы больше не хранятся в snapshot, а грузятся live по UUID через DS callbacks. UI (в `runners/u7-bot`) должен быть адаптирован:
 - `shared/tree-renderer.ts` — передача колбэков `getProjectTitle`/`getLessonTitle` вместо чтения title из snapshot
 - Контроллеры `streams`, `learning`, `mentor` — формирование `TreeNode[]` без вложенных title'ов
 - Это **локальное изменение** (~1–2 дня), не архитектурное. Хуки те же, сигнатуры меняются аддитивно.
@@ -260,4 +260,4 @@ session-persist → tasks (этап B) → sessions → metrics → contribution
 - [conductor/index.md](../index.md) — индекс всех документов
 - [conductor/workflow.md](../workflow.md) — процесс работы conductor
 - [conductor/architecture/ui/bot-architecture.md](../architecture/ui/bot-architecture.md) — актуальное устройство bot-level
-- [packages/dmg-core/docs/domain-modeling.md](../../packages/dmg-core/docs/domain-modeling.md) — архитектурные правила
+- [platform/dmg-core/docs/domain-modeling.md](../../platform/dmg-core/docs/domain-modeling.md) — архитектурные правила

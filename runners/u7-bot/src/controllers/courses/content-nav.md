@@ -71,9 +71,9 @@
 - **Права** — через `Policy`-объекты, не в presenter и не ручными проверками ролей.
 
 **Размещение кода (вариант A):**
-- `packages/core/src/ui/content-nav/` — `NavLevel`/`NavChild`, presenter (транспорт-независимо,
+- `platform/core/src/ui/content-nav/` — `NavLevel`/`NavChild`, presenter (транспорт-независимо,
   `core` не знает доменов);
-- `apps/u7-bot/src/` — резолверы контекста и стори.
+- `runners/u7-bot/src/` — резолверы контекста и стори.
 
 ## 5. Правила и запреты
 

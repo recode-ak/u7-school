@@ -112,7 +112,7 @@
    ```ts
    courseFacade: { getModuleSnapshot: async () => [] },
    ```
-   При этом в `packages/course/src/infra/course-in-proc-facade.ts` есть **реальная реализация** `CourseInProcFacade`. Нужно просто подключить её.
+   При этом в `modules/course/src/infra/course-in-proc-facade.ts` есть **реальная реализация** `CourseInProcFacade`. Нужно просто подключить её.
 2. **Шаг выбора модуля** (`#handleModuleMessage`) возвращает заглушку с одной кнопкой «Обновить список» — не показывает реальные модули ментора.
 3. **Нет превью перед созданием** (US требует подтверждение с кнопками «Всё верно, создать» / «Изменить данные»).
 
@@ -153,7 +153,7 @@
 
 | # | Проблема | Где | Влияние |
 |---|----------|-----|---------|
-| 1 | `CourseFacade` — заглушка в `api-app.ts` | `apps/u7-bot/src/api-app.ts:55` | US-6 не видит модули, `CreateStreamUc` создаёт потоки с пустым `contentSnapshot` |
+| 1 | `CourseFacade` — заглушка в `api-app.ts` | `runners/u7-bot/src/api-app.ts:55` | US-6 не видит модули, `CreateStreamUc` создаёт потоки с пустым `contentSnapshot` |
 | 2 | `ViewStreamStory` не получает роль актора | `view-stream.story.ts` | Нет ролевых кнопок (US-2, US-7) |
 | 3 | `MonitorStory` не имеет доступа к `UserFacade` | `monitor.story.ts` | Показывает userId вместо имён (US-8) |
 | 4 | `ProgressStory` не имеет доступа к `UserFacade` | `progress.story.ts` | Нет имени ментора (US-5) |
@@ -175,8 +175,8 @@
 
 | # | Задача | Файлы | Суть |
 |---|--------|-------|------|
-| 1.1 | Подключить `CourseInProcFacade` в `api-app.ts` | `apps/u7-bot/src/api-app.ts` | Заменить заглушку на реальный фасад (нужны `moduleRepo`, `lessonRepo` из `course`) |
-| 1.2 | Инициализировать репозитории `course` в `api-app.ts` | `apps/u7-bot/src/api-app.ts` | Создать `ModuleJsonRepo`, `LessonJsonRepo` (или один `CourseJsonRepo`) |
+| 1.1 | Подключить `CourseInProcFacade` в `api-app.ts` | `runners/u7-bot/src/api-app.ts` | Заменить заглушку на реальный фасад (нужны `moduleRepo`, `lessonRepo` из `course`) |
+| 1.2 | Инициализировать репозитории `course` в `api-app.ts` | `runners/u7-bot/src/api-app.ts` | Создать `ModuleJsonRepo`, `LessonJsonRepo` (или один `CourseJsonRepo`) |
 | 1.3 | Починить тесты сторис (добавить `story.init(mockApi)`) | `*.story.test.ts` | 13 падающих тестов из-за отсутствия `init()` |
 
 ### Этап 2: Витрина и карточка (US-1, US-2)

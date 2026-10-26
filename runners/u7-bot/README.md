@@ -9,7 +9,7 @@ Grammy-слой — тонкий адаптер апдейтов, состоян
 ## Структура
 
 ```
-apps/u7-bot/
+runners/u7-bot/
   src/
     main.ts                       # Точка входа: config → logger → createBot → ApiApp → UiApp → BotTransport → jobs
     bot.ts                        # createBot(token) — Grammy-бот без сессий (диалогами владеет транспорт)
@@ -87,17 +87,17 @@ bun run dev:fixtures               # свежий мир при каждом з�
 KEEP_WORLD=1 bun run dev:fixtures  # не пересеивать: текущий мир и правки живут
 
 # Продакшен
-NODE_ENV=production bun run apps/u7-bot/src/main.ts
+NODE_ENV=production bun run runners/u7-bot/src/main.ts
 ```
 
 ## Тестирование
 
 ```bash
 # Все тесты бота
-bun test apps/u7-bot/
+bun test runners/u7-bot/
 
 # Только конкретный файл
-bun test apps/u7-bot/tests/streams/
+bun test runners/u7-bot/tests/streams/
 ```
 
 ## Связанные документы

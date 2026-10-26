@@ -24,7 +24,7 @@ Added / Changed / Fixed / Migration.
 
 ### Added
 
-- **Абстракция событий мессенджера (`packages/core`, `apps/u7-bot`)**:
+- **Абстракция событий мессенджера (`platform/core`, `runners/u7-bot`)**:
   - Контракты событий `MessengerEvent` (`member_joined`, `member_left`, `bot_membership`) и действий `MessengerAction` (`kick_member`).
   - Метод `ProactiveSender.execute(action: MessengerAction): Promise<void>`.
   - Хук `handleMessengerEvent(event): Promise<MessengerEventReaction | undefined>` в `BotController` с цепочкой `stop` / `pass`.
@@ -33,11 +33,11 @@ Added / Changed / Fixed / Migration.
 - **Обработчики событий чатов в контроллерах**:
   - `SchoolController`: выдача роли `SUBSCRIBER` при вступлении в группу сообщества школы (`communityGroup`) и снятие роли при выходе.
   - `StreamController`: оповещение ментора о входе неизвестных участников в учебную группу потока и о выходе активных студентов (FR-7).
-- **Drill-down навигация (`packages/core/src/ui/content-nav`)**:
+- **Drill-down навигация (`platform/core/src/ui/content-nav`)**:
   - Единая карточная модель уровня `NavLevel`, презентер `presentNavLevel` с многоуровневыми хлебными крошками (multiline breadcrumbs).
   - Листание соседних элементов (`◀️` / `▶️`) в пределах одного уровня.
   - Перевод каталога курсов (`CourseCatalogStory`), программы модуля ментора (`ViewStreamMentorStory`) и навигации студента (`NavTreeStory`) на общее ядро.
-- **Утилита `truncateByWords` (`packages/core/src/shared/string-utility`)**:
+- **Утилита `truncateByWords` (`platform/core/src/shared/string-utility`)**:
   - Читабельная обрезка длинного текста по границам слов без висячих союзов и предлогов.
 
 ### Changed
@@ -57,7 +57,7 @@ Added / Changed / Fixed / Migration.
 
 ### Removed
 
-- **Процедурный `group-handler.ts`**: удалён процедурный обработчик событий групп из `apps/u7-bot/src/handlers/`, логика распределена по контроллерам `SchoolController` и `StreamController`.
+- **Процедурный `group-handler.ts`**: удалён процедурный обработчик событий групп из `runners/u7-bot/src/handlers/`, логика распределена по контроллерам `SchoolController` и `StreamController`.
 
 ## [0.2.4] — 2026-10-15
 

@@ -1,6 +1,6 @@
 # BotController — Styleguide
 
-**Назначение:** контроллер Telegram-бота — реестр сторис, диспетчер callback/message, владелец префиксации кнопок и обработки ошибок. Базовый класс: `packages/core/src/ui/bot/controller/bot-controller.ts`.
+**Назначение:** контроллер Telegram-бота — реестр сторис, диспетчер callback/message, владелец префиксации кнопок и обработки ошибок. Базовый класс: `platform/core/src/ui/bot/controller/bot-controller.ts`.
 
 > Сжатие/разжатие UUID живёт не здесь, а в `BotTransport`. Общий разрез слоёв —
 > см. [bot-architecture.md](./bot-architecture.md).
@@ -11,22 +11,22 @@
 
 ```
 BotController<TAppMeta, TActor>                        (core, абстрактный)
-  └─ U7BotController                                    (apps/u7-bot) — закрывает U7BotAppMeta + User
-       ├─ StreamsController                            (apps/u7-bot) — реестр доменных сторис
-       ├─ UserController                                (apps/u7-bot) — доставка уведомлений (сторя notify)
-       ├─ CoursesController                            (apps/u7-bot) — реестр доменных сторис
-       ├─ LearningController                           (apps/u7-bot) — реестр доменных сторис
-       ├─ MentorController                             (apps/u7-bot) — реестр доменных сторис
-       ├─ QuestionnaireController                      (apps/u7-bot) — реестр стори анкеты
-       ├─ OnboardingController                         (apps/u7-bot) — логика без сторис
-       └─ AppController                                (apps/u7-bot) — системные сценарии (/start, /help, сообщество)
+  └─ U7BotController                                    (runners/u7-bot) — закрывает U7BotAppMeta + User
+       ├─ StreamsController                            (runners/u7-bot) — реестр доменных сторис
+       ├─ UserController                                (runners/u7-bot) — доставка уведомлений (сторя notify)
+       ├─ CoursesController                            (runners/u7-bot) — реестр доменных сторис
+       ├─ LearningController                           (runners/u7-bot) — реестр доменных сторис
+       ├─ MentorController                             (runners/u7-bot) — реестр доменных сторис
+       ├─ QuestionnaireController                      (runners/u7-bot) — реестр стори анкеты
+       ├─ OnboardingController                         (runners/u7-bot) — логика без сторис
+       └─ AppController                                (runners/u7-bot) — системные сценарии (/start, /help, сообщество)
 ```
 
 - **`BotController`** (`@u7-scl/core/ui`) — базовый класс. Общие механизмы: префиксация кнопок, диспетчеризация в сторис, `handleError`.
 - **`U7BotController`** (`@u7-scl/bot/u7-bot-controller`) — специализация для U7-бота: фиксирует `TAppMeta = U7BotAppMeta`, `TActor = User`, добавляет систему меню (`menuButtons`, `errorExitRows`), `uiApp`.
 - **Доменные контроллеры** (`StreamsController` и т.п.) — тонкий реестр: объявляют `name` и массив `stories`, делегируют всю логику в `U7BotUiStory`.
 - **`UserController`** — доставка уведомлений (сторя `notify`).
-- **`AppController`** (`apps/u7-bot/src/controllers/app/app-controller.ts`) — контроллер уровня приложения для сценариев, не привязанных к доменному модулю: кнопка «Сообщество школы» (сторя `community`), скрытая админ-команда `/log_level` (override `handleCommand`). Системные коды `app:main-menu`/`app:help` перехватывает `U7BotUiApp.dispatch` — до контроллера они не доезжают.
+- **`AppController`** (`runners/u7-bot/src/controllers/app/app-controller.ts`) — контроллер уровня приложения для сценариев, не привязанных к доменному модулю: кнопка «Сообщество школы» (сторя `community`), скрытая админ-команда `/log_level` (override `handleCommand`). Системные коды `app:main-menu`/`app:help` перехватывает `U7BotUiApp.dispatch` — до контроллера они не доезжают.
 
 ---
 
@@ -36,7 +36,7 @@ BotController<TAppMeta, TActor>                        (core, абстрактн
 2. **Стори не знают имени контроллера.** Стори возвращают коды без префикса (`story:action`); контроллер на выходе добавляет префикс `name:` через `#prefixResponse`/`#prefixCode`. Сжатие/разжатие UUID — зона `BotTransport`, не стори и не контроллера.
 3. **Один контроллер = один модуль** (кроме `AppController` — уровень приложения).
 4. **Необработанные ошибки стори** перехватываются в `handleCallback`/`handleMessage` и идут в `handleError`.
-5. **Кросс-контроллерные коды.** Код с префиксом другого контроллера (`app:main-menu`) проходит префиксацию без изменений (`#prefixCode` видит, что первый сегмент — не стори текущего контроллера). Для кросс-контроллерных переходов используй реестр `Routes` (`apps/u7-bot/src/controllers/shared/routes.ts`) и готовые кнопки `buttons.mainMenu(text?)` (`apps/u7-bot/src/controllers/shared/buttons.ts`). `delegate.path` — всегда полный маршрут `controller:story:action:...`: стори пишет относительный путь через `this.cb`/`this.cbFor`, контроллер префиксует его в `#prefixResponse`.
+5. **Кросс-контроллерные коды.** Код с префиксом другого контроллера (`app:main-menu`) проходит префиксацию без изменений (`#prefixCode` видит, что первый сегмент — не стори текущего контроллера). Для кросс-контроллерных переходов используй реестр `Routes` (`runners/u7-bot/src/controllers/shared/routes.ts`) и готовые кнопки `buttons.mainMenu(text?)` (`runners/u7-bot/src/controllers/shared/buttons.ts`). `delegate.path` — всегда полный маршрут `controller:story:action:...`: стори пишет относительный путь через `this.cb`/`this.cbFor`, контроллер префиксует его в `#prefixResponse`.
 
 ---
 
@@ -97,7 +97,7 @@ reset(): void                  // сброс временного состоян
 | `not-found`, `conflict`, `access-denied`, `bad-request` | Текст ошибки |
 | `internal`, `unauthorized`, default | Логирует через `logger.error` + общее сообщение |
 
-`handleError` возвращает `DialogResponse`-экран; тексты — `MdText` через `md` (см. [bot-ui-story.md](./bot-ui-story.md), §4). См. [errors.md](../../../packages/dmg-core/docs/errors-result.md) для контракта `AppError`.
+`handleError` возвращает `DialogResponse`-экран; тексты — `MdText` через `md` (см. [bot-ui-story.md](./bot-ui-story.md), §4). См. [errors.md](../../../platform/dmg-core/docs/errors-result.md) для контракта `AppError`.
 
 ---
 
@@ -110,6 +110,6 @@ reset(): void                  // сброс временного состоян
 ## Связанные файлы
 
 - [BotUiStory](./bot-ui-story.md) — стиль написания сторис
-- [Ошибки](../../../packages/dmg-core/docs/errors-result.md) — `AppError`, `fromError()`
+- [Ошибки](../../../platform/dmg-core/docs/errors-result.md) — `AppError`, `fromError()`
 - [Тестирование бота](./bot-test.md)
 - [Архитектура bot-level](./bot-architecture.md)

@@ -12,7 +12,7 @@
 > - [`conductor/development-roadmap.md`](./development-roadmap.md) — **дорожная карта:** порядок релизов, миграции, зависимости между инициативами
 > - `conductor/workflow.md` — процесс работы conductor (создание треков, генерация планов)
 > - `conductor/architecture-evolution.md` — архитектурные правила (domain boundaries, зависимости пакетов)
-> - `packages/dmg-core/docs/domain-modeling.md` — где размещать логику
+> - `platform/dmg-core/docs/domain-modeling.md` — где размещать логику
 > - `conductor/index.md` — индекс всех документов
 >
 > **Главные изменения от v6:** добавлены мета-поля (`planMd`, `lessonMd`, `summaryMd`) в entity; добавлен файловый Import/Export (папка ↔ JSON) с dry-run; `steps.md` генерируется из Step[] (не хранится); `.content-meta.json` для точного сопоставления при импорте; `AUTHOR_GUIDE.md` — единый промпт для ИИ-агентов; порядок треков перестроен: Import/Export до форка.
@@ -845,15 +845,17 @@ API готово. Реализация — когда встанет потре�
 ### 11.1. Структура монорепо
 
 ```
-packages/
+platform/
 ├── core/          # Фреймворк (Aggregate, UseCase, порты). НЕ трогать.
-├── app/           # Главный модуль u7-school. НЕ зависит от domain-модулей.
+└── app/           # Главный модуль u7-school. НЕ зависит от domain-модулей.
+
+modules/
 ├── course/        # Домен курсов: Course, Module, Lesson, Step, ContentSnapshot
 ├── stream/        # Домен потоков: Stream, Student, enrollment
 ├── user/          # Домен пользователей: User, Role, Policy
 └── onboarding/    # Домен онбординга
 
-apps/
+runners/
 ├── u7-bot/        # Telegram-бот
 └── u7-cli/        # CLI-утилиты
 
@@ -868,58 +870,58 @@ data/courses/      # JSON-хранилище (в будущем — БД)
 
 | Файл | Содержит | Трек |
 |------|----------|------|
-| `packages/course/src/domain/course/entity.ts` | `CourseSchema`, `Course` | 1 |
-| `packages/course/src/domain/course/a-root.ts` | `CourseAr` | 1 |
-| `packages/course/src/domain/course/policy.ts` | `CoursePolicy` (canCreate, canRead, canEdit, canEnrollNextModule) | 1, 4 |
-| `packages/course/src/domain/module/entity.ts` | `ModuleSchema`, `ProjectSchema`, `Module`, `Project` | 1 |
-| `packages/course/src/domain/module/a-root.ts` | `ModuleAr` (getVisibleFor, addProject, publish, etc.) | 1 |
-| `packages/course/src/domain/module/policy.ts` | `ModulePolicy` | 1 |
-| `packages/course/src/domain/module/get-visible-for.test.ts` | Тесты getVisibleFor | 1 |
-| `packages/course/src/domain/lesson/entity.ts` | `LessonSchema`, `Lesson` | 1 |
-| `packages/course/src/domain/lesson/a-root.ts` | `LessonAr` | 1 |
-| `packages/course/src/domain/lesson/policy.ts` | `LessonPolicy` | 1 |
-| `packages/course/src/domain/step/entity.ts` | `StepSchema`, `Step`, `StepText`, `StepCode`, `StepFile` | 1 |
-| `packages/course/src/domain/step/a-root.ts` | `StepAr` | 1 |
-| `packages/course/src/domain/step/policy.ts` | `StepPolicy` | 1 |
-| `packages/course/src/domain/status.ts` | `Status` enum (DRAFT, PUBLISHED, ARCHIVED), `StatusSchema` | — |
-| `packages/course/src/domain/content-snapshot.ts` | `ContentSnapshot`, `ContentSnapshotSchema` (с title'ами, v5) | 2 |
-| `packages/course/src/domain/course-ds.ts` | `CourseDs` (buildSnapshot, findStepPosition, etc.) | 2 |
-| `packages/course/src/domain/facade.ts` | `CourseFacade` interface (getModuleSnapshot, getCourseProgram, etc.) | 2 |
-| `packages/stream/src/domain/stream/entity.ts` | `StreamSchema`, `Stream` (contentSnapshot с title'ами) | 2 |
-| `packages/stream/src/domain/stream/a-root.ts` | `StreamAr` (create, findNextStep, findStepContext, enroll) | 2 |
-| `packages/stream/src/domain/stream/policy.ts` | `StreamPolicy` (canEnrollNextModule) | 4 |
+| `modules/course/src/domain/course/entity.ts` | `CourseSchema`, `Course` | 1 |
+| `modules/course/src/domain/course/a-root.ts` | `CourseAr` | 1 |
+| `modules/course/src/domain/course/policy.ts` | `CoursePolicy` (canCreate, canRead, canEdit, canEnrollNextModule) | 1, 4 |
+| `modules/course/src/domain/module/entity.ts` | `ModuleSchema`, `ProjectSchema`, `Module`, `Project` | 1 |
+| `modules/course/src/domain/module/a-root.ts` | `ModuleAr` (getVisibleFor, addProject, publish, etc.) | 1 |
+| `modules/course/src/domain/module/policy.ts` | `ModulePolicy` | 1 |
+| `modules/course/src/domain/module/get-visible-for.test.ts` | Тесты getVisibleFor | 1 |
+| `modules/course/src/domain/lesson/entity.ts` | `LessonSchema`, `Lesson` | 1 |
+| `modules/course/src/domain/lesson/a-root.ts` | `LessonAr` | 1 |
+| `modules/course/src/domain/lesson/policy.ts` | `LessonPolicy` | 1 |
+| `modules/course/src/domain/step/entity.ts` | `StepSchema`, `Step`, `StepText`, `StepCode`, `StepFile` | 1 |
+| `modules/course/src/domain/step/a-root.ts` | `StepAr` | 1 |
+| `modules/course/src/domain/step/policy.ts` | `StepPolicy` | 1 |
+| `modules/course/src/domain/status.ts` | `Status` enum (DRAFT, PUBLISHED, ARCHIVED), `StatusSchema` | — |
+| `modules/course/src/domain/content-snapshot.ts` | `ContentSnapshot`, `ContentSnapshotSchema` (с title'ами, v5) | 2 |
+| `modules/course/src/domain/course-ds.ts` | `CourseDs` (buildSnapshot, findStepPosition, etc.) | 2 |
+| `modules/course/src/domain/facade.ts` | `CourseFacade` interface (getModuleSnapshot, getCourseProgram, etc.) | 2 |
+| `modules/stream/src/domain/stream/entity.ts` | `StreamSchema`, `Stream` (contentSnapshot с title'ами) | 2 |
+| `modules/stream/src/domain/stream/a-root.ts` | `StreamAr` (create, findNextStep, findStepContext, enroll) | 2 |
+| `modules/stream/src/domain/stream/policy.ts` | `StreamPolicy` (canEnrollNextModule) | 4 |
 
 ### 11.3. Ключевые файлы (API / UC)
 
 | Файл | Содержит | Трек |
 |------|----------|------|
-| `packages/course/src/api/module/create-module-uc.ts` | `CreateModuleUc` | — |
-| `packages/course/src/api/module/publish-module-uc.ts` | `PublishModuleUc` | 1 |
-| `packages/course/src/api/module/get-module-uc.ts` | `GetModuleUc` (getVisibleFor) | 1 |
-| `packages/course/src/api/module/get-module-snapshot-uc.ts` | `GetModuleSnapshotUc` (buildSnapshot) | 2 |
-| `packages/course/src/api/module/enrich-module-uc.ts` | `EnrichModuleUc` | — |
-| `packages/course/src/api/module/add-project-uc.ts` | `AddProjectUc` | — |
-| `packages/course/src/api/lesson/create-lesson-uc.ts` | `CreateLessonUc` | — |
-| `packages/course/src/api/lesson/get-lesson-uc.ts` | `GetLessonUc` | 1 |
-| `packages/course/src/api/step/create-step-uc.ts` | `CreateStepUc` | — |
-| `packages/course/src/api/step/get-step-uc.ts` | `GetStepUc` | 1 |
-| `packages/course/src/api/step/get-steps-by-lessons-uc.ts` | `GetStepsByLessonsUc` | 1 |
-| `packages/course/src/api/course/create-course-uc.ts` | `CreateCourseUc` | — |
-| `packages/course/src/api/course/get-course-uc.ts` | `GetCourseUc` | 1 |
-| `packages/course/src/api/course/add-module-to-course-uc.ts` | `AddModuleToCourseUc` | — |
-| `packages/stream/src/api/stream/create-stream-uc.ts` | `CreateStreamUc` (getModuleSnapshot → snapshot) | 2 |
-| `packages/stream/src/api/student/enroll-student-uc.ts` | `EnrollStudentUc` (canEnrollNextModule) | 4 |
+| `modules/course/src/api/module/create-module-uc.ts` | `CreateModuleUc` | — |
+| `modules/course/src/api/module/publish-module-uc.ts` | `PublishModuleUc` | 1 |
+| `modules/course/src/api/module/get-module-uc.ts` | `GetModuleUc` (getVisibleFor) | 1 |
+| `modules/course/src/api/module/get-module-snapshot-uc.ts` | `GetModuleSnapshotUc` (buildSnapshot) | 2 |
+| `modules/course/src/api/module/enrich-module-uc.ts` | `EnrichModuleUc` | — |
+| `modules/course/src/api/module/add-project-uc.ts` | `AddProjectUc` | — |
+| `modules/course/src/api/lesson/create-lesson-uc.ts` | `CreateLessonUc` | — |
+| `modules/course/src/api/lesson/get-lesson-uc.ts` | `GetLessonUc` | 1 |
+| `modules/course/src/api/step/create-step-uc.ts` | `CreateStepUc` | — |
+| `modules/course/src/api/step/get-step-uc.ts` | `GetStepUc` | 1 |
+| `modules/course/src/api/step/get-steps-by-lessons-uc.ts` | `GetStepsByLessonsUc` | 1 |
+| `modules/course/src/api/course/create-course-uc.ts` | `CreateCourseUc` | — |
+| `modules/course/src/api/course/get-course-uc.ts` | `GetCourseUc` | 1 |
+| `modules/course/src/api/course/add-module-to-course-uc.ts` | `AddModuleToCourseUc` | — |
+| `modules/stream/src/api/stream/create-stream-uc.ts` | `CreateStreamUc` (getModuleSnapshot → snapshot) | 2 |
+| `modules/stream/src/api/student/enroll-student-uc.ts` | `EnrollStudentUc` (canEnrollNextModule) | 4 |
 
 ### 11.4. Ключевые файлы (infra)
 
 | Файл | Содержит |
 |------|----------|
-| `packages/course/src/infra/db/course-json-repo.ts` | `CourseJsonRepo` |
-| `packages/course/src/infra/db/module-json-repo.ts` | `ModuleJsonRepo` |
-| `packages/course/src/infra/db/lesson-json-repo.ts` | `LessonJsonRepo` |
-| `packages/course/src/infra/db/step-json-repo.ts` | `StepJsonRepo` |
-| `packages/stream/src/infra/db/stream-json-repo.ts` | `StreamJsonRepo` |
-| `packages/stream/src/infra/db/student-json-repo.ts` | `StudentJsonRepo` |
+| `modules/course/src/infra/db/course-json-repo.ts` | `CourseJsonRepo` |
+| `modules/course/src/infra/db/module-json-repo.ts` | `ModuleJsonRepo` |
+| `modules/course/src/infra/db/lesson-json-repo.ts` | `LessonJsonRepo` |
+| `modules/course/src/infra/db/step-json-repo.ts` | `StepJsonRepo` |
+| `modules/stream/src/infra/db/stream-json-repo.ts` | `StreamJsonRepo` |
+| `modules/stream/src/infra/db/student-json-repo.ts` | `StudentJsonRepo` |
 
 ### 11.5. Данные (JSON)
 

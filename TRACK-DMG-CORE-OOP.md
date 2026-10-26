@@ -68,4 +68,4 @@
 3. `Rule`.
 4. `DefIndex` и `ArchChecker`.
 5. Репозиторий и двойники.
-6. Перевод `packages/domain` и `packages/<m>` (на импорты DSL это почти не влияет), гайды, `architecture/`.
+6. Перевод `domain` и `modules/<m>` (на импорты DSL это почти не влияет), гайды, `architecture/`.

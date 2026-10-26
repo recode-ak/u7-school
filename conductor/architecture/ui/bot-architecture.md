@@ -5,9 +5,9 @@
 из чего собран UI, кто чем владеет, как течёт апдейт от Telegram до домена и обратно.
 
 Живой код:
-- базовые классы/типы — `packages/core/src/ui/bot/`;
-- приложение бота — `apps/u7-bot/src/`;
-- транспорт — `apps/u7-bot/src/infra/bot-transport.ts`.
+- базовые классы/типы — `platform/core/src/ui/bot/`;
+- приложение бота — `runners/u7-bot/src/`;
+- транспорт — `runners/u7-bot/src/infra/bot-transport.ts`.
 
 ---
 
@@ -20,13 +20,13 @@ Grammy (адаптер) → BotTransport (сессии, штампы, ренде
 
 | Слой | Объект | Где | Ответственность |
 |---|---|---|---|
-| Адаптер | `createBot`, `BotContext` | `apps/u7-bot/src/bot.ts`, `context.ts` | Grammy-бот; `Context` без сессий (Grammy-session нет) |
-| Транспорт | `BotTransport` | `apps/u7-bot/src/infra/bot-transport.ts` | Сессии `BotSession`, штампы `:~seq`, shortId-сжатие, рендер `DialogResponse` (§5), per-chat очередь, `ProactiveSender` |
-| Хаб | `BotUiApp` / `U7BotUiApp` | `packages/core/src/ui/bot/ui-app.ts`, `apps/u7-bot/src/core/ui-app.ts` | Core: `dialog.path/seq`, `enterDialog`, `dispatch`, delegate-склейка, pipe команд (ФР-4). U7: `/start`, `/help`, `/cancel`, системные коды `app:*`, меню из `menuButtons` |
-| Диспетчер | `BotController` / `U7BotController` | `packages/core/src/ui/bot/bot-controller.ts`, `apps/u7-bot/src/core/u7-bot-controller.ts` | Реестр сторис, префиксация кодов `name:`, `handleError`, `errorExitRows` |
-| Сценарий | `BotUiStory` / `U7BotUiStory` | `packages/core/src/ui/bot/bot-ui-story.ts`, `apps/u7-bot/src/core/u7-bot-ui-story.ts` | Логика экрана: UC → `DialogResponse`; `awaitInput`-ввод, `contextHelp`, `menuButtons`, `/cancel` в pipe |
-| Данные | `DialogResponse` / `Screen` / `BotSession` / `ProactiveSender` | `packages/core/src/ui/bot/types.ts` | Типы между слоями |
-| Домен | `ApiApp.execute()` | `packages/core/src/api/` | UseCase'ы доменных модулей |
+| Адаптер | `createBot`, `BotContext` | `runners/u7-bot/src/bot.ts`, `context.ts` | Grammy-бот; `Context` без сессий (Grammy-session нет) |
+| Транспорт | `BotTransport` | `runners/u7-bot/src/infra/bot-transport.ts` | Сессии `BotSession`, штампы `:~seq`, shortId-сжатие, рендер `DialogResponse` (§5), per-chat очередь, `ProactiveSender` |
+| Хаб | `BotUiApp` / `U7BotUiApp` | `platform/core/src/ui/bot/ui-app.ts`, `runners/u7-bot/src/core/ui-app.ts` | Core: `dialog.path/seq`, `enterDialog`, `dispatch`, delegate-склейка, pipe команд (ФР-4). U7: `/start`, `/help`, `/cancel`, системные коды `app:*`, меню из `menuButtons` |
+| Диспетчер | `BotController` / `U7BotController` | `platform/core/src/ui/bot/bot-controller.ts`, `runners/u7-bot/src/core/u7-bot-controller.ts` | Реестр сторис, префиксация кодов `name:`, `handleError`, `errorExitRows` |
+| Сценарий | `BotUiStory` / `U7BotUiStory` | `platform/core/src/ui/bot/bot-ui-story.ts`, `runners/u7-bot/src/core/u7-bot-ui-story.ts` | Логика экрана: UC → `DialogResponse`; `awaitInput`-ввод, `contextHelp`, `menuButtons`, `/cancel` в pipe |
+| Данные | `DialogResponse` / `Screen` / `BotSession` / `ProactiveSender` | `platform/core/src/ui/bot/types.ts` | Типы между слоями |
+| Домен | `ApiApp.execute()` | `platform/core/src/api/` | UseCase'ы доменных модулей |
 
 **Разделение владения:** сессиями и экраном владеет транспорт; диалогом
 (`path`/`seq`) — uiApp; логикой сценария — стори; домен никогда не знает о Telegram.
@@ -37,7 +37,7 @@ Grammy (адаптер) → BotTransport (сессии, штампы, ренде
 
 ### 2.1. `BotTransport` (транспорт/исполнение)
 
-`apps/u7-bot/src/infra/bot-transport.ts`. Владеет:
+`runners/u7-bot/src/infra/bot-transport.ts`. Владеет:
 
 - **сессиями `BotSession`** — внутренняя мапа `tgId → { dialog, screen }`
   (создаётся лениво пустой: до первого `/start` диалог не открыт — ФР-1);
@@ -53,7 +53,7 @@ Grammy (адаптер) → BotTransport (сессии, штампы, ренде
 
 ### 2.2. `BotUiApp` / `U7BotUiApp` (хаб)
 
-`packages/core/src/ui/bot/ui-app.ts`. Core-механика:
+`platform/core/src/ui/bot/ui-app.ts`. Core-механика:
 
 - **`enterDialog(session, path, mode)`** — единственная точка инкремента `seq`
   (ФР-2): `switch` (кнопки/мосты/delegate) — смена пути растит seq и сбрасывает
@@ -66,7 +66,7 @@ Grammy (адаптер) → BotTransport (сессии, штампы, ренде
 - **pipe команд (ФР-4)** — `handleCommand` опрашивает контроллеры (активный
   первым), реакции `pass/continue/stop`; stop с `delegate` исполняется ядром.
 
-`U7BotUiApp` (`apps/u7-bot/src/core/ui-app.ts`) добавляет U7-специфику:
+`U7BotUiApp` (`runners/u7-bot/src/core/ui-app.ts`) добавляет U7-специфику:
 `/start` (гост-регистрация → reopen якоря `app/menu` → welcome из `menuButtons`),
 `/help` (контекстная справка активной стори `contextHelp()` или общий справочник),
 `/cancel` (сброс активной стори в pipe + глобальный reopen меню; ответ без
@@ -98,7 +98,7 @@ Grammy (адаптер) → BotTransport (сессии, штампы, ренде
 сброс себя + stop-реплика), `contextHelp` (контекстная справка), `menuButtons`
 (кнопка главного меню), `errorExitRows` — «⬅️ Меню» на экранах ошибок.
 
-### 2.5. Типы (`packages/core/src/ui/bot/types.ts`)
+### 2.5. Типы (`platform/core/src/ui/bot/types.ts`)
 
 ```ts
 DialogResponse  // screen? / finalize? / notify? / awaitInput? / release? / delegate?
@@ -176,7 +176,7 @@ Grammy callback_query.data
 - **Префиксация** — в `BotController`: стори возвращает `story:action`,
   контроллер добавляет `controller:`; коды с чужим префиксом (`app:main-menu`)
   не трогаются. Кросс-контроллерные адреса — реестр `Routes`
-  (`apps/u7-bot/src/controllers/shared/routes.ts`), готовые кнопки —
+  (`runners/u7-bot/src/controllers/shared/routes.ts`), готовые кнопки —
   `buttons.mainMenu(text?)` (`shared/buttons.ts`).
 - **Штамп `:~<seq36>`** — в транспорте при отправке (после сжатия); сверка на
   входе. Убивает кнопки старых экранов, истории, гонок и рестартов.
@@ -206,5 +206,5 @@ Grammy callback_query.data
 - [BotController Styleguide](./bot-controller.md)
 - [BotUiStory Styleguide](./bot-ui-story.md)
 - [Тестирование бота](./bot-test.md)
-- [Границы архитектуры](../../../packages/dmg-core/docs/layers.md), [Domain boundaries](../../../packages/dmg-core/docs/domain-modeling.md)
+- [Границы архитектуры](../../../platform/dmg-core/docs/layers.md), [Domain boundaries](../../../platform/dmg-core/docs/domain-modeling.md)
 - Материнский документ контракта: `conductor/roadmap/bot-ui-session-architecture.md`

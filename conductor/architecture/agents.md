@@ -9,9 +9,9 @@
 | Роль | Делает | Пишет в |
 |---|---|---|
 | **orchestrator** (основная сессия с Нурболатом) | декомпозиция, брифы срезов, вызов агентов, гейт, решения, план, коммиты | `conductor/`, коммиты |
-| **domain-author** | state, Ar, Policy, события, ошибки, DCS/DQS, все Def, unit-тесты домена | `packages/domain` |
-| **api-author** | реализации UC/ER/Job, репозитории, фасады, wiring, тесты | `packages/<m>` |
-| **migrator** | перевод существующего кода с сохранением поведения | `packages/domain`, `packages/<m>`, точечно вызывающие stories |
+| **domain-author** | state, Ar, Policy, события, ошибки, DCS/DQS, все Def, unit-тесты домена | `domain` |
+| **api-author** | реализации UC/ER/Job, репозитории, фасады, wiring, тесты | `modules/<m>` |
+| **migrator** | перевод существующего кода с сохранением поведения | `domain`, `modules/<m>`, точечно вызывающие stories |
 | **reviewer** | проверка по [rules.md](./rules.md), отчёт с ID | только чтение |
 | ui-author | позже | — |
 
@@ -53,7 +53,7 @@ orchestrator: бриф среза
 
 ## 6. Эталон
 
-Агенты копируют паттерн из образцов двух уровней. **Учебный модуль пакета** `dmg-core` (`packages/dmg-core/src/testing/example`) — на каждый вид артефакта гайд в [guides/](../../packages/dmg-core/docs/guides/index.md): когда применять, команда генератора, ссылка на образец, чеклист ID, ловушки, как тестировать; ссылки и ID документации пакета проверяет `packages/dmg-core/scripts/docs-check.test.ts`. **Эталон проекта** — модуль `wish` (домен `packages/domain/src/wish`, прикладной слой `packages/wish/src`, трек golden-wish): реальные случаи, которых нет в учебном модуле (внешние модули над legacy, мосты, D-41). Роли платформы (`domain-author`, `api-author`, `reviewer`) — в пакете (`packages/dmg-core/agents/`), проектное дополнение — `.agents-core/common.md`.
+Агенты копируют паттерн из образцов двух уровней. **Учебный модуль пакета** `dmg-core` (`platform/dmg-core/src/testing/example`) — на каждый вид артефакта гайд в [guides/](../../platform/dmg-core/docs/guides/index.md): когда применять, команда генератора, ссылка на образец, чеклист ID, ловушки, как тестировать; ссылки и ID документации пакета проверяет `platform/dmg-core/scripts/docs-check.test.ts`. **Эталон проекта** — модуль `wish` (домен `domain/src/wish`, прикладной слой `modules/wish/src`, трек golden-wish): реальные случаи, которых нет в учебном модуле (внешние модули над legacy, мосты, D-41). Роли платформы (`domain-author`, `api-author`, `reviewer`) — в пакете (`platform/dmg-core/agents/`), проектное дополнение — `.agents-core/common.md`.
 
 ## 7. Условия остановки (эскалация к orchestrator)
 

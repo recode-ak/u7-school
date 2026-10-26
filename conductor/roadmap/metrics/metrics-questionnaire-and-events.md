@@ -22,7 +22,7 @@
 Модуль `onboarding` содержал полноценный движок анкет:
 
 ```
-packages/onboarding/src/
+modules/onboarding/src/
   domain/questionnaire/
     a-root.ts          — QuestionnaireAr (start, handleAction, abandon, findAndSetNextQuestion)
     entity.ts          — Questionnaire (telegramId, status, answers, currentQuestionCode, draftAnswers)
@@ -54,7 +54,7 @@ packages/onboarding/src/
 
 **Цель:** создать интерфейс и реализацию шины событий.
 
-**Интерфейс** (новый файл `packages/core/src/domain/events/`):
+**Интерфейс** (новый файл `platform/core/src/domain/events/`):
 
 ```typescript
 // Базовое доменное событие
@@ -82,7 +82,7 @@ interface EventBus {
 - `subscribe` добавляет обработчик, возвращает функцию отписки
 - Добавить в `AppResolver` (чтобы все модули имели доступ)
 
-**Местоположение:** `packages/core/src/domain/events/` → `event-bus.ts` (интерфейс), `in-proc-event-bus.ts` (реализация).
+**Местоположение:** `platform/core/src/domain/events/` → `event-bus.ts` (интерфейс), `in-proc-event-bus.ts` (реализация).
 
 **Тесты:** unit-тесты на подписку, публикацию, отписку, порядок вызова, ошибки в обработчиках.
 
@@ -92,7 +92,7 @@ interface EventBus {
 
 **Цель:** расширить базовый `Aggregate` чтобы агрегаты могли генерировать события.
 
-**Изменения в `ArMeta`** (см. `packages/core/src/domain/ar/aggregate.ts`):
+**Изменения в `ArMeta`** (см. `platform/core/src/domain/ar/aggregate.ts`):
 
 ```typescript
 interface ArMeta {
@@ -233,7 +233,7 @@ abandon(): void
 
 **`QuestionnaireEngine`** — чистый движок навигации по вопросам: ветвление, валидация. Не знает о метриках.
 
-**Местоположение:** `packages/questionnaire/` (новый пакет).
+**Местоположение:** `modules/questionnaire/` (новый пакет).
 
 **`onboarding` остаётся** — делегирует анкетирование в `questionnaire`, оставляет свою ответственность (желания, привязка к курсам, выдача роли CANDIDATE).
 
@@ -277,4 +277,4 @@ abandon(): void
 - [3. Пайплайн + модули](./metrics-pipeline-and-modules.md) — Invite-паттерн, peer-review, metrics
 - [Архитектура](../../architecture/index.md) — слои, доменный API, правила
 - [Именование](../../architecture/naming.md) — структура и имена
-- [Границы доменной логики](../../../packages/dmg-core/docs/domain-modeling.md)
+- [Границы доменной логики](../../../platform/dmg-core/docs/domain-modeling.md)

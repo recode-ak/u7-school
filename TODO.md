@@ -6,7 +6,7 @@
 1. `CreateStreamStory` (wizard): шаг 9 запрашивает только ссылку на Telegram-группу и сохраняет в `telegramGroupId`. Нужно запрашивать **два** поля — ID группы (`telegramGroupId`) и ссылку-приглашение (`telegramGroupInvite`) — и записывать их в соответствующие свойства. Сейчас `telegramGroupInvite` никогда не заполняется через wizard.
 
 2. **Автоподключение к группе при зачислении** — на событие `student.enrolled` студент автоматически подключается к Telegram-группе потока (группа — `stream.telegramGroupId` или env-fallback). Реализация — **не отдельным handler'ом** (как было с киком `registerStudentKickHandler`), а новым контрактом в цепочке `transport → uiApp → controller → story`:
-   - расширить `ProactiveSender` (`packages/core/src/ui/bot/types.ts`) методом вроде `inviteToGroup`/`approveJoinRequest`;
+   - расширить `ProactiveSender` (`platform/core/src/ui/bot/types.ts`) методом вроде `inviteToGroup`/`approveJoinRequest`;
    - реализовать в `BotTransport` (grammy: `createChatInviteLink` и/или `approveChatJoinRequest`);
    - прокинуть делегированием через `BotUiApp` и `BotController`;
    - вызвать из стори, подписанной на `student.enrolled` (аналог `InactivityStory.#kickFromGroup`).
@@ -21,10 +21,10 @@
    ### Суть проблемы
 
    В проекте **две копии** `Role`/`RoleSchema`/`UserSchema`/`User`/`UserArMeta`:
-   - **`packages/user/src/domain/user/roles.ts`** + `entity.ts` — каноничный домен user-пакета (`@u7-scl/user/domain`). Используется всеми доменными политиками (`ModulePolicy`, `LessonPolicy`, `StreamPolicy`, ...) и UC.
-   - **`packages/app/src/domain/user.ts`** — легаси-дубликат внутри app-пакета (`@u7-scl/app/domain`). Используется app-контроллерами и **всеми** UI-stories/тестами (`tests/bot/*`, `packages/stream/src/ui/bot/stories/*`, `packages/onboarding/...`) через реэкспорт `@u7-scl/app/domain`.
+   - **`modules/user/src/domain/user/roles.ts`** + `entity.ts` — каноничный домен user-пакета (`@u7-scl/user/domain`). Используется всеми доменными политиками (`ModulePolicy`, `LessonPolicy`, `StreamPolicy`, ...) и UC.
+   - **`platform/app/src/domain/user.ts`** — легаси-дубликат внутри app-пакета (`@u7-scl/app/domain`). Используется app-контроллерами и **всеми** UI-stories/тестами (`tests/bot/*`, `modules/stream/src/ui/bot/stories/*`, `modules/onboarding/...`) через реэкспорт `@u7-scl/app/domain`.
 
-   Дубликат всплыл при добавлении `Role.AUTHOR` только в `packages/user`: TypeScript сравнивает enum'ы структурно, и пока обе копии были идентичны (6 ролей) — типы считались совместимыми. После расхождения (7 vs 6 ролей) возникла `TS2322` в `tests/bot/integration/stream/view-stream.integration.test.ts` (значение с `packages/user.Role[]` не присваивается туда, где ждали `packages/app.Role[]`). Временный фикс: `AUTHOR` добавлен в обе копии.
+   Дубликат всплыл при добавлении `Role.AUTHOR` только в `modules/user`: TypeScript сравнивает enum'ы структурно, и пока обе копии были идентичны (6 ролей) — типы считались совместимыми. После расхождения (7 vs 6 ролей) возникла `TS2322` в `tests/bot/integration/stream/view-stream.integration.test.ts` (значение с `modules/user.Role[]` не присваивается туда, где ждали `platform/app.Role[]`). Временный фикс: `AUTHOR` добавлен в обе копии.
 
    ### Корень цикла (не в User!)
 
@@ -35,7 +35,7 @@
    - `learning.story.ts`: `appApi.execute('get-step', ...)` (модуль course)
    - `progress.story.ts`: `appApi.execute('get-user', ...)`
 
-   Чтобы `appApi.execute('get-user', {uuid})` был **типизирован** (имя UC + input + output), story обязана знать `U7BotAppMeta` — композитный тип `moduleMetas: UserApiModuleMeta | OnboardingApiModuleMeta | StreamApiModuleMeta | CourseApiModuleMeta` (см. `packages/app/src/domain/u7-bot-app-meta.ts`). `U7BotAppMeta` живёт в `packages/app`, поэтому stream-story импортирует `U7BotApp` из app → **stream → app**, при этом app → stream (для `StreamApiModuleMeta` в union). Двунаправленный цикл.
+   Чтобы `appApi.execute('get-user', {uuid})` был **типизирован** (имя UC + input + output), story обязана знать `U7BotAppMeta` — композитный тип `moduleMetas: UserApiModuleMeta | OnboardingApiModuleMeta | StreamApiModuleMeta | CourseApiModuleMeta` (см. `platform/app/src/domain/u7-bot-app-meta.ts`). `U7BotAppMeta` живёт в `platform/app`, поэтому stream-story импортирует `U7BotApp` из app → **stream → app**, при этом app → stream (для `StreamApiModuleMeta` в union). Двунаправленный цикл.
 
    ### Текущая карта зависимостей
    ```
@@ -47,10 +47,10 @@
    Цикл «работает» только потому, что `import type` стирается tsc, а Bun резолвит пакеты через workspace hoisting.
 
    ### Ключевые типы (контекст для реализации)
-   - `ApiExecutor<TMeta>` (`packages/core/src/domain/types.ts`): `execute<N extends GetUcNamesFromMeta<TMeta>>(ucName, attrs, actorId)`. `TMeta` = `AppMeta` (уровень app) или `ApiModuleMeta` (уровень модуля).
-   - `BotUserStory<TAppMeta, TModuleMeta, TActor>` (`packages/core/src/ui/bot/bot-user-story.ts`): имеет `moduleApi: ApiExecutor<TModuleMeta>` (свой модуль) и `appApi: ApiApp<TAppMeta>` (всё приложение).
-   - `U7BotUserStory<TMeta>` (`packages/app/src/ui/u7-bot-user-story.ts`): `extends BotUserStory<U7BotAppMeta, TMeta, User>` — фиксирует `U7BotAppMeta` и `User`, оставляет открытым `TMeta`. Именно этот класс тянет `U7BotAppMeta` в доменные stories.
-   - `U7BotAppMeta` (`packages/app/src/domain/u7-bot-app-meta.ts`): композиция всех `*ApiModuleMeta`.
+   - `ApiExecutor<TMeta>` (`platform/core/src/domain/types.ts`): `execute<N extends GetUcNamesFromMeta<TMeta>>(ucName, attrs, actorId)`. `TMeta` = `AppMeta` (уровень app) или `ApiModuleMeta` (уровень модуля).
+   - `BotUserStory<TAppMeta, TModuleMeta, TActor>` (`platform/core/src/ui/bot/bot-user-story.ts`): имеет `moduleApi: ApiExecutor<TModuleMeta>` (свой модуль) и `appApi: ApiApp<TAppMeta>` (всё приложение).
+   - `U7BotUserStory<TMeta>` (`platform/app/src/ui/u7-bot-user-story.ts`): `extends BotUserStory<U7BotAppMeta, TMeta, User>` — фиксирует `U7BotAppMeta` и `User`, оставляет открытым `TMeta`. Именно этот класс тянет `U7BotAppMeta` в доменные stories.
+   - `U7BotAppMeta` (`platform/app/src/domain/u7-bot-app-meta.ts`): композиция всех `*ApiModuleMeta`.
 
    ### Почему «обобщёнить TAppMeta» не работает
    Если сделать stories обобщёнными `BotUserStory<TAppMeta extends AppMeta, ...>` и фиксировать `U7BotAppMeta` только при композиции в app — типизация `appApi.execute` **сломается**: `GetUcNamesFromMeta<TAppMeta>` при обобщённом `TAppMeta extends AppMeta` даст `string` (базовый `ApiModuleMeta.ucMetas.ucName: string`), конкретные имена UC (`'get-user'`, `'list-modules'`) и типы input/output исчезнут. Типизация cross-module-вызовов требует фиксации `U7BotAppMeta` прямо в story → неизбежный импорт → цикл.
@@ -61,7 +61,7 @@
    - `CourseReadFacade` — **добавить** в `@u7-scl/course/domain`: `listModules()`, `getModule(uuid)`, `getStep(uuid)`.
    - Story получает фасады через `init()` (как сейчас `moduleApi`) и зовёт напрямую: `this.userFacade.getUserByUuid(id)`, `this.courseFacade.listModules()`.
    - `BotUserStory` упрощается до `<TModuleMeta, TActor>` — `TAppMeta` и `U7BotAppMeta` больше не нужны в stories.
-   - `U7BotAppMeta` остаётся в `packages/app`, но используется **только в точке композиции** (`apps/u7-bot/src/api-app.ts` — регистрация модулей), не в stories.
+   - `U7BotAppMeta` остаётся в `platform/app`, но используется **только в точке композиции** (`runners/u7-bot/src/api-app.ts` — регистрация модулей), не в stories.
    - **Плюсы:** цикл разорван полностью; типизация сохранена; стандартный DDD-паттерн (порт в домене, реализация в infra/app); убирает «знание о всём приложении» из story-слоя.
    - **Минусы:** большой рефакторинг (переписать все `appApi.execute`-вызовы в stream/onboarding-stories; добавить `CourseReadFacade` + реализацию; упростить `BotUserStory`/`U7BotUserStory`; поправить контроллеры, инициализирующие stories фасадами).
 
@@ -69,7 +69,7 @@
    Оставить композитный `appApi`, но сделать цикл честным и безопасным:
    - Объявить `@u7-scl/app` в `dependencies` stream (сейчас не объявлено — скрытый долг).
    - Зафиксировать правило: app ↔ доменные **только `import type`** (никаких value imports через границу — `Role`/`UserSchema` тащить только из `@u7-scl/user/domain`, не из app).
-   - `packages/app/domain/user.ts` → **реэкспорт** из `@u7-scl/user/domain` (устраняет дубликат `User`/`Role`):
+   - `platform/app/domain/user.ts` → **реэкспорт** из `@u7-scl/user/domain` (устраняет дубликат `User`/`Role`):
      ```ts
      export { Role, RoleSchema, UserSchema } from '@u7-scl/user/domain';
      export type { User, UserArMeta } from '@u7-scl/user/domain';
@@ -78,10 +78,10 @@
    - **Минусы:** цикл остаётся; любое случайное value-импортирование через границу ломает схему; при npm-публикации пакетов type-only-цикл работает (типов нет в runtime), но требует наличия деклараций всех пакетов в deps.
 
    ### Смирение с двунаправленностью (текущее состояние)
-   Применён **только временный фикс**: `AUTHOR` добавлен в обе копии `Role` (и в `packages/user`, и в `packages/app/src/domain/user.ts`), чтобы устранить `TS2322`. Дубликат **не устранён** — обе копии `User`/`Role` продолжают существовать независимо. Цикл `app ↔ stream/onboarding` через `U7BotAppMeta`/`appApi` **оставлен как есть** (type-only) — он переживается Bun/tsc в монорепо. Это сознательное «смирение»: разрыв через фасады (Вариант A) и устранение дубликата через реэкспорт (Вариант B) отложены в отдельный трек `app_cycle_break`, чтобы не раздувать скоуп текущих релизов.
+   Применён **только временный фикс**: `AUTHOR` добавлен в обе копии `Role` (и в `modules/user`, и в `platform/app/src/domain/user.ts`), чтобы устранить `TS2322`. Дубликат **не устранён** — обе копии `User`/`Role` продолжают существовать независимо. Цикл `app ↔ stream/onboarding` через `U7BotAppMeta`/`appApi` **оставлен как есть** (type-only) — он переживается Bun/tsc в монорепо. Это сознательное «смирение»: разрыв через фасады (Вариант A) и устранение дубликата через реэкспорт (Вариант B) отложены в отдельный трек `app_cycle_break`, чтобы не раздувать скоуп текущих релизов.
 
    ### Минимальный следующий шаг (при взятии в работу)
-   Заменить тело `packages/app/src/domain/user.ts` на реэкспорт из `@u7-scl/user/domain` (см. код в Варианте B). Это устранит дубликат `User`/`Role` разом: при добавлении новых ролей править только `packages/user/src/domain/user/roles.ts`. Канон — `packages/user` (самый нижний пакет, от него зависят все); `packages/app/domain/user.ts` — фасад-реэкспорт для UI-слоя (чтобы stories/tests импортировали из единой точки `@u7-scl/app/domain`).
+   Заменить тело `platform/app/src/domain/user.ts` на реэкспорт из `@u7-scl/user/domain` (см. код в Варианте B). Это устранит дубликат `User`/`Role` разом: при добавлении новых ролей править только `modules/user/src/domain/user/roles.ts`. Канон — `modules/user` (самый нижний пакет, от него зависят все); `platform/app/domain/user.ts` — фасад-реэкспорт для UI-слоя (чтобы stories/tests импортировали из единой точки `@u7-scl/app/domain`).
 
 ## Релиз 1 — Фундамент
 
@@ -156,7 +156,7 @@
 
 ## Stream: зачисление в активный поток
 
-- **Проблема:** зачисление в **уже активный** поток даёт нерабочее состояние студента. `EnrollStudentUc` (`packages/stream/src/api/student/enroll-student-uc.ts`) создаёт запись в статусе `enrolled` с пустым `steps[]` (только `currentStepId`). Выдача первого шага и перевод `enrolled → active` выполняются только в `activate-stream-uc` (`packages/stream/src/api/stream/activate-stream-uc.ts`) — а тот срабатывает один раз при запуске потока (`StreamAr.activate()` разрешён лишь из статуса `enrollment`). Через каталог бота (`view-stream.story.ts`) — та же дыра: он просто вызывает `enroll-student`. Итог: `step-view` показывает студенту шаг по `currentStepId`, но `StudentAr.completeStep()` отклоняет завершение («шаг не был выдан студенту») — студент видит урок, но не может его пройти. Обнаружено при зачислении Рахима в «Алгоритмика - 7» (2026-09-22): состояние исправлено вручную (`activate()` + `issueStep()` по образцу шага 4 `activate-stream-uc`).
+- **Проблема:** зачисление в **уже активный** поток даёт нерабочее состояние студента. `EnrollStudentUc` (`modules/stream/src/api/student/enroll-student-uc.ts`) создаёт запись в статусе `enrolled` с пустым `steps[]` (только `currentStepId`). Выдача первого шага и перевод `enrolled → active` выполняются только в `activate-stream-uc` (`modules/stream/src/api/stream/activate-stream-uc.ts`) — а тот срабатывает один раз при запуске потока (`StreamAr.activate()` разрешён лишь из статуса `enrollment`). Через каталог бота (`view-stream.story.ts`) — та же дыра: он просто вызывает `enroll-student`. Итог: `step-view` показывает студенту шаг по `currentStepId`, но `StudentAr.completeStep()` отклоняет завершение («шаг не был выдан студенту») — студент видит урок, но не может его пройти. Обнаружено при зачислении Рахима в «Алгоритмика - 7» (2026-09-22): состояние исправлено вручную (`activate()` + `issueStep()` по образцу шага 4 `activate-stream-uc`).
 - **Решение:** в `EnrollStudentUc` после создания записи проверять статус потока: если `active` — сразу `StudentAr.activate()` + `issueStep(firstStepId)` (ровно та же логика, что в `activate-stream-uc` для студентов). Альтернатива — перенести ветку в домен (`StudentAr.enroll()` принимает статус потока) и покрыть тестами оба сценария: зачисление в поток в статусе `enrollment` → как сейчас (шаг выдаёт активация), зачисление в `active` → сразу `active` + выданный первый шаг.
 
 ## Wish и проактивные уведомления (после трека wish-module_20260828)
@@ -167,18 +167,18 @@
 
 ## Планировщик Job (после трека job-scheduler_20260827)
 
-- **Таймзоны в расчёте простоя анкет.** Даты анкет хранятся в формате `isoNow()` (`YYYY-MM-DDTHH:mm` — UTC-цифры без маркера зоны), `Date.parse` трактует их как локальное время: при TZ≠UTC сервера простой искажается на offset (пороги 6ч/8ч SweepAbandonedJob «плывут»). Прод работает в UTC — не проявляется; активируется при переезде окружения. Тесты не ловят: `bun test` стартует в TZ=UTC. Решение: A — `isoNow()` хранит полный UTC-ISO с `Z` (+ расширить схемы валидации дат, + миграция существующих JSON); B — хелпер `parseUtc()` (дописывает `:00Z` перед парсингом) в местах расчёта. Места: `packages/questionnaire/src/api/questionnaire/sweep-abandoned-job.ts`, `packages/questionnaire/src/infra/db/questionnaire-json-repo.ts` (getIdle), `packages/core/src/shared/iso-now.ts`.
+- **Таймзоны в расчёте простоя анкет.** Даты анкет хранятся в формате `isoNow()` (`YYYY-MM-DDTHH:mm` — UTC-цифры без маркера зоны), `Date.parse` трактует их как локальное время: при TZ≠UTC сервера простой искажается на offset (пороги 6ч/8ч SweepAbandonedJob «плывут»). Прод работает в UTC — не проявляется; активируется при переезде окружения. Тесты не ловят: `bun test` стартует в TZ=UTC. Решение: A — `isoNow()` хранит полный UTC-ISO с `Z` (+ расширить схемы валидации дат, + миграция существующих JSON); B — хелпер `parseUtc()` (дописывает `:00Z` перед парсингом) в местах расчёта. Места: `modules/questionnaire/src/api/questionnaire/sweep-abandoned-job.ts`, `modules/questionnaire/src/infra/db/questionnaire-json-repo.ts` (getIdle), `platform/core/src/shared/iso-now.ts`.
 
-- **JobExecutor → воркер.** Тяжёлые job'ы выполняются в процессе бота; под нагрузкой — вынести прогон в отдельный процесс через порт `JobExecutor` (packages/core/src/api/job/job-executor.ts), контракт Job при этом не меняется. **Предусловие — внешнее хранилище данных:** in-memory/JSON-репозитории недоступны из другого процесса.
+- **JobExecutor → воркер.** Тяжёлые job'ы выполняются в процессе бота; под нагрузкой — вынести прогон в отдельный процесс через порт `JobExecutor` (platform/core/src/api/job/job-executor.ts), контракт Job при этом не меняется. **Предусловие — внешнее хранилище данных:** in-memory/JSON-репозитории недоступны из другого процесса.
 - **Симметричный жизненный цикл `init`/`start`/`stop` по слоям.** Сейчас `ApiApp`/`UiApp` имеют start/stop, но модули/UC/ER — только `init()`; единый контракт жизненного цикла для всех слоёв — кандидат в отдельный трек (вместе с переоценкой каскадной инициализации).
 
 ## Анкеты (после трека questionnaire-robustness_20260903)
 
 - **Optional-вопросы (пропуск ответа).** Сейчас все вопросы анкеты обязательны: single/text нельзя закрыть без ответа, а «Далее» с пустым драфтом на multiple-вопросе — это `stale_answer` c `reason='empty_selection'` (трек questionnaire-robustness_20260903, FR-1). Дизайн:
-  - Схема: флаг `optional: boolean` в `ChoiceQuestionSchema`/`TextQuestionSchema` (`packages/questionnaire/src/domain/questionnaire/question.ts`); дефолт `false` — обратная совместимость пулов без миграции.
-  - Skip-семантика: пропущенный вопрос фиксируется как обычная запись `Answer` с `answerCode='skipped'` (`packages/questionnaire/src/domain/questionnaire/entity.ts`) — благодаря этому условия ветвления (condition) могут ссылаться на `'skipped'` единообразно с остальными кодами.
+  - Схема: флаг `optional: boolean` в `ChoiceQuestionSchema`/`TextQuestionSchema` (`modules/questionnaire/src/domain/questionnaire/question.ts`); дефолт `false` — обратная совместимость пулов без миграции.
+  - Skip-семантика: пропущенный вопрос фиксируется как обычная запись `Answer` с `answerCode='skipped'` (`modules/questionnaire/src/domain/questionnaire/entity.ts`) — благодаря этому условия ветвления (condition) могут ссылаться на `'skipped'` единообразно с остальными кодами.
   - UI: для single/text-вопросов кнопка «⏭️ Пропустить» сразу; для optional multiple-вопросов «Далее» с пустым драфтом = skip (не `empty_selection`!). Для **обязательных** multiple-вопросов поведение фазы 2 сохраняется: пустой «Далее» → `stale_answer`/`empty_selection`.
-  - Затрагивает: `question.ts` (схема), `a-root.ts` (`#submitCurrentQuestion` — skip вместо stale для optional; `#progress`), `questionnaire-engine.ts` (`getNextQuestion`/`validate` — `skipped` в `answerCodes` условий уже разрешён синтаксически, отдельной работы не требует), рендер кнопки и обработка `skipped` в `apps/u7-bot/src/controllers/questionnaire/` (render + fill.story).
+  - Затрагивает: `question.ts` (схема), `a-root.ts` (`#submitCurrentQuestion` — skip вместо stale для optional; `#progress`), `questionnaire-engine.ts` (`getNextQuestion`/`validate` — `skipped` в `answerCodes` условий уже разрешён синтаксически, отдельной работы не требует), рендер кнопки и обработка `skipped` в `runners/u7-bot/src/controllers/questionnaire/` (render + fill.story).
 
 - **Очистка исторических `draftAnswers` от невалидных кодов** (протекшие до трека questionnaire-robustness_20260903 драфты не чистятся — решение зафиксировано в треке). Разовая миграция или фильтрация при чтении — при появлении реальных инцидентов.
 
@@ -186,4 +186,4 @@
 
 ## Инфраструктура хранения
 
-- 🔴 **КРИТИЧНО: `JsonFileRepo.readAll()` молча отбрасывает невалидные записи → тихая потеря данных при записи.** `packages/core/src/infra/json-file-repo.ts`: `readAll()` валидирует каждую запись через `v.safeParse`; непрошедшие валидацию записи **пропускаются** с `console.warn` и не попадают в результат. Но `writeAll()` делает **полную перезапись** массива. Следствие: любая запись, однажды отставшая от схемы (новое обязательное поле после релиза, ручная правка JSON, битая запись), исчезает из файла при **первой же** `save()`/`writeAll()` любого другого объекта коллекции — без ошибки, без бэкапа. Триггер реален: расхождение схемы и данных на диске — штатная ситуация при эволюции домена (недавно `notices` в `StudentSchema` и `continueInvitedAt` в `QuestionnaireSchema` добавлялись именно как `optional`, чтобы не попасть в эту ловушку). Дополнительное следствие: нарушается инвариант «сохранил → прочитал всё сохранённое», причём UC об изменении не узнаёт. Решение (кандидаты): **A** — fail-fast: `readAll()` бросает `JsonFileRepoError` при любой невалидной записи (данные не читаются, но и не теряются; запуск останавливается до ручного разбора); **B** — карантин: невалидные записи сбрасываются в side-файл `<file>.quarantine.json`, в `readAll()` не попадают, но физически не теряются; **A+B**: fail-fast + карантин предыдущего состояния файла (`<file>.bak`) перед каждой `writeAll()`. Требует аудита всех вызовов `JsonFileRepo` (репозитории student/questionnaire/stream/user/job-run) и решения, как прод должен вести себя при невалидных данных: падать целиком или деградировать по одной коллекции.
+- 🔴 **КРИТИЧНО: `JsonFileRepo.readAll()` молча отбрасывает невалидные записи → тихая потеря данных при записи.** `platform/core/src/infra/json-file-repo.ts`: `readAll()` валидирует каждую запись через `v.safeParse`; непрошедшие валидацию записи **пропускаются** с `console.warn` и не попадают в результат. Но `writeAll()` делает **полную перезапись** массива. Следствие: любая запись, однажды отставшая от схемы (новое обязательное поле после релиза, ручная правка JSON, битая запись), исчезает из файла при **первой же** `save()`/`writeAll()` любого другого объекта коллекции — без ошибки, без бэкапа. Триггер реален: расхождение схемы и данных на диске — штатная ситуация при эволюции домена (недавно `notices` в `StudentSchema` и `continueInvitedAt` в `QuestionnaireSchema` добавлялись именно как `optional`, чтобы не попасть в эту ловушку). Дополнительное следствие: нарушается инвариант «сохранил → прочитал всё сохранённое», причём UC об изменении не узнаёт. Решение (кандидаты): **A** — fail-fast: `readAll()` бросает `JsonFileRepoError` при любой невалидной записи (данные не читаются, но и не теряются; запуск останавливается до ручного разбора); **B** — карантин: невалидные записи сбрасываются в side-файл `<file>.quarantine.json`, в `readAll()` не попадают, но физически не теряются; **A+B**: fail-fast + карантин предыдущего состояния файла (`<file>.bak`) перед каждой `writeAll()`. Требует аудита всех вызовов `JsonFileRepo` (репозитории student/questionnaire/stream/user/job-run) и решения, как прод должен вести себя при невалидных данных: падать целиком или деградировать по одной коллекции.

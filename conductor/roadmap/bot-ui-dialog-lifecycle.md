@@ -15,14 +15,14 @@
 **Как проявилось.** Фикс `47a5b05f` (трек 2): `handleWelcome` должен был инкрементировать `seq` при повторном `/start`, но `#switchDialog` — no-op при совпадении `path` («меню → меню»). Все кнопки welcome-экрана были мертвы. Фикс точечный (явный `seq + 1`) — системная причина не устранена.
 
 **Системная суть — три рассинхронизированные истины:**
-1. Транспорт лениво создаёт сессию как `{path: menuPath, seq: 0}` («диалог как бы открыт»), но штампы валидны от 1 (И2) → **любые кнопки до первого `/start` мертвы** (alert «нажмите /start»). Каскад: кнопки временного `notifyWithButtons` у получателя без сессии уходят со штампом `~0` (`apps/u7-bot/src/infra/bot-transport.ts`, `notifyWithButtons`).
-2. «Открыть меню заново» моделью не выражается: `#switchDialog` (`packages/core/src/ui/bot/ui-app.ts`) игнорирует совпадение `path` — смена диалога и «остаться в диалоге» неразличимы.
+1. Транспорт лениво создаёт сессию как `{path: menuPath, seq: 0}` («диалог как бы открыт»), но штампы валидны от 1 (И2) → **любые кнопки до первого `/start` мертвы** (alert «нажмите /start»). Каскад: кнопки временного `notifyWithButtons` у получателя без сессии уходят со штампом `~0` (`runners/u7-bot/src/infra/bot-transport.ts`, `notifyWithButtons`).
+2. «Открыть меню заново» моделью не выражается: `#switchDialog` (`platform/core/src/ui/bot/ui-app.ts`) игнорирует совпадение `path` — смена диалога и «остаться в диалоге» неразличимы.
 3. Точки инкремента `seq` рассыпаны: `handleWelcome` (явно), `#switchDialog` (при смене `path`), delegate. Каждая новая точка входа — кандидат в тот же класс бага.
 
 ## Проблема 2: проактивный запуск диалога удалён — `fill.start` сломан в бою
 
 **Цепочка (студент записывается на курс с пулом анкеты):**
-`course-catalog.story.ts` `#handleApply` → UC `create-course-wish` (wish) → `questionnaireFacade.startStandard` → `StartUc` (`packages/questionnaire/src/api/questionnaire/start-uc.ts`) — создаёт анкету, первый вопрос, публикует событие `questionnaire:start` → подписка `FillStory.#handleStartEvent` (`apps/u7-bot/src/controllers/questionnaire/stories/fill.story.ts:56`) должна отправить вопрос и **захватить текстовый ввод** (`captureInput: {path: 'fill'}`) через `proactiveSender.send`.
+`course-catalog.story.ts` `#handleApply` → UC `create-course-wish` (wish) → `questionnaireFacade.startStandard` → `StartUc` (`modules/questionnaire/src/api/questionnaire/start-uc.ts`) — создаёт анкету, первый вопрос, публикует событие `questionnaire:start` → подписка `FillStory.#handleStartEvent` (`runners/u7-bot/src/controllers/questionnaire/stories/fill.story.ts:56`) должна отправить вопрос и **захватить текстовый ввод** (`captureInput: {path: 'fill'}`) через `proactiveSender.send`.
 
 **Что сейчас:** метода `send` в новом `ProactiveSender` нет (И3: проактив не пишет сессию; «проактивный запуск диалога невоспроизводим синтаксически»). В бою:
 - TypeError изолируется шиной (`InProcEventBus`, console.error) — бот не падает;
@@ -52,7 +52,7 @@ B + деградейшн: если получатель в активном ди
 
 ## Материал для генерации трека 1.1
 
-- **Скоуп:** ядро (`packages/core/src/ui/bot/*`, транспорт `apps/u7-bot/src/infra/bot-transport.ts`, их тесты) + документация контракта (§4/§5/§10). Прикладные стори не трогать («трек уменьшает»); применение к анкетам — трек 4.
+- **Скоуп:** ядро (`platform/core/src/ui/bot/*`, транспорт `runners/u7-bot/src/infra/bot-transport.ts`, их тесты) + документация контракта (§4/§5/§10). Прикладные стори не трогать («трек уменьшает»); применение к анкетам — трек 4.
 - **ФР-кандидаты:** единая операция открытия/смены диалога (identity, все точки: `/start`, delegate, мосты, проактив — по выбранному варианту); явное состояние «диалог не открыт» вместо магии `seq = 0`; инвариант-тесты: повторный `/start`, кнопка до `/start`, delegate «меню → меню», мост в свою стори, кнопки `notifyWithButtons` у получателя без сессии; документирование контракта `notifyWithButtons` (тех-долг до `system-task`).
 - **Критерии:** класс сценариев покрыт тестами; документация обновлена; скоуп ядра зелёный (tsc/biome/тесты); легаси остаётся заявленно красным.
 - **За рамками:** миграция сторей (треки 3–5), персистентность (трек 6), сам `system-task`.

@@ -14,9 +14,9 @@
 > обследования tactics-draft) поглощена этим документом и треками.
 >
 > **Родительский документ:** [Система сбора метрик](./metrics-system.md)
-> **Связан:** [спека UI отзывов](../../../apps/u7-bot/src/controllers/peer-review/ui-spec.md) (экраны S01–S07),
+> **Связан:** [спека UI отзывов](../../../runners/u7-bot/src/controllers/peer-review/ui-spec.md) (экраны S01–S07),
 > модуль `dossier` (агрегация по модулю, бывш. `metrics` — карта в [roadmap](../../roadmap.md);
-> пакет-заготовка `packages/dossier` с перенесёнными схемами навыков),
+> пакет-заготовка `modules/dossier` с перенесёнными схемами навыков),
 > [цифровой паспорт](./digital-passport.md) — предъявление,
 > [сессии](../sessions-system.md) — будущий источник кампаний.
 >
@@ -162,11 +162,11 @@ peer-review отвечает на вопрос «**что люди сказал�
 | 3 | Трек «UI отзывов»: экраны S01–S07, приглашения, меню, кнопка карточки потока, пагинация (core + дерево программы), Фаза 6 — сквозные e2e (событие → ER → приглашение → UC → экран); попутно закрыт сквозной дефект read-API (кампании не создавались: `list-stream-students`/`get-users-by-ids` без актора падали UNAUTHORIZED — переведены в публичные read по конвенции фасадных UC) | завершён |
 
 Порядок: 1 → 2b → 3. Треки: [реестр](../../tracks.md). Спека экранов —
-[ui-spec.md](../../../apps/u7-bot/src/controllers/peer-review/ui-spec.md).
+[ui-spec.md](../../../runners/u7-bot/src/controllers/peer-review/ui-spec.md).
 
 ## Связанные документы
 
 - [metrics-pipeline-and-modules](./metrics-pipeline-and-modules.md) — историческая точка проектирования (трек 3.3)
 - [digital-passport](./digital-passport.md) — потребитель фактов peer-review
 - [sessions-system](../sessions-system.md), [contribution-system](../contribution-system.md) — смежные источники профиля
-- [Границы доменной логики](../../../packages/dmg-core/docs/domain-modeling.md) — правила межмодульных взаимодействий
+- [Границы доменной логики](../../../platform/dmg-core/docs/domain-modeling.md) — правила межмодульных взаимодействий

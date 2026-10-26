@@ -1,6 +1,6 @@
 # Генератор в проекте
 
-**Назначение:** как генератор пакета работает в u7-school. Сокращения, структура, имена и сам генератор — документация платформы [naming.md](../../packages/dmg-core/docs/naming.md) (генератор — §5).
+**Назначение:** как генератор пакета работает в u7-school. Сокращения, структура, имена и сам генератор — документация платформы [naming.md](../../platform/dmg-core/docs/naming.md) (генератор — §5).
 
 ---
 
@@ -10,15 +10,15 @@
 
 | Поле | Значение в проекте |
 |---|---|
-| `domain` | `packages/domain/src/{m}` |
-| `app` | `packages/{m}/src` |
+| `domain` | `domain/src/{m}` |
+| `app` | `modules/{m}/src` |
 | `domainImport` | `@u7-scl/domain/{m}` |
 
 Она совпадает с `layout` приложения домена `DomainArch` (`scripts/domain-arch.ts`). Меняешь одно — меняй и другое; расхождение ловит приёмка `scripts/gen-e2e.test.ts` (срез `genprobe` в настоящих каталогах → biome, tsc, тесты, `archCheck`).
 
 ## Новый прикладной пакет
 
-Генератор пишет только исходники. Для нового модуля пакет `packages/<m>/` заводится руками до `gen module`:
+Генератор пишет только исходники. Для нового модуля пакет `modules/<m>/` заводится руками до `gen module`:
 
 - `package.json`: `name` — `@u7-scl/<m>`, `private: true`, `type: module`, `module`/`exports` — `src/index.ts`, `scripts` как у соседних пакетов (`test`, `lint`, `tslint`, `format`, `check`), зависимости `@u7-scl/domain` и `dmg-core` — `workspace:*`;
 - `tsconfig.json`: `{ "extends": "../../tsconfig.json", "compilerOptions": {} }`;
@@ -26,4 +26,4 @@
 
 Затем `bun install` и `bun run gen module <m> --write`.
 
-Вход модуля домена для других — `contract.ts` (D-45): генератор его не создаёт, он пишется по образцу `packages/domain/src/wish/contract.ts`.
+Вход модуля домена для других — `contract.ts` (D-45): генератор его не создаёт, он пишется по образцу `domain/src/wish/contract.ts`.

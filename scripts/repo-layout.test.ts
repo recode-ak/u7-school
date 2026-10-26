@@ -4,8 +4,8 @@ import { join } from 'node:path';
 
 /**
  * Страж раскладки монорепо по осям (трек repo-layout): каталогов
- * `packages/` и `apps/` нет, ссылок на них — тоже. История
- * (`conductor/archive/`) и данные (`data/`) не проверяются.
+ * `packages/` и `apps/` нет, ссылок на них — тоже. История, данные и
+ * внешний контент не проверяются (`SKIP_DIRS`).
  */
 const ROOT = join(import.meta.dir, '..');
 
@@ -15,8 +15,18 @@ const ROOT = join(import.meta.dir, '..');
  */
 const OLD_PATH = /(^|[^A-Za-z0-9_.-])(packages|apps)\/|\/(packages|apps)['"`]/;
 
-/** Не проверяются: история и данные */
-const SKIP_DIRS = ['conductor/archive/', 'data/'];
+/**
+ * Не проверяются: история (архив треков, CHANGELOG, сам трек перехода),
+ * данные и внешний контент (скачанные уроки, шаблоны conductor-setup)
+ */
+const SKIP_DIRS = [
+  'conductor/archive/',
+  'conductor/tracks/repo-layout_20261026/',
+  'CHANGELOG.md',
+  'data/',
+  'authoring/w3school/output/',
+  '.pi/skills/conductor-setup/templates/',
+];
 
 /**
  * Исключения с причиной: сам страж называет старые каталоги; тесты пакета
@@ -29,9 +39,6 @@ const EXCEPTIONS = [
   'platform/dmg-core/src/gen/layout.test.ts',
   'platform/dmg-core/src/gen/validate.test.ts',
 ];
-
-/** Документы обновляет Фаза 3 трека; до неё страж проверяет код и конфиги */
-const isDoc = (file: string) => file.endsWith('.md');
 
 function trackedFiles(): string[] {
   const out = Bun.spawnSync(['git', 'ls-files', '-z'], { cwd: ROOT });
@@ -61,11 +68,11 @@ describe('раскладка монорепо', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('нет ссылок на packages/ и apps/ в коде и конфигах', async () => {
+  it('нет ссылок на packages/ и apps/ в коде, конфигах и документах', async () => {
     const offenders: string[] = [];
     for (const file of trackedFiles()) {
       if (SKIP_DIRS.some((dir) => file.startsWith(dir))) continue;
-      if (EXCEPTIONS.includes(file) || isDoc(file)) continue;
+      if (EXCEPTIONS.includes(file)) continue;
       const path = join(ROOT, file);
       if (!isFile(path)) continue;
       const lines = (await Bun.file(path).text()).split('\n');

@@ -1,6 +1,6 @@
 # BotUiStory — Styleguide
 
-**Назначение:** пользовательский сценарий внутри контроллера бота. Инкапсулирует логику одного сценария (каталог, карточка потока, запись и т.д.). Файл: `apps/u7-bot/src/controllers/<module>/stories/<story-name>.story.ts`.
+**Назначение:** пользовательский сценарий внутри контроллера бота. Инкапсулирует логику одного сценария (каталог, карточка потока, запись и т.д.). Файл: `runners/u7-bot/src/controllers/<module>/stories/<story-name>.story.ts`.
 
 ---
 
@@ -29,9 +29,9 @@
 5. **Актор всегда `User`** из `@u7-scl/app/domain` — не `unknown`, не локальные интерфейсы.
 6. **Права — через Policy-объекты** (`UserPolicy.isStudent(...)`, `StreamPolicy.canEnroll(...)`), не ручные проверки `actor.roles.includes(...)`.
 7. **Кросс-стори вызовы — через `this.cbFor(storyName, action, ...args)`**. Стори не импортируют другие стори напрямую. **Только в пределах одного контроллера** — `storyName` должен быть зарегистрирован в том же контроллере, что и текущая стори.
-8. **Кросс-контроллерные переходы — через реестр `Routes` и готовые кнопки `buttons`.** `cbFor` работает только для стори того же контроллера. Чужие адреса бери из `Routes` (`apps/u7-bot/src/controllers/shared/routes.ts`), готовые кнопки — из `buttons` (`apps/u7-bot/src/controllers/shared/buttons.ts`): `buttons.mainMenu(text?)` возвращает `{ text, code }` (текст по умолчанию «↩️ Главное меню», можно переопределить), `Routes.app.mainMenu` — только адрес. `delegate.path` — всегда полный маршрут: относительный путь (`this.cb`/`this.cbFor`) префиксуется контроллером.
+8. **Кросс-контроллерные переходы — через реестр `Routes` и готовые кнопки `buttons`.** `cbFor` работает только для стори того же контроллера. Чужие адреса бери из `Routes` (`runners/u7-bot/src/controllers/shared/routes.ts`), готовые кнопки — из `buttons` (`runners/u7-bot/src/controllers/shared/buttons.ts`): `buttons.mainMenu(text?)` возвращает `{ text, code }` (текст по умолчанию «↩️ Главное меню», можно переопределить), `Routes.app.mainMenu` — только адрес. `delegate.path` — всегда полный маршрут: относительный путь (`this.cb`/`this.cbFor`) префиксуется контроллером.
 
-Живой образец стори на контракте «Диалог и Экран»: `apps/u7-bot/src/controllers/app/stories/community.story.ts`; базовый класс с докой — `packages/core/src/ui/bot/bot-ui-story.ts`.
+Живой образец стори на контракте «Диалог и Экран»: `runners/u7-bot/src/controllers/app/stories/community.story.ts`; базовый класс с докой — `platform/core/src/ui/bot/bot-ui-story.ts`.
 
 ---
 
@@ -45,7 +45,7 @@
 
 ## 4. Тексты: `MdText` через `md`/`mdRaw`
 
-Ответ стори — `DialogResponse` (`packages/core/src/ui/bot/types.ts`): семь декларативных полей — `screen`/`finalize`/`notify`/`newMessage` (влияние на чат), `awaitInput`/`release` (ввод), `delegate` (маршрут). Механика рендера принадлежит транспорту. Строится хелперами (§5), не литералами.
+Ответ стори — `DialogResponse` (`platform/core/src/ui/bot/types.ts`): семь декларативных полей — `screen`/`finalize`/`notify`/`newMessage` (влияние на чат), `awaitInput`/`release` (ввод), `delegate` (маршрут). Механика рендера принадлежит транспорту. Строится хелперами (§5), не литералами.
 
 Все тексты (`screen.text`, `notify.text`, `finalize.text`) — тип `MdText`:
 
@@ -54,13 +54,13 @@
 - **Композиция** готовых `MdText` — только через `mdConcat`/`mdJoin` из `@u7-scl/core/shared`: вложенная интерполяция `${fragment}` в `md`-шаблон экранирует уже-безопасный текст повторно.
 - `confirm(text: MdText)` — confirm-хелпер принимает уже готовый текст.
 
-Fail-fast: `assertDialogResponseMarkdownSafe(response)` (тесты, транспорт) роняет невалидный MarkdownV2. Живой образец: `packages/core/src/shared/markdown.ts` (+ тесты там же).
+Fail-fast: `assertDialogResponseMarkdownSafe(response)` (тесты, транспорт) роняет невалидный MarkdownV2. Живой образец: `platform/core/src/shared/markdown.ts` (+ тесты там же).
 
 ---
 
 ## 5. Хелперы ответов: `screen`/`ask`/`notify`/`warn`/`note`/`go`/`kb`/`btn`
 
-Ответ стори — доменный язык («показать экран», «спросить», «предупредить», «уйти»), а не транспортные поля `DialogResponse`. Чистые билдеры живут в `packages/core/src/ui/bot/response-builders.ts` (экспорт `@u7-scl/core/ui`), на `BotUiStory` — тонкие `protected`-делегаты `this.screen(...)` и т.д. Возвращают те же структуры — контракт и транспорт не меняются.
+Ответ стори — доменный язык («показать экран», «спросить», «предупредить», «уйти»), а не транспортные поля `DialogResponse`. Чистые билдеры живут в `platform/core/src/ui/bot/response-builders.ts` (экспорт `@u7-scl/core/ui`), на `BotUiStory` — тонкие `protected`-делегаты `this.screen(...)` и т.д. Возвращают те же структуры — контракт и транспорт не меняются.
 
 | Хелпер | Возвращает | Назначение |
 |---|---|---|
@@ -85,7 +85,7 @@ Fail-fast: `assertDialogResponseMarkdownSafe(response)` (тесты, транс�
 
 **Живые образцы** (мигрированные стори):
 
-Каталог с клавиатурой — `apps/u7-bot/src/controllers/courses/stories/course-catalog.story.ts`:
+Каталог с клавиатурой — `runners/u7-bot/src/controllers/courses/stories/course-catalog.story.ts`:
 ```typescript
 if (courses.length === 0) {
   return this.screen(
@@ -99,12 +99,12 @@ rows.push([
 return this.screen(mdJoin(lines), this.kb(rows));
 ```
 
-Wizard-шаг (`ask` + обновлённый контекст) — `apps/u7-bot/src/controllers/mentor/stories/create-stream.ts`:
+Wizard-шаг (`ask` + обновлённый контекст) — `runners/u7-bot/src/controllers/mentor/stories/create-stream.ts`:
 ```typescript
 return this.ask(md`📦 *Выберите модуль курса\:*`, ctx, this.kb(rows));
 ```
 
-Комбинация со снятием ввода (спред) — `apps/u7-bot/src/controllers/streams/stories/view-stream.story.ts`:
+Комбинация со снятием ввода (спред) — `runners/u7-bot/src/controllers/streams/stories/view-stream.story.ts`:
 ```typescript
 return {
   ...this.notify(md`Извините, на данном этапе сообщения не принимаются\.`),
@@ -143,18 +143,18 @@ Wizard (пошаговый ввод) — конечный автомат на `a
 - **Без вызовов API** (например, `menuButtons`) — `init()` не нужен.
 - **MarkdownV2:** `assertDialogResponseMarkdownSafe(response)` после каждого `handle*`.
 
-Живые образцы тестов на новом контракте: `apps/u7-bot/src/controllers/app/stories/community.story.test.ts`, `apps/u7-bot/src/controllers/app/app-controller.test.ts`; базовые сценарии (awaitInput/release, delegate, /help, /cancel) — `packages/core/src/ui/bot/ui-app.test.ts`.
+Живые образцы тестов на новом контракте: `runners/u7-bot/src/controllers/app/stories/community.story.test.ts`, `runners/u7-bot/src/controllers/app/app-controller.test.ts`; базовые сценарии (awaitInput/release, delegate, /help, /cancel) — `platform/core/src/ui/bot/ui-app.test.ts`.
 
 ---
 
 ## 8. Структура файла
 
 ```
-apps/u7-bot/src/controllers/<module>/stories/
+runners/u7-bot/src/controllers/<module>/stories/
   <story-name>.story.ts        — реализация
-apps/u7-bot/tests/<module>/
+runners/u7-bot/tests/<module>/
   <story-name>.integration.test.ts — интеграционные тесты
-apps/u7-bot/tests/e2e/
+runners/u7-bot/tests/e2e/
   <scenario>.e2e.test.ts       — E2E тесты
 ```
 
@@ -163,7 +163,7 @@ apps/u7-bot/tests/e2e/
 ## Связанные styleguide-файлы
 
 - [BotController](./bot-controller.md) — реестр сторис, префиксация кнопок, handleError
-- [Ошибки](../../../packages/dmg-core/docs/errors-result.md) — AppError, хелперы
+- [Ошибки](../../../platform/dmg-core/docs/errors-result.md) — AppError, хелперы
 - [Тестирование бота](./bot-test.md)
 - [Архитектура bot-level](./bot-architecture.md)
-- [DDD API](../../../packages/dmg-core/docs/layers.md) — UseCase, Module
+- [DDD API](../../../platform/dmg-core/docs/layers.md) — UseCase, Module

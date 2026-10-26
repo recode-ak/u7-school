@@ -13,7 +13,7 @@
 ## 2. Структура модуля
 
 ```
-packages/<m>/src/
+modules/<m>/src/
   domain/   entity.ts (схемы), <entity>/a-root.ts, policy.ts, events.ts,
             <entity>/commands/<name>-cmd.ts (Schema + Cmd + CmdMeta + CmdError),
             <m>-ds.ts, facade.ts (интерфейс), module.ts (ModuleMeta, UcMeta-union)
@@ -54,8 +54,8 @@ packages/<m>/src/
 ## 6. Выход из legacy: алиасы и мосты
 
 - Legacy-алиасы переименованы: `#domain-legacy/*`, `#api-legacy/*`, `#ui-legacy/*`, `#shared-legacy/*`, `#infra-legacy/*` (в `imports` каждого пакета). Имена `#domain/*`, `#api/*` и т.д. свободны под новую архитектуру. Алиас платформы — `#core/*` (пакет `dmg-core`).
-- При миграции модуля его импорты переводятся с `#X-legacy/*` на новые пути; когда в пакете не осталось `-legacy`-импортов, запись удаляется из `imports`. Проверка: `grep -rn -- "-legacy/" packages/<m>/src` пусто.
-- Для перенесённых в `@u7-scl/domain` модулей алиас `#domain-legacy/*` удалён; старый `packages/<m>/src/domain` — только barrel с `DEBT` до последнего трека миграции (см. [migration.md](./migration.md) §6).
-- Мосты DMG↔legacy (`packages/core/src/legacy-bridge/`, трек `dmg-core-extract`) удаляются последними — вместе с legacy-шиной, `AppError`, legacy-`Job`. События DMG legacy-подписчики видят всегда; legacy-события подписчикам DMG — только по карте `inbound` в `legacyEventBus` на Def из контракта внешнего модуля (D-37). Часы — `legacyClock()`.
-- **Вызов UC из stories (бывший errors-result §4).** `appApi.run(uc, input, caller, meta)` принимает Def UC и возвращает `Result`; `meta: RequestMeta` с `requestId` строит адаптер транспорта ([caller.md](../../packages/dmg-core/docs/caller.md) §2). `appApi.execute(uc, input, caller, meta)` — перегрузка с тем же вызовом, но `Err` разворачивается в `AppException` (`toLegacyError`: код → имя, `kind` → legacy-`kind`, текст — `denyMessage` или `label`); `execute` по строковому имени не менялся — чтобы не переписывать все stories разом. Story переводится на `run` вместе с миграцией UC, который она вызывает.
+- При миграции модуля его импорты переводятся с `#X-legacy/*` на новые пути; когда в пакете не осталось `-legacy`-импортов, запись удаляется из `imports`. Проверка: `grep -rn -- "-legacy/" modules/<m>/src` пусто.
+- Для перенесённых в `@u7-scl/domain` модулей алиас `#domain-legacy/*` удалён; старый `modules/<m>/src/domain` — только barrel с `DEBT` до последнего трека миграции (см. [migration.md](./migration.md) §6).
+- Мосты DMG↔legacy (`platform/core/src/legacy-bridge/`, трек `dmg-core-extract`) удаляются последними — вместе с legacy-шиной, `AppError`, legacy-`Job`. События DMG legacy-подписчики видят всегда; legacy-события подписчикам DMG — только по карте `inbound` в `legacyEventBus` на Def из контракта внешнего модуля (D-37). Часы — `legacyClock()`.
+- **Вызов UC из stories (бывший errors-result §4).** `appApi.run(uc, input, caller, meta)` принимает Def UC и возвращает `Result`; `meta: RequestMeta` с `requestId` строит адаптер транспорта ([caller.md](../../platform/dmg-core/docs/caller.md) §2). `appApi.execute(uc, input, caller, meta)` — перегрузка с тем же вызовом, но `Err` разворачивается в `AppException` (`toLegacyError`: код → имя, `kind` → legacy-`kind`, текст — `denyMessage` или `label`); `execute` по строковому имени не менялся — чтобы не переписывать все stories разом. Story переводится на `run` вместе с миграцией UC, который она вызывает.
 - Финал перехода: удалить `-legacy`-алиасы, legacy-слои `core`, мосты, этот файл (migration.md §5).

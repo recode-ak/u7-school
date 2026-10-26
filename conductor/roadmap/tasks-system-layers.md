@@ -6,10 +6,10 @@
 > задач. Бизнес-концепция — [tasks-system.md](./tasks-system.md), развилка
 > «кто рендерит кнопки» — [tasks-system-architecture.md](./tasks-system-architecture.md),
 > сценарии и manual-задачи — [tasks-system-scenarios.md](./tasks-system-scenarios.md).
-> Заземлено в живой код: `ArMeta` (`packages/core/src/domain/ar/aggregate.ts`),
-> `UcMeta` (`packages/core/src/api/uc/use-case.ts`), `ApiModuleMeta`
-> (`packages/core/src/domain/types.ts`), `UiApp.handleCallback`
-> (`packages/core/src/ui/bot/ui-app.ts`).
+> Заземлено в живой код: `ArMeta` (`platform/core/src/domain/ar/aggregate.ts`),
+> `UcMeta` (`platform/core/src/api/uc/use-case.ts`), `ApiModuleMeta`
+> (`platform/core/src/domain/types.ts`), `UiApp.handleCallback`
+> (`platform/core/src/ui/bot/ui-app.ts`).
 
 ---
 
@@ -75,7 +75,7 @@ mandatory, dedupeKey? (nullable — manual), ownerInfo, expiresAt?, createdAt/up
 По аналогии с `UcMeta` → `CmdMeta` → `ApiModuleMeta`:
 
 ```ts
-// packages/task/src/domain/types.ts — статический контракт
+// modules/task/src/domain/types.ts — статический контракт
 export interface TaskKindMeta {
   kind: string;        // литерал '<domain>.<name>'
   ownerInfo: unknown;  // тип конверта — конкретизирует владелец
@@ -86,7 +86,7 @@ export interface TaskKindMeta {
 Домен-владелец объявляет литеральные типы (у себя, task о них не знает):
 
 ```ts
-// packages/stream/src/domain/task-kinds.ts
+// modules/stream/src/domain/task-kinds.ts
 export interface InactivityCandidateTaskKind extends TaskKindMeta {
   kind: 'stream.inactivity-candidate';
   ownerInfo: { studentId: string; userId: string; streamId: string };
@@ -231,4 +231,4 @@ export interface TaskKindRenderer<K extends TaskKindMeta = TaskKindMeta> {
 - [tasks-system.md](./tasks-system.md) — бизнес-концепция (pull вместо push).
 - [tasks-system-architecture.md](./tasks-system-architecture.md) — развилка, четыре слоя, треки.
 - [tasks-system-scenarios.md](./tasks-system-scenarios.md) — сценарии, manual-задачи, решения сессии.
-- [domain-boundaries.md](../../packages/dmg-core/docs/domain-modeling.md) — правила границ.
+- [domain-boundaries.md](../../platform/dmg-core/docs/domain-modeling.md) — правила границ.

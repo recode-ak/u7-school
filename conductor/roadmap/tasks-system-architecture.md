@@ -22,7 +22,7 @@
 
 1. **Центральный switch в модуле задач** — типы задач в enum, ветки рендера в одном
    месте. Отвергнут: каждый новый источник задач требует правки центрального файла —
-   точка знания раздувается (пакетные зависимости при этом не растут: всё в `apps/u7-bot`).
+   точка знания раздувается (пакетные зависимости при этом не растут: всё в `runners/u7-bot`).
 2. **Полностью абстрактные задачи + стандартные кнопки** («Выполнено»/«Пропустить») —
    задача как инструкция, действие выполняется вне модуля задач. Отвергнут как
    единственный режим: «Выполнено» для системных действий — дыра в инварианте
@@ -33,7 +33,7 @@
    (вариант 2) остаётся как fallback и тип «внешнее действие».
 
 **Ключевая опора:** маршрутизация колбеков `UiApp.handleCallback`
-(`packages/core/src/ui/bot/ui-app.ts`) уже диспетчеризирует нажатия по префиксу
+(`platform/core/src/ui/bot/ui-app.ts`) уже диспетчеризирует нажатия по префиксу
 контроллера (`cbFor`) — обработчики кнопок не нужно «передавать» в модуль задач,
 они живут у владельцев (confirm, UC, флоу — уже написаны).
 
@@ -45,7 +45,7 @@
 ownerInfo, status, mandatory, dedupeKey, окно жизни, createdAt/updatedAt }`.
 
 - `ownerInfo` — прозрачный конверт владельца (паттерн анкет:
-  `packages/questionnaire/src/domain/facade.ts`), возвращается владельцу в событиях
+  `modules/questionnaire/src/domain/facade.ts`), возвращается владельцу в событиях
   завершения; модуль задач не знает содержимого.
 - Тексты title/description — от владельца (как тексты UC в этапе A: «тексты — в
   домене, UI рендерит»).
@@ -140,7 +140,7 @@ job бездействия (stream) → taskFacade.upsert({ kind: 'stream.inacti
 
 | # | Трек | Содержание | Зависимости |
 |---|------|------------|-------------|
-| 1 | `task-module` | `packages/task`: домен (Task, статусы, dedupeKey, окно жизни), репо, фасад (upsert/close/getMy), UC (get-my-tasks, skip, done), события, реестр TaskTypeMeta + обогащение DTO, notify о рождении; поля manual-задач (origin, authorId, UC create/cancel) — по [tasks-system-scenarios.md](./tasks-system-scenarios.md) | — |
+| 1 | `task-module` | `modules/task`: домен (Task, статусы, dedupeKey, окно жизни), репо, фасад (upsert/close/getMy), UC (get-my-tasks, skip, done), события, реестр TaskTypeMeta + обогащение DTO, notify о рождении; поля manual-задач (origin, authorId, UC create/cancel) — по [tasks-system-scenarios.md](./tasks-system-scenarios.md) | — |
 | 2 | `task-ui` | контроллер tasks в боте: `/tasks` + «Мои задачи» в меню, дефолт-рендерер, реестр kind-рендереров, стандартные кнопки | 1 |
 | 3 | `task-inactivity` | миграция #1/#2, ER памяти, сброс каскада по «Продолжить», возможность меню «Покинуть учёбу» (#5) | 1, 2 |
 | 4 | `task-invites` | миграция анкет-приглашений (#4), брошенная анкета (вопрос 5), «Следующий модуль» (#3) | 1, 2 |
@@ -155,5 +155,5 @@ job бездействия (stream) → taskFacade.upsert({ kind: 'stream.inacti
 - [tasks-system-scenarios.md](./tasks-system-scenarios.md) — сценарии по слоям, manual-задачи, решения сессии.
 - [tasks-system-layers.md](./tasks-system-layers.md) — детальная проработка слоёв: метатипы TaskKindMeta/TaskTypeMeta, kind-рендереры, сопоставление.
 - [development-roadmap.md](./development-roadmap.md) — место инициативы V в очереди релизов.
-- [dmg-core/docs/domain-modeling.md](../../packages/dmg-core/docs/domain-modeling.md) — правила границ (фасады, ER).
+- [dmg-core/docs/domain-modeling.md](../../platform/dmg-core/docs/domain-modeling.md) — правила границ (фасады, ER).
 - [architecture/legacy.md](../architecture/legacy.md) — ER-паттерн для памяти об отказе.

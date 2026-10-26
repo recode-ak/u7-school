@@ -107,7 +107,7 @@ infra/<aggregate>.json-repo.ts
 | `domainImport` | спецификатор импорта домена из прикладного слоя (например, `@acme/domain/{m}`) | не задан — относительный путь к каталогу модуля домена (его `index.ts`; нужен `moduleResolution: bundler`) |
 
 ```json
-{ "gen": { "domain": "packages/domain/src/{m}", "app": "packages/{m}/src", "domainImport": "@acme/domain/{m}" } }
+{ "gen": { "domain": "domain/src/{m}", "app": "modules/{m}/src", "domainImport": "@acme/domain/{m}" } }
 ```
 
 Раскладка генератора должна совпадать с `ArchApp.layout` проекта — иначе `arch:check` не увидит созданное. Генератор пишет только исходники: заготовку пакета модуля (`package.json`, `tsconfig.json`, workspace) создаёт проект.

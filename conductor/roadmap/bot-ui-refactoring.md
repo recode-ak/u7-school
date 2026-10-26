@@ -1,4 +1,4 @@
-# Рефакторинг Bot UI: перенос в `apps/u7-bot`
+# Рефакторинг Bot UI: перенос в `runners/u7-bot`
 
 > ⚠️ **ИСТОРИЧЕСКИЙ ДОКУМЕНТ (архив).** Описывает план рефакторинга, который уже выполнен.
 > Часть решений (например `publicActions`/`getAction`) в итоге НЕ была реализована — в коде
@@ -21,8 +21,8 @@
 > **Связанные conductor-документы:**
 > - [`conductor/development-roadmap.md`](./development-roadmap.md) — **дорожная карта:** порядок релизов, миграции, зависимости между инициативами
 > - `conductor/workflow.md` — процесс работы conductor
-> - `packages/dmg-core/docs/layers.md` — архитектурные правила (слои, импорты)
-> - `packages/dmg-core/docs/domain-modeling.md` — где размещать логику
+> - `platform/dmg-core/docs/layers.md` — архитектурные правила (слои, импорты)
+> - `platform/dmg-core/docs/domain-modeling.md` — где размещать логику
 > - `conductor/index.md` — индекс всех документов
 
 ---
@@ -31,7 +31,7 @@
 
 ### Проблемы
 
-1. **UI размазан по доменным пакетам.** `packages/stream/src/ui/bot/`, `packages/course/src/ui/bot/`, `packages/onboarding/src/ui/bot/` содержат контроллеры и стори. UI — это композиция поверх ВСЕХ доменов, он не принадлежит ни одному из них.
+1. **UI размазан по доменным пакетам.** `modules/stream/src/ui/bot/`, `modules/course/src/ui/bot/`, `modules/onboarding/src/ui/bot/` содержат контроллеры и стори. UI — это композиция поверх ВСЕХ доменов, он не принадлежит ни одному из них.
 
 2. **Циклическая зависимость `app` ↔ `onboarding`.** `app/domain/u7-bot-app-meta.ts` импортирует `OnboardingApiModuleMeta` из `@u7-scl/onboarding`. `onboarding/ui/bot/controller` импортирует `U7BotAppMeta`, `U7BotController` из `@u7-scl/app`. Это вынуждает `app` зависеть от всех доменных модулей.
 
@@ -43,7 +43,7 @@
 
 ### Цель
 
-- **Все bot-ui в одном пакете** `apps/u7-bot` — единая точка сборки UI бота.
+- **Все bot-ui в одном пакете** `runners/u7-bot` — единая точка сборки UI бота.
 - **Контроллеры = кнопки главного меню** — деление по пользовательским функциям, а не по доменным модулям.
 - **`publicActions` на стори + `UiApp.getAction<T>(name)`** — стори объявляет публичные действия, потребители получают типизированную фабрику кнопки через `this.uiApp.getAction<T>(name)`.
 - **Разрыв циклических зависимостей** — `app` зависит только от `core`, доменные модули — от `core` + `app`.
@@ -54,7 +54,7 @@
 ## 2. Целевая структура
 
 ```
-apps/u7-bot/src/
+runners/u7-bot/src/
 ├── shared/
 │   └── tree-renderer.ts           # общий рендеринг дерева проект→урок→шаг в MarkdownV2
 │
@@ -129,7 +129,7 @@ apps/u7-bot/src/
 ├── config.ts
 └── context.ts
 
-tests/ → apps/u7-bot/tests/        # интеграционные и e2e тесты
+tests/ → runners/u7-bot/tests/        # интеграционные и e2e тесты
 ```
 
 ### Принципы именования
@@ -177,8 +177,8 @@ tests/ → apps/u7-bot/tests/        # интеграционные и e2e те�
 После рефакторинга `app` содержит только `User`, `Role`, `UserSchema`, `RoleSchema` (в `app/domain/user.ts`). Зависит только от `core`. Доменные модули импортируют `User`/`Role` из `@u7-scl/app/domain`.
 
 **Удаляется из `app`:**
-- `domain/u7-bot-app-meta.ts` → `apps/u7-bot/src/u7-bot-app-meta.ts`
-- `ui/` целиком → `apps/u7-bot/src/`
+- `domain/u7-bot-app-meta.ts` → `runners/u7-bot/src/u7-bot-app-meta.ts`
+- `ui/` целиком → `runners/u7-bot/src/`
 
 ### 4.2. `U7BotAppMeta` переезжает в `u7-bot`
 
@@ -221,18 +221,18 @@ protected action(text: string, actionName: string, ...ids: string[]): UiBotButto
 
 ### 4.4. `UiApp` в core — центральный хаб
 
-`UiApp<TAppMeta, TActor>` в `packages/core/src/ui/bot/ui-app.ts` реализует `MenuAggregator` и содержит:
+`UiApp<TAppMeta, TActor>` в `platform/core/src/ui/bot/ui-app.ts` реализует `MenuAggregator` и содержит:
 
 - **Маршрутизацию:** `handleWelcome`, `handleCallback`, `handleMessage`, `handleCancel`, `handleTimeout`
 - **Сбор меню:** `collectMainMenu`, `collectHelp`, `collectAllMenuItems`, `collectAllHelpDescriptions`
 - **Реестр publicActions:** `#registerPublicActions()` — плоская мапа с проверкой уникальности
 - **Типизированный доступ:** `getAction<T>(name)` — дженерик задаёт контракт стори
 
-`U7BotUiApp` в `apps/u7-bot/src/ui-app.ts` наследует `UiApp<U7BotAppMeta, User>`, закрывая дженерики.
+`U7BotUiApp` в `runners/u7-bot/src/ui-app.ts` наследует `UiApp<U7BotAppMeta, User>`, закрывая дженерики.
 
 ### 4.5. `connectUiApp` — Grammy-адаптер
 
-`apps/u7-bot/src/handlers/connect-ui-app.ts` — функция `connectUiApp(bot, uiApp, userFacade, botAdminUuid, logger?)`. Чистый адаптер: Grammy-события → `uiApp.handle*()` → `executeResponses(ctx, response)`. Не содержит пользовательских текстов и клавиатур.
+`runners/u7-bot/src/handlers/connect-ui-app.ts` — функция `connectUiApp(bot, uiApp, userFacade, botAdminUuid, logger?)`. Чистый адаптер: Grammy-события → `uiApp.handle*()` → `executeResponses(ctx, response)`. Не содержит пользовательских текстов и клавиатур.
 
 ### 4.6. Баг с пропадающими кнопками ментора
 
@@ -253,20 +253,20 @@ code: `view-stream:view:${streamId}`  // всегда в публичный view
 ### 4.9. Документация обновляется
 
 7 файлов требуют изменений:
-- `packages/dmg-core/docs/layers.md` — убрать `ui/` из структуры доменных модулей
+- `platform/dmg-core/docs/layers.md` — убрать `ui/` из структуры доменных модулей
 - `conductor/architecture/ui/bot-controller.md` — новая иерархия, `UiApp`, `publicActions`
 - `conductor/architecture/ui/bot-ui-story.md` — новые пути, `uiApp.getAction<T>()`
 - `conductor/index.md` — обновить ссылки
-- `packages/core/src/ui/bot/README.md` — правила навигации
-- `packages/stream/src/ui/bot/ui-spec.md` → разделить на 4 файла в `apps/u7-bot/src/{courses,streams,learning,mentor}/ui-spec.md`
-- `apps/u7-bot/README.md` — создать
+- `platform/core/src/ui/bot/README.md` — правила навигации
+- `modules/stream/src/ui/bot/ui-spec.md` → разделить на 4 файла в `runners/u7-bot/src/{courses,streams,learning,mentor}/ui-spec.md`
+- `runners/u7-bot/README.md` — создать
 
 ---
 
 ## 5. Зависимости пакетов после рефакторинга
 
 ```
-apps/u7-bot → core, app, user, course, stream, onboarding
+runners/u7-bot → core, app, user, course, stream, onboarding
 app         → core
 user        → core, app
 course      → core, app, user
@@ -291,12 +291,12 @@ onboarding  → core, app, user
 **Выполнен.** Статус: `[x]` в реестре треков.
 
 **Действия (выполненные):**
-- Создан `UiApp<TAppMeta, TActor>` в `packages/core/src/ui/bot/ui-app.ts`
+- Создан `UiApp<TAppMeta, TActor>` в `platform/core/src/ui/bot/ui-app.ts`
 - Вся маршрутизация перенесена из `BotRouter` в `UiApp`
 - `BotRouter` удалён
 - `BotController.init(appApi, uiApp)` — второй аргумент
 - `BotUserStory.uiApp` + `publicActions`
-- `connectRouter` → `connectUiApp` в `apps/u7-bot/src/handlers/connect-ui-app.ts`
+- `connectRouter` → `connectUiApp` в `runners/u7-bot/src/handlers/connect-ui-app.ts`
 - `U7BotUiApp extends UiApp<U7BotAppMeta, User>`
 - `api-app.ts` разделён на `create-api-app.ts` + `create-ui-app.ts`
 - `ui-actions.ts` удалён
@@ -305,12 +305,12 @@ onboarding  → core, app, user
 
 ### Трек 1: «Перенос базовых классов и `U7BotAppMeta` в `u7-bot`» ✅
 
-**Цель:** создать фундамент в `apps/u7-bot` и разорвать циклическую зависимость `app ↔ onboarding`.
+**Цель:** создать фундамент в `runners/u7-bot` и разорвать циклическую зависимость `app ↔ onboarding`.
 
 **Выполнен.**
 
 **Действия:**
-- Создать целевую структуру папок в `apps/u7-bot`
+- Создать целевую структуру папок в `runners/u7-bot`
 - Перенести `U7BotAppMeta` из `app/domain/` в `u7-bot/src/u7-bot-app-meta.ts`
 - Перенести `U7BotController`, `U7BotUserStory` из `app/ui/` в `u7-bot/src/`
 - Обновить `app/package.json` — убрать зависимости от `stream`, `course`, `onboarding`
@@ -327,7 +327,7 @@ onboarding  → core, app, user
 **Выполнен.**
 
 **Действия:**
-- Создать `apps/u7-bot/src/app/controller.ts` и `stories/community.ts`
+- Создать `runners/u7-bot/src/app/controller.ts` и `stories/community.ts`
 - Заменить `'app:main-menu'` на вызовы `this.uiApp.getAction<AppActions>('mainMenu')()`
 - Перенести тесты
 
@@ -362,9 +362,9 @@ onboarding  → core, app, user
 - `StreamsController` (name='stream', 2 стори: catalog + view-stream)
 - `tree-renderer.ts` переиспользован для S03 без модификаций
 - Кросс-ссылки `getAction<T>(name)`: `CommunityActions.mainMenu` работает, `MonitorActions`/`EnrollActions` — TODO в Треках 5-6
-- Старые файлы `packages/stream/src/ui/bot/controller/` удалены
-- Немигрированные стори (8 шт.) оставлены в `packages/stream/src/ui/bot/stories/` для будущих треков
-- `tests/bot/` полностью удалён — тесты перенесены в `apps/u7-bot/`: unit рядом с исходниками, integration/e2e в `apps/u7-bot/tests/`
+- Старые файлы `modules/stream/src/ui/bot/controller/` удалены
+- Немигрированные стори (8 шт.) оставлены в `modules/stream/src/ui/bot/stories/` для будущих треков
+- `tests/bot/` полностью удалён — тесты перенесены в `runners/u7-bot/`: unit рядом с исходниками, integration/e2e в `runners/u7-bot/tests/`
 - 202 теста (unit + integration + e2e), biome + tsc чисто
 
 **Действия:**
@@ -388,7 +388,7 @@ onboarding  → core, app, user
 - Вынести общие хелперы в `learning/shared.ts` (или оставить protected в базовом классе)
 - `nav-tree.ts` использует `shared/tree-renderer.ts` с добавлением статусов ✅/▶️/🔒
 - Все `cbFor()` → `this.uiApp.getAction<T>(name)`
-- Исправить `StreamPolicy.canEnroll` в `packages/stream/src/domain/stream/policy.ts`: разрешить всем, кроме STUDENT (сейчас только guest/candidate — ментор/автор/админ не могут записаться)
+- Исправить `StreamPolicy.canEnroll` в `modules/stream/src/domain/stream/policy.ts`: разрешить всем, кроме STUDENT (сейчас только guest/candidate — ментор/автор/админ не могут записаться)
 - Перенести тесты
 
 **Зависимости:** Трек 4 (нужен `view-stream` для кросс-ссылок на программу потока).
@@ -413,7 +413,7 @@ onboarding  → core, app, user
 
 ### Трек 7: «Onboarding — заглушка»
 
-**Цель:** перенести как есть, отключить, освободить `packages/onboarding/src/ui/bot/`.
+**Цель:** перенести как есть, отключить, освободить `modules/onboarding/src/ui/bot/`.
 
 **Действия:**
 - Создать `onboarding/controller.ts`
@@ -430,12 +430,12 @@ onboarding  → core, app, user
 **Цель:** удалить старый код, обновить все `.md` файлы, проверить целостность.
 
 **Действия:**
-- Удалить `packages/stream/src/ui/`, `packages/course/src/ui/`, `packages/onboarding/src/ui/`, `packages/app/src/ui/`
-- Удалить `packages/app/src/domain/u7-bot-app-meta.ts`
+- Удалить `modules/stream/src/ui/`, `modules/course/src/ui/`, `modules/onboarding/src/ui/`, `platform/app/src/ui/`
+- Удалить `platform/app/src/domain/u7-bot-app-meta.ts`
 - Обновить `package.json` exports во всех пакетах
 - Обновить 7 файлов документации (см. §4.9)
 - Прогнать `tsc --noEmit`, `biome check`, все тесты
-- Перенести `tests/bot/` → `apps/u7-bot/tests/`
+- Перенести `tests/bot/` → `runners/u7-bot/tests/`
 
 **Зависимости:** Треки 1-7.
 
@@ -446,5 +446,5 @@ onboarding  → core, app, user
 - Рефакторинг onboarding на стори — отложено до metrics
 - Изменения в доменных слоях (domain, api) — только UI, **кроме** `StreamPolicy.canEnroll` (исправление правила доступа к записи)
 - Изменения в `contentSnapshot` (чистое UUID-дерево) — это `content-management.md`, трек 2
-- `apps/u7-cli` — не трогается
+- `runners/u7-cli` — не трогается
 - Новые фичи — только перенос существующего функционала

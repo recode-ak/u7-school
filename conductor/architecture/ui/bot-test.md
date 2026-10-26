@@ -10,9 +10,9 @@
 
 | Уровень | Расположение | Что проверяет | Моки |
 |---|---|---|:---:|
-| **Unit** | `apps/u7-bot/src/controllers/**/*.test.ts`, `packages/core/src/ui/bot/*.test.ts` | Логика одной стори/контроллера в изоляции | ✅ `moduleApi`, `appApi` |
-| **Интеграционный** | `apps/u7-bot/tests/<module>/*.integration.test.ts` | Стори + контроллер + BotTransport + реальные JSON-репозитории | ❌ |
-| **E2E** | `apps/u7-bot/tests/e2e/*.e2e.test.ts` | Полные пользовательские цепочки через `code` кнопок | ❌ |
+| **Unit** | `runners/u7-bot/src/controllers/**/*.test.ts`, `platform/core/src/ui/bot/*.test.ts` | Логика одной стори/контроллера в изоляции | ✅ `moduleApi`, `appApi` |
+| **Интеграционный** | `runners/u7-bot/tests/<module>/*.integration.test.ts` | Стори + контроллер + BotTransport + реальные JSON-репозитории | ❌ |
+| **E2E** | `runners/u7-bot/tests/e2e/*.e2e.test.ts` | Полные пользовательские цепочки через `code` кнопок | ❌ |
 
 ---
 
@@ -29,7 +29,7 @@
 ## 3. Структура и хелперы
 
 ```
-apps/u7-bot/tests/
+runners/u7-bot/tests/
 ├── helpers/
 │   ├── test-app.ts            # createTestApp() — ApiApp с временными репозиториями
 │   ├── test-bot-transport.ts  # TestBotTransport — BotTransport + мок Api + сессии
@@ -39,7 +39,7 @@ apps/u7-bot/tests/
 └── e2e/                       # E2E сценарии
 ```
 
-Хелпер `TestBotTransport` (`apps/u7-bot/tests/helpers/test-bot-transport.ts`):
+Хелпер `TestBotTransport` (`runners/u7-bot/tests/helpers/test-bot-transport.ts`):
 
 - реальный `BotTransport` + реальный `U7BotUiApp` + реальная `sessionMap`;
 - мок `RecordingBotApi` (`sendMessage`/`editMessageText` пишут вызовы в массив);
@@ -56,9 +56,9 @@ assertBotResponseValid(response);
 ```
 
 Примеры живых тестов:
-- unit: `apps/u7-bot/src/controllers/streams/stories/stream-catalog.story.test.ts`;
-- integration: `apps/u7-bot/tests/streams/catalog.integration.test.ts`;
-- E2E: `apps/u7-bot/tests/e2e/`.
+- unit: `runners/u7-bot/src/controllers/streams/stories/stream-catalog.story.test.ts`;
+- integration: `runners/u7-bot/tests/streams/catalog.integration.test.ts`;
+- E2E: `runners/u7-bot/tests/e2e/`.
 
 ### Формат callback_data
 
@@ -101,7 +101,7 @@ Telegram резервирует: `` _ * [ ] ( ) ~ ` > # + - = | { } . ! ``
 - **Статические строки** — ручное экранирование.
 - **Динамические значения** — `escapeMarkdown` из `@u7-scl/core/shared`. Нельзя применять к строке с готовой разметкой — только к отдельным значениям.
 
-Функции: `validateMarkdownV2` (dev-assert), `assertMarkdownV2Safe` (низкоуровневые тесты), `assertResponseMarkdownSafe` (стори/контроллеры/e2e). Код: `packages/core/src/shared/markdown.ts`, `markdown-validator.ts`, `packages/core/src/ui/bot/response-assert.ts`.
+Функции: `validateMarkdownV2` (dev-assert), `assertMarkdownV2Safe` (низкоуровневые тесты), `assertResponseMarkdownSafe` (стори/контроллеры/e2e). Код: `platform/core/src/shared/markdown.ts`, `markdown-validator.ts`, `platform/core/src/ui/bot/response-assert.ts`.
 
 ---
 
@@ -124,20 +124,20 @@ function findButton(response: BotResponse, textContains: string): { text: string
 ## 6. Запуск и отладка
 
 ```bash
-bun test apps/u7-bot/                                  # все тесты бота
-bun test apps/u7-bot/tests/<module>/                   # интеграционные модуля
-bun test apps/u7-bot/tests/e2e/                        # e2e
-bun test packages/core/src/ui/bot/                     # unit (core)
+bun test runners/u7-bot/                                  # все тесты бота
+bun test runners/u7-bot/tests/<module>/                   # интеграционные модуля
+bun test runners/u7-bot/tests/e2e/                        # e2e
+bun test platform/core/src/ui/bot/                     # unit (core)
 
-KEEP_FIXTURES=1 bun test apps/u7-bot/tests/streams/catalog.integration.test.ts  # не удалять фикстуры
+KEEP_FIXTURES=1 bun test runners/u7-bot/tests/streams/catalog.integration.test.ts  # не удалять фикстуры
 ```
 
 ---
 
 ## Связанные документы
 
-- [Общие правила тестирования](../../../packages/dmg-core/docs/testing.md)
+- [Общие правила тестирования](../../../platform/dmg-core/docs/testing.md)
 - [BotController](./bot-controller.md) — префиксация кнопок, handleError
 - [BotUiStory](./bot-ui-story.md) — стиль сторис
 - [Архитектура bot-level](./bot-architecture.md)
-- [DDD принципы](../../../packages/dmg-core/docs/domain-modeling.md)
+- [DDD принципы](../../../platform/dmg-core/docs/domain-modeling.md)

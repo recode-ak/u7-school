@@ -84,7 +84,7 @@ in_progress → completed/abandoned` из трека 2.4a+) остаётся; з
 
 **Цель:** `stream` при завершении модуля студентом генерирует доменное событие.
 
-**Где:** агрегат `ModuleEnrollmentAr` (или его аналог в `packages/stream`).
+**Где:** агрегат `ModuleEnrollmentAr` (или его аналог в `modules/stream`).
 
 **Изменения:**
 - `ArMeta.events` дополняется типом `ModuleCompletedEvent`
@@ -111,7 +111,7 @@ this.addEvent({
 
 **Важно:** событие генерируется только при финальном переходе (advanced/not_advanced/abandoned), не при промежуточных шагах.
 
-**Местоположение:** `packages/stream/src/domain/...` — найти текущий агрегат зачисления и расширить.
+**Местоположение:** `modules/stream/src/domain/...` — найти текущий агрегат зачисления и расширить.
 
 ---
 
@@ -133,7 +133,7 @@ this.addEvent({
 **Структура пакета:**
 
 ```
-packages/peer-review/src/
+modules/peer-review/src/
   domain/
     module.ts                  — PeerReviewApiModuleMeta, PeerReviewApiModuleResolver
     review-session/
@@ -155,7 +155,7 @@ packages/peer-review/src/
   index.ts
 ```
 
-UI бота — в `apps/u7-bot/src/controllers/` (контракт «Диалог и Экран»):
+UI бота — в `runners/u7-bot/src/controllers/` (контракт «Диалог и Экран»):
 kind-рендерер `questionnaire.invite` у questionnaire-контроллера, при
 потребности — контроллер сессий парного программирования.
 
@@ -220,7 +220,7 @@ async execute(event: ModuleCompletedEvent): Promise<void> {
 **Структура пакета:**
 
 ```
-packages/metrics/src/
+modules/metrics/src/
   domain/
     module.ts                  — MetricsApiModuleMeta, MetricsApiModuleResolver
     student-metrics/
@@ -359,5 +359,5 @@ async execute(event: QuestionnaireCompleteEvent): Promise<void> {
 - [2. Questionnaire + EventBus](./metrics-questionnaire-and-events.md) — движок анкет, EventBus, запуск анкет
 - [Архитектура](../../architecture/index.md) — слои, доменный API, правила
 - [Именование](../../architecture/naming.md) — структура и имена
-- [Границы доменной логики](../../../packages/dmg-core/docs/domain-modeling.md) — межмодульные взаимодействия
+- [Границы доменной логики](../../../platform/dmg-core/docs/domain-modeling.md) — межмодульные взаимодействия
 - [Архитектурная эволюция](../../archive/mentor_tools_20260713/architecture-evolution.md) — контекст Релизов 1–3 (в архиве)

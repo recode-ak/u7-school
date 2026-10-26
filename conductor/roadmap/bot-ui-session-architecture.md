@@ -8,8 +8,8 @@
 > guard **не реализован** — вместо него принято это архитектурное решение.
 > Дополнения независимого ревью (хлебные крошки, гашение при любой смене
 > экрана/диалога, константы приложения, delegate в командах) — 2026-09-09, §10.17–20.
-> Живой контракт: `packages/core/src/ui/bot/types.ts` (ядро),
-> `apps/u7-bot/src/infra/bot-transport.ts` (транспорт).
+> Живой контракт: `platform/core/src/ui/bot/types.ts` (ядро),
+> `runners/u7-bot/src/infra/bot-transport.ts` (транспорт).
 
 ---
 
@@ -97,7 +97,7 @@ keepPrevKeyboard). Решение — диалог как первоклассн
 
 ## 4. Контракты (типы)
 
-Живут в `packages/core/src/ui/bot/types.ts`. Направление: вверх к стори — всё
+Живут в `platform/core/src/ui/bot/types.ts`. Направление: вверх к стори — всё
 декларативнее, вниз к транспорту — машиннее. Сторя не видит ни `messageId`,
 ни сессию, ни штампы.
 
@@ -457,18 +457,18 @@ sинхронная запись после каждого апдейта, resto
 
 | Файл | Что происходит |
 |---|---|
-| `packages/core/src/ui/bot/types.ts` | новые типы; старые удаляются в треке 5 |
-| `packages/core/src/ui/bot/ui-app.ts` | seq через `enterDialog` (switch/reopen), маршрутизация без «чужого контроллера», pipe `handleCommand`, `awaitInput`, ретрансляция `invite`; удалить takeover-кодирование |
-| `packages/core/src/ui/bot/bot-controller.ts` | префиксация как есть; pipe `handleCommand` своих стори с агрегацией; `handleError` → `DialogResponse`; удалить `handleTimeout` |
-| `packages/core/src/ui/bot/bot-ui-story.ts` | `handleCommand` (дефолт pass), `contextHelp`, `errorNotify`, дефолт `handleMessage`, `confirm`, `handleError`, `md`; удалить `handleTimeout`, `escapeMarkdown` |
-| `packages/core/src/ui/bot/response-assert.ts` | проверка MdText-литералов (fail-fast остаётся) |
-| `packages/core/src/shared/markdown.ts` | `md`/`mdRaw`/`MdText` (или новый `md.ts` в ui/bot) |
-| `apps/u7-bot/src/infra/bot-transport.ts` | рендер-политика, штампы, очередь на всё, kind-таблица, логи, маркер выбора, единый вход команд (перехват слэш-текстов), `invite`-якорь `app/invite` |
-| `apps/u7-bot/src/shared/app-codes.ts` | константы приложения: системные коды кнопок (`app:main-menu`, `app:help`) и якоря диалогов (`app/menu`, `app/invite`) — единый источник для транспорта, прикладного uiApp и `Routes` |
-| `apps/u7-bot/src/core/ui-app.ts`, `u7-bot-controller.ts` | welcome/help на новом контракте |
+| `platform/core/src/ui/bot/types.ts` | новые типы; старые удаляются в треке 5 |
+| `platform/core/src/ui/bot/ui-app.ts` | seq через `enterDialog` (switch/reopen), маршрутизация без «чужого контроллера», pipe `handleCommand`, `awaitInput`, ретрансляция `invite`; удалить takeover-кодирование |
+| `platform/core/src/ui/bot/bot-controller.ts` | префиксация как есть; pipe `handleCommand` своих стори с агрегацией; `handleError` → `DialogResponse`; удалить `handleTimeout` |
+| `platform/core/src/ui/bot/bot-ui-story.ts` | `handleCommand` (дефолт pass), `contextHelp`, `errorNotify`, дефолт `handleMessage`, `confirm`, `handleError`, `md`; удалить `handleTimeout`, `escapeMarkdown` |
+| `platform/core/src/ui/bot/response-assert.ts` | проверка MdText-литералов (fail-fast остаётся) |
+| `platform/core/src/shared/markdown.ts` | `md`/`mdRaw`/`MdText` (или новый `md.ts` в ui/bot) |
+| `runners/u7-bot/src/infra/bot-transport.ts` | рендер-политика, штампы, очередь на всё, kind-таблица, логи, маркер выбора, единый вход команд (перехват слэш-текстов), `invite`-якорь `app/invite` |
+| `runners/u7-bot/src/shared/app-codes.ts` | константы приложения: системные коды кнопок (`app:main-menu`, `app:help`) и якоря диалогов (`app/menu`, `app/invite`) — единый источник для транспорта, прикладного uiApp и `Routes` |
+| `runners/u7-bot/src/core/ui-app.ts`, `u7-bot-controller.ts` | welcome/help на новом контракте |
 | Стори (24 файла): app/1, user/1, courses/1, streams/3, learning/4, mentor/6, questionnaire/2 (+render.ts) | по трекам 2–5; удалить `editOrSend`/`respondInContext` (learning/shared.ts, questionnaire/render.ts) |
 | Проактивные подписки с кнопками: inactivity, hub, invite, fill-events | на notify-текст в треках 2/4 |
-| `apps/u7-bot/src/context.ts` | `BotSession` вместо `SessionData` |
+| `runners/u7-bot/src/context.ts` | `BotSession` вместо `SessionData` |
 
 ## 12. Открытые вопросы
 

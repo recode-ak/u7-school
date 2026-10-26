@@ -4,7 +4,7 @@
 
 ## 1. Скачивание контента
 
-Для скачивания курсов используется утилита `wget`. Скачивание необходимо производить в папку `packages/w3school/www.w3schools.com/`.
+Для скачивания курсов используется утилита `wget`. Скачивание необходимо производить в папку `authoring/w3school/www.w3schools.com/`.
 
 ### Получить cookies с страницы w3schools
 
@@ -16,7 +16,7 @@
 
 ### Команда для скачивания (пример для курса SQL):
 ```bash
-cd packages/w3school/
+cd authoring/w3school/
 wget --load-cookies ~/Downloads/cookies.txt \
      --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" \
      -r -l 2 -np -k -E -p -nc \
@@ -77,7 +77,7 @@ bun w3s clean --course <название>
 
 ## Структура выходных данных
 
-Результат работы находится в `packages/w3school/output/<course_name>/`:
+Результат работы находится в `authoring/w3school/output/<course_name>/`:
 - `*.md`: уроки в формате Markdown.
 - `syllabus.json`: структурированный список всех уроков с заголовками, путями к файлам и описаниями.
 - `README.md`: автоматически сгенерированное оглавление курса со ссылками на локальные файлы.
