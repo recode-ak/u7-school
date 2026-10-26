@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Role, type User } from '@u7-scl/app/domain';
 import {
   CourseModuleDef,
   GetCourseEnrollmentUcDef,
@@ -12,19 +11,13 @@ import {
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import { CreateCourseWishUcDef } from '@u7-scl/domain/wish';
-import { ok, UserCaller } from 'dmg-core';
+import { type Identified, ok, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { expectOk, StubFacade, testAppContext } from 'dmg-core/testing';
 import { WishJsonRepo } from './infra/wish.json-repo';
 import { createWishModule } from './wish.module';
 
-const ACTOR: User = {
-  uuid: crypto.randomUUID(),
-  name: 'Актор',
-  telegramId: 1,
-  roles: [Role.STUDENT],
-  createdAt: '2026-01-01T00:00',
-};
+const ACTOR: Identified = { uuid: crypto.randomUUID() };
 
 let dir: string;
 beforeEach(() => {

@@ -7,21 +7,30 @@
  * `conductor/architecture/rules.md`. Код выхода 1, если нарушения есть.
  */
 
+import { readdirSync } from 'node:fs';
 import { Glob } from 'bun';
-import { type ArchApp, archCheck, formatViolation } from 'dmg-core/arch';
+import {
+  type ArchApp,
+  archCheck,
+  checkDefs,
+  formatViolation,
+} from 'dmg-core/arch';
+import { indexDefs } from 'dmg-core/graph';
 import { ExampleArch } from 'dmg-core/testing';
+import { DEBT_MD, DOMAIN_MODULES } from './domain-arch';
 import {
   checkDebt,
+  checkDomainDirs,
   checkDomainGraph,
   checkDomainImports,
   type DomainFile,
+  domainGraphOf,
 } from './domain-check';
-import { DEBT_MD, DOMAIN_GRAPH } from './domain-debt';
 
 /**
- * Приложения под проверкой по Def. Модули `@u7-scl/domain` ещё без
- * `defineModule` (их импорты и граф проверяет `runDomainCheck`); приложение
- * домена добавляется с первым модулем на Def (`golden-wish`, Ф12).
+ * Приложения под проверкой по Def. Модули `@u7-scl/domain` проверяет
+ * `runDomainCheck`: Def — `checkDefs`, импорты и граф — правилами проекта
+ * (DEBT-33).
  */
 export const ARCH_APPS: readonly ArchApp[] = [ExampleArch];
 
@@ -60,13 +69,21 @@ export async function readPackageSources(root = '.'): Promise<DomainFile[]> {
   return files;
 }
 
-/** Проверки домена: импорты, граф, долг. Возвращает строки нарушений. */
+/** Проверки домена: Def, импорты, граф, долг. Возвращает строки нарушений. */
 export async function runDomainCheck(root = '.'): Promise<string[]> {
   const code = await readPackageSources(root);
   const debtMd = await Bun.file(`${root}/${DEBT_MD}`).text();
+  const graph = domainGraphOf(DOMAIN_MODULES);
+  const dirs = readdirSync(`${root}/packages/domain/src`, {
+    withFileTypes: true,
+  })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name);
   return [
-    ...checkDomainGraph(DOMAIN_GRAPH),
-    ...checkDomainImports(code, DOMAIN_GRAPH),
+    ...checkDefs(indexDefs(DOMAIN_MODULES)).map(formatViolation),
+    ...checkDomainDirs(dirs, graph),
+    ...checkDomainGraph(graph),
+    ...checkDomainImports(code, graph),
     ...checkDebt({ code, debtMd }),
   ];
 }

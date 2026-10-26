@@ -1,11 +1,11 @@
 // TR-11: адаптер UC внешнего контракта над legacy-фасадом анкет.
-// DEBT-21, DEBT-22: субъект вызывающего — legacy `User` (`@u7-scl/app`):
-// его ждёт legacy `startStandard`; уйдёт при миграции модуля анкет.
-import type { User } from '@u7-scl/app/domain';
+// DEBT-32: субъект вызывающего — entity `User`: его ждёт legacy `startStandard`;
+// уйдёт при миграции модуля анкет.
 import {
   type QuestionnaireModuleDef,
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
+import type { User } from '@u7-scl/domain/user';
 import { type Caller, ok } from 'dmg-core';
 import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
 import type { QuestionnaireModuleDeps } from '../../questionnaire.module';

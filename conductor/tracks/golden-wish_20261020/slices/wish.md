@@ -367,6 +367,23 @@ API платформы — [review-fixes.md](../review-fixes.md) (подпути
 
 **Шаг 4 — оркестратор:** гайд «module» (эталон — `packages/domain/src/wish/wish.module.ts`, `packages/wish/src/wish.module.ts`, сборка `apps/u7-bot/src/create-api-app.ts`), stub-гайд «job».
 
+## Ф13: закрытие долгов
+
+Состояние на старте: в `packages/domain/src/wish/**` импортов `core`/`app` нет. DEBT-21/22 остались в `packages/wish/src/{wish.module.ts,wish/uc/*.uc.ts}` и адаптере анкет `packages/questionnaire/src/{questionnaire.module.ts,questionnaire/uc/start-questionnaire.uc.ts}` — субъект `User` из `@u7-scl/app/domain` (реэкспорт `@u7-scl/domain/user`, DEBT-4). UC `wish` берут у субъекта только `uuid`; полный `User` нужен лишь legacy `startStandard` анкет. DEBT-31 — граф `DOMAIN_GRAPH` руками в `scripts/domain-debt.ts`; `defineModule` есть у `user`, `course`, `questionnaire`, `stream`, `wish`, нет у `peer-review`, `dossier`.
+
+**Шаг 1 — api-author (Sonnet)** (`packages/wish/src/**`, `packages/questionnaire/src/{questionnaire.module.ts,questionnaire/uc/start-questionnaire.uc.ts}` + их тесты):
+- Субъект модуля и UC `wish` — `Identified` из `dmg-core` (Policy wish требует только `uuid`, `UseCaseSubjectOf`), без импорта `@u7-scl/app`. Маркеры DEBT-21/22 в `packages/wish` снять. Тесты — субъект `{ uuid }` или прежний фикстурный пользователь; поведение не меняется.
+- Адаптер анкет (TR-11): `User` — из `@u7-scl/domain/user` (тип фасада `QuestionnaireFacade.startStandard`), не из `app`. Маркеры DEBT-21/22 заменить на `DEBT-32` (запись в `debt.md` даёт оркестратор): субъект адаптера — entity `User` до миграции анкет.
+- Если `this.call(StartQuestionnaireUcDef, …, caller)` в `create-course-wish.uc.ts` не принимает `Caller<Identified>` (граница `Facade<M>`) — эскалация, `dmg-core` не трогать.
+- Сборка `apps/u7-bot/src/create-dmg-modules.ts` и её тесты — только если ломаются типы; stories не трогать.
+
+**Шаг 2 — domain-author (Sonnet)** (`packages/domain/src/{peer-review,dossier}`):
+- `peer-review/peer-review.module.ts` — `PeerReviewModuleDef`, `defineModule({ external: true })`, `dependsOn: [UserModuleDef, QuestionnaireModuleDef, StreamModuleDef]` (как `DOMAIN_GRAPH`), агрегатов/UC/ER/Job нет; `dossier/dossier.module.ts` — `DossierModuleDef`, `dependsOn: []`. Образец — `course/course.module.ts`, `user/user.module.ts`.
+- `contract.ts`: у `peer-review` дописать реэкспорт `PeerReviewModuleDef`; у `dossier` создать (экспорт `DossierModuleDef`). Коллизии с legacy-экспортами `index.ts` — эскалация.
+- Тест: `checkDefs` по семи `ModuleDef` домена — без нарушений (образец — `user.module.test.ts`).
+
+**Шаг 3 — оркестратор** (`scripts/`): граф ARC-04/05 строится из `ModuleDef` (`contract.ts` каждого каталога `packages/domain/src/*/`; каталог без `ModuleDef` — нарушение), `DOMAIN_GRAPH` и маркер DEBT-31 удалены; `ARCH_APPS` получает приложение домена (`archCheck` по Def модулей домена). Записи DEBT-21/22/24/31 в `debt.md` — погашены, DEBT-32 — новая.
+
 ## Было → станет (naming.md §2–§3)
 
 Домен `packages/domain/src/wish/`:
@@ -659,3 +676,15 @@ error нет. warning: литералы статусов в `findAllByKind` `inv
 
 ### Ревью Ф12 (reviewer, Opus, diff `211dbdb3..adb81d37`)
 error 0, warning 0, info 8: шум `warn` в `executeUc` (TR-21 п. 4); мелочи моста (пустой `Set`, лишний `isOf`); шпион `console.error` не в `afterEach`; повтор `UserCaller`/`Trace` в тестах; гайд «module» — место внешнего `defineModule` и предупреждение о субъекте `User` (поправлено); зависимость `u7-bot` от `@u7-scl/domain` vs barrel DEBT-23. Решения — TR-22. Сохраняемое поведение не нарушено.
+
+### Ф13 шаг 1 — api-author (Sonnet)
+Субъект `wish` (`wish.module.ts`, 4 UC и их тесты) — `Identified` из `dmg-core`, импорт `@u7-scl/app` и маркеры DEBT-21/22 сняты; актор тестов — `{ uuid }`. Адаптер анкет: `User` из `@u7-scl/domain/user`, маркер `DEBT-32`. `this.call(StartQuestionnaireUcDef, …)` принимает `Caller<Identified>` — эскалации нет. Новых тестов нет (поведение не меняется); `tsc` чист, `wish`+`questionnaire`+`u7-bot` 1143 pass.
+
+### Ф13 шаг 2 — domain-author (Sonnet)
+`PeerReviewModuleDef` (`dependsOn`: user, questionnaire, stream), `DossierModuleDef` (`dependsOn: []`) — внешние, без операций; `dossier/contract.ts` создан, `peer-review/contract.ts` дополнен. Генератор внешний модуль не создаёт — по образцу `course`/`user`. Тест `domain.modules.test.ts`: red (нет `./dossier/contract`) → green 2 pass.
+
+### Ф13 шаг 3 — оркестратор
+`scripts/domain-debt.ts` → `domain-arch.ts` (`DOMAIN_MODULES`); `domainGraphOf`, `checkDomainDirs` (ARC-05) — red → green; `checkDefs` домена — в `runDomainCheck`; тест шага 2 перенесён в `scripts/arch-check.test.ts` (ARC-04 проекта на корне `domain/src`). Приложение домена в `ARCH_APPS` — 92 нарушения `checkFiles` платформы → DEBT-33. `debt.md`: DEBT-21/22/31 сняты, DEBT-32/33 новые, TR-23. `check` 3734 pass.
+
+### Ревью Ф13 задачи 1 (reviewer, Sonnet, незакоммиченный diff)
+error 0, warning 1, info 4. warning: нет теста `checkDefs` по `DOMAIN_MODULES` после переноса — покрыт: `runDomainCheck` вызывает `checkDefs`, его прогоняет «репозиторий — без нарушений домена и долга». info: пустые строки в `debt.md` и под маркером DEBT-32 — убраны; «92 нарушения» в DEBT-33 — помечено «на момент Ф13»; упоминание DEBT-33 в JSDoc `arch-check.ts` — принято (маркер — в `domain-arch.ts`).

@@ -7,6 +7,8 @@
  * Долг: маркер `// DEBT-<n>` в коде ↔ запись в `conductor/architecture/debt.md`.
  */
 import { posix } from 'node:path';
+import type { AnyModuleDef } from 'dmg-core';
+import { normalize } from 'dmg-core/graph';
 
 export interface DomainFile {
   path: string;
@@ -107,6 +109,23 @@ export function checkDomainImports(
     }
   }
   return out;
+}
+
+/** Граф `dependsOn` из `ModuleDef` модулей домена (D-01). */
+export function domainGraphOf(modules: readonly AnyModuleDef[]): DomainGraph {
+  return Object.fromEntries(
+    modules.map((m) => [m.name, normalize(m).dependsOn]),
+  );
+}
+
+/** ARC-05: каждый каталог `packages/domain/src/<m>/` — модуль графа. */
+export function checkDomainDirs(
+  dirs: readonly string[],
+  graph: DomainGraph,
+): string[] {
+  return dirs
+    .filter((d) => !(d in graph))
+    .map((d) => `ARC-05: ${DOMAIN_SRC}${d}: нет ModuleDef в графе домена`);
 }
 
 /** ARC-05: граф `dependsOn` — DAG без неизвестных модулей. */

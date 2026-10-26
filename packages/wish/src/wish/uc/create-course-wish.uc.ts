@@ -1,6 +1,3 @@
-// DEBT-21, DEBT-22: субъект вызывающего — legacy `User` (`@u7-scl/app`):
-// его ждёт адаптер анкет TR-11 (`startStandard`); уйдёт с миграцией анкет.
-import type { User } from '@u7-scl/app/domain';
 import {
   type CourseEnrollment,
   GetCourseEnrollmentUcDef,
@@ -12,7 +9,7 @@ import {
   type WishModuleDef,
   type WishTargetVo,
 } from '@u7-scl/domain/wish';
-import { type Caller, ok } from 'dmg-core';
+import { type Caller, type Identified, ok } from 'dmg-core';
 import {
   type ParsedInputOf,
   type Trace,
@@ -41,7 +38,7 @@ export class CreateCourseWishUc extends UseCaseFromDef<
   typeof CreateCourseWishUcDef,
   WishDeps,
   Loaded,
-  User
+  Identified
 > {
   constructor(deps: WishDeps, module: typeof WishModuleDef) {
     super(CreateCourseWishUcDef, deps, module);
@@ -53,7 +50,7 @@ export class CreateCourseWishUc extends UseCaseFromDef<
    */
   protected async load(
     { courseId }: Input,
-    caller: Caller<User>,
+    caller: Caller<Identified>,
     trace: Trace,
   ) {
     const enrollment = await this.call(
@@ -82,7 +79,7 @@ export class CreateCourseWishUc extends UseCaseFromDef<
     { courseId }: Input,
     { userId }: Loaded,
     uow: UnitOfWork,
-    caller: Caller<User>,
+    caller: Caller<Identified>,
     trace: Trace,
   ) {
     const created = WishAr.createForCourse(

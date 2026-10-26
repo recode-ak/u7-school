@@ -1,5 +1,3 @@
-// DEBT-21, DEBT-22: субъект вызывающего — legacy `User` (`@u7-scl/app`).
-import type { User } from '@u7-scl/app/domain';
 import {
   GetModuleEnrollmentUcDef,
   type ModuleEnrollment,
@@ -10,7 +8,7 @@ import {
   type WishModuleDef,
   type WishTargetVo,
 } from '@u7-scl/domain/wish';
-import { type Caller, ok } from 'dmg-core';
+import { type Caller, type Identified, ok } from 'dmg-core';
 import {
   type ParsedInputOf,
   type Trace,
@@ -39,7 +37,7 @@ export class CreateModuleWishUc extends UseCaseFromDef<
   typeof CreateModuleWishUcDef,
   WishDeps,
   Loaded,
-  User
+  Identified
 > {
   constructor(deps: WishDeps, module: typeof WishModuleDef) {
     super(CreateModuleWishUcDef, deps, module);
@@ -48,7 +46,7 @@ export class CreateModuleWishUc extends UseCaseFromDef<
   /** Ответ курсов — `this.call` (D-43), желания — все на эту цель. */
   protected async load(
     { moduleId }: Input,
-    caller: Caller<User>,
+    caller: Caller<Identified>,
     trace: Trace,
   ) {
     const enrollment = await this.call(

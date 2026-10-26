@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Role, type User } from '@u7-scl/app/domain';
 import {
   type WishAr,
   WishModuleDef,
@@ -10,7 +9,7 @@ import {
   type WishStatus,
   type WishTargetVo,
 } from '@u7-scl/domain/wish';
-import { GuestCaller, UserCaller } from 'dmg-core';
+import { GuestCaller, type Identified, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
 import { WishJsonRepo } from '../../infra/wish.json-repo';
@@ -27,14 +26,8 @@ const courseTarget: WishTargetVo = { kind: 'course', courseId };
 const moduleTarget: WishTargetVo = { kind: 'module', moduleId };
 
 const ACTOR_ID = crypto.randomUUID();
-const ACTOR: User = {
-  uuid: ACTOR_ID,
-  name: 'Актор',
-  telegramId: 1,
-  roles: [Role.STUDENT],
-  createdAt: '2026-01-01T00:00',
-};
-const asActor = new UserCaller<User>(ACTOR);
+const ACTOR: Identified = { uuid: ACTOR_ID };
+const asActor = new UserCaller<Identified>(ACTOR);
 
 let dir: string;
 let file: string;

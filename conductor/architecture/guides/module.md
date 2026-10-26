@@ -17,7 +17,7 @@
 ## 3. Эталон
 
 - [wish.module.ts (Def)](../../../packages/domain/src/wish/wish.module.ts): `dependsOn` — внешние `ModuleDef` из `contract.ts` зависимостей, четыре UC, четыре ER, `jobs: []`.
-- [wish.module.ts (реализация)](../../../packages/wish/src/wish.module.ts): `WishDeps = ModuleDeps & { wishes }` (тип резолвера — платформа; субъект пока legacy `User` из `@u7-scl/app` — DEBT-21/22, не копировать), `wishMap … satisfies ModuleMap<…>`, `createWishModule(deps)` → `ModuleFromDef`.
+- [wish.module.ts (реализация)](../../../packages/wish/src/wish.module.ts): `WishDeps = ModuleDeps & { wishes }` (тип резолвера — платформа; субъект — `Identified` из `dmg-core`: UC берут у него только `uuid`), `wishMap … satisfies ModuleMap<…>`, `createWishModule(deps)` → `ModuleFromDef`.
 - Внешний модуль-адаптер: [course.module.ts (Def)](../../../packages/domain/src/course/course.module.ts), [course.module.ts (карта)](../../../packages/course/src/course.module.ts) — `<M>Legacy = Pick<…>` над legacy-фасадом.
 - Сборка приложения: [create-dmg-modules.ts](../../../apps/u7-bot/src/create-dmg-modules.ts) — `AppContext` (мост `legacyEventBus` с картами `inbound`, `onInvalid` → `logger.warn`, `legacyClock`, `JsonlOperationLog(<DB_DIR>/oplog)`), фасады `ModuleFacades` по `dependsOn`; подключение — `ApiApp.addDmgModules` до `init` в [create-api-app.ts](../../../apps/u7-bot/src/create-api-app.ts).
 - Вызов из UI: `U7BotUiStory.executeUc(Def, input, actor)` — [u7-bot-ui-story.ts](../../../apps/u7-bot/src/core/u7-bot-ui-story.ts) (`UserCaller`, `Trace.fromRequest`).
@@ -34,7 +34,7 @@
 
 - Legacy-модуль и DMG-модуль подписаны одновременно — двойная обработка событий; при переключении legacy убирается из `ApiApp` тем же коммитом.
 - Удаление legacy до подключения DMG в приложении — сломанный `check`: сначала сборка и stories, потом удаление (TR-21).
-- Резолвер из `@u7-scl/app` (`U7ModuleResolver`, DEBT-22) → `ModuleDeps` платформы и свои репозитории.
+- Резолвер из `@u7-scl/app` (`U7ModuleResolver`) → `ModuleDeps` платформы и свои репозитории; субъект `User` из `@u7-scl/app` → `Identified`.
 - Лог операций тестов в `data/oplog` → временный каталог (`test-app.ts`).
 - Строковое имя UC (`execute('create-course-wish', …)`) → Def; `Caller` и `Trace` строятся в одном месте UI, не в каждой story.
 - `inbound` не передан в мост — DMG ER молча не получают legacy-события; тест доставки на сборке приложения ([create-api-app.test.ts](../../../apps/u7-bot/src/create-api-app.test.ts)).

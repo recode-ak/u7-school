@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'bun:test';
+import { defineModule } from 'dmg-core';
 import {
   checkDebt,
+  checkDomainDirs,
   checkDomainGraph,
   checkDomainImports,
   type DomainFile,
+  domainGraphOf,
 } from './domain-check';
 
 const DEPENDS = { user: [], course: ['user'], stream: ['course'] };
@@ -131,6 +134,42 @@ describe('checkDomainGraph: ARC-05', () => {
   it('зависимость от неизвестного модуля — ARC-05', () => {
     expect(checkDomainGraph({ a: ['x'] })).toEqual([
       'ARC-05: модуль a зависит от неизвестного модуля x',
+    ]);
+  });
+});
+
+describe('domainGraphOf: граф из ModuleDef', () => {
+  const mod = (name: string, dependsOn: ReturnType<typeof defineModule>[]) =>
+    defineModule({
+      name,
+      label: name,
+      description: `Модуль ${name}.`,
+      external: true,
+      dependsOn,
+      aggregates: [],
+      useCases: [],
+      reactions: [],
+      jobs: [],
+    });
+
+  it('прямые зависимости — по именам из dependsOn', () => {
+    const user = mod('user', []);
+    const course = mod('course', [user]);
+    expect(domainGraphOf([user, course])).toEqual({
+      user: [],
+      course: ['user'],
+    });
+  });
+});
+
+describe('checkDomainDirs: ARC-05', () => {
+  it('каждый каталог домена — модуль графа', () => {
+    expect(checkDomainDirs(['user', 'course'], DEPENDS)).toEqual([]);
+  });
+
+  it('каталог без ModuleDef — ARC-05', () => {
+    expect(checkDomainDirs(['user', 'billing'], DEPENDS)).toEqual([
+      'ARC-05: packages/domain/src/billing: нет ModuleDef в графе домена',
     ]);
   });
 });

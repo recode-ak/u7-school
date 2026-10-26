@@ -1,11 +1,9 @@
-// DEBT-21, DEBT-22: субъект вызывающего — legacy `User` (`@u7-scl/app`).
-import type { User } from '@u7-scl/app/domain';
 import {
   CancelWishUcDef,
   WishAr,
   type WishModuleDef,
 } from '@u7-scl/domain/wish';
-import { type Caller, err, ok } from 'dmg-core';
+import { type Caller, err, type Identified, ok } from 'dmg-core';
 import {
   type ParsedInputOf,
   type UnitOfWork,
@@ -22,14 +20,14 @@ export class CancelWishUc extends UseCaseFromDef<
   typeof CancelWishUcDef,
   WishDeps,
   Loaded,
-  User
+  Identified
 > {
   constructor(deps: WishDeps, module: typeof WishModuleDef) {
     super(CancelWishUcDef, deps, module);
   }
 
   /** Текущее желание субъекта на цель; нет желания — `WISH_NOT_FOUND`. */
-  protected async load(target: Input, caller: Caller<User>) {
+  protected async load(target: Input, caller: Caller<Identified>) {
     const userId = this.subject(caller).uuid;
     const wish = await this.resolve.wishes.findCurrentByUserAndTarget(
       userId,

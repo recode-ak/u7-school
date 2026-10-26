@@ -1,8 +1,8 @@
 // TR-11: DMG-модуль внешнего контракта анкет — адаптеры над legacy-фасадом.
-// DEBT-21, DEBT-22: субъект модуля — legacy `User` (`@u7-scl/app`).
-import type { User } from '@u7-scl/app/domain';
+// DEBT-32: субъект модуля — entity `User` до миграции анкет (`startStandard`).
 import type { QuestionnaireFacade } from '@u7-scl/domain/questionnaire';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
+import type { User } from '@u7-scl/domain/user';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { StartQuestionnaireUc } from './questionnaire/uc/start-questionnaire.uc';
 

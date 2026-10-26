@@ -6,7 +6,7 @@
 
 ## Правила
 
-- ID — `DEBT-<n>` (отдельно от решений `D-NN` в [decisions.md](./decisions.md)); номера не переиспользуются, новый — следующий после максимального, в т.ч. погашенного (последний выданный — DEBT-31).
+- ID — `DEBT-<n>` (отдельно от решений `D-NN` в [decisions.md](./decisions.md)); номера не переиспользуются, новый — следующий после максимального, в т.ч. погашенного (последний выданный — DEBT-33).
 - Место долга помечено в коде маркером `// DEBT-<n>` (для `biome-ignore` — в тексте причины).
 - `bun run arch:check` сверяет маркеры в `packages/*/src` и `scripts/` с записями этого файла в обе стороны.
 - Закрытие = удаление маркеров и записи одним коммитом.
@@ -87,18 +87,6 @@
 - **Причина:** `U7ModuleResolver` и `U7_SCHOOL_ID` определены в `app` (см. DEBT-2).
 - **Погашает:** `dmg-core-extract` / перевод `stream` на Def
 - **Критерий снятия:** маркер `DEBT-17` удалён, перенесённые файлы не импортируют `@u7-scl/app`
-
-### DEBT-21: импорты `@u7-scl/core` в domain/wish
-- **Место:** `packages/domain/src/wish/**` (`module.ts`, `wish/commands/legacy-uc-error.ts`; подпути `core/domain`, `core/shared`); адаптер `packages/questionnaire/src/questionnaire/**` (legacy `User`, TR-11)
-- **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `ConflictError`, `NotFoundError`, `ApiModuleMeta`, `isoNow` живут в `core`; механический перенос не меняет базовые классы.
-- **Погашает:** `dmg-core-extract` (Ф4) и `golden-wish`
-- **Критерий снятия:** в `packages/domain/src/wish/**` нет маркеров `DEBT-21` и импортов `@u7-scl/core`
-
-### DEBT-22: импорт `@u7-scl/app/domain` в domain/wish/module.ts
-- **Место:** `packages/domain/src/wish/module.ts` (тип `U7ModuleResolver`); адаптер `packages/questionnaire/src/questionnaire/**` (TR-11)
-- **Причина:** тип резолвера модулей определён в `app` (см. DEBT-2).
-- **Погашает:** `dmg-core-extract` / `golden-wish`
-- **Критерий снятия:** маркер `DEBT-22` удалён, `module.ts` не импортирует `@u7-scl/app`
 
 ### DEBT-25: импорты `@u7-scl/core` в domain/peer-review
 - **Место:** `packages/domain/src/peer-review/**` (`review/{a-root,entity,errors,events}.ts`, `review-campaign/{a-root,entity,errors,events}.ts`, `*/commands/*-cmd.ts`, `errors.ts`; подпути `core/domain`, `core/shared`, `core/api`)
@@ -214,13 +202,19 @@
 - **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
 - **Критерий снятия:** пакет `@u7-scl/dossier` удалён; код живёт в `@u7-scl/domain/dossier`
 
+### DEBT-32: субъект адаптера анкет — entity `User`
+- **Место:** `packages/questionnaire/src/questionnaire.module.ts`, `packages/questionnaire/src/questionnaire/uc/start-questionnaire.uc.ts` (TR-11)
+- **Причина:** legacy `QuestionnaireFacade.startStandard` принимает entity `User` из `@u7-scl/domain/user`; субъект DMG-модуля анкет — она же, хотя UC модулей на Def берут у субъекта только `uuid` (`Identified`, как `wish`).
+- **Погашает:** миграция модуля `questionnaire`
+- **Критерий снятия:** субъект модуля анкет — `Identified` или субъект из `UserModuleDef`, маркер удалён
+
 ## 5. Инструменты проверки
 
-### DEBT-31: граф `dependsOn` домена задан вручную
-- **Место:** `scripts/domain-debt.ts` (`DOMAIN_GRAPH`)
-- **Причина:** у модулей домена ещё нет `defineModule`; граф для ARC-04/05 продублирован руками и может разойтись с `dependsOn` (D-01).
-- **Погашает:** `golden-wish` (Ф12: `WishModuleDef`, контрактные `ModuleDef` зависимостей) — после этого граф строится из `ModuleDef`
-- **Критерий снятия:** `DOMAIN_GRAPH` удалён, `arch:check` берёт граф из Def модулей
+### DEBT-33: `archCheck` по модулям домена не подключён
+- **Место:** `scripts/domain-arch.ts` (`DOMAIN_MODULES`), `scripts/arch-check.ts` (`ARCH_APPS`)
+- **Причина:** `checkFiles` платформы требует импорт чужого модуля только через `index.ts` (ARC-04), а проект открывает подпути `/contract`, `/state` (`scripts/domain-check.ts`); у внешних модулей (`course`, `stream`, `questionnaire`, `peer-review`) проверяются импорты legacy-кода (ARC-06) — 92 нарушения на момент Ф13 `golden-wish`. Пока домен проверяют `checkDefs` и правила проекта в `runDomainCheck`.
+- **Погашает:** `dmg-core-extract` (Ф4–6: правило ARC-04 о публичных подпутях) и миграции внешних модулей
+- **Критерий снятия:** приложение домена в `ARCH_APPS`, `arch:check` чист, маркер удалён
 
 ## 6. Тактические решения перехода (TR)
 
@@ -374,7 +368,6 @@
 - **Решение:** (1) `*.types.ts` (`wish.types.ts`, `wish-fulfillment.types.ts`) — по указанию Нурболата «экспортируемые типы — в отдельный файл» (как `aggregate.types.ts`); внесено в naming.md §4 (Нурболат, 2026-10-26); (2) гайд «event reaction»: вспомогательные `private`-методы ER допустимы, прямой `subscribe(bus)` — только в тестах — поправлено; (3) необязательный раздел «Устройство реализации» в гайдах (use-case, event-reaction) — `_template.md` не меняем до Ф13 (сводка гайдов); (4) JSDoc `GetSameModulesUcDef` о legacy-реализации, длина теста отказа и ожидание опросом в тесте `subscribe`, перепутанные виды id в фикстурах DCS-теста — оставлены, поправить в Ф11 вместе с остальными ER (тот же файл теста и образец); (5) `FulfillmentTargets` — и вопрос, и ответ `isFulfilledBy` — принято, одна форма списков целей.
 - **Пересмотреть:** Ф11 — п. 4 (закрыт, TR-20 п. 6); Ф13 — п. 3.
 
-
 ### TR-20: ER `confirm-wish`, `abandon-wish`, `invite-wishers` и ревью Ф11
 - **Трек / фаза:** `golden-wish`, Ф11
 - **Контекст:** три оставшиеся ER `wish` по гайду Ф10; ревью (Sonnet, `cd5bd03..be43672a`): error нет, 1 warning, 6 info.
@@ -392,3 +385,9 @@
 - **Контекст:** ревью (Opus, `211dbdb3..HEAD`): error 0, warning 0, info 8.
 - **Решение:** (1) гайд «module»: место внешнего `defineModule` (`<m>.module.ts`, экспорт из `contract.ts`) и предупреждение о субъекте `User` (DEBT-21/22) — поправлены; (2) `warn` на каждый вызов `executeUc` — принято (TR-21 п. 4); (3) мост: пустой `Set` после отписки, обработчик для Def без маршрута `inbound`, лишняя проверка `isOf` — без влияния на поведение, принято; (4) шпион `console.error` в `legacy-event-bus.test.ts` снимается в теле теста, а не в `afterEach`; повтор сборки `UserCaller` + `Trace.fromRequest` в интеграционных тестах `u7-bot` — кандидат на хелпер `test-app`; (5) прямая зависимость `u7-bot` от `@u7-scl/domain` — повод пересмотреть barrel DEBT-23.
 - **Пересмотреть:** п. 3, 4 — в Ф13 (чистка вместе с DEBT-21/22); п. 5 — Ф13 / последний трек миграции (DEBT-23).
+
+### TR-23: закрытие DEBT-21/22/31 (Ф13)
+- **Трек / фаза:** `golden-wish`, Ф13
+- **Контекст:** в домене `wish` импортов `core`/`app` не осталось с Ф12; DEBT-21/22 держал субъект `User` из `@u7-scl/app` в UC `packages/wish` и адаптере анкет. DEBT-31 — ручной `DOMAIN_GRAPH`; у `peer-review` и `dossier` не было `ModuleDef`. Подключение приложения домена в `ARCH_APPS` дало 92 нарушения `checkFiles` платформы.
+- **Решение:** (1) субъект модуля и UC `wish` — `Identified` (`dmg-core`); `this.call` к анкетам принимает его без изменений платформы; (2) адаптер анкет берёт `User` из `@u7-scl/domain/user` — DEBT-32; (3) внешние `PeerReviewModuleDef`, `DossierModuleDef`; граф ARC-04/05 — `domainGraphOf(DOMAIN_MODULES)` (`scripts/domain-arch.ts`, бывший `domain-debt.ts`), каталог домена без Def — ARC-05; `checkDefs` по модулям домена — в `runDomainCheck`; (4) `archCheck` домена не подключён — DEBT-33 (ARC-04 платформы без подпутей `/contract`, legacy внешних модулей); (5) тест `packages/domain/src/domain.modules.test.ts` перенесён в `scripts/arch-check.test.ts`: файл в корне `domain/src` с импортами всех модулей нарушал ARC-04 проекта, а `checkDefs` по модулям теперь в `arch:check`; (6) DEBT-24 погашен ещё в Ф2.
+- **Пересмотреть:** п. 4 — стратегически: открыть ли подпути `/contract`, `/state` в ARC-04 платформы или перевести домен на импорт через `index.ts` (вопрос Нурболату); TR-22 п. 3, 4 — без влияния на поведение, остаются принятыми.

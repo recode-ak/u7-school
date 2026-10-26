@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import { defineModule } from 'dmg-core';
 import { ARCH_APPS, runArchCheck, runDomainCheck } from './arch-check';
+import { DOMAIN_MODULES } from './domain-arch';
+import { domainGraphOf } from './domain-check';
 
 function run(apps: Parameters<typeof runArchCheck>[0]) {
   const lines: string[] = [];
@@ -49,6 +51,21 @@ describe('arch:check', () => {
 });
 
 describe('arch:check domain', () => {
+  it('граф dependsOn домена — из ModuleDef, внешние peer-review и dossier', () => {
+    expect(domainGraphOf(DOMAIN_MODULES)).toEqual({
+      user: [],
+      course: ['user'],
+      questionnaire: ['user'],
+      stream: ['user', 'course'],
+      wish: ['user', 'course', 'questionnaire', 'stream'],
+      'peer-review': ['user', 'questionnaire', 'stream'],
+      dossier: [],
+    });
+    const external = DOMAIN_MODULES.filter((m) => m.external);
+    expect(external.map((m) => m.name)).toContain('peer-review');
+    expect(external.map((m) => m.name)).toContain('dossier');
+  });
+
   it('репозиторий — без нарушений домена и долга', async () => {
     expect(await runDomainCheck()).toEqual([]);
   });

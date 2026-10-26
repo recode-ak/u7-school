@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Role, type User } from '@u7-scl/app/domain';
 import {
   CourseModuleDef,
   GetModuleEnrollmentUcDef,
@@ -14,7 +13,13 @@ import {
   type WishState,
   type WishStatus,
 } from '@u7-scl/domain/wish';
-import { CoreErrors, GuestCaller, ok, UserCaller } from 'dmg-core';
+import {
+  CoreErrors,
+  GuestCaller,
+  type Identified,
+  ok,
+  UserCaller,
+} from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import {
   expectErr,
@@ -34,14 +39,8 @@ const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const moduleId = '33333333-3333-4333-8333-333333333333';
 
 const ACTOR_ID = crypto.randomUUID();
-const ACTOR: User = {
-  uuid: ACTOR_ID,
-  name: 'Актор',
-  telegramId: 1,
-  roles: [Role.STUDENT],
-  createdAt: '2026-01-01T00:00',
-};
-const asActor = new UserCaller<User>(ACTOR);
+const ACTOR: Identified = { uuid: ACTOR_ID };
+const asActor = new UserCaller<Identified>(ACTOR);
 
 let dir: string;
 let file: string;

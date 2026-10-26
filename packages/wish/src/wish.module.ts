@@ -1,6 +1,5 @@
-// DEBT-21, DEBT-22: субъект модуля — legacy `User` (`@u7-scl/app`).
-import type { User } from '@u7-scl/app/domain';
 import { WishModuleDef } from '@u7-scl/domain/wish';
+import type { Identified } from 'dmg-core';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { AbandonWishEr } from './wish/er/abandon-wish.er';
 import { ConfirmWishEr } from './wish/er/confirm-wish.er';
@@ -42,11 +41,11 @@ export const wishMap = {
   jobs: {
     // gen:defs:jobs
   },
-} satisfies ModuleMap<typeof WishModuleDef, WishDeps, User>;
+} satisfies ModuleMap<typeof WishModuleDef, WishDeps, Identified>;
 
 /** Модуль wish с зависимостями — для сборки приложения. */
 export function createWishModule(deps: WishDeps) {
-  return new ModuleFromDef<typeof WishModuleDef, WishDeps, User>(
+  return new ModuleFromDef<typeof WishModuleDef, WishDeps, Identified>(
     WishModuleDef,
     wishMap,
     deps,
