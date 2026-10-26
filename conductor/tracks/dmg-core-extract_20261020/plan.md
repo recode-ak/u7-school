@@ -67,7 +67,7 @@
     - [x] Подключение в u7-school поверх общего инструмента (решение 2): роли — в `.agents-core/roles/`, проектный блок — `agents:sync`; снять симлинк скила и чтение ролей из пакета (TR-28 п. 1–2); `sync --check` — в `bun run check`
 - [x] Task: Генераторы в пакет: `dmg-core gen` (перенос `scripts/gen` с шаблонами; раскладка — `ArchApp.layout` проекта), тесты на временном проекте; `bun run gen` проекта вызывает CLI пакета, `scripts/gen` удалён; `naming.md` §5 — в `docs/` пакета (bd51181)
 - [x] Task: Сообщения `arch:check` ссылаются на правило по ID с путём к `docs/rules.md` в пакете; README пакета: установка, быстрый старт на учебном модуле, ссылки на документацию (f748998)
-- [ ] Task: Проверка в `extract-check.sh`: установка tarball в пустой проект → `init` → `llms.txt`, документация и скилы на месте и валидны, битых ссылок нет
+- [x] Task: Проверка в `extract-check.sh`: установка tarball в пустой проект → `init` → `llms.txt`, документация и скилы на месте и валидны, битых ссылок нет (61d202c)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
 ## Фаза 6: Вынос и публикация
