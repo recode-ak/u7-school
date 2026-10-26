@@ -1,0 +1,1 @@
+Верификация Фазы 2 (repo-layout): bun run check — 3981 pass, 0 fail; test:w modules/wish — 127 pass; gen module x печатает domain/src/x и modules/x/src. Ручная проверка подтверждена пользователем.
