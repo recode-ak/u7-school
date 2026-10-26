@@ -1,12 +1,12 @@
 # План: repo-layout
 
-## Фаза 1: Единый источник путей модулей
+## Фаза 1: Единый источник путей модулей [checkpoint: 1b77498]
 
 - [x] Task: `DomainArch.layout` по `gen` из `dmg-core.json` 7464abe
     - [x] Тест (красный): `DomainArch.layout(m)` совпадает с шаблонами `gen.domain`/`gen.app` с подстановкой `{m}` для каждого модуля `DOMAIN_MODULES`
     - [x] Реализация: `scripts/domain-arch.ts` читает `dmg-core.json`, ручные пути убраны
     - [x] `bun run check`, коммит
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Перенос пакетов
 
