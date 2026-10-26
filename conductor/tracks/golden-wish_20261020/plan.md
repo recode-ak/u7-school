@@ -124,7 +124,7 @@
 
 - [x] Task: `confirm-wish`, `abandon-wish`, `invite-wishers` по гайду Фазы 10 (по одному, отдельный TDD-цикл) `1ac9d380`, `f547ad85`
 - [x] Task: Уточнить гайд «event reaction» `be43672a`
-- [ ] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR)
+- [x] Task: Ревью reviewer; замечания без `error` — решение orchestrator (TR) `0cab8ab7` (TR-20)
 - [ ] Task: Контрольная точка 'Фаза 11' (автономно, workflow.md)
 
 ## Фаза 12: Модуль (`defineModule`) и сосуществование
