@@ -1,0 +1,8 @@
+Фаза 11 (golden-wish): ER confirm-wish, abandon-wish, invite-wishers на ReactionFromDef, автономно.
+Проверка: bun run check — 3793 pass / 0 fail (lint, tsc, test); arch:check 0; agent-gate зелёный.
+Ревью: reviewer (Sonnet), diff cd5bd03..be43672a — error нет, 1 warning (литералы статусов в invite ER — исправлено), 6 info; решения TR-20, хвосты TR-19 п. 4 закрыты (0cab8ab7).
+Решение Нурболата: событие без смены статуса — WishAr.invite через change (вопрос 9 брифа, вариант а).
+Новое: ConfirmWishErDef/AbandonWishErDef, WishAr.questionnaireTarget/current; InviteWishersErDef, WishAr.invite, WishInvitationDcs (2 раунда); внешние UC getCoursesStartingWithModule, getStreamPresence, getTelegramAddresses + адаптеры TR-11, карты stream.module.ts/user.module.ts, UserArDef; гайд event-reaction.md (be43672a).
+Покрытие: адаптеры — в <m>.module.test.ts (как адаптеры курса), минимальный UserArDef — как CourseArDef без отдельного теста.
+TDD: red пропущен в 11.1 шаг 2 — добран мутацией (5/9, 4/9 fail).
+Ручная верификация: пропущена (автономный режим).
