@@ -31,19 +31,33 @@ export const DOMAIN_MODULES: readonly AnyModuleDef[] = [
 
 const ROOT = join(import.meta.dir, '..');
 
+/** Шаблоны путей модуля из секции `gen` `dmg-core.json`; `{m}` — имя модуля */
+export interface GenTemplates {
+  domain: string;
+  app: string;
+}
+
 /**
- * Приложение домена для `archCheck`: домен — `packages/domain/src/<m>`,
- * прикладной слой — `packages/<m>/src`; вход модуля для других —
- * `contract.ts` (D-45).
+ * Приложение домена для `archCheck` по шаблонам генератора: один источник
+ * путей с `dmg-core gen`. Функция, а не литерал — чтобы проверить подстановку
+ * на произвольных шаблонах. Вход модуля для других — `contract.ts` (D-45).
  */
-export const DomainArch: ArchApp = {
-  name: 'domain',
-  modules: DOMAIN_MODULES,
-  layout: (m) => ({
-    domain: join(ROOT, 'packages/domain/src', m),
-    app: join(ROOT, 'packages', m, 'src'),
-  }),
-  entry: 'contract',
-};
+export function domainArchFor(gen: GenTemplates, root: string): ArchApp {
+  const fill = (template: string, m: string) =>
+    join(root, template.replaceAll('{m}', m));
+  return {
+    name: 'domain',
+    modules: DOMAIN_MODULES,
+    layout: (m) => ({ domain: fill(gen.domain, m), app: fill(gen.app, m) }),
+    entry: 'contract',
+  };
+}
+
+const config: { gen: GenTemplates } = await Bun.file(
+  join(ROOT, 'dmg-core.json'),
+).json();
+
+/** Приложение домена проекта: пути — из `gen` `dmg-core.json` */
+export const DomainArch: ArchApp = domainArchFor(config.gen, ROOT);
 
 export const DEBT_MD = 'conductor/architecture/debt.md';
