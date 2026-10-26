@@ -59,8 +59,20 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["@u7-scl/**", "#*-legacy/**"],
-                    "message": "ARC-10: платформа DMG не импортирует legacy и @u7-scl/* — мосты живут в legacy-bridge"
+                    "group": [
+                      "**",
+                      "!valibot",
+                      "!@valibot/to-json-schema",
+                      "!node:*",
+                      "!node:*/**",
+                      "!bun:*",
+                      "!dmg-core",
+                      "!dmg-core/**",
+                      "!#core/**",
+                      "!./**",
+                      "!../**"
+                    ],
+                    "message": "ARC-10: платформа импортирует только свои модули (#core/*, dmg-core), peer-зависимости и встроенные модули — не код приложения"
                   }
                 ]
               }
@@ -85,8 +97,20 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["#*-legacy/**", "@u7-scl/**"],
-                    "message": "ARC-10: платформа DMG не импортирует legacy и @u7-scl/* — мосты живут в legacy-bridge"
+                    "group": [
+                      "**",
+                      "!valibot",
+                      "!@valibot/to-json-schema",
+                      "!node:*",
+                      "!node:*/**",
+                      "!bun:*",
+                      "!dmg-core",
+                      "!dmg-core/**",
+                      "!#core/**",
+                      "!./**",
+                      "!../**"
+                    ],
+                    "message": "ARC-10: платформа импортирует только свои модули (#core/*, dmg-core), peer-зависимости и встроенные модули — не код приложения"
                   },
                   {
                     "group": [
@@ -118,8 +142,20 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["@u7-scl/**", "#*-legacy/**"],
-                    "message": "ARC-10: платформа DMG не импортирует legacy и @u7-scl/* — мосты живут в legacy-bridge"
+                    "group": [
+                      "**",
+                      "!valibot",
+                      "!@valibot/to-json-schema",
+                      "!node:*",
+                      "!node:*/**",
+                      "!bun:*",
+                      "!dmg-core",
+                      "!dmg-core/**",
+                      "!#core/**",
+                      "!./**",
+                      "!../**"
+                    ],
+                    "message": "ARC-10: платформа импортирует только свои модули (#core/*, dmg-core), peer-зависимости и встроенные модули — не код приложения"
                   },
                   {
                     "group": ["**/*.state", "**/state"],

@@ -1,4 +1,4 @@
 // expect: ARC-10 error
-import { x } from '@u7-scl/domain';
+import { x } from '@acme/domain';
 
 export const a = x;

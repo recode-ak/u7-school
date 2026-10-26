@@ -1,4 +1,0 @@
-// expect: ARC-10 error
-import { serializeError } from '#shared-legacy/serialize-error';
-
-export const a = serializeError;

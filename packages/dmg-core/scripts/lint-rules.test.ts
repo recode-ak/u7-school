@@ -72,6 +72,30 @@ const ruleDiagnostics = (target: string) =>
       /^(ARC|DOM|ERR|API|CODE)-\d+:/.test(d.message),
   );
 
+/** Группы ARC-10 в `biome.json` пакета (белый список импортов) */
+function arc10Groups(): string[][] {
+  const config = JSON.parse(readFileSync(join(PKG, 'biome.json'), 'utf8'));
+  const groups: string[][] = [];
+  for (const o of config.overrides ?? []) {
+    const patterns =
+      o.linter?.rules?.style?.noRestrictedImports?.options?.patterns ?? [];
+    for (const p of patterns) {
+      if (p.message.startsWith('ARC-10:')) groups.push(p.group);
+    }
+  }
+  return groups;
+}
+
+test('ARC-10: белый список разрешает каждую peer-зависимость пакета', () => {
+  const pkg = JSON.parse(readFileSync(join(PKG, 'package.json'), 'utf8'));
+  const peers = Object.keys(pkg.peerDependencies ?? {});
+  const groups = arc10Groups();
+  expect(groups.length).toBeGreaterThan(0);
+  for (const group of groups) {
+    for (const peer of peers) expect(group).toContain(`!${peer}`);
+  }
+});
+
 describe('lint-правила пакета', () => {
   test('фикстуры есть', () => {
     expect(fixtures.length).toBeGreaterThan(0);

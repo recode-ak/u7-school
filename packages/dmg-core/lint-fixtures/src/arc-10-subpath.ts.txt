@@ -1,0 +1,4 @@
+// expect: ARC-10 error
+import { serializeError } from '#app/serialize-error';
+
+export const a = serializeError;

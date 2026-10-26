@@ -25,8 +25,7 @@
 | ARC-07 | приложение — `@u7-scl/app` |
 | ARC-08 | входные адаптеры — `apps/*`, вызов операций — через `appApi` |
 | ARC-09 | данные школы — через резолвер (`resolve.school`) |
-| ARC-10 | код приложения — `@u7-scl/*` и `#*-legacy/*`; мосты — `packages/core/src/legacy-bridge` |
-| DOM-17 | временное исключение lint — legacy `packages/wish/src/api/**` (TR-16) |
+| ARC-10 | код приложения — `@u7-scl/*` и `#*-legacy/*` (отсекает белый список импортов в `biome.json` пакета); мосты — `packages/core/src/legacy-bridge` |
 | TST-06 | `bun run check` и `bun run arch:check` |
 
 Тестирование бота — [ui/bot-test.md](./ui/bot-test.md).
