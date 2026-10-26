@@ -16,8 +16,8 @@
 - [x] Task: Абстрактный `Def` (`name`, `label`, `description`, `describe()`, `normalize()`; `static define` — в каждом виде, не в базе) — тесты контракта базы `73303e7f`
 - [x] Task: `ErrorDef` (`defineErrors` → статика), перевод `normalize`/`describe` для вида `148cb4dd`
 - [x] Task: `EventDef` (`defineEvents` → статика), то же `6808cdbd`
-- [~] Task: `AggregateDef` (`defineAggregate` → статика), то же; `Aggregate.readonly`/`newState` не трогаем
-- [ ] Task: `DomainRuleDef` и `RulesDef` (`defineRules` → статика), то же
+- [x] Task: `AggregateDef` (`defineAggregate` → статика), то же; `Aggregate.readonly`/`newState` не трогаем `93088b2c`
+- [~] Task: `DomainRuleDef` и `RulesDef` (`defineRules` → статика), то же
 - [ ] Task: Гайды `dmg-core/docs/guides` (errors, events, aggregate) — DSL `XxxDef.define`
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
