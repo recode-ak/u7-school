@@ -21,7 +21,11 @@
 - Из шагов базы наследник пишет только `react(event, uow, caller, trace)` (вспомогательные `private`-методы — по месту, как `ask` эталона) → `Result<void, DomainError>`. Фиксацию UoW после `Ok`, `logger.error` отказа, перехват исключения (`SERVER_INTERNAL`) и запись в лог операций делает база (`handle`, `runLogged`, `journal`) — `try/catch` и `console.*` в ER нет.
 - `caller` и `trace` передаются в `this.call` как пришли — цепочка следа продолжается.
 - Регистрация агрегата вне `touches` и событие вне `emits` — сверка UoW по Def (`createUow`): исключение, в production — `warn`.
-- Идемпотентность — из домена: повторное событие находит агрегаты уже в конечном статусе, предикат Ar (`canFulfill`) их отсекает; ER статусы не сравнивает.
+- Идемпотентность — из домена: повторное событие находит агрегаты уже в конечном статусе, предикат Ar (`canFulfill`, `canConfirm`) их отсекает; ER статусы не сравнивает. Ветвление по предикату Ar — допустимо: это ответ домена.
+- Данные чужого события, формат которых задал свой модуль (`owner` анкеты), разбирает Ar рядом с местом, где формат рождается (`WishAr.questionnaireTarget` ↔ `questionnaire()`); чужое/битое → `undefined` → `ok()` без загрузки.
+- Выбор одного агрегата из загруженных — статический метод Ar (`WishAr.current`), не ER и не репозиторий.
+- Событие без смены статуса (приглашение) — метод Ar через `change` (`WishAr.invite`): событие только от агрегата, цена — запись (`version`/`updatedAt`).
+- Пропуск, о котором надо предупредить, домен возвращает данными (`unreachable`), ER пишет `this.resolve.app.logger.warn(this.def.name, …)`.
 - Подписка — `ModuleFromDef.subscribe()` на шине приложения; `<N>Er.subscribe(bus)` напрямую — только в тестах.
 
 ## 4. Эталон
@@ -30,6 +34,8 @@
 - [fulfill-wish.er.ts (реализация)](../../../packages/wish/src/wish/er/fulfill-wish.er.ts): `findByUser` → `WishFulfillmentDcs` → `ask(question())` (`this.call` только на вопросы, что вернул домен; course — один батч) → `fulfill(answer, this.now())` → `uow.register` каждого изменённого.
 - [wish-fulfillment.dcs.ts](../../../packages/domain/src/wish/wish-fulfillment.dcs.ts): «вопрос → ответ» по образцу Р10; вопрос — готовый вход UC курса, ответ — их выходы ([wish-fulfillment.types.ts](../../../packages/domain/src/wish/wish-fulfillment.types.ts)). Что реализуемо и совпала ли цель — `WishAr.fulfillmentTargets()`, `isFulfilledBy()`.
 - Внешние UC зависимостей и их адаптеры над legacy — [get-courses-including-module.uc.ts](../../../packages/domain/src/course/course/uc/get-courses-including-module.uc.ts), [адаптер](../../../packages/course/src/course/uc/get-courses-including-module.uc.ts) (TR-11).
+- Без вызовов, один агрегат: [confirm-wish.er.ts](../../../packages/wish/src/wish/er/confirm-wish.er.ts) (`emits: [WishEvents.confirmed]`), [abandon-wish.er.ts](../../../packages/wish/src/wish/er/abandon-wish.er.ts).
+- Два раунда «вопрос → ответ» и событие без смены статуса: [invite-wishers.er.ts](../../../packages/wish/src/wish/er/invite-wishers.er.ts), [wish-invitation.dcs.ts](../../../packages/domain/src/wish/wish-invitation.dcs.ts) — раунд 2 (поток, адреса) строится из ответа раунда 1, пустой раунд — без вызовов.
 - Учебный образец без вызовов — [archive-removed-user-tasks.er.ts](../../../packages/dmg-core/src/testing/example/app/todo/task/er/archive-removed-user-tasks.er.ts).
 
 ## 5. Чеклист правил
@@ -49,6 +55,9 @@
 - `Date.now()`, `throw`, `console.error` из legacy → `this.now()`, `Result`, лог базы.
 - Сохранение части агрегатов до сбоя вызова (legacy) → UoW атомарен: отказ любого вызова — ничего не записано (TR-18 п. 3).
 - Вызов курса при пустом наборе кандидатов → домен не задаёт вопрос, ER не вызывает.
+- Лишний раунд ради legacy-API (`getModulePlace`, потом `whichCoursesIncludeModule`) → один вопрос внешнего UC, объединение — в адаптере TR-11 (`getCoursesStartingWithModule`).
+- Внешнему модулю без агрегатов нужен UC → минимальный `<A>ArDef` (D-37, как `CourseArDef`) и карта `<m>.module.ts` в его пакете.
+- `WishEvents.invited.make` в ER (legacy) → метод Ar; ER события не строит.
 
 ## 7. Как тестировать
 
