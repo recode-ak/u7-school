@@ -55,7 +55,9 @@ export function describedDefs(index: DefIndex): DescribedDef[] {
     for (const er of m.reactions) {
       out.push({ title: er.title(m), ...er.describe() });
     }
-    for (const job of m.jobs) add(`Job ${localId(m, job)}`, job);
+    for (const job of m.jobs) {
+      out.push({ title: job.title(m), ...job.describe() });
+    }
   }
   return out;
 }

@@ -2,12 +2,12 @@ import type {
   AnyAggregateDef,
   NormalizedAggregate,
 } from '../domain/aggregate/aggregate-def';
-import type { AnyJobDef, JobSchedule } from '../domain/contracts/define-job';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type {
   AnyEventReactionDef,
   NormalizedEventReaction,
 } from '../domain/contracts/event-reaction-def';
+import type { AnyJobDef, NormalizedJob } from '../domain/contracts/job-def';
 import type {
   AnyUseCaseDef,
   NormalizedUseCase,
@@ -30,6 +30,7 @@ export type {
   NormalizedTransition,
 } from '../domain/aggregate/aggregate-def';
 export type { NormalizedEventReaction } from '../domain/contracts/event-reaction-def';
+export type { NormalizedJob } from '../domain/contracts/job-def';
 export type { NormalizedUseCase } from '../domain/contracts/use-case-def';
 export type { NormalizedEvent } from '../domain/events/event-def';
 export type { NormalizedPolicy } from '../domain/policy/policy-def';
@@ -42,15 +43,6 @@ type Texts = {
   readonly name: string;
   readonly label: string;
   readonly description: string;
-};
-
-export type NormalizedJob = Texts & {
-  readonly dmg: 'job';
-  readonly schedule: JobSchedule;
-  readonly scans: readonly string[];
-  /** Имена UC других модулей, которые задание вызывает (D-42). */
-  readonly calls: readonly string[];
-  readonly emits: readonly string[];
 };
 
 export type NormalizedModule = Texts & {
@@ -118,16 +110,8 @@ export function normalize(def: AnyDef): NormalizedDef {
     case 'rules':
     case 'useCase':
     case 'eventReaction':
-      return def.normalize();
     case 'job':
-      return {
-        dmg: 'job',
-        ...texts(def),
-        schedule: def.schedule,
-        scans: def.scans.map((a) => a.name),
-        calls: def.calls.map((u) => u.name),
-        emits: def.emits.map((e) => e.name),
-      };
+      return def.normalize();
     case 'module':
       return {
         dmg: 'module',

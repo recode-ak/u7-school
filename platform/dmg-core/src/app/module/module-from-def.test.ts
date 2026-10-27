@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { defineModule } from '#core/domain/contracts/define-module';
+import { JobDef } from '#core/domain/contracts/job-def';
 import { SystemCaller, UserCaller } from '#core/kernel/caller/caller';
 import { ok } from '#core/kernel/result/result';
 import { Trace } from '#core/kernel/trace/trace';
@@ -175,7 +176,10 @@ describe('ModuleFromDef.runJob', () => {
 
   test('Job другого модуля — исключение сборки', async () => {
     const any: AnyModuleFromDef<User> = mini;
-    const OtherJobDef = { ...ArchiveDoneTasksJobDef, name: 'other' };
+    const OtherJobDef = JobDef.define({
+      ...ArchiveDoneTasksJobDef,
+      name: 'other',
+    });
     await expect(
       any.runJob(OtherJobDef, Trace.forJob(OtherJobDef)),
     ).rejects.toThrow('Job other не реализован в модуле mini');

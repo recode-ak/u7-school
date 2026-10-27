@@ -1,10 +1,8 @@
 import type { JsonSchema } from '@valibot/to-json-schema';
-import type { AnyAggregateDef } from '../domain/aggregate/aggregate-def';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyEventDef } from '../domain/events/event-def';
 import type { AnyDomainRule } from '../domain/rules/domain-rule-def';
 import {
-  type AnyOperationDef,
   callsOf,
   type DefIndex,
   localId,
@@ -114,7 +112,7 @@ function checkLinks(index: DefIndex): Violation[] {
   };
   const published = new Set<AnyEventDef>();
   for (const op of index.operationOwner.keys()) {
-    for (const e of op.emits ?? []) published.add(e);
+    for (const e of op.emits) published.add(e);
   }
   // События внешнего модуля публикует внешняя сторона (D-37); его UC —
   // контракт без реализации, цель `calls` других модулей (D-42).
@@ -140,14 +138,14 @@ function checkLinks(index: DefIndex): Violation[] {
 
   for (const m of index.modules) {
     for (const op of operationsOf(m)) {
-      const title = operationTitle(m, op);
-      for (const a of aggregatesOf(op)) {
+      const title = op.title(m);
+      for (const a of op.aggregates()) {
         const owner = index.aggregateOwner.get(a);
         if (owner === undefined) {
           add(`${title}: агрегат ${a.name} не входит ни в один модуль`);
         }
       }
-      for (const e of op.emits ?? []) {
+      for (const e of op.emits) {
         const owner = eventModule(e);
         if (owner === undefined) {
           add(`${title}: событие ${e.name} не входит ни в один модуль`);
@@ -160,21 +158,13 @@ function checkLinks(index: DefIndex): Violation[] {
           add(`${title}: UC ${uc.name} не входит ни в один модуль`);
         }
       }
-      switch (op.dmg) {
-        case 'useCase':
-          checkErrors(title, op.referencedErrors());
-          break;
-        case 'eventReaction':
-          for (const e of op.subscribedEvents()) {
-            if (eventModule(e) === undefined) {
-              add(`${title}: событие ${e.name} не входит ни в один модуль`);
-            } else if (!published.has(e)) {
-              add(`${title} слушает ${e.name}, которое никто не публикует`);
-            }
-          }
-          break;
-        case 'job':
-          break;
+      checkErrors(title, op.referencedErrors());
+      for (const e of op.subscribedEvents()) {
+        if (eventModule(e) === undefined) {
+          add(`${title}: событие ${e.name} не входит ни в один модуль`);
+        } else if (!published.has(e)) {
+          add(`${title} слушает ${e.name}, которое никто не публикует`);
+        }
       }
     }
   }
@@ -278,7 +268,7 @@ function checkCalls(index: DefIndex): Violation[] {
   const out: Violation[] = [];
   for (const m of index.modules) {
     for (const op of operationsOf(m)) {
-      const title = operationTitle(m, op);
+      const title = op.title(m);
       for (const uc of callsOf(op)) {
         const owner = index.operationOwner.get(uc);
         if (owner === undefined) continue;
@@ -313,13 +303,13 @@ function checkOwnAggregates(index: DefIndex): Violation[] {
   const out: Violation[] = [];
   for (const m of index.modules) {
     for (const op of operationsOf(m)) {
-      for (const a of aggregatesOf(op)) {
+      for (const a of op.aggregates()) {
         const owner = index.aggregateOwner.get(a);
         if (owner === undefined || owner === m) continue;
         out.push(
           violation(
             'MAN-13',
-            `${operationTitle(m, op)}: агрегат ${localId(owner, a)} модуля ${owner.name}`,
+            `${op.title(m)}: агрегат ${localId(owner, a)} модуля ${owner.name}`,
           ),
         );
       }
@@ -348,19 +338,11 @@ function checkDependsOn(index: DefIndex): Violation[] {
       }
     };
     for (const op of operationsOf(m)) {
-      const title = operationTitle(m, op);
-      switch (op.dmg) {
-        case 'useCase':
-          checkErrors(title, op.referencedErrors());
-          break;
-        case 'eventReaction':
-          for (const e of op.subscribedEvents()) {
-            const a = index.eventOwner.get(e);
-            check(title, `событие ${e.name}`, a && index.aggregateOwner.get(a));
-          }
-          break;
-        case 'job':
-          break;
+      const title = op.title(m);
+      checkErrors(title, op.referencedErrors());
+      for (const e of op.subscribedEvents()) {
+        const a = index.eventOwner.get(e);
+        check(title, `событие ${e.name}`, a && index.aggregateOwner.get(a));
       }
       for (const uc of callsOf(op)) {
         const owner = index.operationOwner.get(uc);
@@ -426,23 +408,6 @@ function checkErrorCodes(index: DefIndex): Violation[] {
     }
   }
   return out;
-}
-
-const OPERATION_KIND = { useCase: 'UC', eventReaction: 'ER', job: 'Job' };
-
-function operationTitle(m: AnyModuleDef, op: AnyOperationDef): string {
-  return `${OPERATION_KIND[op.dmg]} ${localId(m, op)}`;
-}
-
-function aggregatesOf(op: AnyOperationDef): readonly AnyAggregateDef[] {
-  switch (op.dmg) {
-    case 'useCase':
-      return [op.aggregate];
-    case 'eventReaction':
-      return op.touches;
-    case 'job':
-      return op.scans;
-  }
 }
 
 function isCoreError(e: AnyErrorDef): boolean {

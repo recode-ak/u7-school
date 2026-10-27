@@ -296,7 +296,7 @@ describe('checkDefs', () => {
         dependsOn: [],
         useCases: [ShowUcDef],
         reactions: [],
-        jobs: [{ ...PurgeNotesJobDef, calls: [GetItemUcDef] }],
+        jobs: [defineJob({ ...PurgeNotesJobDef, calls: [GetItemUcDef] })],
       });
       const arc04 = report(alpha, BetaModuleDef).filter((l) =>
         l.startsWith('ARC-04'),

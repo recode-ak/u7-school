@@ -3,7 +3,6 @@ import { dirname, join, resolve, sep } from 'node:path';
 import {
   type AnyOperationDef,
   type DefIndex,
-  localId,
   operationsOf,
 } from '../graph/def-index';
 import type { ArchRule, Violation } from './violation';
@@ -62,10 +61,7 @@ export function checkFiles(
     for (const op of operationsOf(m)) {
       const found = findOperationFile(op, domainOps);
       if (found.file === undefined) {
-        add(
-          'MAN-10',
-          `${OPERATION_KIND[op.dmg]} ${localId(m, op)}: ожидается файл ${found.expected}`,
-        );
+        add('MAN-10', `${op.title(m)}: ожидается файл ${found.expected}`);
       } else {
         claimed.add(found.file);
       }
@@ -124,9 +120,6 @@ export function checkFiles(
   return out;
 }
 
-const OPERATION_KIND = { useCase: 'UC', eventReaction: 'ER', job: 'Job' };
-const OPERATION_DIR = { useCase: 'uc', eventReaction: 'er', job: 'job' };
-
 /**
  * Файл операции в домене: `<агрегат>/<uc|er|job>/<имя>.<вид>.ts`. Агрегат —
  * агрегат UC или основной (первый в `touches`/`scans`) у ER/Job; без него
@@ -136,14 +129,9 @@ function findOperationFile(
   op: AnyOperationDef,
   files: readonly string[],
 ): { readonly file: string | undefined; readonly expected: string } {
-  const kind = OPERATION_DIR[op.dmg];
+  const kind = op.fileKind;
   const name = `${kind}/${kebab(op.name)}.${kind}.ts`;
-  const main =
-    op.dmg === 'useCase'
-      ? op.aggregate
-      : op.dmg === 'eventReaction'
-        ? op.touches[0]
-        : op.scans[0];
+  const main = op.mainAggregate();
   if (main === undefined) {
     const file = files.find((f) => f.endsWith(`/${name}`));
     return { file, expected: `<агрегат>/${name}` };

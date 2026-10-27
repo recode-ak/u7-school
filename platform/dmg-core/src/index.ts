@@ -33,7 +33,7 @@ export {
 export {
   type AnyJobDef,
   defineJob,
-  type JobDef,
+  JobDef,
   type JobSchedule,
   type JobSpec,
 } from './domain/contracts/define-job';
