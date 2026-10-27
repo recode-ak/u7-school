@@ -1,0 +1,5 @@
+Задача: базовый репозиторий с оптимистичной блокировкой (Фаза 6, dmg-core-oop).
+Изменения: app/uow/repository.ts — abstract VersionedRepository<A extends Versioned> implements Repository<A>: save() под Lock, abstract stored(uuid)/write(ar), private checkVersion (бывш. assertVersion, удалён); StoredRecord += индекс прочих полей (иначе слабый тип не принимал legacy-запись). dmg-core/app экспортирует VersionedRepository вместо assertVersion.
+Потребители: testing/example task.json-repo и user.memory-repo, modules/wish/src/infra/wish.json-repo.ts, app/app.fixture.ts (MemoryTasks), unit-of-work.test (MapRepo вместо inline-репозиториев), шаблон gen/kinds/app-aggregate.ts (+ classHeader как у biome).
+JSON-репозиторий в write перечитывает файл (внутри замка) — поведение то же.
+Тесты: repository.test.ts — 8 сценариев assertVersion через save + «конфликт — не записан» + «save по одному»; app-aggregate.test — новая шапка и короткая ветка. check — 4100 pass. Доки — задача «Гайд repo».
