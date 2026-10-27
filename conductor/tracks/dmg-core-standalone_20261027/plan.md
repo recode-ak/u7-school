@@ -13,12 +13,12 @@
 - [x] Task: `ApiApp` в `dmg-core/app` (D-50): фабрики модулей → порядок по `dependsOn`, `ModuleFacades` только зависимостей, `dispatch`/`runJob`/`subscribe` 094bd69d
     - [x] Тесты: порядок и фасады по `dependsOn`; цикл, отсутствующая зависимость, повтор — ошибка сборки; `dispatch` неизвестного модуля — `OPERATION_NOT_FOUND`; red
     - [x] Реализация; экспорт из `dmg-core/app`; green
-- [~] Task: Учебное приложение `src/testing/example/app` — сборка
+- [x] Task: Учебное приложение `src/testing/example/app` — сборка 161af694
     - [x] Боевые `InProcEventBus` и `ConsoleLogger` в `dmg-core/app`, `AwaitingBus` в `dmg-core/testing` (решение Нурболата 2026-10-27); тесты red → green 3fca9f3c
     - [x] Плавающий `platform/core/src/legacy-bridge/example-app.test.ts` (`settle` через `setTimeout`) — ожидание доставки по образцу `AwaitingBus` (решение Нурболата 2026-10-27) 596286e6
     - [x] Тесты: фабрика собирает `todo` и `users` с фасадами по `dependsOn`, UC через модуль, событие доходит до реакции, запись в oplog; запуск — red 74c0ceac
     - [x] Реализация фабрики (`InProcOutbox`/`InProcInbox`, лог операций, `Logger`); запуск — green 74c0ceac
-    - [ ] `OperationRef.kind: 'app'` — вызов от корня сборки (резолвер `Caller`); запись D-NN в `decisions.md` пакета, резолвер `ExampleApp` на нём (решение Нурболата 2026-10-27); тесты red → green
+    - [x] `OperationRef.kind: 'app'` — вызов от корня сборки (резолвер `Caller`); запись D-NN в `decisions.md` пакета, резолвер `ExampleApp` на нём (решение Нурболата 2026-10-27); тесты red → green 161af694
 - [ ] Task: Минимальный in-proc раннер учебного примера (CLI-команда → `Caller` → UC → вывод `Result`)
     - [ ] Тест раннера (команда вызывает UC; ошибка ввода — код 1); red
     - [ ] Реализация; green
