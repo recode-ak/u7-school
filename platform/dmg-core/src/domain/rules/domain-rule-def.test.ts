@@ -31,6 +31,10 @@ const hasRoom = DomainRuleDef.define({
     ctx.shelf.isFull() ? ShelfErrors.FULL.err({ limit: 3 }) : ok(),
 });
 
+const OtherErrors = ErrorDef.define('OTHER', {
+  FAILED: { kind: 'conflict', label: 'Сбой', description: 'Чужая ошибка.' },
+});
+
 const ShelfRules = RulesDef.define({
   name: 'shelf',
   label: 'Правила полки',
@@ -54,6 +58,24 @@ describe('DomainRuleDef', () => {
       DomainRuleContextOf<typeof hasRoom>
     >().toEqualTypeOf<ShelfCtx>();
     expectTypeOf(hasRoom).toExtend<AnyDomainRule>();
+  });
+
+  it('check возвращает только свою ошибку (DOM-16)', () => {
+    DomainRuleDef.define({
+      name: 'foreign',
+      label: 'Чужая ошибка',
+      description: 'Правило пытается вернуть не свою ошибку.',
+      error: ShelfErrors.FULL,
+      // @ts-expect-error OTHER_FAILED — не ошибка из `error` правила
+      check: () => OtherErrors.FAILED.err(),
+    });
+  });
+
+  it('check контравариантен: правило с чужим контекстом не подходит', () => {
+    type Other = { readonly other: true };
+    // @ts-expect-error контекст правила — ShelfCtx, а не Other
+    const wrong: DomainRuleDef<Other, typeof ShelfErrors.FULL> = hasRoom;
+    expect(wrong).toBeDefined();
   });
 
   it('normalize() — тексты и код ошибки отказа', () => {

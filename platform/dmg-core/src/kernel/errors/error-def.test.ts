@@ -49,6 +49,19 @@ describe('ErrorDef', () => {
     expect(TodoErrors.ALREADY_DONE.err().error.code).toBe('TODO_ALREADY_DONE');
   });
 
+  it('типы make/err: payload по схеме, литералы code и kind', () => {
+    const e = TodoErrors.NOT_FOUND.make({ todoId: 't1' });
+    expectTypeOf(e.code).toEqualTypeOf<'TODO_NOT_FOUND'>();
+    expectTypeOf(e.kind).toEqualTypeOf<'not_found'>();
+    expectTypeOf(e.payload).toEqualTypeOf<{ todoId: string }>();
+    // @ts-expect-error схема объявлена — payload обязателен
+    TodoErrors.NOT_FOUND.make();
+    // @ts-expect-error payload не по схеме
+    TodoErrors.NOT_FOUND.err({ id: 1 });
+    // @ts-expect-error схемы нет — payload не принимается
+    TodoErrors.ALREADY_DONE.err({ x: 1 });
+  });
+
   it('normalize() — форма графа без функций', () => {
     expect(TodoErrors.NOT_FOUND.normalize()).toEqual({
       dmg: 'error',

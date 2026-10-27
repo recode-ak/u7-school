@@ -84,7 +84,7 @@
 
 DCS остаётся для мутаций нескольких агрегатов и композиции правил с операциями. Композиторы (`allOf`/`anyOf`) для доменных правил — только по потребителю.
 
-Форма API: `domainRule({ name, label, description, error, check })` в группе `<A>Rules = defineRules({ name, label, description, rules })`, файл `<aggregate>.rules.ts`. Def UC — `rules: [...]` рядом с `policy`; исполняет `UseCaseFromDef` над результатом `load` после Policy (`load → Policy → rules → execute`). Ошибка правила объявляется в `errors` UC явно — `checkDefs` ловит пропуск.
+Форма API: `domainRule({ name, label, description, error, check })` в группе `<A>Rules = defineRules({ name, label, description, rules })`, файл `<aggregate>.rules.ts` (с трека `dmg-core-oop` — `DomainRuleDef.define` и `RulesDef.define`, [manifests.md](./manifests.md) §1). Def UC — `rules: [...]` рядом с `policy`; исполняет `UseCaseFromDef` над результатом `load` после Policy (`load → Policy → rules → execute`). Ошибка правила объявляется в `errors` UC явно — `checkDefs` ловит пропуск.
 
 **D-42. Межмодульная связь в манифестах — «UC → UC»; фасад — рантайм-граница без манифеста.** Заменяет D-38, уточняет D-09. Вызывающий `module`, ответственность фасада и рантайм-проверка `calls` — заменены D-43.
 - **Связи объявляются один раз:** `dependsOn` у модуля и `calls` у UC/ER/Job — Def UC других модулей (из `dependsOn`). Граф строит рёбра «UC → UC» из `calls`; последствия вызова (агрегат, `emits`, дальше по ER) выводятся из Def вызываемого UC; command-цель — межмодульный побочный эффект, место которого выбирает владелец проекта по каждому случаю ([use-case.md](./guides/use-case.md) §1). Фасадов в манифестах и графе нет (`defineFacade`, `method`, `facade` в `defineModule` уходят).

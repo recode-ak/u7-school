@@ -1,9 +1,8 @@
-import type { DefTexts } from '#core/kernel/def/def';
+import type { DefOf, DefTexts } from '#core/kernel/def/def';
 import type {
   AnyDomainRule,
   NormalizedDomainRule,
 } from './domain-rule-def.types';
-import type { RulesDef } from './rules-def';
 
 export type RulesSpec = DefTexts & {
   /** Доменные правила агрегата: ключ — имя, значение — правило. */
@@ -15,4 +14,6 @@ export type NormalizedRules = DefTexts & {
   readonly rules: { readonly [key: string]: NormalizedDomainRule };
 };
 
-export type AnyRulesDef = RulesDef<RulesSpec>;
+export type AnyRulesDef = DefOf<'rules', NormalizedRules> & {
+  readonly rules: RulesSpec['rules'];
+};

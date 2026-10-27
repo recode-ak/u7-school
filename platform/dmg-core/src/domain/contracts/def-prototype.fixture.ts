@@ -1,6 +1,6 @@
 // Прототип Def-класса (трек dmg-core-oop, Фаза 0): проверка, что
 // `XxxDef.define` сохраняет вывод литеральных типов. Не продакшен-код:
-// заменяется настоящим `Def` в Фазе 1.
+// заменяется настоящим `UseCaseDef` в Фазе 3.
 import type * as v from 'valibot';
 import type { CallerKind } from '#core/kernel/caller/caller';
 import type { AnyErrorDef } from '#core/kernel/errors/error-def';

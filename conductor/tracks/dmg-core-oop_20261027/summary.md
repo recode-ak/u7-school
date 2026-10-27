@@ -6,3 +6,9 @@
 |---|---|---|---|
 | `CI=true bun test` (весь репозиторий) | 3981 | 0 | 423 |
 | `CI=true bun test` в `platform/dmg-core` | 709 | 0 | 83 |
+
+## Фаза 1: ревью reviewer (2026-10-27)
+
+Замечаний `error` нет. Исправлено: `AnyDomainRule`/`AnyRulesDef` — через `DefOf`, как у остальных видов; в `AggregateDef` убран промежуточный тип с `never`, переходы нормализуются внутри `normalize()` (без публичного `normalizedTransitions`); тесты типов `make`/`err` у `ErrorDef`, своя ошибка и контравариантность `check` у `DomainRuleDef`; удалён неиспользуемый `buildErrors`; `normalize.ts` — общая ветка делегирования; комментарий прототипа (замена в Фазе 3); `manifests.md` — `schemas()`/`texts()`; D-40 — ссылка на новый DSL.
+
+Оставлено сознательно: стиль импортов (в `kernel` — относительные, в `domain` — `#core/…`, как в пакете); `add(...)` в `describedDefs` уйдёт в Фазе 3; публичный экспорт `Def`/`DefOf` — по потребителю (хеш контракта, документация).

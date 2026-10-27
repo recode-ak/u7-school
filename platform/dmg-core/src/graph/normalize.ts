@@ -155,9 +155,7 @@ export function normalize(def: AnyDef): NormalizedDef;
 export function normalize(def: AnyDef): NormalizedDef {
   switch (def.dmg) {
     case 'error':
-      return def.normalize();
     case 'event':
-      return def.normalize();
     case 'aggregate':
       return def.normalize();
     case 'rule':

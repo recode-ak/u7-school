@@ -19,11 +19,3 @@ export function defineErrors<
 >(prefix: P, specs: M): ErrorGroup<P, M> {
   return ErrorDef.define(prefix, specs);
 }
-
-/** Сборка группы с пустым префиксом — то же, что `ErrorDef.define`. */
-export function buildErrors<
-  const P extends string,
-  const M extends Record<string, ErrorSpec>,
->(prefix: P, specs: M): ErrorGroup<P, M> {
-  return ErrorDef.define(prefix, specs);
-}

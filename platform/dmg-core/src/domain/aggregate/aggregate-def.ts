@@ -44,15 +44,14 @@ export class AggregateDef<
     this.state = withEntityDefaults<A['state']>(spec.state);
     this.events = spec.events;
     this.errors = spec.errors;
-    // Поля жизненного цикла есть ровно тогда, когда их объявляет спека.
-    const lifecycle = spec as Partial<
-      Record<'statuses' | 'transitions', never>
-    >;
-    this.statuses = lifecycle.statuses as LifecycleField<A, 'statuses'>;
-    this.transitions = lifecycle.transitions as LifecycleField<
-      A,
-      'transitions'
-    >;
+    // Поля жизненного цикла есть ровно тогда, когда их объявляет спека;
+    // `LifecycleField` — тот же выбор на уровне типов.
+    this.statuses = (
+      'statuses' in spec ? spec.statuses : undefined
+    ) as LifecycleField<A, 'statuses'>;
+    this.transitions = (
+      'transitions' in spec ? spec.transitions : undefined
+    ) as LifecycleField<A, 'transitions'>;
   }
 
   static define<const S extends StateSchema, const A extends AggregateSpec<S>>(
@@ -62,12 +61,33 @@ export class AggregateDef<
   }
 
   normalize(): NormalizedAggregate {
+    // Расширение до общего вида: аннотация без `as` сузилась бы обратно
+    // до дженерика по присваиванию.
+    const transitions = this.transitions as AnyAggregateDef['transitions'];
     return {
       dmg: this.dmg,
       ...this.texts(),
       state: toJsonSchema(this.state),
       statuses: this.statuses,
-      transitions: this.normalizedTransitions(),
+      // Отказы переходов — коды ошибок вместо Def.
+      transitions:
+        transitions &&
+        Object.fromEntries(
+          Object.entries(transitions).map(
+            ([op, t]): [string, NormalizedTransition] => [
+              op,
+              {
+                from: t.from,
+                to: t.to,
+                rejects: Object.fromEntries(
+                  Object.entries(t.rejects).flatMap(([status, e]) =>
+                    e === undefined ? [] : [[status, e.code]],
+                  ),
+                ),
+              },
+            ],
+          ),
+        ),
       events: Object.values(this.events).map((e) => e.name),
       errors: Object.values(this.errors).map((e) => e.code),
     };
@@ -75,29 +95,5 @@ export class AggregateDef<
 
   override schemas(): DefSchemas {
     return [['state', this.state]];
-  }
-
-  /** Переходы с кодами отказов вместо Def ошибок. */
-  normalizedTransitions():
-    | Readonly<Record<string, NormalizedTransition>>
-    | undefined {
-    // Расширение до общего вида: аннотация без `as` сузилась бы обратно
-    // до дженерика по присваиванию.
-    const transitions = this.transitions as AnyAggregateDef['transitions'];
-    if (transitions === undefined) return undefined;
-    return Object.fromEntries(
-      Object.entries(transitions).map(([op, t]) => [
-        op,
-        {
-          from: t.from,
-          to: t.to,
-          rejects: Object.fromEntries(
-            Object.entries(t.rejects).flatMap(([status, e]) =>
-              e === undefined ? [] : [[status, e.code]],
-            ),
-          ),
-        },
-      ]),
-    );
   }
 }
