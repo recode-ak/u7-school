@@ -1,0 +1,4 @@
+Контрольная точка Фазы 6 (репозиторий и тестовые двойники).
+Автотесты: bun run check (вкл. CI=true bun test) — 4107 pass, 0 fail.
+Ручная верификация: bun test modules/wish/src/infra, dmg-core app/uow и testing; обзор VersionedRepository и wish.json-repo.
+Подтверждение Нурболата: «все ок, продолжай» (2026-10-27).
