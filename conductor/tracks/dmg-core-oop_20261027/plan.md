@@ -19,7 +19,7 @@
 - [x] Task: `AggregateDef` (`defineAggregate` → статика), то же; `Aggregate.readonly`/`newState` не трогаем `93088b2c`
 - [x] Task: `DomainRuleDef` и `RulesDef` (`defineRules` → статика), то же `497d4939`
 - [x] Task: Гайды `dmg-core/docs/guides` (errors, events, aggregate) — DSL `XxxDef.define` `311e8f8c`
-- [~] Task: Ревью reviewer
+- [x] Task: Ревью reviewer `19a2cd82`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Иерархия `Rule` и `PolicyDef`
