@@ -14,7 +14,7 @@
 | Job | Job | `ArchiveDoneTasksJob` | `.job.ts` |
 | Dcs | DomainCommandService | `TaskReleaseDcs` | `.dcs.ts` |
 | Dqs | DomainQueryService | `TaskProgressDqs` | `.dqs.ts` |
-| Def | манифест (результат `define*`) | `CompleteTaskUcDef` | — |
+| Def | манифест (экземпляр Def-класса, `XxxDef.define`) | `CompleteTaskUcDef` | — |
 | Repo | Repository | `TaskRepo`, `TaskJsonRepo` | `.repo.ts` |
 | Uow | Unit of Work | `Uow` | — |
 | Vo | Value Object | `TaskAssignmentVo` | — |

@@ -37,7 +37,7 @@
 - [naming.md](./naming.md) — сокращения, файловая структура, имена
 
 **Контракты**
-- [manifests.md](./manifests.md) — семейство `define*`, граф L0/L1/L2, декларация + верификация
+- [manifests.md](./manifests.md) — Def-классы (`XxxDef.define`), граф L0/L1/L2, декларация + верификация
 - [errors-result.md](./errors-result.md) — `Result`, модель ошибок, UoW, исполнение UC
 - [caller.md](./caller.md) — кто вызывает: `guest`, `user`, `delegate`, `system`; след `Trace`
 - [transport.md](./transport.md) — HTTP (JSON-команда), MCP, in-proc

@@ -14,7 +14,7 @@
 | `app` | `modules/{m}/src` |
 | `domainImport` | `@u7-scl/domain/{m}` |
 
-Она совпадает с `layout` приложения домена `DomainArch` (`scripts/domain-arch.ts`). Меняешь одно — меняй и другое; расхождение ловит приёмка `scripts/gen-e2e.test.ts` (срез `genprobe` в настоящих каталогах → biome, tsc, тесты, `archCheck`).
+Она совпадает с `layout` приложения домена `DomainArch` (`scripts/domain-arch.ts`). Меняешь одно — меняй и другое; расхождение ловит приёмка `scripts/gen-e2e.test.ts` (срез `genprobe` в настоящих каталогах → biome, tsc, тесты, `ArchChecker`).
 
 ## Новый прикладной пакет
 
