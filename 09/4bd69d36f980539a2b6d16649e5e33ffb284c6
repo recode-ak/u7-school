@@ -1,0 +1,1 @@
+Задача: ApiApp в dmg-core/app (D-50). Автор — api-author (Opus), ревью — reviewer (4 info: 3 исправлены, AwaitingBus оставлен). Файлы: platform/dmg-core/src/app/api-app/{api-app.ts,api-app.types.ts,api-app.test.ts}, src/app/index.ts, бриф slices/phase-1.md. check: 4166 pass / 0 fail.
