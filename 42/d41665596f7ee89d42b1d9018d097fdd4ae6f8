@@ -1,0 +1,3 @@
+Задача: класс Lock (Фаза 6, dmg-core-oop).
+Изменения: app/uow/lock.ts — class Lock { run(task) } (хвост очереди — private); createLock и тип-функция Lock удалены; экспорт dmg-core/app: Lock. Потребители: task.json-repo (пример), modules/wish wish.json-repo, шаблон gen/kinds/app-aggregate.ts (new Lock(), this.lock.run). Доки: decisions D-36, layers.md, guides/repo.md.
+Тесты: lock.test.ts — сценарии те же на новом API. check — 4097 pass.
