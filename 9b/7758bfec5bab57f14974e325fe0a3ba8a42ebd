@@ -1,0 +1,1 @@
+Задача: гайд repo и docs/testing.md (Фаза 6, dmg-core-oop). guides/repo.md — образец на VersionedRepository (stored/write), чеклист API-03, ловушка «Свой save»; testing.md — RecordingBus/MemoryLogger в testAppContext, MemoryBus; layers.md, rules.md API-03, errors-result.md, decisions D-36, guides/event-reaction.md — новые имена. check зелёный.
