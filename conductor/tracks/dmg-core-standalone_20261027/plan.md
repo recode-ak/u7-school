@@ -24,7 +24,7 @@
     - [x] Реализация; green 9d89ac84
 - [x] Task: `ExampleArch` и `arch:check` пакета охватывают приложение и раннер; какие правила (ARC) на них распространяются 277f86d2
     - Решение D-52: ARC-07/08/09 под корень сборки и раннер; ARC-09 — всё, кроме точки входа раннера
-- [ ] Task: Гайд `docs/guides/app.md` (по `_template.md`) на учебном приложении; ссылки из `guides/index.md`, `layers.md`, `llms.txt`
+- [x] Task: Гайд `docs/guides/app.md` (по `_template.md`) на учебном приложении; ссылки из `guides/index.md`, `layers.md`, `llms.txt` 44a8aa5b
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
