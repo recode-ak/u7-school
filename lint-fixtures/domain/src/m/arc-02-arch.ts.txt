@@ -1,4 +1,4 @@
 // expect: ARC-02 error
-import { archCheck } from 'dmg-core/arch';
+import { ArchChecker } from 'dmg-core/arch';
 
-export const a = archCheck;
+export const a = ArchChecker;

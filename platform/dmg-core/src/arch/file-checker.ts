@@ -110,10 +110,7 @@ export class FileChecker {
               // Связи двух внешних модулей реализованы вне приложения:
               // вход платформа не проверяет, `dependsOn` — проверяет.
               const bothExternal = m.external === true && x.external === true;
-              if (
-                !bothExternal &&
-                !this.isEntry(target, xDir.domain, this.entry)
-              ) {
+              if (!bothExternal && !this.isEntry(target, xDir.domain)) {
                 add(
                   'ARC-04',
                   `${where} импортирует ${x.name} мимо ${this.entry}.ts: ${spec}`,
@@ -191,9 +188,11 @@ export class FileChecker {
    * Цель импорта — вход модуля: `<dir>/<entry>.ts` или `<dir>/<entry>`;
    * для `index` — также сам `<dir>`.
    */
-  private isEntry(path: string, dir: string, entry: string): boolean {
+  private isEntry(path: string, dir: string): boolean {
     const bare = path.replace(/\.[jt]s$/, '');
-    return bare === join(dir, entry) || (entry === 'index' && bare === dir);
+    return (
+      bare === join(dir, this.entry) || (this.entry === 'index' && bare === dir)
+    );
   }
 
   /** `archiveDoneTasks` → `archive-done-tasks`. */

@@ -269,13 +269,11 @@ class GraphBuilder {
 
   /** Id операции: `module.name`; `?.<имя>` — Def вне модулей графа. */
   private operationId(op: AnyOperationDef): string {
-    const owner = this.index.moduleOf(op);
-    return owner ? owner.localId(op) : `?.${op.name}`;
+    return this.index.id(op);
   }
 
   private aggregateId(a: AnyAggregateDef): string {
-    const owner = this.index.moduleOf(a);
-    return owner ? owner.localId(a) : `?.${a.name}`;
+    return this.index.id(a);
   }
 
   private eventModule(e: AnyEventDef): string | undefined {
