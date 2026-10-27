@@ -4,7 +4,7 @@
 
 ## Фаза 0: Базовая линия
 
-- [x] Task: Зафиксировать базовую линию (`bun test` pass/fail по репо и по `dmg-core`, `bun run e2e` пакета) в черновике `summary.md`
+- [x] Task: Зафиксировать базовую линию (`bun test` pass/fail по репо и по `dmg-core`, `bun run e2e` пакета) в черновике `summary.md` f1698d2
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 ## Фаза 1: Корень сборки и учебное приложение
