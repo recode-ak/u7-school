@@ -9,7 +9,7 @@ import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyUseCaseDef } from '../domain/contracts/define-use-case';
 import type { AnyEventDef, NormalizedEvent } from '../domain/events/event-def';
 import type { AnyPolicyDef } from '../domain/policy/define-policy';
-import type { AnyRule } from '../domain/policy/policy';
+import type { AnyRule, NormalizedRule } from '../domain/policy/rule';
 import type {
   AnyDomainRule,
   NormalizedDomainRule,
@@ -26,6 +26,7 @@ export type {
   NormalizedTransition,
 } from '../domain/aggregate/aggregate-def';
 export type { NormalizedEvent } from '../domain/events/event-def';
+export type { NormalizedRule } from '../domain/policy/rule';
 export type { NormalizedDomainRule } from '../domain/rules/domain-rule-def';
 export type { NormalizedRules } from '../domain/rules/rules-def';
 export type { NormalizedError } from '../kernel/errors/error-def';
@@ -35,29 +36,6 @@ type Texts = {
   readonly label: string;
   readonly description: string;
 };
-
-type RuleTexts = {
-  readonly name: string;
-  readonly label: string;
-  readonly denyMessage: string;
-};
-
-export type NormalizedRule =
-  | (RuleTexts & {
-      readonly dmg: 'rule';
-      readonly op: 'rule';
-    })
-  | (RuleTexts & {
-      readonly dmg: 'rule';
-      readonly op: 'anyOf';
-      readonly rules: readonly NormalizedRule[];
-    })
-  | {
-      readonly dmg: 'rule';
-      readonly op: 'allOf';
-      readonly rules: readonly NormalizedRule[];
-    }
-  | { readonly dmg: 'rule'; readonly op: 'allowAll' };
 
 export type NormalizedPolicy = Texts & {
   readonly dmg: 'policy';
@@ -159,13 +137,13 @@ export function normalize(def: AnyDef): NormalizedDef {
     case 'aggregate':
       return def.normalize();
     case 'rule':
-      return normalizeRule(def);
+      return def.normalize();
     case 'policy':
       return {
         dmg: 'policy',
         ...texts(def),
         rules: Object.fromEntries(
-          Object.entries(def.rules).map(([q, r]) => [q, normalizeRule(r)]),
+          Object.entries(def.rules).map(([q, r]) => [q, r.normalize()]),
         ),
       };
     case 'domainRule':
@@ -178,7 +156,7 @@ export function normalize(def: AnyDef): NormalizedDef {
         type: def.type,
         aggregate: def.aggregate.name,
         callers: def.callers,
-        policy: normalizeRule(def.policy),
+        policy: def.policy.normalize(),
         input: schema(def.input),
         output: schema(def.output),
         errors: def.errors.map((e) => e.code),
@@ -224,30 +202,4 @@ function texts(def: Texts): Texts {
 
 function schema(s: v.GenericSchema): JsonSchema {
   return toJsonSchema(s);
-}
-
-function normalizeRule(r: AnyRule): NormalizedRule {
-  switch (r.op) {
-    case 'rule':
-      return {
-        dmg: 'rule',
-        op: 'rule',
-        name: r.name,
-        label: r.label,
-        denyMessage: r.denyMessage,
-      };
-    case 'anyOf':
-      return {
-        dmg: 'rule',
-        op: 'anyOf',
-        name: r.name,
-        label: r.label,
-        denyMessage: r.denyMessage,
-        rules: r.rules.map(normalizeRule),
-      };
-    case 'allOf':
-      return { dmg: 'rule', op: 'allOf', rules: r.rules.map(normalizeRule) };
-    case 'allowAll':
-      return { dmg: 'rule', op: 'allowAll' };
-  }
 }

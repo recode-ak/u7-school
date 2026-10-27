@@ -70,6 +70,9 @@ export {
   type PolicySpec,
 } from './domain/policy/define-policy';
 export {
+  AllOfRule,
+  AllowAll,
+  AnyOfRule,
   type AnyRule,
   allOf,
   allowAll,
@@ -78,12 +81,14 @@ export {
   type Decision,
   denied,
   hasRole,
+  NamedRule,
+  type NormalizedRule,
   type RoleHolder,
-  type Rule,
+  Rule,
   type RuleContextOf,
-  type RuleNode,
   type RuleSpec,
   type RuleSubjectOf,
+  type RuleTexts,
   rule,
 } from './domain/policy/policy';
 export { defineRules } from './domain/rules/define-rules';
