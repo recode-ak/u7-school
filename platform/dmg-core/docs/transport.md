@@ -52,7 +52,8 @@
 
 Форма та же, что у HTTP: команда `{ uc, input, meta? }` и `Result`. Отличие одно: JSON-сериализации нет, объекты передаются как есть (D-46).
 
-- **Клиент — `moduleApi`:** знает адрес модуля (in-proc `apiModule` или URL) и объявляет API модуля. Вызов — `moduleApi.dispatch(ucDef.command(input))` → типизированный `Result<OutputOf<D>, UseCaseErrorOf<D>>`. Смена in-proc на HTTP меняет только адрес `moduleApi`, вызывающий код остаётся прежним.
+- **Клиент — `ModuleApi`** (`dmg-core/app`): Def модуля (адрес — его `name`) и транспорт `CommandTransport` до модуля; in-proc транспорт — `ApiApp` (`dispatch(module, command, caller, trace)`). Вызов — `moduleApi.dispatch(ucDef.command(input), caller, trace)` → типизированный `Result<OutputOf<D>, UseCaseErrorOf<D>>`; команда UC другого модуля — ошибка компиляции. Caller и `Trace` — явные аргументы: их строит адаптер входа (story, CLI). Смена in-proc на HTTP меняет только транспорт, вызывающий код остаётся прежним.
+- **Ответ:** in-proc — `Result` модуля как есть, без сериализации. Ответ из простых данных (wire-транспорт) восстанавливает `moduleApi.restore(command, wire)` по Def UC; ошибка вне контракта — `SERVER_INTERNAL` и `warn` с исходным `code` (ERR-07).
 - **UI (бот, web)** — через `moduleApi`; story обрабатывает `Err` по `code`, презентер решает, как показать.
 - **Фасады** (`ModuleFacade`, D-43) — синхронный вызов в процессе через команду, типизированный сахар поверх; возвращают `Result`, `ReadonlyAr` строит вызывающий. При выносе модуля в сервис тот же контракт идёт по HTTP, агрегаты — снапшотом.
 - **CLI** — тот же `moduleApi`.

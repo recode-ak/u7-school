@@ -3,6 +3,7 @@ import { type Command, ModuleDef, ok, UserCaller } from 'dmg-core';
 import {
   JobFromDef,
   type JobRun,
+  ModuleApi,
   type ModuleDeps,
   ModuleFacades,
   ModuleFromDef,
@@ -13,6 +14,7 @@ import {
 import {
   expectErr,
   expectOk,
+  MemoryLogger,
   MemoryTasks,
   OWNER,
   TASK,
@@ -184,6 +186,38 @@ describe('ApiApp.dispatch — команда по адресу модуля (D-4
       module: 'mini',
       uc: 'createTask',
     });
+  });
+});
+
+describe('ModuleApi поверх ApiApp — клиент in-proc (D-49)', () => {
+  test('транспорт — приложение: Result модуля как есть', async () => {
+    const api = new ModuleApi(MiniModuleDef, app, new MemoryLogger());
+    tasks.rows.clear();
+    const res = await api.dispatch(
+      CompleteTaskUcDef.command({ taskId: TASK }),
+      user(OWNER),
+      REQ,
+    );
+    expectErr(res, 'TASK_NOT_FOUND');
+  });
+
+  test('круговой путь JSON: команда → dispatch → ответ → restore', async () => {
+    const api = new ModuleApi(MiniModuleDef, app, new MemoryLogger());
+    tasks.rows.clear();
+    const command = CompleteTaskUcDef.command({ taskId: TASK });
+    // Сервер сериализует ответ по Def своего UC.
+    const wireCommand: Command<typeof CompleteTaskUcDef> = JSON.parse(
+      JSON.stringify(command),
+    );
+
+    const res = await app.dispatch('mini', wireCommand, user(OWNER), REQ);
+    const wireResult = JSON.parse(
+      JSON.stringify(CompleteTaskUcDef.serializeResult(res)),
+    );
+
+    expect(api.restore(command, wireResult)).toEqual(
+      TaskErrors.NOT_FOUND.err({ taskId: TASK }),
+    );
   });
 });
 
