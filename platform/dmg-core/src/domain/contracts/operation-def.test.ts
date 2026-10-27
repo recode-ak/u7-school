@@ -8,8 +8,9 @@ import {
   TaskErrors,
   UserArDef,
 } from './contracts.fixture';
-import type { AnyUseCaseDef, DeclaredCalls } from './define-use-case';
 import { OperationDef, type OperationSpec } from './operation-def';
+import type { Declared } from './operation-def.types';
+import type { AnyUseCaseDef } from './use-case-def';
 
 type ScanSpec = OperationSpec & {
   readonly scans?: readonly AnyAggregateDef[];
@@ -19,7 +20,7 @@ type ScanSpec = OperationSpec & {
 class ScanDef<const S extends ScanSpec = ScanSpec> extends OperationDef<
   S['name']
 > {
-  declare readonly calls: DeclaredCalls<S>;
+  declare readonly calls: Declared<S, 'calls'>;
   readonly dmg = 'job';
   readonly abbr = 'Job';
   readonly fileKind = 'job';

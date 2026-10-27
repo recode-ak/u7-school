@@ -3,14 +3,14 @@ import {
   GetSameModulesUcDef,
 } from '@u7-scl/domain/course/contract';
 import { StudentEvents } from '@u7-scl/domain/stream/contract';
-import { defineEventReaction } from 'dmg-core';
+import { EventReactionDef } from 'dmg-core';
 import { WishArDef } from '../wish.ar';
 
 /**
  * Реализация желаний зачислением. Что спросить у курса и какие желания
  * реализовать, решает `WishFulfillmentDcs`; события реализации у `wish` нет.
  */
-export const FulfillWishErDef = defineEventReaction({
+export const FulfillWishErDef = EventReactionDef.define({
   name: 'fulfillWish',
   label: 'Отметить желание реализованным',
   description:

@@ -1,5 +1,5 @@
 import type { AnyAggregateDef } from '../domain/aggregate/aggregate-def';
-import type { AnyModuleDef } from '../domain/contracts/define-module';
+import type { AnyModuleDef } from '../domain/contracts/module-def';
 import type { AnyEventDef } from '../domain/events/event-def';
 import type { AnyDomainRule } from '../domain/rules/domain-rule-def';
 import type { AnyErrorDef } from '../kernel/errors/error-def';

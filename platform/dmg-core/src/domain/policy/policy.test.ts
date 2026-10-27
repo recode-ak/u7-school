@@ -1,15 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { UserCaller } from '#core/kernel/caller/caller';
-import { definePolicy } from './define-policy';
-import {
-  allOf,
-  allowAll,
-  allowed,
-  anyOf,
-  denied,
-  hasRole,
-  rule,
-} from './policy';
+import { PolicyDef } from './policy-def';
+import { allowAll, allowed, denied, Rule } from './rule';
 
 type Role = 'admin' | 'author';
 type User = { uuid: string; id: string; hasRole(role: Role): boolean };
@@ -21,7 +13,7 @@ const user = (id: string, ...roles: Role[]): User => ({
   hasRole: (role) => roles.includes(role),
 });
 
-const isOwner = rule({
+const isOwner = Rule.of({
   name: 'isOwner',
   label: 'Владелец задачи',
   denyMessage: 'Задачу может менять только владелец.',
@@ -30,7 +22,7 @@ const isOwner = rule({
 
 const ctx: Ctx = { ownerId: 'u1' };
 
-describe('rule', () => {
+describe('Rule.of', () => {
   it('allowed, если проверка субъекта прошла', () => {
     expect(isOwner.evaluate(user('u1'), ctx)).toEqual(allowed);
   });
@@ -43,7 +35,7 @@ describe('rule', () => {
 
   it('без субъекта (guest, system без человека) — отказ, check не вызван', () => {
     let called = false;
-    const spy = rule({
+    const spy = Rule.of({
       name: 'spy',
       label: 'Шпион',
       denyMessage: 'Нужен субъект.',
@@ -75,9 +67,9 @@ describe('allowAll', () => {
   });
 });
 
-describe('hasRole', () => {
+describe('Rule.hasRole', () => {
   it('allowed с ролью, denied без неё', () => {
-    const admin = hasRole('admin');
+    const admin = Rule.hasRole('admin');
     expect(admin.evaluate(user('u1', 'admin'), undefined)).toEqual(allowed);
     expect(admin.evaluate(user('u1'), undefined)).toEqual(
       denied('hasRole:admin', 'Нужна роль admin.'),
@@ -86,13 +78,13 @@ describe('hasRole', () => {
 });
 
 describe('композиция', () => {
-  const canEdit = anyOf(
+  const canEdit = Rule.anyOf(
     {
       name: 'canEdit',
       label: 'Владелец или администратор',
       denyMessage: 'Менять задачу может владелец или администратор.',
     },
-    hasRole('admin'),
+    Rule.hasRole('admin'),
     isOwner,
   );
 
@@ -108,7 +100,7 @@ describe('композиция', () => {
   });
 
   it('allOf: отказ — первое не прошедшее правило', () => {
-    const canPublish = allOf(hasRole('author'), isOwner);
+    const canPublish = Rule.allOf(Rule.hasRole('author'), isOwner);
     expect(canPublish.evaluate(user('u1', 'author'), ctx)).toEqual(allowed);
     expect(canPublish.evaluate(user('u2', 'author'), ctx)).toEqual(
       denied('isOwner', 'Задачу может менять только владелец.'),
@@ -119,7 +111,11 @@ describe('композиция', () => {
   });
 
   it('субъект композиции — пересечение субъектов правил (тип)', () => {
-    const both = allOf(hasRole('admin'), hasRole('author'), isOwner);
+    const both = Rule.allOf(
+      Rule.hasRole('admin'),
+      Rule.hasRole('author'),
+      isOwner,
+    );
     expect(both.evaluate(user('u1', 'admin', 'author'), ctx)).toEqual(allowed);
     const roleOnly: { hasRole(role: Role): boolean } = {
       hasRole: () => true,
@@ -129,16 +125,16 @@ describe('композиция', () => {
   });
 
   it('контекст композиции — объединение контекстов правил (тип)', () => {
-    const both = allOf(isOwner, hasRole('admin'));
+    const both = Rule.allOf(isOwner, Rule.hasRole('admin'));
     // @ts-expect-error нет ownerId
     both.evaluate(user('u1'), {});
     expect(both.evaluate(user('u1', 'admin'), ctx)).toEqual(allowed);
   });
 });
 
-describe('definePolicy', () => {
+describe('PolicyDef.define', () => {
   it('Def несёт метаданные и правила-ссылки', () => {
-    const TaskPolicy = definePolicy({
+    const TaskPolicy = PolicyDef.define({
       name: 'task',
       label: 'Права на задачи',
       description: 'Кто может менять задачи.',

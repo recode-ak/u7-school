@@ -1,4 +1,4 @@
-import { defineUseCase } from 'dmg-core';
+import { UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { QuestionnairePoolSchema } from '../question';
 import { QuestionnaireArDef } from '../questionnaire.ar';
@@ -14,7 +14,7 @@ import { QuestionnaireRespondentPolicy } from '../questionnaire-respondent.polic
  * самого вызывающего, чужого респондента во входе нет; системный вызов без
  * человека получает `ACCESS_DENIED`.
  */
-export const StartQuestionnaireUcDef = defineUseCase({
+export const StartQuestionnaireUcDef = UseCaseDef.define({
   name: 'startQuestionnaire',
   label: 'Запустить анкету',
   description:

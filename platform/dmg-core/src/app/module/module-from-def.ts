@@ -1,11 +1,11 @@
-import type { AnyEventReactionDef } from '#core/domain/contracts/define-event-reaction';
-import type { AnyJobDef } from '#core/domain/contracts/define-job';
-import type { AnyModuleDef } from '#core/domain/contracts/define-module';
+import type { AnyEventReactionDef } from '#core/domain/contracts/event-reaction-def';
+import type { AnyJobDef } from '#core/domain/contracts/job-def';
+import type { AnyModuleDef } from '#core/domain/contracts/module-def';
 import type {
   AnyUseCaseDef,
   OutputOf,
   UseCaseErrorOf,
-} from '#core/domain/contracts/define-use-case';
+} from '#core/domain/contracts/use-case-def';
 import type { Caller, Identified } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import type { Result } from '#core/kernel/result/result';

@@ -1,10 +1,10 @@
-import { definePolicy, type ReadonlyAr, rule } from 'dmg-core';
+import { PolicyDef, type ReadonlyAr, Rule } from 'dmg-core';
 import type { WishAr } from './wish.ar';
 
 /** Контекст правил желания: желание, над которым действие. */
 export type WishCtx = { readonly wish: ReadonlyAr<WishAr> };
 
-const isAuthor = rule({
+const isAuthor = Rule.of({
   name: 'isAuthor',
   label: 'Автор желания',
   denyMessage: 'Отменить желание может только его автор.',
@@ -15,11 +15,11 @@ const isAuthor = rule({
 /**
  * Права на желания. Создание — без правила: желание всегда выражается
  * за вызывающего (`userId` берётся из субъекта, не из входа), поэтому с Ф8
- * (`defineUseCase`) UC создания сошлются на `allowAll`; сейчас legacy-UC
+ * (`UseCaseDef.define`) UC создания сошлются на `allowAll`; сейчас legacy-UC
  * без Policy. Уникальность активного желания —
  * не право, а доменное правило: `WishRules.rules.unique` (D-40).
  */
-export const WishPolicy = definePolicy({
+export const WishPolicy = PolicyDef.define({
   name: 'wish',
   label: 'Права на желания',
   description: 'Кто может управлять желанием: только его автор.',

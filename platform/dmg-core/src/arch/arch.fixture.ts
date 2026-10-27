@@ -2,17 +2,17 @@
 // слушает его событие и вызывает его UC через фасад (`calls`, D-42). Негативные фикстуры — в тестах,
 // как варианты этих Def.
 import * as v from 'valibot';
-import { defineAggregate } from '../domain/aggregate/define-aggregate';
-import { defineEventReaction } from '../domain/contracts/define-event-reaction';
-import { defineJob } from '../domain/contracts/define-job';
-import { defineModule } from '../domain/contracts/define-module';
-import { defineUseCase } from '../domain/contracts/define-use-case';
-import { defineEvents } from '../domain/events/define-events';
-import { allowAll } from '../domain/policy/policy';
-import { defineErrors } from '../kernel/errors/define-errors';
+import { AggregateDef } from '../domain/aggregate/aggregate-def';
+import { EventReactionDef } from '../domain/contracts/event-reaction-def';
+import { JobDef } from '../domain/contracts/job-def';
+import { ModuleDef } from '../domain/contracts/module-def';
+import { UseCaseDef } from '../domain/contracts/use-case-def';
+import { EventDef } from '../domain/events/event-def';
+import { allowAll } from '../domain/policy/rule';
+import { ErrorDef } from '../kernel/errors/error-def';
 import { BaseEntityFields, F } from '../kernel/fields/fields';
 
-export const ItemEvents = defineEvents('beta.item', {
+export const ItemEvents = EventDef.define('beta.item', {
   created: {
     label: 'Позиция создана',
     description: 'Появилась новая позиция.',
@@ -20,7 +20,7 @@ export const ItemEvents = defineEvents('beta.item', {
   },
 });
 
-export const ItemErrors = defineErrors('ITEM', {
+export const ItemErrors = ErrorDef.define('ITEM', {
   NOT_FOUND: {
     kind: 'not_found',
     label: 'Позиция не найдена',
@@ -29,7 +29,7 @@ export const ItemErrors = defineErrors('ITEM', {
   },
 });
 
-export const ItemArDef = defineAggregate({
+export const ItemArDef = AggregateDef.define({
   name: 'item',
   label: 'Позиция',
   description: 'Позиция каталога.',
@@ -38,7 +38,7 @@ export const ItemArDef = defineAggregate({
   errors: ItemErrors,
 });
 
-export const CreateItemUcDef = defineUseCase({
+export const CreateItemUcDef = UseCaseDef.define({
   name: 'createItem',
   label: 'Создать позицию',
   description: 'Добавляет позицию в каталог.',
@@ -52,7 +52,7 @@ export const CreateItemUcDef = defineUseCase({
   emits: [ItemEvents.created],
 });
 
-export const GetItemUcDef = defineUseCase({
+export const GetItemUcDef = UseCaseDef.define({
   name: 'getItem',
   label: 'Позиция',
   description: 'Позиция по идентификатору — для других модулей.',
@@ -65,7 +65,7 @@ export const GetItemUcDef = defineUseCase({
   errors: [ItemErrors.NOT_FOUND],
 });
 
-export const BetaModuleDef = defineModule({
+export const BetaModuleDef = ModuleDef.define({
   name: 'beta',
   label: 'Каталог',
   description: 'Модуль-зависимость.',
@@ -76,7 +76,7 @@ export const BetaModuleDef = defineModule({
   jobs: [],
 });
 
-export const NoteEvents = defineEvents('alpha.note', {
+export const NoteEvents = EventDef.define('alpha.note', {
   added: {
     label: 'Заметка добавлена',
     description: 'К позиции добавлена заметка.',
@@ -84,7 +84,7 @@ export const NoteEvents = defineEvents('alpha.note', {
   },
 });
 
-export const NoteErrors = defineErrors('NOTE', {
+export const NoteErrors = ErrorDef.define('NOTE', {
   EMPTY: {
     kind: 'validation',
     label: 'Пустая заметка',
@@ -92,7 +92,7 @@ export const NoteErrors = defineErrors('NOTE', {
   },
 });
 
-export const NoteArDef = defineAggregate({
+export const NoteArDef = AggregateDef.define({
   name: 'note',
   label: 'Заметка',
   description: 'Заметка к позиции.',
@@ -101,7 +101,7 @@ export const NoteArDef = defineAggregate({
   errors: NoteErrors,
 });
 
-export const AddNoteErDef = defineEventReaction({
+export const AddNoteErDef = EventReactionDef.define({
   name: 'addNote',
   label: 'Добавить заметку',
   description: 'К новой позиции добавляется заметка.',
@@ -111,7 +111,7 @@ export const AddNoteErDef = defineEventReaction({
   emits: [NoteEvents.added],
 });
 
-export const PurgeNotesJobDef = defineJob({
+export const PurgeNotesJobDef = JobDef.define({
   name: 'purgeNotes',
   label: 'Чистка заметок',
   description: 'Удаляет старые заметки.',
@@ -119,7 +119,7 @@ export const PurgeNotesJobDef = defineJob({
   scans: [NoteArDef],
 });
 
-export const AlphaModuleDef = defineModule({
+export const AlphaModuleDef = ModuleDef.define({
   name: 'alpha',
   label: 'Заметки',
   description: 'Модуль, который зависит от каталога.',

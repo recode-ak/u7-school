@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
-import { defineAggregate } from '../domain/aggregate/define-aggregate';
-import { defineEventReaction } from '../domain/contracts/define-event-reaction';
-import { defineJob } from '../domain/contracts/define-job';
-import { defineModule } from '../domain/contracts/define-module';
+import { AggregateDef } from '../domain/aggregate/aggregate-def';
+import { EventReactionDef } from '../domain/contracts/event-reaction-def';
+import { JobDef } from '../domain/contracts/job-def';
+import { ModuleDef } from '../domain/contracts/module-def';
 import {
   type AnyUseCaseDef,
-  defineUseCase,
-} from '../domain/contracts/define-use-case';
-import { allowAll } from '../domain/policy/policy';
-import { domainRule } from '../domain/rules/domain-rule';
-import { defineErrors } from '../kernel/errors/define-errors';
+  UseCaseDef,
+} from '../domain/contracts/use-case-def';
+import { allowAll } from '../domain/policy/rule';
+import { DomainRuleDef } from '../domain/rules/domain-rule-def';
+import { ErrorDef } from '../kernel/errors/error-def';
 import { BaseEntityFields } from '../kernel/fields/fields';
 import { ok } from '../kernel/result/result';
 import {
@@ -30,7 +30,7 @@ const NOTIFY_CALLS: readonly AnyUseCaseDef[] = [
   GetTaskUcDef,
   CompleteTaskUcDef,
 ];
-const NotifyTodoErDef = defineEventReaction({
+const NotifyTodoErDef = EventReactionDef.define({
   name: 'notifyTodo',
   label: 'Сообщить о задаче',
   description: 'Читает задачу и завершает её через фасад todo.',
@@ -38,7 +38,7 @@ const NotifyTodoErDef = defineEventReaction({
   calls: NOTIFY_CALLS,
 });
 
-const NoteArDef = defineAggregate({
+const NoteArDef = AggregateDef.define({
   name: 'note',
   label: 'Заметка',
   description: 'Заметка к задаче.',
@@ -47,7 +47,7 @@ const NoteArDef = defineAggregate({
   errors: {},
 });
 
-const ShowTaskUcDef = defineUseCase({
+const ShowTaskUcDef = UseCaseDef.define({
   name: 'showTask',
   label: 'Показать задачу',
   description: 'Задача к заметке — через фасад todo.',
@@ -61,7 +61,7 @@ const ShowTaskUcDef = defineUseCase({
   errors: [],
 });
 
-const SweepJobDef = defineJob({
+const SweepJobDef = JobDef.define({
   name: 'sweep',
   label: 'Чистка',
   description: 'Проверяет задачи заметок.',
@@ -69,7 +69,7 @@ const SweepJobDef = defineJob({
   calls: [GetTaskUcDef],
 });
 
-const NotesModuleDef = defineModule({
+const NotesModuleDef = ModuleDef.define({
   name: 'notes',
   label: 'Заметки',
   description: 'Модуль для теста связей «UC → UC».',
@@ -85,14 +85,14 @@ const NotesModuleDef = defineModule({
  * UC `<uc>`, который ссылается на `rules` (по умолчанию — на своё правило).
  */
 function withUniqueRule(name: string, prefix: string) {
-  const errors = defineErrors(prefix, {
+  const errors = ErrorDef.define(prefix, {
     DUPLICATE: {
       kind: 'conflict',
       label: 'Дубль',
       description: 'Такая запись уже есть.',
     },
   });
-  const ArDef = defineAggregate({
+  const ArDef = AggregateDef.define({
     name,
     label: name,
     description: `Агрегат ${name}.`,
@@ -100,7 +100,7 @@ function withUniqueRule(name: string, prefix: string) {
     events: {},
     errors,
   });
-  const unique = domainRule({
+  const unique = DomainRuleDef.define({
     name: 'unique',
     label: 'Запись уникальна',
     description: 'Дубль не создаётся.',
@@ -115,7 +115,7 @@ const ruleUc = (
   a: ReturnType<typeof withUniqueRule>,
   rule = a.unique,
 ) =>
-  defineUseCase({
+  UseCaseDef.define({
     name,
     label: name,
     description: `UC ${name}.`,
@@ -131,7 +131,7 @@ const ruleUc = (
 
 const shopItem = withUniqueRule('item', 'ITEM');
 const shopOrder = withUniqueRule('order', 'ORDER');
-const ShopModuleDef = defineModule({
+const ShopModuleDef = ModuleDef.define({
   name: 'shop',
   label: 'Магазин',
   description: 'Два агрегата с правилом unique.',
@@ -143,7 +143,7 @@ const ShopModuleDef = defineModule({
 });
 
 const cartLine = withUniqueRule('line', 'LINE');
-const CartModuleDef = defineModule({
+const CartModuleDef = ModuleDef.define({
   name: 'cart',
   label: 'Корзина',
   description: 'UC с правилом чужого модуля.',

@@ -1,16 +1,16 @@
 import { describe, expect, expectTypeOf, it } from 'bun:test';
 import * as v from 'valibot';
-import { defineErrors } from '#core/kernel/errors/define-errors';
+import { ErrorDef } from '#core/kernel/errors/error-def';
 import { F } from '#core/kernel/fields/fields';
 import { ok } from '#core/kernel/result/result';
-import { defineRules } from './define-rules';
 import {
   type AnyDomainRule,
   type DomainRuleContextOf,
-  domainRule,
-} from './domain-rule';
+  DomainRuleDef,
+} from './domain-rule-def';
+import { RulesDef } from './rules-def';
 
-const ShelfErrors = defineErrors('SHELF', {
+const ShelfErrors = ErrorDef.define('SHELF', {
   FULL: {
     kind: 'conflict',
     label: 'Полка заполнена',
@@ -19,14 +19,14 @@ const ShelfErrors = defineErrors('SHELF', {
   },
 });
 
-const OtherErrors = defineErrors('OTHER', {
+const OtherErrors = ErrorDef.define('OTHER', {
   FAILED: { kind: 'conflict', label: 'Сбой', description: 'Чужая ошибка.' },
 });
 
 /** Ответ правила — у «агрегата» (D-39): правило только спрашивает. */
 type ShelfCtx = { readonly shelf: { isFull(): boolean; capacity(): number } };
 
-const hasRoom = domainRule({
+const hasRoom = DomainRuleDef.define({
   name: 'hasRoom',
   label: 'На полке есть место',
   description: 'Книгу можно поставить, только если полка не заполнена.',
@@ -41,7 +41,7 @@ const shelf = (full: boolean): ShelfCtx => ({
   shelf: { isFull: () => full, capacity: () => 3 },
 });
 
-describe('domainRule', () => {
+describe('DomainRuleDef.define', () => {
   it('ok, если проверка прошла', () => {
     expect(hasRoom.check(shelf(false))).toEqual(ok());
   });
@@ -73,7 +73,7 @@ describe('domainRule', () => {
   });
 
   it('ошибка чужого ErrorDef не компилируется (DOM-16)', () => {
-    const foreign = domainRule({
+    const foreign = DomainRuleDef.define({
       name: 'foreign',
       label: 'Чужая ошибка',
       description: 'Правило пытается вернуть не свою ошибку.',
@@ -85,9 +85,9 @@ describe('domainRule', () => {
   });
 });
 
-describe('defineRules', () => {
+describe('RulesDef.define', () => {
   it('группа правил агрегата — описанный Def', () => {
-    const ShelfRules = defineRules({
+    const ShelfRules = RulesDef.define({
       name: 'shelf',
       label: 'Правила полки',
       description: 'Допустимость действий с полкой при её состоянии.',

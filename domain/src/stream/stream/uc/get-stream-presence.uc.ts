@@ -1,4 +1,4 @@
-import { allowAll, defineUseCase, F, type OutputOf } from 'dmg-core';
+import { allowAll, F, type OutputOf, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { StreamArDef } from '../stream.ar';
 
@@ -9,7 +9,7 @@ import { StreamArDef } from '../stream.ar';
  * `allowAll`: ответ не зависит от субъекта — это факт существования потока,
  * а не доступ к его содержимому.
  */
-export const GetStreamPresenceUcDef = defineUseCase({
+export const GetStreamPresenceUcDef = UseCaseDef.define({
   name: 'getStreamPresence',
   label: 'Наличие потока',
   description: 'Существует ли поток с указанным id, — для других модулей.',

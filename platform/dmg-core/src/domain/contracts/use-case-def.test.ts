@@ -2,7 +2,7 @@ import { describe, expect, expectTypeOf, it } from 'bun:test';
 import * as v from 'valibot';
 import { F } from '#core/kernel/fields/fields';
 import { toJsonSchema } from '#core/kernel/schema/json-schema';
-import { allowAll } from '../policy/policy';
+import { allowAll } from '../policy/rule';
 import {
   GetUserUcDef,
   TaskArDef,

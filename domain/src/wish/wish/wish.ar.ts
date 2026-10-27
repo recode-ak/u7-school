@@ -1,7 +1,7 @@
 import type { QuestionnairePool } from '@u7-scl/domain/questionnaire/contract';
 import {
   Aggregate,
-  defineAggregate,
+  AggregateDef,
   type ErrorOf,
   type ErrorsOf,
   ok,
@@ -27,7 +27,7 @@ const {
   NOT_FOUND,
 } = WishErrors;
 
-export const WishArDef = defineAggregate({
+export const WishArDef = AggregateDef.define({
   name: 'wish',
   label: 'Желание',
   description:

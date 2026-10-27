@@ -1,11 +1,11 @@
-import type { AnyModuleDef } from '../domain/contracts/define-module';
+import type { Facade, SystemCallable } from '../domain/contracts/facade';
+import type { AnyModuleDef } from '../domain/contracts/module-def';
 import type {
   AnyUseCaseDef,
   InputOf,
   OutputOf,
   UseCaseErrorOf,
-} from '../domain/contracts/define-use-case';
-import type { Facade, SystemCallable } from '../domain/contracts/facade';
+} from '../domain/contracts/use-case-def';
 import type { SystemCaller } from '../kernel/caller/caller';
 import type { Result } from '../kernel/result/result';
 import type { Trace } from '../kernel/trace/trace';

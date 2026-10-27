@@ -9,7 +9,7 @@ import {
   type TaskPolicy,
   TodoModuleDef,
 } from './contracts.fixture';
-import type { AnyUseCaseDef, InputOf } from './define-use-case';
+import type { AnyUseCaseDef, InputOf } from './use-case-def';
 
 describe('типы Def: текущий DSL', () => {
   it('литеральные типы calls, policy, useCases, InputOf', () => {

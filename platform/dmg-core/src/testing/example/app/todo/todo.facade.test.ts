@@ -8,10 +8,10 @@ import { ModuleFacade } from '#core/app/facade/module-facade';
 import { ModuleFacades } from '#core/app/facade/module-facades';
 import type { UnitOfWork } from '#core/app/uow/unit-of-work';
 import { UseCaseFromDef } from '#core/app/use-case/use-case-from-def';
-import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
+import { AggregateDef } from '#core/domain/aggregate/aggregate-def';
 import { ModuleDef } from '#core/domain/contracts/module-def';
 import { UseCaseDef } from '#core/domain/contracts/use-case-def';
-import { allowAll } from '#core/domain/policy/policy';
+import { allowAll } from '#core/domain/policy/rule';
 import { type Caller, UserCaller } from '#core/kernel/caller/caller';
 import { BaseEntityFields, F } from '#core/kernel/fields/fields';
 import { ok } from '#core/kernel/result/result';
@@ -36,7 +36,7 @@ import { createTodoModule } from './todo.module';
 // `calls` и вызывает его через `this.call` (D-43). Вместе с владельцем —
 // фасад `ModuleFacade` над настоящим модулем todo; потребитель отдельно —
 // `StubFacade` с ответом по Def.
-const DigestArDef = defineAggregate({
+const DigestArDef = AggregateDef.define({
   name: 'digest',
   label: 'Сводка',
   description: 'Сводка по задачам — агрегат модуля-потребителя.',

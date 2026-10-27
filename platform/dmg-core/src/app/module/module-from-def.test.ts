@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { defineModule } from '#core/domain/contracts/define-module';
 import { JobDef } from '#core/domain/contracts/job-def';
+import { ModuleDef } from '#core/domain/contracts/module-def';
 import { SystemCaller, UserCaller } from '#core/kernel/caller/caller';
 import { ok } from '#core/kernel/result/result';
 import { Trace } from '#core/kernel/trace/trace';
@@ -27,7 +27,7 @@ import {
   type ModuleMap,
 } from './module-from-def';
 
-const MiniModuleDef = defineModule({
+const MiniModuleDef = ModuleDef.define({
   name: 'mini',
   label: 'Мини',
   description: 'Модуль для проверки карты Def → класс.',

@@ -1,4 +1,4 @@
-import type { AnyModuleDef } from '../domain/contracts/define-module';
+import type { AnyModuleDef } from '../domain/contracts/module-def';
 import { DefIndex } from '../graph/def-index';
 import { DefChecker } from './def-checker';
 import { FileChecker, type ModuleLayout } from './file-checker';

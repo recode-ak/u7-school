@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
-import { type AnyEventDef, defineEvents, type EventOf } from './define-events';
+import { type AnyEventDef, EventDef, type EventOf } from './event-def';
 
-const TaskEvents = defineEvents('todo.task', {
+const TaskEvents = EventDef.define('todo.task', {
   created: {
     label: 'Задача создана',
     description: 'В списке появилась новая задача.',
@@ -15,7 +15,7 @@ const TaskEvents = defineEvents('todo.task', {
   },
 });
 
-describe('defineEvents', () => {
+describe('EventDef.define', () => {
   it('FQN = префикс группы `module.aggregate` + ключ', () => {
     expect(TaskEvents.created.name).toBe('todo.task.created');
     expect(TaskEvents.completed.name).toBe('todo.task.completed');
@@ -65,7 +65,7 @@ describe('defineEvents', () => {
 
   it('префикс обязан иметь вид `module.aggregate`', () => {
     // @ts-expect-error префикс без агрегата
-    defineEvents('todo', {});
+    EventDef.define('todo', {});
     expect(true).toBe(true);
   });
 });

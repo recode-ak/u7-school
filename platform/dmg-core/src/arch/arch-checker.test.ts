@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test';
-import { defineModule } from '../domain/contracts/define-module';
+import { ModuleDef } from '../domain/contracts/module-def';
 import { DefIndex } from '../graph/def-index';
 import { ExampleArch } from '../testing/example/example.arch';
 import { ArchChecker } from './arch-checker';
 
-const broken = defineModule({
+const broken = ModuleDef.define({
   name: 'broken',
   label: '',
   description: 'Модуль без названия и без файлов.',

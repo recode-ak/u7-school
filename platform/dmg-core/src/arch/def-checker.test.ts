@@ -1,24 +1,21 @@
 import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import {
-  defineAggregate,
+  AggregateDef,
   type StateSchema,
-} from '../domain/aggregate/define-aggregate';
-import { defineEventReaction } from '../domain/contracts/define-event-reaction';
-import { defineJob } from '../domain/contracts/define-job';
-import {
-  type AnyModuleDef,
-  defineModule,
-} from '../domain/contracts/define-module';
+} from '../domain/aggregate/aggregate-def';
+import { EventReactionDef } from '../domain/contracts/event-reaction-def';
+import { JobDef } from '../domain/contracts/job-def';
+import { type AnyModuleDef, ModuleDef } from '../domain/contracts/module-def';
 import {
   type AnyUseCaseDef,
-  defineUseCase,
-} from '../domain/contracts/define-use-case';
-import { type AnyEventDef, defineEvents } from '../domain/events/define-events';
-import { allowAll } from '../domain/policy/policy';
-import { domainRule } from '../domain/rules/domain-rule';
+  UseCaseDef,
+} from '../domain/contracts/use-case-def';
+import { type AnyEventDef, EventDef } from '../domain/events/event-def';
+import { allowAll } from '../domain/policy/rule';
+import { DomainRuleDef } from '../domain/rules/domain-rule-def';
 import { DefIndex } from '../graph/def-index';
-import { defineErrors } from '../kernel/errors/define-errors';
+import { ErrorDef } from '../kernel/errors/error-def';
 import { BaseEntityFields, F } from '../kernel/fields/fields';
 import { ok } from '../kernel/result/result';
 import {
@@ -39,7 +36,7 @@ import { DefChecker } from './def-checker';
 const report = (...roots: AnyModuleDef[]): string[] =>
   new DefChecker(DefIndex.from(roots)).check().map((v) => v.format());
 
-const ThingEvents = defineEvents('gamma.thing', {
+const ThingEvents = EventDef.define('gamma.thing', {
   happened: {
     label: 'Случилось',
     description: 'Что-то случилось.',
@@ -54,21 +51,21 @@ function gamma(
     state?: StateSchema;
     input?: v.GenericSchema;
     events?: { readonly [key: string]: AnyEventDef };
-    errors?: Parameters<typeof defineErrors>[1];
+    errors?: Parameters<typeof ErrorDef.define>[1];
     errorPrefix?: string;
   } = {},
 ): AnyModuleDef {
   const events = over.events ?? ThingEvents;
-  const ThingArDef = defineAggregate({
+  const ThingArDef = AggregateDef.define({
     name: 'thing',
     label: 'Вещь',
     description: 'Вещь для негативных фикстур.',
     state: v.object({ ...BaseEntityFields }),
     ...(over.state ? { state: over.state } : {}),
     events,
-    errors: defineErrors(over.errorPrefix ?? 'THING', over.errors ?? {}),
+    errors: ErrorDef.define(over.errorPrefix ?? 'THING', over.errors ?? {}),
   });
-  const DoItUcDef = defineUseCase({
+  const DoItUcDef = UseCaseDef.define({
     name: 'doIt',
     label: 'Сделать',
     description: 'Делает дело.',
@@ -81,7 +78,7 @@ function gamma(
     errors: [],
     emits: Object.values(events),
   });
-  return defineModule({
+  return ModuleDef.define({
     name: 'gamma',
     label: over.label ?? 'Гамма',
     description: 'Модуль негативных фикстур.',
@@ -107,7 +104,7 @@ describe('DefChecker', () => {
     });
 
     it('пустой description события', () => {
-      const events = defineEvents('gamma.thing', {
+      const events = EventDef.define('gamma.thing', {
         happened: {
           label: 'Случилось',
           description: '',
@@ -159,8 +156,8 @@ describe('DefChecker', () => {
 
   describe('MAN-06 — связность', () => {
     it('неопубликованное событие и висячий подписчик', () => {
-      const beta = defineModule({ ...BetaModuleDef, useCases: [] });
-      const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [beta] });
+      const beta = ModuleDef.define({ ...BetaModuleDef, useCases: [] });
+      const alpha = ModuleDef.define({ ...AlphaModuleDef, dependsOn: [beta] });
       expect(report(alpha)).toEqual([
         'MAN-06: ER alpha.addNote: UC getItem не входит ни в один модуль',
         'MAN-06: ER alpha.addNote слушает beta.item.created, которое никто не публикует',
@@ -169,12 +166,12 @@ describe('DefChecker', () => {
     });
 
     it('операция трогает агрегат и публикует событие чужого модуля', () => {
-      const er = defineEventReaction({
+      const er = EventReactionDef.define({
         ...AddNoteErDef,
         touches: [ItemArDef],
         emits: [ItemEvents.created],
       });
-      const alpha = defineModule({
+      const alpha = ModuleDef.define({
         ...AlphaModuleDef,
         reactions: [er],
       });
@@ -186,15 +183,15 @@ describe('DefChecker', () => {
     });
 
     it('Def вне модулей: агрегат UC, событие и ошибка', () => {
-      const LostErrors = defineErrors('LOST', {
+      const LostErrors = ErrorDef.define('LOST', {
         GONE: { kind: 'not_found', label: 'Нет', description: 'Пропало.' },
       });
-      const uc = defineUseCase({
+      const uc = UseCaseDef.define({
         ...CreateItemUcDef,
         aggregate: NoteArDef,
         errors: [LostErrors.GONE],
       });
-      const beta = defineModule({ ...BetaModuleDef, useCases: [uc] });
+      const beta = ModuleDef.define({ ...BetaModuleDef, useCases: [uc] });
       expect(report(beta)).toEqual([
         'MAN-06: UC beta.createItem: агрегат note не входит ни в один модуль',
         'MAN-06: UC beta.createItem: ошибка LOST_GONE не входит ни в один модуль',
@@ -202,13 +199,13 @@ describe('DefChecker', () => {
     });
 
     it('подписка на событие вне модулей', () => {
-      const er = defineEventReaction({
+      const er = EventReactionDef.define({
         ...AddNoteErDef,
         on: [NoteEvents.added],
         emits: [],
         calls: [],
       });
-      const beta = defineModule({
+      const beta = ModuleDef.define({
         ...BetaModuleDef,
         aggregates: [ItemArDef],
         reactions: [er],
@@ -224,17 +221,17 @@ describe('DefChecker', () => {
       report(...roots).filter((l) => l.startsWith('MAN-13'));
 
     it('UC, ER и Job с агрегатом чужого модуля — нарушение', () => {
-      const uc = defineUseCase({
+      const uc = UseCaseDef.define({
         ...CreateItemUcDef,
         name: 'createNote',
         aggregate: ItemArDef,
       });
-      const er = defineEventReaction({
+      const er = EventReactionDef.define({
         ...AddNoteErDef,
         touches: [NoteArDef, ItemArDef],
       });
-      const job = defineJob({ ...PurgeNotesJobDef, scans: [ItemArDef] });
-      const alpha = defineModule({
+      const job = JobDef.define({ ...PurgeNotesJobDef, scans: [ItemArDef] });
+      const alpha = ModuleDef.define({
         ...AlphaModuleDef,
         useCases: [uc],
         reactions: [er],
@@ -254,7 +251,7 @@ describe('DefChecker', () => {
 
   describe('MAN-08 — FQN событий', () => {
     it('префикс не совпадает с модулем и агрегатом', () => {
-      const events = defineEvents('gamma.other', {
+      const events = EventDef.define('gamma.other', {
         happened: {
           label: 'Случилось',
           description: 'Что-то случилось.',
@@ -269,7 +266,7 @@ describe('DefChecker', () => {
 
   describe('ARC-04 — ссылки Def ⊆ dependsOn', () => {
     it('событие и UC из calls модуля вне dependsOn', () => {
-      const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [] });
+      const alpha = ModuleDef.define({ ...AlphaModuleDef, dependsOn: [] });
       expect(report(alpha, BetaModuleDef)).toEqual([
         'ARC-04: ER alpha.addNote: событие beta.item.created модуля beta, которого нет в dependsOn alpha',
         'ARC-04: ER alpha.addNote: UC beta.getItem модуля beta, которого нет в dependsOn alpha',
@@ -277,7 +274,7 @@ describe('DefChecker', () => {
     });
 
     it('calls UC и Job — тоже ⊆ dependsOn', () => {
-      const ShowUcDef = defineUseCase({
+      const ShowUcDef = UseCaseDef.define({
         name: 'showNote',
         label: 'Показать заметку',
         description: 'Заметка с позицией каталога.',
@@ -290,12 +287,12 @@ describe('DefChecker', () => {
         output: v.object({}),
         errors: [],
       });
-      const alpha = defineModule({
+      const alpha = ModuleDef.define({
         ...AlphaModuleDef,
         dependsOn: [],
         useCases: [ShowUcDef],
         reactions: [],
-        jobs: [defineJob({ ...PurgeNotesJobDef, calls: [GetItemUcDef] })],
+        jobs: [JobDef.define({ ...PurgeNotesJobDef, calls: [GetItemUcDef] })],
       });
       const arc04 = report(alpha, BetaModuleDef).filter((l) =>
         l.startsWith('ARC-04'),
@@ -309,14 +306,14 @@ describe('DefChecker', () => {
 
   describe('MAN-05 — calls (D-42)', () => {
     const withCalls = (calls: AnyUseCaseDef[], extra: AnyUseCaseDef[] = []) =>
-      defineModule({
+      ModuleDef.define({
         ...AlphaModuleDef,
         useCases: extra,
-        reactions: [defineEventReaction({ ...AddNoteErDef, calls })],
+        reactions: [EventReactionDef.define({ ...AddNoteErDef, calls })],
       });
 
     it('UC своего модуля в calls — нарушение', () => {
-      const OwnUcDef = defineUseCase({
+      const OwnUcDef = UseCaseDef.define({
         ...GetItemUcDef,
         name: 'getNote',
         aggregate: NoteArDef,
@@ -334,7 +331,7 @@ describe('DefChecker', () => {
     });
 
     it('UC вне модулей в calls — MAN-06', () => {
-      const LostUcDef = defineUseCase({ ...GetItemUcDef, name: 'lost' });
+      const LostUcDef = UseCaseDef.define({ ...GetItemUcDef, name: 'lost' });
       expect(report(withCalls([LostUcDef]))).toEqual([
         'MAN-06: ER alpha.addNote: UC lost не входит ни в один модуль',
       ]);
@@ -344,8 +341,8 @@ describe('DefChecker', () => {
   describe('ARC-05 — dependsOn без циклов', () => {
     it('цикл назван путём', () => {
       const deps: AnyModuleDef[] = [];
-      const a = defineModule({ ...gamma(), name: 'a', dependsOn: deps });
-      const b = defineModule({ ...gamma(), name: 'b', dependsOn: [a] });
+      const a = ModuleDef.define({ ...gamma(), name: 'a', dependsOn: deps });
+      const b = ModuleDef.define({ ...gamma(), name: 'b', dependsOn: [a] });
       deps.push(b);
       expect(report(a).filter((m) => m.startsWith('ARC-05'))).toEqual([
         'ARC-05: цикл dependsOn: a → b → a',
@@ -355,15 +352,15 @@ describe('DefChecker', () => {
 
   describe('ERR-04 — коды ошибок', () => {
     it('один код у разных Def', () => {
-      const Twin = defineErrors('ITEM', {
+      const Twin = ErrorDef.define('ITEM', {
         NOT_FOUND: { kind: 'not_found', label: 'Нет', description: 'Нет.' },
       });
-      const twinAr = defineAggregate({
+      const twinAr = AggregateDef.define({
         ...ItemArDef,
         name: 'twin',
         errors: Twin,
       });
-      const beta = defineModule({
+      const beta = ModuleDef.define({
         ...BetaModuleDef,
         aggregates: [ItemArDef, twinAr],
       });
@@ -404,14 +401,14 @@ describe('DefChecker', () => {
 
   describe('MAN-12 — отказы переходов из группы ошибок агрегата', () => {
     it('ошибка отказа чужой группы', () => {
-      const Foreign = defineErrors('OTHER', {
+      const Foreign = ErrorDef.define('OTHER', {
         CLOSED: { kind: 'conflict', label: 'Закрыта', description: 'Чужая.' },
       });
-      const Own = defineErrors('DOOR', {
+      const Own = ErrorDef.define('DOOR', {
         OPEN: { kind: 'conflict', label: 'Открыта', description: 'Своя.' },
       });
-      const DoorEvents = defineEvents('delta.door', {});
-      const DoorArDef = defineAggregate({
+      const DoorEvents = EventDef.define('delta.door', {});
+      const DoorArDef = AggregateDef.define({
         name: 'door',
         label: 'Дверь',
         description: 'Дверь для фикстуры переходов.',
@@ -431,7 +428,7 @@ describe('DefChecker', () => {
         events: DoorEvents,
         errors: Own,
       });
-      const m = defineModule({
+      const m = ModuleDef.define({
         name: 'delta',
         label: 'Дельта',
         description: 'Модуль фикстуры переходов.',
@@ -448,23 +445,23 @@ describe('DefChecker', () => {
   });
 
   describe('MAN-06 — внешний модуль (только контракт)', () => {
-    const OuterEvents = defineEvents('outer.item', {
+    const OuterEvents = EventDef.define('outer.item', {
       appeared: {
         label: 'Появилась',
         description: 'Запись появилась во внешней системе.',
         payload: v.object({ itemId: F.uuid('записи') }),
       },
     });
-    const OuterItemArDef = defineAggregate({
+    const OuterItemArDef = AggregateDef.define({
       name: 'item',
       label: 'Запись',
       description: 'Запись внешнего модуля.',
       state: v.object({ ...BaseEntityFields }),
       events: OuterEvents,
-      errors: defineErrors('ITEM', {}),
+      errors: ErrorDef.define('ITEM', {}),
     });
     const outer = (over: Partial<AnyModuleDef> = {}) =>
-      defineModule({
+      ModuleDef.define({
         name: 'outer',
         label: 'Внешний',
         description: 'Модуль вне приложения: известен только контракт.',
@@ -479,7 +476,7 @@ describe('DefChecker', () => {
 
     it('события внешнего модуля публикует внешняя сторона — подписка допустима', () => {
       const Outer = outer();
-      const WatchErDef = defineEventReaction({
+      const WatchErDef = EventReactionDef.define({
         name: 'watchOuter',
         label: 'Следить',
         description: 'Реагирует на внешнее событие.',
@@ -488,7 +485,7 @@ describe('DefChecker', () => {
         calls: [],
         emits: [],
       });
-      const inner = defineModule({
+      const inner = ModuleDef.define({
         name: 'inner',
         label: 'Внутренний',
         description: 'Слушает внешний модуль.',
@@ -501,7 +498,7 @@ describe('DefChecker', () => {
       expect(report(inner).filter((l) => l.startsWith('MAN-06'))).toEqual([]);
     });
 
-    const OuterGetUcDef = defineUseCase({
+    const OuterGetUcDef = UseCaseDef.define({
       name: 'getOuterItem',
       label: 'Внешняя запись',
       description: 'Запись внешнего модуля — Def без реализации.',
@@ -516,14 +513,14 @@ describe('DefChecker', () => {
 
     it('Def UC без реализации — контракт, на него ссылаются calls (D-42)', () => {
       const Outer = outer({ useCases: [OuterGetUcDef] });
-      const WatchErDef = defineEventReaction({
+      const WatchErDef = EventReactionDef.define({
         name: 'watchOuter',
         label: 'Следить',
         description: 'Читает внешнюю запись через фасад.',
         on: [OuterEvents.appeared],
         calls: [OuterGetUcDef],
       });
-      const inner = defineModule({
+      const inner = ModuleDef.define({
         name: 'inner',
         label: 'Внутренний',
         description: 'Вызывает UC внешнего модуля.',
@@ -546,7 +543,7 @@ describe('DefChecker', () => {
 
   describe('доменные правила UC', () => {
     const itemExists = (label = 'Позиция есть') =>
-      domainRule({
+      DomainRuleDef.define({
         name: 'itemExists',
         label,
         description: 'Действие допустимо только над существующей позицией.',
@@ -557,9 +554,9 @@ describe('DefChecker', () => {
       rules: readonly ReturnType<typeof itemExists>[],
       errors = [ItemErrors.NOT_FOUND],
     ) =>
-      defineModule({
+      ModuleDef.define({
         ...BetaModuleDef,
-        useCases: [defineUseCase({ ...CreateItemUcDef, errors, rules })],
+        useCases: [UseCaseDef.define({ ...CreateItemUcDef, errors, rules })],
       });
 
     it('объявленная ошибка правила — без нарушений', () => {
@@ -586,10 +583,10 @@ describe('DefChecker', () => {
     });
 
     it('MAN-01: правило чужого модуля — заголовок по владельцу ошибки', () => {
-      const m = defineModule({
+      const m = ModuleDef.define({
         ...AlphaModuleDef,
         useCases: [
-          defineUseCase({
+          UseCaseDef.define({
             ...CreateItemUcDef,
             name: 'noteItem',
             aggregate: NoteArDef,

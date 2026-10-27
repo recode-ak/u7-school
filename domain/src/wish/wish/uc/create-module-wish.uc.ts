@@ -1,5 +1,5 @@
 import { GetModuleEnrollmentUcDef } from '@u7-scl/domain/course/contract';
-import { allowAll, defineUseCase } from 'dmg-core';
+import { allowAll, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { WishArDef } from '../wish.ar';
 import { WishErrors } from '../wish.errors';
@@ -12,7 +12,7 @@ import { WishModuleTargetVo } from '../wish.state';
  * у legacy: сначала модуль (`moduleEnrollable`), затем дубль (`unique`).
  * Анкеты у модулей нет — желание сразу `expressed`; событий создания нет.
  */
-export const CreateModuleWishUcDef = defineUseCase({
+export const CreateModuleWishUcDef = UseCaseDef.define({
   name: 'createModuleWish',
   label: 'Выразить желание пройти модуль',
   description:

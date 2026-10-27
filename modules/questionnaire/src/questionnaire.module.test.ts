@@ -6,15 +6,15 @@ import {
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import {
+  AggregateDef,
   allowAll,
   BaseEntityFields,
   type Caller,
-  defineAggregate,
-  defineModule,
-  defineUseCase,
+  ModuleDef,
   type OperationRef,
   ok,
   SystemCaller,
+  UseCaseDef,
   UserCaller,
 } from 'dmg-core';
 import {
@@ -37,7 +37,7 @@ import {
 // Потребитель модуля анкет — UC другого модуля: объявляет
 // `startQuestionnaire` в `calls` и вызывает его через `this.call` (D-43);
 // фасад — `ModuleFacade` над модулем анкет.
-const ProbeArDef = defineAggregate({
+const ProbeArDef = AggregateDef.define({
   name: 'probe',
   label: 'Проба',
   description: 'Агрегат модуля-потребителя фасада анкет.',
@@ -59,14 +59,14 @@ const probeSpec = {
   errors: [],
 } as const;
 
-const ProbeUcDef = defineUseCase({
+const ProbeUcDef = UseCaseDef.define({
   ...probeSpec,
   calls: [StartQuestionnaireUcDef],
 });
 /** Тот же UC, но `startQuestionnaire` в `calls` не объявлен — вызов не компилируется. */
-const SneakyUcDef = defineUseCase({ ...probeSpec, name: 'sneaky' });
+const SneakyUcDef = UseCaseDef.define({ ...probeSpec, name: 'sneaky' });
 
-const ProbeModuleDef = defineModule({
+const ProbeModuleDef = ModuleDef.define({
   name: 'probe',
   label: 'Проба',
   description: 'Модуль-потребитель фасада анкет.',

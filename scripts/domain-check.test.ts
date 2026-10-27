@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { defineModule } from 'dmg-core';
+import { ModuleDef } from 'dmg-core';
 import {
   checkContractImports,
   checkDebt,
@@ -146,8 +146,11 @@ describe('checkDomainGraph: ARC-05', () => {
 });
 
 describe('domainGraphOf: граф из ModuleDef', () => {
-  const mod = (name: string, dependsOn: ReturnType<typeof defineModule>[]) =>
-    defineModule({
+  const mod = (
+    name: string,
+    dependsOn: ReturnType<typeof ModuleDef.define>[],
+  ) =>
+    ModuleDef.define({
       name,
       label: name,
       description: `Модуль ${name}.`,

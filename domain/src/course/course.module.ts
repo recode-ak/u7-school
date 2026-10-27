@@ -1,5 +1,5 @@
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
-import { defineModule } from 'dmg-core';
+import { ModuleDef } from 'dmg-core';
 import { CourseArDef } from './course/course.ar';
 import { GetCourseEnrollmentUcDef } from './course/uc/get-course-enrollment.uc';
 import { GetCoursesIncludingModuleUcDef } from './course/uc/get-courses-including-module.uc';
@@ -13,7 +13,7 @@ import { GetSameModulesUcDef } from './course/uc/get-same-modules.uc';
  * модули (D-42; исполняет адаптер над legacy-фасадом, TR-11). При миграции
  * `external` снимается.
  */
-export const CourseModuleDef = defineModule({
+export const CourseModuleDef = ModuleDef.define({
   name: 'course',
   label: 'Курсы',
   description: 'Курсы, модули, уроки и шаги учебного контента.',

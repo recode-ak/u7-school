@@ -3,7 +3,7 @@ import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
-import { defineModule } from 'dmg-core';
+import { ModuleDef } from 'dmg-core';
 import { ArchChecker } from 'dmg-core/arch';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import * as v from 'valibot';
@@ -53,7 +53,7 @@ describe('WishArDef', () => {
   });
 
   it('ArchChecker с зависимостями — без нарушений (описания, FQN, уникальность кодов)', () => {
-    const probe = defineModule({
+    const probe = ModuleDef.define({
       name: 'wish',
       label: 'Желания',
       description: 'Проба Def агрегата до паспорта модуля (Ф12).',

@@ -4,10 +4,10 @@ import { BaseEntityFields } from '#core/kernel/fields/fields';
 import { ok, type Result } from '#core/kernel/result/result';
 import { Aggregate } from './aggregate';
 import type { StateOf } from './aggregate.types';
-import { defineAggregate } from './define-aggregate';
+import { AggregateDef } from './aggregate-def';
 import type { ReadonlyAr } from './readonly-ar';
 
-const NoteDef = defineAggregate({
+const NoteDef = AggregateDef.define({
   name: 'note',
   label: 'Заметка',
   description: 'Заметка без статусов.',

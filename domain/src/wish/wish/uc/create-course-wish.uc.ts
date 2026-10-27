@@ -1,6 +1,6 @@
 import { GetCourseEnrollmentUcDef } from '@u7-scl/domain/course/contract';
 import { StartQuestionnaireUcDef } from '@u7-scl/domain/questionnaire/contract';
-import { allowAll, defineUseCase, F } from 'dmg-core';
+import { allowAll, F, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { WishArDef } from '../wish.ar';
 import { WishErrors } from '../wish.errors';
@@ -14,7 +14,7 @@ import { WishCourseTargetVo } from '../wish.state';
  * У курса с пулом анкеты желание ждёт анкету — UC запускает её через
  * модуль анкет; событий создания желания нет.
  */
-export const CreateCourseWishUcDef = defineUseCase({
+export const CreateCourseWishUcDef = UseCaseDef.define({
   name: 'createCourseWish',
   label: 'Выразить желание пройти курс',
   description:

@@ -1,4 +1,4 @@
-import { allowAll, defineUseCase, F, type OutputOf } from 'dmg-core';
+import { allowAll, F, type OutputOf, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { CourseArDef } from '../course.ar';
 
@@ -11,7 +11,7 @@ import { CourseArDef } from '../course.ar';
  * `allowAll`: как у `getCourseEnrollment` — ответ не зависит от субъекта,
  * опубликованное доступно любому, закрытое видно лишь как «недоступно».
  */
-export const GetModuleEnrollmentUcDef = defineUseCase({
+export const GetModuleEnrollmentUcDef = UseCaseDef.define({
   name: 'getModuleEnrollment',
   label: 'Запись на модуль',
   description:

@@ -1,4 +1,4 @@
-import { defineEvents, F } from 'dmg-core';
+import { EventDef, F } from 'dmg-core';
 import * as v from 'valibot';
 
 /**
@@ -6,7 +6,7 @@ import * as v from 'valibot';
  * Публикует legacy-агрегат `StreamAr`; в DMG их доставляет карта `inbound`.
  * При миграции модуля контракт остаётся.
  */
-export const StreamEvents = defineEvents('stream.stream', {
+export const StreamEvents = EventDef.define('stream.stream', {
   created: {
     label: 'Поток создан',
     description:

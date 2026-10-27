@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { defineModule, ok, UserCaller } from 'dmg-core';
+import { ModuleDef, ok, UserCaller } from 'dmg-core';
 import {
   JobFromDef,
   type JobRun,
@@ -32,7 +32,7 @@ import type { AppMeta } from '../../domain/types';
 import type { Job } from '../job/job';
 import { ApiApp } from './api-app';
 
-const MiniModuleDef = defineModule({
+const MiniModuleDef = ModuleDef.define({
   name: 'mini',
   label: 'Мини',
   description: 'DMG-модуль рядом с legacy в ApiApp.',

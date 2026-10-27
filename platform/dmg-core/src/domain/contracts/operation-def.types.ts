@@ -23,3 +23,12 @@ export type OperationFileKind = 'uc' | 'er' | 'job';
 
 /** Def операции модуля: UC, ER или Job. */
 export type AnyOperationDef = AnyUseCaseDef | AnyEventReactionDef | AnyJobDef;
+
+/**
+ * Необязательный список спеки Def: объявлен — его тип, нет — пустой
+ * кортеж. Для `calls` это значит: не объявлены — `OperationFromDef.call`
+ * не пропускает ни одного UC (D-43); общий тип (`Any*Def`) — любой список.
+ */
+export type Declared<S, K extends string> = [K] extends [keyof S]
+  ? NonNullable<S[K & keyof S]>
+  : readonly [];

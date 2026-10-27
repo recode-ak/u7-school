@@ -1,4 +1,4 @@
-import { allowAll, defineUseCase, F, type OutputOf } from 'dmg-core';
+import { allowAll, F, type OutputOf, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { CourseArDef } from '../course.ar';
 
@@ -12,7 +12,7 @@ import { CourseArDef } from '../course.ar';
  * любому, кто может на него записаться; закрытое доступно только как
  * «недоступен».
  */
-export const GetCourseEnrollmentUcDef = defineUseCase({
+export const GetCourseEnrollmentUcDef = UseCaseDef.define({
   name: 'getCourseEnrollment',
   label: 'Запись на курс',
   description:

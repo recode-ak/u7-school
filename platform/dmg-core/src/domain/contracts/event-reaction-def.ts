@@ -5,7 +5,8 @@ import type {
   NormalizedEventReaction,
 } from './event-reaction-def.types';
 import { OperationDef } from './operation-def';
-import type { Declared, SystemCalls } from './use-case-def.types';
+import type { Declared } from './operation-def.types';
+import type { SystemCalls } from './use-case-def.types';
 
 export type {
   AnyEventReactionDef,

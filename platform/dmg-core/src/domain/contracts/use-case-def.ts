@@ -3,8 +3,8 @@ import type { AnyErrorDef } from '#core/kernel/errors/error-def';
 import { toJsonSchema } from '#core/kernel/schema/json-schema';
 import type { AnyAggregateDef } from '../aggregate/aggregate-def';
 import { OperationDef } from './operation-def';
+import type { Declared } from './operation-def.types';
 import type {
-  Declared,
   NormalizedUseCase,
   SystemCalls,
   UseCaseSpec,
@@ -12,8 +12,6 @@ import type {
 
 export type {
   AnyUseCaseDef,
-  Declared,
-  DeclaredCalls,
   InputOf,
   NormalizedUseCase,
   OutputOf,

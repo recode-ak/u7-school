@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { defineModule } from '../domain/contracts/define-module';
+import { ModuleDef } from '../domain/contracts/module-def';
 import { DefIndex } from '../graph/def-index';
 import { AlphaModuleDef, BetaModuleDef } from './arch.fixture';
 import { FileChecker, type ModuleLayout } from './file-checker';
@@ -123,8 +123,11 @@ describe('FileChecker', () => {
         );
       };
       const run = (alphaExternal: boolean, betaExternal: boolean): string[] => {
-        const beta = defineModule({ ...BetaModuleDef, external: betaExternal });
-        const alpha = defineModule({
+        const beta = ModuleDef.define({
+          ...BetaModuleDef,
+          external: betaExternal,
+        });
+        const alpha = ModuleDef.define({
           ...AlphaModuleDef,
           external: alphaExternal,
           dependsOn: [beta],
@@ -201,8 +204,8 @@ describe('FileChecker', () => {
     it('внешний модуль: только контракт в домене, прикладного пакета нет (D-37, D-42)', () => {
       cleanTree();
       rmSync(join(root, 'app/beta'), { recursive: true });
-      const beta = defineModule({ ...BetaModuleDef, external: true });
-      const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [beta] });
+      const beta = ModuleDef.define({ ...BetaModuleDef, external: true });
+      const alpha = ModuleDef.define({ ...AlphaModuleDef, dependsOn: [beta] });
       expect(
         new FileChecker(DefIndex.from([alpha]), layout)
           .check()
@@ -216,8 +219,8 @@ describe('FileChecker', () => {
         'app/beta/legacy.ts',
         "import { x } from '../alpha/alpha.module';\nimport { y } from '../../domain/alpha/note/er/add-note.er';\n",
       );
-      const beta = defineModule({ ...BetaModuleDef, external: true });
-      const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [beta] });
+      const beta = ModuleDef.define({ ...BetaModuleDef, external: true });
+      const alpha = ModuleDef.define({ ...AlphaModuleDef, dependsOn: [beta] });
       expect(
         new FileChecker(DefIndex.from([alpha]), layout)
           .check()

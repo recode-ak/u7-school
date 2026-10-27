@@ -1,4 +1,4 @@
-import { defineEvents, F } from 'dmg-core';
+import { EventDef, F } from 'dmg-core';
 import * as v from 'valibot';
 
 /**
@@ -6,7 +6,7 @@ import * as v from 'valibot';
  * Публикует legacy-агрегат `StudentAr`; в DMG их доставляет карта `inbound`.
  * При миграции модуля контракт остаётся.
  */
-export const StudentEvents = defineEvents('stream.student', {
+export const StudentEvents = EventDef.define('stream.student', {
   enrolled: {
     label: 'Студент зачислен',
     description:

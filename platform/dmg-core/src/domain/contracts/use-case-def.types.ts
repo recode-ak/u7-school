@@ -45,23 +45,9 @@ export type UseCaseSpec = Common &
 /**
  * Любой Def UC — структурный тип публичных членов: конкретный Def
  * сравнивается с ним по полям, а не по вариантности параметра `S`
- * (условный `Declared` делает её неизмеримой).
+ * (условный `Declared` из `operation-def.types` делает её неизмеримой).
  */
 export type AnyUseCaseDef = { readonly [K in keyof UseCaseDef]: UseCaseDef[K] };
-
-/** Необязательный список спеки: не объявлен — пустой кортеж. */
-export type Declared<S, K extends string> = [K] extends [keyof S]
-  ? NonNullable<S[K & keyof S]>
-  : readonly [];
-
-/**
- * `calls` Def: объявленные UC; не объявлены — пустой кортеж, чтобы
- * `OperationFromDef.call` не пропускал ни одного UC (D-43). Общий тип
- * (`Any*Def`) — любой список.
- */
-export type DeclaredCalls<
-  S extends { readonly calls?: readonly AnyUseCaseDef[] },
-> = 'calls' extends keyof S ? NonNullable<S['calls']> : readonly [];
 
 /** Вход UC — то, что передаёт вызывающий (до валидации схемой). */
 export type InputOf<D extends AnyUseCaseDef> = v.InferInput<D['input']>;

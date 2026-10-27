@@ -1,4 +1,4 @@
-import { allowAll, defineUseCase, F, type OutputOf } from 'dmg-core';
+import { allowAll, F, type OutputOf, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { CourseArDef } from '../course.ar';
 
@@ -10,7 +10,7 @@ import { CourseArDef } from '../course.ar';
  * `allowAll`: ответ не зависит от субъекта — это факт о модулях, а не доступ
  * к их содержимому.
  */
-export const GetSameModulesUcDef = defineUseCase({
+export const GetSameModulesUcDef = UseCaseDef.define({
   name: 'getSameModules',
   label: 'Тот же модуль',
   description:

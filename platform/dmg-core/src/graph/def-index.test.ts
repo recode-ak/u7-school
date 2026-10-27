@@ -13,7 +13,7 @@ import {
   UsersModuleDef,
 } from '../domain/contracts/contracts.fixture';
 import { DomainRuleDef } from '../domain/rules/domain-rule-def';
-import { defineErrors } from '../kernel/errors/define-errors';
+import { ErrorDef } from '../kernel/errors/error-def';
 import { ok } from '../kernel/result/result';
 import { DefIndex } from './def-index';
 
@@ -25,7 +25,7 @@ const NotDone = DomainRuleDef.define({
   check: () => ok(undefined),
 });
 
-const Stray = defineErrors('STRAY', {
+const Stray = ErrorDef.define('STRAY', {
   LOST: { kind: 'conflict', label: 'Чужая', description: 'Вне модулей.' },
 });
 

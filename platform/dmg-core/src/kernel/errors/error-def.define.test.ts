@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
-import { defineErrors, type ErrorOf } from './define-errors';
+import { ErrorDef, type ErrorOf } from './error-def';
 
-const TodoErrors = defineErrors('TODO', {
+const TodoErrors = ErrorDef.define('TODO', {
   NOT_FOUND: {
     kind: 'not_found',
     label: 'Задача не найдена',
@@ -16,7 +16,7 @@ const TodoErrors = defineErrors('TODO', {
   },
 });
 
-describe('defineErrors', () => {
+describe('ErrorDef.define', () => {
   it('код = префикс группы + ключ', () => {
     expect(TodoErrors.NOT_FOUND.code).toBe('TODO_NOT_FOUND');
     expect(TodoErrors.ALREADY_DONE.code).toBe('TODO_ALREADY_DONE');
@@ -71,14 +71,14 @@ describe('defineErrors', () => {
   });
 
   it('kind — закрытый набор', () => {
-    defineErrors('X', {
+    ErrorDef.define('X', {
       // @ts-expect-error неизвестный kind
       BAD: { kind: 'oops', label: 'л', description: 'о' },
     });
   });
 
   it('label и description обязательны', () => {
-    defineErrors('X', {
+    ErrorDef.define('X', {
       // @ts-expect-error нет description
       BAD: { kind: 'conflict', label: 'л' },
     });

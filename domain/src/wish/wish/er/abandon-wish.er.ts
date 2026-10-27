@@ -1,12 +1,12 @@
 import { QuestionnaireEvents } from '@u7-scl/domain/questionnaire/contract';
-import { defineEventReaction } from 'dmg-core';
+import { EventReactionDef } from 'dmg-core';
 import { WishArDef } from '../wish.ar';
 
 /**
  * Пометка желания брошенным по прерыванию анкеты. Выбор желания и
  * допустимость перехода решает `WishAr`; чужие анкеты игнорируются.
  */
-export const AbandonWishErDef = defineEventReaction({
+export const AbandonWishErDef = EventReactionDef.define({
   name: 'abandonWish',
   label: 'Пометить желание брошенным по прерыванию анкеты',
   description:

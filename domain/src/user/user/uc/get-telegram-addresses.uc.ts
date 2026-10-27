@@ -1,4 +1,4 @@
-import { allowAll, defineUseCase, F, type OutputOf } from 'dmg-core';
+import { allowAll, F, type OutputOf, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { UserArDef } from '../user.ar';
 
@@ -11,7 +11,7 @@ import { UserArDef } from '../user.ar';
  * `allowAll`: вызывает только система (адресация уведомлений), субъекта
  * нет.
  */
-export const GetTelegramAddressesUcDef = defineUseCase({
+export const GetTelegramAddressesUcDef = UseCaseDef.define({
   name: 'getTelegramAddresses',
   label: 'Адреса Telegram пользователей',
   description:

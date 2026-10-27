@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
-import { defineAggregate } from '../domain/aggregate/define-aggregate';
+import { AggregateDef } from '../domain/aggregate/aggregate-def';
 import {
   ArchiveDoneErDef,
   CompleteTaskUcDef,
@@ -13,12 +13,12 @@ import {
   TaskPolicy,
   TodoModuleDef,
 } from '../domain/contracts/contracts.fixture';
-import { defineJob } from '../domain/contracts/define-job';
-import { defineUseCase } from '../domain/contracts/define-use-case';
-import { allOf, anyOf, hasRole } from '../domain/policy/policy';
-import { defineRules } from '../domain/rules/define-rules';
-import { domainRule } from '../domain/rules/domain-rule';
-import { defineErrors } from '../kernel/errors/define-errors';
+import { JobDef } from '../domain/contracts/job-def';
+import { UseCaseDef } from '../domain/contracts/use-case-def';
+import { Rule } from '../domain/policy/rule';
+import { DomainRuleDef } from '../domain/rules/domain-rule-def';
+import { RulesDef } from '../domain/rules/rules-def';
+import { ErrorDef } from '../kernel/errors/error-def';
 import { BaseEntityFields, F } from '../kernel/fields/fields';
 import { ok } from '../kernel/result/result';
 import { normalize } from './normalize';
@@ -62,10 +62,10 @@ describe('normalize', () => {
   });
 
   it('политика: дерево правил без функций', () => {
-    const tree = anyOf(
+    const tree = Rule.anyOf(
       { name: 'canEdit', label: 'Редактор', denyMessage: 'Нельзя.' },
-      hasRole('admin'),
-      allOf(hasRole('author'), TaskPolicy.rules.canComplete),
+      Rule.hasRole('admin'),
+      Rule.allOf(Rule.hasRole('author'), TaskPolicy.rules.canComplete),
     );
     expect(normalize(tree)).toEqual({
       dmg: 'rule',
@@ -92,7 +92,7 @@ describe('normalize', () => {
       ],
     });
     // Признака делегирования в правиле нет (D-43, Р2).
-    expect(Object.keys(normalize(hasRole('admin'))).sort()).toEqual([
+    expect(Object.keys(normalize(Rule.hasRole('admin'))).sort()).toEqual([
       'denyMessage',
       'dmg',
       'label',
@@ -134,7 +134,7 @@ describe('normalize', () => {
   });
 
   it('доменные правила: тексты и код ошибки; UC ссылается по имени', () => {
-    const notDone = domainRule({
+    const notDone = DomainRuleDef.define({
       name: 'notDone',
       label: 'Задача не выполнена',
       description: 'Действие допустимо только над невыполненной задачей.',
@@ -149,7 +149,7 @@ describe('normalize', () => {
       error: 'TASK_ALREADY_DONE',
     } as const;
     expect(normalize(notDone)).toEqual(normalized);
-    const TaskRules = defineRules({
+    const TaskRules = RulesDef.define({
       name: 'task',
       label: 'Правила задачи',
       description: 'Допустимость действий с задачей.',
@@ -162,7 +162,7 @@ describe('normalize', () => {
       description: 'Допустимость действий с задачей.',
       rules: { notDone: normalized },
     });
-    const uc = defineUseCase({ ...CompleteTaskUcDef, rules: [notDone] });
+    const uc = UseCaseDef.define({ ...CompleteTaskUcDef, rules: [notDone] });
     expect(normalize(uc)).toMatchObject({ rules: ['notDone'] });
   });
 
@@ -188,7 +188,7 @@ describe('normalize', () => {
       emits: [],
     });
     expect(
-      normalize(defineJob({ ...RemindJobDef, calls: [GetUserUcDef] })),
+      normalize(JobDef.define({ ...RemindJobDef, calls: [GetUserUcDef] })),
     ).toMatchObject({ calls: ['getUser'] });
   });
 
@@ -208,7 +208,7 @@ describe('normalize', () => {
   });
 
   it('стабильность: одинаковый Def — одинаковая сериализация; отказы переходов — коды', () => {
-    const NoteErrors = defineErrors('NOTE', {
+    const NoteErrors = ErrorDef.define('NOTE', {
       CLOSED: {
         kind: 'conflict',
         label: 'Закрыта',
@@ -216,7 +216,7 @@ describe('normalize', () => {
       },
     });
     const build = () =>
-      defineAggregate({
+      AggregateDef.define({
         name: 'note',
         label: 'Заметка',
         description: 'Заметка со статусом.',

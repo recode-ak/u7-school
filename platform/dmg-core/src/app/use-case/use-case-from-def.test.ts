@@ -3,14 +3,14 @@ import * as v from 'valibot';
 import type { ReadonlyAr } from '#core/domain/aggregate/readonly-ar';
 import {
   type AnyModuleDef,
-  defineModule,
-} from '#core/domain/contracts/define-module';
+  ModuleDef,
+} from '#core/domain/contracts/module-def';
 import {
   type AnyUseCaseDef,
-  defineUseCase,
-} from '#core/domain/contracts/define-use-case';
-import { allowAll } from '#core/domain/policy/policy';
-import { domainRule } from '#core/domain/rules/domain-rule';
+  UseCaseDef,
+} from '#core/domain/contracts/use-case-def';
+import { allowAll } from '#core/domain/policy/rule';
+import { DomainRuleDef } from '#core/domain/rules/domain-rule-def';
 import {
   type Caller,
   GuestCaller,
@@ -18,7 +18,7 @@ import {
   SystemCaller,
   UserCaller,
 } from '#core/kernel/caller/caller';
-import { defineErrors } from '#core/kernel/errors/define-errors';
+import { ErrorDef } from '#core/kernel/errors/error-def';
 import { ok } from '#core/kernel/result/result';
 import {
   CompleteTaskUcDef,
@@ -40,7 +40,7 @@ import { ModuleFacades } from '../facade/module-facades';
 import type { UnitOfWork } from '../uow/unit-of-work';
 import { UseCaseFromDef } from './use-case-from-def';
 
-const OtherErrors = defineErrors('OTHER', {
+const OtherErrors = ErrorDef.define('OTHER', {
   FAILED: { kind: 'conflict', label: 'Сбой', description: 'Чужая ошибка.' },
 });
 
@@ -52,7 +52,7 @@ const system = new SystemCaller<User>(JOB);
 
 /** Модуль-владелец UC теста — даёт `ref` реализации. */
 const moduleOf = (...useCases: AnyUseCaseDef[]): AnyModuleDef =>
-  defineModule({
+  ModuleDef.define({
     name: 'todo',
     label: 'Задачи',
     description: 'Модуль-владелец UC теста.',
@@ -145,7 +145,7 @@ describe('UseCaseFromDef.handle — отказы до операции', () => {
   });
 
   test('system из callers без человека — Policy всё равно вызвана: ACCESS_DENIED (D-43)', async () => {
-    const SystemUcDef = defineUseCase({
+    const SystemUcDef = UseCaseDef.define({
       ...CompleteTaskUcDef,
       callers: ['system'],
     });
@@ -177,7 +177,7 @@ describe('UseCaseFromDef.handle — отказы до операции', () => {
   });
 
   test('системный UC с allowAll — без субъекта разрешён явно', async () => {
-    const SweepUcDef = defineUseCase({
+    const SweepUcDef = UseCaseDef.define({
       ...CompleteTaskUcDef,
       callers: ['system'],
       policy: allowAll,
@@ -262,7 +262,7 @@ describe('UseCaseFromDef.handle — операция', () => {
   });
 
   test('невалидный выход → OUTPUT_VALIDATION до фиксации: ничего не сохранено и не опубликовано', async () => {
-    const BadOutputUcDef = defineUseCase({
+    const BadOutputUcDef = UseCaseDef.define({
       ...CompleteTaskUcDef,
       output: v.object({ taskId: v.pipe(v.string(), v.uuid()) }),
     });
@@ -349,7 +349,7 @@ describe('UseCaseFromDef — ref', () => {
 });
 
 describe('UseCaseFromDef — вызывающий system (D-43)', () => {
-  const SystemUcDef = defineUseCase({
+  const SystemUcDef = UseCaseDef.define({
     ...CompleteTaskUcDef,
     callers: ['system'],
   });
@@ -433,7 +433,7 @@ describe('UseCaseFromDef — вызывающий system (D-43)', () => {
 });
 
 describe('UseCaseFromDef.subject', () => {
-  const WhoAmIUcDef = defineUseCase({
+  const WhoAmIUcDef = UseCaseDef.define({
     ...CompleteTaskUcDef,
     callers: ['user', 'system'],
     policy: allowAll,
@@ -510,7 +510,7 @@ describe('UseCaseFromDef — типы', () => {
 describe('UseCaseFromDef — доменные правила', () => {
   let calls: string[];
 
-  const notDone = domainRule({
+  const notDone = DomainRuleDef.define({
     name: 'notDone',
     label: 'Задача не выполнена',
     description: 'Действие допустимо только над невыполненной задачей.',
@@ -521,7 +521,7 @@ describe('UseCaseFromDef — доменные правила', () => {
     },
   });
 
-  const RuledUcDef = defineUseCase({
+  const RuledUcDef = UseCaseDef.define({
     ...CompleteTaskUcDef,
     callers: ['user', 'system'],
     rules: [notDone],
@@ -575,7 +575,7 @@ describe('UseCaseFromDef — доменные правила', () => {
   });
 
   test('ошибка правила обязана быть в errors UC (ERR-02)', () => {
-    const UndeclaredUcDef = defineUseCase({
+    const UndeclaredUcDef = UseCaseDef.define({
       ...RuledUcDef,
       errors: [TaskErrors.NOT_FOUND],
     });
@@ -603,7 +603,7 @@ describe('UseCaseFromDef — доменные правила', () => {
   });
 
   test('загруженный контекст обязан подходить каждому правилу', () => {
-    const fewOpen = domainRule({
+    const fewOpen = DomainRuleDef.define({
       name: 'fewOpen',
       label: 'Мало открытых',
       description: 'Открытых задач меньше предела.',
@@ -611,7 +611,7 @@ describe('UseCaseFromDef — доменные правила', () => {
       check: (c: { readonly openCount: number }) =>
         c.openCount < 3 ? ok() : TaskErrors.ARCHIVED.err(),
     });
-    const TwoRulesUcDef = defineUseCase({
+    const TwoRulesUcDef = UseCaseDef.define({
       ...CompleteTaskUcDef,
       rules: [notDone, fewOpen],
     });
@@ -705,7 +705,7 @@ describe('UseCaseFromDef — лог операций (D-43, Р6)', () => {
   });
 
   test('вызывающий system — с операцией и человеком в записи', async () => {
-    const SweepUcDef = defineUseCase({
+    const SweepUcDef = UseCaseDef.define({
       ...CompleteTaskUcDef,
       callers: ['system'],
       policy: allowAll,

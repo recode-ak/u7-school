@@ -1,4 +1,4 @@
-import { allowAll, defineUseCase } from 'dmg-core';
+import { allowAll, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { WishArDef } from '../wish.ar';
 
@@ -7,7 +7,7 @@ import { WishArDef } from '../wish.ar';
  * берётся из субъекта (входа нет), поэтому Policy — `allowAll`.
  * Выход — state желания как есть (из `WishArDef.state`, без копии).
  */
-export const ListUserWishesUcDef = defineUseCase({
+export const ListUserWishesUcDef = UseCaseDef.define({
   name: 'listUserWishes',
   label: 'Мои желания',
   description:

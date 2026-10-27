@@ -1,5 +1,5 @@
 // Платформа DMG (Domain Manifest Graph) — пакет dmg-core.
-// Корень — ядро и манифесты домена (`define*`, `Aggregate`, `Result`, Policy,
+// Корень — ядро и манифесты домена (`XxxDef.define`, `Aggregate`, `Result`, Policy,
 // доменные правила): чистый код без IO, его импортирует домен. Исполнение —
 // `dmg-core/app`, граф манифестов — `dmg-core/graph`, проверки архитектуры —
 // `dmg-core/arch`.
@@ -21,38 +21,25 @@ export {
   type StatusOf,
   type Transition,
 } from './domain/aggregate/aggregate-def';
-export { defineAggregate } from './domain/aggregate/define-aggregate';
 export type { ReadonlyAr } from './domain/aggregate/readonly-ar';
 export {
   type AnyEventReactionDef,
-  defineEventReaction,
   EventReactionDef,
   type EventReactionSpec,
   type ReactionEventOf,
-} from './domain/contracts/define-event-reaction';
+} from './domain/contracts/event-reaction-def';
+export type { Facade, SystemCallable } from './domain/contracts/facade';
 export {
   type AnyJobDef,
-  defineJob,
   JobDef,
   type JobSchedule,
   type JobSpec,
-} from './domain/contracts/define-job';
+} from './domain/contracts/job-def';
 export {
   type AnyModuleDef,
-  defineModule,
   ModuleDef,
   type ModuleSpec,
-} from './domain/contracts/define-module';
-export {
-  type AnyUseCaseDef,
-  defineUseCase,
-  type InputOf,
-  type OutputOf,
-  UseCaseDef,
-  type UseCaseErrorOf,
-  type UseCaseSpec,
-} from './domain/contracts/define-use-case';
-export type { Facade, SystemCallable } from './domain/contracts/facade';
+} from './domain/contracts/module-def';
 export {
   type OperationAbbr,
   OperationDef,
@@ -60,7 +47,14 @@ export {
   type OperationFileKind,
   type OperationSpec,
 } from './domain/contracts/operation-def';
-export { defineEvents } from './domain/events/define-events';
+export {
+  type AnyUseCaseDef,
+  type InputOf,
+  type OutputOf,
+  UseCaseDef,
+  type UseCaseErrorOf,
+  type UseCaseSpec,
+} from './domain/contracts/use-case-def';
 export {
   type AnyEventDef,
   type DomainEvent,
@@ -70,19 +64,20 @@ export {
   type EventPrefix,
   type EventSpec,
 } from './domain/events/event-def';
-export { definePolicy } from './domain/policy/define-policy';
+export {
+  type AnyPolicyDef,
+  PolicyDef,
+  type PolicySpec,
+} from './domain/policy/policy-def';
 export {
   AllOfRule,
   AllowAll,
   AnyOfRule,
   type AnyRule,
-  allOf,
   allowAll,
   allowed,
-  anyOf,
   type Decision,
   denied,
-  hasRole,
   NamedRule,
   type NormalizedRule,
   type RoleHolder,
@@ -91,15 +86,7 @@ export {
   type RuleSpec,
   type RuleSubjectOf,
   type RuleTexts,
-  rule,
-} from './domain/policy/policy';
-export {
-  type AnyPolicyDef,
-  PolicyDef,
-  type PolicySpec,
-} from './domain/policy/policy-def';
-export { defineRules } from './domain/rules/define-rules';
-export { type DomainRule, domainRule } from './domain/rules/domain-rule';
+} from './domain/policy/rule';
 export {
   type AnyDomainRule,
   type DomainRuleContextOf,
@@ -126,7 +113,6 @@ export {
   UserCaller,
 } from './kernel/caller/caller';
 export { type CoreError, CoreErrors } from './kernel/errors/core-errors';
-export { defineErrors } from './kernel/errors/define-errors';
 export {
   type DomainError,
   ERROR_KINDS,

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { CoreErrors } from '#core/kernel/errors/core-errors';
 import type { EventOf } from '../events/event-def';
-import { allowAll } from '../policy/policy';
+import { allowAll } from '../policy/rule';
 import {
   ArchiveDoneErDef,
   CompleteTaskUcDef,
@@ -16,19 +16,19 @@ import {
   TodoModuleDef,
   UsersModuleDef,
 } from './contracts.fixture';
-import type { ReactionEventOf } from './define-event-reaction';
-import { defineEventReaction } from './define-event-reaction';
-import { defineJob } from './define-job';
-import { defineModule } from './define-module';
+import type { ReactionEventOf } from './event-reaction-def';
+import { EventReactionDef } from './event-reaction-def';
+import { JobDef } from './job-def';
+import { ModuleDef } from './module-def';
 import {
   type AnyUseCaseDef,
-  defineUseCase,
   type InputOf,
   type OutputOf,
+  UseCaseDef,
   type UseCaseErrorOf,
-} from './define-use-case';
+} from './use-case-def';
 
-describe('defineUseCase', () => {
+describe('UseCaseDef.define', () => {
   it('Def несёт дискриминатор и ссылки объектами', () => {
     expect(CompleteTaskUcDef.dmg).toBe('useCase');
     expect(CompleteTaskUcDef.aggregate).toBe(TaskArDef);
@@ -42,7 +42,7 @@ describe('defineUseCase', () => {
   });
 
   it('calls — только Def UC (MAN-07, D-42)', () => {
-    defineUseCase({
+    UseCaseDef.define({
       ...ListTasksUcDef,
       // @ts-expect-error в calls — Def UC, а не агрегат или строка
       calls: [TaskArDef],
@@ -52,7 +52,7 @@ describe('defineUseCase', () => {
   });
 
   it('calls — только UC с system в callers (D-43, Р7)', () => {
-    const def = defineUseCase({
+    const def = UseCaseDef.define({
       ...ListTasksUcDef,
       // @ts-expect-error ListTasks зовёт только user — система его не вызовет
       calls: [GetUserUcDef, ListTasksUcDef],
@@ -77,7 +77,7 @@ describe('defineUseCase', () => {
 
   it('label, description и policy обязательны, query не публикует события (тип)', () => {
     // @ts-expect-error policy обязательна (без ограничений — allowAll)
-    defineUseCase({
+    UseCaseDef.define({
       name: 'x',
       label: 'X',
       description: 'X',
@@ -89,7 +89,7 @@ describe('defineUseCase', () => {
       errors: [],
     });
     // @ts-expect-error нет description
-    defineUseCase({
+    UseCaseDef.define({
       name: 'x',
       label: 'X',
       type: 'query',
@@ -101,7 +101,7 @@ describe('defineUseCase', () => {
       errors: [],
     });
     // @ts-expect-error query не публикует события
-    defineUseCase({
+    UseCaseDef.define({
       name: 'x',
       label: 'X',
       description: 'X',
@@ -118,7 +118,7 @@ describe('defineUseCase', () => {
   });
 });
 
-describe('defineEventReaction', () => {
+describe('EventReactionDef.define', () => {
   it('Def несёт on/touches ссылками; calls и emits по умолчанию пусты', () => {
     expect(ArchiveDoneErDef.dmg).toBe('eventReaction');
     expect(ArchiveDoneErDef.on).toEqual([
@@ -131,7 +131,7 @@ describe('defineEventReaction', () => {
   });
 
   it('calls — Def UC других модулей', () => {
-    const er = defineEventReaction({
+    const er = EventReactionDef.define({
       name: 'syncUser',
       label: 'Сверить пользователя',
       description: 'Читает пользователя через фасад.',
@@ -142,7 +142,7 @@ describe('defineEventReaction', () => {
   });
 
   it('calls — только UC с system в callers (D-43, Р7)', () => {
-    const er = defineEventReaction({
+    const er = EventReactionDef.define({
       ...ArchiveDoneErDef,
       // @ts-expect-error ListTasks зовёт только user — система его не вызовет
       calls: [ListTasksUcDef],
@@ -169,7 +169,7 @@ describe('defineEventReaction', () => {
   });
 });
 
-describe('defineJob', () => {
+describe('JobDef.define', () => {
   it('Def несёт расписание и ссылки', () => {
     expect(RemindJobDef.dmg).toBe('job');
     expect(RemindJobDef.schedule).toEqual({
@@ -182,18 +182,18 @@ describe('defineJob', () => {
   });
 
   it('calls — Def UC других модулей', () => {
-    const job = defineJob({ ...RemindJobDef, calls: [GetUserUcDef] });
+    const job = JobDef.define({ ...RemindJobDef, calls: [GetUserUcDef] });
     expect(job.calls).toEqual([GetUserUcDef]);
   });
 
   it('calls — только UC с system в callers (D-43, Р7)', () => {
     // @ts-expect-error ListTasks зовёт только user — система его не вызовет
-    const job = defineJob({ ...RemindJobDef, calls: [ListTasksUcDef] });
+    const job = JobDef.define({ ...RemindJobDef, calls: [ListTasksUcDef] });
     expect(job.calls).toEqual([ListTasksUcDef]);
   });
 });
 
-describe('defineModule', () => {
+describe('ModuleDef.define', () => {
   it('Def несёт состав и зависимости ссылками', () => {
     expect(TodoModuleDef.dmg).toBe('module');
     expect(TodoModuleDef.dependsOn).toEqual([UsersModuleDef]);
@@ -205,7 +205,7 @@ describe('defineModule', () => {
   });
 
   it('внешний модуль объявляет Def UC без реализации (D-37, D-42)', () => {
-    const external = defineModule({ ...UsersModuleDef, external: true });
+    const external = ModuleDef.define({ ...UsersModuleDef, external: true });
     expect(external.useCases).toEqual([GetUserUcDef]);
   });
 });

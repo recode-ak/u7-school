@@ -2,7 +2,7 @@ import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
-import { defineModule } from 'dmg-core';
+import { ModuleDef } from 'dmg-core';
 import { AbandonWishErDef } from './wish/er/abandon-wish.er';
 import { ConfirmWishErDef } from './wish/er/confirm-wish.er';
 import { FulfillWishErDef } from './wish/er/fulfill-wish.er';
@@ -15,7 +15,7 @@ import { WishArDef } from './wish/wish.ar';
 // gen:defs:imports
 
 /** Паспорт модуля желаний. */
-export const WishModuleDef = defineModule({
+export const WishModuleDef = ModuleDef.define({
   name: 'wish',
   label: 'Желания',
   description:

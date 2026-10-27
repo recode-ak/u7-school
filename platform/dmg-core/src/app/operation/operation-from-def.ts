@@ -1,12 +1,12 @@
 import type { AnyAggregateDef } from '#core/domain/aggregate/aggregate-def';
-import type { AnyModuleDef } from '#core/domain/contracts/define-module';
+import type { AnyModuleDef } from '#core/domain/contracts/module-def';
+import type { AnyOperationDef } from '#core/domain/contracts/operation-def.types';
 import type {
   AnyUseCaseDef,
   InputOf,
   OutputOf,
   UseCaseErrorOf,
-} from '#core/domain/contracts/define-use-case';
-import type { AnyOperationDef } from '#core/domain/contracts/operation-def.types';
+} from '#core/domain/contracts/use-case-def';
 import {
   type Caller,
   type OperationRef,

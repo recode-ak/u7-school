@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { AnyUseCaseDef } from '#core/domain/contracts/define-use-case';
+import type { AnyUseCaseDef } from '#core/domain/contracts/use-case-def';
 import {
   type Caller,
   type OperationRef,

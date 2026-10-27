@@ -1,4 +1,4 @@
-import { defineEvents, F } from 'dmg-core';
+import { EventDef, F } from 'dmg-core';
 import * as v from 'valibot';
 
 const userId = F.uuid('пользователя-желающего');
@@ -20,7 +20,7 @@ const addressee = {
  *   «пригласить» — сопоставление потока с целью через фасад курсов и
  *   адресация через фасад пользователей, состояние желания не меняется.
  */
-export const WishEvents = defineEvents('wish.wish', {
+export const WishEvents = EventDef.define('wish.wish', {
   invited: {
     label: 'Желающий приглашён на поток',
     description:

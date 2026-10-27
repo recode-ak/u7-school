@@ -1,6 +1,6 @@
 import type { JsonSchema } from '@valibot/to-json-schema';
 import type * as v from 'valibot';
-import type { AnyModuleDef } from '../domain/contracts/define-module';
+import type { AnyModuleDef } from '../domain/contracts/module-def';
 import type { AnyEventDef } from '../domain/events/event-def';
 import type { AnyDomainRule } from '../domain/rules/domain-rule-def';
 import type { DefIndex } from '../graph/def-index';

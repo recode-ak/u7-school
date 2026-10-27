@@ -1,5 +1,5 @@
 import { QuestionnaireEvents } from '@u7-scl/domain/questionnaire/contract';
-import { defineEventReaction } from 'dmg-core';
+import { EventReactionDef } from 'dmg-core';
 import { WishArDef } from '../wish.ar';
 import { WishEvents } from '../wish.events';
 
@@ -8,7 +8,7 @@ import { WishEvents } from '../wish.events';
  * с ним — решает `WishAr` (`questionnaireTarget`, `current`, `canConfirm`);
  * чужие анкеты (`owner` не в формате `wish`) игнорируются.
  */
-export const ConfirmWishErDef = defineEventReaction({
+export const ConfirmWishErDef = EventReactionDef.define({
   name: 'confirmWish',
   label: 'Подтвердить желание по завершении анкеты',
   description:

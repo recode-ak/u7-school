@@ -1,4 +1,4 @@
-import { defineErrors, F } from 'dmg-core';
+import { ErrorDef, F } from 'dmg-core';
 import * as v from 'valibot';
 import { WishStatus } from './wish.state';
 
@@ -34,7 +34,7 @@ const withTarget = <T extends v.ObjectEntries>(entries: T) =>
  * цель есть, но для записи недоступна (для студента неотличима от
  * отсутствующей). Коды уникальны в приложении — префикс `WISH_`.
  */
-export const WishErrors = defineErrors('WISH', {
+export const WishErrors = ErrorDef.define('WISH', {
   NOT_CONFIRMABLE: {
     kind: 'conflict',
     label: 'Подтвердить можно только ожидающее анкету желание',

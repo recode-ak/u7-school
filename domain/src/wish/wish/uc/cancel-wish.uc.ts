@@ -1,4 +1,4 @@
-import { defineUseCase } from 'dmg-core';
+import { UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { WishArDef } from '../wish.ar';
 import { WishErrors } from '../wish.errors';
@@ -13,7 +13,7 @@ import { WishTargetVo } from '../wish.state';
  * отсутствие агрегата — отказ загрузки (`load`), неотменяемое состояние —
  * доменное правило `cancellable` (после Policy). Событий отмены нет.
  */
-export const CancelWishUcDef = defineUseCase({
+export const CancelWishUcDef = UseCaseDef.define({
   name: 'cancelWish',
   label: 'Отменить желание',
   description:

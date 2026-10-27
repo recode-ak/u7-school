@@ -1,4 +1,4 @@
-import { allowAll, defineUseCase, F, type OutputOf } from 'dmg-core';
+import { allowAll, F, type OutputOf, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { CourseArDef } from '../course.ar';
 
@@ -11,7 +11,7 @@ import { CourseArDef } from '../course.ar';
  * `allowAll`: ответ не зависит от субъекта — это факт о программе курсов,
  * а не доступ к их содержимому.
  */
-export const GetCoursesStartingWithModuleUcDef = defineUseCase({
+export const GetCoursesStartingWithModuleUcDef = UseCaseDef.define({
   name: 'getCoursesStartingWithModule',
   label: 'Курсы, начинающиеся с модуля',
   description:

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import {
   type DomainError,
-  defineModule,
   type Identified,
+  ModuleDef,
   ok,
   type Result,
 } from 'dmg-core';
@@ -31,7 +31,7 @@ import { InProcJobExecutor } from '../infra/in-proc-job-executor';
 import { legacyJob, legacyJobsOf } from './legacy-job';
 
 /** Модуль с одним Job — мост работает через модуль, а не через Job. */
-const ArchiveModuleDef = defineModule({
+const ArchiveModuleDef = ModuleDef.define({
   name: 'archive',
   label: 'Архив',
   description: 'Модуль для проверки моста планировщика.',

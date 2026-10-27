@@ -1,17 +1,17 @@
 // Фикстура контрактов для тестов dmg: по Def каждого вида.
 import * as v from 'valibot';
-import { defineErrors } from '#core/kernel/errors/define-errors';
+import { ErrorDef } from '#core/kernel/errors/error-def';
 import { BaseEntityFields, F } from '#core/kernel/fields/fields';
-import { defineAggregate } from '../aggregate/define-aggregate';
-import { defineEvents } from '../events/define-events';
-import { definePolicy } from '../policy/define-policy';
-import { allowAll, rule } from '../policy/policy';
-import { defineEventReaction } from './define-event-reaction';
-import { defineJob } from './define-job';
-import { defineModule } from './define-module';
-import { defineUseCase } from './define-use-case';
+import { AggregateDef } from '../aggregate/aggregate-def';
+import { EventDef } from '../events/event-def';
+import { PolicyDef } from '../policy/policy-def';
+import { allowAll, Rule } from '../policy/rule';
+import { EventReactionDef } from './event-reaction-def';
+import { JobDef } from './job-def';
+import { ModuleDef } from './module-def';
+import { UseCaseDef } from './use-case-def';
 
-export const TaskEvents = defineEvents('todo.task', {
+export const TaskEvents = EventDef.define('todo.task', {
   created: {
     label: 'Задача создана',
     description: 'Появилась новая задача.',
@@ -24,7 +24,7 @@ export const TaskEvents = defineEvents('todo.task', {
   },
 });
 
-export const TaskErrors = defineErrors('TASK', {
+export const TaskErrors = ErrorDef.define('TASK', {
   NOT_FOUND: {
     kind: 'not_found',
     label: 'Задача не найдена',
@@ -37,7 +37,7 @@ export const TaskErrors = defineErrors('TASK', {
   },
 });
 
-export const TaskArDef = defineAggregate({
+export const TaskArDef = AggregateDef.define({
   name: 'task',
   label: 'Задача',
   description: 'Пункт списка дел.',
@@ -46,12 +46,12 @@ export const TaskArDef = defineAggregate({
   errors: TaskErrors,
 });
 
-export const TaskPolicy = definePolicy({
+export const TaskPolicy = PolicyDef.define({
   name: 'task',
   label: 'Права на задачи',
   description: 'Кто может менять задачи.',
   rules: {
-    canComplete: rule({
+    canComplete: Rule.of({
       name: 'isOwner',
       label: 'Владелец',
       denyMessage: 'Только владелец.',
@@ -61,7 +61,7 @@ export const TaskPolicy = definePolicy({
   },
 });
 
-export const UserArDef = defineAggregate({
+export const UserArDef = AggregateDef.define({
   name: 'user',
   label: 'Пользователь',
   description: 'Учётная запись.',
@@ -71,7 +71,7 @@ export const UserArDef = defineAggregate({
 });
 
 /** UC другого модуля — цель `calls` (D-42). */
-export const GetUserUcDef = defineUseCase({
+export const GetUserUcDef = UseCaseDef.define({
   name: 'getUser',
   label: 'Пользователь',
   description: 'Учётная запись по идентификатору.',
@@ -84,7 +84,7 @@ export const GetUserUcDef = defineUseCase({
   errors: [],
 });
 
-export const CompleteTaskUcDef = defineUseCase({
+export const CompleteTaskUcDef = UseCaseDef.define({
   name: 'completeTask',
   label: 'Завершить задачу',
   description: 'Отмечает задачу выполненной.',
@@ -99,7 +99,7 @@ export const CompleteTaskUcDef = defineUseCase({
   emits: [TaskEvents.completed],
 });
 
-export const ListTasksUcDef = defineUseCase({
+export const ListTasksUcDef = UseCaseDef.define({
   name: 'listTasks',
   label: 'Список задач',
   description: 'Все задачи пользователя.',
@@ -112,7 +112,7 @@ export const ListTasksUcDef = defineUseCase({
   errors: [],
 });
 
-export const ArchiveDoneErDef = defineEventReaction({
+export const ArchiveDoneErDef = EventReactionDef.define({
   name: 'archiveDone',
   label: 'Архивировать выполненную',
   description: 'Переносит выполненную задачу в архив.',
@@ -120,7 +120,7 @@ export const ArchiveDoneErDef = defineEventReaction({
   touches: [TaskArDef],
 });
 
-export const RemindJobDef = defineJob({
+export const RemindJobDef = JobDef.define({
   name: 'remind',
   label: 'Напоминание',
   description: 'Ежедневно напоминает о задачах.',
@@ -129,7 +129,7 @@ export const RemindJobDef = defineJob({
   emits: [],
 });
 
-export const UsersModuleDef = defineModule({
+export const UsersModuleDef = ModuleDef.define({
   name: 'users',
   label: 'Пользователи',
   description: 'Учётные записи.',
@@ -140,7 +140,7 @@ export const UsersModuleDef = defineModule({
   jobs: [],
 });
 
-export const TodoModuleDef = defineModule({
+export const TodoModuleDef = ModuleDef.define({
   name: 'todo',
   label: 'Задачи',
   description: 'Список дел.',

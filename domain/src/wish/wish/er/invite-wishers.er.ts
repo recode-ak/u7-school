@@ -7,7 +7,7 @@ import {
   StreamEvents,
 } from '@u7-scl/domain/stream/contract';
 import { GetTelegramAddressesUcDef } from '@u7-scl/domain/user/contract';
-import { defineEventReaction } from 'dmg-core';
+import { EventReactionDef } from 'dmg-core';
 import { WishArDef } from '../wish.ar';
 import { WishEvents } from '../wish.events';
 
@@ -16,7 +16,7 @@ import { WishEvents } from '../wish.events';
  * и пользователей и каких желающих пригласить, решает `WishInvitationDcs`;
  * событие приглашения строит `WishAr.invite`.
  */
-export const InviteWishersErDef = defineEventReaction({
+export const InviteWishersErDef = EventReactionDef.define({
   name: 'inviteWishers',
   label: 'Пригласить желающих при открытии набора',
   description:

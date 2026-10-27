@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'bun:test';
 import {
+  AggregateDef,
   allowAll,
   BaseEntityFields,
-  defineAggregate,
-  defineErrors,
-  defineModule,
-  defineUseCase,
+  ErrorDef,
   F,
+  ModuleDef,
+  UseCaseDef,
 } from 'dmg-core';
 import { ArchChecker } from 'dmg-core/arch';
 import { normalize } from 'dmg-core/graph';
@@ -45,22 +45,22 @@ describe('CourseModuleDef — внешний модуль (D-37)', () => {
   });
 
   it('UC вызывается другим модулем по calls (D-42) — без нарушений', () => {
-    const ProbeArDef = defineAggregate({
+    const ProbeArDef = AggregateDef.define({
       name: 'probe',
       label: 'Проба',
       description: 'Агрегат модуля-потребителя.',
       state: v.object({ ...BaseEntityFields }),
       events: {},
-      errors: defineErrors('PROBE', {}),
+      errors: ErrorDef.define('PROBE', {}),
     });
-    const consumer = defineModule({
+    const consumer = ModuleDef.define({
       name: 'probe',
       label: 'Проба',
       description: 'Модуль-потребитель для проверки контракта.',
       dependsOn: [CourseModuleDef],
       aggregates: [ProbeArDef],
       useCases: [
-        defineUseCase({
+        UseCaseDef.define({
           name: 'probeEnroll',
           label: 'Проба записи',
           description: 'Спрашивает у курса стартовый модуль.',

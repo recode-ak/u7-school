@@ -9,15 +9,15 @@ import {
   GetSameModulesUcDef,
 } from '@u7-scl/domain/course/contract';
 import {
+  AggregateDef,
   allowAll,
   BaseEntityFields,
   type Caller,
-  defineAggregate,
-  defineModule,
-  defineUseCase,
   F,
+  ModuleDef,
   ok,
   SystemCaller,
+  UseCaseDef,
   UserCaller,
 } from 'dmg-core';
 import {
@@ -36,7 +36,7 @@ import { type CourseLegacy, createCourseModule } from './course.module';
 // Потребитель модуля курсов — UC другого модуля: объявляет
 // `getCourseEnrollment` в `calls` и вызывает его через `this.call` (D-43);
 // фасад — `ModuleFacade` над модулем курсов.
-const ProbeArDef = defineAggregate({
+const ProbeArDef = AggregateDef.define({
   name: 'probe',
   label: 'Проба',
   description: 'Агрегат модуля-потребителя фасада курсов.',
@@ -58,14 +58,14 @@ const probeSpec = {
   errors: [],
 } as const;
 
-const ProbeUcDef = defineUseCase({
+const ProbeUcDef = UseCaseDef.define({
   ...probeSpec,
   calls: [GetCourseEnrollmentUcDef],
 });
 /** Тот же UC, но `getCourseEnrollment` в `calls` не объявлен — вызов не компилируется. */
-const SneakyUcDef = defineUseCase({ ...probeSpec, name: 'sneaky' });
+const SneakyUcDef = UseCaseDef.define({ ...probeSpec, name: 'sneaky' });
 
-const ProbeModuleDef = defineModule({
+const ProbeModuleDef = ModuleDef.define({
   name: 'probe',
   label: 'Проба',
   description: 'Модуль-потребитель фасада курсов.',

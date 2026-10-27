@@ -3,7 +3,7 @@ import type {
   InputOf,
   OutputOf,
   UseCaseErrorOf,
-} from '#core/domain/contracts/define-use-case';
+} from '#core/domain/contracts/use-case-def';
 import type { SystemCaller } from '#core/kernel/caller/caller';
 import type { Result } from '#core/kernel/result/result';
 import type { Trace } from '#core/kernel/trace/trace';

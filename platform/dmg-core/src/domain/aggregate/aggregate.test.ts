@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
-import { defineErrors } from '#core/kernel/errors/define-errors';
+import { ErrorDef } from '#core/kernel/errors/error-def';
 import { BaseEntityFields, F } from '#core/kernel/fields/fields';
 import { ok, type Result } from '#core/kernel/result/result';
 import type { Timestamp } from '#core/kernel/time/timestamp';
 import { expectErr, expectOk } from '#core/testing/index';
-import { defineEvents } from '../events/define-events';
+import { EventDef } from '../events/event-def';
 import { Aggregate } from './aggregate';
 import type { ErrorsOf, EventsOf, StateOf } from './aggregate.types';
-import { defineAggregate } from './define-aggregate';
+import { AggregateDef } from './aggregate-def';
 
 const TaskState = v.object({
   ...BaseEntityFields,
@@ -16,7 +16,7 @@ const TaskState = v.object({
   status: F.picklist(['open', 'done'], 'Статус'),
 });
 
-const TaskEvents = defineEvents('todo.task', {
+const TaskEvents = EventDef.define('todo.task', {
   created: {
     label: 'Задача создана',
     description: 'Появилась новая задача.',
@@ -29,7 +29,7 @@ const TaskEvents = defineEvents('todo.task', {
   },
 });
 
-const TaskErrors = defineErrors('TASK', {
+const TaskErrors = ErrorDef.define('TASK', {
   ALREADY_DONE: {
     kind: 'conflict',
     label: 'Задача уже выполнена',
@@ -42,7 +42,7 @@ const TaskErrors = defineErrors('TASK', {
   },
 });
 
-const TaskArDef = defineAggregate({
+const TaskArDef = AggregateDef.define({
   name: 'task',
   label: 'Задача',
   description: 'Пункт списка дел.',
@@ -125,7 +125,7 @@ class TaskAr extends Aggregate<typeof TaskArDef> {
   }
 }
 
-const SecretArDef = defineAggregate({
+const SecretArDef = AggregateDef.define({
   name: 'secret',
   label: 'Секрет',
   description: 'Сейф с пин-кодом, который не отдаётся наружу.',
@@ -175,7 +175,7 @@ const stored = (status: 'open' | 'done') => ({
   status,
 });
 
-describe('defineAggregate', () => {
+describe('AggregateDef.define', () => {
   it('Def несёт метаданные, статусы, переходы и ссылки на группы', () => {
     expect(TaskArDef.dmg).toBe('aggregate');
     expect(TaskArDef.name).toBe('task');
@@ -198,7 +198,7 @@ describe('defineAggregate', () => {
   });
 
   it('статусы обязаны покрыть все значения `status` состояния', () => {
-    defineAggregate({
+    AggregateDef.define({
       name: 'task',
       label: 'Задача',
       description: 'Пункт списка дел.',
@@ -213,7 +213,7 @@ describe('defineAggregate', () => {
   });
 
   it('переход объявляет отказ для каждого статуса вне `from`', () => {
-    defineAggregate({
+    AggregateDef.define({
       name: 'task',
       label: 'Задача',
       description: 'Пункт списка дел.',

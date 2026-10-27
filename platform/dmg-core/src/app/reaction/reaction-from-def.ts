@@ -1,5 +1,5 @@
-import type { AnyEventReactionDef } from '#core/domain/contracts/define-event-reaction';
-import type { AnyModuleDef } from '#core/domain/contracts/define-module';
+import type { AnyEventReactionDef } from '#core/domain/contracts/event-reaction-def';
+import type { AnyModuleDef } from '#core/domain/contracts/module-def';
 import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { serializeError } from '#core/kernel/errors/serialize-error';

@@ -1,4 +1,4 @@
-import { BaseEntityFields, defineAggregate, defineErrors } from 'dmg-core';
+import { AggregateDef, BaseEntityFields, ErrorDef } from 'dmg-core';
 import * as v from 'valibot';
 
 /**
@@ -6,11 +6,11 @@ import * as v from 'valibot';
  * Состояние, события и ошибки — пустой минимум; агрегат реализует legacy-код
  * (`CourseAr`). При миграции модуля Def наполняется.
  */
-export const CourseArDef = defineAggregate({
+export const CourseArDef = AggregateDef.define({
   name: 'course',
   label: 'Курс',
   description: 'Курс: программа из фаз и модулей, публикуется для записи.',
   state: v.object({ ...BaseEntityFields }),
   events: {},
-  errors: defineErrors('COURSE', {}),
+  errors: ErrorDef.define('COURSE', {}),
 });

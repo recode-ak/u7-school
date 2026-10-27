@@ -1,5 +1,5 @@
-import type { AnyJobDef } from '#core/domain/contracts/define-job';
-import type { AnyModuleDef } from '#core/domain/contracts/define-module';
+import type { AnyJobDef } from '#core/domain/contracts/job-def';
+import type { AnyModuleDef } from '#core/domain/contracts/module-def';
 import { SystemCaller } from '#core/kernel/caller/caller';
 import type { DomainError } from '#core/kernel/errors/error';
 import { ok, type Result } from '#core/kernel/result/result';

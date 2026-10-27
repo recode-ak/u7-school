@@ -1,14 +1,14 @@
 import type { SystemCaller } from '#core/kernel/caller/caller';
 import type { Result } from '#core/kernel/result/result';
 import type { Trace } from '#core/kernel/trace/trace';
-import type { AnyModuleDef } from './define-module';
+import type { AnyModuleDef } from './module-def';
 import type {
   AnyUseCaseDef,
   InputOf,
   OutputOf,
   SystemCallableUc,
   UseCaseErrorOf,
-} from './define-use-case';
+} from './use-case-def';
 
 /** UC модуля M, которые может вызвать система: `'system'` в `callers`. */
 export type SystemCallable<M extends AnyModuleDef> = SystemCallableUc<

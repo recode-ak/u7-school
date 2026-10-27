@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import * as v from 'valibot';
-import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
-import { defineEventReaction } from '#core/domain/contracts/define-event-reaction';
-import { defineJob } from '#core/domain/contracts/define-job';
-import { defineModule } from '#core/domain/contracts/define-module';
+import { AggregateDef } from '#core/domain/aggregate/aggregate-def';
+import { EventReactionDef } from '#core/domain/contracts/event-reaction-def';
+import { JobDef } from '#core/domain/contracts/job-def';
+import { ModuleDef } from '#core/domain/contracts/module-def';
 import {
-  defineUseCase,
+  UseCaseDef,
   type UseCaseErrorOf,
-} from '#core/domain/contracts/define-use-case';
-import { allowAll } from '#core/domain/policy/policy';
+} from '#core/domain/contracts/use-case-def';
+import { allowAll } from '#core/domain/policy/rule';
 import {
   type Caller,
   SystemCaller,
@@ -39,7 +39,7 @@ import { UseCaseFromDef } from '../use-case/use-case-from-def';
 
 // Модуль-потребитель todo: UC, ER и Job вызывают `getTask` через
 // `this.call` (D-43, Р5) — фасад todo в тесте — `StubFacade`.
-const DigestArDef = defineAggregate({
+const DigestArDef = AggregateDef.define({
   name: 'digest',
   label: 'Сводка',
   description: 'Сводка по задачам — агрегат модуля-потребителя.',
@@ -61,21 +61,21 @@ const showSpec = {
   errors: [TaskErrors.NOT_FOUND],
 } as const;
 
-const ShowTaskUcDef = defineUseCase({ ...showSpec, calls: [GetTaskUcDef] });
+const ShowTaskUcDef = UseCaseDef.define({ ...showSpec, calls: [GetTaskUcDef] });
 /** Тот же UC без `calls` — вызвать `getTask` ему нельзя по типу. */
-const SilentUcDef = defineUseCase({ ...showSpec, name: 'silent' });
+const SilentUcDef = UseCaseDef.define({ ...showSpec, name: 'silent' });
 /**
  * UC без доменных ошибок: `TASK_NOT_FOUND` вызванного UC не объявлен —
  * переводит его в свой ответ, ошибки ядра отдаёт как есть (D-43, Р7).
  */
-const TranslateUcDef = defineUseCase({
+const TranslateUcDef = UseCaseDef.define({
   ...showSpec,
   name: 'translate',
   errors: [],
   calls: [GetTaskUcDef],
 });
 
-const NoteRemovedErDef = defineEventReaction({
+const NoteRemovedErDef = EventReactionDef.define({
   name: 'noteRemoved',
   label: 'Отметить удаление',
   description: 'Читает задачу удалённого пользователя через фасад todo.',
@@ -83,14 +83,14 @@ const NoteRemovedErDef = defineEventReaction({
   calls: [GetTaskUcDef],
 });
 /** Реакция без `calls`. */
-const SilentErDef = defineEventReaction({
+const SilentErDef = EventReactionDef.define({
   name: 'silentEr',
   label: 'Молчаливая реакция',
   description: 'Ничего не вызывает.',
   on: [UserEvents.removed],
 });
 
-const DigestJobDef = defineJob({
+const DigestJobDef = JobDef.define({
   name: 'digestJob',
   label: 'Сводка',
   description: 'Читает задачу через фасад todo.',
@@ -98,14 +98,14 @@ const DigestJobDef = defineJob({
   calls: [GetTaskUcDef],
 });
 /** Задание без `calls`. */
-const SilentJobDef = defineJob({
+const SilentJobDef = JobDef.define({
   name: 'silentJob',
   label: 'Молчаливое задание',
   description: 'Ничего не вызывает.',
   schedule: { kind: 'dailyAt', hour: 4, minute: 0 },
 });
 
-const DigestModuleDef = defineModule({
+const DigestModuleDef = ModuleDef.define({
   name: 'digest',
   label: 'Сводки',
   description: 'Модуль-потребитель фасада todo.',
@@ -392,7 +392,7 @@ describe('OperationFromDef.call — ER и Job', () => {
 // Пробы `createUow`: UoW операции со сверкой по её Def (D-43, Р8). Модуль
 // проб владеет агрегатом task, чтобы проверять emits и touches отдельно от
 // MAN-13; чужой агрегат — та же проба в модуле digest.
-const ProbeModuleDef = defineModule({
+const ProbeModuleDef = ModuleDef.define({
   name: 'probe',
   label: 'Пробы',
   description: 'Модуль проб UoW: владеет агрегатом задачи.',

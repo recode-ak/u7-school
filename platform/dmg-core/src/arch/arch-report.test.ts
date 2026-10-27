@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { defineModule } from '../domain/contracts/define-module';
+import { ModuleDef } from '../domain/contracts/module-def';
 import { ExampleArch } from '../testing/example/example.arch';
 import type { ArchApp } from './arch-checker';
 import { RULES_DOC, reportArchCheck } from './arch-report';
@@ -23,7 +23,7 @@ describe('reportArchCheck', () => {
   });
 
   it('нарушения — строки с ID правила, путь к rules.md пакета и код 1', () => {
-    const broken = defineModule({
+    const broken = ModuleDef.define({
       name: 'broken',
       label: '',
       description: 'Модуль без названия и без файлов.',

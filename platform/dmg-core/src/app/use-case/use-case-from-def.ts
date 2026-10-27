@@ -1,15 +1,15 @@
 import * as v from 'valibot';
-import type { AnyModuleDef } from '#core/domain/contracts/define-module';
+import type { AnyModuleDef } from '#core/domain/contracts/module-def';
 import type {
   AnyUseCaseDef,
   OutputOf,
   UseCaseErrorOf,
-} from '#core/domain/contracts/define-use-case';
+} from '#core/domain/contracts/use-case-def';
 import type {
   Rule,
   RuleContextOf,
   RuleSubjectOf,
-} from '#core/domain/policy/policy';
+} from '#core/domain/policy/rule';
 import type {
   DomainRuleContextOf,
   DomainRuleDef,

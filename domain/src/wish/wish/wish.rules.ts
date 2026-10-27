@@ -2,7 +2,7 @@ import type {
   CourseEnrollment,
   ModuleEnrollment,
 } from '@u7-scl/domain/course/contract';
-import { defineRules, domainRule, err, ok, type ReadonlyAr } from 'dmg-core';
+import { DomainRuleDef, err, ok, type ReadonlyAr, RulesDef } from 'dmg-core';
 import type { CreateWish, WishAr } from './wish.ar';
 import { WishErrors } from './wish.errors';
 
@@ -25,7 +25,7 @@ export type UniqueWishCtx = {
  * оказаться не первым. Отказ строит существующее желание — со своим
  * статусом, по нему ветвится UI (D-39).
  */
-const unique = domainRule({
+const unique = DomainRuleDef.define({
   name: 'unique',
   label: 'Одно активное желание на цель',
   description:
@@ -54,7 +54,7 @@ export type CourseEnrollableCtx = {
  * его ответа в ошибку желаний: «недоступен для записи» для студента
  * неотличим от «нет курса» (`WISH_COURSE_NOT_FOUND`).
  */
-const courseEnrollable = domainRule({
+const courseEnrollable = DomainRuleDef.define({
   name: 'courseEnrollable',
   label: 'Курс открыт для записи',
   description:
@@ -80,7 +80,7 @@ export type ModuleEnrollableCtx = {
  * опубликованного курса — допуск без субъекта (D-40). Решает модуль курсов
  * (`enrollable`); здесь — перевод ответа в `WISH_MODULE_NOT_FOUND`.
  */
-const moduleEnrollable = domainRule({
+const moduleEnrollable = DomainRuleDef.define({
   name: 'moduleEnrollable',
   label: 'Модуль открыт для записи',
   description:
@@ -102,7 +102,7 @@ export type CancellableCtx = { readonly wish: ReadonlyAr<WishAr> };
  * (сохраняемое поведение legacy; `NOT_CANCELLABLE` через UC недостижим).
  * Решение — здесь, в UC нет ветвления по статусу (API-01).
  */
-const cancellable = domainRule({
+const cancellable = DomainRuleDef.define({
   name: 'cancellable',
   label: 'Желание можно отменить',
   description:
@@ -112,7 +112,7 @@ const cancellable = domainRule({
     wish.canCancel() ? ok() : err(wish.notFound()),
 });
 
-export const WishRules = defineRules({
+export const WishRules = RulesDef.define({
   name: 'wish',
   label: 'Правила желаний',
   description:

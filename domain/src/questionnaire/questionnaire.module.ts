@@ -1,5 +1,5 @@
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
-import { defineModule } from 'dmg-core';
+import { ModuleDef } from 'dmg-core';
 import { QuestionnaireArDef } from './questionnaire/questionnaire.ar';
 import { StartQuestionnaireUcDef } from './questionnaire/uc/start-questionnaire.uc';
 
@@ -9,7 +9,7 @@ import { StartQuestionnaireUcDef } from './questionnaire/uc/start-questionnaire.
  * другие модули (D-42; исполняет адаптер над legacy-фасадом, TR-11). При
  * миграции `external` снимается.
  */
-export const QuestionnaireModuleDef = defineModule({
+export const QuestionnaireModuleDef = ModuleDef.define({
   name: 'questionnaire',
   label: 'Анкеты',
   description: 'Анкеты респондентов: запуск, заполнение, завершение.',

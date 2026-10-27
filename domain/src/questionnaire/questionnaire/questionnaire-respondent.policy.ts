@@ -1,12 +1,12 @@
-import { definePolicy, rule } from 'dmg-core';
+import { PolicyDef, Rule } from 'dmg-core';
 
 /**
  * Респондент анкеты есть: анкета запускается за субъекта вызывающего
  * (`caller.subject()`), поэтому системный вызов без человека — отказ.
- * `rule()` без субъекта сам возвращает отказ, `check` вызывается лишь
+ * `Rule.of()` без субъекта сам возвращает отказ, `check` вызывается лишь
  * при наличии субъекта.
  */
-const hasRespondent = rule<{ readonly uuid: string }>({
+const hasRespondent = Rule.of<{ readonly uuid: string }>({
   name: 'hasRespondent',
   label: 'Есть респондент',
   denyMessage: 'Анкету можно запустить только за человека-респондента.',
@@ -18,7 +18,7 @@ const hasRespondent = rule<{ readonly uuid: string }>({
  * `QuestionnairePolicy` занят legacy-объектом (`./policy.ts`) и экспортируется
  * из того же индекса; после миграции модуля анкет они сольются.
  */
-export const QuestionnaireRespondentPolicy = definePolicy({
+export const QuestionnaireRespondentPolicy = PolicyDef.define({
   name: 'questionnaireRespondent',
   label: 'Права респондента анкеты',
   description: 'Запустить анкету можно только за человека-респондента.',
