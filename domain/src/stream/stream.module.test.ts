@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { checkDefs } from 'dmg-core/arch';
+import { ArchChecker } from 'dmg-core/arch';
 import { DefIndex, normalize } from 'dmg-core/graph';
 import * as v from 'valibot';
 import { StreamEvents, StreamModuleDef, StudentEvents } from './contract';
@@ -23,9 +23,11 @@ describe('StreamModuleDef — внешний модуль (D-37)', () => {
     });
   });
 
-  it('checkDefs по модулю и зависимостям — без нарушений', () => {
+  it('ArchChecker по модулю и зависимостям — без нарушений', () => {
     expect(
-      checkDefs(DefIndex.from([StreamModuleDef])).map((v) => v.format()),
+      new ArchChecker(DefIndex.from([StreamModuleDef]))
+        .check()
+        .map((v) => v.format()),
     ).toEqual([]);
   });
 

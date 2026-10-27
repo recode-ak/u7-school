@@ -1,4 +1,4 @@
-import { type ArchApp, archCheck } from './arch-check';
+import { type ArchApp, ArchChecker } from './arch-checker';
 
 /** Каталог правил установленного пакета — от корня проекта-потребителя. */
 export const RULES_DOC = 'node_modules/dmg-core/docs/rules.md';
@@ -14,7 +14,7 @@ export function reportArchCheck(
 ): number {
   let total = 0;
   for (const app of apps) {
-    const violations = archCheck(app);
+    const violations = ArchChecker.of(app).check();
     print(`arch:check ${app.name}: нарушений — ${violations.length}`);
     for (const v of violations) print(v.format());
     total += violations.length;

@@ -8,7 +8,7 @@ import {
   defineUseCase,
   F,
 } from 'dmg-core';
-import { checkDefs } from 'dmg-core/arch';
+import { ArchChecker } from 'dmg-core/arch';
 import { DefIndex, normalize } from 'dmg-core/graph';
 import * as v from 'valibot';
 import { CourseModuleDef, GetCourseEnrollmentUcDef } from './contract';
@@ -40,9 +40,11 @@ describe('CourseModuleDef — внешний модуль (D-37)', () => {
     });
   });
 
-  it('checkDefs — без нарушений', () => {
+  it('ArchChecker — без нарушений', () => {
     expect(
-      checkDefs(DefIndex.from([CourseModuleDef])).map((v) => v.format()),
+      new ArchChecker(DefIndex.from([CourseModuleDef]))
+        .check()
+        .map((v) => v.format()),
     ).toEqual([]);
   });
 
@@ -79,8 +81,8 @@ describe('CourseModuleDef — внешний модуль (D-37)', () => {
       reactions: [],
       jobs: [],
     });
-    expect(checkDefs(DefIndex.from([consumer])).map((v) => v.format())).toEqual(
-      [],
-    );
+    expect(
+      new ArchChecker(DefIndex.from([consumer])).check().map((v) => v.format()),
+    ).toEqual([]);
   });
 });

@@ -5,7 +5,7 @@
 #   bun run e2e
 #
 # 1. npm publish --dry-run без исправлений package.json; состав tarball.
-# 2. Установка tarball в пустой проект → импорт и archCheck.
+# 2. Установка tarball в пустой проект → импорт и ArchChecker.
 # 3. dmg-core init → sync --check; документация, скилы и ссылки на месте
 #    (consumer-check.ts); biome потребителя загружает плагины пакета.
 # 4. gen создаёт модуль, тесты заготовок зелёные на установленном пакете.
@@ -58,15 +58,15 @@ cat >package.json <<JSON
 JSON
 bun add "$TARBALL" valibot @valibot/to-json-schema >/dev/null
 cat >smoke.ts <<'TS'
-import { archCheck } from 'dmg-core/arch';
+import { ArchChecker } from 'dmg-core/arch';
 import { ExampleArch } from 'dmg-core/testing';
 
-const violations = archCheck(ExampleArch);
+const violations = ArchChecker.of(ExampleArch).check();
 if (violations.length > 0) {
   console.error(violations);
   process.exit(1);
 }
-console.log('consumer: dmg-core импортируется, archCheck чист');
+console.log('consumer: dmg-core импортируется, ArchChecker чист');
 TS
 bun run smoke.ts
 

@@ -34,10 +34,10 @@ import {
   NoteEvents,
   PurgeNotesJobDef,
 } from './arch.fixture';
-import { checkDefs } from './check-defs';
+import { DefChecker } from './def-checker';
 
 const report = (...roots: AnyModuleDef[]): string[] =>
-  checkDefs(DefIndex.from(roots)).map((v) => v.format());
+  new DefChecker(DefIndex.from(roots)).check().map((v) => v.format());
 
 const ThingEvents = defineEvents('gamma.thing', {
   happened: {
@@ -93,7 +93,7 @@ function gamma(
   });
 }
 
-describe('checkDefs', () => {
+describe('DefChecker', () => {
   it('чистые модули — без нарушений', () => {
     expect(report(AlphaModuleDef)).toEqual([]);
     expect(report(gamma())).toEqual([]);

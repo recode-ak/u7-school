@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { checkDefs } from '#core/arch/check-defs';
+import { ArchChecker } from '#core/arch/arch-checker';
 import { DefIndex } from '#core/graph/def-index';
 import { normalize } from '#core/graph/normalize';
 import { TaskArDef } from './task/task.ar';
@@ -65,9 +65,11 @@ describe('TodoModuleDef', () => {
     expect(defs).toHaveLength(19);
   });
 
-  it('checkDefs вместе с users — без нарушений', () => {
+  it('ArchChecker вместе с users — без нарушений', () => {
     expect(
-      checkDefs(DefIndex.from([TodoModuleDef])).map((v) => v.format()),
+      new ArchChecker(DefIndex.from([TodoModuleDef]))
+        .check()
+        .map((v) => v.format()),
     ).toEqual([]);
   });
 });

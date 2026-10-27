@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { defineModule } from '../domain/contracts/define-module';
 import { ExampleArch } from '../testing/example/example.arch';
-import type { ArchApp } from './arch-check';
+import type { ArchApp } from './arch-checker';
 import { RULES_DOC, reportArchCheck } from './arch-report';
 
 function run(apps: readonly ArchApp[]) {

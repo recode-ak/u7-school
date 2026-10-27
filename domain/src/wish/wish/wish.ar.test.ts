@@ -4,7 +4,7 @@ import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { defineModule } from 'dmg-core';
-import { checkDefs } from 'dmg-core/arch';
+import { ArchChecker } from 'dmg-core/arch';
 import { DefIndex } from 'dmg-core/graph';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import * as v from 'valibot';
@@ -53,7 +53,7 @@ describe('WishArDef', () => {
     ]);
   });
 
-  it('checkDefs с зависимостями — без нарушений (описания, FQN, уникальность кодов)', () => {
+  it('ArchChecker с зависимостями — без нарушений (описания, FQN, уникальность кодов)', () => {
     const probe = defineModule({
       name: 'wish',
       label: 'Желания',
@@ -71,9 +71,9 @@ describe('WishArDef', () => {
     });
     // MAN-06 «событие никто не публикует» — до контрактов UC/ER (Ф8–Ф11):
     // `emits` появится у confirm-wish и invite-wishers.
-    const violations = checkDefs(DefIndex.from([probe])).filter(
-      (x) => x.rule !== 'MAN-06',
-    );
+    const violations = new ArchChecker(DefIndex.from([probe]))
+      .check()
+      .filter((x) => x.rule !== 'MAN-06');
     expect(violations.map((v) => v.format())).toEqual([]);
   });
 });

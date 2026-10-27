@@ -39,4 +39,4 @@
 
 ## 6. Как тестировать
 
-Для каждого VO и статуса проверь через `v.safeParse`, что допустимое значение принимается, а недопустимое отклоняется. Тесты — 10–20 строк ([testing.md](../testing.md), TST-04). Описания полей проверяет `checkDefs` по паспорту модуля ([todo.module.test.ts](../../src/testing/example/todo/todo.module.test.ts)). Фолбэк `updatedAt` проверяй разбором через `<A>ArDef.state`, а не `<A>State`. Логику переходов тестируй в Ar, а не в state.
+Для каждого VO и статуса проверь через `v.safeParse`, что допустимое значение принимается, а недопустимое отклоняется. Тесты — 10–20 строк ([testing.md](../testing.md), TST-04). Описания полей проверяет `ArchChecker` по паспорту модуля ([todo.module.test.ts](../../src/testing/example/todo/todo.module.test.ts)). Фолбэк `updatedAt` проверяй разбором через `<A>ArDef.state`, а не `<A>State`. Логику переходов тестируй в Ar, а не в state.

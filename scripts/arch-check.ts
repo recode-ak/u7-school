@@ -12,7 +12,7 @@ import { readdirSync } from 'node:fs';
 import { Glob } from 'bun';
 import {
   type ArchApp,
-  checkDefs,
+  ArchChecker,
   RULES_DOC,
   reportArchCheck,
 } from 'dmg-core/arch';
@@ -83,7 +83,9 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
     dmg: DOMAIN_MODULES.filter((m) => !m.external).map((m) => m.name),
   };
   return [
-    ...checkDefs(DefIndex.from(DOMAIN_MODULES)).map((v) => v.format()),
+    ...new ArchChecker(DefIndex.from(DOMAIN_MODULES))
+      .check()
+      .map((v) => v.format()),
     ...checkContractImports(
       [...code, ...(await readAppSources(root))],
       modules,

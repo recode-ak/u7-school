@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { defineModule } from '../domain/contracts/define-module';
 import { DefIndex } from '../graph/def-index';
 import { AlphaModuleDef, BetaModuleDef } from './arch.fixture';
-import { checkFiles, type ModuleLayout } from './check-files';
+import { FileChecker, type ModuleLayout } from './file-checker';
 
 let root: string;
 
@@ -42,9 +42,11 @@ function cleanTree(): void {
 }
 
 const report = (): string[] =>
-  checkFiles(DefIndex.from([AlphaModuleDef]), layout).map((v) => v.format());
+  new FileChecker(DefIndex.from([AlphaModuleDef]), layout)
+    .check()
+    .map((v) => v.format());
 
-describe('checkFiles', () => {
+describe('FileChecker', () => {
   it('чистая раскладка — без нарушений', () => {
     cleanTree();
     write(
@@ -103,9 +105,9 @@ describe('checkFiles', () => {
         "import { ItemEvents } from '../../../beta';\n",
       );
       expect(
-        checkFiles(DefIndex.from([AlphaModuleDef]), layout, 'contract').map(
-          (v) => v.format(),
-        ),
+        new FileChecker(DefIndex.from([AlphaModuleDef]), layout, 'contract')
+          .check()
+          .map((v) => v.format()),
       ).toEqual([
         'ARC-04: alpha/note/job/purge-notes.job.ts импортирует beta мимо contract.ts: ../../../beta',
       ]);
@@ -127,9 +129,9 @@ describe('checkFiles', () => {
           external: alphaExternal,
           dependsOn: [beta],
         });
-        return checkFiles(DefIndex.from([alpha]), layout, 'contract').map((v) =>
-          v.format(),
-        );
+        return new FileChecker(DefIndex.from([alpha]), layout, 'contract')
+          .check()
+          .map((v) => v.format());
       };
       const violation =
         'ARC-04: alpha/note/er/add-note.er.ts импортирует beta мимо contract.ts: ../../../beta';
@@ -202,7 +204,9 @@ describe('checkFiles', () => {
       const beta = defineModule({ ...BetaModuleDef, external: true });
       const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [beta] });
       expect(
-        checkFiles(DefIndex.from([alpha]), layout).map((v) => v.format()),
+        new FileChecker(DefIndex.from([alpha]), layout)
+          .check()
+          .map((v) => v.format()),
       ).toEqual([]);
     });
 
@@ -215,7 +219,9 @@ describe('checkFiles', () => {
       const beta = defineModule({ ...BetaModuleDef, external: true });
       const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [beta] });
       expect(
-        checkFiles(DefIndex.from([alpha]), layout).map((v) => v.format()),
+        new FileChecker(DefIndex.from([alpha]), layout)
+          .check()
+          .map((v) => v.format()),
       ).toEqual([]);
     });
   });

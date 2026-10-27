@@ -1,13 +1,13 @@
 /**
  * Приёмка генераторов: срез module → aggregate → uc → er → job → dcs → dqs
  * создаётся во временном проекте с раскладкой по умолчанию и проходит
- * biome, tsc, bun test и archCheck без ручных правок. Проект лежит внутри
+ * biome, tsc, bun test и ArchChecker без ручных правок. Проект лежит внутри
  * пакета (иначе не разрешаются `dmg-core` и `valibot`) и удаляется в конце.
  */
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { type ArchApp, archCheck } from '../arch';
+import { type ArchApp, ArchChecker } from '../arch';
 import { GenLayout } from './layout';
 import { runGen } from './main';
 
@@ -72,7 +72,7 @@ test('тесты заготовок зелёные', async () => {
   expect(res.code).toBe(0);
 }, 120_000);
 
-test('archCheck без нарушений', async () => {
+test('ArchChecker без нарушений', async () => {
   const layout = new GenLayout(GenLayout.defaults, project);
   const domain = await import(layout.domainDir(MODULE));
   const app: ArchApp = {
@@ -80,5 +80,9 @@ test('archCheck без нарушений', async () => {
     modules: [domain.GenprobeModuleDef],
     layout: (m) => ({ domain: layout.domainDir(m), app: layout.appDir(m) }),
   };
-  expect(archCheck(app).map((v) => v.format())).toEqual([]);
+  expect(
+    ArchChecker.of(app)
+      .check()
+      .map((v) => v.format()),
+  ).toEqual([]);
 });

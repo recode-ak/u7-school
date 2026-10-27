@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import type { ArchApp } from '#core/arch/arch-check';
+import type { ArchApp } from '#core/arch/arch-checker';
 import { TodoModuleDef } from './todo';
 
 /**

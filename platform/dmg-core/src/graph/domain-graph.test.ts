@@ -25,7 +25,7 @@ import { buildGraph } from './domain-graph';
 // `completeTask` система не вызывает (нет `'system'` в `callers`), и тип
 // `calls` его не пропустит; здесь он нужен как цель-command для графа —
 // список расширен до общего типа (граф строится и по таким Def, отказ —
-// забота `checkDefs`).
+// забота `DefChecker`).
 const NOTIFY_CALLS: readonly AnyUseCaseDef[] = [
   GetTaskUcDef,
   CompleteTaskUcDef,

@@ -54,7 +54,7 @@ export type UseCaseRulesContextOf<D extends AnyUseCaseDef> = RuleContexts<
 /**
  * Доменное правило UC так, как его видит исполнение: контекст — загруженное,
  * ошибка — из `errors` UC (ERR-02). Правило с необъявленной ошибкой не
- * подходит конструктору; рантайм-проверку того же делает `checkDefs`.
+ * подходит конструктору; рантайм-проверку того же делает `DefChecker`.
  */
 type UseCaseRule<D extends AnyUseCaseDef> = DomainRuleDef<
   UseCaseRulesContextOf<D>,

@@ -1,6 +1,6 @@
 /**
  * Данные проверок домена для `bun run arch:check`: модули домена по Def,
- * приложение домена для `archCheck` и путь к реестру долга
+ * приложение домена для `ArchChecker` и путь к реестру долга
  * `conductor/architecture/debt.md`.
  */
 import { join } from 'node:path';
@@ -16,7 +16,7 @@ import type { ArchApp } from 'dmg-core/arch';
 
 /**
  * Модули `@u7-scl/domain`: граф `dependsOn` строится из Def, Def проверяет
- * `checkDefs`. Каталог домена без модуля в списке — ARC-05
+ * `DefChecker`. Каталог домена без модуля в списке — ARC-05
  * (`checkDomainDirs`).
  */
 export const DOMAIN_MODULES: readonly AnyModuleDef[] = [
@@ -38,7 +38,7 @@ export interface GenTemplates {
 }
 
 /**
- * Приложение домена для `archCheck` по шаблонам генератора: один источник
+ * Приложение домена для `ArchChecker` по шаблонам генератора: один источник
  * путей с `dmg-core gen`. Функция, а не литерал — чтобы проверить подстановку
  * на произвольных шаблонах. Вход модуля для других — `contract.ts` (D-45).
  */

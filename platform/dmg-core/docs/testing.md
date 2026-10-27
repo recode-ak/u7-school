@@ -35,7 +35,7 @@ expect(res.ok ? undefined : res.error.code).toBe('TASK_ALREADY_DONE');
 | **Репозиторий** | контракт: restore/snapshot, поиск, `undefined` при отсутствии | контракт |
 | **UC / ER / Job** | цепочки: нет актора → `UNAUTHORIZED`, нет сущности → `*_NOT_FOUND`, политика → `ACCESS_DENIED`, успех → регистрация в UoW и события; каждая собственная ошибка | по ошибкам |
 | **Модуль** | smoke: один успешный вызов каждого UC на реальных репозиториях (временный каталог) | по UC |
-| **Контрактные** | граф и правила MAN/ARC/ERR (`archCheck` из `dmg-core/arch`) | автоматически |
+| **Контрактные** | граф и правила MAN/ARC/ERR (`ArchChecker` из `dmg-core/arch`) | автоматически |
 
 ## 4. Моки
 

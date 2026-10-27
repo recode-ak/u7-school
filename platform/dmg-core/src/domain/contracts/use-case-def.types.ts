@@ -26,7 +26,7 @@ type Common = DefTexts & {
    * UC других модулей (из `dependsOn`), которые операция вызывает через их
    * фасады (D-42, MAN-05). Только UC с `'system'` в `callers` — тип
    * (`SystemCalls` в `UseCaseDef.define`), согласованность с графом —
-   * `checkDefs`.
+   * `DefChecker`.
    */
   readonly calls?: readonly AnyUseCaseDef[];
   readonly input: v.GenericSchema;

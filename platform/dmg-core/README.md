@@ -19,7 +19,7 @@ bunx dmg-core init
 
 1. **Модуль.** `bunx dmg-core gen module todo --write` создаёт паспорт модуля в домене (`src/domain/todo/`) и прикладной слой (`src/app/todo/`). Без `--write` команда только печатает план. Каталоги и импорт домена задаёт секция `gen` в `dmg-core.json` ([naming.md](docs/naming.md) §5).
 2. **Агрегат и операции.** `gen aggregate todo.task` добавляет state, события, ошибки, Ar, Policy и репозиторий. `gen uc todo.task complete-task` создаёт пару «контракт в домене ↔ реализация в прикладном слое», `er` и `job` работают так же, а `dcs` / `dqs` создают доменные сервисы. В заготовках остаются `TODO` — по ним видно, что заполнить. Как именно, подскажет гайд вида ([индекс](docs/guides/index.md)) и тот же артефакт в учебном модуле.
-3. **Проверка архитектуры.** Опиши приложение для `archCheck` — модули и их раскладку, как в [`example.arch.ts`](src/testing/example/example.arch.ts), — и вызови отчёт из `check` проекта:
+3. **Проверка архитектуры.** Опиши приложение для `ArchChecker` — модули и их раскладку, как в [`example.arch.ts`](src/testing/example/example.arch.ts), — и вызови отчёт из `check` проекта:
 
    ```ts
    import { reportArchCheck } from 'dmg-core/arch';
@@ -44,8 +44,8 @@ bunx dmg-core init
 |---|---|
 | `dmg-core` | ядро и `define*` — единственное, что импортирует домен |
 | `dmg-core/app` | прикладной слой: UC/ER/Job по Def, модуль, UoW, фасады, репозитории |
-| `dmg-core/graph` | нормализация Def и граф модулей |
-| `dmg-core/arch` | `archCheck`, `checkDefs`, `checkFiles`, `reportArchCheck` |
+| `dmg-core/graph` | нормализация Def, `DefIndex` и граф модулей |
+| `dmg-core/arch` | `ArchChecker`, `Violation`, `reportArchCheck` |
 | `dmg-core/testing` | хелперы тестов и учебный модуль (`ExampleArch`) |
 | `dmg-core/cli` | `DmgCoreCli`: `init`, `sync`, `gen` как API (CLI — `bunx dmg-core`) |
 

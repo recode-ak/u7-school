@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { checkDefs } from 'dmg-core/arch';
+import { ArchChecker } from 'dmg-core/arch';
 import { DefIndex, normalize } from 'dmg-core/graph';
 import { WishModuleDef } from './wish.module';
 
@@ -20,9 +20,11 @@ describe('WishModuleDef', () => {
     });
   });
 
-  it('checkDefs — без нарушений', () => {
+  it('ArchChecker — без нарушений', () => {
     expect(
-      checkDefs(DefIndex.from([WishModuleDef])).map((v) => v.format()),
+      new ArchChecker(DefIndex.from([WishModuleDef]))
+        .check()
+        .map((v) => v.format()),
     ).toEqual([]);
   });
 });

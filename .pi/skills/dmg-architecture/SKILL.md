@@ -28,7 +28,7 @@ description: ЗАГРУЖАТЬ ПЕРВЫМ при создании или ре
 ## 4. Проверь перед завершением
 
 - Пройди применимые ID из `rules.md` (ARC, DOM, MAN, ERR, API, CODE, TST).
-- `check` проекта зелёный: lint (правила biome пакета), типы, тесты, `archCheck` (`dmg-core/arch`).
+- `check` проекта зелёный: lint (правила biome пакета), типы, тесты, `ArchChecker` (`dmg-core/arch`).
 - Тесты — `testing.md`; TDD: тест до кода.
 
 ## 5. Стоп-сигналы

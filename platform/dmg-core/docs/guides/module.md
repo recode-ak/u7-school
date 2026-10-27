@@ -29,7 +29,7 @@
 - ARC-06 — прикладной пакет модуля не импортирует другие прикладные пакеты: чужие модули — только `ModuleFacades` в `deps`.
 - API-05 — карта типизирована `satisfies ModuleMap<typeof <M>ModuleDef, <M>Deps, …>`; класс без Def в карте — ошибка типа.
 - MAN-01, MAN-06 — у паспорта `label`/`description`; каждый Def модуля в паспорте.
-- MAN-05 — `calls` операций только из модулей `dependsOn` (`checkDefs`).
+- MAN-05 — `calls` операций только из модулей `dependsOn` (`ArchChecker`).
 - MAN-13 — один UoW — один модуль.
 
 ## 5. Типичные ловушки
@@ -42,4 +42,4 @@
 
 ## 6. Как тестировать
 
-Домен — `normalize(<M>ModuleDef)` (состав паспорта) и `checkDefs(DefIndex.from([…]))` без нарушений ([todo.module.test.ts](../../src/testing/example/todo/todo.module.test.ts), [users.module.test.ts](../../src/testing/example/users/users.module.test.ts)). Прикладной пакет — модуль на настоящем репозитории во временном каталоге, фасады — `StubFacade` по Def, вызовы через `handle`, `runJob`, доставка события через `subscribe` ([todo.module.test.ts](../../src/testing/example/app/todo/todo.module.test.ts)).
+Домен — `normalize(<M>ModuleDef)` (состав паспорта) и `new ArchChecker(DefIndex.from([…])).check()` без нарушений ([todo.module.test.ts](../../src/testing/example/todo/todo.module.test.ts), [users.module.test.ts](../../src/testing/example/users/users.module.test.ts)). Прикладной пакет — модуль на настоящем репозитории во временном каталоге, фасады — `StubFacade` по Def, вызовы через `handle`, `runJob`, доставка события через `subscribe` ([todo.module.test.ts](../../src/testing/example/app/todo/todo.module.test.ts)).

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { checkDefs } from 'dmg-core/arch';
+import { ArchChecker } from 'dmg-core/arch';
 import { DefIndex, normalize } from 'dmg-core/graph';
 import { UserModuleDef } from './contract';
 
@@ -15,9 +15,11 @@ describe('UserModuleDef — внешний модуль (D-37)', () => {
     });
   });
 
-  it('checkDefs — без нарушений', () => {
+  it('ArchChecker — без нарушений', () => {
     expect(
-      checkDefs(DefIndex.from([UserModuleDef])).map((v) => v.format()),
+      new ArchChecker(DefIndex.from([UserModuleDef]))
+        .check()
+        .map((v) => v.format()),
     ).toEqual([]);
   });
 });

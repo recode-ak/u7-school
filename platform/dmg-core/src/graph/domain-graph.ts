@@ -244,7 +244,7 @@ class GraphBuilder {
 
   /**
    * «UC → UC» из `calls` (D-42): обратная связь `calledBy` у вызываемого UC
-   * и связь L0 между модулями. Вызов своего UC — нарушение (`checkDefs`),
+   * и связь L0 между модулями. Вызов своего UC — нарушение (`DefChecker`),
    * связи L0 не даёт.
    */
   private addCalls(m: AnyModuleDef): void {
