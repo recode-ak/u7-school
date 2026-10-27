@@ -19,10 +19,11 @@
     - [x] Тесты: фабрика собирает `todo` и `users` с фасадами по `dependsOn`, UC через модуль, событие доходит до реакции, запись в oplog; запуск — red 74c0ceac
     - [x] Реализация фабрики (`InProcOutbox`/`InProcInbox`, лог операций, `Logger`); запуск — green 74c0ceac
     - [x] `OperationRef.kind: 'app'` — вызов от корня сборки (резолвер `Caller`); запись D-NN в `decisions.md` пакета, резолвер `ExampleApp` на нём (решение Нурболата 2026-10-27); тесты red → green 161af694
-- [ ] Task: Минимальный in-proc раннер учебного примера (CLI-команда → `Caller` → UC → вывод `Result`)
-    - [ ] Тест раннера (команда вызывает UC; ошибка ввода — код 1); red
-    - [ ] Реализация; green
+- [x] Task: Минимальный in-proc раннер учебного примера (CLI-команда → `Caller` → UC → вывод `Result`) 9d89ac84
+    - [x] Тест раннера (команда вызывает UC; ошибка ввода — код 1); red 9d89ac84
+    - [x] Реализация; green 9d89ac84
 - [ ] Task: `ExampleArch` и `arch:check` пакета охватывают приложение и раннер; какие правила (ARC) на них распространяются
+    - Область плагина ARC-09 в `biome.json` пакета (сейчас весь `src/**`, правило — домен и UI); точечное исключение `runner/main.ts` — временное (решение Нурболата 2026-10-27)
 - [ ] Task: Гайд `docs/guides/app.md` (по `_template.md`) на учебном приложении; ссылки из `guides/index.md`, `layers.md`, `llms.txt`
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
