@@ -41,7 +41,7 @@ export const ARCH_APPS: readonly ArchApp[] = [ExampleArch, DomainArch];
 export async function readPackageSources(root = '.'): Promise<DomainFile[]> {
   const files: DomainFile[] = [];
   for (const pattern of [
-    '{platform,modules,authoring}/*/src/**/*.ts',
+    '{platform,modules,authoring,runners}/*/src/**/*.ts',
     'domain/src/**/*.ts',
     'scripts/**/*.ts',
   ]) {

@@ -65,6 +65,7 @@ export function createDmgAppContext(platform: DmgPlatform): AppContext {
   };
 }
 
+// DEBT-39: сборка модулей в раннере, а не в пакете приложения (D-50).
 /**
  * Модули DMG приложения: внешние модули зависимостей (адаптеры над
  * legacy-фасадами, TR-11) и `wish`. Фасады — по `dependsOn` модуля `wish`
