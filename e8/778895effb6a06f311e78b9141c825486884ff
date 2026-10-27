@@ -1,0 +1,1 @@
+Ревью Фазы 4, вопрос 1 (решено с Нурболатом 2026-10-27): ArchChecker.defsOf(roots) — только Def; report() — строки format(). Переведены тесты модулей domain/* и учебного примера, scripts/arch-check.ts, guides/module.md. Вопрос 2: имена в decisions.md оставлены актуальными (журнал — справка по текущему API). check зелёный (4096 pass).
