@@ -1,0 +1,1 @@
+Задача: ревью reviewer (Фаза 2, command-dispatch). error — нет; warn исправлены (уникальность имён при сборке, JSDoc), info — по таблице в slices/phase-2.md. Открыт вопрос: исполнение meta команды.
