@@ -10,6 +10,7 @@
 - Вход для остального кода — `contract.ts` (D-45): `<M>ModuleDef`, Def UC, которые зовут снаружи, события, ошибки, VO их схем; каждый экспорт — с JSDoc «кто и зачем». Ar, Policy, DCS, ArDef и схем entity в нём нет. `index.ts` — для своего прикладного пакета.
 - Зависимость реализована вне приложения (ещё не переведённый код, другой сервис) — внешний модуль `ModuleDef.define({ external: true, … })` в её `contract.ts` (D-37): агрегаты с событиями, Def UC без реализации, без ER/Job; события публикует внешняя сторона.
 - Фасад — только по потребителю ([facade.md](./facade.md)): модулю без вызывающих фасад не нужен.
+- Вход в UC модуля — команда (D-49): `module.dispatch(ucDef.command(input), caller, trace)`. UC модуль находит по имени из команды; неизвестное имя (команда клиента другой версии) — `Err` `OPERATION_NOT_FOUND` с `{ module, uc }`. Модуль адресует транспорт (приложение — по имени модуля), а не команда. Job — `runJob`, реакции — `subscribe`. `handle(def, …)` по ссылке на Def — прежний вход, только до перевода потребителей на команды.
 
 ## 2. Команда
 
@@ -37,9 +38,9 @@
 - Старый обработчик и модуль на Def подписаны на одно событие одновременно — двойная обработка; при переключении старый убирается тем же изменением.
 - Резолвер приложения с лишними полями вместо `ModuleDeps` платформы и своих репозиториев — модуль начинает зависеть от приложения.
 - Лог операций тестов в рабочих данных → временный каталог или `MemoryOperationLog`.
-- Строковое имя UC вместо Def при вызове из UI; `Caller` и `Trace` строятся в одном месте входа, а не в каждой story.
+- Строковое имя UC или команда, собранная руками, вместо `ucDef.command(input)` при вызове из UI; `Caller` и `Trace` строятся в одном месте входа, а не в каждой story.
 - `external` у модуля с реализацией — его ER и Job не попадут в граф; `external` снимается при переводе модуля на Def, контракт остаётся.
 
 ## 6. Как тестировать
 
-Домен — `normalize(<M>ModuleDef)` (состав паспорта) и `ArchChecker.defsOf([…]).report()` без нарушений ([todo.module.test.ts](../../src/testing/example/todo/todo.module.test.ts), [users.module.test.ts](../../src/testing/example/users/users.module.test.ts)). Прикладной пакет — модуль на настоящем репозитории во временном каталоге, фасады — `StubFacade` по Def, вызовы через `handle`, `runJob`, доставка события через `subscribe` ([todo.module.test.ts](../../src/testing/example/app/todo/todo.module.test.ts)).
+Домен — `normalize(<M>ModuleDef)` (состав паспорта) и `ArchChecker.defsOf([…]).report()` без нарушений ([todo.module.test.ts](../../src/testing/example/todo/todo.module.test.ts), [users.module.test.ts](../../src/testing/example/users/users.module.test.ts)). Прикладной пакет — модуль на настоящем репозитории во временном каталоге, фасады — `StubFacade` по Def, вызовы через `dispatch` команды, `runJob`, доставка события через `subscribe` ([todo.module.test.ts](../../src/testing/example/app/todo/todo.module.test.ts)).

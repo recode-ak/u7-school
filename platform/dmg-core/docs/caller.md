@@ -40,7 +40,7 @@ type PersonCaller<U> = GuestCaller<U> | UserCaller<U> | DelegateCaller<U>;
 4. Межмодульный вызов — `this.call(def, input, caller, trace)` базы `OperationFromDef`: только Def из `calls` (по типу — UC с `'system'` в `callers`); база подставляет `SystemCaller(this.ref, caller.person())` и идёт через фасад модуля-владельца (`Facade<M>.handle`). Рантайм-проверки `calls` нет.
 5. След — класс `Trace`: `requestId` (вход транспорта: `Trace.fromRequest`; клиент не передал — создаётся с `warn`, ERR-07), `cause` (запрос, событие или прогон Job), `correlationId` (вся цепочка), `channel?: { name, visitorId? }` (задаётся на входе, идёт по цепочке). ER — `Trace.fromEvent` (канал события не переносится — в конверте его нет), Job — `Trace.forJob(def)` (причина — прогон с именем Job). `toLog()` — форма для лога операций, `toEnvelope()` — для конверта события.
 6. Конверт события несёт `cause` и `correlationId`, но не `caller`: аудит «кто» — лог операций (`OperationLog`, `toLog()` вызывающего), «из-за чего» — `trace.cause`.
-7. Транспорт строит `Caller` и `Trace` на входе (бот — по идентификатору пользователя в канале и активному делегированию, HTTP — по токену) и вызывает `ModuleFromDef.handle`; внутрь UC они передаются неизменными.
+7. Транспорт строит `Caller` и `Trace` на входе (бот — по идентификатору пользователя в канале и активному делегированию, HTTP — по токену) и исполняет команду `ModuleFromDef.dispatch` (D-49); внутрь UC они передаются неизменными.
 
 ## 3. Делегирование
 

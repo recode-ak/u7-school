@@ -11,7 +11,7 @@
 - Реакция на событие — не UC, а ER ([event-reaction.md](./event-reaction.md)).
 - Вызов другого модуля — `this.call(Def, input, caller, trace)` базы `OperationFromDef`, Def вызываемого UC — в `calls` (D-43, [facade.md](./facade.md)).
 - **Побочный эффект в чужом модуле** (command через фасад) — место выбирает владелец проекта по каждому случаю: (1) вызов в `execute` после `uow.register`, до фиксации — эффект, без которого команда не выполнена; риск — эффект без записи при сбое фиксации; (2) событие своего модуля → ER, вызывающая фасад после фиксации — реакция на факт; риск — запись без эффекта, если ER упала. Выбор и принятый риск записываются рядом с кодом.
-- Вход снаружи — только `ModuleFromDef.handle(def, input, caller, trace)`: транспорт строит `Caller` и `Trace` ([caller.md](../caller.md)).
+- Вход снаружи — только команда `ModuleFromDef.dispatch(ucDef.command(input), caller, trace)` (D-49): транспорт адресует модуль и строит `Caller` и `Trace` ([caller.md](../caller.md)).
 
 ## 2. Команда
 
