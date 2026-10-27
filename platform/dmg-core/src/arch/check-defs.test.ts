@@ -35,10 +35,9 @@ import {
   PurgeNotesJobDef,
 } from './arch.fixture';
 import { checkDefs } from './check-defs';
-import { formatViolation } from './violation';
 
 const report = (...roots: AnyModuleDef[]): string[] =>
-  checkDefs(DefIndex.from(roots)).map(formatViolation);
+  checkDefs(DefIndex.from(roots)).map((v) => v.format());
 
 const ThingEvents = defineEvents('gamma.thing', {
   happened: {

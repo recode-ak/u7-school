@@ -16,9 +16,15 @@ export type ArchRule =
   | 'MAN-12'
   | 'MAN-13';
 
-export type Violation = { readonly rule: ArchRule; readonly message: string };
+/** Нарушение правила `rules.md`, найденное `arch:check`. */
+export class Violation {
+  constructor(
+    readonly rule: ArchRule,
+    readonly message: string,
+  ) {}
 
-/** Строка отчёта: начинается с ID правила. */
-export function formatViolation(v: Violation): string {
-  return `${v.rule}: ${v.message}`;
+  /** Строка отчёта: начинается с ID правила. */
+  format(): string {
+    return `${this.rule}: ${this.message}`;
+  }
 }

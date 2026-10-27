@@ -7,7 +7,7 @@ import { CoreErrors } from '../kernel/errors/core-errors';
 import type { AnyErrorDef } from '../kernel/errors/error-def';
 import { toJsonSchema } from '../kernel/schema/json-schema';
 import { describedDefs } from './described-defs';
-import type { ArchRule, Violation } from './violation';
+import { type ArchRule, Violation } from './violation';
 
 /**
  * Контрактные проверки по Def (без файлов): описания и схемы (MAN-01/02/03),
@@ -32,19 +32,14 @@ export function checkDefs(index: DefIndex): Violation[] {
   ];
 }
 
-const violation = (rule: ArchRule, message: string): Violation => ({
-  rule,
-  message,
-});
-
 function checkTexts(index: DefIndex): Violation[] {
   const out: Violation[] = [];
   for (const d of describedDefs(index)) {
     if (d.label.trim() === '') {
-      out.push(violation('MAN-01', `${d.title}: пустой label`));
+      out.push(new Violation('MAN-01', `${d.title}: пустой label`));
     }
     if (d.description.trim() === '') {
-      out.push(violation('MAN-01', `${d.title}: пустой description`));
+      out.push(new Violation('MAN-01', `${d.title}: пустой description`));
     }
   }
   return out;
@@ -60,7 +55,7 @@ function checkSchemas(index: DefIndex): Violation[] {
       } catch (e) {
         const reason = e instanceof Error ? e.message : String(e);
         out.push(
-          violation(
+          new Violation(
             'MAN-03',
             `${d.title} ${name}: не переводится в JSON Schema — ${reason}`,
           ),
@@ -69,7 +64,7 @@ function checkSchemas(index: DefIndex): Violation[] {
       }
       for (const field of undocumented(json, '')) {
         out.push(
-          violation(
+          new Violation(
             'MAN-02',
             `${d.title} ${name}: поле ${field} без description`,
           ),
@@ -103,7 +98,7 @@ function undocumented(s: JsonSchema | boolean, path: string): string[] {
 function checkLinks(index: DefIndex): Violation[] {
   const out: Violation[] = [];
   const add = (message: string): void => {
-    out.push(violation('MAN-06', message));
+    out.push(new Violation('MAN-06', message));
   };
   const published = new Set<AnyEventDef>();
   for (const op of index.operations()) {
@@ -183,7 +178,7 @@ function checkFqn(index: DefIndex): Violation[] {
         const rest = e.name.slice(prefix.length);
         if (!e.name.startsWith(prefix) || rest === '' || rest.includes('.')) {
           out.push(
-            violation(
+            new Violation(
               'MAN-08',
               `событие ${e.name} агрегата ${m.localId(a)}: ожидается префикс ${prefix}`,
             ),
@@ -205,7 +200,7 @@ function checkRejects(index: DefIndex): Violation[] {
         for (const e of Object.values(t.rejects)) {
           if (e === undefined || own.has(e)) continue;
           out.push(
-            violation(
+            new Violation(
               'MAN-12',
               `агрегат ${m.localId(a)}, переход ${op}: отказ ${e.code} не из ошибок агрегата`,
             ),
@@ -231,7 +226,7 @@ function checkUseCaseRules(index: DefIndex): Violation[] {
       for (const r of uc.rules) {
         if (seen.has(r)) {
           out.push(
-            violation(
+            new Violation(
               'DOM-16',
               `${title}: правило ${r.name} указано в rules дважды`,
             ),
@@ -241,7 +236,7 @@ function checkUseCaseRules(index: DefIndex): Violation[] {
         seen.add(r);
         if (!uc.errors.includes(r.error)) {
           out.push(
-            violation(
+            new Violation(
               'ERR-02',
               `${title}: ошибка ${r.error.code} правила ${r.name} не объявлена в errors`,
             ),
@@ -270,14 +265,14 @@ function checkCalls(index: DefIndex): Violation[] {
         const id = owner.localId(uc);
         if (owner === m) {
           out.push(
-            violation(
+            new Violation(
               'MAN-05',
               `${title}: UC ${id} своего модуля — calls только для UC других модулей`,
             ),
           );
         } else if (!uc.callers.includes('system')) {
           out.push(
-            violation(
+            new Violation(
               'MAN-05',
               `${title}: UC ${id} не объявляет system в callers`,
             ),
@@ -302,7 +297,7 @@ function checkOwnAggregates(index: DefIndex): Violation[] {
         const owner = index.moduleOf(a);
         if (owner === undefined || owner === m) continue;
         out.push(
-          violation(
+          new Violation(
             'MAN-13',
             `${op.title(m)}: агрегат ${owner.localId(a)} модуля ${owner.name}`,
           ),
@@ -319,7 +314,7 @@ function checkDependsOn(index: DefIndex): Violation[] {
     const check = (title: string, what: string, owner?: AnyModuleDef) => {
       if (owner && owner !== m && !m.dependsOn.includes(owner)) {
         out.push(
-          violation(
+          new Violation(
             'ARC-04',
             `${title}: ${what} модуля ${owner.name}, которого нет в dependsOn ${m.name}`,
           ),
@@ -357,7 +352,7 @@ function checkCycles(index: DefIndex): Violation[] {
     const at = stack.indexOf(m);
     if (at >= 0) {
       const path = [...stack.slice(at), m].map((x) => x.name).join(' → ');
-      out.push(violation('ARC-05', `цикл dependsOn: ${path}`));
+      out.push(new Violation('ARC-05', `цикл dependsOn: ${path}`));
       return;
     }
     stack.push(m);
@@ -384,7 +379,7 @@ function checkErrorCodes(index: DefIndex): Violation[] {
       for (const e of Object.values(a.errors)) {
         if (!e.code.startsWith(prefix)) {
           out.push(
-            violation(
+            new Violation(
               'ERR-04',
               `ошибка ${e.code} агрегата ${m.localId(a)}: ожидается префикс ${prefix}`,
             ),
@@ -398,7 +393,10 @@ function checkErrorCodes(index: DefIndex): Violation[] {
   for (const [code, defs] of byCode) {
     if (defs.size > 1) {
       out.push(
-        violation('ERR-04', `код ${code} объявлен в ${defs.size} разных Def`),
+        new Violation(
+          'ERR-04',
+          `код ${code} объявлен в ${defs.size} разных Def`,
+        ),
       );
     }
   }

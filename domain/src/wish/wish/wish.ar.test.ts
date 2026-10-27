@@ -4,7 +4,7 @@ import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { defineModule } from 'dmg-core';
-import { checkDefs, formatViolation } from 'dmg-core/arch';
+import { checkDefs } from 'dmg-core/arch';
 import { DefIndex } from 'dmg-core/graph';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import * as v from 'valibot';
@@ -74,7 +74,7 @@ describe('WishArDef', () => {
     const violations = checkDefs(DefIndex.from([probe])).filter(
       (x) => x.rule !== 'MAN-06',
     );
-    expect(violations.map(formatViolation)).toEqual([]);
+    expect(violations.map((v) => v.format())).toEqual([]);
   });
 });
 

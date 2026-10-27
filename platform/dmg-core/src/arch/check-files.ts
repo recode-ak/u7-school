@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import type { AnyOperationDef, DefIndex } from '../graph/def-index';
-import type { ArchRule, Violation } from './violation';
+import { type ArchRule, Violation } from './violation';
 
 /** Каталоги модуля: домен (`domain/src/<m>`) и прикладной пакет (`<m>/src`). */
 export type ModuleLayout = { readonly domain: string; readonly app: string };
@@ -26,7 +26,7 @@ export function checkFiles(
   const dirs = new Map(index.modules.map((m) => [m, layout(m.name)]));
   const out: Violation[] = [];
   const add = (rule: ArchRule, message: string): void => {
-    out.push({ rule, message });
+    out.push(new Violation(rule, message));
   };
 
   for (const [m, dir] of dirs) {

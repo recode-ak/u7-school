@@ -7,7 +7,7 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { type ArchApp, archCheck, formatViolation } from '../arch';
+import { type ArchApp, archCheck } from '../arch';
 import { GenLayout } from './layout';
 import { runGen } from './main';
 
@@ -80,5 +80,5 @@ test('archCheck без нарушений', async () => {
     modules: [domain.GenprobeModuleDef],
     layout: (m) => ({ domain: layout.domainDir(m), app: layout.appDir(m) }),
   };
-  expect(archCheck(app).map(formatViolation)).toEqual([]);
+  expect(archCheck(app).map((v) => v.format())).toEqual([]);
 });

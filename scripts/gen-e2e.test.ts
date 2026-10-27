@@ -11,7 +11,7 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { type ArchApp, archCheck, formatViolation } from 'dmg-core/arch';
+import { type ArchApp, archCheck } from 'dmg-core/arch';
 import { DomainArch } from './domain-arch';
 
 const REPO = join(import.meta.dir, '..');
@@ -92,5 +92,5 @@ test('arch:check без нарушений (раскладка приложен�
     // contract.ts генератор не создаёт (D-45): вход заготовки — index.
     entry: 'index',
   };
-  expect(archCheck(app).map(formatViolation)).toEqual([]);
+  expect(archCheck(app).map((v) => v.format())).toEqual([]);
 });

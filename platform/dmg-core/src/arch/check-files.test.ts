@@ -6,7 +6,6 @@ import { defineModule } from '../domain/contracts/define-module';
 import { DefIndex } from '../graph/def-index';
 import { AlphaModuleDef, BetaModuleDef } from './arch.fixture';
 import { checkFiles, type ModuleLayout } from './check-files';
-import { formatViolation } from './violation';
 
 let root: string;
 
@@ -43,7 +42,7 @@ function cleanTree(): void {
 }
 
 const report = (): string[] =>
-  checkFiles(DefIndex.from([AlphaModuleDef]), layout).map(formatViolation);
+  checkFiles(DefIndex.from([AlphaModuleDef]), layout).map((v) => v.format());
 
 describe('checkFiles', () => {
   it('чистая раскладка — без нарушений', () => {
@@ -105,7 +104,7 @@ describe('checkFiles', () => {
       );
       expect(
         checkFiles(DefIndex.from([AlphaModuleDef]), layout, 'contract').map(
-          formatViolation,
+          (v) => v.format(),
         ),
       ).toEqual([
         'ARC-04: alpha/note/job/purge-notes.job.ts импортирует beta мимо contract.ts: ../../../beta',
@@ -128,8 +127,8 @@ describe('checkFiles', () => {
           external: alphaExternal,
           dependsOn: [beta],
         });
-        return checkFiles(DefIndex.from([alpha]), layout, 'contract').map(
-          formatViolation,
+        return checkFiles(DefIndex.from([alpha]), layout, 'contract').map((v) =>
+          v.format(),
         );
       };
       const violation =
@@ -203,7 +202,7 @@ describe('checkFiles', () => {
       const beta = defineModule({ ...BetaModuleDef, external: true });
       const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [beta] });
       expect(
-        checkFiles(DefIndex.from([alpha]), layout).map(formatViolation),
+        checkFiles(DefIndex.from([alpha]), layout).map((v) => v.format()),
       ).toEqual([]);
     });
 
@@ -216,7 +215,7 @@ describe('checkFiles', () => {
       const beta = defineModule({ ...BetaModuleDef, external: true });
       const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [beta] });
       expect(
-        checkFiles(DefIndex.from([alpha]), layout).map(formatViolation),
+        checkFiles(DefIndex.from([alpha]), layout).map((v) => v.format()),
       ).toEqual([]);
     });
   });

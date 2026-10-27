@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'bun:test';
 import { checkDefs } from '#core/arch/check-defs';
-import { formatViolation } from '#core/arch/violation';
 import { DefIndex } from '#core/graph/def-index';
 import { normalize } from '#core/graph/normalize';
 import { TaskArDef } from './task/task.ar';
@@ -68,7 +67,7 @@ describe('TodoModuleDef', () => {
 
   it('checkDefs вместе с users — без нарушений', () => {
     expect(
-      checkDefs(DefIndex.from([TodoModuleDef])).map(formatViolation),
+      checkDefs(DefIndex.from([TodoModuleDef])).map((v) => v.format()),
     ).toEqual([]);
   });
 });

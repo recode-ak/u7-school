@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { checkDefs, formatViolation } from 'dmg-core/arch';
+import { checkDefs } from 'dmg-core/arch';
 import { DefIndex, normalize } from 'dmg-core/graph';
 import { UserModuleDef } from './contract';
 
@@ -17,7 +17,7 @@ describe('UserModuleDef — внешний модуль (D-37)', () => {
 
   it('checkDefs — без нарушений', () => {
     expect(
-      checkDefs(DefIndex.from([UserModuleDef])).map(formatViolation),
+      checkDefs(DefIndex.from([UserModuleDef])).map((v) => v.format()),
     ).toEqual([]);
   });
 });

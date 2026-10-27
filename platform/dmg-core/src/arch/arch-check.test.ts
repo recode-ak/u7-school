@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { ExampleArch } from '../testing/example/example.arch';
 import { archCheck } from './arch-check';
-import { formatViolation } from './violation';
 
 describe('archCheck', () => {
   it('учебный пример (todo + users) — без нарушений', () => {
@@ -19,7 +18,7 @@ describe('archCheck', () => {
     const app = { ...ExampleArch, entry: undefined };
     const arc04 = (file: string) =>
       `ARC-04: ${file} импортирует users мимо index.ts: #core/testing/example/users/contract`;
-    expect(archCheck(app).map(formatViolation)).toEqual([
+    expect(archCheck(app).map((v) => v.format())).toEqual([
       // домен
       arc04('todo/task/er/release-removed-user-tasks.er.ts'),
       arc04('todo/task/task.rules.ts'),

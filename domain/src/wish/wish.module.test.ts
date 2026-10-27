@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { checkDefs, formatViolation } from 'dmg-core/arch';
+import { checkDefs } from 'dmg-core/arch';
 import { DefIndex, normalize } from 'dmg-core/graph';
 import { WishModuleDef } from './wish.module';
 
@@ -22,7 +22,7 @@ describe('WishModuleDef', () => {
 
   it('checkDefs — без нарушений', () => {
     expect(
-      checkDefs(DefIndex.from([WishModuleDef])).map(formatViolation),
+      checkDefs(DefIndex.from([WishModuleDef])).map((v) => v.format()),
     ).toEqual([]);
   });
 });
