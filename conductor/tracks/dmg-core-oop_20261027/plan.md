@@ -22,7 +22,7 @@
 - [x] Task: Ревью reviewer `19a2cd82`
 - [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
-## Фаза 2: Иерархия `Rule` и `PolicyDef`
+## Фаза 2: Иерархия `Rule` и `PolicyDef` [checkpoint: 3a6f9349]
 
 - [x] Task: Абстрактный `Rule` → `NamedRule`, `AllOfRule`, `AnyOfRule`, `AllowAll`; фабрики `Rule.of/allOf/anyOf/hasRole`; `evaluate`, `normalize()`, `describe()` полиморфно; уходит `switch` по `rule.op` в `normalize.ts` `339e248`
     - `describe()` у `Rule` не вводится (решено с Нурболатом 2026-10-27): у правила нет `description`, MAN-01 его не покрывает; PO и аналитику в графе хватает `label`/`denyMessage` из `normalize()`. Добавим, когда появится потребитель. `allowAll` — константа-экземпляр `AllowAll` (статическое поле базы на наследника — TDZ).
