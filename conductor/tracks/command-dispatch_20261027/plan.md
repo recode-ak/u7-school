@@ -2,10 +2,10 @@
 
 Старт после `dmg-core-oop`. Каждая задача — TDD (red → запуск → green, по шагам), `bun run check` и `arch:check` зелёные после каждой. Платформа — модель Opus. Данные `data/` не трогаем.
 
-## Фаза 0: Решение и контракт
+## Фаза 0: Решение и контракт [checkpoint: feeb6ae]
 
 - [x] Task: D-49 в `decisions.md` («Def — типы клиента, команда — исполнение; модуль адресует транспорт, не команда»); `transport.md` §2 и §4 обновить (`uc` без модуля, `moduleApi` на клиенте) `9f7e822`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md) `feeb6ae`
 
 ## Фаза 1: Команда и ответ
 
