@@ -1,0 +1,4 @@
+Контрольная точка Фазы 5 (генератор).
+Автотесты: bun run check (вкл. CI=true bun test) — 4097 pass, 0 fail.
+Ручная верификация: bun test src/gen + kind-switch.test, обзор gen/kinds/operation.ts.
+Подтверждение Нурболата: «продолжай» (2026-10-27).
