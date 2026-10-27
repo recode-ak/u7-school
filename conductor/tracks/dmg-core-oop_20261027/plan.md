@@ -28,7 +28,7 @@
     - `describe()` у `Rule` не вводится (решено с Нурболатом 2026-10-27): у правила нет `description`, MAN-01 его не покрывает; PO и аналитику в графе хватает `label`/`denyMessage` из `normalize()`. Добавим, когда появится потребитель. `allowAll` — константа-экземпляр `AllowAll` (статическое поле базы на наследника — TDZ).
 - [x] Task: `PolicyDef` (`definePolicy` → статика) `8292da9`
 - [x] Task: Гайд policy `9855bd6`
-- [~] Task: Ревью reviewer
+- [x] Task: Ревью reviewer `0bf34ee`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Операции и модуль
