@@ -44,7 +44,8 @@
 - [x] Task: `normalize.ts`/`described-defs.ts` без `switch` — только делегирование `def.normalize()`/`def.describe()`; контрактный тест «нет `switch` по `dmg`» в `check` `d920619`
     - Тест — `src/arch/kind-switch.test.ts` (graph, arch); `gen` добавить в задаче шаблонов Фазы 5.
 - [x] Task: Гайды (module, event-reaction, job, `manifests.md`) `a46bc41`
-- [~] Task: Ревью reviewer
+- [x] Task: Ревью reviewer `8040f70`
+    - Блокеров нет. Исправлено: `kind-switch.test` ловит `TABLE[x.dmg]` и обратное сравнение. Отложено в Фазу 7: один тип вместо `Declared`/`DeclaredCalls` (общий `Declared` — в `operation-def.types.ts`), `decisions.md` D-09/D-37 на `ModuleDef.define`.
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: `DefIndex` и `ArchChecker`
@@ -73,7 +74,7 @@
 
 ## Фаза 7: Перевод потребителей и документация
 
-- [ ] Task: `domain/` и `modules/<m>` на `XxxDef.define`; `define*` удаляются из публичного API
-- [ ] Task: `llms.txt`, `dmg-core/docs`, `conductor/architecture/` (naming; запись D-xx «Def — классы» в decisions); `TRACK-DMG-CORE-OOP.md` удалён
+- [ ] Task: `domain/` и `modules/<m>` на `XxxDef.define`; `define*` удаляются из публичного API; один тип вместо `Declared`/`DeclaredCalls` (общий — в `operation-def.types.ts`)
+- [ ] Task: `llms.txt`, `dmg-core/docs`, `conductor/architecture/` (naming; запись D-xx «Def — классы» в decisions); D-09/D-37 — `ModuleDef.define`; `TRACK-DMG-CORE-OOP.md` удалён
 - [ ] Task: Финал: гейт качества (workflow) — полный `CI=true bun test`, `tsc`, `biome`, `arch:check`, триаж в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
