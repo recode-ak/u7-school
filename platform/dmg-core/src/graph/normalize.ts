@@ -87,18 +87,5 @@ export function normalize(def: AnyJobDef): NormalizedJob;
 export function normalize(def: AnyModuleDef): NormalizedModule;
 export function normalize(def: AnyDef): NormalizedDef;
 export function normalize(def: AnyDef): NormalizedDef {
-  switch (def.dmg) {
-    case 'error':
-    case 'event':
-    case 'aggregate':
-    case 'rule':
-    case 'policy':
-    case 'domainRule':
-    case 'rules':
-    case 'useCase':
-    case 'eventReaction':
-    case 'job':
-    case 'module':
-      return def.normalize();
-  }
+  return def.normalize();
 }
