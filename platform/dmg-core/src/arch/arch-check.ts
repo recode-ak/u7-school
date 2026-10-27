@@ -1,5 +1,5 @@
 import type { AnyModuleDef } from '../domain/contracts/define-module';
-import { indexDefs } from '../graph/def-index';
+import { DefIndex } from '../graph/def-index';
 import { checkDefs } from './check-defs';
 import { checkFiles, type ModuleLayout } from './check-files';
 import type { Violation } from './violation';
@@ -17,6 +17,6 @@ export type ArchApp = {
 
 /** Все контрактные проверки приложения: по Def и по файлам модулей. */
 export function archCheck(app: ArchApp): Violation[] {
-  const index = indexDefs(app.modules);
+  const index = DefIndex.from(app.modules);
   return [...checkDefs(index), ...checkFiles(index, app.layout, app.entry)];
 }

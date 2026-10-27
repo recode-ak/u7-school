@@ -2,12 +2,7 @@ import type { JsonSchema } from '@valibot/to-json-schema';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyEventDef } from '../domain/events/event-def';
 import type { AnyDomainRule } from '../domain/rules/domain-rule-def';
-import {
-  callsOf,
-  type DefIndex,
-  localId,
-  operationsOf,
-} from '../graph/def-index';
+import type { DefIndex } from '../graph/def-index';
 import { CoreErrors } from '../kernel/errors/core-errors';
 import type { AnyErrorDef } from '../kernel/errors/error-def';
 import { toJsonSchema } from '../kernel/schema/json-schema';
@@ -111,7 +106,7 @@ function checkLinks(index: DefIndex): Violation[] {
     out.push(violation('MAN-06', message));
   };
   const published = new Set<AnyEventDef>();
-  for (const op of index.operationOwner.keys()) {
+  for (const op of index.operations()) {
     for (const e of op.emits) published.add(e);
   }
   // События внешнего модуля публикует внешняя сторона (D-37); его UC —
@@ -125,22 +120,22 @@ function checkLinks(index: DefIndex): Violation[] {
     }
   }
   const eventModule = (e: AnyEventDef): AnyModuleDef | undefined => {
-    const a = index.eventOwner.get(e);
-    return a && index.aggregateOwner.get(a);
+    const a = index.aggregateOf(e);
+    return a && index.moduleOf(a);
   };
   const checkErrors = (title: string, errors: readonly AnyErrorDef[]) => {
     for (const e of errors) {
-      if (!index.errorOwner.has(e) && !isCoreError(e)) {
+      if (!index.aggregateOf(e) && !isCoreError(e)) {
         add(`${title}: ошибка ${e.code} не входит ни в один модуль`);
       }
     }
   };
 
   for (const m of index.modules) {
-    for (const op of operationsOf(m)) {
+    for (const op of m.operations()) {
       const title = op.title(m);
       for (const a of op.aggregates()) {
-        const owner = index.aggregateOwner.get(a);
+        const owner = index.moduleOf(a);
         if (owner === undefined) {
           add(`${title}: агрегат ${a.name} не входит ни в один модуль`);
         }
@@ -153,8 +148,8 @@ function checkLinks(index: DefIndex): Violation[] {
           add(`${title}: публикует событие ${e.name} другого модуля`);
         }
       }
-      for (const uc of callsOf(op)) {
-        if (!index.operationOwner.has(uc)) {
+      for (const uc of op.calls) {
+        if (!index.moduleOf(uc)) {
           add(`${title}: UC ${uc.name} не входит ни в один модуль`);
         }
       }
@@ -190,7 +185,7 @@ function checkFqn(index: DefIndex): Violation[] {
           out.push(
             violation(
               'MAN-08',
-              `событие ${e.name} агрегата ${localId(m, a)}: ожидается префикс ${prefix}`,
+              `событие ${e.name} агрегата ${m.localId(a)}: ожидается префикс ${prefix}`,
             ),
           );
         }
@@ -212,7 +207,7 @@ function checkRejects(index: DefIndex): Violation[] {
           out.push(
             violation(
               'MAN-12',
-              `агрегат ${localId(m, a)}, переход ${op}: отказ ${e.code} не из ошибок агрегата`,
+              `агрегат ${m.localId(a)}, переход ${op}: отказ ${e.code} не из ошибок агрегата`,
             ),
           );
         }
@@ -231,7 +226,7 @@ function checkUseCaseRules(index: DefIndex): Violation[] {
   const out: Violation[] = [];
   for (const m of index.modules) {
     for (const uc of m.useCases) {
-      const title = `UC ${localId(m, uc)}`;
+      const title = `UC ${m.localId(uc)}`;
       const seen = new Set<AnyDomainRule>();
       for (const r of uc.rules) {
         if (seen.has(r)) {
@@ -267,12 +262,12 @@ function checkUseCaseRules(index: DefIndex): Violation[] {
 function checkCalls(index: DefIndex): Violation[] {
   const out: Violation[] = [];
   for (const m of index.modules) {
-    for (const op of operationsOf(m)) {
+    for (const op of m.operations()) {
       const title = op.title(m);
-      for (const uc of callsOf(op)) {
-        const owner = index.operationOwner.get(uc);
+      for (const uc of op.calls) {
+        const owner = index.moduleOf(uc);
         if (owner === undefined) continue;
-        const id = localId(owner, uc);
+        const id = owner.localId(uc);
         if (owner === m) {
           out.push(
             violation(
@@ -302,14 +297,14 @@ function checkCalls(index: DefIndex): Violation[] {
 function checkOwnAggregates(index: DefIndex): Violation[] {
   const out: Violation[] = [];
   for (const m of index.modules) {
-    for (const op of operationsOf(m)) {
+    for (const op of m.operations()) {
       for (const a of op.aggregates()) {
-        const owner = index.aggregateOwner.get(a);
+        const owner = index.moduleOf(a);
         if (owner === undefined || owner === m) continue;
         out.push(
           violation(
             'MAN-13',
-            `${op.title(m)}: агрегат ${localId(owner, a)} модуля ${owner.name}`,
+            `${op.title(m)}: агрегат ${owner.localId(a)} модуля ${owner.name}`,
           ),
         );
       }
@@ -333,20 +328,20 @@ function checkDependsOn(index: DefIndex): Violation[] {
     };
     const checkErrors = (title: string, errors: readonly AnyErrorDef[]) => {
       for (const e of errors) {
-        const a = index.errorOwner.get(e);
-        check(title, `ошибка ${e.code}`, a && index.aggregateOwner.get(a));
+        const a = index.aggregateOf(e);
+        check(title, `ошибка ${e.code}`, a && index.moduleOf(a));
       }
     };
-    for (const op of operationsOf(m)) {
+    for (const op of m.operations()) {
       const title = op.title(m);
       checkErrors(title, op.referencedErrors());
       for (const e of op.subscribedEvents()) {
-        const a = index.eventOwner.get(e);
-        check(title, `событие ${e.name}`, a && index.aggregateOwner.get(a));
+        const a = index.aggregateOf(e);
+        check(title, `событие ${e.name}`, a && index.moduleOf(a));
       }
-      for (const uc of callsOf(op)) {
-        const owner = index.operationOwner.get(uc);
-        if (owner) check(title, `UC ${localId(owner, uc)}`, owner);
+      for (const uc of op.calls) {
+        const owner = index.moduleOf(uc);
+        if (owner) check(title, `UC ${owner.localId(uc)}`, owner);
       }
     }
   }
@@ -391,7 +386,7 @@ function checkErrorCodes(index: DefIndex): Violation[] {
           out.push(
             violation(
               'ERR-04',
-              `ошибка ${e.code} агрегата ${localId(m, a)}: ожидается префикс ${prefix}`,
+              `ошибка ${e.code} агрегата ${m.localId(a)}: ожидается префикс ${prefix}`,
             ),
           );
         }

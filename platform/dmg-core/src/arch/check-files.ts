@@ -1,10 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
-import {
-  type AnyOperationDef,
-  type DefIndex,
-  operationsOf,
-} from '../graph/def-index';
+import type { AnyOperationDef, DefIndex } from '../graph/def-index';
 import type { ArchRule, Violation } from './violation';
 
 /** Каталоги модуля: домен (`domain/src/<m>`) и прикладной пакет (`<m>/src`). */
@@ -58,7 +54,7 @@ export function checkFiles(
     }
 
     const claimed = new Set<string>();
-    for (const op of operationsOf(m)) {
+    for (const op of m.operations()) {
       const found = findOperationFile(op, domainOps);
       if (found.file === undefined) {
         add('MAN-10', `${op.title(m)}: ожидается файл ${found.expected}`);

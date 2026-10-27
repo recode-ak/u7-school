@@ -8,7 +8,7 @@ import {
   defineUseCase,
 } from 'dmg-core';
 import { checkDefs, formatViolation } from 'dmg-core/arch';
-import { indexDefs, normalize } from 'dmg-core/graph';
+import { DefIndex, normalize } from 'dmg-core/graph';
 import * as v from 'valibot';
 import {
   QuestionnaireEvents,
@@ -36,7 +36,7 @@ describe('QuestionnaireModuleDef — внешний модуль (D-37)', () => 
 
   it('checkDefs по модулю и зависимостям — без нарушений', () => {
     expect(
-      checkDefs(indexDefs([QuestionnaireModuleDef])).map(formatViolation),
+      checkDefs(DefIndex.from([QuestionnaireModuleDef])).map(formatViolation),
     ).toEqual([]);
   });
 
@@ -87,7 +87,9 @@ describe('QuestionnaireModuleDef — внешний модуль (D-37)', () => 
       reactions: [],
       jobs: [],
     });
-    expect(checkDefs(indexDefs([consumer])).map(formatViolation)).toEqual([]);
+    expect(checkDefs(DefIndex.from([consumer])).map(formatViolation)).toEqual(
+      [],
+    );
   });
 
   it('abandoned — FQN, reason необязателен и из перечня', () => {

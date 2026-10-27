@@ -3,15 +3,7 @@ import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyEventDef } from '../domain/events/event-def';
 import type { AnyDomainRule } from '../domain/rules/domain-rule-def';
 import type { AnyErrorDef } from '../kernel/errors/error-def';
-import {
-  type AnyOperationDef,
-  callsOf,
-  type DefIndex,
-  indexDefs,
-  localId,
-  operationsOf,
-  ruleId,
-} from './def-index';
+import { type AnyOperationDef, DefIndex } from './def-index';
 import {
   type NormalizedAggregate,
   type NormalizedDomainRule,
@@ -132,7 +124,7 @@ type Mutable<T> = {
 
 /** Граф по корневым модулям приложения (зависимости подтягиваются сами). */
 export function buildGraph(roots: readonly AnyModuleDef[]): DomainGraph {
-  return new GraphBuilder(indexDefs(roots)).build();
+  return new GraphBuilder(DefIndex.from(roots)).build();
 }
 
 class GraphBuilder {
@@ -173,7 +165,7 @@ class GraphBuilder {
   private addModule(m: AnyModuleDef): void {
     this.modules[m.name] = { def: normalize(m) };
     for (const a of m.aggregates) {
-      const id = localId(m, a);
+      const id = m.localId(a);
       this.aggregates[id] = {
         id,
         module: m.name,
@@ -189,7 +181,7 @@ class GraphBuilder {
 
   private addOperations(m: AnyModuleDef): void {
     for (const uc of m.useCases) {
-      const id = localId(m, uc);
+      const id = m.localId(uc);
       const aggregate = this.aggregateId(uc.aggregate);
       const rules = uc.rules.map((r) => {
         const node = this.rule(r);
@@ -210,7 +202,7 @@ class GraphBuilder {
       for (const e of uc.errors) this.error(e).usedBy.push(id);
     }
     for (const er of m.reactions) {
-      const id = localId(m, er);
+      const id = m.localId(er);
       const touches = er.touches.map((a) => this.aggregateId(a));
       this.reactions[id] = {
         id,
@@ -236,7 +228,7 @@ class GraphBuilder {
       }
     }
     for (const job of m.jobs) {
-      const id = localId(m, job);
+      const id = m.localId(job);
       const scans = job.scans.map((a) => this.aggregateId(a));
       this.jobs[id] = {
         id,
@@ -256,12 +248,12 @@ class GraphBuilder {
    * связи L0 не даёт.
    */
   private addCalls(m: AnyModuleDef): void {
-    for (const op of operationsOf(m)) {
-      const operation = localId(m, op);
-      for (const uc of callsOf(op)) {
+    for (const op of m.operations()) {
+      const operation = m.localId(op);
+      for (const uc of op.calls) {
         const useCase = this.operationId(uc);
         this.useCases[useCase]?.calledBy.push(operation);
-        const to = this.index.operationOwner.get(uc)?.name;
+        const to = this.index.moduleOf(uc)?.name;
         if (to === undefined || to === m.name) continue;
         this.links.push({
           kind: 'calls',
@@ -277,22 +269,22 @@ class GraphBuilder {
 
   /** Id операции: `module.name`; `?.<имя>` — Def вне модулей графа. */
   private operationId(op: AnyOperationDef): string {
-    const owner = this.index.operationOwner.get(op);
-    return owner ? localId(owner, op) : `?.${op.name}`;
+    const owner = this.index.moduleOf(op);
+    return owner ? owner.localId(op) : `?.${op.name}`;
   }
 
   private aggregateId(a: AnyAggregateDef): string {
-    const owner = this.index.aggregateOwner.get(a);
-    return owner ? localId(owner, a) : `?.${a.name}`;
+    const owner = this.index.moduleOf(a);
+    return owner ? owner.localId(a) : `?.${a.name}`;
   }
 
   private eventModule(e: AnyEventDef): string | undefined {
-    const a = this.index.eventOwner.get(e);
-    return a && this.index.aggregateOwner.get(a)?.name;
+    const a = this.index.aggregateOf(e);
+    return a && this.index.moduleOf(a)?.name;
   }
 
   private rule(r: AnyDomainRule): Mutable<DomainRuleNode> {
-    const { id, module } = ruleId(this.index, r);
+    const { id, module } = this.index.ruleId(r);
     const known = this.rules[id];
     if (known) return known;
     const node = { id, module, def: normalize(r), usedBy: [] };
@@ -303,7 +295,7 @@ class GraphBuilder {
   private event(e: AnyEventDef): Mutable<EventNode> {
     const known = this.events[e.name];
     if (known) return known;
-    const owner = this.index.eventOwner.get(e);
+    const owner = this.index.aggregateOf(e);
     const node = {
       def: normalize(e),
       aggregate: owner && this.aggregateId(owner),
@@ -317,7 +309,7 @@ class GraphBuilder {
   private error(e: AnyErrorDef): Mutable<ErrorNode> {
     const known = this.errors[e.code];
     if (known) return known;
-    const owner = this.index.errorOwner.get(e);
+    const owner = this.index.aggregateOf(e);
     const node = {
       def: normalize(e),
       aggregate: owner && this.aggregateId(owner),

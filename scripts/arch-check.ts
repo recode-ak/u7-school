@@ -17,7 +17,7 @@ import {
   RULES_DOC,
   reportArchCheck,
 } from 'dmg-core/arch';
-import { indexDefs } from 'dmg-core/graph';
+import { DefIndex } from 'dmg-core/graph';
 import { ExampleArch } from 'dmg-core/testing';
 import { DEBT_MD, DOMAIN_MODULES, DomainArch } from './domain-arch';
 import {
@@ -84,7 +84,7 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
     dmg: DOMAIN_MODULES.filter((m) => !m.external).map((m) => m.name),
   };
   return [
-    ...checkDefs(indexDefs(DOMAIN_MODULES)).map(formatViolation),
+    ...checkDefs(DefIndex.from(DOMAIN_MODULES)).map(formatViolation),
     ...checkContractImports(
       [...code, ...(await readAppSources(root))],
       modules,

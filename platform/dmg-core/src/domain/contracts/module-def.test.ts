@@ -82,6 +82,21 @@ describe('ModuleDef', () => {
     });
   });
 
+  it('operations() — UC, ER и Job модуля по порядку', () => {
+    expect(Todo.operations()).toEqual([
+      CompleteTaskUcDef,
+      ListTasksUcDef,
+      ArchiveDoneErDef,
+      RemindJobDef,
+    ]);
+    expect(Users.operations()).toEqual([GetUserUcDef]);
+  });
+
+  it('localId(def) — id агрегата или операции в графе: `module.name`', () => {
+    expect(Todo.localId(TaskArDef)).toBe('todo.task');
+    expect(Todo.localId(CompleteTaskUcDef)).toBe('todo.completeTask');
+  });
+
   it('конкретный Def совместим с AnyModuleDef; сравнение по ссылке', () => {
     const all: readonly AnyModuleDef[] = [Todo, Users];
     expect(all.includes(Users)).toBe(true);

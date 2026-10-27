@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { checkDefs } from '#core/arch/check-defs';
 import { formatViolation } from '#core/arch/violation';
-import { indexDefs } from '#core/graph/def-index';
+import { DefIndex } from '#core/graph/def-index';
 import { normalize } from '#core/graph/normalize';
 import { TaskArDef } from './task/task.ar';
 import { TodoModuleDef } from './todo.module';
@@ -67,8 +67,8 @@ describe('TodoModuleDef', () => {
   });
 
   it('checkDefs вместе с users — без нарушений', () => {
-    expect(checkDefs(indexDefs([TodoModuleDef])).map(formatViolation)).toEqual(
-      [],
-    );
+    expect(
+      checkDefs(DefIndex.from([TodoModuleDef])).map(formatViolation),
+    ).toEqual([]);
   });
 });

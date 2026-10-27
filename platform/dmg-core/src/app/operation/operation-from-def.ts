@@ -1,6 +1,4 @@
 import type { AnyAggregateDef } from '#core/domain/aggregate/aggregate-def';
-import type { AnyEventReactionDef } from '#core/domain/contracts/define-event-reaction';
-import type { AnyJobDef } from '#core/domain/contracts/define-job';
 import type { AnyModuleDef } from '#core/domain/contracts/define-module';
 import type {
   AnyUseCaseDef,
@@ -8,6 +6,7 @@ import type {
   OutputOf,
   UseCaseErrorOf,
 } from '#core/domain/contracts/define-use-case';
+import type { AnyOperationDef } from '#core/domain/contracts/operation-def.types';
 import {
   type Caller,
   type OperationRef,
@@ -23,8 +22,7 @@ import type { OperationRecord } from '../oplog/operation-record';
 import { type OperationCall, OperationRun } from '../oplog/operation-run';
 import { UnitOfWork } from '../uow/unit-of-work';
 
-/** Def операции приложения: UC, ER или Job. */
-export type AnyOperationDef = AnyUseCaseDef | AnyEventReactionDef | AnyJobDef;
+export type { AnyOperationDef };
 
 /**
  * UC других модулей, которые операция объявила в `calls`. Нет `calls` (или

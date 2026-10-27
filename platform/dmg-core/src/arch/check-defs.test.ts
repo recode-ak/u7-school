@@ -17,7 +17,7 @@ import {
 import { type AnyEventDef, defineEvents } from '../domain/events/define-events';
 import { allowAll } from '../domain/policy/policy';
 import { domainRule } from '../domain/rules/domain-rule';
-import { indexDefs } from '../graph/def-index';
+import { DefIndex } from '../graph/def-index';
 import { defineErrors } from '../kernel/errors/define-errors';
 import { BaseEntityFields, F } from '../kernel/fields/fields';
 import { ok } from '../kernel/result/result';
@@ -38,7 +38,7 @@ import { checkDefs } from './check-defs';
 import { formatViolation } from './violation';
 
 const report = (...roots: AnyModuleDef[]): string[] =>
-  checkDefs(indexDefs(roots)).map(formatViolation);
+  checkDefs(DefIndex.from(roots)).map(formatViolation);
 
 const ThingEvents = defineEvents('gamma.thing', {
   happened: {

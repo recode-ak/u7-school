@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { defineModule } from '../domain/contracts/define-module';
-import { indexDefs } from '../graph/def-index';
+import { DefIndex } from '../graph/def-index';
 import { AlphaModuleDef, BetaModuleDef } from './arch.fixture';
 import { checkFiles, type ModuleLayout } from './check-files';
 import { formatViolation } from './violation';
@@ -43,7 +43,7 @@ function cleanTree(): void {
 }
 
 const report = (): string[] =>
-  checkFiles(indexDefs([AlphaModuleDef]), layout).map(formatViolation);
+  checkFiles(DefIndex.from([AlphaModuleDef]), layout).map(formatViolation);
 
 describe('checkFiles', () => {
   it('чистая раскладка — без нарушений', () => {
@@ -104,7 +104,7 @@ describe('checkFiles', () => {
         "import { ItemEvents } from '../../../beta';\n",
       );
       expect(
-        checkFiles(indexDefs([AlphaModuleDef]), layout, 'contract').map(
+        checkFiles(DefIndex.from([AlphaModuleDef]), layout, 'contract').map(
           formatViolation,
         ),
       ).toEqual([
@@ -128,7 +128,7 @@ describe('checkFiles', () => {
           external: alphaExternal,
           dependsOn: [beta],
         });
-        return checkFiles(indexDefs([alpha]), layout, 'contract').map(
+        return checkFiles(DefIndex.from([alpha]), layout, 'contract').map(
           formatViolation,
         );
       };
@@ -203,7 +203,7 @@ describe('checkFiles', () => {
       const beta = defineModule({ ...BetaModuleDef, external: true });
       const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [beta] });
       expect(
-        checkFiles(indexDefs([alpha]), layout).map(formatViolation),
+        checkFiles(DefIndex.from([alpha]), layout).map(formatViolation),
       ).toEqual([]);
     });
 
@@ -216,7 +216,7 @@ describe('checkFiles', () => {
       const beta = defineModule({ ...BetaModuleDef, external: true });
       const alpha = defineModule({ ...AlphaModuleDef, dependsOn: [beta] });
       expect(
-        checkFiles(indexDefs([alpha]), layout).map(formatViolation),
+        checkFiles(DefIndex.from([alpha]), layout).map(formatViolation),
       ).toEqual([]);
     });
   });

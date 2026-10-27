@@ -1,7 +1,6 @@
 import type * as v from 'valibot';
 import type { AnyDomainRule } from '../domain/rules/domain-rule-def';
 import type { DefIndex } from '../graph/def-index';
-import { localId, ruleId } from '../graph/def-index';
 
 /** Def с описаниями и схемами — в виде, общем для MAN-01/02/03. */
 export type DescribedDef = {
@@ -24,7 +23,7 @@ export function describedDefs(index: DefIndex): DescribedDef[] {
   for (const m of index.modules) {
     out.push({ title: `модуль ${m.name}`, ...m.describe() });
     for (const a of m.aggregates) {
-      out.push({ title: `агрегат ${localId(m, a)}`, ...a.describe() });
+      out.push({ title: `агрегат ${m.localId(a)}`, ...a.describe() });
       for (const e of Object.values(a.events)) {
         out.push({ title: `событие ${e.name}`, ...e.describe() });
       }
@@ -37,7 +36,7 @@ export function describedDefs(index: DefIndex): DescribedDef[] {
       for (const r of uc.rules) {
         if (rules.has(r)) continue;
         rules.add(r);
-        out.push({ title: `правило ${ruleId(index, r).id}`, ...r.describe() });
+        out.push({ title: `правило ${index.ruleId(r).id}`, ...r.describe() });
       }
     }
     for (const er of m.reactions) {

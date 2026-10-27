@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { checkDefs, formatViolation } from 'dmg-core/arch';
-import { indexDefs, normalize } from 'dmg-core/graph';
+import { DefIndex, normalize } from 'dmg-core/graph';
 import * as v from 'valibot';
 import { StreamEvents, StreamModuleDef, StudentEvents } from './contract';
 
@@ -25,7 +25,7 @@ describe('StreamModuleDef — внешний модуль (D-37)', () => {
 
   it('checkDefs по модулю и зависимостям — без нарушений', () => {
     expect(
-      checkDefs(indexDefs([StreamModuleDef])).map(formatViolation),
+      checkDefs(DefIndex.from([StreamModuleDef])).map(formatViolation),
     ).toEqual([]);
   });
 

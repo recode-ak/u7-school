@@ -1,7 +1,7 @@
 // dmg-core/graph — нормализация Def и граф домена L0/L1/L2 (документация,
 // MCP, проверки архитектуры).
 
-export { type DefIndex, indexDefs } from './def-index';
+export { type AnyOperationDef, DefIndex } from './def-index';
 export {
   type AggregateNode,
   buildGraph,

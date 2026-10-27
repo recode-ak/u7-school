@@ -1,4 +1,6 @@
 import type { DefTexts } from '#core/kernel/def/def';
+import type { AnyEventReactionDef } from './event-reaction-def.types';
+import type { AnyJobDef } from './job-def.types';
 import type { AnyUseCaseDef } from './use-case-def.types';
 
 /** Общее в спеке UC, ER и Job: тексты и межмодульные вызовы. */
@@ -18,3 +20,6 @@ export type OperationAbbr = 'UC' | 'ER' | 'Job';
 
 /** Каталог и суффикс файла операции: `<агрегат>/uc/<имя>.uc.ts`. */
 export type OperationFileKind = 'uc' | 'er' | 'job';
+
+/** Def операции модуля: UC, ER или Job. */
+export type AnyOperationDef = AnyUseCaseDef | AnyEventReactionDef | AnyJobDef;
