@@ -1,0 +1,4 @@
+Задача: EventReactionDef (Фаза 3, dmg-core-oop).
+Изменения: класс EventReactionDef<S> extends OperationDef (abbr ER, fileKind er; on, touches/emits/calls нормализованы; aggregates() = touches; subscribedEvents() = on; normalize()); типы в event-reaction-def.types.ts (AnyEventReactionDef структурный, ReactionEventOf, NormalizedEventReaction переехал из graph/normalize.ts). OperationDef.subscribedEvents() — по умолчанию []. defineEventReaction — обёртка до Фазы 7. Потребители: normalize.ts, described-defs, check-defs (ветки ER через subscribedEvents()). index.ts — экспорт класса.
+Файлы: domain/contracts/event-reaction-def{,.types,.test}.ts, define-event-reaction.ts, operation-def{,.test}.ts, graph/normalize.ts, arch/{check-defs,described-defs}.ts, index.ts.
+switch по виду в check-defs остаётся до JobDef (Job ещё литерал). Проверки: check, arch:check — зелёные.
