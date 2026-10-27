@@ -1,0 +1,6 @@
+Задача: сериализуемый Result и обратное восстановление (трек command-dispatch, фаза 1).
+- serialized-result.types.ts: SerializedError { code, kind, payload? }, SerializedResult<T> (transport.md §1).
+- ErrorDef.serialize(error) — без label/description; ErrorDef.restore(payload) — тексты и kind из Def; restore добавлен в AnyErrorDef.
+- UseCaseDef.serializeResult / restoreResult: ошибка ищется среди errors UC и CoreErrors; код вне контракта → SERVER_INTERNAL; value не перепроверяется (проверен UC при исполнении).
+- Тесты: serialized-result.test.ts (круговой путь Ok/Err/ошибки ядра через JSON, неизвестный код, типы), error-def.test.ts (serialize/restore).
+Решение по владельцу: Def UC (знает свои ошибки и выход). check зелёный.
