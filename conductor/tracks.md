@@ -8,11 +8,6 @@
 
 ---
 
-- [x] **Track: command-dispatch — исполнение UC по сериализуемой команде `{ uc, input, meta }`, модуль адресует транспорт; Def — типы клиента. После `dmg-core-oop`**
-*Link: [./tracks/command-dispatch_20261027/](./tracks/command-dispatch_20261027/)*
-
----
-
 - [?] **Кандидат: раскладка генератора `dmg-core` — один источник путей для `gen` и `arch:check`, объявленная граница «гибкости» в документации, `gen` печатает раскладку, `domainImport` из `exports`**
 *Разбор: [dmg-core-gen-layout](./roadmap/dmg-core-gen-layout.md) — как сейчас, цена гибкости, варианты A–D, состав трека, критерии готовности. Папки трека нет: это заготовка, не трек.*
 
