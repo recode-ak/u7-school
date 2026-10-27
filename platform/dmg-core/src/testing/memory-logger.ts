@@ -1,10 +1,7 @@
 import type { Logger } from '../app/context';
+import type { LogRecord } from './memory-logger.types';
 
-export type LogRecord = {
-  readonly level: 'debug' | 'info' | 'warn' | 'error';
-  readonly source: string;
-  readonly message: string;
-};
+export type { LogRecord } from './memory-logger.types';
 
 /** Логгер для тестов: складывает записи в `records` (`meta` не хранит). */
 export class MemoryLogger implements Logger {

@@ -8,7 +8,7 @@ import {
 } from '#core/testing/example/todo/index';
 import { UserArDef } from '#core/testing/example/users/user/user.ar';
 import { expectErr, expectOk } from '#core/testing/index';
-import type { EventBus } from '../events/event-bus';
+import { RecordingBus } from '#core/testing/memory-bus';
 import type { EventEnvelope } from '../events/event-envelope';
 import { InProcOutbox, type Outbox } from '../events/outbox';
 import {
@@ -27,14 +27,19 @@ const TRACE = Trace.fromEvent({ eventId: 'e-0', correlationId: 'c-0' });
 
 type Log = string[];
 
-function recordingBus(published: EventEnvelope[], log: Log): EventBus {
-  return {
-    publish(envelope) {
-      log.push(`publish ${envelope.name}`);
-      published.push(envelope);
-    },
-    subscribe: () => () => {},
-  };
+/** Шина, которая ещё и пишет публикации в журнал порядка. */
+class LoggingBus extends RecordingBus {
+  constructor(
+    published: EventEnvelope[],
+    private readonly log: Log,
+  ) {
+    super(published);
+  }
+
+  override publish(envelope: EventEnvelope): void {
+    this.log.push(`publish ${envelope.name}`);
+    super.publish(envelope);
+  }
 }
 
 /** Репозиторий, который пишет в журнал начало и конец сохранения. */
@@ -79,7 +84,7 @@ beforeEach(() => {
   log = [];
   published = [];
   uow = new UnitOfWork({
-    outbox: new InProcOutbox(recordingBus(published, log)),
+    outbox: new InProcOutbox(new LoggingBus(published, log)),
     trace: TRACE,
     clock: () => AT,
   });
@@ -223,7 +228,7 @@ describe('UnitOfWork.commit', () => {
     expectOk(await uow.commit());
     expectOk(ar.complete(AT));
     const next = new UnitOfWork({
-      outbox: new InProcOutbox(recordingBus(published, log)),
+      outbox: new InProcOutbox(new LoggingBus(published, log)),
       trace: TRACE,
       clock: () => AT,
     });
@@ -241,7 +246,7 @@ describe('UnitOfWork.commit', () => {
 
   test('незаявленное событие при `emits` — исключение до сохранения', async () => {
     const strict = new UnitOfWork({
-      outbox: new InProcOutbox(recordingBus(published, log)),
+      outbox: new InProcOutbox(new LoggingBus(published, log)),
       trace: TRACE,
       clock: () => AT,
       emits: [TaskEvents.completed],
@@ -255,7 +260,7 @@ describe('UnitOfWork.commit', () => {
 
   test('агрегат вне `touches` — исключение при регистрации', () => {
     const narrow = new UnitOfWork({
-      outbox: new InProcOutbox(recordingBus(published, log)),
+      outbox: new InProcOutbox(new LoggingBus(published, log)),
       trace: TRACE,
       clock: () => AT,
       touches: [UserArDef],
@@ -268,7 +273,7 @@ describe('UnitOfWork.commit', () => {
   test('с onViolation нарушения сообщаются, работа не прерывается', async () => {
     const violations: string[] = [];
     const lenient = new UnitOfWork({
-      outbox: new InProcOutbox(recordingBus(published, log)),
+      outbox: new InProcOutbox(new LoggingBus(published, log)),
       trace: TRACE,
       clock: () => AT,
       emits: [],
@@ -286,7 +291,7 @@ describe('UnitOfWork.commit', () => {
 
   test('MAN-13: агрегат чужого модуля — исключение при регистрации', () => {
     const own = new UnitOfWork({
-      outbox: new InProcOutbox(recordingBus(published, log)),
+      outbox: new InProcOutbox(new LoggingBus(published, log)),
       trace: TRACE,
       clock: () => AT,
       module: { ...TodoModuleDef, aggregates: [UserArDef] },
@@ -298,7 +303,7 @@ describe('UnitOfWork.commit', () => {
 
   test('MAN-13: агрегат своего модуля — регистрируется', async () => {
     const own = new UnitOfWork({
-      outbox: new InProcOutbox(recordingBus(published, log)),
+      outbox: new InProcOutbox(new LoggingBus(published, log)),
       trace: TRACE,
       clock: () => AT,
       module: TodoModuleDef,
@@ -315,7 +320,7 @@ describe('UnitOfWork.commit', () => {
   test('MAN-13 с onViolation — сообщается до проверки touches', () => {
     const violations: string[] = [];
     const lenient = new UnitOfWork({
-      outbox: new InProcOutbox(recordingBus(published, log)),
+      outbox: new InProcOutbox(new LoggingBus(published, log)),
       trace: TRACE,
       clock: () => AT,
       module: { ...TodoModuleDef, aggregates: [] },
