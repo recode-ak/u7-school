@@ -1,0 +1,1 @@
+Ревью Фазы 7 (reviewer, Sonnet): блокеров нет; чужие идентификаторы (hasRole сущностей, definePool, defineUi*) не задеты, экспорты и сценарии тестов сохранены, D-48 соответствует сделанному. Исправлено: lint-fixtures/domain/src/m/arc-02-root.ts.txt на ErrorDef. defineFacade в D-38/D-42 — исторический контекст, оставлен. check — 4107 pass.
