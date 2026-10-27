@@ -30,9 +30,9 @@
 
 ## Фаза 2: `init --profile` и `gen module` в монорепо
 
-- [ ] Task: Каркас как план файлов (по образцу `GenPlan`/`applyPlan`: без перезаписи, dry-run)
-    - [ ] Тесты плана `single`: `package.json` со скриптами, tsconfig, `biome.json` с картой плагинов, `dmg-core.json`, `arch-check.ts` на `GenLayout`, каркас приложения и раннера; red
-    - [ ] Реализация; green
+- [x] Task: Каркас как план файлов (по образцу `GenPlan`/`applyPlan`: без перезаписи, dry-run) 00ca6cde
+    - [x] Тесты плана `single`: `package.json` со скриптами, tsconfig, `biome.json` с картой плагинов, `dmg-core.json`, `arch-check.ts` на `GenLayout`, каркас приложения и раннера; red
+    - [x] Реализация; green
 - [ ] Task: Профиль `monorepo`
     - [ ] Тесты плана: workspace, пакет домена (`exports` `./*/contract`, `./*`), пакет приложения, `modules/`, `runners/`, секция `gen` с `domainImport`, карта плагинов по пакетам, корневой `check`; red
     - [ ] Реализация; green
