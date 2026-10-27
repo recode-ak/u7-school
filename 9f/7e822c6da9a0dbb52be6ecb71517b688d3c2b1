@@ -1,0 +1,4 @@
+Задача: D-xx в decisions.md + transport.md §2/§4 (трек command-dispatch, Фаза 0).
+Изменения: добавлено решение D-49 (команда { uc, input, meta? } без модуля; ucDef.command → Command<D>; apiApp → apiModule.dispatch по имени UC; moduleApi на клиенте; сериализуемый Result; фасады/UI/CLI через команды). transport.md §2 — модуль адресует URL, caller/trace — транспорт; §4 переписан на moduleApi. Пометки уточнения у D-17 и D-26.
+Файлы: platform/dmg-core/docs/decisions.md, platform/dmg-core/docs/transport.md, conductor/architecture/decisions.md, conductor/tracks.md.
+Причина: единый путь исполнения UC для in-proc и будущих транспортов (web по JSON).
