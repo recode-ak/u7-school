@@ -29,7 +29,7 @@
 - [x] Task: `PolicyDef` (`definePolicy` → статика) `8292da9`
 - [x] Task: Гайд policy `9855bd6`
 - [x] Task: Ревью reviewer `0bf34ee`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Операции и модуль
 
