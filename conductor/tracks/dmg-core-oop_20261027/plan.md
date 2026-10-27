@@ -70,8 +70,8 @@
 
 ## Фаза 6: Репозиторий и тестовые двойники
 
-- [~] Task: Класс `Lock` (`run(task)`) вместо `createLock()`
-- [ ] Task: Базовый репозиторий с оптимистичной блокировкой (D-36) вместо `assertVersion`; перевод `task.json-repo`, `user.memory-repo`, `modules/wish/src/infra/wish.json-repo.ts`
+- [x] Task: Класс `Lock` (`run(task)`) вместо `createLock()` `42d4166`
+- [~] Task: Базовый репозиторий с оптимистичной блокировкой (D-36) вместо `assertVersion`; перевод `task.json-repo`, `user.memory-repo`, `modules/wish/src/infra/wish.json-repo.ts`
 - [ ] Task: `MemoryLogger`, `MemoryBus` вместо `memoryLogger`, `memoryBus`, `recordingBus`; `testAppContext` на них
 - [ ] Task: Гайд repo, `docs/testing.md`
 - [ ] Task: Ревью reviewer
