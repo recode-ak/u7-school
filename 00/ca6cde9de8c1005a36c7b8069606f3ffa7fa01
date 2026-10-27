@@ -1,0 +1,1 @@
+Задача: Каркас как план файлов (Фаза 2). ProjectScaffold/ProjectFiles/SingleSources/LintMap в src/cli/scaffold; PackageSource отдаёт peer/dev-версии. Ревью: 1 error (ARC-02 белый список) закрыт, DOM-01 policy/rules/dcs, негативный e2e, CallerResolver(uuid, trace). Известный пробел DOM-01 — в брифе phase-2.md. check проекта 4275 pass.
