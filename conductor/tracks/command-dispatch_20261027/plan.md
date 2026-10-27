@@ -17,7 +17,7 @@
 ## Фаза 2: Исполнение
 
 - [x] Task: `ModuleFromDef`: поиск UC по имени вместо `Map` по ссылке на Def; `dispatch(command, caller, trace)`; неизвестный `uc` → `Err` `OPERATION_NOT_FOUND` (базовая ошибка ядра) `75de786`
-- [ ] Task: `apiApp`: выбор `apiModule` по адресу транспорта, неизвестный модуль → `Err`
+- [x] Task: `apiApp`: выбор `apiModule` по адресу транспорта, неизвестный модуль → `Err` `bcadc01`
 - [ ] Task: `ModuleFacade` (D-43) — через команды, типизированный сахар поверх; сборка команды в обобщённом коде — в одном месте с `UseCaseDef.command` (ревью Ф1: `command` исключён из `AnyUseCaseDef`)
 - [ ] Task: Гайды facade, module
 - [ ] Task: Ревью reviewer
