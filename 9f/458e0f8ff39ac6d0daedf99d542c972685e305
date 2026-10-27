@@ -1,0 +1,13 @@
+Верификация Фазы 1 (dmg-core-standalone_20261027), 2026-10-27
+
+Автоматические проверки:
+- CI=true bun run check — зелёный: 4233 pass, 0 fail (lint, tsc, arch:check, agents:check, extract:check)
+- cd platform/dmg-core && bun run e2e — ok
+
+Покрытие: 19 кодовых файлов без парного теста — типы/реэкспорты, source-scan.ts (покрыт тестами file-checker/assembly-checker), example-caller-resolver.ts (example-app.test.ts), users.module.ts и create-dmg-modules.ts (только импорт/маркер). Доложено пользователю.
+
+Ревью: пошаговые reviewer по шагам 1–7 и итоговое по diff 4bf6b412..HEAD — без error; отчёты в slices/phase-1.md.
+
+Ручная проверка (CLI учебного приложения во временном каталоге): create-task от пользователя — код 0; list-tasks — задача видна; гость — UNAUTHORIZED, код 2; --user не-uuid — код 1; без EXAMPLE_DATA_DIR — код 3; oplog: канал cli, getUser с from.kind app.
+
+Подтверждение пользователя: «да».
