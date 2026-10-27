@@ -94,3 +94,22 @@
 | CODE-01 | `console-logger.types.ts:2` | `LogLevel` дублирует литерал `memory-logger` | minor → исправлено (решение Нурболата) |
 | — | `awaiting-bus.ts` | отказ одного обработчика терял остальные | question → исправлено (`allSettled`) |
 | CODE-01 | `in-proc-event-bus.test.ts:2-3` | двойники в обход `#core/testing/index` | minor → исправлено |
+
+### Шаг 3 — отчёт автора (api-author, Opus)
+
+- `example-app.types.ts` — `ExampleAppEnv = { mode, dataDir, users: readonly string[] }` (uuid активных пользователей; строки состояния строит приложение — `UserState` не утекает в окружение); `ExampleAppPorts = { bus?, logger?, clock? }` — подмена портов вторым аргументом, окружение остаётся данными.
+- `example-app.ts` — `ExampleApp(env, ports)`: `AppContext` (`InProcEventBus`, `InProcOutbox` поверх шины, `InProcInbox`, `systemClock`, `ConsoleLogger`, JSONL oplog в `dataDir/oplog`), `UserMemoryRepo`/`TaskJsonRepo`, фабрики модулей, `api` (`ApiApp`), `callers`, `start()` → остановка. `process.env` нет.
+- `example-caller-resolver.ts` — `ExampleCallerResolver.resolve(uuid?, trace)`: `getUser` через `api.dispatch`; нет идентичности, `USER_NOT_FOUND`, `active: false` → `GuestCaller`; прочие `Err` — исключение (ошибка конфигурации, ERR-01). Ролей в домене `users` нет → `hasRole: () => false`.
+- Обход: `getUser` только для `system`, а у `OperationRef.kind` нет вида «вход приложения» → `SystemCaller({ kind: 'useCase', module: 'example-app', name: 'resolveCaller' })` — закрывается подзадачей `kind: 'app'`.
+- Тесты: 10, `AwaitingBus` и временный каталог.
+
+### Шаг 3 — отчёт ревьюера
+
+| ID | файл:строка | суть | severity |
+|---|---|---|---|
+| ARC-04 | `example-app.ts:10`, `example-app.test.ts:17` | Def `todo` из `todo/index` вместо `todo/contract` (D-45) | major → исправлено; машинная проверка — в задаче `ExampleArch` |
+| ERR-06/07 | `example-caller-resolver.ts:50` | любой `Err` → гость, `OPERATION_NOT_FOUND` прячется | major → исправлено (исключение) |
+| — | `example-caller-resolver.ts:21-25` | выдуманный `OperationRef` | question → подзадача `kind: 'app'` (решение Нурболата) |
+| CODE-03 | `example-app.ts:36-37` | `clock()` дважды на запись | minor → исправлено |
+| CODE-01 | `example-app.ts:31-32` | `app`/`users` путают | minor → исправлено (`context`, `userRepo`, `taskRepo`) |
+| TST-04 | `example-app.test.ts:144-160` | oplog через побочный `getUser` | minor → исправлено (явный `createTask`) |
