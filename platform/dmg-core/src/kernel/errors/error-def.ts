@@ -1,5 +1,6 @@
 import { Def, type DefSchemas } from '../def/def';
 import { type Err, err } from '../result/result';
+import type { SerializedError } from '../result/serialized-result.types';
 import { toJsonSchema } from '../schema/json-schema';
 import type { DomainError } from './error';
 import type {
@@ -68,6 +69,25 @@ export class ErrorDef<
 
   err(...args: PayloadArgs<S>): Err<DomainError<C, S['kind'], PayloadOf<S>>> {
     return err(this.make(...args));
+  }
+
+  /** Значение для транспорта: тексты не передаются (transport.md §1). */
+  static serialize(error: DomainError): SerializedError {
+    return { code: error.code, kind: error.kind, payload: error.payload };
+  }
+
+  /**
+   * Значение из сериализованного payload: тексты и `kind` — из Def. Payload
+   * не проверяется схемой: его собрал `make` на стороне исполнения.
+   */
+  restore(payload: unknown): DomainError<C, S['kind'], PayloadOf<S>> {
+    return {
+      code: this.code,
+      kind: this.kind,
+      label: this.label,
+      description: this.description,
+      payload: payload as PayloadOf<S>,
+    };
   }
 
   normalize(): NormalizedError {

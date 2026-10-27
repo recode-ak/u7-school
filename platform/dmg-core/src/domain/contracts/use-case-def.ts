@@ -1,5 +1,8 @@
 import type { DefSchemas } from '#core/kernel/def/def';
-import type { AnyErrorDef } from '#core/kernel/errors/error-def';
+import { CoreErrors } from '#core/kernel/errors/core-errors';
+import { type AnyErrorDef, ErrorDef } from '#core/kernel/errors/error-def';
+import { err, type Result } from '#core/kernel/result/result';
+import type { SerializedResult } from '#core/kernel/result/serialized-result.types';
 import { toJsonSchema } from '#core/kernel/schema/json-schema';
 import type { AnyAggregateDef } from '../aggregate/aggregate-def';
 import type { Command, CommandMeta } from './command';
@@ -8,7 +11,9 @@ import type { Declared } from './operation-def.types';
 import type {
   InputOf,
   NormalizedUseCase,
+  OutputOf,
   SystemCalls,
+  UseCaseErrorOf,
   UseCaseSpec,
 } from './use-case-def.types';
 
@@ -75,6 +80,34 @@ export class UseCaseDef<
     return meta === undefined
       ? { uc: this.name, input }
       : { uc: this.name, input, meta };
+  }
+
+  /** Ответ UC в форме транспорта (transport.md §1). */
+  serializeResult(
+    result: Result<OutputOf<UseCaseDef<S>>, UseCaseErrorOf<UseCaseDef<S>>>,
+  ): SerializedResult<OutputOf<UseCaseDef<S>>> {
+    return result.ok ? result : err(ErrorDef.serialize(result.error));
+  }
+
+  /**
+   * Ответ UC из формы транспорта: ошибку восстанавливает Def из `errors` UC
+   * или базовых ошибок ядра. Код вне контракта — `SERVER_INTERNAL`.
+   */
+  restoreResult(
+    serialized: SerializedResult,
+  ): Result<OutputOf<UseCaseDef<S>>, UseCaseErrorOf<UseCaseDef<S>>> {
+    if (serialized.ok) {
+      // Выход проверил UC схемой при исполнении; транспорт его не меняет.
+      return serialized as Result<OutputOf<UseCaseDef<S>>, never>;
+    }
+    const { code, payload } = serialized.error;
+    const def = [...this.errors, ...Object.values(CoreErrors)].find(
+      (e) => e.code === code,
+    );
+    const error = def
+      ? def.restore(payload)
+      : CoreErrors.SERVER_INTERNAL.make();
+    return err(error as UseCaseErrorOf<UseCaseDef<S>>);
   }
 
   aggregates(): readonly AnyAggregateDef[] {

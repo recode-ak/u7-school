@@ -89,3 +89,23 @@ describe('ErrorDef', () => {
     expectTypeOf(TodoErrors.ALREADY_DONE).toExtend<AnyErrorDef>();
   });
 });
+
+describe('ErrorDef: сериализация значения', () => {
+  it('serialize — только code, kind, payload (transport.md §1)', () => {
+    const error = TodoErrors.NOT_FOUND.make({ todoId: 't1' });
+
+    expect(ErrorDef.serialize(error)).toEqual({
+      code: 'TODO_NOT_FOUND',
+      kind: 'not_found',
+      payload: { todoId: 't1' },
+    });
+  });
+
+  it('restore — значение из сериализованного: label и description из Def', () => {
+    const error = TodoErrors.NOT_FOUND.make({ todoId: 't1' });
+
+    const restored = TodoErrors.NOT_FOUND.restore({ todoId: 't1' });
+
+    expect(restored).toEqual(error);
+  });
+});

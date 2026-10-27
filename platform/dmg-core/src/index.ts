@@ -139,5 +139,9 @@ export {
   ok,
   type Result,
 } from './kernel/result/result';
+export type {
+  SerializedError,
+  SerializedResult,
+} from './kernel/result/serialized-result.types';
 export { toJsonSchema } from './kernel/schema/json-schema';
 export type { Timestamp } from './kernel/time/timestamp';

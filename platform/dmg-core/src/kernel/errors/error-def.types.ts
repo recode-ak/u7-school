@@ -49,6 +49,7 @@ export type AnyErrorDef = DefOf<'error', NormalizedError> & {
   readonly payload?: PayloadSchema;
   make(...args: never[]): DomainError;
   err(...args: never[]): Err<DomainError>;
+  restore(payload: unknown): DomainError;
 };
 
 /** Тип значения ошибки по её Def. */
