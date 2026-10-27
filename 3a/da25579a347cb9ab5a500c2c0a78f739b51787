@@ -1,0 +1,4 @@
+Задача: тестовые двойники классами (Фаза 6, dmg-core-oop).
+Изменения: testing/memory-logger.ts — MemoryLogger implements Logger (records, внешний массив по желанию; meta не хранит, как раньше); testing/memory-bus.ts — RecordingBus (published, подписка no-op — поведение шины testAppContext) и MemoryBus extends RecordingBus (доставка по имени, не ждёт обработчиков). memoryLogger/memoryBus/recordingBus удалены; testAppContext — фабрика на классах; dmg-core/testing экспортирует MemoryLogger, LogRecord, RecordingBus, MemoryBus.
+Потребители: тесты app (events, module, reaction), учебный todo.module.test, platform/core legacy-bridge example-app.test, modules/wish ER-тесты.
+Тесты: memory-logger.test, memory-bus.test (новые). check — 4107 pass. Локальный recordingBus(published, log) в unit-of-work.test оставлен (тестовая шина с журналом порядка, не API).
