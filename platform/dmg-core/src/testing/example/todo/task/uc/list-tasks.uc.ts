@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { defineUseCase } from '#core/domain/contracts/define-use-case';
-import { allowAll } from '#core/domain/policy/policy';
+import { allowAll } from '#core/domain/policy/rule';
 import { TaskArDef } from '../task.ar';
 import { TaskState } from '../task.state';
 

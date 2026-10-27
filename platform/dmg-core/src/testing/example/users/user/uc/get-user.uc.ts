@@ -3,7 +3,7 @@ import {
   defineUseCase,
   type OutputOf,
 } from '#core/domain/contracts/define-use-case';
-import { allowAll } from '#core/domain/policy/policy';
+import { allowAll } from '#core/domain/policy/rule';
 import { F } from '#core/kernel/fields/fields';
 import { UserArDef } from '../user.ar';
 import { UserErrors } from '../user.errors';

@@ -64,7 +64,7 @@ test('ar: Def, класс, create/restore', () => {
 
 test('policy: Def и правило', () => {
   const src = file('student.policy.ts');
-  expect(src).toContain('export const StudentPolicy = definePolicy({');
+  expect(src).toContain('export const StudentPolicy = PolicyDef.define({');
   expect(src).toContain('export type StudentCtx');
   expect(src).toContain('canView');
 });

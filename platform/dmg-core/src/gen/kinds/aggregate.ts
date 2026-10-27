@@ -102,18 +102,18 @@ export class ${P}Ar extends Aggregate<typeof ${P}ArDef> {
 }
 `;
 
-  const policySrc = `import { definePolicy, type ReadonlyAr, rule } from 'dmg-core';
+  const policySrc = `import { PolicyDef, type ReadonlyAr, Rule } from 'dmg-core';
 import type { ${P}Ar } from './${a}.ar';
 
 /** Контекст правил: агрегат, над которым действие. */
 export type ${P}Ctx = { readonly ${toCamel(a)}: ReadonlyAr<${P}Ar> };
 
-export const ${P}Policy = definePolicy({
+export const ${P}Policy = PolicyDef.define({
   name: '${a}',
   label: 'TODO: права на агрегат',
   description: 'TODO: кто и при каких условиях может действовать',
   rules: {
-    canView: rule({
+    canView: Rule.of({
       name: 'canView',
       label: 'TODO: кто может смотреть',
       denyMessage: 'TODO: почему отказано',
