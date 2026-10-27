@@ -2,12 +2,15 @@ import type {
   AnyAggregateDef,
   NormalizedAggregate,
 } from '../domain/aggregate/aggregate-def';
-import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type {
   AnyEventReactionDef,
   NormalizedEventReaction,
 } from '../domain/contracts/event-reaction-def';
 import type { AnyJobDef, NormalizedJob } from '../domain/contracts/job-def';
+import type {
+  AnyModuleDef,
+  NormalizedModule,
+} from '../domain/contracts/module-def';
 import type {
   AnyUseCaseDef,
   NormalizedUseCase,
@@ -31,6 +34,7 @@ export type {
 } from '../domain/aggregate/aggregate-def';
 export type { NormalizedEventReaction } from '../domain/contracts/event-reaction-def';
 export type { NormalizedJob } from '../domain/contracts/job-def';
+export type { NormalizedModule } from '../domain/contracts/module-def';
 export type { NormalizedUseCase } from '../domain/contracts/use-case-def';
 export type { NormalizedEvent } from '../domain/events/event-def';
 export type { NormalizedPolicy } from '../domain/policy/policy-def';
@@ -38,23 +42,6 @@ export type { NormalizedRule } from '../domain/policy/rule';
 export type { NormalizedDomainRule } from '../domain/rules/domain-rule-def';
 export type { NormalizedRules } from '../domain/rules/rules-def';
 export type { NormalizedError } from '../kernel/errors/error-def';
-
-type Texts = {
-  readonly name: string;
-  readonly label: string;
-  readonly description: string;
-};
-
-export type NormalizedModule = Texts & {
-  readonly dmg: 'module';
-  /** Реализован вне приложения — только контракт (D-37). */
-  readonly external: boolean;
-  readonly dependsOn: readonly string[];
-  readonly aggregates: readonly string[];
-  readonly useCases: readonly string[];
-  readonly reactions: readonly string[];
-  readonly jobs: readonly string[];
-};
 
 export type AnyDef =
   | AnyErrorDef
@@ -111,21 +98,7 @@ export function normalize(def: AnyDef): NormalizedDef {
     case 'useCase':
     case 'eventReaction':
     case 'job':
-      return def.normalize();
     case 'module':
-      return {
-        dmg: 'module',
-        ...texts(def),
-        external: def.external ?? false,
-        dependsOn: def.dependsOn.map((m) => m.name),
-        aggregates: def.aggregates.map((a) => a.name),
-        useCases: def.useCases.map((u) => u.name),
-        reactions: def.reactions.map((r) => r.name),
-        jobs: def.jobs.map((j) => j.name),
-      };
+      return def.normalize();
   }
-}
-
-function texts(def: Texts): Texts {
-  return { name: def.name, label: def.label, description: def.description };
 }

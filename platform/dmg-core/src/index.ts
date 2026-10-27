@@ -40,7 +40,7 @@ export {
 export {
   type AnyModuleDef,
   defineModule,
-  type ModuleDef,
+  ModuleDef,
   type ModuleSpec,
 } from './domain/contracts/define-module';
 export {

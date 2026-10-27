@@ -21,20 +21,8 @@ export type DescribedDef = {
 export function describedDefs(index: DefIndex): DescribedDef[] {
   const out: DescribedDef[] = [];
   const rules = new Set<AnyDomainRule>();
-  const add = (
-    title: string,
-    def: { label: string; description: string },
-    schemas: DescribedDef['schemas'] = [],
-  ): void => {
-    out.push({
-      title,
-      label: def.label,
-      description: def.description,
-      schemas,
-    });
-  };
   for (const m of index.modules) {
-    add(`модуль ${m.name}`, m);
+    out.push({ title: `модуль ${m.name}`, ...m.describe() });
     for (const a of m.aggregates) {
       out.push({ title: `агрегат ${localId(m, a)}`, ...a.describe() });
       for (const e of Object.values(a.events)) {
