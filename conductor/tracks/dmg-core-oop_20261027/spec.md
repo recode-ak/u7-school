@@ -37,7 +37,7 @@
 | `arch/check-files.ts` | `OPERATION_DIR[op.dmg]`, главный агрегат тернарником | `op.fileKind`, `op.mainAggregate()` |
 | `graph/def-index.ts` `callsOf` | `calls` у UC необязательный, у ER/Job обязательный | одно поле `calls` |
 | `OPERATION_KIND` и заголовки сообщений | таблица по виду | `op.title(module)` |
-| `gen/kinds/*` | `switch (c.kind)` в `operation.ts` | шаблон из вида |
+| `gen/kinds/*` | `switch (c.kind)` в `operation.ts` | шаблон вида — класс в `gen` (`UseCaseTemplate`, …) |
 
 Задел на будущее (каждая возможность — метод вида, а не новый `switch`): генерация документации, хеш контракта (D-27), JSON Schema/OpenAPI для транспортов, MCP-инструменты из Def UC, формы UI по `input`, сравнение контрактов при выносе модуля в сервис.
 
@@ -72,7 +72,7 @@
 
 ### 8. Генератор
 
-Шаблоны генерации берутся из вида, `switch (c.kind)` в `gen/kinds/operation.ts` уходит. Если это раздувает трек — стоп и обсуждение с Нурболатом.
+Шаблон генерации — класс вида в `gen` (`OperationTemplate` → `UseCaseTemplate`/`ReactionTemplate`/`JobTemplate`), выбор — таблицей; `switch (c.kind)` в `gen/kinds/operation.ts` и `switch (args.kind)` в `gen/main.ts` уходят. Шаблон не в классе Def: Def — доменный контракт в рантайме домена, а шаблоны знают прикладной слой и тесты (решено с Нурболатом 2026-10-27, исследование Фазы 5).
 
 ## Нефункциональные требования
 
