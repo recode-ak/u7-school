@@ -1,17 +1,17 @@
 import { join } from 'node:path';
 import { GenError } from '../../gen/cli';
 import type { GenPlan } from '../../gen/plan';
-import { LintMap } from './lint-map';
+import { AppSources } from './app-sources';
 import { ProjectFiles } from './project-files';
-import type { ScaffoldFile, ScaffoldOptions } from './project-scaffold.types';
-import { SingleSources } from './single-sources';
+import type { ScaffoldOptions } from './project-scaffold.types';
+import { ScaffoldLayout } from './scaffold-layout';
 
 /** Имя пакета npm: строчные, без пробелов, необязательный scope. */
 const PACKAGE_NAME = /^(?:@[a-z0-9~-][a-z0-9._~-]*\/)?[a-z0-9~-][a-z0-9._~-]*$/;
 
 /**
  * Каркас нового проекта (`dmg-core init --profile`) как план файлов:
- * конфиги корня и исходники профиля. План ничего не пишет — запись делает
+ * конфиги проекта и исходники по раскладке профиля (`ScaffoldLayout`). План ничего не пишет — запись делает
  * `applyPlan` (без перезаписи: коллизия — ошибка, ничего не записано).
  * Неверное имя проекта — `GenError` (ошибка ввода CLI, как у `gen`).
  */
@@ -23,10 +23,11 @@ export class ProjectScaffold {
   }
 
   plan(): GenPlan {
-    const { name, pkg, root = '.' } = this.options;
+    const { profile, name, pkg, root = '.' } = this.options;
+    const layout = ScaffoldLayout.of(profile, name);
     const files = [
-      ...new ProjectFiles(name, pkg, this.lintMap()).files(),
-      ...this.sources(),
+      ...new ProjectFiles(name, pkg, layout).files(),
+      ...new AppSources(layout).files(),
     ];
     return {
       files: files.map((file) => ({
@@ -35,19 +36,5 @@ export class ProjectScaffold {
       })),
       edits: [],
     };
-  }
-
-  private lintMap(): LintMap {
-    switch (this.options.profile) {
-      case 'single':
-        return LintMap.single;
-    }
-  }
-
-  private sources(): ScaffoldFile[] {
-    switch (this.options.profile) {
-      case 'single':
-        return new SingleSources().files();
-    }
   }
 }

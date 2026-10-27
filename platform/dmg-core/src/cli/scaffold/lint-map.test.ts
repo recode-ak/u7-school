@@ -8,15 +8,20 @@ import { LintMap } from './lint-map';
 
 const PLUGINS_DIR = join(import.meta.dir, '../../../biome-plugins');
 
-describe('LintMap.single', () => {
-  it('подключает каждый плагин пакета', () => {
-    const plugins = LintMap.single.rules.flatMap((rule) =>
-      'plugin' in rule ? [`${rule.plugin}.grit`] : [],
-    );
+for (const [profile, map] of [
+  ['single', LintMap.single],
+  ['monorepo', LintMap.monorepo],
+] as const) {
+  describe(`LintMap.${profile}`, () => {
+    it('подключает каждый плагин пакета', () => {
+      const plugins = map.rules.flatMap((rule) =>
+        'plugin' in rule ? [`${rule.plugin}.grit`] : [],
+      );
 
-    expect(plugins.sort()).toEqual(readdirSync(PLUGINS_DIR).sort());
+      expect(plugins.sort()).toEqual(readdirSync(PLUGINS_DIR).sort());
+    });
   });
-});
+}
 
 describe('LintMap: repeats', () => {
   it('ссылка на строку без запрета импортов — исключение', () => {

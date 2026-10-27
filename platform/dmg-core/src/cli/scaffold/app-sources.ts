@@ -1,33 +1,116 @@
-import type { ScaffoldFile } from './project-scaffold.types';
+import { sortImports } from '../../gen/import-order';
+import { LINE_WIDTH } from './project-files';
+import type {
+  ScaffoldFile,
+  ScaffoldImports,
+  ScaffoldLayoutData,
+} from './project-scaffold.types';
+import type { ScaffoldLayout } from './scaffold-layout';
+
+/** Импорт шаблона: источник и имена (`type X` — только тип). */
+type Import = { readonly from: string; readonly names: readonly string[] };
 
 /**
- * Исходники каркаса `single` по учебному приложению пакета
- * (`src/testing/example/{app,runner,shared}`): тип пользователя в домене
- * (D-53), пустой корень сборки `src/app` (D-50), раннер `src/runner` с
- * единственным чтением окружения (ARC-09) и тесты к ним. Модулей нет:
- * их добавляет `dmg-core gen module`. Импорты — только публичные входы
- * пакета (`dmg-core`, `dmg-core/app`, `dmg-core/testing`).
+ * Исходники приложения в каркасе — одни шаблоны на все профили, по
+ * учебному приложению пакета (`src/testing/example/{app,runner,shared}`):
+ * тип пользователя в домене (D-53), пустой корень сборки (D-50), раннер
+ * CLI с единственным чтением окружения (ARC-09) и тесты к ним. Каталоги и
+ * спецификаторы импортов между частями — из раскладки профиля
+ * (`ScaffoldLayout`); у пакетов workspaces — ещё и входы `src/index.ts`.
+ * Модулей нет: их добавляет `dmg-core gen module`. Импорты платформы —
+ * только публичные входы пакета (`dmg-core`, `dmg-core/app`,
+ * `dmg-core/testing`).
  */
-export class SingleSources {
+export class AppSources {
+  private readonly layout: ScaffoldLayoutData;
+  private readonly from: ScaffoldImports;
+
+  constructor(layout: ScaffoldLayout) {
+    this.layout = layout.data;
+    this.from = layout.data.imports;
+  }
+
   files(): ScaffoldFile[] {
+    const { domain, app, runner } = this.layout;
     return [
-      { path: 'src/domain/shared/app-user.ts', content: this.appUser() },
-      { path: 'src/app/app.types.ts', content: this.appTypes() },
-      { path: 'src/app/app.ts', content: this.app() },
+      { path: `${domain}/shared/app-user.ts`, content: this.appUser() },
+      { path: `${app}/app.types.ts`, content: this.appTypes() },
+      { path: `${app}/app.ts`, content: this.app() },
       {
-        path: 'src/app/app-caller-resolver.ts',
+        path: `${app}/app-caller-resolver.ts`,
         content: this.callerResolver(),
       },
-      { path: 'src/app/app.test.ts', content: this.appTest() },
-      { path: 'src/runner/runner-env.types.ts', content: this.envTypes() },
-      { path: 'src/runner/runner-env.ts', content: this.env() },
-      { path: 'src/runner/runner-env.test.ts', content: this.envTest() },
-      { path: 'src/runner/runner-cli.types.ts', content: this.cliTypes() },
-      { path: 'src/runner/runner-cli.ts', content: this.cli() },
-      { path: 'src/runner/runner-cli.test.ts', content: this.cliTest() },
-      { path: 'src/runner/main.ts', content: this.main() },
-      { path: 'src/runner/main.test.ts', content: this.mainTest() },
+      { path: `${app}/app.test.ts`, content: this.appTest() },
+      { path: `${runner}/runner-env.types.ts`, content: this.envTypes() },
+      { path: `${runner}/runner-env.ts`, content: this.env() },
+      { path: `${runner}/runner-env.test.ts`, content: this.envTest() },
+      { path: `${runner}/runner-cli.types.ts`, content: this.cliTypes() },
+      { path: `${runner}/runner-cli.ts`, content: this.cli() },
+      { path: `${runner}/runner-cli.test.ts`, content: this.cliTest() },
+      { path: `${runner}/main.ts`, content: this.main() },
+      { path: `${runner}/main.test.ts`, content: this.mainTest() },
+      ...this.entries(),
     ];
+  }
+
+  /** Входы пакетов workspaces; в проекте из одного пакета их нет. */
+  private entries(): ScaffoldFile[] {
+    if (this.layout.workspaces === undefined) return [];
+    const { domain, app } = this.layout;
+    return [
+      {
+        path: `${domain}/index.ts`,
+        content: `/**
+ * Вход пакета домена: общий домен приложения (D-53). Модули — подпутями
+ * пакета: \`<пакет>/<m>/contract\` для другого кода, \`<пакет>/<m>\` — для
+ * своего прикладного пакета.
+ */
+export type { AppUser } from './shared';
+`,
+      },
+      {
+        path: `${domain}/shared/index.ts`,
+        content: `/** Общий домен приложения (D-53): типы, общие для модулей и приложения. */
+export type { AppUser } from './app-user';
+`,
+      },
+      {
+        path: `${app}/index.ts`,
+        content: `/** Вход корня сборки: приложение и его типы — для раннеров. */
+export { App } from './app';
+export type { AppEnv, AppPorts, CallerResolver } from './app.types';
+`,
+      },
+    ];
+  }
+
+  /**
+   * Блок импортов в порядке biome: один источник — один импорт (имена
+   * сливаются), только типы — \`import type\`, длинный — по имени на строку.
+   */
+  private imports(list: readonly Import[]): string {
+    const merged = new Map<string, string[]>();
+    for (const { from, names } of list) {
+      const known = merged.get(from);
+      if (known === undefined) {
+        merged.set(from, [...names]);
+        continue;
+      }
+      known.push(...names);
+      known.sort((a, b) =>
+        a.replace(/^type /, '').localeCompare(b.replace(/^type /, '')),
+      );
+    }
+    const statements = [...merged].map(([from, names]) => {
+      const types = names.every((name) => name.startsWith('type '));
+      const head = types ? 'import type' : 'import';
+      const items = types ? names.map((n) => n.slice('type '.length)) : names;
+      const line = `${head} { ${items.join(', ')} } from '${from}';`;
+      return line.length <= LINE_WIDTH
+        ? line
+        : `${head} {\n${items.map((n) => `  ${n},`).join('\n')}\n} from '${from}';`;
+    });
+    return sortImports(statements);
   }
 
   private appUser(): string {
@@ -45,9 +128,20 @@ export type AppUser = {
   }
 
   private appTypes(): string {
-    return `import type { PersonCaller } from 'dmg-core';
-import type { AppMode, Clock, EventBus, Logger, Trace } from 'dmg-core/app';
-import type { AppUser } from '../domain/shared/app-user';
+    return `${this.imports([
+      { from: 'dmg-core', names: ['type PersonCaller'] },
+      {
+        from: 'dmg-core/app',
+        names: [
+          'type AppMode',
+          'type Clock',
+          'type EventBus',
+          'type Logger',
+          'type Trace',
+        ],
+      },
+      { from: this.from.appUser, names: ['type AppUser'] },
+    ])}
 
 /**
  * Окружение приложения (D-50) — простые данные: раннер собирает их из
@@ -85,21 +179,29 @@ export type CallerResolver = {
   }
 
   private app(): string {
-    return `import { join } from 'node:path';
-import {
-  ApiApp,
-  type AppContext,
-  ConsoleLogger,
-  InProcEventBus,
-  InProcInbox,
-  InProcOutbox,
-  JsonlOperationLog,
-  type ModuleFactory,
-  systemClock,
-} from 'dmg-core/app';
-import type { AppUser } from '../domain/shared/app-user';
-import type { AppEnv, AppPorts, CallerResolver } from './app.types';
-import { AppCallerResolver } from './app-caller-resolver';
+    return `${this.imports([
+      { from: 'node:path', names: ['join'] },
+      {
+        from: 'dmg-core/app',
+        names: [
+          'ApiApp',
+          'type AppContext',
+          'ConsoleLogger',
+          'InProcEventBus',
+          'InProcInbox',
+          'InProcOutbox',
+          'JsonlOperationLog',
+          'type ModuleFactory',
+          'systemClock',
+        ],
+      },
+      { from: this.from.appUser, names: ['type AppUser'] },
+      {
+        from: './app.types',
+        names: ['type AppEnv', 'type AppPorts', 'type CallerResolver'],
+      },
+      { from: './app-caller-resolver', names: ['AppCallerResolver'] },
+    ])}
 
 /**
  * Приложение — корень сборки (D-50): по окружению строит контекст и модули
@@ -113,7 +215,7 @@ export class App {
 
   constructor(env: AppEnv, ports: AppPorts = {}) {
     const context = App.context(env, ports);
-    // Фабрики модулей — из входа прикладного пакета src/app/<m>/index.ts
+    // Фабрики модулей — из входа прикладного пакета ${this.layout.moduleEntry}
     // (D-52) с замыканием на репозитории:
     //   { def: <M>ModuleDef, create: (deps) => create<M>Module({ ...deps, … }) }
     // Корень Def добавь и в modules в scripts/arch-check.ts.
@@ -145,9 +247,11 @@ export class App {
   }
 
   private callerResolver(): string {
-    return `import { GuestCaller, type PersonCaller } from 'dmg-core';
-import type { AppUser } from '../domain/shared/app-user';
-import type { CallerResolver } from './app.types';
+    return `${this.imports([
+      { from: 'dmg-core', names: ['GuestCaller', 'type PersonCaller'] },
+      { from: this.from.appUser, names: ['type AppUser'] },
+      { from: './app.types', names: ['type CallerResolver'] },
+    ])}
 
 /**
  * Резолвер \`Caller\` приложения (D-50). Модуля пользователей пока нет —
@@ -228,9 +332,11 @@ export type EnvVars = Readonly<Record<string, string | undefined>>;
   }
 
   private env(): string {
-    return `import type { AppMode } from 'dmg-core/app';
-import type { AppEnv } from '../app/app.types';
-import type { EnvVars } from './runner-env.types';
+    return `${this.imports([
+      { from: 'dmg-core/app', names: ['type AppMode'] },
+      { from: this.from.appTypes, names: ['type AppEnv'] },
+      { from: './runner-env.types', names: ['type EnvVars'] },
+    ])}
 
 const MODES: readonly AppMode[] = ['test', 'development', 'production'];
 
@@ -320,9 +426,11 @@ export type CliIo = {
   }
 
   private cli(): string {
-    return `import { Trace } from 'dmg-core/app';
-import type { App } from '../app/app';
-import type { CliIo } from './runner-cli.types';
+    return `${this.imports([
+      { from: 'dmg-core/app', names: ['Trace'] },
+      { from: this.from.app, names: ['type App'] },
+      { from: './runner-cli.types', names: ['type CliIo'] },
+    ])}
 
 /**
  * Коды выхода процесса: 0 — успех, 1 — ошибка ввода (argv), 2 — зарезервирован
@@ -334,7 +442,7 @@ export const EXIT_USAGE = 1;
 export const EXIT_CONFIG = 3;
 
 export const USAGE =
-  'Использование: APP_DATA_DIR=data bun src/runner/main.ts whoami [--user <uuid>]';
+  'Использование: APP_DATA_DIR=data bun ${this.layout.runner}/main.ts whoami [--user <uuid>]';
 
 /**
  * CLI-раннер — транспорт: разбирает argv, получает \`Caller\` от резолвера
@@ -381,14 +489,19 @@ export class RunnerCli {
   }
 
   private cliTest(): string {
-    return `import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { MemoryLogger } from 'dmg-core/testing';
-import { App } from '../app/app';
-import { RunnerCli, USAGE } from './runner-cli';
-import type { CliIo } from './runner-cli.types';
+    return `${this.imports([
+      {
+        from: 'bun:test',
+        names: ['afterEach', 'beforeEach', 'describe', 'expect', 'it'],
+      },
+      { from: 'node:fs', names: ['mkdtempSync', 'rmSync'] },
+      { from: 'node:os', names: ['tmpdir'] },
+      { from: 'node:path', names: ['join'] },
+      { from: 'dmg-core/testing', names: ['MemoryLogger'] },
+      { from: this.from.app, names: ['App'] },
+      { from: './runner-cli', names: ['RunnerCli', 'USAGE'] },
+      { from: './runner-cli.types', names: ['type CliIo'] },
+    ])}
 
 // CLI-раннер: argv → резолвер Caller → вывод; коды выхода. Вывод — в буфер
 // io, данные — во временном каталоге.
@@ -478,13 +591,15 @@ describe('RunnerCli', () => {
  * команда CLI, код выхода; ошибка окружения — \`EXIT_CONFIG\`. \`process\` —
  * только здесь (ARC-09).
  *
- *   APP_DATA_DIR=data bun src/runner/main.ts whoami --user <uuid>
+ *   APP_DATA_DIR=data bun ${this.layout.runner}/main.ts whoami --user <uuid>
  */
 
-import { App } from '../app/app';
-import type { AppEnv } from '../app/app.types';
-import { EXIT_CONFIG, RunnerCli } from './runner-cli';
-import { RunnerEnv } from './runner-env';
+${this.imports([
+  { from: this.from.app, names: ['App'] },
+  { from: this.from.appTypes, names: ['type AppEnv'] },
+  { from: './runner-cli', names: ['EXIT_CONFIG', 'RunnerCli'] },
+  { from: './runner-env', names: ['RunnerEnv'] },
+])}
 
 // Ошибка окружения — ошибка конфигурации запуска: сообщение без стека и
 // EXIT_CONFIG. Прочие исключения не ловятся — это сбой, нужен стек.

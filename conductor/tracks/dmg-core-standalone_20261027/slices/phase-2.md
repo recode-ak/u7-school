@@ -90,3 +90,56 @@
 ### Шаг 1b — отчёт автора (api-author, Opus)
 
 `CallerResolver.resolve(uuid, trace)`, `whoami` строит `Trace` (канал `cli`); комментарий о зарезервированных именах `app`/`runner` в `lint-map.ts`; e2e — DOM-01 для rules/dcs и положительный случай `dmg-core`/`valibot` в домене. Пакет `check` — 998 pass. Ревью — оркестратор по diff (правка точечная). Полный `bun run check` проекта — 4275 pass, 0 fail.
+
+## Шаг 2 — профиль `monorepo` как план файлов (api-author, платформа)
+
+Решения Нурболата 2026-10-27 (раскладка, scope, tsconfig, каталоги). Границы — как у шага 1 (`src/cli/scaffold/`, CLI не трогать, документацию пакета не править; `conductor/`, `data/` — нельзя).
+
+**Раскладка `monorepo`** (`ScaffoldProfile = 'single' | 'monorepo'`):
+
+```
+<root>/        package.json (name — имя проекта, private, workspaces: domain, app, modules/*, runners/*),
+               tsconfig.json, biome.json, dmg-core.json, .gitignore, scripts/arch-check.ts
+domain/        @<scope>/domain — exports ".": "./src/index.ts", "./*/contract": "./src/*/contract.ts", "./*": "./src/*/index.ts";
+               src/shared/app-user.ts (D-53) + src/shared/index.ts; src/index.ts
+app/           @<scope>/app — корень сборки: App, AppEnv/AppPorts, CallerResolver (как src/app в single); вход — src/index.ts
+runners/cli/   @<scope>/cli — main.ts (ARC-09), RunnerCli, RunnerEnv (как src/runner в single)
+modules/       пусто (пакеты модулей создаёт `gen module`, задача 4) — каталог в плане не нужен, если `applyPlan` не умеет пустые каталоги; workspace-глоб без совпадений bun допускает — проверь
+```
+
+1. **Scope** — из имени проекта: `acme` → `@acme/*`; `@acme/school` → `@acme/*` (корневой `package.json` — имя проекта как есть).
+2. **`dmg-core.json`** — `CliConfig.defaults()` с секцией `gen`: `domain: "domain/src/{m}"`, `app: "modules/{m}/src"`, `domainImport: "@<scope>/domain/{m}"`.
+3. **Зависимости:** каждый пакет — `dependencies` на то, что импортирует (`dmg-core`, `valibot` у домена; `@<scope>/domain: "workspace:*"` у `app` и `cli`; `@<scope>/app: "workspace:*"` у `cli`); корень — `dmg-core` (бинарь `dmg-core sync --check` и путь плагинов `./node_modules/dmg-core/…`) и инструменты `check` в `devDependencies`. Версии — `PackageSource`.
+4. **tsconfig:** корневой — `compilerOptions` как у `single`, `include` — `src` всех пакетов (`domain/src`, `app/src`, `modules/*/src`, `runners/*/src`) и `scripts`; корневой `tsc --noEmit` проверяет всё. У пакетов — `tsconfig.json` `{ "extends": "../tsconfig.json", "include": ["src"] }` (для `runners/cli` — `../../tsconfig.json`).
+5. **Скрипты:** `check` только в корне (тот же состав, что у `single`); у пакетов — `test` (`bun test`), не больше.
+6. **Карта линтера `LintMap.monorepo`** — те же правила, что у `single`, на каталоги пакетов: домен `domain/src/**`; прикладной слой `modules/*/src/**` (DOM-01 кроме `**/infra/**`); корень сборки `app/src/**`; раннеры `runners/*/src/**`; ARC-09 — везде, кроме `runners/*/src/main.ts`; OPERATIONS — по всем пакетам. ARC-02 в домене: белый список прежний; выход из домена относительным путём в `app`/`runners`/`modules` — запрет, если `arch:check` его не ловит (проверь; глоб спецификатора — как в шаге 1, обоснуй). Пакеты `@<scope>/app`, `@<scope>/cli`, `@<scope>/<m>` белый список уже запрещает.
+7. **`scripts/arch-check.ts`** — `modules: []`, `layout` из `GenLayout.read(root)`, `root: app/src`, `runners: [runners/cli/src]`. Проверь, что `ArchChecker` разрешает спецификаторы `@<scope>/domain/<m>/contract` и `@<scope>/app` (ARC-04/07/08); нет — эскалация.
+8. **Исходники без дублирования:** шаблоны `single` и `monorepo` отличаются путями и спецификаторами импорта (тип пользователя: `../domain/shared/app-user` ↔ `@<scope>/domain/shared`; корень сборки из раннера: относительный ↔ `@<scope>/app`). Параметризуй один класс шаблонов раскладкой профиля (пути + спецификаторы), а не копируй 570 строк. `SingleSources` можно переименовать/обобщить — обоснуй имя. Поведение и тесты `single` не меняются (план `single` — тот же состав и содержимое, кроме неизбежного).
+
+**Тесты:** состав плана `monorepo` (все пути выше); `package.json` корня и пакетов — workspaces, имена со scope, `exports` домена, зависимости `workspace:*`; scope для обоих видов имени; `dmg-core.json` — `CliConfig.parse`, секция `gen` с `domainImport`; `biome.json` — плагины на каталогах пакетов; tsconfig пакетов — `extends`. E2e (как у `single`): план во временный каталог, `node_modules` подменой (включая `@<scope>/*` → каталоги пакетов), `biome check`, `tsc`, `arch-check`, `bun test` — зелёные; негативный e2e карты — по нарушителю на правило в раскладке monorepo (минимум: ARC-02 `node:fs` в домене, DOM-01 в `modules/x/src` и исключение `infra`, ARC-09 в `app/src` и разрешённый `runners/cli/src/main.ts`, ERR-01).
+
+**Правила:** CODE-*, ERR-01, TST-*, простые типы. Новых зависимостей нет.
+
+**Приёмка:** `bun run scripts/agent-gate.ts` зелёный; `cd platform/dmg-core && bun run check` зелёный.
+
+### Шаг 2 — отчёт автора (api-author, Opus)
+
+`ScaffoldLayout.of(profile, name)` — все различия профилей (каталоги, спецификаторы, tsconfig, `gen`, workspaces, пакеты, карта); `SingleSources` → `AppSources` (параметр — раскладка, импорты через `sortImports`); `LintMap.of(LintDirs)` → `single`/`monorepo`; в monorepo ARC-02 запрещает домену относительный выход в `app`/`runners`/`modules` (`arch:check` его не ловит; имена модулей зарезервированы). `ArchChecker` разрешает `@<scope>/…` через `Bun.resolveSync` — эскалации нет. Отклонения: `bun test --pass-with-no-tests` у пакетов; `valibot`, `@valibot/to-json-schema` в dev корня (peer `dmg-core/arch`); DOM-01 на `app/src` и `modules/*/src`; отдельный рендер `package.json`. План `single` — байт в байт. Пакет `check` — 1039 pass.
+
+### Шаг 2 — отчёт ревьюера (Opus)
+
+error нет; план `single` идентичен HEAD (832 строки). warn: `--pass-with-no-tests` — с bun 1.3.1, а `engines` `>=1.2`. info: e2e выходов из домена — три в одном файле (тест слабее, чем выглядит); выход домена в `scripts/` не запрещён (вне брифа); `LINE_WIDTH` в двух файлах; мини-форматтер импортов в `AppSources` — оправдан.
+
+## Шаг 2a — правки по ревью шага 2 (api-author, платформа)
+
+Решения Нурболата 2026-10-27. Границы — шаг 2 плюс поле `engines` в `platform/dmg-core/package.json`.
+
+1. `engines.bun` пакета — `>=1.3.1` (флаг `--pass-with-no-tests` остаётся). Если версия bun упомянута в README/доках пакета — не правь, перечисли в отчёте.
+2. `LINE_WIDTH` — одно объявление в каркасе.
+3. E2e: по файлу-нарушителю на каждый относительный выход домена (`app`, `runners`, `modules`), каждый — ожидаемый ID на своём файле.
+
+**Приёмка:** гейт зелёный; `cd platform/dmg-core && bun run check` зелёный.
+
+### Шаг 2a — отчёт автора (api-author, Opus)
+
+`engines.bun` — `>=1.3.1` (README пакета — оркестратор); `LINE_WIDTH` — одно объявление в `project-files.ts`; e2e — `escape-app.ts`, `escape-runners.ts`, `escape-modules.ts`, ARC-02 на каждом. Пакет `check` — 1041 pass. Ревью — оркестратор по diff (правка точечная). Полный `bun run check` проекта — 4318 pass, 0 fail.

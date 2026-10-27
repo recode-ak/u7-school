@@ -1,7 +1,11 @@
 import { CliConfig } from '../cli-config';
 import type { Dependencies, PackageSource } from '../package-source';
-import type { LintMap } from './lint-map';
-import type { ScaffoldFile } from './project-scaffold.types';
+import type {
+  ScaffoldFile,
+  ScaffoldLayoutData,
+  ScaffoldPackage,
+} from './project-scaffold.types';
+import type { ScaffoldLayout } from './scaffold-layout';
 
 /** Зависимости проекта из `peerDependencies` пакета (кроме самого dmg-core). */
 const PEERS = ['valibot', '@valibot/to-json-schema'];
@@ -9,42 +13,110 @@ const PEERS = ['valibot', '@valibot/to-json-schema'];
 /** Инструменты `check` проекта из `devDependencies` пакета. */
 const TOOLS = ['@biomejs/biome', 'typescript', '@types/bun'];
 
-/** Ширина строки форматтера biome по умолчанию. */
-const LINE_WIDTH = 80;
+/** Ширина строки форматтера biome по умолчанию — для всех шаблонов каркаса. */
+export const LINE_WIDTH = 80;
+
+/** Скрипт тестов пакета workspaces: пакет без тестов — не ошибка. */
+const PACKAGE_TEST = 'bun test --pass-with-no-tests';
 
 /**
- * Конфиги корня проекта: `.gitignore` (зависимости и каталог данных
- * `APP_DATA_DIR=data`), `package.json` (скрипты `check`, версии из пакета),
- * `tsconfig.json`, `biome.json` (по карте линтера), `dmg-core.json`
- * (значения `CliConfig` по умолчанию) и `scripts/arch-check.ts` (раскладка
- * из `GenLayout`). Пути — от корня проекта.
+ * Конфиги проекта. Корень: `.gitignore` (зависимости и каталог данных
+ * `APP_DATA_DIR=data`), `package.json` (скрипты `check`, версии из пакета;
+ * у monorepo — workspaces), `tsconfig.json`, `biome.json` (по карте
+ * линтера), `dmg-core.json` (значения `CliConfig` по умолчанию, `gen` —
+ * раскладка профиля) и `scripts/arch-check.ts` (раскладка из `GenLayout`).
+ * Пакеты workspaces: `package.json` (зависимости, `workspace:*`) и
+ * `tsconfig.json` поверх корневого. Пути — от корня проекта.
  */
 export class ProjectFiles {
+  private readonly layout: ScaffoldLayoutData;
+
   constructor(
     private readonly name: string,
     private readonly pkg: PackageSource,
-    private readonly lint: LintMap,
-  ) {}
+    layout: ScaffoldLayout,
+  ) {
+    this.layout = layout.data;
+  }
 
   files(): ScaffoldFile[] {
     return [
+      ...this.root(),
+      ...this.layout.packages.flatMap((p) => this.packageFiles(p)),
+    ];
+  }
+
+  private root(): ScaffoldFile[] {
+    return [
       { path: '.gitignore', content: 'node_modules/\ndata/\n' },
-      { path: 'package.json', content: this.json(this.packageJson()) },
+      { path: 'package.json', content: this.manifest(this.packageJson()) },
       { path: 'tsconfig.json', content: this.json(this.tsconfig()) },
       { path: 'biome.json', content: this.json(this.biome()) },
       {
         path: CliConfig.file,
-        content: this.json(new CliConfig(this.pkg).defaults()),
+        content: this.json({
+          ...new CliConfig(this.pkg).defaults(),
+          gen: this.layout.gen,
+        }),
       },
       { path: 'scripts/arch-check.ts', content: this.archCheck() },
     ];
   }
 
+  private packageFiles(p: ScaffoldPackage): ScaffoldFile[] {
+    const up = p.dir
+      .split('/')
+      .map(() => '..')
+      .join('/');
+    const workspace: Record<string, string> = {};
+    for (const name of p.workspace) workspace[name] = 'workspace:*';
+    const manifest = {
+      name: p.name,
+      private: true,
+      type: 'module',
+      ...(p.exports === undefined ? {} : { exports: p.exports }),
+      scripts: { test: PACKAGE_TEST },
+      dependencies: { ...this.dependencies(p.dependencies), ...workspace },
+    };
+    return [
+      { path: `${p.dir}/package.json`, content: this.manifest(manifest) },
+      {
+        path: `${p.dir}/tsconfig.json`,
+        content: this.json({
+          extends: `${up}/tsconfig.json`,
+          include: ['src'],
+        }),
+      },
+    ];
+  }
+
+  /** Версии внешних зависимостей: dmg-core — версия пакета, прочие — его peer. */
+  private dependencies(names: readonly string[]): Record<string, string> {
+    const peers = names.filter((name) => name !== 'dmg-core');
+    return {
+      ...(names.includes('dmg-core')
+        ? { 'dmg-core': `^${this.pkg.version}` }
+        : {}),
+      ...this.versions(this.pkg.peerDependencies, peers, 'peerDependencies'),
+    };
+  }
+
   private packageJson(): object {
+    const dependencies = this.dependencies(['dmg-core', ...PEERS]);
+    const tools = this.versions(
+      this.pkg.devDependencies,
+      TOOLS,
+      'devDependencies',
+    );
+    // Корень workspaces ничего не исполняет сам: dmg-core (бинарь
+    // `dmg-core sync`, плагины biome, `arch:check`) с его peer-зависимостями
+    // и инструменты check — dev; пакеты объявляют свои зависимости сами.
+    const workspaces = this.layout.workspaces;
     return {
       name: this.name,
       private: true,
       type: 'module',
+      ...(workspaces === undefined ? {} : { workspaces }),
       scripts: {
         'arch:check': 'bun scripts/arch-check.ts',
         check:
@@ -52,15 +124,9 @@ export class ProjectFiles {
         lint: 'biome check .',
         format: 'biome check . --write',
       },
-      dependencies: {
-        'dmg-core': `^${this.pkg.version}`,
-        ...this.versions(this.pkg.peerDependencies, PEERS, 'peerDependencies'),
-      },
-      devDependencies: this.versions(
-        this.pkg.devDependencies,
-        TOOLS,
-        'devDependencies',
-      ),
+      ...(workspaces === undefined
+        ? { dependencies, devDependencies: tools }
+        : { devDependencies: { ...dependencies, ...tools } }),
     };
   }
 
@@ -99,7 +165,7 @@ export class ProjectFiles {
         noImplicitOverride: true,
         types: ['bun'],
       },
-      include: ['src', 'scripts'],
+      include: this.layout.include,
     };
   }
 
@@ -131,12 +197,13 @@ export class ProjectFiles {
             },
           },
         },
-        ...this.lint.overrides(),
+        ...this.layout.lint.overrides(),
       ],
     };
   }
 
   private archCheck(): string {
+    const { app, runner } = this.layout;
     return `/**
  * \`bun run arch:check\` — контрактные проверки архитектуры (\`ArchChecker\`):
  * корни Def приложения, раскладка модулей из \`dmg-core.json\` (\`GenLayout\`),
@@ -152,12 +219,12 @@ const layout = await GenLayout.read(root);
 const app: ArchApp = {
   name: '${this.name}',
   entry: 'contract',
-  // Корни Def — модули, которые собирает src/app/app.ts; их зависимости
+  // Корни Def — модули, которые собирает ${app}/app.ts; их зависимости
   // по dependsOn проверяются сами.
   modules: [],
   layout: (m) => layout.module(m),
-  root: join(root, 'src/app'),
-  runners: [join(root, 'src/runner')],
+  root: join(root, '${app}'),
+  runners: [join(root, '${runner}')],
 };
 
 process.exitCode = reportArchCheck([app], (line) => console.log(line));
@@ -169,7 +236,7 @@ process.exitCode = reportArchCheck([app], (line) => console.log(line));
    * в одну строку, если она укладывается в ширину строки форматтера.
    */
   private json(data: object): string {
-    const text = JSON.stringify(data, null, 2).replace(
+    return this.manifest(data).replace(
       /^(.*)\[\n([^[\]{}]*?)\n\s*\](,?)$/gm,
       (whole, head: string, items: string, comma: string) => {
         const values = items.split('\n').map((item) => item.trim());
@@ -177,6 +244,10 @@ process.exitCode = reportArchCheck([app], (line) => console.log(line));
         return line.length <= LINE_WIDTH ? line : whole;
       },
     );
-    return `${text}\n`;
+  }
+
+  /** `package.json` в форме biome: массивы всегда раскрыты (как у npm). */
+  private manifest(data: object): string {
+    return `${JSON.stringify(data, null, 2)}\n`;
   }
 }

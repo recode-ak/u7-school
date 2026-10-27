@@ -30,7 +30,7 @@
 
 ## Установка
 
-Нужен Bun ≥ 1.2. `valibot` и `@valibot/to-json-schema` — peer-зависимости:
+Нужен Bun ≥ 1.3.1. `valibot` и `@valibot/to-json-schema` — peer-зависимости:
 
 ```sh
 bun add dmg-core valibot @valibot/to-json-schema

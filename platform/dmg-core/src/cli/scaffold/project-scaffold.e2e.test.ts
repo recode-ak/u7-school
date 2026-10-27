@@ -1,5 +1,5 @@
 /**
- * Приёмка каркаса `single` во временных проектах (как `gen/e2e.test.ts`:
+ * Приёмка каркасов `single` и `monorepo` во временных проектах (как `gen/e2e.test.ts`:
  * `dmg-core`, `valibot` и типы — ссылками в `node_modules` проекта;
  * `dmg-core sync` и установку tarball проверяет `consumer-e2e.sh`):
  *
@@ -7,7 +7,9 @@
  *   tsc, `arch:check` и свои тесты без ручных правок;
  * - карта линтера срабатывает: на каждое правило — файл-нарушитель, biome
  *   выдаёт ожидаемые ID ровно на нём; вне `includes` (тесты, `infra`,
- *   репозитории, точка входа раннера) нарушений нет.
+ *   репозитории, точка входа раннера) нарушений нет;
+ * - в `monorepo` пакеты `@acme/*` — ссылки на свои каталоги (как
+ *   workspaces после `bun install`), `ArchChecker` видит их спецификаторы.
  */
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import {
@@ -19,9 +21,13 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { type ArchApp, ArchChecker } from '../../arch';
 import { applyPlan } from '../../gen/apply';
+import { GenLayout } from '../../gen/layout';
+import { runGen } from '../../gen/main';
 import { PackageSource } from '../package-source';
 import { ProjectScaffold } from './project-scaffold';
+import type { ScaffoldProfile } from './project-scaffold.types';
 
 const PKG = join(import.meta.dir, '../../..');
 /** Исполняемый файл инструмента из зависимостей пакета: `<пакет>/<bin>`. */
@@ -31,9 +37,16 @@ const BIOME = bin('@biomejs/biome', 'bin/biome');
 const TSC = bin('typescript', 'bin/tsc');
 const projects: string[] = [];
 
-/** Каркас `single` во временном каталоге ОС со ссылками на зависимости. */
-async function scaffold(): Promise<string> {
-  const project = mkdtempSync(join(tmpdir(), 'dmg-scaffold-e2e-'));
+/** Пакеты workspaces `monorepo`: имя → каталог от корня проекта. */
+const WORKSPACES: Record<string, string> = {
+  '@acme/domain': 'domain',
+  '@acme/app': 'app',
+  '@acme/cli': 'runners/cli',
+};
+
+/** Каркас профиля во временном каталоге ОС со ссылками на зависимости. */
+async function scaffold(profile: ScaffoldProfile): Promise<string> {
+  const project = mkdtempSync(join(tmpdir(), `dmg-scaffold-${profile}-e2e-`));
   projects.push(project);
   const modules = join(project, 'node_modules');
   mkdirSync(join(modules, '@types'), { recursive: true });
@@ -42,9 +55,15 @@ async function scaffold(): Promise<string> {
     const dir = dirname(Bun.resolveSync(`${dep}/package.json`, PKG));
     symlinkSync(dir, join(modules, dep));
   }
+  if (profile === 'monorepo') {
+    mkdirSync(join(modules, '@acme'));
+    for (const [name, dir] of Object.entries(WORKSPACES)) {
+      symlinkSync(join(project, dir), join(modules, name));
+    }
+  }
   const pkg = await PackageSource.load(PKG);
   const plan = new ProjectScaffold({
-    profile: 'single',
+    profile,
     name: 'acme',
     pkg,
     root: project,
@@ -71,41 +90,45 @@ afterAll(() => {
   }
 });
 
-describe('каркас single чист', () => {
-  let project: string;
-  beforeAll(async () => {
-    project = await scaffold();
-  });
-
-  test('biome чист по biome.json проекта', async () => {
-    const res = await sh([BIOME, 'check', '.'], project);
-    expect(res).toMatchObject({
-      code: 0,
-      text: expect.stringContaining('No fixes'),
+for (const profile of ['single', 'monorepo'] as const) {
+  describe(`каркас ${profile} чист`, () => {
+    let project: string;
+    beforeAll(async () => {
+      project = await scaffold(profile);
     });
-  }, 60_000);
 
-  test('tsc чист', async () => {
-    const res = await sh([TSC, '--noEmit', '-p', project], project);
-    expect(res.text).toBe('');
-    expect(res.code).toBe(0);
-  }, 120_000);
+    test('biome чист по biome.json проекта', async () => {
+      const res = await sh([BIOME, 'check', '.'], project);
+      expect(res).toMatchObject({
+        code: 0,
+        text: expect.stringContaining('No fixes'),
+      });
+    }, 60_000);
 
-  test('arch:check без нарушений при пустом списке модулей', async () => {
-    const res = await sh(['bun', 'scripts/arch-check.ts'], project);
-    expect(res.text).toContain('arch:check: нарушений нет');
-    expect(res.code).toBe(0);
-  }, 60_000);
+    test('tsc чист', async () => {
+      const res = await sh([TSC, '--noEmit', '-p', project], project);
+      expect(res.text).toBe('');
+      expect(res.code).toBe(0);
+    }, 120_000);
 
-  test('тесты каркаса зелёные', async () => {
-    const res = await sh(['bun', 'test'], project);
-    expect(res.text).toContain(' 0 fail');
-    expect(res.code).toBe(0);
-  }, 120_000);
-});
+    test('arch:check без нарушений при пустом списке модулей', async () => {
+      const res = await sh(['bun', 'scripts/arch-check.ts'], project);
+      expect(res.text).toContain('arch:check: нарушений нет');
+      expect(res.code).toBe(0);
+    }, 60_000);
+
+    test('тесты каркаса зелёные', async () => {
+      const res = await sh(['bun', 'test'], project);
+      expect(res.text).toContain(' 0 fail');
+      expect(res.code).toBe(0);
+    }, 120_000);
+  });
+}
 
 /** Нарушители: путь → код и ID правил, которые biome обязан на нём найти. */
-const VIOLATIONS: Record<string, { code: string; ids: string[] }> = {
+type Violations = Record<string, { code: string; ids: string[] }>;
+
+const SINGLE_VIOLATIONS: Violations = {
   'src/domain/v/clock.ts': {
     code: 'export const now = (): number => Date.now();\n',
     ids: ['DOM-14'],
@@ -189,40 +212,187 @@ const VIOLATIONS: Record<string, { code: string; ids: string[] }> = {
   },
 };
 
+/** Нарушители в раскладке monorepo: правило — на каталогах пакетов. */
+const MONOREPO_VIOLATIONS: Violations = {
+  'domain/src/v/clock.ts': {
+    code: 'export const now = (): number => Date.now();\n',
+    ids: ['DOM-14'],
+  },
+  'domain/src/v/io.ts': {
+    code: "import { readFileSync } from 'node:fs';\nexport const read = readFileSync;\n",
+    ids: ['ARC-02'],
+  },
+  // Пакеты приложения — не в белом списке домена.
+  'domain/src/v/package.ts': {
+    code: "import { App } from '@acme/app';\nexport { App };\n",
+    ids: ['ARC-02'],
+  },
+  // Относительный выход домена — по файлу на каждый каталог вне домена.
+  'domain/src/v/escape-app.ts': {
+    code: "import { App } from '../../../app/src/app';\nexport { App };\n",
+    ids: ['ARC-02'],
+  },
+  'domain/src/v/escape-runners.ts': {
+    code: "import { RunnerCli } from '../../../runners/cli/src/runner-cli';\nexport { RunnerCli };\n",
+    ids: ['ARC-02'],
+  },
+  'domain/src/v/escape-modules.ts': {
+    code: "import { M } from '../../../modules/v/src/m';\nexport { M };\n",
+    ids: ['ARC-02'],
+  },
+  'domain/src/v/a/a.state.ts': {
+    code: 'export const S = { uuid: 1 };\n',
+    ids: ['DOM-11'],
+  },
+  'domain/src/v/a/a.policy.ts': {
+    code: "import { readFileSync } from 'node:fs';\nimport { S } from './a.state';\nexport { readFileSync, S };\n",
+    ids: ['ARC-02', 'DOM-01'],
+  },
+  'domain/src/v/allowed.ts': {
+    code: "import { F } from 'dmg-core';\nimport * as v from 'valibot';\nexport const A = v.object({ id: F.uuid('id') });\n",
+    ids: [],
+  },
+  'domain/src/v/a/a.ar.ts': {
+    code: "import { S } from './a.state';\nexport const f = () => {\n  throw new Error(String(S));\n};\n",
+    ids: ['ERR-01'],
+  },
+  'modules/v/src/m.ts': {
+    code: 'export const M = 1;\n',
+    ids: [],
+  },
+  'modules/v/src/a/uc/do.uc.ts': {
+    code: "import { S } from '../../../../../domain/src/v/a/a.state';\nexport const f = (bus: { publish(x: unknown): void }) => bus.publish(S);\n",
+    ids: ['API-02', 'DOM-01'],
+  },
+  'modules/v/src/view.ts': {
+    code: 'export const f = (ar: { snapshot(): unknown }) => ar.snapshot();\n',
+    ids: ['DOM-17'],
+  },
+  'modules/v/src/infra/a.json-repo.ts': {
+    code: "import { S } from '../../../../domain/src/v/a/a.state';\nexport const f = (ar: { snapshot(): unknown }) => [S, ar.snapshot()];\n",
+    ids: [],
+  },
+  'app/src/env.ts': {
+    code: 'export const mode = process.env.APP_MODE;\n',
+    ids: ['ARC-09'],
+  },
+  'app/src/members.ts': {
+    code: 'export class K {\n  public x = 1;\n}\n',
+    ids: ['CODE-02'],
+  },
+  'runners/cli/src/dates.ts': {
+    code: "import * as v from 'valibot';\nexport const D = v.pipe(v.string(), v.isoDateTime());\n",
+    ids: ['DOM-12'],
+  },
+  'runners/cli/src/do.er.ts': {
+    code: "export const f = () => {\n  throw new Error('x');\n};\n",
+    ids: ['ERR-01'],
+  },
+  'modules/v/src/a/uc/do.uc.test.ts': {
+    code: "import { S } from '../../../../../domain/src/v/a/a.state';\nexport const f = (bus: { publish(x: unknown): void }) => {\n  bus.publish(S);\n  throw new Error('x');\n};\n",
+    ids: [],
+  },
+};
+
 type Diagnostic = { message: string; location?: { path?: string } };
 
-describe('карта линтера single срабатывает', () => {
-  let found: Map<string, string[]>;
+/** ID правил biome по файлам проекта профиля с записанными нарушителями. */
+async function lintFindings(
+  profile: ScaffoldProfile,
+  violations: Violations,
+): Promise<Map<string, string[]>> {
+  const project = await scaffold(profile);
+  for (const [path, { code }] of Object.entries(violations)) {
+    mkdirSync(dirname(join(project, path)), { recursive: true });
+    writeFileSync(join(project, path), code);
+  }
+  const res = await sh(
+    [BIOME, 'lint', '--reporter=json', '--max-diagnostics=none', '.'],
+    project,
+  );
+  const diagnostics: Diagnostic[] = JSON.parse(res.out).diagnostics;
+  const found = new Map<string, string[]>();
+  for (const d of diagnostics) {
+    const id = /^([A-Z]+-\d+):/.exec(d.message)?.[1];
+    const path = d.location?.path;
+    if (id === undefined || path === undefined) continue;
+    const ids = found.get(path) ?? [];
+    if (!ids.includes(id)) ids.push(id);
+    found.set(path, ids.sort());
+  }
+  return found;
+}
+
+const LINT_CASES: [ScaffoldProfile, Violations][] = [
+  ['single', SINGLE_VIOLATIONS],
+  ['monorepo', MONOREPO_VIOLATIONS],
+];
+
+for (const [profile, violations] of LINT_CASES) {
+  describe(`карта линтера ${profile} срабатывает`, () => {
+    let found: Map<string, string[]>;
+    beforeAll(async () => {
+      found = await lintFindings(profile, violations);
+    }, 60_000);
+
+    for (const [path, { ids }] of Object.entries(violations)) {
+      test(`${path}: ${ids.join(', ') || 'нет нарушений'}`, () => {
+        expect(found.get(path) ?? []).toEqual(ids);
+      });
+    }
+
+    test('в файлах каркаса (в т.ч. точке входа раннера с process.env) нарушений нет', () => {
+      const others = [...found.keys()].filter((path) => !(path in violations));
+      expect(others).toEqual([]);
+    });
+  });
+}
+
+describe('ArchChecker на monorepo видит спецификаторы пакетов', () => {
+  let violations: string[];
   beforeAll(async () => {
-    const project = await scaffold();
-    for (const [path, { code }] of Object.entries(VIOLATIONS)) {
-      mkdirSync(dirname(join(project, path)), { recursive: true });
+    const project = await scaffold('monorepo');
+    const layout = await GenLayout.read(project);
+    const lines: string[] = [];
+    if (runGen(['module', 'probe', '--write'], layout, (l) => lines.push(l))) {
+      throw new Error(`gen module probe: ${lines.join('\n')}`);
+    }
+    const files: Record<string, string> = {
+      // Вход contract — можно; мимо contract (index модуля) — нельзя.
+      'app/src/probe-root.ts':
+        "export { ProbeModuleDef } from '@acme/domain/probe/contract';\n",
+      'app/src/probe-root-bad.ts':
+        "export { ProbeModuleDef } from '@acme/domain/probe';\n",
+      'runners/cli/src/probe-runner.ts':
+        "export { ProbeModuleDef } from '@acme/domain/probe/contract';\nexport { App } from '@acme/app';\n",
+      'runners/cli/src/probe-runner-bad.ts':
+        "export { ProbeModuleDef } from '@acme/domain/probe';\n",
+    };
+    for (const [path, code] of Object.entries(files)) {
       writeFileSync(join(project, path), code);
     }
-    const res = await sh(
-      [BIOME, 'lint', '--reporter=json', '--max-diagnostics=none', '.'],
-      project,
-    );
-    const diagnostics: Diagnostic[] = JSON.parse(res.out).diagnostics;
-    found = new Map();
-    for (const d of diagnostics) {
-      const id = /^([A-Z]+-\d+):/.exec(d.message)?.[1];
-      const path = d.location?.path;
-      if (id === undefined || path === undefined) continue;
-      const ids = found.get(path) ?? [];
-      if (!ids.includes(id)) ids.push(id);
-      found.set(path, ids.sort());
-    }
+    const domain = await import(layout.domainDir('probe'));
+    const app: ArchApp = {
+      name: 'acme',
+      entry: 'contract',
+      modules: [domain.ProbeModuleDef],
+      layout: (m) => layout.module(m),
+      root: join(project, 'app/src'),
+      runners: [join(project, 'runners/cli/src')],
+    };
+    violations = ArchChecker.of(app)
+      .check()
+      .map((v) => v.format());
   }, 60_000);
 
-  for (const [path, { ids }] of Object.entries(VIOLATIONS)) {
-    test(`${path}: ${ids.join(', ') || 'нет нарушений'}`, () => {
-      expect(found.get(path) ?? []).toEqual(ids);
-    });
-  }
-
-  test('в файлах каркаса (в т.ч. runner/main.ts с process.env) нарушений нет', () => {
-    const others = [...found.keys()].filter((path) => !(path in VIOLATIONS));
-    expect(others).toEqual([]);
+  test('нарушения — только импорты мимо contract (ARC-07, ARC-08)', () => {
+    expect(violations).toEqual([
+      expect.stringMatching(
+        /^ARC-07: .*probe-root-bad\.ts.*@acme\/domain\/probe$/,
+      ),
+      expect.stringMatching(
+        /^ARC-08: .*probe-runner-bad\.ts.*@acme\/domain\/probe$/,
+      ),
+    ]);
   });
 });

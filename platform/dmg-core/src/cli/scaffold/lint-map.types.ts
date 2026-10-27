@@ -29,3 +29,19 @@ export type LintRule =
 
 /** Секция `overrides` biome.json — JSON-объект. */
 export type BiomeOverride = Record<string, unknown>;
+
+/** Каталоги слоёв профиля для карты линтера — глобы biome от корня проекта. */
+export type LintDirs = {
+  /** Исходники домена. */
+  readonly domain: string;
+  /** Прикладной слой и корень сборки (DOM-01, кроме `infra`). */
+  readonly app: readonly string[];
+  /** Исходники всех слоёв (ARC-09, CODE-02, операции и т.д.). */
+  readonly sources: readonly string[];
+  /** Точка входа раннера — единственное место чтения окружения (ARC-09). */
+  readonly main: string;
+  /** Каталоги вне домена, куда домен не выходит относительным путём. */
+  readonly escapes: readonly string[];
+  /** Что за каталоги `escapes` — в сообщение ARC-02. */
+  readonly escapesTitle: string;
+};
