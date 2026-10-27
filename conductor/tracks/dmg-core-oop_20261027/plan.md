@@ -48,7 +48,7 @@
     - Блокеров нет. Исправлено: `kind-switch.test` ловит `TABLE[x.dmg]` и обратное сравнение. Отложено в Фазу 7: один тип вместо `Declared`/`DeclaredCalls` (общий `Declared` — в `operation-def.types.ts`), `decisions.md` D-09/D-37 на `ModuleDef.define`.
 - [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
-## Фаза 4: `DefIndex` и `ArchChecker`
+## Фаза 4: `DefIndex` и `ArchChecker` [checkpoint: 514d5fb]
 
 - [x] Task: `DefIndex.from(roots)` с методами вместо `indexDefs`, `operationsOf`, `callsOf`, `localId`, `ruleId` `0e09372`
     - Методы индекса: `moduleOf` (агрегат/операция), `aggregateOf` (событие/ошибка), `operations()`, `id(def)` (`?.name` вне индекса), `ruleId(rule)`; карты владельцев скрыты. Не зависящее от индекса — у владельца: `ModuleDef.operations()`, `ModuleDef.localId(def)`; `callsOf` убран (`op.calls`). `AnyOperationDef` — в `operation-def.types.ts`.
@@ -57,7 +57,7 @@
     - `layout` необязателен: без него — только проверки Def (тесты модулей домена, `scripts/arch-check.ts`); `ArchChecker.of(app)` — для `ArchApp`. Внутри — `DefChecker` и `FileChecker` (не экспортируются), проверки — их приватные методы. Документация пакета переведена на новые имена сразу (не ждёт Фазы 7).
 - [x] Task: Ревью reviewer `1d11a97`
     - Блокеров нет. Исправлено: `GraphBuilder` — id через `DefIndex.id`; `FileChecker.isEntry` читает `this.entry`; lint-фикстура ARC-02. Решено с Нурболатом 2026-10-27: `ArchChecker.defsOf(roots).report()` для тестов модулей `e877889`; имена в `decisions.md` — актуальные (журнал — справка по текущему API); `conductor/architecture` — Фаза 7.
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 ## Фаза 5: Генератор
 
