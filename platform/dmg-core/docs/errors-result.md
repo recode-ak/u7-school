@@ -22,7 +22,7 @@
 | `validation` | вход не прошёл схему | `INPUT_VALIDATION` |
 | `unauthorized` | `kind` вызывающего не входит в `callers` UC | `UNAUTHORIZED` |
 | `access` | политика отказала (+ правило и `denyMessage`) | `ACCESS_DENIED` |
-| `not_found` | сущности нет | `TASK_NOT_FOUND` |
+| `not_found` | сущности или операции нет | `TASK_NOT_FOUND`, `OPERATION_NOT_FOUND` |
 | `conflict` | состояние не допускает операцию | `TASK_ALREADY_DONE` |
 | `internal` | сбой, баг, невалидный выход | `SERVER_INTERNAL`, `OUTPUT_VALIDATION` |
 
@@ -31,7 +31,7 @@
 - Коды — UPPER_SNAKE с префиксом сущности, **уникальны в приложении** (контрактный тест).
 - Агрегат объявляет ошибки группой `ErrorDef.define`; UC и фасад **ссылаются** на них, результат Ar возвращается как есть.
 - Ошибки зависимостей — по ссылке через контракт фасада; перевод — только при смене смысла (см. [domain-modeling.md](./domain-modeling.md) §4).
-- Базовые (`UNAUTHORIZED`, `INPUT_VALIDATION`, `ACCESS_DENIED`, `OUTPUT_VALIDATION`, `VERSION_CONFLICT`, `SERVER_INTERNAL`) подмешивает ядро.
+- Базовые (`UNAUTHORIZED`, `INPUT_VALIDATION`, `ACCESS_DENIED`, `OUTPUT_VALIDATION`, `VERSION_CONFLICT`, `OPERATION_NOT_FOUND`, `SERVER_INTERNAL`) подмешивает ядро. `OPERATION_NOT_FOUND` (`{ module, uc }`) — по адресу транспорта нет модуля или в модуле нет UC с именем из команды (D-49).
 - **Сериализация** (D-49, [transport.md](./transport.md) §1): в ответе транспорта только `code`, `kind`, `payload` (`ErrorDef.serialize`); тексты клиент восстанавливает по Def (`ErrorDef.restore`, `UseCaseDef.restoreResult`). Код или payload вне контракта UC (другая версия сервиса) восстанавливаются как `SERVER_INTERNAL`, о расхождении сообщает клиент транспорта (`moduleApi`).
 
 ## 3. Исполнение UC (`handle`)

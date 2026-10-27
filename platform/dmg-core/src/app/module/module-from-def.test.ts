@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
+import type { Command } from '#core/domain/contracts/command';
 import { JobDef } from '#core/domain/contracts/job-def';
 import { ModuleDef } from '#core/domain/contracts/module-def';
 import { SystemCaller, UserCaller } from '#core/kernel/caller/caller';
@@ -162,6 +163,50 @@ describe('ModuleFromDef.handle', () => {
   test('реализации UC наружу не раздаются', () => {
     // @ts-expect-error useCase — не публичный: вход только через handle
     expect(mini.useCase).toBeDefined();
+  });
+});
+
+describe('ModuleFromDef.dispatch', () => {
+  test('команда UC своего модуля — ответ его реализации', async () => {
+    const res = await mini.dispatch(
+      CompleteTaskUcDef.command({ taskId: TASK }),
+      new UserCaller(user),
+      REQ,
+    );
+    expectErr(res, 'TASK_NOT_FOUND');
+  });
+
+  test('команда после JSON — UC находится по имени (D-49)', async () => {
+    const any: AnyModuleFromDef<User> = mini;
+    const wire: Command = JSON.parse(
+      JSON.stringify(CompleteTaskUcDef.command({ taskId: TASK })),
+    );
+    const res = await any.dispatch(wire, new UserCaller(user), REQ);
+    expectErr(res, 'TASK_NOT_FOUND');
+  });
+
+  test('неизвестный UC — OPERATION_NOT_FOUND с адресом', async () => {
+    const any: AnyModuleFromDef<User> = mini;
+    const res = await any.dispatch(
+      { uc: 'createTask', input: {} },
+      new UserCaller(user),
+      REQ,
+    );
+    expect(expectErr(res, 'OPERATION_NOT_FOUND').payload).toEqual({
+      module: 'mini',
+      uc: 'createTask',
+    });
+  });
+
+  test('команда UC другого модуля — ошибка компиляции', () => {
+    const wrong = () =>
+      mini.dispatch(
+        // @ts-expect-error createTask не из модуля mini
+        CreateTaskUcDef.command({ title: 'x' }),
+        new UserCaller(user),
+        REQ,
+      );
+    expect(wrong).toBeDefined();
   });
 });
 

@@ -10,6 +10,7 @@ describe('CoreErrors', () => {
       ['ACCESS_DENIED', 'access'],
       ['OUTPUT_VALIDATION', 'internal'],
       ['VERSION_CONFLICT', 'conflict'],
+      ['OPERATION_NOT_FOUND', 'not_found'],
       ['SERVER_INTERNAL', 'internal'],
     ]);
   });
@@ -33,6 +34,14 @@ describe('CoreErrors', () => {
       // @ts-expect-error `calls` проверяет тип — `from` в отказе не нужен
       from: 'notes.notifyTodo',
     });
+  });
+
+  it('OPERATION_NOT_FOUND несёт адрес: модуль и имя UC (D-49)', () => {
+    const error = CoreErrors.OPERATION_NOT_FOUND.make({
+      module: 'todo',
+      uc: 'archiveTask',
+    });
+    expect(error.payload).toEqual({ module: 'todo', uc: 'archiveTask' });
   });
 
   it('INPUT_VALIDATION несёт список проблем', () => {

@@ -1,3 +1,4 @@
+import type { Command } from '#core/domain/contracts/command';
 import type { AnyEventReactionDef } from '#core/domain/contracts/event-reaction-def';
 import type { AnyJobDef } from '#core/domain/contracts/job-def';
 import type { AnyModuleDef } from '#core/domain/contracts/module-def';
@@ -7,6 +8,7 @@ import type {
   UseCaseErrorOf,
 } from '#core/domain/contracts/use-case-def';
 import type { Caller, Identified } from '#core/kernel/caller/caller';
+import { CoreErrors } from '#core/kernel/errors/core-errors';
 import type { DomainError } from '#core/kernel/errors/error';
 import type { Result } from '#core/kernel/result/result';
 import type { Trace } from '#core/kernel/trace/trace';
@@ -91,7 +93,8 @@ export type AnyModuleFromDef<U extends Identified> = ModuleFromDef<
 
 /**
  * Модуль DMG в рантайме — единственная точка входа в его операции (D-43):
- * UC — через `handle`, Job — через `runJob`, реакции — `subscribe`.
+ * UC — через `dispatch` команды (D-49), Job — через `runJob`, реакции —
+ * `subscribe`.
  * Реализации живут внутри и наружу не раздаются; операции получают модуль
  * при создании. Фасад для других модулей — `ModuleFacade` поверх `handle`,
  * его собирает приложение — в карте его нет.
@@ -101,8 +104,9 @@ export class ModuleFromDef<
   R extends ModuleDeps,
   U extends Identified,
 > {
+  /** Реализации UC по имени Def: команда несёт только имя (D-49). */
   private readonly useCases = new Map<
-    AnyUseCaseDef,
+    string,
     UseCaseHandler<AnyUseCaseDef, U>
   >();
   private readonly reactions: ReactionFromDef<
@@ -126,7 +130,7 @@ export class ModuleFromDef<
   ) {
     for (const Impl of Object.values(map.useCases)) {
       const uc = new Impl(deps, def);
-      this.useCases.set(uc.def, uc);
+      this.useCases.set(uc.def.name, uc);
     }
     this.reactions = Object.values(map.reactions).map(
       (Er) => new Er(deps, def),
@@ -136,6 +140,29 @@ export class ModuleFromDef<
       this.jobs.set(job.def, job);
     }
     this.bus = deps.app.bus;
+  }
+
+  /**
+   * Исполнение команды (D-49): UC — по имени из команды, дальше обычный
+   * конвейер UC. Команда UC другого модуля — ошибка компиляции; при стёртом
+   * типе (команда из транспорта) — `OPERATION_NOT_FOUND`: это ответ клиенту
+   * другой версии, а не ошибка сборки. `meta` пока не исполняется.
+   */
+  dispatch<D extends M['useCases'][number]>(
+    command: Command<D>,
+    caller: Caller<U>,
+    trace: Trace,
+  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
+    const uc = this.useCases.get(command.uc);
+    if (uc === undefined || !answers(uc, command)) {
+      return Promise.resolve(
+        CoreErrors.OPERATION_NOT_FOUND.err({
+          module: this.def.name,
+          uc: command.uc,
+        }),
+      );
+    }
+    return uc.handle(command.input, caller, trace);
   }
 
   /**
@@ -189,16 +216,30 @@ export class ModuleFromDef<
     };
   }
 
-  /** Реализация UC по его Def; `undefined` — UC не из этого модуля. */
+  /**
+   * Реализация UC по его Def; `undefined` — UC не из этого модуля (или
+   * другой Def с тем же именем).
+   */
   private useCase<D extends AnyUseCaseDef>(
     def: D,
   ): UseCaseHandler<D, U> | undefined {
-    const uc = this.useCases.get(def);
+    const uc = this.useCases.get(def.name);
     return uc !== undefined && implementsDef(uc, def) ? uc : undefined;
   }
 }
 
-/** Def — ключ карты, поэтому совпадение объекта гарантирует тип `D`. */
+/**
+ * Имя Def — ключ карты, а имена UC в модуле уникальны: совпадение имени с
+ * `uc` команды и есть реализация её Def `D`.
+ */
+function answers<D extends AnyUseCaseDef, U extends Identified>(
+  uc: UseCaseHandler<AnyUseCaseDef, U>,
+  command: Command<D>,
+): uc is UseCaseHandler<D, U> {
+  return uc.def.name === command.uc;
+}
+
+/** Совпадение объекта Def гарантирует тип `D`. */
 function implementsDef<D extends AnyUseCaseDef, U extends Identified>(
   uc: UseCaseHandler<AnyUseCaseDef, U>,
   def: D,

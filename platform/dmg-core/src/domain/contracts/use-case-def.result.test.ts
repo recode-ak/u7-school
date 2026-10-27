@@ -2,7 +2,7 @@
 // восстанавливает тот же `Result`, что вернул UC.
 import { describe, expect, expectTypeOf, it } from 'bun:test';
 import { CoreErrors } from '#core/kernel/errors/core-errors';
-import { err, ok, type Result } from '#core/kernel/result/result';
+import { ok, type Result } from '#core/kernel/result/result';
 import type { SerializedResult } from '#core/kernel/result/serialized-result.types';
 import { CompleteTaskUcDef, TaskErrors } from './contracts.fixture';
 import type { OutputOf, UseCaseErrorOf } from './use-case-def';

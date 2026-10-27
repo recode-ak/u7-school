@@ -55,6 +55,16 @@ export const CoreErrors = ErrorDef.define('', {
       uuid: v.pipe(v.string(), v.description('Идентификатор записи')),
     }),
   },
+  OPERATION_NOT_FOUND: {
+    kind: 'not_found',
+    label: 'Операция не найдена',
+    description:
+      'По адресу транспорта нет модуля или в модуле нет UC с именем из команды (D-49); обычно — расхождение версий клиента и сервиса.',
+    payload: v.object({
+      module: v.pipe(v.string(), v.description('Адрес модуля')),
+      uc: v.pipe(v.string(), v.description('Имя UC из команды')),
+    }),
+  },
   SERVER_INTERNAL: {
     kind: 'internal',
     label: 'Внутренняя ошибка',
