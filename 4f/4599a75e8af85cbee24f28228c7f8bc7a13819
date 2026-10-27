@@ -1,0 +1,3 @@
+Задача: шаблоны операций из вида, без switch (Фаза 5, dmg-core-oop).
+Изменения: gen/kinds/operation.ts — абстрактный OperationTemplate (of(c) по таблице TEMPLATES, contractTest, импорты, testDeps) и наследники UseCaseTemplate/ReactionTemplate/JobTemplate (list, contract, implementation, implementationTest); таблица LIST удалена (поле list). gen/main.ts — PLANNERS: Record<GenKind, planner> вместо switch (args.kind). arch/kind-switch.test.ts — DIRS += gen, шаблон ловит switch (x.kind).
+Проверка: снимок planOperation для uc/er/job × 2 имени до/после совпал побайтно; operation.test, main.test, e2e зелёные; check — 4097 pass.
