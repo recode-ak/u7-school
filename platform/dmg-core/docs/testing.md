@@ -42,7 +42,7 @@ expect(res.ok ? undefined : res.error.code).toBe('TASK_ALREADY_DONE');
 - Домен не мокается: он чистый, тесты работают с настоящими агрегатами.
 - В прикладном слое мокаются порты (репозитории, фасады) — типизированно, без `any`.
 - Время (D-34): домен получает момент аргументом операции (`task.complete(at)`) — в тесте Ar это просто константа. Прикладной слой берёт его из часов приложения (`this.now()` в UC/ER/Job); в тесте — `testAppContext({ at })` и `ctx.setNow(ts)` (`dmg-core/testing`). Глобальных часов нет, `Date` напрямую не читается.
-- Готовые `testAppContext`, `recordingBus`, `memoryLogger`, `StubFacade`, `expectIdempotentReaction` — для UC/ER без реального приложения ([testing/index.ts](../src/testing/index.ts)); учебный модуль — [src/testing/example](../src/testing/example/example.arch.ts).
+- Готовые `testAppContext` (шина — `RecordingBus`, логгер — `MemoryLogger`), `MemoryBus` (доставляет события подписчикам), `StubFacade`, `expectIdempotentReaction` — для UC/ER без реального приложения ([testing/index.ts](../src/testing/index.ts)); учебный модуль — [src/testing/example](../src/testing/example/example.arch.ts).
 
 ## 5. Защита от регресса и чистота правок
 
