@@ -1,0 +1,1 @@
+Финал трека dmg-core-oop: CI=true bun test — 4107 pass / 0 fail (441 файл), dmg-core — 835/0; tsc, biome (0 ошибок, 56 прежних предупреждений), arch:check — зелёные. Триаж в summary.md: регрессов и промежуточных состояний нет.
