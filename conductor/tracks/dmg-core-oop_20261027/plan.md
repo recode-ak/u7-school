@@ -11,7 +11,7 @@
     - Итог прототипа: `static define` базы с `this: new (spec: S) => D` теряет литералы (у TS нет higher-kinded типов: дженерик-конструктор инстанцируется ограничением) и несовместим со статикой вида (TS2417). Работает `static define<const S>` в каждом виде (одна строка `new XxxDef(spec)`), база `Def` без `define`. Необязательные списки (`calls`, `rules`, `emits`) дают условный тип поля → вариантность `S` неизмерима → `Any*Def` — структурный тип публичных членов, а не `XxxDef<Spec>`. Не сработали: аннотация `out S`, нормализация типа через `Omit`.
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
-## Фаза 1: База `Def` и простые виды
+## Фаза 1: База `Def` и простые виды [checkpoint: 3058131d]
 
 - [x] Task: Абстрактный `Def` (`name`, `label`, `description`, `describe()`, `normalize()`; `static define` — в каждом виде, не в базе) — тесты контракта базы `73303e7f`
 - [x] Task: `ErrorDef` (`defineErrors` → статика), перевод `normalize`/`describe` для вида `148cb4dd`
