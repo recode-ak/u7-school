@@ -3,11 +3,12 @@
 import { describe, expect, expectTypeOf, it } from 'bun:test';
 import type { Command, CommandMeta, DefOfCommand } from './command';
 import { CompleteTaskUcDef, ListTasksUcDef } from './contracts.fixture';
-import type {
-  AnyUseCaseDef,
-  InputOf,
-  OutputOf,
-  UseCaseErrorOf,
+import {
+  type AnyUseCaseDef,
+  type InputOf,
+  type OutputOf,
+  UseCaseDef,
+  type UseCaseErrorOf,
 } from './use-case-def';
 
 const taskId = '0190a6c4-1b2c-7d3e-8f40-123456789abc';
@@ -33,6 +34,25 @@ describe('UseCaseDef.command', () => {
 
     expect(JSON.parse(JSON.stringify(command))).toEqual(command);
     expect(Object.getPrototypeOf(command)).toBe(Object.prototype);
+  });
+});
+
+describe('UseCaseDef.commandOf — команда в обобщённом коде', () => {
+  it('по Def, стёртому до AnyUseCaseDef, — та же команда, что command', () => {
+    const def: AnyUseCaseDef = CompleteTaskUcDef;
+    const meta: CommandMeta = { requestId: 'r-3' };
+
+    expect(UseCaseDef.commandOf(def, { taskId })).toEqual(
+      CompleteTaskUcDef.command({ taskId }),
+    );
+    expect(UseCaseDef.commandOf(def, { taskId }, meta)).toEqual(
+      CompleteTaskUcDef.command({ taskId }, meta),
+    );
+  });
+
+  it('тип команды — по Def аргумента', () => {
+    const command = UseCaseDef.commandOf(CompleteTaskUcDef, { taskId });
+    expectTypeOf(command).toEqualTypeOf<Command<typeof CompleteTaskUcDef>>();
   });
 });
 

@@ -9,6 +9,7 @@ import type { Command, CommandMeta } from './command';
 import { OperationDef } from './operation-def';
 import type { Declared } from './operation-def.types';
 import type {
+  AnyUseCaseDef,
   InputOf,
   NormalizedUseCase,
   OutputOf,
@@ -77,9 +78,22 @@ export class UseCaseDef<
     input: InputOf<UseCaseDef<S>>,
     meta?: CommandMeta,
   ): Command<UseCaseDef<S>> {
+    return UseCaseDef.commandOf<UseCaseDef<S>>(this, input, meta);
+  }
+
+  /**
+   * Команда по любому Def — для обобщённого кода (фасады), где Def стёрт до
+   * `AnyUseCaseDef` и метода `command` у него нет. Единственное место сборки
+   * команды.
+   */
+  static commandOf<D extends AnyUseCaseDef>(
+    def: D,
+    input: InputOf<D>,
+    meta?: CommandMeta,
+  ): Command<D> {
     return meta === undefined
-      ? { uc: this.name, input }
-      : { uc: this.name, input, meta };
+      ? { uc: def.name, input }
+      : { uc: def.name, input, meta };
   }
 
   /** Ответ UC в форме транспорта (transport.md §1). */

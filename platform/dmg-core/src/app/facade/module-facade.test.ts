@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { AnyUseCaseDef } from '#core/domain/contracts/use-case-def';
+import type { Command } from '#core/domain/contracts/command';
 import {
   type Caller,
   type OperationRef,
@@ -29,32 +29,28 @@ const from: OperationRef = { kind: 'useCase', module: 'notes', name: 'notify' };
 const caller = new SystemCaller(from, new UserCaller({ uuid: OWNER }));
 
 type Seen = {
-  def: AnyUseCaseDef;
-  input: unknown;
+  command: Command;
   caller: Caller;
   trace: unknown;
 };
 
 /**
- * Модуль todo с одной реализацией — `getTask`, которая запоминает вызов;
- * UC без реализации — исключение сборки, как у `ModuleFromDef.handle`.
+ * Модуль todo, который запоминает команды и на любую отвечает задачей —
+ * фасаду важно только, что он передал модулю.
  */
 function todoModule(seen: Seen[]): FacadeModule<typeof TodoModuleDef> {
   return {
     def: TodoModuleDef,
-    serves: (def) => def === GetTaskUcDef,
-    handle: async (def, input, caller, trace) => {
-      if (def !== GetTaskUcDef) {
-        throw new Error(`UC ${def.name} не реализован в модуле todo`);
-      }
-      seen.push({ def, input, caller, trace });
-      return ok(taskRow(TASK));
+    dispatch: async (command, caller, trace) => {
+      seen.push({ command, caller, trace });
+      // Ответ getTask — единственного UC, который зовут тесты.
+      return ok(taskRow(TASK)) as never;
     },
   };
 }
 
 describe('ModuleFacade', () => {
-  test('handle — вход модуля: UC, вход, вызывающий и след как есть', async () => {
+  test('handle — команда модулю (D-49): вызывающий и след как есть', async () => {
     const seen: Seen[] = [];
     const todo = new ModuleFacade(todoModule(seen));
     const res = await todo.handle(GetTaskUcDef, { taskId: TASK }, caller, REQ);
@@ -62,15 +58,20 @@ describe('ModuleFacade', () => {
     // Выход типизирован по Def UC: state задачи.
     expect(expectOk(res).status).toBe('open');
     expect(seen).toEqual([
-      { def: GetTaskUcDef, input: { taskId: TASK }, caller, trace: REQ },
+      {
+        command: GetTaskUcDef.command({ taskId: TASK }),
+        caller,
+        trace: REQ,
+      },
     ]);
   });
 
-  test('def и serves — от модуля', () => {
+  test('def — от модуля, serves — UC из Def модуля', () => {
     const todo = new ModuleFacade(todoModule([]));
     expect(todo.def).toBe(TodoModuleDef);
     expect(todo.serves(GetTaskUcDef)).toBe(true);
-    expect(todo.serves(CompleteTaskUcDef)).toBe(false);
+    expect(todo.serves(CompleteTaskUcDef)).toBe(true);
+    expect(todo.serves(RemoveUserUcDef)).toBe(false);
   });
 
   test('UC без system в callers и UC другого модуля — ошибка типа', () => {
