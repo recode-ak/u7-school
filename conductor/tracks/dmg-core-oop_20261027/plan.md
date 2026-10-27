@@ -52,7 +52,7 @@
 
 - [x] Task: `DefIndex.from(roots)` с методами вместо `indexDefs`, `operationsOf`, `callsOf`, `localId`, `ruleId` `0e09372`
     - Методы индекса: `moduleOf` (агрегат/операция), `aggregateOf` (событие/ошибка), `operations()`, `id(def)` (`?.name` вне индекса), `ruleId(rule)`; карты владельцев скрыты. Не зависящее от индекса — у владельца: `ModuleDef.operations()`, `ModuleDef.localId(def)`; `callsOf` убран (`op.calls`). `AnyOperationDef` — в `operation-def.types.ts`.
-- [ ] Task: `Violation` — класс с `format()`
+- [x] Task: `Violation` — класс с `format()` `8773f36`
 - [ ] Task: `ArchChecker(index, layout).check()` вместо `archCheck`/`checkDefs`/`checkFiles`/`describedDefs`; `arch-report` на новом API
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
