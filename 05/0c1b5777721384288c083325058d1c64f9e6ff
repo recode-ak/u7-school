@@ -1,0 +1,7 @@
+Задача: тип Command<D> и UseCaseDef.command (трек command-dispatch, фаза 1).
+- command.ts: Command<D> = { uc, input, meta? } с фантомным D (unique symbol, в данных нет), CommandMeta (requestId, version, idempotencyKey), DefOfCommand<C>.
+- UseCaseDef.command(input, meta?) — собирает простой объект; вход не валидирует (это делает UC).
+- AnyUseCaseDef исключает command: фантомный D сравнивал бы S напрямую и ломал совместимость конкретного Def.
+- Экспорт из корня dmg-core.
+- Тесты: command.test.ts (данные, JSON, типы uc/input/OutputOf/UseCaseErrorOf, ts-expect-error по входу).
+check зелёный.
