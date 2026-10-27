@@ -82,7 +82,8 @@
 
 ## Фаза 7: Перевод потребителей и документация
 
-- [~] Task: `domain/` и `modules/<m>` на `XxxDef.define`; `define*` удаляются из публичного API; один тип вместо `Declared`/`DeclaredCalls` (общий — в `operation-def.types.ts`)
-- [ ] Task: `llms.txt`, `dmg-core/docs`, `conductor/architecture/` (naming; запись D-xx «Def — классы» в decisions); D-09/D-37 — `ModuleDef.define`; `TRACK-DMG-CORE-OOP.md` удалён
+- [x] Task: `domain/` и `modules/<m>` на `XxxDef.define`; `define*` удаляются из публичного API; один тип вместо `Declared`/`DeclaredCalls` (общий — в `operation-def.types.ts`) `9de70b5`
+    - Перевод по всему репо (domain, modules, runners, scripts, platform) скриптом по импортам из `dmg-core`; файлы обёрток и `domain/policy/policy.ts` удалены, импорты — на файлы классов; тесты обёрток → `<класс>.define.test.ts`. `allowAll`/`denied`/`allowed` остаются (константы и конструктор решения, не обёртки).
+- [~] Task: `llms.txt`, `dmg-core/docs`, `conductor/architecture/` (naming; запись D-xx «Def — классы» в decisions); D-09/D-37 — `ModuleDef.define`; `TRACK-DMG-CORE-OOP.md` удалён
 - [ ] Task: Финал: гейт качества (workflow) — полный `CI=true bun test`, `tsc`, `biome`, `arch:check`, триаж в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
