@@ -1,4 +1,4 @@
 // expect: none
-import { defineErrors } from 'dmg-core';
+import { ErrorDef } from 'dmg-core';
 
-export const a = defineErrors;
+export const a = ErrorDef;
