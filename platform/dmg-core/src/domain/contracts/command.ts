@@ -4,10 +4,12 @@ declare const def: unique symbol;
 
 /** Расширение команды без смены протокола (transport.md §2). */
 export type CommandMeta = {
+  /**
+   * Одно намерение клиента: клиент создаёт его один раз и повторяет при
+   * ретраях — это и след, и ключ идемпотентности command UC (transport.md §2).
+   */
   readonly requestId?: string;
   readonly version?: number;
-  /** Ключ идемпотентности: повтор с тем же ключом не исполняется дважды. */
-  readonly idempotencyKey?: string;
 };
 
 /**
