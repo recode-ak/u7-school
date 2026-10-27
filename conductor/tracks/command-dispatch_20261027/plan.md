@@ -7,12 +7,12 @@
 - [x] Task: D-49 в `decisions.md` («Def — типы клиента, команда — исполнение; модуль адресует транспорт, не команда»); `transport.md` §2 и §4 обновить (`uc` без модуля, `moduleApi` на клиенте) `9f7e822`
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md) `feeb6ae`
 
-## Фаза 1: Команда и ответ
+## Фаза 1: Команда и ответ [checkpoint: 2063d07]
 
 - [x] Task: Тип `Command<D>` (`{ uc, input, meta? }`, фантомный `D`) и `UseCaseDef.command(input)`; тесты типов (вывод `InputOf`/`OutputOf`) `050c1b5`
 - [x] Task: Сериализуемый `Result` (формат `transport.md`) и обратное восстановление; круговой тест через `JSON.stringify/parse` `2702e42`
 - [x] Task: Ревью reviewer `21af1c5`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md) `2063d07`
 
 ## Фаза 2: Исполнение
 
