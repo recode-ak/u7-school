@@ -10,9 +10,9 @@
 ## Фаза 1: Корень сборки и учебное приложение
 
 - [x] Task: Решение D-50 пакета «Корень сборки приложения»: что собирает пакет приложения (фабрика из окружения → `AppContext`, модули, `ModuleFacades` по `dependsOn`, резолвер `Caller`), что остаётся раннеру (точка входа, транспорт, окружение); обсудить с Нурболатом, записать в `docs/decisions.md`, `layers.md` §6 b167bda1
-- [ ] Task: `ApiApp` в `dmg-core/app` (D-50): фабрики модулей → порядок по `dependsOn`, `ModuleFacades` только зависимостей, `dispatch`/`runJob`/`subscribe`
-    - [ ] Тесты: порядок и фасады по `dependsOn`; цикл, отсутствующая зависимость, повтор — ошибка сборки; `dispatch` неизвестного модуля — `OPERATION_NOT_FOUND`; red
-    - [ ] Реализация; экспорт из `dmg-core/app`; green
+- [x] Task: `ApiApp` в `dmg-core/app` (D-50): фабрики модулей → порядок по `dependsOn`, `ModuleFacades` только зависимостей, `dispatch`/`runJob`/`subscribe` 094bd69d
+    - [x] Тесты: порядок и фасады по `dependsOn`; цикл, отсутствующая зависимость, повтор — ошибка сборки; `dispatch` неизвестного модуля — `OPERATION_NOT_FOUND`; red
+    - [x] Реализация; экспорт из `dmg-core/app`; green
 - [ ] Task: Учебное приложение `src/testing/example/app` — сборка
     - [ ] Тесты: фабрика собирает `todo` и `users` с фасадами по `dependsOn`, UC через модуль, событие доходит до реакции, запись в oplog; запуск — red
     - [ ] Реализация фабрики (`InProcOutbox`/`InProcInbox`, лог операций, `Logger`); запуск — green
