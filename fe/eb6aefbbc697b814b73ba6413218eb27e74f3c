@@ -1,0 +1,3 @@
+Верификация Фазы 0 (command-dispatch): решение D-49 и transport.md §2/§4.
+Автотесты: CI=true bun test — 4107 pass, 0 fail. dmg:check, agents:check, biome — без ошибок (56 старых warning).
+Ручная верификация: чтение D-49, transport.md §2/§4, пометок у D-17 и D-26. Подтверждено пользователем (да).
