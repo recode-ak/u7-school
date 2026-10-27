@@ -1,0 +1,3 @@
+Задача: normalize.ts/described-defs.ts без switch (Фаза 3, dmg-core-oop).
+Изменения: graph/normalize.ts — normalize(def) = def.normalize() (перегрузки по видам сохранены для точного типа результата); described-defs.ts уже только describe() видов (переведён в задачах видов). Новый контрактный тест src/arch/kind-switch.test.ts: в graph/ и arch/ (без тестов) нет switch по .dmg/.op и сравнений .dmg/.op === '...'; gen добавляется в Фазе 5. Тест лежит в arch/, чтобы не попасть в tarball (files исключает тесты подкаталогов).
+Проверки: check (включая extract:check), arch:check — зелёные.
