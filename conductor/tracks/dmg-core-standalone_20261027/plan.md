@@ -16,8 +16,9 @@
 - [~] Task: Учебное приложение `src/testing/example/app` — сборка
     - [x] Боевые `InProcEventBus` и `ConsoleLogger` в `dmg-core/app`, `AwaitingBus` в `dmg-core/testing` (решение Нурболата 2026-10-27); тесты red → green 3fca9f3c
     - [x] Плавающий `platform/core/src/legacy-bridge/example-app.test.ts` (`settle` через `setTimeout`) — ожидание доставки по образцу `AwaitingBus` (решение Нурболата 2026-10-27) 596286e6
-    - [ ] Тесты: фабрика собирает `todo` и `users` с фасадами по `dependsOn`, UC через модуль, событие доходит до реакции, запись в oplog; запуск — red
-    - [ ] Реализация фабрики (`InProcOutbox`/`InProcInbox`, лог операций, `Logger`); запуск — green
+    - [x] Тесты: фабрика собирает `todo` и `users` с фасадами по `dependsOn`, UC через модуль, событие доходит до реакции, запись в oplog; запуск — red 74c0ceac
+    - [x] Реализация фабрики (`InProcOutbox`/`InProcInbox`, лог операций, `Logger`); запуск — green 74c0ceac
+    - [ ] `OperationRef.kind: 'app'` — вызов от корня сборки (резолвер `Caller`); запись D-NN в `decisions.md` пакета, резолвер `ExampleApp` на нём (решение Нурболата 2026-10-27); тесты red → green
 - [ ] Task: Минимальный in-proc раннер учебного примера (CLI-команда → `Caller` → UC → вывод `Result`)
     - [ ] Тест раннера (команда вызывает UC; ошибка ввода — код 1); red
     - [ ] Реализация; green
