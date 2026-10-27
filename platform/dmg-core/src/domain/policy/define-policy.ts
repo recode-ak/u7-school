@@ -1,20 +1,15 @@
-import type { AnyRule } from './policy';
+import { PolicyDef } from './policy-def';
+import type { PolicySpec } from './policy-def.types';
 
-export type PolicySpec = {
-  readonly name: string;
-  readonly label: string;
-  readonly description: string;
-  /** Вопросы «можно ли?» (DOM-10): ключ — имя, значение — правило. */
-  readonly rules: { readonly [question: string]: AnyRule };
-};
+export { PolicyDef } from './policy-def';
+export type { AnyPolicyDef, PolicySpec } from './policy-def.types';
 
-export type PolicyDef<P extends PolicySpec> = P & { readonly dmg: 'policy' };
-
-export type AnyPolicyDef = PolicyDef<PolicySpec>;
-
-/** Политика агрегата: именованные правила, на которые ссылаются UC. */
-export function definePolicy<const P extends PolicySpec>(
-  spec: P,
-): PolicyDef<P> {
-  return { ...spec, dmg: 'policy' };
+/**
+ * Политика агрегата — обёртка над `PolicyDef.define` на время перевода
+ * потребителей (трек dmg-core-oop, Фаза 7 удаляет).
+ */
+export function definePolicy<const S extends PolicySpec>(
+  spec: S,
+): PolicyDef<S> {
+  return PolicyDef.define(spec);
 }

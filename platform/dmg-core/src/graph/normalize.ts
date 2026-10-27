@@ -8,7 +8,10 @@ import type { AnyJobDef, JobSchedule } from '../domain/contracts/define-job';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
 import type { AnyUseCaseDef } from '../domain/contracts/define-use-case';
 import type { AnyEventDef, NormalizedEvent } from '../domain/events/event-def';
-import type { AnyPolicyDef } from '../domain/policy/define-policy';
+import type {
+  AnyPolicyDef,
+  NormalizedPolicy,
+} from '../domain/policy/policy-def';
 import type { AnyRule, NormalizedRule } from '../domain/policy/rule';
 import type {
   AnyDomainRule,
@@ -26,6 +29,7 @@ export type {
   NormalizedTransition,
 } from '../domain/aggregate/aggregate-def';
 export type { NormalizedEvent } from '../domain/events/event-def';
+export type { NormalizedPolicy } from '../domain/policy/policy-def';
 export type { NormalizedRule } from '../domain/policy/rule';
 export type { NormalizedDomainRule } from '../domain/rules/domain-rule-def';
 export type { NormalizedRules } from '../domain/rules/rules-def';
@@ -35,11 +39,6 @@ type Texts = {
   readonly name: string;
   readonly label: string;
   readonly description: string;
-};
-
-export type NormalizedPolicy = Texts & {
-  readonly dmg: 'policy';
-  readonly rules: { readonly [question: string]: NormalizedRule };
 };
 
 export type NormalizedUseCase = Texts & {
@@ -135,17 +134,8 @@ export function normalize(def: AnyDef): NormalizedDef {
     case 'error':
     case 'event':
     case 'aggregate':
-      return def.normalize();
     case 'rule':
-      return def.normalize();
     case 'policy':
-      return {
-        dmg: 'policy',
-        ...texts(def),
-        rules: Object.fromEntries(
-          Object.entries(def.rules).map(([q, r]) => [q, r.normalize()]),
-        ),
-      };
     case 'domainRule':
     case 'rules':
       return def.normalize();

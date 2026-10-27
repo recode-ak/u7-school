@@ -63,12 +63,7 @@ export {
   type EventPrefix,
   type EventSpec,
 } from './domain/events/event-def';
-export {
-  type AnyPolicyDef,
-  definePolicy,
-  type PolicyDef,
-  type PolicySpec,
-} from './domain/policy/define-policy';
+export { definePolicy } from './domain/policy/define-policy';
 export {
   AllOfRule,
   AllowAll,
@@ -91,6 +86,11 @@ export {
   type RuleTexts,
   rule,
 } from './domain/policy/policy';
+export {
+  type AnyPolicyDef,
+  PolicyDef,
+  type PolicySpec,
+} from './domain/policy/policy-def';
 export { defineRules } from './domain/rules/define-rules';
 export { type DomainRule, domainRule } from './domain/rules/domain-rule';
 export {
