@@ -2,7 +2,7 @@
 
 **Назначение:** как написать артефакт DMG по образцу — учебному модулю пакета ([src/testing/example](../../src/testing/example/example.arch.ts): `todo` — задачи, `users` — пользователи). Один файл на вид, формат — [_template.md](./_template.md). Ссылки и ID правил во всей документации пакета проверяет `scripts/docs-check.test.ts` (в `check` пакета).
 
-Раскладка примера: домен — `example/<m>/`, прикладной слой — `example/app/<m>/`, `ArchApp` — `example.arch.ts`. В проекте корни задаёт его `ArchApp.layout` ([naming.md](../naming.md) §2–3). Заготовки создаёт генератор `dmg-core gen <вид> …` (раздел «Команда» каждого гайда).
+Раскладка примера: домен — `example/<m>/`, прикладной слой — `example/app/<m>/`, `ArchApp` — `example.arch.ts`. В проекте корни задаёт секция `gen` `dmg-core.json` ([naming.md](../naming.md) §5). Заготовки создаёт генератор `dmg-core gen <вид> …` (раздел «Команда» каждого гайда).
 
 ---
 

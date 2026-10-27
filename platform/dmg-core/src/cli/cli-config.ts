@@ -26,7 +26,7 @@ const FORMATS: readonly RoleFormat[] = ['neutral', 'claude', 'pi'];
  * по умолчанию (всё из пакета, Claude Code, `AGENTS.md`).
  */
 export class CliConfig {
-  static readonly file = 'dmg-core.json';
+  static readonly file = GenLayout.configFile;
 
   constructor(private readonly pkg: PackageSource) {}
 
@@ -90,31 +90,8 @@ export class CliConfig {
       settings.instructions = data.instructions as string | null;
     }
 
-    if (data.gen !== undefined) settings.gen = this.gen(data.gen);
+    if (data.gen !== undefined) settings.gen = GenLayout.settingsFrom(data.gen);
     return settings;
-  }
-
-  /** Секция `gen`: шаблоны путей с `{m}` поверх значений по умолчанию */
-  private gen(json: unknown): GenLayoutSettings {
-    const data = this.object(json, 'gen');
-    this.known(data, ['domain', 'app', 'domainImport'], 'gen.');
-    const gen = { ...GenLayout.defaults };
-    for (const key of ['domain', 'app'] as const) {
-      const value = data[key];
-      if (value === undefined) continue;
-      if (typeof value !== 'string' || !value.includes('{m}')) {
-        this.fail(`gen.${key} — шаблон пути с {m}`);
-      }
-      gen[key] = value as string;
-    }
-    if (data.domainImport !== undefined) {
-      const value = data.domainImport;
-      if (typeof value !== 'string' || !value.includes('{m}')) {
-        this.fail('gen.domainImport — шаблон с {m}');
-      }
-      gen.domainImport = value as string;
-    }
-    return gen;
   }
 
   private target(json: unknown, field: string): RoleTarget {

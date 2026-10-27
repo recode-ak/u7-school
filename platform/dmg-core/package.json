@@ -27,6 +27,7 @@
     "./app": "./src/app/index.ts",
     "./graph": "./src/graph/index.ts",
     "./arch": "./src/arch/index.ts",
+    "./gen": "./src/gen/index.ts",
     "./cli": "./src/cli/index.ts",
     "./testing": "./src/testing/index.ts",
     "./testing/example/*": "./src/testing/example/*.ts"

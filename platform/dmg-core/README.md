@@ -70,6 +70,7 @@ bunx dmg-core init
 | `dmg-core/app` | прикладной слой: UC/ER/Job по Def, модуль, UoW, фасады, репозитории |
 | `dmg-core/graph` | нормализация Def, `DefIndex` и граф модулей |
 | `dmg-core/arch` | `ArchChecker`, `Violation`, `reportArchCheck` |
+| `dmg-core/gen` | `GenLayout`: раскладка проекта из `dmg-core.json` — один источник для `gen` и `ArchApp.layout` |
 | `dmg-core/testing` | хелперы тестов и учебный модуль (`ExampleArch`) |
 | `dmg-core/cli` | `DmgCoreCli`: `init`, `sync`, `gen` как API (CLI — `bunx dmg-core`) |
 

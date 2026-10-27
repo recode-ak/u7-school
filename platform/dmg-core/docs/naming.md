@@ -1,6 +1,6 @@
 # Структура и именование
 
-**Назначение:** файловая структура домена и прикладного слоя, сокращения, имена файлов и объектов, генератор заготовок. Корни каталогов задаёт `ArchApp.layout` проекта (`dmg-core/arch`); структуру внутри них проверяет проверка файлов `ArchChecker`, создаёт — `dmg-core gen` (§5). Образец — учебный модуль [src/testing/example](../src/testing/example/example.arch.ts).
+**Назначение:** файловая структура домена и прикладного слоя, сокращения, имена файлов и объектов, генератор заготовок. Корни каталогов задаёт секция `gen` `dmg-core.json`, `ArchApp.layout` проекта берёт их оттуда же (`GenLayout`, §5); структуру внутри них проверяет проверка файлов `ArchChecker`, создаёт — `dmg-core gen` (§5). Образец — учебный модуль [src/testing/example](../src/testing/example/example.arch.ts).
 
 ---
 
@@ -110,4 +110,15 @@ infra/<aggregate>.json-repo.ts
 { "gen": { "domain": "domain/src/{m}", "app": "modules/{m}/src", "domainImport": "@acme/domain/{m}" } }
 ```
 
-Раскладка генератора должна совпадать с `ArchApp.layout` проекта — иначе `arch:check` не увидит созданное. Генератор пишет только исходники: заготовку пакета модуля (`package.json`, `tsconfig.json`, workspace) создаёт проект.
+**Гибки только корни каталогов.** Форма внутри модуля (§2–§3) фиксирована: пары «контракт ↔ реализация» по одинаковому относительному пути (MAN-10), 1:1 домена и прикладного слоя (ARC-06). Третьей раскладки внутри модуля нет.
+
+Раскладка — один источник для генератора и `arch:check`: проект строит `ArchApp.layout` из `GenLayout` (`dmg-core/gen`), а не пишет пути вручную. Первая строка вывода `gen` — применяемая раскладка.
+
+```ts
+import { GenLayout } from 'dmg-core/gen';
+
+const layout = await GenLayout.read(root); // секция gen dmg-core.json
+export const AppArch: ArchApp = { name: 'app', modules, layout: (m) => layout.module(m) };
+```
+
+Генератор пишет только исходники: заготовку пакета модуля (`package.json`, `tsconfig.json`, workspace) создаёт проект.

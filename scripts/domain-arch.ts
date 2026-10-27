@@ -13,6 +13,7 @@ import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import type { AnyModuleDef } from 'dmg-core';
 import type { ArchApp } from 'dmg-core/arch';
+import { GenLayout } from 'dmg-core/gen';
 
 /**
  * Модули `@u7-scl/domain`: граф `dependsOn` строится из Def, Def проверяет
@@ -30,34 +31,18 @@ export const DOMAIN_MODULES: readonly AnyModuleDef[] = [
 ];
 
 const ROOT = join(import.meta.dir, '..');
-
-/** Шаблоны путей модуля из секции `gen` `dmg-core.json`; `{m}` — имя модуля */
-export interface GenTemplates {
-  domain: string;
-  app: string;
-}
+const layout = await GenLayout.read(ROOT);
 
 /**
- * Приложение домена для `ArchChecker` по шаблонам генератора: один источник
- * путей с `dmg-core gen`. Функция, а не литерал — чтобы проверить подстановку
- * на произвольных шаблонах. Вход модуля для других — `contract.ts` (D-45).
+ * Приложение домена проекта: пути — из секции `gen` `dmg-core.json` через
+ * `GenLayout`, один источник с `dmg-core gen`. Вход модуля для других —
+ * `contract.ts` (D-45).
  */
-export function domainArchFor(gen: GenTemplates, root: string): ArchApp {
-  const fill = (template: string, m: string) =>
-    join(root, template.replaceAll('{m}', m));
-  return {
-    name: 'domain',
-    modules: DOMAIN_MODULES,
-    layout: (m) => ({ domain: fill(gen.domain, m), app: fill(gen.app, m) }),
-    entry: 'contract',
-  };
-}
-
-const config: { gen: GenTemplates } = await Bun.file(
-  join(ROOT, 'dmg-core.json'),
-).json();
-
-/** Приложение домена проекта: пути — из `gen` `dmg-core.json` */
-export const DomainArch: ArchApp = domainArchFor(config.gen, ROOT);
+export const DomainArch: ArchApp = {
+  name: 'domain',
+  modules: DOMAIN_MODULES,
+  layout: (m) => layout.module(m),
+  entry: 'contract',
+};
 
 export const DEBT_MD = 'conductor/architecture/debt.md';

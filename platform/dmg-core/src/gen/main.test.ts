@@ -29,6 +29,11 @@ const gen = (...argv: string[]) =>
     (line) => out.push(line),
   );
 
+test('первая строка вывода — применяемая раскладка', () => {
+  gen('module', 'stream');
+  expect(out[0]).toStartWith('Раскладка: домен — d/{m}');
+});
+
 test('dry-run по умолчанию: печатает план и ничего не пишет', () => {
   expect(gen('module', 'stream')).toBe(0);
   expect(existsSync(join(root, 'd'))).toBe(false);

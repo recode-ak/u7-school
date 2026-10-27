@@ -12,12 +12,16 @@ import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { type ArchApp, ArchChecker } from 'dmg-core/arch';
+import { GenLayout } from 'dmg-core/gen';
 import { DomainArch } from './domain-arch';
 
 const REPO = join(import.meta.dir, '..');
 const MODULE = 'genprobe';
-const DOMAIN = join(REPO, 'domain/src', MODULE);
-const APP = join(REPO, 'modules', MODULE);
+const { domain: DOMAIN, app: APP_SRC } = (await GenLayout.read(REPO)).module(
+  MODULE,
+);
+// Пакет модуля прикладного слоя — каталог над `src`.
+const APP = join(APP_SRC, '..');
 
 const cleanup = () => {
   rmSync(DOMAIN, { recursive: true, force: true });
@@ -52,13 +56,7 @@ beforeAll(async () => {
 afterAll(cleanup);
 
 test('biome чист', async () => {
-  const res = await sh([
-    'bunx',
-    'biome',
-    'check',
-    `domain/src/${MODULE}`,
-    `modules/${MODULE}`,
-  ]);
+  const res = await sh(['bunx', 'biome', 'check', DOMAIN, APP]);
   expect(res).toMatchObject({
     code: 0,
     text: expect.stringContaining('No fixes'),
@@ -71,12 +69,7 @@ test('tsc чист', async () => {
 }, 300_000);
 
 test('тесты заготовок зелёные', async () => {
-  const res = await sh([
-    'bun',
-    'test',
-    `domain/src/${MODULE}`,
-    `modules/${MODULE}`,
-  ]);
+  const res = await sh(['bun', 'test', DOMAIN, APP]);
   expect(res).toMatchObject({
     code: 0,
     text: expect.stringContaining(' 0 fail'),

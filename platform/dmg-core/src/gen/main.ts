@@ -37,6 +37,7 @@ export function runGen(
     const args = parseArgs(argv, layout);
     validate(args);
     const plan = PLANNERS[args.kind](args);
+    print(layout.describe());
     const result = applyPlan(plan, { write: args.write, adopt: args.adopt });
     const verb = args.write ? 'Создан' : 'Будет создан';
     for (const path of result.written) print(`${verb}: ${path}`);
