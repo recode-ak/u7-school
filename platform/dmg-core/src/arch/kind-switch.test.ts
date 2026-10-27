@@ -1,20 +1,20 @@
 // Контракт трека dmg-core-oop (спека п.3): поведение вида живёт в классе
-// вида, а не в `switch` по дискриминатору в чужом коде. `gen` добавляется
-// в проверку, когда шаблоны операций переходят в вид (Фаза 5).
+// вида, а не в `switch` по дискриминатору в чужом коде. В `gen` вид — строка
+// CLI: шаблоны и планировщики выбираются таблицей, а не `switch`.
 import { describe, expect, it } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SRC = join(import.meta.dir, '..');
-const DIRS = ['graph', 'arch'];
+const DIRS = ['graph', 'arch', 'gen'];
 
 /**
- * Ветвление по виду: `switch (x.dmg)` / `.op`, сравнение `.dmg === '…'`
- * в любом порядке, таблица по виду `TABLE[x.dmg]`.
+ * Ветвление по виду: `switch (x.dmg)` / `.op` / `.kind`, сравнение
+ * `.dmg === '…'` в любом порядке, таблица по виду `TABLE[x.dmg]`.
  */
 const KIND_BRANCH = new RegExp(
   [
-    String.raw`switch\s*\(\s*[\w.]+\.(?:dmg|op)\s*\)`,
+    String.raw`switch\s*\(\s*[\w.]+\.(?:dmg|op|kind)\s*\)`,
     String.raw`\.(?:dmg|op)\s*[!=]==\s*['"]`,
     String.raw`['"]\s*[!=]==\s*[\w.]+\.(?:dmg|op)\b`,
     String.raw`\[\s*[\w.]+\.(?:dmg|op)\s*\]`,
@@ -42,6 +42,7 @@ describe('нет ветвления по виду Def', () => {
   it('шаблон ловит switch и сравнение по виду', () => {
     expect(KIND_BRANCH.test('switch (def.dmg) {')).toBe(true);
     expect(KIND_BRANCH.test('switch (rule.op) {')).toBe(true);
+    expect(KIND_BRANCH.test('switch (args.kind) {')).toBe(true);
     expect(KIND_BRANCH.test("op.dmg === 'useCase'")).toBe(true);
     expect(KIND_BRANCH.test("'job' !== op.dmg")).toBe(true);
     expect(KIND_BRANCH.test('OPERATION_DIR[op.dmg]')).toBe(true);
