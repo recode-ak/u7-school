@@ -1,0 +1,3 @@
+Задача: Иерархия Rule (Фаза 2, dmg-core-oop).
+Изменения: новые domain/policy/rule.ts (Rule, NamedRule, AllOfRule, AnyOfRule, AllowAll, allowAll, allowed, denied), rule.types.ts (Decision, RuleTexts, RuleSpec, NormalizedRule, AnyRule, Subjects/Contexts), rule.test.ts; policy.ts — обёртки rule/allOf/anyOf/hasRole над фабриками; graph/normalize.ts — делегирует r.normalize(), normalizeRule удалён, NormalizedRule переехал в rule.types.ts; index.ts — экспорт классов, RuleNode удалён (заменён классом).
+Причина: спека п.3 — полиморфизм вместо switch по op. describe() не вводится по решению с Нурболатом (граф для PO уже несёт label/denyMessage).
