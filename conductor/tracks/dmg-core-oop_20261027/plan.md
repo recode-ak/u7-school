@@ -33,7 +33,8 @@
 
 ## Фаза 3: Операции и модуль
 
-- [ ] Task: `OperationDef` (`calls` обязательное, нормализуется в конструкторе; `aggregates()`, `errors()`, `title(module)`, `fileKind`, `mainAggregate()`)
+- [x] Task: `OperationDef` (`calls` обязательное, нормализуется в конструкторе; `aggregates()`, `errors()`, `title(module)`, `fileKind`, `mainAggregate()`) `ab67d73`
+    - `errors()` → `referencedErrors()` (решено с Нурболатом 2026-10-27): поле `errors` у UC занято, на нём держатся `D['errors'][number]` и `UseCaseErrorOf`. Сокращение для `title` — поле `abbr` (`UC`/`ER`/`Job`).
 - [ ] Task: `UseCaseDef`, перевод потребителей (`check-defs` ветка UC, `OPERATION_DIR`, `OPERATION_KIND`)
 - [ ] Task: `EventReactionDef` (проверка `on` внутри вида), то же
 - [ ] Task: `JobDef`, то же
