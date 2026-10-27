@@ -40,8 +40,8 @@
 - [x] Task: `EventReactionDef` (проверка `on` внутри вида), то же `79200fa`
     - Подписки — метод базы `subscribedEvents()` (у ER — `on`, у остальных `[]`): проверки `check-defs` по ним общие для всех операций; `switch` уходит в задаче `JobDef`.
 - [x] Task: `JobDef`, то же; `OPERATION_DIR`/`OPERATION_KIND` → `op.fileKind`/`op.title(m)`, главный агрегат → `op.mainAggregate()` `b1c170b`
-- [ ] Task: `ModuleDef` (`defineModule` → статика)
-- [ ] Task: `normalize.ts`/`described-defs.ts` без `switch` — только делегирование `def.normalize()`/`def.describe()`; контрактный тест «нет `switch` по `dmg`» в `check`
+- [x] Task: `ModuleDef` (`defineModule` → статика) `8b8e8af`
+- [~] Task: `normalize.ts`/`described-defs.ts` без `switch` — только делегирование `def.normalize()`/`def.describe()`; контрактный тест «нет `switch` по `dmg`» в `check`
 - [ ] Task: Гайды (module, event-reaction, job, `manifests.md`)
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
