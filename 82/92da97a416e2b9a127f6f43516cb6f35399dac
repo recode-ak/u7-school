@@ -1,0 +1,3 @@
+Задача: PolicyDef (Фаза 2, dmg-core-oop).
+Изменения: новые domain/policy/policy-def.ts, policy-def.types.ts (PolicySpec, NormalizedPolicy, AnyPolicyDef через DefOf), policy-def.test.ts; define-policy.ts — обёртка над PolicyDef.define; graph/normalize.ts — ветка policy делегирует normalize(), ветки с одинаковым телом слиты; index.ts — экспорт класса PolicyDef.
+Причина: спека п.1 — Def как классы.
