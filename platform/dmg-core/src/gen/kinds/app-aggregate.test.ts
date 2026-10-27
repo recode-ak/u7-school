@@ -32,13 +32,26 @@ test('порт: Repository<Ar> с поиском по uuid', () => {
 
 test('JSON-репозиторий: реализует порт, состояние разбирает схема Def', () => {
   const src = file('infra/student.json-repo.ts');
+  // Длинная шапка — в столбик, как у biome.
   expect(src).toContain(
-    'export class StudentJsonRepo implements StudentRepo {',
+    'export class StudentJsonRepo\n  extends VersionedRepository<StudentAr>\n  implements StudentRepo\n{',
   );
+  expect(src).toContain('protected async stored(uuid: string)');
+  expect(src).toContain('protected async write(ar: StudentAr)');
   expect(src).toContain('readonly aggregate = StudentArDef');
   expect(src).toContain('v.array(StudentArDef.state)');
   expect(src).toContain('StudentAr.restore');
   expect(src).toContain("from '../student/student.repo'");
+});
+
+test('JSON-репозиторий: короткая шапка — в одну строку', () => {
+  const short = planAppAggregate(parseArgs(['aggregate', 'stream.x'], layout));
+  const src =
+    short.files.find((f) => f.path === '/p/stream/src/infra/x.json-repo.ts')
+      ?.content ?? '';
+  expect(src).toContain(
+    'export class XJsonRepo extends VersionedRepository<XAr> implements XRepo {',
+  );
 });
 
 test('тест репозитория: сохранить и найти', () => {

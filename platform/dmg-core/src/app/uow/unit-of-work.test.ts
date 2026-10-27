@@ -11,7 +11,12 @@ import { expectErr, expectOk } from '#core/testing/index';
 import type { EventBus } from '../events/event-bus';
 import type { EventEnvelope } from '../events/event-envelope';
 import { InProcOutbox, type Outbox } from '../events/outbox';
-import { assertVersion, type Repository, VersionConflict } from './repository';
+import {
+  type Repository,
+  type StoredRecord,
+  VersionConflict,
+  VersionedRepository,
+} from './repository';
 import { UnitOfWork } from './unit-of-work';
 
 const AT = Date.UTC(2026, 9, 18, 12, 0);
@@ -33,6 +38,23 @@ function recordingBus(published: EventEnvelope[], log: Log): EventBus {
 }
 
 /** Репозиторий, который пишет в журнал начало и конец сохранения. */
+/** Задачи в `Map`: сверка версии — база `VersionedRepository`. */
+class MapRepo extends VersionedRepository<TaskAr> {
+  readonly aggregate = TaskArDef;
+
+  constructor(private readonly rows: Map<string, StoredRecord>) {
+    super();
+  }
+
+  protected async stored(uuid: string): Promise<StoredRecord | undefined> {
+    return this.rows.get(uuid);
+  }
+
+  protected async write(ar: TaskAr): Promise<void> {
+    this.rows.set(ar.uuid, ar.snapshot());
+  }
+}
+
 function slowRepo(log: Log, fail = false): Repository<TaskAr> {
   return {
     aggregate: TaskArDef,
@@ -142,15 +164,10 @@ describe('UnitOfWork.commit', () => {
 
   test('create с занятым uuid — VERSION_CONFLICT, legacy-запись не изменена', async () => {
     const { version: _, ...legacy } = task(A).snapshot();
-    const rows = new Map<string, object>([[A, { ...legacy, title: 'Старая' }]]);
+    const old = { ...legacy, title: 'Старая' };
+    const rows = new Map<string, StoredRecord>([[A, old]]);
     const before = structuredClone(rows.get(A));
-    const repo: Repository<TaskAr> = {
-      aggregate: TaskArDef,
-      async save(ar) {
-        assertVersion(TaskArDef, ar, rows.get(ar.uuid));
-        rows.set(ar.uuid, ar.snapshot());
-      },
-    };
+    const repo = new MapRepo(rows);
     uow.register(task(A), repo);
     const res = await uow.commit();
     expect(expectErr(res, 'VERSION_CONFLICT').payload).toEqual({
@@ -199,14 +216,8 @@ describe('UnitOfWork.commit', () => {
   });
 
   test('новый агрегат после записи сохраняется повторно без конфликта', async () => {
-    const rows = new Map<string, object>();
-    const repo: Repository<TaskAr> = {
-      aggregate: TaskArDef,
-      async save(ar) {
-        assertVersion(TaskArDef, ar, rows.get(ar.uuid));
-        rows.set(ar.uuid, ar.snapshot());
-      },
-    };
+    const rows = new Map<string, StoredRecord>();
+    const repo = new MapRepo(rows);
     const ar = task(A);
     uow.register(ar, repo);
     expectOk(await uow.commit());

@@ -61,11 +61,11 @@ export {
 } from './reaction/reaction-from-def';
 export { Lock } from './uow/lock';
 export {
-  assertVersion,
   type Repository,
   type StoredRecord,
   VersionConflict,
   type Versioned,
+  VersionedRepository,
 } from './uow/repository';
 export {
   type CommitError,

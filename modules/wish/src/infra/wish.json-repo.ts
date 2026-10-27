@@ -1,6 +1,6 @@
 import type { WishState, WishStatus, WishTargetVo } from '@u7-scl/domain/wish';
 import { WishAr, WishArDef } from '@u7-scl/domain/wish';
-import { assertVersion, Lock } from 'dmg-core/app';
+import { type StoredRecord, VersionedRepository } from 'dmg-core/app';
 import * as v from 'valibot';
 import type { WishRepo } from '../wish/wish.repo';
 
@@ -27,11 +27,15 @@ function isSameTarget(a: WishTargetVo, b: WishTargetVo): boolean {
  * файл не перезаписывается. Запись — под замком: чтение → сверка версии →
  * запись атомарны в процессе.
  */
-export class WishJsonRepo implements WishRepo {
+export class WishJsonRepo
+  extends VersionedRepository<WishAr>
+  implements WishRepo
+{
   readonly aggregate = WishArDef;
-  private readonly lock = new Lock();
 
-  constructor(private readonly filePath: string) {}
+  constructor(private readonly filePath: string) {
+    super();
+  }
 
   async findById(uuid: string): Promise<WishAr | undefined> {
     const row = (await this.rows()).find((r) => r.uuid === uuid);
@@ -76,15 +80,14 @@ export class WishJsonRepo implements WishRepo {
     );
   }
 
-  save(ar: WishAr): Promise<void> {
-    return this.lock.run(async () => {
-      const rows = await this.rows();
-      const stored = rows.find((r) => r.uuid === ar.uuid);
-      assertVersion(this.aggregate, ar, stored);
-      const next = rows.filter((r) => r.uuid !== ar.uuid);
-      next.push(ar.snapshot());
-      await Bun.write(this.filePath, JSON.stringify(next, undefined, 2));
-    });
+  protected async stored(uuid: string): Promise<StoredRecord | undefined> {
+    return (await this.rows()).find((r) => r.uuid === uuid);
+  }
+
+  protected async write(ar: WishAr): Promise<void> {
+    const next = (await this.rows()).filter((r) => r.uuid !== ar.uuid);
+    next.push(ar.snapshot());
+    await Bun.write(this.filePath, JSON.stringify(next, undefined, 2));
   }
 
   private async where(match: (row: WishState) => boolean): Promise<WishAr[]> {

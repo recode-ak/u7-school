@@ -5,6 +5,17 @@ import { sortImports } from '../import-order';
 import { toCamel, toPascal } from '../naming';
 import type { GenPlan } from '../plan';
 
+/**
+ * Шапка класса с `extends` и `implements`, как её форматирует biome: в одну
+ * строку до 80 символов, иначе — в столбик с `{` на отдельной строке.
+ */
+function classHeader(name: string, base: string, port: string): string {
+  const line = `export class ${name} extends ${base} implements ${port} {`;
+  return line.length <= 80
+    ? line
+    : `export class ${name}\n  extends ${base}\n  implements ${port}\n{`;
+}
+
 export function planAppAggregate(args: GenArgs): GenPlan {
   const { module: m, aggregate: a = '' } = args;
   const P = toPascal(a);
@@ -25,7 +36,7 @@ export type ${P}Repo = Repository<${P}Ar> & {
 
   const jsonRepoSrc = `${sortImports([
     `import { ${P}Ar, ${P}ArDef } from '${domain('infra')}';`,
-    "import { assertVersion, Lock } from 'dmg-core/app';",
+    "import { type StoredRecord, VersionedRepository } from 'dmg-core/app';",
     "import * as v from 'valibot';",
     `import type { ${P}Repo } from '../${a}/${a}.repo';`,
   ])}
@@ -37,26 +48,26 @@ const Rows = v.array(${P}ArDef.state);
  * разбирает схема Def, агрегат восстанавливает \`${P}Ar.restore\`. Запись —
  * под замком: чтение → сверка версии → запись атомарны в процессе (D-36).
  */
-export class ${P}JsonRepo implements ${P}Repo {
+${classHeader(`${P}JsonRepo`, `VersionedRepository<${P}Ar>`, `${P}Repo`)}
   readonly aggregate = ${P}ArDef;
-  private readonly lock = new Lock();
 
-  constructor(private readonly filePath: string) {}
+  constructor(private readonly filePath: string) {
+    super();
+  }
 
   async findById(uuid: string): Promise<${P}Ar | undefined> {
     const row = (await this.rows()).find((r) => r.uuid === uuid);
     return row && ${P}Ar.restore(row);
   }
 
-  save(ar: ${P}Ar): Promise<void> {
-    return this.lock.run(async () => {
-      const rows = await this.rows();
-      const stored = rows.find((r) => r.uuid === ar.uuid);
-      assertVersion(this.aggregate, ar, stored);
-      const next = rows.filter((r) => r.uuid !== ar.uuid);
-      next.push(ar.snapshot());
-      await Bun.write(this.filePath, JSON.stringify(next, undefined, 2));
-    });
+  protected async stored(uuid: string): Promise<StoredRecord | undefined> {
+    return (await this.rows()).find((r) => r.uuid === uuid);
+  }
+
+  protected async write(ar: ${P}Ar): Promise<void> {
+    const next = (await this.rows()).filter((r) => r.uuid !== ar.uuid);
+    next.push(ar.snapshot());
+    await Bun.write(this.filePath, JSON.stringify(next, undefined, 2));
   }
 
   private async rows() {

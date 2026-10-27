@@ -1,7 +1,7 @@
 // Общие фикстуры тестов прикладного слоя DMG.
 import { TaskAr, TaskArDef } from '../testing/example/todo';
 import type { TaskState } from '../testing/example/todo/task/task.state';
-import { assertVersion } from './uow/repository';
+import { type StoredRecord, VersionedRepository } from './uow/repository';
 
 export const TASK = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 export const TASK_2 = '1c7a3d2f-9b5e-4a4c-8d3f-2e6b8c0f4a21';
@@ -24,7 +24,7 @@ export function taskRow(
 }
 
 /** Репозиторий задач в памяти; `failOnFind` — имитация сбоя диска. */
-export class MemoryTasks {
+export class MemoryTasks extends VersionedRepository<TaskAr> {
   readonly aggregate = TaskArDef;
   readonly rows = new Map<string, TaskState>();
   failOnFind = false;
@@ -43,8 +43,11 @@ export class MemoryTasks {
     return this.where((row) => row.status === 'done');
   }
 
-  async save(ar: TaskAr): Promise<void> {
-    assertVersion(this.aggregate, ar, this.rows.get(ar.uuid));
+  protected async stored(uuid: string): Promise<StoredRecord | undefined> {
+    return this.rows.get(uuid);
+  }
+
+  protected async write(ar: TaskAr): Promise<void> {
     this.rows.set(ar.uuid, ar.snapshot());
   }
 
