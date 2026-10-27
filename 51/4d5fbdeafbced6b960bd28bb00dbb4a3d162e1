@@ -1,0 +1,4 @@
+Контрольная точка Фазы 4 (DefIndex и ArchChecker).
+Автотесты: bun run check (включает CI=true bun test) — 4096 pass, 0 fail; arch:check — нарушений нет.
+Ручная верификация: arch:check, bun test src/arch src/graph, обзор API def-index.ts/arch-checker.ts и ArchChecker.defsOf([M]).report().
+Подтверждение Нурболата: «да, продолжаем» (2026-10-27).
