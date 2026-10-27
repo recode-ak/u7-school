@@ -1,0 +1,5 @@
+Верификация Фазы 2 «Исполнение» (command-dispatch).
+Автотесты: CI=true bun test — 4140 pass, 0 fail; bun run check зелёный (tsc, biome без новых предупреждений, arch:check).
+Ручная проверка: bun test по module, facade, api/app, kernel/errors — dispatch по имени, OPERATION_NOT_FOUND, исключения сборки на дубли имён, фасад через команду; idempotencyKey отсутствует.
+Ревью reviewer: error нет, warn исправлены (ba32277), решение по meta — requestId, DEBT-36 (d06cf5b).
+Подтверждение пользователя: «да».
