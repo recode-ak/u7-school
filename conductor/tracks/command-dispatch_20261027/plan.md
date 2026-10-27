@@ -28,4 +28,5 @@
 - [x] Task: In-proc `moduleApi` (адрес модуля + `dispatch(ucDef.command(input))` → типизированный `Result`); расхождение ответа с контрактом (`restoreResult` → `SERVER_INTERNAL`) — `warn` в лог с исходным `code` (ERR-07, ревью Ф1) `0a9c3f3`
 - [x] Task: Бот-истории `runners/u7-bot` и CLI на `moduleApi`; в раннерах нет `handle(def, …)` `19b63bc`
 - [x] Task: Финал: гейт качества (workflow) — полный `CI=true bun test`, `tsc`, `biome`, `arch:check`, триаж в `summary.md` `93e019d`
+- [x] Task: Переделка B (решение Нурболата): in-proc потребители — `ApiApp.dispatch(moduleDef, command, …)` с проверкой UC модуля по типу, без `ModuleApi`; `ModuleApi` — клиент wire-транспорта (`SerializedResult` → `restore` + `warn`) `1dbdd05`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
