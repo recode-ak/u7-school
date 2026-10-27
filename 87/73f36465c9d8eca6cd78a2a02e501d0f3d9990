@@ -1,0 +1,3 @@
+Задача: Violation — класс с format() (Фаза 4, dmg-core-oop).
+Изменения: arch/violation.ts — class Violation(rule, message).format(); formatViolation удалён; хелпер violation() в check-defs и литерал в check-files → new Violation; arch/index.ts экспортирует класс. Потребители: arch-report, scripts/arch-check.ts, тесты arch/gen/учебного примера/domain/*, scripts/gen-e2e.test.ts — .map((v) => v.format()).
+Тесты: arch/violation.test.ts (новый). check зелёный (4093 pass).
