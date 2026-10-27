@@ -1,6 +1,8 @@
 import {
   type AnyUseCaseDef,
   Caller,
+  type Command,
+  CoreErrors,
   type Identified,
   type InputOf,
   type OutputOf,
@@ -98,6 +100,25 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     trace: Trace,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
     return this.dmgModule(uc).handle(uc, input, caller, trace);
+  }
+
+  /**
+   * Исполнение команды модулем по адресу транспорта (D-49): адрес — имя
+   * модуля (URL `POST /api/<module>`, in-proc `moduleApi`), UC модуль
+   * находит по имени. Неизвестный модуль или UC — `OPERATION_NOT_FOUND`.
+   * След и Caller строит адаптер транспорта на входе, как у `run`.
+   */
+  async dispatch<D extends AnyUseCaseDef>(
+    module: string,
+    command: Command<D>,
+    caller: Caller<DmgActor<TActor>>,
+    trace: Trace,
+  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
+    const target = this.dmgModules.find((m) => m.def.name === module);
+    if (target === undefined) {
+      return CoreErrors.OPERATION_NOT_FOUND.err({ module, uc: command.uc });
+    }
+    return target.dispatch(command, caller, trace);
   }
 
   execute<N extends GetUcNamesFromMeta<TMeta>>(

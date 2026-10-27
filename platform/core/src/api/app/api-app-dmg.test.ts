@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { ModuleDef, ok, UserCaller } from 'dmg-core';
+import { type Command, ModuleDef, ok, UserCaller } from 'dmg-core';
 import {
   JobFromDef,
   type JobRun,
@@ -130,6 +130,53 @@ describe('ApiApp.run — UC DMG', () => {
     await expect(
       app.run(CreateTaskUcDef, { title: 'x' }, user(OWNER), REQ),
     ).rejects.toThrow('UC createTask не зарегистрирован');
+  });
+});
+
+describe('ApiApp.dispatch — команда по адресу модуля (D-49)', () => {
+  test('модуль по адресу исполняет команду: Ok с выходом', async () => {
+    const res = await app.dispatch(
+      'mini',
+      CompleteTaskUcDef.command({ taskId: TASK }),
+      user(OWNER),
+      REQ,
+    );
+    expect(expectOk(res)).toEqual({});
+  });
+
+  test('команда после JSON — тот же ответ', async () => {
+    tasks.rows.clear();
+    const wire: Command = JSON.parse(
+      JSON.stringify(CompleteTaskUcDef.command({ taskId: TASK })),
+    );
+    const res = await app.dispatch('mini', wire, user(OWNER), REQ);
+    expectErr(res, 'TASK_NOT_FOUND');
+  });
+
+  test('неизвестный модуль — OPERATION_NOT_FOUND с адресом', async () => {
+    const res = await app.dispatch(
+      'todo',
+      CompleteTaskUcDef.command({ taskId: TASK }),
+      user(OWNER),
+      REQ,
+    );
+    expect(expectErr(res, 'OPERATION_NOT_FOUND').payload).toEqual({
+      module: 'todo',
+      uc: 'completeTask',
+    });
+  });
+
+  test('неизвестный UC в модуле — OPERATION_NOT_FOUND от модуля', async () => {
+    const res = await app.dispatch(
+      'mini',
+      CreateTaskUcDef.command({ title: 'x' }),
+      user(OWNER),
+      REQ,
+    );
+    expect(expectErr(res, 'OPERATION_NOT_FOUND').payload).toEqual({
+      module: 'mini',
+      uc: 'createTask',
+    });
   });
 });
 
