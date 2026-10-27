@@ -1,0 +1,4 @@
+Задача: OperationDef (Фаза 3, dmg-core-oop).
+Изменения: абстрактная база OperationDef<N, C> над Def — calls (необъявленные → [] в конструкторе, тип C задаёт вид через DeclaredCalls), abstract dmg/abbr/fileKind/aggregates(), referencedErrors() (по умолчанию []), mainAggregate() = aggregates()[0], title(module) = '<abbr> <module>.<name>'.
+Файлы: platform/dmg-core/src/domain/contracts/operation-def.ts, operation-def.types.ts, operation-def.test.ts; src/index.ts (экспорт).
+Причина: общая база UC/ER/Job вместо switch по dmg в check-defs/check-files/def-index (спека п.1). Отклонение: errors() → referencedErrors() — конфликт с полем errors у UC.
