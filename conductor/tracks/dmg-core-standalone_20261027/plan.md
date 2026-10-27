@@ -13,8 +13,9 @@
 - [x] Task: `ApiApp` в `dmg-core/app` (D-50): фабрики модулей → порядок по `dependsOn`, `ModuleFacades` только зависимостей, `dispatch`/`runJob`/`subscribe` 094bd69d
     - [x] Тесты: порядок и фасады по `dependsOn`; цикл, отсутствующая зависимость, повтор — ошибка сборки; `dispatch` неизвестного модуля — `OPERATION_NOT_FOUND`; red
     - [x] Реализация; экспорт из `dmg-core/app`; green
-- [ ] Task: Учебное приложение `src/testing/example/app` — сборка
-    - Передача (2026-10-27, claude, b8b1391): сделано — D-50, `ApiApp` (094bd69), e2e генераторов в `tmpdir` (16ef9a2); осталось — эта задача и далее по Фазе 1, бриф `slices/phase-1.md` дописать шагом 2 (фабрика приложения из `AppEnv` на `ApiApp` + резолвер `Caller`); открыто — плавающий `platform/core/src/legacy-bridge/example-app.test.ts:187` (`settle` через `setTimeout`, ловушка K-20261026-y2cd): спросить Нурболата, чинить ли по образцу `AwaitingBus`; `AwaitingBus` из `api-app.test.ts` вынести в `dmg-core/testing`, если понадобится в тестах приложения/раннера; check — зелёный
+- [~] Task: Учебное приложение `src/testing/example/app` — сборка
+    - [x] Боевые `InProcEventBus` и `ConsoleLogger` в `dmg-core/app`, `AwaitingBus` в `dmg-core/testing` (решение Нурболата 2026-10-27); тесты red → green 3fca9f3c
+    - [ ] Плавающий `platform/core/src/legacy-bridge/example-app.test.ts` (`settle` через `setTimeout`) — ожидание доставки по образцу `AwaitingBus` (решение Нурболата 2026-10-27)
     - [ ] Тесты: фабрика собирает `todo` и `users` с фасадами по `dependsOn`, UC через модуль, событие доходит до реакции, запись в oplog; запуск — red
     - [ ] Реализация фабрики (`InProcOutbox`/`InProcInbox`, лог операций, `Logger`); запуск — green
 - [ ] Task: Минимальный in-proc раннер учебного примера (CLI-команда → `Caller` → UC → вывод `Result`)
