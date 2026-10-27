@@ -86,5 +86,5 @@
     - Перевод по всему репо (domain, modules, runners, scripts, platform) скриптом по импортам из `dmg-core`; файлы обёрток и `domain/policy/policy.ts` удалены, импорты — на файлы классов; тесты обёрток → `<класс>.define.test.ts`. `allowAll`/`denied`/`allowed` остаются (константы и конструктор решения, не обёртки).
 - [x] Task: `llms.txt`, `dmg-core/docs`, `conductor/architecture/` (naming; запись D-xx «Def — классы» в decisions); D-09/D-37 — `ModuleDef.define`; `TRACK-DMG-CORE-OOP.md` удалён `d24961d`
     - Исторические записи `debt.md` (TR) не переписаны — имена в них верны на свою дату; обновлён только открытый пункт «Пересмотреть». Платформенное решение — D-48 в `platform/dmg-core/docs/decisions.md`.
-- [~] Task: Финал: гейт качества (workflow) — полный `CI=true bun test`, `tsc`, `biome`, `arch:check`, триаж в `summary.md`
+- [x] Task: Финал: гейт качества (workflow) — полный `CI=true bun test`, `tsc`, `biome`, `arch:check`, триаж в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
