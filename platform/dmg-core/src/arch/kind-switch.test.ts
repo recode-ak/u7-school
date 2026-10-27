@@ -1,6 +1,9 @@
 // Контракт трека dmg-core-oop (спека п.3): поведение вида живёт в классе
 // вида, а не в `switch` по дискриминатору в чужом коде. В `gen` вид — строка
-// CLI: шаблоны и планировщики выбираются таблицей, а не `switch`.
+// CLI: шаблоны и планировщики выбираются таблицей, а не `switch`. Исключение —
+// сравнения `args.kind === '…'` в `gen/validate.ts`: это проверка ввода CLI
+// для особых случаев (`module`, `aggregate` — «уже существует»), а не
+// поведение вида; поэтому для `.kind` шаблон ловит только `switch`.
 import { describe, expect, it } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';

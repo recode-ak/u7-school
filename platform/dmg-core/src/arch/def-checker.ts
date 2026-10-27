@@ -7,7 +7,7 @@ import type { DefIndex } from '../graph/def-index';
 import { CoreErrors } from '../kernel/errors/core-errors';
 import type { AnyErrorDef } from '../kernel/errors/error-def';
 import { toJsonSchema } from '../kernel/schema/json-schema';
-import { type ArchRule, Violation } from './violation';
+import { Violation } from './violation';
 
 /** Def с описаниями и схемами — в виде, общем для MAN-01/02/03. */
 type DescribedDef = {

@@ -27,14 +27,10 @@ interface Ctx {
 /**
  * Шаблоны файлов операции одного вида: контракт в домене, реализация в
  * прикладном слое и их тесты. Вид — строка CLI (`uc|er|job`): шаблон
- * выбирается таблицей в `OperationTemplate.of`, а не `switch`.
+ * выбирается таблицей `TEMPLATES`, а не `switch`.
  */
 abstract class OperationTemplate {
   constructor(protected readonly c: Ctx) {}
-
-  static of(c: Ctx): OperationTemplate {
-    return new TEMPLATES[c.kind](c);
-  }
 
   /** Маркер списка в паспорте и карте модуля. */
   abstract readonly list: string;
@@ -112,6 +108,7 @@ describe('${c.defName}', () => {
   }
 }
 
+/** UC: `UseCaseDef` и реализация на `UseCaseFromDef`. */
 class UseCaseTemplate extends OperationTemplate {
   readonly list = 'useCases';
 
@@ -189,6 +186,7 @@ ${this.testDeps}
   }
 }
 
+/** ER: `EventReactionDef` и реализация на `ReactionFromDef`. */
 class ReactionTemplate extends OperationTemplate {
   readonly list = 'reactions';
 
@@ -249,6 +247,7 @@ ${this.testDeps}
   }
 }
 
+/** Job: `JobDef` и реализация на `JobFromDef`. */
 class JobTemplate extends OperationTemplate {
   readonly list = 'jobs';
 
@@ -313,6 +312,7 @@ ${this.testDeps}
   }
 }
 
+/** Шаблон операции по виду CLI. */
 const TEMPLATES: Record<OpKind, new (c: Ctx) => OperationTemplate> = {
   uc: UseCaseTemplate,
   er: ReactionTemplate,
@@ -337,7 +337,7 @@ export function planOperation(args: GenArgs): GenPlan {
     base: names.fileName.replace(/\.ts$/, ''),
     domain: args.layout.domainImport(m, join(appDir, a, kind)),
   };
-  const t = OperationTemplate.of(c);
+  const t = new TEMPLATES[kind](c);
 
   const rel = join(a, kind, names.fileName);
   const relBase = `./${a}/${kind}/${c.base}`;
