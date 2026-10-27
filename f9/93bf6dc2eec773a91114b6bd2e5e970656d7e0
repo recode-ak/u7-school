@@ -1,0 +1,3 @@
+Задача: ModuleFacade (D-43) через команды (Фаза 2, command-dispatch).
+Изменения: FacadeModule = { def, dispatch }; ModuleFacade.handle → module.dispatch(UseCaseDef.commandOf(def, input)); serves — def.useCases.includes (полноту реализаций гарантирует ModuleMap). UseCaseDef.commandOf — статический, единственное место сборки команды (замечание ревью Ф1: command вне AnyUseCaseDef).
+Файлы: src/domain/contracts/use-case-def.ts, command.test.ts, src/app/facade/module-facade.ts(+test).
