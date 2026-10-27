@@ -16,7 +16,7 @@ import { type Caller, UserCaller } from '#core/kernel/caller/caller';
 import { BaseEntityFields, F } from '#core/kernel/fields/fields';
 import { ok } from '#core/kernel/result/result';
 import { Trace } from '#core/kernel/trace/trace';
-import type { ExampleUser } from '#core/testing/example/app/app-user';
+import type { ExampleUser } from '#core/testing/example/shared/app-user';
 import {
   GetTaskUcDef,
   TaskAr,

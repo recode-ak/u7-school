@@ -11,8 +11,8 @@ const SOURCE = 'event-bus';
 /**
  * Шина событий в процессе: доставляет конверт подписчикам по имени события
  * в порядке подписки, не дожидаясь обработчиков. Сбой обработчика
- * (исключение или отказ промиса) уходит в `logger.error` и не мешает
- * остальным; `publish` не бросает.
+ * (исключение или отказ промиса) уходит в `logger.error` (в `meta` —
+ * событие, `eventId`, текст и стек ошибки) и не мешает остальным; `publish` не бросает.
  */
 export class InProcEventBus implements EventBus {
   private readonly handlers = new Map<string, Set<Handler>>();
@@ -54,10 +54,16 @@ export class InProcEventBus implements EventBus {
 
   private fail(envelope: EventEnvelope, error: unknown): void {
     const text = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
     this.logger.error(
       SOURCE,
       `обработчик события ${envelope.name} упал: ${text}`,
-      { event: envelope.name, eventId: envelope.eventId, error: text },
+      {
+        event: envelope.name,
+        eventId: envelope.eventId,
+        error: text,
+        ...(stack === undefined ? {} : { stack }),
+      },
     );
   }
 }

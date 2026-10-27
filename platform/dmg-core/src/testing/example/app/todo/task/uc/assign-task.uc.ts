@@ -3,8 +3,8 @@ import { UseCaseFromDef } from '#core/app/use-case/use-case-from-def';
 import type { Caller } from '#core/kernel/caller/caller';
 import { ok } from '#core/kernel/result/result';
 import type { Trace } from '#core/kernel/trace/trace';
-import type { ExampleUser } from '#core/testing/example/app/app-user';
 import type { TodoDeps } from '#core/testing/example/app/todo/todo.module';
+import type { ExampleUser } from '#core/testing/example/shared/app-user';
 import {
   AssignTaskUcDef,
   type TaskAr,

@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { ModuleFacades } from '#core/app/facade/module-facades';
 import { UserCaller } from '#core/kernel/caller/caller';
 import { Trace } from '#core/kernel/trace/trace';
-import type { ExampleUser } from '#core/testing/example/app/app-user';
+import type { ExampleUser } from '#core/testing/example/shared/app-user';
 import { TodoModuleDef } from '#core/testing/example/todo/index';
 import { OPEN_TASKS_LIMIT } from '#core/testing/example/todo/task/task.rules';
 import { expectErr, expectOk, testAppContext } from '#core/testing/index';

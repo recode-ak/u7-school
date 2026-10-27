@@ -27,7 +27,7 @@ import {
   MemoryLogger,
   testAppContext,
 } from '#core/testing/index';
-import type { ExampleUser } from './app-user';
+import type { ExampleUser } from '../shared/app-user';
 import { ExampleApp } from './example-app';
 import { ExampleCallerResolver } from './example-caller-resolver';
 
@@ -252,6 +252,16 @@ describe('ExampleApp.start', () => {
     await bus.delivered();
 
     expect(await assigneeOf(example, owner, taskId)).toBeUndefined();
+  });
+
+  it('повторный start() без остановки — исключение; после остановки — можно', () => {
+    const { example } = makeApp();
+    const stop = example.start();
+    expect(() => example.start()).toThrow(
+      'Реакции приложения уже подписаны на шину',
+    );
+    stop();
+    expect(() => example.start()).not.toThrow();
   });
 
   it('остановка снимает подписки: реакция не срабатывает', async () => {

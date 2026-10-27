@@ -30,6 +30,8 @@ import type { ModuleFactory } from './api-app.types';
 export class ApiApp<U extends Identified> {
   /** Собранные модули по имени — в порядке сборки. */
   private readonly modules = new Map<string, AnyModuleFromDef<U>>();
+  /** Отписки действующей подписки `subscribe()`; `undefined` — не подписано. */
+  private subscribed: readonly (() => void)[] | undefined;
 
   constructor(
     private readonly app: AppContext,
@@ -81,10 +83,23 @@ export class ApiApp<U extends Identified> {
     return target.runJob(job, trace);
   }
 
-  /** Подписывает реакции всех модулей на шину; возвращает общую отписку. */
+  /**
+   * Подписывает реакции всех модулей на шину; возвращает общую отписку.
+   * Повторная подписка без отписки — исключение (ERR-01: ошибка
+   * конфигурации, иначе каждое событие обработается дважды). После отписки
+   * можно подписаться снова; повторный вызов старой отписки ничего не снимает.
+   */
   subscribe(): () => void {
+    if (this.subscribed !== undefined) {
+      throw new Error(
+        'Реакции приложения уже подписаны на шину: повторный subscribe() без отписки обработал бы каждое событие дважды',
+      );
+    }
     const offs = [...this.modules.values()].map((m) => m.subscribe());
+    this.subscribed = offs;
     return () => {
+      if (this.subscribed !== offs) return;
+      this.subscribed = undefined;
       for (const off of offs) off();
     };
   }
@@ -110,24 +125,20 @@ export class ApiApp<U extends Identified> {
     this.modules.set(module.def.name, module);
   }
 
-  /** Собранная зависимость `owner`, если её Def — тот же объект, что `dep`. */
+  /**
+   * Собранная зависимость `owner`, если её Def — тот же объект, что `dep`.
+   * `ordered()` собирает каждую зависимость до зависимого и бросает, если у
+   * неё нет фабрики, — модуль с именем `dep` уже собран.
+   */
   private dependency(
     owner: AnyModuleDef,
     dep: AnyModuleDef,
   ): AnyModuleFromDef<U> {
-    const module = this.required(dep.name);
-    if (module.def !== dep) {
+    const module = this.modules.get(dep.name);
+    if (module?.def !== dep) {
       throw new Error(
         `Модуль ${owner.name} зависит от ${dep.name}, но фабрика ${dep.name} подключила другой объект Def с тем же именем`,
       );
-    }
-    return module;
-  }
-
-  private required(name: string): AnyModuleFromDef<U> {
-    const module = this.modules.get(name);
-    if (module === undefined) {
-      throw new Error(`Модуль ${name} не собран до зависимого от него`);
     }
     return module;
   }

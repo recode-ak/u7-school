@@ -17,7 +17,6 @@ import {
   type LogRecord,
   MemoryLogger,
 } from 'dmg-core/testing';
-import type { ExampleUser } from 'dmg-core/testing/example/app/app-user';
 import { TaskJsonRepo } from 'dmg-core/testing/example/app/todo/infra/task.json-repo';
 import {
   createTodoModule,
@@ -25,6 +24,7 @@ import {
 } from 'dmg-core/testing/example/app/todo/todo.module';
 import { UserMemoryRepo } from 'dmg-core/testing/example/app/users/infra/user.memory-repo';
 import { createUsersModule } from 'dmg-core/testing/example/app/users/users.module';
+import type { ExampleUser } from 'dmg-core/testing/example/shared/app-user';
 import {
   ArchiveDoneTasksJobDef,
   CompleteTaskUcDef,
@@ -129,9 +129,13 @@ class AwaitingLegacyBus extends InProcEventBus {
   }
 
   async delivered(): Promise<void> {
+    const failures: unknown[] = [];
     while (this.pending.length > 0) {
-      await Promise.all(this.pending.splice(0));
+      for (const r of await Promise.allSettled(this.pending.splice(0))) {
+        if (r.status === 'rejected') failures.push(r.reason);
+      }
     }
+    if (failures.length > 0) throw failures[0];
   }
 }
 

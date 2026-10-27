@@ -6,7 +6,7 @@ import { ModuleFacades } from '#core/app/facade/module-facades';
 import { UserCaller } from '#core/kernel/caller/caller';
 import { ok } from '#core/kernel/result/result';
 import { Trace } from '#core/kernel/trace/trace';
-import type { ExampleUser } from '#core/testing/example/app/app-user';
+import type { ExampleUser } from '#core/testing/example/shared/app-user';
 import { TodoModuleDef } from '#core/testing/example/todo/index';
 import type { TaskState } from '#core/testing/example/todo/state';
 import {

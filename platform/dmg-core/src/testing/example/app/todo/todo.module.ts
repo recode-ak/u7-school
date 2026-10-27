@@ -4,7 +4,7 @@ import {
   type ModuleMap,
 } from '#core/app/module/module-from-def';
 import { TodoModuleDef } from '#core/testing/example/todo/index';
-import type { ExampleUser } from '../app-user';
+import type { ExampleUser } from '../../shared/app-user';
 import { ReleaseRemovedUserTasksEr } from './task/er/release-removed-user-tasks.er';
 import { ArchiveDoneTasksJob } from './task/job/archive-done-tasks.job';
 import type { TaskRepo } from './task/task.repo';

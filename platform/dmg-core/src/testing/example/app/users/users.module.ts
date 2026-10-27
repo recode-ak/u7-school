@@ -4,7 +4,7 @@ import {
   type ModuleMap,
 } from '#core/app/module/module-from-def';
 import { UsersModuleDef } from '#core/testing/example/users/index';
-import type { ExampleUser } from '../app-user';
+import type { ExampleUser } from '../../shared/app-user';
 import { GetUserUc } from './user/uc/get-user.uc';
 import { RemoveUserUc } from './user/uc/remove-user.uc';
 import type { UserRepo } from './user/user.repo';

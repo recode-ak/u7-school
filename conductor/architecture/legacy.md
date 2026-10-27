@@ -39,6 +39,8 @@ modules/<m>/src/
 | Repo | interface, `Promise`/`MaybePromise`, `undefined` вместо `null`, только CRUD |
 | Module | domain: `ModuleMeta`; api: `ApiModule` со списком UC; сборка — `createApiApp` |
 
+> Совпадение имён: legacy `ApiApp` (`@u7-scl/core`, `api/app/api-app`) и `InProcEventBus` (`infra/in-proc-event-bus`) — не те же классы, что `ApiApp` и `InProcEventBus` из `dmg-core/app`. В DMG-коде — только из `dmg-core/app`.
+
 ## 4. Платформенные механизмы, которые сохраняются
 
 - **Job-планировщик:** `JobSchedule` (UTC: `interval`, `dailyAt`, `weeklyAt`, `monthlyAt`), порты `JobScheduler` / `JobExecutor` / `JobRunRepo` (персистентность `lastRunAt`, догон пропущенного прогона). Правила Job — API-06.

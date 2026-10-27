@@ -36,6 +36,12 @@ describe('ExampleEnv.toAppEnv', () => {
     ).toEqual([A]);
   });
 
+  it('элемент EXAMPLE_USERS не uuid — исключение конфигурации', () => {
+    expect(() =>
+      parse({ EXAMPLE_DATA_DIR: DIR, EXAMPLE_USERS: `${A},bob` }),
+    ).toThrow('EXAMPLE_USERS: «bob» — не uuid');
+  });
+
   it('нет EXAMPLE_DATA_DIR (или пустой) — исключение конфигурации', () => {
     expect(() => parse({})).toThrow(
       'EXAMPLE_DATA_DIR: не задан каталог данных',

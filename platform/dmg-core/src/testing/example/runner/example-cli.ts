@@ -11,10 +11,14 @@ import {
 import type { ExampleApp } from '../app/example-app';
 import type { CliIo } from './example-cli.types';
 
-/** Коды выхода: успех, ошибка ввода, бизнес-отказ (`Err` операции). */
+/**
+ * Коды выхода: успех, ошибка ввода, бизнес-отказ (`Err` операции), ошибка
+ * окружения (`EXIT_CONFIG` ставит `main.ts`: до CLI дело не доходит).
+ */
 export const EXIT_OK = 0;
 export const EXIT_USAGE = 1;
 export const EXIT_REJECTED = 2;
+export const EXIT_CONFIG = 3;
 
 export const USAGE =
   'Использование: create-task --title <текст> [--user <uuid>] | list-tasks [--user <uuid>]';

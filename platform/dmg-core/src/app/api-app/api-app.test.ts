@@ -9,11 +9,11 @@ import {
   UserCaller,
 } from '#core/kernel/caller/caller';
 import { Trace } from '#core/kernel/trace/trace';
-import type { ExampleUser } from '#core/testing/example/app/app-user';
 import { TaskJsonRepo } from '#core/testing/example/app/todo/infra/task.json-repo';
 import { createTodoModule } from '#core/testing/example/app/todo/todo.module';
 import { UserMemoryRepo } from '#core/testing/example/app/users/infra/user.memory-repo';
 import { createUsersModule } from '#core/testing/example/app/users/users.module';
+import type { ExampleUser } from '#core/testing/example/shared/app-user';
 import {
   ArchiveDoneTasksJobDef,
   AssignTaskUcDef,
@@ -333,6 +333,30 @@ describe('ApiApp.subscribe', () => {
 
     expect((await tasks.findById(mine))?.isArchived()).toBe(true);
     expect((await tasks.findById(theirs))?.isArchived()).toBe(false);
+  });
+
+  it('повторный subscribe() без отписки — исключение (двойная обработка событий)', () => {
+    const { app, usersModule, todoModule } = makeApp();
+    const api = new ApiApp(app, [usersModule, todoModule]);
+    api.subscribe();
+    expect(() => api.subscribe()).toThrow(
+      'Реакции приложения уже подписаны на шину',
+    );
+  });
+
+  it('после отписки можно подписаться снова (повторная отписка безвредна)', async () => {
+    const { app, bus, tasks, usersModule, todoModule } = makeApp();
+    const api = new ApiApp(app, [usersModule, todoModule]);
+    const taskId = await createTask(api, owner);
+
+    const off = api.subscribe();
+    off();
+    off();
+    api.subscribe();
+    expectOk(await removed(api, OWNER));
+    await bus.delivered();
+
+    expect((await tasks.findById(taskId))?.isArchived()).toBe(true);
   });
 
   it('без подписки событие никого не будит', async () => {

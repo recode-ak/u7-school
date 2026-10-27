@@ -178,7 +178,109 @@ describe('AssemblyChecker', () => {
           runners: [join(root, 'app/cli')],
         }),
       ).toEqual([
-        'ARC-08: раннер cli/main.ts импортирует прикладной пакет beta: ../beta',
+        'ARC-08: раннер app/cli/main.ts импортирует прикладной пакет beta: ../beta',
+      ]);
+    });
+  });
+
+  describe('ARC-06 — прикладной пакет модуля и приложение вокруг него', () => {
+    it('импорт файла корня сборки и раннера — нарушение', () => {
+      cleanTree();
+      write(
+        'app/beta/item/uc/create-item.uc.ts',
+        [
+          "import type { AppUser } from '../../../app-user';",
+          "import { App } from '../../../app';",
+          "import { USAGE } from '../../../../runner/cli';",
+          '',
+        ].join('\n'),
+      );
+      write('app/app-user.ts');
+      expect(check()).toEqual([
+        'ARC-06: beta/item/uc/create-item.uc.ts импортирует корень сборки: ../../../app-user',
+        'ARC-06: beta/item/uc/create-item.uc.ts импортирует корень сборки: ../../../app',
+        'ARC-06: beta/item/uc/create-item.uc.ts импортирует раннер: ../../../../runner/cli',
+      ]);
+    });
+
+    it('общий домен, свой и чужой прикладной пакет — не дело этой проверки', () => {
+      cleanTree();
+      // Тип пользователя — в общем домене (D-53); импорт другого прикладного
+      // пакета — ARC-06 у `FileChecker`, не здесь.
+      write('domain/shared/app-user.ts');
+      write(
+        'app/beta/item/uc/create-item.uc.ts',
+        [
+          "import type { AppUser } from '../../../../domain/shared/app-user';",
+          "import { createBeta } from '../../index';",
+          "import { createAlpha } from '../../../alpha';",
+          '',
+        ].join('\n'),
+      );
+      expect(check()).toEqual([]);
+    });
+
+    it('без корня сборки — проверяются только раннеры', () => {
+      cleanTree();
+      write(
+        'app/beta/item/uc/create-item.uc.ts',
+        [
+          "import { App } from '../../../app';",
+          "import { USAGE } from '../../../../runner/cli';",
+          '',
+        ].join('\n'),
+      );
+      expect(
+        check([AlphaModuleDef], { runners: [join(root, 'runner')] }),
+      ).toEqual([
+        'ARC-06: beta/item/uc/create-item.uc.ts импортирует раннер: ../../../../runner/cli',
+      ]);
+    });
+
+    it('внешний модуль: прикладной пакет не проверяется (D-37)', () => {
+      cleanTree();
+      write('app/beta/legacy/factory.ts', "import { App } from '../../app';\n");
+      const beta = ModuleDef.define({ ...BetaModuleDef, external: true });
+      const alpha = ModuleDef.define({ ...AlphaModuleDef, dependsOn: [beta] });
+      expect(check([alpha])).toEqual([]);
+    });
+  });
+
+  describe('место нарушения', () => {
+    it('раннеры с одинаковым basename различаются путём от общего предка', () => {
+      cleanTree();
+      for (const r of ['a', 'b']) {
+        write(
+          `runners/${r}/src/main.ts`,
+          "import { x } from '../../../app/beta';\n",
+        );
+      }
+      expect(
+        check([AlphaModuleDef], {
+          root: join(root, 'app'),
+          runners: [join(root, 'runners/a/src'), join(root, 'runners/b/src')],
+        }),
+      ).toEqual([
+        'ARC-08: раннер runners/a/src/main.ts импортирует прикладной пакет beta: ../../../app/beta',
+        'ARC-08: раннер runners/b/src/main.ts импортирует прикладной пакет beta: ../../../app/beta',
+      ]);
+    });
+
+    it('только раннеры — путь от их общего предка', () => {
+      cleanTree();
+      for (const r of ['a', 'b']) {
+        write(
+          `runners/${r}/src/main.ts`,
+          "import { x } from '../../../app/beta';\n",
+        );
+      }
+      expect(
+        check([AlphaModuleDef], {
+          runners: [join(root, 'runners/a/src'), join(root, 'runners/b/src')],
+        }),
+      ).toEqual([
+        'ARC-08: раннер a/src/main.ts импортирует прикладной пакет beta: ../../../app/beta',
+        'ARC-08: раннер b/src/main.ts импортирует прикладной пакет beta: ../../../app/beta',
       ]);
     });
   });

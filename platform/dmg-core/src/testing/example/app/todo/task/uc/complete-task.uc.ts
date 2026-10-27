@@ -1,8 +1,8 @@
 import type { UnitOfWork } from '#core/app/uow/unit-of-work';
 import { UseCaseFromDef } from '#core/app/use-case/use-case-from-def';
 import { ok } from '#core/kernel/result/result';
-import type { ExampleUser } from '#core/testing/example/app/app-user';
 import type { TodoDeps } from '#core/testing/example/app/todo/todo.module';
+import type { ExampleUser } from '#core/testing/example/shared/app-user';
 import {
   CompleteTaskUcDef,
   type TaskAr,

@@ -12,7 +12,7 @@ import {
   UserErrors,
   UsersModuleDef,
 } from '#core/testing/example/users/contract';
-import type { ExampleUser } from './app-user';
+import type { ExampleUser } from '../shared/app-user';
 
 /**
  * Откуда вызов `users` при разборе вызывающего: `getUser` — только для

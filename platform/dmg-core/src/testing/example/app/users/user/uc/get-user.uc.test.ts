@@ -7,7 +7,7 @@ import {
   UserCaller,
 } from '#core/kernel/caller/caller';
 import { Trace } from '#core/kernel/trace/trace';
-import type { ExampleUser } from '#core/testing/example/app/app-user';
+import type { ExampleUser } from '#core/testing/example/shared/app-user';
 import { UsersModuleDef } from '#core/testing/example/users/index';
 import { expectErr, expectOk, testAppContext } from '#core/testing/index';
 import { UserMemoryRepo } from '../../infra/user.memory-repo';

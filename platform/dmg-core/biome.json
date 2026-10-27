@@ -87,6 +87,7 @@
         "src/domain/**",
         "src/testing/example/todo/**",
         "src/testing/example/users/**",
+        "src/testing/example/shared/**",
         "!**/*.test.ts"
       ],
       "linter": {
@@ -174,6 +175,7 @@
         "src/domain/**",
         "src/testing/example/todo/**",
         "src/testing/example/users/**",
+        "src/testing/example/shared/**",
         "!**/*.test.ts"
       ],
       "plugins": ["./biome-plugins/dom-14-no-clock.grit"]

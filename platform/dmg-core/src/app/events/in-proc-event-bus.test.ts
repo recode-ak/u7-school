@@ -29,6 +29,20 @@ class SignalLogger extends MemoryLogger {
   }
 }
 
+/** Логгер, который сохраняет `meta` записей `error`. */
+class MetaLogger extends MemoryLogger {
+  readonly metas: (Record<string, unknown> | undefined)[] = [];
+
+  override error(
+    source: string,
+    message: string,
+    meta?: Record<string, unknown>,
+  ): void {
+    super.error(source, message);
+    this.metas.push(meta);
+  }
+}
+
 describe('InProcEventBus', () => {
   test('доставляет конверт подписчикам по имени события в порядке подписки', () => {
     const bus = new InProcEventBus(new MemoryLogger());
@@ -124,6 +138,31 @@ describe('InProcEventBus', () => {
     expect(record?.source).toBe('event-bus');
     expect(record?.message).toContain(created);
     expect(record?.message).toContain('отказ');
+  });
+
+  test('meta ошибки обработчика — событие, eventId, текст и стек', () => {
+    const logger = new MetaLogger();
+    const bus = new InProcEventBus(logger);
+    const error = new Error('сбой');
+    bus.subscribe(TaskEvents.created, () => {
+      throw error;
+    });
+    bus.publish(envelope(created, 'e-1'));
+    expect(logger.metas).toEqual([
+      { event: created, eventId: 'e-1', error: 'сбой', stack: error.stack },
+    ]);
+  });
+
+  test('не-Error — в meta без стека', () => {
+    const logger = new MetaLogger();
+    const bus = new InProcEventBus(logger);
+    bus.subscribe(TaskEvents.created, () => {
+      throw 'строка';
+    });
+    bus.publish(envelope(created, 'e-1'));
+    expect(logger.metas).toEqual([
+      { event: created, eventId: 'e-1', error: 'строка' },
+    ]);
   });
 
   test('отказ не-Error значением — текст ошибки строкой', async () => {

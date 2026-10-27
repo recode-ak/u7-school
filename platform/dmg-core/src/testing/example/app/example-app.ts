@@ -9,7 +9,7 @@ import { ConsoleLogger } from '#core/app/logger/console-logger';
 import { JsonlOperationLog } from '#core/app/oplog/jsonl-operation-log';
 import { TodoModuleDef } from '#core/testing/example/todo/contract';
 import { UsersModuleDef } from '#core/testing/example/users/contract';
-import type { ExampleUser } from './app-user';
+import type { ExampleUser } from '../shared/app-user';
 import type { ExampleAppEnv, ExampleAppPorts } from './example-app.types';
 import { ExampleCallerResolver } from './example-caller-resolver';
 import { createTodoModule, TaskJsonRepo } from './todo/index';

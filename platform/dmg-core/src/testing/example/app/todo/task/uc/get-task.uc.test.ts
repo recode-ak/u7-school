@@ -9,7 +9,7 @@ import {
   UserCaller,
 } from '#core/kernel/caller/caller';
 import { Trace } from '#core/kernel/trace/trace';
-import type { ExampleUser } from '#core/testing/example/app/app-user';
+import type { ExampleUser } from '#core/testing/example/shared/app-user';
 import { TaskAr, TodoModuleDef } from '#core/testing/example/todo/index';
 import type { TaskState } from '#core/testing/example/todo/state';
 import { expectErr, expectOk, testAppContext } from '#core/testing/index';

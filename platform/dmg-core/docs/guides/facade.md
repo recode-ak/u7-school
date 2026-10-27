@@ -13,7 +13,7 @@
 - Фасад — только `handle(def, input, caller, trace)`: типизированный сахар, который собирает команду (`UseCaseDef.commandOf`) и отдаёт её `ModuleFromDef.dispatch` владельца (D-49). Методов-обёрток и преобразований нет, доменные решения — в UC и домене владельца (API-04).
 - Модуль для фасада — `FacadeModule<M>` = `{ def, dispatch }`: `ModuleFromDef` in-proc или сетевой клиент с тем же `dispatch`. Выбор фасада в `ModuleFacades` — `serves(def)`: UC из Def модуля.
 - Вызывающий не трогает фасад напрямую: `this.call(Def, input, caller, trace)` базы `OperationFromDef` выбирает фасад из `deps.facades` (`ModuleFacades`) и подставляет `SystemCaller(this.ref, caller.person())`.
-- UI и внешние адаптеры фасад не используют: они вызывают UC через модуль (ARC-08).
+- UI и внешние адаптеры фасад не используют: они вызывают UC через приложение — `api.dispatch` (ARC-08, [app.md](./app.md)).
 - Вызов, меняющий чужой модуль (command), — место выбирает владелец проекта по каждому случаю ([use-case.md](./use-case.md) §1).
 - Фасад отвязывает модули: команда — простые данные, поэтому при выходе модуля в сервис меняется только транспорт `dispatch`, вызывающий код остаётся прежним (D-28, D-46, D-49).
 

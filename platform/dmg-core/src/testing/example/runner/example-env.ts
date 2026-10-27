@@ -1,15 +1,19 @@
+import * as v from 'valibot';
 import type { AppMode } from '#core/app/context';
+import { F } from '#core/kernel/fields/fields';
 import type { ExampleAppEnv } from '../app/example-app.types';
 import type { EnvVars } from './example-env.types';
 
 const MODES: readonly AppMode[] = ['test', 'development', 'production'];
 
+const USER_ID = F.uuid('пользователя');
+
 /**
  * Окружение раннера → `ExampleAppEnv` (ARC-09: `process.env` читает только
  * точка входа и передаёт сюда словарём). Переменные: `EXAMPLE_MODE`
  * (по умолчанию `development`), `EXAMPLE_DATA_DIR` (обязателен),
- * `EXAMPLE_USERS` — uuid через запятую. Неверный режим — исключение
- * (ошибка конфигурации, ERR-01).
+ * `EXAMPLE_USERS` — uuid через запятую. Неверный режим, нет каталога или
+ * не-uuid в списке — исключение (ошибка конфигурации, ERR-01).
  */
 export class ExampleEnv {
   constructor(private readonly vars: EnvVars) {}
@@ -19,11 +23,21 @@ export class ExampleEnv {
     return {
       mode: ExampleEnv.mode(vars.EXAMPLE_MODE),
       dataDir: ExampleEnv.dataDir(vars.EXAMPLE_DATA_DIR),
-      users: (vars.EXAMPLE_USERS ?? '')
-        .split(',')
-        .map((uuid) => uuid.trim())
-        .filter((uuid) => uuid !== ''),
+      users: ExampleEnv.users(vars.EXAMPLE_USERS),
     };
+  }
+
+  private static users(raw: string | undefined): readonly string[] {
+    const users = (raw ?? '')
+      .split(',')
+      .map((uuid) => uuid.trim())
+      .filter((uuid) => uuid !== '');
+    for (const uuid of users) {
+      if (!v.is(USER_ID, uuid)) {
+        throw new Error(`EXAMPLE_USERS: «${uuid}» — не uuid`);
+      }
+    }
+    return users;
   }
 
   private static dataDir(raw: string | undefined): string {
