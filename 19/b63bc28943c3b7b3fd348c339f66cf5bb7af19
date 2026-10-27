@@ -1,0 +1,1 @@
+Задача: бот-истории и CLI на moduleApi. Решения Нурболата: story получает Result и ветвится по code; старый вход по Def удалён (ApiApp.run/execute(Def), ModuleFromDef.handle/serves). Новый долг DEBT-37 (ucErrorNotify через toLegacyError). Живой прогон call-uc не делался (пишет data/oplog).
