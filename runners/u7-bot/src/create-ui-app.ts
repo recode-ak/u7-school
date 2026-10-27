@@ -92,7 +92,6 @@ export async function createUiApp(
       return user;
     },
     appApi: apiApp,
-    wishApi: bundle.wishApi,
     userFacade: bundle.userFacade,
     botAdminUser,
     school: bundle.school,

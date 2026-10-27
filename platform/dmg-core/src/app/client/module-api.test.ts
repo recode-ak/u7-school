@@ -25,13 +25,15 @@ const caller = new UserCaller({ uuid: OWNER });
 
 type Sent = { module: string; command: Command; caller: Caller };
 
-/** Транспорт, который запоминает отправленное и отвечает задачей. */
-function transport(sent: Sent[]): CommandTransport {
+/** Wire-транспорт: запоминает отправленное и отвечает `answer` (простые данные). */
+function transport(
+  sent: Sent[],
+  answer: SerializedResult = ok(taskRow(TASK)),
+): CommandTransport {
   return {
-    dispatch: async (module, command, caller) => {
+    send: async (module, command, caller) => {
       sent.push({ module, command, caller });
-      // Ответ getTask — единственного UC, который зовут тесты dispatch.
-      return ok(taskRow(TASK)) as never;
+      return answer;
     },
   };
 }
@@ -41,7 +43,7 @@ function api(logs: LogRecord[] = []) {
 }
 
 describe('ModuleApi.dispatch', () => {
-  test('команда — по адресу модуля из Def, ответ транспорта как есть', async () => {
+  test('команда — по адресу модуля из Def, Ok ответа как есть', async () => {
     const sent: Sent[] = [];
     const todo = new ModuleApi(
       TodoModuleDef,
@@ -54,6 +56,24 @@ describe('ModuleApi.dispatch', () => {
 
     expect(res).toEqual(ok(taskRow(TASK)));
     expect(sent).toEqual([{ module: 'todo', command, caller }]);
+  });
+
+  test('ошибка ответа восстанавливается по Def UC', async () => {
+    const error = TaskErrors.NOT_FOUND.err({ taskId: TASK });
+    const wire = overJson(GetTaskUcDef.serializeResult(error));
+    const todo = new ModuleApi(
+      TodoModuleDef,
+      transport([], wire),
+      new MemoryLogger(),
+    );
+
+    const res = await todo.dispatch(
+      GetTaskUcDef.command({ taskId: TASK }),
+      caller,
+      REQ,
+    );
+
+    expect(res).toEqual(error);
   });
 
   test('ответ типизирован по Def команды', () => {

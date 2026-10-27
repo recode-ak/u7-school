@@ -1,5 +1,5 @@
 import {
-  type AnyUseCaseDef,
+  type AnyModuleDef,
   type Caller,
   type Command,
   CoreErrors,
@@ -94,22 +94,25 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
   }
 
   /**
-   * Исполнение команды модулем по адресу транспорта (D-49): адрес — имя
-   * модуля (URL `POST /api/<module>`, in-proc `moduleApi`), UC модуль
-   * находит по имени. Неизвестный модуль или UC — `OPERATION_NOT_FOUND`.
-   * След и Caller строит адаптер транспорта на входе (`Trace.fromRequest`:
-   * `requestId` от клиента, а если его нет — создаётся с `warn`, ERR-07;
-   * caller.md §2 п. 7).
+   * Исполнение команды модулем DMG (D-49): адрес — Def модуля, по его имени
+   * приложение находит модуль, а UC модуль находит по имени из команды.
+   * Команда UC другого модуля — ошибка компиляции; модуль не подключён —
+   * `OPERATION_NOT_FOUND`. Caller и след строит адаптер входа
+   * (`Trace.fromRequest`: `requestId` от клиента, а если его нет — создаётся
+   * с `warn`, ERR-07; caller.md §2 п. 7).
    */
-  async dispatch<D extends AnyUseCaseDef>(
-    module: string,
+  async dispatch<M extends AnyModuleDef, D extends M['useCases'][number]>(
+    module: M,
     command: Command<D>,
     caller: Caller<DmgActor<TActor>>,
     trace: Trace,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    const target = this.dmgModules.find((m) => m.def.name === module);
+    const target = this.dmgModules.find((m) => m.def.name === module.name);
     if (target === undefined) {
-      return CoreErrors.OPERATION_NOT_FOUND.err({ module, uc: command.uc });
+      return CoreErrors.OPERATION_NOT_FOUND.err({
+        module: module.name,
+        uc: command.uc,
+      });
     }
     return target.dispatch(command, caller, trace);
   }

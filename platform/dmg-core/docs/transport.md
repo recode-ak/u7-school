@@ -52,8 +52,9 @@
 
 Форма та же, что у HTTP: команда `{ uc, input, meta? }` и `Result`. Отличие одно: JSON-сериализации нет, объекты передаются как есть (D-46).
 
-- **Клиент — `ModuleApi`** (`dmg-core/app`): Def модуля (адрес — его `name`) и транспорт `CommandTransport` до модуля; in-proc транспорт — `ApiApp` (`dispatch(module, command, caller, trace)`). Вызов — `moduleApi.dispatch(ucDef.command(input), caller, trace)` → типизированный `Result<OutputOf<D>, UseCaseErrorOf<D>>`; команда UC другого модуля — ошибка компиляции. Caller и `Trace` — явные аргументы: их строит адаптер входа (story, CLI). Смена in-proc на HTTP меняет только транспорт, вызывающий код остаётся прежним.
-- **Ответ:** in-proc — `Result` модуля как есть, без сериализации. Ответ из простых данных (wire-транспорт) восстанавливает `moduleApi.restore(command, wire)` по Def UC; ошибка вне контракта — `SERVER_INTERNAL` и `warn` с исходным `code` (ERR-07).
-- **UI (бот, web)** — через `moduleApi`; story обрабатывает `Err` по `code`, презентер решает, как показать.
+- **In-proc клиент — приложение:** `apiApp.dispatch(moduleDef, ucDef.command(input), caller, trace)` → типизированный `Result<OutputOf<D>, UseCaseErrorOf<D>>`. Адрес — Def модуля (по его `name` приложение находит модуль), команда UC другого модуля — ошибка компиляции, модуль не подключён — `OPERATION_NOT_FOUND`. Caller и `Trace` — явные аргументы: их строит адаптер входа (story, CLI). Ответ — `Result` модуля как есть, без сериализации.
+- **Вынос модуля в сервис (D-28)** решается в приложении: модуль подключается к `apiApp` как удалённый, вызывающий код не меняется.
+- **Клиент вне процесса — `ModuleApi`** (`dmg-core/app`): Def модуля и wire-транспорт `CommandTransport` (`send(module, command, caller, trace)` → `SerializedResult`; caller и trace транспорт переводит в токен и заголовки). `moduleApi.dispatch(ucDef.command(input), caller, trace)` восстанавливает ответ по Def UC (`restore`); ошибка вне контракта — `SERVER_INTERNAL` и `warn` с исходным `code` (ERR-07). Нужен web UI и клиентам другого сервиса; реализаций транспорта пока нет.
+- **UI (бот)** — через `apiApp.dispatch` (`U7BotUiStory.dispatchUc`); web UI — через `ModuleApi`. Story обрабатывает `Err` по `code`, презентер решает, как показать.
 - **Фасады** (`ModuleFacade`, D-43) — синхронный вызов в процессе через команду, типизированный сахар поверх; возвращают `Result`, `ReadonlyAr` строит вызывающий. При выносе модуля в сервис тот же контракт идёт по HTTP, агрегаты — снапшотом.
-- **CLI** — тот же `moduleApi`.
+- **CLI** — тот же `apiApp.dispatch`.

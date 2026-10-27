@@ -1,6 +1,5 @@
 import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app/domain';
 import type { U7BotApp } from '@u7-scl/bot/u7-bot-app-meta';
-import type { WishApi } from '@u7-scl/bot/u7-bot-ui-story';
 import { ApiApp } from '@u7-scl/core/api';
 import {
   BaseJsonDb,
@@ -16,7 +15,6 @@ import {
   ModuleJsonRepo,
   StepJsonRepo,
 } from '@u7-scl/course/infra';
-import { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import {
   PeerReviewApiModule,
   ReviewCampaignJsonRepo,
@@ -37,7 +35,6 @@ import {
 import { UserApiModule } from '@u7-scl/user/api';
 import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
-import { ModuleApi } from 'dmg-core/app';
 import {
   createDmgAppContext,
   createDmgModules,
@@ -48,8 +45,6 @@ import { cleanupFixtures, loadFixtures } from './fixture-loader';
 export interface TestApp {
   /** Полноценный ApiApp со всеми модулями */
   apiApp: U7BotApp;
-  /** Клиент модуля wish (D-49): команды через apiApp, как у stories */
-  wishApi: WishApi;
   /** API модуля stream (для создания StreamsController) */
   streamModule: StreamApiModule;
   /** API модуля курсов (для создания CoursesController) */
@@ -204,7 +199,6 @@ export async function createTestApp(tag?: string): Promise<TestApp> {
 
   return {
     apiApp,
-    wishApi: new ModuleApi(WishModuleDef, apiApp, logger),
     streamModule,
     courseModule,
     eventBus,

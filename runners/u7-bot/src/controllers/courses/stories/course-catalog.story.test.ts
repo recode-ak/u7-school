@@ -12,6 +12,7 @@ import {
 } from '@u7-scl/domain/wish/contract';
 import { Role } from '@u7-scl/user/domain';
 import {
+  type AnyModuleDef,
   type Command,
   type DomainError,
   type Err,
@@ -19,12 +20,10 @@ import {
   type Result,
   UserCaller,
 } from 'dmg-core';
-import { type CommandTransport, ModuleApi } from 'dmg-core/app';
-import { MemoryLogger } from 'dmg-core/testing';
 import { Routes } from '../../shared/routes';
 import { CourseCatalogStory } from './course-catalog.story';
 
-/** Актор UC DMG — субъект `UserCaller`, переданный транспорту wish. */
+/** Актор UC DMG — субъект `UserCaller`, переданный в `appApi.dispatch`. */
 function subjectOf(caller: unknown): User {
   if (!(caller instanceof UserCaller)) {
     throw new Error('UC DMG вызван без UserCaller');
@@ -158,22 +157,23 @@ describe('CourseCatalogStory', () => {
   }
 
   /**
-   * Story над моками: legacy UC — `appApi.execute`, команды wish —
-   * `wish` через настоящий `ModuleApi` (адрес, субъект, след).
+   * Story над моками: legacy UC — `appApi.execute`, команды DMG —
+   * `appApi.dispatch` (модуль wish отвечает моком `wish`).
    */
   function initStory(
     story: CourseCatalogStory,
     api: { execute: unknown; wish?: ReturnType<typeof mock<WishAnswer>> },
   ) {
     const wish = api.wish ?? mock<WishAnswer>(async () => ok([]));
-    const transport: CommandTransport<User> = {
-      dispatch: async (_module, command, caller) =>
-        (await wish(command, caller)) as never,
+    const dispatch = (
+      module: AnyModuleDef,
+      command: Command,
+      caller: unknown,
+    ) => {
+      expect(module).toBe(WishModuleDef);
+      return wish(command, caller);
     };
-    story.init({
-      appApi: api,
-      wishApi: new ModuleApi(WishModuleDef, transport, new MemoryLogger()),
-    } as never);
+    story.init({ appApi: { execute: api.execute, dispatch } } as never);
   }
 
   // ── Главное меню (декларативные menuButtons) ──

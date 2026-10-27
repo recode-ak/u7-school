@@ -3,6 +3,7 @@ import type { User } from '@u7-scl/app/domain';
 import {
   CancelWishUcDef,
   ListUserWishesUcDef,
+  WishModuleDef,
 } from '@u7-scl/domain/wish/contract';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
@@ -71,7 +72,8 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
 
   test('чтение: legacy-запись видна, ISO разобран в число', async () => {
     const wishes = expectOk(
-      await app.wishApi.dispatch(
+      await app.apiApp.dispatch(
+        WishModuleDef,
         ListUserWishesUcDef.command({}),
         new UserCaller(guest),
         req(),
@@ -86,7 +88,8 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
 
   test('cancel-wish: файл переписан в формате spec, соседняя запись не потеряна', async () => {
     expectOk(
-      await app.wishApi.dispatch(
+      await app.apiApp.dispatch(
+        WishModuleDef,
         CancelWishUcDef.command({
           kind: 'course',
           courseId: INSTANT_COURSE_ID,

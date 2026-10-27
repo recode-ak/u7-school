@@ -19,7 +19,6 @@ function makeApiBundle(): ApiAppBundle {
     apiApp: {
       getModule: mock(() => ({})),
     } as any,
-    wishApi: {} as any,
     eventBus: {} as any,
     userFacade: {
       getUserByUuid: mock(async (uuid: string) => {

@@ -7,7 +7,6 @@ import {
   InProcInbox,
   InProcOutbox,
   JsonlOperationLog,
-  ModuleApi,
   ModuleFacade,
   ModuleFacades,
   Trace,
@@ -55,9 +54,6 @@ let dir: string;
 let legacy: InProcEventBus;
 let deps: TodoDeps;
 let api: ApiApp<AppMeta, ExampleUser>;
-/** Клиенты модулей (D-49): in-proc транспорт — приложение. */
-let todo: ModuleApi<typeof TodoModuleDef, ExampleUser>;
-let usersApi: ModuleApi<typeof UsersModuleDef, ExampleUser>;
 let logs: LogRecord[];
 
 beforeEach(async () => {
@@ -87,13 +83,12 @@ beforeEach(async () => {
     createTodoModule(deps),
   );
   api.init({ start: () => {}, stop: () => {} });
-  todo = new ModuleApi(TodoModuleDef, api, deps.app.logger);
-  usersApi = new ModuleApi(UsersModuleDef, api, deps.app.logger);
 });
 afterEach(() => rm(dir, { recursive: true, force: true }));
 
 async function create(title: string, owner = ANNA): Promise<string> {
-  const res = await todo.dispatch(
+  const res = await api.dispatch(
+    TodoModuleDef,
     CreateTaskUcDef.command({ title }),
     caller(owner),
     req(),
@@ -102,7 +97,8 @@ async function create(title: string, owner = ANNA): Promise<string> {
 }
 
 async function titles(owner = ANNA): Promise<string[]> {
-  const res = await todo.dispatch(
+  const res = await api.dispatch(
+    TodoModuleDef,
     ListTasksUcDef.command({}),
     caller(owner),
     req(),
@@ -120,7 +116,8 @@ describe('todo: сквозной сценарий через appApi.run', () => 
   test('создать → выполнить → в списке выполнена', async () => {
     const id = await create('Купить хлеб');
     expectOk(
-      await todo.dispatch(
+      await api.dispatch(
+        TodoModuleDef,
         CompleteTaskUcDef.command({ taskId: id }),
         caller(ANNA),
         req(),
@@ -137,7 +134,8 @@ describe('todo: сквозной сценарий через appApi.run', () => 
 
   test('чужую задачу выполнить нельзя, администратору можно', async () => {
     const id = await create('Купить хлеб');
-    const foreign = await todo.dispatch(
+    const foreign = await api.dispatch(
+      TodoModuleDef,
       CompleteTaskUcDef.command({ taskId: id }),
       caller(BORIS),
       req(),
@@ -145,7 +143,8 @@ describe('todo: сквозной сценарий через appApi.run', () => 
     expectErr(foreign, 'ACCESS_DENIED');
     const admin = caller(BORIS, true);
     expectOk(
-      await todo.dispatch(
+      await api.dispatch(
+        TodoModuleDef,
         CompleteTaskUcDef.command({ taskId: id }),
         admin,
         req(),
@@ -178,7 +177,8 @@ describe('todo: событие → ER', () => {
     });
     const trace = Trace.fromRequest({ requestId: 'r-remove' });
     expectOk(
-      await usersApi.dispatch(
+      await api.dispatch(
+        UsersModuleDef,
         RemoveUserUcDef.command({ userId: ANNA }),
         admin,
         trace,
@@ -199,7 +199,8 @@ describe('todo: Job на существующем планировщике', () 
     const id = await create('Купить хлеб');
     await create('Позвонить');
     expectOk(
-      await todo.dispatch(
+      await api.dispatch(
+        TodoModuleDef,
         CompleteTaskUcDef.command({ taskId: id }),
         caller(ANNA),
         req(),

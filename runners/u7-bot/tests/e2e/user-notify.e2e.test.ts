@@ -3,7 +3,10 @@ import type { User } from '@u7-scl/app/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
-import { CreateCourseWishUcDef } from '@u7-scl/domain/wish/contract';
+import {
+  CreateCourseWishUcDef,
+  WishModuleDef,
+} from '@u7-scl/domain/wish/contract';
 import type { Stream } from '@u7-scl/stream/domain';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
@@ -96,7 +99,8 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
 
     // 1. Желающий выражает желание пройти курс
     expectOk(
-      await app.wishApi.dispatch(
+      await app.apiApp.dispatch(
+        WishModuleDef,
         CreateCourseWishUcDef.command({ courseId: COURSE_ID }),
         new UserCaller(wisher),
         Trace.fromRequest({ requestId: crypto.randomUUID() }),

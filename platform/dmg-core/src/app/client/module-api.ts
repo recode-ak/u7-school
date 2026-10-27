@@ -13,23 +13,24 @@ import type { Trace } from '#core/kernel/trace/trace';
 import type { Logger } from '../context';
 
 /**
- * Транспорт команд клиента: доставляет команду модулю по адресу (D-49).
- * In-proc — приложение (`ApiApp.dispatch` подходит как есть), ответ —
- * `Result` без сериализации.
+ * Wire-транспорт клиента (D-49): доставляет команду модулю в другом
+ * процессе (HTTP, очередь) и возвращает ответ простыми данными
+ * (transport.md §1). Caller и Trace транспорт переводит в свою форму
+ * (токен, заголовки).
  */
 export type CommandTransport<U extends Identified = Identified> = {
-  dispatch<D extends AnyUseCaseDef>(
+  send(
     module: string,
-    command: Command<D>,
+    command: Command,
     caller: Caller<U>,
     trace: Trace,
-  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
+  ): Promise<SerializedResult>;
 };
 
 /**
- * Клиент модуля (D-49, transport.md §4): знает адрес модуля — имя из Def —
- * и транспорт до него. Смена in-proc на HTTP меняет только транспорт,
- * вызывающий код остаётся прежним.
+ * Клиент модуля вне процесса (D-49, transport.md §4): адрес — имя из Def,
+ * ответ восстанавливается по Def UC команды. In-proc клиенту он не нужен —
+ * там команду исполняет `ApiApp.dispatch` по Def модуля.
  */
 export class ModuleApi<
   M extends AnyModuleDef,
@@ -42,12 +43,18 @@ export class ModuleApi<
   ) {}
 
   /** Команда UC модуля; UC другого модуля — ошибка компиляции. */
-  dispatch<D extends M['useCases'][number]>(
+  async dispatch<D extends M['useCases'][number]>(
     command: Command<D>,
     caller: Caller<U>,
     trace: Trace,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    return this.transport.dispatch(this.def.name, command, caller, trace);
+    const wire = await this.transport.send(
+      this.def.name,
+      command,
+      caller,
+      trace,
+    );
+    return this.restore(command, wire);
   }
 
   /**

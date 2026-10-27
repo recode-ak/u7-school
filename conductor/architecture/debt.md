@@ -222,7 +222,7 @@
 
 ### DEBT-37: отказ UC DMG в боте показывается веткой legacy
 - **Место:** `platform/core/src/ui/bot/bot-ui-story.ts` (`ucErrorNotify`)
-- **Причина:** stories получают `Err` от `moduleApi` (D-49) и ветвятся по `code`, а неожиданный отказ показывают через `errorNotify` legacy: `DomainError` → `AppException` (`toLegacyError`, `kind` → legacy-`kind`, текст — `denyMessage` или `label`). Своего презентера ошибок DMG у UI бота нет.
+- **Причина:** stories получают `Err` от `appApi.dispatch` (D-49) и ветвятся по `code`, а неожиданный отказ показывают через `errorNotify` legacy: `DomainError` → `AppException` (`toLegacyError`, `kind` → legacy-`kind`, текст — `denyMessage` или `label`). Своего презентера ошибок DMG у UI бота нет.
 - **Погашает:** перевод UI бота на манифесты (D-26) или первый трек, которому нужен свой показ ошибок DMG
 - **Критерий снятия:** презентер ошибок DMG в UI бота без `toLegacyError`, маркер удалён
 

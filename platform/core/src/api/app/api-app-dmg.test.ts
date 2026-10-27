@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { type Command, ModuleDef, ok, UserCaller } from 'dmg-core';
 import {
+  type CommandTransport,
   JobFromDef,
   type JobRun,
   ModuleApi,
@@ -28,6 +29,7 @@ import {
   type TaskAr,
   TaskArDef,
   TaskErrors,
+  TodoModuleDef,
 } from 'dmg-core/testing/example/todo/index';
 import type { AppMeta } from '../../domain/types';
 import type { Job } from '../job/job';
@@ -106,10 +108,10 @@ beforeEach(() => {
   app = new ApiApp<AppMeta, User>([]).addDmgModules(mini);
 });
 
-describe('ApiApp.dispatch — команда по адресу модуля (D-49)', () => {
+describe('ApiApp.dispatch — команда модулю по его Def (D-49)', () => {
   test('модуль по адресу исполняет команду: Ok с выходом', async () => {
     const res = await app.dispatch(
-      'mini',
+      MiniModuleDef,
       CompleteTaskUcDef.command({ taskId: TASK }),
       user(OWNER),
       REQ,
@@ -119,16 +121,16 @@ describe('ApiApp.dispatch — команда по адресу модуля (D-4
 
   test('команда после JSON исполняется: вход доходит до UC', async () => {
     tasks.rows.clear();
-    const wire: Command = JSON.parse(
+    const wire: Command<typeof CompleteTaskUcDef> = JSON.parse(
       JSON.stringify(CompleteTaskUcDef.command({ taskId: TASK })),
     );
-    const res = await app.dispatch('mini', wire, user(OWNER), REQ);
+    const res = await app.dispatch(MiniModuleDef, wire, user(OWNER), REQ);
     expectErr(res, 'TASK_NOT_FOUND');
   });
 
-  test('неизвестный модуль — OPERATION_NOT_FOUND с адресом', async () => {
+  test('модуль не подключён — OPERATION_NOT_FOUND с адресом', async () => {
     const res = await app.dispatch(
-      'todo',
+      TodoModuleDef,
       CompleteTaskUcDef.command({ taskId: TASK }),
       user(OWNER),
       REQ,
@@ -145,49 +147,50 @@ describe('ApiApp.dispatch — команда по адресу модуля (D-4
     );
   });
 
-  test('неизвестный UC в модуле — OPERATION_NOT_FOUND от модуля', async () => {
-    const res = await app.dispatch(
-      'mini',
-      CreateTaskUcDef.command({ title: 'x' }),
-      user(OWNER),
-      REQ,
-    );
-    expect(expectErr(res, 'OPERATION_NOT_FOUND').payload).toEqual({
-      module: 'mini',
-      uc: 'createTask',
-    });
+  test('команда UC другого модуля — ошибка типа', () => {
+    const wrong = () =>
+      app.dispatch(
+        MiniModuleDef,
+        // @ts-expect-error createTask не из модуля mini
+        CreateTaskUcDef.command({ title: 'x' }),
+        user(OWNER),
+        REQ,
+      );
+    expect(wrong).toBeFunction();
   });
 });
 
-describe('ModuleApi поверх ApiApp — клиент in-proc (D-49)', () => {
-  test('транспорт — приложение: Result модуля как есть', async () => {
-    const api = new ModuleApi(MiniModuleDef, app, new MemoryLogger());
+describe('ModuleApi — клиент wire-транспорта (D-49)', () => {
+  test('круговой путь JSON: команда → сервер → ответ → restore', async () => {
     tasks.rows.clear();
+    // Сервер за транспортом: команда и ответ — через JSON, ответ
+    // сериализован по Def UC.
+    const wire: CommandTransport = {
+      send: async (module, command) => {
+        expect(module).toBe('mini');
+        const received: Command<typeof CompleteTaskUcDef> = JSON.parse(
+          JSON.stringify(command),
+        );
+        const res = await app.dispatch(
+          MiniModuleDef,
+          received,
+          user(OWNER),
+          REQ,
+        );
+        return JSON.parse(
+          JSON.stringify(CompleteTaskUcDef.serializeResult(res)),
+        );
+      },
+    };
+    const api = new ModuleApi(MiniModuleDef, wire, new MemoryLogger());
+
     const res = await api.dispatch(
       CompleteTaskUcDef.command({ taskId: TASK }),
       user(OWNER),
       REQ,
     );
-    expectErr(res, 'TASK_NOT_FOUND');
-  });
 
-  test('круговой путь JSON: команда → dispatch → ответ → restore', async () => {
-    const api = new ModuleApi(MiniModuleDef, app, new MemoryLogger());
-    tasks.rows.clear();
-    const command = CompleteTaskUcDef.command({ taskId: TASK });
-    // Сервер сериализует ответ по Def своего UC.
-    const wireCommand: Command<typeof CompleteTaskUcDef> = JSON.parse(
-      JSON.stringify(command),
-    );
-
-    const res = await app.dispatch('mini', wireCommand, user(OWNER), REQ);
-    const wireResult = JSON.parse(
-      JSON.stringify(CompleteTaskUcDef.serializeResult(res)),
-    );
-
-    expect(api.restore(command, wireResult)).toEqual(
-      TaskErrors.NOT_FOUND.err({ taskId: TASK }),
-    );
+    expect(res).toEqual(TaskErrors.NOT_FOUND.err({ taskId: TASK }));
   });
 });
 

@@ -18,7 +18,6 @@ import {
   ModuleJsonRepo,
   StepJsonRepo,
 } from '@u7-scl/course/infra';
-import { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import {
   PeerReviewApiModule,
   ReviewCampaignJsonRepo,
@@ -39,10 +38,8 @@ import {
 import { UserApiModule } from '@u7-scl/user/api';
 import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
-import { ModuleApi } from 'dmg-core/app';
 import type { BotConfig } from './config';
 import type { U7BotAppMeta } from './core/u7-bot-app-meta';
-import type { WishApi } from './core/u7-bot-ui-story';
 import { createDmgAppContext, createDmgModules } from './create-dmg-modules';
 
 /**
@@ -50,8 +47,6 @@ import { createDmgAppContext, createDmgModules } from './create-dmg-modules';
  */
 export interface ApiAppBundle {
   apiApp: ApiApp<U7BotAppMeta>;
-  /** клиент модуля wish для stories: адрес — модуль DMG в apiApp */
-  wishApi: WishApi;
   eventBus: EventBus;
   userFacade: UserInProcFacade;
   userRepo: UserJsonRepo;
@@ -221,7 +216,6 @@ export function createApiApp(config: BotConfig, logger: Logger): ApiAppBundle {
 
   return {
     apiApp,
-    wishApi: new ModuleApi(WishModuleDef, apiApp, appLogger),
     eventBus: appResolver.eventBus,
     userFacade,
     userRepo,

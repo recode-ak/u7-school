@@ -12,7 +12,6 @@ import type {
   ProactiveSender,
 } from '@u7-scl/core/ui';
 import { BotPaginator, BotUiStory } from '@u7-scl/core/ui';
-import type { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import {
   type AnyModuleDef,
   type Command,
@@ -21,13 +20,10 @@ import {
   type UseCaseErrorOf,
   UserCaller,
 } from 'dmg-core';
-import { type ModuleApi, Trace } from 'dmg-core/app';
+import { Trace } from 'dmg-core/app';
 import { APP_CODES } from '../shared/app-codes';
 import type { U7BotAppMeta, U7BotUiAppResolve } from './u7-bot-app-meta';
 import type { MenuButton } from './u7-menu';
-
-/** Клиент модуля wish для stories (in-proc, D-49). */
-export type WishApi = ModuleApi<typeof WishModuleDef, User>;
 
 /** Опции постраничного экрана (хелпер U7BotUiStory.pagedScreen). */
 interface PagedScreenOpts<T> {
@@ -157,7 +153,8 @@ export abstract class U7BotUiStory extends BotUiStory<
   // ── Вызов UC модулей DMG ──
 
   /**
-   * Команда модулю DMG от имени актора бота (D-49): отказ — значение `Err`,
+   * Команда модулю DMG от имени актора бота (D-49): адрес — Def модуля,
+   * исполняет `appApi.dispatch` в процессе. Отказ — значение `Err`,
    * story ветвится по `code`, неожиданное — `ucErrorNotify`. Единственное
    * место, где UI строит субъект (`UserCaller` над актором) и след запроса
    * (`Trace.fromRequest`, канал `telegram`, посетитель — `telegramId`).
@@ -167,7 +164,7 @@ export abstract class U7BotUiStory extends BotUiStory<
    * создаётся на каждый вызов с `warn` (ERR-07, caller.md §2 п. 5).
    */
   protected dispatchUc<M extends AnyModuleDef, D extends M['useCases'][number]>(
-    api: ModuleApi<M, User>,
+    module: M,
     command: Command<D>,
     actor: User,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
@@ -176,7 +173,7 @@ export abstract class U7BotUiStory extends BotUiStory<
       (message) =>
         this.logger?.warn(this.dialogPath, message, { uc: command.uc }),
     );
-    return api.dispatch(command, new UserCaller(actor), trace);
+    return this.appApi.dispatch(module, command, new UserCaller(actor), trace);
   }
 
   // ── Постраничные экраны (трек pagination) ──

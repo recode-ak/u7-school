@@ -50,7 +50,7 @@
 ## 4. Сосуществование
 
 - Старые `UseCase`/`EventReaction`/`Job`, `throw*`, Ds работают до миграции своего модуля; паттерны — [legacy.md](./legacy.md).
-- UC legacy — `appApi.execute` по строковому имени (бросает); UC DMG — команда через клиент модуля `ModuleApi` (`Result`, D-49).
+- UC legacy — `appApi.execute` по строковому имени (бросает); UC DMG — команда `appApi.dispatch(moduleDef, …)` (`Result`, D-49).
 - Схемы с `F.timestamp` читают ISO-строку и число, пишут число — данные мигрируют лениво до трека 7.
 
 ## 5. Критерий завершения

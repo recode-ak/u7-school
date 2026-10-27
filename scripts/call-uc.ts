@@ -18,8 +18,8 @@
  *   bun run scripts/call-uc.ts get-current '{"userId":"<uuid>"}'
  *   bun run scripts/call-uc.ts create-course-wish '{"courseId":"<uuid>"}'
  *
- * UC модуля wish — DMG (Ф12): команда через `ModuleApi` (D-49) над той же
- * сборкой DMG, что и в боте (`runners/u7-bot/src/create-dmg-modules.ts`);
+ * UC модуля wish — DMG (Ф12): команда через `ApiApp.dispatch` (D-49) над той
+ * же сборкой DMG, что и в боте (`runners/u7-bot/src/create-dmg-modules.ts`);
  * имя — kebab-case (`create-course-wish`) или имя Def (`createCourseWish`).
  * Отказ — `Err` с кодом в stderr и выход с кодом 1. Лог операций DMG
  * пишется в `data/oplog/`, как у бота.
@@ -66,7 +66,7 @@ import type { UserApiModuleResolver } from '@u7-scl/user/domain';
 import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
 import { type InputOf, UseCaseDef, UserCaller } from 'dmg-core';
-import { ModuleApi, Trace } from 'dmg-core/app';
+import { Trace } from 'dmg-core/app';
 import {
   createDmgAppContext,
   createDmgModules,
@@ -236,10 +236,10 @@ async function main() {
   // ─── Вызов UseCase ────────────────────────────────
   const dmgUc = wishUcDef(ucName);
   if (dmgUc) {
-    const wishApi = new ModuleApi(WishModuleDef, app, appResolver.logger);
     // Вход из командной строки не типизирован — его проверит UC.
     const command = UseCaseDef.commandOf(dmgUc, params as InputOf<WishUc>);
-    const res = await wishApi.dispatch(
+    const res = await app.dispatch(
+      WishModuleDef,
       command,
       new UserCaller(actor),
       Trace.fromRequest({

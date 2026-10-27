@@ -358,7 +358,7 @@ export abstract class BotUiStory<
   }
 
   /**
-   * Отказ UC DMG (`Err` ответа `moduleApi`) — реплика, как `errorNotify`.
+   * Отказ UC DMG (`Err` ответа `appApi.dispatch`) — реплика, как `errorNotify`.
    * Мост: ошибка показывается веткой legacy по `kind` (`toLegacyError`),
    * пока у UI нет презентера ошибок DMG.
    */

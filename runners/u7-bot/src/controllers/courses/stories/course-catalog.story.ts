@@ -14,6 +14,7 @@ import {
   CreateModuleWishUcDef,
   ListUserWishesUcDef,
   WishErrors,
+  WishModuleDef,
 } from '@u7-scl/domain/wish/contract';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
@@ -174,7 +175,7 @@ export class CourseCatalogStory extends U7BotUiStory {
     const modulesInfo = await this.#loadModulesInfo(allModIds);
 
     const wishes = await this.dispatchUc(
-      this.resolve.wishApi,
+      WishModuleDef,
       ListUserWishesUcDef.command({}),
       actor,
     );
@@ -524,7 +525,7 @@ export class CourseCatalogStory extends U7BotUiStory {
     }
 
     const res = await this.dispatchUc(
-      this.resolve.wishApi,
+      WishModuleDef,
       CreateCourseWishUcDef.command({ courseId }),
       actor,
     );
@@ -576,7 +577,7 @@ export class CourseCatalogStory extends U7BotUiStory {
     actor: User,
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
-      this.resolve.wishApi,
+      WishModuleDef,
       CreateModuleWishUcDef.command({ moduleId }),
       actor,
     );
@@ -602,7 +603,7 @@ export class CourseCatalogStory extends U7BotUiStory {
     actor: User,
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
-      this.resolve.wishApi,
+      WishModuleDef,
       CancelWishUcDef.command({ kind: 'course', courseId }),
       actor,
     );
@@ -628,7 +629,7 @@ export class CourseCatalogStory extends U7BotUiStory {
     actor: User,
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
-      this.resolve.wishApi,
+      WishModuleDef,
       CancelWishUcDef.command({ kind: 'module', moduleId }),
       actor,
     );

@@ -30,6 +30,7 @@ import {
 } from '@u7-scl/domain/wish/contract';
 import { Role } from '@u7-scl/user/domain';
 import {
+  type AnyModuleDef,
   type Caller,
   type Command,
   CoreErrors,
@@ -38,11 +39,10 @@ import {
   type Result,
   UserCaller,
 } from 'dmg-core';
-import { type CommandTransport, ModuleApi, type Trace } from 'dmg-core/app';
-import { MemoryLogger } from 'dmg-core/testing';
+import type { Trace } from 'dmg-core/app';
 import { APP_CODES } from '../shared/app-codes';
 import { U7BotController } from './u7-bot-controller';
-import { U7BotUiStory, type WishApi } from './u7-bot-ui-story';
+import { U7BotUiStory } from './u7-bot-ui-story';
 
 /**
  * Заглушка для доступа к protected методу handleError.
@@ -500,11 +500,11 @@ describe('U7BotUiStory — контракт handleCommand', () => {
   });
 });
 
-// ── Вызов UC DMG от имени актора бота: команда через moduleApi (D-49) ──
+// ── Вызов UC DMG от имени актора бота: команда модулю по Def (D-49) ──
 
 describe('U7BotUiStory.dispatchUc', () => {
   type Sent = {
-    module: string;
+    module: AnyModuleDef;
     command: Command;
     caller: Caller;
     trace: Trace;
@@ -513,35 +513,33 @@ describe('U7BotUiStory.dispatchUc', () => {
   class UcStory extends U7BotUiStory {
     readonly name = 'wish';
 
-    constructor(private readonly wishApi: WishApi) {
-      super();
-    }
-
     override handleCallback(): Promise<DialogResponse> {
       throw new Error('Не используется');
     }
 
     list() {
       return this.dispatchUc(
-        this.wishApi,
+        WishModuleDef,
         ListUserWishesUcDef.command({}),
         actor,
       );
     }
   }
 
-  /** Story над wish-клиентом, транспорт которого отвечает `answer`. */
+  /** Story над приложением, `dispatch` которого отвечает `answer`. */
   function makeStory(sent: Sent[], answer: Result<unknown, DomainError>) {
-    const transport: CommandTransport<User> = {
-      dispatch: async (module, command, caller, trace) => {
-        sent.push({ module, command, caller, trace });
-        return answer as never;
-      },
+    const dispatch = async (
+      module: AnyModuleDef,
+      command: Command,
+      caller: Caller,
+      trace: Trace,
+    ) => {
+      sent.push({ module, command, caller, trace });
+      return answer;
     };
-    const story = new UcStory(
-      new ModuleApi(WishModuleDef, transport, new MemoryLogger()),
-    );
+    const story = new UcStory();
     story.init({
+      appApi: { dispatch },
       eventBus: {},
       actorResolver: async () => actor,
     } as never);
@@ -556,7 +554,7 @@ describe('U7BotUiStory.dispatchUc', () => {
 
     const [call] = sent;
     if (call === undefined) throw new Error('Команда не отправлена');
-    expect(call.module).toBe('wish');
+    expect(call.module).toBe(WishModuleDef);
     expect(call.command).toEqual(ListUserWishesUcDef.command({}));
     expect(call.caller).toBeInstanceOf(UserCaller);
     expect((call.caller as UserCaller<User>).user).toBe(actor);
