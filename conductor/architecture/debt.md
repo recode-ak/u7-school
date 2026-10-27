@@ -6,7 +6,7 @@
 
 ## Правила
 
-- ID — `DEBT-<n>` (отдельно от решений `D-NN` в [decisions.md](./decisions.md)); номера не переиспользуются, новый — следующий после максимального, в т.ч. погашенного (последний выданный — DEBT-37).
+- ID — `DEBT-<n>` (отдельно от решений `D-NN` в [decisions.md](./decisions.md)); номера не переиспользуются, новый — следующий после максимального, в т.ч. погашенного (последний выданный — DEBT-38).
 - Место долга помечено в коде маркером `// DEBT-<n>` (для `biome-ignore` — в тексте причины).
 - `bun run arch:check` сверяет маркеры в пакетах (`platform/*`, `domain`, `modules/*`, `authoring/*`) и `scripts/` с записями этого файла в обе стороны.
 - Закрытие = удаление маркеров и записи одним коммитом.
@@ -225,6 +225,12 @@
 - **Причина:** stories получают `Err` от `appApi.dispatch` (D-49) и ветвятся по `code`, а неожиданный отказ показывают через `errorNotify` legacy: `DomainError` → `AppException` (`toLegacyError`, `kind` → legacy-`kind`, текст — `denyMessage` или `label`). Своего презентера ошибок DMG у UI бота нет.
 - **Погашает:** перевод UI бота на манифесты (D-26) или первый трек, которому нужен свой показ ошибок DMG
 - **Критерий снятия:** презентер ошибок DMG в UI бота без `toLegacyError`, маркер удалён
+
+### DEBT-38: `update_id` Telegram не доходит до story — `requestId` без связи с апдейтом
+- **Место:** `platform/core/src/ui/bot/bot-ui-story.ts` (контракт `handleCallback`/`handleMessage`); следствие — `U7BotUiStory.dispatchUc` создаёт `requestId` на каждый вызов с `warn` (ERR-07, TR-21 п. 4)
+- **Причина:** `BotUpdate` и `handle*` ядра бота не несут `update_id`; смена контракта затрагивает все stories. Без него повторная доставка апдейта не узнаётся (DEBT-36), а лог засоряется `warn`.
+- **Погашает:** кандидат [bot-request-id](../roadmap/bot-request-id.md) или трек ui-manifests (D-26)
+- **Критерий снятия:** `requestId` из `update_id` доходит до `dispatchUc`, `warn` не пишется, маркер удалён
 
 ## 5. Инструменты проверки
 

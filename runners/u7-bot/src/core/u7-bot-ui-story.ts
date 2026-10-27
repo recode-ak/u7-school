@@ -161,7 +161,7 @@ export abstract class U7BotUiStory extends BotUiStory<
    *
    * `requestId`: `update_id` Telegram до стори не доходит (контракт
    * `handleCallback`/`handleMessage` ядра его не передаёт), поэтому id
-   * создаётся на каждый вызов с `warn` (ERR-07, caller.md §2 п. 5).
+   * создаётся на каждый вызов с `warn` (ERR-07, caller.md §2 п. 5; DEBT-38).
    */
   protected dispatchUc<M extends AnyModuleDef, D extends M['useCases'][number]>(
     module: M,

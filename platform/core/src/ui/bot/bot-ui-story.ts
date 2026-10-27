@@ -83,6 +83,7 @@ export abstract class BotUiStory<
   }
 
   /** Обработка callback — реализуется в наследниках */
+  // DEBT-38: `update_id` апдейта в контракт не входит — requestId UC без связи с ним.
   abstract handleCallback(
     action: string,
     actor: TActor,
