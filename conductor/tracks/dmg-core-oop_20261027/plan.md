@@ -55,7 +55,8 @@
 - [x] Task: `Violation` — класс с `format()` `8773f36`
 - [x] Task: `ArchChecker(index, layout).check()` вместо `archCheck`/`checkDefs`/`checkFiles`/`describedDefs`; `arch-report` на новом API `4db14eb`
     - `layout` необязателен: без него — только проверки Def (тесты модулей домена, `scripts/arch-check.ts`); `ArchChecker.of(app)` — для `ArchApp`. Внутри — `DefChecker` и `FileChecker` (не экспортируются), проверки — их приватные методы. Документация пакета переведена на новые имена сразу (не ждёт Фазы 7).
-- [ ] Task: Ревью reviewer
+- [x] Task: Ревью reviewer `1d11a97`
+    - Блокеров нет. Исправлено: `GraphBuilder` — id через `DefIndex.id`; `FileChecker.isEntry` читает `this.entry`; lint-фикстура ARC-02. Открыто: фабрика `ArchChecker` для тестов модулей домена; имена в `decisions.md` D-40…D-43; `conductor/architecture` — Фаза 7.
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 ## Фаза 5: Генератор
