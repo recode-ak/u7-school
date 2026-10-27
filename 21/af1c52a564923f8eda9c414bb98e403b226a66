@@ -1,0 +1,5 @@
+Задача: ревью reviewer Фазы 1 (command-dispatch). error нет; warn приняты:
+- ErrorDef.restore проверяет payload схемой (v.is), вне схемы → undefined → restoreResult отдаёт SERVER_INTERNAL (решение Нурболата; warn в лог — moduleApi, Фаза 3).
+- Комментарий к утверждению типа (CODE-03); тест переименован в use-case-def.result.test.ts (CODE-01).
+- Документы: transport.md §1 (serialize/restore, output переживает JSON, uc=completeTask), errors-result.md §2, manifests.md.
+Отчёт — conductor/tracks/command-dispatch_20261027/slices/phase-1.md. check зелёный.
