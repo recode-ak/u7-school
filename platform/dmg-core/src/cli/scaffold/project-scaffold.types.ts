@@ -68,3 +68,12 @@ export type ScaffoldLayoutData = {
   readonly packages: readonly ScaffoldPackage[];
   readonly lint: LintMap;
 };
+
+/** Что нужно `ProjectInit`: аргументы `dmg-core init --profile`. */
+export type InitOptions = {
+  readonly profile: ScaffoldProfile;
+  /** Имя проекта; нет — `name` из package.json или имя каталога. */
+  readonly name?: string;
+  /** Только план, ничего не записывать. */
+  readonly dryRun: boolean;
+};

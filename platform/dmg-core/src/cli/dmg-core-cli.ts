@@ -1,11 +1,15 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { GenError } from '../gen/cli';
 import { GenLayout } from '../gen/layout';
 import { runGen } from '../gen/main';
 import { CliConfig, type CliSettings } from './cli-config';
 import { Delivery } from './delivery';
 import { InstructionsBlock } from './instructions-block';
 import type { PackageSource } from './package-source';
+import { InitArgs } from './scaffold/init-args';
+import { ProjectInit } from './scaffold/project-init';
+import type { InitOptions } from './scaffold/project-scaffold.types';
 
 /** Итог команды: ok — проект согласован с пакетом */
 export interface CliResult {
@@ -22,6 +26,7 @@ interface Prepared {
 /**
  * Команды пакета в проекте:
  *   init         — создать `dmg-core.json` (если нет) и выполнить sync;
+ *   init --profile — каркас проекта (`ProjectInit`), затем sync;
  *   sync         — обновить копии скилов, ролей и вставку в инструкции;
  *   sync --check — сообщить о расхождениях, ничего не меняя;
  *   gen          — создать файлы модуля по раскладке `gen` (без конфига —
@@ -36,13 +41,52 @@ export class DmgCoreCli {
     this.config = new CliConfig(pkg);
   }
 
-  async init(root: string): Promise<CliResult> {
+  /** argv — аргументы после `init`; без `--profile` — прежнее поведение */
+  async init(root: string, argv: readonly string[] = []): Promise<CliResult> {
+    let args: InitArgs;
+    try {
+      args = InitArgs.parse(argv);
+    } catch (error) {
+      return this.failure(error);
+    }
+    if (args.profile !== undefined)
+      return this.scaffold(root, {
+        profile: args.profile,
+        name: args.name,
+        dryRun: args.dryRun,
+      });
     const path = join(root, CliConfig.file);
     if (!(await Bun.file(path).exists())) {
       const defaults = this.config.defaults();
       await writeFile(path, `${JSON.stringify(defaults, null, 2)}\n`);
     }
     return this.sync(root);
+  }
+
+  /** Каркас (без перезаписи), затем sync; dry-run — только план */
+  private async scaffold(
+    root: string,
+    options: InitOptions,
+  ): Promise<CliResult> {
+    let lines: string[];
+    try {
+      lines = await new ProjectInit(this.pkg).run(root, options);
+    } catch (error) {
+      return this.failure(error);
+    }
+    if (options.dryRun) return { ok: true, messages: lines };
+    const synced = await this.sync(root);
+    return {
+      ok: synced.ok,
+      messages: [...lines, ...synced.messages, ProjectInit.next],
+    };
+  }
+
+  /** Ошибка ввода или коллизия (`GenError`) — не ok; прочее — дефект */
+  private failure(error: unknown): CliResult {
+    if (error instanceof GenError)
+      return { ok: false, messages: [`Ошибка: ${error.message}`] };
+    throw error;
   }
 
   async sync(root: string): Promise<CliResult> {
