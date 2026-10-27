@@ -1,0 +1,1 @@
+Задача: Ревью reviewer Фазы 2 (dmg-core-oop). Замечаний error нет; исправлены DOM-05 (docs/rules.md), тест типов Rule.anyOf (rule.test.ts), комментарий allowAll (rule.ts). Решения по warn/info (allowed/denied — утилиты Decision, RuleNode удалён, повтор текстов) — в summary.md. check зелёный.
