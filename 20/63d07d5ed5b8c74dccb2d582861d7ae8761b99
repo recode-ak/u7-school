@@ -1,0 +1,5 @@
+Верификация Фазы 1 (Команда и ответ), трек command-dispatch.
+Автотесты: CI=true bun test — 4127 pass, 0 fail; bun run check — зелёный.
+Ревью reviewer: error нет, warn приняты (slices/phase-1.md).
+Ручная проверка: тесты dmg-core contracts/errors, тесты command и use-case-def.result, diff документов.
+Подтверждение пользователя: «да» (2026-10-27).
