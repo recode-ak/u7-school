@@ -28,7 +28,7 @@ export type {
 export type ReviveSubject<U> = (raw: unknown) => U;
 
 const OperationRefJson = v.object({
-  kind: v.picklist(['useCase', 'eventReaction', 'job']),
+  kind: v.picklist(['useCase', 'eventReaction', 'job', 'app']),
   module: v.string(),
   name: v.string(),
 });

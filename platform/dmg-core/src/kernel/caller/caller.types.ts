@@ -8,11 +8,13 @@ export type Identified = { readonly uuid: string };
 export type CallerKind = 'guest' | 'user' | 'delegate' | 'system';
 
 /**
- * Ссылка на операцию приложения: UC, ER или Job своего или другого модуля.
- * Свой ли модуль — сравнение `module` с модулем вызываемого (D-43).
+ * Ссылка на операцию приложения: UC, ER или Job своего или другого модуля,
+ * либо вход корня сборки (`app`, D-51: `module` — имя приложения, `name` —
+ * имя входа, например резолвер `Caller`). Свой ли модуль — сравнение
+ * `module` с модулем вызываемого (D-43); вызов от приложения всегда чужой.
  */
 export type OperationRef = {
-  readonly kind: 'useCase' | 'eventReaction' | 'job';
+  readonly kind: 'useCase' | 'eventReaction' | 'job' | 'app';
   readonly module: string;
   readonly name: string;
 };

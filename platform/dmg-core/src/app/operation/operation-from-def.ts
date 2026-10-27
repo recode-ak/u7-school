@@ -1,6 +1,9 @@
 import type { AnyAggregateDef } from '#core/domain/aggregate/aggregate-def';
 import type { AnyModuleDef } from '#core/domain/contracts/module-def';
-import type { AnyOperationDef } from '#core/domain/contracts/operation-def.types';
+import type {
+  AnyOperationDef,
+  OperationDmg,
+} from '#core/domain/contracts/operation-def.types';
 import type {
   AnyUseCaseDef,
   InputOf,
@@ -62,7 +65,7 @@ export abstract class OperationFromDef<
     readonly def: D,
     protected readonly resolve: R,
     module: AnyModuleDef,
-    kind: OperationRef['kind'],
+    kind: OperationDmg,
   ) {
     const { list, label } = PLACE[kind];
     const own: readonly AnyOperationDef[] = module[list];

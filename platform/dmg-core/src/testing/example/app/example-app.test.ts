@@ -209,6 +209,28 @@ describe('ExampleApp.callers', () => {
     );
   });
 
+  it('резолвер вызывает users от приложения — в oplog from.kind: app (D-51)', async () => {
+    const { example } = makeApp();
+    await example.callers.resolve(OWNER, REQ);
+
+    const records = readFileSync(join(dir, 'oplog', '2026-10-01.jsonl'), 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line))
+      .filter((record) => record.op === 'getUser');
+
+    expect(records).toEqual([
+      expect.objectContaining({
+        module: 'users',
+        kind: 'useCase',
+        caller: {
+          kind: 'system',
+          from: { kind: 'app', module: 'example-app', name: 'resolveCaller' },
+        },
+      }),
+    ]);
+  });
+
   it('users не подключён — исключение, а не гость', async () => {
     const callers = new ExampleCallerResolver(
       new ApiApp<ExampleUser>(testAppContext().app, []),

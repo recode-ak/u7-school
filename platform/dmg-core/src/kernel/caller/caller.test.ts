@@ -25,6 +25,12 @@ const erRef: OperationRef = {
   module: 'todo',
   name: 'releaseRemovedUserTasks',
 };
+/** Вход корня сборки (D-51): не операция модуля. */
+const appRef: OperationRef = {
+  kind: 'app',
+  module: 'example-app',
+  name: 'resolveCaller',
+};
 
 describe('GuestCaller', () => {
   const guest = new GuestCaller<User>();
@@ -161,6 +167,11 @@ describe('Caller.toJSON / fromJSON — круг через JSON (D-46)', () => {
       type: DelegateCaller,
     },
     { name: 'system', caller: new SystemCaller(erRef), type: SystemCaller },
+    {
+      name: 'system от приложения (D-51)',
+      caller: new SystemCaller<User>(appRef),
+      type: SystemCaller,
+    },
     {
       name: 'system + guest',
       caller: new SystemCaller<User>(ucRef, new GuestCaller()),
@@ -299,6 +310,7 @@ describe('Caller.toJSON / fromJSON — круг через JSON (D-46)', () => {
       { kind: 'user', user: { name: 'без uuid' } },
       { kind: 'delegate', principal: alice, actor: bob },
       { kind: 'system', from: { kind: 'useCase', module: 'wish' } },
+      { kind: 'system', from: { kind: 'module', module: 'wish', name: 'x' } },
     ]) {
       expect(() => Caller.fromJSON(bad)).toThrow(/Caller\.fromJSON/);
     }

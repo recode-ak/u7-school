@@ -59,6 +59,20 @@
 
 **Приёмка:** гейт зелёный; `cd platform/dmg-core && bun run check` зелёный.
 
+## Шаг 4 — `OperationRef.kind: 'app'` (api-author, платформа)
+
+Решение **D-51** в `platform/dmg-core/docs/decisions.md` (Нурболат, 2026-10-27).
+
+**Границы:** `platform/dmg-core/src/kernel/caller/` (тип `OperationRef`, схема JSON вызывающего в `caller.ts`), места, где разбирается `kind` (`grep` по `'eventReaction'`/`OperationRef`: лог операций, сериализация), `src/testing/example/app/example-caller-resolver.ts` (+ тест). Тип `OperationDmg` домена не трогать: `'app'` — не вид операции Def. Документацию не править (D-51 уже записан).
+
+**Что сделать:** `OperationRef.kind` += `'app'`; JSON-схема вызывающего принимает и восстанавливает его; запись в oplog сохраняет; резолвер `ExampleApp` вызывает `users` от `SystemCaller({ kind: 'app', module: 'example-app', name: 'resolveCaller' })`.
+
+**Тесты:** круг JSON `SystemCaller` с `from.kind: 'app'` (туда и обратно); неизвестный `kind` по-прежнему отвергается; запись резолвера в oplog — `from.kind: 'app'`. Red → green.
+
+**Правила:** API-*, ERR-01, CODE-*, TST-*, простые типы.
+
+**Приёмка:** гейт зелёный; `cd platform/dmg-core && bun run check` зелёный.
+
 ## Отчёты
 
 ### Шаг 1 — отчёт автора (api-author, Opus)
@@ -113,3 +127,13 @@
 | CODE-03 | `example-app.ts:36-37` | `clock()` дважды на запись | minor → исправлено |
 | CODE-01 | `example-app.ts:31-32` | `app`/`users` путают | minor → исправлено (`context`, `userRepo`, `taskRepo`) |
 | TST-04 | `example-app.test.ts:144-160` | oplog через побочный `getUser` | minor → исправлено (явный `createTask`) |
+
+### Шаг 4 — отчёт автора (api-author, Opus)
+
+- `OperationRef.kind` += `'app'` (D-51), JSON-схема вызывающего принимает его; конструктор `OperationFromDef` теперь берёт `OperationDmg` домена — операция модуля не может получить вид `'app'`. `OperationRecord.kind` не менялся: вид вызова от приложения в логе — в `caller.from`.
+- Резолвер `ExampleApp` — `SystemCaller({ kind: 'app', module: 'example-app', name: 'resolveCaller' })`.
+- Тесты: круг JSON `SystemCaller` с `from.kind: 'app'`, неизвестный `kind` отвергается, запись резолвера в oplog.
+
+### Шаг 4 — ревью
+
+Diff ~20 строк прод-кода — проверил оркестратор по diff (без субагента): замечаний нет.

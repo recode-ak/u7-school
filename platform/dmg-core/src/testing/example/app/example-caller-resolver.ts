@@ -16,11 +16,10 @@ import type { ExampleUser } from './app-user';
 
 /**
  * Откуда вызов `users` при разборе вызывающего: `getUser` — только для
- * системы, а у `OperationRef` нет вида «вход приложения», поэтому резолвер
- * представляется операцией приложения под своим именем.
+ * системы, резолвер — вход корня сборки (D-51).
  */
 const RESOLVER: OperationRef = {
-  kind: 'useCase',
+  kind: 'app',
   module: 'example-app',
   name: 'resolveCaller',
 };
