@@ -4,7 +4,7 @@
 
 ## Фаза 0: Решение и контракт
 
-- [ ] Task: D-xx в `decisions.md` («Def — типы клиента, команда — исполнение; модуль адресует транспорт, не команда»); `transport.md` §2 и §4 обновить (`uc` без модуля, `moduleApi` на клиенте)
+- [x] Task: D-49 в `decisions.md` («Def — типы клиента, команда — исполнение; модуль адресует транспорт, не команда»); `transport.md` §2 и §4 обновить (`uc` без модуля, `moduleApi` на клиенте) `9f7e822`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 ## Фаза 1: Команда и ответ
