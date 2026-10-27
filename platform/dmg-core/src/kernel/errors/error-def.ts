@@ -1,3 +1,4 @@
+import * as v from 'valibot';
 import { Def, type DefSchemas } from '../def/def';
 import { type Err, err } from '../result/result';
 import type { SerializedError } from '../result/serialized-result.types';
@@ -77,10 +78,17 @@ export class ErrorDef<
   }
 
   /**
-   * Значение из сериализованного payload: тексты и `kind` — из Def. Payload
-   * не проверяется схемой: его собрал `make` на стороне исполнения.
+   * Значение из сериализованного payload: тексты и `kind` — из Def.
+   * Payload вне схемы (другая версия сервиса) — `undefined`: значение
+   * восстановить нельзя. Схема проверяется без преобразований.
    */
-  restore(payload: unknown): DomainError<C, S['kind'], PayloadOf<S>> {
+  restore(
+    payload: unknown,
+  ): DomainError<C, S['kind'], PayloadOf<S>> | undefined {
+    const valid = this.payload
+      ? v.is(this.payload, payload)
+      : payload === undefined;
+    if (!valid) return undefined;
     return {
       code: this.code,
       kind: this.kind,

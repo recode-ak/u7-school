@@ -91,7 +91,9 @@ export class UseCaseDef<
 
   /**
    * Ответ UC из формы транспорта: ошибку восстанавливает Def из `errors` UC
-   * или базовых ошибок ядра. Код вне контракта — `SERVER_INTERNAL`.
+   * или базовых ошибок ядра. Код или payload вне контракта (другая версия
+   * сервиса) — `SERVER_INTERNAL`; сообщить о расхождении — дело клиента
+   * транспорта (ядро не логирует).
    */
   restoreResult(
     serialized: SerializedResult,
@@ -104,9 +106,9 @@ export class UseCaseDef<
     const def = [...this.errors, ...Object.values(CoreErrors)].find(
       (e) => e.code === code,
     );
-    const error = def
-      ? def.restore(payload)
-      : CoreErrors.SERVER_INTERNAL.make();
+    const error = def?.restore(payload) ?? CoreErrors.SERVER_INTERNAL.make();
+    // Def найден среди `errors` UC и ошибок ядра — ровно `UseCaseErrorOf`;
+    // `find` по union списков тип кода не сужает.
     return err(error as UseCaseErrorOf<UseCaseDef<S>>);
   }
 

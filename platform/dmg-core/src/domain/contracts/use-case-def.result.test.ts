@@ -75,6 +75,17 @@ describe('UseCaseDef: сериализация ответа', () => {
     );
   });
 
+  it('payload не проходит схему ошибки — SERVER_INTERNAL', () => {
+    const wire: SerializedResult = {
+      ok: false,
+      error: { code: 'ACCESS_DENIED', kind: 'access', payload: { rule: 1 } },
+    };
+
+    expect(CompleteTaskUcDef.restoreResult(wire)).toEqual(
+      CoreErrors.SERVER_INTERNAL.err(),
+    );
+  });
+
   it('восстановленный Result типизирован по Def', () => {
     const restored = CompleteTaskUcDef.restoreResult({ ok: true, value: {} });
 

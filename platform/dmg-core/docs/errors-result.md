@@ -32,6 +32,7 @@
 - Агрегат объявляет ошибки группой `ErrorDef.define`; UC и фасад **ссылаются** на них, результат Ar возвращается как есть.
 - Ошибки зависимостей — по ссылке через контракт фасада; перевод — только при смене смысла (см. [domain-modeling.md](./domain-modeling.md) §4).
 - Базовые (`UNAUTHORIZED`, `INPUT_VALIDATION`, `ACCESS_DENIED`, `OUTPUT_VALIDATION`, `VERSION_CONFLICT`, `SERVER_INTERNAL`) подмешивает ядро.
+- **Сериализация** (D-49, [transport.md](./transport.md) §1): в ответе транспорта только `code`, `kind`, `payload` (`ErrorDef.serialize`); тексты клиент восстанавливает по Def (`ErrorDef.restore`, `UseCaseDef.restoreResult`). Код или payload вне контракта UC (другая версия сервиса) восстанавливаются как `SERVER_INTERNAL`, о расхождении сообщает клиент транспорта (`moduleApi`).
 
 ## 3. Исполнение UC (`handle`)
 

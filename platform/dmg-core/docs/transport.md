@@ -12,6 +12,8 @@
   { "ok": true, "value": { } }
   { "ok": false, "error": { "code": "TASK_ALREADY_DONE", "kind": "conflict", "payload": { } } }
   ```
+- Сериализует и восстанавливает ответ Def UC: `serializeResult` / `restoreResult`; ошибка — без `label`/`description`, их клиент берёт из Def ([errors-result.md](./errors-result.md) §2). Код или payload вне контракта UC → `SERVER_INTERNAL`.
+- **Выход UC переживает JSON без потерь:** только простые данные (время — `Timestamp`-число, без `Date`, `Map`, `undefined` в значениях). Клиент выход повторно схемой не проверяет: схема с преобразованиями второй раз не пройдёт.
 - Агрегаты передаются **снапшотом**; клиент восстанавливает их в `ReadonlyAr` (домен изоморфный: чистый и синхронный пакет работает и на сервере, и в клиенте).
 - Маппинг `kind` → представление транспорта — **только в адаптере**, ошибка о нём не знает.
 
@@ -19,7 +21,7 @@
 
 - Всегда `POST /api/<module>` с телом JSON-команды:
   ```json
-  { "uc": "complete-task", "input": { }, "meta": { "requestId": "…", "version": 1 } }
+  { "uc": "completeTask", "input": { }, "meta": { "requestId": "…", "version": 1 } }
   ```
 - Команда — простые данные (D-49): `uc` — `name` Def UC, имени модуля в ней нет. Клиент собирает её из Def: `ucDef.command(input)` → `Command<D>`.
 - `meta` — расширение без смены протокола: версионирование, трассировка, идемпотентность.

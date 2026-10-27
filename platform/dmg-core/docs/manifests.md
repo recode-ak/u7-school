@@ -14,7 +14,7 @@
 | `ErrorDef.define` | domain | группа ошибок агрегата (словарь `ErrorDef`): `code`, `kind`, `label`, `description`, схема payload |
 | `PolicyDef.define` / `Rule.of` | domain | вопросы «можно ли?» → правила над субъектом: именованные (`Rule.of`, `Rule.hasRole`) с `label` и `denyMessage`, композиция `Rule.allOf`/`Rule.anyOf`, явное `allowAll` |
 | `RulesDef.define` / `DomainRuleDef.define` | domain | доменные правила без субъекта (D-40): `name`, `label`, `description`, `error` (ErrorDef своей группы), `check(ctx) → Result` |
-| `UseCaseDef.define` | domain (контракт) | `type` (command/query), агрегат, `policy`, `rules` (доменные правила; их ошибки — в `errors`), `callers` ([caller.md](./caller.md)), `calls` (Def UC других модулей с `'system'` в `callers`, D-42/D-43), `input`, `output`, `errors`, `emits` |
+| `UseCaseDef.define` | domain (контракт) | `type` (command/query), агрегат, `policy`, `rules` (доменные правила; их ошибки — в `errors`), `callers` ([caller.md](./caller.md)), `calls` (Def UC других модулей с `'system'` в `callers`, D-42/D-43), `input`, `output`, `errors`, `emits`. Клиенту: `command(input)` — команда (D-49), `serializeResult`/`restoreResult` — ответ для транспорта |
 | `EventReactionDef.define` | domain (контракт) | `on` (события), `touches` (агрегаты), `calls` (Def UC других модулей, D-43), `emits` |
 | `JobDef.define` | domain (контракт) | `schedule`, `scans`, `calls` (Def UC других модулей, D-43), `emits` |
 

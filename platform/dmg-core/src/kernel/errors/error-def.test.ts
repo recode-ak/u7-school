@@ -108,4 +108,16 @@ describe('ErrorDef: сериализация значения', () => {
 
     expect(restored).toEqual(error);
   });
+
+  it('restore — payload не проходит схему: undefined', () => {
+    expect(TodoErrors.NOT_FOUND.restore({ todoId: 1 })).toBeUndefined();
+    expect(TodoErrors.NOT_FOUND.restore(undefined)).toBeUndefined();
+  });
+
+  it('restore — payload у ошибки без схемы: undefined', () => {
+    expect(TodoErrors.ALREADY_DONE.restore({ any: 1 })).toBeUndefined();
+    expect(TodoErrors.ALREADY_DONE.restore(undefined)).toEqual(
+      TodoErrors.ALREADY_DONE.make(),
+    );
+  });
 });
