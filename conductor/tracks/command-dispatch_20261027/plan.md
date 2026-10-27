@@ -19,7 +19,7 @@
 - [x] Task: `ModuleFromDef`: поиск UC по имени вместо `Map` по ссылке на Def; `dispatch(command, caller, trace)`; неизвестный `uc` → `Err` `OPERATION_NOT_FOUND` (базовая ошибка ядра) `75de786`
 - [x] Task: `apiApp`: выбор `apiModule` по адресу транспорта, неизвестный модуль → `Err` `bcadc01`
 - [x] Task: `ModuleFacade` (D-43) — через команды, типизированный сахар поверх; сборка команды в обобщённом коде — в одном месте с `UseCaseDef.command` (ревью Ф1: `command` исключён из `AnyUseCaseDef`) `f993bf6`
-- [ ] Task: Гайды facade, module
+- [x] Task: Гайды facade, module `78e745e`
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
