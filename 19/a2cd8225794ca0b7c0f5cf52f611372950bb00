@@ -1,0 +1,1 @@
+Задача: ревью reviewer (Фаза 1). Замечаний error нет; warning/minor исправлены (см. summary.md трека, раздел «Фаза 1: ревью»). Изменены: aggregate-def.ts, domain-rule-def.types.ts, rules-def.types.ts, define-errors.ts, normalize.ts, def-prototype.fixture.ts, error-def.test.ts, domain-rule-def.test.ts, manifests.md, decisions.md. check зелёный, 4024 pass.
