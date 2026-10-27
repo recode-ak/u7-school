@@ -14,14 +14,14 @@
 - [x] Task: Ревью reviewer `21af1c5`
 - [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md) `2063d07`
 
-## Фаза 2: Исполнение
+## Фаза 2: Исполнение [checkpoint: ac0ac06]
 
 - [x] Task: `ModuleFromDef`: поиск UC по имени вместо `Map` по ссылке на Def; `dispatch(command, caller, trace)`; неизвестный `uc` → `Err` `OPERATION_NOT_FOUND` (базовая ошибка ядра) `75de786`
 - [x] Task: `apiApp`: выбор `apiModule` по адресу транспорта, неизвестный модуль → `Err` `bcadc01`
 - [x] Task: `ModuleFacade` (D-43) — через команды, типизированный сахар поверх; сборка команды в обобщённом коде — в одном месте с `UseCaseDef.command` (ревью Ф1: `command` исключён из `AnyUseCaseDef`) `f993bf6`
 - [x] Task: Гайды facade, module `78e745e`
 - [x] Task: Ревью reviewer `ba32277`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md) `ac0ac06`
 
 ## Фаза 3: Клиент и потребители
 
