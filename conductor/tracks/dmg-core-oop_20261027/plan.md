@@ -75,8 +75,8 @@
     - `VersionedRepository<A>`: `save` под `Lock` — `stored(uuid)` → сверка → `write(ar)`; наследник реализует два метода. `StoredRecord` — с индексом прочих полей (legacy-запись без `version`). JSON-`write` перечитывает файл под тем же замком. Шаблон `gen aggregate` — на базе.
 - [x] Task: `MemoryLogger`, `MemoryBus` вместо `memoryLogger`, `memoryBus`, `recordingBus`; `testAppContext` на них `3ada255`
     - `recordingBus` → `RecordingBus` (только запоминает, подписка no-op), `MemoryBus extends RecordingBus` (ещё и доставляет): шина `testAppContext` по-прежнему не доставляет — иначе ER сработали бы в тестах, где их не ждут.
-- [~] Task: Гайд repo, `docs/testing.md`
-- [ ] Task: Ревью reviewer
+- [x] Task: Гайд repo, `docs/testing.md` `9b7758b`
+- [~] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
 ## Фаза 7: Перевод потребителей и документация
