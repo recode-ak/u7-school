@@ -26,6 +26,6 @@
 ## Фаза 3: Клиент и потребители
 
 - [x] Task: In-proc `moduleApi` (адрес модуля + `dispatch(ucDef.command(input))` → типизированный `Result`); расхождение ответа с контрактом (`restoreResult` → `SERVER_INTERNAL`) — `warn` в лог с исходным `code` (ERR-07, ревью Ф1) `0a9c3f3`
-- [ ] Task: Бот-истории `runners/u7-bot` и CLI на `moduleApi`; в раннерах нет `handle(def, …)`
+- [x] Task: Бот-истории `runners/u7-bot` и CLI на `moduleApi`; в раннерах нет `handle(def, …)` `19b63bc`
 - [ ] Task: Финал: гейт качества (workflow) — полный `CI=true bun test`, `tsc`, `biome`, `arch:check`, триаж в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
