@@ -19,7 +19,7 @@
 ## 3. Образец
 
 - [task.repo.ts](../../src/testing/example/app/todo/task/task.repo.ts): `Repository<TaskAr>` и выборки `find*` — вход и выход `TaskAr`, `undefined` при отсутствии; `Result` в порте нет — `save` бросает `VersionConflict`, UoW превращает его в `VERSION_CONFLICT`.
-- [task.json-repo.ts](../../src/testing/example/app/todo/infra/task.json-repo.ts): `aggregate = TaskArDef`, `createLock`, `assertVersion(aggregate, ar, stored)`, запись `ar.snapshot()`; разбор через `TaskArDef.state`.
+- [task.json-repo.ts](../../src/testing/example/app/todo/infra/task.json-repo.ts): `aggregate = TaskArDef`, `Lock`, `assertVersion(aggregate, ar, stored)`, запись `ar.snapshot()`; разбор через `TaskArDef.state`.
 - [task.json-repo.test.ts](../../src/testing/example/app/todo/infra/task.json-repo.test.ts): round trip, конфликт версии, параллельные записи, каждая выборка (`findActiveByParticipant` — без дублей).
 - [task-release.dcs.ts](../../src/testing/example/todo/task-release.dcs.ts), [task-release.types.ts](../../src/testing/example/todo/task-release.types.ts) и [тест](../../src/testing/example/todo/task-release.dcs.test.ts): DCS над несколькими задачами — свои в архив, назначенные возвращаются владельцам; решает каждый Ar, выборке вызывающего сервис не верит; повтор ничего не меняет.
 

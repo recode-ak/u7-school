@@ -59,7 +59,7 @@ export {
   type ReactionEnvelopeOf,
   ReactionFromDef,
 } from './reaction/reaction-from-def';
-export { createLock, type Lock } from './uow/lock';
+export { Lock } from './uow/lock';
 export {
   assertVersion,
   type Repository,

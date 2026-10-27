@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { createLock } from '#core/app/uow/lock';
+import { Lock } from '#core/app/uow/lock';
 import { assertVersion } from '#core/app/uow/repository';
 import { TaskAr, TaskArDef } from '#core/testing/example/todo/index';
 import { TaskState } from '#core/testing/example/todo/state';
@@ -14,7 +14,7 @@ const Rows = v.array(TaskState);
  */
 export class TaskJsonRepo implements TaskRepo {
   readonly aggregate = TaskArDef;
-  private readonly lock = createLock();
+  private readonly lock = new Lock();
 
   constructor(private readonly filePath: string) {}
 
@@ -40,7 +40,7 @@ export class TaskJsonRepo implements TaskRepo {
   }
 
   save(ar: TaskAr): Promise<void> {
-    return this.lock(async () => {
+    return this.lock.run(async () => {
       const rows = await this.rows();
       const stored = rows.find((r) => r.uuid === ar.uuid);
       assertVersion(this.aggregate, ar, stored);

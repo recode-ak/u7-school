@@ -1,6 +1,6 @@
 import type { WishState, WishStatus, WishTargetVo } from '@u7-scl/domain/wish';
 import { WishAr, WishArDef } from '@u7-scl/domain/wish';
-import { assertVersion, createLock } from 'dmg-core/app';
+import { assertVersion, Lock } from 'dmg-core/app';
 import * as v from 'valibot';
 import type { WishRepo } from '../wish/wish.repo';
 
@@ -29,7 +29,7 @@ function isSameTarget(a: WishTargetVo, b: WishTargetVo): boolean {
  */
 export class WishJsonRepo implements WishRepo {
   readonly aggregate = WishArDef;
-  private readonly lock = createLock();
+  private readonly lock = new Lock();
 
   constructor(private readonly filePath: string) {}
 
@@ -77,7 +77,7 @@ export class WishJsonRepo implements WishRepo {
   }
 
   save(ar: WishAr): Promise<void> {
-    return this.lock(async () => {
+    return this.lock.run(async () => {
       const rows = await this.rows();
       const stored = rows.find((r) => r.uuid === ar.uuid);
       assertVersion(this.aggregate, ar, stored);

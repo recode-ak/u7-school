@@ -25,7 +25,7 @@ export type ${P}Repo = Repository<${P}Ar> & {
 
   const jsonRepoSrc = `${sortImports([
     `import { ${P}Ar, ${P}ArDef } from '${domain('infra')}';`,
-    "import { assertVersion, createLock } from 'dmg-core/app';",
+    "import { assertVersion, Lock } from 'dmg-core/app';",
     "import * as v from 'valibot';",
     `import type { ${P}Repo } from '../${a}/${a}.repo';`,
   ])}
@@ -39,7 +39,7 @@ const Rows = v.array(${P}ArDef.state);
  */
 export class ${P}JsonRepo implements ${P}Repo {
   readonly aggregate = ${P}ArDef;
-  private readonly lock = createLock();
+  private readonly lock = new Lock();
 
   constructor(private readonly filePath: string) {}
 
@@ -49,7 +49,7 @@ export class ${P}JsonRepo implements ${P}Repo {
   }
 
   save(ar: ${P}Ar): Promise<void> {
-    return this.lock(async () => {
+    return this.lock.run(async () => {
       const rows = await this.rows();
       const stored = rows.find((r) => r.uuid === ar.uuid);
       assertVersion(this.aggregate, ar, stored);

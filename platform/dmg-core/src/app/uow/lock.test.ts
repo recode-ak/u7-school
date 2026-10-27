@@ -1,14 +1,14 @@
 import { describe, expect, test } from 'bun:test';
-import { createLock } from './lock';
+import { Lock } from './lock';
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 1));
 
-describe('createLock', () => {
+describe('Lock', () => {
   test('задачи выполняются по одной в порядке вызова', async () => {
-    const lock = createLock();
+    const lock = new Lock();
     const log: string[] = [];
     const task = (name: string) =>
-      lock(async () => {
+      lock.run(async () => {
         log.push(`${name}:start`);
         await tick();
         log.push(`${name}:end`);
@@ -19,11 +19,11 @@ describe('createLock', () => {
   });
 
   test('сбой задачи не блокирует следующие', async () => {
-    const lock = createLock();
-    const failed = lock(async () => {
+    const lock = new Lock();
+    const failed = lock.run(async () => {
       throw new Error('диск недоступен');
     });
     await expect(failed).rejects.toThrow('диск недоступен');
-    expect(await lock(async () => 'ok')).toBe('ok');
+    expect(await lock.run(async () => 'ok')).toBe('ok');
   });
 });
