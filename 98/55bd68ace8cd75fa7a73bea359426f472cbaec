@@ -1,0 +1,2 @@
+Задача: Гайд policy (Фаза 2, dmg-core-oop).
+Docs: guides/policy.md (новый §2 «Правила Rule», перенумерация), manifests.md (строка DSL PolicyDef.define / Rule.of), layers.md. Образец src/testing/example: task.policy.ts на PolicyDef.define/Rule.*, allowAll в UC — из policy/rule. Шаблон gen/kinds/aggregate.ts и ожидание в aggregate.test.ts. check зелёный.
