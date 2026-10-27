@@ -1,0 +1,4 @@
+Верификация Фазы 3 (command-dispatch).
+Автотесты: CI=true bun test — 4146 pass, 0 fail; bun run check зелёный (tsc, biome 0 ошибок / 56 предупреждений как до трека, arch:check чисто).
+Ручная проверка (Нурболат): bun run dev:fixtures — каталог курса, «Хочу пройти курс», повтор (WISH_ALREADY_EXISTS), отмена и повторная отмена (WISH_NOT_FOUND); warn о requestId на вызов — ожидаемо (TR-21). Подтверждено пользователем.
+Состав: ModuleApi (wire-клиент), ApiApp.dispatch(moduleDef, …), бот и CLI на dispatch, удалён вход по Def, DEBT-37.
