@@ -1,0 +1,2 @@
+Задача: гайды facade, module (Фаза 2, command-dispatch).
+Изменения: guides/facade.md, guides/module.md — вход через dispatch команды, FacadeModule, commandOf, OPERATION_NOT_FOUND; use-case.md, rules.md (API-04), caller.md, layers.md — ссылки на ModuleFromDef.handle заменены на dispatch. D-43 в decisions.md не правился: историческая запись, уточнена D-49.
