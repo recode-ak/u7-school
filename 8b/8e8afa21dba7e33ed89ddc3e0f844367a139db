@@ -1,0 +1,3 @@
+Задача: ModuleDef (Фаза 3, dmg-core-oop).
+Изменения: класс ModuleDef<S> extends Def (dmg module; external: boolean из ?? false; dependsOn/aggregates/useCases/reactions/jobs — литеральные типы спеки; normalize()); типы в module-def.types.ts (ModuleSpec, AnyModuleDef структурный, NormalizedModule переехал из graph/normalize.ts). defineModule — обёртка до Фазы 7. normalize.ts: case module → def.normalize(), хелпер texts и тип Texts удалены; described-defs: модуль через m.describe(), хелпер add удалён. index.ts — экспорт класса.
+Файлы: domain/contracts/module-def{,.types,.test}.ts, define-module.ts, graph/normalize.ts, arch/described-defs.ts, index.ts. Проверки: check, arch:check — зелёные.
