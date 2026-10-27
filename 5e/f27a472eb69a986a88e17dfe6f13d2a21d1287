@@ -1,0 +1,5 @@
+Задача: Профиль monorepo (Фаза 2, трек dmg-core-standalone_20261027).
+Сделано: ScaffoldProfile 'single'|'monorepo'; ScaffoldLayout.of(profile, name) — каталоги, спецификаторы импортов, tsconfig, gen (domain/src/{m}, modules/{m}/src, @<scope>/domain/{m}), workspaces, пакеты domain/app/runners/cli; SingleSources -> AppSources (параметр — раскладка); LintMap.of(LintDirs) -> single/monorepo, в monorepo ARC-02 запрещает выход домена в app/runners/modules; e2e обоих профилей и негативный e2e карты; engines bun >=1.3.1.
+Файлы: platform/dmg-core/src/cli/scaffold/{scaffold-layout.ts, app-sources.ts, project-files.ts, project-scaffold.ts, project-scaffold.types.ts, lint-map.ts, lint-map.types.ts, *.test.ts}, platform/dmg-core/package.json, README.md.
+Решения Нурболата: scope из имени, корневой tsconfig + extends, app/ и runners/cli, engines >=1.3.1.
+Ревью: error нет. check проекта 4318 pass.
