@@ -1,0 +1,3 @@
+Задача: ModuleFromDef — dispatch по имени UC (Фаза 2, command-dispatch).
+Изменения: карта реализаций UC по name; dispatch(command, caller, trace); неизвестный uc → OPERATION_NOT_FOUND { module, uc } (решение Нурболата: один код, базовая ошибка ядра). handle(def) сохранён до перевода фасадов (задача 3) и раннеров (Фаза 3).
+Файлы: src/app/module/module-from-def.ts(+test), src/kernel/errors/core-errors.ts(+test), use-case-def.result.test.ts (лишний импорт), docs/errors-result.md, docs/transport.md, docs/decisions.md.
