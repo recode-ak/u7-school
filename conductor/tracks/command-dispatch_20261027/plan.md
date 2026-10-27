@@ -20,7 +20,7 @@
 - [x] Task: `apiApp`: выбор `apiModule` по адресу транспорта, неизвестный модуль → `Err` `bcadc01`
 - [x] Task: `ModuleFacade` (D-43) — через команды, типизированный сахар поверх; сборка команды в обобщённом коде — в одном месте с `UseCaseDef.command` (ревью Ф1: `command` исключён из `AnyUseCaseDef`) `f993bf6`
 - [x] Task: Гайды facade, module `78e745e`
-- [ ] Task: Ревью reviewer
+- [x] Task: Ревью reviewer `ba32277`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Клиент и потребители
