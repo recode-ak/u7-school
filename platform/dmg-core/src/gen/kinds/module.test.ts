@@ -23,10 +23,10 @@ test('паспорт, контракт, публичный API и тест — �
   for (const f of plan.files) expect(f.content).not.toContain('acade');
 });
 
-test('паспорт: defineModule с маркерами для Def', () => {
+test('паспорт: ModuleDef с маркерами для Def', () => {
   const src = file('stream.module.ts');
-  expect(src).toContain("import { defineModule } from 'dmg-core';");
-  expect(src).toContain('export const StreamModuleDef = defineModule({');
+  expect(src).toContain("import { ModuleDef } from 'dmg-core';");
+  expect(src).toContain('export const StreamModuleDef = ModuleDef.define({');
   expect(src).toContain("name: 'stream'");
   for (const m of ['imports', 'aggregates', 'useCases', 'reactions', 'jobs']) {
     expect(src).toContain(`// gen:defs:${m}`);

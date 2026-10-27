@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { defineUseCase } from '#core/domain/contracts/define-use-case';
+import { UseCaseDef } from '#core/domain/contracts/use-case-def';
 import { TaskArDef } from '../task.ar';
 import { TaskErrors } from '../task.errors';
 import { TaskPolicy } from '../task.policy';
@@ -10,7 +10,7 @@ import { TaskState } from '../task.state';
  * системой (через фасад todo), выход — state агрегата; вызывающий сам
  * собирает из него `ReadonlyAr<TaskAr>` (`TaskAr.readonly`).
  */
-export const GetTaskUcDef = defineUseCase({
+export const GetTaskUcDef = UseCaseDef.define({
   name: 'getTask',
   label: 'Задача',
   description:

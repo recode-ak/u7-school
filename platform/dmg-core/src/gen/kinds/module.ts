@@ -12,10 +12,10 @@ export function planDomainModule(args: GenArgs): GenPlan {
   const P = toPascal(m);
   const dir = args.layout.domainDir(m);
 
-  const moduleSrc = `import { defineModule } from 'dmg-core';
+  const moduleSrc = `import { ModuleDef } from 'dmg-core';
 // gen:defs:imports
 
-export const ${P}ModuleDef = defineModule({
+export const ${P}ModuleDef = ModuleDef.define({
   name: '${m}',
   label: 'TODO: название модуля',
   description: 'TODO: что делает модуль',

@@ -36,12 +36,12 @@ function contract(c: Ctx): string {
   const camel = toCamel(c.name);
   switch (c.kind) {
     case 'uc':
-      return `import { allowAll, defineUseCase } from 'dmg-core';
+      return `import { allowAll, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { ${A}ArDef } from '../${c.a}.ar';
 import { ${A}Events } from '../${c.a}.events';
 
-export const ${c.defName} = defineUseCase({
+export const ${c.defName} = UseCaseDef.define({
   name: '${camel}',
   label: 'TODO: название операции',
   description: 'TODO: что делает операция',
@@ -56,11 +56,11 @@ export const ${c.defName} = defineUseCase({
 });
 `;
     case 'er':
-      return `import { defineEventReaction } from 'dmg-core';
+      return `import { EventReactionDef } from 'dmg-core';
 import { ${A}ArDef } from '../${c.a}.ar';
 import { ${A}Events } from '../${c.a}.events';
 
-export const ${c.defName} = defineEventReaction({
+export const ${c.defName} = EventReactionDef.define({
   name: '${camel}',
   label: 'TODO: название реакции',
   description: 'TODO: на что и как реагирует',
@@ -70,12 +70,12 @@ export const ${c.defName} = defineEventReaction({
 });
 `;
     case 'job':
-      return `import { defineJob } from 'dmg-core';
+      return `import { JobDef } from 'dmg-core';
 import { ${A}ArDef } from '../${c.a}.ar';
 
 export const ${toUpperSnake(c.name)}_HOUR = 3;
 
-export const ${c.defName} = defineJob({
+export const ${c.defName} = JobDef.define({
   name: '${camel}',
   label: 'TODO: название задания',
   description: 'TODO: что делает задание',

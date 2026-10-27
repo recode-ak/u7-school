@@ -9,8 +9,8 @@ import { ModuleFacades } from '#core/app/facade/module-facades';
 import type { UnitOfWork } from '#core/app/uow/unit-of-work';
 import { UseCaseFromDef } from '#core/app/use-case/use-case-from-def';
 import { defineAggregate } from '#core/domain/aggregate/define-aggregate';
-import { defineModule } from '#core/domain/contracts/define-module';
-import { defineUseCase } from '#core/domain/contracts/define-use-case';
+import { ModuleDef } from '#core/domain/contracts/module-def';
+import { UseCaseDef } from '#core/domain/contracts/use-case-def';
 import { allowAll } from '#core/domain/policy/policy';
 import { type Caller, UserCaller } from '#core/kernel/caller/caller';
 import { BaseEntityFields, F } from '#core/kernel/fields/fields';
@@ -58,11 +58,14 @@ const showTaskSpec = {
   errors: [TaskErrors.NOT_FOUND],
 } as const;
 
-const ShowTaskUcDef = defineUseCase({ ...showTaskSpec, calls: [GetTaskUcDef] });
+const ShowTaskUcDef = UseCaseDef.define({
+  ...showTaskSpec,
+  calls: [GetTaskUcDef],
+});
 /** Тот же UC, но `getTask` в `calls` не объявлен — вызов не компилируется. */
-const SneakyUcDef = defineUseCase({ ...showTaskSpec, name: 'sneaky' });
+const SneakyUcDef = UseCaseDef.define({ ...showTaskSpec, name: 'sneaky' });
 
-const DigestModuleDef = defineModule({
+const DigestModuleDef = ModuleDef.define({
   name: 'digest',
   label: 'Сводки',
   description: 'Модуль-потребитель фасада todo.',

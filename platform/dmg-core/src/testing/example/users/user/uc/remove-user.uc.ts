@@ -1,12 +1,12 @@
 import * as v from 'valibot';
-import { defineUseCase } from '#core/domain/contracts/define-use-case';
+import { UseCaseDef } from '#core/domain/contracts/use-case-def';
 import { allowAll } from '#core/domain/policy/rule';
 import { UserArDef } from '../user.ar';
 import { UserErrors } from '../user.errors';
 import { UserEvents } from '../user.events';
 import { UserState } from '../user.state';
 
-export const RemoveUserUcDef = defineUseCase({
+export const RemoveUserUcDef = UseCaseDef.define({
   name: 'removeUser',
   label: 'Удалить пользователя',
   description: 'Удаляет учётную запись; задачи пользователя уходят в архив.',

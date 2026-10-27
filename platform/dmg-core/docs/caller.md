@@ -49,5 +49,5 @@ type PersonCaller<U> = GuestCaller<U> | UserCaller<U> | DelegateCaller<U>;
 ## 4. Связанные файлы
 
 - [decisions.md](./decisions.md) — D-43
-- [manifests.md](./manifests.md) — поле `callers` в `defineUseCase`
+- [manifests.md](./manifests.md) — поле `callers` в `UseCaseDef.define`
 - [errors-result.md](./errors-result.md) — `UNAUTHORIZED`, `ACCESS_DENIED`

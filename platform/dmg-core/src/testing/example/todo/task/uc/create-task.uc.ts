@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { defineUseCase } from '#core/domain/contracts/define-use-case';
+import { UseCaseDef } from '#core/domain/contracts/use-case-def';
 import { allowAll } from '#core/domain/policy/rule';
 import { TaskArDef } from '../task.ar';
 import { TaskErrors } from '../task.errors';
@@ -7,7 +7,7 @@ import { TaskEvents } from '../task.events';
 import { TaskRules } from '../task.rules';
 import { TaskState } from '../task.state';
 
-export const CreateTaskUcDef = defineUseCase({
+export const CreateTaskUcDef = UseCaseDef.define({
   name: 'createTask',
   label: 'Создать задачу',
   description: 'Добавляет открытую задачу в список вызывающего.',

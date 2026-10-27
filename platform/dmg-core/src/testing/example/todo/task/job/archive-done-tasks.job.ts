@@ -1,8 +1,8 @@
-import { defineJob } from '#core/domain/contracts/define-job';
+import { JobDef } from '#core/domain/contracts/job-def';
 import { TaskArDef } from '../task.ar';
 import { TaskEvents } from '../task.events';
 
-export const ArchiveDoneTasksJobDef = defineJob({
+export const ArchiveDoneTasksJobDef = JobDef.define({
   name: 'archiveDoneTasks',
   label: 'Архивировать выполненные задачи',
   description: 'Раз в сутки убирает выполненные задачи в архив.',

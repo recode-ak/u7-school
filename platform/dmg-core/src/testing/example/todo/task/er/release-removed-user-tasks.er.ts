@@ -1,4 +1,4 @@
-import { defineEventReaction } from '#core/domain/contracts/define-event-reaction';
+import { EventReactionDef } from '#core/domain/contracts/event-reaction-def';
 import { UserEvents } from '#core/testing/example/users/contract';
 import { TaskArDef } from '../task.ar';
 import { TaskEvents } from '../task.events';
@@ -8,7 +8,7 @@ import { TaskEvents } from '../task.events';
  * Что делать с задачами, решает DCS `TaskReleaseDcs`: батч по нескольким
  * задачам, ER только загружает, отдаёт домену и регистрирует изменённые.
  */
-export const ReleaseRemovedUserTasksErDef = defineEventReaction({
+export const ReleaseRemovedUserTasksErDef = EventReactionDef.define({
   name: 'releaseRemovedUserTasks',
   label: 'Освободить задачи удалённого пользователя',
   description:

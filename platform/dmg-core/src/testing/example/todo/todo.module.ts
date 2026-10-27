@@ -1,4 +1,4 @@
-import { defineModule } from '#core/domain/contracts/define-module';
+import { ModuleDef } from '#core/domain/contracts/module-def';
 import { UsersModuleDef } from '#core/testing/example/users/contract';
 import { ReleaseRemovedUserTasksErDef } from './task/er/release-removed-user-tasks.er';
 import { ArchiveDoneTasksJobDef } from './task/job/archive-done-tasks.job';
@@ -10,7 +10,7 @@ import { GetTaskUcDef } from './task/uc/get-task.uc';
 import { ListTasksUcDef } from './task/uc/list-tasks.uc';
 
 /** Паспорт модуля todo; зависимость — из контракта `users` (ARC-04, D-45). */
-export const TodoModuleDef = defineModule({
+export const TodoModuleDef = ModuleDef.define({
   name: 'todo',
   label: 'Задачи',
   description: 'Учебный модуль DMG: личный список дел. Эталон для тестов core.',

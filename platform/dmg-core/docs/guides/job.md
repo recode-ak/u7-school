@@ -1,6 +1,6 @@
 # Job — гайд
 
-**Назначение:** периодическая операция модуля — контракт `<N>JobDef = defineJob(...)` (`<domain>/<m>/<a>/job/<n>.job.ts`) и реализация `<N>Job extends JobFromDef` (`<app>/<m>/<a>/job/<n>.job.ts`).
+**Назначение:** периодическая операция модуля — контракт `<N>JobDef = JobDef.define(...)` (`<domain>/<m>/<a>/job/<n>.job.ts`) и реализация `<N>Job extends JobFromDef` (`<app>/<m>/<a>/job/<n>.job.ts`).
 
 ---
 

@@ -23,12 +23,14 @@ test('uc: пара контракт ↔ реализация с одинаков
   ]);
 });
 
-test('uc: контракт — defineUseCase на агрегат', () => {
+test('uc: контракт — UseCaseDef на агрегат', () => {
   const src = content(
     plan('uc', 'complete-student'),
     '/d/stream/student/uc/complete-student.uc.ts',
   );
-  expect(src).toContain('export const CompleteStudentUcDef = defineUseCase({');
+  expect(src).toContain(
+    'export const CompleteStudentUcDef = UseCaseDef.define({',
+  );
   expect(src).toContain("name: 'completeStudent'");
   expect(src).toContain("import { StudentArDef } from '../student.ar';");
   expect(src).toContain('aggregate: StudentArDef');
@@ -99,7 +101,7 @@ test('uc: правки домена (module, index) и прикладного м
   ]);
 });
 
-test('er: контракт defineEventReaction на событие агрегата, реализация ReactionFromDef', () => {
+test('er: контракт EventReactionDef на событие агрегата, реализация ReactionFromDef', () => {
   const p = plan('er', 'fulfill-wish');
   expect(p.files.map((f) => f.path)).toEqual([
     '/d/stream/student/er/fulfill-wish.er.ts',
@@ -109,7 +111,7 @@ test('er: контракт defineEventReaction на событие агрега�
   ]);
   const def = content(p, '/d/stream/student/er/fulfill-wish.er.ts');
   expect(def).toContain(
-    'export const FulfillWishErDef = defineEventReaction({',
+    'export const FulfillWishErDef = EventReactionDef.define({',
   );
   expect(def).toContain('on: [StudentEvents.created]');
   expect(def).toContain('touches: [StudentArDef]');
@@ -118,11 +120,11 @@ test('er: контракт defineEventReaction на событие агрега�
   expect(p.edits.map((e) => e.marker)).toContain('// gen:defs:reactions');
 });
 
-test('job: контракт defineJob со scans, константа экспортируется, реализация JobFromDef', () => {
+test('job: контракт JobDef со scans, константа экспортируется, реализация JobFromDef', () => {
   const p = plan('job', 'inactivity-sweep');
   const def = content(p, '/d/stream/student/job/inactivity-sweep.job.ts');
   expect(def).toContain('export const INACTIVITY_SWEEP_HOUR = 3;');
-  expect(def).toContain('export const InactivitySweepJobDef = defineJob({');
+  expect(def).toContain('export const InactivitySweepJobDef = JobDef.define({');
   expect(def).toContain('scans: [StudentArDef]');
   const impl = content(p, '/p/stream/src/student/job/inactivity-sweep.job.ts');
   expect(impl).toContain('export class InactivitySweepJob extends JobFromDef<');

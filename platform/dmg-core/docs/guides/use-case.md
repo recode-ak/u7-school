@@ -1,6 +1,6 @@
 # Use case — гайд
 
-**Назначение:** операция модуля для вызывающего — контракт `<N>UcDef = defineUseCase(...)` (`<domain>/<m>/<a>/uc/<n>.uc.ts`) и реализация `<N>Uc extends UseCaseFromDef` (`<app>/<m>/<a>/uc/<n>.uc.ts`).
+**Назначение:** операция модуля для вызывающего — контракт `<N>UcDef = UseCaseDef.define(...)` (`<domain>/<m>/<a>/uc/<n>.uc.ts`) и реализация `<N>Uc extends UseCaseFromDef` (`<app>/<m>/<a>/uc/<n>.uc.ts`).
 
 ---
 

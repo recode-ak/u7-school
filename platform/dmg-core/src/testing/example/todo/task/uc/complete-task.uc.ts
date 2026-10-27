@@ -1,12 +1,12 @@
 import * as v from 'valibot';
-import { defineUseCase } from '#core/domain/contracts/define-use-case';
+import { UseCaseDef } from '#core/domain/contracts/use-case-def';
 import { TaskArDef } from '../task.ar';
 import { TaskErrors } from '../task.errors';
 import { TaskEvents } from '../task.events';
 import { TaskPolicy } from '../task.policy';
 import { TaskState } from '../task.state';
 
-export const CompleteTaskUcDef = defineUseCase({
+export const CompleteTaskUcDef = UseCaseDef.define({
   name: 'completeTask',
   label: 'Выполнить задачу',
   description: 'Отмечает открытую задачу выполненной.',

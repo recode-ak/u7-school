@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { defineUseCase } from '#core/domain/contracts/define-use-case';
+import { UseCaseDef } from '#core/domain/contracts/use-case-def';
 import { GetUserUcDef, UserErrors } from '#core/testing/example/users/contract';
 import { TaskArDef } from '../task.ar';
 import { TaskErrors } from '../task.errors';
@@ -16,7 +16,7 @@ import { TaskAssignmentVo, TaskState } from '../task.state';
  * по ссылке, ERR-03) → Policy → исполнитель неактивен → задача не открыта.
  * Смена исполнителя публикует `unassigned` прежнего, затем `assigned`.
  */
-export const AssignTaskUcDef = defineUseCase({
+export const AssignTaskUcDef = UseCaseDef.define({
   name: 'assignTask',
   label: 'Назначить задачу',
   description:

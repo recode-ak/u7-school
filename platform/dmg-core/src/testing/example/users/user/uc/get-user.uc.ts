@@ -1,8 +1,5 @@
 import * as v from 'valibot';
-import {
-  defineUseCase,
-  type OutputOf,
-} from '#core/domain/contracts/define-use-case';
+import { type OutputOf, UseCaseDef } from '#core/domain/contracts/use-case-def';
 import { allowAll } from '#core/domain/policy/rule';
 import { F } from '#core/kernel/fields/fields';
 import { UserArDef } from '../user.ar';
@@ -15,7 +12,7 @@ import { UserState } from '../user.state';
  * решение о статусе учётной записи принимает `users` (`UserAr.isActive`),
  * вызывающий его только переводит в своё правило.
  */
-export const GetUserUcDef = defineUseCase({
+export const GetUserUcDef = UseCaseDef.define({
   name: 'getUser',
   label: 'Пользователь',
   description:

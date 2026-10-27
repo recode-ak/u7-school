@@ -1,10 +1,10 @@
 import * as v from 'valibot';
-import { defineUseCase } from '#core/domain/contracts/define-use-case';
+import { UseCaseDef } from '#core/domain/contracts/use-case-def';
 import { allowAll } from '#core/domain/policy/rule';
 import { TaskArDef } from '../task.ar';
 import { TaskState } from '../task.state';
 
-export const ListTasksUcDef = defineUseCase({
+export const ListTasksUcDef = UseCaseDef.define({
   name: 'listTasks',
   label: 'Мои задачи',
   description: 'Неархивные задачи вызывающего: открытые и выполненные.',
