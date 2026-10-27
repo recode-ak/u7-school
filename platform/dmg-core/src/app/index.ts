@@ -27,6 +27,7 @@ export type {
   EventEnvelope,
   PublishedEvent,
 } from './events/event-envelope';
+export { InProcEventBus } from './events/in-proc-event-bus';
 export {
   DEFAULT_INBOX_CAPACITY,
   type Delivery,
@@ -41,6 +42,12 @@ export {
   type JobReport,
   type JobRun,
 } from './job/job-from-def';
+export {
+  ConsoleLogger,
+  type ConsoleLoggerOptions,
+  type LogConsole,
+  type LogLevel,
+} from './logger/console-logger';
 export {
   type AnyModuleFromDef,
   ModuleFromDef,

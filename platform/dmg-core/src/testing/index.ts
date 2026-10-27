@@ -9,6 +9,7 @@ export {
   taskRow,
 } from '../app/app.fixture';
 export { TEST_NOW, testAppContext } from './app-context';
+export { AwaitingBus } from './awaiting-bus';
 export { ExampleArch } from './example/example.arch';
 export { expectErr, expectOk } from './expect-result';
 export { MemoryBus, RecordingBus } from './memory-bus';

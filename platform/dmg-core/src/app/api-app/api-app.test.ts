@@ -3,7 +3,6 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ModuleDef } from '#core/domain/contracts/module-def';
-import type { AnyEventDef } from '#core/domain/events/event-def';
 import {
   type OperationRef,
   SystemCaller,
@@ -28,13 +27,13 @@ import {
   UsersModuleDef,
 } from '#core/testing/example/users/contract';
 import {
+  AwaitingBus,
   expectErr,
   expectOk,
-  MemoryBus,
   testAppContext,
 } from '#core/testing/index';
 import type { AppContext, ModuleDeps } from '../context';
-import type { EnvelopeOf, EventEnvelope } from '../events/event-envelope';
+import type { EventEnvelope } from '../events/event-envelope';
 import { InProcOutbox } from '../events/outbox';
 import { ModuleFromDef } from '../module/module-from-def';
 import { ApiApp } from './api-app';
@@ -68,29 +67,6 @@ const userRow = (uuid: string) => ({
   updatedAt: T0,
   version: 0,
 });
-
-/**
- * Шина в памяти, которая помнит запущенные обработчики: `delivered()`
- * дожидается их завершения без таймеров (`MemoryBus` их не возвращает).
- */
-class AwaitingBus extends MemoryBus {
-  private readonly pending: Promise<void>[] = [];
-
-  override subscribe<D extends AnyEventDef>(
-    def: D,
-    handler: (envelope: EnvelopeOf<D>) => Promise<void>,
-  ): () => void {
-    return super.subscribe(def, (envelope) => {
-      const run = handler(envelope);
-      this.pending.push(run);
-      return run;
-    });
-  }
-
-  async delivered(): Promise<void> {
-    await Promise.all(this.pending);
-  }
-}
 
 let dir: string;
 beforeEach(() => {

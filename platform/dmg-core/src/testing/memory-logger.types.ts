@@ -1,6 +1,8 @@
+import type { LogLevel } from '../app/logger/console-logger.types';
+
 /** Запись `MemoryLogger`. */
 export type LogRecord = {
-  readonly level: 'debug' | 'info' | 'warn' | 'error';
+  readonly level: LogLevel;
   readonly source: string;
   readonly message: string;
 };
