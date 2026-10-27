@@ -8,9 +8,18 @@ import { join } from 'node:path';
 const SRC = join(import.meta.dir, '..');
 const DIRS = ['graph', 'arch'];
 
-/** Ветвление по виду: `switch (x.dmg)` / `.op`, сравнение `.dmg ===`. */
-const KIND_BRANCH =
-  /switch\s*\(\s*[\w.]+\.(?:dmg|op)\s*\)|\.(?:dmg|op)\s*[!=]==\s*['"]/;
+/**
+ * Ветвление по виду: `switch (x.dmg)` / `.op`, сравнение `.dmg === '…'`
+ * в любом порядке, таблица по виду `TABLE[x.dmg]`.
+ */
+const KIND_BRANCH = new RegExp(
+  [
+    String.raw`switch\s*\(\s*[\w.]+\.(?:dmg|op)\s*\)`,
+    String.raw`\.(?:dmg|op)\s*[!=]==\s*['"]`,
+    String.raw`['"]\s*[!=]==\s*[\w.]+\.(?:dmg|op)\b`,
+    String.raw`\[\s*[\w.]+\.(?:dmg|op)\s*\]`,
+  ].join('|'),
+);
 
 function sources(dir: string): string[] {
   return [...new Bun.Glob('**/*.ts').scanSync({ cwd: join(SRC, dir) })]
@@ -34,6 +43,8 @@ describe('нет ветвления по виду Def', () => {
     expect(KIND_BRANCH.test('switch (def.dmg) {')).toBe(true);
     expect(KIND_BRANCH.test('switch (rule.op) {')).toBe(true);
     expect(KIND_BRANCH.test("op.dmg === 'useCase'")).toBe(true);
+    expect(KIND_BRANCH.test("'job' !== op.dmg")).toBe(true);
+    expect(KIND_BRANCH.test('OPERATION_DIR[op.dmg]')).toBe(true);
     expect(KIND_BRANCH.test('return def.normalize();')).toBe(false);
   });
 });

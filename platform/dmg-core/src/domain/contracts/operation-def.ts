@@ -22,7 +22,7 @@ export type {
  * и то, чем проверки графа и файлов различают виды, — агрегаты, ошибки,
  * подписки,
  * сокращение и каталог файла. Вид сужает тип `calls` через
- * `declare readonly calls: DeclaredCalls<S>` (не параметром базы:
+ * `declare readonly calls: Declared<S, 'calls'>` (не параметром базы:
  * `AnyUseCaseDef` выводится из наследника, аргумент `extends` дал бы цикл).
  */
 export abstract class OperationDef<N extends string = string> extends Def<N> {
