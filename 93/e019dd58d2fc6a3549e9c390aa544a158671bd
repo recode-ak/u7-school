@@ -1,0 +1,1 @@
+Гейт качества: CI=true bun test 4146/0, tsc, biome (0 ошибок, 56 предупреждений как до трека), arch:check чисто. Перенесены тесты toLegacyError.
