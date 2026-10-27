@@ -33,9 +33,9 @@
 - [x] Task: Каркас как план файлов (по образцу `GenPlan`/`applyPlan`: без перезаписи, dry-run) 00ca6cde
     - [x] Тесты плана `single`: `package.json` со скриптами, tsconfig, `biome.json` с картой плагинов, `dmg-core.json`, `arch-check.ts` на `GenLayout`, каркас приложения и раннера; red
     - [x] Реализация; green
-- [ ] Task: Профиль `monorepo`
-    - [ ] Тесты плана: workspace, пакет домена (`exports` `./*/contract`, `./*`), пакет приложения, `modules/`, `runners/`, секция `gen` с `domainImport`, карта плагинов по пакетам, корневой `check`; red
-    - [ ] Реализация; green
+- [x] Task: Профиль `monorepo` 5ef27a47
+    - [x] Тесты плана: workspace, пакет домена (`exports` `./*/contract`, `./*`), пакет приложения, `modules/`, `runners/`, секция `gen` с `domainImport`, карта плагинов по пакетам, корневой `check`; red
+    - [x] Реализация; green
 - [ ] Task: CLI `dmg-core init --profile single|monorepo` (без профиля — прежнее поведение; неизвестный профиль — ошибка); тесты CLI red → green
 - [ ] Task: `gen module` в профиле monorepo создаёт пакет модуля (`package.json`, tsconfig); как узнаётся профиль — поле `dmg-core.json` или признак раскладки (решить в задаче); тесты red → green
     - Учесть D-52: `gen module` создаёт `index.ts` прикладного пакета (фабрика, `*Deps`, репозитории) — корень сборки берёт фабрику только из него; `GenLayout`/шаблон `ArchApp` отдают `root` и `runners`
