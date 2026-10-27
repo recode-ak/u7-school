@@ -1,0 +1,3 @@
+Задача: ревью Фазы 3 (reviewer, Opus). Блокеров нет, поведение сохранено (сообщения, порядок нарушений, нормализованные формы, сценарии прототипа перенесены).
+Исправлено: warning — шаблон KIND_BRANCH дополнен TABLE[x.dmg] и обратным сравнением (+ примеры в тесте шаблона); info — JSDoc OperationDef.
+Отложено в Фазу 7 (записано в plan.md): один тип вместо Declared/DeclaredCalls и перенос Declared в operation-def.types.ts; пометки в decisions.md D-09/D-37 (defineModule → ModuleDef.define). Info про contracts.test (calls [] вместо undefined) — намеренно по спеке.
