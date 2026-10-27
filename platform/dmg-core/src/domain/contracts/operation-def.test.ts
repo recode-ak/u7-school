@@ -17,9 +17,9 @@ type ScanSpec = OperationSpec & {
 
 /** Минимальный вид операции: агрегаты из `scans`, без своих ошибок. */
 class ScanDef<const S extends ScanSpec = ScanSpec> extends OperationDef<
-  S['name'],
-  DeclaredCalls<S>
+  S['name']
 > {
+  declare readonly calls: DeclaredCalls<S>;
   readonly dmg = 'job';
   readonly abbr = 'Job';
   readonly fileKind = 'job';

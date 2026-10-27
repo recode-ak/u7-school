@@ -48,7 +48,7 @@ export {
   defineUseCase,
   type InputOf,
   type OutputOf,
-  type UseCaseDef,
+  UseCaseDef,
   type UseCaseErrorOf,
   type UseCaseSpec,
 } from './domain/contracts/define-use-case';

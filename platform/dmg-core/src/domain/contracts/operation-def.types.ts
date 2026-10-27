@@ -1,5 +1,5 @@
 import type { DefTexts } from '#core/kernel/def/def';
-import type { AnyUseCaseDef } from './define-use-case';
+import type { AnyUseCaseDef } from './use-case-def.types';
 
 /** Общее в спеке UC, ER и Job: тексты и межмодульные вызовы. */
 export type OperationSpec<N extends string = string> = DefTexts<N> & {

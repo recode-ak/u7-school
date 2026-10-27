@@ -45,11 +45,8 @@ export function describedDefs(index: DefIndex): DescribedDef[] {
       }
     }
     for (const uc of m.useCases) {
-      add(`UC ${localId(m, uc)}`, uc, [
-        ['input', uc.input],
-        ['output', uc.output],
-      ]);
-      for (const r of uc.rules ?? []) {
+      out.push({ title: uc.title(m), ...uc.describe() });
+      for (const r of uc.rules) {
         if (rules.has(r)) continue;
         rules.add(r);
         out.push({ title: `правило ${ruleId(index, r).id}`, ...r.describe() });

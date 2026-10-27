@@ -1,4 +1,3 @@
-import type * as v from 'valibot';
 import type {
   AnyAggregateDef,
   NormalizedAggregate,
@@ -6,7 +5,10 @@ import type {
 import type { AnyEventReactionDef } from '../domain/contracts/define-event-reaction';
 import type { AnyJobDef, JobSchedule } from '../domain/contracts/define-job';
 import type { AnyModuleDef } from '../domain/contracts/define-module';
-import type { AnyUseCaseDef } from '../domain/contracts/define-use-case';
+import type {
+  AnyUseCaseDef,
+  NormalizedUseCase,
+} from '../domain/contracts/use-case-def';
 import type { AnyEventDef, NormalizedEvent } from '../domain/events/event-def';
 import type {
   AnyPolicyDef,
@@ -18,16 +20,13 @@ import type {
   NormalizedDomainRule,
 } from '../domain/rules/domain-rule-def';
 import type { AnyRulesDef, NormalizedRules } from '../domain/rules/rules-def';
-import type { CallerKind } from '../kernel/caller/caller';
 import type { AnyErrorDef, NormalizedError } from '../kernel/errors/error-def';
-import { toJsonSchema } from '../kernel/schema/json-schema';
-
-type JsonSchema = ReturnType<typeof toJsonSchema>;
 
 export type {
   NormalizedAggregate,
   NormalizedTransition,
 } from '../domain/aggregate/aggregate-def';
+export type { NormalizedUseCase } from '../domain/contracts/use-case-def';
 export type { NormalizedEvent } from '../domain/events/event-def';
 export type { NormalizedPolicy } from '../domain/policy/policy-def';
 export type { NormalizedRule } from '../domain/policy/rule';
@@ -39,22 +38,6 @@ type Texts = {
   readonly name: string;
   readonly label: string;
   readonly description: string;
-};
-
-export type NormalizedUseCase = Texts & {
-  readonly dmg: 'useCase';
-  readonly type: 'command' | 'query';
-  readonly aggregate: string;
-  readonly callers: readonly CallerKind[];
-  readonly policy: NormalizedRule;
-  readonly input: JsonSchema;
-  readonly output: JsonSchema;
-  readonly errors: readonly string[];
-  /** Имена доменных правил UC. */
-  readonly rules: readonly string[];
-  /** Имена UC других модулей, которые UC вызывает (D-42). */
-  readonly calls: readonly string[];
-  readonly emits: readonly string[];
 };
 
 export type NormalizedEventReaction = Texts & {
@@ -138,22 +121,8 @@ export function normalize(def: AnyDef): NormalizedDef {
     case 'policy':
     case 'domainRule':
     case 'rules':
-      return def.normalize();
     case 'useCase':
-      return {
-        dmg: 'useCase',
-        ...texts(def),
-        type: def.type,
-        aggregate: def.aggregate.name,
-        callers: def.callers,
-        policy: def.policy.normalize(),
-        input: schema(def.input),
-        output: schema(def.output),
-        errors: def.errors.map((e) => e.code),
-        rules: (def.rules ?? []).map((r) => r.name),
-        calls: (def.calls ?? []).map((u) => u.name),
-        emits: (def.emits ?? []).map((e) => e.name),
-      };
+      return def.normalize();
     case 'eventReaction':
       return {
         dmg: 'eventReaction',
@@ -188,8 +157,4 @@ export function normalize(def: AnyDef): NormalizedDef {
 
 function texts(def: Texts): Texts {
   return { name: def.name, label: def.label, description: def.description };
-}
-
-function schema(s: v.GenericSchema): JsonSchema {
-  return toJsonSchema(s);
 }

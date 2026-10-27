@@ -162,7 +162,7 @@ function checkLinks(index: DefIndex): Violation[] {
       }
       switch (op.dmg) {
         case 'useCase':
-          checkErrors(title, op.errors);
+          checkErrors(title, op.referencedErrors());
           break;
         case 'eventReaction':
           for (const e of op.on) {
@@ -243,7 +243,7 @@ function checkUseCaseRules(index: DefIndex): Violation[] {
     for (const uc of m.useCases) {
       const title = `UC ${localId(m, uc)}`;
       const seen = new Set<AnyDomainRule>();
-      for (const r of uc.rules ?? []) {
+      for (const r of uc.rules) {
         if (seen.has(r)) {
           out.push(
             violation(
@@ -351,7 +351,7 @@ function checkDependsOn(index: DefIndex): Violation[] {
       const title = operationTitle(m, op);
       switch (op.dmg) {
         case 'useCase':
-          checkErrors(title, op.errors);
+          checkErrors(title, op.referencedErrors());
           break;
         case 'eventReaction':
           for (const e of op.on) {

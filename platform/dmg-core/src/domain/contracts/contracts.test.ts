@@ -48,7 +48,7 @@ describe('defineUseCase', () => {
       calls: [TaskArDef],
     });
     const any: AnyUseCaseDef = ListTasksUcDef;
-    expect(any.calls).toBeUndefined();
+    expect(any.calls).toEqual([]);
   });
 
   it('calls — только UC с system в callers (D-43, Р7)', () => {

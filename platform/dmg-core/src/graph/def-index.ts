@@ -59,7 +59,7 @@ export function operationsOf(m: AnyModuleDef): readonly AnyOperationDef[] {
 
 /** UC других модулей, которые операция вызывает через фасады (D-42). */
 export function callsOf(op: AnyOperationDef): readonly AnyUseCaseDef[] {
-  return op.dmg === 'useCase' ? (op.calls ?? []) : op.calls;
+  return op.calls;
 }
 
 /** Id агрегата и операции в графе: `module.name`. */

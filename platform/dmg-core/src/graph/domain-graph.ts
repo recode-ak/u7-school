@@ -191,7 +191,7 @@ class GraphBuilder {
     for (const uc of m.useCases) {
       const id = localId(m, uc);
       const aggregate = this.aggregateId(uc.aggregate);
-      const rules = (uc.rules ?? []).map((r) => {
+      const rules = uc.rules.map((r) => {
         const node = this.rule(r);
         node.usedBy.push(id);
         return node.id;
@@ -202,11 +202,11 @@ class GraphBuilder {
         def: normalize(uc),
         aggregate,
         rules,
-        calls: (uc.calls ?? []).map((u) => this.operationId(u)),
+        calls: uc.calls.map((u) => this.operationId(u)),
         calledBy: [],
       };
       this.aggregates[aggregate]?.useCases.push(id);
-      for (const e of uc.emits ?? []) this.event(e).publishers.push(id);
+      for (const e of uc.emits) this.event(e).publishers.push(id);
       for (const e of uc.errors) this.error(e).usedBy.push(id);
     }
     for (const er of m.reactions) {

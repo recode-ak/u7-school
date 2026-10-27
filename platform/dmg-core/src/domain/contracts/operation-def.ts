@@ -1,13 +1,13 @@
 import { Def } from '#core/kernel/def/def';
 import type { AnyErrorDef } from '#core/kernel/errors/error-def';
 import type { AnyAggregateDef } from '../aggregate/aggregate-def';
-import type { AnyUseCaseDef } from './define-use-case';
 import type {
   OperationAbbr,
   OperationDmg,
   OperationFileKind,
   OperationSpec,
 } from './operation-def.types';
+import type { AnyUseCaseDef } from './use-case-def.types';
 
 export type {
   OperationAbbr,
@@ -19,22 +19,20 @@ export type {
 /**
  * База операций модуля (UC, ER, Job): межмодульные вызовы `calls`
  * и то, чем проверки графа и файлов различают виды, — агрегаты, ошибки,
- * сокращение и каталог файла. `C` — тип `calls` вида (`DeclaredCalls`):
- * не объявлены — пустой кортеж.
+ * сокращение и каталог файла. Вид сужает тип `calls` через
+ * `declare readonly calls: DeclaredCalls<S>` (не параметром базы:
+ * `AnyUseCaseDef` выводится из наследника, аргумент `extends` дал бы цикл).
  */
-export abstract class OperationDef<
-  N extends string = string,
-  C extends readonly AnyUseCaseDef[] = readonly AnyUseCaseDef[],
-> extends Def<N> {
+export abstract class OperationDef<N extends string = string> extends Def<N> {
   abstract override readonly dmg: OperationDmg;
   abstract readonly abbr: OperationAbbr;
   abstract readonly fileKind: OperationFileKind;
-  readonly calls: C;
+  readonly calls: readonly AnyUseCaseDef[];
 
   constructor(spec: OperationSpec<N>) {
     super(spec);
-    // Необъявленные `calls` — пустой кортеж: тип `C` вида это и выводит.
-    this.calls = (spec.calls ?? []) as C;
+    // Необъявленные `calls` — пустой кортеж: так их и типизирует вид.
+    this.calls = spec.calls ?? [];
   }
 
   /** Агрегаты своего модуля, которые операция меняет или читает (MAN-13). */
