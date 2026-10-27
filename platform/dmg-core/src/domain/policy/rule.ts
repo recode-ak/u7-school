@@ -198,5 +198,5 @@ export class AllowAll extends Rule<unknown, unknown> {
   }
 }
 
-/** Единственный экземпляр `AllowAll`. */
+/** Экземпляр `AllowAll` для Def UC: другого не нужно, состояния у правила нет. */
 export const allowAll: AllowAll = new AllowAll();

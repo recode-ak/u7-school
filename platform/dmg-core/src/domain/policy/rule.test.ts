@@ -116,6 +116,14 @@ describe('evaluate', () => {
     expect(both.evaluate(user('u1', 'admin'), ctx)).toEqual(allowed);
   });
 
+  it('anyOf: субъект и контекст — тоже пересечения (тип)', () => {
+    const roleOnly = { hasRole: () => true };
+    // @ts-expect-error у субъекта нет id, нужного isOwner
+    canEdit.evaluate(roleOnly, ctx);
+    // @ts-expect-error нет ownerId в контексте
+    canEdit.evaluate(user('u1'), {});
+  });
+
   it('evaluate строго контравариантен по субъекту (тип)', () => {
     // @ts-expect-error чужой субъект
     isOwner.evaluate({ name: 'x' }, ctx);
