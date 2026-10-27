@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { ArchChecker } from 'dmg-core/arch';
-import { DefIndex, normalize } from 'dmg-core/graph';
+import { normalize } from 'dmg-core/graph';
 import { WishModuleDef } from './wish.module';
 
 describe('WishModuleDef', () => {
@@ -21,10 +21,6 @@ describe('WishModuleDef', () => {
   });
 
   it('ArchChecker — без нарушений', () => {
-    expect(
-      new ArchChecker(DefIndex.from([WishModuleDef]))
-        .check()
-        .map((v) => v.format()),
-    ).toEqual([]);
+    expect(ArchChecker.defsOf([WishModuleDef]).report()).toEqual([]);
   });
 });

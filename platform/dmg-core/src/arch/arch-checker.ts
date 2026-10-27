@@ -39,7 +39,17 @@ export class ArchChecker {
     return new ArchChecker(DefIndex.from(app.modules), app.layout, app.entry);
   }
 
+  /** Только проверки Def по корневым модулям — для теста модуля домена. */
+  static defsOf(roots: readonly AnyModuleDef[]): ArchChecker {
+    return new ArchChecker(DefIndex.from(roots));
+  }
+
   check(): Violation[] {
     return [...this.defs.check(), ...(this.files?.check() ?? [])];
+  }
+
+  /** Строки отчёта: `<ID правила>: <сообщение>`. */
+  report(): string[] {
+    return this.check().map((v) => v.format());
   }
 }

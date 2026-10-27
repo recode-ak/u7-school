@@ -5,7 +5,6 @@ import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { defineModule } from 'dmg-core';
 import { ArchChecker } from 'dmg-core/arch';
-import { DefIndex } from 'dmg-core/graph';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import * as v from 'valibot';
 import coursePools from './pools/course.json';
@@ -71,7 +70,7 @@ describe('WishArDef', () => {
     });
     // MAN-06 «событие никто не публикует» — до контрактов UC/ER (Ф8–Ф11):
     // `emits` появится у confirm-wish и invite-wishers.
-    const violations = new ArchChecker(DefIndex.from([probe]))
+    const violations = ArchChecker.defsOf([probe])
       .check()
       .filter((x) => x.rule !== 'MAN-06');
     expect(violations.map((v) => v.format())).toEqual([]);

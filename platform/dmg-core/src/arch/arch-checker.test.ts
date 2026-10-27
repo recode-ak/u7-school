@@ -24,6 +24,12 @@ describe('ArchChecker', () => {
     ]);
   });
 
+  it('defsOf(roots) — только Def по модулям; report() — строки нарушений', () => {
+    expect(ArchChecker.defsOf([broken]).report()).toEqual([
+      'MAN-01: модуль broken: пустой label',
+    ]);
+  });
+
   it('с раскладкой — проверки по Def, затем по файлам', () => {
     const checker = new ArchChecker(DefIndex.from([broken]), nowhere);
     expect(checker.check().map((v) => v.format())).toEqual([

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'bun:test';
 import { ArchChecker } from '#core/arch/arch-checker';
-import { DefIndex } from '#core/graph/def-index';
 import { normalize } from '#core/graph/normalize';
 import { UsersModuleDef } from './users.module';
 
@@ -16,10 +15,6 @@ describe('UsersModuleDef', () => {
   });
 
   it('ArchChecker — без нарушений', () => {
-    expect(
-      new ArchChecker(DefIndex.from([UsersModuleDef]))
-        .check()
-        .map((v) => v.format()),
-    ).toEqual([]);
+    expect(ArchChecker.defsOf([UsersModuleDef]).report()).toEqual([]);
   });
 });

@@ -42,4 +42,4 @@
 
 ## 6. Как тестировать
 
-Домен — `normalize(<M>ModuleDef)` (состав паспорта) и `new ArchChecker(DefIndex.from([…])).check()` без нарушений ([todo.module.test.ts](../../src/testing/example/todo/todo.module.test.ts), [users.module.test.ts](../../src/testing/example/users/users.module.test.ts)). Прикладной пакет — модуль на настоящем репозитории во временном каталоге, фасады — `StubFacade` по Def, вызовы через `handle`, `runJob`, доставка события через `subscribe` ([todo.module.test.ts](../../src/testing/example/app/todo/todo.module.test.ts)).
+Домен — `normalize(<M>ModuleDef)` (состав паспорта) и `ArchChecker.defsOf([…]).report()` без нарушений ([todo.module.test.ts](../../src/testing/example/todo/todo.module.test.ts), [users.module.test.ts](../../src/testing/example/users/users.module.test.ts)). Прикладной пакет — модуль на настоящем репозитории во временном каталоге, фасады — `StubFacade` по Def, вызовы через `handle`, `runJob`, доставка события через `subscribe` ([todo.module.test.ts](../../src/testing/example/app/todo/todo.module.test.ts)).

@@ -8,7 +8,7 @@ import {
   defineUseCase,
 } from 'dmg-core';
 import { ArchChecker } from 'dmg-core/arch';
-import { DefIndex, normalize } from 'dmg-core/graph';
+import { normalize } from 'dmg-core/graph';
 import * as v from 'valibot';
 import {
   QuestionnaireEvents,
@@ -35,11 +35,7 @@ describe('QuestionnaireModuleDef — внешний модуль (D-37)', () => 
   });
 
   it('ArchChecker по модулю и зависимостям — без нарушений', () => {
-    expect(
-      new ArchChecker(DefIndex.from([QuestionnaireModuleDef]))
-        .check()
-        .map((v) => v.format()),
-    ).toEqual([]);
+    expect(ArchChecker.defsOf([QuestionnaireModuleDef]).report()).toEqual([]);
   });
 
   it('completed — FQN и payload: owner модуль анкет не толкует', () => {
@@ -89,9 +85,7 @@ describe('QuestionnaireModuleDef — внешний модуль (D-37)', () => 
       reactions: [],
       jobs: [],
     });
-    expect(
-      new ArchChecker(DefIndex.from([consumer])).check().map((v) => v.format()),
-    ).toEqual([]);
+    expect(ArchChecker.defsOf([consumer]).report()).toEqual([]);
   });
 
   it('abandoned — FQN, reason необязателен и из перечня', () => {

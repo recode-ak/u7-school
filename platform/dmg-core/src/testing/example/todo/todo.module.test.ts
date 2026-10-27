@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'bun:test';
 import { ArchChecker } from '#core/arch/arch-checker';
-import { DefIndex } from '#core/graph/def-index';
 import { normalize } from '#core/graph/normalize';
 import { TaskArDef } from './task/task.ar';
 import { TodoModuleDef } from './todo.module';
@@ -66,10 +65,6 @@ describe('TodoModuleDef', () => {
   });
 
   it('ArchChecker вместе с users — без нарушений', () => {
-    expect(
-      new ArchChecker(DefIndex.from([TodoModuleDef]))
-        .check()
-        .map((v) => v.format()),
-    ).toEqual([]);
+    expect(ArchChecker.defsOf([TodoModuleDef]).report()).toEqual([]);
   });
 });

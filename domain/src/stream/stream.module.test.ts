@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { ArchChecker } from 'dmg-core/arch';
-import { DefIndex, normalize } from 'dmg-core/graph';
+import { normalize } from 'dmg-core/graph';
 import * as v from 'valibot';
 import { StreamEvents, StreamModuleDef, StudentEvents } from './contract';
 
@@ -24,11 +24,7 @@ describe('StreamModuleDef — внешний модуль (D-37)', () => {
   });
 
   it('ArchChecker по модулю и зависимостям — без нарушений', () => {
-    expect(
-      new ArchChecker(DefIndex.from([StreamModuleDef]))
-        .check()
-        .map((v) => v.format()),
-    ).toEqual([]);
+    expect(ArchChecker.defsOf([StreamModuleDef]).report()).toEqual([]);
   });
 
   it('StudentEvents.enrolled — FQN и payload контракта', () => {
