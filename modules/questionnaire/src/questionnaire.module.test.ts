@@ -214,9 +214,8 @@ describe('модуль анкет через фасад (D-43, адаптер TR
         app,
         facades: new ModuleFacades(),
         legacy: questionnaireLegacy,
-      }).handle(
-        StartQuestionnaireUcDef,
-        { pool: POOL, owner: OWNER },
+      }).dispatch(
+        StartQuestionnaireUcDef.command({ pool: POOL, owner: OWNER }),
         caller,
         REQ,
       );

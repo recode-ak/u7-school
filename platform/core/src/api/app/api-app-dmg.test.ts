@@ -29,7 +29,6 @@ import {
   TaskArDef,
   TaskErrors,
 } from 'dmg-core/testing/example/todo/index';
-import { AppException } from '../../domain/errors/errors';
 import type { AppMeta } from '../../domain/types';
 import type { Job } from '../job/job';
 import { ApiApp } from './api-app';
@@ -105,35 +104,6 @@ beforeEach(() => {
     deps,
   );
   app = new ApiApp<AppMeta, User>([]).addDmgModules(mini);
-});
-
-describe('ApiApp.run — UC DMG', () => {
-  test('возвращает Result: Ok с выходом', async () => {
-    const res = await app.run(
-      CompleteTaskUcDef,
-      { taskId: TASK },
-      user(OWNER),
-      REQ,
-    );
-    expect(expectOk(res)).toEqual({});
-  });
-
-  test('возвращает Result: отказ — значение, не исключение', async () => {
-    tasks.rows.clear();
-    const res = await app.run(
-      CompleteTaskUcDef,
-      { taskId: TASK },
-      user(OWNER),
-      REQ,
-    );
-    expectErr(res, 'TASK_NOT_FOUND');
-  });
-
-  test('UC вне зарегистрированных модулей — исключение (баг сборки)', async () => {
-    await expect(
-      app.run(CreateTaskUcDef, { title: 'x' }, user(OWNER), REQ),
-    ).rejects.toThrow('UC createTask не зарегистрирован');
-  });
 });
 
 describe('ApiApp.dispatch — команда по адресу модуля (D-49)', () => {
@@ -218,38 +188,6 @@ describe('ModuleApi поверх ApiApp — клиент in-proc (D-49)', () => 
     expect(api.restore(command, wireResult)).toEqual(
       TaskErrors.NOT_FOUND.err({ taskId: TASK }),
     );
-  });
-});
-
-describe('ApiApp.execute — UC DMG', () => {
-  test('Ok — возвращает выход', async () => {
-    expect(
-      await app.execute(CompleteTaskUcDef, { taskId: TASK }, user(OWNER), REQ),
-    ).toEqual({});
-  });
-
-  test('Err — AppException с кодом и legacy-kind', async () => {
-    tasks.rows.clear();
-    const error = await app
-      .execute(CompleteTaskUcDef, { taskId: TASK }, user(OWNER), REQ)
-      .catch((e: unknown) => e);
-    expect(error).toBeInstanceOf(AppException);
-    expect(error instanceof AppException && error.error).toMatchObject({
-      name: 'TASK_NOT_FOUND',
-      kind: 'not-found',
-      message: 'Задача не найдена',
-    });
-  });
-
-  test('ACCESS_DENIED — текст отказа правила в message', async () => {
-    const error = await app
-      .execute(CompleteTaskUcDef, { taskId: TASK }, user('чужой'), REQ)
-      .catch((e: unknown) => e);
-    expect(error instanceof AppException && error.error).toMatchObject({
-      name: 'ACCESS_DENIED',
-      kind: 'access-denied',
-      message: 'Управлять задачей может владелец или администратор.',
-    });
   });
 });
 

@@ -111,36 +111,7 @@ beforeEach(() => {
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const user: User = { uuid: 'u-1', hasRole: () => true };
 
-describe('ModuleFromDef.handle', () => {
-  test('UC своего модуля — ответ его реализации', async () => {
-    const res = await mini.handle(
-      CompleteTaskUcDef,
-      { taskId: TASK },
-      new UserCaller(user),
-      REQ,
-    );
-    expectErr(res, 'TASK_NOT_FOUND');
-  });
-
-  test('UC другого модуля — ошибка компиляции', () => {
-    const wrong = () =>
-      // @ts-expect-error createTask не из модуля mini
-      mini.handle(CreateTaskUcDef, {}, new UserCaller(user), REQ);
-    expect(wrong).toBeDefined();
-  });
-
-  test('чужой Def при стёртом типе модуля — исключение сборки', async () => {
-    const any: AnyModuleFromDef<User> = mini;
-    await expect(
-      any.handle(CreateTaskUcDef, {}, new UserCaller(user), REQ),
-    ).rejects.toThrow('UC createTask не реализован в модуле mini');
-  });
-
-  test('serves — свой UC да, чужой нет', () => {
-    expect(mini.serves(CompleteTaskUcDef)).toBe(true);
-    expect(mini.serves(CreateTaskUcDef)).toBe(false);
-  });
-
+describe('ModuleFromDef', () => {
   test('операции создаёт модуль и передаёт себя: ref — модуль-владелец (D-43)', () => {
     const seen: unknown[] = [];
     class Spy extends CompleteTask {
@@ -161,8 +132,8 @@ describe('ModuleFromDef.handle', () => {
   });
 
   test('реализации UC наружу не раздаются', () => {
-    // @ts-expect-error useCase — не публичный: вход только через handle
-    expect(mini.useCase).toBeDefined();
+    // @ts-expect-error useCases — не публичные: вход только через dispatch
+    expect(mini.useCases).toBeDefined();
   });
 });
 

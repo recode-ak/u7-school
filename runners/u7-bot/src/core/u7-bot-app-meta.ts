@@ -7,6 +7,7 @@ import type { PeerReviewApiModuleMeta } from '@u7-scl/peer-review/domain';
 import type { QuestionnaireApiModuleMeta } from '@u7-scl/questionnaire/domain';
 import type { StreamApiModuleMeta } from '@u7-scl/stream';
 import type { UserApiModuleMeta, UserFacade } from '@u7-scl/user/domain';
+import type { WishApi } from './u7-bot-ui-story';
 //
 // ================= UI layer ===================
 
@@ -15,6 +16,8 @@ import type { UserApiModuleMeta, UserFacade } from '@u7-scl/user/domain';
  * гост-регистрация на /start (от имени системного актора-бота).
  */
 export interface U7BotUiAppResolve extends BotUiAppResolve<U7BotAppMeta, User> {
+  /** клиент модуля wish (D-49) — команды stories, in-proc через ApiApp */
+  wishApi: WishApi;
   /** фасад пользователей — идемпотентная гост-регистрация на /start */
   userFacade: UserFacade;
   /** системный актор-бот (BOT_ADMIN_UUID, резолвится при старте) — регистрация гостя от его имени */

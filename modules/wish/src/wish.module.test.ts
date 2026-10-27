@@ -58,9 +58,8 @@ describe('createWishModule', () => {
     const { module, wishes } = makeModule();
     const courseId = crypto.randomUUID();
 
-    const res = await module.handle(
-      CreateCourseWishUcDef,
-      { courseId },
+    const res = await module.dispatch(
+      CreateCourseWishUcDef.command({ courseId }),
       new UserCaller(ACTOR),
       Trace.fromRequest({ requestId: 'r-1' }),
     );

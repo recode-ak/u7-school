@@ -12,16 +12,22 @@ import type {
   ProactiveSender,
 } from '@u7-scl/core/ui';
 import { BotPaginator, BotUiStory } from '@u7-scl/core/ui';
+import type { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import {
-  type AnyUseCaseDef,
-  type InputOf,
+  type AnyModuleDef,
+  type Command,
   type OutputOf,
+  type Result,
+  type UseCaseErrorOf,
   UserCaller,
 } from 'dmg-core';
-import { Trace } from 'dmg-core/app';
+import { type ModuleApi, Trace } from 'dmg-core/app';
 import { APP_CODES } from '../shared/app-codes';
 import type { U7BotAppMeta, U7BotUiAppResolve } from './u7-bot-app-meta';
 import type { MenuButton } from './u7-menu';
+
+/** Клиент модуля wish для stories (in-proc, D-49). */
+export type WishApi = ModuleApi<typeof WishModuleDef, User>;
 
 /** Опции постраничного экрана (хелпер U7BotUiStory.pagedScreen). */
 interface PagedScreenOpts<T> {
@@ -151,25 +157,26 @@ export abstract class U7BotUiStory extends BotUiStory<
   // ── Вызов UC модулей DMG ──
 
   /**
-   * UC DMG по Def от имени актора бота: отказ — `AppException`, как у
-   * строковых UC (`appApi.execute`). Единственное место, где UI строит
-   * субъект (`UserCaller` над актором) и след запроса (`Trace.fromRequest`,
-   * канал `telegram`, посетитель — `telegramId`).
+   * Команда модулю DMG от имени актора бота (D-49): отказ — значение `Err`,
+   * story ветвится по `code`, неожиданное — `ucErrorNotify`. Единственное
+   * место, где UI строит субъект (`UserCaller` над актором) и след запроса
+   * (`Trace.fromRequest`, канал `telegram`, посетитель — `telegramId`).
    *
    * `requestId`: `update_id` Telegram до стори не доходит (контракт
    * `handleCallback`/`handleMessage` ядра его не передаёт), поэтому id
    * создаётся на каждый вызов с `warn` (ERR-07, caller.md §2 п. 5).
    */
-  protected executeUc<D extends AnyUseCaseDef>(
-    uc: D,
-    input: InputOf<D>,
+  protected dispatchUc<M extends AnyModuleDef, D extends M['useCases'][number]>(
+    api: ModuleApi<M, User>,
+    command: Command<D>,
     actor: User,
-  ): Promise<OutputOf<D>> {
+  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
     const trace = Trace.fromRequest(
       { channel: { name: 'telegram', visitorId: String(actor.telegramId) } },
-      (message) => this.logger?.warn(this.dialogPath, message, { uc: uc.name }),
+      (message) =>
+        this.logger?.warn(this.dialogPath, message, { uc: command.uc }),
     );
-    return this.appApi.execute(uc, input, new UserCaller(actor), trace);
+    return api.dispatch(command, new UserCaller(actor), trace);
   }
 
   // ── Постраничные экраны (трек pagination) ──

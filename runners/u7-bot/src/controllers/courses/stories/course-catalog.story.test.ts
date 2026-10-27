@@ -7,18 +7,52 @@ import {
   CreateCourseWishUcDef,
   CreateModuleWishUcDef,
   ListUserWishesUcDef,
+  WishErrors,
+  WishModuleDef,
 } from '@u7-scl/domain/wish/contract';
 import { Role } from '@u7-scl/user/domain';
-import { UserCaller } from 'dmg-core';
+import {
+  type Command,
+  type DomainError,
+  type Err,
+  ok,
+  type Result,
+  UserCaller,
+} from 'dmg-core';
+import { type CommandTransport, ModuleApi } from 'dmg-core/app';
+import { MemoryLogger } from 'dmg-core/testing';
 import { Routes } from '../../shared/routes';
 import { CourseCatalogStory } from './course-catalog.story';
 
-/** Актор UC DMG — субъект `UserCaller` третьего аргумента `execute`. */
+/** Актор UC DMG — субъект `UserCaller`, переданный транспорту wish. */
 function subjectOf(caller: unknown): User {
   if (!(caller instanceof UserCaller)) {
     throw new Error('UC DMG вызван без UserCaller');
   }
   return caller.user as User;
+}
+
+/** Ответ модуля wish на команду: `command`, `caller` — как их отдал транспорт. */
+type WishAnswer = (
+  command: Command,
+  caller: unknown,
+) => Promise<Result<unknown, DomainError>>;
+
+/**
+ * Мок модуля wish: отвечает `answer` на команду `uc`, на прочие — пустым
+ * списком желаний.
+ */
+function wishModule(uc: string, answer: Result<unknown, DomainError>) {
+  return mock<WishAnswer>(async (command) =>
+    command.uc === uc ? answer : ok([]),
+  );
+}
+
+/** Вызов модуля wish с командой `uc`: команда и субъект. */
+function wishCall(wish: ReturnType<typeof mock<WishAnswer>>, uc: string) {
+  const call = wish.mock.calls.find(([command]) => command.uc === uc);
+  if (call === undefined) throw new Error(`Команда ${uc} не отправлена`);
+  return { input: call[0].input, subject: subjectOf(call[1]) };
 }
 
 describe('CourseCatalogStory', () => {
@@ -82,56 +116,64 @@ describe('CourseCatalogStory', () => {
     }> = [],
   ) {
     return {
-      execute: mock(
-        async (
-          ucName: unknown,
-          attrs: Record<string, unknown>,
-          who?: unknown,
-        ) => {
-          if (ucName === 'list-courses') return courses;
-          if (ucName === ListUserWishesUcDef) {
-            return wishes.filter((w) => w.userId === subjectOf(who).uuid);
-          }
-          if (ucName === 'get-course') {
-            const found = courses.find((c) => c.uuid === attrs.uuid);
-            if (!found)
-              throw Object.assign(new Error('Курс не найден'), {
-                name: 'COURSE_NOT_FOUND',
-              });
-            return found;
-          }
-          if (ucName === 'get-module') {
-            const mod = modules[attrs.uuid as string];
-            if (!mod)
-              throw Object.assign(new Error('Модуль не найден'), {
-                name: 'MODULE_NOT_FOUND',
-              });
-            return mod;
-          }
-          if (ucName === 'get-module-snapshot') {
-            return snapshots[attrs.moduleId as string] ?? [];
-          }
-          if (ucName === 'get-steps-by-lessons') {
-            const result: Record<
-              string,
-              Array<{ uuid: string; description: string }>
-            > = {};
-            for (const id of attrs.lessonIds as string[]) {
-              if (steps[id]) result[id] = steps[id]!;
-            }
-            return result;
-          }
-          return undefined;
-        },
+      wish: mock<WishAnswer>(async (command, caller) =>
+        command.uc === ListUserWishesUcDef.name
+          ? ok(wishes.filter((w) => w.userId === subjectOf(caller).uuid))
+          : ok(undefined),
       ),
+      execute: mock(async (ucName: unknown, attrs: Record<string, unknown>) => {
+        if (ucName === 'list-courses') return courses;
+        if (ucName === 'get-course') {
+          const found = courses.find((c) => c.uuid === attrs.uuid);
+          if (!found)
+            throw Object.assign(new Error('Курс не найден'), {
+              name: 'COURSE_NOT_FOUND',
+            });
+          return found;
+        }
+        if (ucName === 'get-module') {
+          const mod = modules[attrs.uuid as string];
+          if (!mod)
+            throw Object.assign(new Error('Модуль не найден'), {
+              name: 'MODULE_NOT_FOUND',
+            });
+          return mod;
+        }
+        if (ucName === 'get-module-snapshot') {
+          return snapshots[attrs.moduleId as string] ?? [];
+        }
+        if (ucName === 'get-steps-by-lessons') {
+          const result: Record<
+            string,
+            Array<{ uuid: string; description: string }>
+          > = {};
+          for (const id of attrs.lessonIds as string[]) {
+            if (steps[id]) result[id] = steps[id]!;
+          }
+          return result;
+        }
+        return undefined;
+      }),
     };
   }
 
+  /**
+   * Story над моками: legacy UC — `appApi.execute`, команды wish —
+   * `wish` через настоящий `ModuleApi` (адрес, субъект, след).
+   */
   function initStory(
     story: CourseCatalogStory,
-    api: ReturnType<typeof makeAppApi>,
+    api: { execute: unknown; wish?: ReturnType<typeof mock<WishAnswer>> },
   ) {
-    story.init({ appApi: api } as never);
+    const wish = api.wish ?? mock<WishAnswer>(async () => ok([]));
+    const transport: CommandTransport<User> = {
+      dispatch: async (_module, command, caller) =>
+        (await wish(command, caller)) as never,
+    };
+    story.init({
+      appApi: api,
+      wishApi: new ModuleApi(WishModuleDef, transport, new MemoryLogger()),
+    } as never);
   }
 
   // ── Главное меню (декларативные menuButtons) ──
@@ -606,22 +648,17 @@ describe('CourseCatalogStory', () => {
   describe('wish — запись на модуль', () => {
     const moduleId = '33333333-3333-4333-8333-333333333333';
 
-    function makeWishApi(error?: unknown) {
+    function makeWishApi(error?: Err<DomainError>) {
       return {
-        execute: mock(async (ucName: unknown, _attrs: unknown) => {
-          if (ucName === CreateModuleWishUcDef) {
-            if (error) throw error;
-            return undefined;
-          }
-          return undefined;
-        }),
+        execute: mock(async () => undefined),
+        wish: wishModule(CreateModuleWishUcDef.name, error ?? ok(undefined)),
       };
     }
 
     test('успех: вызывает create-module-wish и подтверждает', async () => {
       const api = makeWishApi();
       const story = new CourseCatalogStory();
-      initStory(story, api as never);
+      initStory(story, api);
 
       const response = await story.handleCallback(
         `wish:${moduleId}`,
@@ -630,24 +667,23 @@ describe('CourseCatalogStory', () => {
       );
       assertDialogResponseMarkdownSafe(response);
 
-      const call = (api.execute as ReturnType<typeof mock>).mock.calls.find(
-        (c) => c[0] === CreateModuleWishUcDef,
-      );
-      expect(call).toBeDefined();
-      expect(call![1]).toEqual({ moduleId });
-      expect(subjectOf(call![2])).toBe(actor);
+      expect(wishCall(api.wish, CreateModuleWishUcDef.name)).toEqual({
+        input: { moduleId },
+        subject: actor,
+      });
 
       expect(String(response.screen?.text)).toContain('Записали');
     });
 
     test('желание уже есть: дружелюбное сообщение, не ошибка', async () => {
-      const { errConflict, AppException } = await import('@u7-scl/core/domain');
-      const error = new AppException(
-        errConflict('WISH_ALREADY_EXISTS', 'Желание уже выражено', undefined),
-      );
+      const error = WishErrors.ALREADY_EXISTS.err({
+        userId: actor.uuid,
+        moduleId,
+        status: 'expressed',
+      });
       const api = makeWishApi(error);
       const story = new CourseCatalogStory();
-      initStory(story, api as never);
+      initStory(story, api);
 
       const response = await story.handleCallback(
         `wish:${moduleId}`,
@@ -661,13 +697,9 @@ describe('CourseCatalogStory', () => {
     });
 
     test('другая ошибка: errorNotify — warn-реплика без захвата экрана', async () => {
-      const { errNotFound, AppException } = await import('@u7-scl/core/domain');
-      const error = new AppException(
-        errNotFound('WISH_MODULE_NOT_FOUND', 'Модуль не найден', undefined),
-      );
-      const api = makeWishApi(error);
+      const api = makeWishApi(WishErrors.MODULE_NOT_FOUND.err({ moduleId }));
       const story = new CourseCatalogStory();
-      initStory(story, api as never);
+      initStory(story, api);
 
       const response = await story.handleCallback(
         `wish:${moduleId}`,
@@ -686,15 +718,10 @@ describe('CourseCatalogStory', () => {
   describe('apply — желание пройти курс', () => {
     const courseId = 'c1';
 
-    function makeApplyApi(result?: { outcome: string }, error?: unknown) {
+    function makeApplyApi(answer: Result<unknown, DomainError>) {
       return {
-        execute: mock(async (ucName: unknown, _attrs: unknown) => {
-          if (ucName === CreateCourseWishUcDef) {
-            if (error) throw error;
-            return result;
-          }
-          return undefined;
-        }),
+        execute: mock(async () => undefined),
+        wish: wishModule(CreateCourseWishUcDef.name, answer),
       };
     }
 
@@ -847,9 +874,9 @@ describe('CourseCatalogStory', () => {
     });
 
     test('apply instant: вызывает create-course-wish и рендерит W03', async () => {
-      const appApi = makeApplyApi({ outcome: 'instant' });
+      const appApi = makeApplyApi(ok({ outcome: 'instant' }));
       const story = new CourseCatalogStory();
-      initStory(story, appApi as never);
+      initStory(story, appApi);
 
       const response = await story.handleCallback(
         `apply:${courseId}`,
@@ -858,12 +885,10 @@ describe('CourseCatalogStory', () => {
       );
       assertDialogResponseMarkdownSafe(response);
 
-      const call = (appApi.execute as ReturnType<typeof mock>).mock.calls.find(
-        (c) => c[0] === CreateCourseWishUcDef,
-      );
-      expect(call).toBeDefined();
-      expect(call![1]).toEqual({ courseId });
-      expect(subjectOf(call![2])).toBe(actor);
+      expect(wishCall(appApi.wish, CreateCourseWishUcDef.name)).toEqual({
+        input: { courseId },
+        subject: actor,
+      });
 
       const text = String(response.screen?.text ?? '');
       expect(text).toContain('зафиксировано');
@@ -874,9 +899,9 @@ describe('CourseCatalogStory', () => {
     });
 
     test('apply questionnaire: пустой ответ — анкету рендерит FillStory', async () => {
-      const appApi = makeApplyApi({ outcome: 'questionnaire' });
+      const appApi = makeApplyApi(ok({ outcome: 'questionnaire' }));
       const story = new CourseCatalogStory();
-      initStory(story, appApi as never);
+      initStory(story, appApi);
 
       const response = await story.handleCallback(
         `apply:${courseId}`,
@@ -884,10 +909,9 @@ describe('CourseCatalogStory', () => {
         session,
       );
 
-      const call = (appApi.execute as ReturnType<typeof mock>).mock.calls.find(
-        (c) => c[0] === CreateCourseWishUcDef,
-      );
-      expect(call).toBeDefined();
+      expect(wishCall(appApi.wish, CreateCourseWishUcDef.name).input).toEqual({
+        courseId,
+      });
       // Стори ничего не отправляет — анкету проактивно рендерит FillStory
       expect(response.screen).toBeUndefined();
       expect(response.notify).toBeUndefined();
@@ -896,19 +920,15 @@ describe('CourseCatalogStory', () => {
     test.each(['expressed', 'confirmed'] as const)(
       'apply конфликт %s: W04 с кнопкой отмены и меню',
       async (status) => {
-        const { errConflict, AppException } = await import(
-          '@u7-scl/core/domain'
-        );
-        const error = new AppException(
-          errConflict('WISH_ALREADY_EXISTS', 'Желание уже выражено', {
+        const appApi = makeApplyApi(
+          WishErrors.ALREADY_EXISTS.err({
             userId: actor.uuid,
             courseId,
             status,
           }),
         );
-        const appApi = makeApplyApi(undefined, error);
         const story = new CourseCatalogStory();
-        initStory(story, appApi as never);
+        initStory(story, appApi);
 
         const response = await story.handleCallback(
           `apply:${courseId}`,
@@ -934,19 +954,15 @@ describe('CourseCatalogStory', () => {
     test.each(['expressed', 'confirmed'] as const)(
       'apply конфликт %s: текст ветвится',
       async (status) => {
-        const { errConflict, AppException } = await import(
-          '@u7-scl/core/domain'
-        );
-        const error = new AppException(
-          errConflict('WISH_ALREADY_EXISTS', 'Желание уже выражено', {
+        const appApi = makeApplyApi(
+          WishErrors.ALREADY_EXISTS.err({
             userId: actor.uuid,
             courseId,
             status,
           }),
         );
-        const appApi = makeApplyApi(undefined, error);
         const story = new CourseCatalogStory();
-        initStory(story, appApi as never);
+        initStory(story, appApi);
 
         const response = await story.handleCallback(
           `apply:${courseId}`,
@@ -964,17 +980,15 @@ describe('CourseCatalogStory', () => {
     );
 
     test('apply конфликт pending: W04 — продолжить анкету', async () => {
-      const { errConflict, AppException } = await import('@u7-scl/core/domain');
-      const error = new AppException(
-        errConflict('WISH_ALREADY_EXISTS', 'Желание уже выражено', {
+      const appApi = makeApplyApi(
+        WishErrors.ALREADY_EXISTS.err({
           userId: actor.uuid,
           courseId,
           status: 'pending',
         }),
       );
-      const appApi = makeApplyApi(undefined, error);
       const story = new CourseCatalogStory();
-      initStory(story, appApi as never);
+      initStory(story, appApi);
 
       const response = await story.handleCallback(
         `apply:${courseId}`,
@@ -994,13 +1008,11 @@ describe('CourseCatalogStory', () => {
     });
 
     test('apply: другая ошибка (курс не найден) — errorNotify (warn-реплика)', async () => {
-      const { errNotFound, AppException } = await import('@u7-scl/core/domain');
-      const error = new AppException(
-        errNotFound('WISH_COURSE_NOT_FOUND', 'Курс не найден', { courseId }),
+      const appApi = makeApplyApi(
+        WishErrors.COURSE_NOT_FOUND.err({ courseId }),
       );
-      const appApi = makeApplyApi(undefined, error);
       const story = new CourseCatalogStory();
-      initStory(story, appApi as never);
+      initStory(story, appApi);
 
       const response = await story.handleCallback(
         `apply:${courseId}`,
@@ -1017,22 +1029,17 @@ describe('CourseCatalogStory', () => {
   describe('cancel — отмена желания (W05)', () => {
     const courseId = 'c1';
 
-    function makeCancelApi(error?: unknown) {
+    function makeCancelApi(error?: Err<DomainError>) {
       return {
-        execute: mock(async (ucName: unknown, _attrs: unknown) => {
-          if (ucName === CancelWishUcDef) {
-            if (error) throw error;
-            return undefined;
-          }
-          return undefined;
-        }),
+        execute: mock(async () => undefined),
+        wish: wishModule(CancelWishUcDef.name, error ?? ok(undefined)),
       };
     }
 
     test('cancel: рендерит подтверждение W05 с кнопками Да/Отмена', async () => {
       const appApi = makeCancelApi();
       const story = new CourseCatalogStory();
-      initStory(story, appApi as never);
+      initStory(story, appApi);
 
       const response = await story.handleCallback(
         `cancel:${courseId}`,
@@ -1054,7 +1061,7 @@ describe('CourseCatalogStory', () => {
     test('cancel-confirm: вызывает cancel-wish и сообщает об отмене', async () => {
       const appApi = makeCancelApi();
       const story = new CourseCatalogStory();
-      initStory(story, appApi as never);
+      initStory(story, appApi);
 
       const response = await story.handleCallback(
         `cancel-confirm:${courseId}`,
@@ -1063,12 +1070,10 @@ describe('CourseCatalogStory', () => {
       );
       assertDialogResponseMarkdownSafe(response);
 
-      const call = (appApi.execute as ReturnType<typeof mock>).mock.calls.find(
-        (c) => c[0] === CancelWishUcDef,
-      );
-      expect(call).toBeDefined();
-      expect(call![1]).toEqual({ kind: 'course', courseId });
-      expect(subjectOf(call![2])).toBe(actor);
+      expect(wishCall(appApi.wish, CancelWishUcDef.name)).toEqual({
+        input: { kind: 'course', courseId },
+        subject: actor,
+      });
 
       const text = String(response.screen?.text ?? '');
       expect(text).toContain('отменено');
@@ -1078,16 +1083,11 @@ describe('CourseCatalogStory', () => {
     });
 
     test('cancel-confirm: WISH_NOT_FOUND — мягкое сообщение без ошибки', async () => {
-      const { errNotFound, AppException } = await import('@u7-scl/core/domain');
-      const error = new AppException(
-        errNotFound('WISH_NOT_FOUND', 'Желание не найдено', {
-          userId: actor.uuid,
-          courseId,
-        }),
+      const appApi = makeCancelApi(
+        WishErrors.NOT_FOUND.err({ userId: actor.uuid, courseId }),
       );
-      const appApi = makeCancelApi(error);
       const story = new CourseCatalogStory();
-      initStory(story, appApi as never);
+      initStory(story, appApi);
 
       const response = await story.handleCallback(
         `cancel-confirm:${courseId}`,
@@ -1105,22 +1105,17 @@ describe('CourseCatalogStory', () => {
   describe('cancel-mod — отмена желания модуля (W05-M)', () => {
     const moduleId = '33333333-3333-4333-8333-333333333333';
 
-    function makeCancelApi(error?: unknown) {
+    function makeCancelApi(error?: Err<DomainError>) {
       return {
-        execute: mock(async (ucName: unknown, _attrs: unknown) => {
-          if (ucName === CancelWishUcDef) {
-            if (error) throw error;
-            return undefined;
-          }
-          return undefined;
-        }),
+        execute: mock(async () => undefined),
+        wish: wishModule(CancelWishUcDef.name, error ?? ok(undefined)),
       };
     }
 
     test('cancel-mod: рендерит подтверждение W05-M с кнопками Да/Отмена', async () => {
       const appApi = makeCancelApi();
       const story = new CourseCatalogStory();
-      initStory(story, appApi as never);
+      initStory(story, appApi);
 
       const response = await story.handleCallback(
         `cancel-mod:${moduleId}`,
@@ -1142,7 +1137,7 @@ describe('CourseCatalogStory', () => {
     test('cancel-mod-confirm: вызывает cancel-wish с вариантом module', async () => {
       const appApi = makeCancelApi();
       const story = new CourseCatalogStory();
-      initStory(story, appApi as never);
+      initStory(story, appApi);
 
       const response = await story.handleCallback(
         `cancel-mod-confirm:${moduleId}`,
@@ -1151,28 +1146,21 @@ describe('CourseCatalogStory', () => {
       );
       assertDialogResponseMarkdownSafe(response);
 
-      const call = (appApi.execute as ReturnType<typeof mock>).mock.calls.find(
-        (c) => c[0] === CancelWishUcDef,
-      );
-      expect(call).toBeDefined();
-      expect(call![1]).toEqual({ kind: 'module', moduleId });
-      expect(subjectOf(call![2])).toBe(actor);
+      expect(wishCall(appApi.wish, CancelWishUcDef.name)).toEqual({
+        input: { kind: 'module', moduleId },
+        subject: actor,
+      });
 
       const text = String(response.screen?.text ?? '');
       expect(text).toContain('отменено');
     });
 
     test('cancel-mod-confirm: WISH_NOT_FOUND — мягкое сообщение без ошибки', async () => {
-      const { errNotFound, AppException } = await import('@u7-scl/core/domain');
-      const error = new AppException(
-        errNotFound('WISH_NOT_FOUND', 'Желание не найдено', {
-          userId: actor.uuid,
-          moduleId,
-        }),
+      const appApi = makeCancelApi(
+        WishErrors.NOT_FOUND.err({ userId: actor.uuid, moduleId }),
       );
-      const appApi = makeCancelApi(error);
       const story = new CourseCatalogStory();
-      initStory(story, appApi as never);
+      initStory(story, appApi);
 
       const response = await story.handleCallback(
         `cancel-mod-confirm:${moduleId}`,

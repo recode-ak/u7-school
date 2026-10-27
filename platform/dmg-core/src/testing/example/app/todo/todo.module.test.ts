@@ -90,28 +90,36 @@ function makeModule() {
 }
 
 const create = async (module: ReturnType<typeof createTodoModule>) =>
-  expectOk(await module.handle(CreateTaskUcDef, { title: 'Хлеб' }, owner, REQ))
-    .taskId;
+  expectOk(
+    await module.dispatch(
+      CreateTaskUcDef.command({ title: 'Хлеб' }),
+      owner,
+      REQ,
+    ),
+  ).taskId;
 
 describe('createTodoModule', () => {
   it('собирает модуль по карте Def', () => {
     expect(makeModule().module.def.name).toBe('todo');
   });
 
-  it('smoke: создать → назначить → выполнить → список через handle', async () => {
+  it('smoke: создать → назначить → выполнить → список командами', async () => {
     const { module, tasks, users } = makeModule();
     const taskId = await create(module);
 
     expectOk(
-      await module.handle(
-        AssignTaskUcDef,
-        { taskId, assigneeId: ASSIGNEE },
+      await module.dispatch(
+        AssignTaskUcDef.command({ taskId, assigneeId: ASSIGNEE }),
         owner,
         REQ,
       ),
     );
-    expectOk(await module.handle(CompleteTaskUcDef, { taskId }, owner, REQ));
-    const list = expectOk(await module.handle(ListTasksUcDef, {}, owner, REQ));
+    expectOk(
+      await module.dispatch(CompleteTaskUcDef.command({ taskId }), owner, REQ),
+    );
+    const list = expectOk(
+      await module.dispatch(ListTasksUcDef.command({}), owner, REQ),
+    );
 
     expect(list).toEqual([{ uuid: taskId, title: 'Хлеб', status: 'done' }]);
     expect((await tasks.findById(taskId))?.isAssignedTo(ASSIGNEE)).toBe(true);
@@ -121,7 +129,9 @@ describe('createTodoModule', () => {
   it('runJob: выполненная задача уходит в архив', async () => {
     const { module, tasks } = makeModule();
     const taskId = await create(module);
-    expectOk(await module.handle(CompleteTaskUcDef, { taskId }, owner, REQ));
+    expectOk(
+      await module.dispatch(CompleteTaskUcDef.command({ taskId }), owner, REQ),
+    );
 
     const report = await module.runJob(
       ArchiveDoneTasksJobDef,

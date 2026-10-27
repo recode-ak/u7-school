@@ -14,6 +14,7 @@ import {
 } from '@u7-scl/test-helpers/test-bot-transport';
 import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
+import { expectOk } from 'dmg-core/testing';
 import { CoursesController } from '../../src/controllers/courses/controller';
 import { UserController } from '../../src/controllers/user/controller';
 
@@ -94,11 +95,12 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
     transport.reset();
 
     // 1. Желающий выражает желание пройти курс
-    await app.apiApp.execute(
-      CreateCourseWishUcDef,
-      { courseId: COURSE_ID },
-      new UserCaller(wisher),
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+    expectOk(
+      await app.wishApi.dispatch(
+        CreateCourseWishUcDef.command({ courseId: COURSE_ID }),
+        new UserCaller(wisher),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
     );
 
     // 2. Ментор открывает набор на первый модуль курса

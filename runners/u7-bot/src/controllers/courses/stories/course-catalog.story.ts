@@ -1,7 +1,6 @@
 import type { User } from '@u7-scl/app/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
-import { fromError } from '@u7-scl/core/domain';
 import { md } from '@u7-scl/core/shared';
 import {
   type BotSession,
@@ -14,6 +13,7 @@ import {
   CreateCourseWishUcDef,
   CreateModuleWishUcDef,
   ListUserWishesUcDef,
+  WishErrors,
 } from '@u7-scl/domain/wish/contract';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
@@ -173,8 +173,13 @@ export class CourseCatalogStory extends U7BotUiStory {
     const allModIds = currentCourse.phases.flatMap((p) => p.moduleIds ?? []);
     const modulesInfo = await this.#loadModulesInfo(allModIds);
 
-    const wishes = await this.executeUc(ListUserWishesUcDef, {}, actor);
-    const wishStatus = wishes.find(
+    const wishes = await this.dispatchUc(
+      this.resolve.wishApi,
+      ListUserWishesUcDef.command({}),
+      actor,
+    );
+    if (!wishes.ok) return this.ucErrorNotify(wishes.error);
+    const wishStatus = wishes.value.find(
       (w) =>
         w.target.kind === 'course' && w.target.courseId === currentCourse.uuid,
     )?.status;
@@ -518,56 +523,50 @@ export class CourseCatalogStory extends U7BotUiStory {
       return this.screen(md`⚠️ Курс не указан`);
     }
 
-    try {
-      const { outcome } = await this.executeUc(
-        CreateCourseWishUcDef,
-        { courseId },
-        actor,
-      );
-
-      if (outcome === 'questionnaire') {
+    const res = await this.dispatchUc(
+      this.resolve.wishApi,
+      CreateCourseWishUcDef.command({ courseId }),
+      actor,
+    );
+    if (res.ok) {
+      if (res.value.outcome === 'questionnaire') {
         return {};
       }
-
       return this.screen(
         md`🎯 Твоё желание пройти курс зафиксировано\\!\n\nМы напишем тебе, когда откроется набор на этот курс\\.`,
         this.kb([[buttons.mainMenu()]]),
       );
-    } catch (err) {
-      if (fromError(err).kind === 'conflict') {
-        const status =
-          (fromError(err).payload as { status?: string } | undefined)?.status ??
-          'expressed';
-
-        if (status === 'pending') {
-          return this.screen(
-            md`📝 Ты начал заполнять анкету по этому курсу, но не закончил её\\.\nПродолжи — и желание будет закреплено\\.`,
-            this.kb([
-              [
-                this.btn(
-                  '▶️ Продолжить анкету',
-                  Routes.questionnaire.resume(courseId),
-                ),
-              ],
-              [buttons.mainMenu()],
-            ]),
-          );
-        }
-
-        const text =
-          status === 'confirmed'
-            ? md`📚 Ты уже обучаешься на этом курсе\\.`
-            : md`📝 Ты уже выразил желание пройти этот курс\\.`;
-        return this.screen(
-          text,
-          this.kb([
-            [this.btn('🗑️ Отменить желание', this.cb('cancel', courseId))],
-            [buttons.mainMenu()],
-          ]),
-        );
-      }
-      return this.errorNotify(err);
     }
+    if (res.error.code !== WishErrors.ALREADY_EXISTS.code) {
+      return this.ucErrorNotify(res.error);
+    }
+
+    if (res.error.payload.status === 'pending') {
+      return this.screen(
+        md`📝 Ты начал заполнять анкету по этому курсу, но не закончил её\\.\nПродолжи — и желание будет закреплено\\.`,
+        this.kb([
+          [
+            this.btn(
+              '▶️ Продолжить анкету',
+              Routes.questionnaire.resume(courseId),
+            ),
+          ],
+          [buttons.mainMenu()],
+        ]),
+      );
+    }
+
+    const text =
+      res.error.payload.status === 'confirmed'
+        ? md`📚 Ты уже обучаешься на этом курсе\\.`
+        : md`📝 Ты уже выразил желание пройти этот курс\\.`;
+    return this.screen(
+      text,
+      this.kb([
+        [this.btn('🗑️ Отменить желание', this.cb('cancel', courseId))],
+        [buttons.mainMenu()],
+      ]),
+    );
   }
 
   // ── Запись на модуль (кнопка из уведомления о завершении) ──
@@ -576,22 +575,24 @@ export class CourseCatalogStory extends U7BotUiStory {
     moduleId: string,
     actor: User,
   ): Promise<DialogResponse> {
-    try {
-      await this.executeUc(CreateModuleWishUcDef, { moduleId }, actor);
-
+    const res = await this.dispatchUc(
+      this.resolve.wishApi,
+      CreateModuleWishUcDef.command({ moduleId }),
+      actor,
+    );
+    if (res.ok) {
       return this.screen(
         md`✅ Записали\\! Мы сообщим, когда откроется набор на модуль\\.`,
         this.kb([[buttons.mainMenu()]]),
       );
-    } catch (err) {
-      if (fromError(err).kind === 'conflict') {
-        return this.screen(
-          md`ℹ️ Ты уже записан на этот модуль — ждём открытия набора\\.`,
-          this.kb([[buttons.mainMenu()]]),
-        );
-      }
-      return this.errorNotify(err);
     }
+    if (res.error.code === WishErrors.ALREADY_EXISTS.code) {
+      return this.screen(
+        md`ℹ️ Ты уже записан на этот модуль — ждём открытия набора\\.`,
+        this.kb([[buttons.mainMenu()]]),
+      );
+    }
+    return this.ucErrorNotify(res.error);
   }
 
   // ── Отмена желания курса (W05) ──
@@ -600,26 +601,24 @@ export class CourseCatalogStory extends U7BotUiStory {
     courseId: string,
     actor: User,
   ): Promise<DialogResponse> {
-    try {
-      await this.executeUc(
-        CancelWishUcDef,
-        { kind: 'course', courseId },
-        actor,
-      );
-
+    const res = await this.dispatchUc(
+      this.resolve.wishApi,
+      CancelWishUcDef.command({ kind: 'course', courseId }),
+      actor,
+    );
+    if (res.ok) {
       return this.screen(
         md`🗑️ Желание пройти курс отменено\\.`,
         this.kb([[buttons.mainMenu()]]),
       );
-    } catch (err) {
-      if (fromError(err).kind === 'not-found') {
-        return this.screen(
-          md`ℹ️ Активного желания на этот курс уже нет\\.`,
-          this.kb([[buttons.mainMenu()]]),
-        );
-      }
-      return this.errorNotify(err);
     }
+    if (res.error.code === WishErrors.NOT_FOUND.code) {
+      return this.screen(
+        md`ℹ️ Активного желания на этот курс уже нет\\.`,
+        this.kb([[buttons.mainMenu()]]),
+      );
+    }
+    return this.ucErrorNotify(res.error);
   }
 
   // ── Отмена желания модуля (W05-M) ──
@@ -628,26 +627,24 @@ export class CourseCatalogStory extends U7BotUiStory {
     moduleId: string,
     actor: User,
   ): Promise<DialogResponse> {
-    try {
-      await this.executeUc(
-        CancelWishUcDef,
-        { kind: 'module', moduleId },
-        actor,
-      );
-
+    const res = await this.dispatchUc(
+      this.resolve.wishApi,
+      CancelWishUcDef.command({ kind: 'module', moduleId }),
+      actor,
+    );
+    if (res.ok) {
       return this.screen(
         md`🗑️ Желание пройти модуль отменено\\.`,
         this.kb([[buttons.mainMenu()]]),
       );
-    } catch (err) {
-      if (fromError(err).kind === 'not-found') {
-        return this.screen(
-          md`ℹ️ Активного желания на этот модуль уже нет\\.`,
-          this.kb([[buttons.mainMenu()]]),
-        );
-      }
-      return this.errorNotify(err);
     }
+    if (res.error.code === WishErrors.NOT_FOUND.code) {
+      return this.screen(
+        md`ℹ️ Активного желания на этот модуль уже нет\\.`,
+        this.kb([[buttons.mainMenu()]]),
+      );
+    }
+    return this.ucErrorNotify(res.error);
   }
 
   async #handleLegacyProjectByIndex(

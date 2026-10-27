@@ -18,10 +18,11 @@
  *   bun run scripts/call-uc.ts get-current '{"userId":"<uuid>"}'
  *   bun run scripts/call-uc.ts create-course-wish '{"courseId":"<uuid>"}'
  *
- * UC модуля wish — DMG (Ф12): вызываются по Def через ту же сборку DMG,
- * что и в боте (`runners/u7-bot/src/create-dmg-modules.ts`); имя — kebab-case
- * (`create-course-wish`) или имя Def (`createCourseWish`). Лог операций
- * DMG пишется в `data/oplog/`, как у бота.
+ * UC модуля wish — DMG (Ф12): команда через `ModuleApi` (D-49) над той же
+ * сборкой DMG, что и в боте (`runners/u7-bot/src/create-dmg-modules.ts`);
+ * имя — kebab-case (`create-course-wish`) или имя Def (`createCourseWish`).
+ * Отказ — `Err` с кодом в stderr и выход с кодом 1. Лог операций DMG
+ * пишется в `data/oplog/`, как у бота.
  *
  * ⚠️ Команды (не query) пишут в боевые JSON-файлы: перед изменяющими
  * вызовами убедись, что бот остановлен (pm2 stop u7-school-bot).
@@ -64,8 +65,8 @@ import { UserApiModule } from '@u7-scl/user/api';
 import type { UserApiModuleResolver } from '@u7-scl/user/domain';
 import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
-import { type AnyUseCaseDef, UserCaller } from 'dmg-core';
-import { Trace } from 'dmg-core/app';
+import { type InputOf, UseCaseDef, UserCaller } from 'dmg-core';
+import { ModuleApi, Trace } from 'dmg-core/app';
 import {
   createDmgAppContext,
   createDmgModules,
@@ -78,10 +79,12 @@ const NUR_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';
 const kebab = (name: string) =>
   name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 
+type WishUc = (typeof WishModuleDef)['useCases'][number];
+
 /** UC модуля wish (DMG) по имени: kebab-case или имя Def. */
-function wishUcDef(ucName: string): AnyUseCaseDef | undefined {
+function wishUcDef(ucName: string): WishUc | undefined {
   return WishModuleDef.useCases.find(
-    (def: AnyUseCaseDef) => def.name === ucName || kebab(def.name) === ucName,
+    (def) => def.name === ucName || kebab(def.name) === ucName,
   );
 }
 
@@ -231,19 +234,30 @@ async function main() {
   const actor = await resolveActor(app, actorIdOverride || NUR_UUID);
 
   // ─── Вызов UseCase ────────────────────────────────
+  const dmgUc = wishUcDef(ucName);
+  if (dmgUc) {
+    const wishApi = new ModuleApi(WishModuleDef, app, appResolver.logger);
+    // Вход из командной строки не типизирован — его проверит UC.
+    const command = UseCaseDef.commandOf(dmgUc, params as InputOf<WishUc>);
+    const res = await wishApi.dispatch(
+      command,
+      new UserCaller(actor),
+      Trace.fromRequest({
+        requestId: crypto.randomUUID(),
+        channel: { name: 'cli' },
+      }),
+    );
+    if (!res.ok) {
+      const { code, label, payload } = res.error;
+      console.error(`❌ ${code}: ${label}`, payload ?? '');
+      process.exit(1);
+    }
+    console.log(JSON.stringify(res.value, null, 2));
+    return;
+  }
+
   try {
-    const dmgUc = wishUcDef(ucName);
-    const result = dmgUc
-      ? await app.execute(
-          dmgUc,
-          params,
-          new UserCaller(actor),
-          Trace.fromRequest({
-            requestId: crypto.randomUUID(),
-            channel: { name: 'cli' },
-          }),
-        )
-      : await app.execute(ucName, params, actor);
+    const result = await app.execute(ucName, params, actor);
     console.log(JSON.stringify(result, null, 2));
   } catch (e: unknown) {
     const err = e as {

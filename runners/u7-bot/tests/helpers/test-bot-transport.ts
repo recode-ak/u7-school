@@ -9,6 +9,9 @@ import type {
   DialogState,
   KeyboardDescription,
 } from '@u7-scl/core/ui';
+import { WishModuleDef } from '@u7-scl/domain/wish/contract';
+import { ModuleApi } from 'dmg-core/app';
+import { MemoryLogger } from 'dmg-core/testing';
 import type { Api } from 'grammy';
 import type { BotContext } from '../../src/context';
 import type { U7BotUiAppResolve } from '../../src/core/u7-bot-app-meta';
@@ -190,6 +193,7 @@ export class TestBotTransport {
         eventBus: opts.eventBus ?? new InProcEventBus(),
         actorResolver,
         appApi: apiApp,
+        wishApi: new ModuleApi(WishModuleDef, apiApp, new MemoryLogger()),
         userFacade:
           opts.userFacade ??
           ({

@@ -1,10 +1,13 @@
+import type { DomainError } from 'dmg-core';
 import type { ApiApp } from '#api-legacy/app/api-app';
 import { fromError } from '#domain-legacy/errors/error-helpers';
+import { AppException } from '#domain-legacy/errors/errors';
 import type { AppMeta } from '#domain-legacy/types';
 import type { Logger } from '#shared-legacy/logger';
 import { getGlobalLogger } from '#shared-legacy/logger';
 import { type MdText, md, mdConcat, mdJoin } from '#shared-legacy/markdown';
 import { serializeError } from '#shared-legacy/serialize-error';
+import { toLegacyError } from '../../legacy-bridge';
 import { UiStory } from '../ui-story';
 import type { BotUiAppResolve } from './app-types';
 import { DialogCache } from './dialog-cache';
@@ -352,6 +355,16 @@ export abstract class BotUiStory<
         );
       }
     }
+  }
+
+  /**
+   * Отказ UC DMG (`Err` ответа `moduleApi`) — реплика, как `errorNotify`.
+   * Мост: ошибка показывается веткой legacy по `kind` (`toLegacyError`),
+   * пока у UI нет презентера ошибок DMG.
+   */
+  // DEBT-37: показ ошибки DMG через legacy-ветку errorNotify.
+  protected ucErrorNotify(error: DomainError): DialogResponse {
+    return this.errorNotify(new AppException(toLegacyError(error)));
   }
 
   /**

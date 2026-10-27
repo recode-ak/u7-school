@@ -1,27 +1,23 @@
 import {
   type AnyUseCaseDef,
-  Caller,
+  type Caller,
   type Command,
   CoreErrors,
   type Identified,
-  type InputOf,
   type OutputOf,
   type Result,
   type UseCaseErrorOf,
 } from 'dmg-core';
 import type { AnyModuleFromDef, Trace } from 'dmg-core/app';
 import { errBadRequest, throwError } from '#domain-legacy/errors/error-helpers';
-import {
-  AppException,
-  type NoCommandFoundError,
-} from '#domain-legacy/errors/errors';
+import type { NoCommandFoundError } from '#domain-legacy/errors/errors';
 import type {
   ApiExecutor,
   AppMeta,
   ExtractUcMetaFromMeta,
   GetUcNamesFromMeta,
 } from '#domain-legacy/types';
-import { legacyJobsOf, toLegacyError } from '../../legacy-bridge';
+import { legacyJobsOf } from '../../legacy-bridge';
 import type { JobScheduler } from '../job/job-scheduler';
 import { App } from './app';
 
@@ -38,8 +34,9 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
 {
   #scheduler: JobScheduler | undefined;
 
-  // Модули DMG живут рядом с legacy (strangler): их UC — через run/execute
-  // по Def, реакции — на общей шине, задания — в общем планировщике.
+  // Модули DMG живут рядом с legacy (strangler): их UC — командой через
+  // dispatch по адресу модуля, реакции — на общей шине, задания — в общем
+  // планировщике.
   private readonly dmgModules: AnyModuleFromDef<DmgActor<TActor>>[] = [];
   private dmgUnsubscribes: Array<() => void> = [];
 
@@ -97,24 +94,12 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
   }
 
   /**
-   * Исполнение UC DMG по его Def: отказ — значение `Err`. След строит
-   * адаптер транспорта на входе (`Trace.fromRequest`: `requestId` от
-   * клиента, а если его нет — создаётся с `warn`, ERR-07; caller.md §2 п. 7).
-   */
-  async run<D extends AnyUseCaseDef>(
-    uc: D,
-    input: InputOf<D>,
-    caller: Caller<DmgActor<TActor>>,
-    trace: Trace,
-  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    return this.dmgModule(uc).handle(uc, input, caller, trace);
-  }
-
-  /**
    * Исполнение команды модулем по адресу транспорта (D-49): адрес — имя
    * модуля (URL `POST /api/<module>`, in-proc `moduleApi`), UC модуль
    * находит по имени. Неизвестный модуль или UC — `OPERATION_NOT_FOUND`.
-   * След и Caller строит адаптер транспорта на входе, как у `run`.
+   * След и Caller строит адаптер транспорта на входе (`Trace.fromRequest`:
+   * `requestId` от клиента, а если его нет — создаётся с `warn`, ERR-07;
+   * caller.md §2 п. 7).
    */
   async dispatch<D extends AnyUseCaseDef>(
     module: string,
@@ -129,37 +114,11 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     return target.dispatch(command, caller, trace);
   }
 
-  execute<N extends GetUcNamesFromMeta<TMeta>>(
+  async execute<N extends GetUcNamesFromMeta<TMeta>>(
     ucName: N,
     attrs: ExtractUcMetaFromMeta<TMeta, N>['input'],
     actor?: TActor,
-  ): Promise<ExtractUcMetaFromMeta<TMeta, N>['output']>;
-  /**
-   * UC DMG с прежним поведением «бросить при ошибке»: `Err` → `AppException`
-   * — для stories, ещё не переведённых на `run`.
-   */
-  execute<D extends AnyUseCaseDef>(
-    uc: D,
-    input: InputOf<D>,
-    caller: Caller<DmgActor<TActor>>,
-    trace: Trace,
-  ): Promise<OutputOf<D>>;
-  async execute(
-    uc: string | AnyUseCaseDef,
-    attrs: unknown,
-    who?: unknown,
-    trace?: Trace,
-  ): Promise<unknown> {
-    if (typeof uc !== 'string') {
-      if (!isCaller<DmgActor<TActor>>(who) || trace === undefined) {
-        throw new Error(`ApiApp: для UC ${uc.name} нужны Caller и Trace`);
-      }
-      const res = await this.dmgModule(uc).handle(uc, attrs, who, trace);
-      if (!res.ok) throw new AppException(toLegacyError(res.error));
-      return res.value;
-    }
-    const ucName = uc;
-    const actor = who;
+  ): Promise<ExtractUcMetaFromMeta<TMeta, N>['output']> {
     const module = this.getModules().find((m) => m.hasCommand(ucName));
     if (!module) {
       return throwError(
@@ -174,15 +133,6 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     // Логирование — внутри module.execute
     return module.execute(ucName, attrs, actor);
   }
-
-  /** Модуль DMG, реализующий UC: вход в UC — только его `handle` (D-43). */
-  private dmgModule(uc: AnyUseCaseDef): AnyModuleFromDef<DmgActor<TActor>> {
-    const module = this.dmgModules.find((m) => m.serves(uc));
-    if (module === undefined) {
-      throw new Error(`ApiApp: UC ${uc.name} не зарегистрирован в модулях DMG`);
-    }
-    return module;
-  }
 }
 
 /**
@@ -190,11 +140,3 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
  * (D-43). Legacy-часть `ApiApp` принимает актора как есть.
  */
 type DmgActor<TActor> = TActor & Identified;
-
-/**
- * Перегрузка `execute` для Def гарантирует `Caller<TActor>` типом;
- * реализации перегрузок TS этого не передаёт, поэтому — проверка класса.
- */
-function isCaller<U extends Identified>(value: unknown): value is Caller<U> {
-  return value instanceof Caller;
-}

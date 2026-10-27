@@ -169,32 +169,6 @@ export class ModuleFromDef<
   }
 
   /**
-   * Исполнение UC модуля по его Def: ответ реализации как есть (отказ —
-   * `Err`). UC другого модуля — ошибка компиляции; при стёртом типе модуля
-   * (`AnyModuleFromDef`) — исключение: это ошибка сборки приложения, а не
-   * отказ операции.
-   */
-  handle<D extends M['useCases'][number]>(
-    def: D,
-    input: unknown,
-    caller: Caller<U>,
-    trace: Trace,
-  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    const uc = this.useCase(def);
-    if (uc === undefined) {
-      return Promise.reject(
-        new Error(`UC ${def.name} не реализован в модуле ${this.def.name}`),
-      );
-    }
-    return uc.handle(input, caller, trace);
-  }
-
-  /** Реализован ли UC в этом модуле — выбор модуля по Def в приложении. */
-  serves(def: AnyUseCaseDef): boolean {
-    return this.useCase(def) !== undefined;
-  }
-
-  /**
    * Прогон Job модуля со следом вызывающего (`Trace.forJob`). Job другого
    * модуля — ошибка компиляции, при стёртом типе — исключение сборки.
    */
@@ -217,17 +191,6 @@ export class ModuleFromDef<
     return () => {
       for (const off of offs) off();
     };
-  }
-
-  /**
-   * Реализация UC по его Def; `undefined` — UC не из этого модуля (или
-   * другой Def с тем же именем).
-   */
-  private useCase<D extends AnyUseCaseDef>(
-    def: D,
-  ): UseCaseHandler<D, U> | undefined {
-    const uc = this.useCases.get(def.name);
-    return uc !== undefined && implementsDef(uc, def) ? uc : undefined;
   }
 }
 
@@ -255,12 +218,4 @@ function assertUniqueNames(def: AnyModuleDef): void {
     }
     seen.add(uc.name);
   }
-}
-
-/** Совпадение объекта Def гарантирует тип `D`. */
-function implementsDef<D extends AnyUseCaseDef, U extends Identified>(
-  uc: UseCaseHandler<AnyUseCaseDef, U>,
-  def: D,
-): uc is UseCaseHandler<D, U> {
-  return uc.def === def;
 }

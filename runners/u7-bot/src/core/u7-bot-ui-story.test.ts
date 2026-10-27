@@ -24,13 +24,25 @@ import type {
   CommandUpdate,
   DialogResponse,
 } from '@u7-scl/core/ui';
-import { ListUserWishesUcDef } from '@u7-scl/domain/wish/contract';
+import {
+  ListUserWishesUcDef,
+  WishModuleDef,
+} from '@u7-scl/domain/wish/contract';
 import { Role } from '@u7-scl/user/domain';
-import { UserCaller } from 'dmg-core';
-import type { Trace } from 'dmg-core/app';
+import {
+  type Caller,
+  type Command,
+  CoreErrors,
+  type DomainError,
+  ok,
+  type Result,
+  UserCaller,
+} from 'dmg-core';
+import { type CommandTransport, ModuleApi, type Trace } from 'dmg-core/app';
+import { MemoryLogger } from 'dmg-core/testing';
 import { APP_CODES } from '../shared/app-codes';
 import { U7BotController } from './u7-bot-controller';
-import { U7BotUiStory } from './u7-bot-ui-story';
+import { U7BotUiStory, type WishApi } from './u7-bot-ui-story';
 
 /**
  * Заглушка для доступа к protected методу handleError.
@@ -488,63 +500,89 @@ describe('U7BotUiStory — контракт handleCommand', () => {
   });
 });
 
-// ── Вызов UC DMG от имени актора бота (Ф12) ──
+// ── Вызов UC DMG от имени актора бота: команда через moduleApi (D-49) ──
 
-describe('U7BotUiStory.executeUc', () => {
+describe('U7BotUiStory.dispatchUc', () => {
+  type Sent = {
+    module: string;
+    command: Command;
+    caller: Caller;
+    trace: Trace;
+  };
+
   class UcStory extends U7BotUiStory {
     readonly name = 'wish';
+
+    constructor(private readonly wishApi: WishApi) {
+      super();
+    }
 
     override handleCallback(): Promise<DialogResponse> {
       throw new Error('Не используется');
     }
 
     list() {
-      return this.executeUc(ListUserWishesUcDef, {}, actor);
+      return this.dispatchUc(
+        this.wishApi,
+        ListUserWishesUcDef.command({}),
+        actor,
+      );
     }
   }
 
-  function makeStory(execute: ReturnType<typeof mock>) {
-    const story = new UcStory();
+  /** Story над wish-клиентом, транспорт которого отвечает `answer`. */
+  function makeStory(sent: Sent[], answer: Result<unknown, DomainError>) {
+    const transport: CommandTransport<User> = {
+      dispatch: async (module, command, caller, trace) => {
+        sent.push({ module, command, caller, trace });
+        return answer as never;
+      },
+    };
+    const story = new UcStory(
+      new ModuleApi(WishModuleDef, transport, new MemoryLogger()),
+    );
     story.init({
-      appApi: { execute },
       eventBus: {},
       actorResolver: async () => actor,
     } as never);
     return story;
   }
 
-  test('UC по Def: субъект — актор, след — запрос канала telegram', async () => {
-    const execute = mock(async () => []);
+  test('команда модулю wish: субъект — актор, след — запрос канала telegram', async () => {
+    const sent: Sent[] = [];
     setGlobalLogger(createMockLogger());
 
-    expect(await makeStory(execute).list()).toEqual([]);
+    expect(await makeStory(sent, ok([])).list()).toEqual(ok([]));
 
-    const [def, input, caller, trace] = execute.mock.calls[0] as unknown as [
-      unknown,
-      unknown,
-      UserCaller<User>,
-      Trace,
-    ];
-    expect([def, input]).toEqual([ListUserWishesUcDef, {}]);
-    expect(caller).toBeInstanceOf(UserCaller);
-    expect(caller.user).toBe(actor);
-    expect(trace.cause.kind).toBe('request');
-    expect(trace.channel).toEqual({ name: 'telegram', visitorId: '1' });
+    const [call] = sent;
+    if (call === undefined) throw new Error('Команда не отправлена');
+    expect(call.module).toBe('wish');
+    expect(call.command).toEqual(ListUserWishesUcDef.command({}));
+    expect(call.caller).toBeInstanceOf(UserCaller);
+    expect((call.caller as UserCaller<User>).user).toBe(actor);
+    expect(call.trace.cause.kind).toBe('request');
+    expect(call.trace.channel).toEqual({ name: 'telegram', visitorId: '1' });
+  });
+
+  test('отказ UC — значение Err, не исключение', async () => {
+    const denied = CoreErrors.ACCESS_DENIED.err({
+      rule: 'isOwner',
+      denyMessage: 'Нет',
+    });
+
+    expect(await makeStory([], denied).list()).toEqual(denied);
   });
 
   test('requestId транспорт не передаёт — создаётся новый на вызов с warn', async () => {
-    const execute = mock(async () => []);
+    const sent: Sent[] = [];
     const logger = createMockLogger();
     setGlobalLogger(logger);
-    const story = makeStory(execute);
+    const story = makeStory(sent, ok([]));
 
     await story.list();
     await story.list();
 
-    const ids = execute.mock.calls.map(
-      (c) =>
-        (c as unknown as [unknown, unknown, unknown, Trace])[3].correlationId,
-    );
+    const ids = sent.map((c) => c.trace.correlationId);
     expect(new Set(ids).size).toBe(2);
     expect(logger.warn).toHaveBeenCalledTimes(2);
   });

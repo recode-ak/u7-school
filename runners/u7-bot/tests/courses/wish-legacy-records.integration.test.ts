@@ -8,6 +8,7 @@ import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
+import { expectOk } from 'dmg-core/testing';
 
 /**
  * Интеграционный тест чтения и перезаписи legacy-записей желаний:
@@ -69,11 +70,12 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
     JSON.parse(await Bun.file(wishesPath).text());
 
   test('чтение: legacy-запись видна, ISO разобран в число', async () => {
-    const wishes = await app.apiApp.execute(
-      ListUserWishesUcDef,
-      {},
-      new UserCaller(guest),
-      req(),
+    const wishes = expectOk(
+      await app.wishApi.dispatch(
+        ListUserWishesUcDef.command({}),
+        new UserCaller(guest),
+        req(),
+      ),
     );
 
     const wish = wishes.find((w) => w.uuid === TARGET_UUID);
@@ -83,11 +85,15 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
   });
 
   test('cancel-wish: файл переписан в формате spec, соседняя запись не потеряна', async () => {
-    await app.apiApp.execute(
-      CancelWishUcDef,
-      { kind: 'course', courseId: INSTANT_COURSE_ID },
-      new UserCaller(guest),
-      req(),
+    expectOk(
+      await app.wishApi.dispatch(
+        CancelWishUcDef.command({
+          kind: 'course',
+          courseId: INSTANT_COURSE_ID,
+        }),
+        new UserCaller(guest),
+        req(),
+      ),
     );
 
     const rows = await rawRows();

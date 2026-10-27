@@ -7,6 +7,7 @@ import {
   InProcInbox,
   InProcOutbox,
   JsonlOperationLog,
+  ModuleApi,
   ModuleFacade,
   ModuleFacades,
   Trace,
@@ -33,8 +34,12 @@ import {
   ListTasksUcDef,
   TaskAr,
   TaskEvents,
+  TodoModuleDef,
 } from 'dmg-core/testing/example/todo/index';
-import { RemoveUserUcDef } from 'dmg-core/testing/example/users/index';
+import {
+  RemoveUserUcDef,
+  UsersModuleDef,
+} from 'dmg-core/testing/example/users/index';
 import { ApiApp } from '../api/app/api-app';
 import type { AppMeta } from '../domain/types';
 import { InProcEventBus } from '../infra/in-proc-event-bus';
@@ -50,6 +55,9 @@ let dir: string;
 let legacy: InProcEventBus;
 let deps: TodoDeps;
 let api: ApiApp<AppMeta, ExampleUser>;
+/** Клиенты модулей (D-49): in-proc транспорт — приложение. */
+let todo: ModuleApi<typeof TodoModuleDef, ExampleUser>;
+let usersApi: ModuleApi<typeof UsersModuleDef, ExampleUser>;
 let logs: LogRecord[];
 
 beforeEach(async () => {
@@ -79,16 +87,26 @@ beforeEach(async () => {
     createTodoModule(deps),
   );
   api.init({ start: () => {}, stop: () => {} });
+  todo = new ModuleApi(TodoModuleDef, api, deps.app.logger);
+  usersApi = new ModuleApi(UsersModuleDef, api, deps.app.logger);
 });
 afterEach(() => rm(dir, { recursive: true, force: true }));
 
 async function create(title: string, owner = ANNA): Promise<string> {
-  const res = await api.run(CreateTaskUcDef, { title }, caller(owner), req());
+  const res = await todo.dispatch(
+    CreateTaskUcDef.command({ title }),
+    caller(owner),
+    req(),
+  );
   return expectOk(res).taskId;
 }
 
 async function titles(owner = ANNA): Promise<string[]> {
-  const res = await api.run(ListTasksUcDef, {}, caller(owner), req());
+  const res = await todo.dispatch(
+    ListTasksUcDef.command({}),
+    caller(owner),
+    req(),
+  );
   return expectOk(res).map((t) => `${t.title}:${t.status}`);
 }
 
@@ -102,7 +120,11 @@ describe('todo: сквозной сценарий через appApi.run', () => 
   test('создать → выполнить → в списке выполнена', async () => {
     const id = await create('Купить хлеб');
     expectOk(
-      await api.run(CompleteTaskUcDef, { taskId: id }, caller(ANNA), req()),
+      await todo.dispatch(
+        CompleteTaskUcDef.command({ taskId: id }),
+        caller(ANNA),
+        req(),
+      ),
     );
     expect(await titles()).toEqual(['Купить хлеб:done']);
   });
@@ -115,15 +137,20 @@ describe('todo: сквозной сценарий через appApi.run', () => 
 
   test('чужую задачу выполнить нельзя, администратору можно', async () => {
     const id = await create('Купить хлеб');
-    const foreign = await api.run(
-      CompleteTaskUcDef,
-      { taskId: id },
+    const foreign = await todo.dispatch(
+      CompleteTaskUcDef.command({ taskId: id }),
       caller(BORIS),
       req(),
     );
     expectErr(foreign, 'ACCESS_DENIED');
     const admin = caller(BORIS, true);
-    expectOk(await api.run(CompleteTaskUcDef, { taskId: id }, admin, req()));
+    expectOk(
+      await todo.dispatch(
+        CompleteTaskUcDef.command({ taskId: id }),
+        admin,
+        req(),
+      ),
+    );
   });
 
   test('событие уходит в общую шину — legacy-подписчик его видит', async () => {
@@ -150,7 +177,13 @@ describe('todo: событие → ER', () => {
       name: 'removeUsers',
     });
     const trace = Trace.fromRequest({ requestId: 'r-remove' });
-    expectOk(await api.run(RemoveUserUcDef, { userId: ANNA }, admin, trace));
+    expectOk(
+      await usersApi.dispatch(
+        RemoveUserUcDef.command({ userId: ANNA }),
+        admin,
+        trace,
+      ),
+    );
     await settle();
     expect(archived).toEqual(['r-remove']);
     expect([await titles(ANNA), await titles(BORIS)]).toEqual([
@@ -166,7 +199,11 @@ describe('todo: Job на существующем планировщике', () 
     const id = await create('Купить хлеб');
     await create('Позвонить');
     expectOk(
-      await api.run(CompleteTaskUcDef, { taskId: id }, caller(ANNA), req()),
+      await todo.dispatch(
+        CompleteTaskUcDef.command({ taskId: id }),
+        caller(ANNA),
+        req(),
+      ),
     );
     await legacyJob(createTodoModule(deps), ArchiveDoneTasksJobDef).execute();
     expect(await titles()).toEqual(['Позвонить:open']);

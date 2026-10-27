@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { CoreErrors, type DomainError, ErrorDef } from 'dmg-core';
 import {
   errAccessDenied,
   errBadRequest,
@@ -99,6 +100,9 @@ class TestStory extends BotUiStory<AppMeta, TestActor> {
   }
   callErrorNotify(err: unknown): ReturnType<TestStory['errorNotify']> {
     return this.errorNotify(err);
+  }
+  callUcErrorNotify(error: DomainError): ReturnType<TestStory['errorNotify']> {
+    return this.ucErrorNotify(error);
   }
   callCb(action: string, ...ids: string[]): string {
     return this.cb(action, ...ids);
@@ -492,6 +496,37 @@ describe('BotUiStory — errorNotify (ФР-5)', () => {
     expect(() => assertMarkdownV2Safe(text)).not.toThrow();
     expect(errors.length).toBe(1);
     setGlobalLogger(undefined as unknown as Logger);
+  });
+});
+
+describe('BotUiStory — ucErrorNotify (отказ UC DMG)', () => {
+  const NoteErrors = ErrorDef.define('NOTE', {
+    TAKEN: {
+      kind: 'conflict',
+      label: 'Заметка [уже] занята_',
+      description: 'Тестовая ошибка конфликта.',
+    },
+  });
+
+  test('ошибка Def → warn-реплика с label, без экрана', () => {
+    const response = new TestStory().callUcErrorNotify(NoteErrors.TAKEN.make());
+
+    expect(response.screen).toBeUndefined();
+    expect(response.notify?.kind).toBe('warn');
+    const text = String(response.notify?.text);
+    expect(text).toContain('Заметка');
+    expect(() => assertMarkdownV2Safe(text)).not.toThrow();
+  });
+
+  test('отказ Policy → текст denyMessage', () => {
+    const response = new TestStory().callUcErrorNotify(
+      CoreErrors.ACCESS_DENIED.make({
+        rule: 'isOwner',
+        denyMessage: 'Только владелец',
+      }),
+    );
+
+    expect(String(response.notify?.text)).toContain('Только владелец');
   });
 });
 
