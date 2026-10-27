@@ -1,0 +1,2 @@
+Задача: llms.txt, dmg-core/docs, conductor/architecture; D-48; D-09/D-37 — ModuleDef.define; TRACK-DMG-CORE-OOP.md удалён (Фаза 7, dmg-core-oop).
+Пакет: llms.txt, README.md, docs/index.md, naming.md, rules.md (ARC-02), layers.md, decisions.md (D-09, D-33, D-37, D-40 форма API, D-42, новый D-48). Проект: conductor/architecture/naming.md (ArchChecker), migration.md (XxxDef.define), debt.md — только открытый пункт «Пересмотреть» (исторические TR не переписаны). Спека — пометка о переносе брифа. check — 4107 pass.
