@@ -1,0 +1,4 @@
+Задача: DefIndex.from(roots) с методами (Фаза 4, dmg-core-oop).
+Изменения: класс DefIndex (private-карты владельцев; moduleOf, aggregateOf, operations, id, ruleId); ModuleDef.operations()/localId(def); удалены indexDefs, operationsOf, callsOf, localId, ruleId; AnyOperationDef перенесён в domain/contracts/operation-def.types.ts (app его реэкспортирует).
+Потребители: graph/domain-graph.ts, arch/check-defs.ts, check-files.ts, described-defs.ts, arch-check.ts, graph/index.ts, scripts/arch-check.ts, тесты модулей domain/* и учебного примера, гайд guides/module.md.
+Тесты: graph/def-index.test.ts (новый), module-def.test.ts (+2). bun run check зелёный (4091 pass), arch:check — 0 нарушений.
