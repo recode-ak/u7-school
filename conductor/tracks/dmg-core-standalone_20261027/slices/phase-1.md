@@ -73,6 +73,23 @@
 
 **Приёмка:** гейт зелёный; `cd platform/dmg-core && bun run check` зелёный.
 
+## Шаг 5 — минимальный in-proc раннер учебного примера (api-author, платформа)
+
+Раннер по D-50: точка входа, `process.env` → `ExampleAppEnv`, транспорт (CLI), `Trace`; модули не собирает, `Caller` — через резолвер приложения.
+
+**Границы:** новый каталог `platform/dmg-core/src/testing/example/runner/` (раскладку файлов выбери по `naming.md`, обоснуй). `ExampleApp` не менять (если нужно — эскалация). Документацию не править.
+
+**Что сделать:**
+- Класс CLI-раннера: `run(argv, io)` → код выхода. `io` — порт вывода (stdout/stderr строками), чтобы тест не трогал глобальный `console`/`process`. Команды — минимум две по UC `todo`: создать задачу и список задач; пользователь — опция (`--user <uuid>`, без неё — гость).
+- Поток: разбор argv → `ExampleCallerResolver.resolve(uuid, trace)` → `api.dispatch(TodoModuleDef, <UcDef>.command(input), caller, trace)` → `Result` в stdout (JSON) — `Ok` код 0, `Err` код 2 (бизнес-отказ); ошибка ввода (неизвестная команда, нет обязательного аргумента) — сообщение в stderr, код 1, UC не вызывается. `Trace` — канал CLI, новый `requestId` на запуск.
+- Точка входа (`main.ts` или аналог): `process.env` (например `EXAMPLE_DATA_DIR`, `EXAMPLE_USERS` через запятую, `EXAMPLE_MODE`) → `ExampleAppEnv`, `process.argv`, `process.exitCode`. Только здесь читается `process.env` (ARC-09). Без лишних зависимостей — разбор argv свой, простой.
+
+**Тесты** (временный каталог ОС): команда создаёт задачу от пользователя — код 0, JSON с `taskId`, список её показывает; гость получает `Err` — код 2; неизвестная команда и нет `--title` — код 1, stderr, UC не вызван (oplog пуст); разбор окружения → `ExampleAppEnv` (если вынесен в класс — его тест).
+
+**Правила:** D-50, ARC-09, API-*, ERR-01, CODE-*, TST-*. Новых зависимостей нет.
+
+**Приёмка:** гейт зелёный; `cd platform/dmg-core && bun run check` зелёный.
+
 ## Отчёты
 
 ### Шаг 1 — отчёт автора (api-author, Opus)
@@ -137,3 +154,24 @@
 ### Шаг 4 — ревью
 
 Diff ~20 строк прод-кода — проверил оркестратор по diff (без субагента): замечаний нет.
+
+### Шаг 5 — отчёт автора (api-author, Opus)
+
+- `runner/example-cli.ts` — `ExampleCli(app).run(argv, io)` → код выхода (`EXIT_OK` 0, `EXIT_USAGE` 1, `EXIT_REJECTED` 2). Команды `create-task --title <текст> [--user <uuid>]`, `list-tasks [--user <uuid>]`. Разбор argv → `Result<CliRequest, string>`: неизвестная команда/опция, нет значения, повтор опции, не-uuid в `--user` — код 1, stderr с «Использование:», резолвер и UC не вызываются. Затем `Trace` (канал `cli`, новый `requestId`) → `app.callers.resolve` → одна точка `api.dispatch` с сопоставлением «запрос → команда UC» (`switch`) → `Result` JSON в stdout.
+- `example-cli.types.ts` — `CliIo = { out, err }`; `example-env.ts` (+ `.types.ts`) — `ExampleEnv(vars).toAppEnv()`: `EXAMPLE_MODE` (по умолчанию `development`, неверный — исключение), `EXAMPLE_DATA_DIR` (обязателен — иначе исключение), `EXAMPLE_USERS` через запятую.
+- `main.ts` — единственное место `process.env`/`argv`/`exitCode`; `start()` и остановка — здесь.
+- ARC-09: плагин в `biome.json` пакета подключён на весь `src/**` — `main.ts` исключён точечно (решение Нурболата, временно; пересмотр области — задача `ExampleArch`). Вместе с ним для `main.ts` отключён и CODE-02 (классов там нет).
+- Тесты: 17 (CLI, окружение, запуск `main.ts` отдельным процессом).
+
+### Шаг 5 — отчёт ревьюера
+
+| ID | файл:строка | суть | severity |
+|---|---|---|---|
+| ERR-01 | `example-cli.ts:55` | не-uuid в `--user` → стектрейс резолвера, UC вызван | major → исправлено (ошибка ввода, код 1) |
+| — | `example-cli.ts:109` | повтор опции молча перезаписывался | minor → исправлено (код 1) |
+| CODE-01 | `example-env.ts:7` | `EnvVars` в файле класса | minor → исправлено |
+| — | `example-cli.ts:56-69` | две ветки `dispatch` тернарником | minor → исправлено (одна точка) |
+| — | `example-cli.ts:75, 93-96` | `CliRequest \| string`, нетипизированные опции | minor → исправлено (`Result`, `OptionOf<C>`) |
+| TST-04 | `example-cli.test.ts:58-82` | тест 25 строк, значение до проверки формы | minor → исправлено |
+| — | `example-env.ts:23` | дефолт `./example-data` в рабочем дереве | question → убран, каталог обязателен |
+| — | `biome.json:182-186` | исключение отключает и CODE-02 | question → записано, пересмотр в задаче `ExampleArch` |
