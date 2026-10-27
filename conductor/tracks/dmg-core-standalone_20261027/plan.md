@@ -7,7 +7,7 @@
 - [x] Task: Зафиксировать базовую линию (`bun test` pass/fail по репо и по `dmg-core`, `bun run e2e` пакета) в черновике `summary.md` f1698d2
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
-## Фаза 1: Корень сборки и учебное приложение
+## Фаза 1: Корень сборки и учебное приложение [checkpoint: 9f458e0f]
 
 - [x] Task: Решение D-50 пакета «Корень сборки приложения»: что собирает пакет приложения (фабрика из окружения → `AppContext`, модули, `ModuleFacades` по `dependsOn`, резолвер `Caller`), что остаётся раннеру (точка входа, транспорт, окружение); обсудить с Нурболатом, записать в `docs/decisions.md`, `layers.md` §6 b167bda1
 - [x] Task: `ApiApp` в `dmg-core/app` (D-50): фабрики модулей → порядок по `dependsOn`, `ModuleFacades` только зависимостей, `dispatch`/`runJob`/`subscribe` 094bd69d
@@ -26,7 +26,7 @@
     - Решение D-52: ARC-07/08/09 под корень сборки и раннер; ARC-09 — всё, кроме точки входа раннера
 - [x] Task: Гайд `docs/guides/app.md` (по `_template.md`) на учебном приложении; ссылки из `guides/index.md`, `layers.md`, `llms.txt` 44a8aa5b
 - [x] Task: Ревью reviewer 41bd6e7e
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md) 9f458e0f
 
 ## Фаза 2: `init --profile` и `gen module` в монорепо
 
