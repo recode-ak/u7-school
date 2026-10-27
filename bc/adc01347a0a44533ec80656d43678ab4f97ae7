@@ -1,0 +1,3 @@
+Задача: apiApp — выбор apiModule по адресу транспорта (Фаза 2, command-dispatch).
+Изменения: ApiApp.dispatch(module, command, caller, trace) — модуль DMG по def.name, далее ModuleFromDef.dispatch; неизвестный модуль → OPERATION_NOT_FOUND { module, uc }. run/execute по Def сохранены до перевода раннеров (Фаза 3).
+Файлы: platform/core/src/api/app/api-app.ts, api-app-dmg.test.ts.
