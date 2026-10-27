@@ -2,7 +2,7 @@
 
 Каждая задача — TDD (red → запуск → green, по шагам), `bun run check` зелёный в пакете и в проекте после каждой. Платформенный эталон — модель Opus. Данные `data/` не трогаем; пушей и публикаций нет.
 
-## Фаза 0: Базовая линия
+## Фаза 0: Базовая линия [checkpoint: 4bf6b412]
 
 - [x] Task: Зафиксировать базовую линию (`bun test` pass/fail по репо и по `dmg-core`, `bun run e2e` пакета) в черновике `summary.md` f1698d2
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
