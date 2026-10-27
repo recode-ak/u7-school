@@ -40,6 +40,7 @@ import {
   UsersModuleDef,
 } from 'dmg-core/testing/example/users/index';
 import { ApiApp } from '../api/app/api-app';
+import type { DomainEvent } from '../domain/events/domain-event';
 import type { AppMeta } from '../domain/types';
 import { InProcEventBus } from '../infra/in-proc-event-bus';
 import { legacyClock, legacyEventBus, legacyJob } from './index';
@@ -51,14 +52,14 @@ const caller = (uuid: string, admin = false) =>
   new UserCaller<ExampleUser>({ uuid, hasRole: () => admin });
 
 let dir: string;
-let legacy: InProcEventBus;
+let legacy: AwaitingLegacyBus;
 let deps: TodoDeps;
 let api: ApiApp<AppMeta, ExampleUser>;
 let logs: LogRecord[];
 
 beforeEach(async () => {
   dir = await mkdtemp(path.join(tmpdir(), 'dmg-todo-'));
-  legacy = new InProcEventBus();
+  legacy = new AwaitingLegacyBus();
   logs = [];
   const bus = legacyEventBus(legacy);
   deps = {
@@ -109,8 +110,33 @@ async function titles(owner = ANNA): Promise<string[]> {
 /** След запроса транспорта: в тестах — новый requestId на вызов. */
 const req = (): Trace => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
-/** Реакции legacy-шина вызывает без ожидания — дать им отработать. */
-const settle = () => new Promise((r) => setTimeout(r, 10));
+/**
+ * Legacy-шина, которая помнит запущенные обработчики: `delivered()`
+ * дожидается их (и каскадов) без таймеров — образец `AwaitingBus`.
+ */
+class AwaitingLegacyBus extends InProcEventBus {
+  private readonly pending: Promise<void>[] = [];
+
+  override subscribe<E extends DomainEvent>(
+    eventName: E['eventName'],
+    handler: (event: E) => Promise<void>,
+  ): () => void {
+    return super.subscribe<E>(eventName, (event) => {
+      const run = handler(event);
+      this.pending.push(run);
+      return run;
+    });
+  }
+
+  async delivered(): Promise<void> {
+    while (this.pending.length > 0) {
+      await Promise.all(this.pending.splice(0));
+    }
+  }
+}
+
+/** Реакции legacy-шина вызывает без ожидания — дождаться их. */
+const settle = () => legacy.delivered();
 
 describe('todo: сквозной сценарий через appApi.run', () => {
   test('создать → выполнить → в списке выполнена', async () => {
