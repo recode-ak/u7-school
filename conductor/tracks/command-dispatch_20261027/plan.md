@@ -11,21 +11,21 @@
 
 - [x] Task: Тип `Command<D>` (`{ uc, input, meta? }`, фантомный `D`) и `UseCaseDef.command(input)`; тесты типов (вывод `InputOf`/`OutputOf`) `050c1b5`
 - [x] Task: Сериализуемый `Result` (формат `transport.md`) и обратное восстановление; круговой тест через `JSON.stringify/parse` `2702e42`
-- [ ] Task: Ревью reviewer
+- [x] Task: Ревью reviewer `21af1c5`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Исполнение
 
 - [ ] Task: `ModuleFromDef`: поиск UC по имени вместо `Map` по ссылке на Def; `dispatch(command, caller, trace)`; неизвестный `uc` → `Err` (код уточнить в задаче)
 - [ ] Task: `apiApp`: выбор `apiModule` по адресу транспорта, неизвестный модуль → `Err`
-- [ ] Task: `ModuleFacade` (D-43) — через команды, типизированный сахар поверх
+- [ ] Task: `ModuleFacade` (D-43) — через команды, типизированный сахар поверх; сборка команды в обобщённом коде — в одном месте с `UseCaseDef.command` (ревью Ф1: `command` исключён из `AnyUseCaseDef`)
 - [ ] Task: Гайды facade, module
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Клиент и потребители
 
-- [ ] Task: In-proc `moduleApi` (адрес модуля + `dispatch(ucDef.command(input))` → типизированный `Result`)
+- [ ] Task: In-proc `moduleApi` (адрес модуля + `dispatch(ucDef.command(input))` → типизированный `Result`); расхождение ответа с контрактом (`restoreResult` → `SERVER_INTERNAL`) — `warn` в лог с исходным `code` (ERR-07, ревью Ф1)
 - [ ] Task: Бот-истории `runners/u7-bot` и CLI на `moduleApi`; в раннерах нет `handle(def, …)`
 - [ ] Task: Финал: гейт качества (workflow) — полный `CI=true bun test`, `tsc`, `biome`, `arch:check`, триаж в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
