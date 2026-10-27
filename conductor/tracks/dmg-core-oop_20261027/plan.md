@@ -76,7 +76,8 @@
 - [x] Task: `MemoryLogger`, `MemoryBus` вместо `memoryLogger`, `memoryBus`, `recordingBus`; `testAppContext` на них `3ada255`
     - `recordingBus` → `RecordingBus` (только запоминает, подписка no-op), `MemoryBus extends RecordingBus` (ещё и доставляет): шина `testAppContext` по-прежнему не доставляет — иначе ER сработали бы в тестах, где их не ждут.
 - [x] Task: Гайд repo, `docs/testing.md` `9b7758b`
-- [~] Task: Ревью reviewer
+- [x] Task: Ревью reviewer `c23f6f2`
+    - Блокеров нет; D-36 и атомарность JSON-репозиториев подтверждены. Исправлено: типы — в `repository.types.ts`/`memory-logger.types.ts` (CODE-01); `LoggingBus extends RecordingBus` в тесте UoW. Двойной разбор файла в `save` — осознанно (задача 2).
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
 ## Фаза 7: Перевод потребителей и документация
