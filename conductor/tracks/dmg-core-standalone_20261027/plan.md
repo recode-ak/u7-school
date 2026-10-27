@@ -22,8 +22,8 @@
 - [x] Task: Минимальный in-proc раннер учебного примера (CLI-команда → `Caller` → UC → вывод `Result`) 9d89ac84
     - [x] Тест раннера (команда вызывает UC; ошибка ввода — код 1); red 9d89ac84
     - [x] Реализация; green 9d89ac84
-- [ ] Task: `ExampleArch` и `arch:check` пакета охватывают приложение и раннер; какие правила (ARC) на них распространяются
-    - Область плагина ARC-09 в `biome.json` пакета (сейчас весь `src/**`, правило — домен и UI); точечное исключение `runner/main.ts` — временное (решение Нурболата 2026-10-27)
+- [x] Task: `ExampleArch` и `arch:check` пакета охватывают приложение и раннер; какие правила (ARC) на них распространяются 277f86d2
+    - Решение D-52: ARC-07/08/09 под корень сборки и раннер; ARC-09 — всё, кроме точки входа раннера
 - [ ] Task: Гайд `docs/guides/app.md` (по `_template.md`) на учебном приложении; ссылки из `guides/index.md`, `layers.md`, `llms.txt`
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
@@ -38,6 +38,7 @@
     - [ ] Реализация; green
 - [ ] Task: CLI `dmg-core init --profile single|monorepo` (без профиля — прежнее поведение; неизвестный профиль — ошибка); тесты CLI red → green
 - [ ] Task: `gen module` в профиле monorepo создаёт пакет модуля (`package.json`, tsconfig); как узнаётся профиль — поле `dmg-core.json` или признак раскладки (решить в задаче); тесты red → green
+    - Учесть D-52: `gen module` создаёт `index.ts` прикладного пакета (фабрика, `*Deps`, репозитории) — корень сборки берёт фабрику только из него; `GenLayout`/шаблон `ArchApp` отдают `root` и `runners`
 - [ ] Task: `consumer-e2e.sh` — оба профиля: `init --profile` → `gen module/aggregate/uc` → сборка приложения → раннер вызывает UC → `check` зелёный
 - [ ] Task: Документация
     - [ ] Гайд `docs/guides/project.md`: оба профиля, что создаёт `init`, как растёт проект, кто что правит руками
