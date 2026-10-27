@@ -29,7 +29,7 @@
 
 - [Индекс гайдов](docs/guides/index.md)
 - [State](docs/guides/state.md), [Aggregate](docs/guides/aggregate.md), [Events](docs/guides/events.md), [Errors](docs/guides/errors.md), [Policy](docs/guides/policy.md)
-- [Repo, DCS, DQS](docs/guides/repo.md), [Facade](docs/guides/facade.md), [Use case](docs/guides/use-case.md), [Event reaction](docs/guides/event-reaction.md), [Module](docs/guides/module.md), [Job](docs/guides/job.md)
+- [Repo, DCS, DQS](docs/guides/repo.md), [Facade](docs/guides/facade.md), [Use case](docs/guides/use-case.md), [Event reaction](docs/guides/event-reaction.md), [Module](docs/guides/module.md), [Job](docs/guides/job.md), [App и раннер](docs/guides/app.md)
 
 ## Агенты
 

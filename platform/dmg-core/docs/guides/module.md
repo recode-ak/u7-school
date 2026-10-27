@@ -1,6 +1,6 @@
 # Module — гайд
 
-**Назначение:** паспорт модуля — контракт `<M>ModuleDef = ModuleDef.define(...)` (`<domain>/<m>/<m>.module.ts`), вход для остального кода `<domain>/<m>/contract.ts` и реализация — карта «Def → класс» с `create<M>Module(deps)` (`<app>/<m>/<m>.module.ts`); сборка модулей — в приложении.
+**Назначение:** паспорт модуля — контракт `<M>ModuleDef = ModuleDef.define(...)` (`<domain>/<m>/<m>.module.ts`), вход для остального кода `<domain>/<m>/contract.ts` и реализация — карта «Def → класс» с `create<M>Module(deps)` (`<app>/<m>/<m>.module.ts`); сборка модулей — в приложении ([app.md](./app.md)).
 
 ---
 
