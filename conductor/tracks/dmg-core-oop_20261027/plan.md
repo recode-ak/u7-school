@@ -59,18 +59,18 @@
     - Блокеров нет. Исправлено: `GraphBuilder` — id через `DefIndex.id`; `FileChecker.isEntry` читает `this.entry`; lint-фикстура ARC-02. Решено с Нурболатом 2026-10-27: `ArchChecker.defsOf(roots).report()` для тестов модулей `e877889`; имена в `decisions.md` — актуальные (журнал — справка по текущему API); `conductor/architecture` — Фаза 7.
 - [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
-## Фаза 5: Генератор
+## Фаза 5: Генератор [checkpoint: 9d2c125]
 
 - [x] Task: Исследование `gen/kinds`: можно ли брать шаблон из вида. Вывод — в план; если раздувает трек — стоп и обсуждение с Нурболатом
     - Вывод (решено с Нурболатом 2026-10-27): шаблон не в классе Def — Def доменный контракт в рантайме домена, а шаблоны знают прикладной слой и тесты; экземпляра Def при генерации ещё нет (вид — строка CLI). Вместо этого — иерархия шаблонов в `gen`: `OperationTemplate` → `UseCaseTemplate`/`ReactionTemplate`/`JobTemplate`, выбор по виду — таблица; `switch (args.kind)` в `gen/main.ts` → таблица планировщиков; `kind-switch.test` — плюс `gen` и `switch (x.kind)`. Трек не раздувает.
 - [x] Task: Шаблоны операций из вида, без `switch (c.kind)` в `gen/kinds/operation.ts`; результат генерации не меняется (тесты) `4f4599a`
 - [x] Task: Ревью reviewer `fc4e37f`
     - Блокеров нет, шаблоны идентичны (36 случаев). Исправлено: выбор шаблона — в `planOperation`; JSDoc; исключение `gen/validate.ts` (`args.kind === 'module'|'aggregate'` — проверка ввода CLI, не поведение вида) описано в `kind-switch.test`; спека п.1/п.8 — по решению исследования.
-- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
 ## Фаза 6: Репозиторий и тестовые двойники
 
-- [ ] Task: Класс `Lock` (`run(task)`) вместо `createLock()`
+- [~] Task: Класс `Lock` (`run(task)`) вместо `createLock()`
 - [ ] Task: Базовый репозиторий с оптимистичной блокировкой (D-36) вместо `assertVersion`; перевод `task.json-repo`, `user.memory-repo`, `modules/wish/src/infra/wish.json-repo.ts`
 - [ ] Task: `MemoryLogger`, `MemoryBus` вместо `memoryLogger`, `memoryBus`, `recordingBus`; `testAppContext` на них
 - [ ] Task: Гайд repo, `docs/testing.md`
