@@ -71,5 +71,5 @@
       "@u7-scl/test-helpers/*": ["./runners/u7-bot/tests/helpers/*"]
     }
   },
-  "exclude": ["data/deploy/archive", "platform/dmg-core/tmp-gen-e2e-*"]
+  "exclude": ["data/deploy/archive"]
 }

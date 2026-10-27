@@ -42,7 +42,7 @@ for need in LICENSE llms.txt README.md docs/index.md docs/rules.md \
   fi
 done
 # Тесты в поставке — только учебного модуля (образец для гайдов).
-EXTRA="$(grep -E '^package/(scripts|lint-fixtures|node_modules|tmp-gen-e2e-)|\.test\.ts$' <<<"$FILES" |
+EXTRA="$(grep -E '^package/(scripts|lint-fixtures|node_modules)|\.test\.ts$' <<<"$FILES" |
   grep -v '^package/src/testing/example/' || true)"
 if [ -n "$EXTRA" ]; then
   echo "e2e: лишнее в tarball:" >&2

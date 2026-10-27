@@ -16,7 +16,7 @@ trap 'rm -rf "$WORK"' EXIT
 
 echo "extract:check: копия пакета → $WORK/copy"
 mkdir "$WORK/copy"
-tar -C "$PKG" --exclude=node_modules --exclude='*.tgz' --exclude='tmp-gen-e2e-*' -cf - . | tar -C "$WORK/copy" -xf -
+tar -C "$PKG" --exclude=node_modules --exclude='*.tgz' -cf - . | tar -C "$WORK/copy" -xf -
 cd "$WORK/copy"
 bun install
 bun run check

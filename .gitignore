@@ -50,5 +50,3 @@ data/fixtures/
 data/backup/
 data/backup-adhoc/
 
-# временный проект приёмки генераторов (dmg-core/src/gen/e2e.test.ts)
-platform/dmg-core/tmp-gen-e2e-*/

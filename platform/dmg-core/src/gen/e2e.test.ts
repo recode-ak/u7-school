@@ -1,12 +1,21 @@
 /**
  * Приёмка генераторов: срез module → aggregate → uc → er → job → dcs → dqs
  * создаётся во временном проекте с раскладкой по умолчанию и проходит
- * biome, tsc, bun test и ArchChecker без ручных правок. Проект лежит внутри
- * пакета (иначе не разрешаются `dmg-core` и `valibot`) и удаляется в конце.
+ * biome, tsc, bun test и ArchChecker без ручных правок. Проект лежит во
+ * временном каталоге ОС: внутри пакета его тесты подхватывал параллельный
+ * `bun test`. `dmg-core`, `valibot` и типы разрешаются через ссылки в его
+ * `node_modules`; в конце проект удаляется.
  */
 import { afterAll, beforeAll, expect, test } from 'bun:test';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { type ArchApp, ArchChecker } from '../arch';
 import { GenLayout } from './layout';
 import { runGen } from './main';
@@ -15,8 +24,11 @@ const PKG = join(import.meta.dir, '../..');
 const MODULE = 'genprobe';
 let project: string;
 
-async function sh(cmd: string[]): Promise<{ code: number; text: string }> {
-  const proc = Bun.spawn(cmd, { cwd: PKG, stdout: 'pipe', stderr: 'pipe' });
+async function sh(
+  cmd: string[],
+  cwd = PKG,
+): Promise<{ code: number; text: string }> {
+  const proc = Bun.spawn(cmd, { cwd, stdout: 'pipe', stderr: 'pipe' });
   const [out, err] = await Promise.all([
     new Response(proc.stdout).text(),
     new Response(proc.stderr).text(),
@@ -25,11 +37,18 @@ async function sh(cmd: string[]): Promise<{ code: number; text: string }> {
 }
 
 beforeAll(() => {
-  // Без точки в начале имени: tsc не видит скрытые каталоги.
-  project = mkdtempSync(join(PKG, 'tmp-gen-e2e-'));
+  project = mkdtempSync(join(tmpdir(), 'dmg-gen-e2e-'));
+  const modules = join(project, 'node_modules');
+  mkdirSync(modules);
+  symlinkSync(PKG, join(modules, 'dmg-core'));
+  mkdirSync(join(modules, '@types'));
+  for (const dep of ['valibot', '@types/bun', '@types/node']) {
+    const dir = dirname(Bun.resolveSync(`${dep}/package.json`, PKG));
+    symlinkSync(dir, join(modules, dep));
+  }
   writeFileSync(
     join(project, 'tsconfig.json'),
-    JSON.stringify({ extends: '../tsconfig.json', include: ['.'] }),
+    JSON.stringify({ extends: join(PKG, 'tsconfig.json'), include: ['src'] }),
   );
   const layout = new GenLayout(GenLayout.defaults, project);
   const steps = [
@@ -67,7 +86,7 @@ test('tsc чист', async () => {
 }, 120_000);
 
 test('тесты заготовок зелёные', async () => {
-  const res = await sh(['bun', 'test', project]);
+  const res = await sh(['bun', 'test'], project);
   expect(res.text).toContain(' 0 fail');
   expect(res.code).toBe(0);
 }, 120_000);
