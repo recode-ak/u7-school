@@ -10,6 +10,8 @@ export {
   type TraceLog,
   type TraceStamp,
 } from '../kernel/trace/trace';
+export { ApiApp } from './api-app/api-app';
+export type { ModuleFactory } from './api-app/api-app.types';
 export { type CommandTransport, ModuleApi } from './client/module-api';
 export {
   type AppContext,
