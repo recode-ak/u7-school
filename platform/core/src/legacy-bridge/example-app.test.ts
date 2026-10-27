@@ -15,7 +15,7 @@ import {
   expectErr,
   expectOk,
   type LogRecord,
-  memoryLogger,
+  MemoryLogger,
 } from 'dmg-core/testing';
 import type { ExampleUser } from 'dmg-core/testing/example/app/app-user';
 import { TaskJsonRepo } from 'dmg-core/testing/example/app/todo/infra/task.json-repo';
@@ -63,7 +63,7 @@ beforeEach(async () => {
       outbox: new InProcOutbox(bus),
       inbox: new InProcInbox(),
       clock: legacyClock(),
-      logger: memoryLogger(logs),
+      logger: new MemoryLogger(logs),
       mode: 'test',
       // Как в приложении (`<DB_DIR>/oplog/`), но во временном каталоге.
       oplog: new JsonlOperationLog(path.join(dir, 'oplog')),

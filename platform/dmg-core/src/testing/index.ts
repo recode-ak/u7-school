@@ -8,16 +8,11 @@ export {
   TASK_2,
   taskRow,
 } from '../app/app.fixture';
-export {
-  type LogRecord,
-  memoryBus,
-  memoryLogger,
-  recordingBus,
-  TEST_NOW,
-  testAppContext,
-} from './app-context';
+export { TEST_NOW, testAppContext } from './app-context';
 export { ExampleArch } from './example/example.arch';
 export { expectErr, expectOk } from './expect-result';
+export { MemoryBus, RecordingBus } from './memory-bus';
+export { type LogRecord, MemoryLogger } from './memory-logger';
 export { MemoryOperationLog } from './memory-operation-log';
 export {
   expectIdempotentReaction,

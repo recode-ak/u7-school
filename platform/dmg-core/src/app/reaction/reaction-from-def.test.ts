@@ -18,7 +18,7 @@ import {
 import {
   expectErr,
   expectOk,
-  memoryBus,
+  MemoryBus,
   testAppContext,
 } from '#core/testing/index';
 import { MemoryTasks, OWNER, T0, TASK, TASK_2, taskRow } from '../app.fixture';
@@ -243,7 +243,7 @@ describe('ReactionFromDef — production', () => {
 
 describe('ReactionFromDef.subscribe', () => {
   test('реагирует на событие из шины', async () => {
-    const bus = memoryBus();
+    const bus = new MemoryBus();
     er.subscribe(bus);
     bus.publish(removed());
     await new Promise((r) => setTimeout(r, 0));

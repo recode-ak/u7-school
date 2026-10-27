@@ -20,7 +20,7 @@ import {
   expectErr,
   expectIdempotentReaction,
   expectOk,
-  memoryBus,
+  MemoryBus,
   StubFacade,
   TEST_NOW,
   testAppContext,
@@ -314,7 +314,7 @@ describe('FulfillWishEr.subscribe', () => {
     const w = courseWish('expressed');
     await seed(w);
     courseAnswers([COURSE]);
-    const bus = memoryBus();
+    const bus = new MemoryBus();
     const er = makeEr();
     const handled = trackHandling(er);
     er.subscribe(bus);

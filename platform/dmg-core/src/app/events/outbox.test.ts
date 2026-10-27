@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { recordingBus } from '#core/testing/index';
+import { RecordingBus } from '#core/testing/index';
 import type { EventEnvelope } from './event-envelope';
 import { InProcOutbox } from './outbox';
 
@@ -16,7 +16,7 @@ const envelope = (eventId: string): EventEnvelope => ({
 describe('InProcOutbox', () => {
   test('публикует партию в шину сразу и по порядку', async () => {
     const published: EventEnvelope[] = [];
-    const outbox = new InProcOutbox(recordingBus(published));
+    const outbox = new InProcOutbox(new RecordingBus(published));
     await outbox.put([envelope('e-1'), envelope('e-2')]);
     expect(published.map((e) => e.eventId)).toEqual(['e-1', 'e-2']);
   });

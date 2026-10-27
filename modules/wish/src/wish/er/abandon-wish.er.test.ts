@@ -13,7 +13,7 @@ import { type EnvelopeOf, ModuleFacades } from 'dmg-core/app';
 import {
   expectIdempotentReaction,
   expectOk,
-  memoryBus,
+  MemoryBus,
   TEST_NOW,
   testAppContext,
 } from 'dmg-core/testing';
@@ -209,7 +209,7 @@ describe('AbandonWishEr.subscribe', () => {
   it('реагирует на questionnaire.abandoned из шины', async () => {
     const w = wish('pending');
     await seed(w);
-    const bus = memoryBus();
+    const bus = new MemoryBus();
     const er = makeEr();
     const handled = trackHandling(er);
     er.subscribe(bus);

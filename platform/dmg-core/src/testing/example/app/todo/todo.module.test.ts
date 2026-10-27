@@ -39,7 +39,7 @@ const owner = new UserCaller<ExampleUser>({
 
 /**
  * Шина в памяти, которая помнит запущенные обработчики: `delivered()`
- * дожидается их завершения — без таймеров (`memoryBus` их не возвращает).
+ * дожидается их завершения — без таймеров (`MemoryBus` их не возвращает).
  */
 function awaitingBus() {
   const handlers = new Map<

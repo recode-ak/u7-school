@@ -29,7 +29,7 @@ import {
   expectErr,
   expectIdempotentReaction,
   expectOk,
-  memoryBus,
+  MemoryBus,
   StubFacade,
   TEST_NOW,
   testAppContext,
@@ -414,7 +414,7 @@ describe('InviteWishersEr — отказ других модулей', () => {
 describe('InviteWishersEr.subscribe', () => {
   it('реагирует на stream.stream.created из шины', async () => {
     await seed(moduleWish('expressed'));
-    const bus = memoryBus();
+    const bus = new MemoryBus();
     const er = makeEr();
     const handled = trackHandling(er);
     er.subscribe(bus);

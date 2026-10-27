@@ -4,7 +4,7 @@ import { JobDef } from '#core/domain/contracts/job-def';
 import { SystemCaller, UserCaller } from '#core/kernel/caller/caller';
 import { ok } from '#core/kernel/result/result';
 import { Trace } from '#core/kernel/trace/trace';
-import { memoryBus, testAppContext } from '#core/testing/app-context';
+import { testAppContext } from '#core/testing/app-context';
 import {
   ArchiveDoneTasksJobDef,
   CompleteTaskUcDef,
@@ -14,6 +14,7 @@ import {
 } from '#core/testing/example/todo/index';
 import { UserEvents } from '#core/testing/example/users/index';
 import { expectErr, expectOk } from '#core/testing/index';
+import { MemoryBus } from '#core/testing/memory-bus';
 import { T0, TASK } from '../app.fixture';
 import type { ModuleDeps } from '../context';
 import { ModuleFacades } from '../facade/module-facades';
@@ -189,7 +190,7 @@ describe('ModuleFromDef.runJob', () => {
 
 describe('ModuleFromDef.subscribe', () => {
   test('реакции подписываются на шину приложения; отписка снимает их', async () => {
-    const bus = memoryBus();
+    const bus = new MemoryBus();
     deps = {
       app: { ...testAppContext().app, bus },
       facades,

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { Trace } from '#core/kernel/trace/trace';
 import { TaskAr, TaskArDef } from '#core/testing/example/todo/index';
-import { expectOk, recordingBus } from '#core/testing/index';
+import { expectOk, RecordingBus } from '#core/testing/index';
 import type { Repository } from '../uow/repository';
 import { UnitOfWork } from '../uow/unit-of-work';
 import type { EventEnvelope } from './event-envelope';
@@ -17,7 +17,7 @@ const repo: Repository<TaskAr> = { aggregate: TaskArDef, save: async () => {} };
 async function envelopes(trace: Trace): Promise<EventEnvelope[]> {
   const published: EventEnvelope[] = [];
   const uow = new UnitOfWork({
-    outbox: new InProcOutbox(recordingBus(published)),
+    outbox: new InProcOutbox(new RecordingBus(published)),
     clock: () => AT,
     trace,
   });
