@@ -1,0 +1,1 @@
+Задача: In-proc moduleApi + restore с warn (ERR-07). Решения Нурболата: caller/trace явные, in-proc Result как есть, restore в ModuleApi сейчас. Файлы: dmg-core/src/app/client/module-api.ts (+тест), экспорт dmg-core/app, круговой тест в core api-app-dmg.test.ts, transport.md §4, D-49.
