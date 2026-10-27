@@ -35,9 +35,10 @@
 
 - [x] Task: `OperationDef` (`calls` обязательное, нормализуется в конструкторе; `aggregates()`, `errors()`, `title(module)`, `fileKind`, `mainAggregate()`) `ab67d73`
     - `errors()` → `referencedErrors()` (решено с Нурболатом 2026-10-27): поле `errors` у UC занято, на нём держатся `D['errors'][number]` и `UseCaseErrorOf`. Сокращение для `title` — поле `abbr` (`UC`/`ER`/`Job`).
-- [ ] Task: `UseCaseDef`, перевод потребителей (`check-defs` ветка UC, `OPERATION_DIR`, `OPERATION_KIND`)
+- [x] Task: `UseCaseDef`, перевод потребителей (`check-defs` ветка UC, `OPERATION_DIR`, `OPERATION_KIND`) `5982b55`
+    - `OPERATION_DIR`/`OPERATION_KIND` — таблицы по всем трём видам: уходят в задаче `JobDef`, когда все операции — классы. `calls` вид сужает через `declare readonly calls` (параметр базы `OperationDef<N, C>` давал цикл типов с `AnyUseCaseDef`). Прототип Фазы 0 удалён, сценарии — в `use-case-def.test.ts`.
 - [ ] Task: `EventReactionDef` (проверка `on` внутри вида), то же
-- [ ] Task: `JobDef`, то же
+- [ ] Task: `JobDef`, то же; `OPERATION_DIR`/`OPERATION_KIND` → `op.fileKind`/`op.title(m)`, главный агрегат → `op.mainAggregate()`
 - [ ] Task: `ModuleDef` (`defineModule` → статика)
 - [ ] Task: `normalize.ts`/`described-defs.ts` без `switch` — только делегирование `def.normalize()`/`def.describe()`; контрактный тест «нет `switch` по `dmg`» в `check`
 - [ ] Task: Гайды (module, event-reaction, job, `manifests.md`)
