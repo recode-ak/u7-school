@@ -68,7 +68,7 @@
     - Блокеров нет, шаблоны идентичны (36 случаев). Исправлено: выбор шаблона — в `planOperation`; JSDoc; исключение `gen/validate.ts` (`args.kind === 'module'|'aggregate'` — проверка ввода CLI, не поведение вида) описано в `kind-switch.test`; спека п.1/п.8 — по решению исследования.
 - [x] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
-## Фаза 6: Репозиторий и тестовые двойники
+## Фаза 6: Репозиторий и тестовые двойники [checkpoint: 1b9f1ea]
 
 - [x] Task: Класс `Lock` (`run(task)`) вместо `createLock()` `42d4166`
 - [x] Task: Базовый репозиторий с оптимистичной блокировкой (D-36) вместо `assertVersion`; перевод `task.json-repo`, `user.memory-repo`, `modules/wish/src/infra/wish.json-repo.ts` `062afd0`
@@ -78,11 +78,11 @@
 - [x] Task: Гайд repo, `docs/testing.md` `9b7758b`
 - [x] Task: Ревью reviewer `c23f6f2`
     - Блокеров нет; D-36 и атомарность JSON-репозиториев подтверждены. Исправлено: типы — в `repository.types.ts`/`memory-logger.types.ts` (CODE-01); `LoggingBus extends RecordingBus` в тесте UoW. Двойной разбор файла в `save` — осознанно (задача 2).
-- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
 ## Фаза 7: Перевод потребителей и документация
 
-- [ ] Task: `domain/` и `modules/<m>` на `XxxDef.define`; `define*` удаляются из публичного API; один тип вместо `Declared`/`DeclaredCalls` (общий — в `operation-def.types.ts`)
+- [~] Task: `domain/` и `modules/<m>` на `XxxDef.define`; `define*` удаляются из публичного API; один тип вместо `Declared`/`DeclaredCalls` (общий — в `operation-def.types.ts`)
 - [ ] Task: `llms.txt`, `dmg-core/docs`, `conductor/architecture/` (naming; запись D-xx «Def — классы» в decisions); D-09/D-37 — `ModuleDef.define`; `TRACK-DMG-CORE-OOP.md` удалён
 - [ ] Task: Финал: гейт качества (workflow) — полный `CI=true bun test`, `tsc`, `biome`, `arch:check`, триаж в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
