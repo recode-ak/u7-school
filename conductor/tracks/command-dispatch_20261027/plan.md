@@ -9,7 +9,7 @@
 
 ## Фаза 1: Команда и ответ
 
-- [ ] Task: Тип `Command<D>` (`{ uc, input, meta? }`, фантомный `D`) и `UseCaseDef.command(input)`; тесты типов (вывод `InputOf`/`OutputOf`)
+- [x] Task: Тип `Command<D>` (`{ uc, input, meta? }`, фантомный `D`) и `UseCaseDef.command(input)`; тесты типов (вывод `InputOf`/`OutputOf`) `050c1b5`
 - [ ] Task: Сериализуемый `Result` (формат `transport.md`) и обратное восстановление; круговой тест через `JSON.stringify/parse`
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
