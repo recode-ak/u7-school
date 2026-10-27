@@ -1,0 +1,1 @@
+Переделка B (решение Нурболата): in-proc — ApiApp.dispatch(moduleDef, …), ModuleApi — только wire-клиент. check зелёный, 4146/0.
