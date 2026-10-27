@@ -22,6 +22,11 @@ export {
   type Transition,
 } from './domain/aggregate/aggregate-def';
 export type { ReadonlyAr } from './domain/aggregate/readonly-ar';
+export type {
+  Command,
+  CommandMeta,
+  DefOfCommand,
+} from './domain/contracts/command';
 export {
   type AnyEventReactionDef,
   EventReactionDef,

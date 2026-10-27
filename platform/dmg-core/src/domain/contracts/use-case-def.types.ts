@@ -46,8 +46,12 @@ export type UseCaseSpec = Common &
  * Любой Def UC — структурный тип публичных членов: конкретный Def
  * сравнивается с ним по полям, а не по вариантности параметра `S`
  * (условный `Declared` из `operation-def.types` делает её неизмеримой).
+ * Без `command`: фантомный Def в `Command` сравнивал бы `S` напрямую;
+ * команду собирают на конкретном Def.
  */
-export type AnyUseCaseDef = { readonly [K in keyof UseCaseDef]: UseCaseDef[K] };
+export type AnyUseCaseDef = {
+  readonly [K in Exclude<keyof UseCaseDef, 'command'>]: UseCaseDef[K];
+};
 
 /** Вход UC — то, что передаёт вызывающий (до валидации схемой). */
 export type InputOf<D extends AnyUseCaseDef> = v.InferInput<D['input']>;

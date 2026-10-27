@@ -2,9 +2,11 @@ import type { DefSchemas } from '#core/kernel/def/def';
 import type { AnyErrorDef } from '#core/kernel/errors/error-def';
 import { toJsonSchema } from '#core/kernel/schema/json-schema';
 import type { AnyAggregateDef } from '../aggregate/aggregate-def';
+import type { Command, CommandMeta } from './command';
 import { OperationDef } from './operation-def';
 import type { Declared } from './operation-def.types';
 import type {
+  InputOf,
   NormalizedUseCase,
   SystemCalls,
   UseCaseSpec,
@@ -60,6 +62,19 @@ export class UseCaseDef<
     spec: S & SystemCalls<S>,
   ): UseCaseDef<S> {
     return new UseCaseDef<S>(spec);
+  }
+
+  /**
+   * Команда для исполнения (D-49): простые данные, адрес модуля добавляет
+   * транспорт. Вход не валидируется — это делает UC при исполнении.
+   */
+  command(
+    input: InputOf<UseCaseDef<S>>,
+    meta?: CommandMeta,
+  ): Command<UseCaseDef<S>> {
+    return meta === undefined
+      ? { uc: this.name, input }
+      : { uc: this.name, input, meta };
   }
 
   aggregates(): readonly AnyAggregateDef[] {
