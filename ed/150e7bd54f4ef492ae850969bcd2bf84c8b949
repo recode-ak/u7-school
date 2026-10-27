@@ -1,0 +1,5 @@
+Верификация Фазы 3 «Операции и модуль» (dmg-core-oop).
+Автотесты: bun run check — зелёный (4083 pass, 0 fail, включая extract:check); bun run arch:check — нарушений нет.
+Покрытие: новые классы (OperationDef, UseCaseDef, EventReactionDef, JobDef, ModuleDef) — свои тесты; define-*, described-defs, def-index, учебные контракты — косвенно (contracts.test, check-defs/arch-check, тесты реализаций).
+Ревью reviewer (Opus): блокеров нет; warning исправлен (19d46bd7~1), info отложены в Фазу 7.
+Ручная верификация: план (check, arch:check, отсутствие switch/OPERATION_ в graph/arch) предъявлен; Нурболат подтвердил «продолжай».
