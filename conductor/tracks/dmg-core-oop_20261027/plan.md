@@ -71,8 +71,9 @@
 ## Фаза 6: Репозиторий и тестовые двойники
 
 - [x] Task: Класс `Lock` (`run(task)`) вместо `createLock()` `42d4166`
-- [~] Task: Базовый репозиторий с оптимистичной блокировкой (D-36) вместо `assertVersion`; перевод `task.json-repo`, `user.memory-repo`, `modules/wish/src/infra/wish.json-repo.ts`
-- [ ] Task: `MemoryLogger`, `MemoryBus` вместо `memoryLogger`, `memoryBus`, `recordingBus`; `testAppContext` на них
+- [x] Task: Базовый репозиторий с оптимистичной блокировкой (D-36) вместо `assertVersion`; перевод `task.json-repo`, `user.memory-repo`, `modules/wish/src/infra/wish.json-repo.ts` `062afd0`
+    - `VersionedRepository<A>`: `save` под `Lock` — `stored(uuid)` → сверка → `write(ar)`; наследник реализует два метода. `StoredRecord` — с индексом прочих полей (legacy-запись без `version`). JSON-`write` перечитывает файл под тем же замком. Шаблон `gen aggregate` — на базе.
+- [~] Task: `MemoryLogger`, `MemoryBus` вместо `memoryLogger`, `memoryBus`, `recordingBus`; `testAppContext` на них
 - [ ] Task: Гайд repo, `docs/testing.md`
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
