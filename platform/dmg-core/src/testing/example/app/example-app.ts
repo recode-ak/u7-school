@@ -12,10 +12,8 @@ import { UsersModuleDef } from '#core/testing/example/users/contract';
 import type { ExampleUser } from './app-user';
 import type { ExampleAppEnv, ExampleAppPorts } from './example-app.types';
 import { ExampleCallerResolver } from './example-caller-resolver';
-import { TaskJsonRepo } from './todo/infra/task.json-repo';
-import { createTodoModule } from './todo/todo.module';
-import { UserMemoryRepo } from './users/infra/user.memory-repo';
-import { createUsersModule } from './users/users.module';
+import { createTodoModule, TaskJsonRepo } from './todo/index';
+import { createUsersModule, UserMemoryRepo } from './users/index';
 
 /**
  * Учебное приложение — корень сборки (D-50): по окружению строит контекст,

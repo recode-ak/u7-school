@@ -50,10 +50,14 @@ describe('ArchChecker', () => {
 
   it('вход модуля для других — из приложения (`entry`, по умолчанию index)', () => {
     // Пример входит через `contract.ts`; при входе `index` тот же импорт —
-    // нарушение ARC-04 в домене и прикладном слое.
+    // нарушение ARC-04 в домене и прикладном слое, ARC-07 в корне сборки и
+    // ARC-08 в раннере: `ExampleArch` охватывает их, и `users` — тоже
+    // (через `dependsOn` todo).
     const app = { ...ExampleArch, entry: undefined };
     const arc04 = (file: string) =>
       `ARC-04: ${file} импортирует users мимо index.ts: #core/testing/example/users/contract`;
+    const root = (file: string, m: string) =>
+      `ARC-07: корень сборки app/${file} импортирует ${m} мимо index.ts: #core/testing/example/${m}/contract`;
     expect(
       ArchChecker.of(app)
         .check()
@@ -70,6 +74,14 @@ describe('ArchChecker', () => {
       arc04('todo/task/uc/assign-task.uc.test.ts'),
       arc04('todo/task/uc/assign-task.uc.ts'),
       arc04('todo/todo.module.test.ts'),
+      // корень сборки (`app/` вне пакетов модулей, ARC-07)
+      root('example-app.test.ts', 'todo'),
+      root('example-app.test.ts', 'users'),
+      root('example-app.ts', 'todo'),
+      root('example-app.ts', 'users'),
+      root('example-caller-resolver.ts', 'users'),
+      // раннер (ARC-08)
+      'ARC-08: раннер runner/example-cli.ts импортирует todo мимо index.ts: #core/testing/example/todo/contract',
     ]);
   });
 });

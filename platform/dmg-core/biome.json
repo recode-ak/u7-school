@@ -184,10 +184,11 @@
         "!**/*.test.ts",
         "!src/testing/example/runner/main.ts"
       ],
-      "plugins": [
-        "./biome-plugins/arc-09-no-env.grit",
-        "./biome-plugins/code-02-class-members.grit"
-      ]
+      "plugins": ["./biome-plugins/arc-09-no-env.grit"]
+    },
+    {
+      "includes": ["src/**", "!**/*.test.ts"],
+      "plugins": ["./biome-plugins/code-02-class-members.grit"]
     },
     {
       "includes": [

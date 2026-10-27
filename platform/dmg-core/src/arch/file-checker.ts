@@ -1,13 +1,11 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join, resolve, sep } from 'node:path';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import type { AnyOperationDef, DefIndex } from '../graph/def-index';
+import { SourceScan } from './source-scan';
 import { type ArchRule, Violation } from './violation';
 
 /** Каталоги модуля: домен (`domain/src/<m>`) и прикладной пакет (`<m>/src`). */
 export type ModuleLayout = { readonly domain: string; readonly app: string };
-
-const IMPORT =
-  /(?:^|[\s;])(?:import|export)\s+(?:type\s+)?(?:[^'"]*?\sfrom\s*)?['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)/g;
 
 /**
  * Проверки по файлам модулей: 1:1 домена и прикладного пакета (ARC-06),
@@ -22,6 +20,8 @@ const IMPORT =
  * для всех модулей.
  */
 export class FileChecker {
+  private readonly scan = new SourceScan();
+
   constructor(
     private readonly index: DefIndex,
     private readonly layout: (module: string) => ModuleLayout,
@@ -92,25 +92,25 @@ export class FileChecker {
             [dir.app, true],
           ];
       for (const [base, isApp] of scanned) {
-        for (const f of this.sourceFiles(base)) {
-          const file = join(base, f);
-          for (const spec of this.importsOf(file)) {
-            const target = this.resolveImport(spec, dirname(file));
-            if (target === undefined) continue;
+        for (const f of this.scan.files(base)) {
+          for (const { spec, target } of this.scan.imports(join(base, f))) {
             for (const [x, xDir] of dirs) {
               if (x === m) continue;
               const where = `${m.name}/${f}`;
-              if (isApp && this.inside(target, xDir.app)) {
+              if (isApp && this.scan.inside(target, xDir.app)) {
                 add(
                   'ARC-06',
                   `${where} импортирует прикладной пакет ${x.name}: ${spec}`,
                 );
               }
-              if (!this.inside(target, xDir.domain)) continue;
+              if (!this.scan.inside(target, xDir.domain)) continue;
               // Связи двух внешних модулей реализованы вне приложения:
               // вход платформа не проверяет, `dependsOn` — проверяет.
               const bothExternal = m.external === true && x.external === true;
-              if (!bothExternal && !this.isEntry(target, xDir.domain)) {
+              if (
+                !bothExternal &&
+                !this.scan.isEntry(target, xDir.domain, this.entry)
+              ) {
                 add(
                   'ARC-04',
                   `${where} импортирует ${x.name} мимо ${this.entry}.ts: ${spec}`,
@@ -151,48 +151,7 @@ export class FileChecker {
   }
 
   private operationFiles(base: string): string[] {
-    return this.sourceFiles(base).filter((f) => /\.(uc|er|job)\.ts$/.test(f));
-  }
-
-  /** `.ts`-файлы каталога, относительные пути через `/`, по алфавиту. */
-  private sourceFiles(base: string): string[] {
-    if (!existsSync(base)) return [];
-    return [...new Bun.Glob('**/*.ts').scanSync({ cwd: base })]
-      .map((f) => f.split(sep).join('/'))
-      .sort();
-  }
-
-  private importsOf(file: string): string[] {
-    const text = readFileSync(file, 'utf8');
-    return [...text.matchAll(IMPORT)].flatMap((m) => {
-      const spec = m[1] ?? m[2];
-      return spec === undefined ? [] : [spec];
-    });
-  }
-
-  /** Абсолютный путь цели импорта; пакет, который не разрешается, — пропуск. */
-  private resolveImport(spec: string, from: string): string | undefined {
-    if (spec.startsWith('.')) return resolve(from, spec);
-    try {
-      return Bun.resolveSync(spec, from);
-    } catch {
-      return undefined;
-    }
-  }
-
-  private inside(path: string, dir: string): boolean {
-    return path === dir || path.startsWith(dir + sep);
-  }
-
-  /**
-   * Цель импорта — вход модуля: `<dir>/<entry>.ts` или `<dir>/<entry>`;
-   * для `index` — также сам `<dir>`.
-   */
-  private isEntry(path: string, dir: string): boolean {
-    const bare = path.replace(/\.[jt]s$/, '');
-    return (
-      bare === join(dir, this.entry) || (this.entry === 'index' && bare === dir)
-    );
+    return this.scan.files(base).filter((f) => /\.(uc|er|job)\.ts$/.test(f));
   }
 
   /** `archiveDoneTasks` → `archive-done-tasks`. */
