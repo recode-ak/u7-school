@@ -1,0 +1,4 @@
+Отчёт о верификации Фазы 2 (dmg-core-oop: иерархия Rule и PolicyDef).
+Автотесты: CI=true bun test — 4039 pass, 0 fail (431 файл); bun run check зелёный.
+Ручная верификация: тесты src/domain/policy; TaskPolicy.normalize() — дерево правил с label/denyMessage; gen aggregate — PolicyDef.define/Rule.of; гайд policy §2.
+Подтверждение пользователя: «да» (2026-10-27).
