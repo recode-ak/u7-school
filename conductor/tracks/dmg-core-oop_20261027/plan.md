@@ -43,8 +43,8 @@
 - [x] Task: `ModuleDef` (`defineModule` → статика) `8b8e8af`
 - [x] Task: `normalize.ts`/`described-defs.ts` без `switch` — только делегирование `def.normalize()`/`def.describe()`; контрактный тест «нет `switch` по `dmg`» в `check` `d920619`
     - Тест — `src/arch/kind-switch.test.ts` (graph, arch); `gen` добавить в задаче шаблонов Фазы 5.
-- [ ] Task: Гайды (module, event-reaction, job, `manifests.md`)
-- [ ] Task: Ревью reviewer
+- [x] Task: Гайды (module, event-reaction, job, `manifests.md`) `a46bc41`
+- [~] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: `DefIndex` и `ArchChecker`
