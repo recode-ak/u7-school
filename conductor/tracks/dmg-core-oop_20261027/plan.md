@@ -39,7 +39,7 @@
     - `OPERATION_DIR`/`OPERATION_KIND` — таблицы по всем трём видам: уходят в задаче `JobDef`, когда все операции — классы. `calls` вид сужает через `declare readonly calls` (параметр базы `OperationDef<N, C>` давал цикл типов с `AnyUseCaseDef`). Прототип Фазы 0 удалён, сценарии — в `use-case-def.test.ts`.
 - [x] Task: `EventReactionDef` (проверка `on` внутри вида), то же `79200fa`
     - Подписки — метод базы `subscribedEvents()` (у ER — `on`, у остальных `[]`): проверки `check-defs` по ним общие для всех операций; `switch` уходит в задаче `JobDef`.
-- [ ] Task: `JobDef`, то же; `OPERATION_DIR`/`OPERATION_KIND` → `op.fileKind`/`op.title(m)`, главный агрегат → `op.mainAggregate()`
+- [x] Task: `JobDef`, то же; `OPERATION_DIR`/`OPERATION_KIND` → `op.fileKind`/`op.title(m)`, главный агрегат → `op.mainAggregate()` `b1c170b`
 - [ ] Task: `ModuleDef` (`defineModule` → статика)
 - [ ] Task: `normalize.ts`/`described-defs.ts` без `switch` — только делегирование `def.normalize()`/`def.describe()`; контрактный тест «нет `switch` по `dmg`» в `check`
 - [ ] Task: Гайды (module, event-reaction, job, `manifests.md`)
