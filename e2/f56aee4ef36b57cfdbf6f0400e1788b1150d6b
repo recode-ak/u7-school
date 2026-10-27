@@ -1,0 +1,5 @@
+Задача: CLI dmg-core init --profile single|monorepo (Фаза 2, трек dmg-core-standalone_20261027).
+Сделано: InitArgs (разбор, ошибки ввода — GenError, код 1), ProjectManifest (чистое слияние package.json, конфликт ключа — ошибка, зависимость из любой секции не дублируется, пустых секций нет, нечего добавить — файл не трогается), ProjectInit (имя --name → package.json → каталог; package.json пишется последним после applyPlan — атомарность), DmgCoreCli.init(root, argv), main.ts — общая печать gen/init.
+Файлы: platform/dmg-core/src/cli/{main.ts, main.test.ts, dmg-core-cli.ts, scaffold/init-args*, scaffold/project-manifest*, scaffold/project-init*, scaffold/project-scaffold.types.ts}.
+Решения Нурболата: слияние с существующим package.json; имя --name → package.json → каталог; запись сразу, --dry-run — план; --name ≠ name — конфликт.
+Ревью: error нет, warn/info исправлены (шаг 3a). check проекта 4357 pass.
