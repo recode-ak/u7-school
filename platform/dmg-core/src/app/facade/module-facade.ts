@@ -31,7 +31,7 @@ export type FacadeModule<M extends AnyModuleDef> = {
  * D-49), `handle` по Def — типизированный сахар поверх; доменных решений
  * нет. Отказы UC (`UNAUTHORIZED` без `'system'` в `callers`, Policy, ошибки
  * Def) — ответ модуля как есть. Наследник — только ради удобных методов
- * поверх `handle`.
+ * поверх `handle` фасада.
  */
 export class ModuleFacade<M extends AnyModuleDef> implements Facade<M> {
   constructor(protected readonly module: FacadeModule<M>) {}

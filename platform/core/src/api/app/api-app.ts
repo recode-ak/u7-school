@@ -43,9 +43,17 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
   private readonly dmgModules: AnyModuleFromDef<DmgActor<TActor>>[] = [];
   private dmgUnsubscribes: Array<() => void> = [];
 
-  /** Подключает модули DMG; вызывать до init(). */
+  /**
+   * Подключает модули DMG; вызывать до init(). Имя модуля — адрес команды
+   * (D-49), поэтому дубль — ошибка сборки.
+   */
   addDmgModules(...modules: AnyModuleFromDef<DmgActor<TActor>>[]): this {
-    this.dmgModules.push(...modules);
+    for (const module of modules) {
+      if (this.dmgModules.some((m) => m.def.name === module.def.name)) {
+        throw new Error(`ApiApp: модуль DMG ${module.def.name} уже подключён`);
+      }
+      this.dmgModules.push(module);
+    }
     return this;
   }
 

@@ -96,7 +96,7 @@ export type AnyModuleFromDef<U extends Identified> = ModuleFromDef<
  * UC — через `dispatch` команды (D-49), Job — через `runJob`, реакции —
  * `subscribe`.
  * Реализации живут внутри и наружу не раздаются; операции получают модуль
- * при создании. Фасад для других модулей — `ModuleFacade` поверх `handle`,
+ * при создании. Фасад для других модулей — `ModuleFacade` поверх `dispatch`,
  * его собирает приложение — в карте его нет.
  */
 export class ModuleFromDef<
@@ -128,6 +128,7 @@ export class ModuleFromDef<
     map: ModuleMap<M, R, U> & RuntimeMap<M, R, U>,
     deps: R,
   ) {
+    assertUniqueNames(def);
     for (const Impl of Object.values(map.useCases)) {
       const uc = new Impl(deps, def);
       this.useCases.set(uc.def.name, uc);
@@ -229,7 +230,8 @@ export class ModuleFromDef<
 }
 
 /**
- * Имя Def — ключ карты, а имена UC в модуле уникальны: совпадение имени с
+ * Осознанное сужение типа: имя Def — ключ карты, уникальность имён UC
+ * проверена при сборке (`assertUniqueNames`), поэтому реализация с именем
  * `uc` команды и есть реализация её Def `D`.
  */
 function answers<D extends AnyUseCaseDef, U extends Identified>(
@@ -237,6 +239,20 @@ function answers<D extends AnyUseCaseDef, U extends Identified>(
   command: Command<D>,
 ): uc is UseCaseHandler<D, U> {
   return uc.def.name === command.uc;
+}
+
+/**
+ * Команда находит UC по имени (D-49): дубль имени в Def модуля — ошибка
+ * сборки, иначе один UC молча заслонит другой.
+ */
+function assertUniqueNames(def: AnyModuleDef): void {
+  const seen = new Set<string>();
+  for (const uc of def.useCases) {
+    if (seen.has(uc.name)) {
+      throw new Error(`Имя UC ${uc.name} повторяется в модуле ${def.name}`);
+    }
+    seen.add(uc.name);
+  }
 }
 
 /** Совпадение объекта Def гарантирует тип `D`. */

@@ -82,6 +82,7 @@ const user = (uuid: string) =>
   new UserCaller<User>({ uuid, hasRole: () => false });
 
 let tasks: MemoryTasks;
+let mini: ModuleFromDef<typeof MiniModuleDef, Deps, User>;
 let app: ApiApp<AppMeta, User>;
 
 beforeEach(() => {
@@ -92,7 +93,7 @@ beforeEach(() => {
     facades: new ModuleFacades(),
     tasks,
   };
-  const mini = new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
+  mini = new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
     MiniModuleDef,
     {
       useCases: { completeTask: CompleteTask },
@@ -144,7 +145,7 @@ describe('ApiApp.dispatch — команда по адресу модуля (D-4
     expect(expectOk(res)).toEqual({});
   });
 
-  test('команда после JSON — тот же ответ', async () => {
+  test('команда после JSON исполняется: вход доходит до UC', async () => {
     tasks.rows.clear();
     const wire: Command = JSON.parse(
       JSON.stringify(CompleteTaskUcDef.command({ taskId: TASK })),
@@ -164,6 +165,12 @@ describe('ApiApp.dispatch — команда по адресу модуля (D-4
       module: 'todo',
       uc: 'completeTask',
     });
+  });
+
+  test('два модуля с одним именем — исключение сборки', () => {
+    expect(() => app.addDmgModules(mini)).toThrow(
+      'модуль DMG mini уже подключён',
+    );
   });
 
   test('неизвестный UC в модуле — OPERATION_NOT_FOUND от модуля', async () => {

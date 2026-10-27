@@ -198,6 +198,19 @@ describe('ModuleFromDef.dispatch', () => {
     });
   });
 
+  test('два UC с одним именем в Def модуля — исключение сборки', () => {
+    const TwinDef = ModuleDef.define({
+      ...MiniModuleDef,
+      useCases: [CompleteTaskUcDef, CompleteTaskUcDef],
+    });
+    // Карту под дубль имени тип не выражает (ключ — имя): проверка рантайма.
+    const twinMap = map as never;
+    expect(
+      () =>
+        new ModuleFromDef<typeof TwinDef, Deps, User>(TwinDef, twinMap, deps),
+    ).toThrow('Имя UC completeTask повторяется в модуле mini');
+  });
+
   test('команда UC другого модуля — ошибка компиляции', () => {
     const wrong = () =>
       mini.dispatch(
