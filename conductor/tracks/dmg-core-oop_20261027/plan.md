@@ -31,7 +31,7 @@
 - [x] Task: Ревью reviewer `0bf34ee`
 - [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
-## Фаза 3: Операции и модуль
+## Фаза 3: Операции и модуль [checkpoint: ed150e7]
 
 - [x] Task: `OperationDef` (`calls` обязательное, нормализуется в конструкторе; `aggregates()`, `errors()`, `title(module)`, `fileKind`, `mainAggregate()`) `ab67d73`
     - `errors()` → `referencedErrors()` (решено с Нурболатом 2026-10-27): поле `errors` у UC занято, на нём держатся `D['errors'][number]` и `UseCaseErrorOf`. Сокращение для `title` — поле `abbr` (`UC`/`ER`/`Job`).
@@ -46,7 +46,7 @@
 - [x] Task: Гайды (module, event-reaction, job, `manifests.md`) `a46bc41`
 - [x] Task: Ревью reviewer `8040f70`
     - Блокеров нет. Исправлено: `kind-switch.test` ловит `TABLE[x.dmg]` и обратное сравнение. Отложено в Фазу 7: один тип вместо `Declared`/`DeclaredCalls` (общий `Declared` — в `operation-def.types.ts`), `decisions.md` D-09/D-37 на `ModuleDef.define`.
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: `DefIndex` и `ArchChecker`
 
