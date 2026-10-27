@@ -5,20 +5,36 @@ import { Role } from './role';
 /** Файлы скила: путь от каталога скила → содержимое */
 export type SkillFiles = Map<string, string>;
 
-/** Что пакет поставляет в проект: скилы, роли и общий блок ролей */
+/** Зависимости из package.json: имя → диапазон версий */
+export type Dependencies = Readonly<Record<string, string>>;
+
+/** Поля package.json пакета, которые читает поставка */
+type Manifest = {
+  version: string;
+  peerDependencies?: Dependencies;
+  devDependencies?: Dependencies;
+};
+
+/**
+ * Что пакет поставляет в проект: скилы, роли, общий блок ролей и версии
+ * зависимостей для каркаса проекта (`peerDependencies` — зависимости
+ * потребителя, `devDependencies` — инструменты его `check`).
+ */
 export class PackageSource {
   private constructor(
     readonly version: string,
     readonly skills: Map<string, SkillFiles>,
     readonly roles: Role[],
     readonly common: string,
+    readonly peerDependencies: Dependencies,
+    readonly devDependencies: Dependencies,
   ) {}
 
   /** Читает поставку из корня пакета (`skills/`, `agents/`, `package.json`) */
   static async load(root: string): Promise<PackageSource> {
     const manifest = JSON.parse(
       await readFile(join(root, 'package.json'), 'utf8'),
-    ) as { version: string };
+    ) as Manifest;
 
     const skills = new Map<string, SkillFiles>();
     const skillPaths = await PackageSource.scan(root, 'skills', '**/*');
@@ -42,7 +58,14 @@ export class PackageSource {
     const common = await readFile(join(root, 'agents/common.md'), 'utf8').catch(
       () => '',
     );
-    return new PackageSource(manifest.version, skills, roles, common);
+    return new PackageSource(
+      manifest.version,
+      skills,
+      roles,
+      common,
+      manifest.peerDependencies ?? {},
+      manifest.devDependencies ?? {},
+    );
   }
 
   private static async scan(

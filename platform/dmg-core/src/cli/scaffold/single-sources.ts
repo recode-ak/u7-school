@@ -1,0 +1,572 @@
+import type { ScaffoldFile } from './project-scaffold.types';
+
+/**
+ * Исходники каркаса `single` по учебному приложению пакета
+ * (`src/testing/example/{app,runner,shared}`): тип пользователя в домене
+ * (D-53), пустой корень сборки `src/app` (D-50), раннер `src/runner` с
+ * единственным чтением окружения (ARC-09) и тесты к ним. Модулей нет:
+ * их добавляет `dmg-core gen module`. Импорты — только публичные входы
+ * пакета (`dmg-core`, `dmg-core/app`, `dmg-core/testing`).
+ */
+export class SingleSources {
+  files(): ScaffoldFile[] {
+    return [
+      { path: 'src/domain/shared/app-user.ts', content: this.appUser() },
+      { path: 'src/app/app.types.ts', content: this.appTypes() },
+      { path: 'src/app/app.ts', content: this.app() },
+      {
+        path: 'src/app/app-caller-resolver.ts',
+        content: this.callerResolver(),
+      },
+      { path: 'src/app/app.test.ts', content: this.appTest() },
+      { path: 'src/runner/runner-env.types.ts', content: this.envTypes() },
+      { path: 'src/runner/runner-env.ts', content: this.env() },
+      { path: 'src/runner/runner-env.test.ts', content: this.envTest() },
+      { path: 'src/runner/runner-cli.types.ts', content: this.cliTypes() },
+      { path: 'src/runner/runner-cli.ts', content: this.cli() },
+      { path: 'src/runner/runner-cli.test.ts', content: this.cliTest() },
+      { path: 'src/runner/main.ts', content: this.main() },
+      { path: 'src/runner/main.test.ts', content: this.mainTest() },
+    ];
+  }
+
+  private appUser(): string {
+    return `/**
+ * Пользователь приложения — им приложение замыкает дженерик \`Caller\` (D-04).
+ * Общий домен (D-53): тип импортируют прикладной слой модулей, корень сборки
+ * и раннер; реализации здесь нет.
+ */
+export type AppUser = {
+  readonly uuid: string;
+  /** TODO: сузить \`role\` до ролей приложения (union строк). */
+  hasRole(role: string): boolean;
+};
+`;
+  }
+
+  private appTypes(): string {
+    return `import type { PersonCaller } from 'dmg-core';
+import type { AppMode, Clock, EventBus, Logger, Trace } from 'dmg-core/app';
+import type { AppUser } from '../domain/shared/app-user';
+
+/**
+ * Окружение приложения (D-50) — простые данные: раннер собирает их из
+ * окружения процесса, приложение само окружение не читает (ARC-09).
+ */
+export type AppEnv = {
+  readonly mode: AppMode;
+  /** Каталог данных: лог операций — \`oplog/\`, хранилища модулей — рядом. */
+  readonly dataDir: string;
+};
+
+/**
+ * Подмена портов контекста — для тестов и встраивания. Не задан — боевой:
+ * \`InProcEventBus\`, \`ConsoleLogger\`, \`systemClock\`.
+ */
+export type AppPorts = {
+  readonly bus?: EventBus;
+  readonly logger?: Logger;
+  readonly clock?: Clock;
+};
+
+/**
+ * Резолвер \`Caller\` (D-50): идентичность из транспорта (uuid или её
+ * отсутствие) → человек на входе. \`trace\` — для вызова модуля
+ * пользователей через \`api.dispatch\` (D-51). Раннер получает резолвер
+ * как \`app.callers\`.
+ */
+export type CallerResolver = {
+  resolve(
+    uuid: string | undefined,
+    trace: Trace,
+  ): Promise<PersonCaller<AppUser>>;
+};
+`;
+  }
+
+  private app(): string {
+    return `import { join } from 'node:path';
+import {
+  ApiApp,
+  type AppContext,
+  ConsoleLogger,
+  InProcEventBus,
+  InProcInbox,
+  InProcOutbox,
+  JsonlOperationLog,
+  type ModuleFactory,
+  systemClock,
+} from 'dmg-core/app';
+import type { AppUser } from '../domain/shared/app-user';
+import type { AppEnv, AppPorts, CallerResolver } from './app.types';
+import { AppCallerResolver } from './app-caller-resolver';
+
+/**
+ * Приложение — корень сборки (D-50): по окружению строит контекст и модули
+ * (раскладку фасадов по \`dependsOn\` делает \`ApiApp\`), отдаёт клиент \`api\`
+ * и резолвер \`callers\`. Раннер передаёт окружение, строит \`Trace\` и
+ * вызывает \`start()\`.
+ */
+export class App {
+  readonly api: ApiApp<AppUser>;
+  readonly callers: CallerResolver;
+
+  constructor(env: AppEnv, ports: AppPorts = {}) {
+    const context = App.context(env, ports);
+    // Фабрики модулей — из входа прикладного пакета src/app/<m>/index.ts
+    // (D-52) с замыканием на репозитории:
+    //   { def: <M>ModuleDef, create: (deps) => create<M>Module({ ...deps, … }) }
+    // Корень Def добавь и в modules в scripts/arch-check.ts.
+    const modules: ModuleFactory<AppUser>[] = [];
+    this.api = new ApiApp(context, modules);
+    this.callers = new AppCallerResolver();
+  }
+
+  /** Подписывает реакции всех модулей; возвращает остановку. */
+  start(): () => void {
+    return this.api.subscribe();
+  }
+
+  private static context(env: AppEnv, ports: AppPorts): AppContext {
+    const logger = ports.logger ?? new ConsoleLogger();
+    const bus = ports.bus ?? new InProcEventBus(logger);
+    return {
+      bus,
+      outbox: new InProcOutbox(bus),
+      inbox: new InProcInbox(),
+      clock: ports.clock ?? systemClock,
+      logger,
+      mode: env.mode,
+      oplog: new JsonlOperationLog(join(env.dataDir, 'oplog')),
+    };
+  }
+}
+`;
+  }
+
+  private callerResolver(): string {
+    return `import { GuestCaller, type PersonCaller } from 'dmg-core';
+import type { AppUser } from '../domain/shared/app-user';
+import type { CallerResolver } from './app.types';
+
+/**
+ * Резолвер \`Caller\` приложения (D-50). Модуля пользователей пока нет —
+ * всегда гость: идентичность не нужна, параметры \`uuid\` и \`trace\` опущены.
+ *
+ * TODO: после модуля пользователей — \`resolve(uuid, trace)\`: \`UserCaller\` через
+ * \`api.dispatch\` (конструктор принимает \`api\`), вызов от \`SystemCaller\`
+ * \`kind: 'app'\` (D-51); нет uuid или пользователя — гость, прочий отказ —
+ * исключение (образец — учебное приложение dmg-core).
+ */
+export class AppCallerResolver implements CallerResolver {
+  async resolve(): Promise<PersonCaller<AppUser>> {
+    return new GuestCaller();
+  }
+}
+`;
+  }
+
+  private appTest(): string {
+    return `import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { GuestCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
+import { AwaitingBus, MemoryLogger } from 'dmg-core/testing';
+import { App } from './app';
+
+// Приложение целиком: окружение → контекст, резолвер Caller, запуск и
+// остановка реакций. Порты подменены, данные — во временном каталоге.
+
+const USER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
+const REQ = Trace.fromRequest({ requestId: 'r-1' });
+
+let dir: string;
+beforeEach(() => {
+  dir = mkdtempSync(join(tmpdir(), 'app-'));
+});
+afterEach(() => rmSync(dir, { recursive: true, force: true }));
+
+function makeApp(): App {
+  return new App(
+    { mode: 'test', dataDir: dir },
+    { bus: new AwaitingBus(), logger: new MemoryLogger() },
+  );
+}
+
+describe('App.start', () => {
+  it('повторный start() без остановки — исключение; после остановки — можно', () => {
+    const app = makeApp();
+    const stop = app.start();
+    expect(() => app.start()).toThrow();
+    stop();
+    expect(() => app.start()).not.toThrow();
+  });
+});
+
+describe('App.callers', () => {
+  it('нет идентичности — GuestCaller', async () => {
+    expect(await makeApp().callers.resolve(undefined, REQ)).toBeInstanceOf(
+      GuestCaller,
+    );
+  });
+
+  it('модуля пользователей нет — GuestCaller и по uuid', async () => {
+    expect(await makeApp().callers.resolve(USER, REQ)).toBeInstanceOf(
+      GuestCaller,
+    );
+  });
+});
+`;
+  }
+
+  private envTypes(): string {
+    return `/** Переменные окружения раннера: словарь, как \`process.env\`. */
+export type EnvVars = Readonly<Record<string, string | undefined>>;
+`;
+  }
+
+  private env(): string {
+    return `import type { AppMode } from 'dmg-core/app';
+import type { AppEnv } from '../app/app.types';
+import type { EnvVars } from './runner-env.types';
+
+const MODES: readonly AppMode[] = ['test', 'development', 'production'];
+
+/**
+ * Окружение раннера → \`AppEnv\` (ARC-09: окружение процесса читает только
+ * точка входа и передаёт сюда словарём). Переменные: \`APP_MODE\` (по
+ * умолчанию \`development\`), \`APP_DATA_DIR\` (обязателен). Неверный режим
+ * или нет каталога — исключение (ошибка конфигурации, ERR-01).
+ */
+export class RunnerEnv {
+  constructor(private readonly vars: EnvVars) {}
+
+  toAppEnv(): AppEnv {
+    return {
+      mode: RunnerEnv.mode(this.vars.APP_MODE),
+      dataDir: RunnerEnv.dataDir(this.vars.APP_DATA_DIR),
+    };
+  }
+
+  private static dataDir(raw: string | undefined): string {
+    if (raw === undefined || raw === '') {
+      throw new Error('APP_DATA_DIR: не задан каталог данных');
+    }
+    return raw;
+  }
+
+  private static mode(raw: string | undefined): AppMode {
+    if (raw === undefined || raw === '') return 'development';
+    const mode = MODES.find((m) => m === raw);
+    if (mode === undefined) {
+      throw new Error(\`APP_MODE: «\${raw}» — ожидается \${MODES.join(' | ')}\`);
+    }
+    return mode;
+  }
+}
+`;
+  }
+
+  private envTest(): string {
+    return `import { describe, expect, it } from 'bun:test';
+import { RunnerEnv } from './runner-env';
+import type { EnvVars } from './runner-env.types';
+
+// Разбор переменных окружения раннера в AppEnv (ARC-09: читает только
+// точка входа, класс получает их словарём).
+
+const DIR = '/tmp/app';
+
+const parse = (vars: EnvVars) => new RunnerEnv(vars).toAppEnv();
+
+describe('RunnerEnv.toAppEnv', () => {
+  it('все переменные заданы', () => {
+    expect(parse({ APP_MODE: 'production', APP_DATA_DIR: DIR })).toEqual({
+      mode: 'production',
+      dataDir: DIR,
+    });
+  });
+
+  it('по умолчанию — development', () => {
+    expect(parse({ APP_DATA_DIR: DIR }).mode).toBe('development');
+  });
+
+  it('нет APP_DATA_DIR (или пустой) — исключение конфигурации', () => {
+    expect(() => parse({})).toThrow('APP_DATA_DIR: не задан каталог данных');
+    expect(() => parse({ APP_DATA_DIR: '' })).toThrow('APP_DATA_DIR');
+  });
+
+  it('неизвестный режим — исключение с перечнем допустимых', () => {
+    expect(() => parse({ APP_DATA_DIR: DIR, APP_MODE: 'prod' })).toThrow(
+      'APP_MODE: «prod» — ожидается test | development | production',
+    );
+  });
+});
+`;
+  }
+
+  private cliTypes(): string {
+    return `/**
+ * Порт вывода CLI: строки в stdout и stderr. Точка входа отдаёт \`console\`,
+ * тест — буфер; глобальные \`console\` и \`process\` раннер не трогает.
+ */
+export type CliIo = {
+  out(line: string): void;
+  err(line: string): void;
+};
+`;
+  }
+
+  private cli(): string {
+    return `import { Trace } from 'dmg-core/app';
+import type { App } from '../app/app';
+import type { CliIo } from './runner-cli.types';
+
+/**
+ * Коды выхода процесса: 0 — успех, 1 — ошибка ввода (argv), 2 — зарезервирован
+ * под бизнес-отказ (\`Err\` операции) для команд UC, 3 — ошибка окружения:
+ * \`EXIT_CONFIG\` ставит \`main.ts\`, до CLI дело не доходит.
+ */
+export const EXIT_OK = 0;
+export const EXIT_USAGE = 1;
+export const EXIT_CONFIG = 3;
+
+export const USAGE =
+  'Использование: APP_DATA_DIR=data bun src/runner/main.ts whoami [--user <uuid>]';
+
+/**
+ * CLI-раннер — транспорт: разбирает argv, получает \`Caller\` от резолвера
+ * приложения по идентичности (\`--user\`) и печатает результат. Без команды
+ * или с \`--help\` — справка; \`whoami\` — вид вызывающего.
+ *
+ * TODO: команда UC — argv → \`Trace\` (канал \`cli\`, новый \`requestId\` на
+ * запуск) → \`app.callers.resolve\` → \`app.api.dispatch\` → \`Result\` JSON в
+ * stdout, отказ UC — код 2 (образец — учебный раннер dmg-core).
+ */
+export class RunnerCli {
+  constructor(private readonly app: App) {}
+
+  async run(argv: readonly string[], io: CliIo): Promise<number> {
+    const [command, ...args] = argv;
+    if (command === undefined || command === '--help') {
+      io.out(USAGE);
+      return EXIT_OK;
+    }
+    if (command !== 'whoami') {
+      return RunnerCli.usage(io, \`неизвестная команда: \${command}\`);
+    }
+    const [flag, user, ...rest] = args;
+    const valid =
+      args.length === 0 ||
+      (flag === '--user' && user !== undefined && rest.length === 0);
+    if (!valid) return RunnerCli.usage(io, 'whoami: ожидается [--user <uuid>]');
+    const trace = Trace.fromRequest({
+      requestId: crypto.randomUUID(),
+      channel: { name: 'cli' },
+    });
+    const caller = await this.app.callers.resolve(user, trace);
+    io.out(JSON.stringify({ kind: caller.kind }));
+    return EXIT_OK;
+  }
+
+  private static usage(io: CliIo, error: string): number {
+    io.err(error);
+    io.err(USAGE);
+    return EXIT_USAGE;
+  }
+}
+`;
+  }
+
+  private cliTest(): string {
+    return `import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { MemoryLogger } from 'dmg-core/testing';
+import { App } from '../app/app';
+import { RunnerCli, USAGE } from './runner-cli';
+import type { CliIo } from './runner-cli.types';
+
+// CLI-раннер: argv → резолвер Caller → вывод; коды выхода. Вывод — в буфер
+// io, данные — во временном каталоге.
+
+const USER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
+
+let dir: string;
+beforeEach(() => {
+  dir = mkdtempSync(join(tmpdir(), 'runner-cli-'));
+});
+afterEach(() => rmSync(dir, { recursive: true, force: true }));
+
+/** Буфер вывода: строки stdout и stderr. */
+class BufferIo implements CliIo {
+  readonly stdout: string[] = [];
+  readonly stderr: string[] = [];
+  out(line: string): void {
+    this.stdout.push(line);
+  }
+  err(line: string): void {
+    this.stderr.push(line);
+  }
+}
+
+async function run(...argv: string[]) {
+  const io = new BufferIo();
+  const app = new App(
+    { mode: 'test', dataDir: dir },
+    { logger: new MemoryLogger() },
+  );
+  const code = await new RunnerCli(app).run(argv, io);
+  return { code, io };
+}
+
+describe('RunnerCli: whoami', () => {
+  it('без --user — гость, код 0', async () => {
+    const res = await run('whoami');
+
+    expect(res.code).toBe(0);
+    expect(res.io.stdout).toEqual(['{"kind":"guest"}']);
+  });
+
+  it('--user передаётся резолверу; пользователей нет — гость', async () => {
+    const res = await run('whoami', '--user', USER);
+
+    expect(res.code).toBe(0);
+    expect(res.io.stdout).toEqual(['{"kind":"guest"}']);
+  });
+
+  it('лишние аргументы — ошибка ввода, код 1', async () => {
+    const res = await run('whoami', '--user');
+
+    expect(res.code).toBe(1);
+    expect(res.io.stdout).toEqual([]);
+    expect(res.io.stderr).toEqual(['whoami: ожидается [--user <uuid>]', USAGE]);
+  });
+});
+
+describe('RunnerCli', () => {
+  it('без команды — справка в stdout, код 0', async () => {
+    const res = await run();
+
+    expect(res.code).toBe(0);
+    expect(res.io.stdout).toEqual([USAGE]);
+    expect(res.io.stderr).toEqual([]);
+  });
+
+  it('--help — справка, код 0', async () => {
+    expect((await run('--help')).code).toBe(0);
+  });
+
+  it('неизвестная команда — stderr, код 1', async () => {
+    const res = await run('drop-all');
+
+    expect(res.code).toBe(1);
+    expect(res.io.stdout).toEqual([]);
+    expect(res.io.stderr).toEqual(['неизвестная команда: drop-all', USAGE]);
+  });
+});
+`;
+  }
+
+  private main(): string {
+    return `#!/usr/bin/env bun
+/**
+ * Точка входа раннера (D-50): окружение → \`App\`, запуск реакций, одна
+ * команда CLI, код выхода; ошибка окружения — \`EXIT_CONFIG\`. \`process\` —
+ * только здесь (ARC-09).
+ *
+ *   APP_DATA_DIR=data bun src/runner/main.ts whoami --user <uuid>
+ */
+
+import { App } from '../app/app';
+import type { AppEnv } from '../app/app.types';
+import { EXIT_CONFIG, RunnerCli } from './runner-cli';
+import { RunnerEnv } from './runner-env';
+
+// Ошибка окружения — ошибка конфигурации запуска: сообщение без стека и
+// EXIT_CONFIG. Прочие исключения не ловятся — это сбой, нужен стек.
+let env: AppEnv | undefined;
+try {
+  env = new RunnerEnv(process.env).toAppEnv();
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exitCode = EXIT_CONFIG;
+}
+
+if (env !== undefined) {
+  const app = new App(env);
+  const stop = app.start();
+  try {
+    process.exitCode = await new RunnerCli(app).run(process.argv.slice(2), {
+      out: (line) => console.log(line),
+      err: (line) => console.error(line),
+    });
+  } finally {
+    stop();
+  }
+}
+`;
+  }
+
+  private mainTest(): string {
+    return `import { afterEach, beforeEach, expect, it } from 'bun:test';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { EXIT_CONFIG } from './runner-cli';
+
+// Точка входа целиком: окружение процесса → приложение → код выхода.
+
+const MAIN = join(import.meta.dir, 'main.ts');
+
+let dir: string;
+beforeEach(() => {
+  dir = mkdtempSync(join(tmpdir(), 'main-'));
+});
+afterEach(() => rmSync(dir, { recursive: true, force: true }));
+
+function run(vars: Record<string, string>, args: readonly string[]) {
+  const proc = Bun.spawnSync(['bun', MAIN, ...args], {
+    env: { ...process.env, ...vars },
+  });
+  return {
+    code: proc.exitCode,
+    stdout: proc.stdout.toString(),
+    stderr: proc.stderr.toString(),
+  };
+}
+
+it('--help — справка, код 0', () => {
+  const res = run({ APP_DATA_DIR: dir }, ['--help']);
+
+  expect(res.code).toBe(0);
+  expect(res.stdout).toContain('Использование:');
+});
+
+it('whoami — вызывающий из резолвера приложения, код 0', () => {
+  const res = run({ APP_DATA_DIR: dir }, ['whoami']);
+
+  expect(res.code).toBe(0);
+  expect(JSON.parse(res.stdout)).toEqual({ kind: 'guest' });
+});
+
+it('неизвестная команда — код 1 у процесса', () => {
+  expect(run({ APP_DATA_DIR: dir }, ['drop-all'])).toMatchObject({
+    code: 1,
+    stdout: '',
+  });
+});
+
+it('ошибка окружения — код EXIT_CONFIG, сообщение без стека в stderr', () => {
+  const res = run({ APP_DATA_DIR: '' }, ['--help']);
+
+  expect(res.code).toBe(EXIT_CONFIG);
+  expect(res.stdout).toBe('');
+  expect(res.stderr.trim()).toBe('APP_DATA_DIR: не задан каталог данных');
+});
+`;
+  }
+}
