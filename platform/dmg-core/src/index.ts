@@ -26,7 +26,7 @@ export type { ReadonlyAr } from './domain/aggregate/readonly-ar';
 export {
   type AnyEventReactionDef,
   defineEventReaction,
-  type EventReactionDef,
+  EventReactionDef,
   type EventReactionSpec,
   type ReactionEventOf,
 } from './domain/contracts/define-event-reaction';

@@ -52,7 +52,9 @@ export function describedDefs(index: DefIndex): DescribedDef[] {
         out.push({ title: `правило ${ruleId(index, r).id}`, ...r.describe() });
       }
     }
-    for (const er of m.reactions) add(`ER ${localId(m, er)}`, er);
+    for (const er of m.reactions) {
+      out.push({ title: er.title(m), ...er.describe() });
+    }
     for (const job of m.jobs) add(`Job ${localId(m, job)}`, job);
   }
   return out;

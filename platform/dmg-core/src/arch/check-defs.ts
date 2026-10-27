@@ -165,7 +165,7 @@ function checkLinks(index: DefIndex): Violation[] {
           checkErrors(title, op.referencedErrors());
           break;
         case 'eventReaction':
-          for (const e of op.on) {
+          for (const e of op.subscribedEvents()) {
             if (eventModule(e) === undefined) {
               add(`${title}: событие ${e.name} не входит ни в один модуль`);
             } else if (!published.has(e)) {
@@ -354,7 +354,7 @@ function checkDependsOn(index: DefIndex): Violation[] {
           checkErrors(title, op.referencedErrors());
           break;
         case 'eventReaction':
-          for (const e of op.on) {
+          for (const e of op.subscribedEvents()) {
             const a = index.eventOwner.get(e);
             check(title, `событие ${e.name}`, a && index.aggregateOwner.get(a));
           }

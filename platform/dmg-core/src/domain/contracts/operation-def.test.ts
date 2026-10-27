@@ -114,6 +114,11 @@ describe('OperationDef', () => {
     expect(op.referencedErrors()).toEqual([TaskErrors.NOT_FOUND]);
   });
 
+  it('subscribedEvents() — по умолчанию нет подписок', () => {
+    const op = ScanDef.define({ name: 'remind', ...texts });
+    expect(op.subscribedEvents()).toEqual([]);
+  });
+
   it('title(module) — сокращение вида и id в модуле', () => {
     const job = ScanDef.define({ name: 'remind', ...texts });
     const uc = new FailingDef({ name: 'completeTask', ...texts });

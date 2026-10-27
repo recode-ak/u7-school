@@ -1,6 +1,7 @@
 import { Def } from '#core/kernel/def/def';
 import type { AnyErrorDef } from '#core/kernel/errors/error-def';
 import type { AnyAggregateDef } from '../aggregate/aggregate-def';
+import type { AnyEventDef } from '../events/event-def';
 import type {
   OperationAbbr,
   OperationDmg,
@@ -19,6 +20,7 @@ export type {
 /**
  * База операций модуля (UC, ER, Job): межмодульные вызовы `calls`
  * и то, чем проверки графа и файлов различают виды, — агрегаты, ошибки,
+ * подписки,
  * сокращение и каталог файла. Вид сужает тип `calls` через
  * `declare readonly calls: DeclaredCalls<S>` (не параметром базы:
  * `AnyUseCaseDef` выводится из наследника, аргумент `extends` дал бы цикл).
@@ -40,6 +42,11 @@ export abstract class OperationDef<N extends string = string> extends Def<N> {
 
   /** Ошибки, на которые ссылается контракт; базовые ядра не входят. */
   referencedErrors(): readonly AnyErrorDef[] {
+    return [];
+  }
+
+  /** События, на которые подписана операция; по умолчанию — нет. */
+  subscribedEvents(): readonly AnyEventDef[] {
     return [];
   }
 
