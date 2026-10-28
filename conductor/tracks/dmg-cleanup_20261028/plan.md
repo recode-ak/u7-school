@@ -29,14 +29,14 @@
 
 ## Фаза 3: Отсев повторов command UC (DEBT-1 dmg-core)
 
-- [ ] Task: Решение D-NN в `decisions.md` пакета: ключ (`caller` + `requestId`), сравнение входа, TTL, `REQUEST_CONFLICT`, признак серверного `requestId`; обсудить с Нурболатом
+- [x] Task: Решение D-56 в `decisions.md` пакета: ключ (`caller` + `requestId`), сравнение входа, TTL, `REQUEST_CONFLICT`, признак серверного `requestId`; обсудить с Нурболатом (dmg-core 00fe6c8)
 - [ ] Task: Признак серверного `requestId` в `Trace` (`fromRequest` без `requestId`); тесты red → green
 - [ ] Task: Порт `ReplayStore` + реализация в памяти с TTL в `dmg-core/app`; тесты red → green
 - [ ] Task: Отсев в `dispatch`
     - [ ] Тесты: повтор → сохранённый ответ без исполнения; другой вход → `REQUEST_CONFLICT`; query и серверный `requestId` — без отсева; истёкший TTL; red
     - [ ] Реализация, подключение хранилища (`AppContext`/`ApiApp`), учебное приложение; green
 - [ ] Task: `transport.md` §2; снять DEBT-1 (`debt.md` и маркер)
-- [x] Task: Ревью reviewer cf8169fd (dmg-core 3b9d7cd)
+- [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: `requestId` из `update_id` (u7-school, DEBT-38)
@@ -51,7 +51,7 @@
 ## Фаза 5: Показ ошибок DMG в боте (DEBT-37)
 
 - [ ] Task: `ucErrorNotify` по `kind` и тексту из Def без `toLegacyError`; тесты red → green; снять DEBT-37
-- [x] Task: Ревью reviewer cf8169fd (dmg-core 3b9d7cd)
+- [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
 ## Фаза 6: Финал
