@@ -1,0 +1,1 @@
+Задача: TST-07 lint + переименование теста ER (Фаза 2, по ревью). Пакет dmg-core d448dd5 (решение D-55 — f8fb202): LintMap, biome.json пакета, rules.md, фикстуры, e2e каркаса. check (1275 pass) и e2e пакета зелёные; u7-school check зелёный (3273 pass). Бриф: slices/tst-07-lint.md.
