@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ModuleDef } from '#core/domain/contracts/module-def';
 import {
+  GuestCaller,
   type OperationRef,
   SystemCaller,
   UserCaller,
@@ -268,6 +269,82 @@ describe('ApiApp.dispatch', () => {
     );
 
     expectErr(res, 'OPERATION_NOT_FOUND');
+  });
+});
+
+describe('ApiApp.dispatchByName', () => {
+  it('модуль и UC по имени — тот же Result, что у dispatch', async () => {
+    const { app, tasks, usersModule, todoModule } = makeApp();
+    const api = new ApiApp(app, [usersModule, todoModule]);
+
+    const res = await api.dispatchByName(
+      'todo',
+      { uc: 'createTask', input: { title: 'Хлеб' } },
+      owner,
+      REQ,
+    );
+
+    const { taskId } = expectOk(res) as { taskId: string };
+    expect(await tasks.findById(taskId)).toBeDefined();
+  });
+
+  it('вход не проходит схему UC — INPUT_VALIDATION', async () => {
+    const { app, usersModule, todoModule } = makeApp();
+    const api = new ApiApp(app, [usersModule, todoModule]);
+
+    const res = await api.dispatchByName(
+      'todo',
+      { uc: 'createTask', input: { title: 42 } },
+      owner,
+      REQ,
+    );
+
+    expectErr(res, 'INPUT_VALIDATION');
+  });
+
+  it('вид вызывающего не в callers — UNAUTHORIZED', async () => {
+    const { app, usersModule, todoModule } = makeApp();
+    const api = new ApiApp(app, [usersModule, todoModule]);
+
+    const res = await api.dispatchByName(
+      'todo',
+      { uc: 'createTask', input: { title: 'Хлеб' } },
+      new GuestCaller(),
+      REQ,
+    );
+
+    expect(res).toMatchObject({ ok: false, error: { code: 'UNAUTHORIZED' } });
+  });
+
+  it('Policy отказывает (чужая задача) — ACCESS_DENIED', async () => {
+    const { app, usersModule, todoModule } = makeApp();
+    const api = new ApiApp(app, [usersModule, todoModule]);
+    const taskId = await createTask(api);
+
+    const res = await api.dispatchByName(
+      'todo',
+      { uc: 'completeTask', input: { taskId } },
+      other,
+      REQ,
+    );
+
+    expect(res).toMatchObject({ ok: false, error: { code: 'ACCESS_DENIED' } });
+  });
+
+  it('неизвестный модуль или UC — OPERATION_NOT_FOUND с адресом', async () => {
+    const { app, usersModule, todoModule } = makeApp();
+    const api = new ApiApp(app, [usersModule, todoModule]);
+    const call = (module: string, uc: string) =>
+      api.dispatchByName(module, { uc, input: {} }, owner, REQ);
+
+    const notFound = (module: string, uc: string) => ({
+      ok: false,
+      error: { code: 'OPERATION_NOT_FOUND', payload: { module, uc } },
+    });
+    expect(await call('nope', 'createTask')).toMatchObject(
+      notFound('nope', 'createTask'),
+    );
+    expect(await call('todo', 'nope')).toMatchObject(notFound('todo', 'nope'));
   });
 });
 

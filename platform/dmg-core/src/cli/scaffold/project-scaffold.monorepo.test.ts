@@ -172,7 +172,7 @@ describe('ProjectScaffold monorepo: package.json', () => {
     });
   });
 
-  it('раннер CLI: домен и корень сборки — workspace:*', () => {
+  it('раннер CLI: домен и корень сборки — workspace:*, valibot — проверка --user', () => {
     expect(json('runners/cli/package.json')).toEqual({
       name: '@acme/cli',
       private: true,
@@ -180,6 +180,7 @@ describe('ProjectScaffold monorepo: package.json', () => {
       scripts: { test: 'bun test --pass-with-no-tests' },
       dependencies: {
         'dmg-core': `^${pkg.version}`,
+        valibot: expect.any(String),
         '@acme/domain': 'workspace:*',
         '@acme/app': 'workspace:*',
       },

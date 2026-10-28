@@ -7,8 +7,13 @@ import type {
 } from './project-scaffold.types';
 import type { ScaffoldLayout } from './scaffold-layout';
 
-/** Импорт шаблона: источник и имена (`type X` — только тип). */
-type Import = { readonly from: string; readonly names: readonly string[] };
+/**
+ * Импорт шаблона: источник и имена (`type X` — только тип) или пространство
+ * имён (`import * as <namespace>`).
+ */
+type Import =
+  | { readonly from: string; readonly names: readonly string[] }
+  | { readonly from: string; readonly namespace: string };
 
 /**
  * Исходники приложения в каркасе — одни шаблоны на все профили, по
@@ -90,7 +95,13 @@ export type { AppEnv, AppPorts, CallerResolver } from './app.types';
    */
   private imports(list: readonly Import[]): string {
     const merged = new Map<string, string[]>();
-    for (const { from, names } of list) {
+    const namespaces: string[] = [];
+    for (const item of list) {
+      if ('namespace' in item) {
+        namespaces.push(`import * as ${item.namespace} from '${item.from}';`);
+        continue;
+      }
+      const { from, names } = item;
       merged.set(from, sortNames([...(merged.get(from) ?? []), ...names]));
     }
     const statements = [...merged].map(([from, names]) => {
@@ -98,7 +109,7 @@ export type { AppEnv, AppPorts, CallerResolver } from './app.types';
       const items = types ? names.map((n) => n.slice('type '.length)) : names;
       return namedImport(items, from, types);
     });
-    return sortImports(statements);
+    return sortImports([...statements, ...namespaces]);
   }
 
   private appUser(): string {
@@ -238,23 +249,52 @@ export class App {
 
   private callerResolver(): string {
     return `${this.imports([
-      { from: 'dmg-core', names: ['GuestCaller', 'type PersonCaller'] },
+      {
+        from: 'dmg-core',
+        names: ['GuestCaller', 'type PersonCaller', 'UserCaller'],
+      },
+      { from: 'dmg-core/app', names: ['type Trace'] },
       { from: this.from.appUser, names: ['type AppUser'] },
       { from: './app.types', names: ['type CallerResolver'] },
     ])}
 
+/** Единственный канал, с которого заглушка принимает uuid. */
+const TRUSTED_CHANNEL = 'cli';
+
 /**
- * Резолвер \`Caller\` приложения (D-50). Модуля пользователей пока нет —
- * всегда гость: идентичность не нужна, параметры \`uuid\` и \`trace\` опущены.
+ * Резолвер \`Caller\` приложения (D-50) — заглушка для разработки, пока нет
+ * модуля пользователей. Нет uuid — гость. uuid с канала \`cli\`
+ * (\`trace.channel\`) — \`UserCaller\` без ролей, uuid принимается на веру:
+ * UC с \`callers: ['user']\` вызывается раннером (\`call … --user <uuid>\`)
+ * без правки Def, проверки ролей в Policy отказывают. Кто запускает
+ * локальный CLI, и так владеет каталогом данных.
  *
- * TODO: после модуля пользователей — \`resolve(uuid, trace)\`: \`UserCaller\` через
- * \`api.dispatch\` (конструктор принимает \`api\`), вызов от \`SystemCaller\`
- * \`kind: 'app'\` (D-51); нет uuid или пользователя — гость, прочий отказ —
- * исключение (образец — учебное приложение dmg-core).
+ * uuid с другого канала (HTTP, бот) или без канала — исключение (ERR-01):
+ * это код проверяет, а не соглашение. Транспорт с удалённым входом до
+ * модуля пользователей — дефект конфигурации; тихий гость спрятал бы его
+ * за отказом в правах.
+ *
+ * uuid, придуманные в CLI, не совпадут с пользователями модуля
+ * пользователей: данные, созданные от них, после замены резолвера —
+ * чужие или ничьи.
+ *
+ * TODO: после модуля пользователей — \`UserCaller\` через \`api.dispatch\`
+ * (конструктор принимает \`api\`), вызов от \`SystemCaller\` \`kind: 'app'\`
+ * (D-51); нет uuid или пользователя — гость, прочий отказ — исключение
+ * (образец — учебное приложение dmg-core).
  */
 export class AppCallerResolver implements CallerResolver {
-  async resolve(): Promise<PersonCaller<AppUser>> {
-    return new GuestCaller();
+  async resolve(
+    uuid: string | undefined,
+    trace: Trace,
+  ): Promise<PersonCaller<AppUser>> {
+    if (uuid === undefined) return new GuestCaller();
+    if (trace.channel?.name !== TRUSTED_CHANNEL) {
+      throw new Error(
+        \`Резолвер Caller: uuid принимается только с канала \${TRUSTED_CHANNEL} — подключи модуль пользователей\`,
+      );
+    }
+    return new UserCaller({ uuid, hasRole: () => false });
   }
 }
 `;
@@ -265,7 +305,7 @@ export class AppCallerResolver implements CallerResolver {
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { GuestCaller } from 'dmg-core';
+import { GuestCaller, UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { AwaitingBus, MemoryLogger } from 'dmg-core/testing';
 import { App } from './app';
@@ -275,6 +315,8 @@ import { App } from './app';
 
 const USER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
+const CLI = Trace.fromRequest({ requestId: 'r-2', channel: { name: 'cli' } });
+const HTTP = Trace.fromRequest({ requestId: 'r-3', channel: { name: 'http' } });
 
 let dir: string;
 beforeEach(() => {
@@ -300,16 +342,29 @@ describe('App.start', () => {
 });
 
 describe('App.callers', () => {
-  it('нет идентичности — GuestCaller', async () => {
-    expect(await makeApp().callers.resolve(undefined, REQ)).toBeInstanceOf(
+  it('нет идентичности — GuestCaller на любом канале', async () => {
+    expect(await makeApp().callers.resolve(undefined, CLI)).toBeInstanceOf(
       GuestCaller,
     );
   });
 
-  it('модуля пользователей нет — GuestCaller и по uuid', async () => {
-    expect(await makeApp().callers.resolve(USER, REQ)).toBeInstanceOf(
-      GuestCaller,
+  it('модуля пользователей нет, канал cli — по uuid UserCaller без ролей', async () => {
+    const caller = await makeApp().callers.resolve(USER, CLI);
+
+    expect(caller).toBeInstanceOf(UserCaller);
+    expect(caller.toLog()).toEqual({ kind: 'user', subjectId: USER });
+    expect(caller instanceof UserCaller && caller.user.hasRole('admin')).toBe(
+      false,
     );
+  });
+
+  it('модуля пользователей нет, uuid не с канала cli — исключение конфигурации', async () => {
+    const app = makeApp();
+    for (const trace of [REQ, HTTP]) {
+      await expect(app.callers.resolve(USER, trace)).rejects.toThrow(
+        'Резолвер Caller: uuid принимается только с канала cli',
+      );
+    }
   });
 });
 `;
@@ -417,62 +472,175 @@ export type CliIo = {
 
   private cli(): string {
     return `${this.imports([
+      { from: 'dmg-core', names: ['err', 'F', 'ok', 'type Result'] },
       { from: 'dmg-core/app', names: ['Trace'] },
+      { from: 'valibot', namespace: 'v' },
       { from: this.from.app, names: ['type App'] },
       { from: './runner-cli.types', names: ['type CliIo'] },
     ])}
 
 /**
- * Коды выхода процесса: 0 — успех, 1 — ошибка ввода (argv), 2 — зарезервирован
- * под бизнес-отказ (\`Err\` операции) для команд UC, 3 — ошибка окружения:
- * \`EXIT_CONFIG\` ставит \`main.ts\`, до CLI дело не доходит.
+ * Коды выхода процесса: 0 — успех, 1 — ошибка ввода (argv), 2 — отказ
+ * операции (\`Err\` из \`call\`, в том числе неизвестная операция и вход не
+ * по схеме), 3 — ошибка окружения: \`EXIT_CONFIG\` ставит \`main.ts\`, до CLI
+ * дело не доходит.
  */
 export const EXIT_OK = 0;
 export const EXIT_USAGE = 1;
+export const EXIT_REJECTED = 2;
 export const EXIT_CONFIG = 3;
 
-export const USAGE =
-  'Использование: APP_DATA_DIR=data bun ${this.layout.runner}/main.ts whoami [--user <uuid>]';
+export const USAGE = [
+  'Использование: APP_DATA_DIR=data bun ${this.layout.runner}/main.ts <команда>',
+  "  call <module>.<operation> [--input '<json>'] [--user <uuid>] — вызов UC",
+  '  whoami [--user <uuid>] — вид вызывающего',
+].join('\\n');
+
+type CliCommand = 'call' | 'whoami';
+
+/** Значения опций \`--<имя> <значение>\` любой команды. */
+type CliOptions = { input?: string; user?: string };
 
 /**
- * CLI-раннер — транспорт: разбирает argv, получает \`Caller\` от резолвера
- * приложения по идентичности (\`--user\`) и печатает результат. Без команды
- * или с \`--help\` — справка; \`whoami\` — вид вызывающего.
+ * Опции, разрешённые команде (проверка в рантайме); \`--user\` — общая,
+ * без неё вызов от гостя.
+ */
+const OPTIONS: Record<CliCommand, readonly (keyof CliOptions)[]> = {
+  call: ['input', 'user'],
+  whoami: ['user'],
+};
+
+const USER_ID = F.uuid('пользователя');
+
+/** Разобранная команда CLI. */
+type CliRequest =
+  | { readonly command: 'whoami'; readonly user?: string }
+  | {
+      readonly command: 'call';
+      readonly module: string;
+      readonly uc: string;
+      readonly input: unknown;
+      readonly user?: string;
+    };
+
+/**
+ * CLI-раннер — транспорт: разбирает argv, строит \`Trace\` (канал \`cli\`,
+ * новый \`requestId\` на запуск), получает \`Caller\` от резолвера приложения
+ * по идентичности (\`--user\`) и печатает результат. Без команды или с
+ * \`--help\` — справка.
  *
- * TODO: команда UC — argv → \`Trace\` (канал \`cli\`, новый \`requestId\` на
- * запуск) → \`app.callers.resolve\` → \`app.api.dispatch\` → \`Result\` JSON в
- * stdout, отказ UC — код 2 (образец — учебный раннер dmg-core).
+ * - \`call <module>.<operation>\` — любой UC приложения по имени Def модуля
+ *   и Def UC (\`todo.createTask\`, как в логе операций): \`--input\` — JSON
+ *   входа (по умолчанию \`{}\`, проверяет схема UC), \`Result\` JSON в stdout.
+ * - \`whoami\` — вид вызывающего.
+ *
+ * Своя команда с разбором аргументов под UC — по образцу учебного раннера
+ * dmg-core (\`api.dispatch\` с Def — типизированный \`Result\`).
  */
 export class RunnerCli {
   constructor(private readonly app: App) {}
 
   async run(argv: readonly string[], io: CliIo): Promise<number> {
-    const [command, ...args] = argv;
+    const [command] = argv;
     if (command === undefined || command === '--help') {
       io.out(USAGE);
       return EXIT_OK;
     }
-    if (command !== 'whoami') {
-      return RunnerCli.usage(io, \`неизвестная команда: \${command}\`);
+    const parsed = RunnerCli.parse(argv);
+    if (!parsed.ok) {
+      io.err(parsed.error);
+      io.err(USAGE);
+      return EXIT_USAGE;
     }
-    const [flag, user, ...rest] = args;
-    const valid =
-      args.length === 0 ||
-      (flag === '--user' && user !== undefined && rest.length === 0);
-    if (!valid) return RunnerCli.usage(io, 'whoami: ожидается [--user <uuid>]');
+    const request = parsed.value;
     const trace = Trace.fromRequest({
       requestId: crypto.randomUUID(),
       channel: { name: 'cli' },
     });
-    const caller = await this.app.callers.resolve(user, trace);
-    io.out(JSON.stringify({ kind: caller.kind }));
-    return EXIT_OK;
+    const caller = await this.app.callers.resolve(request.user, trace);
+    if (request.command === 'whoami') {
+      io.out(JSON.stringify({ kind: caller.kind }));
+      return EXIT_OK;
+    }
+    const res = await this.app.api.dispatchByName(
+      request.module,
+      { uc: request.uc, input: request.input },
+      caller,
+      trace,
+    );
+    io.out(JSON.stringify(res));
+    return res.ok ? EXIT_OK : EXIT_REJECTED;
   }
 
-  private static usage(io: CliIo, error: string): number {
-    io.err(error);
-    io.err(USAGE);
-    return EXIT_USAGE;
+  /** argv → запрос; ошибка ввода — текст для stderr. */
+  private static parse(argv: readonly string[]): Result<CliRequest, string> {
+    const [command, ...rest] = argv;
+    if (!RunnerCli.isCommand(command)) {
+      return err(\`неизвестная команда: \${command}\`);
+    }
+    const address = command === 'call' ? rest[0] : undefined;
+    const args = command === 'call' ? rest.slice(1) : rest;
+    const parsed = RunnerCli.options(command, args);
+    if (!parsed.ok) return parsed;
+    const { input, user } = parsed.value;
+    if (user !== undefined && !v.is(USER_ID, user)) {
+      return err(\`--user: не uuid — \${user}\`);
+    }
+    if (command === 'whoami') return ok({ command, user });
+    return RunnerCli.call(address, input, user);
+  }
+
+  /** Адрес \`<module>.<operation>\` и JSON входа → запрос \`call\`. */
+  private static call(
+    address: string | undefined,
+    raw: string | undefined,
+    user: string | undefined,
+  ): Result<CliRequest, string> {
+    if (address === undefined || address.startsWith('--')) {
+      return err('call: нужен адрес <module>.<operation>');
+    }
+    const [module, uc, ...extra] = address.split('.');
+    if (!module || !uc || extra.length > 0) {
+      return err(\`call: адрес «\${address}» — ожидается <module>.<operation>\`);
+    }
+    let input: unknown = {};
+    if (raw !== undefined) {
+      try {
+        input = JSON.parse(raw);
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        return err(\`call: --input — не JSON: \${reason}\`);
+      }
+    }
+    return ok({ command: 'call', module, uc, input, user });
+  }
+
+  private static isCommand(name: string | undefined): name is CliCommand {
+    return name !== undefined && Object.hasOwn(OPTIONS, name);
+  }
+
+  /** Пары \`--имя значение\` из разрешённых для команды, каждая — один раз. */
+  private static options(
+    command: CliCommand,
+    args: readonly string[],
+  ): Result<CliOptions, string> {
+    const options: CliOptions = {};
+    for (let i = 0; i < args.length; i += 2) {
+      const flag = args[i] ?? '';
+      const value = args[i + 1];
+      const name = OPTIONS[command].find((option) => \`--\${option}\` === flag);
+      if (name === undefined) {
+        return err(\`\${command}: неизвестная опция \${flag}\`);
+      }
+      if (options[name] !== undefined) {
+        return err(\`\${command}: \${flag} указан дважды\`);
+      }
+      if (value === undefined) {
+        return err(\`\${command}: нет значения у \${flag}\`);
+      }
+      options[name] = value;
+    }
+    return ok(options);
   }
 }
 `;
@@ -534,19 +702,89 @@ describe('RunnerCli: whoami', () => {
     expect(res.io.stdout).toEqual(['{"kind":"guest"}']);
   });
 
-  it('--user передаётся резолверу; пользователей нет — гость', async () => {
+  it('--user — пользователь (резолвер без модуля пользователей), код 0', async () => {
     const res = await run('whoami', '--user', USER);
 
     expect(res.code).toBe(0);
-    expect(res.io.stdout).toEqual(['{"kind":"guest"}']);
+    expect(res.io.stdout).toEqual(['{"kind":"user"}']);
   });
 
-  it('лишние аргументы — ошибка ввода, код 1', async () => {
+  it('--user без значения — ошибка ввода, код 1', async () => {
     const res = await run('whoami', '--user');
 
     expect(res.code).toBe(1);
     expect(res.io.stdout).toEqual([]);
-    expect(res.io.stderr).toEqual(['whoami: ожидается [--user <uuid>]', USAGE]);
+    expect(res.io.stderr).toEqual(['whoami: нет значения у --user', USAGE]);
+  });
+
+  it('--user не uuid — ошибка ввода, код 1', async () => {
+    const res = await run('whoami', '--user', 'admin');
+
+    expect(res.code).toBe(1);
+    expect(res.io.stderr).toEqual(['--user: не uuid — admin', USAGE]);
+  });
+});
+
+describe('RunnerCli: call', () => {
+  it('модуль не подключён — Result OPERATION_NOT_FOUND в stdout, код 2', async () => {
+    const res = await run(
+      'call',
+      'missing.create',
+      '--input',
+      '{"title":"Хлеб"}',
+      '--user',
+      USER,
+    );
+
+    expect(res.code).toBe(2);
+    expect(res.io.stderr).toEqual([]);
+    expect(JSON.parse(res.io.stdout.join(''))).toMatchObject({
+      ok: false,
+      error: {
+        code: 'OPERATION_NOT_FOUND',
+        payload: { module: 'missing', uc: 'create' },
+      },
+    });
+  });
+
+  it('без адреса — ошибка ввода, код 1', async () => {
+    const res = await run('call');
+
+    expect(res.code).toBe(1);
+    expect(res.io.stderr).toEqual([
+      'call: нужен адрес <module>.<operation>',
+      USAGE,
+    ]);
+  });
+
+  it('адрес без операции — ошибка ввода, код 1', async () => {
+    const res = await run('call', 'todo');
+
+    expect(res.code).toBe(1);
+    expect(res.io.stderr).toEqual([
+      'call: адрес «todo» — ожидается <module>.<operation>',
+      USAGE,
+    ]);
+  });
+
+  it('--input не JSON — ошибка ввода, код 1', async () => {
+    const res = await run('call', 'todo.createTask', '--input', '{title}');
+
+    expect(res.code).toBe(1);
+    expect(res.io.stdout).toEqual([]);
+    expect(res.io.stderr[0]).toStartWith('call: --input — не JSON');
+  });
+
+  it('неизвестная или повторная опция — ошибка ввода, код 1', async () => {
+    const unknown = await run('call', 'todo.createTask', '--title', 'Хлеб');
+    const twice = await run('call', 'a.b', '--user', USER, '--user', USER);
+
+    expect(unknown.code).toBe(1);
+    expect(unknown.io.stderr).toEqual([
+      'call: неизвестная опция --title',
+      USAGE,
+    ]);
+    expect(twice.io.stderr).toEqual(['call: --user указан дважды', USAGE]);
   });
 });
 
@@ -582,6 +820,8 @@ describe('RunnerCli', () => {
  * только здесь (ARC-09).
  *
  *   APP_DATA_DIR=data bun ${this.layout.runner}/main.ts whoami --user <uuid>
+ *   APP_DATA_DIR=data bun ${this.layout.runner}/main.ts call todo.createTask \\
+ *     --input '{}' --user <uuid>
  */
 
 ${this.imports([
@@ -656,6 +896,16 @@ it('whoami — вызывающий из резолвера приложения
 
   expect(res.code).toBe(0);
   expect(JSON.parse(res.stdout)).toEqual({ kind: 'guest' });
+});
+
+it('call — Result JSON в stdout; модуль не подключён — код 2', () => {
+  const res = run({ APP_DATA_DIR: dir }, ['call', 'missing.create']);
+
+  expect(res.code).toBe(2);
+  expect(JSON.parse(res.stdout)).toMatchObject({
+    ok: false,
+    error: { code: 'OPERATION_NOT_FOUND' },
+  });
 });
 
 it('неизвестная команда — код 1 у процесса', () => {

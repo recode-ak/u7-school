@@ -1,6 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { basename, join, relative, resolve } from 'node:path';
 import { applyPlan } from '../../gen/apply';
+import { GenError } from '../../gen/cli';
 import type { PackageSource } from '../package-source';
 import { ProjectManifest } from './project-manifest';
 import { ProjectScaffold } from './project-scaffold';
@@ -50,8 +51,7 @@ export class ProjectInit {
       const scaffold = plan.files.find((f) => f.path === manifestPath);
       plan.files = plan.files.filter((f) => f !== scaffold);
       merged =
-        scaffold &&
-        manifest.merge(this.withOverride(scaffold.content, manifest, options));
+        scaffold && this.merge(scaffold.content, manifest, root, options);
     }
 
     const write = !options.dryRun;
@@ -70,22 +70,53 @@ export class ProjectInit {
   }
 
   /**
-   * Пакеты monorepo зависят от `dmg-core` диапазоном реестра; если корень
-   * поставил его не из реестра (tarball, `file:`, `link:`, путь), без
-   * `overrides` `bun install` ищет пакеты в реестре и падает. Каркас
-   * добавляет `overrides.dmg-core` с тем же спецификатором; другое значение
-   * у проекта — конфликт слияния. В `single` пакетов нет — `overrides` нет.
+   * Слияние с `package.json` проекта. `dmg-core` не из реестра (tarball,
+   * `file:`, `link:`, путь): абсолютный путь (`bun add <tarball>`) в
+   * зависимости корня становится относительным от корня проекта
+   * (`ProjectManifest.portable`) в обоих профилях — проект переносится
+   * вместе с tarball. Пакеты monorepo зависят от `dmg-core` диапазоном
+   * реестра; без `overrides` `bun install` ищет их в реестре и падает —
+   * каркас добавляет `overrides.dmg-core` с тем же спецификатором.
+   * Старый `overrides` на тот же файл заменяется, на другой пакет — ошибка
+   * с подсказкой (`overridden`). В `single` пакетов нет — `overrides` нет.
    */
-  private withOverride(
+  private merge(
     scaffold: string,
     manifest: ProjectManifest,
+    root: string,
     options: InitOptions,
-  ): string {
+  ): string | undefined {
     const spec = manifest.localSpec(DMG_CORE);
-    if (options.profile !== 'monorepo' || spec === undefined) return scaffold;
-    return JSON.stringify({
-      ...JSON.parse(scaffold),
-      overrides: { [DMG_CORE]: spec },
-    });
+    if (spec === undefined) return manifest.merge(scaffold);
+    const base = resolve(root);
+    const portable = ProjectManifest.portable(spec, base);
+    if (options.profile !== 'monorepo') {
+      return manifest.withSpec(DMG_CORE, portable).merge(scaffold);
+    }
+    this.overridden(manifest, portable, base);
+    return manifest.withSpec(DMG_CORE, portable).merge(
+      JSON.stringify({
+        ...JSON.parse(scaffold),
+        overrides: { [DMG_CORE]: portable },
+      }),
+    );
+  }
+
+  /**
+   * `overrides.dmg-core` проекта указывает не на тот пакет, что зависимость
+   * корня (после приведения к пути от корня), — `GenError` с подсказкой.
+   * Тот же файл (старый абсолютный путь) — не конфликт: `withSpec` заменит.
+   */
+  private overridden(
+    manifest: ProjectManifest,
+    portable: string,
+    root: string,
+  ): void {
+    const current = manifest.override(DMG_CORE);
+    if (current === undefined) return;
+    if (ProjectManifest.portable(current, root) === portable) return;
+    throw new GenError(
+      `package.json проекта расходится с каркасом, ничего не записано:\n  «overrides.${DMG_CORE}»: ${current} — не тот пакет, что в зависимости ${DMG_CORE}; поправь на «${portable}» или удали`,
+    );
   }
 }

@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { GenError } from '../../gen/cli';
 
 /** Объект JSON. */
@@ -69,6 +70,56 @@ export class ProjectManifest {
       }
     }
     return undefined;
+  }
+
+  /**
+   * Спецификатор локального пакета относительно корня проекта `root`:
+   * абсолютный путь (так пишет `bun add <tarball>`) и `file:<абсолютный>` —
+   * в `./…` или `../…` (`file:` сохраняется), прочее — как есть. Bun
+   * разрешает относительный путь от корня — и в зависимости, и в
+   * `overrides`: проект переносится вместе с tarball без правок.
+   */
+  static portable(
+    spec: string,
+    root: string,
+    paths: typeof path = path,
+  ): string {
+    const file = spec.startsWith('file:');
+    const target = file ? spec.slice('file:'.length) : spec;
+    if (target === '' || !paths.isAbsolute(target)) return spec;
+    const rel = paths.relative(root, target);
+    // Другой диск (Windows): относительного пути нет — как есть.
+    if (paths.isAbsolute(rel)) return spec;
+    const posix = rel.split(paths.sep).join('/');
+    const dotted = posix.startsWith('../') ? posix : `./${posix}`;
+    return file ? `file:${dotted}` : dotted;
+  }
+
+  /** `overrides.<name>`, если это строка; иначе undefined. */
+  override(name: string): string | undefined {
+    const overrides = this.data.overrides;
+    const spec = isObject(overrides) ? overrides[name] : undefined;
+    return typeof spec === 'string' ? spec : undefined;
+  }
+
+  /**
+   * Копия с другим спецификатором `name`: в секции зависимостей, где она
+   * есть, и в `overrides`, если он там задан.
+   */
+  withSpec(name: string, spec: string): ProjectManifest {
+    const data: JsonObject = structuredClone(this.data);
+    for (const section of DEPENDENCY_SECTIONS) {
+      const deps = data[section];
+      if (isObject(deps) && typeof deps[name] === 'string') {
+        deps[name] = spec;
+        break;
+      }
+    }
+    const overrides = data.overrides;
+    if (isObject(overrides) && typeof overrides[name] === 'string') {
+      overrides[name] = spec;
+    }
+    return new ProjectManifest(data);
   }
 
   /**

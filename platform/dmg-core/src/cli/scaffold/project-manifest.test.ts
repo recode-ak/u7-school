@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test';
+import { win32 } from 'node:path';
 import { GenError } from '../../gen/cli';
 import { ProjectManifest } from './project-manifest';
 
@@ -146,5 +147,30 @@ describe('ProjectManifest: спецификатор не из реестра', (
   it('ищется во всех секциях зависимостей; нет зависимости — undefined', () => {
     expect(spec('./dmg-core.tgz', 'devDependencies')).toBe('./dmg-core.tgz');
     expect(ProjectManifest.parse('{}').localSpec('dmg-core')).toBeUndefined();
+  });
+});
+
+describe('ProjectManifest.portable', () => {
+  it('абсолютный путь — от корня проекта; относительный и реестр — как есть', () => {
+    expect(ProjectManifest.portable('/w/v/d.tgz', '/w/p')).toBe('../v/d.tgz');
+    expect(ProjectManifest.portable('/w/p/d.tgz', '/w/p')).toBe('./d.tgz');
+    expect(ProjectManifest.portable('file:/w/d.tgz', '/w/p')).toBe(
+      'file:../d.tgz',
+    );
+    expect(ProjectManifest.portable('../d.tgz', '/w/p')).toBe('../d.tgz');
+    expect(ProjectManifest.portable('^0.1.0', '/w/p')).toBe('^0.1.0');
+  });
+
+  it('пустой спецификатор — как есть', () => {
+    expect(ProjectManifest.portable('', '/w/p')).toBe('');
+  });
+
+  it('относительного пути нет (другой диск) — исходный спецификатор', () => {
+    expect(ProjectManifest.portable('D:\\v\\d.tgz', 'C:\\p', win32)).toBe(
+      'D:\\v\\d.tgz',
+    );
+    expect(ProjectManifest.portable('C:\\v\\d.tgz', 'C:\\p', win32)).toBe(
+      '../v/d.tgz',
+    );
   });
 });

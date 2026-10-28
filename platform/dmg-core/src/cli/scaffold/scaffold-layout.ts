@@ -100,7 +100,7 @@ export class ScaffoldLayout {
         {
           dir: 'runners/cli',
           name: `@${scope}/cli`,
-          dependencies: ['dmg-core'],
+          dependencies: ['dmg-core', 'valibot'],
           workspace: [domain, app],
         },
       ],

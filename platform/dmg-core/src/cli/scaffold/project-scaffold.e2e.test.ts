@@ -502,4 +502,33 @@ describe('monorepo: срез gen подключает модуль без руч
     expect(res.text).toContain(' 0 fail');
     expect(res.code).toBe(0);
   }, 120_000);
+
+  test('раннер: call UC создания от пользователя — Ok, без --user — UNAUTHORIZED', async () => {
+    const call = (...args: string[]) =>
+      sh(
+        [
+          'env',
+          `APP_DATA_DIR=${join(project, 'data')}`,
+          'bun',
+          'runners/cli/src/main.ts',
+          'call',
+          'todo.createTask',
+          ...args,
+        ],
+        project,
+      );
+    const user = await call('--user', '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6');
+    expect(user.code).toBe(0);
+    expect(JSON.parse(user.out)).toMatchObject({
+      ok: true,
+      value: { taskId: expect.any(String) },
+    });
+
+    const guest = await call();
+    expect(guest.code).toBe(2);
+    expect(JSON.parse(guest.out)).toMatchObject({
+      ok: false,
+      error: { code: 'UNAUTHORIZED' },
+    });
+  }, 60_000);
 });

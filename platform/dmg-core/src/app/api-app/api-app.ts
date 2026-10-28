@@ -1,6 +1,7 @@
 import type { Command } from '#core/domain/contracts/command';
 import type { AnyModuleDef } from '#core/domain/contracts/module-def';
 import type {
+  AnyUseCaseDef,
   OutputOf,
   UseCaseErrorOf,
 } from '#core/domain/contracts/use-case-def';
@@ -25,7 +26,8 @@ import type { ModuleFactory } from './api-app.types';
  * Иначе `ModuleFacade.serves` (сравнение UC по ссылке) не узнает свои UC и
  * ошибка всплывёт только в рантайме («Нет фасада»). Любое нарушение —
  * исключение сборки (ERR-01). Дальше — единственный вход в модули:
- * `dispatch`, `runJob`, `subscribe`.
+ * `dispatch` (по Def) и `dispatchByName` (по имени, для транспорта без
+ * типов) — один путь, `runJob`, `subscribe`.
  */
 export class ApiApp<U extends Identified> {
   /** Собранные модули по имени — в порядке сборки. */
@@ -43,7 +45,8 @@ export class ApiApp<U extends Identified> {
   /**
    * Команда модулю (`ModuleFromDef.dispatch`): команда UC чужого модуля —
    * ошибка компиляции. Модуль не подключён (клиент другой версии, стёртый
-   * тип) — `OPERATION_NOT_FOUND`, а не исключение.
+   * тип) — `OPERATION_NOT_FOUND`, а не исключение. Тот же путь, что у
+   * `dispatchByName`: адрес — имя Def модуля.
    */
   dispatch<M extends AnyModuleDef, D extends M['useCases'][number]>(
     module: M,
@@ -51,13 +54,26 @@ export class ApiApp<U extends Identified> {
     caller: Caller<U>,
     trace: Trace,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    const target = this.modules.get(module.name);
+    return this.dispatchByName(module.name, command, caller, trace);
+  }
+
+  /**
+   * Команда модулю по имени — для транспорта без типов Def: CLI `call`,
+   * HTTP `POST /api/<module>` (transport.md §2). Вход проверяет схема UC
+   * (`INPUT_VALIDATION`), вид вызывающего — `callers`, доступ — Policy;
+   * неизвестный модуль или UC — `Err` `OPERATION_NOT_FOUND`. Без Def выход
+   * и ошибки не типизированы (`D` по умолчанию — любой UC).
+   */
+  dispatchByName<D extends AnyUseCaseDef = AnyUseCaseDef>(
+    module: string,
+    command: Command<D>,
+    caller: Caller<U>,
+    trace: Trace,
+  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
+    const target = this.modules.get(module);
     if (target === undefined) {
       return Promise.resolve(
-        CoreErrors.OPERATION_NOT_FOUND.err({
-          module: module.name,
-          uc: command.uc,
-        }),
+        CoreErrors.OPERATION_NOT_FOUND.err({ module, uc: command.uc }),
       );
     }
     return target.dispatch(command, caller, trace);

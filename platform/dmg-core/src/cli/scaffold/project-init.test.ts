@@ -158,6 +158,88 @@ describe('ProjectInit: существующий package.json', () => {
     expect(manifest.dependencies).toEqual({ 'dmg-core': tarball });
   });
 
+  // Абсолютный путь (так пишет `bun add <tarball>`) → путь от корня проекта.
+  const ABSOLUTE: [string, () => string, string][] = [
+    [
+      'tarball вне проекта',
+      () => join(work, 'vendor/dmg-core-0.1.0.tgz'),
+      '../vendor/dmg-core-0.1.0.tgz',
+    ],
+    [
+      'tarball в проекте',
+      () => join(root, 'dmg-core-0.1.0.tgz'),
+      './dmg-core-0.1.0.tgz',
+    ],
+    [
+      'file: с абсолютным путём',
+      () => `file:${join(work, 'dmg-core-0.1.0.tgz')}`,
+      'file:../dmg-core-0.1.0.tgz',
+    ],
+  ];
+
+  it.each(ABSOLUTE)(
+    'monorepo, %s — overrides и зависимость относительно корня',
+    async (_, absolute, relative) => {
+      await put(
+        'package.json',
+        text({ devDependencies: { 'dmg-core': absolute() } }),
+      );
+      await run({ profile: 'monorepo' });
+      const manifest = JSON.parse(await read('package.json'));
+      expect(manifest.overrides).toEqual({ 'dmg-core': relative });
+      expect(manifest.devDependencies['dmg-core']).toBe(relative);
+    },
+  );
+
+  it.each(ABSOLUTE)(
+    'single, %s — зависимость относительно корня, overrides нет',
+    async (_, absolute, relative) => {
+      await put(
+        'package.json',
+        text({ dependencies: { 'dmg-core': absolute() } }),
+      );
+      await run({ profile: 'single' });
+      const manifest = JSON.parse(await read('package.json'));
+      expect(manifest.dependencies['dmg-core']).toBe(relative);
+      expect(manifest.overrides).toBeUndefined();
+    },
+  );
+
+  it('monorepo, старый абсолютный overrides на тот же tarball — заменён относительным', async () => {
+    const absolute = join(work, 'dmg-core-0.1.0.tgz');
+    await put(
+      'package.json',
+      text({
+        dependencies: { 'dmg-core': absolute },
+        overrides: { 'dmg-core': absolute },
+      }),
+    );
+    await run({ profile: 'monorepo' });
+    const manifest = JSON.parse(await read('package.json'));
+    expect(manifest.overrides).toEqual({ 'dmg-core': '../dmg-core-0.1.0.tgz' });
+    expect(manifest.dependencies['dmg-core']).toBe('../dmg-core-0.1.0.tgz');
+  });
+
+  it('monorepo, overrides на другой tarball — конфликт с подсказкой, каталог как до запуска', async () => {
+    await put(
+      'package.json',
+      text({
+        dependencies: { 'dmg-core': join(work, 'new/dmg-core-0.2.0.tgz') },
+        overrides: { 'dmg-core': join(work, 'old/dmg-core-0.1.0.tgz') },
+      }),
+    );
+    const before = await snapshot();
+    const message = await failure({ profile: 'monorepo' });
+    expect(message).toContain('«overrides.dmg-core»');
+    expect(message).toContain(
+      `${join(work, 'old/dmg-core-0.1.0.tgz')} — не тот пакет, что в зависимости`,
+    );
+    expect(message).toContain(
+      'поправь на «../new/dmg-core-0.2.0.tgz» или удали',
+    );
+    expect(await snapshot()).toEqual(before);
+  });
+
   it('monorepo, dmg-core из реестра — overrides нет', async () => {
     await put('package.json', text({ dependencies: { 'dmg-core': '^0.1.0' } }));
     await run({ profile: 'monorepo' });

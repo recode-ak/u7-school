@@ -10,9 +10,9 @@
 #    (consumer-check.ts); biome потребителя загружает плагины пакета.
 # 4. gen создаёт модуль, тесты заготовок зелёные на установленном пакете.
 # 5. Профили single и monorepo: init --profile → gen module/aggregate/uc
-#    (модуль подключает сам gen) → правки автора (consumer-wire.ts:
-#    контракт, callers, команда раннера) → раннер вызывает UC создания →
-#    bun run check проекта зелёный.
+#    (модуль подключает сам gen) → без ручных правок раннер вызывает UC
+#    создания (`call --user`) → bun run check проекта зелёный; путь к
+#    tarball в зависимости (и overrides monorepo) — от корня проекта.
 set -euo pipefail
 
 PKG="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -110,7 +110,7 @@ bunx dmg-core gen uc todo.task complete-task --write >/dev/null
 bun test src
 
 # Проект по профилю с нуля: пакет из tarball, каркас, срез gen (подключает
-# модуль к приложению), правки автора, вызов UC раннером, полный check.
+# модуль к приложению), вызов UC раннером, полный check.
 # Красный шаг: хвост лога и выход.
 run_logged() {
   local log="$1" what="$2"
@@ -126,14 +126,22 @@ run_logged() {
 # monorepo из имени — как в README.
 profile_e2e() {
   local profile="$1" main="$2" name="$3"
-  local dir="$WORK/$profile" scope="${3#@}"
-  scope="${scope%%/*}"
+  local dir="$WORK/$profile"
   echo "e2e: профиль $profile ($name)"
   mkdir "$dir"
   cd "$dir"
   echo "{ \"name\": \"$name\" }" >package.json
   bun add "$TARBALL" >/dev/null
   bunx dmg-core init --profile "$profile" >/dev/null
+  # Путь к tarball — от корня проекта; в monorepo — и в overrides.
+  local rel="../$(basename "$TARBALL")" fields='.dependencies["dmg-core"]'
+  [ "$profile" = monorepo ] && fields="$fields .overrides[\"dmg-core\"]"
+  for field in $fields; do
+    if [ "$(jq -r "$field" package.json)" != "$rel" ]; then
+      echo "e2e: $profile — $field не $rel: $(jq -c "$field" package.json)" >&2
+      exit 1
+    fi
+  done
   bun install >/dev/null
   run_logged "$WORK/$profile-init-check.log" \
     "$profile — bun run check красный сразу после init" bun run check
@@ -144,12 +152,12 @@ profile_e2e() {
   # Подключение модуля генератором — сразу в форме biome, без format.
   run_logged "$WORK/$profile-gen-lint.log" \
     "$profile — biome красный после gen (подключение модуля)" bunx biome check .
-  bun "$PKG/scripts/consumer-wire.ts" "$dir" "$profile" "$scope"
+  # Ручных правок нет: UC вызывается по имени, контракт (D-45) — граница
+  # TS-импортов между модулями, транспорту он не нужен.
   bun install >/dev/null
-  run_logged "$WORK/$profile-format.log" "$profile — bun run format упал" \
-    bun run format
   local out
-  out="$(APP_DATA_DIR=data bun "$main" create-task)"
+  out="$(APP_DATA_DIR=data bun "$main" call todo.createTask \
+    --user 5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6)"
   if ! grep -qE '^\{"ok":true,"value":\{"taskId":"[0-9a-f-]{36}"\}\}$' <<<"$out"; then
     echo "e2e: $profile — раннер вернул $out" >&2
     exit 1

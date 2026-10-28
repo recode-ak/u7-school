@@ -214,12 +214,13 @@ test('uc не create: тест реализации — успех на сохр
   expect(src).not.toContain('TODO');
 });
 
-test('uc: callers — пользователь, с подсказкой про гостя раннера каркаса', () => {
+test('uc: callers — пользователь, с подсказкой про --user раннера каркаса', () => {
   const src = content(
     plan('uc', 'complete-student'),
     '/d/stream/student/uc/complete-student.uc.ts',
   );
   expect(src).toContain("callers: ['user'],");
+  expect(src).toContain('--user <uuid>');
   expect(src).toContain("'guest'");
   expect(src).toContain('project.md §7');
 });
