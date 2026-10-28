@@ -1,0 +1,1 @@
+Задача: перевод тестов UC примера на фейк (Фаза 2). Пакет dmg-core 7a559c2: task.repo.fake.ts, user.repo.fake.ts; 6 тестов UC без временного каталога, 33 it 1:1 (сверено). check пакета зелёный (1257 pass). Бриф: slices/uc-tests-fake.md.
