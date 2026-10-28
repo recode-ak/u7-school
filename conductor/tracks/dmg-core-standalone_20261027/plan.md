@@ -64,8 +64,9 @@
 
 ## Фаза 4: Локальный вынос
 
-- [ ] Task: Способ подключения в u7-school (`link:` / `file:` / workspace-путь вне репо): проверка `dmg-core sync`, `gen`, biome-плагинов `node_modules/dmg-core/…`, tsc; согласовать с Нурболатом
-- [ ] Task: Репозиторий пакета: `git subtree split --prefix=platform/dmg-core` → `~/dev/kalki/tools/dmg/dmg-core` (с историей); в нём `bun install && bun run check && bun run e2e` зелёные
+- [x] Task: Способ подключения в u7-school (`link:` / `file:` / workspace-путь вне репо): проверка `dmg-core sync`, `gen`, biome-плагинов `node_modules/dmg-core/…`, tsc; согласовать с Нурболатом
+    - D-55 (Нурболат 2026-10-28): сейчас `file:`, при релизе — `git+ssh` с тегом; репо — `~/dev/tools/dmg/dmg-core`. Проверено на макете bun 1.4.2 (bin, плагины, глубина workspace, `--frozen-lockfile`); `sync`/`gen`/tsc на реальном пакете — в задаче «u7-school на вынесенном пакете»
+- [ ] Task: Репозиторий пакета: `git subtree split --prefix=platform/dmg-core` → `~/dev/tools/dmg/dmg-core` (с историей); в нём `bun install && bun run check && bun run e2e` зелёные
 - [ ] Task: u7-school на вынесенном пакете
     - [ ] Замена зависимости `workspace:*`
     - [ ] Удаление `platform/dmg-core` — после подтверждения Нурболата
