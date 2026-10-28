@@ -72,6 +72,7 @@ orchestrator: бриф среза
 - **Приёмка чужой работы** — как работы субагента: полный `bun run check` и reviewer по diff, затем продолжение.
 - **Один источник текстов.** Скиллы: `.claude/skills` — симлинк на `.pi/skills`. Скил `dmg-architecture` и роли платформы доставляет `bun run dmg:sync` (`dmg-core sync` по `dmg-core.json`): скил — в `.pi/skills/`, роли — в `.agents-core/roles/`, общий блок пакета — `.agents-core/dmg-core-common.md`; `dmg:check` (в `check`) ловит устаревшие и правленые копии. Проектная роль — `.agents-core/roles/migrator.md`, общий блок проекта — `.agents-core/common.md`; `bun run agents:sync` собирает копии под обе среды, `agents:check` (в `check`) ловит расхождение. Формат — `.agents-core/README.md`.
 - Скилл `architecture` — вход в эту папку для основной сессии.
+- **Платформа — параллельно.** `dmg-core` (в будущем `dmg-ui`) развивается вместе с u7-school, правка репо пакета — обычная работа трека, не эскалация (изменение контракта пакета — через его `docs/decisions.md`, это стратегическое, §9). Порядок — [index.md](./index.md) §«Правка платформы `dmg-core`»: авторы правят код пакета, orchestrator гоняет `check`/`e2e` пакета и коммитит в его репо отдельно, SHA — в коммите u7-school.
 
 ## 9. Автономный режим перехода
 
