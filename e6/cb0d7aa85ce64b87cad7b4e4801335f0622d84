@@ -1,0 +1,6 @@
+Верификация Фазы 4 «Локальный вынос» (2026-10-28)
+
+Автотесты: CI=true bun test — u7-school 3273 pass / 0 fail; репо пакета ~/dev/tools/dmg/dmg-core 1246 pass / 0 fail; bun run check (u7-school) зелёный; bun run check && bun run e2e (пакет) зелёные.
+Задачи: D-55 (file: до релиза, git+ssh по тегу при релизе); subtree split → ~/dev/tools/dmg/dmg-core (75 коммитов); u7-school на file:, platform/dmg-core и extract:check удалены; реестр долгов пакета (DEBT-36 → DEBT-1 пакета); документация проекта → node_modules/dmg-core, порядок правки платформы; RELEASING.md пакета.
+Не проверено: установка из git до пуша (bun без git+file, sshd нет) — шаг 4 RELEASING.md.
+Ручная проверка: план из 5 шагов (лог репо пакета, check/e2e пакета, platform/ и check u7-school, живые ссылки file:, чтение документов). Подтверждение Нурболата: «да».
