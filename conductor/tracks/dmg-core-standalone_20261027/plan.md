@@ -37,7 +37,7 @@
     - [x] Тесты плана: workspace, пакет домена (`exports` `./*/contract`, `./*`), пакет приложения, `modules/`, `runners/`, секция `gen` с `domainImport`, карта плагинов по пакетам, корневой `check`; red
     - [x] Реализация; green
 - [x] Task: CLI `dmg-core init --profile single|monorepo` (без профиля — прежнее поведение; неизвестный профиль — ошибка); тесты CLI red → green e2f56aee
-- [~] Task: `gen module` в профиле monorepo создаёт пакет модуля (`package.json`, tsconfig); как узнаётся профиль — поле `dmg-core.json` или признак раскладки (решить в задаче); тесты red → green
+- [x] Task: `gen module` в профиле monorepo создаёт пакет модуля (`package.json`, tsconfig); признак — поле `gen.package` (решение Нурболата 2026-10-27); тесты red → green 9220518f
     - Учесть D-52: `gen module` создаёт `index.ts` прикладного пакета (фабрика, `*Deps`, репозитории) — корень сборки берёт фабрику только из него; `GenLayout`/шаблон `ArchApp` отдают `root` и `runners`
 - [ ] Task: `consumer-e2e.sh` — оба профиля: `init --profile` → `gen module/aggregate/uc` → сборка приложения → раннер вызывает UC → `check` зелёный
 - [ ] Task: Документация
