@@ -23,6 +23,8 @@
 - [x] Task: Документация: `testing.md` §4 (пирамида), гайды `use-case`, `event-reaction`, `job`, `module`, `repo`, `llms.txt` e7eb3bf8 (dmg-core a32f3e4)
 - [x] Task: u7-school — `bun install`, `dmg:sync`/`agents:sync`; запись в debt: тесты UC переводятся на фейк по мере касания ab658e4c
 - [x] Task: Ревью reviewer cf8169fd (dmg-core 3b9d7cd)
+- [x] Task: Решение D-55 в `decisions.md` пакета: `MemoryRepo`, `<a>.repo.fake.ts`, TST-07 (по ревью, согласовано с Нурболатом) (dmg-core f8fb202)
+- [~] Task: TST-07 — lint: рабочий код не импортирует `*.repo.fake` и `dmg-core/testing` (`LintMap`, `biome.json` пакета, `rules.md`); переименовать тест ER «…файл не создан»
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Отсев повторов command UC (DEBT-1 dmg-core)
