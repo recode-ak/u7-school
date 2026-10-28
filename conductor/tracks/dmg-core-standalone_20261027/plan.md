@@ -52,13 +52,13 @@
 ## Фаза 3: Агентная приёмка
 
 - [x] Task: Прогон: субагент в пустом каталоге вне репо, только tarball пакета (`bun pm pack`), без доступа к u7-school; задача — поднять monorepo с модулем `todo`, агрегатом, UC и вызовом через раннер, `check` зелёный; протокол: какие документы читал, где застрял, что угадал 8bf3c0a4
-- [~] Task: Закрыть найденные пробелы (документация или каркас; с тестами, если код); бриф — `slices/phase-3.md`
+- [x] Task: Закрыть найденные пробелы (документация или каркас; с тестами, если код); бриф — `slices/phase-3.md` 94c1230e
     - [x] Подключение модуля генератором по маркерам: `app.ts`, `arch-check.ts`, `app/package.json`, репозиторий агрегата (G8, R1) 2caf0bbb
     - [x] Заготовка UC: `emits` по имени, типизированный `execute`, `callers`, готовый репозиторий в тесте (G2, G3, G6) ab580052
     - [x] Раннер каркаса: `call <module>.<operation>` (G10) 93bacd0d
     - [x] `overrides` с относительным путём к tarball (R2) 93bacd0d
     - [x] `scripts/gen-e2e.test.ts` без гонки: срез не в каталогах репо или без обнаружения чужим `bun test` (плавающий `ENOENT reading …/genprobe/…test.ts`) ed6496fd
-    - [ ] Документация: `use-case.md`, `project.md`, `aggregate.md`, `naming.md` §5 (G1, G4, G5, G7, G9, G11)
+    - [x] Документация: `use-case.md`, `project.md`, `aggregate.md`, `naming.md` §5 (G1, G4, G5, G7, G9, G11) 94c1230e
 - [ ] Task: Повторный прогон — чистый, без угадываний; профиль `single` — короткий прогон
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
