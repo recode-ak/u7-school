@@ -1,0 +1,4 @@
+Задача: MemoryRepo<A> в dmg-core/testing (Фаза 2, dmg-cleanup_20261028).
+Пакет dmg-core da9e9a6: src/testing/memory-repo.ts, memory-repo.test.ts (11 тестов), экспорт в src/testing/index.ts.
+Фейк репозитория для тестов UC/ER/Job: сверка версии базы, seed, saved, failOn, restored; find* — ответ теста присваиванием поля (форма согласована с Нурболатом).
+u7-school: бриф conductor/tracks/dmg-cleanup_20261028/slices/memory-repo.md. check пакета зелёный (1257 pass).
