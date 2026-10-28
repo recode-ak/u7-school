@@ -1,0 +1,1 @@
+Задача: документация пирамиды тестов на фейках (Фаза 2). Пакет dmg-core a32f3e4: docs/testing.md §3–4, docs/naming.md, guides use-case/event-reaction/job/module/repo, llms.txt, agents/roles/api-author.md. Решения Нурболата: фейк <a>.repo.fake.ts рядом с портом; DOM-01 без исключений, тип снапшота StateOf. check пакета зелёный.
