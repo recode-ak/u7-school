@@ -170,6 +170,12 @@ export class TestBotTransport {
   #lastResponse: DialogResponse | null = null;
   /** Последний выданный update_id: каждый вызов обработчика — новый апдейт. */
   #updateSeq = 0;
+  /** Последний апдейт и сессия до него — для повторной доставки (`redeliver`). */
+  #lastUpdate?: {
+    ctx: BotContext;
+    fn: () => Promise<void>;
+    sessionBefore?: BotSession;
+  };
 
   constructor(
     apiApp: U7BotApp,
@@ -305,6 +311,29 @@ export class TestBotTransport {
     return this.#run(ctx, () => this.transport.handleMessage(ctx));
   }
 
+  /** update_id последнего апдейта (`tg:<update_id>` — его correlationId). */
+  get lastUpdateId(): number {
+    return this.#updateSeq;
+  }
+
+  /**
+   * Повторная доставка последнего апдейта — тот же контекст и `update_id`
+   * (Telegram не дождался ответа). `sessionLost` — процесс упал после
+   * исполнения апдейта, но до сохранения сессии: она возвращается к
+   * состоянию до апдейта, и повтор проходит сверку штампа.
+   */
+  async redeliver(
+    opts: { sessionLost?: boolean } = {},
+  ): Promise<DialogResponse> {
+    const last = this.#lastUpdate;
+    if (!last) throw new Error('Апдейтов ещё не было');
+    const tgId = last.ctx.from?.id;
+    if (opts.sessionLost && tgId !== undefined && last.sessionBefore) {
+      sessionsOf(this.transport).set(tgId, structuredClone(last.sessionBefore));
+    }
+    return this.#deliver(last.fn);
+  }
+
   // ── Внутреннее ──
 
   /** Команда: подставляет текст в конверт и идёт через transport.handleCommand. */
@@ -346,6 +375,18 @@ export class TestBotTransport {
     fn: () => Promise<void>,
   ): Promise<DialogResponse> {
     (ctx as { update: unknown }).update = { update_id: ++this.#updateSeq };
+    const tgId = ctx.from?.id;
+    const session =
+      tgId === undefined ? undefined : sessionsOf(this.transport).get(tgId);
+    this.#lastUpdate = {
+      ctx,
+      fn,
+      sessionBefore: session && structuredClone(session),
+    };
+    return this.#deliver(fn);
+  }
+
+  async #deliver(fn: () => Promise<void>): Promise<DialogResponse> {
     this.#lastResponse = null;
     await fn();
     return this.#lastResponse ?? {};
