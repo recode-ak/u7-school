@@ -28,7 +28,7 @@
 - [x] Task: Ревью reviewer 41bd6e7e
 - [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md) 9f458e0f
 
-## Фаза 2: `init --profile` и `gen module` в монорепо
+## Фаза 2: `init --profile` и `gen module` в монорепо [checkpoint: 48bd5c05]
 
 - [x] Task: Каркас как план файлов (по образцу `GenPlan`/`applyPlan`: без перезаписи, dry-run) 00ca6cde
     - [x] Тесты плана `single`: `package.json` со скриптами, tsconfig, `biome.json` с картой плагинов, `dmg-core.json`, `arch-check.ts` на `GenLayout`, каркас приложения и раннера; red
