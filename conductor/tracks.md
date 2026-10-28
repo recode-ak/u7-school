@@ -8,10 +8,5 @@
 
 ---
 
-- [?] **Кандидат: бот — `requestId` из `update_id` Telegram: протащить id апдейта до story, убрать `warn` на каждый вызов UC (DEBT-38), основа для отсева повторов (DEBT-1 пакета `dmg-core`)**
-*Разбор: [bot-request-id](./roadmap/bot-request-id.md) — проблема, варианты A–C, критерии готовности. Папки трека нет: это заготовка, не трек.*
-
----
-
 - [~] **Track: Уборка dmg-core и requestId бота — фейки в тестах UC/ER/Job, отсев повторов команд (DEBT-1 пакета), `update_id` → `requestId` (DEBT-38), показ ошибок DMG в боте (DEBT-37)**
 *Link: [./tracks/dmg-cleanup_20261028/](./tracks/dmg-cleanup_20261028/)*

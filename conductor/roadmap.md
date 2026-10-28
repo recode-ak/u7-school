@@ -59,6 +59,7 @@
 - **Миграция bot-ui v3 «Диалог и Экран»**, треки 1–5 (+1.1): архивы `bot-ui-dialog-*_20260905`, `bot-story-helpers_20260912`. Остался трек 6 (п. 1 выше).
 - **Tasks, этап A**: `userFacade.notify`, перенос чистых уведомлений (`user-notify_20260902`).
 - **core/api-актор** (`core-api-actor_20260914`): код готов, ручные верификации фаз — за владельцем.
+- **Уборка dmg-core и requestId бота** (`dmg-cleanup_20261028`): тесты UC/ER/Job пакета на фейках, отсев повторов команд по `requestId` (D-56), `update_id` Telegram → `requestId`/`correlationId`, показ ошибок DMG в боте без legacy-моста.
 
 Полный список треков: [tracks.md](./tracks.md); завершённые — в [archive/](./archive/).
 
