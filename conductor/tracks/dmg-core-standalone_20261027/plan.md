@@ -47,7 +47,7 @@
     - [x] Карта «плагин → каталоги слоёв» в `rules.md`
     - [x] `naming.md` §5 (`gen.package`, вход прикладного слоя `index.ts`, `--adopt` пропускает `package.json`/`tsconfig.json`), `llms.txt`, скил `dmg-architecture`
 - [x] Task: Ревью reviewer 305a8dea
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Агентная приёмка
 
