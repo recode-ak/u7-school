@@ -1,0 +1,7 @@
+Фаза 3: отсев повторов command UC (D-56, DEBT-1 dmg-core снят).
+Пакет dmg-core: 00fe6c8 (D-56), 783a9fd (Trace generated), 31a9c0a (ReplayStore), 7e4bea1 (dispatch, REQUEST_CONFLICT), c949ba0 (правки по ревью).
+Автотесты: dmg-core bun run check — 1316 pass / 0 fail, bun run e2e — ok; u7-school bun run check — 3273 pass / 0 fail.
+Ревью reviewer (Opus): без error, правки — c949ba0.
+Ручная проверка: тесты блока D-56 в module-from-def.test.ts, src/app/replay, D-56 и transport.md §2, подключение InProcReplayStore в боте (e19b7d2f).
+Без отдельных тестовых файлов для command-replay.ts (покрыт через dispatch) и create-dmg-modules.ts (одна строка сборки) — согласовано.
+Подтверждение Нурболата: «да» (2026-10-28).
