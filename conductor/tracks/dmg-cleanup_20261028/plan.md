@@ -10,7 +10,7 @@
 ## Фаза 1: Параллельная разработка платформы
 
 - [x] Task: `AGENTS.md`, `conductor/architecture/agents.md`, `index.md` §«Правка платформы» — `dmg-core` (и будущий `dmg-ui`) развиваются параллельно, агенты правят репо пакета 29710115
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Тесты прикладного уровня на фейках (dmg-core)
 
