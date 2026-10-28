@@ -11,6 +11,15 @@ const DEPENDENCY_SECTIONS = [
   'optionalDependencies',
 ];
 
+/**
+ * Спецификатор не из реестра: протокол (`file:`, `link:`, `github:`,
+ * `https:` …), путь или `<user>/<repo>` (есть `/`), архив (`.tgz`,
+ * `.tar.gz`). Диапазоны и теги реестра (`^0.1.0`, `>=0.1 <1`, `latest`)
+ * не содержат ни `:`, ни `/`. `Bun.semver` не годится: тег — не диапазон,
+ * но из реестра.
+ */
+const LOCAL_SPEC = /[:/]|\.(tgz|tar\.gz)$/;
+
 const isObject = (value: unknown): value is JsonObject =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -44,6 +53,22 @@ export class ProjectManifest {
   name(): string | undefined {
     const name = this.data.name;
     return typeof name === 'string' ? name : undefined;
+  }
+
+  /**
+   * Спецификатор зависимости `name` (любая секция), если он не из реестра
+   * (tarball, `file:`, `link:`, путь, git); иначе или нет зависимости —
+   * undefined.
+   */
+  localSpec(name: string): string | undefined {
+    for (const section of DEPENDENCY_SECTIONS) {
+      const deps = this.data[section];
+      const spec = isObject(deps) ? deps[name] : undefined;
+      if (typeof spec === 'string') {
+        return LOCAL_SPEC.test(spec) ? spec : undefined;
+      }
+    }
+    return undefined;
   }
 
   /**

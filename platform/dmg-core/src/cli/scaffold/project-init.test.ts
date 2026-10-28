@@ -50,6 +50,8 @@ async function put(path: string, text: string) {
   await writeFile(join(root, path), text);
 }
 
+const text = (data: object) => `${JSON.stringify(data, null, 2)}\n`;
+
 async function snapshot(): Promise<Map<string, string>> {
   const files = new Map<string, string>();
   for await (const path of new Bun.Glob('**/*').scan({ cwd: root, dot: true }))
@@ -145,6 +147,45 @@ describe('ProjectInit: существующий package.json', () => {
     expect(manifest.devDependencies['dmg-core']).toBeUndefined();
     expect(manifest.devDependencies.typescript).toBeDefined();
     expect(manifest.scripts.check).toContain('arch:check');
+  });
+
+  it('monorepo, dmg-core не из реестра — overrides с тем же спецификатором', async () => {
+    const tarball = 'file:../dmg-core-0.1.0.tgz';
+    await put('package.json', text({ dependencies: { 'dmg-core': tarball } }));
+    await run({ profile: 'monorepo' });
+    const manifest = JSON.parse(await read('package.json'));
+    expect(manifest.overrides).toEqual({ 'dmg-core': tarball });
+    expect(manifest.dependencies).toEqual({ 'dmg-core': tarball });
+  });
+
+  it('monorepo, dmg-core из реестра — overrides нет', async () => {
+    await put('package.json', text({ dependencies: { 'dmg-core': '^0.1.0' } }));
+    await run({ profile: 'monorepo' });
+    expect(JSON.parse(await read('package.json')).overrides).toBeUndefined();
+  });
+
+  it('single, dmg-core не из реестра — overrides нет (пакетов нет)', async () => {
+    await put(
+      'package.json',
+      text({ dependencies: { 'dmg-core': './d.tgz' } }),
+    );
+    await run({ profile: 'single' });
+    expect(JSON.parse(await read('package.json')).overrides).toBeUndefined();
+  });
+
+  it('overrides.dmg-core с другим значением — конфликт, каталог как до запуска', async () => {
+    await put(
+      'package.json',
+      text({
+        dependencies: { 'dmg-core': './dmg-core-0.1.0.tgz' },
+        overrides: { 'dmg-core': '^0.1.0' },
+      }),
+    );
+    const before = await snapshot();
+    expect(await failure({ profile: 'monorepo' })).toContain(
+      '«overrides.dmg-core»',
+    );
+    expect(await snapshot()).toEqual(before);
   });
 
   it('добавлять нечего — файл не по формату biome не переписан', async () => {

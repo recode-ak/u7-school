@@ -9,6 +9,9 @@
 # 3. dmg-core init → sync --check; документация, скилы и ссылки на месте
 #    (consumer-check.ts); biome потребителя загружает плагины пакета.
 # 4. gen создаёт модуль, тесты заготовок зелёные на установленном пакете.
+# 5. Профили single и monorepo: init --profile → gen module/aggregate/uc →
+#    подключение по подсказкам (consumer-wire.ts) → раннер вызывает UC →
+#    bun run check проекта зелёный.
 set -euo pipefail
 
 PKG="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -103,4 +106,42 @@ bunx dmg-core gen module todo --write >/dev/null
 bunx dmg-core gen aggregate todo.task --write >/dev/null
 bunx dmg-core gen uc todo.task complete-task --write >/dev/null
 bun test src
+
+# Проект по профилю с нуля: пакет из tarball, каркас, срез gen, ручное
+# подключение модуля, вызов UC раннером, полный check проекта.
+profile_e2e() {
+  local profile="$1" main="$2"
+  local dir="$WORK/$profile"
+  echo "e2e: профиль $profile"
+  mkdir "$dir"
+  cd "$dir"
+  echo '{ "name": "acme" }' >package.json
+  bun add "$TARBALL" >/dev/null
+  bunx dmg-core init --profile "$profile" >/dev/null
+  bun install >/dev/null
+  bunx dmg-core gen module todo --write >/dev/null
+  bunx dmg-core gen aggregate todo.task --write >/dev/null
+  bunx dmg-core gen uc todo.task complete-task --write >/dev/null
+  bun "$PKG/scripts/consumer-wire.ts" "$dir" "$profile"
+  bun install >/dev/null
+  bun run format >/dev/null 2>&1
+  local out
+  out="$(APP_DATA_DIR=data bun "$main" complete-task)"
+  if [ "$out" != '{"ok":true,"value":{}}' ]; then
+    echo "e2e: $profile — раннер вернул $out" >&2
+    exit 1
+  fi
+  if ! grep -q '"op":"completeTask"' data/oplog/*.jsonl; then
+    echo "e2e: $profile — нет записи completeTask в oplog" >&2
+    exit 1
+  fi
+  if ! bun run check >"$WORK/$profile-check.log" 2>&1; then
+    tail -40 "$WORK/$profile-check.log" >&2
+    echo "e2e: $profile — bun run check красный" >&2
+    exit 1
+  fi
+}
+
+profile_e2e single src/runner/main.ts
+profile_e2e monorepo runners/cli/src/main.ts
 echo "e2e: ok"

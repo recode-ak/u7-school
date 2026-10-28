@@ -115,3 +115,36 @@ describe('ProjectManifest: слияние', () => {
     expect(() => merge({ dependencies: 'dmg-core' })).toThrow('«dependencies»');
   });
 });
+
+describe('ProjectManifest: спецификатор не из реестра', () => {
+  const spec = (version: string, section = 'dependencies') =>
+    ProjectManifest.parse(
+      text({ [section]: { 'dmg-core': version } }),
+    ).localSpec('dmg-core');
+
+  it('tarball, file:, link:, путь, git, url — спецификатор как есть', () => {
+    for (const version of [
+      './dmg-core-0.1.0.tgz',
+      'dmg-core-0.1.0.tgz',
+      'file:../dmg-core-0.1.0.tgz',
+      'file:../dmg-core',
+      'link:dmg-core',
+      '../dmg-core',
+      '/opt/dmg-core',
+      'github:acme/dmg-core',
+      'acme/dmg-core',
+      'https://example.com/dmg-core-0.1.0.tgz',
+    ])
+      expect(spec(version)).toBe(version);
+  });
+
+  it('диапазон или тег реестра — undefined', () => {
+    for (const version of ['^0.1.0', '0.1.0', '~0.1', '>=0.1 <1', 'latest'])
+      expect(spec(version)).toBeUndefined();
+  });
+
+  it('ищется во всех секциях зависимостей; нет зависимости — undefined', () => {
+    expect(spec('./dmg-core.tgz', 'devDependencies')).toBe('./dmg-core.tgz');
+    expect(ProjectManifest.parse('{}').localSpec('dmg-core')).toBeUndefined();
+  });
+});

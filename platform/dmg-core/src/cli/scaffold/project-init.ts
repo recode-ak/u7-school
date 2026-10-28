@@ -9,6 +9,9 @@ import type { InitOptions } from './project-scaffold.types';
 /** Файл, который каркас сливает с существующим, а не создаёт. */
 const MANIFEST = 'package.json';
 
+/** Пакет, от которого зависят пакеты monorepo. */
+const DMG_CORE = 'dmg-core';
+
 /**
  * Каркас в каталог проекта (`dmg-core init --profile`): имя проекта
  * (`--name` → `name` из package.json → имя каталога), план
@@ -46,7 +49,9 @@ export class ProjectInit {
     if (manifest !== undefined) {
       const scaffold = plan.files.find((f) => f.path === manifestPath);
       plan.files = plan.files.filter((f) => f !== scaffold);
-      merged = scaffold && manifest.merge(scaffold.content);
+      merged =
+        scaffold &&
+        manifest.merge(this.withOverride(scaffold.content, manifest, options));
     }
 
     const write = !options.dryRun;
@@ -62,5 +67,25 @@ export class ProjectInit {
       lines.push(`${write ? 'Дополнен' : 'Будет дополнен'}: ${MANIFEST}`);
     if (!write) lines.push('Это dry-run. Для записи убери --dry-run.');
     return lines;
+  }
+
+  /**
+   * Пакеты monorepo зависят от `dmg-core` диапазоном реестра; если корень
+   * поставил его не из реестра (tarball, `file:`, `link:`, путь), без
+   * `overrides` `bun install` ищет пакеты в реестре и падает. Каркас
+   * добавляет `overrides.dmg-core` с тем же спецификатором; другое значение
+   * у проекта — конфликт слияния. В `single` пакетов нет — `overrides` нет.
+   */
+  private withOverride(
+    scaffold: string,
+    manifest: ProjectManifest,
+    options: InitOptions,
+  ): string {
+    const spec = manifest.localSpec(DMG_CORE);
+    if (options.profile !== 'monorepo' || spec === undefined) return scaffold;
+    return JSON.stringify({
+      ...JSON.parse(scaffold),
+      overrides: { [DMG_CORE]: spec },
+    });
   }
 }

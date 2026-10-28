@@ -39,6 +39,7 @@ export class ScaffoldLayout {
         appTypes: '../app/app.types',
       },
       moduleEntry: 'src/app/<m>/index.ts',
+      rootWorkspace: [],
       packages: [],
       lint: LintMap.single,
     });
@@ -72,6 +73,7 @@ export class ScaffoldLayout {
       imports: { appUser: `${domain}/shared`, app, appTypes: app },
       moduleEntry: `@${scope}/<m> (modules/<m>/src/index.ts)`,
       workspaces: ['domain', 'app', 'modules/*', 'runners/*'],
+      rootWorkspace: [domain],
       packages: [
         {
           dir: 'domain',

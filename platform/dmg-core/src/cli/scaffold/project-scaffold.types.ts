@@ -65,6 +65,13 @@ export type ScaffoldLayoutData = {
   readonly moduleEntry: string;
   /** Глобы workspaces корневого package.json; нет — проект из одного пакета. */
   readonly workspaces?: readonly string[];
+  /**
+   * Пакеты workspaces, которые импортирует корень (`scripts/arch-check.ts`
+   * — контракты домена): dev-зависимости корня `workspace:*`. bun ≥1.3
+   * ставит workspaces изолированно и не поднимает их в корневой
+   * node_modules без явной зависимости.
+   */
+  readonly rootWorkspace: readonly string[];
   readonly packages: readonly ScaffoldPackage[];
   readonly lint: LintMap;
 };

@@ -122,10 +122,12 @@ describe('ProjectScaffold monorepo: package.json', () => {
     });
   });
 
-  it('корень: dmg-core, его peer-зависимости и инструменты check — dev', () => {
+  it('корень: dmg-core, его peer-зависимости, инструменты check и домен — dev', () => {
     const manifest = json('package.json');
 
     expect(manifest.dependencies).toBeUndefined();
+    // Домен — для scripts/arch-check.ts: bun ≥1.3 не поднимает пакеты
+    // workspaces в корневой node_modules без явной зависимости корня.
     expect(manifest.devDependencies).toEqual({
       'dmg-core': `^${pkg.version}`,
       valibot: pkg.peerDependencies.valibot,
@@ -134,6 +136,7 @@ describe('ProjectScaffold monorepo: package.json', () => {
       '@biomejs/biome': pkg.devDependencies['@biomejs/biome'],
       typescript: pkg.devDependencies.typescript,
       '@types/bun': pkg.devDependencies['@types/bun'],
+      '@acme/domain': 'workspace:*',
     });
   });
 

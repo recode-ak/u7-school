@@ -232,3 +232,22 @@ error нет; u7-school без `gen.package` — прежнее поведени
 ### Шаг 4b — отчёт автора (api-author, Opus)
 
 Тест «legacy без входа → adopt создаёт `index.ts`» (поведение было с шага 4 — тест фиксирует, red не было); `PackageSource.moduleDependencies()` — один расчёт для CLI и e2e; `PackageDefectError` (`Error`) — CLI печатает «Ошибка поставки dmg-core…» без стека, код 1; комментарий у `ENTRY_FILES`. Пакет `check` — 1109 pass. Ревью — оркестратор по diff (правка точечная). Полный `bun run check` проекта — 4386 pass, 0 fail.
+
+## Шаг 5 — `consumer-e2e.sh`: оба профиля на установленном tarball
+
+Оркестратор (инфраструктура): `scripts/consumer-e2e.sh` и `scripts/consumer-wire.ts` пакета — `init --profile` → `bun install` → `gen module/aggregate/uc` → подключение по подсказкам (UC в контракт, `callers` с гостем, фабрика, `arch-check.ts`, команда `complete-task` в раннере; monorepo — зависимость корня сборки) → `bun run format` → раннер вызывает UC (`ok`, код 0, запись в oplog) → `bun run check`. Прогон на реальном tarball нашёл два пробела каркаса — шаг 5a.
+
+## Шаг 5a — пробелы каркаса monorepo из e2e (api-author, платформа)
+
+Решения Нурболата 2026-10-28 (п. 2), оркестратора (п. 1, тактика). **Границы:** `src/cli/scaffold/` и тесты; `src/gen/` — только если без этого не обойтись. Документацию пакета, `scripts/` пакета, `conductor/`, `data/` — нельзя.
+
+1. **Домен в корне monorepo.** bun ≥1.3 ставит workspace изолированно: пакеты workspace не поднимаются в корневой `node_modules`. Корневой `scripts/arch-check.ts` импортирует контракты домена (`@<scope>/domain/<m>/contract`), а корень от домена не зависит — `tsc` и `arch:check` падают. Корневой `package.json` профиля `monorepo` — `devDependencies`: `"@<scope>/domain": "workspace:*"`. Тест плана. Юнит-e2e каркаса (`project-scaffold.e2e.test.ts`) подменяет `node_modules` вручную и пробел не видит — если без установки его не воспроизвести, не трогай, напиши в отчёте.
+2. **Установка не из реестра.** Пакеты monorepo (каркас и `gen module`) зависят от `dmg-core: ^<версия>`; если в корне `dmg-core` поставлен tarball / `file:` / `link:` / путём (`bun add ./dmg-core-0.1.0.tgz`), `bun install` падает 404 на пакетах. `init --profile monorepo` при слиянии с существующим `package.json`: спецификатор `dmg-core` корня — не диапазон версии реестра → добавить в корень `"overrides": { "dmg-core": "<тот же спецификатор>" }`. Правило «не диапазон» — простое и явное (обоснуй; `Bun.semver` или префиксы/суффикс `.tgz`), с тестами на виды спецификаторов. Существующий `overrides.dmg-core` с другим значением — конфликт по правилам `ProjectManifest` (ничего не записано). Диапазон реестра (`^0.1.0`, `0.1.0`, `latest`) — `overrides` нет. `single` — без `overrides` (пакетов нет).
+
+**Правила:** CODE-*, ERR-01, TST-*, простые типы. Новых зависимостей нет. TDD: тест → запуск (red) → реализация → запуск (green).
+
+**Приёмка:** `bun run scripts/agent-gate.ts` зелёный; `cd platform/dmg-core && bun run check` зелёный.
+
+### Шаг 5a — отчёт автора (api-author, Opus)
+
+`rootWorkspace` в раскладке: корень `monorepo` — `devDependencies` `"@<scope>/domain": "workspace:*"` (план `single` без изменений); юнит-e2e каркаса не тронут (подмена `node_modules` пробел не воспроизводит). `ProjectManifest.localSpec(name)` — спецификатор с `:`/`/` или `.tgz`/`.tar.gz` (не `Bun.semver`: тег `latest` — из реестра); `ProjectInit` в `monorepo` добавляет `overrides.dmg-core`, другое значение у проекта — конфликт. Пакет `check` — 1116 pass. Ревью — оркестратор по diff (правка точечная; reviewer — задачей фазы). `bun run e2e` пакета — `e2e: ok` на обоих профилях (до правки — 404 `bun install` и `tsc` TS2307 в monorepo, воспроизведено вручную).

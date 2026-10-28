@@ -66,8 +66,7 @@ export class ProjectFiles {
       .split('/')
       .map(() => '..')
       .join('/');
-    const workspace: Record<string, string> = {};
-    for (const name of p.workspace) workspace[name] = 'workspace:*';
+    const workspace = this.workspace(p.workspace);
     const manifest = {
       name: p.name,
       private: true,
@@ -86,6 +85,13 @@ export class ProjectFiles {
         }),
       },
     ];
+  }
+
+  /** Зависимости на пакеты workspaces: версия `workspace:*`. */
+  private workspace(names: readonly string[]): Record<string, string> {
+    const workspace: Record<string, string> = {};
+    for (const name of names) workspace[name] = 'workspace:*';
+    return workspace;
   }
 
   /** Версии внешних зависимостей: dmg-core — версия пакета, прочие — его peer. */
@@ -108,7 +114,8 @@ export class ProjectFiles {
     );
     // Корень workspaces ничего не исполняет сам: dmg-core (бинарь
     // `dmg-core sync`, плагины biome, `arch:check`) с его peer-зависимостями
-    // и инструменты check — dev; пакеты объявляют свои зависимости сами.
+    // и инструменты check — dev, как и пакеты workspaces, которые корень
+    // импортирует (`rootWorkspace`); пакеты объявляют свои зависимости сами.
     const workspaces = this.layout.workspaces;
     return {
       name: this.name,
@@ -124,7 +131,13 @@ export class ProjectFiles {
       },
       ...(workspaces === undefined
         ? { dependencies, devDependencies: tools }
-        : { devDependencies: { ...dependencies, ...tools } }),
+        : {
+            devDependencies: {
+              ...dependencies,
+              ...tools,
+              ...this.workspace(this.layout.rootWorkspace),
+            },
+          }),
     };
   }
 
