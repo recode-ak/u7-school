@@ -27,7 +27,7 @@
 - [x] Task: TST-07 — lint: рабочий код не импортирует `*.repo.fake` и `dmg-core/testing` (`LintMap`, `biome.json` пакета, `rules.md`); переименовать тест ER «…файл не создан» a52a7371 (dmg-core d448dd5)
 - [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
-## Фаза 3: Отсев повторов command UC (DEBT-1 dmg-core)
+## Фаза 3: Отсев повторов command UC (DEBT-1 dmg-core) [checkpoint: d6e96450]
 
 - [x] Task: Решение D-56 в `decisions.md` пакета: ключ (`caller` + `requestId`), сравнение входа, TTL, `REQUEST_CONFLICT`, признак серверного `requestId`; обсудить с Нурболатом (dmg-core 00fe6c8)
 - [x] Task: Признак серверного `requestId` в `Trace` (`fromRequest` без `requestId`); тесты red → green (dmg-core 783a9fd)
