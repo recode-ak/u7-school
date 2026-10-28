@@ -51,7 +51,7 @@
 ## Фаза 5: Показ ошибок DMG в боте (DEBT-37)
 
 - [x] Task: `ucErrorNotify` по `kind` и тексту из Def без `toLegacyError`; тесты red → green; снять DEBT-37 b6294f91
-- [ ] Task: Ревью reviewer
+- [x] Task: Ревью reviewer 15e6f0db
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
 ## Фаза 6: Финал
