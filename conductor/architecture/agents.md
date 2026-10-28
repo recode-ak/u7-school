@@ -53,7 +53,7 @@ orchestrator: бриф среза
 
 ## 6. Эталон
 
-Агенты копируют паттерн из образцов двух уровней. **Учебный модуль пакета** `dmg-core` (`platform/dmg-core/src/testing/example`) — на каждый вид артефакта гайд в [guides/](../../platform/dmg-core/docs/guides/index.md): когда применять, команда генератора, ссылка на образец, чеклист ID, ловушки, как тестировать; ссылки и ID документации пакета проверяет `platform/dmg-core/scripts/docs-check.test.ts`. **Эталон проекта** — модуль `wish` (домен `domain/src/wish`, прикладной слой `modules/wish/src`, трек golden-wish): реальные случаи, которых нет в учебном модуле (внешние модули над legacy, мосты, D-41). Роли платформы (`domain-author`, `api-author`, `reviewer`) — в пакете (`platform/dmg-core/agents/`), проектное дополнение — `.agents-core/common.md`.
+Агенты копируют паттерн из образцов двух уровней. **Учебный модуль пакета** `dmg-core` (`node_modules/dmg-core/src/testing/example`) — на каждый вид артефакта гайд в [guides/](../../node_modules/dmg-core/docs/guides/index.md): когда применять, команда генератора, ссылка на образец, чеклист ID, ловушки, как тестировать; ссылки и ID документации пакета проверяет `node_modules/dmg-core/scripts/docs-check.test.ts`. **Эталон проекта** — модуль `wish` (домен `domain/src/wish`, прикладной слой `modules/wish/src`, трек golden-wish): реальные случаи, которых нет в учебном модуле (внешние модули над legacy, мосты, D-41). Роли платформы (`domain-author`, `api-author`, `reviewer`) — в пакете (`node_modules/dmg-core/agents/`), проектное дополнение — `.agents-core/common.md`.
 
 ## 7. Условия остановки (эскалация к orchestrator)
 

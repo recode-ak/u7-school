@@ -169,4 +169,4 @@ peer-review отвечает на вопрос «**что люди сказал�
 - [metrics-pipeline-and-modules](./metrics-pipeline-and-modules.md) — историческая точка проектирования (трек 3.3)
 - [digital-passport](./digital-passport.md) — потребитель фактов peer-review
 - [sessions-system](../sessions-system.md), [contribution-system](../contribution-system.md) — смежные источники профиля
-- [Границы доменной логики](../../../platform/dmg-core/docs/domain-modeling.md) — правила межмодульных взаимодействий
+- [Границы доменной логики](../../../node_modules/dmg-core/docs/domain-modeling.md) — правила межмодульных взаимодействий

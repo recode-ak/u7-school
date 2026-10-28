@@ -92,7 +92,7 @@ Reviewer вместо «Сделано» даёт таблицу замечан�
 ### Перед началом
 
 - Бриф среза — `conductor/tracks/<track>/slices/<slice>.md` (или текст вызова orchestrator).
-- Прочитай `.claude/skills/architecture/SKILL.md`: он выбирает режим (legacy, UI или DMG) и ведёт в документы. Документация платформы в монорепо — `platform/dmg-core/docs/` (то же, что `node_modules/dmg-core/docs/`); проектные документы — `conductor/architecture/`.
+- Прочитай `.claude/skills/architecture/SKILL.md`: он выбирает режим (legacy, UI или DMG) и ведёт в документы. Документация платформы — `node_modules/dmg-core/docs/` (пакет правится в своём репо, не в `node_modules`); проектные документы — `conductor/architecture/`.
 - Всё на русском: отчёт, комментарии в коде, документация. Код и имена API — как есть.
 
 ### Запрещено

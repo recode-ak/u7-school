@@ -1,18 +1,18 @@
 # Правила в проекте
 
-**Назначение:** как каталог правил платформы применяется в u7-school. Сам каталог с ID (ARC, DOM, MAN, ERR, API, CODE, TST) — в пакете: [rules.md](../../platform/dmg-core/docs/rules.md). Своих ID у проекта нет; правило меняется через решение D-NN ([decisions.md](./decisions.md) проекта или пакета).
+**Назначение:** как каталог правил платформы применяется в u7-school. Сам каталог с ID (ARC, DOM, MAN, ERR, API, CODE, TST) — в пакете: [rules.md](../../node_modules/dmg-core/docs/rules.md). Своих ID у проекта нет; правило меняется через решение D-NN ([decisions.md](./decisions.md) проекта или пакета).
 
 ---
 
 ## Где проверяется
 
-- **lint** — `biome.json` корня и `platform/dmg-core/biome.json` (`overrides`), плагины — `node_modules/dmg-core/biome-plugins/*.grit` (правила DMG принадлежат пакету; корень подключает их из установленного пакета); тест правил проекта — `scripts/lint-rules.test.ts` на фикстурах `lint-fixtures/`, правил на коде пакета — `platform/dmg-core/scripts/lint-rules.test.ts` на `platform/dmg-core/lint-fixtures/`.
+- **lint** — `biome.json` корня (`overrides`; у пакета — свой `biome.json` в его репо), плагины — `node_modules/dmg-core/biome-plugins/*.grit` (правила DMG принадлежат пакету; корень подключает их из установленного пакета); тест правил проекта — `scripts/lint-rules.test.ts` на фикстурах `lint-fixtures/`, правил на коде пакета — `scripts/lint-rules.test.ts` на `lint-fixtures/` в репо пакета.
 - **test** — `bun run arch:check` (`scripts/arch-check.ts`, `ArchApp` проекта) и контрактные тесты; всё входит в `bun run check`.
-- **review** — роль `reviewer` (`platform/dmg-core/agents/roles/reviewer.md` + общий блок проекта).
+- **review** — роль `reviewer` (`node_modules/dmg-core/agents/roles/reviewer.md` + общий блок проекта).
 
 ## Что блокирует, что нет
 
-Блокируют только новые пути (`domain/**`, `platform/dmg-core/src/**`). На legacy действуют ARC-01 и ARC-07, а ARC-06 и ARC-08 — `warn` ([legacy.md](./legacy.md)). DOM-01 не охватывает рендереры UI и stories (до миграции UI).
+Блокируют только новые пути (`domain/**`; код пакета проверяется в его репо). На legacy действуют ARC-01 и ARC-07, а ARC-06 и ARC-08 — `warn` ([legacy.md](./legacy.md)). DOM-01 не охватывает рендереры UI и stories (до миграции UI).
 
 ## Привязка правил к пакетам проекта
 

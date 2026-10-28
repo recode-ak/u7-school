@@ -231,4 +231,4 @@ export interface TaskKindRenderer<K extends TaskKindMeta = TaskKindMeta> {
 - [tasks-system.md](./tasks-system.md) — бизнес-концепция (pull вместо push).
 - [tasks-system-architecture.md](./tasks-system-architecture.md) — развилка, четыре слоя, треки.
 - [tasks-system-scenarios.md](./tasks-system-scenarios.md) — сценарии, manual-задачи, решения сессии.
-- [domain-boundaries.md](../../platform/dmg-core/docs/domain-modeling.md) — правила границ.
+- [domain-boundaries.md](../../node_modules/dmg-core/docs/domain-modeling.md) — правила границ.
