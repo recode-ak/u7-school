@@ -57,6 +57,7 @@
     - [x] Заготовка UC: `emits` по имени, типизированный `execute`, `callers`, готовый репозиторий в тесте (G2, G3, G6) ab580052
     - [ ] Раннер каркаса: `call <module>.<operation>` (G10)
     - [ ] `overrides` с относительным путём к tarball (R2)
+    - [ ] `scripts/gen-e2e.test.ts` без гонки: срез не в каталогах репо или без обнаружения чужим `bun test` (плавающий `ENOENT reading …/genprobe/…test.ts`)
     - [ ] Документация: `use-case.md`, `project.md`, `aggregate.md`, `naming.md` §5 (G1, G4, G5, G7, G9, G11)
 - [ ] Task: Повторный прогон — чистый, без угадываний; профиль `single` — короткий прогон
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
