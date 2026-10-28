@@ -12,7 +12,7 @@
 - [x] Task: `AGENTS.md`, `conductor/architecture/agents.md`, `index.md` §«Правка платформы» — `dmg-core` (и будущий `dmg-ui`) развиваются параллельно, агенты правят репо пакета 29710115
 - [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
-## Фаза 2: Тесты прикладного уровня на фейках (dmg-core)
+## Фаза 2: Тесты прикладного уровня на фейках (dmg-core) [checkpoint: f179b4e1]
 
 - [x] Task: `MemoryRepo<A>` в `dmg-core/testing` 5620b60 (dmg-core da9e9a6)
     - [x] Тесты: round trip, конфликт версии, `seed`, записанное, `failOn`, заданный ответ `find*`; red
