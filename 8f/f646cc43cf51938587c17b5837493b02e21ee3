@@ -1,0 +1,5 @@
+Задача Ф4 'Контекст запроса' (трек dmg-cleanup_20261028).
+Сделано: BotRequestContext (platform/core/src/ui/bot) на AsyncLocalStorage; BotTransport.#enqueueUpdate оборачивает handleCommand/handleCallback/handleMessage в контекст update_id; U7BotUiStory.dispatchUc строит Trace с requestId tg:<update_id>#<n> и correlationId tg:<update_id>; вне контекста — warn как раньше.
+Тесты: bot-request-context.test.ts (6), u7-bot-ui-story.test.ts (+2), bot-transport.test.ts (+4); мок-контексты тестов транспорта и стенд e2e получают update_id (стенд — новый на каждый вызов).
+Причина: DEBT-38, основа отсева повторов (D-56 dmg-core). Решение — TR-30 в debt.md. Маркеры DEBT-38/новый долг — задача 'Снять DEBT-38'.
+check зелёный: 3285 pass.
