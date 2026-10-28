@@ -32,10 +32,10 @@
 - [x] Task: Решение D-56 в `decisions.md` пакета: ключ (`caller` + `requestId`), сравнение входа, TTL, `REQUEST_CONFLICT`, признак серверного `requestId`; обсудить с Нурболатом (dmg-core 00fe6c8)
 - [x] Task: Признак серверного `requestId` в `Trace` (`fromRequest` без `requestId`); тесты red → green (dmg-core 783a9fd)
 - [x] Task: Порт `ReplayStore` + реализация в памяти с TTL в `dmg-core/app`; тесты red → green; u7-school — `InProcReplayStore` до Фазы 4 (dmg-core 31a9c0a)
-- [ ] Task: Отсев в `dispatch`
-    - [ ] Тесты: повтор → сохранённый ответ без исполнения; другой вход → `REQUEST_CONFLICT`; query и серверный `requestId` — без отсева; истёкший TTL; red
-    - [ ] Реализация, подключение хранилища (`AppContext`/`ApiApp`), учебное приложение; green
-- [ ] Task: `transport.md` §2; снять DEBT-1 (`debt.md` и маркер)
+- [x] Task: Отсев в `dispatch` (dmg-core 7e4bea1)
+    - [x] Тесты: повтор → сохранённый ответ без исполнения; другой вход → `REQUEST_CONFLICT`; query и серверный `requestId` — без отсева; истёкший TTL; red
+    - [x] Реализация, подключение хранилища (`AppContext`/`ApiApp`), учебное приложение; green
+- [x] Task: `transport.md` §2; снять DEBT-1 (`debt.md` и маркер) (dmg-core 7e4bea1)
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
