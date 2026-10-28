@@ -18,7 +18,7 @@
     - [x] Тесты: round trip, конфликт версии, `seed`, записанное, `failOn`, заданный ответ `find*`; red
     - [x] Реализация, экспорт; green
 - [x] Task: Перевод тестов UC примера (`create`/`complete`/`assign`/`get`/`list` задач, `get-user`); сверка сценариев старых и новых тестов 73deffde (dmg-core 7a559c2)
-- [ ] Task: Перевод тестов ER и Job примера (`FailingRepo` → `failOn`)
+- [x] Task: Перевод тестов ER и Job примера (`FailingRepo` → `failOn`) a176dfa8 (dmg-core 1df1d03)
 - [ ] Task: Шаблон теста UC в `gen` на фейке; тесты генератора и `consumer-e2e` зелёные
 - [ ] Task: Документация: `testing.md` §4 (пирамида), гайды `use-case`, `event-reaction`, `job`, `module`, `repo`, `llms.txt`
 - [ ] Task: u7-school — `bun install`, `dmg:sync`/`agents:sync`; запись в debt: тесты UC переводятся на фейк по мере касания
