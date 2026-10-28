@@ -39,7 +39,8 @@
 - [x] Task: CLI `dmg-core init --profile single|monorepo` (без профиля — прежнее поведение; неизвестный профиль — ошибка); тесты CLI red → green e2f56aee
 - [x] Task: `gen module` в профиле monorepo создаёт пакет модуля (`package.json`, tsconfig); признак — поле `gen.package` (решение Нурболата 2026-10-27); тесты red → green 9220518f
     - Учесть D-52: `gen module` создаёт `index.ts` прикладного пакета (фабрика, `*Deps`, репозитории) — корень сборки берёт фабрику только из него; `GenLayout`/шаблон `ArchApp` отдают `root` и `runners`
-- [ ] Task: `consumer-e2e.sh` — оба профиля: `init --profile` → `gen module/aggregate/uc` → сборка приложения → раннер вызывает UC → `check` зелёный
+- [x] Task: `consumer-e2e.sh` — оба профиля: `init --profile` → `gen module/aggregate/uc` → сборка приложения → раннер вызывает UC → `check` зелёный dcbe6f68
+    - Пробелы каркаса monorepo из e2e: домен в корне, `overrides.dmg-core` при установке не из реестра (решение Нурболата 2026-10-28)
 - [ ] Task: Документация
     - [ ] Гайд `docs/guides/project.md`: оба профиля, что создаёт `init`, как растёт проект, кто что правит руками
     - [ ] README — быстрый старт обоих профилей
