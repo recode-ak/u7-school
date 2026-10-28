@@ -547,23 +547,66 @@ describe('BotUiStory — ucErrorNotify (отказ UC DMG)', () => {
   test('internal и unauthorized → общее сообщение без label, error-лог', () => {
     const errors: unknown[] = [];
     setGlobalLogger(makeErrorSpyLogger(errors));
+    try {
+      const story = new TestStory();
+
+      for (const error of [
+        CoreErrors.SERVER_INTERNAL.make(),
+        CoreErrors.UNAUTHORIZED.make({ callerKind: 'system' }),
+      ]) {
+        const response = story.callUcErrorNotify(error);
+        expect(response.notify?.kind).toBe('warn');
+        const text = String(response.notify?.text);
+        expect(text).not.toContain(error.label);
+        expect(text).toContain('Произошла ошибка');
+      }
+      expect(errors).toMatchObject([
+        { code: 'SERVER_INTERNAL' },
+        { code: 'UNAUTHORIZED', payload: { callerKind: 'system' } },
+      ]);
+    } finally {
+      setGlobalLogger(undefined as unknown as Logger);
+    }
+  });
+
+  test('not_found и conflict ядра → label из Def', () => {
     const story = new TestStory();
 
     for (const error of [
-      CoreErrors.SERVER_INTERNAL.make(),
-      CoreErrors.UNAUTHORIZED.make({ callerKind: 'system' }),
+      CoreErrors.OPERATION_NOT_FOUND.make({ module: 'note', uc: 'x' }),
+      CoreErrors.VERSION_CONFLICT.make({ aggregate: 'note', uuid: 'n-1' }),
     ]) {
       const response = story.callUcErrorNotify(error);
       expect(response.notify?.kind).toBe('warn');
-      const text = String(response.notify?.text);
-      expect(text).not.toContain(error.label);
-      expect(text).toContain('Произошла ошибка');
+      expect(String(response.notify?.text)).toContain(error.label);
     }
-    expect(errors).toMatchObject([
-      { code: 'SERVER_INTERNAL' },
-      { code: 'UNAUTHORIZED', payload: { callerKind: 'system' } },
-    ]);
-    setGlobalLogger(undefined as unknown as Logger);
+  });
+
+  test('без issues и без denyMessage → запасной label', () => {
+    const FallbackErrors = ErrorDef.define('NOTE', {
+      INVALID: {
+        kind: 'validation',
+        label: 'Заметка некорректна',
+        description: 'Тестовая ошибка валидации без полей.',
+      },
+      FORBIDDEN: {
+        kind: 'access',
+        label: 'Заметка закрыта',
+        description: 'Тестовый отказ без текста правила.',
+      },
+    });
+    const story = new TestStory();
+
+    const invalid = String(
+      story.callUcErrorNotify(FallbackErrors.INVALID.make()).notify?.text,
+    );
+    expect(invalid).toContain('Ошибка валидации');
+    expect(invalid).toContain('Заметка некорректна');
+    expect(
+      String(
+        story.callUcErrorNotify(FallbackErrors.FORBIDDEN.make()).notify?.text,
+      ),
+    ).toContain('Заметка закрыта');
   });
 });
 
