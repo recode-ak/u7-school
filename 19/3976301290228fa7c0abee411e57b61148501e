@@ -1,0 +1,4 @@
+Задача: Документация (фаза 2, dmg-core-standalone).
+Изменения: новый гайд docs/guides/project.md; README — быстрый старт single/monorepo; rules.md — «Карта линтера» по LintMap с тестом в lint-map.test.ts; naming.md §3/§5 (index.ts прикладного пакета, gen.package, --adopt, init --profile); app.md §2 вместо «в разработке»; docs/index.md, guides/index.md, llms.txt, skills/dmg-architecture/SKILL.md и копия .pi/skills через dmg-core sync.
+Причина: агент должен поднять проект в обоих профилях только по документации пакета (фаза 3 — агентная приёмка).
+check пакета 1117 pass, check проекта 4394 pass.
