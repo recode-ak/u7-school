@@ -25,7 +25,7 @@
 - [x] Task: Ревью reviewer cf8169fd (dmg-core 3b9d7cd)
 - [x] Task: Решение D-55 в `decisions.md` пакета: `MemoryRepo`, `<a>.repo.fake.ts`, TST-07 (по ревью, согласовано с Нурболатом) (dmg-core f8fb202)
 - [x] Task: TST-07 — lint: рабочий код не импортирует `*.repo.fake` и `dmg-core/testing` (`LintMap`, `biome.json` пакета, `rules.md`); переименовать тест ER «…файл не создан» a52a7371 (dmg-core d448dd5)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Отсев повторов command UC (DEBT-1 dmg-core)
 
