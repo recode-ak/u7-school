@@ -57,5 +57,5 @@
 ## Фаза 6: Финал
 
 - [x] Task: Гейт качества (workflow.md): полный прогон, сверка с базовой линией; `summary.md` c6942521
-- [ ] Task: Удалить `roadmap/bot-request-id.md`, снять `[?]` в `tracks.md`, обновить `roadmap.md`
+- [x] Task: Удалить `roadmap/bot-request-id.md`, снять `[?]` в `tracks.md`, обновить `roadmap.md` 820e499f
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
