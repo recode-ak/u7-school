@@ -1,0 +1,1 @@
+Задачи Фазы 1: черновик и решение D-57 в dmg-core (6e877f3). EntityMeta {version, createdAt, updatedAt}, плоское хранение, view().meta, геттер version удаляется; ожидаемая версия — поле входа UC expectedVersion (F.expectedVersion()), шаг this.expectVersion(ar, v); CommandMeta.version удаляется. Выбор B — Нурболат.
