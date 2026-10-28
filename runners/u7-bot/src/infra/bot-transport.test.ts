@@ -2,6 +2,7 @@ import { describe, expect, mock, test } from 'bun:test';
 import { type Logger, mdRaw, setGlobalLogger } from '@u7-scl/core/shared';
 import {
   BotController,
+  BotRequestContext,
   type BotSession,
   BotUiApp,
   type CommandUpdate,
@@ -59,6 +60,7 @@ function makeCtx(overrides: Partial<BotContext> = {}): BotContext {
       data: 'app:menu:open',
     } as BotContext['callbackQuery'],
     message: { text: 'hello' } as BotContext['message'],
+    update: { update_id: 1 } as BotContext['update'],
     ...overrides,
   } as unknown as BotContext;
 }
@@ -1014,6 +1016,101 @@ describe('BotTransport — рендер-политика', () => {
 // ── notify: проактив (И3: сессия не трогается) ──
 
 // ── Единый вход команд (ФР-4) ──
+
+// ── Контекст запроса: update_id Telegram доходит до обработки (DEBT-38) ──
+
+describe('BotTransport — контекст апдейта', () => {
+  /** correlationId контекста, видимый внутри uiApp. */
+  const seen = () => BotRequestContext.current()?.correlationId;
+
+  test('команда исполняется в контексте своего update_id', async () => {
+    let inside: string | undefined;
+    const uiApp = makeUiApp({
+      handleCommand: mock(async () => {
+        inside = seen();
+        return null;
+      }),
+    });
+    const transport = new BotTransport(uiApp, makeMockBotApi());
+
+    await transport.handleCommand(
+      makeCtx({
+        message: { text: '/help' } as BotContext['message'],
+        update: { update_id: 501 } as BotContext['update'],
+      }),
+    );
+
+    expect(inside).toBe('tg:501');
+  });
+
+  test('нажатие кнопки исполняется в контексте своего update_id', async () => {
+    let inside: string | undefined;
+    const { transport, pressed } = await startDialog({
+      seq: 1,
+      uiApp: {
+        handleCallback: mock(async () => {
+          inside = seen();
+          return null;
+        }),
+      },
+    });
+
+    await transport.handleCallback(
+      makeCtx({
+        callbackQuery: { data: pressed } as BotContext['callbackQuery'],
+        update: { update_id: 502 } as BotContext['update'],
+      }),
+    );
+
+    expect(inside).toBe('tg:502');
+  });
+
+  test('ввод исполняется в контексте своего update_id', async () => {
+    let inside: string | undefined;
+    const { transport, session } = await startDialog({
+      seq: 1,
+      uiApp: {
+        handleMessage: mock(async () => {
+          inside = seen();
+          return null;
+        }),
+      },
+    });
+    session.dialog.input = {};
+
+    await transport.handleMessage(
+      makeCtx({
+        message: { text: 'ответ' } as BotContext['message'],
+        update: { update_id: 503 } as BotContext['update'],
+      }),
+    );
+
+    expect(inside).toBe('tg:503');
+  });
+
+  test('апдейты одного чата в очереди не смешивают контексты', async () => {
+    const order: (string | undefined)[] = [];
+    const uiApp = makeUiApp({
+      handleCommand: mock(async () => {
+        await new Promise((r) => setTimeout(r, 1));
+        order.push(seen());
+        return null;
+      }),
+    });
+    const transport = new BotTransport(uiApp, makeMockBotApi());
+    const command = (updateId: number) =>
+      transport.handleCommand(
+        makeCtx({
+          message: { text: '/help' } as BotContext['message'],
+          update: { update_id: updateId } as BotContext['update'],
+        }),
+      );
+
+    await Promise.all([command(11), command(12)]);
+
+    expect(order).toEqual(['tg:11', 'tg:12']);
+  });
+});
 
 describe('parseCommandText — конверт слэш-команды', () => {
   test('/help без аргументов → { command: help, args: "" }', () => {

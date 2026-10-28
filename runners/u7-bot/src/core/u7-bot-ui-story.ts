@@ -11,7 +11,7 @@ import type {
   Paged,
   ProactiveSender,
 } from '@u7-scl/core/ui';
-import { BotPaginator, BotUiStory } from '@u7-scl/core/ui';
+import { BotPaginator, BotRequestContext, BotUiStory } from '@u7-scl/core/ui';
 import {
   type AnyModuleDef,
   type Command,
@@ -159,17 +159,22 @@ export abstract class U7BotUiStory extends BotUiStory<
    * место, где UI строит субъект (`UserCaller` над актором) и след запроса
    * (`Trace.fromRequest`, канал `telegram`, посетитель — `telegramId`).
    *
-   * `requestId`: `update_id` Telegram до стори не доходит (контракт
-   * `handleCallback`/`handleMessage` ядра его не передаёт), поэтому id
-   * создаётся на каждый вызов с `warn` (ERR-07, caller.md §2 п. 5; DEBT-38).
+   * `requestId` и `correlationId` — из контекста апдейта Telegram
+   * (`BotRequestContext`, транспорт). Вне обработки апдейта контекста нет:
+   * id создаётся на вызов с `warn` (ERR-07, caller.md §2 п. 5).
    */
   protected dispatchUc<M extends AnyModuleDef, D extends M['useCases'][number]>(
     module: M,
     command: Command<D>,
     actor: User,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
+    const request = BotRequestContext.current();
     const trace = Trace.fromRequest(
-      { channel: { name: 'telegram', visitorId: String(actor.telegramId) } },
+      {
+        requestId: request?.nextRequestId(),
+        correlationId: request?.correlationId,
+        channel: { name: 'telegram', visitorId: String(actor.telegramId) },
+      },
       (message) =>
         this.logger?.warn(this.dialogPath, message, { uc: command.uc }),
     );

@@ -7,6 +7,7 @@ import {
 } from '@u7-scl/core/shared';
 import {
   assertDialogResponseMarkdownSafe,
+  BotRequestContext,
   type BotSession,
   type BotSessionRepo,
   type BotUpdate,
@@ -228,7 +229,7 @@ export class BotTransport implements BotUpdateHandler, ProactiveSender {
     const update = parseCommandText(text, tgId, ctx.from);
     if (!update) return;
 
-    await this.#enqueue(tgId, async () => {
+    await this.#enqueueUpdate(ctx, tgId, async () => {
       const session = this.#session(tgId);
       const response = await this.uiApp.handleCommand(update, tgId, session);
       // null → тихий пропуск; конвейер отвечает меню/репликой сам (ФР-4).
@@ -257,7 +258,7 @@ export class BotTransport implements BotUpdateHandler, ProactiveSender {
     const rawData = ctx.callbackQuery?.data;
     if (!tgId || !rawData) return;
 
-    await this.#enqueue(tgId, async () => {
+    await this.#enqueueUpdate(ctx, tgId, async () => {
       const session = this.#session(tgId);
 
       // 0. Диалог не открыт (до первого /start) → alert «Наберите /start»,
@@ -334,7 +335,7 @@ export class BotTransport implements BotUpdateHandler, ProactiveSender {
       return;
     }
 
-    await this.#enqueue(tgId, async () => {
+    await this.#enqueueUpdate(ctx, tgId, async () => {
       const session = this.#session(tgId);
       // Повторная проверка внутри слота очереди — к моменту исполнения
       // ввод мог быть снят параллельной кнопкой.
@@ -872,6 +873,22 @@ export class BotTransport implements BotUpdateHandler, ProactiveSender {
    * Покрывает и webhook (нет встроенной сериализации), и конкуренцию
    * notify с апдейтами; в polling — no-op (грамми уже последователен).
    */
+  /**
+   * Апдейт Telegram в очередь чата — в контексте его `update_id`
+   * (`BotRequestContext`): вызовы UC апдейта получают из него `requestId`
+   * и общий `correlationId`. Контекст захватывается при постановке в
+   * очередь и виден, когда до апдейта дойдёт черёд.
+   */
+  #enqueueUpdate(
+    ctx: BotContext,
+    tgId: number,
+    fn: () => Promise<void>,
+  ): Promise<void> {
+    return BotRequestContext.run(ctx.update.update_id, () =>
+      this.#enqueue(tgId, fn),
+    );
+  }
+
   #enqueue<T>(tgId: number, fn: () => Promise<T>): Promise<T> {
     const prev = this.queues.get(tgId) ?? Promise.resolve();
     const next = prev.then(fn, fn); // ошибка предыдущего НЕ роняет хвост

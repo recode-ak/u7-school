@@ -18,11 +18,12 @@ import {
   md,
   setGlobalLogger,
 } from '@u7-scl/core/shared';
-import type {
-  BotSession,
-  BotUpdate,
-  CommandUpdate,
-  DialogResponse,
+import {
+  BotRequestContext,
+  type BotSession,
+  type BotUpdate,
+  type CommandUpdate,
+  type DialogResponse,
 } from '@u7-scl/core/ui';
 import {
   ListUserWishesUcDef,
@@ -583,5 +584,41 @@ describe('U7BotUiStory.dispatchUc', () => {
     const ids = sent.map((c) => c.trace.correlationId);
     expect(new Set(ids).size).toBe(2);
     expect(logger.warn).toHaveBeenCalledTimes(2);
+  });
+
+  test('в контексте апдейта: requestId — tg:<update_id>#<n>, correlationId общий, без warn', async () => {
+    const sent: Sent[] = [];
+    const logger = createMockLogger();
+    setGlobalLogger(logger);
+    const story = makeStory(sent, ok([]));
+
+    await BotRequestContext.run(100, async () => {
+      await story.list();
+      await story.list();
+    });
+
+    expect(sent.map((c) => c.trace.clientRequestId)).toEqual([
+      'tg:100#1',
+      'tg:100#2',
+    ]);
+    expect(sent.map((c) => c.trace.correlationId)).toEqual([
+      'tg:100',
+      'tg:100',
+    ]);
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  test('повтор апдейта — те же requestId (отсев повторов узнаёт команду)', async () => {
+    const sent: Sent[] = [];
+    setGlobalLogger(createMockLogger());
+    const story = makeStory(sent, ok([]));
+
+    await BotRequestContext.run(7, () => story.list());
+    await BotRequestContext.run(7, () => story.list());
+
+    expect(sent.map((c) => c.trace.clientRequestId)).toEqual([
+      'tg:7#1',
+      'tg:7#1',
+    ]);
   });
 });

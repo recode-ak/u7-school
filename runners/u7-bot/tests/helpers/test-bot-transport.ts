@@ -168,6 +168,8 @@ export class TestBotTransport {
   readonly uiApp: ExposedMenuUiApp;
   readonly transport: BotTransport;
   #lastResponse: DialogResponse | null = null;
+  /** Последний выданный update_id: каждый вызов обработчика — новый апдейт. */
+  #updateSeq = 0;
 
   constructor(
     apiApp: U7BotApp,
@@ -295,12 +297,12 @@ export class TestBotTransport {
    * .editedMessages), как это делает реальный клиент.
    */
   async handleCallback(ctx: BotContext): Promise<DialogResponse> {
-    return this.#run(() => this.transport.handleCallback(ctx));
+    return this.#run(ctx, () => this.transport.handleCallback(ctx));
   }
 
   /** Текстовый ввод в ожидающий диалог (awaitInput). */
   async handleMessage(ctx: BotContext): Promise<DialogResponse> {
-    return this.#run(() => this.transport.handleMessage(ctx));
+    return this.#run(ctx, () => this.transport.handleMessage(ctx));
   }
 
   // ── Внутреннее ──
@@ -308,7 +310,7 @@ export class TestBotTransport {
   /** Команда: подставляет текст в конверт и идёт через transport.handleCommand. */
   async #command(ctx: BotContext, text: string): Promise<DialogResponse> {
     (ctx as { message: unknown }).message = { text };
-    return this.#run(() => this.transport.handleCommand(ctx));
+    return this.#run(ctx, () => this.transport.handleCommand(ctx));
   }
 
   /**
@@ -335,8 +337,15 @@ export class TestBotTransport {
    * Запускает обработчик транспорта и возвращает DialogResponse,
    * захваченный на границе uiApp (полная форма: screen + notify +
    * awaitInput/release). {} — ответа не было (тихий пропуск).
+   *
+   * Каждый вызов — новый апдейт Telegram: мок-контекст получает свежий
+   * `update_id` (контексты переиспользуются между нажатиями).
    */
-  async #run(fn: () => Promise<void>): Promise<DialogResponse> {
+  async #run(
+    ctx: BotContext,
+    fn: () => Promise<void>,
+  ): Promise<DialogResponse> {
+    (ctx as { update: unknown }).update = { update_id: ++this.#updateSeq };
     this.#lastResponse = null;
     await fn();
     return this.#lastResponse ?? {};

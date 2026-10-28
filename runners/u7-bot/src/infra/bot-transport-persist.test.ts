@@ -56,6 +56,7 @@ function makeCtx(overrides: Partial<BotContext> = {}): BotContext {
       data: 'app:menu:open',
     } as BotContext['callbackQuery'],
     message: { text: 'hello' } as BotContext['message'],
+    update: { update_id: 1 } as BotContext['update'],
     ...overrides,
   } as unknown as BotContext;
 }
