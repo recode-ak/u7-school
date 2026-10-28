@@ -1,0 +1,1 @@
+Задача: шаблон теста UC в gen на фейке (Фаза 2). Пакет dmg-core f61a212: app-aggregate.ts (генерация <a>.repo.fake.ts), operation.ts (тесты create/update на фейке), тесты генератора, pair-rule.test.ts. gen uc создаёт фейк при отсутствии. check (1261 pass) и e2e пакета зелёные. Бриф: slices/gen-uc-test-fake.md.
