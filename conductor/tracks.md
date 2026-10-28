@@ -13,5 +13,5 @@
 
 ---
 
-- [~] **Track: dmg-core-standalone — пакет самодостаточен для старта нового проекта (профили single и monorepo, учебное приложение и раннер, агентная приёмка) и локальный вынос в `~/dev/tools/dmg/dmg-core`**
+- [x] **Track: dmg-core-standalone — пакет самодостаточен для старта нового проекта (профили single и monorepo, учебное приложение и раннер, агентная приёмка) и локальный вынос в `~/dev/tools/dmg/dmg-core`**
 *Link: [./tracks/dmg-core-standalone_20261027/](./tracks/dmg-core-standalone_20261027/)*
