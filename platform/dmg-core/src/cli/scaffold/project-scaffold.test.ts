@@ -153,14 +153,19 @@ describe('ProjectScaffold single: прочие конфиги', () => {
     });
   });
 
-  it('dmg-core.json — значения CliConfig по умолчанию и разбирается parse', () => {
+  it('dmg-core.json — значения CliConfig по умолчанию с корнем сборки, разбирается parse', () => {
     const config = new CliConfig(pkg);
     const data = json('dmg-core.json');
 
-    expect(data).toEqual(config.defaults());
+    const defaults = config.defaults();
+    expect(data).toEqual({
+      ...defaults,
+      gen: { ...defaults.gen, compositionRoot: 'src/app' },
+    });
     expect(config.parse(data).gen).toEqual({
       domain: 'src/domain/{m}',
       app: 'src/app/{m}',
+      compositionRoot: 'src/app',
     });
   });
 
@@ -170,11 +175,23 @@ describe('ProjectScaffold single: прочие конфиги', () => {
     expect(src).toContain("import { GenLayout } from 'dmg-core/gen'");
     expect(src).toContain('await GenLayout.read(');
     expect(src).toContain('layout: (m) => layout.module(m)');
-    expect(src).toContain('modules: []');
+    expect(src).toContain(
+      "export const modules: ArchApp['modules'] = [\n  // gen:modules\n];",
+    );
+    expect(src).toContain("from 'dmg-core/gen';\n// gen:imports\n");
     expect(src).toContain("root: join(root, 'src/app')");
     expect(src).toContain("runners: [join(root, 'src/runner')]");
     expect(src).toContain(`name: '${NAME}'`);
     expect(src).toContain('reportArchCheck(');
+  });
+
+  it('app.ts — маркеры подключения модулей для gen module/aggregate', () => {
+    const src = file('src/app/app.ts');
+
+    expect(src).toContain("from './app-caller-resolver';\n// gen:imports\n");
+    expect(src).toContain(
+      'const modules: ModuleFactory<AppUser>[] = [\n      // gen:modules\n    ];',
+    );
   });
 
   it('biome.json — схема версии biome пакета', () => {

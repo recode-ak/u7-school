@@ -73,3 +73,10 @@ CLI раннера в каркасе (оба профиля) получает к
 - `guides/project.md`: §4 — подключение генератором, `call`; §5 — что теперь руками; §6 чек-лист — MAN-06; `overrides` из шага 4.
 - `guides/aggregate.md` — ссылка на MAN-06 у событий.
 - `naming.md` §5 — новые маркеры; README, `llms.txt`, скил `dmg-architecture` — если затронуты.
+
+### Отчёты: шаг 1 (api-author, Opus; reviewer)
+
+- Маркеры `// gen:imports`, `// gen:modules` (`app.ts`, `scripts/arch-check.ts`), `// gen:repos:<m>` (фабрика модуля в `app.ts`). Поле `gen.compositionRoot` (single — `src/app`, monorepo — `app/src`); по умолчанию `src/app` только при раскладке по умолчанию, иначе общая подсказка «Корень сборки не задан».
+- Зависимость пакета модуля — правка JSON (`PackageManifest`); импорты — `ImportBlock` (порядок и слияние как у biome; конфликт имён — «Вставь вручную» с причиной, без алиаса).
+- Файл данных репозитория — `<m>.<a>.json` (уникально в приложении). `arch-check.ts`: `export const modules` — форма biome organizeImports (маркер под импортами только перед `export`).
+- Ревью: error нет; 4 warn (длинные импорты, коллизия проверки присутствия и имени файла данных, ложный путь без `compositionRoot`, R1 в запасной подсказке) и info — исправлены автором, гейт/`e2e`/`check` зелёные.

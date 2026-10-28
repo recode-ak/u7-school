@@ -15,15 +15,31 @@ export interface PlannedEdit {
   /** Например `// gen:exports`. */
   marker: string;
   line: string;
+  /**
+   * Связанные правки: не вставлена одна (нет файла, маркера, конфликт
+   * имён) — следующие правки группы тоже уходят в «Вставь вручную».
+   */
+  group?: string;
+}
+
+/** Правка, которую генератор не применил: вставить вручную; `reason` — почему. */
+export type HintedEdit = PlannedEdit & { reason?: string };
+
+/**
+ * Зависимость в `dependencies` существующего `package.json`: правка JSON,
+ * а не текста; уже объявленная не меняется.
+ */
+export interface PlannedDependency {
+  path: string;
+  name: string;
+  version: string;
 }
 
 export interface GenPlan {
   files: PlannedFile[];
   edits: PlannedEdit[];
-  /**
-   * Что сделать руками после записи (подключение модуля к приложению):
-   * генератор не правит чужие файлы без маркеров. Строки — как печатать.
-   */
+  dependencies?: PlannedDependency[];
+  /** Что сделать после записи (например, `bun install`). Строки — как печатать. */
   notes?: string[];
 }
 
@@ -33,5 +49,7 @@ export interface ApplyResult {
   /** Существующие точки входа, не перезаписанные в режиме adopt. */
   skipped: PlannedFile[];
   /** Правки, которые не удалось применить (нет файла или маркера) — вставить вручную. */
-  hints: PlannedEdit[];
+  hints: HintedEdit[];
+  /** Зависимости, которые не удалось вписать (нет `package.json`) — вручную. */
+  dependencyHints: PlannedDependency[];
 }

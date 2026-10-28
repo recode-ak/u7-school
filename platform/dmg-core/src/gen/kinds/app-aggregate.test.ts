@@ -63,7 +63,7 @@ test('тест репозитория: сохранить и найти', () => 
 test('правки: порт попадает в Deps модуля, репозиторий — во вход пакета', () => {
   const mod = '/p/stream/src/stream.module.ts';
   const index = '/p/stream/src/index.ts';
-  expect(plan.edits).toEqual([
+  expect(plan.edits.filter((e) => e.path !== 'src/app/app.ts')).toEqual([
     {
       path: mod,
       marker: '// gen:defs:imports',
@@ -85,4 +85,89 @@ test('правки: порт попадает в Deps модуля, репози
       line: "export { StudentJsonRepo } from './infra/student.json-repo';",
     },
   ]);
+});
+
+test('правки app.ts: импорт JSON-репозитория и репозиторий в фабрике модуля', () => {
+  const mono = new GenLayout(
+    {
+      domain: 'domain/src/{m}',
+      app: 'modules/{m}/src',
+      domainImport: '@acme/domain/{m}',
+      package: '@acme/{m}',
+      compositionRoot: 'app/src',
+    },
+    '/r',
+  );
+  const edits = planAppAggregate(
+    parseArgs(['aggregate', 'stream.student'], mono),
+  ).edits.filter((e) => e.path === '/r/app/src/app.ts');
+  expect(edits).toEqual([
+    {
+      path: '/r/app/src/app.ts',
+      marker: '// gen:imports',
+      line: "import { StudentJsonRepo } from '@acme/stream';",
+      group: 'repo:stream.student',
+    },
+    {
+      path: '/r/app/src/app.ts',
+      marker: '// gen:repos:stream',
+      line: [
+        '            studentRepo: new StudentJsonRepo(',
+        "              join(env.dataDir, 'stream.student.json'),",
+        '            ),',
+      ].join('\n'),
+      group: 'repo:stream.student',
+    },
+  ]);
+});
+
+test('длинный репозиторий в app.ts — аргумент на своей строке, как у biome', () => {
+  const single = new GenLayout(GenLayout.defaults, '/r');
+  const edits = planAppAggregate(
+    parseArgs(['aggregate', 'stream.attendance-record'], single),
+  ).edits.filter((e) => e.path === '/r/src/app/app.ts');
+  expect(edits).toEqual([
+    {
+      path: '/r/src/app/app.ts',
+      marker: '// gen:imports',
+      line: "import { AttendanceRecordJsonRepo } from './stream';",
+      group: 'repo:stream.attendance-record',
+    },
+    {
+      path: '/r/src/app/app.ts',
+      marker: '// gen:repos:stream',
+      line: [
+        '            attendanceRecordRepo: new AttendanceRecordJsonRepo(',
+        "              join(env.dataDir, 'stream.attendance-record.json'),",
+        '            ),',
+      ].join('\n'),
+      group: 'repo:stream.attendance-record',
+    },
+  ]);
+});
+
+test('длинное имя: импорт JSON-репозитория в app.ts — по имени на строку', () => {
+  const mono = new GenLayout(
+    {
+      domain: 'domain/src/{m}',
+      app: 'modules/{m}/src',
+      domainImport: '@acme/domain/{m}',
+      package: '@acme/{m}',
+      compositionRoot: 'app/src',
+    },
+    '/r',
+  );
+  const [imp] = planAppAggregate(
+    parseArgs(
+      ['aggregate', 'notification-settings.delivery-channel-preferences'],
+      mono,
+    ),
+  ).edits.filter((e) => e.path === '/r/app/src/app.ts');
+  expect(imp?.line).toBe(
+    [
+      'import {',
+      '  DeliveryChannelPreferencesJsonRepo,',
+      "} from '@acme/notification-settings';",
+    ].join('\n'),
+  );
 });

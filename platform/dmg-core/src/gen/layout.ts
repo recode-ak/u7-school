@@ -17,7 +17,16 @@ export interface GenLayoutSettings {
    * `/src`); нужен `domainImport` — по нему зависимость на пакет домена.
    */
   package?: string;
+  /**
+   * Каталог корня сборки (`app.ts`, D-50) — без `{m}`: `gen module` и
+   * `gen aggregate` подключают модуль по маркерам его `app.ts`; при
+   * `gen.package` и пути на `/src` — ещё зависимость в `package.json` пакета.
+   */
+  compositionRoot?: string;
 }
+
+/** Поля секции `gen`. */
+const FIELDS = ['domain', 'app', 'domainImport', 'package', 'compositionRoot'];
 
 /** Суффикс каталога прикладного слоя в пакете модуля. */
 const SRC = '/src';
@@ -37,6 +46,16 @@ export class GenLayout {
     domain: 'src/domain/{m}',
     app: 'src/app/{m}',
   };
+
+  /**
+   * Корень сборки по умолчанию — только при раскладке по умолчанию: при
+   * своей раскладке без `gen.compositionRoot` он неизвестен, и генератор
+   * не подключает модуль сам, а печатает общую подсказку.
+   */
+  static readonly defaultCompositionRoot = 'src/app';
+
+  /** Скрипт `arch:check` проекта (пишет `dmg-core init`) — от корня проекта */
+  static readonly archCheck = 'scripts/arch-check.ts';
 
   /** Раскладка проекта из `dmg-core.json`; нет файла или секции — по умолчанию */
   static async read(root: string): Promise<GenLayout> {
@@ -58,7 +77,7 @@ export class GenLayout {
     }
     const data = json as Record<string, unknown>;
     for (const key of Object.keys(data)) {
-      if (!['domain', 'app', 'domainImport', 'package'].includes(key)) {
+      if (!FIELDS.includes(key)) {
         GenLayout.fail(`неизвестное поле «gen.${key}»`);
       }
     }
@@ -77,6 +96,13 @@ export class GenLayout {
         GenLayout.fail('gen.domainImport — шаблон с {m}');
       }
       gen.domainImport = value as string;
+    }
+    if (data.compositionRoot !== undefined) {
+      const value = data.compositionRoot;
+      if (typeof value !== 'string' || value.includes('{m}')) {
+        GenLayout.fail('gen.compositionRoot — путь каталога без {m}');
+      }
+      gen.compositionRoot = value as string;
     }
     if (data.package !== undefined) {
       const value = data.package;
@@ -117,6 +143,45 @@ export class GenLayout {
     return { domain: this.domainDir(module), app: this.appDir(module) };
   }
 
+  /**
+   * Каталог корня сборки (`gen.compositionRoot`); не задан — `src/app` при
+   * раскладке по умолчанию, иначе undefined
+   */
+  compositionDir(): string | undefined {
+    const dir = this.compositionRoot();
+    return dir === undefined ? undefined : this.path(dir, '');
+  }
+
+  private compositionRoot(): string | undefined {
+    const { domain, app, compositionRoot } = this.settings;
+    if (compositionRoot !== undefined) return compositionRoot;
+    const { defaults } = GenLayout;
+    return domain === defaults.domain && app === defaults.app
+      ? GenLayout.defaultCompositionRoot
+      : undefined;
+  }
+
+  /**
+   * `package.json` пакета корня сборки: каталог корня оканчивается на
+   * `/src`, а модули — пакеты (`gen.package`); иначе undefined
+   */
+  compositionPackage(): string | undefined {
+    const dir = this.compositionDir();
+    if (
+      dir === undefined ||
+      this.settings.package === undefined ||
+      !dir.endsWith(SRC)
+    ) {
+      return undefined;
+    }
+    return join(dir.slice(0, -SRC.length), 'package.json');
+  }
+
+  /** Скрипт `arch:check` проекта */
+  archCheckFile(): string {
+    return this.path(GenLayout.archCheck, '');
+  }
+
   /** Пакет прикладного слоя модуля; нет `gen.package` — undefined */
   package(module: string): ModulePackage | undefined {
     const { package: name, domainImport } = this.settings;
@@ -135,7 +200,10 @@ export class GenLayout {
   describe(): string {
     const { domain, app, domainImport, package: name } = this.settings;
     const line = `Раскладка: домен — ${domain}, прикладной слой — ${app}, импорт домена — ${domainImport ?? 'относительный'}`;
-    return name === undefined ? line : `${line}, пакет модуля — ${name}`;
+    const withPackage =
+      name === undefined ? line : `${line}, пакет модуля — ${name}`;
+    const root = this.compositionRoot() ?? 'не задан (gen.compositionRoot)';
+    return `${withPackage}, корень сборки — ${root}`;
   }
 
   /** Импорт домена по шаблону (`gen.domainImport`), а не относительный */

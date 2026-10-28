@@ -76,12 +76,109 @@ test('uc/er/job/dcs/dqs --write', () => {
   expect(existsSync(join(root, 'd/stream/navigation.dqs.ts'))).toBe(true);
 });
 
-test('module: подсказка подключения к приложению — после списка файлов', () => {
-  gen('module', 'stream', '--write');
-  const at = out.findIndex((l) => l.startsWith('Вставь вручную — подключение'));
-  expect(at).toBeGreaterThan(0);
-  expect(out.slice(at).join('\n')).toContain('createStreamModule');
-  expect(out.slice(0, at).join('\n')).toContain('stream.module.ts');
+/** Раскладка с корнем сборки `src/app` (как у single). */
+const WIRED = { domain: 'd/{m}', app: 'p/{m}/src', compositionRoot: 'src/app' };
+const genWired = (...argv: string[]) =>
+  runGen(argv, new GenLayout(WIRED, root), (line) => out.push(line));
+
+test('module без каркаса: «Вставь вручную» с точными путями app.ts и arch-check.ts', () => {
+  expect(genWired('module', 'stream', '--write')).toBe(0);
+  const text = out.join('\n');
+  expect(text).toContain(
+    `Вставь вручную в ${join(root, 'src/app/app.ts')} перед // gen:modules:`,
+  );
+  expect(text).toContain('createStreamModule({');
+  expect(text).toContain(
+    `Вставь вручную в ${join(root, 'scripts/arch-check.ts')} перед // gen:modules:`,
+  );
+});
+
+test('своя раскладка без gen.compositionRoot: общая подсказка, ложных путей нет', () => {
+  expect(gen('module', 'stream', '--write')).toBe(0);
+  const text = out.join('\n');
+  expect(text).toContain('Корень сборки не задан (gen.compositionRoot');
+  expect(text).not.toContain('src/app/app.ts');
+});
+
+/** Корень сборки и arch-check.ts с маркерами — как после `dmg-core init`. */
+function wiringFiles(app: string): void {
+  mkdirSync(join(root, app), { recursive: true });
+  writeFileSync(
+    join(root, app, 'app.ts'),
+    [
+      "import { join } from 'node:path';",
+      '// gen:imports',
+      '',
+      'export const make = (env: { dataDir: string }) => [',
+      '  join(env.dataDir),',
+      '  // gen:modules',
+      '];',
+      '',
+    ].join('\n'),
+  );
+  mkdirSync(join(root, 'scripts'));
+  writeFileSync(
+    join(root, 'scripts/arch-check.ts'),
+    "import { join } from 'node:path';\n// gen:imports\nconst modules = [\n  // gen:modules\n];\n",
+  );
+}
+
+test('module и aggregate по маркерам: фабрика с репозиторием, Def в arch-check', () => {
+  wiringFiles('src/app');
+  genWired('module', 'stream', '--write');
+  genWired('aggregate', 'stream.student', '--write');
+  expect(out.join('\n')).not.toContain('Вставь вручную');
+  const app = readFileSync(join(root, 'src/app/app.ts'), 'utf8');
+  expect(app).toContain(
+    "import { createStreamModule, StudentJsonRepo } from '../../p/stream/src';",
+  );
+  expect(app).toContain(
+    "import { StreamModuleDef } from '../../d/stream/contract';",
+  );
+  expect(app).toContain(
+    "studentRepo: new StudentJsonRepo(\n              join(env.dataDir, 'stream.student.json'),\n            ),\n            // gen:repos:stream",
+  );
+  expect(readFileSync(join(root, 'scripts/arch-check.ts'), 'utf8')).toContain(
+    '  StreamModuleDef,\n  // gen:modules',
+  );
+});
+
+test('агрегат task в двух модулях: у каждого свой репозиторий и файл данных', () => {
+  wiringFiles('src/app');
+  for (const m of ['alpha', 'beta']) {
+    genWired('module', m, '--write');
+  }
+  out = [];
+  genWired('aggregate', 'alpha.task', '--write');
+  genWired('aggregate', 'beta.task', '--write');
+  const app = readFileSync(join(root, 'src/app/app.ts'), 'utf8');
+  expect(app).toContain(
+    "taskRepo: new TaskJsonRepo(join(env.dataDir, 'alpha.task.json')),\n            // gen:repos:alpha",
+  );
+  // Второй TaskJsonRepo — конфликт имени: импорт и строка — вручную.
+  expect(app.match(/TaskJsonRepo/g)?.length).toBe(2);
+  const text = out.join('\n');
+  expect(text).toContain(
+    "имя TaskJsonRepo уже импортировано из '../../p/alpha/src' — нужен алиас",
+  );
+  expect(text).toContain(
+    `Вставь вручную в ${join(root, 'src/app/app.ts')} перед // gen:repos:beta`,
+  );
+  expect(text).toContain("join(env.dataDir, 'beta.task.json')");
+});
+
+test('dry-run: уже объявленная зависимость не печатается как «Будет изменён»', () => {
+  mkdirSync(join(root, 'app'));
+  writeFileSync(
+    join(root, 'app/package.json'),
+    '{ "dependencies": { "@acme/stream": "workspace:*" } }',
+  );
+  const layout = new GenLayout(
+    { ...PACKAGE_LAYOUT, compositionRoot: 'app/src' },
+    root,
+  );
+  runGen(['module', 'stream'], layout, (l) => out.push(l), DEPS);
+  expect(out.join('\n')).not.toContain('app/package.json');
 });
 
 test('module: вход прикладного слоя index.ts; aggregate дописывает репозиторий', () => {
@@ -106,6 +203,35 @@ const PACKAGE_LAYOUT = {
 const DEPS = { 'dmg-core': '^2.0.0', valibot: '^1.5.0' };
 const genPackage = (...argv: string[]) =>
   runGen(argv, new GenLayout(PACKAGE_LAYOUT, root), (l) => out.push(l), DEPS);
+
+test('module с gen.package: нет package.json корня сборки — подсказка с путём', () => {
+  const layout = new GenLayout(
+    { ...PACKAGE_LAYOUT, compositionRoot: 'app/src' },
+    root,
+  );
+  runGen(['module', 'stream', '--write'], layout, (l) => out.push(l), DEPS);
+  expect(out.join('\n')).toContain(
+    `Вставь вручную в ${join(root, 'app/package.json')}, dependencies: "@acme/stream": "workspace:*"`,
+  );
+  expect(out.join('\n')).toContain('bun install');
+});
+
+test('module с gen.package: зависимость вписана в package.json корня сборки', () => {
+  mkdirSync(join(root, 'app'));
+  writeFileSync(join(root, 'app/package.json'), '{ "name": "@acme/app" }');
+  const layout = new GenLayout(
+    { ...PACKAGE_LAYOUT, compositionRoot: 'app/src' },
+    root,
+  );
+  runGen(['module', 'stream', '--write'], layout, (l) => out.push(l), DEPS);
+  expect(out).toContain(`Изменён: ${join(root, 'app/package.json')}`);
+  expect(
+    JSON.parse(readFileSync(join(root, 'app/package.json'), 'utf8')),
+  ).toEqual({
+    name: '@acme/app',
+    dependencies: { '@acme/stream': 'workspace:*' },
+  });
+});
 
 test('module с gen.package: пакет модуля с версиями зависимостей из вызова', () => {
   expect(genPackage('module', 'stream', '--write')).toBe(0);

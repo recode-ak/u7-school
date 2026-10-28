@@ -228,6 +228,7 @@ describe('ProjectScaffold monorepo: прочие конфиги', () => {
       app: 'modules/{m}/src',
       domainImport: '@acme/domain/{m}',
       package: '@acme/{m}',
+      compositionRoot: 'app/src',
     };
 
     expect(data).toEqual({ ...config.defaults(), gen });
@@ -238,10 +239,22 @@ describe('ProjectScaffold monorepo: прочие конфиги', () => {
     const src = file('scripts/arch-check.ts');
 
     expect(src).toContain('await GenLayout.read(');
-    expect(src).toContain('modules: []');
+    expect(src).toContain(
+      "export const modules: ArchApp['modules'] = [\n  // gen:modules\n];",
+    );
+    expect(src).toContain("from 'dmg-core/gen';\n// gen:imports\n");
     expect(src).toContain("root: join(root, 'app/src')");
     expect(src).toContain("runners: [join(root, 'runners/cli/src')]");
     expect(src).toContain(`name: '${NAME}'`);
+  });
+
+  it('app.ts — маркеры подключения модулей для gen module/aggregate', () => {
+    const src = file('app/src/app.ts');
+
+    expect(src).toContain("from './app-caller-resolver';\n// gen:imports\n");
+    expect(src).toContain(
+      'const modules: ModuleFactory<AppUser>[] = [\n      // gen:modules\n    ];',
+    );
   });
 
   it('biome.json — плагины на каталогах пакетов', () => {

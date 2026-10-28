@@ -27,6 +27,7 @@ const PLANNERS: Record<GenKind, (args: GenArgs) => GenPlan> = {
 const merge = (...plans: GenPlan[]): GenPlan => ({
   files: plans.flatMap((p) => p.files),
   edits: plans.flatMap((p) => p.edits),
+  dependencies: plans.flatMap((p) => p.dependencies ?? []),
   notes: plans.flatMap((p) => p.notes ?? []),
 });
 
@@ -52,12 +53,18 @@ export function runGen(
       print(`Пропущен: ${file.path} (уже есть) — сверь вручную с шаблоном:`);
       for (const line of file.content.trimEnd().split('\n')) print(`  ${line}`);
     }
-    for (const path of args.write ? result.edited : editedPaths(plan)) {
+    for (const path of result.edited) {
       print(`${args.write ? 'Изменён' : 'Будет изменён'}: ${path}`);
     }
     for (const hint of result.hints) {
-      print(`Вставь вручную в ${hint.path} перед ${hint.marker}:`);
+      const why = hint.reason === undefined ? '' : ` (${hint.reason})`;
+      print(`Вставь вручную в ${hint.path} перед ${hint.marker}${why}:`);
       print(`  ${hint.line}`);
+    }
+    for (const dep of result.dependencyHints) {
+      print(
+        `Вставь вручную в ${dep.path}, dependencies: "${dep.name}": "${dep.version}"`,
+      );
     }
     for (const note of plan.notes ?? []) print(note);
     if (!args.write) print('Это dry-run. Для записи добавь --write.');
@@ -70,7 +77,3 @@ export function runGen(
     throw error;
   }
 }
-
-const editedPaths = (plan: GenPlan): string[] => [
-  ...new Set(plan.edits.map((e) => e.path)),
-];

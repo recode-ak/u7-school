@@ -10,9 +10,9 @@
  *   репозитории, точка входа раннера) нарушений нет;
  * - в `monorepo` пакеты `@acme/*` — ссылки на свои каталоги (как
  *   workspaces после `bun install`), `ArchChecker` видит их спецификаторы;
- * - срез `gen` в `monorepo` (модуль, агрегат, UC) с пакетом модуля и
- *   ручным подключением к приложению по подсказкам `gen module` проходит
- *   biome, tsc, `arch:check` и тесты.
+ * - срез `gen` в `monorepo` (модуль, агрегат, UC) с пакетом модуля сам
+ *   подключает модуль к приложению (маркеры каркаса) и проходит biome,
+ *   tsc, `arch:check` и тесты без ручных правок.
  */
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import {
@@ -404,19 +404,9 @@ describe('ArchChecker на monorepo видит спецификаторы пак
   });
 });
 
-/** Правка файла проекта: замена ровно одного вхождения (подключение руками). */
-function patch(project: string, path: string, from: string, to: string) {
-  const file = join(project, path);
-  const text = readFileSync(file, 'utf8');
-  if (text.split(from).length !== 2) {
-    throw new Error(`${path}: ожидалось одно вхождение «${from}»`);
-  }
-  writeFileSync(file, text.replace(from, to));
-}
-
-describe('monorepo: срез gen и подключение модуля по подсказкам', () => {
+describe('monorepo: срез gen подключает модуль без ручных правок', () => {
   let project: string;
-  let hints: string;
+  let output: string;
   beforeAll(async () => {
     project = await scaffold('monorepo');
     const cli = new DmgCoreCli(await PackageSource.load(PKG));
@@ -430,65 +420,41 @@ describe('monorepo: срез gen и подключение модуля по п�
       if (!res.ok) throw new Error(`gen ${step.join(' ')}: ${res.messages}`);
       messages.push(...res.messages);
     }
-    hints = messages.join('\n');
-    // Подключение по подсказкам gen module (как после `bun install`:
-    // пакет модуля — ссылка в node_modules).
+    output = messages.join('\n');
+    // Как после `bun install`: пакет модуля — ссылка в node_modules.
     symlinkSync(
       join(project, 'modules/todo'),
       join(project, 'node_modules/@acme/todo'),
     );
-    patch(
-      project,
-      'app/package.json',
-      '"@acme/domain": "workspace:*"',
-      '"@acme/domain": "workspace:*",\n    "@acme/todo": "workspace:*"',
-    );
-    patch(
-      project,
-      'app/src/app.ts',
-      "import type { AppUser } from '@acme/domain/shared';\n",
-      "import type { AppUser } from '@acme/domain/shared';\n" +
-        "import { TodoModuleDef } from '@acme/domain/todo/contract';\n" +
-        "import { createTodoModule, TaskJsonRepo } from '@acme/todo';\n",
-    );
-    patch(
-      project,
-      'app/src/app.ts',
-      'const modules: ModuleFactory<AppUser>[] = [];',
-      [
-        'const modules: ModuleFactory<AppUser>[] = [',
-        '      {',
-        '        def: TodoModuleDef,',
-        '        create: (deps) =>',
-        '          createTodoModule({',
-        '            ...deps,',
-        "            taskRepo: new TaskJsonRepo(join(env.dataDir, 'task.json')),",
-        '          }),',
-        '      },',
-        '    ];',
-      ].join('\n'),
-    );
-    patch(
-      project,
-      'scripts/arch-check.ts',
-      "import { type ArchApp, reportArchCheck } from 'dmg-core/arch';\n",
-      "import { TodoModuleDef } from '@acme/domain/todo/contract';\n" +
-        "import { type ArchApp, reportArchCheck } from 'dmg-core/arch';\n",
-    );
-    patch(
-      project,
-      'scripts/arch-check.ts',
-      'modules: [],',
-      'modules: [TodoModuleDef],',
-    );
   }, 60_000);
 
-  test('подсказки gen module: фабрика, arch-check, зависимость корня сборки', () => {
-    expect(hints).toContain('createTodoModule');
-    expect(hints).toContain("'@acme/todo'");
-    expect(hints).toContain("'@acme/domain/todo/contract'");
-    expect(hints).toContain('scripts/arch-check.ts');
-    expect(hints).toContain('"@acme/todo": "workspace:*"');
+  test('вывод gen: корень сборки, arch-check и package.json изменены, вручную — ничего', () => {
+    expect(output).not.toContain('Вставь вручную');
+    for (const path of [
+      'app/src/app.ts',
+      'scripts/arch-check.ts',
+      'app/package.json',
+    ]) {
+      expect(output).toContain(`Изменён: ${join(project, path)}`);
+    }
+    expect(output).toContain('bun install');
+  });
+
+  test('корень сборки: фабрика модуля с JSON-репозиторием агрегата', () => {
+    const app = readFileSync(join(project, 'app/src/app.ts'), 'utf8');
+    expect(app).toContain(
+      "import { TodoModuleDef } from '@acme/domain/todo/contract';",
+    );
+    expect(app).toContain(
+      "import { createTodoModule, TaskJsonRepo } from '@acme/todo';",
+    );
+    expect(app).toContain(
+      "taskRepo: new TaskJsonRepo(join(env.dataDir, 'todo.task.json')),",
+    );
+    expect(
+      JSON.parse(readFileSync(join(project, 'app/package.json'), 'utf8'))
+        .dependencies,
+    ).toMatchObject({ '@acme/todo': 'workspace:*' });
   });
 
   test('пакет модуля и вход с репозиторием', () => {

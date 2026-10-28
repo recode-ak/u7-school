@@ -6,7 +6,7 @@ import { planAppModule } from './app-module';
 
 const root = '/p';
 const plan = (
-  gen: { domainImport?: string; package?: string } = {
+  gen: { domainImport?: string; package?: string; compositionRoot?: string } = {
     domainImport: '@acme/domain/{m}',
   },
 ) =>
@@ -37,25 +37,162 @@ export { createStreamModule, type StreamDeps } from './stream.module';
   );
 });
 
-test('notes — подключение к приложению вручную: фабрика и arch-check', () => {
-  const notes = plan().notes ?? [];
-  const text = notes.join('\n');
+const MONO = {
+  domainImport: '@acme/domain/{m}',
+  package: '@acme/{m}',
+  compositionRoot: 'app/src',
+};
+
+test('подключение к app.ts: импорты Def и фабрики, элемент с маркером репозиториев', () => {
+  const edits = plan(MONO).edits.filter((e) => e.path === 'app/src/app.ts');
+  expect(edits).toEqual([
+    {
+      path: 'app/src/app.ts',
+      marker: '// gen:imports',
+      line: "import { StreamModuleDef } from '@acme/domain/stream/contract';",
+    },
+    {
+      path: 'app/src/app.ts',
+      marker: '// gen:imports',
+      line: "import { createStreamModule } from '@acme/stream';",
+    },
+    {
+      path: 'app/src/app.ts',
+      marker: '// gen:modules',
+      line: [
+        '      {',
+        '        def: StreamModuleDef,',
+        '        create: (deps) =>',
+        '          createStreamModule({',
+        '            ...deps,',
+        '            // gen:repos:stream',
+        '          }),',
+        '      },',
+      ].join('\n'),
+    },
+  ]);
+});
+
+test('подключение к arch-check.ts: импорт и корень Def', () => {
+  const edits = plan(MONO).edits.filter(
+    (e) => e.path === 'scripts/arch-check.ts',
+  );
+  expect(edits).toEqual([
+    {
+      path: 'scripts/arch-check.ts',
+      marker: '// gen:imports',
+      line: "import { StreamModuleDef } from '@acme/domain/stream/contract';",
+    },
+    {
+      path: 'scripts/arch-check.ts',
+      marker: '// gen:modules',
+      line: '  StreamModuleDef,',
+    },
+  ]);
+});
+
+test('с gen.package — зависимость пакета корня сборки и напоминание bun install', () => {
+  const p = plan(MONO);
+  expect(p.dependencies).toEqual([
+    {
+      path: 'app/package.json',
+      name: '@acme/stream',
+      version: 'workspace:*',
+    },
+  ]);
+  expect(p.notes).toEqual([
+    'Затем bun install — чтобы пакет модуля появился в node_modules.',
+  ]);
+});
+
+test('без gen.package (single): относительные импорты, зависимостей нет', () => {
+  const p = planAppModule(
+    parseArgs(['module', 'stream'], new GenLayout(GenLayout.defaults, '/r')),
+  );
+  expect(p.dependencies ?? []).toEqual([]);
+  expect(p.notes ?? []).toEqual([]);
+  expect(p.edits.filter((e) => e.marker === '// gen:imports')).toEqual([
+    {
+      path: '/r/src/app/app.ts',
+      marker: '// gen:imports',
+      line: "import { StreamModuleDef } from '../domain/stream/contract';",
+    },
+    {
+      path: '/r/src/app/app.ts',
+      marker: '// gen:imports',
+      line: "import { createStreamModule } from './stream';",
+    },
+    {
+      path: '/r/scripts/arch-check.ts',
+      marker: '// gen:imports',
+      line: "import { StreamModuleDef } from '../src/domain/stream/contract';",
+    },
+  ]);
+});
+
+test('gen.package, корень сборки не на /src — зависимость вручную с каталогом', () => {
+  const p = plan({
+    domainImport: '@acme/domain/{m}',
+    package: '@acme/{m}',
+    compositionRoot: 'app',
+  });
+  expect(p.dependencies ?? []).toEqual([]);
+  const text = (p.notes ?? []).join('\n');
+  expect(text).toContain('"@acme/stream": "workspace:*"');
+  expect(text).toContain('package.json пакета с каталогом app');
+  expect(text).toContain(
+    'bun install — чтобы пакет модуля появился в node_modules',
+  );
+});
+
+test('своя раскладка без gen.compositionRoot — правок нет, общая подсказка', () => {
+  const p = plan({ domainImport: '@acme/domain/{m}', package: '@acme/{m}' });
+  expect(p.edits).toEqual([]);
+  expect(p.dependencies ?? []).toEqual([]);
+  const text = (p.notes ?? []).join('\n');
+  expect(text).toContain('gen.compositionRoot');
   expect(text).toContain(
     '{ def: StreamModuleDef, create: (deps) => createStreamModule({ ...deps }) }',
   );
-  expect(text).toContain('/p/stream/src/index.ts');
+  expect(text).toContain("'@acme/stream'");
   expect(text).toContain("'@acme/domain/stream/contract'");
   expect(text).toContain('scripts/arch-check.ts');
-  expect(text).not.toContain('workspace:*');
+  expect(text).toContain('"@acme/stream": "workspace:*"');
+  expect(text).not.toContain('src/app/app.ts');
 });
 
-test('notes — с gen.package: вход по имени пакета и зависимость корня сборки', () => {
-  const text = (
-    plan({ domainImport: '@acme/domain/{m}', package: '@acme/{m}' }).notes ?? []
-  ).join('\n');
-  expect(text).toContain("'@acme/stream'");
-  expect(text).toContain('"@acme/stream": "workspace:*"');
-  expect(text).toContain('bun install');
+test('длинные имена: импорты Def и фабрики — в форме biome (по имени на строку)', () => {
+  const p = planAppModule(
+    parseArgs(
+      ['module', 'notification-settings'],
+      new GenLayout(
+        {
+          domain: 'domain/src/{m}',
+          app: 'modules/{m}/src',
+          domainImport: '@acme/domain/{m}',
+          package: '@acme/{m}',
+          compositionRoot: 'app/src',
+        },
+        '/r',
+      ),
+    ),
+  );
+  const imports = p.edits
+    .filter((e) => e.path === '/r/app/src/app.ts')
+    .filter((e) => e.marker === '// gen:imports')
+    .map((e) => e.line);
+  expect(imports).toEqual([
+    [
+      'import {',
+      '  NotificationSettingsModuleDef,',
+      "} from '@acme/domain/notification-settings/contract';",
+    ].join('\n'),
+    // Ровно 80 символов — ещё одна строка.
+    "import { createNotificationSettingsModule } from '@acme/notification-settings';",
+  ]);
+  for (const line of imports.flatMap((l) => l.split('\n'))) {
+    expect(line.length).toBeLessThanOrEqual(80);
+  }
 });
 
 test('без domainImport — относительный импорт домена', () => {

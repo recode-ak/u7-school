@@ -32,7 +32,10 @@ export class ScaffoldLayout {
       app: 'src/app',
       runner: 'src/runner',
       include: ['src', 'scripts'],
-      gen: { ...GenLayout.defaults },
+      gen: {
+        ...GenLayout.defaults,
+        compositionRoot: GenLayout.defaultCompositionRoot,
+      },
       imports: {
         appUser: '../domain/shared/app-user',
         app: '../app/app',
@@ -69,6 +72,7 @@ export class ScaffoldLayout {
         app: 'modules/{m}/src',
         domainImport: `${domain}/{m}`,
         package: `@${scope}/{m}`,
+        compositionRoot: 'app/src',
       },
       imports: { appUser: `${domain}/shared`, app, appTypes: app },
       moduleEntry: `@${scope}/<m> (modules/<m>/src/index.ts)`,

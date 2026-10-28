@@ -2,8 +2,17 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname } from 'node:path';
 import { GenError } from './cli';
-import { importBefore, isImportSource } from './import-order';
-import type { ApplyResult, GenPlan, PlannedEdit, PlannedFile } from './plan';
+import { ImportBlock } from './import-block';
+import { isImportSource } from './import-order';
+import { PackageManifest } from './package-manifest';
+import type {
+  ApplyResult,
+  GenPlan,
+  HintedEdit,
+  PlannedDependency,
+  PlannedEdit,
+  PlannedFile,
+} from './plan';
 
 /**
  * В режиме adopt существующие не перезаписываются: входы модуля (D-45) и
@@ -18,29 +27,59 @@ const ENTRY_FILES = [
   'tsconfig.json',
 ];
 
-/** Куда вставить `line`: в отсортированный блок import/export над маркером. */
-function insertionIndex(lines: string[], marker: number, line: string): number {
-  if (!isImportSource(line)) return marker;
+/** Строка — маркер генератора (`// gen:*`). */
+const isMarker = (line: string) => line.trim().startsWith('// gen:');
+
+const indentOf = (line: string) => line.length - line.trimStart().length;
+
+/**
+ * Свой блок маркера: непрерывные строки над ним с отступом не меньше
+ * маркерного, до предыдущего маркера. Здесь ищется уже вставленная строка:
+ * такая же строка в чужом блоке (репозиторий `task` другого модуля) — не
+ * повод пропустить вставку.
+ */
+function blockAbove(lines: readonly string[], marker: number): string[] {
+  const indent = indentOf(lines[marker] ?? '');
   let start = marker;
-  while (start > 0 && isImportSource(lines[start - 1] ?? '')) start--;
-  for (let i = start; i < marker; i++) {
-    if (importBefore(line, lines[i] ?? '')) return i;
+  while (start > 0) {
+    const line = lines[start - 1] ?? '';
+    if (isMarker(line) || indentOf(line) < indent) break;
+    start--;
   }
-  return marker;
+  return lines.slice(start, marker);
 }
 
-/** Результат правки одного маркера: новый текст или причина отказа. */
-function insertBeforeMarker(
-  text: string,
-  edit: PlannedEdit,
-): { text: string } | { skipped: 'present' | 'no-marker' } {
+/** Итог правки одного маркера. */
+type EditResult =
+  | { text: string }
+  | { skipped: 'present' }
+  | { hint: string | undefined };
+
+/**
+ * Правка одного маркера. Импорт или реэкспорт встаёт в блок над маркером
+ * по правилам biome (`ImportBlock`), прочее — прямо перед маркером, если
+ * его ещё нет в своём блоке (`blockAbove`).
+ */
+function insertBeforeMarker(text: string, edit: PlannedEdit): EditResult {
   const lines = text.split('\n');
-  if (lines.some((l) => l.trim() === edit.line.trim())) {
-    return { skipped: 'present' };
-  }
   const at = lines.findIndex((l) => l.trim() === edit.marker);
-  if (at === -1) return { skipped: 'no-marker' };
-  lines.splice(insertionIndex(lines, at, edit.line), 0, edit.line);
+  if (at === -1) return { hint: undefined };
+  if (isImportSource(edit.line)) {
+    const result = ImportBlock.above(lines, at).insert(edit.line);
+    if (result.kind === 'present') return { skipped: 'present' };
+    if (result.kind === 'conflict') {
+      return {
+        hint: `имя ${result.name} уже импортировано из '${result.from}' — нужен алиас`,
+      };
+    }
+    return { text: lines.join('\n') };
+  }
+  const block = blockAbove(lines, at);
+  const present = edit.line.includes('\n')
+    ? block.join('\n').includes(edit.line)
+    : block.some((l) => l.trim() === edit.line.trim());
+  if (present) return { skipped: 'present' };
+  lines.splice(at, 0, edit.line);
   return { text: lines.join('\n') };
 }
 
@@ -71,25 +110,52 @@ export function applyPlan(
   // Правки считаем целиком до записи: сбой чтения не оставит половину результата.
   const pending = new Map<string, string>();
   const edited: string[] = [];
-  const hints: PlannedEdit[] = [];
+  const hints: HintedEdit[] = [];
+  const failed = new Set<string>();
+  const hint = (edit: PlannedEdit, reason: string | undefined) => {
+    hints.push(reason === undefined ? edit : { ...edit, reason });
+    if (edit.group !== undefined) failed.add(edit.group);
+  };
   for (const edit of plan.edits) {
+    if (edit.group !== undefined && failed.has(edit.group)) {
+      hint(edit, `не вставлена связанная правка группы ${edit.group}`);
+      continue;
+    }
     const planned = files.find((f) => f.path === edit.path);
     const source =
       pending.get(edit.path) ??
       planned?.content ??
       (existsSync(edit.path) ? readFileSync(edit.path, 'utf8') : undefined);
     if (source === undefined) {
-      hints.push(edit);
+      hint(edit, undefined);
       continue;
     }
     const result = insertBeforeMarker(source, edit);
-    if ('skipped' in result) {
-      if (result.skipped === 'no-marker') hints.push(edit);
+    if ('skipped' in result) continue;
+    if ('hint' in result) {
+      hint(edit, result.hint);
       continue;
     }
     if (planned) planned.content = result.text;
     else pending.set(edit.path, result.text);
     if (!edited.includes(edit.path) && !planned) edited.push(edit.path);
+  }
+  const dependencyHints: PlannedDependency[] = [];
+  for (const dep of plan.dependencies ?? []) {
+    const source =
+      pending.get(dep.path) ??
+      (existsSync(dep.path) ? readFileSync(dep.path, 'utf8') : undefined);
+    if (source === undefined) {
+      dependencyHints.push(dep);
+      continue;
+    }
+    const text = PackageManifest.parse(dep.path, source).withDependency(
+      dep.name,
+      dep.version,
+    );
+    if (text === undefined) continue;
+    pending.set(dep.path, text);
+    if (!edited.includes(dep.path)) edited.push(dep.path);
   }
 
   if (options.write) {
@@ -99,5 +165,5 @@ export function applyPlan(
     }
     for (const [path, text] of pending) writeFileSync(path, text);
   }
-  return { written: paths, edited, hints, skipped };
+  return { written: paths, edited, hints, dependencyHints, skipped };
 }

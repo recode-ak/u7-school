@@ -1,10 +1,9 @@
 /**
- * Подключение модуля `todo` в каркасе проекта-потребителя
- * (`scripts/consumer-e2e.sh`) — то, что автор делает руками после
- * `gen module/aggregate/uc` по подсказкам: UC в контракт (D-45), фабрика в
- * корень сборки, Def в `arch-check.ts`, команда UC в раннере; в monorepo —
- * зависимость корня сборки на пакет модуля. Порядок импортов и формат
- * доводит `bun run format` потребителя.
+ * Правки проекта-потребителя (`scripts/consumer-e2e.sh`), которые автор
+ * делает руками после `gen module/aggregate/uc`: UC в контракт (D-45),
+ * `callers` UC под гостя и команда UC в раннере. Модуль к корню сборки,
+ * `arch-check.ts` и `package.json` пакета корня подключает сам `gen`.
+ * Порядок импортов и формат доводит `bun run format` потребителя.
  *
  *   bun scripts/consumer-wire.ts <корень> single|monorepo [<scope>]
  *
@@ -20,34 +19,23 @@ type Profile = 'single' | 'monorepo';
 type WireLayout = {
   readonly contract: string;
   readonly uc: string;
-  readonly app: string;
   readonly runner: string;
-  /** Импорт контракта `todo` из корня сборки и раннера */
+  /** Импорт контракта `todo` из раннера */
   readonly contractFrom: string;
-  /** Импорт контракта `todo` из `scripts/arch-check.ts` */
-  readonly archContractFrom: string;
-  /** Импорт входа прикладного пакета `todo` из корня сборки */
-  readonly moduleFrom: string;
 };
 
 const layouts = (scope: string): Record<Profile, WireLayout> => ({
   single: {
     contract: 'src/domain/todo/contract.ts',
     uc: 'src/domain/todo/task/uc/complete-task.uc.ts',
-    app: 'src/app/app.ts',
     runner: 'src/runner/runner-cli.ts',
     contractFrom: '../domain/todo/contract',
-    archContractFrom: '../src/domain/todo/contract',
-    moduleFrom: './todo',
   },
   monorepo: {
     contract: 'domain/src/todo/contract.ts',
     uc: 'domain/src/todo/task/uc/complete-task.uc.ts',
-    app: 'app/src/app.ts',
     runner: 'runners/cli/src/runner-cli.ts',
     contractFrom: `@${scope}/domain/todo/contract`,
-    archContractFrom: `@${scope}/domain/todo/contract`,
-    moduleFrom: `@${scope}/todo`,
   },
 });
 
@@ -68,34 +56,6 @@ class ConsumerWiring {
     );
     // Резолвер каркаса — всегда гость: UC открыт и ему.
     this.patch(l.uc, "callers: ['user'],", "callers: ['guest', 'user'],");
-    this.prepend(
-      l.app,
-      `import { TodoModuleDef } from '${l.contractFrom}';\n` +
-        `import { createTodoModule, TaskJsonRepo } from '${l.moduleFrom}';\n`,
-    );
-    this.patch(
-      l.app,
-      'const modules: ModuleFactory<AppUser>[] = [];',
-      `const modules: ModuleFactory<AppUser>[] = [
-      {
-        def: TodoModuleDef,
-        create: (deps) =>
-          createTodoModule({
-            ...deps,
-            taskRepo: new TaskJsonRepo(join(env.dataDir, 'task.json')),
-          }),
-      },
-    ];`,
-    );
-    this.prepend(
-      'scripts/arch-check.ts',
-      `import { TodoModuleDef } from '${l.archContractFrom}';\n`,
-    );
-    this.patch(
-      'scripts/arch-check.ts',
-      'modules: [],',
-      'modules: [TodoModuleDef],',
-    );
     this.prepend(
       l.runner,
       `import { CompleteTaskUcDef, TodoModuleDef } from '${l.contractFrom}';\n`,
@@ -120,13 +80,6 @@ class ConsumerWiring {
     }
     if (command !== 'whoami') {`,
     );
-    if (this.profile === 'monorepo') {
-      this.patch(
-        'app/package.json',
-        `"@${this.scope}/domain": "workspace:*"`,
-        `"@${this.scope}/domain": "workspace:*",\n    "@${this.scope}/todo": "workspace:*"`,
-      );
-    }
   }
 
   private prepend(path: string, text: string): void {

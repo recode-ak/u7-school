@@ -9,8 +9,9 @@
 # 3. dmg-core init → sync --check; документация, скилы и ссылки на месте
 #    (consumer-check.ts); biome потребителя загружает плагины пакета.
 # 4. gen создаёт модуль, тесты заготовок зелёные на установленном пакете.
-# 5. Профили single и monorepo: init --profile → gen module/aggregate/uc →
-#    подключение по подсказкам (consumer-wire.ts) → раннер вызывает UC →
+# 5. Профили single и monorepo: init --profile → gen module/aggregate/uc
+#    (модуль подключает сам gen) → правки автора (consumer-wire.ts:
+#    контракт, callers, команда раннера) → раннер вызывает UC →
 #    bun run check проекта зелёный.
 set -euo pipefail
 
@@ -107,8 +108,8 @@ bunx dmg-core gen aggregate todo.task --write >/dev/null
 bunx dmg-core gen uc todo.task complete-task --write >/dev/null
 bun test src
 
-# Проект по профилю с нуля: пакет из tarball, каркас, срез gen, ручное
-# подключение модуля, вызов UC раннером, полный check проекта.
+# Проект по профилю с нуля: пакет из tarball, каркас, срез gen (подключает
+# модуль к приложению), правки автора, вызов UC раннером, полный check.
 # Красный шаг: хвост лога и выход.
 run_logged() {
   local log="$1" what="$2"
@@ -138,6 +139,9 @@ profile_e2e() {
   bunx dmg-core gen module todo --write >/dev/null
   bunx dmg-core gen aggregate todo.task --write >/dev/null
   bunx dmg-core gen uc todo.task complete-task --write >/dev/null
+  # Подключение модуля генератором — сразу в форме biome, без format.
+  run_logged "$WORK/$profile-gen-lint.log" \
+    "$profile — biome красный после gen (подключение модуля)" bunx biome check .
   bun "$PKG/scripts/consumer-wire.ts" "$dir" "$profile" "$scope"
   bun install >/dev/null
   run_logged "$WORK/$profile-format.log" "$profile — bun run format упал" \

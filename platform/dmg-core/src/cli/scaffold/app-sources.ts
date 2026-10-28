@@ -1,5 +1,5 @@
-import { sortImports } from '../../gen/import-order';
-import { LINE_WIDTH } from './project-files';
+import { namedImport, sortImports, sortNames } from '../../gen/import-order';
+import { WIRING_MARKERS } from '../../gen/kinds/app-wiring';
 import type {
   ScaffoldFile,
   ScaffoldImports,
@@ -91,24 +91,12 @@ export type { AppEnv, AppPorts, CallerResolver } from './app.types';
   private imports(list: readonly Import[]): string {
     const merged = new Map<string, string[]>();
     for (const { from, names } of list) {
-      const known = merged.get(from);
-      if (known === undefined) {
-        merged.set(from, [...names]);
-        continue;
-      }
-      known.push(...names);
-      known.sort((a, b) =>
-        a.replace(/^type /, '').localeCompare(b.replace(/^type /, '')),
-      );
+      merged.set(from, sortNames([...(merged.get(from) ?? []), ...names]));
     }
     const statements = [...merged].map(([from, names]) => {
       const types = names.every((name) => name.startsWith('type '));
-      const head = types ? 'import type' : 'import';
       const items = types ? names.map((n) => n.slice('type '.length)) : names;
-      const line = `${head} { ${items.join(', ')} } from '${from}';`;
-      return line.length <= LINE_WIDTH
-        ? line
-        : `${head} {\n${items.map((n) => `  ${n},`).join('\n')}\n} from '${from}';`;
+      return namedImport(items, from, types);
     });
     return sortImports(statements);
   }
@@ -202,6 +190,7 @@ export type CallerResolver = {
       },
       { from: './app-caller-resolver', names: ['AppCallerResolver'] },
     ])}
+${WIRING_MARKERS.imports}
 
 /**
  * Приложение — корень сборки (D-50): по окружению строит контекст и модули
@@ -216,10 +205,11 @@ export class App {
   constructor(env: AppEnv, ports: AppPorts = {}) {
     const context = App.context(env, ports);
     // Фабрики модулей — из входа прикладного пакета ${this.layout.moduleEntry}
-    // (D-52) с замыканием на репозитории:
-    //   { def: <M>ModuleDef, create: (deps) => create<M>Module({ ...deps, … }) }
-    // Корень Def добавь и в modules в scripts/arch-check.ts.
-    const modules: ModuleFactory<AppUser>[] = [];
+    // (D-52) с замыканием на репозитории. Вставляет \`dmg-core gen module\`
+    // (корень Def — и в scripts/arch-check.ts), репозитории — \`gen aggregate\`.
+    const modules: ModuleFactory<AppUser>[] = [
+      ${WIRING_MARKERS.modules}
+    ];
     this.api = new ApiApp(context, modules);
     this.callers = new AppCallerResolver();
   }

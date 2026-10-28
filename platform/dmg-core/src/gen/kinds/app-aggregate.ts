@@ -1,13 +1,15 @@
 /**
  * `gen aggregate <m>.<agg>` — прикладной слой: порт `repo` и
  * JSON-репозиторий; оба — во вход пакета модуля `index.ts` (D-52: корень
- * сборки передаёт репозитории в фабрику).
+ * сборки передаёт репозитории в фабрику), JSON-репозиторий — в фабрику
+ * модуля в корне сборки (`AppWiring`).
  */
 import { join } from 'node:path';
 import type { GenArgs } from '../cli';
 import { sortImports } from '../import-order';
 import { toCamel, toPascal } from '../naming';
 import type { GenPlan } from '../plan';
+import { AppWiring } from './app-wiring';
 
 /**
  * Шапка класса с `extends` и `implements`, как её форматирует biome: в одну
@@ -156,6 +158,7 @@ describe('${P}JsonRepo', () => {
         marker: '// gen:exports',
         line: `export { ${P}JsonRepo } from './infra/${a}.json-repo';`,
       },
+      ...new AppWiring(args).aggregateEdits(a),
     ],
   };
 }

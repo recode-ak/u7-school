@@ -1,3 +1,5 @@
+import { LINE_WIDTH } from '../../gen/import-order';
+import { WIRING_MARKERS } from '../../gen/kinds/app-wiring';
 import { PACKAGE_TEST } from '../../gen/kinds/module-package';
 import { CliConfig } from '../cli-config';
 import type { Dependencies, PackageSource } from '../package-source';
@@ -13,9 +15,6 @@ const PEERS = ['valibot', '@valibot/to-json-schema'];
 
 /** Инструменты `check` проекта из `devDependencies` пакета. */
 const TOOLS = ['@biomejs/biome', 'typescript', '@types/bun'];
-
-/** Ширина строки форматтера biome по умолчанию — для всех шаблонов каркаса. */
-export const LINE_WIDTH = 80;
 
 /**
  * Конфиги проекта. Корень: `.gitignore` (зависимости и каталог данных
@@ -215,6 +214,7 @@ export class ProjectFiles {
 
   private archCheck(): string {
     const { app, runner } = this.layout;
+    const { imports, modules } = WIRING_MARKERS;
     return `/**
  * \`bun run arch:check\` — контрактные проверки архитектуры (\`ArchChecker\`):
  * корни Def приложения, раскладка модулей из \`dmg-core.json\` (\`GenLayout\`),
@@ -223,6 +223,19 @@ export class ProjectFiles {
 import { join } from 'node:path';
 import { type ArchApp, reportArchCheck } from 'dmg-core/arch';
 import { GenLayout } from 'dmg-core/gen';
+${imports}
+
+/**
+ * Корни Def — модули, которые собирает ${app}/app.ts (вставляет
+ * \`dmg-core gen module\`); их зависимости по dependsOn проверяются сами.
+ * \`export\` — из-за biome: маркер импортов (комментарий сразу под ними)
+ * organizeImports принимает, только если за ним идёт export, иначе считает
+ * его частью следующего оператора и требует пустую строку перед маркером
+ * (а она оторвала бы маркер от блока импортов).
+ */
+export const modules: ArchApp['modules'] = [
+  ${modules}
+];
 
 const root = join(import.meta.dir, '..');
 const layout = await GenLayout.read(root);
@@ -230,9 +243,7 @@ const layout = await GenLayout.read(root);
 const app: ArchApp = {
   name: '${this.name}',
   entry: 'contract',
-  // Корни Def — модули, которые собирает ${app}/app.ts; их зависимости
-  // по dependsOn проверяются сами.
-  modules: [],
+  modules,
   layout: (m) => layout.module(m),
   root: join(root, '${app}'),
   runners: [join(root, '${runner}')],

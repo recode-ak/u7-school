@@ -48,3 +48,30 @@ export function sortImports(statements: readonly string[]): string {
     .sort((a, b) => (importBefore(a, b) ? -1 : importBefore(b, a) ? 1 : 0))
     .join('\n');
 }
+
+/** Ширина строки форматтера biome по умолчанию — для всех шаблонов и вставок. */
+export const LINE_WIDTH = 80;
+
+/** Ключ сортировки имени импорта: `type X` — по `X`. */
+const nameKey = (name: string) => name.replace(/^type /, '');
+
+/** Имена импорта в порядке biome: без учёта регистра и `type`. */
+export function sortNames(names: readonly string[]): string[] {
+  return [...names].sort((a, b) => nameKey(a).localeCompare(nameKey(b)));
+}
+
+/**
+ * Именованный импорт в форме biome: в одну строку до `LINE_WIDTH`, иначе —
+ * по имени на строку. `typeOnly` — `import type`; имена — уже по порядку.
+ */
+export function namedImport(
+  names: readonly string[],
+  from: string,
+  typeOnly = false,
+): string {
+  const head = typeOnly ? 'import type' : 'import';
+  const line = `${head} { ${names.join(', ')} } from '${from}';`;
+  return line.length <= LINE_WIDTH
+    ? line
+    : `${head} {\n${names.map((n) => `  ${n},`).join('\n')}\n} from '${from}';`;
+}

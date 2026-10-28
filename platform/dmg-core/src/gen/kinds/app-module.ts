@@ -2,13 +2,14 @@
  * `gen module <m>` — прикладной слой модуля (naming.md §3): карта модуля,
  * её тест и вход `index.ts` для корня сборки (D-52). Пакет workspaces —
  * `module-package` (только при `gen.package`). К приложению модуль
- * подключается руками — по подсказкам `notes`.
+ * подключается по маркерам каркаса — `AppWiring`.
  */
 import { join } from 'node:path';
 import type { GenArgs } from '../cli';
 import { sortImports } from '../import-order';
 import { toCamel, toPascal } from '../naming';
 import type { GenPlan } from '../plan';
+import { AppWiring } from './app-wiring';
 
 export function planAppModule(args: GenArgs): GenPlan {
   const { module: m } = args;
@@ -16,6 +17,7 @@ export function planAppModule(args: GenArgs): GenPlan {
   const c = toCamel(m);
   const src = args.layout.appDir(m);
   const domain = args.layout.domainImport(m, src);
+  const wiring = new AppWiring(args);
 
   const moduleSrc = `${sortImports([
     `import { ${P}ModuleDef } from '${domain}';`,
@@ -79,34 +81,8 @@ export { create${P}Module, type ${P}Deps } from './${m}.module';
       { path: join(src, `${m}.module.test.ts`), content: testSrc },
       { path: join(src, 'index.ts'), content: indexSrc },
     ],
-    edits: [],
-    notes: wiringNotes(args),
+    edits: wiring.moduleEdits(),
+    dependencies: wiring.moduleDependencies(),
+    notes: wiring.moduleNotes(),
   };
-}
-
-/**
- * Подключение модуля к приложению — руками (маркеров в корне сборки нет):
- * фабрика в список модулей, корень Def в `arch:check`, у пакета модуля —
- * зависимость корня сборки и `bun install`.
- */
-function wiringNotes(args: GenArgs): string[] {
-  const { module: m, layout } = args;
-  const P = toPascal(m);
-  const pkg = layout.package(m);
-  const entry = pkg ? `'${pkg.name}'` : `${layout.appDir(m)}/index.ts`;
-  const contract = layout.hasDomainImport()
-    ? `'${layout.domainImport(m, '.')}/contract'`
-    : `${layout.domainDir(m)}/contract.ts`;
-  return [
-    `Вставь вручную — подключение модуля ${m} к приложению:`,
-    '  корень сборки, список модулей (репозитории — в create вместе с deps):',
-    `    { def: ${P}ModuleDef, create: (deps) => create${P}Module({ ...deps }) }`,
-    `    create${P}Module — из входа ${entry}, ${P}ModuleDef — из ${contract}`,
-    `  scripts/arch-check.ts, modules: ${P}ModuleDef (из ${contract})`,
-    ...(pkg
-      ? [
-          `  package.json корня сборки, dependencies: "${pkg.name}": "workspace:*", затем bun install`,
-        ]
-      : []),
-  ];
 }
