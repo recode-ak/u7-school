@@ -13,5 +13,5 @@
 
 ---
 
-- [ ] **Track: Уборка dmg-core и requestId бота — фейки в тестах UC/ER/Job, отсев повторов команд (DEBT-1 пакета), `update_id` → `requestId` (DEBT-38), показ ошибок DMG в боте (DEBT-37)**
+- [~] **Track: Уборка dmg-core и requestId бота — фейки в тестах UC/ER/Job, отсев повторов команд (DEBT-1 пакета), `update_id` → `requestId` (DEBT-38), показ ошибок DMG в боте (DEBT-37)**
 *Link: [./tracks/dmg-cleanup_20261028/](./tracks/dmg-cleanup_20261028/)*
