@@ -74,7 +74,8 @@
     - [x] `extract:check` — убрать из `check` или переделать на проверку внешнего репо: убран вместе со скриптом (решение Нурболата 2026-10-28) a6785409
     - [x] `bun run check` зелёный (3273 pass; 1242 теста пакета ушли в его репо) a6785409
     - DEBT-36 → реестр долгов пакета `debt.md` + `scripts/debt-check` (решение Нурболата 2026-10-28), в репо пакета 358926a
-- [ ] Task: Документация проекта: ссылки `platform/dmg-core/…` → `node_modules/dmg-core/…` (`conductor/architecture`, скилы, `AGENTS.md`, `tech-stack.md`); процесс правки платформы (репо пакета → u7-school)
+- [x] Task: Документация проекта: ссылки `platform/dmg-core/…` → `node_modules/dmg-core/…` (`conductor/architecture`, скилы, `AGENTS.md`, `tech-stack.md`); процесс правки платформы (репо пакета → u7-school) f0e15036
+    - Процесс — `conductor/architecture/index.md` «Правка платформы `dmg-core`»; исторические TR в `debt.md`, архив и треки не трогали
 - [ ] Task: Чек-лист публикации в репо пакета: актуальные пути, сравнение npm / приватный registry или scope / git с рекомендацией
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
