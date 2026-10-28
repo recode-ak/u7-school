@@ -1,0 +1,1 @@
+Задача: Ревью reviewer (фаза 2). Ревьюер Opus по diff 9f458e0f..HEAD: error нет; 5 warn по документации исправлены (установка tarball, порядок bun add → init, overrides, пробел DOM-01, зарезервированные имена, format перед check); info — в брифе, на решение Нурболата. check проекта 4394 pass.
