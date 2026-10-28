@@ -109,22 +109,39 @@ bun test src
 
 # Проект по профилю с нуля: пакет из tarball, каркас, срез gen, ручное
 # подключение модуля, вызов UC раннером, полный check проекта.
+# Красный шаг: хвост лога и выход.
+run_logged() {
+  local log="$1" what="$2"
+  shift 2
+  if ! "$@" >"$log" 2>&1; then
+    tail -40 "$log" >&2
+    echo "e2e: $what" >&2
+    exit 1
+  fi
+}
+
+# Имя проекта со scope (`@acme/school`) проверяет вывод scope пакетов
+# monorepo из имени — как в README.
 profile_e2e() {
-  local profile="$1" main="$2"
-  local dir="$WORK/$profile"
-  echo "e2e: профиль $profile"
+  local profile="$1" main="$2" name="$3"
+  local dir="$WORK/$profile" scope="${3#@}"
+  scope="${scope%%/*}"
+  echo "e2e: профиль $profile ($name)"
   mkdir "$dir"
   cd "$dir"
-  echo '{ "name": "acme" }' >package.json
+  echo "{ \"name\": \"$name\" }" >package.json
   bun add "$TARBALL" >/dev/null
   bunx dmg-core init --profile "$profile" >/dev/null
   bun install >/dev/null
+  run_logged "$WORK/$profile-init-check.log" \
+    "$profile — bun run check красный сразу после init" bun run check
   bunx dmg-core gen module todo --write >/dev/null
   bunx dmg-core gen aggregate todo.task --write >/dev/null
   bunx dmg-core gen uc todo.task complete-task --write >/dev/null
-  bun "$PKG/scripts/consumer-wire.ts" "$dir" "$profile"
+  bun "$PKG/scripts/consumer-wire.ts" "$dir" "$profile" "$scope"
   bun install >/dev/null
-  bun run format >/dev/null 2>&1
+  run_logged "$WORK/$profile-format.log" "$profile — bun run format упал" \
+    bun run format
   local out
   out="$(APP_DATA_DIR=data bun "$main" complete-task)"
   if [ "$out" != '{"ok":true,"value":{}}' ]; then
@@ -135,13 +152,10 @@ profile_e2e() {
     echo "e2e: $profile — нет записи completeTask в oplog" >&2
     exit 1
   fi
-  if ! bun run check >"$WORK/$profile-check.log" 2>&1; then
-    tail -40 "$WORK/$profile-check.log" >&2
-    echo "e2e: $profile — bun run check красный" >&2
-    exit 1
-  fi
+  run_logged "$WORK/$profile-check.log" "$profile — bun run check красный" \
+    bun run check
 }
 
-profile_e2e single src/runner/main.ts
-profile_e2e monorepo runners/cli/src/main.ts
+profile_e2e single src/runner/main.ts acme
+profile_e2e monorepo runners/cli/src/main.ts @acme/school
 echo "e2e: ok"

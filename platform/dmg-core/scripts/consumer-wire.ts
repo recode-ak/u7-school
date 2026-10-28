@@ -6,7 +6,10 @@
  * зависимость корня сборки на пакет модуля. Порядок импортов и формат
  * доводит `bun run format` потребителя.
  *
- *   bun scripts/consumer-wire.ts <корень> single|monorepo
+ *   bun scripts/consumer-wire.ts <корень> single|monorepo [<scope>]
+ *
+ * scope пакетов monorepo — как его выводит каркас из имени проекта
+ * (`@acme/school` → `acme`); по умолчанию `acme`.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -27,7 +30,7 @@ type WireLayout = {
   readonly moduleFrom: string;
 };
 
-const LAYOUTS: Record<Profile, WireLayout> = {
+const layouts = (scope: string): Record<Profile, WireLayout> => ({
   single: {
     contract: 'src/domain/todo/contract.ts',
     uc: 'src/domain/todo/task/uc/complete-task.uc.ts',
@@ -42,21 +45,22 @@ const LAYOUTS: Record<Profile, WireLayout> = {
     uc: 'domain/src/todo/task/uc/complete-task.uc.ts',
     app: 'app/src/app.ts',
     runner: 'runners/cli/src/runner-cli.ts',
-    contractFrom: '@acme/domain/todo/contract',
-    archContractFrom: '@acme/domain/todo/contract',
-    moduleFrom: '@acme/todo',
+    contractFrom: `@${scope}/domain/todo/contract`,
+    archContractFrom: `@${scope}/domain/todo/contract`,
+    moduleFrom: `@${scope}/todo`,
   },
-};
+});
 
 /** Правки файлов проекта: замена ровно одного вхождения. */
 class ConsumerWiring {
   constructor(
     private readonly root: string,
     private readonly profile: Profile,
+    private readonly scope: string,
   ) {}
 
   wire(): void {
-    const l = LAYOUTS[this.profile];
+    const l = layouts(this.scope)[this.profile];
     this.patch(
       l.contract,
       '/** Кто: сборка приложения',
@@ -119,8 +123,8 @@ class ConsumerWiring {
     if (this.profile === 'monorepo') {
       this.patch(
         'app/package.json',
-        '"@acme/domain": "workspace:*"',
-        '"@acme/domain": "workspace:*",\n    "@acme/todo": "workspace:*"',
+        `"@${this.scope}/domain": "workspace:*"`,
+        `"@${this.scope}/domain": "workspace:*",\n    "@${this.scope}/todo": "workspace:*"`,
       );
     }
   }
@@ -141,12 +145,12 @@ class ConsumerWiring {
 }
 
 if (import.meta.main) {
-  const [root, profile] = process.argv.slice(2);
+  const [root, profile, scope = 'acme'] = process.argv.slice(2);
   if (!root || (profile !== 'single' && profile !== 'monorepo')) {
     console.error(
-      'Использование: bun scripts/consumer-wire.ts <корень> single|monorepo',
+      'Использование: bun scripts/consumer-wire.ts <корень> single|monorepo [<scope>]',
     );
     process.exit(2);
   }
-  new ConsumerWiring(root, profile).wire();
+  new ConsumerWiring(root, profile, scope).wire();
 }
