@@ -1,0 +1,5 @@
+Верификация Фазы 4 'requestId из update_id' (трек dmg-cleanup_20261028).
+Автотесты: CI=true bun test — 3303 pass, 0 fail; bun run check зелёный.
+Задачи: 8ff646cc (BotRequestContext, dispatchUc), 4455d890 (FileReplayStore, подключение), 2ae78429 (документы), 3a6fc630 (e2e), b8b50fd0 (DEBT-38 снят, DEBT-41).
+Ручная проверка: план предложен (dev-бот: нет warn о requestId, oplog tg:<id>#1, файл в replay/); пользователь ответил «продолжаем».
+Ревью reviewer в плане фазы нет — не запускался.
