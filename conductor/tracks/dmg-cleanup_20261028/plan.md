@@ -14,9 +14,9 @@
 
 ## Фаза 2: Тесты прикладного уровня на фейках (dmg-core)
 
-- [ ] Task: `MemoryRepo<A>` в `dmg-core/testing`
-    - [ ] Тесты: round trip, конфликт версии, `seed`, записанное, `failOn`, заданный ответ `find*`; red
-    - [ ] Реализация, экспорт; green
+- [x] Task: `MemoryRepo<A>` в `dmg-core/testing` 5620b60 (dmg-core da9e9a6)
+    - [x] Тесты: round trip, конфликт версии, `seed`, записанное, `failOn`, заданный ответ `find*`; red
+    - [x] Реализация, экспорт; green
 - [ ] Task: Перевод тестов UC примера (`create`/`complete`/`assign`/`get`/`list` задач, `get-user`); сверка сценариев старых и новых тестов
 - [ ] Task: Перевод тестов ER и Job примера (`FailingRepo` → `failOn`)
 - [ ] Task: Шаблон теста UC в `gen` на фейке; тесты генератора и `consumer-e2e` зелёные
