@@ -7,6 +7,11 @@
  *
  * Сами генераторы и их тесты — в пакете (`dmg-core/src/gen`); здесь — только
  * проверка, что настройки проекта дают рабочий код.
+ *
+ * Имя без `.test`: корневой `bun test` файл не находит, запуск — отдельным
+ * шагом `bun run gen:e2e` в `check`. Срез живёт в каталогах репозитория,
+ * и параллельный `bun test` подхватывал его файлы, удалённые в `afterAll`
+ * (плавающий `ENOENT reading …/genprobe/…test.ts`).
  */
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { rmSync } from 'node:fs';
