@@ -49,3 +49,18 @@ api-author (Opus), 2026-10-28. Пакет `dmg-core` `da9e9a6`.
 - Тесты: `memory-repo.test.ts`, 11 шт.; red — `Cannot find module './memory-repo'`; green — 11 pass. `check` пакета — 1257 pass / 0 fail.
 
 ## Отчёт ревьюера
+
+reviewer (Opus), 2026-10-28 — ревью всей Фазы 2 (срезы memory-repo, uc-tests-fake, er-job-tests-fake, gen-uc-test-fake; пакет `b001e0e..a32f3e4`, u7-school `9c108539..ab658e4c`). Блокеров (`error`) нет; сценарии тестов примера 1:1, решения Нурболата соблюдены. Проверены DOM-01, API-03, TST-03/04/05, ERR-04, `testing.md` §4.
+
+| ID | файл:строка | суть | severity | решение |
+|---|---|---|---|---|
+| — | `src/testing/memory-repo.ts:26-35` | JSDoc-пример: `MemoryTaskRepo`/`TaskState` вместо `TaskRepoFake`/`StateOf` | warn | исправлено, dmg-core `3b9d7cd` |
+| — | spec НФТ / `docs/decisions.md` пакета | новый API `dmg-core/testing` и `.repo.fake.ts` без D-NN | question | к Нурболату |
+| DOM-01/ARC | `naming.md:59`, `gen/kinds/app-aggregate.ts` | фейк в рабочем `src`, импорт `dmg-core/testing` из нетестового кода не запрещён линтером | question | к Нурболату |
+| TST-05 | `er/release-removed-user-tasks.er.test.ts:124` | имя «…файл не создан» устарело | info | к Нурболату |
+| — | `memory-repo.test.ts:16-29` | копия `TaskRepoFake` под именем `MemoryTaskRepo` | info | оставлено |
+| TST-04 | `uc/create-task.uc.test.ts:28-29` | ответ строится из `saved`, а не `restored` | info | оставлено |
+| — | `memory-repo.ts:52-54` | `saved` отдаёт внутренний массив | info | оставлено |
+| — | `gen/kinds/operation.ts:640-648` | фейк из `gen uc` для порта с `find*` не компилируется до дописывания | info | задокументировано, оставлено |
+| — | u7-school `debt.md` DEBT-40 | у `wish` нет `wish.repo.fake.ts` | info | создаст `gen uc` при первом касании |
+| — | `guides/aggregate.md:15`, `state.md:16`, `README.md:73` | перечни `gen aggregate` без фейка | info | оставлено |
