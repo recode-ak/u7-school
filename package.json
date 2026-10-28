@@ -14,7 +14,7 @@
     "@biomejs/biome": "^2.5.13",
     "@types/bun": "latest",
     "@types/markdown-it": "^14.2.0",
-    "dmg-core": "workspace:*"
+    "dmg-core": "file:../../tools/dmg/dmg-core"
   },
   "private": true,
   "scripts": {
@@ -51,7 +51,8 @@
   },
   "type": "module",
   "workspaces": [
-    "platform/*",
+    "platform/app",
+    "platform/core",
     "domain",
     "modules/*",
     "runners/*",

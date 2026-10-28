@@ -15,7 +15,7 @@
     "@u7-scl/app": "workspace:*",
     "@u7-scl/core": "workspace:*",
     "@u7-scl/domain": "workspace:*",
-    "dmg-core": "workspace:*"
+    "dmg-core": "file:../../../../tools/dmg/dmg-core"
   },
   "exports": {
     ".": "./src/index.ts",

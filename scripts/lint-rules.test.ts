@@ -41,7 +41,7 @@ const fixtures = [...new Bun.Glob('**/*.txt').scanSync(FIXTURES)].map(
   },
 );
 
-const DMG_CORE = 'platform/dmg-core';
+const DMG_CORE = 'node_modules/dmg-core';
 
 let work: string;
 let diagnostics: Diagnostic[];

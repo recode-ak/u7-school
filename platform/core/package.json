@@ -26,6 +26,6 @@
     "#shared-legacy/*": "./src/shared/*.ts"
   },
   "dependencies": {
-    "dmg-core": "workspace:*"
+    "dmg-core": "file:../../../../tools/dmg/dmg-core"
   }
 }

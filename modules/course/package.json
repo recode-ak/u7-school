@@ -16,7 +16,7 @@
     "@u7-scl/core": "workspace:*",
     "@u7-scl/domain": "workspace:*",
     "@u7-scl/user": "workspace:*",
-    "dmg-core": "workspace:*",
+    "dmg-core": "file:../../../../tools/dmg/dmg-core",
     "valibot": "^1.0.0"
   },
   "exports": {

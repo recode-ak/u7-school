@@ -18,7 +18,7 @@
     "@u7-scl/questionnaire": "workspace:*",
     "@u7-scl/stream": "workspace:*",
     "@u7-scl/user": "workspace:*",
-    "dmg-core": "workspace:*"
+    "dmg-core": "file:../../../../tools/dmg/dmg-core"
   },
   "exports": {
     ".": "./src/index.ts",
