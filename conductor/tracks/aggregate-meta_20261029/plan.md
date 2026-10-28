@@ -4,7 +4,7 @@
 
 ## Фаза 0: Базовая линия
 
-- [~] Task: Зафиксировать базовую линию (`bun test` pass/fail в u7-school и в пакете, `bun run e2e` пакета) в черновике `summary.md`
+- [x] Task: Зафиксировать базовую линию (`bun test` pass/fail в u7-school и в пакете, `bun run e2e` пакета) в черновике `summary.md` f5d9a4f
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 ## Фаза 1: Решение D-57
