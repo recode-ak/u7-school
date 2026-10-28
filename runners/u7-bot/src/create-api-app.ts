@@ -40,7 +40,11 @@ import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
 import type { BotConfig } from './config';
 import type { U7BotAppMeta } from './core/u7-bot-app-meta';
-import { createDmgAppContext, createDmgModules } from './create-dmg-modules';
+import {
+  createDmgAppContext,
+  createDmgModules,
+  type DmgPlatform,
+} from './create-dmg-modules';
 
 /**
  * Результат фабрики ApiApp — только доменный слой.
@@ -61,8 +65,14 @@ export interface ApiAppBundle {
  * Создаёт ApiApp и все доменные зависимости (модули, репозитории, фасады).
  *
  * НЕ создаёт контроллеры — это ответственность createUiApp().
+ * `dmg.replay` — отсев повторов команд DMG (D-56): бот передаёт файловый,
+ * иначе — в памяти процесса.
  */
-export function createApiApp(config: BotConfig, logger: Logger): ApiAppBundle {
+export function createApiApp(
+  config: BotConfig,
+  logger: Logger,
+  dmg: Pick<DmgPlatform, 'replay'> = {},
+): ApiAppBundle {
   const db = new BaseJsonDb();
 
   const mentors =
@@ -168,6 +178,7 @@ export function createApiApp(config: BotConfig, logger: Logger): ApiAppBundle {
       logger: appLogger,
       mode: config.mode,
       oplogDir: `${config.dbDir}/oplog`,
+      replay: dmg.replay,
     }),
     {
       user: userFacade,

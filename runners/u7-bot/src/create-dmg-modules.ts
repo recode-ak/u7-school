@@ -24,6 +24,7 @@ import {
   JsonlOperationLog,
   ModuleFacade,
   ModuleFacades,
+  type ReplayStore,
 } from 'dmg-core/app';
 
 /** Платформа DMG поверх legacy-приложения: шина, логгер, режим, каталог лога операций. */
@@ -33,6 +34,8 @@ export type DmgPlatform = {
   readonly mode: AppMode;
   /** Каталог лога операций — `<DB_DIR>/oplog` (TR-13 п. 10), в тестах — временный. */
   readonly oplogDir: string;
+  /** Отсев повторов команд (D-56); не задан — в памяти процесса. Бот — файловый `<DB_DIR>/replay`. */
+  readonly replay?: ReplayStore;
 };
 
 /** Legacy-фасады, над которыми собраны внешние DMG-модули зависимостей (TR-11). */
@@ -47,10 +50,11 @@ export type DmgLegacyFacades = {
  * Контекст приложения для модулей DMG на время сосуществования: шина DMG
  * поверх legacy-шины (входящие legacy-события зависимостей — по картам
  * `inbound`, D-37), outbox и inbox в процессе (D-47), часы legacy, логгер
- * приложения, JSONL-лог операций, отсев повторов команд в памяти (D-56).
+ * приложения, JSONL-лог операций, отсев повторов команд (D-56) —
+ * переданный или в памяти.
  */
 export function createDmgAppContext(platform: DmgPlatform): AppContext {
-  const { legacyBus, logger, mode, oplogDir } = platform;
+  const { legacyBus, logger, mode, oplogDir, replay } = platform;
   const bus = legacyEventBus(legacyBus, {
     inbound: [...streamLegacyInbound, ...questionnaireLegacyInbound],
     onInvalid: (message) => logger.warn('legacy-event-bus', message),
@@ -64,7 +68,7 @@ export function createDmgAppContext(platform: DmgPlatform): AppContext {
     logger,
     mode,
     oplog: new JsonlOperationLog(oplogDir),
-    replay: new InProcReplayStore({ clock }),
+    replay: replay ?? new InProcReplayStore({ clock }),
   };
 }
 

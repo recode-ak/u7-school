@@ -11,7 +11,14 @@ import {
   type QuestionnairePool,
 } from '@u7-scl/domain/questionnaire';
 import { StreamAr, StudentAr } from '@u7-scl/domain/stream';
-import type { OperationRecord } from 'dmg-core/app';
+import { CancelWishUcDef, WishModuleDef } from '@u7-scl/domain/wish/contract';
+import { UserCaller } from 'dmg-core';
+import {
+  type OperationRecord,
+  type ReplayClaim,
+  type ReplayStore,
+  Trace,
+} from 'dmg-core/app';
 import * as v from 'valibot';
 import { type BotConfig, BotConfigSchema } from './config';
 import { createApiApp } from './create-api-app';
@@ -74,6 +81,48 @@ describe('create-api-app (smoke: сборка с модулем peer-review)', (
       ACTOR,
     );
     expect(campaigns).toEqual([]);
+  });
+});
+
+// ══ Отсев повторов команд DMG: хранилище даёт раннер (D-56, Ф4 трека dmg-cleanup) ══
+
+describe('create-api-app: хранилище отсева повторов команд', () => {
+  let dir: string;
+
+  beforeAll(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'u7-api-app-replay-'));
+  });
+
+  afterAll(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test('команда с requestId клиента идёт через переданное хранилище', async () => {
+    const claimed: string[] = [];
+    const replay: ReplayStore = {
+      claim: async (key): Promise<ReplayClaim> => {
+        claimed.push(key);
+        return { kind: 'claimed', token: 't' };
+      },
+      complete: async () => {},
+      release: async () => {},
+    };
+    const bundle = createApiApp(makeConfig(dir), new ConsoleLogger(), {
+      replay,
+    });
+
+    await bundle.apiApp.dispatch(
+      WishModuleDef,
+      CancelWishUcDef.command({ kind: 'course', courseId: COURSE }),
+      new UserCaller(ACTOR),
+      Trace.fromRequest({
+        requestId: 'tg:1#1',
+        channel: { name: 'telegram', visitorId: '1' },
+      }),
+    );
+
+    expect(claimed).toHaveLength(1);
+    expect(claimed[0]).toContain('tg:1#1');
   });
 });
 

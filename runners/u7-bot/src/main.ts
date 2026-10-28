@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { CompositeLogger } from '@u7-scl/app/infra';
+import { FileReplayStore } from '@u7-scl/core/infra';
+import { legacyClock } from '@u7-scl/core/legacy-bridge';
 import {
   ConsoleLogger,
   type Logger,
@@ -54,7 +56,13 @@ try {
 
 const bot = createBot(config.botToken);
 
-const apiBundle = createApiApp(config, logger);
+// Отсев повторов команд DMG (D-56) переживает рестарт: Telegram повторно
+// доставляет апдейт, не дождавшись ответа упавшего процесса.
+const replay = await FileReplayStore.open({
+  dir: `${config.dbDir}/replay`,
+  clock: legacyClock(),
+});
+const apiBundle = createApiApp(config, logger, { replay });
 const uiBundle = await createUiApp(apiBundle.apiApp, apiBundle, {
   botAdminUuid: config.botAdminUuid,
   adminTelegramIds: config.adminTelegramIds,

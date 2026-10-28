@@ -1,4 +1,5 @@
 export { BaseJsonDb } from './base-json-db';
+export { FileReplayStore } from './file-replay-store';
 export { InProcEventBus } from './in-proc-event-bus';
 export { InProcJobExecutor } from './in-proc-job-executor';
 export {
