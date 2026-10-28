@@ -27,13 +27,13 @@ type WireLayout = {
 const layouts = (scope: string): Record<Profile, WireLayout> => ({
   single: {
     contract: 'src/domain/todo/contract.ts',
-    uc: 'src/domain/todo/task/uc/complete-task.uc.ts',
+    uc: 'src/domain/todo/task/uc/create-task.uc.ts',
     runner: 'src/runner/runner-cli.ts',
     contractFrom: '../domain/todo/contract',
   },
   monorepo: {
     contract: 'domain/src/todo/contract.ts',
-    uc: 'domain/src/todo/task/uc/complete-task.uc.ts',
+    uc: 'domain/src/todo/task/uc/create-task.uc.ts',
     runner: 'runners/cli/src/runner-cli.ts',
     contractFrom: `@${scope}/domain/todo/contract`,
   },
@@ -52,18 +52,18 @@ class ConsumerWiring {
     this.patch(
       l.contract,
       '/** Кто: сборка приложения',
-      "/** Кто: раннер. Зачем: отметить задачу выполненной. */\nexport { CompleteTaskUcDef } from './task/uc/complete-task.uc';\n/** Кто: сборка приложения",
+      "/** Кто: раннер. Зачем: создать задачу. */\nexport { CreateTaskUcDef } from './task/uc/create-task.uc';\n/** Кто: сборка приложения",
     );
     // Резолвер каркаса — всегда гость: UC открыт и ему.
     this.patch(l.uc, "callers: ['user'],", "callers: ['guest', 'user'],");
     this.prepend(
       l.runner,
-      `import { CompleteTaskUcDef, TodoModuleDef } from '${l.contractFrom}';\n`,
+      `import { CreateTaskUcDef, TodoModuleDef } from '${l.contractFrom}';\n`,
     );
     this.patch(
       l.runner,
       "    if (command !== 'whoami') {",
-      `    if (command === 'complete-task') {
+      `    if (command === 'create-task') {
       const trace = Trace.fromRequest({
         requestId: crypto.randomUUID(),
         channel: { name: 'cli' },
@@ -71,7 +71,7 @@ class ConsumerWiring {
       const caller = await this.app.callers.resolve(undefined, trace);
       const res = await this.app.api.dispatch(
         TodoModuleDef,
-        CompleteTaskUcDef.command({}),
+        CreateTaskUcDef.command({}),
         caller,
         trace,
       );

@@ -146,7 +146,7 @@ test('длинный репозиторий в app.ts — аргумент на 
   ]);
 });
 
-test('длинное имя: импорт JSON-репозитория в app.ts — по имени на строку', () => {
+test('длинное имя: импорт JSON-репозитория в app.ts — одна строка (одно имя biome не переносит)', () => {
   const mono = new GenLayout(
     {
       domain: 'domain/src/{m}',
@@ -164,10 +164,6 @@ test('длинное имя: импорт JSON-репозитория в app.ts 
     ),
   ).edits.filter((e) => e.path === '/r/app/src/app.ts');
   expect(imp?.line).toBe(
-    [
-      'import {',
-      '  DeliveryChannelPreferencesJsonRepo,',
-      "} from '@acme/notification-settings';",
-    ].join('\n'),
+    "import { DeliveryChannelPreferencesJsonRepo } from '@acme/notification-settings';",
   );
 });

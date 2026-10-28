@@ -6,9 +6,10 @@
  */
 import { join } from 'node:path';
 import type { GenArgs } from '../cli';
-import { sortImports } from '../import-order';
+import { namedExport, namedImport, sortImports } from '../import-order';
 import { toCamel, toPascal } from '../naming';
 import type { GenPlan } from '../plan';
+import { fit, list } from '../wrap';
 import { AppWiring } from './app-wiring';
 
 export function planAppModule(args: GenArgs): GenPlan {
@@ -18,6 +19,10 @@ export function planAppModule(args: GenArgs): GenPlan {
   const src = args.layout.appDir(m);
   const domain = args.layout.domainImport(m, src);
   const wiring = new AppWiring(args);
+
+  const typeArgs = [`typeof ${P}ModuleDef`, `${P}Deps`, 'Identified'];
+  const ctorArgs = [`${P}ModuleDef`, `${c}Map`, 'deps'];
+  const factory = [`create${P}Module`, `type ${P}Deps`];
 
   const moduleSrc = `${sortImports([
     `import { ${P}ModuleDef } from '${domain}';`,
@@ -42,28 +47,27 @@ export const ${c}Map = {
   jobs: {
     // gen:defs:jobs
   },
-} satisfies ModuleMap<typeof ${P}ModuleDef, ${P}Deps, Identified>;
+${list('', '} satisfies ModuleMap<', typeArgs, '>;', { comma: false })}
 
 /** Модуль ${m} с зависимостями — для сборки приложения. */
-export function create${P}Module(deps: ${P}Deps) {
-  return new ModuleFromDef<typeof ${P}ModuleDef, ${P}Deps, Identified>(
-    ${P}ModuleDef,
-    ${c}Map,
-    deps,
-  );
+${list('', `export function create${P}Module(`, [`deps: ${P}Deps`], ') {')}
+${fit(
+  `  return new ModuleFromDef<${typeArgs.join(', ')}>(\n${ctorArgs.map((x) => `    ${x},`).join('\n')}\n  );`,
+  `${list('  ', 'return new ModuleFromDef<', typeArgs, '>', { comma: false })}${list('  ', '(', ctorArgs, ');').trimStart()}`,
+)}
 }
 `;
 
   const testSrc = `import { describe, expect, it } from 'bun:test';
 import { ModuleFacades } from 'dmg-core/app';
 import { testAppContext } from 'dmg-core/testing';
-import { create${P}Module, type ${P}Deps } from './${m}.module';
+${namedImport(factory, `./${m}.module`)}
 
 describe('create${P}Module', () => {
   it('собирает модуль по карте Def', () => {
     const { app } = testAppContext();
-    const deps = { app, facades: new ModuleFacades() } as ${P}Deps;
-    expect(create${P}Module(deps).def.name).toBe('${m}');
+${list('    ', 'const deps = {', ['app', 'facades: new ModuleFacades()'], `} as ${P}Deps;`, { space: true })}
+${list('    ', `expect(create${P}Module(deps).def.name).toBe(`, [`'${m}'`], ');')}
   });
 });
 `;
@@ -71,7 +75,7 @@ describe('create${P}Module', () => {
   // Вход пополняет `gen aggregate` (репозитории) по маркеру.
   const indexSrc = `// Вход прикладного пакета ${m} для корня сборки (ARC-07, D-52): фабрика
 // модуля и репозитории. UC, ER и Job снаружи не видны.
-export { create${P}Module, type ${P}Deps } from './${m}.module';
+${namedExport(factory, `./${m}.module`)}
 // gen:exports
 `;
 

@@ -419,9 +419,12 @@ export class DefChecker {
     return Object.values<AnyErrorDef>(CoreErrors).includes(e);
   }
 
-  /** `studentProgress` → `STUDENT_PROGRESS`. */
+  /** `studentProgress`, `student-progress` → `STUDENT_PROGRESS` (ERR-04). */
   private upperSnake(name: string): string {
-    return name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase();
+    return name
+      .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+      .replaceAll('-', '_')
+      .toUpperCase();
   }
 
   /**

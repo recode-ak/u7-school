@@ -80,3 +80,13 @@ CLI раннера в каркасе (оба профиля) получает к
 - Зависимость пакета модуля — правка JSON (`PackageManifest`); импорты — `ImportBlock` (порядок и слияние как у biome; конфликт имён — «Вставь вручную» с причиной, без алиаса).
 - Файл данных репозитория — `<m>.<a>.json` (уникально в приложении). `arch-check.ts`: `export const modules` — форма biome organizeImports (маркер под импортами только перед `export`).
 - Ревью: error нет; 4 warn (длинные импорты, коллизия проверки присутствия и имени файла данных, ложный путь без `compositionRoot`, R1 в запасной подсказке) и info — исправлены автором, гейт/`e2e`/`check` зелёные.
+
+### Отчёты: шаг 2 (api-author, Opus; reviewer)
+
+- UC `create`/`create-*` — рабочая заготовка (`<A>Ar.create`, `uow.register`, `emits: [created]`, output `<a>Id`); прочие — `load` по `findById` + `NOT_FOUND`, `emits: []` с TODO (MAN-06). Сигнатура `execute` типизирована, комментарий к `callers` про гостя. Тест — с `<A>JsonRepo` во временном каталоге, без TODO.
+- Подсказка MAN-06 в `notes`: `gen aggregate` всегда, `gen uc` не-create и `gen er` — если UC создания нет.
+- Переносы длинных строк в форме biome — `src/gen/wrap.ts` (`fit`, `list`); срез с длинными именами в `src/gen/e2e.test.ts`. Попутно: `namedImport` не переносит одно имя; порядок путей импорта как у biome (`pathKey`).
+- Отклонения: `biome.json` каркаса исключает `data` (UC создания пишет JSON, `check` краснел после запуска раннера); в e2e пакета и `scripts/gen-e2e.test.ts` добавлен UC создания.
+- ERR-04: `ArchChecker` ждал префикс с дефисом для агрегата `study-group` — исправлено на UPPER_SNAKE.
+- Ревью: error нет; warn (молчание о MAN-06) и info исправлены. Гейт/`check`/`e2e` зелёные.
+- Замечено: `scripts/gen-e2e.test.ts` пишет срез в настоящие каталоги репо — гейт один раз упал с `ENOENT reading …/domain/src/genprobe/…test.ts` (гонка с обнаружением тестов), повтор зелёный. Было до трека; вынести вопрос Нурболату.

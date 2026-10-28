@@ -108,3 +108,9 @@ test('правки: Def в паспорт модуля и экспорты в in
     },
   ]);
 });
+
+test('MAN-06: подсказка — событие created публикует UC создания', () => {
+  expect(plan.notes).toEqual([
+    'Событие created публикует UC создания (MAN-06): dmg-core gen uc stream.student create',
+  ]);
+});

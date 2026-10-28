@@ -414,6 +414,8 @@ describe('monorepo: срез gen подключает модуль без руч
     for (const step of [
       ['module', 'todo'],
       ['aggregate', 'todo.task'],
+      // Создание публикует `created` (MAN-06), операция — над существующим.
+      ['uc', 'todo.task', 'create-task'],
       ['uc', 'todo.task', 'complete-task'],
     ]) {
       const res = await cli.gen(project, [...step, '--write']);

@@ -194,6 +194,13 @@ describe('ProjectScaffold single: прочие конфиги', () => {
     );
   });
 
+  it('biome.json — каталог данных вне проверки: запуск раннера не ломает check', () => {
+    expect(json('biome.json').files).toEqual({
+      ignoreUnknown: true,
+      includes: ['**', '!!data'],
+    });
+  });
+
   it('biome.json — схема версии biome пакета', () => {
     expect(json('biome.json').$schema).toBe(
       `https://biomejs.dev/schemas/${pkg.devDependencies['@biomejs/biome']}/schema.json`,

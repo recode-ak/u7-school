@@ -11,7 +11,7 @@
 # 4. gen создаёт модуль, тесты заготовок зелёные на установленном пакете.
 # 5. Профили single и monorepo: init --profile → gen module/aggregate/uc
 #    (модуль подключает сам gen) → правки автора (consumer-wire.ts:
-#    контракт, callers, команда раннера) → раннер вызывает UC →
+#    контракт, callers, команда раннера) → раннер вызывает UC создания →
 #    bun run check проекта зелёный.
 set -euo pipefail
 
@@ -105,6 +105,7 @@ rm -r lint biome.json
 echo "e2e: gen на установленном пакете"
 bunx dmg-core gen module todo --write >/dev/null
 bunx dmg-core gen aggregate todo.task --write >/dev/null
+bunx dmg-core gen uc todo.task create-task --write >/dev/null
 bunx dmg-core gen uc todo.task complete-task --write >/dev/null
 bun test src
 
@@ -138,6 +139,7 @@ profile_e2e() {
     "$profile — bun run check красный сразу после init" bun run check
   bunx dmg-core gen module todo --write >/dev/null
   bunx dmg-core gen aggregate todo.task --write >/dev/null
+  bunx dmg-core gen uc todo.task create-task --write >/dev/null
   bunx dmg-core gen uc todo.task complete-task --write >/dev/null
   # Подключение модуля генератором — сразу в форме biome, без format.
   run_logged "$WORK/$profile-gen-lint.log" \
@@ -147,13 +149,13 @@ profile_e2e() {
   run_logged "$WORK/$profile-format.log" "$profile — bun run format упал" \
     bun run format
   local out
-  out="$(APP_DATA_DIR=data bun "$main" complete-task)"
-  if [ "$out" != '{"ok":true,"value":{}}' ]; then
+  out="$(APP_DATA_DIR=data bun "$main" create-task)"
+  if ! grep -qE '^\{"ok":true,"value":\{"taskId":"[0-9a-f-]{36}"\}\}$' <<<"$out"; then
     echo "e2e: $profile — раннер вернул $out" >&2
     exit 1
   fi
-  if ! grep -q '"op":"completeTask"' data/oplog/*.jsonl; then
-    echo "e2e: $profile — нет записи completeTask в oplog" >&2
+  if ! grep -q '"op":"createTask"' data/oplog/*.jsonl; then
+    echo "e2e: $profile — нет записи createTask в oplog" >&2
     exit 1
   fi
   run_logged "$WORK/$profile-check.log" "$profile — bun run check красный" \

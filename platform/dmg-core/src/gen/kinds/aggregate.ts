@@ -1,8 +1,11 @@
 /** `gen aggregate <m>.<agg>` — домен агрегата (naming.md §2). */
 import { join } from 'node:path';
 import type { GenArgs } from '../cli';
+import { namedExport, namedImport } from '../import-order';
 import { toCamel, toPascal, toUpperSnake } from '../naming';
 import type { GenPlan } from '../plan';
+import { fit, list } from '../wrap';
+import { createdNote } from './operation';
 
 export function planDomainAggregate(args: GenArgs): GenPlan {
   const { module: m, aggregate: a = '' } = args;
@@ -12,6 +15,17 @@ export function planDomainAggregate(args: GenArgs): GenPlan {
   const dir = join(root, a);
   const modulePath = join(root, `${m}.module.ts`);
   const indexPath = join(root, 'index.ts');
+
+  // Поле payload события и ошибки на уровне \`pad\` (внутри \`created\` и
+  // \`NOT_FOUND\`), с переносом по ширине.
+  const payload = (pad: string) =>
+    list(
+      `${pad}  `,
+      'payload: v.object({',
+      [`${idField}: F.uuid('агрегата')`],
+      '}),',
+      { space: true },
+    );
 
   const stateSrc = `import { BaseEntityFields, F } from 'dmg-core';
 import * as v from 'valibot';
@@ -23,32 +37,36 @@ export const ${P}State = v.object({
   status: F.picklist(['active'], 'Статус'),
 });
 
-export type ${P}State = v.InferOutput<typeof ${P}State>;
+${list('', `export type ${P}State = v.InferOutput<`, [`typeof ${P}State`], '>;', { comma: false })}
 `;
 
   const eventsSrc = `import { EventDef, F } from 'dmg-core';
 import * as v from 'valibot';
 
-export const ${P}Events = EventDef.define('${m}.${a}', {
-  created: {
-    label: 'TODO: событие создания',
-    description: 'TODO: когда возникает событие',
-    payload: v.object({ ${idField}: F.uuid('агрегата') }),
-  },
-});
+${defineWithKey(`export const ${P}Events = EventDef.define`, `'${m}.${a}'`, [
+  'created: {',
+  "  label: 'TODO: событие создания',",
+  "  description: 'TODO: когда возникает событие',",
+  payload,
+  '},',
+])}
 `;
 
   const errorsSrc = `import { ErrorDef, F } from 'dmg-core';
 import * as v from 'valibot';
 
-export const ${P}Errors = ErrorDef.define('${toUpperSnake(a)}', {
-  NOT_FOUND: {
-    kind: 'not_found',
-    label: 'TODO: агрегат не найден',
-    description: 'TODO: когда возникает ошибка',
-    payload: v.object({ ${idField}: F.uuid('агрегата') }),
-  },
-});
+${defineWithKey(
+  `export const ${P}Errors = ErrorDef.define`,
+  `'${toUpperSnake(a)}'`,
+  [
+    'NOT_FOUND: {',
+    "  kind: 'not_found',",
+    "  label: 'TODO: агрегат не найден',",
+    "  description: 'TODO: когда возникает ошибка',",
+    payload,
+    '},',
+  ],
+)}
 `;
 
   const arSrc = `import {
@@ -76,19 +94,19 @@ export const ${P}ArDef = AggregateDef.define({
   errors: ${P}Errors,
 });
 
-type ${P}Event = EventsOf<typeof ${P}ArDef>;
+${list('', `type ${P}Event = EventsOf<`, [`typeof ${P}ArDef`], '>;', { comma: false })}
 
 export type Create${P} = {
   readonly uuid: string;
 };
 
-export class ${P}Ar extends Aggregate<typeof ${P}ArDef> {
-  private constructor(state: ${P}State, events?: readonly ${P}Event[]) {
+${list('', `export class ${P}Ar extends Aggregate<`, [`typeof ${P}ArDef`], '> {', { comma: false })}
+${list('  ', 'private constructor(', [`state: ${P}State`, `events?: readonly ${P}Event[]`], ') {')}
     super(${P}ArDef, state, events);
   }
 
-  static create(input: Create${P}, at: Timestamp): Result<${P}Ar, never> {
-    const created = ${P}Events.created.make({ ${idField}: input.uuid });
+${list('  ', 'static create(', [`input: Create${P}`, 'at: Timestamp'], `): Result<${P}Ar, never> {`)}
+${list('    ', `const created = ${P}Events.created.make({`, [`${idField}: input.uuid`], '});', { space: true })}
     const state: ${P}State = {
       ...${P}Ar.newState(input.uuid, at),
       status: 'active',
@@ -96,7 +114,7 @@ export class ${P}Ar extends Aggregate<typeof ${P}ArDef> {
     return ok(new ${P}Ar(state, [created]));
   }
 
-  static restore(snapshot: ${P}State): ${P}Ar {
+${list('  ', 'static restore(', [`snapshot: ${P}State`], `): ${P}Ar {`)}
     return new ${P}Ar(snapshot);
   }
 }
@@ -106,7 +124,10 @@ export class ${P}Ar extends Aggregate<typeof ${P}ArDef> {
 import type { ${P}Ar } from './${a}.ar';
 
 /** Контекст правил: агрегат, над которым действие. */
-export type ${P}Ctx = { readonly ${toCamel(a)}: ReadonlyAr<${P}Ar> };
+${fit(
+  `export type ${P}Ctx = { readonly ${toCamel(a)}: ReadonlyAr<${P}Ar> };`,
+  `export type ${P}Ctx = {\n  readonly ${toCamel(a)}: ReadonlyAr<${P}Ar>;\n};`,
+)}
 
 export const ${P}Policy = PolicyDef.define({
   name: '${a}',
@@ -117,7 +138,7 @@ export const ${P}Policy = PolicyDef.define({
       name: 'canView',
       label: 'TODO: кто может смотреть',
       denyMessage: 'TODO: почему отказано',
-      check: (_subject: { readonly uuid: string }, _ctx: ${P}Ctx) => true,
+${list('      ', 'check: (', ['_subject: { readonly uuid: string }', `_ctx: ${P}Ctx`], ') => true,')}
     }),
   },
 });
@@ -132,7 +153,7 @@ const T0 = Date.UTC(2026, 9, 1);
 
 describe('${P}Ar.create', () => {
   it('активный агрегат и событие created', () => {
-    const ar = expectOk(${P}Ar.create({ uuid: ID }, T0));
+${list('    ', 'const ar = expectOk(', [`${P}Ar.create({ uuid: ID }, T0)`], ');', { comma: true })}
     expect(ar.snapshot()).toEqual({
       uuid: ID,
       status: 'active',
@@ -141,7 +162,7 @@ describe('${P}Ar.create', () => {
       version: 0,
     });
     expect(ar.pullEvents()).toEqual([
-      { name: '${m}.${a}.created', payload: { ${idField}: ID } },
+${list('      ', '{', [`name: '${m}.${a}.created'`, `payload: { ${idField}: ID }`], '},', { space: true })}
     ]);
   });
 });
@@ -150,7 +171,7 @@ describe('${P}Ar.create', () => {
   const policyTestSrc = `import { describe, expect, it } from 'bun:test';
 import { allowed } from 'dmg-core';
 import { ${P}Ar } from './${a}.ar';
-import { type ${P}Ctx, ${P}Policy } from './${a}.policy';
+${namedImport([`type ${P}Ctx`, `${P}Policy`], `./${a}.policy`)}
 
 type User = { uuid: string };
 
@@ -170,7 +191,7 @@ const ctx: ${P}Ctx = {
 
 describe('${P}Policy.canView', () => {
   it('пользователь — allowed', () => {
-    expect(${P}Policy.rules.canView.evaluate(user, ctx)).toEqual(allowed);
+${expectEqual('    ', `${P}Policy.rules.canView.evaluate(user, ctx)`, 'allowed')}
   });
 });
 `;
@@ -206,10 +227,44 @@ describe('${P}Policy.canView', () => {
         marker: '// gen:defs:aggregates',
         line: `    ${P}ArDef,`,
       },
-      idx(`export { ${P}Ar, ${P}ArDef } from './${a}/${a}.ar';`),
+      idx(namedExport([`${P}Ar`, `${P}ArDef`], `./${a}/${a}.ar`)),
       idx(`export { ${P}Errors } from './${a}/${a}.errors';`),
       idx(`export { ${P}Events } from './${a}/${a}.events';`),
-      idx(`export { type ${P}Ctx, ${P}Policy } from './${a}/${a}.policy';`),
+      idx(namedExport([`type ${P}Ctx`, `${P}Policy`], `./${a}/${a}.policy`)),
     ],
+    notes: [createdNote(m, a)],
   };
+}
+
+/**
+ * \`export const X = Def.define('<ключ>', { … });\` в форме biome: с объектом,
+ * прижатым к скобке, если шапка влезает, иначе — аргументы в столбик.
+ * \`body\` — строки объекта без внешнего отступа; функция — строка, которой
+ * нужен отступ (перенос по ширине на своём уровне).
+ */
+function defineWithKey(
+  head: string,
+  key: string,
+  body: readonly (string | ((pad: string) => string))[],
+): string {
+  const lines = (pad: string) =>
+    body
+      .map((line) => (typeof line === 'string' ? `${pad}${line}` : line(pad)))
+      .join('\n');
+  return fit(
+    `${head}(${key}, {\n${lines('  ')}\n});`,
+    `${head}(\n  ${key},\n  {\n${lines('    ')}\n  },\n);`,
+  );
+}
+
+/**
+ * \`expect(<actual>).toEqual(<expected>);\` в форме biome: в строку; иначе
+ * переносится аргумент последнего вызова, а если и так не влезает — первого.
+ */
+function expectEqual(pad: string, actual: string, expected: string): string {
+  return fit(
+    `${pad}expect(${actual}).toEqual(${expected});`,
+    `${pad}expect(${actual}).toEqual(\n${pad}  ${expected},\n${pad});`,
+    `${pad}expect(\n${pad}  ${actual},\n${pad}).toEqual(${expected});`,
+  );
 }

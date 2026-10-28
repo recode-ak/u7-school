@@ -6,9 +6,10 @@
  */
 import { join } from 'node:path';
 import type { GenArgs } from '../cli';
-import { sortImports } from '../import-order';
+import { namedImport, sortImports } from '../import-order';
 import { toCamel, toPascal } from '../naming';
 import type { GenPlan } from '../plan';
+import { fit, list } from '../wrap';
 import { AppWiring } from './app-wiring';
 
 /**
@@ -30,19 +31,32 @@ export function planAppAggregate(args: GenArgs): GenPlan {
   const modulePath = join(src, `${m}.module.ts`);
   const indexPath = join(src, 'index.ts');
 
+  /** Сигнатура \`findById\` с отступом \`pad\` (у класса — \`async\`). */
+  const findById = (head: string, end: string) => {
+    const pad = head.replace(/\S.*$/, '');
+    const name = head.trimStart();
+    return list(
+      pad,
+      `${name}findById(`,
+      ['uuid: string'],
+      `): Promise<${P}Ar | undefined>${end}`,
+    );
+  };
+
   const repoSrc = `${sortImports([
     `import type { ${P}Ar } from '${domain(a)}';`,
     "import type { Repository } from 'dmg-core/app';",
   ])}
 
 /** Порт репозитория: принимает и возвращает Ar (API-03). */
-export type ${P}Repo = Repository<${P}Ar> & {
-  findById(uuid: string): Promise<${P}Ar | undefined>;
-};
+${fit(
+  `export type ${P}Repo = Repository<${P}Ar> & {\n${findById('  ', ';')}\n};`,
+  `export type ${P}Repo =\n  Repository<${P}Ar> & {\n${findById('    ', ';')}\n  };`,
+)}
 `;
 
   const jsonRepoSrc = `${sortImports([
-    `import { ${P}Ar, ${P}ArDef } from '${domain('infra')}';`,
+    namedImport([`${P}Ar`, `${P}ArDef`], domain('infra')),
     "import { type StoredRecord, VersionedRepository } from 'dmg-core/app';",
     "import * as v from 'valibot';",
     `import type { ${P}Repo } from '../${a}/${a}.repo';`,
@@ -62,7 +76,7 @@ ${classHeader(`${P}JsonRepo`, `VersionedRepository<${P}Ar>`, `${P}Repo`)}
     super();
   }
 
-  async findById(uuid: string): Promise<${P}Ar | undefined> {
+${findById('  async ', ' {')}
     const row = (await this.rows()).find((r) => r.uuid === uuid);
     return row && ${P}Ar.restore(row);
   }
@@ -85,6 +99,19 @@ ${classHeader(`${P}JsonRepo`, `VersionedRepository<${P}Ar>`, `${P}Repo`)}
 }
 `;
 
+  const newRepo = list(
+    '    ',
+    `const repo = new ${P}JsonRepo(`,
+    [`join(dir, '${a}.json')`],
+    ');',
+  );
+  const createAr = list(
+    '    ',
+    'const ar = expectOk(',
+    [`${P}Ar.create({ uuid: ID }, T0)`],
+    ');',
+  );
+
   const testSrc = `${sortImports([
     "import { afterEach, beforeEach, describe, expect, it } from 'bun:test';",
     "import { mkdtempSync, rmSync } from 'node:fs';",
@@ -97,32 +124,33 @@ ${classHeader(`${P}JsonRepo`, `VersionedRepository<${P}Ar>`, `${P}Repo`)}
   ])}
 
 const ID = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
+const T0 = Date.UTC(2026, 9, 1);
 const OTHER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
 
 let dir: string;
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), '${a}-repo-'));
+${list('  ', 'dir = mkdtempSync(', [`join(tmpdir(), '${a}-repo-')`], ');')}
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 describe('${P}JsonRepo', () => {
   it('сохраняет агрегат и находит его по uuid', async () => {
-    const repo = new ${P}JsonRepo(join(dir, '${a}.json'));
-    const ar = expectOk(${P}Ar.create({ uuid: ID }, Date.UTC(2026, 9, 1)));
+${newRepo}
+${createAr}
     await repo.save(ar);
     expect((await repo.findById(ID))?.snapshot()).toEqual(ar.snapshot());
   });
 
   it('запись по устаревшей версии — VersionConflict', async () => {
-    const repo = new ${P}JsonRepo(join(dir, '${a}.json'));
-    const ar = expectOk(${P}Ar.create({ uuid: ID }, Date.UTC(2026, 9, 1)));
+${newRepo}
+${createAr}
     await repo.save(ar);
-    const stale = ${P}Ar.restore({ ...ar.snapshot(), version: 1 });
+${list('    ', `const stale = ${P}Ar.restore({`, ['...ar.snapshot()', 'version: 1'], '});', { space: true })}
     await expect(repo.save(stale)).rejects.toBeInstanceOf(VersionConflict);
   });
 
   it('нет записи — undefined', async () => {
-    const repo = new ${P}JsonRepo(join(dir, '${a}.json'));
+${newRepo}
     expect(await repo.findById(OTHER)).toBeUndefined();
   });
 });

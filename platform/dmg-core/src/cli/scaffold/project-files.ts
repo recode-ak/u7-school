@@ -185,7 +185,9 @@ export class ProjectFiles {
       $schema: `https://biomejs.dev/schemas/${version}/schema.json`,
       root: true,
       vcs: { enabled: false },
-      files: { ignoreUnknown: true },
+      // Каталог данных (`APP_DATA_DIR=data`, как в `.gitignore`) пишет
+      // приложение — не исходники проекта.
+      files: { ignoreUnknown: true, includes: ['**', '!!data'] },
       formatter: { enabled: true, indentStyle: 'space', indentWidth: 2 },
       linter: { enabled: true, rules: { preset: 'recommended' } },
       javascript: { formatter: { quoteStyle: 'single' } },

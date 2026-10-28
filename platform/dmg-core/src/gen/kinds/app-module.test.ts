@@ -161,7 +161,7 @@ test('своя раскладка без gen.compositionRoot — правок н
   expect(text).not.toContain('src/app/app.ts');
 });
 
-test('длинные имена: импорты Def и фабрики — в форме biome (по имени на строку)', () => {
+test('длинные имена: импорт с одним именем biome не переносит — одна строка', () => {
   const p = planAppModule(
     parseArgs(
       ['module', 'notification-settings'],
@@ -182,17 +182,9 @@ test('длинные имена: импорты Def и фабрики — в ф�
     .filter((e) => e.marker === '// gen:imports')
     .map((e) => e.line);
   expect(imports).toEqual([
-    [
-      'import {',
-      '  NotificationSettingsModuleDef,',
-      "} from '@acme/domain/notification-settings/contract';",
-    ].join('\n'),
-    // Ровно 80 символов — ещё одна строка.
+    "import { NotificationSettingsModuleDef } from '@acme/domain/notification-settings/contract';",
     "import { createNotificationSettingsModule } from '@acme/notification-settings';",
   ]);
-  for (const line of imports.flatMap((l) => l.split('\n'))) {
-    expect(line.length).toBeLessThanOrEqual(80);
-  }
 });
 
 test('без domainImport — относительный импорт домена', () => {

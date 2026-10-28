@@ -23,9 +23,23 @@ function keyOf(statement: string): Key | undefined {
   return [group, source];
 }
 
-/** Biome ставит `.` раньше `-` в путях (`./a.facade` < `./a-b.dcs`). */
-const pathKey = (path: string) =>
-  path.replaceAll('.', '\u0001').replaceAll('-', '\u0002');
+/**
+ * Ключ пути, как сравнивает biome: дальний родитель раньше ближнего
+ * (каждый ведущий `../` — младший символ, `./` отбрасывается), дальше `/`
+ * раньше `.`, а `.` раньше `-` (`./a/b` < `./a.facade` < `./a-b.dcs`).
+ */
+const pathKey = (path: string) => {
+  const parents = /^(?:\.\.\/)*/.exec(path)?.[0] ?? '';
+  return (
+    '\u0000'.repeat(parents.length / 3) +
+    path
+      .slice(parents.length)
+      .replace(/^\.\//, '')
+      .replaceAll('/', '\u0001')
+      .replaceAll('.', '\u0002')
+      .replaceAll('-', '\u0003')
+  );
+};
 
 function before(a: Key, b: Key): boolean {
   if (a[0] !== b[0]) return a[0] < b[0];
@@ -62,16 +76,25 @@ export function sortNames(names: readonly string[]): string[] {
 
 /**
  * Именованный импорт в форме biome: в одну строку до `LINE_WIDTH`, иначе —
- * по имени на строку. `typeOnly` — `import type`; имена — уже по порядку.
+ * по имени на строку (одно имя biome не переносит). `typeOnly` — `import
+ * type`; имена — уже по порядку.
  */
 export function namedImport(
   names: readonly string[],
   from: string,
   typeOnly = false,
 ): string {
-  const head = typeOnly ? 'import type' : 'import';
+  return named(typeOnly ? 'import type' : 'import', names, from);
+}
+
+/** Реэкспорт `export { … } from` — в той же форме, что `namedImport`. */
+export function namedExport(names: readonly string[], from: string): string {
+  return named('export', names, from);
+}
+
+function named(head: string, names: readonly string[], from: string): string {
   const line = `${head} { ${names.join(', ')} } from '${from}';`;
-  return line.length <= LINE_WIDTH
+  return line.length <= LINE_WIDTH || names.length < 2
     ? line
     : `${head} {\n${names.map((n) => `  ${n},`).join('\n')}\n} from '${from}';`;
 }

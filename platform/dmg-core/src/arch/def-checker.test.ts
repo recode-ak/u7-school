@@ -386,6 +386,22 @@ describe('DefChecker', () => {
       ]);
     });
 
+    it('агрегат с дефисом — префикс UPPER_SNAKE', () => {
+      const StudyGroupErrors = ErrorDef.define('STUDY_GROUP', {
+        GONE: { kind: 'not_found', label: 'Нет', description: 'Нет.' },
+      });
+      const studyGroupAr = AggregateDef.define({
+        ...ItemArDef,
+        name: 'study-group',
+        errors: StudyGroupErrors,
+      });
+      const beta = ModuleDef.define({
+        ...BetaModuleDef,
+        aggregates: [ItemArDef, studyGroupAr],
+      });
+      expect(report(beta).filter((m) => m.startsWith('ERR-04'))).toEqual([]);
+    });
+
     it('префикс не совпадает с агрегатом', () => {
       const m = gamma({
         errorPrefix: 'THINGS',

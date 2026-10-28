@@ -52,3 +52,23 @@ test('importBefore: строки без источника не сравнива
     true,
   );
 });
+
+test('«/» раньше «.» и «-»: каталог агрегата раньше соседа с тем же префиксом', () => {
+  expect(
+    sortImports([
+      "export { E } from './study-group-member.y';",
+      "export { A } from './study-group-member/a';",
+      "export { C } from './study-group.x';",
+      "export { B } from './study-group/b';",
+      "export { D } from './study/d';",
+    ]),
+  ).toBe(
+    [
+      "export { D } from './study/d';",
+      "export { B } from './study-group/b';",
+      "export { C } from './study-group.x';",
+      "export { A } from './study-group-member/a';",
+      "export { E } from './study-group-member.y';",
+    ].join('\n'),
+  );
+});

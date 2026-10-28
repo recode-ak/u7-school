@@ -1,10 +1,12 @@
 /**
- * Приёмка генераторов: срез module → aggregate → uc → er → job → dcs → dqs
- * создаётся во временном проекте с раскладкой по умолчанию и проходит
- * biome, tsc, bun test и ArchChecker без ручных правок. Проект лежит во
- * временном каталоге ОС: внутри пакета его тесты подхватывал параллельный
- * `bun test`. `dmg-core`, `valibot` и типы разрешаются через ссылки в его
- * `node_modules`; в конце проект удаляется.
+ * Приёмка генераторов: срез module → aggregate → uc (создание и операция
+ * над агрегатом) → er → job → dcs → dqs создаётся во временном проекте с
+ * раскладкой по умолчанию и проходит biome, tsc, bun test и ArchChecker без
+ * ручных правок. Второй срез — с очень длинными именами модуля, агрегата и
+ * операций: шаблоны переносят строки так же, как biome (CODE-01). Проект
+ * лежит во временном каталоге ОС: внутри пакета его тесты подхватывал
+ * параллельный `bun test`. `dmg-core`, `valibot` и типы разрешаются через
+ * ссылки в его `node_modules`; в конце проект удаляется.
  */
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import {
@@ -22,6 +24,9 @@ import { runGen } from './main';
 
 const PKG = join(import.meta.dir, '../..');
 const MODULE = 'genprobe';
+/** Модуль и агрегат с длинными именами — проверка переносов строк. */
+const LONG = 'learning-progress-analytics';
+const LONG_AGG = `${LONG}.questionnaire-response-revision`;
 let project: string;
 
 async function sh(
@@ -54,11 +59,18 @@ beforeAll(() => {
   const steps = [
     ['module', MODULE],
     ['aggregate', `${MODULE}.student`],
+    ['uc', `${MODULE}.student`, 'create-student'],
     ['uc', `${MODULE}.student`, 'complete-student'],
     ['er', `${MODULE}.student`, 'react-student'],
     ['job', `${MODULE}.student`, 'sweep-students'],
     ['dcs', MODULE, 'progress'],
     ['dqs', MODULE, 'navigation'],
+    ['module', LONG],
+    ['aggregate', LONG_AGG],
+    ['uc', LONG_AGG, 'create-questionnaire-response-revision'],
+    ['uc', LONG_AGG, 'archive-questionnaire-response-revision'],
+    ['er', LONG_AGG, 'react-to-questionnaire-response-revision'],
+    ['job', LONG_AGG, 'sweep-stale-questionnaire-response-revisions'],
   ];
   for (const step of steps) {
     const lines: string[] = [];
@@ -94,9 +106,13 @@ test('тесты заготовок зелёные', async () => {
 test('ArchChecker без нарушений', async () => {
   const layout = new GenLayout(GenLayout.defaults, project);
   const domain = await import(layout.domainDir(MODULE));
+  const long = await import(layout.domainDir(LONG));
   const app: ArchApp = {
     name: MODULE,
-    modules: [domain.GenprobeModuleDef],
+    modules: [
+      domain.GenprobeModuleDef,
+      long.LearningProgressAnalyticsModuleDef,
+    ],
     layout: (m) => ({ domain: layout.domainDir(m), app: layout.appDir(m) }),
   };
   expect(

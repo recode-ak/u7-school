@@ -42,6 +42,8 @@ beforeAll(async () => {
   const steps = [
     ['module', MODULE],
     ['aggregate', `${MODULE}.student`],
+    // Создание публикует `created` (MAN-06), операция — над существующим.
+    ['uc', `${MODULE}.student`, 'create-student'],
     ['uc', `${MODULE}.student`, 'complete-student'],
     ['er', `${MODULE}.student`, 'react-student'],
     ['job', `${MODULE}.student`, 'sweep-students'],
