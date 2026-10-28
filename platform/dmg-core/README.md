@@ -45,17 +45,17 @@ bunx dmg-core init --profile monorepo    # пакеты @acme/domain, @acme/app,
 bun install && bun run check
 ```
 
-Дальше — модули генератором и подключение к приложению по подсказке `gen module`:
+Дальше — модули генератором; он же подключает их к приложению (корень сборки, `arch-check.ts`, зависимость пакета модуля):
 
 ```sh
 bunx dmg-core gen module todo --write
 bunx dmg-core gen aggregate todo.task --write
-bunx dmg-core gen uc todo.task complete-task --write
+bunx dmg-core gen uc todo.task create --write     # рабочий UC создания
+bun install && bun run check                      # зелёный без ручных правок
+APP_DATA_DIR=data bun src/runner/main.ts call todo.create --user <uuid>   # monorepo — runners/cli/src/main.ts
 ```
 
-1. Фабрику модуля — в список модулей корня сборки (`src/app/app.ts` | `app/src/app.ts`), `TodoModuleDef` — в `modules` `scripts/arch-check.ts`; в monorepo — `"@acme/todo": "workspace:*"` в `app/package.json` и `bun install`.
-2. UC — в `contract.ts` модуля, команда — в раннере (`runner-cli.ts`, через `app.api.dispatch`).
-3. `bun run format` (порядок импортов после ручных правок), затем `bun run check` — зелёный; раннер: `APP_DATA_DIR=data bun src/runner/main.ts <команда>` (monorepo — `runners/cli/src/main.ts`).
+Дальше — смысл заготовок: поля state, операции Ar, схемы входа, `callers` и Policy UC (`TODO` в коде).
 
 Подробно, с тем, кто что правит руками, — [docs/guides/project.md](docs/guides/project.md); приложение и раннер — [docs/guides/app.md](docs/guides/app.md).
 

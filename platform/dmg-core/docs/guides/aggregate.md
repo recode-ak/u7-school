@@ -12,7 +12,7 @@
 
 ## 2. Команда
 
-`dmg-core gen aggregate <m>.<a> --write` создаёт state, events, errors, Ar, Policy и repo. Заполни TODO в Def (`statuses`, `transitions` с `from`/`to`/`rejects`) и методы Ar. Генератору нужен паспорт `<m>.module.ts`.
+`dmg-core gen aggregate <m>.<a> --write` создаёт state, events, errors, Ar, Policy и repo; в корне сборки — репозиторий в фабрике модуля ([project.md](./project.md) §4). Заполни TODO в Def (`statuses`, `transitions` с `from`/`to`/`rejects`) и методы Ar. Генератору нужен паспорт `<m>.module.ts`. Событие `created` публикует UC создания — `gen uc <m>.<a> create`; каждое объявленное событие должен эмитить какой-то UC/ER/Job (MAN-06), иначе `arch:check` красный.
 
 ## 3. Образец
 
@@ -27,6 +27,7 @@
 - DOM-03 — `create` (новый агрегат) и `restore` (из хранилища) разделены, Ar не создаёт другой Ar.
 - DOM-04 — наружу идут идентификаторы и методы-вопросы, геттеров на каждое поле нет.
 - DOM-14 — `uuid` и момент `at` приходят аргументами, статус меняет только `transition`.
+- MAN-06 — каждое событие из `events` публикует какая-то операция (`emits` UC/ER/Job).
 - MAN-12 — у каждого перехода `rejects` покрывает все статусы вне `from` ошибками своей группы.
 - MAN-01 — у Def есть `label` и `description`, у статусов — `label`.
 - ERR-01 — штатный отказ возвращается как `Err` и не бросается.

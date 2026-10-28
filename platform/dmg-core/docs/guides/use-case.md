@@ -17,12 +17,32 @@
 
 `dmg-core gen uc <m>.<a> <имя> --write` — пара Def + реализация с тестами, строка в `<M>ModuleDef.useCases` и в карте модуля. Требует `<m>.module.ts`. Заполнить: `label`/`description`, `callers`, `policy`, `rules`, `calls`, схемы, `errors`, `emits`.
 
+Заготовка зависит от имени:
+
+- **`create` / `create-*`** — рабочий UC создания: `load` → `ok(undefined)`, `execute` — `<A>Ar.create({ uuid: crypto.randomUUID() }, this.now())` → `uow.register(created.value, this.resolve.<a>Repo)` → `ok({ <a>Id })`; `emits: [<A>Events.created]`, выход `<a>Id`. Остаётся перенести поля входа в `Create<A>`.
+- **иначе** — операция над существующим агрегатом: вход `<a>Id`, `load` — `this.resolve.<a>Repo.findById` или `<A>Errors.NOT_FOUND`, `execute` — `TODO` для операции Ar и `uow.register`; `errors: [NOT_FOUND]`, `emits: []` — событие операции добавь сам (MAN-06).
+- `callers: ['user']` — раннер каркаса вызывает от пользователя только с `--user` ([project.md](./project.md) §3).
+- Тест — настоящий `<A>JsonRepo` во временном каталоге: создание проверяет запись, операция — успех и `NOT_FOUND`.
+
 ## 3. Устройство реализации
 
 - Конструктор `(deps, module: typeof <M>ModuleDef)` → `super(<N>UcDef, deps, module)`: модуль передаёт себя, из него — `this.ref` для `SystemCaller` и лога операций.
 - Шаги базы — `protected`, порядок фиксирован: `checkCaller` → `parseInput` → `load` → `checkPolicy` → `checkRules` → `execute` → `parseOutput` → фиксация (`uow.commit()`, публикация через outbox, запись в `OperationLog` — инвариант базы). Наследник пишет `load` и `execute` методами; переопределение `checkPolicy` — только для системного вызова без субъекта.
 - `load(input, caller, trace)` собирает контекст Policy и правил; `execute(input, loaded, uow, caller, trace)` — домен и `uow.register`. `caller` и `trace` передаются в `this.call` как пришли.
+- Сигнатуры с типами (`ParsedInputOf` и `UnitOfWork` — из `dmg-core/app`, `Caller` и `Identified` — из `dmg-core`):
+
+  ```ts
+  type Input = ParsedInputOf<typeof CompleteUcDef>;
+  type Loaded = { readonly task: TaskAr };
+
+  protected async load({ taskId }: Input) { … }
+  protected async execute(input: Input, { task }: Loaded, uow: UnitOfWork, caller: Caller<Identified>) { … }
+  ```
+
+  Тип пользователя — `Identified` в заготовке; тип приложения (D-53, `AppUser`) нужен, только если Policy или UC читают его поля. Параметры методов TS проверяет бивариантно: сменил тип субъекта в Policy — сверь и `execute`.
+- Зависимости модуля (репозитории, фасады, порты из `<M>Deps`) — `this.resolve.<имя>`; поля `deps` наружу нет.
 - Субъект — `this.subject(caller)`, время — `this.now()`; UoW создаёт база.
+- Новый `uuid` агрегата — в UC (`crypto.randomUUID()`) или из входа, если id выдаёт вызывающий; Ar и домен uuid не создают (детерминизм, DOM-14).
 
 ## 4. Command и query
 
@@ -32,6 +52,7 @@
 | `load` | агрегат(ы) и ответы зависимостей — контекст Policy и `rules` | контекст Policy, если он нужен; иначе `ok(undefined)` |
 | `execute` | метод Ar → `uow.register`; ошибка Ar — `return` как есть | чтение репозитория → выход; `uow` не трогается |
 | `rules`, `emits` | по смыслу | нет |
+| схемы входа и выхода | из state: `v.object({ taskId: TaskState.entries.uuid, title: TaskState.entries.title })` — не копия поля (D-39) | `v.pick(<A>State, …)` |
 | выход | ответ методом Ar или `{}` | форма из state (`v.pick`, без копии схемы), значение — `view()` (D-44; `snapshot()` — только репозиторий, DOM-17) |
 
 - Нет агрегата при загрузке → `NOT_FOUND` из `load` (отказ загрузки, не решение по состоянию): Policy требует агрегат в контексте.
@@ -70,4 +91,4 @@
 
 ## 8. Как тестировать
 
-Каждая ошибка UC — с `code` и «ничего не записано»; порядок отказов (первый при нарушении нескольких); каждый исход выхода; сбой вызова чужого модуля (`StubFacade.answer` с ошибкой) — ответ UC и отсутствие записи; вызовы чужих UC — `received` (`SystemCaller` от UC, человек исходного вызова); недопустимый вызывающий — `UNAUTHORIZED`; у query — «ничего не записано» и только данные субъекта; у command над агрегатом — отказ Policy (`ACCESS_DENIED`) и каждый недопустимый статус. Репозиторий — настоящий во временном каталоге ([assign-task.uc.test.ts](../../src/testing/example/app/todo/task/uc/assign-task.uc.test.ts)); вход через модуль — smoke [todo.module.test.ts](../../src/testing/example/app/todo/todo.module.test.ts); лог операций — `MemoryOperationLog` из `testAppContext()`. Общее — [testing.md](../testing.md).
+Каждая ошибка UC — с `code` и «ничего не записано» (`expectErr(res, 'TASK_NOT_FOUND')` из `dmg-core/testing`: код — `<ПРЕФИКС ГРУППЫ>_<КЛЮЧ>` в UPPER_SNAKE, ERR-04, [errors.md](./errors.md)); порядок отказов (первый при нарушении нескольких); каждый исход выхода; сбой вызова чужого модуля (`StubFacade.answer` с ошибкой) — ответ UC и отсутствие записи; вызовы чужих UC — `received` (`SystemCaller` от UC, человек исходного вызова); недопустимый вызывающий — `UNAUTHORIZED`; у query — «ничего не записано» и только данные субъекта; у command над агрегатом — отказ Policy (`ACCESS_DENIED`) и каждый недопустимый статус. Репозиторий — настоящий во временном каталоге ([assign-task.uc.test.ts](../../src/testing/example/app/todo/task/uc/assign-task.uc.test.ts)); вход через модуль — smoke [todo.module.test.ts](../../src/testing/example/app/todo/todo.module.test.ts); лог операций — `MemoryOperationLog` из `testAppContext()`. Общее — [testing.md](../testing.md).
