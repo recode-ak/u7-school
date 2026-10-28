@@ -36,7 +36,7 @@
     - [x] Тесты: повтор → сохранённый ответ без исполнения; другой вход → `REQUEST_CONFLICT`; query и серверный `requestId` — без отсева; истёкший TTL; red
     - [x] Реализация, подключение хранилища (`AppContext`/`ApiApp`), учебное приложение; green
 - [x] Task: `transport.md` §2; снять DEBT-1 (`debt.md` и маркер) (dmg-core 7e4bea1)
-- [ ] Task: Ревью reviewer
+- [x] Task: Ревью reviewer; правки по ревью (dmg-core c949ba0)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: `requestId` из `update_id` (u7-school, DEBT-38)
