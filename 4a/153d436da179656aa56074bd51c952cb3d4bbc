@@ -1,0 +1,4 @@
+Фаза 6: Финал
+Коммиты: c6942521 (summary.md, гейт качества), 820e499f (удалена заготовка bot-request-id, снят [?], roadmap).
+Автотесты: CI=true bun test u7-school — 3304 pass, 0 fail; dmg-core — 1316 pass, 0 fail, check зелёный, e2e ok.
+Ручная проверка: сверка summary.md и документов; Нурболат подтвердил — «да».
