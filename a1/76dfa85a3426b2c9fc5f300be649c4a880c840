@@ -1,0 +1,1 @@
+Задача: перевод тестов ER и Job примера (Фаза 2). Пакет dmg-core 1df1d03: release-removed-user-tasks.er.test.ts, archive-done-tasks.job.test.ts на TaskRepoFake, FailingRepo → failOn; 7 тестов 1:1 (сверено). check пакета зелёный (1257 pass). Бриф: slices/er-job-tests-fake.md.
