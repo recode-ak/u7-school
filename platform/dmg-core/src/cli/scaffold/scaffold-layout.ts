@@ -67,6 +67,7 @@ export class ScaffoldLayout {
         domain: 'domain/src/{m}',
         app: 'modules/{m}/src',
         domainImport: `${domain}/{m}`,
+        package: `@${scope}/{m}`,
       },
       imports: { appUser: `${domain}/shared`, app, appTypes: app },
       moduleEntry: `@${scope}/<m> (modules/<m>/src/index.ts)`,

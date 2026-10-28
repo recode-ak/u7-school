@@ -93,7 +93,7 @@ describe('ProjectManifest: слияние', () => {
       text({
         name: 'other',
         type: 'commonjs',
-        workspaces: ['packages/*'],
+        workspaces: ['libs/*'],
         scripts: { check: 'npm test' },
       }),
     );

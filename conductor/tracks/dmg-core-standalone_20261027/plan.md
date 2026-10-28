@@ -37,14 +37,14 @@
     - [x] Тесты плана: workspace, пакет домена (`exports` `./*/contract`, `./*`), пакет приложения, `modules/`, `runners/`, секция `gen` с `domainImport`, карта плагинов по пакетам, корневой `check`; red
     - [x] Реализация; green
 - [x] Task: CLI `dmg-core init --profile single|monorepo` (без профиля — прежнее поведение; неизвестный профиль — ошибка); тесты CLI red → green e2f56aee
-- [ ] Task: `gen module` в профиле monorepo создаёт пакет модуля (`package.json`, tsconfig); как узнаётся профиль — поле `dmg-core.json` или признак раскладки (решить в задаче); тесты red → green
+- [~] Task: `gen module` в профиле monorepo создаёт пакет модуля (`package.json`, tsconfig); как узнаётся профиль — поле `dmg-core.json` или признак раскладки (решить в задаче); тесты red → green
     - Учесть D-52: `gen module` создаёт `index.ts` прикладного пакета (фабрика, `*Deps`, репозитории) — корень сборки берёт фабрику только из него; `GenLayout`/шаблон `ArchApp` отдают `root` и `runners`
 - [ ] Task: `consumer-e2e.sh` — оба профиля: `init --profile` → `gen module/aggregate/uc` → сборка приложения → раннер вызывает UC → `check` зелёный
 - [ ] Task: Документация
     - [ ] Гайд `docs/guides/project.md`: оба профиля, что создаёт `init`, как растёт проект, кто что правит руками
     - [ ] README — быстрый старт обоих профилей
     - [ ] Карта «плагин → каталоги слоёв» в `rules.md`
-    - [ ] `naming.md` §5, `llms.txt`, скил `dmg-architecture`
+    - [ ] `naming.md` §5 (`gen.package`, вход прикладного слоя `index.ts`, `--adopt` пропускает `package.json`/`tsconfig.json`), `llms.txt`, скил `dmg-architecture`
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 

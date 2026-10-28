@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { GenError } from '../gen/cli';
+import { GenError, PackageDefectError } from '../gen/cli';
 import { GenLayout } from '../gen/layout';
 import { runGen } from '../gen/main';
 import { CliConfig, type CliSettings } from './cli-config';
@@ -140,10 +140,24 @@ export class DmgCoreCli {
     settings: CliSettings,
   ): CliResult {
     const messages: string[] = [];
-    const code = runGen(argv, new GenLayout(settings.gen, root), (line) =>
-      messages.push(line),
-    );
-    return { ok: code === 0, messages };
+    try {
+      const code = runGen(
+        argv,
+        new GenLayout(settings.gen, root),
+        (line) => messages.push(line),
+        this.pkg.moduleDependencies(),
+      );
+      return { ok: code === 0, messages };
+    } catch (error) {
+      // Дефект поставки — сообщение без стека (main: stderr, код 1).
+      if (!(error instanceof PackageDefectError)) throw error;
+      return {
+        ok: false,
+        messages: [
+          `Ошибка поставки dmg-core (переустанови пакет): ${error.message}`,
+        ],
+      };
+    }
   }
 
   /** Настройки проекта → доставка; строка — сообщение об ошибке конфига */

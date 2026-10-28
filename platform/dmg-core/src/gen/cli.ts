@@ -5,6 +5,14 @@ export class GenError extends Error {
   override name = 'GenError';
 }
 
+/**
+ * Дефект поставки пакета dmg-core (нет версии зависимости в его
+ * package.json): не ошибка ввода, но CLI сообщает о нём без стека.
+ */
+export class PackageDefectError extends Error {
+  override name = 'PackageDefectError';
+}
+
 export type GenKind =
   | 'module'
   | 'aggregate'
@@ -24,6 +32,11 @@ export interface GenArgs {
   adopt: boolean;
   /** Раскладка проекта (`dmg-core.json`, `gen`) */
   layout: GenLayout;
+  /**
+   * Диапазоны внешних зависимостей пакета модуля (`gen.package`): имя →
+   * версия; нужны `dmg-core` и `valibot` (JSON-репозитории `gen aggregate`)
+   */
+  dependencies?: Readonly<Record<string, string>>;
 }
 
 /** Что ожидает вид: цель (`m` или `m.agg`) и нужно ли имя. */

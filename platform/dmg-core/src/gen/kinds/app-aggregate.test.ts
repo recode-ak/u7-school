@@ -60,8 +60,9 @@ test('тест репозитория: сохранить и найти', () => 
   );
 });
 
-test('правки: порт попадает в Deps модуля', () => {
+test('правки: порт попадает в Deps модуля, репозиторий — во вход пакета', () => {
   const mod = '/p/stream/src/stream.module.ts';
+  const index = '/p/stream/src/index.ts';
   expect(plan.edits).toEqual([
     {
       path: mod,
@@ -72,6 +73,16 @@ test('правки: порт попадает в Deps модуля', () => {
       path: mod,
       marker: '// gen:deps',
       line: '  readonly studentRepo: StudentRepo;',
+    },
+    {
+      path: index,
+      marker: '// gen:exports',
+      line: "export type { StudentRepo } from './student/student.repo';",
+    },
+    {
+      path: index,
+      marker: '// gen:exports',
+      line: "export { StudentJsonRepo } from './infra/student.json-repo';",
     },
   ]);
 });

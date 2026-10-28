@@ -1,4 +1,8 @@
-/** `gen aggregate <m>.<agg>` — прикладной слой: порт `repo` и JSON-репозиторий. */
+/**
+ * `gen aggregate <m>.<agg>` — прикладной слой: порт `repo` и
+ * JSON-репозиторий; оба — во вход пакета модуля `index.ts` (D-52: корень
+ * сборки передаёт репозитории в фабрику).
+ */
 import { join } from 'node:path';
 import type { GenArgs } from '../cli';
 import { sortImports } from '../import-order';
@@ -22,6 +26,7 @@ export function planAppAggregate(args: GenArgs): GenPlan {
   const src = args.layout.appDir(m);
   const domain = (dir: string) => args.layout.domainImport(m, join(src, dir));
   const modulePath = join(src, `${m}.module.ts`);
+  const indexPath = join(src, 'index.ts');
 
   const repoSrc = `${sortImports([
     `import type { ${P}Ar } from '${domain(a)}';`,
@@ -140,6 +145,16 @@ describe('${P}JsonRepo', () => {
         path: modulePath,
         marker: '// gen:deps',
         line: `  readonly ${toCamel(a)}Repo: ${P}Repo;`,
+      },
+      {
+        path: indexPath,
+        marker: '// gen:exports',
+        line: `export type { ${P}Repo } from './${a}/${a}.repo';`,
+      },
+      {
+        path: indexPath,
+        marker: '// gen:exports',
+        line: `export { ${P}JsonRepo } from './infra/${a}.json-repo';`,
       },
     ],
   };

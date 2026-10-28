@@ -1,3 +1,4 @@
+import { PACKAGE_TEST } from '../../gen/kinds/module-package';
 import { CliConfig } from '../cli-config';
 import type { Dependencies, PackageSource } from '../package-source';
 import type {
@@ -15,9 +16,6 @@ const TOOLS = ['@biomejs/biome', 'typescript', '@types/bun'];
 
 /** Ширина строки форматтера biome по умолчанию — для всех шаблонов каркаса. */
 export const LINE_WIDTH = 80;
-
-/** Скрипт тестов пакета workspaces: пакет без тестов — не ошибка. */
-const PACKAGE_TEST = 'bun test --pass-with-no-tests';
 
 /**
  * Конфиги проекта. Корень: `.gitignore` (зависимости и каталог данных

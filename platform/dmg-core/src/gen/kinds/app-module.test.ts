@@ -6,7 +6,9 @@ import { planAppModule } from './app-module';
 
 const root = '/p';
 const plan = (
-  gen: { domainImport?: string } = { domainImport: '@acme/domain/{m}' },
+  gen: { domainImport?: string; package?: string } = {
+    domainImport: '@acme/domain/{m}',
+  },
 ) =>
   planAppModule(
     parseArgs(
@@ -17,11 +19,43 @@ const plan = (
 const content = (p: ReturnType<typeof plan>, rel: string) =>
   p.files.find((f) => f.path === join(root, 'stream', rel))?.content ?? '';
 
-test('только исходники модуля: заготовку пакета (package.json) пишет проект', () => {
+test('исходники модуля и вход прикладного пакета (пакет — module-package)', () => {
   expect(plan().files.map((f) => f.path.slice(root.length + 1))).toEqual([
     'stream/src/stream.module.ts',
     'stream/src/stream.module.test.ts',
+    'stream/src/index.ts',
   ]);
+});
+
+test('index.ts — вход для корня сборки (D-52): фабрика, Deps и маркер', () => {
+  expect(content(plan(), 'src/index.ts')).toBe(
+    `// Вход прикладного пакета stream для корня сборки (ARC-07, D-52): фабрика
+// модуля и репозитории. UC, ER и Job снаружи не видны.
+export { createStreamModule, type StreamDeps } from './stream.module';
+// gen:exports
+`,
+  );
+});
+
+test('notes — подключение к приложению вручную: фабрика и arch-check', () => {
+  const notes = plan().notes ?? [];
+  const text = notes.join('\n');
+  expect(text).toContain(
+    '{ def: StreamModuleDef, create: (deps) => createStreamModule({ ...deps }) }',
+  );
+  expect(text).toContain('/p/stream/src/index.ts');
+  expect(text).toContain("'@acme/domain/stream/contract'");
+  expect(text).toContain('scripts/arch-check.ts');
+  expect(text).not.toContain('workspace:*');
+});
+
+test('notes — с gen.package: вход по имени пакета и зависимость корня сборки', () => {
+  const text = (
+    plan({ domainImport: '@acme/domain/{m}', package: '@acme/{m}' }).notes ?? []
+  ).join('\n');
+  expect(text).toContain("'@acme/stream'");
+  expect(text).toContain('"@acme/stream": "workspace:*"');
+  expect(text).toContain('bun install');
 });
 
 test('без domainImport — относительный импорт домена', () => {

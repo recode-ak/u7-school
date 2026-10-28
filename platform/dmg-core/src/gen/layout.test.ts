@@ -118,3 +118,63 @@ test('read — без файла или без секции gen значения
     join(root, 'src/app/todo'),
   );
 });
+
+const MONOREPO = {
+  domain: 'domain/src/{m}',
+  app: 'modules/{m}/src',
+  domainImport: '@acme/domain/{m}',
+  package: '@acme/{m}',
+};
+
+test('settingsFrom — gen.package: шаблон имени пакета модуля', () => {
+  expect(GenLayout.settingsFrom(MONOREPO)).toEqual(MONOREPO);
+});
+
+test('settingsFrom — ошибки gen.package', () => {
+  const error = (json: unknown) => () => GenLayout.settingsFrom(json);
+  expect(error({ ...MONOREPO, package: '@acme/todo' })).toThrow(
+    'dmg-core.json: gen.package — шаблон имени пакета с {m}',
+  );
+  expect(error({ ...MONOREPO, app: 'modules/{m}' })).toThrow(
+    'dmg-core.json: gen.package — gen.app должен оканчиваться на /src',
+  );
+  const { domainImport: _, ...noImport } = MONOREPO;
+  expect(error(noImport)).toThrow(
+    'dmg-core.json: gen.package — нужен gen.domainImport',
+  );
+});
+
+test('package — пакет модуля над каталогом прикладного слоя', () => {
+  expect(new GenLayout(MONOREPO, '.').package('todo')).toEqual({
+    dir: 'modules/todo',
+    name: '@acme/todo',
+    domain: '@acme/domain',
+    root: '../..',
+  });
+  expect(new GenLayout(MONOREPO, '/repo').package('todo')).toEqual({
+    dir: '/repo/modules/todo',
+    name: '@acme/todo',
+    domain: '@acme/domain',
+    root: '../..',
+  });
+});
+
+test('package — пакет домена без scope: первый сегмент domainImport', () => {
+  const plain = { ...MONOREPO, domainImport: 'domain/{m}', package: '{m}' };
+  expect(new GenLayout(plain, '.').package('todo')).toMatchObject({
+    name: 'todo',
+    domain: 'domain',
+  });
+});
+
+test('package — без gen.package пакета нет', () => {
+  expect(new GenLayout(GenLayout.defaults, '.').package('todo')).toBe(
+    undefined,
+  );
+});
+
+test('describe — с пакетом модуля', () => {
+  expect(new GenLayout(MONOREPO, '.').describe()).toBe(
+    'Раскладка: домен — domain/src/{m}, прикладной слой — modules/{m}/src, импорт домена — @acme/domain/{m}, пакет модуля — @acme/{m}',
+  );
+});

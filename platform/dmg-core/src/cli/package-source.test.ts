@@ -30,6 +30,18 @@ describe('PackageSource: версии зависимостей', () => {
     expect(pkg.devDependencies['@biomejs/biome']).toBeString();
   });
 
+  it('moduleDependencies — диапазоны пакета модуля: dmg-core и peer valibot', async () => {
+    const pkg = await PackageSource.load(PACKAGE_ROOT);
+
+    expect(pkg.moduleDependencies()).toEqual({
+      'dmg-core': `^${pkg.version}`,
+      valibot: expect.stringMatching(/^\^/),
+    });
+    expect(pkg.moduleDependencies().valibot).toBe(
+      pkg.peerDependencies.valibot ?? 'нет',
+    );
+  });
+
   it('нет секций зависимостей — пустые словари', async () => {
     await writeFile(
       join(dir, 'package.json'),

@@ -182,3 +182,53 @@ error нет; атомарность соблюдена, `init` без проф�
 ### Шаг 3a — отчёт автора (api-author, Opus)
 
 Пустая секция не добавляется; `ProjectManifest.merge` → `undefined`, если добавлять нечего (файл не переписан, «Дополнен» не печатается; тест на файл не по формату biome); `main.ts` — одна печать результата `gen`/`init`. Пакет `check` — 1080 pass. Ревью — оркестратор по diff (правка точечная). Полный `bun run check` проекта — 4357 pass, 0 fail.
+
+## Шаг 4 — `gen module` в профиле monorepo (api-author, платформа)
+
+Решение Нурболата 2026-10-27: признак — поле `gen.package` в `dmg-core.json`. **Границы:** `src/gen/` (layout, kinds, main, тесты), `src/cli/scaffold/` (секция `gen` и шаблоны каркаса); документацию пакета не править (задача «Документация»); `conductor/`, `data/` — нельзя. Поведение `gen` в u7-school (без `gen.package`) — прежнее, кроме п. 2.
+
+1. **`gen.package`** — шаблон имени пакета с `{m}` (`"@acme/{m}"`). Задан — `gen module` дополнительно создаёт пакет модуля в каталоге над `app` (`modules/{m}/src` → `modules/{m}`): `package.json` (`name`, `private`, `type: module`, `exports: { ".": "./src/index.ts" }`, скрипт `test` — как у пакетов каркаса, `dependencies`: `dmg-core` той же версии, что у каркаса, и пакет домена из `domainImport` — `workspace:*`) и `tsconfig.json` (`extends` на корень по глубине). `app` не оканчивается на `/src`, или `domainImport` не задан при `package` — ошибка раскладки (`GenLayout.settingsFrom`). `init --profile monorepo` пишет `package: "@<scope>/{m}"`.
+2. **Вход прикладного пакета (D-52):** `gen module` в любой раскладке создаёт `index.ts` прикладного слоя модуля: экспорт фабрики `create<M>Module` и `<M>Deps` и маркер `// gen:exports`; `gen aggregate` добавляет туда экспорт репозитория (`<A>Repo`, `<A>JsonRepo`) по маркеру. Корень сборки импортирует модуль только через этот вход. `--adopt`: существующий `index.ts` не перезаписывается (как у домена).
+3. **Подключение к приложению — подсказки, не правки:** после `gen module` печатать «Вставь вручную»: фабрику в список модулей корня сборки, Def в `modules` `scripts/arch-check.ts`, в monorepo — зависимость `"@<scope>/<m>": "workspace:*"` в `package.json` корня сборки и `bun install`. Маркеров в каркасе не добавляем.
+4. **Тесты (TDD):** `GenLayout` — `package` (валидный, без `{m}`, `app` без `/src`, без `domainImport`); план `gen module` с `package` — файлы пакета и их содержимое; без `package` — пакета нет; `index.ts` прикладного слоя и вставка репозитория `gen aggregate`; e2e: `init --profile monorepo` → `gen module todo --write` → `gen aggregate todo.task --write` → `gen uc …` → ручное подключение по подсказкам → `biome`, `tsc`, `arch-check`, `bun test` зелёные (как e2e каркаса, `node_modules` подменой). Существующие тесты `gen` — не править без нужды; правка ожидания из-за п. 2 — перечисли в отчёте.
+
+**Правила:** CODE-*, MAN-10, ARC-06, D-52, TST-*, простые типы. Новых зависимостей нет.
+
+**Приёмка:** гейт зелёный; `cd platform/dmg-core && bun run check` зелёный; `bun run check` проекта (u7-school `gen` без `package` не сломан).
+
+### Шаг 4 — отчёт автора (api-author, Opus)
+
+`gen.package` (`GenLayout.package(m)`, проверки: `{m}`, `app` на `/src`, `domainImport`); `gen/kinds/module-package.ts` — `package.json`/`tsconfig.json` пакета модуля, `PACKAGE_TEST` — одно объявление в `gen`; `GenArgs.version` (через `DmgCoreCli.generate`); `index.ts` прикладного слоя (`create<M>Module`, `<M>Deps`, `// gen:exports`), `gen aggregate` вставляет репозитории; `GenPlan.notes` — подсказки подключения. E2e: каркас monorepo → `gen module/aggregate/uc` → ручное подключение → `check` зелёный. Правки ожиданий: `app-module.test.ts`, `app-aggregate.test.ts`, `project-scaffold.monorepo.test.ts`, e2e ArchChecker. Пакет `check` — 1104 pass. **Эскалация:** `bun run check` проекта — 1 fail: `scripts/repo-layout.test.ts` (запрет ссылок на старые каталоги раскладки) из-за `project-manifest.test.ts:96` (значение `workspaces` со старым каталогом, коммит e2f56aee — страж смотрит `git ls-files`, поэтому до коммита не падал). Открыто: `valibot` в зависимостях пакета модуля (`*.json-repo.ts` его импортирует); `--adopt` с `gen.package` — коллизия существующего `package.json` модуля.
+
+## Шаг 4a — доводка шага 4 (api-author, платформа)
+
+Решения оркестратора 2026-10-27 (тактика). Границы — шаг 4 плюс `src/cli/scaffold/project-manifest.test.ts`.
+
+1. `project-manifest.test.ts:96` — значение `workspaces` без старых каталогов раскладки (например `libs/*`); `scripts/repo-layout.test.ts` не трогать.
+2. Пакет модуля — `valibot` в `dependencies` (версия из `peerDependencies` пакета, как у домена каркаса); тест.
+3. `--adopt` с `gen.package`: существующие `package.json` и `tsconfig.json` пакета модуля не перезаписываются и не коллизия — «Пропущен», как `index.ts`/`contract.ts`; тест.
+
+**Приёмка:** гейт зелёный; `cd platform/dmg-core && bun run check` и `bun run check` проекта — зелёные.
+
+### Шаг 4a — отчёт автора (api-author, Opus)
+
+`workspaces` в тесте — `libs/*`; `GenArgs.dependencies` (`dmg-core`, `valibot` из `peerDependencies`) вместо `version`, нет версии — `Error`; `ENTRY_FILES` + `package.json`, `tsconfig.json` (`--adopt` — «Пропущен», без него — коллизия). Пакет `check` — 1106 pass. Страж `repo-layout` сработал на текст брифа — оркестратор переписал строки.
+
+### Шаги 4–4a — отчёт ревьюера (Opus)
+
+error нет; u7-school без `gen.package` — прежнее поведение (существующие `index.ts` — «Пропущен»/подсказка), правки ожиданий оправданы. warn: в тест adopt добавлен `index.ts` без упоминания — сценарий «legacy без входа → adopt создаёт вход» не покрыт; e2e дублирует расчёт зависимостей (`valibot ?? ''` прячет отсутствие). question: нет `peerDependencies.valibot` — падение CLI со стеком. info: `ENTRY_FILES` по имени файла — скрытый риск; `naming.md` §5 про `--adopt` — в «Документацию».
+
+## Шаг 4b — доводка по ревью шагов 4–4a (api-author, платформа)
+
+Решения Нурболата 2026-10-28. Границы — как у шага 4.
+
+1. Тест: legacy-модуль без `index.ts` прикладного слоя → `gen module --adopt` создаёт вход (с маркером).
+2. E2e monorepo берёт зависимости пакета модуля из того же кода, что `DmgCoreCli` (без повторного расчёта и `?? ''`).
+3. Нет версии зависимости пакета модуля (дефект поставки пакета) — `Error` остаётся, но CLI печатает внятное сообщение без стека в stderr, код 1; тест.
+4. Комментарий у `ENTRY_FILES`: пропуск при `--adopt` — по имени файла, любой вид с таким именем под него попадает.
+
+**Приёмка:** гейт зелёный; `cd platform/dmg-core && bun run check` и `bun run check` проекта — зелёные.
+
+### Шаг 4b — отчёт автора (api-author, Opus)
+
+Тест «legacy без входа → adopt создаёт `index.ts`» (поведение было с шага 4 — тест фиксирует, red не было); `PackageSource.moduleDependencies()` — один расчёт для CLI и e2e; `PackageDefectError` (`Error`) — CLI печатает «Ошибка поставки dmg-core…» без стека, код 1; комментарий у `ENTRY_FILES`. Пакет `check` — 1109 pass. Ревью — оркестратор по diff (правка точечная). Полный `bun run check` проекта — 4386 pass, 0 fail.

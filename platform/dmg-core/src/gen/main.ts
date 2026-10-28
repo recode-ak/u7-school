@@ -5,6 +5,7 @@ import { planDomainAggregate } from './kinds/aggregate';
 import { planAppAggregate } from './kinds/app-aggregate';
 import { planAppModule } from './kinds/app-module';
 import { planDomainModule } from './kinds/module';
+import { planModulePackage } from './kinds/module-package';
 import { planOperation } from './kinds/operation';
 import { planDomainService } from './kinds/service';
 import type { GenLayout } from './layout';
@@ -13,7 +14,8 @@ import { validate } from './validate';
 
 /** Планировщик по виду артефакта CLI: таблица вместо `switch`. */
 const PLANNERS: Record<GenKind, (args: GenArgs) => GenPlan> = {
-  module: (args) => merge(planDomainModule(args), planAppModule(args)),
+  module: (args) =>
+    merge(planDomainModule(args), planAppModule(args), planModulePackage(args)),
   aggregate: (args) => merge(planDomainAggregate(args), planAppAggregate(args)),
   uc: planOperation,
   er: planOperation,
@@ -25,16 +27,21 @@ const PLANNERS: Record<GenKind, (args: GenArgs) => GenPlan> = {
 const merge = (...plans: GenPlan[]): GenPlan => ({
   files: plans.flatMap((p) => p.files),
   edits: plans.flatMap((p) => p.edits),
+  notes: plans.flatMap((p) => p.notes ?? []),
 });
 
-/** Возвращает код выхода процесса; вывод — через `print`. */
+/**
+ * Возвращает код выхода процесса; вывод — через `print`. `dependencies` —
+ * диапазоны зависимостей пакета модуля (нужны при `gen.package`).
+ */
 export function runGen(
   argv: readonly string[],
   layout: GenLayout,
   print: (line: string) => void,
+  dependencies?: Readonly<Record<string, string>>,
 ): number {
   try {
-    const args = parseArgs(argv, layout);
+    const args = { ...parseArgs(argv, layout), dependencies };
     validate(args);
     const plan = PLANNERS[args.kind](args);
     print(layout.describe());
@@ -52,6 +59,7 @@ export function runGen(
       print(`Вставь вручную в ${hint.path} перед ${hint.marker}:`);
       print(`  ${hint.line}`);
     }
+    for (const note of plan.notes ?? []) print(note);
     if (!args.write) print('Это dry-run. Для записи добавь --write.');
     return 0;
   } catch (error) {

@@ -76,6 +76,81 @@ test('uc/er/job/dcs/dqs --write', () => {
   expect(existsSync(join(root, 'd/stream/navigation.dqs.ts'))).toBe(true);
 });
 
+test('module: подсказка подключения к приложению — после списка файлов', () => {
+  gen('module', 'stream', '--write');
+  const at = out.findIndex((l) => l.startsWith('Вставь вручную — подключение'));
+  expect(at).toBeGreaterThan(0);
+  expect(out.slice(at).join('\n')).toContain('createStreamModule');
+  expect(out.slice(0, at).join('\n')).toContain('stream.module.ts');
+});
+
+test('module: вход прикладного слоя index.ts; aggregate дописывает репозиторий', () => {
+  gen('module', 'stream', '--write');
+  gen('aggregate', 'stream.student', '--write');
+  expect(readFileSync(join(root, 'p/stream/src/index.ts'), 'utf8')).toContain(
+    [
+      "export { StudentJsonRepo } from './infra/student.json-repo';",
+      "export { createStreamModule, type StreamDeps } from './stream.module';",
+      "export type { StudentRepo } from './student/student.repo';",
+      '// gen:exports',
+    ].join('\n'),
+  );
+});
+
+const PACKAGE_LAYOUT = {
+  domain: 'd/{m}',
+  app: 'p/{m}/src',
+  domainImport: '@acme/d/{m}',
+  package: '@acme/{m}',
+};
+const DEPS = { 'dmg-core': '^2.0.0', valibot: '^1.5.0' };
+const genPackage = (...argv: string[]) =>
+  runGen(argv, new GenLayout(PACKAGE_LAYOUT, root), (l) => out.push(l), DEPS);
+
+test('module с gen.package: пакет модуля с версиями зависимостей из вызова', () => {
+  expect(genPackage('module', 'stream', '--write')).toBe(0);
+  expect(
+    JSON.parse(readFileSync(join(root, 'p/stream/package.json'), 'utf8'))
+      .dependencies,
+  ).toEqual({ ...DEPS, '@acme/d': 'workspace:*' });
+  expect(existsSync(join(root, 'p/stream/tsconfig.json'))).toBe(true);
+});
+
+test('module --adopt с gen.package: package.json и tsconfig.json пакета не тронуты', () => {
+  mkdirSync(join(root, 'p/wish/src'), { recursive: true });
+  writeFileSync(join(root, 'p/wish/package.json'), '{}');
+  writeFileSync(join(root, 'p/wish/tsconfig.json'), '{ }');
+  expect(genPackage('module', 'wish', '--adopt', '--write')).toBe(0);
+  expect(readFileSync(join(root, 'p/wish/package.json'), 'utf8')).toBe('{}');
+  expect(readFileSync(join(root, 'p/wish/tsconfig.json'), 'utf8')).toBe('{ }');
+  expect(existsSync(join(root, 'p/wish/src/wish.module.ts'))).toBe(true);
+  const text = out.join('\n');
+  expect(text).toContain(`Пропущен: ${join(root, 'p/wish/package.json')}`);
+  expect(text).toContain(`Пропущен: ${join(root, 'p/wish/tsconfig.json')}`);
+});
+
+test('module с gen.package без --adopt: существующий package.json — коллизия', () => {
+  mkdirSync(join(root, 'p/wish'), { recursive: true });
+  writeFileSync(join(root, 'p/wish/package.json'), '{}');
+  expect(genPackage('module', 'wish', '--write')).toBe(1);
+  expect(existsSync(join(root, 'd/wish'))).toBe(false);
+});
+
+test('module --adopt: legacy без входа прикладного слоя — index.ts создан с маркером', () => {
+  mkdirSync(join(root, 'd/wish'), { recursive: true });
+  mkdirSync(join(root, 'p/wish/src'), { recursive: true });
+  writeFileSync(join(root, 'd/wish/index.ts'), '// legacy\n');
+  expect(gen('module', 'wish', '--adopt', '--write')).toBe(0);
+  const index = readFileSync(join(root, 'p/wish/src/index.ts'), 'utf8');
+  expect(index).toContain(
+    "export { createWishModule, type WishDeps } from './wish.module';",
+  );
+  expect(index).toContain('// gen:exports');
+  expect(out.join('\n')).toContain(
+    `Создан: ${join(root, 'p/wish/src/index.ts')}`,
+  );
+});
+
 test('ошибка ввода: код 1 и сообщение, ничего не создано', () => {
   expect(gen('uc', 'stream.student', 'x')).toBe(1);
   expect(out.join('\n')).toContain('Модуль «stream» не найден');
@@ -136,6 +211,7 @@ test('module --adopt поверх legacy: точки входа не трону�
   mkdirSync(join(root, 'd/wish'), { recursive: true });
   mkdirSync(join(root, 'p/wish/src'), { recursive: true });
   writeFileSync(join(root, 'd/wish/index.ts'), '// legacy\n');
+  writeFileSync(join(root, 'p/wish/src/index.ts'), '// legacy app\n');
   writeFileSync(join(root, 'p/wish/package.json'), '{}');
   expect(gen('module', 'wish', '--adopt', '--write')).toBe(0);
   expect(existsSync(join(root, 'd/wish/wish.module.ts'))).toBe(true);
@@ -144,6 +220,9 @@ test('module --adopt поверх legacy: точки входа не трону�
     '// legacy\n',
   );
   expect(readFileSync(join(root, 'p/wish/package.json'), 'utf8')).toBe('{}');
+  expect(readFileSync(join(root, 'p/wish/src/index.ts'), 'utf8')).toBe(
+    '// legacy app\n',
+  );
   expect(out.join('\n')).toContain(
     `Пропущен: ${join(root, 'd/wish/index.ts')}`,
   );

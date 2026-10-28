@@ -217,13 +217,14 @@ describe('ProjectScaffold monorepo: tsconfig', () => {
 });
 
 describe('ProjectScaffold monorepo: прочие конфиги', () => {
-  it('dmg-core.json — раскладка gen пакетов и разбирается parse', () => {
+  it('dmg-core.json — раскладка gen пакетов (с package) и разбирается parse', () => {
     const config = new CliConfig(pkg);
     const data = json('dmg-core.json');
     const gen = {
       domain: 'domain/src/{m}',
       app: 'modules/{m}/src',
       domainImport: '@acme/domain/{m}',
+      package: '@acme/{m}',
     };
 
     expect(data).toEqual({ ...config.defaults(), gen });

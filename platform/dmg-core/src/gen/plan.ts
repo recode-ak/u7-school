@@ -20,6 +20,11 @@ export interface PlannedEdit {
 export interface GenPlan {
   files: PlannedFile[];
   edits: PlannedEdit[];
+  /**
+   * Что сделать руками после записи (подключение модуля к приложению):
+   * генератор не правит чужие файлы без маркеров. Строки — как печатать.
+   */
+  notes?: string[];
 }
 
 export interface ApplyResult {

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -35,7 +36,11 @@ const write = (path: string, text: string) => put(root, { [path]: text });
 
 async function cli(version = '1.0.0'): Promise<DmgCoreCli> {
   await put(pkgRoot, {
-    'package.json': JSON.stringify({ name: 'dmg-core', version }),
+    'package.json': JSON.stringify({
+      name: 'dmg-core',
+      version,
+      peerDependencies: { valibot: '^1.5.0' },
+    }),
   });
   return new DmgCoreCli(await PackageSource.load(pkgRoot));
 }
@@ -290,6 +295,60 @@ describe('gen', () => {
     expect(await read('packages/todo/src/todo.module.ts')).toContain(
       "import { TodoModuleDef } from '@acme/domain/todo';",
     );
+  });
+
+  test('gen.package — пакет модуля с dmg-core версии пакета', async () => {
+    await write(
+      'dmg-core.json',
+      JSON.stringify({
+        gen: {
+          domain: 'domain/src/{m}',
+          app: 'modules/{m}/src',
+          domainImport: '@acme/domain/{m}',
+          package: '@acme/{m}',
+        },
+      }),
+    );
+    const result = await (await cli('1.2.3')).gen(root, [
+      'module',
+      'todo',
+      '--write',
+    ]);
+    expect(result.ok).toBe(true);
+    expect(JSON.parse(await read('modules/todo/package.json'))).toMatchObject({
+      name: '@acme/todo',
+      dependencies: {
+        'dmg-core': '^1.2.3',
+        valibot: '^1.5.0',
+        '@acme/domain': 'workspace:*',
+      },
+    });
+  });
+
+  test('gen.package и нет версии valibot в пакете — сообщение о поставке, не исключение', async () => {
+    await write(
+      'dmg-core.json',
+      JSON.stringify({
+        gen: {
+          domain: 'domain/src/{m}',
+          app: 'modules/{m}/src',
+          domainImport: '@acme/domain/{m}',
+          package: '@acme/{m}',
+        },
+      }),
+    );
+    await put(pkgRoot, {
+      'package.json': JSON.stringify({ name: 'dmg-core', version: '1.0.0' }),
+    });
+    const broken = new DmgCoreCli(await PackageSource.load(pkgRoot));
+    const result = await broken.gen(root, ['module', 'todo', '--write']);
+    expect(result).toEqual({
+      ok: false,
+      messages: [
+        'Ошибка поставки dmg-core (переустанови пакет): gen.package: нет версии valibot для пакета модуля',
+      ],
+    });
+    expect(existsSync(join(root, 'domain'))).toBe(false);
   });
 
   test('ошибки конфига gen — с полем', async () => {

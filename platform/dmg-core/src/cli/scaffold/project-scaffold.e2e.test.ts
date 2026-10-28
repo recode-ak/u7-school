@@ -9,12 +9,16 @@
  *   выдаёт ожидаемые ID ровно на нём; вне `includes` (тесты, `infra`,
  *   репозитории, точка входа раннера) нарушений нет;
  * - в `monorepo` пакеты `@acme/*` — ссылки на свои каталоги (как
- *   workspaces после `bun install`), `ArchChecker` видит их спецификаторы.
+ *   workspaces после `bun install`), `ArchChecker` видит их спецификаторы;
+ * - срез `gen` в `monorepo` (модуль, агрегат, UC) с пакетом модуля и
+ *   ручным подключением к приложению по подсказкам `gen module` проходит
+ *   biome, tsc, `arch:check` и тесты.
  */
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import {
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -25,6 +29,7 @@ import { type ArchApp, ArchChecker } from '../../arch';
 import { applyPlan } from '../../gen/apply';
 import { GenLayout } from '../../gen/layout';
 import { runGen } from '../../gen/main';
+import { DmgCoreCli } from '../dmg-core-cli';
 import { PackageSource } from '../package-source';
 import { ProjectScaffold } from './project-scaffold';
 import type { ScaffoldProfile } from './project-scaffold.types';
@@ -354,7 +359,9 @@ describe('ArchChecker на monorepo видит спецификаторы пак
     const project = await scaffold('monorepo');
     const layout = await GenLayout.read(project);
     const lines: string[] = [];
-    if (runGen(['module', 'probe', '--write'], layout, (l) => lines.push(l))) {
+    const deps = (await PackageSource.load(PKG)).moduleDependencies();
+    const print = (line: string) => lines.push(line);
+    if (runGen(['module', 'probe', '--write'], layout, print, deps)) {
       throw new Error(`gen module probe: ${lines.join('\n')}`);
     }
     const files: Record<string, string> = {
@@ -395,4 +402,136 @@ describe('ArchChecker на monorepo видит спецификаторы пак
       ),
     ]);
   });
+});
+
+/** Правка файла проекта: замена ровно одного вхождения (подключение руками). */
+function patch(project: string, path: string, from: string, to: string) {
+  const file = join(project, path);
+  const text = readFileSync(file, 'utf8');
+  if (text.split(from).length !== 2) {
+    throw new Error(`${path}: ожидалось одно вхождение «${from}»`);
+  }
+  writeFileSync(file, text.replace(from, to));
+}
+
+describe('monorepo: срез gen и подключение модуля по подсказкам', () => {
+  let project: string;
+  let hints: string;
+  beforeAll(async () => {
+    project = await scaffold('monorepo');
+    const cli = new DmgCoreCli(await PackageSource.load(PKG));
+    const messages: string[] = [];
+    for (const step of [
+      ['module', 'todo'],
+      ['aggregate', 'todo.task'],
+      ['uc', 'todo.task', 'complete-task'],
+    ]) {
+      const res = await cli.gen(project, [...step, '--write']);
+      if (!res.ok) throw new Error(`gen ${step.join(' ')}: ${res.messages}`);
+      messages.push(...res.messages);
+    }
+    hints = messages.join('\n');
+    // Подключение по подсказкам gen module (как после `bun install`:
+    // пакет модуля — ссылка в node_modules).
+    symlinkSync(
+      join(project, 'modules/todo'),
+      join(project, 'node_modules/@acme/todo'),
+    );
+    patch(
+      project,
+      'app/package.json',
+      '"@acme/domain": "workspace:*"',
+      '"@acme/domain": "workspace:*",\n    "@acme/todo": "workspace:*"',
+    );
+    patch(
+      project,
+      'app/src/app.ts',
+      "import type { AppUser } from '@acme/domain/shared';\n",
+      "import type { AppUser } from '@acme/domain/shared';\n" +
+        "import { TodoModuleDef } from '@acme/domain/todo/contract';\n" +
+        "import { createTodoModule, TaskJsonRepo } from '@acme/todo';\n",
+    );
+    patch(
+      project,
+      'app/src/app.ts',
+      'const modules: ModuleFactory<AppUser>[] = [];',
+      [
+        'const modules: ModuleFactory<AppUser>[] = [',
+        '      {',
+        '        def: TodoModuleDef,',
+        '        create: (deps) =>',
+        '          createTodoModule({',
+        '            ...deps,',
+        "            taskRepo: new TaskJsonRepo(join(env.dataDir, 'task.json')),",
+        '          }),',
+        '      },',
+        '    ];',
+      ].join('\n'),
+    );
+    patch(
+      project,
+      'scripts/arch-check.ts',
+      "import { type ArchApp, reportArchCheck } from 'dmg-core/arch';\n",
+      "import { TodoModuleDef } from '@acme/domain/todo/contract';\n" +
+        "import { type ArchApp, reportArchCheck } from 'dmg-core/arch';\n",
+    );
+    patch(
+      project,
+      'scripts/arch-check.ts',
+      'modules: [],',
+      'modules: [TodoModuleDef],',
+    );
+  }, 60_000);
+
+  test('подсказки gen module: фабрика, arch-check, зависимость корня сборки', () => {
+    expect(hints).toContain('createTodoModule');
+    expect(hints).toContain("'@acme/todo'");
+    expect(hints).toContain("'@acme/domain/todo/contract'");
+    expect(hints).toContain('scripts/arch-check.ts');
+    expect(hints).toContain('"@acme/todo": "workspace:*"');
+  });
+
+  test('пакет модуля и вход с репозиторием', () => {
+    expect(
+      JSON.parse(
+        readFileSync(join(project, 'modules/todo/package.json'), 'utf8'),
+      ),
+    ).toMatchObject({
+      name: '@acme/todo',
+      exports: { '.': './src/index.ts' },
+      dependencies: {
+        valibot: expect.any(String),
+        '@acme/domain': 'workspace:*',
+      },
+    });
+    expect(
+      readFileSync(join(project, 'modules/todo/src/index.ts'), 'utf8'),
+    ).toContain("export { TaskJsonRepo } from './infra/task.json-repo';");
+  });
+
+  test('biome чист', async () => {
+    const res = await sh([BIOME, 'check', '.'], project);
+    expect(res).toMatchObject({
+      code: 0,
+      text: expect.stringContaining('No fixes'),
+    });
+  }, 60_000);
+
+  test('tsc чист', async () => {
+    const res = await sh([TSC, '--noEmit', '-p', project], project);
+    expect(res.text).toBe('');
+    expect(res.code).toBe(0);
+  }, 120_000);
+
+  test('arch:check без нарушений с модулем todo', async () => {
+    const res = await sh(['bun', 'scripts/arch-check.ts'], project);
+    expect(res.text).toContain('arch:check: нарушений нет');
+    expect(res.code).toBe(0);
+  }, 60_000);
+
+  test('тесты проекта зелёные', async () => {
+    const res = await sh(['bun', 'test'], project);
+    expect(res.text).toContain(' 0 fail');
+    expect(res.code).toBe(0);
+  }, 120_000);
 });

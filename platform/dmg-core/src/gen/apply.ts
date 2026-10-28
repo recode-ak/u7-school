@@ -5,8 +5,18 @@ import { GenError } from './cli';
 import { importBefore, isImportSource } from './import-order';
 import type { ApplyResult, GenPlan, PlannedEdit, PlannedFile } from './plan';
 
-/** Входы модуля (D-45): в режиме adopt существующие не перезаписываются. */
-const ENTRY_FILES = ['index.ts', 'contract.ts'];
+/**
+ * В режиме adopt существующие не перезаписываются: входы модуля (D-45) и
+ * манифесты пакета модуля (`gen.package`) — их пишет проект при переводе.
+ * Пропуск — по имени файла: под него попадает любой файл плана с таким
+ * именем, какой бы вид его ни создал.
+ */
+const ENTRY_FILES = [
+  'index.ts',
+  'contract.ts',
+  'package.json',
+  'tsconfig.json',
+];
 
 /** Куда вставить `line`: в отсортированный блок import/export над маркером. */
 function insertionIndex(lines: string[], marker: number, line: string): number {

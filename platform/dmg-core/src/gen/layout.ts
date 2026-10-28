@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, join, relative, sep } from 'node:path';
 import type { ModuleLayout } from '../arch/file-checker';
+import type { ModulePackage } from './layout.types';
 
 /** Раскладка проекта для генераторов (`dmg-core.json`, `gen`); `{m}` — имя модуля */
 export interface GenLayoutSettings {
@@ -10,7 +11,16 @@ export interface GenLayoutSettings {
   app: string;
   /** Спецификатор импорта домена из прикладного слоя; нет — относительный путь */
   domainImport?: string;
+  /**
+   * Имя пакета модуля (`@acme/{m}`): задан — `gen module` создаёт пакет
+   * workspaces над каталогом прикладного слоя (`app` оканчивается на
+   * `/src`); нужен `domainImport` — по нему зависимость на пакет домена.
+   */
+  package?: string;
 }
+
+/** Суффикс каталога прикладного слоя в пакете модуля. */
+const SRC = '/src';
 
 /**
  * Где генератор создаёт файлы модуля и как прикладной слой импортирует
@@ -48,7 +58,7 @@ export class GenLayout {
     }
     const data = json as Record<string, unknown>;
     for (const key of Object.keys(data)) {
-      if (!['domain', 'app', 'domainImport'].includes(key)) {
+      if (!['domain', 'app', 'domainImport', 'package'].includes(key)) {
         GenLayout.fail(`неизвестное поле «gen.${key}»`);
       }
     }
@@ -67,6 +77,19 @@ export class GenLayout {
         GenLayout.fail('gen.domainImport — шаблон с {m}');
       }
       gen.domainImport = value as string;
+    }
+    if (data.package !== undefined) {
+      const value = data.package;
+      if (typeof value !== 'string' || !value.includes('{m}')) {
+        GenLayout.fail('gen.package — шаблон имени пакета с {m}');
+      }
+      if (!gen.app.endsWith(SRC)) {
+        GenLayout.fail(`gen.package — gen.app должен оканчиваться на ${SRC}`);
+      }
+      if (gen.domainImport === undefined) {
+        GenLayout.fail('gen.package — нужен gen.domainImport');
+      }
+      gen.package = value as string;
     }
     return gen;
   }
@@ -94,10 +117,30 @@ export class GenLayout {
     return { domain: this.domainDir(module), app: this.appDir(module) };
   }
 
+  /** Пакет прикладного слоя модуля; нет `gen.package` — undefined */
+  package(module: string): ModulePackage | undefined {
+    const { package: name, domainImport } = this.settings;
+    if (name === undefined || domainImport === undefined) return undefined;
+    const dir = this.appDir(module).slice(0, -SRC.length);
+    const domain = this.fill(domainImport, module).split('/');
+    return {
+      dir,
+      name: this.fill(name, module),
+      domain: domain.slice(0, domain[0]?.startsWith('@') ? 2 : 1).join('/'),
+      root: relative(dir, this.root).split(sep).join('/'),
+    };
+  }
+
   /** Применяемая раскладка одной строкой — первая строка вывода `gen` */
   describe(): string {
-    const { domain, app, domainImport } = this.settings;
-    return `Раскладка: домен — ${domain}, прикладной слой — ${app}, импорт домена — ${domainImport ?? 'относительный'}`;
+    const { domain, app, domainImport, package: name } = this.settings;
+    const line = `Раскладка: домен — ${domain}, прикладной слой — ${app}, импорт домена — ${domainImport ?? 'относительный'}`;
+    return name === undefined ? line : `${line}, пакет модуля — ${name}`;
+  }
+
+  /** Импорт домена по шаблону (`gen.domainImport`), а не относительный */
+  hasDomainImport(): boolean {
+    return this.settings.domainImport !== undefined;
   }
 
   /** Спецификатор импорта домена модуля из файла в каталоге fromDir */

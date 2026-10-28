@@ -68,6 +68,20 @@ export class PackageSource {
     );
   }
 
+  /**
+   * Диапазоны внешних зависимостей пакета модуля (`gen.package`) — как у
+   * каркаса: dmg-core — версия пакета, valibot — его peer. Нет версии
+   * valibot — её нет и здесь: о дефекте поставки сообщает `gen`.
+   */
+  moduleDependencies(): Record<string, string> {
+    const dependencies: Record<string, string> = {
+      'dmg-core': `^${this.version}`,
+    };
+    const valibot = this.peerDependencies.valibot;
+    if (valibot !== undefined) dependencies.valibot = valibot;
+    return dependencies;
+  }
+
   private static async scan(
     root: string,
     dir: string,
