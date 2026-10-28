@@ -48,11 +48,11 @@
 - [x] Task: Снять DEBT-38; новый долг — контракт story в `dmg-ui` несёт id запроса явно (DEBT-41) b8b50fd0
 - [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
-## Фаза 5: Показ ошибок DMG в боте (DEBT-37)
+## Фаза 5: Показ ошибок DMG в боте (DEBT-37) [checkpoint: b590e99c]
 
 - [x] Task: `ucErrorNotify` по `kind` и тексту из Def без `toLegacyError`; тесты red → green; снять DEBT-37 b6294f91
 - [x] Task: Ревью reviewer 15e6f0db
-- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
 ## Фаза 6: Финал
 
