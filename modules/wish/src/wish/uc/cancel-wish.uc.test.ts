@@ -1,3 +1,4 @@
+// DEBT-40: репозиторий во временном каталоге — перевести на фейк порта (`<a>.repo.fake.ts`) при касании.
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
