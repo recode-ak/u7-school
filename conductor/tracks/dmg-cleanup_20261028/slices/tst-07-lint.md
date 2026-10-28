@@ -30,4 +30,14 @@ TST-07: в прикладном слое и корне сборки (катал�
 
 ## Отчёт автора
 
+api-author (Opus), 2026-10-28. Пакет `dmg-core` `d448dd5`.
+
+- `lint-map.ts`: строка TST-07 после DOM-01 «прикладной слой» — `<app-dirs>/**` без `infra/**` и `*.repo.fake.ts`; запрет `**/*.repo.fake`, `dmg-core/testing`, `dmg-core/testing/**`; `repeats: ['DOM-01']`.
+- Отклонение: `bans()` — `repeats` берёт ближайшую строку с ID выше (раньше — первую, доменную DOM-01 с чужим сообщением); тест в `lint-map.test.ts`.
+- Отклонение: `infra/` вне TST-07, как и DOM-01 прикладного слоя (иначе ложный DOM-01 на json-repo).
+- `biome.json` пакета: секция для `src/testing/example/app/**` (кроме тестов, `infra`, фейков) — ARC-10, DOM-01, TST-07 (+ `#core/testing`, `#core/testing/*`).
+- `rules.md`: TST-07 и строка карты; фикстуры `lint-fixtures/…`; `scripts/lint-rules.test.ts` — фильтр ID с `TST`; e2e каркаса single/monorepo.
+- Тест ER переименован: «…Ok, ничего не записано».
+- red: 7 падений; green. `check` пакета — 1275 pass / 0 fail, `e2e: ok` (сверил orchestrator). u7-school: `bun install`, `dmg:sync` — без изменений файлов, `check` 3273 pass / 0 fail.
+
 ## Отчёт ревьюера
