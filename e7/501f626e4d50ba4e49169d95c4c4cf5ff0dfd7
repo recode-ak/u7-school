@@ -1,0 +1,6 @@
+Фаза 3 «Агентная приёмка» — отчёт о верификации
+
+Автотесты: CI=true bun test — корень 4515 pass / 0 fail; platform/dmg-core 1242 pass / 0 fail; bun run check — зелёный; bun run e2e пакета — ok.
+Агентная приёмка: прогон 1 (monorepo) — 2 застревания, 11 угадываний; закрыты задачей 2 (2caf0bbb, ab580052, 93bacd0d, ed6496fd, 94c1230e). Прогон 2 (monorepo + single) — без блокеров, мелкие пробелы закрыты (0da2bbbc). Прогон 3 (контрольный, monorepo library) — чистый (331dd281).
+Ручная верификация: init --profile monorepo с относительным путём к tarball; gen module/aggregate/uc без «Вставь вручную»; check зелёный с предупреждением MAN-01; arch:check --strict — код 1; call todo.create --user → Ok (0), без --user → UNAUTHORIZED (2); фабрика с taskRepo в app.ts.
+Подтверждение пользователя: «да» (2026-10-28).
