@@ -20,6 +20,7 @@ import {
   type AppMode,
   InProcInbox,
   InProcOutbox,
+  InProcReplayStore,
   JsonlOperationLog,
   ModuleFacade,
   ModuleFacades,
@@ -46,7 +47,7 @@ export type DmgLegacyFacades = {
  * Контекст приложения для модулей DMG на время сосуществования: шина DMG
  * поверх legacy-шины (входящие legacy-события зависимостей — по картам
  * `inbound`, D-37), outbox и inbox в процессе (D-47), часы legacy, логгер
- * приложения, JSONL-лог операций.
+ * приложения, JSONL-лог операций, отсев повторов команд в памяти (D-56).
  */
 export function createDmgAppContext(platform: DmgPlatform): AppContext {
   const { legacyBus, logger, mode, oplogDir } = platform;
@@ -54,14 +55,16 @@ export function createDmgAppContext(platform: DmgPlatform): AppContext {
     inbound: [...streamLegacyInbound, ...questionnaireLegacyInbound],
     onInvalid: (message) => logger.warn('legacy-event-bus', message),
   });
+  const clock = legacyClock();
   return {
     bus,
     outbox: new InProcOutbox(bus),
     inbox: new InProcInbox(),
-    clock: legacyClock(),
+    clock,
     logger,
     mode,
     oplog: new JsonlOperationLog(oplogDir),
+    replay: new InProcReplayStore({ clock }),
   };
 }
 

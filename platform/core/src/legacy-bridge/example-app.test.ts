@@ -6,6 +6,7 @@ import { ok, SystemCaller, UserCaller } from 'dmg-core';
 import {
   InProcInbox,
   InProcOutbox,
+  InProcReplayStore,
   JsonlOperationLog,
   ModuleFacade,
   ModuleFacades,
@@ -62,16 +63,18 @@ beforeEach(async () => {
   legacy = new AwaitingLegacyBus();
   logs = [];
   const bus = legacyEventBus(legacy);
+  const clock = legacyClock();
   deps = {
     app: {
       bus,
       outbox: new InProcOutbox(bus),
       inbox: new InProcInbox(),
-      clock: legacyClock(),
+      clock,
       logger: new MemoryLogger(logs),
       mode: 'test',
       // Как в приложении (`<DB_DIR>/oplog/`), но во временном каталоге.
       oplog: new JsonlOperationLog(path.join(dir, 'oplog')),
+      replay: new InProcReplayStore({ clock }),
     },
     facades: new ModuleFacades(),
     tasks: new TaskJsonRepo(path.join(dir, 'tasks.json')),
