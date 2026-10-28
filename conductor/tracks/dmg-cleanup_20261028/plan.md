@@ -54,8 +54,8 @@
 - [x] Task: Ревью reviewer 15e6f0db
 - [x] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
-## Фаза 6: Финал
+## Фаза 6: Финал [checkpoint: 4a153d43]
 
 - [x] Task: Гейт качества (workflow.md): полный прогон, сверка с базовой линией; `summary.md` c6942521
 - [x] Task: Удалить `roadmap/bot-request-id.md`, снять `[?]` в `tracks.md`, обновить `roadmap.md` 820e499f
-- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
