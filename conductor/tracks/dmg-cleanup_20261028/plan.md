@@ -44,7 +44,7 @@
 - [x] Task: Контекст запроса: транспорт кладёт `update_id`, `dispatchUc` — `requestId = tg:<update_id>#<n>`, `correlationId = tg:<update_id>`, без `warn`; тесты stories и транспорта red → green 8ff646cc
 - [x] Task: Файловый `ReplayStore` в `data/replay/` (TTL, очистка просроченного); тесты на временном каталоге red → green; подключение в раннере 4455d890
 - [x] Task: `AGENTS.md` (незащищённые данные), `docs/backup.md`, `.gitignore` 2ae78429
-- [ ] Task: e2e: повтор апдейта — UC не исполнен повторно; два UC одного апдейта — общий `correlationId`
+- [x] Task: e2e: повтор апдейта — UC не исполнен повторно; два UC одного апдейта — общий `correlationId` 3a6fc630
 - [ ] Task: Снять DEBT-38; новый долг — контракт story в `dmg-ui` несёт id запроса явно
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
