@@ -62,7 +62,7 @@
 - [x] Task: Повторный прогон — чистый, без угадываний; профиль `single` — короткий прогон 331dd281
 - [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
-## Фаза 4: Локальный вынос
+## Фаза 4: Локальный вынос [checkpoint: e6cb0d7]
 
 - [x] Task: Способ подключения в u7-school (`link:` / `file:` / workspace-путь вне репо): проверка `dmg-core sync`, `gen`, biome-плагинов `node_modules/dmg-core/…`, tsc; согласовать с Нурболатом
     - D-55 (Нурболат 2026-10-28): сейчас `file:`, при релизе — `git+ssh` с тегом; репо — `~/dev/tools/dmg/dmg-core`. Проверено на макете bun 1.4.2 (bin, плагины, глубина workspace, `--frozen-lockfile`); `sync`/`gen`/tsc на реальном пакете — в задаче «u7-school на вынесенном пакете»
@@ -78,7 +78,7 @@
     - Процесс — `conductor/architecture/index.md` «Правка платформы `dmg-core`»; исторические TR в `debt.md`, архив и треки не трогали
 - [x] Task: Чек-лист публикации в репо пакета: актуальные пути, сравнение npm / приватный registry или scope / git с рекомендацией
     - `RELEASING.md` в корне репо пакета (b001e0e): рекомендация — git по тегу (приватный GitHub), npm — когда понадобится вне своих проектов. Установку из git до пуша проверить нельзя (`git+file` bun не поддерживает, sshd нет) — шаг 4 чек-листа
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 ## Финал
 
