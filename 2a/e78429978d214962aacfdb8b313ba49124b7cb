@@ -1,0 +1,3 @@
+Задача Ф4 'AGENTS.md, docs/backup.md, .gitignore' (трек dmg-cleanup_20261028).
+Сделано: AGENTS.md — data/replay/ в списке незащищённых git данных; docs/backup.md — раздел «Не бэкапятся» (oplog, replay); .gitignore — комментарий рантайм-состояния (data/* уже игнорирует каталог, правило не менялось). scripts/backup.sh — явный список файлов, replay туда не попадает без правок.
+check зелёный.
