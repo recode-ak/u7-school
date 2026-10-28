@@ -1,0 +1,1 @@
+Задача: ревью Фазы 2 (reviewer, Opus). Ошибок нет; warn (JSDoc-пример MemoryRepo) исправлен в dmg-core 3b9d7cd. Вопросы (D-NN для API testing, запрет импорта фейков в рабочем коде, имя теста ER) — к Нурболату. Отчёт: slices/memory-repo.md.
