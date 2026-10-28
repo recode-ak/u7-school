@@ -54,6 +54,17 @@ test('JSON-репозиторий: короткая шапка — в одну �
   );
 });
 
+test('тест репозитория: вход создания — одна константа Create<A>', () => {
+  const src = file('infra/student.json-repo.test.ts');
+  expect(src).toContain(
+    'const createInput: CreateStudent = {\n  uuid: ID,\n};',
+  );
+  expect(src).toContain('StudentAr.create(createInput, T0)');
+  expect(src).toContain(
+    "import { type CreateStudent, StudentAr } from '@acme/domain/stream';",
+  );
+});
+
 test('тест репозитория: сохранить и найти', () => {
   expect(file('infra/student.json-repo.test.ts')).toContain(
     "describe('StudentJsonRepo'",

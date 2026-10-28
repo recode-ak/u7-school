@@ -14,6 +14,26 @@
 
 `dmg-core gen aggregate <m>.<a> --write` создаёт state, events, errors, Ar, Policy и repo; в корне сборки — репозиторий в фабрике модуля ([project.md](./project.md) §4). Заполни TODO в Def (`statuses`, `transitions` с `from`/`to`/`rejects`) и методы Ar. Генератору нужен паспорт `<m>.module.ts`. Событие `created` публикует UC создания — `gen uc <m>.<a> create`; каждое объявленное событие должен эмитить какой-то UC/ER/Job (MAN-06), иначе `arch:check` красный.
 
+Переход — в Def, метод — в Ar ([task.ar.ts](../../src/testing/example/todo/task/task.ar.ts)):
+
+```ts
+statuses: { open: { label: 'Открыта' }, done: { label: 'Выполнена' } },
+transitions: {
+  // rejects — ошибка на каждый статус вне from (MAN-12), полноту проверяет компилятор
+  complete: { from: ['open'], to: 'done', rejects: { done: TaskErrors.ALREADY_DONE } },
+},
+
+complete(at: Timestamp): Result<void, RejectOf<typeof TaskArDef, 'complete'>> {
+  return this.transition('complete', at, (draft, emit) => {
+    draft.completedAt = at;
+    emit(TaskEvents.completed.make(this.ref()));
+    return ok();
+  });
+}
+```
+
+Первый аргумент `transition` — ключ из `transitions`; метод Ar принято называть так же. Ошибки отказа — в `<a>.errors.ts`, `kind` отказа перехода — `conflict` ([errors.md](./errors.md)). Статус нового агрегата задаёт `create`. Новое поле state из входа создания — допиши его в `Create<A>` и `create`, затем в константу `createInput` тестов заготовок (`tsc` укажет каждую); поле со значением по умолчанию — только в `create`, тесты не меняются.
+
 ## 3. Образец
 
 - [task.ar.ts](../../src/testing/example/todo/task/task.ar.ts): `TaskArDef` (3 статуса, 2 перехода, `rejects` для каждого статуса вне `from`); `TaskAr` — `create`/`restore`, переходы `complete`/`archive` через `this.transition`, мутации без смены статуса `assign`/`unassign` через `this.change`; отказы метода — `RejectOf<…, 'complete'>`, а не вся группа.

@@ -42,11 +42,11 @@ APP_DATA_DIR=data bun <раннер>/main.ts whoami [--user <uuid>]
 APP_DATA_DIR=data bun <раннер>/main.ts call <module>.<operation> [--input '<json>'] [--user <uuid>]
 ```
 
-`call` вызывает любой UC подключённого модуля по имени (`todo.create` — имена Def модуля и UC, как в логе операций) через `app.api.dispatchByName` и печатает `Result` JSON целиком (с `label`/`description` ошибки — это вывод для человека, не wire-формат [transport.md](../transport.md)). Коды выхода: 0 — `Ok`, 1 — ошибка ввода (argv, JSON, uuid), 2 — `Err` операции (в том числе `OPERATION_NOT_FOUND`, `INPUT_VALIDATION`, `UNAUTHORIZED`), 3 — окружение. Как устроены приложение и раннер — [app.md](./app.md).
+`call` вызывает любой UC подключённого модуля по имени (`todo.create` — имена Def модуля и UC, как в логе операций; `gen uc todo.task complete-task` → `call todo.completeTask`, агрегата в адресе нет) через `app.api.dispatchByName` и печатает `Result` JSON целиком (с `label`/`description` ошибки — это вывод для человека, не wire-формат [transport.md](../transport.md)). Коды выхода: 0 — `Ok`, 1 — ошибка ввода (argv, JSON, uuid), 2 — `Err` операции (в том числе `OPERATION_NOT_FOUND`, `INPUT_VALIDATION`, `UNAUTHORIZED`), 3 — окружение. Как устроены приложение и раннер — [app.md](./app.md).
 
 **Резолвер каркаса — заглушка разработки.** Пока нет модуля пользователей, `--user <uuid>` даёт `UserCaller` без ролей, без `--user` — гость. Uuid принимается на веру только с канала `cli` (проверка в коде): с другого канала — исключение, удалённый вход (HTTP, бот) без модуля пользователей — дефект конфигурации. Uuid, придуманные в CLI, попадут в данные и не совпадут с реальными пользователями — это отступление от D-50 (`UserCaller` выдаёт модуль пользователей) только для каркаса.
 
-`check` проекта: `dmg-core sync --check` → `biome check` → `tsc --noEmit` → `arch:check` → `bun test`.
+`check` проекта: `dmg-core sync --check` → `biome check` → `tsc --noEmit` → `arch:check` → `bun test`. Незаполненные `TODO` в `label`/`description` Def `arch:check` печатает предупреждением (MAN-01) и не роняет — заготовки зелёные; `bun run arch:check --strict` считает их нарушениями (код 1) — для CI и перед выпуском.
 
 ## 4. Как растёт проект
 
@@ -64,7 +64,7 @@ APP_DATA_DIR=data bun <раннер>/main.ts call todo.create --user "$(bun -e '
    - `gen aggregate` — репозиторий в фабрику: `<a>Repo: new <A>JsonRepo(join(env.dataDir, '<m>.<a>.json'))` (имя файла уникально в приложении).
    - Нет маркера (своя раскладка, правленый `app.ts`) или конфликт имён импортов (агрегаты с одним именем в двух модулях) — генератор печатает «Вставь вручную в <файл> перед <маркер>» с причиной и не падает. Без `gen.compositionRoot` при своей раскладке корень сборки не правится — подсказка называет поле.
 2. **UC.** `gen uc <m>.<a> create` (или `create-*`) — рабочий: `<A>Ar.create`, `uow.register`, `emits: [created]`, выход `<a>Id`; остаётся перенести поля входа. Остальные — `load` агрегата по `<a>Id` с `NOT_FOUND`, `execute` с `TODO` для операции домена, `emits: []` ([use-case.md](./use-case.md) §2). Событие `created` должен кто-то публиковать (MAN-06): генератор напоминает, пока UC создания нет.
-3. **Вызов.** Любой UC — `call` раннера; своя команда в `runner-cli.ts` нужна только для удобного интерфейса (образец — [app.md](./app.md) §3). Видимость для транспорта задают `callers` и Policy, а не `contract.ts` (D-54): контракт — граница импортов между модулями.
+3. **Вызов.** Любой UC — `call` раннера; отдельный e2e-тест `call` проекту не нужен: раннер покрыт тестами каркаса, сценарии — тестами Ar и UC. Своя команда в `runner-cli.ts` нужна только для удобного интерфейса (образец — [app.md](./app.md) §3). Видимость для транспорта задают `callers` и Policy, а не `contract.ts` (D-54): контракт — граница импортов между модулями.
 4. **Модуль пользователей** — резолвер `Caller` вместо заглушки (TODO в `app-caller-resolver.ts`, образец — [app.md](./app.md) §3).
 5. После ручных правок — `bun run format` (порядок импортов biome), затем `bun run check`. Код генератора проходит `check` без правок.
 
@@ -80,6 +80,7 @@ APP_DATA_DIR=data bun <раннер>/main.ts call todo.create --user "$(bun -e '
 - ARC-07, ARC-08 — корень сборки берёт фабрику только из входа прикладного пакета; раннер — только приложение и контракты.
 - ARC-06 — прикладной пакет модуля не импортирует соседей; один пакет на модуль домена.
 - ARC-09 — окружение читает только `main.ts` раннера.
+- MAN-01 — `label`/`description` Def заполнены (включая метки статусов и Policy): `arch:check` без предупреждения «незаполненных TODO», `arch:check --strict` зелёный.
 - MAN-06 — каждое событие агрегата публикует какой-то UC/ER/Job (`arch:check`: «событие … никто не публикует»): объявил событие — сгенерируй операцию, которая его эмитит, или убери событие.
 - TST-06 — `check` проекта зелёный после каждого шага.
 

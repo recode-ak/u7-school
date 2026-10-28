@@ -149,3 +149,10 @@ CLI раннера в каркасе (оба профиля) получает к
   - (б) `gen uc` печатает адрес вызова: «Вызов: call <module>.<operation>» (S2).
   - (в) `gen aggregate` печатает: новое поле state — обнови `Create<A>` и тесты заготовок (`<a>.ar.test.ts`, `<a>.policy.test.ts`, `<a>.json-repo.test.ts`, тесты UC); статус по умолчанию — первый из `statuses` (S3/M4). Если тесты заготовок можно сделать устойчивыми к новым полям (одна фабрика входа `Create<A>` на агрегат в тестах, вместо литералов в каждом тесте) без type-level трюков — сделай и обоснуй.
 - **Документация (оркестратор):** `aggregate.md` §2 — врезка `transitions`/`rejects`, имя метода = имя перехода, ссылка на `errors.md` для `kind`; `state.md`/`project.md` — где список `F.*`; README — пути раннера раздельно; `project.md` — адрес `call` из имени `gen uc`, e2e `call` не нужен.
+
+### Отчёты: остаток задачи 3 (api-author, Opus; reviewer; документация — оркестратор)
+
+- MAN-01: незаполненные `TODO` (`/^todo(?![\p{L}\p{N}_-])/iu`) в `label`/`description` Def и метках статусов — `DefChecker.todos()`; в `label`/`description`/`denyMessage` Policy — `FileChecker.todos()` по исходникам `*.policy.ts` (PolicyDef недостижим из графа Def; ограничения: только при раскладке, только однострочный литерал). `arch:check` — предупреждение, код 0; `--strict` — нарушение, код 1 (проверено в `consumer-e2e.sh`). Полнота: e2e генератора — число предупреждений = числу TODO-литералов в домене.
+- `gen uc` печатает «Вызов: call <module>.<uc>»; `gen aggregate` — подсказку о новом поле state. Тесты заготовок на `createInput: Create<A>` и `input: InputOf<…>` — новое поле входа tsc показывает в каждой константе; поле с умолчанием тестов не трогает.
+- Документация: `aggregate.md` (врезка переходов, `kind`, новое поле), `state.md` (`F.*`), `project.md` (адрес `call`, e2e не нужен, `--strict`, MAN-01), `rules.md` (MAN-01), README (пути раннера).
+- Ревью: error нет; 2 warn (детектор не видел статусы и Policy; формулировка `project.md`) и info исправлены. Гейт/`check`/`e2e` зелёные.

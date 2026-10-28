@@ -11,6 +11,7 @@ import {
 import { kindNames, toCamel, toPascal, toUpperSnake } from '../naming';
 import type { GenPlan, PlannedFile } from '../plan';
 import { fit, list } from '../wrap';
+import { createInputConst } from './aggregate';
 
 type OpKind = 'uc' | 'er' | 'job';
 
@@ -376,13 +377,25 @@ ${this.register(key)}
       "import { tmpdir } from 'node:os';",
       "import { join } from 'node:path';",
       namedImport(sortNames([...domain, this.moduleDef]), c.domain),
-      "import { UserCaller } from 'dmg-core';",
+      "import { type InputOf, UserCaller } from 'dmg-core';",
       "import { ModuleFacades, Trace } from 'dmg-core/app';",
       `import { ${check} } from 'dmg-core/testing';`,
       `import { ${c.agg}JsonRepo } from '../../infra/${c.a}.json-repo';`,
       `import type { ${c.deps} } from '../../${c.m}.module';`,
       `import { ${c.className} } from './${c.base}';`,
     ]);
+  }
+
+  /**
+   * Вход UC в тесте — константа с типом входа контракта: новое поле входа
+   * tsc показывает здесь, а не ошибкой схемы в рантайме (\`handle\` берёт
+   * \`unknown\`).
+   */
+  private inputConst(...fields: string[]): string {
+    const head = `const input: InputOf<typeof ${this.c.defName}> =`;
+    return fields.length === 0
+      ? fit(`${head} {};`, `${head}\n  {};`)
+      : list('', `${head} {`, fields, '};', { space: true });
   }
 
   /** Резолвер с JSON-репозиторием во временном каталоге — до каждого теста. */
@@ -412,15 +425,16 @@ afterEach(() => rmSync(dir, { recursive: true, force: true }));`;
     const c = this.c;
     return `${this.repoTestImports(
       'afterEach, beforeEach, describe, expect, it',
-      [],
+      [`type ${c.defName}`],
       'expectOk, testAppContext',
     )}
 
+${this.inputConst()}
 ${this.repoSetup}
 
 describe('${c.className}', () => {
   it('создаёт агрегат и сохраняет его', async () => {
-    const out = expectOk(await uc.handle({}, user, trace));
+    const out = expectOk(await uc.handle(input, user, trace));
 ${list('    ', 'expect(', [`await repo.findById(out.${this.idField})`], ').toBeDefined();')}
   });
 });
@@ -433,18 +447,19 @@ ${list('    ', 'expect(', [`await repo.findById(out.${this.idField})`], ').toBeD
     const code = `${toUpperSnake(c.a)}_NOT_FOUND`;
     return `${this.repoTestImports(
       'afterEach, beforeEach, describe, expect, it',
-      [`${A}Ar`],
+      [`type ${c.defName}`, `type Create${A}`, `${A}Ar`],
       'expectErr, expectOk, testAppContext',
     )}
 
 const ID = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 const T0 = Date.UTC(2026, 9, 1);
-const input = { ${this.idField}: ID };
+${createInputConst(A)}
+${this.inputConst(`${this.idField}: ID`)}
 ${this.repoSetup}
 
 describe('${c.className}', () => {
   it('загружает агрегат и сохраняет его', async () => {
-${list('    ', 'const ar = expectOk(', [`${A}Ar.create({ uuid: ID }, T0)`], ');')}
+${list('    ', 'const ar = expectOk(', [`${A}Ar.create(createInput, T0)`], ');')}
     await repo.save(ar);
     expectOk(await uc.handle(input, user, trace));
   });
@@ -613,6 +628,15 @@ function createNotes(args: GenArgs, kind: OpKind): string[] {
   return hasCreate ? [] : [createdNote(m, a)];
 }
 
+/**
+ * Адрес UC для раннера каркаса: модуль и имя операции из Def (camelCase),
+ * без агрегата — `gen uc notes.note create` → `call notes.create`.
+ */
+function callNotes(args: GenArgs, kind: OpKind): string[] {
+  if (kind !== 'uc') return [];
+  return [`Вызов: call ${args.module}.${toCamel(args.name ?? '')}`];
+}
+
 /** Подсказка: событие `created` публикует UC создания (MAN-06). */
 export const createdNote = (m: string, a: string): string =>
   `Событие created публикует UC создания (MAN-06): dmg-core gen uc ${m}.${a} create`;
@@ -688,6 +712,6 @@ export function planOperation(args: GenArgs): GenPlan {
         ),
       },
     ],
-    notes: createNotes(args, kind),
+    notes: [...createNotes(args, kind), ...callNotes(args, kind)],
   };
 }

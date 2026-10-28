@@ -1,8 +1,13 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { AnyOperationDef, DefIndex } from '../graph/def-index';
 import { SourceScan } from './source-scan';
+import { TODO_TEXT } from './todo-text';
 import { type ArchRule, Violation } from './violation';
+
+/** Текстовое поле Policy или правила в строке исходника: поле и литерал. */
+const POLICY_TEXT =
+  /\b(label|description|denyMessage)\s*:\s*(?:'([^']*)'|"([^"]*)"|`([^`]*)`)/;
 
 /** Каталоги модуля: домен (`domain/src/<m>`) и прикладной пакет (`<m>/src`). */
 export type ModuleLayout = { readonly domain: string; readonly app: string };
@@ -27,6 +32,37 @@ export class FileChecker {
     private readonly layout: (module: string) => ModuleLayout,
     private readonly entry = 'index',
   ) {}
+
+  /**
+   * Незаполненные тексты Policy (MAN-01, предупреждения): PolicyDef не входит
+   * в граф Def, поэтому `label`/`description` политики и `label`/`denyMessage`
+   * её правил ищутся в исходниках `*.policy.ts` домена — строковый литерал
+   * поля, начинающийся со слова `TODO` (см. `DefChecker.todos`).
+   */
+  todos(): Violation[] {
+    const out: Violation[] = [];
+    for (const m of this.index.modules) {
+      const base = this.layout(m.name).domain;
+      for (const f of this.scan.files(base)) {
+        if (!f.endsWith('.policy.ts')) continue;
+        const lines = readFileSync(join(base, f), 'utf8').split('\n');
+        lines.forEach((line, i) => {
+          const found = POLICY_TEXT.exec(line);
+          if (!found) return;
+          const [, field, ...quoted] = found;
+          const text = (quoted.find((q) => q !== undefined) ?? '').trim();
+          if (!TODO_TEXT.test(text)) return;
+          out.push(
+            new Violation(
+              'MAN-01',
+              `политика ${m.name}/${f}:${i + 1}: ${field} не заполнен — «${text}»`,
+            ),
+          );
+        });
+      }
+    }
+    return out;
+  }
 
   check(): Violation[] {
     const dirs = new Map(

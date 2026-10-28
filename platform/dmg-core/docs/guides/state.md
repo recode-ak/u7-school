@@ -13,7 +13,7 @@
 
 ## 2. Команда
 
-`dmg-core gen aggregate <m>.<a> --write` создаёт `<a>.state.ts` вместе со всеми артефактами агрегата: events, errors, Ar, Policy, repo. Заполни TODO полями и замени заглушку статуса. Генератору нужен паспорт `<m>.module.ts` ([module.md](./module.md)).
+`dmg-core gen aggregate <m>.<a> --write` создаёт `<a>.state.ts` вместе со всеми артефактами агрегата: events, errors, Ar, Policy, repo. Заполни TODO полями и замени заглушку статуса. Поля — `F.*` из `dmg-core` (описание из метки, DOM-11): `F.string(label)` — непустая строка, `F.int(label)`, `F.boolean(label)`, `F.picklist([...], label)`, `F.uuid('<кого>')` — ссылка на сущность, `F.timestamp('<чего>')` — момент (DOM-12); необязательное — `v.optional(F.*)`; прочее — `valibot` с `v.description`. Генератору нужен паспорт `<m>.module.ts` ([module.md](./module.md)).
 
 ## 3. Образец
 

@@ -6,10 +6,11 @@
  */
 import { join } from 'node:path';
 import type { GenArgs } from '../cli';
-import { namedImport, sortImports } from '../import-order';
+import { namedImport, sortImports, sortNames } from '../import-order';
 import { toCamel, toPascal } from '../naming';
 import type { GenPlan } from '../plan';
 import { fit, list } from '../wrap';
+import { createInputConst } from './aggregate';
 import { AppWiring } from './app-wiring';
 
 /**
@@ -108,7 +109,7 @@ ${findById('  async ', ' {')}
   const createAr = list(
     '    ',
     'const ar = expectOk(',
-    [`${P}Ar.create({ uuid: ID }, T0)`],
+    [`${P}Ar.create(createInput, T0)`],
     ');',
   );
 
@@ -117,7 +118,7 @@ ${findById('  async ', ' {')}
     "import { mkdtempSync, rmSync } from 'node:fs';",
     "import { tmpdir } from 'node:os';",
     "import { join } from 'node:path';",
-    `import { ${P}Ar } from '${domain('infra')}';`,
+    namedImport(sortNames([`type Create${P}`, `${P}Ar`]), domain('infra')),
     "import { VersionConflict } from 'dmg-core/app';",
     "import { expectOk } from 'dmg-core/testing';",
     `import { ${P}JsonRepo } from './${a}.json-repo';`,
@@ -126,6 +127,7 @@ ${findById('  async ', ' {')}
 const ID = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 const T0 = Date.UTC(2026, 9, 1);
 const OTHER = '5e3d1c2b-7a6f-4e8d-b9c0-a1f2e3d4c5b6';
+${createInputConst(P)}
 
 let dir: string;
 beforeEach(() => {

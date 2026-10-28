@@ -67,7 +67,7 @@ test('uc: тест реализации — модуль, пустые фаса�
     '/p/stream/src/student/uc/complete-student.uc.test.ts',
   );
   expect(src).toContain(
-    "import { StreamModuleDef, StudentAr } from '@acme/domain/stream';",
+    "import {\n  type CompleteStudentUcDef,\n  type CreateStudent,\n  StreamModuleDef,\n  StudentAr,\n} from '@acme/domain/stream';",
   );
   expect(src).toContain('facades: new ModuleFacades()');
   expect(src).toContain('new CompleteStudentUc(deps, StreamModuleDef)');
@@ -182,6 +182,18 @@ test('uc create: тест реализации — JSON-репозиторий �
   expect(src).not.toContain('TODO');
 });
 
+test('uc create: вход теста — одна типизированная константа по контракту', () => {
+  const src = content(
+    plan('uc', 'create-student'),
+    '/p/stream/src/student/uc/create-student.uc.test.ts',
+  );
+  expect(src).toContain(
+    'const input: InputOf<typeof CreateStudentUcDef> = {};',
+  );
+  expect(src).toContain('await uc.handle(input, user, trace)');
+  expect(src).toContain("import { type InputOf, UserCaller } from 'dmg-core';");
+});
+
 test('uc не create: emits пуст с TODO про событие, загрузка агрегата по id', () => {
   const p = plan('uc', 'complete-student');
   const def = content(p, '/d/stream/student/uc/complete-student.uc.ts');
@@ -212,6 +224,21 @@ test('uc не create: тест реализации — успех на сохр
   );
   expect(src).toContain("expectErr(res, 'STUDENT_NOT_FOUND')");
   expect(src).not.toContain('TODO');
+});
+
+test('uc не create: вход создания агрегата — одна константа Create<A>', () => {
+  const src = content(
+    plan('uc', 'complete-student'),
+    '/p/stream/src/student/uc/complete-student.uc.test.ts',
+  );
+  expect(src).toContain(
+    'const createInput: CreateStudent = {\n  uuid: ID,\n};',
+  );
+  expect(src).toContain('StudentAr.create(createInput, T0)');
+  expect(src).toContain(
+    'const input: InputOf<typeof CompleteStudentUcDef> = { studentId: ID };',
+  );
+  expect(src).toContain('type CreateStudent');
 });
 
 test('uc: callers — пользователь, с подсказкой про --user раннера каркаса', () => {
@@ -249,10 +276,21 @@ test('тест контракта: длинное имя разбито по с�
 const NOTE =
   'Событие created публикует UC создания (MAN-06): dmg-core gen uc stream.student create';
 
+test('uc — адрес вызова раннером: call <модуль>.<имя UC>', () => {
+  expect(plan('uc', 'create-student').notes).toEqual([
+    'Вызов: call stream.createStudent',
+  ]);
+  expect(plan('er', 'fulfill-wish').notes).not.toContainEqual(
+    expect.stringContaining('Вызов:'),
+  );
+});
+
 test('MAN-06: без UC создания в каталоге — подсказка у uc не-create и er', () => {
-  expect(plan('uc', 'complete-student').notes).toEqual([NOTE]);
+  expect(plan('uc', 'complete-student').notes).toEqual([
+    NOTE,
+    'Вызов: call stream.completeStudent',
+  ]);
   expect(plan('er', 'fulfill-wish').notes).toEqual([NOTE]);
-  expect(plan('uc', 'create-student').notes).toEqual([]);
   expect(plan('job', 'inactivity-sweep').notes).toEqual([]);
 });
 
@@ -268,7 +306,7 @@ test('MAN-06: UC создания уже есть — подсказки нет'
     const notes = planOperation(
       parseArgs(['uc', 'stream.student', 'complete-student'], withCreate),
     ).notes;
-    expect(notes).toEqual([]);
+    expect(notes).toEqual(['Вызов: call stream.completeStudent']);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

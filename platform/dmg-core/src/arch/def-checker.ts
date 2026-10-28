@@ -7,6 +7,7 @@ import type { DefIndex } from '../graph/def-index';
 import { CoreErrors } from '../kernel/errors/core-errors';
 import type { AnyErrorDef } from '../kernel/errors/error-def';
 import { toJsonSchema } from '../kernel/schema/json-schema';
+import { TODO_TEXT } from './todo-text';
 import { Violation } from './violation';
 
 /** Def с описаниями и схемами — в виде, общем для MAN-01/02/03. */
@@ -42,6 +43,41 @@ export class DefChecker {
       ...this.checkCalls(),
       ...this.checkOwnAggregates(),
     ];
+  }
+
+  /**
+   * Незаполненные тексты: `label`/`description` Def и метки статусов
+   * агрегатов начинаются со слова `TODO` (так их оставляет `dmg-core gen`).
+   * Не нарушения — предупреждения MAN-01: заготовка после `gen` проходит
+   * `check` без правок, а `arch:check` печатает, что осталось заполнить.
+   * Тексты Policy в граф Def не входят — их находит `FileChecker.todos`.
+   */
+  todos(): Violation[] {
+    const out: Violation[] = [];
+    const add = (title: string, field: string, text: string): void => {
+      const trimmed = text.trim();
+      if (!TODO_TEXT.test(trimmed)) return;
+      out.push(
+        new Violation(
+          'MAN-01',
+          `${title}: ${field} не заполнен — «${trimmed}»`,
+        ),
+      );
+    };
+    for (const d of this.described()) {
+      add(d.title, 'label', d.label);
+      add(d.title, 'description', d.description);
+    }
+    for (const m of this.index.modules) {
+      for (const a of m.aggregates) {
+        const statuses: Record<string, { readonly label: string }> =
+          a.statuses ?? {};
+        for (const [status, { label }] of Object.entries(statuses)) {
+          add(`агрегат ${m.localId(a)} статус ${status}`, 'label', label);
+        }
+      }
+    }
+    return out;
   }
 
   private checkTexts(): Violation[] {

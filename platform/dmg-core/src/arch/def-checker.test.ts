@@ -117,6 +117,78 @@ describe('DefChecker', () => {
     });
   });
 
+  describe('MAN-01 — незаполненные TODO (предупреждения)', () => {
+    const todos = (...roots: AnyModuleDef[]): string[] =>
+      new DefChecker(DefIndex.from(roots)).todos().map((v) => v.format());
+
+    it('label и description с TODO — предупреждения, не нарушения', () => {
+      const events = EventDef.define('gamma.thing', {
+        happened: {
+          label: 'TODO: событие',
+          description: '  TODO когда возникает',
+          payload: v.object({ thingId: F.uuid('вещи') }),
+        },
+      });
+      const m = gamma({ label: 'TODO: название модуля', events });
+      expect(report(m)).toEqual([]);
+      expect(todos(m)).toEqual([
+        'MAN-01: модуль gamma: label не заполнен — «TODO: название модуля»',
+        'MAN-01: событие gamma.thing.happened: label не заполнен — «TODO: событие»',
+        'MAN-01: событие gamma.thing.happened: description не заполнен — «TODO когда возникает»',
+      ]);
+    });
+
+    it('заполненные описания и TODO не в начале — без предупреждений', () => {
+      expect(todos(gamma({ label: 'Гамма (TODO позже)' }))).toEqual([]);
+      expect(todos(AlphaModuleDef)).toEqual([]);
+    });
+
+    it('без учёта регистра: todo:, Todo — предупреждения', () => {
+      expect(todos(gamma({ label: 'todo: модуль' }))).toEqual([
+        'MAN-01: модуль gamma: label не заполнен — «todo: модуль»',
+      ]);
+      expect(todos(gamma({ label: 'Todo' }))).toHaveLength(1);
+    });
+
+    it('TODO — только отдельное слово: Todoist, TODOшка, todo-list — не TODO', () => {
+      for (const label of ['Todoist', 'TODOшка', 'todo-list', 'TODO_X']) {
+        expect(todos(gamma({ label }))).toEqual([]);
+      }
+    });
+
+    it('метки статусов агрегата', () => {
+      const ThingArDef = AggregateDef.define({
+        name: 'thing',
+        label: 'Вещь',
+        description: 'Вещь со статусами.',
+        state: v.object({
+          ...BaseEntityFields,
+          status: F.picklist(['active', 'done'], 'Статус'),
+        }),
+        statuses: {
+          active: { label: 'TODO: статус' },
+          done: { label: 'Готово' },
+        },
+        transitions: {},
+        events: ThingEvents,
+        errors: ErrorDef.define('THING', {}),
+      });
+      const m = ModuleDef.define({
+        name: 'gamma',
+        label: 'Гамма',
+        description: 'Модуль со статусами.',
+        dependsOn: [],
+        aggregates: [ThingArDef],
+        useCases: [],
+        reactions: [],
+        jobs: [],
+      });
+      expect(todos(m)).toEqual([
+        'MAN-01: агрегат gamma.thing статус active: label не заполнен — «TODO: статус»',
+      ]);
+    });
+  });
+
   describe('MAN-02 — описания полей схем', () => {
     it('поле без description, в том числе вложенное', () => {
       const state = v.object({

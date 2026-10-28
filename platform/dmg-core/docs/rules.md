@@ -72,7 +72,7 @@
 
 | ID | Правило | Проверка |
 |---|---|---|
-| MAN-01 | Все Def (модуль, фасад, Ar, UC, ER, Job, событие, ошибка) имеют `label` и `description` | type + test |
+| MAN-01 | Все Def (модуль, фасад, Ar, UC, ER, Job, событие, ошибка) имеют `label` и `description`; незаполненные `TODO` заготовок (в т. ч. метки статусов и Policy) — предупреждение `arch:check`, с `--strict` — нарушение | type + test + arch |
 | MAN-02 | Каждое поле схем имеет `description` | test |
 | MAN-03 | Схемы input/output/payload конвертируются в JSON Schema | test |
 | MAN-04 | UC/ER/Job публикуют только события из `emits` | test |

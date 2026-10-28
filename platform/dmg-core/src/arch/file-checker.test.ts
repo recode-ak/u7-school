@@ -46,6 +46,47 @@ const report = (): string[] =>
     .check()
     .map((v) => v.format());
 
+describe('FileChecker.todos — тексты Policy (вне графа Def)', () => {
+  const todos = (): string[] =>
+    new FileChecker(DefIndex.from([AlphaModuleDef]), layout)
+      .todos()
+      .map((v) => v.format());
+
+  it('label/description Policy и label/denyMessage правил с TODO', () => {
+    write(
+      'domain/alpha/note/note.policy.ts',
+      [
+        'export const NotePolicy = PolicyDef.define({',
+        "  name: 'note',",
+        "  label: 'TODO: права на агрегат',",
+        "  description: 'todo кто может',",
+        '  rules: {',
+        '    canView: Rule.of({',
+        "      name: 'canView',",
+        "      label: 'Кто смотрит',",
+        "      denyMessage: 'Todo: почему отказано',",
+        '    }),',
+        '  },',
+        '});',
+      ].join('\n'),
+    );
+    expect(todos()).toEqual([
+      'MAN-01: политика alpha/note/note.policy.ts:3: label не заполнен — «TODO: права на агрегат»',
+      'MAN-01: политика alpha/note/note.policy.ts:4: description не заполнен — «todo кто может»',
+      'MAN-01: политика alpha/note/note.policy.ts:9: denyMessage не заполнен — «Todo: почему отказано»',
+    ]);
+  });
+
+  it('заполненная Policy, TODO не словом и тесты — без предупреждений', () => {
+    write(
+      'domain/alpha/note/note.policy.ts',
+      "  label: 'Права (TODO позже)',\n  description: 'Todoist',\n",
+    );
+    write('domain/alpha/note/note.policy.test.ts', "  label: 'TODO',\n");
+    expect(todos()).toEqual([]);
+  });
+});
+
 describe('FileChecker', () => {
   it('чистая раскладка — без нарушений', () => {
     cleanTree();

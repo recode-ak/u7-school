@@ -39,6 +39,24 @@ describe('ArchChecker', () => {
     ]);
   });
 
+  it('todos() — незаполненные TODO в Def отдельно от check()', () => {
+    const draft = ModuleDef.define({
+      name: 'draft',
+      label: 'TODO: название модуля',
+      description: 'Заготовка модуля.',
+      dependsOn: [],
+      aggregates: [],
+      useCases: [],
+      reactions: [],
+      jobs: [],
+    });
+    const checker = ArchChecker.defsOf([draft]);
+    expect(checker.check()).toEqual([]);
+    expect(checker.todos().map((v) => v.format())).toEqual([
+      'MAN-01: модуль draft: label не заполнен — «TODO: название модуля»',
+    ]);
+  });
+
   it('учебный пример (todo + users) — без нарушений', () => {
     expect(ArchChecker.of(ExampleArch).check()).toEqual([]);
   });

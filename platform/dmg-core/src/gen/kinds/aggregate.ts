@@ -1,7 +1,7 @@
 /** `gen aggregate <m>.<agg>` — домен агрегата (naming.md §2). */
 import { join } from 'node:path';
 import type { GenArgs } from '../cli';
-import { namedExport, namedImport } from '../import-order';
+import { namedExport, namedImport, sortNames } from '../import-order';
 import { toCamel, toPascal, toUpperSnake } from '../naming';
 import type { GenPlan } from '../plan';
 import { fit, list } from '../wrap';
@@ -120,6 +120,10 @@ ${list('  ', 'static restore(', [`snapshot: ${P}State`], `): ${P}Ar {`)}
 }
 `;
 
+  // Вход создания в тестах — одна константа на файл: поле Create<A>
+  // добавляется в ней, а не в каждом вызове \`create\`.
+  const createInput = createInputConst(P);
+
   const policySrc = `import { PolicyDef, type ReadonlyAr, Rule } from 'dmg-core';
 import type { ${P}Ar } from './${a}.ar';
 
@@ -146,15 +150,17 @@ ${list('      ', 'check: (', ['_subject: { readonly uuid: string }', `_ctx: ${P}
 
   const arTestSrc = `import { describe, expect, it } from 'bun:test';
 import { expectOk } from 'dmg-core/testing';
-import { ${P}Ar } from './${a}.ar';
+${namedImport(sortNames([`type Create${P}`, `${P}Ar`]), `./${a}.ar`)}
 
 const ID = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 const T0 = Date.UTC(2026, 9, 1);
+${createInput}
 
 describe('${P}Ar.create', () => {
   it('активный агрегат и событие created', () => {
-${list('    ', 'const ar = expectOk(', [`${P}Ar.create({ uuid: ID }, T0)`], ');', { comma: true })}
-    expect(ar.snapshot()).toEqual({
+${list('    ', 'const ar = expectOk(', [`${P}Ar.create(createInput, T0)`], ');', { comma: true })}
+    // toMatchObject: новое поле state проверяется отдельно и не ломает эту.
+    expect(ar.snapshot()).toMatchObject({
       uuid: ID,
       status: 'active',
       createdAt: T0,
@@ -170,23 +176,21 @@ ${list('      ', '{', [`name: '${m}.${a}.created'`, `payload: { ${idField}: ID }
 
   const policyTestSrc = `import { describe, expect, it } from 'bun:test';
 import { allowed } from 'dmg-core';
-import { ${P}Ar } from './${a}.ar';
+import { expectOk } from 'dmg-core/testing';
+${namedImport(sortNames([`type Create${P}`, `${P}Ar`]), `./${a}.ar`)}
 ${namedImport([`type ${P}Ctx`, `${P}Policy`], `./${a}.policy`)}
 
 type User = { uuid: string };
 
 const ID = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
+const T0 = Date.UTC(2026, 9, 1);
+${createInput}
 
 const user: User = { uuid: ID };
 
+// Агрегат — через create, а не литерал state: новое поле его не ломает.
 const ctx: ${P}Ctx = {
-  ${toCamel(a)}: ${P}Ar.restore({
-    uuid: ID,
-    status: 'active',
-    createdAt: 0,
-    updatedAt: 0,
-    version: 0,
-  }),
+${list('  ', `${toCamel(a)}: expectOk(`, [`${P}Ar.create(createInput, T0)`], '),')}
 };
 
 describe('${P}Policy.canView', () => {
@@ -227,13 +231,36 @@ ${expectEqual('    ', `${P}Policy.rules.canView.evaluate(user, ctx)`, 'allowed')
         marker: '// gen:defs:aggregates',
         line: `    ${P}ArDef,`,
       },
-      idx(namedExport([`${P}Ar`, `${P}ArDef`], `./${a}/${a}.ar`)),
+      idx(
+        namedExport(
+          sortNames([`type Create${P}`, `${P}Ar`, `${P}ArDef`]),
+          `./${a}/${a}.ar`,
+        ),
+      ),
       idx(`export { ${P}Errors } from './${a}/${a}.errors';`),
       idx(`export { ${P}Events } from './${a}/${a}.events';`),
       idx(namedExport([`type ${P}Ctx`, `${P}Policy`], `./${a}/${a}.policy`)),
     ],
-    notes: [createdNote(m, a)],
+    notes: [createdNote(m, a), stateNote(a)],
   };
+}
+
+/**
+ * Константа входа создания в тестах заготовок: объект раскрыт, biome
+ * сохраняет его таким при любой длине имён.
+ */
+export const createInputConst = (P: string): string =>
+  `const createInput: Create${P} = {\n  uuid: ID,\n};`;
+
+/** Подсказка: что обновить при новом поле state (тесты заготовок). */
+function stateNote(a: string): string {
+  const P = toPascal(a);
+  return (
+    `Новое поле state: из входа создания — в Create${P} (${a}.ar.ts) и в ` +
+    `константу createInput тестов заготовок (${a}.ar.test.ts, ` +
+    `${a}.policy.test.ts, ${a}.json-repo.test.ts, тест UC не create), ` +
+    `иначе — значение в ${P}Ar.create; статус нового агрегата задаёт ${P}Ar.create.`
+  );
 }
 
 /**

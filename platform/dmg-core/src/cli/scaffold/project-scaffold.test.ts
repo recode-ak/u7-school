@@ -183,6 +183,7 @@ describe('ProjectScaffold single: прочие конфиги', () => {
     expect(src).toContain("runners: [join(root, 'src/runner')]");
     expect(src).toContain(`name: '${NAME}'`);
     expect(src).toContain('reportArchCheck(');
+    expect(src).toContain("strict: process.argv.includes('--strict')");
   });
 
   it('app.ts — маркеры подключения модулей для gen module/aggregate', () => {

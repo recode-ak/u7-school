@@ -52,7 +52,8 @@ bunx dmg-core gen module todo --write
 bunx dmg-core gen aggregate todo.task --write
 bunx dmg-core gen uc todo.task create --write     # рабочий UC создания
 bun install && bun run check                      # зелёный без ручных правок
-APP_DATA_DIR=data bun src/runner/main.ts call todo.create --user <uuid>   # monorepo — runners/cli/src/main.ts
+APP_DATA_DIR=data bun src/runner/main.ts call todo.create --user <uuid>        # single
+APP_DATA_DIR=data bun runners/cli/src/main.ts call todo.create --user <uuid>   # monorepo
 ```
 
 Дальше — смысл заготовок: поля state, операции Ar, схемы входа, `callers` и Policy UC (`TODO` в коде).

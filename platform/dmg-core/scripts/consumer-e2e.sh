@@ -11,7 +11,8 @@
 # 4. gen создаёт модуль, тесты заготовок зелёные на установленном пакете.
 # 5. Профили single и monorepo: init --profile → gen module/aggregate/uc
 #    (модуль подключает сам gen) → без ручных правок раннер вызывает UC
-#    создания (`call --user`) → bun run check проекта зелёный; путь к
+#    создания (`call --user`) → bun run check проекта зелёный; TODO
+#    заготовок: arch:check — предупреждения (0), --strict — MAN-01 (1); путь к
 #    tarball в зависимости (и overrides monorepo) — от корня проекта.
 set -euo pipefail
 
@@ -152,6 +153,26 @@ profile_e2e() {
   # Подключение модуля генератором — сразу в форме biome, без format.
   run_logged "$WORK/$profile-gen-lint.log" \
     "$profile — biome красный после gen (подключение модуля)" bunx biome check .
+  # Незаполненные TODO заготовок: без флага — предупреждения (код 0),
+  # с --strict — нарушения MAN-01 (код 1).
+  local arch code
+  arch="$(bun run arch:check 2>&1)" || {
+    echo "$arch" >&2
+    echo "e2e: $profile — arch:check без --strict не 0 после gen" >&2
+    exit 1
+  }
+  if ! grep -q '^MAN-01 (предупреждение): ' <<<"$arch"; then
+    echo "$arch" >&2
+    echo "e2e: $profile — arch:check не вывел предупреждения MAN-01" >&2
+    exit 1
+  fi
+  code=0
+  arch="$(bun run arch:check --strict 2>&1)" || code=$?
+  if [ "$code" -ne 1 ] || ! grep -q '^MAN-01: ' <<<"$arch"; then
+    echo "$arch" >&2
+    echo "e2e: $profile — arch:check --strict: код $code, ждали 1 и MAN-01" >&2
+    exit 1
+  fi
   # Ручных правок нет: UC вызывается по имени, контракт (D-45) — граница
   # TS-импортов между модулями, транспорту он не нужен.
   bun install >/dev/null

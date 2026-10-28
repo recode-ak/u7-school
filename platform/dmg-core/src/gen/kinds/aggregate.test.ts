@@ -69,6 +69,24 @@ test('policy: Def и правило', () => {
   expect(src).toContain('canView');
 });
 
+test('тесты: вход создания — одна константа Create<A> на файл, без литерала state', () => {
+  const decl = 'const createInput: CreateStudent = {\n  uuid: ID,\n};';
+  const ar = file('student.ar.test.ts');
+  expect(ar).toContain(decl);
+  expect(ar).toContain(
+    "import { type CreateStudent, StudentAr } from './student.ar';",
+  );
+  expect(ar).toContain('StudentAr.create(createInput, T0)');
+  // Новое поле state не ломает проверку снапшота.
+  expect(ar).toContain('expect(ar.snapshot()).toMatchObject({');
+  const policy = file('student.policy.test.ts');
+  expect(policy).toContain(decl);
+  expect(policy).toContain(
+    'student: expectOk(StudentAr.create(createInput, T0)),',
+  );
+  expect(policy).not.toContain('restore(');
+});
+
 test('тесты: создание агрегата и правило политики', () => {
   expect(file('student.ar.test.ts')).toContain("describe('StudentAr.create'");
   expect(file('student.policy.test.ts')).toContain(
@@ -89,7 +107,7 @@ test('правки: Def в паспорт модуля и экспорты в in
     {
       path: idx,
       marker: '// gen:exports',
-      line: "export { StudentAr, StudentArDef } from './student/student.ar';",
+      line: "export {\n  type CreateStudent,\n  StudentAr,\n  StudentArDef,\n} from './student/student.ar';",
     },
     {
       path: idx,
@@ -109,8 +127,9 @@ test('правки: Def в паспорт модуля и экспорты в in
   ]);
 });
 
-test('MAN-06: подсказка — событие created публикует UC создания', () => {
+test('подсказки: created публикует UC создания (MAN-06); новое поле state', () => {
   expect(plan.notes).toEqual([
     'Событие created публикует UC создания (MAN-06): dmg-core gen uc stream.student create',
+    'Новое поле state: из входа создания — в CreateStudent (student.ar.ts) и в константу createInput тестов заготовок (student.ar.test.ts, student.policy.test.ts, student.json-repo.test.ts, тест UC не create), иначе — значение в StudentAr.create; статус нового агрегата задаёт StudentAr.create.',
   ]);
 });

@@ -103,11 +103,11 @@ test('тесты заготовок зелёные', async () => {
   expect(res.code).toBe(0);
 }, 120_000);
 
-test('ArchChecker без нарушений', async () => {
+async function probeApp(): Promise<ArchApp> {
   const layout = new GenLayout(GenLayout.defaults, project);
   const domain = await import(layout.domainDir(MODULE));
   const long = await import(layout.domainDir(LONG));
-  const app: ArchApp = {
+  return {
     name: MODULE,
     modules: [
       domain.GenprobeModuleDef,
@@ -115,6 +115,37 @@ test('ArchChecker без нарушений', async () => {
     ],
     layout: (m) => ({ domain: layout.domainDir(m), app: layout.appDir(m) }),
   };
+}
+
+test('TODO заготовок — все в предупреждениях MAN-01, без пропусков', async () => {
+  const app = await probeApp();
+  const todos = ArchChecker.of(app)
+    .todos()
+    .map((v) => v.format());
+  // Каждый текст с TODO, который gen пишет в домене, — одно предупреждение.
+  const field = /\b(?:label|description|denyMessage):\s*'TODO/g;
+  let written = 0;
+  for (const m of [MODULE, LONG]) {
+    const dir = app.layout(m).domain;
+    for (const f of new Bun.Glob('**/*.ts').scanSync({ cwd: dir })) {
+      if (f.endsWith('.test.ts')) continue;
+      const text = await Bun.file(join(dir, f)).text();
+      written += text.match(field)?.length ?? 0;
+    }
+  }
+  expect(todos).toHaveLength(written);
+  for (const part of [
+    'агрегат genprobe.student статус active: label',
+    'политика genprobe/student/student.policy.ts:',
+    ': denyMessage не заполнен',
+    'UC genprobe.createStudent: label',
+  ]) {
+    expect(todos.some((t) => t.includes(part))).toBe(true);
+  }
+});
+
+test('ArchChecker без нарушений', async () => {
+  const app = await probeApp();
   expect(
     ArchChecker.of(app)
       .check()

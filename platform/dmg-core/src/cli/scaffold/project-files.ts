@@ -220,7 +220,8 @@ export class ProjectFiles {
     return `/**
  * \`bun run arch:check\` — контрактные проверки архитектуры (\`ArchChecker\`):
  * корни Def приложения, раскладка модулей из \`dmg-core.json\` (\`GenLayout\`),
- * корень сборки и раннер. Выход 1 — есть нарушения.
+ * корень сборки и раннер. Выход 1 — есть нарушения. \`--strict\` —
+ * незаполненные \`TODO\` в описаниях Def тоже нарушения (MAN-01).
  */
 import { join } from 'node:path';
 import { type ArchApp, reportArchCheck } from 'dmg-core/arch';
@@ -251,7 +252,10 @@ const app: ArchApp = {
   runners: [join(root, '${runner}')],
 };
 
-process.exitCode = reportArchCheck([app], (line) => console.log(line));
+// Незаполненные TODO в Def — предупреждения; --strict делает их нарушениями.
+process.exitCode = reportArchCheck([app], (line) => console.log(line), {
+  strict: process.argv.includes('--strict'),
+});
 `;
   }
 

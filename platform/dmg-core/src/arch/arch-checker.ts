@@ -64,6 +64,15 @@ export class ArchChecker {
     ];
   }
 
+  /**
+   * Предупреждения: незаполненные `TODO` в текстах Def, метках статусов и
+   * (при заданной раскладке) Policy (MAN-01). Не входят в `check()` —
+   * заготовки после `gen` проходят его без правок.
+   */
+  todos(): Violation[] {
+    return [...this.defs.todos(), ...(this.files?.todos() ?? [])];
+  }
+
   /** Строки отчёта: `<ID правила>: <сообщение>`. */
   report(): string[] {
     return this.check().map((v) => v.format());
