@@ -5,7 +5,7 @@
 ## Фаза 0: Базовая линия
 
 - [x] Task: Зафиксировать базовую линию (`bun test` pass/fail в u7-school и в пакете, `bun run e2e` пакета) в черновике `summary.md` 57af7441
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 ## Фаза 1: Параллельная разработка платформы
 
