@@ -20,5 +20,6 @@
 | module | [module.md](./module.md) | `todo/todo.module.ts`, `todo/contract.ts` |
 | job | [job.md](./job.md) | `archive-done-tasks.job.ts` |
 | app и раннер (корень сборки, D-50) | [app.md](./app.md) | `app/example-app.ts`, `runner/example-cli.ts` |
+| проект: профили `init`, рост, подключение модулей | [project.md](./project.md) | каркас `dmg-core init --profile` |
 
 Без отдельного гайда: тесты — [testing.md](../testing.md); поля `F.*` и `shared/` — [manifests.md](../manifests.md) §3; структура и имена — [naming.md](../naming.md).

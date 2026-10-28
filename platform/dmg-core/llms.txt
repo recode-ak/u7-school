@@ -9,6 +9,7 @@
 - [Вход в документацию](docs/index.md): суть DMG, карта документов
 - [Слои и пакеты](docs/layers.md): оси, импорты, доменный API, доступ к entity
 - [Моделирование домена](docs/domain-modeling.md): модуль-владелец, Ar / Policy / доменное правило / DCS / DQS, границы модулей
+- [Проект](docs/guides/project.md): `dmg-core init --profile single|monorepo` — что создаёт каркас, как растёт проект, подключение модулей
 - [Структура и имена](docs/naming.md): сокращения, файловая структура домена и прикладного слоя, генератор `dmg-core gen` (§5)
 
 ## Контракты
@@ -20,7 +21,7 @@
 
 ## Правила и качество
 
-- [Каталог правил](docs/rules.md): ID правил (ARC, DOM, MAN, ERR, API, CODE, TST) и способ проверки
+- [Каталог правил](docs/rules.md): ID правил (ARC, DOM, MAN, ERR, API, CODE, TST), способ проверки, карта линтера «правило → каталоги слоёв»
 - [Решения](docs/decisions.md): реестр решений платформы D-NN
 - [Тестирование](docs/testing.md): принципы, пирамида, хелперы `dmg-core/testing`
 - [Стиль TypeScript](docs/typescript.md)
@@ -29,7 +30,7 @@
 
 - [Индекс гайдов](docs/guides/index.md)
 - [State](docs/guides/state.md), [Aggregate](docs/guides/aggregate.md), [Events](docs/guides/events.md), [Errors](docs/guides/errors.md), [Policy](docs/guides/policy.md)
-- [Repo, DCS, DQS](docs/guides/repo.md), [Facade](docs/guides/facade.md), [Use case](docs/guides/use-case.md), [Event reaction](docs/guides/event-reaction.md), [Module](docs/guides/module.md), [Job](docs/guides/job.md), [App и раннер](docs/guides/app.md)
+- [Repo, DCS, DQS](docs/guides/repo.md), [Facade](docs/guides/facade.md), [Use case](docs/guides/use-case.md), [Event reaction](docs/guides/event-reaction.md), [Module](docs/guides/module.md), [Job](docs/guides/job.md), [App и раннер](docs/guides/app.md), [Проект](docs/guides/project.md)
 
 ## Агенты
 

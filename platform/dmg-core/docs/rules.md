@@ -2,11 +2,31 @@
 
 **Назначение:** проверяемые правила архитектуры. Агенты и ревьюер ссылаются на ID; каждая машинная проверка выводит ID в сообщении (`DOM-01: …`). Правило меняется только через [decisions.md](./decisions.md).
 
-Проверка: **lint** — biome (`noRestrictedImports`, GritQL-плагины пакета `node_modules/dmg-core/biome-plugins/*.grit`, подключение — в README; видно в IDE); **type** — компилятор; **test** — контрактный или рантайм-тест (`ArchChecker` из `dmg-core/arch` в `check` проекта); **review** — агент-ревьюер. Какие пути блокируются и какие исключения действуют на время перехода, решает проект в своём `biome.json` и `ArchApp`. Ограничения: в DOM-11 автоматизированы базовые поля, а «DTO из схемы» — `review`. Повторяющееся замечание ревьюера переводится в машинную проверку (ratchet).
+Проверка: **lint** — biome (`noRestrictedImports`, GritQL-плагины пакета `node_modules/dmg-core/biome-plugins/*.grit`, подключение — [карта линтера](#карта-линтера); видно в IDE); **type** — компилятор; **test** — контрактный или рантайм-тест (`ArchChecker` из `dmg-core/arch` в `check` проекта); **review** — агент-ревьюер. Какие пути блокируются и какие исключения действуют на время перехода, решает проект в своём `biome.json` и `ArchApp`. Ограничения: в DOM-11 автоматизированы базовые поля, а «DTO из схемы» — `review`. Повторяющееся замечание ревьюера переводится в машинную проверку (ratchet).
 
 Имена слоёв — по [layers.md](./layers.md): **платформа** (`dmg-core`), **домен** (пакет домена), **приложение** (пакет приложения), **прикладной пакет модуля**, **входные адаптеры**.
 
 ---
+
+## Карта линтера
+
+Какие lint-правила на какие каталоги слоёв подключены в `biome.json` проекта. Каркас `dmg-core init --profile` пишет `overrides` по этой карте (источник — `LintMap` в `src/cli/scaffold/lint-map.ts`); проект без каркаса подключает правила так же. Плагины — `node_modules/dmg-core/biome-plugins/*.grit`, запреты импортов — `noRestrictedImports`. Тесты (`*.test.ts`) из всех строк исключены.
+
+| ID | Чем | Слой | single | monorepo |
+|---|---|---|---|---|
+| ARC-02 | `noRestrictedImports`: только `dmg-core`, `valibot` и свои файлы; без относительного выхода в корень сборки, раннеры и прикладной слой | домен | `src/domain` | `domain/src` |
+| DOM-01 | `noRestrictedImports`: без `…/state` (плюс запреты ARC-02) | домен: `*.policy.ts`, `*.rules.ts`, `*.dcs.ts` | `src/domain` | `domain/src` |
+| DOM-14 | `dom-14-no-clock.grit` | домен | `src/domain` | `domain/src` |
+| DOM-11 | `dom-11-base-fields.grit` | домен: `*.state.ts` | `src/domain` | `domain/src` |
+| DOM-01 | `noRestrictedImports`: без `…/state` | прикладной слой и корень сборки, кроме `infra/` | `src/app` | `app/src`, `modules/*/src` |
+| ARC-09 | `arc-09-no-env.grit` | все исходники, кроме точки входа раннера | `src`, кроме `src/runner/main.ts` | все `src`, кроме `runners/*/src/main.ts` |
+| CODE-02 | `code-02-class-members.grit` | все исходники | `src` | `domain/src`, `app/src`, `modules/*/src`, `runners/*/src` |
+| DOM-12 | `dom-12-no-iso-dates.grit` | все исходники | то же | то же |
+| DOM-17 | `dom-17-snapshot-repo-only.grit` | все исходники, кроме репозиториев (`*.repo.ts`, `*-repo.ts`, `*.json-repo.ts`, `*.memory-repo.ts`) | то же | то же |
+| ERR-01 | `err-01-no-throw.grit` | `*.ar.ts`, `*.dcs.ts`, `*.facade.ts`, `*.uc.ts`, `*.er.ts` | то же | то же |
+| API-02 | `api-02-no-manual-publish.grit` | файлы ERR-01 и `*.job.ts` | то же | то же |
+
+Имена модулей домена `app`, `runner` (single) и `app`, `runners`, `modules` (monorepo) зарезервированы: глоб запрета ARC-02 видит спецификатор `../app/…`, а не путь, и импорт такого соседа даёт ложное нарушение.
 
 ## ARC — пакеты и границы
 

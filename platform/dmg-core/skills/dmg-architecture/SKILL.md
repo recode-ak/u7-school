@@ -17,16 +17,16 @@ description: ЗАГРУЖАТЬ ПЕРВЫМ при создании или ре
 
 ## 2. Как назвать и где положить
 
-`naming.md`: сокращения (Ar, Uc, Er, Job, Dcs, Dqs, Def), суффиксы файлов (`.ar.ts`, `.uc.ts`, …), зеркальная пара контракт ↔ реализация. Корни каталогов задаёт `ArchApp.layout` проекта. Заготовки — генератором `dmg-core gen …` (`naming.md` §5; раскладка — секция `gen` в `dmg-core.json`), а не руками.
+`naming.md`: сокращения (Ar, Uc, Er, Job, Dcs, Dqs, Def), суффиксы файлов (`.ar.ts`, `.uc.ts`, …), зеркальная пара контракт ↔ реализация. Корни каталогов задаёт `ArchApp.layout` проекта. Заготовки — генератором `dmg-core gen …` (`naming.md` §5; раскладка — секция `gen` в `dmg-core.json`), а не руками. Новый проект — каркас `dmg-core init --profile single|monorepo`; что он создаёт, как подключить модуль к приложению и кто что правит руками — `guides/project.md`.
 
 ## 3. Как написать артефакт вида
 
-Гайд `docs/guides/<вид>.md` (индекс — `guides/index.md`): когда применять, команда генератора, образец в учебном модуле, чеклист ID, типичные ловушки, как тестировать. Виды: state, aggregate, events, errors, policy, repo (с DCS/DQS), facade, use-case, event-reaction, module, job.
+Гайд `docs/guides/<вид>.md` (индекс — `guides/index.md`): когда применять, команда генератора, образец в учебном модуле, чеклист ID, типичные ловушки, как тестировать. Виды: state, aggregate, events, errors, policy, repo (с DCS/DQS), facade, use-case, event-reaction, module, job, app (корень сборки и раннер), project (профили и рост проекта).
 
 ## 4. Проверь перед завершением
 
 - Пройди применимые ID из `rules.md` (ARC, DOM, MAN, ERR, API, CODE, TST).
-- `check` проекта зелёный: lint (правила biome пакета), типы, тесты, `ArchChecker` (`dmg-core/arch`).
+- `check` проекта зелёный: lint (правила biome пакета; какие на какие каталоги — «Карта линтера» в `rules.md`), типы, тесты, `ArchChecker` (`dmg-core/arch`).
 - Тесты — `testing.md`; TDD: тест до кода.
 
 ## 5. Стоп-сигналы

@@ -30,16 +30,43 @@
 
 ## Установка
 
-Нужен Bun ≥ 1.3.1. `valibot` и `@valibot/to-json-schema` — peer-зависимости:
+Нужен Bun ≥ 1.3.1. `valibot` и `@valibot/to-json-schema` — peer-зависимости (каркас `init --profile` добавляет их сам).
+
+## Быстрый старт: новый проект
+
+Каркас — конфиги, `check`, корень сборки и раннер CLI — создаёт `init --profile` ([гайд проекта](docs/guides/project.md)):
+
+```sh
+mkdir school && cd school && echo '{ "name": "@acme/school" }' > package.json
+bun add dmg-core
+bunx dmg-core init --profile single      # один пакет: src/domain, src/app, src/runner
+# или
+bunx dmg-core init --profile monorepo    # пакеты @acme/domain, @acme/app, modules/*, runners/cli
+bun install && bun run check
+```
+
+Дальше — модули генератором и подключение к приложению по подсказке `gen module`:
+
+```sh
+bunx dmg-core gen module todo --write
+bunx dmg-core gen aggregate todo.task --write
+bunx dmg-core gen uc todo.task complete-task --write
+```
+
+1. Фабрику модуля — в список модулей корня сборки (`src/app/app.ts` | `app/src/app.ts`), `TodoModuleDef` — в `modules` `scripts/arch-check.ts`; в monorepo — `"@acme/todo": "workspace:*"` в `app/package.json` и `bun install`.
+2. UC — в `contract.ts` модуля, команда — в раннере (`runner-cli.ts`, через `app.api.dispatch`).
+3. `bun run check` зелёный; раннер: `APP_DATA_DIR=data bun src/runner/main.ts <команда>` (monorepo — `runners/cli/src/main.ts`).
+
+Подробно, с тем, кто что правит руками, — [docs/guides/project.md](docs/guides/project.md); приложение и раннер — [docs/guides/app.md](docs/guides/app.md).
+
+## Быстрый старт: существующий проект
 
 ```sh
 bun add dmg-core valibot @valibot/to-json-schema
 bunx dmg-core init
 ```
 
-`init` создаёт `dmg-core.json` и доставляет в проект скилы и роли агентов (по умолчанию — для Claude Code в `.claude/`). Ещё он добавляет в `AGENTS.md` ссылку на [`llms.txt`](llms.txt) — индекс документации для агентов. После обновления пакета выполни `dmg-core sync`; `dmg-core sync --check` в `check` проекта падает, если копии устарели.
-
-## Быстрый старт
+`init` без профиля создаёт `dmg-core.json` и доставляет в проект скилы и роли агентов (по умолчанию — для Claude Code в `.claude/`). Ещё он добавляет в `AGENTS.md` ссылку на [`llms.txt`](llms.txt) — индекс документации для агентов. После обновления пакета выполни `dmg-core sync`; `dmg-core sync --check` в `check` проекта падает, если копии устарели. Каркас `init --profile` делает то же и сверх того.
 
 1. **Модуль.** `bunx dmg-core gen module todo --write` создаёт паспорт модуля в домене (`src/domain/todo/`) и прикладной слой (`src/app/todo/`). Без `--write` команда только печатает план. Каталоги и импорт домена задаёт секция `gen` в `dmg-core.json` ([naming.md](docs/naming.md) §5).
 2. **Агрегат и операции.** `gen aggregate todo.task` добавляет state, события, ошибки, Ar, Policy и репозиторий. `gen uc todo.task complete-task` создаёт пару «контракт в домене ↔ реализация в прикладном слое», `er` и `job` работают так же, а `dcs` / `dqs` создают доменные сервисы. В заготовках остаются `TODO` — по ним видно, что заполнить. Как именно, подскажет гайд вида ([индекс](docs/guides/index.md)) и тот же артефакт в учебном модуле.
@@ -59,7 +86,7 @@ bunx dmg-core init
    { "overrides": [{ "includes": ["src/domain/**", "!**/*.test.ts"], "plugins": ["./node_modules/dmg-core/biome-plugins/dom-14-no-clock.grit"] }] }
    ```
 
-   Какой плагин на какие пути — по каталогу правил ([rules.md](docs/rules.md)).
+   Какой плагин на какие пути — [карта линтера](docs/rules.md#карта-линтера) в каталоге правил.
 5. **Тесты.** Хелперы — в `dmg-core/testing`: `testAppContext`, `expectOk`, контракт идемпотентности реакций и другие ([testing.md](docs/testing.md)).
 
 ## Подпути
@@ -80,7 +107,7 @@ bunx dmg-core init
 - [Слои](docs/layers.md), [моделирование домена](docs/domain-modeling.md), [структура, имена и генератор](docs/naming.md)
 - [Манифесты](docs/manifests.md), [ошибки и Result](docs/errors-result.md), [Caller и Trace](docs/caller.md), [транспорт](docs/transport.md)
 - [Каталог правил](docs/rules.md), [решения](docs/decisions.md), [тестирование](docs/testing.md), [стиль TypeScript](docs/typescript.md)
-- [Гайды по видам артефактов](docs/guides/index.md)
+- [Гайды по видам артефактов](docs/guides/index.md), [проект: профили и рост](docs/guides/project.md)
 - Для агентов: [`llms.txt`](llms.txt), скил [`dmg-architecture`](skills/dmg-architecture/SKILL.md), [роли](agents/README.md)
 
 ## Лицензия

@@ -22,6 +22,7 @@
 
 | Задача | Читай |
 |---|---|
+| Начать проект | [guides/project.md](./guides/project.md) → [guides/app.md](./guides/app.md) |
 | Понять устройство | [layers.md](./layers.md) → [domain-modeling.md](./domain-modeling.md) |
 | Создать файл / объект | [naming.md](./naming.md) → [rules.md](./rules.md) |
 | Написать артефакт по образцу | [guides/](./guides/index.md) |

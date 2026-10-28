@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { LintMap } from './lint-map';
 
@@ -38,5 +38,25 @@ describe('LintMap: repeats', () => {
     expect(() => map.overrides()).toThrow(
       'Карта линтера: DOM-01 повторяет DOM-14 — нет строки с запретом импортов',
     );
+  });
+});
+
+// Раздел «Карта линтера» в rules.md пишется по LintMap: каждая строка
+// таблицы (ID и плагин) названа в нём.
+describe('LintMap: карта в rules.md', () => {
+  const rules = readFileSync(
+    join(import.meta.dir, '../../../docs/rules.md'),
+    'utf8',
+  );
+  const map = rules.split('## Карта линтера')[1]?.split('\n## ')[0] ?? '';
+
+  it('называет ID и плагин каждой строки', () => {
+    const missing = LintMap.single.rules
+      .flatMap((rule) =>
+        'plugin' in rule ? [rule.id, `${rule.plugin}.grit`] : [rule.id],
+      )
+      .filter((name) => !map.includes(name));
+
+    expect(missing).toEqual([]);
   });
 });
