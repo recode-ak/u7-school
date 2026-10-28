@@ -42,7 +42,7 @@
 ## Фаза 4: `requestId` из `update_id` (u7-school, DEBT-38)
 
 - [x] Task: Контекст запроса: транспорт кладёт `update_id`, `dispatchUc` — `requestId = tg:<update_id>#<n>`, `correlationId = tg:<update_id>`, без `warn`; тесты stories и транспорта red → green 8ff646cc
-- [ ] Task: Файловый `ReplayStore` в `data/replay/` (TTL, очистка просроченного); тесты на временном каталоге red → green; подключение в раннере
+- [x] Task: Файловый `ReplayStore` в `data/replay/` (TTL, очистка просроченного); тесты на временном каталоге red → green; подключение в раннере 4455d890
 - [ ] Task: `AGENTS.md` (незащищённые данные), `docs/backup.md`, `.gitignore`
 - [ ] Task: e2e: повтор апдейта — UC не исполнен повторно; два UC одного апдейта — общий `correlationId`
 - [ ] Task: Снять DEBT-38; новый долг — контракт story в `dmg-ui` несёт id запроса явно
