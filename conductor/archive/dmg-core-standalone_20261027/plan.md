@@ -83,4 +83,4 @@
 ## Финал
 
 - [x] Task: Гейт качества (workflow): полный `CI=true bun test` проекта и репо пакета, триаж, сверка тестов (тесты пакета ушли в его репо)
-- [ ] Task: `summary.md`, `tracks.md`, архив
+- [x] Task: `summary.md`, `tracks.md`, архив
