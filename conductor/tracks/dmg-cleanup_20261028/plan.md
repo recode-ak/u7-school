@@ -20,7 +20,7 @@
 - [x] Task: Перевод тестов UC примера (`create`/`complete`/`assign`/`get`/`list` задач, `get-user`); сверка сценариев старых и новых тестов 73deffde (dmg-core 7a559c2)
 - [x] Task: Перевод тестов ER и Job примера (`FailingRepo` → `failOn`) a176dfa8 (dmg-core 1df1d03)
 - [x] Task: Шаблон теста UC в `gen` на фейке; тесты генератора и `consumer-e2e` зелёные 5253a4f0 (dmg-core f61a212)
-- [~] Task: Документация: `testing.md` §4 (пирамида), гайды `use-case`, `event-reaction`, `job`, `module`, `repo`, `llms.txt`
+- [x] Task: Документация: `testing.md` §4 (пирамида), гайды `use-case`, `event-reaction`, `job`, `module`, `repo`, `llms.txt` e7eb3bf8 (dmg-core a32f3e4)
 - [ ] Task: u7-school — `bun install`, `dmg:sync`/`agents:sync`; запись в debt: тесты UC переводятся на фейк по мере касания
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
