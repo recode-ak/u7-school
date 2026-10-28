@@ -1,0 +1,5 @@
+Верификация фазы 2 «init --profile и gen module в монорепо».
+Автотесты: CI=true bun test — проект 4394 pass / 0 fail, пакет dmg-core 1117 pass / 0 fail; bun run check проекта зелёный; bun run e2e пакета — ok (оба профиля: init → check → gen module/aggregate/uc → подключение → раннер вызывает UC → check).
+Ревью: reviewer (Opus) по 9f458e0f..HEAD — error нет, warn по документации исправлены (305a8dea), e2e доработан по решению Нурболата (aad3dbe5).
+Ручная верификация: tarball → init --profile monorepo (@acme/school) → bun install → check; раннер whoami; gen module todo с пакетом и подсказкой «Вставь вручную»; чтение project.md и карты линтера.
+Подтверждение пользователя: «да» (2026-10-28).
