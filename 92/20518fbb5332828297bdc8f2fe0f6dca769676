@@ -1,0 +1,5 @@
+Задача: gen module в профиле monorepo (Фаза 2, трек dmg-core-standalone_20261027).
+Сделано: GenLayout gen.package ({m}, app на /src, domainImport обязателен) и package(m); gen/kinds/module-package.ts — package.json/tsconfig.json пакета модуля; PackageSource.moduleDependencies() (dmg-core, valibot); PackageDefectError — внятная ошибка поставки; index.ts прикладного слоя (create<M>Module, <M>Deps, // gen:exports) и вставка репозиториев gen aggregate; GenPlan.notes — подсказки подключения; ENTRY_FILES + package.json/tsconfig.json для --adopt; init monorepo пишет gen.package.
+Файлы: platform/dmg-core/src/gen/{layout*, plan.ts, apply.ts, cli.ts, main*, index.ts, kinds/module-package*, kinds/app-module*, kinds/app-aggregate*}, src/cli/{dmg-core-cli*, package-source*, scaffold/*}.
+Решения: Нурболат — признак gen.package, доводки 4b; оркестратор — valibot в пакете модуля, --adopt пропускает манифесты, подсказки вместо маркеров.
+Ревью: error нет, warn/question исправлены (4b). check проекта 4386 pass.
