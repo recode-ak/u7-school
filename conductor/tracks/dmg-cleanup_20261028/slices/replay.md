@@ -40,3 +40,12 @@
 
 - На каждом шаге: тесты сначала red (вывод в отчёте), затем green; `bun run check` пакета зелёный, `bun run e2e` — после шага 3.
 - В отчёте: API, решения на усмотрение, отклонения от брифа и почему.
+
+## Отчёт автора
+
+api-author (Opus), 2026-10-28. Пакет `dmg-core` `00fe6c8..7e4bea1`.
+
+- **Шаг 1** (`783a9fd`): `Cause` `request` — `generated?: true`, схема JSON с полем; геттер `Trace.clientRequestId` — единственный вопрос `dispatch` к следу. Red 5 fail → green; `check` 1281 pass.
+- **Шаг 2** (`31a9c0a`): `src/app/replay/replay-store.ts` — `ReplayStore` (`claim(key, input)` → `claimed | answered | conflict(reason)`, `complete`, `release`), `InProcReplayStore` (`clock`, TTL 24 ч от последней записи, ёмкость 10 000). `AppContext.replay` — `testAppContext`, учебное приложение, шаблон `init`. Red 11 fail → green; `check` 1292 pass, `e2e` ok. В u7-school `InProcReplayStore` подключил orchestrator (`e19b7d2f`).
+- **Шаг 3** (`7e4bea1`): `src/app/replay/command-replay.ts` — `CommandReplay` (не экспортируется), `dispatch` идёт через него; `REQUEST_CONFLICT` в `CoreErrors`; DEBT-1 снят; `transport.md` §2, `errors-result.md`, `caller.md` п. 5. Red 7 fail → green; `check` 1305 pass, `e2e` ok.
+- **Отклонения шага 3:** тесты `api-app`, `example-app`, `todo.module` слали разные команды с одним `requestId` — теперь `req()` на вызов; ключ гостя включает имя канала; сбой хранилища — `SERVER_INTERNAL`/`error` в логгер (ERR-07). Оба последних orchestrator внёс в D-56.
