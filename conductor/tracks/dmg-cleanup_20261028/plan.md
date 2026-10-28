@@ -22,7 +22,7 @@
 - [x] Task: Шаблон теста UC в `gen` на фейке; тесты генератора и `consumer-e2e` зелёные 5253a4f0 (dmg-core f61a212)
 - [x] Task: Документация: `testing.md` §4 (пирамида), гайды `use-case`, `event-reaction`, `job`, `module`, `repo`, `llms.txt` e7eb3bf8 (dmg-core a32f3e4)
 - [x] Task: u7-school — `bun install`, `dmg:sync`/`agents:sync`; запись в debt: тесты UC переводятся на фейк по мере касания ab658e4c
-- [ ] Task: Ревью reviewer
+- [x] Task: Ревью reviewer cf8169fd (dmg-core 3b9d7cd)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Отсев повторов command UC (DEBT-1 dmg-core)
@@ -34,7 +34,7 @@
     - [ ] Тесты: повтор → сохранённый ответ без исполнения; другой вход → `REQUEST_CONFLICT`; query и серверный `requestId` — без отсева; истёкший TTL; red
     - [ ] Реализация, подключение хранилища (`AppContext`/`ApiApp`), учебное приложение; green
 - [ ] Task: `transport.md` §2; снять DEBT-1 (`debt.md` и маркер)
-- [ ] Task: Ревью reviewer
+- [x] Task: Ревью reviewer cf8169fd (dmg-core 3b9d7cd)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: `requestId` из `update_id` (u7-school, DEBT-38)
@@ -49,7 +49,7 @@
 ## Фаза 5: Показ ошибок DMG в боте (DEBT-37)
 
 - [ ] Task: `ucErrorNotify` по `kind` и тексту из Def без `toLegacyError`; тесты red → green; снять DEBT-37
-- [ ] Task: Ревью reviewer
+- [x] Task: Ревью reviewer cf8169fd (dmg-core 3b9d7cd)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
 ## Фаза 6: Финал
