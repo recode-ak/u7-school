@@ -27,17 +27,8 @@ const SKIP_DIRS = [
   '.pi/skills/conductor-setup/templates/',
 ];
 
-/**
- * Исключения с причиной: сам страж называет старые каталоги; тесты пакета
- * `dmg-core` берут произвольные шаблоны раскладки — это примеры
- * конфигурации, а не пути монорепо.
- */
-const EXCEPTIONS = [
-  'scripts/repo-layout.test.ts',
-  'platform/dmg-core/src/cli/dmg-core-cli.test.ts',
-  'platform/dmg-core/src/gen/layout.test.ts',
-  'platform/dmg-core/src/gen/validate.test.ts',
-];
+/** Исключения с причиной: сам страж называет старые каталоги. */
+const EXCEPTIONS = ['scripts/repo-layout.test.ts'];
 
 function trackedFiles(): string[] {
   const out = Bun.spawnSync(['git', 'ls-files', '-z'], { cwd: ROOT });

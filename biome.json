@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!platform/dmg-core"],
+    "includes": ["**"],
     "maxSize": 5242880
   },
   "formatter": {

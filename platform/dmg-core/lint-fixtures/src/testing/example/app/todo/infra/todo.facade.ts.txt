@@ -1,2 +1,0 @@
-// expect: DOM-17 error
-export const out = (ar: { snapshot(): unknown }) => ar.snapshot();

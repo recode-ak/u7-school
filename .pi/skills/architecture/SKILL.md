@@ -29,7 +29,7 @@ description: ЗАГРУЖАТЬ ПЕРВЫМ при создании или ре
 ## 3. Проверь перед завершением
 
 - Применимые ID из `platform/dmg-core/docs/rules.md`.
-- `bun run check` (включает `arch:check`, `agents:check`, `extract:check`) — зелёный. TDD.
+- `bun run check` (включает `arch:check`, `agents:check`) — зелёный. TDD.
 
 ## 4. Стоп-сигналы
 

@@ -10,6 +10,7 @@
 - Место долга помечено в коде маркером `// DEBT-<n>` (для `biome-ignore` — в тексте причины).
 - `bun run arch:check` сверяет маркеры в пакетах (`platform/*`, `domain`, `modules/*`, `authoring/*`, `runners/*`) и `scripts/` с записями этого файла в обе стороны.
 - Закрытие = удаление маркеров и записи одним коммитом.
+- Долг в коде пакета `dmg-core` — в его собственном реестре (`debt.md` в корне репо пакета, свои `DEBT-<n>`); здесь только долг u7-school. Ссылка на него — «DEBT-<n> пакета `dmg-core`».
 - В архиве трека `domain-package` ID записаны в старом формате: `D-<n>` там = `DEBT-<n>` здесь.
 - **Тактические решения перехода** ведутся отдельно, как `TR-<n>` (§6, [agents.md](./agents.md) §9). Маркер в коде для них не обязателен, и `arch:check` их не сверяет. Если решение оставило временный код, на этот код заводится ещё и `DEBT-<n>`, и записи ссылаются друг на друга.
 
@@ -214,12 +215,6 @@
 - **Погашает:** трек перевода `stream` или отдельная задача `wish`: приглашение потока в state желания
 - **Критерий снятия:** тест идемпотентности `invite-wishers` — обычный `it`, маркер удалён
 
-### DEBT-36: повтор команды не отсеивается по `requestId`
-- **Место:** `platform/dmg-core/src/app/module/module-from-def.ts` (`dispatch`)
-- **Причина:** правило D-49 / `transport.md` §2: `requestId` — одно намерение клиента, повтор command UC с тем же `requestId` от того же caller не исполняется дважды (сохранённый ответ; другой вход — конфликт; серверный `requestId` и query — без отсева). In-proc повторов нет, поэтому `dispatch` `meta` пока не исполняет; нужны хранилище ответов с TTL и код ошибки конфликта.
-- **Погашает:** трек транспорта (HTTP-адаптер)
-- **Критерий снятия:** `dispatch` (или адаптер транспорта) отсеивает повтор по правилу `transport.md` §2, тесты повтора и конфликта, маркер удалён
-
 ### DEBT-37: отказ UC DMG в боте показывается веткой legacy
 - **Место:** `platform/core/src/ui/bot/bot-ui-story.ts` (`ucErrorNotify`)
 - **Причина:** stories получают `Err` от `appApi.dispatch` (D-49) и ветвятся по `code`, а неожиданный отказ показывают через `errorNotify` legacy: `DomainError` → `AppException` (`toLegacyError`, `kind` → legacy-`kind`, текст — `denyMessage` или `label`). Своего презентера ошибок DMG у UI бота нет.
@@ -228,7 +223,7 @@
 
 ### DEBT-38: `update_id` Telegram не доходит до story — `requestId` без связи с апдейтом
 - **Место:** `platform/core/src/ui/bot/bot-ui-story.ts` (контракт `handleCallback`/`handleMessage`); следствие — `U7BotUiStory.dispatchUc` создаёт `requestId` на каждый вызов с `warn` (ERR-07, TR-21 п. 4)
-- **Причина:** `BotUpdate` и `handle*` ядра бота не несут `update_id`; смена контракта затрагивает все stories. Без него повторная доставка апдейта не узнаётся (DEBT-36), а лог засоряется `warn`.
+- **Причина:** `BotUpdate` и `handle*` ядра бота не несут `update_id`; смена контракта затрагивает все stories. Без него повторная доставка апдейта не узнаётся (DEBT-1 пакета `dmg-core`, бывший DEBT-36), а лог засоряется `warn`.
 - **Погашает:** кандидат [bot-request-id](../roadmap/bot-request-id.md) или трек ui-manifests (D-26)
 - **Критерий снятия:** `requestId` из `update_id` доходит до `dispatchUc`, `warn` не пишется, маркер удалён
 

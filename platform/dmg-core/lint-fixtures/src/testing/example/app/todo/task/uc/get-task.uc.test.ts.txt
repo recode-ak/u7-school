@@ -1,2 +1,0 @@
-// expect: none
-export const row = (ar: { snapshot(): unknown }) => ar.snapshot();

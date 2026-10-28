@@ -7,7 +7,7 @@
  * фикстуры и настоящий `biome.json` во временный каталог (плагины — как из
  * установленного `dmg-core`) и запускает biome: сообщение должно начинаться
  * с ID правила. Правила на коде самого пакета — его тест
- * `platform/dmg-core/scripts/lint-rules.test.ts`.
+ * `scripts/lint-rules.test.ts` в репо `dmg-core`.
  */
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import {

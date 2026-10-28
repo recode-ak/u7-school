@@ -1,7 +1,0 @@
-// CODE-02: TS `private`/`protected`; `#private` и `public` запрещены.
-or {
-  JsPrivateClassMemberName() as $m,
-  TsAccessibilityModifier() as $m where { $m <: r"public" }
-} where {
-  register_diagnostic(span=$m, message="CODE-02: только TS private/protected — без #private и public (rules.md)", severity="error")
-}

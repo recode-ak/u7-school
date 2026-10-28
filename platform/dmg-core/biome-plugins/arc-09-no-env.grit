@@ -1,7 +1,0 @@
-// ARC-09 (D-52): process.env / Bun.env читает только точка входа раннера — остальные слои получают окружение данными (AppEnv).
-or {
-  `process.env`,
-  `Bun.env`
-} as $m where {
-  register_diagnostic(span=$m, message="ARC-09: process.env / Bun.env — только в точке входа раннера; окружение передаётся данными (AppEnv, rules.md)", severity="error")
-}

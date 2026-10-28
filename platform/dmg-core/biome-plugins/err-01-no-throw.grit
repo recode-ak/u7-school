@@ -1,4 +1,0 @@
-// ERR-01: штатные отказы не бросаются (Ar, DCS, фасады, UC, ER) — возвращай Err.
-`throw $e` as $m where {
-  register_diagnostic(span=$m, message="ERR-01: штатные отказы не бросаются — верни Err (rules.md)", severity="error")
-}
