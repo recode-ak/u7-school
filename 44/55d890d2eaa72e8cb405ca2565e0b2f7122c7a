@@ -1,0 +1,4 @@
+Задача Ф4 'Файловый ReplayStore' (трек dmg-cleanup_20261028).
+Сделано: platform/core/src/infra/file-replay-store.ts (+14 тестов на временном каталоге: контракт порта, рестарт, снятие 'в работе' и просроченных с файлами, битый файл, параллельный claim); экспорт из @u7-scl/core/infra; DmgPlatform.replay и третий параметр createApiApp (dmg.replay; по умолчанию InProcReplayStore); main.ts открывает FileReplayStore в <DB_DIR>/replay (legacyClock). Тест сборки create-api-app: команда с requestId клиента идёт через переданное хранилище.
+Причина: ФР-4 спеки — отсев повторной доставки апдейта Telegram после рестарта.
+check зелёный: 3300 pass.
