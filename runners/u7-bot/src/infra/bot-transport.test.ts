@@ -1017,7 +1017,7 @@ describe('BotTransport — рендер-политика', () => {
 
 // ── Единый вход команд (ФР-4) ──
 
-// ── Контекст запроса: update_id Telegram доходит до обработки (DEBT-38) ──
+// ── Контекст запроса: update_id Telegram доходит до обработки (TR-30) ──
 
 describe('BotTransport — контекст апдейта', () => {
   /** correlationId контекста, видимый внутри uiApp. */
