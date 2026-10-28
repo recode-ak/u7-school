@@ -76,7 +76,8 @@
     - DEBT-36 → реестр долгов пакета `debt.md` + `scripts/debt-check` (решение Нурболата 2026-10-28), в репо пакета 358926a
 - [x] Task: Документация проекта: ссылки `platform/dmg-core/…` → `node_modules/dmg-core/…` (`conductor/architecture`, скилы, `AGENTS.md`, `tech-stack.md`); процесс правки платформы (репо пакета → u7-school) f0e15036
     - Процесс — `conductor/architecture/index.md` «Правка платформы `dmg-core`»; исторические TR в `debt.md`, архив и треки не трогали
-- [ ] Task: Чек-лист публикации в репо пакета: актуальные пути, сравнение npm / приватный registry или scope / git с рекомендацией
+- [x] Task: Чек-лист публикации в репо пакета: актуальные пути, сравнение npm / приватный registry или scope / git с рекомендацией
+    - `RELEASING.md` в корне репо пакета (b001e0e): рекомендация — git по тегу (приватный GitHub), npm — когда понадобится вне своих проектов. Установку из git до пуша проверить нельзя (`git+file` bun не поддерживает, sshd нет) — шаг 4 чек-листа
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 ## Финал
