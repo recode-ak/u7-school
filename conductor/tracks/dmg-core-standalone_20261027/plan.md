@@ -41,11 +41,11 @@
     - Учесть D-52: `gen module` создаёт `index.ts` прикладного пакета (фабрика, `*Deps`, репозитории) — корень сборки берёт фабрику только из него; `GenLayout`/шаблон `ArchApp` отдают `root` и `runners`
 - [x] Task: `consumer-e2e.sh` — оба профиля: `init --profile` → `gen module/aggregate/uc` → сборка приложения → раннер вызывает UC → `check` зелёный dcbe6f68
     - Пробелы каркаса monorepo из e2e: домен в корне, `overrides.dmg-core` при установке не из реестра (решение Нурболата 2026-10-28)
-- [ ] Task: Документация
-    - [ ] Гайд `docs/guides/project.md`: оба профиля, что создаёт `init`, как растёт проект, кто что правит руками
-    - [ ] README — быстрый старт обоих профилей
-    - [ ] Карта «плагин → каталоги слоёв» в `rules.md`
-    - [ ] `naming.md` §5 (`gen.package`, вход прикладного слоя `index.ts`, `--adopt` пропускает `package.json`/`tsconfig.json`), `llms.txt`, скил `dmg-architecture`
+- [x] Task: Документация 19397630
+    - [x] Гайд `docs/guides/project.md`: оба профиля, что создаёт `init`, как растёт проект, кто что правит руками
+    - [x] README — быстрый старт обоих профилей
+    - [x] Карта «плагин → каталоги слоёв» в `rules.md`
+    - [x] `naming.md` §5 (`gen.package`, вход прикладного слоя `index.ts`, `--adopt` пропускает `package.json`/`tsconfig.json`), `llms.txt`, скил `dmg-architecture`
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
