@@ -68,11 +68,12 @@
     - D-55 (Нурболат 2026-10-28): сейчас `file:`, при релизе — `git+ssh` с тегом; репо — `~/dev/tools/dmg/dmg-core`. Проверено на макете bun 1.4.2 (bin, плагины, глубина workspace, `--frozen-lockfile`); `sync`/`gen`/tsc на реальном пакете — в задаче «u7-school на вынесенном пакете»
 - [x] Task: Репозиторий пакета: `git subtree split --prefix=platform/dmg-core` → `~/dev/tools/dmg/dmg-core` (с историей); в нём `bun install && bun run check && bun run e2e` зелёные
     - split fc2392e (75 коммитов истории `platform/dmg-core`), в репо пакета 3073942 — свои `.gitignore` и `bun.lock`; check 1242 pass, e2e ok
-- [~] Task: u7-school на вынесенном пакете
+- [x] Task: u7-school на вынесенном пакете a6785409
     - [x] Замена зависимости `workspace:*` 710fd8f6
-    - [ ] Удаление `platform/dmg-core` — после подтверждения Нурболата
-    - [ ] `extract:check` — убрать из `check` или переделать на проверку внешнего репо
-    - [ ] `bun run check` зелёный
+    - [x] Удаление `platform/dmg-core` — после подтверждения Нурболата a6785409
+    - [x] `extract:check` — убрать из `check` или переделать на проверку внешнего репо: убран вместе со скриптом (решение Нурболата 2026-10-28) a6785409
+    - [x] `bun run check` зелёный (3273 pass; 1242 теста пакета ушли в его репо) a6785409
+    - DEBT-36 → реестр долгов пакета `debt.md` + `scripts/debt-check` (решение Нурболата 2026-10-28), в репо пакета 358926a
 - [ ] Task: Документация проекта: ссылки `platform/dmg-core/…` → `node_modules/dmg-core/…` (`conductor/architecture`, скилы, `AGENTS.md`, `tech-stack.md`); процесс правки платформы (репо пакета → u7-school)
 - [ ] Task: Чек-лист публикации в репо пакета: актуальные пути, сравнение npm / приватный registry или scope / git с рекомендацией
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
