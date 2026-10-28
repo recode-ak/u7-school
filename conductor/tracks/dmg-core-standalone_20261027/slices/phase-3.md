@@ -156,3 +156,9 @@ CLI раннера в каркасе (оба профиля) получает к
 - `gen uc` печатает «Вызов: call <module>.<uc>»; `gen aggregate` — подсказку о новом поле state. Тесты заготовок на `createInput: Create<A>` и `input: InputOf<…>` — новое поле входа tsc показывает в каждой константе; поле с умолчанием тестов не трогает.
 - Документация: `aggregate.md` (врезка переходов, `kind`, новое поле), `state.md` (`F.*`), `project.md` (адрес `call`, e2e не нужен, `--strict`, MAN-01), `rules.md` (MAN-01), README (пути раннера).
 - Ревью: error нет; 2 warn (детектор не видел статусы и Policy; формулировка `project.md`) и info исправлены. Гейт/`check`/`e2e` зелёные.
+
+## Прогон 3 — контрольный (2026-10-28, monorepo, Sonnet, свежий tarball после 0da2bbbc)
+
+`library`: `Book` (`title`, `author`; `available`/`lent`; `lend` только из `available`), UC `create` и `lend`, три вызова `call`. **Итог:** `check` зелёный (40 тестов), `arch:check --strict` — 0 нарушений; `call library.create` → Ok `bookId`, `call library.lend` → Ok, повтор → `BOOK_ALREADY_LENT` (код 2). Читал README, `llms.txt`, `project.md`, `aggregate.md`, образец `todo/task`, `errors.md`, начало `testing.md`. Блокеров и расхождений нет; единственный красный `tsc` — константы `createInput` после новых полей (предсказано документацией).
+
+Угадывания — проектные решения (имена UC и статусов, событие `lent`), не пробелы документации. Пробел: `TODO` в `app-user.ts` каркаса не упомянут — добавлен в `project.md` §4 вместе с оговоркой, что `--strict` комментарии не проверяет. **Прогон признан чистым.**
