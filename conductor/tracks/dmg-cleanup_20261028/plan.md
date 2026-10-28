@@ -37,7 +37,7 @@
     - [x] Реализация, подключение хранилища (`AppContext`/`ApiApp`), учебное приложение; green
 - [x] Task: `transport.md` §2; снять DEBT-1 (`debt.md` и маркер) (dmg-core 7e4bea1)
 - [x] Task: Ревью reviewer; правки по ревью (dmg-core c949ba0)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: `requestId` из `update_id` (u7-school, DEBT-38)
 
