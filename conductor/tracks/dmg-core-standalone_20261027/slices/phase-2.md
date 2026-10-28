@@ -251,3 +251,11 @@ error нет; u7-school без `gen.package` — прежнее поведени
 ### Шаг 5a — отчёт автора (api-author, Opus)
 
 `rootWorkspace` в раскладке: корень `monorepo` — `devDependencies` `"@<scope>/domain": "workspace:*"` (план `single` без изменений); юнит-e2e каркаса не тронут (подмена `node_modules` пробел не воспроизводит). `ProjectManifest.localSpec(name)` — спецификатор с `:`/`/` или `.tgz`/`.tar.gz` (не `Bun.semver`: тег `latest` — из реестра); `ProjectInit` в `monorepo` добавляет `overrides.dmg-core`, другое значение у проекта — конфликт. Пакет `check` — 1116 pass. Ревью — оркестратор по diff (правка точечная; reviewer — задачей фазы). `bun run e2e` пакета — `e2e: ok` на обоих профилях (до правки — 404 `bun install` и `tsc` TS2307 в monorepo, воспроизведено вручную).
+
+## Ревью фазы 2 — reviewer (Opus), diff `9f458e0f..HEAD`
+
+error нет; код (CODE-*, ERR-01, TST-*) — без новых замечаний. Ручной прогон tarball → `init --profile monorepo` → `bun install` → `check` — зелёный; состав `init`, подсказки `gen module`, карта линтера совпадают с документацией.
+
+warn (документация) — исправлено оркестратором: установка до публикации (`bun add ./dmg-core-<версия>.tgz`) и порядок `bun add` → `init`; `overrides` только при слиянии с `package.json`; известный пробел DOM-01 под картой и строка DOM-01 в каталоге; зарезервированные имена по профилям; `bun run format` перед `check` после ручного подключения. Из info взяты: пример репозитория в фабрике (project.md §4), `.gitignore` и агенты в таблице §3.
+
+info — на решение Нурболата: e2e (`check` сразу после `init`; имя `@acme/school` в одном профиле; лог `format`); подсказки `gen aggregate` (репозиторий в фабрике) и `gen uc` (экспорт в `contract.ts`, `callers` с гостем) — по итогам прогона фазы 3; `npm:`/`workspace:` в `overrides` — безвредно. Сверка карты с `LintMap` по ID и плагинам уже есть (`lint-map.test.ts`), каталоги не сверяются.

@@ -34,11 +34,11 @@
 
 ## Быстрый старт: новый проект
 
-Каркас — конфиги, `check`, корень сборки и раннер CLI — создаёт `init --profile` ([гайд проекта](docs/guides/project.md)):
+Каркас — конфиги, `check`, корень сборки и раннер CLI — создаёт `init --profile` ([гайд проекта](docs/guides/project.md)). Сначала `bun add`, потом `init`:
 
 ```sh
 mkdir school && cd school && echo '{ "name": "@acme/school" }' > package.json
-bun add dmg-core
+bun add dmg-core                         # до публикации: bun add ./dmg-core-<версия>.tgz
 bunx dmg-core init --profile single      # один пакет: src/domain, src/app, src/runner
 # или
 bunx dmg-core init --profile monorepo    # пакеты @acme/domain, @acme/app, modules/*, runners/cli
@@ -55,7 +55,7 @@ bunx dmg-core gen uc todo.task complete-task --write
 
 1. Фабрику модуля — в список модулей корня сборки (`src/app/app.ts` | `app/src/app.ts`), `TodoModuleDef` — в `modules` `scripts/arch-check.ts`; в monorepo — `"@acme/todo": "workspace:*"` в `app/package.json` и `bun install`.
 2. UC — в `contract.ts` модуля, команда — в раннере (`runner-cli.ts`, через `app.api.dispatch`).
-3. `bun run check` зелёный; раннер: `APP_DATA_DIR=data bun src/runner/main.ts <команда>` (monorepo — `runners/cli/src/main.ts`).
+3. `bun run format` (порядок импортов после ручных правок), затем `bun run check` — зелёный; раннер: `APP_DATA_DIR=data bun src/runner/main.ts <команда>` (monorepo — `runners/cli/src/main.ts`).
 
 Подробно, с тем, кто что правит руками, — [docs/guides/project.md](docs/guides/project.md); приложение и раннер — [docs/guides/app.md](docs/guides/app.md).
 

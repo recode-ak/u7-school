@@ -15,12 +15,12 @@
 
 ```sh
 mkdir school && cd school && echo '{ "name": "@acme/school" }' > package.json
-bun add dmg-core
+bun add dmg-core                         # до публикации: bun add ./dmg-core-<версия>.tgz
 bunx dmg-core init --profile monorepo   # или single; --dry-run — только план, --name — имя проекта
 bun install && bun run check
 ```
 
-Имя проекта — `--name`, иначе `name` из `package.json`, иначе имя каталога. Существующие файлы не перезаписываются (коллизия — ошибка, ничего не записано); существующий `package.json` дополняется. В monorepo, если `dmg-core` поставлен не из реестра (tarball, `file:`, `link:`), `init` добавляет `overrides.dmg-core` с тем же спецификатором — иначе `bun install` ищет пакеты в реестре.
+Порядок важен: сначала `bun add dmg-core`, потом `init` — бинарь `dmg-core` берётся из установленного пакета. Имя проекта — `--name`, иначе `name` из `package.json`, иначе имя каталога. Существующие файлы не перезаписываются (коллизия — ошибка, ничего не записано); существующий `package.json` дополняется. В monorepo, если `dmg-core` поставлен не из реестра (tarball, `file:`, `link:`), `init` при слиянии с `package.json` добавляет `overrides.dmg-core` с тем же спецификатором — иначе `bun install` ищет пакеты модулей в реестре и падает 404. Поставил `dmg-core` не из реестра уже после `init` — добавь `overrides` руками.
 
 ## 3. Что создаёт `init`
 
@@ -33,6 +33,7 @@ bun install && bun run check
 | домен | `src/domain/shared/app-user.ts` — тип пользователя | `domain/` — пакет с `exports` `./*/contract`, `./*` |
 | корень сборки | `src/app/app.ts`, резолвер `Caller`, тест | `app/` — пакет `@<scope>/app` |
 | раннер | `src/runner/`: окружение, CLI, `main.ts`, тесты | `runners/cli/` |
+| `.gitignore`; агенты (`init` выполняет `dmg-core sync`) | `.gitignore`; скилы и роли (`.claude/`), ссылка на `llms.txt` в `AGENTS.md` | то же |
 
 Раннер сразу работает: `APP_DATA_DIR=data bun <раннер>/main.ts whoami`. Как устроены приложение и раннер — [app.md](./app.md).
 
@@ -42,12 +43,12 @@ bun install && bun run check
 
 1. `gen module <m>`, `gen aggregate <m>.<a>`, `gen uc <m>.<a> <имя>` и т.д. ([naming.md](../naming.md) §5). В monorepo `gen module` создаёт и пакет `modules/<m>` (`package.json`, `tsconfig.json`).
 2. Подключение модуля — `gen module` печатает его «Вставь вручную»:
-   - корень сборки: фабрика в список модулей — `{ def: <M>ModuleDef, create: (deps) => create<M>Module({ ...deps, <репозитории> }) }`; фабрика — из входа прикладного пакета (`index.ts`), Def — из контракта домена;
+   - корень сборки: фабрика в список модулей — `{ def: <M>ModuleDef, create: (deps) => create<M>Module({ ...deps, <репозитории> }) }`; фабрика — из входа прикладного пакета (`index.ts`), Def — из контракта домена; после `gen aggregate` — его репозиторий в `create`, например `taskRepo: new TaskJsonRepo(join(env.dataDir, 'task.json'))` (подсказки нет — о нём скажет `tsc`);
    - `scripts/arch-check.ts`: `<M>ModuleDef` в `modules`;
    - monorepo: `"@<scope>/<m>": "workspace:*"` в `app/package.json`, затем `bun install`.
 3. Внешние операции модуля — в его `contract.ts` (D-45); вызов UC из раннера — команда через `app.api.dispatch` (TODO в `runner-cli.ts`, образец — [app.md](./app.md) §3).
 4. Модуль пользователей — резолвер `Caller` перестаёт отдавать только гостя (TODO в `app-caller-resolver.ts`).
-5. После каждого шага — `bun run check`.
+5. После каждого шага — `bun run format` (ручные правки ломают порядок импортов biome), затем `bun run check`.
 
 ## 5. Кто что правит руками
 
@@ -67,5 +68,5 @@ bun install && bun run check
 
 - Модуль сгенерирован, но не подключён — UC отвечает `OPERATION_NOT_FOUND`, `arch:check` модуль не проверяет.
 - monorepo: забыта зависимость `app` на пакет модуля — `tsc` не находит `@<scope>/<m>`; после правки `package.json` — `bun install`.
-- Модуль домена назван `app`, `runner`, `modules` — ложное ARC-02 (имена зарезервированы, [rules.md](../rules.md#карта-линтера)).
+- Модуль домена назван зарезервированным именем — ложное ARC-02: single — `app`, `runner`; monorepo — `app`, `runners`, `modules` ([rules.md](../rules.md#карта-линтера)).
 - UC каркаса без модуля пользователей вызывается гостем: в `callers` UC нужен `'guest'` или резолвер с пользователями.
