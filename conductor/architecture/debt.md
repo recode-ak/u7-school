@@ -215,12 +215,6 @@
 - **Погашает:** трек перевода `stream` или отдельная задача `wish`: приглашение потока в state желания
 - **Критерий снятия:** тест идемпотентности `invite-wishers` — обычный `it`, маркер удалён
 
-### DEBT-37: отказ UC DMG в боте показывается веткой legacy
-- **Место:** `platform/core/src/ui/bot/bot-ui-story.ts` (`ucErrorNotify`)
-- **Причина:** stories получают `Err` от `appApi.dispatch` (D-49) и ветвятся по `code`, а неожиданный отказ показывают через `errorNotify` legacy: `DomainError` → `AppException` (`toLegacyError`, `kind` → legacy-`kind`, текст — `denyMessage` или `label`). Своего презентера ошибок DMG у UI бота нет.
-- **Погашает:** перевод UI бота на манифесты (D-26) или первый трек, которому нужен свой показ ошибок DMG
-- **Критерий снятия:** презентер ошибок DMG в UI бота без `toLegacyError`, маркер удалён
-
 ### DEBT-39: модули DMG собирает раннер, а не пакет приложения
 - **Место:** `runners/u7-bot/src/create-dmg-modules.ts` (`createDmgAppContext`, `createDmgModules`)
 - **Причина:** по D-50 корень сборки — пакет приложения, который строит модули через `ApiApp` (раскладка фасадов по `dependsOn`) и даёт резолвер `Caller`. В u7-school `@u7-scl/app` пока legacy, поэтому модули DMG собирает раннер вручную поверх legacy-фасадов (TR-11), а in-proc клиент — legacy `ApiApp` из `@u7-scl/core/api`. Перенос сборки в пакет приложения выходит за рамки трека `dmg-core-standalone`.

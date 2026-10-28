@@ -2,7 +2,6 @@
 // Уйдёт вместе с legacy (conductor/architecture/legacy.md §6).
 
 export { legacyClock } from './legacy-clock';
-export { toLegacyError } from './legacy-error';
 export {
   type LegacyEventBusOptions,
   type LegacyInbound,

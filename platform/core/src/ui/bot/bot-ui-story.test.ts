@@ -528,6 +528,43 @@ describe('BotUiStory — ucErrorNotify (отказ UC DMG)', () => {
 
     expect(String(response.notify?.text)).toContain('Только владелец');
   });
+
+  test('валидация входа → перечень полей из payload.issues', () => {
+    const response = new TestStory().callUcErrorNotify(
+      CoreErrors.INPUT_VALIDATION.make({
+        issues: [{ path: 'title_1', message: 'Пусто [поле]' }],
+      }),
+    );
+
+    expect(response.notify?.kind).toBe('warn');
+    const text = String(response.notify?.text);
+    expect(text).toContain('Ошибка валидации');
+    expect(text).toContain('title');
+    expect(text).toContain('Пусто');
+    expect(() => assertMarkdownV2Safe(text)).not.toThrow();
+  });
+
+  test('internal и unauthorized → общее сообщение без label, error-лог', () => {
+    const errors: unknown[] = [];
+    setGlobalLogger(makeErrorSpyLogger(errors));
+    const story = new TestStory();
+
+    for (const error of [
+      CoreErrors.SERVER_INTERNAL.make(),
+      CoreErrors.UNAUTHORIZED.make({ callerKind: 'system' }),
+    ]) {
+      const response = story.callUcErrorNotify(error);
+      expect(response.notify?.kind).toBe('warn');
+      const text = String(response.notify?.text);
+      expect(text).not.toContain(error.label);
+      expect(text).toContain('Произошла ошибка');
+    }
+    expect(errors).toMatchObject([
+      { code: 'SERVER_INTERNAL' },
+      { code: 'UNAUTHORIZED', payload: { callerKind: 'system' } },
+    ]);
+    setGlobalLogger(undefined as unknown as Logger);
+  });
 });
 
 describe('BotUiStory — колбэк-хелперы', () => {

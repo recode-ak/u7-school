@@ -1,13 +1,11 @@
 import type { DomainError } from 'dmg-core';
 import type { ApiApp } from '#api-legacy/app/api-app';
 import { fromError } from '#domain-legacy/errors/error-helpers';
-import { AppException } from '#domain-legacy/errors/errors';
 import type { AppMeta } from '#domain-legacy/types';
 import type { Logger } from '#shared-legacy/logger';
 import { getGlobalLogger } from '#shared-legacy/logger';
 import { type MdText, md, mdConcat, mdJoin } from '#shared-legacy/markdown';
 import { serializeError } from '#shared-legacy/serialize-error';
-import { toLegacyError } from '../../legacy-bridge';
 import { UiStory } from '../ui-story';
 import type { BotUiAppResolve } from './app-types';
 import { DialogCache } from './dialog-cache';
@@ -358,13 +356,43 @@ export abstract class BotUiStory<
   }
 
   /**
-   * Отказ UC DMG (`Err` ответа `appApi.dispatch`) — реплика, как `errorNotify`.
-   * Мост: ошибка показывается веткой legacy по `kind` (`toLegacyError`),
-   * пока у UI нет презентера ошибок DMG.
+   * Отказ UC DMG (`Err` ответа `appApi.dispatch`) — warn-реплика без
+   * захвата экрана, как `errorNotify`. Ветвление по `kind` ошибки DMG:
+   * - `validation` — перечисляет поля из `payload.issues`, иначе `label`;
+   * - `access` — `denyMessage` отказавшего правила, иначе `label`;
+   * - `not_found`, `conflict` — `label` из Def;
+   * - `internal`, `unauthorized` — логирует и возвращает общее сообщение
+   *   (доменные данные не утекают).
    */
-  // DEBT-37: показ ошибки DMG через legacy-ветку errorNotify.
   protected ucErrorNotify(error: DomainError): DialogResponse {
-    return this.errorNotify(new AppException(toLegacyError(error)));
+    switch (error.kind) {
+      case 'validation': {
+        const issues = issuesOf(error.payload);
+        if (issues.length > 0) {
+          const lines = issues.map((i) => md`• *${i.path}*: ${i.message}`);
+          return this.warn(mdConcat(md`*Ошибка валидации*\n\n`, mdJoin(lines)));
+        }
+        return this.warn(md`*Ошибка валидации*\n\n${error.label}`);
+      }
+
+      case 'access':
+        return this.warn(md`${denyMessageOf(error.payload) ?? error.label}`);
+
+      case 'not_found':
+      case 'conflict':
+        return this.warn(md`${error.label}`);
+
+      case 'internal':
+      case 'unauthorized':
+        this.logger?.error('bot', 'Отказ UC в story', {
+          code: error.code,
+          kind: error.kind,
+          payload: error.payload,
+        });
+        return this.warn(
+          md`Произошла ошибка\\. Попробуйте ещё раз или обратитесь к администратору\\.`,
+        );
+    }
   }
 
   /**
@@ -417,4 +445,23 @@ export abstract class BotUiStory<
       }
     }
   }
+}
+
+/** Поля из `payload.issues` ошибки валидации DMG (`INPUT_VALIDATION`). */
+function issuesOf(
+  payload: unknown,
+): ReadonlyArray<{ path: string; message: string }> {
+  if (typeof payload !== 'object' || payload === null) return [];
+  if (!('issues' in payload) || !Array.isArray(payload.issues)) return [];
+  return payload.issues;
+}
+
+/** Текст отказа правила Policy (`ACCESS_DENIED.payload.denyMessage`). */
+function denyMessageOf(payload: unknown): string | undefined {
+  return typeof payload === 'object' &&
+    payload !== null &&
+    'denyMessage' in payload &&
+    typeof payload.denyMessage === 'string'
+    ? payload.denyMessage
+    : undefined;
 }
