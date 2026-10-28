@@ -59,7 +59,7 @@
     - [x] `overrides` с относительным путём к tarball (R2) 93bacd0d
     - [x] `scripts/gen-e2e.test.ts` без гонки: срез не в каталогах репо или без обнаружения чужим `bun test` (плавающий `ENOENT reading …/genprobe/…test.ts`) ed6496fd
     - [x] Документация: `use-case.md`, `project.md`, `aggregate.md`, `naming.md` §5 (G1, G4, G5, G7, G9, G11) 94c1230e
-- [ ] Task: Повторный прогон — чистый, без угадываний; профиль `single` — короткий прогон
+- [~] Task: Повторный прогон — чистый, без угадываний; профиль `single` — короткий прогон
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: Локальный вынос

@@ -115,3 +115,37 @@ CLI раннера в каркасе (оба профиля) получает к
 - Воспроизвести не удалось: 6 прогонов `CI=true bun test` подряд — без `ENOENT`; `agent-gate` в режиме full запускает один корневой `check`, параллельных пакетов нет. Версия: внешний `bun test` обнаруживает файлы среза `genprobe`, пока `beforeAll` их создаёт, а читает после `afterAll` (удалены).
 - Решение: `scripts/gen-e2e.test.ts` → `scripts/gen-e2e.e2e.ts` (корневой `bun test` его не находит) и отдельный шаг `bun run gen:e2e` (`bun test ./scripts/gen-e2e.e2e.ts`) в `check` перед `bun test`. Генерация среза больше не идёт одновременно с другим обнаружением тестов. `pathIgnorePatterns` не подошёл: явный путь в `bun test` его не обходит.
 - Проверка: 10 прогонов полного `bun run check` подряд — зелёные, `ENOENT` нет.
+
+## Прогон 2 (2026-10-28, свежий tarball после задачи 2, Sonnet)
+
+### single — короткий (`notes`, агрегат `Note` с `text`, UC создания, вызов через `call`)
+
+**Итог:** `check` зелёный (34 теста), `call notes.create --input '{"text":"привет"}' --user <uuid>` → Ok, без `--user` → `UNAUTHORIZED` (код 2). Читал только `llms.txt` и `guides/project.md` — хватило; блокеров нет.
+
+Мелкие пробелы:
+- S1: список полей `F.*` — нашёл только grep по образцу (`guides/state.md`).
+- S2: адрес `call` для `gen uc notes.note create` — `notes.create` (не `notes.note.create`): нет примера связи «имя в gen → адрес call».
+- S3: новое поле state → править сгенерированные тесты (`<a>.ar.test.ts`, `<a>.policy.test.ts`, `<a>.json-repo.test.ts`, `create.uc.test.ts` с `handle({})`) — не сказано; `tsc`/тесты ведут, но напоминание помогло бы.
+- S4: `check` зелёный при незаполненных `label: 'TODO: …'` — проверки не требуют заполнения TODO.
+
+### monorepo — полный (`todo`: `Task` с `title`, `open`/`done`, `complete` только из `open`; UC create и complete; три вызова `call`)
+
+**Итог:** `check` зелёный (40 тестов). `call todo.create` → Ok `taskId`; `call todo.complete` → Ok; повтор → `TASK_ALREADY_DONE` (код 2). Все `gen` — без «Вставь вручную», заготовки зелёные без правок (37 тестов). Блокеров нет; читал README, `llms.txt`, `project.md`, `app.md`, `naming.md` §5 (grep), `aggregate.md`, образец `todo/task`.
+
+Мелкие пробелы:
+- M1: синтаксис `transitions`/`rejects` — только в образце `task.ar.ts`; в `aggregate.md` §2 нет врезки.
+- M2: выбор `kind` ошибки — `errors.md` не связан из `aggregate.md`/`project.md`.
+- M3: метод Ar называется как переход (`this.transition('complete', …)`) — не сказано.
+- M4: = S3 (тесты заготовок после смены state: `task.policy.test.ts` со статусом `active`, `task.json-repo.test.ts` без `title`).
+- M5: README — путь раннера single/monorepo в одном примере легко перепутать.
+- Вопрос агента: нужен ли e2e-тест `call` в проекте — нет: раннер покрыт тестами каркаса, сценарии — тестами Ar/UC (ответ в `project.md`).
+
+## Задача 3 — остаток после прогона 2
+
+Решение оркестратора: закрыть S1–S4, M1–M5 одним заходом, затем короткий контрольный прогон.
+
+- **Код (api-author):**
+  - (а) MAN-01 в `ArchChecker`: `label`/`description` Def, начинающиеся с `TODO`, — нарушение (заготовка не заполнена). Сейчас `check` проекта зелёный с `label: 'TODO: …'` (S4). Сгенерированные заготовки после `gen` тогда красные — это намеренно? **Нет:** заготовки должны проходить `check` без правок (спец., нефункциональные). Поэтому — предупреждение, не нарушение: `arch:check` печатает список незаполненных `TODO` в Def и выходит 0; флаг/опция строгости — на усмотрение автора с обоснованием.
+  - (б) `gen uc` печатает адрес вызова: «Вызов: call <module>.<operation>» (S2).
+  - (в) `gen aggregate` печатает: новое поле state — обнови `Create<A>` и тесты заготовок (`<a>.ar.test.ts`, `<a>.policy.test.ts`, `<a>.json-repo.test.ts`, тесты UC); статус по умолчанию — первый из `statuses` (S3/M4). Если тесты заготовок можно сделать устойчивыми к новым полям (одна фабрика входа `Create<A>` на агрегат в тестах, вместо литералов в каждом тесте) без type-level трюков — сделай и обоснуй.
+- **Документация (оркестратор):** `aggregate.md` §2 — врезка `transitions`/`rejects`, имя метода = имя перехода, ссылка на `errors.md` для `kind`; `state.md`/`project.md` — где список `F.*`; README — пути раннера раздельно; `project.md` — адрес `call` из имени `gen uc`, e2e `call` не нужен.
