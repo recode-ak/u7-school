@@ -60,7 +60,7 @@
     - [x] `scripts/gen-e2e.test.ts` без гонки: срез не в каталогах репо или без обнаружения чужим `bun test` (плавающий `ENOENT reading …/genprobe/…test.ts`) ed6496fd
     - [x] Документация: `use-case.md`, `project.md`, `aggregate.md`, `naming.md` §5 (G1, G4, G5, G7, G9, G11) 94c1230e
 - [x] Task: Повторный прогон — чистый, без угадываний; профиль `single` — короткий прогон 331dd281
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: Локальный вынос
 
