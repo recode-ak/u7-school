@@ -28,7 +28,7 @@
 > Пересмотр (Нурболат, 2026-10-29, TR-33): legacy-ядро `@u7-scl/app` выносится в `@u7-scl/app-legacy` (иначе цикл пакетов, D-53); корень собирает всё приложение (legacy и DMG); резолвер `Caller` — над legacy `userFacade`. Разбор — `summary.md`.
 
 - [x] Task: Разбор `runners/u7-bot/src/create-dmg-modules.ts`: что переезжает в `@u7-scl/app` (контекст, модули, адаптеры TR-11, резолвер `Caller`), что остаётся раннеру; план правок — в `summary.md`
-- [ ] Task: Вынос legacy `@u7-scl/app` (`domain/`, `infra/logger`) в `@u7-scl/app-legacy` (`platform/app-legacy`): импорты, `package.json`, `tsconfig`, `biome.json`, `legacy.md`; поведение не меняется, `check` зелёный
+- [x] Task: Вынос legacy `@u7-scl/app` (`domain/`, `infra/logger`) в `@u7-scl/app-legacy` (`platform/app-legacy`): импорты, `package.json`, `tsconfig`, `biome.json`, `legacy.md`; поведение не меняется, `check` зелёный `6aedee4` (`legacy.md` без упоминаний; `domain-check`: корень `@u7-scl/app` домену — ARC-06)
 - [ ] Task: Legacy `ApiApp` (`@u7-scl/core/api`) — DMG через `ApiApp` из `dmg-core/app` вместо `addDmgModules` (`dispatch`, `subscribe`, Job через `legacyJobsOf`)
     - [ ] Тесты: `dispatch` делегирует, реакции подписываются в `init`, Job DMG — в планировщике; red
     - [ ] Реализация; green
