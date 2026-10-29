@@ -1,0 +1,2 @@
+// expect: ARC-09 error
+export const a = Bun.env.TOKEN;

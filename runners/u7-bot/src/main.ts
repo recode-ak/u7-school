@@ -21,7 +21,7 @@ import { BotTransport } from './infra/bot-transport';
 import { JsonBotSessionRepo } from './infra/json-bot-session-repo';
 import { FileLogger, TelegramLogger } from './infra/logger';
 
-const config = loadConfig();
+const config = loadConfig(process.env);
 
 // ══ Инициализация логгера ══
 const consoleLogger = new ConsoleLogger();

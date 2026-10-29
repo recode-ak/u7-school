@@ -603,9 +603,19 @@
     {
       "includes": ["domain/**", "!**/*.test.ts"],
       "plugins": [
-        "./node_modules/dmg-core/biome-plugins/arc-09-no-env.grit",
         "./node_modules/dmg-core/biome-plugins/code-02-class-members.grit"
       ]
+    },
+    {
+      "includes": [
+        "domain/**",
+        "platform/*/src/**",
+        "modules/*/src/**",
+        "runners/*/src/**",
+        "!runners/*/src/main.ts",
+        "!**/*.test.ts"
+      ],
+      "plugins": ["./node_modules/dmg-core/biome-plugins/arc-09-no-env.grit"]
     },
     {
       "includes": ["domain/**", "!**/*.test.ts"],

@@ -17,7 +17,7 @@ describe('loadConfig', () => {
     const originalEnv = { ...process.env };
     setValidEnv();
 
-    const config = loadConfig();
+    const config = loadConfig(process.env);
 
     expect(config.botToken).toBe('test-token');
     expect(config.communityGroupUrl).toBe('https://t.me/+comm');
@@ -36,7 +36,7 @@ describe('loadConfig', () => {
     setValidEnv();
     delete process.env.DB_DIR;
 
-    const config = loadConfig();
+    const config = loadConfig(process.env);
 
     expect(config.dbDir).toBe('./data');
 
@@ -48,7 +48,7 @@ describe('loadConfig', () => {
     setValidEnv();
     delete process.env.BOT_TOKEN;
 
-    expect(() => loadConfig()).toThrow();
+    expect(() => loadConfig(process.env)).toThrow();
 
     process.env = originalEnv;
   });
@@ -58,7 +58,7 @@ describe('loadConfig', () => {
     setValidEnv();
     process.env.BOT_ADMIN_UUID = 'not-a-uuid';
 
-    expect(() => loadConfig()).toThrow();
+    expect(() => loadConfig(process.env)).toThrow();
 
     process.env = originalEnv;
   });
@@ -68,7 +68,7 @@ describe('loadConfig', () => {
     setValidEnv();
     delete process.env.COMMUNITY_GROUP_ID;
 
-    expect(() => loadConfig()).toThrow();
+    expect(() => loadConfig(process.env)).toThrow();
 
     process.env = originalEnv;
   });
@@ -78,7 +78,7 @@ describe('loadConfig', () => {
     setValidEnv();
     delete process.env.COMMUNITY_GROUP_URL;
 
-    expect(() => loadConfig()).toThrow();
+    expect(() => loadConfig(process.env)).toThrow();
 
     process.env = originalEnv;
   });
@@ -88,7 +88,7 @@ describe('loadConfig', () => {
     setValidEnv();
     delete process.env.STUDENT_GROUP_ID;
 
-    expect(() => loadConfig()).toThrow();
+    expect(() => loadConfig(process.env)).toThrow();
 
     process.env = originalEnv;
   });
@@ -98,7 +98,7 @@ describe('loadConfig', () => {
     setValidEnv();
     delete process.env.STUDENT_GROUP_INVITE;
 
-    expect(() => loadConfig()).toThrow();
+    expect(() => loadConfig(process.env)).toThrow();
 
     process.env = originalEnv;
   });
@@ -108,7 +108,7 @@ describe('loadConfig', () => {
     setValidEnv();
     delete process.env.NODE_ENV;
 
-    expect(() => loadConfig()).toThrow();
+    expect(() => loadConfig(process.env)).toThrow();
 
     process.env = originalEnv;
   });
@@ -118,7 +118,7 @@ describe('loadConfig', () => {
     setValidEnv();
     process.env.NODE_ENV = 'staging';
 
-    expect(() => loadConfig()).toThrow();
+    expect(() => loadConfig(process.env)).toThrow();
 
     process.env = originalEnv;
   });
@@ -128,7 +128,7 @@ describe('loadConfig', () => {
     setValidEnv();
     process.env.NODE_ENV = 'production';
 
-    const config = loadConfig();
+    const config = loadConfig(process.env);
     expect(config.mode).toBe('production');
 
     process.env = originalEnv;
@@ -139,7 +139,7 @@ describe('loadConfig', () => {
     setValidEnv();
     process.env.NODE_ENV = 'development';
 
-    const config = loadConfig();
+    const config = loadConfig(process.env);
     expect(config.mode).toBe('development');
 
     process.env = originalEnv;

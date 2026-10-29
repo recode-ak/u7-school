@@ -94,36 +94,37 @@ export const BotConfigSchema = v.object({
 
 export type BotConfig = v.InferOutput<typeof BotConfigSchema>;
 
+/** Переменные окружения процесса — их читает точка входа раннера (ARC-09). */
+export type BotEnv = Readonly<Record<string, string | undefined>>;
+
 /**
- * Читает и валидирует конфигурацию из process.env.
- * Bun загружает .env автоматически — dotenv не требуется.
+ * Валидирует конфигурацию из переменных окружения `env`: `main.ts` передаёт
+ * `process.env` (ARC-09). Bun загружает .env автоматически — dotenv не требуется.
  */
-export function loadConfig(): BotConfig {
+export function loadConfig(env: BotEnv): BotConfig {
   const raw = {
-    botToken: process.env.BOT_TOKEN,
-    communityGroupUrl: process.env.COMMUNITY_GROUP_URL,
-    communityGroupId: process.env.COMMUNITY_GROUP_ID
-      ? Number(process.env.COMMUNITY_GROUP_ID)
+    botToken: env.BOT_TOKEN,
+    communityGroupUrl: env.COMMUNITY_GROUP_URL,
+    communityGroupId: env.COMMUNITY_GROUP_ID
+      ? Number(env.COMMUNITY_GROUP_ID)
       : undefined,
-    studentGroupId: process.env.STUDENT_GROUP_ID
-      ? Number(process.env.STUDENT_GROUP_ID)
+    studentGroupId: env.STUDENT_GROUP_ID
+      ? Number(env.STUDENT_GROUP_ID)
       : undefined,
-    studentGroupInvite: process.env.STUDENT_GROUP_INVITE,
-    mode: process.env.NODE_ENV,
-    botAdminUuid: process.env.BOT_ADMIN_UUID,
-    botMode: process.env.BOT_MODE,
-    webhookUrl: process.env.WEBHOOK_URL,
-    webhookPort: process.env.WEBHOOK_PORT
-      ? Number(process.env.WEBHOOK_PORT)
+    studentGroupInvite: env.STUDENT_GROUP_INVITE,
+    mode: env.NODE_ENV,
+    botAdminUuid: env.BOT_ADMIN_UUID,
+    botMode: env.BOT_MODE,
+    webhookUrl: env.WEBHOOK_URL,
+    webhookPort: env.WEBHOOK_PORT ? Number(env.WEBHOOK_PORT) : undefined,
+    webhookPath: env.WEBHOOK_PATH,
+    adminTelegramIds: env.ADMIN_TELEGRAM_IDS,
+    loggerBotToken: env.LOGGER_BOT_TOKEN,
+    dbDir: env.DB_DIR,
+    devTelegramId: env.DEV_TELEGRAM_ID
+      ? Number(env.DEV_TELEGRAM_ID)
       : undefined,
-    webhookPath: process.env.WEBHOOK_PATH,
-    adminTelegramIds: process.env.ADMIN_TELEGRAM_IDS,
-    loggerBotToken: process.env.LOGGER_BOT_TOKEN,
-    dbDir: process.env.DB_DIR,
-    devTelegramId: process.env.DEV_TELEGRAM_ID
-      ? Number(process.env.DEV_TELEGRAM_ID)
-      : undefined,
-    schoolMentors: process.env.SCHOOL_MENTOR_IDS,
+    schoolMentors: env.SCHOOL_MENTOR_IDS,
   };
 
   return v.parse(BotConfigSchema, raw);

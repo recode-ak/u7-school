@@ -189,7 +189,7 @@ Grammy callback_query.data
 
 ## 5. Сборка приложения (`main.ts`)
 
-1. `config = loadConfig()` → логгер.
+1. `config = loadConfig(process.env)` (окружение читает только `main.ts`, ARC-09) → логгер.
 2. `bot = createBot(token)` (без сессий).
 3. `apiBundle = createApiApp(...)` — домены + репозитории.
 4. `uiBundle = createUiApp(...)` — контроллеры + `U7BotUiApp` (без init).
