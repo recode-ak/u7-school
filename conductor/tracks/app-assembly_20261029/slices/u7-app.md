@@ -85,3 +85,22 @@ TDD: тесты → запуск (red) → реализация → green.
 ### migrator (Opus), шаг 3
 
 Готово, гейт зелёный (проверено оркестратором). `u7-cli/main.ts` и `scripts/call-uc.ts` — на `U7App` (`dbDir: 'data'`, `mode: 'development'`, школа — поля `TEST_SCHOOL`); `CliController` — на `ApiApp<U7BotAppMeta>`, `types.ts` CLI удалён, импортов пакетов модулей в `u7-cli` нет; `create-dmg-modules.ts` удалён. Скрипты не запускались. Изменения поведения: CLI и `call-uc` видят все модули бота; в `call-uc` подписаны реакции `peer-review` (раньше модуля не было) — как в боте; школа в `call-uc` — `TEST_SCHOOL` (раньше отсутствовала, `as unknown as`); неизвестный актор — сообщение и exit 1 вместо исключения.
+
+### reviewer (Opus), Фаза 2
+
+Без `error`; тесты `platform/app` и `platform/core/src/api/app` — 77 pass. Поведение бота сохранено (пути, порядок `init`/`start`/`stop`, подписка реакций, Job, фасады `wish` по `dependsOn`).
+
+| ID | файл:строка | суть | severity |
+|---|---|---|---|
+| ARC-07 (D-52) | platform/app/src/u7-app.ts:55-56 | подпути мигрированного `wish` (`@u7-scl/wish/infra`, `@u7-scl/wish/wish`) вместо входа пакета | warning |
+| ARC-07 | platform/app/src/u7-app.ts:15-53 | legacy-подпути; правила `biome.json` для `platform/app/**` нет | note |
+| ARC-06 / D-53 | scripts/domain-check.ts:23 | запрет `@u7-scl/app` в `modules/**` машинно не проверяется | warning |
+| D-51 / ERR-01 | platform/app/src/u7-caller-resolver.ts:21 | `SystemCaller` не нужен (legacy-фасад без `Caller`); невалидный uuid → гость | note |
+| — | runners/u7-bot/src/core/u7-bot-ui-story.ts:184 | лишнее чтение пользователя на `dispatchUc`; гость недостижим | note |
+| — | scripts/call-uc.ts:111 | реакции `peer-review` пишут в `data/peer-review/`; в шапке не сказано | warning |
+| — | runners/u7-cli/src/main.ts:14 | CLI видит все UC и реакции — поверхность записи выросла | question |
+| TST-05 | runners/u7-bot/tests/helpers/test-app.ts:51-77 | плоские копии фикстур не обновляются после записей — ловушка | note |
+| TST-05 | platform/core/src/api/app/api-app-dmg.test.ts | ослаблений нет | note |
+
+Решения оркестратора: шапка `call-uc.ts` — дополнена; ARC-07 для `platform/app/**` (включая вход `wish` вместо подпутей) и D-53 для `modules/**` — задачи Ф3; CLI — вопрос Нурболату на контрольной точке; остальное — принято (TR-34).
+
