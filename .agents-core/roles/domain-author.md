@@ -2,6 +2,8 @@
 name: domain-author
 description: Пишет домен среза на dmg-core — state, Ar, Policy, доменные правила, события, ошибки, DCS/DQS, все Def (включая контракты UC/ER/Job) и unit-тесты домена. Вызывать первым шагом нового среза.
 tools: [read, edit, write, bash, grep, find]
+model:
+  claude: opus
 ---
 
 <!-- dmg-core@0.1.0: сгенерировано `dmg-core sync` — не править -->

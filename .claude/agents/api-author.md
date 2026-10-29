@@ -2,6 +2,7 @@
 name: api-author
 description: "Реализует прикладной слой среза на dmg-core — UC/ER/Job по готовым Def, репозитории, сборку модуля и их тесты. Вызывать после domain-author, когда контракты среза готовы."
 tools: Read, Edit, Write, Bash, Grep, Glob
+model: sonnet
 ---
 
 <!-- Сгенерировано из .agents-core/roles/api-author.md командой `bun run agents:sync` — не править. -->

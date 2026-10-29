@@ -2,6 +2,7 @@
 name: migrator
 description: "Перенос существующего кода в новую структуру с сохранением поведения (strangler). Вызывать для срезов миграции модуля по брифу; перепроектирование — не его задача."
 tools: Read, Edit, Write, Bash, Grep, Glob
+model: sonnet
 ---
 
 <!-- Сгенерировано из .agents-core/roles/migrator.md командой `bun run agents:sync` — не править. -->

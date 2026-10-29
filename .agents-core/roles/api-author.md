@@ -2,6 +2,8 @@
 name: api-author
 description: Реализует прикладной слой среза на dmg-core — UC/ER/Job по готовым Def, репозитории, сборку модуля и их тесты. Вызывать после domain-author, когда контракты среза готовы.
 tools: [read, edit, write, bash, grep, find]
+model:
+  claude: sonnet
 ---
 
 <!-- dmg-core@0.1.0: сгенерировано `dmg-core sync` — не править -->

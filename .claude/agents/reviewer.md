@@ -2,6 +2,7 @@
 name: reviewer
 description: "Ревью diff среза на dmg-core по правилам rules.md с проверкой review. Только читает, код не исправляет. Вызывать после зелёного check, до коммита среза."
 tools: Read, Grep, Glob, Bash
+model: sonnet
 ---
 
 <!-- Сгенерировано из .agents-core/roles/reviewer.md командой `bun run agents:sync` — не править. -->

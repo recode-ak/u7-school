@@ -2,6 +2,8 @@
 name: migrator
 description: Перенос существующего кода в новую структуру с сохранением поведения (strangler). Вызывать для срезов миграции модуля по брифу; перепроектирование — не его задача.
 tools: [read, edit, write, bash, grep, find]
+model:
+  claude: sonnet
 ---
 
 # Роль: migrator

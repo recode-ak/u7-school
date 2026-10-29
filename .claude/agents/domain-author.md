@@ -2,6 +2,7 @@
 name: domain-author
 description: "Пишет домен среза на dmg-core — state, Ar, Policy, доменные правила, события, ошибки, DCS/DQS, все Def (включая контракты UC/ER/Job) и unit-тесты домена. Вызывать первым шагом нового среза."
 tools: Read, Edit, Write, Bash, Grep, Glob
+model: opus
 ---
 
 <!-- Сгенерировано из .agents-core/roles/domain-author.md командой `bun run agents:sync` — не править. -->

@@ -2,7 +2,7 @@
 name: tech-lead
 description: "По готовой spec трека готовит черновик plan.md (срезы → фазы, шаги по ролям, расхождения spec с кодом) или черновик брифа среза на dmg-core (границы, Def, «было → станет», ID rules.md). Только читает. Вызывать при планировании трека и в начале каждой фазы."
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: opus
 ---
 
 <!-- Сгенерировано из .agents-core/roles/tech-lead.md командой `bun run agents:sync` — не править. -->
