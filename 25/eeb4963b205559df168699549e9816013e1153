@@ -1,0 +1,1 @@
+Задача Ф3 'ARC-07 корневого biome.json': блок platform/app/src/** в biome.json (домен — только contract, @u7-scl/wish/** запрещён); фикстуры lint-fixtures/platform/app/src/arc-07-{app,domain,entry}.ts.txt; TR-35 п. 5 (маска для следующих модулей). U7App через вход wish — уже в 4b0d63e. check зелёный (3326 pass).
