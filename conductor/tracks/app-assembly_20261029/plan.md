@@ -58,5 +58,5 @@
 
 ## Фаза 5: Финал
 
-- [ ] Task: `summary.md`: итог, сравнение с базовой линией, TR трека
+- [~] Task: `summary.md`: итог, сравнение с базовой линией, TR трека
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
