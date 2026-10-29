@@ -1,0 +1,7 @@
+Верификация Фазы 1 (срез review-campaign) — автономно (agents.md §9).
+Автотесты: CI=true bun run check — зелёный (3392 pass, 0 fail; arch:check — нарушений нет; test:tz 20+20 pass); bun run test:bot — 979 pass, 0 fail (базовая линия 978).
+Критерии приёмки: в review-campaign/** (домен и пакет) нет throw, импортов @u7-scl/core и app-legacy; new Ar — только в create/restore агрегата; маркеров DEBT-25/28 нет; PeerReviewModuleDef без external; git status data/ чист.
+Покрытие: кодовые файлы фазы без парного теста — индексы, контракты, типы портов, тест-хелперы, правки импортов; u7-app.ts покрыт platform/app/tests/u7-app.test.ts, student.events.ts — student.events.fate.test.ts.
+Reviewer: error нет; 2 minor исправлены, 1 question — оставлено (TR-38 п. 7). data-keeper: расхождений с аудитом нет.
+Решения: ERR-04 — группа REVIEW_CAMPAIGN (Нурболат); коммит пары red+green (Нурболат); TR-38 пп. 1–7.
+Ручная верификация не проводилась (автономный режим).
