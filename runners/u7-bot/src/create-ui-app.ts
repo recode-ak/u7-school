@@ -1,5 +1,5 @@
+import type { U7App } from '@u7-scl/app';
 import { AppController } from '@u7-scl/bot/app/app-controller';
-import type { ApiApp } from '@u7-scl/core/api';
 import { CoursesController } from './controllers/courses/controller';
 import { LearningController } from './controllers/learning/controller';
 import { MentorController } from './controllers/mentor/controller';
@@ -8,9 +8,14 @@ import { QuestionnaireController } from './controllers/questionnaire/controller'
 import { SchoolController } from './controllers/school/controller';
 import { StreamsController } from './controllers/streams/controller';
 import { UserController } from './controllers/user/controller';
-import type { U7BotAppMeta, U7BotUiAppResolve } from './core/u7-bot-app-meta';
+import type { U7BotUiAppResolve } from './core/u7-bot-app-meta';
 import { U7BotUiApp } from './core/ui-app';
-import type { ApiAppBundle } from './create-api-app';
+
+/** Поля приложения (`U7App`), нужные UI-слою бота. */
+export type UiAppSource = Pick<
+  U7App,
+  'apiApp' | 'eventBus' | 'userFacade' | 'school' | 'callers'
+>;
 
 /**
  * Результат фабрики UiApp — UI-слой бота.
@@ -45,8 +50,7 @@ export interface CreateUiAppOptions {
  * вызывающим кодом (main.ts) после создания BotTransport.
  */
 export async function createUiApp(
-  apiApp: ApiApp<U7BotAppMeta>,
-  bundle: ApiAppBundle,
+  app: UiAppSource,
   options: CreateUiAppOptions,
 ): Promise<UiAppBundle> {
   const streamController = new StreamsController();
@@ -76,25 +80,24 @@ export async function createUiApp(
   // resolve для каскадной инициализации UiApp → контроллеры → стори.
   // actorResolver: резолвит User по telegramId через userFacade;
   // userFacade + botAdminUser — идемпотентная гост-регистрация на /start.
-  const botAdminUser = await bundle.userFacade.getUserByUuid(
-    options.botAdminUuid,
-  );
+  const botAdminUser = await app.userFacade.getUserByUuid(options.botAdminUuid);
   if (!botAdminUser) {
     throw new Error(
       `BOT_ADMIN_UUID не найден: пользователь ${options.botAdminUuid} не существует`,
     );
   }
   const resolve: U7BotUiAppResolve = {
-    eventBus: bundle.eventBus,
+    eventBus: app.eventBus,
     actorResolver: async (tgId: number) => {
-      const user = await bundle.userFacade.getUserByTelegramId(tgId);
+      const user = await app.userFacade.getUserByTelegramId(tgId);
       if (!user) throw new Error(`Пользователь с telegramId ${tgId} не найден`);
       return user;
     },
-    appApi: apiApp,
-    userFacade: bundle.userFacade,
+    appApi: app.apiApp,
+    userFacade: app.userFacade,
     botAdminUser,
-    school: bundle.school,
+    school: app.school,
+    callers: app.callers,
     adminTelegramIds: options.adminTelegramIds,
   };
 

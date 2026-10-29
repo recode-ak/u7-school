@@ -34,7 +34,15 @@ TDD: тесты → запуск (red) → реализация → green.
 - Перенеси существующие тесты `create-api-app.test.ts`, которые проверяют сборку, в пакет.
 - **Раннер в этом шаге не трогай**: `create-api-app.ts`/`create-dmg-modules.ts` остаются до шага 2 (дублирование на один коммит допустимо).
 
-### Шаг 2 — раннеры на `U7App` (следующая задача, придёт отдельным сообщением)
+### Шаг 2 — раннер `u7-bot` на `U7App`
+
+- `main.ts`: `BotConfig` → `U7AppEnv` (чтение `process.env` остаётся в `config.ts`, ARC-09), `new U7App(env, { logger })`; UI (`create-ui-app.ts`) получает поля из `U7App`.
+- Удалить `create-api-app.ts`, `create-dmg-modules.ts`, `create-api-app.test.ts`; `u7-bot-app-meta.ts` берёт `U7BotAppMeta`/`U7BotApp` из `@u7-scl/app` (дубль снят), UI-типы остаются.
+- `U7BotUiStory.dispatchUc`: `Caller` — из `app.callers.resolve(actor.uuid, trace)` вместо `new UserCaller(actor)`; резолвер доходит до истории через резолв UI (`U7BotUiAppResolve`) — по образцу соседних полей. Поведение: актор истории всегда зарегистрирован, ответы UC не меняются.
+- `tests/helpers/test-app.ts`: на `U7App`, если раскладка фикстур совпадает с `<dbDir>/…` (`U7AppEnv.dbDir = fixtures.dbDir`); если не совпадает — оставь как есть (только `createDmgApp` → из `U7App` недоступен: тогда эскалация) и опиши расхождение.
+- Приёмка: гейт зелёный, `bun run test:bot` зелёный (980 pass на базовой линии), `grep` по `runners/` — импортов прикладных пакетов модулей нет, кроме того, что опишешь в отчёте.
+
+### Шаг 3 — `u7-cli` и `scripts/call-uc.ts` на `U7App` (придёт отдельным сообщением)
 
 ## Критерии приёмки (шаг 1)
 
@@ -60,3 +68,11 @@ TDD: тесты → запуск (red) → реализация → green.
 Подпути legacy, которые берёт приложение (ARC-07, D-52 — свести в Ф3): `@u7-scl/{user,course,questionnaire}/{api,infra,domain}`, `@u7-scl/wish/{infra,wish}`, `@u7-scl/peer-review/domain`, `@u7-scl/app-legacy/domain`, `@u7-scl/core/*`.
 
 Вопросы — решены оркестратором: `_trace` с комментарием — как в `wish`; повторный `init` в перенесённом тесте оставлен (проверяет переподписку); дубль меты — шаг 2.
+
+### migrator (Opus), шаг 2
+
+Готово, гейт зелёный, `test:bot` — 977 pass (980 − 4 перенесённых в `platform/app` + 1 новый). `main.ts` → `new U7App(env, { logger })`, `app.start()/stop()`; `createUiApp(app: UiAppSource, …)`; `U7BotUiAppResolve.callers`; `dispatchUc` — `callers.resolve(actor.uuid, trace)` (тест red → green); мета — переэкспорт из `@u7-scl/app`; `create-api-app{,.test}.ts` удалены; `test-app.ts` на `U7App` (`dbDir = fixtures.dbDir`, материализатор пишет и вложенные пути). Отклонение: `create-dmg-modules.ts` остаётся до шага 3 — его импортирует `scripts/call-uc.ts`.
+
+Остались импорты прикладных пакетов в `runners/`: `tests/helpers/test-app.ts` (репозитории для проверки состояния, warn ARC-08 был и раньше), `controllers/streams/controller.ts` (`@u7-scl/stream`: `Student`, `StudentAr`, `StudentOutcomeCategory` — было до трека), `u7-cli` (шаг 3) — разобрать в Ф3.
+
+Вопрос `callers` обязателен или нет — решено оркестратором: обязателен (один путь построения `Caller`).

@@ -12,13 +12,12 @@ import type {
   ProactiveSender,
 } from '@u7-scl/core/ui';
 import { BotPaginator, BotRequestContext, BotUiStory } from '@u7-scl/core/ui';
-import {
-  type AnyModuleDef,
-  type Command,
-  type OutputOf,
-  type Result,
-  type UseCaseErrorOf,
-  UserCaller,
+import type {
+  AnyModuleDef,
+  Command,
+  OutputOf,
+  Result,
+  UseCaseErrorOf,
 } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { APP_CODES } from '../shared/app-codes';
@@ -156,14 +155,18 @@ export abstract class U7BotUiStory extends BotUiStory<
    * Команда модулю DMG от имени актора бота (D-49): адрес — Def модуля,
    * исполняет `appApi.dispatch` в процессе. Отказ — значение `Err`,
    * story ветвится по `code`, неожиданное — `ucErrorNotify`. Единственное
-   * место, где UI строит субъект (`UserCaller` над актором) и след запроса
-   * (`Trace.fromRequest`, канал `telegram`, посетитель — `telegramId`).
+   * место, где UI строит след запроса (`Trace.fromRequest`, канал
+   * `telegram`, посетитель — `telegramId`); субъект (`Caller`) по uuid
+   * актора даёт резолвер приложения (`resolve.callers`, D-50).
    *
    * `requestId` и `correlationId` — из контекста апдейта Telegram
    * (`BotRequestContext`, транспорт). Вне обработки апдейта контекста нет:
    * id создаётся на вызов с `warn` (ERR-07, caller.md §2 п. 5).
    */
-  protected dispatchUc<M extends AnyModuleDef, D extends M['useCases'][number]>(
+  protected async dispatchUc<
+    M extends AnyModuleDef,
+    D extends M['useCases'][number],
+  >(
     module: M,
     command: Command<D>,
     actor: User,
@@ -178,7 +181,8 @@ export abstract class U7BotUiStory extends BotUiStory<
       (message) =>
         this.logger?.warn(this.dialogPath, message, { uc: command.uc }),
     );
-    return this.appApi.dispatch(module, command, new UserCaller(actor), trace);
+    const caller = await this.resolve.callers.resolve(actor.uuid, trace);
+    return this.appApi.dispatch(module, command, caller, trace);
   }
 
   // ── Постраничные экраны (трек pagination) ──

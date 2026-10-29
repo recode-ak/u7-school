@@ -156,6 +156,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@google/genai": "^1.49.0",
+        "@u7-scl/app": "workspace:*",
         "@u7-scl/app-legacy": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/course": "workspace:*",

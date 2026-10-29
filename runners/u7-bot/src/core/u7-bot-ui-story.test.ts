@@ -527,8 +527,18 @@ describe('U7BotUiStory.dispatchUc', () => {
     }
   }
 
-  /** Story над приложением, `dispatch` которого отвечает `answer`. */
-  function makeStory(sent: Sent[], answer: Result<unknown, DomainError>) {
+  /** Запрос резолвера `Caller`: идентичность и след вызова. */
+  type Resolved = { uuid: string | undefined; trace: Trace };
+
+  /**
+   * Story над приложением, `dispatch` которого отвечает `answer`; резолвер
+   * `Caller` приложения находит актора и записывает запросы в `resolved`.
+   */
+  function makeStory(
+    sent: Sent[],
+    answer: Result<unknown, DomainError>,
+    resolved: Resolved[] = [],
+  ) {
     const dispatch = async (
       module: AnyModuleDef,
       command: Command,
@@ -538,11 +548,18 @@ describe('U7BotUiStory.dispatchUc', () => {
       sent.push({ module, command, caller, trace });
       return answer;
     };
+    const callers = {
+      resolve: async (uuid: string | undefined, trace: Trace) => {
+        resolved.push({ uuid, trace });
+        return new UserCaller(actor);
+      },
+    };
     const story = new UcStory();
     story.init({
       appApi: { dispatch },
       eventBus: {},
       actorResolver: async () => actor,
+      callers,
     } as never);
     return story;
   }
@@ -561,6 +578,23 @@ describe('U7BotUiStory.dispatchUc', () => {
     expect((call.caller as UserCaller<User>).user).toBe(actor);
     expect(call.trace.cause.kind).toBe('request');
     expect(call.trace.channel).toEqual({ name: 'telegram', visitorId: '1' });
+  });
+
+  test('Caller — от резолвера приложения: uuid актора и след того же вызова', async () => {
+    const sent: Sent[] = [];
+    const resolved: Resolved[] = [];
+    setGlobalLogger(createMockLogger());
+
+    await makeStory(sent, ok([]), resolved).list();
+
+    const [call] = sent;
+    const [lookup] = resolved;
+    if (call === undefined || lookup === undefined) {
+      throw new Error('Команда не отправлена или Caller не разрешён');
+    }
+    expect(resolved).toHaveLength(1);
+    expect(lookup.uuid).toBe(actor.uuid);
+    expect(lookup.trace).toBe(call.trace);
   });
 
   test('отказ UC — значение Err, не исключение', async () => {

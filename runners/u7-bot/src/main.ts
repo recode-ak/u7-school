@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { U7App } from '@u7-scl/app';
 import { CompositeLogger } from '@u7-scl/app-legacy/infra';
 import { FileReplayStore } from '@u7-scl/core/infra';
 import { legacyClock } from '@u7-scl/core/legacy-bridge';
@@ -15,7 +16,6 @@ import { webhookCallback } from 'grammy';
 import type { DevPersonaPanel } from '../scripts/dev-persona';
 import { createBot } from './bot';
 import { loadConfig } from './config';
-import { createApiApp } from './create-api-app';
 import { createUiApp } from './create-ui-app';
 import { BotTransport } from './infra/bot-transport';
 import { JsonBotSessionRepo } from './infra/json-bot-session-repo';
@@ -62,8 +62,25 @@ const replay = await FileReplayStore.open({
   dir: `${config.dbDir}/replay`,
   clock: legacyClock(),
 });
-const apiBundle = createApiApp(config, logger, { replay });
-const uiBundle = await createUiApp(apiBundle.apiApp, apiBundle, {
+// Корень сборки (D-50): окружение — простые данные из конфига (ARC-09).
+const app = new U7App(
+  {
+    mode: config.mode,
+    dbDir: config.dbDir,
+    communityGroup: {
+      id: config.communityGroupId,
+      url: config.communityGroupUrl,
+    },
+    studentGroup: {
+      id: config.studentGroupId,
+      inviteUrl: config.studentGroupInvite,
+    },
+    mentors: config.schoolMentors,
+    replay,
+  },
+  { logger },
+);
+const uiBundle = await createUiApp(app, {
   botAdminUuid: config.botAdminUuid,
   adminTelegramIds: config.adminTelegramIds,
 });
@@ -106,7 +123,7 @@ uiBundle.uiApp.start(); // подписки стори на доменные с�
 
 // ══ Старт периодических заданий (Job) ══
 // Ошибка одиночного прогона логируется внутри планировщика, процесс не падает.
-apiBundle.apiApp.start();
+app.start();
 
 // ══ TelegramLogger — только если указаны adminTelegramIds ══
 if (config.adminTelegramIds.length > 0) {
@@ -129,7 +146,7 @@ if (config.adminTelegramIds.length > 0) {
 }
 
 // ══ Верификация бота при старте ══
-const adminUser = await apiBundle.userFacade.getUserByUuid(config.botAdminUuid);
+const adminUser = await app.userFacade.getUserByUuid(config.botAdminUuid);
 if (!adminUser) {
   throw new Error(
     `BOT_ADMIN_UUID не найден: пользователь ${config.botAdminUuid} не существует`,
@@ -266,7 +283,7 @@ async function shutdown(signal: string): Promise<void> {
     // 1. UI: отписка стори от доменных событий
     uiBundle.uiApp.stop();
     // 2. API: остановка периодических заданий
-    apiBundle.apiApp.stop();
+    app.stop();
     // 3. Транспорт бота
     if (config.botMode === 'webhook') {
       server?.stop(true);

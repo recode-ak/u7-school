@@ -158,7 +158,8 @@ describe('CourseCatalogStory', () => {
 
   /**
    * Story над моками: legacy UC — `appApi.execute`, команды DMG —
-   * `appApi.dispatch` (модуль wish отвечает моком `wish`).
+   * `appApi.dispatch` (модуль wish отвечает моком `wish`), субъект —
+   * резолвер `callers`.
    */
   function initStory(
     story: CourseCatalogStory,
@@ -173,7 +174,17 @@ describe('CourseCatalogStory', () => {
       expect(module).toBe(WishModuleDef);
       return wish(command, caller);
     };
-    story.init({ appApi: { execute: api.execute, dispatch } } as never);
+    // Резолвер `Caller` приложения (D-50): актор бота зарегистрирован.
+    const callers = {
+      resolve: async (uuid: string | undefined) => {
+        expect(uuid).toBe(actor.uuid);
+        return new UserCaller(actor);
+      },
+    };
+    story.init({
+      appApi: { execute: api.execute, dispatch },
+      callers,
+    } as never);
   }
 
   // ── Главное меню (декларативные menuButtons) ──

@@ -182,7 +182,9 @@ export class TestBotTransport {
     actorResolver: (tgId: number) => Promise<User>,
     controllers: U7BotController[],
     opts: {
-      eventBus?: InProcEventBus;
+      eventBus?: U7BotUiAppResolve['eventBus'];
+      /** Резолвер `Caller` приложения — субъект команд DMG из stories (`dispatchUc`). */
+      callers?: U7BotUiAppResolve['callers'];
       /** Фасад пользователей — гост-регистрация на /start (см. ensureRegisteredGuest). */
       userFacade?: U7BotUiAppResolve['userFacade'];
       /** Системный актор-бот: от его имени регистрируются гости. */
@@ -213,6 +215,11 @@ export class TestBotTransport {
           createdAt: '2026-01-01T00:00',
         },
         school: TEST_SCHOOL,
+        callers: opts.callers ?? {
+          resolve: async () => {
+            throw new Error('TestBotTransport: резолвер Caller не передан');
+          },
+        },
       },
       this.transport,
     );
@@ -411,7 +418,11 @@ export function createTestBotTransport(
       return user;
     },
     controllers,
-    { eventBus: app.eventBus, userFacade: app.userFacade },
+    {
+      eventBus: app.eventBus,
+      userFacade: app.userFacade,
+      callers: app.callers,
+    },
   );
 }
 

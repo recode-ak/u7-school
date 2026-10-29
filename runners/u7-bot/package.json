@@ -20,6 +20,7 @@
     "@u7-scl/peer-review": "workspace:*",
     "@u7-scl/stream": "workspace:*",
     "@u7-scl/user": "workspace:*",
+    "@u7-scl/app": "workspace:*",
     "@u7-scl/app-legacy": "workspace:*",
     "dmg-core": "file:../../../../tools/dmg/dmg-core",
     "@google/genai": "^1.49.0",
