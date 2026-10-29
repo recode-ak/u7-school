@@ -1,0 +1,5 @@
+Верификация Фазы 2 (app-assembly, корень сборки @u7-scl/app)
+Автотесты: CI=true bun test — 3320 pass, 0 fail; bun run test:bot — 977 pass, 0 fail (980 на базовой линии: 4 теста сборки перенесены в platform/app, +1); bun run check — зелёный.
+Ревью: reviewer (Opus) без error; решения — TR-34; задачи ARC-07 platform/app и D-53 modules/** — в Ф3.
+Ручная проверка: бот на фикстурах — /start → каталог → «Хочу на курс», запись createCourseWish в oplog с caller.kind 'user'. Подтверждено Нурболатом.
+Известное: u7-cli не стартует (нет about.md у stream/questionnaire/peer-review) — DEBT-42.
