@@ -23,7 +23,7 @@
 - [x] Task: Ревью reviewer; правки по ревью — без `error`; `dmg-core c8d0e93`, TR-32 `027b79b`
 - [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md) — автономно
 
-## Фаза 2: Корень сборки в `@u7-scl/app` (DEBT-39)
+## Фаза 2: Корень сборки в `@u7-scl/app` (DEBT-39) [checkpoint: 0d40e19]
 
 > Пересмотр (Нурболат, 2026-10-29, TR-33): legacy-ядро `@u7-scl/app` выносится в `@u7-scl/app-legacy` (иначе цикл пакетов, D-53); корень собирает всё приложение (legacy и DMG); резолвер `Caller` — над legacy `userFacade`. Разбор — `summary.md`.
 
