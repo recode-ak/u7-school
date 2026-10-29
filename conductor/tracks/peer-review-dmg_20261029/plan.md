@@ -23,11 +23,22 @@
 
 - [ ] Task: `test-designer`: характеризация `get-my-campaigns`, `get-campaign-recipients` и ER `create-student-campaign` на `v0.2.6`; red-тесты Def-контрактов среза
 - [ ] Task: `migrator`: домен — state (`F.timestamp`, DEBT-28 в части кампаний), `ReviewCampaignArDef` и Ar, события, ошибки, Policy и правила, DCS/DQS по брифу (`campaign-facts-ds`); без импортов `core`/`app-legacy` (DEBT-25 в части кампаний)
-- [ ] Task: `migrator`: прикладной слой — Def UC и ER, `UseCaseFromDef`/`ReactionFromDef`, репозиторий через UoW, `inbound` для `stream.completed`, адаптеры TR-11 к `user`/`questionnaire`/`stream`; тест репозитория на `DB_DIR=./data/fixtures`
-- [ ] Task: Stories кампаний (`campaign.story`, `invite.story`, `campaign-profiles`) → `dispatch`; e2e-тесты бота зелёные
+- [ ] Task: `migrator`: контракт `stream` (по брифу) — `StudentEvents.completed`/`abandoned`, `GetStreamMembersUcDef`, адаптер TR-11, маршруты `inbound`
+- [ ] Task: `migrator`: прикладной слой — Def UC и ER, `UseCaseFromDef`/`ReactionFromDef`, репозиторий через UoW (строгий разбор, TR-37), фабрика в `U7App`, мост `create-review-uc`; тест репозитория на `DB_DIR=./data/fixtures`
+- [ ] Task: Stories кампаний (`campaign.story`, `invite.story`, `campaign-profiles`, вызовы `get-my-campaigns` в `my-reviews.story`) → `dispatch`, подписка на `peer-review.review-campaign.created`; e2e-тесты бота зелёные
 - [ ] Task: `data-keeper` по diff (state и репозиторий)
 - [ ] Task: `reviewer`; замечания без `error` решает orchestrator (TR)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
+
+**Критерии приёмки Фазы 1** (подробно — бриф `slices/review-campaign.md`):
+- `domain/src/peer-review/review-campaign/**` и `modules/peer-review/src/review-campaign/**`: нет `throw*` для штатных отказов, `new Ar`, импортов `@u7-scl/core` и `@u7-scl/app-legacy`.
+- Маркеры DEBT-25 и DEBT-28 в части кампаний сняты; `arch:check` — нарушений нет.
+- `PeerReviewModuleDef` без `external`, с агрегатом кампании, 2 UC и ER; `checkDefs` зелёный.
+- `student.completed`/`abandoned` доходят до ER как Def (`legacy-inbound.test.ts`); `GetStreamMembersUcDef` и адаптер покрыты тестами.
+- Тесты репозитория на фикстурах и во временном каталоге: legacy-запись (ISO → число, `updatedAt`, `version`), round-trip, невалидная запись — исключение, файл цел.
+- Сценарии старых тестов кампаний перенесены (список — отчёт `test-designer`); тест границы окна при `TZ=Asia/Oral` зелёный.
+- UC рецензий работают через мост: тесты `create-review-uc` зелёные.
+- `bun run check` зелёный; `bun run test:bot` — не меньше 978 pass; `git status data/` чист.
 
 ## Фаза 2: Срез `review`
 
@@ -40,13 +51,26 @@
 - [ ] Task: `reviewer`; замечания без `error` решает orchestrator (TR)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
 
+**Критерии приёмки Фазы 2** (уточняет бриф `slices/review.md`):
+- Во всём `domain/src/peer-review/**` и `modules/peer-review/src/**` (кроме legacy, удаляемого в Ф3): нет `throw*` для штатных отказов, `new Ar`, импортов `@u7-scl/core` и `@u7-scl/app-legacy`.
+- DEBT-25, DEBT-28, DEBT-29 — маркеров нет; валидация текста — правило или Policy, не `#validateText` в Ar.
+- 5 UC и ER `notify-review-recipient` — через `UseCaseFromDef`/`ReactionFromDef`; мост `create-review-uc` из Ф1 снят.
+- Тесты репозитория рецензий — как у кампаний (legacy-запись, round-trip, невалидная запись).
+- Сценарии старых тестов рецензий перенесены; `bun run check` зелёный; `test:bot` — не меньше 978 pass; `git status data/` чист.
+
 ## Фаза 3: Сборка и снятие legacy
 
 - [ ] Task: `PeerReviewModuleDef` без `external` (снят в Ф1 — MAN-06), с агрегатами, UC и ER обоих срезов; `checkDefs` зелёный
-- [ ] Task: Фабрика `peer-review` в `U7App` через вход пакета (как `wish`); `@u7-scl/peer-review/**` в ARC-07 корневого `biome.json` (TR-35, п. 5)
+- [ ] Task: Фабрика `peer-review` в `U7App` (подключена в Ф1) — legacy-резолвер снят; `@u7-scl/peer-review/**` в ARC-07 корневого `biome.json` (TR-35, п. 5)
 - [ ] Task: Удалить legacy `PeerReviewApiModule`, `module.ts` домена (DEBT-26), `commands/*-cmd.ts`, старые репозитории; сверить, что сценарии удалённых тестов перенесены; DEBT-34 в части `peer-review`
 - [ ] Task: `reviewer`; замечания без `error` решает orchestrator (TR)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
+
+**Критерии приёмки Фазы 3:**
+- `PeerReviewApiModule`, `domain/src/peer-review/module.ts`, `commands/*-cmd.ts`, legacy-репозитории удалены; `grep` по репозиторию не находит их импортов.
+- DEBT-26 и DEBT-34 в части `peer-review` — маркеров нет; `@u7-scl/peer-review/**` в группе ARC-07 `biome.json`, `bun run lint` зелёный.
+- `PeerReviewModuleDef` содержит оба агрегата, все UC и ER; `checkDefs` зелёный.
+- Сценарии удалённых тестов сверены с новыми (список в отчёте); `bun run check` зелёный; `test:bot` — не меньше 978 pass.
 
 ## Фаза 4: Финал
 
@@ -54,3 +78,20 @@
 - [ ] Task: Итог пилота: каждая роль по критериям §5 [agent-roles.md](../../architecture/agent-roles.md), промежуточный вывод (годна, нужна правка или кандидат на удаление)
 - [ ] Task: [debt.md](../../architecture/debt.md) — DEBT-25, 26, 28, 29 сняты, маркеры синхронны; [migration.md](../../architecture/migration.md) §6 — состояние, входной долг, следующий трек `stream`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+
+**Критерии приёмки Фазы 4** (= критерии spec):
+- `CI=true bun test` и `test:bot` — красных нет либо каждый отнесён к промежуточному состоянию с владельцем; регрессов нет; числа и сравнение с базовой линией — в `summary.md`.
+- DEBT-25, 26, 28, 29 сняты в `debt.md`, `arch:check` — нарушений нет.
+- «Пилот ролей» заполнен по всем вызовам, по каждой роли — промежуточный вывод.
+- `migration.md` §6 и формулировка про `stream.completed` (§2.1) исправлены; следующий трек — `stream`.
+
+## Покрытие spec
+
+| Критерий spec | Фаза |
+|---|---|
+| нет `throw*`, `new Ar`, импортов `core`/`app-legacy` | 1 (кампании), 2 (весь модуль) |
+| DEBT-25, 26, 28, 29 погашены, `arch:check` | 1–2 (25, 28, 29), 3 (26), 4 (`debt.md`) |
+| `PeerReviewModuleDef` без `external`, legacy удалён | 1 (`external`), 3 (legacy) |
+| `check` зелёный, reviewer без `error` | каждая фаза |
+| `git status data/` чист | каждая фаза |
+| «Пилот ролей» заполнен, вывод по ролям | 0–3 (строки), 4 (вывод) |
