@@ -24,8 +24,8 @@ import {
   type ReplayStore,
   Trace,
 } from 'dmg-core/app';
-import { U7App } from './u7-app';
-import type { U7AppEnv } from './u7-app.types';
+import { U7App } from '../src/u7-app';
+import type { U7AppEnv } from '../src/u7-app.types';
 
 /** Актор для UC с requiresAuth: checkAuth проверяет только наличие. */
 const ACTOR: User = {

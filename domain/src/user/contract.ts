@@ -6,6 +6,7 @@ export type {
   UserModuleError,
   UserNotFoundUcError,
 } from './user/commands/errors';
+export type { User } from './user/entity';
 export type { UserNotifiedEvent } from './user/events';
 export {
   GetTelegramAddressesUcDef,

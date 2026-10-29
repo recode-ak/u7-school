@@ -1,4 +1,4 @@
-import type { User, UserFacade } from '@u7-scl/domain/user';
+import type { User, UserFacade } from '@u7-scl/domain/user/contract';
 import { GuestCaller, type PersonCaller, UserCaller } from 'dmg-core';
 import type { Trace } from 'dmg-core/app';
 

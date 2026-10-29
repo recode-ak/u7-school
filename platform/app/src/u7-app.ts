@@ -51,9 +51,7 @@ import {
 import { createUserModule } from '@u7-scl/user';
 import { UserApiModule } from '@u7-scl/user/api';
 import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
-import { createWishModule } from '@u7-scl/wish';
-import { WishJsonRepo } from '@u7-scl/wish/infra';
-import type { WishRepo } from '@u7-scl/wish/wish';
+import { createWishModule, WishJsonRepo, type WishRepo } from '@u7-scl/wish';
 import type { Identified } from 'dmg-core';
 import {
   type AppContext,

@@ -7,7 +7,7 @@ import type {
   UiEventSubscription,
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
-import { WishEvents } from '@u7-scl/wish/domain';
+import { WishEvents } from '@u7-scl/domain/wish/contract';
 import type * as v from 'valibot';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
 import { Routes } from '../../shared/routes';
