@@ -1,0 +1,1 @@
+Верификация Фазы 5 — автономно. bun run check: 3330 pass, 0 fail; test:bot 978 pass; dmg-core 1345 pass, e2e ok. Гейт закрытия трека: красных нет, триаж в summary.md.
