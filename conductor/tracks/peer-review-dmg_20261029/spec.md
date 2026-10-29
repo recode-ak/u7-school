@@ -8,7 +8,7 @@
 
 - **Порядок.** Модули переводятся сверху вниз по графу ([migration.md](../../architecture/migration.md) §2.1). `peer-review` стоит на вершине, legacy-клиентов у него нет, поэтому обратных мостов нет. Зависимости `user`, `questionnaire` и `stream` подключаются как внешние `ModuleDef` с адаптерами TR-11. Событие `stream.completed` приходит через `inbound`.
 - **Срезы:** `review-campaign` (2 UC и ER `create-student-campaign`), затем `review` (5 UC и ER `notify-review-recipient`). Job нет.
-- **Конвейер среза:** `architect` пишет бриф → `test-designer` пишет характеризацию поведения `v0.2.6` (red) → `migrator` переносит → гейт → `data-keeper`, если diff затрагивает `state`, `*.repo.ts` или снимки → `reviewer`.
+- **Конвейер среза:** `tech-lead` пишет бриф → `test-designer` пишет характеризацию поведения `v0.2.6` (red) → `migrator` переносит → гейт → `data-keeper`, если diff затрагивает `state`, `*.repo.ts` или снимки → `reviewer`.
 - **Режим.** Ф0 проверяется вместе с Нурболатом. С Ф1 работа идёт автономно ([agents.md](../../architecture/agents.md) §9): тактические решения записываются в `TR-<n>`, к Нурболату — только стратегические вопросы.
 - **Модели.** Новые роли работают на Sonnet. Если роль не справляется, она переключается на Opus, а причина записывается в «Пилот ролей».
 - **UI.** Stories бота (`peer-review/*` и `school-reviews`) переводятся на `dispatch` в срезе своего агрегата.
@@ -30,7 +30,7 @@
 ## Функциональные требования
 
 **Ф0. Роли волны 1.**
-- Добавить `architect`, `test-designer` и `data-keeper` в `.agents-core/roles/` и выполнить `bun run agents:sync`. Роли должны появиться и в Claude Code, и в pi.
+- Добавить `tech-lead` (вначале — `architect`), `test-designer` и `data-keeper` в `.agents-core/roles/` и выполнить `bun run agents:sync`. Роли должны появиться и в Claude Code, и в pi.
 - Описать их место в конвейере в [agents.md](../../architecture/agents.md) §3.
 - Завести в `summary.md` раздел «Пилот ролей». На каждый вызов в нём фиксируется: повлиял ли отчёт на решение, сколько замечаний принято, правился ли промпт.
 

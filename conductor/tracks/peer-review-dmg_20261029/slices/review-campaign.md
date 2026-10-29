@@ -1,6 +1,6 @@
 # Бриф среза: `peer-review` / `review-campaign`
 
-Черновик — `architect` (Sonnet, Ф0), проверен orchestrator'ом: пп. 1–2 и 7 «Расхождений» и MAN-06 сверены с кодом. Читай до старта: `../spec.md`, `../plan.md` (Фаза 1), эталон `wish` и его бриф `conductor/archive/golden-wish_20261020/slices/wish.md`.
+Черновик — `architect`, ныне `tech-lead` (Sonnet, Ф0), проверен orchestrator'ом: пп. 1–2 и 7 «Расхождений» и MAN-06 сверены с кодом. Читай до старта: `../spec.md`, `../plan.md` (Фаза 1), эталон `wish` и его бриф `conductor/archive/golden-wish_20261020/slices/wish.md`.
 
 ## Расхождения с постановкой
 

@@ -8,5 +8,5 @@
 
 ---
 
-- [~] **Track: Перевод `peer-review` на DMG + пилот ролей волны 1 (`architect`, `test-designer`, `data-keeper`)**
+- [~] **Track: Перевод `peer-review` на DMG + пилот ролей волны 1 (`tech-lead`, `test-designer`, `data-keeper`)**
 *Link: [./tracks/peer-review-dmg_20261029/](./tracks/peer-review-dmg_20261029/)*

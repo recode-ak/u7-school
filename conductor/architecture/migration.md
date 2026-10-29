@@ -90,8 +90,8 @@
 ### Старт следующих треков
 
 - **Следующий — `peer-review`** (трек 5, порядок — §2.1). Создаётся `conductor-newtrack` (ID вида `peer-review-dmg_<дата>`) по этому разделу:
-  - **Ф0 — роли волны 1** ([agent-roles.md](./agent-roles.md)): `architect`, `test-designer`, `data-keeper` в `.agents-core/roles/`, `bun run agents:sync`; место в конвейере — [agents.md](./agents.md) §3; раздел «Пилот ролей» в `summary.md`.
-  - **Срезы** по агрегатам `review-campaign` и `review` (`modules/peer-review/src/api`): `architect` → бриф по образцу `conductor/archive/golden-wish_20261020/slices/wish.md`; `test-designer` → характеризация поведения `v0.2.6`; `migrator` → перенос; `data-keeper` — на `state` и репозитории; `reviewer`.
+  - **Ф0 — роли волны 1** ([agent-roles.md](./agent-roles.md)): `tech-lead`, `test-designer`, `data-keeper` в `.agents-core/roles/`, `bun run agents:sync`; место в конвейере — [agents.md](./agents.md) §3; раздел «Пилот ролей» в `summary.md`.
+  - **Срезы** по агрегатам `review-campaign` и `review` (`modules/peer-review/src/api`): `tech-lead` → бриф по образцу `conductor/archive/golden-wish_20261020/slices/wish.md`; `test-designer` → характеризация поведения `v0.2.6`; `migrator` → перенос; `data-keeper` — на `state` и репозитории; `reviewer`.
   - **Зависимости** `user`, `questionnaire`, `stream` — внешние `ModuleDef` с адаптерами TR-11 (как у `wish`); событие `stream.completed` — через `inbound`. Обратных мостов нет.
   - **Сборка:** фабрика в `U7App` (`platform/app/src/u7-app.ts`, как `wish`) через вход пакета; `@u7-scl/peer-review/**` — в группу ARC-07 блока `platform/app/src/**` корневого `biome.json` (TR-35 п. 5). Stories бота `peer-review` — на `dispatch`.
   - **Итог:** пилот ролей по критериям [agent-roles.md](./agent-roles.md) §5, решение о волне 2.
