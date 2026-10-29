@@ -15,9 +15,9 @@
 
 ## Фаза 2: Ожидаемая версия от клиента (dmg-core)
 
-- [ ] Task: `F.expectedVersion()` и удаление `CommandMeta.version`
-    - [ ] Тесты: схема поля (целое ≥ 0, необязательное, отказ на отрицательном/дробном); команда без `version` в `meta`; red
-    - [ ] Реализация; green
+- [x] Task: `F.expectedVersion()` и удаление `CommandMeta.version` (dmg-core 53e66d1)
+    - [x] Тесты: схема поля (целое ≥ 0, необязательное, отказ на отрицательном/дробном); команда без `version` в `meta`; red
+    - [x] Реализация; green
 - [ ] Task: Шаг `expectVersion(ar, expected)` в `UseCaseFromDef`
     - [ ] Тесты: совпала — операция идёт; расходится — `Err(VERSION_CONFLICT)` без фиксации и событий; не прислана — сверки нет; red
     - [ ] Реализация; green
