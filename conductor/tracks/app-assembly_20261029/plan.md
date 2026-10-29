@@ -37,7 +37,7 @@
     - [x] Реализация; green (бриф `slices/u7-app.md`, migrator Opus)
 - [x] Task: Раннер `u7-bot` получает приложение из `AppEnv`; `create-api-app.ts` и `create-dmg-modules.ts` удалены; `dispatchUc` — через `app.callers`; e2e-тесты бота зелёные `0d6e578` (977 pass: −4 перенесены в `platform/app`, +1; `create-dmg-modules.ts` удаляется в следующей задаче — его держит `call-uc.ts`)
 - [x] Task: Раннер `u7-cli` и `scripts/call-uc.ts` — на `U7App`; `create-dmg-modules.ts` удалён `b408042` (CLI и `call-uc` видят все модули бота, включая реакции `peer-review`)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md) — подтверждено Нурболатом (бот на фикстурах, «Хочу на курс», oplog)
 
 ## Фаза 3: Правила D-52
 
