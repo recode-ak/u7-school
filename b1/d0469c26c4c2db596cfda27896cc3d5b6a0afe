@@ -1,0 +1,1 @@
+Верификация Фазы 3 (правила D-52/D-53) — автономно (agents.md §9). Команда: bun run check (lint + tslint + CI=true bun test): 3338 pass, 0 fail; arch:check без нарушений. Reviewer (Sonnet): 0 error; warnings исправлены в d9d2417. TR-35, TR-36. Поведение бота не меняется: изменения — проверки архитектуры, импорты через входы и контракты, loadConfig(env).
