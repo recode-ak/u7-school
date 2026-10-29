@@ -9,7 +9,7 @@
 ## Функциональные требования
 
 1. Решение D-57 в `decisions.md` пакета: ожидаемая версия — поле входа UC; VO `meta` рассмотрен и отвергнут.
-2. Схема поля `F.expectedVersion()` — `expectedVersion?: number` (целое ≥ 0, необязательное).
+2. Схема поля `F.expectedVersion(label)` (описание из метки, DOM-11) — `expectedVersion?: number` (целое ≥ 0, необязательное).
 3. Шаг `this.expectVersion(ar, expected)` в `UseCaseFromDef`: расходится с `ar.version` — `Err(VERSION_CONFLICT)` (payload — агрегат и uuid); `expected === undefined` — сверки нет. UC вызывает шаг до операции, поэтому отказ не оставляет записи и событий.
 4. `CommandMeta.version` удаляется (не используется); `meta` команды — только `requestId`.
 5. Учебный модуль (`completeTask`), генератор (если шаблон UC это затрагивает), гайд `use-case`, `transport.md` §2, `llms.txt` — с ожидаемой версией.
