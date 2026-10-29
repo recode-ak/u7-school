@@ -68,7 +68,7 @@
 
 Все модули в `@u7-scl/domain`, нет реэкспортов в старых пакетах, нет `throw*` для штатных отказов, нет строковых дат, все проверки [rules.md](./rules.md) машинные — блокирующие, кроме помеченных `review`; `legacy.md` удалён.
 
-Вместе с завершением в пакет переезжает общее видение процесса: черновик [dmg-process.md](./dmg-process.md) → `docs/process.md` `dmg-core` (без специфики проекта и conductor), роли, оправдавшие себя в пилоте ([agent-roles.md](./agent-roles.md) §5), — в `agents/` пакета; проектные документы ([agents.md](./agents.md), [agent-roles.md](./agent-roles.md)) ссылаются на него и оставляют только привязку к проекту.
+Вместе с завершением в пакет переезжает общее видение процесса: черновик [dmg-process.md](./dmg-process.md) → `docs/process.md` `dmg-core` (без специфики проекта и conductor), роли, оправдавшие себя в пилоте ([agent-roles.md](./agent-roles.md) §5), — в `agents/` пакета; проектные документы ([agents.md](./agents.md), [agent-roles.md](./agent-roles.md)) ссылаются на него и оставляют только привязку к проекту. В этом же шаге роли пакета получают префикс `dmg-*` ([agent-roles.md](./agent-roles.md) §1, п. 6): `dmg-domain-author`, `dmg-api-author`, `dmg-reviewer` и перенесённые роли пилота; проектные роли остаются без префикса.
 
 ## 6. Состояние переноса
 
