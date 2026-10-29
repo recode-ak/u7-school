@@ -65,6 +65,7 @@
 
 ## 6. Связанные файлы
 
+- [dmg-process.md](./dmg-process.md) — общее видение процесса без специфики проекта, черновик для пакета.
 - [agents.md](./agents.md) — нынешние роли, срез, гейт, модели.
 - `.agents-core/README.md` — формат ролей проекта; `node_modules/dmg-core/agents/README.md` — формат пакета.
 - [migration.md](./migration.md) §2, §6 — в каком треке идёт пилот.

@@ -68,6 +68,8 @@
 
 Все модули в `@u7-scl/domain`, нет реэкспортов в старых пакетах, нет `throw*` для штатных отказов, нет строковых дат, все проверки [rules.md](./rules.md) машинные — блокирующие, кроме помеченных `review`; `legacy.md` удалён.
 
+Вместе с завершением в пакет переезжает общее видение процесса: черновик [dmg-process.md](./dmg-process.md) → `docs/process.md` `dmg-core` (без специфики проекта и conductor), роли, оправдавшие себя в пилоте ([agent-roles.md](./agent-roles.md) §5), — в `agents/` пакета; проектные документы ([agents.md](./agents.md), [agent-roles.md](./agent-roles.md)) ссылаются на него и оставляют только привязку к проекту.
+
 ## 6. Состояние переноса
 
 - **На Def (DMG):** `wish` — домен `domain/src/wish`, прикладной слой `modules/wish/src` (4 UC, 4 ER, JSON-репозиторий, `ModuleFromDef`), legacy `wish` удалён. Эталон: гайды — [guides/](../../node_modules/dmg-core/docs/guides/index.md). Чужие вызовы UC — в шаге `fetch` после Policy (D-58 пакета).
