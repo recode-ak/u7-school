@@ -1,0 +1,1 @@
+После контрольной точки Ф1, по решению Нурболата: снят test:tz (корень, domain, modules/peer-review) и проба зоны в review-campaign.state.test.ts и review-campaign.json-repo.test.ts; DEBT-43 — зона проекта UTC+5, маркер в create-stream.ts. check зелёный, 3391 pass.
