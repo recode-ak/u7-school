@@ -1,3 +1,0 @@
-Задача: test-designer — характеризация и red-тесты среза review-campaign (Ф1).
-Красные (ожидаемо, до migrator): все 21 новый файл, кроме ArchChecker в domain/src/peer-review/peer-review.module.test.ts (зелёный). Причины: Cannot find module (*.ar, *.errors, *.events, *.policy, *.rules, *.dqs, uc/*, er/*, review-campaign.json-repo, get-stream-members.uc); нет Def StudentEvents.completed/abandoned; external в PeerReviewModuleDef.
-Решения: TR-38 (wip-коммит red, PEER_REVIEW_INVALID_PARTICIPANTS, onlyLives). Старые тесты и data/ не тронуты.
