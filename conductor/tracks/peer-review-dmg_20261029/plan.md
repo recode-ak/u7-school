@@ -40,7 +40,7 @@
 - UC рецензий работают через мост: тесты `create-review-uc` зелёные.
 - `bun run check` зелёный; `bun run test:bot` — не меньше 978 pass; `git status data/` чист.
 
-## Фаза 2: Срез `review`
+## Фаза 2: Срез `review` [checkpoint: 72b152e5]
 
 - [x] Task: `tech-lead`: бриф `slices/review.md` (5 UC, ER `notify-review-recipient`, `peer-review-question-pool`, `scope-reviews-ds`, валидация текста — DEBT-29) ab60e36e
 - [x] Task: `test-designer`: характеризация `create-review`, `get-my-review`, `list-my-reviews`, `list-scope-reviews`, `list-scope-facts` и ER; red-тесты Def-контрактов 6a4cca7b
@@ -49,7 +49,7 @@
 - [x] Task: Stories рецензий (`campaign`, `my-reviews`, `reviews-for-me`, `scope-reviews`, `review-render`), `school-reviews`, `view-stream` → `dispatch`; подписчик уведомления адресату; e2e бота зелёные 6a4cca7b
 - [x] Task: `data-keeper` по diff ec0590ca
 - [x] Task: `reviewer`; замечания без `error` решает orchestrator (TR) ec0590ca
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно) 72b152e5
 
 **Критерии приёмки Фазы 2** (уточняет бриф `slices/review.md`):
 - Во всём `domain/src/peer-review/**` и `modules/peer-review/src/**` (кроме legacy, удаляемого в Ф3): нет `throw*` для штатных отказов, `new Ar`, импортов `@u7-scl/core` и `@u7-scl/app-legacy`.
