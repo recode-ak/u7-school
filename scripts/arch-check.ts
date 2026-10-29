@@ -24,6 +24,7 @@ import {
   checkDomainDirs,
   checkDomainGraph,
   checkDomainImports,
+  checkModuleImports,
   type DomainFile,
   domainGraphOf,
 } from './domain-check';
@@ -67,7 +68,10 @@ async function readAppSources(root: string): Promise<DomainFile[]> {
   return files;
 }
 
-/** Проверки домена: Def, импорты, граф, долг. Возвращает строки нарушений. */
+/**
+ * Проверки домена: Def, импорты домена и прикладных пакетов, граф, долг.
+ * Возвращает строки нарушений.
+ */
 export async function runDomainCheck(root = '.'): Promise<string[]> {
   const code = await readPackageSources(root);
   const debtMd = await Bun.file(`${root}/${DEBT_MD}`).text();
@@ -90,6 +94,7 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
     ...checkDomainDirs(dirs, graph),
     ...checkDomainGraph(graph),
     ...checkDomainImports(code, graph),
+    ...checkModuleImports(code),
     ...checkDebt({ code, debtMd }),
   ];
 }

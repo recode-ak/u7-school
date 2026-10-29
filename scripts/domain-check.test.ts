@@ -6,6 +6,7 @@ import {
   checkDomainDirs,
   checkDomainGraph,
   checkDomainImports,
+  checkModuleImports,
   type DomainFile,
   domainGraphOf,
 } from './domain-check';
@@ -138,6 +139,53 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
       file('modules/user/src/a.ts', "import '@u7-scl/app-legacy';"),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([]);
+  });
+});
+
+describe('checkModuleImports: ARC-06 (D-53)', () => {
+  it('платформа, домен и пакеты модулей — без нарушений', () => {
+    const files = [
+      file(
+        'modules/wish/src/a.ts',
+        "import { A } from '@u7-scl/app-legacy';\nimport { C } from '@u7-scl/core';\nimport { W } from '@u7-scl/domain/wish';\nimport { R } from './wish/wish.repo';",
+      ),
+    ];
+    expect(checkModuleImports(files)).toEqual([]);
+  });
+
+  it('корень сборки @u7-scl/app — ARC-06, маркер DEBT не спасает', () => {
+    const files = [
+      file(
+        'modules/user/src/a.ts',
+        "import { A } from '@u7-scl/app'; // DEBT-1\nimport { B } from '@u7-scl/app/u7-app';",
+      ),
+    ];
+    expect(checkModuleImports(files)).toEqual([
+      "ARC-06: modules/user/src/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '@u7-scl/app')",
+      "ARC-06: modules/user/src/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '@u7-scl/app/u7-app')",
+    ]);
+  });
+
+  it('раннеры пакетом и относительным путём — ARC-06', () => {
+    const files = [
+      file(
+        'modules/user/src/infra/a.ts',
+        "import { B } from '@u7-scl/bot';\nimport { C } from '@u7-scl/cli';\nimport { M } from '../../../../runners/u7-bot/src/main';\nimport { U } from '../../../../platform/app/src/u7-app';",
+      ),
+    ];
+    expect(checkModuleImports(files)).toEqual([
+      "ARC-06: modules/user/src/infra/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '@u7-scl/bot')",
+      "ARC-06: modules/user/src/infra/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '@u7-scl/cli')",
+      "ARC-06: modules/user/src/infra/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '../../../../runners/u7-bot/src/main')",
+      "ARC-06: modules/user/src/infra/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '../../../../platform/app/src/u7-app')",
+    ]);
+  });
+
+  it('файлы вне modules/ не проверяются', () => {
+    const files = [
+      file('runners/u7-bot/src/a.ts', "import { A } from '@u7-scl/app';"),
+    ];
+    expect(checkModuleImports(files)).toEqual([]);
   });
 });
 
