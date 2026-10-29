@@ -52,8 +52,8 @@
 ## Фаза 4: Гигиена (TR-28, TR-29, документация)
 
 - [x] Task: TR-29: `scripts/agents-sync.ts` на `Role` из `dmg-core/cli` либо цель пакета с общим блоком проекта (выбрать по разбору, при смене API пакета — согласовать); тест: вывод `agents:sync` не изменился; закрыть TR-29 `db1e9cd` (`dmg-core a9aea1b`: `Role.renderEnv` — метка сборщика проекта, API не сломан)
-- [~] Task: TR-28: вычистить пути `platform/dmg-core/…` и «остатки legacy» в комментариях пакета, сообщения ARC-10, комментарий `dom-17-snapshot-repo-only.grit` (dmg-core); закрыть TR-28
-- [ ] Task: `migration.md` §6 — «Состояние переноса», «Входной долг», «Старт следующих треков» по факту; `index.md` архитектуры при необходимости
+- [x] Task: TR-28: вычистить пути `platform/dmg-core/…` и «остатки legacy» в комментариях пакета, сообщения ARC-10, комментарий `dom-17-snapshot-repo-only.grit` (dmg-core); закрыть TR-28 `8366651` (`dmg-core 00bda68`; ARC-10, DOM-17, `define-*` уже были чистыми; «legacy» как общий термин — `external`, `gen --adopt` — оставлен)
+- [~] Task: `migration.md` §6 — «Состояние переноса», «Входной долг», «Старт следующих треков» по факту; `index.md` архитектуры при необходимости
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 ## Фаза 5: Финал
