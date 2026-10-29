@@ -121,6 +121,22 @@
         "dmg-core": "file:../../../../tools/dmg/dmg-core",
       },
     },
+    "platform/app": {
+      "name": "@u7-scl/app",
+      "version": "0.1.0",
+      "dependencies": {
+        "@u7-scl/app-legacy": "workspace:*",
+        "@u7-scl/core": "workspace:*",
+        "@u7-scl/course": "workspace:*",
+        "@u7-scl/domain": "workspace:*",
+        "@u7-scl/peer-review": "workspace:*",
+        "@u7-scl/questionnaire": "workspace:*",
+        "@u7-scl/stream": "workspace:*",
+        "@u7-scl/user": "workspace:*",
+        "@u7-scl/wish": "workspace:*",
+        "dmg-core": "file:../../../../tools/dmg/dmg-core",
+      },
+    },
     "platform/app-legacy": {
       "name": "@u7-scl/app-legacy",
       "version": "0.1.0",
@@ -278,6 +294,8 @@
     "@typescript/typescript-win32-arm64": ["@typescript/typescript-win32-arm64@7.0.2", "", { "os": "win32", "cpu": "arm64" }, "sha512-Gyl1Vy6OsWesLzmq+EP0Fb7b4Nid5232AvcA2SFcdYreldpNtYFFofPjnt62y9hQy7VTaZp65ICJjuAQRaVcIQ=="],
 
     "@typescript/typescript-win32-x64": ["@typescript/typescript-win32-x64@7.0.2", "", { "os": "win32", "cpu": "x64" }, "sha512-0BQ3HkAHHlKLSp1qRvf3SUhGpGsDuhB/jgFw75guyqbxJqEaS0Cw/VFO8i2nHglJUzQCRtMMR/IBAKE3ETMC4g=="],
+
+    "@u7-scl/app": ["@u7-scl/app@workspace:platform/app"],
 
     "@u7-scl/app-legacy": ["@u7-scl/app-legacy@workspace:platform/app-legacy"],
 
@@ -587,6 +605,8 @@
 
     "zwitch": ["zwitch@2.0.4", "", {}, "sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A=="],
 
+    "@u7-scl/app/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
+
     "@u7-scl/bot/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
 
     "@u7-scl/core/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
@@ -611,6 +631,8 @@
 
     "parse5/entities": ["entities@6.0.1", "", {}, "sha512-aN97NXWF6AWBTahfVOIrB/NShkzi5H7F9r1s9mD3cDj4Ko5f2qhhVoYMibXF7GlLveb/D2ioWay8lxI97Ven3g=="],
 
+    "@u7-scl/app/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
+
     "@u7-scl/bot/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
 
     "@u7-scl/core/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
@@ -628,6 +650,8 @@
     "@u7-scl/wish/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
 
     "dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
+
+    "@u7-scl/app/dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
 
     "@u7-scl/bot/dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
 
