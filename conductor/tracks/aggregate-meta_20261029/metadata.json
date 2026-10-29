@@ -4,5 +4,5 @@
   "status": "new",
   "created_at": "2026-10-28T19:43:33Z",
   "updated_at": "2026-10-28T19:43:33Z",
-  "description": "Метаданные агрегата: VO meta (version, createdAt, updatedAt) на Ar и в view, ожидаемая версия от клиента (VERSION_CONFLICT), хранение плоское"
+  "description": "Ожидаемая версия от клиента во входе UC (F.expectedVersion, expectVersion → VERSION_CONFLICT); VO meta отвергнут (D-57)"
 }
