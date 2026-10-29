@@ -15,8 +15,7 @@
 - [x] Task: Роль `test-designer` в `.agents-core/roles/test-designer.md`: характеризация поведения `v0.2.6` и red-тесты по Def среза, список сценариев в брифе; `agents:sync` 91340d90
 - [x] Task: Роль `data-keeper` в `.agents-core/roles/data-keeper.md`: совместимость чтения `state` и снимков, путь миграции, нужен ли бэкап, правило данных `AGENTS.md`; триггер по путям diff; `agents:sync` c0269a95
 - [x] Task: Место ролей в конвейере — [agents.md](../../architecture/agents.md) §3; каркас раздела «Пилот ролей» в `summary.md` 6ce7ce7a
-- [~] Task: `data-keeper` (первый вызов): аудит формата `peer-review/campaigns.json` и `reviews.json` (фикстуры и формат, который читает legacy-репозиторий). Проверить, есть ли живые записи. Отчёт — в бриф
-    - Передача (2026-10-29, claude, ec679c9f): сделано — аудит по коду и фикстурам в брифе; осталось — проверка живых записей с разрешения Нурболата; check — не требуется (только документы)
+- [x] Task: `data-keeper` (первый вызов): аудит формата `peer-review/campaigns.json` и `reviews.json` (фикстуры и формат, который читает legacy-репозиторий). Проверить, есть ли живые записи. Отчёт — в бриф 27e35ea7
 - [x] Task: `architect`: бриф `slices/review-campaign.md` — границы, Def и реализации, сохраняемое поведение, ID правил, «было → станет», внешние Def (`stream.completed`, UC `user`/`questionnaire`), stories кампаний; проверка брифа orchestrator'ом ec679c9f
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
@@ -43,7 +42,7 @@
 
 ## Фаза 3: Сборка и снятие legacy
 
-- [ ] Task: `PeerReviewModuleDef` без `external`, с агрегатами, UC и ER; `checkDefs` зелёный
+- [ ] Task: `PeerReviewModuleDef` без `external` (снят в Ф1 — MAN-06), с агрегатами, UC и ER обоих срезов; `checkDefs` зелёный
 - [ ] Task: Фабрика `peer-review` в `U7App` через вход пакета (как `wish`); `@u7-scl/peer-review/**` в ARC-07 корневого `biome.json` (TR-35, п. 5)
 - [ ] Task: Удалить legacy `PeerReviewApiModule`, `module.ts` домена (DEBT-26), `commands/*-cmd.ts`, старые репозитории; сверить, что сценарии удалённых тестов перенесены; DEBT-34 в части `peer-review`
 - [ ] Task: `reviewer`; замечания без `error` решает orchestrator (TR)
