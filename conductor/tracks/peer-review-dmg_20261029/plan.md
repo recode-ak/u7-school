@@ -19,7 +19,7 @@
 - [x] Task: `architect`: бриф `slices/review-campaign.md` — границы, Def и реализации, сохраняемое поведение, ID правил, «было → станет», внешние Def (`stream.completed`, UC `user`/`questionnaire`), stories кампаний; проверка брифа orchestrator'ом ec679c9f
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md) ab586f70
 
-## Фаза 1: Срез `review-campaign`
+## Фаза 1: Срез `review-campaign` [checkpoint: 14ebe343]
 
 - [x] Task: `test-designer`: характеризация `get-my-campaigns`, `get-campaign-recipients` и ER `create-student-campaign` на `v0.2.6`; red-тесты Def-контрактов среза 2d03728b
 - [x] Task: `migrator`: домен — state (`F.timestamp`, DEBT-28 в части кампаний), `ReviewCampaignArDef` и Ar, события, ошибки, Policy и правила, DCS/DQS по брифу (`campaign-facts-ds`); без импортов `core`/`app-legacy` (DEBT-25 в части кампаний) 2d03728b
@@ -28,7 +28,7 @@
 - [x] Task: Stories кампаний (`campaign.story`, `invite.story`, `campaign-profiles`, вызовы `get-my-campaigns` в `my-reviews.story`) → `dispatch`, подписка на `peer-review.review-campaign.created`; e2e-тесты бота зелёные 2d03728b
 - [x] Task: `data-keeper` по diff (state и репозиторий) 345d4065
 - [x] Task: `reviewer`; замечания без `error` решает orchestrator (TR) 345d4065
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно) 14ebe343
 
 **Критерии приёмки Фазы 1** (подробно — бриф `slices/review-campaign.md`):
 - `domain/src/peer-review/review-campaign/**` и `modules/peer-review/src/review-campaign/**`: нет `throw*` для штатных отказов, `new Ar`, импортов `@u7-scl/core` и `@u7-scl/app-legacy`.
