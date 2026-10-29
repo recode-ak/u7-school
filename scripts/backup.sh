@@ -23,14 +23,9 @@
 #   bash scripts/backup.sh --prune
 #   bash scripts/backup.sh --verify data/backup/<снимок>
 #
-# Копируемые файлы (отсутствующие пропускаются с предупреждением):
-#   users:          users.json, seed.json
-#   questionnaires: questionnaires.json (движок questionnaire)
-#   wish:           wishes.json
-#   jobs:           last-runs.json (состояние планировщика)
-#   streams:        streams.json, students.json
-#   courses:        courses.json, modules.json, lessons.json, steps.json
-#   bot:            bot/sessions.json, bot/short-ids.json (сессии и shortId-мапа)
+# Копируются ВСЕ файлы data/, кроме явно исключённых каталогов (EXCLUDE ниже).
+# Новое хранилище попадает в снимок само; исключение — только осознанно,
+# с причиной в комментарии.
 
 set -euo pipefail
 
@@ -52,21 +47,27 @@ REASON="planned"
 FORCE=0
 PROTECTED=0
 
-FILES=(
-  "users/users.json"
-  "users/seed.json"
-  "questionnaires/questionnaires.json"
-  "wish/wishes.json"
-  "jobs/last-runs.json"
-  "streams/streams.json"
-  "streams/students.json"
-  "courses/courses.json"
-  "courses/modules.json"
-  "courses/lessons.json"
-  "courses/steps.json"
-  "bot/sessions.json"
-  "bot/short-ids.json"
+# Каталоги верхнего уровня data/, которые НЕ бэкапятся. Всё остальное — бэкапится.
+EXCLUDE=(
+  "backup"        # сами снимки
+  "backup-adhoc"  # ручные копии (docs/backup.md)
+  "oplog"         # лог операций DMG, в бэкап не входит (D-43)
+  "replay"        # отсев повторов команд DMG, TTL 24 ч (D-56 dmg-core)
+  "fixtures"      # тестовые фикстуры (seed:fixtures), не живые данные
+  "sources"       # контент курсов, защищён git
+  "fullstack-js"  # контент курсов, защищён git
 )
+
+# Список файлов снимка: все файлы data/ вне EXCLUDE, пути относительно data/.
+collect_files() {
+  local prune=() dir
+  for dir in "${EXCLUDE[@]}"; do
+    prune+=(-path "./${dir}" -prune -o)
+  done
+  (cd data && find . "${prune[@]}" -type f -print) | sed 's|^\./||' | LC_ALL=C sort
+}
+
+mapfile -t FILES < <(collect_files)
 
 # ── Отпечаток данных: менялось ли что-то с прошлого снимка ─────────────────
 compute_fingerprint() {
@@ -170,7 +171,7 @@ for rel in "${FILES[@]}"; do
     cp "data/${rel}" "${SNAP}/${rel}"
     copied=$((copied + 1))
   else
-    echo "⚠️  Пропущен (нет файла): data/${rel}"
+    echo "⚠️  Пропущен (файл исчез во время снимка): data/${rel}"
   fi
 done
 
