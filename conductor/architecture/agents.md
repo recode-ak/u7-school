@@ -13,9 +13,12 @@
 | **api-author** | реализации UC/ER/Job, репозитории, фасады, wiring, тесты | `modules/<m>` |
 | **migrator** | перевод существующего кода с сохранением поведения | `domain`, `modules/<m>`, точечно вызывающие stories |
 | **reviewer** | проверка по [rules.md](./rules.md), отчёт с ID | только чтение |
+| **architect** (пилот) | черновик брифа среза: границы, Def, «было → станет», ID правил | только чтение, бриф пишет orchestrator |
+| **test-designer** (пилот) | характеризация поведения и red-тесты до реализации | `*.test.ts` среза |
+| **data-keeper** (пилот) | совместимость записей, путь миграции, бэкап | только чтение |
 | ui-author | позже | — |
 
-Новые роли (`architect`, `test-designer`, `data-keeper`, `user`, `product` и др.) — план внедрения, пилот и критерии переноса в пакет: [agent-roles.md](./agent-roles.md).
+Роли с пометкой «пилот» — волна 1 [agent-roles.md](./agent-roles.md) §4; там же остальные роли (`user`, `product` и др.), пилот и критерии переноса в пакет.
 
 **Автор ≠ ревьюер.** Ревьюер не исправляет код. Каждый агент получает минимум инструментов (reviewer — без write/edit).
 
@@ -31,12 +34,20 @@
 Срез = один агрегат со своими UC/ER/Job.
 
 ```
-orchestrator: бриф среза
+orchestrator: задача среза
+  → architect                 → черновик брифа → orchestrator: бриф
+  → test-designer             → характеризация (green) + red по Def
   → domain-author | migrator  → гейт
   → api-author    | migrator  → гейт
+  → data-keeper               → отчёт (только по триггеру)
   → reviewer                  → отчёт
   → orchestrator: решение → правки автором → гейт → коммит
 ```
+
+- `architect` — если срез новый или бриф не очевиден; простой срез по готовому образцу orchestrator описывает сам.
+- `test-designer` — до первого автора; автор делает его red-тесты зелёными, тесты не ослабляет.
+- `data-keeper` — если diff затрагивает `state`, `*.repo.ts`, `*.json-repo.ts` или снимки.
+- Отчёты новых ролей переносятся в бриф, а итог каждого вызова — в `summary.md` трека, раздел «Пилот ролей» ([agent-roles.md](./agent-roles.md) §5).
 
 Параллельно — только срезы независимых модулей (без общего `dependsOn`-пути).
 
@@ -72,7 +83,7 @@ orchestrator: бриф среза
 - **Одна активная сессия-оркестратор.** Обе среды не ведут один трек одновременно: правило «единственного писателя» (§4) действует на ту, что сейчас открыта.
 - **Передача — через conductor** (протокол — скилл `conductor-implement`, раздел 4.1), обычно на границе фазы или трека. Посреди задачи (исключение) — остановка: коммит (красный `check` — `wip`) и пометка «Передача» под незавершённой задачей в `plan.md`. Старт: `git status`, `plan.md`, `git log` от последнего SHA из плана.
 - **Приёмка чужой работы** — как работы субагента: полный `bun run check` и reviewer по diff, затем продолжение.
-- **Один источник текстов.** Скиллы: `.claude/skills` — симлинк на `.pi/skills`. Скил `dmg-architecture` и роли платформы доставляет `bun run dmg:sync` (`dmg-core sync` по `dmg-core.json`): скил — в `.pi/skills/`, роли — в `.agents-core/roles/`, общий блок пакета — `.agents-core/dmg-core-common.md`; `dmg:check` (в `check`) ловит устаревшие и правленые копии. Проектная роль — `.agents-core/roles/migrator.md`, общий блок проекта — `.agents-core/common.md`; `bun run agents:sync` собирает копии под обе среды, `agents:check` (в `check`) ловит расхождение. Формат — `.agents-core/README.md`.
+- **Один источник текстов.** Скиллы: `.claude/skills` — симлинк на `.pi/skills`. Скил `dmg-architecture` и роли платформы доставляет `bun run dmg:sync` (`dmg-core sync` по `dmg-core.json`): скил — в `.pi/skills/`, роли — в `.agents-core/roles/`, общий блок пакета — `.agents-core/dmg-core-common.md`; `dmg:check` (в `check`) ловит устаревшие и правленые копии. Проектные роли — `.agents-core/roles/` (`migrator` и роли пилота), общий блок проекта — `.agents-core/common.md`; `bun run agents:sync` собирает копии под обе среды, `agents:check` (в `check`) ловит расхождение. Формат — `.agents-core/README.md`.
 - Скилл `architecture` — вход в эту папку для основной сессии.
 - **Платформа — параллельно.** `dmg-core` (в будущем `dmg-ui`) развивается вместе с u7-school, правка репо пакета — обычная работа трека, не эскалация (изменение контракта пакета — через его `docs/decisions.md`, это стратегическое, §9). Порядок — [index.md](./index.md) §«Правка платформы `dmg-core`»: авторы правят код пакета, orchestrator гоняет `check`/`e2e` пакета и коммитит в его репо отдельно, SHA — в коммите u7-school.
 

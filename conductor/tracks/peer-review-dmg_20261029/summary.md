@@ -10,3 +10,10 @@
 | u7-school (`3ec36148`) | `CI=true bun test modules/peer-review` | 73 pass, 0 fail (13 файлов) |
 | dmg-core (`00bda68`) | `CI=true bun test` | 1345 pass, 0 fail (130 файлов) |
 | dmg-core (`00bda68`) | `bun run e2e` | `e2e: ok` |
+
+## Пилот ролей
+
+Критерии — [agent-roles.md](../../architecture/agent-roles.md) §5. Строка на каждый вызов новой роли.
+
+| # | Роль | Задача | Модель | Повлиял на решение | Принято замечаний | Промпт правился | Оценка orchestrator |
+|---|---|---|---|---|---|---|---|
