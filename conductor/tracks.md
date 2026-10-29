@@ -8,7 +8,7 @@
 
 ---
 
-- [~] **Track: Ожидаемая версия от клиента (D-57; VO `meta` отвергнут)**
+- [x] **Track: Ожидаемая версия от клиента (D-57; VO `meta` отвергнут)**
 *Link: [./tracks/aggregate-meta_20261029/](./tracks/aggregate-meta_20261029/)*
 
 ---
