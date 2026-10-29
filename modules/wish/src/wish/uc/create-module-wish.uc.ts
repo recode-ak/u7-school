@@ -20,16 +20,18 @@ import type { WishDeps } from '../../wish.module';
 type ModuleTarget = Extract<WishTargetVo, { kind: 'module' }>;
 
 /**
- * Загруженное — контекст правил `moduleEnrollable` и `unique`: ответ
- * модуля курсов о записи и желания пользователя на этот модуль.
+ * Загруженное — свои данные, контекст правила `unique`: желания пользователя
+ * на этот модуль.
  */
 type Loaded = {
   readonly moduleId: string;
-  readonly enrollment: ModuleEnrollment;
   readonly userId: string;
   readonly target: ModuleTarget;
   readonly wishes: readonly WishAr[];
 };
+
+/** Контекст правила `moduleEnrollable` — ответ модуля курсов (D-58, `fetch`). */
+type Fetched = { readonly enrollment: ModuleEnrollment };
 
 type Input = ParsedInputOf<typeof CreateModuleWishUcDef>;
 
@@ -37,15 +39,29 @@ export class CreateModuleWishUc extends UseCaseFromDef<
   typeof CreateModuleWishUcDef,
   WishDeps,
   Loaded,
-  Identified
+  Identified,
+  Fetched
 > {
   constructor(deps: WishDeps, module: typeof WishModuleDef) {
     super(CreateModuleWishUcDef, deps, module);
   }
 
-  /** Ответ курсов — `this.call` (D-43), желания — все на эту цель. */
-  protected async load(
+  /** Свои данные: субъект, цель и желания пользователя на неё. */
+  protected async load({ moduleId }: Input, caller: Caller<Identified>) {
+    const userId = this.subject(caller).uuid;
+    const target: ModuleTarget = { kind: 'module', moduleId };
+    return ok({
+      moduleId,
+      userId,
+      target,
+      wishes: await this.resolve.wishes.findAllByUserAndTarget(userId, target),
+    });
+  }
+
+  /** Ответ модуля курсов — `this.call` (фасад, D-43) после Policy (D-58). */
+  protected override async fetch(
     { moduleId }: Input,
+    _loaded: Loaded,
     caller: Caller<Identified>,
     trace: Trace,
   ) {
@@ -56,15 +72,7 @@ export class CreateModuleWishUc extends UseCaseFromDef<
       trace,
     );
     if (!enrollment.ok) return enrollment;
-    const userId = this.subject(caller).uuid;
-    const target: ModuleTarget = { kind: 'module', moduleId };
-    return ok({
-      moduleId,
-      enrollment: enrollment.value,
-      userId,
-      target,
-      wishes: await this.resolve.wishes.findAllByUserAndTarget(userId, target),
-    });
+    return ok({ enrollment: enrollment.value });
   }
 
   protected async execute(

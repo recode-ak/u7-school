@@ -21,16 +21,18 @@ import type { WishDeps } from '../../wish.module';
 type CourseTarget = Extract<WishTargetVo, { kind: 'course' }>;
 
 /**
- * Загруженное — контекст правил `courseEnrollable` и `unique`: ответ
- * модуля курсов о записи и желания пользователя на этот курс.
+ * Загруженное — свои данные, контекст правила `unique`: желания пользователя
+ * на этот курс.
  */
 type Loaded = {
   readonly courseId: string;
-  readonly enrollment: CourseEnrollment;
   readonly userId: string;
   readonly target: CourseTarget;
   readonly wishes: readonly WishAr[];
 };
+
+/** Контекст правила `courseEnrollable` — ответ модуля курсов (D-58, `fetch`). */
+type Fetched = { readonly enrollment: CourseEnrollment };
 
 type Input = ParsedInputOf<typeof CreateCourseWishUcDef>;
 
@@ -38,18 +40,29 @@ export class CreateCourseWishUc extends UseCaseFromDef<
   typeof CreateCourseWishUcDef,
   WishDeps,
   Loaded,
-  Identified
+  Identified,
+  Fetched
 > {
   constructor(deps: WishDeps, module: typeof WishModuleDef) {
     super(CreateCourseWishUcDef, deps, module);
   }
 
-  /**
-   * Ответ курса — `this.call` (фасад модуля курсов, D-43), желания — все
-   * на эту цель.
-   */
-  protected async load(
+  /** Свои данные: субъект, цель и желания пользователя на неё. */
+  protected async load({ courseId }: Input, caller: Caller<Identified>) {
+    const userId = this.subject(caller).uuid;
+    const target: CourseTarget = { kind: 'course', courseId };
+    return ok({
+      courseId,
+      userId,
+      target,
+      wishes: await this.resolve.wishes.findAllByUserAndTarget(userId, target),
+    });
+  }
+
+  /** Ответ модуля курсов — `this.call` (фасад, D-43) после Policy (D-58). */
+  protected override async fetch(
     { courseId }: Input,
+    _loaded: Loaded,
     caller: Caller<Identified>,
     trace: Trace,
   ) {
@@ -60,15 +73,7 @@ export class CreateCourseWishUc extends UseCaseFromDef<
       trace,
     );
     if (!enrollment.ok) return enrollment;
-    const userId = this.subject(caller).uuid;
-    const target: CourseTarget = { kind: 'course', courseId };
-    return ok({
-      courseId,
-      enrollment: enrollment.value,
-      userId,
-      target,
-      wishes: await this.resolve.wishes.findAllByUserAndTarget(userId, target),
-    });
+    return ok({ enrollment: enrollment.value });
   }
 
   /**
