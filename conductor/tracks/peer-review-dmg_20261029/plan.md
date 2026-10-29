@@ -76,7 +76,7 @@
 
 - [x] Task: Гейт закрытия ([workflow.md](../../workflow.md)): `CI=true bun test`, `test:bot`, `dmg-core`, триаж и сравнение с базовой линией — в `summary.md` c277a1fc
 - [x] Task: Итог пилота: каждая роль по критериям §5 [agent-roles.md](../../architecture/agent-roles.md), промежуточный вывод (годна, нужна правка или кандидат на удаление) c8fb9806
-- [ ] Task: [debt.md](../../architecture/debt.md) — DEBT-25, 26, 28, 29 сняты, маркеры синхронны; [migration.md](../../architecture/migration.md) §6 — состояние, входной долг, следующий трек `stream`
+- [x] Task: [debt.md](../../architecture/debt.md) — DEBT-25, 26, 28, 29 сняты, маркеры синхронны; [migration.md](../../architecture/migration.md) §6 — состояние, входной долг, следующий трек `stream` b709a3e2
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 4** (= критерии spec):
