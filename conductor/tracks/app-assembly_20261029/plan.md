@@ -7,14 +7,21 @@
 - [x] Task: Зафиксировать базовую линию (`bun test` pass/fail в u7-school и в пакете, `bun run e2e` пакета, e2e-тесты бота) в черновике `summary.md` `08ebca5`
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md) — автономно
 
-## Фаза 1: Вызовы после Policy (TR-27, dmg-core) [checkpoint: 615164e]
+## Фаза 1: Шаг `fetch` после Policy (TR-27, dmg-core)
 
-> Решение (Нурболат, 2026-10-29): шаг `fetch` не вводим — D-58; секретный ответ зависимости — значением в контекст, отказ — правилом после Policy. Задачи `fetch` в `UseCaseFromDef`, учебного `assignTask` и генератора сняты.
+> Пересмотр (Нурболат, 2026-10-29): первое решение «`fetch` не вводим» (`dmg-core 12e2791`, `79eab714`, контрольная точка `615164e3`) отменено — для системы, выходящей за монолит, право проверяется до чужих вызовов платформой. Порядок исправлен против спеки: правила — после `fetch` (правилам нужен ответ зависимости, `assigneeActive`).
 
-- [x] Task: Решение D-58 в `decisions.md` пакета: порядок `load` → Policy → правила → `execute` сохранён, `fetch` отвергнут; согласовано с Нурболатом `dmg-core 12e2791`
-- [x] Task: Гайд `use-case`: ловушка «вызов зависимости в `load` идёт до права» — неудобства и способы решения (D-58) `dmg-core 12e2791`
-- [x] Task: u7-school: `bun install`, `dmg:sync`; UC `wish` — чужие вызовы в `load` (`createCourseWish`, `createModuleWish`: `allowAll`, ответ о самом субъекте — секретности нет, правок нет); закрыть TR-27 в `debt.md` `79eab71`
-- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md) — автономно
+- [x] Task: Решение в `decisions.md` пакета — согласовано с Нурболатом (первая редакция D-58 `dmg-core 12e2791`, отменена)
+- [ ] Task: D-58 — новая редакция: `load` (контекст Policy) → Policy → `fetch` (необязательный, чужие вызовы после права) → правила (`L & F`) → `execute`; правило API-07
+- [ ] Task: Шаг `fetch` в `UseCaseFromDef`
+    - [ ] Тесты: `fetch` не вызывается при отказе Policy; правила видят результат `fetch`; результат `fetch` доходит до `execute`; ошибка `fetch` возвращается как есть без фиксации; UC без `fetch` работает как прежде; red
+    - [ ] Реализация; green
+- [ ] Task: Учебный модуль: `assignTask` — `users.getUser` в `fetch`; тест «не-владелец получает `ACCESS_DENIED`, `users` не вызывается»
+- [ ] Task: API-07 — GritQL `this.call` в `load` (`error`, подавление `// biome-ignore lint/plugin: <зачем Policy>`); фикстуры, `LintMap`, `biome.json` пакета, `rules.md`
+- [ ] Task: Генератор UC (шаблон — при необходимости), гайд `use-case` (шаг `fetch`, ловушка снята), `llms.txt`
+- [ ] Task: u7-school: `bun install`, `dmg:sync`/`agents:sync`, API-07 в корневом `biome.json`; UC `wish` — чужие вызовы из `load` в `fetch`; TR-27 закрыт
+- [ ] Task: Ревью reviewer; правки по ревью
+- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Корень сборки в `@u7-scl/app` (DEBT-39)
 
