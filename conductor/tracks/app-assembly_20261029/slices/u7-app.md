@@ -42,7 +42,12 @@ TDD: тесты → запуск (red) → реализация → green.
 - `tests/helpers/test-app.ts`: на `U7App`, если раскладка фикстур совпадает с `<dbDir>/…` (`U7AppEnv.dbDir = fixtures.dbDir`); если не совпадает — оставь как есть (только `createDmgApp` → из `U7App` недоступен: тогда эскалация) и опиши расхождение.
 - Приёмка: гейт зелёный, `bun run test:bot` зелёный (980 pass на базовой линии), `grep` по `runners/` — импортов прикладных пакетов модулей нет, кроме того, что опишешь в отчёте.
 
-### Шаг 3 — `u7-cli` и `scripts/call-uc.ts` на `U7App` (придёт отдельным сообщением)
+### Шаг 3 — `u7-cli` и `scripts/call-uc.ts` на `U7App`
+
+- `runners/u7-cli/src/main.ts`: вместо ручной сборки `user` + `course` — `new U7App(env, { logger })` (`mode: 'development'`, `dbDir: 'data'` — как пути по умолчанию сейчас; школа — поля `TEST_SCHOOL`). `CliController` получает `app.apiApp`; если тип `CliAppMeta` не сходится с `U7BotAppMeta` — сузь тип контроллера, без `as unknown as`. `start()` не вызывается (CLI короткоживущий), как сейчас.
+- `scripts/call-uc.ts`: сборка → `U7App` (`dbDir` — тот же, что сейчас: `data`), `resolveActor` и вызов UC — через поля `U7App`; Caller DMG — через `app.callers`. Комментарии со ссылками на `create-api-app.ts` поправить. **Скрипт не запускать на реальных данных** — только `tsc` и тесты, если они есть.
+- Удалить `runners/u7-bot/src/create-dmg-modules.ts`.
+- Приёмка: гейт зелёный; в `runners/u7-cli` нет импортов прикладных пакетов модулей; `grep create-dmg-modules` по репо (кроме `conductor/`) пуст.
 
 ## Критерии приёмки (шаг 1)
 

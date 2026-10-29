@@ -35,8 +35,8 @@
 - [x] Task: Сборка в `@u7-scl/app` — `U7App` по `AppEnv` (бывшие `create-api-app.ts` и `create-dmg-modules.ts`) `e799dbb`
     - [x] Тесты: `U7App` собирает модуль `wish` через `ApiApp` (фасады по `dependsOn`), резолвер `Caller` (активный пользователь — `UserCaller`, нет или неизвестен — `GuestCaller`); red
     - [x] Реализация; green (бриф `slices/u7-app.md`, migrator Opus)
-- [ ] Task: Раннер `u7-bot` получает приложение из `AppEnv`; `create-api-app.ts` и `create-dmg-modules.ts` удалены; `dispatchUc` — через `app.callers`; e2e-тесты бота зелёные
-- [ ] Task: Раннер `u7-cli` и `scripts/call-uc.ts` — на `U7App`
+- [x] Task: Раннер `u7-bot` получает приложение из `AppEnv`; `create-api-app.ts` и `create-dmg-modules.ts` удалены; `dispatchUc` — через `app.callers`; e2e-тесты бота зелёные `0d6e578` (977 pass: −4 перенесены в `platform/app`, +1; `create-dmg-modules.ts` удаляется в следующей задаче — его держит `call-uc.ts`)
+- [ ] Task: Раннер `u7-cli` и `scripts/call-uc.ts` — на `U7App`; `create-dmg-modules.ts` удалён
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Правила D-52
