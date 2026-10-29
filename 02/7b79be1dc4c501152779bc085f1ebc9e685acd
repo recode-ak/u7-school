@@ -1,0 +1,1 @@
+Задача: u7-school под D-58. dmg-core 65d8917..c8d0e93 (fetch, assignTask, API-07, документы, правки ревью). biome.json — API-07 на modules/*/src/**/*.uc.ts; wish createCourseWish/createModuleWish — this.call из load в fetch (api-author, Sonnet); TR-32. reviewer (Opus) — без error. check зелёный: 3308/0; dmg-core 1343/0, e2e ok.
