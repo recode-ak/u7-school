@@ -42,11 +42,11 @@
 
 ## Фаза 2: Срез `review`
 
-- [ ] Task: `tech-lead`: бриф `slices/review.md` (5 UC, ER `notify-review-recipient`, `peer-review-question-pool`, `scope-reviews-ds`, валидация текста — DEBT-29)
+- [~] Task: `tech-lead`: бриф `slices/review.md` (5 UC, ER `notify-review-recipient`, `peer-review-question-pool`, `scope-reviews-ds`, валидация текста — DEBT-29)
 - [ ] Task: `test-designer`: характеризация `create-review`, `get-my-review`, `list-my-reviews`, `list-scope-reviews`, `list-scope-facts` и ER; red-тесты Def-контрактов
 - [ ] Task: `migrator`: домен — state, `ReviewArDef` и Ar, события, ошибки, Policy и правила (валидация текста вместо `#validateText`, DEBT-29), DQS; DEBT-25 и DEBT-28 полностью
 - [ ] Task: `migrator`: прикладной слой — Def UC и ER, реализации, репозиторий через UoW; тест на фикстурах
-- [ ] Task: Stories рецензий (`my-reviews`, `scope-reviews`, `review-render`) и `school-reviews` → `dispatch`; e2e бота зелёные
+- [ ] Task: Stories рецензий (`campaign`, `my-reviews`, `reviews-for-me`, `scope-reviews`, `review-render`), `school-reviews`, `view-stream` → `dispatch`; подписчик уведомления адресату; e2e бота зелёные
 - [ ] Task: `data-keeper` по diff
 - [ ] Task: `reviewer`; замечания без `error` решает orchestrator (TR)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
@@ -54,9 +54,9 @@
 **Критерии приёмки Фазы 2** (уточняет бриф `slices/review.md`):
 - Во всём `domain/src/peer-review/**` и `modules/peer-review/src/**` (кроме legacy, удаляемого в Ф3): нет `throw*` для штатных отказов, `new Ar`, импортов `@u7-scl/core` и `@u7-scl/app-legacy`.
 - DEBT-25, DEBT-28, DEBT-29 — маркеров нет; валидация текста — правило или Policy, не `#validateText` в Ar.
-- 5 UC и ER `notify-review-recipient` — через `UseCaseFromDef`/`ReactionFromDef`; мост `create-review-uc` из Ф1 снят.
+- 5 UC — через `UseCaseFromDef`; ER `notify-review-recipient` снят, уведомление адресату — подписка story на `peer-review.review.created` (D-41, решение Нурболата); мост `create-review-uc` из Ф1 снят.
 - Тесты репозитория рецензий — как у кампаний (legacy-запись, round-trip, невалидная запись).
-- Сценарии старых тестов рецензий перенесены; `bun run check` зелёный; `test:bot` — не меньше 978 pass; `git status data/` чист.
+- Сценарии старых тестов рецензий перенесены; `bun run check` зелёный; `test:bot` — не меньше 979 pass; `git status data/` чист.
 
 ## Фаза 3: Сборка и снятие legacy
 
