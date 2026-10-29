@@ -1,0 +1,4 @@
+Верификация Фазы 4 — автономно (agents.md §9).
+Авто: bun run check — 3330 pass, 0 fail; agents:check и dmg:check зелёные; dmg-core: check 1345 pass, e2e ok.
+Ревью reviewer: error нет; warning — путь в критерии снятия DEBT-4, исправлен 62b7768; info — без действий.
+TR-28, TR-29 закрыты (записи удалены). Задачи: db1e9cd (TR-29, dmg-core a9aea1b), 8366651 (TR-28, dmg-core 00bda68), 6dce9a1 (migration.md §6).
