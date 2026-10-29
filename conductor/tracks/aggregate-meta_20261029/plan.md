@@ -35,5 +35,5 @@
 
 ## Фаза 4: Финал
 
-- [ ] Task: `summary.md`: итог, сравнение с базовой линией, TR трека; `migration.md`/`debt.md` при необходимости
+- [x] Task: `summary.md`: итог, сравнение с базовой линией, TR трека; `migration.md`/`debt.md` при необходимости 510e8ede
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
