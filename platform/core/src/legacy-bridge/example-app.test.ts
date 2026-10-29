@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { ok, SystemCaller, UserCaller } from 'dmg-core';
 import {
+  ApiApp as DmgApiApp,
   InProcInbox,
   InProcOutbox,
   InProcReplayStore,
@@ -79,13 +80,21 @@ beforeEach(async () => {
     facades: new ModuleFacades(),
     tasks: new TaskJsonRepo(path.join(dir, 'tasks.json')),
   };
+  const { tasks } = deps;
   const users = new UserMemoryRepo([
     { uuid: ANNA, createdAt: 0, updatedAt: 0, version: 0, status: 'active' },
   ]);
-  api = new ApiApp<AppMeta, ExampleUser>([]).addDmgModules(
-    createUsersModule({ app: deps.app, facades: deps.facades, users }),
-    createTodoModule(deps),
-  );
+  const dmg = new DmgApiApp<ExampleUser>(deps.app, [
+    {
+      def: UsersModuleDef,
+      create: (d) => createUsersModule({ ...d, users }),
+    },
+    { def: TodoModuleDef, create: (d) => createTodoModule({ ...d, tasks }) },
+  ]);
+  api = new ApiApp<AppMeta, ExampleUser>([]).withDmg(dmg, [
+    UsersModuleDef,
+    TodoModuleDef,
+  ]);
   api.init({ start: () => {}, stop: () => {} });
 });
 afterEach(() => rm(dir, { recursive: true, force: true }));

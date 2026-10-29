@@ -2,6 +2,11 @@ import type { EventBus as LegacyBus } from '@u7-scl/core/domain';
 import { legacyClock, legacyEventBus } from '@u7-scl/core/legacy-bridge';
 import type { Logger } from '@u7-scl/core/shared';
 import { type CourseLegacy, createCourseModule } from '@u7-scl/course';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
+import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import { UserModuleDef } from '@u7-scl/domain/user/contract';
+import { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import {
   createQuestionnaireModule,
   type QuestionnaireLegacy,
@@ -15,15 +20,16 @@ import {
 import { createUserModule, type UserLegacy } from '@u7-scl/user';
 import { createWishModule } from '@u7-scl/wish';
 import type { WishRepo } from '@u7-scl/wish/wish';
+import type { Identified } from 'dmg-core';
 import {
+  ApiApp,
   type AppContext,
   type AppMode,
   InProcInbox,
   InProcOutbox,
   InProcReplayStore,
   JsonlOperationLog,
-  ModuleFacade,
-  ModuleFacades,
+  type ModuleFactory,
   type ReplayStore,
 } from 'dmg-core/app';
 
@@ -74,41 +80,41 @@ export function createDmgAppContext(platform: DmgPlatform): AppContext {
 
 // DEBT-39: сборка модулей в раннере, а не в пакете приложения (D-50).
 /**
- * Модули DMG приложения: внешние модули зависимостей (адаптеры над
- * legacy-фасадами, TR-11) и `wish`. Фасады — по `dependsOn` модуля `wish`
- * (D-43); у адаптеров зависимостей нет.
+ * Приложение DMG: внешние модули зависимостей (адаптеры над legacy-фасадами,
+ * TR-11) и `wish`, собранные `ApiApp` пакета — фасады по `dependsOn`
+ * (D-50). `modules` — их Def для заданий legacy-планировщика
+ * (`ApiApp.withDmg`).
  */
-export function createDmgModules(
+export function createDmgApp(
   app: AppContext,
   legacy: DmgLegacyFacades,
   wishes: WishRepo,
 ) {
-  const none = new ModuleFacades();
-  const user = createUserModule({ app, facades: none, legacy: legacy.user });
-  const course = createCourseModule({
-    app,
-    facades: none,
-    legacy: legacy.course,
-  });
-  const questionnaire = createQuestionnaireModule({
-    app,
-    facades: none,
-    legacy: legacy.questionnaire,
-  });
-  const stream = createStreamModule({
-    app,
-    facades: none,
-    legacy: legacy.stream,
-  });
-  const wish = createWishModule({
-    app,
-    facades: new ModuleFacades([
-      new ModuleFacade(user),
-      new ModuleFacade(course),
-      new ModuleFacade(questionnaire),
-      new ModuleFacade(stream),
-    ]),
-    wishes,
-  });
-  return [user, course, questionnaire, stream, wish] as const;
+  const factories: ModuleFactory<Identified>[] = [
+    {
+      def: UserModuleDef,
+      create: (deps) => createUserModule({ ...deps, legacy: legacy.user }),
+    },
+    {
+      def: CourseModuleDef,
+      create: (deps) => createCourseModule({ ...deps, legacy: legacy.course }),
+    },
+    {
+      def: QuestionnaireModuleDef,
+      create: (deps) =>
+        createQuestionnaireModule({ ...deps, legacy: legacy.questionnaire }),
+    },
+    {
+      def: StreamModuleDef,
+      create: (deps) => createStreamModule({ ...deps, legacy: legacy.stream }),
+    },
+    {
+      def: WishModuleDef,
+      create: (deps) => createWishModule({ ...deps, wishes }),
+    },
+  ];
+  return {
+    api: new ApiApp<Identified>(app, factories),
+    modules: factories.map((f) => f.def),
+  };
 }

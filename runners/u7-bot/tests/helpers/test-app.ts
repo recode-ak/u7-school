@@ -36,8 +36,8 @@ import { UserApiModule } from '@u7-scl/user/api';
 import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
 import {
+  createDmgApp,
   createDmgAppContext,
-  createDmgModules,
 } from '../../src/create-dmg-modules';
 import type { FixturePaths } from './fixture-loader';
 import { cleanupFixtures, loadFixtures } from './fixture-loader';
@@ -153,7 +153,7 @@ export async function createTestApp(tag?: string): Promise<TestApp> {
   // ══ DMG: wish и внешние модули зависимостей (зеркально create-api-app.ts) ══
   // Лог операций — во временном каталоге фикстур, не в data/.
   const wishRepo = new WishJsonRepo(`${fixtures.dbDir}/wish/wishes.json`);
-  const dmgModules = createDmgModules(
+  const dmg = createDmgApp(
     createDmgAppContext({
       legacyBus: eventBus,
       logger,
@@ -193,7 +193,7 @@ export async function createTestApp(tag?: string): Promise<TestApp> {
     courseModule,
     questionnaireModule,
     peerReviewModule,
-  ]).addDmgModules(...dmgModules);
+  ]).withDmg(dmg.api, dmg.modules);
 
   apiApp.init(new InProcJobScheduler({ logger }));
 

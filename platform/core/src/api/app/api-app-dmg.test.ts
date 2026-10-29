@@ -1,12 +1,12 @@
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { type Command, ModuleDef, ok, UserCaller } from 'dmg-core';
 import {
   type CommandTransport,
+  ApiApp as DmgApiApp,
   JobFromDef,
   type JobRun,
   ModuleApi,
   type ModuleDeps,
-  ModuleFacades,
   ModuleFromDef,
   Trace,
   type UnitOfWork,
@@ -85,27 +85,30 @@ const user = (uuid: string) =>
   new UserCaller<User>({ uuid, hasRole: () => false });
 
 let tasks: MemoryTasks;
-let mini: ModuleFromDef<typeof MiniModuleDef, Deps, User>;
+let dmg: DmgApiApp<User>;
 let app: ApiApp<AppMeta, User>;
 
 beforeEach(() => {
   tasks = new MemoryTasks();
   tasks.rows.set(TASK, taskRow(TASK));
-  const deps = {
-    app: testAppContext().app,
-    facades: new ModuleFacades(),
-    tasks,
-  };
-  mini = new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
-    MiniModuleDef,
+  // Модули DMG собирает ApiApp пакета (корень сборки, D-50); legacy
+  // ApiApp получает его готовым.
+  dmg = new DmgApiApp<User>(testAppContext().app, [
     {
-      useCases: { completeTask: CompleteTask },
-      reactions: {},
-      jobs: { archiveDoneTasks: ArchiveDone },
+      def: MiniModuleDef,
+      create: (deps) =>
+        new ModuleFromDef<typeof MiniModuleDef, Deps, User>(
+          MiniModuleDef,
+          {
+            useCases: { completeTask: CompleteTask },
+            reactions: {},
+            jobs: { archiveDoneTasks: ArchiveDone },
+          },
+          { ...deps, tasks },
+        ),
     },
-    deps,
-  );
-  app = new ApiApp<AppMeta, User>([]).addDmgModules(mini);
+  ]);
+  app = new ApiApp<AppMeta, User>([]).withDmg(dmg, [MiniModuleDef]);
 });
 
 describe('ApiApp.dispatch — команда модулю по его Def (D-49)', () => {
@@ -141,9 +144,9 @@ describe('ApiApp.dispatch — команда модулю по его Def (D-49)
     });
   });
 
-  test('два модуля с одним именем — исключение сборки', () => {
-    expect(() => app.addDmgModules(mini)).toThrow(
-      'модуль DMG mini уже подключён',
+  test('повторное подключение DMG — исключение сборки', () => {
+    expect(() => app.withDmg(dmg, [MiniModuleDef])).toThrow(
+      'ApiApp: приложение DMG уже подключено',
     );
   });
 
@@ -194,16 +197,45 @@ describe('ModuleApi — клиент wire-транспорта (D-49)', () => {
   });
 });
 
+describe('ApiApp.init — реакции DMG на шине', () => {
+  test('init подписывает реакции приложения DMG', () => {
+    const subscribe = spyOn(dmg, 'subscribe');
+    app.init({ start: () => {}, stop: () => {} });
+    expect(subscribe).toHaveBeenCalledTimes(1);
+  });
+
+  test('повторный init переподписывает без исключения', () => {
+    const scheduler = { start: () => {}, stop: () => {} };
+    app.init(scheduler);
+    expect(() => app.init(scheduler)).not.toThrow();
+  });
+});
+
 describe('ApiApp.start — задания DMG рядом с legacy', () => {
-  test('планировщик получает задания модулей DMG', () => {
-    const started: string[] = [];
+  const startJobs = () => {
+    const started: Job[] = [];
     app.init({
       start: (jobs: readonly Job[]) => {
-        started.push(...jobs.map((j) => j.jobName));
+        started.push(...jobs);
       },
       stop: () => {},
     });
     app.start();
-    expect(started).toEqual(['archiveDoneTasks']);
+    return started;
+  };
+
+  test('планировщик получает задания модулей DMG', () => {
+    expect(startJobs().map((j) => j.jobName)).toEqual(['archiveDoneTasks']);
+  });
+
+  test('задание исполняется через runJob приложения DMG', async () => {
+    const runJob = spyOn(dmg, 'runJob');
+    const [job] = startJobs();
+    await job?.execute();
+    expect(runJob).toHaveBeenCalledWith(
+      MiniModuleDef,
+      ArchiveDoneTasksJobDef,
+      expect.anything(),
+    );
   });
 });

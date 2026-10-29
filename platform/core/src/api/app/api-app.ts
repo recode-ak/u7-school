@@ -8,7 +8,7 @@ import {
   type Result,
   type UseCaseErrorOf,
 } from 'dmg-core';
-import type { AnyModuleFromDef, Trace } from 'dmg-core/app';
+import type { ApiApp as DmgApiApp, Trace } from 'dmg-core/app';
 import { errBadRequest, throwError } from '#domain-legacy/errors/error-helpers';
 import type { NoCommandFoundError } from '#domain-legacy/errors/errors';
 import type {
@@ -18,6 +18,7 @@ import type {
   GetUcNamesFromMeta,
 } from '#domain-legacy/types';
 import { legacyJobsOf } from '../../legacy-bridge';
+import type { Job } from '../job/job';
 import type { JobScheduler } from '../job/job-scheduler';
 import { App } from './app';
 
@@ -34,23 +35,26 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
 {
   #scheduler: JobScheduler | undefined;
 
-  // Модули DMG живут рядом с legacy (strangler): их UC — командой через
+  // Модули DMG живут рядом с legacy (strangler): собирает их ApiApp пакета
+  // (корень сборки, D-50), здесь — делегирование: UC — командой через
   // dispatch по адресу модуля, реакции — на общей шине, задания — в общем
   // планировщике.
-  private readonly dmgModules: AnyModuleFromDef<DmgActor<TActor>>[] = [];
-  private dmgUnsubscribes: Array<() => void> = [];
+  private dmg: DmgApp<TActor> | undefined;
+  private dmgUnsubscribe: (() => void) | undefined;
 
   /**
-   * Подключает модули DMG; вызывать до init(). Имя модуля — адрес команды
-   * (D-49), поэтому дубль — ошибка сборки.
+   * Подключает собранное приложение DMG; вызывать до init(). `modules` —
+   * Def его модулей: по ним планировщик получает задания (`ApiApp` пакета
+   * модули наружу не отдаёт). Повторное подключение — ошибка сборки.
    */
-  addDmgModules(...modules: AnyModuleFromDef<DmgActor<TActor>>[]): this {
-    for (const module of modules) {
-      if (this.dmgModules.some((m) => m.def.name === module.def.name)) {
-        throw new Error(`ApiApp: модуль DMG ${module.def.name} уже подключён`);
-      }
-      this.dmgModules.push(module);
+  withDmg(
+    api: DmgApiApp<DmgActor<TActor>>,
+    modules: readonly AnyModuleDef[],
+  ): this {
+    if (this.dmg !== undefined) {
+      throw new Error('ApiApp: приложение DMG уже подключено');
     }
+    this.dmg = { api, modules };
     return this;
   }
 
@@ -64,8 +68,8 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     for (const module of this.getModules()) {
       module.init();
     }
-    for (const unsubscribe of this.dmgUnsubscribes) unsubscribe();
-    this.dmgUnsubscribes = this.dmgModules.map((module) => module.subscribe());
+    this.dmgUnsubscribe?.();
+    this.dmgUnsubscribe = this.dmg?.api.subscribe();
   }
 
   /**
@@ -79,7 +83,7 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     }
     const jobs = [
       ...this.getModules().flatMap((module) => module.jobs),
-      ...this.dmgModules.flatMap((module) => legacyJobsOf(module)),
+      ...this.dmgJobs(),
     ];
     this.#scheduler.start(jobs);
   }
@@ -107,14 +111,25 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
     caller: Caller<DmgActor<TActor>>,
     trace: Trace,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    const target = this.dmgModules.find((m) => m.def.name === module.name);
-    if (target === undefined) {
+    if (this.dmg === undefined) {
       return CoreErrors.OPERATION_NOT_FOUND.err({
         module: module.name,
         uc: command.uc,
       });
     }
-    return target.dispatch(command, caller, trace);
+    return this.dmg.api.dispatch(module, command, caller, trace);
+  }
+
+  /** Задания модулей DMG в форме legacy: прогон — `runJob` приложения DMG. */
+  private dmgJobs(): Job[] {
+    if (this.dmg === undefined) return [];
+    const { api, modules } = this.dmg;
+    return modules.flatMap((def) =>
+      legacyJobsOf({
+        def,
+        runJob: (job, trace) => api.runJob(def, job, trace),
+      }),
+    );
   }
 
   async execute<N extends GetUcNamesFromMeta<TMeta>>(
@@ -143,3 +158,9 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
  * (D-43). Legacy-часть `ApiApp` принимает актора как есть.
  */
 type DmgActor<TActor> = TActor & Identified;
+
+/** Подключённое приложение DMG и Def его модулей. */
+type DmgApp<TActor> = {
+  readonly api: DmgApiApp<DmgActor<TActor>>;
+  readonly modules: readonly AnyModuleDef[];
+};

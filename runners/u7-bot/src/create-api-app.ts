@@ -41,8 +41,8 @@ import { WishJsonRepo } from '@u7-scl/wish/infra';
 import type { BotConfig } from './config';
 import type { U7BotAppMeta } from './core/u7-bot-app-meta';
 import {
+  createDmgApp,
   createDmgAppContext,
-  createDmgModules,
   type DmgPlatform,
 } from './create-dmg-modules';
 
@@ -172,7 +172,7 @@ export function createApiApp(
   // ══ DMG: wish и внешние модули зависимостей (адаптеры над legacy) ══
   // Шина DMG — поверх общей legacy-шины: события wish видят stories,
   // legacy-события stream/questionnaire доходят до ER wish (D-37).
-  const dmgModules = createDmgModules(
+  const dmgApp = createDmgApp(
     createDmgAppContext({
       legacyBus: appResolver.eventBus,
       logger: appLogger,
@@ -214,7 +214,7 @@ export function createApiApp(
     courseModule,
     questionnaireModule,
     peerReviewModule,
-  ]).addDmgModules(...dmgModules);
+  ]).withDmg(dmgApp.api, dmgApp.modules);
 
   // Планировщик — техническая зависимость: передаётся через init(),
   // lastRunAt персистится — задания переживают перезагрузку (misfire-политика).

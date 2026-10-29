@@ -68,8 +68,8 @@ import { WishJsonRepo } from '@u7-scl/wish/infra';
 import { type InputOf, UseCaseDef, UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import {
+  createDmgApp,
   createDmgAppContext,
-  createDmgModules,
 } from '../runners/u7-bot/src/create-dmg-modules.ts';
 import { resolveActor } from './_app-factory';
 
@@ -203,7 +203,7 @@ async function main() {
   const streamFacade = new StreamInProcFacade(streamModule);
 
   // DMG: wish и внешние модули зависимостей — как в create-api-app.ts
-  const dmgModules = createDmgModules(
+  const dmg = createDmgApp(
     createDmgAppContext({
       legacyBus: appResolver.eventBus,
       logger: appResolver.logger,
@@ -224,7 +224,7 @@ async function main() {
     streamModule,
     courseModule,
     questionnaireModule,
-  ]).addDmgModules(...dmgModules);
+  ]).withDmg(dmg.api, dmg.modules);
 
   // init() заполняет карты UC и подписки ER; start() НЕ вызываем —
   // таймеры job'ов в одноразовом скрипте не нужны (паттерн _app-factory)
