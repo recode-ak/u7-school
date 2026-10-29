@@ -11,7 +11,7 @@
 
 - [x] Task: Черновик D-57 в `decisions.md` пакета: `EntityMeta`, плоское хранение, `view().meta`, судьба геттера `version`; варианты канала ожидаемой версии (`CommandMeta.expectedVersion` vs поле входа UC) с плюсами и минусами 6e877f3; пересмотрено — VO `meta` отвергнут (dmg-core b64a0b4)
 - [x] Task: Обсудить канал ожидаемой версии с Нурболатом; записать D-57 (dmg-core) 6e877f3 (выбран вариант B — поле входа UC)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Ожидаемая версия от клиента (dmg-core)
 
