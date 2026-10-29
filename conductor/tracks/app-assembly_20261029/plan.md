@@ -32,9 +32,9 @@
 - [x] Task: Legacy `ApiApp` (`@u7-scl/core/api`) — DMG через `ApiApp` из `dmg-core/app` вместо `addDmgModules` (`dispatch`, `subscribe`, Job через `legacyJobsOf`) `711c875`
     - [x] Тесты: `dispatch` делегирует, реакции подписываются в `init`, Job DMG — в планировщике; red
     - [x] Реализация; green (`withDmg(api, defs)`; `createDmgModules` → `createDmgApp` на фабриках — ручная раскладка фасадов снята уже здесь)
-- [ ] Task: Сборка в `@u7-scl/app` — `U7App` по `AppEnv` (бывшие `create-api-app.ts` и `create-dmg-modules.ts`)
-    - [ ] Тесты: `U7App` собирает модуль `wish` через `ApiApp` (фасады по `dependsOn`), резолвер `Caller` (активный пользователь — `UserCaller`, нет или неизвестен — `GuestCaller`); red
-    - [ ] Реализация; green
+- [x] Task: Сборка в `@u7-scl/app` — `U7App` по `AppEnv` (бывшие `create-api-app.ts` и `create-dmg-modules.ts`) `e799dbb`
+    - [x] Тесты: `U7App` собирает модуль `wish` через `ApiApp` (фасады по `dependsOn`), резолвер `Caller` (активный пользователь — `UserCaller`, нет или неизвестен — `GuestCaller`); red
+    - [x] Реализация; green (бриф `slices/u7-app.md`, migrator Opus)
 - [ ] Task: Раннер `u7-bot` получает приложение из `AppEnv`; `create-api-app.ts` и `create-dmg-modules.ts` удалены; `dispatchUc` — через `app.callers`; e2e-тесты бота зелёные
 - [ ] Task: Раннер `u7-cli` и `scripts/call-uc.ts` — на `U7App`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
