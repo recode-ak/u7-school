@@ -1,0 +1,1 @@
+Верификация Ф4 (подтверждена Нурболатом 2026-10-29): bun run check зелёный — bun test 3526 pass / 0 fail, test:bot 996 pass (база 978), dmg-core 1345 pass, e2e ok; триаж и итог пилота — summary.md; DEBT-25, 26, 28, 29 сняты, arch:check без нарушений; migration.md §2, §2.1, §6 обновлены, следующий трек — stream; git status data/ чист.
