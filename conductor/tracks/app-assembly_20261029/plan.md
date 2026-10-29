@@ -7,16 +7,13 @@
 - [x] Task: Зафиксировать базовую линию (`bun test` pass/fail в u7-school и в пакете, `bun run e2e` пакета, e2e-тесты бота) в черновике `summary.md` `08ebca5`
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md) — автономно
 
-## Фаза 1: Шаг `fetch` после Policy (TR-27, dmg-core)
+## Фаза 1: Вызовы после Policy (TR-27, dmg-core)
 
-- [ ] Task: Решение D-NN в `decisions.md` пакета: жизненный цикл `load` → Policy → правила → `fetch` → `execute`; что идёт в `load`, что в `fetch`; согласовать с Нурболатом
-- [ ] Task: Шаг `fetch` в `UseCaseFromDef`
-    - [ ] Тесты: `fetch` не вызывается при отказе Policy или правила; результат `fetch` доходит до `execute`; ошибка `fetch` возвращается как есть без фиксации; UC без `fetch` работает как прежде; red
-    - [ ] Реализация; green
-- [ ] Task: Учебный модуль: `assignTask` — `users.getUser` в `fetch`; тест «не-владелец не узнаёт о существовании пользователя»
-- [ ] Task: Генератор UC (шаблон) и гайд `use-case`: шаг `fetch`, ловушка снята; `llms.txt`
-- [ ] Task: u7-school: `bun install`, `dmg:sync`/`agents:sync`; UC `wish` — проверить вызовы чужих UC в `load`, перенести в `fetch`, где они нужны только после права; закрыть TR-27 в `debt.md`
-- [ ] Task: Ревью reviewer; правки по ревью
+> Решение (Нурболат, 2026-10-29): шаг `fetch` не вводим — D-58; секретный ответ зависимости — значением в контекст, отказ — правилом после Policy. Задачи `fetch` в `UseCaseFromDef`, учебного `assignTask` и генератора сняты.
+
+- [x] Task: Решение D-58 в `decisions.md` пакета: порядок `load` → Policy → правила → `execute` сохранён, `fetch` отвергнут; согласовано с Нурболатом `dmg-core 12e2791`
+- [x] Task: Гайд `use-case`: ловушка «вызов зависимости в `load` идёт до права» — неудобства и способы решения (D-58) `dmg-core 12e2791`
+- [~] Task: u7-school: `bun install`, `dmg:sync`; UC `wish` — чужие вызовы в `load` (`createCourseWish`, `createModuleWish`: `allowAll`, ответ о самом субъекте — секретности нет, правок нет); закрыть TR-27 в `debt.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Корень сборки в `@u7-scl/app` (DEBT-39)
