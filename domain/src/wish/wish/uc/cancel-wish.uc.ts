@@ -1,10 +1,12 @@
-import { UseCaseDef } from 'dmg-core';
+import { F, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { WishArDef } from '../wish.ar';
 import { WishErrors } from '../wish.errors';
 import { WishPolicy } from '../wish.policy';
 import { WishRules } from '../wish.rules';
-import { WishTargetVo } from '../wish.state';
+import { WishCourseTargetVo, WishModuleTargetVo } from '../wish.state';
+
+const expectedVersion = F.expectedVersion('желания');
 
 /**
  * Отмена желания: вход — цель (курс или модуль), желание ищется среди
@@ -23,7 +25,13 @@ export const CancelWishUcDef = UseCaseDef.define({
   callers: ['user'],
   policy: WishPolicy.rules.canCancel,
   rules: [WishRules.rules.cancellable],
-  input: WishTargetVo,
+  input: v.pipe(
+    v.variant('kind', [
+      v.object({ ...WishCourseTargetVo.entries, expectedVersion }),
+      v.object({ ...WishModuleTargetVo.entries, expectedVersion }),
+    ]),
+    v.description('Цель желания и ожидаемая версия желания'),
+  ),
   output: v.object({}),
   // NOT_CANCELLABLE через UC недостижим: правило `cancellable` срабатывает
   // раньше (→ NOT_FOUND). В `errors` — по ERR-02: её пробрасывает переход Ar.

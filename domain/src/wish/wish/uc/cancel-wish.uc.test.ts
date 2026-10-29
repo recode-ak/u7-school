@@ -39,6 +39,36 @@ describe('CancelWishUcDef', () => {
     expect(v.safeParse(input, {}).success).toBe(false);
   });
 
+  it('expectedVersion: необязателен, неотрицательное целое', () => {
+    const { input } = CancelWishUcDef;
+    const course = { kind: 'course', courseId: COURSE };
+    const mod = { kind: 'module', moduleId: MODULE };
+    for (const target of [course, mod]) {
+      expect(
+        v.safeParse(input, { ...target, expectedVersion: 0 }).success,
+      ).toBe(true);
+      expect(
+        v.safeParse(input, { ...target, expectedVersion: 3 }).success,
+      ).toBe(true);
+      expect(v.safeParse(input, target).success).toBe(true);
+      expect(
+        v.safeParse(input, { ...target, expectedVersion: -1 }).success,
+      ).toBe(false);
+      expect(
+        v.safeParse(input, { ...target, expectedVersion: 1.5 }).success,
+      ).toBe(false);
+    }
+  });
+
+  it('expectedVersion сохраняется в разобранном входе', () => {
+    const r = v.parse(CancelWishUcDef.input, {
+      kind: 'course',
+      courseId: COURSE,
+      expectedVersion: 2,
+    });
+    expect(r).toMatchObject({ expectedVersion: 2 });
+  });
+
   it('выход — пустой объект', () => {
     expect(v.parse(CancelWishUcDef.output, {})).toEqual({});
   });

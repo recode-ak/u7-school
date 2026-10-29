@@ -173,3 +173,39 @@ describe('CancelWishUc', () => {
     expect(await statuses()).toEqual(['expressed']);
   });
 });
+
+// Ожидаемая версия от клиента (D-57): устаревшее действие отклоняется без записи.
+describe('CancelWishUc — ожидаемая версия', () => {
+  const seededUuid = async () =>
+    (JSON.parse(await Bun.file(file).text()) as WishState[])[0]?.uuid ?? '';
+
+  it('совпала (версия 0 из seed) — желание отменено', async () => {
+    await seed('expressed');
+
+    expectOk(
+      await makeUc().handle(
+        { ...courseTarget, expectedVersion: 0 },
+        asActor,
+        REQ,
+      ),
+    );
+
+    expect(await statuses()).toEqual(['cancelled']);
+  });
+
+  it('расходится — VERSION_CONFLICT, статус не изменился', async () => {
+    await seed('expressed');
+
+    const res = await makeUc().handle(
+      { ...courseTarget, expectedVersion: 1 },
+      asActor,
+      REQ,
+    );
+
+    expect(expectErr(res, 'VERSION_CONFLICT').payload).toEqual({
+      aggregate: 'wish',
+      uuid: await seededUuid(),
+    });
+    expect(await statuses()).toEqual(['expressed']);
+  });
+});

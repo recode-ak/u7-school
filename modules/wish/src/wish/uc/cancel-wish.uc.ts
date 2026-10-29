@@ -37,7 +37,14 @@ export class CancelWishUc extends UseCaseFromDef<
     return err(WishAr.notFoundFor(userId, target));
   }
 
-  protected async execute(_input: Input, { wish }: Loaded, uow: UnitOfWork) {
+  protected async execute(
+    { expectedVersion }: Input,
+    { wish }: Loaded,
+    uow: UnitOfWork,
+  ) {
+    // Устаревшее действие клиента — отказ до отмены (D-57).
+    const expected = this.expectVersion(wish, expectedVersion);
+    if (!expected.ok) return expected;
     const cancelled = wish.cancel(this.now());
     if (!cancelled.ok) return cancelled;
     uow.register(wish, this.resolve.wishes);
