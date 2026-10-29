@@ -1,0 +1,1 @@
+Верификация Ф3 (автономно, agents.md §9): bun run check зелёный — bun test 3526 pass / 0 fail, test:bot 996 pass (порог 978); reviewer без error; git status data/ чист. Критерии Ф3: legacy удалён, grep пуст, DEBT-26 снят, DEBT-34 в части peer-review чист, ARC-07 группа добавлена, checkDefs зелёный.
