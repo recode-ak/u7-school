@@ -1,0 +1,1 @@
+Ф1: правки по ревью (2 minor), решение по question — оставить throw дубля в write (инвариант хранилища). Отчёты data-keeper (расхождений с аудитом нет) и reviewer (error нет) — в брифе. check зелёный 3392 pass, test:bot 979, arch:check 0.
