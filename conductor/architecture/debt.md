@@ -145,7 +145,7 @@
 - **Место:** `platform/app-legacy/src/domain/user.ts`
 - **Причина:** `User`, `UserSchema`, `Role`, `RoleSchema`, `UserArMeta` импортируются из `@u7-scl/app-legacy/domain` во всём репозитории; канонический владелец теперь `domain/user`.
 - **Погашает:** последний трек миграции
-- **Критерий снятия:** потребители импортируют из `@u7-scl/domain/user`; `app/src/domain/user.ts` удалён
+- **Критерий снятия:** потребители импортируют из `@u7-scl/domain/user`; `platform/app-legacy/src/domain/user.ts` удалён
 
 ## 4. Прочее
 
