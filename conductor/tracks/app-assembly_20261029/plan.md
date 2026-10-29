@@ -42,7 +42,7 @@
 ## Фаза 3: Правила D-52
 
 - [x] Task: `DomainArch` с `root` и `runners`; тест-фикстура: раннер импортирует прикладной пакет → ARC-08; red → green `4b0d63e` (8 нарушений устранены — TR-35; `U7App` берёт `wish` через вход пакета уже здесь)
-- [ ] Task: ARC-07 корневого `biome.json` — как в пакете (входы `modules/<m>` для app); фикстура `lint-fixtures`; блок для `platform/app/**` (сейчас правила нет — ревью Ф2); `U7App` берёт `wish` через вход пакета, а не `@u7-scl/wish/{infra,wish}`
+- [x] Task: ARC-07 корневого `biome.json` — как в пакете (входы `modules/<m>` для app); фикстура `lint-fixtures`; блок для `platform/app/**` (сейчас правила нет — ревью Ф2); `U7App` берёт `wish` через вход пакета, а не `@u7-scl/wish/{infra,wish}` `25eeb49` (в пакете ARC-07 — только `arch:check`; в корне — lint для `platform/app/src/**`, маска модулей на DMG — TR-35 п. 5; `U7App` через вход — в `4b0d63e`)
 - [ ] Task: D-53 (ARC-06) — машинный запрет `@u7-scl/app` в `modules/**` (`domain-check` смотрит только `domain/src/`); фикстура; red → green
 - [ ] Task: ARC-09 — на всё, кроме точек входа раннеров; поправить найденные нарушения или завести DEBT
 - [ ] Task: `rules.md` — карта правил; снять маркер и запись DEBT-39
