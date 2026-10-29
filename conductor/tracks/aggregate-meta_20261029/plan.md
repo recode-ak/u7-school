@@ -13,7 +13,7 @@
 - [x] Task: Обсудить канал ожидаемой версии с Нурболатом; записать D-57 (dmg-core) 6e877f3 (выбран вариант B — поле входа UC)
 - [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
-## Фаза 2: Ожидаемая версия от клиента (dmg-core)
+## Фаза 2: Ожидаемая версия от клиента (dmg-core) [checkpoint: 09ab4ba]
 
 - [x] Task: `F.expectedVersion()` и удаление `CommandMeta.version` (dmg-core 53e66d1)
     - [x] Тесты: схема поля (целое ≥ 0, необязательное, отказ на отрицательном/дробном); команда без `version` в `meta`; red
