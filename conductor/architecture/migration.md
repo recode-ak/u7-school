@@ -21,7 +21,7 @@
 | 2 ✅ | **generators** | `bun run gen` для всех видов артефактов по [naming.md](./naming.md) | orchestrator + Нурболат |
 | 3 ✅ | **domain-package** | трек: `conductor/archive/domain-package_20261020`, реестр долга — [debt.md](./debt.md). Пакет-каркас `@u7-scl/domain` создан в треке generators; наполнить: механически перенести domain-слои снизу вверх: user (+ `User` из app) → course → questionnaire → stream → wish → peer-review → dossier. Старые пути `@u7-scl/<m>/domain` временно реэкспортируют | migrator |
 | 4 ✅ | **golden-wish** | перевести `wish` на Def, `Result`, Policy, entity-правило, UoW, Timestamp. Эталон; по нему написаны гайды артефактов — [guides/](../../node_modules/dmg-core/docs/guides/index.md). Трек: `conductor/archive/golden-wish_20261020` | orchestrator + Нурболат |
-| 5 ✅ | **peer-review** | первый модуль конвейером агентов; Ф0 — пилот ролей волны 1 ([agent-roles.md](./agent-roles.md) §4). Трек: `conductor/tracks/peer-review-dmg_20261029` | агенты |
+| 5 ✅ | **peer-review** | первый модуль конвейером агентов; Ф0 — пилот ролей волны 1 ([agent-roles.md](./agent-roles.md) §4). Трек: `conductor/archive/peer-review-dmg_20261029` | агенты |
 | 6 | остальные модули | сверху вниз по графу (§2.1): `stream` (бывший `stream-student`) → `questionnaire` → `course` → `user`; `dossier` — в любой момент | агенты |
 | 7 | **timestamp-data** | пакетная миграция живых данных, удаление «чтения строки» | orchestrator, с подтверждением |
 | 8 | **delegation** | агрегат `Delegation` в user, построение `delegate` в транспорте ([caller.md](../../node_modules/dmg-core/docs/caller.md) §3) | агенты |
@@ -92,9 +92,9 @@
 
 ### Старт следующих треков
 
-- **Следующий — `stream`** (трек 6, порядок — §2.1). Создаётся `conductor-newtrack` (ID вида `stream-dmg_<дата>`) по шаблону трека `peer-review` (`conductor/tracks/peer-review-dmg_20261029`):
+- **Следующий — `stream`** (трек 6, порядок — §2.1). Создаётся `conductor-newtrack` (ID вида `stream-dmg_<дата>`) по шаблону трека `peer-review` (`conductor/archive/peer-review-dmg_20261029`):
   - **Конвейер среза:** `tech-lead` (бриф) → `test-designer` (red) → `migrator` (green) → гейт → `data-keeper` (по триггеру) → `reviewer`; Ф0 ролей не нужна — роли уже есть.
   - **Пилот ролей — второй трек** ([agent-roles.md](./agent-roles.md) §5): раздел «Пилот ролей» в `summary.md`; в начале трека — решение по кандидату на правку промпта `data-keeper` (итог пилота `peer-review`); в конце — годность ролей и решение о волне 2.
   - **Мосты:** адаптеры TR-11 `stream` у `wish` и `peer-review` снимаются; `student.completed`/`abandoned` — события модуля на Def вместо `inbound`. DEBT-35 решается здесь.
   - **Сборка:** фабрика в `U7App`, `@u7-scl/stream/**` — в группу ARC-07 `biome.json`; stories `stream` — на `dispatch`.
-- Базовая линия тестов на конец `peer-review`: `conductor/tracks/peer-review-dmg_20261029/summary.md` («Гейт закрытия»).
+- Базовая линия тестов на конец `peer-review`: `conductor/archive/peer-review-dmg_20261029/summary.md` («Гейт закрытия»).
