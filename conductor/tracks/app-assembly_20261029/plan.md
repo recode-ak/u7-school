@@ -7,7 +7,7 @@
 - [x] Task: Зафиксировать базовую линию (`bun test` pass/fail в u7-school и в пакете, `bun run e2e` пакета, e2e-тесты бота) в черновике `summary.md` `08ebca5`
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md) — автономно
 
-## Фаза 1: Шаг `fetch` после Policy (TR-27, dmg-core)
+## Фаза 1: Шаг `fetch` после Policy (TR-27, dmg-core) [checkpoint: 3317350]
 
 > Пересмотр (Нурболат, 2026-10-29): первое решение «`fetch` не вводим» (`dmg-core 12e2791`, `79eab714`, контрольная точка `615164e3`) отменено — для системы, выходящей за монолит, право проверяется до чужих вызовов платформой. Порядок исправлен против спеки: правила — после `fetch` (правилам нужен ответ зависимости, `assigneeActive`).
 
