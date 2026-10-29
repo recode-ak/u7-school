@@ -129,16 +129,18 @@
 - **DEBT-26, 29, 34, 27** — не затрагиваются в срезе (кроме удаления `reviewCampaignRepo` из резолвера).
 - **Новые TR:** мост `create-review-uc` (до Ф2); аддитивный контракт `stream` и адаптер (TR-11, снимается треком `stream`); строгий разбор (как TR-2); снятие `external` в Ф1.
 
-## Открытые вопросы (стратегические — к Нурболату на проверке Ф0)
+## Решения Нурболата по открытым вопросам (2026-10-29)
 
-1. **Аддитивная правка контракта `stream`** (`StudentEvents.completed/abandoned`, `GetStreamMembersUcDef`, адаптер). Без неё ER не собрать; альтернатива (ER на legacy-шине при `external`) запрещена MAN-06. Рекомендация — добавить.
-2. **Снятие `external` в Ф1** вместо Ф3 (п. 7). Рекомендация — снять; Ф3 в плане — проверка и удаление legacy.
-3. **Строгий разбор невалидных записей** (п. 12). Рекомендация — строгий, как `wish`. Связано: проверка живых записей и `peer-review/*.json` вне системного бэкапа.
-4. **Код отказа постороннему** `PEER_REVIEW_NOT_PARTICIPANT` → `ACCESS_DENIED`. Рекомендация — принять: stories по нему не ветвятся.
-5. **Код `REVIEW_WINDOW_CLOSED`:** A — `PEER_REVIEW_WINDOW_CLOSED` в группе `PEER_REVIEW`, правка `campaign.story.ts:123` (рекомендация); B — оставить, проверка окна уходит в правило `review` в Ф2.
-6. **Мост `create-review-uc`:** C — правка на новый Ar (рекомендация); A — копия legacy-кампании до Ф2 (конфликт имён, двойное чтение формата).
-7. **Вход UC без `userId`/`authorId`** — из субъекта. Рекомендация — убрать.
-8. **TZ `expiresAt`:** сохранять ли локальное толкование старых записей. Рекомендация — нет (UTC); проверить TZ процесса на проде перед выкаткой (`pm2.config.cjs`).
+1. ✅ **Контракт `stream` дополняется** `StudentEvents.completed/abandoned`, `GetStreamMembersUcDef` и адаптером TR-11.
+2. ✅ **`external` снимается в Ф1**; Ф3 — проверка и удаление legacy.
+3. ✅ **Строгий разбор** (решение поручено orchestrator'у) — TR-37. На проде невалидных записей не было.
+4. ✅ **`ACCESS_DENIED`** вместо `PEER_REVIEW_NOT_PARTICIPANT` в `get-campaign-recipients`.
+5. ✅ **Вариант A:** `PEER_REVIEW_WINDOW_CLOSED` в группе `PEER_REVIEW`, правка `campaign.story.ts:123`.
+6. ✅ **Вариант C:** мост `create-review-uc` на новый `ReviewCampaignAr` (TR, снимается в Ф2).
+7. ✅ **Вход UC без `userId`/`authorId`** — пользователь берётся из субъекта.
+8. ✅ **UTC.** Сервер на проде — `Etc/UTC`, поэтому толкование не меняется; тест на границу окна с `TZ=Asia/Oral` остаётся (защита от смены TZ).
+
+Бэкап: `scripts/backup.sh` теперь берёт все файлы `data/`, кроме явных исключений (`d7c073a4`, вне трека) — `peer-review/*.json` в снимке. На прод попадёт с выкаткой; до неё перед первой записью новым кодом — `backup:adhoc` (см. аудит).
 
 ## Правила (ID rules.md)
 
@@ -185,7 +187,7 @@ DOM-01…06, DOM-10…12, DOM-14…16; API-01, API-03, API-05; MAN-01, MAN-02, M
 
 **Тесты репозиториев (обе коллекции, фикстуры + временный каталог; образец — блок «legacy-записи» `modules/wish/src/infra/wish.json-repo.test.ts`):** ISO → число UTC, `updatedAt = createdAt`, `version = 0`; запись без `updatedAt` / без `authorOutcome` / `participants: []`; legacy-запись читается после `save` соседней; после обновления `version = 1`; невалидная запись — явный ожидаемый исход; дубли пар → ошибка; round-trip нового формата.
 
-**Живые записи.** Не проверены — read-only команда (счёт, имена полей, типы дат, без значений) ждёт разрешения Нурболата.
+**Живые записи (прод `/srv/u7-school`, `v0.2.6`, 2026-10-29, только чтение):** `campaigns.json` — 65 записей, поля `context, createdAt, expiresAt, participants, payload, scopeId, subjectId, uuid`, даты — строки, `updatedAt` нет ни у одной; `reviews.json` — 24 записи, поля `authorId, authorOutcome, campaignId, createdAt, direction, recipientId, scopeId, text, updatedAt, uuid`, даты — строки. Каталога `backups/*.invalid` нет. TZ сервера — `Etc/UTC`.
 
 ## Отчёты агентов
 
