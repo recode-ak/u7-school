@@ -456,7 +456,7 @@
 ### TR-33: корень сборки — `@u7-scl/app`, legacy-ядро — в `@u7-scl/app-legacy`
 - **Трек / фаза:** `app-assembly`, Ф2 (разбор, решение Нурболата)
 - **Контекст:** legacy-часть `@u7-scl/app` (`domain/`, `infra/logger`) импортируют `domain/` и все `modules/*`, поэтому корень сборки в этом пакете дал бы цикл пакетов (D-53). `create-api-app.ts` раннера собирает и legacy-, и DMG-модули. В DMG-модуле `user` нет `getUser`.
-- **Решение:** legacy-содержимое переезжает в `@u7-scl/app-legacy` (`platform/app-legacy`), `@u7-scl/app` становится корнем сборки всего приложения (legacy и DMG, класс `U7App` по `AppEnv`). Резолвер `Caller` — над legacy `userFacade` (мост TR-11). Разбор — `tracks/app-assembly_20261029/summary.md`.
+- **Решение:** legacy-содержимое переезжает в `@u7-scl/app-legacy` (`platform/app-legacy`), `@u7-scl/app` становится корнем сборки всего приложения (legacy и DMG, класс `U7App` по `AppEnv`). Резолвер `Caller` — над legacy `userFacade` (мост TR-11). Разбор — `conductor/archive/app-assembly_20261029/summary.md`.
 - **Пересмотреть:** при переводе `user` на DMG резолвер идёт через `ApiApp.dispatch` (`getUser`), как в учебном приложении; `@u7-scl/app-legacy` удаляется вместе с последним legacy-модулем.
 
 ### TR-34: решения по ревью Ф2 `app-assembly` (корень сборки)

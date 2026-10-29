@@ -7,6 +7,3 @@
 > Отказ или завершение трека-наследника — заготовка удаляется, запись снимается.
 
 ---
-
-- [x] **Track: Корень сборки DMG в `@u7-scl/app` (DEBT-39), шаг `fetch` после Policy (TR-27), гигиена перед `stream-student`**
-*Link: [./tracks/app-assembly_20261029/](./tracks/app-assembly_20261029/)*
