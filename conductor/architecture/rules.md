@@ -12,7 +12,7 @@
 
 ## Что блокирует, что нет
 
-Блокируют только новые пути (`domain/**`; код пакета проверяется в его репо). На legacy действуют ARC-01 и ARC-07, а ARC-06 и ARC-08 — `warn` ([legacy.md](./legacy.md)). DOM-01 не охватывает рендереры UI и stories (до миграции UI).
+Блокируют новые пути (`domain/**`, модули на Def) и связи с приложением вокруг модулей; код пакета проверяется в его репо. На legacy действуют ARC-01 и ARC-07 (`@u7-scl/app-legacy`), lint ARC-06 и ARC-08 — `warn` ([legacy.md](./legacy.md)); `arch:check` по ARC-06/07/08 — `error` везде, где модуль на Def или правило не зависит от модуля. DOM-01 не охватывает рендереры UI и stories (до миграции UI).
 
 ## Привязка правил к пакетам проекта
 
@@ -21,10 +21,10 @@
 | ARC-01 | платформа — `dmg-core` и legacy `@u7-scl/core` |
 | ARC-02 | домен — `@u7-scl/domain` (`domain`); импорт `@u7-scl/core` — только по долгу ([debt.md](./debt.md)) |
 | ARC-04 | контракт модуля — `@u7-scl/domain/<m>/contract`; пары legacy-модулей — по долгу до миграции |
-| ARC-06 | прикладной пакет модуля — `modules/<m>` |
-| ARC-07 | приложение — `@u7-scl/app` |
-| ARC-08 | входные адаптеры — `runners/*`, вызов операций — через `appApi` |
-| ARC-09 | данные школы — через резолвер (`resolve.school`) |
+| ARC-06 | прикладной пакет модуля — `modules/<m>`; чужие пакеты — lint `warn` по модулю; корень сборки и раннеры — `arch:check` для всех пакетов (`checkModuleImports`, D-53) |
+| ARC-07 | приложение (корень сборки) — `@u7-scl/app` (`platform/app/src`, `DomainArch.root`): домен — только `contract`, пакет модуля на Def — только вход (`index`); подпути пакетов внешних модулей разрешены — корень собирает и legacy (TR-33, TR-35). Lint дублирует для раннего сигнала: маска пакетов на Def пополняется при переводе модуля. Legacy-ядро `@u7-scl/app-legacy` — только `core` и `domain` (lint) |
+| ARC-08 | входные адаптеры — `runners/*` (`src`, `DomainArch.runners` — все каталоги `runners/*`), вызов операций — через приложение; тесты вне `src` не проверяются |
+| ARC-09 | окружение читает только `runners/*/src/main.ts` (lint на `domain`, `platform/*/src`, `modules/*/src`, `runners/*/src`); `authoring/*` и `scripts/` — отдельные утилиты, вне правила (TR-36); данные школы — через резолвер (`resolve.school`) |
 | ARC-10 | код приложения — `@u7-scl/*` и `#*-legacy/*` (отсекает белый список импортов в `biome.json` пакета); мосты — `platform/core/src/legacy-bridge` |
 | TST-06 | `bun run check` и `bun run arch:check` |
 

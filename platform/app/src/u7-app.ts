@@ -67,7 +67,7 @@ import type { U7BotAppMeta } from './u7-app-meta';
 import { U7CallerResolver } from './u7-caller-resolver';
 
 /**
- * Приложение u7-school — корень сборки (D-50, DEBT-39, TR-33): по окружению
+ * Приложение u7-school — корень сборки (D-50, TR-33): по окружению
  * строит репозитории `<dbDir>/…`, legacy-модули и фасады, приложение DMG
  * (внешние модули зависимостей над legacy-фасадами и `wish`, фасады по
  * `dependsOn`) и legacy `ApiApp` с ним (`withDmg`), инициализированный
