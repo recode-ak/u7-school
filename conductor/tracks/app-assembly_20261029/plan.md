@@ -29,9 +29,9 @@
 
 - [x] Task: Разбор `runners/u7-bot/src/create-dmg-modules.ts`: что переезжает в `@u7-scl/app` (контекст, модули, адаптеры TR-11, резолвер `Caller`), что остаётся раннеру; план правок — в `summary.md`
 - [x] Task: Вынос legacy `@u7-scl/app` (`domain/`, `infra/logger`) в `@u7-scl/app-legacy` (`platform/app-legacy`): импорты, `package.json`, `tsconfig`, `biome.json`, `legacy.md`; поведение не меняется, `check` зелёный `6aedee4` (`legacy.md` без упоминаний; `domain-check`: корень `@u7-scl/app` домену — ARC-06)
-- [ ] Task: Legacy `ApiApp` (`@u7-scl/core/api`) — DMG через `ApiApp` из `dmg-core/app` вместо `addDmgModules` (`dispatch`, `subscribe`, Job через `legacyJobsOf`)
-    - [ ] Тесты: `dispatch` делегирует, реакции подписываются в `init`, Job DMG — в планировщике; red
-    - [ ] Реализация; green
+- [x] Task: Legacy `ApiApp` (`@u7-scl/core/api`) — DMG через `ApiApp` из `dmg-core/app` вместо `addDmgModules` (`dispatch`, `subscribe`, Job через `legacyJobsOf`) `711c875`
+    - [x] Тесты: `dispatch` делегирует, реакции подписываются в `init`, Job DMG — в планировщике; red
+    - [x] Реализация; green (`withDmg(api, defs)`; `createDmgModules` → `createDmgApp` на фабриках — ручная раскладка фасадов снята уже здесь)
 - [ ] Task: Сборка в `@u7-scl/app` — `U7App` по `AppEnv` (бывшие `create-api-app.ts` и `create-dmg-modules.ts`)
     - [ ] Тесты: `U7App` собирает модуль `wish` через `ApiApp` (фасады по `dependsOn`), резолвер `Caller` (активный пользователь — `UserCaller`, нет или неизвестен — `GuestCaller`); red
     - [ ] Реализация; green
