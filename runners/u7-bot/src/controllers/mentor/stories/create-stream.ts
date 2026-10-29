@@ -416,6 +416,7 @@ export class CreateStreamStory extends U7BotUiStory {
     ctx: CreateStreamWizardContext,
     text: string,
   ): DialogResponse {
+    // DEBT-43: время старта — по UTC+5 «как есть» (ISO без зоны), вывод — getUTC*.
     const normalizedDate = text.includes('T') ? text : `${text}T00:00`;
 
     // OPTIONAL_FIELDS всегда непустой

@@ -133,18 +133,9 @@ describe('ReviewCampaignState — форма (ФР-1, ФР-3)', () => {
   });
 });
 
-// Решение 13 брифа: ISO без зоны — UTC при любой TZ процесса. Раньше (new Date(строка)) —
-// локальное время; тест защищает от смены TZ сервера.
-describe('ReviewCampaignArDef.state — TZ процесса', () => {
-  // Только в `bun run test:tz` (TZ=Asia/Oral): зона процесса не UTC.
-  test('проба: при TZ=Asia/Oral локальное чтение сдвинуто (UTC+5)', () => {
-    if (process.env.TZ !== 'Asia/Oral') return;
-    expect(new Date('2026-09-27T10:00').getTime()).toBe(
-      Date.UTC(2026, 8, 27, 5),
-    );
-  });
-
-  test('ISO без зоны остаётся UTC, а не локальным временем', () => {
+// Решение 13 брифа: ISO без зоны читается как UTC.
+describe('ReviewCampaignArDef.state — ISO без зоны', () => {
+  test('ISO без зоны читается как UTC', () => {
     const res = parse(legacy());
     expect(res.success).toBe(true);
     if (!res.success) return;

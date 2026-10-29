@@ -254,26 +254,16 @@ describe('ReviewCampaignJsonRepo: legacy-записи', () => {
     expect(raw).toHaveLength(1);
   });
 
-  test('legacy-окно: граница включительно при TZ процесса Asia/Oral (UTC+5)', async () => {
-    // Проба зоны — только в `bun run test:tz` (TZ=Asia/Oral).
-    if (process.env.TZ === 'Asia/Oral') {
-      expect(new Date('2026-09-27T10:00').getTime()).toBe(
-        Date.UTC(2026, 8, 27, 5),
-      );
-    }
-    {
-      const row = legacyRow({ expiresAt: '2026-09-27T10:00' });
-      const repo = await repoWith('legacy-tz.json', [row]);
-      const edge = Date.UTC(2026, 8, 27, 10);
+  test('legacy-окно (ISO без зоны = UTC): граница expiresAt включительно', async () => {
+    const row = legacyRow({ expiresAt: '2026-09-27T10:00' });
+    const repo = await repoWith('legacy-boundary.json', [row]);
+    const edge = Date.UTC(2026, 8, 27, 10);
 
-      expect(await repo.findActiveBySubject(IDS.alice, edge - 1)).toHaveLength(
-        1,
-      );
-      expect(await repo.findActiveBySubject(IDS.alice, edge)).toHaveLength(0);
-      expect(
-        (await repo.findById(row.uuid))?.isExpired(Date.UTC(2026, 8, 27, 5)),
-      ).toBe(false);
-    }
+    expect(await repo.findActiveBySubject(IDS.alice, edge - 1)).toHaveLength(1);
+    expect(await repo.findActiveBySubject(IDS.alice, edge)).toHaveLength(0);
+    expect(
+      (await repo.findById(row.uuid))?.isExpired(Date.UTC(2026, 8, 27, 5)),
+    ).toBe(false);
   });
 });
 

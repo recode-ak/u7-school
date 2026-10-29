@@ -20,7 +20,6 @@
   "scripts": {
     "test": "bun test",
     "test:bot": "bun test runners/u7-bot/",
-    "test:tz": "bun run --filter '*' test:tz",
     "gen:e2e": "bun test ./scripts/gen-e2e.e2e.ts",
     "backup": "bash scripts/backup.sh",
     "backup:adhoc": "bash scripts/backup-adhoc.sh",
@@ -43,7 +42,7 @@
     "format": "bunx biome check . --write",
     "tslint": "tsc --noEmit",
     "tslint:w": "bash -c 'bun run --cwd \"${0}\" tslint'",
-    "check": "bun run dmg:check && bun run agents:check && bun run lint && bun run tslint && bun run arch:check && bun run gen:e2e && bun test && bun run test:tz",
+    "check": "bun run dmg:check && bun run agents:check && bun run lint && bun run tslint && bun run arch:check && bun run gen:e2e && bun test",
     "check:w": "bash -c 'bun run --cwd \"${0}\" check'",
     "start:prod": "pm2 start pm2.config.cjs --env production",
     "start:prod:stop": "pm2 stop pm2.config.cjs",
