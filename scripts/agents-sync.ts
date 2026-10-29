@@ -6,52 +6,27 @@
  *   bun run agents:sync   — пересобрать копии
  *   bun run agents:check  — проверить, что копии совпадают с источником
  *
- * Формат источника — `.agents-core/README.md`.
+ * Формат источника — `.agents-core/README.md`; разбор и отрисовка — `Role`
+ * пакета (`dmg-core/cli`), метка копии — своя.
  */
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { basename, dirname, join } from 'node:path';
-import { Marker } from 'dmg-core/cli';
+import { dirname, join } from 'node:path';
+import { type AgentEnv, Marker, Role } from 'dmg-core/cli';
 
-/** Среда, под которую собирается копия роли */
-export type Env = 'claude' | 'pi';
-
-const TOOLS = {
-  read: { claude: 'Read', pi: 'read' },
-  edit: { claude: 'Edit', pi: 'edit' },
-  write: { claude: 'Write', pi: 'write' },
-  bash: { claude: 'Bash', pi: 'bash' },
-  grep: { claude: 'Grep', pi: 'grep' },
-  find: { claude: 'Glob', pi: 'find' },
-} as const satisfies Record<string, Record<Env, string>>;
-
-/** Нейтральное имя инструмента */
-export type Tool = keyof typeof TOOLS;
-
-const ENVS: readonly Env[] = ['claude', 'pi'];
-const FIELDS = ['name', 'description', 'tools', 'model'];
+const ENVS: readonly AgentEnv[] = ['claude', 'pi'];
 
 export const SOURCE_DIR = '.agents-core/roles';
 /** Общий блок проекта, дописываемый в конец каждой роли (необязателен) */
 export const COMMON_FILE = '.agents-core/common.md';
 /** Общий блок пакета `dmg-core` — кладёт `dmg-core sync` (`dmg-core.json`) */
 export const DMG_COMMON_FILE = '.agents-core/dmg-core-common.md';
-export const TARGET_DIRS: Record<Env, string> = {
+export const TARGET_DIRS: Record<AgentEnv, string> = {
   claude: '.claude/agents',
   pi: '.pi/agents',
 };
 
 /** Метка, по которой генератор узнаёт свои копии */
 const GENERATED_MARK = 'командой `bun run agents:sync` — не править.';
-
-/** Роль, разобранная из файла источника */
-export interface Role {
-  source: string;
-  name: string;
-  description: string;
-  tools: Tool[];
-  model: Partial<Record<Env, string>>;
-  body: string;
-}
 
 /** Файл источника: путь от корня репозитория и содержимое */
 export interface SourceFile {
@@ -72,89 +47,9 @@ export interface SyncResult {
   messages: string[];
 }
 
-function isTool(value: unknown): value is Tool {
-  return typeof value === 'string' && value in TOOLS;
-}
-
-function isEnv(value: string): value is Env {
-  return (ENVS as readonly string[]).includes(value);
-}
-
-/**
- * Разбирает файл источника роли. Бросает Error с путём файла
- * при любом нарушении формата.
- */
-export function parseRole(path: string, text: string): Role {
-  const fail = (message: string): never => {
-    throw new Error(`${path}: ${message}`);
-  };
-  const match = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/.exec(text);
-  if (!match) return fail('нет frontmatter');
-  const fm = Bun.YAML.parse(match[1] ?? '');
-  if (typeof fm !== 'object' || fm === null || Array.isArray(fm)) {
-    return fail('frontmatter должен быть объектом');
-  }
-  const data = fm as Record<string, unknown>;
-
-  for (const key of Object.keys(data)) {
-    if (!FIELDS.includes(key)) fail(`неизвестное поле «${key}»`);
-  }
-  const expectedName = basename(path, '.md');
-  if (data.name !== expectedName) {
-    fail(`name «${String(data.name)}» не совпадает с именем файла`);
-  }
-  if (typeof data.description !== 'string' || data.description === '') {
-    fail('нужен description');
-  }
-  if (!Array.isArray(data.tools) || data.tools.length === 0) {
-    fail('нужен непустой список tools');
-  }
-  const tools = (data.tools as unknown[]).map((tool) =>
-    isTool(tool) ? tool : fail(`неизвестный инструмент «${String(tool)}»`),
-  );
-
-  const model: Partial<Record<Env, string>> = {};
-  if (data.model !== undefined) {
-    if (typeof data.model !== 'object' || data.model === null) {
-      fail('model должен быть объектом { claude?, pi? }');
-    }
-    for (const [env, value] of Object.entries(data.model as object)) {
-      if (!isEnv(env)) fail(`неизвестная среда модели «${env}»`);
-      if (typeof value !== 'string') fail(`model.${env} должен быть строкой`);
-      model[env as Env] = value as string;
-    }
-  }
-
-  return {
-    source: path,
-    name: expectedName,
-    description: data.description as string,
-    tools,
-    model,
-    body: (match[2] ?? '').trim(),
-  };
-}
-
-/** Собирает текст копии роли для среды; common — общий блок всех ролей */
-export function renderRole(env: Env, role: Role, common = ''): string {
-  const lines = [
-    '---',
-    `name: ${role.name}`,
-    `description: ${JSON.stringify(role.description)}`,
-    `tools: ${role.tools.map((tool) => TOOLS[tool][env]).join(', ')}`,
-  ];
-  const model = role.model[env];
-  if (model) lines.push(`model: ${model}`);
-  lines.push(
-    '---',
-    '',
-    `<!-- Сгенерировано из ${role.source} ${GENERATED_MARK} -->`,
-    '',
-    role.body,
-    '',
-  );
-  if (common.trim()) lines.push(common.trim(), '');
-  return lines.join('\n');
+/** Метка копии проекта: источник роли и команда сборки */
+function commentOf(source: string): string {
+  return `<!-- Сгенерировано из ${source} ${GENERATED_MARK} -->`;
 }
 
 /** Ожидаемые копии всех ролей: путь от корня → содержимое */
@@ -165,7 +60,7 @@ export function buildCopies(
   const copies = new Map<string, string>();
   const seen = new Map<string, string>();
   for (const { path, text } of sources) {
-    const role = parseRole(path, text);
+    const role = Role.parse(path, text);
     const first = seen.get(role.name);
     if (first !== undefined) {
       throw new Error(`${path}: роль ${role.name} уже задана в ${first}`);
@@ -174,7 +69,7 @@ export function buildCopies(
     for (const env of ENVS) {
       copies.set(
         `${TARGET_DIRS[env]}/${role.name}.md`,
-        renderRole(env, role, common),
+        role.renderEnv(env, commentOf(path), common),
       );
     }
   }
