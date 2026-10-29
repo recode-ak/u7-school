@@ -1,0 +1,4 @@
+Задача: cancelWish с expectedVersion (Фаза 3, aggregate-meta_20261029).
+Изменения: domain/src/wish/wish/uc/cancel-wish.uc.ts (+тест) — вход с F.expectedVersion('желания'); modules/wish/src/wish/uc/cancel-wish.uc.ts (+тест) — this.expectVersion до wish.cancel; conductor/architecture/debt.md — TR-31; slices/wish.md — бриф и отчёты.
+Причина: D-57 — клиент присылает версию, устаревшее действие отклоняется.
+Проверки: agent-gate зелёный, check 3308 pass / 0 fail, reviewer без error/warning.
