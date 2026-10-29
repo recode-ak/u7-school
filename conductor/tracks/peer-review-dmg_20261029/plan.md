@@ -58,13 +58,13 @@
 - Тесты репозитория рецензий — как у кампаний (legacy-запись, round-trip, невалидная запись).
 - Сценарии старых тестов рецензий перенесены; `bun run check` зелёный; `test:bot` — не меньше 979 pass; `git status data/` чист.
 
-## Фаза 3: Сборка и снятие legacy
+## Фаза 3: Сборка и снятие legacy [checkpoint: 0b895c28]
 
 - [x] Task: `PeerReviewModuleDef` без `external` (снят в Ф1 — MAN-06), с агрегатами, UC и ER обоих срезов; `checkDefs` зелёный 5e5c340e
 - [x] Task: Фабрика `peer-review` в `U7App` (подключена в Ф1) — legacy-резолвер снят; `@u7-scl/peer-review/**` в ARC-07 корневого `biome.json` (TR-35, п. 5) 5e5c340e
 - [x] Task: Удалить legacy `PeerReviewApiModule`, `module.ts` домена (DEBT-26), `commands/*-cmd.ts`, старые репозитории; сверить, что сценарии удалённых тестов перенесены; DEBT-34 в части `peer-review` 5e5c340e
 - [x] Task: `reviewer`; замечания без `error` решает orchestrator (TR) 5e5c340e
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно) 0b895c28
 
 **Критерии приёмки Фазы 3:**
 - `PeerReviewApiModule`, `domain/src/peer-review/module.ts`, `commands/*-cmd.ts`, legacy-репозитории удалены; `grep` по репозиторию не находит их импортов.
