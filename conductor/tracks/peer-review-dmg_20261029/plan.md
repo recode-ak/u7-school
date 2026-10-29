@@ -10,7 +10,7 @@
 
 ## Фаза 0: Роли волны 1 и база
 
-- [ ] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `peer-review` (домен и пакет), `dmg-core` `bun test` и `e2e`
+- [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `peer-review` (домен и пакет), `dmg-core` `bun test` и `e2e` 441b90ac
 - [ ] Task: Роль `architect` в `.agents-core/roles/architect.md`: вопрос, что роль знает, формат выхода — черновик брифа по образцу `conductor/archive/golden-wish_20261020/slices/wish.md`; Sonnet; `bun run agents:sync`
 - [ ] Task: Роль `test-designer` в `.agents-core/roles/test-designer.md`: характеризация поведения `v0.2.6` и red-тесты по Def среза, список сценариев в брифе; `agents:sync`
 - [ ] Task: Роль `data-keeper` в `.agents-core/roles/data-keeper.md`: совместимость чтения `state` и снимков, путь миграции, нужен ли бэкап, правило данных `AGENTS.md`; триггер по путям diff; `agents:sync`
