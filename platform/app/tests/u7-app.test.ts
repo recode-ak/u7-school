@@ -62,11 +62,10 @@ describe('U7App (smoke: сборка с модулем peer-review)', () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  test('приложение собирается: модуль peer-review зарегистрирован', () => {
+  test('приложение собирается: peer-review — только Def-модуль DMG, legacy-модуля нет', () => {
     const bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
 
-    const module = bundle.apiApp.getModule('peer-review');
-    expect(module).toBeDefined();
+    expect(bundle.apiApp.getModule('peer-review')).toBeUndefined();
     expect(bundle.school.communityGroup.url).toBe('https://t.me/test-comm');
     expect(bundle.appResolver.mode).toBe('test');
     expect(bundle.appResolver.school.studentGroup.inviteUrl).toBe(
@@ -88,10 +87,8 @@ describe('U7App (smoke: сборка с модулем peer-review)', () => {
     expect(res).toEqual({ ok: true, value: [] });
   });
 
-  test('UC рецензий — в модуле DMG, legacy-оболочка пуста (Ф3)', async () => {
+  test('UC рецензий — в модуле DMG', async () => {
     const bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
-    const legacy = bundle.apiApp.getModule('peer-review');
-    expect(legacy?.useCases).toEqual([]);
 
     const res = await bundle.apiApp.dispatch(
       PeerReviewModuleDef,

@@ -89,12 +89,6 @@
 - **Погашает:** перевод `stream` на Def
 - **Критерий снятия:** маркер `DEBT-17` удалён, перенесённые файлы не импортируют `@u7-scl/app-legacy`
 
-### DEBT-26: импорт `@u7-scl/app-legacy/domain` в domain/peer-review/module.ts
-- **Место:** `domain/src/peer-review/module.ts` (тип `U7ModuleResolver`)
-- **Причина:** тип резолвера модулей определён в `app` (см. DEBT-2).
-- **Погашает:** перевод `peer-review` на Def
-- **Критерий снятия:** маркер `DEBT-26` удалён, `module.ts` не импортирует `@u7-scl/app-legacy`
-
 ## 2. Реэкспорты старых путей
 
 ### DEBT-3: barrel `modules/user/src/domain/index.ts`
@@ -128,8 +122,8 @@
 - **Критерий снятия:** потребители импортируют `@u7-scl/domain/wish`; barrel удалён
 
 ### DEBT-27: barrel `modules/peer-review/src/domain/index.ts`
-- **Место:** `modules/peer-review/src/domain/index.ts`, `modules/peer-review/src/api/errors.ts` (если ошибки перенесены в домен)
-- **Причина:** потребители импортируют `@u7-scl/peer-review/domain` и `../errors`; переписывать их не входит в трек.
+- **Место:** `modules/peer-review/src/domain/index.ts`
+- **Причина:** потребители импортируют `@u7-scl/peer-review/domain`; переписывать их не входит в трек.
 - **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
 - **Критерий снятия:** потребители импортируют `@u7-scl/domain/peer-review`; barrel удалён
 
@@ -225,7 +219,7 @@
 
 ### DEBT-34: legacy-модули импортируют чужой `index`
 - **Место:** `scripts/domain-check.ts` (`checkContractImports` пропускает пары legacy-модулей; `checkDomainImports` разрешает `index`)
-- **Причина:** D-45 — чужой модуль только через `contract`; legacy-код `user`, `course`, `questionnaire`, `stream`, `peer-review`, `dossier` импортирует `index` друг друга (entity `User`, `Role`, фасады) — около 100 импортов.
+- **Причина:** D-45 — чужой модуль только через `contract`; legacy-код `user`, `course`, `questionnaire`, `stream`, `dossier` импортирует `index` друг друга (entity `User`, `Role`, фасады) — около 100 импортов.
 - **Погашает:** перевод каждого модуля на Def — модуль попадает в проверку автоматически (`external` снят)
 - **Критерий снятия:** все модули на Def; пропуск legacy-пар и `index` в `checkDomainImports` удалены, маркер удалён
 

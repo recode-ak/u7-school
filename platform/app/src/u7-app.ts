@@ -28,7 +28,6 @@ import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import {
   createPeerReviewModule,
-  PeerReviewApiModule,
   ReviewCampaignJsonRepo,
   type ReviewCampaignRepo,
   ReviewJsonRepo,
@@ -208,22 +207,12 @@ export class U7App {
       },
     );
 
-    // ══ Peer-review (legacy): пустая оболочка до Ф3 ══
-    // Кампании, отзывы и подписка ER на события судьбы студента — в модуле DMG.
-    const peerReviewModule = new PeerReviewApiModule({
-      streamFacade,
-      userFacade,
-      appResolver,
-      eventBus: appResolver.eventBus,
-    });
-
     // ══ ApiApp: модули (legacy + DMG) ══
     const apiApp = new ApiApp<U7BotAppMeta>([
       userModule,
       streamModule,
       courseModule,
       questionnaireModule,
-      peerReviewModule,
     ]).withDmg(dmg.api, dmg.modules);
 
     // Планировщик — техническая зависимость: передаётся через init(),

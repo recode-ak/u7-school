@@ -17,7 +17,7 @@ import { PeerReviewController } from '../../src/controllers/peer-review/controll
 
 /**
  * Smoke сквозной склейки peer-review на тестовом стенде (Фаза 6, задача 1):
- * TestApp подключает PeerReviewApiModule на фикстурах peer-review/*,
+ * TestApp подключает Def-модуль peer-review на фикстурах peer-review/*,
  * ER создания кампании подписан на события судьбы студента общей шиной,
  * сторя приглашений работает на реальной шине.
  *
