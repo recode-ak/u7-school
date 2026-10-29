@@ -11,17 +11,16 @@ Grammy-слой — тонкий адаптер апдейтов, состоян
 ```
 runners/u7-bot/
   src/
-    main.ts                       # Точка входа: config → logger → createBot → ApiApp → UiApp → BotTransport → jobs
+    main.ts                       # Точка входа: config → U7AppEnv → U7App (@u7-scl/app) → UiApp → BotTransport → jobs
     bot.ts                        # createBot(token) — Grammy-бот без сессий (диалогами владеет транспорт)
     context.ts                    # BotContext = Context (реэкспорт BotSession из core)
     config.ts                     # BotConfig (токены, группа школы, админы)
-    create-api-app.ts             # Фабрика ApiApp (доменные модули + репозитории)
     create-ui-app.ts              # Фабрика U7BotUiApp (контроллеры + actorResolver + transport)
     ensure-registered.ts          # Гост-регистрация пользователя по telegramId
     core/
       u7-bot-controller.ts        # U7BotController — базовый контроллер (префиксация кодов)
       u7-bot-ui-story.ts          # U7BotUiStory — базовая стори (контракт команд ФР-4)
-      u7-bot-app-meta.ts          # U7BotAppMeta — мета-тип приложения (для appApi)
+      u7-bot-app-meta.ts          # UI-типы бота; U7BotAppMeta — переэкспорт из @u7-scl/app
       ui-app.ts                   # U7BotUiApp — специализация BotUiApp (init/start)
       u7-menu.ts                  # Декларативные кнопки главного меню
     controllers/

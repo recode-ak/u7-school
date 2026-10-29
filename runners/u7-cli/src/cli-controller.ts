@@ -3,11 +3,11 @@ import { dirname, join } from 'node:path';
 import { stdin as input, stdout as output } from 'node:process';
 import * as readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
+import type { U7BotAppMeta } from '@u7-scl/app';
 import type { User } from '@u7-scl/app-legacy';
 import type { ApiApp, UcDocType } from '@u7-scl/core/api';
 import type * as v from 'valibot';
 import { formatValibotErrors } from './controller/format-valibot-errors';
-import type { CliAppMeta } from './types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -110,7 +110,7 @@ export class CliController {
   private currentActor: User | null = null;
   private rl: readline.Interface;
 
-  constructor(private app: ApiApp<CliAppMeta>) {
+  constructor(private app: ApiApp<U7BotAppMeta>) {
     this.rl = readline.createInterface({ input, output });
   }
 
@@ -319,7 +319,7 @@ export class CliController {
 
     try {
       const result = await this.app.execute(
-        ucName as CliAppMeta['moduleMetas']['ucMetas']['ucName'],
+        ucName as U7BotAppMeta['moduleMetas']['ucMetas']['ucName'],
         payload,
         this.currentActor ?? undefined,
       );

@@ -81,3 +81,7 @@ TDD: тесты → запуск (red) → реализация → green.
 Остались импорты прикладных пакетов в `runners/`: `tests/helpers/test-app.ts` (репозитории для проверки состояния, warn ARC-08 был и раньше), `controllers/streams/controller.ts` (`@u7-scl/stream`: `Student`, `StudentAr`, `StudentOutcomeCategory` — было до трека), `u7-cli` (шаг 3) — разобрать в Ф3.
 
 Вопрос `callers` обязателен или нет — решено оркестратором: обязателен (один путь построения `Caller`).
+
+### migrator (Opus), шаг 3
+
+Готово, гейт зелёный (проверено оркестратором). `u7-cli/main.ts` и `scripts/call-uc.ts` — на `U7App` (`dbDir: 'data'`, `mode: 'development'`, школа — поля `TEST_SCHOOL`); `CliController` — на `ApiApp<U7BotAppMeta>`, `types.ts` CLI удалён, импортов пакетов модулей в `u7-cli` нет; `create-dmg-modules.ts` удалён. Скрипты не запускались. Изменения поведения: CLI и `call-uc` видят все модули бота; в `call-uc` подписаны реакции `peer-review` (раньше модуля не было) — как в боте; школа в `call-uc` — `TEST_SCHOOL` (раньше отсутствовала, `as unknown as`); неизвестный актор — сообщение и exit 1 вместо исключения.

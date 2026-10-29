@@ -12,9 +12,9 @@
     "check": "bun run lint && bun run tslint && bun test --pass-with-no-tests"
   },
   "dependencies": {
-    "@u7-scl/user": "workspace:*",
+    "@u7-scl/app": "workspace:*",
+    "@u7-scl/app-legacy": "workspace:*",
     "@u7-scl/core": "workspace:*",
-    "@u7-scl/course": "workspace:*",
     "valibot": "^1.2.0"
   }
 }

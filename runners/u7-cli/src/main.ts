@@ -1,55 +1,27 @@
-import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app-legacy/domain';
-import { ApiApp } from '@u7-scl/core/api';
-import { InProcEventBus, InProcJobScheduler } from '@u7-scl/core/infra';
+import { U7App } from '@u7-scl/app';
+import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import { ConsoleLogger, LogLevel } from '@u7-scl/core/shared';
-import { CourseApiModule } from '@u7-scl/course/api';
-import {
-  CourseJsonRepo,
-  LessonJsonRepo,
-  ModuleJsonRepo,
-  StepJsonRepo,
-} from '@u7-scl/course/infra';
-import { UserApiModule } from '@u7-scl/user/api';
-import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
 import { CliController } from './cli-controller';
-import type { CliAppMeta } from './types';
 
 async function main() {
   const logger = new ConsoleLogger();
   logger.setLogLevel(LogLevel.DEBUG);
-  const appResolver: U7AppResolver = {
-    logger,
-    mode: 'development',
-    eventBus: new InProcEventBus(),
-    school: TEST_SCHOOL,
-  };
 
-  const userRepo = new UserJsonRepo();
-  const userModule = new UserApiModule({
-    userRepo,
-    appResolver,
-    eventBus: appResolver.eventBus,
-  });
-  const userFacade = new UserInProcFacade(userModule);
-
-  const courseRepo = new CourseJsonRepo('data/courses/courses.json');
-
-  const courseModule = new CourseApiModule({
-    moduleRepo: new ModuleJsonRepo(),
-    courseRepo,
-    lessonRepo: new LessonJsonRepo(),
-    stepRepo: new StepJsonRepo(),
-    userFacade,
-    appResolver,
-    eventBus: appResolver.eventBus,
-  });
-
-  // CLI — короткоживущий процесс: планировщик передаётся через init()
-  // (обязательный контракт ApiApp), но start() не вызывается —
-  // фоновые задания не нужны.
-  const app = new ApiApp<CliAppMeta>([userModule, courseModule]);
-  app.init(new InProcJobScheduler({ logger }));
-  const controller = new CliController(app);
+  // Корень сборки (D-50): данные — `data/` (прежние пути по умолчанию),
+  // школа — поля TEST_SCHOOL. CLI — короткоживущий процесс: U7App
+  // инициализирует планировщик (обязательный контракт ApiApp), но start()
+  // не вызывается — фоновые задания не нужны.
+  const app = new U7App(
+    {
+      mode: 'development',
+      dbDir: 'data',
+      communityGroup: TEST_SCHOOL.communityGroup,
+      studentGroup: TEST_SCHOOL.studentGroup,
+      mentors: [...TEST_SCHOOL.mentors],
+    },
+    { logger },
+  );
+  const controller = new CliController(app.apiApp);
   await controller.run();
 }
 

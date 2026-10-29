@@ -1,10 +1,8 @@
 /**
  * call-uc — утилита для вызова UseCase из команднойчей строки.
  *
- * Собирает полный стек ApiApp со всеми модулями приложения
- * (user, course, stream, questionnaire, wish) — в том же порядке
- * и с теми же зависимостями, что и живое приложение бота
- * (runners/u7-bot/src/create-api-app.ts), но без Telegram-интерфейса.
+ * Собирает то же приложение, что и бот — корень сборки `U7App`
+ * (`@u7-scl/app`, D-50) над `data/`, — но без Telegram-интерфейса.
  *
  * Использование:
  *   bun run scripts/call-uc.ts <usecase> '<json-params>' [actorId]
@@ -19,7 +17,7 @@
  *   bun run scripts/call-uc.ts create-course-wish '{"courseId":"<uuid>"}'
  *
  * UC модуля wish — DMG (Ф12): команда через `ApiApp.dispatch` (D-49) над той
- * же сборкой DMG, что и в боте (`runners/u7-bot/src/create-dmg-modules.ts`);
+ * же сборкой DMG, что и в боте (`U7App`), субъект — резолвер `app.callers`;
  * имя — kebab-case (`create-course-wish`) или имя Def (`createCourseWish`).
  * Отказ — `Err` с кодом в stderr и выход с кодом 1. Лог операций DMG
  * пишется в `data/oplog/`, как у бота.
@@ -31,47 +29,12 @@
  * actorId можно переопределить третьим аргументом.
  */
 
-import { ApiApp } from '@u7-scl/core/api';
-import {
-  BaseJsonDb,
-  InProcEventBus,
-  InProcJobScheduler,
-} from '@u7-scl/core/infra';
-import type { Logger } from '@u7-scl/core/shared';
-import { CourseApiModule } from '@u7-scl/course/api';
-import type { CourseApiModuleResolver } from '@u7-scl/course/domain';
-import {
-  CourseInProcFacade,
-  CourseJsonRepo,
-  LessonJsonRepo,
-  ModuleJsonRepo,
-  StepJsonRepo,
-} from '@u7-scl/course/infra';
+import { U7App, type U7BotAppMeta } from '@u7-scl/app';
+import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
+import { ConsoleLogger } from '@u7-scl/core/shared';
 import { WishModuleDef } from '@u7-scl/domain/wish/contract';
-import { QuestionnaireApiModule } from '@u7-scl/questionnaire/api';
-import type { QuestionnaireApiModuleResolver } from '@u7-scl/questionnaire/domain';
-import {
-  QuestionnaireInProcFacade,
-  QuestionnaireJsonRepo,
-} from '@u7-scl/questionnaire/infra';
-import type { StreamApiModuleResolver } from '@u7-scl/stream';
-import {
-  StreamApiModule,
-  StreamInProcFacade,
-  StreamJsonRepo,
-  StudentJsonRepo,
-} from '@u7-scl/stream';
-import { UserApiModule } from '@u7-scl/user/api';
-import type { UserApiModuleResolver } from '@u7-scl/user/domain';
-import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
-import { WishJsonRepo } from '@u7-scl/wish/infra';
-import { type InputOf, UseCaseDef, UserCaller } from 'dmg-core';
+import { type InputOf, UseCaseDef } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
-import {
-  createDmgApp,
-  createDmgAppContext,
-} from '../runners/u7-bot/src/create-dmg-modules.ts';
-import { resolveActor } from './_app-factory';
 
 const NUR_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';
 
@@ -141,111 +104,44 @@ async function main() {
     process.exit(1);
   }
 
-  // ─── Инициализация (порядок как в create-api-app.ts) ────────
-  const db = new BaseJsonDb();
-  const appResolver = {
-    logger: console as unknown as Logger,
-    mode: 'development' as const,
-    eventBus: new InProcEventBus(),
-  };
-
-  const userRepo = new UserJsonRepo('data/users/users.json', undefined, db);
-  const streamRepo = new StreamJsonRepo('data/streams/streams.json');
-  const studentRepo = new StudentJsonRepo('data/streams/students.json');
-
-  const userModule = new UserApiModule({
-    userRepo,
-    appResolver,
-    eventBus: appResolver.eventBus,
-  } as unknown as UserApiModuleResolver);
-  const userFacade = new UserInProcFacade(userModule);
-
-  const moduleRepo = new ModuleJsonRepo('data/courses/modules.json');
-  const lessonRepo = new LessonJsonRepo('data/courses/lessons.json');
-  const stepRepo = new StepJsonRepo('data/courses/steps.json');
-  const courseRepo = new CourseJsonRepo('data/courses/courses.json');
-
-  const courseModule = new CourseApiModule({
-    db,
-    moduleRepo,
-    courseRepo,
-    lessonRepo,
-    stepRepo,
-    userFacade,
-    appResolver,
-    eventBus: appResolver.eventBus,
-  } as unknown as CourseApiModuleResolver);
-  const courseFacade = new CourseInProcFacade(courseModule);
-
-  const qRepo = new QuestionnaireJsonRepo(
-    'data/questionnaires/questionnaires.json',
-    db,
-  );
-  const questionnaireModule = new QuestionnaireApiModule({
-    questionnaireRepo: qRepo,
-    userFacade,
-    db,
-    appResolver,
-    eventBus: appResolver.eventBus,
-  } as unknown as QuestionnaireApiModuleResolver);
-  const questionnaireFacade = new QuestionnaireInProcFacade(
-    questionnaireModule,
-  );
-
-  const streamModule = new StreamApiModule({
-    streamRepo,
-    streamStudentRepo: studentRepo,
-    userFacade,
-    courseFacade,
-    appResolver,
-    eventBus: appResolver.eventBus,
-  } as unknown as StreamApiModuleResolver);
-  const streamFacade = new StreamInProcFacade(streamModule);
-
-  // DMG: wish и внешние модули зависимостей — как в create-api-app.ts
-  const dmg = createDmgApp(
-    createDmgAppContext({
-      legacyBus: appResolver.eventBus,
-      logger: appResolver.logger,
-      mode: appResolver.mode,
-      oplogDir: 'data/oplog',
-    }),
+  // ─── Инициализация: корень сборки, как у бота ─────────
+  // Данные — `data/`; школа — поля TEST_SCHOOL (вызываемым UC школа бота не
+  // нужна). U7App выполняет init() (карты UC, подписки ER); start() НЕ
+  // вызываем — таймеры job'ов в одноразовом скрипте не нужны.
+  const app = new U7App(
     {
-      user: userFacade,
-      course: courseFacade,
-      questionnaire: questionnaireFacade,
-      stream: streamFacade,
+      mode: 'development',
+      dbDir: 'data',
+      communityGroup: TEST_SCHOOL.communityGroup,
+      studentGroup: TEST_SCHOOL.studentGroup,
+      mentors: [...TEST_SCHOOL.mentors],
     },
-    new WishJsonRepo('data/wish/wishes.json'),
+    { logger: new ConsoleLogger() },
   );
-
-  const app = new ApiApp([
-    userModule,
-    streamModule,
-    courseModule,
-    questionnaireModule,
-  ]).withDmg(dmg.api, dmg.modules);
-
-  // init() заполняет карты UC и подписки ER; start() НЕ вызываем —
-  // таймеры job'ов в одноразовом скрипте не нужны (паттерн _app-factory)
-  app.init(new InProcJobScheduler({ logger: console as unknown as Logger }));
 
   // Актор — полный User-объект (по умолчанию Nur)
-  const actor = await resolveActor(app, actorIdOverride || NUR_UUID);
+  const actorId = actorIdOverride || NUR_UUID;
+  const actor = await app.userFacade.getUserByUuid(actorId);
+  if (!actor) {
+    console.error(`❌ Ошибка: пользователь ${actorId} не найден`);
+    process.exit(1);
+  }
 
   // ─── Вызов UseCase ────────────────────────────────
   const dmgUc = wishUcDef(ucName);
   if (dmgUc) {
     // Вход из командной строки не типизирован — его проверит UC.
     const command = UseCaseDef.commandOf(dmgUc, params as InputOf<WishUc>);
-    const res = await app.dispatch(
+    const trace = Trace.fromRequest({
+      requestId: crypto.randomUUID(),
+      channel: { name: 'cli' },
+    });
+    const caller = await app.callers.resolve(actor.uuid, trace);
+    const res = await app.apiApp.dispatch(
       WishModuleDef,
       command,
-      new UserCaller(actor),
-      Trace.fromRequest({
-        requestId: crypto.randomUUID(),
-        channel: { name: 'cli' },
-      }),
+      caller,
+      trace,
     );
     if (!res.ok) {
       const { code, label, payload } = res.error;
@@ -257,7 +153,12 @@ async function main() {
   }
 
   try {
-    const result = await app.execute(ucName, params, actor);
+    // Имя UC из командной строки не типизировано — неизвестное отвергнет ApiApp.
+    const result = await app.apiApp.execute(
+      ucName as U7BotAppMeta['moduleMetas']['ucMetas']['ucName'],
+      params,
+      actor,
+    );
     console.log(JSON.stringify(result, null, 2));
   } catch (e: unknown) {
     const err = e as {
