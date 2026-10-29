@@ -1,0 +1,4 @@
+Задача Ф4: TR-29 — agents:sync на Role пакета.
+Пакет dmg-core a9aea1b: Role.renderEnv(env, comment, common) — копия среды со своей меткой; render делегирует ему (API не сломан).
+u7-school: scripts/agents-sync.ts — Role.parse + renderEnv, удалены TOOLS/Env/Tool/Role/parseRole/renderRole; тесты разбора перенесены на пакет (role.test.ts), в проекте — характеризация buildCopies (точный текст копии, ошибки с путём, дубль роли).
+debt.md: запись TR-29 удалена. Проверки: agents:check зелёный, bun run check — 3330 pass.
