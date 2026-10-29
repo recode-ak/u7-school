@@ -33,7 +33,7 @@
 - [x] Task: Ревью reviewer; правки по ревью 12c98c5 (error и warning нет; 2 info оставлены — бриф `slices/wish.md`)
 - [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
-## Фаза 4: Финал
+## Фаза 4: Финал [checkpoint: b547102]
 
 - [x] Task: `summary.md`: итог, сравнение с базовой линией, TR трека; `migration.md`/`debt.md` при необходимости 510e8ede
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
