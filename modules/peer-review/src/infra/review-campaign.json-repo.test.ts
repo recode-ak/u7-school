@@ -247,6 +247,11 @@ describe('ReviewCampaignJsonRepo: legacy-записи', () => {
     await repo.save(loaded);
 
     expect((await repo.findById(row.uuid))?.snapshot().version).toBe(0);
+    const raw = (await Bun.file(
+      path('legacy-resave.json'),
+    ).json()) as ReviewCampaignState[];
+    expect(raw.filter((r) => r.uuid === row.uuid)).toHaveLength(1);
+    expect(raw).toHaveLength(1);
   });
 
   test('legacy-окно: граница включительно при TZ процесса Asia/Oral (UTC+5)', async () => {

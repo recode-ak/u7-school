@@ -4,8 +4,9 @@ import {
   type PeerReviewModuleDef,
   type ReviewCampaignAr,
   ReviewCampaignErrors,
+  ReviewCampaignPolicy,
 } from '@u7-scl/domain/peer-review';
-import { type Caller, err, type Identified, ok } from 'dmg-core';
+import { type Caller, CoreErrors, err, type Identified, ok } from 'dmg-core';
 import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
 import type { PeerReviewDeps } from '../../peer-review.module';
 
@@ -44,9 +45,12 @@ export class GetCampaignRecipientsUc extends UseCaseFromDef<
   ) {
     const userId = this.subject(caller).uuid;
     const myRole = campaign.authorRoleOf(userId);
-    // Policy пропускает только автора окна; ветка — для сужения типа.
+    // Policy пропускает только автора окна; ветка сужает тип и дублирует отказ.
     if (myRole === undefined) {
-      throw new Error('GetCampaignRecipientsUc: автор окна не определён');
+      return CoreErrors.ACCESS_DENIED.err({
+        rule: 'isWindowAuthor',
+        denyMessage: ReviewCampaignPolicy.rules.isWindowAuthor.denyMessage,
+      });
     }
     const myReviews = await this.resolve.reviews.findByCampaignAndAuthor(
       campaignId,

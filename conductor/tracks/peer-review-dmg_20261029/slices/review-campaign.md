@@ -215,3 +215,17 @@ DOM-01…06, DOM-10…12, DOM-14…16; API-01, API-03, API-05; MAN-01, MAN-02, M
 `campaign.story` (адресаты, «мои кампании»), `my-reviews.story` → `dispatchUc(PeerReviewModuleDef, …)`; `REVIEW_CAMPAIGN_NOT_FOUND` по `code` → экран S03 (текст прежний), прочие отказы — `ucErrorNotify`. `invite.story` подписан на FQN `ReviewCampaignEvents.created`. Импорты бота — `@u7-scl/domain/peer-review/contract`; в контракт добавлены type-экспорты `Review`, `ReviewDirection`, `RecipientReviewsGroup`, `StudentOutcome` (как `User` у `user`, TR-35 п. 2). Миры: `WorldCampaign` (ввод с ISO). Тест-кит `stories/peer-review-dmg.test-kit.ts`. e2e `reviews-for-me` — кампания создаётся событием `student.completed` вместо записи сырого state. `test:bot` 978 → 979 pass (+1 — NOT_FOUND в S03).
 
 **Гейт orchestrator:** `CI=true bun run check` зелёный — 3392 pass, `arch:check` 0 нарушений, `test:tz` 20 + 20 pass; `git status data/` чист.
+
+### data-keeper — по diff `6ac8d0e0..2d03728b` (Ф1, Sonnet)
+
+Расхождений с аудитом нет: ISO → число UTC, `updatedAt = createdAt`, `version = 0`, `participants: []`, round-trip, уникальность пары (`json-repo.ts:143-154`), строгий разбор без перезаписи файла (`:165-169`, тесты сверяют текст до и после), путь и формат JSON-массива прежние (`u7-app.ts:188-190`), `reviews.json` не затронут, миры e2e пишут ISO как legacy. Недостающих тестов нет. Риски: откат кода после первой записи — только из копии, не `git revert`; строгий разбор — TR-37 (утверждён). Риск «`peer-review` вне системного бэкапа» — устаревший: `backup.sh` после `d7c073a4` копирует весь `data/` вне `EXCLUDE` (проверено orchestrator'ом). Перед выкаткой — `backup:adhoc` по аудиту.
+
+### reviewer — по diff `6ac8d0e0..2d03728b` (Ф1, Sonnet)
+
+| ID | файл:строка | суть | severity | решение |
+|---|---|---|---|---|
+| ERR-01 | `modules/peer-review/src/review-campaign/uc/get-campaign-recipients.uc.ts:49` | `throw` в недостижимой ветке после Policy | minor | исправить (TR-38 п. 7) |
+| — | `modules/peer-review/src/infra/review-campaign.json-repo.ts:73` | `throw` при дубле пары в `write` | question | оставить: инвариант хранилища (бриф п. 11), штатный отказ — `unique` |
+| TST-05 | `modules/peer-review/src/infra/review-campaign.json-repo.test.ts:241` | потеряна проверка «повторный save не дублирует» (число записей) | minor | вернуть (TR-38 п. 7) |
+
+Критерии приёмки, сохраняемое поведение, мост `create-review-uc` (коды и порядок проверок прежние), тексты S02–S06 — без замечаний. Перенос сценариев: потерь нет; `get-campaign-recipients` 9 → 7 — два «доступ запрещён» слиты в `it.each`. Намеренно сняты: минутная точность `createdAt`, генерация uuid в фабрике (теперь в ER), клон-снапшот `participants`.
