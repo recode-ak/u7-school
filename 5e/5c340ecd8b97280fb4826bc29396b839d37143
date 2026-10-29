@@ -1,0 +1,1 @@
+Ф3 трека peer-review-dmg: задачи 1–4 (сверка PeerReviewModuleDef, снятие legacy-резолвера и ARC-07, удаление PeerReviewApiModule/module.ts/api, reviewer). Исполнитель — migrator (Sonnet), ревью — reviewer (Sonnet), error нет; warning по DEBT-27 исправлен. check зелёный: bun test 3526/0, test:bot 996/0. data/ не тронута. Автономно.
