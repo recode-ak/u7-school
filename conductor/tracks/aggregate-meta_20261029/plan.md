@@ -22,8 +22,8 @@
     - [x] Тесты: совпала — операция идёт; расходится — `Err(VERSION_CONFLICT)` без фиксации и событий; не прислана — сверки нет; red
     - [x] Реализация; green
 - [x] Task: Учебный модуль: `completeTask` с `expectedVersion`, тест; генератор — по необходимости (dmg-core 6ed31b6; генератор не меняется — сверка по выбору UC)
-- [ ] Task: Документация: гайд `use-case`, `transport.md` §2, `llms.txt`
-- [ ] Task: Ревью reviewer; правки по ревью
+- [x] Task: Документация: гайд `use-case`, `transport.md` §2, `llms.txt` (dmg-core 275661f; плюс `errors-result.md` и описание `VERSION_CONFLICT`)
+- [~] Task: Ревью reviewer; правки по ревью
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: `wish` в u7-school
