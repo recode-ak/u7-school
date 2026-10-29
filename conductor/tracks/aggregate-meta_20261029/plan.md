@@ -24,7 +24,7 @@
 - [x] Task: Учебный модуль: `completeTask` с `expectedVersion`, тест; генератор — по необходимости (dmg-core 6ed31b6; генератор не меняется — сверка по выбору UC)
 - [x] Task: Документация: гайд `use-case`, `transport.md` §2, `llms.txt` (dmg-core 275661f; плюс `errors-result.md` и описание `VERSION_CONFLICT`)
 - [x] Task: Ревью reviewer; правки по ревью (dmg-core dbfbbe0; error нет; warning о сверке после мутации — задокументировано, `storedVersion` не подходит для `ReadonlyAr`; принято: метка `F.expectedVersion(label)`, тесты через вход и порядок отказов; при релизе отметить удаление `CommandMeta.version`)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: `wish` в u7-school
 
