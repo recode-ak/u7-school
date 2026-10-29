@@ -45,7 +45,7 @@
 - [x] Task: ARC-07 корневого `biome.json` — как в пакете (входы `modules/<m>` для app); фикстура `lint-fixtures`; блок для `platform/app/**` (сейчас правила нет — ревью Ф2); `U7App` берёт `wish` через вход пакета, а не `@u7-scl/wish/{infra,wish}` `25eeb49` (в пакете ARC-07 — только `arch:check`; в корне — lint для `platform/app/src/**`, маска модулей на DMG — TR-35 п. 5; `U7App` через вход — в `4b0d63e`)
 - [x] Task: D-53 (ARC-06) — машинный запрет `@u7-scl/app` в `modules/**` (`domain-check` смотрит только `domain/src/`); фикстура; red → green `0b3133c` (`checkModuleImports` в `arch:check`; нарушений нет)
 - [x] Task: ARC-09 — на всё, кроме точек входа раннеров; поправить найденные нарушения или завести DEBT `1e5dbf6` (одно нарушение — `loadConfig` бота, исправлено; `authoring`, `scripts` вне правила — TR-36)
-- [ ] Task: `rules.md` — карта правил; снять маркер и запись DEBT-39
+- [x] Task: `rules.md` — карта правил; снять маркер и запись DEBT-39 `9b818ea`
 - [ ] Task: Ревью reviewer; правки по ревью
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
