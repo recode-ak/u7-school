@@ -59,21 +59,24 @@
 
 ## 6. Состояние переноса
 
-- **На Def (DMG):** `wish` — домен `domain/src/wish`, прикладной слой `modules/wish/src` (4 UC, 4 ER, JSON-репозиторий, `ModuleFromDef`); в приложении собран в `runners/u7-bot/src/create-dmg-modules.ts`, legacy `wish` удалён. Это эталон: гайды — [guides/](../../node_modules/dmg-core/docs/guides/index.md).
-- **Внешние модули (D-37):** `user`, `course`, `questionnaire`, `stream`, `peer-review`, `dossier` — `ModuleDef.define({ external: true })` в домене; UC, которые зовёт `wish`, исполняют адаптеры над legacy-фасадами (TR-11), legacy-события входят через `legacyEventBus` (`inbound`).
+- **На Def (DMG):** `wish` — домен `domain/src/wish`, прикладной слой `modules/wish/src` (4 UC, 4 ER, JSON-репозиторий, `ModuleFromDef`), legacy `wish` удалён. Эталон: гайды — [guides/](../../node_modules/dmg-core/docs/guides/index.md). Чужие вызовы UC — в шаге `fetch` после Policy (D-58 пакета).
+- **Корень сборки (D-50, D-52):** `@u7-scl/app` (`platform/app`) — `U7App` собирает всё приложение по `AppEnv`: legacy-модули, `AppContext` DMG, модули DMG через `ApiApp` пакета (фабрики `ModuleFactory`, фасады по `dependsOn`), резолвер `Caller` (`U7CallerResolver` над legacy `userFacade`). Legacy-ядро приложения — `@u7-scl/app-legacy` (`platform/app-legacy`, TR-33). Раннеры (`u7-bot`, `u7-cli`) и `scripts/call-uc.ts` получают приложение из `U7App`; ARC-07/08/09 и D-53 (ARC-06) — машинные (`arch:check`, `biome`).
+- **Внешние модули (D-37):** `user`, `course`, `questionnaire`, `stream`, `peer-review`, `dossier` — `ModuleDef.define({ external: true })` в домене; UC, которые зовёт `wish`, исполняют адаптеры над legacy-фасадами (TR-11) — фабрики в `U7App`, legacy-события входят через `legacyEventBus` (`inbound`).
 - **Механически перенесены** (трек 3): domain-слои всех модулей в `@u7-scl/domain`; старые `modules/<m>/src/domain/index.ts` и `modules/dossier/src/index.ts` — barrel-реэкспорты с маркером `DEBT`.
-- **Граф `dependsOn`** строится из `ModuleDef` (`scripts/domain-arch.ts`); `arch:check` сверяет маркеры `// DEBT-<n>` с [debt.md](./debt.md), тактические решения перехода — `TR-<n>` там же.
+- **Граф `dependsOn`** строится из `ModuleDef` (`scripts/domain-arch.ts`, `DomainArch` с `root` и `runners`); `arch:check` сверяет маркеры `// DEBT-<n>` с [debt.md](./debt.md), тактические решения перехода — `TR-<n>` там же.
 
 ### Входной долг для следующих треков
 
 | Владелец | Долги |
 |---|---|
-| `dmg-core-extract` Ф4–6 | — (DEBT-33 погашен в Ф4, TR-26) |
-| треки перевода модулей на Def | импорты `core`/`app` в домене — user DEBT-1, 2; course DEBT-6, 7; questionnaire DEBT-11, 12; stream DEBT-16, 17; peer-review DEBT-25, 26; импорты чужого `index` legacy-модулями — DEBT-34; user DEBT-5; course DEBT-9, 10; questionnaire DEBT-14, 15, 32; stream DEBT-19, 20; peer-review DEBT-28, 29 |
-| последний трек миграции | barrel-долги DEBT-3, 8, 13, 18, 23, 27, 30 и `User` в `app` (DEBT-4) |
+| `stream-student` и перевод `stream` | импорты `core`/`app-legacy` в домене — DEBT-16, 17; DEBT-19, 20; ER `invite-wishers` не идемпотентен — DEBT-35 |
+| треки перевода остальных модулей на Def | импорты `core`/`app-legacy` в домене — user DEBT-1, 2; course DEBT-6, 7; questionnaire DEBT-11, 12; peer-review DEBT-25, 26; импорты чужого `index` legacy-модулями — DEBT-34; user DEBT-5; course DEBT-9, 10; questionnaire DEBT-14, 15, 32; peer-review DEBT-28, 29 |
+| по мере касания | тесты UC/ER/Job на JSON во временном каталоге — DEBT-40 |
+| `ui-manifests` / `dmg-ui` | id апдейта Telegram неявным контекстом — DEBT-41 |
+| после перехода | `u7-cli` и `call-uc` — общий инструмент вызова UC — DEBT-42 |
+| последний трек миграции | barrel-долги DEBT-3, 8, 13, 18, 23, 27, 30 и `User` в `app-legacy` (DEBT-4) |
 
 ### Старт следующих треков
 
-- **`dmg-core-extract` Ф4–6** — по spec трека; гайды переезжают в `docs/guides/` пакета (решение «вариант А» spec `golden-wish`).
-- **`stream-student`** (трек 5) — первый срез конвейером агентов по гайдам; бриф — по образцу `conductor/archive/golden-wish_20261020/slices/wish.md`, итог эталона — `summary.md` трека.
-- Базовая линия тестов на конец `golden-wish`: 3734 pass, 0 fail.
+- **`stream-student`** (трек 5) — первый срез конвейером агентов по гайдам пакета; бриф — по образцу `conductor/archive/golden-wish_20261020/slices/wish.md`, итог эталона — `summary.md` трека. Модуль подключается фабрикой в `U7App` (`platform/app/src/u7-app.ts`, как `wish`) через вход пакета: `@u7-scl/<m>/**` — в группу ARC-07 блока `platform/app/src/**` корневого `biome.json` (TR-35 п. 5); адаптер TR-11 для `stream` снимается, когда UC `wish` начнут вызывать модуль на Def.
+- Базовая линия тестов на конец `app-assembly`: см. `summary.md` трека `app-assembly_20261029`.
