@@ -1,8 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import { assertMarkdownV2Safe, type MdText } from '@u7-scl/core/shared';
-import type { StudentCampaignCreatedEvent } from '@u7-scl/peer-review/domain';
-import { InviteStory } from './invite.story';
+import { ReviewCampaignEvents } from '@u7-scl/domain/peer-review/contract';
+import { InviteStory, type ReviewCampaignCreatedEvent } from './invite.story';
 
 // ══ Фикстуры ══
 
@@ -38,11 +38,11 @@ const mentor: Profile = {
 };
 
 function makeCreatedEvent(
-  overrides: Partial<StudentCampaignCreatedEvent['payload']> = {},
-): StudentCampaignCreatedEvent {
+  overrides: Partial<ReviewCampaignCreatedEvent['payload']> = {},
+): ReviewCampaignCreatedEvent {
   return {
     eventId: crypto.randomUUID(),
-    eventName: 'student-campaign.created',
+    eventName: ReviewCampaignEvents.created.name,
     occurredAt: '2026-09-21T12:00',
     aggregateName: 'ReviewCampaign',
     aggregateId: CAMPAIGN_ID,
@@ -117,22 +117,23 @@ function setupStory(
   return { story, invites, execute };
 }
 
-/** Обработчик подписки student-campaign.created. */
+/** Обработчик подписки peer-review.review-campaign.created. */
 function campaignCreatedHandler(
   story: InviteStory,
-): (event: StudentCampaignCreatedEvent) => Promise<void> {
+): (event: ReviewCampaignCreatedEvent) => Promise<void> {
   const sub = story
     .getEventSubscriptions()
-    .find((s) => s.eventName === 'student-campaign.created');
-  if (!sub) throw new Error('Подписка student-campaign.created не найдена');
-  return sub.handle as (event: StudentCampaignCreatedEvent) => Promise<void>;
+    .find((s) => s.eventName === 'peer-review.review-campaign.created');
+  if (!sub)
+    throw new Error('Подписка peer-review.review-campaign.created не найдена');
+  return sub.handle as (event: ReviewCampaignCreatedEvent) => Promise<void>;
 }
 
 describe('InviteStory — приглашения по созданию кампании (S01)', () => {
-  test('подписана на student-campaign.created', () => {
+  test('подписана на peer-review.review-campaign.created', () => {
     const { story } = setupStory();
     const names = story.getEventSubscriptions().map((s) => s.eventName);
-    expect(names).toContain('student-campaign.created');
+    expect(names).toContain('peer-review.review-campaign.created');
   });
 
   test('два приглашения: субъекту и ментору — по одному каждому', async () => {

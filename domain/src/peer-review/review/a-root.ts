@@ -2,7 +2,7 @@
 import { Aggregate, errValidation, throwError } from '@u7-scl/core/domain';
 // DEBT-25
 import { isoNow } from '@u7-scl/core/shared';
-import type { StudentOutcome } from '../review-campaign/entity';
+import type { StudentOutcome } from '../shared/campaign-fields';
 import type { ReviewArMeta, ReviewDirection } from './entity';
 import {
   REVIEW_TEXT_MAX_LENGTH,

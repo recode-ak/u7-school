@@ -21,13 +21,17 @@ import {
   StepJsonRepo,
 } from '@u7-scl/course/infra';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review/contract';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import {
+  createPeerReviewModule,
   PeerReviewApiModule,
   ReviewCampaignJsonRepo,
+  type ReviewCampaignRepo,
+  type ReviewFactsReader,
   ReviewJsonRepo,
 } from '@u7-scl/peer-review';
 import {
@@ -180,9 +184,15 @@ export class U7App {
 
     const streamFacade = new StreamInProcFacade(streamModule);
 
-    // ══ DMG: wish и внешние модули зависимостей (адаптеры над legacy) ══
-    // Шина DMG — поверх общей legacy-шины: события wish видят stories,
-    // legacy-события stream/questionnaire доходят до ER wish (D-37).
+    // ══ Peer-review: репозитории (кампании — DMG, рецензии — legacy до Ф2) ══
+    const reviewCampaignRepo = new ReviewCampaignJsonRepo(
+      `${dbDir}/peer-review/campaigns.json`,
+    );
+    const reviewRepo = new ReviewJsonRepo(`${dbDir}/peer-review/reviews.json`);
+
+    // ══ DMG: wish, peer-review и внешние модули зависимостей (адаптеры над legacy) ══
+    // Шина DMG — поверх общей legacy-шины: события wish и peer-review видят
+    // stories, legacy-события stream/questionnaire доходят до ER (D-37).
     const dmg = U7App.dmgApp(
       U7App.dmgContext(env, appResolver.eventBus, logger),
       {
@@ -191,16 +201,15 @@ export class U7App {
         questionnaire: questionnaireFacade,
         stream: streamFacade,
       },
-      new WishJsonRepo(`${dbDir}/wish/wishes.json`),
+      {
+        wishes: new WishJsonRepo(`${dbDir}/wish/wishes.json`),
+        campaigns: reviewCampaignRepo,
+        reviews: reviewRepo,
+      },
     );
 
-    // ══ Peer-review: репозитории, модуль и фасад ══
-    // Подписка ER на события судьбы студента — в module.init() (apiApp.init).
-    const reviewCampaignRepo = new ReviewCampaignJsonRepo(
-      `${dbDir}/peer-review/campaigns.json`,
-    );
-    const reviewRepo = new ReviewJsonRepo(`${dbDir}/peer-review/reviews.json`);
-
+    // ══ Peer-review (legacy): UC рецензий и уведомление адресата ══
+    // Кампании и подписка ER на события судьбы студента — в модуле DMG.
     const peerReviewModule = new PeerReviewApiModule({
       reviewCampaignRepo,
       reviewRepo,
@@ -281,14 +290,18 @@ export class U7App {
 
   /**
    * Приложение DMG: внешние модули зависимостей (адаптеры над legacy-фасадами,
-   * TR-11) и `wish`, собранные `ApiApp` пакета — фасады по `dependsOn`
+   * TR-11), `wish` и `peer-review` (кампании), собранные `ApiApp` пакета — фасады по `dependsOn`
    * (D-50). `modules` — их Def для заданий legacy-планировщика
    * (`ApiApp.withDmg`).
    */
   private static dmgApp(
     context: AppContext,
     legacy: U7LegacyFacades,
-    wishes: WishRepo,
+    repos: {
+      readonly wishes: WishRepo;
+      readonly campaigns: ReviewCampaignRepo;
+      readonly reviews: ReviewFactsReader;
+    },
   ) {
     const factories: ModuleFactory<Identified>[] = [
       {
@@ -312,7 +325,16 @@ export class U7App {
       },
       {
         def: WishModuleDef,
-        create: (deps) => createWishModule({ ...deps, wishes }),
+        create: (deps) => createWishModule({ ...deps, wishes: repos.wishes }),
+      },
+      {
+        def: PeerReviewModuleDef,
+        create: (deps) =>
+          createPeerReviewModule({
+            ...deps,
+            campaigns: repos.campaigns,
+            reviews: repos.reviews,
+          }),
       },
     ];
     return {

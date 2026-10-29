@@ -9,9 +9,8 @@ import type {
 import { Status } from '@u7-scl/course/domain';
 import type {
   Review,
-  ReviewCampaign,
   StudentOutcome,
-} from '@u7-scl/peer-review/domain';
+} from '@u7-scl/domain/peer-review/contract';
 import type { Stream, StreamStatus, Student } from '@u7-scl/stream/domain';
 import type { Role, User } from '@u7-scl/user/domain';
 import { assertWorldInvariants } from './invariants';
@@ -22,6 +21,7 @@ import type {
   ReviewDef,
   StreamDef,
   StudentDef,
+  WorldCampaign,
   WorldDefinition,
   WorldState,
 } from './types';
@@ -31,7 +31,7 @@ import { deterministicUuid } from './uuid';
  * Проверяет согласованность судьбы кампании и статуса студента.
  */
 function assertCampaignStudentFateInvariant(
-  campaign: ReviewCampaign,
+  campaign: WorldCampaign,
   student: Student | undefined,
   streamStatus?: string,
 ): void {
@@ -331,8 +331,8 @@ export function buildWorldState(
     return studentEntity;
   });
 
-  // 5. Сборка кампаний peer-review (CampaignDef -> ReviewCampaign)
-  const campaigns: ReviewCampaign[] = (def.campaigns ?? []).map(
+  // 5. Сборка кампаний peer-review (CampaignDef -> WorldCampaign)
+  const campaigns: WorldCampaign[] = (def.campaigns ?? []).map(
     (c: CampaignDef) => {
       const campaignUuid = c.uuid ?? deterministicUuid(`campaign:${c.key}`);
       campaignUuidByKey.set(c.key, campaignUuid);
@@ -355,7 +355,7 @@ export function buildWorldState(
           userUuidByKey.get(pKey) ?? deterministicUuid(`person:${pKey}`),
       );
 
-      const campaignEntity: ReviewCampaign = {
+      const campaignEntity: WorldCampaign = {
         uuid: campaignUuid,
         context: 'stream_fate',
         scopeId,

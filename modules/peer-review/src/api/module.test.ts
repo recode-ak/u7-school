@@ -1,104 +1,21 @@
-import { describe, expect, mock, test } from 'bun:test';
-import { InProcEventBus } from '@u7-scl/core/infra';
-import type {
-  PeerReviewApiModuleResolver,
-  ReviewCampaign,
-  ReviewCampaignRepo,
-} from '@u7-scl/domain/peer-review';
-import type { StreamMembers } from '@u7-scl/stream/domain';
+import { describe, expect, test } from 'bun:test';
+import type { PeerReviewApiModuleResolver } from '@u7-scl/domain/peer-review';
 import { PeerReviewApiModule } from './module';
 
-const SCOPE = '11111111-1111-4111-8111-111111111111';
-const SUBJECT = '22222222-2222-4222-8222-222222222222';
-
-function makeMembers(): StreamMembers {
-  return {
-    mentorId: '66666666-6666-4666-8666-666666666666',
-    students: [
-      {
-        userId: SUBJECT,
-        status: 'advanced',
-        neverStarted: false,
-      },
-    ],
-  };
-}
-
-/** Мок-резолвер: реальный ER работает против моков репо/фасада. */
-function makeResolve(members: StreamMembers | undefined) {
-  const eventBus = new InProcEventBus();
-  const saved: ReviewCampaign[] = [];
-  const resolve = {
-    reviewCampaignRepo: {
-      save: mock((c: ReviewCampaign) => {
-        saved.push(c);
-        return Promise.resolve();
-      }),
-      findBySubject: mock(() =>
-        Promise.resolve(undefined),
-      ) as unknown as ReviewCampaignRepo['findBySubject'],
-    } as unknown as ReviewCampaignRepo,
-    reviewRepo: {},
-    streamFacade: { getMembers: mock(() => Promise.resolve(members)) },
-    appResolver: { logger: console, mode: 'test' as const, eventBus },
-    eventBus,
-  };
-  return { resolve, saved };
-}
-
-describe('PeerReviewApiModule (ФР-6)', () => {
-  test('семь пользовательских UC (ФР-7) + ER реакции (ФР-6)', () => {
-    const { resolve } = makeResolve(makeMembers());
-    const mod = new PeerReviewApiModule(
-      resolve as unknown as PeerReviewApiModuleResolver,
-    );
+// Кампании (2 UC и ER из событий stream) переехали в Def-модуль:
+// `../peer-review.module.test.ts`. Здесь — остаток legacy-модуля (рецензии).
+describe('PeerReviewApiModule (ФР-7)', () => {
+  test('пять UC рецензий + ER уведомления адресата', () => {
+    const mod = new PeerReviewApiModule({} as PeerReviewApiModuleResolver);
     expect(mod.useCases.map((uc) => uc.getUcName()).sort()).toEqual([
       'create-review',
-      'get-campaign-recipients',
-      'get-my-campaigns',
       'get-my-review',
       'list-my-reviews',
       'list-scope-facts',
       'list-scope-reviews',
     ]);
-    expect(mod.reactions).toHaveLength(2);
-    const eventNames = mod.reactions
-      .flatMap((er) => [...er.getEventNames()])
-      .sort();
-    expect(eventNames).toEqual([
-      'review.created',
-      'student.abandoned',
-      'student.completed',
-    ]);
-  });
-
-  test('init подписывает ER: student.completed создаёт кампанию окна', async () => {
-    const { resolve, saved } = makeResolve(makeMembers());
-    const mod = new PeerReviewApiModule(
-      resolve as unknown as PeerReviewApiModuleResolver,
-    );
-    mod.init();
-
-    resolve.eventBus.publish({
-      eventId: crypto.randomUUID(),
-      eventName: 'student.completed',
-      occurredAt: '2026-09-20T10:00',
-      aggregateName: 'Student',
-      aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-      payload: {
-        studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-        userId: SUBJECT,
-        streamId: SCOPE,
-        moduleId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
-        outcome: 'advanced',
-      },
-    });
-
-    // ER асинхронен (подписка шины) — ждём микротаск
-    await new Promise((r) => setTimeout(r, 0));
-    expect(saved).toHaveLength(1);
-    expect(saved[0]!.context).toBe('stream_fate');
-    expect(saved[0]!.scopeId).toBe(SCOPE);
-    expect(saved[0]!.subjectId).toBe(SUBJECT);
+    expect(mod.reactions).toHaveLength(1);
+    const eventNames = mod.reactions.flatMap((er) => [...er.getEventNames()]);
+    expect(eventNames).toEqual(['review.created']);
   });
 });

@@ -1,14 +1,29 @@
 import type { Course, Lesson, Module, Step } from '@u7-scl/course/domain';
 import type {
   Review,
-  ReviewCampaign,
   ReviewDirection,
   StudentOutcome,
-} from '@u7-scl/peer-review/domain';
+} from '@u7-scl/domain/peer-review/contract';
 import type { Questionnaire } from '@u7-scl/questionnaire/domain';
 import type { Stream, StreamStatus, Student } from '@u7-scl/stream/domain';
 import type { Role, User } from '@u7-scl/user/domain';
 import type { WishState } from '@u7-scl/wish/domain';
+
+/**
+ * Кампания в мире — ввод state (не state): даты ISO, как в legacy-файле;
+ * `ReviewCampaignArDef.state` переводит их в число UTC при чтении (D-36).
+ */
+export interface WorldCampaign {
+  uuid: string;
+  context: 'stream_fate';
+  scopeId: string;
+  subjectId: string;
+  createdAt: string;
+  updatedAt?: string;
+  expiresAt: string;
+  participants: string[];
+  payload: { subjectOutcome: StudentOutcome; mentorId: string };
+}
 
 /**
  * WorldState — центральный объект состояния мира.
@@ -22,7 +37,7 @@ export interface WorldState {
   modules: Module[];
   lessons: Lesson[];
   steps: Step[];
-  campaigns: ReviewCampaign[];
+  campaigns: WorldCampaign[];
   reviews: Review[];
   wishes: WishState[];
   questionnaires: Questionnaire[];

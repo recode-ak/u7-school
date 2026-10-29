@@ -7,9 +7,15 @@ import {
   type BotSession,
   type DialogResponse,
 } from '@u7-scl/core/ui';
+import {
+  GetCampaignRecipientsUcDef,
+  ReviewCampaignErrors,
+} from '@u7-scl/domain/peer-review/contract';
 import { Role } from '@u7-scl/user/domain';
+import { err } from 'dmg-core';
 import { CampaignStory } from './campaign.story';
 import { MyReviewsStory } from './my-reviews.story';
+import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
 
 describe('CampaignStory (S03 — список адресатов)', () => {
   const CAMPAIGN_ID = 'aaaaaaaa-0000-0000-0000-000000000001';
@@ -53,6 +59,32 @@ describe('CampaignStory (S03 — список адресатов)', () => {
       | 'never_started',
   ) {
     return {
+      // UC DMG модуля peer-review — через `dispatch`
+      dispatch: peerReviewDispatch({
+        getCampaignRecipients: () => ({
+          campaignId: CAMPAIGN_ID,
+          context: 'stream_fate',
+          myRole,
+          mentorId: MENTOR_ID,
+          // исход субъекта — тексты S03/S05 по парам «роль-судьба»
+          subjectOutcome: myOutcome ?? 'completed_passed',
+          daysLeft: 5,
+          recipients,
+        }),
+        getMyCampaigns: () => [
+          {
+            campaignId: CAMPAIGN_ID,
+            context: 'stream_fate',
+            scopeId: STREAM_ID,
+            subjectId: actor.uuid,
+            myRole,
+            expiresAt: Date.parse('2026-09-26T00:00'),
+            subjectOutcome: myOutcome ?? 'completed_passed',
+            daysLeft: 5,
+            progress: { done: 1, total: recipients.length },
+          },
+        ],
+      }),
       execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
         if (failWindow && ucName === 'create-review') {
           throw new AppException({
@@ -70,29 +102,6 @@ describe('CampaignStory (S03 — список адресатов)', () => {
           throw new Error('имитация ошибки UC');
         }
         switch (ucName) {
-          case 'get-campaign-recipients':
-            return {
-              campaignId: CAMPAIGN_ID,
-              myRole,
-              mentorId: MENTOR_ID,
-              // исход субъекта — тексты S03/S05 по парам «роль-судьба»
-              subjectOutcome: myOutcome ?? 'completed_passed',
-              daysLeft: 5,
-              recipients,
-            };
-          case 'get-my-campaigns':
-            return [
-              {
-                campaignId: CAMPAIGN_ID,
-                context: 'stream_fate',
-                scopeId: STREAM_ID,
-                subjectId: actor.uuid,
-                myRole,
-                expiresAt: '2026-09-26T00:00',
-                daysLeft: 5,
-                progress: { done: 1, total: recipients.length },
-              },
-            ];
           case 'list-my-reviews':
             return { reviews: [] };
           case 'create-review':
@@ -129,9 +138,9 @@ describe('CampaignStory (S03 — список адресатов)', () => {
 
   function makeBoth(api: ReturnType<typeof makeAppApi>) {
     const hub = new MyReviewsStory();
-    hub.init({ appApi: api } as never);
+    hub.init({ appApi: api, callers: testCallers } as never);
     const story = new CampaignStory(hub);
-    story.init({ appApi: api } as never);
+    story.init({ appApi: api, callers: testCallers } as never);
     return { story, hub };
   }
 
@@ -228,12 +237,33 @@ describe('CampaignStory (S03 — список адресатов)', () => {
         [string, Record<string, unknown>, unknown]
       >
     ).map(([ucName, attrs]) => [ucName, attrs]);
-    expect(calls).toContainEqual([
-      'get-campaign-recipients',
-      { campaignId: CAMPAIGN_ID, authorId: actor.uuid },
-    ]);
+    // адресаты — UC DMG getCampaignRecipients (автор — субъект вызова)
+    const commands = appApi.dispatch.mock.calls.map(([, command]) => command);
+    expect(commands).toContainEqual(
+      GetCampaignRecipientsUcDef.command({ campaignId: CAMPAIGN_ID }),
+    );
     expect(calls).toContainEqual(['get-stream', { streamId: STREAM_ID }]);
     expect(calls).toContainEqual(['get-user', { uuid: MENTOR_ID }]);
+  });
+
+  test('list: кампании нет (NOT_FOUND) → «Кампания не найдена» и возврат в хаб', async () => {
+    const appApi = makeAppApi([{ userId: PEER_ID, hasMyReview: false }]);
+    appApi.dispatch.mockImplementation((async () =>
+      err(
+        ReviewCampaignErrors.NOT_FOUND.make({ campaignId: CAMPAIGN_ID }),
+      )) as never);
+    const story = makeStories(appApi);
+
+    const response = await story.handleCallback(
+      `list:${CAMPAIGN_ID}`,
+      actor,
+      session,
+    );
+
+    expect(String(response.screen?.text ?? '')).toContain(
+      'Кампания не найдена',
+    );
+    expect(findBtn(response, '↩️ Мои отзывы')).not.toBeNull();
   });
 
   test('list: автор-ментор — адресаты-студенты, менторских кнопок нет', async () => {

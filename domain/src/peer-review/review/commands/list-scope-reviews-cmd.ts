@@ -1,7 +1,7 @@
 // DEBT-25
 import type { UcMeta } from '@u7-scl/core/api';
 import * as v from 'valibot';
-import { StudentOutcomeSchema } from '../../review-campaign/entity';
+import { StudentOutcomeSchema } from '../../shared/campaign-fields';
 import { isoMinuteField, uuidField } from '../../shared/schema';
 import { ReviewDirectionSchema } from '../entity';
 import type { ScopeReviewsProjection } from '../scope-reviews-ds';

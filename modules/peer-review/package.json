@@ -6,10 +6,11 @@
   "private": true,
   "scripts": {
     "test": "bun test",
+    "test:tz": "TZ=Asia/Oral bun test src/infra/review-campaign.json-repo.test.ts",
     "lint": "bunx biome check .",
     "tslint": "tsc --noEmit",
     "format": "bunx biome check . --write",
-    "check": "bun run lint && bun run tslint && bun test"
+    "check": "bun run lint && bun run tslint && bun test && bun run test:tz"
   },
   "dependencies": {
     "@u7-scl/app-legacy": "workspace:*",

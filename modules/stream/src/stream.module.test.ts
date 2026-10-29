@@ -33,6 +33,7 @@ function stream(found: boolean) {
       asked.push(id);
       return found ? ({ uuid: id } as never) : undefined;
     },
+    getMembers: async () => undefined,
   } satisfies StreamLegacy;
   const facade = new ModuleFacade(
     createStreamModule({ app, facades: new ModuleFacades(), legacy }),

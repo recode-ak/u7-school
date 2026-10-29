@@ -5,9 +5,11 @@ import {
   type BotSession,
   type DialogResponse,
 } from '@u7-scl/core/ui';
+import { GetMyCampaignsUcDef } from '@u7-scl/domain/peer-review/contract';
 import { Role } from '@u7-scl/user/domain';
 import { Routes } from '../../shared/routes';
 import { MyReviewsStory } from './my-reviews.story';
+import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
 
 /** Кнопка по подстроке текста (кросс-describe хелпер). */
 function findBtn(response: DialogResponse, needle: string) {
@@ -29,20 +31,21 @@ describe('MyReviewsStory — кнопка меню «💬 Отзывы» (S02)',
 
   function makeStory(campaignCount: number, reviewCount = 0) {
     const appApi = {
-      execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
-        if (ucName === 'get-my-campaigns') {
-          return Array.from({ length: campaignCount }, (_, i) => ({
+      dispatch: peerReviewDispatch({
+        getMyCampaigns: () =>
+          Array.from({ length: campaignCount }, (_, i) => ({
             campaignId: `aaaaaaaa-0000-0000-0000-00000000000${i}`,
             context: 'stream_fate',
             scopeId: 'bbbbbbbb-0000-0000-0000-000000000001',
-            subjectId: attrs.userId,
+            subjectId: actor.uuid,
             myRole: 'subject',
             subjectOutcome: 'completed_passed',
-            expiresAt: '2026-09-26T00:00',
+            expiresAt: Date.parse('2026-09-26T00:00'),
             daysLeft: 5,
             progress: { done: 0, total: 1 },
-          }));
-        }
+          })),
+      }),
+      execute: mock(async (ucName: string) => {
         if (ucName === 'list-my-reviews') {
           return {
             reviews: Array.from({ length: reviewCount }, (_, i) => ({
@@ -59,7 +62,7 @@ describe('MyReviewsStory — кнопка меню «💬 Отзывы» (S02)',
       }),
     };
     const story = new MyReviewsStory();
-    story.init({ appApi } as never);
+    story.init({ appApi, callers: testCallers } as never);
     return { story, appApi };
   }
 
@@ -86,16 +89,14 @@ describe('MyReviewsStory — кнопка меню «💬 Отзывы» (S02)',
     expect(buttons).toEqual([]);
   });
 
-  test('проверка — UC get-my-campaigns (onlyLives) и list-my-reviews от id актора', async () => {
+  test('проверка — UC DMG getMyCampaigns (onlyLives) и list-my-reviews от id актора', async () => {
     const { story, appApi } = makeStory(1);
 
     await story.menuButtons(actor);
 
-    expect(appApi.execute).toHaveBeenCalledWith(
-      'get-my-campaigns',
-      { userId: actor.uuid, onlyLives: true },
-      actor,
-    );
+    expect(appApi.dispatch.mock.calls.map(([, command]) => command)).toEqual([
+      GetMyCampaignsUcDef.command({ onlyLives: true }),
+    ]);
     expect(appApi.execute).toHaveBeenCalledWith(
       'list-my-reviews',
       { userId: actor.uuid },
@@ -178,10 +179,12 @@ describe('MyReviewsStory — экран S02 «Мои отзывы» (мини-к
     } = {},
   ) {
     return {
+      dispatch: peerReviewDispatch({
+        getMyCampaigns: () =>
+          cards.map((c) => ({ ...c, context: 'stream_fate' })),
+      }),
       execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
         switch (ucName) {
-          case 'get-my-campaigns':
-            return cards.map((c) => ({ ...c, context: 'stream_fate' }));
           case 'list-my-reviews':
             return {
               reviews: Array.from({ length: opts.incoming ?? 0 }, (_, i) => ({
@@ -222,7 +225,10 @@ describe('MyReviewsStory — экран S02 «Мои отзывы» (мини-к
     cards: Card[],
     opts?: { missingSubject?: boolean; incoming?: number },
   ) {
-    story.init({ appApi: makeAppApi(cards, opts) } as never);
+    story.init({
+      appApi: makeAppApi(cards, opts),
+      callers: testCallers,
+    } as never);
     return story;
   }
 
@@ -269,7 +275,7 @@ describe('MyReviewsStory — экран S02 «Мои отзывы» (мини-к
   test('ментор «подопечный завершил»: имя субъекта batch-UC, кнопка «N. Отзыв об {Имя}»', async () => {
     const appApi = makeAppApi([mentorCard]);
     const story = new MyReviewsStory();
-    story.init({ appApi } as never);
+    story.init({ appApi, callers: testCallers } as never);
 
     const response = await story.handleCallback('hub', actor, session);
     assertDialogResponseMarkdownSafe(response);
@@ -437,10 +443,9 @@ describe('MyReviewsStory — пагинация хаба S02 (BotPaginator + Dia
 
   function initStory(cards: ReturnType<typeof manyCards>) {
     const appApi = {
+      dispatch: peerReviewDispatch({ getMyCampaigns: () => cards }),
       execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
         switch (ucName) {
-          case 'get-my-campaigns':
-            return cards;
           case 'list-my-reviews':
             return { reviews: [] };
           case 'get-stream':
@@ -453,7 +458,7 @@ describe('MyReviewsStory — пагинация хаба S02 (BotPaginator + Dia
       }),
     };
     const story = new MyReviewsStory();
-    story.init({ appApi } as never);
+    story.init({ appApi, callers: testCallers } as never);
     return { story, appApi };
   }
 
@@ -508,9 +513,9 @@ describe('MyReviewsStory — пагинация хаба S02 (BotPaginator + Dia
     await story.handleCallback('hub-page:1', actor, session);
     await story.handleCallback('hub-page:0', actor, session);
 
-    const calls = (
-      appApi.execute.mock.calls as unknown as Array<[string]>
-    ).filter(([ucName]) => ucName === 'get-my-campaigns');
+    const calls = appApi.dispatch.mock.calls.filter(
+      ([, command]) => command.uc === GetMyCampaignsUcDef.name,
+    );
     expect(calls).toHaveLength(1);
   });
 

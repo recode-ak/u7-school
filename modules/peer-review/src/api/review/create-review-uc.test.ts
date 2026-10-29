@@ -13,10 +13,10 @@ import * as Shared from '@u7-scl/core/shared';
 import type {
   PeerReviewApiModuleResolver,
   Review,
-  ReviewCampaignRepo,
   ReviewRepo,
 } from '@u7-scl/domain/peer-review';
-import { ReviewCampaignFactory } from '@u7-scl/domain/peer-review';
+import { ReviewCampaignAr } from '@u7-scl/domain/peer-review';
+import { expectOk } from 'dmg-core/testing';
 import { CreateReviewUc } from './create-review-uc';
 
 const SCOPE = '11111111-1111-4111-8111-111111111111';
@@ -29,14 +29,19 @@ const CAMPAIGN_ID = '3aaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const TEXT = 'Крепкий напарник по паре, всё получалось.';
 
 function makeCampaign(now = NOW) {
-  return ReviewCampaignFactory.createStudentCampaign({
-    scopeId: SCOPE,
-    subjectId: ALICE,
-    mentorId: MENTOR,
-    subjectOutcome: 'completed_passed',
-    participantIds: [BOB],
-    now,
-  });
+  return expectOk(
+    ReviewCampaignAr.create(
+      {
+        uuid: CAMPAIGN_ID,
+        scopeId: SCOPE,
+        subjectId: ALICE,
+        mentorId: MENTOR,
+        subjectOutcome: 'completed_passed',
+        participantIds: [BOB],
+      },
+      now.getTime(),
+    ),
+  );
 }
 
 function makeResolve(
@@ -47,8 +52,8 @@ function makeResolve(
   const eventBus = new InProcEventBus();
   const resolve = {
     reviewCampaignRepo: {
-      findById: mock(() => Promise.resolve(campaign?.state)),
-    } as unknown as ReviewCampaignRepo,
+      findById: mock(() => Promise.resolve(campaign)),
+    },
     reviewRepo: {
       findByPair: mock(() => Promise.resolve(existing)),
       save: mock((review: Review) => {
@@ -266,6 +271,75 @@ describe('CreateReviewUc (ФР-7)', () => {
     } catch (e) {
       expectError('PEER_REVIEW_RECIPIENT_NOT_ALLOWED', 'conflict')(e);
     }
+  });
+
+  test('ментор пишет соученику — RECIPIENT_NOT_ALLOWED (перенос a-root: assertCanWrite)', async () => {
+    const campaign = makeCampaign();
+    const { resolve, saved } = makeResolve(campaign);
+    const uc = new CreateReviewUc();
+    uc.init(resolve);
+
+    try {
+      await uc.execute({
+        campaignId: CAMPAIGN_ID,
+        authorId: MENTOR,
+        recipientId: BOB,
+        text: TEXT,
+      });
+      expect.unreachable('должен бросить конфликт адресата');
+    } catch (e) {
+      expectError('PEER_REVIEW_RECIPIENT_NOT_ALLOWED', 'conflict')(e);
+    }
+    expect(saved).toHaveLength(0);
+  });
+
+  test('соученик-автор (не субъект и не ментор) — доступ запрещён (перенос a-root)', async () => {
+    const campaign = makeCampaign();
+    const { resolve, saved } = makeResolve(campaign);
+    const uc = new CreateReviewUc();
+    uc.init(resolve);
+
+    try {
+      await uc.execute({
+        campaignId: CAMPAIGN_ID,
+        authorId: BOB,
+        recipientId: MENTOR,
+        text: TEXT,
+      });
+      expect.unreachable('должен бросить ошибку доступа');
+    } catch (e) {
+      expectError('PEER_REVIEW_NOT_PARTICIPANT', 'access-denied')(e);
+    }
+    expect(saved).toHaveLength(0);
+  });
+
+  test('граница окна: в момент expiresAt отзыв уже нельзя (перенос a-root: ensureLive)', async () => {
+    const created = makeCampaign();
+    const { resolve } = makeResolve(created);
+    const uc = new CreateReviewUc();
+    uc.init(resolve);
+    nowSpy.mockReturnValue(new Date(created.expiresAt));
+
+    try {
+      await uc.execute({
+        campaignId: CAMPAIGN_ID,
+        authorId: ALICE,
+        recipientId: MENTOR,
+        text: TEXT,
+      });
+      expect.unreachable('должен бросить ошибку окна');
+    } catch (e) {
+      expectError('REVIEW_WINDOW_CLOSED', 'conflict')(e);
+    }
+
+    nowSpy.mockReturnValue(new Date(created.expiresAt - 1));
+    const res = await uc.execute({
+      campaignId: CAMPAIGN_ID,
+      authorId: ALICE,
+      recipientId: MENTOR,
+      text: TEXT,
+    });
+    expect(res.recipientId).toBe(MENTOR);
   });
 
   test('текст короче минимума — REVIEW_TEXT_INVALID', async () => {

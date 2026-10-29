@@ -1,11 +1,18 @@
 import { afterAll, beforeAll, describe, expect, spyOn, test } from 'bun:test';
+import type { User } from '@u7-scl/app-legacy/domain';
 import * as Shared from '@u7-scl/core/shared';
+import {
+  GetMyCampaignsUcDef,
+  PeerReviewModuleDef,
+} from '@u7-scl/domain/peer-review/contract';
 import type { StudentCompletedEvent } from '@u7-scl/stream/domain';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { UserCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 
 /**
@@ -16,7 +23,7 @@ import { PeerReviewController } from '../../src/controllers/peer-review/controll
  *
  *   1) модуль зарегистрирован — UC get-my-campaigns отвечает (не NO_COMMAND_FOUND);
  *   2) student.completed → кампания создаётся (репозиторий + UC);
- *   3) student-campaign.created → два приглашения (субъекту и ментору)
+ *   3) peer-review.review-campaign.created → два приглашения (субъекту и ментору)
  *      с полным кодом кнопки `💬 Отзывы`.
  *
  * Субъект — «Марина» (uuid 777…): его исхода нет в фикстурах
@@ -53,6 +60,15 @@ describe('E2E peer-review: инфраструктура стенда (smoke)', (
   let transport: TestBotTransport;
   let nowSpy: ReturnType<typeof spyOn>;
 
+  /** UC DMG `getMyCampaigns` от имени пользователя (как стори бота). */
+  const dispatchMyCampaigns = (user: User) =>
+    app.apiApp.dispatch(
+      PeerReviewModuleDef,
+      GetMyCampaignsUcDef.command({}),
+      new UserCaller(user),
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+    );
+
   beforeAll(async () => {
     nowSpy = spyOn(Shared, 'now').mockReturnValue(FROZEN_NOW);
     app = await createTestApp('pr-smoke');
@@ -66,12 +82,10 @@ describe('E2E peer-review: инфраструктура стенда (smoke)', (
 
   test('модуль peer-review зарегистрирован — get-my-campaigns отвечает', async () => {
     const mentor = (await app.userFacade.getUserByTelegramId(MENTOR_TG))!;
-    // Без модуля execute кинет NO_COMMAND_FOUND
-    const cards = await app.apiApp.execute(
-      'get-my-campaigns',
-      { userId: mentor.uuid },
-      mentor,
-    );
+    // Без модуля dispatch вернёт отказ NO_COMMAND_FOUND
+    const res = await dispatchMyCampaigns(mentor);
+    expect(res.ok).toBe(true);
+    const cards = res.ok ? res.value : [];
     expect(Array.isArray(cards)).toBe(true);
     // Фикстура c1a11111: субъект 333…, ментор 444… — окно кампании живое
     // на замороженное «сейчас» (FROZEN_NOW), поэтому репозиторий её вернёт.
@@ -114,29 +128,27 @@ describe('E2E peer-review: инфраструктура стенда (smoke)', (
     );
     expect(campaign).toBeDefined();
     // Формат v4: адресация по исходу субъекта, ментор — соавтор
-    expect(campaign?.payload.subjectOutcome).toBe('completed_passed');
-    expect(campaign?.payload.mentorId).toBe(
+    const state = campaign?.snapshot();
+    expect(state?.payload.subjectOutcome).toBe('completed_passed');
+    expect(state?.payload.mentorId).toBe(
       '44444444-4444-4444-4444-444444444444',
     );
     // Соученики потока без abandoned и без субъекта
-    expect(campaign?.participants).toEqual([
+    expect(state?.participants).toEqual([
       '33333333-3333-3333-3333-333333333333',
       '88888888-8888-4888-8888-888888888888',
     ]);
 
     // UC видит кампанию и субъекту, и ментору
     const subject = (await app.userFacade.getUserByTelegramId(SUBJECT_TG))!;
-    const subjectCards = await app.apiApp.execute(
-      'get-my-campaigns',
-      { userId: subject.uuid },
-      subject,
-    );
+    const subjectRes = await dispatchMyCampaigns(subject);
+    const subjectCards = subjectRes.ok ? subjectRes.value : [];
     expect(subjectCards.some((c) => c.campaignId === campaign?.uuid)).toBe(
       true,
     );
   });
 
-  test('student-campaign.created → приглашения субъекту и ментору на реальной шине', async () => {
+  test('peer-review.review-campaign.created → приглашения субъекту и ментору на реальной шине', async () => {
     // Событие опубликовано ER в предыдущем тесте — ждём доставку приглашений
     await waitUntil(
       () =>

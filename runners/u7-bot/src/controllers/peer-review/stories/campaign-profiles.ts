@@ -1,9 +1,11 @@
 import { type MdText, md, mdJoin } from '@u7-scl/core/shared';
 import type {
-  AuthorRole,
   MyCampaignCard,
   StudentOutcome,
-} from '@u7-scl/peer-review/domain';
+} from '@u7-scl/domain/peer-review/contract';
+
+/** Роль автора в кампании (из карточки «моей кампании»). */
+type AuthorRole = MyCampaignCard['myRole'];
 
 /**
  * Профиль кампании — видонезависимое ядро стори кампании (навигация,

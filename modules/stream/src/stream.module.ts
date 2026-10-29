@@ -3,10 +3,11 @@ import type { StreamFacade } from '@u7-scl/domain/stream/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import type { Identified } from 'dmg-core';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
+import { GetStreamMembersUc } from './stream/uc/get-stream-members.uc';
 import { GetStreamPresenceUc } from './stream/uc/get-stream-presence.uc';
 
 /** Что адаптеры TR-11 берут у legacy-фасада потоков. */
-export type StreamLegacy = Pick<StreamFacade, 'getStream'>;
+export type StreamLegacy = Pick<StreamFacade, 'getStream' | 'getMembers'>;
 
 /** Резолвер DMG-модуля потоков: платформа + legacy-фасад (TR-11). */
 export type StreamModuleDeps = ModuleDeps & { readonly legacy: StreamLegacy };
@@ -15,6 +16,7 @@ export type StreamModuleDeps = ModuleDeps & { readonly legacy: StreamLegacy };
 export const streamModuleMap = {
   useCases: {
     getStreamPresence: GetStreamPresenceUc,
+    getStreamMembers: GetStreamMembersUc,
   },
   reactions: {},
   jobs: {},

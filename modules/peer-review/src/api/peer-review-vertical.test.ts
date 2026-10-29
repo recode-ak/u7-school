@@ -6,13 +6,18 @@ import type { User } from '@u7-scl/app-legacy';
 import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import { InProcEventBus } from '@u7-scl/core/infra';
 import type { Logger } from '@u7-scl/core/shared';
-import type { PeerReviewApiModuleResolver } from '@u7-scl/domain/peer-review';
-import type {
-  StreamMembers,
-  StudentCompletedEvent,
-} from '@u7-scl/stream/domain';
-import { ReviewCampaignJsonRepo } from '../infra/db/review-campaign-json-repo';
+import {
+  GetCampaignRecipientsUcDef,
+  GetMyCampaignsUcDef,
+  type PeerReviewApiModuleResolver,
+  ReviewCampaignAr,
+} from '@u7-scl/domain/peer-review';
+import { type Identified, UserCaller } from 'dmg-core';
+import { ModuleFacades, Trace } from 'dmg-core/app';
+import { expectOk, testAppContext } from 'dmg-core/testing';
 import { ReviewJsonRepo } from '../infra/db/review-json-repo';
+import { ReviewCampaignJsonRepo } from '../infra/review-campaign.json-repo';
+import { createPeerReviewModule } from '../peer-review.module';
 import { PeerReviewApiModule } from './module';
 
 const SCOPE = '11111111-1111-4111-8111-111111111111';
@@ -30,54 +35,22 @@ const SILENT_LOGGER = {
   error: mock(() => {}),
 } as unknown as Logger;
 
-function completedEvent(): StudentCompletedEvent {
-  return {
-    eventId: crypto.randomUUID(),
-    eventName: 'student.completed',
-    occurredAt: '2026-09-20T10:00',
-    aggregateName: 'Student',
-    aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-    payload: {
-      studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-      userId: SUBJECT,
-      streamId: SCOPE,
-      moduleId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
-      outcome: 'advanced',
-    },
-  };
-}
-
-function members(): StreamMembers {
-  return {
-    mentorId: MENTOR,
-    students: [
-      {
-        userId: SUBJECT,
-        status: 'advanced',
-        neverStarted: false,
-      },
-      {
-        userId: PEER,
-        status: 'active',
-        neverStarted: false,
-      },
-    ],
-  };
-}
-
 /**
- * Собирает настоящую вертикаль: json-репозитории, шина in-proc,
- * ER create-student-campaign (через module.init) и пользовательские UC.
- * Фасад stream — стаб с составом потока.
+ * Собирает вертикаль: json-репозитории, шина in-proc, legacy-модуль рецензий
+ * (create-review и чтение) и Def-модуль кампаний (`createPeerReviewModule`) над
+ * теми же репозиториями. Кампанию открывает ER Def-модуля — его вертикаль в
+ * `../peer-review.module.test.ts`, здесь кампания создаётся напрямую Ar.
  */
 function makeVertical() {
   const eventBus = new InProcEventBus();
+  // Свой каталог на каждый тест: файлы репозиториев не пересекаются.
+  const own = join(dir, crypto.randomUUID());
+  const campaigns = new ReviewCampaignJsonRepo(join(own, 'campaigns.json'));
+  const reviews = new ReviewJsonRepo(join(own, 'reviews.json'));
   const resolve: PeerReviewApiModuleResolver = {
-    reviewCampaignRepo: new ReviewCampaignJsonRepo(join(dir, 'campaigns.json')),
-    reviewRepo: new ReviewJsonRepo(join(dir, 'reviews.json')),
-    streamFacade: {
-      getMembers: mock(() => Promise.resolve(members())),
-    } as unknown as PeerReviewApiModuleResolver['streamFacade'],
+    reviewCampaignRepo: campaigns,
+    reviewRepo: reviews,
+    streamFacade: {} as PeerReviewApiModuleResolver['streamFacade'],
     // Фасад user — стаб: имена по UUID, notify — тихая заглушка
     // (ER notify-review-recipient вызовет его при create-review).
     userFacade: {
@@ -103,28 +76,35 @@ function makeVertical() {
   };
 
   const module = new PeerReviewApiModule(resolve);
-  // init() подписывает ER на student.completed/student.abandoned
   module.init();
-  return { module, eventBus, resolve };
+  const { app } = testAppContext();
+  const campaignModule = createPeerReviewModule({
+    app,
+    facades: new ModuleFacades(),
+    campaigns,
+    reviews,
+  });
+  return { module, campaignModule, campaigns };
 }
 
-/**
- * Шина InProc — fire-and-forget для async-обработчиков, поэтому состояние
- * после publish ждём поллингом (детерминированно, без sleep-магии).
- */
-async function waitUntil<T>(
-  probe: () => Promise<T | undefined>,
-  timeoutMs = 1000,
-): Promise<T> {
-  const deadline = Date.now() + timeoutMs;
-  for (;;) {
-    const value = await probe();
-    if (value !== undefined) return value;
-    if (Date.now() > deadline) {
-      throw new Error('waitUntil: состояние не наступило за отведённое время');
-    }
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  }
+/** Кампания окна судьбы: субъект завершил поток, соученик — PEER. */
+async function openCampaign(campaigns: ReviewCampaignJsonRepo) {
+  const created = expectOk(
+    ReviewCampaignAr.create(
+      {
+        uuid: crypto.randomUUID(),
+        scopeId: SCOPE,
+        subjectId: SUBJECT,
+        mentorId: MENTOR,
+        subjectOutcome: 'completed_passed',
+        participantIds: [PEER],
+      },
+      // окно открыто сейчас: мост create-review сверяет его с реальными часами
+      Date.now(),
+    ),
+  );
+  await campaigns.save(created);
+  return created;
 }
 
 let dir: string;
@@ -137,38 +117,18 @@ afterAll(async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
-describe('Вертикаль peer-review: student.completed → ER → кампания → отзыв → чтение', () => {
-  test('полный цикл: событие создаёт кампанию, отзывы пишутся и читаются', async () => {
-    const { module, eventBus, resolve } = makeVertical();
+const REQ = Trace.fromRequest({ requestId: 'r-1' });
 
-    // Доменное событие агрегата ловим на шине
-    const createdEvents: unknown[] = [];
-    eventBus.subscribe('student-campaign.created', async (e) => {
-      createdEvents.push(e);
-    });
+describe('Вертикаль peer-review: кампания → отзыв → чтение', () => {
+  test('полный цикл: отзывы пишутся через мост и читаются', async () => {
+    const { module, campaignModule, campaigns } = makeVertical();
+    const campaign = await openCampaign(campaigns);
 
-    // ── 1. Событие судьбы студента → ER создаёт кампанию ──
-    eventBus.publish(completedEvent());
-
-    const campaign = await waitUntil(() =>
-      resolve.reviewCampaignRepo.findBySubject(SCOPE, SUBJECT),
-    );
-    expect(campaign).toBeDefined();
-    expect(campaign?.context).toBe('stream_fate');
-    // Форма: participants — только id адресуемых (ещё учащийся соученик)
-    expect(campaign?.participants).toEqual([PEER]);
-    expect(campaign?.payload).toEqual({
-      subjectOutcome: 'completed_passed',
-      mentorId: MENTOR,
-    });
-    // Событие агрегата опубликовано на шине
-    expect(createdEvents).toHaveLength(1);
-
-    // ── 2. Субъект пишет отзыв соученику в окне ──
+    // ── Субъект пишет отзыв соученику в окне ──
     const saved = await module.execute(
       'create-review',
       {
-        campaignId: campaign!.uuid,
+        campaignId: campaign.uuid,
         authorId: SUBJECT,
         recipientId: PEER,
         text: 'Держал темп до конца потока, помогал с вопросами',
@@ -181,7 +141,7 @@ describe('Вертикаль peer-review: student.completed → ER → камп�
     const savedMentor = await module.execute(
       'create-review',
       {
-        campaignId: campaign!.uuid,
+        campaignId: campaign.uuid,
         authorId: MENTOR,
         recipientId: SUBJECT,
         text: 'Стабильный результат и сильный финальный проект',
@@ -190,30 +150,38 @@ describe('Вертикаль peer-review: student.completed → ER → камп�
     );
     expect(savedMentor.recipientId).toBe(SUBJECT);
 
-    // ── 3. Чтение: мои кампании различают роли и прогресс ──
-    const subjectCards = await module.execute(
-      'get-my-campaigns',
-      { userId: SUBJECT, onlyLives: true },
-      ACTOR,
+    // ── Чтение: мои кампании различают роли и прогресс ──
+    const subject = new UserCaller<Identified>({ uuid: SUBJECT });
+    const mentor = new UserCaller<Identified>({ uuid: MENTOR });
+    const subjectCards = expectOk(
+      await campaignModule.dispatch(
+        GetMyCampaignsUcDef.command({ onlyLives: true }),
+        subject,
+        REQ,
+      ),
     );
     expect(subjectCards).toHaveLength(1);
-    expect(subjectCards[0]!.myRole).toBe('subject');
-    expect(subjectCards[0]!.progress).toEqual({ done: 1, total: 2 });
+    expect(subjectCards[0]?.myRole).toBe('subject');
+    expect(subjectCards[0]?.progress).toEqual({ done: 1, total: 2 });
 
-    const mentorCards = await module.execute(
-      'get-my-campaigns',
-      { userId: MENTOR, onlyLives: true },
-      ACTOR,
+    const mentorCards = expectOk(
+      await campaignModule.dispatch(
+        GetMyCampaignsUcDef.command({ onlyLives: true }),
+        mentor,
+        REQ,
+      ),
     );
     expect(mentorCards).toHaveLength(1);
-    expect(mentorCards[0]!.myRole).toBe('mentor');
-    expect(mentorCards[0]!.progress).toEqual({ done: 1, total: 1 });
+    expect(mentorCards[0]?.myRole).toBe('mentor');
+    expect(mentorCards[0]?.progress).toEqual({ done: 1, total: 1 });
 
     // Деталка: адресаты субъекта с признаком «мой отзыв есть»
-    const recipients = await module.execute(
-      'get-campaign-recipients',
-      { campaignId: campaign!.uuid, authorId: SUBJECT },
-      ACTOR,
+    const recipients = expectOk(
+      await campaignModule.dispatch(
+        GetCampaignRecipientsUcDef.command({ campaignId: campaign.uuid }),
+        subject,
+        REQ,
+      ),
     );
     const peerView = recipients.recipients.find((r) => r.userId === PEER);
     expect(peerView?.hasMyReview).toBe(true);
@@ -237,19 +205,31 @@ describe('Вертикаль peer-review: student.completed → ER → камп�
     );
   });
 
-  test('идемпотентность вертикали: повтор события не создаёт вторую кампанию', async () => {
-    const { eventBus, resolve } = makeVertical();
+  test('повторный отзыв той же паре перезаписывает, а не дублирует', async () => {
+    const { module, campaigns } = makeVertical();
+    const campaign = await openCampaign(campaigns);
+    const write = (text: string) =>
+      module.execute(
+        'create-review',
+        {
+          campaignId: campaign.uuid,
+          authorId: SUBJECT,
+          recipientId: PEER,
+          text,
+        },
+        ACTOR,
+      );
 
-    eventBus.publish(completedEvent());
-    await waitUntil(() =>
-      resolve.reviewCampaignRepo.findBySubject(SCOPE, SUBJECT),
+    const first = await write('Первый вариант отзыва, достаточно длинный.');
+    const second = await write('Второй вариант отзыва, достаточно длинный.');
+
+    expect(second.reviewId).toBe(first.reviewId);
+    const scopeReviews = await module.execute(
+      'list-scope-reviews',
+      { scopeIds: [SCOPE] },
+      ACTOR,
     );
-
-    eventBus.publish(completedEvent());
-    // Даём повторной обработке завершиться — кампания должна остаться одна
-    await new Promise((resolve) => setTimeout(resolve, 30));
-
-    const all = await resolve.reviewCampaignRepo.findActiveBySubject(SUBJECT);
-    expect(all).toHaveLength(1);
+    const peer = scopeReviews.recipients.find((r) => r.recipientId === PEER);
+    expect(peer?.reviews).toHaveLength(1);
   });
 });

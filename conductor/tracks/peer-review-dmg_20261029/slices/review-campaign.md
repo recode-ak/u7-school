@@ -136,6 +136,7 @@
 3. ✅ **Строгий разбор** (решение поручено orchestrator'у) — TR-37. На проде невалидных записей не было.
 4. ✅ **`ACCESS_DENIED`** вместо `PEER_REVIEW_NOT_PARTICIPANT` в `get-campaign-recipients`.
 5. ✅ **Вариант A:** `PEER_REVIEW_WINDOW_CLOSED` в группе `PEER_REVIEW`, правка `campaign.story.ts:123`.
+   **Пересмотрено (Нурболат, 2026-10-29, ERR-04 — префикс агрегата):** ошибки кампании — `REVIEW_CAMPAIGN_NOT_FOUND`, `_ALREADY_EXISTS`, `_INVALID_PARTICIPANTS`. Ошибки записи рецензии (`WINDOW_CLOSED`, `NOT_PARTICIPANT`, `RECIPIENT_NOT_ALLOWED`) — агрегата `Review`, объявляются в Ф2 как `REVIEW_*`; до Ф2 мост `create-review-uc` бросает прежние legacy-коды, `campaign.story.ts:123` правится в Ф2. Решения брифа п. 5 и сигнатуры test-designer в этой части заменены.
 6. ✅ **Вариант C:** мост `create-review-uc` на новый `ReviewCampaignAr` (TR, снимается в Ф2).
 7. ✅ **Вход UC без `userId`/`authorId`** — пользователь берётся из субъекта.
 8. ✅ **UTC.** Сервер на проде — `Etc/UTC`, поэтому толкование не меняется; тест на границу окна с `TZ=Asia/Oral` остаётся (защита от смены TZ).
@@ -191,4 +192,26 @@ DOM-01…06, DOM-10…12, DOM-14…16; API-01, API-03, API-05; MAN-01, MAN-02, M
 
 ## Отчёты агентов
 
-(заполняет orchestrator по шагам)
+### test-designer (Ф1, Sonnet)
+
+21 тестовый файл + хелпер `modules/peer-review/src/review-campaign/review-campaign.fixture.ts`; `TZ=Asia/Oral bun test` — 30 fail (нет модулей/Def, `external`), 1 pass (`ArchChecker`). Характеризация покрыта старыми тестами — сценарии перенесены как ожидания нового кода.
+
+**Старый тест → новый (перенос — автор):** `review-campaign-factory`, `a-root`, `entity` → `D/review-campaign.{ar,state}.test.ts` (`ensureLive`/`assertCanWrite`/`reviewTargets` не переносятся — их сценарии держит мост `create-review-uc`); `campaign-facts-ds` → `D/campaign-facts.dqs.test.ts`; `get-my-campaigns-uc`, `get-campaign-recipients-uc` → `M/review-campaign/uc/*.uc.test.ts`; `create-student-campaign-er` → `M/review-campaign/er/…` + `D/student-fate.dqs.test.ts`; `review-campaign-json-repo` → `M/infra/review-campaign.json-repo.test.ts`; `peer-review-vertical` → `M/peer-review.module.test.ts` (кампании). Автор правит `u7-app.test.ts`, `stream.module.test.ts`; `legacy-inbound.student-fate.test.ts` можно слить с `legacy-inbound.test.ts`. (`D` = `domain/src/peer-review/review-campaign`, `M` = `modules/peer-review/src`.)
+
+**Сигнатуры, зафиксированные тестами** (автор следует им): `ReviewCampaignAr.create({ uuid, scopeId, subjectId, mentorId, subjectOutcome, participantIds }, at)`; `authorRoleOf` постороннему → `undefined`, `targetIdsFor` → `[]`; `isMentor`. Ошибки: `CAMPAIGN_NOT_FOUND` (`not_found`), `ALREADY_EXISTS` (`conflict`), `NOT_PARTICIPANT` (`access`), `RECIPIENT_NOT_ALLOWED`, `WINDOW_CLOSED` (`conflict`, payload `{ campaignId, expiresAt }`), `INVALID_PARTICIPANTS` (`validation`, TR-38). `ReviewCampaignRules.unique({ scopeId, subjectId, campaigns })`; Policy — контекст `{ campaign }` (`ReviewCampaignCtx`). `CampaignFactsDqs.myCampaignFacts(ar, userId, reviews, at)`, `.recipientsWithMyReview(ar, userId, reviews)`; `StudentFateDqs.forCompleted({ userId, outcome }, members)`, `.forAbandoned({ userId }, members)` → `{ outcome, participantIds }`. Deps прикладного слоя `{ app, facades, campaigns, reviews }`, `reviews.findByCampaignAndAuthor` — форма legacy `ReviewRepo`. Экспорты: `createPeerReviewModule`, `peerReviewMap`; Def `getMyCampaigns`, `getCampaignRecipients`, `createStudentCampaign`, `getStreamMembers`.
+
+**Решения orchestrator (TR-38):** код инварианта адресации — `PEER_REVIEW_INVALID_PARTICIPANTS`; `get-my-campaigns` — только живые и без `onlyLives` (как `v0.2.6`). Возможная строгость `F.uuid` к UUID фикстур (`3333…`) проявится в тесте чтения фикстур.
+
+### migrator — домен и контракт `stream` (Ф1, Sonnet)
+
+Домен кампаний: `review-campaign.{state,errors,events,ar,policy,rules}.ts`, `campaign-facts.dqs.ts`, `student-fate.dqs.ts`, `uc/*`, `er/*`, `shared/campaign-fields.ts`; `PeerReviewModuleDef` без `external`. `stream`: `StudentEvents.completed/abandoned`, `GetStreamMembersUcDef` (в `useCases` модуля — иначе `checkDefs` не принимает `calls` ER), адаптер TR-11 `GetStreamMembersUc`, два маршрута inbound. Эскалации: ERR-04 (решено Нурболатом — группа `REVIEW_CAMPAIGN`), проверка `'statuses' in ArDef` и утечка TZ — дефекты тестов, исправил `test-designer`. Отклонения: `myCampaignFacts` → `undefined` для постороннего; время в выходе UC — строго число (`epochMsField`), `F.timestamp` принимает ISO; инвариант адресации при `restore` — схемой.
+
+### migrator — прикладной слой (Ф1, Sonnet)
+
+`modules/peer-review/src`: `peer-review.module.ts`, `review-campaign/{uc,er}/*`, `review-campaign.repo.ts`, `review-facts.reader.ts`, `infra/review-campaign.json-repo.ts` (`VersionedRepository`, строгий разбор). Мост `create-review-uc` на новом Ar с прежними legacy-кодами. `u7-app.ts`: `PeerReviewModuleDef` в `dmgApp`, в `PeerReviewApiModule` — 5 UC и ER `notify`. Удалены legacy кампаний в домене и пакете вместе с тестами. Сценарии: ER 10 → 13, recipients 9 → 7 (часть — в домене), my-campaigns 5 → 9, repo 6 → 20, `create-review-uc` 13 → 16 (+3 из удалённого `a-root.test.ts`), `u7-app` 7 → 9. Отклонения — TR-38 пп. 5–6.
+
+### migrator — stories (Ф1, Sonnet)
+
+`campaign.story` (адресаты, «мои кампании»), `my-reviews.story` → `dispatchUc(PeerReviewModuleDef, …)`; `REVIEW_CAMPAIGN_NOT_FOUND` по `code` → экран S03 (текст прежний), прочие отказы — `ucErrorNotify`. `invite.story` подписан на FQN `ReviewCampaignEvents.created`. Импорты бота — `@u7-scl/domain/peer-review/contract`; в контракт добавлены type-экспорты `Review`, `ReviewDirection`, `RecipientReviewsGroup`, `StudentOutcome` (как `User` у `user`, TR-35 п. 2). Миры: `WorldCampaign` (ввод с ISO). Тест-кит `stories/peer-review-dmg.test-kit.ts`. e2e `reviews-for-me` — кампания создаётся событием `student.completed` вместо записи сырого state. `test:bot` 978 → 979 pass (+1 — NOT_FOUND в S03).
+
+**Гейт orchestrator:** `CI=true bun run check` зелёный — 3392 pass, `arch:check` 0 нарушений, `test:tz` 20 + 20 pass; `git status data/` чист.

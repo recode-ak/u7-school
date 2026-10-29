@@ -35,7 +35,7 @@ describe('assemblyPackages: ARC-06 (D-53)', () => {
 });
 
 describe('arch:check domain', () => {
-  it('граф dependsOn домена — из ModuleDef, внешние peer-review и dossier', () => {
+  it('граф dependsOn домена — из ModuleDef, внешний dossier (peer-review на Def)', () => {
     expect(domainGraphOf(DOMAIN_MODULES)).toEqual({
       user: [],
       course: ['user'],
@@ -46,7 +46,7 @@ describe('arch:check domain', () => {
       dossier: [],
     });
     const external = DOMAIN_MODULES.filter((m) => m.external);
-    expect(external.map((m) => m.name)).toContain('peer-review');
+    expect(external.map((m) => m.name)).not.toContain('peer-review');
     expect(external.map((m) => m.name)).toContain('dossier');
   });
 

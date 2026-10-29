@@ -1,5 +1,6 @@
 import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
+import type { DomainEvent } from '@u7-scl/core/domain';
 import { type MdText, md, mdJoin } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -7,11 +8,19 @@ import type {
   UiEventSubscription,
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
-import type {
-  StudentCampaignCreatedEvent,
-  StudentOutcome,
-} from '@u7-scl/peer-review/domain';
+import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
+import { ReviewCampaignEvents } from '@u7-scl/domain/peer-review/contract';
+import type * as v from 'valibot';
 import { Routes } from '../../shared/routes';
+
+/**
+ * Событие в legacy-форме, как его доставляет `legacyEventBus`:
+ * `eventName` — FQN Def, `payload` — по схеме `ReviewCampaignEvents.created`.
+ */
+export type ReviewCampaignCreatedEvent = DomainEvent & {
+  eventName: typeof ReviewCampaignEvents.created.name;
+  payload: v.InferOutput<typeof ReviewCampaignEvents.created.payload>;
+};
 
 /** Профиль получателя (telegramId может отсутствовать — приглашение пропускается). */
 type Profile = { uuid: string; name: string; telegramId?: number };
@@ -19,8 +28,8 @@ type Profile = { uuid: string; name: string; telegramId?: number };
 /**
  * US: Приглашение в кампанию отзывов (S01) — по событию создания кампании.
  *
- * Подписка на student-campaign.created (публикует ER домена по событиям
- * судьбы студента): два персонализированных приглашения — субъекту
+ * Подписка на `ReviewCampaignEvents.created` (FQN
+ * `peer-review.review-campaign.created`; публикует ER модуля peer-review): два персонализированных приглашения — субъекту
  * (текст по его исходу из события, скрыт от пользователя) и ментору
  * скоупа («Выдайте свой отзыв для {Имя}»). Одно приглашение каждому,
  * напоминаний нет (до task-модуля).
@@ -36,16 +45,16 @@ export class InviteStory extends U7BotUiStory {
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<StudentCampaignCreatedEvent>(
-        'student-campaign.created',
+      eventSubscription<ReviewCampaignCreatedEvent>(
+        ReviewCampaignEvents.created.name,
         (event) => this.#handleCampaignCreated(event),
       ),
     ];
   }
 
-  /** student-campaign.created → приглашения субъекту и ментору. */
+  /** `peer-review.review-campaign.created` → приглашения субъекту и ментору. */
   async #handleCampaignCreated(
-    event: StudentCampaignCreatedEvent,
+    event: ReviewCampaignCreatedEvent,
   ): Promise<void> {
     const { campaignId, scopeId, subjectId, mentorId, subjectOutcome } =
       event.payload;

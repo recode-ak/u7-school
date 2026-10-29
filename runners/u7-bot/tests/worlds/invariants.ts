@@ -1,4 +1,4 @@
-import type { StudentOutcome } from '@u7-scl/peer-review/domain';
+import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
 import type { Stream } from '@u7-scl/stream/domain';
 import type { User } from '@u7-scl/user/domain';
 import { Role } from '@u7-scl/user/domain';

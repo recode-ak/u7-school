@@ -9,5 +9,7 @@ import { StreamEvents, StudentEvents } from '@u7-scl/domain/stream/contract';
  */
 export const streamLegacyInbound: readonly LegacyInbound[] = [
   { legacy: 'student.enrolled', def: StudentEvents.enrolled },
+  { legacy: 'student.completed', def: StudentEvents.completed },
+  { legacy: 'student.abandoned', def: StudentEvents.abandoned },
   { legacy: 'stream.created', def: StreamEvents.created },
 ];

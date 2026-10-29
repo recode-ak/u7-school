@@ -8,7 +8,11 @@ import type {
   KbButton,
   Page,
 } from '@u7-scl/core/ui';
-import type { MyCampaignCard } from '@u7-scl/peer-review/domain';
+import {
+  GetMyCampaignsUcDef,
+  type MyCampaignCard,
+  PeerReviewModuleDef,
+} from '@u7-scl/domain/peer-review/contract';
 import { buttons } from '../../shared/buttons';
 import { campaignProfileOf } from './campaign-profiles';
 
@@ -60,15 +64,22 @@ export class MyReviewsStory extends U7BotUiStory {
   /** Ключ кеша страниц хаба (DialogCache — эпоха диалога). */
   #cacheKey = 'my-reviews:hub';
 
+  /** Живые кампании актора — UC DMG `getMyCampaigns` с `onlyLives`. */
+  async #liveCardsOf(actor: User): Promise<MyCampaignCard[]> {
+    const res = await this.dispatchUc(
+      PeerReviewModuleDef,
+      GetMyCampaignsUcDef.command({ onlyLives: true }),
+      actor,
+    );
+    if (!res.ok) throw new Error(res.error.code);
+    return res.value;
+  }
+
   // ── Главное меню (декларативная кнопка) ──
 
   override async menuButtons(actor: User): Promise<MenuButton[]> {
     const [cards, incoming] = await Promise.all([
-      this.appApi.execute(
-        'get-my-campaigns',
-        { userId: actor.uuid, onlyLives: true },
-        actor,
-      ),
+      this.#liveCardsOf(actor),
       this.appApi.execute('list-my-reviews', { userId: actor.uuid }, actor),
     ]);
     if (cards.length === 0 && incoming.reviews.length === 0) return [];
@@ -120,11 +131,7 @@ export class MyReviewsStory extends U7BotUiStory {
         payload: HubPayload;
       }> => {
         const [cards, incoming] = await Promise.all([
-          this.appApi.execute(
-            'get-my-campaigns',
-            { userId: actor.uuid, onlyLives: true },
-            actor,
-          ),
+          this.#liveCardsOf(actor),
           this.appApi.execute('list-my-reviews', { userId: actor.uuid }, actor),
         ]);
         if (cards.length === 0) {

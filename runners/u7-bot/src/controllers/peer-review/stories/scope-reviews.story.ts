@@ -2,7 +2,7 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { type MdText, md } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
-import type { RecipientReviewsGroup } from '@u7-scl/peer-review/domain';
+import type { RecipientReviewsGroup } from '@u7-scl/domain/peer-review/contract';
 import { Routes } from '../../shared/routes';
 import { authorLabel, rolesOf } from './review-render';
 

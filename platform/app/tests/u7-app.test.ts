@@ -7,6 +7,10 @@ import { InProcJobScheduler } from '@u7-scl/core/infra';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import type { ContentSnapshot } from '@u7-scl/domain/course';
 import {
+  GetMyCampaignsUcDef,
+  PeerReviewModuleDef,
+} from '@u7-scl/domain/peer-review/contract';
+import {
   QuestionnaireFactory,
   type QuestionnairePool,
 } from '@u7-scl/domain/questionnaire';
@@ -69,18 +73,27 @@ describe('U7App (smoke: сборка с модулем peer-review)', () => {
     );
   });
 
-  test('init(): подписка ER проходит, query-UC модуля отвечает', async () => {
+  test('init(): подписка ER проходит, query-UC модуля (DMG) отвечает', async () => {
     const bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
     bundle.apiApp.init(new InProcJobScheduler({ logger: new ConsoleLogger() }));
 
-    // Модуль init() подписал ER create-student-campaign на события судьбы
-    // студента; пользовательский UC доступен через единый вход приложения
-    const campaigns = await bundle.apiApp.execute(
-      'get-my-campaigns',
-      { userId: '11111111-1111-4111-8111-111111111111', onlyLives: true },
-      ACTOR,
+    // Кампании — модуль DMG: UC доступен через единый вход приложения
+    const res = await bundle.apiApp.dispatch(
+      PeerReviewModuleDef,
+      GetMyCampaignsUcDef.command({ onlyLives: true }),
+      new UserCaller(ACTOR),
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
     );
-    expect(campaigns).toEqual([]);
+    expect(res).toEqual({ ok: true, value: [] });
+  });
+
+  test('UC рецензий остаются в legacy-модуле, кампании из него убраны', () => {
+    const bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
+    const legacy = bundle.apiApp.getModule('peer-review');
+    const names = legacy?.useCases.map((uc) => uc.getUcName()) ?? [];
+    expect(names).toContain('create-review');
+    expect(names).not.toContain('get-my-campaigns');
+    expect(names).not.toContain('get-campaign-recipients');
   });
 });
 
@@ -335,5 +348,50 @@ describe('U7App: legacy-события доходят до ER DMG-модуля w
       [CONFIRMED, 'confirmed'],
       [ABANDONED, 'abandoned'],
     ]);
+  });
+});
+
+// ══ Сосуществование (Ф1 peer-review): legacy-событие stream → ER кампаний DMG ══
+
+describe('U7App: legacy student.completed доходит до ER createStudentCampaign', () => {
+  let dir: string;
+
+  beforeAll(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'u7-app-peer-review-'));
+  });
+
+  afterAll(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test('реакция исполняется (в логе операций); потока нет — кампания не создана', async () => {
+    const bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
+    bundle.eventBus.publish({
+      eventId: crypto.randomUUID(),
+      eventName: 'student.completed',
+      occurredAt: '2026-09-20T10:00',
+      aggregateName: 'Student',
+      aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      payload: {
+        studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        userId: '77777777-7777-4777-8777-777777777777',
+        streamId: STREAM,
+        moduleId: MODULE,
+        outcome: 'advanced',
+      },
+    });
+
+    const deadline = Date.now() + 3000;
+    let ran: OperationRecord[] = [];
+    while (Date.now() < deadline && ran.length === 0) {
+      ran = (await oplogRecords(dir)).filter(
+        (r) => r.module === 'peer-review' && r.op === 'createStudentCampaign',
+      );
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    expect(ran).toHaveLength(1);
+    expect(
+      await Bun.file(join(dir, 'peer-review', 'campaigns.json')).exists(),
+    ).toBe(false);
   });
 });

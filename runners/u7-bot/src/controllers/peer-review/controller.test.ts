@@ -21,6 +21,6 @@ describe('PeerReviewController (реестр)', () => {
 
     const events = controller.getEventSubscriptions().map((s) => s.eventName);
 
-    expect(events).toContain('student-campaign.created');
+    expect(events).toContain('peer-review.review-campaign.created');
   });
 });

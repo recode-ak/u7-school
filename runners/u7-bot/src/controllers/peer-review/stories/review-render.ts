@@ -2,7 +2,7 @@ import { type MdText, md } from '@u7-scl/core/shared';
 import type {
   ReviewDirection,
   StudentOutcome,
-} from '@u7-scl/peer-review/domain';
+} from '@u7-scl/domain/peer-review/contract';
 
 /** Общий рендер отзыва для сторей чтения (S07 «Отзывы потока», S08 «Отзывы мне»). */
 

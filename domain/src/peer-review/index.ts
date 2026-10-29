@@ -10,7 +10,4 @@ export * from './review/commands/list-scope-facts-cmd';
 export * from './review/commands/list-scope-reviews-cmd';
 export * from './review/events';
 export * from './review-campaign';
-export * from './review-campaign/commands/get-campaign-recipients-cmd';
-export * from './review-campaign/commands/get-my-campaigns-cmd';
-export * from './review-campaign/events';
 export * from './state';

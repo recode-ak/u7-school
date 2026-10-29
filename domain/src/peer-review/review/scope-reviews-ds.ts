@@ -1,4 +1,4 @@
-import type { StudentOutcome } from '../review-campaign/entity';
+import type { StudentOutcome } from '../shared/campaign-fields';
 import type { Review, ReviewDirection } from './entity';
 
 /** Снимок отзыва для рендера: направление и снапшот исхода автора. */

@@ -3,7 +3,15 @@ import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { AppException } from '@u7-scl/core/domain';
 import { type MdText, md, mdJoin } from '@u7-scl/core/shared';
 import type { BotSession, BotUpdate, DialogResponse } from '@u7-scl/core/ui';
-import type { MyRecipientsView } from '@u7-scl/peer-review/domain';
+import {
+  GetCampaignRecipientsUcDef,
+  GetMyCampaignsUcDef,
+  type MyCampaignCard,
+  type MyRecipientsView,
+  PeerReviewModuleDef,
+  ReviewCampaignErrors,
+} from '@u7-scl/domain/peer-review/contract';
+import type { DomainError } from 'dmg-core';
 import { campaignProfileOf } from './campaign-profiles';
 import type { MyReviewsStory } from './my-reviews.story';
 
@@ -148,16 +156,12 @@ export class CampaignStory extends U7BotUiStory {
     actor: User,
     page?: number,
   ): Promise<DialogResponse> {
-    const view = await this.appApi.execute(
-      'get-campaign-recipients',
-      { campaignId, authorId: actor.uuid },
-      actor,
-    );
-    const cards = await this.appApi.execute(
-      'get-my-campaigns',
-      { userId: actor.uuid },
-      actor,
-    );
+    const recipients = await this.#recipientsOf(campaignId, actor);
+    if (!recipients.ok) {
+      return this.#recipientsFailure(recipients.error, page);
+    }
+    const view = recipients.value;
+    const cards = await this.#cardsOf(actor);
     const card = cards.find((c) => c.campaignId === campaignId);
     if (!card) {
       // кампания не жива/не моя — проверка РАНЬШЕ автопровала: истёкшее
@@ -222,11 +226,11 @@ export class CampaignStory extends U7BotUiStory {
     actor: User,
     page?: number,
   ): Promise<DialogResponse> {
-    const view = await this.appApi.execute(
-      'get-campaign-recipients',
-      { campaignId, authorId: actor.uuid },
-      actor,
-    );
+    const recipients = await this.#recipientsOf(campaignId, actor);
+    if (!recipients.ok) {
+      return this.#recipientsFailure(recipients.error, page);
+    }
+    const view = recipients.value;
     const recipient = view.recipients.find((r) => r.userId === recipientId);
     if (!recipient) {
       return this.screen(
@@ -333,11 +337,11 @@ export class CampaignStory extends U7BotUiStory {
     finalize: { text: MdText },
     page?: number,
   ): Promise<DialogResponse> {
-    const view = await this.appApi.execute(
-      'get-campaign-recipients',
-      { campaignId, authorId: actor.uuid },
-      actor,
-    );
+    const recipients = await this.#recipientsOf(campaignId, actor);
+    if (!recipients.ok) {
+      return this.#recipientsFailure(recipients.error, page);
+    }
+    const view = recipients.value;
     // session — в хаб: сброс кеша страниц после смены эпохи диалога
     // (обновлённый прогресс M/K на карточке); page — возврат на ту же
     // страницу хаба, с которой пришли в кампанию
@@ -371,13 +375,39 @@ export class CampaignStory extends U7BotUiStory {
       : this.#hubBtn(page);
   }
 
-  /** Название потока кампании — для шапки экранов ввода. */
-  async #streamTitleOf(campaignId: string, actor: User): Promise<string> {
-    const cards = await this.appApi.execute(
-      'get-my-campaigns',
-      { userId: actor.uuid },
+  /** Адресаты автора в окне — UC DMG `getCampaignRecipients` (автор — актор). */
+  #recipientsOf(campaignId: string, actor: User) {
+    return this.dispatchUc(
+      PeerReviewModuleDef,
+      GetCampaignRecipientsUcDef.command({ campaignId }),
       actor,
     );
+  }
+
+  /** Живые кампании актора — UC DMG `getMyCampaigns` (по умолчанию живые). */
+  async #cardsOf(actor: User): Promise<MyCampaignCard[]> {
+    const res = await this.dispatchUc(
+      PeerReviewModuleDef,
+      GetMyCampaignsUcDef.command({}),
+      actor,
+    );
+    return res.ok ? res.value : [];
+  }
+
+  /** Отказ чтения адресатов: нет кампании — экран S03, прочее — реплика. */
+  #recipientsFailure(error: DomainError, page?: number): DialogResponse {
+    if (error.code === ReviewCampaignErrors.NOT_FOUND.code) {
+      return this.screen(
+        md`⚠️ Кампания не найдена\\.`,
+        this.kb([[this.#hubBtn(page)]]),
+      );
+    }
+    return this.ucErrorNotify(error);
+  }
+
+  /** Название потока кампании — для шапки экранов ввода. */
+  async #streamTitleOf(campaignId: string, actor: User): Promise<string> {
+    const cards = await this.#cardsOf(actor);
     const card = cards.find((c) => c.campaignId === campaignId);
     if (!card) return '';
     const stream = await this.appApi.execute(

@@ -1,7 +1,7 @@
 // DEBT-25
 import type { ArMeta } from '@u7-scl/core/domain';
 import * as v from 'valibot';
-import { StudentOutcomeSchema } from '../review-campaign/entity';
+import { StudentOutcomeSchema } from '../shared/campaign-fields';
 import { isoMinuteField, uuidField } from '../shared/schema';
 import type { ReviewCreatedEvent } from './events';
 

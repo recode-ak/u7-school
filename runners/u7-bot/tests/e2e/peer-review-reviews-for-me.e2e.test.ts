@@ -68,11 +68,6 @@ function completedEvent(userId: string, aggregateId: string) {
   } satisfies StudentCompletedEvent;
 }
 
-/** isoMinute «сейчас ± сдвиг» — формат окна кампании. */
-function isoMinute(offsetMs = 0): string {
-  return new Date(Date.now() + offsetMs).toISOString().slice(0, 16);
-}
-
 /** /start → хаб по кнопке меню «💬 Отзывы». */
 async function openHub(transport: TestBotTransport, tgId: number) {
   await transport.handleStart(transport.makeBotContext(tgId));
@@ -94,27 +89,20 @@ describe('E2E peer-review: S08 «Отзывы мне»', () => {
       new PeerReviewController(),
     ]);
 
-    // Живая кампания Марины — событием судьбы (как в бою); кампания
-    // Олега — напрямую в репо (субъект без отзывов для негативного кейса)
+    // Живые кампании Марины и Олега (окно 7 дн от «сейчас») — событием
+    // судьбы, как в бою; у Олега отзывов нет — негативный кейс
     app.eventBus.publish(
       completedEvent(MARINA_ID, 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1'),
     );
     await waitUntil(async () =>
       Boolean(await app.reviewCampaignRepo.findBySubject(STREAM_ID, MARINA_ID)),
     );
-    await app.reviewCampaignRepo.save({
-      uuid: 'c5a55555-5555-4555-8555-555555555555',
-      context: 'stream_fate',
-      scopeId: STREAM_ID,
-      subjectId: OLEG_ID,
-      createdAt: isoMinute(),
-      expiresAt: isoMinute(7 * 24 * 3600 * 1000),
-      participants: [],
-      payload: {
-        subjectOutcome: 'completed_passed',
-        mentorId: '44444444-4444-4444-4444-444444444444',
-      },
-    });
+    app.eventBus.publish(
+      completedEvent(OLEG_ID, 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2'),
+    );
+    await waitUntil(async () =>
+      Boolean(await app.reviewCampaignRepo.findBySubject(STREAM_ID, OLEG_ID)),
+    );
   });
 
   afterAll(async () => {

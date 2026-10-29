@@ -3,6 +3,10 @@ export * from './errors';
 export type { StreamFacade, StreamMember, StreamMembers } from './facade';
 export { StreamEvents } from './stream/stream.events';
 export {
+  GetStreamMembersUcDef,
+  type StreamMembersView,
+} from './stream/uc/get-stream-members.uc';
+export {
   GetStreamPresenceUcDef,
   type StreamPresence,
 } from './stream/uc/get-stream-presence.uc';

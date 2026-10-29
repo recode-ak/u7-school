@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 // DEBT-25
 import { AppException } from '@u7-scl/core/domain';
-import type { StudentOutcome } from '../review-campaign/entity';
+import type { StudentOutcome } from '../shared/campaign-fields';
 import { ReviewAr } from './a-root';
 import type { ReviewDirection } from './entity';
 import { REVIEW_TEXT_MIN_LENGTH } from './entity';
