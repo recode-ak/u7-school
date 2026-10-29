@@ -1,0 +1,1 @@
+Задача: закрыть TR-27. dmg-core 12e2791: D-58 (fetch отвергнут), гайд use-case — неудобства и способы. u7-school: запись TR-27 удалена из debt.md; plan/spec/tracks — Фаза 1 перепланирована (решение Нурболата 2026-10-29). wish: createCourseWish/createModuleWish зовут чужой UC в load, Policy allowAll, ответ о субъекте — правок нет. check зелёный (3308/0).
