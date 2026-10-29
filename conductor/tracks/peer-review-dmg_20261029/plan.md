@@ -8,7 +8,7 @@
 
 **С Фазы 1 — автономный режим** ([agents.md](../../architecture/agents.md) §9). В `data/` не пишем. Решения и входной долг — в [spec.md](./spec.md).
 
-## Фаза 0: Роли волны 1 и база
+## Фаза 0: Роли волны 1 и база [checkpoint: ab586f70]
 
 - [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `peer-review` (домен и пакет), `dmg-core` `bun test` и `e2e` 441b90ac
 - [x] Task: Роль `architect` в `.agents-core/roles/architect.md` (переименована в `tech-lead`, решение Нурболата 2026-10-29): вопрос, что роль знает, формат выхода — черновик брифа по образцу `conductor/archive/golden-wish_20261020/slices/wish.md`; Sonnet; `bun run agents:sync` df4d1a74
@@ -17,7 +17,7 @@
 - [x] Task: Место ролей в конвейере — [agents.md](../../architecture/agents.md) §3; каркас раздела «Пилот ролей» в `summary.md` 6ce7ce7a
 - [x] Task: `data-keeper` (первый вызов): аудит формата `peer-review/campaigns.json` и `reviews.json` (фикстуры и формат, который читает legacy-репозиторий). Проверить, есть ли живые записи. Отчёт — в бриф 27e35ea7
 - [x] Task: `architect`: бриф `slices/review-campaign.md` — границы, Def и реализации, сохраняемое поведение, ID правил, «было → станет», внешние Def (`stream.completed`, UC `user`/`questionnaire`), stories кампаний; проверка брифа orchestrator'ом ec679c9f
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md) ab586f70
 
 ## Фаза 1: Срез `review-campaign`
 
