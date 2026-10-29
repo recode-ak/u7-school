@@ -19,9 +19,9 @@
 - [x] Task: Учебный модуль: `assignTask` — `users.getUser` в `fetch`; тест «не-владелец получает `ACCESS_DENIED`, `users` не вызывается» `dmg-core 54a0c03`
 - [x] Task: API-07 — GritQL `this.call` в `load` (`error`, подавление `// biome-ignore lint/plugin: <зачем Policy>`); фикстуры, `LintMap`, `biome.json` пакета, `rules.md` `dmg-core 1551f28`
 - [x] Task: Генератор UC (шаблон — при необходимости), гайд `use-case` (шаг `fetch`, ловушка снята), `llms.txt` `dmg-core ae345a4` — шаблон и `llms.txt` без правок (`this.call` не генерируется, жизненного цикла в `llms.txt` нет); попутно `policy.md`, `errors-result.md`, `domain-modeling.md`
-- [~] Task: u7-school: `bun install`, `dmg:sync`/`agents:sync`, API-07 в корневом `biome.json`; UC `wish` — чужие вызовы из `load` в `fetch`; TR-27 закрыт
-- [ ] Task: Ревью reviewer; правки по ревью
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: u7-school: `bun install`, `dmg:sync`/`agents:sync`, API-07 в корневом `biome.json`; UC `wish` — чужие вызовы из `load` в `fetch`; TR-27 закрыт (запись удалена в `79eab714`) `027b79b`
+- [x] Task: Ревью reviewer; правки по ревью — без `error`; `dmg-core c8d0e93`, TR-32 `027b79b`
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md) — автономно
 
 ## Фаза 2: Корень сборки в `@u7-scl/app` (DEBT-39)
 
