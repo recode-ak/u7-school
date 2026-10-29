@@ -7,7 +7,7 @@
 - [x] Task: Зафиксировать базовую линию (`bun test` pass/fail в u7-school и в пакете, `bun run e2e` пакета, e2e-тесты бота) в черновике `summary.md` `08ebca5`
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md) — автономно
 
-## Фаза 1: Вызовы после Policy (TR-27, dmg-core)
+## Фаза 1: Вызовы после Policy (TR-27, dmg-core) [checkpoint: 615164e]
 
 > Решение (Нурболат, 2026-10-29): шаг `fetch` не вводим — D-58; секретный ответ зависимости — значением в контекст, отказ — правилом после Policy. Задачи `fetch` в `UseCaseFromDef`, учебного `assignTask` и генератора сняты.
 
