@@ -550,9 +550,11 @@
                     "group": [
                       "@u7-scl/domain",
                       "@u7-scl/domain/**",
-                      "!@u7-scl/domain/*/contract"
+                      "!@u7-scl/domain/*/contract",
+                      "!@u7-scl/domain/shared",
+                      "!@u7-scl/domain/shared/**"
                     ],
-                    "message": "ARC-07: корень сборки берёт домен модуля только через контракт (@u7-scl/domain/<m>/contract)"
+                    "message": "ARC-07: корень сборки берёт домен модуля только через контракт (@u7-scl/domain/<m>/contract), общий домен — shared (D-53)"
                   },
                   {
                     "group": ["@u7-scl/wish/**"],

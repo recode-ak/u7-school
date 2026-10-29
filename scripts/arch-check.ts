@@ -54,6 +54,19 @@ export async function readPackageSources(root = '.'): Promise<DomainFile[]> {
   return files;
 }
 
+/** Имена пакетов корня сборки и раннеров (`platform/app`, `runners/*`) — ARC-06. */
+export async function assemblyPackages(root: string): Promise<string[]> {
+  // Glob Bun не разворачивает `/` внутри `{…}` — корень и раннеры отдельно.
+  const paths = ['platform/app/package.json'];
+  for await (const path of new Glob('runners/*/package.json').scan(root)) {
+    paths.push(path);
+  }
+  const names = await Promise.all(
+    paths.map(async (p) => (await Bun.file(`${root}/${p}`).json()).name),
+  );
+  return names.sort();
+}
+
 /** Исходники приложений для ARC-04 (D-45): код и тесты `runners/*`. */
 async function readAppSources(root: string): Promise<DomainFile[]> {
   const files: DomainFile[] = [];
@@ -94,7 +107,7 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
     ...checkDomainDirs(dirs, graph),
     ...checkDomainGraph(graph),
     ...checkDomainImports(code, graph),
-    ...checkModuleImports(code),
+    ...checkModuleImports(code, await assemblyPackages(root)),
     ...checkDebt({ code, debtMd }),
   ];
 }

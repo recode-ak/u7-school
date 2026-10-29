@@ -144,4 +144,19 @@ describe('loadConfig', () => {
 
     process.env = originalEnv;
   });
+
+  test('окружение — параметр: глобальный process.env не читается', () => {
+    const config = loadConfig({
+      BOT_TOKEN: 'literal-token',
+      COMMUNITY_GROUP_URL: 'https://t.me/+comm',
+      COMMUNITY_GROUP_ID: '-1',
+      STUDENT_GROUP_INVITE: 'https://t.me/+stud',
+      STUDENT_GROUP_ID: '-2',
+      BOT_ADMIN_UUID: '550e8400-e29b-41d4-a716-446655440000',
+      NODE_ENV: 'test',
+    });
+
+    expect(config.botToken).toBe('literal-token');
+    expect(config.dbDir).toBe('./data');
+  });
 });

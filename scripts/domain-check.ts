@@ -113,25 +113,28 @@ export function checkDomainImports(
 }
 
 const MODULES_DIR = 'modules/';
-// Корень сборки и раннеры: пакетом (`@u7-scl/app`, `@u7-scl/bot`, `@u7-scl/cli`)
-// или относительным путём в их каталоги.
-const ASSEMBLY_PKG = /^@u7-scl\/(app|bot|cli)(\/|$)/;
+// Каталоги корня сборки и раннеров — для относительных импортов.
 const ASSEMBLY_DIR = /^(platform\/app|runners)\//;
 
 /**
  * ARC-06 (D-53): прикладные пакеты `modules/<m>/**` не импортируют корень
- * сборки и раннеры — модуль не зависит от собирающего его приложения. Для
- * модулей на Def то же ловит `AssemblyChecker` (`DomainArch`), здесь — для
- * всех пакетов, включая legacy внешних модулей. Маркер DEBT не спасает.
+ * сборки и раннеры — пакетом из `packages` (имена — из `package.json`
+ * корня и раннеров, `assemblyPackages`) или относительным путём в их
+ * каталоги. Для модулей на Def то же ловит `AssemblyChecker`
+ * (`DomainArch`), здесь — для всех пакетов, включая legacy внешних модулей.
+ * Маркер DEBT не спасает.
  */
-export function checkModuleImports(files: readonly DomainFile[]): string[] {
+export function checkModuleImports(
+  files: readonly DomainFile[],
+  packages: readonly string[],
+): string[] {
   const out: string[] = [];
   for (const f of files) {
     if (!f.path.startsWith(MODULES_DIR)) continue;
     for (const { spec } of importsOf(f.text)) {
       const banned = spec.startsWith('.')
         ? ASSEMBLY_DIR.test(posix.join(posix.dirname(f.path), spec))
-        : ASSEMBLY_PKG.test(spec);
+        : packages.some((p) => spec === p || spec.startsWith(`${p}/`));
       if (banned) {
         out.push(
           `ARC-06: ${f.path}: прикладной пакет не импортирует корень сборки и раннеры (import '${spec}')`,

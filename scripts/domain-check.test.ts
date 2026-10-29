@@ -143,6 +143,18 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
 });
 
 describe('checkModuleImports: ARC-06 (D-53)', () => {
+  // Пакеты корня сборки и раннеров — из package.json (`assemblyPackages`).
+  const ASSEMBLY = ['@u7-scl/app', '@u7-scl/bot', '@u7-scl/cli'];
+
+  it('пакет нового раннера из списка — ARC-06', () => {
+    const files = [
+      file('modules/user/src/a.ts', "import { W } from '@u7-scl/web/x';"),
+    ];
+    expect(checkModuleImports(files, [...ASSEMBLY, '@u7-scl/web'])).toEqual([
+      "ARC-06: modules/user/src/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '@u7-scl/web/x')",
+    ]);
+  });
+
   it('платформа, домен и пакеты модулей — без нарушений', () => {
     const files = [
       file(
@@ -150,7 +162,7 @@ describe('checkModuleImports: ARC-06 (D-53)', () => {
         "import { A } from '@u7-scl/app-legacy';\nimport { C } from '@u7-scl/core';\nimport { W } from '@u7-scl/domain/wish';\nimport { R } from './wish/wish.repo';",
       ),
     ];
-    expect(checkModuleImports(files)).toEqual([]);
+    expect(checkModuleImports(files, ASSEMBLY)).toEqual([]);
   });
 
   it('корень сборки @u7-scl/app — ARC-06, маркер DEBT не спасает', () => {
@@ -160,7 +172,7 @@ describe('checkModuleImports: ARC-06 (D-53)', () => {
         "import { A } from '@u7-scl/app'; // DEBT-1\nimport { B } from '@u7-scl/app/u7-app';",
       ),
     ];
-    expect(checkModuleImports(files)).toEqual([
+    expect(checkModuleImports(files, ASSEMBLY)).toEqual([
       "ARC-06: modules/user/src/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '@u7-scl/app')",
       "ARC-06: modules/user/src/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '@u7-scl/app/u7-app')",
     ]);
@@ -173,7 +185,7 @@ describe('checkModuleImports: ARC-06 (D-53)', () => {
         "import { B } from '@u7-scl/bot';\nimport { C } from '@u7-scl/cli';\nimport { M } from '../../../../runners/u7-bot/src/main';\nimport { U } from '../../../../platform/app/src/u7-app';",
       ),
     ];
-    expect(checkModuleImports(files)).toEqual([
+    expect(checkModuleImports(files, ASSEMBLY)).toEqual([
       "ARC-06: modules/user/src/infra/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '@u7-scl/bot')",
       "ARC-06: modules/user/src/infra/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '@u7-scl/cli')",
       "ARC-06: modules/user/src/infra/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '../../../../runners/u7-bot/src/main')",
@@ -185,7 +197,7 @@ describe('checkModuleImports: ARC-06 (D-53)', () => {
     const files = [
       file('runners/u7-bot/src/a.ts', "import { A } from '@u7-scl/app';"),
     ];
-    expect(checkModuleImports(files)).toEqual([]);
+    expect(checkModuleImports(files, ASSEMBLY)).toEqual([]);
   });
 });
 

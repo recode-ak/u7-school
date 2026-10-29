@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { type ArchApp, reportArchCheck } from 'dmg-core/arch';
-import { ARCH_APPS, runDomainCheck } from './arch-check';
+import { ARCH_APPS, assemblyPackages, runDomainCheck } from './arch-check';
 import { DOMAIN_MODULES } from './domain-arch';
 import { domainGraphOf } from './domain-check';
 
@@ -21,6 +21,16 @@ describe('arch:check', () => {
     const domain = ARCH_APPS.find((a) => a.name === 'domain');
     expect(domain?.modules).toEqual(DOMAIN_MODULES);
     expect(domain?.entry).toBe('contract');
+  });
+});
+
+describe('assemblyPackages: ARC-06 (D-53)', () => {
+  it('пакеты корня сборки и всех раннеров', async () => {
+    expect(await assemblyPackages('.')).toEqual([
+      '@u7-scl/app',
+      '@u7-scl/bot',
+      '@u7-scl/cli',
+    ]);
   });
 });
 
