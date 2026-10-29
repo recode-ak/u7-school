@@ -1,0 +1,4 @@
+Ф1, срез review-campaign — задачи: test-designer (red), migrator: домен, контракт stream, прикладной слой, stories.
+Роли: test-designer (Sonnet), migrator ×3 (Sonnet). Решения: ERR-04 — группа REVIEW_CAMPAIGN (Нурболат); TR-38 пп. 1–6 (коммит пары red+green, INVALID_PARTICIPANTS, onlyLives, test:tz, обвязка MemoryBus, legacy-ошибки моста); type-экспорты contract peer-review.
+Проверки orchestrator: CI=true bun run check — зелёный, 3392 pass; test:tz 20+20; arch:check 0; test:bot 979 pass (базовая линия 978); data/ чист.
+Удалено: legacy кампаний в domain/src/peer-review/review-campaign и modules/peer-review/src/{api/review-campaign,api/er/create-student-campaign-er,infra/db/review-campaign-json-repo}.
