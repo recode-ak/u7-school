@@ -2,10 +2,26 @@ import { expect, mock } from 'bun:test';
 import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review/contract';
 import { type Command, ok, UserCaller } from 'dmg-core';
 
+/** Отказ UC в моке: ответ-значение, которое `peerReviewDispatch` превращает в `err`. */
+export class Refusal {
+  constructor(
+    readonly error: { code: string; kind: string; payload?: unknown },
+  ) {}
+}
+
+/** Отказ домена с кодом (`Result.err`) вместо успешного ответа. */
+export const refuse = (code: string, kind = 'conflict', payload?: unknown) =>
+  new Refusal({ code, kind, payload });
+
 /** Ответы UC модуля peer-review (DMG) в моках stories: вход → значение. */
 export interface PeerReviewAnswers {
   getMyCampaigns?: (input: unknown) => unknown;
   getCampaignRecipients?: (input: unknown) => unknown;
+  createReview?: (input: unknown) => unknown;
+  getMyReview?: (input: unknown) => unknown;
+  listMyReviews?: (input: unknown) => unknown;
+  listScopeReviews?: (input: unknown) => unknown;
+  listScopeFacts?: (input: unknown) => unknown;
 }
 
 /**
@@ -17,7 +33,10 @@ export function peerReviewDispatch(answers: PeerReviewAnswers) {
     expect(module).toBe(PeerReviewModuleDef);
     const answer = answers[command.uc as keyof PeerReviewAnswers];
     if (!answer) throw new Error(`Нет ответа на UC DMG: ${command.uc}`);
-    return ok(answer(command.input));
+    const value = answer(command.input);
+    return value instanceof Refusal
+      ? { ok: false as const, error: value.error }
+      : ok(value);
   });
 }
 

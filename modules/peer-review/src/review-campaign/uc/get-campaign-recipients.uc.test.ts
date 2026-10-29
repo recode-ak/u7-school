@@ -7,6 +7,10 @@ import { type Identified, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
 import { ReviewCampaignJsonRepo } from '../../infra/review-campaign.json-repo';
+import {
+  FactsReviewRepo,
+  type ReviewFactStub,
+} from '../../review/review.fixture';
 import { campaign, DAY, IDS, T0 } from '../review-campaign.fixture';
 import { GetCampaignRecipientsUc } from './get-campaign-recipients.uc';
 
@@ -16,8 +20,6 @@ import { GetCampaignRecipientsUc } from './get-campaign-recipients.uc';
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const as = (uuid: string) => new UserCaller<Identified>({ uuid });
 
-type Fact = { authorId: string; recipientId: string };
-
 let dir: string;
 let file: string;
 beforeEach(() => {
@@ -26,17 +28,14 @@ beforeEach(() => {
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-function makeUc(reviews: Fact[] = [], at = T0) {
+function makeUc(reviews: ReviewFactStub[] = [], at = T0) {
   const { app } = testAppContext({ at });
   return new GetCampaignRecipientsUc(
     {
       app,
       facades: new ModuleFacades(),
       campaigns: new ReviewCampaignJsonRepo(file),
-      reviews: {
-        findByCampaignAndAuthor: async (_c: string, authorId: string) =>
-          reviews.filter((r) => r.authorId === authorId),
-      },
+      reviews: new FactsReviewRepo(reviews),
     },
     PeerReviewModuleDef,
   );

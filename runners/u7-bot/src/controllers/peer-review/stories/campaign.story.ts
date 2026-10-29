@@ -1,15 +1,17 @@
 import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
-import { AppException } from '@u7-scl/core/domain';
 import { type MdText, md, mdJoin } from '@u7-scl/core/shared';
 import type { BotSession, BotUpdate, DialogResponse } from '@u7-scl/core/ui';
 import {
+  CreateReviewUcDef,
   GetCampaignRecipientsUcDef,
   GetMyCampaignsUcDef,
+  GetMyReviewUcDef,
   type MyCampaignCard,
   type MyRecipientsView,
   PeerReviewModuleDef,
   ReviewCampaignErrors,
+  ReviewErrors,
 } from '@u7-scl/domain/peer-review/contract';
 import type { DomainError } from 'dmg-core';
 import { campaignProfileOf } from './campaign-profiles';
@@ -86,65 +88,64 @@ export class CampaignStory extends U7BotUiStory {
       );
     }
     try {
-      const before = await this.appApi.execute(
-        'get-my-review',
-        {
+      const before = await this.dispatchUc(
+        PeerReviewModuleDef,
+        GetMyReviewUcDef.command({
           campaignId: context.campaignId,
-          authorId: actor.uuid,
           recipientId: context.recipientId,
-        },
+        }),
         actor,
       );
-      const saved = await this.appApi.execute(
-        'create-review',
-        {
+      if (!before.ok) return this.ucErrorNotify(before.error);
+      const saved = await this.dispatchUc(
+        PeerReviewModuleDef,
+        CreateReviewUcDef.command({
           campaignId: context.campaignId,
-          authorId: actor.uuid,
           recipientId: context.recipientId,
           text,
-        },
+        }),
         actor,
       );
+      if (!saved.ok) {
+        // Окно истекло пока писали — экран-заглушка (спека: возможности нет).
+        // Финализация закрывает экран ввода, заглушка — новым сообщением
+        // (после текста пользователя всё актуальное — внизу чата)
+        if (saved.error.code === ReviewErrors.WINDOW_CLOSED.code) {
+          const name =
+            (await this.#namesOf([context.recipientId], actor)).get(
+              context.recipientId,
+            ) ?? '';
+          return {
+            finalize: {
+              text: md`⌛ Окно закрылось — отзыв о ${name} не отправлен\\.`,
+            },
+            ...this.screen(
+              md`⌛ Возможность написать отзыв уже закрыта\\.`,
+              this.kb([[this.#hubBtn(context.pageNumber)]]),
+            ),
+          };
+        }
+        // Прочие отказы домена (чужой адресат и т.п.) — реплика поверх
+        return this.ucErrorNotify(saved.error);
+      }
       const name =
         (await this.#namesOf([context.recipientId], actor)).get(
           context.recipientId,
         ) ?? '';
       // Инфо-сообщение о результате: новое сохранение или перезапись
-      const verb = before.found ? 'обновлён' : 'отправлен';
-      const notice = before.found
+      const verb = before.value.found ? 'обновлён' : 'отправлен';
+      const notice = before.value.found
         ? md`✏️ Отзыв о ${name} обновлён\\.`
         : md`✅ Отзыв о ${name} сохранён\\.`;
       return this.#afterSaveResponse(
-        saved.campaignId,
+        saved.value.campaignId,
         actor,
         session,
         notice,
-        await this.#saveFinalize(saved.campaignId, name, verb, actor),
+        await this.#saveFinalize(saved.value.campaignId, name, verb, actor),
         context.pageNumber,
       );
     } catch (err) {
-      // Окно истекло пока писали — экран-заглушка (спека: возможности нет).
-      // Финализация закрывает экран ввода, заглушка — новым сообщением
-      // (после текста пользователя всё актуальное — внизу чата)
-      if (
-        err instanceof AppException &&
-        err.error.name === 'REVIEW_WINDOW_CLOSED'
-      ) {
-        const name =
-          (await this.#namesOf([context.recipientId], actor)).get(
-            context.recipientId,
-          ) ?? '';
-        return {
-          finalize: {
-            text: md`⌛ Окно закрылось — отзыв о ${name} не отправлен\\.`,
-          },
-          ...this.screen(
-            md`⌛ Возможность написать отзыв уже закрыта\\.`,
-            this.kb([[this.#hubBtn(context.pageNumber)]]),
-          ),
-        };
-      }
-      // Прочие ошибки домена (чужой адресат и т.п.) — реплика поверх
       return this.errorNotify(err);
     }
   }
@@ -274,11 +275,13 @@ export class CampaignStory extends U7BotUiStory {
     }
 
     // S04: адресат уже отозван — экран перезаписи с текущим текстом
-    const my = await this.appApi.execute(
-      'get-my-review',
-      { campaignId, authorId: actor.uuid, recipientId },
+    const myRes = await this.dispatchUc(
+      PeerReviewModuleDef,
+      GetMyReviewUcDef.command({ campaignId, recipientId }),
       actor,
     );
+    if (!myRes.ok) return this.ucErrorNotify(myRes.error);
+    const my = myRes.value;
     if (!my.found) {
       // рассинхрон признака (гонка) — обычный ввод S05
       return this.ask(

@@ -42,11 +42,14 @@ export function authorLabel(args: {
   return `${roles.author}${outcome}`;
 }
 
-/** Дата отзыва из isoMinute («2026-09-21T10:00») — «21.09.2026». */
-export function reviewDate(createdAt: string): string {
-  const [date] = createdAt.split('T');
-  const [y, m, d] = (date ?? '').split('-');
-  return d && m && y ? `${d}.${m}.${y}` : createdAt;
+/**
+ * Дата отзыва из метки времени (мс, UTC) — «21.09.2026». Зона — UTC, как у
+ * прежнего ISO-текста; перевод на зону проекта — DEBT-43.
+ */
+export function reviewDate(createdAt: number): string {
+  const iso = new Date(createdAt).toISOString().slice(0, 10);
+  const [y, m, d] = iso.split('-');
+  return `${d}.${m}.${y}`;
 }
 
 /** Строка автора отзыва в MarkdownV2: «👤 {Имя} (студент · исход · дата):». */
@@ -54,7 +57,7 @@ export function authorLine(args: {
   name: string;
   direction: ReviewDirection;
   authorOutcome?: StudentOutcome;
-  createdAt: string;
+  createdAt: number;
 }): MdText {
   return md`👤 ${args.name} \\(${authorLabel(args)} · ${reviewDate(args.createdAt)}\\):`;
 }
@@ -65,7 +68,7 @@ export function renderReviewCard(args: {
   direction: ReviewDirection;
   authorOutcome?: StudentOutcome;
   streamTitle: string;
-  createdAt: string;
+  createdAt: number;
   text: string;
 }): MdText {
   return md`👤 От: ${args.authorName} \\(${authorLabel(args)}\\)
@@ -82,7 +85,7 @@ export function renderSchoolReviewCard(args: {
   direction: ReviewDirection;
   authorOutcome?: StudentOutcome;
   streamTitle: string;
-  createdAt: string;
+  createdAt: number;
   text: string;
 }): MdText {
   return md`👨‍🏫 Ментор: ${args.mentorName}

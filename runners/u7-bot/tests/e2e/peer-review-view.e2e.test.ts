@@ -1,6 +1,11 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import {
+  CreateReviewUcDef,
+  ListScopeReviewsUcDef,
+  PeerReviewModuleDef,
+} from '@u7-scl/domain/peer-review/contract';
 import type { StudentCompletedEvent } from '@u7-scl/stream/domain';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
@@ -10,6 +15,8 @@ import {
   stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { UserCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 
 /**
@@ -35,7 +42,7 @@ const SUBJECT_USER_ID = '77777777-7777-4777-8777-777777777777';
 const MENTOR_TG = 1004;
 const MENTOR_USER_ID = '44444444-4444-4444-4444-444444444444';
 
-/** Прокси над apiApp: считает execute по имени UC (для кеш-ассертов). */
+/** Прокси над apiApp: считает execute и dispatch по имени UC (для кеш-ассертов). */
 function countingApi(app: TestApp): {
   api: typeof app.apiApp;
   count: (name: string) => number;
@@ -55,6 +62,20 @@ function countingApi(app: TestApp): {
               ) => Promise<unknown>;
             }
           ).execute(name, attrs, actor);
+        };
+      }
+      if (prop === 'dispatch') {
+        return async (
+          module: unknown,
+          command: { uc: string },
+          ...rest: unknown[]
+        ) => {
+          counts.set(command.uc, (counts.get(command.uc) ?? 0) + 1);
+          return (
+            target as unknown as {
+              dispatch: (...a: unknown[]) => Promise<unknown>;
+            }
+          ).dispatch(module, command, ...rest);
         };
       }
       const value = Reflect.get(target, prop, receiver);
@@ -274,17 +295,17 @@ describe('E2E peer-review: S07 — пагинация и DialogCache', () => {
       [SUBJECT_USER_ID, longReview('D4: отзыв ментора о студенте.')],
     ];
     for (const [recipientId, text] of reviews) {
-      await app.apiApp.execute(
-        'create-review',
-        {
+      const written = await app.apiApp.dispatch(
+        PeerReviewModuleDef,
+        CreateReviewUcDef.command({
           campaignId: campaign.uuid,
-          authorId:
-            recipientId === SUBJECT_USER_ID ? mentor.uuid : subject.uuid,
           recipientId,
           text,
-        },
-        recipientId === SUBJECT_USER_ID ? mentor : subject,
+        }),
+        new UserCaller(recipientId === SUBJECT_USER_ID ? mentor : subject),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
       );
+      expect(written.ok).toBe(true);
     }
 
     // Открываем S07: карточка потока → кнопка «💬 Отзывы»
@@ -306,7 +327,7 @@ describe('E2E peer-review: S07 — пагинация и DialogCache', () => {
     expect(first?.index).toBe(1);
 
     // Открытие S07 = один build (чтение домена)
-    expect(counter?.count('list-scope-reviews')).toBe(1);
+    expect(counter?.count(ListScopeReviewsUcDef.name)).toBe(1);
 
     const s07MessageId = transport.api.sentMessages
       .filter((s) => s.telegramId === GUEST_TG)
@@ -365,6 +386,6 @@ describe('E2E peer-review: S07 — пагинация и DialogCache', () => {
     expect(allTexts).toContain('Работать в паре');
 
     // DialogCache: все тыки — из кеша, list-scope-reviews не звался
-    expect(counter?.count('list-scope-reviews')).toBe(1);
+    expect(counter?.count(ListScopeReviewsUcDef.name)).toBe(1);
   });
 });

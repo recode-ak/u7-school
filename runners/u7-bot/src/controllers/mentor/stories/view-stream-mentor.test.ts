@@ -5,6 +5,10 @@ import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import type { Stream } from '@u7-scl/stream/domain';
 import { StreamStatus } from '@u7-scl/stream/domain';
 import { Role } from '@u7-scl/user/domain';
+import {
+  peerReviewDispatch,
+  testCallers,
+} from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { ViewStreamMentorStory } from './view-stream-mentor';
 
 const mentorActor: User = {
@@ -66,7 +70,14 @@ function createStory(handler?: Handler) {
       return undefined;
     }),
   };
-  story.init({ appApi } as never);
+  // факты отзывов скоупа (карточка потока) — UC DMG через dispatch
+  const dispatch = peerReviewDispatch({
+    listScopeFacts: () => ({ hasReviews: false, reviewsCount: 0 }),
+  });
+  story.init({
+    appApi: { ...appApi, dispatch },
+    callers: testCallers,
+  } as never);
   return { story, appApi };
 }
 

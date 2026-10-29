@@ -1,3 +1,2 @@
-// Прикладной слой агрегата review-campaign: порты чтения и записи
+// Прикладной слой агрегата review-campaign: порт репозитория
 export * from './review-campaign.repo';
-export * from './review-facts.reader';

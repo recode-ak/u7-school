@@ -24,6 +24,7 @@ import {
   testAppContext,
 } from 'dmg-core/testing';
 import { ReviewCampaignJsonRepo } from '../../infra/review-campaign.json-repo';
+import { FactsReviewRepo } from '../../review/review.fixture';
 import { campaign, DAY } from '../review-campaign.fixture';
 import { CreateStudentCampaignEr } from './create-student-campaign.er';
 
@@ -79,7 +80,7 @@ const makeEr = () =>
       app: ctx.app,
       facades: new ModuleFacades([streams]),
       campaigns,
-      reviews: { findByCampaignAndAuthor: async () => [] },
+      reviews: new FactsReviewRepo(),
     },
     PeerReviewModuleDef,
   );

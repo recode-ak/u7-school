@@ -5,8 +5,10 @@ import {
   type BotSession,
   type DialogResponse,
 } from '@u7-scl/core/ui';
+import { ListMyReviewsUcDef } from '@u7-scl/domain/peer-review/contract';
 import { Role } from '@u7-scl/user/domain';
 import { Routes } from '../../shared/routes';
+import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
 import { ReviewsForMeStory } from './reviews-for-me.story';
 
 /**
@@ -53,7 +55,7 @@ interface Snapshot {
     | 'dropped'
     | 'never_started';
   text: string;
-  createdAt: string;
+  createdAt: number;
 }
 
 /** appApi-мок: list-my-reviews + get-users-by-ids + get-stream. */
@@ -62,10 +64,9 @@ function makeAppApi(
   opts: { emptyNames?: boolean; streamFails?: boolean } = {},
 ) {
   return {
+    dispatch: peerReviewDispatch({ listMyReviews: () => ({ reviews }) }),
     execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
       switch (ucName) {
-        case 'list-my-reviews':
-          return { reviews };
         case 'get-users-by-ids':
           if (opts.emptyNames) return [];
           return [
@@ -91,7 +92,7 @@ function makeStory(
 ) {
   const appApi = makeAppApi(reviews, opts);
   const story = new ReviewsForMeStory();
-  story.init({ appApi } as never);
+  story.init({ appApi, callers: testCallers } as never);
   return { story, appApi };
 }
 
@@ -112,7 +113,7 @@ function manyReviews(n: number): Snapshot[] {
     direction: 'student_student' as const,
     authorOutcome: 'completed_passed' as const,
     text: `Отзыв номер ${i + 1}`,
-    createdAt: `2026-09-2${9 - (i % 10)}T10:00`,
+    createdAt: Date.UTC(2026, 8, 29 - (i % 10), 10),
   }));
 }
 
@@ -126,7 +127,7 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
         direction: 'student_student',
         authorOutcome: 'completed_passed',
         text: 'Отличный товарищ по команде',
-        createdAt: '2026-09-21T10:00',
+        createdAt: Date.UTC(2026, 8, 21, 10, 0),
       },
     ];
     const { story, appApi } = makeStory(reviews);
@@ -143,11 +144,9 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
     expect(text).toContain('📅 Дата: 21\\.09\\.2026');
     expect(text).toContain('💬 «Отличный товарищ по команде»');
 
-    expect(appApi.execute).toHaveBeenCalledWith(
-      'list-my-reviews',
-      { userId: READER },
-      actor,
-    );
+    expect(appApi.dispatch.mock.calls.map(([, command]) => command)).toEqual([
+      ListMyReviewsUcDef.command({}),
+    ]);
   });
 
   test('автор-ментор (mentor_student) — без лейбла исхода', async () => {
@@ -158,7 +157,7 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
         authorId: AUTHOR_2,
         direction: 'mentor_student',
         text: 'Глубоко разбирается в коде',
-        createdAt: '2026-09-20T11:00',
+        createdAt: Date.UTC(2026, 8, 20, 11, 0),
       },
     ];
     const { story } = makeStory(reviews);
@@ -178,7 +177,7 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
         authorId: AUTHOR_1,
         direction: 'student_student',
         text: 'текст один',
-        createdAt: '2026-09-21T10:00',
+        createdAt: Date.UTC(2026, 8, 21, 10, 0),
       },
       {
         reviewId: '11111111-0000-0000-0000-000000000006',
@@ -186,7 +185,7 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
         authorId: AUTHOR_1,
         direction: 'student_student',
         text: 'текст два',
-        createdAt: '2026-09-20T10:00',
+        createdAt: Date.UTC(2026, 8, 20, 10, 0),
       },
       {
         reviewId: '11111111-0000-0000-0000-000000000007',
@@ -194,7 +193,7 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
         authorId: AUTHOR_2,
         direction: 'student_student',
         text: 'текст три',
-        createdAt: '2026-09-19T10:00',
+        createdAt: Date.UTC(2026, 8, 19, 10, 0),
       },
     ];
     const { story, appApi } = makeStory(reviews);
@@ -220,7 +219,7 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
           direction: 'student_student',
           authorOutcome: 'dropped',
           text: 'текст отзыва',
-          createdAt: '2026-09-21T10:00',
+          createdAt: Date.UTC(2026, 8, 21, 10, 0),
         },
       ],
       { emptyNames: true },
@@ -242,7 +241,7 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
           direction: 'student_student',
           authorOutcome: 'completed_passed',
           text: 'текст отзыва',
-          createdAt: '2026-09-21T10:00',
+          createdAt: Date.UTC(2026, 8, 21, 10, 0),
         },
       ],
       { streamFails: true },
@@ -306,7 +305,7 @@ describe('ReviewsForMeStory — карточная пагинация (◀️ П
         authorId: AUTHOR_1,
         direction: 'student_student',
         text: 'Свежий отзыв',
-        createdAt: '2026-09-22T09:00',
+        createdAt: Date.UTC(2026, 8, 22, 9, 0),
       },
       {
         reviewId: '11111111-0000-0000-0000-000000000002',
@@ -314,7 +313,7 @@ describe('ReviewsForMeStory — карточная пагинация (◀️ П
         authorId: AUTHOR_2,
         direction: 'student_student',
         text: 'Старый отзыв',
-        createdAt: '2026-09-18T09:00',
+        createdAt: Date.UTC(2026, 8, 18, 9, 0),
       },
     ];
     const { story } = makeStory(reviews);
@@ -358,9 +357,9 @@ describe('ReviewsForMeStory — карточная пагинация (◀️ П
       session,
     );
 
-    const reads = (
-      appApi.execute.mock.calls as unknown as Array<[string]>
-    ).filter(([uc]) => uc === 'list-my-reviews');
+    const reads = appApi.dispatch.mock.calls.filter(
+      ([, command]) => command.uc === ListMyReviewsUcDef.name,
+    );
     expect(reads).toHaveLength(1);
   });
 

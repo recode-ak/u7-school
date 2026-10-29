@@ -7,10 +7,7 @@ import type {
   Step,
 } from '@u7-scl/course/domain';
 import { Status } from '@u7-scl/course/domain';
-import type {
-  Review,
-  StudentOutcome,
-} from '@u7-scl/domain/peer-review/contract';
+import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
 import type { Stream, StreamStatus, Student } from '@u7-scl/stream/domain';
 import type { Role, User } from '@u7-scl/user/domain';
 import { assertWorldInvariants } from './invariants';
@@ -23,6 +20,7 @@ import type {
   StudentDef,
   WorldCampaign,
   WorldDefinition,
+  WorldReview,
   WorldState,
 } from './types';
 import { deterministicUuid } from './uuid';
@@ -383,7 +381,7 @@ export function buildWorldState(
   );
 
   // 6. Сборка отзывов (ReviewDef -> Review)
-  const reviews: Review[] = (def.reviews ?? []).map((r: ReviewDef) => {
+  const reviews: WorldReview[] = (def.reviews ?? []).map((r: ReviewDef) => {
     const reviewUuid = r.uuid ?? deterministicUuid(`review:${r.key}`);
     const campaignUuid =
       campaignUuidByKey.get(r.campaignKey) ??
@@ -403,7 +401,7 @@ export function buildWorldState(
       resolveRelativeTime(r.createdAt ?? 'T-1d', anchorDate),
     );
 
-    const reviewEntity: Review = {
+    const reviewEntity: WorldReview = {
       uuid: reviewUuid,
       scopeId,
       campaignId: campaignUuid,

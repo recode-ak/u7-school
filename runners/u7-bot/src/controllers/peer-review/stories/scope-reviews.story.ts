@@ -2,7 +2,11 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { type MdText, md } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
-import type { RecipientReviewsGroup } from '@u7-scl/domain/peer-review/contract';
+import {
+  ListScopeReviewsUcDef,
+  PeerReviewModuleDef,
+  type RecipientReviewsGroup,
+} from '@u7-scl/domain/peer-review/contract';
 import { Routes } from '../../shared/routes';
 import { authorLabel, rolesOf } from './review-render';
 
@@ -68,10 +72,16 @@ export class ScopeReviewsStory extends U7BotUiStory {
     scopeId: string,
     actor: User,
   ): Promise<{ header: MdText; blocks: string[]; payload: undefined }> {
-    const [projection, stream] = await Promise.all([
-      this.appApi.execute('list-scope-reviews', { scopeIds: [scopeId] }, actor),
+    const [res, stream] = await Promise.all([
+      this.dispatchUc(
+        PeerReviewModuleDef,
+        ListScopeReviewsUcDef.command({ scopeIds: [scopeId] }),
+        actor,
+      ),
       this.appApi.execute('get-stream', { streamId: scopeId }, actor),
     ]);
+    if (!res.ok) throw new Error(res.error.code);
+    const projection = res.value;
 
     const names = await this.#namesOf(uniqueIds(projection.recipients), actor);
 

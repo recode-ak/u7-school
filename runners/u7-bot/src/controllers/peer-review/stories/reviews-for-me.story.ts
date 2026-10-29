@@ -2,6 +2,10 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { type MdText, md } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse, KbButton } from '@u7-scl/core/ui';
+import {
+  ListMyReviewsUcDef,
+  PeerReviewModuleDef,
+} from '@u7-scl/domain/peer-review/contract';
 import { buttons } from '../../shared/buttons';
 import { renderReviewCard } from './review-render';
 
@@ -58,11 +62,13 @@ export class ReviewsForMeStory extends U7BotUiStory {
   async #buildCards(
     actor: User,
   ): Promise<{ title: MdText; cards: MdText[]; payload: undefined }> {
-    const { reviews } = await this.appApi.execute(
-      'list-my-reviews',
-      { userId: actor.uuid },
+    const res = await this.dispatchUc(
+      PeerReviewModuleDef,
+      ListMyReviewsUcDef.command({}),
       actor,
     );
+    if (!res.ok) throw new Error(res.error.code);
+    const { reviews } = res.value;
 
     const [names, titles] = await Promise.all([
       this.#namesOf([...new Set(reviews.map((r) => r.authorId))], actor),

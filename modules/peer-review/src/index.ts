@@ -1,6 +1,7 @@
 export * from './api';
 export * from './domain';
 export * from './infra';
-// DMG: модуль peer-review (Ф1 — кампании)
+// DMG: модуль peer-review (Ф1 — кампании, Ф2 — отзывы)
 export * from './peer-review.module';
+export * from './review';
 export * from './review-campaign';

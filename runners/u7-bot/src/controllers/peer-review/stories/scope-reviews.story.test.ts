@@ -5,7 +5,9 @@ import {
   type BotSession,
   type DialogResponse,
 } from '@u7-scl/core/ui';
+import { ListScopeReviewsUcDef } from '@u7-scl/domain/peer-review/contract';
 import { Role } from '@u7-scl/user/domain';
+import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
 import { ScopeReviewsStory } from './scope-reviews.story';
 
 /**
@@ -48,7 +50,7 @@ interface Snapshot {
     | 'dropped'
     | 'never_started';
   text: string;
-  createdAt: string;
+  createdAt: number;
 }
 
 interface Group {
@@ -64,10 +66,14 @@ function longText(n: number, pad = 700): string {
 /** appApi-мок: list-scope-reviews, get-stream, get-users-by-ids. */
 function makeAppApi(groups: Group[], opts: { emptyNames?: boolean } = {}) {
   return {
+    dispatch: peerReviewDispatch({
+      listScopeReviews: (input) => ({
+        scopeIds: (input as { scopeIds: string[] }).scopeIds,
+        recipients: groups,
+      }),
+    }),
     execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
       switch (ucName) {
-        case 'list-scope-reviews':
-          return { scopeIds: attrs.scopeIds, recipients: groups };
         case 'get-stream':
           return { uuid: attrs.streamId, title: 'Поток решения' };
         case 'get-users-by-ids':
@@ -89,7 +95,7 @@ function makeAppApi(groups: Group[], opts: { emptyNames?: boolean } = {}) {
 function makeStory(groups: Group[], opts?: { emptyNames?: boolean }) {
   const appApi = makeAppApi(groups, opts);
   const story = new ScopeReviewsStory();
-  story.init({ appApi } as never);
+  story.init({ appApi, callers: testCallers } as never);
   return { story, appApi };
 }
 
@@ -110,7 +116,7 @@ function manyReviews(n: number, textPad = 700): Group[] {
     direction: 'student_student',
     authorOutcome: 'completed_passed',
     text: longText(i + 1, textPad),
-    createdAt: `2026-09-2${i % 10}T10:00`,
+    createdAt: Date.UTC(2026, 8, 20 + (i % 10), 10),
   }));
   return [{ recipientId: STUDENT_1, reviews }];
 }
@@ -128,7 +134,7 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
             direction: 'student_student',
             authorOutcome: 'completed_passed',
             text: 'Отличный товарищ по команде',
-            createdAt: '2026-09-21T10:00',
+            createdAt: Date.UTC(2026, 8, 21, 10, 0),
           },
         ],
       },
@@ -162,7 +168,7 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
             direction: 'student_mentor',
             authorOutcome: 'never_started',
             text: 'Ментор был на связи',
-            createdAt: '2026-09-21T11:00',
+            createdAt: Date.UTC(2026, 8, 21, 11, 0),
           },
         ],
       },
@@ -193,7 +199,7 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
             authorId: MENTOR_ID,
             direction: 'mentor_student',
             text: 'Вера глубоко разбирается в коде',
-            createdAt: '2026-09-21T12:00',
+            createdAt: Date.UTC(2026, 8, 21, 12, 0),
           },
         ],
       },
@@ -225,7 +231,7 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
             direction: 'student_student',
             authorOutcome: 'dropped',
             text: 'Первый отзыв о Борисе',
-            createdAt: '2026-09-21T10:00',
+            createdAt: Date.UTC(2026, 8, 21, 10, 0),
           },
           {
             reviewId: '11111111-0000-0000-0000-000000000005',
@@ -234,7 +240,7 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
             direction: 'student_student',
             authorOutcome: 'completed_not_passed',
             text: 'Второй отзыв о Борисе',
-            createdAt: '2026-09-21T12:00',
+            createdAt: Date.UTC(2026, 8, 21, 12, 0),
           },
         ],
       },
@@ -247,7 +253,7 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
             authorId: AUTHOR_1,
             direction: 'student_student',
             text: 'Отзыв о Вере',
-            createdAt: '2026-09-21T13:00',
+            createdAt: Date.UTC(2026, 8, 21, 13, 0),
           },
         ],
       },
@@ -280,7 +286,7 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
             authorId: AUTHOR_1,
             direction: 'student_student',
             text: 'текст один',
-            createdAt: '2026-09-21T10:00',
+            createdAt: Date.UTC(2026, 8, 21, 10, 0),
           },
           {
             reviewId: '11111111-0000-0000-0000-000000000005',
@@ -288,7 +294,7 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
             authorId: AUTHOR_1,
             direction: 'student_student',
             text: 'текст два',
-            createdAt: '2026-09-21T11:00',
+            createdAt: Date.UTC(2026, 8, 21, 11, 0),
           },
         ],
       },
@@ -301,7 +307,7 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
             authorId: AUTHOR_2,
             direction: 'student_mentor',
             text: 'текст три',
-            createdAt: '2026-09-21T12:00',
+            createdAt: Date.UTC(2026, 8, 21, 12, 0),
           },
         ],
       },
@@ -333,7 +339,7 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
             direction: 'student_student',
             authorOutcome: 'completed_passed',
             text: 'текст отзыва',
-            createdAt: '2026-09-21T10:00',
+            createdAt: Date.UTC(2026, 8, 21, 10, 0),
           },
         ],
       },
@@ -470,9 +476,9 @@ describe('ScopeReviewsStory — пагинация (BotPaginator + DialogCache)'
       );
     }
 
-    const reads = (
-      appApi.execute.mock.calls as unknown as Array<[string]>
-    ).filter(([uc]) => uc === 'list-scope-reviews');
+    const reads = appApi.dispatch.mock.calls.filter(
+      ([, command]) => command.uc === ListScopeReviewsUcDef.name,
+    );
     expect(reads).toHaveLength(1);
   });
 
@@ -481,11 +487,13 @@ describe('ScopeReviewsStory — пагинация (BotPaginator + DialogCache)'
 
     await story.handleCallback(`view:${SCOPE_ID}`, actor, session);
 
-    const call = appApi.execute.mock.calls.find(
-      ([uc]) => uc === 'list-scope-reviews',
+    const call = appApi.dispatch.mock.calls.find(
+      ([, command]) => command.uc === ListScopeReviewsUcDef.name,
     );
     expect(call).toBeDefined();
-    expect(call?.[1]).toEqual({ scopeIds: [SCOPE_ID] });
+    expect(call?.[1]).toEqual(
+      ListScopeReviewsUcDef.command({ scopeIds: [SCOPE_ID] }),
+    );
   });
 
   test('одна страница коротких отзывов — без индикатора и навигации', async () => {

@@ -2,7 +2,11 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { type MdText, md } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
-import type { RecipientReviewsGroup } from '@u7-scl/domain/peer-review/contract';
+import {
+  ListScopeReviewsUcDef,
+  PeerReviewModuleDef,
+  type RecipientReviewsGroup,
+} from '@u7-scl/domain/peer-review/contract';
 import type { Stream } from '@u7-scl/stream/domain';
 import { renderSchoolReviewCard } from '../../peer-review/stories/review-render';
 import { buttons } from '../../shared/buttons';
@@ -13,7 +17,7 @@ import { buttons } from '../../shared/buttons';
  * Вход: `school:reviews:list[:<page>]` — кнопка «💬 Отзывы» в хабе школы.
  * Логика:
  * 1. Получает все потоки школы (`list-streams({ schoolId })`).
- * 2. Собирает отзывы студентов о менторах (`list-scope-reviews({ scopeIds, direction: 'student_mentor' })`).
+ * 2. Собирает отзывы студентов о менторах (`listScopeReviews({ scopeIds, filter: { direction: 'student_mentor' } })`).
  * 3. Резолвит имена менторов и авторов через batch `get-users-by-ids`.
  * 4. Рендерит карточки через `cardPagedScreen` с кнопкой «⬅️ Назад в школу».
  */
@@ -77,11 +81,16 @@ export class SchoolReviewsStory extends U7BotUiStory {
 
     const streamTitles = new Map(streams.map((s) => [s.uuid, s.title]));
 
-    const projection = (await this.appApi.execute(
-      'list-scope-reviews',
-      { scopeIds, direction: 'student_mentor' },
+    const res = await this.dispatchUc(
+      PeerReviewModuleDef,
+      ListScopeReviewsUcDef.command({
+        scopeIds,
+        filter: { direction: 'student_mentor' },
+      }),
       actor,
-    )) as { recipients: RecipientReviewsGroup[] };
+    );
+    if (!res.ok) throw new Error(res.error.code);
+    const projection = res.value;
 
     const userIds = uniqueIds(projection.recipients);
     const names = await this.#namesOf(userIds, actor);

@@ -10,6 +10,7 @@ import type {
 } from '@u7-scl/core/ui';
 import {
   GetMyCampaignsUcDef,
+  ListMyReviewsUcDef,
   type MyCampaignCard,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
@@ -75,14 +76,25 @@ export class MyReviewsStory extends U7BotUiStory {
     return res.value;
   }
 
+  /** Число отзывов мне — UC DMG `listMyReviews` (адресат — актор). */
+  async #incomingCountOf(actor: User): Promise<number> {
+    const res = await this.dispatchUc(
+      PeerReviewModuleDef,
+      ListMyReviewsUcDef.command({}),
+      actor,
+    );
+    if (!res.ok) throw new Error(res.error.code);
+    return res.value.reviews.length;
+  }
+
   // ── Главное меню (декларативная кнопка) ──
 
   override async menuButtons(actor: User): Promise<MenuButton[]> {
     const [cards, incoming] = await Promise.all([
       this.#liveCardsOf(actor),
-      this.appApi.execute('list-my-reviews', { userId: actor.uuid }, actor),
+      this.#incomingCountOf(actor),
     ]);
-    if (cards.length === 0 && incoming.reviews.length === 0) return [];
+    if (cards.length === 0 && incoming === 0) return [];
     return [
       {
         kind: 'callback',
@@ -132,7 +144,7 @@ export class MyReviewsStory extends U7BotUiStory {
       }> => {
         const [cards, incoming] = await Promise.all([
           this.#liveCardsOf(actor),
-          this.appApi.execute('list-my-reviews', { userId: actor.uuid }, actor),
+          this.#incomingCountOf(actor),
         ]);
         if (cards.length === 0) {
           return {
@@ -140,7 +152,7 @@ export class MyReviewsStory extends U7BotUiStory {
             blocks: [] as string[],
             payload: {
               cards: [] as HubCardBtn[],
-              hasIncoming: incoming.reviews.length > 0,
+              hasIncoming: incoming > 0,
             },
           };
         }
@@ -173,7 +185,7 @@ export class MyReviewsStory extends U7BotUiStory {
           blocks: this.#blocks(cards, titles, names),
           payload: {
             cards: payload,
-            hasIncoming: incoming.reviews.length > 0,
+            hasIncoming: incoming > 0,
           },
         };
       },

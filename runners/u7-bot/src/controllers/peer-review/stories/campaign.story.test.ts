@@ -1,6 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
-import { AppException } from '@u7-scl/core/domain';
 import { md } from '@u7-scl/core/shared';
 import {
   assertDialogResponseMarkdownSafe,
@@ -8,14 +7,20 @@ import {
   type DialogResponse,
 } from '@u7-scl/core/ui';
 import {
+  CreateReviewUcDef,
   GetCampaignRecipientsUcDef,
   ReviewCampaignErrors,
+  ReviewErrors,
 } from '@u7-scl/domain/peer-review/contract';
 import { Role } from '@u7-scl/user/domain';
 import { err } from 'dmg-core';
 import { CampaignStory } from './campaign.story';
 import { MyReviewsStory } from './my-reviews.story';
-import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
+import {
+  peerReviewDispatch,
+  refuse,
+  testCallers,
+} from './peer-review-dmg.test-kit';
 
 describe('CampaignStory (S03 — список адресатов)', () => {
   const CAMPAIGN_ID = 'aaaaaaaa-0000-0000-0000-000000000001';
@@ -84,36 +89,38 @@ describe('CampaignStory (S03 — список адресатов)', () => {
             progress: { done: 1, total: recipients.length },
           },
         ],
+        getMyReview: () =>
+          myReviewText === undefined
+            ? { found: false }
+            : { found: true, text: myReviewText },
+        createReview: (input) => {
+          if (failWindow) {
+            return refuse(ReviewErrors.WINDOW_CLOSED.code, 'conflict', {
+              campaignId: CAMPAIGN_ID,
+              expiresAt: Date.parse('2026-09-19T00:00'),
+            });
+          }
+          // имитация отказа домена (прочие отказы — реплика поверх)
+          if (failUc === 'create-review') {
+            return refuse(ReviewErrors.RECIPIENT_NOT_ALLOWED.code);
+          }
+          const { campaignId, recipientId } = input as {
+            campaignId: string;
+            recipientId: string;
+          };
+          return {
+            reviewId: '10000000-0000-0000-0000-000000000001',
+            campaignId,
+            recipientId,
+          };
+        },
+        listMyReviews: () => ({ reviews: [] }),
       }),
       execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
-        if (failWindow && ucName === 'create-review') {
-          throw new AppException({
-            name: 'REVIEW_WINDOW_CLOSED',
-            level: 'domain',
-            kind: 'conflict',
-            message: 'Окно отзывов закрыто',
-            payload: {
-              campaignId: CAMPAIGN_ID,
-              expiresAt: '2026-09-19T00:00',
-            },
-          });
-        }
         if (ucName === failUc) {
           throw new Error('имитация ошибки UC');
         }
         switch (ucName) {
-          case 'list-my-reviews':
-            return { reviews: [] };
-          case 'create-review':
-            return {
-              reviewId: '10000000-0000-0000-0000-000000000001',
-              campaignId: attrs.campaignId,
-              recipientId: attrs.recipientId,
-            };
-          case 'get-my-review':
-            return myReviewText === undefined
-              ? { found: false }
-              : { found: true, text: myReviewText };
           case 'get-stream':
             return { uuid: attrs.uuid, title: 'Поток S' };
           case 'get-user':
@@ -654,20 +661,15 @@ describe('CampaignStory (S03 — список адресатов)', () => {
     const btn = findBtn(response, 'Одногруппник — Борис');
     expect(btn?.text.startsWith('✅')).toBe(true);
 
-    const calls = (
-      appApi.execute.mock.calls as unknown as Array<
-        [string, Record<string, unknown>, unknown]
-      >
-    ).map(([ucName, attrs]) => [ucName, attrs]);
-    expect(calls).toContainEqual([
-      'create-review',
-      {
+    expect(
+      appApi.dispatch.mock.calls.map(([, command]) => command),
+    ).toContainEqual(
+      CreateReviewUcDef.command({
         campaignId: CAMPAIGN_ID,
-        authorId: actor.uuid,
         recipientId: PEER_ID,
         text: reviewText,
-      },
-    ]);
+      }),
+    );
   });
 
   test('ввод: единственный адресат — инфо «сохранён» + хаб «Мои отзывы»', async () => {
@@ -822,20 +824,15 @@ describe('CampaignStory (S03 — список адресатов)', () => {
     expect(String(response.notify?.text ?? '')).toContain('обновлён');
     expect(String(response.notify?.text ?? '')).not.toContain('сохранён');
     expect(String(response.screen?.text ?? '')).toContain('О ком расскажешь');
-    const calls = (
-      appApi.execute.mock.calls as unknown as Array<
-        [string, Record<string, unknown>, unknown]
-      >
-    ).map(([ucName, attrs]) => [ucName, attrs]);
-    expect(calls).toContainEqual([
-      'create-review',
-      {
+    expect(
+      appApi.dispatch.mock.calls.map(([, command]) => command),
+    ).toContainEqual(
+      CreateReviewUcDef.command({
         campaignId: CAMPAIGN_ID,
-        authorId: actor.uuid,
         recipientId: PEER_ID,
         text: 'Обновлённый отзыв, всё было отлично',
-      },
-    ]);
+      }),
+    );
   });
 
   test('open: ✅-адресат, отзыв уже не найден — обычный ввод S05', async () => {

@@ -2,12 +2,36 @@
  * Контракт модуля peer-review: паспорт, Def операций кампаний, события и
  * ошибки. Ar, Policy, Rules, DQS, ArDef и схемы entity сюда не входят.
  */
-export * from './errors';
 export { PeerReviewModuleDef } from './peer-review.module';
-/** Кто: stories и тесты бота. Зачем: типы исхода, направления и отзыва (срез review — Ф2). */
-export type { Review, ReviewDirection } from './review/entity';
-export * from './review/errors';
-export type { RecipientReviewsGroup } from './review/scope-reviews-ds';
+export { ReviewErrors } from './review/review.errors';
+/** Кто: подписчик уведомления адресату (story бота). Зачем: событие первой записи отзыва. */
+export { ReviewEvents } from './review/review.events';
+/** Кто: stories и тесты бота. Зачем: направление, фильтр и снимки отзывов. */
+export type { ReviewDirection, ReviewState } from './review/review.state';
+export type {
+  RecipientReviewsGroup,
+  ReviewFilter,
+  ReviewSnapshot,
+} from './review/review.types';
+/** Кто: stories бота. Зачем: написать или перезаписать отзыв. */
+export { CreateReviewUcDef } from './review/uc/create-review.uc';
+/** Кто: stories бота. Зачем: мой отзыв адресату. */
+export { GetMyReviewUcDef, type MyReview } from './review/uc/get-my-review.uc';
+/** Кто: stories бота. Зачем: «Отзывы мне». */
+export {
+  ListMyReviewsUcDef,
+  type MyReviewsProjection,
+} from './review/uc/list-my-reviews.uc';
+/** Кто: модуль streams (карточка потока). Зачем: факты отзывов скоупа. */
+export {
+  ListScopeFactsUcDef,
+  type ScopeFacts,
+} from './review/uc/list-scope-facts.uc';
+/** Кто: stories бота. Зачем: отзывы скоупов по адресатам. */
+export {
+  ListScopeReviewsUcDef,
+  type ScopeReviewsProjection,
+} from './review/uc/list-scope-reviews.uc';
 export { CreateStudentCampaignErDef } from './review-campaign/er/create-student-campaign.er';
 export { ReviewCampaignErrors } from './review-campaign/review-campaign.errors';
 /** Кто: ER создания кампании, адаптеры. Зачем: событие открытия окна. */

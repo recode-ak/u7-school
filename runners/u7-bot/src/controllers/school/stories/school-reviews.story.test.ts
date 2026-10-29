@@ -2,7 +2,12 @@ import { describe, expect, mock, test } from 'bun:test';
 import { TEST_SCHOOL, type User } from '@u7-scl/app-legacy/domain';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
+import { ListScopeReviewsUcDef } from '@u7-scl/domain/peer-review/contract';
 import { Role } from '@u7-scl/user/domain';
+import {
+  peerReviewDispatch,
+  testCallers,
+} from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { SchoolReviewsStory } from './school-reviews.story';
 
 const actor: User = {
@@ -38,7 +43,7 @@ function makeStory(opts?: {
         | 'dropped'
         | 'never_started';
       text: string;
-      createdAt: string;
+      createdAt: number;
     }>;
   }>;
   names?: Record<string, string>;
@@ -61,11 +66,6 @@ function makeStory(opts?: {
       switch (ucName) {
         case 'list-streams':
           return streams;
-        case 'list-scope-reviews':
-          return {
-            scopeIds: attrs.scopeIds,
-            recipients,
-          };
         case 'get-users-by-ids': {
           const ids = attrs.userIds as string[];
           return ids.map((id) => ({
@@ -79,14 +79,23 @@ function makeStory(opts?: {
     },
   );
 
+  const dispatchMock = peerReviewDispatch({
+    listScopeReviews: (input) => ({
+      scopeIds: (input as { scopeIds: string[] }).scopeIds,
+      recipients,
+    }),
+  });
+
   story.init({
     school: TEST_SCHOOL,
     appApi: {
       execute: executeMock,
+      dispatch: dispatchMock,
     },
+    callers: testCallers,
   } as any);
 
-  return { story, executeMock };
+  return { story, executeMock, dispatchMock };
 }
 
 describe('SchoolReviewsStory (SH03)', () => {
@@ -98,7 +107,7 @@ describe('SchoolReviewsStory (SH03)', () => {
   });
 
   test('пустой срез: если потоков или отзывов нет — заглушка с кнопкой «Назад в школу»', async () => {
-    const { story, executeMock } = makeStory({ recipients: [] });
+    const { story, executeMock, dispatchMock } = makeStory({ recipients: [] });
 
     const response: DialogResponse = await story.handleCallback(
       'list',
@@ -121,11 +130,12 @@ describe('SchoolReviewsStory (SH03)', () => {
       { schoolId: SCHOOL_ID },
       actor,
     );
-    expect(executeMock).toHaveBeenCalledWith(
-      'list-scope-reviews',
-      { scopeIds: [STREAM_1, STREAM_2], direction: 'student_mentor' },
-      actor,
-    );
+    expect(dispatchMock.mock.calls.map(([, command]) => command)).toEqual([
+      ListScopeReviewsUcDef.command({
+        scopeIds: [STREAM_1, STREAM_2],
+        filter: { direction: 'student_mentor' },
+      }),
+    ]);
   });
 
   test('один отзыв: карточка с ментором, автором, потоком, датой и текстом (без индикатора и кнопок листания)', async () => {
@@ -141,7 +151,7 @@ describe('SchoolReviewsStory (SH03)', () => {
               direction: 'student_mentor',
               authorOutcome: 'completed_passed',
               text: 'Отличный курс, ментор всегда помогал!',
-              createdAt: '2026-09-20T10:00',
+              createdAt: Date.UTC(2026, 8, 20, 10, 0),
             },
           ],
         },
@@ -183,10 +193,10 @@ describe('SchoolReviewsStory (SH03)', () => {
       direction: 'student_mentor' as const,
       authorOutcome: 'completed_passed' as const,
       text: `Отзыв номер ${i + 1}`,
-      createdAt: `2026-09-2${i}T10:00`,
+      createdAt: Date.UTC(2026, 8, 20 + i, 10),
     }));
 
-    const { story, executeMock } = makeStory({
+    const { story, dispatchMock } = makeStory({
       recipients: [
         {
           recipientId: MENTOR_1,
@@ -228,8 +238,8 @@ describe('SchoolReviewsStory (SH03)', () => {
     expect(prevBtn).toBeDefined();
 
     // Проверка кеширования: повторные обращения к домену не происходят
-    const scopeReviewCalls = executeMock.mock.calls.filter(
-      ([name]) => name === 'list-scope-reviews',
+    const scopeReviewCalls = dispatchMock.mock.calls.filter(
+      ([, command]) => command.uc === ListScopeReviewsUcDef.name,
     );
     expect(scopeReviewCalls).toHaveLength(1);
   });

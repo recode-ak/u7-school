@@ -1,6 +1,5 @@
 import type { Course, Lesson, Module, Step } from '@u7-scl/course/domain';
 import type {
-  Review,
   ReviewDirection,
   StudentOutcome,
 } from '@u7-scl/domain/peer-review/contract';
@@ -26,6 +25,23 @@ export interface WorldCampaign {
 }
 
 /**
+ * Отзыв в мире — ввод state (не state): даты ISO, как в legacy-файле;
+ * `ReviewArDef.state` переводит их в число UTC и дописывает `updatedAt` (D-36).
+ */
+export interface WorldReview {
+  uuid: string;
+  scopeId: string;
+  campaignId: string;
+  authorId: string;
+  direction: ReviewDirection;
+  authorOutcome?: StudentOutcome;
+  recipientId: string;
+  text: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+/**
  * WorldState — центральный объект состояния мира.
  * Коллекции state-объектов агрегатов, нейтральные к хранилищу (plain-данные).
  */
@@ -38,7 +54,7 @@ export interface WorldState {
   lessons: Lesson[];
   steps: Step[];
   campaigns: WorldCampaign[];
-  reviews: Review[];
+  reviews: WorldReview[];
   wishes: WishState[];
   questionnaires: Questionnaire[];
   sessions: unknown[];

@@ -89,12 +89,6 @@
 - **Погашает:** перевод `stream` на Def
 - **Критерий снятия:** маркер `DEBT-17` удалён, перенесённые файлы не импортируют `@u7-scl/app-legacy`
 
-### DEBT-25: импорты `@u7-scl/core` в domain/peer-review
-- **Место:** `domain/src/peer-review/**` (`review/{a-root,entity,errors,events}.ts`, `review-campaign/{a-root,entity,errors,events}.ts`, `*/commands/*-cmd.ts`, `errors.ts`; подпути `core/domain`, `core/shared`, `core/api`)
-- **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, ошибки, `isoNow`, `UcMeta` живут в `core`; механический перенос не меняет базовые классы. `core/api` (`UcMeta`) — подпуть платформы.
-- **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
-- **Критерий снятия:** в `domain/src/peer-review/**` нет маркеров `DEBT-25` и импортов `@u7-scl/core`
-
 ### DEBT-26: импорт `@u7-scl/app-legacy/domain` в domain/peer-review/module.ts
 - **Место:** `domain/src/peer-review/module.ts` (тип `U7ModuleResolver`)
 - **Причина:** тип резолвера модулей определён в `app` (см. DEBT-2).
@@ -184,18 +178,6 @@
 - **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
 - **Погашает:** перевод `stream` на Def (логика — в Policy/DQS)
 - **Критерий снятия:** маркеры `DEBT-20` и `biome-ignore` удалены, методы вынесены по правилам
-
-### DEBT-28: `v.isoDateTime` в схеме domain/peer-review (DOM-12)
-- **Место:** `domain/src/peer-review/shared/schema.ts` (`isoMinuteField`; `biome-ignore lint/plugin`)
-- **Причина:** схема перенесена без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что DEBT-5, DEBT-9, DEBT-14, DEBT-19; DEBT-24 погашен в `golden-wish` Ф2).
-- **Погашает:** перевод `peer-review` на Def (`F.timestamp`)
-- **Критерий снятия:** маркеры `DEBT-28` и `biome-ignore` удалены, даты описаны через поля Def
-
-### DEBT-29: приватный метод `#validateText` в ReviewAr (CODE-02)
-- **Место:** `domain/src/peer-review/review/a-root.ts` (`static #validateText`; `biome-ignore lint/plugin`)
-- **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
-- **Погашает:** перевод `peer-review` на Def (валидация текста — в Policy)
-- **Критерий снятия:** маркер `DEBT-29` и `biome-ignore` удалены, метод вынесен по правилам
 
 ### DEBT-30: barrel `modules/dossier/src/index.ts`
 - **Место:** `modules/dossier/src/index.ts`
@@ -470,7 +452,6 @@
 - **Контекст:** reviewer: резолвер `Caller` над legacy-фасадом без `SystemCaller` (D-51); лишнее чтение пользователя в `dispatchUc`; плоские копии фикстур e2e не обновляются после записей.
 - **Решение:** (1) `SystemCaller` не вводится — legacy-фасад `Caller` не принимает и в лог операций не пишет; при переводе `user` на DMG — по TR-33 «Пересмотреть»; (2) чтение пользователя на вызов принято — цена одного пути построения `Caller` (D-50); (3) плоские копии фикстур читает только `fixture-loader.test` (начальное состояние) — принято. (4) CLI и `call-uc` собираются как бот — все UC и реакции (Нурболат, 2026-10-29: одна сборка на все входы, D-50); риск записи — в шапке `call-uc.ts`.
 - **Пересмотреть:** (2) — если чтение станет заметным по времени ответа бота; (3) — если новый тест прочтёт плоскую копию после записи.
-
 
 ### TR-35: нарушения ARC-07/08 при включении `root` и `runners` у `DomainArch`
 - **Трек / фаза:** `app-assembly`, Ф3

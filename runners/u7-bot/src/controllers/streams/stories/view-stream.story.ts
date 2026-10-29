@@ -17,6 +17,10 @@ import {
   presentNavLevel,
   type StepContentData,
 } from '@u7-scl/core/ui';
+import {
+  ListScopeFactsUcDef,
+  PeerReviewModuleDef,
+} from '@u7-scl/domain/peer-review/contract';
 import type {
   CategorizedStudent,
   Stream,
@@ -219,17 +223,13 @@ export class ViewStreamStory extends U7BotUiStory {
 
   /** Есть ли отзывы по потоку (S07): ошибки домена — карточку не ломают. */
   async #streamHasReviews(streamId: string, actor: User): Promise<boolean> {
-    try {
-      const facts = await this.appApi.execute(
-        'list-scope-facts',
-        { scopeId: streamId },
-        actor,
-      );
-      return facts.hasReviews;
-    } catch {
-      // факты недоступны — кнопки отзывов не будет
-      return false;
-    }
+    const facts = await this.dispatchUc(
+      PeerReviewModuleDef,
+      ListScopeFactsUcDef.command({ scopeId: streamId }),
+      actor,
+    );
+    // не ok — факты недоступны, кнопки отзывов не будет
+    return facts.ok && facts.value.hasReviews;
   }
 
   /**

@@ -31,8 +31,8 @@ import {
   PeerReviewApiModule,
   ReviewCampaignJsonRepo,
   type ReviewCampaignRepo,
-  type ReviewFactsReader,
   ReviewJsonRepo,
+  type ReviewRepo,
 } from '@u7-scl/peer-review';
 import {
   createQuestionnaireModule,
@@ -184,7 +184,7 @@ export class U7App {
 
     const streamFacade = new StreamInProcFacade(streamModule);
 
-    // ══ Peer-review: репозитории (кампании — DMG, рецензии — legacy до Ф2) ══
+    // ══ Peer-review: репозитории кампаний и отзывов (DMG) ══
     const reviewCampaignRepo = new ReviewCampaignJsonRepo(
       `${dbDir}/peer-review/campaigns.json`,
     );
@@ -208,11 +208,9 @@ export class U7App {
       },
     );
 
-    // ══ Peer-review (legacy): UC рецензий и уведомление адресата ══
-    // Кампании и подписка ER на события судьбы студента — в модуле DMG.
+    // ══ Peer-review (legacy): пустая оболочка до Ф3 ══
+    // Кампании, отзывы и подписка ER на события судьбы студента — в модуле DMG.
     const peerReviewModule = new PeerReviewApiModule({
-      reviewCampaignRepo,
-      reviewRepo,
       streamFacade,
       userFacade,
       appResolver,
@@ -300,7 +298,7 @@ export class U7App {
     repos: {
       readonly wishes: WishRepo;
       readonly campaigns: ReviewCampaignRepo;
-      readonly reviews: ReviewFactsReader;
+      readonly reviews: ReviewRepo;
     },
   ) {
     const factories: ModuleFactory<Identified>[] = [

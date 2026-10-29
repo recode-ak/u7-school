@@ -1,5 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { AppController } from '@u7-scl/bot/app/app-controller';
+import {
+  CreateReviewUcDef,
+  PeerReviewModuleDef,
+} from '@u7-scl/domain/peer-review/contract';
 import type { StudentCompletedEvent } from '@u7-scl/stream/domain';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -7,6 +11,8 @@ import {
   pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { UserCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 
 /**
@@ -127,16 +133,17 @@ describe('E2E peer-review: S08 «Отзывы мне»', () => {
     ))!;
     // Свежий отзыв ментора → Марина (createdAt «сейчас» > фиксурного);
     // писать субъекту окна может субъект или ментор — берём ментора
-    await app.apiApp.execute(
-      'create-review',
-      {
+    const written = await app.apiApp.dispatch(
+      PeerReviewModuleDef,
+      CreateReviewUcDef.command({
         campaignId: campaign.uuid,
-        authorId: mentor.uuid,
         recipientId: marina.uuid,
         text: NEW_REVIEW_TEXT,
-      },
-      mentor,
+      }),
+      new UserCaller(mentor),
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
     );
+    expect(written.ok).toBe(true);
 
     const hub = await openHub(transport, MARINA_TG);
     const hubBtns = hub.screen?.keyboard?.rows.flat() ?? [];

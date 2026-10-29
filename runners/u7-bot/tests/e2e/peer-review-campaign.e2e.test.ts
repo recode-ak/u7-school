@@ -1,4 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import {
+  GetMyReviewUcDef,
+  PeerReviewModuleDef,
+} from '@u7-scl/domain/peer-review/contract';
 import type {
   StudentAbandonedEvent,
   StudentCompletedEvent,
@@ -9,6 +13,8 @@ import {
   pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { UserCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 
 /**
@@ -247,17 +253,18 @@ describe('E2E peer-review: судьба субъекта — написание'
       STREAM_ID,
       SUBJECT_USER_ID,
     );
-    const my = await app.apiApp.execute(
-      'get-my-review',
-      {
+    const res = await app.apiApp.dispatch(
+      PeerReviewModuleDef,
+      GetMyReviewUcDef.command({
         campaignId: campaign!.uuid,
-        authorId: subject.uuid,
         recipientId: MENTOR_USER_ID,
-      },
-      subject,
+      }),
+      new UserCaller(subject),
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
     );
-    expect(my.found).toBe(true);
-    expect(my.text).toBe(GOOD_TEXT_2);
+    if (!res.ok) throw new Error(res.error.code);
+    expect(res.value.found).toBe(true);
+    expect(res.value.text).toBe(GOOD_TEXT_2);
   });
 
   // Продолжение кампании из предыдущего теста (stateful-сценарий):

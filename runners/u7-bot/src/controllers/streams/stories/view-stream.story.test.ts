@@ -3,7 +3,13 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import type { ContentSnapshot } from '@u7-scl/course/domain';
+import { ListScopeFactsUcDef } from '@u7-scl/domain/peer-review/contract';
 import { Role } from '@u7-scl/user/domain';
+import type { Command } from 'dmg-core';
+import {
+  peerReviewDispatch,
+  testCallers,
+} from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { ViewStreamStory } from './view-stream.story';
 
 const STREAM_ID = '11111111-1111-4111-8111-111111111111';
@@ -47,6 +53,9 @@ describe('ViewStreamStory (S02-S04)', () => {
     users?: Record<string, { name: string }>;
   }
 
+  /** Факты отзывов скоупа (карточка потока): отзывов нет. */
+  const listScopeFacts = () => ({ hasReviews: false, reviewsCount: 0 });
+
   function makeStory(opts: SetupOptions = {}) {
     const mockAppApi = {
       execute: mock(async (name: string, params?: Record<string, unknown>) => {
@@ -66,7 +75,13 @@ describe('ViewStreamStory (S02-S04)', () => {
     };
 
     const story = new ViewStreamStory();
-    story.init({ appApi: mockAppApi } as never);
+    story.init({
+      appApi: {
+        ...mockAppApi,
+        dispatch: peerReviewDispatch({ listScopeFacts }),
+      },
+      callers: testCallers,
+    } as never);
     return { story, mockAppApi };
   }
 
@@ -719,23 +734,30 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
 
   /** Мок карточки: единственная переменная — факты отзывов скоупа. */
   function makeStoryWithFacts(
-    facts: { hasReviews: boolean; reviewsCount: number } | 'throw' | undefined,
+    facts: { hasReviews: boolean; reviewsCount: number } | 'fail' | undefined,
   ) {
+    const dispatch =
+      facts === 'fail'
+        ? mock(async (_module: unknown, _command: Command) => ({
+            ok: false as const,
+            error: { code: 'REVIEW_UNAVAILABLE', kind: 'internal' },
+          }))
+        : peerReviewDispatch({
+            listScopeFacts: () =>
+              facts ?? { hasReviews: false, reviewsCount: 0 },
+          });
     const mockAppApi = {
+      dispatch,
       execute: mock(async (name: string) => {
         if (name === 'get-stream') return makeStream();
         if (name === 'list-stream-students') return [];
         if (name === 'get-user')
           return { uuid: 'm1', name: 'Ментор Менторович', roles: [] };
-        if (name === 'list-scope-facts') {
-          if (facts === 'throw') throw new Error('домен недоступен');
-          return facts ?? { hasReviews: false, reviewsCount: 0 };
-        }
         return undefined;
       }),
     };
     const story = new ViewStreamStory();
-    story.init({ appApi: mockAppApi } as never);
+    story.init({ appApi: mockAppApi, callers: testCallers } as never);
     return { story, mockAppApi };
   }
 
@@ -775,8 +797,8 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
     expect(btnTexts.some((t) => t.includes('Отзывы'))).toBe(false);
   });
 
-  test('факты недоступны (ошибка UC) → карточка живёт, кнопки нет', async () => {
-    const { story } = makeStoryWithFacts('throw');
+  test('факты недоступны (отказ UC, не ok) → карточка живёт, кнопки нет', async () => {
+    const { story } = makeStoryWithFacts('fail');
 
     const response = await story.handleCallback(
       `view:${STREAM_ID}`,
@@ -790,7 +812,7 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
     expect(btnTexts.some((t) => t.includes('Отзывы'))).toBe(false);
   });
 
-  test('видимость проверяется UC list-scope-facts с scopeId потока', async () => {
+  test('видимость проверяется UC listScopeFacts с scopeId потока', async () => {
     const { story, mockAppApi } = makeStoryWithFacts({
       hasReviews: true,
       reviewsCount: 1,
@@ -798,11 +820,8 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
 
     await story.handleCallback(`view:${STREAM_ID}`, rvActor, rvSession);
 
-    const call = (
-      mockAppApi.execute.mock.calls as unknown as Array<
-        [string, Record<string, unknown>]
-      >
-    ).find(([name]) => name === 'list-scope-facts');
-    expect(call?.[1]).toEqual({ scopeId: STREAM_ID });
+    expect(
+      mockAppApi.dispatch.mock.calls.map(([, command]) => command),
+    ).toEqual([ListScopeFactsUcDef.command({ scopeId: STREAM_ID })]);
   });
 });

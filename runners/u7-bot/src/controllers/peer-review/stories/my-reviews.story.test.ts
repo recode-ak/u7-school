@@ -5,7 +5,10 @@ import {
   type BotSession,
   type DialogResponse,
 } from '@u7-scl/core/ui';
-import { GetMyCampaignsUcDef } from '@u7-scl/domain/peer-review/contract';
+import {
+  GetMyCampaignsUcDef,
+  ListMyReviewsUcDef,
+} from '@u7-scl/domain/peer-review/contract';
 import { Role } from '@u7-scl/user/domain';
 import { Routes } from '../../shared/routes';
 import { MyReviewsStory } from './my-reviews.story';
@@ -44,21 +47,16 @@ describe('MyReviewsStory — кнопка меню «💬 Отзывы» (S02)',
             daysLeft: 5,
             progress: { done: 0, total: 1 },
           })),
-      }),
-      execute: mock(async (ucName: string) => {
-        if (ucName === 'list-my-reviews') {
-          return {
-            reviews: Array.from({ length: reviewCount }, (_, i) => ({
-              reviewId: `11111111-0000-0000-0000-${String(i).padStart(12, '0')}`,
-              authorId: 'cccccccc-0000-0000-0000-000000000001',
-              direction: 'student_student',
-              authorOutcome: 'completed_passed',
-              text: 'Отзыв адресату',
-              createdAt: '2026-09-21T10:00',
-            })),
-          };
-        }
-        throw new Error(`неизвестный UC: ${ucName}`);
+        listMyReviews: () => ({
+          reviews: Array.from({ length: reviewCount }, (_, i) => ({
+            reviewId: `11111111-0000-0000-0000-${String(i).padStart(12, '0')}`,
+            authorId: 'cccccccc-0000-0000-0000-000000000001',
+            direction: 'student_student',
+            authorOutcome: 'completed_passed',
+            text: 'Отзыв адресату',
+            createdAt: Date.UTC(2026, 8, 21, 10),
+          })),
+        }),
       }),
     };
     const story = new MyReviewsStory();
@@ -96,12 +94,8 @@ describe('MyReviewsStory — кнопка меню «💬 Отзывы» (S02)',
 
     expect(appApi.dispatch.mock.calls.map(([, command]) => command)).toEqual([
       GetMyCampaignsUcDef.command({ onlyLives: true }),
+      ListMyReviewsUcDef.command({}),
     ]);
-    expect(appApi.execute).toHaveBeenCalledWith(
-      'list-my-reviews',
-      { userId: actor.uuid },
-      actor,
-    );
   });
 
   test('нет живых кампаний, но есть входящие отзывы → кнопка меню есть (S08)', async () => {
@@ -182,20 +176,19 @@ describe('MyReviewsStory — экран S02 «Мои отзывы» (мини-к
       dispatch: peerReviewDispatch({
         getMyCampaigns: () =>
           cards.map((c) => ({ ...c, context: 'stream_fate' })),
+        listMyReviews: () => ({
+          reviews: Array.from({ length: opts.incoming ?? 0 }, (_, i) => ({
+            reviewId: `11111111-0000-0000-0000-${String(i).padStart(12, '0')}`,
+            authorId: 'cccccccc-0000-0000-0000-000000000001',
+            direction: 'student_student',
+            authorOutcome: 'completed_passed',
+            text: 'Отзыв адресату',
+            createdAt: Date.UTC(2026, 8, 21, 10),
+          })),
+        }),
       }),
       execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
         switch (ucName) {
-          case 'list-my-reviews':
-            return {
-              reviews: Array.from({ length: opts.incoming ?? 0 }, (_, i) => ({
-                reviewId: `11111111-0000-0000-0000-${String(i).padStart(12, '0')}`,
-                authorId: 'cccccccc-0000-0000-0000-000000000001',
-                direction: 'student_student',
-                authorOutcome: 'completed_passed',
-                text: 'Отзыв адресату',
-                createdAt: '2026-09-21T10:00',
-              })),
-            };
           case 'get-stream':
             return {
               uuid: attrs.streamId,
@@ -443,11 +436,12 @@ describe('MyReviewsStory — пагинация хаба S02 (BotPaginator + Dia
 
   function initStory(cards: ReturnType<typeof manyCards>) {
     const appApi = {
-      dispatch: peerReviewDispatch({ getMyCampaigns: () => cards }),
+      dispatch: peerReviewDispatch({
+        getMyCampaigns: () => cards,
+        listMyReviews: () => ({ reviews: [] }),
+      }),
       execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
         switch (ucName) {
-          case 'list-my-reviews':
-            return { reviews: [] };
           case 'get-stream':
             return { uuid: attrs.streamId, title: 'Первый поток' };
           case 'get-users-by-ids':

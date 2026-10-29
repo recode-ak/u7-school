@@ -2,7 +2,7 @@
 
 Перед стартом прочитай `../spec.md`, `../plan.md` (Фаза 2) и бриф [review-campaign.md](./review-campaign.md). Это образец: решения Ф1 действуют, если ниже не сказано иное. Ещё нужен эталон `wish`. Черновик подготовил `tech-lead`, orchestrator проверил его, решения Нурболата — в конце.
 
-Поведение `v0.2.6` (`../u7-school-v0.2.6/packages/peer-review/src`) сверено с HEAD. Код `review/*`, `api/review/*` и `api/er/*` совпадает, отличаются только импорты и маркеры DEBT. Поэтому отдельная характеризация на `v0.2.6` не нужна: ожидания — это сценарии текущих тестов.
+Поведение `v0.2.6` (worktree `../u7-school-v0.2.6`) сверено с HEAD. Код `review/*`, `api/review/*` и `api/er/*` совпадает, отличаются только импорты и маркеры DEBT. Поэтому отдельная характеризация на `v0.2.6` не нужна: ожидания — это сценарии текущих тестов.
 
 ## Расхождения spec/plan с кодом
 
@@ -226,3 +226,24 @@ DOM-01…06, DOM-10…12, DOM-14…16; API-01, API-03, API-05, API-07; MAN-01, M
 3. ✅ **Доступ к читающим UC** — `allowAll`: отзывы доступны всем, это нормально. Нужны фильтры, чтобы не тащить лишнее: `ReviewFilter` во входе списочных UC, фильтрует репозиторий (п. 7, 9).
 
 Решения orchestrator'а без вопроса (TR-39): имя события по MAN-08; заменённое удаляется в Ф2 вместе с тестами; `peer-review-question-pool` не трогаем; строгий разбор `reviews.json`; дата в UI — UTC до DEBT-43.
+
+## Отчёт test-designer (Ф2)
+
+Новые тесты лежат незакоммиченными по TR-38 п. 1. Результат: 23 red и 21 файл, который не загружается без реализации; 208 старых тестов — pass.
+
+**Файлы:**
+- домен: `review/review.{state,ar,rules,policy,errors,events}.test.ts`, `review-draft.dqs.test.ts`, `scope-reviews.dqs.test.ts`, `review/uc/*.uc.test.ts` (Def), `peer-review.review-module.test.ts`;
+- прикладной слой: `review/review.fixture.ts`, `review/uc/*.uc.test.ts`, `infra/review.json-repo.test.ts`, `review/review.vertical.test.ts`;
+- бот: `stories/review-notify.story.test.ts`.
+
+**Допущения по сигнатурам** (приняты orchestrator'ом, автор может уточнить вместе с тестами):
+- контекст `recipientAllowed` — `{ campaign, authorId, recipientId }`, payload — `{ campaignId, authorId, recipientId }`;
+- `ReviewFilter` фильтрует по И; чужой `recipientId` в фильтре `listMyReviews` даёт пустой результат;
+- UC передаёт фильтр репозиторию и сам в памяти не фильтрует;
+- подписчик — `ReviewNotifyStory` (`review-notify`): профили одним `get-users-by-ids`, отправка через `proactiveSender.notify`, предупреждение через `logger.warn`; добавить его в `PeerReviewController.stories`;
+- `ReviewJsonRepo(filePath)`; UC — `CreateReviewUc` и т. д., конструктор `({ app, facades, campaigns, reviews }, PeerReviewModuleDef)`.
+
+**Задания автору:**
+- слить `peer-review.review-module.test.ts` в `peer-review.module.test.ts` домена и `review.vertical.test.ts` в `peer-review.module.test.ts` пакета; старые паспорта (1 агрегат, 2 UC) обновить;
+- заглушки `reviews: { findByCampaignAndAuthor }` в тестах кампаний привести к `ReviewRepo`, иначе упадёт `tsc`;
+- убрать из `domain/src/peer-review/index.ts` реэкспорты `review/commands/*` и `review/events`.

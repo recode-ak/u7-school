@@ -8,6 +8,7 @@ import { ConsoleLogger } from '@u7-scl/core/shared';
 import type { ContentSnapshot } from '@u7-scl/domain/course';
 import {
   GetMyCampaignsUcDef,
+  ListScopeFactsUcDef,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
 import {
@@ -87,13 +88,21 @@ describe('U7App (smoke: сборка с модулем peer-review)', () => {
     expect(res).toEqual({ ok: true, value: [] });
   });
 
-  test('UC рецензий остаются в legacy-модуле, кампании из него убраны', () => {
+  test('UC рецензий — в модуле DMG, legacy-оболочка пуста (Ф3)', async () => {
     const bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
     const legacy = bundle.apiApp.getModule('peer-review');
-    const names = legacy?.useCases.map((uc) => uc.getUcName()) ?? [];
-    expect(names).toContain('create-review');
-    expect(names).not.toContain('get-my-campaigns');
-    expect(names).not.toContain('get-campaign-recipients');
+    expect(legacy?.useCases).toEqual([]);
+
+    const res = await bundle.apiApp.dispatch(
+      PeerReviewModuleDef,
+      ListScopeFactsUcDef.command({ scopeId: crypto.randomUUID() }),
+      new UserCaller(ACTOR),
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+    );
+    expect(res).toEqual({
+      ok: true,
+      value: { hasReviews: false, reviewsCount: 0 },
+    });
   });
 });
 

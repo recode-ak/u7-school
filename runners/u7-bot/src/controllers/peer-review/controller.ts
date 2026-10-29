@@ -2,6 +2,7 @@ import { U7BotController } from '@u7-scl/bot/u7-bot-controller';
 import { CampaignStory } from './stories/campaign.story';
 import { InviteStory } from './stories/invite.story';
 import { MyReviewsStory } from './stories/my-reviews.story';
+import { ReviewNotifyStory } from './stories/review-notify.story';
 import { ReviewsForMeStory } from './stories/reviews-for-me.story';
 import { ScopeReviewsStory } from './stories/scope-reviews.story';
 
@@ -12,7 +13,8 @@ import { ScopeReviewsStory } from './stories/scope-reviews.story';
  * Содержит стори: invite (S01 — проактивные приглашения),
  * my-reviews (S02 — хаб), campaign (S03–S06 — кампания отзывов),
  * scope-reviews (S07 — постраничный просмотр отзывов потока),
- * reviews-for-me (S08 — все отзывы, адресованные пользователю).
+ * reviews-for-me (S08 — все отзывы, адресованные пользователю),
+ * review-notify (уведомление адресата о новом отзыве).
  */
 export class PeerReviewController extends U7BotController {
   readonly name = 'peer-review';
@@ -25,6 +27,7 @@ export class PeerReviewController extends U7BotController {
       hub,
       new CampaignStory(hub),
       new InviteStory(),
+      new ReviewNotifyStory(),
       new ScopeReviewsStory(),
       new ReviewsForMeStory(),
     ];
