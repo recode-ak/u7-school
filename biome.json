@@ -538,6 +538,34 @@
       }
     },
     {
+      "includes": ["platform/app/src/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@u7-scl/domain",
+                      "@u7-scl/domain/**",
+                      "!@u7-scl/domain/*/contract"
+                    ],
+                    "message": "ARC-07: корень сборки берёт домен модуля только через контракт (@u7-scl/domain/<m>/contract)"
+                  },
+                  {
+                    "group": ["@u7-scl/wish/**"],
+                    "message": "ARC-07: корень сборки берёт прикладной пакет wish только через вход @u7-scl/wish (фабрика, репозитории)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["runners/**"],
       "linter": {
         "rules": {

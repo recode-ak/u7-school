@@ -1,0 +1,4 @@
+// expect: ARC-07 error
+import { WishJsonRepo } from '@u7-scl/wish/infra';
+
+export const a = WishJsonRepo;

@@ -1,0 +1,4 @@
+// expect: ARC-07 error
+import { StreamAr } from '@u7-scl/domain/stream';
+
+export const a = StreamAr;

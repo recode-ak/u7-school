@@ -1,0 +1,5 @@
+// expect: none
+import { WishModuleDef } from '@u7-scl/domain/wish/contract';
+import { createWishModule } from '@u7-scl/wish';
+
+export const a = [WishModuleDef, createWishModule];
