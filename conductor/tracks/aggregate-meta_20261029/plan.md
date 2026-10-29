@@ -29,8 +29,8 @@
 ## Фаза 3: `wish` в u7-school
 
 - [x] Task: `bun install`, `dmg:sync`/`agents:sync`; `check` — список поломок (dmg-core dbfbbe0; поломок нет, check зелёный: 3304 pass)
-- [ ] Task: `cancelWish` с `expectedVersion`: тест (совпала / расходится / не прислана) red → green
-- [ ] Task: Ревью reviewer; правки по ревью
+- [x] Task: `cancelWish` с `expectedVersion`: тест (совпала / расходится / не прислана) red → green 12c98c5 (вход — цель + `expectedVersion`, TR-31)
+- [x] Task: Ревью reviewer; правки по ревью 12c98c5 (error и warning нет; 2 info оставлены — бриф `slices/wish.md`)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: Финал
