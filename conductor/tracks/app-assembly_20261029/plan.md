@@ -25,12 +25,18 @@
 
 ## Фаза 2: Корень сборки в `@u7-scl/app` (DEBT-39)
 
-- [ ] Task: Разбор `runners/u7-bot/src/create-dmg-modules.ts`: что переезжает в `@u7-scl/app` (контекст, модули, адаптеры TR-11, резолвер `Caller`), что остаётся раннеру; план правок — в `summary.md`
-- [ ] Task: Сборка в `@u7-scl/app`
-    - [ ] Тесты: приложение собирает модуль `wish` через `ApiApp`, раскладка фасадов по `dependsOn`, резолвер `Caller`; red
+> Пересмотр (Нурболат, 2026-10-29, TR-33): legacy-ядро `@u7-scl/app` выносится в `@u7-scl/app-legacy` (иначе цикл пакетов, D-53); корень собирает всё приложение (legacy и DMG); резолвер `Caller` — над legacy `userFacade`. Разбор — `summary.md`.
+
+- [x] Task: Разбор `runners/u7-bot/src/create-dmg-modules.ts`: что переезжает в `@u7-scl/app` (контекст, модули, адаптеры TR-11, резолвер `Caller`), что остаётся раннеру; план правок — в `summary.md`
+- [ ] Task: Вынос legacy `@u7-scl/app` (`domain/`, `infra/logger`) в `@u7-scl/app-legacy` (`platform/app-legacy`): импорты, `package.json`, `tsconfig`, `biome.json`, `legacy.md`; поведение не меняется, `check` зелёный
+- [ ] Task: Legacy `ApiApp` (`@u7-scl/core/api`) — DMG через `ApiApp` из `dmg-core/app` вместо `addDmgModules` (`dispatch`, `subscribe`, Job через `legacyJobsOf`)
+    - [ ] Тесты: `dispatch` делегирует, реакции подписываются в `init`, Job DMG — в планировщике; red
     - [ ] Реализация; green
-- [ ] Task: Раннер `u7-bot` получает приложение из `AppEnv`; `create-dmg-modules.ts` удалён; e2e-тесты бота зелёные
-- [ ] Task: Раннер `u7-cli` — проверить и перевести на сборку приложения, если собирает модули сам
+- [ ] Task: Сборка в `@u7-scl/app` — `U7App` по `AppEnv` (бывшие `create-api-app.ts` и `create-dmg-modules.ts`)
+    - [ ] Тесты: `U7App` собирает модуль `wish` через `ApiApp` (фасады по `dependsOn`), резолвер `Caller` (активный пользователь — `UserCaller`, нет или неизвестен — `GuestCaller`); red
+    - [ ] Реализация; green
+- [ ] Task: Раннер `u7-bot` получает приложение из `AppEnv`; `create-api-app.ts` и `create-dmg-modules.ts` удалены; `dispatchUc` — через `app.callers`; e2e-тесты бота зелёные
+- [ ] Task: Раннер `u7-cli` и `scripts/call-uc.ts` — на `U7App`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Правила D-52
