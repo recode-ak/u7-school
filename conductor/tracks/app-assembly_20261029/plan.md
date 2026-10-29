@@ -39,7 +39,7 @@
 - [x] Task: Раннер `u7-cli` и `scripts/call-uc.ts` — на `U7App`; `create-dmg-modules.ts` удалён `b408042` (CLI и `call-uc` видят все модули бота, включая реакции `peer-review`)
 - [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md) — подтверждено Нурболатом (бот на фикстурах, «Хочу на курс», oplog)
 
-## Фаза 3: Правила D-52
+## Фаза 3: Правила D-52 [checkpoint: b1d0469]
 
 - [x] Task: `DomainArch` с `root` и `runners`; тест-фикстура: раннер импортирует прикладной пакет → ARC-08; red → green `4b0d63e` (8 нарушений устранены — TR-35; `U7App` берёт `wish` через вход пакета уже здесь)
 - [x] Task: ARC-07 корневого `biome.json` — как в пакете (входы `modules/<m>` для app); фикстура `lint-fixtures`; блок для `platform/app/**` (сейчас правила нет — ревью Ф2); `U7App` берёт `wish` через вход пакета, а не `@u7-scl/wish/{infra,wish}` `25eeb49` (в пакете ARC-07 — только `arch:check`; в корне — lint для `platform/app/src/**`, маска модулей на DMG — TR-35 п. 5; `U7App` через вход — в `4b0d63e`)
@@ -47,7 +47,7 @@
 - [x] Task: ARC-09 — на всё, кроме точек входа раннеров; поправить найденные нарушения или завести DEBT `1e5dbf6` (одно нарушение — `loadConfig` бота, исправлено; `authoring`, `scripts` вне правила — TR-36)
 - [x] Task: `rules.md` — карта правил; снять маркер и запись DEBT-39 `9b818ea`
 - [x] Task: Ревью reviewer; правки по ревью — без `error`; `d9d2417` (TR-35 п. 6–9)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md) — автономно
 
 ## Фаза 4: Гигиена (TR-28, TR-29, документация)
 
