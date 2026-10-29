@@ -1,0 +1,1 @@
+Задача: место ролей в конвейере. agents.md §1 — роли пилота в таблице; §3 — конвейер architect → test-designer → автор → гейт → data-keeper (по триггеру) → reviewer и условия вызова; §8 — проектные роли. .agents-core/README.md — роли пилота. summary.md — раздел «Пилот ролей» (таблица по критериям agent-roles.md §5).
