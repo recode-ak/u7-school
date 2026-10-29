@@ -1,0 +1,5 @@
+Верификация Фазы 3 (wish в u7-school, D-57).
+Автотесты: bun run check — 3308 pass, 0 fail; agent-gate зелёный.
+Ручная проверка: bun test cancel-wish (домен и UC) — совпала / расходится / не прислана / отказ на отрицательном и дробном; сверка до wish.cancel (12c98c5).
+Ревью: reviewer без error/warning.
+Подтверждение пользователя: «да» (2026-10-29); вопрос о закреплении примера в учебном модуле dmg-core — да, completeTask (dmg-core 6ed31b6/dbfbbe0).
