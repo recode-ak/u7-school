@@ -26,12 +26,12 @@
 - [x] Task: Ревью reviewer; правки по ревью (dmg-core dbfbbe0; error нет; warning о сверке после мутации — задокументировано, `storedVersion` не подходит для `ReadonlyAr`; принято: метка `F.expectedVersion(label)`, тесты через вход и порядок отказов; при релизе отметить удаление `CommandMeta.version`)
 - [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
-## Фаза 3: `wish` в u7-school
+## Фаза 3: `wish` в u7-school [checkpoint: 0fc7376]
 
 - [x] Task: `bun install`, `dmg:sync`/`agents:sync`; `check` — список поломок (dmg-core dbfbbe0; поломок нет, check зелёный: 3304 pass)
 - [x] Task: `cancelWish` с `expectedVersion`: тест (совпала / расходится / не прислана) red → green 12c98c5 (вход — цель + `expectedVersion`, TR-31)
 - [x] Task: Ревью reviewer; правки по ревью 12c98c5 (error и warning нет; 2 info оставлены — бриф `slices/wish.md`)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: Финал
 
