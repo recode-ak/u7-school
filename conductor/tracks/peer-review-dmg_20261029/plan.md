@@ -13,7 +13,7 @@
 - [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `peer-review` (домен и пакет), `dmg-core` `bun test` и `e2e` 441b90ac
 - [x] Task: Роль `architect` в `.agents-core/roles/architect.md`: вопрос, что роль знает, формат выхода — черновик брифа по образцу `conductor/archive/golden-wish_20261020/slices/wish.md`; Sonnet; `bun run agents:sync` df4d1a74
 - [x] Task: Роль `test-designer` в `.agents-core/roles/test-designer.md`: характеризация поведения `v0.2.6` и red-тесты по Def среза, список сценариев в брифе; `agents:sync` 91340d90
-- [ ] Task: Роль `data-keeper` в `.agents-core/roles/data-keeper.md`: совместимость чтения `state` и снимков, путь миграции, нужен ли бэкап, правило данных `AGENTS.md`; триггер по путям diff; `agents:sync`
+- [x] Task: Роль `data-keeper` в `.agents-core/roles/data-keeper.md`: совместимость чтения `state` и снимков, путь миграции, нужен ли бэкап, правило данных `AGENTS.md`; триггер по путям diff; `agents:sync` c0269a95
 - [ ] Task: Место ролей в конвейере — [agents.md](../../architecture/agents.md) §3; каркас раздела «Пилот ролей» в `summary.md`
 - [ ] Task: `data-keeper` (первый вызов): аудит формата `peer-review/campaigns.json` и `reviews.json` (фикстуры и формат, который читает legacy-репозиторий). Проверить, есть ли живые записи. Отчёт — в бриф
 - [ ] Task: `architect`: бриф `slices/review-campaign.md` — границы, Def и реализации, сохраняемое поведение, ID правил, «было → станет», внешние Def (`stream.completed`, UC `user`/`questionnaire`), stories кампаний; проверка брифа orchestrator'ом
