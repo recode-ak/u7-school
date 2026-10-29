@@ -47,8 +47,8 @@
 - [x] Task: `migrator`: домен — state, `ReviewArDef` и Ar, события, ошибки, Policy и правила (валидация текста вместо `#validateText`, DEBT-29), DQS; DEBT-25 и DEBT-28 полностью 6a4cca7b
 - [x] Task: `migrator`: прикладной слой — Def UC и ER, реализации, репозиторий через UoW; тест на фикстурах 6a4cca7b
 - [x] Task: Stories рецензий (`campaign`, `my-reviews`, `reviews-for-me`, `scope-reviews`, `review-render`), `school-reviews`, `view-stream` → `dispatch`; подписчик уведомления адресату; e2e бота зелёные 6a4cca7b
-- [ ] Task: `data-keeper` по diff
-- [ ] Task: `reviewer`; замечания без `error` решает orchestrator (TR)
+- [x] Task: `data-keeper` по diff ec0590ca
+- [x] Task: `reviewer`; замечания без `error` решает orchestrator (TR) ec0590ca
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 2** (уточняет бриф `slices/review.md`):
