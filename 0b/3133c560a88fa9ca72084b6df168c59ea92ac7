@@ -1,0 +1,1 @@
+Задача Ф3 'D-53 (ARC-06)': scripts/domain-check.ts — checkModuleImports; scripts/domain-check.test.ts — 4 теста (red → green); scripts/arch-check.ts — подключение в runDomainCheck. Нарушений в коде нет. check зелёный (3330 pass).
