@@ -11,8 +11,8 @@
 
 - [ ] Task: Решение `D-NN` в `decisions.md` пакета: типы документов, ответственность, направление ссылок, критерий «оправдан»; обсудить с Нурболатом
 - [ ] Task: Правило о комментариях в `rules.md` пакета (новый ID)
-- [ ] Task: Раздел «Как устроена документация» в `docs/index.md`: типы, ответственность, кто и когда актуализирует
-- [ ] Task: Правило и критерий в промптах `domain-author`, `api-author` (пакет), `migrator`, `tech-lead` (`.agents-core/roles`), проверка в `reviewer`; `agents:sync`
+- [ ] Task: Раздел «Как устроена документация» в `docs/index.md`: типы, ответственность, кто и когда актуализирует; таблица «что куда» (правило, способ, поток, контракт)
+- [ ] Task: Правило и критерий в промптах `domain-author`, `api-author` (пакет), `migrator`, `tech-lead` (`.agents-core/roles`), проверка в `reviewer`; строка «Документы» в формате брифа среза (`tech-lead`); `agents:sync`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Проверки, роль и concepts
@@ -22,6 +22,9 @@
     - [ ] Реализация; green
 - [ ] Task: Проверка `covers:` во front-matter concepts — `warn` в `check`, блок в гейте релиза (`RELEASING.md`)
     - [ ] Тесты: исходник менялся позже документа → warn; red
+    - [ ] Реализация; green
+- [ ] Task: Команда `docs:impact <пути>` и триггер в `agent-gate.ts` (правка `dmg-core/src/{app,kernel,domain}` без `docs/` и `decisions.md` — предупреждение); `covers:` и у guides
+    - [ ] Тесты: путь совпал с `covers` → документ в списке; не совпал → пусто; правка без docs → предупреждение; red
     - [ ] Реализация; green
 - [ ] Task: Роль `documentarian` в `.agents-core/roles/` (только чтение, список расхождений, триггер — после фазы, менявшей документы, и перед релизом); пилот ведётся в `summary.md`
 - [ ] Task: Каталог `concepts/`, `docs/index.md`, `llms.txt` с двумя входами
