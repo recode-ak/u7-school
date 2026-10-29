@@ -1,0 +1,5 @@
+Проверка Фазы 0 (с Нурболатом).
+Автотесты: bun run check — зелёный (lint, tslint, arch:check, gen:e2e, 3330 pass / 0 fail); bun run test:bot — 978 pass / 0 fail; совпадает с базовой линией.
+По ходу check: repo-layout.test.ts поймал путь старой раскладки в брифе (строка 10) — переформулирован в этом коммите.
+Ручная проверка: Нурболат прочитал роли tech-lead, test-designer, data-keeper — замечаний нет после правок (триггер *repo.ts); решения по 8 вопросам брифа review-campaign приняты; проверка живых записей на проде выполнена с разрешения (только чтение).
+Вне плана в фазе: бэкап всего data/ кроме исключений (d7c073a4); роли постановки user/ux/product/architect и tech-lead на двух уровнях (agent-roles.md, agents.md §4, conductor-newtrack); черновик dmg-process.md для пакета; префикс dmg-* при переносе; критерии приёмки фаз в плане.
