@@ -7,7 +7,7 @@
 - [x] Task: Зафиксировать базовую линию (`bun test` pass/fail в u7-school и в пакете, `bun run e2e` пакета) в черновике `summary.md` f5d9a4f
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
-## Фаза 1: Решение D-57
+## Фаза 1: Решение D-57 [checkpoint: f9ee988]
 
 - [x] Task: Черновик D-57 в `decisions.md` пакета: `EntityMeta`, плоское хранение, `view().meta`, судьба геттера `version`; варианты канала ожидаемой версии (`CommandMeta.expectedVersion` vs поле входа UC) с плюсами и минусами 6e877f3; пересмотрено — VO `meta` отвергнут (dmg-core b64a0b4)
 - [x] Task: Обсудить канал ожидаемой версии с Нурболатом; записать D-57 (dmg-core) 6e877f3 (выбран вариант B — поле входа UC)
