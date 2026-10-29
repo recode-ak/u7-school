@@ -33,7 +33,7 @@
  * NUR_UUID — автор-ментор, от имени которого выполняются запросы.
  * Для скриптов это всегда администратор с полным доступом.
  */
-import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app/domain';
+import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app-legacy/domain';
 import { ApiApp } from '@u7-scl/core/api';
 import type { AppMeta } from '@u7-scl/core/domain';
 import { type Logger, LogLevel } from '@u7-scl/core/shared';

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app/domain';
+import type { User } from '@u7-scl/app-legacy/domain';
 import {
   AppException,
   errAccessDenied,

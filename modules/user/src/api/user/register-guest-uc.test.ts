@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app/domain';
+import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app-legacy/domain';
 import { ApiApp } from '@u7-scl/core/api';
 import {
   BaseJsonDb,

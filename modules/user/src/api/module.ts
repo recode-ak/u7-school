@@ -1,4 +1,4 @@
-import { U7ApiModule } from '@u7-scl/app/domain';
+import { U7ApiModule } from '@u7-scl/app-legacy/domain';
 import type { ErMeta, EventReaction } from '@u7-scl/core/api';
 import type {
   UserApiModuleMeta,

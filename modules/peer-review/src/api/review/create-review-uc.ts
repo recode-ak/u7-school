@@ -1,4 +1,4 @@
-import { U7UseCase } from '@u7-scl/app/domain';
+import { U7UseCase } from '@u7-scl/app-legacy/domain';
 import { errNotFound } from '@u7-scl/core/domain';
 import { now } from '@u7-scl/core/shared';
 import type {

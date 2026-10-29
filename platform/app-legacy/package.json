@@ -1,5 +1,5 @@
 {
-  "name": "@u7-scl/app",
+  "name": "@u7-scl/app-legacy",
   "version": "0.1.0",
   "module": "./src/index.ts",
   "type": "module",

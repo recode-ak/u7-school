@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
-import { Role, type User } from '@u7-scl/app/domain';
+import { Role, type User } from '@u7-scl/app-legacy/domain';
 import type { QuestionnairePool } from '@u7-scl/domain/questionnaire';
 import {
   QuestionnaireModuleDef,

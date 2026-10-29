@@ -1,6 +1,6 @@
 // DEBT-17
 // biome-ignore lint/style/noRestrictedImports: DEBT-17 — тип резолвера/константа пока в app
-import { U7_SCHOOL_ID } from '@u7-scl/app/domain';
+import { U7_SCHOOL_ID } from '@u7-scl/app-legacy/domain';
 // DEBT-16
 import { Aggregate } from '@u7-scl/core/domain';
 // DEBT-16

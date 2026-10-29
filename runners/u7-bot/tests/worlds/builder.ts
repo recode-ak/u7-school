@@ -1,4 +1,4 @@
-import { U7_SCHOOL_ID } from '@u7-scl/app/domain';
+import { U7_SCHOOL_ID } from '@u7-scl/app-legacy/domain';
 import type {
   Course,
   Lesson,

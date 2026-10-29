@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app';
+import type { User } from '@u7-scl/app-legacy';
 import type { UserFacade } from '@u7-scl/user/domain';
 
 /** Данные отправителя из Telegram, достаточные для регистрации гостя. */

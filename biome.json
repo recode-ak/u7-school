@@ -512,7 +512,7 @@
       }
     },
     {
-      "includes": ["platform/app/**"],
+      "includes": ["platform/app-legacy/**"],
       "linter": {
         "rules": {
           "style": {
@@ -528,7 +528,7 @@
                       "!@u7-scl/domain",
                       "!@u7-scl/domain/**"
                     ],
-                    "message": "ARC-07: app импортирует только core и domain"
+                    "message": "ARC-07: app-legacy импортирует только core и domain"
                   }
                 ]
               }
@@ -556,8 +556,8 @@
                       "!@u7-scl/core/**",
                       "!@u7-scl/core/infra",
                       "!@u7-scl/core/infra/**",
-                      "!@u7-scl/app/infra",
-                      "!@u7-scl/app/infra/**"
+                      "!@u7-scl/app-legacy/infra",
+                      "!@u7-scl/app-legacy/infra/**"
                     ],
                     "message": "ARC-08: apps работают через appApi; репозитории и реализации модулей не импортируют"
                   }

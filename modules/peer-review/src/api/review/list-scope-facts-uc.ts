@@ -1,4 +1,4 @@
-import { U7UseCase } from '@u7-scl/app/domain';
+import { U7UseCase } from '@u7-scl/app-legacy/domain';
 import type { PeerReviewApiModuleResolver } from '@u7-scl/domain/peer-review';
 import {
   type ListScopeFactsCmd,

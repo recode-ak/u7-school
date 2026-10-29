@@ -38,7 +38,7 @@
       "name": "@u7-scl/domain",
       "version": "0.1.0",
       "dependencies": {
-        "@u7-scl/app": "workspace:*",
+        "@u7-scl/app-legacy": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "dmg-core": "file:../../../tools/dmg/dmg-core",
         "valibot": "^1.0.0",
@@ -48,7 +48,7 @@
       "name": "@u7-scl/course",
       "version": "0.1.0",
       "dependencies": {
-        "@u7-scl/app": "workspace:*",
+        "@u7-scl/app-legacy": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/domain": "workspace:*",
         "@u7-scl/user": "workspace:*",
@@ -67,7 +67,7 @@
       "name": "@u7-scl/peer-review",
       "version": "0.1.0",
       "dependencies": {
-        "@u7-scl/app": "workspace:*",
+        "@u7-scl/app-legacy": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/questionnaire": "workspace:*",
         "@u7-scl/stream": "workspace:*",
@@ -78,7 +78,7 @@
       "name": "@u7-scl/questionnaire",
       "version": "0.1.0",
       "dependencies": {
-        "@u7-scl/app": "workspace:*",
+        "@u7-scl/app-legacy": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/domain": "workspace:*",
         "@u7-scl/user": "workspace:*",
@@ -89,7 +89,7 @@
       "name": "@u7-scl/stream",
       "version": "0.1.0",
       "dependencies": {
-        "@u7-scl/app": "workspace:*",
+        "@u7-scl/app-legacy": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/course": "workspace:*",
         "@u7-scl/domain": "workspace:*",
@@ -102,7 +102,7 @@
       "name": "@u7-scl/user",
       "version": "0.1.0",
       "dependencies": {
-        "@u7-scl/app": "workspace:*",
+        "@u7-scl/app-legacy": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/domain": "workspace:*",
         "dmg-core": "file:../../../../tools/dmg/dmg-core",
@@ -112,7 +112,7 @@
       "name": "@u7-scl/wish",
       "version": "0.1.0",
       "dependencies": {
-        "@u7-scl/app": "workspace:*",
+        "@u7-scl/app-legacy": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/course": "workspace:*",
         "@u7-scl/questionnaire": "workspace:*",
@@ -121,8 +121,8 @@
         "dmg-core": "file:../../../../tools/dmg/dmg-core",
       },
     },
-    "platform/app": {
-      "name": "@u7-scl/app",
+    "platform/app-legacy": {
+      "name": "@u7-scl/app-legacy",
       "version": "0.1.0",
       "dependencies": {
         "@u7-scl/core": "workspace:*",
@@ -140,7 +140,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@google/genai": "^1.49.0",
-        "@u7-scl/app": "workspace:*",
+        "@u7-scl/app-legacy": "workspace:*",
         "@u7-scl/core": "workspace:*",
         "@u7-scl/course": "workspace:*",
         "@u7-scl/domain": "workspace:*",
@@ -279,7 +279,7 @@
 
     "@typescript/typescript-win32-x64": ["@typescript/typescript-win32-x64@7.0.2", "", { "os": "win32", "cpu": "x64" }, "sha512-0BQ3HkAHHlKLSp1qRvf3SUhGpGsDuhB/jgFw75guyqbxJqEaS0Cw/VFO8i2nHglJUzQCRtMMR/IBAKE3ETMC4g=="],
 
-    "@u7-scl/app": ["@u7-scl/app@workspace:platform/app"],
+    "@u7-scl/app-legacy": ["@u7-scl/app-legacy@workspace:platform/app-legacy"],
 
     "@u7-scl/bot": ["@u7-scl/bot@workspace:runners/u7-bot"],
 

@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app/domain';
+import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { md, mdJoin } from '@u7-scl/core/shared';
 import type {

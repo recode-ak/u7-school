@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app';
+import type { User } from '@u7-scl/app-legacy';
 import type {
   PeerReviewApiModuleResolver,
   ReviewCreatedEvent,

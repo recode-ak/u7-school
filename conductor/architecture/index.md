@@ -10,7 +10,7 @@
 
 | Ось ([layers.md](../../node_modules/dmg-core/docs/layers.md)) | Пакеты u7-school |
 |---|---|
-| Платформа | `dmg-core` (репо `~/dev/tools/dmg/dmg-core`, в проекте — `node_modules/dmg-core`, D-55), приложение `@u7-scl/app`; legacy `@u7-scl/core` и мосты `platform/core/src/legacy-bridge` |
+| Платформа | `dmg-core` (репо `~/dev/tools/dmg/dmg-core`, в проекте — `node_modules/dmg-core`, D-55), приложение `@u7-scl/app`; legacy `@u7-scl/core`, legacy-ядро приложения `@u7-scl/app-legacy` (TR-33) и мосты `platform/core/src/legacy-bridge` |
 | Домен | `@u7-scl/domain` (`domain/src/<m>`; вход модуля — `@u7-scl/domain/<m>/contract`) |
 | Прикладной слой | `modules/<m>/src` (1:1 с модулем домена) |
 | Входные адаптеры | `runners/*`: бот `u7-bot`, позже web и транспорты; операции — через `appApi` |

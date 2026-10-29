@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Role, type User } from '@u7-scl/app';
+import { Role, type User } from '@u7-scl/app-legacy';
 import { InProcJobScheduler } from '@u7-scl/core/infra';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import type { ContentSnapshot } from '@u7-scl/domain/course';

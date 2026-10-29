@@ -26,7 +26,7 @@
 
 ## Группы
 
-1. Импорты `@u7-scl/app` / `@u7-scl/core` в домене.
+1. Импорты `@u7-scl/app-legacy` / `@u7-scl/core` в домене.
 2. Реэкспорты старых путей `modules/<m>/src/domain/index.ts`.
 3. `User` в `app`.
 4. Прочее.
@@ -41,11 +41,11 @@
 - **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
 - **Критерий снятия:** в `domain/src/user/**` нет маркеров `DEBT-1` и импортов `@u7-scl/core`
 
-### DEBT-2: импорт `@u7-scl/app/domain` в domain/user/module.ts
+### DEBT-2: импорт `@u7-scl/app-legacy/domain` в domain/user/module.ts
 - **Место:** `domain/src/user/module.ts` (тип `U7ModuleResolver`)
 - **Причина:** тип резолвера модулей определён в `app`; создаёт циклическую зависимость пакетов `app` ↔ `domain` (только типы, в рантайме импорт стирается); сам цикл пакетов также снимается этим долгом.
 - **Погашает:** перевод `user` на Def
-- **Критерий снятия:** маркер `DEBT-2` удалён, `module.ts` не импортирует `@u7-scl/app`
+- **Критерий снятия:** маркер `DEBT-2` удалён, `module.ts` не импортирует `@u7-scl/app-legacy`
 
 ### DEBT-5: `v.isoDateTime` в `UserSchema` (DOM-12)
 - **Место:** `domain/src/user/user/entity.ts` (`createdAt`, `updatedAt`; `biome-ignore lint/plugin`)
@@ -59,11 +59,11 @@
 - **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
 - **Критерий снятия:** в `domain/src/course/**` нет маркеров `DEBT-6` и импортов `@u7-scl/core`
 
-### DEBT-7: импорт `@u7-scl/app/domain` в domain/course/module.ts
+### DEBT-7: импорт `@u7-scl/app-legacy/domain` в domain/course/module.ts
 - **Место:** `domain/src/course/module.ts` (тип `U7ModuleResolver`)
 - **Причина:** тип резолвера модулей определён в `app` (см. DEBT-2).
 - **Погашает:** перевод `course` на Def
-- **Критерий снятия:** маркер `DEBT-7` удалён, `module.ts` не импортирует `@u7-scl/app`
+- **Критерий снятия:** маркер `DEBT-7` удалён, `module.ts` не импортирует `@u7-scl/app-legacy`
 
 ### DEBT-11: импорты `@u7-scl/core` в domain/questionnaire
 - **Место:** `domain/src/questionnaire/**` (`module.ts`, `questionnaire/{a-root,entity,events,questionnaire-factory}.ts`, `questionnaire/{likert,standard}/*-ar.ts`, `questionnaire/commands/errors.ts`; подпути `core/domain`, `core/shared`, `core/infra`)
@@ -71,11 +71,11 @@
 - **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
 - **Критерий снятия:** в `domain/src/questionnaire/**` нет маркеров `DEBT-11` и импортов `@u7-scl/core`
 
-### DEBT-12: импорт `@u7-scl/app/domain` в domain/questionnaire/module.ts
+### DEBT-12: импорт `@u7-scl/app-legacy/domain` в domain/questionnaire/module.ts
 - **Место:** `domain/src/questionnaire/module.ts` (тип `U7ModuleResolver`)
 - **Причина:** тип резолвера модулей определён в `app` (см. DEBT-2).
 - **Погашает:** перевод `questionnaire` на Def
-- **Критерий снятия:** маркер `DEBT-12` удалён, `module.ts` не импортирует `@u7-scl/app`
+- **Критерий снятия:** маркер `DEBT-12` удалён, `module.ts` не импортирует `@u7-scl/app-legacy`
 
 ### DEBT-16: импорты `@u7-scl/core` в domain/stream
 - **Место:** `domain/src/stream/**` (`stream-ds.ts`, `{stream,student}/{a-root,entity,events}.ts`, `{stream,student}/commands/*-cmd.ts`; подпути `core/domain`, `core/shared`, `core/api`)
@@ -83,11 +83,11 @@
 - **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
 - **Критерий снятия:** в `domain/src/stream/**` нет маркеров `DEBT-16` и импортов `@u7-scl/core`
 
-### DEBT-17: импорты `@u7-scl/app/domain` в domain/stream
+### DEBT-17: импорты `@u7-scl/app-legacy/domain` в domain/stream
 - **Место:** `domain/src/stream/module.ts` (тип `U7ModuleResolver`), `stream/stream/a-root.ts` (константа `U7_SCHOOL_ID`)
 - **Причина:** `U7ModuleResolver` и `U7_SCHOOL_ID` определены в `app` (см. DEBT-2).
 - **Погашает:** перевод `stream` на Def
-- **Критерий снятия:** маркер `DEBT-17` удалён, перенесённые файлы не импортируют `@u7-scl/app`
+- **Критерий снятия:** маркер `DEBT-17` удалён, перенесённые файлы не импортируют `@u7-scl/app-legacy`
 
 ### DEBT-25: импорты `@u7-scl/core` в domain/peer-review
 - **Место:** `domain/src/peer-review/**` (`review/{a-root,entity,errors,events}.ts`, `review-campaign/{a-root,entity,errors,events}.ts`, `*/commands/*-cmd.ts`, `errors.ts`; подпути `core/domain`, `core/shared`, `core/api`)
@@ -95,11 +95,11 @@
 - **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
 - **Критерий снятия:** в `domain/src/peer-review/**` нет маркеров `DEBT-25` и импортов `@u7-scl/core`
 
-### DEBT-26: импорт `@u7-scl/app/domain` в domain/peer-review/module.ts
+### DEBT-26: импорт `@u7-scl/app-legacy/domain` в domain/peer-review/module.ts
 - **Место:** `domain/src/peer-review/module.ts` (тип `U7ModuleResolver`)
 - **Причина:** тип резолвера модулей определён в `app` (см. DEBT-2).
 - **Погашает:** перевод `peer-review` на Def
-- **Критерий снятия:** маркер `DEBT-26` удалён, `module.ts` не импортирует `@u7-scl/app`
+- **Критерий снятия:** маркер `DEBT-26` удалён, `module.ts` не импортирует `@u7-scl/app-legacy`
 
 ## 2. Реэкспорты старых путей
 
@@ -143,7 +143,7 @@
 
 ### DEBT-4: реэкспорт `User`/`Role` в app
 - **Место:** `platform/app/src/domain/user.ts`
-- **Причина:** `User`, `UserSchema`, `Role`, `RoleSchema`, `UserArMeta` импортируются из `@u7-scl/app/domain` во всём репозитории; канонический владелец теперь `domain/user`.
+- **Причина:** `User`, `UserSchema`, `Role`, `RoleSchema`, `UserArMeta` импортируются из `@u7-scl/app-legacy/domain` во всём репозитории; канонический владелец теперь `domain/user`.
 - **Погашает:** последний трек миграции
 - **Критерий снятия:** потребители импортируют из `@u7-scl/domain/user`; `app/src/domain/user.ts` удалён
 

@@ -20,7 +20,7 @@
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { U7_SCHOOL_ID } from '@u7-scl/app/domain';
+import { U7_SCHOOL_ID } from '@u7-scl/app-legacy/domain';
 
 export interface MigrateResult {
   total: number;

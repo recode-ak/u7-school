@@ -8,7 +8,7 @@ import {
 } from 'bun:test';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { User } from '@u7-scl/app/domain';
+import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
 import { U7BotController } from '@u7-scl/bot/u7-bot-controller';

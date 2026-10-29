@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { TEST_SCHOOL, type User } from '@u7-scl/app/domain';
+import { TEST_SCHOOL, type User } from '@u7-scl/app-legacy/domain';
 import { Role } from '@u7-scl/user/domain';
 import type { ApiAppBundle } from './create-api-app';
 import { createUiApp } from './create-ui-app';

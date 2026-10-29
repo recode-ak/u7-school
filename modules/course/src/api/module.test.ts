@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, mock, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app/domain';
+import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app-legacy/domain';
 import type { NotifyKind } from '@u7-scl/core/domain';
 import { Status } from '@u7-scl/domain/course';
 import type { User, UserFacade } from '@u7-scl/user/domain';

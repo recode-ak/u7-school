@@ -1,4 +1,4 @@
-import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app/domain';
+import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app-legacy/domain';
 import { ApiApp } from '@u7-scl/core/api';
 import { InProcEventBus, InProcJobScheduler } from '@u7-scl/core/infra';
 import { ConsoleLogger, LogLevel } from '@u7-scl/core/shared';

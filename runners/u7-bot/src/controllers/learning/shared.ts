@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app/domain';
+import type { User } from '@u7-scl/app-legacy/domain';
 import type { ApiApp } from '@u7-scl/core/api';
 import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import type { DialogResponse, NavNodeStatus } from '@u7-scl/core/ui';

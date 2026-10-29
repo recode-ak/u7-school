@@ -1,4 +1,4 @@
-import { U7UseCase } from '@u7-scl/app/domain';
+import { U7UseCase } from '@u7-scl/app-legacy/domain';
 import type { UcMeta } from '@u7-scl/core/api';
 import { errAccessDenied, errNotFound } from '@u7-scl/core/domain';
 import type { Stream, StreamApiModuleResolver } from '@u7-scl/domain/stream';

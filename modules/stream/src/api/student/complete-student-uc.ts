@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app/domain';
+import type { User } from '@u7-scl/app-legacy/domain';
 import { errNotFound } from '@u7-scl/core/domain';
 import type { Stream, Student } from '@u7-scl/domain/stream';
 import {

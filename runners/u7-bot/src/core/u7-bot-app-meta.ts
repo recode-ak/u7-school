@@ -1,5 +1,9 @@
-import type { User } from '@u7-scl/app';
-import type { School, U7ApiApp, U7AppResolver } from '@u7-scl/app/domain';
+import type { User } from '@u7-scl/app-legacy';
+import type {
+  School,
+  U7ApiApp,
+  U7AppResolver,
+} from '@u7-scl/app-legacy/domain';
 import type { AppMeta } from '@u7-scl/core/domain';
 import type { BotUiAppResolve } from '@u7-scl/core/ui';
 import type { CourseApiModuleMeta } from '@u7-scl/course/domain';

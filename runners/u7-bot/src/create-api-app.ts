@@ -1,5 +1,5 @@
-import type { School, U7AppResolver } from '@u7-scl/app/domain';
-import { createSchool, TEST_SCHOOL } from '@u7-scl/app/domain';
+import type { School, U7AppResolver } from '@u7-scl/app-legacy/domain';
+import { createSchool, TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import { ApiApp } from '@u7-scl/core/api';
 import type { EventBus } from '@u7-scl/core/domain';
 import {

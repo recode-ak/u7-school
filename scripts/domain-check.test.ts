@@ -88,24 +88,36 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
     ]);
   });
 
-  it('app/core без маркера DEBT — ARC-02', () => {
+  it('корень сборки @u7-scl/app — ARC-06, маркер DEBT не спасает', () => {
     const files = [
       file(
         'domain/src/user/a.ts',
-        "import { A } from '@u7-scl/app';\nimport { C } from '@u7-scl/core';",
+        "import { A } from '@u7-scl/app'; // DEBT-1",
       ),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([
-      "ARC-02: domain/src/user/a.ts: импорт '@u7-scl/app' без // DEBT-<n>",
+      "ARC-06: domain/src/user/a.ts: домен не импортирует прикладной слой (import '@u7-scl/app')",
+    ]);
+  });
+
+  it('app-legacy/core без маркера DEBT — ARC-02', () => {
+    const files = [
+      file(
+        'domain/src/user/a.ts',
+        "import { A } from '@u7-scl/app-legacy';\nimport { C } from '@u7-scl/core';",
+      ),
+    ];
+    expect(checkDomainImports(files, DEPENDS)).toEqual([
+      "ARC-02: domain/src/user/a.ts: импорт '@u7-scl/app-legacy' без // DEBT-<n>",
       "ARC-02: domain/src/user/a.ts: импорт '@u7-scl/core' без // DEBT-<n>",
     ]);
   });
 
-  it('app/core с маркером DEBT в той же строке или строкой выше — ок', () => {
+  it('app-legacy/core с маркером DEBT в той же строке или строкой выше — ок', () => {
     const files = [
       file(
         'domain/src/user/a.ts',
-        "import { A } from '@u7-scl/app'; // DEBT-1\n// DEBT-2\nimport { C } from '@u7-scl/core';",
+        "import { A } from '@u7-scl/app-legacy'; // DEBT-1\n// DEBT-2\nimport { C } from '@u7-scl/core';",
       ),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([]);
@@ -122,7 +134,9 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
   });
 
   it('файлы вне domain/src/<m>/ игнорируются', () => {
-    const files = [file('modules/user/src/a.ts', "import '@u7-scl/app';")];
+    const files = [
+      file('modules/user/src/a.ts', "import '@u7-scl/app-legacy';"),
+    ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([]);
   });
 });

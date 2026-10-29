@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { Role, type User } from '@u7-scl/app/domain';
+import { Role, type User } from '@u7-scl/app-legacy/domain';
 import type { StreamApiModuleResolver } from '@u7-scl/domain/stream';
 import { ActivateStreamUc } from './activate-stream-uc';
 

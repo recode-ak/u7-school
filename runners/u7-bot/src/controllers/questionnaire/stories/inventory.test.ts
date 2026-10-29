@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app/domain';
+import type { User } from '@u7-scl/app-legacy/domain';
 import type { U7BotApp } from '@u7-scl/bot/u7-bot-app-meta';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { FillStory } from './fill.story';

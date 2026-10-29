@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app/domain';
+import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotController } from '@u7-scl/bot/u7-bot-controller';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import { md, parseLogLevel } from '@u7-scl/core/shared';

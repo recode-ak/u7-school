@@ -1,6 +1,6 @@
 // DEBT-2
 // biome-ignore lint/style/noRestrictedImports: DEBT-2 — тип резолвера пока в app
-import type { U7ModuleResolver } from '@u7-scl/app/domain';
+import type { U7ModuleResolver } from '@u7-scl/app-legacy/domain';
 // DEBT-1
 import type { ApiModuleMeta } from '@u7-scl/core/domain';
 import type { AddRoleToUserCmdMeta } from './user/commands/add-role-to-user-cmd';

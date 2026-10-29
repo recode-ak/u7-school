@@ -1,4 +1,4 @@
-// @u7-scl/app/domain — доменные типы уровня приложения
+// @u7-scl/app-legacy/domain — доменные типы уровня приложения
 
 export type {
   U7ApiApp,

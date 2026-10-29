@@ -1,4 +1,4 @@
-import { U7UseCase, type User } from '@u7-scl/app/domain';
+import { U7UseCase, type User } from '@u7-scl/app-legacy/domain';
 import type { UcMeta } from '@u7-scl/core/api';
 import { errAccessDenied, errNotFound } from '@u7-scl/core/domain';
 import type {

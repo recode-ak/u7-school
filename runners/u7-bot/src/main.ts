@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { CompositeLogger } from '@u7-scl/app/infra';
+import { CompositeLogger } from '@u7-scl/app-legacy/infra';
 import { FileReplayStore } from '@u7-scl/core/infra';
 import { legacyClock } from '@u7-scl/core/legacy-bridge';
 import {

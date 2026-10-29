@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { Role, type User } from '@u7-scl/app';
+import { Role, type User } from '@u7-scl/app-legacy';
 import type { UserFacade } from '@u7-scl/user/domain';
 import { ensureRegisteredGuest } from './ensure-registered';
 

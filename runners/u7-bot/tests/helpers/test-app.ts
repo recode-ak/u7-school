@@ -1,4 +1,4 @@
-import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app/domain';
+import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app-legacy/domain';
 import type { U7BotApp } from '@u7-scl/bot/u7-bot-app-meta';
 import { ApiApp } from '@u7-scl/core/api';
 import {

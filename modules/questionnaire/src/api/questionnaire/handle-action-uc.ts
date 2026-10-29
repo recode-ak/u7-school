@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app/domain';
+import type { User } from '@u7-scl/app-legacy/domain';
 import type {
   HandleActionCmdMeta,
   QuestionnaireActionResponse,

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { TEST_SCHOOL, type User } from '@u7-scl/app/domain';
+import { TEST_SCHOOL, type User } from '@u7-scl/app-legacy/domain';
 import { Role } from '@u7-scl/user/domain';
 import { CommunityStory } from './community.story';
 

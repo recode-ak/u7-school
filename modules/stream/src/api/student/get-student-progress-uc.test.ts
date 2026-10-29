@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { Role, type User } from '@u7-scl/app/domain';
+import { Role, type User } from '@u7-scl/app-legacy/domain';
 import { isoNow } from '@u7-scl/core/shared';
 import { StreamStatus } from '@u7-scl/domain/stream';
 import { GetStudentProgressUc } from './get-student-progress-uc';

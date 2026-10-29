@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app/domain';
+import type { User } from '@u7-scl/app-legacy/domain';
 import type { DomainEvent } from '@u7-scl/core/domain';
 import { md, mdJoin } from '@u7-scl/core/shared';
 import type {

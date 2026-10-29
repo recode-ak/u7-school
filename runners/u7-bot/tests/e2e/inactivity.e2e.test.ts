@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app/domain';
+import type { User } from '@u7-scl/app-legacy/domain';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import type {
   StudentAbandonedEvent,
