@@ -56,7 +56,7 @@
 - [x] Task: `migration.md` §6 — «Состояние переноса», «Входной долг», «Старт следующих треков» по факту; `index.md` архитектуры при необходимости `6dce9a1` (`index.md` без правок; попутно DEBT-4 — путь в `app-legacy`)
 - [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md) — автономно (ревью reviewer без `error`, warning DEBT-4 исправлен `62b7768`)
 
-## Фаза 5: Финал
+## Фаза 5: Финал [checkpoint: 0f91d18]
 
 - [x] Task: `summary.md`: итог, сравнение с базовой линией, TR трека `c8e0e7e`
 - [x] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md) — автономно
