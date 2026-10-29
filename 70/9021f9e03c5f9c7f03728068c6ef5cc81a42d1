@@ -1,0 +1,1 @@
+Переименование роли architect → tech-lead (решение Нурболата 2026-10-29). agent-roles.md §2–4: product — доменный граф, новый architect — техническая архитектура (волна 3), цепочка постановки user → product → architect → spec. agents.md §1/§3, migration.md §6, .agents-core/README.md, plan/spec/summary/бриф трека, tracks.md.
