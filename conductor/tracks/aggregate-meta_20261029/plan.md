@@ -18,9 +18,9 @@
 - [x] Task: `F.expectedVersion()` и удаление `CommandMeta.version` (dmg-core 53e66d1)
     - [x] Тесты: схема поля (целое ≥ 0, необязательное, отказ на отрицательном/дробном); команда без `version` в `meta`; red
     - [x] Реализация; green
-- [ ] Task: Шаг `expectVersion(ar, expected)` в `UseCaseFromDef`
-    - [ ] Тесты: совпала — операция идёт; расходится — `Err(VERSION_CONFLICT)` без фиксации и событий; не прислана — сверки нет; red
-    - [ ] Реализация; green
+- [x] Task: Шаг `expectVersion(ar, expected)` в `UseCaseFromDef` (dmg-core 0156ec3)
+    - [x] Тесты: совпала — операция идёт; расходится — `Err(VERSION_CONFLICT)` без фиксации и событий; не прислана — сверки нет; red
+    - [x] Реализация; green
 - [ ] Task: Учебный модуль: `completeTask` с `expectedVersion`, тест; генератор — по необходимости
 - [ ] Task: Документация: гайд `use-case`, `transport.md` §2, `llms.txt`
 - [ ] Task: Ревью reviewer; правки по ревью
