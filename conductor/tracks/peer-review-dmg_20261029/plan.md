@@ -72,12 +72,12 @@
 - `PeerReviewModuleDef` содержит оба агрегата, все UC и ER; `checkDefs` зелёный.
 - Сценарии удалённых тестов сверены с новыми (список в отчёте); `bun run check` зелёный; `test:bot` — не меньше 978 pass.
 
-## Фаза 4: Финал
+## Фаза 4: Финал [checkpoint: 194efa9e]
 
 - [x] Task: Гейт закрытия ([workflow.md](../../workflow.md)): `CI=true bun test`, `test:bot`, `dmg-core`, триаж и сравнение с базовой линией — в `summary.md` c277a1fc
 - [x] Task: Итог пилота: каждая роль по критериям §5 [agent-roles.md](../../architecture/agent-roles.md), промежуточный вывод (годна, нужна правка или кандидат на удаление) c8fb9806
 - [x] Task: [debt.md](../../architecture/debt.md) — DEBT-25, 26, 28, 29 сняты, маркеры синхронны; [migration.md](../../architecture/migration.md) §6 — состояние, входной долг, следующий трек `stream` b709a3e2
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md) 194efa9e
 
 **Критерии приёмки Фазы 4** (= критерии spec):
 - `CI=true bun test` и `test:bot` — красных нет либо каждый отнесён к промежуточному состоянию с владельцем; регрессов нет; числа и сравнение с базовой линией — в `summary.md`.
