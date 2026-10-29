@@ -5,7 +5,7 @@
 ## Фаза 0: Базовая линия
 
 - [x] Task: Зафиксировать базовую линию (`bun test` pass/fail в u7-school и в пакете, `bun run e2e` пакета, e2e-тесты бота) в черновике `summary.md` `08ebca5`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md) — автономно
 
 ## Фаза 1: Шаг `fetch` после Policy (TR-27, dmg-core)
 
