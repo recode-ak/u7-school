@@ -60,10 +60,10 @@
 
 ## Фаза 3: Сборка и снятие legacy
 
-- [ ] Task: `PeerReviewModuleDef` без `external` (снят в Ф1 — MAN-06), с агрегатами, UC и ER обоих срезов; `checkDefs` зелёный
-- [ ] Task: Фабрика `peer-review` в `U7App` (подключена в Ф1) — legacy-резолвер снят; `@u7-scl/peer-review/**` в ARC-07 корневого `biome.json` (TR-35, п. 5)
-- [ ] Task: Удалить legacy `PeerReviewApiModule`, `module.ts` домена (DEBT-26), `commands/*-cmd.ts`, старые репозитории; сверить, что сценарии удалённых тестов перенесены; DEBT-34 в части `peer-review`
-- [ ] Task: `reviewer`; замечания без `error` решает orchestrator (TR)
+- [x] Task: `PeerReviewModuleDef` без `external` (снят в Ф1 — MAN-06), с агрегатами, UC и ER обоих срезов; `checkDefs` зелёный 5e5c340e
+- [x] Task: Фабрика `peer-review` в `U7App` (подключена в Ф1) — legacy-резолвер снят; `@u7-scl/peer-review/**` в ARC-07 корневого `biome.json` (TR-35, п. 5) 5e5c340e
+- [x] Task: Удалить legacy `PeerReviewApiModule`, `module.ts` домена (DEBT-26), `commands/*-cmd.ts`, старые репозитории; сверить, что сценарии удалённых тестов перенесены; DEBT-34 в части `peer-review` 5e5c340e
+- [x] Task: `reviewer`; замечания без `error` решает orchestrator (TR) 5e5c340e
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 3:**
