@@ -734,18 +734,26 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
 
   /** Мок карточки: единственная переменная — факты отзывов скоупа. */
   function makeStoryWithFacts(
-    facts: { hasReviews: boolean; reviewsCount: number } | 'fail' | undefined,
+    facts:
+      | { hasReviews: boolean; reviewsCount: number }
+      | 'fail'
+      | 'throw'
+      | undefined,
   ) {
     const dispatch =
-      facts === 'fail'
-        ? mock(async (_module: unknown, _command: Command) => ({
-            ok: false as const,
-            error: { code: 'REVIEW_UNAVAILABLE', kind: 'internal' },
-          }))
-        : peerReviewDispatch({
-            listScopeFacts: () =>
-              facts ?? { hasReviews: false, reviewsCount: 0 },
-          });
+      facts === 'throw'
+        ? mock(async (_module: unknown, _command: Command) => {
+            throw new Error('диспетчер недоступен');
+          })
+        : facts === 'fail'
+          ? mock(async (_module: unknown, _command: Command) => ({
+              ok: false as const,
+              error: { code: 'REVIEW_UNAVAILABLE', kind: 'internal' },
+            }))
+          : peerReviewDispatch({
+              listScopeFacts: () =>
+                facts ?? { hasReviews: false, reviewsCount: 0 },
+            });
     const mockAppApi = {
       dispatch,
       execute: mock(async (name: string) => {
@@ -799,6 +807,21 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
 
   test('факты недоступны (отказ UC, не ok) → карточка живёт, кнопки нет', async () => {
     const { story } = makeStoryWithFacts('fail');
+
+    const response = await story.handleCallback(
+      `view:${STREAM_ID}`,
+      rvActor,
+      rvSession,
+    );
+
+    expect(String(response.screen?.text)).toContain('JS Core');
+    const btnTexts =
+      response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
+    expect(btnTexts.some((t) => t.includes('Отзывы'))).toBe(false);
+  });
+
+  test('исключение диспетчера → карточка живёт, кнопки нет (как v0.2.6)', async () => {
+    const { story } = makeStoryWithFacts('throw');
 
     const response = await story.handleCallback(
       `view:${STREAM_ID}`,

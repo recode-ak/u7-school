@@ -72,10 +72,9 @@ export class CreateReviewUc extends UseCaseFromDef<
 
   protected async execute(
     { campaignId, recipientId, text }: Input,
-    { campaign, authorId, existing }: Loaded,
+    { campaign, at, authorId, existing }: Loaded,
     uow: UnitOfWork,
   ) {
-    const at = this.now();
     let review = existing;
     if (review) {
       const overwritten = review.overwrite(text, at);

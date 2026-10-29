@@ -223,13 +223,18 @@ export class ViewStreamStory extends U7BotUiStory {
 
   /** Есть ли отзывы по потоку (S07): ошибки домена — карточку не ломают. */
   async #streamHasReviews(streamId: string, actor: User): Promise<boolean> {
-    const facts = await this.dispatchUc(
-      PeerReviewModuleDef,
-      ListScopeFactsUcDef.command({ scopeId: streamId }),
-      actor,
-    );
-    // не ok — факты недоступны, кнопки отзывов не будет
-    return facts.ok && facts.value.hasReviews;
+    try {
+      const facts = await this.dispatchUc(
+        PeerReviewModuleDef,
+        ListScopeFactsUcDef.command({ scopeId: streamId }),
+        actor,
+      );
+      // не ok — факты недоступны, кнопки отзывов не будет
+      return facts.ok && facts.value.hasReviews;
+    } catch {
+      // исключение диспетчера — как и отказ: карточку потока не ломаем
+      return false;
+    }
   }
 
   /**

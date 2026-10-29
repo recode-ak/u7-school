@@ -56,7 +56,8 @@ export type ReviewFactStub = { authorId: string; recipientId: string };
  * Репозиторий отзывов в памяти для тестов кампаний: отзывы собраны из фактов
  * «автор → адресат». Факты не привязаны к кампании, поэтому
  * `findByCampaignAndAuthor` не сверяет `campaignId`; остальные запросы
- * честные. Запись не нужна — `save` кладёт агрегат в список.
+ * честные; `findByPair` сверяет `campaignId` как есть, а отзывы из фактов
+ * лежат в фиксированной кампании `CAMPAIGN_ID`. Запись не нужна — `save` кладёт агрегат в список.
  */
 export class FactsReviewRepo implements ReviewRepo {
   readonly aggregate = ReviewArDef;
