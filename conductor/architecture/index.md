@@ -26,7 +26,7 @@
 | Написать артефакт по образцу | [guides/](../../node_modules/dmg-core/docs/guides/index.md) + эталон `wish` |
 | Править немигрированный модуль | [legacy.md](./legacy.md) |
 | Работать с ботом | [ui/](./ui/bot-architecture.md) |
-| Работать агентом | [agents.md](./agents.md), скилы `architecture` и `dmg-architecture` |
+| Работать агентом | [agents.md](./agents.md), [agent-roles.md](./agent-roles.md), скилы `architecture` и `dmg-architecture` |
 
 ## Правка платформы `dmg-core`
 
@@ -52,6 +52,7 @@
 - [legacy.md](./legacy.md) — паттерны немигрированного кода (удаляется после перехода)
 - [debt.md](./debt.md) — реестр долга `DEBT-<n>` и тактических решений `TR-<n>`
 - [agents.md](./agents.md) — роли агентов, контуры качества, связь с conductor, среды Claude Code и pi
+- [agent-roles.md](./agent-roles.md) — новые роли агентов: состав, место в процессе, волны внедрения, критерии годности
 - [docs-strategy.md](./docs-strategy.md) — доменная и техническая документация
 
 **UI (Telegram-бот)**

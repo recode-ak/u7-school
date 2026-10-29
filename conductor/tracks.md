@@ -7,3 +7,6 @@
 > Отказ или завершение трека-наследника — заготовка удаляется, запись снимается.
 
 ---
+
+- [?] **Track: Перевод `peer-review` на DMG + пилот ролей волны 1 (`architect`, `test-designer`, `data-keeper`)**
+*Разбор: [migration.md §2.1, §6 «Старт следующих треков»](./architecture/migration.md), роли — [agent-roles.md](./architecture/agent-roles.md)*
