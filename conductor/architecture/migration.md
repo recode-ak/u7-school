@@ -94,7 +94,7 @@
 
 - **Следующий — `stream`** (трек 6, порядок — §2.1). Создаётся `conductor-newtrack` (ID вида `stream-dmg_<дата>`) по шаблону трека `peer-review` (`conductor/archive/peer-review-dmg_20261029`):
   - **Конвейер среза:** `tech-lead` (бриф) → `test-designer` (red) → `migrator` (green) → гейт → `data-keeper` (по триггеру) → `reviewer`; Ф0 ролей не нужна — роли уже есть.
-  - **Пилот ролей — второй трек** ([agent-roles.md](./agent-roles.md) §5): раздел «Пилот ролей» в `summary.md`; в начале трека — решение по кандидату на правку промпта `data-keeper` (итог пилота `peer-review`); в конце — годность ролей и решение о волне 2.
+  - **Пилот ролей — второй трек** ([agent-roles.md](./agent-roles.md) §5): раздел «Пилот ролей» в `summary.md`; промпт `data-keeper` поправлен до старта (итог пилота `peer-review`), в треке промпты ролей не правятся; в конце — годность ролей и решение о волне 2.
   - **Мосты:** адаптеры TR-11 `stream` у `wish` и `peer-review` снимаются; `student.completed`/`abandoned` — события модуля на Def вместо `inbound`. DEBT-35 решается здесь.
   - **Сборка:** фабрика в `U7App`, `@u7-scl/stream/**` — в группу ARC-07 `biome.json`; stories `stream` — на `dispatch`.
 - Базовая линия тестов на конец `peer-review`: `conductor/archive/peer-review-dmg_20261029/summary.md` («Гейт закрытия»).
