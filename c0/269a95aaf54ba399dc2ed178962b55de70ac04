@@ -1,0 +1,1 @@
+Задача: роль data-keeper. Файлы: .agents-core/roles/data-keeper.md, копии .claude/agents/data-keeper.md и .pi/agents/data-keeper.md (agents:sync). совместимость записей, путь миграции, бэкап; только чтение. Модель — Sonnet (agent-roles.md §1).
