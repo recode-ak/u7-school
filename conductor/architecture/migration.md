@@ -21,7 +21,7 @@
 | 2 ✅ | **generators** | `bun run gen` для всех видов артефактов по [naming.md](./naming.md) | orchestrator + Нурболат |
 | 3 ✅ | **domain-package** | трек: `conductor/archive/domain-package_20261020`, реестр долга — [debt.md](./debt.md). Пакет-каркас `@u7-scl/domain` создан в треке generators; наполнить: механически перенести domain-слои снизу вверх: user (+ `User` из app) → course → questionnaire → stream → wish → peer-review → dossier. Старые пути `@u7-scl/<m>/domain` временно реэкспортируют | migrator |
 | 4 ✅ | **golden-wish** | перевести `wish` на Def, `Result`, Policy, entity-правило, UoW, Timestamp. Эталон; по нему написаны гайды артефактов — [guides/](../../node_modules/dmg-core/docs/guides/index.md). Трек: `conductor/archive/golden-wish_20261020` | orchestrator + Нурболат |
-| 5 | **peer-review** | первый модуль конвейером агентов; Ф0 — пилот ролей волны 1 ([agent-roles.md](./agent-roles.md) §4) | агенты |
+| 5 ✅ | **peer-review** | первый модуль конвейером агентов; Ф0 — пилот ролей волны 1 ([agent-roles.md](./agent-roles.md) §4). Трек: `conductor/tracks/peer-review-dmg_20261029` | агенты |
 | 6 | остальные модули | сверху вниз по графу (§2.1): `stream` (бывший `stream-student`) → `questionnaire` → `course` → `user`; `dossier` — в любой момент | агенты |
 | 7 | **timestamp-data** | пакетная миграция живых данных, удаление «чтения строки» | orchestrator, с подтверждением |
 | 8 | **delegation** | агрегат `Delegation` в user, построение `delegate` в транспорте ([caller.md](../../node_modules/dmg-core/docs/caller.md) §3) | агенты |
@@ -39,7 +39,7 @@
 - **Прямой мост** (модуль на Def зовёт legacy-зависимость) уже есть и проверен на `wish`: внешний `ModuleDef` + адаптер над legacy-фасадом (TR-11), legacy-события — через `legacyEventBus` (`inbound`). Он дешёвый и снимается, когда зависимость переезжает.
 - **Обратный мост** (legacy-модуль зовёт модуль на Def) не существует: legacy-код импортирует чужие entity, Ar и фасады напрямую (DEBT-34). Его пришлось бы строить на каждого клиента.
 
-Снизу вверх (`user` первым) — обратный мост для `course`, `questionnaire`, `stream`, `peer-review` и entity `User` во всём репозитории (DEBT-4). Сверху вниз обратных мостов между модулями нет: к моменту перевода поставщика все его клиенты уже на Def. `peer-review` — вершина: `stream` связан с ним только событием `stream.completed` (идёт через `inbound`). `user` — последний, вместе с ним уходят `U7CallerResolver` над legacy `userFacade` (TR-33) и DEBT-4. UI (stories бота) — клиент всех модулей при любом порядке: переводится на `dispatch` в треке своего модуля.
+Снизу вверх (`user` первым) — обратный мост для `course`, `questionnaire`, `stream`, `peer-review` и entity `User` во всём репозитории (DEBT-4). Сверху вниз обратных мостов между модулями нет: к моменту перевода поставщика все его клиенты уже на Def. `peer-review` — вершина: от `stream` он получает события `student.completed`/`abandoned` (`StudentEvents`, через `inbound`) и зовёт UC состава потока `GetStreamMembersUcDef` (адаптер TR-11); обратных вызовов из `stream` нет. `user` — последний, вместе с ним уходят `U7CallerResolver` над legacy `userFacade` (TR-33) и DEBT-4. UI (stories бота) — клиент всех модулей при любом порядке: переводится на `dispatch` в треке своего модуля.
 
 ## 3. Что исправляет переход
 
@@ -73,8 +73,9 @@
 ## 6. Состояние переноса
 
 - **На Def (DMG):** `wish` — домен `domain/src/wish`, прикладной слой `modules/wish/src` (4 UC, 4 ER, JSON-репозиторий, `ModuleFromDef`), legacy `wish` удалён. Эталон: гайды — [guides/](../../node_modules/dmg-core/docs/guides/index.md). Чужие вызовы UC — в шаге `fetch` после Policy (D-58 пакета).
+- **На Def (DMG):** `peer-review` — домен `domain/src/peer-review` (агрегаты `review-campaign`, `review`), прикладной слой `modules/peer-review/src` (7 UC, ER `create-student-campaign`, JSON-репозитории через UoW со строгим разбором), legacy `PeerReviewApiModule` удалён; уведомление адресату — подписка story на `peer-review.review.created`. Stories бота — на `dispatch`.
 - **Корень сборки (D-50, D-52):** `@u7-scl/app` (`platform/app`) — `U7App` собирает всё приложение по `AppEnv`: legacy-модули, `AppContext` DMG, модули DMG через `ApiApp` пакета (фабрики `ModuleFactory`, фасады по `dependsOn`), резолвер `Caller` (`U7CallerResolver` над legacy `userFacade`). Legacy-ядро приложения — `@u7-scl/app-legacy` (`platform/app-legacy`, TR-33). Раннеры (`u7-bot`, `u7-cli`) и `scripts/call-uc.ts` получают приложение из `U7App`; ARC-07/08/09 и D-53 (ARC-06) — машинные (`arch:check`, `biome`).
-- **Внешние модули (D-37):** `user`, `course`, `questionnaire`, `stream`, `peer-review`, `dossier` — `ModuleDef.define({ external: true })` в домене; UC, которые зовёт `wish`, исполняют адаптеры над legacy-фасадами (TR-11) — фабрики в `U7App`, legacy-события входят через `legacyEventBus` (`inbound`).
+- **Внешние модули (D-37):** `user`, `course`, `questionnaire`, `stream`, `dossier` — `ModuleDef.define({ external: true })` в домене; UC, которые зовут `wish` и `peer-review`, исполняют адаптеры над legacy-фасадами (TR-11) — фабрики в `U7App`, legacy-события входят через `legacyEventBus` (`inbound`).
 - **Механически перенесены** (трек 3): domain-слои всех модулей в `@u7-scl/domain`; старые `modules/<m>/src/domain/index.ts` и `modules/dossier/src/index.ts` — barrel-реэкспорты с маркером `DEBT`.
 - **Граф `dependsOn`** строится из `ModuleDef` (`scripts/domain-arch.ts`, `DomainArch` с `root` и `runners`); `arch:check` сверяет маркеры `// DEBT-<n>` с [debt.md](./debt.md), тактические решения перехода — `TR-<n>` там же.
 
@@ -82,8 +83,8 @@
 
 | Владелец | Долги |
 |---|---|
-| перевод `stream` | импорты `core`/`app-legacy` в домене — DEBT-16, 17; DEBT-19, 20; ER `invite-wishers` не идемпотентен — DEBT-35 |
-| треки перевода остальных модулей на Def | импорты `core`/`app-legacy` в домене — user DEBT-1, 2; course DEBT-6, 7; questionnaire DEBT-11, 12; peer-review DEBT-25, 26; импорты чужого `index` legacy-модулями — DEBT-34; user DEBT-5; course DEBT-9, 10; questionnaire DEBT-14, 15, 32; peer-review DEBT-28, 29 |
+| перевод `stream` | импорты `core`/`app-legacy` в домене — DEBT-16, 17; DEBT-19, 20; ER `invite-wishers` не идемпотентен — DEBT-35; адаптеры TR-11 `stream` у `wish` и `peer-review` (`GetStreamMembersUcDef`, `StudentEvents` через `inbound`) |
+| треки перевода остальных модулей на Def | импорты `core`/`app-legacy` в домене — user DEBT-1, 2; course DEBT-6, 7; questionnaire DEBT-11, 12; импорты чужого `index` legacy-модулями — DEBT-34; user DEBT-5; course DEBT-9, 10; questionnaire DEBT-14, 15, 32 |
 | по мере касания | тесты UC/ER/Job на JSON во временном каталоге — DEBT-40 |
 | `ui-manifests` / `dmg-ui` | id апдейта Telegram неявным контекстом — DEBT-41 |
 | после перехода | `u7-cli` и `call-uc` — общий инструмент вызова UC — DEBT-42 |
@@ -91,11 +92,9 @@
 
 ### Старт следующих треков
 
-- **Следующий — `peer-review`** (трек 5, порядок — §2.1). Создаётся `conductor-newtrack` (ID вида `peer-review-dmg_<дата>`) по этому разделу:
-  - **Ф0 — роли волны 1** ([agent-roles.md](./agent-roles.md)): `tech-lead`, `test-designer`, `data-keeper` в `.agents-core/roles/`, `bun run agents:sync`; место в конвейере — [agents.md](./agents.md) §3; раздел «Пилот ролей» в `summary.md`.
-  - **Срезы** по агрегатам `review-campaign` и `review` (`modules/peer-review/src/api`): `tech-lead` → бриф по образцу `conductor/archive/golden-wish_20261020/slices/wish.md`; `test-designer` → характеризация поведения `v0.2.6`; `migrator` → перенос; `data-keeper` — на `state` и репозитории; `reviewer`.
-  - **Зависимости** `user`, `questionnaire`, `stream` — внешние `ModuleDef` с адаптерами TR-11 (как у `wish`); событие `stream.completed` — через `inbound`. Обратных мостов нет.
-  - **Сборка:** фабрика в `U7App` (`platform/app/src/u7-app.ts`, как `wish`) через вход пакета; `@u7-scl/peer-review/**` — в группу ARC-07 блока `platform/app/src/**` корневого `biome.json` (TR-35 п. 5). Stories бота `peer-review` — на `dispatch`.
-  - **Итог:** пилот ролей по критериям [agent-roles.md](./agent-roles.md) §5, решение о волне 2.
-- **Затем `stream`** — тот же шаблон; адаптер TR-11 для `stream` у `wish` и `peer-review` снимается, DEBT-35 решается здесь.
-- Базовая линия тестов на конец `app-assembly`: `conductor/archive/app-assembly_20261029/summary.md`.
+- **Следующий — `stream`** (трек 6, порядок — §2.1). Создаётся `conductor-newtrack` (ID вида `stream-dmg_<дата>`) по шаблону трека `peer-review` (`conductor/tracks/peer-review-dmg_20261029`):
+  - **Конвейер среза:** `tech-lead` (бриф) → `test-designer` (red) → `migrator` (green) → гейт → `data-keeper` (по триггеру) → `reviewer`; Ф0 ролей не нужна — роли уже есть.
+  - **Пилот ролей — второй трек** ([agent-roles.md](./agent-roles.md) §5): раздел «Пилот ролей» в `summary.md`; в начале трека — решение по кандидату на правку промпта `data-keeper` (итог пилота `peer-review`); в конце — годность ролей и решение о волне 2.
+  - **Мосты:** адаптеры TR-11 `stream` у `wish` и `peer-review` снимаются; `student.completed`/`abandoned` — события модуля на Def вместо `inbound`. DEBT-35 решается здесь.
+  - **Сборка:** фабрика в `U7App`, `@u7-scl/stream/**` — в группу ARC-07 `biome.json`; stories `stream` — на `dispatch`.
+- Базовая линия тестов на конец `peer-review`: `conductor/tracks/peer-review-dmg_20261029/summary.md` («Гейт закрытия»).
