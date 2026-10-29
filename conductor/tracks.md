@@ -8,5 +8,5 @@
 
 ---
 
-- [?] **Track: Перевод `peer-review` на DMG + пилот ролей волны 1 (`architect`, `test-designer`, `data-keeper`)**
-*Разбор: [migration.md §2.1, §6 «Старт следующих треков»](./architecture/migration.md), роли — [agent-roles.md](./architecture/agent-roles.md)*
+- [ ] **Track: Перевод `peer-review` на DMG + пилот ролей волны 1 (`architect`, `test-designer`, `data-keeper`)**
+*Link: [./tracks/peer-review-dmg_20261029/](./tracks/peer-review-dmg_20261029/)*
