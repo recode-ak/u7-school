@@ -43,10 +43,10 @@
 ## Фаза 2: Срез `review`
 
 - [x] Task: `tech-lead`: бриф `slices/review.md` (5 UC, ER `notify-review-recipient`, `peer-review-question-pool`, `scope-reviews-ds`, валидация текста — DEBT-29) ab60e36e
-- [ ] Task: `test-designer`: характеризация `create-review`, `get-my-review`, `list-my-reviews`, `list-scope-reviews`, `list-scope-facts` и ER; red-тесты Def-контрактов
-- [ ] Task: `migrator`: домен — state, `ReviewArDef` и Ar, события, ошибки, Policy и правила (валидация текста вместо `#validateText`, DEBT-29), DQS; DEBT-25 и DEBT-28 полностью
-- [ ] Task: `migrator`: прикладной слой — Def UC и ER, реализации, репозиторий через UoW; тест на фикстурах
-- [ ] Task: Stories рецензий (`campaign`, `my-reviews`, `reviews-for-me`, `scope-reviews`, `review-render`), `school-reviews`, `view-stream` → `dispatch`; подписчик уведомления адресату; e2e бота зелёные
+- [x] Task: `test-designer`: характеризация `create-review`, `get-my-review`, `list-my-reviews`, `list-scope-reviews`, `list-scope-facts` и ER; red-тесты Def-контрактов 6a4cca7b
+- [x] Task: `migrator`: домен — state, `ReviewArDef` и Ar, события, ошибки, Policy и правила (валидация текста вместо `#validateText`, DEBT-29), DQS; DEBT-25 и DEBT-28 полностью 6a4cca7b
+- [x] Task: `migrator`: прикладной слой — Def UC и ER, реализации, репозиторий через UoW; тест на фикстурах 6a4cca7b
+- [x] Task: Stories рецензий (`campaign`, `my-reviews`, `reviews-for-me`, `scope-reviews`, `review-render`), `school-reviews`, `view-stream` → `dispatch`; подписчик уведомления адресату; e2e бота зелёные 6a4cca7b
 - [ ] Task: `data-keeper` по diff
 - [ ] Task: `reviewer`; замечания без `error` решает orchestrator (TR)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
