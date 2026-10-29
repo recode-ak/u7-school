@@ -1,0 +1,1 @@
+Фаза 1 (автономно, решения Нурболата 2026-10-29: fetch вводится, порядок load → Policy → fetch → rules → execute). check u7-school зелёный 3308/0 (test:bot входит); dmg-core check 1343/0, e2e ok. reviewer (Opus) без error; warnings исправлены, notes/questions — TR-32. Предыдущая контрольная точка 615164e3 (fetch отвергнут) заменена.
