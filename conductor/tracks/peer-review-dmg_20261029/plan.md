@@ -21,12 +21,12 @@
 
 ## Фаза 1: Срез `review-campaign`
 
-- [ ] Task: `test-designer`: характеризация `get-my-campaigns`, `get-campaign-recipients` и ER `create-student-campaign` на `v0.2.6`; red-тесты Def-контрактов среза
-- [ ] Task: `migrator`: домен — state (`F.timestamp`, DEBT-28 в части кампаний), `ReviewCampaignArDef` и Ar, события, ошибки, Policy и правила, DCS/DQS по брифу (`campaign-facts-ds`); без импортов `core`/`app-legacy` (DEBT-25 в части кампаний)
-- [ ] Task: `migrator`: контракт `stream` (по брифу) — `StudentEvents.completed`/`abandoned`, `GetStreamMembersUcDef`, адаптер TR-11, маршруты `inbound`
-- [ ] Task: `migrator`: прикладной слой — Def UC и ER, `UseCaseFromDef`/`ReactionFromDef`, репозиторий через UoW (строгий разбор, TR-37), фабрика в `U7App`, мост `create-review-uc`; тест репозитория на `DB_DIR=./data/fixtures`
-- [ ] Task: Stories кампаний (`campaign.story`, `invite.story`, `campaign-profiles`, вызовы `get-my-campaigns` в `my-reviews.story`) → `dispatch`, подписка на `peer-review.review-campaign.created`; e2e-тесты бота зелёные
-- [ ] Task: `data-keeper` по diff (state и репозиторий)
+- [x] Task: `test-designer`: характеризация `get-my-campaigns`, `get-campaign-recipients` и ER `create-student-campaign` на `v0.2.6`; red-тесты Def-контрактов среза 2d03728b
+- [x] Task: `migrator`: домен — state (`F.timestamp`, DEBT-28 в части кампаний), `ReviewCampaignArDef` и Ar, события, ошибки, Policy и правила, DCS/DQS по брифу (`campaign-facts-ds`); без импортов `core`/`app-legacy` (DEBT-25 в части кампаний) 2d03728b
+- [x] Task: `migrator`: контракт `stream` (по брифу) — `StudentEvents.completed`/`abandoned`, `GetStreamMembersUcDef`, адаптер TR-11, маршруты `inbound` 2d03728b
+- [x] Task: `migrator`: прикладной слой — Def UC и ER, `UseCaseFromDef`/`ReactionFromDef`, репозиторий через UoW (строгий разбор, TR-37), фабрика в `U7App`, мост `create-review-uc`; тест репозитория на `DB_DIR=./data/fixtures` 2d03728b
+- [x] Task: Stories кампаний (`campaign.story`, `invite.story`, `campaign-profiles`, вызовы `get-my-campaigns` в `my-reviews.story`) → `dispatch`, подписка на `peer-review.review-campaign.created`; e2e-тесты бота зелёные 2d03728b
+- [~] Task: `data-keeper` по diff (state и репозиторий)
 - [ ] Task: `reviewer`; замечания без `error` решает orchestrator (TR)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
 
