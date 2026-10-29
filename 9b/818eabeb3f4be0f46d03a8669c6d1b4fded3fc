@@ -1,0 +1,1 @@
+Задача Ф3 'rules.md — карта правил; DEBT-39': conductor/architecture/rules.md — строки ARC-06…09 и раздел «Что блокирует»; DEBT-39 — запись в debt.md и маркер в platform/app/src/u7-app.ts удалены (критерии снятия выполнены задачами Ф2–Ф3). check зелёный (3335 pass).
