@@ -12,14 +12,14 @@
 > Пересмотр (Нурболат, 2026-10-29): первое решение «`fetch` не вводим» (`dmg-core 12e2791`, `79eab714`, контрольная точка `615164e3`) отменено — для системы, выходящей за монолит, право проверяется до чужих вызовов платформой. Порядок исправлен против спеки: правила — после `fetch` (правилам нужен ответ зависимости, `assigneeActive`).
 
 - [x] Task: Решение в `decisions.md` пакета — согласовано с Нурболатом (первая редакция D-58 `dmg-core 12e2791`, отменена)
-- [ ] Task: D-58 — новая редакция: `load` (контекст Policy) → Policy → `fetch` (необязательный, чужие вызовы после права) → правила (`L & F`) → `execute`; правило API-07
-- [ ] Task: Шаг `fetch` в `UseCaseFromDef`
-    - [ ] Тесты: `fetch` не вызывается при отказе Policy; правила видят результат `fetch`; результат `fetch` доходит до `execute`; ошибка `fetch` возвращается как есть без фиксации; UC без `fetch` работает как прежде; red
-    - [ ] Реализация; green
-- [ ] Task: Учебный модуль: `assignTask` — `users.getUser` в `fetch`; тест «не-владелец получает `ACCESS_DENIED`, `users` не вызывается»
-- [ ] Task: API-07 — GritQL `this.call` в `load` (`error`, подавление `// biome-ignore lint/plugin: <зачем Policy>`); фикстуры, `LintMap`, `biome.json` пакета, `rules.md`
-- [ ] Task: Генератор UC (шаблон — при необходимости), гайд `use-case` (шаг `fetch`, ловушка снята), `llms.txt`
-- [ ] Task: u7-school: `bun install`, `dmg:sync`/`agents:sync`, API-07 в корневом `biome.json`; UC `wish` — чужие вызовы из `load` в `fetch`; TR-27 закрыт
+- [x] Task: D-58 — новая редакция: `load` (контекст Policy) → Policy → `fetch` (необязательный, чужие вызовы после права) → правила (`L & F`) → `execute`; правило API-07 `dmg-core 8b6b8e2`
+- [x] Task: Шаг `fetch` в `UseCaseFromDef` `dmg-core 65d8917`
+    - [x] Тесты: `fetch` не вызывается при отказе Policy; правила видят результат `fetch`; результат `fetch` доходит до `execute`; ошибка `fetch` возвращается как есть без фиксации; UC без `fetch` работает как прежде; red
+    - [x] Реализация; green (`F` по умолчанию `unknown`: UC без `fetch` и с `load` → `ok(undefined)` не меняются; контекст правил — по `L & F` в конструкторе, типовой тест переписан)
+- [x] Task: Учебный модуль: `assignTask` — `users.getUser` в `fetch`; тест «не-владелец получает `ACCESS_DENIED`, `users` не вызывается» `dmg-core 54a0c03`
+- [x] Task: API-07 — GritQL `this.call` в `load` (`error`, подавление `// biome-ignore lint/plugin: <зачем Policy>`); фикстуры, `LintMap`, `biome.json` пакета, `rules.md` `dmg-core 1551f28`
+- [x] Task: Генератор UC (шаблон — при необходимости), гайд `use-case` (шаг `fetch`, ловушка снята), `llms.txt` `dmg-core ae345a4` — шаблон и `llms.txt` без правок (`this.call` не генерируется, жизненного цикла в `llms.txt` нет); попутно `policy.md`, `errors-result.md`, `domain-modeling.md`
+- [~] Task: u7-school: `bun install`, `dmg:sync`/`agents:sync`, API-07 в корневом `biome.json`; UC `wish` — чужие вызовы из `load` в `fetch`; TR-27 закрыт
 - [ ] Task: Ревью reviewer; правки по ревью
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
