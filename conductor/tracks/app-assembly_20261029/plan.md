@@ -46,7 +46,7 @@
 - [x] Task: D-53 (ARC-06) — машинный запрет `@u7-scl/app` в `modules/**` (`domain-check` смотрит только `domain/src/`); фикстура; red → green `0b3133c` (`checkModuleImports` в `arch:check`; нарушений нет)
 - [x] Task: ARC-09 — на всё, кроме точек входа раннеров; поправить найденные нарушения или завести DEBT `1e5dbf6` (одно нарушение — `loadConfig` бота, исправлено; `authoring`, `scripts` вне правила — TR-36)
 - [x] Task: `rules.md` — карта правил; снять маркер и запись DEBT-39 `9b818ea`
-- [ ] Task: Ревью reviewer; правки по ревью
+- [x] Task: Ревью reviewer; правки по ревью — без `error`; `d9d2417` (TR-35 п. 6–9)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ## Фаза 4: Гигиена (TR-28, TR-29, документация)
