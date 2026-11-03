@@ -1,0 +1,1 @@
+Верификация Фазы 1 (эталон checkDebt). Авто: CI=true bun run check — зелёный, 3559 pass / 0 fail; bun test scripts/domain-check.test.ts — 59 pass, покрытие domain-check.ts 100%. Ревью reviewer — error нет, правки 2ca0583. Ручная: тесты по правилам, arch:check без нарушений (на старой сверке до Ф2). Подтверждение Нурболата: «да».
