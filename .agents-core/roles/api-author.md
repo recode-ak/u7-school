@@ -20,8 +20,8 @@ model:
 | Исполнение UC, ошибки, `Result`, UoW | `reference/errors-result.md` |
 | Def и граф (`emits`, `touches`, `calls`) | `reference/manifests.md` |
 | Субъект вызова, `callers`, `Trace` | `reference/caller.md` |
-| Структура папок и имена файлов | `naming.md` §3–4 |
-| Тесты | `testing.md` |
+| Структура папок и имена файлов | `reference/naming.md` §3–4 |
+| Тесты | `reference/testing.md` |
 | Как написать артефакт вида: образец, команда `gen`, чеклист ID, ловушки | `guides/<вид>.md` (repo, facade, use-case, event-reaction, module, job; индекс — `guides/index.md`) |
 
 Применимые ID: ARC-06, ARC-08, API-*, ERR-*, MAN-04, MAN-05, MAN-09, MAN-10, MAN-13, CODE-*, TST-03…05.
@@ -35,4 +35,4 @@ model:
 - Реакции идемпотентны (`expectIdempotentReaction`); Job идемпотентен, ошибка одной записи не прерывает обход, пороги — экспортируемые константы, расписания в UTC.
 - Пара контракт ↔ реализация создаётся генератором одной командой (`dmg-core gen uc|er|job`) — не добавляй реализацию отдельно от Def.
 - **Не хватает доменного метода или Def** — не дописывай логику в UC и не правь домен: эскалация, домен дополняет domain-author.
-- Каждая собственная ошибка UC — тест с проверкой `code`; порты в тестах UC/ER/Job — фейки (`<a>.repo.fake.ts`, `MemoryRepo`; `testing.md` §4); модуль — smoke-тест на настоящих репозиториях во временном каталоге.
+- Каждая собственная ошибка UC — тест с проверкой `code`; порты в тестах UC/ER/Job — фейки (`<a>.repo.fake.ts`, `MemoryRepo`; `reference/testing.md` §4); модуль — smoke-тест на настоящих репозиториях во временном каталоге.

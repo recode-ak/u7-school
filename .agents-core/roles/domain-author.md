@@ -20,8 +20,8 @@ model:
 | Что можно импортировать в домене, доступ к entity | `reference/layers.md` |
 | Def, обязательные описания, схемы, граф | `reference/manifests.md` |
 | Ошибки и `Result` | `reference/errors-result.md` |
-| Структура папок и имена файлов | `naming.md` |
-| Тесты | `testing.md` |
+| Структура папок и имена файлов | `reference/naming.md` |
+| Тесты | `reference/testing.md` |
 | Как написать артефакт вида: образец, команда `gen`, чеклист ID, ловушки | `guides/<вид>.md` (state, aggregate, events, errors, policy, repo, module; индекс — `guides/index.md`) |
 
 Применимые ID: ARC-02…05, ARC-09, DOM-*, MAN-*, ERR-*, CODE-*, TST-01, TST-02, TST-04, TST-05.

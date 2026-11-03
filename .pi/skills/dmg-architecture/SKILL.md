@@ -19,7 +19,7 @@ description: ЗАГРУЖАТЬ ПЕРВЫМ при создании или ре
 
 ## 2. Как назвать и где положить
 
-`naming.md`: сокращения (Ar, Uc, Er, Job, Dcs, Dqs, Def), суффиксы файлов (`.ar.ts`, `.uc.ts`, …), зеркальная пара контракт ↔ реализация. Корни каталогов задаёт `ArchApp.layout` проекта. Заготовки — генератором `dmg-core gen …` (`naming.md` §5; раскладка — секция `gen` в `dmg-core.json`), а не руками. Новый проект — каркас `dmg-core init --profile single|monorepo`; что он создаёт, как подключить модуль к приложению и кто что правит руками — `guides/project.md`.
+`reference/naming.md`: сокращения (Ar, Uc, Er, Job, Dcs, Dqs, Def), суффиксы файлов (`.ar.ts`, `.uc.ts`, …), зеркальная пара контракт ↔ реализация. Корни каталогов задаёт `ArchApp.layout` проекта. Заготовки — генератором `dmg-core gen …` (`reference/naming.md` §5; раскладка — секция `gen` в `dmg-core.json`), а не руками. Новый проект — каркас `dmg-core init --profile single|monorepo`; что он создаёт, как подключить модуль к приложению и кто что правит руками — `guides/project.md`.
 
 ## 3. Как написать артефакт вида
 
@@ -27,9 +27,9 @@ description: ЗАГРУЖАТЬ ПЕРВЫМ при создании или ре
 
 ## 4. Проверь перед завершением
 
-- Пройди применимые ID из `rules.md` (ARC, DOM, MAN, ERR, API, CODE, TST).
+- Пройди применимые ID из `reference/rules.md` (ARC, DOM, MAN, ERR, API, CODE, TST).
 - `check` проекта зелёный: lint (правила biome пакета; какие на какие каталоги — «Карта линтера» в `rules.md`), типы, тесты, `ArchChecker` (`dmg-core/arch`).
-- Тесты — `testing.md`; TDD: тест до кода.
+- Тесты — `reference/testing.md`; TDD: тест до кода.
 
 ## 5. Стоп-сигналы
 

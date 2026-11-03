@@ -53,7 +53,7 @@ model: sonnet
 ### Перед началом
 
 - Прочитай скил `dmg-architecture` и документы платформы, на которые он ведёт для твоей задачи (`node_modules/dmg-core/docs/`).
-- Прочитай бриф целиком: границы, критерии приёмки, применимые ID из `node_modules/dmg-core/docs/rules.md`.
+- Прочитай бриф целиком: границы, критерии приёмки, применимые ID из `node_modules/dmg-core/docs/reference/rules.md`.
 - Образец любого артефакта — учебный модуль `node_modules/dmg-core/src/testing/example` и гайд вида `docs/guides/<вид>.md`.
 
 ### Запрещено
