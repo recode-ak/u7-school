@@ -1,0 +1,4 @@
+Задача: transport, errors-result, caller — нормативная часть в reference, объяснение в concepts (фаза 3, dmg-docs).
+Пакет dmg-core@463fdd7: docs/reference/{transport,errors-result,caller}.md (ссылки только на D-NN и reference); concepts errors.md, caller.md, transport.md (covers:, mermaid); таблицы базовых ошибок ядра (сверены с core-errors.ts) и отсева повторов; Trace — отдельный раздел caller §3, делегирование — §4. Поток handle остался в uc-path/aggregate-lifecycle, в reference — только гарантии.
+Ссылки: docs, guides, decisions, llms.txt, README, роли, скил, комментарии src; u7-school — conductor/architecture (debt.md — история, не правлена).
+check и e2e пакета зелёные (warn docs:covers по guides/facade.md — был до задачи); check u7-school зелёный.
