@@ -15,7 +15,7 @@
 - [x] Task: Правило и критерий в промптах `domain-author`, `api-author` (пакет), `migrator`, `tech-lead` (`.agents-core/roles`), проверка в `reviewer`; строка «Документы» в формате брифа среза (`tech-lead`); `agents:sync` d99bc260 (dmg-core@c8ed69f; авторы пакета — через общий блок `common.md`)
 - [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md) d78ad64
 
-## Фаза 2: Проверки, роль и concepts
+## Фаза 2: Проверки, роль и concepts [checkpoint: 756c3d0d]
 
 - [x] Task: Тест ссылок (`docs/`, `llms.txt`, JSDoc `@see`) в `bun run check` dmg-core@685b566 (расширен `docs-check`: направление по типам, якоря, `checkSee`; `guides/facade.md` — ссылки на исходники в `covers:`)
     - [x] Тесты: битая ссылка, ссылка на несуществующий файл, ссылка против направления; red
@@ -30,7 +30,7 @@
 - [x] Task: Каталог `concepts/`, `docs/index.md`, `llms.txt` с двумя входами dmg-core@4185548 (`concepts/index.md`, `_template.md`; concepts в `llms.txt` — `Optional`)
 - [x] Task: Concepts: «Путь вызова UC», «Слои и зависимости», «Жизненный цикл агрегата и событий», «Как читать модуль» (mermaid, `covers:`) dmg-core@612cd19 (`uc-path`, `layers`, `aggregate-lifecycle`, `reading-a-module`)
 - [x] Task: Ревью reviewer; вызов `documentarian` (пилот) 7b8aab3 (dmg-core@14f0156; отчёты — `summary.md`, «Пилот ролей»)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md) 756c3d0d
 
 ## Фаза 3: Нарезка существующих docs
 
