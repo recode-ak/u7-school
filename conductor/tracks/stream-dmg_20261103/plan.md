@@ -24,7 +24,7 @@
 - TR-8 без открытого вопроса; запись в `decisions.md`; TR экспорта `Role` в `debt.md`.
 - Бриф `slices/stream.md` покрывает все пункты задачи; открытых стратегических вопросов нет.
 
-## Фаза 1: Срез `stream`
+## Фаза 1: Срез `stream` [checkpoint: 735b6ba]
 
 - [x] Task: `test-designer`: характеризация на `v0.2.6` — `create`, `activate`, `archive`, `complete`, `get`, `list`, `list-students`, `getStreamMembers`, `getStreamPresence`; ER `invite-wishers` на повторное `stream.created`; red-тесты Def-контрактов среза, тест идемпотентности DEBT-35 (ждёт успеха) `c0e2899`
 - [x] Task: `migrator`: домен — state (`F.timestamp`, DEBT-5 в части потока), `StreamArDef` и Ar, события, ошибки, Policy и правила, DCS/DQS по TR-8; без `core`/`app-legacy` и чужого `index` `c0e2899`
