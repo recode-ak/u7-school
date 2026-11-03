@@ -11,8 +11,8 @@
 
 - [x] Task: Решение `D-NN` в `decisions.md` пакета: типы документов, ответственность, направление ссылок, критерий «оправдан»; обсудить с Нурболатом dmg-core@5752f08 (D-59; reference — каталог `docs/reference/`, предел JSDoc — review + warn в `check`)
 - [x] Task: Правило о комментариях в `rules.md` пакета (новый ID) dmg-core@3a47e97 (CODE-04)
-- [ ] Task: Раздел «Как устроена документация» в `docs/index.md`: типы, ответственность, кто и когда актуализирует; таблица «что куда» (правило, способ, поток, контракт)
-- [ ] Task: Правило и критерий в промптах `domain-author`, `api-author` (пакет), `migrator`, `tech-lead` (`.agents-core/roles`), проверка в `reviewer`; строка «Документы» в формате брифа среза (`tech-lead`); `agents:sync`
+- [x] Task: Раздел «Как устроена документация» в `docs/index.md`: типы, ответственность, кто и когда актуализирует; таблица «что куда» (правило, способ, поток, контракт) dmg-core@1dd6285
+- [x] Task: Правило и критерий в промптах `domain-author`, `api-author` (пакет), `migrator`, `tech-lead` (`.agents-core/roles`), проверка в `reviewer`; строка «Документы» в формате брифа среза (`tech-lead`); `agents:sync` d99bc260 (dmg-core@c8ed69f; авторы пакета — через общий блок `common.md`)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 ## Фаза 2: Проверки, роль и concepts
