@@ -20,7 +20,7 @@ import { ExampleArch } from 'dmg-core/testing';
 import { DEBT_MD, DOMAIN_MODULES, DomainArch } from './domain-arch';
 import {
   checkContractImports,
-  checkDebt,
+  checkDebtMarkers,
   checkDomainDirs,
   checkDomainGraph,
   checkDomainImports,
@@ -108,7 +108,7 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
     ...checkDomainGraph(graph),
     ...checkDomainImports(code, graph),
     ...checkModuleImports(code, await assemblyPackages(root)),
-    ...checkDebt({ code, debtMd }),
+    ...checkDebtMarkers({ code, debtMd }),
   ];
 }
 

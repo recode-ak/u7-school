@@ -3,6 +3,7 @@ import { ModuleDef } from 'dmg-core';
 import {
   checkContractImports,
   checkDebt,
+  checkDebtMarkers,
   checkDomainDirs,
   checkDomainGraph,
   checkDomainImports,
@@ -101,24 +102,11 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
     ]);
   });
 
-  it('app-legacy/core без маркера DEBT — ARC-02', () => {
+  it('app-legacy/core без маркера DEBT — не ошибка (ARC-02 — через checkDebt)', () => {
     const files = [
       file(
         'domain/src/user/a.ts',
         "import { A } from '@u7-scl/app-legacy';\nimport { C } from '@u7-scl/core';",
-      ),
-    ];
-    expect(checkDomainImports(files, DEPENDS)).toEqual([
-      "ARC-02: domain/src/user/a.ts: импорт '@u7-scl/app-legacy' без // DEBT-<n>",
-      "ARC-02: domain/src/user/a.ts: импорт '@u7-scl/core' без // DEBT-<n>",
-    ]);
-  });
-
-  it('app-legacy/core с маркером DEBT в той же строке или строкой выше — ок', () => {
-    const files = [
-      file(
-        'domain/src/user/a.ts',
-        "import { A } from '@u7-scl/app-legacy'; // DEBT-1\n// DEBT-2\nimport { C } from '@u7-scl/core';",
       ),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([]);
@@ -327,7 +315,7 @@ describe('checkContractImports: ARC-04 (D-45)', () => {
   });
 });
 
-describe('checkDebt: сверка маркеров в коде и debt.md', () => {
+describe('checkDebtMarkers: сверка маркеров в коде и debt.md', () => {
   const md = (...ids: string[]) => ids.map((id) => `### ${id}: x\n`).join('\n');
   const at = (id: string) => [
     file('domain/src/user/a.ts', `// ${id}: причина`),
@@ -338,22 +326,229 @@ describe('checkDebt: сверка маркеров в коде и debt.md', () =
       file('domain/src/user/a.ts', '// DEBT-1'),
       file('modules/user/src/domain/index.ts', '// DEBT-2 — barrel'),
     ];
-    expect(checkDebt({ code, debtMd: md('DEBT-1', 'DEBT-2') })).toEqual([]);
+    expect(checkDebtMarkers({ code, debtMd: md('DEBT-1', 'DEBT-2') })).toEqual(
+      [],
+    );
   });
 
   it('маркер в коде без записи в debt.md', () => {
-    expect(checkDebt({ code: at('DEBT-3'), debtMd: md() })).toEqual([
+    expect(checkDebtMarkers({ code: at('DEBT-3'), debtMd: md() })).toEqual([
       'DEBT: DEBT-3 есть в коде (domain/src/user/a.ts), но нет записи в debt.md',
     ]);
   });
 
   it('запись в debt.md без маркера (долг погашен, запись осталась)', () => {
     expect(
-      checkDebt({ code: at('DEBT-1'), debtMd: md('DEBT-1', 'DEBT-2') }),
+      checkDebtMarkers({ code: at('DEBT-1'), debtMd: md('DEBT-1', 'DEBT-2') }),
     ).toEqual(['DEBT: DEBT-2 есть в debt.md, но нет маркера в коде']);
   });
 
   it('старый формат D-<n> не считается маркером', () => {
-    expect(checkDebt({ code: at('D-1'), debtMd: md() })).toEqual([]);
+    expect(checkDebtMarkers({ code: at('D-1'), debtMd: md() })).toEqual([]);
+  });
+});
+
+describe('checkDebt: allowlist долгов в debt.md', () => {
+  const CORE = "import { A } from '@u7-scl/core';";
+  const LEGACY = "import { L } from '@u7-scl/app-legacy/domain';";
+  const ISO =
+    '  // biome-ignore lint/plugin: DEBT-5 — дата\n  at: v.isoDateTime(),';
+
+  /** DEBT-1 — слитая запись: два glob со своим «Погашает», Корень — домен. */
+  const DEBT_1 = [
+    '### DEBT-1: импорты `@u7-scl/core` в домене',
+    '- **Место:**',
+    '  - `domain/src/user/**` — погашает: перевод `user` на Def',
+    '  - `domain/src/course/**` — погашает: перевод `course` на Def',
+    "- **Признак:** `from '@u7-scl/core`",
+    '- **Корень:** `domain/src/**`',
+    '- **Причина:** базовые классы в `core`.',
+  ].join('\n');
+  /** DEBT-5 — Место одной строкой (два glob и пояснение), без Корня. */
+  const DEBT_5 = [
+    '### DEBT-5: `v.isoDateTime` в схемах домена',
+    '- **Место:** `domain/src/user/entity.ts`, `domain/src/course/*/entity.ts` (`createdAt`; `biome-ignore`)',
+    '- **Признак:** `v\\.isoDateTime`',
+  ].join('\n');
+  const CLOSED = '### DEBT-6: слит в DEBT-1';
+  const md = (...entries: string[]) =>
+    ['# Реестр долга', '## 1. Группа', ...entries, '## 6. TR'].join('\n\n');
+
+  const CODE = [
+    file('domain/src/user/a.ts', CORE),
+    file('domain/src/course/a.ts', CORE),
+    file('domain/src/user/entity.ts', ISO),
+    file('domain/src/course/lesson/entity.ts', ISO),
+  ];
+  const run = (
+    code: readonly DomainFile[],
+    debtMd = md(DEBT_1, DEBT_5, CLOSED),
+    mode: 'transition' | 'strict' = 'strict',
+  ) => checkDebt({ code, debtMd, mode });
+
+  describe('разбор записи', () => {
+    it('Место списком и строкой, Признак, Корень, закрытая — без нарушений', () => {
+      expect(run(CODE)).toEqual([]);
+    });
+
+    it('открытая запись без Места — ошибка', () => {
+      const debtMd = md(DEBT_1.replace(/- \*\*Место:\*\*\n(  - .*\n)+/, ''));
+      expect(run(CODE.slice(0, 2), debtMd)).toEqual([
+        'DEBT: DEBT-1: нет поля Место',
+      ]);
+    });
+
+    it('открытая запись без Признака — ошибка', () => {
+      const debtMd = md(DEBT_1.replace(/- \*\*Признак:\*\*.*\n/, ''));
+      expect(run(CODE.slice(0, 2), debtMd)).toEqual([
+        'DEBT: DEBT-1: нет поля Признак',
+      ]);
+    });
+
+    it('Признак — неверная регулярка — ошибка', () => {
+      const debtMd = md(DEBT_5.replace('`v\\.isoDateTime`', '`v(`'));
+      expect(run(CODE.slice(2), debtMd)).toEqual([
+        'DEBT: DEBT-5: Признак `v(` — неверная регулярка',
+      ]);
+    });
+
+    it('Признак — регулярка с флагом m: ^ — начало строки', () => {
+      const debtMd = md(
+        [
+          '### DEBT-10: приватные члены Ar',
+          '- **Место:** `domain/src/course/a-root.ts`',
+          '- **Признак:** `^\\s*(static\\s+)?#\\w+`',
+        ].join('\n'),
+      );
+      const code = [
+        file('domain/src/course/a-root.ts', 'class A {\n  static #x() {}\n}'),
+      ];
+      expect(run(code, debtMd)).toEqual([]);
+    });
+
+    it('шаблон записи в «Правилах» (DEBT-<n>) не считается записью', () => {
+      const debtMd = md(
+        '```\n### DEBT-<n>: <название>\n- **Место:** <glob>\n```',
+        DEBT_5,
+      );
+      expect(run(CODE.slice(2), debtMd)).toEqual([]);
+    });
+  });
+
+  describe('Место', () => {
+    it('glob не находит ни одного файла — устаревшее место', () => {
+      expect(run(CODE.slice(1, 2), md(DEBT_1))).toEqual([
+        'DEBT: DEBT-1: Место `domain/src/user/**` не находит файлов — устаревшее место',
+      ]);
+    });
+
+    it('признак пропал в одном glob слитой записи — долг погашен (glob)', () => {
+      const code = [
+        file('domain/src/user/a.ts', 'export {};'),
+        ...CODE.slice(1),
+      ];
+      expect(run(code)).toEqual([
+        'DEBT: DEBT-1: долг погашен (`domain/src/user/**`) — сними glob или закрой запись',
+      ]);
+    });
+
+    it('признак есть хотя бы в одном файле glob — не погашен', () => {
+      const code = [...CODE, file('domain/src/user/b.ts', 'export {};')];
+      expect(run(code)).toEqual([]);
+    });
+  });
+
+  describe('Корень', () => {
+    it('признак в Корне вне Места — долг без записи (файл и строка)', () => {
+      const code = [...CODE, file('domain/src/stream/a.ts', `// x\n${CORE}`)];
+      expect(run(code)).toEqual([
+        'DEBT: DEBT-1: долг без записи — domain/src/stream/a.ts:2',
+      ]);
+    });
+
+    it('признак вне Корня — не ошибка', () => {
+      const code = [...CODE, file('modules/stream/src/a.ts', CORE)];
+      expect(run(code)).toEqual([]);
+    });
+
+    it('без Корня — ищется по всем файлам проверки', () => {
+      const code = [...CODE, file('modules/user/src/b.ts', ISO)];
+      expect(run(code)).toEqual([
+        'DEBT: DEBT-5: долг без записи — modules/user/src/b.ts:2',
+      ]);
+    });
+
+    it('ARC-02 без маркера: импорт app-legacy в домене вне Места — долг без записи', () => {
+      const debtMd = md(
+        [
+          '### DEBT-2: импорт `@u7-scl/app-legacy` в домене',
+          '- **Место:** `domain/src/user/module.ts`',
+          "- **Признак:** `from '@u7-scl/app-legacy`",
+          '- **Корень:** `domain/src/**`',
+        ].join('\n'),
+      );
+      const code = [
+        file('domain/src/user/module.ts', LEGACY),
+        file('domain/src/course/module.ts', LEGACY),
+      ];
+      expect(run(code, debtMd)).toEqual([
+        'DEBT: DEBT-2: долг без записи — domain/src/course/module.ts:1',
+      ]);
+    });
+  });
+
+  describe('DEBT-N в коде', () => {
+    const bare = (text: string) => [
+      ...CODE,
+      file('modules/user/src/c.ts', text),
+    ];
+
+    it('голый маркер — ошибка в строгом режиме', () => {
+      expect(run(bare('// DEBT-1\nexport {};'))).toEqual([
+        'DEBT: modules/user/src/c.ts:1: DEBT-1 вне biome-ignore',
+      ]);
+    });
+
+    it('упоминание в JSDoc — ошибка в строгом режиме', () => {
+      expect(run(bare('/**\n * Вход; свести — DEBT-1.\n */'))).toEqual([
+        'DEBT: modules/user/src/c.ts:2: DEBT-1 вне biome-ignore',
+      ]);
+    });
+
+    it('голый маркер открытой записи — допустим в переходном режиме', () => {
+      expect(
+        run(bare('// DEBT-1\nexport {};'), undefined, 'transition'),
+      ).toEqual([]);
+    });
+
+    it('голый маркер неизвестной записи — ошибка и в переходном режиме', () => {
+      expect(
+        run(bare('// DEBT-3\nexport {};'), undefined, 'transition'),
+      ).toEqual([
+        'DEBT: modules/user/src/c.ts:1: DEBT-3 — нет записи в debt.md',
+      ]);
+    });
+
+    it('biome-ignore с ID открытой записи — без нарушений', () => {
+      expect(run(bare('// biome-ignore lint/plugin: DEBT-5 — дата'))).toEqual(
+        [],
+      );
+    });
+
+    it('biome-ignore с неизвестным ID — ошибка', () => {
+      expect(run(bare('// biome-ignore lint/plugin: DEBT-99 — x'))).toEqual([
+        'DEBT: modules/user/src/c.ts:1: DEBT-99 — нет записи в debt.md',
+      ]);
+    });
+
+    it('biome-ignore с закрытым ID — ошибка со ссылкой на запись слияния', () => {
+      expect(run(bare('// biome-ignore lint/plugin: DEBT-6 — x'))).toEqual([
+        'DEBT: modules/user/src/c.ts:1: DEBT-6 закрыт (слит в DEBT-1)',
+      ]);
+    });
+
+    it('старый формат D-<n> не считается маркером', () => {
+      expect(run(bare('// D-1: причина'))).toEqual([]);
+    });
   });
 });

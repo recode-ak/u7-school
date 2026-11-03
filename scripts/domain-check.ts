@@ -7,6 +7,7 @@
  * Долг: маркер `// DEBT-<n>` в коде ↔ запись в `conductor/architecture/debt.md`.
  */
 import { posix } from 'node:path';
+import { Glob } from 'bun';
 import type { AnyModuleDef } from 'dmg-core';
 import { normalize } from 'dmg-core/graph';
 
@@ -23,24 +24,20 @@ const DOMAIN_SRC = 'domain/src/';
 const PLATFORM = /^@u7-scl\/(app-legacy|core)(\/|$)/;
 const DOMAIN_PKG = /^@u7-scl\/domain(?:\/([^/]+)(?:\/(.+))?)?$/;
 const PUBLIC_SUBPATHS = new Set(['contract']);
-const DEBT_RE = /\bDEBT-\d+\b/;
 const IMPORT_RE =
   /(?:\b(?:import|export)\b[^;'"]*?\bfrom\s*|\bimport\s*(?:\(\s*)?)(['"])([^'"\n]+)\1/g;
 
 interface ImportRef {
   spec: string;
   line: number;
-  marked: boolean;
 }
 
 function importsOf(text: string): ImportRef[] {
-  const lines = text.split('\n');
   const refs: ImportRef[] = [];
   for (const m of text.matchAll(IMPORT_RE)) {
     const at = (m.index ?? 0) + m[0].length;
     const line = text.slice(0, at).split('\n').length;
-    const near = `${lines[line - 2] ?? ''}\n${lines[line - 1] ?? ''}`;
-    refs.push({ spec: m[2] ?? '', line, marked: DEBT_RE.test(near) });
+    refs.push({ spec: m[2] ?? '', line });
   }
   return refs;
 }
@@ -73,7 +70,7 @@ export function checkDomainImports(
       }
     };
 
-    for (const { spec, marked } of importsOf(f.text)) {
+    for (const { spec } of importsOf(f.text)) {
       if (spec.startsWith('.')) {
         const target = posix.join(posix.dirname(f.path), spec);
         if (!target.startsWith(DOMAIN_SRC)) {
@@ -97,7 +94,8 @@ export function checkDomainImports(
             );
         } else crossModule(other, '', spec);
       } else if (PLATFORM.test(spec)) {
-        if (!marked) fail('ARC-02', `импорт '${spec}' без // DEBT-<n>`);
+        // ARC-02: допустим только как учтённый долг — проверяет `checkDebt`
+        // (записи с Корнем `domain/src/**`)
       } else if (DOMAIN_PKG.test(spec)) {
         const m = DOMAIN_PKG.exec(spec);
         if (m?.[1]) crossModule(m[1], m[2] ?? '', spec);
@@ -238,7 +236,7 @@ export function checkDomainGraph(graph: DomainGraph): string[] {
 }
 
 /** Сверка маркеров `DEBT-<n>` в коде с записями `debt.md`. */
-export function checkDebt(input: {
+export function checkDebtMarkers(input: {
   code: readonly DomainFile[];
   debtMd: string;
 }): string[] {
@@ -260,4 +258,166 @@ export function checkDebt(input: {
     if (!inCode.has(id))
       out.push(`DEBT: ${id} есть в debt.md, но нет маркера в коде`);
   return out;
+}
+
+/**
+ * Запись реестра долга. Открытая — Место (glob), Признак (регулярка), Корень
+ * (glob области поиска; нет — все файлы проверки); закрытая — `mergedInto`.
+ */
+interface DebtEntry {
+  id: string;
+  mergedInto?: string;
+  places: string[];
+  sign?: string;
+  root?: string;
+}
+
+const HEADING = /^#{1,3}\s/;
+const DEBT_HEADING = /^###\s+(DEBT-\d+)\b(.*)$/;
+const MERGED = /слит в (DEBT-\d+)/;
+const FIELD = /^- \*\*([^*]+):\*\*(.*)$/;
+const SUB_ITEM = /^\s+- (.*)$/;
+const TICK = /^`([^`]+)`\s*,?\s*/;
+const DEBT_ID = /\bDEBT-\d+\b/g;
+
+/** Реестр долга `debt.md` как allowlist: записи и их сверка с кодом. */
+class DebtRegistry {
+  constructor(readonly entries: ReadonlyMap<string, DebtEntry>) {}
+
+  /**
+   * Разбор: запись — заголовок `### DEBT-<n>` до следующего заголовка.
+   * Место — glob'ы в бэктиках в начале строки поля или пунктов под ним
+   * (после них — пояснение); Признак и Корень — первый токен в бэктиках.
+   */
+  static parse(md: string): DebtRegistry {
+    const entries = new Map<string, DebtEntry>();
+    let entry: DebtEntry | undefined;
+    let field: string | undefined;
+    for (const line of md.split('\n')) {
+      if (HEADING.test(line)) {
+        const head = DEBT_HEADING.exec(line);
+        entry = head
+          ? {
+              id: head[1] ?? '',
+              mergedInto: MERGED.exec(head[2] ?? '')?.[1],
+              places: [],
+            }
+          : undefined;
+        if (entry) entries.set(entry.id, entry);
+        continue;
+      }
+      if (!entry) continue;
+      const f = FIELD.exec(line);
+      if (f) {
+        field = f[1];
+        const ticks = DebtRegistry.leadingTicks(f[2] ?? '');
+        if (field === 'Место') entry.places.push(...ticks);
+        if (field === 'Признак') entry.sign = ticks[0];
+        if (field === 'Корень') entry.root = ticks[0];
+        continue;
+      }
+      const item = SUB_ITEM.exec(line);
+      if (item && field === 'Место')
+        entry.places.push(...DebtRegistry.leadingTicks(item[1] ?? ''));
+    }
+    return new DebtRegistry(entries);
+  }
+
+  /** Токены в бэктиках подряд в начале текста (через запятую). */
+  static leadingTicks(text: string): string[] {
+    const out: string[] = [];
+    let rest = text.trimStart();
+    for (let m = TICK.exec(rest); m; m = TICK.exec(rest)) {
+      out.push(m[1] ?? '');
+      rest = rest.slice(m[0].length);
+    }
+    return out;
+  }
+
+  check(code: readonly DomainFile[], mode: 'transition' | 'strict'): string[] {
+    const out: string[] = [];
+    for (const e of this.entries.values())
+      if (!e.mergedInto) out.push(...this.checkEntry(e, code));
+    out.push(...this.checkIds(code, mode));
+    return out;
+  }
+
+  /** Место и Признак записи: устаревший glob, погашенный glob, долг вне Места. */
+  checkEntry(e: DebtEntry, code: readonly DomainFile[]): string[] {
+    const fail = (msg: string) => `DEBT: ${e.id}: ${msg}`;
+    const missing = [
+      ...(e.places.length ? [] : [fail('нет поля Место')]),
+      ...(e.sign ? [] : [fail('нет поля Признак')]),
+    ];
+    if (missing.length || !e.sign) return missing;
+    let sign: RegExp;
+    try {
+      sign = new RegExp(e.sign, 'm');
+    } catch {
+      return [fail(`Признак \`${e.sign}\` — неверная регулярка`)];
+    }
+
+    const out: string[] = [];
+    const places = e.places.map((p) => new Glob(p));
+    e.places.forEach((place, i) => {
+      const files = code.filter((f) => places[i]?.match(f.path));
+      if (!files.length)
+        out.push(
+          fail(`Место \`${place}\` не находит файлов — устаревшее место`),
+        );
+      else if (!files.some((f) => sign.test(f.text)))
+        out.push(
+          fail(`долг погашен (\`${place}\`) — сними glob или закрой запись`),
+        );
+    });
+
+    const root = e.root ? new Glob(e.root) : undefined;
+    for (const f of code) {
+      if (root && !root.match(f.path)) continue;
+      if (places.some((g) => g.match(f.path))) continue;
+      const m = sign.exec(f.text);
+      if (m) {
+        const line = f.text.slice(0, m.index).split('\n').length;
+        out.push(fail(`долг без записи — ${f.path}:${line}`));
+      }
+    }
+    return out;
+  }
+
+  /**
+   * `DEBT-<n>` в коде: ID открытой записи и только в строке `biome-ignore`.
+   * Переходный режим допускает ID открытой записи вне `biome-ignore`.
+   */
+  checkIds(
+    code: readonly DomainFile[],
+    mode: 'transition' | 'strict',
+  ): string[] {
+    const out: string[] = [];
+    for (const f of code)
+      f.text.split('\n').forEach((line, i) => {
+        for (const [id] of line.matchAll(DEBT_ID)) {
+          const at = `DEBT: ${f.path}:${i + 1}: ${id}`;
+          const e = this.entries.get(id);
+          if (!e) out.push(`${at} — нет записи в debt.md`);
+          else if (e.mergedInto)
+            out.push(`${at} закрыт (слит в ${e.mergedInto})`);
+          else if (mode === 'strict' && !line.includes('biome-ignore'))
+            out.push(`${at} вне biome-ignore`);
+        }
+      });
+    return out;
+  }
+}
+
+/**
+ * Сверка кода с реестром долга `debt.md` (allowlist): у каждой открытой
+ * записи признак есть в каждом glob Места и нет в Корне вне Места;
+ * `DEBT-<n>` в коде — только в `biome-ignore` (`strict`).
+ */
+export function checkDebt(input: {
+  code: readonly DomainFile[];
+  debtMd: string;
+  mode: 'transition' | 'strict';
+}): string[] {
+  return DebtRegistry.parse(input.debtMd).check(input.code, input.mode);
 }
