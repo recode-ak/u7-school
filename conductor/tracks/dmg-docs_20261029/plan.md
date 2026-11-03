@@ -49,7 +49,7 @@
 - [x] Task: Ревью reviewer; вызов `documentarian` dmg-core@9ed5c07 (reviewer: 1 major, 4 minor, 1 question — потери норм при переносе возвращены в reference; documentarian: 4 расхождения, приняты все; отчёты — `summary.md`, «Пилот ролей»)
 - [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md) b3fc2239
 
-## Фаза 4: Стрижка JSDoc
+## Фаза 4: Стрижка JSDoc [checkpoint: 644a8ccd]
 
 - [x] Task: `kernel` — для каждого сценария сначала сверка с тестами, недостающие (red → green), затем сокращение комментария dmg-core@63e558a (`withEntityDefaults`, `Trace`; два теста ограничений — характеризация, red невозможен без поломки кода)
 - [x] Task: `domain` — то же dmg-core@6ea9a01 (8 блоков; сценарии уже покрыты тестами)
@@ -63,7 +63,7 @@
     - [x] Тесты: 7 строк без `@see` → warn; 7 строк со `@see` и 6 строк → нет; red
     - [x] Реализация; green
 - [x] Task: Ревью reviewer; вызов `documentarian` dmg-core@d20edbc (reviewer: 9 minor, 2 question; documentarian: 4 пункта — приняты все; отчёты — `summary.md`, «Пилот ролей»)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md) 644a8ccd
 
 ## Фаза 5: Финал
 
