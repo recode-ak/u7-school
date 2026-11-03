@@ -8,5 +8,5 @@
 
 ---
 
-- [ ] **Track: Переход модуля stream на dmg**
+- [~] **Track: Переход модуля stream на dmg**
 *Link: [./tracks/stream-dmg_20261103/](./tracks/stream-dmg_20261103/)*
