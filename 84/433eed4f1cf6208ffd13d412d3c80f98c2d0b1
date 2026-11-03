@@ -1,0 +1,1 @@
+Задача: Фаза 1 — проверка маркеров в DebtRegistry. DebtRegistry.checkTempMarkers (вызов из check), фразы «Временное решение»/«Уходит с миграцией» без регистра, «ВРЕМЕННЫЙ» заглавными; допустимы только в Месте открытой записи. Файлы: scripts/domain-check.ts, scripts/domain-check.test.ts. Базовая линия: 3558 тестов, arch:check 0; после: 3568, 0.
