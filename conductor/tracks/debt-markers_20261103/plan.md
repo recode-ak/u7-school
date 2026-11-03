@@ -63,11 +63,11 @@
 
 Критерии приёмки: `rg -n '\bDEBT-\d+' <корни> | rg -v biome-ignore` — пусто; `arch:check` строгий, 0 нарушений; число тестов ≥ базовой линии; `bun run check` зелёный.
 
-## Фаза 4: Склейка дублей (Sonnet)
+## Фаза 4: Склейка дублей (Sonnet) [checkpoint: a20406c2]
 
 - [x] Task: Слить в `debt.md`: DEBT-1 ← 6/11/16; DEBT-2 ← 7/12/17; DEBT-5 ← 9/14/19; DEBT-3 ← 4/8/13/18/23/27/30; DEBT-10 ← 15/20 — glob со своим «Погашает»; закрытые — «слит в DEBT-N» `570e8893`
 - [x] Task: Перенумеровать `biome-ignore` с закрытыми ID `570e8893`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 Критерии приёмки: `rg 'DEBT-(4|6|7|8|9|11|12|13|14|15|16|17|18|19|20|23|27|30)\b' <корни>` — пусто; закрытые ID помечены; `bun run check` зелёный.
 
