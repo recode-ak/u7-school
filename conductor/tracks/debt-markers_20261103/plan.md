@@ -40,18 +40,18 @@
     - [x] Перенести сценарии старой `checkDebt` (старая сверка — `checkDebtMarkers` со своими тестами до Ф2)
 - [x] Task: Тесты ARC-02 без маркера: импорт `@u7-scl/core`/`app-legacy` в домене без `DEBT-N` — не ошибка `checkDomainImports`; red `806f0c3`
 - [x] Task: Реализация `checkDebt({ code, debtMd, mode })` и переделка ARC-02; `arch-check.ts` пока на старой сверке; green `806f0c3`
-- [ ] Task: Ревью reviewer
+- [x] Task: Ревью reviewer — error нет; правки `2ca0583`, отложено: шапка и `rules.md` — Ф7, формат glob'ов — Ф2
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 Критерии приёмки: именованный тест на каждое правило FR2/FR3; `bun test scripts/domain-check.test.ts` зелёный; число тестов ≥ базовой линии; `bun run check` зелёный.
 
 ## Фаза 2: Разметка реестра и подключение (Opus)
 
-- [ ] Task: «Правила» `debt.md`: поля Место/Признак/Корень, «Погашает» на glob, закрытие «слит в», `DEBT-N` только в `biome-ignore`; «последний выданный — DEBT-43»
+- [ ] Task: «Правила» `debt.md`: поля Место/Признак/Корень (glob'ы — подряд в бэктиках через запятую в начале строки или пунктами первого уровня; сверить число разобранных glob по всем записям), «Погашает» на glob, закрытие «слит в», `DEBT-N` только в `biome-ignore`; «последний выданный — DEBT-43»
 - [ ] Task: Место, Признак, Корень для всех 30 записей по таблице; поправки учёта: DEBT-35 (Место, критерий), DEBT-40 (+ peer-review), DEBT-43 (узкий признак, ввод и `formatDate` — текстом)
 - [ ] Task: `arch-check.ts` — новая `checkDebt` в переходном режиме; тексты ошибок `domain-check.ts` без ID долгов
 - [ ] Task: Ручная проба: убрать признак из файла Места / добавить вне Места → нарушение есть; откатить
-- [ ] Task: Ревью reviewer
+- [x] Task: Ревью reviewer — error нет; правки `2ca0583`, отложено: шапка и `rules.md` — Ф7, формат glob'ов — Ф2
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 Критерии приёмки: `bun run arch:check` — 0 нарушений; у каждой открытой записи Место и Признак; проба ловит оба случая; `bun run check` зелёный.
