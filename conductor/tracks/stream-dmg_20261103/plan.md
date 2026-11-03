@@ -26,16 +26,16 @@
 
 ## Фаза 1: Срез `stream`
 
-- [x] Task: `test-designer`: характеризация на `v0.2.6` — `create`, `activate`, `archive`, `complete`, `get`, `list`, `list-students`, `getStreamMembers`, `getStreamPresence`; ER `invite-wishers` на повторное `stream.created`; red-тесты Def-контрактов среза, тест идемпотентности DEBT-35 (ждёт успеха)
-- [x] Task: `migrator`: домен — state (`F.timestamp`, DEBT-5 в части потока), `StreamArDef` и Ar, события, ошибки, Policy и правила, DCS/DQS по TR-8; без `core`/`app-legacy` и чужого `index`
-- [x] Task: `migrator`: внешние контракты — экспорт `Role` из контракта `user`; Def UC и адаптер `course` для снимка модуля, `ContentSnapshot` в контракте `course`
-- [x] Task: `migrator`: прикладной слой — Def UC (`UseCaseFromDef`), «состав потока», `findStreamByTelegramGroup`, репозиторий через UoW (строгий разбор) с тестом на `DB_DIR=./data/fixtures`; адаптеры TR-11 `getStreamMembers`/`getStreamPresence` у `wish` и `peer-review` заменены настоящими UC; фабрика в `U7App`
-- [x] Task: `migrator`: DEBT-35 — `invitedStreamIds` в state желания (необязательное поле), правило отсева повтора в ER `invite-wishers`; `stream.created` от агрегата на Def, не через `inbound`
-- [x] Task: Stories и клиенты потока → `dispatch`: `mentor/*` (create, activate, my-streams, submenu, view-stream-mentor — часть потока), `streams/*` (catalog, view-stream — часть потока, `controller` через `findStreamByTelegramGroup`), `courses/wish-*`, `peer-review/*` (`get-stream`), `school-reviews`; e2e потока зелёные
-- [x] Task: Запись красной зоны в `debt.md`: поимённый список падающих тестов студента, критерий снятия — конец Ф2
-- [x] Task: `data-keeper`: state и репозиторий `stream`, `update-stream-snapshot`, state `wish` — чтение `streams.json` и `wishes.json`, смешанные ISO/число, ленивая конвертация, откат
-- [~] Task: `reviewer`; замечания без `error` решает orchestrator (TR), предложения перепроектирования — Нурболату
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
+- [x] Task: `test-designer`: характеризация на `v0.2.6` — `create`, `activate`, `archive`, `complete`, `get`, `list`, `list-students`, `getStreamMembers`, `getStreamPresence`; ER `invite-wishers` на повторное `stream.created`; red-тесты Def-контрактов среза, тест идемпотентности DEBT-35 (ждёт успеха) `c0e2899`
+- [x] Task: `migrator`: домен — state (`F.timestamp`, DEBT-5 в части потока), `StreamArDef` и Ar, события, ошибки, Policy и правила, DCS/DQS по TR-8; без `core`/`app-legacy` и чужого `index` `c0e2899`
+- [x] Task: `migrator`: внешние контракты — экспорт `Role` из контракта `user`; Def UC и адаптер `course` для снимка модуля, `ContentSnapshot` в контракте `course` `c0e2899`
+- [x] Task: `migrator`: прикладной слой — Def UC (`UseCaseFromDef`), «состав потока», `findStreamByTelegramGroup`, репозиторий через UoW (строгий разбор) с тестом на `DB_DIR=./data/fixtures`; адаптеры TR-11 `getStreamMembers`/`getStreamPresence` у `wish` и `peer-review` заменены настоящими UC; фабрика в `U7App` `c0e2899`
+- [x] Task: `migrator`: DEBT-35 — `invitedStreamIds` в state желания (необязательное поле), правило отсева повтора в ER `invite-wishers`; `stream.created` от агрегата на Def, не через `inbound` `c0e2899`
+- [x] Task: Stories и клиенты потока → `dispatch`: `mentor/*` (create, activate, my-streams, submenu, view-stream-mentor — часть потока), `streams/*` (catalog, view-stream — часть потока, `controller` через `findStreamByTelegramGroup`), `courses/wish-*`, `peer-review/*` (`get-stream`), `school-reviews`; e2e потока зелёные `c0e2899`
+- [x] Task: Запись красной зоны в `debt.md`: поимённый список падающих тестов студента, критерий снятия — конец Ф2 `c0e2899`
+- [x] Task: `data-keeper`: state и репозиторий `stream`, `update-stream-snapshot`, state `wish` — чтение `streams.json` и `wishes.json`, смешанные ISO/число, ленивая конвертация, откат `c0e2899`
+- [x] Task: `reviewer`; замечания без `error` решает orchestrator (TR), предложения перепроектирования — Нурболату `c0e2899`
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 1** (уточняет бриф `slices/stream.md`):
 - `domain/src/stream/stream/**` и `modules/stream/src/stream/**`: нет `throw*` для штатных отказов, `new StreamAr`, импортов `@u7-scl/core` и `@u7-scl/app-legacy`.
