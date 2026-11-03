@@ -4,9 +4,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   changedPaths,
+  docsWarning,
   exec,
   type GatePlan,
   loadWorkspaces,
+  packageRepo,
   parseStatus,
   planGate,
   type Runner,
@@ -231,6 +233,73 @@ describe('changedPaths', () => {
       await mkdir(join(root, 'modules/a'), { recursive: true });
       await writeFile(join(root, 'modules/a/x.ts'), '');
       expect(changedPaths(root)).toEqual(['modules/a/x.ts']);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('docsWarning: правка платформы без документов', () => {
+  const impact = (paths: string[]) =>
+    paths.some((p) => p.startsWith('src/app/'))
+      ? ['docs/guides/use-case.md']
+      : [];
+
+  test('src/app без docs/ — предупреждение с документами из docs:impact', () => {
+    const warning = docsWarning(
+      ['src/app/use-case/use-case-from-def.ts', 'scripts/x.ts'],
+      impact,
+    );
+    expect(warning).toContain('без правки docs/');
+    expect(warning).toContain('docs/guides/use-case.md');
+  });
+
+  test('covers не совпали — предупреждение без списка', () => {
+    const warning = docsWarning(['src/kernel/result/result.ts'], impact);
+    expect(warning).toContain('без правки docs/');
+    expect(warning).toContain('covers не совпали');
+  });
+
+  test('правка docs/ в том же diff — тихо', () => {
+    expect(
+      docsWarning(
+        ['src/domain/aggregate/aggregate.ts', 'docs/decisions.md'],
+        impact,
+      ),
+    ).toBeUndefined();
+  });
+
+  test('вне src/{app,kernel,domain} и только тесты — тихо', () => {
+    expect(
+      docsWarning(
+        ['src/gen/kinds/module.ts', 'src/app/uow/lock.test.ts'],
+        impact,
+      ),
+    ).toBeUndefined();
+  });
+});
+
+describe('packageRepo', () => {
+  test('file: в dependencies или devDependencies корня — абсолютный путь репо dmg-core', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'agent-gate-pkg-'));
+    try {
+      await writeFile(
+        join(root, 'package.json'),
+        JSON.stringify({
+          dependencies: { 'dmg-core': 'file:../tools/dmg-core' },
+        }),
+      );
+      expect(await packageRepo(root)).toBe(join(root, '../tools/dmg-core'));
+      await writeFile(
+        join(root, 'package.json'),
+        JSON.stringify({ devDependencies: { 'dmg-core': 'file:../dmg' } }),
+      );
+      expect(await packageRepo(root)).toBe(join(root, '../dmg'));
+      await writeFile(
+        join(root, 'package.json'),
+        JSON.stringify({ dependencies: { 'dmg-core': '^0.1.0' } }),
+      );
+      expect(await packageRepo(root)).toBeUndefined();
     } finally {
       await rm(root, { recursive: true, force: true });
     }

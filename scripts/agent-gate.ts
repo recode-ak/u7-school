@@ -4,7 +4,8 @@
  * Изменённые пути (`git status`) → пакеты workspace + транзитивно зависимые →
  * `bun run check` в каждом. Корневые конфиги и файлы вне пакетов → полный
  * `bun run check`. Только `.md` → пропуск. Красный гейт — exit 2 и хвост
- * вывода в stderr (так Claude Code возвращает ошибку субагенту).
+ * вывода в stderr (так Claude Code возвращает ошибку субагенту). Правка
+ * исходников платформы в репо `dmg-core` без `docs/` — предупреждение в stdout.
  *
  * Запуск: `bun run scripts/agent-gate.ts`.
  */
@@ -205,6 +206,40 @@ export async function exec(cmd: string[], cwd: string): Promise<RunOutput> {
   return { ok: code === 0, output: `${stdout}\n${stderr}` };
 }
 
+/** Исходники платформы, правка которых обычно меняет поток или контракт (D-59 пакета) */
+const PLATFORM_SRC_RE = /^src\/(?:app|kernel|domain)\/.+(?<!\.test)\.ts$/;
+
+/**
+ * Предупреждение: в репо `dmg-core` правка `src/{app,kernel,domain}` без
+ * правки `docs/`. `impact` — документы по `docs:impact` пакета.
+ */
+export function docsWarning(
+  paths: string[],
+  impact: (paths: string[]) => string[],
+): string | undefined {
+  const sources = paths.filter((p) => PLATFORM_SRC_RE.test(p));
+  if (sources.length === 0 || paths.some((p) => p.startsWith('docs/'))) {
+    return undefined;
+  }
+  const docs = impact(sources);
+  const hint =
+    docs.length > 0
+      ? `проверь документы: ${docs.join(', ')}`
+      : 'covers не совпали — проверь concepts и decisions.md';
+  return `agent-gate: предупреждение — dmg-core: правка src/{app,kernel,domain} без правки docs/; ${hint} (D-59)`;
+}
+
+/** Репо `dmg-core`, если корневой package.json подключает его как `file:` */
+export async function packageRepo(root: string): Promise<string | undefined> {
+  const pkg = await readJson(join(root, 'package.json'));
+  const deps = {
+    ...(pkg.dependencies as Record<string, string> | undefined),
+    ...(pkg.devDependencies as Record<string, string> | undefined),
+  };
+  const spec = deps['dmg-core'];
+  return spec?.startsWith('file:') ? join(root, spec.slice(5)) : undefined;
+}
+
 /** Изменённые пути рабочего дерева; разбирается только stdout git */
 export function changedPaths(root: string): string[] {
   const proc = Bun.spawnSync(
@@ -225,5 +260,17 @@ if (import.meta.main) {
   );
   if (result.stdout) console.log(result.stdout);
   if (result.stderr) console.error(result.stderr);
+  const repo = await packageRepo(root);
+  const warning =
+    repo &&
+    docsWarning(changedPaths(repo), (paths) =>
+      Bun.spawnSync(['bun', 'run', 'scripts/docs-impact.ts', ...paths], {
+        cwd: repo,
+      })
+        .stdout.toString()
+        .split('\n')
+        .filter((line) => line !== ''),
+    );
+  if (warning) console.log(warning);
   process.exit(result.code);
 }
