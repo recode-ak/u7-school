@@ -27,7 +27,7 @@
 
 ## Фаза 0: Базовая линия (Opus, сессия Ф1)
 
-- [ ] Task: Зафиксировать базовую линию: `bun run check`, число тестов `bun test`; замер по корням `arch:check` (`DEBT-N` всего / в `biome-ignore` / голые, `TR-NN`, строки «временн…») — в черновик `summary.md`
+- [x] Task: Зафиксировать базовую линию: `bun run check`, число тестов `bun test`; замер по корням `arch:check` (`DEBT-N` всего / в `biome-ignore` / голые, `TR-NN`, строки «временн…») — в черновик `summary.md` `1ebf7fb`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 ## Фаза 1: Эталон `checkDebt` (Opus)
