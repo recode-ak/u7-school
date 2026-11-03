@@ -92,7 +92,7 @@
 ## Фаза 7: Финал (Sonnet)
 
 - [ ] Task: Документы о маркерах: `debt.md` (Правила), шапка `domain-check.ts`, `rules.md` (ARC-02), `.agents-core/roles/tech-lead.md` → `bun run agents:sync`
-- [ ] Task: Заготовка `roadmap/u7-comments-docs.md`: часть про долги и `TR` закрыта, часть про Def и генерируемую документацию остаётся кандидатом
+- [x] Task: Заготовка `roadmap/u7-comments-docs.md`: удалена вместе с кандидатом `[?]` (решение Нурболата, 2026-11-03); часть про Def и генерируемую документацию — в `migration.md` §2, строка 10+
 - [ ] Task: Сравнение с базовой линией в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
 
