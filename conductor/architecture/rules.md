@@ -1,6 +1,6 @@
 # Правила в проекте
 
-**Назначение:** как каталог правил платформы применяется в u7-school. Сам каталог с ID (ARC, DOM, MAN, ERR, API, CODE, TST) — в пакете: [rules.md](../../node_modules/dmg-core/docs/rules.md). Своих ID у проекта нет; правило меняется через решение D-NN ([decisions.md](./decisions.md) проекта или пакета).
+**Назначение:** как каталог правил платформы применяется в u7-school. Сам каталог с ID (ARC, DOM, MAN, ERR, API, CODE, TST) — в пакете: [rules.md](../../node_modules/dmg-core/docs/reference/rules.md). Своих ID у проекта нет; правило меняется через решение D-NN ([decisions.md](./decisions.md) проекта или пакета).
 
 ---
 

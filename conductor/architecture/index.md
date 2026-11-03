@@ -22,7 +22,7 @@
 | Задача | Читай |
 |---|---|
 | Понять устройство DMG | [layers.md](../../node_modules/dmg-core/docs/reference/layers.md) → [domain-modeling.md](../../node_modules/dmg-core/docs/reference/domain-modeling.md) |
-| Создать файл / объект | [naming.md пакета](../../node_modules/dmg-core/docs/naming.md), генератор в проекте — [naming.md](./naming.md) → [rules.md](./rules.md) |
+| Создать файл / объект | [naming.md пакета](../../node_modules/dmg-core/docs/reference/naming.md), генератор в проекте — [naming.md](./naming.md) → [rules.md](./rules.md) |
 | Написать артефакт по образцу | [guides/](../../node_modules/dmg-core/docs/guides/index.md) + эталон `wish` |
 | Править немигрированный модуль | [legacy.md](./legacy.md) |
 | Работать с ботом | [ui/](./ui/bot-architecture.md) |

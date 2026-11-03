@@ -13,7 +13,7 @@ tools: read, edit, write, bash, grep, find
 ## Что читать
 
 - Бриф среза (`conductor/tracks/<track>/slices/<slice>.md`): Def, сохраняемое поведение, границы.
-- `node_modules/dmg-core/docs/testing.md` и раздел «как тестировать» гайда вида (`docs/guides/<вид>.md`); образец тестов — учебный модуль `node_modules/dmg-core/src/testing/example` и эталон `wish`.
+- `node_modules/dmg-core/docs/reference/testing.md` и раздел «как тестировать» гайда вида (`docs/guides/<вид>.md`); образец тестов — учебный модуль `node_modules/dmg-core/src/testing/example` и эталон `wish`.
 - Существующие тесты среза — источник сценариев; поведение релиза — worktree `../u7-school-v0.2.6` (только чтение).
 
 ## Два вида тестов

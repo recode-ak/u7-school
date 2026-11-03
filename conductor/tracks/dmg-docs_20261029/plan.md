@@ -45,7 +45,7 @@
     - Критерий приёмки: Нурболат читает и подтверждает, что главная мысль понятна без других документов; `documentarian` — без расхождений с кодом
 - [x] Task: `layers`, `domain-modeling`, `manifests` — нормативная часть в reference, объяснение — в concepts (`domain.md` из задачи выше, `layers.md`); каждый факт — одно место dmg-core@a6392b0 (concepts `rule-placement`, `manifests`; кейс назначения — в `rule-placement`)
 - [x] Task: `testing`, `rules`, `naming`, `typescript` — в reference; `guides/` — обновить ссылки dmg-core@b6932a7 (`RULES_DOC`, `docs-check`, `consumer-check` — путь `docs/reference/rules.md`; корень `docs/` — `index.md` и `decisions.md`)
-- [ ] Task: Ссылки в `llms.txt`, скилах, `AGENTS.md` u7-school; `dmg:sync`; тест ссылок зелёный
+- [x] Task: Ссылки в `llms.txt`, скилах, `AGENTS.md` u7-school; `dmg:sync`; тест ссылок зелёный (`llms.txt` и скил пакета — в коммитах задач выше; u7-school: роли, скилы `architecture` и `conductor-review`, `conductor/architecture`, `conductor/roadmap`; `AGENTS.md` ведёт на `docs/index.md` — без правки)
 - [ ] Task: Ревью reviewer; вызов `documentarian`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
