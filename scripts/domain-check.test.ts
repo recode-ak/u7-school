@@ -3,7 +3,6 @@ import { ModuleDef } from 'dmg-core';
 import {
   checkContractImports,
   checkDebt,
-  checkDebtMarkers,
   checkDomainDirs,
   checkDomainGraph,
   checkDomainImports,
@@ -41,7 +40,7 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
       file('domain/src/course/a.ts', "import { U } from '../user/state';"),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([
-      "ARC-04: domain/src/course/a.ts: чужой модуль user — только через contract, index — по DEBT-34 (import '../user/state')",
+      "ARC-04: domain/src/course/a.ts: чужой модуль user — только через contract или index (import '../user/state')",
     ]);
   });
 
@@ -63,7 +62,7 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
       ),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([
-      "ARC-04: domain/src/course/a.ts: чужой модуль user — только через contract, index — по DEBT-34 (import '@u7-scl/domain/user/state')",
+      "ARC-04: domain/src/course/a.ts: чужой модуль user — только через contract или index (import '@u7-scl/domain/user/state')",
     ]);
   });
 
@@ -312,39 +311,6 @@ describe('checkContractImports: ARC-04 (D-45)', () => {
     expect(
       run('runners/bot/src/a.ts', "import { U } from '@u7-scl/domain/user';"),
     ).toEqual([]);
-  });
-});
-
-describe('checkDebtMarkers: сверка маркеров в коде и debt.md', () => {
-  const md = (...ids: string[]) => ids.map((id) => `### ${id}: x\n`).join('\n');
-  const at = (id: string) => [
-    file('domain/src/user/a.ts', `// ${id}: причина`),
-  ];
-
-  it('всё согласовано — без нарушений', () => {
-    const code = [
-      file('domain/src/user/a.ts', '// DEBT-1'),
-      file('modules/user/src/domain/index.ts', '// DEBT-2 — barrel'),
-    ];
-    expect(checkDebtMarkers({ code, debtMd: md('DEBT-1', 'DEBT-2') })).toEqual(
-      [],
-    );
-  });
-
-  it('маркер в коде без записи в debt.md', () => {
-    expect(checkDebtMarkers({ code: at('DEBT-3'), debtMd: md() })).toEqual([
-      'DEBT: DEBT-3 есть в коде (domain/src/user/a.ts), но нет записи в debt.md',
-    ]);
-  });
-
-  it('запись в debt.md без маркера (долг погашен, запись осталась)', () => {
-    expect(
-      checkDebtMarkers({ code: at('DEBT-1'), debtMd: md('DEBT-1', 'DEBT-2') }),
-    ).toEqual(['DEBT: DEBT-2 есть в debt.md, но нет маркера в коде']);
-  });
-
-  it('старый формат D-<n> не считается маркером', () => {
-    expect(checkDebtMarkers({ code: at('D-1'), debtMd: md() })).toEqual([]);
   });
 });
 

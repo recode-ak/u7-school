@@ -20,7 +20,7 @@ import { ExampleArch } from 'dmg-core/testing';
 import { DEBT_MD, DOMAIN_MODULES, DomainArch } from './domain-arch';
 import {
   checkContractImports,
-  checkDebtMarkers,
+  checkDebt,
   checkDomainDirs,
   checkDomainGraph,
   checkDomainImports,
@@ -82,12 +82,23 @@ async function readAppSources(root: string): Promise<DomainFile[]> {
 }
 
 /**
+ * Сверка кода с реестром долга `debt.md` (allowlist, `checkDebt`). Режим
+ * переходный: голые маркеры `DEBT-<n>` допустимы до Ф3 трека debt-markers.
+ */
+export async function runDebtCheck(root = '.'): Promise<string[]> {
+  return checkDebt({
+    code: await readPackageSources(root),
+    debtMd: await Bun.file(`${root}/${DEBT_MD}`).text(),
+    mode: 'transition',
+  });
+}
+
+/**
  * Проверки домена: Def, импорты домена и прикладных пакетов, граф, долг.
  * Возвращает строки нарушений.
  */
 export async function runDomainCheck(root = '.'): Promise<string[]> {
   const code = await readPackageSources(root);
-  const debtMd = await Bun.file(`${root}/${DEBT_MD}`).text();
   const graph = domainGraphOf(DOMAIN_MODULES);
   const dirs = readdirSync(`${root}/domain/src`, {
     withFileTypes: true,
@@ -108,7 +119,7 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
     ...checkDomainGraph(graph),
     ...checkDomainImports(code, graph),
     ...checkModuleImports(code, await assemblyPackages(root)),
-    ...checkDebtMarkers({ code, debtMd }),
+    ...(await runDebtCheck(root)),
   ];
 }
 

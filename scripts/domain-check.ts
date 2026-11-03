@@ -65,7 +65,7 @@ export function checkDomainImports(
       } else if (sub && sub !== 'index' && !PUBLIC_SUBPATHS.has(sub)) {
         fail(
           'ARC-04',
-          `чужой модуль ${other} — только через contract, index — по DEBT-34 (import '${spec}')`,
+          `чужой модуль ${other} — только через contract или index (import '${spec}')`,
         );
       }
     };
@@ -90,7 +90,7 @@ export function checkDomainImports(
           else
             fail(
               'ARC-04',
-              `чужой модуль ${other} — только через contract, index — по DEBT-34 (import '${spec}')`,
+              `чужой модуль ${other} — только через contract или index (import '${spec}')`,
             );
         } else crossModule(other, '', spec);
       } else if (PLATFORM.test(spec)) {
@@ -232,34 +232,6 @@ export function checkDomainGraph(graph: DomainGraph): string[] {
     return false;
   };
   for (const m of Object.keys(graph)) if (visit(m)) break;
-  return out;
-}
-
-/**
- * Прежняя сверка маркеров `DEBT-<n>` в коде с записями `debt.md` в обе
- * стороны; уходит, когда `arch:check` переходит на `checkDebt`.
- */
-export function checkDebtMarkers(input: {
-  code: readonly DomainFile[];
-  debtMd: string;
-}): string[] {
-  const inCode = new Map<string, string>();
-  for (const f of input.code)
-    for (const m of f.text.matchAll(/\b(DEBT-\d+)\b/g)) {
-      const id = m[1] ?? '';
-      if (!inCode.has(id)) inCode.set(id, f.path);
-    }
-  const inMd = new Set(
-    [...input.debtMd.matchAll(/^###\s+(DEBT-\d+)\b/gm)].map((m) => m[1] ?? ''),
-  );
-
-  const out: string[] = [];
-  for (const [id, path] of inCode)
-    if (!inMd.has(id))
-      out.push(`DEBT: ${id} есть в коде (${path}), но нет записи в debt.md`);
-  for (const id of inMd)
-    if (!inCode.has(id))
-      out.push(`DEBT: ${id} есть в debt.md, но нет маркера в коде`);
   return out;
 }
 
