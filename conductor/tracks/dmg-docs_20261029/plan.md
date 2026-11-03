@@ -43,7 +43,7 @@
     - «Почему так» — D-05, D-28, D-34, D-39, D-45 и др. по месту; образцы — учебный модуль `todo` (`src/testing/example/todo`), доказательство «без инфраструктуры» — его доменные тесты
     - Front-matter `covers:` (`src/domain/**`, `src/kernel/**`, образец `todo`); 30–100 строк; строка в `concepts/index.md`; связь с `concepts/layers.md` и `reading-a-module.md` — ссылками, без повтора
     - Критерий приёмки: Нурболат читает и подтверждает, что главная мысль понятна без других документов; `documentarian` — без расхождений с кодом
-- [ ] Task: `layers`, `domain-modeling`, `manifests` — нормативная часть в reference, объяснение — в concepts (`domain.md` из задачи выше, `layers.md`); каждый факт — одно место
+- [x] Task: `layers`, `domain-modeling`, `manifests` — нормативная часть в reference, объяснение — в concepts (`domain.md` из задачи выше, `layers.md`); каждый факт — одно место dmg-core@a6392b0 (concepts `rule-placement`, `manifests`; кейс назначения — в `rule-placement`)
 - [ ] Task: `testing`, `rules`, `naming`, `typescript` — в reference; `guides/` — обновить ссылки
 - [ ] Task: Ссылки в `llms.txt`, скилах, `AGENTS.md` u7-school; `dmg:sync`; тест ссылок зелёный
 - [ ] Task: Ревью reviewer; вызов `documentarian`

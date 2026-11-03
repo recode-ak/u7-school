@@ -18,7 +18,7 @@ tools: read, grep, find, bash
 ## Что читать
 
 - Задача среза — текст вызова (трек, срез, что переносится или создаётся), `spec.md` и `plan.md` трека.
-- Платформа: скил `dmg-architecture`, `node_modules/dmg-core/docs/` — `manifests.md`, `domain-modeling.md`, `naming.md`, `rules.md`, гайды `docs/guides/<вид>.md`.
+- Платформа: скил `dmg-architecture`, `node_modules/dmg-core/docs/` — `reference/manifests.md`, `reference/domain-modeling.md`, `naming.md`, `rules.md`, гайды `docs/guides/<вид>.md`.
 - Проект: `conductor/architecture/` — `naming.md` (раскладка), `migration.md` (порядок, сосуществование), `legacy.md` (как устроен старый код), `debt.md` (долг модуля, TR).
 - Образцы: эталон проекта `wish` (`domain/src/wish`, `modules/wish/src`) и его бриф `conductor/archive/golden-wish_20261020/slices/wish.md` — **образец формы брифа**.
 - Исходный код среза и его тесты. Поведение релиза — worktree `../u7-school-v0.2.6` (только чтение).

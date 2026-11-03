@@ -49,6 +49,6 @@
 
 ## 5. Связанные файлы
 
-- [manifests.md](../../node_modules/dmg-core/docs/manifests.md) — доменные манифесты и граф L0–L2
+- [manifests.md](../../node_modules/dmg-core/docs/reference/manifests.md) — доменные манифесты и граф L0–L2
 - [docs-strategy.md](./docs-strategy.md) — куда попадает генерируемая документация
 - [ui/bot-architecture.md](./ui/bot-architecture.md) — текущая архитектура бота

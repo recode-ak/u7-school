@@ -166,4 +166,4 @@ runners/u7-bot/tests/e2e/
 - [Ошибки](../../../node_modules/dmg-core/docs/reference/errors-result.md) — AppError, хелперы
 - [Тестирование бота](./bot-test.md)
 - [Архитектура bot-level](./bot-architecture.md)
-- [DDD API](../../../node_modules/dmg-core/docs/layers.md) — UseCase, Module
+- [DDD API](../../../node_modules/dmg-core/docs/reference/layers.md) — UseCase, Module

@@ -8,7 +8,7 @@
 
 ## Раскладка монорепо
 
-| Ось ([layers.md](../../node_modules/dmg-core/docs/layers.md)) | Пакеты u7-school |
+| Ось ([layers.md](../../node_modules/dmg-core/docs/reference/layers.md)) | Пакеты u7-school |
 |---|---|
 | Платформа | `dmg-core` (репо `~/dev/tools/dmg/dmg-core`, в проекте — `node_modules/dmg-core`, D-55), приложение `@u7-scl/app`; legacy `@u7-scl/core`, legacy-ядро приложения `@u7-scl/app-legacy` (TR-33) и мосты `platform/core/src/legacy-bridge` |
 | Домен | `@u7-scl/domain` (`domain/src/<m>`; вход модуля — `@u7-scl/domain/<m>/contract`) |
@@ -21,7 +21,7 @@
 
 | Задача | Читай |
 |---|---|
-| Понять устройство DMG | [layers.md](../../node_modules/dmg-core/docs/layers.md) → [domain-modeling.md](../../node_modules/dmg-core/docs/domain-modeling.md) |
+| Понять устройство DMG | [layers.md](../../node_modules/dmg-core/docs/reference/layers.md) → [domain-modeling.md](../../node_modules/dmg-core/docs/reference/domain-modeling.md) |
 | Создать файл / объект | [naming.md пакета](../../node_modules/dmg-core/docs/naming.md), генератор в проекте — [naming.md](./naming.md) → [rules.md](./rules.md) |
 | Написать артефакт по образцу | [guides/](../../node_modules/dmg-core/docs/guides/index.md) + эталон `wish` |
 | Править немигрированный модуль | [legacy.md](./legacy.md) |

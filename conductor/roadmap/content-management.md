@@ -12,7 +12,7 @@
 > - [`conductor/development-roadmap.md`](./development-roadmap.md) — **дорожная карта:** порядок релизов, миграции, зависимости между инициативами
 > - `conductor/workflow.md` — процесс работы conductor (создание треков, генерация планов)
 > - `conductor/architecture-evolution.md` — архитектурные правила (domain boundaries, зависимости пакетов)
-> - `node_modules/dmg-core/docs/domain-modeling.md` — где размещать логику
+> - `node_modules/dmg-core/docs/reference/domain-modeling.md` — где размещать логику
 > - `conductor/index.md` — индекс всех документов
 >
 > **Главные изменения от v6:** добавлены мета-поля (`planMd`, `lessonMd`, `summaryMd`) в entity; добавлен файловый Import/Export (папка ↔ JSON) с dry-run; `steps.md` генерируется из Step[] (не хранится); `.content-meta.json` для точного сопоставления при импорте; `AUTHOR_GUIDE.md` — единый промпт для ИИ-агентов; порядок треков перестроен: Import/Export до форка.

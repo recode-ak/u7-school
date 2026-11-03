@@ -359,5 +359,5 @@ async execute(event: QuestionnaireCompleteEvent): Promise<void> {
 - [2. Questionnaire + EventBus](./metrics-questionnaire-and-events.md) — движок анкет, EventBus, запуск анкет
 - [Архитектура](../../architecture/index.md) — слои, доменный API, правила
 - [Именование](../../architecture/naming.md) — структура и имена
-- [Границы доменной логики](../../../node_modules/dmg-core/docs/domain-modeling.md) — межмодульные взаимодействия
+- [Границы доменной логики](../../../node_modules/dmg-core/docs/reference/domain-modeling.md) — межмодульные взаимодействия
 - [Архитектурная эволюция](../../archive/mentor_tools_20260713/architecture-evolution.md) — контекст Релизов 1–3 (в архиве)

@@ -14,9 +14,9 @@ tools: read, edit, write, bash, grep, find
 
 | Вопрос | Документ (`node_modules/dmg-core/docs/`) |
 |---|---|
-| Какому модулю и объекту принадлежит логика | `domain-modeling.md` |
-| Что можно импортировать в домене, доступ к entity | `layers.md` |
-| Def, обязательные описания, схемы, граф | `manifests.md` |
+| Какому модулю и объекту принадлежит логика | `reference/domain-modeling.md` |
+| Что можно импортировать в домене, доступ к entity | `reference/layers.md` |
+| Def, обязательные описания, схемы, граф | `reference/manifests.md` |
 | Ошибки и `Result` | `reference/errors-result.md` |
 | Структура папок и имена файлов | `naming.md` |
 | Тесты | `testing.md` |

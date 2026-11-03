@@ -206,5 +206,5 @@ Grammy callback_query.data
 - [BotController Styleguide](./bot-controller.md)
 - [BotUiStory Styleguide](./bot-ui-story.md)
 - [Тестирование бота](./bot-test.md)
-- [Границы архитектуры](../../../node_modules/dmg-core/docs/layers.md), [Domain boundaries](../../../node_modules/dmg-core/docs/domain-modeling.md)
+- [Границы архитектуры](../../../node_modules/dmg-core/docs/reference/layers.md), [Domain boundaries](../../../node_modules/dmg-core/docs/reference/domain-modeling.md)
 - Материнский документ контракта: `conductor/roadmap/bot-ui-session-architecture.md`

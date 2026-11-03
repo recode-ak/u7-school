@@ -14,9 +14,9 @@ tools: read, edit, write, bash, grep, find
 
 | Вопрос | Документ (`node_modules/dmg-core/docs/`) |
 |---|---|
-| Прикладной слой и входные адаптеры | `layers.md` §5–6 |
+| Прикладной слой и входные адаптеры | `reference/layers.md` §5–6 |
 | Исполнение UC, ошибки, `Result`, UoW | `reference/errors-result.md` |
-| Def и граф (`emits`, `touches`, `calls`) | `manifests.md` |
+| Def и граф (`emits`, `touches`, `calls`) | `reference/manifests.md` |
 | Субъект вызова, `callers`, `Trace` | `reference/caller.md` |
 | Структура папок и имена файлов | `naming.md` §3–4 |
 | Тесты | `testing.md` |
