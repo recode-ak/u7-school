@@ -8,6 +8,7 @@ import {
   exec,
   type GatePlan,
   loadWorkspaces,
+  packageDocsWarning,
   packageRepo,
   parseStatus,
   planGate,
@@ -300,6 +301,34 @@ describe('packageRepo', () => {
         JSON.stringify({ dependencies: { 'dmg-core': '^0.1.0' } }),
       );
       expect(await packageRepo(root)).toBeUndefined();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test('абсолютный file: — как есть', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'agent-gate-pkg-'));
+    try {
+      await writeFile(
+        join(root, 'package.json'),
+        JSON.stringify({ dependencies: { 'dmg-core': 'file:/opt/dmg-core' } }),
+      );
+      expect(await packageRepo(root)).toBe('/opt/dmg-core');
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('packageDocsWarning', () => {
+  test('репо пакета нет или это не git — без предупреждения и без исключения', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'agent-gate-pkg-'));
+    try {
+      await writeFile(
+        join(root, 'package.json'),
+        JSON.stringify({ dependencies: { 'dmg-core': 'file:./missing' } }),
+      );
+      expect(await packageDocsWarning(root)).toBeUndefined();
     } finally {
       await rm(root, { recursive: true, force: true });
     }

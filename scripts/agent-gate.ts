@@ -5,13 +5,14 @@
  * `bun run check` в каждом. Корневые конфиги и файлы вне пакетов → полный
  * `bun run check`. Только `.md` → пропуск. Красный гейт — exit 2 и хвост
  * вывода в stderr (так Claude Code возвращает ошибку субагенту). Правка
- * исходников платформы в репо `dmg-core` без `docs/` — предупреждение в stdout.
+ * исходников платформы в репо `dmg-core` без `docs/` — предупреждение в stdout
+ * (D-59 пакета).
  *
  * Запуск: `bun run scripts/agent-gate.ts`.
  */
 
 import { readFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 export interface Workspace {
   /** Имя пакета из package.json */
@@ -206,7 +207,7 @@ export async function exec(cmd: string[], cwd: string): Promise<RunOutput> {
   return { ok: code === 0, output: `${stdout}\n${stderr}` };
 }
 
-/** Исходники платформы, правка которых обычно меняет поток или контракт (D-59 пакета) */
+/** Исходники платформы, правка которых обычно меняет поток или контракт */
 const PLATFORM_SRC_RE = /^src\/(?:app|kernel|domain)\/.+(?<!\.test)\.ts$/;
 
 /**
@@ -237,7 +238,31 @@ export async function packageRepo(root: string): Promise<string | undefined> {
     ...(pkg.devDependencies as Record<string, string> | undefined),
   };
   const spec = deps['dmg-core'];
-  return spec?.startsWith('file:') ? join(root, spec.slice(5)) : undefined;
+  return spec?.startsWith('file:') ? resolve(root, spec.slice(5)) : undefined;
+}
+
+/**
+ * Предупреждение по незакоммиченным правкам репо пакета: гейт идёт до
+ * коммита (субагенты не коммитят). Нет репо или git упал — без
+ * предупреждения: побочный канал не меняет исход гейта.
+ */
+export async function packageDocsWarning(
+  root: string,
+): Promise<string | undefined> {
+  try {
+    const repo = await packageRepo(root);
+    if (repo === undefined) return undefined;
+    return docsWarning(changedPaths(repo), (paths) =>
+      Bun.spawnSync(['bun', 'run', 'scripts/docs-impact.ts', ...paths], {
+        cwd: repo,
+      })
+        .stdout.toString()
+        .split('\n')
+        .filter((line) => line !== ''),
+    );
+  } catch {
+    return undefined;
+  }
 }
 
 /** Изменённые пути рабочего дерева; разбирается только stdout git */
@@ -260,17 +285,7 @@ if (import.meta.main) {
   );
   if (result.stdout) console.log(result.stdout);
   if (result.stderr) console.error(result.stderr);
-  const repo = await packageRepo(root);
-  const warning =
-    repo &&
-    docsWarning(changedPaths(repo), (paths) =>
-      Bun.spawnSync(['bun', 'run', 'scripts/docs-impact.ts', ...paths], {
-        cwd: repo,
-      })
-        .stdout.toString()
-        .split('\n')
-        .filter((line) => line !== ''),
-    );
+  const warning = await packageDocsWarning(root);
   if (warning) console.log(warning);
   process.exit(result.code);
 }
