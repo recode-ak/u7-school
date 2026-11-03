@@ -1,0 +1,5 @@
+Задача: Ревью reviewer; вызов documentarian (пилот) — фаза 2.
+reviewer: 10 замечаний, error нет; 8 исправлено, 2 вопроса отвечены (summary.md).
+documentarian (вызов 1, general-purpose+Sonnet с промптом роли): 7 расхождений, принято 7; 6 исправлено, 1 (дубль цепочки шагов UC) — в фазу 3.
+Коммиты: dmg-core@14f0156 (docs-check, covers-check, concepts, layers.md, JSDoc ModuleFacade и AssignTaskUcDef); u7-school 7b8aab3 (agent-gate: packageDocsWarning, resolve для file:; summary.md).
+Проверки: check и e2e пакета зелёные; check u7-school зелёный.
