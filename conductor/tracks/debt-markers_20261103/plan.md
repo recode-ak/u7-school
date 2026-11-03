@@ -73,9 +73,9 @@
 
 ## Фаза 5: `TR-NN` и паттерн адаптера (Sonnet)
 
-- [ ] Task: Раздел «UC-адаптер над legacy-фасадом» в `migration.md` (из TR-11: где живёт, как называется, когда уходит)
-- [ ] Task: Удалить `TR-NN` из кода (67 в 40 файлах + `runners/u7-bot/tests/e2e/update-replay.e2e.test.ts`); где ссылка объясняла «почему» — «адаптер над legacy-фасадом»
-- [ ] Task: Проверка `TR-NN` в коде в строгом режиме `arch:check` (тест — red → green); `runners/*/tests` — в корни
+- [x] Task: Раздел «UC-адаптер над legacy-фасадом» в `migration.md` (из TR-11: где живёт, как называется, когда уходит) `5e9c42a1`
+- [x] Task: Удалить `TR-NN` из кода (67 в 40 файлах + `runners/u7-bot/tests/e2e/update-replay.e2e.test.ts`); где ссылка объясняла «почему» — «адаптер над legacy-фасадом» `5e9c42a1`
+- [x] Task: Проверка `TR-NN` в коде в строгом режиме `arch:check` (тест — red → green); `runners/*/tests` — в корни `5e9c42a1`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
 Критерии приёмки: `rg '\bTR-\d+'` по коду (с `runners/*/tests`) — пусто; раздел в `migration.md` есть; записи TR в §6 на месте; `bun run check` зелёный.
