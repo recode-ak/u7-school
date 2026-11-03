@@ -25,7 +25,7 @@
 | DEBT-42 | `runners/u7-cli/src/main.ts`, `scripts/call-uc.ts` | `dbDir: 'data'` | `{runners/*/src,scripts}/**` |
 | DEBT-43 | `view-stream.story.ts`, `wish-invite.story.ts` | `getUTCHours\(` | `runners/u7-bot/src/**` |
 
-## Фаза 0: Базовая линия (Opus, сессия Ф1)
+## Фаза 0: Базовая линия (Opus, сессия Ф1) [checkpoint: b63de8b]
 
 - [x] Task: Зафиксировать базовую линию: `bun run check`, число тестов `bun test`; замер по корням `arch:check` (`DEBT-N` всего / в `biome-ignore` / голые, `TR-NN`, строки «временн…») — в черновик `summary.md` `1ebf7fb`
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
