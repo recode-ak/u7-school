@@ -4,7 +4,7 @@
 
 ## Фаза 0: Базовая линия
 
-- [ ] Task: Зафиксировать базовую линию: `bun test`, `bun run e2e` пакета и u7-school; точный замер `dmg-core/src` (доля комментариев, блоки ≥12 строк, строки с `D-NN`, `TR-NN`) в черновике `summary.md`
+- [x] Task: Зафиксировать базовую линию: `bun test`, `bun run e2e` пакета и u7-school; точный замер `dmg-core/src` (доля комментариев, блоки ≥12 строк, строки с `D-NN`, `TR-NN`) в черновике `summary.md` f9868e4
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 ## Фаза 1: Правило и решение
