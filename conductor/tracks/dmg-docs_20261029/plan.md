@@ -29,7 +29,7 @@
 - [x] Task: Роль `documentarian` в `.agents-core/roles/` (только чтение, список расхождений, триггер — после фазы, менявшей документы, и перед релизом); пилот ведётся в `summary.md` b67e63c
 - [x] Task: Каталог `concepts/`, `docs/index.md`, `llms.txt` с двумя входами dmg-core@4185548 (`concepts/index.md`, `_template.md`; concepts в `llms.txt` — `Optional`)
 - [x] Task: Concepts: «Путь вызова UC», «Слои и зависимости», «Жизненный цикл агрегата и событий», «Как читать модуль» (mermaid, `covers:`) dmg-core@612cd19 (`uc-path`, `layers`, `aggregate-lifecycle`, `reading-a-module`)
-- [ ] Task: Ревью reviewer; вызов `documentarian` (пилот)
+- [x] Task: Ревью reviewer; вызов `documentarian` (пилот) 7b8aab3 (dmg-core@14f0156; отчёты — `summary.md`, «Пилот ролей»)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 ## Фаза 3: Нарезка существующих docs
