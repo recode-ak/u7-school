@@ -1,0 +1,6 @@
+Верификация Фазы 1 (срез stream), автономно.
+Коммит среза: c0e2899. check: dmg/agents/lint/tslint/arch/gen:e2e зелёные; тесты 3781 pass, 2 fail — user-notify.e2e FR-6 #7c и кнопка 7a (красная зона TR-42, снятие — конец Ф2).
+reviewer: error/warn нет; 4 minor (CODE-04 ×3, ARC-08) исправлены; 3 question приняты по Т3, Т9, Т15, образцу course-catalog.
+data-keeper: error принят (TR-42); warn — строгий разбор streams.json; бэкап перед первым запуском обязателен; тест legacy-чтения нового формата добавлен.
+TR: TR-41 Т14–Т17, TR-42; DEBT-35 закрыт, DEBT-47 заведён, DEBT-2/44 — glob stream сняты.
+Открытый вопрос Нурболату: разбор копии живого streams.json схемой нового state.
