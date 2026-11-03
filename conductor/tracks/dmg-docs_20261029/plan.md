@@ -59,9 +59,9 @@
 - [x] Task: `docs:covers` — коммиты, менявшие в `src/` только комментарии, не делают документ устаревшим (решение Нурболата 2026-11-03: шум после стрижки JSDoc) dmg-core@9202766 (`lastCodeChangeAt` по `git log -p`; `*.test.ts` тоже не считаются; 14 warn → 1, давний `layers.md`)
     - [x] Тесты: правка только комментария → нет warn; правка кода → warn; red
     - [x] Реализация; green
-- [~] Task: `warn` в `check` на JSDoc длиннее 6 строк без `@see` (обещан D-59, задачи не было; решение Нурболата 2026-11-03)
-    - [ ] Тесты: 7 строк без `@see` → warn; 7 строк со `@see` и 6 строк → нет; red
-    - [ ] Реализация; green
+- [x] Task: `warn` в `check` на JSDoc длиннее 6 строк без `@see` (обещан D-59, задачи не было; решение Нурболата 2026-11-03) dmg-core@9bcebfa (`docs:jsdoc`; на коммите — 34 warn вне kernel/domain/app)
+    - [x] Тесты: 7 строк без `@see` → warn; 7 строк со `@see` и 6 строк → нет; red
+    - [x] Реализация; green
 - [ ] Task: Ревью reviewer; вызов `documentarian`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
