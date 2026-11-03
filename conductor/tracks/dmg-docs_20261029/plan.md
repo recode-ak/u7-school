@@ -27,7 +27,7 @@
     - [x] Тесты: путь совпал с `covers` → документ в списке; не совпал → пусто; правка без docs → предупреждение; red
     - [x] Реализация; green
 - [x] Task: Роль `documentarian` в `.agents-core/roles/` (только чтение, список расхождений, триггер — после фазы, менявшей документы, и перед релизом); пилот ведётся в `summary.md` b67e63c
-- [ ] Task: Каталог `concepts/`, `docs/index.md`, `llms.txt` с двумя входами
+- [x] Task: Каталог `concepts/`, `docs/index.md`, `llms.txt` с двумя входами dmg-core@4185548 (`concepts/index.md`, `_template.md`; concepts в `llms.txt` — `Optional`)
 - [ ] Task: Concepts: «Путь вызова UC», «Слои и зависимости», «Жизненный цикл агрегата и событий», «Как читать модуль» (mermaid, `covers:`)
 - [ ] Task: Ревью reviewer; вызов `documentarian` (пилот)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
