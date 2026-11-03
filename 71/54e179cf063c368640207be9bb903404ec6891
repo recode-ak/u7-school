@@ -1,0 +1,5 @@
+Задача: Проверка covers: во front-matter — warn в check, блок в гейте релиза.
+Коммит пакета: dmg-core@3a69c0c.
+Изменено (dmg-core): scripts/covers-check.ts (coversOf, checkCovers, readCovers, CLI docs:covers [--strict]; время изменения — последний коммит git по pathspec :(glob)), scripts/covers-check.test.ts (7 тестов, контракт: пути covers пакета находят файлы), package.json (docs:covers в check), RELEASING.md (--strict в чек-листе релиза), docs/index.md (docs:covers в разделе актуализации).
+Причина: ФР-6 spec — механическая проверка актуальности.
+Проверки: check и e2e пакета зелёные; check u7-school зелёный.
