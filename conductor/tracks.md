@@ -10,3 +10,8 @@
 
 - [x] **Track: Комментарии и долги в коде u7-school — allowlist долгов в `debt.md`, ARC-02 без маркеров, удаление `TR-NN` и временных комментариев, склейка дублей**
 *Link: [./tracks/debt-markers_20261103/](./tracks/debt-markers_20261103/)*
+
+---
+
+- [?] **Candidate: Проверка «временных» комментариев в `arch:check` — «Временное решение / ВРЕМЕННЫЙ» вне Места записей `debt.md`**
+*Разбор: [./roadmap/temp-comments-check.md](./roadmap/temp-comments-check.md)*
