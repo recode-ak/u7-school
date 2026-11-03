@@ -26,7 +26,7 @@
 - [x] Task: Команда `docs:impact <пути>` и триггер в `agent-gate.ts` (правка `dmg-core/src/{app,kernel,domain}` без `docs/` и `decisions.md` — предупреждение); `covers:` и у guides 5d61dca (dmg-core@8d139ad; репо пакета гейт находит по `file:` корневого `package.json`)
     - [x] Тесты: путь совпал с `covers` → документ в списке; не совпал → пусто; правка без docs → предупреждение; red
     - [x] Реализация; green
-- [ ] Task: Роль `documentarian` в `.agents-core/roles/` (только чтение, список расхождений, триггер — после фазы, менявшей документы, и перед релизом); пилот ведётся в `summary.md`
+- [x] Task: Роль `documentarian` в `.agents-core/roles/` (только чтение, список расхождений, триггер — после фазы, менявшей документы, и перед релизом); пилот ведётся в `summary.md` b67e63c
 - [ ] Task: Каталог `concepts/`, `docs/index.md`, `llms.txt` с двумя входами
 - [ ] Task: Concepts: «Путь вызова UC», «Слои и зависимости», «Жизненный цикл агрегата и событий», «Как читать модуль» (mermaid, `covers:`)
 - [ ] Task: Ревью reviewer; вызов `documentarian` (пилот)
