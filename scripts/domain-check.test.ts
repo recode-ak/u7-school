@@ -586,6 +586,73 @@ describe('checkDebt: allowlist долгов в debt.md', () => {
   });
 });
 
+describe('checkDebt: маркеры временности вне Места открытой записи', () => {
+  const DEBT = [
+    '### DEBT-1: импорты `@u7-scl/core`',
+    '- **Место:** `domain/src/user/**`',
+    "- **Признак:** `from '@u7-scl/core`",
+    '### DEBT-7: слит в DEBT-1',
+    '- **Место:** `modules/old/**`',
+    "- **Признак:** `from '@u7-scl/core`",
+  ].join('\n\n');
+  const CORE = "import { A } from '@u7-scl/core';";
+  const run = (path: string, comment: string) =>
+    checkDebt({
+      code: [
+        file('domain/src/user/a.ts', CORE),
+        file(path, `${CORE}\n${comment}`),
+      ],
+      debtMd: DEBT,
+      mode: 'strict',
+    }).filter((e) => e.includes('маркер'));
+  const err = (path: string, line: number, phrase: string) =>
+    `DEBT: ${path}:${line}: маркер временности «${phrase}» вне Места открытой записи — заведи запись в debt.md или убери комментарий`;
+
+  it.each([
+    ['Временное решение', '// Временное решение: пока так'],
+    ['ВРЕМЕННЫЙ', '/** ВРЕМЕННЫЙ адаптер */'],
+    ['Уходит с миграцией', '// Уходит с миграцией модуля'],
+  ])(
+    '«%s» вне Места — ошибка с путём, строкой и подсказкой',
+    (phrase, text) => {
+      expect(run('modules/user/src/b.ts', text)).toEqual([
+        err('modules/user/src/b.ts', 2, phrase),
+      ]);
+    },
+  );
+
+  it('фраза в файле из Места открытой записи — без ошибки', () => {
+    expect(run('domain/src/user/b.ts', '// Временное решение')).toEqual([]);
+  });
+
+  it('фраза в Месте закрытой записи («слит в») — ошибка', () => {
+    expect(run('modules/old/b.ts', '// Временное решение')).toEqual([
+      err('modules/old/b.ts', 2, 'Временное решение'),
+    ]);
+  });
+
+  it('«Временное решение» и «Уходит с миграцией» — без учёта регистра', () => {
+    expect(run('modules/user/src/b.ts', '// временное РЕШЕНИЕ')).toHaveLength(
+      1,
+    );
+    expect(run('modules/user/src/b.ts', '// уходит С миграцией')).toHaveLength(
+      1,
+    );
+  });
+
+  it('«ВРЕМЕННЫЙ» — только заглавными', () => {
+    expect(run('modules/user/src/b.ts', '// временный адаптер')).toEqual([]);
+  });
+
+  it.each([
+    '// временные метки',
+    '// одновременно с этим',
+    '// во временном каталоге',
+  ])('без ложных срабатываний: %s', (text) => {
+    expect(run('modules/user/src/b.ts', text)).toEqual([]);
+  });
+});
+
 describe('checkTrMarkers: записи TR-<n> живут в debt.md, не в коде', () => {
   it('TR-<n> в комментарии, JSDoc и имени теста — ошибка с путём и строкой', () => {
     const code = [

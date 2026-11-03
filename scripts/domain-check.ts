@@ -4,7 +4,8 @@
  *   bun run arch:check
  *
  * Чистые функции над файлами в памяти; чтение диска — в `readDomainFiles`.
- * Долг: allowlist `conductor/architecture/debt.md`; в коде `DEBT-<n>` — только в `biome-ignore`.
+ * Долг: allowlist `conductor/architecture/debt.md`; в коде `DEBT-<n>` — только в `biome-ignore`;
+ * маркеры временности («Временное решение», «ВРЕМЕННЫЙ», «Уходит с миграцией») — только в Месте открытой записи.
  */
 import { posix } from 'node:path';
 import { Glob } from 'bun';
@@ -253,6 +254,8 @@ const SUB_ITEM = /^ {2}- (.*)$/;
 const FENCE = /^\s*```/;
 const TICK = /^`([^`]+)`\s*,?\s*/;
 const DEBT_ID = /\bDEBT-\d+\b/g;
+// Фразы, а не слово «временный»; `\b` для кириллицы не работает, «ВРЕМЕННЫЙ» — только заглавными.
+const TEMP_MARKERS = [/временное решение|уходит с миграцией/gi, /ВРЕМЕННЫЙ/g];
 
 /** Реестр долга `debt.md` как allowlist: записи и их сверка с кодом. */
 class DebtRegistry {
@@ -329,6 +332,7 @@ class DebtRegistry {
     for (const e of this.entries.values())
       if (!e.mergedInto) out.push(...this.checkEntry(e, code));
     out.push(...this.checkIds(code, mode));
+    out.push(...this.checkTempMarkers(code));
     return out;
   }
 
@@ -397,6 +401,25 @@ class DebtRegistry {
             out.push(`${at} вне biome-ignore`);
         }
       });
+    return out;
+  }
+
+  /** Маркер временности допустим только в файле из Места открытой записи. */
+  private checkTempMarkers(code: readonly DomainFile[]): string[] {
+    const places = [...this.entries.values()]
+      .filter((e) => !e.mergedInto)
+      .flatMap((e) => e.places.map((p) => new Glob(p)));
+    const out: string[] = [];
+    for (const f of code) {
+      if (places.some((g) => g.match(f.path))) continue;
+      f.text.split('\n').forEach((line, i) => {
+        for (const re of TEMP_MARKERS)
+          for (const [phrase] of line.matchAll(re))
+            out.push(
+              `DEBT: ${f.path}:${i + 1}: маркер временности «${phrase}» вне Места открытой записи — заведи запись в debt.md или убери комментарий`,
+            );
+      });
+    }
     return out;
   }
 }
