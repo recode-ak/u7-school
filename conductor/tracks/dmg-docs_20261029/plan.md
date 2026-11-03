@@ -7,13 +7,13 @@
 - [x] Task: Зафиксировать базовую линию: `bun test`, `bun run e2e` пакета и u7-school; точный замер `dmg-core/src` (доля комментариев, блоки ≥12 строк, строки с `D-NN`, `TR-NN`) в черновике `summary.md` f9868e4
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md) d257e23
 
-## Фаза 1: Правило и решение
+## Фаза 1: Правило и решение [checkpoint: d78ad64]
 
 - [x] Task: Решение `D-NN` в `decisions.md` пакета: типы документов, ответственность, направление ссылок, критерий «оправдан»; обсудить с Нурболатом dmg-core@5752f08 (D-59; reference — каталог `docs/reference/`, предел JSDoc — review + warn в `check`)
 - [x] Task: Правило о комментариях в `rules.md` пакета (новый ID) dmg-core@3a47e97 (CODE-04)
 - [x] Task: Раздел «Как устроена документация» в `docs/index.md`: типы, ответственность, кто и когда актуализирует; таблица «что куда» (правило, способ, поток, контракт) dmg-core@1dd6285
 - [x] Task: Правило и критерий в промптах `domain-author`, `api-author` (пакет), `migrator`, `tech-lead` (`.agents-core/roles`), проверка в `reviewer`; строка «Документы» в формате брифа среза (`tech-lead`); `agents:sync` d99bc260 (dmg-core@c8ed69f; авторы пакета — через общий блок `common.md`)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md) d78ad64
 
 ## Фаза 2: Проверки, роль и concepts
 
