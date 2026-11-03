@@ -24,7 +24,7 @@
 
 1. UI обращается к бэку **только через Def UC** (команда `ucDef.command(input)`, D-49: в процессе — `appApi.dispatch(moduleDef, …)`, для удалённого UI — `ModuleApi` с HTTP-транспортом). Отдельного «apiFacade»-манифеста нет — он был бы дублем.
 2. Сторис вызывает только UC из своего списка (рантайм-ассерт в test/dev, как `emits`).
-3. `callers` сторис ⊆ `callers` каждого её UC: сторис для `guest` не вызывает UC «только для `user`» (контрактный тест; см. [caller.md](../../node_modules/dmg-core/docs/caller.md)).
+3. `callers` сторис ⊆ `callers` каждого её UC: сторис для `guest` не вызывает UC «только для `user`» (контрактный тест; см. [caller.md](../../node_modules/dmg-core/docs/reference/caller.md)).
 4. Каждое действие экрана объявляет, куда ведёт: другой экран, сторис или UC. Незаявленный переход — ошибка в test/dev.
 5. Экран объявляет **примеры** — именованные состояния на фикстурах (`empty`, `withProgress`, `noAccess`…).
 

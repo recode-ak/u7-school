@@ -97,7 +97,7 @@ reset(): void                  // сброс временного состоян
 | `not-found`, `conflict`, `access-denied`, `bad-request` | Текст ошибки |
 | `internal`, `unauthorized`, default | Логирует через `logger.error` + общее сообщение |
 
-`handleError` возвращает `DialogResponse`-экран; тексты — `MdText` через `md` (см. [bot-ui-story.md](./bot-ui-story.md), §4). См. [errors.md](../../../node_modules/dmg-core/docs/errors-result.md) для контракта `AppError`.
+`handleError` возвращает `DialogResponse`-экран; тексты — `MdText` через `md` (см. [bot-ui-story.md](./bot-ui-story.md), §4). См. [errors.md](../../../node_modules/dmg-core/docs/reference/errors-result.md) для контракта `AppError`.
 
 ---
 
@@ -110,6 +110,6 @@ reset(): void                  // сброс временного состоян
 ## Связанные файлы
 
 - [BotUiStory](./bot-ui-story.md) — стиль написания сторис
-- [Ошибки](../../../node_modules/dmg-core/docs/errors-result.md) — `AppError`, `fromError()`
+- [Ошибки](../../../node_modules/dmg-core/docs/reference/errors-result.md) — `AppError`, `fromError()`
 - [Тестирование бота](./bot-test.md)
 - [Архитектура bot-level](./bot-architecture.md)

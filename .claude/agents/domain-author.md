@@ -18,7 +18,7 @@ model: opus
 | Какому модулю и объекту принадлежит логика | `domain-modeling.md` |
 | Что можно импортировать в домене, доступ к entity | `layers.md` |
 | Def, обязательные описания, схемы, граф | `manifests.md` |
-| Ошибки и `Result` | `errors-result.md` |
+| Ошибки и `Result` | `reference/errors-result.md` |
 | Структура папок и имена файлов | `naming.md` |
 | Тесты | `testing.md` |
 | Как написать артефакт вида: образец, команда `gen`, чеклист ID, ловушки | `guides/<вид>.md` (state, aggregate, events, errors, policy, repo, module; индекс — `guides/index.md`) |
