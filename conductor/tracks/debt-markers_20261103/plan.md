@@ -30,7 +30,7 @@
 - [x] Task: Зафиксировать базовую линию: `bun run check`, число тестов `bun test`; замер по корням `arch:check` (`DEBT-N` всего / в `biome-ignore` / голые, `TR-NN`, строки «временн…») — в черновик `summary.md` `1ebf7fb`
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
-## Фаза 1: Эталон `checkDebt` (Opus)
+## Фаза 1: Эталон `checkDebt` (Opus) [checkpoint: 4a8d9b0]
 
 - [x] Task: Тесты новой `checkDebt` в `scripts/domain-check.test.ts`; red `806f0c3`
     - [x] Разбор записи: Место (несколько glob, «Погашает» на glob), Признак, Корень, закрытая «слит в DEBT-N»
