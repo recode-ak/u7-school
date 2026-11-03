@@ -32,7 +32,7 @@
 - [x] Task: Ревью reviewer; вызов `documentarian` (пилот) 7b8aab3 (dmg-core@14f0156; отчёты — `summary.md`, «Пилот ролей»)
 - [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md) 756c3d0d
 
-## Фаза 3: Нарезка существующих docs
+## Фаза 3: Нарезка существующих docs [checkpoint: b3fc2239]
 
 - [x] Task: `transport`, `errors-result`, `caller` — нормативная часть в reference, объяснение — в concepts dmg-core@463fdd7 (`docs/reference/` с теми же именами; concepts `errors`, `caller`, `transport`)
 - [x] Task: Concept «Домен — приложение без инфраструктуры» (`docs/concepts/domain.md`) — из объяснительной части `domain-modeling.md` и `layers.md` §3–4 dmg-core@be486d8 (подтверждён Нурболатом; `documentarian` — в задаче ревью фазы)
@@ -47,7 +47,7 @@
 - [x] Task: `testing`, `rules`, `naming`, `typescript` — в reference; `guides/` — обновить ссылки dmg-core@b6932a7 (`RULES_DOC`, `docs-check`, `consumer-check` — путь `docs/reference/rules.md`; корень `docs/` — `index.md` и `decisions.md`)
 - [x] Task: Ссылки в `llms.txt`, скилах, `AGENTS.md` u7-school; `dmg:sync`; тест ссылок зелёный (`llms.txt` и скил пакета — в коммитах задач выше; u7-school: роли, скилы `architecture` и `conductor-review`, `conductor/architecture`, `conductor/roadmap`; `AGENTS.md` ведёт на `docs/index.md` — без правки)
 - [x] Task: Ревью reviewer; вызов `documentarian` dmg-core@9ed5c07 (reviewer: 1 major, 4 minor, 1 question — потери норм при переносе возвращены в reference; documentarian: 4 расхождения, приняты все; отчёты — `summary.md`, «Пилот ролей»)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md) b3fc2239
 
 ## Фаза 4: Стрижка JSDoc
 
