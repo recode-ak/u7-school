@@ -26,9 +26,9 @@
 
 ## Фаза 2: Документация и снятие кандидата (Sonnet)
 
-- [ ] Task: `conductor/architecture/debt.md` («Правила»): список фраз, регистр, где маркер допустим, текст ошибки; проверить `rules.md` и `migration.md` на упоминания маркеров
-- [ ] Task: Снять кандидата в `conductor/tracks.md`, удалить `conductor/roadmap/temp-comments-check.md`
-- [ ] Task: Финальный гейт: `bun run check` и `bun run arch:check` зелёные, сравнение с базовой линией; итог в `summary.md`
-- [ ] Task: Conductor - User Manual Verification 'Документация и снятие кандидата' (Protocol in workflow.md)
+- [x] Task: `conductor/architecture/debt.md` («Правила»): список фраз, регистр, где маркер допустим, текст ошибки; проверить `rules.md` и `migration.md` на упоминания маркеров
+- [x] Task: Снять кандидата в `conductor/tracks.md`, удалить `conductor/roadmap/temp-comments-check.md`
+- [x] Task: Финальный гейт: `bun run check` и `bun run arch:check` зелёные, сравнение с базовой линией; итог в `summary.md`
+- [x] Task: Conductor - User Manual Verification 'Документация и снятие кандидата' (Protocol in workflow.md)
 
 *Приёмка:* `grep "Временное решение" conductor/architecture/debt.md` находит правило; `grep temp-comments conductor/tracks.md` пусто; файла `roadmap/temp-comments-check.md` нет.

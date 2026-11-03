@@ -8,10 +8,5 @@
 
 ---
 
-- [?] **Candidate: Проверка «временных» комментариев в `arch:check` — «Временное решение / ВРЕМЕННЫЙ» вне Места записей `debt.md`**
-*Разбор: [./roadmap/temp-comments-check.md](./roadmap/temp-comments-check.md)*
-
----
-
 - [~] **Track: Проверка «временных» комментариев в `arch:check` — «Временное решение / ВРЕМЕННЫЙ / Уходит с миграцией» вне Места записей `debt.md`**
 *Link: [./tracks/temp-comments-check_20261103/](./tracks/temp-comments-check_20261103/)*
