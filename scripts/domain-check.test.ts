@@ -358,7 +358,7 @@ describe('checkDebt: allowlist долгов в debt.md', () => {
     });
 
     it('открытая запись без Места — ошибка', () => {
-      const debtMd = md(DEBT_1.replace(/- \*\*Место:\*\*\n(  - .*\n)+/, ''));
+      const debtMd = md(DEBT_1.replace(/- \*\*Место:\*\*\n( {2}- .*\n)+/, ''));
       expect(run(CODE.slice(0, 2), debtMd)).toEqual([
         'DEBT: DEBT-1: нет поля Место',
       ]);
