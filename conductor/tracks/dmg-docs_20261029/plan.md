@@ -51,7 +51,7 @@
 
 ## Фаза 4: Стрижка JSDoc
 
-- [ ] Task: `kernel` — для каждого сценария сначала сверка с тестами, недостающие (red → green), затем сокращение комментария
+- [x] Task: `kernel` — для каждого сценария сначала сверка с тестами, недостающие (red → green), затем сокращение комментария dmg-core@63e558a (`withEntityDefaults`, `Trace`; два теста ограничений — характеризация, red невозможен без поломки кода)
 - [ ] Task: `domain` — то же
 - [ ] Task: `app` (`UnitOfWork.commit`, `CommandReplay`, `use-case-from-def`, `reaction`) — сценарии сбоев в именованные тесты, выжимка в concepts
 - [ ] Task: `arch`, `cli` (комментарии `scaffold/app-sources.ts` — в шаблоны), `testing`
