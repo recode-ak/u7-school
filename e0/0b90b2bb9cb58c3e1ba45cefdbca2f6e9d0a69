@@ -1,0 +1,5 @@
+Верификация Фазы 5 (dmg-docs_20261029), 2026-11-03
+Автотесты: dmg-core@1789b42 — bun run check зелёный (1397 тестов, docs:covers 0 warn), bun run e2e ok; u7-school — bun run check зелёный (3533 теста).
+Замер dmg-core/src prod (00bda68 → d20edbc): комментарии 17,7% → 16,3%, блоков ≥12 строк 15 → 0, JSDoc >6 без ссылки 64 → 0, D-NN 188 → 146.
+Добавлено: verified: <sha> в docs:covers (dmg-core@1789b42), три warn сняты.
+Ручная верификация: итог в summary.md; подтверждено Нурболатом («да»).
