@@ -235,7 +235,10 @@ export function checkDomainGraph(graph: DomainGraph): string[] {
   return out;
 }
 
-/** Сверка маркеров `DEBT-<n>` в коде с записями `debt.md`. */
+/**
+ * Прежняя сверка маркеров `DEBT-<n>` в коде с записями `debt.md` в обе
+ * стороны; уходит, когда `arch:check` переходит на `checkDebt`.
+ */
 export function checkDebtMarkers(input: {
   code: readonly DomainFile[];
   debtMd: string;
@@ -276,34 +279,51 @@ const HEADING = /^#{1,3}\s/;
 const DEBT_HEADING = /^###\s+(DEBT-\d+)\b(.*)$/;
 const MERGED = /слит в (DEBT-\d+)/;
 const FIELD = /^- \*\*([^*]+):\*\*(.*)$/;
-const SUB_ITEM = /^\s+- (.*)$/;
+const SUB_ITEM = /^ {2}- (.*)$/;
+const FENCE = /^\s*```/;
 const TICK = /^`([^`]+)`\s*,?\s*/;
 const DEBT_ID = /\bDEBT-\d+\b/g;
 
 /** Реестр долга `debt.md` как allowlist: записи и их сверка с кодом. */
 class DebtRegistry {
-  constructor(readonly entries: ReadonlyMap<string, DebtEntry>) {}
+  private constructor(
+    private readonly entries: ReadonlyMap<string, DebtEntry>,
+    private readonly duplicates: readonly string[],
+  ) {}
 
   /**
-   * Разбор: запись — заголовок `### DEBT-<n>` до следующего заголовка.
-   * Место — glob'ы в бэктиках в начале строки поля или пунктов под ним
-   * (после них — пояснение); Признак и Корень — первый токен в бэктиках.
+   * Разбор: запись — заголовок `### DEBT-<n>` до следующего заголовка; блоки
+   * кода ``` пропускаются. Место — glob'ы в бэктиках в начале строки поля или
+   * пунктов первого уровня под ним до пустой строки (после glob'ов —
+   * пояснение); Признак и Корень — первый токен в бэктиках.
    */
   static parse(md: string): DebtRegistry {
     const entries = new Map<string, DebtEntry>();
+    const duplicates: string[] = [];
     let entry: DebtEntry | undefined;
     let field: string | undefined;
+    let fenced = false;
     for (const line of md.split('\n')) {
+      if (FENCE.test(line)) fenced = !fenced;
+      if (fenced || FENCE.test(line)) continue;
+      if (!line.trim()) {
+        field = undefined;
+        continue;
+      }
       if (HEADING.test(line)) {
+        field = undefined;
         const head = DEBT_HEADING.exec(line);
-        entry = head
-          ? {
-              id: head[1] ?? '',
-              mergedInto: MERGED.exec(head[2] ?? '')?.[1],
-              places: [],
-            }
-          : undefined;
-        if (entry) entries.set(entry.id, entry);
+        const id = head?.[1] ?? '';
+        entry =
+          head && !entries.has(id)
+            ? {
+                id,
+                mergedInto: MERGED.exec(head[2] ?? '')?.[1],
+                places: [],
+              }
+            : undefined;
+        if (entry) entries.set(id, entry);
+        else if (head) duplicates.push(id);
         continue;
       }
       if (!entry) continue;
@@ -320,11 +340,11 @@ class DebtRegistry {
       if (item && field === 'Место')
         entry.places.push(...DebtRegistry.leadingTicks(item[1] ?? ''));
     }
-    return new DebtRegistry(entries);
+    return new DebtRegistry(entries, duplicates);
   }
 
   /** Токены в бэктиках подряд в начале текста (через запятую). */
-  static leadingTicks(text: string): string[] {
+  private static leadingTicks(text: string): string[] {
     const out: string[] = [];
     let rest = text.trimStart();
     for (let m = TICK.exec(rest); m; m = TICK.exec(rest)) {
@@ -335,7 +355,7 @@ class DebtRegistry {
   }
 
   check(code: readonly DomainFile[], mode: 'transition' | 'strict'): string[] {
-    const out: string[] = [];
+    const out = this.duplicates.map((id) => `DEBT: ${id}: дубль записи`);
     for (const e of this.entries.values())
       if (!e.mergedInto) out.push(...this.checkEntry(e, code));
     out.push(...this.checkIds(code, mode));
@@ -343,7 +363,7 @@ class DebtRegistry {
   }
 
   /** Место и Признак записи: устаревший glob, погашенный glob, долг вне Места. */
-  checkEntry(e: DebtEntry, code: readonly DomainFile[]): string[] {
+  private checkEntry(e: DebtEntry, code: readonly DomainFile[]): string[] {
     const fail = (msg: string) => `DEBT: ${e.id}: ${msg}`;
     const missing = [
       ...(e.places.length ? [] : [fail('нет поля Место')]),
@@ -372,6 +392,8 @@ class DebtRegistry {
     });
 
     const root = e.root ? new Glob(e.root) : undefined;
+    if (root && !code.some((f) => root.match(f.path)))
+      return [...out, fail(`Корень \`${e.root}\` не находит файлов`)];
     for (const f of code) {
       if (root && !root.match(f.path)) continue;
       if (places.some((g) => g.match(f.path))) continue;
@@ -388,7 +410,7 @@ class DebtRegistry {
    * `DEBT-<n>` в коде: ID открытой записи и только в строке `biome-ignore`.
    * Переходный режим допускает ID открытой записи вне `biome-ignore`.
    */
-  checkIds(
+  private checkIds(
     code: readonly DomainFile[],
     mode: 'transition' | 'strict',
   ): string[] {

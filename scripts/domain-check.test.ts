@@ -433,6 +433,37 @@ describe('checkDebt: allowlist долгов в debt.md', () => {
       );
       expect(run(CODE.slice(2), debtMd)).toEqual([]);
     });
+
+    it('запись и поле внутри блока кода ``` не разбираются', () => {
+      const example = [
+        '```',
+        '### DEBT-99: пример',
+        '- **Место:** `nowhere/**`',
+        '- **Признак:** `x`',
+        '```',
+      ].join('\n');
+      const inEntry = `${DEBT_5}\n\`\`\`\n- **Место:** \`nowhere/**\`\n\`\`\``;
+      expect(run(CODE.slice(2), md(example, inEntry))).toEqual([]);
+    });
+
+    it('пункт под другим полем, после пустой строки и вложенный — не Место', () => {
+      const debtMd = md(
+        [
+          DEBT_1.replace(
+            '- **Признак:**',
+            '    - `nested()` — вложенное пояснение\n\n  - `bar()` — после пустой строки\n- **Признак:**',
+          ),
+          '  - `foo()` — после Причины',
+        ].join('\n'),
+      );
+      expect(run(CODE.slice(0, 2), debtMd)).toEqual([]);
+    });
+
+    it('повторный заголовок записи — дубль', () => {
+      expect(run(CODE.slice(2), md(DEBT_5, DEBT_5))).toEqual([
+        'DEBT: DEBT-5: дубль записи',
+      ]);
+    });
   });
 
   describe('Место', () => {
@@ -469,6 +500,35 @@ describe('checkDebt: allowlist долгов в debt.md', () => {
     it('признак вне Корня — не ошибка', () => {
       const code = [...CODE, file('modules/stream/src/a.ts', CORE)];
       expect(run(code)).toEqual([]);
+    });
+
+    it('Корень не находит файлов — ошибка (поиск вне Места отключился бы)', () => {
+      const debtMd = md(DEBT_1.replace('`domain/src/**`', '`nowhere/**`'));
+      expect(run(CODE.slice(0, 2), debtMd)).toEqual([
+        'DEBT: DEBT-1: Корень `nowhere/**` не находит файлов',
+      ]);
+    });
+
+    it('Корень и Место с {…}: исключения перечислением, расширения', () => {
+      const debtMd = md(
+        [
+          '### DEBT-40: тесты на временном каталоге',
+          '- **Место:** `modules/wish/src/**/*.{uc,er,job}.test.ts`',
+          '- **Признак:** `mkdtemp`',
+          '- **Корень:** `{modules,platform}/*/src/**/*.{uc,er,job}.test.ts`',
+        ].join('\n'),
+      );
+      const code = [
+        file('modules/wish/src/wish/uc/a.uc.test.ts', 'mkdtemp'),
+        file('modules/peer-review/src/b.er.test.ts', 'mkdtemp'),
+        file('platform/core/src/c.job.test.ts', 'mkdtemp'),
+        file('modules/peer-review/src/d.repo.test.ts', 'mkdtemp'),
+        file('runners/u7-bot/src/e.uc.test.ts', 'mkdtemp'),
+      ];
+      expect(run(code, debtMd)).toEqual([
+        'DEBT: DEBT-40: долг без записи — modules/peer-review/src/b.er.test.ts:1',
+        'DEBT: DEBT-40: долг без записи — platform/core/src/c.job.test.ts:1',
+      ]);
     });
 
     it('без Корня — ищется по всем файлам проверки', () => {
@@ -543,6 +603,12 @@ describe('checkDebt: allowlist долгов в debt.md', () => {
 
     it('biome-ignore с закрытым ID — ошибка со ссылкой на запись слияния', () => {
       expect(run(bare('// biome-ignore lint/plugin: DEBT-6 — x'))).toEqual([
+        'DEBT: modules/user/src/c.ts:1: DEBT-6 закрыт (слит в DEBT-1)',
+      ]);
+    });
+
+    it('голый маркер закрытой записи в строгом режиме — ошибка «закрыт»', () => {
+      expect(run(bare('// DEBT-6'))).toEqual([
         'DEBT: modules/user/src/c.ts:1: DEBT-6 закрыт (слит в DEBT-1)',
       ]);
     });
