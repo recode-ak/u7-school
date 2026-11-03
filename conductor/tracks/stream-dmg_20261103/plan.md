@@ -14,8 +14,8 @@
 
 ## Фаза 0: База и решения
 
-- [ ] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/stream` и `modules/stream`, `dmg-core` `bun test`; каркас раздела «Пилот ролей»
-- [ ] Task: Решение по TR-8 (c с опорой на d) — в `debt.md` (TR-8: вопрос закрыт) и `decisions.md`; TR экспорта `Role` из контракта `user` (снимает перевод `user`)
+- [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/stream` и `modules/stream`, `dmg-core` `bun test`; каркас раздела «Пилот ролей» `df4a6dc`
+- [~] Task: Решение по TR-8 (c с опорой на d) — в `debt.md` (TR-8: вопрос закрыт) и `decisions.md`; TR экспорта `Role` из контракта `user` (снимает перевод `user`)
 - [ ] Task: `tech-lead`: бриф `slices/stream.md` — 9 UC → «состав потока» (слияние), `findStreamByTelegramGroup`; `stream.created` как Def, удаление `stream.completed`; Policy с ролями через `Role` контракта `user`; DCS/DQS из `StreamDs` по TR-8; Def UC `course` (снимок модуля, `ContentSnapshot` в контракте `course`); DEBT-35 (`invitedStreamIds` в state `wish`); stories и клиенты потока; ожидаемая красная зона; ID rules.md; проверка брифа orchestrator'ом, вопросы перепроектирования — Нурболату
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md; автономно)
 
