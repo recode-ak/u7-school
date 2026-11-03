@@ -19,7 +19,7 @@
 | ID | В проекте |
 |---|---|
 | ARC-01 | платформа — `dmg-core` и legacy `@u7-scl/core` |
-| ARC-02 | домен — `@u7-scl/domain` (`domain`); импорт `@u7-scl/core` — только по долгу ([debt.md](./debt.md)) |
+| ARC-02 | домен — `@u7-scl/domain` (`domain`); импорт `@u7-scl/core` — только в Месте открытой записи долга ([debt.md](./debt.md), поля Место/Признак/Корень), без маркера в коде |
 | ARC-04 | контракт модуля — `@u7-scl/domain/<m>/contract`; пары legacy-модулей — по долгу до миграции |
 | ARC-06 | прикладной пакет модуля — `modules/<m>`; чужие пакеты — lint `warn` по модулю; корень сборки и раннеры — `arch:check` для всех пакетов (`checkModuleImports`, D-53) |
 | ARC-07 | приложение (корень сборки) — `@u7-scl/app` (`platform/app/src`, `DomainArch.root`): домен — только `contract`, пакет модуля на Def — только вход (`index`); подпути пакетов внешних модулей разрешены — корень собирает и legacy (TR-33, TR-35). Lint дублирует для раннего сигнала: маска пакетов на Def пополняется при переводе модуля. Legacy-ядро `@u7-scl/app-legacy` — только `core` и `domain` (lint) |

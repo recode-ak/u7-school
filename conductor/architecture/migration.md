@@ -86,8 +86,8 @@
 - **На Def (DMG):** `peer-review` — домен `domain/src/peer-review` (агрегаты `review-campaign`, `review`), прикладной слой `modules/peer-review/src` (7 UC, ER `create-student-campaign`, JSON-репозитории через UoW со строгим разбором), legacy `PeerReviewApiModule` удалён; уведомление адресату — подписка story на `peer-review.review.created`. Stories бота — на `dispatch`.
 - **Корень сборки (D-50, D-52):** `@u7-scl/app` (`platform/app`) — `U7App` собирает всё приложение по `AppEnv`: legacy-модули, `AppContext` DMG, модули DMG через `ApiApp` пакета (фабрики `ModuleFactory`, фасады по `dependsOn`), резолвер `Caller` (`U7CallerResolver` над legacy `userFacade`). Legacy-ядро приложения — `@u7-scl/app-legacy` (`platform/app-legacy`, TR-33). Раннеры (`u7-bot`, `u7-cli`) и `scripts/call-uc.ts` получают приложение из `U7App`; ARC-07/08/09 и D-53 (ARC-06) — машинные (`arch:check`, `biome`).
 - **Внешние модули (D-37):** `user`, `course`, `questionnaire`, `stream`, `dossier` — `ModuleDef.define({ external: true })` в домене; UC, которые зовут `wish` и `peer-review`, исполняют адаптеры над legacy-фасадами (TR-11) — фабрики в `U7App`, legacy-события входят через `legacyEventBus` (`inbound`).
-- **Механически перенесены** (трек 3): domain-слои всех модулей в `@u7-scl/domain`; старые `modules/<m>/src/domain/index.ts` и `modules/dossier/src/index.ts` — barrel-реэкспорты с маркером `DEBT`.
-- **Граф `dependsOn`** строится из `ModuleDef` (`scripts/domain-arch.ts`, `DomainArch` с `root` и `runners`); `arch:check` сверяет маркеры `// DEBT-<n>` с [debt.md](./debt.md), тактические решения перехода — `TR-<n>` там же.
+- **Механически перенесены** (трек 3): domain-слои всех модулей в `@u7-scl/domain`; старые `modules/<m>/src/domain/index.ts` и `modules/dossier/src/index.ts` — barrel-реэкспорты (долг — в Месте записи `debt.md`).
+- **Граф `dependsOn`** строится из `ModuleDef` (`scripts/domain-arch.ts`, `DomainArch` с `root` и `runners`); `arch:check` сверяет код с реестром [debt.md](./debt.md) по полям Место/Признак/Корень; тактические решения перехода — `TR-<n>` там же (в код не пишутся).
 
 ### Входной долг для следующих треков
 

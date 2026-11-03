@@ -97,9 +97,9 @@
 - Данные для сравнения в `summary.md` — раздел «Итог Ф6» там же; базовая линия — раздел «Базовая линия».
 - Идея от ревью Ф6 (не в объёме трека, только предложить Нурболату как кандидата): машинная проверка «Временное решение / ВРЕМЕННЫЙ» в комментариях вне Места записей.
 
-- [ ] Task: Документы о маркерах: `debt.md` (Правила), шапка `domain-check.ts`, `rules.md` (ARC-02), `.agents-core/roles/tech-lead.md` → `bun run agents:sync`
+- [x] Task: Документы о маркерах: `debt.md` (Правила), шапка `domain-check.ts`, `rules.md` (ARC-02), `.agents-core/roles/tech-lead.md` → `bun run agents:sync`
 - [x] Task: Заготовка `roadmap/u7-comments-docs.md`: удалена вместе с кандидатом `[?]` (решение Нурболата, 2026-11-03); часть про Def и генерируемую документацию — в `migration.md` §2, строка 10+ `c84296ac`
-- [ ] Task: Сравнение с базовой линией в `summary.md`
+- [x] Task: Сравнение с базовой линией в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
 
 Критерии приёмки: `rg 'маркер.*DEBT|// DEBT-<n>'` в `conductor/architecture` и `.agents-core` — только о `biome-ignore`; число тестов ≥ базовой линии; `bun run check` зелёный.
