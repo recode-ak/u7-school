@@ -1,0 +1,5 @@
+Верификация Фазы 3 (нарезка docs), 2026-11-03.
+Автотесты: пакет — bun run check (1373 pass, 0 fail; 4 warn docs:covers от правки путей в комментариях src — снимутся в фазе 4), bun run e2e (ok); u7-school — bun run check (3533 pass, exit 0).
+Ручные шаги: docs/index.md — три типа; concepts rule-placement и transport — самодостаточны, mermaid; reference/transport против concepts/transport — норма и объяснение разведены; arch:check u7-school — путь docs/reference/rules.md.
+Коммиты пакета фазы: 463fdd7, be486d8, a6392b0, b6932a7, 9ed5c07. Ревью: reviewer (1 major, 4 minor, 1 question) и documentarian (4) — исправлено.
+Подтверждение Нурболата: «да».
