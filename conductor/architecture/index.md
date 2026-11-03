@@ -10,7 +10,7 @@
 
 | Ось ([layers.md](../../node_modules/dmg-core/docs/reference/layers.md)) | Пакеты u7-school |
 |---|---|
-| Платформа | `dmg-core` (репо `~/dev/tools/dmg/dmg-core`, в проекте — `node_modules/dmg-core`, D-55), приложение `@u7-scl/app`; legacy `@u7-scl/core`, legacy-ядро приложения `@u7-scl/app-legacy` (TR-33) и мосты `platform/core/src/legacy-bridge` |
+| Платформа | `dmg-core` (репо `~/dev/tools/dmg/dmg-core`, в проекте — `node_modules/dmg-core`, D-61), приложение `@u7-scl/app`; legacy `@u7-scl/core`, legacy-ядро приложения `@u7-scl/app-legacy` (TR-33) и мосты `platform/core/src/legacy-bridge` |
 | Домен | `@u7-scl/domain` (`domain/src/<m>`; вход модуля — `@u7-scl/domain/<m>/contract`) |
 | Прикладной слой | `modules/<m>/src` (1:1 с модулем домена) |
 | Входные адаптеры | `runners/*`: бот `u7-bot`, позже web и транспорты; операции — через `appApi` |
@@ -30,7 +30,7 @@
 
 ## Правка платформы `dmg-core`
 
-Пакет живёт в своём репо `~/dev/tools/dmg/dmg-core` и подключён как `file:` (D-55); `node_modules/dmg-core` — только для чтения.
+Пакет живёт в своём репо `~/dev/tools/dmg/dmg-core` и подключён как `file:` (D-61); `node_modules/dmg-core` — только для чтения.
 
 Платформа (`dmg-core`, в будущем `dmg-ui`) развивается параллельно с u7-school: что нужно проекту и принадлежит платформе, правится в платформе, а не обходится в проекте. Агенты вправе править репо пакета по этому порядку; коммит в репо пакета делается отдельно, его SHA указывается в коммите u7-school.
 
@@ -38,7 +38,7 @@
 2. В репо пакета зелёные `bun run check` и `bun run e2e`; коммит там.
 3. В u7-school — `bun install` (новые файлы пакета подтягиваются только так), при изменении доставляемых документов, скилов и ролей — `bun run dmg:sync` и `bun run agents:sync`; `bun run check` зелёный; коммит, в сообщении — SHA коммита пакета.
 
-Правка, нужная u7-school, но меняющая контракт пакета, — сначала решение в `docs/decisions.md` пакета. С релиза — тег пакета и `git+ssh` вместо `file:` (D-55).
+Правка, нужная u7-school, но меняющая контракт пакета, — сначала решение в `docs/decisions.md` пакета. С релиза — тег пакета и `git+ssh` вместо `file:` (D-61).
 
 ## Документы проекта
 

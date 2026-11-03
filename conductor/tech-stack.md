@@ -6,7 +6,7 @@
 
 ## Фреймворки и библиотеки
 - **Core Framework:** Собственный мета-фреймворк (@u7/core) с поддержкой DDD, type-safe ApiApp и планировщиком периодических заданий (Job)
-- **Платформа DMG:** пакет `dmg-core` — отдельный репо `~/dev/tools/dmg/dmg-core`, подключён как `file:` (с релиза — `git+ssh` по тегу, D-55); новый код пишется на нём, `@u7/core` — legacy
+- **Платформа DMG:** пакет `dmg-core` — отдельный репо `~/dev/tools/dmg/dmg-core`, подключён как `file:` (с релиза — `git+ssh` по тегу, D-61); новый код пишется на нём, `@u7/core` — legacy
 - **Web API / Бэкенд:** Elysia
 - **Telegram Bot:** Grammy
 - **Telegram Conversations:** @grammyjs/conversations
