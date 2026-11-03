@@ -2,10 +2,10 @@
 
 Каждая фаза — отдельная сессия. Код — TDD (red → запуск → green). Правки пакета — коммит в `~/dev/tools/dmg/dmg-core` (зелёные `check` и `e2e`), затем в u7-school `bun install`, `dmg:sync`/`agents:sync` при изменении доставляемых файлов, `check`, коммит с SHA пакета. Данные `data/` не трогаем; пушей и деплоя нет.
 
-## Фаза 0: Базовая линия
+## Фаза 0: Базовая линия [checkpoint: d257e23]
 
 - [x] Task: Зафиксировать базовую линию: `bun test`, `bun run e2e` пакета и u7-school; точный замер `dmg-core/src` (доля комментариев, блоки ≥12 строк, строки с `D-NN`, `TR-NN`) в черновике `summary.md` f9868e4
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md) d257e23
 
 ## Фаза 1: Правило и решение
 
