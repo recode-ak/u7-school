@@ -2,7 +2,10 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
-import type { ContentSnapshot } from '@u7-scl/course/domain';
+import {
+  GetStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import { StreamDs } from '@u7-scl/stream/domain';
 import { buttons } from '../../shared/buttons';
 import { formatProgressBar, getStudent } from '../shared';
@@ -41,16 +44,13 @@ export class ProgressStory extends U7BotUiStory {
       );
     }
 
-    const stream = (await this.appApi.execute('get-stream', {
-      streamId,
-    })) as {
-      title: string;
-      contentSnapshot: ContentSnapshot;
-    };
-
-    if (!stream?.contentSnapshot) {
-      return this.screen(md`⚠️ Программа потока не найдена\\.`);
-    }
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const stream = loaded.value;
 
     const card = StreamDs.computeStudentCard(stream.contentSnapshot, student);
     const projectProgress = StreamDs.computeStreamProjectProgress(

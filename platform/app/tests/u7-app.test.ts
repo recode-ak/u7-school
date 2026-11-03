@@ -15,7 +15,11 @@ import {
   QuestionnaireFactory,
   type QuestionnairePool,
 } from '@u7-scl/domain/questionnaire';
-import { StreamAr, StudentAr } from '@u7-scl/domain/stream';
+import { StudentAr } from '@u7-scl/domain/stream';
+import {
+  CreateStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import {
   CancelWishUcDef,
   CreateCourseWishUcDef,
@@ -235,6 +239,33 @@ const snapshot: ContentSnapshot = [
   },
 ];
 
+/** Опубликованный модуль и урок в legacy-формате — снимок для `createStream`. */
+const legacyModule = {
+  uuid: MODULE,
+  title: 'Основы JS',
+  description: 'Синтаксис языка',
+  authorId: RESPONDENT,
+  status: 'published',
+  projects: [
+    {
+      uuid: snapshot[0]?.projectId,
+      title: 'Введение',
+      status: 'published',
+      lessonIds: [snapshot[0]?.lessons[0]?.lessonId],
+    },
+  ],
+  createdAt: '2026-06-01T10:00',
+};
+const legacyLesson = {
+  uuid: snapshot[0]?.lessons[0]?.lessonId,
+  moduleId: MODULE,
+  title: 'Урок 1',
+  status: 'published',
+  createdAt: '2026-06-01T10:00',
+  stepIds: [STEP],
+  mentorStepIds: [],
+};
+
 /** Желание в анкетной ветке (pending) — legacy-запись wishes.json. */
 const pendingWish = (uuid: string, userId: string) => ({
   uuid,
@@ -306,6 +337,15 @@ describe('U7App: legacy-события доходят до ER DMG-модуля w
         pendingWish(ABANDONED, QUITTER),
       ]),
     );
+    await mkdir(join(dir, 'courses'), { recursive: true });
+    await Bun.write(
+      join(dir, 'courses', 'modules.json'),
+      JSON.stringify([legacyModule]),
+    );
+    await Bun.write(
+      join(dir, 'courses', 'lessons.json'),
+      JSON.stringify([legacyLesson]),
+    );
     bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
   });
 
@@ -313,25 +353,23 @@ describe('U7App: legacy-события доходят до ER DMG-модуля w
     await rm(dir, { recursive: true, force: true });
   });
 
-  test('student.enrolled, stream.created, questionnaire:complete|abandon → fulfillWish, inviteWishers, confirmWish, abandonWish', async () => {
+  test('student.enrolled, createStream, questionnaire:complete|abandon, questionnaire:complete|abandon → fulfillWish, inviteWishers, confirmWish, abandonWish', async () => {
     const bus = bundle.eventBus;
     bus.publish(
       single(StudentAr.enroll(STREAM, RESPONDENT, STEP, MODULE).flushEvents()),
     );
-    bus.publish(
-      single(
-        StreamAr.create(
-          {
-            title: 'Поток JS-1',
-            description: 'Основной поток курса JavaScript',
-            mentorId: RESPONDENT,
-            moduleId: MODULE,
-            startDate: '2026-06-01T12:00',
-          },
-          snapshot,
-        ).flushEvents(),
-      ),
+    const created = await bundle.apiApp.dispatch(
+      StreamModuleDef,
+      CreateStreamUcDef.command({
+        title: 'Поток JS-1',
+        description: 'Основной поток курса JavaScript',
+        moduleId: MODULE,
+        startDate: Date.UTC(2026, 5, 1, 12),
+      }),
+      new UserCaller({ ...ACTOR, roles: [Role.MENTOR] }),
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
     );
+    expect(created.ok).toBe(true);
     const completed = questionnaireOf(RESPONDENT);
     completed.handleAction({ type: 'callback', value: 'yes' });
     bus.publish(single(completed.flushEvents()));

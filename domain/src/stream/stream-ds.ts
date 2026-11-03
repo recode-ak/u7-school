@@ -1,9 +1,7 @@
-import { errConflict, throwError } from '@u7-scl/core/domain';
 import { now } from '@u7-scl/core/shared';
 import type { ContentSnapshot, StepPosition } from '@u7-scl/domain/course';
 import { CourseDs } from '@u7-scl/domain/course';
-import type { StreamConflictUcError } from './errors';
-import type { StreamAr } from './stream/a-root';
+import type { LegacyStreamAr } from './stream/a-root';
 import { StudentAr } from './student/a-root';
 import type { StepRecord, Student } from './student/entity';
 import type {
@@ -25,39 +23,11 @@ import type {
 
 export const StreamDs = {
   /**
-   * Завершить поток с инвариантом терминальности (ФР-2 трека peer-review).
-   *
-   * Координация двух агрегатов модуля: пока у кого-то из студентов
-   * нетерминальный статус (active/enrolled), завершение невозможно —
-   * ментор должен указать исход каждому. Терминальность спрашивает
-   * у StudentAr (зона Student), переход и событие — StreamAr (зона Stream).
-   *
-   * @throws STREAM_CONFLICT со списком нетерминальных студентов
-   */
-  completeStream(stream: StreamAr, students: StudentAr[]): void {
-    const pending = students
-      .filter((s) => !s.isTerminal())
-      .map((s) => ({ userId: s.state.userId, status: s.state.status }));
-
-    if (pending.length > 0) {
-      throwError(
-        errConflict<StreamConflictUcError>(
-          'STREAM_CONFLICT',
-          `Нельзя завершить поток: ${pending.length} студентов ещё учатся. Сначала укажите исход для каждого.`,
-          { pending },
-        ),
-      );
-    }
-
-    stream.complete();
-  },
-
-  /**
    * Завершить шаг и выдать следующий.
    * Определяет уровень перехода: step / lesson / project / stream.
    */
   completeStep(
-    stream: StreamAr,
+    stream: LegacyStreamAr,
     student: StudentAr,
     stepId: string,
   ): CompletionResult {
@@ -128,7 +98,7 @@ export const StreamDs = {
    * Возвращает null, если условия не выполнены (обычный already_completed).
    */
   tryIssueTailStep(
-    stream: StreamAr,
+    stream: LegacyStreamAr,
     student: StudentAr,
     completedStepId: string,
   ): CompletionResult | null {

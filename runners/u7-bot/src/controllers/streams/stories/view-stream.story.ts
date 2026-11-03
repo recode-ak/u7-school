@@ -21,16 +21,18 @@ import {
   ListScopeFactsUcDef,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
-import type {
-  CategorizedStudent,
-  Stream,
-  Student,
-} from '@u7-scl/stream/domain';
+import {
+  GetStreamMembersUcDef,
+  GetStreamUcDef,
+  StreamModuleDef,
+  type StreamWithRights,
+} from '@u7-scl/domain/stream/contract';
+import type { CategorizedStudent, Student } from '@u7-scl/stream/domain';
 import {
   AbandonSign,
   CompletionSign,
+  LegacyStreamPolicy,
   StreamDs,
-  StreamPolicy,
   StudentAr,
   StudentOutcomeCategory,
 } from '@u7-scl/stream/domain';
@@ -41,18 +43,13 @@ import { resolveStreamNavLevel } from '../stream-nav-resolver';
 /** Контекст awaitInput при вводе кодового слова */
 interface EnrollKeyContext {
   streamId: string;
-  enrollmentKey: string;
   attempts: number;
 }
 
-/** Минимум полей потока для финального поздравления */
-interface EnrollStreamInfo {
-  title: string;
-  startDate: string;
-  telegramGroupInvite?: string;
-}
-
 const MAX_ENROLL_ATTEMPTS = 3;
+
+/** Текст отказа зачисления при неверном кодовом слове: слово UI не знает, неверное узнаёт по отказу */
+const WRONG_ENROLL_KEY_MESSAGE = 'Неверное кодовое слово';
 
 /**
  * S02-S04: Детальная карточка потока (curious-режим).
@@ -76,7 +73,7 @@ export class ViewStreamStory extends U7BotUiStory {
     }
 
     if (cmd === 'details' && streamId) {
-      return this.handleDetailsView(streamId);
+      return this.handleDetailsView(streamId, actor);
     }
 
     if (cmd === 'students' && streamId) {
@@ -122,42 +119,8 @@ export class ViewStreamStory extends U7BotUiStory {
       };
     }
 
-    const enteredKey = update.text;
-
-    if (enteredKey !== ctx.enrollmentKey) {
-      const attemptsLeft = MAX_ENROLL_ATTEMPTS - ctx.attempts - 1;
-      if (attemptsLeft <= 0) {
-        return {
-          release: true,
-          ...this.screen(
-            md`❌ Попытки исчерпаны\\.\nВозврат к потоку — нажмите кнопку ниже\\.`,
-            this.kb([
-              [
-                this.btn(
-                  '⬅️ Назад к потоку',
-                  this.cbFor(this.storyName, 'view', ctx.streamId),
-                ),
-              ],
-            ]),
-          ),
-        };
-      }
-
-      return {
-        ...this.warn(
-          md`❌ Неверное слово\\. Осталось попыток: ${attemptsLeft}`,
-        ),
-        awaitInput: {
-          context: {
-            ...ctx,
-            attempts: ctx.attempts + 1,
-          } satisfies EnrollKeyContext,
-        },
-      };
-    }
-
-    // Верное слово — зачисляем
-    return this.#doEnroll(ctx.streamId, actor, ctx.enrollmentKey);
+    // Кодовое слово проверяет зачисление; UI его не знает (оно не выходит из потока)
+    return this.#doEnroll(ctx.streamId, actor, update.text, ctx.attempts);
   }
 
   // ── Защищённые методы (доступны для наследования) ──
@@ -166,19 +129,24 @@ export class ViewStreamStory extends U7BotUiStory {
     streamId: string,
     actor: User,
   ): Promise<DialogResponse> {
-    const stream = (await this.appApi.execute('get-stream', {
-      streamId,
-    })) as Stream;
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const stream = loaded.value;
     let studentCount = 0;
     try {
-      const students = await this.appApi.execute(
-        'list-stream-students',
-        { streamId },
+      const members = await this.dispatchUc(
+        StreamModuleDef,
+        GetStreamMembersUcDef.command({ streamId }),
         actor,
       );
-      studentCount = (students as unknown[]).length;
+      // не ok — счётчик не критичен для карточки
+      if (members.ok) studentCount = members.value?.students.length ?? 0;
     } catch {
-      // счётчик студентов не критичен для карточки
+      // исключение диспетчера — как и отказ: карточку не ломаем
     }
 
     const hasReviews = await this.#streamHasReviews(streamId, actor);
@@ -200,8 +168,9 @@ export class ViewStreamStory extends U7BotUiStory {
       archived: '⚫ Архивирован',
     };
 
-    const dateStr = this.formatDate(stream.startDate);
-    const timeStr = this.#formatTime(stream.startDate);
+    const startIso = new Date(stream.startDate).toISOString();
+    const dateStr = this.formatDate(startIso);
+    const timeStr = this.#formatTime(startIso);
 
     const text = mdJoin([
       md`📋 *${stream.title}*`,
@@ -271,12 +240,13 @@ export class ViewStreamStory extends U7BotUiStory {
       streamId = actionOrStreamId;
     }
 
-    const stream = (await this.appApi.execute('get-stream', {
-      streamId,
-    })) as Stream | null;
-    if (!stream) {
-      return this.screen(md`❌ Поток не найден\\.`);
-    }
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const stream = loaded.value;
 
     if (!stream.contentSnapshot || stream.contentSnapshot.length === 0) {
       return this.screen(
@@ -292,7 +262,7 @@ export class ViewStreamStory extends U7BotUiStory {
       );
     }
 
-    const canEdit = StreamPolicy.canEdit(actor, stream);
+    const canEdit = stream.canManage;
     if (this.storyName === 'view-stream-mentor' && !canEdit) {
       return this.screen(md`⛔ У вас нет прав для управления этим потоком\\.`);
     }
@@ -376,10 +346,17 @@ export class ViewStreamStory extends U7BotUiStory {
     return this.screen(text, keyboard);
   }
 
-  protected async handleDetailsView(streamId: string): Promise<DialogResponse> {
-    const stream = (await this.appApi.execute('get-stream', {
-      streamId,
-    })) as Stream;
+  protected async handleDetailsView(
+    streamId: string,
+    actor: User,
+  ): Promise<DialogResponse> {
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const stream = loaded.value;
 
     const fields: Array<{ label: string; value: string | undefined }> = [
       { label: '🎯 Цель', value: stream.goal },
@@ -415,12 +392,12 @@ export class ViewStreamStory extends U7BotUiStory {
   }
 
   protected buildKeyboard(
-    stream: Stream,
+    stream: StreamWithRights,
     actor: User,
     opts?: { hasReviews?: boolean },
   ): KeyboardDescription {
-    const canEnroll = StreamPolicy.canEnroll(actor);
-    const isOwnerMentor = StreamPolicy.canEdit(actor, stream);
+    const canEnroll = LegacyStreamPolicy.canEnroll(actor);
+    const isOwnerMentor = stream.canManage;
     const rows: KbButton[][] = [];
 
     // ── Публичные кнопки (всем) ──
@@ -479,13 +456,13 @@ export class ViewStreamStory extends U7BotUiStory {
       actor,
     )) as Student[];
 
-    const stream = (await this.appApi.execute('get-stream', {
-      streamId,
-    })) as Stream;
-
-    if (!stream) {
-      return this.screen(md`⚠️ Поток не найден`);
-    }
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const stream = loaded.value;
 
     // Категоризируем через DS
     const categorized = StreamDs.categorizeStudents(students, now());
@@ -683,13 +660,13 @@ export class ViewStreamStory extends U7BotUiStory {
       // оставляем обрезок
     }
 
-    const stream = (await this.appApi.execute('get-stream', {
-      streamId: student.streamId,
-    })) as Stream;
-
-    if (!stream) {
-      return this.screen(md`⚠️ Поток не найден`);
-    }
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId: student.streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const stream = loaded.value;
 
     // Lag info
     const [cat] = StreamDs.categorizeStudents([student]);
@@ -895,19 +872,18 @@ export class ViewStreamStory extends U7BotUiStory {
     streamId: string,
     actor: User,
   ): Promise<DialogResponse> {
-    const stream = (await this.appApi.execute('get-stream', {
-      streamId,
-    })) as { enrollmentKey?: string; title: string };
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
 
-    // Если есть кодовое слово — запрашиваем его
-    if (stream.enrollmentKey) {
+    // Если нужно кодовое слово — запрашиваем его
+    if (loaded.value.requiresEnrollmentKey) {
       return this.ask(
         md`🔑 Введите кодовое слово для записи на поток:`,
-        {
-          streamId,
-          enrollmentKey: stream.enrollmentKey,
-          attempts: 0,
-        } satisfies EnrollKeyContext,
+        { streamId, attempts: 0 } satisfies EnrollKeyContext,
         this.kb([
           [
             this.btn(
@@ -932,19 +908,49 @@ export class ViewStreamStory extends U7BotUiStory {
     };
   }
 
+  /** Неверное слово: переспрос с учётом попытки или возврат к потоку, когда попытки кончились */
+  #wrongKey(streamId: string, attempts: number): DialogResponse {
+    const attemptsLeft = MAX_ENROLL_ATTEMPTS - attempts - 1;
+    if (attemptsLeft <= 0) {
+      return {
+        release: true,
+        ...this.screen(
+          md`❌ Попытки исчерпаны\\.\nВозврат к потоку — нажмите кнопку ниже\\.`,
+          this.kb([
+            [
+              this.btn(
+                '⬅️ Назад к потоку',
+                this.cbFor(this.storyName, 'view', streamId),
+              ),
+            ],
+          ]),
+        ),
+      };
+    }
+    return {
+      ...this.warn(md`❌ Неверное слово\\. Осталось попыток: ${attemptsLeft}`),
+      awaitInput: {
+        context: {
+          streamId,
+          attempts: attempts + 1,
+        } satisfies EnrollKeyContext,
+      },
+    };
+  }
+
   async #doEnroll(
     streamId: string,
     actor: User,
     enrollmentKey?: string,
+    attempts = 0,
   ): Promise<DialogResponse> {
-    let stream: EnrollStreamInfo;
-    try {
-      stream = (await this.appApi.execute('get-stream', {
-        streamId,
-      })) as EnrollStreamInfo;
-    } catch (err) {
-      return this.errorNotify(err);
-    }
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const stream = loaded.value;
 
     try {
       await this.appApi.execute(
@@ -957,11 +963,18 @@ export class ViewStreamStory extends U7BotUiStory {
         actor,
       );
     } catch (err) {
+      if (
+        enrollmentKey !== undefined &&
+        err instanceof Error &&
+        err.message.includes(WRONG_ENROLL_KEY_MESSAGE)
+      ) {
+        return this.#wrongKey(streamId, attempts);
+      }
       // Ошибки валидации/конфликты — реплика-переспрос без захвата экрана
       return this.errorNotify(err);
     }
 
-    const dateStr = this.formatDate(stream.startDate);
+    const dateStr = this.formatDate(new Date(stream.startDate).toISOString());
     const lines: MdText[] = [
       md`🎉 *Вы успешно записаны на поток\\!*`,
       md``,

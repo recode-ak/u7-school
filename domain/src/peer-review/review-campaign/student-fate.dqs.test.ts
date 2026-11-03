@@ -13,7 +13,13 @@ const student = (
   userId: string,
   status: 'enrolled' | 'active' | 'abandoned' | 'advanced' | 'not_advanced',
   neverStarted = false,
-) => ({ userId, status, neverStarted });
+) => ({
+  studentId: crypto.randomUUID(),
+  userId,
+  status,
+  neverStarted,
+  inProgress: status === 'enrolled' || status === 'active',
+});
 
 const members = (subject = student(SUBJECT, 'advanced')) => ({
   mentorId: MENTOR,

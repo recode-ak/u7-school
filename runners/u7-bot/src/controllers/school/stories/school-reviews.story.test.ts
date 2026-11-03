@@ -3,6 +3,7 @@ import { TEST_SCHOOL, type User } from '@u7-scl/app-legacy/domain';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { ListScopeReviewsUcDef } from '@u7-scl/domain/peer-review/contract';
+import { ListStreamsUcDef } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
 import {
   peerReviewDispatch,
@@ -64,8 +65,6 @@ function makeStory(opts?: {
   const executeMock = mock(
     async (ucName: string, attrs: Record<string, unknown>) => {
       switch (ucName) {
-        case 'list-streams':
-          return streams;
         case 'get-users-by-ids': {
           const ids = attrs.userIds as string[];
           return ids.map((id) => ({
@@ -80,6 +79,7 @@ function makeStory(opts?: {
   );
 
   const dispatchMock = peerReviewDispatch({
+    listStreams: () => streams,
     listScopeReviews: (input) => ({
       scopeIds: (input as { scopeIds: string[] }).scopeIds,
       recipients,
@@ -107,7 +107,7 @@ describe('SchoolReviewsStory (SH03)', () => {
   });
 
   test('пустой срез: если потоков или отзывов нет — заглушка с кнопкой «Назад в школу»', async () => {
-    const { story, executeMock, dispatchMock } = makeStory({ recipients: [] });
+    const { story, dispatchMock } = makeStory({ recipients: [] });
 
     const response: DialogResponse = await story.handleCallback(
       'list',
@@ -125,12 +125,8 @@ describe('SchoolReviewsStory (SH03)', () => {
     expect(backBtn).toBeDefined();
     expect(backBtn?.code).toBe('school:hub:open');
 
-    expect(executeMock).toHaveBeenCalledWith(
-      'list-streams',
-      { schoolId: SCHOOL_ID },
-      actor,
-    );
     expect(dispatchMock.mock.calls.map(([, command]) => command)).toEqual([
+      ListStreamsUcDef.command({ schoolId: SCHOOL_ID }),
       ListScopeReviewsUcDef.command({
         scopeIds: [STREAM_1, STREAM_2],
         filter: { direction: 'student_mentor' },

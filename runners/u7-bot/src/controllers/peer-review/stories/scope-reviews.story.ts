@@ -7,6 +7,10 @@ import {
   PeerReviewModuleDef,
   type RecipientReviewsGroup,
 } from '@u7-scl/domain/peer-review/contract';
+import {
+  GetStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import { Routes } from '../../shared/routes';
 import { authorLabel, rolesOf } from './review-render';
 
@@ -78,9 +82,14 @@ export class ScopeReviewsStory extends U7BotUiStory {
         ListScopeReviewsUcDef.command({ scopeIds: [scopeId] }),
         actor,
       ),
-      this.appApi.execute('get-stream', { streamId: scopeId }, actor),
+      this.dispatchUc(
+        StreamModuleDef,
+        GetStreamUcDef.command({ streamId: scopeId }),
+        actor,
+      ),
     ]);
     if (!res.ok) throw new Error(res.error.code);
+    if (!stream.ok) throw new Error(stream.error.code);
     const projection = res.value;
 
     const names = await this.#namesOf(uniqueIds(projection.recipients), actor);
@@ -96,7 +105,7 @@ export class ScopeReviewsStory extends U7BotUiStory {
     );
 
     return {
-      header: md`💬 *Отзывы* — поток «${stream.title}»`,
+      header: md`💬 *Отзывы* — поток «${stream.value.title}»`,
       blocks,
       payload: undefined,
     };

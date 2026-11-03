@@ -26,17 +26,18 @@ describe('CourseModuleDef — внешний модуль (D-37)', () => {
         'getCoursesIncludingModule',
         'getSameModules',
         'getCoursesStartingWithModule',
+        'getModuleSnapshot',
       ],
       reactions: [],
       jobs: [],
     });
   });
 
-  it('агрегат курса — минимальный контракт: без событий и ошибок', () => {
+  it('агрегат курса — минимальный контракт: без событий, ошибка — модуль не найден', () => {
     expect(normalize(CourseArDef)).toMatchObject({
       name: 'course',
       events: [],
-      errors: [],
+      errors: ['COURSE_MODULE_NOT_FOUND'],
     });
   });
 

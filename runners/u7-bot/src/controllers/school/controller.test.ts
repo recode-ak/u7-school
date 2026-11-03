@@ -3,6 +3,8 @@ import { TEST_SCHOOL, type User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { Role } from '@u7-scl/user/domain';
+import { testCallers } from '../peer-review/stories/peer-review-dmg.test-kit';
+import { dmgDispatch } from '../streams/stories/stream-dmg.test-kit';
 import { SchoolController } from './controller';
 
 describe('SchoolController (реестр)', () => {
@@ -112,11 +114,10 @@ describe('SchoolController (реестр)', () => {
     controller.init({
       school: TEST_SCHOOL,
       appApi: {
-        execute: mock(async (ucName: string) => {
-          if (ucName === 'list-streams') return [];
-          return { recipients: [] };
-        }),
+        execute: mock(async () => ({ recipients: [] })),
+        dispatch: dmgDispatch({ listStreams: () => [] }),
       },
+      callers: testCallers,
     } as any);
 
     const response = await controller.handleCallback(

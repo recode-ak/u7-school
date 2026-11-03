@@ -1,42 +1,17 @@
 import { type Course, CoursePolicy } from '@u7-scl/domain/course';
 import { type User, UserPolicy } from '@u7-scl/domain/user';
-import { StreamStatus } from '../status';
 import { StudentAr } from '../student/a-root';
 import type { Student } from '../student/entity';
 import type { Stream } from './entity';
 
-export const StreamPolicy = {
-  canCreate(actor: User): boolean {
-    return UserPolicy.isMentor(actor);
-  },
-
-  canRead(actor: User, stream: Stream): boolean {
-    if (this.isActive(stream) || this.isComplete(stream)) return true;
-    return UserPolicy.isAdmin(actor) || this.isMentor(actor, stream);
-  },
-
-  canEdit(actor: User, stream: Stream): boolean {
-    return UserPolicy.isAdmin(actor) || this.isMentor(actor, stream);
-  },
-
+/** Legacy-права потока для студента (зачисление) — до Ф2; права потока — `StreamPolicy` (stream.policy.ts). */
+export const LegacyStreamPolicy = {
   canEnroll(actor: User): boolean {
     return !UserPolicy.isStudent(actor);
   },
 
   isMentor(actor: User, stream: Stream): boolean {
     return actor.uuid === stream.mentorId;
-  },
-
-  isComplete(stream: Stream): boolean {
-    return stream.status === StreamStatus.COMPLETED;
-  },
-
-  isActive(stream: Stream): boolean {
-    return stream.status === StreamStatus.ACTIVE;
-  },
-
-  isArchived(stream: Stream): boolean {
-    return stream.status === StreamStatus.ARCHIVED;
   },
 
   /**

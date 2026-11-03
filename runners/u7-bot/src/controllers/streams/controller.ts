@@ -1,26 +1,16 @@
+import { dispatchModuleUc } from '@u7-scl/bot/dispatch-uc';
 import { U7BotController } from '@u7-scl/bot/u7-bot-controller';
 import { getGlobalLogger, md } from '@u7-scl/core/shared';
 import type { MessengerEvent, MessengerEventReaction } from '@u7-scl/core/ui';
 import {
-  type Student,
-  StudentAr,
-  StudentOutcomeCategory,
-} from '@u7-scl/stream';
+  FindStreamByTelegramGroupUcDef,
+  GetStreamMembersUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
+import type { Command } from 'dmg-core';
 import { InactivityStory } from './stories/inactivity.story';
 import { CatalogStory } from './stories/stream-catalog.story';
 import { ViewStreamStory } from './stories/view-stream.story';
-
-function isStudentInProgress(studentState: unknown): boolean {
-  try {
-    return (
-      new StudentAr(studentState as Student).outcomeCategory() ===
-      StudentOutcomeCategory.IN_PROGRESS
-    );
-  } catch {
-    const raw = studentState as { status?: string };
-    return raw?.status === 'active' || raw?.status === 'enrolled';
-  }
-}
 
 /**
  * Контроллер streams — «Потоки курсов» (S01-S04).
@@ -46,31 +36,26 @@ export class StreamsController extends U7BotController {
     event: MessengerEvent,
   ): Promise<MessengerEventReaction | undefined> {
     try {
-      const streams = await this.resolve.appApi.execute('list-streams', {});
-      const stream = streams.find(
-        (s) =>
-          s.telegramGroupId &&
-          String(s.telegramGroupId) === String(event.chatId),
+      const found = await this.#dispatchAsGuest(
+        FindStreamByTelegramGroupUcDef.command({
+          telegramGroupId: String(event.chatId),
+        }),
       );
+      if (!found.ok) throw new Error(found.error.code);
+      const stream = found.value;
       if (!stream) {
         return 'pass';
       }
 
       if (event.kind === 'member_joined') {
-        const students = await this.resolve.appApi.execute(
-          'list-stream-students',
-          { streamId: stream.uuid },
-        );
+        const students = await this.#studentsOf(stream.uuid);
         const user = await this.resolve.userFacade.getUserByTelegramId(
           event.user.id,
         );
 
         const isStudentActive =
           Boolean(user) &&
-          students.some(
-            (s: { userId?: string }) =>
-              s.userId === user?.uuid && isStudentInProgress(s),
-          );
+          students.some((s) => s.userId === user?.uuid && s.inProgress);
 
         if (!isStudentActive) {
           const mentor = await this.resolve.appApi.execute('get-user', {
@@ -94,13 +79,9 @@ export class StreamsController extends U7BotController {
           event.user.id,
         );
         if (user) {
-          const students = await this.resolve.appApi.execute(
-            'list-stream-students',
-            { streamId: stream.uuid },
-          );
+          const students = await this.#studentsOf(stream.uuid);
           const isActive = students.some(
-            (s: { userId?: string }) =>
-              s.userId === user.uuid && isStudentInProgress(s),
+            (s) => s.userId === user.uuid && s.inProgress,
           );
           if (isActive) {
             const mentor = await this.resolve.appApi.execute('get-user', {
@@ -125,5 +106,28 @@ export class StreamsController extends U7BotController {
       );
       return 'stop';
     }
+  }
+
+  /** Студенты потока; потока нет — пусто. */
+  async #studentsOf(streamId: string) {
+    const members = await this.#dispatchAsGuest(
+      GetStreamMembersUcDef.command({ streamId }),
+    );
+    if (!members.ok) throw new Error(members.error.code);
+    return members.value?.students ?? [];
+  }
+
+  /**
+   * Команда модулю потоков от гостя: событие группы приходит без актора
+   * бота, а читают поток открытые запросы (Т8).
+   */
+  #dispatchAsGuest<D extends (typeof StreamModuleDef)['useCases'][number]>(
+    command: Command<D>,
+  ) {
+    return dispatchModuleUc(StreamModuleDef, command, {
+      resolve: this.resolve,
+      warn: (message, meta) =>
+        getGlobalLogger()?.warn('stream-controller', message, meta),
+    });
   }
 }

@@ -40,12 +40,19 @@ export function notEnrolled(): DialogResponse {
   return screen(md`📖 Вы не записаны ни на один поток`);
 }
 
+/** Поток в части, нужной студенческим экранам. */
+export type StreamSnapshotView = {
+  title: string;
+  contentSnapshot: ContentSnapshot;
+};
+
 /**
  * Получает студента и поток. null — студент не записан или поток недоступен.
  */
 export async function getStudentAndStream(
   appApi: ApiApp<U7BotAppMeta>,
   actor: User,
+  loadStream: (streamId: string) => Promise<StreamSnapshotView | undefined>,
 ): Promise<{
   student: Student | null;
   stream: { title: string; contentSnapshot: ContentSnapshot } | null;
@@ -56,13 +63,8 @@ export async function getStudentAndStream(
   const student = studentResult.value;
 
   try {
-    const stream = await appApi.execute('get-stream', {
-      streamId: student.streamId,
-    });
-    return {
-      student,
-      stream: stream as { title: string; contentSnapshot: ContentSnapshot },
-    };
+    const stream = await loadStream(student.streamId);
+    return stream ? { student, stream } : { student: null, stream: null };
   } catch {
     return { student: null, stream: null };
   }

@@ -3,10 +3,13 @@
  * модулей (D-42; фасад — `Facade<typeof CourseModuleDef>`, D-43),
  * legacy-фасад и ошибки.
  */
+export type { ContentSnapshot } from './content-snapshot';
+export { ContentSnapshotVo } from './content-snapshot';
 export type {
   CourseAccessDeniedUcError,
   CourseNotFoundUcError,
 } from './course/commands/errors';
+export { CourseErrors } from './course/course.errors';
 export {
   type CourseEnrollment,
   GetCourseEnrollmentUcDef,
@@ -23,6 +26,7 @@ export {
   GetModuleEnrollmentUcDef,
   type ModuleEnrollment,
 } from './course/uc/get-module-enrollment.uc';
+export { GetModuleSnapshotUcDef } from './course/uc/get-module-snapshot.uc';
 export {
   GetSameModulesUcDef,
   type SameModules,

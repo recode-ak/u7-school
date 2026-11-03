@@ -42,9 +42,11 @@ const STUDENT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
 type Status = 'enrolled' | 'active' | 'abandoned' | 'advanced' | 'not_advanced';
 const member = (userId: string, status: Status, neverStarted = false) => ({
+  studentId: crypto.randomUUID(),
   userId,
   status,
   neverStarted,
+  inProgress: status === 'active' || status === 'enrolled',
 });
 const fullMembers = (subject = member(SUBJECT, 'advanced')) => ({
   mentorId: MENTOR,

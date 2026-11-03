@@ -99,9 +99,8 @@ const baseResolve = (overrides: Record<string, unknown> = {}) =>
 
 describe('ListStreamStudentsUc', () => {
   test('вызов без актора — фасадный read-API для ER других модулей (peer-review)', async () => {
-    // StreamInProcFacade.getMembers зовёт UC без актора из ER создания
-    // кампании: системный read, гейт наличия пользователя не нужен
-    // (как у get-stream / which-courses-include-module).
+    // ER создания кампании зовёт UC без актора: системный read, гейт
+    // наличия пользователя не нужен (как у get-stream / which-courses-include-module).
     // Свои студенты с валидными uuid: handle валидирует output по схеме.
     const validStudent = {
       uuid: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',

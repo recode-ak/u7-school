@@ -3,6 +3,12 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { Role } from '@u7-scl/user/domain';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
+import {
+  dmgDispatch,
+  streamNotFound,
+  streamView,
+} from '../../streams/stories/stream-dmg.test-kit';
 import { MonitorStory } from './monitor';
 
 // ══ Фабрики ══
@@ -140,7 +146,6 @@ function setupStory(
     execute: mock(async (name: string, params?: Record<string, unknown>) => {
       if (apiErrors.has(name)) throw new Error(`API error: ${name}`);
       if (name === 'list-stream-students') return students;
-      if (name === 'get-stream') return stream;
       if (name === 'get-student-progress')
         return students.find((s) => s.uuid === params?.studentId) ?? null;
       if (name === 'get-user') {
@@ -153,7 +158,20 @@ function setupStory(
       return undefined;
     }),
   };
-  story.init({ appApi } as never);
+  // Поток читает UC getStream; право управления — у ментора потока (как Policy)
+  const dispatch = dmgDispatch({
+    getStream: (_input, caller) =>
+      stream
+        ? streamView({
+            ...stream,
+            canManage: stream.mentorId === caller.subject().uuid,
+          })
+        : streamNotFound(),
+  });
+  story.init({
+    appApi: { ...appApi, dispatch },
+    callers: testCallers,
+  } as never);
   return { story, appApi };
 }
 
@@ -239,7 +257,7 @@ describe('MonitorStory (S07/S08) — контракт «Диалог и Экра
       mentorActor(),
       session,
     );
-    expect(String(response.screen?.text)).toContain('Поток не найден');
+    expect(String(response.notify?.text)).toContain('Поток не найден');
   });
 
   test('students: дефолт-фильтр FR-8 — только активные, сводка по всем', async () => {
@@ -539,7 +557,7 @@ describe('MonitorStory (S07/S08) — контракт «Диалог и Экра
       mentorActor(),
       session,
     );
-    expect(String(response.screen?.text)).toContain('Поток не найден');
+    expect(String(response.notify?.text)).toContain('Поток не найден');
   });
 
   // ═══ mark-abandoned: confirm → выполнение (FR-5, delegate) ═══

@@ -42,6 +42,11 @@ describe('WishErrors — коды, kind и тексты', () => {
         'conflict',
         'Пригласить можно только выраженное или подтверждённое желание',
       ],
+      [
+        'WISH_ALREADY_INVITED',
+        'conflict',
+        'Желающий уже приглашён на этот поток',
+      ],
       ['WISH_ALREADY_EXISTS', 'conflict', 'Желание уже выражено'],
       ['WISH_NOT_FOUND', 'not_found', 'Желание не найдено'],
       ['WISH_COURSE_NOT_FOUND', 'not_found', 'Курс не найден'],

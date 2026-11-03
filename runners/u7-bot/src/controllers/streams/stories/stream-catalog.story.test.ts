@@ -1,9 +1,11 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { Role } from '@u7-scl/user/domain';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { CatalogStory } from './stream-catalog.story';
+import { dmgDispatch } from './stream-dmg.test-kit';
 
 describe('CatalogStory (S01)', () => {
   const session: BotSession = { dialog: { path: 'stream/catalog', seq: 1 } };
@@ -18,14 +20,11 @@ describe('CatalogStory (S01)', () => {
   /** Создаёт сторис с мокнутым appApi */
   function makeStory(streams: unknown[]) {
     const mockAppApi = {
-      execute: mock(async (name: string) => {
-        if (name === 'list-streams') return streams;
-        return undefined;
-      }),
+      dispatch: dmgDispatch({ listStreams: () => streams }),
     };
 
     const story = new CatalogStory();
-    story.init({ appApi: mockAppApi } as never);
+    story.init({ appApi: mockAppApi, callers: testCallers } as never);
     return { story, mockAppApi };
   }
 

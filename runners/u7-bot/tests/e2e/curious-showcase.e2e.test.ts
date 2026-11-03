@@ -638,7 +638,7 @@ describe('E2E: Витрина для любопытного', () => {
           callbackData: `stream:view-stream:view:ffffffff-ffff-ffff-ffff-ffffffffffff:${stamp}`,
         }),
       );
-      expect(response.screen?.text).toContain('не найден');
+      expect(String(response.notify?.text)).toContain('не найден');
     });
   });
 

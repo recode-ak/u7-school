@@ -4,7 +4,7 @@ import {
   type EnrollStudentCmd,
   type EnrollStudentCmdMeta,
   EnrollStudentCmdSchema,
-  StreamAr,
+  LegacyStreamAr,
   StudentAr,
 } from '@u7-scl/domain/stream';
 import { Role } from '@u7-scl/user/domain';
@@ -16,7 +16,7 @@ import { StreamUseCase } from '../stream-uc';
  *
  * Оркестрирует получение данных и делегирует доменную логику
  * (проверку enrollmentKey, конфликта активных записей и gate)
- * в StreamAr.enroll().
+ * в LegacyStreamAr.enroll().
  */
 export class EnrollStudentUc extends StreamUseCase<EnrollStudentCmdMeta> {
   protected readonly ucName = 'enroll-student' as const;
@@ -70,7 +70,7 @@ export class EnrollStudentUc extends StreamUseCase<EnrollStudentCmdMeta> {
     }
 
     // 2. Доменная операция: проверка правил зачисления
-    const streamAr = new StreamAr(streamEntity);
+    const streamAr = new LegacyStreamAr(streamEntity);
     const { firstStepId } = streamAr.enroll({
       enrollmentKey: command.enrollmentKey,
       course,

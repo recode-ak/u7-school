@@ -13,6 +13,10 @@ import {
   ReviewCampaignErrors,
   ReviewErrors,
 } from '@u7-scl/domain/peer-review/contract';
+import {
+  GetStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import type { DomainError } from 'dmg-core';
 import { campaignProfileOf } from './campaign-profiles';
 import type { MyReviewsStory } from './my-reviews.story';
@@ -178,11 +182,12 @@ export class CampaignStory extends U7BotUiStory {
     if (single) {
       return this.#askReview(campaignId, single.userId, actor, page);
     }
-    const stream = await this.appApi.execute(
-      'get-stream',
-      { streamId: card.scopeId },
+    const stream = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId: card.scopeId }),
       actor,
     );
+    if (!stream.ok) return this.ucErrorNotify(stream.error);
     const names = await this.#namesOf(
       view.recipients.map((r) => r.userId),
       actor,
@@ -203,7 +208,7 @@ export class CampaignStory extends U7BotUiStory {
 
     return this.screen(
       mdJoin([
-        profile.listHeader(stream.title),
+        profile.listHeader(stream.value.title),
         md``,
         ...profile.listIntro(view.myRole, view.subjectOutcome, subjectName),
         md``,
@@ -413,12 +418,13 @@ export class CampaignStory extends U7BotUiStory {
     const cards = await this.#cardsOf(actor);
     const card = cards.find((c) => c.campaignId === campaignId);
     if (!card) return '';
-    const stream = await this.appApi.execute(
-      'get-stream',
-      { streamId: card.scopeId },
+    const stream = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId: card.scopeId }),
       actor,
     );
-    return stream.title;
+    if (!stream.ok) throw new Error(stream.error.code);
+    return stream.value.title;
   }
 
   /** Имена адресатов для подписей кнопок. */

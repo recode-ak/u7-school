@@ -2,7 +2,10 @@ import { describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
+import { ListStreamsUcDef } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
+import { dmgDispatch } from '../../streams/stories/stream-dmg.test-kit';
 import { MyStreamsStory } from './my-streams';
 
 function mentorActor(): User {
@@ -32,14 +35,19 @@ const mockStreams = [
   },
 ];
 
-function setupStory(appApi?: {
-  execute: (cmd: string) => Promise<unknown>;
-}): MyStreamsStory {
+/** Ответ listStreams по умолчанию — как UC: только потоки запрошенного ментора. */
+const ownStreams = (input: unknown) =>
+  mockStreams.filter((s) => s.mentorId === (input as ListInput).mentorId);
+
+type ListInput = { mentorId?: string };
+
+function setupStory(
+  answer: (input: unknown) => unknown = ownStreams,
+): MyStreamsStory & { dispatch: ReturnType<typeof dmgDispatch> } {
   const story = new MyStreamsStory();
-  story.init({
-    appApi: appApi ?? { execute: async () => mockStreams },
-  } as never);
-  return story;
+  const dispatch = dmgDispatch({ listStreams: answer });
+  story.init({ appApi: { dispatch }, callers: testCallers } as never);
+  return Object.assign(story, { dispatch });
 }
 
 function flat(response: DialogResponse) {
@@ -132,10 +140,18 @@ describe('MyStreamsStory — контракт «Диалог и Экран»', (
     expect(texts.some((t) => t.includes('Вкл.'))).toBe(false);
   });
 
+  test('list: потоки запрашиваются UC listStreams с mentorId актора', async () => {
+    const story = setupStory();
+    await story.handleCallback('list', mentorActor(), session);
+    expect(story.dispatch.mock.calls.map(([, command]) => command)).toEqual([
+      ListStreamsUcDef.command({ mentorId: 'mentor-1' }),
+    ]);
+  });
+
   // ── Пустой список ──
 
   test('пустой список — «У вас пока нет потоков» + Назад', async () => {
-    const story = setupStory({ execute: async () => [] });
+    const story = setupStory(() => []);
     const response = await story.handleCallback('list', mentorActor(), session);
     expect(String(response.screen?.text)).toContain('У вас пока нет потоков');
     const { texts, codes } = flat(response);
@@ -146,10 +162,8 @@ describe('MyStreamsStory — контракт «Диалог и Экран»', (
   // ── Ошибка API ──
 
   test('ошибка API — экран «Не удалось загрузить список потоков.»', async () => {
-    const story = setupStory({
-      execute: async () => {
-        throw new Error('API error');
-      },
+    const story = setupStory(() => {
+      throw new Error('API error');
     });
     const response = await story.handleCallback('list', mentorActor(), session);
     expect(String(response.screen?.text)).toContain('Не удалось загрузить');

@@ -3,15 +3,12 @@ import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import { type MdText, md, mdConcat } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse, KbButton } from '@u7-scl/core/ui';
+import {
+  ListStreamsUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import { StreamStatus } from '@u7-scl/stream/domain';
 import { buttons } from '../../shared/buttons';
-
-/** Витрина потока каталога — минимум полей для отображения */
-interface StreamRow {
-  uuid: string;
-  title: string;
-  status: string;
-}
 
 const STATUS_EMOJI: Record<string, string> = {
   enrollment: '🟡',
@@ -47,10 +44,13 @@ export class CatalogStory extends U7BotUiStory {
     }
 
     // Получаем все потоки одним запросом (без фильтра по статусу)
-    const allStreams = (await this.appApi.execute(
-      'list-streams',
-      {},
-    )) as StreamRow[];
+    const listed = await this.dispatchUc(
+      StreamModuleDef,
+      ListStreamsUcDef.command({}),
+      actor,
+    );
+    if (!listed.ok) return this.ucErrorNotify(listed.error);
+    const allStreams = listed.value;
 
     // Разделяем по статусам
     const enrollmentStreams = allStreams.filter(

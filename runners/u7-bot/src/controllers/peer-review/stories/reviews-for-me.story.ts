@@ -6,6 +6,10 @@ import {
   ListMyReviewsUcDef,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
+import {
+  GetStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import { buttons } from '../../shared/buttons';
 import { renderReviewCard } from './review-render';
 
@@ -122,12 +126,12 @@ export class ReviewsForMeStory extends U7BotUiStory {
     await Promise.all(
       scopeIds.map(async (scopeId) => {
         try {
-          const stream = await this.appApi.execute(
-            'get-stream',
-            { streamId: scopeId },
+          const stream = await this.dispatchUc(
+            StreamModuleDef,
+            GetStreamUcDef.command({ streamId: scopeId }),
             actor,
           );
-          titles.set(scopeId, stream.title);
+          titles.set(scopeId, stream.ok ? stream.value.title : 'неизвестно');
         } catch {
           titles.set(scopeId, 'неизвестно');
         }

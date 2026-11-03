@@ -6,7 +6,11 @@ import type {
   DialogResponse,
 } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
+import { CourseErrors } from '@u7-scl/domain/course/contract';
+import { CreateStreamUcDef } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
+import { dmgDispatch, refuse } from '../../streams/stories/stream-dmg.test-kit';
 import { CreateStreamStory } from './create-stream';
 
 /** Контекст wizard-а (живёт в dialog.input.context) */
@@ -56,7 +60,12 @@ const MOD_FIELDS: WizardCtx = {
   moduleAdditional: 'Доп',
 };
 
-function createStory(apiOverrides?: Record<string, unknown>) {
+function createStory(
+  apiOverrides?: Record<string, unknown>,
+  createStream: () => unknown = () => ({
+    streamId: '11111111-1111-4111-8111-111111111111',
+  }),
+) {
   const story = new CreateStreamStory();
   const appApi = {
     execute: mock(async (name: string, params?: Record<string, unknown>) => {
@@ -75,12 +84,17 @@ function createStory(apiOverrides?: Record<string, unknown>) {
       return undefined;
     }),
   };
+  const dispatch = dmgDispatch({ createStream });
   // Второй аргумент — имя контроллера (для isActive в pipe-командах)
   story.init(
-    { appApi, school: TEST_SCHOOL } as never,
+    {
+      appApi: { ...appApi, dispatch },
+      callers: testCallers,
+      school: TEST_SCHOOL,
+    } as never,
     { name: 'mentor' } as never,
   );
-  return { story, appApi };
+  return { story, appApi, dispatch };
 }
 
 const inputMsg = (text: string) => ({
@@ -655,8 +669,8 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
 
   // ── confirm: создание потока ──
 
-  test('confirm: UC create-stream с полным cmd, экран успеха + release', async () => {
-    const { story, appApi } = createStory();
+  test('confirm: UC createStream с полным cmd, экран успеха + release', async () => {
+    const { story, dispatch } = createStory();
     const session = wizardSession(12, {
       moduleId: 'mod-1',
       title: 'Мой Поток',
@@ -684,37 +698,43 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
     expect(String(response.screen?.text)).toBe('✅ *Поток успешно создан\\!*');
     assertDialogResponseMarkdownSafe(response);
 
-    const calls = appApi.execute.mock.calls as unknown[][];
-    const call = calls.find((c) => c[0] === 'create-stream');
-    expect(call?.[1]).toEqual({
-      title: 'Мой Поток',
-      description: 'Описание',
-      moduleId: 'mod-1',
-      startDate: '2026-09-01T14:00',
-      telegramGroupId: '-100123456789',
-      mentorId: 'mentor-1',
-      goal: 'Цель',
-      result: 'Результат',
-      rules: 'Правила',
-      targetAudience: 'Аудитория',
-      additional: 'Дополнительно',
-      enrollmentKey: 'secret',
-      telegramGroupInvite: 'https://t.me/+abc123',
-    });
+    // Ментор потока — субъект, школа — из настроек: во входе их нет; дата — UTC-метка
+    expect(dispatch.mock.calls.map(([, command]) => command)).toEqual([
+      CreateStreamUcDef.command({
+        title: 'Мой Поток',
+        description: 'Описание',
+        moduleId: 'mod-1',
+        startDate: Date.parse('2026-09-01T14:00:00.000Z'),
+        telegramGroupId: '-100123456789',
+        goal: 'Цель',
+        result: 'Результат',
+        rules: 'Правила',
+        targetAudience: 'Аудитория',
+        additional: 'Дополнительно',
+        enrollmentKey: 'secret',
+        telegramGroupInvite: 'https://t.me/+abc123',
+      }),
+    ]);
   });
 
-  test('confirm: ошибка UC — экран ошибки', async () => {
-    const { story } = createStory({
-      'create-stream': () => {
-        throw new Error('Ошибка создания');
-      },
-    });
+  test('confirm: отказ UC (модуль не найден) — реплика с текстом отказа, без экрана успеха', async () => {
+    const { story } = createStory(undefined, () =>
+      refuse(
+        CourseErrors.MODULE_NOT_FOUND.code,
+        'not_found',
+        {},
+        'Модуль не найден',
+      ),
+    );
     const response = await story.handleCallback(
       'confirm',
       mentorActor,
       wizardSession(12, { moduleId: 'mod-1', title: 'Поток' }),
     );
-    expect(String(response.screen?.text)).toContain('⚠️');
+    expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toContain('Модуль не найден');
+    expect(response.screen).toBeUndefined();
+    expect(response.release).toBeUndefined();
   });
 
   test('confirm без контекста — реплика-предупреждение + release', async () => {

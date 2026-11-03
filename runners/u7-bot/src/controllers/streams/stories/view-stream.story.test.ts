@@ -4,28 +4,23 @@ import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import type { ContentSnapshot } from '@u7-scl/course/domain';
 import { ListScopeFactsUcDef } from '@u7-scl/domain/peer-review/contract';
-import { Role } from '@u7-scl/user/domain';
-import type { Command } from 'dmg-core';
 import {
-  peerReviewDispatch,
-  testCallers,
-} from '../../peer-review/stories/peer-review-dmg.test-kit';
+  GetStreamMembersUcDef,
+  GetStreamUcDef,
+} from '@u7-scl/domain/stream/contract';
+import { Role } from '@u7-scl/user/domain';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
+import { dmgDispatch, refuse, streamView } from './stream-dmg.test-kit';
 import { ViewStreamStory } from './view-stream.story';
 
 const STREAM_ID = '11111111-1111-4111-8111-111111111111';
 
 /** Поток в статусе enrollment с кодовым словом и без */
 function makeStream(overrides: Record<string, unknown> = {}) {
-  return {
-    uuid: STREAM_ID,
-    title: 'Поток «JS Core — Поток 2»',
-    description: 'Базовый поток по fullstack JS',
-    status: 'enrollment',
-    startDate: '2026-10-01T10:00:00.000Z',
-    mentorId: 'm1-m1-m1',
+  return streamView({
     contentSnapshot: [] as ContentSnapshot,
     ...overrides,
-  };
+  });
 }
 
 function makeActor(roles: Role[] = [Role.GUEST]): User {
@@ -45,13 +40,20 @@ describe('ViewStreamStory (S02-S04)', () => {
   const guest = makeActor();
 
   interface SetupOptions {
-    /** Поток, возвращаемый get-stream */
+    /** Поток, возвращаемый getStream */
     stream?: Record<string, unknown>;
-    /** Студенты, возвращаемые list-stream-students */
+    /** Студенты: list-stream-students и состав потока (getStreamMembers) */
     students?: unknown[];
     /** Пользователи, возвращаемые get-user (по uuid) */
     users?: Record<string, { name: string }>;
+    /** Зачисление отказывает: введено неверное кодовое слово */
+    wrongKey?: boolean;
   }
+
+  /** Отказ legacy-зачисления при неверном кодовом слове */
+  const wrongKey = () => {
+    throw new Error('Неверное кодовое слово');
+  };
 
   /** Факты отзывов скоупа (карточка потока): отзывов нет. */
   const listScopeFacts = () => ({ hasReviews: false, reviewsCount: 0 });
@@ -59,7 +61,6 @@ describe('ViewStreamStory (S02-S04)', () => {
   function makeStory(opts: SetupOptions = {}) {
     const mockAppApi = {
       execute: mock(async (name: string, params?: Record<string, unknown>) => {
-        if (name === 'get-stream') return opts.stream ?? makeStream();
         if (name === 'list-stream-students') return opts.students ?? [];
         if (name === 'get-user')
           return (
@@ -69,6 +70,7 @@ describe('ViewStreamStory (S02-S04)', () => {
               roles: [],
             }
           );
+        if (name === 'enroll-student' && opts.wrongKey) wrongKey();
         if (name === 'get-student-progress') return undefined;
         return undefined;
       }),
@@ -78,7 +80,14 @@ describe('ViewStreamStory (S02-S04)', () => {
     story.init({
       appApi: {
         ...mockAppApi,
-        dispatch: peerReviewDispatch({ listScopeFacts }),
+        dispatch: dmgDispatch({
+          getStream: () => opts.stream ?? makeStream(),
+          getStreamMembers: () => ({
+            mentorId: 'm1-m1-m1',
+            students: opts.students ?? [],
+          }),
+          listScopeFacts,
+        }),
       },
       callers: testCallers,
     } as never);
@@ -176,7 +185,7 @@ describe('ViewStreamStory (S02-S04)', () => {
   test('MENTOR — владелец потока — НЕ видит lifecycle-кнопок', async () => {
     const mentor = makeActor([Role.MENTOR]);
     const { story } = makeStory({
-      stream: makeStream({ mentorId: mentor.uuid }),
+      stream: makeStream({ mentorId: mentor.uuid, canManage: true }),
     });
     const response = await story.handleCallback(
       `view:${STREAM_ID}`,
@@ -335,14 +344,19 @@ describe('ViewStreamStory (S02-S04)', () => {
     const mockAppApi = {
       execute: mock(async (name: string) => {
         if (name === 'get-student-progress') return makeStudent();
-        if (name === 'get-stream') return makeStream();
         if (name === 'get-user')
           return { uuid: 'u-1', name: 'Студент Студентов', roles: [] };
         return undefined;
       }),
     };
     const { story } = makeStory();
-    story.init({ appApi: mockAppApi } as never);
+    story.init({
+      appApi: {
+        ...mockAppApi,
+        dispatch: dmgDispatch({ getStream: () => makeStream() }),
+      },
+      callers: testCallers,
+    } as never);
 
     const response = await story.handleCallback(
       'student-detail:st-1',
@@ -362,7 +376,7 @@ describe('ViewStreamStory (S02-S04)', () => {
 
   test('enroll без кодового слова: поздравление-реплика + delegate на меню', async () => {
     const { story, mockAppApi } = makeStory({
-      stream: makeStream({ enrollmentKey: undefined }),
+      stream: makeStream({ requiresEnrollmentKey: false }),
     });
     const response = await story.handleCallback(
       `enroll:${STREAM_ID}`,
@@ -383,7 +397,7 @@ describe('ViewStreamStory (S02-S04)', () => {
 
   test('enroll c кодовым словом: экран запроса слова + awaitInput', async () => {
     const { story, mockAppApi } = makeStory({
-      stream: makeStream({ enrollmentKey: 'дракон' }),
+      stream: makeStream({ requiresEnrollmentKey: true }),
     });
     const response = await story.handleCallback(
       `enroll:${STREAM_ID}`,
@@ -399,7 +413,6 @@ describe('ViewStreamStory (S02-S04)', () => {
     expect(enrollCalls).toHaveLength(0);
     expect(response.awaitInput?.context).toEqual({
       streamId: STREAM_ID,
-      enrollmentKey: 'дракон',
       attempts: 0,
     });
     // Кнопка отмены — на enroll-cancel
@@ -413,13 +426,12 @@ describe('ViewStreamStory (S02-S04)', () => {
     // Подменяем execute, чтобы enroll-student бросил ошибку валидации
     const failing = {
       execute: mock(async (name: string) => {
-        if (name === 'get-stream')
-          return makeStream({ enrollmentKey: undefined });
         if (name === 'enroll-student') throw new Error('validation failed');
         return undefined;
       }),
+      dispatch: dmgDispatch({ getStream: () => makeStream() }),
     };
-    story.init({ appApi: failing } as never);
+    story.init({ appApi: failing, callers: testCallers } as never);
 
     const response = await story.handleCallback(
       `enroll:${STREAM_ID}`,
@@ -451,7 +463,7 @@ describe('ViewStreamStory (S02-S04)', () => {
         path: 'stream/view-stream',
         seq: 2,
         input: {
-          context: { streamId: STREAM_ID, enrollmentKey: 'дракон', attempts },
+          context: { streamId: STREAM_ID, attempts },
         },
       },
     };
@@ -459,7 +471,7 @@ describe('ViewStreamStory (S02-S04)', () => {
 
   test('handleMessage: верное слово — зачисление (notify + delegate на меню)', async () => {
     const { story, mockAppApi } = makeStory({
-      stream: makeStream({ enrollmentKey: 'дракон' }),
+      stream: makeStream({ requiresEnrollmentKey: true }),
     });
     const response = await story.handleMessage(
       { type: 'message', text: 'дракон', telegramId: 1 },
@@ -477,7 +489,7 @@ describe('ViewStreamStory (S02-S04)', () => {
   });
 
   test('handleMessage: неверное слово — warn-переспрос + awaitInput с попытками+1', async () => {
-    const { story } = makeStory();
+    const { story } = makeStory({ wrongKey: true });
     const response = await story.handleMessage(
       { type: 'message', text: 'не то', telegramId: 1 },
       guest,
@@ -488,14 +500,13 @@ describe('ViewStreamStory (S02-S04)', () => {
     expect(String(response.notify?.text)).toContain('Осталось попыток: 2');
     expect(response.awaitInput?.context).toEqual({
       streamId: STREAM_ID,
-      enrollmentKey: 'дракон',
       attempts: 1,
     });
     expect(response.screen).toBeUndefined();
   });
 
   test('handleMessage: попытки исчерпаны — release + экран возврата к потоку', async () => {
-    const { story } = makeStory();
+    const { story } = makeStory({ wrongKey: true });
     const response = await story.handleMessage(
       { type: 'message', text: 'не то', telegramId: 1 },
       guest,
@@ -588,12 +599,6 @@ describe('ViewStreamStory — публичная drill-down программа �
   function makePublicStory() {
     const mockAppApi = {
       execute: mock(async (name: string, params?: Record<string, unknown>) => {
-        if (name === 'get-stream') {
-          return makeStream({
-            uuid: STREAM_ID_PUB,
-            contentSnapshot: snapshot,
-          });
-        }
         if (name === 'get-steps-by-lessons') {
           return {
             'lesson-1': [
@@ -614,7 +619,16 @@ describe('ViewStreamStory — публичная drill-down программа �
       }),
     };
     const story = new ViewStreamStory();
-    story.init({ appApi: mockAppApi } as never);
+    story.init({
+      appApi: {
+        ...mockAppApi,
+        dispatch: dmgDispatch({
+          getStream: () =>
+            makeStream({ uuid: STREAM_ID_PUB, contentSnapshot: snapshot }),
+        }),
+      },
+      callers: testCallers,
+    } as never);
     return { story, mockAppApi };
   }
 
@@ -740,24 +754,28 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
       | 'throw'
       | undefined,
   ) {
+    // Отказ или исключение касается только фактов отзывов; поток читается всегда
+    const streamAnswers = {
+      getStream: () => makeStream(),
+      getStreamMembers: () => ({ mentorId: 'm1-m1-m1', students: [] }),
+    };
     const dispatch =
-      facts === 'throw'
-        ? mock(async (_module: unknown, _command: Command) => {
-            throw new Error('диспетчер недоступен');
+      facts === 'throw' || facts === 'fail'
+        ? dmgDispatch({
+            ...streamAnswers,
+            listScopeFacts: () => {
+              if (facts === 'throw') throw new Error('диспетчер недоступен');
+              return refuse('REVIEW_UNAVAILABLE', 'internal');
+            },
           })
-        : facts === 'fail'
-          ? mock(async (_module: unknown, _command: Command) => ({
-              ok: false as const,
-              error: { code: 'REVIEW_UNAVAILABLE', kind: 'internal' },
-            }))
-          : peerReviewDispatch({
-              listScopeFacts: () =>
-                facts ?? { hasReviews: false, reviewsCount: 0 },
-            });
+        : dmgDispatch({
+            ...streamAnswers,
+            listScopeFacts: () =>
+              facts ?? { hasReviews: false, reviewsCount: 0 },
+          });
     const mockAppApi = {
       dispatch,
       execute: mock(async (name: string) => {
-        if (name === 'get-stream') return makeStream();
         if (name === 'list-stream-students') return [];
         if (name === 'get-user')
           return { uuid: 'm1', name: 'Ментор Менторович', roles: [] };
@@ -845,6 +863,10 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
 
     expect(
       mockAppApi.dispatch.mock.calls.map(([, command]) => command),
-    ).toEqual([ListScopeFactsUcDef.command({ scopeId: STREAM_ID })]);
+    ).toEqual([
+      GetStreamUcDef.command({ streamId: STREAM_ID }),
+      GetStreamMembersUcDef.command({ streamId: STREAM_ID }),
+      ListScopeFactsUcDef.command({ scopeId: STREAM_ID }),
+    ]);
   });
 });

@@ -2,7 +2,6 @@ import type { ArMeta } from '@u7-scl/core/domain';
 import { ContentSnapshotSchema } from '@u7-scl/domain/course';
 import * as v from 'valibot';
 import { StreamStatusSchema } from '../status';
-import type { StreamCompletedEvent, StreamCreatedEvent } from './events';
 
 /** Схема сущности потока курсов */
 export const StreamSchema = v.object({
@@ -56,5 +55,4 @@ export interface StreamArMeta extends ArMeta {
   name: 'Stream';
   label: 'Поток';
   state: Stream;
-  events: StreamCreatedEvent | StreamCompletedEvent;
 }

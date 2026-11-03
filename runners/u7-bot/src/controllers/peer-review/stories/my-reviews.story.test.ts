@@ -11,6 +11,7 @@ import {
 } from '@u7-scl/domain/peer-review/contract';
 import { Role } from '@u7-scl/user/domain';
 import { Routes } from '../../shared/routes';
+import { streamView } from '../../streams/stories/stream-dmg.test-kit';
 import { MyReviewsStory } from './my-reviews.story';
 import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
 
@@ -57,6 +58,7 @@ describe('MyReviewsStory — кнопка меню «💬 Отзывы» (S02)',
             createdAt: Date.UTC(2026, 8, 21, 10),
           })),
         }),
+        getStream: () => streamView({ title: 'Первый поток' }),
       }),
     };
     const story = new MyReviewsStory();
@@ -162,7 +164,7 @@ describe('MyReviewsStory — экран S02 «Мои отзывы» (мини-к
 
   /**
    * appApi-мок: get-my-campaigns (только живые), list-my-reviews,
-   * get-stream, get-users-by-ids. `incoming` — входящие отзывы (S08),
+   * getStream (DMG), get-users-by-ids. `incoming` — входящие отзывы (S08),
    * `missingSubject` — batch не находит субъекта (запасной лейбл).
    */
   function makeAppApi(
@@ -186,15 +188,16 @@ describe('MyReviewsStory — экран S02 «Мои отзывы» (мини-к
             createdAt: Date.UTC(2026, 8, 21, 10),
           })),
         }),
+        getStream: (input) => {
+          const { streamId } = input as { streamId: string };
+          return streamView({
+            uuid: streamId,
+            title: streamId === STREAM_1 ? 'Первый поток' : 'Второй поток',
+          });
+        },
       }),
-      execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
+      execute: mock(async (ucName: string) => {
         switch (ucName) {
-          case 'get-stream':
-            return {
-              uuid: attrs.streamId,
-              title:
-                attrs.streamId === STREAM_1 ? 'Первый поток' : 'Второй поток',
-            };
           case 'get-users-by-ids':
             if (opts.missingSubject) return [];
             return [
@@ -439,11 +442,10 @@ describe('MyReviewsStory — пагинация хаба S02 (BotPaginator + Dia
       dispatch: peerReviewDispatch({
         getMyCampaigns: () => cards,
         listMyReviews: () => ({ reviews: [] }),
+        getStream: () => streamView({ title: 'Первый поток' }),
       }),
-      execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
+      execute: mock(async (ucName: string) => {
         switch (ucName) {
-          case 'get-stream':
-            return { uuid: attrs.streamId, title: 'Первый поток' };
           case 'get-users-by-ids':
             return [];
           default:

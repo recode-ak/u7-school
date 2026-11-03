@@ -2,9 +2,7 @@ import { EventDef, F } from 'dmg-core';
 import * as v from 'valibot';
 
 /**
- * События потока — контракт внешнего модуля `stream` (D-37).
- * Публикует legacy-агрегат `StreamAr`; в DMG их доставляет карта `inbound`.
- * При миграции модуля контракт остаётся.
+ * События потока. `stream.completed` не переносится: подписчиков не было.
  */
 export const StreamEvents = EventDef.define('stream.stream', {
   created: {

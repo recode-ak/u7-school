@@ -63,6 +63,12 @@ export const WishErrors = ErrorDef.define('WISH', {
     description:
       'Приглашение на поток доступно из expressed и confirmed; остальные желания уже не ждут набора.',
   },
+  ALREADY_INVITED: {
+    kind: 'conflict',
+    label: 'Желающий уже приглашён на этот поток',
+    description:
+      'Приглашение на поток отправляется один раз: повторное событие открытия набора не приглашает повторно.',
+  },
   ALREADY_EXISTS: {
     kind: 'conflict',
     label: 'Желание уже выражено',

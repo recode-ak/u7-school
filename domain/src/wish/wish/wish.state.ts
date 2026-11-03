@@ -46,6 +46,10 @@ export const WishState = v.object({
   userId: F.uuid('пользователя'),
   target: WishTargetVo,
   status: WishStatus,
+  invitedStreamIds: v.pipe(
+    v.optional(v.array(F.uuid('потока, на который приглашено желание'))),
+    v.description('Потоки, на которые желающий уже приглашён'),
+  ),
 });
 
 export type WishState = v.InferOutput<typeof WishState>;

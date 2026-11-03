@@ -2,7 +2,13 @@ import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import { assertMarkdownV2Safe, type MdText } from '@u7-scl/core/shared';
 import { ReviewCampaignEvents } from '@u7-scl/domain/peer-review/contract';
+import {
+  dmgDispatch,
+  streamNotFound,
+  streamView,
+} from '../../streams/stories/stream-dmg.test-kit';
 import { InviteStory, type ReviewCampaignCreatedEvent } from './invite.story';
+import { testCallers } from './peer-review-dmg.test-kit';
 
 // ══ Фикстуры ══
 
@@ -14,10 +20,10 @@ const MENTOR_ID = 'eeeeeeee-0000-4000-8000-000000000004';
 const SUBJECT_TG = 1001;
 const MENTOR_TG = 2002;
 
-const stream = {
+const stream = streamView({
   uuid: STREAM_ID,
   title: 'JavaScript Основы — Поток 1',
-};
+});
 
 type Profile = Omit<User, 'telegramId'> & { telegramId?: number };
 
@@ -88,10 +94,6 @@ function setupStory(
 
   const execute = mock(
     async (name: string, params?: Record<string, unknown>) => {
-      if (name === 'get-stream') {
-        if (!localStream) throw new Error('Поток не найден');
-        return localStream;
-      }
       if (name === 'get-users-by-ids') {
         const ids = (params?.userIds ?? []) as string[];
         return [localSubject, localMentor].filter(
@@ -103,16 +105,24 @@ function setupStory(
   );
 
   const story = new InviteStory();
-  Object.assign(story, {
-    appApi: { execute },
-    proactiveSender: {
+  story.init(
+    {
+      appApi: {
+        execute,
+        dispatch: dmgDispatch({
+          getStream: () => localStream ?? streamNotFound(),
+        }),
+      },
+      callers: testCallers,
+    } as never,
+    {
       invite: mock(
         async (telegramId: number, payload: InviteCall['payload']) => {
           invites.push({ telegramId, payload });
         },
       ),
-    },
-  } as unknown);
+    } as never,
+  );
 
   return { story, invites, execute };
 }
@@ -288,15 +298,16 @@ describe('InviteStory — приглашения по созданию камп�
       subject: { ...subject, name: 'Борис' },
     });
     // batch не находит субъекта: перекроем мок — вернёт только ментора
-    Object.assign(story, {
+    story.init({
       appApi: {
         execute: mock(async (name: string) => {
-          if (name === 'get-stream') return stream;
           if (name === 'get-users-by-ids') return [mentor];
           return undefined;
         }),
+        dispatch: dmgDispatch({ getStream: () => stream }),
       },
-    } as unknown);
+      callers: testCallers,
+    } as never);
 
     await campaignCreatedHandler(story)(makeCreatedEvent());
 

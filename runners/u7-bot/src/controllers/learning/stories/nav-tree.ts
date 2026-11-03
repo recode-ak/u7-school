@@ -10,6 +10,10 @@ import {
 } from '@u7-scl/core/ui';
 import type { ContentSnapshot } from '@u7-scl/course/domain';
 import {
+  GetStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
+import {
   getStudentAndStream,
   loadStepDescriptions,
   notEnrolled,
@@ -34,7 +38,18 @@ export class NavTreeStory extends U7BotUiStory {
     actor: User,
     session: BotSession,
   ): Promise<DialogResponse> {
-    const { student, stream } = await getStudentAndStream(this.appApi, actor);
+    const { student, stream } = await getStudentAndStream(
+      this.appApi,
+      actor,
+      async (streamId) => {
+        const loaded = await this.dispatchUc(
+          StreamModuleDef,
+          GetStreamUcDef.command({ streamId }),
+          actor,
+        );
+        return loaded.ok ? loaded.value : undefined;
+      },
+    );
     if (!student || !stream) {
       return notEnrolled();
     }

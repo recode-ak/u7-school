@@ -6,8 +6,13 @@ import {
   type DialogResponse,
 } from '@u7-scl/core/ui';
 import { ListMyReviewsUcDef } from '@u7-scl/domain/peer-review/contract';
+import { GetStreamUcDef } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
 import { Routes } from '../../shared/routes';
+import {
+  streamNotFound,
+  streamView,
+} from '../../streams/stories/stream-dmg.test-kit';
 import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
 import { ReviewsForMeStory } from './reviews-for-me.story';
 
@@ -58,14 +63,23 @@ interface Snapshot {
   createdAt: number;
 }
 
-/** appApi-мок: list-my-reviews + get-users-by-ids + get-stream. */
+/** appApi-мок: listMyReviews и getStream (DMG) + get-users-by-ids. */
 function makeAppApi(
   reviews: Snapshot[],
   opts: { emptyNames?: boolean; streamFails?: boolean } = {},
 ) {
   return {
-    dispatch: peerReviewDispatch({ listMyReviews: () => ({ reviews }) }),
-    execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
+    dispatch: peerReviewDispatch({
+      listMyReviews: () => ({ reviews }),
+      getStream: (input) => {
+        if (opts.streamFails) return streamNotFound();
+        const { streamId } = input as { streamId: string };
+        return streamId === STREAM_2
+          ? streamView({ uuid: STREAM_2, title: 'JS Advanced — Поток 2' })
+          : streamView({ uuid: STREAM_1, title: 'JS Core — Поток 1' });
+      },
+    }),
+    execute: mock(async (ucName: string) => {
       switch (ucName) {
         case 'get-users-by-ids':
           if (opts.emptyNames) return [];
@@ -73,12 +87,6 @@ function makeAppApi(
             { uuid: AUTHOR_1, name: 'Анна' },
             { uuid: AUTHOR_2, name: 'Глеб' },
           ];
-        case 'get-stream':
-          if (opts.streamFails) throw new Error('Поток не найден');
-          if (attrs.streamId === STREAM_2) {
-            return { uuid: STREAM_2, title: 'JS Advanced — Поток 2' };
-          }
-          return { uuid: STREAM_1, title: 'JS Core — Поток 1' };
         default:
           throw new Error(`неизвестный UC: ${ucName}`);
       }
@@ -146,6 +154,7 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
 
     expect(appApi.dispatch.mock.calls.map(([, command]) => command)).toEqual([
       ListMyReviewsUcDef.command({}),
+      GetStreamUcDef.command({ streamId: STREAM_1 }),
     ]);
   });
 

@@ -19,8 +19,8 @@ import type {
   Result,
   UseCaseErrorOf,
 } from 'dmg-core';
-import { Trace } from 'dmg-core/app';
 import { APP_CODES } from '../shared/app-codes';
+import { dispatchModuleUc } from './dispatch-uc';
 import type { U7BotAppMeta, U7BotUiAppResolve } from './u7-bot-app-meta';
 import type { MenuButton } from './u7-menu';
 
@@ -171,18 +171,39 @@ export abstract class U7BotUiStory extends BotUiStory<
     command: Command<D>,
     actor: User,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
+    return this.#dispatchAs(module, command, actor.uuid, actor.telegramId);
+  }
+
+  /**
+   * Запрос модулю DMG от гостя — для реакций на события, где актора нет
+   * (подписки на события домена). Только запросы с `callers: ['guest']`.
+   */
+  protected async dispatchUcAsGuest<
+    M extends AnyModuleDef,
+    D extends M['useCases'][number],
+  >(
+    module: M,
+    command: Command<D>,
+  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
+    return this.#dispatchAs(module, command, undefined, undefined);
+  }
+
+  async #dispatchAs<M extends AnyModuleDef, D extends M['useCases'][number]>(
+    module: M,
+    command: Command<D>,
+    uuid: string | undefined,
+    telegramId: number | undefined,
+  ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
     const request = BotRequestContext.current();
-    const trace = Trace.fromRequest(
-      {
-        requestId: request?.nextRequestId(),
-        correlationId: request?.correlationId,
-        channel: { name: 'telegram', visitorId: String(actor.telegramId) },
-      },
-      (message) =>
-        this.logger?.warn(this.dialogPath, message, { uc: command.uc }),
-    );
-    const caller = await this.resolve.callers.resolve(actor.uuid, trace);
-    return this.appApi.dispatch(module, command, caller, trace);
+    return dispatchModuleUc(module, command, {
+      resolve: this.resolve,
+      uuid,
+      telegramId,
+      requestId: request?.nextRequestId(),
+      correlationId: request?.correlationId,
+      warn: (message, meta) =>
+        this.logger?.warn(this.dialogPath, message, meta),
+    });
   }
 
   // ── Постраничные экраны (трек pagination) ──

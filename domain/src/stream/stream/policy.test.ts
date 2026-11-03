@@ -3,7 +3,7 @@ import { Status } from '@u7-scl/domain/course';
 import { Role } from '@u7-scl/domain/user';
 import { StreamStatus } from '../status';
 import type { Stream } from './entity';
-import { StreamPolicy } from './policy';
+import { LegacyStreamPolicy } from './policy';
 
 const syntaxModuleId = '33333333-3333-4333-8333-333333333333';
 const algoModuleId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -37,40 +37,7 @@ const mockStream = {
   contentSnapshot: [],
 };
 
-describe('StreamPolicy', () => {
-  test('canCreate — true для MENTOR', () => {
-    const actor = {
-      uuid: 'a1',
-      name: 'Mentor',
-      telegramId: 1,
-      roles: [Role.MENTOR],
-      createdAt: '2026-01-01T00:00:00Z',
-    };
-    expect(StreamPolicy.canCreate(actor)).toBe(true);
-  });
-
-  test('canCreate — false для GUEST', () => {
-    const actor = {
-      uuid: 'a1',
-      name: 'Guest',
-      telegramId: 2,
-      roles: [Role.GUEST],
-      createdAt: '2026-01-01T00:00:00Z',
-    };
-    expect(StreamPolicy.canCreate(actor)).toBe(false);
-  });
-
-  test('canRead — true для всех при ACTIVE', () => {
-    const actor = {
-      uuid: 'a2',
-      name: 'Student',
-      telegramId: 3,
-      roles: [Role.STUDENT],
-      createdAt: '2026-01-01T00:00:00Z',
-    };
-    expect(StreamPolicy.canRead(actor, mockStream)).toBe(true);
-  });
-
+describe('LegacyStreamPolicy', () => {
   test('canEnroll — true для GUEST', () => {
     const actor = {
       uuid: 'a1',
@@ -79,7 +46,7 @@ describe('StreamPolicy', () => {
       roles: [Role.GUEST],
       createdAt: '2026-01-01T00:00:00Z',
     };
-    expect(StreamPolicy.canEnroll(actor)).toBe(true);
+    expect(LegacyStreamPolicy.canEnroll(actor)).toBe(true);
   });
 
   test('canEnroll — true для MENTOR', () => {
@@ -90,7 +57,7 @@ describe('StreamPolicy', () => {
       roles: [Role.MENTOR],
       createdAt: '2026-01-01T00:00:00Z',
     };
-    expect(StreamPolicy.canEnroll(actor)).toBe(true);
+    expect(LegacyStreamPolicy.canEnroll(actor)).toBe(true);
   });
 
   test('canEnroll — true для ADMIN', () => {
@@ -101,7 +68,7 @@ describe('StreamPolicy', () => {
       roles: [Role.ADMIN],
       createdAt: '2026-01-01T00:00:00Z',
     };
-    expect(StreamPolicy.canEnroll(actor)).toBe(true);
+    expect(LegacyStreamPolicy.canEnroll(actor)).toBe(true);
   });
 
   test('canEnroll — true для SUBSCRIBER', () => {
@@ -112,7 +79,7 @@ describe('StreamPolicy', () => {
       roles: [Role.SUBSCRIBER],
       createdAt: '2026-01-01T00:00:00Z',
     };
-    expect(StreamPolicy.canEnroll(actor)).toBe(true);
+    expect(LegacyStreamPolicy.canEnroll(actor)).toBe(true);
   });
 
   test('canEnroll — false для STUDENT', () => {
@@ -123,11 +90,11 @@ describe('StreamPolicy', () => {
       roles: [Role.STUDENT],
       createdAt: '2026-01-01T00:00:00Z',
     };
-    expect(StreamPolicy.canEnroll(actor)).toBe(false);
+    expect(LegacyStreamPolicy.canEnroll(actor)).toBe(false);
   });
 });
 
-describe('StreamPolicy.canEnrollNextModule', () => {
+describe('LegacyStreamPolicy.canEnrollNextModule', () => {
   const mockStream = {
     uuid: 'a1aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     moduleId: syntaxModuleId,
@@ -156,13 +123,18 @@ describe('StreamPolicy.canEnrollNextModule', () => {
 
   test('входной модуль разрешён без завершённых потоков', () => {
     expect(
-      StreamPolicy.canEnrollNextModule(mockCourse, syntaxModuleId, [], []),
+      LegacyStreamPolicy.canEnrollNextModule(
+        mockCourse,
+        syntaxModuleId,
+        [],
+        [],
+      ),
     ).toBe(true);
   });
 
   test('предыдущий модуль завершён с advanced → разрешён', () => {
     expect(
-      StreamPolicy.canEnrollNextModule(
+      LegacyStreamPolicy.canEnrollNextModule(
         mockCourse,
         algoModuleId,
         [mockStudentAdvanced],
@@ -173,7 +145,7 @@ describe('StreamPolicy.canEnrollNextModule', () => {
 
   test('предыдущий модуль завершён с not_advanced → отказ', () => {
     expect(
-      StreamPolicy.canEnrollNextModule(
+      LegacyStreamPolicy.canEnrollNextModule(
         mockCourse,
         algoModuleId,
         [mockStudentNotAdvanced],
@@ -184,7 +156,7 @@ describe('StreamPolicy.canEnrollNextModule', () => {
 
   test('предыдущий модуль abandoned → отказ', () => {
     expect(
-      StreamPolicy.canEnrollNextModule(
+      LegacyStreamPolicy.canEnrollNextModule(
         mockCourse,
         algoModuleId,
         [mockStudentAbandoned],
@@ -195,13 +167,13 @@ describe('StreamPolicy.canEnrollNextModule', () => {
 
   test('нет записи на предыдущий модуль → отказ', () => {
     expect(
-      StreamPolicy.canEnrollNextModule(mockCourse, algoModuleId, [], []),
+      LegacyStreamPolicy.canEnrollNextModule(mockCourse, algoModuleId, [], []),
     ).toBe(false);
   });
 
   test('модуль не найден в курсе → отказ', () => {
     expect(
-      StreamPolicy.canEnrollNextModule(
+      LegacyStreamPolicy.canEnrollNextModule(
         mockCourse,
         'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
         [mockStudentAdvanced],

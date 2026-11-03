@@ -7,6 +7,7 @@ import {
 } from '@u7-scl/core/ui';
 import { ListScopeReviewsUcDef } from '@u7-scl/domain/peer-review/contract';
 import { Role } from '@u7-scl/user/domain';
+import { streamView } from '../../streams/stories/stream-dmg.test-kit';
 import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
 import { ScopeReviewsStory } from './scope-reviews.story';
 
@@ -63,7 +64,7 @@ function longText(n: number, pad = 700): string {
   return `Отзыв номер ${n}. ${'а'.repeat(pad)}`;
 }
 
-/** appApi-мок: list-scope-reviews, get-stream, get-users-by-ids. */
+/** appApi-мок: listScopeReviews и getStream (DMG), get-users-by-ids. */
 function makeAppApi(groups: Group[], opts: { emptyNames?: boolean } = {}) {
   return {
     dispatch: peerReviewDispatch({
@@ -71,11 +72,14 @@ function makeAppApi(groups: Group[], opts: { emptyNames?: boolean } = {}) {
         scopeIds: (input as { scopeIds: string[] }).scopeIds,
         recipients: groups,
       }),
+      getStream: (input) =>
+        streamView({
+          uuid: (input as { streamId: string }).streamId,
+          title: 'Поток решения',
+        }),
     }),
-    execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
+    execute: mock(async (ucName: string) => {
       switch (ucName) {
-        case 'get-stream':
-          return { uuid: attrs.streamId, title: 'Поток решения' };
         case 'get-users-by-ids':
           if (opts.emptyNames) return [];
           return [

@@ -182,3 +182,88 @@ DOM-01…06, DOM-10…12, DOM-14…17; API-01…05, API-07; MAN-01…06, MAN-08,
 - Репозиторий: legacy-запись (ISO → число, `version = 0`, `updatedAt = createdAt`), round-trip, устаревшая версия, битая запись — исключение, файл цел.
 - Тесты UC — на фейке порта; сценарии старых тестов потока перенесены (список — отчёт test-designer).
 - `bun run check` зелёный, кроме тестов из записи красной зоны; `arch:check` синхронен с `debt.md`; `git status data/` чист.
+
+## Отчёт `test-designer` (Ф1, шаг 1)
+
+Прод-код не тронут. Изменён один старый тест: `modules/wish/src/wish/er/invite-wishers.er.test.ts` (DEBT-35, ждёт `resolves`). Все новые тесты красные по существу (нет модуля или экспорта, не тот `Result`). e2e «ушёл студент» и «чужая группа» зелёные уже на текущем коде.
+
+| Старый тест | Новый тест |
+|---|---|
+| `stream/a-root.test.ts` | `domain/src/stream/stream/stream.ar.test.ts` |
+| `stream/entity.test.ts` | `stream.state.test.ts` (ISO → число, `version = 0`, `updatedAt = createdAt`) |
+| `stream/policy.test.ts` | `stream.policy.test.ts` |
+| `stream-ds.test.ts:787-880` | `stream.rules.test.ts` + `manage-stream.uc.test.ts` |
+| тексты отказов | `stream.errors.test.ts` |
+| Def 9 UC, `StreamModuleDef` | `stream/uc/stream.uc-defs.test.ts`, `stream.module.def.test.ts`, `modules/stream/src/stream.module.map.test.ts` |
+| `api/stream/create-stream-uc.test.ts` | `modules/stream/src/stream/uc/create-stream.uc.test.ts` |
+| `api/stream/{activate,complete,archive}-stream-uc.test.ts` | `manage-stream.uc.test.ts` |
+| `api/stream/{get-stream,list-streams}-uc.test.ts`, members, presence | `read-stream.uc.test.ts` |
+| `stream-in-proc-facade.test.ts` | `read-stream.uc.test.ts`; мост — `infra/legacy-stream-students.test.ts` |
+| `legacy-inbound.test.ts:79-95` | `legacy-inbound.stream-created.test.ts` |
+| `infra/db/stream-json-repo.test.ts` | `infra/stream.json-repo.test.ts` (`mkdtemp`) |
+| `controller.test.ts` | `runners/u7-bot/src/controllers/streams/controller.stream-group.test.ts` |
+| `user-notify.e2e.test.ts` п. 1 | `runners/u7-bot/tests/e2e/stream-dmg.e2e.test.ts` |
+| — | `get-module-snapshot.uc.test.ts` (домен и модуль `course`), `domain/src/user/contract.role.test.ts`, `domain/src/wish/wish/wish.invited.test.ts` |
+
+Фикстуры: `domain/src/stream/stream/stream.fixture.ts`, `modules/stream/src/stream/uc/stream-uc.fixture.ts` (с `StudentsFake`).
+
+**Для migrator.** Удалить: `api/stream/*.test.ts` (кроме `list-stream-students-uc.test.ts`), `infra/stream-in-proc-facade.test.ts`, `commands/*`, части `a-root.test.ts`, `policy.test.ts`, `stream-ds.test.ts` (`completeStream`). Переписать: оба `stream.module.test.ts`, `get-stream-members.uc.test.ts`, `legacy-inbound.test.ts:79-95`, `domain/src/course/course.module.test.ts` (6 UC), `wish.ar.test.ts` (`invitedStreamIds`), `platform/app/tests/u7-app.test.ts:316-356`, `controller.test.ts`, `user-notify.e2e.test.ts`.
+
+**Допущения тестов (контракты, принятые orchestrator'ом):** имена `…UcDef`/`…Uc`, `StreamErrors`, `StreamPolicy.rules.{canCreate,canManage}`, `StreamRules.rules.studentsSettled`; `StreamAr.create({ uuid, … }, at)`; `StreamAr`, `StreamState`, `StreamStudentFact { studentId, userId, status, settled, inProgress, neverStarted }` — из `@u7-scl/domain/stream`; `new StreamJsonRepo(filePath)`; `CourseLegacy.getModuleSnapshot(moduleId)`, not-found — `AppException` `MODULE_NOT_FOUND`; контроллер — `appApi.dispatch(StreamModuleDef, <Def>.command(...), caller)`; в `completeStream` `NOT_ACTIVE` проверяется после `studentsSettled`.
+
+**Вопросы → решения orchestrator'а:** тексты отказов с числом и статусом — TR-41 (Т14).
+
+## Отчёт `migrator` (Ф1, шаг 2 — домен)
+
+`domain`: 1148 pass, 0 fail; `tsc`, `biome` чисты (проверено orchestrator'ом). Новые `stream.{state,ar,errors,types,rules,policy,events}.ts`, 7 новых Def UC + 2 расширены/сохранены, `stream.module.ts` (9 UC, `external`), `contract.ts`, `index.ts`; `facade.ts` удалён. Т1 — `LegacyStreamAr`/`LegacyStreamPolicy` только со студенческими методами. Удалены `stream/events.ts`, 6 из 7 `commands/*`, `StreamDs.completeStream`, `stream.completed`. `Role` — в контракте `user`; `course` — `GetModuleSnapshotUcDef`, `CourseErrors` (`COURSE_MODULE_NOT_FOUND`), `ContentSnapshotVo`/`ContentSnapshot`, 6 UC. DEBT-35 в домене `wish` готов.
+
+**Отклонения** (TR-41 Т15): `list-stream-students-cmd.ts` и legacy `stream/repo.ts` остаются до Ф2; `v.trim()` снят с заголовков снимка; правки тестов — разбор state через `StreamArDef.state` (фолбэк `updatedAt`), типы в `stream.errors.test.ts`/`contract.role.test.ts`, упоминания TR/DEBT из комментариев доменных тестов (CODE-04); старые тесты домена — по списку «Для migrator»; фикстуры `student-fate.dqs.test.ts` + `studentId`, `inProgress`.
+
+**Красное вне домена (шаг 3–4):** `modules/stream` (`api/stream/*`, `stream-in-proc-facade`, `stream.module.ts`, новые тесты), `modules/course` (`course.module.ts`), `modules/peer-review` (`create-student-campaign.er.test.ts` — фикстуры), `platform/app/tests/u7-app.test.ts`, stories `runners/u7-bot`; `arch:check` — упоминания TR/DEBT в комментариях новых тестов `modules`/`runners` (CODE-04), DEBT-35 вне `biome-ignore` в `invite-wishers.er.test.ts`.
+
+## Отчёт `migrator` (Ф1, шаг 3 — прикладной слой)
+
+Зелёные (проверено orchestrator'ом): `modules/stream` 182, `modules/course` 163, `modules/wish` 129, `modules/peer-review` 141, `platform/app` 13 pass; `tsc` 0 ошибок; `arch:check` — нарушений нет после правки `debt.md` (DEBT-35 закрыт, DEBT-44 — glob `stream` снят, `get-module-snapshot` добавлен в glob `course`; DEBT-47 — признак «Мост к legacy-студентам»).
+
+Сделано: `stream.module.ts` (`StreamDeps`, `streamMap` 9 UC), UC через `UseCaseFromDef`, порты `StreamRepo`/`StreamStudents` + фейк, `infra/stream.json-repo.ts` (`VersionedRepository`, строгий разбор), мост `infra/legacy-stream-students.ts`; удалены `api/stream/*` (кроме `list-stream-students`), `stream-in-proc-facade*`, адаптеры TR-11; `legacy-inbound` без `stream.created`. `course` — `GetModuleSnapshotUc`. `wish` — `invite-wishers` без изменений кода, DEBT-35 зелёный. `peer-review` — фикстуры под Т6. `U7App` — новый репозиторий, мост, `school.id`; `U7LegacyFacades.stream` удалён; `u7-app.test.ts` — `stream.created` через `dispatch(CreateStreamUcDef…)`.
+
+Отклонения — TR-41 Т16; правки тестов только в типах (`Outcome`, `system as never`, кортеж `ids()`).
+
+**Красное (шаг 4):** `runners/u7-bot` — `tsc` в 16 stories, `streams/controller.ts`, `learning/{shared,stories/step-view,stories/progress}.ts`, `tests/e2e/user-notify.e2e.test.ts`, `tests/mentor/mentor.integration.test.ts`; тесты бота 108 fail / 903 pass.
+
+## Отчёт `migrator` (Ф1, шаг 4 — stories)
+
+`runners/u7-bot`: вызовы потока — `dispatchUc(StreamModuleDef, …)` в `mentor/*`, `streams/*`, `courses/wish-*`, `peer-review/*`, `school-reviews`, `learning/{shared,step-view,progress,nav-tree}`; `canManage` из `getStream`; «мои потоки» — `listStreams({ mentorId })`; `LegacyStreamPolicy.canEnroll` — до Ф2. Т14 — `complete-confirm` ветвится по `STREAM_STUDENTS_IN_PROGRESS`. Т11 — даты числа, wizard `createStream` → UTC-метка. Т8 — `#dispatchAsGuest` в `streams/controller.ts`; `dispatchUcAsGuest` в `u7-bot-ui-story.ts` для обработчиков событий без актора. Т17 — кодовое слово: лимит 3 попытки по тексту legacy-отказа (после эскалации). Тесты stories — на моках `appApi.dispatch`, хелпер `streams/stories/stream-dmg.test-kit.ts`; `peer-review-dmg.test-kit.ts` принимает `StreamModuleDef`; сценарии `handleMessengerEvent` из `controller.test.ts` — в `controller.stream-group.test.ts`; `ui-spec.md` — `canManage`.
+
+**Отклонения (приняты):** ожидание текста в `controller.stream-group.test.ts` экранировано под MdText; «поток не найден» — `notify` через `ucErrorNotify` (4 теста перенесены на `response.notify`); `'activate-stream'`/`'create-stream'` остались только как имена stories и callback-коды.
+
+**Проверка orchestrator'а:** полный `check` — все шаги до тестов зелёные, тесты 3780 pass / 2 fail (красная зона, TR-42); `git status data/` чист.
+
+## Отчёт `data-keeper` (Ф1)
+
+Живой `data/` не читался; выводы по коду и тестам.
+- **error (принят, TR-42):** первая запись `StreamJsonRepo` переписывает весь `streams.json`; `LegacyStreamJsonRepo` пропускает все потоки — `enroll`/`complete-student` → `STREAM_NOT_FOUND`, `drop`/`mark-abandoned` молча не уведомляют, `inactivity-sweep` пропускает. Legacy при чтении нового формата пишет `data/streams/backups/streams.invalid.<ts>.json` один раз на процесс; `save` не вызывается.
+- **warn:** строгий разбор — одна невалидная запись останавливает `findAll`/`findById`/`write` (legacy пропускал). Невалидные записи в живых данных неизвестны.
+- **info:** читатель файл не портит; запись не атомарна (как legacy); совместимость полей (`F.timestamp`, фолбэки `updatedAt`/`version`, `contentSnapshot` без `v.trim()`) — старые записи читаются; `invitedStreamIds` необязательное, откат — повторные приглашения без потери данных.
+- **Откат:** после первой записи — только восстановление `streams.json` из `bun run backup`. **Бэкап перед первым запуском обязателен.** Пакетная миграция не нужна (ленивая конвертация).
+- **Рекомендации:** (1) с разрешения Нурболата — разбор копии `streams.json` схемой `StreamArDef.state` во временном каталоге, вывод только числа записей и ошибок → **открытый вопрос к контрольной точке**; (2) по результату — чинить или пропускать; (3) тесты «legacy читает новый формат» и «`wish` без `invitedStreamIds`» → переданы migrator.
+
+## Отчёт `reviewer` (Ф1)
+
+`error`/`warn` нет. Проверены ID брифа; grep-критерии выполнены; сохранность поведения подтверждена; ослабленных тестов нет.
+
+| ID | файл:строка | суть | severity | решение |
+|---|---|---|---|---|
+| CODE-04 | `stream.ar.ts:69,90` | лишние `D-NN` вне шапки | minor | правка |
+| CODE-04 | `list-stream-students-uc.ts:15-17`, `.test.ts:102` | комментарий об удалённом фасаде | minor | правка |
+| CODE-04 | `legacy-stream-students.test.ts:6-9` | шапка — история переноса | minor | правка |
+| ARC-08 | `streams/controller.ts:123-139`, `u7-bot-ui-story.ts` | дубль `dispatch` от гостя | minor | правка |
+| TST-05 | тесты stories (~20) | `story.init({...} as never)` | question | принято — как в образце `course-catalog.story.test.ts` |
+| DOM-17 | `activate-stream.uc.ts:50` | `launch` до фиксации | question | принято — Т3 |
+| MAN-02 | `content-snapshot.ts` | `v.uuid`, снят `v.trim()` | question | принято — Т9, Т15 |
+
+Кандидат в ratchet: CODE-04 — одна `D-NN` на файл, ссылки на удалённые сущности.
+
+## Открытые вопросы к контрольной точке Ф1
+
+- **Данные:** разрешить разбор копии живого `streams.json` схемой нового state (только числа записей/ошибок) до Ф2 — рекомендация `data-keeper`.

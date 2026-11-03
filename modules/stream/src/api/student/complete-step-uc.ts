@@ -4,7 +4,7 @@ import {
   type CompleteStepCmd,
   type CompleteStepCmdMeta,
   CompleteStepCmdSchema,
-  StreamAr,
+  LegacyStreamAr,
   StreamDs,
   StudentAr,
 } from '@u7-scl/domain/stream';
@@ -60,7 +60,7 @@ export class CompleteStepUc extends StreamUseCase<CompleteStepCmdMeta> {
       this.throwAccessDenied('Студент не найден');
     }
 
-    const streamAr = new StreamAr(streamEntity);
+    const streamAr = new LegacyStreamAr(streamEntity);
     const studentAr = new StudentAr(studentEntity);
 
     // 2. Выполнение логики

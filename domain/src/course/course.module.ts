@@ -5,6 +5,7 @@ import { GetCourseEnrollmentUcDef } from './course/uc/get-course-enrollment.uc';
 import { GetCoursesIncludingModuleUcDef } from './course/uc/get-courses-including-module.uc';
 import { GetCoursesStartingWithModuleUcDef } from './course/uc/get-courses-starting-with-module.uc';
 import { GetModuleEnrollmentUcDef } from './course/uc/get-module-enrollment.uc';
+import { GetModuleSnapshotUcDef } from './course/uc/get-module-snapshot.uc';
 import { GetSameModulesUcDef } from './course/uc/get-same-modules.uc';
 
 /**
@@ -26,6 +27,7 @@ export const CourseModuleDef = ModuleDef.define({
     GetCoursesIncludingModuleUcDef,
     GetSameModulesUcDef,
     GetCoursesStartingWithModuleUcDef,
+    GetModuleSnapshotUcDef,
   ],
   reactions: [],
   jobs: [],

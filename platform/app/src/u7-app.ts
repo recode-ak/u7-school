@@ -45,8 +45,10 @@ import {
 } from '@u7-scl/questionnaire/infra';
 import {
   createStreamModule,
+  LegacyStreamJsonRepo,
+  legacyStreamStudents,
   StreamApiModule,
-  StreamInProcFacade,
+  type StreamDeps,
   StreamJsonRepo,
   StudentJsonRepo,
   streamLegacyInbound,
@@ -117,7 +119,10 @@ export class U7App {
       db,
     );
 
-    const streamRepo = new StreamJsonRepo(`${dbDir}/streams/streams.json`);
+    // Legacy-репозиторий потоков — только чтение для студентов (до Ф2); потоки пишет `StreamJsonRepo`.
+    const streamRepo = new LegacyStreamJsonRepo(
+      `${dbDir}/streams/streams.json`,
+    );
     const streamStudentRepo = new StudentJsonRepo(
       `${dbDir}/streams/students.json`,
     );
@@ -181,8 +186,6 @@ export class U7App {
       eventBus: appResolver.eventBus,
     });
 
-    const streamFacade = new StreamInProcFacade(streamModule);
-
     // ══ Peer-review: репозитории кампаний и отзывов (DMG) ══
     const reviewCampaignRepo = new ReviewCampaignJsonRepo(
       `${dbDir}/peer-review/campaigns.json`,
@@ -198,12 +201,14 @@ export class U7App {
         user: userFacade,
         course: courseFacade,
         questionnaire: questionnaireFacade,
-        stream: streamFacade,
       },
       {
         wishes: new WishJsonRepo(`${dbDir}/wish/wishes.json`),
         campaigns: reviewCampaignRepo,
         reviews: reviewRepo,
+        streams: new StreamJsonRepo(`${dbDir}/streams/streams.json`),
+        students: legacyStreamStudents(streamStudentRepo),
+        schoolId: school.id,
       },
     );
 
@@ -288,6 +293,9 @@ export class U7App {
       readonly wishes: WishRepo;
       readonly campaigns: ReviewCampaignRepo;
       readonly reviews: ReviewRepo;
+      readonly streams: StreamDeps['streams'];
+      readonly students: StreamDeps['students'];
+      readonly schoolId: string;
     },
   ) {
     const factories: ModuleFactory<Identified>[] = [
@@ -308,7 +316,12 @@ export class U7App {
       {
         def: StreamModuleDef,
         create: (deps) =>
-          createStreamModule({ ...deps, legacy: legacy.stream }),
+          createStreamModule({
+            ...deps,
+            streams: repos.streams,
+            students: repos.students,
+            schoolId: repos.schoolId,
+          }),
       },
       {
         def: WishModuleDef,

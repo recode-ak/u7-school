@@ -9,6 +9,14 @@ import {
 import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
+import {
+  GetStreamUcDef,
+  ListStreamsUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
+import { type Command, UserCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
+import { expectOk } from 'dmg-core/testing';
 import type { TestApp } from '../helpers/test-app';
 import { createTestApp } from '../helpers/test-app';
 import {
@@ -44,13 +52,25 @@ describe('MentorController (интеграционный)', () => {
     await app.cleanup();
   });
 
+  /** Запрос потоков от имени ментора (как stories бота) */
+  const dispatchStream = <
+    D extends (typeof StreamModuleDef)['useCases'][number],
+  >(
+    command: Command<D>,
+  ) =>
+    app.apiApp.dispatch(
+      StreamModuleDef,
+      command,
+      new UserCaller(mentor),
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+    );
+
   // ── Мои потоки ──
 
   test('ментор видит свои потоки (включая все 4 статуса)', async () => {
-    const streams = await app.apiApp.execute('list-streams', {});
-    const myStreams = (
-      streams as Array<{ mentorId: string; status: string }>
-    ).filter((s) => s.mentorId === mentor.uuid);
+    const myStreams = expectOk(
+      await dispatchStream(ListStreamsUcDef.command({ mentorId: mentor.uuid })),
+    );
     expect(myStreams.length).toBeGreaterThanOrEqual(4);
     const statuses = new Set(myStreams.map((s) => s.status));
     expect(statuses.has('enrollment')).toBe(true);
@@ -62,22 +82,19 @@ describe('MentorController (интеграционный)', () => {
   // ── Карточка потока ──
 
   test('enrollment поток существует и доступен', async () => {
-    const stream = await app.apiApp.execute(
-      'get-stream',
-      { streamId: ENROLLMENT_ID },
-      mentor,
+    const stream = expectOk(
+      await dispatchStream(GetStreamUcDef.command({ streamId: ENROLLMENT_ID })),
     );
-    expect((stream as { status: string }).status).toBe('enrollment');
-    expect((stream as { mentorId: string }).mentorId).toBe(mentor.uuid);
+    expect(stream.status).toBe('enrollment');
+    expect(stream.mentorId).toBe(mentor.uuid);
+    expect(stream.canManage).toBe(true);
   });
 
   test('active поток — статус active', async () => {
-    const stream = await app.apiApp.execute(
-      'get-stream',
-      { streamId: ACTIVE_ID },
-      mentor,
+    const stream = expectOk(
+      await dispatchStream(GetStreamUcDef.command({ streamId: ACTIVE_ID })),
     );
-    expect((stream as { status: string }).status).toBe('active');
+    expect(stream.status).toBe('active');
   });
 
   // ── Студенты ──
@@ -115,6 +132,19 @@ describe('CreateStream Wizard (интеграционный)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
   let mentor: User;
+
+  /** Запрос потоков от имени ментора (как stories бота) */
+  const dispatchStream = <
+    D extends (typeof StreamModuleDef)['useCases'][number],
+  >(
+    command: Command<D>,
+  ) =>
+    app.apiApp.dispatch(
+      StreamModuleDef,
+      command,
+      new UserCaller(mentor),
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+    );
   let tgId: number;
 
   beforeAll(async () => {
@@ -314,11 +344,9 @@ describe('CreateStream Wizard (интеграционный)', () => {
     expect(String(finalResp.screen?.text)).toContain('создан');
 
     // Сквозная проверка: оба поля сохранены в правильных полях потока
-    const streams = (await app.apiApp.execute('list-streams', {})) as Array<{
-      description: string;
-      telegramGroupId?: string;
-      telegramGroupInvite?: string;
-    }>;
+    const streams = expectOk(
+      await dispatchStream(ListStreamsUcDef.command({})),
+    );
     const created = streams.find(
       (s) => s.description === 'Тестовый поток (поля группы)',
     );

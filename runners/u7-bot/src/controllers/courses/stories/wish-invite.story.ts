@@ -7,6 +7,11 @@ import type {
   UiEventSubscription,
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
+import {
+  GetStreamUcDef,
+  StreamModuleDef,
+  type StreamView,
+} from '@u7-scl/domain/stream/contract';
 import { WishEvents } from '@u7-scl/domain/wish/contract';
 import type * as v from 'valibot';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
@@ -60,16 +65,15 @@ export class WishInviteStory extends U7BotUiStory {
     const moduleId =
       payload.targetKind === 'module' ? payload.moduleId : undefined;
 
-    let stream: {
-      title: string;
-      startDate: string;
-      mentorId: string;
-      enrollmentKey?: string;
-    };
+    let stream: StreamView;
     try {
-      stream = (await this.appApi.execute('get-stream', {
-        streamId,
-      })) as typeof stream;
+      const loaded = await this.dispatchUcAsGuest(
+        StreamModuleDef,
+        GetStreamUcDef.command({ streamId }),
+      );
+      // Поток недоступен — приглашение невозможно (молчаливый пропуск)
+      if (!loaded.ok) return;
+      stream = loaded.value;
     } catch {
       // Поток недоступен — приглашение невозможно (молчаливый пропуск)
       return;
@@ -89,17 +93,18 @@ export class WishInviteStory extends U7BotUiStory {
     const mentorLine = await this.#mentorLine(stream.mentorId);
 
     // Ключ набора опционален: без него запись мгновенная, без кодового слова
-    const enrollHint = stream.enrollmentKey
+    const enrollHint = stream.requiresEnrollmentKey
       ? md`Для записи нужен ключ — его выдаёт ментор\\. Запись: /start → 🏫 Школа → 📚 Потоки → «${stream.title}» → 📝 Записаться\\.`
       : md`Запись свободная: /start → 🏫 Школа → 📚 Потоки → «${stream.title}» → 📝 Записаться\\.`;
 
+    const startIso = new Date(stream.startDate).toISOString();
     const text = mdJoin([
       md`📣 *Открылся набор\\!*`,
       md``,
       subject,
       md``,
       md`📚 Поток: «${stream.title}»`,
-      md`📅 Старт: ${this.formatDate(stream.startDate)}, ${this.#formatTime(stream.startDate)}`,
+      md`📅 Старт: ${this.formatDate(startIso)}, ${this.#formatTime(startIso)}`,
       ...mentorLine,
       md``,
       enrollHint,

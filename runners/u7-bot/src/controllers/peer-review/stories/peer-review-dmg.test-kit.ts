@@ -1,5 +1,6 @@
 import { expect, mock } from 'bun:test';
 import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review/contract';
+import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { type Command, ok, UserCaller } from 'dmg-core';
 
 /** Отказ UC в моке: ответ-значение, которое `peerReviewDispatch` превращает в `err`. */
@@ -13,7 +14,7 @@ export class Refusal {
 export const refuse = (code: string, kind = 'conflict', payload?: unknown) =>
   new Refusal({ code, kind, payload });
 
-/** Ответы UC модуля peer-review (DMG) в моках stories: вход → значение. */
+/** Ответы UC DMG в моках stories (peer-review и чтение потока): вход → значение. */
 export interface PeerReviewAnswers {
   getMyCampaigns?: (input: unknown) => unknown;
   getCampaignRecipients?: (input: unknown) => unknown;
@@ -22,15 +23,19 @@ export interface PeerReviewAnswers {
   listMyReviews?: (input: unknown) => unknown;
   listScopeReviews?: (input: unknown) => unknown;
   listScopeFacts?: (input: unknown) => unknown;
+  getStream?: (input: unknown) => unknown;
+  listStreams?: (input: unknown) => unknown;
 }
 
 /**
- * Мок `appApi.dispatch`: команда модулю peer-review отвечает `ok(...)` по
- * имени UC; чужой модуль или UC без ответа — ошибка теста.
+ * Мок `appApi.dispatch`: команда модулю peer-review или потоков отвечает
+ * `ok(...)` по имени UC; чужой модуль или UC без ответа — ошибка теста.
  */
 export function peerReviewDispatch(answers: PeerReviewAnswers) {
   return mock(async (module: unknown, command: Command) => {
-    expect(module).toBe(PeerReviewModuleDef);
+    expect(module === PeerReviewModuleDef || module === StreamModuleDef).toBe(
+      true,
+    );
     const answer = answers[command.uc as keyof PeerReviewAnswers];
     if (!answer) throw new Error(`Нет ответа на UC DMG: ${command.uc}`);
     const value = answer(command.input);

@@ -14,6 +14,10 @@ import {
   type MyCampaignCard,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
+import {
+  GetStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import { buttons } from '../../shared/buttons';
 import { campaignProfileOf } from './campaign-profiles';
 
@@ -287,12 +291,13 @@ export class MyReviewsStory extends U7BotUiStory {
   ): Promise<Map<string, string>> {
     const titles = new Map<string, string>();
     for (const scopeId of scopeIds) {
-      const stream = await this.appApi.execute(
-        'get-stream',
-        { streamId: scopeId },
+      const stream = await this.dispatchUc(
+        StreamModuleDef,
+        GetStreamUcDef.command({ streamId: scopeId }),
         actor,
       );
-      titles.set(scopeId, stream.title);
+      if (!stream.ok) throw new Error(stream.error.code);
+      titles.set(scopeId, stream.value.title);
     }
     return titles;
   }

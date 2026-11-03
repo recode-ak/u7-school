@@ -1,6 +1,12 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { MdText } from '@u7-scl/core/shared';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
+import {
+  dmgDispatch,
+  streamNotFound,
+  streamView,
+} from '../../streams/stories/stream-dmg.test-kit';
 import { type WishInvitedEvent, WishInviteStory } from './wish-invite.story';
 
 // ══ Фикстуры ══
@@ -11,18 +17,15 @@ const MODULE_ID = '33333333-3333-4333-8333-333333333333';
 const MENTOR_ID = '66666666-6666-4666-8666-666666666666';
 const WISHER_TELEGRAM_ID = 1003;
 
-const stream = {
+const stream = streamView({
   uuid: STREAM_ID,
   title: 'JavaScript Основы — Поток 1',
   description: 'Первый поток',
   mentorId: MENTOR_ID,
   moduleId: MODULE_ID,
-  startDate: '2026-09-17T10:00:00.000Z',
-  status: 'recruiting',
-  contentSnapshot: [],
-  createdAt: '2026-09-01T00:00',
-  enrollmentKey: undefined as string | undefined,
-};
+  startDate: Date.parse('2026-09-17T10:00:00.000Z'),
+  status: 'enrollment',
+});
 
 const course = { uuid: COURSE_ID, title: 'JavaScript Основы' };
 const module_ = { uuid: MODULE_ID, title: 'JavaScript Основы', projects: [] };
@@ -99,14 +102,6 @@ function setupStory(
 
   const execute = mock(
     async (name: string, params?: Record<string, unknown>) => {
-      if (name === 'get-stream') {
-        if (!localStream) {
-          throw Object.assign(new Error('Поток не найден'), {
-            name: 'STREAM_NOT_FOUND',
-          });
-        }
-        return localStream;
-      }
       if (name === 'get-user') {
         const uuid = params?.uuid as string;
         if (uuid === MENTOR_ID) return localMentor;
@@ -119,9 +114,17 @@ function setupStory(
   );
 
   const story = new WishInviteStory();
-  Object.assign(story, {
-    appApi: { execute },
-    proactiveSender: {
+  story.init(
+    {
+      appApi: {
+        execute,
+        dispatch: dmgDispatch({
+          getStream: () => localStream ?? streamNotFound(),
+        }),
+      },
+      callers: testCallers,
+    } as never,
+    {
       invite: mock(
         async (
           telegramId: number,
@@ -133,8 +136,8 @@ function setupStory(
           invites.push({ telegramId, payload });
         },
       ),
-    },
-  } as unknown);
+    } as never,
+  );
 
   return { story, invites, execute };
 }
@@ -198,7 +201,7 @@ describe('WishInviteStory', () => {
 
   test('поток с ключом набора → подсказка про кодовое слово', async () => {
     const { story, invites } = setupStory({
-      stream: { ...stream, enrollmentKey: 'secret123' },
+      stream: { ...stream, requiresEnrollmentKey: true },
     });
     const handle = subHandler(story, 'wish.wish.invited');
 

@@ -3,6 +3,11 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { Role } from '@u7-scl/user/domain';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
+import {
+  dmgDispatch,
+  streamView,
+} from '../../streams/stories/stream-dmg.test-kit';
 import { ProgressStory } from './progress';
 
 describe('ProgressStory', () => {
@@ -38,7 +43,7 @@ describe('ProgressStory', () => {
     title: 'Python Basic',
     description: 'Курс',
     status: 'active',
-    startDate: '2026-06-01T00:00:00.000Z',
+    startDate: Date.parse('2026-06-01T00:00:00.000Z'),
     contentSnapshot: [
       {
         projectId: 'proj-1',
@@ -63,12 +68,17 @@ describe('ProgressStory', () => {
         return val;
       }
       if (name === 'get-student-by-user') return mockStudent;
-      if (name === 'get-stream') return mockStream;
       return undefined;
     });
 
     const story = new ProgressStory();
-    story.init({ appApi: { execute: appApiSpy } } as never);
+    story.init({
+      appApi: {
+        execute: appApiSpy,
+        dispatch: dmgDispatch({ getStream: () => streamView(mockStream) }),
+      },
+      callers: testCallers,
+    } as never);
     return { story, appApiSpy };
   }
 

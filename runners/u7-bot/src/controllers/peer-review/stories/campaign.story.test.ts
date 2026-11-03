@@ -12,8 +12,10 @@ import {
   ReviewCampaignErrors,
   ReviewErrors,
 } from '@u7-scl/domain/peer-review/contract';
+import { GetStreamUcDef } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
 import { err } from 'dmg-core';
+import { streamView } from '../../streams/stories/stream-dmg.test-kit';
 import { CampaignStory } from './campaign.story';
 import { MyReviewsStory } from './my-reviews.story';
 import {
@@ -115,14 +117,13 @@ describe('CampaignStory (S03 — список адресатов)', () => {
           };
         },
         listMyReviews: () => ({ reviews: [] }),
+        getStream: () => streamView({ uuid: STREAM_ID, title: 'Поток S' }),
       }),
       execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
         if (ucName === failUc) {
           throw new Error('имитация ошибки UC');
         }
         switch (ucName) {
-          case 'get-stream':
-            return { uuid: attrs.uuid, title: 'Поток S' };
           case 'get-user':
             return { uuid: attrs.uuid, name: NAMES[String(attrs.uuid)] ?? '' };
           case 'get-users-by-ids':
@@ -249,7 +250,9 @@ describe('CampaignStory (S03 — список адресатов)', () => {
     expect(commands).toContainEqual(
       GetCampaignRecipientsUcDef.command({ campaignId: CAMPAIGN_ID }),
     );
-    expect(calls).toContainEqual(['get-stream', { streamId: STREAM_ID }]);
+    expect(commands).toContainEqual(
+      GetStreamUcDef.command({ streamId: STREAM_ID }),
+    );
     expect(calls).toContainEqual(['get-user', { uuid: MENTOR_ID }]);
   });
 

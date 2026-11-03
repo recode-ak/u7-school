@@ -2,6 +2,10 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { md } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
+import {
+  ActivateStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 
 /**
  * US-7: Запуск потока (старт обучения).
@@ -19,7 +23,12 @@ export class ActivateStreamStory extends U7BotUiStory {
     if (cmd !== 'activate' || !streamId) {
       return this.unknownCommand(action, actor, session);
     }
-    await this.appApi.execute('activate-stream', { streamId }, actor);
+    const res = await this.dispatchUc(
+      StreamModuleDef,
+      ActivateStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!res.ok) return this.ucErrorNotify(res.error);
 
     return this.screen(
       md`🚀 *Поток запущен\\!* Первые задания выданы студентам\\. Они увидят их в разделе «🎓 Моя учёба»\\.`,

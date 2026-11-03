@@ -17,23 +17,11 @@ import type {
   KbButton,
 } from '@u7-scl/core/ui';
 import { Status } from '@u7-scl/course/domain';
-
-/** Тип команды создания потока (локально, для wizard-а) */
-interface CreateStreamCmd {
-  title: string;
-  description: string;
-  mentorId: string;
-  moduleId: string;
-  startDate: string;
-  telegramGroupId: string;
-  telegramGroupInvite?: string;
-  goal?: string;
-  result?: string;
-  rules?: string;
-  additional?: string;
-  targetAudience?: string;
-  enrollmentKey?: string;
-}
+import {
+  CreateStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
+import type { InputOf } from 'dmg-core';
 
 /** Контекст wizard-а создания потока (живёт в dialog.input.context) */
 interface CreateStreamWizardContext {
@@ -773,13 +761,13 @@ export class CreateStreamStory extends U7BotUiStory {
       };
     }
 
-    const cmd: CreateStreamCmd = {
+    // Дата wizard-а — UTC без часового пояса (`YYYY-MM-DDTHH:mm`); поток хранит метку времени
+    const cmd: InputOf<typeof CreateStreamUcDef> = {
       title: context.title,
       description: context.description,
       moduleId: context.moduleId,
-      startDate: context.startDate,
+      startDate: new Date(`${context.startDate}Z`).getTime(),
       telegramGroupId: context.telegramGroupId,
-      mentorId: actor.uuid,
     };
 
     // Добавляем необязательные поля, если они заданы
@@ -792,11 +780,12 @@ export class CreateStreamStory extends U7BotUiStory {
     if (context.telegramGroupInvite)
       cmd.telegramGroupInvite = context.telegramGroupInvite;
 
-    try {
-      await this.appApi.execute('create-stream', cmd, actor);
-    } catch (err: unknown) {
-      return this.handleError(err);
-    }
+    const created = await this.dispatchUc(
+      StreamModuleDef,
+      CreateStreamUcDef.command(cmd),
+      actor,
+    );
+    if (!created.ok) return this.ucErrorNotify(created.error);
 
     return {
       release: true,

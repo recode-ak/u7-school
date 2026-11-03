@@ -2,13 +2,19 @@ import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
-import type { Stream } from '@u7-scl/stream/domain';
+import {
+  ArchiveStreamUcDef,
+  CompleteStreamUcDef,
+  StreamErrors,
+} from '@u7-scl/domain/stream/contract';
 import { StreamStatus } from '@u7-scl/stream/domain';
 import { Role } from '@u7-scl/user/domain';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import {
-  peerReviewDispatch,
-  testCallers,
-} from '../../peer-review/stories/peer-review-dmg.test-kit';
+  dmgDispatch,
+  refuse,
+  streamView,
+} from '../../streams/stories/stream-dmg.test-kit';
 import { ViewStreamMentorStory } from './view-stream-mentor';
 
 const mentorActor: User = {
@@ -30,7 +36,7 @@ const mockStream = {
   status: StreamStatus.ENROLLMENT,
   mentorId: 'mentor-1',
   moduleId: 'module-1',
-  startDate: '2026-06-01T10:00:00.000Z',
+  startDate: Date.parse('2026-06-01T10:00:00.000Z'),
   contentSnapshot: [
     {
       projectId: 'project-1',
@@ -44,7 +50,7 @@ const mockStream = {
       ],
     },
   ],
-} as Stream;
+};
 
 const mockStudent = {
   uuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001',
@@ -57,28 +63,52 @@ const mockStudent = {
   createdAt: '2026-01-01T00:00',
 };
 
+/**
+ * Обработчик ответов: имена legacy-UC (`execute`) и UC потока DMG
+ * (`getStream`, `completeStream`, `archiveStream`).
+ */
 type Handler = (name: string, params?: Record<string, unknown>) => unknown;
+
+/** Ответ getStream: право управления — у ментора потока (как Policy). */
+function viewOf(raw: Record<string, unknown>, callerId: string) {
+  return streamView({ ...raw, canManage: raw.mentorId === callerId });
+}
 
 function createStory(handler?: Handler) {
   const story = new ViewStreamMentorStory();
-  const appApi = {
-    execute: mock(async (name: string, params?: Record<string, unknown>) => {
-      if (handler) return handler(name, params);
-      if (name === 'get-stream') return mockStream;
+  const answer: Handler =
+    handler ??
+    ((name) => {
+      if (name === 'getStream') return mockStream;
       if (name === 'list-stream-students') return [];
       if (name === 'get-user') return { name: 'Ментор Тест', roles: [] };
       return undefined;
-    }),
+    });
+  const appApi = {
+    execute: mock(async (name: string, params?: Record<string, unknown>) =>
+      answer(name, params),
+    ),
   };
-  // факты отзывов скоупа (карточка потока) — UC DMG через dispatch
-  const dispatch = peerReviewDispatch({
+  // поток и факты отзывов скоупа — UC DMG через dispatch
+  const dispatch = dmgDispatch({
+    getStream: (input, caller) => {
+      const stream = answer('getStream', input as Record<string, unknown>);
+      return stream instanceof Object && 'uuid' in stream
+        ? viewOf(stream as Record<string, unknown>, caller.subject().uuid)
+        : stream;
+    },
+    getStreamMembers: () => ({ mentorId: 'mentor-1', students: [] }),
+    completeStream: (input) =>
+      answer('completeStream', input as Record<string, unknown>),
+    archiveStream: (input) =>
+      answer('archiveStream', input as Record<string, unknown>),
     listScopeFacts: () => ({ hasReviews: false, reviewsCount: 0 }),
   });
   story.init({
     appApi: { ...appApi, dispatch },
     callers: testCallers,
   } as never);
-  return { story, appApi };
+  return { story, appApi, dispatch };
 }
 
 function flat(response: DialogResponse) {
@@ -127,7 +157,7 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
 
   test('view: active — «✅ Завершить» вместо «Запустить»', async () => {
     const { story } = createStory((name) => {
-      if (name === 'get-stream')
+      if (name === 'getStream')
         return { ...mockStream, status: StreamStatus.ACTIVE };
       if (name === 'list-stream-students') return [];
       if (name === 'get-user') return { name: 'Ментор Тест', roles: [] };
@@ -146,7 +176,7 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
 
   test('view: completed — «📁 В архив»', async () => {
     const { story } = createStory((name) => {
-      if (name === 'get-stream')
+      if (name === 'getStream')
         return { ...mockStream, status: StreamStatus.COMPLETED };
       if (name === 'list-stream-students') return [];
       if (name === 'get-user') return { name: 'Ментор Тест', roles: [] };
@@ -209,7 +239,7 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
 
   test('program: карточка урока — все шаги доступны для ментора', async () => {
     const { story } = createStory((name) => {
-      if (name === 'get-stream') return mockStream;
+      if (name === 'getStream') return mockStream;
       if (name === 'get-steps-by-lessons') {
         return {
           'lesson-1': [
@@ -241,7 +271,7 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
 
   test('program: карточка шага — ментор видит тело шага (readOnly)', async () => {
     const { story } = createStory((name, params) => {
-      if (name === 'get-stream') return mockStream;
+      if (name === 'getStream') return mockStream;
       if (name === 'get-step') {
         return {
           uuid: params?.uuid,
@@ -296,7 +326,7 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
 
   test('details: показывает заполненные поля', async () => {
     const { story } = createStory((name) => {
-      if (name === 'get-stream')
+      if (name === 'getStream')
         return { ...mockStream, goal: 'Научиться', result: 'Сможете' };
       if (name === 'get-user') return { name: 'Ментор Тест', roles: [] };
       return undefined;
@@ -315,7 +345,7 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
 
   test('students: кнопка студента — monitor:detail + менторские ⛔✅', async () => {
     const { story } = createStory((name) => {
-      if (name === 'get-stream')
+      if (name === 'getStream')
         return { ...mockStream, status: StreamStatus.ACTIVE };
       if (name === 'list-stream-students') return [mockStudent];
       if (name === 'get-user')
@@ -353,7 +383,7 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
 
   test('students: advanced — только 🔄 (повтор), без ⛔', async () => {
     const { story } = createStory((name) => {
-      if (name === 'get-stream')
+      if (name === 'getStream')
         return { ...mockStream, status: StreamStatus.ACTIVE };
       if (name === 'list-stream-students')
         return [{ ...mockStudent, status: 'advanced' }];
@@ -376,7 +406,7 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
 
   test('students: не-owner ментор — без менторских кнопок', async () => {
     const { story } = createStory((name) => {
-      if (name === 'get-stream')
+      if (name === 'getStream')
         return { ...mockStream, status: StreamStatus.ACTIVE, mentorId: 'x' };
       if (name === 'list-stream-students') return [mockStudent];
       if (name === 'get-user')
@@ -415,21 +445,60 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
     ]);
   });
 
-  test('complete-confirm: UC complete-stream, экран успеха с кнопкой назад', async () => {
-    const { story, appApi } = createStory();
+  test('complete-confirm: UC completeStream, экран успеха с кнопкой назад', async () => {
+    const { story, dispatch } = createStory();
     const response = await story.handleCallback(
       'complete-confirm:stream-1',
       mentorActor,
       session,
     );
-    const calls = appApi.execute.mock.calls as unknown[][];
-    expect(calls.find((c) => c[0] === 'complete-stream')?.[1]).toEqual({
-      streamId: 'stream-1',
-    });
+    expect(dispatch.mock.calls.map(([, command]) => command)).toEqual([
+      CompleteStreamUcDef.command({ streamId: 'stream-1' }),
+    ]);
     expect(String(response.screen?.text)).toContain('Поток завершён');
     expect(response.screen?.keyboard?.rows).toEqual([
       [{ text: '⬅️ Назад к списку', code: 'my-streams:list' }],
     ]);
+  });
+
+  test('complete-confirm: есть студенты без исхода — прежний текст с числом студентов', async () => {
+    const pending = [
+      { userId: 'u-1', status: 'active' },
+      { userId: 'u-2', status: 'enrolled' },
+    ];
+    const { story } = createStory((name) =>
+      name === 'completeStream'
+        ? refuse(StreamErrors.STUDENTS_IN_PROGRESS.code, 'conflict', {
+            pending,
+          })
+        : undefined,
+    );
+    const response = await story.handleCallback(
+      'complete-confirm:stream-1',
+      mentorActor,
+      session,
+    );
+    assertDialogResponseMarkdownSafe(response);
+    expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toBe(
+      'Нельзя завершить поток: 2 студентов ещё учатся\\. Сначала укажите исход для каждого\\.',
+    );
+    expect(response.screen).toBeUndefined();
+  });
+
+  test('complete-confirm: иной отказ (поток не активен) — текст ошибки домена', async () => {
+    const { story } = createStory((name) =>
+      name === 'completeStream'
+        ? refuse(StreamErrors.NOT_ACTIVE.code, 'conflict')
+        : undefined,
+    );
+    const response = await story.handleCallback(
+      'complete-confirm:stream-1',
+      mentorActor,
+      session,
+    );
+    expect(response.notify?.kind).toBe('warn');
+    expect(response.screen).toBeUndefined();
   });
 
   // ── archive: confirm → выполнение ──
@@ -454,17 +523,16 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
     ]);
   });
 
-  test('archive-confirm: UC archive-stream, экран успеха с кнопкой назад', async () => {
-    const { story, appApi } = createStory();
+  test('archive-confirm: UC archiveStream, экран успеха с кнопкой назад', async () => {
+    const { story, dispatch } = createStory();
     const response = await story.handleCallback(
       'archive-confirm:stream-1',
       mentorActor,
       session,
     );
-    const calls = appApi.execute.mock.calls as unknown[][];
-    expect(calls.find((c) => c[0] === 'archive-stream')?.[1]).toEqual({
-      streamId: 'stream-1',
-    });
+    expect(dispatch.mock.calls.map(([, command]) => command)).toEqual([
+      ArchiveStreamUcDef.command({ streamId: 'stream-1' }),
+    ]);
     expect(String(response.screen?.text)).toContain('архив');
     expect(response.screen?.keyboard?.rows).toEqual([
       [{ text: '⬅️ Назад к списку', code: 'my-streams:list' }],

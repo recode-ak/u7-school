@@ -6,8 +6,12 @@ import type {
   UiEventSubscription,
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
+import {
+  GetStreamUcDef,
+  StreamModuleDef,
+  type StreamView,
+} from '@u7-scl/domain/stream/contract';
 import type {
-  Stream,
   Student,
   StudentAbandonedEvent,
   StudentInactivityRemoveCandidateEvent,
@@ -288,13 +292,13 @@ export class InactivityStory extends U7BotUiStory {
   }
 
   /** Поток по id (undefined, если недоступен). */
-  async #resolveStream(streamId: string): Promise<Stream | undefined> {
+  async #resolveStream(streamId: string): Promise<StreamView | undefined> {
     try {
-      const stream: Stream | undefined = await this.appApi.execute(
-        'get-stream',
-        { streamId },
+      const stream = await this.dispatchUcAsGuest(
+        StreamModuleDef,
+        GetStreamUcDef.command({ streamId }),
       );
-      return stream;
+      return stream.ok ? stream.value : undefined;
     } catch {
       return undefined;
     }

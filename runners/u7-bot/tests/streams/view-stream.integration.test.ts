@@ -114,7 +114,7 @@ describe('ViewStreamStory (интеграционный)', () => {
       'view',
       'ffffffff-ffff-ffff-ffff-ffffffffffff',
     );
-    expect(response.screen?.text).toContain('не найден');
+    expect(String(response.notify?.text)).toContain('не найден');
   });
 
   // ── S03: Программа потока ──

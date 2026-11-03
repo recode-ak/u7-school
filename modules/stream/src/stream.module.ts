@@ -1,35 +1,56 @@
-// DMG-модуль внешнего контракта потоков — адаптеры над legacy-фасадом.
-import type { StreamFacade } from '@u7-scl/domain/stream/contract';
-import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
-import type { Identified } from 'dmg-core';
+import { StreamModuleDef } from '@u7-scl/domain/stream';
+import type { User } from '@u7-scl/domain/user/contract';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
+import type { StreamRepo } from './stream/stream.repo';
+import type { StreamStudents } from './stream/stream-students';
+import { ActivateStreamUc } from './stream/uc/activate-stream.uc';
+import { ArchiveStreamUc } from './stream/uc/archive-stream.uc';
+import { CompleteStreamUc } from './stream/uc/complete-stream.uc';
+import { CreateStreamUc } from './stream/uc/create-stream.uc';
+import { FindStreamByTelegramGroupUc } from './stream/uc/find-stream-by-telegram-group.uc';
+import { GetStreamUc } from './stream/uc/get-stream.uc';
 import { GetStreamMembersUc } from './stream/uc/get-stream-members.uc';
 import { GetStreamPresenceUc } from './stream/uc/get-stream-presence.uc';
+import { ListStreamsUc } from './stream/uc/list-streams.uc';
 
-/** Что адаптеры над legacy-фасадом берут у legacy-фасада потоков. */
-export type StreamLegacy = Pick<StreamFacade, 'getStream' | 'getMembers'>;
+/** Субъект потока: права зависят только от `uuid` и ролей (`StreamPolicy`). */
+export type StreamUser = Pick<User, 'uuid' | 'roles'>;
 
-/** Резолвер DMG-модуля потоков: платформа + legacy-фасад. */
-export type StreamModuleDeps = ModuleDeps & { readonly legacy: StreamLegacy };
+/**
+ * Резолвер модуля: платформа (фасад `course` — в `facades`, вызываемый UC — в
+ * `calls`), репозиторий потоков, порт студентов и школа приложения.
+ */
+export type StreamDeps = ModuleDeps & {
+  readonly streams: StreamRepo;
+  readonly students: StreamStudents;
+  readonly schoolId: string;
+};
 
-/** Карта «Def → класс» внешнего модуля потоков (API-05); ER и Job нет. */
-export const streamModuleMap = {
+/** Карта «Def → класс» модуля stream (API-05); ER и Job нет. */
+export const streamMap = {
   useCases: {
-    getStreamPresence: GetStreamPresenceUc,
+    createStream: CreateStreamUc,
+    activateStream: ActivateStreamUc,
+    completeStream: CompleteStreamUc,
+    archiveStream: ArchiveStreamUc,
+    getStream: GetStreamUc,
+    listStreams: ListStreamsUc,
     getStreamMembers: GetStreamMembersUc,
+    getStreamPresence: GetStreamPresenceUc,
+    findStreamByTelegramGroup: FindStreamByTelegramGroupUc,
   },
   reactions: {},
   jobs: {},
-} satisfies ModuleMap<typeof StreamModuleDef, StreamModuleDeps, Identified>;
+} satisfies ModuleMap<typeof StreamModuleDef, StreamDeps, StreamUser>;
 
 /**
- * DMG-модуль потоков — владелец UC внешнего контракта; фасад для других
- * модулей — `new ModuleFacade(createStreamModule(deps))` (D-43).
+ * Модуль потоков: DMG-часть (поток) на своём репозитории; студенты — через
+ * порт `StreamStudents` (мост к legacy до Ф2).
  */
-export function createStreamModule(deps: StreamModuleDeps) {
-  return new ModuleFromDef<
-    typeof StreamModuleDef,
-    StreamModuleDeps,
-    Identified
-  >(StreamModuleDef, streamModuleMap, deps);
+export function createStreamModule(deps: StreamDeps) {
+  return new ModuleFromDef<typeof StreamModuleDef, StreamDeps, StreamUser>(
+    StreamModuleDef,
+    streamMap,
+    deps,
+  );
 }

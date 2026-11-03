@@ -7,7 +7,8 @@ import { StreamArDef } from '../stream.ar';
  * Проекцию исходов («прошёл»/«не прошёл») делают потребители. Отсутствие
  * потока — штатный исход `undefined`, не ошибка: вызывающий решает сам.
  *
- * `allowAll`: вызывает система (реакция другого модуля), субъекта нет.
+ * `allowAll`: вызывает система (реакция другого модуля) без субъекта, а
+ * бот и экраны потока читают состав так же — права не нужны.
  */
 export const GetStreamMembersUcDef = UseCaseDef.define({
   name: 'getStreamMembers',
@@ -16,7 +17,7 @@ export const GetStreamMembersUcDef = UseCaseDef.define({
     'Ментор потока и его студенты со статусами и признаком «не начинал»; потока нет — пусто.',
   type: 'query',
   aggregate: StreamArDef,
-  callers: ['system'],
+  callers: ['system', 'user', 'guest'],
   policy: allowAll,
   input: v.object({
     streamId: F.uuid('потока'),
@@ -27,12 +28,14 @@ export const GetStreamMembersUcDef = UseCaseDef.define({
       students: v.pipe(
         v.array(
           v.object({
+            studentId: F.uuid('записи студента'),
             userId: F.uuid('студента'),
             status: F.picklist(
               ['enrolled', 'active', 'abandoned', 'advanced', 'not_advanced'],
               'статуса студента в потоке',
             ),
             neverStarted: F.boolean('студент не начинал учёбу'),
+            inProgress: F.boolean('студент учится или только зачислен'),
           }),
         ),
         v.description('Студенты потока со статусами'),

@@ -1,62 +1,48 @@
-import { beforeEach, describe, expect, it } from 'bun:test';
-import {
-  GetStreamPresenceUcDef,
-  type StreamModuleDef,
-} from '@u7-scl/domain/stream/contract';
+import { describe, expect, it } from 'bun:test';
+import { GetStreamPresenceUcDef } from '@u7-scl/domain/stream/contract';
 import { SystemCaller } from 'dmg-core';
-import {
-  type AppContext,
-  ModuleFacade,
-  ModuleFacades,
-  Trace,
-} from 'dmg-core/app';
+import { ModuleFacade, ModuleFacades, Trace } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
-import { createStreamModule, type StreamLegacy } from './stream.module';
+import { StreamRepoFake } from './stream/stream.repo.fake';
+import {
+  SCHOOL,
+  STREAM,
+  StudentsFake,
+  state,
+} from './stream/uc/stream-uc.fixture';
+import { createStreamModule } from './stream.module';
 
-// Адаптер над legacy-фасадом: ответ legacy-фасада потоков передаётся как есть.
+// Вход через фасад модуля: поток из репозитория, ответ — по Def.
 
-const STREAM = '11111111-1111-4111-8111-111111111111';
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const asSystem = () =>
   new SystemCaller({ kind: 'useCase', module: 'probe', name: 'probe' });
 
-let app: AppContext;
-beforeEach(() => {
-  app = testAppContext().app;
-});
-
-/** Модуль потоков над legacy; запоминает спрошенные потоки. */
-function stream(found: boolean) {
-  const asked: string[] = [];
-  const legacy = {
-    getStream: async (id: string) => {
-      asked.push(id);
-      return found ? ({ uuid: id } as never) : undefined;
-    },
-    getMembers: async () => undefined,
-  } satisfies StreamLegacy;
-  const facade = new ModuleFacade(
-    createStreamModule({ app, facades: new ModuleFacades(), legacy }),
+function facade(streams: StreamRepoFake) {
+  return new ModuleFacade(
+    createStreamModule({
+      app: testAppContext().app,
+      facades: new ModuleFacades(),
+      streams,
+      students: new StudentsFake(),
+      schoolId: SCHOOL,
+    }),
   );
-  return { facade, asked };
 }
 
-const ask = (facade: ModuleFacade<typeof StreamModuleDef>) =>
-  facade.handle(GetStreamPresenceUcDef, { streamId: STREAM }, asSystem(), REQ);
+const ask = (f: ReturnType<typeof facade>) =>
+  f.handle(GetStreamPresenceUcDef, { streamId: STREAM }, asSystem(), REQ);
 
-describe('getStreamPresence: адаптер над getStream', () => {
+describe('getStreamPresence через фасад модуля', () => {
   it('поток есть — exists: true', async () => {
-    const { facade, asked } = stream(true);
-    expect(expectOk(await ask(facade))).toEqual({ exists: true });
-    expect(asked).toEqual([STREAM]);
+    const streams = new StreamRepoFake().seed(state('active'));
+
+    expect(expectOk(await ask(facade(streams)))).toEqual({ exists: true });
   });
 
   it('потока нет — exists: false, без ошибки', async () => {
-    const { facade } = stream(false);
-    expect(expectOk(await ask(facade))).toEqual({ exists: false });
-  });
-
-  it('модуль обслуживает свой UC', () => {
-    expect(stream(true).facade.serves(GetStreamPresenceUcDef)).toBe(true);
+    expect(expectOk(await ask(facade(new StreamRepoFake())))).toEqual({
+      exists: false,
+    });
   });
 });

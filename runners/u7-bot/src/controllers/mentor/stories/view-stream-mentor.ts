@@ -6,13 +6,16 @@ import type {
   KbButton,
   KeyboardDescription,
 } from '@u7-scl/core/ui';
-import type { Stream, Student } from '@u7-scl/stream/domain';
 import {
-  StreamPolicy,
-  StudentAr,
-  StudentOutcomeCategory,
-  StudentPolicy,
-} from '@u7-scl/stream/domain';
+  ArchiveStreamUcDef,
+  CompleteStreamUcDef,
+  GetStreamUcDef,
+  StreamErrors,
+  StreamModuleDef,
+  type StreamWithRights,
+} from '@u7-scl/domain/stream/contract';
+import type { Student } from '@u7-scl/stream/domain';
+import { StudentAr, StudentOutcomeCategory } from '@u7-scl/stream/domain';
 import { ViewStreamStory } from '../../streams/stories/view-stream.story';
 
 /**
@@ -44,7 +47,7 @@ export class ViewStreamMentorStory extends ViewStreamStory {
     }
 
     if (cmd === 'details' && streamId) {
-      return this.handleDetailsView(streamId);
+      return this.handleDetailsView(streamId, actor);
     }
 
     // Lifecycle-действия
@@ -71,10 +74,10 @@ export class ViewStreamMentorStory extends ViewStreamStory {
   // ── Переопределение клавиатуры ──
 
   protected override buildKeyboard(
-    stream: Stream,
-    actor: User,
+    stream: StreamWithRights,
+    _actor: User,
   ): KeyboardDescription {
-    const canEdit = StreamPolicy.canEdit(actor, stream);
+    const canEdit = stream.canManage;
     const rows: KbButton[][] = [];
 
     // ── Публичные кнопки (всем) ──
@@ -162,11 +165,13 @@ export class ViewStreamMentorStory extends ViewStreamStory {
       actor,
     )) as Student[];
 
-    const stream = (await this.appApi.execute('get-stream', {
-      streamId,
-    })) as Stream;
-
-    const canManage = StudentPolicy.canManageStudent(actor, stream);
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const canManage = loaded.value.canManage;
 
     // Перестраиваем клавиатуру: заменяем коды кнопок на monitor:...
     const newRows = baseKeyboard.rows.map((row) => {
@@ -270,7 +275,23 @@ export class ViewStreamMentorStory extends ViewStreamStory {
     streamId: string,
     actor: User,
   ): Promise<DialogResponse> {
-    await this.appApi.execute('complete-stream', { streamId }, actor);
+    const res = await this.dispatchUc(
+      StreamModuleDef,
+      CompleteStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!res.ok) {
+      // Прежний текст отказа: число студентов без исхода (Т14)
+      if (res.error.code === StreamErrors.STUDENTS_IN_PROGRESS.code) {
+        const pending = (
+          res.error.payload as { pending: readonly unknown[] } | undefined
+        )?.pending;
+        return this.warn(
+          md`Нельзя завершить поток: ${pending?.length ?? 0} студентов ещё учатся\\. Сначала укажите исход для каждого\\.`,
+        );
+      }
+      return this.ucErrorNotify(res.error);
+    }
     return this.screen(
       md`✅ *Поток завершён\\!* Обучение окончено\\.`,
       this.kb([
@@ -280,7 +301,12 @@ export class ViewStreamMentorStory extends ViewStreamStory {
   }
 
   async #handleArchive(streamId: string, actor: User): Promise<DialogResponse> {
-    await this.appApi.execute('archive-stream', { streamId }, actor);
+    const res = await this.dispatchUc(
+      StreamModuleDef,
+      ArchiveStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!res.ok) return this.ucErrorNotify(res.error);
     return this.screen(
       md`📁 *Поток перемещён в архив\\.*`,
       this.kb([

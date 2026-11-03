@@ -63,8 +63,20 @@ function makeModule() {
       ok({
         mentorId: MENTOR,
         students: [
-          { userId: SUBJECT, status: 'advanced', neverStarted: false },
-          { userId: PEER, status: 'active', neverStarted: false },
+          {
+            studentId: crypto.randomUUID(),
+            userId: SUBJECT,
+            status: 'advanced',
+            neverStarted: false,
+            inProgress: false,
+          },
+          {
+            studentId: crypto.randomUUID(),
+            userId: PEER,
+            status: 'active',
+            neverStarted: false,
+            inProgress: true,
+          },
         ],
       }),
   );

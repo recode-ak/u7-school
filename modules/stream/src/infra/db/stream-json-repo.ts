@@ -3,9 +3,10 @@ import type { Stream, StreamRepo } from '@u7-scl/domain/stream';
 import { StreamSchema } from '@u7-scl/domain/stream';
 
 /**
- * JSON-файловая реализация репозитория потоков.
+ * JSON-файловая реализация legacy-репозитория потоков: только чтение для
+ * legacy-студента до Ф2 (потоки пишет `StreamJsonRepo`).
  */
-export class StreamJsonRepo implements StreamRepo {
+export class LegacyStreamJsonRepo implements StreamRepo {
   readonly #repo: JsonFileRepo<Stream>;
 
   constructor(filePath: string) {

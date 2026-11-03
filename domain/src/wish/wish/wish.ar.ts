@@ -23,6 +23,7 @@ const {
   NOT_CANCELLABLE,
   NOT_FULFILLABLE,
   NOT_INVITABLE,
+  ALREADY_INVITED,
   ALREADY_EXISTS,
   NOT_FOUND,
 } = WishErrors;
@@ -365,6 +366,11 @@ export class WishAr extends Aggregate<typeof WishArDef> {
     return this.state.userId;
   }
 
+  /** Приглашён ли желающий на этот поток. */
+  wasInvitedTo(streamId: string): boolean {
+    return this.state.invitedStreamIds?.includes(streamId) ?? false;
+  }
+
   /**
    * Приглашает ли набор желание: оно приглашаемо, и его цель среди целей,
    * которые модуль курсов признал за модулем потока (`matched`).
@@ -445,17 +451,23 @@ export class WishAr extends Aggregate<typeof WishArDef> {
 
   /**
    * Приглашает желающего на поток: событие `invited` с адресом и целью из
-   * своего state. Статус не меняется (идемпотентность повторного набора —
-   * долг, решение вопроса 9 брифа). Не приглашаемое — `NOT_INVITABLE`.
+   * своего state, поток запоминается в `invitedStreamIds`. Статус не меняется.
+   * Не приглашаемое — `NOT_INVITABLE`, уже приглашённое на этот поток —
+   * `ALREADY_INVITED`.
    */
   invite(
     at: Timestamp,
     to: { readonly streamId: string; readonly telegramId: number },
-  ): Result<void, ErrorOf<typeof NOT_INVITABLE>> {
+  ): Result<
+    void,
+    ErrorOf<typeof NOT_INVITABLE> | ErrorOf<typeof ALREADY_INVITED>
+  > {
     if (!this.canInvite()) return NOT_INVITABLE.err();
+    if (this.wasInvitedTo(to.streamId)) return ALREADY_INVITED.err();
     return this.change(at, (draft, emit) => {
       const { userId, target } = draft;
       const addressee = { userId, ...to };
+      draft.invitedStreamIds = [...(draft.invitedStreamIds ?? []), to.streamId];
       emit(
         WishEvents.invited.make(
           target.kind === 'course'

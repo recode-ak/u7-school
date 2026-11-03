@@ -7,6 +7,10 @@ import type {
   UiEventSubscription,
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
+import {
+  ListStreamsUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import { WishEvents } from '@u7-scl/domain/wish/contract';
 import type * as v from 'valibot';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
@@ -77,7 +81,12 @@ export class WishConfirmedStory extends U7BotUiStory {
   async #courseMentors(courseId: string): Promise<Mentor[]> {
     let streams: Array<{ mentorId: string; moduleId: string }>;
     try {
-      streams = await this.appApi.execute('list-streams', {});
+      const listed = await this.dispatchUcAsGuest(
+        StreamModuleDef,
+        ListStreamsUcDef.command({}),
+      );
+      if (!listed.ok) return [];
+      streams = listed.value;
     } catch {
       return [];
     }

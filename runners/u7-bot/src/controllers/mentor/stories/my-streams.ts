@@ -2,13 +2,10 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { md, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse, KbButton } from '@u7-scl/core/ui';
-
-interface StreamRow {
-  uuid: string;
-  title: string;
-  status: string;
-  mentorId: string;
-}
+import {
+  ListStreamsUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 
 const STATUS_EMOJI: Record<string, string> = {
   enrollment: '🟡',
@@ -53,14 +50,14 @@ export class MyStreamsStory extends U7BotUiStory {
     showArchived: boolean,
   ): Promise<DialogResponse> {
     try {
-      const allStreams = (await this.appApi.execute('list-streams', {})) as
-        | StreamRow[]
-        | undefined;
-
       // Только потоки текущего ментора
-      let myStreams = (allStreams ?? []).filter(
-        (s) => s.mentorId === actor.uuid,
+      const listed = await this.dispatchUc(
+        StreamModuleDef,
+        ListStreamsUcDef.command({ mentorId: actor.uuid }),
+        actor,
       );
+      if (!listed.ok) return this.ucErrorNotify(listed.error);
+      let myStreams = listed.value;
 
       // Фильтрация по умолчанию — только enrollment + active
       if (!showArchived && !showCompleted) {

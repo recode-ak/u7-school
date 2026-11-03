@@ -9,18 +9,17 @@ import {
   now,
 } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse, KbButton } from '@u7-scl/core/ui';
-import type {
-  CategorizedStudent,
-  Stream,
-  Student,
-} from '@u7-scl/stream/domain';
+import {
+  GetStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
+import type { CategorizedStudent, Student } from '@u7-scl/stream/domain';
 import {
   AbandonSign,
   CompletionSign,
   StreamDs,
   StudentAr,
   StudentOutcomeCategory,
-  StudentPolicy,
 } from '@u7-scl/stream/domain';
 
 /**
@@ -100,13 +99,13 @@ export class MonitorStory extends U7BotUiStory {
       actor,
     )) as Student[];
 
-    const stream = (await this.appApi.execute('get-stream', {
-      streamId,
-    })) as Stream | undefined;
-
-    if (!stream) {
-      return this.screen(md`⚠️ Поток не найден`);
-    }
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const stream = loaded.value;
 
     // FR-8: по умолчанию — только активные (active/enrolled);
     // режим «все» показывает и выбывших (метрики в нём — тоже по всем)
@@ -195,7 +194,7 @@ export class MonitorStory extends U7BotUiStory {
     // Клавиатура
     const keyboardRows: KbButton[][] = [];
 
-    const canManage = StudentPolicy.canManageStudent(actor, stream);
+    const canManage = stream.canManage;
 
     // Строки студентов для текста сообщения
     const studentLines: MdText[] = [];
@@ -422,13 +421,13 @@ export class MonitorStory extends U7BotUiStory {
       // профиль недоступен — оставляем обрезок userId
     }
 
-    const stream = (await this.appApi.execute('get-stream', {
-      streamId: student.streamId,
-    })) as Stream | undefined;
-
-    if (!stream) {
-      return this.screen(md`⚠️ Поток не найден`);
-    }
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId: student.streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const stream = loaded.value;
 
     // Lag info
     const [cat] = StreamDs.categorizeStudents([student]);

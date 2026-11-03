@@ -1,24 +1,24 @@
-// Адаптер UC внешнего контракта над legacy-фасадом потоков.
 import {
   GetStreamPresenceUcDef,
   type StreamModuleDef,
-} from '@u7-scl/domain/stream/contract';
+} from '@u7-scl/domain/stream';
 import { ok } from 'dmg-core';
-import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
-import type { StreamModuleDeps } from '../../stream.module';
+import {
+  type ParsedInputOf,
+  type UnitOfWork,
+  UseCaseFromDef,
+} from 'dmg-core/app';
+import type { StreamDeps } from '../../stream.module';
 
 type Input = ParsedInputOf<typeof GetStreamPresenceUcDef>;
 
-/**
- * `getStreamPresence` поверх legacy `getStream`:
- * поток найден — `exists: true`, иначе `false` (не ошибка).
- */
+/** Есть ли поток; отсутствие — `exists: false`, не ошибка. */
 export class GetStreamPresenceUc extends UseCaseFromDef<
   typeof GetStreamPresenceUcDef,
-  StreamModuleDeps,
+  StreamDeps,
   undefined
 > {
-  constructor(deps: StreamModuleDeps, module: typeof StreamModuleDef) {
+  constructor(deps: StreamDeps, module: typeof StreamModuleDef) {
     super(GetStreamPresenceUcDef, deps, module);
   }
 
@@ -26,8 +26,8 @@ export class GetStreamPresenceUc extends UseCaseFromDef<
     return ok(undefined);
   }
 
-  protected async execute({ streamId }: Input) {
-    const stream = await this.resolve.legacy.getStream(streamId);
+  protected async execute({ streamId }: Input, _: undefined, __: UnitOfWork) {
+    const stream = await this.resolve.streams.findById(streamId);
     return ok({ exists: stream !== undefined });
   }
 }

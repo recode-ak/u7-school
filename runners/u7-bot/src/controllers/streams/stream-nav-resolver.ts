@@ -7,7 +7,6 @@ import {
   type StepContentData,
 } from '@u7-scl/core/ui';
 import type { ContentSnapshot } from '@u7-scl/course/domain';
-import type { Stream } from '@u7-scl/stream/domain';
 
 export type StreamNavMode = 'mentor' | 'viewer';
 
@@ -17,7 +16,8 @@ export interface StreamNavAddress {
 }
 
 export interface ResolveStreamNavLevelParams {
-  stream: Stream;
+  /** Поток целиком или его часть: нужны только идентификатор и снимок контента */
+  stream: { uuid: string; contentSnapshot: ContentSnapshot };
   address: string | StreamNavAddress;
   story?: string;
   mode?: StreamNavMode;

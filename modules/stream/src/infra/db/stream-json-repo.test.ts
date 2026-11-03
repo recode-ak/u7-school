@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Stream } from '@u7-scl/domain/stream';
 import { StreamStatus } from '@u7-scl/domain/stream';
-import { StreamJsonRepo } from './stream-json-repo';
+import { LegacyStreamJsonRepo } from './stream-json-repo';
 
 function makeStream(
   uuid: string,
@@ -26,7 +26,7 @@ function makeStream(
   };
 }
 
-describe('StreamJsonRepo', () => {
+describe('LegacyStreamJsonRepo', () => {
   let dir: string;
 
   beforeAll(async () => {
@@ -38,7 +38,7 @@ describe('StreamJsonRepo', () => {
   });
 
   test('фильтрует потоки по schoolId', async () => {
-    const repo = new StreamJsonRepo(join(dir, 'streams.json'));
+    const repo = new LegacyStreamJsonRepo(join(dir, 'streams.json'));
     const schoolA = 'a0000000-0000-4000-8000-000000000001';
     const schoolB = 'b0000000-0000-4000-8000-000000000002';
     const mentorId = '660e8400-e29b-41d4-a716-446655440002';

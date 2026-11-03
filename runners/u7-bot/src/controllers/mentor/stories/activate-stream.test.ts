@@ -2,7 +2,13 @@ import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
+import {
+  ActivateStreamUcDef,
+  StreamErrors,
+} from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
+import { dmgDispatch, refuse } from '../../streams/stories/stream-dmg.test-kit';
 import { ActivateStreamStory } from './activate-stream';
 
 const actor: User = {
@@ -17,11 +23,12 @@ const session: BotSession = {
   dialog: { path: 'mentor/activate-stream', seq: 2 },
 };
 
-function createStory() {
+function createStory(answer: () => unknown = () => ({})) {
   const story = new ActivateStreamStory();
-  const appApi = { execute: mock(async () => undefined) };
-  story.init({ appApi } as never);
-  return { story, appApi };
+  const dispatch = dmgDispatch({ activateStream: answer });
+  const appApi = { execute: mock(async () => undefined), dispatch };
+  story.init({ appApi, callers: testCallers } as never);
+  return { story, appApi, dispatch };
 }
 
 describe('ActivateStreamStory (US-7) — контракт «Диалог и Экран»', () => {
@@ -31,7 +38,7 @@ describe('ActivateStreamStory (US-7) — контракт «Диалог и Эк
   });
 
   test('activate: экран «Поток запущен» с точной кнопкой назад', async () => {
-    const { story, appApi } = createStory();
+    const { story, dispatch } = createStory();
     const response: DialogResponse = await story.handleCallback(
       'activate:s1',
       actor,
@@ -47,9 +54,18 @@ describe('ActivateStreamStory (US-7) — контракт «Диалог и Эк
     ]);
 
     // UC вызван с параметрами потока
-    const calls = appApi.execute.mock.calls as unknown[][];
-    const call = calls.find((c) => c[0] === 'activate-stream');
-    expect(call?.[1]).toEqual({ streamId: 's1' });
+    expect(dispatch.mock.calls.map(([, command]) => command)).toEqual([
+      ActivateStreamUcDef.command({ streamId: 's1' }),
+    ]);
+  });
+
+  test('activate: поток не в наборе — реплика с текстом отказа, без экрана успеха', async () => {
+    const { story } = createStory(() =>
+      refuse(StreamErrors.NOT_ENROLLING.code, 'conflict'),
+    );
+    const response = await story.handleCallback('activate:s1', actor, session);
+    expect(response.notify?.kind).toBe('warn');
+    expect(response.screen).toBeUndefined();
   });
 
   test('неизвестная команда — экран «Неизвестная команда»', async () => {

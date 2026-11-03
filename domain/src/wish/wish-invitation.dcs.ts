@@ -62,7 +62,11 @@ export class WishInvitationDcs {
     match: InvitationMatchAnswer,
     reach: InvitationReachAnswer,
     at: Timestamp,
-  ): Result<InvitationOutcome, ErrorOf<typeof WishErrors.NOT_INVITABLE>> {
+  ): Result<
+    InvitationOutcome,
+    | ErrorOf<typeof WishErrors.NOT_INVITABLE>
+    | ErrorOf<typeof WishErrors.ALREADY_INVITED>
+  > {
     const matched = this.matched(match);
     if (reach.stream?.exists !== true || matched.length === 0) {
       return ok({ invited: [], unreachable: [] });
@@ -85,12 +89,17 @@ export class WishInvitationDcs {
     return ok({ invited, unreachable: [...unreachable] });
   }
 
-  /** Желания, которых набор приглашает по ответу курсов. */
+  /**
+   * Желания, которых набор приглашает по ответу курсов; уже приглашённые
+   * на этот поток отсеиваются (повтор `stream.created`).
+   */
   private matched(match: InvitationMatchAnswer): readonly WishAr[] {
     const targets = {
       courseIds: match.courses?.courseIds ?? [],
       moduleIds: match.modules?.moduleIds ?? [],
     };
-    return this.wishes.filter((wish) => wish.isInvitedBy(targets));
+    return this.wishes.filter(
+      (wish) => wish.isInvitedBy(targets) && !wish.wasInvitedTo(this.streamId),
+    );
   }
 }

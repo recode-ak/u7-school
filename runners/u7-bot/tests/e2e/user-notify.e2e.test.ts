@@ -4,10 +4,14 @@ import { AppController } from '@u7-scl/bot/app/app-controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import {
+  ActivateStreamUcDef,
+  CreateStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
+import {
   CreateCourseWishUcDef,
   WishModuleDef,
 } from '@u7-scl/domain/wish/contract';
-import type { Stream } from '@u7-scl/stream/domain';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -108,17 +112,19 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
     );
 
     // 2. Ментор открывает набор на первый модуль курса
-    const stream = (await app.apiApp.execute(
-      'create-stream',
-      {
-        title: 'Основы JS — Поток осени',
-        description: 'Набор на первый модуль',
-        mentorId: mentor.uuid,
-        moduleId: FIRST_MODULE,
-        startDate: '2026-10-01T00:00',
-      },
-      mentor,
-    )) as Stream;
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        CreateStreamUcDef.command({
+          title: 'Основы JS — Поток осени',
+          description: 'Набор на первый модуль',
+          moduleId: FIRST_MODULE,
+          startDate: Date.UTC(2026, 9, 1),
+        }),
+        new UserCaller(mentor),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    );
 
     // 3. Желающему доставлено ровно одно кнопочное приглашение (канал
     //    invite): курс, поток, дата, ментор, кнопка отмены (MarkdownV2)
@@ -176,22 +182,24 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
     transport.reset();
 
     // 1. Ментор открывает поток на последнем модуле программы
-    const stream = (await app.apiApp.execute(
-      'create-stream',
-      {
-        title: 'Алгоритмика — Финальный поток',
-        description: 'Последний модуль программы',
-        mentorId: mentor.uuid,
-        moduleId: LAST_MODULE,
-        startDate: '2026-11-01T00:00',
-      },
-      mentor,
-    )) as Stream;
+    const stream = expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        CreateStreamUcDef.command({
+          title: 'Алгоритмика — Финальный поток',
+          description: 'Последний модуль программы',
+          moduleId: LAST_MODULE,
+          startDate: Date.UTC(2026, 10, 1),
+        }),
+        new UserCaller(mentor),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    );
 
     // 2. Студент, прошедший первый модуль, записывается (gate пройден)
     await app.apiApp.execute(
       'enroll-student',
-      { streamId: stream.uuid, userId: studentAdvanced.uuid },
+      { streamId: stream.streamId, userId: studentAdvanced.uuid },
       studentAdvanced,
     );
     const record = (await app.apiApp.execute(
@@ -199,19 +207,26 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
       { userId: studentAdvanced.uuid },
       mentor,
     )) as unknown as { uuid: string; streamId: string };
-    expect(record.streamId).toBe(stream.uuid);
+    expect(record.streamId).toBe(stream.streamId);
 
     // 3. Ментор активирует поток — студент станет active с выданным шагом
-    await app.apiApp.execute(
-      'activate-stream',
-      { streamId: stream.uuid },
-      mentor,
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        ActivateStreamUcDef.command({ streamId: stream.streamId }),
+        new UserCaller(mentor),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
     );
 
     // 4. Ментор завершает студента с исходом «прошёл»
     await app.apiApp.execute(
       'complete-student',
-      { streamId: stream.uuid, studentId: record.uuid, outcome: 'advanced' },
+      {
+        streamId: stream.streamId,
+        studentId: record.uuid,
+        outcome: 'advanced',
+      },
       mentor,
     );
 

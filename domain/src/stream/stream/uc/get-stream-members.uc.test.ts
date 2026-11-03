@@ -7,16 +7,24 @@ const STREAM = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 const USER = '22222222-2222-4222-8222-222222222222';
 const members = {
   mentorId: '66666666-6666-4666-8666-666666666666',
-  students: [{ userId: USER, status: 'abandoned', neverStarted: true }],
+  students: [
+    {
+      studentId: '11111111-1111-4111-8111-111111111111',
+      userId: USER,
+      status: 'abandoned',
+      neverStarted: true,
+      inProgress: false,
+    },
+  ],
 };
 
 describe('GetStreamMembersUcDef', () => {
-  it('query для других модулей (system) над агрегатом потока, allowAll, без ошибок', () => {
+  it('query для других модулей (system) и бота (user, guest) над агрегатом потока, allowAll, без ошибок', () => {
     expect(normalize(GetStreamMembersUcDef)).toMatchObject({
       name: 'getStreamMembers',
       type: 'query',
       aggregate: 'stream',
-      callers: ['system'],
+      callers: ['system', 'user', 'guest'],
       errors: [],
     });
     expect(GetStreamMembersUcDef.policy.op).toBe('allowAll');

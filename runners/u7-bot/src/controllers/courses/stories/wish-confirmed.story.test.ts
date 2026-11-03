@@ -1,6 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import { assertMarkdownV2Safe, type MdText } from '@u7-scl/core/shared';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
+import { dmgDispatch } from '../../streams/stories/stream-dmg.test-kit';
 import {
   type WishConfirmedEvent,
   WishConfirmedStory,
@@ -80,7 +82,6 @@ function setupStory(opts: { user?: User; course?: { title: string } } = {}): {
         return undefined;
       }
       if (name === 'get-course') return localCourse;
-      if (name === 'list-streams') return streams;
       if (name === 'get-course-by-module') {
         const moduleId = params?.moduleId as string;
         if (['module-a', 'module-b', 'module-c'].includes(moduleId)) {
@@ -93,14 +94,20 @@ function setupStory(opts: { user?: User; course?: { title: string } } = {}): {
   );
 
   const story = new WishConfirmedStory();
-  Object.assign(story, {
-    appApi: { execute },
-    proactiveSender: {
+  story.init(
+    {
+      appApi: {
+        execute,
+        dispatch: dmgDispatch({ listStreams: () => streams }),
+      },
+      callers: testCallers,
+    } as never,
+    {
       notify: mock(async (telegramId: number, payload: { text: MdText }) => {
         notifies.push({ telegramId, payload });
       }),
-    },
-  } as unknown);
+    } as never,
+  );
 
   return { story, notifies };
 }

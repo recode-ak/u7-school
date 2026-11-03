@@ -327,6 +327,7 @@ describe('WishAr.invite — приглашение на поток', () => {
       expectOk(ar.invite(T1, to));
       expect(ar.snapshot()).toEqual({
         ...stored(status),
+        invitedStreamIds: [STREAM],
         updatedAt: T1,
         version: 1,
       });

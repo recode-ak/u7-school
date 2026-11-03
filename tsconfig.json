@@ -62,6 +62,7 @@
       "@u7-scl/bot/u7-bot-app-meta": [
         "./runners/u7-bot/src/core/u7-bot-app-meta.ts"
       ],
+      "@u7-scl/bot/dispatch-uc": ["./runners/u7-bot/src/core/dispatch-uc.ts"],
       "@u7-scl/bot/u7-menu": ["./runners/u7-bot/src/core/u7-menu.ts"],
       "@u7-scl/bot/app/*": ["./runners/u7-bot/src/controllers/app/*"],
       "@u7-scl/bot/courses/*": ["./runners/u7-bot/src/controllers/courses/*"],

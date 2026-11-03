@@ -8,6 +8,10 @@ import type {
   KeyboardDescription,
 } from '@u7-scl/core/ui';
 import type { ContentSnapshot, Step } from '@u7-scl/course/domain';
+import {
+  GetStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import type { Student } from '@u7-scl/stream/domain';
 import {
   StreamDs,
@@ -79,28 +83,24 @@ export class StepViewStory extends U7BotUiStory {
 
     const stepId = _overrideStepId ?? student.currentStepId;
 
-    const stream = await this.appApi.execute('get-stream', {
-      streamId: student.streamId,
-    });
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId: student.streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const stream = loaded.value;
 
     // Все шаги программы завершены, а итоговый статус ставит ментор —
     // показываем экран завершения потока вместо повторного рендера шага
     // (иначе повтор «Выполнено» даёт same-content edit и ошибку Telegram
     // «message is not modified»)
-    const progress = StreamDs.computeProgress(
-      (stream as { contentSnapshot: ContentSnapshot }).contentSnapshot,
-      student,
-    );
+    const progress = StreamDs.computeProgress(stream.contentSnapshot, student);
     if (progress.total > 0 && progress.completed >= progress.total) {
       return this.#streamCompletedScreen();
     }
 
-    return this.#buildStepView(
-      stream as { title: string; contentSnapshot: ContentSnapshot },
-      stepId,
-      student.streamId,
-      student,
-    );
+    return this.#buildStepView(stream, stepId, student.streamId, student);
   }
 
   async #handleComplete(action: string, actor: User): Promise<DialogResponse> {
@@ -156,6 +156,7 @@ export class StepViewStory extends U7BotUiStory {
         },
         streamId,
         freshStudent,
+        actor,
       );
     }
 
@@ -170,7 +171,18 @@ export class StepViewStory extends U7BotUiStory {
     streamId: string,
     stepId: string,
   ): Promise<DialogResponse> {
-    const { student, stream } = await getStudentAndStream(this.appApi, actor);
+    const { student, stream } = await getStudentAndStream(
+      this.appApi,
+      actor,
+      async (id) => {
+        const loaded = await this.dispatchUc(
+          StreamModuleDef,
+          GetStreamUcDef.command({ streamId: id }),
+          actor,
+        );
+        return loaded.ok ? loaded.value : undefined;
+      },
+    );
     if (!student || !stream) {
       const studentResult = await getStudent(this.appApi, actor);
       return studentResult.ok
@@ -316,10 +328,15 @@ export class StepViewStory extends U7BotUiStory {
     },
     streamId: string,
     student: Student,
+    actor: User,
   ): Promise<DialogResponse> {
-    const stream = (await this.appApi.execute('get-stream', {
-      streamId,
-    })) as { title: string; contentSnapshot: ContentSnapshot };
+    const loaded = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamUcDef.command({ streamId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const stream = loaded.value;
 
     const { messageText, buttonText } = buildTransitionMessage(
       result,

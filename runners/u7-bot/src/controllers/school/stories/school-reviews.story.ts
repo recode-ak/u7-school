@@ -7,7 +7,10 @@ import {
   PeerReviewModuleDef,
   type RecipientReviewsGroup,
 } from '@u7-scl/domain/peer-review/contract';
-import type { Stream } from '@u7-scl/stream/domain';
+import {
+  ListStreamsUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import { renderSchoolReviewCard } from '../../peer-review/stories/review-render';
 import { buttons } from '../../shared/buttons';
 
@@ -64,11 +67,13 @@ export class SchoolReviewsStory extends U7BotUiStory {
     schoolId: string,
     actor: User,
   ): Promise<{ title: MdText; cards: MdText[]; payload: undefined }> {
-    const streams = (await this.appApi.execute(
-      'list-streams',
-      { schoolId },
+    const listed = await this.dispatchUc(
+      StreamModuleDef,
+      ListStreamsUcDef.command({ schoolId }),
       actor,
-    )) as Stream[];
+    );
+    if (!listed.ok) throw new Error(listed.error.code);
+    const streams = listed.value;
 
     const scopeIds = streams.map((s) => s.uuid);
     if (scopeIds.length === 0) {

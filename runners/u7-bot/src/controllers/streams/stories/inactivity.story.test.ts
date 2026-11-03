@@ -8,14 +8,14 @@ import type {
 } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import type {
-  Stream,
   StudentAbandonedEvent,
   StudentInactivityRemoveCandidateEvent,
   StudentInactivityWarningEvent,
 } from '@u7-scl/stream/domain';
-import { StreamStatus } from '@u7-scl/stream/domain';
 import { Role } from '@u7-scl/user/domain';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { InactivityStory } from './inactivity.story';
+import { dmgDispatch, streamView } from './stream-dmg.test-kit';
 
 // ══ Фикстуры ══
 
@@ -32,18 +32,16 @@ const student: User = {
   createdAt: '2026-01-01T00:00',
 };
 
-const stream: Stream = {
+const stream = streamView({
   uuid: STREAM_ID,
   schoolId: 'a0000000-0000-4000-8000-000000000001',
   title: 'JS Core — Поток 2',
   description: 'Второй поток',
   mentorId: MENTOR_USER_ID,
   moduleId: '44444444-4444-4444-8444-444444444444',
-  startDate: '2026-06-01T00:00',
-  status: StreamStatus.ACTIVE,
-  contentSnapshot: [],
-  createdAt: '2026-06-01T00:00',
-};
+  startDate: Date.parse('2026-06-01T00:00'),
+  status: 'active',
+});
 
 function makeWarningEvent(
   overrides: Partial<StudentInactivityWarningEvent['payload']> = {},
@@ -108,7 +106,7 @@ function makeAbandonedEvent(
 
 // ══ Сборка стори с моками ══
 
-function setupStory(opts: { streamOverrides?: Partial<Stream> } = {}): {
+function setupStory(opts: { streamOverrides?: Record<string, unknown> } = {}): {
   story: InactivityStory;
   notifies: Array<{ telegramId: number; payload: NotificationPayload }>;
   invites: Array<{
@@ -140,9 +138,6 @@ function setupStory(opts: { streamOverrides?: Partial<Stream> } = {}): {
         if (uuid === STUDENT_USER_ID) return student;
         return undefined;
       }
-      if (name === 'get-stream') {
-        return { ...stream, ...opts.streamOverrides };
-      }
       if (name === 'get-student-progress') {
         const sid = params?.studentId as string;
         if (sid === 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') {
@@ -160,9 +155,17 @@ function setupStory(opts: { streamOverrides?: Partial<Stream> } = {}): {
   );
 
   const story = new InactivityStory();
-  Object.assign(story, {
-    appApi: { execute },
-    proactiveSender: {
+  story.init(
+    {
+      appApi: {
+        execute,
+        dispatch: dmgDispatch({
+          getStream: () => ({ ...stream, ...opts.streamOverrides }),
+        }),
+      },
+      callers: testCallers,
+    } as never,
+    {
       notify: mock(async (telegramId: number, payload: NotificationPayload) => {
         notifies.push({ telegramId, payload });
       }),
@@ -191,8 +194,8 @@ function setupStory(opts: { streamOverrides?: Partial<Stream> } = {}): {
       kickFromGroup: mock(async (groupId: number | string, userId: number) => {
         kicks.push({ groupId, userId });
       }),
-    },
-  } as unknown);
+    } as never,
+  );
 
   return { story, notifies, invites, kicks, execute };
 }
@@ -354,13 +357,18 @@ describe('InactivityStory', () => {
 
     // get-user вернул студента без telegramId — кику некому
     const userWithoutTg = { ...student, telegramId: undefined };
-    (story as unknown as { appApi: unknown }).appApi = {
-      execute: mock(async (name: string) => {
-        if (name === 'get-user') return userWithoutTg;
-        if (name === 'get-stream') return stream;
-        return undefined;
-      }),
-    };
+    story.init({
+      appApi: {
+        execute: mock(async (name: string) => {
+          if (name === 'get-user') return userWithoutTg;
+          return undefined;
+        }),
+        dispatch: dmgDispatch({
+          getStream: () => ({ ...stream, telegramGroupId: GROUP_ID }),
+        }),
+      },
+      callers: testCallers,
+    } as never);
 
     await subHandler(story, 'student.abandoned')(makeAbandonedEvent() as never);
 

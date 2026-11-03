@@ -1,130 +1,21 @@
-// biome-ignore lint/style/noRestrictedImports: DEBT-2 — тип резолвера/константа пока в app
-import { U7_SCHOOL_ID } from '@u7-scl/app-legacy/domain';
 import { Aggregate } from '@u7-scl/core/domain';
-import { isoNow } from '@u7-scl/core/shared';
-import type { ContentSnapshot, Course } from '@u7-scl/domain/course';
-import { StreamStatus } from '../status';
+import type { Course } from '@u7-scl/domain/course';
 import { StudentAr } from '../student/a-root';
 import type { Student } from '../student/entity';
-import type { CreateStreamCmd } from './commands/create-stream-cmd';
 import type { Stream, StreamArMeta } from './entity';
 import { StreamSchema } from './entity';
-import { StreamPolicy } from './policy';
+import { LegacyStreamPolicy } from './policy';
 
 /**
- * Агрегат Stream — корень учебного потока.
+ * Legacy-агрегат потока для студента (зачисление, шаги контента) — до Ф2.
+ * Жизненный цикл потока перенесён в `StreamAr` (stream.ar.ts).
  */
-export class StreamAr extends Aggregate<StreamArMeta> {
+export class LegacyStreamAr extends Aggregate<StreamArMeta> {
   static readonly arName = 'Stream';
   static readonly arLabel = 'Поток';
 
   constructor(state: Stream) {
     super(state, StreamSchema);
-  }
-
-  /**
-   * Фабричный метод для создания нового потока.
-   * Добавляет доменное событие stream.created (публикуется UC'ом).
-   */
-  static create(
-    cmd: CreateStreamCmd,
-    contentSnapshot: ContentSnapshot,
-    schoolId: string = U7_SCHOOL_ID,
-  ): StreamAr {
-    const candidate: Stream = {
-      uuid: crypto.randomUUID(),
-      schoolId: cmd.schoolId ?? schoolId,
-      title: cmd.title,
-      description: cmd.description,
-      mentorId: cmd.mentorId,
-      moduleId: cmd.moduleId,
-      startDate: cmd.startDate,
-      status: StreamStatus.ENROLLMENT,
-      telegramGroupId: cmd.telegramGroupId,
-      telegramGroupInvite: cmd.telegramGroupInvite,
-      goal: cmd.goal,
-      result: cmd.result,
-      rules: cmd.rules,
-      additional: cmd.additional,
-      targetAudience: cmd.targetAudience,
-      enrollmentKey: cmd.enrollmentKey,
-      contentSnapshot,
-      createdAt: isoNow(),
-    };
-
-    const ar = new StreamAr(candidate);
-    ar.addEvent({
-      eventId: crypto.randomUUID(),
-      eventName: 'stream.created',
-      occurredAt: isoNow(),
-      aggregateName: 'Stream',
-      aggregateId: candidate.uuid,
-      payload: {
-        streamId: candidate.uuid,
-        moduleId: candidate.moduleId,
-      },
-    });
-    return ar;
-  }
-
-  /**
-   * Запуск потока (перевод из открытой записи в активный статус).
-   */
-  activate(): void {
-    if (this._state.status !== StreamStatus.ENROLLMENT) {
-      this.throwBadRequest(
-        `Недопустимый переход статуса. Поток в статусе '${this._state.status}' не может быть запущен.`,
-      );
-    }
-
-    this.safeUpdate({
-      status: StreamStatus.ACTIVE,
-    });
-  }
-
-  /**
-   * Успешное завершение потока.
-   * Кладёт доменное событие stream.completed (публикуется UC'ом).
-   */
-  complete(): void {
-    if (this._state.status !== StreamStatus.ACTIVE) {
-      this.throwBadRequest(
-        `Недопустимый переход статуса. Поток в статусе '${this._state.status}' не может быть завершён.`,
-      );
-    }
-
-    this.safeUpdate({
-      status: StreamStatus.COMPLETED,
-    });
-
-    this.addEvent({
-      eventId: crypto.randomUUID(),
-      eventName: 'stream.completed',
-      occurredAt: isoNow(),
-      aggregateName: 'Stream',
-      aggregateId: this._state.uuid,
-      payload: {
-        streamId: this._state.uuid,
-      },
-    });
-  }
-
-  /**
-   * Отправка потока в архив.
-   * Только завершённые (COMPLETED) потоки могут быть архивированы.
-   */
-  archive(): void {
-    if (StreamPolicy.isArchived(this._state)) {
-      this.throwBadRequest('Поток уже находится в архиве.');
-    }
-
-    if (!StreamPolicy.isComplete(this._state)) {
-      this.throwBadRequest('В архив можно отправить только завершённый поток.');
-    }
-
-    this.safeUpdate({
-      status: StreamStatus.ARCHIVED,
-    });
   }
 
   /**
@@ -164,7 +55,7 @@ export class StreamAr extends Aggregate<StreamArMeta> {
     // 3. Gate: проверка доступа к модулю курса (только если курс известен)
     if (
       params.course &&
-      !StreamPolicy.canEnrollNextModule(
+      !LegacyStreamPolicy.canEnrollNextModule(
         params.course,
         this._state.moduleId,
         params.existingStudents,

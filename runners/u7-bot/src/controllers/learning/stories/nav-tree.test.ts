@@ -3,6 +3,11 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { Role } from '@u7-scl/user/domain';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
+import {
+  dmgDispatch,
+  streamView,
+} from '../../streams/stories/stream-dmg.test-kit';
 import { NavTreeStory } from './nav-tree';
 
 describe('NavTreeStory — drill-down навигация студента (TDD)', () => {
@@ -185,7 +190,6 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
       }
       if (name === 'get-student-by-user') return richStudent;
       if (name === 'get-student-progress') return richStudent;
-      if (name === 'get-stream') return richStream;
       if (name === 'get-step') {
         const p = params as { uuid: string };
         return allSteps[p.uuid] as unknown;
@@ -218,7 +222,13 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
     });
 
     const story = new NavTreeStory();
-    story.init({ appApi: { execute: appApiSpy } } as never);
+    story.init({
+      appApi: {
+        execute: appApiSpy,
+        dispatch: dmgDispatch({ getStream: () => streamView(richStream) }),
+      },
+      callers: testCallers,
+    } as never);
     return { story, appApiSpy };
   }
 

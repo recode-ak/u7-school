@@ -144,6 +144,7 @@ function legacy(
     },
     whichCoursesIncludeModule: async () => [],
     whichModulesAreSame: async () => [],
+    getModuleSnapshot: async () => [],
   };
   return { facade, asked };
 }

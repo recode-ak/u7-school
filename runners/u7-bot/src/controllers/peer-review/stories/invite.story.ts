@@ -10,6 +10,10 @@ import type {
 import { eventSubscription } from '@u7-scl/core/ui';
 import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
 import { ReviewCampaignEvents } from '@u7-scl/domain/peer-review/contract';
+import {
+  GetStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import type * as v from 'valibot';
 import { Routes } from '../../shared/routes';
 
@@ -61,10 +65,13 @@ export class InviteStory extends U7BotUiStory {
 
     let streamTitle: string;
     try {
-      const stream = await this.appApi.execute('get-stream', {
-        streamId: scopeId,
-      });
-      streamTitle = stream.title;
+      const stream = await this.dispatchUcAsGuest(
+        StreamModuleDef,
+        GetStreamUcDef.command({ streamId: scopeId }),
+      );
+      // Поток недоступен — приглашение невозможно (молчаливый пропуск)
+      if (!stream.ok) return;
+      streamTitle = stream.value.title;
     } catch {
       // Поток недоступен — приглашение невозможно (молчаливый пропуск)
       return;
