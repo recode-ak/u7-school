@@ -1,0 +1,4 @@
+Задача: базовая линия (Фаза 0, dmg-docs_20261029).
+Проверки: пакет check/e2e зелёные; u7-school check был красный на dmg:check (model: в копиях ролей из 7f85673b) — исправлено в пакете dmg-core@46b5c72, check зелёный.
+Замер dmg-core/src@00bda68: prod 198 файлов, 14572 строк, комментарии 17,7%, блоков ≥12 — 15, JSDoc >6 — 69 (без ссылки 69), D-NN — 178, TR-NN — 0.
+Файлы: conductor/tracks.md (трек [~]), conductor/tracks/dmg-docs_20261029/summary.md.
