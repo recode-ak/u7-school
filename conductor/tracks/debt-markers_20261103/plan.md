@@ -41,7 +41,7 @@
 - [x] Task: Тесты ARC-02 без маркера: импорт `@u7-scl/core`/`app-legacy` в домене без `DEBT-N` — не ошибка `checkDomainImports`; red `806f0c3`
 - [x] Task: Реализация `checkDebt({ code, debtMd, mode })` и переделка ARC-02; `arch-check.ts` пока на старой сверке; green `806f0c3`
 - [x] Task: Ревью reviewer — error нет; правки `2ca0583`, отложено: шапка и `rules.md` — Ф7, формат glob'ов — Ф2
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 Критерии приёмки: именованный тест на каждое правило FR2/FR3; `bun test scripts/domain-check.test.ts` зелёный; число тестов ≥ базовой линии; `bun run check` зелёный.
 
