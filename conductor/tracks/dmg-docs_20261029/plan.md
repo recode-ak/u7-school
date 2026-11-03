@@ -67,7 +67,7 @@
 
 ## Фаза 5: Финал
 
-- [ ] Task: Повторный замер, сверка с базовой линией, `check` и `e2e` пакета и проекта
+- [x] Task: Повторный замер, сверка с базовой линией, `check` и `e2e` пакета и проекта a02bfd30 (комментарии prod 17,7% → 16,3%, блоков ≥12 строк 15 → 0, JSDoc >6 без ссылки 64 → 0)
     - Три warn `docs:covers` (`concepts/domain.md`, `concepts/errors.md`, `guides/errors.md` — правка `description` ошибок ядра в `dmg-core@d20edbc`, документы не затронуты) — решить до гейта релиза (`--strict`); отложено решением Нурболата 2026-11-03
-- [ ] Task: `bun install` в u7-school, SHA пакета; `summary.md` с разделом «Пилот ролей» (`documentarian`)
+- [x] Task: `bun install` в u7-school, SHA пакета; `summary.md` с разделом «Пилот ролей» (`documentarian`) a02bfd30 (dmg-core@d20edbc; `bun install` без изменений)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
