@@ -20,9 +20,9 @@
 - [x] Task: Тест ссылок (`docs/`, `llms.txt`, JSDoc `@see`) в `bun run check` dmg-core@685b566 (расширен `docs-check`: направление по типам, якоря, `checkSee`; `guides/facade.md` — ссылки на исходники в `covers:`)
     - [x] Тесты: битая ссылка, ссылка на несуществующий файл, ссылка против направления; red
     - [x] Реализация; green
-- [ ] Task: Проверка `covers:` во front-matter concepts — `warn` в `check`, блок в гейте релиза (`RELEASING.md`)
-    - [ ] Тесты: исходник менялся позже документа → warn; red
-    - [ ] Реализация; green
+- [x] Task: Проверка `covers:` во front-matter concepts — `warn` в `check`, блок в гейте релиза (`RELEASING.md`) dmg-core@3a69c0c (`docs:covers`: время по git; путь covers без файлов — ошибка; `--strict` — в гейте релиза)
+    - [x] Тесты: исходник менялся позже документа → warn; red
+    - [x] Реализация; green
 - [ ] Task: Команда `docs:impact <пути>` и триггер в `agent-gate.ts` (правка `dmg-core/src/{app,kernel,domain}` без `docs/` и `decisions.md` — предупреждение); `covers:` и у guides
     - [ ] Тесты: путь совпал с `covers` → документ в списке; не совпал → пусто; правка без docs → предупреждение; red
     - [ ] Реализация; green
