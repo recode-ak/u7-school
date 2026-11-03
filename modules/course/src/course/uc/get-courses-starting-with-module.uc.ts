@@ -1,4 +1,4 @@
-// TR-11: адаптер UC внешнего контракта над legacy-фасадом курсов.
+// Адаптер UC внешнего контракта над legacy-фасадом курсов.
 import {
   type CourseModuleDef,
   GetCoursesStartingWithModuleUcDef,

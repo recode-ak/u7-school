@@ -167,7 +167,7 @@ function probe(courseLegacy: CourseLegacy) {
   return new ProbeUc(depsWith(courseLegacy), ProbeModuleDef);
 }
 
-describe('модуль курсов через фасад (D-43, адаптер TR-11)', () => {
+describe('модуль курсов через фасад (D-43, адаптер над legacy-фасадом)', () => {
   it('курс доступен и есть стартовый модуль — enrollable с модулем', async () => {
     const { facade, asked } = legacy(true, START);
     const res = await probe(facade).handle({ courseId: COURSE }, USER, REQ);
@@ -219,7 +219,7 @@ describe('модуль курсов через фасад (D-43, адаптер 
   });
 });
 
-describe('getModuleEnrollment: адаптер над getModulePlace (TR-11)', () => {
+describe('getModuleEnrollment: адаптер над getModulePlace', () => {
   const MODULE = '2d8e4b6a-5f3c-4e7d-9a0b-9c8d7e6f5a4b';
   const PLACE: ModulePlace = {
     courseId: COURSE,
@@ -260,7 +260,7 @@ describe('getModuleEnrollment: адаптер над getModulePlace (TR-11)', ()
   });
 });
 
-describe('батч-вопросы о зачислении: ответ legacy как есть (TR-11)', () => {
+describe('батч-вопросы о зачислении: ответ legacy как есть', () => {
   const MODULE = '2d8e4b6a-5f3c-4e7d-9a0b-9c8d7e6f5a4b';
   const OTHER = '3e9f5c7b-6a4d-4f8e-8b1c-0d9e8f7a6b5c';
   const FORK = '4fa06d8c-7b5e-4a9f-9c2d-1e0f9a8b7c6d';
@@ -316,7 +316,7 @@ describe('батч-вопросы о зачислении: ответ legacy к�
   });
 });
 
-describe('getCoursesStartingWithModule: адаптер над getModulePlace + whichCoursesIncludeModule (TR-11)', () => {
+describe('getCoursesStartingWithModule: адаптер над getModulePlace + whichCoursesIncludeModule', () => {
   const MODULE = '2d8e4b6a-5f3c-4e7d-9a0b-9c8d7e6f5a4b';
   const FORK = '4fa06d8c-7b5e-4a9f-9c2d-1e0f9a8b7c6d';
   const asSystem = () =>

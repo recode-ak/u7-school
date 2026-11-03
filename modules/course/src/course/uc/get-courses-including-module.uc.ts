@@ -1,4 +1,4 @@
-// TR-11: адаптер UC внешнего контракта над legacy-фасадом курсов.
+// Адаптер UC внешнего контракта над legacy-фасадом курсов.
 import {
   type CourseModuleDef,
   GetCoursesIncludingModuleUcDef,
@@ -11,7 +11,7 @@ type Input = ParsedInputOf<typeof GetCoursesIncludingModuleUcDef>;
 
 /**
  * Временная реализация `getCoursesIncludingModule` поверх legacy
- * `whichCoursesIncludeModule` (TR-11): принадлежность модуля курсам, в т.ч.
+ * `whichCoursesIncludeModule`: принадлежность модуля курсам, в т.ч.
  * историческую, решает legacy-код; ответ передаётся как есть. Уходит с
  * миграцией курсов.
  */

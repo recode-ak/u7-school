@@ -31,7 +31,7 @@ export type U7AppPorts = {
   readonly logger?: Logger;
 };
 
-/** Legacy-фасады, над которыми собраны внешние DMG-модули зависимостей (TR-11). */
+/** Legacy-фасады, над которыми собраны внешние DMG-модули зависимостей. */
 export type U7LegacyFacades = {
   readonly user: UserLegacy;
   readonly course: CourseLegacy;

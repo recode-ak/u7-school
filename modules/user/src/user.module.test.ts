@@ -13,7 +13,7 @@ import {
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import { createUserModule, type UserLegacy } from './user.module';
 
-// Адаптер TR-11: адреса собираются по профилям legacy-фасада пользователей.
+// Адаптер над legacy-фасадом: адреса собираются по профилям legacy-фасада пользователей.
 
 const A = '22222222-2222-4222-8222-222222222222';
 const B = '77777777-7777-4777-8777-777777777777';
@@ -50,7 +50,7 @@ function users(profiles: Record<string, number | null>) {
 const ask = (facade: ModuleFacade<typeof UserModuleDef>, userIds: string[]) =>
   facade.handle(GetTelegramAddressesUcDef, { userIds }, asSystem(), REQ);
 
-describe('getTelegramAddresses: адаптер над getUserByUuid (TR-11)', () => {
+describe('getTelegramAddresses: адаптер над getUserByUuid', () => {
   it('у пользователей есть telegramId — адреса как есть, по порядку', async () => {
     const { facade, asked } = users({ [A]: 111, [B]: 222 });
     expect(expectOk(await ask(facade, [A, B]))).toEqual({

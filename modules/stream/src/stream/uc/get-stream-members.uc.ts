@@ -1,4 +1,4 @@
-// TR-11: адаптер UC внешнего контракта над legacy-фасадом потоков.
+// Адаптер UC внешнего контракта над legacy-фасадом потоков.
 import {
   GetStreamMembersUcDef,
   type StreamModuleDef,

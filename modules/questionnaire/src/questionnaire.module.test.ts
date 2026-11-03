@@ -179,7 +179,7 @@ function depsWith(questionnaireLegacy: QuestionnaireLegacy): ModuleDeps {
   };
 }
 
-describe('модуль анкет через фасад (D-43, адаптер TR-11)', () => {
+describe('модуль анкет через фасад (D-43, адаптер над legacy-фасадом)', () => {
   it('запуск вызывает legacy startStandard: субъект, пул, owner как ownerInfo', async () => {
     const { facade, calls } = legacy();
     const res = await new ProbeUc(depsWith(facade), ProbeModuleDef).handle(

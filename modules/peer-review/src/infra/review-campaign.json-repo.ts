@@ -13,7 +13,7 @@ const Rows = v.array(ReviewCampaignArDef.state);
  * Кампании отзывов в JSON-файле: массив снапшотов. Только хранение — запись
  * разбирает `ReviewCampaignArDef.state` (он же переводит legacy-даты ISO в
  * число UTC и дописывает `updatedAt`/`version`, D-36), агрегат восстанавливает
- * `ReviewCampaignAr.restore`. Битая запись — исключение (TR-37), файл не
+ * `ReviewCampaignAr.restore`. Битая запись — исключение, файл не
  * читается и не перезаписывается. Запись — под замком.
  *
  * Ключ окна (скоуп, субъект) уникален: штатный отказ даёт правило `unique`,

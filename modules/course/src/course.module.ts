@@ -1,4 +1,4 @@
-// TR-11: DMG-модуль внешнего контракта курсов — адаптеры над legacy-фасадом.
+// DMG-модуль внешнего контракта курсов — адаптеры над legacy-фасадом.
 import type { CourseFacade } from '@u7-scl/domain/course';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import type { Identified } from 'dmg-core';
@@ -10,7 +10,7 @@ import { GetModuleEnrollmentUc } from './course/uc/get-module-enrollment.uc';
 import { GetSameModulesUc } from './course/uc/get-same-modules.uc';
 
 /**
- * Что адаптеры TR-11 берут у legacy-фасада курсов: только вопросы,
+ * Что адаптеры над legacy-фасадом берут у legacy-фасада курсов: только вопросы,
  * нужные UC внешнего контракта.
  */
 export type CourseLegacy = Pick<
@@ -23,14 +23,14 @@ export type CourseLegacy = Pick<
 >;
 
 /**
- * Резолвер DMG-модуля курсов: платформа + legacy-фасад (TR-11). Своих
+ * Резолвер DMG-модуля курсов: платформа + legacy-фасад. Своих
  * репозиториев нет — данные читает legacy-модуль.
  */
 export type CourseModuleDeps = ModuleDeps & { readonly legacy: CourseLegacy };
 
 /**
  * Карта «Def → класс» внешнего модуля курсов (API-05, D-37): реализации —
- * адаптеры над legacy (TR-11); ER и Job у внешнего модуля нет.
+ * адаптеры над legacy; ER и Job у внешнего модуля нет.
  */
 export const courseModuleMap = {
   useCases: {
@@ -47,7 +47,7 @@ export const courseModuleMap = {
 /**
  * DMG-модуль курсов — владелец UC внешнего контракта; фасад для других
  * модулей — `new ModuleFacade(createCourseModule(deps))` (D-43). Приложение
- * собирает его поверх legacy `CourseInProcFacade` (TR-11).
+ * собирает его поверх legacy `CourseInProcFacade`.
  */
 export function createCourseModule(deps: CourseModuleDeps) {
   return new ModuleFromDef<

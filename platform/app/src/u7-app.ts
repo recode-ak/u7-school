@@ -70,7 +70,7 @@ import type { U7BotAppMeta } from './u7-app-meta';
 import { U7CallerResolver } from './u7-caller-resolver';
 
 /**
- * Приложение u7-school — корень сборки (D-50, TR-33): по окружению
+ * Приложение u7-school — корень сборки (D-50): по окружению
  * строит репозитории `<dbDir>/…`, legacy-модули и фасады, приложение DMG
  * (внешние модули зависимостей над legacy-фасадами и `wish`, фасады по
  * `dependsOn`) и legacy `ApiApp` с ним (`withDmg`), инициализированный
@@ -276,9 +276,9 @@ export class U7App {
   }
 
   /**
-   * Приложение DMG: внешние модули зависимостей (адаптеры над legacy-фасадами,
-   * TR-11), `wish` и `peer-review` (кампании), собранные `ApiApp` пакета — фасады по `dependsOn`
-   * (D-50). `modules` — их Def для заданий legacy-планировщика
+   * Приложение DMG: внешние модули зависимостей (адаптеры над legacy-фасадами),
+   * `wish` и `peer-review` (кампании), собранные `ApiApp` пакета — фасады по
+   * `dependsOn` (D-50). `modules` — их Def для заданий legacy-планировщика
    * (`ApiApp.withDmg`).
    */
   private static dmgApp(

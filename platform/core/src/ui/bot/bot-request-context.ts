@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 
 /**
  * Контекст запроса бота на время обработки одного апдейта Telegram
- * (вариант B кандидата bot-request-id, TR-30).
+ * (вариант B кандидата bot-request-id).
  *
  * Транспорт запускает обработку апдейта в `run(update_id, …)`; вызов UC
  * берёт отсюда след без смены сигнатур `handle*` стори: `correlationId =

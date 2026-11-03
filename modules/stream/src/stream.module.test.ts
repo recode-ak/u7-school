@@ -13,7 +13,7 @@ import {
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import { createStreamModule, type StreamLegacy } from './stream.module';
 
-// Адаптер TR-11: ответ legacy-фасада потоков передаётся как есть.
+// Адаптер над legacy-фасадом: ответ legacy-фасада потоков передаётся как есть.
 
 const STREAM = '11111111-1111-4111-8111-111111111111';
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
@@ -44,7 +44,7 @@ function stream(found: boolean) {
 const ask = (facade: ModuleFacade<typeof StreamModuleDef>) =>
   facade.handle(GetStreamPresenceUcDef, { streamId: STREAM }, asSystem(), REQ);
 
-describe('getStreamPresence: адаптер над getStream (TR-11)', () => {
+describe('getStreamPresence: адаптер над getStream', () => {
   it('поток есть — exists: true', async () => {
     const { facade, asked } = stream(true);
     expect(expectOk(await ask(facade))).toEqual({ exists: true });

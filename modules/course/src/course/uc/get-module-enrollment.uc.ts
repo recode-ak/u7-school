@@ -1,4 +1,4 @@
-// TR-11: адаптер UC внешнего контракта над legacy-фасадом курсов.
+// Адаптер UC внешнего контракта над legacy-фасадом курсов.
 import {
   type CourseModuleDef,
   GetModuleEnrollmentUcDef,
@@ -9,7 +9,7 @@ import type { CourseModuleDeps } from '../../course.module';
 
 /**
  * Временная реализация `getModuleEnrollment` поверх legacy `getModulePlace`
- * (TR-11): место модуля в программе опубликованного курса решает legacy-код;
+ *: место модуля в программе опубликованного курса решает legacy-код;
  * адаптер лишь переводит «есть место» в `enrollable`. Уходит с миграцией курсов.
  */
 export class GetModuleEnrollmentUc extends UseCaseFromDef<

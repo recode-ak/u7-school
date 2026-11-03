@@ -7,6 +7,7 @@ import {
   checkDomainGraph,
   checkDomainImports,
   checkModuleImports,
+  checkTrMarkers,
   type DomainFile,
   domainGraphOf,
 } from './domain-check';
@@ -582,5 +583,33 @@ describe('checkDebt: allowlist долгов в debt.md', () => {
     it('старый формат D-<n> не считается маркером', () => {
       expect(run(bare('// D-1: причина'))).toEqual([]);
     });
+  });
+});
+
+describe('checkTrMarkers: записи TR-<n> живут в debt.md, не в коде', () => {
+  it('TR-<n> в комментарии, JSDoc и имени теста — ошибка с путём и строкой', () => {
+    const code = [
+      file('modules/user/src/a.ts', '// TR-11: адаптер\nconst x = 1;'),
+      file('platform/app/src/b.ts', '/** Резолвер (D-50, TR-33). */'),
+      file(
+        'modules/course/src/c.test.ts',
+        "describe('адаптер (TR-11)', () => {});",
+      ),
+    ];
+    expect(checkTrMarkers(code)).toEqual([
+      'TR: modules/user/src/a.ts:1: TR-11 — запись реестра в коде',
+      'TR: platform/app/src/b.ts:1: TR-33 — запись реестра в коде',
+      'TR: modules/course/src/c.test.ts:1: TR-11 — запись реестра в коде',
+    ]);
+  });
+
+  it('код без TR-<n> и слова вроде STR-1 — без нарушений', () => {
+    const code = [
+      file(
+        'modules/user/src/a.ts',
+        "const id = 'STR-1'; // адаптер над legacy-фасадом",
+      ),
+    ];
+    expect(checkTrMarkers(code)).toEqual([]);
   });
 });

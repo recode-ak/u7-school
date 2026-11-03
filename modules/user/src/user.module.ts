@@ -1,14 +1,14 @@
-// TR-11: DMG-модуль внешнего контракта пользователей — адаптеры над legacy-фасадом.
+// DMG-модуль внешнего контракта пользователей — адаптеры над legacy-фасадом.
 import type { UserFacade } from '@u7-scl/domain/user/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import type { Identified } from 'dmg-core';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { GetTelegramAddressesUc } from './user/uc/get-telegram-addresses.uc';
 
-/** Что адаптеры TR-11 берут у legacy-фасада пользователей. */
+/** Что адаптеры над legacy-фасадом берут у legacy-фасада пользователей. */
 export type UserLegacy = Pick<UserFacade, 'getUserByUuid'>;
 
-/** Резолвер DMG-модуля пользователей: платформа + legacy-фасад (TR-11). */
+/** Резолвер DMG-модуля пользователей: платформа + legacy-фасад. */
 export type UserModuleDeps = ModuleDeps & { readonly legacy: UserLegacy };
 
 /** Карта «Def → класс» внешнего модуля пользователей (API-05); ER и Job нет. */

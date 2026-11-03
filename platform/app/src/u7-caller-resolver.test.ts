@@ -8,8 +8,8 @@ import { GuestCaller, UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { U7App } from './u7-app';
 
-// Резолвер `Caller` корня сборки (D-50, TR-33): идентичность из транспорта →
-// человек на входе через legacy-фасад пользователей (мост TR-11).
+// Резолвер `Caller` корня сборки (D-50): идентичность из транспорта →
+// человек на входе через legacy-фасад пользователей (адаптер над legacy-фасадом).
 
 const KNOWN: User = {
   uuid: '22222222-2222-4222-8222-222222222222',

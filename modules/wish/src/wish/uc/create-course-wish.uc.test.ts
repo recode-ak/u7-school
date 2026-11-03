@@ -41,7 +41,7 @@ import { CreateCourseWishUc } from './create-course-wish.uc';
 // Def. Фасады курсов и анкет — `StubFacade` по Def из домена (ARC-06: пакеты
 // модулей друг друга не импортируют); ответы legacy-фасадов («не
 // опубликован», «без стартового модуля») сводит к `enrollable: false`
-// адаптер TR-11 — эти случаи проверяет `modules/course` (Ф8 шаг 2b).
+// адаптер над legacy-фасадом — эти случаи проверяет `modules/course` (Ф8 шаг 2b).
 
 const START_MODULE = '11111111-1111-4111-8111-111111111111';
 const REQ = Trace.fromRequest({ requestId: 'r-1' });

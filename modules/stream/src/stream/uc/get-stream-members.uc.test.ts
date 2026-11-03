@@ -13,7 +13,7 @@ import {
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import { createStreamModule, type StreamLegacy } from '../../stream.module';
 
-// Адаптер TR-11: ответ legacy getMembers передаётся как есть; «нет потока» — ok(undefined).
+// Адаптер над legacy-фасадом: ответ legacy getMembers передаётся как есть; «нет потока» — ok(undefined).
 
 const STREAM = '11111111-1111-4111-8111-111111111111';
 const MENTOR = '66666666-6666-4666-8666-666666666666';
@@ -45,7 +45,7 @@ function stream(members: Awaited<ReturnType<StreamLegacy['getMembers']>>) {
 const ask = (facade: ModuleFacade<typeof StreamModuleDef>) =>
   facade.handle(GetStreamMembersUcDef, { streamId: STREAM }, asSystem(), REQ);
 
-describe('getStreamMembers: адаптер над getMembers (TR-11)', () => {
+describe('getStreamMembers: адаптер над getMembers', () => {
   it('поток есть — состав как есть', async () => {
     const members = {
       mentorId: MENTOR,

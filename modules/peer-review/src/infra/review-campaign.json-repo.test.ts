@@ -267,7 +267,7 @@ describe('ReviewCampaignJsonRepo: legacy-записи', () => {
   });
 });
 
-describe('ReviewCampaignJsonRepo: невалидная запись (TR-37, строгий разбор)', () => {
+describe('ReviewCampaignJsonRepo: невалидная запись (строгий разбор)', () => {
   test('битая запись — ValiError на чтении и записи, файл не изменён (мягкого пропуска нет)', async () => {
     const text = JSON.stringify([
       legacyRow(),

@@ -20,7 +20,7 @@ export interface DomainFile {
 export type DomainGraph = Readonly<Record<string, readonly string[]>>;
 
 const DOMAIN_SRC = 'domain/src/';
-// Корень сборки `@u7-scl/app` — не платформа: домену запрещён (ARC-06, TR-33).
+// Корень сборки `@u7-scl/app` — не платформа: домену запрещён (ARC-06).
 const PLATFORM = /^@u7-scl\/(app-legacy|core)(\/|$)/;
 const DOMAIN_PKG = /^@u7-scl\/domain(?:\/([^/]+)(?:\/(.+))?)?$/;
 const PUBLIC_SUBPATHS = new Set(['contract']);
@@ -412,4 +412,21 @@ export function checkDebt(input: {
   mode: 'transition' | 'strict';
 }): string[] {
   return DebtRegistry.parse(input.debtMd).check(input.code, input.mode);
+}
+
+const TR_ID = /\bTR-\d+\b/g;
+
+/**
+ * Записи реестра `TR-<n>` живут в `debt.md` §6: в коде ссылка устаревает
+ * вместе с адаптером. Где она объясняла «почему» — «адаптер над
+ * legacy-фасадом» (`migration.md` §2.2).
+ */
+export function checkTrMarkers(code: readonly DomainFile[]): string[] {
+  const out: string[] = [];
+  for (const f of code)
+    f.text.split('\n').forEach((line, i) => {
+      for (const [id] of line.matchAll(TR_ID))
+        out.push(`TR: ${f.path}:${i + 1}: ${id} — запись реестра в коде`);
+    });
+  return out;
 }

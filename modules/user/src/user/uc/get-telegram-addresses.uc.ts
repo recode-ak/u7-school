@@ -1,4 +1,4 @@
-// TR-11: адаптер UC внешнего контракта над legacy-фасадом пользователей.
+// Адаптер UC внешнего контракта над legacy-фасадом пользователей.
 import {
   GetTelegramAddressesUcDef,
   type UserModuleDef,

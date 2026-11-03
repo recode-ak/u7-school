@@ -29,7 +29,7 @@ import {
 import type { OperationRecord } from 'dmg-core/app';
 
 /**
- * E2E: `requestId` вызова UC из `update_id` Telegram (TR-30, D-56 пакета).
+ * E2E: `requestId` вызова UC из `update_id` Telegram (D-56 пакета).
  *
  * - Повторная доставка апдейта (тот же `update_id`) — команда не исполняется
  *   второй раз: отсев повторов отдаёт сохранённый ответ, экран тот же.

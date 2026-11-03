@@ -17,7 +17,7 @@ import {
 import { ReviewJsonRepo } from './review.json-repo';
 
 // Перенос `infra/db/review-json-repo.test.ts` (8) на VersionedRepository
-// + legacy-записи, строгий разбор (TR-37), фильтр ReviewFilter.
+// + legacy-записи, строгий разбор, фильтр ReviewFilter.
 // Только временный каталог и чтение фикстуры `data/fixtures` (запись — никогда).
 
 const tmpDir = mkdtempSync(join(tmpdir(), 'review-json-repo-'));
@@ -316,7 +316,7 @@ describe('ReviewJsonRepo: legacy-записи', () => {
   });
 });
 
-describe('ReviewJsonRepo: невалидная запись (TR-37, строгий разбор)', () => {
+describe('ReviewJsonRepo: невалидная запись (строгий разбор)', () => {
   test('битая запись — ValiError на чтении и записи, файл не изменён', async () => {
     const text = JSON.stringify([legacyReview(), { uuid: 'not-a-uuid' }]);
     await Bun.write(path('broken.json'), text);

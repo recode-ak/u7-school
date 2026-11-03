@@ -1,4 +1,4 @@
-// TR-11: адаптер UC внешнего контракта над legacy-фасадом анкет.
+// Адаптер UC внешнего контракта над legacy-фасадом анкет.
 // субъект вызывающего — entity `User`: его ждёт legacy `startStandard`;
 // уйдёт при миграции модуля анкет.
 import {
@@ -11,7 +11,7 @@ import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
 import type { QuestionnaireModuleDeps } from '../../questionnaire.module';
 
 /**
- * Временная реализация `startQuestionnaire` (TR-11): анкету создаёт,
+ * Временная реализация `startQuestionnaire`: анкету создаёт,
  * сохраняет и публикует `questionnaire:start` legacy-модуль (D-37);
  * `owner` контракта — legacy `ownerInfo`. Через UoW адаптер ничего не
  * пишет: `emits` Def описывает событие legacy-кода.

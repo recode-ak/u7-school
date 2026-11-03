@@ -10,7 +10,7 @@ import { GetSameModulesUcDef } from './course/uc/get-same-modules.uc';
 /**
  * Внешний модуль курсов (D-37): реализован legacy-кодом, здесь только
  * контракт для `dependsOn` и Def UC без реализации, которые вызывают другие
- * модули (D-42; исполняет адаптер над legacy-фасадом, TR-11). При миграции
+ * модули (D-42; исполняет адаптер над legacy-фасадом). При миграции
  * `external` снимается.
  */
 export const CourseModuleDef = ModuleDef.define({

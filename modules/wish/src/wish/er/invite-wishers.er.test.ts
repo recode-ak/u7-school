@@ -428,7 +428,7 @@ describe('InviteWishersEr.subscribe', () => {
 
 describe('InviteWishersEr — идемпотентность (D-47)', () => {
   // повторное stream.created (новый eventId) повторно публикует
-  // wish.invited — ER не идемпотентен (TR-20). Тест фиксирует текущее
+  // wish.invited — ER не идемпотентен. Тест фиксирует текущее
   // нарушение; после починки ожидание меняется на успех (`resolves`).
   it('повтор stream.created с новым eventId — пока публикует событие', async () => {
     await seed(moduleWish('expressed'));

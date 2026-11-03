@@ -1,4 +1,4 @@
-// TR-11: DMG-модуль внешнего контракта потоков — адаптеры над legacy-фасадом.
+// DMG-модуль внешнего контракта потоков — адаптеры над legacy-фасадом.
 import type { StreamFacade } from '@u7-scl/domain/stream/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import type { Identified } from 'dmg-core';
@@ -6,10 +6,10 @@ import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { GetStreamMembersUc } from './stream/uc/get-stream-members.uc';
 import { GetStreamPresenceUc } from './stream/uc/get-stream-presence.uc';
 
-/** Что адаптеры TR-11 берут у legacy-фасада потоков. */
+/** Что адаптеры над legacy-фасадом берут у legacy-фасада потоков. */
 export type StreamLegacy = Pick<StreamFacade, 'getStream' | 'getMembers'>;
 
-/** Резолвер DMG-модуля потоков: платформа + legacy-фасад (TR-11). */
+/** Резолвер DMG-модуля потоков: платформа + legacy-фасад. */
 export type StreamModuleDeps = ModuleDeps & { readonly legacy: StreamLegacy };
 
 /** Карта «Def → класс» внешнего модуля потоков (API-05); ER и Job нет. */

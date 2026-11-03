@@ -25,6 +25,7 @@ import {
   checkDomainGraph,
   checkDomainImports,
   checkModuleImports,
+  checkTrMarkers,
   type DomainFile,
   domainGraphOf,
 } from './domain-check';
@@ -99,6 +100,7 @@ export async function runDebtCheck(root = '.'): Promise<string[]> {
  */
 export async function runDomainCheck(root = '.'): Promise<string[]> {
   const code = await readPackageSources(root);
+  const appCode = await readAppSources(root);
   const graph = domainGraphOf(DOMAIN_MODULES);
   const dirs = readdirSync(`${root}/domain/src`, {
     withFileTypes: true,
@@ -111,15 +113,13 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
   };
   return [
     ...ArchChecker.defsOf(DOMAIN_MODULES).report(),
-    ...checkContractImports(
-      [...code, ...(await readAppSources(root))],
-      modules,
-    ),
+    ...checkContractImports([...code, ...appCode], modules),
     ...checkDomainDirs(dirs, graph),
     ...checkDomainGraph(graph),
     ...checkDomainImports(code, graph),
     ...checkModuleImports(code, await assemblyPackages(root)),
     ...(await runDebtCheck(root)),
+    ...checkTrMarkers([...code, ...appCode]),
   ];
 }
 

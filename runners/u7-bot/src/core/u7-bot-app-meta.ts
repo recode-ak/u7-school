@@ -24,7 +24,7 @@ export interface U7BotUiAppResolve extends BotUiAppResolve<U7BotAppMeta, User> {
 }
 
 // ================= API layer ===================
-// Метаданные legacy API-приложения — в корне сборки `@u7-scl/app` (D-50, TR-33).
+// Метаданные legacy API-приложения — в корне сборки `@u7-scl/app` (D-50).
 export type { U7BotApp, U7BotAppMeta } from '@u7-scl/app';
 
 export type { U7AppResolver };

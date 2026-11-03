@@ -25,7 +25,7 @@ u7-school — это современная LMS (Learning Management System), п
 ### Платформа (`platform/`)
 - **dmg-core** (внешний пакет, репо `~/dev/tools/dmg/dmg-core`, D-55): Платформа DMG — Def, Ar, Policy, UC/ER/Job, генератор и проверки архитектуры (документация — `node_modules/dmg-core/docs/index.md`).
 - **[core](./platform/core/)**: Ядро платформы. Содержит базовые абстракции DDD (`Aggregate`, `UseCase`, `ApiModule`), UI-компоненты для ботов (`BotController`, `BotUserStory`, `BotRouter`) и общие утилиты.
-- **[app-legacy](./platform/app-legacy/)**: Legacy-ядро приложения (TR-33). Определяет `U7BotController`, `U7BotUserStory`, общие типы (`User`, `Role`, `U7BotAppMeta`) для Telegram-бота.
+- **[app-legacy](./platform/app-legacy/)**: Legacy-ядро приложения. Определяет `U7BotController`, `U7BotUserStory`, общие типы (`User`, `Role`, `U7BotAppMeta`) для Telegram-бота.
 
 ### Домен (`domain/`)
 - **[domain](./domain/)**: Чистый синхронный домен всех модулей и их контракты (`@u7-scl/domain/<m>`).

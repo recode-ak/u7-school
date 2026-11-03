@@ -25,7 +25,7 @@ const withTarget = <T extends v.ObjectEntries>(entries: T) =>
   ]);
 
 /**
- * Ошибки агрегата `wish`: отказы переходов (`conflict`, TR-3) и ошибки UC.
+ * Ошибки агрегата `wish`: отказы переходов (`conflict`) и ошибки UC.
  * `label` — прежний текст legacy-исключения: UC/ER поднимают его, пока
  * `Result` не дошёл до вызывающих.
  *
