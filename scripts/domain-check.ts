@@ -4,7 +4,7 @@
  *   bun run arch:check
  *
  * Чистые функции над файлами в памяти; чтение диска — в `readDomainFiles`.
- * Долг: маркер `// DEBT-<n>` в коде ↔ запись в `conductor/architecture/debt.md`.
+ * Долг: allowlist `conductor/architecture/debt.md`; в коде `DEBT-<n>` — только в `biome-ignore`.
  */
 import { posix } from 'node:path';
 import { Glob } from 'bun';
@@ -161,8 +161,6 @@ function ownerOf(path: string, all: readonly string[]): string | undefined {
   return m && all.includes(m) ? m : undefined;
 }
 
-// DEBT-34: пары legacy-модулей импортируют чужой `index` — проверка ждёт
-// их миграции на Def
 /**
  * ARC-04 (D-45): чужой модуль — только через `contract`. Блокирует, если
  * модуль на Def импортирует или импортируется; пары legacy-модулей — по

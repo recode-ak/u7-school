@@ -14,7 +14,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
  * Неявный контекст — временный: в `dmg-ui` контракт story несёт id запроса
  * явно.
  */
-// DEBT-41: id апдейта до story — неявным контекстом, не через контракт story.
+// id апдейта до story — неявным контекстом, не через контракт story.
 export class BotRequestContext {
   static readonly #storage = new AsyncLocalStorage<BotRequestContext>();
 

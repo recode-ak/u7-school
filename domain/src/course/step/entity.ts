@@ -1,4 +1,3 @@
-// DEBT-6
 import { FileMetadataSchema } from '@u7-scl/core/domain';
 import * as v from 'valibot';
 import { StatusSchema } from '../status';

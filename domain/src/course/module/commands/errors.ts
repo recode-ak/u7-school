@@ -1,4 +1,3 @@
-// DEBT-6
 import type { AccessDeniedError, NotFoundError } from '@u7-scl/core/domain';
 import type { UserNotFoundUcError } from '@u7-scl/domain/user';
 

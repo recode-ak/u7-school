@@ -1,4 +1,3 @@
-// DEBT-40: репозиторий во временном каталоге — перевести на фейк порта (`<a>.repo.fake.ts`) при касании.
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -428,10 +427,10 @@ describe('InviteWishersEr.subscribe', () => {
 });
 
 describe('InviteWishersEr — идемпотентность (D-47)', () => {
-  // DEBT-35: повторное stream.created (новый eventId) повторно публикует
+  // повторное stream.created (новый eventId) повторно публикует
   // wish.invited — ER не идемпотентен (TR-20). Тест фиксирует текущее
   // нарушение; после починки ожидание меняется на успех (`resolves`).
-  it('повтор stream.created с новым eventId — пока публикует событие (DEBT-35)', async () => {
+  it('повтор stream.created с новым eventId — пока публикует событие', async () => {
     await seed(moduleWish('expressed'));
     const er = makeEr();
     await expect(

@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, spyOn, test } from 'bun:test';
-// DEBT-16
 import * as Shared from '@u7-scl/core/shared';
 import { AbandonSign, CompletionSign, StudentOutcomeCategory } from '../status';
 import { StudentAr } from './a-root';

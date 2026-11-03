@@ -57,8 +57,8 @@
 
 ## Фаза 3: Голые маркеры (Sonnet)
 
-- [ ] Task: Удалить голые `// DEBT-N` (86 в 70 файлах), хвостовые у импортов в `errors.ts` (3), упоминания в JSDoc (`scripts/call-uc.ts`, `review-render.ts`), DEBT-35 в имени теста и комментарии `invite-wishers.er.test.ts`, комментарий `domain-check.ts`; «почему» — оставить без ID
-- [ ] Task: Включить строгий режим `checkDebt` в `arch:check`
+- [x] Task: Удалить голые `// DEBT-N` (86 в 70 файлах), хвостовые у импортов в `errors.ts` (3), упоминания в JSDoc (`scripts/call-uc.ts`, `review-render.ts`), DEBT-35 в имени теста и комментарии `invite-wishers.er.test.ts`, комментарий `domain-check.ts`; «почему» — оставить без ID
+- [x] Task: Включить строгий режим `checkDebt` в `arch:check`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 Критерии приёмки: `rg -n '\bDEBT-\d+' <корни> | rg -v biome-ignore` — пусто; `arch:check` строгий, 0 нарушений; число тестов ≥ базовой линии; `bun run check` зелёный.

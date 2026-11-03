@@ -1,4 +1,3 @@
-// DEBT-11
 import type { ArMeta } from '@u7-scl/core/domain';
 import * as v from 'valibot';
 import { QuestionnairePoolSchema } from './question';

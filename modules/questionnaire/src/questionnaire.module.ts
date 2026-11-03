@@ -1,5 +1,5 @@
 // TR-11: DMG-модуль внешнего контракта анкет — адаптеры над legacy-фасадом.
-// DEBT-32: субъект модуля — entity `User` до миграции анкет (`startStandard`).
+// субъект модуля — entity `User` до миграции анкет (`startStandard`).
 import type { QuestionnaireFacade } from '@u7-scl/domain/questionnaire';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import type { User } from '@u7-scl/domain/user';

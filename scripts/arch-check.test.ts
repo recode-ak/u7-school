@@ -72,7 +72,7 @@ describe('runDebtCheck: реестр долга как allowlist', () => {
   ].join('\n');
   const CORE = "import { A } from '@u7-scl/core';\n";
 
-  it('долг вне Места и неизвестный ID — нарушения; голый маркер — допуск переходного режима', async () => {
+  it('долг вне Места и неизвестный ID — нарушения; голый маркер — нарушение строгого режима', async () => {
     const root = await mkdtemp(join(tmpdir(), 'debt-check-'));
     try {
       const put = async (path: string, text: string) => {
@@ -86,6 +86,7 @@ describe('runDebtCheck: реестр долга как allowlist', () => {
       expect(await runDebtCheck(root)).toEqual([
         'DEBT: DEBT-1: долг без записи — domain/src/course/b.ts:1',
         'DEBT: domain/src/course/c.ts:1: DEBT-9 — нет записи в debt.md',
+        'DEBT: domain/src/user/a.ts:2: DEBT-1 вне biome-ignore',
       ]);
     } finally {
       await rm(root, { recursive: true, force: true });

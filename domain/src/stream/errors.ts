@@ -3,7 +3,7 @@ import type {
   BadRequestError,
   ConflictError,
   NotFoundError,
-} from '@u7-scl/core/domain'; // DEBT-16
+} from '@u7-scl/core/domain';
 
 export type StreamNotFoundUcError = NotFoundError<
   'STREAM_NOT_FOUND',

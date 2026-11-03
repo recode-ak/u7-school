@@ -1,4 +1,3 @@
-// DEBT-16
 import type { DomainEvent } from '@u7-scl/core/domain';
 
 /**

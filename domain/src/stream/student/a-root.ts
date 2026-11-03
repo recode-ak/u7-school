@@ -1,6 +1,4 @@
-// DEBT-16
 import { Aggregate } from '@u7-scl/core/domain';
-// DEBT-16
 import { isoNow, now } from '@u7-scl/core/shared';
 import {
   AbandonSign,

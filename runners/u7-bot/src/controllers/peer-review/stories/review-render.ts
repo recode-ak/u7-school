@@ -44,7 +44,7 @@ export function authorLabel(args: {
 
 /**
  * Дата отзыва из метки времени (мс, UTC) — «21.09.2026». Зона — UTC, как у
- * прежнего ISO-текста; перевод на зону проекта — DEBT-43.
+ * прежнего ISO-текста; перевод на зону проекта.
  */
 export function reviewDate(createdAt: number): string {
   const iso = new Date(createdAt).toISOString().slice(0, 10);

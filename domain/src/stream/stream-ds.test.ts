@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-// DEBT-16
 import { AppException } from '@u7-scl/core/domain';
 import type { ContentSnapshot } from '@u7-scl/domain/course';
 import { StreamStatus } from './status';

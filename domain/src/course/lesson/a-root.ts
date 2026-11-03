@@ -1,6 +1,4 @@
-// DEBT-6
 import { Aggregate } from '@u7-scl/core/domain';
-// DEBT-6
 import { isoNow } from '@u7-scl/core/shared';
 import type { User } from '@u7-scl/domain/user';
 import type { Module } from '../module/entity';

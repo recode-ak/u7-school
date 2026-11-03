@@ -1,4 +1,3 @@
-// DEBT-1
 import type { NotifyKind } from '@u7-scl/core/domain';
 import type { User } from './user/entity';
 import type { Role } from './user/roles';

@@ -1,4 +1,3 @@
-// DEBT-1
 import type { DomainEvent, NotifyKind } from '@u7-scl/core/domain';
 
 /**

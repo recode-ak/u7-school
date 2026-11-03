@@ -1,5 +1,5 @@
 // TR-11: адаптер UC внешнего контракта над legacy-фасадом анкет.
-// DEBT-32: субъект вызывающего — entity `User`: его ждёт legacy `startStandard`;
+// субъект вызывающего — entity `User`: его ждёт legacy `startStandard`;
 // уйдёт при миграции модуля анкет.
 import {
   type QuestionnaireModuleDef,

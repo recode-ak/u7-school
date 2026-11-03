@@ -7,7 +7,7 @@ async function main() {
   const logger = new ConsoleLogger();
   logger.setLogLevel(LogLevel.DEBUG);
 
-  // DEBT-42: CLI не стартует без about.md у всех legacy-модулей; только legacy-UC.
+  // CLI не стартует без about.md у всех legacy-модулей; только legacy-UC.
   // Корень сборки (D-50): данные — `data/` (прежние пути по умолчанию),
   // школа — поля TEST_SCHOOL. CLI — короткоживущий процесс: U7App
   // инициализирует планировщик (обязательный контракт ApiApp), но start()
