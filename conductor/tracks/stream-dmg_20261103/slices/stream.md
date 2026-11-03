@@ -1,8 +1,8 @@
 # Бриф среза: `stream` / `stream`
 
-Черновик — `tech-lead`, Ф0; проверка — orchestrator. Читай вместе с `../spec.md`, `../plan.md` (Ф1), эталоном `wish` и брифом `conductor/archive/peer-review-dmg_20261029/slices/review-campaign.md`. Код потока в `v0.2.6` (`../u7-school-v0.2.6/packages/stream/src/{domain,api}/stream`) совпадает с HEAD, отличаются только импорты: характеризация — текущие тесты как ожидания нового кода.
+Черновик — `tech-lead`, Ф0; проверка — orchestrator. Читай вместе с `../spec.md`, `../plan.md` (Ф1), эталоном `wish` и брифом `conductor/archive/peer-review-dmg_20261029/slices/review-campaign.md`. Код потока в `v0.2.6` (`../u7-school-v0.2.6`, пакет `stream`, каталоги `src/{domain,api}/stream`) совпадает с HEAD, отличаются только импорты: характеризация — текущие тесты как ожидания нового кода.
 
-> **Статус:** принят. С1–С4 — по рекомендациям (Нурболат, 2026-11-03), Т1–Т13 — по рекомендациям; всё — TR-41.
+> **Статус:** принят. С1–С4 — по рекомендациям (Нурболат, 2026-11-03), Т1–Т12 — по рекомендациям, Т13 снят пересмотром D-60; всё — TR-41.
 
 ## Расхождения spec/plan с кодом
 
@@ -28,8 +28,7 @@
 - `domain/src/course/{contract.ts,course.module.ts,content-snapshot.ts,course/uc/get-module-snapshot.uc.ts}`, `modules/course/src/{course.module.ts,course/uc/get-module-snapshot.uc.ts}` (TR-11);
 - `domain/src/wish/{wish/wish.state.ts,wish/wish.ar.ts,wish-invitation.dcs.ts}`, `modules/wish/src/wish/er/invite-wishers.er.test.ts:430-444` (DEBT-35);
 - `platform/app/src/{u7-app.ts,u7-app.types.ts}`, `platform/app/tests/u7-app.test.ts`;
-- stories и тесты из «Шагов» п. 4; `runners/u7-bot/tests/{mentor/mentor.integration.test.ts,e2e/user-notify.e2e.test.ts}`;
-- остаток TR-8: `domain/src/peer-review/review/review-draft.dqs.ts:4`, `biome.json:179-181`, `dmg-core` (раздел «Документы»).
+- stories и тесты из «Шагов» п. 4; `runners/u7-bot/tests/{mentor/mentor.integration.test.ts,e2e/user-notify.e2e.test.ts}`.
 
 **Не трогать:** `data/`; `student/**`, кроме переименований Т1; `api/student/*`; класс `StreamApiModule` (Ф3); `tests/worlds/*` (Ф3); `scripts/update-stream-snapshot.ts`, `stream-snapshot-sync.ts` (Ф3); ARC-07 в `biome.json` (Ф3).
 
@@ -42,7 +41,7 @@
 5. **Ошибки** (`stream.errors.ts`, группа `STREAM`, ERR-04): `STREAM_NOT_FOUND` (not-found, `{ streamId }`); `STREAM_NOT_ENROLLING`, `STREAM_NOT_ACTIVE`, `STREAM_NOT_COMPLETED`, `STREAM_ALREADY_ARCHIVED` (conflict); `STREAM_STUDENTS_IN_PROGRESS` (conflict, `{ pending: { userId, status }[] }` — бывший `STREAM_CONFLICT`). Legacy `StreamUcErrors` — для legacy-студента до Ф2.
 6. **Policy** (`stream.policy.ts`, TR-40, DOM-05/15): субъект — `Pick<User, 'uuid' | 'roles'>` из `@u7-scl/domain/user/contract`; `canCreate` — `Rule.of` «ментор» (`subject.roles.includes(Role.MENTOR)`; админ без `MENTOR` поток не создаёт, как в legacy `policy.ts:9-11`); `canManage` — `Rule.anyOf(isStreamMentor, isAdmin)`, контекст `{ stream: ReadonlyAr<StreamAr> }`; `Rule.hasRole` не подходит — у legacy `User` нет `hasRole`. Legacy `canRead` не используется — удалить.
 7. **Правило** `StreamRules.studentsSettled` (`stream.rules.ts`, D-40, DOM-16): контекст `{ students: readonly StreamStudentFact[] }`; отказ `STREAM_STUDENTS_IN_PROGRESS` со списком; «завершён ли» отвечает студент (`settled` в факте). Заменяет `StreamDs.completeStream`.
-8. **Проекция** `stream.projection.ts` (D-60, первая в проекте): `StreamView = v.omit(StreamArDef.state, [...])`, состав — по С1. Её отдают `getStream`, `listStreams`, `findStreamByTelegramGroup` и `StreamAr.view()`. DQS потока в Ф1 нет: UI-расчёты `StreamDs` — студенческие (Ф2).
+8. **Форма ответа** (D-60, D-44): схема `StreamView` — рядом с `StreamArDef` (`stream.ar.ts`): `v.omit` из state без `enrollmentKey` + `requiresEnrollmentKey` (С1); `StreamAr` задаёт `V = StreamView` и переопределяет `view()`. Её отдают `getStream`, `listStreams`, `findStreamByTelegramGroup`. DQS потока в Ф1 нет: UI-расчёты `StreamDs` — студенческие (Ф2).
 9. **Def UC** (`stream/uc/*.uc.ts`; `callers` — MAN-11; вызов чужого модуля — в `fetch`, API-07):
 
    | Имя | Тип | `callers` | Policy | Вход → выход | `errors` / `rules` / `calls` / `emits` |
@@ -67,7 +66,7 @@
 ## Шаги (по ролям)
 
 1. **test-designer:** характеризация по существующим тестам — `domain/src/stream/stream/{a-root,policy,entity}.test.ts` (часть потока), `stream-ds.test.ts:787-880` (`completeStream`), `modules/stream/src/api/stream/*.test.ts` (7), `infra/stream-in-proc-facade.test.ts`, `stream/uc/get-stream-members.uc.test.ts`, `stream.module.test.ts`, `infra/db/stream-json-repo.test.ts`, `legacy-inbound.test.ts:79-95`; red по Def — `StreamArDef`, state (legacy-запись), ошибки, Policy (TST-02: ментор, не ментор, админ, гость), `studentsSettled`, 9 Def UC, `GetModuleSnapshotUcDef`, `StreamModuleDef`, `Role` в контракте `user`; тесты UC — на фейках порта и `StreamStudents`; репозиторий — `mkdtemp`; DEBT-35 — `resolves`; e2e — `createStream` → приглашение (`user-notify.e2e.test.ts:97`), `findStreamByTelegramGroup` (вступил чужой / ушёл студент); список «старый тест → новый» — в отчёт.
-2. **migrator, домен:** `bun run gen aggregate stream.stream --adopt` (при коллизиях — вручную по `wish`); `stream.{state,ar,errors,policy,rules,projection,types}.ts`, `uc/*`; legacy — Т1, удаление методов, `events.ts`/`commands/*`, `completeStream` из `StreamDs`; контракты `user` (`Role`) и `course`; TR-8 — `review-draft.dqs.ts:4` (`ReviewDirection` из `review.types.ts`), DOM-01 в `biome.json` + `domain/**/*.dqs.ts`; `dmg-core` — раздел «Документы».
+2. **migrator, домен:** `bun run gen aggregate stream.stream --adopt` (при коллизиях — вручную по `wish`); `stream.{state,ar,errors,policy,rules,types}.ts`, `uc/*`; legacy — Т1, удаление методов, `events.ts`/`commands/*`, `completeStream` из `StreamDs`; контракты `user` (`Role`) и `course`.
 3. **migrator, прикладной слой:** `stream.module.ts`, 9 UC (`UseCaseFromDef`), порт и JSON-репозиторий, `StreamStudents` + `legacyStreamStudents`, адаптер `course`, удаление адаптеров TR-11 и `api/stream/*`, `u7-app.ts`, `u7-app.test.ts`, DEBT-35 в `wish`.
 4. **migrator, stories → `dispatch`:** `mentor/{create-stream:796, activate-stream:22, view-stream-mentor:77,165,273,283, my-streams:56, monitor:103,425}`, `streams/{controller:49,61,98, stories/stream-catalog:51, stories/view-stream:169,175,274,295,380,423,482,686,898,942, stories/inactivity:294}`, `courses/{wish-invite:70, wish-confirmed:80}`, `peer-review/{invite:64, scope-reviews:81, my-reviews:291, campaign:182,417, reviews-for-me:126}`, `school/school-reviews:68`, `learning/{shared:59, stories/step-view:82,320, stories/progress:44}`; тесты stories (моки `appApi.dispatch`, образец — `course-catalog.story.test.ts:161-185`), `tests/mentor/mentor.integration.test.ts`, `tests/e2e/user-notify.e2e.test.ts`.
 5. **orchestrator:** запись красной зоны в `debt.md`.
@@ -91,7 +90,7 @@
 | `stream/repo.ts` | удаляется; порт — в `modules/stream` |
 | `module.ts` (метаданные 15 UC) | метаданные 8 UC студента до Ф3 |
 | `stream.module.ts` (`external`, 2 UC) | `external` до Ф3 (Т4), 9 UC |
-| — | `stream.errors.ts`, `stream.projection.ts`, `stream.types.ts` (`StreamStudentFact`) |
+| — | `stream.errors.ts`, `stream.types.ts` (`StreamStudentFact`) |
 
 ### Прикладной слой
 
@@ -157,29 +156,21 @@
 - **Т10.** DEBT-35: отсев — DCS + вопрос Ar; повторный `invite` Ar отклоняет `WISH_ALREADY_INVITED`.
 - **Т11.** Даты в выходе — числа; `BotUiStory.formatDate(iso)` получает `new Date(n).toISOString()`; ввод `startDate` — UTC, как сейчас.
 - **Т12.** Тест репозитория — `mkdtemp`.
-- **Т13.** Остаток TR-8 — в Ф1.
+- **Т13.** Снят: после пересмотра D-60 (`09005e1`) остатка TR-8 нет.
 
 ## Правила (ID rules.md)
 
 DOM-01…06, DOM-10…12, DOM-14…17; API-01…05, API-07; MAN-01…06, MAN-08, MAN-10…13; ERR-01…06; ARC-02…04, ARC-06, ARC-08; CODE-01, CODE-02, CODE-04; TST-01…07.
 
-## Документы (`dmg-core`, TR-8)
+## Документы (`dmg-core`)
 
-| Документ | Что обновить |
-|---|---|
-| `src/cli/scaffold/lint-map.ts:94-104` | DOM-01: `${domain}/*.dqs.ts` в файлы и сообщение + `lint-map.test.ts` |
-| `docs/reference/rules.md` (DOM-01) | `*.dqs.ts` в lint; из review убрать «`*.dqs.ts`: state — только для схем» |
-| `docs/guides/project.md` | сверить пример `biome.json` по `covers` |
-| `docs/reference/naming.md:34` | `<topic>.projection.ts` — Def проекции (D-60) |
-| `docs/guides/repo.md:18,39` | DQS не читает state, форма — проекция, поля отдаёт Ar (D-60) |
-
-Если ArchChecker (CODE-01) не знает суффикса `.projection.ts` — правка в том же коммите пакета; SHA — в коммите u7-school.
+Не затронуты: D-60 пересмотрен и записан вместе с `layers.md` §4 и строкой DOM-01 `rules.md` (`09005e1`).
 
 ## Долг
 
-- **Гасится:** DEBT-35; DEBT-44 — glob `modules/stream/src/stream/uc/{get-stream-members,get-stream-presence}.uc.ts`; DEBT-2 — glob `domain/src/stream/stream/a-root.ts`; TR-8 «Осталось»; TR-11 (stream).
+- **Гасится:** DEBT-35; DEBT-44 — glob `modules/stream/src/stream/uc/{get-stream-members,get-stream-presence}.uc.ts`; DEBT-2 — glob `domain/src/stream/stream/a-root.ts`; TR-11 (stream).
 - **Не гасится в Ф1:** DEBT-1 (уточнить Место), DEBT-5, DEBT-10 — Ф2; DEBT-3, DEBT-34 — Ф3.
-- **Новые:** DEBT-47 (мост `infra/legacy-stream-students.ts`, снятие — Ф2); TR на Т1–Т13 и ответы С1–С4; запись красной зоны.
+- **Новые:** DEBT-47 (мост `infra/legacy-stream-students.ts`, снятие — Ф2); TR на Т1–Т12 и ответы С1–С4; запись красной зоны.
 
 ## Критерии приёмки
 
@@ -190,5 +181,4 @@ DOM-01…06, DOM-10…12, DOM-14…17; API-01…05, API-07; MAN-01…06, MAN-08,
 - DEBT-35: тест повторного `stream.created` — `resolves`, зелёный.
 - Репозиторий: legacy-запись (ISO → число, `version = 0`, `updatedAt = createdAt`), round-trip, устаревшая версия, битая запись — исключение, файл цел.
 - Тесты UC — на фейке порта; сценарии старых тестов потока перенесены (список — отчёт test-designer).
-- Lint DOM-01 ловит импорт state в `*.dqs.ts`; `review-draft.dqs.ts` state не импортирует.
 - `bun run check` зелёный, кроме тестов из записи красной зоны; `arch:check` синхронен с `debt.md`; `git status data/` чист.
