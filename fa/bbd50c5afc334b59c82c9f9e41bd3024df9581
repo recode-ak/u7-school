@@ -1,0 +1,5 @@
+Задача: четыре concept-документа.
+Коммит пакета: dmg-core@612cd19 — docs/concepts/{uc-path,layers,aggregate-lifecycle,reading-a-module}.md, индекс concepts/index.md.
+Каждый: front-matter covers:, одна схема mermaid, шаги, «Почему так» со ссылками D-NN, «Где дальше».
+Замечено для пилота documentarian: JSDoc AssignTaskUcDef (src/testing/example/todo/task/uc/assign-task.uc.ts) говорит, что users спрашивает load, а реализация делает это в fetch (D-58).
+Проверки: check и e2e пакета зелёные; check u7-school зелёный.
