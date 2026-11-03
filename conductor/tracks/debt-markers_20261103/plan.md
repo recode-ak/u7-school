@@ -32,14 +32,14 @@
 
 ## Фаза 1: Эталон `checkDebt` (Opus)
 
-- [ ] Task: Тесты новой `checkDebt` в `scripts/domain-check.test.ts`; red
-    - [ ] Разбор записи: Место (несколько glob, «Погашает» на glob), Признак, Корень, закрытая «слит в DEBT-N»
-    - [ ] Устаревший glob; погашенный glob (признак пропал в одном glob слитой записи)
-    - [ ] Долг вне Места в пределах Корня; вне Корня — не ошибка
-    - [ ] `DEBT-N` вне `biome-ignore`: ошибка в строгом режиме, допуск в переходном; неизвестный и закрытый ID в `biome-ignore`
-    - [ ] Перенести сценарии старой `checkDebt`
-- [ ] Task: Тесты ARC-02 без маркера: импорт `@u7-scl/core`/`app-legacy` в домене без `DEBT-N` — не ошибка `checkDomainImports`; red
-- [ ] Task: Реализация `checkDebt({ code, debtMd, mode })` и переделка ARC-02; `arch-check.ts` пока на старой сверке; green
+- [x] Task: Тесты новой `checkDebt` в `scripts/domain-check.test.ts`; red `806f0c3`
+    - [x] Разбор записи: Место (несколько glob, «Погашает» на glob), Признак, Корень, закрытая «слит в DEBT-N»
+    - [x] Устаревший glob; погашенный glob (признак пропал в одном glob слитой записи)
+    - [x] Долг вне Места в пределах Корня; вне Корня — не ошибка
+    - [x] `DEBT-N` вне `biome-ignore`: ошибка в строгом режиме, допуск в переходном; неизвестный и закрытый ID в `biome-ignore`
+    - [x] Перенести сценарии старой `checkDebt` (старая сверка — `checkDebtMarkers` со своими тестами до Ф2)
+- [x] Task: Тесты ARC-02 без маркера: импорт `@u7-scl/core`/`app-legacy` в домене без `DEBT-N` — не ошибка `checkDomainImports`; red `806f0c3`
+- [x] Task: Реализация `checkDebt({ code, debtMd, mode })` и переделка ARC-02; `arch-check.ts` пока на старой сверке; green `806f0c3`
 - [ ] Task: Ревью reviewer
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
