@@ -53,7 +53,7 @@
 
 - [x] Task: `kernel` — для каждого сценария сначала сверка с тестами, недостающие (red → green), затем сокращение комментария dmg-core@63e558a (`withEntityDefaults`, `Trace`; два теста ограничений — характеризация, red невозможен без поломки кода)
 - [x] Task: `domain` — то же dmg-core@6ea9a01 (8 блоков; сценарии уже покрыты тестами)
-- [ ] Task: `app` (`UnitOfWork.commit`, `CommandReplay`, `use-case-from-def`, `reaction`) — сценарии сбоев в именованные тесты, выжимка в concepts
+- [x] Task: `app` (`UnitOfWork.commit`, `CommandReplay`, `use-case-from-def`, `reaction`) — сценарии сбоев в именованные тесты, выжимка в concepts dmg-core@7021261 (5 новых тестов сбоев — характеризация; выжимка — `uc-path` шаг 2, `aggregate-lifecycle` шаг 6)
 - [ ] Task: `arch`, `cli` (комментарии `scaffold/app-sources.ts` — в шаблоны), `testing`
 - [ ] Task: `D-NN` из середины фраз — в шапки; `@see` на документы
 - [ ] Task: Ревью reviewer; вызов `documentarian`
