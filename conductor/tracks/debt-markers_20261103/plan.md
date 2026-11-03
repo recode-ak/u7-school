@@ -84,7 +84,7 @@
 
 - [x] Task: Пройти `rg -i 'временн|уход(ит|ят) с миграц|до миграции|после перехода'` (~73 строки в 53 файлах): для каждого — запись в `debt.md`; нет — черновик записи (Место, Признак) в отчёт на подтверждение; затем комментарий удалить, «почему» оставить
 - [x] Task: Завести подтверждённые записи; ревью reviewer
-- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
 Критерии приёмки: каждый оставшийся «временн…» — «почему» без признака долга или файл в Месте записи (таблица в `summary.md`); `bun run check` зелёный.
 
@@ -100,6 +100,6 @@
 - [x] Task: Документы о маркерах: `debt.md` (Правила), шапка `domain-check.ts`, `rules.md` (ARC-02), `.agents-core/roles/tech-lead.md` → `bun run agents:sync`
 - [x] Task: Заготовка `roadmap/u7-comments-docs.md`: удалена вместе с кандидатом `[?]` (решение Нурболата, 2026-11-03); часть про Def и генерируемую документацию — в `migration.md` §2, строка 10+ `c84296ac`
 - [x] Task: Сравнение с базовой линией в `summary.md`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
 
 Критерии приёмки: `rg 'маркер.*DEBT|// DEBT-<n>'` в `conductor/architecture` и `.agents-core` — только о `biome-ignore`; число тестов ≥ базовой линии; `bun run check` зелёный.
