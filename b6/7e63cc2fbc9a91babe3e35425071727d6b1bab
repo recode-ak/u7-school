@@ -1,0 +1,4 @@
+Задача: роль documentarian в .agents-core/roles/.
+Файлы: .agents-core/roles/documentarian.md (новая), .claude/agents/documentarian.md и .pi/agents/documentarian.md (agents:sync), conductor/architecture/agents.md (§1 таблица ролей), conductor/architecture/agent-roles.md (§4: пилот в треке dmg-docs), .agents-core/README.md.
+Причина: ФР-6 spec — аудит актуальности; пилот ведётся в summary.md трека.
+Проверки: check u7-school зелёный.
