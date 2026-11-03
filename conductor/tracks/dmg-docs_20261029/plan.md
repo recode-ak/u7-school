@@ -17,9 +17,9 @@
 
 ## Фаза 2: Проверки, роль и concepts
 
-- [ ] Task: Тест ссылок (`docs/`, `llms.txt`, JSDoc `@see`) в `bun run check`
-    - [ ] Тесты: битая ссылка, ссылка на несуществующий файл, ссылка против направления; red
-    - [ ] Реализация; green
+- [x] Task: Тест ссылок (`docs/`, `llms.txt`, JSDoc `@see`) в `bun run check` dmg-core@685b566 (расширен `docs-check`: направление по типам, якоря, `checkSee`; `guides/facade.md` — ссылки на исходники в `covers:`)
+    - [x] Тесты: битая ссылка, ссылка на несуществующий файл, ссылка против направления; red
+    - [x] Реализация; green
 - [ ] Task: Проверка `covers:` во front-matter concepts — `warn` в `check`, блок в гейте релиза (`RELEASING.md`)
     - [ ] Тесты: исходник менялся позже документа → warn; red
     - [ ] Реализация; green
