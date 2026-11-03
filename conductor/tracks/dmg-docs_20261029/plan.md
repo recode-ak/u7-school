@@ -56,6 +56,12 @@
 - [x] Task: `app` (`UnitOfWork.commit`, `CommandReplay`, `use-case-from-def`, `reaction`) — сценарии сбоев в именованные тесты, выжимка в concepts dmg-core@7021261 (5 новых тестов сбоев — характеризация; выжимка — `uc-path` шаг 2, `aggregate-lifecycle` шаг 6)
 - [ ] Task: `arch`, `cli` (комментарии `scaffold/app-sources.ts` — в шаблоны), `testing`
 - [ ] Task: `D-NN` из середины фраз — в шапки; `@see` на документы
+- [x] Task: `docs:covers` — коммиты, менявшие в `src/` только комментарии, не делают документ устаревшим (решение Нурболата 2026-11-03: шум после стрижки JSDoc) dmg-core@9202766 (`lastCodeChangeAt` по `git log -p`; `*.test.ts` тоже не считаются; 14 warn → 1, давний `layers.md`)
+    - [x] Тесты: правка только комментария → нет warn; правка кода → warn; red
+    - [x] Реализация; green
+- [~] Task: `warn` в `check` на JSDoc длиннее 6 строк без `@see` (обещан D-59, задачи не было; решение Нурболата 2026-11-03)
+    - [ ] Тесты: 7 строк без `@see` → warn; 7 строк со `@see` и 6 строк → нет; red
+    - [ ] Реализация; green
 - [ ] Task: Ревью reviewer; вызов `documentarian`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
