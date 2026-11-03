@@ -267,7 +267,7 @@ export class StudentAr extends Aggregate<StudentArMeta> {
   }
 
   /** Добавляет событие снятия с учёбы (student.abandoned). */
-  // biome-ignore lint/plugin: перенос без изменения кода (#private — DEBT-20)
+  // biome-ignore lint/plugin: перенос без изменения кода (#private — DEBT-10)
   #addAbandonedEvent(
     who: 'self' | 'mentor',
     cause: 'voluntary' | 'inactivity' | 'by_mentor',
@@ -333,7 +333,7 @@ export class StudentAr extends Aggregate<StudentArMeta> {
   }
 
   /** Добавляет событие завершения модуля (student.completed). */
-  // biome-ignore lint/plugin: перенос без изменения кода (#private — DEBT-20)
+  // biome-ignore lint/plugin: перенос без изменения кода (#private — DEBT-10)
   #addCompletedEvent(
     moduleId: string,
     outcome: 'advanced' | 'not_advanced',

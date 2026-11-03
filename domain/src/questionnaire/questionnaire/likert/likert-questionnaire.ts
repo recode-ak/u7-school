@@ -11,7 +11,7 @@ export const LikertAnswerSchema = v.object({
   answerCode: v.pipe(v.string(), v.nonEmpty('Код ответа не может быть пустым')),
   answeredAt: v.pipe(
     v.string(),
-    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-14
+    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-5
     v.isoDateTime('Некорректный формат даты ответа'),
   ),
 });

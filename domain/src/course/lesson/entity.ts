@@ -12,10 +12,10 @@ export const LessonSchema = v.object({
   ),
   additional: v.optional(v.string()),
   status: StatusSchema,
-  // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты, DOM-12; DEBT-9)
+  // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты, DOM-12; DEBT-5)
   createdAt: v.pipe(v.string(), v.isoDateTime('Некорректный формат даты')),
   updatedAt: v.optional(
-    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты, DOM-12; DEBT-9)
+    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты, DOM-12; DEBT-5)
     v.pipe(v.string(), v.isoDateTime('Некорректный формат даты')),
   ),
   estimatedMinutes: v.optional(

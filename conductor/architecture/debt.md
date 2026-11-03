@@ -54,195 +54,110 @@
 
 ## 1. Импорты `app` / `core` в домене
 
-### DEBT-1: импорты `@u7-scl/core` в domain/user
-- **Место:** `domain/src/user/**` — `facade.ts`, `module.ts`, `user/a-root.ts`, `user/events.ts`, `user/commands/{errors,notify-user-cmd,register-guest-cmd}.ts`
+### DEBT-1: импорты `@u7-scl/core` в домене
+- **Место:**
+  - `domain/src/user/**` — `facade.ts`, `module.ts`, `user/a-root.ts`, `user/events.ts`, `user/commands/{errors,notify-user-cmd,register-guest-cmd}.ts`; погашает перевод `user` на Def
+  - `domain/src/course/**` — `module.ts`, `*/a-root.ts`, `*/entity.ts`, `*/commands/errors.ts`, `content-path/commands/resolve-content-path-cmd.ts`; подпути `core/domain`, `core/shared`, `core/infra`; погашает перевод `course` на Def
+  - `domain/src/questionnaire/**` — `module.ts`, `questionnaire/{a-root,entity,events,questionnaire-factory}.ts`, `questionnaire/{likert,standard}/*-ar.ts`, `questionnaire/commands/errors.ts`; подпути `core/domain`, `core/shared`, `core/infra`; погашает перевод `questionnaire` на Def
+  - `domain/src/stream/**` — `stream-ds.ts`, `{stream,student}/{a-root,entity,events}.ts`, `{stream,student}/commands/*-cmd.ts`, тесты `stream-ds`, `student/a-root`; подпути `core/domain`, `core/shared`, `core/api`; погашает перевод `stream` на Def
 - **Признак:** `from '@u7-scl/core`
-- **Корень:** `domain/src/{user,wish,dossier,peer-review}/**` — до склейки (Ф4) — модули без дублей группы
-- **Причина:** `Aggregate`, `DomainEvent`, `NotifyKind`, `AccessDeniedError`, `isoNow` живут в `core`; механический перенос не меняет базовые классы.
-- **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
-- **Критерий снятия:** в `domain/src/user/**` нет маркеров `DEBT-1` и импортов `@u7-scl/core`
+- **Корень:** `domain/src/**`
+- **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `NotifyKind`, ошибки (`AccessDeniedError`, `NotFoundError`, `errConflict`, `throwError`), `isoNow`, `now`, `UcMeta`, `FileMetadataSchema`, `ApiModuleMeta`, `BaseJsonDb` живут в `core`; механический перенос не меняет базовые классы.
+- **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26); glob снимают по мере перевода
+- **Критерий снятия:** в `domain/src/**` нет импортов `@u7-scl/core`
 
-### DEBT-2: импорт `@u7-scl/app-legacy/domain` в domain/user/module.ts
-- **Место:** `domain/src/user/module.ts` — тип `U7ModuleResolver`
+### DEBT-2: импорты `@u7-scl/app-legacy` в домене
+- **Место:**
+  - `domain/src/user/module.ts` — тип `U7ModuleResolver`; погашает перевод `user` на Def
+  - `domain/src/course/module.ts` — тип `U7ModuleResolver`; погашает перевод `course` на Def
+  - `domain/src/questionnaire/module.ts` — тип `U7ModuleResolver`; погашает перевод `questionnaire` на Def
+  - `domain/src/stream/module.ts`, `domain/src/stream/stream/a-root.ts` — тип `U7ModuleResolver`, константа `U7_SCHOOL_ID`; погашает перевод `stream` на Def
 - **Признак:** `from '@u7-scl/app-legacy`
-- **Корень:** `domain/src/{user,wish,dossier,peer-review}/**` — до склейки (Ф4) — модули без дублей группы
-- **Причина:** тип резолвера модулей определён в `app`; создаёт циклическую зависимость пакетов `app` ↔ `domain` (только типы, в рантайме импорт стирается); сам цикл пакетов также снимается этим долгом.
-- **Погашает:** перевод `user` на Def
-- **Критерий снятия:** маркер `DEBT-2` удалён, `module.ts` не импортирует `@u7-scl/app-legacy`
+- **Корень:** `domain/src/**`
+- **Причина:** тип резолвера модулей и `U7_SCHOOL_ID` определены в `app`; создаёт циклическую зависимость пакетов `app` ↔ `domain` (только типы, в рантайме импорт стирается); сам цикл пакетов также снимается этим долгом.
+- **Погашает:** перевод модуля на Def; glob снимают по мере перевода
+- **Критерий снятия:** `domain/src/**` не импортирует `@u7-scl/app-legacy`
 
-### DEBT-5: `v.isoDateTime` в `UserSchema` (DOM-12)
-- **Место:** `domain/src/user/user/entity.ts` — `createdAt`, `updatedAt`; `biome-ignore lint/plugin`
+### DEBT-5: `v.isoDateTime` в схемах домена (DOM-12)
+- **Место:**
+  - `domain/src/user/user/entity.ts` — `createdAt`, `updatedAt`; `biome-ignore lint/plugin`; погашает перевод `user` на Def (`F.timestamp`)
+  - `domain/src/course/*/entity.ts` — `course`, `lesson`, `module`, `step`: `createdAt`, `updatedAt`; `biome-ignore lint/plugin`; погашает перевод `course` на Def (`F.timestamp`)
+  - `domain/src/questionnaire/questionnaire/entity.ts`, `domain/src/questionnaire/questionnaire/likert/likert-questionnaire.ts` — `biome-ignore lint/plugin`; погашает перевод `questionnaire` на Def (`F.timestamp`)
+  - `domain/src/stream/{stream,student}/entity.ts`, `domain/src/stream/date-test.test.ts` — 9 мест в схемах (`biome-ignore lint/plugin`) и тест формата даты; погашает перевод `stream` на Def (`F.timestamp`)
 - **Признак:** `v\.isoDateTime`
-- **Корень:** `domain/src/{user,wish,dossier,peer-review}/**` — до склейки (Ф4) — модули без дублей группы
-- **Причина:** схема перенесена из `app` без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена.
-- **Погашает:** перевод `user` на Def (`F.timestamp`)
-- **Критерий снятия:** маркеры `DEBT-5` и `biome-ignore` удалены, даты описаны через поля Def
+- **Корень:** `domain/src/**`
+- **Причина:** схемы перенесены из `app` без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена.
+- **Погашает:** перевод модуля на Def; glob снимают по мере перевода
+- **Критерий снятия:** `biome-ignore` с `DEBT-5` удалены, даты описаны через поля Def
 
-### DEBT-6: импорты `@u7-scl/core` в domain/course
-- **Место:** `domain/src/course/**` — `module.ts`, `*/a-root.ts`, `*/entity.ts`, `*/commands/errors.ts`, `content-path/commands/resolve-content-path-cmd.ts`; подпути `core/domain`, `core/shared`, `core/infra`
-- **Признак:** `from '@u7-scl/core`
-- **Корень:** `domain/src/course/**` — до склейки в DEBT-1 (Ф4)
-- **Причина:** `Aggregate`, `FileMetadataSchema`, `AccessDeniedError`, `NotFoundError`, `isoNow`, `ApiModuleMeta`, `BaseJsonDb` живут в `core`; механический перенос не меняет базовые классы.
-- **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
-- **Критерий снятия:** в `domain/src/course/**` нет маркеров `DEBT-6` и импортов `@u7-scl/core`
+### DEBT-6: импорты `@u7-scl/core` в domain/course — слит в DEBT-1
 
-### DEBT-7: импорт `@u7-scl/app-legacy/domain` в domain/course/module.ts
-- **Место:** `domain/src/course/module.ts` — тип `U7ModuleResolver`
-- **Признак:** `from '@u7-scl/app-legacy`
-- **Корень:** `domain/src/course/**` — до склейки в DEBT-2 (Ф4)
-- **Причина:** тип резолвера модулей определён в `app` (см. DEBT-2).
-- **Погашает:** перевод `course` на Def
-- **Критерий снятия:** маркер `DEBT-7` удалён, `module.ts` не импортирует `@u7-scl/app-legacy`
+### DEBT-7: импорт `@u7-scl/app-legacy/domain` в domain/course/module.ts — слит в DEBT-2
 
-### DEBT-11: импорты `@u7-scl/core` в domain/questionnaire
-- **Место:** `domain/src/questionnaire/**` — `module.ts`, `questionnaire/{a-root,entity,events,questionnaire-factory}.ts`, `questionnaire/{likert,standard}/*-ar.ts`, `questionnaire/commands/errors.ts`; подпути `core/domain`, `core/shared`, `core/infra`
-- **Признак:** `from '@u7-scl/core`
-- **Корень:** `domain/src/questionnaire/**` — до склейки в DEBT-1 (Ф4)
-- **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, ошибки, `isoNow`, `ApiModuleMeta`, `BaseJsonDb` живут в `core`; механический перенос не меняет базовые классы.
-- **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
-- **Критерий снятия:** в `domain/src/questionnaire/**` нет маркеров `DEBT-11` и импортов `@u7-scl/core`
+### DEBT-11: импорты `@u7-scl/core` в domain/questionnaire — слит в DEBT-1
 
-### DEBT-12: импорт `@u7-scl/app-legacy/domain` в domain/questionnaire/module.ts
-- **Место:** `domain/src/questionnaire/module.ts` — тип `U7ModuleResolver`
-- **Признак:** `from '@u7-scl/app-legacy`
-- **Корень:** `domain/src/questionnaire/**` — до склейки в DEBT-2 (Ф4)
-- **Причина:** тип резолвера модулей определён в `app` (см. DEBT-2).
-- **Погашает:** перевод `questionnaire` на Def
-- **Критерий снятия:** маркер `DEBT-12` удалён, `module.ts` не импортирует `@u7-scl/app-legacy`
+### DEBT-12: импорт `@u7-scl/app-legacy/domain` в domain/questionnaire/module.ts — слит в DEBT-2
 
-### DEBT-16: импорты `@u7-scl/core` в domain/stream
-- **Место:** `domain/src/stream/**` — `stream-ds.ts`, `{stream,student}/{a-root,entity,events}.ts`, `{stream,student}/commands/*-cmd.ts`, тесты `stream-ds`, `student/a-root`; подпути `core/domain`, `core/shared`, `core/api`
-- **Признак:** `from '@u7-scl/core`
-- **Корень:** `domain/src/stream/**` — до склейки в DEBT-1 (Ф4)
-- **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `errConflict`, `throwError`, `isoNow`, `now`, `UcMeta` живут в `core`; механический перенос не меняет базовые классы. `core/api` (`UcMeta`) — подпуть платформы, не входивший в долги user/course/questionnaire.
-- **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26)
-- **Критерий снятия:** в `domain/src/stream/**` нет маркеров `DEBT-16` и импортов `@u7-scl/core`
+### DEBT-16: импорты `@u7-scl/core` в domain/stream — слит в DEBT-1
 
-### DEBT-17: импорты `@u7-scl/app-legacy/domain` в domain/stream
-- **Место:** `domain/src/stream/module.ts`, `domain/src/stream/stream/a-root.ts` — тип `U7ModuleResolver`, константа `U7_SCHOOL_ID`
-- **Признак:** `from '@u7-scl/app-legacy`
-- **Корень:** `domain/src/stream/**` — до склейки в DEBT-2 (Ф4)
-- **Причина:** `U7ModuleResolver` и `U7_SCHOOL_ID` определены в `app` (см. DEBT-2).
-- **Погашает:** перевод `stream` на Def
-- **Критерий снятия:** маркер `DEBT-17` удалён, перенесённые файлы не импортируют `@u7-scl/app-legacy`
+### DEBT-17: импорты `@u7-scl/app-legacy/domain` в domain/stream — слит в DEBT-2
 
 ## 2. Реэкспорты старых путей
 
-### DEBT-3: barrel `modules/user/src/domain/index.ts`
-- **Место:** `modules/user/src/domain/index.ts`
+### DEBT-3: barrel'ы `modules/<m>/src/domain/index.ts`
+- **Место:**
+  - `modules/user/src/domain/index.ts` — потребители (≈96 файлов) импортируют `@u7-scl/user/domain`
+  - `modules/course/src/domain/index.ts` — потребители импортируют `@u7-scl/course/domain`
+  - `modules/questionnaire/src/domain/index.ts` — потребители импортируют `@u7-scl/questionnaire/domain`
+  - `modules/stream/src/domain/index.ts`, `modules/stream/src/api/errors.ts` — потребители импортируют `@u7-scl/stream/domain` и `../errors`; ошибки перенесены в `domain/stream/errors.ts`, т.к. домен импортировал их из api
+  - `modules/wish/src/domain/index.ts` — потребители импортируют `@u7-scl/wish/domain`
+  - `modules/peer-review/src/domain/index.ts` — потребители импортируют `@u7-scl/peer-review/domain`
+  - `modules/dossier/src/index.ts` — пакет `@u7-scl/dossier` публикует корень `.`; потребителей в коде нет, но публичный путь сохранён на время миграции
+  - `platform/app-legacy/src/domain/user.ts` — реэкспорт `User`, `UserSchema`, `Role`, `RoleSchema`, `UserArMeta`: их импортируют из `@u7-scl/app-legacy/domain` во всём репозитории; канонический владелец — `domain/user`
 - **Признак:** `export \* from '@u7-scl/domain/`
-- **Корень:** `modules/user/src/**` — до склейки (Ф4)
-- **Причина:** потребители (≈96 файлов) импортируют `@u7-scl/user/domain`; переписывать их не входит в трек.
+- **Корень:** `{modules,platform}/*/src/**`
+- **Причина:** переписывать потребителей старых путей не входит в трек; реэкспорты сохраняют пути на время миграции.
 - **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
-- **Критерий снятия:** потребители импортируют `@u7-scl/domain/user`; barrel удалён
+- **Критерий снятия:** потребители импортируют из `@u7-scl/domain/<модуль>`; barrel'ы и `platform/app-legacy/src/domain/user.ts` удалены
 
-### DEBT-8: barrel `modules/course/src/domain/index.ts`
-- **Место:** `modules/course/src/domain/index.ts`
-- **Признак:** `export \* from '@u7-scl/domain/`
-- **Корень:** `modules/course/src/**` — до склейки в DEBT-3 (Ф4)
-- **Причина:** потребители импортируют `@u7-scl/course/domain`; переписывать их не входит в трек.
-- **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
-- **Критерий снятия:** потребители импортируют `@u7-scl/domain/course`; barrel удалён
+### DEBT-8: barrel `modules/course/src/domain/index.ts` — слит в DEBT-3
 
-### DEBT-13: barrel `modules/questionnaire/src/domain/index.ts`
-- **Место:** `modules/questionnaire/src/domain/index.ts`
-- **Признак:** `export \* from '@u7-scl/domain/`
-- **Корень:** `modules/questionnaire/src/**` — до склейки в DEBT-3 (Ф4)
-- **Причина:** потребители импортируют `@u7-scl/questionnaire/domain`; переписывать их не входит в трек.
-- **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
-- **Критерий снятия:** потребители импортируют `@u7-scl/domain/questionnaire`; barrel удалён
+### DEBT-13: barrel `modules/questionnaire/src/domain/index.ts` — слит в DEBT-3
 
-### DEBT-18: barrel `modules/stream/src/domain/index.ts`
-- **Место:** `modules/stream/src/domain/index.ts`, `modules/stream/src/api/errors.ts` — ошибки перенесены в `domain/stream/errors.ts`, т.к. домен импортировал их из api
-- **Признак:** `export \* from '@u7-scl/domain/`
-- **Корень:** `modules/stream/src/**` — до склейки в DEBT-3 (Ф4)
-- **Причина:** потребители импортируют `@u7-scl/stream/domain` и `../errors`; переписывать их не входит в трек.
-- **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
-- **Критерий снятия:** потребители импортируют `@u7-scl/domain/stream`; barrel удалён
+### DEBT-18: barrel `modules/stream/src/domain/index.ts` — слит в DEBT-3
 
-### DEBT-23: barrel `modules/wish/src/domain/index.ts`
-- **Место:** `modules/wish/src/domain/index.ts`
-- **Признак:** `export \* from '@u7-scl/domain/`
-- **Корень:** `modules/wish/src/**` — до склейки в DEBT-3 (Ф4)
-- **Причина:** потребители импортируют `@u7-scl/wish/domain`; переписывать их не входит в трек.
-- **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
-- **Критерий снятия:** потребители импортируют `@u7-scl/domain/wish`; barrel удалён
+### DEBT-23: barrel `modules/wish/src/domain/index.ts` — слит в DEBT-3
 
-### DEBT-27: barrel `modules/peer-review/src/domain/index.ts`
-- **Место:** `modules/peer-review/src/domain/index.ts`
-- **Признак:** `export \* from '@u7-scl/domain/`
-- **Корень:** `modules/peer-review/src/**` — до склейки в DEBT-3 (Ф4)
-- **Причина:** потребители импортируют `@u7-scl/peer-review/domain`; переписывать их не входит в трек.
-- **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
-- **Критерий снятия:** потребители импортируют `@u7-scl/domain/peer-review`; barrel удалён
+### DEBT-27: barrel `modules/peer-review/src/domain/index.ts` — слит в DEBT-3
 
 ## 3. `User` в `app`
 
-### DEBT-4: реэкспорт `User`/`Role` в app-legacy
-- **Место:** `platform/app-legacy/src/domain/user.ts`
-- **Признак:** `export \* from '@u7-scl/domain/`
-- **Корень:** `platform/*/src/**` — до склейки в DEBT-3 (Ф4)
-- **Причина:** `User`, `UserSchema`, `Role`, `RoleSchema`, `UserArMeta` импортируются из `@u7-scl/app-legacy/domain` во всём репозитории; канонический владелец теперь `domain/user`.
-- **Погашает:** последний трек миграции
-- **Критерий снятия:** потребители импортируют из `@u7-scl/domain/user`; `platform/app-legacy/src/domain/user.ts` удалён
+### DEBT-4: реэкспорт `User`/`Role` в app-legacy — слит в DEBT-3
 
 ## 4. Прочее
 
-### DEBT-9: `v.isoDateTime` в схемах domain/course (DOM-12)
-- **Место:** `domain/src/course/*/entity.ts` — `course`, `lesson`, `module`, `step`: `createdAt`, `updatedAt`; `biome-ignore lint/plugin`
-- **Признак:** `v\.isoDateTime`
-- **Корень:** `domain/src/course/**` — до склейки в DEBT-5 (Ф4)
-- **Причина:** схемы перенесены без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что DEBT-5 для user).
-- **Погашает:** перевод `course` на Def (`F.timestamp`)
-- **Критерий снятия:** маркеры `DEBT-9` и `biome-ignore` удалены, даты описаны через поля Def
+### DEBT-9: `v.isoDateTime` в схемах domain/course (DOM-12) — слит в DEBT-5
 
-### DEBT-10: приватный метод `#filterPublished` (CODE-02)
-- **Место:** `domain/src/course/module/a-root.ts` — `#filterPublished`; `biome-ignore lint/plugin`
+### DEBT-10: приватные члены `#…` в Ar (CODE-02)
+- **Место:**
+  - `domain/src/course/module/a-root.ts` — `#filterPublished`; `biome-ignore lint/plugin`; погашает перевод `course` на Def (фильтрация — в Policy/DQS)
+  - `domain/src/questionnaire/questionnaire/a-root.ts` — 10 методов и поле `#engine`; `biome-ignore lint/plugin`; погашает перевод `questionnaire` на Def (логика — в Policy/DQS)
+  - `domain/src/stream/student/a-root.ts` — 2 метода; `biome-ignore lint/plugin`; погашает перевод `stream` на Def (логика — в Policy/DQS)
 - **Признак:** `^\s*(static\s+)?(async\s+)?(get\s+)?#\w+`
-- **Корень:** `domain/src/{course,user,wish,dossier,peer-review}/**/a-root.ts` — до склейки (Ф4) — модули без дублей группы
+- **Корень:** `domain/src/**/a-root.ts`
 - **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
-- **Погашает:** перевод `course` на Def (фильтрация — в Policy/DQS)
-- **Критерий снятия:** маркер `DEBT-10` и `biome-ignore` удалены, метод вынесен по правилам
+- **Погашает:** перевод модуля на Def; glob снимают по мере перевода
+- **Критерий снятия:** `biome-ignore` с `DEBT-10` удалены, методы вынесены по правилам
 
-### DEBT-14: `v.isoDateTime` в схемах domain/questionnaire (DOM-12)
-- **Место:** `domain/src/questionnaire/questionnaire/entity.ts`, `domain/src/questionnaire/questionnaire/likert/likert-questionnaire.ts` — `biome-ignore lint/plugin`
-- **Признак:** `v\.isoDateTime`
-- **Корень:** `domain/src/questionnaire/**` — до склейки в DEBT-5 (Ф4)
-- **Причина:** схемы перенесены без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что DEBT-5, DEBT-9).
-- **Погашает:** перевод `questionnaire` на Def (`F.timestamp`)
-- **Критерий снятия:** маркеры `DEBT-14` и `biome-ignore` удалены, даты описаны через поля Def
+### DEBT-14: `v.isoDateTime` в схемах domain/questionnaire (DOM-12) — слит в DEBT-5
 
-### DEBT-15: приватные члены `#…` в QuestionnaireAr (CODE-02)
-- **Место:** `domain/src/questionnaire/questionnaire/a-root.ts` — 10 методов и поле `#engine`; `biome-ignore lint/plugin`
-- **Признак:** `^\s*(static\s+)?(async\s+)?(get\s+)?#\w+`
-- **Корень:** `domain/src/questionnaire/**/a-root.ts` — до склейки в DEBT-10 (Ф4)
-- **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
-- **Погашает:** перевод `questionnaire` на Def (логика — в Policy/DQS)
-- **Критерий снятия:** маркеры `DEBT-15` и `biome-ignore` удалены, методы вынесены по правилам
+### DEBT-15: приватные члены `#…` в QuestionnaireAr (CODE-02) — слит в DEBT-10
 
-### DEBT-19: `v.isoDateTime` в схемах domain/stream (DOM-12)
-- **Место:** `domain/src/stream/{stream,student}/entity.ts`, `domain/src/stream/date-test.test.ts` — 9 мест в схемах (`biome-ignore lint/plugin`) и тест формата даты
-- **Признак:** `v\.isoDateTime`
-- **Корень:** `domain/src/stream/**` — до склейки в DEBT-5 (Ф4)
-- **Причина:** схемы перенесены без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена (то же, что DEBT-5, DEBT-9, DEBT-14).
-- **Погашает:** перевод `stream` на Def (`F.timestamp`)
-- **Критерий снятия:** маркеры `DEBT-19` и `biome-ignore` удалены, даты описаны через поля Def
+### DEBT-19: `v.isoDateTime` в схемах domain/stream (DOM-12) — слит в DEBT-5
 
-### DEBT-20: приватные методы `#…` в StudentAr (CODE-02)
-- **Место:** `domain/src/stream/student/a-root.ts` — 2 метода; `biome-ignore lint/plugin`
-- **Признак:** `^\s*(static\s+)?(async\s+)?(get\s+)?#\w+`
-- **Корень:** `domain/src/stream/**/a-root.ts` — до склейки в DEBT-10 (Ф4)
-- **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
-- **Погашает:** перевод `stream` на Def (логика — в Policy/DQS)
-- **Критерий снятия:** маркеры `DEBT-20` и `biome-ignore` удалены, методы вынесены по правилам
+### DEBT-20: приватные методы `#…` в StudentAr (CODE-02) — слит в DEBT-10
 
-### DEBT-30: barrel `modules/dossier/src/index.ts`
-- **Место:** `modules/dossier/src/index.ts`
-- **Признак:** `export \* from '@u7-scl/domain/`
-- **Корень:** `modules/dossier/src/**` — до склейки в DEBT-3 (Ф4)
-- **Причина:** пакет `@u7-scl/dossier` публикует корень `.`; потребителей в коде нет, но публичный путь сохранён на время миграции.
-- **Погашает:** последний трек миграции (критерий завершения §5 `migration.md`)
-- **Критерий снятия:** пакет `@u7-scl/dossier` удалён; код живёт в `@u7-scl/domain/dossier`
+### DEBT-30: barrel `modules/dossier/src/index.ts` — слит в DEBT-3
 
 ### DEBT-32: субъект адаптера анкет — entity `User`
 - **Место:** `modules/questionnaire/src/questionnaire.module.ts`, `modules/questionnaire/src/questionnaire/uc/start-questionnaire.uc.ts` — адаптер над legacy-фасадом

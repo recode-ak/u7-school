@@ -1,4 +1,4 @@
-// biome-ignore lint/style/noRestrictedImports: DEBT-17 — тип резолвера/константа пока в app
+// biome-ignore lint/style/noRestrictedImports: DEBT-2 — тип резолвера/константа пока в app
 import { U7_SCHOOL_ID } from '@u7-scl/app-legacy/domain';
 import { Aggregate } from '@u7-scl/core/domain';
 import { isoNow } from '@u7-scl/core/shared';

@@ -36,11 +36,11 @@ export const StepRecordSchema = v.object({
   ),
   issuedAt: v.pipe(
     v.string(),
-    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-19)
+    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-5)
     v.isoDateTime('Некорректный формат даты выдачи'),
   ),
   completedAt: v.optional(
-    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-19)
+    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-5)
     v.pipe(v.string(), v.isoDateTime('Некорректный формат даты завершения')),
   ),
 });
@@ -64,7 +64,7 @@ export const StudentNoticeRecordSchema = v.object({
   kind: StudentNoticeKindSchema,
   sentAt: v.pipe(
     v.string(),
-    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-19)
+    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-5)
     v.isoDateTime('Некорректный формат даты уведомления'),
   ),
 });
@@ -80,7 +80,7 @@ export const StudentSchema = v.object({
   userId: v.pipe(v.string(), v.uuid('Некорректный формат UUID пользователя')),
   enrolledAt: v.pipe(
     v.string(),
-    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-19)
+    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-5)
     v.isoDateTime('Некорректный формат даты зачисления'),
   ),
   status: v.picklist(
@@ -97,11 +97,11 @@ export const StudentSchema = v.object({
   notices: v.optional(v.array(StudentNoticeRecordSchema)),
   createdAt: v.pipe(
     v.string(),
-    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-19)
+    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-5)
     v.isoDateTime('Некорректный формат даты создания'),
   ),
   updatedAt: v.optional(
-    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-19)
+    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-5)
     v.pipe(v.string(), v.isoDateTime('Некорректный формат даты обновления')),
   ),
 });

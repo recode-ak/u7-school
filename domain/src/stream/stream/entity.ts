@@ -22,7 +22,7 @@ export const StreamSchema = v.object({
   moduleId: v.pipe(v.string(), v.uuid('Некорректный формат UUID модуля')),
   startDate: v.pipe(
     v.string(),
-    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-19)
+    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-5)
     v.isoDateTime('Некорректный формат даты начала'),
   ),
   status: StreamStatusSchema,
@@ -41,11 +41,11 @@ export const StreamSchema = v.object({
 
   createdAt: v.pipe(
     v.string(),
-    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-19)
+    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-5)
     v.isoDateTime('Некорректный формат даты создания'),
   ),
   updatedAt: v.optional(
-    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-19)
+    // biome-ignore lint/plugin: перенос без изменения схем (ISO-даты — DEBT-5)
     v.pipe(v.string(), v.isoDateTime('Некорректный формат даты обновления')),
   ),
 });

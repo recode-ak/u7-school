@@ -1,4 +1,4 @@
-// biome-ignore lint/style/noRestrictedImports: DEBT-7 — тип резолвера пока в app
+// biome-ignore lint/style/noRestrictedImports: DEBT-2 — тип резолвера пока в app
 import type { U7ModuleResolver } from '@u7-scl/app-legacy/domain';
 import type { ApiModuleMeta } from '@u7-scl/core/domain';
 import type { BaseJsonDb } from '@u7-scl/core/infra';
