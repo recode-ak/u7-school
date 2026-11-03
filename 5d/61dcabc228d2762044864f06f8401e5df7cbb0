@@ -1,0 +1,6 @@
+Задача: docs:impact <пути> и триггер в agent-gate.ts; covers: у guides.
+Коммиты: u7-school 5d61dcab; dmg-core@8d139ad.
+dmg-core: scripts/covers-check.ts (impactOf; шаблоны _* исключены), scripts/docs-impact.ts (CLI), package.json (docs:impact), scripts/covers-check.test.ts (impactOf: совпал/не совпал/node_modules и каталог; контракт — covers у всех guides), covers: во front-matter 13 гайдов и _template.md.
+u7-school: scripts/agent-gate.ts (docsWarning, packageRepo — dependencies и devDependencies; предупреждение в stdout, код выхода не меняется), scripts/agent-gate.test.ts (6 тестов), роль tech-lead + agents:sync.
+Причина: ФР-6 spec — механические подсказки актуальности.
+Проверки: check и e2e пакета зелёные; check u7-school зелёный (3531 pass); живая проверка гейта с временным файлом в dmg-core/src/app — предупреждение выдано.
