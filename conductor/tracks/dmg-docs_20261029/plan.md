@@ -54,7 +54,7 @@
 - [x] Task: `kernel` — для каждого сценария сначала сверка с тестами, недостающие (red → green), затем сокращение комментария dmg-core@63e558a (`withEntityDefaults`, `Trace`; два теста ограничений — характеризация, red невозможен без поломки кода)
 - [x] Task: `domain` — то же dmg-core@6ea9a01 (8 блоков; сценарии уже покрыты тестами)
 - [x] Task: `app` (`UnitOfWork.commit`, `CommandReplay`, `use-case-from-def`, `reaction`) — сценарии сбоев в именованные тесты, выжимка в concepts dmg-core@7021261 (5 новых тестов сбоев — характеризация; выжимка — `uc-path` шаг 2, `aggregate-lifecycle` шаг 6)
-- [ ] Task: `arch`, `cli` (комментарии `scaffold/app-sources.ts` — в шаблоны), `testing`
+- [x] Task: `arch`, `cli` (комментарии `scaffold/app-sources.ts` — в шаблоны), `gen`, `testing` (`gen` добавлен решением Нурболата 2026-11-03: 4 warn `docs:jsdoc` вне задач; «в шаблоны» — стрижка комментариев внутри шаблонов генерируемого кода) dmg-core@8d91255 (34 warn `docs:jsdoc` → 0; сценарии уже покрыты тестами, новых нет)
 - [ ] Task: `D-NN` из середины фраз — в шапки; `@see` на документы
 - [x] Task: `docs:covers` — коммиты, менявшие в `src/` только комментарии, не делают документ устаревшим (решение Нурболата 2026-11-03: шум после стрижки JSDoc) dmg-core@9202766 (`lastCodeChangeAt` по `git log -p`; `*.test.ts` тоже не считаются; 14 warn → 1, давний `layers.md`)
     - [x] Тесты: правка только комментария → нет warn; правка кода → warn; red
