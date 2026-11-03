@@ -1,0 +1,5 @@
+Задача: Тест ссылок (docs/, llms.txt, JSDoc @see) в bun run check.
+Коммит пакета: dmg-core@685b566.
+Изменено (dmg-core): scripts/docs-check.ts — направление ссылок по типам D-59 (concepts/guides/reference; документ → код только на образцы src/testing/example), проверка якорей по заголовкам (slug GitHub, без блоков кода), checkSee для путей @see в src/**/*.ts; scripts/docs-check.test.ts — 11 новых тестов и контракт @see, фикстура первого теста дополнена заголовком под якорь; docs/guides/facade.md — ссылки на исходники платформы перенесены в covers: front-matter.
+Причина: ФР-2 spec — ссылки проверяются тестом в check.
+Проверки: check и e2e пакета зелёные (1357 pass); check u7-school зелёный (3526 pass).
