@@ -1,0 +1,1 @@
+Задача Ф0: бриф slices/stream.md. Черновик tech-lead (Opus), проверен orchestrator'ом (4 утверждения по коду). С1–С4 приняты Нурболатом по рекомендациям (ключ не в выходе, DCS запуска, вход без mentorId/schoolId, мост StreamStudents DEBT-47 и get-stream в Ф1), Т1–Т13 — orchestrator; всё в TR-41. Пилот ролей: строка 1. Файлы: slices/stream.md, debt.md, summary.md.
