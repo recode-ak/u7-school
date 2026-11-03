@@ -10,9 +10,8 @@ import type { StreamModuleDeps } from '../../stream.module';
 type Input = ParsedInputOf<typeof GetStreamPresenceUcDef>;
 
 /**
- * Временная реализация `getStreamPresence` поверх legacy `getStream`:
- * поток найден — `exists: true`, иначе `false` (не ошибка). Уходит с
- * миграцией потоков.
+ * `getStreamPresence` поверх legacy `getStream`:
+ * поток найден — `exists: true`, иначе `false` (не ошибка).
  */
 export class GetStreamPresenceUc extends UseCaseFromDef<
   typeof GetStreamPresenceUcDef,

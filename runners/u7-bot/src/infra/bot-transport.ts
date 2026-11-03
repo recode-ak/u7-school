@@ -474,7 +474,7 @@ export class BotTransport implements BotUpdateHandler, ProactiveSender {
   }
 
   /**
-   * ВРЕМЕННЫЙ проактив с кнопками (ФР-6): удаляется с tasks-system.
+   * Проактив с кнопками (ФР-6) — до tasks-system.
    *
    * Кнопки штампуются seq текущей эпохи диалога получателя. Диалога нет →
    * создаётся «временно активный» диалог-якорь приложения (seq = 1):
@@ -482,7 +482,7 @@ export class BotTransport implements BotUpdateHandler, ProactiveSender {
    * switch-ит диалог в целевую стори (seq++), /start делает reopen —
    * обе ветки легальны. Единственное место, где транспорт пишет
    * `session.dialog` в обход enterDialog: у проактива нет сессии-аргумента,
-   * а сессиями владеет только транспорт (компромисс временного метода).
+   * а сессиями владеет только транспорт (компромисс метода).
    */
   async invite(
     telegramId: number,

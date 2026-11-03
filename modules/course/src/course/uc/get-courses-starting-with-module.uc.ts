@@ -10,10 +10,10 @@ import type { CourseModuleDeps } from '../../course.module';
 type Input = ParsedInputOf<typeof GetCoursesStartingWithModuleUcDef>;
 
 /**
- * Временная реализация `getCoursesStartingWithModule` поверх legacy:
+ * `getCoursesStartingWithModule` поверх legacy:
  * модуль первый в опубликованном курсе (`getModulePlace`) — тогда курсы,
  * включающие его, решает `whichCoursesIncludeModule`; иначе пусто без
- * вопроса о курсах. Уходит с миграцией курсов.
+ * вопроса о курсах.
  */
 export class GetCoursesStartingWithModuleUc extends UseCaseFromDef<
   typeof GetCoursesStartingWithModuleUcDef,

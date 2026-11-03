@@ -85,7 +85,7 @@ export abstract class BotController<
     await this.proactiveSender.notify(telegramId, payload);
   }
 
-  /** Временный проактив с кнопками (ФР-6) — делегирует родителю */
+  /** Проактив с кнопками (ФР-6) — делегирует родителю */
   async invite(
     telegramId: number,
     payload: { text: MdText; keyboard: KeyboardDescription },

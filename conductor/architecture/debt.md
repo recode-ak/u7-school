@@ -6,7 +6,7 @@
 
 ## Правила
 
-- ID — `DEBT-<n>` (отдельно от решений `D-NN` в [decisions.md](./decisions.md)); номера не переиспользуются, новый — следующий после максимального, в т.ч. погашенного и слитого (последний выданный — DEBT-43).
+- ID — `DEBT-<n>` (отдельно от решений `D-NN` в [decisions.md](./decisions.md)); номера не переиспользуются, новый — следующий после максимального, в т.ч. погашенного и слитого (последний выданный — DEBT-46).
 - Реестр — **allowlist**: код к записи привязывают её поля, а не маркеры. Поля открытой записи:
   - **Место** (обязательно) — где долг допущен: glob'ы в бэктиках подряд через запятую в начале строки поля или пунктами первого уровня под ним; после glob'ов — пояснение текстом. У каждого glob может быть своё «Погашает» — в пояснении пункта.
   - **Признак** (обязательно) — регулярка (JS, флаг `m`) в бэктиках, которой долг выражен в коде.
@@ -206,6 +206,34 @@
 - **Причина:** решение Нурболата (2026-10-29): сервер и хранение — UTC; всё, что вводит и видит пользователь, — в зоне проекта UTC+5 (`Asia/Oral`), одной на всех. Персональной зоны у пользователя пока нет.
 - **Погашает:** трек персональных зон — поле зоны в `user`, форматирование и разбор ввода по зоне пользователя (зона проекта — значение по умолчанию)
 - **Критерий снятия:** даты для пользователя форматируются и разбираются по его зоне из `user`; жёстко заданная UTC+5 остаётся только как значение по умолчанию; маркер удалён
+
+### DEBT-44: UC-адаптеры над legacy-фасадами
+- **Место:**
+  - `modules/user/src/user/uc/get-telegram-addresses.uc.ts` — адаптер над фасадом пользователей; погашает миграция модуля `user`
+  - `modules/course/src/course/uc/{get-course-enrollment,get-module-enrollment,get-courses-including-module,get-courses-starting-with-module,get-same-modules}.uc.ts` — адаптеры над фасадом курсов; погашает миграция модуля `course`
+  - `modules/stream/src/stream/uc/{get-stream-members,get-stream-presence}.uc.ts` — адаптеры над фасадом потоков; погашает миграция модуля `stream`
+  - `modules/questionnaire/src/questionnaire/uc/start-questionnaire.uc.ts` — адаптер над фасадом анкет; погашает миграция модуля `questionnaire`
+- **Признак:** `Адаптер .* над legacy`
+- **Корень:** `modules/*/src/**/uc/*.uc.ts`
+- **Причина:** TR-11 — модули не на DMG (D-37), внешний контракт закрыт UC-адаптером над legacy-фасадом; паттерн описан в [migration.md](./migration.md), раздел «UC-адаптер над legacy-фасадом».
+- **Погашает:** миграция соответствующего модуля (по glob'у)
+- **Критерий снятия:** адаптер заменён настоящим UC модуля, `external` снят, legacy-фасад удалён, заголовок адаптера удалён
+
+### DEBT-45: проактив с кнопками `invite` (ФР-6)
+- **Место:** `platform/core/src/ui/bot/{types,ui-app,bot-controller,bot-controller.test}.ts`, `runners/u7-bot/src/infra/{bot-transport,bot-transport.test}.ts`, `runners/u7-bot/src/controllers/{peer-review/stories/invite.story,courses/stories/wish-invite.story,learning/stories/{hub,hub.test},questionnaire/stories/{invite.story,fill.story,fill.story.warning.test,fill.story.continue-invite.test}}.ts`; погашает `tasks-system`
+- **Признак:** `ФР-6`
+- **Корень:** `{platform,runners}/*/src/**`
+- **Причина:** кнопочные приглашения идут каналом `invite` в обход `enterDialog`: у проактива нет сессии-аргумента, получателю без диалога транспорт создаёт диалог-якорь (seq = 1). Модуля `tasks-system` ещё нет.
+- **Погашает:** трек `tasks-system`
+- **Критерий снятия:** `ProactiveSender.invite`, диалог-якорь и подписки stories на канал `invite` удалены, приглашения идут через `tasks-system`, признака нет
+
+### DEBT-46: прямое чтение `manifest.json` менторских файлов в обход API
+- **Место:** `scripts/list-lessons.ts`, `scripts/distribute-mentor.ts`
+- **Признак:** `manifest\.json`
+- **Корень:** `scripts/**`
+- **Причина:** менторские шаги не добавлены в уроки через API (`mentorStepIds`), поэтому скрипты читают `mentor-files/manifest.json` с диска.
+- **Погашает:** интеграция менторских шагов в уроки через API
+- **Критерий снятия:** скрипты получают менторские файлы через `get-step` (`kind: 'file'`) по `mentorStepIds`, чтений `manifest.json` с диска нет
 
 ## 5. Инструменты проверки
 

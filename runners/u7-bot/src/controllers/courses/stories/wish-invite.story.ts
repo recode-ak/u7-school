@@ -36,8 +36,8 @@ type Mentor = Omit<User, 'telegramId'> & {
  * кнопочный проактив канала invite — с кнопкой «🗑️ Отменить желание»,
  * ведущей в существующие экраны отмены W05 / W05-M (course-catalog).
  *
- * ⚠️ Временное решение: кнопочные проактивы до переезда в tasks-system
- * (см. TODO.md) — сторя самоликвидируется после ввода модуля задач.
+ * Кнопочный проактив (ФР-6) — до переезда в tasks-system (см. TODO.md):
+ * сторя уходит после ввода модуля задач.
  */
 export class WishInviteStory extends U7BotUiStory {
   readonly name = 'wish-invite';

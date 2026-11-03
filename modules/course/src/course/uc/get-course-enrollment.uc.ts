@@ -8,10 +8,9 @@ import { UseCaseFromDef } from 'dmg-core/app';
 import type { CourseModuleDeps } from '../../course.module';
 
 /**
- * Временная реализация `getCourseEnrollment` поверх legacy-фасада курсов
- *: модуль курсов не мигрирован (D-37), решение «доступен ли курс и
+ * `getCourseEnrollment` поверх legacy-фасада курсов: модуль курсов не мигрирован (D-37), решение «доступен ли курс и
  * с какого модуля» принимает legacy-код. Ветвление по ответам legacy — часть
- * адаптера, не прикладной логики; уходит вместе с адаптером при миграции.
+ * адаптера, не прикладной логики.
  */
 export class GetCourseEnrollmentUc extends UseCaseFromDef<
   typeof GetCourseEnrollmentUcDef,

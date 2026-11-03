@@ -10,10 +10,9 @@ import type { UserModuleDeps } from '../../user.module';
 type Input = ParsedInputOf<typeof GetTelegramAddressesUcDef>;
 
 /**
- * Временная реализация `getTelegramAddresses` поверх legacy
+ * `getTelegramAddresses` поверх legacy
  * `getUserByUuid` (батча в legacy нет — по одному): пользователь без
- * профиля или без `telegramId` в ответ не попадает. Уходит с миграцией
- * пользователей.
+ * профиля или без `telegramId` в ответ не попадает.
  */
 export class GetTelegramAddressesUc extends UseCaseFromDef<
   typeof GetTelegramAddressesUcDef,

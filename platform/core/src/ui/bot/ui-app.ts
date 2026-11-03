@@ -190,7 +190,7 @@ export abstract class BotUiApp<
     await this.transport.notify(telegramId, payload);
   }
 
-  /** Временный проактив с кнопками (ФР-6) — делегирует в transport */
+  /** Проактив с кнопками (ФР-6) — делегирует в transport */
   async invite(
     telegramId: number,
     payload: { text: MdText; keyboard: KeyboardDescription },

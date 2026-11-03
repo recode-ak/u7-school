@@ -41,7 +41,7 @@ export class HubStory extends U7BotUiStory {
 
   /**
    * student.completed — кнопочные ветки 7a/7b через канал invite
-   * (ФР-6, временное исключение И3 до tasks-system): кнопка ведёт в
+   * (ФР-6, исключение И3 до tasks-system): кнопка ведёт в
    * CourseCatalogStory (wish → UC create-module-wish). Безкнопочные
    * 7c/7d («Курс завершён», место неизвестно) доставляет механизм
    * userFacade.notify из UC complete-student.

@@ -17,7 +17,7 @@
  *   bun run scripts/list-lessons.ts 2:1:3       # то же
  *   bun run scripts/list-lessons.ts m2-p1-l3    # то же, явный формат
  *
- * ## Временные отступления
+ * ## Ограничения
  * - **Подсчёт менторских файлов**: функция `countMentorFilesDirect()`
  *   читает `manifest.json` напрямую с диска, в обход API.
  *   Причина: менторские файлы ещё не интегрированы в use-case'ы
@@ -62,13 +62,11 @@ interface ManifestFile {
 // Автоопределение имён папок модулей: m1-syntax, m2-algorithm, ...
 const moduleDirs = readdirSync(DATA_DIR).sort();
 
-// ─── ВРЕМЕННО: прямой подсчёт менторских файлов ───
-// TODO: заменить на app.execute('get-step', { uuid }) для mentorStepIds,
-//       когда менторские шаги будут добавлены в уроки через API.
+// ─── Прямой подсчёт менторских файлов ───
 
 /**
  * Считает количество менторских файлов для урока, читая manifest.json
- * напрямую с диска. Временное решение — будет заменено на API-вызов.
+ * напрямую с диска. В обход API: менторские шаги в уроки через API не добавлены.
  */
 function countMentorFilesDirect(moduleDir: string, projectDir: string): number {
   const manifestPath = `${DATA_DIR}/${moduleDir}/${projectDir}/mentor-files/manifest.json`;

@@ -11,7 +11,7 @@ import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
 import type { QuestionnaireModuleDeps } from '../../questionnaire.module';
 
 /**
- * Временная реализация `startQuestionnaire`: анкету создаёт,
+ * `startQuestionnaire`: анкету создаёт,
  * сохраняет и публикует `questionnaire:start` legacy-модуль (D-37);
  * `owner` контракта — legacy `ownerInfo`. Через UoW адаптер ничего не
  * пишет: `emits` Def описывает событие legacy-кода.

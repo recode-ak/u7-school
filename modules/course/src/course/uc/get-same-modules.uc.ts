@@ -10,9 +10,8 @@ import type { CourseModuleDeps } from '../../course.module';
 type Input = ParsedInputOf<typeof GetSameModulesUcDef>;
 
 /**
- * Временная реализация `getSameModules` поверх legacy `whichModulesAreSame`
- *: историческую идентичность модулей решает legacy-код; ответ
- * передаётся как есть. Уходит с миграцией курсов.
+ * `getSameModules` поверх legacy `whichModulesAreSame`: историческую идентичность модулей решает legacy-код; ответ
+ * передаётся как есть.
  */
 export class GetSameModulesUc extends UseCaseFromDef<
   typeof GetSameModulesUcDef,

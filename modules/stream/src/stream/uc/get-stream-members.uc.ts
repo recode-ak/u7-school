@@ -10,9 +10,8 @@ import type { StreamModuleDeps } from '../../stream.module';
 type Input = ParsedInputOf<typeof GetStreamMembersUcDef>;
 
 /**
- * Временная реализация `getStreamMembers` поверх legacy `getMembers`: состав
- * передаётся как есть, потока нет — `ok(undefined)` (штатный исход). Уходит
- * с миграцией потоков.
+ * `getStreamMembers` поверх legacy `getMembers`: состав
+ * передаётся как есть, потока нет — `ok(undefined)` (штатный исход).
  */
 export class GetStreamMembersUc extends UseCaseFromDef<
   typeof GetStreamMembersUcDef,

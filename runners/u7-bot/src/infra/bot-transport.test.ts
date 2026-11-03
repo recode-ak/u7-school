@@ -1346,9 +1346,9 @@ describe('BotTransport — диалоговая реплика notify (ФР-5)',
   });
 });
 
-// ── Временный проактив с кнопками (ФР-6, до tasks-system) ──
+// ── Проактив с кнопками (ФР-6, до tasks-system) ──
 
-describe('BotTransport — invite (временный, ФР-6)', () => {
+describe('BotTransport — invite (ФР-6)', () => {
   const inviteKeyboard: KeyboardDescription = {
     rows: [[{ text: '▶️ Начать', code: 'invite:start:q1' }]],
     isMultiple: false,

@@ -10,10 +10,9 @@ import type { CourseModuleDeps } from '../../course.module';
 type Input = ParsedInputOf<typeof GetCoursesIncludingModuleUcDef>;
 
 /**
- * Временная реализация `getCoursesIncludingModule` поверх legacy
+ * `getCoursesIncludingModule` поверх legacy
  * `whichCoursesIncludeModule`: принадлежность модуля курсам, в т.ч.
- * историческую, решает legacy-код; ответ передаётся как есть. Уходит с
- * миграцией курсов.
+ * историческую, решает legacy-код; ответ передаётся как есть.
  */
 export class GetCoursesIncludingModuleUc extends UseCaseFromDef<
   typeof GetCoursesIncludingModuleUcDef,

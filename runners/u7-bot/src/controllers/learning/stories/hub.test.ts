@@ -330,7 +330,7 @@ describe('HubStory — подписка на student.completed', () => {
 
     await getSub(story).handle(makeCompletedEvent('advanced'));
 
-    // 7a: кнопочный проактив — invite (временное исключение И3 до tasks-system)
+    // 7a: кнопочный проактив — invite (исключение И3 до tasks-system)
     expect(sender.notify).not.toHaveBeenCalled();
     expect(sender.invite).toHaveBeenCalledTimes(1);
     const [tgId, payload] = (sender.invite as ReturnType<typeof mock>).mock

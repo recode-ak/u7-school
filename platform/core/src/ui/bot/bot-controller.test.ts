@@ -299,7 +299,7 @@ describe('BotController — handleCommand: pipe стори', () => {
     expect(order).toEqual(['one', 'two', 'three']);
   });
 
-  test('invite (временный ФР-6) делегирует родителю-отправителю', async () => {
+  test('invite (ФР-6) делегирует родителю-отправителю', async () => {
     const invited: Array<[number, string]> = [];
     const ctrl = makeCtrl([]);
     ctrl.init(
