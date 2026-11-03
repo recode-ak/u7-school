@@ -20,7 +20,7 @@
 - [x] Task: Реализация: `DebtRegistry.checkTempMarkers`, вызов из `check`, тесты green; обновить шапку `domain-check.ts` [84433eed]
 - [x] Task: `bun run arch:check` на реальном коде — 0 новых нарушений, сравнить с базовой линией
 - [x] Task: Ревью diff по `rules.md` (роль `reviewer`)
-- [ ] Task: Conductor - User Manual Verification 'Проверка маркеров в DebtRegistry' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Проверка маркеров в DebtRegistry' [checkpoint: 84433ee] (Protocol in workflow.md)
 
 *Приёмка:* тестов больше базового числа, red зафиксирован; `bun run check` и `arch:check` зелёные; `scripts/arch-check.ts` не менялся; новых исключений в `readPackageSources` и `checkDebt` нет.
 
