@@ -62,7 +62,7 @@
 - [x] Task: `warn` в `check` на JSDoc длиннее 6 строк без `@see` (обещан D-59, задачи не было; решение Нурболата 2026-11-03) dmg-core@9bcebfa (`docs:jsdoc`; на коммите — 34 warn вне kernel/domain/app)
     - [x] Тесты: 7 строк без `@see` → warn; 7 строк со `@see` и 6 строк → нет; red
     - [x] Реализация; green
-- [ ] Task: Ревью reviewer; вызов `documentarian`
+- [x] Task: Ревью reviewer; вызов `documentarian` dmg-core@d20edbc (reviewer: 9 minor, 2 question; documentarian: 4 пункта — приняты все; отчёты — `summary.md`, «Пилот ролей»)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 ## Фаза 5: Финал
