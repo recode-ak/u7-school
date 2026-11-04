@@ -34,7 +34,7 @@
 
 **Критерии приёмки:** в `.agents-core/roles`, `.claude/agents`, `.pi/agents` по 8 ролей (6 `dmg-*`, `migrator`, `documentarian`); `dmg:check` и `agents:check` зелёные; `git diff dmg-core.json` пуст; grep старых имён по `scripts`, `.claude/settings.json`, `.agents-core`, `.claude/agents`, `.pi/agents` пуст.
 
-## Фаза 3: Пилотный срез на учебном модуле
+## Фаза 3: Пилотный срез на учебном модуле [checkpoint: 17a1f78b]
 
 - [x] Task: Подготовка
     - [x] Два временных worktree пакета (`claude`, `pi`); в каждом `dmg-core.json` с целями `.claude/agents` / `.pi/agents` и `sync`
