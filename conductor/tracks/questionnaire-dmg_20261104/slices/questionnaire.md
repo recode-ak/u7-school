@@ -636,7 +636,7 @@ DOM-01…06, DOM-10…12, DOM-14, DOM-15, DOM-17; API-01…07; MAN-01…06, MAN-
 - `U7App`: `createQuestionnaireModule` на `QuestionnaireJsonRepo(<dbDir>/questionnaires/questionnaires.json)`; удалены `QuestionnaireApiModule`, `QuestionnaireInProcFacade`, legacy-репозиторий, резолвер, `questionnaireLegacyInbound`, поле `questionnaireFacade`; `U7LegacyFacades` без `questionnaire`; метатип Т15 — из корня `@u7-scl/questionnaire` (ARC-07).
 - Stories (Т16): только типовые импорты в `render`, `fill.story`, `invite.story`; временный `stories/legacy-events.ts`.
 - `u7-app.test.ts`: `questionnaireFacade` → `getModule('questionnaire')` нет; сценарий «complete/abandon → ER wish» — через `dispatch` Def-UC вместо фабрики и ручной публикации.
-- Эскалации (решены orchestrator): долг в `debt.md` (DEBT-1 сужен, 2/5/10/44 — глобы сняты, DEBT-32 закрыт); `TR-46` в комментарии теста событий убран; ссылка на `packages/` в брифе заменена.
+- Эскалации (решены orchestrator): долг в `debt.md` (DEBT-1 сужен, 2/5/10/44 — глобы сняты, DEBT-32 закрыт); `TR-46` в комментарии теста событий убран; ссылка на старую раскладку пакетов в брифе заменена.
 - Итог: `bun run check` — 4134 pass, 12 fail (красная зона TR-49), `tsc`, `lint`, `arch:check` зелёные; `data/` чист.
 
 ## Отчёт `dmg-data-keeper` (Ф1, шаг 7; flash, $0.06)
@@ -654,3 +654,25 @@ DOM-01…06, DOM-10…12, DOM-14, DOM-15, DOM-17; API-01…07; MAN-01…06, MAN-
 ### Открытые вопросы к контрольной точке Ф1 (Нурболату, не блокируют)
 
 - **Д1. Живые данные анкет.** Перед выкаткой — read-only сверка `data/questionnaires/questionnaires.json` новой схемой (команда — в отчёте `dmg-data-keeper`, вывод `.cache/pi-runs/F1-data-keeper.*`), бэкап и правило «откат — только с восстановлением файла». Делать сейчас или на ревизии перед релизом?
+
+## Отчёт `dmg-reviewer` (Ф1; Opus)
+
+Вердикт: Ф1 принимается, `error` нет.
+
+| ID | файл:строка | суть | severity | решение orchestrator |
+|---|---|---|---|---|
+| DOM-13 / ERR-01 | `questionnaire.ar.ts:319-321` | `in_progress` без/с чужим `currentQuestionCode` маскировался под `NOT_IN_PROGRESS`, а `screen()` на той же записи бросал | warn | исправлено: `throw` + тест |
+| MAN-01 | `uc/{start-by-invite,decline-invite,handle-action,get-current}.uc.ts` | `label` расходились с Р12 | warn | исправлено: прежние тексты |
+| критерий брифа | `questionnaire-uc.fixture.ts` и тесты UC | тестовый caller `owner` ломал grep-критерий | warn | исправлено: `respondent`; остаток grep — тесты, что `owner` не принимается |
+| CODE-04 | `questionnaire.ar.ts`, `questionnaire-engine.ts`, `entity.ts`, `commands/errors.ts` | ID решений брифа в комментариях, неверный `biome-ignore` | warn | исправлено |
+| API-01 | `abandon.uc.ts:46-48` | условная регистрация — несогласованно с прочими UC, безвредно | info | принято, TR-49 (3) |
+| API-01 | `sweep-abandoned-questionnaires.job.ts:38` | `needsSweep` дублирует ветвление `sweepIdle` | info | принято (решение остаётся в Ar), на ревизии |
+| API-06 | `questionnaire.ar.ts:41-53` | пороги в файле Ar, реэкспорт из Def Job | info | принято; порядок импорта исправлен |
+| мёртвый код | `questionnaire.ar.ts:175-178, 272-276` | `?? questions[0] as Question` (Р7) | info | исправлено: `firstQuestion` с `throw` |
+| CODE-03 | `questionnaire.ar.ts:491-496` | ручной дубль `refOf` | info | исправлено |
+| DOM-03 | `questionnaire.ar.ts:192,217,225` | `new QuestionnaireAr` в статических фабриках | info | допустимо |
+| ERR-01 | `questionnaire.ar.ts:157-165` | `throw` на restore `abandoned` без причины | info | допустимо |
+
+Кандидат в машинную проверку (ratchet): CODE-04 — ID брифа (`Т\d+`, `Р\d+`) в комментариях кода.
+
+Правки по ревью — migrator (flash, 1 круг, $0.06): `bun test domain/src/questionnaire modules/questionnaire` — 326 pass; `tsc`, `biome`, `arch:check` зелёные.
