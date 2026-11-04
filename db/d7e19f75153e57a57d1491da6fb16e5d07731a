@@ -1,0 +1,4 @@
+Верификация Фазы 4 (stream-dmg_20261103)
+Автотесты: CI=true bun test — 3947 pass, 0 fail; bun run test:bot — 1039 pass, 0 fail; dmg-core bun test — 1397 pass, e2e ok; bun run check и arch:check — зелёные.
+Ручная проверка: diff 10a5415d, b9de2b0f (только документы и модель tech-lead); summary.md (гейт, итог пилота), debt.md (DEBT-48), migration.md §6.
+Подтверждение: Нурболат — «да» (2026-11-04).
