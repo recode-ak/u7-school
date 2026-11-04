@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   changedPaths,
+  dataKeeperHint,
   docsWarning,
   exec,
   type GatePlan,
@@ -317,6 +318,36 @@ describe('packageRepo', () => {
     } finally {
       await rm(root, { recursive: true, force: true });
     }
+  });
+});
+
+describe('dataKeeperHint', () => {
+  test.each([
+    'domain/src/stream/stream.state.ts',
+    'domain/src/wish/state.ts',
+    'modules/wish/src/wish.repo.ts',
+    'modules/wish/src/wish.json-repo.ts',
+    'modules/user/src/user-json-repo.ts',
+    'domain/src/stream/content-snapshot.ts',
+  ])('%s — подсказка про dmg-data-keeper', (path) => {
+    expect(dataKeeperHint([path])).toContain('dmg-data-keeper');
+  });
+
+  test.each([
+    'domain/src/stream/stream.state.test.ts',
+    'modules/wish/src/wish.json-repo.test.ts',
+    'conductor/architecture/state.md',
+    'modules/stream/src/get-module-snapshot.uc.ts',
+    'modules/stream/src/create-stream.uc.ts',
+  ])('%s — без подсказки', (path) => {
+    expect(dataKeeperHint([path])).toBeUndefined();
+  });
+
+  test('без изменений — без подсказки; в тексте перечислены пути', () => {
+    expect(dataKeeperHint([])).toBeUndefined();
+    expect(
+      dataKeeperHint(['a/x.state.ts', 'b/y.repo.ts', 'c/z.uc.ts']),
+    ).toMatch(/a\/x\.state\.ts.*b\/y\.repo\.ts/);
   });
 });
 

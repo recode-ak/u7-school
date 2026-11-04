@@ -6,7 +6,8 @@
  * `bun run check`. Только `.md` → пропуск. Красный гейт — exit 2 и хвост
  * вывода в stderr (так Claude Code возвращает ошибку субагенту). Правка
  * исходников платформы в репо `dmg-core` без `docs/` — предупреждение в stdout
- * (D-59 пакета).
+ * (D-59 пакета). Правка `state`, репозиториев и снимков — подсказка про
+ * `dmg-data-keeper`.
  *
  * Запуск: `bun run scripts/agent-gate.ts`.
  */
@@ -230,6 +231,22 @@ export function docsWarning(
   return `agent-gate: предупреждение — dmg-core: правка src/{app,kernel,domain} без правки docs/; ${hint} (D-59)`;
 }
 
+/** Файлы формата хранения: `state`, репозитории, снимки контента (не тесты) */
+const DATA_FILE_RE =
+  /(?:(?:^|[/.-])(?:state|repo)(?:\.fake)?\.ts|-repo\.ts|content-snapshot[^/]*\.ts)$/;
+
+/**
+ * Подсказка: diff затрагивает формат хранимых записей — стоит вызвать
+ * `dmg-data-keeper`. Только подсказка, код выхода гейта не меняет.
+ */
+export function dataKeeperHint(paths: string[]): string | undefined {
+  const files = paths.filter(
+    (p) => DATA_FILE_RE.test(p) && !p.endsWith('.test.ts'),
+  );
+  if (files.length === 0) return undefined;
+  return `agent-gate: подсказка — затронут формат хранения (${files.join(', ')}); вызови dmg-data-keeper`;
+}
+
 /** Репо `dmg-core`, если корневой package.json подключает его как `file:` */
 export async function packageRepo(root: string): Promise<string | undefined> {
   const pkg = await readJson(join(root, 'package.json'));
@@ -279,7 +296,8 @@ export function changedPaths(root: string): string[] {
 
 if (import.meta.main) {
   const root = process.cwd();
-  const plan = planGate(changedPaths(root), await loadWorkspaces(root));
+  const paths = changedPaths(root);
+  const plan = planGate(paths, await loadWorkspaces(root));
   const result = await runGate(plan, (dir) =>
     exec(['bun', 'run', 'check'], join(root, dir)),
   );
@@ -287,5 +305,7 @@ if (import.meta.main) {
   if (result.stderr) console.error(result.stderr);
   const warning = await packageDocsWarning(root);
   if (warning) console.log(warning);
+  const hint = dataKeeperHint(paths);
+  if (hint) console.log(hint);
   process.exit(result.code);
 }
