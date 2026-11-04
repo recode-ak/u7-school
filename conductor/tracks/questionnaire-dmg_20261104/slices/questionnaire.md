@@ -2,7 +2,7 @@
 
 Черновик — `dmg-tech-lead`, Ф0; проверка — orchestrator. Читать вместе с `../spec.md`, `../plan.md` (Ф1–Ф2), TR-46, TR-47, D-63, эталоном `wish` и брифами `conductor/archive/stream-dmg_20261103/slices/{stream,student}.md`.
 
-Код анкеты в `v0.2.6` (`../u7-school-v0.2.6/packages/questionnaire`) совпадает с HEAD с точностью до импортов и `biome-ignore`. Проверено `diff` для `a-root.ts` и `sweep-abandoned-job.ts`. Характеризация строится на текущих тестах как ожиданиях нового кода.
+Код анкеты в `v0.2.6` (worktree `../u7-school-v0.2.6`, пакет анкет) совпадает с HEAD с точностью до импортов и `biome-ignore`. Проверено `diff` для `a-root.ts` и `sweep-abandoned-job.ts`. Характеризация строится на текущих тестах как ожиданиях нового кода.
 
 > **Статус:** принят orchestrator'ом (2026-11-04). С1, С2, Т1 решены Нурболатом по рекомендациям, Т2–Т20 — по рекомендациям; всё — TR-48.
 
@@ -629,3 +629,12 @@ DOM-01…06, DOM-10…12, DOM-14, DOM-15, DOM-17; API-01…07; MAN-01…06, MAN-
 - Не тронуто (шаги 4–5 / Ф3): `package.json` (`exports["./api"]`, `#api-legacy/*`), `tsconfig.json` (путь `@u7-scl/questionnaire/api`).
 - Круг 2 — правка red-тестов по эскалации (дефекты тестов): отказ доступа проверяется по `payload.denyMessage` (платформа отдаёт общий `label`, образец `stream`); smoke модуля — свой `requestId` на команду (D-56); аннотации типов хелперов `caller: Caller<QuestionnaireUser>`, `input: unknown`.
 - Итог: `bun test modules/questionnaire domain/src/questionnaire` — 324 pass; `tsc` модуля — 0; `biome` чисто; `data/` чист. `arch:check` красный: DEBT-32/44 погашены, DEBT-2/5/10 — сузить в `debt.md` (orchestrator, шаг 6), ARC-07/08 в `platform`/`runners` — шаги 4–5.
+
+## Отчёт `migrator`, клиенты `wish` и сборка (Ф1, шаги 4–5; flash, 1 круг, $0.10)
+
+- `wish`: `create-course-wish.uc.ts` — `ownerInfo` во входе `StartQuestionnaireUcDef`; ER `confirm-wish`/`abandon-wish` берут `ownerInfo` из payload Def-событий (`kind`, обязательный `reason` — схема).
+- `U7App`: `createQuestionnaireModule` на `QuestionnaireJsonRepo(<dbDir>/questionnaires/questionnaires.json)`; удалены `QuestionnaireApiModule`, `QuestionnaireInProcFacade`, legacy-репозиторий, резолвер, `questionnaireLegacyInbound`, поле `questionnaireFacade`; `U7LegacyFacades` без `questionnaire`; метатип Т15 — из корня `@u7-scl/questionnaire` (ARC-07).
+- Stories (Т16): только типовые импорты в `render`, `fill.story`, `invite.story`; временный `stories/legacy-events.ts`.
+- `u7-app.test.ts`: `questionnaireFacade` → `getModule('questionnaire')` нет; сценарий «complete/abandon → ER wish» — через `dispatch` Def-UC вместо фабрики и ручной публикации.
+- Эскалации (решены orchestrator): долг в `debt.md` (DEBT-1 сужен, 2/5/10/44 — глобы сняты, DEBT-32 закрыт); `TR-46` в комментарии теста событий убран; ссылка на `packages/` в брифе заменена.
+- Итог: `bun run check` — 4134 pass, 12 fail (красная зона TR-49), `tsc`, `lint`, `arch:check` зелёные; `data/` чист.
