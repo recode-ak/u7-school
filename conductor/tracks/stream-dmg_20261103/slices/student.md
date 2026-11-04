@@ -429,3 +429,24 @@ DOM-01…06, DOM-10…12, DOM-14…17; API-01…07; MAN-01…06, MAN-08, MAN-10�
 - Тесты UC и Job — на фейках, без `mkdtemp`. Репозиторий: legacy-запись (ISO → число, `version = 0`, `updatedAt = createdAt`), round-trip, устаревшая версия, битая запись → исключение, файл цел.
 - e2e на каждое событие, получаемое ботом, есть и зелёные; оба теста TR-42 зелёные; сценарии старых тестов студента, Job и `stream-ds.test.ts` перенесены (список — отчёт test-designer).
 - `bun run check` полностью зелёный; `test:bot` — не меньше 996; записи TR-42 в `debt.md` нет; `git status data/` чист.
+
+## Отчёт ревью Ф2 и остаток
+
+Срез выполнен в A/B-тесте исполнителей; в `main` влита ветка A (Claude, `63a30d3`) — [research/deepseek-ab-2026-11.md](../../../research/deepseek-ab-2026-11.md). Слепое ревью (Opus): 8/10, 1 error, 7 warn, 7 info; `check` зелёный, `test:bot` 1038. `data-keeper`: блокеров нет; бэкап перед выкаткой обязателен (первая запись переводит весь `students.json` в числа, откат — только из бэкапа), `update-stream-snapshot.ts` — только при остановленном боте (Ф3).
+
+Решения orchestrator'а (тактика → TR-44). Исполнители — по [deepseek.md](../../../architecture/deepseek.md) §2.
+
+| # | Замечание | Решение | Кто |
+|---|---|---|---|
+| 1 | **error** `STUDENT_ROLE_MISMATCH` не снят (`runners/u7-bot/tests/worlds/invariants.ts:50`, `world-check.test.ts:132`) | снять инвариант и его тест (критерий приёмки) | migrator, flash |
+| 2 | `runJob` в `platform/core/src/api/app/api-app.ts:124` и `tests/helpers/test-app.ts:35` без эскалации | принять (нужен e2e Job), TR-44 | — |
+| 3 | скрипты `*snapshot*.ts` на barrel `@u7-scl/stream/domain` | принять до Ф3 (решение orchestrator'а), TR-44 | — |
+| 4 | нет e2e 7b (`not_advanced` → «Пройти модуль снова») через настоящий UC (`student-dmg.e2e.test.ts:113`) | добавить | test-designer, Sonnet |
+| 5 | ветка `PREREQUISITE_NOT_PASSED` (`view-stream.story.ts:918-923`) без теста story; payload через `as` | тест story + типизированный payload из `StudentErrors` | test-designer, Sonnet → migrator, flash |
+| 6 | DCS/DQS объектными литералами (`stream-launch.dcs.ts:26`, `step-completion.dcs.ts:96`, `stream-members.dqs.ts:182`, `student-progress.dqs.ts:84`) | классы по образцу `wish-fulfillment.dcs.ts` | migrator, flash |
+| 7 | `getStudentProgress.progress.card` всегда `on_track`/0 ч; monitor склеивает `roster` сам (`monitor.ts:369-383`) | отставание считать в UC (`StreamMembersDqs`), склейку из UI убрать | migrator, flash |
+| 8 | Т14: `scripts/call-uc.ts:68` обещает legacy `stream` | поправить справку | migrator, flash |
+| 9 | CODE-04: JSDoc > 6 строк без `@see` (`get-stream-members.uc.ts:6`, `hub.ts:33`, `inactivity.story.ts:50`), ссылки «Т8/С3/Т7» в комментариях | сократить, ссылки убрать | migrator, flash |
+| 10 | `data-keeper`: нет теста на файл со смешанными ISO/числами | добавить в тест репозитория | test-designer, flash |
+
+Остальные info (хрупкое сравнение кода ошибки по литералу, `setTimeout` в e2e, лишний `getStudentProgress` в `InactivityStory`, текст `NOT_ENROLLED`) — на усмотрение исполнителя в тех же файлах, без отдельных шагов. После правок — `bun run check`, повторный `reviewer` по diff правок, затем закрытие фазы.

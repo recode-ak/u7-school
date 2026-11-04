@@ -49,14 +49,15 @@
 ## Фаза 2: Срез `student`
 
 - [x] Task: `tech-lead`: бриф `slices/student.md` — 7 UC (без `set-next-preference`), `getActiveStudent`, Job `inactivity-sweep` (`JobFromDef`); события `enrolled`/`completed`/`abandoned`/`inactivity-*` как Def (inactivity — без `telegramId`); `complete(outcome)` без `abandoned`; правило зачисления в правилах студента (факты из DQS и Def UC `course`); запись `StreamDs` (`completeStep`, `tryIssueTailStep`) в Ar/DCS, UI-расчёты — DQS (query UC — при веских причинах); уведомления — stories по событиям (D-41); снятие красной зоны; вопросы перепроектирования — Нурболату `a5b3afd`
-- [ ] Task: `test-designer`: характеризация на `v0.2.6` — `enroll` (кодовое слово, конфликт активной записи, gate модуля, нет шагов), `complete-step`, `complete` (исходы, тексты), `drop`, `mark-abandoned` (тексты уведомлений), `get-by-user`, `get-progress`; Job — пороги 5/7 дней, повтор через день, сброс, сбой одного студента не прерывает обход; red-тесты Def-контрактов
-- [ ] Task: `migrator`: домен — state, `StudentArDef` и Ar (без `#…`), события, ошибки, Policy и правила, DCS/DQS из `StreamDs`; DEBT-1, 2, 5, 10 в части stream — маркеров нет
-- [ ] Task: `migrator`: прикладной слой — Def UC, `getActiveStudent`, Job, репозиторий студентов через UoW с тестом на фикстурах; в stream нет `addRoleToUser`/`removeRoleFromUser`; `set-next-preference` удалён
-- [ ] Task: `migrator`: подписчики на Def-события студента напрямую — ER `fulfill-wish` (`wish`), `create-student-campaign` (`peer-review`); `student.*` из `streamLegacyInbound` снят
-- [ ] Task: UI → `dispatch` и подписки Def: `learning/*` (hub — меню через `getActiveStudent`, подписка на `completed`; shared, progress, step-view, nav-resolver — DQS/UC), `streams/stories/inactivity` (адрес через `GetTelegramAddressesUcDef`), `view-stream` (enroll, progress), `mentor/monitor`, `view-stream-mentor` (часть студента), `streams/controller` (без `new StudentAr`), stories уведомлений `complete`/`drop`/`mark-abandoned`, `scripts/gen-e2e`; инвариант миров `STUDENT_ROLE_MISMATCH` снят; e2e на каждое событие, получаемое ботом
-- [ ] Task: Снять запись красной зоны из `debt.md`
-- [ ] Task: `data-keeper`: state и репозиторий студента, `notices`, смешанные даты в `students.json`
-- [ ] Task: `reviewer`; замечания без `error` решает orchestrator (TR), предложения перепроектирования — Нурболату
+- [x] Task: `test-designer`: характеризация на `v0.2.6` — `enroll` (кодовое слово, конфликт активной записи, gate модуля, нет шагов), `complete-step`, `complete` (исходы, тексты), `drop`, `mark-abandoned` (тексты уведомлений), `get-by-user`, `get-progress`; Job — пороги 5/7 дней, повтор через день, сброс, сбой одного студента не прерывает обход; red-тесты Def-контрактов `63a30d3`
+- [x] Task: `migrator`: домен — state, `StudentArDef` и Ar (без `#…`), события, ошибки, Policy и правила, DCS/DQS из `StreamDs`; DEBT-1, 2, 5, 10 в части stream — маркеров нет `63a30d3`
+- [x] Task: `migrator`: прикладной слой — Def UC, `getActiveStudent`, Job, репозиторий студентов через UoW с тестом на фикстурах; в stream нет `addRoleToUser`/`removeRoleFromUser`; `set-next-preference` удалён `63a30d3`
+- [x] Task: `migrator`: подписчики на Def-события студента напрямую — ER `fulfill-wish` (`wish`), `create-student-campaign` (`peer-review`); `student.*` из `streamLegacyInbound` снят `63a30d3`
+- [x] Task: UI → `dispatch` и подписки Def: `learning/*` (hub — меню через `getActiveStudent`, подписка на `completed`; shared, progress, step-view, nav-resolver — DQS/UC), `streams/stories/inactivity` (адрес через `GetTelegramAddressesUcDef`), `view-stream` (enroll, progress), `mentor/monitor`, `view-stream-mentor` (часть студента), `streams/controller` (без `new StudentAr`), stories уведомлений `complete`/`drop`/`mark-abandoned`, `scripts/gen-e2e`; инвариант миров `STUDENT_ROLE_MISMATCH` снят; e2e на каждое событие, получаемое ботом `63a30d3`
+- [x] Task: Снять запись красной зоны из `debt.md` `63a30d3`
+- [x] Task: `data-keeper`: state и репозиторий студента, `notices`, смешанные даты в `students.json` `63a30d3`
+- [~] Task: `reviewer`; замечания без `error` решает orchestrator (TR), предложения перепроектирования — Нурболату
+    - Передача (2026-11-04, claude, 60d209b): сделано — ревью (слепое, Opus, 8/10, ветка A A/B-теста); осталось — правки по «Отчёт ревью Ф2» в конце `slices/student.md` (исполнители — по `conductor/architecture/deepseek.md`), затем повторный reviewer по diff правок; check — зелёный
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 2** (уточняет бриф `slices/student.md`):
