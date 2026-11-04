@@ -1,3 +1,15 @@
 {
-  "packages": []
+  "packages": [],
+  "compaction": {
+    "modelOverrides": {
+      "deepseek/deepseek-flash": {
+        "reserveTokens": 850000,
+        "keepRecentTokens": 30000
+      },
+      "deepseek/deepseek-v4-pro": {
+        "reserveTokens": 850000,
+        "keepRecentTokens": 30000
+      }
+    }
+  }
 }

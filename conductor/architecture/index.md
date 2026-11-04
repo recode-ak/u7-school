@@ -27,6 +27,7 @@
 | Править немигрированный модуль | [legacy.md](./legacy.md) |
 | Работать с ботом | [ui/](./ui/bot-architecture.md) |
 | Работать агентом | [agents.md](./agents.md), [agent-roles.md](./agent-roles.md), скилы `architecture` и `dmg-architecture` |
+| Отдать шаг DeepSeek | [deepseek.md](./deepseek.md) |
 
 ## Правка платформы `dmg-core`
 
@@ -54,6 +55,8 @@
 - [agents.md](./agents.md) — роли агентов, контуры качества, связь с conductor, среды Claude Code и pi
 - [dmg-process.md](./dmg-process.md) — общее видение процесса (уровни постановки, роли, срез, SDD и без него); черновик для пакета `dmg-core`
 - [agent-roles.md](./agent-roles.md) — новые роли агентов: состав, место в процессе, волны внедрения, критерии годности
+- [deepseek.md](./deepseek.md) — делегирование шагов ролей в DeepSeek: кому что, промпт, запуск и учёт
+- [deepseek-ab-2026-11.md](./deepseek-ab-2026-11.md) — A/B-тест DeepSeek против Claude (Ф2 `stream-dmg`): ход, ошибки, данные, выводы
 - [docs-strategy.md](./docs-strategy.md) — доменная и техническая документация
 
 **UI (Telegram-бот)**
