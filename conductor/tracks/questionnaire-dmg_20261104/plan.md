@@ -21,15 +21,15 @@
 
 - [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/questionnaire` и `modules/questionnaire`, `dmg-core` `bun test`. Создать каркасы разделов «Пилот ролей» и «DeepSeek» (Opus) d117baaa
 - [x] Task: Записать решения Q1–Q3, Q5 и тактические (один агрегат с variant-state, query-UC, `responses.json`, фикстуры) в TR в `debt.md` и `decisions.md` (Opus) ed2b01c8
-- [x] Task: `dmg-tech-lead`: бриф `slices/questionnaire.md` (Sonnet). Содержание:
+- [x] Task: `dmg-tech-lead`: бриф `slices/questionnaire.md` (Sonnet). Содержание: 0f36309f
     - 9 UC и Job `sweep-abandoned-questionnaires`: пороги, тексты, только standard;
     - 6 Def-событий (Q1) и `ownerInfo` в контракте (Q2), события без `telegramId`/`response` (Q3);
     - разбор `a-root.ts` по Ar, Policy, правилам и DQS; `QuestionnaireEngine` остаётся чистым классом;
     - проверка поддержки `v.variant` в `AggregateDef`;
     - Policy «только за себя» через `Identified` (TR-11, DEBT-32);
     - клиенты `wish`, ожидаемая красная зона, ID `rules.md`.
-- [x] Task: orchestrator проверяет бриф (Opus). Вопросы перепроектирования — Нурболату
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md; автономно)
+- [x] Task: orchestrator проверяет бриф (Opus). Вопросы перепроектирования — Нурболату 0f36309f
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 0:**
 - Базовая линия (pass/fail по командам) — в `summary.md`.
