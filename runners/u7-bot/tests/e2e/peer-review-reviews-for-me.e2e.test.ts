@@ -4,7 +4,6 @@ import {
   CreateReviewUcDef,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
-import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
@@ -14,6 +13,7 @@ import {
 import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
+import { completeStudent } from '../helpers/student-fate';
 
 /**
  * E2E «Отзывы мне» (S08):
@@ -56,22 +56,14 @@ async function waitUntil(
   }
 }
 
-/** Событие судьбы студента потока (исход «завершил и прошел»). */
-function completedEvent(userId: string, aggregateId: string) {
-  return {
-    eventId: crypto.randomUUID(),
-    eventName: StudentEvents.completed.name,
-    occurredAt: '2026-09-22T12:00',
-    aggregateName: 'Student',
-    aggregateId,
-    payload: {
-      studentId: aggregateId,
-      userId,
-      streamId: STREAM_ID,
-      moduleId: MODULE_ID,
-      outcome: 'advanced',
-    },
-  };
+/** Судьба студента потока (исход «завершил и прошел») — настоящим UC ментора. */
+function completeFate(app: TestApp, studentId: string) {
+  return completeStudent(app, {
+    callerTelegramId: MENTOR_TG,
+    streamId: STREAM_ID,
+    studentId,
+    outcome: 'advanced',
+  });
 }
 
 /** /start → хаб по кнопке меню «💬 Отзывы». */
@@ -97,15 +89,11 @@ describe('E2E peer-review: S08 «Отзывы мне»', () => {
 
     // Живые кампании Марины и Олега (окно 7 дн от «сейчас») — событием
     // судьбы, как в бою; у Олега отзывов нет — негативный кейс
-    app.eventBus.publish(
-      completedEvent(MARINA_ID, 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1'),
-    );
+    await completeFate(app, 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1');
     await waitUntil(async () =>
       Boolean(await app.reviewCampaignRepo.findBySubject(STREAM_ID, MARINA_ID)),
     );
-    app.eventBus.publish(
-      completedEvent(OLEG_ID, 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2'),
-    );
+    await completeFate(app, 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2');
     await waitUntil(async () =>
       Boolean(await app.reviewCampaignRepo.findBySubject(STREAM_ID, OLEG_ID)),
     );

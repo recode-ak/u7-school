@@ -3,7 +3,6 @@ import {
   GetMyReviewUcDef,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
-import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
@@ -13,6 +12,11 @@ import {
 import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
+import {
+  completeStudent,
+  dropStudent,
+  makeStudentActive,
+} from '../helpers/student-fate';
 
 /**
  * E2E «Судьба субъекта — написание» (Фаза 6, задача 2): сквозной путь
@@ -36,6 +40,7 @@ const MENTOR_USER_ID = '44444444-4444-4444-4444-444444444444';
 // «Олег» — соученик субъекта; тест 3: субъект «забросил»
 // (у Андрея 333 уже есть фикстурная кампания c1a11111 — идемпотентность ER)
 const DROPPED_TG = 1008;
+const DROPPED_STUDENT_ID = 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2';
 const DROPPED_USER_ID = '88888888-8888-4888-8888-888888888888';
 
 const GOOD_TEXT = 'Ментор спокойно разбирал мои ошибки и не давал застрять.';
@@ -68,19 +73,11 @@ describe('E2E peer-review: судьба субъекта — написание'
 
   test('событие судьбы → приглашения → S03 → ввод → S06 → перезапись S04', async () => {
     // ── 1. Событие судьбы: завершил и прошел ──
-    app.eventBus.publish({
-      eventId: crypto.randomUUID(),
-      eventName: StudentEvents.completed.name,
-      occurredAt: '2026-09-22T12:00',
-      aggregateName: 'Student',
-      aggregateId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
-      payload: {
-        studentId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
-        userId: SUBJECT_USER_ID,
-        streamId: STREAM_ID,
-        moduleId: 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0',
-        outcome: 'advanced',
-      },
+    await completeStudent(app, {
+      callerTelegramId: MENTOR_TG,
+      streamId: STREAM_ID,
+      studentId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
+      outcome: 'advanced',
     });
 
     // ── 2. Два приглашения: субъекту (по исходу) и ментору (с именем) ──
@@ -324,20 +321,12 @@ describe('E2E peer-review: судьба субъекта — написание'
   // Живое окно «забросил»: адресат только ментор — автопровал
   // в экран ввода, минуя список (правило «выбор без выбора»).
   test('dropped: автопровал единственного адресата → ввод → сохранение → хаб', async () => {
-    // ── 1. Событие: Андрей забросил учёбу ──
-    app.eventBus.publish({
-      eventId: crypto.randomUUID(),
-      eventName: StudentEvents.abandoned.name,
-      occurredAt: '2026-09-22T12:00',
-      aggregateName: 'Student',
-      aggregateId: 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2',
-      payload: {
-        studentId: 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2',
-        userId: DROPPED_USER_ID,
-        streamId: STREAM_ID,
-        who: 'self',
-        cause: 'voluntary',
-      },
+    // ── 1. Судьба: Андрей забросил учёбу (UC drop-student от студента) ──
+    await makeStudentActive(app, DROPPED_STUDENT_ID);
+    await dropStudent(app, {
+      studentTelegramId: DROPPED_TG,
+      streamId: STREAM_ID,
+      studentId: DROPPED_STUDENT_ID,
     });
 
     // ── 2. Приглашение с мягким текстом судьбы ──

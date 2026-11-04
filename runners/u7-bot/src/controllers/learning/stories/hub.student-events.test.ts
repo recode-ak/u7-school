@@ -28,7 +28,11 @@ const event = (outcome: 'advanced' | 'not_advanced') => ({
   },
 });
 
-function makeStory(place: unknown, telegramId: number | undefined = 123) {
+function makeStory(
+  place: unknown,
+  options: { telegramId?: number } = { telegramId: 123 },
+) {
+  const { telegramId } = options;
   const appApi = {
     execute: mock(async (name: string) => {
       if (name === 'get-user')
@@ -106,7 +110,7 @@ describe('HubStory — подписка на StudentEvents.completed', () => {
   });
 
   test('у пользователя нет telegramId → ни notify, ни invite', async () => {
-    const { sender, sub } = makeStory({ isLast: true }, undefined);
+    const { sender, sub } = makeStory({ isLast: true }, {});
     await sub?.handle(event('advanced') as never);
 
     expect(sender.notify).not.toHaveBeenCalled();
