@@ -56,7 +56,7 @@
 - [x] Task: Новые имена в `agents.md`, `agent-roles.md`, `migration.md`, `workflow.md`, `deepseek.md`, `rules.md`, `.pi/skills/conductor-{implement,newtrack}` 1c9f4b1a
 - [x] Task: `dmg-process.md` → ссылка на `docs/process.md` пакета (или удалить с правкой ссылок в `index.md`, `agent-roles.md`, `migration.md`); в `agents.md`, `agent-roles.md` — только привязка к проекту 1c9f4b1a
 - [x] Task: Закрыть пилот: `migration.md` §5, §6 (перенос сделан; следующий — `questionnaire` на ролях пакета), `agent-roles.md` §1 п. 6, §4 (волна 2), §5 (пилот — только волна 3+), `agents.md` (строка «Пилот ролей») 1c9f4b1a
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4: Документы и скилы' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4: Документы и скилы' (Protocol in workflow.md)
 
 **Критерии приёмки:** grep старых имён по живым файлам пуст (исключения — spec п. 5); ссылки на `dmg-process.md` живые; `migration.md` §5, §6 актуальны.
 
