@@ -47,7 +47,7 @@
     - Пакет `6cfe5f2`: правки 5 ролей и `common.md`, `docs/process.md` §4 (гейт по области автора, красный шаг `check` скрывает следующие), `domain-graph.test.ts` — вхождение вместо точных списков `todo`
     - DEBT-49 (u7-school): расширение pi `subagent` привязано к скриптам u7-school
 - [x] Task: Удалить worktree — с подтверждения Нурболата
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3: Пилотный срез' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3: Пилотный срез' (Protocol in workflow.md)
 
 **Критерии приёмки:** обе среды прошли конвейер до отчёта `dmg-reviewer` или сбой описан; по каждой роли — вывод о критерии 6; код среза в пакет не попал; правки промптов доставлены, `dmg:check` зелёный.
 
