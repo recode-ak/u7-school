@@ -9,9 +9,9 @@
 
 ## Фаза 1: роли в пакете
 
-Коммит пакета `3eb2461` (`dmg-core` 0.1.1, D-61 пакета): шесть ролей `dmg-*`, `docs/process.md` (`covers: agents/**`), `agents/README.md`, `docs/index.md`, `llms.txt`. `check` пакета зелёный, 1397 pass (= базовой линии). Grep специфики u7-school по `agents/roles` пуст.
+Коммиты пакета `3eb2461`, `de89c2f` (`dmg-core` 0.1.1, D-62 пакета): шесть ролей `dmg-*`, `docs/process.md` (`covers: agents/**`), `agents/README.md`, `docs/index.md`, `llms.txt`. `check` пакета зелёный, 1397 pass (= базовой линии). Grep специфики u7-school по `agents/roles` пуст.
 
-Номер D-61 в пакете совпадает с D-61 u7-school (`file:`) — реестры раздельные, ссылки из u7-school на решение пакета пишутся как «D-61 пакета».
+Решение пакета — D-62: D-61 занят в u7-school (`file:`), по решению Нурболата номер не дублируется.
 
 Специфика u7-school, снятая с ролей (→ `.agents-core/common.md`, Фаза 2):
 - tech-lead: план — `conductor-newtrack`, бриф — `conductor-implement`; spec/plan — `conductor/tracks/<track>/`; проектные документы `conductor/architecture/`: `naming.md`, `migration.md`, `legacy.md`, `debt.md` (DEBT-ID, glob'ы «Места записей», TR); эталон `wish` (`domain/src/wish`, `modules/wish/src`), образец брифа `conductor/archive/golden-wish_20261020/slices/wish.md`; конвейер — `agents.md` §3, стратегическое — §9; репо пакета — путь из `file:` у `dmg-core` в `package.json`.

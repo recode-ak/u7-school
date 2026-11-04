@@ -17,7 +17,7 @@
 - [x] Task: `docs/process.md` из `conductor/architecture/dmg-process.md` без проекта и conductor; `docs/index.md`, `llms.txt`, `covers:` dmg-core@3eb2461
 - [x] Task: `agents/README.md` (таблица шести ролей, порядок среза), `README.md`, D-NN в `docs/decisions.md`, версия `0.1.1` dmg-core@3eb2461
 - [x] Task: `bun run check` пакета, коммит в репо пакета, SHA dmg-core@3eb2461
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1: Роли в пакете' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1: Роли в пакете' (Protocol in workflow.md)
 
 **Критерии приёмки:** в `agents/roles/` шесть ролей `dmg-*`; `grep -rE "wish|v0\.2\.6|data/|conductor|u7|backup|AGENTS|chronicle" agents/roles` пуст; `check` пакета зелёный (включая `docs:covers`); версия `0.1.1`, решение в `decisions.md`; тестов не меньше базовой линии.
 
