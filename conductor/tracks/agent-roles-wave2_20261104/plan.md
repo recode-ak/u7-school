@@ -1,0 +1,85 @@
+# Plan: agent-roles-wave2_20261104
+
+Каждая задача кода идёт по TDD: red → запуск → green. Правка платформы — в репо `~/dev/tools/dmg/dmg-core` отдельным коммитом, его SHA — в коммите u7-school (`conductor/architecture/index.md`, «Правка платформы `dmg-core`»). Порядок доставки ролей: `bun install` → `bun run dmg:sync` → `bun run agents:sync`.
+
+Черновик — роль `tech-lead` (2026-11-04): расхождения spec с кодом внесены в [spec.md](./spec.md) (п. 3, 3а, 5, 8).
+
+## Фаза 1: Роли в пакете `dmg-core`
+
+- [ ] Task: Базовая линия: `CI=true bun test` в u7-school и в пакете — числа в `summary.md`
+- [ ] Task: Тесты пакета на шесть ролей `dmg-*` (red)
+    - [ ] `src/cli/dmg-core-cli.test.ts` — список ролей настоящего пакета
+    - [ ] `src/cli/main.test.ts` — `dmg-reviewer.md`
+    - [ ] `scripts/docs-check.test.ts` — путь `agents/roles/dmg-reviewer.md`
+    - [ ] Запуск: тесты красные
+- [ ] Task: Переименовать `domain-author`, `api-author`, `reviewer` → `dmg-*` (файлы, `name:`, ссылки между ролями, `scripts/jsdoc-check.ts`); тесты зелёные
+- [ ] Task: Перенести каркас `dmg-tech-lead`, `dmg-test-designer`, `dmg-data-keeper` без специфики u7-school (модель — Sonnet); специфику выписать для `.agents-core/common.md`
+- [ ] Task: `docs/process.md` из `conductor/architecture/dmg-process.md` без проекта и conductor; `docs/index.md`, `llms.txt`, `covers:`
+- [ ] Task: `agents/README.md` (таблица шести ролей, порядок среза), `README.md`, D-NN в `docs/decisions.md`, версия `0.1.1`
+- [ ] Task: `bun run check` пакета, коммит в репо пакета, SHA
+- [ ] Task: Conductor - User Manual Verification 'Фаза 1: Роли в пакете' (Protocol in workflow.md)
+
+**Критерии приёмки:** в `agents/roles/` шесть ролей `dmg-*`; `grep -rE "wish|v0\.2\.6|data/|conductor|u7|backup|AGENTS|chronicle" agents/roles` пуст; `check` пакета зелёный (включая `docs:covers`); версия `0.1.1`, решение в `decisions.md`; тестов не меньше базовой линии.
+
+## Фаза 2: Подключение в u7-school
+
+- [ ] Task: `bun install` → `bun run dmg:sync` → удалить проектные `.agents-core/roles/{tech-lead,test-designer,data-keeper}.md` → `bun run agents:sync`
+- [ ] Task: Специфику u7-school из Фазы 1 — в `.agents-core/common.md`; ссылки на роли в `.agents-core/README.md`, `common.md`, `migrator`, `documentarian`
+- [ ] Task: Зашитые имена ролей
+    - [ ] Red: `scripts/subagent-gate.test.ts` на `dmg-domain-author`, `dmg-api-author`
+    - [ ] Green: `GATED_AGENTS` и matcher `SubagentStop` в `.claude/settings.json` — одним коммитом
+    - [ ] Фикстуры `scripts/agents-sync.test.ts`, `scripts/agent-gate.test.ts`
+- [ ] Task: `bun run check`, коммит с SHA пакета
+- [ ] Task: Conductor - User Manual Verification 'Фаза 2: Подключение в u7-school' (Protocol in workflow.md)
+
+**Критерии приёмки:** в `.agents-core/roles`, `.claude/agents`, `.pi/agents` по 8 ролей (6 `dmg-*`, `migrator`, `documentarian`); `dmg:check` и `agents:check` зелёные; `git diff dmg-core.json` пуст; grep старых имён по `scripts`, `.claude/settings.json`, `.agents-core`, `.claude/agents`, `.pi/agents` пуст.
+
+## Фаза 3: Пилотный срез на учебном модуле
+
+- [ ] Task: Подготовка
+    - [ ] Два временных worktree пакета (`claude`, `pi`); в каждом `dmg-core.json` с целями `.claude/agents` / `.pi/agents` и `sync`
+    - [ ] Задание среза: `todo`, изменение `state` (например, «отложить задачу до даты») — одно для обеих сред
+- [ ] Task: Прогон в Claude Code: сессия-оркестратор в worktree, конвейер `dmg-tech-lead` → `dmg-test-designer` → `dmg-domain-author`/`dmg-api-author` → `check` → `dmg-data-keeper` → `dmg-reviewer`; отчёты и расход
+- [ ] Task: Прогон в pi автономно: один `pi -p` с заданием среза; основная сессия только запускает и читает итог (сессия, diff, отчёты), по ходу не вмешивается
+- [ ] Task: Итог «Пилот волны 2» в `summary.md`: роль × среда, критерии 1–6, расход, сбои автономности pi
+- [ ] Task: Правки промптов по итогу — в пакет (коммит, SHA) → `dmg:sync` → `agents:sync` в u7-school
+- [ ] Task: Удалить worktree — с подтверждения Нурболата
+- [ ] Task: Conductor - User Manual Verification 'Фаза 3: Пилотный срез' (Protocol in workflow.md)
+
+**Критерии приёмки:** обе среды прошли конвейер до отчёта `dmg-reviewer` или сбой описан; по каждой роли — вывод о критерии 6; код среза в пакет не попал; правки промптов доставлены, `dmg:check` зелёный.
+
+## Фаза 4: Документы и скилы
+
+- [ ] Task: Новые имена в `agents.md`, `agent-roles.md`, `migration.md`, `workflow.md`, `deepseek.md`, `rules.md`, `.pi/skills/conductor-{implement,newtrack}`
+- [ ] Task: `dmg-process.md` → ссылка на `docs/process.md` пакета (или удалить с правкой ссылок в `index.md`, `agent-roles.md`, `migration.md`); в `agents.md`, `agent-roles.md` — только привязка к проекту
+- [ ] Task: Закрыть пилот: `migration.md` §5, §6 (перенос сделан; следующий — `questionnaire` на ролях пакета), `agent-roles.md` §1 п. 6, §4 (волна 2), §5 (пилот — только волна 3+), `agents.md` (строка «Пилот ролей»)
+- [ ] Task: Conductor - User Manual Verification 'Фаза 4: Документы и скилы' (Protocol in workflow.md)
+
+**Критерии приёмки:** grep старых имён по живым файлам пуст (исключения — spec п. 5); ссылки на `dmg-process.md` живые; `migration.md` §5, §6 актуальны.
+
+## Фаза 5: Подсказка `dmg-data-keeper` в гейте
+
+- [ ] Task: Red: тесты `dataKeeperHint` в `scripts/agent-gate.test.ts` (`state`, `repo`, `-repo`, `content-snapshot` — подсказка; `*.test.ts`, `.md`, `get-module-snapshot*` — нет; код выхода не меняется)
+- [ ] Task: Green: `dataKeeperHint` в `scripts/agent-gate.ts` рядом с `packageDocsWarning`, вызов в `import.meta.main`
+- [ ] Task: Ревью diff — `dmg-reviewer`
+- [ ] Task: Conductor - User Manual Verification 'Фаза 5: Подсказка в гейте' (Protocol in workflow.md)
+
+**Критерии приёмки:** новые тесты есть и зелёные; `bun run check` зелёный.
+
+## Фаза 6: Финал
+
+- [ ] Task: Гейт закрытия: `CI=true bun test` в обоих репо, сравнение с базовой линией, триаж в `summary.md`; `git status data/` пуст
+- [ ] Task: Сверка критериев spec 1–8
+- [ ] Task: Conductor - User Manual Verification 'Фаза 6: Финал' (Protocol in workflow.md)
+
+## Покрытие spec
+
+| Критерий | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Фаза | 1 | 1 | 2 | 4 | 1, 4 | 5 | 3 | 6 |
+
+## Риски
+
+- Пилот до фазы документов: скилы conductor ещё зовут старые имена — между фазами 2 и 4 роли вызываются только по новым.
+- `file:`: без `bun install` `dmg:check` видит старый `node_modules/dmg-core`.
+- pi автономно может застрять на вопросе — в задании: не останавливаться, выбирать по рекомендации, записывать допущения.
