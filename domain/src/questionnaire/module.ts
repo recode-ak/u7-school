@@ -1,6 +1,6 @@
 /**
- * Оболочка Т15: метатипы API-модуля questionnaire для `U7BotAppMeta` и
- * stories до Ф2/Ф3. Резолвера и зависимостей рантайма здесь нет.
+ * Метатипы API-модуля questionnaire для `U7BotAppMeta` и stories.
+ * Резолвера и зависимостей рантайма здесь нет.
  */
 import type { ApiModuleMeta } from '@u7-scl/core/domain';
 import type { AbandonCmdMeta } from './questionnaire/commands/abandon-cmd';

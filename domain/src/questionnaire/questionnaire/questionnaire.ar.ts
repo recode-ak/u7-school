@@ -158,7 +158,7 @@ export class QuestionnaireAr extends Aggregate<typeof QuestionnaireArDef> {
       this.state.status === 'abandoned' &&
       this.state.abandonReason === undefined
     ) {
-      // biome-ignore lint/plugin: Т13 — испорченная запись не восстанавливается
+      // biome-ignore lint/plugin: нарушен инвариант «abandoned ⇒ abandonReason» записи — это дефект данных, а не отказ операции
       throw new Error(
         `Анкета ${this.state.uuid}: статус abandoned без причины прерывания`,
       );
@@ -172,10 +172,7 @@ export class QuestionnaireAr extends Aggregate<typeof QuestionnaireArDef> {
     at: Timestamp,
   ): Result<QuestionnaireAr, never> {
     const pool = v.parse(QuestionnairePoolSchema, input.pool);
-    const first = (new QuestionnaireEngine(pool.questions).getNextQuestion(
-      null,
-      [],
-    ) ?? pool.questions[0]) as Question;
+    const first = firstQuestion(new QuestionnaireEngine(pool.questions));
     const state: QuestionnaireState = {
       ...QuestionnaireAr.newState(input.uuid, at),
       kind: 'standard',
@@ -269,12 +266,7 @@ export class QuestionnaireAr extends Aggregate<typeof QuestionnaireArDef> {
     return this.transition('start', at, (draft) => {
       delete draft.warnedAt;
       delete draft.continueInvitedAt;
-      const first = (this.engine.getNextQuestion(null, []) ??
-        (this.state.kind === 'likert'
-          ? (this.state.questionPool as LikertQuestionPool).questions[0]
-          : (this.state.questionPool as QuestionnairePool)
-              .questions[0])) as Question;
-      draft.currentQuestionCode = first.questionCode;
+      draft.currentQuestionCode = firstQuestion(this.engine).questionCode;
       return ok();
     });
   }
@@ -295,7 +287,7 @@ export class QuestionnaireAr extends Aggregate<typeof QuestionnaireArDef> {
     });
   }
 
-  /** Прерывание анкеты: повтор на `abandoned` — Ok без события (Т3). */
+  /** Прерывание анкеты: повтор на `abandoned` — Ok без события. */
   abandon(
     at: Timestamp,
     reason: 'by_user' | 'timeout',
@@ -315,10 +307,8 @@ export class QuestionnaireAr extends Aggregate<typeof QuestionnaireArDef> {
   ): Result<QuestionnaireActionResponse, ActionError> {
     if (this.state.status !== 'in_progress') return NOT_IN_PROGRESS.err();
     this.resetIdleFlags();
-    const code = this.state.currentQuestionCode;
-    if (code === null) return NOT_IN_PROGRESS.err();
-    const question = this.engine.getByCode(code);
-    if (question === undefined) return NOT_IN_PROGRESS.err();
+    const code = this.currentQuestionCode();
+    const question = this.engine.getRequiredByCode(code);
     const screen = this.screenBuilder();
     const { type, value } = action;
 
@@ -473,7 +463,7 @@ export class QuestionnaireAr extends Aggregate<typeof QuestionnaireArDef> {
     });
   }
 
-  /** Сброс флагов простоя при активности: `updatedAt` не сдвигается (Т1, Т2). */
+  /** Сброс флагов простоя при активности: `updatedAt` не сдвигается. */
   private resetIdleFlags(): void {
     if (
       this.state.warnedAt === undefined &&
@@ -489,19 +479,13 @@ export class QuestionnaireAr extends Aggregate<typeof QuestionnaireArDef> {
   }
 
   private completedEvent(answers: AnswerVo[]): QuestionnaireEvent {
-    const ref = {
-      questionnaireId: this.state.uuid,
-      respondentId: this.state.respondentId,
-      ownerInfo: this.state.ownerInfo,
-    };
     if (this.state.kind === 'likert') {
       return QuestionnaireEvents.completed.make({
-        ...ref,
-        kind: 'likert',
+        ...refOf(this.state),
         likertScores: this.likertScores(answers),
       });
     }
-    return QuestionnaireEvents.completed.make({ ...ref, kind: 'standard' });
+    return QuestionnaireEvents.completed.make(refOf(this.state));
   }
 
   /** Средневзвешенные баллы по подкатегориям: Σ(ответ × вес) / Σ(вес). */
@@ -547,6 +531,18 @@ export class QuestionnaireAr extends Aggregate<typeof QuestionnaireArDef> {
     return v.parse(v.array(LikertScoreSchema), scores);
   }
 
+  /** Код текущего вопроса; анкета в работе без вопроса — дефект записи. */
+  private currentQuestionCode(): string {
+    const code = this.state.currentQuestionCode;
+    if (code === null) {
+      // biome-ignore lint/plugin: нарушен инвариант «in_progress ⇒ currentQuestionCode» записи — это дефект данных, а не отказ операции
+      throw new Error(
+        `Анкета ${this.state.uuid}: статус in_progress без текущего вопроса`,
+      );
+    }
+    return code;
+  }
+
   private lastActivityAt(): Timestamp {
     return this.state.updatedAt ?? this.state.createdAt;
   }
@@ -560,13 +556,25 @@ export class QuestionnaireAr extends Aggregate<typeof QuestionnaireArDef> {
   }
 }
 
-function refOf(state: QuestionnaireState): QuestionnaireRef {
+function refOf<K extends QuestionnaireRef['kind']>(
+  state: Extract<QuestionnaireState, { kind: K }>,
+): QuestionnaireRef & { readonly kind: K } {
   return {
     questionnaireId: state.uuid,
     respondentId: state.respondentId,
     kind: state.kind,
     ownerInfo: state.ownerInfo,
   };
+}
+
+/** Первый вопрос пула; пул без показываемого вопроса — дефект данных. */
+function firstQuestion(engine: QuestionnaireEngine): Question {
+  const first = engine.getNextQuestion(null, []);
+  if (first === null) {
+    // biome-ignore lint/plugin: пул без первого вопроса — дефект данных, а не отказ операции
+    throw new Error('Пул анкеты не содержит показываемого первого вопроса');
+  }
+  return first;
 }
 
 function buildEngine(state: QuestionnaireState): QuestionnaireEngine {

@@ -8,7 +8,7 @@ import { QuestionnaireActionResponseSchema } from '../questionnaire.types';
 /** Принятие приглашения: приглашённая анкета переходит в работу. */
 export const StartByInviteUcDef = UseCaseDef.define({
   name: 'startByInvite',
-  label: 'Начать анкету по приглашению',
+  label: 'Запустить анкету по приглашению',
   description:
     'Запускает приглашённую анкету и возвращает первый вопрос. События не публикует: started — только при создании.',
   type: 'command',

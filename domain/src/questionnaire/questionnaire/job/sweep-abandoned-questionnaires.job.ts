@@ -1,5 +1,5 @@
 import { JobDef } from 'dmg-core';
-import { QuestionnaireArDef } from '../questionnaire.ar';
+import { INTERVAL_MS, QuestionnaireArDef } from '../questionnaire.ar';
 import { QuestionnaireEvents } from '../questionnaire.events';
 
 export {
@@ -11,8 +11,6 @@ export {
   WARN_AFTER_HOURS,
   WARN_AFTER_IDLE_MS,
 } from '../questionnaire.ar';
-
-import { INTERVAL_MS } from '../questionnaire.ar';
 
 /**
  * Обход брошенных анкет: приглашение продолжить (3 ч), предупреждение (6 ч)

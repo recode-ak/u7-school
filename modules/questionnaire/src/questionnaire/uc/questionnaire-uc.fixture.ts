@@ -28,7 +28,7 @@ export const HOUR = 60 * 60 * 1000;
 export const T0 = Date.UTC(2026, 5, 1, 10);
 export const REQ = Trace.fromRequest({ requestId: 'r-1' });
 
-export const owner = new UserCaller({
+export const respondent = new UserCaller({
   uuid: RESPONDENT,
   roles: [Role.STUDENT],
 });

@@ -9,9 +9,9 @@ import {
   anonymous,
   MISSING,
   makeEnv,
-  owner,
   QUESTIONNAIRE,
   REQ,
+  respondent,
   state,
   stranger,
   T0,
@@ -21,7 +21,7 @@ import {
 
 let env: ReturnType<typeof makeEnv>;
 const run = (
-  caller: Caller<QuestionnaireUser> = owner,
+  caller: Caller<QuestionnaireUser> = respondent,
   questionnaireId: string = QUESTIONNAIRE,
 ) =>
   new GetCurrentUc(env.deps, QuestionnaireModuleDef).handle(
@@ -99,7 +99,7 @@ describe('GetCurrentUc', () => {
   });
 
   it('анкеты нет — QUESTIONNAIRE_NOT_FOUND', async () => {
-    expectErr(await run(owner, MISSING), 'QUESTIONNAIRE_NOT_FOUND');
+    expectErr(await run(respondent, MISSING), 'QUESTIONNAIRE_NOT_FOUND');
   });
 
   it('чужая анкета — ACCESS_DENIED, админ читает', async () => {

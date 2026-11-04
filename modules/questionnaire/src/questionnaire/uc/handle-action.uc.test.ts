@@ -11,11 +11,11 @@ import {
   MISSING,
   makeEnv,
   OWNER_INFO,
-  owner,
   pool,
   QUESTIONNAIRE,
   REQ,
   RESPONDENT,
+  respondent,
   state,
   stranger,
   T0,
@@ -28,7 +28,7 @@ let env: ReturnType<typeof makeEnv>;
 type Action = { type: 'callback' | 'text'; value: string };
 const run = (
   action: Action,
-  caller: Caller<QuestionnaireUser> = owner,
+  caller: Caller<QuestionnaireUser> = respondent,
   questionnaireId: string = QUESTIONNAIRE,
 ) =>
   new HandleActionUc(env.deps, QuestionnaireModuleDef).handle(
@@ -158,7 +158,10 @@ describe('HandleActionUc', () => {
   });
 
   it('анкеты нет — QUESTIONNAIRE_NOT_FOUND', async () => {
-    expectErr(await run(cb('yes'), owner, MISSING), 'QUESTIONNAIRE_NOT_FOUND');
+    expectErr(
+      await run(cb('yes'), respondent, MISSING),
+      'QUESTIONNAIRE_NOT_FOUND',
+    );
   });
 
   it('чужая анкета — ACCESS_DENIED «Нет доступа к анкете», ответов нет', async () => {

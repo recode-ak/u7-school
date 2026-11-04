@@ -12,10 +12,10 @@ import {
   makeEnv,
   OTHER_QUESTIONNAIRE,
   OTHER_USER,
-  owner,
   QUESTIONNAIRE,
   REQ,
   RESPONDENT,
+  respondent,
   state,
   stranger,
   T0,
@@ -26,7 +26,7 @@ import {
 
 let env: ReturnType<typeof makeEnv>;
 const run = (
-  caller: Caller<QuestionnaireUser> = owner,
+  caller: Caller<QuestionnaireUser> = respondent,
   userId: string = RESPONDENT,
 ) =>
   new GetQuestionnairesByUserUc(env.deps, QuestionnaireModuleDef).handle(

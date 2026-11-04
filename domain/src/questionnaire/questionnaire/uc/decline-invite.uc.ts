@@ -8,7 +8,7 @@ import { QuestionnairePolicy } from '../questionnaire.policy';
 /** Отказ от приглашения: анкета прерывается с причиной `declined`. */
 export const DeclineInviteUcDef = UseCaseDef.define({
   name: 'declineInvite',
-  label: 'Отказаться от анкеты',
+  label: 'Отказаться от приглашения на анкету',
   description:
     'Прерывает приглашённую анкету с причиной by_user и публикует abandoned с reason declined.',
   type: 'command',

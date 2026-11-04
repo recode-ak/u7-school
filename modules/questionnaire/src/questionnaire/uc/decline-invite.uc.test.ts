@@ -10,10 +10,10 @@ import {
   MISSING,
   makeEnv,
   OWNER_INFO,
-  owner,
   QUESTIONNAIRE,
   REQ,
   RESPONDENT,
+  respondent,
   state,
   stranger,
 } from './questionnaire-uc.fixture';
@@ -22,7 +22,7 @@ import {
 
 let env: ReturnType<typeof makeEnv>;
 const run = (
-  caller: Caller<QuestionnaireUser> = owner,
+  caller: Caller<QuestionnaireUser> = respondent,
   questionnaireId: string = QUESTIONNAIRE,
 ) =>
   new DeclineInviteUc(env.deps, QuestionnaireModuleDef).handle(
@@ -77,7 +77,7 @@ describe('DeclineInviteUc', () => {
   );
 
   it('анкеты нет — QUESTIONNAIRE_NOT_FOUND', async () => {
-    expectErr(await run(owner, MISSING), 'QUESTIONNAIRE_NOT_FOUND');
+    expectErr(await run(respondent, MISSING), 'QUESTIONNAIRE_NOT_FOUND');
   });
 
   it('чужая анкета — ACCESS_DENIED, статус прежний', async () => {

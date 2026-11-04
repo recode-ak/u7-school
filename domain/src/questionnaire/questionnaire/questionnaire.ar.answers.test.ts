@@ -341,3 +341,21 @@ describe('handleAction — stale-ответы (FR-1, Т2)', () => {
     expect(state.updatedAt).toBe(T0);
   });
 });
+
+describe('handleAction — повреждённая запись', () => {
+  it('in_progress без текущего вопроса — исключение, а не штатный отказ', () => {
+    const ar = QuestionnaireAr.restore(
+      stored('in_progress', { currentQuestionCode: null }),
+    );
+    expect(() => ar.handleAction(at(1), cb('yes'))).toThrow(
+      'статус in_progress без текущего вопроса',
+    );
+  });
+
+  it('текущий вопрос вне пула — исключение, а не штатный отказ', () => {
+    const ar = QuestionnaireAr.restore(
+      stored('in_progress', { currentQuestionCode: 'нет-такого' }),
+    );
+    expect(() => ar.handleAction(at(1), cb('yes'))).toThrow('не найден в пуле');
+  });
+});

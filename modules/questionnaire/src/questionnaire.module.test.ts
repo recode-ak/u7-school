@@ -42,10 +42,10 @@ import {
   likertPool,
   OTHER_USER,
   OWNER_INFO,
-  owner,
   pool,
   REQ,
   RESPONDENT,
+  respondent,
   systemAlone,
   systemFor,
 } from './questionnaire/uc/questionnaire-uc.fixture';
@@ -169,7 +169,7 @@ describe('модуль анкет через фасад потребителя (
   it('запуск через фасад создаёт анкету за субъекта, ownerInfo сохранён', async () => {
     const res = await probe().handle(
       { pool: pool(), ownerInfo: OWNER_INFO },
-      owner,
+      respondent,
       REQ,
     );
     expect(expectOk(res)).toEqual({});
@@ -236,7 +236,7 @@ describe('smoke: каждый UC на реальном репозитории (m
     const list = expectOk(
       await mod.dispatch(
         GetQuestionnairesByUserUcDef.command({ userId: RESPONDENT }),
-        owner,
+        respondent,
         req(),
       ),
     );
@@ -248,7 +248,7 @@ describe('smoke: каждый UC на реальном репозитории (m
     const current = expectOk(
       await mod.dispatch(
         GetCurrentUcDef.command(id(standard.uuid)),
-        owner,
+        respondent,
         req(),
       ),
     );
@@ -260,7 +260,7 @@ describe('smoke: каждый UC на реальном репозитории (m
           type: 'callback',
           value: 'yes',
         }),
-        owner,
+        respondent,
         req(),
       ),
     );
@@ -271,7 +271,7 @@ describe('smoke: каждый UC на реальном репозитории (m
           type: 'callback',
           value: 'ok',
         }),
-        owner,
+        respondent,
         req(),
       ),
     );
@@ -280,7 +280,7 @@ describe('smoke: каждый UC на реальном репозитории (m
       expectOk(
         await mod.dispatch(
           GetQuestionnaireUcDef.command(id(standard.uuid)),
-          owner,
+          respondent,
           req(),
         ),
       ).status,
@@ -290,18 +290,22 @@ describe('smoke: каждый UC на реальном репозитории (m
       expectOk(
         await mod.dispatch(
           StartByInviteUcDef.command(id(likert.uuid)),
-          owner,
+          respondent,
           req(),
         ),
       ).type,
     ).toBe('new_question');
     expectOk(
-      await mod.dispatch(AbandonUcDef.command(id(likert.uuid)), owner, req()),
+      await mod.dispatch(
+        AbandonUcDef.command(id(likert.uuid)),
+        respondent,
+        req(),
+      ),
     );
     expectErr(
       await mod.dispatch(
         DeclineInviteUcDef.command(id(likert.uuid)),
-        owner,
+        respondent,
         req(),
       ),
       'QUESTIONNAIRE_NOT_INVITED',

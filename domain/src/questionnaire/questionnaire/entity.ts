@@ -1,6 +1,6 @@
 /**
- * Оболочка Т15: типы записи анкеты для миров, e2e и метатипов команд.
- * Рантайм-схемы состояния — `questionnaire.state.ts`; оболочка удаляется в Ф3.
+ * Типы записи анкеты для миров, e2e и метатипов команд.
+ * Рантайм-схемы состояния — `questionnaire.state.ts`.
  */
 
 /** Ответ на вопрос анкеты; дата — число UTC или ISO-строка legacy-записи. */
@@ -38,7 +38,7 @@ export type BaseQuestionnaireState = {
 
 export type Questionnaire = BaseQuestionnaireState;
 
-/** Метаданные агрегата анкеты для оболочки метатипов команд (Т15). */
+/** Метаданные агрегата анкеты для метатипов команд. */
 export interface BaseQuestionnaireArMeta {
   name: 'Questionnaire';
   label: 'Анкета';

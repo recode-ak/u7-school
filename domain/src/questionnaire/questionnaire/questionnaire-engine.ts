@@ -71,7 +71,7 @@ export class QuestionnaireEngine {
     return this.index.get(code);
   }
 
-  /** Вопрос по коду; запись с вопросом вне пула — исключение (Т13). */
+  /** Вопрос по коду; запись с вопросом вне пула — исключение. */
   getRequiredByCode(code: string): Question {
     const question = this.index.get(code);
     if (question === undefined) {

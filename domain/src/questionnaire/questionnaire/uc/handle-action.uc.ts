@@ -9,7 +9,7 @@ import { QuestionnaireActionResponseSchema } from '../questionnaire.types';
 /** Ответ на текущий вопрос анкеты: callback кнопки или свободный текст. */
 export const HandleActionUcDef = UseCaseDef.define({
   name: 'handleAction',
-  label: 'Ответить на вопрос анкеты',
+  label: 'Обработать действие в анкете',
   description:
     'Фиксирует ответ, переключает черновик multiple-вопроса или завершает анкету событием completed.',
   type: 'command',

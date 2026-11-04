@@ -10,9 +10,9 @@ import {
   MISSING,
   makeEnv,
   OWNER_INFO,
-  owner,
   QUESTIONNAIRE,
   REQ,
+  respondent,
   state,
   stranger,
   T0,
@@ -22,7 +22,7 @@ import {
 
 let env: ReturnType<typeof makeEnv>;
 const run = (
-  caller: Caller<QuestionnaireUser> = owner,
+  caller: Caller<QuestionnaireUser> = respondent,
   questionnaireId: string = QUESTIONNAIRE,
 ) =>
   new GetQuestionnaireUc(env.deps, QuestionnaireModuleDef).handle(
@@ -61,7 +61,7 @@ describe('GetQuestionnaireUc', () => {
 
   it('анкеты нет — QUESTIONNAIRE_NOT_FOUND', async () => {
     const error = expectErr(
-      await run(owner, MISSING),
+      await run(respondent, MISSING),
       'QUESTIONNAIRE_NOT_FOUND',
     );
     expect(error.payload).toEqual({ questionnaireId: MISSING });

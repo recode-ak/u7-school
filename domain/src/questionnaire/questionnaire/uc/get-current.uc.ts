@@ -8,7 +8,7 @@ import { QuestionnaireActionResponseSchema } from '../questionnaire.types';
 /** Текущий экран анкеты: приглашение, вопрос или завершение. */
 export const GetCurrentUcDef = UseCaseDef.define({
   name: 'getCurrent',
-  label: 'Получить текущий экран анкеты',
+  label: 'Получить текущее состояние анкеты',
   description:
     'Возвращает экран, который видит респондент: приглашение, текущий вопрос или завершение.',
   type: 'query',

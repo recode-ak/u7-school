@@ -9,9 +9,9 @@ import {
   likertState,
   MISSING,
   makeEnv,
-  owner,
   QUESTIONNAIRE,
   REQ,
+  respondent,
   state,
   stranger,
   T0,
@@ -22,7 +22,7 @@ import { StartByInviteUc } from './start-by-invite.uc';
 
 let env: ReturnType<typeof makeEnv>;
 const run = (
-  caller: Caller<QuestionnaireUser> = owner,
+  caller: Caller<QuestionnaireUser> = respondent,
   questionnaireId: string = QUESTIONNAIRE,
 ) =>
   new StartByInviteUc(env.deps, QuestionnaireModuleDef).handle(
@@ -88,7 +88,7 @@ describe('StartByInviteUc', () => {
 
   it('анкеты нет — QUESTIONNAIRE_NOT_FOUND с questionnaireId', async () => {
     const error = expectErr(
-      await run(owner, MISSING),
+      await run(respondent, MISSING),
       'QUESTIONNAIRE_NOT_FOUND',
     );
     expect(error.kind).toBe('not_found');
