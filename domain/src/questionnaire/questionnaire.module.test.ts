@@ -25,7 +25,7 @@ import {
 const base = {
   questionnaireId: '11111111-1111-4111-8111-111111111111',
   respondentId: '22222222-2222-4222-8222-222222222222',
-  kind: 'standard',
+  kind: 'standard' as const,
   ownerInfo: { kind: 'wish', wishId: 'w-1' },
 };
 
@@ -96,7 +96,7 @@ describe('QuestionnaireModuleDef', () => {
   it('abandoned — FQN, reason обязателен и из перечня', () => {
     const { abandoned } = QuestionnaireEvents;
     expect(abandoned.name).toBe('questionnaire.questionnaire.abandoned');
-    for (const reason of ['timeout', 'by_user', 'declined']) {
+    for (const reason of ['timeout', 'by_user', 'declined'] as const) {
       expect(v.parse(abandoned.payload, { ...base, reason })).toEqual({
         ...base,
         reason,

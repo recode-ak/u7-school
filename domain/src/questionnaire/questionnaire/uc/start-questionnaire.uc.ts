@@ -3,32 +3,26 @@ import * as v from 'valibot';
 import { QuestionnairePoolSchema } from '../question';
 import { QuestionnaireArDef } from '../questionnaire.ar';
 import { QuestionnaireEvents } from '../questionnaire.events';
-import { QuestionnaireRespondentPolicy } from '../questionnaire-respondent.policy';
+import { QuestionnairePolicy } from '../questionnaire.policy';
 
-/**
- * Запуск обычной анкеты — для других модулей (D-42). Респондент — субъект
- * вызывающего; `owner` — данные владельца анкеты (legacy `ownerInfo`):
- * модуль анкет их не толкует и возвращает в событиях.
- *
- * Policy: респондент есть (`hasRespondent`) — анкета запускается только за
- * самого вызывающего, чужого респондента во входе нет; системный вызов без
- * человека получает `ACCESS_DENIED`.
- */
+/** Запуск обычной анкеты за респондента: создаёт её сразу в работе. */
 export const StartQuestionnaireUcDef = UseCaseDef.define({
   name: 'startQuestionnaire',
   label: 'Запустить анкету',
   description:
-    'Создаёт обычную анкету по пулу вопросов за вызывающего и показывает первый вопрос.',
+    'Создаёт обычную анкету сразу в работе и публикует started. Вызывается владельцем анкеты (wish, peer-review) за респондента.',
   type: 'command',
   aggregate: QuestionnaireArDef,
   callers: ['system'],
-  policy: QuestionnaireRespondentPolicy.rules.hasRespondent,
+  policy: QuestionnairePolicy.rules.hasRespondent,
   input: v.object({
-    pool: v.pipe(
-      QuestionnairePoolSchema,
-      v.description('Пул анкеты: тексты и вопросы'),
+    pool: v.pipe(QuestionnairePoolSchema, v.description('Пул вопросов анкеты')),
+    ownerInfo: v.pipe(
+      v.record(v.string(), v.unknown()),
+      v.description(
+        'Данные владельца анкеты: модуль анкет их не толкует и передаёт как есть',
+      ),
     ),
-    owner: QuestionnaireEvents.started.payload.entries.owner,
   }),
   output: v.object({}),
   errors: [],

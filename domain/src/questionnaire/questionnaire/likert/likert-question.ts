@@ -25,23 +25,38 @@ export const LIKERT_SCALE: readonly AnswerOption[] = [
 
 /** Маппинг вопроса на метрику (узкий: категория↔подкатегория не связаны). */
 export const LikertMappingSchema = v.object({
-  category: v.pipe(v.string(), v.nonEmpty('Категория не может быть пустой')),
+  category: v.pipe(
+    v.string(),
+    v.nonEmpty('Категория не может быть пустой'),
+    v.description('Категория навыка'),
+  ),
   subcategory: v.pipe(
     v.string(),
     v.nonEmpty('Подкатегория не может быть пустой'),
+    v.description('Подкатегория навыка'),
   ),
-  weight: v.number(),
+  weight: v.pipe(v.number(), v.description('Вес вопроса в подкатегории')),
 });
 export type LikertMapping = v.InferOutput<typeof LikertMappingSchema>;
 
 /** Балл по подкатегории — результат вычисления likertScores. */
 export const LikertScoreSchema = v.object({
-  category: v.pipe(v.string(), v.nonEmpty('Категория не может быть пустой')),
+  category: v.pipe(
+    v.string(),
+    v.nonEmpty('Категория не может быть пустой'),
+    v.description('Категория навыка'),
+  ),
   subcategory: v.pipe(
     v.string(),
     v.nonEmpty('Подкатегория не может быть пустой'),
+    v.description('Подкатегория навыка'),
   ),
-  score: v.pipe(v.number(), v.minValue(1), v.maxValue(5)),
+  score: v.pipe(
+    v.number(),
+    v.minValue(1),
+    v.maxValue(5),
+    v.description('Балл по подкатегории (1–5)'),
+  ),
 });
 export type LikertScore = v.InferOutput<typeof LikertScoreSchema>;
 
@@ -54,24 +69,38 @@ export const LikertQuestionSchema = v.object({
   questionCode: v.pipe(
     v.string(),
     v.nonEmpty('Код вопроса не может быть пустым'),
+    v.description('Код вопроса: уникален в пуле'),
   ),
   question: v.pipe(
     v.string(),
     v.nonEmpty('Текст вопроса не может быть пустым'),
+    v.description('Текст вопроса'),
   ),
-  likertMapping: LikertMappingSchema,
+  likertMapping: v.pipe(
+    LikertMappingSchema,
+    v.description('Маппинг вопроса на метрику'),
+  ),
 });
 export type LikertQuestion = v.InferOutput<typeof LikertQuestionSchema>;
 
 /** Пул вопросов likert-анкеты — метаданные + LikertQuestion[] */
 export const LikertQuestionPoolSchema = v.object({
-  inviteText: v.optional(v.string()),
-  whyText: v.optional(v.string()),
-  completionText: v.optional(v.string()),
-  cancelWarning: v.optional(v.string()),
+  inviteText: v.optional(
+    v.pipe(v.string(), v.description('Текст приглашения к анкете')),
+  ),
+  whyText: v.optional(
+    v.pipe(v.string(), v.description('Зачем анкета — пояснение респонденту')),
+  ),
+  completionText: v.optional(
+    v.pipe(v.string(), v.description('Текст после завершения анкеты')),
+  ),
+  cancelWarning: v.optional(
+    v.pipe(v.string(), v.description('Предупреждение при отмене анкеты')),
+  ),
   questions: v.pipe(
     v.array(LikertQuestionSchema),
     v.minLength(1, 'Пул должен содержать хотя бы один вопрос'),
+    v.description('Вопросы likert-анкеты в порядке показа'),
   ),
 });
 export type LikertQuestionPool = v.InferOutput<typeof LikertQuestionPoolSchema>;

@@ -1,8 +1,8 @@
-// biome-ignore lint/style/noRestrictedImports: DEBT-2 — тип резолвера пока в app
-import type { U7ModuleResolver } from '@u7-scl/app-legacy/domain';
+/**
+ * Оболочка Т15: метатипы API-модуля questionnaire для `U7BotAppMeta` и
+ * stories до Ф2/Ф3. Резолвера и зависимостей рантайма здесь нет.
+ */
 import type { ApiModuleMeta } from '@u7-scl/core/domain';
-import type { BaseJsonDb } from '@u7-scl/core/infra';
-import type { UserFacade } from '@u7-scl/domain/user';
 import type { AbandonCmdMeta } from './questionnaire/commands/abandon-cmd';
 import type { DeclineInviteCmdMeta } from './questionnaire/commands/decline-invite-cmd';
 import type { GetCurrentCmdMeta } from './questionnaire/commands/get-current-cmd';
@@ -12,7 +12,6 @@ import type { HandleActionCmdMeta } from './questionnaire/commands/handle-action
 import type { SendLikertInviteCmdMeta } from './questionnaire/commands/send-likert-invite-cmd';
 import type { StartByInviteCmdMeta } from './questionnaire/commands/start-by-invite-cmd';
 import type { StartCmdMeta } from './questionnaire/commands/start-cmd';
-import type { QuestionnaireRepo } from './questionnaire/repo';
 
 export type QuestionnaireUcMetas =
   | SendLikertInviteCmdMeta
@@ -25,16 +24,9 @@ export type QuestionnaireUcMetas =
   | GetQuestionnaireCmdMeta
   | GetQuestionnairesByUserCmdMeta;
 
-/** Метаданные API-модуля questionnaire */
+/** Метаданные API-модуля questionnaire. */
 export interface QuestionnaireApiModuleMeta extends ApiModuleMeta {
   name: 'questionnaire';
   url: '/questionnaire';
   ucMetas: QuestionnaireUcMetas;
-}
-
-/** Резолвер зависимостей API-модуля questionnaire */
-export interface QuestionnaireApiModuleResolver extends U7ModuleResolver {
-  questionnaireRepo: QuestionnaireRepo;
-  userFacade: UserFacade;
-  db: BaseJsonDb;
 }

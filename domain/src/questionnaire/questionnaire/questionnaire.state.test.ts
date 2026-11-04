@@ -42,17 +42,20 @@ describe('QuestionnaireState — legacy-запись', () => {
   it.each([
     ['standard', legacyStandard],
     ['likert', legacyLikert],
-  ])('%s: ISO → числа UTC, updatedAt = createdAt, version = 0', (kind, row) => {
-    const res = parse(row);
-    expect(res.success).toBe(true);
-    if (res.success) {
-      expect(res.output.kind).toBe(kind);
-      expect(res.output.createdAt).toBe(T);
-      expect(res.output.updatedAt).toBe(T);
-      expect(res.output.version).toBe(0);
-      expect(res.output.completedAt).toBeNull();
-    }
-  });
+  ] as const)(
+    '%s: ISO → числа UTC, updatedAt = createdAt, version = 0',
+    (kind, row) => {
+      const res = parse(row);
+      expect(res.success).toBe(true);
+      if (res.success) {
+        expect(res.output.kind).toBe(kind);
+        expect(res.output.createdAt).toBe(T);
+        expect(res.output.updatedAt).toBe(T);
+        expect(res.output.version).toBe(0);
+        expect(res.output.completedAt).toBeNull();
+      }
+    },
+  );
 
   it('даты ответов, warnedAt, continueInvitedAt и completedAt — числа', () => {
     const res = parse({
@@ -76,7 +79,7 @@ describe('QuestionnaireState — legacy-запись', () => {
   });
 
   it('abandonReason (timeout, by_user) и ownerInfo сохраняются', () => {
-    for (const abandonReason of ['timeout', 'by_user']) {
+    for (const abandonReason of ['timeout', 'by_user'] as const) {
       const res = parse({
         ...legacyStandard,
         status: 'abandoned',

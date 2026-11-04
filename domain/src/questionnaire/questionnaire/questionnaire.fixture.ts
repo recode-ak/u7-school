@@ -174,8 +174,8 @@ export const storedLikert = (
 });
 
 /** Общие поля payload событий анкеты (`ref` контракта). */
-export const refOf = (
-  kind: 'standard' | 'likert' = 'standard',
+export const refOf = <K extends 'standard' | 'likert' = 'standard'>(
+  kind: K = 'standard' as K,
   ownerInfo: Record<string, unknown> = kind === 'standard'
     ? OWNER_INFO
     : LIKERT_OWNER_INFO,

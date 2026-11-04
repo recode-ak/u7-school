@@ -1,106 +1,22 @@
-import type { ArMeta } from '@u7-scl/core/domain';
-import * as v from 'valibot';
-import { QuestionnairePoolSchema } from './question';
-
-export const AnswerSchema = v.object({
-  questionCode: v.pipe(
-    v.string(),
-    v.nonEmpty('Код вопроса не может быть пустым'),
-  ),
-  /** Код(ы) ответа: для choice — <code>, для text — "text" */
-  answerCode: v.pipe(v.string(), v.nonEmpty('Код ответа не может быть пустым')),
-  /** Текст ответа: обязателен для text-вопросов, отсутствует для choice */
-  answerText: v.optional(v.string()),
-  answeredAt: v.pipe(
-    v.string(),
-    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-5
-    v.isoDateTime('Некорректный формат даты ответа'),
-  ),
-});
-
-export type Answer = v.InferOutput<typeof AnswerSchema>;
-
-export const QuestionnaireStatusSchema = v.picklist(
-  ['invited', 'in_progress', 'completed', 'abandoned'],
-  'Некорректный статус анкеты',
-);
-
-export type QuestionnaireStatus = v.InferOutput<
-  typeof QuestionnaireStatusSchema
->;
-
-export const AbandonReasonSchema = v.picklist(
-  ['timeout', 'by_user'],
-  'Некорректная причина прерывания анкеты',
-);
-
 /**
- * Причина прерывания анкеты:
- * - 'timeout' — анкета закрыта планировщиком по таймауту простоя;
- * - 'by_user' — пользователь прервал анкету вручную.
+ * Оболочка Т15: типы записи анкеты для миров, e2e и метатипов команд.
+ * Рантайм-схемы состояния — `questionnaire.state.ts`; оболочка удаляется в Ф3.
  */
-export type AbandonReason = v.InferOutput<typeof AbandonReasonSchema>;
 
-/** Схема состояния обычной анкеты */
-export const QuestionnaireSchema = v.object({
-  kind: v.literal('standard'),
-  uuid: v.pipe(v.string(), v.uuid('Некорректный формат UUID')),
-  respondentId: v.pipe(
-    v.string(),
-    v.uuid('respondentId должен быть валидным UUID'),
-  ),
-  status: QuestionnaireStatusSchema,
-  currentQuestionCode: v.nullable(
-    v.pipe(v.string(), v.nonEmpty('Код текущего вопроса не может быть пустым')),
-  ),
-  draftAnswers: v.record(v.string(), v.string()),
-  answers: v.array(AnswerSchema),
-  questionPool: QuestionnairePoolSchema,
-  ownerInfo: v.record(v.string(), v.unknown()),
-  createdAt: v.pipe(
-    v.string(),
-    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-5
-    v.isoDateTime('Некорректный формат даты создания'),
-  ),
-  updatedAt: v.optional(
-    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-5
-    v.pipe(v.string(), v.isoDateTime('Некорректный формат даты обновления')),
-  ),
-  /** Когда анкете отправлено предупреждение о закрытии (брошенная анкета) */
-  warnedAt: v.optional(
-    v.pipe(
-      v.string(),
-      // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-5
-      v.isoDateTime('Некорректный формат даты предупреждения'),
-    ),
-  ),
-  /** Когда анкете отправлено приглашение продолжить заполнение (брошенная анкета, ступень 3ч) */
-  continueInvitedAt: v.optional(
-    v.pipe(
-      v.string(),
-      // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-5
-      v.isoDateTime('Некорректный формат даты приглашения продолжить'),
-    ),
-  ),
-  completedAt: v.nullable(
-    // biome-ignore lint/plugin: перенос без изменений, ISO-даты в схемах (DOM-12) DEBT-5
-    v.pipe(v.string(), v.isoDateTime('Некорректный формат даты завершения')),
-  ),
-  /** Причина прерывания — персистируется вместе со статусом abandoned */
-  abandonReason: v.optional(AbandonReasonSchema),
-});
+/** Ответ на вопрос анкеты; дата — число UTC или ISO-строка legacy-записи. */
+export type Answer = {
+  questionCode: string;
+  answerCode: string;
+  answerText?: string;
+  answeredAt: number | string;
+};
 
-export type Questionnaire = v.InferOutput<typeof QuestionnaireSchema>;
-
-/**
- * Базовые поля состояния анкеты — общие для базового QuestionnaireAr
- * и наследников (например, LikertQuestionnaireAr с упрощённым пулом).
- */
+/** Запись анкеты в мире: даты — ISO или числа UTC. */
 export type BaseQuestionnaireState = {
   kind: 'standard' | 'likert';
   uuid: string;
   respondentId: string;
-  status: QuestionnaireStatus;
+  status: 'invited' | 'in_progress' | 'completed' | 'abandoned';
   currentQuestionCode: string | null;
   draftAnswers: Record<string, string>;
   answers: Answer[];
@@ -112,19 +28,18 @@ export type BaseQuestionnaireState = {
     questions: unknown[];
   };
   ownerInfo: Record<string, unknown>;
-  createdAt: string;
-  updatedAt?: string;
-  /** Когда анкете отправлено предупреждение о закрытии */
-  warnedAt?: string;
-  /** Когда анкете отправлено приглашение продолжить заполнение */
-  continueInvitedAt?: string;
-  completedAt: string | null;
-  /** Причина прерывания анкеты (см. AbandonReason) */
-  abandonReason?: AbandonReason;
+  createdAt: string | number;
+  updatedAt?: string | number;
+  warnedAt?: string | number;
+  continueInvitedAt?: string | number;
+  completedAt: string | number | null;
+  abandonReason?: 'timeout' | 'by_user';
 };
 
-/** Метаданные агрегата Questionnaire */
-export interface BaseQuestionnaireArMeta extends ArMeta {
+export type Questionnaire = BaseQuestionnaireState;
+
+/** Метаданные агрегата анкеты для оболочки метатипов команд (Т15). */
+export interface BaseQuestionnaireArMeta {
   name: 'Questionnaire';
   label: 'Анкета';
   state: BaseQuestionnaireState;

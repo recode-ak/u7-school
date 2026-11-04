@@ -71,6 +71,15 @@ export class QuestionnaireEngine {
     return this.index.get(code);
   }
 
+  /** Вопрос по коду; запись с вопросом вне пула — исключение (Т13). */
+  getRequiredByCode(code: string): Question {
+    const question = this.index.get(code);
+    if (question === undefined) {
+      throw new Error(`Вопрос "${code}" не найден в пуле`);
+    }
+    return question;
+  }
+
   /**
    * Прогресс вопроса: позиция (1-based) и total — по активному маршруту,
    * а не по полному пулу. Маршрут строится с начала пула применением

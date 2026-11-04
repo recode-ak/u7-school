@@ -8,7 +8,7 @@ import { QuestionnaireEvents } from './questionnaire.events';
 const ref = {
   questionnaireId: '11111111-1111-4111-8111-111111111111',
   respondentId: '22222222-2222-4222-8222-222222222222',
-  kind: 'standard',
+  kind: 'standard' as const,
   ownerInfo: { kind: 'wish', wishId: 'w-1' },
 };
 const scores = [
@@ -99,7 +99,7 @@ describe('QuestionnaireEvents.completed', () => {
   });
 
   it('likert: ref + likertScores', () => {
-    const likert = { ...ref, kind: 'likert', likertScores: scores };
+    const likert = { ...ref, kind: 'likert' as const, likertScores: scores };
     expect(v.parse(payload, likert)).toEqual(likert);
   });
 
@@ -111,7 +111,7 @@ describe('QuestionnaireEvents.completed', () => {
     const bad = (s: object) =>
       valid(payload, {
         ...ref,
-        kind: 'likert',
+        kind: 'likert' as const,
         likertScores: [{ ...scores[0], ...s }],
       });
     expect(bad({ score: 0.9 })).toBe(false);
@@ -125,7 +125,7 @@ describe('QuestionnaireEvents.completed', () => {
 describe('QuestionnaireEvents.abandoned', () => {
   const { payload } = QuestionnaireEvents.abandoned;
 
-  it.each(['timeout', 'by_user', 'declined'])(
+  it.each(['timeout', 'by_user', 'declined'] as const)(
     'reason %s допустим',
     (reason) => {
       expect(v.parse(payload, { ...ref, reason })).toEqual({ ...ref, reason });

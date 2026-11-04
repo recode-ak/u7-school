@@ -101,6 +101,7 @@ describe('handleAction — завершение', () => {
     const ar = create(
       simplePool({ completionText: 'Спасибо! Анкета принята.' }),
     );
+    ar.pullEvents();
     act(ar, cb('yes'));
     const res = expectOk(ar.handleAction(at(100), cb('ok')));
     return { ar, res };

@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import type { BaseQuestionnaireArMeta } from '../entity';
-import type { QuestionnaireActionResponse } from '../types';
+import type { QuestionnaireActionResponse } from '../questionnaire.types';
 import type {
   AccessDeniedUcError,
   InternalUcError,
