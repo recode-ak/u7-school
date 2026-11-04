@@ -621,3 +621,11 @@ DOM-01…06, DOM-10…12, DOM-14, DOM-15, DOM-17; API-01…07; MAN-01…06, MAN-
 - Принято: `throw` в конструкторе Ar на `restore` повреждённого state (инвариант, тест требует); `new QuestionnaireAr` в статических фабриках (образец `student.ar.ts`).
 - Возвращено и исправлено во 2-м круге: `this.pullEvents()` при завершении (Ar глушил `started`) — ошибка теста `answers.test` (не забирал события после создания), тест поправлен; схемы расширены до `string` через `as unknown as` — возвращены точные литералы, `QuestionnaireState = v.InferOutput`, тесты — `as const`, `refOf` generic.
 - Итог: `bun test domain/src/questionnaire domain/src/wish` — 424 pass; `tsc` домена — 0 ошибок; `biome` чисто. Гейт красный вне домена (шаги 3–5).
+
+## Отчёт `migrator`, прикладной слой (Ф1, шаг 3; flash, 2 круга, ~$0.24)
+
+- Созданы: порт `questionnaire.repo.ts` (`findById`, `findByRespondent`, `findIdle`), `questionnaire.repo.fake.ts` (`MemoryRepo`), 9 UC (`start-questionnaire` — настоящий UC вместо адаптера), Job `sweep-abandoned-questionnaires.job.ts`, `infra/questionnaire.json-repo.ts` (`VersionedRepository`, `v.array(QuestionnaireArDef.state)`); переписаны `questionnaire.module.ts`, `index.ts`, `infra/index.ts`. Удалены 24 файла legacy: `src/api/**`, `src/infra/db/**`, in-proc-фасад, `legacy-inbound{,.test}.ts`.
+- Отклонение (на ревью, TR): `AbandonUc` регистрирует агрегат в UoW только при изменении версии — иначе идемпотентный повтор на `abandoned` (Т3) пишет запись.
+- Не тронуто (шаги 4–5 / Ф3): `package.json` (`exports["./api"]`, `#api-legacy/*`), `tsconfig.json` (путь `@u7-scl/questionnaire/api`).
+- Круг 2 — правка red-тестов по эскалации (дефекты тестов): отказ доступа проверяется по `payload.denyMessage` (платформа отдаёт общий `label`, образец `stream`); smoke модуля — свой `requestId` на команду (D-56); аннотации типов хелперов `caller: Caller<QuestionnaireUser>`, `input: unknown`.
+- Итог: `bun test modules/questionnaire domain/src/questionnaire` — 324 pass; `tsc` модуля — 0; `biome` чисто; `data/` чист. `arch:check` красный: DEBT-32/44 погашены, DEBT-2/5/10 — сузить в `debt.md` (orchestrator, шаг 6), ARC-07/08 в `platform`/`runners` — шаги 4–5.

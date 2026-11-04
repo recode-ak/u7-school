@@ -47,8 +47,8 @@
     - state (`F.timestamp`, variant `kind`, поле `ownerInfo`), `QuestionnaireArDef` и Ar без `#` и с `Result` вместо `throw*`;
     - 6 событий, ошибки, Policy и правила, DCS/DQS, Def 9 UC и Job;
     - без `core`, `app-legacy` и чужого `index`. DEBT-1, 2, 5, 10 (questionnaire).
-- [~] Task: `migrator`, прикладной слой (flash): `UseCaseFromDef`, `JobFromDef`, адрес через `GetTelegramAddressesUcDef`; репозиторий через UoW (строгий разбор) с тестом на `DB_DIR=./data/fixtures`
-- [ ] Task: `migrator`, клиенты `wish` и сборка Ф1 (flash; С1 TR-48 — `external` и legacy снимаются в Ф1):
+- [x] Task: `migrator`, прикладной слой (flash) d8f32b23 —: `UseCaseFromDef`, `JobFromDef`, адрес через `GetTelegramAddressesUcDef`; репозиторий через UoW (строгий разбор) с тестом на `DB_DIR=./data/fixtures`
+- [~] Task: `migrator`, клиенты `wish` и сборка Ф1 (flash; С1 TR-48 — `external` и legacy снимаются в Ф1):
     - `u7-app.ts`, `u7-app.types.ts`, `u7-app.test.ts` на модуль Def; типовые импорты stories (Т16);
     - `StartQuestionnaireUcDef` реализован настоящим UC, адаптер `start-questionnaire` удалён (DEBT-44, DEBT-32);
     - `owner` → `ownerInfo` во входе UC и в ER `confirm-wish`/`abandon-wish` с тестами (Q2);
