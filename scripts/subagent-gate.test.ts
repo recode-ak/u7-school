@@ -12,12 +12,15 @@ import {
 describe('needsGate', () => {
   test('роли, меняющие код, — гейт нужен', () => {
     expect(needsGate(['migrator'])).toBe(true);
-    expect(needsGate(['reviewer', 'api-author'])).toBe(true);
+    expect(needsGate(['dmg-domain-author'])).toBe(true);
+    expect(needsGate(['dmg-reviewer', 'dmg-api-author'])).toBe(true);
   });
 
-  test('только reviewer или чужие агенты — гейт не нужен', () => {
-    expect(needsGate(['reviewer'])).toBe(false);
+  test('только dmg-reviewer или чужие агенты — гейт не нужен', () => {
+    expect(needsGate(['dmg-reviewer'])).toBe(false);
+    expect(needsGate(['dmg-tech-lead', 'dmg-data-keeper'])).toBe(false);
     expect(needsGate(['scout'])).toBe(false);
+    expect(needsGate(['domain-author', 'api-author'])).toBe(false);
     expect(needsGate([])).toBe(false);
   });
 });

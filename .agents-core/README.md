@@ -1,6 +1,6 @@
 # .agents-core — единый источник ролей агентов
 
-Роли платформы (`domain-author`, `api-author`, `reviewer`) и их общий блок — из пакета `dmg-core` (формат — `node_modules/dmg-core/agents/README.md`): `bun run dmg:sync` по `dmg-core.json` кладёт их в `roles/` и `dmg-core-common.md` с меткой версии (руками не править, `dmg:check` в `check`). Проектное — роли `roles/migrator.md`, роли пилота волны 1 (`tech-lead`, `test-designer`, `data-keeper`) и `documentarian` (`conductor/architecture/agent-roles.md`) и общий блок проекта `common.md`. `bun run agents:sync` собирает все роли из `roles/` в копии под каждую среду:
+Роли платформы (`dmg-tech-lead`, `dmg-test-designer`, `dmg-domain-author`, `dmg-api-author`, `dmg-data-keeper`, `dmg-reviewer`) и их общий блок — из пакета `dmg-core` (формат — `node_modules/dmg-core/agents/README.md`): `bun run dmg:sync` по `dmg-core.json` кладёт их в `roles/` и `dmg-core-common.md` с меткой версии (руками не править, `dmg:check` в `check`). Проектное — роли `roles/migrator.md` и `roles/documentarian.md` (`conductor/architecture/agent-roles.md`) и общий блок проекта `common.md` (привязка ролей пакета к u7-school). `bun run agents:sync` собирает все роли из `roles/` в копии под каждую среду:
 
 - `.claude/agents/<role>.md` — Claude Code;
 - `.pi/agents/<role>.md` — pi.
@@ -15,7 +15,7 @@
 
 ```markdown
 ---
-name: reviewer            # совпадает с именем файла
+name: migrator            # совпадает с именем файла
 description: Что делает роль и когда её вызывать
 tools: [read, grep, find, bash]
 model:                    # необязательно; без него — модель среды

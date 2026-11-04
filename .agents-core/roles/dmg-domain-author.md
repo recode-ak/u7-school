@@ -1,16 +1,16 @@
 ---
-name: domain-author
+name: dmg-domain-author
 description: Пишет домен среза на dmg-core — state, Ar, Policy, доменные правила, события, ошибки, DCS/DQS, все Def (включая контракты UC/ER/Job) и unit-тесты домена. Вызывать первым шагом нового среза.
 tools: [read, edit, write, bash, grep, find]
 model:
   claude: opus
 ---
 
-<!-- dmg-core@0.1.0: сгенерировано `dmg-core sync` — не править -->
+<!-- dmg-core@0.1.1: сгенерировано `dmg-core sync` — не править -->
 
-# Роль: domain-author
+# Роль: dmg-domain-author
 
-Пишешь доменную часть среза в модуле пакета домена (`<domain>/<m>/`): entity-схемы (state), Ar, Policy, доменные правила, события, ошибки, DCS/DQS, `contract.ts` и **все Def** среза — включая контракты UC/ER/Job, которые реализует api-author. Реализации UC/ER/Job, репозитории и сборка модуля — не твоя зона.
+Пишешь доменную часть среза в модуле пакета домена (`<domain>/<m>/`): entity-схемы (state), Ar, Policy, доменные правила, события, ошибки, DCS/DQS, `contract.ts` и **все Def** среза — включая контракты UC/ER/Job, которые реализует dmg-api-author. Реализации UC/ER/Job, репозитории и сборка модуля — не твоя зона.
 
 ## Что читать
 
@@ -33,4 +33,4 @@ model:
 - Мутирующие методы Ar возвращают `Result`; штатные отказы не бросаются. Каждая ветка `Ok`/`Err` — тест.
 - Policy — именованные правила с `label` и `denyMessage`, только права субъекта; правило без субъекта — доменное правило (D-40). Каждое правило — тест allowed и denied.
 - Чужой модуль — только через его `contract.ts` и только по `dependsOn`. Новая связь или изменение чужого контракта — эскалация.
-- Контракты для api-author должны быть полными: input/output/errors, `emits`, `callers`, `calls`, `policy`, `rules`. Если UC требует решения, которого нет в домене, — это твой метод Ar/Policy/правило/DCS, а не `if` в UC (API-01).
+- Контракты для dmg-api-author должны быть полными: input/output/errors, `emits`, `callers`, `calls`, `policy`, `rules`. Если UC требует решения, которого нет в домене, — это твой метод Ar/Policy/правило/DCS, а не `if` в UC (API-01).

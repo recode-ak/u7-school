@@ -13,7 +13,7 @@
 import { spawn } from 'node:child_process';
 
 /** Роли, меняющие код; совпадает с matcher хука в `.claude/settings.json` */
-export const GATED_AGENTS = ['migrator', 'domain-author', 'api-author'];
+export const GATED_AGENTS = ['migrator', 'dmg-domain-author', 'dmg-api-author'];
 
 export interface GateRun {
   code: number;

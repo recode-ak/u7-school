@@ -110,10 +110,10 @@ describe('planGate', () => {
 
   test('.md ролей агентов — полный check (его проверяет agents:check)', () => {
     for (const path of [
-      '.agents-core/roles/reviewer.md',
+      '.agents-core/roles/dmg-reviewer.md',
       '.agents-core/common.md',
-      '.claude/agents/reviewer.md',
-      '.pi/agents/reviewer.md',
+      '.claude/agents/dmg-reviewer.md',
+      '.pi/agents/dmg-reviewer.md',
     ]) {
       expect(planGate([path], WORKSPACES).kind).toBe('full');
     }
