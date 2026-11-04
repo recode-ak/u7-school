@@ -93,3 +93,11 @@ export function isoMinute(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return d.toISOString().slice(0, 16);
 }
+
+/**
+ * Момент в миллисекундах (UTC). Строка без зоны (`YYYY-MM-DDTHH:mm`) читается
+ * как UTC — так же, как состояние по Def (D-36).
+ */
+export function utcMs(iso: string): number {
+  return Date.parse(/(Z|[+-]\d\d:\d\d)$/.test(iso) ? iso : `${iso}Z`);
+}

@@ -6,7 +6,6 @@ import { ConsoleLogger } from '@u7-scl/core/shared';
 import type { CourseApiModule } from '@u7-scl/course/api';
 import { CourseInProcFacade } from '@u7-scl/course/infra';
 import { ReviewCampaignJsonRepo, ReviewJsonRepo } from '@u7-scl/peer-review';
-import type { StreamApiModule } from '@u7-scl/stream';
 import type { UserInProcFacade } from '@u7-scl/user/infra';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
 import type { AnyModuleDef, DomainError, Result } from 'dmg-core';
@@ -17,8 +16,6 @@ import { cleanupFixtures, loadFixtures } from './fixture-loader';
 export interface TestApp {
   /** Полноценный ApiApp со всеми модулями */
   apiApp: U7BotApp;
-  /** API модуля stream (для создания StreamsController) */
-  streamModule: StreamApiModule;
   /** API модуля курсов (для создания CoursesController) */
   courseModule: CourseApiModule;
   /** Общая шина событий (та же, что внутри apiApp) — для TestBotTransport */
@@ -69,7 +66,6 @@ export async function createTestApp(tag?: string): Promise<TestApp> {
 
   return {
     apiApp: app.apiApp,
-    streamModule: app.streamModule,
     courseModule: app.courseModule,
     eventBus: app.eventBus,
     callers: app.callers,

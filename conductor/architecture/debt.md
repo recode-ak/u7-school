@@ -71,7 +71,6 @@
   - `domain/src/user/module.ts` — тип `U7ModuleResolver`; погашает перевод `user` на Def
   - `domain/src/course/module.ts` — тип `U7ModuleResolver`; погашает перевод `course` на Def
   - `domain/src/questionnaire/module.ts` — тип `U7ModuleResolver`; погашает перевод `questionnaire` на Def
-  - `domain/src/stream/module.ts` — тип `U7ModuleResolver` в оболочке (TR-43 Т1); погашает Ф3 трека `stream-dmg`
 - **Признак:** `from '@u7-scl/app-legacy`
 - **Корень:** `domain/src/**`
 - **Причина:** тип резолвера модулей и `U7_SCHOOL_ID` определены в `app`; создаёт циклическую зависимость пакетов `app` ↔ `domain` (только типы, в рантайме импорт стирается); сам цикл пакетов также снимается этим долгом.
@@ -83,7 +82,6 @@
   - `domain/src/user/user/entity.ts` — `createdAt`, `updatedAt`; `biome-ignore lint/plugin`; погашает перевод `user` на Def (`F.timestamp`)
   - `domain/src/course/*/entity.ts` — `course`, `lesson`, `module`, `step`: `createdAt`, `updatedAt`; `biome-ignore lint/plugin`; погашает перевод `course` на Def (`F.timestamp`)
   - `domain/src/questionnaire/questionnaire/entity.ts`, `domain/src/questionnaire/questionnaire/likert/likert-questionnaire.ts` — `biome-ignore lint/plugin`; погашает перевод `questionnaire` на Def (`F.timestamp`)
-  - `domain/src/stream/{stream,student}/entity.ts` — схемы legacy-типов для миров и скриптов (`biome-ignore lint/plugin`, TR-43 Т1); погашает Ф3 трека `stream-dmg`
 - **Признак:** `v\.isoDateTime`
 - **Корень:** `domain/src/**`
 - **Причина:** схемы перенесены из `app` без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена.
@@ -511,3 +509,9 @@
 - **Решение:** `runJob` в `ApiApp` (`platform/core`) и в `tests/helpers/test-app.ts` принят — нужен e2e Job через `runJob`; скрипты `update-stream-snapshot`/`stream-snapshot-sync` импортируют `Student`/`StepRecord` через barrel `@u7-scl/stream/domain` (DEBT-3) — в контракте этих типов нет, контракт не расширяется; остальные замечания — к правке (таблица брифа).
 - **Повторное ревью правок (8.5/10, без `error`):** `GetStudentProgressUc` считает отставание по всему составу потока — список монитора (`shared/student-rows.ts`) делает ≈2N+1 полных разборов `students.json` вместо N+1 (`StudentJsonRepo` без кэша); при десятках студентов терпимо, не правится. `view-stream-mentor.ts` (`STUDENTS_IN_PROGRESS`) оставлен на `as`: `ErrorDef.restore` строго валидирует схему, а story-тест мокает payload с не-uuid `userId`. Критерий приёмки Ф2 `grep "Role.STUDENT…"` относится к прод-коду: в тестах Policy потока и студента `Role.STUDENT` остаётся как роль, не дающая прав (роль ещё есть в `user`).
 - **Пересмотреть:** Ф3 — скрипты на типы контракта или репозиторий DMG, barrel удаляется; чтение файла один раз на UoW в `StudentJsonRepo` или пакетный запрос прогресса по потоку (тогда `lagById` в `loadStudentRows` не нужен); `restore` в `view-stream-mentor` вместе с правкой мока.
+
+### TR-45: границы среза сборки `stream` (`stream-dmg`, Ф3)
+- **Трек / фаза:** `stream-dmg`, Ф3 (orchestrator, 2026-11-04; бриф — `slices/assembly.md`)
+- **Контекст:** критерий плана Ф3 `grep "…|StreamJsonRepo"` написан до Ф1: `StreamJsonRepo`/`StudentJsonRepo` в `modules/stream/src/infra/` — новые репозитории (UoW, `VersionedRepository`), а не legacy. `StreamFacade`, `StreamInProcFacade`, `streamLegacyInbound`, `commands/*-cmd.ts`, `stream-uc.ts` удалены ещё в Ф1–Ф2; `external` у `StreamModuleDef` уже нет.
+- **Решение:** `StreamJsonRepo` из критерия исключён; бриф сам, без `tech-lead` (срез по образцу `peer-review`); задачи 2–4 плана — один шаг `migrator`; legacy-entity потока и студента удаляются, если после перевода миров и скриптов потребителей не осталось (удалены). Ревью: `update-stream-snapshot.ts` правит `contentSnapshot` в `streams.json` сырым JSON, без `version`/`updatedAt` — оставлено (репозиторий читает, бриф не требовал); `students.json` пишется через строгий разбор `StudentArDef.state`, при сбое разбора — отказ до записи; справка — бэкап и запуск при остановленном боте (гонка перезаписи).
+- **Пересмотреть:** `update-stream-snapshot.ts` — запись потока и студентов через репозитории Def и UoW (снимает гонку с ботом и обход `version`).

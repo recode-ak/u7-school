@@ -1,10 +1,17 @@
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { ContentSnapshot } from '@u7-scl/course/domain';
-import type { Student } from '@u7-scl/domain/stream';
+import { StudentJsonRepo, type StudentState } from '@u7-scl/stream';
+import * as v from 'valibot';
 import {
   analyzeSnapshotDelta,
   extractStepIds,
+  parseStudentRows,
+  readStudentRows,
   syncAheadStudents,
+  writeStudentRows,
 } from './stream-snapshot-sync';
 
 // Вспомогательная функция для генерации тестового снапшота
@@ -25,16 +32,25 @@ function makeSnapshot(
   }));
 }
 
+type Student = StudentState;
+
+/** Момент как число миллисекунд (UTC): так хранит дату Def. */
+const T = (iso: string): number =>
+  Date.parse(iso.endsWith('Z') ? iso : `${iso}Z`);
+const AT = T('2026-10-09T12:00:00.000Z');
+
 function makeStudent(override: Partial<Student>): Student {
   return {
     uuid: 'student-1',
     streamId: 'stream-1',
     userId: 'user-1',
     status: 'active',
-    enrolledAt: '2026-09-01T10:00:00.000Z',
+    enrolledAt: T('2026-09-01T10:00:00.000Z'),
     currentStepId: 'step-1',
     steps: [],
-    createdAt: '2026-09-01T10:00:00.000Z',
+    createdAt: T('2026-09-01T10:00:00.000Z'),
+    updatedAt: T('2026-09-01T10:00:00.000Z'),
+    version: 0,
     ...override,
   };
 }
@@ -196,7 +212,7 @@ describe('stream-snapshot-sync', () => {
         uuid: 'stud-behind',
         currentStepId: 's1',
         steps: [
-          { stepId: 's1', status: 'issued', issuedAt: '2026-09-01T10:00' },
+          { stepId: 's1', status: 'issued', issuedAt: T('2026-09-01T10:00') },
         ],
       });
 
@@ -207,20 +223,15 @@ describe('stream-snapshot-sync', () => {
           {
             stepId: 's1',
             status: 'completed',
-            issuedAt: '2026-09-01T10:00',
-            completedAt: '2026-09-01T11:00',
+            issuedAt: T('2026-09-01T10:00'),
+            completedAt: T('2026-09-01T11:00'),
           },
-          { stepId: 's3', status: 'issued', issuedAt: '2026-09-01T11:00' },
+          { stepId: 's3', status: 'issued', issuedAt: T('2026-09-01T11:00') },
         ],
       });
 
       const students = [studBehind, studAhead];
-      const result = syncAheadStudents(
-        newSnap,
-        students,
-        ['s2-new'],
-        '2026-10-09T12:00:00.000Z',
-      );
+      const result = syncAheadStudents(newSnap, students, ['s2-new'], AT);
 
       expect(result.updatedCount).toBe(1);
       expect(result.updatedStudentUuids).toEqual(['stud-ahead']);
@@ -232,8 +243,8 @@ describe('stream-snapshot-sync', () => {
       const addedRecord = studAhead.steps.find((s) => s.stepId === 's2-new');
       expect(addedRecord).toBeDefined();
       expect(addedRecord?.status).toBe('completed');
-      expect(addedRecord?.issuedAt).toBe('2026-10-09T12:00:00.000Z');
-      expect(addedRecord?.completedAt).toBe('2026-10-09T12:00:00.000Z');
+      expect(addedRecord?.issuedAt).toBe(AT);
+      expect(addedRecord?.completedAt).toBe(AT);
     });
 
     test('повторный вызов идемпотентен (не дублирует шаги)', () => {
@@ -251,10 +262,10 @@ describe('stream-snapshot-sync', () => {
           {
             stepId: 's1',
             status: 'completed',
-            issuedAt: '2026-09-01T10:00',
-            completedAt: '2026-09-01T11:00',
+            issuedAt: T('2026-09-01T10:00'),
+            completedAt: T('2026-09-01T11:00'),
           },
-          { stepId: 's3', status: 'issued', issuedAt: '2026-09-01T11:00' },
+          { stepId: 's3', status: 'issued', issuedAt: T('2026-09-01T11:00') },
         ],
       });
 
@@ -267,5 +278,119 @@ describe('stream-snapshot-sync', () => {
       expect(secondRun.updatedCount).toBe(0);
       expect(studAhead.steps.length).toBe(3);
     });
+  });
+});
+
+describe('запись студентов после синхронизации (формат Def)', () => {
+  const U = (n: number) => `a0000000-0000-4000-8000-00000000000${n}`;
+  const STEP_1 = U(1);
+  const STEP_2 = U(2);
+  const NEW_STEP = U(3);
+  const STREAM = U(4);
+  let dir: string;
+
+  beforeAll(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'u7-snapshot-sync-'));
+  });
+
+  afterAll(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const snapshot = makeSnapshot([
+    {
+      projectId: 'p1',
+      lessons: [{ lessonId: 'l1', stepIds: [STEP_1, NEW_STEP, STEP_2] }],
+    },
+  ]);
+
+  test('legacy-запись (ISO-даты, без version) и запись нового формата: после записи version и числовые даты сохранены, репозиторий читает файл', async () => {
+    const file = join(dir, 'students.json');
+    const legacy = {
+      uuid: U(5),
+      streamId: STREAM,
+      userId: U(6),
+      status: 'active',
+      enrolledAt: '2026-09-01T10:00',
+      currentStepId: STEP_2,
+      steps: [
+        {
+          stepId: STEP_1,
+          status: 'completed',
+          issuedAt: '2026-09-01T10:00',
+          completedAt: '2026-09-01T11:00',
+        },
+        { stepId: STEP_2, status: 'issued', issuedAt: '2026-09-01T11:00' },
+      ],
+      createdAt: '2026-09-01T10:00',
+    };
+    const modern = {
+      ...legacy,
+      uuid: U(7),
+      userId: U(8),
+      enrolledAt: T('2026-09-01T10:00'),
+      createdAt: T('2026-09-01T10:00'),
+      updatedAt: T('2026-09-02T10:00'),
+      version: 3,
+      steps: [
+        {
+          stepId: STEP_1,
+          status: 'completed',
+          issuedAt: T('2026-09-01T10:00'),
+          completedAt: T('2026-09-01T11:00'),
+        },
+        { stepId: STEP_2, status: 'issued', issuedAt: T('2026-09-01T11:00') },
+      ],
+    };
+
+    const rows = parseStudentRows([legacy, modern]);
+    const res = syncAheadStudents(snapshot, rows, [NEW_STEP], AT);
+    expect(res.updatedCount).toBe(2);
+    await writeStudentRows(file, rows);
+
+    const written = (await Bun.file(file).json()) as StudentState[];
+    const [legacyOut, modernOut] = written;
+    expect(legacyOut?.version).toBe(0);
+    expect(modernOut?.version).toBe(3);
+    for (const row of written) {
+      for (const key of ['enrolledAt', 'createdAt', 'updatedAt'] as const) {
+        expect(typeof row[key]).toBe('number');
+      }
+      for (const step of row.steps) {
+        expect(typeof step.issuedAt).toBe('number');
+      }
+    }
+    expect(legacyOut?.createdAt).toBe(T('2026-09-01T10:00'));
+    expect(modernOut?.updatedAt).toBe(T('2026-09-02T10:00'));
+    const added = modernOut?.steps.find((st) => st.stepId === NEW_STEP);
+    expect(added).toEqual({
+      stepId: NEW_STEP,
+      status: 'completed',
+      issuedAt: AT,
+      completedAt: AT,
+    });
+
+    const repo = new StudentJsonRepo(file);
+    const restored = await repo.findById(U(7));
+    expect(restored?.snapshot().version).toBe(3);
+    expect(restored?.snapshot().steps.length).toBe(3);
+    expect(await repo.findByStream(STREAM)).toHaveLength(2);
+  });
+
+  test('битая запись — ошибка разбора до записи', () => {
+    expect(() => parseStudentRows([{ uuid: 'x' }])).toThrow(v.ValiError);
+  });
+
+  test('битый students.json — отказ чтения, streams.json не изменён; нет файла — пустой список', async () => {
+    const streamsFile = join(dir, 'streams.json');
+    const studentsFile = join(dir, 'broken-students.json');
+    await Bun.write(streamsFile, '[{"uuid":"s"}]');
+    await Bun.write(studentsFile, JSON.stringify([{ uuid: 'x' }]));
+
+    await expect(readStudentRows(studentsFile)).rejects.toBeInstanceOf(
+      v.ValiError,
+    );
+    expect(await Bun.file(streamsFile).text()).toBe('[{"uuid":"s"}]');
+    expect(await readStudentRows(join(dir, 'absent.json'))).toEqual([]);
   });
 });

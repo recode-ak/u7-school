@@ -8,10 +8,10 @@ import type {
 } from '@u7-scl/course/domain';
 import { Status } from '@u7-scl/course/domain';
 import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
-import type { Stream, StreamStatus, Student } from '@u7-scl/stream/domain';
+import type { StreamState, StudentState } from '@u7-scl/stream/domain';
 import type { Role, User } from '@u7-scl/user/domain';
 import { assertWorldInvariants } from './invariants';
-import { isoMinute, resolveRelativeTime } from './relative-time';
+import { isoMinute, resolveRelativeTime, utcMs } from './relative-time';
 import type {
   CampaignDef,
   PersonDef,
@@ -30,7 +30,7 @@ import { deterministicUuid } from './uuid';
  */
 function assertCampaignStudentFateInvariant(
   campaign: WorldCampaign,
-  student: Student | undefined,
+  student: StudentState | undefined,
   streamStatus?: string,
 ): void {
   if (!student) {
@@ -207,7 +207,7 @@ export function buildWorldState(
   }
 
   // 3. Сборка потоков (StreamDef -> Stream)
-  const streams: Stream[] = (def.streams ?? []).map((s: StreamDef) => {
+  const streams: StreamState[] = (def.streams ?? []).map((s: StreamDef) => {
     const streamUuid = s.uuid ?? deterministicUuid(`stream:${s.key}`);
     streamUuidByKey.set(s.key, streamUuid);
 
@@ -252,19 +252,17 @@ export function buildWorldState(
     });
 
     const startDate = resolveRelativeTime(s.startedAt ?? 'T-30d', anchorDate);
-    const createdAt = isoMinute(
-      new Date(new Date(startDate).getTime() - 30 * 24 * 60 * 60 * 1000),
-    );
+    const createdAt = utcMs(startDate) - 30 * 24 * 60 * 60 * 1000;
 
-    const streamEntity: Stream = {
+    const streamEntity: StreamState = {
       uuid: streamUuid,
       schoolId: s.schoolId ?? U7_SCHOOL_ID,
       title: s.title,
       description: s.description,
       mentorId,
       moduleId,
-      startDate,
-      status: s.status as StreamStatus,
+      startDate: utcMs(startDate),
+      status: s.status as StreamState['status'],
       enrollmentKey: s.enrollmentKey,
       telegramGroupId: s.telegramGroupId ?? '-1001111111111',
       telegramGroupInvite:
@@ -272,62 +270,73 @@ export function buildWorldState(
       goal: s.goal ?? 'Освоить ключевые навыки программирования',
       result: s.result ?? 'Готовый проект в портфолио',
       contentSnapshot:
-        (s.contentSnapshot as Stream['contentSnapshot']) ?? contentSnapshot,
+        (s.contentSnapshot as StreamState['contentSnapshot']) ??
+        contentSnapshot,
       createdAt,
+      updatedAt: createdAt,
+      version: 0,
     };
 
     return streamEntity;
   });
 
   // 4. Сборка студентов (StudentDef -> Student)
-  const students: Student[] = (def.students ?? []).map((st: StudentDef) => {
-    const studentUuid = st.uuid ?? deterministicUuid(`student:${st.key}`);
-    const userId =
-      userUuidByKey.get(st.personKey) ??
-      deterministicUuid(`person:${st.personKey}`);
-    const streamId =
-      streamUuidByKey.get(st.streamKey) ??
-      deterministicUuid(`stream:${st.streamKey}`);
+  const students: StudentState[] = (def.students ?? []).map(
+    (st: StudentDef) => {
+      const studentUuid = st.uuid ?? deterministicUuid(`student:${st.key}`);
+      const userId =
+        userUuidByKey.get(st.personKey) ??
+        deterministicUuid(`person:${st.personKey}`);
+      const streamId =
+        streamUuidByKey.get(st.streamKey) ??
+        deterministicUuid(`stream:${st.streamKey}`);
 
-    const enrolledAt = resolveRelativeTime(st.enrolledAt, anchorDate);
+      const enrolledAt = utcMs(resolveRelativeTime(st.enrolledAt, anchorDate));
 
-    // Текущий шаг
-    const defaultStepId =
-      steps[0]?.uuid ?? deterministicUuid('step:placeholder');
-    const currentStepId =
-      (st.currentStepKey ? stepUuidByKey.get(st.currentStepKey) : undefined) ??
-      st.currentStepId ??
-      defaultStepId;
-
-    const studentSteps = (st.steps ?? []).map((sRec) => {
-      const stepId =
-        (sRec.stepKey ? stepUuidByKey.get(sRec.stepKey) : undefined) ??
-        sRec.stepId ??
+      // Текущий шаг
+      const defaultStepId =
+        steps[0]?.uuid ?? deterministicUuid('step:placeholder');
+      const currentStepId =
+        (st.currentStepKey
+          ? stepUuidByKey.get(st.currentStepKey)
+          : undefined) ??
+        st.currentStepId ??
         defaultStepId;
 
-      return {
-        stepId,
-        status: sRec.status,
-        issuedAt: resolveRelativeTime(sRec.issuedAt ?? enrolledAt, anchorDate),
-        completedAt: sRec.completedAt
-          ? resolveRelativeTime(sRec.completedAt, anchorDate)
-          : undefined,
+      const studentSteps = (st.steps ?? []).map((sRec) => {
+        const stepId =
+          (sRec.stepKey ? stepUuidByKey.get(sRec.stepKey) : undefined) ??
+          sRec.stepId ??
+          defaultStepId;
+
+        return {
+          stepId,
+          status: sRec.status,
+          issuedAt: utcMs(
+            resolveRelativeTime(sRec.issuedAt ?? st.enrolledAt, anchorDate),
+          ),
+          completedAt: sRec.completedAt
+            ? utcMs(resolveRelativeTime(sRec.completedAt, anchorDate))
+            : undefined,
+        };
+      });
+
+      const studentEntity: StudentState = {
+        uuid: studentUuid,
+        streamId,
+        userId,
+        enrolledAt,
+        status: st.status,
+        currentStepId,
+        steps: studentSteps,
+        createdAt: enrolledAt,
+        updatedAt: enrolledAt,
+        version: 0,
       };
-    });
 
-    const studentEntity: Student = {
-      uuid: studentUuid,
-      streamId,
-      userId,
-      enrolledAt,
-      status: st.status,
-      currentStepId,
-      steps: studentSteps,
-      createdAt: enrolledAt,
-    };
-
-    return studentEntity;
-  });
+      return studentEntity;
+    },
+  );
 
   // 5. Сборка кампаний peer-review (CampaignDef -> WorldCampaign)
   const campaigns: WorldCampaign[] = (def.campaigns ?? []).map(

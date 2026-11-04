@@ -1,6 +1,42 @@
-import { isoNow } from '@u7-scl/core/shared';
+import { now } from '@u7-scl/core/shared';
 import type { ContentSnapshot } from '@u7-scl/course/domain';
-import type { StepRecord, Student } from '@u7-scl/stream/domain';
+import { StudentArDef, type StudentState } from '@u7-scl/stream/domain';
+import * as v from 'valibot';
+
+type Student = StudentState;
+type StepRecord = Student['steps'][number];
+
+const StudentRows = v.array(StudentArDef.state);
+
+/**
+ * Разбирает содержимое `students.json` строгой схемой Def: ISO-даты legacy
+ * становятся числами, `version` и `updatedAt` дописываются (D-36). Битая
+ * запись — исключение до любой записи.
+ */
+export function parseStudentRows(raw: unknown): Student[] {
+  return v.parse(StudentRows, raw);
+}
+
+/**
+ * Читает `students.json`: нет файла — пустой список; файл есть, но разбор
+ * упал — исключение (`ValiError`), вызывающий останавливается до любой записи.
+ */
+export async function readStudentRows(filePath: string): Promise<Student[]> {
+  const file = Bun.file(filePath);
+  if (!(await file.exists())) return [];
+  return parseStudentRows(await file.json());
+}
+
+/**
+ * Пишет студентов в `students.json` в формате, который читает
+ * `StudentJsonRepo`: `version` и числовые даты сохраняются как в `rows`.
+ */
+export async function writeStudentRows(
+  filePath: string,
+  rows: readonly Student[],
+): Promise<void> {
+  await Bun.write(filePath, JSON.stringify(rows, undefined, 2));
+}
 
 /** Информация об опережающем студенте для отчёта */
 export interface AheadStudentInfo {
@@ -140,7 +176,7 @@ export function syncAheadStudents(
   newSnapshot: ContentSnapshot,
   students: Student[],
   addedStepIds: string[],
-  nowIso: string = isoNow(),
+  at: number = now().getTime(),
 ): { updatedCount: number; updatedStudentUuids: string[] } {
   const newStepIds = extractStepIds(newSnapshot);
   const updatedUuids = new Set<string>();
@@ -161,14 +197,14 @@ export function syncAheadStudents(
           const newRecord: StepRecord = {
             stepId: newStepId,
             status: 'completed',
-            issuedAt: nowIso,
-            completedAt: nowIso,
+            issuedAt: at,
+            completedAt: at,
           };
           student.steps.push(newRecord);
           updatedUuids.add(student.uuid);
         } else if (existingRecord.status !== 'completed') {
           existingRecord.status = 'completed';
-          existingRecord.completedAt = nowIso;
+          existingRecord.completedAt = at;
           updatedUuids.add(student.uuid);
         }
       }

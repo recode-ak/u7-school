@@ -1,6 +1,5 @@
 // Domain слой модуля stream (@u7-scl/domain/stream)
 export * from './contract';
-export * from './module';
 export * from './state';
 export * from './step-completion.dcs';
 export * from './stream/stream.ar';

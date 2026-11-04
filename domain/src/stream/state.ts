@@ -1,4 +1,2 @@
-/** Схемы и типы состояния модуля stream (entity, статусы, id). */
+/** Статусы и признаки итога модуля stream. */
 export * from './status';
-export * from './stream/entity';
-export * from './student/entity';

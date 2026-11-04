@@ -1,7 +1,8 @@
 import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
-import type { Stream } from '@u7-scl/stream/domain';
+import type { StreamState } from '@u7-scl/stream/domain';
 import type { User } from '@u7-scl/user/domain';
 import { Role } from '@u7-scl/user/domain';
+import { isoMinute, utcMs } from './relative-time';
 import type { WorldState } from './types';
 
 /** Нарушение инварианта мира */
@@ -27,7 +28,7 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
   const violations: InvariantViolation[] = [];
 
   const usersById = new Map<string, User>(state.users.map((u) => [u.uuid, u]));
-  const streamsById = new Map<string, Stream>(
+  const streamsById = new Map<string, StreamState>(
     state.streams.map((s) => [s.uuid, s]),
   );
 
@@ -46,12 +47,12 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
     }
 
     // Хронология: регистрация пользователя <= зачисление студента
-    const userCreated = new Date(user.createdAt).getTime();
-    const enrolled = new Date(st.enrolledAt).getTime();
+    const userCreated = utcMs(user.createdAt);
+    const enrolled = st.enrolledAt;
     if (userCreated > enrolled) {
       violations.push({
         code: 'CHRONOLOGY_REGISTRATION_AFTER_ENROLLMENT',
-        message: `Дата регистрации пользователя "${user.name}" (${user.createdAt}) позже даты зачисления в поток (${st.enrolledAt})`,
+        message: `Дата регистрации пользователя "${user.name}" (${user.createdAt}) позже даты зачисления в поток (${isoMinute(new Date(st.enrolledAt))})`,
         entity: 'Student',
         id: st.uuid,
       });
@@ -60,11 +61,11 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
     // Хронология: если студент уже учится / завершил поток, его регистрация не может быть позже старта потока
     const streamEntity = streamsById.get(st.streamId);
     if (streamEntity && st.status !== 'enrolled') {
-      const streamStart = new Date(streamEntity.startDate).getTime();
+      const streamStart = streamEntity.startDate;
       if (userCreated > streamStart) {
         violations.push({
           code: 'CHRONOLOGY_REGISTRATION_AFTER_STREAM_START',
-          message: `Дата регистрации пользователя "${user.name}" (${user.createdAt}) позже старта потока "${streamEntity.title}" (${streamEntity.startDate})`,
+          message: `Дата регистрации пользователя "${user.name}" (${user.createdAt}) позже старта потока "${streamEntity.title}" (${isoMinute(new Date(streamEntity.startDate))})`,
           entity: 'Student',
           id: st.uuid,
         });
@@ -115,8 +116,8 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
   // 4. Инварианты кампаний отзывов
   for (const cmp of state.campaigns) {
     // 4.1. Окно кампании: createdAt < expiresAt
-    const createdTime = new Date(cmp.createdAt).getTime();
-    const expiresTime = new Date(cmp.expiresAt).getTime();
+    const createdTime = utcMs(cmp.createdAt);
+    const expiresTime = utcMs(cmp.expiresAt);
     if (expiresTime <= createdTime) {
       violations.push({
         code: 'CAMPAIGN_WINDOW_INVALID',
@@ -157,11 +158,11 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
     }
 
     // Хронология: кампания не может быть создана раньше зачисления студента
-    const enrolledTime = new Date(st.enrolledAt).getTime();
+    const enrolledTime = st.enrolledAt;
     if (createdTime < enrolledTime) {
       violations.push({
         code: 'CAMPAIGN_CREATED_BEFORE_ENROLLMENT',
-        message: `Окно кампании (${cmp.createdAt}) создано раньше зачисления/исхода студента (${st.enrolledAt})`,
+        message: `Окно кампании (${cmp.createdAt}) создано раньше зачисления/исхода студента (${isoMinute(new Date(st.enrolledAt))})`,
         entity: 'ReviewCampaign',
         id: cmp.uuid,
       });

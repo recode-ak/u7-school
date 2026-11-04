@@ -45,7 +45,6 @@ import {
 } from '@u7-scl/questionnaire/infra';
 import {
   createStreamModule,
-  StreamApiModule,
   type StreamDeps,
   StreamJsonRepo,
   StudentJsonRepo,
@@ -82,7 +81,6 @@ export class U7App {
   readonly userFacade: UserInProcFacade;
   readonly userRepo: UserJsonRepo;
   readonly questionnaireFacade: QuestionnaireInProcFacade;
-  readonly streamModule: StreamApiModule;
   readonly courseModule: CourseApiModule;
   readonly school: School;
   readonly appResolver: U7AppResolver;
@@ -166,13 +164,6 @@ export class U7App {
       questionnaireModule,
     );
 
-    const streamModule = new StreamApiModule({
-      userFacade,
-      courseFacade,
-      appResolver,
-      eventBus: appResolver.eventBus,
-    });
-
     // ══ Peer-review: репозитории кампаний и отзывов (DMG) ══
     const reviewCampaignRepo = new ReviewCampaignJsonRepo(
       `${dbDir}/peer-review/campaigns.json`,
@@ -202,7 +193,6 @@ export class U7App {
     // ══ ApiApp: модули (legacy + DMG) ══
     const apiApp = new ApiApp<U7BotAppMeta>([
       userModule,
-      streamModule,
       courseModule,
       questionnaireModule,
     ]).withDmg(dmg.api, dmg.modules);
@@ -221,7 +211,6 @@ export class U7App {
     this.userFacade = userFacade;
     this.userRepo = userRepo;
     this.questionnaireFacade = questionnaireFacade;
-    this.streamModule = streamModule;
     this.courseModule = courseModule;
     this.school = school;
     this.appResolver = appResolver;

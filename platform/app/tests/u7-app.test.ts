@@ -130,7 +130,7 @@ describe('U7App: сборка', () => {
     expect(app.userFacade).toBeDefined();
     expect(app.userRepo).toBeDefined();
     expect(app.questionnaireFacade).toBeDefined();
-    expect(app.apiApp.getModule('stream')).toBe(app.streamModule);
+    expect(app.apiApp.getModule('stream')).toBeUndefined();
     expect(app.apiApp.getModule('course')).toBe(app.courseModule);
     expect(app.school).toBe(app.appResolver.school);
     expect(app.callers).toBeDefined();

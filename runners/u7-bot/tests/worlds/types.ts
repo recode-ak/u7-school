@@ -4,7 +4,11 @@ import type {
   StudentOutcome,
 } from '@u7-scl/domain/peer-review/contract';
 import type { Questionnaire } from '@u7-scl/questionnaire/domain';
-import type { Stream, StreamStatus, Student } from '@u7-scl/stream/domain';
+import type {
+  StreamState,
+  StreamStatus,
+  StudentState,
+} from '@u7-scl/stream/domain';
 import type { Role, User } from '@u7-scl/user/domain';
 import type { WishState } from '@u7-scl/wish/domain';
 
@@ -47,8 +51,8 @@ export interface WorldReview {
  */
 export interface WorldState {
   users: User[];
-  streams: Stream[];
-  students: Student[];
+  streams: StreamState[];
+  students: StudentState[];
   courses: Course[];
   modules: Module[];
   lessons: Lesson[];

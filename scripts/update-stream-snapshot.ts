@@ -9,16 +9,24 @@
  *   bun run scripts/update-stream-snapshot.ts              # интерактивный выбор потока
  *   bun run scripts/update-stream-snapshot.ts <streamId>   # конкретный поток
  *
+ * Перед запуском на живых данных — `bun run backup`. Запускать при остановленном
+ * боте или вне пиковых часов: скрипт перечитывает и перезаписывает файл целиком
+ * без проверки `version`, запись бота между чтением и записью потеряется.
+ * При `--sync-students` `students.json` переписывается целиком в формате Def
+ * (числовые даты, `version`; ключи вне схемы отбрасываются — как первая запись
+ * `StudentJsonRepo`). Битая запись останавливает скрипт до любой записи.
+ *
  * Снапшот строится из актуальных данных модуля потока (get-module-snapshot):
  * только published-проекты и published-уроки.
  */
 
 import type { ContentSnapshot } from '@u7-scl/course/domain';
-import type { Student } from '@u7-scl/stream/domain';
 import { createApp } from './_app-factory';
 import {
   analyzeSnapshotDelta,
+  readStudentRows,
   syncAheadStudents,
+  writeStudentRows,
 } from './stream-snapshot-sync';
 
 const STREAMS_FILE = 'data/streams/streams.json';
@@ -135,15 +143,8 @@ async function main() {
   const oldSnapshot = (oldStream.contentSnapshot ?? []) as ContentSnapshot;
 
   // ── Проверка дельты контента и студентов ────────
-  let students: Student[] = [];
-  try {
-    const studentsFile = Bun.file(STUDENTS_FILE);
-    if (await studentsFile.exists()) {
-      students = (await studentsFile.json()) as Student[];
-    }
-  } catch (err) {
-    console.warn(`⚠️ Не удалось прочитать ${STUDENTS_FILE}:`, err);
-  }
+  // Битый students.json — исключение: main завершает скрипт с кодом 1 до записи.
+  const students = await readStudentRows(STUDENTS_FILE);
 
   const streamStudents = students.filter((s) => s.streamId === stream.uuid);
   const delta = analyzeSnapshotDelta(
@@ -250,7 +251,7 @@ async function main() {
     const updatedAllStudents = students.map(
       (s) => streamStudentsMap.get(s.uuid) ?? s,
     );
-    await Bun.write(STUDENTS_FILE, JSON.stringify(updatedAllStudents, null, 2));
+    await writeStudentRows(STUDENTS_FILE, updatedAllStudents);
   }
 
   console.log(`✅ Готово! Обновлён поток: ${selected.title}`);
