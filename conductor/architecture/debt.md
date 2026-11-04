@@ -59,7 +59,7 @@
 - **Место:**
   - `domain/src/user/**` — `facade.ts`, `module.ts`, `user/a-root.ts`, `user/events.ts`, `user/commands/{errors,notify-user-cmd,register-guest-cmd}.ts`; погашает перевод `user` на Def
   - `domain/src/course/**` — `module.ts`, `*/a-root.ts`, `*/entity.ts`, `*/commands/errors.ts`, `content-path/commands/resolve-content-path-cmd.ts`; подпути `core/domain`, `core/shared`, `core/infra`; погашает перевод `course` на Def
-  - `domain/src/questionnaire/**` — `module.ts`, `questionnaire/{a-root,entity,events,questionnaire-factory}.ts`, `questionnaire/{likert,standard}/*-ar.ts`, `questionnaire/commands/errors.ts`; подпути `core/domain`, `core/shared`, `core/infra`; погашает перевод `questionnaire` на Def
+  - `domain/src/questionnaire/module.ts` — оболочка метатипов до Ф3 `questionnaire-dmg` (TR-48 Т15); погашает удаление оболочки в Ф3
 - **Признак:** `from '@u7-scl/core`
 - **Корень:** `domain/src/**`
 - **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `NotifyKind`, ошибки (`AccessDeniedError`, `NotFoundError`, `errConflict`, `throwError`), `isoNow`, `now`, `UcMeta`, `FileMetadataSchema`, `ApiModuleMeta`, `BaseJsonDb` живут в `core`; механический перенос не меняет базовые классы.
@@ -70,7 +70,6 @@
 - **Место:**
   - `domain/src/user/module.ts` — тип `U7ModuleResolver`; погашает перевод `user` на Def
   - `domain/src/course/module.ts` — тип `U7ModuleResolver`; погашает перевод `course` на Def
-  - `domain/src/questionnaire/module.ts` — тип `U7ModuleResolver`; погашает перевод `questionnaire` на Def
 - **Признак:** `from '@u7-scl/app-legacy`
 - **Корень:** `domain/src/**`
 - **Причина:** тип резолвера модулей и `U7_SCHOOL_ID` определены в `app`; создаёт циклическую зависимость пакетов `app` ↔ `domain` (только типы, в рантайме импорт стирается); сам цикл пакетов также снимается этим долгом.
@@ -81,7 +80,6 @@
 - **Место:**
   - `domain/src/user/user/entity.ts` — `createdAt`, `updatedAt`; `biome-ignore lint/plugin`; погашает перевод `user` на Def (`F.timestamp`)
   - `domain/src/course/*/entity.ts` — `course`, `lesson`, `module`, `step`: `createdAt`, `updatedAt`; `biome-ignore lint/plugin`; погашает перевод `course` на Def (`F.timestamp`)
-  - `domain/src/questionnaire/questionnaire/entity.ts`, `domain/src/questionnaire/questionnaire/likert/likert-questionnaire.ts` — `biome-ignore lint/plugin`; погашает перевод `questionnaire` на Def (`F.timestamp`)
 - **Признак:** `v\.isoDateTime`
 - **Корень:** `domain/src/**`
 - **Причина:** схемы перенесены из `app` без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена.
@@ -139,7 +137,6 @@
 ### DEBT-10: приватные члены `#…` в Ar (CODE-02)
 - **Место:**
   - `domain/src/course/module/a-root.ts` — `#filterPublished`; `biome-ignore lint/plugin`; погашает перевод `course` на Def (фильтрация — в Policy/DQS)
-  - `domain/src/questionnaire/questionnaire/a-root.ts` — 10 методов и поле `#engine`; `biome-ignore lint/plugin`; погашает перевод `questionnaire` на Def (логика — в Policy/DQS)
 - **Признак:** `^\s*(static\s+)?(async\s+)?(get\s+)?#\w+`
 - **Корень:** `domain/src/**/a-root.ts`
 - **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
@@ -155,14 +152,6 @@
 ### DEBT-20: приватные методы `#…` в StudentAr (CODE-02) — слит в DEBT-10
 
 ### DEBT-30: barrel `modules/dossier/src/index.ts` — слит в DEBT-3
-
-### DEBT-32: субъект адаптера анкет — entity `User`
-- **Место:** `modules/questionnaire/src/questionnaire.module.ts`, `modules/questionnaire/src/questionnaire/uc/start-questionnaire.uc.ts` — адаптер над legacy-фасадом
-- **Признак:** `import type \{ User \} from '@u7-scl/domain/user'`
-- **Корень:** `modules/{course,questionnaire,stream,wish,peer-review,dossier}/src/**` — пакеты кроме владельца `user`
-- **Причина:** legacy `QuestionnaireFacade.startStandard` принимает entity `User` из `@u7-scl/domain/user`; субъект DMG-модуля анкет — она же, хотя UC модулей на Def берут у субъекта только `uuid` (`Identified`, как `wish`).
-- **Погашает:** миграция модуля `questionnaire`
-- **Критерий снятия:** субъект модуля анкет — `Identified` или субъект из `UserModuleDef`
 
 ### DEBT-40: тесты UC/ER/Job u7-school на JSON-репозитории во временном каталоге
 - **Место:** `modules/wish/src/**/*.{uc,er,job}.test.ts`, `modules/peer-review/src/**/*.{uc,er,job}.test.ts` — тесты UC/ER на `mkdtemp`
@@ -200,7 +189,6 @@
 - **Место:**
   - `modules/user/src/user/uc/get-telegram-addresses.uc.ts` — адаптер над фасадом пользователей; погашает миграция модуля `user`
   - `modules/course/src/course/uc/{get-course-enrollment,get-module-enrollment,get-courses-including-module,get-courses-starting-with-module,get-same-modules,get-module-snapshot,get-module-prerequisite}.uc.ts` — адаптеры над фасадом курсов; погашает миграция модуля `course`
-  - `modules/questionnaire/src/questionnaire/uc/start-questionnaire.uc.ts` — адаптер над фасадом анкет; погашает миграция модуля `questionnaire`
 - **Признак:** `Адаптер .* над legacy`
 - **Корень:** `modules/*/src/**/uc/*.uc.ts`
 - **Причина:** TR-11 — модули не на DMG (D-37), внешний контракт закрыт UC-адаптером над legacy-фасадом; паттерн описан в [migration.md](./migration.md), раздел «UC-адаптер над legacy-фасадом».
@@ -550,3 +538,14 @@
 - **Контекст:** Job на внешнем модуле запрещён `checkDefs` (MAN-06); `GetTelegramAddressesUcDef` доступен только `system`, story вызывает UC как `user`/`guest`; `Aggregate.change` всегда ставит `updatedAt: at`, а пометки простоя не должны сдвигать таймер.
 - **Решение:** (С1) `external` и legacy-реализация анкет (`QuestionnaireApiModule`, фасад, inbound, legacy-репозиторий в `U7App`) снимаются в Ф1; Ф3 — ARC-07 `biome.json`, скрипты, миры, `test-app`, удаление оболочки Т15. (С2) адрес в stories Ф2 — legacy `get-user`, как `InactivityStory` (TR-43 С2); D-63 действует для событий, Job и ER. (Т1) `markWarned`/`markContinueInvited` вызывают `change(this.state.updatedAt, …)`: растёт только `version`; тест «не сдвигает `updatedAt`» обязателен. (Т2–Т20) — по рекомендациям брифа, раздел «Открытые вопросы».
 - **Пересмотреть:** (С2) — перевод `user` на Def; (Т1) — если платформа добавит проверку монотонности `at` или опцию «не трогать `updatedAt`»; (Т15, Т16) — Ф3/Ф2.
+
+### TR-49: красная зона и тактика Ф1 `questionnaire-dmg`
+- **Трек / фаза:** `questionnaire-dmg`, Ф1 (orchestrator, 2026-11-05)
+- **Контекст:** в Ф1 модуль анкет переведён на Def целиком (TR-48 С1), а stories бота до Ф2 остаются на legacy-именах `questionnaire:*` и `appApi.execute`; legacy-UC удалены вместе с `a-root`.
+- **Решение:**
+  - (1) **Красная зона Ф1–Ф2** — 12 e2e бота падают («UC не найден», нет legacy-событий): `runners/u7-bot/tests/e2e/questionnaire-ux.e2e.test.ts` — «radio: выбор → финализация Q1…», «multiple: тоггл редактирует на месте…», ««Далее» → финализация Q3…», «при чужом активном флоу…», «без сессии (якорь app/invite)…»; `runners/u7-bot/tests/e2e/wish-questionnaire.e2e.test.ts` — «apply анкетного курса → приглашение…», «выбор в вопросе 1 → текстовый «Вопрос 2 из 3»…», «/cancel посреди анкеты…», «confirmed → на карточке кнопка «Отменить желание»…», «повторный apply при незавершённой анкете…», «resume без активной анкеты…», «полное прохождение: 3 вопроса…». Story-тесты на `executeMock` зелёные. Критерий снятия — конец Ф2: все 12 зелёные, запись (1) снимается.
+  - (2) Т16: временные типы legacy-событий — `runners/u7-bot/src/controllers/questionnaire/stories/legacy-events.ts`; удаляется в Ф2 вместе с подписками на `questionnaire:*`.
+  - (3) `AbandonUc` регистрирует агрегат в UoW только при росте версии: идемпотентный `abandon` на `abandoned` (Т3) иначе пишет запись без изменений.
+  - (4) Т20: мост `legacyEventBus` оставлен, маршрутов анкет в `inbound` нет; поле `questionnaireFacade` и legacy-модуль анкет из `U7App` удалены, метатип оболочки Т15 импортируется из корня `@u7-scl/questionnaire` (ARC-07).
+  - (5) Дефекты red-тестов, исправленные по эскалации автора: события не забирались после `createStandard` (Ar глушил `started`); текст отказа доступа — в `payload.denyMessage`, не в `label`; один `requestId` на все команды smoke-теста (D-56).
+- **Пересмотреть:** (1), (2) — конец Ф2; (3) — если UoW платформы научится пропускать неизменённые агрегаты (тогда условие убрать); (4) — Ф3.
