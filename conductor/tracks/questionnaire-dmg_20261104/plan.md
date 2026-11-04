@@ -36,7 +36,7 @@
 - Решения Q1–Q3, Q5 и тактические записаны в TR и `decisions.md`.
 - Бриф покрывает UC, события, Job и клиентов. Открытых стратегических вопросов нет.
 
-## Фаза 1: Срез `questionnaire`
+## Фаза 1: Срез `questionnaire` [checkpoint: 3feb0b09]
 
 - [x] Task: `dmg-test-designer`: характеризация на `v0.2.6` и red-тесты (Sonnet) a152c1c1
     - [x] `start` (пул, `ownerInfo`, `started`), `handle-action` (choice/text/next, `stale-answer`, завершение, `completed` с `kind`, likert — `likertScores`), `start-by-invite`, `decline-invite` (`abandoned` с `reason: declined`), `abandon` (`by_user`), `send-likert-invite` (`invited`), `get-questionnaire`, `get-current`, `get-questionnaires-by-user`, правила доступа (респондент/admin)
@@ -56,7 +56,7 @@
 - [x] Task: Записать красную зону в `debt.md` 2f45eb78: поимённый список падающих stories, dialog- и e2e-тестов бота, `u7-app.test`; критерий снятия — конец Ф2 (Opus)
 - [x] Task: `dmg-data-keeper` (flash): state и репозиторий — чтение `questionnaires.json` (ISO и число, оба `kind`, `ownerInfo`, `warnedAt`/`continueInvitedAt`/`abandonReason`), собственные фикстуры, откат
 - [x] Task: `dmg-reviewer` (Opus) deaa3c7b. Замечания без `error` решает orchestrator (TR), предложения перепроектирования — Нурболату
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 1** (уточняет бриф):
 - В `domain/src/questionnaire/questionnaire/**` и `modules/questionnaire/src/questionnaire/**` нет:
