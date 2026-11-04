@@ -14,3 +14,4 @@
 | Отчёт | Дата | Что выяснили | Правила |
 |---|---|---|---|
 | [deepseek-ab-2026-11.md](./deepseek-ab-2026-11.md) | 2026-11 | DeepSeek flash на исполнителях ~12× дешевле Sonnet при качестве на шаг ниже (7/10 против 8/10); `pi-dcp` ломает кэш; pro не окупается | [deepseek.md](../architecture/deepseek.md) |
+| [agent-roles-pilot-2026-11.md](./agent-roles-pilot-2026-11.md) | 2026-11 | Шесть ролей `dmg-*` проходят конвейер на учебном модуле в Claude Code и pi; Claude быстрее и тщательнее в ревью, pi на flash — сильный автономный оркестратор, но слабый ревьюер | [agent-roles.md](../architecture/agent-roles.md) |
