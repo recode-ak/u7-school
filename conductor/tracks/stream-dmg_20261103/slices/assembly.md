@@ -75,3 +75,7 @@ ARC-07, MAN-06, D-36, D-45 (вход модуля — `contract`), D-53.
 ## Правки по ревью (Ф3)
 
 `readStudentRows` (`stream-snapshot-sync.ts`): нет файла — `[]`, сбой строгого разбора — `ValiError`; в `update-stream-snapshot.ts` `catch` с warn снят, отказ — exit 1 до записи `streams.json`. Тест «битая запись» — `toThrow(v.ValiError)`; новый тест отказа чтения. Справка — в шапке скрипта (бэкап, остановленный бот, формат Def, отказ до записи). Итог: `check` зелёный (3947 / 0), `test:bot` 1039 / 0, `data/` чист.
+
+## Проверка живых данных (2026-11-04, с разрешения Нурболата)
+
+Открытый вопрос `data-keeper` закрыт. Копии `kalki_server:/srv/u7-school/data/streams/{students,streams}.json` (только чтение, `scp` в scratchpad; сервер не менялся) разобраны схемами `StudentArDef.state` и `StreamArDef.state` с обходом вложенных объектов и массивов: `students.json` — 104 записи, `streams.json` — 9; все разобраны строгой схемой, ключей вне схемы нет (контроль: подложенный ключ обнаруживается). Первая запись репозитория или `--sync-students` полей не потеряет.
