@@ -20,7 +20,7 @@
 ## Фаза 0: База и решения
 
 - [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/questionnaire` и `modules/questionnaire`, `dmg-core` `bun test`. Создать каркасы разделов «Пилот ролей» и «DeepSeek» (Opus) d117baaa
-- [x] Task: Записать решения Q1–Q3, Q5 и тактические (один агрегат с variant-state, query-UC, `responses.json`, фикстуры) в TR в `debt.md` и `decisions.md` (Opus)
+- [x] Task: Записать решения Q1–Q3, Q5 и тактические (один агрегат с variant-state, query-UC, `responses.json`, фикстуры) в TR в `debt.md` и `decisions.md` (Opus) ed2b01c8
 - [ ] Task: `dmg-tech-lead`: бриф `slices/questionnaire.md` (Sonnet). Содержание:
     - 9 UC и Job `sweep-abandoned-questionnaires`: пороги, тексты, только standard;
     - 6 Def-событий (Q1) и `ownerInfo` в контракте (Q2), события без `telegramId`/`response` (Q3);
