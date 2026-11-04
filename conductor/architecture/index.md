@@ -53,7 +53,7 @@
 - [legacy.md](./legacy.md) — паттерны немигрированного кода (удаляется после перехода)
 - [debt.md](./debt.md) — реестр долга `DEBT-<n>` и тактических решений `TR-<n>`
 - [agents.md](./agents.md) — роли агентов, контуры качества, связь с conductor, среды Claude Code и pi
-- [dmg-process.md](./dmg-process.md) — общее видение процесса (уровни постановки, роли, срез, SDD и без него); черновик для пакета `dmg-core`
+- [process.md](../../node_modules/dmg-core/docs/process.md) — общее видение процесса (уровни постановки, роли, срез, SDD и без него), в пакете `dmg-core`
 - [agent-roles.md](./agent-roles.md) — новые роли агентов: состав, место в процессе, волны внедрения, критерии годности
 - [deepseek.md](./deepseek.md) — делегирование шагов ролей в DeepSeek: кому что, промпт, запуск и учёт
 - [docs-strategy.md](./docs-strategy.md) — доменная и техническая документация

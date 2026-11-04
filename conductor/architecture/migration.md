@@ -78,7 +78,7 @@
 
 Все модули в `@u7-scl/domain`, нет реэкспортов в старых пакетах, нет `throw*` для штатных отказов, нет строковых дат, все проверки [rules.md](./rules.md) машинные — блокирующие, кроме помеченных `review`; `legacy.md` удалён.
 
-Вместе с завершением в пакет переезжает общее видение процесса: черновик [dmg-process.md](./dmg-process.md) → `docs/process.md` `dmg-core` (без специфики проекта и conductor), роли, оправдавшие себя в пилоте ([agent-roles.md](./agent-roles.md) §5), — в `agents/` пакета; проектные документы ([agents.md](./agents.md), [agent-roles.md](./agent-roles.md)) ссылаются на него и оставляют только привязку к проекту. В этом же шаге роли пакета получают префикс `dmg-*` ([agent-roles.md](./agent-roles.md) §1, п. 6): `dmg-domain-author`, `dmg-api-author`, `dmg-reviewer` и перенесённые роли пилота; проектные роли остаются без префикса.
+Общее видение процесса и оправдавшие себя роли переехали в пакет (трек `agent-roles-wave2`): [process.md](../../node_modules/dmg-core/docs/process.md) и `agents/` пакета; проектные документы ([agents.md](./agents.md), [agent-roles.md](./agent-roles.md)) оставляют только привязку к проекту. Роли пакета с префиксом `dmg-*` ([agent-roles.md](./agent-roles.md) §1, п. 6): `dmg-domain-author`, `dmg-api-author`, `dmg-reviewer`, `dmg-tech-lead`, `dmg-test-designer`, `dmg-data-keeper`; проектные роли без префикса.
 
 ## 6. Состояние переноса
 
@@ -108,10 +108,10 @@ ID — канонические: слитые записи (DEBT-6, 7, 9, 11, 12
 
 ### Старт следующих треков
 
-- **Перед ним — трек волны 2** ([agent-roles.md](./agent-roles.md) §4; решение Нурболата, 2026-11-04): каркас ролей `tech-lead`, `test-designer`, `data-keeper` переезжает в `dmg-core` с префиксом `dmg-*`, проектная часть — в `.agents-core/`; критерий 6 проверяется на учебном модуле пакета.
+- **Трек волны 2 выполнен** (`agent-roles-wave2_20261104`, [agent-roles.md](./agent-roles.md) §4): каркас ролей `dmg-tech-lead`, `dmg-test-designer`, `dmg-data-keeper` в `dmg-core` с префиксом `dmg-*`, проектная часть — в `.agents-core/`; критерий 6 проверен пилотом на учебном модуле пакета (`summary.md` трека).
 - **Следующий модуль — `questionnaire`** (трек 6, порядок — §2.1): после `stream` у `questionnaire` нет legacy-клиентов. Его клиенты на Def — `peer-review` и `wish`. Трек создаётся через `conductor-newtrack` (ID вида `questionnaire-dmg_<дата>`) по шаблону трека `stream` (`conductor/archive/stream-dmg_20261103`):
-  - **Конвейер среза:** `tech-lead` (бриф среза с доменом; бриф механической сборки — orchestrator, TR-45) → `test-designer` (red) → `migrator` (green) → гейт → `data-keeper` (по триггеру) → `reviewer`.
-  - **Роли волны 1** годны по итогу пилота за два трека (`stream-dmg`, `summary.md`); в `questionnaire` — роли из пакета (после трека волны 2); `tech-lead` — на Sonnet.
+  - **Конвейер среза:** `dmg-tech-lead` (бриф среза с доменом; бриф механической сборки — orchestrator, TR-45) → `dmg-test-designer` (red) → `migrator` (green) → гейт → `dmg-data-keeper` (по триггеру) → `dmg-reviewer`.
+  - **Роли волны 1** годны по итогу пилота за два трека (`stream-dmg`, `summary.md`); в `questionnaire` — роли из пакета; `dmg-tech-lead` — на Sonnet.
   - **Мосты:** адаптер `start-questionnaire` (DEBT-44) заменяется настоящим UC, `questionnaire:start` из legacy-шины — Def-событием; субъект адаптера — DEBT-32.
   - **Сборка:** фабрика в `U7App`, `@u7-scl/questionnaire/**` — в группу ARC-07 `biome.json`; stories анкет — на `dispatch`.
 - Базовая линия тестов на конец `stream`: `conductor/archive/stream-dmg_20261103/summary.md` («Гейт закрытия»).
