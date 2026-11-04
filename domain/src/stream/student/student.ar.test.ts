@@ -440,7 +440,7 @@ describe('StudentAr.view', () => {
 describe('StudentAr — бездействие', () => {
   const at = (days: number, extraMs = 0) => T0 + days * DAY + extraMs;
   const pull = (ar: StudentAr) =>
-    ar.pullEvents().map((e) => [e.name, e.payload]);
+    ar.pullEvents().map((e): [string, unknown] => [e.name, e.payload]);
 
   it('порог 5 дней: в 4 дня 23 ч уведомлять нечего, в 5 дней — пора', () => {
     const ar = restore('enrolled');
@@ -499,7 +499,10 @@ describe('StudentAr — бездействие', () => {
       StudentEvents.inactivityWarning.name,
       StudentEvents.inactivityRemoveCandidate.name,
     ]);
-    expect(events[1]?.[1]).toMatchObject({ days: 7, wasWarned: true });
+    expect(events[1]?.[1]).toMatchObject({
+      days: 7,
+      wasWarned: true,
+    });
   });
 
   it('повтор «через 2 дня»: через день — пусто, через два — снова', () => {

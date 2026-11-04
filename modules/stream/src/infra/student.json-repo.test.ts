@@ -194,7 +194,15 @@ describe('StudentJsonRepo — legacy-записи', () => {
 });
 
 describe('StudentJsonRepo — выборки', () => {
-  const ids = () => Array.from({ length: 6 }, () => crypto.randomUUID());
+  const ids = () =>
+    Array.from({ length: 6 }, () => crypto.randomUUID() as string) as [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
 
   test('findByStream / findByUser фильтруют по полю', async () => {
     const [a, b, c] = ids();

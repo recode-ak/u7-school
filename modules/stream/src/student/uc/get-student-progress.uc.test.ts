@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { StreamUser } from '../../stream.module';
 import { GetStudentProgressUc } from './get-student-progress.uc';
 import {
   anonymous,
@@ -26,7 +28,7 @@ const LESSON = '22222222-2222-4222-8222-222222222222';
 let env: ReturnType<typeof makeEnv>;
 const ask = (
   extra: { stepId?: string; lessonId?: string } = {},
-  caller = owner,
+  caller: Caller<StreamUser> = owner,
 ) =>
   new GetStudentProgressUc(env.deps, StreamModuleDef).handle(
     { studentId: STUDENT, ...extra },

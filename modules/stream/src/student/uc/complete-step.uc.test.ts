@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { StreamUser } from '../../stream.module';
 import { CompleteStepUc } from './complete-step.uc';
 import {
   anonymous,
@@ -26,8 +28,11 @@ import {
 const OTHER_STEP = '99999999-9999-4999-8999-999999999999';
 let env: ReturnType<typeof makeEnv>;
 const uc = () => new CompleteStepUc(env.deps, StreamModuleDef);
-const run = (stepId = STEP_1, caller = owner, streamId = STREAM) =>
-  uc().handle({ studentId: STUDENT, streamId, stepId }, caller, REQ);
+const run = (
+  stepId = STEP_1,
+  caller: Caller<StreamUser> = owner,
+  streamId = STREAM,
+) => uc().handle({ studentId: STUDENT, streamId, stepId }, caller, REQ);
 const stored = () => env.students.restoredOrThrow(STUDENT).snapshot();
 
 beforeEach(() => {

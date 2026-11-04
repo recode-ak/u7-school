@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { StreamUser } from '../../stream.module';
 import { MarkAbandonedUc } from './mark-abandoned.uc';
 import {
   admin,
@@ -27,7 +29,7 @@ let env: ReturnType<typeof makeEnv>;
 const uc = () => new MarkAbandonedUc(env.deps, StreamModuleDef);
 const run = (
   cause: 'inactivity' | 'by_mentor' = 'inactivity',
-  caller = mentor,
+  caller: Caller<StreamUser> = mentor,
   streamId = STREAM,
 ) => uc().handle({ streamId, studentId: STUDENT, cause }, caller, REQ);
 const stored = () => env.students.restoredOrThrow(STUDENT).snapshot();

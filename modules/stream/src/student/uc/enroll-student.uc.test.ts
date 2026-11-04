@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
-import { ok } from 'dmg-core';
+import { type Caller, ok } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { StreamUser } from '../../stream.module';
 import { EnrollStudentUc } from './enroll-student.uc';
 import {
   anonymous,
@@ -28,8 +29,10 @@ import {
 
 let env: ReturnType<typeof makeEnv>;
 const uc = () => new EnrollStudentUc(env.deps, StreamModuleDef);
-const enroll = (input: { enrollmentKey?: string } = {}, caller = owner) =>
-  uc().handle({ streamId: STREAM, ...input }, caller, REQ);
+const enroll = (
+  input: { enrollmentKey?: string } = {},
+  caller: Caller<StreamUser> = owner,
+) => uc().handle({ streamId: STREAM, ...input }, caller, REQ);
 
 beforeEach(() => {
   env = makeEnv();

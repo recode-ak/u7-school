@@ -3,7 +3,7 @@ import { normalize } from 'dmg-core/graph';
 import * as v from 'valibot';
 import { CourseModuleDef, GetModulePrerequisiteUcDef } from '../../contract';
 
-// Условие допуска к модулю — Def UC `course` для `enrollStudent` (TR-11, DEBT-44).
+// Условие допуска к модулю — Def UC `course` для `enrollStudent`.
 // Выход — variant по `gate`: none | module | closed.
 
 const MODULE = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';

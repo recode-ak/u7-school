@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { StreamUser } from '../../stream.module';
 import { CompleteStudentUc } from './complete-student.uc';
 import {
   admin,
@@ -28,7 +30,7 @@ let env: ReturnType<typeof makeEnv>;
 const uc = () => new CompleteStudentUc(env.deps, StreamModuleDef);
 const run = (
   outcome: 'advanced' | 'not_advanced' = 'advanced',
-  caller = mentor,
+  caller: Caller<StreamUser> = mentor,
   streamId = STREAM,
 ) => uc().handle({ streamId, studentId: STUDENT, outcome }, caller, REQ);
 const stored = () => env.students.restoredOrThrow(STUDENT).snapshot();
