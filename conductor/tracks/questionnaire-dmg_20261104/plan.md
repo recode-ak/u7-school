@@ -17,7 +17,7 @@
 
 **Красная зона Ф1–Ф2.** После Ф1 stories и e2e бота на legacy-именах `questionnaire:*` падают: моста нет. Гейт Ф1 — `check` зелёный, кроме тестов из записи красной зоны в `debt.md`. Список поимённый, критерий снятия — конец Ф2. С конца Ф2 `check` полностью зелёный.
 
-## Фаза 0: База и решения
+## Фаза 0: База и решения [checkpoint: 05dbdd25]
 
 - [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/questionnaire` и `modules/questionnaire`, `dmg-core` `bun test`. Создать каркасы разделов «Пилот ролей» и «DeepSeek» (Opus) d117baaa
 - [x] Task: Записать решения Q1–Q3, Q5 и тактические (один агрегат с variant-state, query-UC, `responses.json`, фикстуры) в TR в `debt.md` и `decisions.md` (Opus) ed2b01c8
