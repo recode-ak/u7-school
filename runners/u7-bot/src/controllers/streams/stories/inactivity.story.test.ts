@@ -7,15 +7,12 @@ import type {
   NotificationPayload,
 } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
-import type {
-  StudentAbandonedEvent,
-  StudentInactivityRemoveCandidateEvent,
-  StudentInactivityWarningEvent,
-} from '@u7-scl/stream/domain';
+import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { InactivityStory } from './inactivity.story';
-import { dmgDispatch, streamView } from './stream-dmg.test-kit';
+import { dmgDispatch, refuse, streamView } from './stream-dmg.test-kit';
+import { studentView } from './student-dmg.test-kit';
 
 // ══ Фикстуры ══
 
@@ -44,11 +41,11 @@ const stream = streamView({
 });
 
 function makeWarningEvent(
-  overrides: Partial<StudentInactivityWarningEvent['payload']> = {},
-): StudentInactivityWarningEvent {
+  overrides: Partial<Record<string, unknown>> = {},
+): Record<string, unknown> {
   return {
     eventId: crypto.randomUUID(),
-    eventName: 'student.inactivity-warning',
+    eventName: StudentEvents.inactivityWarning.name,
     occurredAt: '2026-08-30T19:00',
     aggregateName: 'Student',
     aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
@@ -56,19 +53,18 @@ function makeWarningEvent(
       studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       userId: STUDENT_USER_ID,
       streamId: STREAM_ID,
-      telegramId: 1003,
-      daysInactive: 5,
+      days: 5,
       ...overrides,
     },
   };
 }
 
 function makeCandidateEvent(
-  overrides: Partial<StudentInactivityRemoveCandidateEvent['payload']> = {},
-): StudentInactivityRemoveCandidateEvent {
+  overrides: Partial<Record<string, unknown>> = {},
+): Record<string, unknown> {
   return {
     eventId: crypto.randomUUID(),
-    eventName: 'student.inactivity-remove-candidate',
+    eventName: StudentEvents.inactivityRemoveCandidate.name,
     occurredAt: '2026-08-30T19:00',
     aggregateName: 'Student',
     aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
@@ -76,8 +72,7 @@ function makeCandidateEvent(
       studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       userId: STUDENT_USER_ID,
       streamId: STREAM_ID,
-      mentorTelegramId: 1004,
-      daysInactive: 7,
+      days: 7,
       wasWarned: false,
       ...overrides,
     },
@@ -85,11 +80,11 @@ function makeCandidateEvent(
 }
 
 function makeAbandonedEvent(
-  overrides: Partial<StudentAbandonedEvent['payload']> = {},
-): StudentAbandonedEvent {
+  overrides: Partial<Record<string, unknown>> = {},
+): Record<string, unknown> {
   return {
     eventId: crypto.randomUUID(),
-    eventName: 'student.abandoned',
+    eventName: StudentEvents.abandoned.name,
     occurredAt: '2026-08-30T19:00',
     aggregateName: 'Student',
     aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
@@ -118,6 +113,7 @@ function setupStory(opts: { streamOverrides?: Record<string, unknown> } = {}): {
   }>;
   kicks: Array<{ groupId: number | string; userId: number }>;
   execute: ReturnType<typeof mock>;
+  dispatch: ReturnType<typeof dmgDispatch>;
 } {
   const notifies: Array<{
     telegramId: number;
@@ -136,32 +132,41 @@ function setupStory(opts: { streamOverrides?: Record<string, unknown> } = {}): {
       if (name === 'get-user') {
         const uuid = params?.uuid as string;
         if (uuid === STUDENT_USER_ID) return student;
-        return undefined;
-      }
-      if (name === 'get-student-progress') {
-        const sid = params?.studentId as string;
-        if (sid === 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') {
-          return {
-            uuid: sid,
-            userId: STUDENT_USER_ID,
-            streamId: STREAM_ID,
-            status: 'active',
-          };
-        }
+        if (uuid === MENTOR_USER_ID)
+          return { ...student, uuid, name: 'Ментор', telegramId: 1004 };
         return undefined;
       }
       return undefined;
     },
   );
+  const dispatch = dmgDispatch({
+    getStream: () => ({ ...stream, ...opts.streamOverrides }),
+    // Запись студента есть только у aaaaaaaa…, остальные — не найдены
+    getStudentProgress: (input) => {
+      const sid = (input as { studentId: string }).studentId;
+      return sid === 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+        ? {
+            student: studentView({
+              uuid: sid,
+              userId: STUDENT_USER_ID,
+              streamId: STREAM_ID,
+              status: 'active',
+              currentStepId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+              steps: [],
+            }),
+          }
+        : refuse('STUDENT_NOT_FOUND', 'not_found');
+    },
+    dropStudent: () => ({}),
+    markAbandoned: () => ({}),
+  });
 
   const story = new InactivityStory();
   story.init(
     {
       appApi: {
         execute,
-        dispatch: dmgDispatch({
-          getStream: () => ({ ...stream, ...opts.streamOverrides }),
-        }),
+        dispatch,
       },
       callers: testCallers,
     } as never,
@@ -197,7 +202,7 @@ function setupStory(opts: { streamOverrides?: Record<string, unknown> } = {}): {
     } as never,
   );
 
-  return { story, notifies, invites, kicks, execute };
+  return { story, notifies, invites, kicks, execute, dispatch };
 }
 
 /** Достаёт обработчик подписки по имени события */
@@ -222,9 +227,9 @@ describe('InactivityStory', () => {
       .map((s) => s.eventName)
       .sort();
     expect(names).toEqual([
-      'student.abandoned',
-      'student.inactivity-remove-candidate',
-      'student.inactivity-warning',
+      StudentEvents.abandoned.name,
+      StudentEvents.inactivityRemoveCandidate.name,
+      StudentEvents.inactivityWarning.name,
     ]);
   });
 
@@ -235,7 +240,7 @@ describe('InactivityStory', () => {
 
     await subHandler(
       story,
-      'student.inactivity-warning',
+      StudentEvents.inactivityWarning.name,
     )(makeWarningEvent() as never);
 
     // Кнопочный проактив — канал invite (не notify)
@@ -261,7 +266,7 @@ describe('InactivityStory', () => {
 
     await subHandler(
       story,
-      'student.inactivity-warning',
+      StudentEvents.inactivityWarning.name,
     )(makeWarningEvent() as never);
 
     expect(() =>
@@ -276,7 +281,7 @@ describe('InactivityStory', () => {
 
     await subHandler(
       story,
-      'student.inactivity-remove-candidate',
+      StudentEvents.inactivityRemoveCandidate.name,
     )(makeCandidateEvent() as never);
 
     // Кнопочный проактив — канал invite (не notify)
@@ -304,7 +309,7 @@ describe('InactivityStory', () => {
 
     await subHandler(
       story,
-      'student.inactivity-remove-candidate',
+      StudentEvents.inactivityRemoveCandidate.name,
     )(makeCandidateEvent({ wasWarned: true }) as never);
 
     const text = String(invites[0]?.payload.text);
@@ -317,7 +322,7 @@ describe('InactivityStory', () => {
 
     await subHandler(
       story,
-      'student.inactivity-remove-candidate',
+      StudentEvents.inactivityRemoveCandidate.name,
     )(
       makeCandidateEvent({
         userId: '99999999-9999-4999-8999-999999999999',
@@ -336,7 +341,10 @@ describe('InactivityStory', () => {
       streamOverrides: { telegramGroupId: GROUP_ID },
     });
 
-    await subHandler(story, 'student.abandoned')(makeAbandonedEvent() as never);
+    await subHandler(
+      story,
+      StudentEvents.abandoned.name,
+    )(makeAbandonedEvent() as never);
 
     expect(kicks).toHaveLength(1);
     expect(kicks[0]).toEqual({ groupId: GROUP_ID, userId: 1003 });
@@ -345,7 +353,10 @@ describe('InactivityStory', () => {
   test('abandoned: у потока нет группы — кик не вызывается, ошибок нет', async () => {
     const { story, kicks } = setupStory();
 
-    await subHandler(story, 'student.abandoned')(makeAbandonedEvent() as never);
+    await subHandler(
+      story,
+      StudentEvents.abandoned.name,
+    )(makeAbandonedEvent() as never);
 
     expect(kicks).toHaveLength(0);
   });
@@ -370,7 +381,10 @@ describe('InactivityStory', () => {
       callers: testCallers,
     } as never);
 
-    await subHandler(story, 'student.abandoned')(makeAbandonedEvent() as never);
+    await subHandler(
+      story,
+      StudentEvents.abandoned.name,
+    )(makeAbandonedEvent() as never);
 
     expect(kicks).toHaveLength(0);
   });
@@ -409,8 +423,8 @@ describe('InactivityStory', () => {
     ]);
   });
 
-  test('drop-student-confirm: UC drop-student + прощание и выход в меню', async () => {
-    const { story, execute } = setupStory({
+  test('drop-student-confirm: UC dropStudent + прощание и выход в меню', async () => {
+    const { story, dispatch } = setupStory({
       streamOverrides: { telegramGroupId: GROUP_ID },
     });
 
@@ -421,14 +435,11 @@ describe('InactivityStory', () => {
     );
 
     assertDialogResponseMarkdownSafe(response);
-    expect(execute).toHaveBeenCalledWith(
-      'drop-student',
-      {
-        streamId: STREAM_ID,
-        studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-      },
-      student,
-    );
+    const dropCall = dispatch.mock.calls.find((c) => c[1].uc === 'dropStudent');
+    expect(dropCall?.[1].input).toEqual({
+      streamId: STREAM_ID,
+      studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    });
     expect(String(response.screen?.text)).toContain('Ты покинул учёбу');
     expect(buttonCodes(response)).toEqual([
       { text: '⬅️ В меню', code: 'app:main-menu' },
@@ -436,7 +447,7 @@ describe('InactivityStory', () => {
   });
 
   test('mark-abandoned: confirm-диалог снятия с возвратом в меню', async () => {
-    const { story, execute } = setupStory();
+    const { story, dispatch } = setupStory();
 
     const response = await story.handleCallback(
       `mark-abandoned:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa`,
@@ -445,11 +456,12 @@ describe('InactivityStory', () => {
     );
 
     assertDialogResponseMarkdownSafe(response);
-    expect(execute).toHaveBeenCalledWith(
-      'get-student-progress',
-      { studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' },
-      student,
+    const progressCall = dispatch.mock.calls.find(
+      (c) => c[1].uc === 'getStudentProgress',
     );
+    expect(progressCall?.[1].input).toEqual({
+      studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    });
     expect(String(response.screen?.text)).toContain(
       'Снять студента *Иван Студент*',
     );
@@ -480,8 +492,8 @@ describe('InactivityStory', () => {
     );
   });
 
-  test('mark-abandoned-confirm: UC mark-abandoned cause=inactivity + реплика результата', async () => {
-    const { story, execute } = setupStory();
+  test('mark-abandoned-confirm: UC markAbandoned cause=inactivity + реплика результата', async () => {
+    const { story, dispatch } = setupStory();
 
     const response = await story.handleCallback(
       `mark-abandoned-confirm:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa`,
@@ -490,15 +502,14 @@ describe('InactivityStory', () => {
     );
 
     assertDialogResponseMarkdownSafe(response);
-    expect(execute).toHaveBeenCalledWith(
-      'mark-abandoned',
-      {
-        streamId: STREAM_ID,
-        studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-        cause: 'inactivity',
-      },
-      student,
+    const markCall = dispatch.mock.calls.find(
+      (c) => c[1].uc === 'markAbandoned',
     );
+    expect(markCall?.[1].input).toEqual({
+      streamId: STREAM_ID,
+      studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      cause: 'inactivity',
+    });
     expect(String(response.screen?.text)).toContain(
       'снят с учёбы за бездействие и исключён из группы потока',
     );
@@ -507,7 +518,7 @@ describe('InactivityStory', () => {
 
   test('drop-student-confirm: ошибка UC — экран ошибки с выходом в меню', async () => {
     const { story } = setupStory();
-    // get-student-progress для несуществующего студента бросает —
+    // getStudentProgress для несуществующего студента отказывает —
     // #getStudent возвращает undefined → экран «не найдена» (без UC-вызова)
     const response = await story.handleCallback(
       `drop-student-confirm:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb`,

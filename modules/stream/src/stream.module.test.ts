@@ -4,13 +4,9 @@ import { SystemCaller } from 'dmg-core';
 import { ModuleFacade, ModuleFacades, Trace } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import { StreamRepoFake } from './stream/stream.repo.fake';
-import {
-  SCHOOL,
-  STREAM,
-  StudentsFake,
-  state,
-} from './stream/uc/stream-uc.fixture';
+import { SCHOOL, STREAM, state } from './stream/uc/stream-uc.fixture';
 import { createStreamModule } from './stream.module';
+import { StudentRepoFake } from './student/student.repo.fake';
 
 // Вход через фасад модуля: поток из репозитория, ответ — по Def.
 
@@ -24,7 +20,7 @@ function facade(streams: StreamRepoFake) {
       app: testAppContext().app,
       facades: new ModuleFacades(),
       streams,
-      students: new StudentsFake(),
+      students: new StudentRepoFake(),
       schoolId: SCHOOL,
     }),
   );

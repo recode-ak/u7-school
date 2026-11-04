@@ -9,27 +9,49 @@ import {
   screen,
 } from '@u7-scl/core/ui';
 import type { ContentSnapshot } from '@u7-scl/course/domain';
-import type { Student } from '@u7-scl/stream/domain';
-import { StreamDs } from '@u7-scl/stream/domain';
+import {
+  GetStudentByUserUcDef,
+  type Progress,
+  type StreamModuleDef,
+  type StudentProgress,
+  type StudentView,
+} from '@u7-scl/domain/stream/contract';
+import type { Command, OutputOf, Result, UseCaseErrorOf } from 'dmg-core';
 import type { U7BotAppMeta } from '../../core/u7-bot-app-meta';
 
+/** Студент в представлении контракта `stream`. */
+export type Student = StudentView;
+
 /**
- * Получает студента по userId через appApi.
+ * Исполнитель команд модуля `stream` от имени актора: стори отдаёт замыкание
+ * над `dispatchUc` (метод защищён, хелперы раздела learning его не видят).
+ */
+export type StreamDispatch = <
+  D extends (typeof StreamModuleDef)['useCases'][number],
+>(
+  command: Command<D>,
+) => Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
+
+/** Расчёты прогресса из `getStudentProgress` (поток есть). */
+export type ProgressView = NonNullable<StudentProgress['progress']>;
+
+/**
+ * Получает студента по userId через `getStudentByUser`.
  * Возвращает DialogResponse (экран) при ошибке.
  */
 export async function getStudent(
-  appApi: ApiApp<U7BotAppMeta>,
+  dispatch: StreamDispatch,
   actor: User,
 ): Promise<
   { ok: true; value: Student } | { ok: false; value: DialogResponse }
 > {
   try {
-    const user = await appApi.execute(
-      'get-student-by-user',
-      { userId: actor.uuid },
-      actor,
+    const res = await dispatch(
+      GetStudentByUserUcDef.command({ userId: actor.uuid }),
     );
-    return { ok: true, value: user as Student };
+    return res.ok
+      ? { ok: true, value: res.value }
+      : { ok: false, value: notEnrolled() };
   } catch {
     return { ok: false, value: notEnrolled() };
   }
@@ -50,14 +72,14 @@ export type StreamSnapshotView = {
  * Получает студента и поток. null — студент не записан или поток недоступен.
  */
 export async function getStudentAndStream(
-  appApi: ApiApp<U7BotAppMeta>,
+  dispatch: StreamDispatch,
   actor: User,
   loadStream: (streamId: string) => Promise<StreamSnapshotView | undefined>,
 ): Promise<{
   student: Student | null;
   stream: { title: string; contentSnapshot: ContentSnapshot } | null;
 }> {
-  const studentResult = await getStudent(appApi, actor);
+  const studentResult = await getStudent(dispatch, actor);
   if (!studentResult.ok) return { student: null, stream: null };
 
   const student = studentResult.value;
@@ -204,8 +226,7 @@ export function formatStepMessage(
     code?: string;
     content?: string;
   },
-  snapshot?: ContentSnapshot,
-  student?: { steps: Array<{ stepId: string; status: string }> },
+  lessonProgress?: Progress,
   opts?: FormatStepMessageOpts,
 ): MdText {
   const mode = opts?.mode ?? 'study';
@@ -247,14 +268,9 @@ export function formatStepMessage(
   // может получить completed > total и упасть в String.repeat.
   let completed = resolved?.stepIndex ?? 0;
   let totalSteps = resolved?.totalSteps ?? 1;
-  if (snapshot && student) {
-    const progress = StreamDs.getStepLessonProgress(
-      snapshot,
-      step.uuid,
-      student,
-    );
-    completed = progress.completed;
-    totalSteps = progress.total;
+  if (lessonProgress) {
+    completed = lessonProgress.completed;
+    totalSteps = lessonProgress.total;
   }
 
   const lines: MdText[] = [
@@ -278,7 +294,8 @@ export function formatStepMessage(
 }
 
 /**
- * Строит сообщение о переходе (завершение урока/проекта).
+ * Строит сообщение о переходе (завершение урока/проекта) по расчётам
+ * `getStudentProgress` (с `lessonId` завершённого урока — заголовок урока).
  */
 export function buildTransitionMessage(
   result: {
@@ -288,18 +305,13 @@ export function buildTransitionMessage(
     currentStepId?: string;
   },
   stream: { title: string; contentSnapshot: ContentSnapshot },
-  student: Student,
+  progress: ProgressView,
 ): {
   messageText: MdText;
   buttonText: string;
 } {
   if (result.level === 'lesson' && result.completedLessonId) {
-    const lessonTitle =
-      StreamDs.buildLessonSteps(
-        stream.contentSnapshot,
-        result.completedLessonId,
-        student,
-      )?.lessonTitle ?? '';
+    const lessonTitle = progress.lesson?.lessonTitle ?? '';
 
     // Найти проект, содержащий этот урок
     let projectIdx = 0;
@@ -311,13 +323,16 @@ export function buildTransitionMessage(
       }
     }
 
-    const moduleProgress = StreamDs.computeProgress(
-      stream.contentSnapshot,
-      student,
-    );
-    const projectItem = stream.contentSnapshot[projectIdx];
-    const projectProgress = projectItem
-      ? StreamDs.computeProgress([projectItem], student)
+    // Шаги проекта — сумма по урокам дерева навигации (проект с тем же индексом)
+    const projectNode = progress.tree.projects[projectIdx];
+    const projectProgress = projectNode
+      ? {
+          completed: projectNode.lessons.reduce(
+            (sum, l) => sum + l.completedSteps,
+            0,
+          ),
+          total: projectNode.lessons.reduce((sum, l) => sum + l.totalSteps, 0),
+        }
       : { completed: 0, total: 0 };
 
     const messageText = mdJoin([
@@ -325,7 +340,7 @@ export function buildTransitionMessage(
       md``,
       mdConcat(
         md`📊 Прогресс по модулю: `,
-        formatProgressBar(moduleProgress.completed, moduleProgress.total),
+        formatProgressBar(progress.module.completed, progress.module.total),
       ),
       mdConcat(
         md`📊 Прогресс по проекту: `,
@@ -342,14 +357,12 @@ export function buildTransitionMessage(
         (p) => p.projectId === result.completedProjectId,
       )?.projectTitle ?? '';
 
-    const progress = StreamDs.computeProgress(stream.contentSnapshot, student);
-
     const messageText = mdJoin([
       md`🚀 Проект «${title}» завершён\\!`,
       md``,
       mdConcat(
         md`📊 Прогресс по модулю: `,
-        formatProgressBar(progress.completed, progress.total),
+        formatProgressBar(progress.module.completed, progress.module.total),
       ),
     ]);
 

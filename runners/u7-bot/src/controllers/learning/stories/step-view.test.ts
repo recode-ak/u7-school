@@ -8,6 +8,10 @@ import {
   dmgDispatch,
   streamView,
 } from '../../streams/stories/stream-dmg.test-kit';
+import {
+  type LegacyStudent,
+  studentAnswers,
+} from '../../streams/stories/student-dmg.test-kit';
 import { StepViewStory } from './step-view';
 
 describe('StepViewStory', () => {
@@ -69,20 +73,27 @@ describe('StepViewStory', () => {
     ],
   };
 
-  /** Создаёт StepViewStory с замоканным appApi. */
+  /**
+   * Создаёт StepViewStory с замоканным appApi. Ключи `appApiOverrides`:
+   * `get-student-by-user` — запись студента (функция — студент не найден),
+   * `complete-step` — ответ `completeStep`; остальное — `execute` legacy.
+   */
   function makeStory(
     appApiOverrides?: Record<string, unknown>,
     customStep?: Record<string, unknown>,
   ) {
+    const studentOverride = appApiOverrides?.['get-student-by-user'];
+    const student =
+      typeof studentOverride === 'function'
+        ? undefined
+        : ((studentOverride ?? mockStudent) as LegacyStudent);
+    const completeStep = appApiOverrides?.['complete-step'] ?? {
+      level: 'step',
+      currentStepId: STEP2_ID,
+    };
+
     const appApiSpy = mock(
       (name: string, _params?: Record<string, unknown>) => {
-        if (appApiOverrides && name in appApiOverrides) {
-          const val = appApiOverrides[name];
-          if (typeof val === 'function') return (val as () => unknown)();
-          if (val instanceof Error) throw val;
-          return val;
-        }
-        if (name === 'get-student-by-user') return mockStudent;
         if (name === 'get-step') {
           return (
             customStep ?? {
@@ -96,23 +107,21 @@ describe('StepViewStory', () => {
             }
           );
         }
-        if (name === 'complete-step') {
-          return { level: 'step', currentStepId: STEP2_ID };
-        }
-        if (name === 'get-student-progress') return mockStudent;
         return undefined;
       },
     );
+    const dispatch = dmgDispatch({
+      getStream: () => streamView(mockStream),
+      ...studentAnswers(student, mockStream.contentSnapshot),
+      completeStep: () => completeStep,
+    });
 
     const story = new StepViewStory();
     story.init({
-      appApi: {
-        execute: appApiSpy,
-        dispatch: dmgDispatch({ getStream: () => streamView(mockStream) }),
-      },
+      appApi: { execute: appApiSpy, dispatch },
       callers: testCallers,
     } as never);
-    return { story, appApiSpy };
+    return { story, appApiSpy, dispatch };
   }
 
   test('my-study:continue — экран текущего шага с телом', async () => {

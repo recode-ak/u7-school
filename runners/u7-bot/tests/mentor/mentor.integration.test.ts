@@ -10,6 +10,7 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import {
+  GetStreamMembersUcDef,
   GetStreamUcDef,
   ListStreamsUcDef,
   StreamModuleDef,
@@ -100,12 +101,12 @@ describe('MentorController (интеграционный)', () => {
   // ── Студенты ──
 
   test('список студентов enrollment-потока (пустой)', async () => {
-    const students = await app.apiApp.execute(
-      'list-stream-students',
-      { streamId: ENROLLMENT_ID },
-      mentor,
+    const members = expectOk(
+      await dispatchStream(
+        GetStreamMembersUcDef.command({ streamId: ENROLLMENT_ID }),
+      ),
     );
-    expect(Array.isArray(students)).toBe(true);
+    expect(Array.isArray(members?.students)).toBe(true);
   });
 
   // ── Создание потока (wizard: модули) ──

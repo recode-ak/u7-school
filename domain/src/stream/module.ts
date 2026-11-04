@@ -1,37 +1,21 @@
-// biome-ignore lint/style/noRestrictedImports: DEBT-2 — тип резолвера/константа пока в app
+// biome-ignore lint/style/noRestrictedImports: DEBT-2 — тип резолвера пока в app
 import type { U7ModuleResolver } from '@u7-scl/app-legacy/domain';
-import type { CourseFacade } from '@u7-scl/domain/course';
-import type { UserFacade } from '@u7-scl/domain/user';
-import type { ListStreamStudentsCmdMeta } from './stream/commands/list-stream-students-cmd';
-import type { StreamRepo } from './stream/repo';
-import type { CompleteStepCmdMeta } from './student/commands/complete-step-cmd';
-import type { CompleteStudentCmdMeta } from './student/commands/complete-student-cmd';
-import type { DropStudentCmdMeta } from './student/commands/drop-student-cmd';
-import type { EnrollStudentCmdMeta } from './student/commands/enroll-student-cmd';
-import type { GetStudentByUserCmdMeta } from './student/commands/get-student-by-user-cmd';
-import type { GetStudentProgressCmdMeta } from './student/commands/get-student-progress-cmd';
-import type { MarkAbandonedCmdMeta } from './student/commands/mark-abandoned-cmd';
-import type { SetNextPreferenceCmdMeta } from './student/commands/set-next-preference-cmd';
-import type { StudentRepo } from './student/repo';
+import type { CourseFacade } from '@u7-scl/domain/course/contract';
+import type { UserFacade } from '@u7-scl/domain/user/contract';
 
+/**
+ * Резолвер зависимостей API-модуля stream (оболочка до Ф3 трека `stream-dmg`).
+ */
 export interface StreamApiModuleResolver extends U7ModuleResolver {
-  streamRepo: StreamRepo;
-  streamStudentRepo: StudentRepo;
   userFacade: UserFacade;
   courseFacade: CourseFacade;
 }
 
+/**
+ * Метаданные API-модуля stream: UC и Job переведены на Def, legacy-UC нет.
+ */
 export interface StreamApiModuleMeta {
   name: 'stream';
   url: '/stream';
-  ucMetas:
-    | ListStreamStudentsCmdMeta
-    | CompleteStepCmdMeta
-    | EnrollStudentCmdMeta
-    | GetStudentByUserCmdMeta
-    | GetStudentProgressCmdMeta
-    | DropStudentCmdMeta
-    | MarkAbandonedCmdMeta
-    | CompleteStudentCmdMeta
-    | SetNextPreferenceCmdMeta;
+  ucMetas: never;
 }

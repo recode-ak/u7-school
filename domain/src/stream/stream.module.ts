@@ -11,17 +11,22 @@ import { GetStreamUcDef } from './stream/uc/get-stream.uc';
 import { GetStreamMembersUcDef } from './stream/uc/get-stream-members.uc';
 import { GetStreamPresenceUcDef } from './stream/uc/get-stream-presence.uc';
 import { ListStreamsUcDef } from './stream/uc/list-streams.uc';
+import { InactivitySweepJobDef } from './student/job/inactivity-sweep.job';
 import { StudentArDef } from './student/student.ar';
+import { CompleteStepUcDef } from './student/uc/complete-step.uc';
+import { CompleteStudentUcDef } from './student/uc/complete-student.uc';
+import { DropStudentUcDef } from './student/uc/drop-student.uc';
+import { EnrollStudentUcDef } from './student/uc/enroll-student.uc';
+import { GetActiveStudentUcDef } from './student/uc/get-active-student.uc';
+import { GetStudentByUserUcDef } from './student/uc/get-student-by-user.uc';
+import { GetStudentProgressUcDef } from './student/uc/get-student-progress.uc';
+import { MarkAbandonedUcDef } from './student/uc/mark-abandoned.uc';
 
-/**
- * Модуль потоков. Поток переведён на Def (9 UC); студент — legacy-код, поэтому
- * модуль остаётся внешним (`external`, D-37) до Ф3 трека `stream-dmg`.
- */
+/** Модуль потоков: поток (9 UC) и студент (8 UC, Job бездействия). */
 export const StreamModuleDef = ModuleDef.define({
   name: 'stream',
   label: 'Потоки',
   description: 'Потоки обучения по модулям курсов и участие студентов в них.',
-  external: true,
   dependsOn: [UserModuleDef, CourseModuleDef],
   aggregates: [StreamArDef, StudentArDef],
   useCases: [
@@ -34,7 +39,15 @@ export const StreamModuleDef = ModuleDef.define({
     GetStreamMembersUcDef,
     GetStreamPresenceUcDef,
     FindStreamByTelegramGroupUcDef,
+    EnrollStudentUcDef,
+    CompleteStepUcDef,
+    CompleteStudentUcDef,
+    DropStudentUcDef,
+    MarkAbandonedUcDef,
+    GetStudentByUserUcDef,
+    GetStudentProgressUcDef,
+    GetActiveStudentUcDef,
   ],
   reactions: [],
-  jobs: [],
+  jobs: [InactivitySweepJobDef],
 });

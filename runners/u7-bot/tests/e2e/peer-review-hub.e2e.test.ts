@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { AppController } from '@u7-scl/bot/app/app-controller';
-import type { StudentCompletedEvent } from '@u7-scl/stream/domain';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
@@ -9,6 +8,7 @@ import {
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
+import { completeStudent } from '../helpers/student-fate';
 
 /**
  * E2E «Хаб и меню» (Фаза 6, задача 3):
@@ -73,20 +73,12 @@ describe('E2E peer-review: хаб «Мои отзывы» и меню', () => {
   });
 
   test('живая кампания → кнопка меню видна (kind callback, приоритет 25)', async () => {
-    app.eventBus.publish({
-      eventId: crypto.randomUUID(),
-      eventName: 'student.completed',
-      occurredAt: '2026-09-22T12:00',
-      aggregateName: 'Student',
-      aggregateId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
-      payload: {
-        studentId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
-        userId: SUBJECT_USER_ID,
-        streamId: STREAM_ID,
-        moduleId: 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0',
-        outcome: 'advanced',
-      },
-    } satisfies StudentCompletedEvent);
+    await completeStudent(app, {
+      callerTelegramId: MENTOR_TG,
+      streamId: STREAM_ID,
+      studentId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
+      outcome: 'advanced',
+    });
 
     await waitUntil(async () =>
       Boolean(

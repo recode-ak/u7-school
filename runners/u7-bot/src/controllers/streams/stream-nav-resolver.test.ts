@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { ContentSnapshot } from '@u7-scl/course/domain';
-import { type Stream, StreamStatus } from '@u7-scl/stream/domain';
+import { StreamStatus, type StreamView } from '@u7-scl/domain/stream/contract';
 import { resolveStreamNavLevel } from './stream-nav-resolver';
 
 describe('stream-nav-resolver (TDD)', () => {
@@ -46,7 +46,17 @@ describe('stream-nav-resolver (TDD)', () => {
     },
   ];
 
-  const stream: Stream = {
+  const stream: Pick<
+    StreamView,
+    | 'uuid'
+    | 'schoolId'
+    | 'moduleId'
+    | 'mentorId'
+    | 'title'
+    | 'description'
+    | 'status'
+    | 'contentSnapshot'
+  > = {
     uuid: '11111111-1111-4111-8111-111111111111',
     schoolId: '22222222-2222-4222-8222-222222222222',
     moduleId: '33333333-3333-4333-8333-333333333333',
@@ -54,10 +64,7 @@ describe('stream-nav-resolver (TDD)', () => {
     title: 'Веб-разработка с нуля',
     description: 'Описание потока',
     status: StreamStatus.ACTIVE,
-    startDate: '2026-02-01T00:00:00.000Z',
     contentSnapshot: snapshot,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
   };
 
   const stepDescriptions: Record<string, string> = {

@@ -2,7 +2,6 @@ import { StreamModuleDef } from '@u7-scl/domain/stream';
 import type { User } from '@u7-scl/domain/user/contract';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import type { StreamRepo } from './stream/stream.repo';
-import type { StreamStudents } from './stream/stream-students';
 import { ActivateStreamUc } from './stream/uc/activate-stream.uc';
 import { ArchiveStreamUc } from './stream/uc/archive-stream.uc';
 import { CompleteStreamUc } from './stream/uc/complete-stream.uc';
@@ -12,21 +11,31 @@ import { GetStreamUc } from './stream/uc/get-stream.uc';
 import { GetStreamMembersUc } from './stream/uc/get-stream-members.uc';
 import { GetStreamPresenceUc } from './stream/uc/get-stream-presence.uc';
 import { ListStreamsUc } from './stream/uc/list-streams.uc';
+import { InactivitySweepJob } from './student/job/inactivity-sweep.job';
+import type { StudentRepo } from './student/student.repo';
+import { CompleteStepUc } from './student/uc/complete-step.uc';
+import { CompleteStudentUc } from './student/uc/complete-student.uc';
+import { DropStudentUc } from './student/uc/drop-student.uc';
+import { EnrollStudentUc } from './student/uc/enroll-student.uc';
+import { GetActiveStudentUc } from './student/uc/get-active-student.uc';
+import { GetStudentByUserUc } from './student/uc/get-student-by-user.uc';
+import { GetStudentProgressUc } from './student/uc/get-student-progress.uc';
+import { MarkAbandonedUc } from './student/uc/mark-abandoned.uc';
 
 /** Субъект потока: права зависят только от `uuid` и ролей (`StreamPolicy`). */
 export type StreamUser = Pick<User, 'uuid' | 'roles'>;
 
 /**
  * Резолвер модуля: платформа (фасад `course` — в `facades`, вызываемый UC — в
- * `calls`), репозиторий потоков, порт студентов и школа приложения.
+ * `calls`), репозитории потоков и студентов и школа приложения.
  */
 export type StreamDeps = ModuleDeps & {
   readonly streams: StreamRepo;
-  readonly students: StreamStudents;
+  readonly students: StudentRepo;
   readonly schoolId: string;
 };
 
-/** Карта «Def → класс» модуля stream (API-05); ER и Job нет. */
+/** Карта «Def → класс» модуля stream (API-05); ER нет, Job — обход бездействующих студентов. */
 export const streamMap = {
   useCases: {
     createStream: CreateStreamUc,
@@ -38,14 +47,21 @@ export const streamMap = {
     getStreamMembers: GetStreamMembersUc,
     getStreamPresence: GetStreamPresenceUc,
     findStreamByTelegramGroup: FindStreamByTelegramGroupUc,
+    enrollStudent: EnrollStudentUc,
+    completeStep: CompleteStepUc,
+    completeStudent: CompleteStudentUc,
+    dropStudent: DropStudentUc,
+    markAbandoned: MarkAbandonedUc,
+    getStudentByUser: GetStudentByUserUc,
+    getStudentProgress: GetStudentProgressUc,
+    getActiveStudent: GetActiveStudentUc,
   },
   reactions: {},
-  jobs: {},
+  jobs: { inactivitySweep: InactivitySweepJob },
 } satisfies ModuleMap<typeof StreamModuleDef, StreamDeps, StreamUser>;
 
 /**
- * Модуль потоков: DMG-часть (поток) на своём репозитории; студенты — через
- * порт `StreamStudents` (мост к legacy до Ф2).
+ * Модуль потоков: поток и студент на своих репозиториях.
  */
 export function createStreamModule(deps: StreamDeps) {
   return new ModuleFromDef<typeof StreamModuleDef, StreamDeps, StreamUser>(

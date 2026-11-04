@@ -1,5 +1,6 @@
 import {
   GetStreamMembersUcDef,
+  StreamMembersDqs,
   type StreamModuleDef,
 } from '@u7-scl/domain/stream';
 import { type Identified, ok } from 'dmg-core';
@@ -13,8 +14,9 @@ import type { StreamDeps } from '../../stream.module';
 type Input = ParsedInputOf<typeof GetStreamMembersUcDef>;
 
 /**
- * Состав потока: ментор из потока, студенты — факты порта `StreamStudents`
- * без `settled` (это вопрос правила завершения). Потока нет — `undefined`.
+ * Состав потока: ментор из потока, студенты — факты `StreamMembersDqs` без
+ * `settled` (это вопрос правила завершения) и отставание `roster` на момент
+ * запроса. Потока нет — `undefined`.
  */
 export class GetStreamMembersUc extends UseCaseFromDef<
   typeof GetStreamMembersUcDef,
@@ -34,10 +36,10 @@ export class GetStreamMembersUc extends UseCaseFromDef<
     const stream = await this.resolve.streams.findById(streamId);
     if (!stream) return ok(undefined);
 
-    const facts = await this.resolve.students.factsOf(streamId);
+    const students = await this.resolve.students.findByStream(streamId);
     return ok({
       mentorId: stream.view().mentorId,
-      students: facts.map(
+      students: StreamMembersDqs.facts(students).map(
         ({ studentId, userId, status, neverStarted, inProgress }) => ({
           studentId,
           userId,
@@ -46,6 +48,7 @@ export class GetStreamMembersUc extends UseCaseFromDef<
           inProgress,
         }),
       ),
+      roster: StreamMembersDqs.roster(stream, students, this.now()),
     });
   }
 }

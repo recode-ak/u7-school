@@ -9,7 +9,6 @@ import { ListStreamsUc } from './list-streams.uc';
 import {
   admin,
   anonymous,
-  fact,
   MENTOR_ID,
   makeEnv,
   mentor,
@@ -209,52 +208,6 @@ describe('GetStreamMembersUc', () => {
     expect(
       expectOk(await uc().handle({ streamId: STREAM }, system, REQ)),
     ).toBeUndefined();
-  });
-
-  it('ментор и студенты: сырые статусы, studentId, inProgress, neverStarted; settled не отдаётся', async () => {
-    env.streams.seed(state('completed'));
-    const advanced = fact(U1, 'advanced');
-    const notAdvanced = fact(U2, 'not_advanced');
-    const enrolled = fact(U3, 'enrolled');
-    const active = fact(MENTOR_ID, 'active');
-    const never = fact('44444444-4444-4444-8444-444444444445', 'abandoned', {
-      neverStarted: true,
-    });
-    const started = fact('55555555-5555-4555-8555-555555555556', 'abandoned');
-    env.students.facts = [
-      advanced,
-      notAdvanced,
-      enrolled,
-      active,
-      never,
-      started,
-    ];
-
-    const members = expectOk(
-      await uc().handle({ streamId: STREAM }, system, REQ),
-    );
-
-    expect(members?.mentorId).toBe(MENTOR_ID);
-    expect(members?.students).toEqual(
-      [advanced, notAdvanced, enrolled, active, never, started].map((f) => ({
-        studentId: f.studentId,
-        userId: f.userId,
-        status: f.status,
-        neverStarted: f.neverStarted,
-        inProgress: f.inProgress,
-      })),
-    );
-    expect(
-      members?.students.map((s) => [s.status, s.neverStarted, s.inProgress]),
-    ).toEqual([
-      ['advanced', false, false],
-      ['not_advanced', false, false],
-      ['enrolled', false, true],
-      ['active', false, true],
-      ['abandoned', true, false],
-      ['abandoned', false, false],
-    ]);
-    expect(env.students.asked).toEqual([STREAM]);
   });
 
   it('пользователь и гость тоже читают состав', async () => {

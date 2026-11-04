@@ -1,10 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import type { ContentSnapshot } from '@u7-scl/course/domain';
-import type { Student } from '@u7-scl/stream/domain';
+import type { NavigationTree } from '@u7-scl/domain/stream/contract';
 import { resolveStudentNavLevel } from './student-nav-resolver';
 
 describe('student-nav-resolver (TDD)', () => {
-  const STREAM_ID = 'stream-111';
   const STEP1_ID = 'step-uuid-1';
   const STEP2_ID = 'step-uuid-2';
   const STEP3_ID = 'step-uuid-3';
@@ -49,25 +48,54 @@ describe('student-nav-resolver (TDD)', () => {
   ];
 
   // Студент завершил шаг 1, шаг 2 текущий, остальные заблокированы
-  const student: Student = {
-    uuid: 'student-1',
-    streamId: STREAM_ID,
-    userId: 'user-1',
-    status: 'active',
-    enrolledAt: '2026-01-01T00:00:00.000Z',
-    createdAt: '2026-01-01T00:00:00.000Z',
-    currentStepId: STEP2_ID,
-    steps: [
+  // (дерево — проекция `getStudentProgress`, как её строит StudentProgressDqs)
+  const tree: NavigationTree = {
+    projects: [
       {
-        stepId: STEP1_ID,
-        status: 'completed',
-        issuedAt: '2026-01-01',
-        completedAt: '2026-01-02',
+        title: 'Основы',
+        status: 'current',
+        completedLessons: 1,
+        totalLessons: 2,
+        lessons: [
+          {
+            lessonId: LESSON1_ID,
+            title: 'Введение',
+            status: 'current',
+            completedSteps: 1,
+            totalSteps: 2,
+            steps: [
+              { stepId: STEP1_ID, status: 'completed', index: 1 },
+              { stepId: STEP2_ID, status: 'current', index: 2 },
+            ],
+          },
+          {
+            lessonId: LESSON2_ID,
+            title: 'Переменные',
+            status: 'locked',
+            completedSteps: 0,
+            totalSteps: 2,
+            steps: [
+              { stepId: STEP3_ID, status: 'locked', index: 1 },
+              { stepId: STEP4_ID, status: 'locked', index: 2 },
+            ],
+          },
+        ],
       },
       {
-        stepId: STEP2_ID,
-        status: 'issued',
-        issuedAt: '2026-01-02',
+        title: 'Продвинутый',
+        status: 'locked',
+        completedLessons: 0,
+        totalLessons: 1,
+        lessons: [
+          {
+            lessonId: LESSON3_ID,
+            title: 'Функции',
+            status: 'locked',
+            completedSteps: 0,
+            totalSteps: 1,
+            steps: [{ stepId: STEP5_ID, status: 'locked', index: 1 }],
+          },
+        ],
       },
     ],
   };
@@ -99,7 +127,7 @@ describe('student-nav-resolver (TDD)', () => {
       story: 'nav-tree',
       address: { level: 'root' },
       snapshot,
-      student,
+      tree,
       stepDescriptions: stepsDescriptions,
     });
 
@@ -127,7 +155,7 @@ describe('student-nav-resolver (TDD)', () => {
       story: 'nav-tree',
       address: { level: 'project', targetId: PROJECT1_ID },
       snapshot,
-      student,
+      tree,
       stepDescriptions: stepsDescriptions,
     });
 
@@ -160,7 +188,7 @@ describe('student-nav-resolver (TDD)', () => {
       story: 'nav-tree',
       address: { level: 'lesson', targetId: LESSON1_ID },
       snapshot,
-      student,
+      tree,
       stepDescriptions: stepsDescriptions,
     });
 
@@ -199,7 +227,7 @@ describe('student-nav-resolver (TDD)', () => {
       story: 'nav-tree',
       address: { level: 'step', targetId: STEP1_ID },
       snapshot,
-      student,
+      tree,
       stepDescriptions: stepsDescriptions,
       stepContent: stepContents[STEP1_ID],
     });
@@ -232,7 +260,7 @@ describe('student-nav-resolver (TDD)', () => {
       story: 'nav-tree',
       address: { level: 'step', targetId: STEP2_ID },
       snapshot,
-      student,
+      tree,
       stepDescriptions: stepsDescriptions,
       stepContent: stepContents[STEP2_ID],
     });
@@ -251,7 +279,7 @@ describe('student-nav-resolver (TDD)', () => {
       story: 'nav-tree',
       address: { level: 'step', targetId: STEP3_ID },
       snapshot,
-      student,
+      tree,
       stepDescriptions: stepsDescriptions,
     });
 

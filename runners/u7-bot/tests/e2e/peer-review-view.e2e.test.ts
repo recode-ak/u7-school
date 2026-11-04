@@ -6,7 +6,6 @@ import {
   ListScopeReviewsUcDef,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
-import type { StudentCompletedEvent } from '@u7-scl/stream/domain';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -18,6 +17,7 @@ import {
 import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
+import { completeStudent } from '../helpers/student-fate';
 
 /**
  * E2E «Просмотр S07 из карточки потока» (Фаза 6, задача 4):
@@ -251,20 +251,12 @@ describe('E2E peer-review: S07 — пагинация и DialogCache', () => {
     counter = stand.counter;
 
     // Кампания судьбой + 4 длинных отзыва (страница = один блок)
-    app.eventBus.publish({
-      eventId: crypto.randomUUID(),
-      eventName: 'student.completed',
-      occurredAt: '2026-09-22T12:00',
-      aggregateName: 'Student',
-      aggregateId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
-      payload: {
-        studentId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
-        userId: SUBJECT_USER_ID,
-        streamId: STREAM_WITH_REVIEWS,
-        moduleId: 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0',
-        outcome: 'advanced',
-      },
-    } satisfies StudentCompletedEvent);
+    await completeStudent(app, {
+      callerTelegramId: MENTOR_TG,
+      streamId: STREAM_WITH_REVIEWS,
+      studentId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
+      outcome: 'advanced',
+    });
     const deadline = Date.now() + 3000;
     while (
       !(await app.reviewCampaignRepo.findBySubject(

@@ -5,7 +5,6 @@ import {
   GetMyCampaignsUcDef,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
-import type { StudentCompletedEvent } from '@u7-scl/stream/domain';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
@@ -14,6 +13,7 @@ import {
 import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
+import { completeStudent } from '../helpers/student-fate';
 
 /**
  * Smoke сквозной склейки peer-review на тестовом стенде (Фаза 6, задача 1):
@@ -99,20 +99,12 @@ describe('E2E peer-review: инфраструктура стенда (smoke)', (
   test('student.completed → ER создаёт кампанию (репозиторий + UC)', async () => {
     transport.reset();
 
-    app.eventBus.publish({
-      eventId: crypto.randomUUID(),
-      eventName: 'student.completed',
-      occurredAt: '2026-09-22T12:00',
-      aggregateName: 'Student',
-      aggregateId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
-      payload: {
-        studentId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
-        userId: SUBJECT_USER_ID,
-        streamId: STREAM_ID,
-        moduleId: 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0',
-        outcome: 'advanced',
-      },
-    } satisfies StudentCompletedEvent);
+    await completeStudent(app, {
+      callerTelegramId: MENTOR_TG,
+      streamId: STREAM_ID,
+      studentId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
+      outcome: 'advanced',
+    });
 
     // Кампания появилась в репозитории
     await waitUntil(async () => {

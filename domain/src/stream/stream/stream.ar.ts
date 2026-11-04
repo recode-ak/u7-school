@@ -13,6 +13,7 @@ import * as v from 'valibot';
 import { StreamErrors } from './stream.errors';
 import { StreamEvents } from './stream.events';
 import { StreamState } from './stream.state';
+import type { StepPlace } from './stream.types';
 
 const { NOT_ENROLLING, NOT_ACTIVE, NOT_COMPLETED, ALREADY_ARCHIVED } =
   StreamErrors;
@@ -88,7 +89,7 @@ export type CreateStream = Omit<
  * Жизненный цикл (правила — в `StreamArDef.transitions`): набор → идёт →
  * завершён → архив. Завершение требует исходов у всех студентов — это
  * инвариант двух агрегатов (`StreamRules.rules.studentsSettled`).
- * Шаги контента студента (`findNextStep`) остаются в legacy до Ф2.
+ * Снимок контента отвечает на вопросы студента: первый шаг, место шага.
  */
 export class StreamAr extends Aggregate<typeof StreamArDef, StreamView> {
   private constructor(state: StreamState, events?: readonly StreamEvent[]) {
@@ -132,6 +133,50 @@ export class StreamAr extends Aggregate<typeof StreamArDef, StreamView> {
     for (const project of this.state.contentSnapshot) {
       for (const lesson of project.lessons) {
         if (lesson.stepIds.length > 0) return lesson.stepIds[0];
+      }
+    }
+    return undefined;
+  }
+
+  /** Модуль, по которому идёт поток. */
+  moduleId(): string {
+    return this.state.moduleId;
+  }
+
+  /** Принимает ли поток введённое кодовое слово; слова у потока нет — принимает любое. */
+  acceptsEnrollmentKey(key?: string): boolean {
+    const expected = this.state.enrollmentKey;
+    return expected === undefined || expected === key;
+  }
+
+  /** Идёт ли поток по этому модулю. */
+  teachesModule(moduleId: string): boolean {
+    return this.state.moduleId === moduleId;
+  }
+
+  /**
+   * Место шага в снимке контента: следующий шаг (по порядку обхода проектов
+   * и уроков), урок и проект шага, последний ли он в уроке, последний ли
+   * урок в проекте. `undefined` — шага в снимке нет.
+   */
+  stepPlace(stepId: string): StepPlace | undefined {
+    const order = this.state.contentSnapshot.flatMap((project) =>
+      project.lessons.flatMap((lesson) => lesson.stepIds),
+    );
+    const index = order.indexOf(stepId);
+    if (index === -1) return undefined;
+    const nextStepId = order[index + 1];
+    for (const project of this.state.contentSnapshot) {
+      for (const [li, lesson] of project.lessons.entries()) {
+        const at = lesson.stepIds.indexOf(stepId);
+        if (at === -1) continue;
+        return {
+          ...(nextStepId !== undefined && { nextStepId }),
+          lessonId: lesson.lessonId,
+          projectId: project.projectId,
+          lastInLesson: at === lesson.stepIds.length - 1,
+          lastLessonInProject: li === project.lessons.length - 1,
+        };
       }
     }
     return undefined;

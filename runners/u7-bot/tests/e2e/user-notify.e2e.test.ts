@@ -1,11 +1,15 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
+import { LearningController } from '@u7-scl/bot/learning/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import {
   ActivateStreamUcDef,
+  CompleteStudentUcDef,
   CreateStreamUcDef,
+  EnrollStudentUcDef,
+  GetStudentByUserUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
 import {
@@ -80,6 +84,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
     transport = createTestBotTransport(app, [
       new AppController('https://t.me/u7_school_group'),
       new StreamsController(),
+      new LearningController(),
       new MentorController(),
       new UserController(),
       new CoursesController(),
@@ -197,16 +202,22 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
     );
 
     // 2. Студент, прошедший первый модуль, записывается (gate пройден)
-    await app.apiApp.execute(
-      'enroll-student',
-      { streamId: stream.streamId, userId: studentAdvanced.uuid },
-      studentAdvanced,
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        EnrollStudentUcDef.command({ streamId: stream.streamId }),
+        new UserCaller(studentAdvanced),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
     );
-    const record = (await app.apiApp.execute(
-      'get-student-by-user',
-      { userId: studentAdvanced.uuid },
-      mentor,
-    )) as unknown as { uuid: string; streamId: string };
+    const record = expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        GetStudentByUserUcDef.command({ userId: studentAdvanced.uuid }),
+        new UserCaller(mentor),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    );
     expect(record.streamId).toBe(stream.streamId);
 
     // 3. Ментор активирует поток — студент станет active с выданным шагом
@@ -220,14 +231,17 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
     );
 
     // 4. Ментор завершает студента с исходом «прошёл»
-    await app.apiApp.execute(
-      'complete-student',
-      {
-        streamId: stream.streamId,
-        studentId: record.uuid,
-        outcome: 'advanced',
-      },
-      mentor,
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        CompleteStudentUcDef.command({
+          streamId: stream.streamId,
+          studentId: record.uuid,
+          outcome: 'advanced',
+        }),
+        new UserCaller(mentor),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
     );
 
     // 5. Студенту доставлено поздравление с завершением курса
@@ -241,29 +255,39 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
     transport.reset();
 
     // Студент f0f0f0f0 (e1e1e1e1, модуль a0a0a0a0) — есть следующий модуль
-    const record = (await app.apiApp.execute(
-      'get-student-by-user',
-      { userId: studentActive.uuid },
-      mentor,
-    )) as unknown as { uuid: string; streamId: string };
+    const record = expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        GetStudentByUserUcDef.command({ userId: studentActive.uuid }),
+        new UserCaller(mentor),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    );
 
-    await app.apiApp.execute(
-      'complete-student',
-      {
-        streamId: record.streamId,
-        studentId: record.uuid,
-        outcome: 'advanced',
-      },
-      mentor,
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        CompleteStudentUcDef.command({
+          streamId: record.streamId,
+          studentId: record.uuid,
+          outcome: 'advanced',
+        }),
+        new UserCaller(mentor),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
     );
 
     // Небольшая пауза: подписки шины синхронные, но доставка асинхронна
     await new Promise((r) => setTimeout(r, 200));
 
-    // Уведомления студенту нет — она приходит только при 7c/7d
-    const noticed = transport.api.sentMessages.find(
+    // Текстового уведомления нет — оно приходит только при 7c/7d; HubStory
+    // (стенд с LearningController) шлёт кнопочное приглашение 7a
+    const toStudent = transport.api.sentMessages.filter(
       (m) => m.telegramId === STUDENT_ACTIVE_TG,
     );
-    expect(noticed).toBeUndefined();
+    expect(toStudent.map((m) => m.text).join('\n')).toContain(
+      'записаться на следующий',
+    );
+    expect(toStudent.some((m) => m.text.includes('Курс завершён'))).toBe(false);
   });
 });

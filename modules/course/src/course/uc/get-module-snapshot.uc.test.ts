@@ -50,6 +50,10 @@ function facadeOver(getModuleSnapshot: CourseLegacy['getModuleSnapshot']) {
     whichCoursesIncludeModule: async () => [],
     whichModulesAreSame: async () => [],
     getModuleSnapshot,
+    getCourseByModuleId: async () => undefined,
+    getModule: async () => {
+      throw new Error('не вызывается');
+    },
   };
   return new ModuleFacade(
     createCourseModule({ app, facades: new ModuleFacades(), legacy }),

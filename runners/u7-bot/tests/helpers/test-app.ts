@@ -9,6 +9,8 @@ import { ReviewCampaignJsonRepo, ReviewJsonRepo } from '@u7-scl/peer-review';
 import type { StreamApiModule } from '@u7-scl/stream';
 import type { UserInProcFacade } from '@u7-scl/user/infra';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
+import type { AnyModuleDef, DomainError, Result } from 'dmg-core';
+import { type JobReport, Trace } from 'dmg-core/app';
 import type { FixturePaths } from './fixture-loader';
 import { cleanupFixtures, loadFixtures } from './fixture-loader';
 
@@ -29,6 +31,11 @@ export interface TestApp {
   reviewCampaignRepo: ReviewCampaignJsonRepo;
   /** Репозиторий отзывов peer-review — проверка сохранённых отзывов UC */
   reviewRepo: ReviewJsonRepo;
+  /** Разовый прогон Job модуля DMG вне расписания */
+  runJob<M extends AnyModuleDef>(
+    module: M,
+    job: M['jobs'][number],
+  ): Promise<Result<JobReport, DomainError>>;
   /** Фасад пользователей (для получения тестовых акторов) */
   userFacade: UserInProcFacade;
   /** Фасад курсов */
@@ -66,6 +73,7 @@ export async function createTestApp(tag?: string): Promise<TestApp> {
     courseModule: app.courseModule,
     eventBus: app.eventBus,
     callers: app.callers,
+    runJob: (module, job) => app.apiApp.runJob(module, job, Trace.forJob(job)),
     wishRepo: new WishJsonRepo(`${fixtures.dbDir}/wish/wishes.json`),
     reviewCampaignRepo: new ReviewCampaignJsonRepo(
       fixtures.peerReview.campaigns,

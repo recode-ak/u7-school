@@ -11,6 +11,7 @@ import {
 import type { ContentSnapshot } from '@u7-scl/course/domain';
 import {
   GetStreamUcDef,
+  GetStudentProgressUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
 import {
@@ -39,7 +40,7 @@ export class NavTreeStory extends U7BotUiStory {
     session: BotSession,
   ): Promise<DialogResponse> {
     const { student, stream } = await getStudentAndStream(
-      this.appApi,
+      (command) => this.dispatchUc(StreamModuleDef, command, actor),
       actor,
       async (streamId) => {
         const loaded = await this.dispatchUc(
@@ -107,11 +108,19 @@ export class NavTreeStory extends U7BotUiStory {
       }
     }
 
+    const loadedProgress = await this.dispatchUc(
+      StreamModuleDef,
+      GetStudentProgressUcDef.command({ studentId: student.uuid }),
+      actor,
+    );
+    const tree = loadedProgress.ok ? loadedProgress.value.progress?.tree : null;
+    if (!tree) return notEnrolled();
+
     const navLevel = resolveStudentNavLevel({
       story: this.name,
       address: navAddress,
       snapshot: stream.contentSnapshot,
-      student,
+      tree,
       stepDescriptions,
       stepContent,
       backToHubCode: this.cbFor('hub', 'my-study'),

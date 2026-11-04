@@ -60,7 +60,6 @@
   - `domain/src/user/**` — `facade.ts`, `module.ts`, `user/a-root.ts`, `user/events.ts`, `user/commands/{errors,notify-user-cmd,register-guest-cmd}.ts`; погашает перевод `user` на Def
   - `domain/src/course/**` — `module.ts`, `*/a-root.ts`, `*/entity.ts`, `*/commands/errors.ts`, `content-path/commands/resolve-content-path-cmd.ts`; подпути `core/domain`, `core/shared`, `core/infra`; погашает перевод `course` на Def
   - `domain/src/questionnaire/**` — `module.ts`, `questionnaire/{a-root,entity,events,questionnaire-factory}.ts`, `questionnaire/{likert,standard}/*-ar.ts`, `questionnaire/commands/errors.ts`; подпути `core/domain`, `core/shared`, `core/infra`; погашает перевод `questionnaire` на Def
-  - `domain/src/stream/**` — `stream-ds.ts`, `{stream,student}/{a-root,entity,events}.ts`, `{stream,student}/commands/*-cmd.ts`, тесты `stream-ds`, `student/a-root`; подпути `core/domain`, `core/shared`, `core/api`; погашает перевод `stream` на Def
 - **Признак:** `from '@u7-scl/core`
 - **Корень:** `domain/src/**`
 - **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `NotifyKind`, ошибки (`AccessDeniedError`, `NotFoundError`, `errConflict`, `throwError`), `isoNow`, `now`, `UcMeta`, `FileMetadataSchema`, `ApiModuleMeta`, `BaseJsonDb` живут в `core`; механический перенос не меняет базовые классы.
@@ -72,7 +71,7 @@
   - `domain/src/user/module.ts` — тип `U7ModuleResolver`; погашает перевод `user` на Def
   - `domain/src/course/module.ts` — тип `U7ModuleResolver`; погашает перевод `course` на Def
   - `domain/src/questionnaire/module.ts` — тип `U7ModuleResolver`; погашает перевод `questionnaire` на Def
-  - `domain/src/stream/module.ts` — тип `U7ModuleResolver`; погашает перевод `stream` на Def
+  - `domain/src/stream/module.ts` — тип `U7ModuleResolver` в оболочке (TR-43 Т1); погашает Ф3 трека `stream-dmg`
 - **Признак:** `from '@u7-scl/app-legacy`
 - **Корень:** `domain/src/**`
 - **Причина:** тип резолвера модулей и `U7_SCHOOL_ID` определены в `app`; создаёт циклическую зависимость пакетов `app` ↔ `domain` (только типы, в рантайме импорт стирается); сам цикл пакетов также снимается этим долгом.
@@ -84,7 +83,7 @@
   - `domain/src/user/user/entity.ts` — `createdAt`, `updatedAt`; `biome-ignore lint/plugin`; погашает перевод `user` на Def (`F.timestamp`)
   - `domain/src/course/*/entity.ts` — `course`, `lesson`, `module`, `step`: `createdAt`, `updatedAt`; `biome-ignore lint/plugin`; погашает перевод `course` на Def (`F.timestamp`)
   - `domain/src/questionnaire/questionnaire/entity.ts`, `domain/src/questionnaire/questionnaire/likert/likert-questionnaire.ts` — `biome-ignore lint/plugin`; погашает перевод `questionnaire` на Def (`F.timestamp`)
-  - `domain/src/stream/{stream,student}/entity.ts`, `domain/src/stream/date-test.test.ts` — 9 мест в схемах (`biome-ignore lint/plugin`) и тест формата даты; погашает перевод `stream` на Def (`F.timestamp`)
+  - `domain/src/stream/{stream,student}/entity.ts` — схемы legacy-типов для миров и скриптов (`biome-ignore lint/plugin`, TR-43 Т1); погашает Ф3 трека `stream-dmg`
 - **Признак:** `v\.isoDateTime`
 - **Корень:** `domain/src/**`
 - **Причина:** схемы перенесены из `app` без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена.
@@ -110,7 +109,7 @@
   - `modules/user/src/domain/index.ts` — потребители (≈96 файлов) импортируют `@u7-scl/user/domain`
   - `modules/course/src/domain/index.ts` — потребители импортируют `@u7-scl/course/domain`
   - `modules/questionnaire/src/domain/index.ts` — потребители импортируют `@u7-scl/questionnaire/domain`
-  - `modules/stream/src/domain/index.ts`, `modules/stream/src/api/errors.ts` — потребители импортируют `@u7-scl/stream/domain` и `../errors`; ошибки перенесены в `domain/stream/errors.ts`, т.к. домен импортировал их из api
+  - `modules/stream/src/domain/index.ts` — потребители импортируют `@u7-scl/stream/domain`; погашает Ф3 трека `stream-dmg`
   - `modules/wish/src/domain/index.ts` — потребители импортируют `@u7-scl/wish/domain`
   - `modules/peer-review/src/domain/index.ts` — потребители импортируют `@u7-scl/peer-review/domain`
   - `modules/dossier/src/index.ts` — пакет `@u7-scl/dossier` публикует корень `.`; потребителей в коде нет, но публичный путь сохранён на время миграции
@@ -143,7 +142,6 @@
 - **Место:**
   - `domain/src/course/module/a-root.ts` — `#filterPublished`; `biome-ignore lint/plugin`; погашает перевод `course` на Def (фильтрация — в Policy/DQS)
   - `domain/src/questionnaire/questionnaire/a-root.ts` — 10 методов и поле `#engine`; `biome-ignore lint/plugin`; погашает перевод `questionnaire` на Def (логика — в Policy/DQS)
-  - `domain/src/stream/student/a-root.ts` — 2 метода; `biome-ignore lint/plugin`; погашает перевод `stream` на Def (логика — в Policy/DQS)
 - **Признак:** `^\s*(static\s+)?(async\s+)?(get\s+)?#\w+`
 - **Корень:** `domain/src/**/a-root.ts`
 - **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
@@ -203,7 +201,7 @@
 ### DEBT-44: UC-адаптеры над legacy-фасадами
 - **Место:**
   - `modules/user/src/user/uc/get-telegram-addresses.uc.ts` — адаптер над фасадом пользователей; погашает миграция модуля `user`
-  - `modules/course/src/course/uc/{get-course-enrollment,get-module-enrollment,get-courses-including-module,get-courses-starting-with-module,get-same-modules,get-module-snapshot}.uc.ts` — адаптеры над фасадом курсов; погашает миграция модуля `course`
+  - `modules/course/src/course/uc/{get-course-enrollment,get-module-enrollment,get-courses-including-module,get-courses-starting-with-module,get-same-modules,get-module-snapshot,get-module-prerequisite}.uc.ts` — адаптеры над фасадом курсов; погашает миграция модуля `course`
   - `modules/questionnaire/src/questionnaire/uc/start-questionnaire.uc.ts` — адаптер над фасадом анкет; погашает миграция модуля `questionnaire`
 - **Признак:** `Адаптер .* над legacy`
 - **Корень:** `modules/*/src/**/uc/*.uc.ts`
@@ -227,13 +225,6 @@
 - **Погашает:** интеграция менторских шагов в уроки через API
 - **Критерий снятия:** скрипты получают менторские файлы через `get-step` (`kind: 'file'`) по `mentorStepIds`, чтений `manifest.json` с диска нет
 
-### DEBT-47: мост нового потока к legacy-студентам
-- **Место:** `modules/stream/src/infra/legacy-stream-students{,.test}.ts`
-- **Признак:** `Мост к legacy-студентам`
-- **Корень:** `modules/stream/src/infra/**`
-- **Причина:** агрегат потока переведён на Def в Ф1 трека `stream-dmg`, а студент — в Ф2; `activateStream`, `completeStream` и «состав потока» читают и меняют студентов через порт `StreamStudents` над legacy `StudentRepo` (TR-41, С4/Т2).
-- **Погашает:** Ф2 трека `stream-dmg` (срез `student`)
-- **Критерий снятия:** порт `StreamStudents` реализован над новым репозиторием студента (или заменён DQS/DCS по С2), файла `legacy-stream-students.ts` нет
 
 ## 5. Инструменты проверки
 
@@ -507,11 +498,6 @@
 - **Решение:** (С1) выход потока без `enrollmentKey`, с `requiresEnrollmentKey`; ключ проверяет только `enroll` (Ф2). (С2) активация студентов при запуске — DCS в одном UoW `activateStream` (форма — бриф Ф2). (С3) вход `createStream` без `mentorId`/`schoolId`: ментор — субъект, школа — deps. (С4) мост к legacy-студентам — порт `StreamStudents` над legacy `StudentRepo` (DEBT-47, снятие — Ф2); вызовы `get-stream` в `learning/*`, `inactivity`, `monitor` переводятся в Ф1, их студенческая логика — Ф2. (Т1) legacy `StreamAr`/`StreamPolicy` → `LegacyStreamAr`/`LegacyStreamPolicy` до Ф2. (Т3) `launch` — в `execute` после `uow.register` (D-41, вариант 1), повтор безопасен. (Т4) `external` у `StreamModuleDef` — до Ф3. (Т5) legacy потока удаляется в Ф1; `list-stream-students` и legacy `StreamJsonRepo` — до Ф2. (Т6) `getStreamMembers` + `studentId`, `inProgress`, `callers` + `user`, `guest`, без фильтра `status`. (Т7) `canManage` в ответе `getStream`. (Т8) `findStreamByTelegramGroup` — первое совпадение. (Т9) `v.description` в `ContentSnapshot`, `v.uuid` не меняется. (Т10) DEBT-35 — DCS + вопрос Ar, повтор `invite` — `WISH_ALREADY_INVITED`. (Т11) даты в выходе — числа, `formatDate` получает ISO из story. (Т12) тест репозитория — `mkdtemp` (`data/fixtures` нет в git). (Т13) снят: остатка TR-8 нет после пересмотра D-60. (Т14) тексты отказов: `label` в `ErrorDef` статичен. `STREAM_STUDENTS_IN_PROGRESS` — «Нельзя завершить поток: есть студенты без исхода. Сначала укажите исход для каждого.»; story завершения ветвится по коду и показывает прежний текст с числом из `pending.length`. `STREAM_NOT_ENROLLING`/`STREAM_NOT_ACTIVE` — «Недопустимый переход статуса. Поток не может быть запущен.» / «… завершён.» без сырого статуса (кнопки и так скрыты по статусу). (Т15) отклонения migrator в домене: `commands/list-stream-students-cmd.ts` и legacy `stream/repo.ts` остаются до Ф2 (нужны legacy-студенту); `v.trim()` снят с заголовков `ContentSnapshot` (`toJsonSchema` не поддерживает), trim `title`/`description` в state — через `v.transform`. (Т16) прикладной слой: legacy `StreamJsonRepo` → `LegacyStreamJsonRepo` (имя занял новый репозиторий; только чтение для legacy-студента до Ф2); субъект UC потока — `StreamUser = Pick<User, 'uuid' | 'roles'>`, у `getStreamMembers`/`getStreamPresence` — `Identified` (`callers` с `system`); DEBT-35 закрыт доменной частью, код ER `invite-wishers` не менялся. (Т17) кодовое слово (С1): ключа в ответе потока нет, UI спрашивает слово при `requiresEnrollmentKey` и передаёт его в legacy `enroll-student`; лимит 3 попытки сохраняется — неверное слово story распознаёт по тексту legacy-отказа «Неверное кодовое слово» (у `throwBadRequest` нет своего кода). Stories: «несуществующий поток» — `ucErrorNotify` (`notify`, а не `screen`); `dispatchUcAsGuest` для обработчиков событий без актора.
 - **Пересмотреть:** (С4, Т1, Т5, Т15, Т16); (Т17) — в Ф2: распознавание по коду ошибки `enroll` на Def вместо текста — в Ф2 вместе с агрегатом студента; (Т4) — Ф3.
 
-### TR-42: красная зона Ф1–Ф2 трека `stream-dmg`
-- **Трек / фаза:** `stream-dmg`, Ф1 (решение spec «сосуществование срезов — без моста»)
-- **Контекст:** поток на Def пишет `streams.json` числовыми датами и `version`; legacy `LegacyStreamJsonRepo` (`StreamSchema`, `v.isoDateTime`) такие записи пропускает, и legacy `enroll-student`/`complete-student` отвечают `STREAM_NOT_FOUND`; `drop-student`/`mark-abandoned` молча не уведомляют, `inactivity-sweep` пропускает студентов (прод не деплоится до конца перехода).
-- **Решение:** между Ф1 и Ф2 допускаются падающие тесты — поимённо: `runners/u7-bot/tests/e2e/user-notify.e2e.test.ts` › «закрытие потока на последнем модуле → «🎉 Курс завершён!» (FR-6 #7c)» и › «закрытие на модуле с следующим → уведомления студенту нет (кнопка 7a)». Других падений нет (`check` Ф1: 3780 pass, 2 fail). `mentor-management.e2e` (`:299`) зелёный.
-- **Пересмотреть:** конец Ф2 — оба теста зелёные, `bun run check` полностью зелёный, запись удалена.
 
 ### TR-43: решения брифа среза `student` (`stream-dmg`)
 - **Трек / фаза:** `stream-dmg`, Ф2 (бриф `slices/student.md`; С1, С3, С4 — Нурболат, 2026-11-04; С2, Т1–Т14 — orchestrator)

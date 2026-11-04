@@ -8,6 +8,10 @@ import {
   dmgDispatch,
   streamView,
 } from '../../streams/stories/stream-dmg.test-kit';
+import {
+  type LegacyStudent,
+  studentAnswers,
+} from '../../streams/stories/student-dmg.test-kit';
 import { ProgressStory } from './progress';
 
 describe('ProgressStory', () => {
@@ -60,22 +64,22 @@ describe('ProgressStory', () => {
   };
 
   function makeStory(appApiOverrides?: Record<string, unknown>) {
-    const appApiSpy = mock((name: string, ..._args: unknown[]) => {
-      if (appApiOverrides && name in appApiOverrides) {
-        const val = appApiOverrides[name];
-        if (typeof val === 'function') return (val as () => unknown)();
-        if (val instanceof Error) throw val;
-        return val;
-      }
-      if (name === 'get-student-by-user') return mockStudent;
-      return undefined;
-    });
+    // `get-student-by-user`: запись студента, функция — студент не найден
+    const studentOverride = appApiOverrides?.['get-student-by-user'];
+    const student =
+      typeof studentOverride === 'function'
+        ? undefined
+        : ((studentOverride ?? mockStudent) as LegacyStudent);
+    const appApiSpy = mock((_name: string, ..._args: unknown[]) => undefined);
 
     const story = new ProgressStory();
     story.init({
       appApi: {
         execute: appApiSpy,
-        dispatch: dmgDispatch({ getStream: () => streamView(mockStream) }),
+        dispatch: dmgDispatch({
+          getStream: () => streamView(mockStream),
+          ...studentAnswers(student, mockStream.contentSnapshot),
+        }),
       },
       callers: testCallers,
     } as never);

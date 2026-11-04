@@ -2,9 +2,8 @@ import { EventDef, F } from 'dmg-core';
 import * as v from 'valibot';
 
 /**
- * События студента потока — контракт внешнего модуля `stream` (D-37).
- * Публикует legacy-агрегат `StudentAr`; в DMG их доставляет карта `inbound`.
- * При миграции модуля контракт остаётся.
+ * События студента потока. Публикует UoW агрегата `StudentAr`; уведомления
+ * о бездействии — Job `inactivitySweep` (адресатов и тексты определяет бот).
  */
 export const StudentEvents = EventDef.define('stream.student', {
   enrolled: {
@@ -43,6 +42,29 @@ export const StudentEvents = EventDef.define('stream.student', {
         ['voluntary', 'inactivity', 'by_mentor'],
         'причины ухода',
       ),
+    }),
+  },
+  inactivityWarning: {
+    label: 'Студент не занимается',
+    description:
+      'Студент не занимался несколько дней: предупреждение студенту (с 5-го дня, затем каждые 2 дня).',
+    payload: v.object({
+      studentId: F.uuid('записи студента'),
+      userId: F.uuid('студента'),
+      streamId: F.uuid('потока'),
+      days: F.int('полных дней без активности'),
+    }),
+  },
+  inactivityRemoveCandidate: {
+    label: 'Студент — кандидат на снятие с учёбы',
+    description:
+      'Студент не занимался неделю и больше: уведомление ментору с предложением снять (с 7-го дня, затем каждые 2 дня).',
+    payload: v.object({
+      studentId: F.uuid('записи студента'),
+      userId: F.uuid('студента'),
+      streamId: F.uuid('потока'),
+      days: F.int('полных дней без активности'),
+      wasWarned: F.boolean('студенту ранее отправлялись предупреждения'),
     }),
   },
 });

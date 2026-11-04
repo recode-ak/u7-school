@@ -9,13 +9,12 @@ import type {
 import {
   ArchiveStreamUcDef,
   CompleteStreamUcDef,
+  GetStreamMembersUcDef,
   GetStreamUcDef,
   StreamErrors,
   StreamModuleDef,
   type StreamWithRights,
 } from '@u7-scl/domain/stream/contract';
-import type { Student } from '@u7-scl/stream/domain';
-import { StudentAr, StudentOutcomeCategory } from '@u7-scl/stream/domain';
 import { ViewStreamStory } from '../../streams/stories/view-stream.story';
 
 /**
@@ -159,11 +158,13 @@ export class ViewStreamMentorStory extends ViewStreamStory {
     if (!baseScreen || !baseKeyboard) return baseResponse;
 
     // Получаем данные для построения менторской клавиатуры
-    const students = (await this.appApi.execute(
-      'list-stream-students',
-      { streamId },
+    const membersRes = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamMembersUcDef.command({ streamId }),
       actor,
-    )) as Student[];
+    );
+    if (!membersRes.ok) return this.ucErrorNotify(membersRes.error);
+    const students = membersRes.value?.students ?? [];
 
     const loaded = await this.dispatchUc(
       StreamModuleDef,
@@ -201,12 +202,10 @@ export class ViewStreamMentorStory extends ViewStreamStory {
       // Извлекаем studentUuid из кода кнопки
       const parts = studentBtn.code.split(':');
       const studentUuid = parts[parts.length - 1];
-      const student = students.find((s) => s.uuid === studentUuid);
+      const student = students.find((s) => s.studentId === studentUuid);
       if (!student || !canManage) return row;
 
-      const isActive =
-        new StudentAr(student).outcomeCategory() ===
-        StudentOutcomeCategory.IN_PROGRESS;
+      const isActive = student.inProgress;
       const extraBtns: KbButton[] = [];
 
       if (isActive) {
@@ -217,8 +216,8 @@ export class ViewStreamMentorStory extends ViewStreamStory {
           this.btn('✅', this.cbFor('monitor', 'complete', studentUuid!)),
         );
       } else if (
-        new StudentAr(student).outcomeCategory() ===
-        StudentOutcomeCategory.COMPLETED
+        student.status === 'advanced' ||
+        student.status === 'not_advanced'
       ) {
         extraBtns.push(
           this.btn('🔄', this.cbFor('monitor', 'complete', studentUuid!)),

@@ -2,7 +2,15 @@ import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
+import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
+import { dmgDispatch, refuse } from '../../streams/stories/stream-dmg.test-kit';
+import {
+  type LegacyStudent,
+  studentAnswers,
+  studentView,
+} from '../../streams/stories/student-dmg.test-kit';
 import { HubStory } from './hub';
 
 describe('HubStory', () => {
@@ -26,7 +34,7 @@ describe('HubStory', () => {
 
   const STREAM_ID = '11111111-1111-4111-8111-111111111111';
 
-  const mockStudent = {
+  const mockStudent: LegacyStudent = {
     uuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001',
     streamId: STREAM_ID,
     userId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
@@ -44,23 +52,32 @@ describe('HubStory', () => {
     createdAt: '2026-01-01T00:00',
   };
 
-  function makeStory(appApiOverrides?: Record<string, unknown>) {
-    const mockAppApi = {
-      execute: mock((name: string) => {
-        if (appApiOverrides && name in appApiOverrides) {
-          const val = appApiOverrides[name];
-          if (typeof val === 'function') return (val as () => unknown)();
-          if (val instanceof Error) throw val;
-          return val;
-        }
-        if (name === 'get-student-by-user') return mockStudent;
-        return undefined;
-      }),
-    };
+  /**
+   * Хаб с замоканным `dispatch`. Ключи `overrides`: `get-student-by-user` —
+   * запись студента (функция — студент не найден), `drop-student` — ответ
+   * `dropStudent` (по умолчанию успех).
+   */
+  function makeStory(overrides?: Record<string, unknown>) {
+    const studentOverride = overrides?.['get-student-by-user'];
+    const student =
+      typeof studentOverride === 'function'
+        ? undefined
+        : ((studentOverride ?? mockStudent) as LegacyStudent);
+    const dispatch = dmgDispatch({
+      ...studentAnswers(student, []),
+      getActiveStudent: (_input, caller) =>
+        student && caller.subject().uuid === studentActor.uuid
+          ? { student: studentView(student) }
+          : {},
+      dropStudent: () => overrides?.['drop-student'] ?? {},
+    });
 
     const story = new HubStory();
-    story.init({ appApi: mockAppApi } as never);
-    return { story, mockAppApi };
+    story.init({
+      appApi: { execute: mock(() => undefined), dispatch },
+      callers: testCallers,
+    } as never);
+    return { story, dispatch };
   }
 
   test('my-study — экран хаба с кнопками', async () => {
@@ -175,15 +192,8 @@ describe('HubStory', () => {
     expect(btns.some((b) => b.text.includes('Остаться'))).toBe(true);
   });
 
-  test('my-study:leave — вызывает drop-student, реплика «Ты покинул учёбу…»', async () => {
-    const executeSpy = mock((name: string, ..._args: unknown[]) => {
-      if (name === 'get-student-by-user') return mockStudent;
-      if (name === 'drop-student') return undefined;
-      return undefined;
-    });
-
-    const story = new HubStory();
-    story.init({ appApi: { execute: executeSpy } } as never);
+  test('my-study:leave — вызывает dropStudent, реплика «Ты покинул учёбу…»', async () => {
+    const { story, dispatch } = makeStory();
 
     const response = await story.handleCallback(
       'my-study:leave',
@@ -192,11 +202,11 @@ describe('HubStory', () => {
     );
     assertDialogResponseMarkdownSafe(response);
 
-    const dropCalls = executeSpy.mock.calls.filter(
-      (c: unknown[]) => c[0] === 'drop-student',
+    const dropCalls = dispatch.mock.calls.filter(
+      (c) => c[1].uc === 'dropStudent',
     );
     expect(dropCalls.length).toBe(1);
-    expect(dropCalls[0]![1]).toEqual({
+    expect(dropCalls[0]?.[1].input).toEqual({
       streamId: STREAM_ID,
       studentId: mockStudent.uuid,
     });
@@ -206,15 +216,15 @@ describe('HubStory', () => {
     expect(text).toContain('возвращайся');
   });
 
-  test('my-study:leave при ошибке — экран ошибки с кнопкой меню', async () => {
-    const executeSpy = mock((name: string, ..._args: unknown[]) => {
-      if (name === 'get-student-by-user') return mockStudent;
-      if (name === 'drop-student') throw new Error('drop failed');
-      return undefined;
+  test('my-study:leave при ошибке — реплика-предупреждение с причиной отказа', async () => {
+    const { story } = makeStory({
+      'drop-student': refuse(
+        'STUDENT_NOT_STUDYING',
+        'conflict',
+        undefined,
+        'Нельзя снять студента с учёбы: он уже не учится.',
+      ),
     });
-
-    const story = new HubStory();
-    story.init({ appApi: { execute: executeSpy } } as never);
 
     const response = await story.handleCallback(
       'my-study:leave',
@@ -222,7 +232,9 @@ describe('HubStory', () => {
       session,
     );
 
-    expect(String(response.screen?.text)).toContain('⚠️');
+    expect(response.screen).toBeUndefined();
+    expect(String(response.notify?.text)).toContain('уже не учится');
+    expect(response.notify?.kind).toBe('warn');
   });
 
   test('menuButtons — STUDENT видит «🎓 Моя учёба» (priority 20)', async () => {
@@ -263,14 +275,14 @@ describe('HubStory', () => {
 
 // ── Подписка на student.completed (кнопочные 7a/7b — канал invite, ФР-6) ──
 
-describe('HubStory — подписка на student.completed', () => {
+describe('HubStory — подписка на StudentEvents.completed', () => {
   const moduleId = '33333333-3333-4333-8333-333333333333';
   const nextModuleId = '55555555-5555-4555-8555-555555555555';
 
   function makeCompletedEvent(outcome: 'advanced' | 'not_advanced') {
     return {
       eventId: 'ev-2',
-      eventName: 'student.completed' as const,
+      eventName: StudentEvents.completed.name,
       occurredAt: '2026-08-28T12:00:00.000Z',
       aggregateName: 'Student' as const,
       aggregateId: 'student-uuid',
@@ -314,7 +326,7 @@ describe('HubStory — подписка на student.completed', () => {
   function getSub(story: ReturnType<typeof makeStoryWithSender>['story']) {
     const sub = story
       .getEventSubscriptions()
-      .find((s) => s.eventName === 'student.completed');
+      .find((s) => s.eventName === StudentEvents.completed.name);
     if (!sub) throw new Error('подписка на student.completed не найдена');
     return sub;
   }
@@ -377,7 +389,7 @@ describe('HubStory — подписка на student.completed', () => {
     expect(button?.code).toBe(`course:course-catalog:wish:${moduleId}`);
   });
 
-  test('advanced + последний модуль → ничего не шлётся (уведомление — из UC, 7c)', async () => {
+  test('advanced + последний модуль → безкнопочный notify «Курс завершён» (7c), без invite', async () => {
     const { story, sender } = makeStoryWithSender({
       courseId: 'c-1',
       isFirst: false,
@@ -387,8 +399,14 @@ describe('HubStory — подписка на student.completed', () => {
 
     await getSub(story).handle(makeCompletedEvent('advanced'));
 
-    expect(sender.notify).not.toHaveBeenCalled();
+    // Уведомление 7c шлёт стори (раньше — UC complete-student)
     expect(sender.invite).not.toHaveBeenCalled();
+    expect(sender.notify).toHaveBeenCalledTimes(1);
+    const [tgId, payload] = (sender.notify as ReturnType<typeof mock>).mock
+      .calls[0] as [number, { text: unknown; kind: string }];
+    expect(tgId).toBe(123);
+    expect(payload.kind).toBe('info');
+    expect(String(payload.text)).toContain('Курс завершён');
   });
 
   test('нет telegramId → сообщения не отправляются', async () => {
@@ -411,12 +429,16 @@ describe('HubStory — подписка на student.completed', () => {
     expect(sender.invite).not.toHaveBeenCalled();
   });
 
-  test('place undefined + advanced → ничего не шлётся (уведомление — из UC, 7d)', async () => {
+  test('place undefined + advanced → безкнопочный notify «Модуль завершён» (7d), без invite', async () => {
     const { story, sender } = makeStoryWithSender(undefined);
 
     await getSub(story).handle(makeCompletedEvent('advanced'));
 
-    expect(sender.notify).not.toHaveBeenCalled();
     expect(sender.invite).not.toHaveBeenCalled();
+    expect(sender.notify).toHaveBeenCalledTimes(1);
+    const [, payload] = (sender.notify as ReturnType<typeof mock>).mock
+      .calls[0] as [number, { text: unknown; kind: string }];
+    expect(payload.kind).toBe('info');
+    expect(String(payload.text)).toContain('Модуль завершён');
   });
 });

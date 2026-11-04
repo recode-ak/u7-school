@@ -1,5 +1,5 @@
-/** Контракт модуля stream: паспорт, Def UC, события и ошибки (D-45). */
-export * from './errors';
+/** Контракт модуля stream: паспорт, Def UC, события, ошибки и виды (D-45). */
+export * from './status';
 export type { StreamView } from './stream/stream.ar';
 export { StreamErrors } from './stream/stream.errors';
 export { StreamEvents } from './stream/stream.events';
@@ -22,4 +22,31 @@ export {
 } from './stream/uc/get-stream-presence.uc';
 export { ListStreamsUcDef } from './stream/uc/list-streams.uc';
 export { StreamModuleDef } from './stream.module';
+export { InactivitySweepJobDef } from './student/job/inactivity-sweep.job';
+export type { StudentView } from './student/student.ar';
+export { StudentErrors } from './student/student.errors';
 export { StudentEvents } from './student/student.events';
+export type {
+  CompletionResult,
+  LagLevel,
+  LessonSteps,
+  NavigationTree,
+  NodeStatus,
+  Progress,
+  RosterEntry,
+  StepNode,
+  StepPosition,
+  StudentCard,
+  TimeCategory,
+} from './student/student.types';
+export { CompleteStepUcDef } from './student/uc/complete-step.uc';
+export { CompleteStudentUcDef } from './student/uc/complete-student.uc';
+export { DropStudentUcDef } from './student/uc/drop-student.uc';
+export { EnrollStudentUcDef } from './student/uc/enroll-student.uc';
+export { GetActiveStudentUcDef } from './student/uc/get-active-student.uc';
+export { GetStudentByUserUcDef } from './student/uc/get-student-by-user.uc';
+export {
+  GetStudentProgressUcDef,
+  type StudentProgress,
+} from './student/uc/get-student-progress.uc';
+export { MarkAbandonedUcDef } from './student/uc/mark-abandoned.uc';
