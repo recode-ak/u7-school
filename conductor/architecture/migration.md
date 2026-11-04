@@ -84,8 +84,9 @@
 
 - **На Def (DMG):** `wish` — домен `domain/src/wish`, прикладной слой `modules/wish/src` (4 UC, 4 ER, JSON-репозиторий, `ModuleFromDef`), legacy `wish` удалён. Эталон: гайды — [guides/](../../node_modules/dmg-core/docs/guides/index.md). Чужие вызовы UC — в шаге `fetch` после Policy (D-58 пакета).
 - **На Def (DMG):** `peer-review` — домен `domain/src/peer-review` (агрегаты `review-campaign`, `review`), прикладной слой `modules/peer-review/src` (7 UC, ER `create-student-campaign`, JSON-репозитории через UoW со строгим разбором), legacy `PeerReviewApiModule` удалён; уведомление адресату — подписка story на `peer-review.review.created`. Stories бота — на `dispatch`.
+- **На Def (DMG):** `stream` — домен `domain/src/stream` (агрегаты `stream`, `student`; DCS/DQS, правило зачисления по фактам Def UC `course`), прикладной слой `modules/stream/src` (UC через `UseCaseFromDef`, «состав потока», `findStreamByTelegramGroup`, `getActiveStudent`, Job `inactivity-sweep` через `JobFromDef`, JSON-репозитории через UoW со строгим разбором), `StreamModuleDef` без `external`, legacy `StreamApiModule` и legacy-домен удалены. Роль `STUDENT` stream не выдаёт — студента определяет `getActiveStudent` (сама роль — DEBT-48 трека `user`). Права ментора — `Role` из контракта `user` (TR-40). Бот подписан на Def-события `stream.created` и `student.*`. Трек: `conductor/archive/stream-dmg_20261103`.
 - **Корень сборки (D-50, D-52):** `@u7-scl/app` (`platform/app`) — `U7App` собирает всё приложение по `AppEnv`: legacy-модули, `AppContext` DMG, модули DMG через `ApiApp` пакета (фабрики `ModuleFactory`, фасады по `dependsOn`), резолвер `Caller` (`U7CallerResolver` над legacy `userFacade`). Legacy-ядро приложения — `@u7-scl/app-legacy` (`platform/app-legacy`, TR-33). Раннеры (`u7-bot`, `u7-cli`) и `scripts/call-uc.ts` получают приложение из `U7App`; ARC-07/08/09 и D-53 (ARC-06) — машинные (`arch:check`, `biome`).
-- **Внешние модули (D-37):** `user`, `course`, `questionnaire`, `stream`, `dossier` — `ModuleDef.define({ external: true })` в домене; UC, которые зовут `wish` и `peer-review`, исполняют адаптеры над legacy-фасадами (TR-11) — фабрики в `U7App`, legacy-события входят через `legacyEventBus` (`inbound`).
+- **Внешние модули (D-37):** `user`, `course`, `questionnaire`, `dossier` — `ModuleDef.define({ external: true })` в домене; UC, которые зовут `wish`, `peer-review` и `stream`, исполняют адаптеры над legacy-фасадами (TR-11) — фабрики в `U7App`, legacy-события входят через `legacyEventBus` (`inbound`).
 - **Механически перенесены** (трек 3): domain-слои всех модулей в `@u7-scl/domain`; старые `modules/<m>/src/domain/index.ts` и `modules/dossier/src/index.ts` — barrel-реэкспорты (долг — в Месте записи `debt.md`).
 - **Граф `dependsOn`** строится из `ModuleDef` (`scripts/domain-arch.ts`, `DomainArch` с `root` и `runners`); `arch:check` сверяет код с реестром [debt.md](./debt.md) по полям Место/Признак/Корень; тактические решения перехода — `TR-<n>` там же (в код не пишутся).
 
@@ -93,18 +94,23 @@
 
 | Владелец | Долги |
 |---|---|
-| перевод `stream` | импорты `core`/`app-legacy` в домене — DEBT-16, 17; DEBT-19, 20; ER `invite-wishers` не идемпотентен — DEBT-35; адаптеры TR-11 `stream` у `wish` и `peer-review` (`GetStreamMembersUcDef`, `StudentEvents` через `inbound`) |
-| треки перевода остальных модулей на Def | импорты `core`/`app-legacy` в домене — user DEBT-1, 2; course DEBT-6, 7; questionnaire DEBT-11, 12; импорты чужого `index` legacy-модулями — DEBT-34; user DEBT-5; course DEBT-9, 10; questionnaire DEBT-14, 15, 32 |
-| по мере касания | тесты UC/ER/Job на JSON во временном каталоге — DEBT-40 |
+ID — канонические: слитые записи (DEBT-6, 7, 9, 11, 12, 14, 15, 16, 17, 19, 20 и др.) указывают на запись с меньшим ID ([debt.md](./debt.md), «Правила»).
+
+| Владелец | Долги |
+|---|---|
+| перевод `questionnaire` | glob'ы `questionnaire` в DEBT-1 (`core`), 2 (`app-legacy`), 5 (`v.isoDateTime`), 10 (`#…` в Ar); субъект адаптера анкет — DEBT-32; адаптер `start-questionnaire` — DEBT-44, TR-11; legacy-пары в DEBT-34 |
+| перевод `course` | glob'ы `course` в DEBT-1, 2, 5, 10; адаптеры UC курса (в т.ч. `get-module-snapshot`, `get-module-prerequisite` для `stream`) — DEBT-44, TR-11; legacy-пары в DEBT-34 |
+| перевод `user` | glob'ы `user` в DEBT-1, 2, 5; роль `STUDENT` и данные `data/users` — DEBT-48; экспорт `Role` из контракта `user` — TR-40; адаптер `get-telegram-addresses` — DEBT-44; `U7CallerResolver` — TR-33 |
+| по мере касания | тесты UC/ER/Job на JSON во временном каталоге — DEBT-40; `update-stream-snapshot.ts` — запись через репозитории Def и UoW (TR-45); чтение `students.json` один раз на UoW (TR-44) |
 | `ui-manifests` / `dmg-ui` | id апдейта Telegram неявным контекстом — DEBT-41 |
 | после перехода | `u7-cli` и `call-uc` — общий инструмент вызова UC — DEBT-42 |
-| последний трек миграции | barrel-долги DEBT-3, 8, 13, 18, 23, 27, 30 и `User` в `app-legacy` (DEBT-4) |
+| последний трек миграции | barrel-реэкспорты и `User` в `app-legacy` — DEBT-3 (в т.ч. `@u7-scl/stream/domain` для скриптов снимков, TR-44) |
 
 ### Старт следующих треков
 
-- **Следующий — `stream`** (трек 6, порядок — §2.1). Создаётся `conductor-newtrack` (ID вида `stream-dmg_<дата>`) по шаблону трека `peer-review` (`conductor/archive/peer-review-dmg_20261029`):
-  - **Конвейер среза:** `tech-lead` (бриф) → `test-designer` (red) → `migrator` (green) → гейт → `data-keeper` (по триггеру) → `reviewer`; Ф0 ролей не нужна — роли уже есть.
-  - **Пилот ролей — второй трек** ([agent-roles.md](./agent-roles.md) §5): раздел «Пилот ролей» в `summary.md`; промпт `data-keeper` поправлен до старта (итог пилота `peer-review`), в треке промпты ролей не правятся; в конце — годность ролей и решение о волне 2.
-  - **Мосты:** адаптеры TR-11 `stream` у `wish` и `peer-review` снимаются; `student.completed`/`abandoned` — события модуля на Def вместо `inbound`. DEBT-35 решается здесь.
-  - **Сборка:** фабрика в `U7App`, `@u7-scl/stream/**` — в группу ARC-07 `biome.json`; stories `stream` — на `dispatch`.
-- Базовая линия тестов на конец `peer-review`: `conductor/archive/peer-review-dmg_20261029/summary.md` («Гейт закрытия»).
+- **Следующий — `questionnaire`** (трек 6, порядок — §2.1): после `stream` у `questionnaire` нет legacy-клиентов. Его клиенты на Def — `peer-review` и `wish`. Трек создаётся через `conductor-newtrack` (ID вида `questionnaire-dmg_<дата>`) по шаблону трека `stream` (`conductor/archive/stream-dmg_20261103`):
+  - **Конвейер среза:** `tech-lead` (бриф среза с доменом; бриф механической сборки — orchestrator, TR-45) → `test-designer` (red) → `migrator` (green) → гейт → `data-keeper` (по триггеру) → `reviewer`.
+  - **Роли волны 1** годны по итогу пилота за два трека (`stream-dmg`, `summary.md`). Нужна ли строка «Пилот ролей» на каждый вызов, решается вместе с волной 2 ([agent-roles.md](./agent-roles.md) §4).
+  - **Мосты:** адаптер `start-questionnaire` (DEBT-44) заменяется настоящим UC, `questionnaire:start` из legacy-шины — Def-событием; субъект адаптера — DEBT-32.
+  - **Сборка:** фабрика в `U7App`, `@u7-scl/questionnaire/**` — в группу ARC-07 `biome.json`; stories анкет — на `dispatch`.
+- Базовая линия тестов на конец `stream`: `conductor/archive/stream-dmg_20261103/summary.md` («Гейт закрытия»).

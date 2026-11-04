@@ -6,7 +6,7 @@
 
 ## Правила
 
-- ID — `DEBT-<n>` (отдельно от решений `D-NN` в [decisions.md](./decisions.md)); номера не переиспользуются, новый — следующий после максимального, в т.ч. погашенного и слитого (последний выданный — DEBT-46).
+- ID — `DEBT-<n>` (отдельно от решений `D-NN` в [decisions.md](./decisions.md)); номера не переиспользуются, новый — следующий после максимального, в т.ч. погашенного и слитого (последний выданный — DEBT-48).
 - Реестр — **allowlist**: код к записи привязывают её поля, а не маркеры. Поля открытой записи:
   - **Место** (обязательно) — где долг допущен: glob'ы в бэктиках подряд через запятую в начале строки поля или пунктами первого уровня под ним; после glob'ов — пояснение текстом. У каждого glob может быть своё «Погашает» — в пояснении пункта.
   - **Признак** (обязательно) — регулярка (JS, флаг `m`) в бэктиках, которой долг выражен в коде.
@@ -223,6 +223,14 @@
 - **Погашает:** интеграция менторских шагов в уроки через API
 - **Критерий снятия:** скрипты получают менторские файлы через `get-step` (`kind: 'file'`) по `mentorStepIds`, чтений `manifest.json` с диска нет
 
+### DEBT-48: роль `STUDENT` в модуле `user`
+- **Место:** `domain/src/user/user/{roles,policy}.ts` — значение `Role.STUDENT`, `UserPolicy.isStudent`, исключения `canAddRole`/`canRemoveRole` («ментор — любому, пользователь — себе»)
+- **Признак:** `Role\.STUDENT`
+- **Корень:** `**/*policy.ts`
+- **Причина:** с трека `stream-dmg` (Ф2) `stream` не выдаёт и не снимает роль — студента определяет `getActiveStudent`. Роль осталась в `user` и в живых `data/users` (spec `stream-dmg`, «Роль `STUDENT`»); удаление — перевод `user`. В тестах `course`, `stream` и бота `Role.STUDENT` — роль без прав (TR-44), Корень их не ловит.
+- **Погашает:** трек перевода `user` на Def
+- **Критерий снятия:** `Role.STUDENT` и исключения удалены; `STUDENT` убран из `roles` в `data/users` — миграция данных с `bun run backup` и разрешения Нурболата
+
 
 ## 5. Инструменты проверки
 
@@ -230,7 +238,7 @@
 - **Место:** `scripts/domain-check.ts` — `checkContractImports` пропускает пары legacy-модулей; `checkDomainImports` разрешает `index`
 - **Признак:** `sub !== 'index'`
 - **Корень:** `scripts/domain-check.ts`
-- **Причина:** D-45 — чужой модуль только через `contract`; legacy-код `user`, `course`, `questionnaire`, `stream`, `dossier` импортирует `index` друг друга (entity `User`, `Role`, фасады) — около 100 импортов.
+- **Причина:** D-45 — чужой модуль только через `contract`; legacy-код `user`, `course`, `questionnaire`, `dossier` импортирует `index` друг друга (entity `User`, `Role`, фасады) — около 100 импортов.
 - **Погашает:** перевод каждого модуля на Def — модуль попадает в проверку автоматически (`external` снят)
 - **Критерий снятия:** все модули на Def; пропуск legacy-пар и `index` в `checkDomainImports` удалены
 
@@ -322,6 +330,7 @@
 - **Пересмотрено (Ф8а, Р9, D-43):** подход с Def UC во внешнем контракте и адаптерами принят; `callers: ['system']`; типы `CourseModuleFacade`/`QuestionnaireModuleFacade` удалены — `Facade<typeof <M>ModuleDef>` и `ModuleFacade`; `GetCourseEnrollmentUcDef.policy = allowAll` остаётся; `StartQuestionnaireUcDef.policy` — `QuestionnaireRespondentPolicy.rules.hasRespondent` (без субъекта — `ACCESS_DENIED`; имя — `QuestionnairePolicy` занято legacy).
 - **Дополнено (Ф9):** `GetModuleEnrollmentUcDef` (`course`, query «модуль в программе опубликованного курса», `allowAll`) — адаптер `modules/course/src/course/uc/get-module-enrollment.uc.ts` над legacy `getModulePlace`.
 - **Пересмотреть:** при миграции `course`/`questionnaire` — адаптеры заменяются настоящими UC, `external` снимается, legacy-фасады удаляются.
+- **Снято для `stream`** (`stream-dmg`, Ф1): адаптеры `getStreamMembers`/`getStreamPresence` у `wish` и `peer-review` заменены настоящими UC модуля `stream`.
 
 ### TR-12: решения по ревью Ф8
 - **Трек / фаза:** `golden-wish`, Ф8
@@ -488,7 +497,7 @@
 - **Трек / фаза:** `stream-dmg`, Ф0 (решение Нурболата, 2026-11-03)
 - **Контекст:** Policy `stream` проверяет права ментора, а `user` не переведён на Def: у субъекта `Caller` нет API `UserAr`.
 - **Решение:** субъект `Caller` — legacy-entity `User` с `roles`; контракт `domain/src/user/contract.ts` дополнительно экспортирует `Role`; Policy `stream` проверяет `subject.roles.includes(Role.MENTOR)`. Расширять контракт `user` дальше — только если это меньше движений; небольшой долг предпочтительнее выхода за пределы модуля `stream`.
-- **Пересмотреть:** при переводе `user` на Def — проверки переходят на API `UserAr` (`isMentor()`, `isAdmin()`), экспорт `Role` из контракта снимается.
+- **Пересмотреть:** при переводе `user` на Def — проверки переходят на API `UserAr` (`isMentor()`, `isAdmin()`), экспорт `Role` из контракта снимается. Передано треку `user` вместе с DEBT-48 (`stream-dmg`, Ф4).
 
 ### TR-41: решения брифа среза `stream` (`stream-dmg`)
 - **Трек / фаза:** `stream-dmg`, Ф0 (бриф `slices/stream.md`; С1–С4 — Нурболат, 2026-11-03, по рекомендациям; Т1–Т13 — orchestrator)
