@@ -9,6 +9,3 @@
 ---
 
 ---
-
-- [~] **Track: Перенос ролей волны 2 в dmg-core**
-*Link: [./tracks/agent-roles-wave2_20261104/](./tracks/agent-roles-wave2_20261104/)*
