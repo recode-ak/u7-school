@@ -10,5 +10,5 @@
 
 ---
 
-- [ ] **Track: Перевод модуля questionnaire на DMG (трек 6 migration.md)**
+- [~] **Track: Перевод модуля questionnaire на DMG (трек 6 migration.md)**
 *Link: [./tracks/questionnaire-dmg_20261104/](./tracks/questionnaire-dmg_20261104/)*
