@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { ContentSnapshotSchema } from '@u7-scl/domain/course';
+import { ContentSnapshotVo as ContentSnapshotSchema } from '@u7-scl/domain/course/contract';
 import * as v from 'valibot';
 import { StreamStatus } from '../status';
 import { StreamSchema } from './entity';

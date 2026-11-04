@@ -1,5 +1,4 @@
-import type { ArMeta } from '@u7-scl/core/domain';
-import { ContentSnapshotSchema } from '@u7-scl/domain/course';
+import { ContentSnapshotVo } from '@u7-scl/domain/course/contract';
 import * as v from 'valibot';
 import { StreamStatusSchema } from '../status';
 
@@ -36,7 +35,7 @@ export const StreamSchema = v.object({
 
   enrollmentKey: v.optional(v.string()),
 
-  contentSnapshot: ContentSnapshotSchema,
+  contentSnapshot: ContentSnapshotVo,
 
   createdAt: v.pipe(
     v.string(),
@@ -50,9 +49,3 @@ export const StreamSchema = v.object({
 });
 
 export type Stream = v.InferOutput<typeof StreamSchema>;
-
-export interface StreamArMeta extends ArMeta {
-  name: 'Stream';
-  label: 'Поток';
-  state: Stream;
-}

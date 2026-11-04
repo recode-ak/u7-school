@@ -26,6 +26,10 @@ export {
   GetModuleEnrollmentUcDef,
   type ModuleEnrollment,
 } from './course/uc/get-module-enrollment.uc';
+export {
+  GetModulePrerequisiteUcDef,
+  type ModulePrerequisite,
+} from './course/uc/get-module-prerequisite.uc';
 export { GetModuleSnapshotUcDef } from './course/uc/get-module-snapshot.uc';
 export {
   GetSameModulesUcDef,

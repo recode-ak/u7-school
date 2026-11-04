@@ -11,14 +11,14 @@ const ids = {
   moduleId: '44444444-4444-4444-8444-444444444444',
 };
 
-describe('StreamModuleDef — внешний модуль (D-37)', () => {
-  it('паспорт: внешний, зависит от user и course, агрегаты stream и student', () => {
-    expect(StreamModuleDef.external).toBe(true);
+describe('StreamModuleDef — события и паспорт', () => {
+  it('паспорт: не внешний, зависит от user и course, агрегаты stream и student', () => {
+    expect(StreamModuleDef.external).toBeFalsy();
     expect(normalize(StreamModuleDef)).toMatchObject({
       dependsOn: ['user', 'course'],
       aggregates: ['stream', 'student'],
       reactions: [],
-      jobs: [],
+      jobs: ['inactivitySweep'],
     });
   });
 

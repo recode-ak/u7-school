@@ -1,10 +1,4 @@
-import type { ArMeta } from '@u7-scl/core/domain';
 import * as v from 'valibot';
-import type {
-  StudentAbandonedEvent,
-  StudentCompletedEvent,
-  StudentEnrolledEvent,
-} from './events';
 
 /** Детали отчисления студента */
 export const AbandonDetailsSchema = v.object({
@@ -107,10 +101,3 @@ export const StudentSchema = v.object({
 });
 
 export type Student = v.InferOutput<typeof StudentSchema>;
-
-export interface StudentArMeta extends ArMeta {
-  name: 'Student';
-  label: 'Студент потока';
-  state: Student;
-  events: StudentEnrolledEvent | StudentCompletedEvent | StudentAbandonedEvent;
-}

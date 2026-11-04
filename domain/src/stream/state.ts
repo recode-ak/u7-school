@@ -2,4 +2,3 @@
 export * from './status';
 export * from './stream/entity';
 export * from './student/entity';
-export * from './types';
