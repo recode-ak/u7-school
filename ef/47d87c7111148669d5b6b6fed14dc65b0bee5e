@@ -1,0 +1,1 @@
+Фаза 2 (подключение в u7-school). Коммит 3ae06948. Автотесты: bun run check — зелёный, 3947 pass/0 fail; dmg:check, agents:check зелёные; git diff dmg-core.json пуст; grep старых имён пуст. Ручная проверка: по 8 ролей в .claude/agents и .pi/agents. Подтверждение Нурболата: «да».
