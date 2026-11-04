@@ -12,6 +12,7 @@ import {
 } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { testAppContext } from 'dmg-core/testing';
+import type { QuestionnaireUser } from '../../questionnaire.module';
 import { QuestionnaireRepoFake } from '../questionnaire.repo.fake';
 
 /** Общие данные тестов UC и Job анкет: фейк репозитория, вызывающие, состояния. */
@@ -42,7 +43,7 @@ const FROM: OperationRef = { kind: 'useCase', module: 'probe', name: 'probe' };
 /** Вызов другого модуля за человека (`this.call`) и без человека (ER/Job). */
 export const systemFor = (uuid = RESPONDENT) =>
   new SystemCaller(FROM, new UserCaller({ uuid, roles: [Role.STUDENT] }));
-export const systemAlone = new SystemCaller(FROM);
+export const systemAlone = new SystemCaller<QuestionnaireUser>(FROM);
 
 export const pool = (): QuestionnairePool => ({
   inviteText: 'Приглашаем пройти опрос',

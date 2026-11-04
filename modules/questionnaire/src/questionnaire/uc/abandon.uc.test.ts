@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
+import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { QuestionnaireUser } from '../../questionnaire.module';
 import { AbandonUc } from './abandon.uc';
 import {
   admin,
@@ -20,7 +22,10 @@ import {
 // Перенос `api/module.test.ts` (abandon): причина by_user; повтор идемпотентен (Т3).
 
 let env: ReturnType<typeof makeEnv>;
-const run = (caller = owner, questionnaireId = QUESTIONNAIRE) =>
+const run = (
+  caller: Caller<QuestionnaireUser> = owner,
+  questionnaireId: string = QUESTIONNAIRE,
+) =>
   new AbandonUc(env.deps, QuestionnaireModuleDef).handle(
     { questionnaireId },
     caller,

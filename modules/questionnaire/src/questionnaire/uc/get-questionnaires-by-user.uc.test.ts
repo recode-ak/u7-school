@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
+import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { QuestionnaireUser } from '../../questionnaire.module';
 import { GetQuestionnairesByUserUc } from './get-questionnaires-by-user.uc';
 import {
   ADMIN_USER,
@@ -23,7 +25,10 @@ import {
 // любые — admin; порядок записей — как в файле.
 
 let env: ReturnType<typeof makeEnv>;
-const run = (caller = owner, userId = RESPONDENT) =>
+const run = (
+  caller: Caller<QuestionnaireUser> = owner,
+  userId: string = RESPONDENT,
+) =>
   new GetQuestionnairesByUserUc(env.deps, QuestionnaireModuleDef).handle(
     { userId },
     caller,
@@ -61,7 +66,9 @@ describe('GetQuestionnairesByUserUc', () => {
 
   it('чужой список — ACCESS_DENIED «Нет доступа к списку анкет пользователя»', async () => {
     const error = expectErr(await run(stranger, RESPONDENT), 'ACCESS_DENIED');
-    expect(error.label).toBe('Нет доступа к списку анкет пользователя');
+    expect((error.payload as { denyMessage: string }).denyMessage).toBe(
+      'Нет доступа к списку анкет пользователя',
+    );
   });
 
   it('гость — UNAUTHORIZED', async () => {

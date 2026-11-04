@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
+import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { QuestionnaireUser } from '../../questionnaire.module';
 import {
   likertPool,
   makeEnv,
@@ -20,7 +22,7 @@ const info = {
   role: 'student_student',
   subjectId: OTHER_USER,
 };
-const run = (caller = systemFor()) =>
+const run = (caller: Caller<QuestionnaireUser> = systemFor()) =>
   new SendLikertInviteUc(env.deps, QuestionnaireModuleDef).handle(
     { pool: likertPool(), ownerInfo: info },
     caller,

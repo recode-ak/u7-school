@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
+import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { QuestionnaireUser } from '../../questionnaire.module';
 import { DeclineInviteUc } from './decline-invite.uc';
 import {
   admin,
@@ -19,7 +21,10 @@ import {
 // Перенос `api/module.test.ts` (decline-invite): в state by_user, в событии declined (Т4).
 
 let env: ReturnType<typeof makeEnv>;
-const run = (caller = owner, questionnaireId = QUESTIONNAIRE) =>
+const run = (
+  caller: Caller<QuestionnaireUser> = owner,
+  questionnaireId: string = QUESTIONNAIRE,
+) =>
   new DeclineInviteUc(env.deps, QuestionnaireModuleDef).handle(
     { questionnaireId },
     caller,

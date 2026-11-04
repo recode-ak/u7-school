@@ -1,31 +1,32 @@
-// Адаптер UC внешнего контракта над legacy-фасадом анкет.
-// субъект вызывающего — entity `User`: его ждёт legacy `startStandard`;
-// уйдёт при миграции модуля анкет.
 import {
+  QuestionnaireAr,
   type QuestionnaireModuleDef,
   StartQuestionnaireUcDef,
-} from '@u7-scl/domain/questionnaire/contract';
-import type { User } from '@u7-scl/domain/user';
+} from '@u7-scl/domain/questionnaire';
 import { type Caller, ok } from 'dmg-core';
-import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
-import type { QuestionnaireModuleDeps } from '../../questionnaire.module';
+import {
+  type ParsedInputOf,
+  type UnitOfWork,
+  UseCaseFromDef,
+} from 'dmg-core/app';
+import type {
+  QuestionnaireDeps,
+  QuestionnaireUser,
+} from '../../questionnaire.module';
+
+type Input = ParsedInputOf<typeof StartQuestionnaireUcDef>;
 
 /**
- * `startQuestionnaire`: анкету создаёт,
- * сохраняет и публикует `questionnaire:start` legacy-модуль (D-37);
- * `owner` контракта — legacy `ownerInfo`. Через UoW адаптер ничего не
- * пишет: `emits` Def описывает событие legacy-кода.
+ * `startQuestionnaire`: анкета создаётся сразу в работе за субъекта вызова —
+ * владелец анкеты (`wish`, `peer-review`) передаёт пул и свои данные.
  */
 export class StartQuestionnaireUc extends UseCaseFromDef<
   typeof StartQuestionnaireUcDef,
-  QuestionnaireModuleDeps,
+  QuestionnaireDeps,
   undefined,
-  User
+  QuestionnaireUser
 > {
-  constructor(
-    deps: QuestionnaireModuleDeps,
-    module: typeof QuestionnaireModuleDef,
-  ) {
+  constructor(deps: QuestionnaireDeps, module: typeof QuestionnaireModuleDef) {
     super(StartQuestionnaireUcDef, deps, module);
   }
 
@@ -33,14 +34,23 @@ export class StartQuestionnaireUc extends UseCaseFromDef<
     return ok(undefined);
   }
 
-  /** Респондент — субъект исходного человека (`SystemCaller.person()`). */
   protected async execute(
-    { pool, owner }: ParsedInputOf<typeof StartQuestionnaireUcDef>,
+    { pool, ownerInfo }: Input,
     _: undefined,
-    __: unknown,
-    caller: Caller<User>,
+    uow: UnitOfWork,
+    caller: Caller<QuestionnaireUser>,
   ) {
-    await this.resolve.legacy.startStandard(this.subject(caller), pool, owner);
+    const created = QuestionnaireAr.createStandard(
+      {
+        uuid: crypto.randomUUID(),
+        respondentId: this.subject(caller).uuid,
+        pool,
+        ownerInfo,
+      },
+      this.now(),
+    );
+    if (!created.ok) return created;
+    uow.register(created.value, this.resolve.questionnaires);
     return ok({});
   }
 }

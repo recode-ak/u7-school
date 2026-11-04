@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
+import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { QuestionnaireUser } from '../../questionnaire.module';
 import { GetQuestionnaireUc } from './get-questionnaire.uc';
 import {
   admin,
@@ -19,7 +21,10 @@ import {
 // Перенос `api/module.test.ts` (get-questionnaire): вход `questionnaireId` (Т11), выход — вид.
 
 let env: ReturnType<typeof makeEnv>;
-const run = (caller = owner, questionnaireId = QUESTIONNAIRE) =>
+const run = (
+  caller: Caller<QuestionnaireUser> = owner,
+  questionnaireId: string = QUESTIONNAIRE,
+) =>
   new GetQuestionnaireUc(env.deps, QuestionnaireModuleDef).handle(
     { questionnaireId },
     caller,
@@ -63,7 +68,8 @@ describe('GetQuestionnaireUc', () => {
   });
 
   it('чужая анкета — ACCESS_DENIED «Нет доступа к анкете»', async () => {
-    expect(expectErr(await run(stranger), 'ACCESS_DENIED').label).toBe(
+    const error = expectErr(await run(stranger), 'ACCESS_DENIED');
+    expect((error.payload as { denyMessage: string }).denyMessage).toBe(
       'Нет доступа к анкете',
     );
   });

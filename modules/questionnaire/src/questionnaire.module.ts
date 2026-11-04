@@ -1,45 +1,52 @@
-// DMG-модуль внешнего контракта анкет — адаптеры над legacy-фасадом.
-// субъект модуля — entity `User` до миграции анкет (`startStandard`).
-import type { QuestionnaireFacade } from '@u7-scl/domain/questionnaire';
-import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
-import type { User } from '@u7-scl/domain/user';
+import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire';
+import type { User } from '@u7-scl/domain/user/contract';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
+import { SweepAbandonedQuestionnairesJob } from './questionnaire/job/sweep-abandoned-questionnaires.job';
+import type { QuestionnaireRepo } from './questionnaire/questionnaire.repo';
+import { AbandonUc } from './questionnaire/uc/abandon.uc';
+import { DeclineInviteUc } from './questionnaire/uc/decline-invite.uc';
+import { GetCurrentUc } from './questionnaire/uc/get-current.uc';
+import { GetQuestionnaireUc } from './questionnaire/uc/get-questionnaire.uc';
+import { GetQuestionnairesByUserUc } from './questionnaire/uc/get-questionnaires-by-user.uc';
+import { HandleActionUc } from './questionnaire/uc/handle-action.uc';
+import { SendLikertInviteUc } from './questionnaire/uc/send-likert-invite.uc';
+import { StartByInviteUc } from './questionnaire/uc/start-by-invite.uc';
 import { StartQuestionnaireUc } from './questionnaire/uc/start-questionnaire.uc';
 
-/** Что адаптеры над legacy-фасадом берут у legacy-фасада анкет. */
-export type QuestionnaireLegacy = Pick<QuestionnaireFacade, 'startStandard'>;
+/** Субъект анкеты: права зависят только от `uuid` и ролей (`QuestionnairePolicy`). */
+export type QuestionnaireUser = Pick<User, 'uuid' | 'roles'>;
 
-/**
- * Резолвер DMG-модуля анкет: платформа + legacy-фасад. Своих
- * репозиториев нет — анкеты пишет legacy-модуль.
- */
-export type QuestionnaireModuleDeps = ModuleDeps & {
-  readonly legacy: QuestionnaireLegacy;
+/** Резолвер модуля анкет: платформа и репозиторий анкет. */
+export type QuestionnaireDeps = ModuleDeps & {
+  readonly questionnaires: QuestionnaireRepo;
 };
 
-/**
- * Карта «Def → класс» внешнего модуля анкет (API-05, D-37): реализации —
- * адаптеры над legacy; ER и Job у внешнего модуля нет.
- */
-export const questionnaireModuleMap = {
-  useCases: { startQuestionnaire: StartQuestionnaireUc },
+/** Карта «Def → класс» модуля анкет (API-05); реакций нет, Job — обход брошенных. */
+export const questionnaireMap = {
+  useCases: {
+    startQuestionnaire: StartQuestionnaireUc,
+    sendLikertInvite: SendLikertInviteUc,
+    startByInvite: StartByInviteUc,
+    declineInvite: DeclineInviteUc,
+    handleAction: HandleActionUc,
+    abandon: AbandonUc,
+    getQuestionnaire: GetQuestionnaireUc,
+    getCurrent: GetCurrentUc,
+    getQuestionnairesByUser: GetQuestionnairesByUserUc,
+  },
   reactions: {},
-  jobs: {},
+  jobs: { sweepAbandonedQuestionnaires: SweepAbandonedQuestionnairesJob },
 } satisfies ModuleMap<
   typeof QuestionnaireModuleDef,
-  QuestionnaireModuleDeps,
-  User
+  QuestionnaireDeps,
+  QuestionnaireUser
 >;
 
-/**
- * DMG-модуль анкет — владелец UC внешнего контракта; фасад для других
- * модулей — `new ModuleFacade(createQuestionnaireModule(deps))` (D-43). Приложение
- * собирает его поверх legacy `QuestionnaireInProcFacade`.
- */
-export function createQuestionnaireModule(deps: QuestionnaireModuleDeps) {
+/** Модуль анкет: анкета на своём репозитории, запуск — по вызову владельца. */
+export function createQuestionnaireModule(deps: QuestionnaireDeps) {
   return new ModuleFromDef<
     typeof QuestionnaireModuleDef,
-    QuestionnaireModuleDeps,
-    User
-  >(QuestionnaireModuleDef, questionnaireModuleMap, deps);
+    QuestionnaireDeps,
+    QuestionnaireUser
+  >(QuestionnaireModuleDef, questionnaireMap, deps);
 }

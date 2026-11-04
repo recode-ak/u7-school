@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
+import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { QuestionnaireUser } from '../../questionnaire.module';
 import {
   admin,
   anonymous,
@@ -19,7 +21,10 @@ import { StartByInviteUc } from './start-by-invite.uc';
 // Перенос `api/module.test.ts` (start-by-invite). Событие started НЕ публикуется (Т5).
 
 let env: ReturnType<typeof makeEnv>;
-const run = (caller = owner, questionnaireId = QUESTIONNAIRE) =>
+const run = (
+  caller: Caller<QuestionnaireUser> = owner,
+  questionnaireId: string = QUESTIONNAIRE,
+) =>
   new StartByInviteUc(env.deps, QuestionnaireModuleDef).handle(
     { questionnaireId },
     caller,
@@ -93,7 +98,9 @@ describe('StartByInviteUc', () => {
 
   it('чужая анкета — ACCESS_DENIED «Нет доступа к анкете», ничего не записано', async () => {
     const error = expectErr(await run(stranger), 'ACCESS_DENIED');
-    expect(error.label).toBe('Нет доступа к анкете');
+    expect((error.payload as { denyMessage: string }).denyMessage).toBe(
+      'Нет доступа к анкете',
+    );
     expect(env.questionnaires.saved).toEqual([]);
   });
 

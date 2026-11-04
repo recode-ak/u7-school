@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
+import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { QuestionnaireUser } from '../../questionnaire.module';
 import {
   makeEnv,
   OWNER_INFO,
@@ -18,8 +20,8 @@ import { StartQuestionnaireUc } from './start-questionnaire.uc';
 
 let env: ReturnType<typeof makeEnv>;
 const run = (
-  caller = systemFor(),
-  input = { pool: pool(), ownerInfo: OWNER_INFO },
+  caller: Caller<QuestionnaireUser> = systemFor(),
+  input: unknown = { pool: pool(), ownerInfo: OWNER_INFO },
 ) =>
   new StartQuestionnaireUc(env.deps, QuestionnaireModuleDef).handle(
     input,

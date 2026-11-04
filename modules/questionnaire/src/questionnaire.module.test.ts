@@ -30,7 +30,7 @@ import {
   ModuleFacade,
   ModuleFacades,
   type ParsedInputOf,
-  type Trace,
+  Trace,
   type UnitOfWork,
   UseCaseFromDef,
 } from 'dmg-core/app';
@@ -212,6 +212,8 @@ describe('smoke: каждый UC на реальном репозитории (m
   it('запуск → ответ → завершение → список; likert → отказ; abandon; get*', async () => {
     const repo = new QuestionnaireJsonRepo(join(dir, 'questionnaires.json'));
     const mod = moduleOn(repo);
+    // Своя команда — свой `requestId`: повтор входа отсеивает D-56.
+    const req = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
     expectOk(
       await mod.dispatch(
@@ -220,14 +222,14 @@ describe('smoke: каждый UC на реальном репозитории (m
           ownerInfo: OWNER_INFO,
         }),
         systemFor(),
-        REQ,
+        req(),
       ),
     );
     expectOk(
       await mod.dispatch(
         SendLikertInviteUcDef.command({ pool: likertPool(), ownerInfo: {} }),
         systemFor(),
-        REQ,
+        req(),
       ),
     );
 
@@ -235,7 +237,7 @@ describe('smoke: каждый UC на реальном репозитории (m
       await mod.dispatch(
         GetQuestionnairesByUserUcDef.command({ userId: RESPONDENT }),
         owner,
-        REQ,
+        req(),
       ),
     );
     expect(list.map((q) => q.kind)).toEqual(['standard', 'likert']);
@@ -247,7 +249,7 @@ describe('smoke: каждый UC на реальном репозитории (m
       await mod.dispatch(
         GetCurrentUcDef.command(id(standard.uuid)),
         owner,
-        REQ,
+        req(),
       ),
     );
     expect(current.type).toBe('new_question');
@@ -259,7 +261,7 @@ describe('smoke: каждый UC на реальном репозитории (m
           value: 'yes',
         }),
         owner,
-        REQ,
+        req(),
       ),
     );
     const done = expectOk(
@@ -270,7 +272,7 @@ describe('smoke: каждый UC на реальном репозитории (m
           value: 'ok',
         }),
         owner,
-        REQ,
+        req(),
       ),
     );
     expect(done.type).toBe('completed');
@@ -279,7 +281,7 @@ describe('smoke: каждый UC на реальном репозитории (m
         await mod.dispatch(
           GetQuestionnaireUcDef.command(id(standard.uuid)),
           owner,
-          REQ,
+          req(),
         ),
       ).status,
     ).toBe('completed');
@@ -289,18 +291,18 @@ describe('smoke: каждый UC на реальном репозитории (m
         await mod.dispatch(
           StartByInviteUcDef.command(id(likert.uuid)),
           owner,
-          REQ,
+          req(),
         ),
       ).type,
     ).toBe('new_question');
     expectOk(
-      await mod.dispatch(AbandonUcDef.command(id(likert.uuid)), owner, REQ),
+      await mod.dispatch(AbandonUcDef.command(id(likert.uuid)), owner, req()),
     );
     expectErr(
       await mod.dispatch(
         DeclineInviteUcDef.command(id(likert.uuid)),
         owner,
-        REQ,
+        req(),
       ),
       'QUESTIONNAIRE_NOT_INVITED',
     );
