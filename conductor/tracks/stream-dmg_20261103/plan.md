@@ -84,7 +84,7 @@
 ## Фаза 4: Финал
 
 - [x] Task: Гейт закрытия ([workflow.md](../../workflow.md)): `CI=true bun test`, `test:bot`, `dmg-core`, триаж и сравнение с базовой линией — в `summary.md`
-- [~] Task: Итог пилота за два трека: каждая роль по критериям §5 [agent-roles.md](../../architecture/agent-roles.md) — окончательное решение; решение о волне 2
+- [x] Task: Итог пилота за два трека: каждая роль по критериям §5 [agent-roles.md](../../architecture/agent-roles.md) — окончательное решение; решение о волне 2
 - [x] Task: [debt.md](../../architecture/debt.md) — DEBT-1, 2, 5, 10 (stream), 35 и TR-11 (stream) сняты; новый долг роли `STUDENT` и TR экспорта `Role` — трек `user`; долги, отложенные решениями Нурболата
 - [x] Task: [migration.md](../../architecture/migration.md) §6 — состояние, входной долг (алиасы DEBT-16, 17, 19, 20 → 1, 2, 5, 10), следующий трек `questionnaire`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)

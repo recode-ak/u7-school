@@ -108,9 +108,10 @@ ID — канонические: слитые записи (DEBT-6, 7, 9, 11, 12
 
 ### Старт следующих треков
 
-- **Следующий — `questionnaire`** (трек 6, порядок — §2.1): после `stream` у `questionnaire` нет legacy-клиентов. Его клиенты на Def — `peer-review` и `wish`. Трек создаётся через `conductor-newtrack` (ID вида `questionnaire-dmg_<дата>`) по шаблону трека `stream` (`conductor/archive/stream-dmg_20261103`):
+- **Перед ним — трек волны 2** ([agent-roles.md](./agent-roles.md) §4; решение Нурболата, 2026-11-04): каркас ролей `tech-lead`, `test-designer`, `data-keeper` переезжает в `dmg-core` с префиксом `dmg-*`, проектная часть — в `.agents-core/`; критерий 6 проверяется на учебном модуле пакета.
+- **Следующий модуль — `questionnaire`** (трек 6, порядок — §2.1): после `stream` у `questionnaire` нет legacy-клиентов. Его клиенты на Def — `peer-review` и `wish`. Трек создаётся через `conductor-newtrack` (ID вида `questionnaire-dmg_<дата>`) по шаблону трека `stream` (`conductor/archive/stream-dmg_20261103`):
   - **Конвейер среза:** `tech-lead` (бриф среза с доменом; бриф механической сборки — orchestrator, TR-45) → `test-designer` (red) → `migrator` (green) → гейт → `data-keeper` (по триггеру) → `reviewer`.
-  - **Роли волны 1** годны по итогу пилота за два трека (`stream-dmg`, `summary.md`). Нужна ли строка «Пилот ролей» на каждый вызов, решается вместе с волной 2 ([agent-roles.md](./agent-roles.md) §4).
+  - **Роли волны 1** годны по итогу пилота за два трека (`stream-dmg`, `summary.md`); в `questionnaire` — роли из пакета (после трека волны 2); `tech-lead` — на Sonnet.
   - **Мосты:** адаптер `start-questionnaire` (DEBT-44) заменяется настоящим UC, `questionnaire:start` из legacy-шины — Def-событием; субъект адаптера — DEBT-32.
   - **Сборка:** фабрика в `U7App`, `@u7-scl/questionnaire/**` — в группу ARC-07 `biome.json`; stories анкет — на `dispatch`.
 - Базовая линия тестов на конец `stream`: `conductor/archive/stream-dmg_20261103/summary.md` («Гейт закрытия»).

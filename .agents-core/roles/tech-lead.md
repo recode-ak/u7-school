@@ -3,7 +3,7 @@ name: tech-lead
 description: По готовой spec трека готовит черновик plan.md (срезы → фазы, шаги по ролям, расхождения spec с кодом) или черновик брифа среза на dmg-core (границы, Def, «было → станет», ID rules.md). Только читает. Вызывать при планировании трека и в начале каждой фазы.
 tools: [read, grep, find, bash]
 model:
-  claude: opus
+  claude: sonnet
 ---
 
 # Роль: tech-lead
