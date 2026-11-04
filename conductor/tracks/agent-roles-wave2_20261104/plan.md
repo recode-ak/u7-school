@@ -4,7 +4,7 @@
 
 Черновик — роль `tech-lead` (2026-11-04): расхождения spec с кодом внесены в [spec.md](./spec.md) (п. 3, 3а, 5, 8).
 
-## Фаза 1: Роли в пакете `dmg-core`
+## Фаза 1: Роли в пакете `dmg-core` [checkpoint: 233ac950]
 
 - [x] Task: Базовая линия: `CI=true bun test` в u7-school и в пакете — числа в `summary.md` 5f1970fd
 - [x] Task: Тесты пакета на шесть ролей `dmg-*` (red) dmg-core@3eb2461
