@@ -638,3 +638,19 @@ DOM-01…06, DOM-10…12, DOM-14, DOM-15, DOM-17; API-01…07; MAN-01…06, MAN-
 - `u7-app.test.ts`: `questionnaireFacade` → `getModule('questionnaire')` нет; сценарий «complete/abandon → ER wish» — через `dispatch` Def-UC вместо фабрики и ручной публикации.
 - Эскалации (решены orchestrator): долг в `debt.md` (DEBT-1 сужен, 2/5/10/44 — глобы сняты, DEBT-32 закрыт); `TR-46` в комментарии теста событий убран; ссылка на `packages/` в брифе заменена.
 - Итог: `bun run check` — 4134 pass, 12 fail (красная зона TR-49), `tsc`, `lint`, `arch:check` зелёные; `data/` чист.
+
+## Отчёт `dmg-data-keeper` (Ф1, шаг 7; flash, $0.06)
+
+Проверка на собственных фикстурах (`mkdtemp`), `data/` не читался.
+
+- **Совместимо:** ISO и числовые даты (`createdAt`, `updatedAt`, `completedAt`, `warnedAt`, `continueInvitedAt`, `answers[].answeredAt`), запись без `updatedAt`/`version` (`updatedAt = createdAt`, `version: 0`), оба `kind`, `ownerInfo`, `draftAnswers`, `abandonReason`. Миграция не нужна: файл конвертируется первой записью.
+- **Первая запись** переписывает весь `questionnaires.json` (числа, `version` всем записям).
+- **Риск отката:** после первой записи legacy `v0.2.6` отвергает все записи (список пуст, `save` пишет только новую). Откат — только с восстановлением файла из бэкапа.
+- **Строже legacy (при условии):** `answerText: ""` (`F.string` непустая), `version` чужого типа, `abandoned` без `abandonReason` (`restore` бросает); одна невалидная запись → `ValiError` на любом чтении/записи, файл цел.
+- **Ключ Job** `sweep-abandoned-questionnaires` → `sweepAbandonedQuestionnaires`: первый прогон через 3 ч, старый ключ осиротеет (безвредно).
+- **Рекомендации к выкатке:** `bun run backup`; read-only сверка живого файла через `v.safeParse(QuestionnaireArDef.state, row)` (Нурболат); откат — с восстановлением файла.
+- **Недостающие тесты (следующий срез/ревизия):** соседняя запись после первой записи, `version` неверного типа, `abandoned` без причины через `findByRespondent`.
+
+### Открытые вопросы к контрольной точке Ф1 (Нурболату, не блокируют)
+
+- **Д1. Живые данные анкет.** Перед выкаткой — read-only сверка `data/questionnaires/questionnaires.json` новой схемой (команда — в отчёте `dmg-data-keeper`, вывод `.cache/pi-runs/F1-data-keeper.*`), бэкап и правило «откат — только с восстановлением файла». Делать сейчас или на ревизии перед релизом?

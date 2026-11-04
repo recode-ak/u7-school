@@ -54,8 +54,8 @@
     - `owner` → `ownerInfo` во входе UC и в ER `confirm-wish`/`abandon-wish` с тестами (Q2);
     - `questionnaireLegacyInbound` и его тест удалены, ER подписаны на Def-события агрегата.
 - [x] Task: Записать красную зону в `debt.md` 2f45eb78: поимённый список падающих stories, dialog- и e2e-тестов бота, `u7-app.test`; критерий снятия — конец Ф2 (Opus)
-- [~] Task: `dmg-data-keeper` (flash): state и репозиторий — чтение `questionnaires.json` (ISO и число, оба `kind`, `ownerInfo`, `warnedAt`/`continueInvitedAt`/`abandonReason`), собственные фикстуры, откат
-- [ ] Task: `dmg-reviewer` (Opus). Замечания без `error` решает orchestrator (TR), предложения перепроектирования — Нурболату
+- [x] Task: `dmg-data-keeper` (flash): state и репозиторий — чтение `questionnaires.json` (ISO и число, оба `kind`, `ownerInfo`, `warnedAt`/`continueInvitedAt`/`abandonReason`), собственные фикстуры, откат
+- [~] Task: `dmg-reviewer` (Opus). Замечания без `error` решает orchestrator (TR), предложения перепроектирования — Нурболату
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 1** (уточняет бриф):
