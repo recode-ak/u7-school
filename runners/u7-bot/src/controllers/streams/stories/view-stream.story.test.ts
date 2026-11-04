@@ -5,12 +5,19 @@ import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import type { ContentSnapshot } from '@u7-scl/course/domain';
 import { ListScopeFactsUcDef } from '@u7-scl/domain/peer-review/contract';
 import {
+  GetActiveStudentUcDef,
   GetStreamMembersUcDef,
   GetStreamUcDef,
 } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { dmgDispatch, refuse, streamView } from './stream-dmg.test-kit';
+import {
+  type LegacyStudent,
+  progressProjection,
+  streamMembers,
+  studentView,
+} from './student-dmg.test-kit';
 import { ViewStreamStory } from './view-stream.story';
 
 const STREAM_ID = '11111111-1111-4111-8111-111111111111';
@@ -48,12 +55,11 @@ describe('ViewStreamStory (S02-S04)', () => {
     users?: Record<string, { name: string }>;
     /** Зачисление отказывает: введено неверное кодовое слово */
     wrongKey?: boolean;
+    /** Зачисление отказывает ошибкой валидации */
+    enrollFails?: boolean;
+    /** У пользователя уже есть живая запись студента */
+    activeStudent?: boolean;
   }
-
-  /** Отказ legacy-зачисления при неверном кодовом слове */
-  const wrongKey = () => {
-    throw new Error('Неверное кодовое слово');
-  };
 
   /** Факты отзывов скоупа (карточка потока): отзывов нет. */
   const listScopeFacts = () => ({ hasReviews: false, reviewsCount: 0 });
@@ -61,7 +67,6 @@ describe('ViewStreamStory (S02-S04)', () => {
   function makeStory(opts: SetupOptions = {}) {
     const mockAppApi = {
       execute: mock(async (name: string, params?: Record<string, unknown>) => {
-        if (name === 'list-stream-students') return opts.students ?? [];
         if (name === 'get-user')
           return (
             opts.users?.[String(params?.uuid)] ?? {
@@ -70,28 +75,61 @@ describe('ViewStreamStory (S02-S04)', () => {
               roles: [],
             }
           );
-        if (name === 'enroll-student' && opts.wrongKey) wrongKey();
-        if (name === 'get-student-progress') return undefined;
         return undefined;
       }),
     };
 
+    const students = (opts.students ?? []) as LegacyStudent[];
+    const stream = opts.stream ?? makeStream();
+    const dispatch = dmgDispatch({
+      getStream: () => stream,
+      getStreamMembers: () => streamMembers('m1-m1-m1', students),
+      getStudentProgress: (input) => {
+        const found = students.find(
+          (s) => s.uuid === (input as { studentId: string }).studentId,
+        );
+        return found
+          ? {
+              student: studentView(found),
+              progress: progressProjection(
+                (stream.contentSnapshot ?? []) as Parameters<
+                  typeof progressProjection
+                >[0],
+                found,
+              ),
+            }
+          : refuse('STUDENT_NOT_FOUND', 'not_found');
+      },
+      getActiveStudent: () =>
+        opts.activeStudent
+          ? { student: studentView(makeStudent() as unknown as LegacyStudent) }
+          : {},
+      enrollStudent: () => {
+        if (opts.wrongKey)
+          return refuse(
+            'STUDENT_WRONG_ENROLLMENT_KEY',
+            'validation',
+            undefined,
+            'Неверное кодовое слово',
+          );
+        if (opts.enrollFails)
+          return refuse(
+            'STUDENT_NO_STEPS',
+            'conflict',
+            undefined,
+            'В потоке нет доступных шагов',
+          );
+        return { studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001' };
+      },
+      listScopeFacts,
+    });
+
     const story = new ViewStreamStory();
     story.init({
-      appApi: {
-        ...mockAppApi,
-        dispatch: dmgDispatch({
-          getStream: () => opts.stream ?? makeStream(),
-          getStreamMembers: () => ({
-            mentorId: 'm1-m1-m1',
-            students: opts.students ?? [],
-          }),
-          listScopeFacts,
-        }),
-      },
+      appApi: { ...mockAppApi, dispatch },
       callers: testCallers,
     } as never);
-    return { story, mockAppApi };
+    return { story, mockAppApi, dispatch };
   }
 
   // ── Карточка потока (view) ──
@@ -341,25 +379,15 @@ describe('ViewStreamStory (S02-S04)', () => {
   // ── Карточка студента (student-detail) ──
 
   test('student-detail: показывает карточку студента', async () => {
-    const mockAppApi = {
-      execute: mock(async (name: string) => {
-        if (name === 'get-student-progress') return makeStudent();
-        if (name === 'get-user')
-          return { uuid: 'u-1', name: 'Студент Студентов', roles: [] };
-        return undefined;
-      }),
-    };
-    const { story } = makeStory();
-    story.init({
-      appApi: {
-        ...mockAppApi,
-        dispatch: dmgDispatch({ getStream: () => makeStream() }),
+    const { story } = makeStory({
+      students: [makeStudent() as unknown as LegacyStudent],
+      users: {
+        'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb': { name: 'Студент Студентов' },
       },
-      callers: testCallers,
-    } as never);
+    });
 
     const response = await story.handleCallback(
-      'student-detail:st-1',
+      'student-detail:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001',
       guest,
       session,
     );
@@ -375,7 +403,7 @@ describe('ViewStreamStory (S02-S04)', () => {
   // ── Запись (enroll): без кодового слова → delegate на меню ──
 
   test('enroll без кодового слова: поздравление-реплика + delegate на меню', async () => {
-    const { story, mockAppApi } = makeStory({
+    const { story, dispatch } = makeStory({
       stream: makeStream({ requiresEnrollmentKey: false }),
     });
     const response = await story.handleCallback(
@@ -384,11 +412,13 @@ describe('ViewStreamStory (S02-S04)', () => {
       session,
     );
 
-    expect(mockAppApi.execute).toHaveBeenCalledWith(
-      'enroll-student',
-      { streamId: STREAM_ID, userId: guest.uuid, enrollmentKey: undefined },
-      guest,
+    const enrollCall = dispatch.mock.calls.find(
+      (c) => c[1].uc === 'enrollStudent',
     );
+    expect(enrollCall?.[1].input).toEqual({
+      streamId: STREAM_ID,
+      enrollmentKey: undefined,
+    });
     expect(String(response.notify?.text)).toContain('успешно записаны');
     // delegate: enroll→menu (сохранённое использование)
     expect(response.delegate?.path).toBe('app:main-menu');
@@ -396,7 +426,7 @@ describe('ViewStreamStory (S02-S04)', () => {
   });
 
   test('enroll c кодовым словом: экран запроса слова + awaitInput', async () => {
-    const { story, mockAppApi } = makeStory({
+    const { story, dispatch } = makeStory({
       stream: makeStream({ requiresEnrollmentKey: true }),
     });
     const response = await story.handleCallback(
@@ -407,9 +437,9 @@ describe('ViewStreamStory (S02-S04)', () => {
 
     expect(String(response.screen?.text)).toContain('кодовое слово');
     // Зачисления ещё нет — только запрос слова
-    const enrollCalls = (
-      mockAppApi.execute as unknown as { mock: { calls: unknown[][] } }
-    ).mock.calls.filter((c) => c[0] === 'enroll-student');
+    const enrollCalls = dispatch.mock.calls.filter(
+      (c) => c[1].uc === 'enrollStudent',
+    );
     expect(enrollCalls).toHaveLength(0);
     expect(response.awaitInput?.context).toEqual({
       streamId: STREAM_ID,
@@ -421,17 +451,8 @@ describe('ViewStreamStory (S02-S04)', () => {
     expect(codes).toContain(`view-stream:cancel:${STREAM_ID}`);
   });
 
-  test('enroll: ошибка UC — errorNotify (реплика warn без захвата экрана)', async () => {
-    const { story } = makeStory();
-    // Подменяем execute, чтобы enroll-student бросил ошибку валидации
-    const failing = {
-      execute: mock(async (name: string) => {
-        if (name === 'enroll-student') throw new Error('validation failed');
-        return undefined;
-      }),
-      dispatch: dmgDispatch({ getStream: () => makeStream() }),
-    };
-    story.init({ appApi: failing, callers: testCallers } as never);
+  test('enroll: ошибка UC — ucErrorNotify (реплика warn без захвата экрана)', async () => {
+    const { story } = makeStory({ enrollFails: true });
 
     const response = await story.handleCallback(
       `enroll:${STREAM_ID}`,
@@ -439,6 +460,7 @@ describe('ViewStreamStory (S02-S04)', () => {
       session,
     );
     expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toContain('нет доступных шагов');
     expect(response.delegate).toBeUndefined();
   });
 
@@ -470,7 +492,7 @@ describe('ViewStreamStory (S02-S04)', () => {
   }
 
   test('handleMessage: верное слово — зачисление (notify + delegate на меню)', async () => {
-    const { story, mockAppApi } = makeStory({
+    const { story, dispatch } = makeStory({
       stream: makeStream({ requiresEnrollmentKey: true }),
     });
     const response = await story.handleMessage(
@@ -479,11 +501,13 @@ describe('ViewStreamStory (S02-S04)', () => {
       enrollSession(0),
     );
 
-    expect(mockAppApi.execute).toHaveBeenCalledWith(
-      'enroll-student',
-      { streamId: STREAM_ID, userId: guest.uuid, enrollmentKey: 'дракон' },
-      guest,
+    const enrollCall = dispatch.mock.calls.find(
+      (c) => c[1].uc === 'enrollStudent',
     );
+    expect(enrollCall?.[1].input).toEqual({
+      streamId: STREAM_ID,
+      enrollmentKey: 'дракон',
+    });
     expect(String(response.notify?.text)).toContain('успешно записаны');
     expect(response.delegate?.path).toBe('app:main-menu');
   });
@@ -758,6 +782,7 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
     const streamAnswers = {
       getStream: () => makeStream(),
       getStreamMembers: () => ({ mentorId: 'm1-m1-m1', students: [] }),
+      getActiveStudent: () => ({}),
     };
     const dispatch =
       facts === 'throw' || facts === 'fail'
@@ -867,6 +892,7 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
       GetStreamUcDef.command({ streamId: STREAM_ID }),
       GetStreamMembersUcDef.command({ streamId: STREAM_ID }),
       ListScopeFactsUcDef.command({ scopeId: STREAM_ID }),
+      GetActiveStudentUcDef.command({ userId: rvActor.uuid }),
     ]);
   });
 });

@@ -22,6 +22,7 @@ export {
 } from './stream/uc/get-stream-presence.uc';
 export { ListStreamsUcDef } from './stream/uc/list-streams.uc';
 export { StreamModuleDef } from './stream.module';
+export { InactivitySweepJobDef } from './student/job/inactivity-sweep.job';
 export type { StudentView } from './student/student.ar';
 export { StudentErrors } from './student/student.errors';
 export { StudentEvents } from './student/student.events';

@@ -6,9 +6,16 @@ import { Role } from '@u7-scl/user/domain';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import {
   dmgDispatch,
+  refuse,
   streamNotFound,
   streamView,
 } from '../../streams/stories/stream-dmg.test-kit';
+import {
+  type LegacyStudent,
+  progressProjection,
+  streamMembers,
+  studentView,
+} from '../../streams/stories/student-dmg.test-kit';
 import { MonitorStory } from './monitor';
 
 // ══ Фабрики ══
@@ -144,21 +151,19 @@ function setupStory(
   const story = new MonitorStory();
   const appApi = {
     execute: mock(async (name: string, params?: Record<string, unknown>) => {
-      if (apiErrors.has(name)) throw new Error(`API error: ${name}`);
-      if (name === 'list-stream-students') return students;
-      if (name === 'get-student-progress')
-        return students.find((s) => s.uuid === params?.studentId) ?? null;
       if (name === 'get-user') {
         if (userError) throw new Error('User not found');
         const uuid = params?.uuid as string;
         return { uuid, name: userNames[uuid] ?? uuid.slice(0, 8) };
       }
-      if (name === 'mark-abandoned') return undefined;
-      if (name === 'complete-student') return undefined;
       return undefined;
     }),
   };
   // Поток читает UC getStream; право управления — у ментора потока (как Policy)
+  const snapshot = (stream?.contentSnapshot ?? []) as Parameters<
+    typeof progressProjection
+  >[0];
+  const legacy = students as unknown as LegacyStudent[];
   const dispatch = dmgDispatch({
     getStream: (_input, caller) =>
       stream
@@ -167,12 +172,31 @@ function setupStory(
             canManage: stream.mentorId === caller.subject().uuid,
           })
         : streamNotFound(),
+    getStreamMembers: () =>
+      streamMembers(stream?.mentorId ?? 'mentor-1', legacy),
+    getStudentProgress: (input) => {
+      const found = legacy.find(
+        (s) => s.uuid === (input as { studentId: string }).studentId,
+      );
+      if (!found) return refuse('STUDENT_NOT_FOUND', 'not_found');
+      return {
+        student: studentView(found),
+        // Потока нет — расчётов нет (progress не заполняется)
+        progress: stream ? progressProjection(snapshot, found) : undefined,
+      };
+    },
+    markAbandoned: () =>
+      apiErrors.has('mark-abandoned') ? refuse('STUDENT_NOT_STUDYING') : {},
+    completeStudent: () =>
+      apiErrors.has('complete-student')
+        ? refuse('STUDENT_NOT_COMPLETABLE')
+        : {},
   });
   story.init({
     appApi: { ...appApi, dispatch },
     callers: testCallers,
   } as never);
-  return { story, appApi };
+  return { story, appApi, dispatch };
 }
 
 const session: BotSession = {
@@ -589,8 +613,8 @@ describe('MonitorStory (S07/S08) — контракт «Диалог и Экра
     ]);
   });
 
-  test('mark-abandoned-confirm: UC mark-abandoned cause=inactivity + delegate на список', async () => {
-    const { story, appApi } = setupStory();
+  test('mark-abandoned-confirm: UC markAbandoned cause=inactivity + delegate на список', async () => {
+    const { story, dispatch } = setupStory();
     const response = await story.handleCallback(
       'mark-abandoned-confirm:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001',
       mentorActor(),
@@ -598,9 +622,8 @@ describe('MonitorStory (S07/S08) — контракт «Диалог и Экра
     );
 
     // FR-5: снятие за бездействие с причиной inactivity
-    const calls = appApi.execute.mock.calls as unknown[][];
-    const call = calls.find((c) => c[0] === 'mark-abandoned');
-    expect(call?.[1]).toEqual({
+    const call = dispatch.mock.calls.find((c) => c[1].uc === 'markAbandoned');
+    expect(call?.[1].input).toEqual({
       streamId: '11111111-1111-4111-8111-111111111111',
       studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001',
       cause: 'inactivity',
@@ -613,17 +636,17 @@ describe('MonitorStory (S07/S08) — контракт «Диалог и Экра
     );
   });
 
-  test('mark-abandoned-confirm: ошибка UC — экран ошибки с выходом в меню', async () => {
+  test('mark-abandoned-confirm: ошибка UC — warn-реплика без перехода', async () => {
     const { story } = setupStory({ apiErrors: new Set(['mark-abandoned']) });
     const response = await story.handleCallback(
       'mark-abandoned-confirm:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001',
       mentorActor(),
       session,
     );
-    const text = String(response.screen?.text);
-    expect(text).toContain('⚠️');
-    const { codes } = flat(response);
-    expect(codes).toContain('app:main-menu');
+    // Отказ UC — warn-реплика без захвата экрана (ucErrorNotify)
+    expect(response.screen).toBeUndefined();
+    expect(response.notify?.kind).toBe('warn');
+    expect(response.delegate).toBeUndefined();
   });
 
   // ═══ complete-student: выбор исхода → confirm → выполнение ═══
@@ -694,15 +717,16 @@ describe('MonitorStory (S07/S08) — контракт «Диалог и Экра
     expect(String(abandoned.screen?.text)).toContain('забросил');
   });
 
-  test('complete-confirm-confirm: UC complete-student + delegate на список', async () => {
-    const { story, appApi } = setupStory();
+  test('complete-confirm-confirm: UC completeStudent + delegate на список', async () => {
+    const { story, dispatch } = setupStory();
     const response = await story.handleCallback(
       'complete-confirm-confirm:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001:advanced',
       mentorActor(),
       session,
     );
-    const calls = appApi.execute.mock.calls as unknown[][];
-    expect(calls.find((c) => c[0] === 'complete-student')?.[1]).toEqual({
+    expect(
+      dispatch.mock.calls.find((c) => c[1].uc === 'completeStudent')?.[1].input,
+    ).toEqual({
       streamId: '11111111-1111-4111-8111-111111111111',
       studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001',
       outcome: 'advanced',
@@ -740,14 +764,15 @@ describe('MonitorStory (S07/S08) — контракт «Диалог и Экра
     expect(String(response.screen?.text)).toContain('Неизвестный исход');
   });
 
-  test('complete-confirm-confirm: ошибка UC — экран ошибки', async () => {
+  test('complete-confirm-confirm: ошибка UC — warn-реплика без экрана', async () => {
     const { story } = setupStory({ apiErrors: new Set(['complete-student']) });
     const response = await story.handleCallback(
       'complete-confirm-confirm:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001:advanced',
       mentorActor(),
       session,
     );
-    expect(String(response.screen?.text)).toContain('⚠️');
+    expect(response.screen).toBeUndefined();
+    expect(response.notify?.kind).toBe('warn');
   });
 
   // ═══ history / неизвестные / ввод ═══

@@ -20,24 +20,17 @@ describe('formatStepMessage — режимы student / readOnly / study (TDD)', 
   };
 
   test('[Red] режим student: выводит хлебные крошки, статус и тело шага', () => {
-    const text = formatStepMessage(
-      'Поток 7',
-      resolved,
-      dummyStep,
-      undefined,
-      undefined,
-      {
-        mode: 'student',
-        status: 'in_progress',
-        statusLabel: 'В процессе',
-        breadcrumbs: [
-          '📖 Программа модуля',
-          'Введение в web',
-          'Как устроен web',
-          'Шаг 3',
-        ],
-      },
-    );
+    const text = formatStepMessage('Поток 7', resolved, dummyStep, undefined, {
+      mode: 'student',
+      status: 'in_progress',
+      statusLabel: 'В процессе',
+      breadcrumbs: [
+        '📖 Программа модуля',
+        'Введение в web',
+        'Как устроен web',
+        'Шаг 3',
+      ],
+    });
 
     // Должен содержать хлебные крошки
     expect(text).toContain(
@@ -54,22 +47,15 @@ describe('formatStepMessage — режимы student / readOnly / study (TDD)', 
   });
 
   test('[Red] режим readOnly: выводит хлебные крошки и тело, БЕЗ статуса', () => {
-    const text = formatStepMessage(
-      'Поток 7',
-      resolved,
-      dummyStep,
-      undefined,
-      undefined,
-      {
-        mode: 'readOnly',
-        breadcrumbs: [
-          '📖 Программа модуля',
-          'Введение в web',
-          'Как устроен web',
-          'Шаг 3',
-        ],
-      },
-    );
+    const text = formatStepMessage('Поток 7', resolved, dummyStep, undefined, {
+      mode: 'readOnly',
+      breadcrumbs: [
+        '📖 Программа модуля',
+        'Введение в web',
+        'Как устроен web',
+        'Шаг 3',
+      ],
+    });
 
     // Должен содержать менторские хлебные крошки
     expect(text).toContain(
@@ -92,17 +78,10 @@ describe('formatStepMessage — режимы student / readOnly / study (TDD)', 
       code: 'function hello(name: string): string {\n  return "Hello, " + name;\n}',
     };
 
-    const text = formatStepMessage(
-      'Поток 7',
-      resolved,
-      codeStep,
-      undefined,
-      undefined,
-      {
-        mode: 'readOnly',
-        breadcrumbs: ['📖 Программа модуля', 'Web', 'Урок', 'Шаг 1'],
-      },
-    );
+    const text = formatStepMessage('Поток 7', resolved, codeStep, undefined, {
+      mode: 'readOnly',
+      breadcrumbs: ['📖 Программа модуля', 'Web', 'Урок', 'Шаг 1'],
+    });
 
     expect(text).toContain('```');
     expect(text).toContain('function hello');

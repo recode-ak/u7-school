@@ -3,12 +3,13 @@ import {
   type Caller,
   type Command,
   CoreErrors,
+  type DomainError,
   type Identified,
   type OutputOf,
   type Result,
   type UseCaseErrorOf,
 } from 'dmg-core';
-import type { ApiApp as DmgApiApp, Trace } from 'dmg-core/app';
+import type { ApiApp as DmgApiApp, JobReport, Trace } from 'dmg-core/app';
 import { errBadRequest, throwError } from '#domain-legacy/errors/error-helpers';
 import type { NoCommandFoundError } from '#domain-legacy/errors/errors';
 import type {
@@ -118,6 +119,21 @@ export class ApiApp<TMeta extends AppMeta, TActor = unknown>
       });
     }
     return this.dmg.api.dispatch(module, command, caller, trace);
+  }
+
+  /**
+   * Разовый прогон Job модуля DMG вне расписания (стенды e2e). Модуль не
+   * подключён — исключение конфигурации, как у `ApiApp` пакета.
+   */
+  async runJob<M extends AnyModuleDef>(
+    module: M,
+    job: M['jobs'][number],
+    trace: Trace,
+  ): Promise<Result<JobReport, DomainError>> {
+    if (this.dmg === undefined) {
+      throw new Error('ApiApp: приложение DMG не подключено');
+    }
+    return this.dmg.api.runJob(module, job, trace);
   }
 
   /** Задания модулей DMG в форме legacy: прогон — `runJob` приложения DMG. */

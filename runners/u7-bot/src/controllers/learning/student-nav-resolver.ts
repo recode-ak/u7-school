@@ -7,8 +7,7 @@ import {
   type StepContentData,
 } from '@u7-scl/core/ui';
 import type { ContentSnapshot } from '@u7-scl/course/domain';
-import type { Student } from '@u7-scl/stream/domain';
-import { StreamDs } from '@u7-scl/stream/domain';
+import type { NavigationTree } from '@u7-scl/domain/stream/contract';
 
 export interface StudentNavAddress {
   level: 'root' | 'project' | 'lesson' | 'step';
@@ -19,7 +18,8 @@ export interface ResolveStudentNavLevelParams {
   story?: string;
   address: StudentNavAddress;
   snapshot: ContentSnapshot;
-  student: Student;
+  /** Дерево навигации студента — проекция `getStudentProgress`. */
+  tree: NavigationTree;
   stepDescriptions?: Record<string, string>;
   stepContent?: StepContentData;
   backToHubCode?: string;
@@ -32,16 +32,21 @@ function mapStatus(status: 'completed' | 'current' | 'locked'): NavNodeStatus {
 }
 
 /**
- * Резолвит карточку уровня NavLevel для студента на основе ContentSnapshot и Student progress.
+ * Резолвит карточку уровня NavLevel для студента на основе ContentSnapshot и дерева навигации студента.
  * Чистая функция без побочных эффектов.
  */
 export function resolveStudentNavLevel(
   params: ResolveStudentNavLevelParams,
 ): NavLevel | null {
   const story = params.story ?? 'nav-tree';
-  const tree = StreamDs.buildNavigationTree(params.snapshot, params.student);
-  const { address, snapshot, stepDescriptions, stepContent, backToHubCode } =
-    params;
+  const {
+    address,
+    snapshot,
+    tree,
+    stepDescriptions,
+    stepContent,
+    backToHubCode,
+  } = params;
 
   // ── Уровень 1: Root (Модуль / Проекты) ──
   if (address.level === 'root') {

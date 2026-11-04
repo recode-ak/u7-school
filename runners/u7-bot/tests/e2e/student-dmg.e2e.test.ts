@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
+import { LearningController } from '@u7-scl/bot/learning/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import {
@@ -99,6 +100,7 @@ async function createStand(tag: string): Promise<Stand> {
   const app = await createTestApp(tag);
   const transport = createTestBotTransport(app, [
     new StreamsController(),
+    new LearningController(),
     new MentorController(),
     new UserController(),
     new CoursesController(),
@@ -197,9 +199,15 @@ describe('E2E: completed → уведомление студенту (7a/7b/7c)'
     );
     await new Promise((r) => setTimeout(r, 200));
 
-    expect(
-      transport.api.sentMessages.find((m) => m.telegramId === STUDENT_TG),
-    ).toBeUndefined();
+    // HubStory (стенд с LearningController) шлёт кнопочное приглашение 7a;
+    // безкнопочного текста 7c/7d нет
+    const toStudent = transport.api.sentMessages.filter(
+      (m) => m.telegramId === STUDENT_TG,
+    );
+    expect(toStudent.map((m) => m.text).join('\n')).toContain(
+      'записаться на следующий',
+    );
+    expect(toStudent.some((m) => m.text.includes('Курс завершён'))).toBe(false);
   });
 });
 

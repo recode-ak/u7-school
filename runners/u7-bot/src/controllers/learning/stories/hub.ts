@@ -1,7 +1,8 @@
 import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
-import { md } from '@u7-scl/core/shared';
+import type { DomainEvent } from '@u7-scl/core/domain';
+import { md, mdRaw, safeConvert } from '@u7-scl/core/shared';
 import type {
   BotSession,
   DialogResponse,
@@ -10,21 +11,34 @@ import type {
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
 import type { ModulePlace } from '@u7-scl/course/domain';
-import type { StudentCompletedEvent } from '@u7-scl/stream/domain';
-import { StudentAr, StudentOutcomeCategory } from '@u7-scl/stream/domain';
-import { UserPolicy } from '@u7-scl/user/domain';
+import {
+  DropStudentUcDef,
+  GetActiveStudentUcDef,
+  StreamModuleDef,
+  StudentEvents,
+} from '@u7-scl/domain/stream/contract';
+import type * as v from 'valibot';
 import { buttons } from '../../shared/buttons';
-import { getStudent } from '../shared';
+import { getStudent, type StreamDispatch } from '../shared';
+
+/**
+ * Событие в legacy-форме, как его доставляет `legacyEventBus`:
+ * `eventName` — FQN Def, `payload` — по схеме `StudentEvents.completed`.
+ */
+export type StudentCompletedEvent = DomainEvent & {
+  eventName: typeof StudentEvents.completed.name;
+  payload: v.InferOutput<typeof StudentEvents.completed.payload>;
+};
 
 /**
  * Хаб «Моя учёба» — главное меню обучения, список действий студента.
  *
  * Самовыход (FR-4): кнопка «🚪 Покинуть учёбу» в меню хаба → confirm-диалог →
- * UC drop-student → студент abandoned + мягкий кик из TG-группы (FR-6 —
- * событие student.abandoned слушает InactivityStory).
+ * UC dropStudent → студент abandoned + мягкий кик из TG-группы (FR-6 —
+ * событие StudentEvents.abandoned слушает InactivityStory).
  *
  * О зачислении студент узнаёт из флоу-ответа view-stream (с инструкцией
- * по /start) — подписки на student.enrolled нет.
+ * по /start) — подписки на StudentEvents.enrolled нет.
  */
 export class HubStory extends U7BotUiStory {
   readonly name = 'hub';
@@ -33,18 +47,18 @@ export class HubStory extends U7BotUiStory {
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<StudentCompletedEvent>('student.completed', (event) =>
-        this.#handleCompletedEvent(event),
+      eventSubscription<StudentCompletedEvent>(
+        StudentEvents.completed.name,
+        (event) => this.#handleCompletedEvent(event),
       ),
     ];
   }
 
   /**
-   * student.completed — кнопочные ветки 7a/7b через канал invite
+   * StudentEvents.completed — кнопочные ветки 7a/7b через канал invite
    * (ФР-6, исключение И3 до tasks-system): кнопка ведёт в
    * CourseCatalogStory (wish → UC create-module-wish). Безкнопочные
-   * 7c/7d («Курс завершён», место неизвестно) доставляет механизм
-   * userFacade.notify из UC complete-student.
+   * 7c/7d («Курс завершён», место неизвестно) — notify этой же стори.
    */
   async #handleCompletedEvent(event: StudentCompletedEvent): Promise<void> {
     const { userId, moduleId, outcome } = event.payload;
@@ -76,8 +90,17 @@ export class HubStory extends U7BotUiStory {
         text: md`🏁 Модуль завершён\\!\n\nХочешь записаться на следующий\\?`,
         keyboard: this.kb([[buttons.wishModule(place.nextModuleId)]]),
       });
+      return;
     }
-    // иначе — безкнопочные 7c/7d: уведомление уже отправлено UC
+    // advanced и нет следующего модуля (7c/7d): «Курс завершён» для
+    // последнего модуля программы, иначе «Модуль завершён»
+    const text = place?.isLast
+      ? '🎉 Курс завершён! Поздравляем — ты прошёл всю программу.'
+      : '🏁 Модуль завершён!';
+    await this.proactiveSender.notify(user.telegramId, {
+      text: mdRaw(safeConvert(text)),
+      kind: 'info',
+    });
   }
 
   // ── Callback ──
@@ -102,7 +125,19 @@ export class HubStory extends U7BotUiStory {
   // ── Главное меню (декларативные кнопки) ──
 
   override async menuButtons(actor: User): Promise<MenuButton[]> {
-    if (UserPolicy.isStudent(actor)) {
+    // Меню — только при живой записи студента (учится или зачислен)
+    let hasActiveStudent = false;
+    try {
+      const active = await this.dispatchUc(
+        StreamModuleDef,
+        GetActiveStudentUcDef.command({ userId: actor.uuid }),
+        actor,
+      );
+      hasActiveStudent = active.ok && active.value.student !== undefined;
+    } catch {
+      // отказ модуля потоков не ломает главное меню: кнопки учёбы нет
+    }
+    if (hasActiveStudent) {
       return [
         {
           kind: 'callback',
@@ -116,17 +151,20 @@ export class HubStory extends U7BotUiStory {
     return [];
   }
 
+  /** Команды модуля `stream` от имени актора — для хелперов раздела learning. */
+  #dispatchFor(actor: User): StreamDispatch {
+    return (command) => this.dispatchUc(StreamModuleDef, command, actor);
+  }
+
   // ── Приватные методы: хаб ──
 
   /** Экран хаба «Моя учёба» с кнопками действий. */
   async #showHub(actor: User): Promise<DialogResponse> {
-    const studentResult = await getStudent(this.appApi, actor);
+    const studentResult = await getStudent(this.#dispatchFor(actor), actor);
     if (!studentResult.ok) return studentResult.value;
 
     const student = studentResult.value;
-    const isFinished =
-      new StudentAr(student).outcomeCategory() !==
-      StudentOutcomeCategory.IN_PROGRESS;
+    const isFinished = student.outcome.category !== 'in_progress';
 
     const rows: KbButton[][] = [];
 
@@ -163,7 +201,7 @@ export class HubStory extends U7BotUiStory {
   // ── Приватные методы: самовыход из учёбы (FR-4) ──
 
   async #showLeaveConfirm(actor: User): Promise<DialogResponse> {
-    const studentResult = await getStudent(this.appApi, actor);
+    const studentResult = await getStudent(this.#dispatchFor(actor), actor);
     if (!studentResult.ok) return studentResult.value;
 
     return this.screen(
@@ -178,20 +216,20 @@ export class HubStory extends U7BotUiStory {
   }
 
   async #executeLeave(actor: User): Promise<DialogResponse> {
-    const studentResult = await getStudent(this.appApi, actor);
+    const studentResult = await getStudent(this.#dispatchFor(actor), actor);
     if (!studentResult.ok) return studentResult.value;
 
     const student = studentResult.value;
 
-    try {
-      await this.appApi.execute(
-        'drop-student',
-        { streamId: student.streamId, studentId: student.uuid },
-        actor,
-      );
-    } catch (err) {
-      return this.handleError(err);
-    }
+    const dropped = await this.dispatchUc(
+      StreamModuleDef,
+      DropStudentUcDef.command({
+        streamId: student.streamId,
+        studentId: student.uuid,
+      }),
+      actor,
+    );
+    if (!dropped.ok) return this.ucErrorNotify(dropped.error);
 
     return this.screen(
       md`Ты покинул учёбу\\. Жаль, что не сложилось — возвращайся, когда будешь готов\\!`,

@@ -1,5 +1,12 @@
 import type { User } from '@u7-scl/app-legacy/domain';
-import { type MdText, md, mdJoin } from '@u7-scl/core/shared';
+import type { DomainEvent } from '@u7-scl/core/domain';
+import {
+  type MdText,
+  md,
+  mdJoin,
+  mdRaw,
+  safeConvert,
+} from '@u7-scl/core/shared';
 import type {
   BotSession,
   DialogResponse,
@@ -7,36 +14,59 @@ import type {
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
 import {
+  DropStudentUcDef,
   GetStreamUcDef,
+  GetStudentProgressUcDef,
+  MarkAbandonedUcDef,
   StreamModuleDef,
   type StreamView,
+  StudentEvents,
+  type StudentView,
 } from '@u7-scl/domain/stream/contract';
-import type {
-  Student,
-  StudentAbandonedEvent,
-  StudentInactivityRemoveCandidateEvent,
-  StudentInactivityWarningEvent,
-} from '@u7-scl/stream/domain';
+import type * as v from 'valibot';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
 import { Routes } from '../../shared/routes';
 
 /**
+ * События студента в legacy-форме, как их доставляет `legacyEventBus`:
+ * `eventName` — FQN Def, `payload` — по схеме события.
+ */
+type StudentEventOf<E extends { name: string; payload: v.GenericSchema }> =
+  DomainEvent & { eventName: E['name']; payload: v.InferOutput<E['payload']> };
+
+export type StudentInactivityWarningEvent = StudentEventOf<
+  typeof StudentEvents.inactivityWarning
+>;
+export type StudentInactivityRemoveCandidateEvent = StudentEventOf<
+  typeof StudentEvents.inactivityRemoveCandidate
+>;
+export type StudentAbandonedEvent = StudentEventOf<
+  typeof StudentEvents.abandoned
+>;
+
+/** Профиль пользователя в части, нужной уведомлениям. */
+type Profile = { name: string; telegramId?: number };
+
+/**
  * Проактивные уведомления о бездействии и уходе из учёбы.
  *
- * Подписки на события job'а inactivity-sweep и агрегата Student:
- * - student.inactivity-warning (5+ дней) → студенту предупреждение
+ * Подписки на события Job `inactivitySweep` и агрегата Student (FQN Def):
+ * - `StudentEvents.inactivityWarning` (5+ дней) → студенту предупреждение
  *   с кнопкой «🚪 Покинуть учёбу» (самовыход, FR-4);
- * - student.inactivity-remove-candidate (7+ дней) → ментору потока
+ * - `StudentEvents.inactivityRemoveCandidate` (7+ дней) → ментору потока
  *   «Студент A из группы B не занимался N дней» с кнопкой
  *   «⚠️ Снять с учёбы» (FR-5, cause=inactivity);
- * - student.abandoned → мягкий кик из TG-группы потока.
+ * - `StudentEvents.abandoned` → мягкий кик из TG-группы потока и текст:
+ *   самовыход → ментору (#3, `info`); снятие ментором по бездействию →
+ *   студенту (#4, `warn`); снятие по усмотрению ментора — без текста (Т6).
+ *
+ * Адрес получателя события не несёт: telegramId — по профилю через legacy
+ * `get-user` (С2), ментор — `getStream(streamId).mentorId`.
  *
  * Кнопочные проактивы идут каналом invite: получателю без открытого
  * диалога открывается экран «invite»,
  * кнопки штампуются и валидны. Нажатие обрабатывает handleCallback:
- * confirm-диалог → UC drop-student / mark-abandoned.
- * Текстовые уведомления (#3/#4) отправляют UC drop-student /
- * mark-abandoned через userFacade.notify.
+ * confirm-диалог → UC dropStudent / markAbandoned.
  */
 export class InactivityStory extends U7BotUiStory {
   readonly name = 'inactivity';
@@ -46,15 +76,16 @@ export class InactivityStory extends U7BotUiStory {
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
       eventSubscription<StudentInactivityWarningEvent>(
-        'student.inactivity-warning',
+        StudentEvents.inactivityWarning.name,
         (event) => this.#handleWarningEvent(event),
       ),
       eventSubscription<StudentInactivityRemoveCandidateEvent>(
-        'student.inactivity-remove-candidate',
+        StudentEvents.inactivityRemoveCandidate.name,
         (event) => this.#handleCandidateEvent(event),
       ),
-      eventSubscription<StudentAbandonedEvent>('student.abandoned', (event) =>
-        this.#handleAbandonedEvent(event),
+      eventSubscription<StudentAbandonedEvent>(
+        StudentEvents.abandoned.name,
+        (event) => this.#handleAbandonedEvent(event),
       ),
     ];
   }
@@ -63,13 +94,23 @@ export class InactivityStory extends U7BotUiStory {
   async #handleWarningEvent(
     event: StudentInactivityWarningEvent,
   ): Promise<void> {
-    const { telegramId, studentId, daysInactive } = event.payload;
+    const { studentId, userId, days } = event.payload;
+
+    const telegramId = await this.#resolveTelegramId(userId);
+    if (telegramId === undefined) {
+      this.logger?.warn(
+        this.name,
+        'Предупреждение о бездействии не отправлено: нет telegramId студента',
+        { userId },
+      );
+      return;
+    }
 
     await this.proactiveSender.invite(telegramId, {
       text: mdJoin([
         md`⏳ *Учёба стоит*`,
         md``,
-        md`Ты не занимаешься уже ${this.#pluralizeDays(daysInactive)}\\.`,
+        md`Ты не занимаешься уже ${this.#pluralizeDays(days)}\\.`,
         md``,
         md`Если бездействие продлится больше недели, ментор может снять тебя с учёбы за бездействие\\.`,
       ]),
@@ -88,24 +129,35 @@ export class InactivityStory extends U7BotUiStory {
   async #handleCandidateEvent(
     event: StudentInactivityRemoveCandidateEvent,
   ): Promise<void> {
-    const {
-      mentorTelegramId,
-      studentId,
-      userId,
-      streamId,
-      daysInactive,
-      wasWarned,
-    } = event.payload;
+    const { studentId, userId, streamId, days, wasWarned } = event.payload;
 
-    const [studentName, streamTitle] = await Promise.all([
+    const stream = await this.#resolveStream(streamId);
+    if (!stream) {
+      this.logger?.warn(
+        this.name,
+        'Уведомление ментору не отправлено: поток недоступен',
+        { streamId },
+      );
+      return;
+    }
+    const [studentName, mentorTelegramId] = await Promise.all([
       this.#resolveName(userId),
-      this.#resolveStreamTitle(streamId),
+      this.#resolveTelegramId(stream.mentorId),
     ]);
+    if (mentorTelegramId === undefined) {
+      this.logger?.warn(
+        this.name,
+        'Уведомление ментору не отправлено: нет telegramId ментора',
+        { mentorId: stream.mentorId },
+      );
+      return;
+    }
+    const streamTitle = stream.title;
 
     const lines: MdText[] = [
       md`🛑 *Кандидат на снятие с учёбы*`,
       md``,
-      md`Студент *${studentName}* из группы «${streamTitle}» не занимался ${this.#pluralizeDays(daysInactive)}\\.`,
+      md`Студент *${studentName}* из группы «${streamTitle}» не занимался ${this.#pluralizeDays(days)}\\.`,
     ];
     if (wasWarned) {
       lines.push(md``, md`ℹ️ Уведомления были ранее отправлены студенту\\.`);
@@ -125,15 +177,71 @@ export class InactivityStory extends U7BotUiStory {
   }
 
   /**
-   * Событие ухода из учёбы — мягкий кик из Telegram-группы потока (FR-6).
-   * Текстовые уведомления отправляют UC drop-student / mark-abandoned
-   * через userFacade.notify.
+   * Уход из учёбы: мягкий кик из Telegram-группы потока (FR-6) для любого
+   * ухода; текст — самовыход ментору, снятие по бездействию студенту.
+   * Поток недоступен — ничего не делаем (предупреждение в лог).
    */
   async #handleAbandonedEvent(event: StudentAbandonedEvent): Promise<void> {
-    const { userId, streamId } = event.payload;
+    const { userId, streamId, who, cause } = event.payload;
 
-    // FR-6: мягкое исключение из Telegram-группы потока — для обоих сценариев
-    await this.#kickFromGroup(streamId, userId);
+    const [stream, student] = await Promise.all([
+      this.#resolveStream(streamId),
+      this.#resolveProfile(userId),
+    ]);
+    if (!stream) {
+      this.logger?.warn(
+        this.name,
+        'Уход студента не обработан: поток недоступен',
+        { streamId },
+      );
+      return;
+    }
+
+    // FR-6: мягкое исключение из Telegram-группы потока — для всех уходов
+    if (stream.telegramGroupId !== undefined && student?.telegramId) {
+      await this.proactiveSender.kickFromGroup(
+        stream.telegramGroupId,
+        student.telegramId,
+      );
+    }
+
+    if (who === 'self') {
+      const name = student?.name ?? userId.slice(0, 8);
+      await this.#notify(
+        stream.mentorId,
+        `🚪 Студент ${name} покинул учёбу с потока «${stream.title}» по собственному желанию.`,
+        'info',
+      );
+      return;
+    }
+    if (cause === 'inactivity') {
+      await this.#notify(
+        userId,
+        `Ты снят с учёбы с потока «${stream.title}» за бездействие и исключён из его группы. Прогресс сохранён — если захочешь вернуться, напиши ментору потока.`,
+        'warn',
+      );
+    }
+  }
+
+  /** Текст пользователю по uuid (адрес — профиль); нет адреса — пропуск с warn. */
+  async #notify(
+    userId: string,
+    text: string,
+    kind: 'info' | 'warn',
+  ): Promise<void> {
+    const telegramId = await this.#resolveTelegramId(userId);
+    if (telegramId === undefined) {
+      this.logger?.warn(
+        this.name,
+        'Уведомление не отправлено: нет telegramId получателя',
+        { userId },
+      );
+      return;
+    }
+    await this.proactiveSender.notify(telegramId, {
+      text: mdRaw(safeConvert(text)),
+      kind,
+    });
   }
 
   // ── Callback ──
@@ -200,15 +308,12 @@ export class InactivityStory extends U7BotUiStory {
       return this.screen(md`⚠️ Запись студента не найдена`);
     }
 
-    try {
-      await this.appApi.execute(
-        'drop-student',
-        { streamId: student.streamId, studentId },
-        actor,
-      );
-    } catch (err: unknown) {
-      return this.handleError(err);
-    }
+    const dropped = await this.dispatchUc(
+      StreamModuleDef,
+      DropStudentUcDef.command({ streamId: student.streamId, studentId }),
+      actor,
+    );
+    if (!dropped.ok) return this.ucErrorNotify(dropped.error);
 
     return this.screen(
       md`Ты покинул учёбу\\. Жаль, что не сложилось — возвращайся, когда будешь готов\\!`,
@@ -226,19 +331,16 @@ export class InactivityStory extends U7BotUiStory {
       return this.screen(md`⚠️ Запись студента не найдена`);
     }
 
-    try {
-      await this.appApi.execute(
-        'mark-abandoned',
-        {
-          streamId: student.streamId,
-          studentId,
-          cause: 'inactivity' as const,
-        },
-        actor,
-      );
-    } catch (err: unknown) {
-      return this.handleError(err);
-    }
+    const abandoned = await this.dispatchUc(
+      StreamModuleDef,
+      MarkAbandonedUcDef.command({
+        streamId: student.streamId,
+        studentId,
+        cause: 'inactivity',
+      }),
+      actor,
+    );
+    if (!abandoned.ok) return this.ucErrorNotify(abandoned.error);
 
     const name = await this.#resolveName(student.userId);
 
@@ -251,13 +353,24 @@ export class InactivityStory extends U7BotUiStory {
   async #getStudent(
     studentId: string,
     actor: User,
-  ): Promise<Student | undefined> {
+  ): Promise<StudentView | undefined> {
     try {
-      return await this.appApi.execute(
-        'get-student-progress',
-        { studentId },
+      const res = await this.dispatchUc(
+        StreamModuleDef,
+        GetStudentProgressUcDef.command({ studentId }),
         actor,
       );
+      return res.ok ? res.value.student : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Профиль пользователя по uuid (legacy `get-user`); недоступен — undefined. */
+  async #resolveProfile(userId: string): Promise<Profile | undefined> {
+    try {
+      const user = await this.appApi.execute('get-user', { uuid: userId });
+      return user ?? undefined;
     } catch {
       return undefined;
     }
@@ -265,30 +378,12 @@ export class InactivityStory extends U7BotUiStory {
 
   /** Имя пользователя по uuid (fallback — первые 8 символов id). */
   async #resolveName(userId: string): Promise<string> {
-    try {
-      const user = await this.appApi.execute('get-user', { uuid: userId });
-      if (user) return user.name;
-    } catch {
-      // профиль недоступен — покажем id
-    }
-    return userId.slice(0, 8);
+    return (await this.#resolveProfile(userId))?.name ?? userId.slice(0, 8);
   }
 
   /** telegramId пользователя по uuid. */
   async #resolveTelegramId(userId: string): Promise<number | undefined> {
-    try {
-      const user = await this.appApi.execute('get-user', { uuid: userId });
-      return user?.telegramId;
-    } catch {
-      return undefined;
-    }
-  }
-
-  /** Название потока (fallback — id). */
-  async #resolveStreamTitle(streamId: string): Promise<string> {
-    const stream = await this.#resolveStream(streamId);
-    if (stream) return stream.title;
-    return streamId.slice(0, 8);
+    return (await this.#resolveProfile(userId))?.telegramId;
   }
 
   /** Поток по id (undefined, если недоступен). */
@@ -302,25 +397,6 @@ export class InactivityStory extends U7BotUiStory {
     } catch {
       return undefined;
     }
-  }
-
-  /**
-   * Мягко исключает студента из Telegram-группы потока (FR-6).
-   * Нет группы у потока или нет telegramId у студента — пропуск.
-   * Ошибки кика изолированы в транспорте и не всплывают наружу.
-   */
-  async #kickFromGroup(streamId: string, userId: string): Promise<void> {
-    const [stream, telegramId] = await Promise.all([
-      this.#resolveStream(streamId),
-      this.#resolveTelegramId(userId),
-    ]);
-    const groupId = stream?.telegramGroupId;
-    if (groupId === undefined || telegramId === undefined) return;
-    await this.proactiveSender.execute({
-      kind: 'kick_member',
-      chatId: groupId,
-      userId: telegramId,
-    });
   }
 
   /** Склоняет «N дней» (1 день, 2 дня, 5 дней). */

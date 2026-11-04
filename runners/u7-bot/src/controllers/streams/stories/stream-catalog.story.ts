@@ -6,8 +6,8 @@ import type { BotSession, DialogResponse, KbButton } from '@u7-scl/core/ui';
 import {
   ListStreamsUcDef,
   StreamModuleDef,
+  StreamStatus,
 } from '@u7-scl/domain/stream/contract';
-import { StreamStatus } from '@u7-scl/stream/domain';
 import { buttons } from '../../shared/buttons';
 
 const STATUS_EMOJI: Record<string, string> = {

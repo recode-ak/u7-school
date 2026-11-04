@@ -3,6 +3,10 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { LearningController } from '@u7-scl/bot/learning/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import {
+  GetStudentByUserUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -10,12 +14,15 @@ import {
   pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { UserCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
+import { expectOk } from 'dmg-core/testing';
 
 /**
  * E2E самовыхода из учёбы (FR-4, восстановление интерактивности после
  * [7034c7e]): кнопка «🚪 Покинуть учёбу» в меню хаба → confirm-диалог →
- * UC drop-student → студент abandoned, мягкий кик из TG-группы потока
- * (FR-6, событие student.abandoned → InactivityStory).
+ * UC dropStudent → студент abandoned, мягкий кик из TG-группы потока
+ * (FR-6, событие StudentEvents.abandoned → InactivityStory).
  *
  * Фикстуры: студент tg 1003 → student f0f0f0f0 → поток e1e1e1e1
  * (active, TG-группа -1002222222222).
@@ -78,7 +85,15 @@ describe('E2E: Самовыход из учёбы (learning/hub, FR-4/FR-6)', ()
     const leaveText = String(leaveResp.screen?.text);
     expect(leaveText).toContain('Ты покинул учёбу');
 
-    // 5. FR-6: студент мягко исключён из TG-группы потока (ban + unban)
+    // 5. FR-6: студент мягко исключён из TG-группы потока (ban + unban);
+    // событие abandoned доставляется шиной после ответа UC — ждём кик
+    const deadline = Date.now() + 3000;
+    while (
+      Date.now() < deadline &&
+      !transport.api.kickedMembers.some((k) => k.telegramId === tgId)
+    ) {
+      await new Promise((r) => setTimeout(r, 20));
+    }
     const kicks = transport.api.kickedMembers.filter(
       (k) => k.telegramId === tgId,
     );
@@ -87,21 +102,23 @@ describe('E2E: Самовыход из учёбы (learning/hub, FR-4/FR-6)', ()
     expect(kicks[0]!.unbanned).toBe(true);
 
     // 6. Студент переведён в abandoned (проверка через домен)
-    const studentAfter = await app.apiApp.execute(
-      'get-student-by-user',
-      { userId: student.uuid },
-      student,
+    const studentAfter = expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        GetStudentByUserUcDef.command({ userId: student.uuid }),
+        new UserCaller(student),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
     );
-    expect((studentAfter as { status: string }).status).toBe('abandoned');
+    expect(studentAfter.status).toBe('abandoned');
   });
 
-  test('после самовыхода студент теряет кнопку «Моя учёба» в меню (роль STUDENT снята)', async () => {
-    // drop-student снимает роль STUDENT — свежий актор из репо без роли,
-    // menuButtons больше не отдаёт пункт
+  test('после самовыхода студент теряет кнопку «Моя учёба» в меню (нет живой записи)', async () => {
+    // stream роль STUDENT не снимает: меню опирается на живую запись
+    // студента (getActiveStudent), а не на роль
     const fresh = (await app.userFacade.getUserByTelegramId(
       student.telegramId,
     ))!;
-    expect(fresh.roles).not.toContain('STUDENT');
 
     const menu = await transport.collectMainMenu(fresh);
     expect(menu.some((i) => i.text.includes('Моя учёба'))).toBe(false);

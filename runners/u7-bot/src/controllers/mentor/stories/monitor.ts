@@ -1,26 +1,23 @@
 import type { User } from '@u7-scl/app-legacy/domain';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
-import {
-  type MdText,
-  md,
-  mdConcat,
-  mdJoin,
-  mdRaw,
-  now,
-} from '@u7-scl/core/shared';
+import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse, KbButton } from '@u7-scl/core/ui';
 import {
+  CompleteStudentUcDef,
+  GetStreamMembersUcDef,
   GetStreamUcDef,
+  GetStudentProgressUcDef,
+  MarkAbandonedUcDef,
   StreamModuleDef,
+  type StudentProgress,
 } from '@u7-scl/domain/stream/contract';
-import type { CategorizedStudent, Student } from '@u7-scl/stream/domain';
+import type { StreamDispatch } from '../../learning/shared';
 import {
-  AbandonSign,
-  CompletionSign,
-  StreamDs,
-  StudentAr,
-  StudentOutcomeCategory,
-} from '@u7-scl/stream/domain';
+  lagMarker,
+  loadStudentRows,
+  outcomeIcon,
+  outcomeLabel,
+} from '../../shared/student-rows';
 
 /**
  * US-8: Мониторинг прогресса группы.
@@ -93,12 +90,6 @@ export class MonitorStory extends U7BotUiStory {
     actor: User,
     showAll: boolean,
   ): Promise<DialogResponse> {
-    const students = (await this.appApi.execute(
-      'list-stream-students',
-      { streamId },
-      actor,
-    )) as Student[];
-
     const loaded = await this.dispatchUc(
       StreamModuleDef,
       GetStreamUcDef.command({ streamId }),
@@ -107,47 +98,29 @@ export class MonitorStory extends U7BotUiStory {
     if (!loaded.ok) return this.ucErrorNotify(loaded.error);
     const stream = loaded.value;
 
+    const membersRes = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamMembersUcDef.command({ streamId }),
+      actor,
+    );
+    if (!membersRes.ok) return this.ucErrorNotify(membersRes.error);
+    const students = membersRes.value?.students ?? [];
+    const lagMap = new Map(
+      (membersRes.value?.roster ?? []).map((r) => [r.studentId, r.lagLevel]),
+    );
+
     // FR-8: по умолчанию — только активные (active/enrolled);
     // режим «все» показывает и выбывших (метрики в нём — тоже по всем)
-    const visible = showAll
-      ? students
-      : students.filter(
-          (s) =>
-            new StudentAr(s).outcomeCategory() ===
-            StudentOutcomeCategory.IN_PROGRESS,
-        );
+    const visible = showAll ? students : students.filter((s) => s.inProgress);
 
-    // Категоризируем через DS
-    const categorized = StreamDs.categorizeStudents(visible, now());
-    const lagMap = new Map(categorized.map((c) => [c.studentId, c.lagLevel]));
-
-    // Считаем прогресс и собираем данные для каждого студента
-    interface StudentRow {
-      student: Student;
-      ar: StudentAr;
-      name: string;
-      progress: { completed: number; total: number; percent: number };
-      lagLevel: CategorizedStudent['lagLevel'];
-    }
-
-    const rows: StudentRow[] = [];
-    for (const s of visible) {
-      const progress = StreamDs.computeProgress(stream.contentSnapshot, s);
-      const lagLevel = lagMap.get(s.uuid) ?? 'on_track';
-      const ar = new StudentAr(s);
-
-      let name = s.userId.slice(0, 8);
-      try {
-        const user = await this.appApi.execute('get-user', {
-          uuid: s.userId,
-        });
-        name = user.name;
-      } catch {
-        // профиль недоступен — оставляем обрезок userId
-      }
-
-      rows.push({ student: s, ar, name, progress, lagLevel });
-    }
+    const built = await loadStudentRows(
+      this.#dispatchFor(actor),
+      (userId) => this.#userName(userId),
+      visible,
+      lagMap,
+    );
+    if (!built.ok) return this.ucErrorNotify(built.error);
+    const rows = built.rows;
 
     // Сортировка: 🛑 → ⚠️ → 🏃 по прогрессу → ✅
     const lagOrder: Record<string, number> = {
@@ -162,10 +135,8 @@ export class MonitorStory extends U7BotUiStory {
       if (la !== lb) return la - lb;
 
       // Завершённые (исход зафиксирован) — в конец
-      const aDone =
-        a.ar.outcomeCategory() !== StudentOutcomeCategory.IN_PROGRESS;
-      const bDone =
-        b.ar.outcomeCategory() !== StudentOutcomeCategory.IN_PROGRESS;
+      const aDone = a.student.outcome.category !== 'in_progress';
+      const bDone = b.student.outcome.category !== 'in_progress';
       if (aDone !== bDone) return aDone ? 1 : -1;
 
       // По убыванию прогресса
@@ -179,12 +150,12 @@ export class MonitorStory extends U7BotUiStory {
     let abandonedCount = 0;
 
     for (const r of rows) {
-      const category = r.ar.outcomeCategory();
-      if (category === StudentOutcomeCategory.IN_PROGRESS) {
+      const { category, signs } = r.student.outcome;
+      if (category === 'in_progress') {
         activeCount++;
-      } else if (category === StudentOutcomeCategory.ABANDONED) {
+      } else if (category === 'abandoned') {
         abandonedCount++;
-      } else if (r.ar.outcomeSigns().includes(CompletionSign.PASSED)) {
+      } else if (signs.includes('passed')) {
         advancedCount++;
       } else {
         notAdvancedCount++;
@@ -200,38 +171,32 @@ export class MonitorStory extends U7BotUiStory {
     const studentLines: MdText[] = [];
 
     for (const r of rows) {
-      const marker = this.#lagMarker(r.lagLevel, r.ar);
+      const marker = lagMarker(r.lagLevel, r.student);
       // Учится сейчас: живая запись, уже начавшая (не зачисление) —
       // признаки агрегата StudentAr (ФР‑10)
-      const isActive = r.ar.isInProgress() && !r.ar.isEnrolled();
-
-      // Сводка через DS
-      const summary = StreamDs.computeStudentRowSummary(
-        stream.contentSnapshot,
-        r.student,
-      );
+      const isActive = r.student.inProgress && !r.student.enrolled;
 
       // Текст: маркер, имя, прогресс-бар, категория времени
       const bar = this.#formatProgressBar(
-        summary.progress.completed,
-        summary.progress.total,
+        r.progress.completed,
+        r.progress.total,
       );
       const parts: MdText[] = [
         md`${marker} ${r.name}`,
-        mdConcat(bar, md` ${summary.progress.percent}%`),
+        mdConcat(bar, md` ${r.progress.percent}%`),
       ];
-      if (summary.dominantCategory && summary.medianTimeMinutes !== null) {
+      if (r.dominantCategory && r.medianTimeMinutes !== null) {
         parts.push(
           mdConcat(
-            md`${summary.dominantCategory.emoji} ${summary.dominantCategory.name}: `,
-            md`${summary.medianTimeMinutes} мин`,
+            md`${r.dominantCategory.emoji} ${r.dominantCategory.name}: `,
+            md`${r.medianTimeMinutes} мин`,
           ),
         );
       }
       studentLines.push(mdJoin(parts, ' \\| '));
 
       // Кнопка: только эмодзи + имя + процент
-      const nameBtn = `${marker} ${r.name} — ${summary.progress.percent}%`;
+      const nameBtn = `${marker} ${r.name} — ${r.progress.percent}%`;
 
       const studentRow: KbButton[] = [
         this.btn(nameBtn, this.cbFor('monitor', 'detail', r.student.uuid)),
@@ -247,10 +212,7 @@ export class MonitorStory extends U7BotUiStory {
         studentRow.push(
           this.btn('✅', this.cbFor('monitor', 'complete', r.student.uuid)),
         );
-      } else if (
-        canManage &&
-        r.ar.outcomeCategory() === StudentOutcomeCategory.COMPLETED
-      ) {
+      } else if (canManage && r.student.outcome.category === 'completed') {
         studentRow.push(
           this.btn('🔄', this.cbFor('monitor', 'complete', r.student.uuid)),
         );
@@ -275,11 +237,7 @@ export class MonitorStory extends U7BotUiStory {
     ]);
 
     // Сводка FR-8: всегда видна, от режима не зависит (по всем студентам)
-    const activeTotal = students.filter(
-      (s) =>
-        new StudentAr(s).outcomeCategory() ===
-        StudentOutcomeCategory.IN_PROGRESS,
-    ).length;
+    const activeTotal = students.filter((s) => s.inProgress).length;
     const departedTotal = students.length - activeTotal;
     const countLabel = this.#pluralize(
       students.length,
@@ -332,54 +290,6 @@ export class MonitorStory extends U7BotUiStory {
     return this.screen(mdJoin(header), this.kb(keyboardRows));
   }
 
-  /** Иконка исхода студента (оформление) */
-  #statusIcon(ar: StudentAr): string {
-    switch (ar.outcomeCategory()) {
-      case StudentOutcomeCategory.COMPLETED:
-        return ar.outcomeSigns().includes(CompletionSign.PASSED) ? '✅' : '↩️';
-      case StudentOutcomeCategory.ABANDONED:
-        return '🚫';
-      case StudentOutcomeCategory.IN_PROGRESS:
-        return '🟢';
-    }
-  }
-
-  /**
-   * Подпись исхода студента. Термины унифицированы по спеке трека
-   * (см. spec.md ФР-2): «окончил», «окончил, не прошёл», «забросил»,
-   * «не начал», «покинул сам», «снят ментором», «учится».
-   */
-  #statusLabel(ar: StudentAr): string {
-    switch (ar.outcomeCategory()) {
-      case StudentOutcomeCategory.COMPLETED:
-        return ar.outcomeSigns().includes(CompletionSign.PASSED)
-          ? 'окончил'
-          : 'окончил, не прошёл';
-      case StudentOutcomeCategory.ABANDONED: {
-        const signs = ar.outcomeSigns();
-        // Приоритет «не начал» над причиной ухода
-        if (signs.includes(AbandonSign.NEVER_STARTED)) return 'не начал';
-        if (signs.includes(AbandonSign.LEFT_VOLUNTARILY)) return 'покинул сам';
-        if (signs.includes(AbandonSign.REMOVED_BY_MENTOR))
-          return 'снят ментором';
-        // Легаси: abandoned с шагами, причина неизвестна
-        return 'забросил';
-      }
-      case StudentOutcomeCategory.IN_PROGRESS:
-        return 'учится';
-    }
-  }
-
-  /** Возвращает маркер отставания с учётом исхода студента */
-  #lagMarker(lagLevel: CategorizedStudent['lagLevel'], ar: StudentAr): string {
-    if (ar.outcomeCategory() !== StudentOutcomeCategory.IN_PROGRESS) {
-      return this.#statusIcon(ar);
-    }
-    if (lagLevel === 'critical') return '🛑';
-    if (lagLevel === 'lagging') return '⚠️';
-    return '🏃';
-  }
-
   /**
    * Форматирует прогресс-бар для Telegram MarkdownV2.
    * Скобки экранированы: \[ ████░░░░ \]
@@ -404,54 +314,79 @@ export class MonitorStory extends U7BotUiStory {
     return many;
   }
 
-  async #handleDetail(studentId: string, actor: User): Promise<DialogResponse> {
-    const student = (await this.appApi.execute(
-      'get-student-progress',
-      { studentId },
-      actor,
-    )) as Student;
+  /** Команды модуля `stream` от имени актора — для хелперов списков. */
+  #dispatchFor(actor: User): StreamDispatch {
+    return (command) => this.dispatchUc(StreamModuleDef, command, actor);
+  }
 
-    let userName = student.userId.slice(0, 8);
+  /** Имя пользователя по uuid (fallback — первые 8 символов id). */
+  async #userName(userId: string): Promise<string> {
     try {
-      const user = await this.appApi.execute('get-user', {
-        uuid: student.userId,
-      });
-      userName = user.name;
+      const user = await this.appApi.execute('get-user', { uuid: userId });
+      return user.name;
     } catch {
-      // профиль недоступен — оставляем обрезок userId
+      return userId.slice(0, 8);
     }
+  }
 
+  /** Запись студента, расчёты и имя; отказ UC — готовый ответ с ошибкой. */
+  async #loadStudent(
+    studentId: string,
+    actor: User,
+  ): Promise<
+    | {
+        ok: true;
+        student: StudentProgress['student'];
+        progress: StudentProgress['progress'];
+        userName: string;
+      }
+    | { ok: false; response: DialogResponse }
+  > {
     const loaded = await this.dispatchUc(
       StreamModuleDef,
-      GetStreamUcDef.command({ streamId: student.streamId }),
+      GetStudentProgressUcDef.command({ studentId }),
       actor,
     );
-    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
-    const stream = loaded.value;
-
-    // Lag info
-    const [cat] = StreamDs.categorizeStudents([student]);
-    const lagInfo = cat
-      ? {
-          lagLevel: cat.lagLevel,
-          hoursSinceLastActivity: cat.hoursSinceLastActivity,
-        }
-      : { lagLevel: 'on_track' as const, hoursSinceLastActivity: 0 };
-
-    // Карточка через DS (только данные)
-    const card = StreamDs.computeStudentCard(
-      stream.contentSnapshot,
+    if (!loaded.ok) {
+      return { ok: false, response: this.ucErrorNotify(loaded.error) };
+    }
+    const { student, progress } = loaded.value;
+    return {
+      ok: true,
       student,
-      lagInfo,
+      progress,
+      userName: await this.#userName(student.userId),
+    };
+  }
+
+  async #handleDetail(studentId: string, actor: User): Promise<DialogResponse> {
+    const loadedStudent = await this.#loadStudent(studentId, actor);
+    if (!loadedStudent.ok) return loadedStudent.response;
+    const { student, progress, userName } = loadedStudent;
+    if (!progress) return this.warn(md`Поток не найден`);
+
+    // Отставание — из состава потока (медиана по учащимся)
+    const membersRes = await this.dispatchUc(
+      StreamModuleDef,
+      GetStreamMembersUcDef.command({ streamId: student.streamId }),
+      actor,
     );
+    const lag = membersRes.ok
+      ? membersRes.value?.roster?.find((r) => r.studentId === student.uuid)
+      : undefined;
+    const card = lag
+      ? {
+          ...progress.card,
+          lagLevel: lag.lagLevel,
+          hoursSinceLastActivity: lag.hoursSinceLastActivity,
+        }
+      : progress.card;
 
     const bar = (c: number, t: number) => this.#formatProgressBar(c, t);
-    const ar = new StudentAr(student);
-
     const lines: MdText[] = [
       mdConcat(
         md`👤 *${userName}* \\| `,
-        md`${this.#statusIcon(ar)} ${this.#statusLabel(ar)}`,
+        md`${outcomeIcon(student)} ${outcomeLabel(student)}`,
       ),
       md``,
       md`———`,
@@ -525,8 +460,7 @@ export class MonitorStory extends U7BotUiStory {
 
     // Отставание / статус: учится сейчас (живая запись, не зачисление) —
     // признаки агрегата StudentAr (ФР‑10)
-    const studentAr = new StudentAr(student);
-    if (studentAr.isInProgress() && !studentAr.isEnrolled()) {
+    if (student.inProgress && !student.enrolled) {
       if (card.lagLevel === 'critical') {
         const days = Math.round(card.hoursSinceLastActivity / 24);
         lines.push(md``, md`🛑 Критическое отставание: ${days} дн\\.`);
@@ -561,21 +495,9 @@ export class MonitorStory extends U7BotUiStory {
     studentId: string,
     actor: User,
   ): Promise<DialogResponse> {
-    const student = (await this.appApi.execute(
-      'get-student-progress',
-      { studentId },
-      actor,
-    )) as Student;
-
-    let userName = student.userId.slice(0, 8);
-    try {
-      const user = await this.appApi.execute('get-user', {
-        uuid: student.userId,
-      });
-      userName = user.name;
-    } catch {
-      // профиль недоступен — оставляем обрезок userId
-    }
+    const loadedStudent = await this.#loadStudent(studentId, actor);
+    if (!loadedStudent.ok) return loadedStudent.response;
+    const { student, userName } = loadedStudent;
 
     return this.confirm(
       'mark-abandoned',
@@ -591,31 +513,20 @@ export class MonitorStory extends U7BotUiStory {
     studentId: string,
     actor: User,
   ): Promise<DialogResponse> {
-    const student = (await this.appApi.execute(
-      'get-student-progress',
-      { studentId },
+    const loadedStudent = await this.#loadStudent(studentId, actor);
+    if (!loadedStudent.ok) return loadedStudent.response;
+    const { student, userName } = loadedStudent;
+
+    const abandoned = await this.dispatchUc(
+      StreamModuleDef,
+      MarkAbandonedUcDef.command({
+        streamId: student.streamId,
+        studentId,
+        cause: 'inactivity',
+      }),
       actor,
-    )) as Student;
-
-    let userName = student.userId.slice(0, 8);
-    try {
-      const user = await this.appApi.execute('get-user', {
-        uuid: student.userId,
-      });
-      userName = user.name;
-    } catch {
-      // профиль недоступен — оставляем обрезок userId
-    }
-
-    try {
-      await this.appApi.execute(
-        'mark-abandoned',
-        { streamId: student.streamId, studentId, cause: 'inactivity' as const },
-        actor,
-      );
-    } catch (err: unknown) {
-      return this.handleError(err);
-    }
+    );
+    if (!abandoned.ok) return this.ucErrorNotify(abandoned.error);
 
     return {
       // Реплика результата — notify (поверх целевого экрана delegate,
@@ -664,21 +575,9 @@ export class MonitorStory extends U7BotUiStory {
     const parts = action.split(':');
     const outcome = parts[2]; // advanced | not_advanced | abandoned
 
-    const student = (await this.appApi.execute(
-      'get-student-progress',
-      { studentId },
-      actor,
-    )) as Student;
-
-    let userName = student.userId.slice(0, 8);
-    try {
-      const user = await this.appApi.execute('get-user', {
-        uuid: student.userId,
-      });
-      userName = user.name;
-    } catch {
-      // профиль недоступен — оставляем обрезок userId
-    }
+    const loadedStudent = await this.#loadStudent(studentId, actor);
+    if (!loadedStudent.ok) return loadedStudent.response;
+    const { student, userName } = loadedStudent;
 
     // Связка «команда UC → подпись исхода»; термины — унифицированные литералы
     const outcomeLabels: Record<string, string> = {
@@ -718,35 +617,32 @@ export class MonitorStory extends U7BotUiStory {
     }
     const outcome = rawOutcome;
 
-    const student = (await this.appApi.execute(
-      'get-student-progress',
-      { studentId },
-      actor,
-    )) as Student;
+    const loadedStudent = await this.#loadStudent(studentId, actor);
+    if (!loadedStudent.ok) return loadedStudent.response;
+    const { student, userName } = loadedStudent;
 
-    let userName = student.userId.slice(0, 8);
-    try {
-      const user = await this.appApi.execute('get-user', {
-        uuid: student.userId,
-      });
-      userName = user.name;
-    } catch {
-      // профиль недоступен — оставляем обрезок userId
-    }
-
-    try {
-      await this.appApi.execute(
-        'complete-student',
-        {
-          streamId: student.streamId,
-          studentId,
-          outcome,
-        },
-        actor,
-      );
-    } catch (err: unknown) {
-      return this.handleError(err);
-    }
+    // «забросил» — снятие ментором (by_mentor); исход прохождения — завершение
+    const result =
+      outcome === 'abandoned'
+        ? await this.dispatchUc(
+            StreamModuleDef,
+            MarkAbandonedUcDef.command({
+              streamId: student.streamId,
+              studentId,
+              cause: 'by_mentor',
+            }),
+            actor,
+          )
+        : await this.dispatchUc(
+            StreamModuleDef,
+            CompleteStudentUcDef.command({
+              streamId: student.streamId,
+              studentId,
+              outcome,
+            }),
+            actor,
+          );
+    if (!result.ok) return this.ucErrorNotify(result.error);
 
     return {
       // Реплика результата — notify (см. #handleMarkAbandonedExecute)

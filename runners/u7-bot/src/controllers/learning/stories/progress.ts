@@ -4,9 +4,9 @@ import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import {
   GetStreamUcDef,
+  GetStudentProgressUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
-import { StreamDs } from '@u7-scl/stream/domain';
 import { buttons } from '../../shared/buttons';
 import { formatProgressBar, getStudent } from '../shared';
 
@@ -33,7 +33,10 @@ export class ProgressStory extends U7BotUiStory {
   }
 
   async #showProgress(actor: User, streamId: string): Promise<DialogResponse> {
-    const studentResult = await getStudent(this.appApi, actor);
+    const studentResult = await getStudent(
+      (command) => this.dispatchUc(StreamModuleDef, command, actor),
+      actor,
+    );
     if (!studentResult.ok) return studentResult.value;
 
     const student = studentResult.value;
@@ -52,11 +55,16 @@ export class ProgressStory extends U7BotUiStory {
     if (!loaded.ok) return this.ucErrorNotify(loaded.error);
     const stream = loaded.value;
 
-    const card = StreamDs.computeStudentCard(stream.contentSnapshot, student);
-    const projectProgress = StreamDs.computeStreamProjectProgress(
-      stream.contentSnapshot,
-      student,
+    const loadedProgress = await this.dispatchUc(
+      StreamModuleDef,
+      GetStudentProgressUcDef.command({ studentId: student.uuid }),
+      actor,
     );
+    if (!loadedProgress.ok) return this.ucErrorNotify(loadedProgress.error);
+    const calc = loadedProgress.value.progress;
+    if (!calc) return this.warn(md`Поток не найден`);
+    const card = calc.card;
+    const projectProgress = calc.projects;
 
     const lines: MdText[] = [
       md`📊 *Мой прогресс* — ${stream.title}`,

@@ -8,6 +8,10 @@ import {
   dmgDispatch,
   streamView,
 } from '../../streams/stories/stream-dmg.test-kit';
+import {
+  type LegacyStudent,
+  studentAnswers,
+} from '../../streams/stories/student-dmg.test-kit';
 import { NavTreeStory } from './nav-tree';
 
 describe('NavTreeStory — drill-down навигация студента (TDD)', () => {
@@ -181,15 +185,14 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
       },
     };
 
+    // `get-student-by-user`: запись студента, функция — студент не найден
+    const studentOverride = appApiOverrides?.['get-student-by-user'];
+    const student =
+      typeof studentOverride === 'function'
+        ? undefined
+        : ((studentOverride ?? richStudent) as LegacyStudent);
+
     const appApiSpy = mock((name: string, params?: Record<string, unknown>) => {
-      if (appApiOverrides && name in appApiOverrides) {
-        const val = appApiOverrides[name];
-        if (typeof val === 'function') return (val as () => unknown)();
-        if (val instanceof Error) throw val;
-        return val;
-      }
-      if (name === 'get-student-by-user') return richStudent;
-      if (name === 'get-student-progress') return richStudent;
       if (name === 'get-step') {
         const p = params as { uuid: string };
         return allSteps[p.uuid] as unknown;
@@ -225,7 +228,10 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
     story.init({
       appApi: {
         execute: appApiSpy,
-        dispatch: dmgDispatch({ getStream: () => streamView(richStream) }),
+        dispatch: dmgDispatch({
+          getStream: () => streamView(richStream),
+          ...studentAnswers(student, richSnapshot),
+        }),
       },
       callers: testCallers,
     } as never);

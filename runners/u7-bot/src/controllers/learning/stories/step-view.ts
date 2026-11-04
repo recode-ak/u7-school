@@ -9,15 +9,11 @@ import type {
 } from '@u7-scl/core/ui';
 import type { ContentSnapshot, Step } from '@u7-scl/course/domain';
 import {
+  CompleteStepUcDef,
   GetStreamUcDef,
+  GetStudentProgressUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
-import type { Student } from '@u7-scl/stream/domain';
-import {
-  StreamDs,
-  StudentAr,
-  StudentOutcomeCategory,
-} from '@u7-scl/stream/domain';
 import { buttons } from '../../shared/buttons';
 import {
   buildStepList,
@@ -27,6 +23,8 @@ import {
   getCompletedStepsInOrder,
   getStudent,
   getStudentAndStream,
+  type ProgressView,
+  type StreamDispatch,
 } from '../shared';
 
 /**
@@ -61,21 +59,39 @@ export class StepViewStory extends U7BotUiStory {
     return this.unknownCommand(action, actor, session);
   }
 
+  /** Команды модуля `stream` от имени актора — для хелперов раздела learning. */
+  #dispatchFor(actor: User): StreamDispatch {
+    return (command) => this.dispatchUc(StreamModuleDef, command, actor);
+  }
+
+  /**
+   * Расчёты прогресса студента (`getStudentProgress`): шаг и урок — по
+   * необходимости. Потока нет или отказ — `undefined`.
+   */
+  async #loadProgress(
+    actor: User,
+    input: { studentId: string; stepId?: string; lessonId?: string },
+  ): Promise<ProgressView | undefined> {
+    const res = await this.dispatchUc(
+      StreamModuleDef,
+      GetStudentProgressUcDef.command(input),
+      actor,
+    );
+    return res.ok ? res.value.progress : undefined;
+  }
+
   // ── Приватные методы: основной поток ──
 
   async #showCurrentStep(
     actor: User,
     _overrideStepId?: string,
   ): Promise<DialogResponse> {
-    const studentResult = await getStudent(this.appApi, actor);
+    const studentResult = await getStudent(this.#dispatchFor(actor), actor);
     if (!studentResult.ok) return studentResult.value;
 
     const student = studentResult.value;
 
-    if (
-      new StudentAr(student).outcomeCategory() !==
-      StudentOutcomeCategory.IN_PROGRESS
-    ) {
+    if (student.outcome.category !== 'in_progress') {
       return this.screen(
         md`🎉 *Поздравляю\\!* Вы завершили обучение в потоке\\!`,
       );
@@ -95,12 +111,16 @@ export class StepViewStory extends U7BotUiStory {
     // показываем экран завершения потока вместо повторного рендера шага
     // (иначе повтор «Выполнено» даёт same-content edit и ошибку Telegram
     // «message is not modified»)
-    const progress = StreamDs.computeProgress(stream.contentSnapshot, student);
-    if (progress.total > 0 && progress.completed >= progress.total) {
+    const progress = await this.#loadProgress(actor, {
+      studentId: student.uuid,
+      stepId,
+    });
+    const module = progress?.module;
+    if (module && module.total > 0 && module.completed >= module.total) {
       return this.#streamCompletedScreen();
     }
 
-    return this.#buildStepView(stream, stepId, student.streamId, student);
+    return this.#buildStepView(stream, stepId, student.streamId, progress);
   }
 
   async #handleComplete(action: string, actor: User): Promise<DialogResponse> {
@@ -109,7 +129,7 @@ export class StepViewStory extends U7BotUiStory {
       return this.unknownCommand(action, actor);
     }
 
-    const studentResult = await getStudent(this.appApi, actor);
+    const studentResult = await getStudent(this.#dispatchFor(actor), actor);
     if (!studentResult.ok) return studentResult.value;
 
     const student = studentResult.value;
@@ -120,16 +140,13 @@ export class StepViewStory extends U7BotUiStory {
       );
     }
 
-    const result = (await this.appApi.execute(
-      'complete-step',
-      { studentId: student.uuid, streamId, stepId },
+    const completed = await this.dispatchUc(
+      StreamModuleDef,
+      CompleteStepUcDef.command({ studentId: student.uuid, streamId, stepId }),
       actor,
-    )) as {
-      level: 'step' | 'lesson' | 'project' | 'stream' | 'already_completed';
-      completedLessonId?: string;
-      completedProjectId?: string;
-      currentStepId?: string;
-    };
+    );
+    if (!completed.ok) return this.ucErrorNotify(completed.error);
+    const result = completed.value;
 
     if (result.level === 'already_completed') {
       // Шаг уже был завершён ранее — просто показываем актуальный текущий шаг
@@ -141,23 +158,13 @@ export class StepViewStory extends U7BotUiStory {
     }
 
     if (result.level === 'lesson' || result.level === 'project') {
-      // Перезагружаем студента — completeStep мутирует и сохраняет новое состояние
-      const freshStudent = (await this.appApi.execute(
-        'get-student-progress',
-        { studentId: student.uuid },
-        actor,
-      )) as Student;
-      return this.#announceTransition(
-        result as {
-          level: 'lesson' | 'project';
-          completedLessonId?: string;
-          completedProjectId?: string;
-          currentStepId?: string;
-        },
-        streamId,
-        freshStudent,
-        actor,
-      );
+      // Расчёты после завершения шага: completeStep мутирует и сохраняет новое состояние
+      const progress = await this.#loadProgress(actor, {
+        studentId: student.uuid,
+        lessonId:
+          result.level === 'lesson' ? result.completedLessonId : undefined,
+      });
+      return this.#announceTransition(result, streamId, progress, actor);
     }
 
     return this.#showCurrentStep(actor, result.currentStepId);
@@ -172,7 +179,7 @@ export class StepViewStory extends U7BotUiStory {
     stepId: string,
   ): Promise<DialogResponse> {
     const { student, stream } = await getStudentAndStream(
-      this.appApi,
+      this.#dispatchFor(actor),
       actor,
       async (id) => {
         const loaded = await this.dispatchUc(
@@ -184,7 +191,7 @@ export class StepViewStory extends U7BotUiStory {
       },
     );
     if (!student || !stream) {
-      const studentResult = await getStudent(this.appApi, actor);
+      const studentResult = await getStudent(this.#dispatchFor(actor), actor);
       return studentResult.ok
         ? this.screen(md`⚠️ Поток не найден`)
         : studentResult.value;
@@ -196,7 +203,11 @@ export class StepViewStory extends U7BotUiStory {
       );
     }
 
-    const resolved = StreamDs.getStepPosition(stream.contentSnapshot, stepId);
+    const progress = await this.#loadProgress(actor, {
+      studentId: student.uuid,
+      stepId,
+    });
+    const resolved = progress?.step?.position;
 
     if (!resolved) {
       return this.screen(md`⚠️ Шаг не найден в программе потока\\.`);
@@ -211,8 +222,7 @@ export class StepViewStory extends U7BotUiStory {
       stream.title,
       resolved,
       step as Step,
-      stream.contentSnapshot,
-      student,
+      progress?.step?.lessonProgress,
     );
 
     // Список шагов урока
@@ -279,17 +289,16 @@ export class StepViewStory extends U7BotUiStory {
     stream: { title: string; contentSnapshot: ContentSnapshot },
     stepId: string,
     streamId: string,
-    student?: Student,
+    progress: ProgressView | undefined,
   ): Promise<DialogResponse> {
-    const resolved = StreamDs.getStepPosition(stream.contentSnapshot, stepId);
+    const resolved = progress?.step?.position ?? null;
 
     const step = await this.appApi.execute('get-step', { uuid: stepId });
     const message = formatStepMessage(
       stream.title,
       resolved,
       step as Step,
-      stream.contentSnapshot,
-      student,
+      progress?.step?.lessonProgress,
     );
     const keyboard = this.#buildStepKeyboard(streamId, stepId);
 
@@ -327,7 +336,7 @@ export class StepViewStory extends U7BotUiStory {
       currentStepId?: string;
     },
     streamId: string,
-    student: Student,
+    progress: ProgressView | undefined,
     actor: User,
   ): Promise<DialogResponse> {
     const loaded = await this.dispatchUc(
@@ -337,11 +346,12 @@ export class StepViewStory extends U7BotUiStory {
     );
     if (!loaded.ok) return this.ucErrorNotify(loaded.error);
     const stream = loaded.value;
+    if (!progress) return this.#showCurrentStep(actor, result.currentStepId);
 
     const { messageText, buttonText } = buildTransitionMessage(
       result,
       stream,
-      student,
+      progress,
     );
 
     return {

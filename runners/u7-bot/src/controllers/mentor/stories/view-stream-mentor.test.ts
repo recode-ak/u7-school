@@ -6,8 +6,8 @@ import {
   ArchiveStreamUcDef,
   CompleteStreamUcDef,
   StreamErrors,
+  StreamStatus,
 } from '@u7-scl/domain/stream/contract';
-import { StreamStatus } from '@u7-scl/stream/domain';
 import { Role } from '@u7-scl/user/domain';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import {
@@ -15,6 +15,12 @@ import {
   refuse,
   streamView,
 } from '../../streams/stories/stream-dmg.test-kit';
+import {
+  type LegacyStudent,
+  progressProjection,
+  streamMembers,
+  studentView,
+} from '../../streams/stories/student-dmg.test-kit';
 import { ViewStreamMentorStory } from './view-stream-mentor';
 
 const mentorActor: User = {
@@ -52,7 +58,7 @@ const mockStream = {
   ],
 };
 
-const mockStudent = {
+const mockStudent: LegacyStudent = {
   uuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001',
   userId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   enrolledAt: '2026-01-01T00:00',
@@ -97,7 +103,24 @@ function createStory(handler?: Handler) {
         ? viewOf(stream as Record<string, unknown>, caller.subject().uuid)
         : stream;
     },
-    getStreamMembers: () => ({ mentorId: 'mentor-1', students: [] }),
+    // состав потока и расчёты студента строятся по ответу 'list-stream-students'
+    getStreamMembers: () =>
+      streamMembers(
+        'mentor-1',
+        (answer('list-stream-students') ?? []) as LegacyStudent[],
+      ),
+    getStudentProgress: (input) => {
+      const list = (answer('list-stream-students') ?? []) as LegacyStudent[];
+      const found = list.find(
+        (s) => s.uuid === (input as { studentId: string }).studentId,
+      );
+      return found
+        ? {
+            student: studentView(found),
+            progress: progressProjection(mockStream.contentSnapshot, found),
+          }
+        : refuse('STUDENT_NOT_FOUND', 'not_found');
+    },
     completeStream: (input) =>
       answer('completeStream', input as Record<string, unknown>),
     archiveStream: (input) =>

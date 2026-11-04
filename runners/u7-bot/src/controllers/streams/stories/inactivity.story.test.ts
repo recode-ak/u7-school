@@ -11,7 +11,8 @@ import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { InactivityStory } from './inactivity.story';
-import { dmgDispatch, streamView } from './stream-dmg.test-kit';
+import { dmgDispatch, refuse, streamView } from './stream-dmg.test-kit';
+import { studentView } from './student-dmg.test-kit';
 
 // ══ Фикстуры ══
 
@@ -112,6 +113,7 @@ function setupStory(opts: { streamOverrides?: Record<string, unknown> } = {}): {
   }>;
   kicks: Array<{ groupId: number | string; userId: number }>;
   execute: ReturnType<typeof mock>;
+  dispatch: ReturnType<typeof dmgDispatch>;
 } {
   const notifies: Array<{
     telegramId: number;
@@ -134,30 +136,37 @@ function setupStory(opts: { streamOverrides?: Record<string, unknown> } = {}): {
           return { ...student, uuid, name: 'Ментор', telegramId: 1004 };
         return undefined;
       }
-      if (name === 'get-student-progress') {
-        const sid = params?.studentId as string;
-        if (sid === 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') {
-          return {
-            uuid: sid,
-            userId: STUDENT_USER_ID,
-            streamId: STREAM_ID,
-            status: 'active',
-          };
-        }
-        return undefined;
-      }
       return undefined;
     },
   );
+  const dispatch = dmgDispatch({
+    getStream: () => ({ ...stream, ...opts.streamOverrides }),
+    // Запись студента есть только у aaaaaaaa…, остальные — не найдены
+    getStudentProgress: (input) => {
+      const sid = (input as { studentId: string }).studentId;
+      return sid === 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+        ? {
+            student: studentView({
+              uuid: sid,
+              userId: STUDENT_USER_ID,
+              streamId: STREAM_ID,
+              status: 'active',
+              currentStepId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+              steps: [],
+            }),
+          }
+        : refuse('STUDENT_NOT_FOUND', 'not_found');
+    },
+    dropStudent: () => ({}),
+    markAbandoned: () => ({}),
+  });
 
   const story = new InactivityStory();
   story.init(
     {
       appApi: {
         execute,
-        dispatch: dmgDispatch({
-          getStream: () => ({ ...stream, ...opts.streamOverrides }),
-        }),
+        dispatch,
       },
       callers: testCallers,
     } as never,
@@ -193,7 +202,7 @@ function setupStory(opts: { streamOverrides?: Record<string, unknown> } = {}): {
     } as never,
   );
 
-  return { story, notifies, invites, kicks, execute };
+  return { story, notifies, invites, kicks, execute, dispatch };
 }
 
 /** Достаёт обработчик подписки по имени события */
@@ -414,8 +423,8 @@ describe('InactivityStory', () => {
     ]);
   });
 
-  test('drop-student-confirm: UC drop-student + прощание и выход в меню', async () => {
-    const { story, execute } = setupStory({
+  test('drop-student-confirm: UC dropStudent + прощание и выход в меню', async () => {
+    const { story, dispatch } = setupStory({
       streamOverrides: { telegramGroupId: GROUP_ID },
     });
 
@@ -426,14 +435,11 @@ describe('InactivityStory', () => {
     );
 
     assertDialogResponseMarkdownSafe(response);
-    expect(execute).toHaveBeenCalledWith(
-      'drop-student',
-      {
-        streamId: STREAM_ID,
-        studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-      },
-      student,
-    );
+    const dropCall = dispatch.mock.calls.find((c) => c[1].uc === 'dropStudent');
+    expect(dropCall?.[1].input).toEqual({
+      streamId: STREAM_ID,
+      studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    });
     expect(String(response.screen?.text)).toContain('Ты покинул учёбу');
     expect(buttonCodes(response)).toEqual([
       { text: '⬅️ В меню', code: 'app:main-menu' },
@@ -441,7 +447,7 @@ describe('InactivityStory', () => {
   });
 
   test('mark-abandoned: confirm-диалог снятия с возвратом в меню', async () => {
-    const { story, execute } = setupStory();
+    const { story, dispatch } = setupStory();
 
     const response = await story.handleCallback(
       `mark-abandoned:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa`,
@@ -450,11 +456,12 @@ describe('InactivityStory', () => {
     );
 
     assertDialogResponseMarkdownSafe(response);
-    expect(execute).toHaveBeenCalledWith(
-      'get-student-progress',
-      { studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' },
-      student,
+    const progressCall = dispatch.mock.calls.find(
+      (c) => c[1].uc === 'getStudentProgress',
     );
+    expect(progressCall?.[1].input).toEqual({
+      studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    });
     expect(String(response.screen?.text)).toContain(
       'Снять студента *Иван Студент*',
     );
@@ -485,8 +492,8 @@ describe('InactivityStory', () => {
     );
   });
 
-  test('mark-abandoned-confirm: UC mark-abandoned cause=inactivity + реплика результата', async () => {
-    const { story, execute } = setupStory();
+  test('mark-abandoned-confirm: UC markAbandoned cause=inactivity + реплика результата', async () => {
+    const { story, dispatch } = setupStory();
 
     const response = await story.handleCallback(
       `mark-abandoned-confirm:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa`,
@@ -495,15 +502,14 @@ describe('InactivityStory', () => {
     );
 
     assertDialogResponseMarkdownSafe(response);
-    expect(execute).toHaveBeenCalledWith(
-      'mark-abandoned',
-      {
-        streamId: STREAM_ID,
-        studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-        cause: 'inactivity',
-      },
-      student,
+    const markCall = dispatch.mock.calls.find(
+      (c) => c[1].uc === 'markAbandoned',
     );
+    expect(markCall?.[1].input).toEqual({
+      streamId: STREAM_ID,
+      studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      cause: 'inactivity',
+    });
     expect(String(response.screen?.text)).toContain(
       'снят с учёбы за бездействие и исключён из группы потока',
     );
@@ -512,7 +518,7 @@ describe('InactivityStory', () => {
 
   test('drop-student-confirm: ошибка UC — экран ошибки с выходом в меню', async () => {
     const { story } = setupStory();
-    // get-student-progress для несуществующего студента бросает —
+    // getStudentProgress для несуществующего студента отказывает —
     // #getStudent возвращает undefined → экран «не найдена» (без UC-вызова)
     const response = await story.handleCallback(
       `drop-student-confirm:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb`,
