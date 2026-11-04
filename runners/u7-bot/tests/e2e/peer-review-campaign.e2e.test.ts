@@ -3,10 +3,7 @@ import {
   GetMyReviewUcDef,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
-import type {
-  StudentAbandonedEvent,
-  StudentCompletedEvent,
-} from '@u7-scl/stream/domain';
+import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
@@ -73,7 +70,7 @@ describe('E2E peer-review: судьба субъекта — написание'
     // ── 1. Событие судьбы: завершил и прошел ──
     app.eventBus.publish({
       eventId: crypto.randomUUID(),
-      eventName: 'student.completed',
+      eventName: StudentEvents.completed.name,
       occurredAt: '2026-09-22T12:00',
       aggregateName: 'Student',
       aggregateId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
@@ -84,7 +81,7 @@ describe('E2E peer-review: судьба субъекта — написание'
         moduleId: 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0',
         outcome: 'advanced',
       },
-    } satisfies StudentCompletedEvent);
+    });
 
     // ── 2. Два приглашения: субъекту (по исходу) и ментору (с именем) ──
     await waitUntil(
@@ -330,7 +327,7 @@ describe('E2E peer-review: судьба субъекта — написание'
     // ── 1. Событие: Андрей забросил учёбу ──
     app.eventBus.publish({
       eventId: crypto.randomUUID(),
-      eventName: 'student.abandoned',
+      eventName: StudentEvents.abandoned.name,
       occurredAt: '2026-09-22T12:00',
       aggregateName: 'Student',
       aggregateId: 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2',
@@ -341,7 +338,7 @@ describe('E2E peer-review: судьба субъекта — написание'
         who: 'self',
         cause: 'voluntary',
       },
-    } satisfies StudentAbandonedEvent);
+    });
 
     // ── 2. Приглашение с мягким текстом судьбы ──
     await waitUntil(() =>

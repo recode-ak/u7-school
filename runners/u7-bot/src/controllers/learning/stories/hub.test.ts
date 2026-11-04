@@ -2,6 +2,7 @@ import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
+import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
 import { HubStory } from './hub';
 
@@ -270,7 +271,7 @@ describe('HubStory — подписка на student.completed', () => {
   function makeCompletedEvent(outcome: 'advanced' | 'not_advanced') {
     return {
       eventId: 'ev-2',
-      eventName: 'student.completed' as const,
+      eventName: StudentEvents.completed.name,
       occurredAt: '2026-08-28T12:00:00.000Z',
       aggregateName: 'Student' as const,
       aggregateId: 'student-uuid',
@@ -314,7 +315,7 @@ describe('HubStory — подписка на student.completed', () => {
   function getSub(story: ReturnType<typeof makeStoryWithSender>['story']) {
     const sub = story
       .getEventSubscriptions()
-      .find((s) => s.eventName === 'student.completed');
+      .find((s) => s.eventName === StudentEvents.completed.name);
     if (!sub) throw new Error('подписка на student.completed не найдена');
     return sub;
   }

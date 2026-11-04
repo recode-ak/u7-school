@@ -5,7 +5,7 @@ import {
   GetMyCampaignsUcDef,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
-import type { StudentCompletedEvent } from '@u7-scl/stream/domain';
+import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
@@ -101,7 +101,7 @@ describe('E2E peer-review: инфраструктура стенда (smoke)', (
 
     app.eventBus.publish({
       eventId: crypto.randomUUID(),
-      eventName: 'student.completed',
+      eventName: StudentEvents.completed.name,
       occurredAt: '2026-09-22T12:00',
       aggregateName: 'Student',
       aggregateId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
@@ -112,7 +112,7 @@ describe('E2E peer-review: инфраструктура стенда (smoke)', (
         moduleId: 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0',
         outcome: 'advanced',
       },
-    } satisfies StudentCompletedEvent);
+    });
 
     // Кампания появилась в репозитории
     await waitUntil(async () => {

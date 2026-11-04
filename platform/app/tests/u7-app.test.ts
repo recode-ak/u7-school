@@ -15,10 +15,10 @@ import {
   QuestionnaireFactory,
   type QuestionnairePool,
 } from '@u7-scl/domain/questionnaire';
-import { StudentAr } from '@u7-scl/domain/stream';
 import {
   CreateStreamUcDef,
   StreamModuleDef,
+  StudentEvents,
 } from '@u7-scl/domain/stream/contract';
 import {
   CancelWishUcDef,
@@ -355,9 +355,19 @@ describe('U7App: legacy-события доходят до ER DMG-модуля w
 
   test('student.enrolled, createStream, questionnaire:complete|abandon, questionnaire:complete|abandon → fulfillWish, inviteWishers, confirmWish, abandonWish', async () => {
     const bus = bundle.eventBus;
-    bus.publish(
-      single(StudentAr.enroll(STREAM, RESPONDENT, STEP, MODULE).flushEvents()),
-    );
+    bus.publish({
+      eventId: crypto.randomUUID(),
+      eventName: StudentEvents.enrolled.name,
+      occurredAt: '2026-06-01T10:00',
+      aggregateName: 'Student',
+      aggregateId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+      payload: {
+        studentId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+        userId: RESPONDENT,
+        streamId: STREAM,
+        moduleId: MODULE,
+      },
+    });
     const created = await bundle.apiApp.dispatch(
       StreamModuleDef,
       CreateStreamUcDef.command({
@@ -397,7 +407,7 @@ describe('U7App: legacy-события доходят до ER DMG-модуля w
 
 // ══ Сосуществование (Ф1 peer-review): legacy-событие stream → ER кампаний DMG ══
 
-describe('U7App: legacy student.completed доходит до ER createStudentCampaign', () => {
+describe('U7App: Def-событие stream.student.completed доходит до ER createStudentCampaign', () => {
   let dir: string;
 
   beforeAll(async () => {
@@ -412,7 +422,7 @@ describe('U7App: legacy student.completed доходит до ER createStudentCa
     const bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
     bundle.eventBus.publish({
       eventId: crypto.randomUUID(),
-      eventName: 'student.completed',
+      eventName: StudentEvents.completed.name,
       occurredAt: '2026-09-20T10:00',
       aggregateName: 'Student',
       aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',

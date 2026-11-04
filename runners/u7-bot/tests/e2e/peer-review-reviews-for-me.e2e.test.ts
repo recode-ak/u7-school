@@ -4,7 +4,7 @@ import {
   CreateReviewUcDef,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
-import type { StudentCompletedEvent } from '@u7-scl/stream/domain';
+import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
@@ -60,7 +60,7 @@ async function waitUntil(
 function completedEvent(userId: string, aggregateId: string) {
   return {
     eventId: crypto.randomUUID(),
-    eventName: 'student.completed',
+    eventName: StudentEvents.completed.name,
     occurredAt: '2026-09-22T12:00',
     aggregateName: 'Student',
     aggregateId,
@@ -71,7 +71,7 @@ function completedEvent(userId: string, aggregateId: string) {
       moduleId: MODULE_ID,
       outcome: 'advanced',
     },
-  } satisfies StudentCompletedEvent;
+  };
 }
 
 /** /start → хаб по кнопке меню «💬 Отзывы». */

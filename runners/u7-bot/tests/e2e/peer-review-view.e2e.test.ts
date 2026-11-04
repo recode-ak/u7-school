@@ -6,7 +6,7 @@ import {
   ListScopeReviewsUcDef,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
-import type { StudentCompletedEvent } from '@u7-scl/stream/domain';
+import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -253,7 +253,7 @@ describe('E2E peer-review: S07 — пагинация и DialogCache', () => {
     // Кампания судьбой + 4 длинных отзыва (страница = один блок)
     app.eventBus.publish({
       eventId: crypto.randomUUID(),
-      eventName: 'student.completed',
+      eventName: StudentEvents.completed.name,
       occurredAt: '2026-09-22T12:00',
       aggregateName: 'Student',
       aggregateId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
@@ -264,7 +264,7 @@ describe('E2E peer-review: S07 — пагинация и DialogCache', () => {
         moduleId: 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0',
         outcome: 'advanced',
       },
-    } satisfies StudentCompletedEvent);
+    });
     const deadline = Date.now() + 3000;
     while (
       !(await app.reviewCampaignRepo.findBySubject(

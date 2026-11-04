@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { AppController } from '@u7-scl/bot/app/app-controller';
-import type { StudentCompletedEvent } from '@u7-scl/stream/domain';
+import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
@@ -75,7 +75,7 @@ describe('E2E peer-review: хаб «Мои отзывы» и меню', () => {
   test('живая кампания → кнопка меню видна (kind callback, приоритет 25)', async () => {
     app.eventBus.publish({
       eventId: crypto.randomUUID(),
-      eventName: 'student.completed',
+      eventName: StudentEvents.completed.name,
       occurredAt: '2026-09-22T12:00',
       aggregateName: 'Student',
       aggregateId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
@@ -86,7 +86,7 @@ describe('E2E peer-review: хаб «Мои отзывы» и меню', () => {
         moduleId: 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0',
         outcome: 'advanced',
       },
-    } satisfies StudentCompletedEvent);
+    });
 
     await waitUntil(async () =>
       Boolean(

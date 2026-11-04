@@ -1,17 +1,21 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
-import type {
-  StudentAbandonedEvent,
-  StudentInactivityRemoveCandidateEvent,
-  StudentInactivityWarningEvent,
-} from '@u7-scl/stream/domain';
+import {
+  GetStudentProgressUcDef,
+  MarkAbandonedUcDef,
+  StreamModuleDef,
+  StudentEvents,
+} from '@u7-scl/domain/stream/contract';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
   pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { UserCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
+import { expectOk } from 'dmg-core/testing';
 import { UserController } from '../../src/controllers/user/controller';
 
 /**
@@ -104,7 +108,7 @@ async function waitKick(
 function publishWarning(app: TestApp, daysInactive: number): void {
   app.eventBus.publish({
     eventId: crypto.randomUUID(),
-    eventName: 'student.inactivity-warning',
+    eventName: StudentEvents.inactivityWarning.name,
     occurredAt: '2026-09-09T12:00',
     aggregateName: 'Student',
     aggregateId: STUDENT_F0,
@@ -112,10 +116,9 @@ function publishWarning(app: TestApp, daysInactive: number): void {
       studentId: STUDENT_F0,
       userId: STUDENT_USER_ID,
       streamId: STREAM2_ID,
-      telegramId: STUDENT_TG,
-      daysInactive,
+      days: daysInactive,
     },
-  } satisfies StudentInactivityWarningEvent);
+  });
 }
 
 /** Публикует событие-кандидата на снятие (ступень 7+ дней). */
@@ -126,7 +129,7 @@ function publishCandidate(
 ): void {
   app.eventBus.publish({
     eventId: crypto.randomUUID(),
-    eventName: 'student.inactivity-remove-candidate',
+    eventName: StudentEvents.inactivityRemoveCandidate.name,
     occurredAt: '2026-09-09T12:00',
     aggregateName: 'Student',
     aggregateId: STUDENT_F0,
@@ -134,18 +137,17 @@ function publishCandidate(
       studentId: STUDENT_F0,
       userId: STUDENT_USER_ID,
       streamId: STREAM2_ID,
-      mentorTelegramId: MENTOR_TG,
-      daysInactive,
+      days: daysInactive,
       wasWarned,
     },
-  } satisfies StudentInactivityRemoveCandidateEvent);
+  });
 }
 
 /** Публикует событие ухода из учёбы (подписчик — мягкий кик, FR-6). */
 function publishAbandoned(app: TestApp): void {
   app.eventBus.publish({
     eventId: crypto.randomUUID(),
-    eventName: 'student.abandoned',
+    eventName: StudentEvents.abandoned.name,
     occurredAt: '2026-09-09T12:00',
     aggregateName: 'Student',
     aggregateId: STUDENT_F0,
@@ -156,7 +158,7 @@ function publishAbandoned(app: TestApp): void {
       who: 'self',
       cause: 'voluntary',
     },
-  } satisfies StudentAbandonedEvent);
+  });
 }
 
 // ═══ Контур A: проактивы бездействия (FR-1) + callback-тупик (И3) ═══
@@ -292,11 +294,14 @@ describe('E2E: выход из группы и снятие ментором', (
     expect(notice).toContain('покинул группу');
 
     // Статус студента не изменился — решение об уходе принимают люди
-    const record = (await app.apiApp.execute(
-      'get-student-progress',
-      { studentId: STUDENT_F0 },
-      mentor,
-    )) as unknown as { status: string };
+    const record = expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        GetStudentProgressUcDef.command({ studentId: STUDENT_F0 }),
+        new UserCaller(mentor),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    ).student;
     expect(record.status).toBe('active');
   });
 
@@ -306,18 +311,28 @@ describe('E2E: выход из группы и снятие ментором', (
 
     // UC напрямую (в бою — кнопка в monitor):
     // снимает студента, публикует student.abandoned и уведомляет студента
-    await app.apiApp.execute(
-      'mark-abandoned',
-      { studentId: STUDENT_F0, streamId: STREAM2_ID, cause: 'inactivity' },
-      mentor,
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        MarkAbandonedUcDef.command({
+          studentId: STUDENT_F0,
+          streamId: STREAM2_ID,
+          cause: 'inactivity',
+        }),
+        new UserCaller(mentor),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
     );
 
     // Студент abandoned в репозитории
-    const record = (await app.apiApp.execute(
-      'get-student-progress',
-      { studentId: STUDENT_F0 },
-      mentor,
-    )) as unknown as { status: string };
+    const record = expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        GetStudentProgressUcDef.command({ studentId: STUDENT_F0 }),
+        new UserCaller(mentor),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    ).student;
     expect(record.status).toBe('abandoned');
 
     // Мягкий кик из группы потока

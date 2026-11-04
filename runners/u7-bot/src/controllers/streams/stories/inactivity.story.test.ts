@@ -7,11 +7,7 @@ import type {
   NotificationPayload,
 } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
-import type {
-  StudentAbandonedEvent,
-  StudentInactivityRemoveCandidateEvent,
-  StudentInactivityWarningEvent,
-} from '@u7-scl/stream/domain';
+import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { InactivityStory } from './inactivity.story';
@@ -44,11 +40,11 @@ const stream = streamView({
 });
 
 function makeWarningEvent(
-  overrides: Partial<StudentInactivityWarningEvent['payload']> = {},
-): StudentInactivityWarningEvent {
+  overrides: Partial<Record<string, unknown>> = {},
+): Record<string, unknown> {
   return {
     eventId: crypto.randomUUID(),
-    eventName: 'student.inactivity-warning',
+    eventName: StudentEvents.inactivityWarning.name,
     occurredAt: '2026-08-30T19:00',
     aggregateName: 'Student',
     aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
@@ -56,19 +52,18 @@ function makeWarningEvent(
       studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       userId: STUDENT_USER_ID,
       streamId: STREAM_ID,
-      telegramId: 1003,
-      daysInactive: 5,
+      days: 5,
       ...overrides,
     },
   };
 }
 
 function makeCandidateEvent(
-  overrides: Partial<StudentInactivityRemoveCandidateEvent['payload']> = {},
-): StudentInactivityRemoveCandidateEvent {
+  overrides: Partial<Record<string, unknown>> = {},
+): Record<string, unknown> {
   return {
     eventId: crypto.randomUUID(),
-    eventName: 'student.inactivity-remove-candidate',
+    eventName: StudentEvents.inactivityRemoveCandidate.name,
     occurredAt: '2026-08-30T19:00',
     aggregateName: 'Student',
     aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
@@ -76,8 +71,7 @@ function makeCandidateEvent(
       studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       userId: STUDENT_USER_ID,
       streamId: STREAM_ID,
-      mentorTelegramId: 1004,
-      daysInactive: 7,
+      days: 7,
       wasWarned: false,
       ...overrides,
     },
@@ -85,11 +79,11 @@ function makeCandidateEvent(
 }
 
 function makeAbandonedEvent(
-  overrides: Partial<StudentAbandonedEvent['payload']> = {},
-): StudentAbandonedEvent {
+  overrides: Partial<Record<string, unknown>> = {},
+): Record<string, unknown> {
   return {
     eventId: crypto.randomUUID(),
-    eventName: 'student.abandoned',
+    eventName: StudentEvents.abandoned.name,
     occurredAt: '2026-08-30T19:00',
     aggregateName: 'Student',
     aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
@@ -136,6 +130,8 @@ function setupStory(opts: { streamOverrides?: Record<string, unknown> } = {}): {
       if (name === 'get-user') {
         const uuid = params?.uuid as string;
         if (uuid === STUDENT_USER_ID) return student;
+        if (uuid === MENTOR_USER_ID)
+          return { ...student, uuid, name: 'Ментор', telegramId: 1004 };
         return undefined;
       }
       if (name === 'get-student-progress') {
@@ -222,9 +218,9 @@ describe('InactivityStory', () => {
       .map((s) => s.eventName)
       .sort();
     expect(names).toEqual([
-      'student.abandoned',
-      'student.inactivity-remove-candidate',
-      'student.inactivity-warning',
+      StudentEvents.abandoned.name,
+      StudentEvents.inactivityRemoveCandidate.name,
+      StudentEvents.inactivityWarning.name,
     ]);
   });
 
@@ -235,7 +231,7 @@ describe('InactivityStory', () => {
 
     await subHandler(
       story,
-      'student.inactivity-warning',
+      StudentEvents.inactivityWarning.name,
     )(makeWarningEvent() as never);
 
     // Кнопочный проактив — канал invite (не notify)
@@ -261,7 +257,7 @@ describe('InactivityStory', () => {
 
     await subHandler(
       story,
-      'student.inactivity-warning',
+      StudentEvents.inactivityWarning.name,
     )(makeWarningEvent() as never);
 
     expect(() =>
@@ -276,7 +272,7 @@ describe('InactivityStory', () => {
 
     await subHandler(
       story,
-      'student.inactivity-remove-candidate',
+      StudentEvents.inactivityRemoveCandidate.name,
     )(makeCandidateEvent() as never);
 
     // Кнопочный проактив — канал invite (не notify)
@@ -304,7 +300,7 @@ describe('InactivityStory', () => {
 
     await subHandler(
       story,
-      'student.inactivity-remove-candidate',
+      StudentEvents.inactivityRemoveCandidate.name,
     )(makeCandidateEvent({ wasWarned: true }) as never);
 
     const text = String(invites[0]?.payload.text);
@@ -317,7 +313,7 @@ describe('InactivityStory', () => {
 
     await subHandler(
       story,
-      'student.inactivity-remove-candidate',
+      StudentEvents.inactivityRemoveCandidate.name,
     )(
       makeCandidateEvent({
         userId: '99999999-9999-4999-8999-999999999999',
@@ -336,7 +332,10 @@ describe('InactivityStory', () => {
       streamOverrides: { telegramGroupId: GROUP_ID },
     });
 
-    await subHandler(story, 'student.abandoned')(makeAbandonedEvent() as never);
+    await subHandler(
+      story,
+      StudentEvents.abandoned.name,
+    )(makeAbandonedEvent() as never);
 
     expect(kicks).toHaveLength(1);
     expect(kicks[0]).toEqual({ groupId: GROUP_ID, userId: 1003 });
@@ -345,7 +344,10 @@ describe('InactivityStory', () => {
   test('abandoned: у потока нет группы — кик не вызывается, ошибок нет', async () => {
     const { story, kicks } = setupStory();
 
-    await subHandler(story, 'student.abandoned')(makeAbandonedEvent() as never);
+    await subHandler(
+      story,
+      StudentEvents.abandoned.name,
+    )(makeAbandonedEvent() as never);
 
     expect(kicks).toHaveLength(0);
   });
@@ -370,7 +372,10 @@ describe('InactivityStory', () => {
       callers: testCallers,
     } as never);
 
-    await subHandler(story, 'student.abandoned')(makeAbandonedEvent() as never);
+    await subHandler(
+      story,
+      StudentEvents.abandoned.name,
+    )(makeAbandonedEvent() as never);
 
     expect(kicks).toHaveLength(0);
   });
