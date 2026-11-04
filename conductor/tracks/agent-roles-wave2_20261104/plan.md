@@ -71,8 +71,8 @@
 
 ## Фаза 6: Финал
 
-- [ ] Task: Гейт закрытия: `CI=true bun test` в обоих репо, сравнение с базовой линией, триаж в `summary.md`; `git status data/` пуст
-- [ ] Task: Сверка критериев spec 1–8
+- [x] Task: Гейт закрытия: `CI=true bun test` в обоих репо, сравнение с базовой линией, триаж в `summary.md`; `git status data/` пуст
+- [x] Task: Сверка критериев spec 1–8
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6: Финал' (Protocol in workflow.md)
 
 ## Покрытие spec

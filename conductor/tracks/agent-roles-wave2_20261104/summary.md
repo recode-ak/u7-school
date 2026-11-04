@@ -73,3 +73,14 @@
 - `domain-graph.test.ts`: вхождение вместо точного состава `todo`. Тест детерминизма JSON поймал, что в Bun `toMatchObject` с `expect.arrayContaining` портит общий объект `graph`, поэтому проверки разделены. Со срезом pi-пилота: 1417 pass, 0 fail.
 
 Долг: DEBT-49 в u7-school — расширение pi `subagent` не переносится; ждёт решения о доставке pi-расширения пакетом.
+
+## Гейт закрытия (Фаза 6, 2026-11-04)
+
+| Репо | pass | fail | файлов | к базовой линии |
+|---|---|---|---|---|
+| u7-school | 3959 | 0 | 386 | +12 (тесты `dataKeeperHint`) |
+| dmg-core | 1397 | 0 | 132 | без изменений |
+
+`git status data/` пуст; `dmg:check`, `agents:check` зелёные. Падений нет, триажа не требуется.
+
+Критерии spec: 1 — шесть `dmg-*` в `agents/roles/`, grep по `u7-school|conductor|wish` пуст; 2 — `dmg-core` 0.1.1, D-62; 3 — `.claude/agents` и `.pi/agents`: шесть `dmg-*`, `migrator`, `documentarian`; 4 — grep старых имён вне `debt.md`/`decisions.md` пуст; 5 — `process.md` в пакете, `dmg-process.md` удалён, `migration.md` §5/§6 обновлены; 6 — `dataKeeperHint` + тесты (`70731b08`), ревью без `error`; 7 — пилот, раздел выше; 8 — число тестов не меньше базовой линии.
