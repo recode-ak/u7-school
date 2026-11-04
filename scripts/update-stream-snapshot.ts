@@ -14,7 +14,7 @@
  */
 
 import type { ContentSnapshot } from '@u7-scl/course/domain';
-import type { Student } from '@u7-scl/domain/stream';
+import type { Student } from '@u7-scl/stream/domain';
 import { createApp } from './_app-factory';
 import {
   analyzeSnapshotDelta,
