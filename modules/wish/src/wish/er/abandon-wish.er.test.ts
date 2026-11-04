@@ -50,13 +50,17 @@ function makeEr() {
 }
 
 function abandoned(
-  owner: Record<string, unknown> = { courseId: COURSE },
+  ownerInfo: Record<string, unknown> = { courseId: COURSE },
   respondentId = USER,
+  reason: 'timeout' | 'by_user' | 'declined' = 'timeout',
+  kind: 'standard' | 'likert' = 'standard',
 ): EnvelopeOf<typeof QuestionnaireEvents.abandoned> {
   const payload = {
     questionnaireId: crypto.randomUUID(),
     respondentId,
-    owner,
+    kind,
+    ownerInfo,
+    reason,
   };
   return {
     ...QuestionnaireEvents.abandoned.make(payload),
@@ -182,7 +186,7 @@ describe('AbandonWishEr', () => {
     expect(ctx.published).toHaveLength(published);
   });
 
-  it('чужой owner — ничего не загружено, не записано, не опубликовано', async () => {
+  it('чужой ownerInfo — ничего не загружено, не записано, не опубликовано', async () => {
     // Файла нет: любая загрузка желаний оставила бы след; репозиторий не должен вызываться.
     let loads = 0;
     const spy = Object.assign(Object.create(wishes), {
@@ -201,6 +205,52 @@ describe('AbandonWishEr', () => {
 
     expect(loads).toBe(0);
     expect(await Bun.file(file).exists()).toBe(false);
+    expect(ctx.published).toEqual([]);
+  });
+});
+
+describe('AbandonWishEr — причина и вид анкеты (Q1, Т4)', () => {
+  it.each(['timeout', 'by_user', 'declined'] as const)(
+    'reason %s: pending → abandoned',
+    async (reason) => {
+      const w = wish('pending');
+      await seed(w);
+
+      expectOk(
+        await makeEr().handle(abandoned({ courseId: COURSE }, USER, reason)),
+      );
+
+      expect(await statuses()).toEqual({ [w.uuid]: 'abandoned' });
+    },
+  );
+
+  it('declined для выданной, но не начатой анкеты курса закрывает pending-желание', async () => {
+    const w = wish('pending');
+    await seed(w);
+
+    expectOk(
+      await makeEr().handle(abandoned({ courseId: COURSE }, USER, 'declined')),
+    );
+
+    const [stored] = await wishes.findByUser(USER);
+    expect(stored?.snapshot()).toMatchObject({
+      status: 'abandoned',
+      updatedAt: TEST_NOW,
+    });
+    expect(ctx.published).toEqual([]);
+  });
+
+  it('abandoned с kind: likert и чужим ownerInfo не трогает желания', async () => {
+    await seed(wish('pending'));
+    const before = await Bun.file(file).text();
+
+    expectOk(
+      await makeEr().handle(
+        abandoned({ context: 'module_completed' }, USER, 'timeout', 'likert'),
+      ),
+    );
+
+    expect(await Bun.file(file).text()).toBe(before);
     expect(ctx.published).toEqual([]);
   });
 });

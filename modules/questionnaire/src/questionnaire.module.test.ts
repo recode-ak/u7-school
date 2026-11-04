@@ -1,9 +1,19 @@
-import { beforeEach, describe, expect, it } from 'bun:test';
-import { Role, type User } from '@u7-scl/app-legacy/domain';
-import type { QuestionnairePool } from '@u7-scl/domain/questionnaire';
+import { afterAll, beforeEach, describe, expect, it } from 'bun:test';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
+  AbandonUcDef,
+  DeclineInviteUcDef,
+  GetCurrentUcDef,
+  GetQuestionnairesByUserUcDef,
+  GetQuestionnaireUcDef,
+  HandleActionUcDef,
   QuestionnaireModuleDef,
+  SendLikertInviteUcDef,
+  StartByInviteUcDef,
   StartQuestionnaireUcDef,
+  SweepAbandonedQuestionnairesJobDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import {
   AggregateDef,
@@ -11,11 +21,8 @@ import {
   BaseEntityFields,
   type Caller,
   ModuleDef,
-  type OperationRef,
   ok,
-  SystemCaller,
   UseCaseDef,
-  UserCaller,
 } from 'dmg-core';
 import {
   type AppContext,
@@ -23,20 +30,36 @@ import {
   ModuleFacade,
   ModuleFacades,
   type ParsedInputOf,
-  Trace,
+  type Trace,
   type UnitOfWork,
   UseCaseFromDef,
 } from 'dmg-core/app';
 import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
 import * as v from 'valibot';
+import { QuestionnaireJsonRepo } from './infra/questionnaire.json-repo';
+import { QuestionnaireRepoFake } from './questionnaire/questionnaire.repo.fake';
+import {
+  likertPool,
+  OTHER_USER,
+  OWNER_INFO,
+  owner,
+  pool,
+  REQ,
+  RESPONDENT,
+  systemAlone,
+  systemFor,
+} from './questionnaire/uc/questionnaire-uc.fixture';
 import {
   createQuestionnaireModule,
-  type QuestionnaireLegacy,
+  type QuestionnaireUser,
+  questionnaireMap,
 } from './questionnaire.module';
 
-// Потребитель модуля анкет — UC другого модуля: объявляет
-// `startQuestionnaire` в `calls` и вызывает его через `this.call` (D-43);
-// фасад — `ModuleFacade` над модулем анкет.
+// Модуль анкет на DMG: заменяет адаптерный тест над legacy-фасадом
+// (`QuestionnaireLegacy`, `startStandard`). Потребитель вызывает
+// `startQuestionnaire` через фасад (D-43), карта «Def → класс» (API-05) и smoke
+// каждого UC на реальном репозитории во временном каталоге.
+
 const ProbeArDef = AggregateDef.define({
   name: 'probe',
   label: 'Проба',
@@ -45,7 +68,6 @@ const ProbeArDef = AggregateDef.define({
   events: {},
   errors: {},
 });
-
 const probeSpec = {
   name: 'probeQuestionnaire',
   label: 'Проба анкеты',
@@ -58,32 +80,26 @@ const probeSpec = {
   output: v.object({}),
   errors: [],
 } as const;
-
 const ProbeUcDef = UseCaseDef.define({
   ...probeSpec,
   calls: [StartQuestionnaireUcDef],
 });
-/** Тот же UC, но `startQuestionnaire` в `calls` не объявлен — вызов не компилируется. */
-const SneakyUcDef = UseCaseDef.define({ ...probeSpec, name: 'sneaky' });
-
 const ProbeModuleDef = ModuleDef.define({
   name: 'probe',
   label: 'Проба',
   description: 'Модуль-потребитель фасада анкет.',
   dependsOn: [QuestionnaireModuleDef],
   aggregates: [ProbeArDef],
-  useCases: [ProbeUcDef, SneakyUcDef],
+  useCases: [ProbeUcDef],
   reactions: [],
   jobs: [],
 });
-
-type Input = ParsedInputOf<typeof ProbeUcDef>;
 
 class ProbeUc extends UseCaseFromDef<
   typeof ProbeUcDef,
   ModuleDeps,
   undefined,
-  User
+  QuestionnaireUser
 > {
   constructor(deps: ModuleDeps, module: typeof ProbeModuleDef) {
     super(ProbeUcDef, deps, module);
@@ -92,149 +108,201 @@ class ProbeUc extends UseCaseFromDef<
     return ok(undefined);
   }
   protected async execute(
-    input: Input,
+    input: ParsedInputOf<typeof ProbeUcDef>,
     _: undefined,
     __: UnitOfWork,
-    caller: Caller<User>,
+    caller: Caller<QuestionnaireUser>,
     trace: Trace,
   ) {
     return this.call(StartQuestionnaireUcDef, input, caller, trace);
   }
-}
-
-class SneakyUc extends UseCaseFromDef<
-  typeof SneakyUcDef,
-  ModuleDeps,
-  undefined,
-  User
-> {
-  constructor(deps: ModuleDeps, module: typeof ProbeModuleDef) {
-    super(SneakyUcDef, deps, module);
-  }
-  protected async load() {
-    return ok(undefined);
-  }
-  protected async execute(
-    input: Input,
-    _: undefined,
-    __: UnitOfWork,
-    caller: Caller<User>,
-    trace: Trace,
-  ) {
-    // @ts-expect-error startQuestionnaire нет в calls UC sneaky
-    return this.call(StartQuestionnaireUcDef, input, caller, trace);
-  }
-}
-
-const POOL: QuestionnairePool = {
-  inviteText: 'Приглашение',
-  questions: [
-    {
-      question: 'Q1',
-      questionCode: 'q1',
-      type: 'choice',
-      multiple: false,
-      answers: [{ answer: 'A', answerCode: 'a' }],
-    },
-  ],
-};
-const OWNER = { kind: 'wish', wishId: 'w-1' };
-const USER: User = {
-  uuid: '00000000-0000-0000-0000-000000000001',
-  name: 'Test',
-  telegramId: 123,
-  roles: [Role.STUDENT],
-  createdAt: '2024-01-01T00:00:00.000Z',
-};
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
-
-type StartCall = readonly [User, QuestionnairePool, Record<string, unknown>];
-
-/** Legacy-фасад анкет: запоминает аргументы `startStandard`. */
-function legacy() {
-  const calls: StartCall[] = [];
-  const facade: QuestionnaireLegacy = {
-    startStandard: async (actor, pool, ownerInfo) => {
-      calls.push([actor, pool, ownerInfo]);
-    },
-  };
-  return { facade, calls };
 }
 
 let app: AppContext;
+let questionnaires: QuestionnaireRepoFake;
 beforeEach(() => {
   app = testAppContext().app;
+  questionnaires = new QuestionnaireRepoFake();
 });
 
-/** Резолвер потребителя: фасад — модуль анкет над заданным legacy. */
-function depsWith(questionnaireLegacy: QuestionnaireLegacy): ModuleDeps {
-  const questionnaire = createQuestionnaireModule({
+const moduleOn = (repo: QuestionnaireRepoFake | QuestionnaireJsonRepo) =>
+  createQuestionnaireModule({
     app,
     facades: new ModuleFacades(),
-    legacy: questionnaireLegacy,
+    questionnaires: repo,
   });
-  return {
-    app,
-    facades: new ModuleFacades([new ModuleFacade(questionnaire)]),
-  };
-}
 
-describe('модуль анкет через фасад (D-43, адаптер над legacy-фасадом)', () => {
-  it('запуск вызывает legacy startStandard: субъект, пул, owner как ownerInfo', async () => {
-    const { facade, calls } = legacy();
-    const res = await new ProbeUc(depsWith(facade), ProbeModuleDef).handle(
-      { pool: POOL, owner: OWNER },
-      new UserCaller(USER),
+describe('questionnaireMap (API-05)', () => {
+  it('9 UC и один Job, ER нет', () => {
+    expect(Object.keys(questionnaireMap.useCases).sort()).toEqual(
+      [
+        'startQuestionnaire',
+        'sendLikertInvite',
+        'startByInvite',
+        'declineInvite',
+        'handleAction',
+        'abandon',
+        'getQuestionnaire',
+        'getCurrent',
+        'getQuestionnairesByUser',
+      ].sort(),
+    );
+    expect(questionnaireMap.reactions).toEqual({});
+    expect(Object.keys(questionnaireMap.jobs)).toEqual([
+      SweepAbandonedQuestionnairesJobDef.name,
+    ]);
+  });
+});
+
+describe('модуль анкет через фасад потребителя (D-43)', () => {
+  const probe = () =>
+    new ProbeUc(
+      {
+        app,
+        facades: new ModuleFacades([
+          new ModuleFacade(moduleOn(questionnaires)),
+        ]),
+      },
+      ProbeModuleDef,
+    );
+
+  it('запуск через фасад создаёт анкету за субъекта, ownerInfo сохранён', async () => {
+    const res = await probe().handle(
+      { pool: pool(), ownerInfo: OWNER_INFO },
+      owner,
       REQ,
     );
     expect(expectOk(res)).toEqual({});
-    expect(calls).toEqual([[USER, POOL, OWNER]]);
-  });
-
-  it('UC нет в calls потребителя — ошибка типа (рантайм-проверки нет)', () => {
-    const { facade } = legacy();
-    expect(new SneakyUc(depsWith(facade), ProbeModuleDef).ref.name).toBe(
-      'sneaky',
-    );
+    expect(questionnaires.saved).toHaveLength(1);
+    expect(questionnaires.saved[0]).toMatchObject({
+      respondentId: RESPONDENT,
+      kind: 'standard',
+      status: 'in_progress',
+      ownerInfo: OWNER_INFO,
+    });
   });
 
   describe('startQuestionnaire: Policy «респондент есть»', () => {
-    // Вызывающий — `SystemCaller` операции другого модуля, как его строит
-    // `this.call`: с человеком пришедшего или без него (вызов из ER/Job).
-    const FROM: OperationRef = {
-      kind: 'useCase',
-      module: 'probe',
-      name: 'probeQuestionnaire',
-    };
-    const start = (
-      questionnaireLegacy: QuestionnaireLegacy,
-      caller: Caller<User>,
-    ) =>
-      createQuestionnaireModule({
-        app,
-        facades: new ModuleFacades(),
-        legacy: questionnaireLegacy,
-      }).dispatch(
-        StartQuestionnaireUcDef.command({ pool: POOL, owner: OWNER }),
+    const start = (caller: Caller<QuestionnaireUser>) =>
+      moduleOn(questionnaires).dispatch(
+        StartQuestionnaireUcDef.command({
+          pool: pool(),
+          ownerInfo: OWNER_INFO,
+        }),
         caller,
         REQ,
       );
 
     it('системный вызов без человека — ACCESS_DENIED, ничего не запущено', async () => {
-      const { facade, calls } = legacy();
-      const res = await start(facade, new SystemCaller(FROM));
-      expectErr(res, 'ACCESS_DENIED');
-      expect(calls).toEqual([]);
+      expectErr(await start(systemAlone), 'ACCESS_DENIED');
+      expect(questionnaires.saved).toEqual([]);
     });
 
     it('системный вызов с человеком — запускает за его субъекта', async () => {
-      const { facade, calls } = legacy();
-      const res = await start(
-        facade,
-        new SystemCaller(FROM, new UserCaller(USER)),
-      );
-      expect(expectOk(res)).toEqual({});
-      expect(calls).toEqual([[USER, POOL, OWNER]]);
+      expect(expectOk(await start(systemFor(OTHER_USER)))).toEqual({});
+      expect(questionnaires.saved[0]?.respondentId).toBe(OTHER_USER);
     });
+  });
+});
+
+describe('smoke: каждый UC на реальном репозитории (mkdtemp)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'questionnaire-module-test-'));
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+  it('запуск → ответ → завершение → список; likert → отказ; abandon; get*', async () => {
+    const repo = new QuestionnaireJsonRepo(join(dir, 'questionnaires.json'));
+    const mod = moduleOn(repo);
+
+    expectOk(
+      await mod.dispatch(
+        StartQuestionnaireUcDef.command({
+          pool: pool(),
+          ownerInfo: OWNER_INFO,
+        }),
+        systemFor(),
+        REQ,
+      ),
+    );
+    expectOk(
+      await mod.dispatch(
+        SendLikertInviteUcDef.command({ pool: likertPool(), ownerInfo: {} }),
+        systemFor(),
+        REQ,
+      ),
+    );
+
+    const list = expectOk(
+      await mod.dispatch(
+        GetQuestionnairesByUserUcDef.command({ userId: RESPONDENT }),
+        owner,
+        REQ,
+      ),
+    );
+    expect(list.map((q) => q.kind)).toEqual(['standard', 'likert']);
+    const [standard, likert] = list;
+    if (!standard || !likert) throw new Error('анкеты не созданы');
+    const id = (questionnaireId: string) => ({ questionnaireId });
+
+    const current = expectOk(
+      await mod.dispatch(
+        GetCurrentUcDef.command(id(standard.uuid)),
+        owner,
+        REQ,
+      ),
+    );
+    expect(current.type).toBe('new_question');
+    expectOk(
+      await mod.dispatch(
+        HandleActionUcDef.command({
+          ...id(standard.uuid),
+          type: 'callback',
+          value: 'yes',
+        }),
+        owner,
+        REQ,
+      ),
+    );
+    const done = expectOk(
+      await mod.dispatch(
+        HandleActionUcDef.command({
+          ...id(standard.uuid),
+          type: 'callback',
+          value: 'ok',
+        }),
+        owner,
+        REQ,
+      ),
+    );
+    expect(done.type).toBe('completed');
+    expect(
+      expectOk(
+        await mod.dispatch(
+          GetQuestionnaireUcDef.command(id(standard.uuid)),
+          owner,
+          REQ,
+        ),
+      ).status,
+    ).toBe('completed');
+
+    expect(
+      expectOk(
+        await mod.dispatch(
+          StartByInviteUcDef.command(id(likert.uuid)),
+          owner,
+          REQ,
+        ),
+      ).type,
+    ).toBe('new_question');
+    expectOk(
+      await mod.dispatch(AbandonUcDef.command(id(likert.uuid)), owner, REQ),
+    );
+    expectErr(
+      await mod.dispatch(
+        DeclineInviteUcDef.command(id(likert.uuid)),
+        owner,
+        REQ,
+      ),
+      'QUESTIONNAIRE_NOT_INVITED',
+    );
   });
 });

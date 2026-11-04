@@ -51,19 +51,30 @@ function makeEr() {
 }
 
 function completed(
-  owner: Record<string, unknown> = { courseId: COURSE },
+  ownerInfo: Record<string, unknown> = { courseId: COURSE },
   respondentId = USER,
+  kind: 'standard' | 'likert' = 'standard',
 ): EnvelopeOf<typeof QuestionnaireEvents.completed> {
-  const payload = {
+  const ref = {
     questionnaireId: crypto.randomUUID(),
     respondentId,
-    owner,
+    ownerInfo,
   };
+  const payload =
+    kind === 'likert'
+      ? {
+          ...ref,
+          kind,
+          likertScores: [
+            { category: 'team_skills', subcategory: 'communication', score: 4 },
+          ],
+        }
+      : { ...ref, kind };
   return {
     ...QuestionnaireEvents.completed.make(payload),
     eventId: crypto.randomUUID(),
     occurredAt: TEST_NOW,
-    aggregateId: payload.questionnaireId,
+    aggregateId: ref.questionnaireId,
     cause: { kind: 'request', requestId: 'r-1' },
     correlationId: 'c-1',
   };
@@ -189,7 +200,7 @@ describe('ConfirmWishEr', () => {
     expect(ctx.published).toHaveLength(published);
   });
 
-  it('чужой owner — ничего не загружено, не записано, не опубликовано', async () => {
+  it('чужой ownerInfo — ничего не загружено, не записано, не опубликовано', async () => {
     // Файла нет: любая загрузка желаний оставила бы след; репозиторий не должен вызываться.
     let loads = 0;
     const spy = Object.assign(Object.create(wishes), {
@@ -208,6 +219,22 @@ describe('ConfirmWishEr', () => {
 
     expect(loads).toBe(0);
     expect(await Bun.file(file).exists()).toBe(false);
+    expect(ctx.published).toEqual([]);
+  });
+});
+
+describe('ConfirmWishEr — likert-анкета (Q1)', () => {
+  it('completed с kind: likert и чужим ownerInfo не трогает желания', async () => {
+    await seed(wish('pending'));
+    const before = await Bun.file(file).text();
+
+    expectOk(
+      await makeEr().handle(
+        completed({ context: 'module_completed' }, USER, 'likert'),
+      ),
+    );
+
+    expect(await Bun.file(file).text()).toBe(before);
     expect(ctx.published).toEqual([]);
   });
 });

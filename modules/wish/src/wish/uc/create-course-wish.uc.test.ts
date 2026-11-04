@@ -153,7 +153,7 @@ describe('CreateCourseWishUc', () => {
           person: asActor,
           input: {
             pool: findCoursePool(pooledCourseId),
-            owner: { courseId: pooledCourseId },
+            ownerInfo: { courseId: pooledCourseId },
           },
         },
       ]);
