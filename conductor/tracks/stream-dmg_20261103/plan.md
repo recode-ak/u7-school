@@ -67,17 +67,17 @@
 - Job — через `JobFromDef`; сценарии старых тестов студента, Job и `stream-ds.test.ts` перенесены (список — отчёт `test-designer`).
 - Записи красной зоны в `debt.md` нет; `bun run check` полностью зелёный; `test:bot` — не меньше базовой линии; `git status data/` чист.
 
-## Фаза 3: Сборка и снятие legacy
+## Фаза 3: Сборка и снятие legacy [checkpoint: 22c6dd0]
 
-- [ ] Task: `tech-lead` или orchestrator: бриф `slices/assembly.md` по образцу `peer-review`
-- [ ] Task: `migrator`: `StreamModuleDef` без `external`; фабрика в `U7App` без legacy-резолвера; `@u7-scl/stream/**` в группу ARC-07 `biome.json`
-- [ ] Task: `migrator`: удалить `StreamApiModule` (`modules/stream/src/api/`), `domain/src/stream/module.ts`, `commands/*-cmd.ts`, `StreamFacade`, `StreamInProcFacade`, `streamLegacyInbound`, legacy-репозитории, `stream-uc.ts`; `legacy.stream` и `inbound` в `u7-app.ts`, `u7-app-meta.ts`, `u7-app.types.ts`; DEBT-34 в части `stream`
-- [ ] Task: `migrator`: `tests/helpers/test-app.ts`, миры (`builder`, `types`, `invariants`), скрипты (`update-stream-snapshot` — `version` и числовые даты, `stream-snapshot-sync`) — на модуль Def и типы контракта; `platform/app/tests/u7-app.test.ts`
-- [ ] Task: `reviewer`; замечания без `error` решает orchestrator (TR)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
+- [x] Task: `tech-lead` или orchestrator: бриф `slices/assembly.md` по образцу `peer-review` (orchestrator, TR-45) `22c6dd0`
+- [x] Task: `migrator`: `StreamModuleDef` без `external`; фабрика в `U7App` без legacy-резолвера; `@u7-scl/stream/**` в группу ARC-07 `biome.json` (`external` снят ещё в Ф1–Ф2 — сверка) `22c6dd0`
+- [x] Task: `migrator`: удалить `StreamApiModule` (`modules/stream/src/api/`), `domain/src/stream/module.ts`, `commands/*-cmd.ts`, `StreamFacade`, `StreamInProcFacade`, `streamLegacyInbound`, legacy-репозитории, `stream-uc.ts`; `legacy.stream` и `inbound` в `u7-app.ts`, `u7-app-meta.ts`, `u7-app.types.ts`; DEBT-34 в части `stream` (большая часть удалена в Ф1–Ф2; остаток — оболочка, `module.ts`, legacy-entity) `22c6dd0`
+- [x] Task: `migrator`: `tests/helpers/test-app.ts`, миры (`builder`, `types`, `invariants`), скрипты (`update-stream-snapshot` — `version` и числовые даты, `stream-snapshot-sync`) — на модуль Def и типы контракта; `platform/app/tests/u7-app.test.ts` `22c6dd0`
+- [x] Task: `reviewer`; замечания без `error` решает orchestrator (TR) — 8.5/10; + `data-keeper` (скрипты снимков) `22c6dd0`
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 3:**
-- `grep -rn "StreamApiModule\|StreamInProcFacade\|streamLegacyInbound\|StreamJsonRepo" --include=*.ts .` — пусто; импорты `@u7-scl/stream/domain` — только barrel DEBT-3.
+- `grep -rn "StreamApiModule\|StreamInProcFacade\|streamLegacyInbound" --include=*.ts .` — пусто (`StreamJsonRepo` — новый репозиторий, TR-45); импорты `@u7-scl/stream/domain` — только barrel DEBT-3.
 - `StreamModuleDef` без `external`; `checkDefs` и `bun run lint` (ARC-07) зелёные; DEBT-34 в части `stream` — маркеров нет.
 - Сценарии удалённых тестов сверены с новыми (список в отчёте); `bun run check` зелёный; `test:bot` — не меньше базовой линии.
 
