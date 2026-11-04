@@ -87,7 +87,7 @@
 - [x] Task: Итог пилота за два трека: каждая роль по критериям §5 [agent-roles.md](../../architecture/agent-roles.md) — окончательное решение; решение о волне 2
 - [x] Task: [debt.md](../../architecture/debt.md) — DEBT-1, 2, 5, 10 (stream), 35 и TR-11 (stream) сняты; новый долг роли `STUDENT` и TR экспорта `Role` — трек `user`; долги, отложенные решениями Нурболата
 - [x] Task: [migration.md](../../architecture/migration.md) §6 — состояние, входной долг (алиасы DEBT-16, 17, 19, 20 → 1, 2, 5, 10), следующий трек `questionnaire`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 4** (= критерии spec):
 - `CI=true bun test` и `test:bot` — красных нет; регрессов нет; числа и сравнение с базовой линией — в `summary.md`.
