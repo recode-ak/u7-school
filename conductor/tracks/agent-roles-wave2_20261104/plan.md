@@ -21,7 +21,7 @@
 
 **Критерии приёмки:** в `agents/roles/` шесть ролей `dmg-*`; `grep -rE "wish|v0\.2\.6|data/|conductor|u7|backup|AGENTS|chronicle" agents/roles` пуст; `check` пакета зелёный (включая `docs:covers`); версия `0.1.1`, решение в `decisions.md`; тестов не меньше базовой линии.
 
-## Фаза 2: Подключение в u7-school
+## Фаза 2: Подключение в u7-school [checkpoint: ef47d87c]
 
 - [x] Task: `bun install` → `bun run dmg:sync` → удалить проектные `.agents-core/roles/{tech-lead,test-designer,data-keeper}.md` → `bun run agents:sync` 3ae06948
 - [x] Task: Специфику u7-school из Фазы 1 — в `.agents-core/common.md`; ссылки на роли в `.agents-core/README.md`, `common.md`, `migrator`, `documentarian` 3ae06948
