@@ -36,9 +36,10 @@
 
 ## Фаза 3: Пилотный срез на учебном модуле
 
-- [ ] Task: Подготовка
-    - [ ] Два временных worktree пакета (`claude`, `pi`); в каждом `dmg-core.json` с целями `.claude/agents` / `.pi/agents` и `sync`
-    - [ ] Задание среза: `todo`, изменение `state` (например, «отложить задачу до даты») — одно для обеих сред
+- [x] Task: Подготовка
+    - [x] Два временных worktree пакета (`claude`, `pi`); в каждом `dmg-core.json` с целями `.claude/agents` / `.pi/agents` и `sync`
+        - `~/dev/tools/dmg/dmg-core-pilot-{claude,pi}`, ветки `pilot/{claude,pi}` от `de89c2f`; самоссылка `node_modules/dmg-core → ..` (роли ведут в `node_modules/dmg-core/…`, в репо пакета его нет — решение Нурболата); в pi-worktree — копия `.pi/extensions/subagent`, `.pi/subagent.json`, `.pi/settings.json`; `check` в worktree зелёный (1397)
+    - [x] Задание среза: [pilot-task.md](./pilot-task.md); Claude Code — headless `claude -p` из основной сессии (решение Нурболата): `todo`, изменение `state` (например, «отложить задачу до даты») — одно для обеих сред
 - [ ] Task: Прогон в Claude Code: сессия-оркестратор в worktree, конвейер `dmg-tech-lead` → `dmg-test-designer` → `dmg-domain-author`/`dmg-api-author` → `check` → `dmg-data-keeper` → `dmg-reviewer`; отчёты и расход
 - [ ] Task: Прогон в pi автономно: один `pi -p` с заданием среза; основная сессия только запускает и читает итог (сессия, diff, отчёты), по ходу не вмешивается
 - [ ] Task: Итог «Пилот волны 2» в `summary.md`: роль × среда, критерии 1–6, расход, сбои автономности pi
