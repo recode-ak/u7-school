@@ -21,14 +21,14 @@
 
 - [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/questionnaire` и `modules/questionnaire`, `dmg-core` `bun test`. Создать каркасы разделов «Пилот ролей» и «DeepSeek» (Opus) d117baaa
 - [x] Task: Записать решения Q1–Q3, Q5 и тактические (один агрегат с variant-state, query-UC, `responses.json`, фикстуры) в TR в `debt.md` и `decisions.md` (Opus) ed2b01c8
-- [ ] Task: `dmg-tech-lead`: бриф `slices/questionnaire.md` (Sonnet). Содержание:
+- [x] Task: `dmg-tech-lead`: бриф `slices/questionnaire.md` (Sonnet). Содержание:
     - 9 UC и Job `sweep-abandoned-questionnaires`: пороги, тексты, только standard;
     - 6 Def-событий (Q1) и `ownerInfo` в контракте (Q2), события без `telegramId`/`response` (Q3);
     - разбор `a-root.ts` по Ar, Policy, правилам и DQS; `QuestionnaireEngine` остаётся чистым классом;
     - проверка поддержки `v.variant` в `AggregateDef`;
     - Policy «только за себя» через `Identified` (TR-11, DEBT-32);
     - клиенты `wish`, ожидаемая красная зона, ID `rules.md`.
-- [ ] Task: orchestrator проверяет бриф (Opus). Вопросы перепроектирования — Нурболату
+- [x] Task: orchestrator проверяет бриф (Opus). Вопросы перепроектирования — Нурболату
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 0:**
@@ -48,7 +48,8 @@
     - 6 событий, ошибки, Policy и правила, DCS/DQS, Def 9 UC и Job;
     - без `core`, `app-legacy` и чужого `index`. DEBT-1, 2, 5, 10 (questionnaire).
 - [ ] Task: `migrator`, прикладной слой (flash): `UseCaseFromDef`, `JobFromDef`, адрес через `GetTelegramAddressesUcDef`; репозиторий через UoW (строгий разбор) с тестом на `DB_DIR=./data/fixtures`
-- [ ] Task: `migrator`, клиенты `wish` (flash):
+- [ ] Task: `migrator`, клиенты `wish` и сборка Ф1 (flash; С1 TR-48 — `external` и legacy снимаются в Ф1):
+    - `u7-app.ts`, `u7-app.types.ts`, `u7-app.test.ts` на модуль Def; типовые импорты stories (Т16);
     - `StartQuestionnaireUcDef` реализован настоящим UC, адаптер `start-questionnaire` удалён (DEBT-44, DEBT-32);
     - `owner` → `ownerInfo` во входе UC и в ER `confirm-wish`/`abandon-wish` с тестами (Q2);
     - `questionnaireLegacyInbound` и его тест удалены, ER подписаны на Def-события агрегата.
