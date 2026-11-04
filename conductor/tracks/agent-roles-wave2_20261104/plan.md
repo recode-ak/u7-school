@@ -7,16 +7,16 @@
 ## Фаза 1: Роли в пакете `dmg-core`
 
 - [x] Task: Базовая линия: `CI=true bun test` в u7-school и в пакете — числа в `summary.md` 5f1970fd
-- [ ] Task: Тесты пакета на шесть ролей `dmg-*` (red)
-    - [ ] `src/cli/dmg-core-cli.test.ts` — список ролей настоящего пакета
-    - [ ] `src/cli/main.test.ts` — `dmg-reviewer.md`
-    - [ ] `scripts/docs-check.test.ts` — путь `agents/roles/dmg-reviewer.md`
-    - [ ] Запуск: тесты красные
-- [ ] Task: Переименовать `domain-author`, `api-author`, `reviewer` → `dmg-*` (файлы, `name:`, ссылки между ролями, `scripts/jsdoc-check.ts`); тесты зелёные
-- [ ] Task: Перенести каркас `dmg-tech-lead`, `dmg-test-designer`, `dmg-data-keeper` без специфики u7-school (модель — Sonnet); специфику выписать для `.agents-core/common.md`
-- [ ] Task: `docs/process.md` из `conductor/architecture/dmg-process.md` без проекта и conductor; `docs/index.md`, `llms.txt`, `covers:`
-- [ ] Task: `agents/README.md` (таблица шести ролей, порядок среза), `README.md`, D-NN в `docs/decisions.md`, версия `0.1.1`
-- [ ] Task: `bun run check` пакета, коммит в репо пакета, SHA
+- [x] Task: Тесты пакета на шесть ролей `dmg-*` (red) dmg-core@3eb2461
+    - [x] `src/cli/dmg-core-cli.test.ts` — список ролей настоящего пакета
+    - [x] `src/cli/main.test.ts` — `dmg-reviewer.md`
+    - [x] `scripts/docs-check.test.ts` — путь `agents/roles/dmg-reviewer.md`
+    - [x] Запуск: тесты красные
+- [x] Task: Переименовать `domain-author`, `api-author`, `reviewer` → `dmg-*` (файлы, `name:`, ссылки между ролями, `scripts/jsdoc-check.ts`); тесты зелёные dmg-core@3eb2461
+- [x] Task: Перенести каркас `dmg-tech-lead`, `dmg-test-designer`, `dmg-data-keeper` без специфики u7-school (модель — Sonnet); специфику выписать для `.agents-core/common.md` dmg-core@3eb2461
+- [x] Task: `docs/process.md` из `conductor/architecture/dmg-process.md` без проекта и conductor; `docs/index.md`, `llms.txt`, `covers:` dmg-core@3eb2461
+- [x] Task: `agents/README.md` (таблица шести ролей, порядок среза), `README.md`, D-NN в `docs/decisions.md`, версия `0.1.1` dmg-core@3eb2461
+- [x] Task: `bun run check` пакета, коммит в репо пакета, SHA dmg-core@3eb2461
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1: Роли в пакете' (Protocol in workflow.md)
 
 **Критерии приёмки:** в `agents/roles/` шесть ролей `dmg-*`; `grep -rE "wish|v0\.2\.6|data/|conductor|u7|backup|AGENTS|chronicle" agents/roles` пуст; `check` пакета зелёный (включая `docs:covers`); версия `0.1.1`, решение в `decisions.md`; тестов не меньше базовой линии.
