@@ -1,0 +1,1 @@
+Фаза 2 трека agent-roles-wave2: подключение ролей dmg-* (dmg-core 0.1.1, de89c2f). Файлы: .agents-core/{README,common,dmg-core-common}.md, roles/*, .claude/agents/*, .pi/agents/*, .claude/settings.json, scripts/subagent-gate{,.test}.ts, scripts/agents-sync.test.ts, scripts/agent-gate.test.ts, AGENTS.md, .pi/skills/dmg-architecture. bun run check зелёный, 3947 pass.
