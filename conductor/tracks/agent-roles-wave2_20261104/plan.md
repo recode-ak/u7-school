@@ -23,13 +23,13 @@
 
 ## Фаза 2: Подключение в u7-school
 
-- [ ] Task: `bun install` → `bun run dmg:sync` → удалить проектные `.agents-core/roles/{tech-lead,test-designer,data-keeper}.md` → `bun run agents:sync`
-- [ ] Task: Специфику u7-school из Фазы 1 — в `.agents-core/common.md`; ссылки на роли в `.agents-core/README.md`, `common.md`, `migrator`, `documentarian`
-- [ ] Task: Зашитые имена ролей
-    - [ ] Red: `scripts/subagent-gate.test.ts` на `dmg-domain-author`, `dmg-api-author`
-    - [ ] Green: `GATED_AGENTS` и matcher `SubagentStop` в `.claude/settings.json` — одним коммитом
-    - [ ] Фикстуры `scripts/agents-sync.test.ts`, `scripts/agent-gate.test.ts`
-- [ ] Task: `bun run check`, коммит с SHA пакета
+- [x] Task: `bun install` → `bun run dmg:sync` → удалить проектные `.agents-core/roles/{tech-lead,test-designer,data-keeper}.md` → `bun run agents:sync` 3ae06948
+- [x] Task: Специфику u7-school из Фазы 1 — в `.agents-core/common.md`; ссылки на роли в `.agents-core/README.md`, `common.md`, `migrator`, `documentarian` 3ae06948
+- [x] Task: Зашитые имена ролей 3ae06948
+    - [x] Red: `scripts/subagent-gate.test.ts` на `dmg-domain-author`, `dmg-api-author`
+    - [x] Green: `GATED_AGENTS` и matcher `SubagentStop` в `.claude/settings.json` — одним коммитом
+    - [x] Фикстуры `scripts/agents-sync.test.ts`, `scripts/agent-gate.test.ts`
+- [x] Task: `bun run check`, коммит с SHA пакета 3ae06948
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2: Подключение в u7-school' (Protocol in workflow.md)
 
 **Критерии приёмки:** в `.agents-core/roles`, `.claude/agents`, `.pi/agents` по 8 ролей (6 `dmg-*`, `migrator`, `documentarian`); `dmg:check` и `agents:check` зелёные; `git diff dmg-core.json` пуст; grep старых имён по `scripts`, `.claude/settings.json`, `.agents-core`, `.claude/agents`, `.pi/agents` пуст.
