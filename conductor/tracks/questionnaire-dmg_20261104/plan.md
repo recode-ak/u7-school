@@ -43,11 +43,11 @@
     - [x] Job: пороги 3/6/9 ч, флаги `warnedAt`/`continueInvitedAt`, сброс при активности, сбой одной анкеты не прерывает обход, likert не затрагивается; события без `telegramId`
     - [x] Перенос сценариев старых тестов (`questionnaire-engine`, `questionnaire-ar`, `likert-questionnaire-ar`, `warned-at`, `continue-invited-at`, `stale-answer`, `question`, `factory`, `repo-*`), список — в отчёте
     - [x] Red Def-контрактов (6 событий, `ownerInfo`) и репозитория: legacy ISO → число, round-trip, невалидная запись
-- [~] Task: `migrator`, домен (flash):
+- [x] Task: `migrator`, домен (flash): e8bef8a0
     - state (`F.timestamp`, variant `kind`, поле `ownerInfo`), `QuestionnaireArDef` и Ar без `#` и с `Result` вместо `throw*`;
     - 6 событий, ошибки, Policy и правила, DCS/DQS, Def 9 UC и Job;
     - без `core`, `app-legacy` и чужого `index`. DEBT-1, 2, 5, 10 (questionnaire).
-- [ ] Task: `migrator`, прикладной слой (flash): `UseCaseFromDef`, `JobFromDef`, адрес через `GetTelegramAddressesUcDef`; репозиторий через UoW (строгий разбор) с тестом на `DB_DIR=./data/fixtures`
+- [~] Task: `migrator`, прикладной слой (flash): `UseCaseFromDef`, `JobFromDef`, адрес через `GetTelegramAddressesUcDef`; репозиторий через UoW (строгий разбор) с тестом на `DB_DIR=./data/fixtures`
 - [ ] Task: `migrator`, клиенты `wish` и сборка Ф1 (flash; С1 TR-48 — `external` и legacy снимаются в Ф1):
     - `u7-app.ts`, `u7-app.types.ts`, `u7-app.test.ts` на модуль Def; типовые импорты stories (Т16);
     - `StartQuestionnaireUcDef` реализован настоящим UC, адаптер `start-questionnaire` удалён (DEBT-44, DEBT-32);

@@ -614,3 +614,10 @@ DOM-01…06, DOM-10…12, DOM-14, DOM-15, DOM-17; API-01…07; MAN-01…06, MAN-
 **API, заданный тестами (для migrator):** `QuestionnaireAr.createStandard|createLikert({ uuid, respondentId, pool, ownerInfo }, at)` → `Result`; `start`, `decline`, `abandon(at, reason)`, `handleAction(at, { type, value })`, `sweepIdle(at)` → `Result`; `needsSweep`, `idleFor`, `screen`, `isOf`, `view`, `snapshot`, `pullEvents`; `QuestionnaireScreen.getNextButtonText` (static); коды `QUESTIONNAIRE_*`; константы Job `INVITE|WARN|ABANDON_AFTER_HOURS`, `*_IDLE_MS`, `INTERVAL_MS`; классы 9 UC и `SweepAbandonedQuestionnairesJob`; `QuestionnaireRepoFake` (`findIdle({ idleMs, at, kinds? })`), `QuestionnaireJsonRepo(filePath)`, `createQuestionnaireModule`, `questionnaireMap`, `QuestionnaireUser`.
 
 **Эскалаций нет.**
+
+## Отчёт `migrator`, домен (Ф1, шаг 2; flash, 2 круга, $0.45)
+
+- Генератор отказал (каталог существует) — агрегат перенесён вручную по `wish`/`stream`. Созданы `questionnaire.{state,types,errors,events,policy,ar}.ts`, `questionnaire-screen.ts`, Def 9 UC и Job; обновлены `contract.ts`, `index.ts`, оболочка Т15. Удалены legacy (`a-root.ts`, `facade.ts`, `errors.ts`, `events.ts`, `policy.ts`, `repo.ts`, `types.ts`, фабрика, `standard/*`, `likert/likert-questionnaire*`) и 8 старых тест-файлов (сценарии перенесены test-designer).
+- Принято: `throw` в конструкторе Ar на `restore` повреждённого state (инвариант, тест требует); `new QuestionnaireAr` в статических фабриках (образец `student.ar.ts`).
+- Возвращено и исправлено во 2-м круге: `this.pullEvents()` при завершении (Ar глушил `started`) — ошибка теста `answers.test` (не забирал события после создания), тест поправлен; схемы расширены до `string` через `as unknown as` — возвращены точные литералы, `QuestionnaireState = v.InferOutput`, тесты — `as const`, `refOf` generic.
+- Итог: `bun test domain/src/questionnaire domain/src/wish` — 424 pass; `tsc` домена — 0 ошибок; `biome` чисто. Гейт красный вне домена (шаги 3–5).
