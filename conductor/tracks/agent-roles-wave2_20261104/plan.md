@@ -6,7 +6,7 @@
 
 ## Фаза 1: Роли в пакете `dmg-core`
 
-- [~] Task: Базовая линия: `CI=true bun test` в u7-school и в пакете — числа в `summary.md`
+- [x] Task: Базовая линия: `CI=true bun test` в u7-school и в пакете — числа в `summary.md` 5f1970fd
 - [ ] Task: Тесты пакета на шесть ролей `dmg-*` (red)
     - [ ] `src/cli/dmg-core-cli.test.ts` — список ролей настоящего пакета
     - [ ] `src/cli/main.test.ts` — `dmg-reviewer.md`
