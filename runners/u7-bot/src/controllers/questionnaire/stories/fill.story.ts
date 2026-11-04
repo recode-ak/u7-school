@@ -10,16 +10,16 @@ import {
   type KbButton,
   type UiEventSubscription,
 } from '@u7-scl/core/ui';
-import type {
-  QuestionnaireAbandonEvent,
-  QuestionnaireAbandonWarningEvent,
-  QuestionnaireActionResponse,
-  QuestionnaireContinueInviteEvent,
-  QuestionnaireStartEvent,
-} from '@u7-scl/questionnaire/domain';
+import type { QuestionnaireActionResponse } from '@u7-scl/domain/questionnaire/contract';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
+import type {
+  QuestionnaireAbandonEvent,
+  QuestionnaireAbandonWarningEvent,
+  QuestionnaireContinueInviteEvent,
+  QuestionnaireStartEvent,
+} from './legacy-events';
 import { renderActionResponse } from './render';
 
 /**

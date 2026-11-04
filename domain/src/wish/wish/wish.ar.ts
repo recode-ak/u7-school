@@ -131,7 +131,7 @@ export type CreateModuleWish = {
 
 /**
  * Анкета к запуску для нового желания: вход UC запуска анкеты (D-42).
- * `owner` модуль анкет не толкует и возвращает в событиях — по `courseId`
+ * `ownerInfo` модуль анкет не толкует и возвращает в событиях — по `courseId`
  * реакции желаний находят желание.
  */
 export type WishQuestionnaire = {
@@ -140,8 +140,8 @@ export type WishQuestionnaire = {
 };
 
 /**
- * Формат `owner` анкеты желания — тот же, что строит `questionnaire()`.
- * Единственное место разбора: события анкеты возвращают `owner` как есть.
+ * Формат `ownerInfo` анкеты желания — тот же, что строит `questionnaire()`.
+ * Единственное место разбора: события анкеты возвращают `ownerInfo` как есть.
  */
 const QuestionnaireOwner = v.object({
   courseId: v.pipe(v.string(), v.minLength(1)),
@@ -218,12 +218,13 @@ export class WishAr extends Aggregate<typeof WishArDef> {
   }
 
   /**
-   * Цель желания по `owner` события анкеты: обратное к `questionnaire().owner`.
-   * Чужой или битый `owner` (анкета не `wish`) — `undefined`, реакции
+   * Цель желания по `ownerInfo` события анкеты: обратное к
+   * `questionnaire().owner`.
+   * Чужой или битый `ownerInfo` (анкета не `wish`) — `undefined`, реакции
    * такое событие игнорируют.
    */
-  static questionnaireTarget(owner: unknown): WishTargetVo | undefined {
-    const parsed = v.safeParse(QuestionnaireOwner, owner);
+  static questionnaireTarget(ownerInfo: unknown): WishTargetVo | undefined {
+    const parsed = v.safeParse(QuestionnaireOwner, ownerInfo);
     return parsed.success
       ? { kind: 'course', courseId: parsed.output.courseId }
       : undefined;

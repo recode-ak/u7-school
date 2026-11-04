@@ -23,8 +23,8 @@ export class ConfirmWishEr extends ReactionFromDef<Def, WishDeps> {
   }
 
   protected async react(event: ReactionEnvelopeOf<Def>, uow: UnitOfWork) {
-    const { respondentId: userId, owner } = event.payload;
-    const target = WishAr.questionnaireTarget(owner);
+    const { respondentId: userId, ownerInfo } = event.payload;
+    const target = WishAr.questionnaireTarget(ownerInfo);
     if (!target) return ok();
     const { wishes } = this.resolve;
     const wish = WishAr.current(

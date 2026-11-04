@@ -35,14 +35,9 @@ import {
 } from '@u7-scl/peer-review';
 import {
   createQuestionnaireModule,
-  questionnaireLegacyInbound,
+  QuestionnaireJsonRepo,
+  type QuestionnaireRepo,
 } from '@u7-scl/questionnaire';
-import { QuestionnaireApiModule } from '@u7-scl/questionnaire/api';
-import type { QuestionnaireApiModuleResolver } from '@u7-scl/questionnaire/domain';
-import {
-  QuestionnaireJsonRepo as QJsonRepo,
-  QuestionnaireInProcFacade,
-} from '@u7-scl/questionnaire/infra';
 import {
   createStreamModule,
   type StreamDeps,
@@ -80,7 +75,6 @@ export class U7App {
   readonly eventBus: EventBus;
   readonly userFacade: UserInProcFacade;
   readonly userRepo: UserJsonRepo;
-  readonly questionnaireFacade: QuestionnaireInProcFacade;
   readonly courseModule: CourseApiModule;
   readonly school: School;
   readonly appResolver: U7AppResolver;
@@ -142,28 +136,6 @@ export class U7App {
 
     const courseFacade = new CourseInProcFacade(courseModule);
 
-    // ══ Questionnaire: модуль и фасад ══
-    const qRepo = new QJsonRepo(
-      `${dbDir}/questionnaires/questionnaires.json`,
-      db,
-    );
-
-    const questionnaireResolver: QuestionnaireApiModuleResolver = {
-      questionnaireRepo: qRepo,
-      userFacade,
-      db,
-      appResolver,
-      eventBus: appResolver.eventBus,
-    };
-
-    const questionnaireModule = new QuestionnaireApiModule(
-      questionnaireResolver,
-    );
-
-    const questionnaireFacade = new QuestionnaireInProcFacade(
-      questionnaireModule,
-    );
-
     // ══ Peer-review: репозитории кампаний и отзывов (DMG) ══
     const reviewCampaignRepo = new ReviewCampaignJsonRepo(
       `${dbDir}/peer-review/campaigns.json`,
@@ -172,16 +144,18 @@ export class U7App {
 
     // ══ DMG: wish, peer-review и внешние модули зависимостей (адаптеры над legacy) ══
     // Шина DMG — поверх общей legacy-шины: события wish и peer-review видят
-    // stories, legacy-события stream/questionnaire доходят до ER (D-37).
+    // stories, legacy-события stream доходят до ER (D-37).
     const dmg = U7App.dmgApp(
       U7App.dmgContext(env, appResolver.eventBus, logger),
       {
         user: userFacade,
         course: courseFacade,
-        questionnaire: questionnaireFacade,
       },
       {
         wishes: new WishJsonRepo(`${dbDir}/wish/wishes.json`),
+        questionnaires: new QuestionnaireJsonRepo(
+          `${dbDir}/questionnaires/questionnaires.json`,
+        ),
         campaigns: reviewCampaignRepo,
         reviews: reviewRepo,
         streams: new StreamJsonRepo(`${dbDir}/streams/streams.json`),
@@ -191,11 +165,10 @@ export class U7App {
     );
 
     // ══ ApiApp: модули (legacy + DMG) ══
-    const apiApp = new ApiApp<U7BotAppMeta>([
-      userModule,
-      courseModule,
-      questionnaireModule,
-    ]).withDmg(dmg.api, dmg.modules);
+    const apiApp = new ApiApp<U7BotAppMeta>([userModule, courseModule]).withDmg(
+      dmg.api,
+      dmg.modules,
+    );
 
     // Планировщик — техническая зависимость: передаётся через init(),
     // lastRunAt персистится — задания переживают перезагрузку (misfire-политика).
@@ -210,7 +183,6 @@ export class U7App {
     this.eventBus = appResolver.eventBus;
     this.userFacade = userFacade;
     this.userRepo = userRepo;
-    this.questionnaireFacade = questionnaireFacade;
     this.courseModule = courseModule;
     this.school = school;
     this.appResolver = appResolver;
@@ -240,7 +212,7 @@ export class U7App {
     logger: Logger,
   ): AppContext {
     const bus = legacyEventBus(legacyBus, {
-      inbound: [...questionnaireLegacyInbound],
+      inbound: [],
       onInvalid: (message) => logger.warn('legacy-event-bus', message),
     });
     const clock = legacyClock();
@@ -258,15 +230,16 @@ export class U7App {
 
   /**
    * Приложение DMG: внешние модули зависимостей (адаптеры над legacy-фасадами),
-   * `wish` и `peer-review` (кампании), собранные `ApiApp` пакета — фасады по
-   * `dependsOn` (D-50). `modules` — их Def для заданий legacy-планировщика
-   * (`ApiApp.withDmg`).
+   * `wish`, `peer-review` (кампании) и `questionnaire`, собранные `ApiApp`
+   * пакета — фасады по `dependsOn` (D-50). `modules` — их Def для заданий
+   * legacy-планировщика (`ApiApp.withDmg`).
    */
   private static dmgApp(
     context: AppContext,
     legacy: U7LegacyFacades,
     repos: {
       readonly wishes: WishRepo;
+      readonly questionnaires: QuestionnaireRepo;
       readonly campaigns: ReviewCampaignRepo;
       readonly reviews: ReviewRepo;
       readonly streams: StreamDeps['streams'];
@@ -287,7 +260,10 @@ export class U7App {
       {
         def: QuestionnaireModuleDef,
         create: (deps) =>
-          createQuestionnaireModule({ ...deps, legacy: legacy.questionnaire }),
+          createQuestionnaireModule({
+            ...deps,
+            questionnaires: repos.questionnaires,
+          }),
       },
       {
         def: StreamModuleDef,

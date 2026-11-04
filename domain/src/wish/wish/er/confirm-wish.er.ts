@@ -6,7 +6,7 @@ import { WishEvents } from '../wish.events';
 /**
  * Подтверждение желания по завершении анкеты. Чьё это желание и что делать
  * с ним — решает `WishAr` (`questionnaireTarget`, `current`, `canConfirm`);
- * чужие анкеты (`owner` не в формате `wish`) игнорируются.
+ * чужие анкеты (`ownerInfo` не в формате `wish`) игнорируются.
  */
 export const ConfirmWishErDef = EventReactionDef.define({
   name: 'confirmWish',

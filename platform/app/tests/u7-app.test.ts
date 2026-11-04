@@ -12,9 +12,13 @@ import {
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
 import {
-  QuestionnaireFactory,
+  AbandonUcDef,
+  GetQuestionnairesByUserUcDef,
+  HandleActionUcDef,
+  QuestionnaireModuleDef,
   type QuestionnairePool,
-} from '@u7-scl/domain/questionnaire';
+  StartQuestionnaireUcDef,
+} from '@u7-scl/domain/questionnaire/contract';
 import {
   ActivateStreamUcDef,
   CompleteStudentUcDef,
@@ -28,7 +32,7 @@ import {
   ListUserWishesUcDef,
   WishModuleDef,
 } from '@u7-scl/domain/wish/contract';
-import { UserCaller } from 'dmg-core';
+import { type OperationRef, SystemCaller, UserCaller } from 'dmg-core';
 import {
   type OperationRecord,
   type ReplayClaim,
@@ -129,7 +133,7 @@ describe('U7App: сборка', () => {
     expect(app.eventBus).toBe(app.appResolver.eventBus);
     expect(app.userFacade).toBeDefined();
     expect(app.userRepo).toBeDefined();
-    expect(app.questionnaireFacade).toBeDefined();
+    expect(app.apiApp.getModule('questionnaire')).toBeUndefined();
     expect(app.apiApp.getModule('stream')).toBeUndefined();
     expect(app.apiApp.getModule('course')).toBe(app.courseModule);
     expect(app.school).toBe(app.appResolver.school);
@@ -277,20 +281,39 @@ const pendingWish = (uuid: string, userId: string) => ({
   createdAt: '2026-03-01T10:00',
 });
 
-/** Анкета по курсу: владелец — желание курса (как у create-course-wish). */
-function questionnaireOf(respondentId: string) {
-  const ar = QuestionnaireFactory.createStandard(respondentId, pool, {
-    courseId: COURSE,
-  });
-  ar.start();
-  return ar;
-}
+/** Вызов владельца анкеты (`system`) — как `createCourseWish` в модуле `wish`. */
+const FROM_WISH: OperationRef = {
+  kind: 'useCase',
+  module: 'wish',
+  name: 'createCourseWish',
+};
 
-/** Первое событие агрегата (legacy-форма — как публикуют legacy-UC). */
-function single<E>(events: readonly E[]): E {
-  const [event] = events;
-  if (event === undefined) throw new Error('агрегат не создал событие');
-  return event;
+/** Запускает анкету курса за респондента модулем Def; возвращает её uuid. */
+async function startQuestionnaire(
+  bundle: U7App,
+  respondentId: string,
+): Promise<string> {
+  const started = await bundle.apiApp.dispatch(
+    QuestionnaireModuleDef,
+    StartQuestionnaireUcDef.command({ pool, ownerInfo: { courseId: COURSE } }),
+    new SystemCaller(
+      FROM_WISH,
+      new UserCaller({ ...ACTOR, uuid: respondentId }),
+    ),
+    trace(),
+  );
+  if (!started.ok) throw new Error('startQuestionnaire не выполнен');
+
+  const list = await bundle.apiApp.dispatch(
+    QuestionnaireModuleDef,
+    GetQuestionnairesByUserUcDef.command({ userId: respondentId }),
+    new UserCaller({ ...ACTOR, uuid: respondentId }),
+    trace(),
+  );
+  if (!list.ok) throw new Error('getQuestionnairesByUser не выполнен');
+  const [own] = list.value;
+  if (own === undefined) throw new Error('анкета респондента не найдена');
+  return own.uuid;
 }
 
 /** Курс из legacy-файлов — источник снимка для `createStream`. */
@@ -396,16 +419,31 @@ describe('U7App: события студента доходят до ER DMG-мо
     await rm(dir, { recursive: true, force: true });
   });
 
-  test('enrollStudent, createStream, questionnaire:complete|abandon, questionnaire:complete|abandon → fulfillWish, inviteWishers, confirmWish, abandonWish', async () => {
-    const bus = bundle.eventBus;
+  test('enrollStudent, createStream, startQuestionnaire, handleAction/abandon → fulfillWish, inviteWishers, confirmWish, abandonWish', async () => {
     const streamId = await createStream(bundle);
     await enroll(bundle, streamId, RESPONDENT);
-    const completed = questionnaireOf(RESPONDENT);
-    completed.handleAction({ type: 'callback', value: 'yes' });
-    bus.publish(single(completed.flushEvents()));
-    const abandoned = questionnaireOf(QUITTER);
-    abandoned.abandon('timeout');
-    bus.publish(single(abandoned.flushEvents()));
+
+    const completed = await startQuestionnaire(bundle, RESPONDENT);
+    const answered = await bundle.apiApp.dispatch(
+      QuestionnaireModuleDef,
+      HandleActionUcDef.command({
+        questionnaireId: completed,
+        type: 'callback',
+        value: 'yes',
+      }),
+      new UserCaller({ ...ACTOR, uuid: RESPONDENT }),
+      trace(),
+    );
+    expect(answered.ok).toBe(true);
+
+    const abandoned = await startQuestionnaire(bundle, QUITTER);
+    const interrupted = await bundle.apiApp.dispatch(
+      QuestionnaireModuleDef,
+      AbandonUcDef.command({ questionnaireId: abandoned }),
+      new UserCaller({ ...ACTOR, uuid: QUITTER }),
+      trace(),
+    );
+    expect(interrupted.ok).toBe(true);
 
     const names = [
       'abandonWish',

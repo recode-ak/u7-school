@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { QuestionnaireEvents } from './questionnaire.events';
 
-// Событийный контракт (TR-46: Q1, Q2, Q3; Т12): 6 событий, `ownerInfo`,
+// Событийный контракт (Q1, Q2, Q3; Т12): 6 событий, `ownerInfo`,
 // обязательные `kind` и `reason`, `likertScores` у likert; без `telegramId`/`response`.
 
 const ref = {

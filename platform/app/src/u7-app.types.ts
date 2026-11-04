@@ -1,6 +1,5 @@
 import type { Logger } from '@u7-scl/core/shared';
 import type { CourseLegacy } from '@u7-scl/course';
-import type { QuestionnaireLegacy } from '@u7-scl/questionnaire';
 import type { UserLegacy } from '@u7-scl/user';
 import type { AppMode, ReplayStore } from 'dmg-core/app';
 
@@ -34,5 +33,4 @@ export type U7AppPorts = {
 export type U7LegacyFacades = {
   readonly user: UserLegacy;
   readonly course: CourseLegacy;
-  readonly questionnaire: QuestionnaireLegacy;
 };

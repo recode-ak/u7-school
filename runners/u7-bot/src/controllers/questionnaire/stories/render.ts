@@ -11,7 +11,7 @@ import {
 import type {
   Question,
   QuestionnaireActionResponse,
-} from '@u7-scl/questionnaire/domain';
+} from '@u7-scl/domain/questionnaire/contract';
 import { buttons } from '../../shared/buttons';
 
 /**

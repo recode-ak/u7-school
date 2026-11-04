@@ -7,10 +7,10 @@ import {
   type KbButton,
   type UiEventSubscription,
 } from '@u7-scl/core/ui';
-import type { QuestionnaireInviteEvent } from '@u7-scl/questionnaire/domain';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
+import type { QuestionnaireInviteEvent } from './legacy-events';
 import { renderActionResponse } from './render';
 
 /**

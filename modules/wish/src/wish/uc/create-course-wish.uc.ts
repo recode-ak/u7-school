@@ -99,7 +99,7 @@ export class CreateCourseWishUc extends UseCaseFromDef<
     if (questionnaire) {
       const started = await this.call(
         StartQuestionnaireUcDef,
-        { pool: questionnaire.pool, owner: questionnaire.owner },
+        { pool: questionnaire.pool, ownerInfo: questionnaire.owner },
         caller,
         trace,
       );
