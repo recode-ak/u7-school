@@ -16,9 +16,11 @@ import {
   type QuestionnairePool,
 } from '@u7-scl/domain/questionnaire';
 import {
+  ActivateStreamUcDef,
+  CompleteStudentUcDef,
   CreateStreamUcDef,
+  EnrollStudentUcDef,
   StreamModuleDef,
-  StudentEvents,
 } from '@u7-scl/domain/stream/contract';
 import {
   CancelWishUcDef,
@@ -291,6 +293,55 @@ function single<E>(events: readonly E[]): E {
   return event;
 }
 
+/** Курс из legacy-файлов — источник снимка для `createStream`. */
+async function seedCourse(dbDir: string): Promise<void> {
+  await mkdir(join(dbDir, 'courses'), { recursive: true });
+  await Bun.write(
+    join(dbDir, 'courses', 'modules.json'),
+    JSON.stringify([legacyModule]),
+  );
+  await Bun.write(
+    join(dbDir, 'courses', 'lessons.json'),
+    JSON.stringify([legacyLesson]),
+  );
+}
+
+const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
+const MENTOR = new UserCaller({ ...ACTOR, roles: [Role.MENTOR] });
+
+/** Поток создаёт ментор (Def UC `createStream`); возвращает его uuid. */
+async function createStream(bundle: U7App): Promise<string> {
+  const created = await bundle.apiApp.dispatch(
+    StreamModuleDef,
+    CreateStreamUcDef.command({
+      title: 'Поток JS-1',
+      description: 'Основной поток курса JavaScript',
+      moduleId: MODULE,
+      startDate: Date.UTC(2026, 5, 1, 12),
+    }),
+    MENTOR,
+    trace(),
+  );
+  if (!created.ok) throw new Error('createStream не выполнен');
+  return created.value.streamId;
+}
+
+/** Зачисление студента (Def UC `enrollStudent`): событие публикует UoW `stream`. */
+async function enroll(
+  bundle: U7App,
+  streamId: string,
+  userId: string,
+): Promise<string> {
+  const res = await bundle.apiApp.dispatch(
+    StreamModuleDef,
+    EnrollStudentUcDef.command({ streamId }),
+    new UserCaller({ ...ACTOR, uuid: userId }),
+    trace(),
+  );
+  if (!res.ok) throw new Error('enrollStudent не выполнен');
+  return res.value.studentId;
+}
+
 /** Записи лога операций приложения (`<dbDir>/oplog/*.jsonl`). */
 async function oplogRecords(dbDir: string): Promise<OperationRecord[]> {
   const dir = join(dbDir, 'oplog');
@@ -321,7 +372,7 @@ async function waitReactions(
   return seen.sort();
 }
 
-describe('U7App: legacy-события доходят до ER DMG-модуля wish', () => {
+describe('U7App: события студента доходят до ER DMG-модуля wish', () => {
   let dir: string;
   let bundle: U7App;
   const CONFIRMED = '44444444-4444-4444-8444-444444444444';
@@ -337,15 +388,7 @@ describe('U7App: legacy-события доходят до ER DMG-модуля w
         pendingWish(ABANDONED, QUITTER),
       ]),
     );
-    await mkdir(join(dir, 'courses'), { recursive: true });
-    await Bun.write(
-      join(dir, 'courses', 'modules.json'),
-      JSON.stringify([legacyModule]),
-    );
-    await Bun.write(
-      join(dir, 'courses', 'lessons.json'),
-      JSON.stringify([legacyLesson]),
-    );
+    await seedCourse(dir);
     bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
   });
 
@@ -353,33 +396,10 @@ describe('U7App: legacy-события доходят до ER DMG-модуля w
     await rm(dir, { recursive: true, force: true });
   });
 
-  test('student.enrolled, createStream, questionnaire:complete|abandon, questionnaire:complete|abandon → fulfillWish, inviteWishers, confirmWish, abandonWish', async () => {
+  test('enrollStudent, createStream, questionnaire:complete|abandon, questionnaire:complete|abandon → fulfillWish, inviteWishers, confirmWish, abandonWish', async () => {
     const bus = bundle.eventBus;
-    bus.publish({
-      eventId: crypto.randomUUID(),
-      eventName: StudentEvents.enrolled.name,
-      occurredAt: '2026-06-01T10:00',
-      aggregateName: 'Student',
-      aggregateId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
-      payload: {
-        studentId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
-        userId: RESPONDENT,
-        streamId: STREAM,
-        moduleId: MODULE,
-      },
-    });
-    const created = await bundle.apiApp.dispatch(
-      StreamModuleDef,
-      CreateStreamUcDef.command({
-        title: 'Поток JS-1',
-        description: 'Основной поток курса JavaScript',
-        moduleId: MODULE,
-        startDate: Date.UTC(2026, 5, 1, 12),
-      }),
-      new UserCaller({ ...ACTOR, roles: [Role.MENTOR] }),
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
-    );
-    expect(created.ok).toBe(true);
+    const streamId = await createStream(bundle);
+    await enroll(bundle, streamId, RESPONDENT);
     const completed = questionnaireOf(RESPONDENT);
     completed.handleAction({ type: 'callback', value: 'yes' });
     bus.publish(single(completed.flushEvents()));
@@ -407,7 +427,7 @@ describe('U7App: legacy-события доходят до ER DMG-модуля w
 
 // ══ Сосуществование (Ф1 peer-review): legacy-событие stream → ER кампаний DMG ══
 
-describe('U7App: Def-событие stream.student.completed доходит до ER createStudentCampaign', () => {
+describe('U7App: событие completeStudent доходит до ER createStudentCampaign', () => {
   let dir: string;
 
   beforeAll(async () => {
@@ -418,22 +438,33 @@ describe('U7App: Def-событие stream.student.completed доходит до
     await rm(dir, { recursive: true, force: true });
   });
 
-  test('реакция исполняется (в логе операций); потока нет — кампания не создана', async () => {
+  test('реакция исполняется (в логе операций); кампания по потоку создана', async () => {
     const bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
-    bundle.eventBus.publish({
-      eventId: crypto.randomUUID(),
-      eventName: StudentEvents.completed.name,
-      occurredAt: '2026-09-20T10:00',
-      aggregateName: 'Student',
-      aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-      payload: {
-        studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-        userId: '77777777-7777-4777-8777-777777777777',
-        streamId: STREAM,
-        moduleId: MODULE,
+    await seedCourse(dir);
+    const streamId = await createStream(bundle);
+    const studentId = await enroll(
+      bundle,
+      streamId,
+      '77777777-7777-4777-8777-777777777777',
+    );
+    const activated = await bundle.apiApp.dispatch(
+      StreamModuleDef,
+      ActivateStreamUcDef.command({ streamId }),
+      MENTOR,
+      trace(),
+    );
+    expect(activated.ok).toBe(true);
+    const completed = await bundle.apiApp.dispatch(
+      StreamModuleDef,
+      CompleteStudentUcDef.command({
+        streamId,
+        studentId,
         outcome: 'advanced',
-      },
-    });
+      }),
+      new UserCaller({ ...ACTOR, roles: [Role.ADMIN] }),
+      trace(),
+    );
+    expect(completed.ok).toBe(true);
 
     const deadline = Date.now() + 3000;
     let ran: OperationRecord[] = [];
@@ -446,6 +477,6 @@ describe('U7App: Def-событие stream.student.completed доходит до
     expect(ran).toHaveLength(1);
     expect(
       await Bun.file(join(dir, 'peer-review', 'campaigns.json')).exists(),
-    ).toBe(false);
+    ).toBe(true);
   });
 });
