@@ -64,7 +64,7 @@
 
 - [x] Task: Red: тесты `dataKeeperHint` в `scripts/agent-gate.test.ts` (`state`, `repo`, `-repo`, `content-snapshot` — подсказка; `*.test.ts`, `.md`, `get-module-snapshot*` — нет; код выхода не меняется) 70731b08
 - [x] Task: Green: `dataKeeperHint` в `scripts/agent-gate.ts` рядом с `packageDocsWarning`, вызов в `import.meta.main` 70731b08
-- [ ] Task: Ревью diff — `dmg-reviewer`
+- [x] Task: Ревью diff — `dmg-reviewer`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5: Подсказка в гейте' (Protocol in workflow.md)
 
 **Критерии приёмки:** новые тесты есть и зелёные; `bun run check` зелёный.
