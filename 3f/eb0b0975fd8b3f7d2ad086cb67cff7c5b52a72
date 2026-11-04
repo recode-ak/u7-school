@@ -1,0 +1,1 @@
+Верификация Ф1 (автономно): CI=true bun test / bun run check — 4136 pass, 12 fail (только красная зона TR-49: e2e questionnaire-ux 5, wish-questionnaire 7); tsc, lint, arch:check зелёные; git status data/ чист. dmg-reviewer (Opus): error нет, warn исправлены. TR-49 записан. Открытый вопрос Нурболату: Д1 (сверка живых данных анкет), С2 (адрес Telegram в stories, до брифа Ф2).
