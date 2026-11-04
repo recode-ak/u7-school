@@ -38,12 +38,12 @@
 
 ## Фаза 1: Срез `questionnaire`
 
-- [ ] Task: `dmg-test-designer`: характеризация на `v0.2.6` и red-тесты (Sonnet)
-    - [ ] `start` (пул, `ownerInfo`, `started`), `handle-action` (choice/text/next, `stale-answer`, завершение, `completed` с `kind`, likert — `likertScores`), `start-by-invite`, `decline-invite` (`abandoned` с `reason: declined`), `abandon` (`by_user`), `send-likert-invite` (`invited`), `get-questionnaire`, `get-current`, `get-questionnaires-by-user`, правила доступа (респондент/admin)
-    - [ ] Job: пороги 3/6/9 ч, флаги `warnedAt`/`continueInvitedAt`, сброс при активности, сбой одной анкеты не прерывает обход, likert не затрагивается; события без `telegramId`
-    - [ ] Перенос сценариев старых тестов (`questionnaire-engine`, `questionnaire-ar`, `likert-questionnaire-ar`, `warned-at`, `continue-invited-at`, `stale-answer`, `question`, `factory`, `repo-*`), список — в отчёте
-    - [ ] Red Def-контрактов (6 событий, `ownerInfo`) и репозитория: legacy ISO → число, round-trip, невалидная запись
-- [ ] Task: `migrator`, домен (flash):
+- [x] Task: `dmg-test-designer`: характеризация на `v0.2.6` и red-тесты (Sonnet) a152c1c1
+    - [x] `start` (пул, `ownerInfo`, `started`), `handle-action` (choice/text/next, `stale-answer`, завершение, `completed` с `kind`, likert — `likertScores`), `start-by-invite`, `decline-invite` (`abandoned` с `reason: declined`), `abandon` (`by_user`), `send-likert-invite` (`invited`), `get-questionnaire`, `get-current`, `get-questionnaires-by-user`, правила доступа (респондент/admin)
+    - [x] Job: пороги 3/6/9 ч, флаги `warnedAt`/`continueInvitedAt`, сброс при активности, сбой одной анкеты не прерывает обход, likert не затрагивается; события без `telegramId`
+    - [x] Перенос сценариев старых тестов (`questionnaire-engine`, `questionnaire-ar`, `likert-questionnaire-ar`, `warned-at`, `continue-invited-at`, `stale-answer`, `question`, `factory`, `repo-*`), список — в отчёте
+    - [x] Red Def-контрактов (6 событий, `ownerInfo`) и репозитория: legacy ISO → число, round-trip, невалидная запись
+- [~] Task: `migrator`, домен (flash):
     - state (`F.timestamp`, variant `kind`, поле `ownerInfo`), `QuestionnaireArDef` и Ar без `#` и с `Result` вместо `throw*`;
     - 6 событий, ошибки, Policy и правила, DCS/DQS, Def 9 UC и Job;
     - без `core`, `app-legacy` и чужого `index`. DEBT-1, 2, 5, 10 (questionnaire).

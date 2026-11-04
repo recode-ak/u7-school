@@ -584,3 +584,33 @@ DOM-01…06, DOM-10…12, DOM-14, DOM-15, DOM-17; API-01…07; MAN-01…06, MAN-
 - **Новое наблюдаемое поведение ER `wish`:** `declined` и likert-события доходят до `abandonWish`/`confirmWish` (расхождение 7, Т4).
 - **flash на домене:** качество держат тесты Sonnet; после каждого шага — гейт и `--numstat`.
 - **`updatedAt`-приём (Т1/Т2)** опирается на то, что `change` не проверяет монотонность времени; если платформа добавит проверку, приём сломается — тесты «не сдвигает `updatedAt»» это поймают.
+
+## Отчёт `dmg-test-designer` (Ф1, шаг 1)
+
+**Итог прогона** `bun test domain/src/questionnaire modules/questionnaire domain/src/wish modules/wish`: 474 pass, 61 fail, 25 «Cannot find module» — ожидаемый red (нет реализации/Def; `wish` читает `owner`). `biome` по новым файлам зелёный; `tsc` — только ошибки от ненаписанных Ar/Def.
+
+**Новые файлы.** Домен `domain/src/questionnaire/questionnaire/`: `questionnaire.fixture.ts`, `questionnaire.ar{,.answers,.likert,.idle}.test.ts`, `questionnaire.{errors,events,state,policy}.test.ts`, `questionnaire-screen.test.ts`, `uc/questionnaire.uc-defs.test.ts`, `job/sweep-abandoned-questionnaires.job.test.ts`. Модуль `modules/questionnaire/src/`: `questionnaire/uc/questionnaire-uc.fixture.ts`, 9 `questionnaire/uc/<uc>.uc.test.ts`, `questionnaire/job/sweep-abandoned-questionnaires.job.test.ts`, `infra/questionnaire.json-repo.test.ts`.
+
+**Изменены:** тесты состава модуля (домен и модуль, переписаны на месте); `wish`: `er/{confirm,abandon}-wish.er.test.ts` (домен и модуль), `uc/create-course-wish.uc.test.ts`.
+
+**Перенос сценариев:**
+
+| Старый тест | Новый файл |
+|---|---|
+| `standard/questionnaire-ar`, `questionnaire-factory` | `questionnaire.ar.test.ts`, `questionnaire.ar.answers.test.ts` |
+| `standard/stale-answer` | `questionnaire.ar.answers.test.ts` |
+| `likert/likert-questionnaire-ar` | `questionnaire.ar.likert.test.ts` |
+| `warned-at`, `continue-invited-at` | `questionnaire.ar.idle.test.ts` (через `sweepIdle`) |
+| `uc/start-questionnaire.uc` | `uc/questionnaire.uc-defs.test.ts`, `start-questionnaire.uc.test.ts` |
+| `questionnaire-respondent.policy` | `questionnaire.policy.test.ts` |
+| `api/module.test.ts` | 9 `*.uc.test.ts` |
+| `sweep-abandoned-job*` | `job/sweep-abandoned-questionnaires.job.test.ts` (домен и модуль) |
+| `questionnaire-json-repo`, `questionnaire-repo-idle` | `infra/questionnaire.json-repo.test.ts` |
+
+**Не перенесено:** `questionnaire-repo-active` (Т18); `legacy-inbound.test` (удаляется с кодом); `abandon(undefined|'неверно')` (причина типизирована); прямые `markWarned`/`markContinueInvited` (покрыты через `sweepIdle`, «бросает на не-активной» → Т7); «невалидные записи игнорируются» → «исключение, файл цел» (бриф). Старые тест-файлы удаляет migrator вместе с legacy.
+
+**Отклонения:** Ar-тесты — 4 файла (прецедент `stream.ar.student.test.ts`); Т10 — один код `NOT_INVITED`. В доменных ER-тестах `wish` добавлены проверки payload через `*ErDef.on`.
+
+**API, заданный тестами (для migrator):** `QuestionnaireAr.createStandard|createLikert({ uuid, respondentId, pool, ownerInfo }, at)` → `Result`; `start`, `decline`, `abandon(at, reason)`, `handleAction(at, { type, value })`, `sweepIdle(at)` → `Result`; `needsSweep`, `idleFor`, `screen`, `isOf`, `view`, `snapshot`, `pullEvents`; `QuestionnaireScreen.getNextButtonText` (static); коды `QUESTIONNAIRE_*`; константы Job `INVITE|WARN|ABANDON_AFTER_HOURS`, `*_IDLE_MS`, `INTERVAL_MS`; классы 9 UC и `SweepAbandonedQuestionnairesJob`; `QuestionnaireRepoFake` (`findIdle({ idleMs, at, kinds? })`), `QuestionnaireJsonRepo(filePath)`, `createQuestionnaireModule`, `questionnaireMap`, `QuestionnaireUser`.
+
+**Эскалаций нет.**
