@@ -45,13 +45,10 @@ import {
 } from '@u7-scl/questionnaire/infra';
 import {
   createStreamModule,
-  LegacyStreamJsonRepo,
-  legacyStreamStudents,
   StreamApiModule,
   type StreamDeps,
   StreamJsonRepo,
   StudentJsonRepo,
-  streamLegacyInbound,
 } from '@u7-scl/stream';
 import { createUserModule } from '@u7-scl/user';
 import { UserApiModule } from '@u7-scl/user/api';
@@ -119,14 +116,6 @@ export class U7App {
       db,
     );
 
-    // Legacy-репозиторий потоков — только чтение для студентов (до Ф2); потоки пишет `StreamJsonRepo`.
-    const streamRepo = new LegacyStreamJsonRepo(
-      `${dbDir}/streams/streams.json`,
-    );
-    const streamStudentRepo = new StudentJsonRepo(
-      `${dbDir}/streams/students.json`,
-    );
-
     // ══ Модули: резолвер в конструкторе ══
     const userModule = new UserApiModule({
       userRepo,
@@ -178,8 +167,6 @@ export class U7App {
     );
 
     const streamModule = new StreamApiModule({
-      streamRepo,
-      streamStudentRepo,
       userFacade,
       courseFacade,
       appResolver,
@@ -207,7 +194,7 @@ export class U7App {
         campaigns: reviewCampaignRepo,
         reviews: reviewRepo,
         streams: new StreamJsonRepo(`${dbDir}/streams/streams.json`),
-        students: legacyStreamStudents(streamStudentRepo),
+        students: new StudentJsonRepo(`${dbDir}/streams/students.json`),
         schoolId: school.id,
       },
     );
@@ -264,7 +251,7 @@ export class U7App {
     logger: Logger,
   ): AppContext {
     const bus = legacyEventBus(legacyBus, {
-      inbound: [...streamLegacyInbound, ...questionnaireLegacyInbound],
+      inbound: [...questionnaireLegacyInbound],
       onInvalid: (message) => logger.warn('legacy-event-bus', message),
     });
     const clock = legacyClock();

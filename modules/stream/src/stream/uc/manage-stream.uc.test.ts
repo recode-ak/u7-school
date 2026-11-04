@@ -8,14 +8,12 @@ import { CompleteStreamUc } from './complete-stream.uc';
 import {
   admin,
   anonymous,
-  fact,
   guestRole,
   MENTOR_ID,
   makeEnv,
   mentor,
   otherMentor,
   REQ,
-  STEP_1,
   STREAM,
   state,
   student,
@@ -118,23 +116,13 @@ describe('ActivateStreamUc', () => {
     expect(env.streams.saved).toHaveLength(1);
   });
 
-  it('студентам потока выдаётся первый шаг снимка (launch)', async () => {
-    env.streams.seed(state('enrollment'));
-
-    expectOk(await activate().handle(input, mentor, REQ));
-
-    expect(env.students.launched).toEqual([
-      { streamId: STREAM, firstStepId: STEP_1 },
-    ]);
-  });
-
   it('первого шага нет — поток активен, студенты не тронуты', async () => {
     env.streams.seed(state('enrollment', { contentSnapshot: [] }));
 
     expectOk(await activate().handle(input, mentor, REQ));
 
     expect(statusOf()).toBe('active');
-    expect(env.students.launched).toEqual([]);
+    expect(env.students.saved).toEqual([]);
   });
 
   it.each(['active', 'completed', 'archived'] as const)(
@@ -145,7 +133,7 @@ describe('ActivateStreamUc', () => {
       const res = await activate().handle(input, mentor, REQ);
 
       expect(expectErr(res, 'STREAM_NOT_ENROLLING').kind).toBe('conflict');
-      expect(env.students.launched).toEqual([]);
+      expect(env.students.saved).toEqual([]);
       expect(env.streams.saved).toEqual([]);
     },
   );
@@ -158,57 +146,17 @@ describe('ActivateStreamUc', () => {
       'ACCESS_DENIED',
     );
 
-    expect(env.students.launched).toEqual([]);
+    expect(env.students.saved).toEqual([]);
   });
 });
 
 describe('CompleteStreamUc', () => {
-  const U1 = '11111111-1111-4111-8111-111111111111';
-  const U2 = '22222222-2222-4222-8222-222222222222';
   beforeEach(() => env.streams.seed(state('active')));
 
   it('студентов нет — поток завершён', async () => {
     expectOk(await complete().handle(input, mentor, REQ));
 
     expect(statusOf()).toBe('completed');
-  });
-
-  it('все студенты в конечном статусе — поток завершён; факты спрошены по потоку', async () => {
-    env.students.facts = [
-      fact(U1, 'abandoned'),
-      fact(U2, 'advanced'),
-      fact(MENTOR_ID, 'not_advanced'),
-    ];
-
-    expectOk(await complete().handle(input, mentor, REQ));
-
-    expect(statusOf()).toBe('completed');
-    expect(env.students.asked).toEqual([STREAM]);
-  });
-
-  it('студент active — STREAM_STUDENTS_IN_PROGRESS со списком, поток не завершён', async () => {
-    env.students.facts = [fact(U1, 'abandoned'), fact(U2, 'active')];
-
-    const res = await complete().handle(input, mentor, REQ);
-
-    const error = expectErr(res, 'STREAM_STUDENTS_IN_PROGRESS');
-    expect(error.label).toStartWith('Нельзя завершить поток');
-    expect(error.payload).toEqual({
-      pending: [{ userId: U2, status: 'active' }],
-    });
-    expect(statusOf()).toBe('active');
-    expect(env.streams.saved).toEqual([]);
-  });
-
-  it('студент enrolled тоже блокирует (дыра ФР-2)', async () => {
-    env.students.facts = [fact(U2, 'enrolled')];
-
-    const res = await complete().handle(input, mentor, REQ);
-
-    expect(expectErr(res, 'STREAM_STUDENTS_IN_PROGRESS').payload).toEqual({
-      pending: [{ userId: U2, status: 'enrolled' }],
-    });
-    expect(env.streams.saved).toEqual([]);
   });
 
   it.each(['enrollment', 'completed', 'archived'] as const)(

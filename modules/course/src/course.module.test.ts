@@ -145,6 +145,10 @@ function legacy(
     whichCoursesIncludeModule: async () => [],
     whichModulesAreSame: async () => [],
     getModuleSnapshot: async () => [],
+    getCourseByModuleId: async () => undefined,
+    getModule: async () => {
+      throw new Error('не вызывается');
+    },
   };
   return { facade, asked };
 }

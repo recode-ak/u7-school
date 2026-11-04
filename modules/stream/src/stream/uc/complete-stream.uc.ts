@@ -2,6 +2,7 @@ import {
   CompleteStreamUcDef,
   type StreamAr,
   StreamErrors,
+  StreamMembersDqs,
   type StreamModuleDef,
   type StreamStudentFact,
 } from '@u7-scl/domain/stream';
@@ -38,9 +39,10 @@ export class CompleteStreamUc extends UseCaseFromDef<
       : err(StreamErrors.NOT_FOUND.make({ streamId }));
   }
 
-  /** Студенты — свой порт, не чужой модуль: спрашиваем после права. */
+  /** Студенты — свой репозиторий, не чужой модуль: спрашиваем после права. */
   protected override async fetch({ streamId }: Input) {
-    return ok({ students: await this.resolve.students.factsOf(streamId) });
+    const students = await this.resolve.students.findByStream(streamId);
+    return ok({ students: StreamMembersDqs.facts(students) });
   }
 
   protected async execute(_: Input, { stream }: Loaded, uow: UnitOfWork) {

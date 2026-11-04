@@ -103,11 +103,11 @@ export function makeEnv(at = T0) {
   const ctx = testAppContext({ at });
   const streams = new StreamRepoFake();
   const students = new StudentRepoFake();
-  const env = {
+  const stand = {
     prerequisite: ok({ gate: 'none' }) as Prerequisite,
   };
   const course = new StubFacade(CourseModuleDef)
-    .answer(GetModulePrerequisiteUcDef, () => env.prerequisite)
+    .answer(GetModulePrerequisiteUcDef, () => stand.prerequisite)
     .answer(GetModuleSnapshotUcDef, () => ok(contentSnapshot));
   const deps = {
     app: ctx.app,
@@ -136,17 +136,16 @@ export function makeEnv(at = T0) {
     students.findStudying = async () => rows().filter((s) => s.isInProgress());
   };
   const seedStreams = (...states: StreamState[]) => streams.seed(...states);
-  return {
+  return Object.assign(stand, {
     ctx,
     streams,
     students,
     course,
     deps,
-    env,
     seedStudents,
     seedStreams,
     rows,
-  };
+  });
 }
 
 export const streamOf = (

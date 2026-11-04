@@ -7,6 +7,7 @@ import { GetCourseEnrollmentUc } from './course/uc/get-course-enrollment.uc';
 import { GetCoursesIncludingModuleUc } from './course/uc/get-courses-including-module.uc';
 import { GetCoursesStartingWithModuleUc } from './course/uc/get-courses-starting-with-module.uc';
 import { GetModuleEnrollmentUc } from './course/uc/get-module-enrollment.uc';
+import { GetModulePrerequisiteUc } from './course/uc/get-module-prerequisite.uc';
 import { GetModuleSnapshotUc } from './course/uc/get-module-snapshot.uc';
 import { GetSameModulesUc } from './course/uc/get-same-modules.uc';
 
@@ -22,6 +23,8 @@ export type CourseLegacy = Pick<
   | 'whichCoursesIncludeModule'
   | 'whichModulesAreSame'
   | 'getModuleSnapshot'
+  | 'getCourseByModuleId'
+  | 'getModule'
 >;
 
 /**
@@ -42,6 +45,7 @@ export const courseModuleMap = {
     getCoursesStartingWithModule: GetCoursesStartingWithModuleUc,
     getSameModules: GetSameModulesUc,
     getModuleSnapshot: GetModuleSnapshotUc,
+    getModulePrerequisite: GetModulePrerequisiteUc,
   },
   reactions: {},
   jobs: {},

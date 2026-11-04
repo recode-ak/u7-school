@@ -2,7 +2,9 @@ import {
   ActivateStreamUcDef,
   type StreamAr,
   StreamErrors,
+  StreamLaunchDcs,
   type StreamModuleDef,
+  type StudentAr,
 } from '@u7-scl/domain/stream';
 import { err, ok } from 'dmg-core';
 import {
@@ -12,13 +14,15 @@ import {
 } from 'dmg-core/app';
 import type { StreamDeps, StreamUser } from '../../stream.module';
 
-type Loaded = { readonly stream: StreamAr };
+type Loaded = {
+  readonly stream: StreamAr;
+  readonly students: readonly StudentAr[];
+};
 type Input = ParsedInputOf<typeof ActivateStreamUcDef>;
 
 /**
- * Запуск потока. Студентов запускает мост `StreamStudents.launch` в `execute`
- * после `uow.register`, до фиксации (D-41, вариант 1): сбой фиксации оставит
- * студентов активными при незаписанном потоке; повтор безопасен.
+ * Запуск потока. Поток и его студенты меняются `StreamLaunchDcs` и
+ * фиксируются одним UoW.
  */
 export class ActivateStreamUc extends UseCaseFromDef<
   typeof ActivateStreamUcDef,
@@ -32,22 +36,27 @@ export class ActivateStreamUc extends UseCaseFromDef<
 
   protected async load({ streamId }: Input) {
     const stream = await this.resolve.streams.findById(streamId);
-    return stream
-      ? ok({ stream })
-      : err(StreamErrors.NOT_FOUND.make({ streamId }));
+    if (!stream) return err(StreamErrors.NOT_FOUND.make({ streamId }));
+    const students = await this.resolve.students.findByStream(streamId);
+    return ok({ stream, students });
   }
 
   protected async execute(
-    { streamId }: Input,
-    { stream }: Loaded,
+    _: Input,
+    { stream, students }: Loaded,
     uow: UnitOfWork,
   ) {
-    const activated = stream.activate(this.now());
-    if (!activated.ok) return activated;
+    const launched = StreamLaunchDcs.launch(stream, students, this.now());
+    if (!launched.ok) {
+      // Ошибки студентов недостижимы: DCS трогает только зачисленных и без шагов
+      const { error } = launched;
+      if (error.code === 'STREAM_NOT_ENROLLING') return err(error);
+      throw new Error(`Запуск потока: ${error.code}`);
+    }
     uow.register(stream, this.resolve.streams);
-
-    const firstStepId = stream.firstStepId();
-    if (firstStepId) await this.resolve.students.launch(streamId, firstStepId);
+    for (const student of launched.value) {
+      uow.register(student, this.resolve.students);
+    }
     return ok({});
   }
 }

@@ -2,19 +2,15 @@ import {
   CourseModuleDef,
   GetModuleSnapshotUcDef,
 } from '@u7-scl/domain/course/contract';
-import {
-  StreamAr,
-  type StreamState,
-  type StreamStudentFact,
-} from '@u7-scl/domain/stream';
+import { StreamAr, type StreamState } from '@u7-scl/domain/stream';
 import { Role } from '@u7-scl/domain/user/contract';
 import { GuestCaller, ok, SystemCaller, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { StubFacade, testAppContext } from 'dmg-core/testing';
+import { StudentRepoFake } from '../../student/student.repo.fake';
 import { StreamRepoFake } from '../stream.repo.fake';
-import type { StreamStudents } from '../stream-students';
 
-/** Общие данные тестов UC потока (фейки порта и студентов, фасад курсов). */
+/** Общие данные тестов UC потока (фейки репозиториев, фасад курсов). */
 export const STREAM = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 export const SCHOOL = 'a0000000-0000-4000-8000-000000000001';
 export const MENTOR_ID = '66666666-6666-4666-8666-666666666666';
@@ -80,39 +76,6 @@ export const state = (
   ...extra,
 });
 
-export const fact = (
-  userId: string,
-  status: StreamStudentFact['status'],
-  extra: Partial<StreamStudentFact> = {},
-): StreamStudentFact => ({
-  studentId: crypto.randomUUID(),
-  userId,
-  status,
-  settled:
-    status === 'abandoned' ||
-    status === 'advanced' ||
-    status === 'not_advanced',
-  inProgress: status === 'active' || status === 'enrolled',
-  neverStarted: false,
-  ...extra,
-});
-
-/** Фейк порта `StreamStudents`: факты задаёт тест, запуски запоминает. */
-export class StudentsFake implements StreamStudents {
-  facts: StreamStudentFact[] = [];
-  readonly asked: string[] = [];
-  readonly launched: { streamId: string; firstStepId: string }[] = [];
-
-  async factsOf(streamId: string): Promise<StreamStudentFact[]> {
-    this.asked.push(streamId);
-    return this.facts;
-  }
-
-  async launch(streamId: string, firstStepId: string): Promise<void> {
-    this.launched.push({ streamId, firstStepId });
-  }
-}
-
 /** Что последним спросили у репозитория при выборках (ответ задаёт тест). */
 export type Answered = { filter?: unknown; telegramGroupId?: string };
 
@@ -120,7 +83,8 @@ export type Answered = { filter?: unknown; telegramGroupId?: string };
 export function makeEnv(moduleSnapshot = contentSnapshot) {
   const ctx = testAppContext({ at: T0 });
   const streams = new StreamRepoFake();
-  const students = new StudentsFake();
+  const students = new StudentRepoFake();
+  students.findByStream = async () => [];
   const course = new StubFacade(CourseModuleDef).answer(
     GetModuleSnapshotUcDef,
     () => ok(moduleSnapshot),
