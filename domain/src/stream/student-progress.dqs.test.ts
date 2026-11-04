@@ -38,6 +38,8 @@ const snapshot = [
   },
 ];
 
+type Snapshot = typeof snapshot;
+
 const MIN = 60_000;
 const T = Date.UTC(2026, 7, 1, 10);
 type Step = StudentState['steps'][number];
@@ -61,11 +63,13 @@ const studentOf = (steps: Step[], extra: Partial<StudentState> = {}) =>
     }),
   );
 
+/** DQS над снимком (по умолчанию — полный `snapshot`) и студентом. */
+const dqs = (student: StudentAr, snap: Snapshot = snapshot) =>
+  new StudentProgressDqs(snap, student);
+
 describe('StudentProgressDqs.computeProgress', () => {
   it('0/4 — только начал', () => {
-    expect(
-      StudentProgressDqs.computeProgress(snapshot, studentOf([open(A)])),
-    ).toEqual({
+    expect(dqs(studentOf([open(A)])).computeProgress()).toEqual({
       completed: 0,
       total: 4,
       percent: 0,
@@ -74,22 +78,21 @@ describe('StudentProgressDqs.computeProgress', () => {
 
   it('3/4 — многопроектный', () => {
     expect(
-      StudentProgressDqs.computeProgress(
-        snapshot,
-        studentOf([done(A), done(B), done(C), open(D)]),
-      ),
+      dqs(studentOf([done(A), done(B), done(C), open(D)])).computeProgress(),
     ).toEqual({ completed: 3, total: 4, percent: 75 });
   });
 
   it('частичный снимок: шаги чужих проектов не считаются', () => {
     const only = snapshot.slice(1);
-    expect(
-      StudentProgressDqs.computeProgress(only, studentOf([done(A), done(D)])),
-    ).toEqual({ completed: 1, total: 1, percent: 100 });
+    expect(dqs(studentOf([done(A), done(D)]), only).computeProgress()).toEqual({
+      completed: 1,
+      total: 1,
+      percent: 100,
+    });
   });
 
   it('пустой снимок — 0/0, 0%', () => {
-    expect(StudentProgressDqs.computeProgress([], studentOf([]))).toEqual({
+    expect(dqs(studentOf([]), []).computeProgress()).toEqual({
       completed: 0,
       total: 0,
       percent: 0,
@@ -99,10 +102,7 @@ describe('StudentProgressDqs.computeProgress', () => {
 
 describe('StudentProgressDqs.buildNavigationTree', () => {
   it('без активности все узлы locked', () => {
-    const tree = StudentProgressDqs.buildNavigationTree(
-      snapshot,
-      studentOf([]),
-    );
+    const tree = dqs(studentOf([])).buildNavigationTree();
     expect(tree.projects.map((p) => p.status)).toEqual(['locked', 'locked']);
     expect(tree.projects[0]?.lessons[0]?.steps).toEqual([
       { stepId: A, status: 'locked', index: 1 },
@@ -111,10 +111,7 @@ describe('StudentProgressDqs.buildNavigationTree', () => {
   });
 
   it('1/2 шагов: шаг completed, выданный current, урок и проект current', () => {
-    const tree = StudentProgressDqs.buildNavigationTree(
-      snapshot,
-      studentOf([done(A), open(B)]),
-    );
+    const tree = dqs(studentOf([done(A), open(B)])).buildNavigationTree();
     const lesson = tree.projects[0]?.lessons[0];
     expect(lesson?.steps.map((s) => s.status)).toEqual([
       'completed',
@@ -135,10 +132,9 @@ describe('StudentProgressDqs.buildNavigationTree', () => {
   });
 
   it('всё пройдено — проекты completed', () => {
-    const tree = StudentProgressDqs.buildNavigationTree(
-      snapshot,
+    const tree = dqs(
       studentOf([done(A), done(B), done(C), done(D)]),
-    );
+    ).buildNavigationTree();
     expect(tree.projects.map((p) => p.status)).toEqual([
       'completed',
       'completed',
@@ -148,11 +144,7 @@ describe('StudentProgressDqs.buildNavigationTree', () => {
 
 describe('StudentProgressDqs.buildLessonSteps', () => {
   it('шаги урока: completed + current, индексы 1-based, заголовки', () => {
-    const view = StudentProgressDqs.buildLessonSteps(
-      snapshot,
-      L11,
-      studentOf([done(A), open(B)]),
-    );
+    const view = dqs(studentOf([done(A), open(B)])).buildLessonSteps(L11);
     expect(view).toEqual({
       lessonTitle: 'У1.1',
       lessonIndex: 1,
@@ -166,50 +158,32 @@ describe('StudentProgressDqs.buildLessonSteps', () => {
   });
 
   it('невыданный шаг — locked', () => {
-    const view = StudentProgressDqs.buildLessonSteps(
-      snapshot,
-      L11,
-      studentOf([done(A)]),
-    );
+    const view = dqs(studentOf([done(A)])).buildLessonSteps(L11);
     expect(view?.steps.map((s) => s.status)).toEqual(['completed', 'locked']);
   });
 
   it('урока нет — null', () => {
-    expect(
-      StudentProgressDqs.buildLessonSteps(snapshot, UNKNOWN, studentOf([])),
-    ).toBeNull();
+    expect(dqs(studentOf([])).buildLessonSteps(UNKNOWN)).toBeNull();
   });
 });
 
 describe('StudentProgressDqs.computeProjectLevelProgress', () => {
   it('0/2 — нет завершённых уроков', () => {
-    expect(
-      StudentProgressDqs.computeProjectLevelProgress(
-        snapshot,
-        0,
-        studentOf([done(A)]),
-      ),
-    ).toEqual({ completed: 0, total: 2, percent: 0 });
+    expect(dqs(studentOf([done(A)])).computeProjectLevelProgress(0)).toEqual({
+      completed: 0,
+      total: 2,
+      percent: 0,
+    });
   });
 
   it('урок завершён, когда завершены все его шаги', () => {
     expect(
-      StudentProgressDqs.computeProjectLevelProgress(
-        snapshot,
-        0,
-        studentOf([done(A), done(B)]),
-      ),
+      dqs(studentOf([done(A), done(B)])).computeProjectLevelProgress(0),
     ).toEqual({ completed: 1, total: 2, percent: 50 });
   });
 
   it('индекса проекта нет — 0/0', () => {
-    expect(
-      StudentProgressDqs.computeProjectLevelProgress(
-        snapshot,
-        9,
-        studentOf([]),
-      ),
-    ).toEqual({
+    expect(dqs(studentOf([])).computeProjectLevelProgress(9)).toEqual({
       completed: 0,
       total: 0,
       percent: 0,
@@ -220,10 +194,7 @@ describe('StudentProgressDqs.computeProjectLevelProgress', () => {
 describe('StudentProgressDqs.computeStreamProjectProgress', () => {
   it('0/2, 1/2, 2/2', () => {
     const f = (steps: Step[]) =>
-      StudentProgressDqs.computeStreamProjectProgress(
-        snapshot,
-        studentOf(steps),
-      );
+      dqs(studentOf(steps)).computeStreamProjectProgress();
     expect(f([done(A)])).toEqual({ completed: 0, total: 2, percent: 0 });
     expect(f([done(A), done(B), done(C)])).toEqual({
       completed: 1,
@@ -240,13 +211,9 @@ describe('StudentProgressDqs.computeStreamProjectProgress', () => {
 
 describe('StudentProgressDqs.getStepLessonProgress', () => {
   it('считает завершённые шаги своего урока', () => {
-    expect(
-      StudentProgressDqs.getStepLessonProgress(
-        snapshot,
-        A,
-        studentOf([done(A), done(C)]),
-      ),
-    ).toEqual({ completed: 1, total: 2, percent: 50 });
+    expect(dqs(studentOf([done(A), done(C)])).getStepLessonProgress(A)).toEqual(
+      { completed: 1, total: 2, percent: 50 },
+    );
   });
 
   it('урок ищется по шагу, а не по заголовку (одноимённые уроки)', () => {
@@ -262,19 +229,15 @@ describe('StudentProgressDqs.getStepLessonProgress', () => {
         lessons: [{ lessonId: L21, lessonTitle: 'Урок', stepIds: [B, C] }],
       },
     ];
-    expect(
-      StudentProgressDqs.getStepLessonProgress(twins, C, studentOf([done(B)])),
-    ).toEqual({ completed: 1, total: 2, percent: 50 });
+    expect(dqs(studentOf([done(B)]), twins).getStepLessonProgress(C)).toEqual({
+      completed: 1,
+      total: 2,
+      percent: 50,
+    });
   });
 
   it('неизвестный шаг — нулевой прогресс', () => {
-    expect(
-      StudentProgressDqs.getStepLessonProgress(
-        snapshot,
-        UNKNOWN,
-        studentOf([]),
-      ),
-    ).toEqual({
+    expect(dqs(studentOf([])).getStepLessonProgress(UNKNOWN)).toEqual({
       completed: 0,
       total: 0,
       percent: 0,
@@ -284,7 +247,7 @@ describe('StudentProgressDqs.getStepLessonProgress', () => {
 
 describe('StudentProgressDqs.stepPosition', () => {
   it('индексы и заголовки (1-based) и размер урока', () => {
-    expect(StudentProgressDqs.stepPosition(snapshot, C)).toMatchObject({
+    expect(dqs(studentOf([])).stepPosition(C)).toMatchObject({
       projectIndex: 1,
       projectTitle: 'П1',
       lessonIndex: 2,
@@ -293,21 +256,19 @@ describe('StudentProgressDqs.stepPosition', () => {
   });
 
   it('шага нет — null', () => {
-    expect(StudentProgressDqs.stepPosition(snapshot, UNKNOWN)).toBeNull();
+    expect(dqs(studentOf([])).stepPosition(UNKNOWN)).toBeNull();
   });
 });
 
 describe('StudentProgressDqs.computeStepTimeStats', () => {
   it('нет шагов → все нули; незавершённые пропускаются', () => {
-    expect(StudentProgressDqs.computeStepTimeStats(studentOf([]))).toEqual({
+    expect(dqs(studentOf([])).computeStepTimeStats()).toEqual({
       runner: 0,
       fast: 0,
       normal: 0,
       deep: 0,
     });
-    expect(
-      StudentProgressDqs.computeStepTimeStats(studentOf([open(A)])),
-    ).toEqual({
+    expect(dqs(studentOf([open(A)])).computeStepTimeStats()).toEqual({
       runner: 0,
       fast: 0,
       normal: 0,
@@ -317,7 +278,7 @@ describe('StudentProgressDqs.computeStepTimeStats', () => {
 
   it('границы: <1 мин runner, 1–5 fast, 5–15 normal, ≥15 deep', () => {
     const stats = (minutes: number) =>
-      StudentProgressDqs.computeStepTimeStats(studentOf([done(A, minutes)]));
+      dqs(studentOf([done(A, minutes)])).computeStepTimeStats();
     expect(stats(0.5)).toMatchObject({ runner: 1 });
     expect(stats(1)).toMatchObject({ fast: 1 });
     expect(stats(5)).toMatchObject({ normal: 1 });
@@ -328,31 +289,28 @@ describe('StudentProgressDqs.computeStepTimeStats', () => {
 
 describe('StudentProgressDqs.computeAvgTime', () => {
   it('нет завершённых → null/null', () => {
-    expect(StudentProgressDqs.computeAvgTime(studentOf([open(A)]))).toEqual({
+    expect(dqs(studentOf([open(A)])).computeAvgTime()).toEqual({
       medianMinutes: null,
       dominant: null,
     });
   });
 
   it('один шаг за 2 минуты → медиана 2, доминанта Спринтер', () => {
-    const res = StudentProgressDqs.computeAvgTime(studentOf([done(A, 2)]));
+    const res = dqs(studentOf([done(A, 2)])).computeAvgTime();
     expect(res.medianMinutes).toBe(2);
     expect(res.dominant).toMatchObject({ emoji: '⚡', name: 'Спринтер' });
   });
 
   it('медиана двух шагов (1 и 5 минут) — 3', () => {
     expect(
-      StudentProgressDqs.computeAvgTime(studentOf([done(A, 1), done(B, 5)]))
-        .medianMinutes,
+      dqs(studentOf([done(A, 1), done(B, 5)])).computeAvgTime().medianMinutes,
     ).toBe(3);
   });
 });
 
 describe('StudentProgressDqs.computeStudentRowSummary', () => {
   it('студент без шагов — 0%, времени нет', () => {
-    expect(
-      StudentProgressDqs.computeStudentRowSummary(snapshot, studentOf([])),
-    ).toEqual({
+    expect(dqs(studentOf([])).computeStudentRowSummary()).toEqual({
       progress: { completed: 0, total: 4, percent: 0 },
       medianTimeMinutes: null,
       dominantCategory: null,
@@ -360,10 +318,9 @@ describe('StudentProgressDqs.computeStudentRowSummary', () => {
   });
 
   it('2 из 4 шагов — 50%, медиана и доминирующая категория', () => {
-    const res = StudentProgressDqs.computeStudentRowSummary(
-      snapshot,
+    const res = dqs(
       studentOf([done(A, 2), done(B, 2)]),
-    );
+    ).computeStudentRowSummary();
     expect(res.progress).toEqual({ completed: 2, total: 4, percent: 50 });
     expect(res.medianTimeMinutes).toBe(2);
     expect(res.dominantCategory).toMatchObject({ name: 'Спринтер', count: 2 });
@@ -372,11 +329,9 @@ describe('StudentProgressDqs.computeStudentRowSummary', () => {
 
 describe('StudentProgressDqs.computeStudentCard', () => {
   it('прогресс модуля и текущего проекта, урок, время, lag из аргумента', () => {
-    const card = StudentProgressDqs.computeStudentCard(
-      snapshot,
+    const card = dqs(
       studentOf([done(A, 3), open(B)], { currentStepId: B }),
-      { lagLevel: 'lagging', hoursSinceLastActivity: 2 },
-    );
+    ).computeStudentCard({ lagLevel: 'lagging', hoursSinceLastActivity: 2 });
     expect(card.moduleProgress).toEqual({
       completed: 1,
       total: 4,
@@ -394,16 +349,15 @@ describe('StudentProgressDqs.computeStudentCard', () => {
   });
 
   it('без lag-аргумента: on_track и 0 часов', () => {
-    const card = StudentProgressDqs.computeStudentCard(snapshot, studentOf([]));
+    const card = dqs(studentOf([])).computeStudentCard();
     expect(card.lagLevel).toBe('on_track');
     expect(card.hoursSinceLastActivity).toBe(0);
   });
 
   it('текущего шага нет в снимке — без проекта и урока', () => {
-    const card = StudentProgressDqs.computeStudentCard(
-      snapshot,
+    const card = dqs(
       studentOf([], { currentStepId: UNKNOWN }),
-    );
+    ).computeStudentCard();
     expect(card.currentProject).toBeUndefined();
     expect(card.currentLesson).toBeUndefined();
     expect(card.medianTimeMinutes).toBeNull();

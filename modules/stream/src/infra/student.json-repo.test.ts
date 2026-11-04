@@ -193,6 +193,65 @@ describe('StudentJsonRepo — legacy-записи', () => {
   });
 });
 
+describe('StudentJsonRepo — смешанный файл', () => {
+  test('ISO-записи без version и числовые с version читаются целиком, round-trip корректен', async () => {
+    const legacyId = crypto.randomUUID();
+    const modernId = crypto.randomUUID();
+    const path = filePath('students-mixed.json');
+    const repo = await repoWith('students-mixed.json', [
+      {
+        uuid: legacyId,
+        streamId: STREAM,
+        userId: USER,
+        enrolledAt: '2026-06-01T10:00',
+        status: 'enrolled',
+        currentStepId: STEP,
+        steps: [],
+        createdAt: '2026-06-01T10:00',
+      },
+      makeState({
+        uuid: modernId,
+        userId: OTHER_USER,
+        status: 'active',
+        updatedAt: T0 + 7000,
+        version: 3,
+      }),
+    ]);
+
+    expect((await repo.findByStream(STREAM)).map((s) => s.uuid)).toEqual([
+      legacyId,
+      modernId,
+    ]);
+    expect((await repo.findById(legacyId))?.snapshot()).toMatchObject({
+      enrolledAt: T0,
+      createdAt: T0,
+      updatedAt: T0,
+      version: 0,
+    });
+    expect((await repo.findById(modernId))?.snapshot()).toMatchObject({
+      updatedAt: T0 + 7000,
+      version: 3,
+    });
+
+    const loaded = await repo.findById(legacyId);
+    if (!loaded) throw new Error('студент не найден');
+    expectOk(loaded.activate(T0 + 5000));
+    await repo.save(loaded);
+
+    const rows = JSON.parse(await Bun.file(path).text()) as StudentState[];
+    expect(rows.find((r) => r.uuid === legacyId)).toMatchObject({
+      enrolledAt: T0,
+      status: 'active',
+      version: 1,
+    });
+    expect(rows.find((r) => r.uuid === modernId)).toMatchObject({
+      updatedAt: T0 + 7000,
+      version: 3,
+    });
+    expect((await repo.findById(modernId))?.snapshot().version).toBe(3);
+  });
+});
+
 describe('StudentJsonRepo — выборки', () => {
   const ids = () =>
     Array.from({ length: 6 }, () => crypto.randomUUID() as string) as [

@@ -13,7 +13,7 @@ import { StudentPolicy } from './student.policy';
 
 // Перенос `policy.test.ts` (canViewProgress, canCompleteStep, canManageStudent)
 // на Policy по Def (TST-02). Субъект — `Pick<User, 'uuid' | 'roles'>`.
-// `canCompleteStep` теперь действует (Т8): `isSelf` — для завершения шага и выхода.
+// `canCompleteStep` теперь действует: `isSelf` — для завершения шага и выхода.
 
 const who = (uuid: string, ...roles: Role[]) => ({ uuid, roles });
 const student = StudentAr.restore(stored('active'));

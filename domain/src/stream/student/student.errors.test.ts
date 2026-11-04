@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { StudentErrors } from './student.errors';
 
-// Ошибки агрегата `student` (ERR-04): код, вид и статичный `label` (Т14 Ф1).
+// Ошибки агрегата `student` (ERR-04): код, вид и статичный `label`.
 // Тексты — дословно из legacy-исключений v0.2.6 (решение 7 брифа).
 
 describe('StudentErrors — коды и kind', () => {

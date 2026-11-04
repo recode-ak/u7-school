@@ -4,7 +4,7 @@ import { StudentEvents } from '../student.events';
 import { InactivitySweepJobDef } from './inactivity-sweep.job';
 
 // Def Job (MAN-04/05/13): ежедневно в 19:00 UTC, сканирует агрегат студента,
-// публикует два события бездействия. Имя `inactivitySweep` (Т4).
+// публикует два события бездействия. Имя `inactivitySweep`.
 
 describe('InactivitySweepJobDef', () => {
   it('имя и расписание: ежедневно 19:00 UTC', () => {

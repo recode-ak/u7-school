@@ -6,7 +6,7 @@ import { StreamErrors } from '../stream.errors';
 /**
  * Поток для показа: чтение открыто всем (`allowAll`), как в legacy.
  * `canManage` — право вызывающего управлять потоком: UI по нему показывает
- * кнопки, права сам не вычисляет (Т7).
+ * кнопки, права сам не вычисляет.
  */
 export const GetStreamUcDef = UseCaseDef.define({
   name: 'getStream',

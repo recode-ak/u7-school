@@ -668,23 +668,6 @@ export class ViewStreamStory extends U7BotUiStory {
 
     if (!progress) return this.warn(md`Поток не найден`);
 
-    // Отставание — из состава потока (медиана по учащимся)
-    const membersRes = await this.dispatchUc(
-      StreamModuleDef,
-      GetStreamMembersUcDef.command({ streamId: student.streamId }),
-      actor,
-    );
-    const lag = membersRes.ok
-      ? membersRes.value?.roster?.find((r) => r.studentId === student.uuid)
-      : undefined;
-    const card = lag
-      ? {
-          ...progress.card,
-          lagLevel: lag.lagLevel,
-          hoursSinceLastActivity: lag.hoursSinceLastActivity,
-        }
-      : progress.card;
-
     const bar = (c: number, t: number) => this.#formatProgressBar(c, t);
     const lines: MdText[] = [
       mdConcat(
@@ -697,24 +680,24 @@ export class ViewStreamStory extends U7BotUiStory {
       md`*Прогресс студента:*`,
       mdConcat(
         mdRaw(
-          `📊 Прогресс по модулю: ${bar(card.moduleProgress.completed, card.moduleProgress.total)} \\| `,
+          `📊 Прогресс по модулю: ${bar(progress.card.moduleProgress.completed, progress.card.moduleProgress.total)} \\| `,
         ),
-        md`${card.moduleProgress.percent}%`,
+        md`${progress.card.moduleProgress.percent}%`,
       ),
     ];
 
     // Проект и урок
-    if (card.currentProject) {
-      lines.push(md``, md`📁 Проект: «${card.currentProject.title}»`);
-      if (card.currentLesson) {
-        lines.push(md`📝 Урок: «${card.currentLesson.title}»`);
+    if (progress.card.currentProject) {
+      lines.push(md``, md`📁 Проект: «${progress.card.currentProject.title}»`);
+      if (progress.card.currentLesson) {
+        lines.push(md`📝 Урок: «${progress.card.currentLesson.title}»`);
       }
       lines.push(
         mdConcat(
           mdRaw(
-            `📊 Прогресс по проекту: ${bar(card.currentProject.progress.completed, card.currentProject.progress.total)} \\| `,
+            `📊 Прогресс по проекту: ${bar(progress.card.currentProject.progress.completed, progress.card.currentProject.progress.total)} \\| `,
           ),
-          md`${card.currentProject.progress.percent}%`,
+          md`${progress.card.currentProject.progress.percent}%`,
         ),
       );
     }
@@ -723,10 +706,10 @@ export class ViewStreamStory extends U7BotUiStory {
     lines.push(md``, md`———`, md``, md`*Усидчивость студента:*`);
 
     // Среднее время
-    if (card.medianTimeMinutes !== null) {
+    if (progress.card.medianTimeMinutes !== null) {
       lines.push(
         md``,
-        md`⏱ Типичное время на шаг: ${card.medianTimeMinutes} мин\\.`,
+        md`⏱ Типичное время на шаг: ${progress.card.medianTimeMinutes} мин\\.`,
       );
     }
 
@@ -737,7 +720,7 @@ export class ViewStreamStory extends U7BotUiStory {
       Вдумчивый: '< 15 мин\\.',
       Исследователь: '\\> 15 мин\\.',
     };
-    for (const c of card.timeCategories) {
+    for (const c of progress.card.timeCategories) {
       const desc = catDescs[c.name] ?? '';
       lines.push(
         mdConcat(
@@ -752,7 +735,7 @@ export class ViewStreamStory extends U7BotUiStory {
     lines.push(md``, md`———`, md``, md`*Активность студента:*`);
 
     // Последняя активность
-    const hours = Math.round(card.hoursSinceLastActivity);
+    const hours = Math.round(progress.card.hoursSinceLastActivity);
     if (hours > 0) {
       const days = Math.round(hours / 24);
       if (days >= 1) {
@@ -765,12 +748,12 @@ export class ViewStreamStory extends U7BotUiStory {
     // Отставание / статус: учится сейчас (живая запись, не зачисление) —
     // признаки агрегата StudentAr (ФР‑10)
     if (student.inProgress && !student.enrolled) {
-      if (card.lagLevel === 'critical') {
-        const days = Math.round(card.hoursSinceLastActivity / 24);
+      if (progress.card.lagLevel === 'critical') {
+        const days = Math.round(progress.card.hoursSinceLastActivity / 24);
         lines.push(md``, md`🛑 Критическое отставание: ${days} дн\\.`);
-      } else if (card.lagLevel === 'lagging') {
-        if (card.hoursSinceLastActivity > 4 * 24) {
-          const days = Math.round(card.hoursSinceLastActivity / 24);
+      } else if (progress.card.lagLevel === 'lagging') {
+        if (progress.card.hoursSinceLastActivity > 4 * 24) {
+          const days = Math.round(progress.card.hoursSinceLastActivity / 24);
           lines.push(md``, md`⚠️ Отстаёт: ${days} дн\\.`);
         } else {
           lines.push(md``, md`⚠️ Отстаёт от группы`);
@@ -916,11 +899,14 @@ export class ViewStreamStory extends U7BotUiStory {
         return this.#wrongKey(streamId, attempts);
       }
       if (enrolled.error.code === StudentErrors.PREREQUISITE_NOT_PASSED.code) {
-        const moduleTitle = (
-          enrolled.error.payload as { moduleTitle?: string } | undefined
-        )?.moduleTitle;
+        // Payload восстанавливается по схеме ошибки: без утверждения типа.
+        const payload = StudentErrors.PREREQUISITE_NOT_PASSED.restore(
+          enrolled.error.payload,
+        )?.payload;
+        // Payload не по схеме — текст ошибки без пустого названия модуля
+        if (!payload) return this.warn(md`${enrolled.error.label}`);
         // Прежний текст отказа допуска к модулю
-        return this.warn(md`Сначала пройдите модуль «${moduleTitle ?? ''}»`);
+        return this.warn(md`Сначала пройдите модуль «${payload.moduleTitle}»`);
       }
       // Ошибки валидации/конфликты — реплика-переспрос без захвата экрана
       return this.ucErrorNotify(enrolled.error);

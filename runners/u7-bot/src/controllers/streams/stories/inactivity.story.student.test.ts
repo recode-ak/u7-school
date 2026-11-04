@@ -8,7 +8,7 @@ import { InactivityStory } from './inactivity.story';
 import { dmgDispatch, streamNotFound, streamView } from './stream-dmg.test-kit';
 
 // Подписки InactivityStory на Def-события студента (решение 17 брифа среза
-// student). Адрес — по профилю через legacy `get-user` (С2, вариант a),
+// student). Адрес — по профилю через legacy `get-user` (вариант a),
 // ментор — `getStream(streamId).mentorId`; Job и UC адресов не знают.
 // События приходят в legacy-форме шины: `eventName` — FQN Def.
 //   - inactivityWarning / inactivityRemoveCandidate: поле `days`;

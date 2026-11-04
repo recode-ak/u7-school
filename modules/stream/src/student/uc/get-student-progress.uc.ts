@@ -1,5 +1,6 @@
 import {
   GetStudentProgressUcDef,
+  StreamMembersDqs,
   type StreamModuleDef,
   StudentErrors,
   StudentProgressDqs,
@@ -16,6 +17,7 @@ type Input = ParsedInputOf<typeof GetStudentProgressUcDef>;
 
 /**
  * Запись студента и расчёты по снимку контента потока (`StudentProgressDqs`).
+ * Отставание в карточке — из `StreamMembersDqs.roster` по студентам потока.
  * Потока нет — `progress` не заполняется. Прогресс виден любому (`allowAll`).
  */
 export class GetStudentProgressUc extends UseCaseFromDef<
@@ -43,30 +45,33 @@ export class GetStudentProgressUc extends UseCaseFromDef<
     const stream = await streams.findById(student.view().streamId);
     if (!stream) return ok({ student: student.view() });
 
-    const snapshot = stream.view().contentSnapshot;
-    const dqs = StudentProgressDqs;
+    // Медиана отставания — по учащимся потока, поэтому нужен весь состав.
+    const lag = new StreamMembersDqs(
+      stream,
+      await students.findByStream(stream.uuid),
+    )
+      .roster(this.now())
+      .find((row) => row.studentId === student.uuid);
+
+    const dqs = new StudentProgressDqs(stream.view().contentSnapshot, student);
     return ok({
       student: student.view(),
       progress: {
-        module: dqs.computeProgress(snapshot, student),
-        projects: dqs.computeStreamProjectProgress(snapshot, student),
-        card: dqs.computeStudentCard(snapshot, student),
-        tree: dqs.buildNavigationTree(snapshot, student),
+        module: dqs.computeProgress(),
+        projects: dqs.computeStreamProjectProgress(),
+        card: dqs.computeStudentCard(lag),
+        tree: dqs.buildNavigationTree(),
         step:
           stepId === undefined
             ? undefined
             : {
-                position: dqs.stepPosition(snapshot, stepId) ?? undefined,
-                lessonProgress: dqs.getStepLessonProgress(
-                  snapshot,
-                  stepId,
-                  student,
-                ),
+                position: dqs.stepPosition(stepId) ?? undefined,
+                lessonProgress: dqs.getStepLessonProgress(stepId),
               },
         lesson:
           lessonId === undefined
             ? undefined
-            : (dqs.buildLessonSteps(snapshot, lessonId, student) ?? undefined),
+            : (dqs.buildLessonSteps(lessonId) ?? undefined),
       },
     });
   }

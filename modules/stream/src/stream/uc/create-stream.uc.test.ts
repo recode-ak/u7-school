@@ -27,7 +27,7 @@ import {
 // Перенос `api/stream/create-stream-uc.test.ts`.
 // Сохраняется: статус enrollment, необязательные поля, ключа без enrollmentKey нет,
 // schoolId — школа приложения, снимок модуля в момент создания, created после
-// записи, гость и не-ментор — отказ. Новое (С3): ментор — субъект.
+// записи, гость и не-ментор — отказ. Новое: ментор — субъект.
 
 let env: ReturnType<typeof makeEnv>;
 let uc: CreateStreamUc;

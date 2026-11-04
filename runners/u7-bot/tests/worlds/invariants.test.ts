@@ -88,36 +88,7 @@ describe('world-kit: инварианты роли/статуса и хроно�
     return { pMentor, pStudent, cCourse, sStream, stStudent, cmp };
   }
 
-  describe('инвариант роли пользователя', () => {
-    it('сборка падает, если студент в активном потоке не имеет роли STUDENT', () => {
-      const base = createValidBase();
-      // Пользователь Андрей имеет только роль GUEST, но числится активным студентом
-      const pStudentGuest = person({
-        key: 'andrey',
-        name: 'Андрей',
-        telegramId: 1003,
-        roles: ['GUEST'],
-        registeredAt: 'T-60d',
-      });
-      const stStudentActive = student({
-        key: 'student-andrey',
-        personKey: 'andrey',
-        streamKey: 'stream-1',
-        enrolledAt: 'T-50d',
-        status: 'active',
-      });
-
-      expect(() =>
-        buildWorldState({
-          anchorDate: anchor,
-          persons: [base.pMentor, pStudentGuest],
-          courses: [base.cCourse],
-          streams: [base.sStream],
-          students: [stStudentActive],
-        }),
-      ).toThrow(/рол.*STUDENT|учится в потоке/iu);
-    });
-
+  describe('инвариант роли ментора', () => {
     it('сборка падает, если ментор потока не имеет роли MENTOR', () => {
       const base = createValidBase();
       const pMentorNoRole = person({

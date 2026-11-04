@@ -73,37 +73,52 @@ function durationOf(step: StepRecord): number | undefined {
   return duration < 0 ? undefined : duration;
 }
 
+function countSteps(snapshot: ContentSnapshot): number {
+  return snapshot.reduce(
+    (sum, p) => sum + p.lessons.reduce((s, l) => s + l.stepIds.length, 0),
+    0,
+  );
+}
+
+function categoriesOf(stats: StepTimeStats): TimeCategory[] {
+  const counts = [stats.runner, stats.fast, stats.normal, stats.deep];
+  return TIME_CATEGORIES.map((category, index) => ({
+    ...category,
+    count: counts[index] ?? 0,
+  }));
+}
+
 /**
  * DQS: прогресс студента по снимку контента потока — прогресс, дерево
- * навигации, статистика времени, карточка. Только читает; момент `at`
- * (отставание) приходит аргументом.
- *
- * `snapshot` — полный снимок потока или частичный (один проект): считаются
- * только шаги, которые есть в переданном снимке.
+ * навигации, статистика времени, карточка. Только читает; отставание
+ * приходит аргументом. Считаются только шаги, которые есть в переданном
+ * снимке (полный поток или его часть).
  */
-export const StudentProgressDqs = {
+export class StudentProgressDqs {
+  constructor(
+    private readonly snapshot: ContentSnapshot,
+    private readonly student: Student,
+  ) {}
+
   /** Прогресс по шагам: завершено из общего числа шагов снимка. */
-  computeProgress(snapshot: ContentSnapshot, student: Student): Progress {
+  computeProgress(): Progress {
     const inSnapshot = new Set(
-      snapshot.flatMap((p) => p.lessons.flatMap((l) => l.stepIds)),
+      this.snapshot.flatMap((p) => p.lessons.flatMap((l) => l.stepIds)),
     );
-    const done = stepsOf(student).filter(
+    const done = stepsOf(this.student).filter(
       (step) => step.status === 'completed' && inSnapshot.has(step.stepId),
     ).length;
-    return progressOf(done, countSteps(snapshot));
-  },
+    return progressOf(done, countSteps(this.snapshot));
+  }
 
   /** Дерево навигации: проекты → уроки → шаги со статусами completed/current/locked. */
-  buildNavigationTree(
-    snapshot: ContentSnapshot,
-    student: Student,
-  ): NavigationTree {
+  buildNavigationTree(): NavigationTree {
     return {
-      projects: snapshot.map((project) => {
+      projects: this.snapshot.map((project) => {
         let completedLessons = 0;
         let hasCurrent = false;
         const lessons = project.lessons.map((lesson) => {
-          const steps = nodesOf(lesson.stepIds, student);
+          const steps = nodesOf(lesson.stepIds, this.student);
           const completedSteps = steps.filter(
             (s) => s.status === 'completed',
           ).length;
@@ -141,15 +156,11 @@ export const StudentProgressDqs = {
         };
       }),
     };
-  },
+  }
 
   /** Шаги урока с заголовками и индексами (с 1); урока нет — `null`. */
-  buildLessonSteps(
-    snapshot: ContentSnapshot,
-    lessonId: string,
-    student: Student,
-  ): LessonSteps | null {
-    for (const [pi, project] of snapshot.entries()) {
+  buildLessonSteps(lessonId: string): LessonSteps | null {
+    for (const [pi, project] of this.snapshot.entries()) {
       for (const [li, lesson] of project.lessons.entries()) {
         if (lesson.lessonId !== lessonId) continue;
         return {
@@ -157,70 +168,59 @@ export const StudentProgressDqs = {
           lessonIndex: li + 1,
           projectTitle: project.projectTitle,
           projectIndex: pi + 1,
-          steps: nodesOf(lesson.stepIds, student),
+          steps: nodesOf(lesson.stepIds, this.student),
         };
       }
     }
     return null;
-  },
+  }
 
   /** Прогресс проекта: сколько его уроков завершены (все шаги урока выполнены). */
-  computeProjectLevelProgress(
-    snapshot: ContentSnapshot,
-    projectIndex: number,
-    student: Student,
-  ): Progress {
-    const project = snapshot[projectIndex];
+  computeProjectLevelProgress(projectIndex: number): Progress {
+    const project = this.snapshot[projectIndex];
     if (!project) return NO_PROGRESS;
-    const done = completedIds(student);
+    const done = completedIds(this.student);
     return progressOf(
       project.lessons.filter((l) => l.stepIds.every((id) => done.has(id)))
         .length,
       project.lessons.length,
     );
-  },
+  }
 
   /** Прогресс по проектам: сколько проектов завершены (все уроки выполнены). */
-  computeStreamProjectProgress(
-    snapshot: ContentSnapshot,
-    student: Student,
-  ): Progress {
-    const done = completedIds(student);
+  computeStreamProjectProgress(): Progress {
+    const done = completedIds(this.student);
     return progressOf(
-      snapshot.filter((p) =>
+      this.snapshot.filter((p) =>
         p.lessons.every((l) => l.stepIds.every((id) => done.has(id))),
       ).length,
-      snapshot.length,
+      this.snapshot.length,
     );
-  },
+  }
 
   /**
    * Прогресс в уроке шага. Урок ищется по самому шагу, а не по заголовку:
    * заголовки уроков в снимке не уникальны.
    */
-  getStepLessonProgress(
-    snapshot: ContentSnapshot,
-    stepId: string,
-    student: Student,
-  ): Progress {
-    const lesson = snapshot
+  getStepLessonProgress(stepId: string): Progress {
+    const lesson = this.snapshot
       .flatMap((p) => p.lessons)
       .find((l) => l.stepIds.includes(stepId));
     if (!lesson) return NO_PROGRESS;
-    const done = completedIds(student);
+    const done = completedIds(this.student);
     return progressOf(
       lesson.stepIds.filter((id) => done.has(id)).length,
       lesson.stepIds.length,
     );
-  },
+  }
 
   /**
    * Позиция шага в снимке: индексы (с 1), заголовки, число шагов урока.
    * Шага нет — `null`. Копия `CourseDs.findStepPosition`: домен не импортирует
    * чужой индекс.
    */
-  stepPosition(snapshot: ContentSnapshot, stepId: string): StepPosition | null {
-    for (const [pi, project] of snapshot.entries()) {
+  stepPosition(stepId: string): StepPosition | null {
+    for (const [pi, project] of this.snapshot.entries()) {
       for (const [li, lesson] of project.lessons.entries()) {
         const index = lesson.stepIds.indexOf(stepId);
         if (index === -1) continue;
@@ -235,12 +235,12 @@ export const StudentProgressDqs = {
       }
     }
     return null;
-  },
+  }
 
   /** Сколько завершённых шагов в каждой категории времени (<1, 1–5, 5–15, ≥15 минут). */
-  computeStepTimeStats(student: Student): StepTimeStats {
+  computeStepTimeStats(): StepTimeStats {
     const stats = { runner: 0, fast: 0, normal: 0, deep: 0 };
-    for (const step of stepsOf(student)) {
+    for (const step of stepsOf(this.student)) {
       const duration = durationOf(step);
       if (duration === undefined) continue;
       const minutes = duration / MINUTE_MS;
@@ -250,14 +250,14 @@ export const StudentProgressDqs = {
       else stats.deep++;
     }
     return stats;
-  },
+  }
 
   /** Медиана минут на шаг (устойчива к выбросам) и преобладающая категория времени. */
-  computeAvgTime(student: Student): {
+  computeAvgTime(): {
     medianMinutes: number | null;
     dominant: TimeCategory | null;
   } {
-    const durations = stepsOf(student)
+    const durations = stepsOf(this.student)
       .map(durationOf)
       .filter((d): d is number => d !== undefined)
       .sort((a, b) => a - b);
@@ -267,79 +267,47 @@ export const StudentProgressDqs = {
       durations.length % 2 === 0
         ? ((durations[mid - 1] ?? 0) + (durations[mid] ?? 0)) / 2
         : (durations[mid] ?? 0);
-    const counts = categoriesOf(
-      StudentProgressDqs.computeStepTimeStats(student),
-    );
+    const counts = categoriesOf(this.computeStepTimeStats());
     const top = [...counts].sort((a, b) => b.count - a.count)[0];
     return {
       medianMinutes: Math.round(medianMs / MINUTE_MS),
       dominant: top && top.count > 0 ? top : null,
     };
-  },
+  }
 
   /** Сводка студента для строки списка: прогресс, медиана времени, преобладающая категория. */
-  computeStudentRowSummary(
-    snapshot: ContentSnapshot,
-    student: Student,
-  ): StudentRowSummary {
-    const { medianMinutes, dominant } =
-      StudentProgressDqs.computeAvgTime(student);
+  computeStudentRowSummary(): StudentRowSummary {
+    const { medianMinutes, dominant } = this.computeAvgTime();
     return {
-      progress: StudentProgressDqs.computeProgress(snapshot, student),
+      progress: this.computeProgress(),
       medianTimeMinutes: medianMinutes,
       dominantCategory: dominant,
     };
-  },
+  }
 
   /**
    * Карточка студента: прогресс модуля и текущего проекта, текущий урок,
    * время по категориям. Отставание — аргумент (считает `StreamMembersDqs.roster`);
    * не задано — `on_track` и 0 часов.
    */
-  computeStudentCard(
-    snapshot: ContentSnapshot,
-    student: Student,
-    lag?: LagInfo,
-  ): StudentCard {
-    const position = StudentProgressDqs.stepPosition(
-      snapshot,
-      student.currentStepId(),
-    );
-    const { medianMinutes } = StudentProgressDqs.computeAvgTime(student);
+  computeStudentCard(lag?: LagInfo): StudentCard {
+    const position = this.stepPosition(this.student.currentStepId());
+    const { medianMinutes } = this.computeAvgTime();
     return {
-      moduleProgress: StudentProgressDqs.computeProgress(snapshot, student),
+      moduleProgress: this.computeProgress(),
       currentProject: position
         ? {
             title: position.projectTitle,
-            progress: StudentProgressDqs.computeProjectLevelProgress(
-              snapshot,
+            progress: this.computeProjectLevelProgress(
               position.projectIndex - 1,
-              student,
             ),
           }
         : undefined,
       currentLesson: position ? { title: position.lessonTitle } : undefined,
       medianTimeMinutes: medianMinutes,
-      timeCategories: categoriesOf(
-        StudentProgressDqs.computeStepTimeStats(student),
-      ),
+      timeCategories: categoriesOf(this.computeStepTimeStats()),
       hoursSinceLastActivity: lag?.hoursSinceLastActivity ?? 0,
       lagLevel: lag?.lagLevel ?? 'on_track',
     };
-  },
-};
-
-function countSteps(snapshot: ContentSnapshot): number {
-  return snapshot.reduce(
-    (sum, p) => sum + p.lessons.reduce((s, l) => s + l.stepIds.length, 0),
-    0,
-  );
-}
-
-function categoriesOf(stats: StepTimeStats): TimeCategory[] {
-  const counts = [stats.runner, stats.fast, stats.normal, stats.deep];
-  return TIME_CATEGORIES.map((category, index) => ({
-    ...category,
-    count: counts[index] ?? 0,
-  }));
+  }
 }

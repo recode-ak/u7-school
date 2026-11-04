@@ -40,9 +40,9 @@ export class CompleteStreamUc extends UseCaseFromDef<
   }
 
   /** Студенты — свой репозиторий, не чужой модуль: спрашиваем после права. */
-  protected override async fetch({ streamId }: Input) {
+  protected override async fetch({ streamId }: Input, { stream }: Loaded) {
     const students = await this.resolve.students.findByStream(streamId);
-    return ok({ students: StreamMembersDqs.facts(students) });
+    return ok({ students: new StreamMembersDqs(stream, students).facts() });
   }
 
   protected async execute(_: Input, { stream }: Loaded, uow: UnitOfWork) {

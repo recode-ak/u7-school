@@ -22,8 +22,8 @@ import {
 } from './student-uc.fixture';
 
 // Перенос `api/student/complete-step-uc.test.ts`. Студент своё — Policy isSelf
-// (Т8: legacy `canCompleteStep` не применялся). «Студент не найден» —
-// `not_found`, а не `access` (Т9).
+// (legacy `canCompleteStep` не применялся). «Студент не найден» —
+// `not_found`, а не `access`.
 
 const OTHER_STEP = '99999999-9999-4999-8999-999999999999';
 let env: ReturnType<typeof makeEnv>;

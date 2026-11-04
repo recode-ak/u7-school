@@ -37,18 +37,19 @@ export class GetStreamMembersUc extends UseCaseFromDef<
     if (!stream) return ok(undefined);
 
     const students = await this.resolve.students.findByStream(streamId);
+    const members = new StreamMembersDqs(stream, students);
     return ok({
       mentorId: stream.view().mentorId,
-      students: StreamMembersDqs.facts(students).map(
-        ({ studentId, userId, status, neverStarted, inProgress }) => ({
+      students: members
+        .facts()
+        .map(({ studentId, userId, status, neverStarted, inProgress }) => ({
           studentId,
           userId,
           status,
           neverStarted,
           inProgress,
-        }),
-      ),
-      roster: StreamMembersDqs.roster(stream, students, this.now()),
+        })),
+      roster: members.roster(this.now()),
     });
   }
 }

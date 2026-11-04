@@ -59,7 +59,7 @@ const studentAt = (stepId: string, extra = {}) =>
   );
 
 const run = (s: StreamAr, st: StudentAr, stepId: string) =>
-  StepCompletionDcs.completeStep(s, st, stepId, T1);
+  new StepCompletionDcs(s, st).completeStep(stepId, T1);
 
 describe('StepCompletionDcs.completeStep — уровни', () => {
   it('step: следующий шаг в том же уроке', () => {

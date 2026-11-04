@@ -23,7 +23,7 @@ import {
 
 // Перенос `api/student/drop-student-uc.test.ts`. Самовыход: Policy isSelf
 // («Вы не можете выйти из чужого потока»). Уведомление ментору (стори) теперь
-// подписано на событие abandoned. Т8: студент должен принадлежать потоку входа.
+// подписано на событие abandoned. Студент должен принадлежать потоку входа.
 
 let env: ReturnType<typeof makeEnv>;
 const uc = () => new DropStudentUc(env.deps, StreamModuleDef);

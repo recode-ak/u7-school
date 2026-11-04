@@ -6,7 +6,7 @@ import { StreamLaunchDcs } from './stream-launch.dcs';
 import { StudentAr } from './student/student.ar';
 import { issued, STUDENT, stored, T0, T1 } from './student/student.fixture';
 
-// Перенос `StreamStudents.launch` (legacy-stream-students.test.ts) в DCS (С2 Ф1):
+// Перенос `StreamStudents.launch` (legacy-stream-students.test.ts) в DCS:
 // сначала поток `activate`, затем каждому `enrolled` — activate, каждому без
 // шагов (статус не важен) — первый шаг. Возвращает изменённых студентов.
 
@@ -26,14 +26,14 @@ const student = (
 describe('StreamLaunchDcs.launch', () => {
   it('поток переходит в active', () => {
     const s = stream();
-    expectOk(StreamLaunchDcs.launch(s, [], T1));
+    expectOk(new StreamLaunchDcs(s, []).launch(T1));
     expect(s.snapshot().status).toBe('active');
   });
 
   it('поток не в наборе — STREAM_NOT_ENROLLING, студенты не тронуты', () => {
     const s = student(STUDENT, 'enrolled');
     expectErr(
-      StreamLaunchDcs.launch(stream('active'), [s], T1),
+      new StreamLaunchDcs(stream('active'), [s]).launch(T1),
       'STREAM_NOT_ENROLLING',
     );
     expect(s.snapshot().status).toBe('enrolled');
@@ -41,7 +41,7 @@ describe('StreamLaunchDcs.launch', () => {
 
   it('enrolled → active и получает первый шаг снимка', () => {
     const s = student(STUDENT, 'enrolled');
-    const changed = expectOk(StreamLaunchDcs.launch(stream(), [s], T1));
+    const changed = expectOk(new StreamLaunchDcs(stream(), [s]).launch(T1));
     expect(ids(changed)).toEqual([STUDENT]);
     expect(s.snapshot().status).toBe('active');
     expect(s.snapshot().steps).toEqual([issued(STEP_1, T1)]);
@@ -50,7 +50,7 @@ describe('StreamLaunchDcs.launch', () => {
 
   it('active без шагов получает первый шаг, статус остаётся', () => {
     const s = student(STUDENT, 'active');
-    const changed = expectOk(StreamLaunchDcs.launch(stream(), [s], T1));
+    const changed = expectOk(new StreamLaunchDcs(stream(), [s]).launch(T1));
     expect(ids(changed)).toEqual([STUDENT]);
     expect(s.snapshot().status).toBe('active');
     expect(s.snapshot().steps).toHaveLength(1);
@@ -58,14 +58,14 @@ describe('StreamLaunchDcs.launch', () => {
 
   it('студент с шагами не меняется и не возвращается', () => {
     const s = student(STUDENT, 'active', { steps: [issued(STEP_1, T0)] });
-    const changed = expectOk(StreamLaunchDcs.launch(stream(), [s], T1));
+    const changed = expectOk(new StreamLaunchDcs(stream(), [s]).launch(T1));
     expect(changed).toEqual([]);
     expect(s.snapshot().steps).toEqual([issued(STEP_1, T0)]);
   });
 
   it('первый шаг выдаётся и ушедшему без шагов (статус не учитывается, как в legacy)', () => {
     const s = student(STUDENT, 'abandoned');
-    const changed = expectOk(StreamLaunchDcs.launch(stream(), [s], T1));
+    const changed = expectOk(new StreamLaunchDcs(stream(), [s]).launch(T1));
     expect(ids(changed)).toEqual([STUDENT]);
     expect(s.snapshot().status).toBe('abandoned');
     expect(s.snapshot().steps).toEqual([issued(STEP_1, T1)]);
@@ -77,7 +77,7 @@ describe('StreamLaunchDcs.launch', () => {
     const c = student(U3, 'enrolled', { steps: [issued(STEP_1, T0)] });
     const d = student(U4, 'advanced', { steps: [issued(STEP_1, T0)] });
     const changed = expectOk(
-      StreamLaunchDcs.launch(stream(), [a, b, c, d], T1),
+      new StreamLaunchDcs(stream(), [a, b, c, d]).launch(T1),
     );
     expect(ids(changed)).toEqual([STUDENT, U3]);
     expect(c.snapshot().status).toBe('active');
@@ -87,7 +87,7 @@ describe('StreamLaunchDcs.launch', () => {
   it('первого шага в потоке нет — поток активен, студенты не меняются', () => {
     const s = student(STUDENT, 'enrolled');
     const flow = stream('enrollment', { contentSnapshot: [] });
-    const changed = expectOk(StreamLaunchDcs.launch(flow, [s], T1));
+    const changed = expectOk(new StreamLaunchDcs(flow, [s]).launch(T1));
     expect(changed).toEqual([]);
     expect(flow.snapshot().status).toBe('active');
     expect(s.snapshot().status).toBe('enrolled');
@@ -95,6 +95,6 @@ describe('StreamLaunchDcs.launch', () => {
   });
 
   it('студентов нет — Ok с пустым списком', () => {
-    expect(expectOk(StreamLaunchDcs.launch(stream(), [], T1))).toEqual([]);
+    expect(expectOk(new StreamLaunchDcs(stream(), []).launch(T1))).toEqual([]);
   });
 });

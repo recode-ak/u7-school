@@ -24,7 +24,7 @@ import {
 
 // Перенос `api/student/complete-student-uc.test.ts`. Исход `abandoned` убран
 // из команды (теперь `markAbandoned`); уведомления студенту шлёт story.
-// Т8: студент должен принадлежать потоку из входа.
+// Студент должен принадлежать потоку из входа.
 
 let env: ReturnType<typeof makeEnv>;
 const uc = () => new CompleteStudentUc(env.deps, StreamModuleDef);

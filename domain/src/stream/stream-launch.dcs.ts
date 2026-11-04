@@ -16,29 +16,27 @@ export type StreamLaunchError =
   | ErrorOf<typeof StudentErrors.STEP_ALREADY_ISSUED>;
 
 /**
- * Запуск потока: переводит поток в активный и поднимает его студентов.
- *
- * Сначала `stream.activate` — отказ потока оставляет студентов нетронутыми.
- * Затем каждому зачисленному — `activate`, каждому без шагов (статус не
- * важен, как в legacy) — первый шаг потока. Что нужно студенту, отвечает
- * сам `StudentAr`; сервис собирает порядок и применяет.
+ * Запуск потока: `stream.activate`, затем зачисленным — `activate`, а
+ * каждому без шагов (статус не важен, как в legacy) — первый шаг. Отказ
+ * потока оставляет студентов нетронутыми; порядок собирает сервис.
  */
-export const StreamLaunchDcs = {
+export class StreamLaunchDcs {
+  constructor(
+    private readonly stream: StreamAr,
+    private readonly students: readonly StudentAr[],
+  ) {}
+
   /**
    * Запускает поток и возвращает изменённых студентов — их регистрирует
    * вызывающий. Первого шага в потоке нет — поток активен, студенты не меняются.
    */
-  launch(
-    stream: StreamAr,
-    students: readonly StudentAr[],
-    at: Timestamp,
-  ): Result<readonly StudentAr[], StreamLaunchError> {
-    const activated = stream.activate(at);
+  launch(at: Timestamp): Result<readonly StudentAr[], StreamLaunchError> {
+    const activated = this.stream.activate(at);
     if (!activated.ok) return activated;
-    const firstStepId = stream.firstStepId();
+    const firstStepId = this.stream.firstStepId();
     if (firstStepId === undefined) return ok([]);
     const changed: StudentAr[] = [];
-    for (const student of students) {
+    for (const student of this.students) {
       let touched = false;
       if (student.isEnrolled()) {
         const res = student.activate(at);
@@ -53,5 +51,5 @@ export const StreamLaunchDcs = {
       if (touched) changed.push(student);
     }
     return ok(changed);
-  },
-};
+  }
+}

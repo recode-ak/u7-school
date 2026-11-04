@@ -4,7 +4,7 @@ import * as v from 'valibot';
 /**
  * Ошибки агрегата `stream`. `label` — текст, который видит пользователь
  * (прежние тексты legacy-исключений); число студентов в него не входит —
- * `label` статичен, а список лежит в `payload` (Т14).
+ * `label` статичен, а список лежит в `payload`.
  */
 export const StreamErrors = ErrorDef.define('STREAM', {
   NOT_FOUND: {

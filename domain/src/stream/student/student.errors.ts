@@ -4,7 +4,7 @@ import * as v from 'valibot';
 /**
  * Ошибки агрегата `student`. `label` — текст, который видит пользователь
  * (прежние тексты legacy-исключений); статус студента в него не входит —
- * `label` статичен (Т10, Т14 Ф1).
+ * `label` статичен.
  */
 export const StudentErrors = ErrorDef.define('STUDENT', {
   NOT_FOUND: {

@@ -3,6 +3,10 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import {
+  CreateStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -11,6 +15,9 @@ import {
   stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { UserCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
+import { expectOk } from 'dmg-core/testing';
 
 /**
  * Интеграционный тест S02-S04: карточка потока, программа, детали.
@@ -333,5 +340,39 @@ describe('ViewStreamStory (интеграционный)', () => {
       (m) => m.telegramId === tgId && m.text.includes('зачислен'),
     );
     expect(duplicates).toHaveLength(0);
+  });
+
+  // ── Допуск к модулю (PREREQUISITE_NOT_PASSED) ──
+
+  test('запись на модуль без пройденного предыдущего → «Сначала пройдите модуль «…»»', async () => {
+    // Алгоритмика — последняя фаза; кандидат 1002 предыдущий модуль не проходил
+    const stream = expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        CreateStreamUcDef.command({
+          title: 'Алгоритмика — закрытый допуск',
+          description: 'Поток для проверки допуска',
+          moduleId: 'a1a1a1a1-b1b1-4b1b-8b1b-b1b1b1b1b1b1',
+          startDate: Date.UTC(2026, 10, 1),
+        }),
+        new UserCaller(mentor),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    );
+
+    const candidate = (await app.userFacade.getUserByTelegramId(1002))!;
+    await openView(candidate, 'view', stream.streamId);
+    const tgId = candidate.telegramId;
+    const response = await transport.handleCallback(
+      transport.makeBotContext(tgId, {
+        callbackData: pressedCode(transport, tgId, 'Записаться'),
+      }),
+    );
+
+    const text = (response.notify?.text ??
+      response.screen?.text ??
+      '') as string;
+    expect(text).toMatch(/Сначала пройдите модуль «.+»/);
+    expect(text).not.toContain('записаны');
   });
 });

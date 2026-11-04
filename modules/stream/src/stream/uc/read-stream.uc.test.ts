@@ -23,7 +23,7 @@ import {
 
 // Перенос `get-stream-uc`, `list-streams-uc`, `stream-in-proc-facade` (getMembers),
 // `get-stream-members.uc`: чтение открыто всем (allowAll), включая гостя;
-// ключ записи в ответ не попадает (С1).
+// ключ записи в ответ не попадает.
 
 let env: ReturnType<typeof makeEnv>;
 beforeEach(() => {

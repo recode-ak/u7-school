@@ -48,25 +48,10 @@ export type StudentAbandonedEvent = StudentEventOf<
 type Profile = { name: string; telegramId?: number };
 
 /**
- * Проактивные уведомления о бездействии и уходе из учёбы.
- *
- * Подписки на события Job `inactivitySweep` и агрегата Student (FQN Def):
- * - `StudentEvents.inactivityWarning` (5+ дней) → студенту предупреждение
- *   с кнопкой «🚪 Покинуть учёбу» (самовыход, FR-4);
- * - `StudentEvents.inactivityRemoveCandidate` (7+ дней) → ментору потока
- *   «Студент A из группы B не занимался N дней» с кнопкой
- *   «⚠️ Снять с учёбы» (FR-5, cause=inactivity);
- * - `StudentEvents.abandoned` → мягкий кик из TG-группы потока и текст:
- *   самовыход → ментору (#3, `info`); снятие ментором по бездействию →
- *   студенту (#4, `warn`); снятие по усмотрению ментора — без текста (Т6).
- *
- * Адрес получателя события не несёт: telegramId — по профилю через legacy
- * `get-user` (С2), ментор — `getStream(streamId).mentorId`.
- *
- * Кнопочные проактивы идут каналом invite: получателю без открытого
- * диалога открывается экран «invite»,
- * кнопки штампуются и валидны. Нажатие обрабатывает handleCallback:
- * confirm-диалог → UC dropStudent / markAbandoned.
+ * Проактивные уведомления о бездействии и уходе из учёбы: события Job
+ * `inactivitySweep` и агрегата Student (FQN Def). Адрес получателя событие
+ * не несёт: telegramId — по профилю через legacy `get-user`, ментор —
+ * `getStream(streamId).mentorId`; нажатия обрабатывает handleCallback.
  */
 export class InactivityStory extends U7BotUiStory {
   readonly name = 'inactivity';

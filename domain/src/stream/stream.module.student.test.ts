@@ -4,7 +4,7 @@ import { normalize } from 'dmg-core/graph';
 import * as contract from './contract';
 import { StreamModuleDef } from './contract';
 
-// Паспорт модуля после среза `student` (Т1): внешний статус снят
+// Паспорт модуля после среза `student`: внешний статус снят
 // (иначе нельзя объявить Job, MAN-06), 17 UC, 1 Job. Заменяет
 // ожидания `stream.module.def.test.ts` (external, 9 UC, jobs: []).
 

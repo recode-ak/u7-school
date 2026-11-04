@@ -106,19 +106,12 @@ describe('world:check — валидатор мира', () => {
     const logs: string[] = [];
     const worldDef = createValidWorldDef();
 
-    // Вносим нарушение роли: студент активен, но имеет только GUEST
-    worldDef.persons[1] = person({
-      key: 'andrey',
-      name: 'Андрей',
-      telegramId: 1003,
-      roles: ['GUEST'],
-      registeredAt: 'T-60d',
-    });
+    // Вносим нарушение хронологии: зачисление раньше регистрации
     worldDef.students[0] = student({
       key: 'student-andrey',
       personKey: 'andrey',
       streamKey: 'stream-1',
-      enrolledAt: 'T-50d',
+      enrolledAt: 'T-70d',
       status: 'active',
     });
 
@@ -129,9 +122,13 @@ describe('world:check — валидатор мира', () => {
     expect(result.valid).toBe(false);
     expect(result.violations.length).toBeGreaterThan(0);
     expect(
-      result.violations.some((v) => v.code === 'STUDENT_ROLE_MISMATCH'),
+      result.violations.some(
+        (v) => v.code === 'CHRONOLOGY_REGISTRATION_AFTER_ENROLLMENT',
+      ),
     ).toBe(true);
-    expect(logs.some((l) => l.includes('STUDENT_ROLE_MISMATCH'))).toBe(true);
+    expect(
+      logs.some((l) => l.includes('CHRONOLOGY_REGISTRATION_AFTER_ENROLLMENT')),
+    ).toBe(true);
   });
 
   it('ловит несколько нарушений инвариантов одновременно', () => {

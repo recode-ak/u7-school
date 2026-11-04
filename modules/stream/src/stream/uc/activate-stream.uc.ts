@@ -46,11 +46,11 @@ export class ActivateStreamUc extends UseCaseFromDef<
     { stream, students }: Loaded,
     uow: UnitOfWork,
   ) {
-    const launched = StreamLaunchDcs.launch(stream, students, this.now());
+    const launched = new StreamLaunchDcs(stream, students).launch(this.now());
     if (!launched.ok) {
       // Ошибки студентов недостижимы: DCS трогает только зачисленных и без шагов
       const { error } = launched;
-      if (error.code === 'STREAM_NOT_ENROLLING') return err(error);
+      if (error.code === StreamErrors.NOT_ENROLLING.code) return err(error);
       throw new Error(`Запуск потока: ${error.code}`);
     }
     uow.register(stream, this.resolve.streams);

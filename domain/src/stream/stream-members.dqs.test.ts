@@ -39,15 +39,17 @@ const withActivity = (
     }),
   );
 
+const stream = StreamAr.restore(streamStored('active'));
+
 describe('StreamMembersDqs.facts', () => {
   it('факт по каждому студенту: статус, settled, inProgress, neverStarted', () => {
-    const facts = StreamMembersDqs.facts([
+    const facts = new StreamMembersDqs(stream, [
       withActivity(id(1), 'enrolled'),
       withActivity(id(2), 'active', 2),
       withActivity(id(3), 'abandoned'),
       withActivity(id(4), 'advanced', 2),
       withActivity(id(5), 'not_advanced', 2),
-    ]);
+    ]).facts();
     expect(
       facts.map((f) => [
         f.studentId,
@@ -67,14 +69,13 @@ describe('StreamMembersDqs.facts', () => {
   });
 
   it('студентов нет — пусто', () => {
-    expect(StreamMembersDqs.facts([])).toEqual([]);
+    expect(new StreamMembersDqs(stream, []).facts()).toEqual([]);
   });
 });
 
 describe('StreamMembersDqs.roster', () => {
-  const stream = StreamAr.restore(streamStored('active'));
   const roster = (...students: StudentAr[]) =>
-    StreamMembersDqs.roster(stream, students, AT);
+    new StreamMembersDqs(stream, students).roster(AT);
   const lag = (...students: StudentAr[]) =>
     roster(...students).map((r) => r.lagLevel);
 

@@ -22,8 +22,8 @@ import {
 } from './student-uc.fixture';
 
 // Перенос `api/student/mark-abandoned-uc.test.ts`. Уведомление студенту
-// (только `cause = inactivity`, Т6) теперь шлёт story по событию abandoned.
-// Т8: студент должен принадлежать потоку входа.
+// (только `cause = inactivity`) теперь шлёт story по событию abandoned.
+// Студент должен принадлежать потоку входа.
 
 let env: ReturnType<typeof makeEnv>;
 const uc = () => new MarkAbandonedUc(env.deps, StreamModuleDef);

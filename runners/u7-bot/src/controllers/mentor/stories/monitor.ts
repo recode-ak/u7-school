@@ -364,23 +364,7 @@ export class MonitorStory extends U7BotUiStory {
     if (!loadedStudent.ok) return loadedStudent.response;
     const { student, progress, userName } = loadedStudent;
     if (!progress) return this.warn(md`Поток не найден`);
-
-    // Отставание — из состава потока (медиана по учащимся)
-    const membersRes = await this.dispatchUc(
-      StreamModuleDef,
-      GetStreamMembersUcDef.command({ streamId: student.streamId }),
-      actor,
-    );
-    const lag = membersRes.ok
-      ? membersRes.value?.roster?.find((r) => r.studentId === student.uuid)
-      : undefined;
-    const card = lag
-      ? {
-          ...progress.card,
-          lagLevel: lag.lagLevel,
-          hoursSinceLastActivity: lag.hoursSinceLastActivity,
-        }
-      : progress.card;
+    const { card } = progress;
 
     const bar = (c: number, t: number) => this.#formatProgressBar(c, t);
     const lines: MdText[] = [

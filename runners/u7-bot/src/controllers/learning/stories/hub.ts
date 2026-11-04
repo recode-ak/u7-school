@@ -31,14 +31,9 @@ export type StudentCompletedEvent = DomainEvent & {
 };
 
 /**
- * Хаб «Моя учёба» — главное меню обучения, список действий студента.
- *
- * Самовыход (FR-4): кнопка «🚪 Покинуть учёбу» в меню хаба → confirm-диалог →
- * UC dropStudent → студент abandoned + мягкий кик из TG-группы (FR-6 —
- * событие StudentEvents.abandoned слушает InactivityStory).
- *
- * О зачислении студент узнаёт из флоу-ответа view-stream (с инструкцией
- * по /start) — подписки на StudentEvents.enrolled нет.
+ * Хаб «Моя учёба» — главное меню обучения: самовыход (FR-4) через UC
+ * dropStudent даёт abandoned и мягкий кик из TG-группы (FR-6, событие
+ * слушает InactivityStory). О зачислении студент узнаёт из view-stream.
  */
 export class HubStory extends U7BotUiStory {
   readonly name = 'hub';

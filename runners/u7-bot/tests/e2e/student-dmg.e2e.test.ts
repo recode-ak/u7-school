@@ -181,6 +181,73 @@ describe('E2E: completed → уведомление студенту (7a/7b/7c)'
     expect(text).toContain('Поздравляем');
   });
 
+  test('not_advanced → студенту «Пройти модуль снова» (7b)', async () => {
+    const { app, transport, mentor } = stand;
+    transport.reset();
+    const marina = (await app.userFacade.getUserByTelegramId(STUDENT_ADV_TG))!;
+
+    const stream = expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        CreateStreamUcDef.command({
+          title: 'Алгоритмика — Повторный поток',
+          description: 'Поток для исхода not_advanced',
+          moduleId: LAST_MODULE,
+          startDate: Date.UTC(2026, 10, 1),
+        }),
+        new UserCaller(mentor),
+        trace(),
+      ),
+    );
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        EnrollStudentUcDef.command({ streamId: stream.streamId }),
+        new UserCaller(marina),
+        trace(),
+      ),
+    );
+    const record = expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        GetStudentByUserUcDef.command({ userId: marina.uuid }),
+        new UserCaller(mentor),
+        trace(),
+      ),
+    );
+    expect(record.streamId).toBe(stream.streamId);
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        ActivateStreamUcDef.command({ streamId: stream.streamId }),
+        new UserCaller(mentor),
+        trace(),
+      ),
+    );
+
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        CompleteStudentUcDef.command({
+          streamId: stream.streamId,
+          studentId: record.uuid,
+          outcome: 'not_advanced',
+        }),
+        new UserCaller(mentor),
+        trace(),
+      ),
+    );
+
+    const text = await waitMessageFor(transport, STUDENT_ADV_TG);
+    expect(text).toContain('Модуль не пройден до конца');
+    const invite = transport.api.sentMessages.find(
+      (m) => m.telegramId === STUDENT_ADV_TG,
+    );
+    const button = invite?.keyboard?.rows.flat().at(0);
+    expect(invite?.keyboard?.rows.flat()).toHaveLength(1);
+    expect(button?.text).toBe('🔁 Пройти модуль снова');
+  });
+
   test('advanced на модуле со следующим → студенту уведомления нет', async () => {
     const { app, transport, mentor } = stand;
     transport.reset();

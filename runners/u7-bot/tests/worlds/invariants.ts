@@ -31,7 +31,8 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
     state.streams.map((s) => [s.uuid, s]),
   );
 
-  // 1. Инварианты роли и статуса студента
+  // 1. Инварианты студента: пользователь и хронология (роль STUDENT stream
+  // не ведёт)
   for (const st of state.students) {
     const user = usersById.get(st.userId);
     if (!user) {
@@ -42,16 +43,6 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
         id: st.uuid,
       });
       continue;
-    }
-
-    const hasStudentRole = user.roles.some((r) => r === Role.STUDENT);
-    if (st.status === 'active' && !hasStudentRole) {
-      violations.push({
-        code: 'STUDENT_ROLE_MISMATCH',
-        message: `Пользователь "${user.name}" (${user.uuid}) учится в активном потоке со статусом "${st.status}", но не имеет роли STUDENT (роли: ${user.roles.join(', ')})`,
-        entity: 'User',
-        id: user.uuid,
-      });
     }
 
     // Хронология: регистрация пользователя <= зачисление студента

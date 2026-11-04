@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
+import { StreamMembersDqs } from '@u7-scl/domain/stream';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
@@ -18,10 +19,11 @@ import {
   stranger,
   streamOf,
   studentState,
+  T0,
 } from './student-uc.fixture';
 
 // Перенос `api/student/get-student-progress-uc.test.ts`: прогресс виден любому
-// (allowAll); «Студент не найден» — not_found (Т9). Расчёты UI (С1, вариант a)
+// (allowAll); «Студент не найден» — not_found. Расчёты UI (вариант a)
 // теперь в ответе: `progress { module, projects, card, tree, step?, lesson? }`.
 
 const LESSON = '22222222-2222-4222-8222-222222222222';
@@ -120,5 +122,52 @@ describe('GetStudentProgressUc', () => {
     expectOk(await ask());
     expect(env.students.saved).toEqual([]);
     expect(env.ctx.published).toEqual([]);
+  });
+});
+
+describe('GetStudentProgressUc — отставание в card', () => {
+  const HOUR = 60 * 60 * 1000;
+  const OTHER_A = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  const OTHER_B = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+
+  it('lagLevel и hoursSinceLastActivity совпадают с roster состава потока', async () => {
+    // Ощутимо ниже 4 суток: отставание даёт только медиана учащихся.
+    const now = T0 + 100 * HOUR;
+    env = makeEnv(now);
+    env.seedStreams(streamOf('active'));
+    env.seedStudents(
+      studentState('active', {
+        steps: [done(STEP_1, T0, T0), issued(STEP_2, T0)],
+        currentStepId: STEP_2,
+      }),
+      studentState('active', {
+        uuid: OTHER_A,
+        userId: OTHER_A,
+        steps: [issued(STEP_1, now - 10 * HOUR)],
+      }),
+      studentState('active', {
+        uuid: OTHER_B,
+        userId: OTHER_B,
+        steps: [issued(STEP_1, now - 12 * HOUR)],
+      }),
+    );
+    const stream = await env.streams.findById(streamOf('active').uuid);
+    if (!stream) throw new Error('поток не найден');
+    const expected = new StreamMembersDqs(
+      stream,
+      await env.students.findByStream(stream.uuid),
+    )
+      .roster(now)
+      .find((r) => r.studentId === STUDENT);
+
+    const card = expectOk(await ask()).progress?.card;
+
+    expect(expected).toEqual({
+      studentId: STUDENT,
+      lagLevel: 'lagging',
+      hoursSinceLastActivity: 100,
+    });
+    expect(card?.lagLevel).toBe(expected?.lagLevel);
+    expect(card?.hoursSinceLastActivity).toBe(expected?.hoursSinceLastActivity);
   });
 });

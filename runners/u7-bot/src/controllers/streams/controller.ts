@@ -119,7 +119,7 @@ export class StreamsController extends U7BotController {
 
   /**
    * Команда модулю потоков от гостя: событие группы приходит без актора
-   * бота, а читают поток открытые запросы (Т8).
+   * бота, а читают поток открытые запросы.
    */
   #dispatchAsGuest<D extends (typeof StreamModuleDef)['useCases'][number]>(
     command: Command<D>,

@@ -25,7 +25,7 @@ import {
 // Перенос `api/student/enroll-student-uc.test.ts`. Порядок отказов: ключ →
 // активная запись (в том числе в этом же потоке) → gate → нет шагов; курса нет —
 // gate пропускается; статус потока не проверяется. Зачисляется субъект вызова
-// (С3); роль STUDENT stream не выдаёт.
+// роль STUDENT stream не выдаёт.
 
 let env: ReturnType<typeof makeEnv>;
 const uc = () => new EnrollStudentUc(env.deps, StreamModuleDef);

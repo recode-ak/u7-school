@@ -43,9 +43,7 @@ export class CompleteStepUc extends UseCaseFromDef<
     { student, stream }: Loaded,
     uow: UnitOfWork,
   ) {
-    const result = StepCompletionDcs.completeStep(
-      stream,
-      student,
+    const result = new StepCompletionDcs(stream, student).completeStep(
       stepId,
       this.now(),
     );

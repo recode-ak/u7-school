@@ -23,6 +23,9 @@
  * Отказ — `Err` с кодом в stderr и выход с кодом 1. Лог операций DMG
  * пишется в `data/oplog/`, как у бота.
  *
+ * UC `stream` перешли на DMG (модуль `stream`), но через `call-uc` пока не
+ * вызываются: скрипт знает только DMG-модуль `wish`. До Ф3 их вызов — в боте.
+ *
  * ⚠️ Команды (не query) пишут в боевые JSON-файлы: перед изменяющими
  * вызовами убедись, что бот остановлен (pm2 stop u7-school-bot).
  * Реакции модулей подписаны, как в боте: событие команды запускает их
@@ -65,7 +68,8 @@ function printHelp() {
   json-params  — параметры в JSON (обязательно, можно '{}')
   actorId      — UUID пользователя (опционально, по умолчанию Nur)
 
-Доступные модули: user, course, stream, questionnaire, wish.
+Доступные модули: user, course, questionnaire (legacy-вызов), wish (DMG).
+UC stream (DMG) через call-uc пока не вызываются — до Ф3.
 
 Примеры:
   bun run scripts/call-uc.ts list-modules '{}'

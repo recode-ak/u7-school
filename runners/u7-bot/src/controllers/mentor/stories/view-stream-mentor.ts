@@ -280,7 +280,7 @@ export class ViewStreamMentorStory extends ViewStreamStory {
       actor,
     );
     if (!res.ok) {
-      // Прежний текст отказа: число студентов без исхода (Т14)
+      // Прежний текст отказа: число студентов без исхода
       if (res.error.code === StreamErrors.STUDENTS_IN_PROGRESS.code) {
         const pending = (
           res.error.payload as { pending: readonly unknown[] } | undefined

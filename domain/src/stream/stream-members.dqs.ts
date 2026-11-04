@@ -24,16 +24,30 @@ function median(values: readonly number[]): number {
   return ((sorted[mid - 1] ?? 0) + (sorted[mid] ?? 0)) / 2;
 }
 
+function lagLevel(hours: number, studyingMedian: number): LagLevel {
+  if (hours > CRITICAL_AFTER_HOURS) return 'critical';
+  if (hours > LAGGING_AFTER_HOURS) return 'lagging';
+  if (studyingMedian > 0 && hours >= studyingMedian * MEDIAN_LAG_FACTOR) {
+    return 'lagging';
+  }
+  return 'on_track';
+}
+
 /**
  * DQS: состав потока в проекциях по студентам. Только читает.
  */
-export const StreamMembersDqs = {
+export class StreamMembersDqs {
+  constructor(
+    private readonly stream: ReadonlyAr<StreamAr>,
+    private readonly students: Students,
+  ) {}
+
   /**
    * Факты о студентах для правила `studentsSettled` и состава потока: поток
    * спрашивает у студентов только итог, статус сырой.
    */
-  facts(students: Students): StreamStudentFact[] {
-    return students.map((student) => {
+  facts(): StreamStudentFact[] {
+    return this.students.map((student) => {
       const { userId, status } = student.view();
       return {
         studentId: student.uuid,
@@ -44,22 +58,16 @@ export const StreamMembersDqs = {
         neverStarted: student.neverStarted(),
       };
     });
-  },
+  }
 
   /**
-   * Отставание студентов потока на момент `at`: время без активности
-   * (0 — шагов нет) и уровень. Критично — больше 7 суток, отстаёт — больше
-   * 4; иначе отстаёт на 30% и больше от медианы учащихся. Медиана — только
-   * по учащимся, поэтому совпадает и для «только активных», и для «всех»;
-   * ушедшие и завершившие — всегда `on_track`.
+   * Отставание на момент `at`: время без активности (0 — шагов нет) и
+   * уровень. Критично — больше 7 суток, отстаёт — больше 4; иначе — на 30%+
+   * от медианы учащихся. Ушедшие и завершившие — `on_track`.
    */
-  roster(
-    stream: ReadonlyAr<StreamAr>,
-    students: Students,
-    at: Timestamp,
-  ): RosterEntry[] {
-    const members = students.filter((student) =>
-      student.belongsToStream(stream.uuid),
+  roster(at: Timestamp): RosterEntry[] {
+    const members = this.students.filter((student) =>
+      student.belongsToStream(this.stream.uuid),
     );
     const hours = members.map((student) => {
       const last = student.lastActivityAt();
@@ -78,14 +86,5 @@ export const StreamMembersDqs = {
         hoursSinceLastActivity: sinceLast,
       };
     });
-  },
-};
-
-function lagLevel(hours: number, studyingMedian: number): LagLevel {
-  if (hours > CRITICAL_AFTER_HOURS) return 'critical';
-  if (hours > LAGGING_AFTER_HOURS) return 'lagging';
-  if (studyingMedian > 0 && hours >= studyingMedian * MEDIAN_LAG_FACTOR) {
-    return 'lagging';
   }
-  return 'on_track';
 }
