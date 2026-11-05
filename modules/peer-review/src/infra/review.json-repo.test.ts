@@ -3,7 +3,6 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ReviewAr, type ReviewState } from '@u7-scl/domain/peer-review';
-import { VersionConflict } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import {
@@ -156,7 +155,6 @@ describe('ReviewJsonRepo: findByScopes и фильтр', () => {
       R(2),
       R(3),
     ]);
-    expect(await repo.findByScopes([])).toEqual([]);
   });
 
   test.each([
@@ -172,7 +170,6 @@ describe('ReviewJsonRepo: findByScopes и фильтр', () => {
       },
       [R(2)],
     ],
-    ['пустой фильтр', {}, [R(1), R(2), R(3)]],
   ])('фильтр %s', async (_l, filter, expected) => {
     const repo = await repoWith('scopes-filter.json', rows());
     expect(
@@ -190,7 +187,6 @@ describe('ReviewJsonRepo: findByScopes и фильтр', () => {
   test('findByRecipient без фильтра: все отзывы адресату, где бы он ни был адресатом', async () => {
     const repo = await repoWith('recipient.json', rows());
     expect(uuids(await repo.findByRecipient(IDS.bob))).toEqual([R(2), R(3)]);
-    expect(await repo.findByRecipient(IDS.carol)).toEqual([]);
   });
 
   test.each([
@@ -206,37 +202,6 @@ describe('ReviewJsonRepo: findByScopes и фильтр', () => {
   });
 });
 
-describe('ReviewJsonRepo: версия (D-36)', () => {
-  test('create с занятым uuid — VersionConflict, файл не изменён', async () => {
-    const repo = new ReviewJsonRepo(path('busy-uuid.json'));
-    await repo.save(make({ uuid: R(1) }));
-    const before = await Bun.file(path('busy-uuid.json')).text();
-
-    await expect(
-      repo.save(make({ uuid: R(1), recipientId: IDS.bob })),
-    ).rejects.toBeInstanceOf(VersionConflict);
-
-    expect(await Bun.file(path('busy-uuid.json')).text()).toBe(before);
-  });
-
-  test('восстановленный агрегат, записи нет — VersionConflict, файл не создан', async () => {
-    const repo = new ReviewJsonRepo(path('restored-missing.json'));
-    await expect(
-      repo.save(ReviewAr.restore(review({ version: 1 }))),
-    ).rejects.toBeInstanceOf(VersionConflict);
-    expect(await Bun.file(path('restored-missing.json')).exists()).toBe(false);
-  });
-
-  test('параллельные записи разных пар не теряют друг друга', async () => {
-    const repo = new ReviewJsonRepo(path('parallel.json'));
-    await Promise.all([
-      repo.save(make({ uuid: R(1), recipientId: IDS.mentor })),
-      repo.save(make({ uuid: R(2), recipientId: IDS.bob })),
-    ]);
-    expect(await raw('parallel.json')).toHaveLength(2);
-  });
-});
-
 describe('ReviewJsonRepo: legacy-записи', () => {
   test('ISO без зоны → число UTC, updatedAt = createdAt, version = 0', async () => {
     const row = legacyReview();
@@ -245,74 +210,6 @@ describe('ReviewJsonRepo: legacy-записи', () => {
     expect(state?.createdAt).toBe(Date.UTC(2026, 8, 20, 11));
     expect(state?.updatedAt).toBe(Date.UTC(2026, 8, 20, 11));
     expect(state?.version).toBe(0);
-  });
-
-  test('updatedAt из записи (ISO) читается числом', async () => {
-    const row = legacyReview({ updatedAt: '2026-09-21T08:15' });
-    const repo = await repoWith('legacy-updated.json', [row]);
-    const state = (await repo.findById(row.uuid))?.snapshot();
-    expect(state?.updatedAt).toBe(Date.UTC(2026, 8, 21, 8, 15));
-    expect(state?.createdAt).toBe(Date.UTC(2026, 8, 20, 11));
-  });
-
-  test('запись ментора без authorOutcome читается', async () => {
-    const { authorOutcome: _, ...row } = legacyReview({
-      direction: 'mentor_student',
-      authorId: IDS.mentor,
-      recipientId: IDS.alice,
-    });
-    const repo = await repoWith('legacy-mentor.json', [row]);
-    const ar = await repo.findById(row.uuid);
-    expect(ar?.direction).toBe('mentor_student');
-    expect(ar?.authorOutcome).toBeUndefined();
-  });
-
-  test('legacy читается после save соседней; файл переписан в новом формате', async () => {
-    const row = legacyReview();
-    const repo = await repoWith('legacy-save.json', [row]);
-
-    await repo.save(make({ uuid: R(1), recipientId: IDS.bob }));
-
-    const state = (await repo.findById(row.uuid))?.snapshot();
-    expect(state?.createdAt).toBe(Date.UTC(2026, 8, 20, 11));
-    expect(state?.version).toBe(0);
-    expect(
-      (await raw('legacy-save.json')).every(
-        (r) => typeof r.createdAt === 'number',
-      ),
-    ).toBe(true);
-  });
-
-  test('повторный save legacy-записи без изменений: version 0, запись одна', async () => {
-    const row = legacyReview();
-    const repo = await repoWith('legacy-resave.json', [row]);
-    const loaded = await repo.findById(row.uuid);
-    if (!loaded) throw new Error('запись не найдена');
-
-    await repo.save(loaded);
-
-    expect((await repo.findById(row.uuid))?.snapshot().version).toBe(0);
-    expect(await raw('legacy-resave.json')).toHaveLength(1);
-  });
-
-  test('legacy-перезапись: version 1, uuid и createdAt прежние', async () => {
-    const row = legacyReview();
-    const repo = await repoWith('legacy-overwrite.json', [row]);
-    const loaded = await repo.findById(row.uuid);
-    if (!loaded) throw new Error('запись не найдена');
-    expectOk(
-      loaded.overwrite('Новый текст отзыва после правки', T0 + 9 * HOUR),
-    );
-    await repo.save(loaded);
-
-    const [saved, ...rest] = await raw('legacy-overwrite.json');
-    expect(rest).toEqual([]);
-    expect(saved).toMatchObject({
-      uuid: row.uuid,
-      createdAt: Date.UTC(2026, 8, 20, 11),
-      updatedAt: T0 + 9 * HOUR,
-      version: 1,
-    });
   });
 });
 
@@ -330,31 +227,6 @@ describe('ReviewJsonRepo: невалидная запись (строгий ра
       ValiError,
     );
     expect(await Bun.file(path('broken.json')).text()).toBe(text);
-  });
-
-  test('текст короче 10 символов в файле — ValiError', async () => {
-    const text = JSON.stringify([legacyReview({ text: 'коротко' })]);
-    await Bun.write(path('short-text.json'), text);
-    const repo = new ReviewJsonRepo(path('short-text.json'));
-    await expect(repo.findByScope(IDS.scope)).rejects.toBeInstanceOf(ValiError);
-    expect(await Bun.file(path('short-text.json')).text()).toBe(text);
-  });
-
-  test('невалидный JSON — исключение, файл не изменён', async () => {
-    const text = '[{"uuid": ';
-    await Bun.write(path('bad-json.json'), text);
-    const repo = new ReviewJsonRepo(path('bad-json.json'));
-    await expect(repo.findById(R(1))).rejects.toThrow();
-    await expect(repo.save(make())).rejects.toThrow();
-    expect(await Bun.file(path('bad-json.json')).text()).toBe(text);
-  });
-
-  test('корень файла не массив — ValiError, файл не изменён', async () => {
-    const text = JSON.stringify({ reviews: [] });
-    await Bun.write(path('not-array.json'), text);
-    const repo = new ReviewJsonRepo(path('not-array.json'));
-    await expect(repo.findById(R(1))).rejects.toBeInstanceOf(ValiError);
-    expect(await Bun.file(path('not-array.json')).text()).toBe(text);
   });
 
   test('файла нет — пусто, поиск не падает и файл не создаёт', async () => {

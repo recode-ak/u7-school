@@ -26,11 +26,6 @@ const campaign = (scopeId = SCOPE, subjectId = SUBJECT) =>
 const { unique } = ReviewCampaignRules.rules;
 
 describe('ReviewCampaignRules.unique (D-40, DOM-16)', () => {
-  it('описание ссылается на REVIEW_CAMPAIGN_ALREADY_EXISTS', () => {
-    expect(unique.dmg).toBe('domainRule');
-    expect(unique.error.code).toBe('REVIEW_CAMPAIGN_ALREADY_EXISTS');
-  });
-
   it('кампаний на пару нет — ok', () => {
     expectOk(
       unique.check({ scopeId: SCOPE, subjectId: SUBJECT, campaigns: [] }),

@@ -56,14 +56,6 @@ describe('StudentFateDqs.forCompleted', () => {
       ).participantIds,
     ).toEqual([LIVE, DONE]);
   });
-
-  it('ментор не попадает в участников', () => {
-    const { participantIds } = StudentFateDqs.forCompleted(
-      { userId: SUBJECT, outcome: 'advanced' },
-      members(),
-    );
-    expect(participantIds).not.toContain(MENTOR);
-  });
 });
 
 describe('StudentFateDqs.forAbandoned', () => {

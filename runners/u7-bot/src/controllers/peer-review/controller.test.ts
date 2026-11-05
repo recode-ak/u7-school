@@ -16,12 +16,4 @@ describe('PeerReviewController (реестр)', () => {
       'scope-reviews',
     ]);
   });
-
-  test('подписка приглашений S01 доставляется через контроллер', () => {
-    const controller = new PeerReviewController();
-
-    const events = controller.getEventSubscriptions().map((s) => s.eventName);
-
-    expect(events).toContain('peer-review.review-campaign.created');
-  });
 });

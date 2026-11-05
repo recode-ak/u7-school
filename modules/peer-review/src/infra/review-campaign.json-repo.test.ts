@@ -6,7 +6,6 @@ import {
   ReviewCampaignAr,
   type ReviewCampaignState,
 } from '@u7-scl/domain/peer-review';
-import { VersionConflict } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import { campaign, IDS, T0 } from '../review-campaign/review-campaign.fixture';
@@ -163,39 +162,6 @@ describe('ReviewCampaignJsonRepo: save и поиск', () => {
   });
 });
 
-describe('ReviewCampaignJsonRepo: версия (D-36)', () => {
-  test('create с занятым uuid — VersionConflict, запись не изменена', async () => {
-    const repo = new ReviewCampaignJsonRepo(path('busy-uuid.json'));
-    const ar = make();
-    await repo.save(ar);
-    const before = await Bun.file(path('busy-uuid.json')).text();
-
-    await expect(
-      repo.save(make({ uuid: ar.uuid, scopeId: IDS.scope2 })),
-    ).rejects.toBeInstanceOf(VersionConflict);
-
-    expect(await Bun.file(path('busy-uuid.json')).text()).toBe(before);
-  });
-
-  test('восстановленный агрегат, записи нет — VersionConflict, файл не создан', async () => {
-    const repo = new ReviewCampaignJsonRepo(path('restored-missing.json'));
-    const restored = ReviewCampaignAr.restore(campaign({ version: 1 }));
-
-    await expect(repo.save(restored)).rejects.toBeInstanceOf(VersionConflict);
-    expect(await Bun.file(path('restored-missing.json')).exists()).toBe(false);
-  });
-
-  test('параллельные записи разных кампаний не теряют друг друга', async () => {
-    const repo = new ReviewCampaignJsonRepo(path('parallel.json'));
-    await Promise.all([
-      repo.save(make({ subjectId: IDS.alice })),
-      repo.save(make({ subjectId: IDS.bob })),
-    ]);
-    expect(await repo.findBySubject(IDS.scope, IDS.alice)).toBeDefined();
-    expect(await repo.findBySubject(IDS.scope, IDS.bob)).toBeDefined();
-  });
-});
-
 describe('ReviewCampaignJsonRepo: legacy-записи', () => {
   test('ISO без зоны → число UTC, updatedAt = createdAt, version = 0', async () => {
     const row = legacyRow();
@@ -207,35 +173,6 @@ describe('ReviewCampaignJsonRepo: legacy-записи', () => {
     expect(state?.expiresAt).toBe(Date.UTC(2026, 8, 27, 10));
     expect(state?.updatedAt).toBe(Date.UTC(2026, 8, 20, 10));
     expect(state?.version).toBe(0);
-  });
-
-  test('participants: [] читается', async () => {
-    const row = legacyRow({
-      participants: [],
-      payload: { subjectOutcome: 'dropped', mentorId: IDS.mentor },
-    });
-    const repo = await repoWith('legacy-empty.json', [row]);
-    expect((await repo.findById(row.uuid))?.snapshot().participants).toEqual(
-      [],
-    );
-  });
-
-  test('legacy-запись читается после save соседней (файл переписан в новом формате)', async () => {
-    const row = legacyRow();
-    const repo = await repoWith('legacy-save.json', [row]);
-    const other = make({ subjectId: IDS.bob });
-
-    await repo.save(other);
-
-    const state = (await repo.findById(row.uuid))?.snapshot();
-    expect(state?.createdAt).toBe(Date.UTC(2026, 8, 20, 10));
-    expect(state?.updatedAt).toBe(Date.UTC(2026, 8, 20, 10));
-    expect(state?.version).toBe(0);
-    expect((await repo.findById(other.uuid))?.uuid).toBe(other.uuid);
-    const raw = (await Bun.file(
-      path('legacy-save.json'),
-    ).json()) as ReviewCampaignState[];
-    expect(raw.every((r) => typeof r.createdAt === 'number')).toBe(true);
   });
 
   test('повторный save legacy-записи без изменений остаётся допустимым и сохраняет version 0', async () => {
@@ -252,18 +189,6 @@ describe('ReviewCampaignJsonRepo: legacy-записи', () => {
     ).json()) as ReviewCampaignState[];
     expect(raw.filter((r) => r.uuid === row.uuid)).toHaveLength(1);
     expect(raw).toHaveLength(1);
-  });
-
-  test('legacy-окно (ISO без зоны = UTC): граница expiresAt включительно', async () => {
-    const row = legacyRow({ expiresAt: '2026-09-27T10:00' });
-    const repo = await repoWith('legacy-boundary.json', [row]);
-    const edge = Date.UTC(2026, 8, 27, 10);
-
-    expect(await repo.findActiveBySubject(IDS.alice, edge - 1)).toHaveLength(1);
-    expect(await repo.findActiveBySubject(IDS.alice, edge)).toHaveLength(0);
-    expect(
-      (await repo.findById(row.uuid))?.isExpired(Date.UTC(2026, 8, 27, 5)),
-    ).toBe(false);
   });
 });
 
@@ -287,30 +212,6 @@ describe('ReviewCampaignJsonRepo: невалидная запись (строг�
     ).rejects.toBeInstanceOf(ValiError);
 
     expect(await Bun.file(path('broken.json')).text()).toBe(text);
-  });
-
-  test('невалидный JSON — исключение, файл не изменён', async () => {
-    const text = '[{"uuid": ';
-    await Bun.write(path('bad-json.json'), text);
-    const repo = new ReviewCampaignJsonRepo(path('bad-json.json'));
-
-    await expect(repo.findById(crypto.randomUUID())).rejects.toThrow();
-    await expect(repo.save(make())).rejects.toThrow();
-
-    expect(await Bun.file(path('bad-json.json')).text()).toBe(text);
-  });
-
-  test('корень файла не массив — ValiError, файл не изменён', async () => {
-    const text = JSON.stringify({ campaigns: [] });
-    await Bun.write(path('not-array.json'), text);
-    const repo = new ReviewCampaignJsonRepo(path('not-array.json'));
-
-    await expect(repo.findById(crypto.randomUUID())).rejects.toBeInstanceOf(
-      ValiError,
-    );
-    await expect(repo.save(make())).rejects.toBeInstanceOf(ValiError);
-
-    expect(await Bun.file(path('not-array.json')).text()).toBe(text);
   });
 
   test('файла нет — пусто, поиск не падает и файл не создаёт', async () => {

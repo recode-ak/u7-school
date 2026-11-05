@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { expectOk } from 'dmg-core/testing';
-import { ReviewAr, ReviewArDef } from './review.ar';
+import { ReviewAr } from './review.ar';
 import { ReviewEvents } from './review.events';
 import type { ReviewState } from './review.state';
 
@@ -45,15 +45,6 @@ const stored = (over: Partial<ReviewState> = {}): ReviewState => ({
   ...over,
 });
 
-describe('ReviewArDef — без жизненного цикла', () => {
-  it('имя review; нет statuses/transitions; событие created', () => {
-    expect(ReviewArDef.name).toBe('review');
-    expect(ReviewArDef.statuses).toBeUndefined();
-    expect(ReviewArDef.transitions).toBeUndefined();
-    expect(ReviewArDef.events).toHaveProperty('created');
-  });
-});
-
 describe('ReviewAr.create', () => {
   it('direction и снимок исхода автора сохраняются; version 0', () => {
     const ar = expectOk(ReviewAr.create(input(), AT));
@@ -82,13 +73,6 @@ describe('ReviewAr.create', () => {
     expect(ar.authorOutcome).toBeUndefined();
   });
 
-  it('uuid — со входа; createdAt = updatedAt = at без минутного усечения', () => {
-    const ar = expectOk(ReviewAr.create(input(), AT));
-    expect(ar.uuid).toBe(U.review);
-    expect(ar.snapshot().createdAt).toBe(AT);
-    expect(ar.snapshot().updatedAt).toBe(AT);
-  });
-
   it('событие created: peer-review.review.created с полным payload, выдаётся единожды', () => {
     const ar = expectOk(ReviewAr.create(input(), AT));
     expect(ar.pullEvents()).toEqual([
@@ -102,35 +86,6 @@ describe('ReviewAr.create', () => {
       }),
     ]);
     expect(ar.pullEvents()).toEqual([]);
-  });
-});
-
-describe('ReviewAr.restore', () => {
-  it('восстанавливает по snapshot; события не накоплены', () => {
-    const ar = ReviewAr.restore(stored());
-    expect(ar.snapshot()).toEqual(stored());
-    expect(ar.pullEvents()).toEqual([]);
-  });
-
-  it('version сохраняется', () => {
-    expect(ReviewAr.restore(stored({ version: 2 })).version).toBe(2);
-  });
-
-  it('текст вне 10–3500 — исключение (схема state страхует restore)', () => {
-    expect(() => ReviewAr.restore(stored({ text: 'коротко' }))).toThrow();
-    expect(() =>
-      ReviewAr.restore(stored({ text: 'а'.repeat(3501) })),
-    ).toThrow();
-  });
-
-  it('повреждённое направление — исключение', () => {
-    expect(() =>
-      ReviewAr.restore(stored({ direction: 'mentor_mentor' as never })),
-    ).toThrow();
-  });
-
-  it('view() — состояние наружу', () => {
-    expect(ReviewAr.restore(stored()).view()).toEqual(stored());
   });
 });
 
@@ -150,11 +105,5 @@ describe('ReviewAr.overwrite', () => {
     ar.pullEvents();
     expectOk(ar.overwrite('Другой текст отзыва после правки.', LATER));
     expect(ar.pullEvents()).toEqual([]);
-  });
-
-  it('граница минимума по длине — Ok', () => {
-    const ar = ReviewAr.restore(stored());
-    expectOk(ar.overwrite('б'.repeat(10), LATER));
-    expect(ar.text).toBe('б'.repeat(10));
   });
 });

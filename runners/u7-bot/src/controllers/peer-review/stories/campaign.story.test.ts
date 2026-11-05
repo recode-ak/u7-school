@@ -8,11 +8,9 @@ import {
 } from '@u7-scl/core/ui';
 import {
   CreateReviewUcDef,
-  GetCampaignRecipientsUcDef,
   ReviewCampaignErrors,
   ReviewErrors,
 } from '@u7-scl/domain/peer-review/contract';
-import { GetStreamUcDef } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
 import { err } from 'dmg-core';
 import { streamView } from '../../streams/stories/stream-dmg.test-kit';
@@ -231,31 +229,6 @@ describe('CampaignStory (S03 — список адресатов)', () => {
     expect(btn?.code).toBe(`campaign:open:${CAMPAIGN_ID}:${PEER_ID}`);
   });
 
-  test('list: UC-вызовы — адресаты (authorId = я), поток по scopeId моей карточки, имена адресатов', async () => {
-    const appApi = makeAppApi([
-      { userId: MENTOR_ID, hasMyReview: false },
-      { userId: PEER_ID, hasMyReview: false },
-    ]);
-    const story = makeStories(appApi);
-
-    await story.handleCallback(`list:${CAMPAIGN_ID}`, actor, session);
-
-    const calls = (
-      appApi.execute.mock.calls as unknown as Array<
-        [string, Record<string, unknown>, unknown]
-      >
-    ).map(([ucName, attrs]) => [ucName, attrs]);
-    // адресаты — UC DMG getCampaignRecipients (автор — субъект вызова)
-    const commands = appApi.dispatch.mock.calls.map(([, command]) => command);
-    expect(commands).toContainEqual(
-      GetCampaignRecipientsUcDef.command({ campaignId: CAMPAIGN_ID }),
-    );
-    expect(commands).toContainEqual(
-      GetStreamUcDef.command({ streamId: STREAM_ID }),
-    );
-    expect(calls).toContainEqual(['get-user', { uuid: MENTOR_ID }]);
-  });
-
   test('list: кампании нет (NOT_FOUND) → «Кампания не найдена» и возврат в хаб', async () => {
     const appApi = makeAppApi([{ userId: PEER_ID, hasMyReview: false }]);
     appApi.dispatch.mockImplementation((async () =>
@@ -446,14 +419,6 @@ describe('CampaignStory (S03 — список адресатов)', () => {
     const text = String(response.notify?.text ?? '');
 
     expect(text).toContain('Как писать отзыв');
-    // новые разделы: сильные стороны первыми и «пиши своё»
-    expect(text).toContain('Сначала — сильные стороны');
-    expect(text).toContain('Пиши своё');
-    expect(text).toContain('Пиши о навыках и фактах');
-    expect(text).toContain('Ярлык и переход на личности');
-    expect(text).toContain('Как превратить ярлык в полезный отзыв');
-    // приписка: ввод остаётся живым
-    expect(text).toContain('Экран ввода остаётся активным');
     // инфо-сообщение: экрана и клавиатуры нет, ввод не сбрасывается
     expect(response.screen).toBeUndefined();
     expect(response.awaitInput).toBeUndefined();

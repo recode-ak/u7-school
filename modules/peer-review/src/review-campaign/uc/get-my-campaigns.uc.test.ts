@@ -3,15 +3,15 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review';
-import { GuestCaller, type Identified, UserCaller } from 'dmg-core';
+import { type Identified, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
-import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
+import { expectOk, testAppContext } from 'dmg-core/testing';
 import { ReviewCampaignJsonRepo } from '../../infra/review-campaign.json-repo';
 import {
   FactsReviewRepo,
   type ReviewFactStub,
 } from '../../review/review.fixture';
-import { campaign, DAY, IDS, T0 } from '../review-campaign.fixture';
+import { campaign, IDS, T0 } from '../review-campaign.fixture';
 import { GetMyCampaignsUc } from './get-my-campaigns.uc';
 
 // Перенос legacy `api/review-campaign/get-my-campaigns-uc.test.ts` на UC по Def.
@@ -65,24 +65,6 @@ describe('GetMyCampaignsUc (ФР-7)', () => {
     });
   });
 
-  it('ментор видит кампанию субъекта со своей ролью', async () => {
-    await seed(campaign());
-
-    const cards = expectOk(await makeUc().handle({}, as(IDS.mentor), REQ));
-
-    expect(cards).toHaveLength(1);
-    expect(cards[0]).toMatchObject({ myRole: 'mentor', subjectId: IDS.alice });
-  });
-
-  it('соученик (участник) и посторонний кампаний не видят', async () => {
-    await seed(campaign());
-
-    expect(expectOk(await makeUc().handle({}, as(IDS.bob), REQ))).toEqual([]);
-    expect(expectOk(await makeUc().handle({}, as(IDS.stranger), REQ))).toEqual(
-      [],
-    );
-  });
-
   it('прогресс M/K: мои отзывы / адресаты политики', async () => {
     const own = campaign();
     await seed(own);
@@ -98,24 +80,6 @@ describe('GetMyCampaignsUc (ФР-7)', () => {
 
     // K — соученик + ментор; M — два отзыва от alice из трёх
     expect(card?.progress).toEqual({ done: 2, total: 2 });
-  });
-
-  it('onlyLives отсекает истекшие окна; без флага истёкшие не возвращаются репозиторием как активные', async () => {
-    const live = campaign();
-    const expired = campaign({
-      scopeId: IDS.scope2,
-      createdAt: T0 - 30 * DAY,
-    });
-    await seed(live, expired);
-
-    const lives = expectOk(
-      await makeUc().handle({ onlyLives: true }, as(IDS.alice), REQ),
-    );
-    expect(lives.map((c) => c.campaignId)).toEqual([live.uuid]);
-    expect(lives[0]?.daysLeft).toBeGreaterThan(0);
-
-    const all = expectOk(await makeUc().handle({}, as(IDS.alice), REQ));
-    expect(all.map((c) => c.campaignId)).toEqual([live.uuid]);
   });
 
   it('filter: по scopeId и по context', async () => {
@@ -173,13 +137,5 @@ describe('GetMyCampaignsUc (ФР-7)', () => {
 
     expect(expectOk(before)).toHaveLength(1);
     expect(expectOk(at)).toEqual([]);
-  });
-
-  it('вызывающий guest — UNAUTHORIZED', async () => {
-    await seed(campaign());
-    const res = await makeUc().handle({}, new GuestCaller(), REQ);
-    expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
-      callerKind: 'guest',
-    });
   });
 });

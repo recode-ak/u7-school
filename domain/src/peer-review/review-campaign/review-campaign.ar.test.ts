@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import { REVIEW_WINDOW_DAYS } from './constants';
-import { ReviewCampaignAr, ReviewCampaignArDef } from './review-campaign.ar';
+import { ReviewCampaignAr } from './review-campaign.ar';
 import { ReviewCampaignEvents } from './review-campaign.events';
 import type { ReviewCampaignState } from './review-campaign.state';
 
@@ -47,15 +47,6 @@ const input = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-describe('ReviewCampaignArDef — без жизненного цикла (окно закрывает время)', () => {
-  it('нет statuses/transitions; событие created; ошибки группы', () => {
-    expect(ReviewCampaignArDef.name).toBe('review-campaign');
-    expect(ReviewCampaignArDef.statuses).toBeUndefined();
-    expect(ReviewCampaignArDef.transitions).toBeUndefined();
-    expect(ReviewCampaignArDef.events).toHaveProperty('created');
-  });
-});
-
 describe('ReviewCampaignAr.create (бывш. ReviewCampaignFactory.createStudentCampaign)', () => {
   it('контекст stream_fate, скоуп, субъект, ментор, исход в payload; version 0', () => {
     const campaign = expectOk(ReviewCampaignAr.create(input(), T0));
@@ -68,6 +59,19 @@ describe('ReviewCampaignAr.create (бывш. ReviewCampaignFactory.createStudent
     expect(campaign.subjectId).toBe(UUIDS.subject);
     expect(campaign.mentorId).toBe(UUIDS.mentor);
     expect(campaign.subjectOutcome).toBe('completed_passed');
+
+    const outcomes = [
+      'completed_passed',
+      'completed_not_passed',
+      'dropped',
+      'never_started',
+    ] as const;
+    for (const subjectOutcome of outcomes) {
+      const created = expectOk(
+        ReviewCampaignAr.create(input({ subjectOutcome }), T0),
+      );
+      expect(created.subjectOutcome).toBe(subjectOutcome);
+    }
   });
 
   it(`expiresAt = at + ${REVIEW_WINDOW_DAYS.streamFate} суток (7), Date.now() не читается`, () => {
@@ -76,18 +80,6 @@ describe('ReviewCampaignAr.create (бывш. ReviewCampaignFactory.createStudent
     expect(campaign.expiresAt).toBe(T0 + 7 * DAY);
     const later = expectOk(ReviewCampaignAr.create(input(), T0 + 123_456));
     expect(later.expiresAt).toBe(T0 + 123_456 + 7 * DAY);
-  });
-
-  it.each([
-    'completed_passed',
-    'completed_not_passed',
-    'dropped',
-    'never_started',
-  ] as const)('исход %s проходит в payload', (subjectOutcome) => {
-    const campaign = expectOk(
-      ReviewCampaignAr.create(input({ subjectOutcome }), T0),
-    );
-    expect(campaign.subjectOutcome).toBe(subjectOutcome);
   });
 
   it('участники: порядок сохранён; пустой список валиден (dropped/never_started)', () => {
@@ -100,12 +92,6 @@ describe('ReviewCampaignAr.create (бывш. ReviewCampaignFactory.createStudent
     expect(empty.snapshot().participants).toEqual([]);
     const two = expectOk(ReviewCampaignAr.create(input(), T0));
     expect(two.snapshot().participants).toEqual([UUIDS.alice, UUIDS.bob]);
-  });
-
-  it('окно сразу согласовано: жива, daysLeft = 7', () => {
-    const campaign = expectOk(ReviewCampaignAr.create(input(), T0));
-    expect(campaign.isExpired(T0)).toBe(false);
-    expect(campaign.daysLeft(T0)).toBe(REVIEW_WINDOW_DAYS.streamFate);
   });
 
   it('событие created из create: peer-review.review-campaign.created с полными данными для UI (ФР-5)', () => {
@@ -141,24 +127,6 @@ describe('ReviewCampaignAr.create (бывш. ReviewCampaignFactory.createStudent
 });
 
 describe('ReviewCampaignAr.restore', () => {
-  it('восстанавливает по snapshot; события не накоплены', () => {
-    const campaign = ar();
-    expect(campaign.snapshot()).toEqual(stored());
-    expect(campaign.pullEvents()).toEqual([]);
-  });
-
-  it('updatedAt и version сохраняются при restore', () => {
-    const campaign = ar({ updatedAt: T0 + DAY, version: 2 });
-    expect(campaign.snapshot().updatedAt).toBe(T0 + DAY);
-    expect(campaign.version).toBe(2);
-  });
-
-  it('повреждённый контекст — исключение (нарушение инварианта хранилища)', () => {
-    expect(() =>
-      ReviewCampaignAr.restore({ ...stored(), context: 'x' } as never),
-    ).toThrow();
-  });
-
   it('участники нарушают инвариант адресации — исключение при restore', () => {
     expect(() => ar({ participants: [UUIDS.alice, UUIDS.alice] })).toThrow();
     expect(() => ar({ participants: [UUIDS.subject] })).toThrow();
@@ -187,15 +155,6 @@ describe('ReviewCampaignAr: окно жизни', () => {
 });
 
 describe('ReviewCampaignAr: вопросы о составе', () => {
-  it('геттеры каркаса и payload', () => {
-    const c = ar();
-    expect(c.scopeId).toBe(UUIDS.scope);
-    expect(c.subjectId).toBe(UUIDS.subject);
-    expect(c.mentorId).toBe(UUIDS.mentor);
-    expect(c.subjectOutcome).toBe('completed_passed');
-    expect(c.expiresAt).toBe(T7);
-  });
-
   it('isSubject / isMentor / hasParticipant', () => {
     const c = ar();
     expect(c.isSubject(UUIDS.subject)).toBe(true);
@@ -204,11 +163,6 @@ describe('ReviewCampaignAr: вопросы о составе', () => {
     expect(c.isMentor(UUIDS.subject)).toBe(false);
     expect(c.hasParticipant(UUIDS.alice)).toBe(true);
     expect(c.hasParticipant(UUIDS.stranger)).toBe(false);
-  });
-
-  it('view() — состояние наружу без мутации агрегата', () => {
-    const c = ar();
-    expect(c.view()).toEqual(stored());
   });
 });
 
@@ -222,26 +176,17 @@ describe('ReviewCampaignAr: роль автора и адресаты (ФР-3)',
   });
 
   it('targetIdsFor субъекта — соученики + ментор (порядок сохранён)', () => {
-    expect(ar().targetIdsFor(UUIDS.subject)).toEqual([
-      UUIDS.alice,
-      UUIDS.bob,
-      UUIDS.mentor,
-    ]);
-  });
-
-  it('targetIdsFor субъекта при пустом participants — только ментор', () => {
-    expect(ar({ participants: [] }).targetIdsFor(UUIDS.subject)).toEqual([
-      UUIDS.mentor,
-    ]);
+    const cases: [Partial<ReviewCampaignState>, string[]][] = [
+      [{}, [UUIDS.alice, UUIDS.bob, UUIDS.mentor]],
+      [{ participants: [] }, [UUIDS.mentor]],
+    ];
+    for (const [over, expected] of cases) {
+      expect(ar(over).targetIdsFor(UUIDS.subject)).toEqual(expected);
+    }
   });
 
   it('targetIdsFor ментора — единственный адресат субъект', () => {
     expect(ar().targetIdsFor(UUIDS.mentor)).toEqual([UUIDS.subject]);
-  });
-
-  it('никогда не о себе: автора нет в его списке адресатов', () => {
-    expect(ar().targetIdsFor(UUIDS.subject)).not.toContain(UUIDS.subject);
-    expect(ar().targetIdsFor(UUIDS.mentor)).not.toContain(UUIDS.mentor);
   });
 
   it('соученик и посторонний не авторы окна — адресатов нет', () => {

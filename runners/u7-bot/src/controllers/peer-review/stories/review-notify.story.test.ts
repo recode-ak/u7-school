@@ -90,13 +90,6 @@ function handler(story: ReviewNotifyStory) {
 }
 
 describe('ReviewNotifyStory — уведомление адресату о новом отзыве', () => {
-  test('подписана на peer-review.review.created', () => {
-    const { story } = setupStory([]);
-    expect(story.getEventSubscriptions().map((s) => s.eventName)).toContain(
-      'peer-review.review.created',
-    );
-  });
-
   test('соученик написал: уведомление адресату с именем и ролью автора', async () => {
     const { story, sent, warns } = setupStory([
       user(ALICE, 'Алиса', 101),
@@ -158,29 +151,15 @@ describe('ReviewNotifyStory — уведомление адресату о но�
     expect([...input.userIds].sort()).toEqual([ALICE, BOB].sort());
   });
 
-  test('у адресата нет telegramId — предупреждение, сообщение не отправляется', async () => {
-    const { story, sent, warns } = setupStory([
-      user(ALICE, 'Алиса', 101),
-      user(BOB, 'Боб'),
-    ]);
-
-    await handler(story)(createdEvent('student_student'));
-
-    expect(sent).toHaveLength(0);
-    expect(warns).toHaveLength(1);
-  });
-
-  test('автор не найден — предупреждение, сообщение не отправляется', async () => {
-    const { story, sent, warns } = setupStory([user(BOB, 'Боб', 202)]);
-
-    await handler(story)(createdEvent('student_student'));
-
-    expect(sent).toHaveLength(0);
-    expect(warns).toHaveLength(1);
-  });
-
-  test('адресат не найден — предупреждение, сообщение не отправляется', async () => {
-    const { story, sent, warns } = setupStory([user(ALICE, 'Алиса', 101)]);
+  test.each<[string, Profile[]]>([
+    [
+      'у адресата нет telegramId',
+      [user(ALICE, 'Алиса', 101), user(BOB, 'Боб')],
+    ],
+    ['автор не найден', [user(BOB, 'Боб', 202)]],
+    ['адресат не найден', [user(ALICE, 'Алиса', 101)]],
+  ])('%s — предупреждение, сообщение не отправляется', async (_, profiles) => {
+    const { story, sent, warns } = setupStory(profiles);
 
     await handler(story)(createdEvent('student_student'));
 

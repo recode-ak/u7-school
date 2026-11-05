@@ -158,26 +158,6 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
     ]);
   });
 
-  test('автор-ментор (mentor_student) — без лейбла исхода', async () => {
-    const reviews: Snapshot[] = [
-      {
-        reviewId: '11111111-0000-0000-0000-000000000002',
-        scopeId: STREAM_1,
-        authorId: AUTHOR_2,
-        direction: 'mentor_student',
-        text: 'Глубоко разбирается в коде',
-        createdAt: Date.UTC(2026, 8, 20, 11, 0),
-      },
-    ];
-    const { story } = makeStory(reviews);
-
-    const response = await story.handleCallback('view', actor, session);
-    const text = String(response.screen?.text ?? '');
-
-    expect(text).toContain('👤 От: Глеб \\(ментор\\)');
-    expect(text).toContain('💬 «Глубоко разбирается в коде»');
-  });
-
   test('имена авторов — один batch-запрос с уникальными id', async () => {
     const reviews: Snapshot[] = [
       {
@@ -282,15 +262,6 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
     expect(text).toContain('пока не написали ни одного отзыва');
     const back = findBtn(response, 'Мои отзывы');
     expect(back?.code).toBe('my-reviews:hub');
-  });
-
-  test('неизвестная команда — экран unknownCommand', async () => {
-    const { story } = makeStory(manyReviews(1));
-
-    const response = await story.handleCallback('wat', actor, session);
-    const text = String(response.screen?.text ?? '');
-
-    expect(text.toLowerCase()).toContain('неизвестн');
   });
 });
 

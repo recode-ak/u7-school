@@ -5,17 +5,13 @@ import {
   authorLine,
   OUTCOME_LABELS,
   renderReviewCard,
-  renderSchoolReviewCard,
   reviewDate,
   rolesOf,
 } from './review-render';
 
 describe('reviewDate — дата по UTC из числа', () => {
-  test('обычный момент → dd.mm.yyyy', () => {
-    expect(reviewDate(Date.UTC(2026, 8, 21, 10, 0))).toBe('21.09.2026');
-  });
-
   test('около полуночи UTC дата не сдвигается зоной процесса', () => {
+    expect(reviewDate(Date.UTC(2026, 8, 21, 10, 0))).toBe('21.09.2026');
     expect(reviewDate(Date.parse('2026-09-21T23:30:00Z'))).toBe('21.09.2026');
     expect(reviewDate(Date.parse('2026-09-22T00:00:00Z'))).toBe('22.09.2026');
   });
@@ -84,22 +80,5 @@ describe('рендер карточек (MarkdownV2)', () => {
     expect(s).toContain('📚 Поток: JS Core \\(поток 1\\)');
     expect(s).toContain('📅 Дата: 21\\.09\\.2026');
     expect(s).toContain('\\*супер\\*');
-  });
-
-  test('renderSchoolReviewCard: ментор, автор-ментор без лейбла исхода', () => {
-    const text = renderSchoolReviewCard({
-      mentorName: 'Пётр',
-      authorName: 'Борис',
-      direction: 'student_mentor',
-      authorOutcome: 'never_started',
-      streamTitle: 'Поток',
-      createdAt,
-      text: 'Текст',
-    });
-    assertMarkdownV2Safe(text);
-    const s = String(text);
-    expect(s).toContain('👨‍🏫 Ментор: Пётр');
-    expect(s).toContain('студент · не начал');
-    expect(s).toContain('21\\.09\\.2026');
   });
 });

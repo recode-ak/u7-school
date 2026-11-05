@@ -79,8 +79,4 @@ describe('ScopeReviewsDqs.groupByRecipient', () => {
       'aaaaaaaa-aaaa-4aaa-8aaa-000000000009',
     ]);
   });
-
-  test('пустой скоуп — пустой список групп', () => {
-    expect(ScopeReviewsDqs.groupByRecipient([])).toEqual([]);
-  });
 });

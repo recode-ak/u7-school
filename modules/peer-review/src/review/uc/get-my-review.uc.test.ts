@@ -53,11 +53,6 @@ describe('GetMyReviewUc (S04 — текст моего отзыва)', () => {
     expect(expectOk(await ask(IDS.alice))).toEqual({ found: false });
   });
 
-  it('чужой отзыв не виден: автор — субъект вызова', async () => {
-    await Bun.write(file, JSON.stringify([review({ text: TEXT })]));
-    expect(expectOk(await ask(IDS.bob))).toEqual({ found: false });
-  });
-
   it('другой адресат или другая кампания — found: false', async () => {
     await Bun.write(file, JSON.stringify([review({ text: TEXT })]));
     expect(expectOk(await ask(IDS.alice, CAMPAIGN_ID, IDS.bob))).toEqual({

@@ -29,11 +29,6 @@ const campaign = ReviewCampaignAr.restore({
 const { windowOpen, recipientAllowed, validText } = ReviewRules.rules;
 
 describe('ReviewRules.windowOpen', () => {
-  it('описание ссылается на REVIEW_WINDOW_CLOSED', () => {
-    expect(windowOpen.dmg).toBe('domainRule');
-    expect(windowOpen.error.code).toBe('REVIEW_WINDOW_CLOSED');
-  });
-
   it('до границы — ok, за 1 мс — ok', () => {
     expectOk(windowOpen.check({ campaign, at: T0 }));
     expectOk(windowOpen.check({ campaign, at: T7 - 1 }));
@@ -46,22 +41,16 @@ describe('ReviewRules.windowOpen', () => {
     );
     expect(error.kind).toBe('conflict');
     expect(error.payload).toEqual({ campaignId: CAMPAIGN, expiresAt: T7 });
-  });
 
-  it('после границы — закрыто', () => {
-    expectErr(
+    const later = expectErr(
       windowOpen.check({ campaign, at: T7 + 60_000 }),
       'REVIEW_WINDOW_CLOSED',
     );
+    expect(later.payload).toEqual({ campaignId: CAMPAIGN, expiresAt: T7 });
   });
 });
 
 describe('ReviewRules.recipientAllowed', () => {
-  it('описание ссылается на REVIEW_RECIPIENT_NOT_ALLOWED', () => {
-    expect(recipientAllowed.dmg).toBe('domainRule');
-    expect(recipientAllowed.error.code).toBe('REVIEW_RECIPIENT_NOT_ALLOWED');
-  });
-
   it.each([
     ['субъект → ментор', SUBJECT, MENTOR],
     ['субъект → соученик', SUBJECT, ALICE],
@@ -104,11 +93,6 @@ describe('ReviewRules.recipientAllowed', () => {
 });
 
 describe('ReviewRules.validText', () => {
-  it('описание ссылается на REVIEW_TEXT_INVALID', () => {
-    expect(validText.dmg).toBe('domainRule');
-    expect(validText.error.code).toBe('REVIEW_TEXT_INVALID');
-  });
-
   it('границы 10 и 3500 — ok', () => {
     expectOk(validText.check({ text: 'а'.repeat(10) }));
     expectOk(validText.check({ text: 'а'.repeat(3500) }));

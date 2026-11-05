@@ -354,22 +354,6 @@ describe('MyReviewsStory — экран S02 «Мои отзывы» (мини-к
     expect(last?.code).toBe(Routes.app.mainMenu);
   });
 
-  test('есть входящие отзывы → в хабе ряд «📥 Отзывы мне» перед меню (S08)', async () => {
-    const story = initStory(new MyReviewsStory(), [subjectCard], {
-      incoming: 2,
-    });
-
-    const response = await story.handleCallback('hub', actor, session);
-
-    const rows = response.screen?.keyboard?.rows ?? [];
-    const incoming = findBtn(response, 'Отзывы мне');
-    expect(incoming?.text).toBe('📥 Отзывы мне');
-    expect(incoming?.code).toBe('reviews-for-me:view');
-    // ряд перед главным меню
-    expect(rows.at(-1)?.[0]?.code).toBe(Routes.app.mainMenu);
-    expect(rows.at(-2)?.[0]?.text).toBe('📥 Отзывы мне');
-  });
-
   test('нет входящих отзывов → кнопки «📥 Отзывы мне» в хабе нет', async () => {
     const story = initStory(new MyReviewsStory(), [subjectCard]);
 

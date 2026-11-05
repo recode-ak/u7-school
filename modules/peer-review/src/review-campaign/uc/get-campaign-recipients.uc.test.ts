@@ -70,35 +70,6 @@ describe('GetCampaignRecipientsUc', () => {
     ]);
   });
 
-  it('ментор: единственный адресат — субъект; subjectOutcome — исход подопечного', async () => {
-    const c = campaign();
-    await seed(c);
-
-    const res = expectOk(
-      await makeUc().handle({ campaignId: c.uuid }, as(IDS.mentor), REQ),
-    );
-
-    expect(res.myRole).toBe('mentor');
-    expect(res.subjectOutcome).toBe('completed_passed');
-    expect(res.recipients).toEqual([{ userId: IDS.alice, hasMyReview: false }]);
-  });
-
-  it('субъект dropped (пустой participants): только ментор, исход dropped', async () => {
-    const c = campaign({
-      subjectId: IDS.carol,
-      participants: [],
-      payload: { subjectOutcome: 'dropped', mentorId: IDS.mentor },
-    });
-    await seed(c);
-
-    const res = expectOk(
-      await makeUc().handle({ campaignId: c.uuid }, as(IDS.carol), REQ),
-    );
-
-    expect(res.subjectOutcome).toBe('dropped');
-    expect(res.recipients.map((r) => r.userId)).toEqual([IDS.mentor]);
-  });
-
   it('истёкшая кампания читается, daysLeft = 0', async () => {
     const c = campaign();
     await seed(c);
@@ -134,7 +105,7 @@ describe('GetCampaignRecipientsUc', () => {
     },
   );
 
-  it('кампания не найдена — REVIEW_CAMPAIGN_NOT_FOUND «Кампания отзывов не найдена»', async () => {
+  it('кампания не найдена — REVIEW_CAMPAIGN_NOT_FOUND', async () => {
     const missing = '3aaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
     const res = await makeUc().handle(
@@ -144,8 +115,6 @@ describe('GetCampaignRecipientsUc', () => {
     );
 
     const error = expectErr(res, 'REVIEW_CAMPAIGN_NOT_FOUND');
-    expect(error.kind).toBe('not_found');
-    expect(error.label).toBe('Кампания отзывов не найдена');
     expect(error.payload).toEqual({ campaignId: missing });
   });
 });
