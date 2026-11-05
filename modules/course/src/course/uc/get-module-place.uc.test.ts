@@ -2,13 +2,9 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import {
-  A0,
-  A1,
   anonymous,
-  CCCC,
   COURSE,
   courseState,
-  FAFA,
   M1,
   M2,
   M3,
@@ -22,11 +18,11 @@ import {
 } from './course-uc.fixture';
 import { GetModulePlaceUc } from './get-module-place.uc';
 
-// Перенос `api/course/get-module-place-uc.test.ts` (7): первый/средний/последний
-// модуль, этапы в линейном порядке (flatMap), только опубликованные курсы,
-// модуль вне курсов — пусто. Новое: `stage` (Т7); для курса из одного этапа
-// результат прежний плюс `stage`. Правило «курс модуля» —
-// `ModuleCoursesDqs.firstPublishedIncluding` (С2).
+// Перенос `api/course/get-module-place-uc.test.ts` (7): место модуля в
+// программе, этапы, только опубликованные курсы, модуль вне курсов — пусто.
+// Форма места (первый/средний/последний, линейный порядок, `stage`) —
+// `CourseAr.placeOf` (`course.ar.test.ts`), правило «курс модуля» —
+// `ModuleCoursesDqs` (`module-courses.dqs.test.ts`) — TST-08.
 
 const C1 = '44444444-4444-4444-8444-444444444441';
 const C2 = '44444444-4444-4444-8444-444444444442';
@@ -45,34 +41,6 @@ const place = (
 describe('GetModulePlaceUc — место в программе (курс без этапов)', () => {
   beforeEach(() => {
     env.seedCourses(plainCourse(COURSE, [M1, M2, M3]));
-  });
-
-  it('первый модуль: isFirst, nextModuleId', async () => {
-    expect(expectOk(await place(M1))).toEqual({
-      courseId: COURSE,
-      isFirst: true,
-      isLast: false,
-      nextModuleId: M2,
-    });
-  });
-
-  it('средний модуль: prev и next', async () => {
-    expect(expectOk(await place(M2))).toEqual({
-      courseId: COURSE,
-      isFirst: false,
-      isLast: false,
-      prevModuleId: M1,
-      nextModuleId: M3,
-    });
-  });
-
-  it('последний модуль: isLast, prevModuleId', async () => {
-    expect(expectOk(await place(M3))).toEqual({
-      courseId: COURSE,
-      isFirst: false,
-      isLast: true,
-      prevModuleId: M2,
-    });
   });
 
   it('stage у курса без этапов нет', async () => {
@@ -144,42 +112,6 @@ describe('GetModulePlaceUc — какие курсы участвуют', () => 
     env.seedCourses(plainCourse(C1, [M1], 'archived'));
 
     expect(expectOk(await place(M1))).toBeUndefined();
-  });
-
-  it('фикстурный случай С2: a1a1… — место по первому опубликованному курсу (fafa…, не первый)', async () => {
-    env.seedCourses(
-      courseState('published', {
-        uuid: FAFA,
-        moduleIds: [A0, A1],
-        phases: [phase('Синтаксис', A0), phase('Алгоритмика', A1)],
-      }),
-      plainCourse(CCCC, [A1]),
-    );
-
-    expect(expectOk(await place(A1))).toEqual({
-      courseId: FAFA,
-      isFirst: false,
-      isLast: true,
-      prevModuleId: A0,
-      stage: { index: 1, title: 'Алгоритмика' },
-    });
-  });
-
-  it('фикстурный случай С2: порядок файла решает — cccc… первым даёт isFirst', async () => {
-    env.seedCourses(
-      plainCourse(CCCC, [A1]),
-      courseState('published', {
-        uuid: FAFA,
-        moduleIds: [A0, A1],
-        phases: [phase('Синтаксис', A0), phase('Алгоритмика', A1)],
-      }),
-    );
-
-    expect(expectOk(await place(A1))).toEqual({
-      courseId: CCCC,
-      isFirst: true,
-      isLast: true,
-    });
   });
 });
 

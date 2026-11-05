@@ -3,7 +3,7 @@ import * as v from 'valibot';
 
 /**
  * Ошибки курсов, видимые другим модулям (контракт). «Модуль не найден» —
- * `ModuleErrors.NOT_FOUND` по ссылке (ERR-03): у курса такой ошибки нет (Т8).
+ * `ModuleErrors.NOT_FOUND` по ссылке (ERR-03): у курса такой ошибки нет.
  */
 export const CourseErrors = ErrorDef.define('COURSE', {
   NOT_FOUND: {

@@ -27,7 +27,7 @@ export const ModuleArDef = AggregateDef.define({
  * Версия в представлении обязательна: клиент сверяет её при записи, а в
  * state поле необязательно — legacy-запись читается как версия 0 (D-36).
  * Своя схема, а не `BaseEntityFields.version`: `nonOptional` в JSON Schema
- * выхода не выражается (MAN-03, Т12).
+ * выхода не выражается (MAN-03).
  */
 const versionOut = v.pipe(
   v.number(),

@@ -19,13 +19,14 @@ export class PassedModulesDqs {
    * один элемент. Запись без своего потока среди переданных пропускается.
    */
   moduleIds(): string[] {
-    const moduleByStream = new Map(
-      this.streams.map((stream) => [stream.uuid, stream.moduleId()]),
-    );
     const passed = this.students
       .filter((student) => student.isPassed())
-      .map((student) => moduleByStream.get(student.view().streamId))
-      .filter((moduleId): moduleId is string => moduleId !== undefined);
+      .flatMap((student) => {
+        const stream = this.streams.find((candidate) =>
+          student.belongsToStream(candidate.uuid),
+        );
+        return stream === undefined ? [] : [stream.moduleId()];
+      });
     return [...new Set(passed)];
   }
 }

@@ -12,7 +12,7 @@ type Input = ParsedInputOf<typeof GetCourseUcDef>;
 
 /**
  * Курс по идентификатору: чтение открыто всем, статус курс не скрывает —
- * представление курса отдаётся как есть (С1, вариант А).
+ * представление курса отдаётся как есть.
  */
 export class GetCourseUc extends UseCaseFromDef<
   typeof GetCourseUcDef,

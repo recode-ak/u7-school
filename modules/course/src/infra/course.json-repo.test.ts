@@ -324,6 +324,20 @@ describe('CourseJsonRepo — нарушения инвариантов прог�
       expect(await Bun.file(path).text()).toBe(text);
     });
   }
+
+  test('нарушенная соседняя запись роняет чтение всего файла', async () => {
+    const intact = makeState({ title: 'Целый курс' });
+    const broken = makeState({ moduleIds: [M1, M2, M1] });
+    const path = filePath('courses-invariant-neighbour.json');
+    const text = JSON.stringify([intact, broken]);
+    await Bun.write(path, text);
+    const repo = new CourseJsonRepo(path);
+
+    await expect(repo.findById(intact.uuid)).rejects.toBeInstanceOf(ValiError);
+    await expect(repo.findAll()).rejects.toBeInstanceOf(ValiError);
+
+    expect(await Bun.file(path).text()).toBe(text);
+  });
 });
 
 describe('CourseJsonRepo — findByIds', () => {

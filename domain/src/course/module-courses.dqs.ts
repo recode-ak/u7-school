@@ -2,15 +2,11 @@ import type { ReadonlyAr } from 'dmg-core';
 import type { CourseAr } from './course/course.ar';
 
 /**
- * DQS «какой курс у модуля»: единственное место правила выбора курса модуля
- * (С2 брифа `course`; до сведения в одно место их было три). Поведение
- * v0.2.6 сохранено: `firstIncluding` — любой статус (`getCourseByModule`,
- * `getModulePrerequisite`), `firstPublishedIncluding` — только опубликованные
- * (`getModulePlace`, `getModuleEnrollment`). Порядок массива — порядок файла,
- * он часть поведения. Только читает.
- *
- * Долг: две ветки правила (любой статус / опубликованный) — до появления
- * архивации курсов и истории модулей; замена — правка одного места.
+ * DQS «какой курс у модуля»: единственное место правила выбора курса модуля.
+ * `firstIncluding` — любой статус (`getCourseByModule`, `getModulePrerequisite`),
+ * `firstPublishedIncluding` — только опубликованные (`getModulePlace`,
+ * `getModuleEnrollment`); порядок массива — порядок файла, он часть поведения.
+ * Правило — долг в реестре, см. `conductor/architecture/debt.md`. Только читает.
  */
 export class ModuleCoursesDqs {
   constructor(private readonly courses: readonly ReadonlyAr<CourseAr>[]) {}
@@ -25,5 +21,11 @@ export class ModuleCoursesDqs {
     return this.courses.find(
       (course) => course.isPublished() && course.includesModule(moduleId),
     );
+  }
+
+  /** Модуль стартовый в первом опубликованном курсе, включающем его. */
+  startsPublishedCourse(moduleId: string): boolean {
+    const course = this.firstPublishedIncluding(moduleId);
+    return course?.placeOf(moduleId)?.isFirst === true;
   }
 }

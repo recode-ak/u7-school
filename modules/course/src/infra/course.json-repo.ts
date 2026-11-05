@@ -1,4 +1,9 @@
-import { CourseAr, CourseArDef, type CourseState } from '@u7-scl/domain/course';
+import {
+  CourseAr,
+  CourseArDef,
+  CourseProgramInvariant,
+  type CourseState,
+} from '@u7-scl/domain/course';
 import { type StoredRecord, VersionedRepository } from 'dmg-core/app';
 import * as v from 'valibot';
 import type { CourseFilter, CourseRepo } from '../course/course.repo';
@@ -11,8 +16,8 @@ const compareText = (a: string, b: string): number =>
 
 /**
  * Курсы в JSON-файле: массив снапшотов. Только хранение — запись разбирает
- * `CourseArDef.state`, инвариант программы проверяет `CourseAr.restore`;
- * битая запись — исключение, файл не перезаписывается.
+ * `CourseArDef.state`, инвариант программы проверяется у каждой строки при
+ * чтении; нарушение у любой записи — исключение, файл не перезаписывается.
  */
 export class CourseJsonRepo
   extends VersionedRepository<CourseAr>
@@ -85,6 +90,13 @@ export class CourseJsonRepo
   private async rows(): Promise<CourseState[]> {
     const file = Bun.file(this.filePath);
     if (!(await file.exists())) return [];
-    return v.parse(Rows, await file.json());
+    const rows = v.parse(Rows, await file.json());
+    for (const row of rows) {
+      v.parse(CourseProgramInvariant, {
+        moduleIds: row.moduleIds,
+        phases: row.phases,
+      });
+    }
+    return rows;
   }
 }

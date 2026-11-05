@@ -12,10 +12,9 @@ type Input = ParsedInputOf<typeof GetCoursesStartingWithModuleUcDef>;
 
 /**
  * Какие из переданных курсов начинаются с модуля — для других модулей.
- * Поведение v0.2.6: модуль должен быть первым в первом опубликованном курсе,
- * включающем его (правило — `ModuleCoursesDqs`), и лишь тогда из кандидатов
- * (любой статус) остаются включающие модуль. Расхождение с «по кандидату» —
- * С2 брифа, замена — правка одного DQS.
+ * Поведение v0.2.6: модуль должен быть стартовым в первом опубликованном
+ * курсе, включающем его (`ModuleCoursesDqs.startsPublishedCourse`), и лишь
+ * тогда из кандидатов (любой статус) остаются включающие модуль.
  */
 export class GetCoursesStartingWithModuleUc extends UseCaseFromDef<
   typeof GetCoursesStartingWithModuleUcDef,
@@ -30,10 +29,8 @@ export class GetCoursesStartingWithModuleUc extends UseCaseFromDef<
     const published = await this.resolve.courses.findAll({
       status: 'published',
     });
-    const start = new ModuleCoursesDqs(published).firstPublishedIncluding(
-      moduleId,
-    );
-    if (start?.placeOf(moduleId)?.isFirst !== true) return ok({ courses: [] });
+    if (!new ModuleCoursesDqs(published).startsPublishedCourse(moduleId))
+      return ok({ courses: [] });
     if (courseIds.length === 0) return ok({ courses: [] });
     return ok({ courses: await this.resolve.courses.findByIds(courseIds) });
   }

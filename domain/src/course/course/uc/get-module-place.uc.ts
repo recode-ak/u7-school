@@ -47,7 +47,7 @@ export type ModulePlace = v.InferOutput<typeof ModulePlace>;
 /**
  * Место модуля в программе опубликованного курса: первый такой курс в
  * порядке файла (поведение v0.2.6, правило — `ModuleCoursesDqs`). Модуль вне
- * опубликованных курсов — пусто, а не ошибка (Т17).
+ * опубликованных курсов — пусто, а не ошибка.
  */
 export const GetModulePlaceUcDef = UseCaseDef.define({
   name: 'getModulePlace',

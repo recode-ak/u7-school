@@ -4,8 +4,8 @@ import { CourseArDef, CourseView } from '../course.ar';
 
 /**
  * Курс, в программу которого входит модуль: любого статуса, первый в порядке
- * файла (расхождение 10 брифа — правило собрано в `ModuleCoursesDqs`).
- * Модуля нет ни в одном курсе — пусто, а не ошибка (Т17).
+ * файла (правило собрано в `ModuleCoursesDqs`). Модуля нет ни в одном курсе —
+ * пусто, а не ошибка.
  */
 export const GetCourseByModuleUcDef = UseCaseDef.define({
   name: 'getCourseByModule',

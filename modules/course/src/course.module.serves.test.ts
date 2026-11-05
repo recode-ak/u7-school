@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import {
-  CourseModuleDef,
-  GetCourseByModuleUcDef,
-  GetCourseUcDef,
-  GetModulePlaceUcDef,
-  ListCoursesUcDef,
-} from '@u7-scl/domain/course/contract';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { ModuleFacade } from 'dmg-core/app';
 import { normalize } from 'dmg-core/graph';
 import { makeCourseEnv } from './course/uc/course-uc.fixture';
@@ -31,18 +25,6 @@ describe('createCourseModule — сборка модуля курсов (Р10, �
   it('фасад обслуживает все Def UC модуля', () => {
     const served = facade();
     for (const def of CourseModuleDef.useCases) {
-      expect(served.serves(def)).toBe(true);
-    }
-  });
-
-  it('фасад обслуживает четыре UC чтения курсов (Ф3)', () => {
-    const served = facade();
-    for (const def of [
-      GetCourseUcDef,
-      ListCoursesUcDef,
-      GetCourseByModuleUcDef,
-      GetModulePlaceUcDef,
-    ]) {
       expect(served.serves(def)).toBe(true);
     }
   });

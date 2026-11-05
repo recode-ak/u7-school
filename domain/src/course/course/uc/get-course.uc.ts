@@ -5,7 +5,7 @@ import { CourseErrors } from '../course.errors';
 
 /**
  * Курс по идентификатору: чтение открыто всем, статус курс не скрывает —
- * варианта «виден только автору» в срезе нет (С1, вариант А).
+ * варианта «виден только автору» нет.
  */
 export const GetCourseUcDef = UseCaseDef.define({
   name: 'getCourse',

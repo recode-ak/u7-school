@@ -30,16 +30,9 @@ export class GetCourseEnrollmentUc extends UseCaseFromDef<
   }
 
   protected async execute(_: Input, { course }: Loaded) {
-    return ok(enrollmentOf(course));
+    const startModuleId = course?.enrollmentStart();
+    return startModuleId === undefined
+      ? ok<CourseEnrollment>({ enrollable: false })
+      : ok<CourseEnrollment>({ enrollable: true, startModuleId });
   }
 }
-
-/** Стартовый модуль есть только у опубликованного курса с программой. */
-const enrollmentOf = (course: CourseAr | undefined): CourseEnrollment => {
-  const startModuleId = course?.isPublished()
-    ? course.startModuleId()
-    : undefined;
-  return startModuleId === undefined
-    ? { enrollable: false }
-    : { enrollable: true, startModuleId };
-};

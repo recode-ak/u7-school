@@ -2,12 +2,8 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import {
-  A0,
-  A1,
   anonymous,
-  CCCC,
   courseState,
-  FAFA,
   M1,
   M2,
   M3,
@@ -23,7 +19,8 @@ import { GetCourseByModuleUc } from './get-course-by-module.uc';
 
 // Перенос `api/course/get-course-by-module-uc.test.ts` (3): курс, содержащий
 // модуль; любой статус (архивный находится); модуль вне курсов — пусто.
-// Правило «какой курс у модуля» — `ModuleCoursesDqs.firstIncluding` (С2).
+// Правило «какой курс у модуля» и порядок файла — `ModuleCoursesDqs`
+// (`module-courses.dqs.test.ts`, TST-08).
 
 const C1 = '44444444-4444-4444-8444-444444444441';
 const C2 = '44444444-4444-4444-8444-444444444442';
@@ -63,28 +60,6 @@ describe('GetCourseByModuleUc — успех', () => {
 
   it('курсов нет — пусто', async () => {
     expect(expectOk(await byModule(M1))).toBeUndefined();
-  });
-
-  it('несколько курсов с модулем — первый в порядке файла, статус не важен', async () => {
-    env.seedCourses(
-      plainCourse(C1, [M1], 'archived'),
-      plainCourse(C2, [M1], 'published'),
-    );
-
-    expect(expectOk(await byModule(M1))?.uuid).toBe(C1);
-  });
-
-  it('фикстурный случай С2: a1a1… — fafa… (второй в нём) идёт раньше cccc…', async () => {
-    env.seedCourses(
-      courseState('published', {
-        uuid: FAFA,
-        moduleIds: [A0, A1],
-        phases: [phase('Синтаксис', A0), phase('Алгоритмика', A1)],
-      }),
-      plainCourse(CCCC, [A1]),
-    );
-
-    expect(expectOk(await byModule(A1))?.uuid).toBe(FAFA);
   });
 
   it('курс отдаётся представлением со stages', async () => {

@@ -146,3 +146,42 @@ describe('ModuleCoursesDqs.firstPublishedIncluding — только опубли
     expect(dqs.firstPublishedIncluding(A0)?.placeOf(A0)?.isFirst).toBe(true);
   });
 });
+
+describe('ModuleCoursesDqs.startsPublishedCourse — стартовый модуль опубликованного курса', () => {
+  it('единственный опубликованный курс, модуль первый — true', () => {
+    const dqs = new ModuleCoursesDqs([course(FAFA, 'published', [M1, M2])]);
+    expect(dqs.startsPublishedCourse(M1)).toBe(true);
+  });
+
+  it('модуль не первый — false', () => {
+    const dqs = new ModuleCoursesDqs([course(FAFA, 'published', [M1, M2])]);
+    expect(dqs.startsPublishedCourse(M2)).toBe(false);
+  });
+
+  it('модуль вне опубликованных курсов — false', () => {
+    const dqs = new ModuleCoursesDqs([course(FAFA, 'published', [M1])]);
+    expect(dqs.startsPublishedCourse(OUTSIDE)).toBe(false);
+  });
+
+  it('неопубликованный курс не участвует: архивный стартовый не делает модуль стартовым', () => {
+    const dqs = new ModuleCoursesDqs([
+      course(FAFA, 'archived', [M1, M2]),
+      course(CCCC, 'published', [M2]),
+    ]);
+    expect(dqs.startsPublishedCourse(M1)).toBe(false);
+  });
+
+  it('фикстурный порядок fafa…/cccc…: a1a1… не стартовый в fafa…, хотя в cccc… он первый', () => {
+    const dqs = new ModuleCoursesDqs(fixtureCourses());
+
+    expect(dqs.startsPublishedCourse(A1)).toBe(false);
+    expect(dqs.startsPublishedCourse(A0)).toBe(true);
+  });
+
+  it('обратный порядок cccc…/fafa…: стартовый курс — cccc… (a0a0… всё равно первый в fafa…)', () => {
+    const dqs = new ModuleCoursesDqs([...fixtureCourses()].reverse());
+
+    expect(dqs.startsPublishedCourse(A1)).toBe(true);
+    expect(dqs.startsPublishedCourse(A0)).toBe(true);
+  });
+});

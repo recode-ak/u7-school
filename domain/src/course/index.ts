@@ -83,9 +83,7 @@ export type {
   WhichCoursesIncludeModuleCmdMeta,
 } from './course/commands/which-courses-include-module-cmd';
 export { WhichCoursesIncludeModuleCmdSchema } from './course/commands/which-courses-include-module-cmd';
-// Агрегат Course
-// Новый агрегат и legacy (`Legacy*`) — legacy живёт рядом до Ф5
-// Команды и типы, нужные прикладному слою (api/infra)
+// Курс: новый агрегат, legacy (`Legacy*`) рядом и команды для прикладного слоя
 export type {
   CourseStage,
   CourseView,

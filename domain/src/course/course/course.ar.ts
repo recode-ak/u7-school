@@ -6,6 +6,8 @@ import {
   CourseState,
   type PhaseVo,
 } from './course.state';
+// Схемы места модуля — в Def UC: тип места выводится из них, один источник.
+import type { ModulePlace, ModuleStage } from './uc/get-module-place.uc';
 
 /**
  * Def агрегата `course`: жизненный цикл объявлен статусами, но операций нет —
@@ -78,25 +80,18 @@ export const CourseView = v.object({
 export type CourseView = v.InferOutput<typeof CourseView>;
 
 /** Этап, в который входит модуль: позиция в курсе и заголовок. */
-export type CourseStageRef = {
-  readonly index: number;
-  readonly title: string;
-  readonly track?: string;
-};
+export type CourseStageRef = v.InferOutput<typeof ModuleStage>;
 
 /** Место модуля в программе курса (линейный порядок этапов). */
-export type ModulePlaceInCourse = {
-  readonly isFirst: boolean;
-  readonly isLast: boolean;
-  readonly prevModuleId?: string;
-  readonly nextModuleId?: string;
-  readonly stage?: CourseStageRef;
-};
+export type ModulePlaceInCourse = Omit<
+  v.InferOutput<typeof ModulePlace>,
+  'courseId'
+>;
 
 /**
  * Агрегат Course — программа курса и её этапы. Методы-вопросы отвечают на
- * «опубликован ли», «входит ли модуль», «с какого модуля начинается» и «где
- * место модуля»; вопросы одного агрегата живут здесь, а не в DQS (Т2).
+ * «опубликован ли», «входит ли модуль», «с какого модуля начинается запись» и
+ * «где место модуля»; вопросы одного агрегата живут здесь, а не в DQS.
  */
 export class CourseAr extends Aggregate<typeof CourseArDef, CourseView> {
   private constructor(state: CourseState) {
@@ -126,6 +121,11 @@ export class CourseAr extends Aggregate<typeof CourseArDef, CourseView> {
   /** Стартовый модуль программы — `undefined` у пустой программы. */
   startModuleId(): string | undefined {
     return this.state.moduleIds[0];
+  }
+
+  /** С какого модуля начинается запись: у неопубликованного курса записи нет. */
+  enrollmentStart(): string | undefined {
+    return this.isPublished() ? this.startModuleId() : undefined;
   }
 
   /** Этапы курса: срез программы от метки этапа до следующей метки. */

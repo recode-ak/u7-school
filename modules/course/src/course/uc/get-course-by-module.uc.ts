@@ -13,7 +13,7 @@ type Input = ParsedInputOf<typeof GetCourseByModuleUcDef>;
 /**
  * Курс, в программу которого входит модуль: любого статуса, первый в порядке
  * файла. Правило выбора курса модуля — `ModuleCoursesDqs`; модуль вне курсов
- * — пусто, а не ошибка (Т17).
+ * — пусто, а не ошибка.
  */
 export class GetCourseByModuleUc extends UseCaseFromDef<
   typeof GetCourseByModuleUcDef,

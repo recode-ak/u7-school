@@ -27,8 +27,9 @@ import {
 // допуск пропускается; статус потока не проверяется. Зачисляется субъект вызова
 // роль STUDENT stream не выдаёт. Допуск — вердикт курса (D-65): `passedModuleIds`
 // собирает `PassedModulesDqs` из `advanced`-записей и потоков (Т10); сравнений с
-// id курса в UC нет. Три сценария про «пройден» из legacy-теста переехали в
-// «`passedModuleIds` в вызове курса» (TST-08).
+// id курса в UC нет. Сценарии «пройден» — `advanced`, `not_advanced`, другой
+// модуль, дубли прохождений, ушедшая запись — в `passed-modules.dqs.test.ts`
+// (TST-08).
 
 let env: ReturnType<typeof makeEnv>;
 const uc = () => new EnrollStudentUc(env.deps, StreamModuleDef);
@@ -284,42 +285,6 @@ describe('EnrollStudentUc — passedModuleIds в вызове курса (Т10)'
     expectErr(await enroll(), 'STUDENT_PREREQUISITE_NOT_PASSED');
 
     expect(asked().map((i) => i.passedModuleIds)).toEqual([[]]);
-  });
-
-  it('ушедшая запись модуль не засчитывает', async () => {
-    env.seedStreams(prevStream());
-    env.seedStudents(
-      studentState('abandoned', {
-        uuid: crypto.randomUUID(),
-        streamId: OTHER_STREAM,
-      }),
-    );
-
-    expectOk(await enroll());
-
-    expect(asked().map((i) => i.passedModuleIds)).toEqual([[]]);
-  });
-
-  it('два прохождения одного модуля в разных потоках — модуль один раз', async () => {
-    const SECOND_STREAM = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
-    env.seedStreams(
-      prevStream(),
-      streamOf('completed', { uuid: SECOND_STREAM, moduleId: PREV_MODULE }),
-    );
-    env.seedStudents(
-      studentState('advanced', {
-        uuid: crypto.randomUUID(),
-        streamId: OTHER_STREAM,
-      }),
-      studentState('advanced', {
-        uuid: crypto.randomUUID(),
-        streamId: SECOND_STREAM,
-      }),
-    );
-
-    expectOk(await enroll());
-
-    expect(asked().map((i) => i.passedModuleIds)).toEqual([[PREV_MODULE]]);
   });
 
   it('записи другого пользователя не учитываются', async () => {

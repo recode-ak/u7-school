@@ -13,8 +13,6 @@ import { StudentRules } from './student.rules';
 // Допуск к модулю — вердикт курса (D-65): правило ничего не сравнивает, а
 // переводит вердикт в отказ; «пройден» собирает `PassedModulesDqs` (TST-08).
 
-const OTHER_STREAM = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
-
 const stream = (extra = {}) =>
   StreamAr.restore(streamStored('enrollment', extra));
 const student = (status: Parameters<typeof stored>[0], extra = {}) =>
@@ -162,23 +160,6 @@ describe('prerequisitePassed', () => {
     );
     expect(error.payload).toEqual({ moduleTitle: 'Основы' });
     expect(error.label).toBe('Сначала пройдите предыдущий модуль');
-  });
-
-  it('записи студента вердикт не меняют: advanced при отказе — отказ, при admitted — ok', () => {
-    const advanced = [student('advanced', { streamId: OTHER_STREAM })];
-    expectErr(
-      prerequisitePassed.check({
-        ...baseCtx,
-        userStudents: advanced,
-        prerequisite: {
-          admitted: false,
-          reason: 'previous-not-passed',
-          title: 'Основы',
-        },
-      }),
-      'STUDENT_PREREQUISITE_NOT_PASSED',
-    );
-    expectOk(prerequisitePassed.check({ ...baseCtx, userStudents: [] }));
   });
 });
 

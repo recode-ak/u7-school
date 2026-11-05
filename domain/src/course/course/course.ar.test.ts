@@ -98,6 +98,22 @@ describe('CourseAr.isPublished / includesModule / startModuleId', () => {
   });
 });
 
+describe('CourseAr.enrollmentStart — стартовый модуль для записи', () => {
+  it('опубликованный курс с программой — первый модуль', () => {
+    expect(twoStages().enrollmentStart()).toBe(M1);
+  });
+
+  it.each(['draft', 'archived'] as const)('%s — записи нет', (status) => {
+    expect(restore(status).enrollmentStart()).toBeUndefined();
+  });
+
+  it('опубликованный курс без программы — записи нет', () => {
+    expect(
+      restore('published', { moduleIds: [], phases: [] }).enrollmentStart(),
+    ).toBeUndefined();
+  });
+});
+
 describe('CourseAr.stages — этапы программы', () => {
   it('курс без этапов — []', () => {
     expect(noStages([M1, M2]).stages()).toEqual([]);

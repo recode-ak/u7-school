@@ -13,7 +13,7 @@ type Input = ParsedInputOf<typeof GetModulePlaceUcDef>;
 /**
  * Место модуля в программе опубликованного курса: первый такой курс в
  * порядке файла (правило — `ModuleCoursesDqs`), соседи по линейному порядку
- * и этап. Модуль вне опубликованных курсов — пусто, а не ошибка (Т17).
+ * и этап. Модуль вне опубликованных курсов — пусто, а не ошибка.
  */
 export class GetModulePlaceUc extends UseCaseFromDef<
   typeof GetModulePlaceUcDef,

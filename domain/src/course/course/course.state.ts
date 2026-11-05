@@ -34,7 +34,7 @@ export type PhaseVo = v.InferOutput<typeof PhaseVo>;
  * читаются: ISO-даты → число (UTC), нет `updatedAt` → `createdAt`, нет
  * `version` → 0 (D-36). `phases` здесь без проверок: инварианты программы
  * вынесены в `CourseProgramInvariant`, иначе `state` не переводится в JSON
- * Schema (Т3).
+ * Schema.
  */
 export const CourseState = v.object({
   ...BaseEntityFields,
@@ -74,7 +74,7 @@ const positionOf = (moduleIds: readonly string[], moduleId: string) =>
   moduleIds.indexOf(moduleId);
 
 /**
- * Инварианты программы и меток (Р2, Т3): модуль в программе один раз; метка
+ * Инварианты программы и меток: модуль в программе один раз; метка
  * указывает на модуль программы; метки идут в порядке программы (отсюда — не
  * больше одного этапа на модуль); первый этап начинается с первого модуля;
  * заголовки этапов уникальны. Висячие `moduleIds` (модуля нет в
