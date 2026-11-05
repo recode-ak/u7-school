@@ -41,6 +41,12 @@
 | Ф2 | `T2-questionnaire-domain-apply` | flash | 0.106 | 73 | 99% | 0 |
 | Ф2 | `T2-questionnaire-bot-apply` | flash | 0.146 | 86 | 99% | 0 |
 | Ф2 | `T2-questionnaire-app-apply` | flash | 0.068 | 46 | 98% | 0 |
+| Ф2 | `T2-inv-peer-review-domain` | flash | 0.123 | 31 | 93% | 0 |
+| Ф2 | `T2-inv-peer-review-app` | flash | 0.116 | 26 | 91% | 0 |
+| Ф2 | `T2-inv-peer-review-bot` | flash | 0.179 | 76 | 97% | 0 |
+| Ф2 | `T2-peer-review-domain-table` | flash | 0.181 | 49 | 96% | 0 (приёмка: legacy — владелец репо, ссылки `:33`/`:58`/`:30` переведены) |
+| Ф2 | `T2-peer-review-app-table` | flash | 0.155 | 70 | 97% | 0 (приёмка: `json-repo:200`, `:241` оставлены — точный ISO → UTC) |
+| Ф2 | `T2-peer-review-bot-table` | flash | 0.107 | 55 | 98% | 0 |
 
 Инвентаризация — роль `dmg-tech-lead` (только чтение, файл отчёта через bash). Три `stream` шли параллельно в одном дереве без конфликтов: код не меняют, файлы разные.
 
