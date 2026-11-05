@@ -1,0 +1,1 @@
+Задача Ф0.1: базовая линия. CI=true bun test 4216/0 (397), test:bot 1107/0 (101), domain/src/course 258/0, modules/course 170/0, dmg-core 1397/0. Файлы: summary.md (новый), tracks.md ([~]), plan.md. resolve-content-path/get-course-program вызываются только тестами.
