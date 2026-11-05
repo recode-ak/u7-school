@@ -187,7 +187,7 @@
 ### DEBT-44: UC-адаптеры над legacy-фасадами
 - **Место:**
   - `modules/user/src/user/uc/get-telegram-addresses.uc.ts` — адаптер над фасадом пользователей; погашает миграция модуля `user`
-  - `modules/course/src/course/uc/{get-course-enrollment,get-module-enrollment,get-courses-including-module,get-courses-starting-with-module,get-same-modules,get-module-snapshot,get-module-prerequisite}.uc.ts` — адаптеры над фасадом курсов; погашает миграция модуля `course`
+  - `modules/course/src/course/uc/{get-course-enrollment,get-module-enrollment,get-courses-including-module,get-courses-starting-with-module,get-same-modules,get-module-prerequisite}.uc.ts` — адаптеры над фасадом курсов; погашает миграция модуля `course`
 - **Признак:** `Адаптер .* над legacy`
 - **Корень:** `modules/*/src/**/uc/*.uc.ts`
 - **Причина:** TR-11 — модули не на DMG (D-37), внешний контракт закрыт UC-адаптером над legacy-фасадом; паттерн описан в [migration.md](./migration.md), раздел «UC-адаптер над legacy-фасадом».
@@ -607,3 +607,18 @@
   - smoke `getModule`/`listModules` через собранный `U7App` — не в Ф1 (потребителей нет), к Ф4;
   - остальные `warn` ревью (дублирование хелперов, лишний generic view, `ModuleSummary` в контракте, payload отказа из `Decision`, CODE-04, TST-04, экспорт порта) — исправлены в срезе.
 - **Пересмотреть:** Т11 — снять в Ф5.
+
+### TR-55: итоги среза `lesson` + `step` + снимок (`course-dmg`, Ф2)
+- **Трек / фаза:** `course-dmg`, Ф2 (бриф `conductor/tracks/course-dmg_20261105/slices/lesson-step.md`, отчёты авторов, `dmg-data-keeper` и `dmg-reviewer`; orchestrator)
+- **Контекст:** ревью — без `error`, 5 `warn`; данные совместимы на чтение (снимки 4 модулей и `getStepsByLessons` совпали с legacy побайтово), запись новыми репозиториями при живом legacy делает `lessons.json`/`steps.json` нечитаемыми для legacy.
+- **Решение:**
+  - исправлены в срезе: ссылки на фазы/вопросы в комментариях (CODE-04), копии массивов из `outline()`/`publishedOutline()` (DOM-17), вопрос `LessonAr.stepIds()` для `getStepsByLessons` вместо `outline()`, проверка доступа снимка до чтения уроков, мёртвая ветка в группировке шагов;
+  - отбор и группировка шагов `getStepsByLessons` остаются в `execute` UC (API-01, `warn`): потребитель один, форма повторяет v0.2.6, DQS «на вырост» не заводится (`repo.md` §5);
+  - `LessonView`/`StepView` объявляют `version` обязательным своей схемой (`v.nonOptional` не переводится в JSON Schema, MAN-03); `ModuleView` — пока с необязательной версией, выровнять в срезе `course` (Ф3);
+  - `FileVo` строже legacy `FileMetadataSchema` (`size` целое, `mimeType` обрезается) — шагов `kind: file` в данных 0, принято;
+  - паспорт `CourseModuleDef` в тесте сверяется без учёта порядка — порядок не часть контракта;
+  - `StepsByLesson`: в `index.ts` — legacy-тип, в `contract.ts` — новый (одно имя) — снимается с legacy в Ф5;
+  - запрет `save` новых `LessonJsonRepo`/`StepJsonRepo` над `data/` до Ф5 — как Т11 (TR-53, TR-54);
+  - наблюдение к Ф4: DMG-вызов пишет в `data/oplog` ~9 КБ на снимок и ~18 КБ на `getStepsByLessons` — при вызове на каждый рендер навигации учесть рост лога;
+  - DEBT-44, «Место»: адаптер `get-module-snapshot` снят.
+- **Пересмотреть:** `ModuleView.version` — Ф3; запрет записи — Ф5; CODE-04 (ссылки на фазы в комментариях) повторяется от Ф1 — кандидат в машинную проверку.

@@ -63,7 +63,7 @@
     - [x] перенос сценариев `content-snapshot*.test.ts`, `course-ds.test.ts`, `lesson/*`, `step/*` (список — в отчёте).
 - [x] Task: `migrator`, домен и прикладной слой (flash); адаптер `get-module-snapshot` заменён настоящим UC ffca0443
 - [x] Task: `dmg-data-keeper` (flash): чтение `lessons.json`, `steps.json` ffca0443
-- [~] Task: `dmg-reviewer` (Opus)
+- [x] Task: `dmg-reviewer` (Opus) 9d3dc1f0
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 2:**

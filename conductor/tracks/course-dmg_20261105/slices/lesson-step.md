@@ -258,3 +258,23 @@ UC `GetLessonUc`, `GetStepUc`, `GetStepsByLessonsUc` (модуль — один 
 ### Данные — `dmg-data-keeper` (flash, `cd-F2-data`)
 Совместимо на чтение. Строго читаются 248/248 уроков, 1161/1161 шаг, фикстуры 69/69 и 71/71. Снимки 4 модулей совпадают с legacy побайтово (184 урока, 918 шагов), 32 черновых шага в `stepIds` (С1 подтверждено), висячих ссылок 0. `getStepsByLessons` (гость): 1128 = 1129 − 1 шаг вне уроков, JSON совпал. Время: новый 24–32 мс, legacy 241–257 мс (Т7 — кеш не нужен). `sha256` до/после совпадает.
 Риски: первый `save` нового репозитория делает `lessons/steps.json` нечитаемым для legacy (0/248), следующий legacy `save` оставляет 1 запись — запрет Т11 до Ф5 и бэкап перед первым `save` (как Ф1). Наблюдение к Ф4: DMG-вызов пишет в `data/oplog` ~9 КБ на снимок и ~18 КБ на `getStepsByLessons` — при вызове на каждый рендер навигации лог заметно растёт.
+
+### Ревью — `dmg-reviewer` (Opus)
+Без `error`; критерии 2–7 выполнены, сценарии legacy-тестов перенесены по таблице, тест снимка покрывает 5 обязательных случаев. Red и реализация в одном коммите — сравнение «red не ослаблен» частичное (`.skip`/`@ts-`/лишних `as never` нет).
+
+| ID | файл | суть | severity | решение |
+|---|---|---|---|---|
+| CODE-04 | `index.ts`, `get-module-snapshot.uc.ts`, `module-snapshot.dqs.ts`, `versionOut` | ссылки на Ф/С в комментариях, две D-NN | warn | исправлено (в тестах — оставлено; машинная проверка — кандидат, TR-55) |
+| DOM-17 | `lesson.ar.ts`, `module.ar.ts` | `outline()`/`publishedOutline()` отдают массивы state | warn | исправлено (копии) |
+| DOM-04/10 | `get-steps-by-lessons.uc.ts` | шаги урока через `outline()` (форма снимка) | warn | исправлено (`LessonAr.stepIds()`) |
+| API-01 | `get-steps-by-lessons.uc.ts` | отбор и группировка в `execute` | warn | оставлено, TR-55 |
+| — | `get-module-snapshot.uc.ts` | уроки читаются до проверки доступа | info | исправлено (+ тест) |
+| — | `get-steps-by-lessons.uc.ts` | мёртвый `?? []` | info | исправлено |
+| — | `ModuleView` | `version` необязателен в отличие от `LessonView`/`StepView` | info | Ф3, TR-55 |
+| — | `step.state.ts` | `FileVo` строже legacy | info | принято, TR-55 |
+| — | `index.ts`/`contract.ts` | `StepsByLesson` — два источника | info | Ф5, TR-55 |
+| TST-05 | `course.module.test.ts` | паспорт без учёта порядка | info | принято, TR-55 |
+| — | `debt.md` | DEBT-44 «Место» с адаптером снимка | вне границ | исправлено orchestrator |
+
+### Правки по ревью — `migrator` (flash, `cd-F2-fix`), 9d3dc1f0
+Пункты 1–5 решения orchestrator; +3 теста (`stepIds()`, «при отказе уроки не читаются»), red → green. `check` — 4604 pass.
