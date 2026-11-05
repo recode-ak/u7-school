@@ -2,14 +2,14 @@ import { ErrorDef, F } from 'dmg-core';
 import * as v from 'valibot';
 
 /**
- * Ошибки курсов, видимые другим модулям (контракт). Остальные ошибки
- * модуля — legacy (`CourseModuleError`), пока агрегат не переведён на Def.
+ * Ошибки курсов, видимые другим модулям (контракт). «Модуль не найден» —
+ * `ModuleErrors.NOT_FOUND` по ссылке (ERR-03): у курса такой ошибки нет (Т8).
  */
 export const CourseErrors = ErrorDef.define('COURSE', {
-  MODULE_NOT_FOUND: {
+  NOT_FOUND: {
     kind: 'not_found',
-    label: 'Модуль не найден',
-    description: 'Модуля с таким идентификатором нет.',
-    payload: v.object({ moduleId: F.uuid('модуля') }),
+    label: 'Курс не найден',
+    description: 'Курса с таким идентификатором нет.',
+    payload: v.object({ courseId: F.uuid('курса') }),
   },
 });

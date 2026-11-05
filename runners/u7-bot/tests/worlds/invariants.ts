@@ -1,7 +1,9 @@
+import { CourseArDef, CourseProgramInvariant } from '@u7-scl/course/domain';
 import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
 import type { StreamState } from '@u7-scl/stream/domain';
 import type { User } from '@u7-scl/user/domain';
 import { Role } from '@u7-scl/user/domain';
+import * as v from 'valibot';
 import { isoMinute, utcMs } from './relative-time';
 import type { WorldState } from './types';
 
@@ -97,7 +99,34 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
     }
   }
 
-  // 3. Инвариант роли автора курса
+  // 3. Инварианты курса: state и программа (метки этапов в порядке программы)
+  for (const c of state.courses) {
+    const course = v.safeParse(CourseArDef.state, c);
+    if (!course.success) {
+      violations.push({
+        code: 'COURSE_STATE_INVALID',
+        message: `Курс "${c.title}" (${c.uuid}): ${course.issues[0]?.message}`,
+        entity: 'Course',
+        id: c.uuid,
+      });
+      continue;
+    }
+
+    const program = v.safeParse(CourseProgramInvariant, {
+      moduleIds: course.output.moduleIds,
+      phases: course.output.phases,
+    });
+    if (!program.success) {
+      violations.push({
+        code: 'COURSE_PROGRAM_INVALID',
+        message: `Курс "${c.title}" (${c.uuid}): ${program.issues[0]?.message}`,
+        entity: 'Course',
+        id: c.uuid,
+      });
+    }
+  }
+
+  // 4. Инвариант роли автора курса
   for (const c of state.courses) {
     const author = usersById.get(c.authorId);
     if (author) {
@@ -113,9 +142,9 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
     }
   }
 
-  // 4. Инварианты кампаний отзывов
+  // 5. Инварианты кампаний отзывов
   for (const cmp of state.campaigns) {
-    // 4.1. Окно кампании: createdAt < expiresAt
+    // 5.1. Окно кампании: createdAt < expiresAt
     const createdTime = utcMs(cmp.createdAt);
     const expiresTime = utcMs(cmp.expiresAt);
     if (expiresTime <= createdTime) {
@@ -127,7 +156,7 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
       });
     }
 
-    // 4.2. Связь со студентом: согласованность исхода и даты
+    // 5.2. Связь со студентом: согласованность исхода и даты
     const st = state.students.find(
       (s) => s.streamId === cmp.scopeId && s.userId === cmp.subjectId,
     );

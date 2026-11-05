@@ -2,6 +2,7 @@ import {
   CourseModuleDef,
   GetModulePrerequisiteUcDef,
   GetModuleSnapshotUcDef,
+  type ModulePrerequisite,
 } from '@u7-scl/domain/course/contract';
 import type {
   StreamState,
@@ -56,12 +57,8 @@ export const stranger = new UserCaller({
   roles: [Role.STUDENT],
 });
 
-type Prerequisite = Result<
-  | { gate: 'none' }
-  | { gate: 'closed' }
-  | { gate: 'module'; moduleId: string; title: string },
-  never
->;
+/** Вердикт курса (D-65) — ответ заглушки `getModulePrerequisite`. */
+type Prerequisite = Result<ModulePrerequisite, never>;
 
 export const studentState = (
   status: StudentState['status'],
@@ -96,7 +93,10 @@ export const withStep = (extra: Partial<StudentState> = {}) =>
 
 /**
  * Стенд UC студента: часы на `T0`, фейки репозиториев потоков и студентов,
- * фасад `course` (допуск к модулю — `env.prerequisite`, снимок — по умолчанию).
+ * фасад `course` (снимок — по умолчанию). Заглушка допуска отвечает по входу,
+ * как курс: `passedModuleIds` содержит `PREV_MODULE` — `admitted`, иначе —
+ * вердикт `env.prerequisite` (по умолчанию `admitted`). Так сбор
+ * `passedModuleIds` из записей студента проверяется, а не подменяется полем.
  * Выборки студентов отвечают по текущей базе фейка.
  */
 export function makeEnv(at = T0) {
@@ -104,10 +104,14 @@ export function makeEnv(at = T0) {
   const streams = new StreamRepoFake();
   const students = new StudentRepoFake();
   const stand = {
-    prerequisite: ok({ gate: 'none' }) as Prerequisite,
+    prerequisite: ok({ admitted: true }) as Prerequisite,
   };
   const course = new StubFacade(CourseModuleDef)
-    .answer(GetModulePrerequisiteUcDef, () => stand.prerequisite)
+    .answer(GetModulePrerequisiteUcDef, ({ passedModuleIds }) =>
+      passedModuleIds.includes(PREV_MODULE)
+        ? (ok({ admitted: true }) as Prerequisite)
+        : stand.prerequisite,
+    )
     .answer(GetModuleSnapshotUcDef, () => ok(contentSnapshot));
   const deps = {
     app: ctx.app,

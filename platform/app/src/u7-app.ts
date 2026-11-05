@@ -12,6 +12,7 @@ import { legacyClock, legacyEventBus } from '@u7-scl/core/legacy-bridge';
 import type { Logger } from '@u7-scl/core/shared';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import {
+  type CourseRepo,
   createCourseModule,
   type LessonRepo,
   type ModuleRepo,
@@ -19,7 +20,7 @@ import {
 } from '@u7-scl/course';
 import { CourseApiModule } from '@u7-scl/course/api';
 import {
-  CourseInProcFacade,
+  CourseJsonRepo,
   LegacyCourseJsonRepo,
   LegacyLessonJsonRepo,
   LegacyModuleJsonRepo,
@@ -148,8 +149,6 @@ export class U7App {
       eventBus: appResolver.eventBus,
     });
 
-    const courseFacade = new CourseInProcFacade(courseModule);
-
     // ══ Peer-review: репозитории кампаний и отзывов (DMG) ══
     const reviewCampaignRepo = new ReviewCampaignJsonRepo(
       `${dbDir}/peer-review/campaigns.json`,
@@ -161,11 +160,9 @@ export class U7App {
     // stories, legacy-события stream доходят до ER (D-37).
     const dmg = U7App.dmgApp(
       U7App.dmgContext(env, appResolver.eventBus, logger),
+      { user: userFacade },
       {
-        user: userFacade,
-        course: courseFacade,
-      },
-      {
+        courses: new CourseJsonRepo(`${dbDir}/courses/courses.json`),
         modules: new ModuleJsonRepo(`${dbDir}/courses/modules.json`),
         lessons: new LessonJsonRepo(`${dbDir}/courses/lessons.json`),
         steps: new StepJsonRepo(`${dbDir}/courses/steps.json`),
@@ -246,15 +243,17 @@ export class U7App {
   }
 
   /**
-   * Приложение DMG: внешние модули зависимостей (адаптеры над legacy-фасадами),
-   * `wish`, `peer-review` (кампании) и `questionnaire`, собранные `ApiApp`
-   * пакета — фасады по `dependsOn` (D-50). `modules` — их Def для заданий
-   * legacy-планировщика (`ApiApp.withDmg`).
+   * Приложение DMG: внешние модули зависимостей (`user` — адаптер над
+   * legacy-фасадом, `course` — на своих репозиториях), `wish`, `peer-review`
+   * (кампании) и `questionnaire`, собранные `ApiApp` пакета — фасады по
+   * `dependsOn` (D-50). `modules` — их Def для заданий legacy-планировщика
+   * (`ApiApp.withDmg`).
    */
   private static dmgApp(
     context: AppContext,
     legacy: U7LegacyFacades,
     repos: {
+      readonly courses: CourseRepo;
       readonly modules: ModuleRepo;
       readonly lessons: LessonRepo;
       readonly steps: StepRepo;
@@ -277,7 +276,7 @@ export class U7App {
         create: (deps) =>
           createCourseModule({
             ...deps,
-            legacy: legacy.course,
+            courses: repos.courses,
             modules: repos.modules,
             lessons: repos.lessons,
             steps: repos.steps,

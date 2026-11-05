@@ -23,9 +23,12 @@ import {
 } from './student-uc.fixture';
 
 // Перенос `api/student/enroll-student-uc.test.ts`. Порядок отказов: ключ →
-// активная запись (в том числе в этом же потоке) → gate → нет шагов; курса нет —
-// gate пропускается; статус потока не проверяется. Зачисляется субъект вызова
-// роль STUDENT stream не выдаёт.
+// активная запись (в том числе в этом же потоке) → допуск → нет шагов; курса нет —
+// допуск пропускается; статус потока не проверяется. Зачисляется субъект вызова
+// роль STUDENT stream не выдаёт. Допуск — вердикт курса (D-65): `passedModuleIds`
+// собирает `PassedModulesDqs` из `advanced`-записей и потоков (Т10); сравнений с
+// id курса в UC нет. Три сценария про «пройден» из legacy-теста переехали в
+// «`passedModuleIds` в вызове курса» (TST-08).
 
 let env: ReturnType<typeof makeEnv>;
 const uc = () => new EnrollStudentUc(env.deps, StreamModuleDef);
@@ -70,7 +73,7 @@ describe('EnrollStudentUc — успех', () => {
     expectOk(await enroll());
 
     expect(env.course.received.map((c) => [c.def.name, c.input])).toEqual([
-      ['getModulePrerequisite', { moduleId: MODULE }],
+      ['getModulePrerequisite', { moduleId: MODULE, passedModuleIds: [] }],
     ]);
   });
 
@@ -163,13 +166,13 @@ describe('EnrollStudentUc — отказы', () => {
     expect(env.students.saved).toEqual([]);
   });
 
-  it('порядок: ключ → активная запись → gate → нет шагов', async () => {
+  it('порядок: ключ → активная запись → допуск → нет шагов', async () => {
     const LIVE = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
     env.seedStreams(
       streamOf('enrollment', { enrollmentKey: 'секрет', contentSnapshot: [] }),
     );
     env.seedStudents(studentState('active', { uuid: LIVE }));
-    env.prerequisite = ok({ gate: 'closed' });
+    env.prerequisite = ok({ admitted: false, reason: 'closed' });
 
     expectErr(
       await enroll({ enrollmentKey: 'нет' }),
@@ -186,31 +189,47 @@ describe('EnrollStudentUc — отказы', () => {
       'STUDENT_PREREQUISITE_NOT_PASSED',
     );
 
-    env.prerequisite = ok({ gate: 'none' });
+    env.prerequisite = ok({ admitted: true });
     expectErr(await enroll({ enrollmentKey: 'секрет' }), 'STUDENT_NO_STEPS');
   });
 });
 
-describe('EnrollStudentUc — допуск к модулю (gate)', () => {
-  const module = {
-    gate: 'module',
-    moduleId: PREV_MODULE,
+describe('EnrollStudentUc — допуск к модулю (вердикт курса)', () => {
+  const notPassed = {
+    admitted: false,
+    reason: 'previous-not-passed',
     title: 'Основы',
   } as const;
-
-  it('gate none (курса нет или модуль входной) — Ok', async () => {
-    env.prerequisite = ok({ gate: 'none' });
+  it('admitted (курса нет или модуль входной) — Ok', async () => {
+    env.prerequisite = ok({ admitted: true });
     expectOk(await enroll());
   });
 
-  it('gate closed — STUDENT_PREREQUISITE_NOT_PASSED с «предыдущий»', async () => {
-    env.prerequisite = ok({ gate: 'closed' });
+  it('closed — STUDENT_PREREQUISITE_NOT_PASSED с «предыдущий»', async () => {
+    env.prerequisite = ok({ admitted: false, reason: 'closed' });
     const error = expectErr(await enroll(), 'STUDENT_PREREQUISITE_NOT_PASSED');
     expect(error.payload).toEqual({ moduleTitle: 'предыдущий' });
   });
 
-  it('предыдущий модуль пройден (advanced в потоке этого модуля) — Ok', async () => {
-    env.prerequisite = ok(module);
+  it('previous-not-passed — отказ с названием модуля из вердикта и текстом «Сначала пройдите предыдущий модуль»', async () => {
+    env.prerequisite = ok(notPassed);
+    const error = expectErr(await enroll(), 'STUDENT_PREREQUISITE_NOT_PASSED');
+    expect(error.payload).toEqual({ moduleTitle: 'Основы' });
+    expect(error.label).toBe('Сначала пройдите предыдущий модуль');
+  });
+});
+
+describe('EnrollStudentUc — passedModuleIds в вызове курса (Т10)', () => {
+  const notPassed = {
+    admitted: false,
+    reason: 'previous-not-passed',
+    title: 'Основы',
+  } as const;
+  const asked = () =>
+    env.course.received.map((c) => c.input as { passedModuleIds: string[] });
+
+  it('advanced в потоке предыдущего модуля — модуль в passedModuleIds, допуск есть', async () => {
+    env.prerequisite = ok(notPassed);
     env.seedStreams(prevStream());
     env.seedStudents(
       studentState('advanced', {
@@ -219,11 +238,14 @@ describe('EnrollStudentUc — допуск к модулю (gate)', () => {
         steps: [done(STEP_1)],
       }),
     );
+
     expectOk(await enroll());
+
+    expect(asked().map((i) => i.passedModuleIds)).toEqual([[PREV_MODULE]]);
   });
 
-  it('not_advanced не «прошёл» — отказ с названием модуля', async () => {
-    env.prerequisite = ok(module);
+  it('not_advanced не «прошёл» — passedModuleIds пуст, отказ с названием модуля', async () => {
+    env.prerequisite = ok(notPassed);
     env.seedStreams(prevStream());
     env.seedStudents(
       studentState('not_advanced', {
@@ -232,13 +254,87 @@ describe('EnrollStudentUc — допуск к модулю (gate)', () => {
         steps: [issued(STEP_1)],
       }),
     );
+
     const error = expectErr(await enroll(), 'STUDENT_PREREQUISITE_NOT_PASSED');
+
     expect(error.payload).toEqual({ moduleTitle: 'Основы' });
-    expect(error.label).toBe('Сначала пройдите предыдущий модуль');
+    expect(asked().map((i) => i.passedModuleIds)).toEqual([[]]);
   });
 
-  it('записей нет — отказ', async () => {
-    env.prerequisite = ok(module);
+  it('прошёл другой модуль — в passedModuleIds только он, допуска нет', async () => {
+    env.prerequisite = ok(notPassed);
+    env.seedStreams(
+      streamOf('completed', { uuid: OTHER_STREAM, moduleId: MODULE }),
+    );
+    env.seedStudents(
+      studentState('advanced', {
+        uuid: crypto.randomUUID(),
+        streamId: OTHER_STREAM,
+      }),
+    );
+
     expectErr(await enroll(), 'STUDENT_PREREQUISITE_NOT_PASSED');
+
+    expect(asked().map((i) => i.passedModuleIds)).toEqual([[MODULE]]);
+  });
+
+  it('записей нет — passedModuleIds пуст, отказ', async () => {
+    env.prerequisite = ok(notPassed);
+
+    expectErr(await enroll(), 'STUDENT_PREREQUISITE_NOT_PASSED');
+
+    expect(asked().map((i) => i.passedModuleIds)).toEqual([[]]);
+  });
+
+  it('ушедшая запись модуль не засчитывает', async () => {
+    env.seedStreams(prevStream());
+    env.seedStudents(
+      studentState('abandoned', {
+        uuid: crypto.randomUUID(),
+        streamId: OTHER_STREAM,
+      }),
+    );
+
+    expectOk(await enroll());
+
+    expect(asked().map((i) => i.passedModuleIds)).toEqual([[]]);
+  });
+
+  it('два прохождения одного модуля в разных потоках — модуль один раз', async () => {
+    const SECOND_STREAM = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+    env.seedStreams(
+      prevStream(),
+      streamOf('completed', { uuid: SECOND_STREAM, moduleId: PREV_MODULE }),
+    );
+    env.seedStudents(
+      studentState('advanced', {
+        uuid: crypto.randomUUID(),
+        streamId: OTHER_STREAM,
+      }),
+      studentState('advanced', {
+        uuid: crypto.randomUUID(),
+        streamId: SECOND_STREAM,
+      }),
+    );
+
+    expectOk(await enroll());
+
+    expect(asked().map((i) => i.passedModuleIds)).toEqual([[PREV_MODULE]]);
+  });
+
+  it('записи другого пользователя не учитываются', async () => {
+    env.prerequisite = ok(notPassed);
+    env.seedStreams(prevStream());
+    env.seedStudents(
+      studentState('advanced', {
+        uuid: crypto.randomUUID(),
+        streamId: OTHER_STREAM,
+        userId: '99999999-9999-4999-8999-999999999999',
+      }),
+    );
+
+    expectErr(await enroll(), 'STUDENT_PREREQUISITE_NOT_PASSED');
+
+    expect(asked().map((i) => i.passedModuleIds)).toEqual([[]]);
   });
 });

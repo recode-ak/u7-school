@@ -1,41 +1,45 @@
-// Адаптер UC внешнего контракта над legacy-фасадом курсов.
+import type { CourseAr } from '@u7-scl/domain/course';
 import {
+  type CourseEnrollment,
   type CourseModuleDef,
   GetCourseEnrollmentUcDef,
 } from '@u7-scl/domain/course/contract';
 import { ok } from 'dmg-core';
-import { UseCaseFromDef } from 'dmg-core/app';
+import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
 import type { CourseModuleDeps } from '../../course.module';
 
+type Loaded = { readonly course: CourseAr | undefined };
+type Input = ParsedInputOf<typeof GetCourseEnrollmentUcDef>;
+
 /**
- * `getCourseEnrollment` поверх legacy-фасада курсов: модуль курсов не мигрирован (D-37), решение «доступен ли курс и
- * с какого модуля» принимает legacy-код. Ветвление по ответам legacy — часть
- * адаптера, не прикладной логики.
+ * Запись на курс — для других модулей: стартовый модуль программы. Курс не
+ * найден, не опубликован или без программы — для записи неотличимы:
+ * `enrollable: false`, без причины.
  */
 export class GetCourseEnrollmentUc extends UseCaseFromDef<
   typeof GetCourseEnrollmentUcDef,
   CourseModuleDeps,
-  undefined
+  Loaded
 > {
   constructor(deps: CourseModuleDeps, module: typeof CourseModuleDef) {
     super(GetCourseEnrollmentUcDef, deps, module);
   }
 
-  protected async load() {
-    return ok(undefined);
+  protected async load({ courseId }: Input) {
+    return ok({ course: await this.resolve.courses.findById(courseId) });
   }
 
-  /** Не опубликован/архив/пустая программа — неотличимы: `enrollable: false`. */
-  protected async execute({ courseId }: { courseId: string }) {
-    const { legacy } = this.resolve;
-    if (!(await legacy.isCourseEnrollable(courseId))) {
-      return ok({ enrollable: false as const });
-    }
-    const startModuleId = await legacy.getCourseStartModuleId(courseId);
-    return ok(
-      startModuleId === undefined
-        ? { enrollable: false as const }
-        : { enrollable: true as const, startModuleId },
-    );
+  protected async execute(_: Input, { course }: Loaded) {
+    return ok(enrollmentOf(course));
   }
 }
+
+/** Стартовый модуль есть только у опубликованного курса с программой. */
+const enrollmentOf = (course: CourseAr | undefined): CourseEnrollment => {
+  const startModuleId = course?.isPublished()
+    ? course.startModuleId()
+    : undefined;
+  return startModuleId === undefined
+    ? { enrollable: false }
+    : { enrollable: true, startModuleId };
+};

@@ -1,4 +1,4 @@
-// Адаптер UC внешнего контракта над legacy-фасадом курсов.
+import type { CourseAr } from '@u7-scl/domain/course';
 import {
   type CourseModuleDef,
   GetCoursesIncludingModuleUcDef,
@@ -7,31 +7,34 @@ import { ok } from 'dmg-core';
 import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
 import type { CourseModuleDeps } from '../../course.module';
 
+type Loaded = { readonly courses: readonly CourseAr[] };
 type Input = ParsedInputOf<typeof GetCoursesIncludingModuleUcDef>;
 
 /**
- * `getCoursesIncludingModule` поверх legacy
- * `whichCoursesIncludeModule`: принадлежность модуля курсам, в т.ч.
- * историческую, решает legacy-код; ответ передаётся как есть.
+ * Какие из переданных курсов включают модуль — для других модулей: курс в
+ * любом статусе (принадлежность в т.ч. историческая), неизвестный
+ * пропускается, порядок ответа — порядок `courseIds`.
  */
 export class GetCoursesIncludingModuleUc extends UseCaseFromDef<
   typeof GetCoursesIncludingModuleUcDef,
   CourseModuleDeps,
-  undefined
+  Loaded
 > {
   constructor(deps: CourseModuleDeps, module: typeof CourseModuleDef) {
     super(GetCoursesIncludingModuleUcDef, deps, module);
   }
 
-  protected async load() {
-    return ok(undefined);
+  protected async load({ courseIds }: Input) {
+    if (courseIds.length === 0) return ok({ courses: [] });
+    return ok({ courses: await this.resolve.courses.findByIds(courseIds) });
   }
 
-  protected async execute({ moduleId, courseIds }: Input) {
-    const included = await this.resolve.legacy.whichCoursesIncludeModule(
-      moduleId,
-      [...courseIds],
-    );
+  protected async execute({ moduleId, courseIds }: Input, { courses }: Loaded) {
+    const byId = new Map(courses.map((course) => [course.uuid, course]));
+    const included = courseIds.flatMap((courseId) => {
+      const course = byId.get(courseId);
+      return course?.includesModule(moduleId) ? [course.uuid] : [];
+    });
     return ok({ courseIds: included });
   }
 }

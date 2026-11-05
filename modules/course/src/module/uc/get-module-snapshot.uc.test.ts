@@ -161,10 +161,10 @@ describe('GetModuleSnapshotUc — успех', () => {
 });
 
 describe('GetModuleSnapshotUc — отказы', () => {
-  it('модуля нет — COURSE_MODULE_NOT_FOUND, kind not_found', async () => {
+  it('модуля нет — MODULE_NOT_FOUND (ModuleErrors.NOT_FOUND, Т8), kind not_found', async () => {
     const error = expectErr(
       await snapshot(anonymous, MISSING),
-      'COURSE_MODULE_NOT_FOUND',
+      'MODULE_NOT_FOUND',
     );
 
     expect(error.kind).toBe('not_found');
@@ -220,7 +220,7 @@ describe('GetModuleSnapshotUc — отказы', () => {
     expect(env.asked.lessons).toEqual([]);
   });
 
-  it('сбой репозитория модулей — SERVER_INTERNAL, а не COURSE_MODULE_NOT_FOUND', async () => {
+  it('сбой репозитория модулей — SERVER_INTERNAL, а не MODULE_NOT_FOUND', async () => {
     env.modules.findById = async () => {
       throw new Error('диск недоступен');
     };

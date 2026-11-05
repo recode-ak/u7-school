@@ -6,13 +6,12 @@ import { StudentErrors } from './student.errors';
 
 /**
  * Контекст правил зачисления: поток, введённое кодовое слово, все записи
- * пользователя с их потоками и условие допуска к модулю от курсов.
+ * пользователя и условие допуска к модулю от курсов.
  */
 export type EnrollStudentCtx = {
   readonly stream: ReadonlyAr<StreamAr>;
   readonly enrollmentKey?: string;
   readonly userStudents: readonly ReadonlyAr<StudentAr>[];
-  readonly userStreams: readonly ReadonlyAr<StreamAr>[];
   readonly prerequisite: ModulePrerequisite;
 };
 
@@ -43,9 +42,9 @@ const notStudyingElsewhere = DomainRuleDef.define({
 });
 
 /**
- * Предыдущий модуль курса пройден (`advanced` в потоке этого модуля;
- * `not_advanced` не «прошёл»). Условие допуска — ответ курсов: `none` — нет
- * условия, `closed` — отказ без названия, `module` — нужна запись о прохождении.
+ * Допуск к модулю по вердикту курса (D-65): правило ничего не сравнивает, а
+ * переводит вердикт в отказ. Название предыдущего модуля — для текста отказа;
+ * `closed` — предыдущий модуль определить нельзя.
  */
 const prerequisitePassed = DomainRuleDef.define({
   name: 'prerequisitePassed',
@@ -53,27 +52,12 @@ const prerequisitePassed = DomainRuleDef.define({
   description:
     'Зачислить на модуль можно, только если пройден предыдущий модуль курса (если он есть).',
   error: StudentErrors.PREREQUISITE_NOT_PASSED,
-  check: ({ prerequisite, userStudents, userStreams }: EnrollStudentCtx) => {
-    if (prerequisite.gate === 'none') return ok();
-    if (prerequisite.gate === 'closed') {
-      return StudentErrors.PREREQUISITE_NOT_PASSED.err({
-        moduleTitle: 'предыдущий',
-      });
-    }
-    const passed = userStudents.some(
-      (student) =>
-        student.isPassed() &&
-        userStreams.some(
-          (stream) =>
-            student.belongsToStream(stream.uuid) &&
-            stream.teachesModule(prerequisite.moduleId),
-        ),
-    );
-    return passed
-      ? ok()
-      : StudentErrors.PREREQUISITE_NOT_PASSED.err({
-          moduleTitle: prerequisite.title,
-        });
+  check: ({ prerequisite }: EnrollStudentCtx) => {
+    if (prerequisite.admitted) return ok();
+    return StudentErrors.PREREQUISITE_NOT_PASSED.err({
+      moduleTitle:
+        prerequisite.reason === 'closed' ? 'предыдущий' : prerequisite.title,
+    });
   },
 });
 

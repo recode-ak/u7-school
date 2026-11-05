@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'bun:test';
-import { ModuleAr } from './module.ar';
+import { toJsonSchema } from 'dmg-core';
+import * as v from 'valibot';
+import { ModuleAr, ModuleView } from './module.ar';
 import {
   AUTHOR,
   LESSON_1,
@@ -204,5 +206,24 @@ describe('ModuleAr.publishedOutline', () => {
   it('статус самого модуля не фильтрует: draft-модуль отдаёт опубликованные проекты', () => {
     const ar = restore('draft', { projects: [project('published')] });
     expect(ar.publishedOutline()).toHaveLength(1);
+  });
+});
+
+describe('ModuleView — version обязателен', () => {
+  it('представление без version не проходит схему выхода', () => {
+    const { version: _omitted, ...withoutVersion } = restore(
+      'published',
+    ).viewFor(true) as ModuleView;
+    expect(v.safeParse(ModuleView, withoutVersion).success).toBe(false);
+  });
+
+  it('представление с version проходит', () => {
+    const view = restore('published').viewFor(true);
+    expect(v.safeParse(ModuleView, view).success).toBe(true);
+  });
+
+  it('JSON Schema выхода требует version, как у урока и шага (MAN-03)', () => {
+    const schema = toJsonSchema(ModuleView) as { required?: string[] };
+    expect(schema.required).toContain('version');
   });
 });

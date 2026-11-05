@@ -1,11 +1,5 @@
 import { U7_SCHOOL_ID } from '@u7-scl/app-legacy/domain';
-import type {
-  Course,
-  Lesson,
-  Module,
-  Project,
-  Step,
-} from '@u7-scl/course/domain';
+import type { Lesson, Module, Project, Step } from '@u7-scl/course/domain';
 import { Status } from '@u7-scl/course/domain';
 import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
 import type { StreamState, StudentState } from '@u7-scl/stream/domain';
@@ -19,6 +13,7 @@ import type {
   StreamDef,
   StudentDef,
   WorldCampaign,
+  WorldCourse,
   WorldDefinition,
   WorldReview,
   WorldState,
@@ -58,6 +53,17 @@ function assertCampaignStudentFateInvariant(
       `Инвариант нарушен: судьба кампании "${outcome}" противоречит статусу студента "${status}" (ожидалось: ${allowedStatuses?.join(', ')})`,
     );
   }
+}
+
+/**
+ * Этапы курса по умолчанию: один этап «Основная программа» с первого модуля;
+ * в курсе без модулей этапов нет.
+ */
+function defaultPhases(moduleIds: readonly string[]): WorldCourse['phases'] {
+  const first = moduleIds[0];
+  return first === undefined
+    ? []
+    : [{ title: 'Основная программа', fromModuleId: first }];
 }
 
 /**
@@ -105,7 +111,7 @@ export function buildWorldState(
   });
 
   // 2. Сборка курсов, модулей, уроков, шагов
-  const courses: Course[] = [];
+  const courses: WorldCourse[] = [];
   const modules: Module[] = [];
   const lessons: Lesson[] = [];
   const steps: Step[] = [];
@@ -118,12 +124,12 @@ export function buildWorldState(
       userUuidByKey.get(c.authorKey) ??
       deterministicUuid(`person:${c.authorKey}`);
 
-    const moduleIds: string[] = [];
+    const declaredModuleIds: string[] = [];
 
     for (const m of c.modules ?? []) {
       const moduleUuid = m.uuid ?? deterministicUuid(`module:${m.key}`);
       moduleUuidByKey.set(m.key, moduleUuid);
-      moduleIds.push(moduleUuid);
+      declaredModuleIds.push(moduleUuid);
 
       const moduleProjects: Project[] = [];
 
@@ -189,18 +195,16 @@ export function buildWorldState(
       modules.push(moduleEntity);
     }
 
-    const courseEntity: Course = {
+    const moduleIds = c.moduleIds ?? declaredModuleIds;
+
+    const courseEntity: WorldCourse = {
       uuid: courseUuid,
       title: c.title,
       description: c.description,
       authorId: authorUuid,
-      phases: c.phases ?? [
-        {
-          title: 'Основная программа',
-          moduleIds,
-        },
-      ],
-      status: Status.PUBLISHED,
+      moduleIds,
+      phases: c.phases ?? defaultPhases(moduleIds),
+      status: 'published',
       createdAt: resolveRelativeTime('T-120d', anchorDate),
     };
     courses.push(courseEntity);

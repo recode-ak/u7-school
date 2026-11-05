@@ -1,5 +1,4 @@
 import type { Logger } from '@u7-scl/core/shared';
-import type { CourseLegacy } from '@u7-scl/course';
 import type { UserLegacy } from '@u7-scl/user';
 import type { AppMode, ReplayStore } from 'dmg-core/app';
 
@@ -32,5 +31,4 @@ export type U7AppPorts = {
 /** Legacy-фасады, над которыми собраны внешние DMG-модули зависимостей. */
 export type U7LegacyFacades = {
   readonly user: UserLegacy;
-  readonly course: CourseLegacy;
 };

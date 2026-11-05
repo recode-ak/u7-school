@@ -13,6 +13,7 @@ import { normalize } from 'dmg-core/graph';
 import * as v from 'valibot';
 import { CourseModuleDef, GetCourseEnrollmentUcDef } from './contract';
 import { CourseArDef } from './course/course.ar';
+import { CourseErrors } from './course/course.errors';
 import { LessonArDef } from './lesson/lesson.ar';
 import { LessonErrors } from './lesson/lesson.errors';
 import { ModuleArDef } from './module/module.ar';
@@ -21,7 +22,7 @@ import { StepArDef } from './step/step.ar';
 import { StepErrors } from './step/step.errors';
 
 describe('CourseModuleDef — внешний модуль (D-37)', () => {
-  it('паспорт: внешний, зависит от user, 4 агрегата, 12 Def UC', () => {
+  it('паспорт: внешний, зависит от user, 4 агрегата, 16 Def UC', () => {
     expect(CourseModuleDef.external).toBe(true);
     const passport = normalize(CourseModuleDef);
     expect(passport).toMatchObject({
@@ -47,17 +48,24 @@ describe('CourseModuleDef — внешний модуль (D-37)', () => {
         'getStep',
         'getStepsByLessons',
         'getModuleSnapshot',
+        'getCourse',
+        'listCourses',
+        'getCourseByModule',
+        'getModulePlace',
       ].sort(),
     );
-    expect(passport.useCases).toHaveLength(12);
+    expect(passport.useCases).toHaveLength(16);
   });
 
-  it('агрегат курса — минимальный контракт: без событий, ошибка — модуль не найден', () => {
+  it('агрегат курса: без событий, одна ошибка — COURSE_NOT_FOUND (модуль не найден — ModuleErrors.NOT_FOUND, Т8)', () => {
     expect(normalize(CourseArDef)).toMatchObject({
       name: 'course',
       events: [],
-      errors: ['COURSE_MODULE_NOT_FOUND'],
+      errors: ['COURSE_NOT_FOUND'],
     });
+    expect(Object.values(CourseErrors).map((e) => e.code)).toEqual([
+      'COURSE_NOT_FOUND',
+    ]);
   });
 
   it('агрегат модуля: без событий, одна ошибка — MODULE_NOT_FOUND', () => {

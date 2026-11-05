@@ -2,11 +2,33 @@ import { allowAll, F, type OutputOf, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { CourseArDef } from '../course.ar';
 
+/** Вердикт «допуск закрыт»: записи предыдущего модуля нет в `modules.json`. */
+const closed = v.object({
+  admitted: v.pipe(v.literal(false), v.description('Допуска к модулю нет')),
+  reason: v.pipe(
+    v.literal('closed'),
+    v.description('Предыдущий модуль курса определить нельзя'),
+  ),
+});
+
+/** Вердикт «предыдущий модуль не пройден»: его название — для текста отказа. */
+const previousNotPassed = v.object({
+  admitted: v.pipe(v.literal(false), v.description('Допуска к модулю нет')),
+  reason: v.pipe(
+    v.literal('previous-not-passed'),
+    v.description('Не пройден предыдущий модуль программы'),
+  ),
+  title: v.pipe(
+    v.string(),
+    v.description('Название предыдущего модуля — для текста отказа'),
+  ),
+});
+
 /**
  * Условие допуска к модулю — для других модулей (зачисление на поток).
- * Ответ по виду `gate`: `none` — курса нет или модуль входной, `module` —
- * нужно пройти предыдущий модуль (его id и название), `closed` — предыдущий
- * модуль курса определить нельзя.
+ * Вердикт по `admitted`: курса нет, модуль входной или предыдущий пройден —
+ * допуск есть; иначе причина отказа. Принадлежность «пройден» решает курс:
+ * клиент ничего не сравнивает (D-65).
  *
  * `allowAll`: вызывает система (UC другого модуля), ответ не зависит от субъекта.
  */
@@ -14,33 +36,26 @@ export const GetModulePrerequisiteUcDef = UseCaseDef.define({
   name: 'getModulePrerequisite',
   label: 'Условие допуска к модулю',
   description:
-    'Какой модуль нужно пройти до записи на указанный: нет условия, предыдущий модуль курса или допуск закрыт — для других модулей.',
+    'Допуск к записи на модуль: нужен ли пройденный предыдущий модуль курса и можно ли его определить — для других модулей.',
   type: 'query',
   aggregate: CourseArDef,
   callers: ['system'],
   policy: allowAll,
-  input: v.object({ moduleId: F.uuid('модуля') }),
-  output: v.variant('gate', [
+  input: v.object({
+    moduleId: F.uuid('модуля'),
+    passedModuleIds: v.pipe(
+      v.array(F.uuid('модуля')),
+      v.description('Модули, которые студент уже прошёл'),
+    ),
+  }),
+  output: v.variant('admitted', [
     v.object({
-      gate: v.pipe(
-        v.literal('none'),
-        v.description('Условия допуска нет: курса нет или модуль входной'),
+      admitted: v.pipe(
+        v.literal(true),
+        v.description('Допуск есть: условия нет или предыдущий модуль пройден'),
       ),
     }),
-    v.object({
-      gate: v.pipe(
-        v.literal('module'),
-        v.description('Нужно пройти предыдущий модуль'),
-      ),
-      moduleId: F.uuid('предыдущего модуля'),
-      title: v.pipe(v.string(), v.description('Название предыдущего модуля')),
-    }),
-    v.object({
-      gate: v.pipe(
-        v.literal('closed'),
-        v.description('Допуск закрыт: предыдущий модуль определить нельзя'),
-      ),
-    }),
+    v.variant('reason', [previousNotPassed, closed]),
   ]),
   errors: [],
 });

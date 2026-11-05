@@ -1,52 +1,47 @@
-// Адаптер UC внешнего контракта над legacy-фасадом курсов.
-import { LegacyCourseAr } from '@u7-scl/domain/course';
+import {
+  type ModulePrerequisite,
+  ModulePrerequisiteDqs,
+} from '@u7-scl/domain/course';
 import {
   type CourseModuleDef,
   GetModulePrerequisiteUcDef,
 } from '@u7-scl/domain/course/contract';
 import { ok } from 'dmg-core';
-import { UseCaseFromDef } from 'dmg-core/app';
+import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
 import type { CourseModuleDeps } from '../../course.module';
 
+type Loaded = { readonly verdict: ModulePrerequisite };
+type Input = ParsedInputOf<typeof GetModulePrerequisiteUcDef>;
+
 /**
- * `getModulePrerequisite` поверх legacy `getCourseByModuleId` +
- * `LegacyCourseAr.getPrevModuleId` + `getModule`: курса нет или модуль входной —
- * `none`; модуля нет в порядке курса — `closed`; иначе `module`. Название
- * предыдущего модуля не получено — вместо него его id.
+ * Условие допуска к модулю — для других модулей: нужен ли пройденный
+ * предыдущий модуль программы. Курсы читаются все (курс модуля — первый в
+ * порядке файла, любой статус) — правило вердикта в `ModulePrerequisiteDqs`.
  */
 export class GetModulePrerequisiteUc extends UseCaseFromDef<
   typeof GetModulePrerequisiteUcDef,
   CourseModuleDeps,
-  undefined
+  Loaded
 > {
   constructor(deps: CourseModuleDeps, module: typeof CourseModuleDef) {
     super(GetModulePrerequisiteUcDef, deps, module);
   }
 
-  protected async load() {
-    return ok(undefined);
+  protected async load({ moduleId, passedModuleIds }: Input) {
+    const [courses, modules] = await Promise.all([
+      this.resolve.courses.findAll(),
+      this.resolve.modules.findAll(),
+    ]);
+    return ok({
+      verdict: new ModulePrerequisiteDqs(
+        courses,
+        modules,
+        passedModuleIds,
+      ).verdict(moduleId),
+    });
   }
 
-  protected async execute({ moduleId }: { moduleId: string }) {
-    const { legacy } = this.resolve;
-    const course = await legacy.getCourseByModuleId(moduleId);
-    if (!course) return ok({ gate: 'none' as const });
-    const prevModuleId = new LegacyCourseAr(course).getPrevModuleId(moduleId);
-    if (prevModuleId === undefined) return ok({ gate: 'none' as const });
-    if (prevModuleId === null) return ok({ gate: 'closed' as const });
-    try {
-      const prev = await legacy.getModule(prevModuleId);
-      return ok({
-        gate: 'module' as const,
-        moduleId: prevModuleId,
-        title: prev.title,
-      });
-    } catch {
-      return ok({
-        gate: 'module' as const,
-        moduleId: prevModuleId,
-        title: prevModuleId,
-      });
-    }
+  protected async execute(_: Input, { verdict }: Loaded) {
+    return ok(verdict);
   }
 }

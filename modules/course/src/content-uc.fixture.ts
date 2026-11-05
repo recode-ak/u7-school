@@ -1,7 +1,8 @@
 import type { LessonState, StepState } from '@u7-scl/domain/course';
 import { ModuleFacades } from 'dmg-core/app';
 import { testAppContext } from 'dmg-core/testing';
-import type { CourseLegacy, CourseModuleDeps } from './course.module';
+import { CourseRepoFake } from './course/course.repo.fake';
+import type { CourseModuleDeps } from './course.module';
 import { LessonRepoFake } from './lesson/lesson.repo.fake';
 import { ModuleRepoFake } from './module/module.repo.fake';
 import { MODULE, T0 } from './module/uc/module-uc.fixture';
@@ -130,7 +131,7 @@ export function makeContentEnv() {
   const deps: CourseModuleDeps = {
     app: ctx.app,
     facades: new ModuleFacades(),
-    legacy: {} as CourseLegacy,
+    courses: new CourseRepoFake(),
     modules,
     lessons,
     steps,

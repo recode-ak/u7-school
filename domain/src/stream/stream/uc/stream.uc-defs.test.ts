@@ -39,7 +39,7 @@ describe('CreateStreamUcDef', () => {
       aggregate: 'stream',
       callers: ['user'],
       calls: ['getModuleSnapshot'],
-      errors: ['COURSE_MODULE_NOT_FOUND'],
+      errors: ['MODULE_NOT_FOUND'],
       emits: ['stream.stream.created'],
     });
     expect(CreateStreamUcDef.policy).toBe(StreamPolicy.rules.canCreate);

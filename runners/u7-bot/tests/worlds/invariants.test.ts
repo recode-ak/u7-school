@@ -221,4 +221,46 @@ describe('world-kit: инварианты роли/статуса и хроно�
       ).toThrow(/окно кампании.*закрытия.*создания|expiresAt/iu);
     });
   });
+
+  describe('инварианты курса: state и программа', () => {
+    it('сборка падает, если запись курса не разбирается схемой state', () => {
+      const base = createValidBase();
+
+      expect(() =>
+        buildWorldState({
+          anchorDate: anchor,
+          persons: [base.pMentor, base.pStudent],
+          courses: [{ ...base.cCourse, description: '  ' }],
+          streams: [base.sStream],
+          students: [base.stStudent],
+          campaigns: [base.cmp],
+        }),
+      ).toThrow(/COURSE_STATE_INVALID.*Описание курса/iu);
+    });
+
+    it('сборка падает, если этап начинается с модуля вне программы', () => {
+      const base = createValidBase();
+      const inProgram = '11111111-1111-4111-8111-111111111111';
+      const outOfProgram = '22222222-2222-4222-8222-222222222222';
+      const cCourse = course({
+        key: 'js-core',
+        uuid: '33333333-3333-4333-8333-333333333333',
+        title: 'JS Core',
+        description: 'Курс',
+        authorKey: 'mentor',
+        moduleIds: [inProgram],
+        phases: [{ title: 'Этап', fromModuleId: outOfProgram }],
+      });
+
+      expect(() =>
+        buildWorldState({
+          anchorDate: anchor,
+          persons: [base.pMentor, base.pStudent],
+          courses: [cCourse],
+        }),
+      ).toThrow(
+        /COURSE_PROGRAM_INVALID.*этап начинается с модуля вне программы/iu,
+      );
+    });
+  });
 });

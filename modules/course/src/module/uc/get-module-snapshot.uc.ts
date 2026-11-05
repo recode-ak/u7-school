@@ -4,9 +4,9 @@ import {
   ModuleSnapshotDqs,
 } from '@u7-scl/domain/course';
 import {
-  CourseErrors,
   type CourseModuleDef,
   GetModuleSnapshotUcDef,
+  ModuleErrors,
 } from '@u7-scl/domain/course/contract';
 import { type Caller, CoreErrors, err, ok } from 'dmg-core';
 import {
@@ -39,7 +39,7 @@ export class GetModuleSnapshotUc extends UseCaseFromDef<
 
   protected async load({ moduleId }: Input) {
     const module = await this.resolve.modules.findById(moduleId);
-    if (!module) return err(CourseErrors.MODULE_NOT_FOUND.make({ moduleId }));
+    if (!module) return err(ModuleErrors.NOT_FOUND.make({ moduleId }));
     return ok({ module });
   }
 

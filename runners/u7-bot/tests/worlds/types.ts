@@ -1,4 +1,4 @@
-import type { Course, Lesson, Module, Step } from '@u7-scl/course/domain';
+import type { CourseState, Lesson, Module, Step } from '@u7-scl/course/domain';
 import type {
   ReviewDirection,
   StudentOutcome,
@@ -46,6 +46,20 @@ export interface WorldReview {
 }
 
 /**
+ * Курс в мире — ввод state (не state): даты ISO, как в legacy-файле, `version`
+ * необязательна; `CourseArDef.state` переводит даты в число UTC и дописывает
+ * `updatedAt`, `version` по умолчанию 0 (D-36).
+ */
+export type WorldCourse = Omit<
+  CourseState,
+  'createdAt' | 'updatedAt' | 'version'
+> & {
+  createdAt: string;
+  updatedAt?: string;
+  version?: number;
+};
+
+/**
  * WorldState — центральный объект состояния мира.
  * Коллекции state-объектов агрегатов, нейтральные к хранилищу (plain-данные).
  */
@@ -53,7 +67,7 @@ export interface WorldState {
   users: User[];
   streams: StreamState[];
   students: StudentState[];
-  courses: Course[];
+  courses: WorldCourse[];
   modules: Module[];
   lessons: Lesson[];
   steps: Step[];
@@ -122,6 +136,13 @@ export interface ModuleDef {
   projects?: ProjectDef[];
 }
 
+/** Декларативное описание этапа: заголовок и модуль, с которого он начинается */
+export interface CoursePhaseDef {
+  title: string;
+  track?: string;
+  fromModuleId: string;
+}
+
 /** Декларативное описание курса */
 export interface CourseDef {
   key: string;
@@ -130,7 +151,10 @@ export interface CourseDef {
   description: string;
   authorKey: string;
   modules?: ModuleDef[];
-  phases?: { title: string; moduleIds: string[] }[];
+  /** Программа курса: id модулей по порядку; по умолчанию — модули `modules`. */
+  moduleIds?: string[];
+  /** Этапы программы; по умолчанию — один этап с первого модуля. */
+  phases?: CoursePhaseDef[];
 }
 
 /** Декларативное описание потока */

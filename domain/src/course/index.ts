@@ -26,7 +26,6 @@ export {
   ContentSnapshotSchema,
   LessonSnapshotSchema,
 } from './content-snapshot';
-// Агрегат Course
 export { LegacyCourseAr } from './course/a-root';
 export type {
   AddModuleToCourseCmd,
@@ -84,13 +83,32 @@ export type {
   WhichCoursesIncludeModuleCmdMeta,
 } from './course/commands/which-courses-include-module-cmd';
 export { WhichCoursesIncludeModuleCmdSchema } from './course/commands/which-courses-include-module-cmd';
+// Агрегат Course
+// Новый агрегат и legacy (`Legacy*`) — legacy живёт рядом до Ф5
+// Команды и типы, нужные прикладному слою (api/infra)
+export type {
+  CourseStage,
+  CourseView,
+  ModulePlaceInCourse,
+} from './course/course.ar';
+export { CourseAr, CourseArDef } from './course/course.ar';
+export { CourseErrors } from './course/course.errors';
+export type { CourseState, PhaseVo } from './course/course.state';
+export { CourseProgramInvariant } from './course/course.state';
 export type { Course, CourseArMeta, Phase } from './course/entity';
 export { CourseSchema, PhaseSchema } from './course/entity';
 export { LegacyCoursePolicy } from './course/policy';
 export type { CourseListFilter, LegacyCourseRepo } from './course/repo';
+export type { ModulePlace } from './course/uc/get-module-place.uc';
+export type { ModulePrerequisite } from './course/uc/get-module-prerequisite.uc';
 // Domain Service
 export { CourseDs } from './course-ds';
-export type { CourseFacade, CourseProgram, ModulePlace } from './facade';
+// Legacy-тип фасада: имя `ModulePlace` занято новым UC-выходом
+export type {
+  CourseFacade,
+  CourseProgram,
+  ModulePlace as LegacyModulePlace,
+} from './facade';
 // Агрегат Lesson: новый и legacy (`Legacy*`) — legacy живёт рядом
 export { LegacyLessonAr } from './lesson/a-root';
 export type {
@@ -185,6 +203,9 @@ export type { ModuleState } from './module/module.state';
 export { LegacyModulePolicy } from './module/policy';
 export type { LegacyModuleRepo, ModuleListFilter } from './module/repo';
 export type { ModuleId as ModuleEntityId } from './module/types';
+// DQS курса: курс модуля и вердикт пререквизита
+export { ModuleCoursesDqs } from './module-courses.dqs';
+export { ModulePrerequisiteDqs } from './module-prerequisite.dqs';
 // DQS снимка контента модуля
 export { ModuleSnapshotDqs } from './module-snapshot.dqs';
 // Общие типы

@@ -6,7 +6,7 @@ import type {
   DialogResponse,
 } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
-import { CourseErrors } from '@u7-scl/domain/course/contract';
+import { ModuleErrors } from '@u7-scl/domain/course/contract';
 import { CreateStreamUcDef } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
@@ -719,12 +719,7 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
 
   test('confirm: отказ UC (модуль не найден) — реплика с текстом отказа, без экрана успеха', async () => {
     const { story } = createStory(undefined, () =>
-      refuse(
-        CourseErrors.MODULE_NOT_FOUND.code,
-        'not_found',
-        {},
-        'Модуль не найден',
-      ),
+      refuse(ModuleErrors.NOT_FOUND.code, 'not_found', {}, 'Модуль не найден'),
     );
     const response = await story.handleCallback(
       'confirm',

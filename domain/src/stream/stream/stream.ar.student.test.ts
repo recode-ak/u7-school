@@ -64,13 +64,6 @@ describe('StreamAr.acceptsEnrollmentKey', () => {
   );
 });
 
-describe('StreamAr.teachesModule', () => {
-  it('свой модуль — true, чужой — false', () => {
-    expect(streamWith().teachesModule(MODULE)).toBe(true);
-    expect(streamWith().teachesModule(P1)).toBe(false);
-  });
-});
-
 describe('StreamAr.stepPlace', () => {
   it('обычный шаг: следующий в уроке, не последний', () => {
     expect(streamWith().stepPlace(S1)).toEqual({

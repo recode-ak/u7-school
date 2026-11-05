@@ -1,4 +1,3 @@
-// Адаптер UC внешнего контракта над legacy-фасадом курсов.
 import {
   type CourseModuleDef,
   GetSameModulesUcDef,
@@ -10,8 +9,9 @@ import type { CourseModuleDeps } from '../../course.module';
 type Input = ParsedInputOf<typeof GetSameModulesUcDef>;
 
 /**
- * `getSameModules` поверх legacy `whichModulesAreSame`: историческую идентичность модулей решает legacy-код; ответ
- * передаётся как есть.
+ * Какие из модулей — тот же модуль — для других модулей: сегодня идентичность
+ * — равенство id, повторы кандидатов сохраняются (D-65). Репозитории не
+ * читаются: ответ — свойство входа.
  */
 export class GetSameModulesUc extends UseCaseFromDef<
   typeof GetSameModulesUcDef,
@@ -27,9 +27,7 @@ export class GetSameModulesUc extends UseCaseFromDef<
   }
 
   protected async execute({ moduleId, moduleIds }: Input) {
-    const same = await this.resolve.legacy.whichModulesAreSame(moduleId, [
-      ...moduleIds,
-    ]);
+    const same = moduleIds.filter((id) => id === moduleId);
     return ok({ moduleIds: same });
   }
 }

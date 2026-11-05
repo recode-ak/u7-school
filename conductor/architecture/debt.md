@@ -187,7 +187,6 @@
 ### DEBT-44: UC-адаптеры над legacy-фасадами
 - **Место:**
   - `modules/user/src/user/uc/get-telegram-addresses.uc.ts` — адаптер над фасадом пользователей; погашает миграция модуля `user`
-  - `modules/course/src/course/uc/{get-course-enrollment,get-module-enrollment,get-courses-including-module,get-courses-starting-with-module,get-same-modules,get-module-prerequisite}.uc.ts` — адаптеры над фасадом курсов; погашает миграция модуля `course`
 - **Признак:** `Адаптер .* над legacy`
 - **Корень:** `modules/*/src/**/uc/*.uc.ts`
 - **Причина:** TR-11 — модули не на DMG (D-37), внешний контракт закрыт UC-адаптером над legacy-фасадом; паттерн описан в [migration.md](./migration.md), раздел «UC-адаптер над legacy-фасадом».
@@ -633,3 +632,19 @@
   - (Т1–Т18) брифа — по рекомендациям, в том числе: S0 `Legacy*` для `CourseAr`/`CoursePolicy`/`CourseRepo`/`CourseJsonRepo`; вопросы одного курса — методы `CourseAr`, DQS — `ModuleCoursesDqs`, `ModulePrerequisiteDqs`; инвариант программы и меток — схема вне `state` + `v.parse` в конструкторе (прецедент `ReviewCampaignAr`), `dmg-core` не правится; единая ошибка `ModuleErrors.NOT_FOUND` (снятие `CourseErrors.MODULE_NOT_FOUND`); `passedModuleIds` — `PassedModulesDqs` в `stream`; legacy-deps (`CourseLegacy`, `U7LegacyFacades.course`) убираются в Ф3, а не Ф5; authoring-UC, `get-course-program`, `resolve-content-path`, `which-courses-include-module` — до Ф5; перевод `courses.json` — одноразовым скриптом вне репозитория.
   - (Данные) после коммита переведённого `courses.json` legacy-чтение молча теряет записи и пишет `data/courses/backups/`: legacy-UC курса над `data/` не запускать до Ф5.
 - **Пересмотреть:** (С1) — в треке «История модулей курса»; (С2) — там же; (С3) — снять с красной зоной в Ф4.
+
+### TR-57: красная зона Ф3–Ф4 `course-dmg`
+- **Трек / фаза:** `course-dmg`, Ф3 (orchestrator, 2026-11-05; TR-52 (5), TR-56 С3)
+- **Контекст:** сборка читает `courses.json` новым строгим `CourseJsonRepo` (`moduleIds` + `phases[].fromModuleId`), тестовые миры переведены на новый формат; stories каталога и навигации бота до Ф4 зовут legacy-UC курса (`list-courses`, `get-course`, `get-module-place` через `LegacyCourseJsonRepo`), а legacy-схема записи нового формата молча пропускает — курсов «нет». Мост чтения не делается (С3).
+- **Решение:**
+  - (1) Красная зона — 29 тестов в 8 файлах `runners/u7-bot/tests` (прогон `CI=true bun test`, 4903 pass / 29 fail):
+    - `courses/course-catalog.integration.test.ts` — 1 (`list: курсы + этапы inline`);
+    - `courses/wish-flow.integration.test.ts` — 2 (`cancel…`, `опасное название…`);
+    - `e2e/curious-showcase.e2e.test.ts` — 9 (drill-down каталога);
+    - `e2e/pagination.e2e.test.ts` — 2 (каталог: «Полный трек»);
+    - `e2e/questionnaire-ux.e2e.test.ts` — 5 и `e2e/wish-questionnaire.e2e.test.ts` — 6 (нет кнопки «Хочу пройти курс» — пустой каталог);
+    - `e2e/student-dmg.e2e.test.ts` — 2 и `e2e/user-notify.e2e.test.ts` — 2 («Курс завершён» / «записаться на следующий» — legacy `get-module-place` пуст).
+  - (2) Гейт Ф3 — `check` зелёный, кроме списка (1); новых красных вне списка нет.
+  - (3) legacy-UC курса над `data/` не запускать до Ф5: после коммита переведённого `courses.json` legacy-чтение теряет записи и пишет `data/courses/backups/` (TR-56).
+  - (4) Наблюдение (вне трека): `computeSourceHash` (`runners/u7-bot/tests/worlds/materializer.ts`) сериализует определение мира с реплэйсером-массивом ключей верхнего уровня — вложенные поля в хеш не попадают, кеш `.cache/worlds` не инвалидируется при правке курсов/модулей мира; после перевода чистили вручную.
+- **Пересмотреть:** (1)–(2) — снять в конце Ф4 (stories на `dispatchUc`); (3) — Ф5; (4) — отдельной задачей.

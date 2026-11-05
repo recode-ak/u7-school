@@ -1,12 +1,16 @@
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { ModuleDef } from 'dmg-core';
 import { CourseArDef } from './course/course.ar';
+import { GetCourseUcDef } from './course/uc/get-course.uc';
+import { GetCourseByModuleUcDef } from './course/uc/get-course-by-module.uc';
 import { GetCourseEnrollmentUcDef } from './course/uc/get-course-enrollment.uc';
 import { GetCoursesIncludingModuleUcDef } from './course/uc/get-courses-including-module.uc';
 import { GetCoursesStartingWithModuleUcDef } from './course/uc/get-courses-starting-with-module.uc';
 import { GetModuleEnrollmentUcDef } from './course/uc/get-module-enrollment.uc';
+import { GetModulePlaceUcDef } from './course/uc/get-module-place.uc';
 import { GetModulePrerequisiteUcDef } from './course/uc/get-module-prerequisite.uc';
 import { GetSameModulesUcDef } from './course/uc/get-same-modules.uc';
+import { ListCoursesUcDef } from './course/uc/list-courses.uc';
 import { LessonArDef } from './lesson/lesson.ar';
 import { GetLessonUcDef } from './lesson/uc/get-lesson.uc';
 import { ModuleArDef } from './module/module.ar';
@@ -31,6 +35,10 @@ export const CourseModuleDef = ModuleDef.define({
   dependsOn: [UserModuleDef],
   aggregates: [CourseArDef, ModuleArDef, LessonArDef, StepArDef],
   useCases: [
+    GetCourseUcDef,
+    ListCoursesUcDef,
+    GetCourseByModuleUcDef,
+    GetModulePlaceUcDef,
     GetCourseEnrollmentUcDef,
     GetModuleEnrollmentUcDef,
     GetCoursesIncludingModuleUcDef,

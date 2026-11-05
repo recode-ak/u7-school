@@ -1,6 +1,6 @@
 import {
-  CourseErrors,
   GetModuleSnapshotUcDef,
+  ModuleErrors,
 } from '@u7-scl/domain/course/contract';
 import { UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
@@ -41,6 +41,6 @@ export const CreateStreamUcDef = UseCaseDef.define({
     enrollmentKey: entries.enrollmentKey,
   }),
   output: v.object({ streamId: entries.uuid }),
-  errors: [CourseErrors.MODULE_NOT_FOUND],
+  errors: [ModuleErrors.NOT_FOUND],
   emits: [StreamEvents.created],
 });

@@ -4,8 +4,8 @@ import type {
   Course,
   CourseFacade,
   CourseProgram,
+  LegacyModulePlace,
   Module,
-  ModulePlace,
 } from '@u7-scl/domain/course';
 import { LegacyCoursePolicy } from '@u7-scl/domain/course';
 import type { CourseApiModule } from '../api/module';
@@ -81,7 +81,9 @@ export class CourseInProcFacade implements CourseFacade {
     return course.phases.flatMap((p) => p.moduleIds)[0];
   }
 
-  async getModulePlace(moduleId: string): Promise<ModulePlace | undefined> {
+  async getModulePlace(
+    moduleId: string,
+  ): Promise<LegacyModulePlace | undefined> {
     return this.courseModule.execute('get-module-place', { moduleId });
   }
 

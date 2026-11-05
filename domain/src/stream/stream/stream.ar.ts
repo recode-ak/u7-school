@@ -149,11 +149,6 @@ export class StreamAr extends Aggregate<typeof StreamArDef, StreamView> {
     return expected === undefined || expected === key;
   }
 
-  /** Идёт ли поток по этому модулю. */
-  teachesModule(moduleId: string): boolean {
-    return this.state.moduleId === moduleId;
-  }
-
   /**
    * Место шага в снимке контента: следующий шаг (по порядку обхода проектов
    * и уроков), урок и проект шага, последний ли он в уроке, последний ли

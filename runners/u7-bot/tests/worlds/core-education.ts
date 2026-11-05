@@ -195,14 +195,18 @@ export const CORE_EDUCATION_WORLD: WorldDefinition = {
       description:
         'Практический курс по современному JavaScript: от базового синтаксиса до асинхронных операций и архитектуры.',
       authorKey: 'dev',
+      moduleIds: [
+        'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0',
+        'a1a1a1a1-b1b1-4b1b-8b1b-b1b1b1b1b1b1',
+      ],
       phases: [
         {
           title: 'Синтаксис',
-          moduleIds: ['a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0'],
+          fromModuleId: 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0',
         },
         {
           title: 'Алгоритмика',
-          moduleIds: ['a1a1a1a1-b1b1-4b1b-8b1b-b1b1b1b1b1b1'],
+          fromModuleId: 'a1a1a1a1-b1b1-4b1b-8b1b-b1b1b1b1b1b1',
         },
       ],
       modules: [
@@ -392,10 +396,11 @@ export const CORE_EDUCATION_WORLD: WorldDefinition = {
       description:
         'Курс с опасным названием для проверки экранирования MarkdownV2. Запись через анкету (малый пул).',
       authorKey: 'dev',
+      moduleIds: ['a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0'],
       phases: [
         {
           title: 'Основы',
-          moduleIds: ['a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0'],
+          fromModuleId: 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0',
         },
       ],
     },
@@ -406,10 +411,11 @@ export const CORE_EDUCATION_WORLD: WorldDefinition = {
       description:
         'Published-курс с опасным названием (MarkdownV2) для интеграционных тестов wish.',
       authorKey: 'dev',
+      moduleIds: ['a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0'],
       phases: [
         {
           title: 'Этап опасностей',
-          moduleIds: ['a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0'],
+          fromModuleId: 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0',
         },
       ],
     },
@@ -419,6 +425,7 @@ export const CORE_EDUCATION_WORLD: WorldDefinition = {
       title: 'Длинный курс (пагинация)',
       description: 'Курс с длинным модулем для проверки пагинации каталога.',
       authorKey: 'dev',
+      moduleIds: ['f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2'],
       modules: [
         {
           key: 'mod-long-pagination',
@@ -432,7 +439,7 @@ export const CORE_EDUCATION_WORLD: WorldDefinition = {
       phases: [
         {
           title: 'Полный трек',
-          moduleIds: ['f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2'],
+          fromModuleId: 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2',
         },
       ],
     },

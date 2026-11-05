@@ -1,16 +1,18 @@
 import { describe, expect, it } from 'bun:test';
+import type { ModulePrerequisite } from '@u7-scl/domain/course/contract';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import { StreamAr } from '../stream/stream.ar';
-import { MODULE, stored as streamStored } from '../stream/stream.fixture';
+import { stored as streamStored } from '../stream/stream.fixture';
 import { StudentAr } from './student.ar';
-import { STUDENT, stored } from './student.fixture';
+import { stored } from './student.fixture';
 import { StudentRules } from './student.rules';
 
 // Перенос `LegacyStreamAr.enroll` (a-root.test.ts, ветки отказов) и
 // `canEnrollNextModule` (policy.test.ts) на правила зачисления (D-40).
-// Порядок: ключ → активная запись → gate → нет шагов (legacy a-root.ts:42-77).
+// Порядок: ключ → активная запись → допуск → нет шагов (legacy a-root.ts:42-77).
+// Допуск к модулю — вердикт курса (D-65): правило ничего не сравнивает, а
+// переводит вердикт в отказ; «пройден» собирает `PassedModulesDqs` (TST-08).
 
-const PREV = '12345678-1234-4234-8234-123456789012';
 const OTHER_STREAM = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 
 const stream = (extra = {}) =>
@@ -22,11 +24,7 @@ const baseCtx = {
   stream: stream(),
   enrollmentKey: undefined as string | undefined,
   userStudents: [] as StudentAr[],
-  userStreams: [] as StreamAr[],
-  prerequisite: { gate: 'none' } as
-    | { gate: 'none' }
-    | { gate: 'closed' }
-    | { gate: 'module'; moduleId: string; title: string },
+  prerequisite: { admitted: true } as ModulePrerequisite,
 };
 
 const {
@@ -135,72 +133,52 @@ describe('notStudyingElsewhere', () => {
 });
 
 describe('prerequisitePassed', () => {
-  const prevStream = StreamAr.restore(
-    streamStored('completed', { uuid: OTHER_STREAM, moduleId: PREV }),
-  );
-  const module = { gate: 'module', moduleId: PREV, title: 'Основы' } as const;
-
-  it('gate none (курса нет или модуль входной) — ok', () => {
+  it('вердикт admitted (курса нет, модуль входной или предыдущий пройден) — ok', () => {
     expectOk(prerequisitePassed.check(baseCtx));
   });
 
-  it('gate closed — отказ с «предыдущий»', () => {
+  it('closed — отказ с «предыдущий»', () => {
     const error = expectErr(
       prerequisitePassed.check({
         ...baseCtx,
-        prerequisite: { gate: 'closed' },
+        prerequisite: { admitted: false, reason: 'closed' },
       }),
       'STUDENT_PREREQUISITE_NOT_PASSED',
     );
     expect(error.payload).toEqual({ moduleTitle: 'предыдущий' });
   });
 
-  it('предыдущий модуль пройден (advanced в потоке этого модуля) — ok', () => {
-    expectOk(
-      prerequisitePassed.check({
-        ...baseCtx,
-        prerequisite: module,
-        userStudents: [
-          student('advanced', { streamId: OTHER_STREAM, uuid: STUDENT }),
-        ],
-        userStreams: [prevStream],
-      }),
-    );
-  });
-
-  it('not_advanced не «прошёл» — отказ с названием модуля', () => {
+  it('previous-not-passed — отказ с названием модуля из вердикта', () => {
     const error = expectErr(
       prerequisitePassed.check({
         ...baseCtx,
-        prerequisite: module,
-        userStudents: [student('not_advanced', { streamId: OTHER_STREAM })],
-        userStreams: [prevStream],
+        prerequisite: {
+          admitted: false,
+          reason: 'previous-not-passed',
+          title: 'Основы',
+        },
       }),
       'STUDENT_PREREQUISITE_NOT_PASSED',
     );
     expect(error.payload).toEqual({ moduleTitle: 'Основы' });
+    expect(error.label).toBe('Сначала пройдите предыдущий модуль');
   });
 
-  it('прошёл другой модуль — отказ', () => {
-    const otherModule = StreamAr.restore(
-      streamStored('completed', { uuid: OTHER_STREAM, moduleId: MODULE }),
-    );
+  it('записи студента вердикт не меняют: advanced при отказе — отказ, при admitted — ok', () => {
+    const advanced = [student('advanced', { streamId: OTHER_STREAM })];
     expectErr(
       prerequisitePassed.check({
         ...baseCtx,
-        prerequisite: module,
-        userStudents: [student('advanced', { streamId: OTHER_STREAM })],
-        userStreams: [otherModule],
+        userStudents: advanced,
+        prerequisite: {
+          admitted: false,
+          reason: 'previous-not-passed',
+          title: 'Основы',
+        },
       }),
       'STUDENT_PREREQUISITE_NOT_PASSED',
     );
-  });
-
-  it('записей нет — отказ', () => {
-    expectErr(
-      prerequisitePassed.check({ ...baseCtx, prerequisite: module }),
-      'STUDENT_PREREQUISITE_NOT_PASSED',
-    );
+    expectOk(prerequisitePassed.check({ ...baseCtx, userStudents: [] }));
   });
 });
 

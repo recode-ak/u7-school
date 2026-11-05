@@ -1,4 +1,4 @@
-// Адаптер UC внешнего контракта над legacy-фасадом курсов.
+import { type CourseAr, ModuleCoursesDqs } from '@u7-scl/domain/course';
 import {
   type CourseModuleDef,
   GetCoursesStartingWithModuleUcDef,
@@ -7,34 +7,43 @@ import { ok } from 'dmg-core';
 import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
 import type { CourseModuleDeps } from '../../course.module';
 
+type Loaded = { readonly courses: readonly CourseAr[] };
 type Input = ParsedInputOf<typeof GetCoursesStartingWithModuleUcDef>;
 
 /**
- * `getCoursesStartingWithModule` поверх legacy:
- * модуль первый в опубликованном курсе (`getModulePlace`) — тогда курсы,
- * включающие его, решает `whichCoursesIncludeModule`; иначе пусто без
- * вопроса о курсах.
+ * Какие из переданных курсов начинаются с модуля — для других модулей.
+ * Поведение v0.2.6: модуль должен быть первым в первом опубликованном курсе,
+ * включающем его (правило — `ModuleCoursesDqs`), и лишь тогда из кандидатов
+ * (любой статус) остаются включающие модуль. Расхождение с «по кандидату» —
+ * С2 брифа, замена — правка одного DQS.
  */
 export class GetCoursesStartingWithModuleUc extends UseCaseFromDef<
   typeof GetCoursesStartingWithModuleUcDef,
   CourseModuleDeps,
-  undefined
+  Loaded
 > {
   constructor(deps: CourseModuleDeps, module: typeof CourseModuleDef) {
     super(GetCoursesStartingWithModuleUcDef, deps, module);
   }
 
-  protected async load() {
-    return ok(undefined);
+  protected async load({ moduleId, courseIds }: Input) {
+    const published = await this.resolve.courses.findAll({
+      status: 'published',
+    });
+    const start = new ModuleCoursesDqs(published).firstPublishedIncluding(
+      moduleId,
+    );
+    if (start?.placeOf(moduleId)?.isFirst !== true) return ok({ courses: [] });
+    if (courseIds.length === 0) return ok({ courses: [] });
+    return ok({ courses: await this.resolve.courses.findByIds(courseIds) });
   }
 
-  protected async execute({ moduleId, courseIds }: Input) {
-    const { legacy } = this.resolve;
-    const place = await legacy.getModulePlace(moduleId);
-    if (!place?.isFirst) return ok({ courseIds: [] });
-    const included = await legacy.whichCoursesIncludeModule(moduleId, [
-      ...courseIds,
-    ]);
-    return ok({ courseIds: included });
+  protected async execute({ moduleId, courseIds }: Input, { courses }: Loaded) {
+    const byId = new Map(courses.map((course) => [course.uuid, course]));
+    const starting = courseIds.flatMap((courseId) => {
+      const course = byId.get(courseId);
+      return course?.includesModule(moduleId) ? [course.uuid] : [];
+    });
+    return ok({ courseIds: starting });
   }
 }

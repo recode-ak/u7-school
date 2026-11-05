@@ -1,5 +1,7 @@
 // API
 export * from './api';
+// Порт репозитория курсов
+export type { CourseFilter, CourseRepo } from './course/course.repo';
 // DMG: внешний контракт курсов (D-42)
 export * from './course.module';
 // Domain

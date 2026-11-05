@@ -1,13 +1,13 @@
 import { allowAll, F, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { ContentSnapshotVo } from '../../content-snapshot';
-import { CourseErrors } from '../../course/course.errors';
 import { ModuleArDef } from '../module.ar';
+import { ModuleErrors } from '../module.errors';
 
 /**
  * Снимок контента модуля — для других модулей: поток фиксирует его при
- * создании. Модуля нет — `COURSE_MODULE_NOT_FOUND` (ошибка агрегата `course`
- * по ссылке до объединения с `MODULE_NOT_FOUND`).
+ * создании. Модуля нет — `MODULE_NOT_FOUND`: одна ошибка «модуль не найден»
+ * на модуль (Т8).
  *
  * `allowAll`: чтение открыто всем, видимость модуля решает UC через
  * `ModulePolicy` (гость субъекта не имеет). `system` — вызов из `createStream`,
@@ -24,5 +24,5 @@ export const GetModuleSnapshotUcDef = UseCaseDef.define({
   policy: allowAll,
   input: v.object({ moduleId: F.uuid('модуля') }),
   output: ContentSnapshotVo,
-  errors: [CourseErrors.MODULE_NOT_FOUND],
+  errors: [ModuleErrors.NOT_FOUND],
 });

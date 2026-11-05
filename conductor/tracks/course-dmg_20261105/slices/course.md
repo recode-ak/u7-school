@@ -322,3 +322,10 @@
 
 ### S0 — `migrator` (flash, `cd-F3-s0`), 82106df3
 21 файл, 4 имени → `Legacy*` целым словом, `biome --write` (переносы строк); реэкспорт `CourseFacade, CourseProgram, ModulePlace` из `contract.ts` снят (потребителей через `contract.ts` не было). Тесты 4602 → 4602, `check` зелёный; подсказка гейта о формате хранения — ложная (имя файла `*-repo.ts`). $0.03.
+
+### Шаг 1 — `dmg-test-designer` (Sonnet)
+34 файла (22 новых, 12 правок). Red: `domain modules platform` — 3204 pass / 68 fail, 21 файл не загружается (нет модулей реализации). Перенесены сценарии `entity.test`, `a-root.test`, `policy.test` (`canEnrollNextModule`), `api/course/*-uc.test`, `course-json-repo.test`, адаптеров `course.module.test`, `student.rules.test` (пререквизит), `enroll-student.uc.test`. Пины Т8 переведены на `ModuleErrors.NOT_FOUND`.
+- **Раскладка DQS (принята orchestrator):** `new ModuleCoursesDqs(courses).firstIncluding|firstPublishedIncluding(moduleId)`; `new ModulePrerequisiteDqs(courses, modules, passedModuleIds).verdict(moduleId)`; `new PassedModulesDqs(students, streams).moduleIds()`.
+- **Для шага 3:** `module-uc.fixture.ts`, `content-uc.fixture.ts` — `legacy: {} as CourseLegacy` перевести на `courses`; `CourseRepoFake` — наследник `MemoryRepo`, как `ModuleRepoFake`.
+- **Для шага 4:** `StreamAr.teachesModule` и тест `stream.ar.student.test.ts:67-72` удалить (покрытие — `passed-modules.dqs.test.ts`).
+- **Кандидаты в чистку:** блоки адаптеров над `legacy` в `modules/course/src/course.module.test.ts:237-460` — переписать под сборку без `legacy` в шаге 3; legacy-тесты `api/course/*`, `policy.test`, `a-root.test` — с кодом в Ф5.

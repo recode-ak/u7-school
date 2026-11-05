@@ -134,12 +134,12 @@ describe('CreateStreamUc — отказы', () => {
     },
   );
 
-  it('модуль не найден — COURSE_MODULE_NOT_FOUND от курса, ничего не записано', async () => {
+  it('модуль не найден — MODULE_NOT_FOUND (ModuleErrors.NOT_FOUND, Т8), ничего не записано', async () => {
     const missing = new StubFacade(CourseModuleDef).answer(
       GetModuleSnapshotUcDef,
       () =>
         err({
-          code: 'COURSE_MODULE_NOT_FOUND',
+          code: 'MODULE_NOT_FOUND',
           kind: 'not_found',
           label: 'Модуль не найден',
           description: 'Модуль не найден',
@@ -153,7 +153,7 @@ describe('CreateStreamUc — отказы', () => {
 
     const res = await failed.handle(input, mentor, REQ);
 
-    expectErr(res, 'COURSE_MODULE_NOT_FOUND');
+    expectErr(res, 'MODULE_NOT_FOUND');
     expect(env.streams.saved).toEqual([]);
     expect(env.ctx.published).toEqual([]);
   });

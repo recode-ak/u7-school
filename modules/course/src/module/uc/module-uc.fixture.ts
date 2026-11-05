@@ -3,11 +3,8 @@ import { Role } from '@u7-scl/domain/user/contract';
 import { GuestCaller, SystemCaller, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { testAppContext } from 'dmg-core/testing';
-import type {
-  CourseLegacy,
-  CourseModuleDeps,
-  CourseUser,
-} from '../../course.module';
+import { CourseRepoFake } from '../../course/course.repo.fake';
+import type { CourseModuleDeps, CourseUser } from '../../course.module';
 import { LessonRepoFake } from '../../lesson/lesson.repo.fake';
 import { StepRepoFake } from '../../step/step.repo.fake';
 import { ModuleRepoFake } from '../module.repo.fake';
@@ -79,7 +76,7 @@ export function makeEnv() {
   const deps: CourseModuleDeps = {
     app: ctx.app,
     facades: new ModuleFacades(),
-    legacy: {} as CourseLegacy,
+    courses: new CourseRepoFake(),
     modules,
     lessons,
     steps,

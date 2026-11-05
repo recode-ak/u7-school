@@ -23,8 +23,24 @@ export const ModuleArDef = AggregateDef.define({
   errors: ModuleErrors,
 });
 
+/**
+ * Версия в представлении обязательна: клиент сверяет её при записи, а в
+ * state поле необязательно — legacy-запись читается как версия 0 (D-36).
+ * Своя схема, а не `BaseEntityFields.version`: `nonOptional` в JSON Schema
+ * выхода не выражается (MAN-03, Т12).
+ */
+const versionOut = v.pipe(
+  v.number(),
+  v.integer(),
+  v.minValue(0),
+  v.description('Версия сущности (оптимистичная блокировка)'),
+);
+
 /** Модуль наружу: state целиком — даты числами, версия включена (D-36). */
-export const ModuleView = v.object({ ...ModuleState.entries });
+export const ModuleView = v.object({
+  ...ModuleState.entries,
+  version: versionOut,
+});
 
 export type ModuleView = v.InferOutput<typeof ModuleView>;
 

@@ -2,6 +2,7 @@ import type { ModulePrerequisite } from '@u7-scl/domain/course/contract';
 import { GetModulePrerequisiteUcDef } from '@u7-scl/domain/course/contract';
 import {
   EnrollStudentUcDef,
+  PassedModulesDqs,
   type StreamAr,
   StreamErrors,
   type StreamModuleDef,
@@ -62,13 +63,17 @@ export class EnrollStudentUc extends UseCaseFromDef<
   /** Условие допуска — `this.call` (фасад `course`, D-43) после Policy (D-58). */
   protected override async fetch(
     _: Input,
-    { stream }: Loaded,
+    { stream, userStudents, userStreams }: Loaded,
     caller: Caller<Identified>,
     trace: Trace,
   ) {
+    const passedModuleIds = new PassedModulesDqs(
+      userStudents,
+      userStreams,
+    ).moduleIds();
     const prerequisite = await this.call(
       GetModulePrerequisiteUcDef,
-      { moduleId: stream.view().moduleId },
+      { moduleId: stream.view().moduleId, passedModuleIds },
       caller,
       trace,
     );
