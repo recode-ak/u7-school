@@ -231,3 +231,20 @@
 6. Сценарии из таблицы «Сохраняемое поведение» перенесены (список — в отчёте `dmg-test-designer`, сверяет reviewer); `git diff --numstat` — старые тесты не потеряны (кроме перечисленных как «не переносятся» и удаляемых в Ф5).
 7. `git status --short data/` пуст; `sha256sum data/courses/modules.json` до и после — одинаков.
 8. `CourseModuleDef`: `external` по-прежнему `true`; в `normalize()` — `aggregates: ['course','module']`, UC 9.
+
+## Отчёты
+
+### S0 — `migrator` (flash, `cd-F1-s0`), 3c4faa9d
+36 файлов, только переименования и импорты; `describe` тоже переименованы. Красный `check` — старый путь v0.2.6 в брифах (`repo-layout`) (исправлен orchestrator).
+
+### Шаг 1 — `dmg-test-designer` (Sonnet)
+Новые: `module.fixture.ts`, `module.state.test.ts` (20), `module.ar.test.ts` (17), `module.policy.test.ts` (9), `modules/course/src/module/uc/module-uc.fixture.ts` (стенд, вне брифа — по `stream-uc.fixture.ts`), `get-module.uc.test.ts` (15), `list-modules.uc.test.ts` (16), `infra/module.json-repo.test.ts` (24). Изменены тесты состава/сборки: `domain/src/course/course.module.test.ts`, `modules/course/src/course.module.test.ts`, `get-module-{prerequisite,snapshot}.uc.test.ts`.
+Перенесены: `get-visible-for` (6) и «только корневые проекты» → `module.ar`; `canRead`/`isAuthor`/`isAdminOrAuthor` → `module.policy`, `canReadProject` → `viewFor`; `entity.test` → `module.state`; `get-module-uc` (7), `list-modules-uc` (3), `module-json-repo` (5) — в новые. Не перенесены — по таблице брифа.
+Ожидания к реализации: `ACCESS_DENIED.payload.rule = 'canSeeUnpublished'`; `ModuleRepoFake.seed(state)`; классы UC `GetModuleUc`/`ListModulesUc(deps, CourseModuleDef)`; `ModuleAr` и тип `ModuleState` из `@u7-scl/domain/course`. Замечание: у репозитория нет `create`, `save` нового uuid даёт `VersionConflict` (база) — не проверяется.
+Итог: 399 pass, 10 файлов red на «Cannot find module». Orchestrator проверил.
+
+### Шаг 2 — `migrator` (flash, `cd-F1-domain`)
+Файлы Р1–Р5, Р9 вручную (генератор блокировали готовые тесты). Отклонения: `ProjectVo` → `domain/src/course/shared/project-vo.ts` (GritQL DOM-11 запрещает ключ `uuid` в `*.state.ts`), реэкспорт из `module.state.ts`. Grep `new [A-Za-z]*Ar\(` даёт `restore` в `module.ar.ts` — норма (критерий брифа неточен: исключение `*.ar.ts`). Маркер DEBT-10 в комментарии `module.ar.test.ts` убран orchestrator (`arch:check`).
+
+### Шаг 3 — `migrator` (flash, `cd-F1-app`), b035df66
+Порт, фейк, `GetModuleUc`/`ListModulesUc`, `ModuleJsonRepo`, `CourseUser`, `u7-app.ts`. Отклонения: экспорт `ModuleArDef`, `ModulePolicy`, `ModuleSummary` из `domain/src/course/index.ts` (deep-import закрыт `exports`); классы UC не экспортируются из индекса пакета (имена заняты legacy `api/`); `_app-factory.ts` не менялся (там только legacy). Адаптерам TR-11 четвёртый generic не понадобился. `sha256 data/courses/modules.json` не изменился; `save` в прод-путях не вызывается (Т11). `check` — 4323 pass.

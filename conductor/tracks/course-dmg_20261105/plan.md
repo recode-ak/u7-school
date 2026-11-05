@@ -37,13 +37,13 @@
 ## Фаза 1: Срез `module`
 
 - [x] Task: `migrator` S0 (flash): legacy `ModuleAr`/`ModulePolicy`/`ModuleRepo`/`ModuleJsonRepo` → `Legacy*` (бриф, шаг 0) 3c4faa9d
-- [~] Task: `dmg-test-designer`: характеризация на `../u7-school-v0.2.6` и red-тесты (Sonnet)
-    - [ ] state `Module` (проекты — VO, `status`, `tags`) с `F.timestamp`, чтение дат без секунд;
-    - [ ] DQS/Policy видимости: автор/админ видит всё, остальным — опубликованное (замена `#filterPublished`, DEBT-10);
-    - [ ] UC `get-module`, `list-modules`; ошибки `MODULE_NOT_FOUND`, `MODULE_ACCESS_DENIED`;
-    - [ ] репозиторий: legacy ISO → число, round-trip, невалидная запись;
-    - [ ] перенос сценариев legacy-тестов `module` (список — в отчёте).
-- [ ] Task: `migrator`, домен и прикладной слой (flash): Def, Ar без `#` и `throw*`, `UseCaseFromDef`, репозиторий через UoW со строгим разбором; `CourseModuleDef` пока с `external`
+- [x] Task: `dmg-test-designer`: характеризация на `../u7-school-v0.2.6` и red-тесты (Sonnet) b035df66
+    - [x] state `Module` (проекты — VO, `status`, `tags`) с `F.timestamp`, чтение дат без секунд;
+    - [x] DQS/Policy видимости: автор/админ видит всё, остальным — опубликованное (замена `#filterPublished`, DEBT-10);
+    - [x] UC `get-module`, `list-modules`; ошибки `MODULE_NOT_FOUND`, `MODULE_ACCESS_DENIED`;
+    - [x] репозиторий: legacy ISO → число, round-trip, невалидная запись;
+    - [x] перенос сценариев legacy-тестов `module` (список — в отчёте).
+- [x] Task: `migrator`, домен и прикладной слой (flash): Def, Ar без `#` и `throw*`, `UseCaseFromDef`, репозиторий через UoW со строгим разбором; `CourseModuleDef` пока с `external` b035df66
 - [ ] Task: `dmg-data-keeper` (flash): чтение `data/courses/modules.json` (копия и `DB_DIR=./data/fixtures`), откат
 - [ ] Task: `dmg-reviewer` (Opus). Замечания без `error` решает orchestrator (TR), перепроектирование — Нурболату
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
