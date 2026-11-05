@@ -91,7 +91,7 @@ export type { CourseListFilter, CourseRepo } from './course/repo';
 // Domain Service
 export { CourseDs } from './course-ds';
 export type { CourseFacade, CourseProgram, ModulePlace } from './facade';
-// Агрегат Lesson: новый и legacy (`Legacy*`) до Ф5
+// Агрегат Lesson: новый и legacy (`Legacy*`) — legacy живёт рядом
 export { LegacyLessonAr } from './lesson/a-root';
 export type {
   CreateLessonCmd,
@@ -187,7 +187,7 @@ export type { ModuleId as ModuleEntityId } from './module/types';
 export { ModuleSnapshotDqs } from './module-snapshot.dqs';
 // Общие типы
 export { Status, StatusSchema } from './status';
-// Агрегат Step: новый и legacy (`Legacy*`) до Ф5
+// Агрегат Step: новый и legacy (`Legacy*`) — legacy живёт рядом
 export { LegacyStepAr } from './step/a-root';
 export type {
   CreateStepCmd,

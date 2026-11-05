@@ -41,7 +41,7 @@ export class GetStepsByLessonsUc extends UseCaseFromDef<
 
   protected async load({ lessonIds }: Input) {
     const lessons = await this.resolve.lessons.findByIds(lessonIds);
-    const stepIds = [...new Set(lessons.flatMap((it) => it.outline().stepIds))];
+    const stepIds = [...new Set(lessons.flatMap((it) => it.stepIds()))];
     const steps = await this.resolve.steps.findByIds(stepIds);
     return ok({ lessons, steps });
   }
@@ -57,8 +57,8 @@ export class GetStepsByLessonsUc extends UseCaseFromDef<
     const result: StepsByLesson = {};
 
     for (const lesson of lessons) {
-      const items = result[lesson.uuid] ?? [];
-      for (const stepId of lesson.outline().stepIds) {
+      const items: StepsByLesson[string] = [];
+      for (const stepId of lesson.stepIds()) {
         const step = byId.get(stepId);
         const allowed = step && canSee.get(step.moduleId);
         const summary =

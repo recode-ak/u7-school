@@ -1,5 +1,4 @@
 import {
-  type LessonAr,
   type ModuleAr,
   ModulePolicy,
   ModuleSnapshotDqs,
@@ -19,7 +18,6 @@ import type { CourseModuleDeps, CourseUser } from '../../course.module';
 
 type Loaded = {
   readonly module: ModuleAr;
-  readonly lessons: readonly LessonAr[];
 };
 type Input = ParsedInputOf<typeof GetModuleSnapshotUcDef>;
 
@@ -42,18 +40,12 @@ export class GetModuleSnapshotUc extends UseCaseFromDef<
   protected async load({ moduleId }: Input) {
     const module = await this.resolve.modules.findById(moduleId);
     if (!module) return err(CourseErrors.MODULE_NOT_FOUND.make({ moduleId }));
-
-    // Урок одного модуля может входить в несколько проектов: uuid без повторов.
-    const lessonIds = [
-      ...new Set(module.publishedOutline().flatMap((it) => it.lessonIds)),
-    ];
-    const lessons = await this.resolve.lessons.findByIds(lessonIds);
-    return ok({ module, lessons });
+    return ok({ module });
   }
 
   protected async execute(
     _: Input,
-    { module, lessons }: Loaded,
+    { module }: Loaded,
     __: UnitOfWork,
     caller: Caller<CourseUser>,
   ) {
@@ -65,6 +57,12 @@ export class GetModuleSnapshotUc extends UseCaseFromDef<
         denyMessage: rule.denyMessage,
       });
     }
+
+    // Урок одного модуля может входить в несколько проектов: uuid без повторов.
+    const lessonIds = [
+      ...new Set(module.publishedOutline().flatMap((it) => it.lessonIds)),
+    ];
+    const lessons = await this.resolve.lessons.findByIds(lessonIds);
     return ok(new ModuleSnapshotDqs(module, lessons).build());
   }
 }

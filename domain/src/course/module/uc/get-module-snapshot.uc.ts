@@ -7,7 +7,7 @@ import { ModuleArDef } from '../module.ar';
 /**
  * Снимок контента модуля — для других модулей: поток фиксирует его при
  * создании. Модуля нет — `COURSE_MODULE_NOT_FOUND` (ошибка агрегата `course`
- * по ссылке до объединения с `MODULE_NOT_FOUND`, Ф3).
+ * по ссылке до объединения с `MODULE_NOT_FOUND`).
  *
  * `allowAll`: чтение открыто всем, видимость модуля решает UC через
  * `ModulePolicy` (гость субъекта не имеет). `system` — вызов из `createStream`,

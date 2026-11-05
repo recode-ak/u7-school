@@ -324,6 +324,17 @@ describe('GetModuleSnapshotUc — отказы', () => {
     expect(error.payload).toMatchObject({ rule: 'canSeeUnpublished' });
   });
 
+  it('при отказе в доступе уроки не читаются', async () => {
+    env.modules.seed(
+      moduleState('draft', { projects: [projectState('published')] }),
+    );
+    env.lessons.seed(lessonState(LESSON_1, 'published'));
+
+    expectErr(await snapshot(anonymous), 'ACCESS_DENIED');
+
+    expect(env.asked.lessons).toEqual([]);
+  });
+
   it('сбой репозитория модулей — SERVER_INTERNAL, а не COURSE_MODULE_NOT_FOUND', async () => {
     env.modules.findById = async () => {
       throw new Error('диск недоступен');

@@ -24,8 +24,8 @@ export const LessonArDef = AggregateDef.define({
 });
 
 /**
- * Версия в представлении обязательна: клиент сверяет её при записи (D-57),
- * а в state поле необязательно — legacy-запись читается как версия 0 (D-36).
+ * Версия в представлении обязательна: клиент сверяет её при записи, а в state
+ * поле необязательно — legacy-запись читается как версия 0 (D-36).
  * Своя схема, а не `BaseEntityFields.version`: `nonOptional` в JSON Schema
  * выхода не выражается (MAN-03).
  */
@@ -86,12 +86,17 @@ export class LessonAr extends Aggregate<typeof LessonArDef> {
     return this.view();
   }
 
+  /** Шаги урока по порядку прохождения — копия, чтобы не отдать state. */
+  stepIds(): string[] {
+    return [...this.state.stepIds];
+  }
+
   /** Вклад урока в снимок: идентификатор, заголовок и шаги по порядку. */
   outline(): LessonOutline {
     return {
       lessonId: this.state.uuid,
       lessonTitle: this.state.title,
-      stepIds: this.state.stepIds,
+      stepIds: this.stepIds(),
     };
   }
 }

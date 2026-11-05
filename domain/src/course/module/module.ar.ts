@@ -99,7 +99,7 @@ export class ModuleAr extends Aggregate<typeof ModuleArDef> {
       .map((project) => ({
         projectId: project.uuid,
         projectTitle: project.title,
-        lessonIds: project.lessonIds,
+        lessonIds: [...project.lessonIds],
       }));
   }
 

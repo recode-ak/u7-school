@@ -69,6 +69,21 @@ describe('LessonAr.viewFor — с правом на неопубликованн
   });
 });
 
+describe('LessonAr.stepIds — шаги урока для навигации', () => {
+  it('порядок урока сохраняется; пустой урок — []', () => {
+    expect(
+      restore('published', { stepIds: [STEP_2, STEP_1] }).stepIds(),
+    ).toEqual([STEP_2, STEP_1]);
+    expect(restore('published', { stepIds: [] }).stepIds()).toEqual([]);
+  });
+
+  it('наружу — копия: правка ответа не меняет урок', () => {
+    const ar = restore('published');
+    ar.stepIds().reverse();
+    expect(ar.stepIds()).toEqual([STEP_1, STEP_2]);
+  });
+});
+
 describe('LessonAr.outline — вклад в снимок', () => {
   it('lessonId, lessonTitle, stepIds — и только они', () => {
     const outline = restore('published').outline();
