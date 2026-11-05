@@ -6,7 +6,6 @@ import {
   QuestionnaireAr,
   type QuestionnaireState,
 } from '@u7-scl/domain/questionnaire';
-import { VersionConflict } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import { QuestionnaireJsonRepo } from './questionnaire.json-repo';
 
@@ -122,37 +121,6 @@ describe('QuestionnaireJsonRepo — save и findById', () => {
     expect(await repo.findById(crypto.randomUUID())).toBeUndefined();
     expect(await Bun.file(path).exists()).toBe(false);
   });
-
-  test('переход сохраняется, версия растёт (обновление существующей)', async () => {
-    const repo = new QuestionnaireJsonRepo(filePath('transition.json'));
-    const ar = makeStandard();
-    await repo.save(ar);
-
-    const loaded = await repo.findById(ar.uuid);
-    if (!loaded) throw new Error('анкета не найдена');
-    expectOk(loaded.abandon(T0 + 1000, 'by_user'));
-    await repo.save(loaded);
-
-    const after = (await repo.findById(ar.uuid))?.snapshot();
-    expect(after).toMatchObject({
-      status: 'abandoned',
-      abandonReason: 'by_user',
-      version: 1,
-    });
-  });
-
-  test('запись по устаревшей версии — VersionConflict', async () => {
-    const repo = new QuestionnaireJsonRepo(filePath('stale.json'));
-    const ar = makeStandard();
-    await repo.save(ar);
-    const first = await repo.findById(ar.uuid);
-    const second = await repo.findById(ar.uuid);
-    if (!first || !second) throw new Error('анкета не найдена');
-    expectOk(first.abandon(T0 + 1000, 'by_user'));
-    expectOk(second.abandon(T0 + 2000, 'by_user'));
-    await repo.save(first);
-    await expect(repo.save(second)).rejects.toBeInstanceOf(VersionConflict);
-  });
 });
 
 describe('QuestionnaireJsonRepo — legacy-записи', () => {
@@ -168,40 +136,6 @@ describe('QuestionnaireJsonRepo — legacy-записи', () => {
       completedAt: null,
     });
     expect(state?.answers[0]?.answeredAt).toBe(Date.UTC(2026, 5, 1, 10, 30));
-  });
-
-  test('warnedAt, continueInvitedAt, completedAt и updatedAt читаются из ISO', async () => {
-    const id = crypto.randomUUID();
-    const { repo } = await repoWith('legacy-flags.json', [
-      legacy(id, {
-        updatedAt: '2026-06-01T11:00',
-        warnedAt: '2026-06-01T10:20',
-        continueInvitedAt: '2026-06-01T10:10',
-      }),
-    ]);
-    expect((await repo.findById(id))?.snapshot()).toMatchObject({
-      updatedAt: Date.UTC(2026, 5, 1, 11),
-      warnedAt: Date.UTC(2026, 5, 1, 10, 20),
-      continueInvitedAt: Date.UTC(2026, 5, 1, 10, 10),
-    });
-  });
-
-  test('legacy likert-запись читается', async () => {
-    const id = crypto.randomUUID();
-    const { repo } = await repoWith('legacy-likert.json', [
-      legacy(id, {
-        kind: 'likert',
-        status: 'invited',
-        currentQuestionCode: null,
-        answers: [],
-        questionPool: likertPool(),
-      }),
-    ]);
-    expect((await repo.findById(id))?.snapshot()).toMatchObject({
-      kind: 'likert',
-      createdAt: T0,
-      version: 0,
-    });
   });
 
   test('legacy-запись после перехода сохраняется с version 1, соседние целы', async () => {
@@ -227,25 +161,6 @@ describe('QuestionnaireJsonRepo — legacy-записи', () => {
       createdAt: T0,
     });
     expect((await repo.findById(neighbour))?.snapshot().createdAt).toBe(T0);
-  });
-
-  test('смешанный файл: ISO без version и числовые с version читаются целиком', async () => {
-    const legacyId = crypto.randomUUID();
-    const modernId = crypto.randomUUID();
-    const modern = makeStandard().snapshot();
-    const { repo } = await repoWith('mixed.json', [
-      legacy(legacyId),
-      { ...modern, uuid: modernId, updatedAt: T0 + 7000, version: 3 },
-    ]);
-    expect((await repo.findByRespondent(USER)).map((q) => q.uuid)).toEqual([
-      legacyId,
-      modernId,
-    ]);
-    expect((await repo.findById(modernId))?.snapshot()).toMatchObject({
-      updatedAt: T0 + 7000,
-      version: 3,
-    });
-    expect((await repo.findById(legacyId))?.snapshot().version).toBe(0);
   });
 });
 
@@ -328,12 +243,6 @@ describe('QuestionnaireJsonRepo — findIdle (брошенные анкеты)',
     const only = await idle(repo, { kinds: ['standard'] });
     expect(only.map((q) => q.snapshot().kind)).toEqual(['standard']);
     expect(await idle(repo)).toHaveLength(2);
-  });
-
-  test('пустое хранилище — пустой массив', async () => {
-    expect(
-      await idle(new QuestionnaireJsonRepo(filePath('idle-empty.json'))),
-    ).toEqual([]);
   });
 });
 

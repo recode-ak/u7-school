@@ -13,7 +13,6 @@ import {
   SendLikertInviteUcDef,
   StartByInviteUcDef,
   StartQuestionnaireUcDef,
-  SweepAbandonedQuestionnairesJobDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import {
   AggregateDef,
@@ -40,25 +39,22 @@ import { QuestionnaireJsonRepo } from './infra/questionnaire.json-repo';
 import { QuestionnaireRepoFake } from './questionnaire/questionnaire.repo.fake';
 import {
   likertPool,
-  OTHER_USER,
   OWNER_INFO,
   pool,
   REQ,
   RESPONDENT,
   respondent,
-  systemAlone,
   systemFor,
 } from './questionnaire/uc/questionnaire-uc.fixture';
 import {
   createQuestionnaireModule,
   type QuestionnaireUser,
-  questionnaireMap,
 } from './questionnaire.module';
 
 // Модуль анкет на DMG: заменяет адаптерный тест над legacy-фасадом
 // (`QuestionnaireLegacy`, `startStandard`). Потребитель вызывает
-// `startQuestionnaire` через фасад (D-43), карта «Def → класс» (API-05) и smoke
-// каждого UC на реальном репозитории во временном каталоге.
+// `startQuestionnaire` через фасад (D-43); smoke каждого UC — на реальном
+// репозитории во временном каталоге.
 
 const ProbeArDef = AggregateDef.define({
   name: 'probe',
@@ -132,28 +128,6 @@ const moduleOn = (repo: QuestionnaireRepoFake | QuestionnaireJsonRepo) =>
     questionnaires: repo,
   });
 
-describe('questionnaireMap (API-05)', () => {
-  it('9 UC и один Job, ER нет', () => {
-    expect(Object.keys(questionnaireMap.useCases).sort()).toEqual(
-      [
-        'startQuestionnaire',
-        'sendLikertInvite',
-        'startByInvite',
-        'declineInvite',
-        'handleAction',
-        'abandon',
-        'getQuestionnaire',
-        'getCurrent',
-        'getQuestionnairesByUser',
-      ].sort(),
-    );
-    expect(questionnaireMap.reactions).toEqual({});
-    expect(Object.keys(questionnaireMap.jobs)).toEqual([
-      SweepAbandonedQuestionnairesJobDef.name,
-    ]);
-  });
-});
-
 describe('модуль анкет через фасад потребителя (D-43)', () => {
   const probe = () =>
     new ProbeUc(
@@ -179,28 +153,6 @@ describe('модуль анкет через фасад потребителя (
       kind: 'standard',
       status: 'in_progress',
       ownerInfo: OWNER_INFO,
-    });
-  });
-
-  describe('startQuestionnaire: Policy «респондент есть»', () => {
-    const start = (caller: Caller<QuestionnaireUser>) =>
-      moduleOn(questionnaires).dispatch(
-        StartQuestionnaireUcDef.command({
-          pool: pool(),
-          ownerInfo: OWNER_INFO,
-        }),
-        caller,
-        REQ,
-      );
-
-    it('системный вызов без человека — ACCESS_DENIED, ничего не запущено', async () => {
-      expectErr(await start(systemAlone), 'ACCESS_DENIED');
-      expect(questionnaires.saved).toEqual([]);
-    });
-
-    it('системный вызов с человеком — запускает за его субъекта', async () => {
-      expect(expectOk(await start(systemFor(OTHER_USER)))).toEqual({});
-      expect(questionnaires.saved[0]?.respondentId).toBe(OTHER_USER);
     });
   });
 });

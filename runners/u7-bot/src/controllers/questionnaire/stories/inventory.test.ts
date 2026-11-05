@@ -4,21 +4,13 @@ import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { QuestionnaireEvents } from '@u7-scl/domain/questionnaire/contract';
 import { FillStory } from './fill.story';
 import { InviteStory } from './invite.story';
-import {
-  initStory,
-  invitedEvent,
-  invitedView,
-  newQuestionView,
-  RESPONDENT_ID,
-  respondentProfile,
-  subscriptionOf,
-} from './questionnaire-dmg.test-kit';
-import { renderActionResponse } from './render';
+import { initStory, invitedView } from './questionnaire-dmg.test-kit';
 
 /**
- * ИНВЕНТАРИЗАЦИЯ кнопок и реплик анкетных стори: точные
- * ассерты текста и кода КАЖДОЙ кнопки каждого экрана на контракте
- * «Диалог и Экран» (DialogResponse) — канонический список кнопок.
+ * Реестр кодов кнопок анкетных стори на контракте «Диалог и Экран»
+ * (DialogResponse): формы `fill:answer:{qId}:{aCode}`, `fill:next:{qId}:{qCode}`
+ * и коды invite-экранов, плюс сторожа состава подписок стори. Тексты кнопок и
+ * экранов держат поведенческие тесты стори.
  *
  * Коды кнопок в ответах стори — без префикса контроллера (префиксует
  * контроллер); в проактивном invite-канале (подписки) — полные коды
@@ -26,8 +18,6 @@ import { renderActionResponse } from './render';
  */
 
 // ══ Хелперы ══
-
-const users = { [RESPONDENT_ID]: respondentProfile() };
 
 const actor = { uuid: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee' } as User;
 
@@ -154,207 +144,20 @@ describe('Инвентаризация FillStory', () => {
     expect(res.screen?.keyboard).toBeUndefined();
     expect(String(res.screen?.text)).toContain('Введите ваш ответ текстом');
   });
-
-  test('S04 completed: кнопка «↩️ Главное меню» (app:main-menu) + release', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        handleAction: () => ({
-          type: 'completed',
-          questionnaireId: 'q-1',
-          previousQuestion: radioQuestion,
-          previousSelectedAnswers: ['novice'],
-          completionText: 'Спасибо! Анкета принята.',
-        }),
-      },
-    });
-
-    const res = await story.handleCallback(
-      'answer:q-1:novice',
-      actor,
-      fillSession(),
-    );
-
-    expect(String(res.screen?.text)).toContain('Анкета завершена');
-    expect(flatButtons(res)).toEqual([['↩️ Главное меню', 'app:main-menu']]);
-    expect(res.release).toBe(true);
-  });
-
-  test('S05a cancel: confirm-кнопки «Да, прервать» / «Нет, продолжить» с qId', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        getCurrent: () => ({
-          type: 'new_question',
-          questionnaireId: 'q-1',
-          question: radioQuestion,
-          cancelWarning: 'Данные не сохранятся.',
-        }),
-      },
-    });
-
-    const res = await story.handleCallback('cancel:q-1', actor, fillSession());
-
-    expect(String(res.screen?.text)).toContain(
-      'Вы уверены, что хотите прервать анкету?',
-    );
-    expect(String(res.screen?.text)).toContain('Данные не сохранятся');
-    expect(flatButtons(res)).toEqual([
-      ['✅ Да, прервать', 'fill:cancel-confirm:q-1'],
-      ['❌ Нет, продолжить', 'fill:current:q-1'],
-    ]);
-  });
-
-  test('S05b cancel-confirm: «Анкета прервана.» + главное меню + release', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: { abandon: () => undefined },
-    });
-
-    const res = await story.handleCallback(
-      'cancel-confirm:q-1',
-      actor,
-      fillSession(),
-    );
-
-    expect(String(res.screen?.text)).toContain('Анкета прервана');
-    expect(flatButtons(res)).toEqual([['↩️ Главное меню', 'app:main-menu']]);
-    expect(res.release).toBe(true);
-  });
-
-  test('fill:resume:{courseId}: экран вопроса + awaitInput с questionnaireId', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        getQuestionnairesByUser: () => [
-          {
-            kind: 'standard',
-            uuid: 'q-1',
-            status: 'in_progress',
-            ownerInfo: { courseId: 'course-1' },
-          },
-        ],
-        getCurrent: () => ({
-          type: 'new_question',
-          questionnaireId: 'q-1',
-          question: textQuestion,
-        }),
-      },
-    });
-
-    const res = await story.handleCallback(
-      'resume:course-1',
-      actor,
-      fillSession(),
-    );
-
-    expect(String(res.screen?.text)).toContain('Расскажи о себе');
-    expect(res.awaitInput?.context).toEqual({ questionnaireId: 'q-1' });
-  });
-
-  test('fill:resume — анкета не найдена: экран с главным меню', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: { getQuestionnairesByUser: () => [] },
-    });
-
-    const res = await story.handleCallback(
-      'resume:course-1',
-      actor,
-      fillSession(),
-    );
-
-    expect(String(res.screen?.text)).toContain('Анкета не найдена');
-    expect(flatButtons(res)).toEqual([['↩️ Главное меню', 'app:main-menu']]);
-  });
-
-  test('fill:current:{qId}: экран вопроса + awaitInput (восстановление флоу)', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        getCurrent: () => ({
-          type: 'new_question',
-          questionnaireId: 'q-1',
-          question: textQuestion,
-        }),
-      },
-    });
-
-    const res = await story.handleCallback('current:q-1', actor, {
-      dialog: { path: 'app/menu', seq: 5 },
-    });
-
-    expect(String(res.screen?.text)).toContain('Расскажи о себе');
-    expect(res.awaitInput?.context).toEqual({ questionnaireId: 'q-1' });
-  });
-
-  test('неизвестный action: экран «⚠️ Неизвестная команда» без кнопок', async () => {
-    const { story } = initStory(new FillStory());
-
-    const res = await story.handleCallback('nonsense:1', actor, fillSession());
-
-    expect(String(res.screen?.text)).toContain('Неизвестная команда');
-    expect(res.screen?.keyboard).toBeUndefined();
-  });
 });
 
 // ══ InviteStory — инвентаризация экранов ══
 
 describe('Инвентаризация InviteStory', () => {
-  test('S01 (подписка invited): invite-канал, ПОЛНЫЕ коды кнопок', async () => {
-    const { story, sender } = initStory(new InviteStory(), {
-      users,
-      answers: {
-        getCurrent: () =>
-          invitedView({
-            questionnaireId: 'q1',
-            inviteText: 'Заполните анкету',
-            whyText: 'Для обучения',
-          }),
-      },
-    });
+  test('подписка InviteStory — только invited', () => {
+    const { story } = initStory(new InviteStory());
 
     expect(story.getEventSubscriptions().map((s) => s.eventName)).toEqual([
       QuestionnaireEvents.invited.name,
     ]);
-
-    await subscriptionOf(story, QuestionnaireEvents.invited.name).handle(
-      invitedEvent({ questionnaireId: 'q1' }),
-    );
-
-    expect(sender.invite).toHaveBeenCalledTimes(1);
-    const [telegramId, payload] = sender.invite.mock.calls[0] as unknown as [
-      number,
-      { text: string; keyboard: { rows: { text: string; code: string }[][] } },
-    ];
-    expect(telegramId).toBe(456);
-    expect(payload.text).toContain('Анкета');
-    expect(payload.text).toContain('Заполните анкету');
-
-    expect(
-      payload.keyboard.rows.map((r) => r.map((b) => [b.text, b.code])),
-    ).toEqual([
-      [['▶️ Начать заполнение', 'questionnaire:invite:start:q1']],
-      [['❔ Зачем это нужно?', 'questionnaire:invite:why:q1']],
-      [['⏭️ Пропустить', 'questionnaire:invite:decline:q1']],
-    ]);
   });
 
-  test('S01 без whyText: кнопка «Зачем это нужно?» не показывается', async () => {
-    const { story, sender } = initStory(new InviteStory(), {
-      users,
-      answers: { getCurrent: () => invitedView({ questionnaireId: 'q1' }) },
-    });
-
-    await subscriptionOf(story, QuestionnaireEvents.invited.name).handle(
-      invitedEvent({ questionnaireId: 'q1' }),
-    );
-
-    const [, payload] = sender.invite.mock.calls[0] as unknown as [
-      number,
-      { keyboard: { rows: { text: string; code: string }[][] } },
-    ];
-    expect(payload.keyboard.rows.flat().map((b) => b.text)).toEqual([
-      '▶️ Начать заполнение',
-      '⏭️ Пропустить',
-    ]);
-  });
-
-  test('invite:why:{qId}: экран whyText + кнопка «✅ Хорошо» → invite:invite', async () => {
+  test('invite:why:{qId}: кнопка «✅ Хорошо» → invite:invite', async () => {
     const { story } = initStory(new InviteStory(), {
       answers: {
         getCurrent: () =>
@@ -364,11 +167,10 @@ describe('Инвентаризация InviteStory', () => {
 
     const res = await story.handleCallback('why:q1', actor, fillSession());
 
-    expect(String(res.screen?.text)).toContain('Для обучения');
     expect(flatButtons(res)).toEqual([['✅ Хорошо', 'invite:invite:q1']]);
   });
 
-  test('invite:invite:{qId}: повторный S01, кнопки start/why/decline', async () => {
+  test('invite:invite:{qId}: кнопки start/why/decline', async () => {
     const { story } = initStory(new InviteStory(), {
       answers: {
         getCurrent: () =>
@@ -382,7 +184,6 @@ describe('Инвентаризация InviteStory', () => {
 
     const res = await story.handleCallback('invite:q1', actor, fillSession());
 
-    expect(String(res.screen?.text)).toContain('Заполните анкету');
     expect(flatButtons(res)).toEqual([
       ['▶️ Начать заполнение', 'invite:start:q1'],
       ['❔ Зачем это нужно?', 'invite:why:q1'],
@@ -390,7 +191,7 @@ describe('Инвентаризация InviteStory', () => {
     ]);
   });
 
-  test('invite:decline:{qId} (S06a): confirm-кнопки с cancelWarning', async () => {
+  test('invite:decline:{qId} (S06a): confirm-кнопки пропуска', async () => {
     const { story } = initStory(new InviteStory(), {
       answers: {
         getCurrent: () =>
@@ -403,63 +204,9 @@ describe('Инвентаризация InviteStory', () => {
 
     const res = await story.handleCallback('decline:q1', actor, fillSession());
 
-    expect(String(res.screen?.text)).toContain(
-      'Вы уверены, что хотите пропустить анкету?',
-    );
-    expect(String(res.screen?.text)).toContain('Придётся заполнять с начала');
     expect(flatButtons(res)).toEqual([
       ['✅ Да, пропустить', 'invite:decline-confirm:q1'],
       ['❌ Нет, вернуться', 'invite:invite:q1'],
-    ]);
-  });
-
-  test('invite:decline-confirm:{qId} (S06b): «Анкета пропущена.» + меню + release', async () => {
-    const { story } = initStory(new InviteStory(), {
-      answers: { declineInvite: () => undefined },
-    });
-
-    const res = await story.handleCallback(
-      'decline-confirm:q1',
-      actor,
-      fillSession(),
-    );
-
-    expect(String(res.screen?.text)).toContain('Анкета пропущена');
-    expect(flatButtons(res)).toEqual([['↩️ Главное меню', 'app:main-menu']]);
-    expect(res.release).toBe(true);
-  });
-
-  test('invite:start:{qId}: delegate в fill:current:{qId} (диалог fill, не invite)', async () => {
-    const { story } = initStory(new InviteStory(), {
-      answers: {
-        startByInvite: () => ({ ok: true }),
-        getCurrent: () => newQuestionView({ question: textQuestion }),
-      },
-    });
-
-    const res = await story.handleCallback('start:q-1', actor, fillSession());
-
-    // Делегат: ввод анкеты адресуется fill-стори, а не invite
-    expect(res.delegate?.path).toBe('fill:current:q-1');
-  });
-});
-
-// ══ renderActionResponse — invited-ветка ══
-
-describe('Инвентаризация render.ts — renderActionResponse(invited)', () => {
-  test('invited: экран приглашения с кнопками invite-стори', () => {
-    const res = renderActionResponse({
-      type: 'invited',
-      questionnaireId: 'q1',
-      inviteText: 'Заполните анкету',
-      whyText: 'Для обучения',
-    });
-
-    expect(String(res.screen?.text)).toContain('Заполните анкету');
-    expect(flatButtons(res)).toEqual([
-      ['▶️ Начать заполнение', 'invite:start:q1'],
-      ['❔ Зачем это нужно?', 'invite:why:q1'],
-      ['⏭️ Пропустить', 'invite:decline:q1'],
     ]);
   });
 });

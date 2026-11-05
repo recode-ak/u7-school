@@ -194,7 +194,7 @@
 - **Критерий снятия:** адаптер заменён настоящим UC модуля, `external` снят, legacy-фасад удалён, заголовок адаптера удалён
 
 ### DEBT-45: проактив с кнопками `invite` (ФР-6)
-- **Место:** `platform/core/src/ui/bot/{types,ui-app,bot-controller,bot-controller.test}.ts`, `runners/u7-bot/src/infra/{bot-transport,bot-transport.test}.ts`, `runners/u7-bot/src/controllers/{peer-review/stories/invite.story,courses/stories/wish-invite.story,learning/stories/{hub,hub.test},questionnaire/stories/{invite.story,fill.story,fill.story.warning.test,fill.story.continue-invite.test}}.ts`; погашает `tasks-system`
+- **Место:** `platform/core/src/ui/bot/{types,ui-app,bot-controller,bot-controller.test}.ts`, `runners/u7-bot/src/infra/{bot-transport,bot-transport.test}.ts`, `runners/u7-bot/src/controllers/{peer-review/stories/invite.story,courses/stories/wish-invite.story,learning/stories/{hub,hub.test},questionnaire/stories/{invite.story,fill.story,fill.story.events.test}}.ts`; погашает `tasks-system`
 - **Признак:** `ФР-6`
 - **Корень:** `{platform,runners}/*/src/**`
 - **Причина:** кнопочные приглашения идут каналом `invite` в обход `enterDialog`: у проактива нет сессии-аргумента, получателю без диалога транспорт создаёт диалог-якорь (seq = 1). Модуля `tasks-system` ещё нет.

@@ -5,35 +5,26 @@ import { FillStory } from './fill.story';
 import {
   abandonedEvent,
   abandonWarningEvent,
+  continueInviteEvent,
   initStory,
   RESPONDENT_ID,
   respondentProfile,
   subscriptionOf,
-  useMockLogger,
 } from './questionnaire-dmg.test-kit';
 
 /**
- * Подписка abandonWarning (S07, ступень 6ч планировщика) и abandoned (S08)
- * на контракте «Диалог и Экран»: кнопочный проактив — ТОЛЬКО канал invite
- * (ФР-6, «никогда срезка в notify»), полные коды кнопок (транспорт проактивы
- * не префиксует), подсказка /start на случай устаревшего экрана. Прерывание —
- * через confirm-экран (fill:cancel), не сразу abandon. Адрес события не
- * несёт: telegramId — по профилю респондента (`get-user`).
+ * Проактивные события FillStory на контракте «Диалог и Экран»:
+ * abandonWarning (S07, ступень 6ч) и continueInvite (S09, ступень 3ч) —
+ * кнопочный проактив ТОЛЬКО каналом invite (ФР-6, «никогда срезка в notify»),
+ * полные коды кнопок (транспорт проактивы не префиксует), прерывание — через
+ * confirm-экран. abandoned (S08) — notify только при reason='timeout'.
+ * Адрес события не несёт: telegramId — по профилю респондента (`get-user`).
  */
 
 const users = { [RESPONDENT_ID]: respondentProfile() };
 
 describe('FillStory — abandonWarning (S07): invite-канал', () => {
-  const logger = useMockLogger();
-
-  test('подписки включают abandonWarning и abandoned', () => {
-    const { story } = initStory(new FillStory());
-    const names = story.getEventSubscriptions().map((s) => s.eventName);
-    expect(names).toContain(QuestionnaireEvents.abandonWarning.name);
-    expect(names).toContain(QuestionnaireEvents.abandoned.name);
-  });
-
-  test('с courseId: кнопки «Продолжить» (мост resume) и «Прервать» (confirm), подсказка /start', async () => {
+  test('с courseId: «Продолжить» (мост resume) и «Прервать» (confirm)', async () => {
     const { story, sender, execute } = initStory(new FillStory(), { users });
 
     await subscriptionOf(story, QuestionnaireEvents.abandonWarning.name).handle(
@@ -73,23 +64,9 @@ describe('FillStory — abandonWarning (S07): invite-канал', () => {
       ['⏭️ Прервать', 'questionnaire:fill:cancel:q-1'],
     ]);
   });
-
-  test('нет адреса (профиля нет) — тишина и warn', async () => {
-    const { story, sender } = initStory(new FillStory(), { users: {} });
-
-    await subscriptionOf(story, QuestionnaireEvents.abandonWarning.name).handle(
-      abandonWarningEvent(),
-    );
-
-    expect(sender.invite).not.toHaveBeenCalled();
-    expect(sender.notify).not.toHaveBeenCalled();
-    expect(logger.warn).toHaveBeenCalled();
-  });
 });
 
 describe('FillStory — abandoned (S08): notify о закрытии по таймауту', () => {
-  const logger = useMockLogger();
-
   test('reason=timeout — notify без кнопок', async () => {
     const { story, sender } = initStory(new FillStory(), { users });
 
@@ -108,36 +85,58 @@ describe('FillStory — abandoned (S08): notify о закрытии по тай�
     expect(() => assertMarkdownV2Safe(payload.text)).not.toThrow();
   });
 
-  test('reason=by_user (ручное прерывание) — дубля нет, ничего не шлём', async () => {
+  test.each(['by_user', 'declined'] as const)(
+    'reason=%s — дубля нет, ничего не шлём',
+    async (reason) => {
+      const { story, sender } = initStory(new FillStory(), { users });
+
+      await subscriptionOf(story, QuestionnaireEvents.abandoned.name).handle(
+        abandonedEvent({ reason }),
+      );
+
+      expect(sender.notify).not.toHaveBeenCalled();
+      expect(sender.invite).not.toHaveBeenCalled();
+    },
+  );
+});
+
+describe('FillStory — continueInvite (S09): invite-канал', () => {
+  test('сообщение «продолжим?» с кнопками «Продолжить анкету» и «Прервать»', async () => {
     const { story, sender } = initStory(new FillStory(), { users });
 
-    await subscriptionOf(story, QuestionnaireEvents.abandoned.name).handle(
-      abandonedEvent({ reason: 'by_user' }),
+    await subscriptionOf(story, QuestionnaireEvents.continueInvite.name).handle(
+      continueInviteEvent({ ownerInfo: { courseId: 'course-1' } }),
     );
 
-    expect(sender.notify).not.toHaveBeenCalled();
-    expect(sender.invite).not.toHaveBeenCalled();
+    expect(sender.invite).toHaveBeenCalledTimes(1);
+    const [telegramId, payload] = sender.invite.mock.calls[0] as unknown as [
+      number,
+      { text: string; keyboard: { rows: { text: string; code: string }[][] } },
+    ];
+    expect(telegramId).toBe(456);
+
+    expect(payload.text).toContain('продолжим?');
+    expect(() => assertMarkdownV2Safe(payload.text)).not.toThrow();
+
+    expect(payload.keyboard.rows.flat().map((b) => [b.text, b.code])).toEqual([
+      ['▶️ Продолжить анкету', 'questionnaire:fill:resume:course-1'],
+      ['⏭️ Прервать', 'questionnaire:fill:cancel:q-1'],
+    ]);
   });
 
-  test('reason=declined (отказ от приглашения) — ничего не шлём', async () => {
+  test('без courseId — кнопки-моста нет, только «Прервать»', async () => {
     const { story, sender } = initStory(new FillStory(), { users });
 
-    await subscriptionOf(story, QuestionnaireEvents.abandoned.name).handle(
-      abandonedEvent({ reason: 'declined' }),
+    await subscriptionOf(story, QuestionnaireEvents.continueInvite.name).handle(
+      continueInviteEvent({ ownerInfo: {} }),
     );
 
-    expect(sender.notify).not.toHaveBeenCalled();
-    expect(sender.invite).not.toHaveBeenCalled();
-  });
-
-  test('timeout без адреса (профиля нет) — слать некому, warn', async () => {
-    const { story, sender } = initStory(new FillStory(), { users: {} });
-
-    await subscriptionOf(story, QuestionnaireEvents.abandoned.name).handle(
-      abandonedEvent({ reason: 'timeout' }),
-    );
-
-    expect(sender.notify).not.toHaveBeenCalled();
-    expect(logger.warn).toHaveBeenCalled();
+    const [, payload] = sender.invite.mock.calls[0] as unknown as [
+      number,
+      { keyboard: { rows: { text: string; code: string }[][] } },
+    ];
+    expect(payload.keyboard.rows.flat().map((b) => [b.text, b.code])).toEqual([
+      ['⏭️ Прервать', 'questionnaire:fill:cancel:q-1'],
+    ]);
   });
 });

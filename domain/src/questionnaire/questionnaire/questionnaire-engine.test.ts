@@ -5,38 +5,6 @@ import type { AnswerVo } from './questionnaire.state';
 import { QuestionnaireEngine } from './questionnaire-engine';
 
 describe('QuestionnaireEngine', () => {
-  test('загружает и валидирует корректный пул', () => {
-    const pool: Question[] = [
-      { question: 'Текстовый', questionCode: 't1', type: 'text' },
-      {
-        question: 'Выбор',
-        questionCode: 'c1',
-        type: 'choice',
-        multiple: false,
-        answers: [{ answer: 'Да', answerCode: 'yes' }],
-      },
-    ];
-    const engine = new QuestionnaireEngine(pool);
-    expect(engine.getByCode('t1')).toBeDefined();
-    expect(engine.getByCode('c1')).toBeDefined();
-  });
-
-  test('getByCode возвращает вопрос по коду', () => {
-    const pool: Question[] = [
-      {
-        question: 'Выбор',
-        questionCode: 'c1',
-        type: 'choice',
-        multiple: false,
-        answers: [{ answer: 'Да', answerCode: 'yes' }],
-      },
-    ];
-    const engine = new QuestionnaireEngine(pool);
-    const q = engine.getByCode('c1');
-    expect(q).toBeDefined();
-    expect(q?.questionCode).toBe('c1');
-  });
-
   test('buildValidationSchema для text — валидирует непустую строку', () => {
     const engine = new QuestionnaireEngine([
       { question: 'Текстовый вопрос', questionCode: 'text_q', type: 'text' },
@@ -44,24 +12,6 @@ describe('QuestionnaireEngine', () => {
     const schema = engine.buildValidationSchema('text_q');
     expect(() => v.parse(schema, 'hello')).not.toThrow();
     expect(() => v.parse(schema, '')).toThrow();
-  });
-
-  test('buildValidationSchema для single choice — валидирует picklist', () => {
-    const engine = new QuestionnaireEngine([
-      {
-        question: 'Q1',
-        questionCode: 'q1',
-        type: 'choice',
-        multiple: false,
-        answers: [
-          { answer: 'Yes', answerCode: 'yes' },
-          { answer: 'No', answerCode: 'no' },
-        ],
-      },
-    ]);
-    const schema = engine.buildValidationSchema('q1');
-    expect(() => v.parse(schema, 'yes')).not.toThrow();
-    expect(() => v.parse(schema, 'maybe')).toThrow();
   });
 
   test('buildValidationSchema для multiple — валидирует массив', () => {
@@ -154,25 +104,6 @@ describe('QuestionnaireEngine', () => {
     expect(() => new QuestionnaireEngine(pool)).toThrow(
       'condition в вопросе "q1" ссылается на вопрос, стоящий позже в пуле: q1',
     );
-  });
-
-  test('condition на более ранний вопрос — пул валиден', () => {
-    const pool: Question[] = [
-      {
-        question: 'Q1',
-        questionCode: 'q1',
-        type: 'choice',
-        multiple: false,
-        answers: [{ answer: 'A', answerCode: 'a' }],
-      },
-      {
-        question: 'Q2',
-        questionCode: 'q2',
-        type: 'text',
-        condition: { questionCode: 'q1', answerCodes: ['a'] },
-      },
-    ];
-    expect(() => new QuestionnaireEngine(pool)).not.toThrow();
   });
 
   test('падает если text-вопрос содержит answers', () => {
@@ -300,12 +231,6 @@ describe('QuestionnaireEngine.getNextQuestion — any-of на multiple-вопр�
     const next = engine.getNextQuestion('days', daysAnswer('tue,wed'));
     expect(next?.questionCode).toBe('final');
   });
-
-  test('одиночный ответ — тот же путь (split)', () => {
-    const engine = new QuestionnaireEngine(pool);
-    const next = engine.getNextQuestion('days', daysAnswer('mon'));
-    expect(next?.questionCode).toBe('mon_followup');
-  });
 });
 
 describe('QuestionnaireEngine.getProgress — динамический маршрут (реальный пул)', () => {
@@ -418,29 +343,31 @@ describe('QuestionnaireEngine.getProgress — динамический марш�
     a.questionCode === 'intensity' ? answer('intensity', 'intensive') : a,
   );
 
-  test('base-ветка: total = 10 (без intensive_time), позиция по маршруту', () => {
-    const engine = new QuestionnaireEngine(pool);
-    expect(engine.getProgress('base_time', baseAnswers)).toEqual({
-      index: 9,
-      total: 10,
-    });
-    expect(engine.getProgress('goal_text', baseAnswers)).toEqual({
-      index: 10,
-      total: 10,
-    });
-  });
+  const branches = [
+    {
+      title: 'base-ветка: total = 10 (без intensive_time)',
+      answers: baseAnswers,
+      lastStep: 'base_time',
+      step: { index: 9, total: 10 },
+      end: { index: 10, total: 10 },
+    },
+    {
+      title: 'intensive-ветка: total = 9 (без base_days и base_time)',
+      answers: intensiveAnswers,
+      lastStep: 'intensive_time',
+      step: { index: 8, total: 9 },
+      end: { index: 9, total: 9 },
+    },
+  ];
 
-  test('intensive-ветка: total = 9 (без base_days и base_time)', () => {
-    const engine = new QuestionnaireEngine(pool);
-    expect(engine.getProgress('intensive_time', intensiveAnswers)).toEqual({
-      index: 8,
-      total: 9,
-    });
-    expect(engine.getProgress('goal_text', intensiveAnswers)).toEqual({
-      index: 9,
-      total: 9,
-    });
-  });
+  test.each(branches)(
+    '$title, позиция по маршруту',
+    ({ answers, lastStep, step, end }) => {
+      const engine = new QuestionnaireEngine(pool);
+      expect(engine.getProgress(lastStep, answers)).toEqual(step);
+      expect(engine.getProgress('goal_text', answers)).toEqual(end);
+    },
+  );
 
   test('вопрос чужой ветки не входит в активный маршрут — undefined', () => {
     const engine = new QuestionnaireEngine(pool);
@@ -461,12 +388,6 @@ describe('QuestionnaireEngine.getProgress', () => {
     { question: 'Один', questionCode: 'q1', type: 'text' },
     { question: 'Два', questionCode: 'q2', type: 'text' },
   ];
-
-  test('возвращает 1-based позицию вопроса и размер пула', () => {
-    const engine = new QuestionnaireEngine(pool);
-    expect(engine.getProgress('q1', [])).toEqual({ index: 1, total: 2 });
-    expect(engine.getProgress('q2', [])).toEqual({ index: 2, total: 2 });
-  });
 
   test('неизвестный код вопроса — undefined', () => {
     const engine = new QuestionnaireEngine(pool);

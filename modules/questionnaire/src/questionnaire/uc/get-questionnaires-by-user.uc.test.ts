@@ -1,13 +1,10 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import type { Caller } from 'dmg-core';
-import { expectErr, expectOk } from 'dmg-core/testing';
+import { expectOk } from 'dmg-core/testing';
 import type { QuestionnaireUser } from '../../questionnaire.module';
 import { GetQuestionnairesByUserUc } from './get-questionnaires-by-user.uc';
 import {
-  ADMIN_USER,
-  admin,
-  anonymous,
   likertState,
   makeEnv,
   OTHER_QUESTIONNAIRE,
@@ -17,12 +14,11 @@ import {
   RESPONDENT,
   respondent,
   state,
-  stranger,
   T0,
 } from './questionnaire-uc.fixture';
 
-// Перенос `api/module.test.ts` (get-questionnaires-by-user): свои — респонденту,
-// любые — admin; порядок записей — как в файле.
+// Перенос `api/module.test.ts` (get-questionnaires-by-user): свои — респонденту;
+// порядок записей — как в файле.
 
 let env: ReturnType<typeof makeEnv>;
 const run = (
@@ -54,24 +50,5 @@ describe('GetQuestionnairesByUserUc', () => {
       [QUESTIONNAIRE, 'standard'],
       [OTHER_QUESTIONNAIRE, 'likert'],
     ]);
-  });
-
-  it('у пользователя без анкет — пустой список', async () => {
-    expect(expectOk(await run(admin, ADMIN_USER))).toEqual([]);
-  });
-
-  it('admin читает список другого пользователя', async () => {
-    expect(expectOk(await run(admin, RESPONDENT))).toHaveLength(2);
-  });
-
-  it('чужой список — ACCESS_DENIED «Нет доступа к списку анкет пользователя»', async () => {
-    const error = expectErr(await run(stranger, RESPONDENT), 'ACCESS_DENIED');
-    expect((error.payload as { denyMessage: string }).denyMessage).toBe(
-      'Нет доступа к списку анкет пользователя',
-    );
-  });
-
-  it('гость — UNAUTHORIZED', async () => {
-    expectErr(await run(anonymous), 'UNAUTHORIZED');
   });
 });

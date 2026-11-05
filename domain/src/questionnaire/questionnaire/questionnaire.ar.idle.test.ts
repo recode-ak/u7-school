@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import { expectOk } from 'dmg-core/testing';
 import { QuestionnaireAr } from './questionnaire.ar';
 import { QuestionnaireEvents } from './questionnaire.events';
-import { HOUR, refOf, stored, storedLikert, T0 } from './questionnaire.fixture';
+import { HOUR, refOf, stored, T0 } from './questionnaire.fixture';
 
 // Перенос `warned-at.test.ts`, `continue-invited-at.test.ts` и ступеней Job
 // (`sweep-abandoned-job*.test.ts`) на `sweepIdle(at)`: 3 ч — continueInvite,
@@ -112,12 +112,6 @@ describe('sweepIdle — ступени простоя', () => {
     expect(state.warnedAt).toBe(T0 + 6 * HOUR);
     expect(state.updatedAt).toBe(T0);
   });
-
-  it('флаг растит version, но не updatedAt (приём Т1)', () => {
-    const ar = restore('in_progress');
-    expectOk(ar.sweepIdle(T0 + 3 * HOUR));
-    expect(ar.snapshot().version).toBe(1);
-  });
 });
 
 describe('sweepIdle — invited (Т7)', () => {
@@ -197,13 +191,5 @@ describe('сброс флагов при активности', () => {
     ar.pullEvents();
     expectOk(ar.sweepIdle(T0 + 9 * HOUR));
     expect(eventNames(ar)).toEqual([QuestionnaireEvents.continueInvite.name]);
-  });
-});
-
-describe('likert и sweepIdle', () => {
-  it('отбор likert исключает Job (kinds: standard); Ar likert хранит kind', () => {
-    expect(
-      QuestionnaireAr.restore(storedLikert('in_progress')).snapshot().kind,
-    ).toBe('likert');
   });
 });

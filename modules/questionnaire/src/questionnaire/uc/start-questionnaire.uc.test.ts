@@ -34,11 +34,12 @@ beforeEach(() => {
 });
 
 describe('StartQuestionnaireUc', () => {
-  it('создаёт анкету in_progress за субъекта вызова с пулом и ownerInfo', async () => {
+  it('создаёт анкету in_progress за субъекта вызова и публикует started', async () => {
     expect(expectOk(await run())).toEqual({});
 
+    const saved = env.questionnaires.saved[0];
     expect(env.questionnaires.saved).toHaveLength(1);
-    expect(env.questionnaires.saved[0]).toMatchObject({
+    expect(saved).toMatchObject({
       kind: 'standard',
       respondentId: RESPONDENT,
       status: 'in_progress',
@@ -48,12 +49,6 @@ describe('StartQuestionnaireUc', () => {
       createdAt: T0,
       updatedAt: T0,
     });
-  });
-
-  it('публикует started { questionnaireId, respondentId, kind, ownerInfo } без telegramId и response', async () => {
-    await run();
-    const saved = env.questionnaires.saved[0];
-
     expect(env.events()).toEqual([
       [
         'questionnaire.questionnaire.started',
@@ -73,12 +68,18 @@ describe('StartQuestionnaireUc', () => {
     expect(env.ctx.published).toEqual([]);
   });
 
-  it('пул без вопросов отклоняется схемой входа', async () => {
-    const res = await run(systemFor(), {
-      pool: { questions: [] },
-      ownerInfo: {},
-    });
-    expect(res.ok).toBe(false);
+  it.each([
+    {
+      title: 'поле owner вместо ownerInfo',
+      input: { pool: pool(), owner: OWNER_INFO },
+    },
+    {
+      title: 'пустой пул',
+      input: { pool: { questions: [] }, ownerInfo: {} },
+    },
+  ])('$title — INPUT_VALIDATION, анкета не создана', async ({ input }) => {
+    expectErr(await run(systemFor(), input), 'INPUT_VALIDATION');
     expect(env.questionnaires.saved).toEqual([]);
+    expect(env.ctx.published).toEqual([]);
   });
 });

@@ -32,16 +32,13 @@ import { QuestionnaireController } from '../../src/controllers/questionnaire/con
  * E2E пяти Def-событий анкеты в боте (срез UI): подписки `FillStory`
  * (`started`, `abandonWarning`, `continueInvite`, `abandoned`) и
  * `InviteStory` (`invited`) на шине под FQN Def.
- *   1) `started` — реальный `startQuestionnaire`: с `courseId` приглашение
- *      с кнопкой-мостом, без — подсказка входа через /start;
+ *   1) `started` — реальный `startQuestionnaire`: сообщение доставлено,
+ *      кнопка несёт действие `questionnaire:fill:resume:<courseId>`;
  *   2) `invited` — реальный `sendLikertInvite`: «📋 Анкета», кнопки
  *      `questionnaire:invite:start|why|decline:<id>`;
- *   3) `abandonWarning`, `continueInvite`, `abandoned(timeout)` — публикация
- *      события на шине (часами `createTestApp` не управляет, Job покрыт
- *      модульными тестами);
- *   4) отрицательные: `abandoned` с `by_user`/`declined` — тишина; `invited` и
- *      события без профиля респондента — тишина без падения (следующее
- *      событие доходит).
+ *   3) отрицательные: `invited` и остальные события без профиля респондента —
+ *      тишина без падения (следующее событие доходит).
+ * Тексты приглашений держат unit-тесты стори; здесь — факт доставки и коды.
  * Адрес событие не несёт: telegramId бот берёт по профилю респондента.
  */
 
@@ -135,12 +132,6 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
     );
   }
 
-  /** Сообщения пользователю после паузы доставки — для проверок «тишины». */
-  async function sentToAfterPause(tgId: number): Promise<SentMessage[]> {
-    await Bun.sleep(200);
-    return transport.api.sentMessages.filter((m) => m.telegramId === tgId);
-  }
-
   /**
    * Действие кнопки: транспорт сжимает uuid (`~<short>`) и дописывает штамп
    * `:~<seq>`, поэтому сравниваем действие (до сжатых сегментов) и подпись.
@@ -190,7 +181,7 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
 
   // ── started ──
 
-  test('started с courseId: приглашение «заполнить анкету» с кнопкой-мостом resume', async () => {
+  test('started с courseId: сообщение доставлено, кнопка несёт действие resume', async () => {
     expectOk(
       await app.apiApp.dispatch(
         QuestionnaireModuleDef,
@@ -203,32 +194,14 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
       ),
     );
 
-    const msg = await waitForSent(
-      respondent.telegramId,
-      'Для вас подготовлена анкета',
+    const msg = await waitFor('сообщение респонденту', () =>
+      transport.api.sentMessages.find(
+        (m) => m.telegramId === respondent.telegramId,
+      ),
     );
-    expect(msg.text).toContain('📋');
     expect(actionsOf(msg)).toEqual([
       ['▶️ Заполнить анкету', 'questionnaire:fill:resume:'],
     ]);
-  });
-
-  test('started без courseId: подсказка входа через /start, без кнопок', async () => {
-    expectOk(
-      await app.apiApp.dispatch(
-        QuestionnaireModuleDef,
-        StartQuestionnaireUcDef.command({
-          pool: standardPool(),
-          ownerInfo: {},
-        }),
-        new SystemCaller(FROM, new UserCaller(respondent)),
-        trace(),
-      ),
-    );
-
-    const msg = await waitForSent(respondent.telegramId, '/start');
-    expect(msg.text).toContain('Для вас подготовлена анкета');
-    expect(msg.keyboard?.rows.flat() ?? []).toEqual([]);
   });
 
   // ── invited ──
@@ -262,7 +235,10 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
     expect(new Set(shortIds).size).toBe(1);
   });
 
-  test('invited без профиля респондента: сообщения нет, бот не падает, следующее событие доходит', async () => {
+  // ── Отрицательные ──
+
+  test('нет профиля респондента: invited и события — тишина без падения, следующее событие доходит', async () => {
+    // invited из реального UC: адресат — неизвестный профилю uuid
     expectOk(
       await app.apiApp.dispatch(
         QuestionnaireModuleDef,
@@ -278,64 +254,6 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
       ),
     );
 
-    expect(await sentToAfterPause(respondent.telegramId)).toEqual([]);
-
-    publish(QuestionnaireEvents.continueInvite, base());
-    await waitForSent(respondent.telegramId, 'продолжим?');
-  });
-
-  // ── abandonWarning / continueInvite / abandoned ──
-
-  test('abandonWarning: «Анкета приостановлена» с кнопками «Продолжить» и «Прервать»', async () => {
-    const qId = crypto.randomUUID();
-    publish(QuestionnaireEvents.abandonWarning, base({ questionnaireId: qId }));
-
-    const msg = await waitForSent(
-      respondent.telegramId,
-      'Анкета приостановлена',
-    );
-    expect(actionsOf(msg)).toEqual([
-      ['▶️ Продолжить', 'questionnaire:fill:resume:'],
-      ['⏭️ Прервать', 'questionnaire:fill:cancel:'],
-    ]);
-  });
-
-  test('continueInvite: «продолжим?» с кнопками «Продолжить анкету» и «Прервать»', async () => {
-    const qId = crypto.randomUUID();
-    publish(QuestionnaireEvents.continueInvite, base({ questionnaireId: qId }));
-
-    const msg = await waitForSent(respondent.telegramId, 'продолжим?');
-    expect(actionsOf(msg)).toEqual([
-      ['▶️ Продолжить анкету', 'questionnaire:fill:resume:'],
-      ['⏭️ Прервать', 'questionnaire:fill:cancel:'],
-    ]);
-  });
-
-  test('abandoned(timeout): уведомление о закрытии из-за неактивности', async () => {
-    publish(QuestionnaireEvents.abandoned, abandonedBase('timeout'));
-
-    const msg = await waitForSent(
-      respondent.telegramId,
-      'длительной неактивности',
-    );
-    expect(msg.keyboard?.rows.flat() ?? []).toEqual([]);
-  });
-
-  // ── Отрицательные ──
-
-  test('abandoned(by_user): сообщения нет', async () => {
-    publish(QuestionnaireEvents.abandoned, abandonedBase('by_user'));
-
-    expect(await sentToAfterPause(respondent.telegramId)).toEqual([]);
-  });
-
-  test('abandoned(declined): сообщения нет', async () => {
-    publish(QuestionnaireEvents.abandoned, abandonedBase('declined'));
-
-    expect(await sentToAfterPause(respondent.telegramId)).toEqual([]);
-  });
-
-  test('нет профиля респондента: события без сообщений и без падения, следующее событие доходит', async () => {
     publish(
       QuestionnaireEvents.abandonWarning,
       base({ respondentId: UNKNOWN_USER_ID }),

@@ -25,7 +25,9 @@ import {
 /**
  * Вызовы UC модуля анкет из InviteStory через `dispatchUc`, отказы с экраном
  * «⬅️ Меню» и подписка `invited`: текст приглашения берётся из `getCurrent`
- * от имени респондента (событие экран не несёт).
+ * от имени респондента (событие экран не несёт). Доменные тексты
+ * (`whyText`, `cancelWarning`) экранируются под MarkdownV2 (инцидент
+ * 2026-09-03).
  */
 
 const actor = { uuid: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee' } as User;
@@ -57,16 +59,6 @@ describe('InviteStory — вызовы UC через dispatchUc', () => {
       { uc: 'startByInvite', input: { questionnaireId: 'q-1' } },
     ]);
     expect(callers).toEqual([actor.uuid]);
-    expect(res.delegate?.path).toBe('fill:current:q-1');
-  });
-
-  test('start:{qId}: результат startByInvite (ok) игнорируется — делегат в fill', async () => {
-    const { story } = initStory(new InviteStory(), {
-      answers: { startByInvite: () => newQuestionView() },
-    });
-
-    const res = await story.handleCallback('start:q-1', actor, session);
-
     expect(res.delegate?.path).toBe('fill:current:q-1');
   });
 
@@ -383,5 +375,21 @@ describe('InviteStory — подписка invited: экран из getCurrent',
     const warns = warnsOf(logger, 'invite', 'сбой чтения профиля');
     expect(warns).toHaveLength(1);
     expect(warns[0]?.[2]?.error).toContain('сбой get-user');
+  });
+});
+
+describe('InviteStory — MarkdownV2-безопасность доменных текстов', () => {
+  test.each([
+    ['whyText', 'why:q1', { whyText: unsafeText }],
+    ['cancelWarning', 'decline:q1', { cancelWarning: unsafeText }],
+  ] as const)('%s с спецсимволами безопасен', async (_field, action, view) => {
+    const { story } = initStory(new InviteStory(), {
+      answers: { getCurrent: () => invitedView(view) },
+    });
+
+    const res = await story.handleCallback(action, actor, session);
+
+    expect(res.screen?.text).toContain('Иванов\\_Иван');
+    expect(() => assertMarkdownV2Safe(res.screen!.text)).not.toThrow();
   });
 });
