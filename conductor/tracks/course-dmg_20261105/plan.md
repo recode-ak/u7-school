@@ -19,12 +19,12 @@
 
 ## Фаза 0: База и решения
 
-- [~] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/course` и `modules/course`, `dmg-core` `bun test`. Каркас раздела «DeepSeek» (Opus)
-- [ ] Task: Записать решения spec в TR (`debt.md`) и `decisions.md` (Opus):
-    - [ ] этап — метка программы (`moduleIds` + `fromModuleId`), `stages` в ответе `get-course`;
-    - [ ] «клиент спрашивает — курс разруливает», вердикт пререквизита `admitted`;
-    - [ ] состав UC: переносимые, сливаемые методы фасада, удаляемые (9 команд, `get-course-program`, `resolve-content-path`);
-    - [ ] порядок срезов, аддитивные Ф1–Ф2, план красной зоны Ф3–Ф4.
+- [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/course` и `modules/course`, `dmg-core` `bun test`. Каркас раздела «DeepSeek» (Opus) b1d57ddb
+- [~] Task: Записать решения spec в TR (`debt.md`) и `decisions.md` (Opus):
+    - [x] этап — метка программы (`moduleIds` + `fromModuleId`), `stages` в ответе `get-course`;
+    - [x] «клиент спрашивает — курс разруливает», вердикт пререквизита `admitted`;
+    - [x] состав UC: переносимые, сливаемые методы фасада, удаляемые (9 команд, `get-course-program`, `resolve-content-path`);
+    - [x] порядок срезов, аддитивные Ф1–Ф2, план красной зоны Ф3–Ф4.
 - [ ] Task: `dmg-tech-lead`: брифы `slices/module.md`, `slices/lesson-step.md` (Sonnet). Обязательно: способ получить роль и авторство для Policy видимости при субъекте `Identified` (сверка с `wish`/`stream`; если нужен `user` — вопрос Нурболату, D-41); список legacy-тестов на перенос; ID `rules.md`
 - [ ] Task: orchestrator проверяет брифы (Opus). Вопросы перепроектирования — Нурболату
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md; автономно)
