@@ -583,3 +583,16 @@
   - (4) Порядок срезов: `module` → `lesson` + `step` + снимок → `course` (программа, этапы, клиент `stream`, данные) → UI → сборка. `course` зависит от `module` и `lesson`. Ф1–Ф2 аддитивны: legacy-UC живут рядом с Def, `check` зелёный.
   - (5) Красная зона Ф3–Ф4: строгий новый формат `courses.json` (Ф3) роняет legacy-UC курса, stories каталога/навигации и их integration/e2e. Список — поимённо в `debt.md` в Ф3, критерий снятия — конец Ф4.
 - **Пересмотреть:** (3) — в треке «История модулей курса»; (5) — снять в Ф4.
+
+### TR-53: решения брифов `module` и `lesson-step` (`course-dmg`, Ф0)
+- **Трек / фаза:** `course-dmg`, Ф0 (брифы `conductor/tracks/course-dmg_20261105/slices/module.md`, `lesson-step.md`; стратегические — Нурболат, 2026-11-05; тактические — orchestrator по рекомендациям `dmg-tech-lead`)
+- **Контекст:** бот читает контент курса без актора, поэтому автор черновиков не видит; `listModules` отдаёт модуль целиком, а потребители (`create-stream`, `list-lessons`, `distribute-lesson`) берут `uuid`, `title`, `status`; legacy-снимок падает на первом невидимом уроке (`getOutLesson`), хотя фильтр задуман; новые имена `ModuleAr`/`ModulePolicy`/`ModuleRepo` совпадают с legacy в `export *`.
+- **Решение:**
+  - (С1 `module`) после Ф4 (`dispatch` с реальным вызывающим) автор и администратор видят черновые проекты, уроки и шаги; для студента без изменений — принято.
+  - (С2 `module`) `listModules` отдаёт `ModuleSummary` (`uuid`, `title`, `description`, `status`, `tags`) — в срезе Ф1.
+  - (С1 `lesson-step`) черновые шаги в снимке — как v0.2.6: в `data/courses/steps.json` у 32 опубликованных уроков по одному черновому шагу, их `stepIds` входят в снимок, а `getStep` студенту их не отдаёт (число шагов и прогресс новых потоков завышены). Опубликовать шаги или считать их частью дизайна — решение автора контента; в код это не долг (реестр DEBT — только для кода), счёт проверяет `dmg-data-keeper` в Ф2.
+  - (С2 `lesson-step`) снимок пропускает невидимый урок, а не роняет вызов — в срезе Ф2.
+  - (Т `module`) Т1–Т13 брифа — по рекомендациям: legacy-классы переименовываются в `Legacy*` шагом S0 до red; субъект `CourseUser = Pick<User,'uuid'|'roles'>` (как TR-40, вызова `user` нет, D-41 не затронут); видимость — UC `allowAll` + правило `canSeeUnpublished` + `ModuleAr.viewFor`, отказ `CoreErrors.ACCESS_DENIED`; `ModuleErrors.NOT_FOUND` рядом с `COURSE_MODULE_NOT_FOUND` до Ф3; вход `{ moduleId }`; `limit` до отбора видимых (как v0.2.6); `CourseModuleDef` с `external` до Ф5 — вместо арх-проверок пар grep-критерии; новый `ModuleJsonRepo.save` над `data/` до Ф5 не вызывается (числовые даты не прочтёт legacy).
+  - (Т `lesson-step`) Т1–Т11 брифа — по рекомендациям: снимок — в агрегат `module`, `callers` `['user','guest','system']`; своих Policy у `lesson`/`step` нет; ошибка снимка `COURSE_MODULE_NOT_FOUND` до Ф3; висячие `lessonId`/`stepId` и шаг без модуля в `getStepsByLessons` пропускаются молча (как v0.2.6); `CourseDs` и `content-snapshot.ts` — до Ф5.
+  - (Расхождение) маркер DEBT-10 (`#filterPublished` legacy `module/a-root.ts`) уходит в Ф5 вместе с legacy-UC, а не в Ф1: критерий Ф1 относится к Def-файлам.
+- **Пересмотреть:** (С1 `lesson-step`) — при правке данных автором контента или в треке «История модулей курса»; TR-40 — добавлен `course`; (Т11 `module`) — снять в Ф5; висячие ссылки — в треке «История модулей курса».
