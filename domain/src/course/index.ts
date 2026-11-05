@@ -118,6 +118,8 @@ export { LessonErrors } from './lesson/lesson.errors';
 export type { LessonState } from './lesson/lesson.state';
 export { LegacyLessonPolicy } from './lesson/policy';
 export type { LegacyLessonRepo } from './lesson/repo';
+// DQS шагов уроков
+export { LessonStepsDqs } from './lesson-steps.dqs';
 export type { CourseApiModuleMeta, CourseApiModuleResolver } from './module';
 // Агрегат Module
 export { LegacyModuleAr } from './module/a-root';
