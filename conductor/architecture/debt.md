@@ -601,9 +601,9 @@
 - **Трек / фаза:** `course-dmg`, Ф1 (бриф `conductor/tracks/course-dmg_20261105/slices/module.md`, отчёты авторов и `dmg-reviewer`; orchestrator)
 - **Контекст:** GritQL `dom-11-base-fields.grit` ловит любой ключ `uuid:` в `*.state.ts`, включая `uuid: F.uuid(…)` вложенного проекта; legacy `JsonFileRepo.readAll` на невалидной записи не падает, а отбрасывает её (`safeParse` + автобэкап); ревью Ф1 — без `error`, 8 `warn`.
 - **Решение:**
-  - схема проекта модуля (`ProjectVo`) — в `domain/src/course/shared/project-vo.ts` с реэкспортом из `module.state.ts`: вернуть в state без правки DOM-11 нельзя (ключ на диске — `uuid`, `biome-ignore` запрещён); имя `ProjectVo` неточно (у проекта есть идентичность — вложенная сущность), переименование — вместе с возвратом в state;
+  - проект модуля — вложенная сущность `ProjectEntity` в `module.state.ts` (Нурболат, 2026-11-05): у проекта есть идентичность (`uuid`, на него ссылаются снимок и бот), номера вместо `uuid` отклонены — сменили бы формат `modules.json` и контракт снимка. DOM-11 в `dmg-core` сужен (`15a74a6`): `uuid: F.uuid(…)` вложенной сущности разрешён; суффикс `Entity` — в `naming.md` пакета;
   - (Т11, уточнено `dmg-data-keeper`) первый `save` нового `ModuleJsonRepo` над `data/courses/modules.json` при живом legacy делает чтение legacy пустым, а следующий legacy `save` опустошает файл: запрет записи до Ф5 обязателен, перед первым `save` — `backup:adhoc`;
   - `listModules` проверяет видимость через `viewFor(...) !== undefined` (строит view ради флага) — форма, не поведение; оставлено;
   - smoke `getModule`/`listModules` через собранный `U7App` — не в Ф1 (потребителей нет), к Ф4;
   - остальные `warn` ревью (дублирование хелперов, лишний generic view, `ModuleSummary` в контракте, payload отказа из `Decision`, CODE-04, TST-04, экспорт порта) — исправлены в срезе.
-- **Пересмотреть:** правка DOM-11 в `dmg-core` (разрешить вложенный `uuid: F.uuid`) — вопрос Нурболату на контрольной точке Ф1; после неё — `ProjectVo` обратно в `module.state.ts` с новым именем; Т11 — снять в Ф5.
+- **Пересмотреть:** Т11 — снять в Ф5.

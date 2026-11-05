@@ -272,3 +272,6 @@
 
 ### Правки по ревью — `migrator` (flash, `cd-F1-fix`), 6e4363ae
 Все исправляемые `warn`; payload отказа — из `rule.name`/`rule.denyMessage` (значения те же). `check` — 4323 pass.
+
+### После контрольной точки — проект как сущность (Нурболат)
+`dmg-core` `15a74a6`: DOM-11 разрешает `uuid: F.uuid(…)` вложенной сущности (фикстуры lint), суффикс `Entity` в `naming.md`, раздел в `state.md`. u7-school (`migrator`, flash, `cd-F1-entity`): `ProjectVo` → `ProjectEntity` в `module.state.ts`, `shared/` удалён. `check` — 4323 pass.

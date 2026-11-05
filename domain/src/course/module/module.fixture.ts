@@ -1,4 +1,4 @@
-import type { ModuleState, ProjectVo } from './module.state';
+import type { ModuleState, ProjectEntity } from './module.state';
 
 /** Общие идентификаторы и состояние модуля для тестов домена модуля курса. */
 export const MODULE = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
@@ -12,9 +12,9 @@ export const LESSON_2 = '44444444-4444-4444-8444-444444444444';
 export const T0 = Date.UTC(2026, 6, 8, 18, 35);
 
 export const project = (
-  status: ProjectVo['status'],
-  extra: Partial<ProjectVo> = {},
-): ProjectVo => ({
+  status: ProjectEntity['status'],
+  extra: Partial<ProjectEntity> = {},
+): ProjectEntity => ({
   uuid: status === 'published' ? PROJECT_PUBLISHED : PROJECT_DRAFT,
   title: status === 'published' ? 'Проект 1' : 'Черновик',
   status,

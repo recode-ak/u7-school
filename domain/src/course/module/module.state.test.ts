@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { ModuleArDef } from './module.ar';
 import { AUTHOR, MODULE, PROJECT_PUBLISHED, T0 } from './module.fixture';
-import { ProjectVo } from './module.state';
+import { ProjectEntity } from './module.state';
 
 // Перенос `entity.test.ts` (ModuleSchema, ProjectSchema) на state по Def (D-36):
 // даты — числа (UTC), legacy-запись с ISO читается. «НЕ содержит kind» не переносится.
@@ -125,20 +125,20 @@ describe('ModuleState — поля (перенос entity.test.ts)', () => {
   });
 });
 
-describe('ProjectVo (перенос ProjectSchema)', () => {
+describe('ProjectEntity (перенос ProjectSchema)', () => {
   it('принимает валидный проект', () => {
-    expect(v.safeParse(ProjectVo, legacyProject).success).toBe(true);
+    expect(v.safeParse(ProjectEntity, legacyProject).success).toBe(true);
   });
 
   it('принимает проект с пустым lessonIds', () => {
     expect(
-      v.safeParse(ProjectVo, { ...legacyProject, lessonIds: [] }).success,
+      v.safeParse(ProjectEntity, { ...legacyProject, lessonIds: [] }).success,
     ).toBe(true);
   });
 
   it('принимает опциональные goal, result, additional', () => {
     expect(
-      v.safeParse(ProjectVo, {
+      v.safeParse(ProjectEntity, {
         ...legacyProject,
         goal: 'Цель',
         result: 'Результат',
@@ -149,18 +149,19 @@ describe('ProjectVo (перенос ProjectSchema)', () => {
 
   it('отклоняет пустой заголовок проекта', () => {
     expect(
-      v.safeParse(ProjectVo, { ...legacyProject, title: '' }).success,
+      v.safeParse(ProjectEntity, { ...legacyProject, title: '' }).success,
     ).toBe(false);
   });
 
   it('отклоняет некорректный uuid урока в lessonIds', () => {
     expect(
-      v.safeParse(ProjectVo, { ...legacyProject, lessonIds: ['x'] }).success,
+      v.safeParse(ProjectEntity, { ...legacyProject, lessonIds: ['x'] })
+        .success,
     ).toBe(false);
   });
 
-  it('не имеет собственных дат (value object)', () => {
-    const res = v.safeParse(ProjectVo, { ...legacyProject, createdAt: 1 });
+  it('не имеет собственных дат (вложенная сущность)', () => {
+    const res = v.safeParse(ProjectEntity, { ...legacyProject, createdAt: 1 });
     expect(res.success).toBe(true);
     if (res.success) {
       expect('createdAt' in res.output).toBe(false);
