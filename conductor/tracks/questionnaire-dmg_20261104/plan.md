@@ -77,21 +77,25 @@
 
 ## Фаза 2: Срез UI
 
-- [ ] Task: `dmg-test-designer`: e2e на каждое событие, которое бот получает по подписке (`started`, `invited`, `abandonWarning`, `continueInvite`, `abandoned`/timeout); тесты переведённых stories с «Сохраняемым поведением» (Sonnet)
-- [ ] Task: UI на `dispatch` и Def-подписки (Sonnet):
-    - `questionnaire/{invite,fill,render}`, `controller`;
-    - `ownerInfo.courseId` из payload, адрес через `GetTelegramAddressesUcDef`, экран по `get-current`;
-    - типы `render.ts` из контракта;
-    - `course-catalog.story` и `course-nav-resolver` — проверить вызовы анкет.
-- [ ] Task: Обновить `fill.dialog.test`, `invite.dialog.test`, `inventory.test`, `questionnaire-ux.e2e`, `wish-questionnaire.e2e` на Def-имена (flash). Снять запись красной зоны из `debt.md`
+Бриф — [slices/ui.md](./slices/ui.md), решения — TR-50. Порядок задач изменён (Т5): red → механический перевод остальных тестов → UI.
+
+- [x] Task: `dmg-tech-lead`: бриф `slices/ui.md` (Sonnet), приёмка orchestrator (Opus); TR-50
+- [ ] Task: `dmg-test-designer` (Sonnet), шаг 1 брифа:
+    - кит `questionnaire-dmg.test-kit.ts`;
+    - red-тесты подписок на 5 Def-событий (адрес через `get-user`, `ownerInfo.courseId` из payload, `invited` — экран по `get-current`) и состава подписок;
+    - red-тесты вызовов 6 `*UcDef` и отказов (`ucErrorScreen`, `CHOICE_EXPECTED` без префикса);
+    - e2e `questionnaire-events.e2e.test.ts` на каждое событие, включая отрицательные
+- [ ] Task: `migrator` (flash), шаг 2 брифа: перевод остальных тестов `fill.dialog`, `invite.dialog`, `inventory`, e2e `questionnaire-ux`, `wish-questionnaire` на `dmgDispatch`/Def-имена (число тестов не сокращать)
+- [ ] Task: UI (Sonnet, `migrator`), шаг 3 брифа: `fill.story`, `invite.story`, `render.ts` (`ucErrorScreen`) на `dispatchUc` и Def-подписки; удалить `legacy-events.ts`; `ui-spec.md`. Снять TR-49 (1), (2) в `debt.md` (orchestrator)
 - [ ] Task: `dmg-reviewer` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
 
-**Критерии приёмки Фазы 2:**
-- `grep -rn "'questionnaire:" runners` пуст, кроме маршрутов `Routes.questionnaire.*`: бот подписан только на Def-события.
-- `grep -rn "appApi.execute('\(get-current\|handle-action\|abandon\|start-by-invite\|decline-invite\|get-questionnaires-by-user\)'" runners` пуст.
+**Критерии приёмки Фазы 2** (полностью — раздел «Критерии приёмки» брифа):
+- `grep -rnE "['\"]questionnaire:(start|invite|abandon-warning|continue-invite|abandon)['\"]" runners` пуст; `legacy-events.ts` удалён.
+- `grep -rnE "['\"](get-current|handle-action|abandon|start-by-invite|decline-invite|get-questionnaires-by-user)['\"]" runners` пуст (включая многострочные вызовы и тесты).
+- `appApi.execute`/`apiApp.execute` в анкетных stories и e2e — только `'get-user'`.
 - На каждое событие, которое бот получает по подписке, есть e2e.
-- `bun run check` полностью зелёный, `test:bot` не ниже базовой линии. Записи красной зоны в `debt.md` нет. `git status data/` чист.
+- `bun run check` полностью зелёный, `test:bot` не ниже базовой линии. Записи красной зоны в `debt.md` нет. `git diff` без `domain/`, `modules/`, `platform/`, `core/`. `git status data/` чист.
 
 ## Фаза 3: Сборка и снятие legacy
 
@@ -143,7 +147,7 @@
 
 - **Красная зона Ф1–Ф2:** UI читает legacy-события (`ownerInfo`, `telegramId`, `response`).
 - **Пропущенная подписка молча гасит уведомление.** Поэтому e2e на каждое событие.
-- **Адрес через `GetTelegramAddressesUcDef`.** Поведение при отсутствии адреса должно совпасть с текущим: сейчас Job не публикует событие без `telegramId`.
+- **Адрес в stories — через legacy `get-user`** (С2, TR-49 (6)). Поведение при отсутствии адреса должно совпасть с текущим: тишина и `warn`.
 - **`a-root.ts` (590 строк)** надо разложить по Ar, Policy и DQS.
 - **variant-state в `AggregateDef`.** Если он не поддерживается — правка `dmg-core` отдельным коммитом.
 - **flash на домене:** качество держат тесты Sonnet. Гейт и `--numstat` — после каждого шага.

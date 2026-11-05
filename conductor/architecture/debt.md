@@ -551,3 +551,15 @@
   - (6) С2 (Нурболат, 2026-11-05): stories Ф2 берут адрес Telegram через legacy `get-user`, как `InactivityStory` (TR-43 С2); `GetTelegramAddressesUcDef` остаётся `system` для Job и ER (D-63).
   - (7) Д1 (Нурболат, 2026-11-05): живой `questionnaires.json` сверен read-only (84 записи, проблемных 0). Новый репозиторий при первой записи переписывает весь файл в числовых датах с `version` — legacy `v0.2.6` его не прочитает: перед выкаткой `bun run backup`, откат — только с восстановлением файла.
 - **Пересмотреть:** (1), (2) — конец Ф2; (6) — перевод `user` на Def; (7) — выкатка после ревизии; (3) — если UoW платформы научится пропускать неизменённые агрегаты (тогда условие убрать); (4) — Ф3.
+
+### TR-50: решения брифа UI Ф2 `questionnaire-dmg`
+- **Трек / фаза:** `questionnaire-dmg`, Ф2 (orchestrator, 2026-11-05)
+- **Контекст:** stories анкет переводятся на `dispatchUc` и Def-подписки (бриф `conductor/tracks/questionnaire-dmg_20261104/slices/ui.md`). В базовой story нет Result-аналога legacy `handleError` (экран «⚠️ …» с «⬅️ Меню»), `ucErrorNotify` добавляет префикс «Ошибка валидации».
+- **Решение:**
+  - (1) Экран ошибки — локальный `ucErrorScreen` в `stories/render.ts` с ветками legacy `handleError`; `CHOICE_EXPECTED`/`EMPTY_ANSWER_CODE` — `warn` с `label` без префикса. Видимое поведение не меняется.
+  - (2) `invited`: экран приглашения — `GetCurrentUcDef` от профиля респондента; отказ или не-`invited` ответ → fallback «Заполните, пожалуйста, анкету.» без «Зачем» и `warn`.
+  - (3) e2e `abandonWarning`/`continueInvite`/`abandoned(timeout)` — публикацией Def-события в шину: часами `createTestApp` не управляет, Job покрыт в Ф1.
+  - (4) Тестовый кит stories — реэкспорт `dmgDispatch`/`refuse` из `stream-dmg.test-kit`.
+  - (5) Порядок задач Ф2: red (test-designer) → механический перевод остальных тестов (flash) → реализация UI (Sonnet); критерии приёмки плана заменены grep-критериями брифа (многострочные вызовы).
+  - (6) Типы Def-событий для stories — `stories/questionnaire-events.ts`, в контракт не реэкспортируются.
+- **Пересмотреть:** (1) — когда в `U7BotUiStory` появится общий экран отказа по `Result`; (3) — при управлении часами в `createTestApp`; (4) — общий тестовый кит DMG для stories.
