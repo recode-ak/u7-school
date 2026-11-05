@@ -25,8 +25,8 @@
     - [x] «клиент спрашивает — курс разруливает», вердикт пререквизита `admitted`;
     - [x] состав UC: переносимые, сливаемые методы фасада, удаляемые (9 команд, `get-course-program`, `resolve-content-path`);
     - [x] порядок срезов, аддитивные Ф1–Ф2, план красной зоны Ф3–Ф4.
-- [~] Task: `dmg-tech-lead`: брифы `slices/module.md`, `slices/lesson-step.md` (Sonnet). Обязательно: способ получить роль и авторство для Policy видимости при субъекте `Identified` (сверка с `wish`/`stream`; если нужен `user` — вопрос Нурболату, D-41); список legacy-тестов на перенос; ID `rules.md`
-- [ ] Task: orchestrator проверяет брифы (Opus). Вопросы перепроектирования — Нурболату
+- [x] Task: `dmg-tech-lead`: брифы `slices/module.md`, `slices/lesson-step.md` (Sonnet). Обязательно: способ получить роль и авторство для Policy видимости при субъекте `Identified` (сверка с `wish`/`stream`; если нужен `user` — вопрос Нурболату, D-41); список legacy-тестов на перенос; ID `rules.md` 3dc0da16
+- [x] Task: orchestrator проверяет брифы (Opus). Вопросы перепроектирования — Нурболату 3dc0da16
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 0:**
