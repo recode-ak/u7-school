@@ -278,3 +278,6 @@ UC `GetLessonUc`, `GetStepUc`, `GetStepsByLessonsUc` (модуль — один 
 
 ### Правки по ревью — `migrator` (flash, `cd-F2-fix`), 9d3dc1f0
 Пункты 1–5 решения orchestrator; +3 теста (`stepIds()`, «при отказе уроки не читаются»), red → green. `check` — 4604 pass.
+
+### После контрольной точки — `LessonStepsDqs` (Нурболат), af02ca25
+Сборка ответа `getStepsByLessons` вынесена из `execute` в `domain/src/course/lesson-steps.dqs.ts` (замечание API-01 ревью): UC грузит Ar и считает решения `canSeeUnpublished` по модулям, DQS собирает ответ. Red — `dmg-test-designer` (Sonnet, 13 тестов), green — flash `cd-F2-dqs` (доработка: тип `StepsByLesson` брался из legacy `commands/`). `check` — 4617 pass.
