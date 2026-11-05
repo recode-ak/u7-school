@@ -8,6 +8,9 @@ import { GetModuleEnrollmentUcDef } from './course/uc/get-module-enrollment.uc';
 import { GetModulePrerequisiteUcDef } from './course/uc/get-module-prerequisite.uc';
 import { GetModuleSnapshotUcDef } from './course/uc/get-module-snapshot.uc';
 import { GetSameModulesUcDef } from './course/uc/get-same-modules.uc';
+import { ModuleArDef } from './module/module.ar';
+import { GetModuleUcDef } from './module/uc/get-module.uc';
+import { ListModulesUcDef } from './module/uc/list-modules.uc';
 
 /**
  * Внешний модуль курсов (D-37): реализован legacy-кодом, здесь только
@@ -21,7 +24,7 @@ export const CourseModuleDef = ModuleDef.define({
   description: 'Курсы, модули, уроки и шаги учебного контента.',
   external: true,
   dependsOn: [UserModuleDef],
-  aggregates: [CourseArDef],
+  aggregates: [CourseArDef, ModuleArDef],
   useCases: [
     GetCourseEnrollmentUcDef,
     GetModuleEnrollmentUcDef,
@@ -30,6 +33,8 @@ export const CourseModuleDef = ModuleDef.define({
     GetCoursesStartingWithModuleUcDef,
     GetModuleSnapshotUcDef,
     GetModulePrerequisiteUcDef,
+    GetModuleUcDef,
+    ListModulesUcDef,
   ],
   reactions: [],
   jobs: [],

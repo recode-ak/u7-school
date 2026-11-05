@@ -10,6 +10,7 @@ import {
 } from 'dmg-core/app';
 import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
 import { type CourseLegacy, createCourseModule } from '../../course.module';
+import { ModuleRepoFake } from '../../module/module.repo.fake';
 
 // `getModuleSnapshot` — адаптер над legacy `getModuleSnapshot`
 // (`CourseInProcFacade`). Нет модуля (`MODULE_NOT_FOUND` legacy) →
@@ -56,7 +57,12 @@ function facadeOver(getModuleSnapshot: CourseLegacy['getModuleSnapshot']) {
     },
   };
   return new ModuleFacade(
-    createCourseModule({ app, facades: new ModuleFacades(), legacy }),
+    createCourseModule({
+      app,
+      facades: new ModuleFacades(),
+      legacy,
+      modules: new ModuleRepoFake(),
+    }),
   );
 }
 

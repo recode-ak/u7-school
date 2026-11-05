@@ -10,6 +10,7 @@ import {
 } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import { type CourseLegacy, createCourseModule } from '../../course.module';
+import { ModuleRepoFake } from '../../module/module.repo.fake';
 
 // `getModulePrerequisite` — адаптер над legacy `getCourseByModuleId` +
 // `CourseAr.getPrevModuleId` + `getModule` (enroll-student-uc.ts:52-70):
@@ -63,7 +64,12 @@ function facadeOver(
     getModule,
   } as unknown as CourseLegacy;
   return new ModuleFacade(
-    createCourseModule({ app, facades: new ModuleFacades(), legacy }),
+    createCourseModule({
+      app,
+      facades: new ModuleFacades(),
+      legacy,
+      modules: new ModuleRepoFake(),
+    }),
   );
 }
 

@@ -6,7 +6,9 @@ import {
   GetCoursesIncludingModuleUcDef,
   GetCoursesStartingWithModuleUcDef,
   GetModuleEnrollmentUcDef,
+  GetModuleUcDef,
   GetSameModulesUcDef,
+  ListModulesUcDef,
 } from '@u7-scl/domain/course/contract';
 import {
   AggregateDef,
@@ -32,6 +34,7 @@ import {
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { type CourseLegacy, createCourseModule } from './course.module';
+import { ModuleRepoFake } from './module/module.repo.fake';
 
 // Потребитель модуля курсов — UC другого модуля: объявляет
 // `getCourseEnrollment` в `calls` и вызывает его через `this.call` (D-43);
@@ -163,6 +166,7 @@ function depsWith(courseLegacy: CourseLegacy): ModuleDeps {
   const course = createCourseModule({
     app,
     facades: new ModuleFacades(),
+    modules: new ModuleRepoFake(),
     legacy: courseLegacy,
   });
   return { app, facades: new ModuleFacades([new ModuleFacade(course)]) };
@@ -204,6 +208,7 @@ describe('модуль курсов через фасад (D-43, адаптер 
       createCourseModule({
         app,
         facades: new ModuleFacades(),
+        modules: new ModuleRepoFake(),
         legacy: legacy(true).facade,
       }),
     );
@@ -217,10 +222,24 @@ describe('модуль курсов через фасад (D-43, адаптер 
       createCourseModule({
         app,
         facades: new ModuleFacades(),
+        modules: new ModuleRepoFake(),
         legacy: legacy(true).facade,
       }),
     );
     expect(facade.serves(GetModuleEnrollmentUcDef)).toBe(true);
+  });
+
+  it('модуль обслуживает getModule и listModules (срез module)', () => {
+    const facade = new ModuleFacade(
+      createCourseModule({
+        app,
+        facades: new ModuleFacades(),
+        modules: new ModuleRepoFake(),
+        legacy: legacy(true).facade,
+      }),
+    );
+    expect(facade.serves(GetModuleUcDef)).toBe(true);
+    expect(facade.serves(ListModulesUcDef)).toBe(true);
   });
 });
 
@@ -236,6 +255,7 @@ describe('getModuleEnrollment: адаптер над getModulePlace', () => {
     const course = createCourseModule({
       app,
       facades: new ModuleFacades(),
+      modules: new ModuleRepoFake(),
       legacy: courseLegacy,
     });
     return new ModuleFacade(course);
@@ -280,6 +300,7 @@ describe('батч-вопросы о зачислении: ответ legacy к�
       createCourseModule({
         app,
         facades: new ModuleFacades(),
+        modules: new ModuleRepoFake(),
         legacy: {
           ...base,
           whichCoursesIncludeModule: async (moduleId, ids) => {
@@ -335,6 +356,7 @@ describe('getCoursesStartingWithModule: адаптер над getModulePlace + w
       createCourseModule({
         app,
         facades: new ModuleFacades(),
+        modules: new ModuleRepoFake(),
         legacy: {
           ...base,
           getModulePlace: async (moduleId) => {

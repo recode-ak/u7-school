@@ -13,13 +13,15 @@ import { normalize } from 'dmg-core/graph';
 import * as v from 'valibot';
 import { CourseModuleDef, GetCourseEnrollmentUcDef } from './contract';
 import { CourseArDef } from './course/course.ar';
+import { ModuleArDef } from './module/module.ar';
+import { ModuleErrors } from './module/module.errors';
 
 describe('CourseModuleDef — внешний модуль (D-37)', () => {
   it('паспорт: внешний, зависит от user, Def UC без реализации', () => {
     expect(CourseModuleDef.external).toBe(true);
     expect(normalize(CourseModuleDef)).toMatchObject({
       dependsOn: ['user'],
-      aggregates: ['course'],
+      aggregates: ['course', 'module'],
       useCases: [
         'getCourseEnrollment',
         'getModuleEnrollment',
@@ -28,6 +30,8 @@ describe('CourseModuleDef — внешний модуль (D-37)', () => {
         'getCoursesStartingWithModule',
         'getModuleSnapshot',
         'getModulePrerequisite',
+        'getModule',
+        'listModules',
       ],
       reactions: [],
       jobs: [],
@@ -40,6 +44,17 @@ describe('CourseModuleDef — внешний модуль (D-37)', () => {
       events: [],
       errors: ['COURSE_MODULE_NOT_FOUND'],
     });
+  });
+
+  it('агрегат модуля: без событий, одна ошибка — MODULE_NOT_FOUND', () => {
+    expect(normalize(ModuleArDef)).toMatchObject({
+      name: 'module',
+      events: [],
+      errors: ['MODULE_NOT_FOUND'],
+    });
+    expect(Object.values(ModuleErrors).map((e) => e.code)).toEqual([
+      'MODULE_NOT_FOUND',
+    ]);
   });
 
   it('ArchChecker — без нарушений', () => {

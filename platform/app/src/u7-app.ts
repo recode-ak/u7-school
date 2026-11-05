@@ -11,13 +11,14 @@ import {
 import { legacyClock, legacyEventBus } from '@u7-scl/core/legacy-bridge';
 import type { Logger } from '@u7-scl/core/shared';
 import { ConsoleLogger } from '@u7-scl/core/shared';
-import { createCourseModule } from '@u7-scl/course';
+import { type CourseModuleDeps, createCourseModule } from '@u7-scl/course';
 import { CourseApiModule } from '@u7-scl/course/api';
 import {
   CourseInProcFacade,
   CourseJsonRepo,
   LegacyModuleJsonRepo,
   LessonJsonRepo,
+  ModuleJsonRepo,
   StepJsonRepo,
 } from '@u7-scl/course/infra';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
@@ -154,6 +155,7 @@ export class U7App {
         course: courseFacade,
       },
       {
+        modules: new ModuleJsonRepo(`${dbDir}/courses/modules.json`),
         wishes: new WishJsonRepo(`${dbDir}/wish/wishes.json`),
         questionnaires: new QuestionnaireJsonRepo(
           `${dbDir}/questionnaires/questionnaires.json`,
@@ -240,6 +242,7 @@ export class U7App {
     context: AppContext,
     legacy: U7LegacyFacades,
     repos: {
+      readonly modules: CourseModuleDeps['modules'];
       readonly wishes: WishRepo;
       readonly questionnaires: QuestionnaireRepo;
       readonly campaigns: ReviewCampaignRepo;
@@ -257,7 +260,11 @@ export class U7App {
       {
         def: CourseModuleDef,
         create: (deps) =>
-          createCourseModule({ ...deps, legacy: legacy.course }),
+          createCourseModule({
+            ...deps,
+            legacy: legacy.course,
+            modules: repos.modules,
+          }),
       },
       {
         def: QuestionnaireModuleDef,

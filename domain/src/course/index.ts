@@ -172,6 +172,10 @@ export {
   ModuleSchema,
   ProjectSchema,
 } from './module/entity';
+export type { ModuleSummary } from './module/module.ar';
+export { ModuleAr, ModuleArDef } from './module/module.ar';
+export { ModulePolicy } from './module/module.policy';
+export type { ModuleState } from './module/module.state';
 export { LegacyModulePolicy } from './module/policy';
 export type { LegacyModuleRepo, ModuleListFilter } from './module/repo';
 export type { ModuleId as ModuleEntityId } from './module/types';
