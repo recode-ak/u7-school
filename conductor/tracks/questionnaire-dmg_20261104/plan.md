@@ -99,7 +99,7 @@
 
 ## Фаза 3: Сборка и снятие legacy
 
-- [ ] Task: orchestrator (TR-45): бриф `slices/assembly.md` по образцу `stream` (Opus)
+- [x] Task: orchestrator (TR-45): бриф `slices/assembly.md` по образцу `stream` (Opus); TR-51 — задачи 2–4 одним шагом `migrator`
 - [ ] Task: `migrator` (flash): `QuestionnaireModuleDef` без `external`; фабрика в `U7App` без legacy-резолвера и `inbound`; `@u7-scl/questionnaire/**` — в группу ARC-07 `biome.json`
 - [ ] Task: `migrator` (flash), удаление legacy:
     - `api/*`, `module.ts`, `facade.ts` и `commands/*-cmd.ts`;
