@@ -11,7 +11,7 @@ import { StepSchema } from './entity';
 /**
  * Агрегат Step — шаг урока.
  */
-export class StepAr extends Aggregate<StepArMeta> {
+export class LegacyStepAr extends Aggregate<StepArMeta> {
   static readonly arName = 'Step';
   static readonly arLabel = 'Шаг';
 
@@ -19,7 +19,7 @@ export class StepAr extends Aggregate<StepArMeta> {
     super(state, StepSchema);
   }
 
-  static create(command: CreateStepCmd): StepAr {
+  static create(command: CreateStepCmd): LegacyStepAr {
     const base = {
       uuid: crypto.randomUUID(),
       moduleId: command.moduleId,
@@ -53,7 +53,7 @@ export class StepAr extends Aggregate<StepArMeta> {
       };
     }
 
-    return new StepAr(candidate);
+    return new LegacyStepAr(candidate);
   }
 
   /**

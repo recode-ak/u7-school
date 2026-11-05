@@ -9,7 +9,11 @@ import type {
   ModuleNotFoundUcError,
   Step,
 } from '@u7-scl/domain/course';
-import { LegacyModuleAr, LessonAr, StepAr } from '@u7-scl/domain/course';
+import {
+  LegacyLessonAr,
+  LegacyModuleAr,
+  LegacyStepAr,
+} from '@u7-scl/domain/course';
 
 /**
  * Базовый класс для всех use-case'ов модуля курсов.
@@ -66,12 +70,12 @@ export abstract class CourseUseCase<TMeta extends UcMeta> extends U7UseCase<
   }
 
   /**
-   * Возвращает урок в читаемом виде через LessonAr.getVisibleFor.
+   * Возвращает урок в читаемом виде через LegacyLessonAr.getVisibleFor.
    * Бросает ACCESS_DENIED если урок не виден актору.
    */
   protected async getOutLesson(lesson: Lesson, actor?: User): Promise<Lesson> {
     const module = await this.getModule(lesson.moduleId);
-    const ar = new LessonAr(lesson);
+    const ar = new LegacyLessonAr(lesson);
     const result = ar.getVisibleFor(actor, module);
     if (!result) {
       this.throwError(
@@ -88,12 +92,12 @@ export abstract class CourseUseCase<TMeta extends UcMeta> extends U7UseCase<
   }
 
   /**
-   * Возвращает шаг в читаемом виде через StepAr.getVisibleFor.
+   * Возвращает шаг в читаемом виде через LegacyStepAr.getVisibleFor.
    * Бросает ACCESS_DENIED если шаг не виден актору.
    */
   protected async getOutStep(step: Step, actor?: User): Promise<Step> {
     const module = await this.getModule(step.moduleId);
-    const ar = new StepAr(step);
+    const ar = new LegacyStepAr(step);
     const result = ar.getVisibleFor(actor, module);
     if (!result) {
       this.throwError(

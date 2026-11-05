@@ -5,8 +5,8 @@
  * Отправляет шаги уроков в Telegram точно так же, как это делает бот
  * в реальном приложении. Одновременно является интеграционным тестом:
  *   - `get-module-snapshot` use-case (структура проектов и уроков)
- *   - `get-lesson` use-case (LessonJsonRepo, visibility-политики)
- *   - `get-step` use-case (StepJsonRepo, все kind: text/code/file)
+ *   - `get-lesson` use-case (LegacyLessonJsonRepo, visibility-политики)
+ *   - `get-step` use-case (LegacyStepJsonRepo, все kind: text/code/file)
  *   - `safeConvert` — конвертация Markdown → Telegram MarkdownV2
  *   - Полный пайплайн форматирования и отправки (parse_mode: 'MarkdownV2')
  *

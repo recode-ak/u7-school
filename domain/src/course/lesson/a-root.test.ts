@@ -3,7 +3,7 @@ import type { User } from '@u7-scl/domain/user';
 import { Role } from '@u7-scl/domain/user';
 import type { Module } from '../module/entity';
 import { Status } from '../status';
-import { LessonAr } from './a-root';
+import { LegacyLessonAr } from './a-root';
 
 const cmd = {
   moduleId: crypto.randomUUID(),
@@ -13,10 +13,10 @@ const cmd = {
   estimatedMinutes: undefined,
 };
 
-describe('LessonAr', () => {
+describe('LegacyLessonAr', () => {
   describe('create', () => {
     test('создаёт урок', () => {
-      const ar = LessonAr.create(cmd);
+      const ar = LegacyLessonAr.create(cmd);
       expect(ar.state.title).toBe('Урок 1');
       expect(ar.state.status).toBe(Status.DRAFT);
       expect(ar.state.stepIds).toEqual([]);
@@ -24,12 +24,12 @@ describe('LessonAr', () => {
     });
 
     test('не создаёт updatedAt при создании', () => {
-      const ar = LessonAr.create(cmd);
+      const ar = LegacyLessonAr.create(cmd);
       expect(ar.state.updatedAt).toBeUndefined();
     });
 
     test('принимает команду с опциональными полями', () => {
-      const ar = LessonAr.create({
+      const ar = LegacyLessonAr.create({
         ...cmd,
         additional: 'Доп',
         estimatedMinutes: 30,
@@ -62,36 +62,42 @@ describe('LessonAr', () => {
     }
 
     test('без актора — DRAFT → null', () => {
-      const ar = LessonAr.create(cmd);
+      const ar = LegacyLessonAr.create(cmd);
       expect(ar.getVisibleFor(undefined, module)).toBeNull();
     });
 
     test('без актора — PUBLISHED → урок', () => {
-      const ar = LessonAr.create(cmd);
-      const published = new LessonAr({ ...ar.state, status: Status.PUBLISHED });
+      const ar = LegacyLessonAr.create(cmd);
+      const published = new LegacyLessonAr({
+        ...ar.state,
+        status: Status.PUBLISHED,
+      });
       expect(published.getVisibleFor(undefined, module)).not.toBeNull();
     });
 
     test('автор видит DRAFT', () => {
-      const ar = LessonAr.create(cmd);
+      const ar = LegacyLessonAr.create(cmd);
       expect(
         ar.getVisibleFor(makeActor([Role.MENTOR], authorId), module),
       ).not.toBeNull();
     });
 
     test('ADMIN видит DRAFT', () => {
-      const ar = LessonAr.create(cmd);
+      const ar = LegacyLessonAr.create(cmd);
       expect(ar.getVisibleFor(makeActor([Role.ADMIN]), module)).not.toBeNull();
     });
 
     test('студент не видит DRAFT', () => {
-      const ar = LessonAr.create(cmd);
+      const ar = LegacyLessonAr.create(cmd);
       expect(ar.getVisibleFor(makeActor([Role.STUDENT]), module)).toBeNull();
     });
 
     test('студент видит PUBLISHED', () => {
-      const ar = LessonAr.create(cmd);
-      const published = new LessonAr({ ...ar.state, status: Status.PUBLISHED });
+      const ar = LegacyLessonAr.create(cmd);
+      const published = new LegacyLessonAr({
+        ...ar.state,
+        status: Status.PUBLISHED,
+      });
       expect(
         published.getVisibleFor(makeActor([Role.STUDENT]), module),
       ).not.toBeNull();

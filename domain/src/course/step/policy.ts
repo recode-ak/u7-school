@@ -9,7 +9,7 @@ import type { Step } from './entity';
  * Политика прав доступа для шагов.
  * Получает Course для самостоятельной проверки авторства через LegacyModulePolicy.
  */
-export const StepPolicy = {
+export const LegacyStepPolicy = {
   canCreate(actor: User): boolean {
     return UserPolicy.isAuthor(actor);
   },

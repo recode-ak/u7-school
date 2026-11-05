@@ -18,7 +18,7 @@ import type {
 import type { CourseRepo } from './course/repo';
 import type { CreateLessonCmdMeta } from './lesson/commands/create-lesson-cmd';
 import type { GetLessonCmdMeta } from './lesson/commands/get-lesson-cmd';
-import type { LessonRepo } from './lesson/repo';
+import type { LegacyLessonRepo } from './lesson/repo';
 import type { AddProjectCmdMeta } from './module/commands/add-project-cmd';
 import type { CreateModuleCmdMeta } from './module/commands/create-module-cmd';
 import type { EnrichModuleCmdMeta } from './module/commands/enrich-module-cmd';
@@ -30,7 +30,7 @@ import type { LegacyModuleRepo } from './module/repo';
 import type { CreateStepCmdMeta } from './step/commands/create-step-cmd';
 import type { GetStepCmdMeta } from './step/commands/get-step-cmd';
 import type { GetStepsByLessonsCmdMeta } from './step/commands/get-steps-by-lessons-cmd';
-import type { StepRepo } from './step/repo';
+import type { LegacyStepRepo } from './step/repo';
 
 export type CourseUcMetas =
   | CreateCourseCmdMeta
@@ -72,7 +72,7 @@ export interface CourseApiModuleResolver extends U7ModuleResolver {
   db?: BaseJsonDb;
   moduleRepo: LegacyModuleRepo;
   courseRepo: CourseRepo;
-  lessonRepo: LessonRepo;
-  stepRepo: StepRepo;
+  lessonRepo: LegacyLessonRepo;
+  stepRepo: LegacyStepRepo;
   userFacade: UserFacade;
 }

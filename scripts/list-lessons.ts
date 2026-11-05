@@ -5,7 +5,7 @@
  * Выводит структуру курса: модули → проекты → уроки → количество шагов.
  * Одновременно является интеграционным тестом:
  *   - `list-modules` use-case (LegacyModuleJsonRepo.getAll, visibility-политики)
- *   - `get-module-snapshot` use-case (LessonJsonRepo, CourseDs.buildSnapshot)
+ *   - `get-module-snapshot` use-case (LegacyLessonJsonRepo, CourseDs.buildSnapshot)
  *   - Корректность связей moduleId/lessonIds/stepIds в JSON-файлах
  *
  * ## Использование
@@ -163,7 +163,7 @@ async function main() {
     if (!mod || !moduleDir) continue;
     if (filter?.module !== undefined && filter.module !== M) continue;
 
-    // Получаем снимок модуля через API (тестирует get-module-snapshot + LessonJsonRepo)
+    // Получаем снимок модуля через API (тестирует get-module-snapshot + LegacyLessonJsonRepo)
     type SnapshotLesson = { lessonId: string; lessonTitle: string };
     type SnapshotProject = {
       projectTitle: string;

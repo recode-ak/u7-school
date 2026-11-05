@@ -1,29 +1,29 @@
 import type { User } from '@u7-scl/app-legacy/domain';
 import { errNotFound } from '@u7-scl/core/domain';
 import type {
+  LegacyStepRepo,
   Step,
   StepNotFoundUcError,
-  StepRepo,
 } from '@u7-scl/domain/course';
 import {
   type GetStepCmd,
   type GetStepCmdMeta,
   GetStepCmdSchema,
-  StepAr,
+  LegacyStepAr,
   StepSchema,
 } from '@u7-scl/domain/course';
 import { CourseUseCase } from '../course-uc';
 
 /**
  * Use-case получения шага по UUID.
- * Без actor — только PUBLISHED. С actor — через StepPolicy.
+ * Без actor — только PUBLISHED. С actor — через LegacyStepPolicy.
  */
 export class GetStepUc extends CourseUseCase<GetStepCmdMeta> {
   protected readonly ucName = 'get-step' as const;
   protected readonly ucLabel = 'Получить шаг по UUID' as const;
   protected readonly arMeta = {
-    arName: StepAr.arName as 'Step',
-    arLabel: StepAr.arLabel as 'Шаг',
+    arName: LegacyStepAr.arName as 'Step',
+    arLabel: LegacyStepAr.arLabel as 'Шаг',
   };
   protected readonly type = 'query' as const;
   protected readonly requiresAuth = false as const;
@@ -31,7 +31,7 @@ export class GetStepUc extends CourseUseCase<GetStepCmdMeta> {
   protected readonly outputSchema = StepSchema;
 
   async execute(command: GetStepCmd, actor?: User): Promise<Step> {
-    const step = await (this.resolve.stepRepo as StepRepo).getByUuid(
+    const step = await (this.resolve.stepRepo as LegacyStepRepo).getByUuid(
       command.uuid,
     );
     if (!step) {

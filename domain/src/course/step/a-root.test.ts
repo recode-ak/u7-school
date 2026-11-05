@@ -3,12 +3,12 @@ import type { User } from '@u7-scl/domain/user';
 import { Role } from '@u7-scl/domain/user';
 import type { Module } from '../module/entity';
 import { Status } from '../status';
-import { StepAr } from './a-root';
+import { LegacyStepAr } from './a-root';
 
-describe('StepAr', () => {
+describe('LegacyStepAr', () => {
   describe('create', () => {
     test('создаёт text-шаг', () => {
-      const ar = StepAr.create({
+      const ar = LegacyStepAr.create({
         moduleId: crypto.randomUUID(),
         lessonId: crypto.randomUUID(),
         description: 'Описание',
@@ -20,7 +20,7 @@ describe('StepAr', () => {
     });
 
     test('создаёт code-шаг', () => {
-      const ar = StepAr.create({
+      const ar = LegacyStepAr.create({
         moduleId: crypto.randomUUID(),
         lessonId: crypto.randomUUID(),
         description: 'Описание',
@@ -34,7 +34,7 @@ describe('StepAr', () => {
     });
 
     test('создаёт code-шаг без language', () => {
-      const ar = StepAr.create({
+      const ar = LegacyStepAr.create({
         moduleId: crypto.randomUUID(),
         lessonId: crypto.randomUUID(),
         description: 'Описание',
@@ -46,7 +46,7 @@ describe('StepAr', () => {
     });
 
     test('создаёт file-шаг', () => {
-      const ar = StepAr.create({
+      const ar = LegacyStepAr.create({
         moduleId: crypto.randomUUID(),
         lessonId: crypto.randomUUID(),
         description: 'Описание',
@@ -66,7 +66,7 @@ describe('StepAr', () => {
     });
 
     test('не создаёт updatedAt при создании', () => {
-      const ar = StepAr.create({
+      const ar = LegacyStepAr.create({
         moduleId: crypto.randomUUID(),
         lessonId: crypto.randomUUID(),
         description: 'Описание',
@@ -101,7 +101,7 @@ describe('StepAr', () => {
     }
 
     test('без актора — DRAFT → null', () => {
-      const ar = StepAr.create({
+      const ar = LegacyStepAr.create({
         moduleId: crypto.randomUUID(),
         lessonId: crypto.randomUUID(),
         description: 'Описание',
@@ -112,19 +112,22 @@ describe('StepAr', () => {
     });
 
     test('без актора — PUBLISHED → шаг', () => {
-      const ar = StepAr.create({
+      const ar = LegacyStepAr.create({
         moduleId: crypto.randomUUID(),
         lessonId: crypto.randomUUID(),
         description: 'Описание',
         kind: 'text',
         content: 'Ш',
       });
-      const published = new StepAr({ ...ar.state, status: Status.PUBLISHED });
+      const published = new LegacyStepAr({
+        ...ar.state,
+        status: Status.PUBLISHED,
+      });
       expect(published.getVisibleFor(undefined, module)).not.toBeNull();
     });
 
     test('автор видит DRAFT', () => {
-      const ar = StepAr.create({
+      const ar = LegacyStepAr.create({
         moduleId: crypto.randomUUID(),
         lessonId: crypto.randomUUID(),
         description: 'Описание',
@@ -137,7 +140,7 @@ describe('StepAr', () => {
     });
 
     test('ADMIN видит DRAFT', () => {
-      const ar = StepAr.create({
+      const ar = LegacyStepAr.create({
         moduleId: crypto.randomUUID(),
         lessonId: crypto.randomUUID(),
         description: 'Описание',
@@ -148,7 +151,7 @@ describe('StepAr', () => {
     });
 
     test('студент не видит DRAFT', () => {
-      const ar = StepAr.create({
+      const ar = LegacyStepAr.create({
         moduleId: crypto.randomUUID(),
         lessonId: crypto.randomUUID(),
         description: 'Описание',
@@ -159,14 +162,17 @@ describe('StepAr', () => {
     });
 
     test('студент видит PUBLISHED', () => {
-      const ar = StepAr.create({
+      const ar = LegacyStepAr.create({
         moduleId: crypto.randomUUID(),
         lessonId: crypto.randomUUID(),
         description: 'Описание',
         kind: 'text',
         content: 'Ш',
       });
-      const published = new StepAr({ ...ar.state, status: Status.PUBLISHED });
+      const published = new LegacyStepAr({
+        ...ar.state,
+        status: Status.PUBLISHED,
+      });
       expect(
         published.getVisibleFor(makeActor([Role.STUDENT]), module),
       ).not.toBeNull();

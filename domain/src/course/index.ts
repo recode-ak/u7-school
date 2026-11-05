@@ -92,7 +92,7 @@ export type { CourseListFilter, CourseRepo } from './course/repo';
 export { CourseDs } from './course-ds';
 export type { CourseFacade, CourseProgram, ModulePlace } from './facade';
 // Агрегат Lesson
-export { LessonAr } from './lesson/a-root';
+export { LegacyLessonAr } from './lesson/a-root';
 export type {
   CreateLessonCmd,
   CreateLessonCmdError,
@@ -112,8 +112,8 @@ export type {
 export { GetLessonCmdSchema } from './lesson/commands/get-lesson-cmd';
 export type { Lesson, LessonArMeta } from './lesson/entity';
 export { LessonSchema } from './lesson/entity';
-export { LessonPolicy } from './lesson/policy';
-export type { LessonRepo } from './lesson/repo';
+export { LegacyLessonPolicy } from './lesson/policy';
+export type { LegacyLessonRepo } from './lesson/repo';
 export type { CourseApiModuleMeta, CourseApiModuleResolver } from './module';
 // Агрегат Module
 export { LegacyModuleAr } from './module/a-root';
@@ -182,7 +182,7 @@ export type { ModuleId as ModuleEntityId } from './module/types';
 // Общие типы
 export { Status, StatusSchema } from './status';
 // Агрегат Step
-export { StepAr } from './step/a-root';
+export { LegacyStepAr } from './step/a-root';
 export type {
   CreateStepCmd,
   CreateStepCmdError,
@@ -214,8 +214,8 @@ export type {
   StepText,
 } from './step/entity';
 export { StepCommonSchema, StepSchema } from './step/entity';
-export { StepPolicy } from './step/policy';
-export type { StepRepo } from './step/repo';
+export { LegacyStepPolicy } from './step/policy';
+export type { LegacyStepRepo } from './step/repo';
 export type {
   CourseId,
   LessonId,

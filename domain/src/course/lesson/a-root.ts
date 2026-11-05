@@ -11,7 +11,7 @@ import { LessonSchema } from './entity';
 /**
  * Агрегат Lesson — урок курса.
  */
-export class LessonAr extends Aggregate<LessonArMeta> {
+export class LegacyLessonAr extends Aggregate<LessonArMeta> {
   static readonly arName = 'Lesson';
   static readonly arLabel = 'Урок';
 
@@ -19,7 +19,7 @@ export class LessonAr extends Aggregate<LessonArMeta> {
     super(state, LessonSchema);
   }
 
-  static create(command: CreateLessonCmd): LessonAr {
+  static create(command: CreateLessonCmd): LegacyLessonAr {
     const candidate: Lesson = {
       uuid: crypto.randomUUID(),
       moduleId: command.moduleId,
@@ -31,7 +31,7 @@ export class LessonAr extends Aggregate<LessonArMeta> {
       stepIds: [],
       mentorStepIds: [],
     };
-    return new LessonAr(candidate);
+    return new LegacyLessonAr(candidate);
   }
 
   /** Добавляет stepId в массив урока. */

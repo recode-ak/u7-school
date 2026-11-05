@@ -1,12 +1,12 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type {
   CourseApiModuleResolver,
+  LegacyLessonRepo,
   LegacyModuleRepo,
+  LegacyStepRepo,
   Lesson,
-  LessonRepo,
   Module,
   Step,
-  StepRepo,
 } from '@u7-scl/domain/course';
 import { Status } from '@u7-scl/domain/course';
 import type { User } from '@u7-scl/user/domain';
@@ -45,7 +45,7 @@ function setupUc() {
     getAll: mock(async () => []),
   };
   const stepSave = mock(async (_s: Step): Promise<void> => {});
-  const stepRepo: StepRepo = {
+  const stepRepo: LegacyStepRepo = {
     save: stepSave,
     getByUuid: mock(async () => undefined),
     getByIds: mock(async () => []),
@@ -90,7 +90,7 @@ function setupUc() {
     lessonRepo: {
       getByUuid: lessonGetByUuid,
       save: lessonSave,
-    } as unknown as LessonRepo,
+    } as unknown as LegacyLessonRepo,
     stepRepo,
     userFacade,
   } as unknown as CourseApiModuleResolver);

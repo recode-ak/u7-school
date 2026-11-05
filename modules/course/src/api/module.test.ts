@@ -6,9 +6,9 @@ import type { NotifyKind } from '@u7-scl/core/domain';
 import { Status } from '@u7-scl/domain/course';
 import type { User, UserFacade } from '@u7-scl/user/domain';
 import { Role } from '@u7-scl/user/domain';
-import { LessonJsonRepo } from '#infra-legacy/db/lesson-json-repo';
+import { LegacyLessonJsonRepo } from '#infra-legacy/db/lesson-json-repo';
 import { LegacyModuleJsonRepo } from '#infra-legacy/db/module-json-repo';
-import { StepJsonRepo } from '#infra-legacy/db/step-json-repo';
+import { LegacyStepJsonRepo } from '#infra-legacy/db/step-json-repo';
 import { CourseApiModule } from './module';
 
 const tmpDir = mkdtempSync('/tmp/course-api-module-test-');
@@ -120,8 +120,8 @@ function setupModule(facade: MockUserFacade) {
       getByUuid: mock(async () => undefined),
       getAll: mock(async () => []),
     },
-    lessonRepo: new LessonJsonRepo(nextPath('lessons')),
-    stepRepo: new StepJsonRepo(nextPath('steps')),
+    lessonRepo: new LegacyLessonJsonRepo(nextPath('lessons')),
+    stepRepo: new LegacyStepJsonRepo(nextPath('steps')),
     userFacade: facade,
     appResolver,
     eventBus: appResolver.eventBus,
@@ -248,8 +248,8 @@ describe('CourseApiModule', () => {
           },
         ]),
       },
-      lessonRepo: new LessonJsonRepo(nextPath('lessons')),
-      stepRepo: new StepJsonRepo(nextPath('steps')),
+      lessonRepo: new LegacyLessonJsonRepo(nextPath('lessons')),
+      stepRepo: new LegacyStepJsonRepo(nextPath('steps')),
       userFacade: facade,
       appResolver,
       eventBus: appResolver.eventBus,

@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Step } from '@u7-scl/domain/course';
 import { Status } from '@u7-scl/domain/course';
-import { StepJsonRepo } from './step-json-repo';
+import { LegacyStepJsonRepo } from './step-json-repo';
 
 const tmpDir = mkdtempSync('/tmp/step-repo-test-');
 
@@ -23,13 +23,13 @@ function makeStep(overrides: Partial<Step> = {}): Step {
   } as Step;
 }
 
-describe('StepJsonRepo', () => {
+describe('LegacyStepJsonRepo', () => {
   afterAll(() => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
   test('save и getByUuid', async () => {
-    const repo = new StepJsonRepo(filePath());
+    const repo = new LegacyStepJsonRepo(filePath());
     const uuid = crypto.randomUUID();
     const step = makeStep({ uuid });
 
@@ -41,7 +41,7 @@ describe('StepJsonRepo', () => {
   });
 
   test('getByIds возвращает шаги по списку ID', async () => {
-    const repo = new StepJsonRepo(join(tmpDir, 'steps-ids.json'));
+    const repo = new LegacyStepJsonRepo(join(tmpDir, 'steps-ids.json'));
     const id1 = crypto.randomUUID();
     const id2 = crypto.randomUUID();
     const s1 = makeStep({ uuid: id1 });

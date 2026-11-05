@@ -1,11 +1,14 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type { Step, StepRepo } from '@u7-scl/domain/course';
+import type { LegacyStepRepo, Step } from '@u7-scl/domain/course';
 import { StepSchema } from '@u7-scl/domain/course';
 
 /**
  * JSON-реализация репозитория шагов.
  */
-export class StepJsonRepo extends JsonFileRepo<Step> implements StepRepo {
+export class LegacyStepJsonRepo
+  extends JsonFileRepo<Step>
+  implements LegacyStepRepo
+{
   constructor(filePath = 'data/courses/steps.json') {
     super(StepSchema, filePath);
   }

@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Lesson } from '@u7-scl/domain/course';
 import { Status } from '@u7-scl/domain/course';
-import { LessonJsonRepo } from './lesson-json-repo';
+import { LegacyLessonJsonRepo } from './lesson-json-repo';
 
 const tmpDir = mkdtempSync('/tmp/lesson-repo-test-');
 
@@ -24,13 +24,13 @@ function makeLesson(overrides: Partial<Lesson> = {}): Lesson {
   };
 }
 
-describe('LessonJsonRepo', () => {
+describe('LegacyLessonJsonRepo', () => {
   afterAll(() => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
   test('save и getByUuid', async () => {
-    const repo = new LessonJsonRepo(filePath());
+    const repo = new LegacyLessonJsonRepo(filePath());
     const uuid = crypto.randomUUID();
     const lesson = makeLesson({ uuid });
 
@@ -42,7 +42,7 @@ describe('LessonJsonRepo', () => {
   });
 
   test('getByIds возвращает уроки по списку ID', async () => {
-    const repo = new LessonJsonRepo(join(tmpDir, 'lessons-ids.json'));
+    const repo = new LegacyLessonJsonRepo(join(tmpDir, 'lessons-ids.json'));
     const id1 = crypto.randomUUID();
     const id2 = crypto.randomUUID();
     const l1 = makeLesson({ uuid: id1 });

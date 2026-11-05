@@ -16,10 +16,10 @@ import { CourseApiModule } from '@u7-scl/course/api';
 import {
   CourseInProcFacade,
   CourseJsonRepo,
+  LegacyLessonJsonRepo,
   LegacyModuleJsonRepo,
-  LessonJsonRepo,
+  LegacyStepJsonRepo,
   ModuleJsonRepo,
-  StepJsonRepo,
 } from '@u7-scl/course/infra';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review/contract';
@@ -121,8 +121,10 @@ export class U7App {
     const moduleRepo = new LegacyModuleJsonRepo(
       `${dbDir}/courses/modules.json`,
     );
-    const lessonRepo = new LessonJsonRepo(`${dbDir}/courses/lessons.json`);
-    const stepRepo = new StepJsonRepo(`${dbDir}/courses/steps.json`);
+    const lessonRepo = new LegacyLessonJsonRepo(
+      `${dbDir}/courses/lessons.json`,
+    );
+    const stepRepo = new LegacyStepJsonRepo(`${dbDir}/courses/steps.json`);
 
     const courseRepo = new CourseJsonRepo(`${dbDir}/courses/courses.json`);
 

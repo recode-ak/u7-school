@@ -9,7 +9,7 @@ import type { Lesson } from './entity';
  * Политика прав доступа для уроков.
  * Получает Course для самостоятельной проверки авторства через LegacyModulePolicy.
  */
-export const LessonPolicy = {
+export const LegacyLessonPolicy = {
   canCreate(actor: User): boolean {
     return UserPolicy.isAuthor(actor);
   },

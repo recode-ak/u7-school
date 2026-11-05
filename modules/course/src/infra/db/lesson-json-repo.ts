@@ -1,11 +1,14 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
-import type { Lesson, LessonRepo } from '@u7-scl/domain/course';
+import type { LegacyLessonRepo, Lesson } from '@u7-scl/domain/course';
 import { LessonSchema } from '@u7-scl/domain/course';
 
 /**
  * JSON-реализация репозитория уроков.
  */
-export class LessonJsonRepo extends JsonFileRepo<Lesson> implements LessonRepo {
+export class LegacyLessonJsonRepo
+  extends JsonFileRepo<Lesson>
+  implements LegacyLessonRepo
+{
   constructor(filePath = 'data/courses/lessons.json') {
     super(LessonSchema, filePath);
   }

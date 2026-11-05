@@ -1,5 +1,9 @@
 import type { User } from '@u7-scl/app-legacy/domain';
-import type { LessonRepo, Step, StepRepo } from '@u7-scl/domain/course';
+import type {
+  LegacyLessonRepo,
+  LegacyStepRepo,
+  Step,
+} from '@u7-scl/domain/course';
 import {
   type GetStepsByLessonsCmd,
   type GetStepsByLessonsCmdMeta,
@@ -12,7 +16,7 @@ import { CourseUseCase } from '../course-uc';
 /**
  * Получение шагов по ID уроков.
  * Возвращает шаги, сгруппированные по уроку (uuid + description).
- * Применяет StepPolicy.getVisibleFor для фильтрации по статусу.
+ * Применяет LegacyStepPolicy.getVisibleFor для фильтрации по статусу.
  */
 export class GetStepsByLessonsUc extends CourseUseCase<GetStepsByLessonsCmdMeta> {
   protected readonly ucName = 'get-steps-by-lessons' as const;
@@ -38,8 +42,8 @@ export class GetStepsByLessonsUc extends CourseUseCase<GetStepsByLessonsCmdMeta>
     command: GetStepsByLessonsCmd,
     actor?: User,
   ): Promise<StepsByLesson> {
-    const repo = this.resolve.stepRepo as StepRepo;
-    const lessonRepo = this.resolve.lessonRepo as LessonRepo;
+    const repo = this.resolve.stepRepo as LegacyStepRepo;
+    const lessonRepo = this.resolve.lessonRepo as LegacyLessonRepo;
 
     // Загружаем уроки
     const lessons = await lessonRepo.getByIds(command.lessonIds);

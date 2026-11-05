@@ -1,12 +1,12 @@
 import type { ContentSnapshot, StepPosition } from './content-snapshot';
 import type { Course } from './course/entity';
-import { LessonAr } from './lesson/a-root';
+import { LegacyLessonAr } from './lesson/a-root';
 import type { CreateLessonCmd } from './lesson/commands/create-lesson-cmd';
 import type { Lesson } from './lesson/entity';
 import type { LegacyModuleAr } from './module/a-root';
 import type { Module } from './module/entity';
 import { Status } from './status';
-import { StepAr } from './step/a-root';
+import { LegacyStepAr } from './step/a-root';
 import type { CreateStepCmd } from './step/commands/create-step-cmd';
 
 /**
@@ -34,8 +34,8 @@ export class CourseDs {
     module: LegacyModuleAr,
     cmd: CreateLessonCmd,
     projectId: string,
-  ): { module: LegacyModuleAr; lesson: LessonAr } {
-    const lesson = LessonAr.create(cmd);
+  ): { module: LegacyModuleAr; lesson: LegacyLessonAr } {
+    const lesson = LegacyLessonAr.create(cmd);
     module.addLessonToProject(projectId, lesson.state.uuid);
     return { module, lesson };
   }
@@ -45,10 +45,10 @@ export class CourseDs {
    * Возвращает изменённые агрегаты для сохранения в БД.
    */
   createStep(
-    lesson: LessonAr,
+    lesson: LegacyLessonAr,
     cmd: CreateStepCmd,
-  ): { lesson: LessonAr; step: StepAr } {
-    const step = StepAr.create(cmd);
+  ): { lesson: LegacyLessonAr; step: LegacyStepAr } {
+    const step = LegacyStepAr.create(cmd);
     lesson.addStep(step.state.uuid);
 
     return { lesson, step };

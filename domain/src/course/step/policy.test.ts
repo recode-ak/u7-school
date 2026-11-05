@@ -4,7 +4,7 @@ import { Role } from '@u7-scl/domain/user';
 import type { Module } from '../module/entity';
 import { Status } from '../status';
 import type { Step } from './entity';
-import { StepPolicy } from './policy';
+import { LegacyStepPolicy } from './policy';
 
 function makeActor(roles: Role[], uuid = 'actor-uuid'): User {
   return {
@@ -39,19 +39,19 @@ const step: Step = {
   createdAt: '2026-05-01T12:00',
 } as Step;
 
-describe('StepPolicy', () => {
+describe('LegacyStepPolicy', () => {
   describe('canCreate', () => {
     test('ADMIN без AUTHOR не может создавать', () => {
-      expect(StepPolicy.canCreate(makeActor([Role.ADMIN]))).toBe(false);
+      expect(LegacyStepPolicy.canCreate(makeActor([Role.ADMIN]))).toBe(false);
     });
     test('AUTHOR может создавать', () => {
-      expect(StepPolicy.canCreate(makeActor([Role.AUTHOR]))).toBe(true);
+      expect(LegacyStepPolicy.canCreate(makeActor([Role.AUTHOR]))).toBe(true);
     });
     test('MENTOR без AUTHOR не может создавать', () => {
-      expect(StepPolicy.canCreate(makeActor([Role.MENTOR]))).toBe(false);
+      expect(LegacyStepPolicy.canCreate(makeActor([Role.MENTOR]))).toBe(false);
     });
     test('STUDENT не может создавать', () => {
-      expect(StepPolicy.canCreate(makeActor([Role.STUDENT]))).toBe(false);
+      expect(LegacyStepPolicy.canCreate(makeActor([Role.STUDENT]))).toBe(false);
     });
   });
 
@@ -60,19 +60,23 @@ describe('StepPolicy', () => {
 
     test('автор может читать DRAFT', () => {
       expect(
-        StepPolicy.canRead(makeActor([Role.MENTOR], authorId), step, course),
+        LegacyStepPolicy.canRead(
+          makeActor([Role.MENTOR], authorId),
+          step,
+          course,
+        ),
       ).toBe(true);
     });
 
     test('ADMIN может читать DRAFT', () => {
-      expect(StepPolicy.canRead(makeActor([Role.ADMIN]), step, course)).toBe(
-        true,
-      );
+      expect(
+        LegacyStepPolicy.canRead(makeActor([Role.ADMIN]), step, course),
+      ).toBe(true);
     });
 
     test('студент может читать PUBLISHED шаг', () => {
       expect(
-        StepPolicy.canRead(
+        LegacyStepPolicy.canRead(
           makeActor([Role.STUDENT]),
           { ...step, status: Status.PUBLISHED },
           course,
@@ -81,9 +85,9 @@ describe('StepPolicy', () => {
     });
 
     test('студент НЕ может читать DRAFT шаг', () => {
-      expect(StepPolicy.canRead(makeActor([Role.STUDENT]), step, course)).toBe(
-        false,
-      );
+      expect(
+        LegacyStepPolicy.canRead(makeActor([Role.STUDENT]), step, course),
+      ).toBe(false);
     });
   });
 
@@ -92,26 +96,34 @@ describe('StepPolicy', () => {
 
     test('автор может редактировать', () => {
       expect(
-        StepPolicy.canEdit(makeActor([Role.MENTOR], authorId), step, course),
+        LegacyStepPolicy.canEdit(
+          makeActor([Role.MENTOR], authorId),
+          step,
+          course,
+        ),
       ).toBe(true);
     });
 
     test('ADMIN может редактировать', () => {
-      expect(StepPolicy.canEdit(makeActor([Role.ADMIN]), step, course)).toBe(
-        true,
-      );
+      expect(
+        LegacyStepPolicy.canEdit(makeActor([Role.ADMIN]), step, course),
+      ).toBe(true);
     });
 
     test('MENTOR не автор не может редактировать', () => {
       expect(
-        StepPolicy.canEdit(makeActor([Role.MENTOR], 'other'), step, course),
+        LegacyStepPolicy.canEdit(
+          makeActor([Role.MENTOR], 'other'),
+          step,
+          course,
+        ),
       ).toBe(false);
     });
 
     test('STUDENT не может редактировать', () => {
-      expect(StepPolicy.canEdit(makeActor([Role.STUDENT]), step, course)).toBe(
-        false,
-      );
+      expect(
+        LegacyStepPolicy.canEdit(makeActor([Role.STUDENT]), step, course),
+      ).toBe(false);
     });
   });
 });

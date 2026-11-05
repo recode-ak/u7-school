@@ -6,10 +6,10 @@ import {
   type CreateStepCmd,
   type CreateStepCmdMeta,
   CreateStepCmdSchema,
+  LegacyLessonAr,
   LegacyModulePolicy,
-  LessonAr,
-  StepAr,
-  StepPolicy,
+  LegacyStepAr,
+  LegacyStepPolicy,
   StepSchema,
 } from '@u7-scl/domain/course';
 import { CourseUseCase } from '../course-uc';
@@ -22,8 +22,8 @@ export class CreateStepUc extends CourseUseCase<CreateStepCmdMeta> {
   protected readonly ucName = 'create-step' as const;
   protected readonly ucLabel = 'Создать шаг' as const;
   protected readonly arMeta = {
-    arName: StepAr.arName as 'Step',
-    arLabel: StepAr.arLabel as 'Шаг',
+    arName: LegacyStepAr.arName as 'Step',
+    arLabel: LegacyStepAr.arLabel as 'Шаг',
   };
   protected readonly type = 'command' as const;
   protected readonly requiresAuth = true as const;
@@ -31,7 +31,7 @@ export class CreateStepUc extends CourseUseCase<CreateStepCmdMeta> {
   protected readonly outputSchema = StepSchema;
 
   async execute(command: CreateStepCmd, actor: User): Promise<Step> {
-    if (!StepPolicy.canCreate(actor)) {
+    if (!LegacyStepPolicy.canCreate(actor)) {
       this.throwAccessDenied('Недостаточно прав для создания шага');
     }
 
@@ -54,7 +54,7 @@ export class CreateStepUc extends CourseUseCase<CreateStepCmdMeta> {
     }
 
     const ds = new CourseDs();
-    const lessonAr = new LessonAr(lessonState);
+    const lessonAr = new LegacyLessonAr(lessonState);
     const { lesson, step } = ds.createStep(lessonAr, command);
 
     const db = this.resolve.db;

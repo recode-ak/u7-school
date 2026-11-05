@@ -5,10 +5,10 @@ import {
   type CreateLessonCmd,
   type CreateLessonCmdMeta,
   CreateLessonCmdSchema,
+  LegacyLessonAr,
+  LegacyLessonPolicy,
   LegacyModuleAr,
   LegacyModulePolicy,
-  LessonAr,
-  LessonPolicy,
   LessonSchema,
 } from '@u7-scl/domain/course';
 import { CourseUseCase } from '../course-uc';
@@ -22,8 +22,8 @@ export class CreateLessonUc extends CourseUseCase<CreateLessonCmdMeta> {
   protected readonly ucName = 'create-lesson' as const;
   protected readonly ucLabel = 'Создать урок' as const;
   protected readonly arMeta = {
-    arName: LessonAr.arName as 'Lesson',
-    arLabel: LessonAr.arLabel as 'Урок',
+    arName: LegacyLessonAr.arName as 'Lesson',
+    arLabel: LegacyLessonAr.arLabel as 'Урок',
   };
   protected readonly type = 'command' as const;
   protected readonly requiresAuth = true as const;
@@ -31,7 +31,7 @@ export class CreateLessonUc extends CourseUseCase<CreateLessonCmdMeta> {
   protected readonly outputSchema = LessonSchema;
 
   async execute(command: CreateLessonCmd, actor: User): Promise<Lesson> {
-    if (!LessonPolicy.canCreate(actor)) {
+    if (!LegacyLessonPolicy.canCreate(actor)) {
       this.throwAccessDenied('Недостаточно прав для создания урока');
     }
 
