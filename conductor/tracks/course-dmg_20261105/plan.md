@@ -20,7 +20,7 @@
 ## Фаза 0: База и решения
 
 - [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/course` и `modules/course`, `dmg-core` `bun test`. Каркас раздела «DeepSeek» (Opus) b1d57ddb
-- [~] Task: Записать решения spec в TR (`debt.md`) и `decisions.md` (Opus):
+- [x] Task: Записать решения spec в TR (`debt.md`) и `decisions.md` (Opus): cf07c035
     - [x] этап — метка программы (`moduleIds` + `fromModuleId`), `stages` в ответе `get-course`;
     - [x] «клиент спрашивает — курс разруливает», вердикт пререквизита `admitted`;
     - [x] состав UC: переносимые, сливаемые методы фасада, удаляемые (9 команд, `get-course-program`, `resolve-content-path`);
