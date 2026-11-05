@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test';
 import { assertMarkdownV2Safe } from '@u7-scl/core/shared';
 import {
   authorLabel,
-  authorLine,
   OUTCOME_LABELS,
   renderReviewCard,
   reviewDate,
@@ -51,19 +50,6 @@ describe('роли и подписи автора', () => {
 
 describe('рендер карточек (MarkdownV2)', () => {
   const createdAt = Date.UTC(2026, 8, 21, 10);
-
-  test('authorLine: имя, роль, исход и дата', () => {
-    const text = authorLine({
-      name: 'Анна',
-      direction: 'student_student',
-      authorOutcome: 'completed_passed',
-      createdAt,
-    });
-    assertMarkdownV2Safe(text);
-    expect(String(text)).toContain('Анна');
-    expect(String(text)).toContain('студент · завершил и прошел');
-    expect(String(text)).toContain('21\\.09\\.2026');
-  });
 
   test('renderReviewCard: автор, поток, дата, текст; спецсимволы экранированы', () => {
     const text = renderReviewCard({

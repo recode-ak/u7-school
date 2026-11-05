@@ -188,11 +188,6 @@ export class ReviewCampaignAr extends Aggregate<typeof ReviewCampaignArDef> {
     return this.state.payload.mentorId === userId;
   }
 
-  /** Является ли userId адресуемым соучеником. */
-  hasParticipant(userId: string): boolean {
-    return this.state.participants.includes(userId);
-  }
-
   // ── Вопросы: окно жизни ──
 
   /** Закрыто ли окно на момент `at` (граница включительно). */

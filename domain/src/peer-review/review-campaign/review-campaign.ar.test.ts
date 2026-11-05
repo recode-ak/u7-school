@@ -155,14 +155,12 @@ describe('ReviewCampaignAr: окно жизни', () => {
 });
 
 describe('ReviewCampaignAr: вопросы о составе', () => {
-  it('isSubject / isMentor / hasParticipant', () => {
+  it('isSubject / isMentor', () => {
     const c = ar();
     expect(c.isSubject(UUIDS.subject)).toBe(true);
     expect(c.isSubject(UUIDS.alice)).toBe(false);
     expect(c.isMentor(UUIDS.mentor)).toBe(true);
     expect(c.isMentor(UUIDS.subject)).toBe(false);
-    expect(c.hasParticipant(UUIDS.alice)).toBe(true);
-    expect(c.hasParticipant(UUIDS.stranger)).toBe(false);
   });
 });
 

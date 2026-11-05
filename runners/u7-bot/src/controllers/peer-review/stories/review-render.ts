@@ -52,16 +52,6 @@ export function reviewDate(createdAt: number): string {
   return `${d}.${m}.${y}`;
 }
 
-/** Строка автора отзыва в MarkdownV2: «👤 {Имя} (студент · исход · дата):». */
-export function authorLine(args: {
-  name: string;
-  direction: ReviewDirection;
-  authorOutcome?: StudentOutcome;
-  createdAt: number;
-}): MdText {
-  return md`👤 ${args.name} \\(${authorLabel(args)} · ${reviewDate(args.createdAt)}\\):`;
-}
-
 /** Карточка одного отзыва для S08 «Отзывы мне». */
 export function renderReviewCard(args: {
   authorName: string;
