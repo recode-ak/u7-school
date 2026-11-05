@@ -12,8 +12,6 @@ import {
   anonymous,
   author,
   LESSON_1,
-  LESSON_2,
-  LESSON_3,
   lessonState,
   MODULE,
   makeContentEnv,
@@ -26,17 +24,13 @@ import {
   STEP_2,
   student,
   system,
-  textStep,
 } from '../../content-uc.fixture';
 import { type CourseUser, createCourseModule } from '../../course.module';
 import { GetModuleSnapshotUc } from './get-module-snapshot.uc';
 
-// Настоящий UC вместо адаптера над legacy (5 тестов адаптера): «снимок как
-// есть», «пустой модуль», «модуль не найден» сохраняются; «иной сбой →
-// SERVER_INTERNAL» — сбой репозитория; «модуль обслуживает getModuleSnapshot» —
-// `facade.serves`. Плюс сценарии legacy `get-module-snapshot-uc` (тестов у
-// него не было): модуль виден автору/администратору или опубликован, проекты
-// и уроки — только `published`, порядок из данных.
+// Ответственность UC: доступ к модулю через Policy, отказы, чтение только
+// одним запросом, `facade.serves`. Правила сборки снимка — на уровне
+// `ModuleSnapshotDqs` (TST-08).
 
 const PROJECT_2 = '88888888-8888-4888-8888-888888888881';
 const MISSING = '99999999-9999-4999-8999-999999999990';
@@ -91,11 +85,6 @@ describe('GetModuleSnapshotUc — успех', () => {
     ]);
   });
 
-  it('пустой модуль — пустой снимок', async () => {
-    env.modules.seed(moduleState('published'));
-    expect(expectOk(await snapshot(anonymous))).toEqual([]);
-  });
-
   it.each([
     ['гость', anonymous],
     ['студент', student],
@@ -134,108 +123,7 @@ describe('GetModuleSnapshotUc — успех', () => {
     expect(expectOk(await snapshot(asSystemFor(mentor)))).toHaveLength(1);
   });
 
-  it('только опубликованные проекты: draft и archived исключены', async () => {
-    env.modules.seed(
-      moduleState('published', {
-        projects: [
-          projectState('draft'),
-          projectState('published'),
-          { ...projectState('archived'), uuid: PROJECT_2 },
-        ],
-      }),
-    );
-    env.lessons.seed(lessonState(LESSON_1, 'published'));
-
-    const result = expectOk(await snapshot(anonymous));
-
-    expect(result.map((p) => p.projectId)).toEqual([PROJECT_PUBLISHED]);
-  });
-
-  it('порядок проектов и уроков — из данных, а не из выборки репозитория', async () => {
-    env.modules.seed(
-      moduleState('published', {
-        projects: [
-          {
-            ...projectState('published'),
-            uuid: PROJECT_2,
-            lessonIds: [LESSON_3, LESSON_1],
-          },
-          { ...projectState('published'), lessonIds: [LESSON_2] },
-        ],
-      }),
-    );
-    env.lessons.seed(
-      lessonState(LESSON_1, 'published'),
-      lessonState(LESSON_2, 'published'),
-      lessonState(LESSON_3, 'published'),
-    );
-    env.reversed.on = true;
-
-    const result = expectOk(await snapshot(anonymous));
-
-    expect(result.map((p) => p.projectId)).toEqual([
-      PROJECT_2,
-      PROJECT_PUBLISHED,
-    ]);
-    expect(result[0]?.lessons.map((l) => l.lessonId)).toEqual([
-      LESSON_3,
-      LESSON_1,
-    ]);
-  });
-
-  it('черновой урок опубликованного проекта пропускается, а не обрушивает вызов (С2)', async () => {
-    env.modules.seed(
-      moduleState('published', {
-        projects: [
-          { ...projectState('published'), lessonIds: [LESSON_1, LESSON_2] },
-        ],
-      }),
-    );
-    env.lessons.seed(
-      lessonState(LESSON_1, 'draft'),
-      lessonState(LESSON_2, 'published'),
-    );
-
-    for (const caller of [anonymous, student, otherMentor]) {
-      const result = expectOk(await snapshot(caller));
-      expect(result[0]?.lessons.map((l) => l.lessonId)).toEqual([LESSON_2]);
-    }
-  });
-
-  it('archived-урок пропускается', async () => {
-    env.modules.seed(
-      moduleState('published', {
-        projects: [
-          { ...projectState('published'), lessonIds: [LESSON_1, LESSON_2] },
-        ],
-      }),
-    );
-    env.lessons.seed(
-      lessonState(LESSON_1, 'archived'),
-      lessonState(LESSON_2, 'published'),
-    );
-
-    const result = expectOk(await snapshot(anonymous));
-
-    expect(result[0]?.lessons.map((l) => l.lessonId)).toEqual([LESSON_2]);
-  });
-
-  it('урок, которого нет в репозитории, пропускается (долг: маскирует рассогласование данных)', async () => {
-    env.modules.seed(
-      moduleState('published', {
-        projects: [
-          { ...projectState('published'), lessonIds: [LESSON_1, LESSON_2] },
-        ],
-      }),
-    );
-    env.lessons.seed(lessonState(LESSON_2, 'published'));
-
-    const result = expectOk(await snapshot(anonymous));
-
-    expect(result[0]?.lessons.map((l) => l.lessonId)).toEqual([LESSON_2]);
-  });
-
-  it('урок в двух проектах входит в оба; уроки запрашиваются одним запросом без повторов', async () => {
+  it('уроки запрашиваются одним запросом без повторов', async () => {
     env.modules.seed(
       moduleState('published', {
         projects: [
@@ -246,9 +134,8 @@ describe('GetModuleSnapshotUc — успех', () => {
     );
     env.lessons.seed(lessonState(LESSON_1, 'published'));
 
-    const result = expectOk(await snapshot(anonymous));
+    await snapshot(anonymous);
 
-    expect(result.map((p) => p.lessons.length)).toEqual([1, 1]);
     expect(env.asked.lessons).toHaveLength(1);
     expect(new Set(env.asked.lessons[0]).size).toBe(
       env.asked.lessons[0]?.length ?? -1,
@@ -256,13 +143,11 @@ describe('GetModuleSnapshotUc — успех', () => {
     expect(env.asked.lessonById).toEqual([]);
   });
 
-  it('stepIds урока включаются целиком, в том числе черновые шаги; шаги не читаются (С1)', async () => {
+  it('шаги не читаются (С1)', async () => {
     seedPublished();
-    env.steps.seed(textStep(STEP_1, 'published'), textStep(STEP_2, 'draft'));
 
-    const result = expectOk(await snapshot(anonymous));
+    await snapshot(anonymous);
 
-    expect(result[0]?.lessons[0]?.stepIds).toEqual([STEP_1, STEP_2]);
     expect(env.asked.steps).toEqual([]);
     expect(env.asked.stepById).toEqual([]);
   });
