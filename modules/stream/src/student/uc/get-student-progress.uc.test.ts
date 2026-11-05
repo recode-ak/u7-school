@@ -1,22 +1,18 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
-import { StreamMembersDqs } from '@u7-scl/domain/stream';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import type { Caller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import type { StreamUser } from '../../stream.module';
 import { GetStudentProgressUc } from './get-student-progress.uc';
 import {
-  anonymous,
   done,
   issued,
   makeEnv,
-  mentor,
   owner,
   REQ,
   STEP_1,
   STEP_2,
   STUDENT,
-  stranger,
   streamOf,
   studentState,
   T0,
@@ -99,12 +95,6 @@ describe('GetStudentProgressUc', () => {
     expect(res.progress).toBeUndefined();
   });
 
-  it('прогресс виден любому: чужой студент, ментор, гость', async () => {
-    for (const caller of [stranger, mentor, anonymous]) {
-      expect(expectOk(await ask({}, caller)).student.uuid).toBe(STUDENT);
-    }
-  });
-
   it('студента нет — STUDENT_NOT_FOUND (not_found, Т9)', async () => {
     const error = expectErr(
       await new GetStudentProgressUc(env.deps, StreamModuleDef).handle(
@@ -115,13 +105,6 @@ describe('GetStudentProgressUc', () => {
       'STUDENT_NOT_FOUND',
     );
     expect(error.kind).toBe('not_found');
-    expect(error.label).toBe('Студент не найден');
-  });
-
-  it('чтение не пишет и не публикует', async () => {
-    expectOk(await ask());
-    expect(env.students.saved).toEqual([]);
-    expect(env.ctx.published).toEqual([]);
   });
 });
 
@@ -130,7 +113,7 @@ describe('GetStudentProgressUc — отставание в card', () => {
   const OTHER_A = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
   const OTHER_B = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 
-  it('lagLevel и hoursSinceLastActivity совпадают с roster состава потока', async () => {
+  it('отставание в card: lagging и часы с последней активности', async () => {
     // Ощутимо ниже 4 суток: отставание даёт только медиана учащихся.
     const now = T0 + 100 * HOUR;
     env = makeEnv(now);
@@ -151,23 +134,10 @@ describe('GetStudentProgressUc — отставание в card', () => {
         steps: [issued(STEP_1, now - 12 * HOUR)],
       }),
     );
-    const stream = await env.streams.findById(streamOf('active').uuid);
-    if (!stream) throw new Error('поток не найден');
-    const expected = new StreamMembersDqs(
-      stream,
-      await env.students.findByStream(stream.uuid),
-    )
-      .roster(now)
-      .find((r) => r.studentId === STUDENT);
 
     const card = expectOk(await ask()).progress?.card;
 
-    expect(expected).toEqual({
-      studentId: STUDENT,
-      lagLevel: 'lagging',
-      hoursSinceLastActivity: 100,
-    });
-    expect(card?.lagLevel).toBe(expected?.lagLevel);
-    expect(card?.hoursSinceLastActivity).toBe(expected?.hoursSinceLastActivity);
+    expect(card?.lagLevel).toBe('lagging');
+    expect(card?.hoursSinceLastActivity).toBe(100);
   });
 });

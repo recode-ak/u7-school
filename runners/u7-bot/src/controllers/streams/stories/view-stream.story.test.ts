@@ -319,14 +319,6 @@ describe('ViewStreamStory (S02-S04)', () => {
     expect(codes).toContain(`view-stream:view:${STREAM_ID}`);
   });
 
-  // ── Неизвестные команды ──
-
-  test('неизвестная команда', async () => {
-    const { story } = makeStory();
-    const response = await story.handleCallback('bogus:1', guest, session);
-    expect(String(response.screen?.text)).toContain('Неизвестная');
-  });
-
   test('view без streamId — ошибка', async () => {
     const { story } = makeStory();
     const response = await story.handleCallback('view', guest, session);
@@ -544,17 +536,6 @@ describe('ViewStreamStory (S02-S04)', () => {
     expect(codes).toContain(`view-stream:view:${STREAM_ID}`);
   });
 
-  test('handleMessage: ввод без awaitInput-контекста — реплика-отказ + release', async () => {
-    const { story } = makeStory();
-    const response = await story.handleMessage(
-      { type: 'message', text: 'что-то', telegramId: 1 },
-      guest,
-      session,
-    );
-    expect(String(response.notify?.text)).toContain('не принимаются');
-    expect(response.release).toBe(true);
-  });
-
   // ── Мосты навигации ──
 
   test('students: кнопка студента ведёт в view-stream:student-detail (не monitor)', async () => {
@@ -689,7 +670,7 @@ describe('ViewStreamStory — публичная drill-down программа �
     expect(btnCodes).toContain(`view-stream:view:${STREAM_ID_PUB}`);
   });
 
-  test('project: карточка проекта — список уроков и листание проектов', async () => {
+  test('project: карточка проекта — коды кнопок уроков (мосты в nav-tree)', async () => {
     const { story } = makePublicStory();
     const response = await story.handleCallback(
       `prog:${STREAM_ID_PUB}:project:proj-1`,
@@ -697,9 +678,6 @@ describe('ViewStreamStory — публичная drill-down программа �
       pubSession,
     );
     assertDialogResponseMarkdownSafe(response);
-    const text = String(response.screen?.text);
-    expect(text).toContain('Программа модуля');
-    expect(text).toContain('Введение в архитектуру');
 
     const btnTexts =
       response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
@@ -711,44 +689,8 @@ describe('ViewStreamStory — публичная drill-down программа �
     expect(btnCodes).toContain(
       `view-stream:prog:${STREAM_ID_PUB}:lesson:lesson-1`,
     );
-    expect(btnTexts).toContain('След. проект ▶️');
-    expect(btnCodes).toContain(
-      `view-stream:prog:${STREAM_ID_PUB}:project:proj-2`,
-    );
-    expect(btnTexts).toContain('⬅️ Назад к модулю');
-    expect(btnCodes).toContain(`view-stream:prog:${STREAM_ID_PUB}:root`);
-  });
-
-  test('lesson: карточка урока — заголовки шагов в тексте, но кнопок шагов нет', async () => {
-    const { story } = makePublicStory();
-    const response = await story.handleCallback(
-      `prog:${STREAM_ID_PUB}:lesson:lesson-1`,
-      pubActor,
-      pubSession,
-    );
-    assertDialogResponseMarkdownSafe(response);
-    const text = String(response.screen?.text);
-    expect(text).toContain('Модули и компоненты');
-    expect(text).toContain('Описание первого шага');
-    expect(text).toContain('Описание второго шага');
-
-    const btnTexts =
-      response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-    const btnCodes =
-      response.screen?.keyboard?.rows.flat().map((b) => b.code) ?? [];
-
-    // Зрителю кнопки перехода в шаги недоступны!
-    expect(btnCodes.some((c) => c.includes(':step:'))).toBe(false);
-    expect(btnTexts.some((t) => t.includes('📄'))).toBe(false);
-
-    // Листание уроков и возврат к проекту доступны
-    expect(btnTexts).toContain('След. урок ▶️');
     expect(btnCodes).toContain(
       `view-stream:prog:${STREAM_ID_PUB}:lesson:lesson-2`,
-    );
-    expect(btnTexts).toContain('⬅️ Назад к проекту');
-    expect(btnCodes).toContain(
-      `view-stream:prog:${STREAM_ID_PUB}:project:proj-1`,
     );
   });
 

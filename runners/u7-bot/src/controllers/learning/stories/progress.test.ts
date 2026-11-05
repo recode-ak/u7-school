@@ -63,13 +63,8 @@ describe('ProgressStory', () => {
     ],
   };
 
-  function makeStory(appApiOverrides?: Record<string, unknown>) {
-    // `get-student-by-user`: запись студента, функция — студент не найден
-    const studentOverride = appApiOverrides?.['get-student-by-user'];
-    const student =
-      typeof studentOverride === 'function'
-        ? undefined
-        : ((studentOverride ?? mockStudent) as LegacyStudent);
+  function makeStory() {
+    const student = mockStudent as LegacyStudent;
     const appApiSpy = mock((_name: string, ..._args: unknown[]) => undefined);
 
     const story = new ProgressStory();
@@ -150,32 +145,5 @@ describe('ProgressStory', () => {
     );
 
     expect(String(response.screen?.text)).toContain('не соответствует');
-  });
-
-  test('студент не записан → экран «не записаны»', async () => {
-    const { story } = makeStory({
-      'get-student-by-user': (() => {
-        throw new Error('not found');
-      }) as unknown,
-    });
-
-    const response = await story.handleCallback(
-      `progress:${STREAM_ID}`,
-      studentActor,
-      session,
-    );
-
-    expect(String(response.screen?.text)).toContain('не записаны');
-  });
-
-  test('неизвестная команда — экран unknownCommand', async () => {
-    const { story } = makeStory();
-
-    const response = await story.handleCallback(
-      'unknown',
-      studentActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Неизвестная');
   });
 });

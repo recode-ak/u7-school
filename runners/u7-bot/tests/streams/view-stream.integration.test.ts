@@ -20,7 +20,7 @@ import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 
 /**
- * Интеграционный тест S02-S04: карточка потока, программа, детали.
+ * Интеграционный тест S02: карточка потока и навигация вокруг неё.
  *
  * Контракт «Диалог и Экран»: ассерты — по DialogResponse, захваченному
  * на границе uiApp. Коды прямых вызовов штампуются актуальным штампом
@@ -79,35 +79,8 @@ describe('ViewStreamStory (интеграционный)', () => {
 
   // ── S02: Карточка потока ──
 
-  test('view: показывает карточку enrollment-потока', async () => {
-    const response = await openView(guest, 'view', ENROLLMENT_ID);
-    const text = response.screen?.text ?? '';
-    expect(text).toContain('JS Core');
-    expect(text).toContain('Ментор');
-    expect(text).toContain('📚 Курс');
-    expect(text).not.toContain('Неизвестная команда');
-  });
-
-  test('view: кнопки Программа, Детали, Назад к списку', async () => {
-    const response = await openView(guest, 'view', ENROLLMENT_ID);
-    const btns =
-      response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-    expect(btns.some((t) => t.includes('Программа модуля'))).toBe(true);
-    expect(btns.some((t) => t.includes('Детали'))).toBe(true);
-    expect(btns.some((t) => t.includes('Назад к списку'))).toBe(true);
-  });
-
   test('view: нет менторских lifecycle-кнопок (гость)', async () => {
     const response = await openView(guest, 'view', ENROLLMENT_ID);
-    const btns =
-      response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-    expect(btns.some((t) => t.includes('Запустить'))).toBe(false);
-    expect(btns.some((t) => t.includes('Завершить'))).toBe(false);
-    expect(btns.some((t) => t.includes('В архив'))).toBe(false);
-  });
-
-  test('view: нет менторских lifecycle-кнопок (ментор своего потока)', async () => {
-    const response = await openView(mentor, 'view', ENROLLMENT_ID);
     const btns =
       response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
     expect(btns.some((t) => t.includes('Запустить'))).toBe(false);
@@ -123,41 +96,6 @@ describe('ViewStreamStory (интеграционный)', () => {
     );
     expect(String(response.notify?.text)).toContain('не найден');
   });
-
-  // ── S03: Программа потока ──
-
-  test('program: показывает карточку программы модуля', async () => {
-    const response = await openView(guest, 'program', ACTIVE_ID);
-    const text = response.screen?.text ?? '';
-    expect(text).toContain('Программа модуля');
-    expect(text).toContain('Введение');
-    expect(text).toContain('Циклы и функции');
-  });
-
-  test('program: кнопка «Назад к потоку»', async () => {
-    const response = await openView(guest, 'program', ACTIVE_ID);
-    const btns =
-      response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-    expect(btns.some((t) => t.includes('Назад к потоку'))).toBe(true);
-  });
-
-  // ── S04: Детали ──
-
-  test('details: показывает детали потока', async () => {
-    const response = await openView(guest, 'details', ENROLLMENT_ID);
-    const text = response.screen?.text ?? '';
-    expect(text).toContain('Детали');
-    expect(text).toContain('JS Core');
-  });
-
-  test('details: кнопка «Назад к потоку»', async () => {
-    const response = await openView(guest, 'details', ENROLLMENT_ID);
-    const btns =
-      response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-    expect(btns.some((t) => t.includes('Назад к потоку'))).toBe(true);
-  });
-
-  // ── Сквозной сценарий ──
 
   test('сквозной: каталог → карточка → программа → назад', async () => {
     const tgId = guest.telegramId;
@@ -230,13 +168,6 @@ describe('ViewStreamStory (интеграционный)', () => {
 
   // ── S05: Список студентов (публичный) ──
 
-  test('students: кнопка «👥 Студенты» в карточке потока', async () => {
-    const response = await openView(guest, 'view', ACTIVE_ID);
-    const btns =
-      response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-    expect(btns.some((t) => t.includes('Студенты'))).toBe(true);
-  });
-
   test('students: открывает список студентов с метриками', async () => {
     const response = await openView(guest, 'students', ACTIVE_ID);
     const text = response.screen?.text ?? '';
@@ -244,68 +175,6 @@ describe('ViewStreamStory (интеграционный)', () => {
     expect(text).toContain('Метрики группы');
     expect(text).not.toContain('Неизвестная команда');
   });
-
-  test('students: кнопка студента ведёт в view-stream:student-detail (не monitor)', async () => {
-    const response = await openView(guest, 'students', ACTIVE_ID);
-    const allCodes =
-      response.screen?.keyboard?.rows.flat().map((b) => b.code) ?? [];
-
-    // Кнопки студентов должны использовать view-stream:student-detail (публичный)
-    const studentDetailCodes = allCodes.filter((c) =>
-      c.includes(':student-detail:'),
-    );
-    expect(studentDetailCodes.length).toBeGreaterThan(0);
-
-    // НЕ должно быть monitor:detail:
-    const monitorDetailCodes = allCodes.filter((c) =>
-      c.startsWith('monitor:detail:'),
-    );
-    expect(monitorDetailCodes.length).toBe(0);
-  });
-
-  test('students: публичный режим НЕ содержит кнопок ⛔✅🔄', async () => {
-    const response = await openView(mentor, 'students', ACTIVE_ID);
-    const allTexts =
-      response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-
-    expect(allTexts).not.toContain('⛔');
-    expect(allTexts).not.toContain('✅');
-    expect(allTexts).not.toContain('🔄');
-  });
-
-  test('students: публичная карточка студента (student-detail)', async () => {
-    // Список студентов
-    const listResp = await openView(guest, 'students', ACTIVE_ID);
-
-    // Кнопка первого студента (raw-код в DialogResponse)
-    const studentBtn = listResp.screen?.keyboard?.rows
-      .flat()
-      .find((b) => b.code.includes(':student-detail:'));
-    expect(studentBtn).toBeDefined();
-
-    // Нажатие с актуальным штампом (та же стори — seq не менялся)
-    const tgId = guest.telegramId;
-    const response = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: stampedCode(transport, tgId, studentBtn!.code),
-      }),
-    );
-    const text = response.screen?.text ?? '';
-    // Полная карточка: Прогресс студента, Усидчивость, Активность
-    expect(text).toContain('Прогресс студента');
-    expect(text).toContain('Усидчивость студента');
-    expect(text).toContain('Активность студента');
-    expect(text).not.toContain('Неизвестная команда');
-
-    // Кнопка «Назад к списку» ведёт в students
-    const backBtn = response.screen?.keyboard?.rows
-      .flat()
-      .find((b) => b.text.includes('Назад к списку'));
-    expect(backBtn).toBeDefined();
-    expect(backBtn!.code).toContain(':students:');
-  });
-
-  // ── Запись с кодовым словом (enroll-key) ──
 
   test('enroll-key: гость вводит кодовое слово и записывается', async () => {
     const ENROLL_KEY_ID = 'e4e4e4e4-e4e4-e4e4-e4e4-e4e4e4e4e4e4';

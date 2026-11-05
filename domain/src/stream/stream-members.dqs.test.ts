@@ -67,10 +67,6 @@ describe('StreamMembersDqs.facts', () => {
     ]);
     expect(facts[0]?.userId).toBe(`11111111-1111-4111-8111-111111111111`);
   });
-
-  it('студентов нет — пусто', () => {
-    expect(new StreamMembersDqs(stream, []).facts()).toEqual([]);
-  });
 });
 
 describe('StreamMembersDqs.roster', () => {
@@ -78,10 +74,6 @@ describe('StreamMembersDqs.roster', () => {
     new StreamMembersDqs(stream, students).roster(AT);
   const lag = (...students: StudentAr[]) =>
     roster(...students).map((r) => r.lagLevel);
-
-  it('студентов нет — пусто', () => {
-    expect(roster()).toEqual([]);
-  });
 
   it('запись на студента, порядок входа, hoursSinceLastActivity', () => {
     const res = roster(

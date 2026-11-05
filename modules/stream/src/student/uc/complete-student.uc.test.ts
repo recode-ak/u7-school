@@ -5,19 +5,15 @@ import { expectErr, expectOk } from 'dmg-core/testing';
 import type { StreamUser } from '../../stream.module';
 import { CompleteStudentUc } from './complete-student.uc';
 import {
-  admin,
-  anonymous,
   MODULE,
   makeEnv,
   mentor,
   OTHER_STREAM,
   otherMentor,
-  owner,
   REQ,
   STREAM,
   STUDENT,
   streamOf,
-  studentState,
   USER,
   withStep,
 } from './student-uc.fixture';
@@ -66,26 +62,16 @@ describe('CompleteStudentUc', () => {
     },
   );
 
-  it('смена исхода: advanced ↔ not_advanced разрешена', async () => {
-    expectOk(await run('advanced'));
-    expectOk(await run('not_advanced'));
-    expect(stored().status).toBe('not_advanced');
-  });
+  it('исход abandoned не принимается — INPUT_VALIDATION', async () => {
+    const res = await uc().handle(
+      { streamId: STREAM, studentId: STUDENT, outcome: 'abandoned' } as never,
+      mentor,
+      REQ,
+    );
 
-  it('админ, не ментор потока — Ok', async () => {
-    expectOk(await run('advanced', admin));
+    expectErr(res, 'INPUT_VALIDATION');
+    expect(stored().status).toBe('active');
   });
-
-  it.each(['enrolled', 'abandoned'] as const)(
-    'студент в статусе %s — STUDENT_NOT_COMPLETABLE «Нельзя завершить студента: он не учится.»',
-    async (status) => {
-      env.seedStudents(studentState(status));
-      const error = expectErr(await run(), 'STUDENT_NOT_COMPLETABLE');
-      expect(error.label).toBe('Нельзя завершить студента: он не учится.');
-      expect(env.ctx.published).toEqual([]);
-      expect(env.students.saved).toEqual([]);
-    },
-  );
 
   it('студента нет — STUDENT_NOT_FOUND', async () => {
     const error = expectErr(
@@ -118,21 +104,8 @@ describe('CompleteStudentUc', () => {
 });
 
 describe('CompleteStudentUc — права', () => {
-  it.each([
-    ['ментор чужого потока', otherMentor],
-    ['сам студент', owner],
-  ])(
-    '%s — ACCESS_DENIED «Недостаточно прав для завершения студента»',
-    async (_, caller) => {
-      const error = expectErr(await run('advanced', caller), 'ACCESS_DENIED');
-      expect((error.payload as { denyMessage: string }).denyMessage).toBe(
-        'Недостаточно прав для завершения студента',
-      );
-      expect(stored().status).toBe('active');
-    },
-  );
-
-  it('вызывающий guest — UNAUTHORIZED', async () => {
-    expectErr(await run('advanced', anonymous), 'UNAUTHORIZED');
+  it('ментор чужого потока — ACCESS_DENIED, запись не меняется', async () => {
+    expectErr(await run('advanced', otherMentor), 'ACCESS_DENIED');
+    expect(stored().status).toBe('active');
   });
 });

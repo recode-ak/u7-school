@@ -32,28 +32,6 @@ const {
   streamHasSteps,
 } = StudentRules.rules;
 
-describe('StudentRules — состав и порядок', () => {
-  it('четыре правила в порядке legacy', () => {
-    expect(Object.keys(StudentRules.rules)).toEqual([
-      'enrollmentKeyAccepted',
-      'notStudyingElsewhere',
-      'prerequisitePassed',
-      'streamHasSteps',
-    ]);
-  });
-
-  it('правила ссылаются на ошибки STUDENT_*', () => {
-    expect(enrollmentKeyAccepted.error.code).toBe(
-      'STUDENT_WRONG_ENROLLMENT_KEY',
-    );
-    expect(notStudyingElsewhere.error.code).toBe('STUDENT_ALREADY_STUDYING');
-    expect(prerequisitePassed.error.code).toBe(
-      'STUDENT_PREREQUISITE_NOT_PASSED',
-    );
-    expect(streamHasSteps.error.code).toBe('STUDENT_NO_STEPS');
-  });
-});
-
 describe('enrollmentKeyAccepted', () => {
   it('у потока нет ключа — ok, что бы ни ввели', () => {
     expectOk(enrollmentKeyAccepted.check(baseCtx));
@@ -159,7 +137,6 @@ describe('prerequisitePassed', () => {
       'STUDENT_PREREQUISITE_NOT_PASSED',
     );
     expect(error.payload).toEqual({ moduleTitle: 'Основы' });
-    expect(error.label).toBe('Сначала пройдите предыдущий модуль');
   });
 });
 

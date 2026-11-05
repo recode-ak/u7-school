@@ -4,8 +4,8 @@
 
 > Обновляется в каждом коммите шага. При возврате — читать этот блок и `git log main..tst-cleanup`.
 
-- **Сделано:** Ф0; Ф1 (закономерности Б-1…Б-13, правила TST-09 / D-67, `ui/bot-test.md` §2 п. 5); Ф2 `wish` — 348 → 237 тестов домена и модуля, e2e −1, покрытие строк не упало, `check` 4782 pass / 29 fail (TR-57, новых нет).
-- **Дальше:** Ф2 `stream` — таблицы удаления по `inventory/stream-{domain,app,bot}.md` (flash, промпт — по образцу `inventory/prompt-wish-table.md`, `--label T2-stream-<часть>-table`); перед этим снять покрытие `stream` в `.cache/cov/`. Отложено до `course-dmg`: `wish-questionnaire.e2e.test.ts:460` (слить в `wish-flow.integration.test.ts:251`).
+- **Сделано:** Ф0; Ф1 (закономерности Б-1…Б-13, правила TST-09 / D-67, `ui/bot-test.md` §2 п. 5); Ф2 `wish` (348 → 237 домен+модуль, e2e −1); Ф2 `stream` — домен 416 → 263, модуль 226 → 112, бот 335 → 252; покрытие строк не упало; `check` 4432 pass / 29 fail (TR-57, новых нет).
+- **Дальше:** Ф2 `questionnaire` — сначала инвентаризация (Ф1 её не делала: промпт по образцу `inventory/prompt-stream-*.md`, но сразу с Б-ID), затем таблица и удаление как у `stream`; перед этим снять покрытие в `.cache/cov/`. Отложено до `course-dmg`: `wish-questionnaire.e2e.test.ts:460` (слить в `wish-flow.integration.test.ts:251`), `student-dmg.e2e.test.ts:122`, `:251`. Отложено «удалить с кодом» (Б-13): `domain/src/stream/status.test.ts:13`, `:28` — мёртвые экспорты `status.ts`, решение — к Нурболату.
 - **Открытые вопросы к Нурболату:** нет.
 
 ---
@@ -29,7 +29,7 @@
 На модуль (`wish`, `stream`, `questionnaire`, `peer-review`, `user`, `dossier`): таблица удаления «тест → закономерность → где покрыт» (flash) → приёмка таблицы (Opus) → удаление по таблице (flash) → гейт: `bun test --coverage` затронутых исходников не ниже, `check` зелёный, `git diff --numstat` только тестовые файлы.
 
 - [x] Task: `wish`
-- [ ] Task: `stream`
+- [x] Task: `stream`
 - [ ] Task: `questionnaire`
 - [ ] Task: `peer-review`
 - [ ] Task: `user`, `dossier`

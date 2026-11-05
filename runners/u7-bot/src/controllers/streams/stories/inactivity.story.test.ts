@@ -11,7 +11,12 @@ import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { InactivityStory } from './inactivity.story';
-import { dmgDispatch, refuse, streamView } from './stream-dmg.test-kit';
+import {
+  dmgDispatch,
+  refuse,
+  streamNotFound,
+  streamView,
+} from './stream-dmg.test-kit';
 import { studentView } from './student-dmg.test-kit';
 
 // ══ Фикстуры ══
@@ -39,6 +44,20 @@ const stream = streamView({
   startDate: Date.parse('2026-06-01T00:00'),
   status: 'active',
 });
+
+/** Профиль, который вернёт `get-user`; `telegramId` может отсутствовать */
+type ProfileOverride = Omit<User, 'telegramId'> & { telegramId?: number };
+
+/** Профили, которые возвращает `get-user` по умолчанию */
+const PROFILES: Record<string, ProfileOverride | undefined> = {
+  [STUDENT_USER_ID]: student,
+  [MENTOR_USER_ID]: {
+    ...student,
+    uuid: MENTOR_USER_ID,
+    name: 'Ментор',
+    telegramId: 1004,
+  },
+};
 
 function makeWarningEvent(
   overrides: Partial<Record<string, unknown>> = {},
@@ -101,7 +120,13 @@ function makeAbandonedEvent(
 
 // ══ Сборка стори с моками ══
 
-function setupStory(opts: { streamOverrides?: Record<string, unknown> } = {}): {
+function setupStory(
+  opts: {
+    streamOverrides?: Record<string, unknown>;
+    stream?: 'ok' | 'missing';
+    profiles?: Record<string, ProfileOverride | undefined>;
+  } = {},
+): {
   story: InactivityStory;
   notifies: Array<{ telegramId: number; payload: NotificationPayload }>;
   invites: Array<{
@@ -128,19 +153,16 @@ function setupStory(opts: { streamOverrides?: Record<string, unknown> } = {}): {
   }> = [];
   const kicks: Array<{ groupId: number | string; userId: number }> = [];
   const execute = mock(
-    async (name: string, params?: Record<string, unknown>) => {
-      if (name === 'get-user') {
-        const uuid = params?.uuid as string;
-        if (uuid === STUDENT_USER_ID) return student;
-        if (uuid === MENTOR_USER_ID)
-          return { ...student, uuid, name: 'Ментор', telegramId: 1004 };
-        return undefined;
-      }
-      return undefined;
-    },
+    async (name: string, params?: Record<string, unknown>) =>
+      name === 'get-user'
+        ? (opts.profiles ?? PROFILES)[params?.uuid as string]
+        : undefined,
   );
   const dispatch = dmgDispatch({
-    getStream: () => ({ ...stream, ...opts.streamOverrides }),
+    getStream: () =>
+      opts.stream === 'missing'
+        ? streamNotFound()
+        : { ...stream, ...opts.streamOverrides },
     // Запись студента есть только у aaaaaaaa…, остальные — не найдены
     getStudentProgress: (input) => {
       const sid = (input as { studentId: string }).studentId;
@@ -220,17 +242,20 @@ function subHandler(
 describe('InactivityStory', () => {
   // ── Подписки ──
 
-  test('подписывается на три события бездействия и ухода', () => {
+  test('подписки на FQN Def, legacy-имён student.* нет', () => {
     const { story } = setupStory();
     const names = story
       .getEventSubscriptions()
       .map((s) => s.eventName)
       .sort();
-    expect(names).toEqual([
-      StudentEvents.abandoned.name,
-      StudentEvents.inactivityRemoveCandidate.name,
-      StudentEvents.inactivityWarning.name,
-    ]);
+    expect(names).toEqual(
+      [
+        StudentEvents.abandoned.name,
+        StudentEvents.inactivityRemoveCandidate.name,
+        StudentEvents.inactivityWarning.name,
+      ].sort(),
+    );
+    expect(names.some((n) => n.startsWith('student.'))).toBe(false);
   });
 
   // ── Предупреждение студенту (FR-1, 5+ дней) ──
@@ -272,6 +297,23 @@ describe('InactivityStory', () => {
     expect(() =>
       assertMarkdownV2Safe(String(invites[0]?.payload.text)),
     ).not.toThrow();
+  });
+
+  test.each([
+    ['профиля нет', {}],
+    [
+      'у профиля нет telegramId',
+      { [STUDENT_USER_ID]: { ...student, telegramId: undefined } },
+    ],
+  ])('%s — пропуск без исключения и без отправки', async (_, profiles) => {
+    const { story, invites } = setupStory({ profiles });
+
+    await subHandler(
+      story,
+      StudentEvents.inactivityWarning.name,
+    )(makeWarningEvent() as never);
+
+    expect(invites).toHaveLength(0);
   });
 
   // ── Уведомление ментору (FR-1, 7+ дней) ──
@@ -334,6 +376,38 @@ describe('InactivityStory', () => {
     expect(() => assertMarkdownV2Safe(text)).not.toThrow();
   });
 
+  test('candidate: поток недоступен — ментор неизвестен, отправки нет', async () => {
+    const { story, invites } = setupStory({ stream: 'missing' });
+
+    await subHandler(
+      story,
+      StudentEvents.inactivityRemoveCandidate.name,
+    )(makeCandidateEvent() as never);
+
+    expect(invites).toHaveLength(0);
+  });
+
+  test('candidate: у ментора нет telegramId — отправки нет', async () => {
+    const { story, invites } = setupStory({
+      profiles: {
+        [STUDENT_USER_ID]: student,
+        [MENTOR_USER_ID]: {
+          ...student,
+          uuid: MENTOR_USER_ID,
+          name: 'Ментор',
+          telegramId: undefined,
+        },
+      },
+    });
+
+    await subHandler(
+      story,
+      StudentEvents.inactivityRemoveCandidate.name,
+    )(makeCandidateEvent() as never);
+
+    expect(invites).toHaveLength(0);
+  });
+
   // ── События ухода (кик; текстовые уведомления — в UC) ──
 
   test('abandoned → мягкий кик из группы потока (FR-6)', async () => {
@@ -386,6 +460,81 @@ describe('InactivityStory', () => {
       StudentEvents.abandoned.name,
     )(makeAbandonedEvent() as never);
 
+    expect(kicks).toHaveLength(0);
+  });
+
+  test('abandoned: у студента нет telegramId — уведомление студенту невозможно', async () => {
+    const { story, kicks, notifies } = setupStory({
+      profiles: { [STUDENT_USER_ID]: { ...student, telegramId: undefined } },
+    });
+
+    await subHandler(
+      story,
+      StudentEvents.abandoned.name,
+    )(makeAbandonedEvent({ who: 'mentor', cause: 'inactivity' }) as never);
+
+    expect(kicks).toHaveLength(0);
+    expect(notifies).toHaveLength(0);
+  });
+
+  test('abandoned: self — ментору notify kind info «покинул учёбу … по собственному желанию»', async () => {
+    const { story, notifies } = setupStory();
+
+    await subHandler(
+      story,
+      StudentEvents.abandoned.name,
+    )(makeAbandonedEvent() as never);
+
+    expect(notifies).toHaveLength(1);
+    expect(notifies[0]?.telegramId).toBe(1004);
+    expect(notifies[0]?.payload.kind).toBe('info');
+    const text = String(notifies[0]?.payload.text);
+    expect(text).toContain('Иван Студент');
+    expect(text).toContain('покинул учёбу');
+    expect(text).toContain('JS Core — Поток 2');
+    expect(text).toContain('по собственному желанию');
+  });
+
+  test('abandoned: mentor + inactivity — студенту notify kind warn «снят с учёбы … за бездействие»', async () => {
+    const { story, notifies } = setupStory();
+
+    await subHandler(
+      story,
+      StudentEvents.abandoned.name,
+    )(makeAbandonedEvent({ who: 'mentor', cause: 'inactivity' }) as never);
+
+    expect(notifies).toHaveLength(1);
+    expect(notifies[0]?.telegramId).toBe(1003);
+    expect(notifies[0]?.payload.kind).toBe('warn');
+    const text = String(notifies[0]?.payload.text);
+    expect(text).toContain('снят с учёбы');
+    expect(text).toContain('за бездействие');
+    expect(text).toContain('JS Core — Поток 2');
+  });
+
+  test('abandoned: mentor + by_mentor — студенту текста нет (Т6), кик есть', async () => {
+    const { story, notifies, kicks } = setupStory({
+      streamOverrides: { telegramGroupId: GROUP_ID },
+    });
+
+    await subHandler(
+      story,
+      StudentEvents.abandoned.name,
+    )(makeAbandonedEvent({ who: 'mentor', cause: 'by_mentor' }) as never);
+
+    expect(notifies).toHaveLength(0);
+    expect(kicks).toHaveLength(1);
+  });
+
+  test('abandoned: поток недоступен — уведомления и кика нет, исключения нет', async () => {
+    const { story, notifies, kicks } = setupStory({ stream: 'missing' });
+
+    await subHandler(
+      story,
+      StudentEvents.abandoned.name,
+    )(makeAbandonedEvent() as never);
+
+    expect(notifies).toHaveLength(0);
     expect(kicks).toHaveLength(0);
   });
 
@@ -529,14 +678,5 @@ describe('InactivityStory', () => {
     expect(String(response.screen?.text)).toContain(
       'Запись студента не найдена',
     );
-  });
-
-  test('неизвестный action — экран «Неизвестная команда»', async () => {
-    const { story } = setupStory();
-
-    const response = await story.handleCallback('wat:123', student, SESSION);
-
-    assertDialogResponseMarkdownSafe(response);
-    expect(String(response.screen?.text)).toContain('Неизвестная команда');
   });
 });

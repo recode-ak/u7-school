@@ -96,21 +96,6 @@ describe('StreamJsonRepo — save и findById', () => {
     expect(await repo.findById(crypto.randomUUID())).toBeUndefined();
     expect(await Bun.file(path).exists()).toBe(false);
   });
-
-  test('переход статуса сохраняется, версия растёт', async () => {
-    const repo = new StreamJsonRepo(filePath('streams-transition.json'));
-    const stream = makeStream();
-    await repo.save(stream);
-
-    const loaded = await repo.findById(stream.uuid);
-    if (!loaded) throw new Error('поток не найден');
-    expectOk(loaded.activate(T0 + 1000));
-    await repo.save(loaded);
-
-    const after = (await repo.findById(stream.uuid))?.snapshot();
-    expect(after?.status).toBe('active');
-    expect(after?.version).toBe(1);
-  });
 });
 
 describe('StreamJsonRepo — версия (D-36)', () => {
@@ -129,20 +114,6 @@ describe('StreamJsonRepo — версия (D-36)', () => {
     expect((await repo.findById(stream.uuid))?.snapshot().updatedAt).toBe(
       T0 + 1000,
     );
-  });
-
-  test('create с занятым uuid — VersionConflict, файл не изменён', async () => {
-    const path = filePath('streams-busy.json');
-    const repo = new StreamJsonRepo(path);
-    const stream = makeStream();
-    await repo.save(stream);
-    const before = await Bun.file(path).text();
-
-    await expect(
-      repo.save(makeStream({ uuid: stream.uuid })),
-    ).rejects.toBeInstanceOf(VersionConflict);
-
-    expect(await Bun.file(path).text()).toBe(before);
   });
 });
 
@@ -283,18 +254,6 @@ describe('StreamJsonRepo — битая запись', () => {
     await expect(repo.findById(crypto.randomUUID())).rejects.toThrow();
     await expect(repo.save(makeStream())).rejects.toThrow();
 
-    expect(await Bun.file(path).text()).toBe(text);
-  });
-
-  test('корень файла не массив — ValiError, файл не изменён', async () => {
-    const path = filePath('streams-not-array.json');
-    const text = JSON.stringify({ streams: [] });
-    await Bun.write(path, text);
-    const repo = new StreamJsonRepo(path);
-
-    await expect(repo.findById(crypto.randomUUID())).rejects.toBeInstanceOf(
-      ValiError,
-    );
     expect(await Bun.file(path).text()).toBe(text);
   });
 });

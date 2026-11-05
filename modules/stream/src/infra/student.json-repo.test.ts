@@ -80,21 +80,6 @@ describe('StudentJsonRepo — save и findById', () => {
     expect(await Bun.file(path).exists()).toBe(false);
   });
 
-  test('переход сохраняется, версия растёт', async () => {
-    const repo = new StudentJsonRepo(filePath('students-transition.json'));
-    const student = makeStudent();
-    await repo.save(student);
-
-    const loaded = await repo.findById(student.uuid);
-    if (!loaded) throw new Error('студент не найден');
-    expectOk(loaded.activate(T0 + 1000));
-    await repo.save(loaded);
-
-    const after = (await repo.findById(student.uuid))?.snapshot();
-    expect(after?.status).toBe('active');
-    expect(after?.version).toBe(1);
-  });
-
   test('запись по устаревшей версии — VersionConflict', async () => {
     const repo = new StudentJsonRepo(filePath('students-stale.json'));
     const student = makeStudent();
@@ -282,27 +267,36 @@ describe('StudentJsonRepo — выборки', () => {
     expect(await repo.findByStream(crypto.randomUUID())).toEqual([]);
   });
 
-  test('findStudying возвращает только active и enrolled (перенос getByStatuses)', async () => {
-    const [a, b, c, d, e] = ids();
-    const repo = await repoWith('students-studying.json', [
-      makeState({ uuid: a, status: 'active' }),
-      makeState({ uuid: b, status: 'enrolled' }),
-      makeState({ uuid: c, status: 'abandoned' }),
-      makeState({ uuid: d, status: 'advanced' }),
-      makeState({ uuid: e, status: 'not_advanced' }),
-    ]);
+  test.each([
+    {
+      title: 'active и enrolled возвращаются, терминальные — нет',
+      statuses: ['active', 'enrolled', 'abandoned', 'advanced', 'not_advanced'],
+      keep: [0, 1],
+    },
+    {
+      title: 'в файле только терминальные — пусто',
+      statuses: ['advanced', 'abandoned'],
+      keep: [],
+    },
+  ] as { title: string; statuses: StudentState['status'][]; keep: number[] }[])(
+    'findStudying: $title',
+    async ({ statuses, keep }) => {
+      const rows = statuses.map((status) => makeState({ status }));
+      const repo = await repoWith(
+        `students-studying-${statuses.join('-')}.json`,
+        rows,
+      );
 
-    expect((await repo.findStudying()).map((s) => s.uuid).sort()).toEqual(
-      [a, b].sort(),
-    );
-  });
+      const found = await repo.findStudying();
 
-  test('findStudying: учащихся нет — пусто', async () => {
-    const repo = await repoWith('students-nobody.json', [
-      makeState({ status: 'advanced' }),
-    ]);
-    expect(await repo.findStudying()).toEqual([]);
-  });
+      expect(found.map((s) => s.uuid).sort()).toEqual(
+        rows
+          .filter((_, i) => keep.includes(i))
+          .map((r) => r.uuid)
+          .sort(),
+      );
+    },
+  );
 });
 
 describe('StudentJsonRepo — битая запись', () => {
@@ -330,18 +324,6 @@ describe('StudentJsonRepo — битая запись', () => {
     await expect(repo.findById(crypto.randomUUID())).rejects.toThrow();
     await expect(repo.save(makeStudent())).rejects.toThrow();
 
-    expect(await Bun.file(path).text()).toBe(text);
-  });
-
-  test('корень файла не массив — ValiError, файл не изменён', async () => {
-    const path = filePath('students-not-array.json');
-    const text = JSON.stringify({ students: [] });
-    await Bun.write(path, text);
-    const repo = new StudentJsonRepo(path);
-
-    await expect(repo.findById(crypto.randomUUID())).rejects.toBeInstanceOf(
-      ValiError,
-    );
     expect(await Bun.file(path).text()).toBe(text);
   });
 });

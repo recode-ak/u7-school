@@ -144,11 +144,6 @@ function flat(response: DialogResponse) {
 }
 
 describe('ViewStreamMentorStory (S02m-карточка) — контракт «Диалог и Экран»', () => {
-  test('menuButtons: пусто (вход только через «Мои потоки»)', async () => {
-    const { story } = createStory();
-    expect(await story.menuButtons(mentorActor)).toEqual([]);
-  });
-
   // ── view: карточка + lifecycle-клавиатура ──
 
   test('view: карточка потока, enrollment — «🚀 Запустить» и точные коды', async () => {
@@ -217,109 +212,6 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
 
   // ── program / details: родительский текст, назад — на свою view ──
 
-  test('program: карточка модуля (root) — без статусов, назад в view-stream-mentor', async () => {
-    const { story } = createStory();
-    const response = await story.handleCallback(
-      'program:stream-1',
-      mentorActor,
-      session,
-    );
-    assertDialogResponseMarkdownSafe(response);
-    const text = String(response.screen?.text);
-    expect(text).toContain('Программа модуля');
-    expect(text).toContain('Проект 1');
-    expect(text).toContain('урок');
-    // Без статусов
-    expect(text).not.toContain('✅');
-    expect(text).not.toContain('▶️');
-    expect(text).not.toContain('🔒');
-    const { texts, codes } = flat(response);
-    expect(texts).toContain('1. Проект 1');
-    expect(codes).toContain(
-      'view-stream-mentor:prog:stream-1:project:project-1',
-    );
-    expect(texts).toContain('⬅️ Назад к потоку');
-    expect(codes).toContain('view-stream-mentor:view:stream-1');
-  });
-
-  test('program: карточка проекта — список уроков', async () => {
-    const { story } = createStory();
-    const response = await story.handleCallback(
-      'prog:stream-1:project:project-1',
-      mentorActor,
-      session,
-    );
-    assertDialogResponseMarkdownSafe(response);
-    const text = String(response.screen?.text);
-    expect(text).toContain('Программа модуля');
-    expect(text).toContain('Проект 1');
-    const { texts, codes } = flat(response);
-    expect(texts).toContain('1. Урок 1');
-    expect(codes).toContain('view-stream-mentor:prog:stream-1:lesson:lesson-1');
-    expect(texts).toContain('⬅️ Назад к модулю');
-    expect(codes).toContain('view-stream-mentor:prog:stream-1:root');
-  });
-
-  test('program: карточка урока — все шаги доступны для ментора', async () => {
-    const { story } = createStory((name) => {
-      if (name === 'getStream') return mockStream;
-      if (name === 'get-steps-by-lessons') {
-        return {
-          'lesson-1': [
-            { uuid: 'step-1', description: 'Шаг первый' },
-            { uuid: 'step-2', description: 'Шаг второй' },
-          ],
-        };
-      }
-      return undefined;
-    });
-    const response = await story.handleCallback(
-      'prog:stream-1:lesson:lesson-1',
-      mentorActor,
-      session,
-    );
-    assertDialogResponseMarkdownSafe(response);
-    const text = String(response.screen?.text);
-    expect(text).toContain('Урок 1');
-    const { texts, codes } = flat(response);
-    expect(texts).toContain('1. Шаг первый');
-    expect(texts).toContain('2. Шаг второй');
-    expect(codes).toContain('view-stream-mentor:prog:stream-1:step:step-1');
-    expect(codes).toContain('view-stream-mentor:prog:stream-1:step:step-2');
-    expect(texts).toContain('⬅️ Назад к проекту');
-    expect(codes).toContain(
-      'view-stream-mentor:prog:stream-1:project:project-1',
-    );
-  });
-
-  test('program: карточка шага — ментор видит тело шага (readOnly)', async () => {
-    const { story } = createStory((name, params) => {
-      if (name === 'getStream') return mockStream;
-      if (name === 'get-step') {
-        return {
-          uuid: params?.uuid,
-          description: 'Шаг первый',
-          kind: 'text',
-          content: 'Теория протокола HTTP.',
-        };
-      }
-      return undefined;
-    });
-    const response = await story.handleCallback(
-      'prog:stream-1:step:step-1',
-      mentorActor,
-      session,
-    );
-    assertDialogResponseMarkdownSafe(response);
-    const text = String(response.screen?.text);
-    expect(text).toContain('Теория протокола HTTP');
-    const { texts, codes } = flat(response);
-    expect(texts).toContain('След. шаг ▶️');
-    expect(codes).toContain('view-stream-mentor:prog:stream-1:step:step-2');
-    expect(texts).toContain('⬅️ Назад к уроку');
-    expect(codes).toContain('view-stream-mentor:prog:stream-1:lesson:lesson-1');
-  });
-
   test('program: не-ментор потока получает отказ доступа', async () => {
     const { story } = createStory();
     const guestActor: User = {
@@ -345,23 +237,6 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
       session,
     );
     expect(String(stepResponse.screen?.text)).toContain('нет прав');
-  });
-
-  test('details: показывает заполненные поля', async () => {
-    const { story } = createStory((name) => {
-      if (name === 'getStream')
-        return { ...mockStream, goal: 'Научиться', result: 'Сможете' };
-      if (name === 'get-user') return { name: 'Ментор Тест', roles: [] };
-      return undefined;
-    });
-    const response = await story.handleCallback(
-      'details:stream-1',
-      mentorActor,
-      session,
-    );
-    const text = String(response.screen?.text);
-    expect(text).toContain('Детали');
-    expect(text).toContain('Научиться');
   });
 
   // ── students: менторский режим списка ──
@@ -560,28 +435,5 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
     expect(response.screen?.keyboard?.rows).toEqual([
       [{ text: '⬅️ Назад к списку', code: 'my-streams:list' }],
     ]);
-  });
-
-  // ── Неизвестные действия ──
-
-  test('неизвестная команда — экран «Неизвестная команда»', async () => {
-    const { story } = createStory();
-    const response = await story.handleCallback(
-      'bogus:1',
-      mentorActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Неизвестная');
-  });
-
-  test('handleMessage: дефолт ядра — реплика-отказ + release', async () => {
-    const { story } = createStory();
-    const response = await story.handleMessage(
-      { type: 'message', text: 'что-то', telegramId: 123 },
-      mentorActor,
-      session,
-    );
-    expect(String(response.notify?.text)).toContain('не принимаются');
-    expect(response.release).toBe(true);
   });
 });

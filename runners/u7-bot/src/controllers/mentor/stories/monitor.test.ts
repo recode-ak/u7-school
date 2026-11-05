@@ -216,11 +216,6 @@ function flat(response: DialogResponse) {
 }
 
 describe('MonitorStory (S07/S08) — контракт «Диалог и Экран»', () => {
-  test('menuButtons: пусто (вход из карточки потока)', async () => {
-    const { story } = setupStory();
-    expect(await story.menuButtons(mentorActor())).toEqual([]);
-  });
-
   // ═══ students: список (S07) ═══
 
   test('students: список с активным студентом, точные коды навигации', async () => {
@@ -785,32 +780,5 @@ describe('MonitorStory (S07/S08) — контракт «Диалог и Экра
       session,
     );
     expect(String(response.screen?.text)).toContain('ещё не реализована');
-  });
-
-  test('неизвестная команда — экран «Неизвестная команда»', async () => {
-    const { story } = setupStory();
-    const response = await story.handleCallback(
-      'unknown',
-      mentorActor(),
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Неизвестная');
-  });
-
-  test('пустой action — экран «Неизвестная команда»', async () => {
-    const { story } = setupStory();
-    const response = await story.handleCallback('', mentorActor(), session);
-    expect(String(response.screen?.text)).toContain('Неизвестная');
-  });
-
-  test('handleMessage: дефолт ядра — реплика-отказ + release', async () => {
-    const { story } = setupStory();
-    const response = await story.handleMessage(
-      { type: 'message', text: 'что-то', telegramId: 123 },
-      mentorActor(),
-      session,
-    );
-    expect(String(response.notify?.text)).toContain('не принимаются');
-    expect(response.release).toBe(true);
   });
 });

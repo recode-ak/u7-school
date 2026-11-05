@@ -93,8 +93,4 @@ describe('StreamLaunchDcs.launch', () => {
     expect(s.snapshot().status).toBe('enrolled');
     expect(s.snapshot().steps).toEqual([]);
   });
-
-  it('студентов нет — Ok с пустым списком', () => {
-    expect(expectOk(new StreamLaunchDcs(stream(), []).launch(T1))).toEqual([]);
-  });
 });

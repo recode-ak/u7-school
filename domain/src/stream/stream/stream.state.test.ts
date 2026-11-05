@@ -2,10 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { StreamArDef } from './stream.ar';
 import { MENTOR, MODULE, SCHOOL, STREAM, snapshot } from './stream.fixture';
-import { StreamState } from './stream.state';
-
-// Перенос `entity.test.ts` (StreamSchema) на state по Def (D-36):
-// даты — числа (UTC), legacy-запись с ISO читается.
+import type { StreamState } from './stream.state';
 
 const legacy = {
   uuid: STREAM,
@@ -24,17 +21,6 @@ const legacy = {
 const parse = (value: unknown) => v.safeParse(StreamArDef.state, value);
 
 describe('StreamState — legacy-запись (D-36)', () => {
-  it('ISO-даты (без зоны — UTC) становятся числами, updatedAt = createdAt, version = 0', () => {
-    const res = parse(legacy);
-    expect(res.success).toBe(true);
-    if (res.success) {
-      expect(res.output.startDate).toBe(Date.UTC(2026, 5, 1, 12));
-      expect(res.output.createdAt).toBe(Date.UTC(2026, 5, 1, 10));
-      expect(res.output.updatedAt).toBe(Date.UTC(2026, 5, 1, 10));
-      expect(res.output.version).toBe(0);
-    }
-  });
-
   it('legacy updatedAt (ISO с зоной) сохраняется числом', () => {
     const res = parse({ ...legacy, updatedAt: '2026-06-02T08:30:00.000Z' });
     expect(res.success).toBe(true);
@@ -42,51 +28,43 @@ describe('StreamState — legacy-запись (D-36)', () => {
       expect(res.output.updatedAt).toBe(Date.UTC(2026, 5, 2, 8, 30));
     }
   });
-
-  it('запись нового формата (числа, version) проходит как есть', () => {
-    const t = Date.UTC(2026, 5, 1, 10);
-    const res = parse({
-      ...legacy,
-      startDate: Date.UTC(2026, 5, 1, 12),
-      createdAt: t,
-      updatedAt: t + 5,
-      version: 3,
-    });
-    expect(res.success).toBe(true);
-    if (res.success) {
-      expect(res.output.updatedAt).toBe(t + 5);
-      expect(res.output.version).toBe(3);
-    }
-  });
-
-  it('снимок контента сохраняется', () => {
-    const res = parse(legacy);
-    expect(res.success && res.output.contentSnapshot).toEqual(snapshot);
-  });
 });
 
+const optional = {
+  telegramGroupId: '-100123',
+  telegramGroupInvite: 'https://t.me/+abc',
+  goal: 'Цель',
+  result: 'Результат',
+  rules: 'Правила',
+  additional: 'Допы',
+  targetAudience: 'Все',
+};
+
+const T = Date.UTC(2026, 5, 1, 10);
+
+const without = (key: string) => {
+  const { [key]: _omitted, ...rest } = legacy as Record<string, unknown>;
+  return rest;
+};
+
+type Row = {
+  title: string;
+  value: unknown;
+  valid?: boolean;
+  output?: (out: StreamState) => void;
+};
+
+const REQUIRED = [
+  'title',
+  'mentorId',
+  'moduleId',
+  'schoolId',
+  'startDate',
+  'status',
+  'contentSnapshot',
+];
+
 describe('StreamState — поля', () => {
-  it('принимает все необязательные поля, включая enrollmentKey', () => {
-    const res = parse({
-      ...legacy,
-      telegramGroupId: '-100123',
-      telegramGroupInvite: 'https://t.me/+abc',
-      goal: 'Цель',
-      result: 'Результат',
-      rules: 'Правила',
-      additional: 'Допы',
-      targetAudience: 'Все',
-      enrollmentKey: 'секрет',
-    });
-    expect(res.success).toBe(true);
-    if (res.success) expect(res.output.enrollmentKey).toBe('секрет');
-  });
-
-  it('без enrollmentKey ключа в результате нет', () => {
-    const res = parse(legacy);
-    expect(res.success && 'enrollmentKey' in res.output).toBe(false);
-  });
-
   it('заголовок и описание обрезаются по краям', () => {
     const res = parse({ ...legacy, title: '  Поток  ', description: ' Опис ' });
     expect(res.success && [res.output.title, res.output.description]).toEqual([
@@ -95,48 +73,78 @@ describe('StreamState — поля', () => {
     ]);
   });
 
-  it.each([
-    ['пустой заголовок', { title: '   ' }],
-    ['пустое описание', { description: '' }],
-    ['uuid не uuid', { uuid: 'x' }],
-    ['schoolId не uuid', { schoolId: 'x' }],
-    ['mentorId не uuid', { mentorId: 'x' }],
-    ['moduleId не uuid', { moduleId: 'x' }],
-    ['неизвестный статус', { status: 'paused' }],
-    ['некорректная дата начала', { startDate: 'вчера' }],
-    [
-      'пустой заголовок проекта в снимке',
-      {
+  it.each<Row>([
+    {
+      title: 'принимает запись нового формата (числа, version)',
+      value: {
+        ...legacy,
+        startDate: Date.UTC(2026, 5, 1, 12),
+        createdAt: T,
+        updatedAt: T + 5,
+        version: 3,
+      },
+      valid: true,
+      output: (out) => expect([out.updatedAt, out.version]).toEqual([T + 5, 3]),
+    },
+    {
+      title: 'принимает все необязательные поля',
+      value: { ...legacy, ...optional, enrollmentKey: 'секрет' },
+      valid: true,
+      output: (out) => expect(out.enrollmentKey).toBe('секрет'),
+    },
+    {
+      title: 'принимает без enrollmentKey — ключа в результате нет',
+      value: legacy,
+      valid: true,
+      output: (out) => expect('enrollmentKey' in out).toBe(false),
+    },
+    ...(['enrollment', 'active', 'completed', 'archived'] as const).map(
+      (status) => ({
+        title: `принимает статус ${status}`,
+        value: { ...legacy, status },
+        valid: true,
+      }),
+    ),
+    { title: 'отклоняет пустой заголовок', value: { ...legacy, title: '   ' } },
+    {
+      title: 'отклоняет пустое описание',
+      value: { ...legacy, description: '' },
+    },
+    { title: 'отклоняет uuid не uuid', value: { ...legacy, uuid: 'x' } },
+    {
+      title: 'отклоняет schoolId не uuid',
+      value: { ...legacy, schoolId: 'x' },
+    },
+    {
+      title: 'отклоняет mentorId не uuid',
+      value: { ...legacy, mentorId: 'x' },
+    },
+    {
+      title: 'отклоняет moduleId не uuid',
+      value: { ...legacy, moduleId: 'x' },
+    },
+    {
+      title: 'отклоняет неизвестный статус',
+      value: { ...legacy, status: 'paused' },
+    },
+    {
+      title: 'отклоняет некорректную дату начала',
+      value: { ...legacy, startDate: 'вчера' },
+    },
+    {
+      title: 'отклоняет пустой заголовок проекта в снимке',
+      value: {
+        ...legacy,
         contentSnapshot: [{ ...snapshot[0], projectTitle: '' }],
       },
-    ],
-  ])('отклоняет: %s', (_, patch) => {
-    expect(parse({ ...legacy, ...patch }).success).toBe(false);
-  });
-
-  it.each([
-    'title',
-    'mentorId',
-    'moduleId',
-    'schoolId',
-    'startDate',
-    'status',
-    'contentSnapshot',
-  ])('отклоняет запись без обязательного поля %s', (key) => {
-    const { [key]: _omitted, ...rest } = legacy as Record<string, unknown>;
-    expect(parse(rest).success).toBe(false);
-  });
-
-  it.each(['enrollment', 'active', 'completed', 'archived'])(
-    'принимает статус %s',
-    (status) => {
-      expect(parse({ ...legacy, status }).success).toBe(true);
     },
-  );
-
-  it('у каждого поля есть описание (MAN-02)', () => {
-    for (const field of Object.values(StreamState.entries)) {
-      expect(v.getDescription(field)).toBeString();
-    }
+    ...REQUIRED.map((key) => ({
+      title: `отклоняет запись без обязательного поля ${key}`,
+      value: without(key),
+    })),
+  ])('$title', ({ value, valid = false, output }) => {
+    const res = parse(value);
+    expect(res.success).toBe(valid);
+    if (res.success) output?.(res.output);
   });
 });

@@ -14,14 +14,11 @@ const ctx = { stream: StreamAr.restore(stored('active')) };
 const { canCreate, canManage } = StreamPolicy.rules;
 
 describe('StreamPolicy.canCreate', () => {
-  it('ментор — allowed', () => {
-    expect(canCreate.evaluate(who(MENTOR, Role.MENTOR), {})).toEqual(allowed);
-  });
-
-  it('ментор и админ одновременно — allowed', () => {
-    expect(
-      canCreate.evaluate(who(MENTOR, Role.MENTOR, Role.ADMIN), {}).allowed,
-    ).toBe(true);
+  it.each([
+    { title: 'ментор', roles: [Role.MENTOR] },
+    { title: 'ментор и админ одновременно', roles: [Role.MENTOR, Role.ADMIN] },
+  ])('$title — allowed', ({ roles }) => {
+    expect(canCreate.evaluate(who(MENTOR, ...roles), {})).toEqual(allowed);
   });
 
   it('админ без роли MENTOR — denied (как в legacy)', () => {
@@ -29,15 +26,9 @@ describe('StreamPolicy.canCreate', () => {
   });
 
   it.each([Role.GUEST, Role.SUBSCRIBER, Role.STUDENT, Role.AUTHOR])(
-    'роль %s — denied с текстом «Недостаточно прав для создания потока»',
+    'роль %s — denied',
     (role) => {
-      const decision = canCreate.evaluate(who(MENTOR, role), {});
-      expect(decision.allowed).toBe(false);
-      if (!decision.allowed) {
-        expect(decision.denyMessage).toBe(
-          'Недостаточно прав для создания потока',
-        );
-      }
+      expect(canCreate.evaluate(who(MENTOR, role), {}).allowed).toBe(false);
     },
   );
 
@@ -47,9 +38,13 @@ describe('StreamPolicy.canCreate', () => {
 });
 
 describe('StreamPolicy.canManage', () => {
-  it('ментор потока — allowed', () => {
-    expect(canManage.evaluate(who(MENTOR, Role.MENTOR), ctx)).toEqual(allowed);
-  });
+  it.each(['enrollment', 'active', 'completed', 'archived'] as const)(
+    'ментор потока в статусе %s — allowed',
+    (status) => {
+      const c = { stream: StreamAr.restore(stored(status)) };
+      expect(canManage.evaluate(who(MENTOR, Role.MENTOR), c)).toEqual(allowed);
+    },
+  );
 
   it('ментор потока без роли MENTOR (по uuid) — allowed', () => {
     expect(canManage.evaluate(who(MENTOR), ctx).allowed).toBe(true);
@@ -61,36 +56,17 @@ describe('StreamPolicy.canManage', () => {
     );
   });
 
-  it('чужой ментор — denied', () => {
-    const decision = canManage.evaluate(who(OTHER_MENTOR, Role.MENTOR), ctx);
-    expect(decision.allowed).toBe(false);
-    if (!decision.allowed) {
-      expect(decision.denyMessage).toContain('Недостаточно прав');
-    }
-  });
-
-  it('студент — denied', () => {
-    expect(
-      canManage.evaluate(who(OTHER_MENTOR, Role.STUDENT), ctx).allowed,
-    ).toBe(false);
-  });
-
-  it('гость (роль GUEST) — denied', () => {
-    expect(canManage.evaluate(who(OTHER_MENTOR, Role.GUEST), ctx).allowed).toBe(
+  it.each([
+    { title: 'чужой ментор', roles: [Role.MENTOR] },
+    { title: 'студент', roles: [Role.STUDENT] },
+    { title: 'гость (роль GUEST)', roles: [Role.GUEST] },
+  ])('$title — denied', ({ roles }) => {
+    expect(canManage.evaluate(who(OTHER_MENTOR, ...roles), ctx).allowed).toBe(
       false,
     );
   });
 
   it('без субъекта (гость-вызывающий) — denied', () => {
     expect(canManage.evaluate(undefined, ctx).allowed).toBe(false);
-  });
-
-  it('статус потока на право не влияет', () => {
-    for (const status of ['enrollment', 'completed', 'archived'] as const) {
-      const c = { stream: StreamAr.restore(stored(status)) };
-      expect(canManage.evaluate(who(MENTOR, Role.MENTOR), c).allowed).toBe(
-        true,
-      );
-    }
   });
 });

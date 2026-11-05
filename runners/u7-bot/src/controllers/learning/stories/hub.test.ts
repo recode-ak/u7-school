@@ -260,17 +260,6 @@ describe('HubStory', () => {
     );
     expect(item?.description).toContain('Моя учёба');
   });
-
-  test('неизвестная команда — экран unknownCommand', async () => {
-    const { story } = makeStory();
-
-    const response = await story.handleCallback(
-      'unknown',
-      studentActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Неизвестная');
-  });
 });
 
 // ── Подписка на student.completed (кнопочные 7a/7b — канал invite, ФР-6) ──
@@ -330,6 +319,14 @@ describe('HubStory — подписка на StudentEvents.completed', () => {
     if (!sub) throw new Error('подписка на student.completed не найдена');
     return sub;
   }
+
+  test('подписка идёт на FQN Def, а не на legacy-имя student.completed', () => {
+    const { story } = makeStoryWithSender();
+    const sub = getSub(story);
+    expect(sub.eventName).toBe('stream.student.completed');
+    const names = story.getEventSubscriptions().map((s) => s.eventName);
+    expect(names).not.toContain('student.completed');
+  });
 
   test('advanced + следующий модуль → invite с кнопкой «➡️ Следующий модуль»', async () => {
     const { story, sender } = makeStoryWithSender({

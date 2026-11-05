@@ -7,7 +7,6 @@ import {
   OTHER_STREAM,
   owner,
   REQ,
-  STUDENT,
   studentState,
   USER,
 } from './student-uc.fixture';
@@ -58,40 +57,9 @@ describe('GetStudentByUserUc', () => {
     });
   });
 
-  it('вид без notices, с исходом и признаками', async () => {
-    env.seedStudents(
-      studentState('active', {
-        notices: [{ kind: 'inactivity_warn_student', sentAt: 1 }],
-      }),
-    );
-    const view = expectOk(await ask());
-    expect('notices' in view).toBe(false);
-    expect(view).toMatchObject({
-      uuid: STUDENT,
-      outcome: { category: 'in_progress', signs: [] },
-      enrolled: false,
-      passed: false,
-    });
-  });
-
   it('записей нет — STUDENT_NOT_FOUND', async () => {
     env.seedStudents();
     const error = expectErr(await ask(), 'STUDENT_NOT_FOUND');
     expect(error.kind).toBe('not_found');
-  });
-
-  it('записи другого пользователя не возвращаются', async () => {
-    env.seedStudents(studentState('active'));
-    expectErr(
-      await ask('99999999-9999-4999-8999-999999999999'),
-      'STUDENT_NOT_FOUND',
-    );
-  });
-
-  it('событий и записи нет', async () => {
-    env.seedStudents(studentState('active'));
-    expectOk(await ask());
-    expect(env.ctx.published).toEqual([]);
-    expect(env.students.saved).toEqual([]);
   });
 });

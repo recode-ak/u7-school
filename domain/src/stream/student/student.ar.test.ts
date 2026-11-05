@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { expectErr, expectOk } from 'dmg-core/testing';
-import { StudentAr, StudentArDef } from './student.ar';
+import { StudentAr } from './student.ar';
 import { StudentEvents } from './student.events';
 import {
   completed,
@@ -8,7 +8,6 @@ import {
   input,
   issued,
   MODULE,
-  OTHER_USER,
   STEP_1,
   STEP_2,
   STEP_3,
@@ -25,40 +24,10 @@ import type { StudentState } from './student.state';
 // ветки стали `Err` с кодом `STUDENT_*`, события — из `StudentEvents`,
 // даты — числа UTC. Расчёты lag/median уехали в DQS (student-progress.dqs.test.ts).
 
-const STATUSES = [
-  'enrolled',
-  'active',
-  'abandoned',
-  'advanced',
-  'not_advanced',
-] as const;
 const restore = (
   status: StudentState['status'],
   extra: Partial<StudentState> = {},
 ) => StudentAr.restore(stored(status, extra));
-
-describe('StudentArDef', () => {
-  it('пять статусов и пять переходов', () => {
-    expect(Object.keys(StudentArDef.statuses)).toEqual([...STATUSES]);
-    expect(Object.keys(StudentArDef.transitions)).toEqual([
-      'activate',
-      'drop',
-      'abandon',
-      'advance',
-      'notAdvance',
-    ]);
-  });
-
-  it('события агрегата: enrolled, completed, abandoned, inactivityWarning, inactivityRemoveCandidate', () => {
-    expect(Object.keys(StudentArDef.events)).toEqual([
-      'enrolled',
-      'completed',
-      'abandoned',
-      'inactivityWarning',
-      'inactivityRemoveCandidate',
-    ]);
-  });
-});
 
 describe('StudentAr.enroll', () => {
   it('студент enrolled: шагов нет, currentStepId = первый шаг, enrolledAt = at, version 0', () => {
@@ -75,19 +44,6 @@ describe('StudentAr.enroll', () => {
       updatedAt: T0,
       version: 0,
     });
-  });
-
-  it('событие enrolled { studentId, userId, streamId, moduleId } — единственное', () => {
-    const ar = expectOk(StudentAr.enroll(input, T0));
-    expect(ar.pullEvents()).toEqual([
-      StudentEvents.enrolled.make({
-        studentId: STUDENT,
-        userId: USER,
-        streamId: STREAM,
-        moduleId: MODULE,
-      }),
-    ]);
-    expect(ar.pullEvents()).toEqual([]);
   });
 });
 
@@ -305,14 +261,6 @@ describe('StudentAr.completeStep', () => {
 });
 
 describe('StudentAr — вопросы', () => {
-  it('isOwnedBy / belongsToStream', () => {
-    const ar = restore('active');
-    expect(ar.isOwnedBy(USER)).toBe(true);
-    expect(ar.isOwnedBy(OTHER_USER)).toBe(false);
-    expect(ar.belongsToStream(STREAM)).toBe(true);
-    expect(ar.belongsToStream(OTHER_USER)).toBe(false);
-  });
-
   it.each([
     ['enrolled', 'in_progress', true, true, false, false],
     ['active', 'in_progress', true, false, false, false],
@@ -330,13 +278,6 @@ describe('StudentAr — вопросы', () => {
       expect(ar.isPassed()).toBe(passed);
     },
   );
-
-  it('hasNoSteps: пока нет ни одной записи шага (статус не важен)', () => {
-    expect(restore('abandoned').hasNoSteps()).toBe(true);
-    expect(
-      restore('active', { steps: [issued(STEP_1, T0)] }).hasNoSteps(),
-    ).toBe(false);
-  });
 
   it('neverStarted: только выбывший без завершённого шага', () => {
     expect(restore('abandoned').neverStarted()).toBe(true);
@@ -394,7 +335,7 @@ describe('StudentAr — вопросы', () => {
 });
 
 describe('StudentAr.view', () => {
-  it('state без notices плюс ответы вопросов', () => {
+  it('state без notices плюс ответы вопросов; учащийся — inProgress, не passed', () => {
     const ar = restore('abandoned', {
       abandonDetails: { who: 'self', cause: 'voluntary' },
       notices: [{ kind: 'inactivity_warn_student', sentAt: T0 }],
@@ -416,9 +357,7 @@ describe('StudentAr.view', () => {
       neverStarted: true,
       passed: false,
     });
-  });
 
-  it('учащийся: inProgress, не passed', () => {
     expect(restore('enrolled').view()).toMatchObject({
       inProgress: true,
       enrolled: true,
@@ -426,12 +365,6 @@ describe('StudentAr.view', () => {
       outcome: { category: 'in_progress', signs: [] },
     });
     expect(restore('advanced').view()).toMatchObject({ passed: true });
-  });
-
-  it('копия: правка вида не меняет агрегат', () => {
-    const ar = restore('active', { steps: [issued(STEP_1, T0)] });
-    ar.view().steps.push(issued(STEP_2, T0));
-    expect(ar.snapshot().steps).toHaveLength(1);
   });
 });
 
@@ -566,14 +499,6 @@ describe('StudentAr — бездействие', () => {
     });
     expect(ar.needsInactivityNotice(at(8))).toBe(false); // 4 дня от выдачи
     expect(ar.needsInactivityNotice(at(9))).toBe(true);
-  });
-
-  it('activate сбрасывает цепочку: после возобновления снова ждём порога', () => {
-    const ar = restore('enrolled', {
-      notices: [{ kind: 'inactivity_warn_student', sentAt: at(5) }],
-    });
-    expectOk(ar.activate(at(5)));
-    expect(ar.snapshot().notices ?? []).toEqual([]);
   });
 
   it.each(['abandoned', 'advanced', 'not_advanced'] as const)(

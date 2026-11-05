@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
-import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import type { StreamState } from '@u7-scl/domain/stream';
+import {
+  type ListStreamsUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
+import type { Caller } from 'dmg-core';
+import type { ParsedInputOf } from 'dmg-core/app';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import type { StreamUser } from '../../stream.module';
 import { FindStreamByTelegramGroupUc } from './find-stream-by-telegram-group.uc';
 import { GetStreamUc } from './get-stream.uc';
 import { GetStreamMembersUc } from './get-stream-members.uc';
@@ -55,10 +62,6 @@ describe('GetStreamUc', () => {
     expect(typeof view.startDate).toBe('number');
   });
 
-  it('гость читает без ограничений', async () => {
-    expectOk(await uc().handle({ streamId: STREAM }, anonymous, REQ));
-  });
-
   it('вызывающий system не допущен (callers: user, guest) — UNAUTHORIZED', async () => {
     const res = await uc().handle({ streamId: STREAM }, system as never, REQ);
 
@@ -67,7 +70,7 @@ describe('GetStreamUc', () => {
     });
   });
 
-  it('нет потока — STREAM_NOT_FOUND «Поток не найден»', async () => {
+  it('нет потока — STREAM_NOT_FOUND { streamId }', async () => {
     const other = '99999999-9999-4999-8999-999999999999';
 
     const error = expectErr(
@@ -75,7 +78,6 @@ describe('GetStreamUc', () => {
       'STREAM_NOT_FOUND',
     );
 
-    expect(error.label).toBe('Поток не найден');
     expect(error.payload).toEqual({ streamId: other });
   });
 
@@ -101,69 +103,59 @@ describe('GetStreamUc', () => {
     expect('enrollmentKey' in view).toBe(false);
     expect(view.requiresEnrollmentKey).toBe(true);
   });
-
-  it('без ключа requiresEnrollmentKey = false', async () => {
-    const view = expectOk(
-      await uc().handle({ streamId: STREAM }, student, REQ),
-    );
-
-    expect(view.requiresEnrollmentKey).toBe(false);
-  });
 });
 
 describe('ListStreamsUc', () => {
   const uc = () => new ListStreamsUc(env.deps, StreamModuleDef);
 
-  it('фильтр status, mentorId, schoolId уходит в репозиторий как есть', async () => {
-    env.answerWith(state('active'));
+  type FilterCase = [
+    title: string,
+    input: ParsedInputOf<typeof ListStreamsUcDef>,
+    caller: Caller<StreamUser>,
+    seeded: StreamState[],
+    filter: object,
+    statuses: StreamState['status'][],
+  ];
 
-    const list = expectOk(
-      await uc().handle(
-        { status: 'active', mentorId: MENTOR_ID, schoolId: SCHOOL },
-        student,
-        REQ,
-      ),
-    );
+  const filterCases: FilterCase[] = [
+    [
+      'фильтр status, mentorId, schoolId уходит в репозиторий как есть',
+      { status: 'active', mentorId: MENTOR_ID, schoolId: SCHOOL },
+      student,
+      [state('active')],
+      { status: 'active', mentorId: MENTOR_ID, schoolId: SCHOOL },
+      ['active'],
+    ],
+    [
+      'только schoolId — фильтр { schoolId }',
+      { schoolId: SCHOOL },
+      student,
+      [state('enrollment')],
+      { schoolId: SCHOOL },
+      ['enrollment'],
+    ],
+    [
+      'без фильтра — все потоки',
+      {},
+      anonymous,
+      [state('enrollment'), state('archived', { uuid: U1 })],
+      {},
+      ['enrollment', 'archived'],
+    ],
+  ];
 
-    expect(env.asked.filter).toEqual({
-      status: 'active',
-      mentorId: MENTOR_ID,
-      schoolId: SCHOOL,
-    });
-    expect(list).toHaveLength(1);
-    expect(list[0]?.schoolId).toBe(SCHOOL);
-  });
+  it.each(filterCases)(
+    '%s',
+    async (_, input, caller, seeded, filter, statuses) => {
+      env.answerWith(...seeded);
 
-  it('только schoolId — фильтр { schoolId }', async () => {
-    env.answerWith(state('enrollment'));
+      const list = expectOk(await uc().handle(input, caller, REQ));
 
-    expectOk(await uc().handle({ schoolId: SCHOOL }, student, REQ));
-
-    expect(env.asked.filter).toEqual({ schoolId: SCHOOL });
-  });
-
-  it('без фильтра — все потоки; гость допущен', async () => {
-    env.answerWith(state('enrollment'), state('archived', { uuid: U1 }));
-
-    const list = expectOk(await uc().handle({}, anonymous, REQ));
-
-    expect(list.map((s) => s.status)).toEqual(['enrollment', 'archived']);
-  });
-
-  it('кодовое слово не отдаётся', async () => {
-    env.answerWith(state('enrollment', { enrollmentKey: 'секрет' }));
-
-    const [view] = expectOk(await uc().handle({}, student, REQ));
-
-    expect(view && 'enrollmentKey' in view).toBe(false);
-    expect(view?.requiresEnrollmentKey).toBe(true);
-  });
-
-  it('пусто — пустой список', async () => {
-    env.answerWith();
-
-    expect(expectOk(await uc().handle({}, student, REQ))).toEqual([]);
-  });
+      expect(env.asked.filter).toEqual(filter);
+      expect(list.map((s) => s.status)).toEqual(statuses);
+      expect(list[0]?.schoolId).toBe(SCHOOL);
+    },
+  );
 });
 
 describe('FindStreamByTelegramGroupUc', () => {
@@ -188,16 +180,14 @@ describe('FindStreamByTelegramGroupUc', () => {
     ).toBeUndefined();
   });
 
-  it('кодовое слово не отдаётся', async () => {
-    env.answerWith(
-      state('active', { telegramGroupId: '-100', enrollmentKey: 'секрет' }),
+  it('идентификатор группы числом — INPUT_VALIDATION (Т8)', async () => {
+    const res = await uc().handle(
+      { telegramGroupId: -1001234567890 } as never,
+      student,
+      REQ,
     );
 
-    const view = expectOk(
-      await uc().handle({ telegramGroupId: '-100' }, student, REQ),
-    );
-
-    expect(view && 'enrollmentKey' in view).toBe(false);
+    expectErr(res, 'INPUT_VALIDATION');
   });
 });
 
@@ -208,13 +198,6 @@ describe('GetStreamMembersUc', () => {
     expect(
       expectOk(await uc().handle({ streamId: STREAM }, system, REQ)),
     ).toBeUndefined();
-  });
-
-  it('пользователь и гость тоже читают состав', async () => {
-    env.streams.seed(state('active'));
-
-    expectOk(await uc().handle({ streamId: STREAM }, student, REQ));
-    expectOk(await uc().handle({ streamId: STREAM }, anonymous, REQ));
   });
 });
 

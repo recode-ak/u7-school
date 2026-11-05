@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'bun:test';
 import { expectErr, expectOk } from 'dmg-core/testing';
-import { StreamAr, StreamArDef } from './stream.ar';
-import { StreamEvents } from './stream.events';
+import { StreamAr } from './stream.ar';
 import {
   MENTOR,
   MODULE,
-  OTHER_MENTOR,
   SCHOOL,
   START,
   STEP_1,
@@ -17,7 +15,6 @@ import {
 } from './stream.fixture';
 import type { StreamState } from './stream.state';
 
-const STATUSES = ['enrollment', 'active', 'completed', 'archived'] as const;
 const restore = (
   status: StreamState['status'],
   extra: Partial<StreamState> = {},
@@ -34,26 +31,6 @@ const input = {
   contentSnapshot: snapshot,
 };
 
-describe('StreamArDef', () => {
-  it('четыре статуса и три перехода (MAN-12)', () => {
-    expect(Object.keys(StreamArDef.statuses)).toEqual([
-      'enrollment',
-      'active',
-      'completed',
-      'archived',
-    ]);
-    expect(Object.keys(StreamArDef.transitions)).toEqual([
-      'activate',
-      'complete',
-      'archive',
-    ]);
-  });
-
-  it('события агрегата — StreamEvents (только created)', () => {
-    expect(Object.keys(StreamArDef.events)).toEqual(['created']);
-  });
-});
-
 describe('StreamAr.create', () => {
   it('новый поток в статусе enrollment: поля input, createdAt = updatedAt = at, version 0', () => {
     const ar = expectOk(StreamAr.create(input, T0));
@@ -64,14 +41,6 @@ describe('StreamAr.create', () => {
       updatedAt: T0,
       version: 0,
     });
-  });
-
-  it('событие created { streamId, moduleId } — единственное', () => {
-    const ar = expectOk(StreamAr.create(input, T0));
-    expect(ar.pullEvents()).toEqual([
-      StreamEvents.created.make({ streamId: STREAM, moduleId: MODULE }),
-    ]);
-    expect(ar.pullEvents()).toEqual([]);
   });
 
   it('необязательные поля копируются', () => {
@@ -89,37 +58,6 @@ describe('StreamAr.create', () => {
       StreamAr.create({ ...input, ...optional }, T0),
     ).snapshot();
     expect(state).toMatchObject(optional);
-  });
-
-  it('без enrollmentKey ключа в state нет', () => {
-    const state = expectOk(StreamAr.create(input, T0)).snapshot();
-    expect('enrollmentKey' in state).toBe(false);
-  });
-
-  it('снимок контента сохраняется как есть', () => {
-    const ar = expectOk(StreamAr.create(input, T0));
-    expect(ar.snapshot().contentSnapshot).toEqual(snapshot);
-  });
-});
-
-describe('StreamAr.restore', () => {
-  it('legacy-запись: ISO-даты, без version и updatedAt', () => {
-    const ar = StreamAr.restore({
-      ...input,
-      status: 'active',
-      startDate: '2026-06-01T12:00',
-      createdAt: '2026-06-01T10:00',
-    } as never);
-    expect(ar.snapshot()).toMatchObject({
-      startDate: START,
-      createdAt: T0,
-      updatedAt: T0,
-      version: 0,
-    });
-  });
-
-  it('восстановленный поток событий не имеет', () => {
-    expect(restore('active').pullEvents()).toEqual([]);
   });
 });
 
@@ -182,24 +120,7 @@ describe('StreamAr.archive', () => {
   });
 });
 
-describe('StreamAr — полный цикл', () => {
-  it('enrollment → active → completed → archived', () => {
-    const ar = restore('enrollment');
-    expectOk(ar.activate(T1));
-    expectOk(ar.complete(T1));
-    expectOk(ar.archive(T1));
-    expect(ar.snapshot().status).toBe('archived');
-    expect(ar.snapshot().version).toBe(3);
-  });
-});
-
 describe('StreamAr — вопросы', () => {
-  it('isMentoredBy: ментор потока — да, другой — нет', () => {
-    const ar = restore('active');
-    expect(ar.isMentoredBy(MENTOR)).toBe(true);
-    expect(ar.isMentoredBy(OTHER_MENTOR)).toBe(false);
-  });
-
   it('firstStepId: первый шаг первого урока со шагами', () => {
     expect(restore('active').firstStepId()).toBe(STEP_1);
   });
@@ -248,23 +169,15 @@ describe('StreamAr — вопросы', () => {
 });
 
 describe('StreamAr.view (D-60, С1)', () => {
-  it('без enrollmentKey, requiresEnrollmentKey = true, когда ключ задан', () => {
-    const view = restore('enrollment', { enrollmentKey: 'секрет' }).view();
-    expect('enrollmentKey' in view).toBe(false);
-    expect(view.requiresEnrollmentKey).toBe(true);
-  });
-
-  it('requiresEnrollmentKey = false, когда ключа нет', () => {
-    const view = restore('enrollment').view();
-    expect('enrollmentKey' in view).toBe(false);
-    expect(view.requiresEnrollmentKey).toBe(false);
-  });
-
-  it('остальные поля state — как есть (даты — числа)', () => {
-    const { enrollmentKey: _key, ...rest } = stored('active', { goal: 'Цель' });
-    expect(restore('active', { goal: 'Цель' }).view()).toEqual({
-      ...rest,
-      requiresEnrollmentKey: false,
-    });
-  });
+  it.each([
+    { title: 'ключ задан', extra: { enrollmentKey: 'секрет' }, requires: true },
+    { title: 'ключа нет', extra: {}, requires: false },
+  ])(
+    '$title — requiresEnrollmentKey = $requires, в виде ключа нет',
+    ({ extra, requires }) => {
+      const view = restore('enrollment', extra).view();
+      expect('enrollmentKey' in view).toBe(false);
+      expect(view.requiresEnrollmentKey).toBe(requires);
+    },
+  );
 });

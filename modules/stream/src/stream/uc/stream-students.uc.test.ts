@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
+import type { StudentState } from '@u7-scl/domain/stream';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import {
@@ -7,7 +8,6 @@ import {
   issued,
   makeEnv,
   mentor,
-  OTHER_STREAM,
   REQ,
   STEP_1,
   STEP_2,
@@ -61,48 +61,23 @@ describe('ActivateStreamUc — запуск студентов (StreamLaunchDcs,
     expect(env.students.saved).toHaveLength(1);
   });
 
-  it('студент с шагами не меняется и не пишется', async () => {
-    env.seedStudents(studentState('active', { steps: [done(STEP_1)] }));
-    expectOk(await run());
-    expect(env.students.saved).toEqual([]);
-  });
+  const noFirstStep: [string, StudentState[]][] = [
+    ['студент enrolled в стенде', [studentState('enrolled')]],
+    ['студентов нет', []],
+  ];
 
-  it('ушедший без шагов получает первый шаг (статус не учитывается)', async () => {
-    env.seedStudents(studentState('abandoned'));
-    expectOk(await run());
-    const student = env.students.restoredOrThrow(STUDENT).snapshot();
-    expect(student.status).toBe('abandoned');
-    expect(student.steps).toHaveLength(1);
-  });
-
-  it('студенты другого потока не затронуты', async () => {
-    env.seedStudents(studentState('enrolled', { streamId: OTHER_STREAM }));
-    expectOk(await run());
-    expect(env.students.saved).toEqual([]);
-  });
-
-  it('первого шага нет — поток активен, студенты не меняются', async () => {
-    env.seedStreams(streamOf('enrollment', { contentSnapshot: [] }));
-    env.seedStudents(studentState('enrolled'));
-    expectOk(await run());
-    expect(env.streams.restoredOrThrow(STREAM).snapshot().status).toBe(
-      'active',
-    );
-    expect(env.students.saved).toEqual([]);
-  });
-
-  it('поток не в наборе — STREAM_NOT_ENROLLING, студенты не тронуты', async () => {
-    env.seedStreams(streamOf('active'));
-    env.seedStudents(studentState('enrolled'));
-    expectErr(await run(), 'STREAM_NOT_ENROLLING');
-    expect(env.students.saved).toEqual([]);
-  });
-
-  it('событий в шину нет', async () => {
-    env.seedStudents(studentState('enrolled'));
-    expectOk(await run());
-    expect(env.ctx.published).toEqual([]);
-  });
+  it.each(noFirstStep)(
+    'первого шага нет — поток активен, студенты не записаны (%s)',
+    async (_, students) => {
+      env.seedStreams(streamOf('enrollment', { contentSnapshot: [] }));
+      env.seedStudents(...students);
+      expectOk(await run());
+      expect(env.streams.restoredOrThrow(STREAM).snapshot().status).toBe(
+        'active',
+      );
+      expect(env.students.saved).toEqual([]);
+    },
+  );
 });
 
 describe('CompleteStreamUc — студенты из StudentRepo', () => {
@@ -127,24 +102,18 @@ describe('CompleteStreamUc — студенты из StudentRepo', () => {
     expectOk(await run());
   });
 
-  it.each(['enrolled', 'active'] as const)(
-    'студент %s блокирует: STREAM_STUDENTS_IN_PROGRESS со списком { userId, status }',
-    async (status) => {
-      env.seedStudents(
-        studentState('advanced'),
-        studentState(status, { uuid: S2, userId: U2 }),
-      );
-      const error = expectErr(await run(), 'STREAM_STUDENTS_IN_PROGRESS');
-      expect(error.payload).toEqual({ pending: [{ userId: U2, status }] });
-      expect(env.streams.restoredOrThrow(STREAM).snapshot().status).toBe(
-        'active',
-      );
-    },
-  );
-
-  it('студенты других потоков не блокируют', async () => {
-    env.seedStudents(studentState('active', { streamId: OTHER_STREAM }));
-    expectOk(await run());
+  it('студент active блокирует: STREAM_STUDENTS_IN_PROGRESS со списком { userId, status }', async () => {
+    env.seedStudents(
+      studentState('advanced'),
+      studentState('active', { uuid: S2, userId: U2 }),
+    );
+    const error = expectErr(await run(), 'STREAM_STUDENTS_IN_PROGRESS');
+    expect(error.payload).toEqual({
+      pending: [{ userId: U2, status: 'active' }],
+    });
+    expect(env.streams.restoredOrThrow(STREAM).snapshot().status).toBe(
+      'active',
+    );
   });
 });
 
@@ -157,12 +126,6 @@ describe('GetStreamMembersUc — состав и roster', () => {
     );
 
   beforeEach(() => env.seedStreams(streamOf('active')));
-
-  it('потока нет — пусто, не ошибка', async () => {
-    expect(
-      expectOk(await ask('99999999-9999-4999-8999-999999999999')),
-    ).toBeUndefined();
-  });
 
   it('ментор и факты студентов (без settled)', async () => {
     env.seedStudents(
@@ -217,12 +180,5 @@ describe('GetStreamMembersUc — состав и roster', () => {
       [S3, 'on_track'],
     ]);
     expect(res?.roster?.[1]?.hoursSinceLastActivity).toBe(1);
-  });
-
-  it('чтение не пишет и не публикует', async () => {
-    env.seedStudents(studentState('active'));
-    expectOk(await ask());
-    expect(env.students.saved).toEqual([]);
-    expect(env.ctx.published).toEqual([]);
   });
 });

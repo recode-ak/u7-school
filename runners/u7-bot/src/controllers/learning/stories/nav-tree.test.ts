@@ -117,7 +117,7 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
     contentSnapshot: richSnapshot,
   };
 
-  function makeStory(appApiOverrides?: Record<string, unknown>) {
+  function makeStory() {
     const allSteps: Record<string, Record<string, unknown>> = {
       [STEP1_ID]: {
         uuid: STEP1_ID,
@@ -185,12 +185,7 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
       },
     };
 
-    // `get-student-by-user`: запись студента, функция — студент не найден
-    const studentOverride = appApiOverrides?.['get-student-by-user'];
-    const student =
-      typeof studentOverride === 'function'
-        ? undefined
-        : ((studentOverride ?? richStudent) as LegacyStudent);
+    const student = richStudent as LegacyStudent;
 
     const appApiSpy = mock((name: string, params?: Record<string, unknown>) => {
       if (name === 'get-step') {
@@ -388,29 +383,6 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
     expect(backBtn?.code).toBe(`nav-tree:lesson:${LESSON1_ID}`);
   });
 
-  test('nav-tree:step:<id> — на текущем шаге «След. ▶️» исчезает, если следующий шаг заблокирован', async () => {
-    const { story } = makeStory();
-
-    // STEP4 — текущий шаг в уроке 2. Он последний в уроке, следующий шаг в уроке 3 заблокирован
-    const response = await story.handleCallback(
-      `nav-tree:step:${STEP4_ID}`,
-      studentActor,
-      session,
-    );
-    assertDialogResponseMarkdownSafe(response);
-
-    const text = String(response.screen?.text);
-    expect(text).toContain('▶️ В процессе');
-
-    const flatBtns = response.screen?.keyboard?.rows.flat() ?? [];
-    // Нет кнопки След. ▶️
-    expect(flatBtns.some((b) => b.text.includes('След. ▶️'))).toBe(false);
-
-    // Есть кнопка ◀️ Пред. на STEP3
-    const prevBtn = flatBtns.find((b) => b.text.includes('◀️ Пред.'));
-    expect(prevBtn?.code).toBe(`nav-tree:step:${STEP3_ID}`);
-  });
-
   test('nav-tree:step:<id> — прямой запрос заблокированного шага возвращает ошибку/отказ', async () => {
     const { story } = makeStory();
 
@@ -439,32 +411,5 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
 
     const text = String(response.screen?.text);
     expect(text).toContain('Основы');
-  });
-
-  test('студент не записан — экран «не записаны»', async () => {
-    const { story } = makeStory({
-      'get-student-by-user': (() => {
-        throw new Error('not found');
-      }) as unknown,
-    });
-
-    const response = await story.handleCallback(
-      'my-study:lessons',
-      studentActor,
-      session,
-    );
-
-    expect(String(response.screen?.text)).toContain('не записаны');
-  });
-
-  test('неизвестная команда — экран unknownCommand', async () => {
-    const { story } = makeStory();
-
-    const response = await story.handleCallback(
-      'unknown',
-      studentActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Неизвестная');
   });
 });

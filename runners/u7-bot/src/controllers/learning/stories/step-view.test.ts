@@ -434,44 +434,6 @@ describe('StepViewStory', () => {
     expect(String(response.screen?.text)).toContain('Поток полностью завершён');
   });
 
-  test('complete (level=lesson) — «↩️ Главное меню» в конце', async () => {
-    const { story } = makeStory({
-      'complete-step': {
-        level: 'lesson',
-        completedLessonId: 'lesson-uuid-1',
-        currentStepId: STEP3_ID,
-      },
-    });
-
-    const response = await story.handleCallback(
-      `complete:${STREAM_ID}:${STEP1_ID}`,
-      studentActor,
-      session,
-    );
-
-    const rows = response.screen?.keyboard?.rows ?? [];
-    const lastRow = rows[rows.length - 1]!;
-    expect(lastRow[0]!.text).toBe('↩️ Главное меню');
-    expect(lastRow[0]!.code).toBe('app:main-menu');
-  });
-
-  test('complete (level=stream) — «↩️ Главное меню» в конце', async () => {
-    const { story } = makeStory({
-      'complete-step': { level: 'stream' },
-    });
-
-    const response = await story.handleCallback(
-      `complete:${STREAM_ID}:999`,
-      studentActor,
-      session,
-    );
-
-    const rows = response.screen?.keyboard?.rows ?? [];
-    const lastRow = rows[rows.length - 1]!;
-    expect(lastRow[0]!.text).toBe('↩️ Главное меню');
-    expect(lastRow[0]!.code).toBe('app:main-menu');
-  });
-
   // ── my-study:view (просмотр завершённого шага) ──
 
   test('my-study:view — просмотр completed шага с шагами урока', async () => {
@@ -528,18 +490,6 @@ describe('StepViewStory', () => {
     expect(btns2.some((b) => b.text.includes('Вперёд'))).toBe(false);
   });
 
-  test('my-study:view — другой streamId → ошибка', async () => {
-    const { story } = makeStory();
-
-    const response = await story.handleCallback(
-      `my-study:view:other-stream:${STEP2_ID}`,
-      studentActor,
-      session,
-    );
-
-    expect(String(response.screen?.text)).toContain('не соответствует');
-  });
-
   test('my-study:view — несуществующий stepId → шаг не найден', async () => {
     const { story } = makeStory();
 
@@ -566,32 +516,5 @@ describe('StepViewStory', () => {
     );
 
     expect(String(response.screen?.text)).toContain('завершили');
-  });
-
-  test('студент не записан — экран «не записаны»', async () => {
-    const { story } = makeStory({
-      'get-student-by-user': (() => {
-        throw new Error('not found');
-      }) as unknown,
-    });
-
-    const response = await story.handleCallback(
-      'my-study:continue',
-      studentActor,
-      session,
-    );
-
-    expect(String(response.screen?.text)).toContain('не записаны');
-  });
-
-  test('неизвестная команда — экран unknownCommand', async () => {
-    const { story } = makeStory();
-
-    const response = await story.handleCallback(
-      'unknown',
-      studentActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Неизвестная');
   });
 });

@@ -28,12 +28,6 @@ describe('CatalogStory (S01)', () => {
     return { story, mockAppApi };
   }
 
-  test('menuButtons возвращает пустой массив (вход из главного меню убран)', async () => {
-    const { story } = makeStory([]);
-    const buttons = await story.menuButtons(guestActor);
-    expect(buttons).toHaveLength(0);
-  });
-
   test('list: показывает enrollment и active потоки', async () => {
     const { story } = makeStory([
       {
@@ -50,7 +44,11 @@ describe('CatalogStory (S01)', () => {
 
     const response = await story.handleCallback('list', guestActor, session);
     assertDialogResponseMarkdownSafe(response);
-    expect(String(response.screen?.text)).toContain('Потоки курсов');
+    const text = String(response.screen?.text);
+    expect(text).toContain('📚 *Потоки курсов*');
+    // Легенда статусов
+    expect(text).toContain('🟡 — идёт набор');
+    expect(text).toContain('⚫ — в архиве');
     const rows = response.screen?.keyboard?.rows ?? [];
     const btnTexts = rows.flat().map((b) => b.text);
     expect(btnTexts.some((t) => t.includes('Поток Набора'))).toBe(true);
@@ -210,25 +208,7 @@ describe('CatalogStory (S01)', () => {
     expect(lastRow?.[0]?.code).toBe('school:hub:open');
   });
 
-  test('неизвестная команда каталога — экран «Неизвестная команда»', async () => {
-    const { story } = makeStory([]);
-
-    const response = await story.handleCallback('bogus', guestActor, session);
-    expect(String(response.screen?.text)).toContain('Неизвестная');
-  });
-
-  test('handleMessage — дефолт ядра (ввод без ожидания до стори не доходит)', async () => {
-    const { story } = makeStory([]);
-    const msg = await story.handleMessage(
-      { type: 'message', text: 'x', telegramId: 1 },
-      guestActor,
-      session,
-    );
-    expect(String(msg.notify?.text)).toContain('не принимаются');
-    expect(msg.release).toBe(true);
-  });
-
-  test('тексты экрана: заголовок и легенда статусов', async () => {
+  test('тексты экрана: название потока со спецсимволами — plain-текст кнопки', async () => {
     const { story } = makeStory([
       {
         uuid: 'e-e-e-e-e-e-e-e-e-e-e-e-e-e-e-e',
@@ -238,10 +218,6 @@ describe('CatalogStory (S01)', () => {
     ]);
 
     const response = await story.handleCallback('list', guestActor, session);
-    const text = String(response.screen?.text);
-    expect(text).toContain('📚 *Потоки курсов*');
-    expect(text).toContain('🟡 — идёт набор');
-    expect(text).toContain('⚫ — в архиве');
     // Текст кнопки — plain (без экранирования по контракту)
     const btn = response.screen?.keyboard?.rows[0]?.[0];
     expect(btn?.text).toBe('🟡 Поток «JS_Core» (набор!)');

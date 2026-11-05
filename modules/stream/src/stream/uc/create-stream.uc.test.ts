@@ -9,8 +9,6 @@ import { ModuleFacades } from 'dmg-core/app';
 import { expectErr, expectOk, StubFacade } from 'dmg-core/testing';
 import { CreateStreamUc } from './create-stream.uc';
 import {
-  admin,
-  anonymous,
   contentSnapshot,
   guestRole,
   MENTOR_ID,
@@ -20,7 +18,6 @@ import {
   REQ,
   SCHOOL,
   START,
-  student,
   T0,
 } from './stream-uc.fixture';
 
@@ -63,6 +60,12 @@ describe('CreateStreamUc — успех', () => {
       updatedAt: T0,
       version: 0,
     });
+    expect(env.ctx.published).toHaveLength(1);
+    expect(env.ctx.published[0]).toMatchObject({
+      name: 'stream.stream.created',
+      aggregateId: streamId,
+      payload: { streamId, moduleId: MODULE },
+    });
   });
 
   it('снимок модуля берётся у курса по moduleId от имени операции', async () => {
@@ -93,46 +96,16 @@ describe('CreateStreamUc — успех', () => {
 
     expect('enrollmentKey' in (env.streams.saved[0] ?? {})).toBe(false);
   });
-
-  it('публикует stream.stream.created { streamId, moduleId } после записи', async () => {
-    const { streamId } = expectOk(await uc.handle(input, mentor, REQ));
-
-    expect(env.ctx.published).toHaveLength(1);
-    expect(env.ctx.published[0]).toMatchObject({
-      name: 'stream.stream.created',
-      aggregateId: streamId,
-      payload: { streamId, moduleId: MODULE },
-    });
-  });
 });
 
 describe('CreateStreamUc — отказы', () => {
-  it('вызывающий guest — UNAUTHORIZED, ничего не записано и не опубликовано', async () => {
-    const res = await uc.handle(input, anonymous, REQ);
+  it('пользователь с ролью GUEST — ACCESS_DENIED, ничего не записано', async () => {
+    const res = await uc.handle(input, guestRole, REQ);
 
-    expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
-      callerKind: 'guest',
-    });
+    expectErr(res, 'ACCESS_DENIED');
     expect(env.streams.saved).toEqual([]);
-    expect(env.ctx.published).toEqual([]);
+    expect(env.course.received).toEqual([]);
   });
-
-  it.each([
-    ['пользователь с ролью GUEST', guestRole],
-    ['студент', student],
-    ['админ без роли MENTOR', admin],
-  ])(
-    '%s — ACCESS_DENIED «Недостаточно прав для создания потока»',
-    async (_, caller) => {
-      const res = await uc.handle(input, caller, REQ);
-
-      expect(expectErr(res, 'ACCESS_DENIED').payload).toMatchObject({
-        denyMessage: 'Недостаточно прав для создания потока',
-      });
-      expect(env.streams.saved).toEqual([]);
-      expect(env.course.received).toEqual([]);
-    },
-  );
 
   it('модуль не найден — MODULE_NOT_FOUND (ModuleErrors.NOT_FOUND, Т8), ничего не записано', async () => {
     const missing = new StubFacade(CourseModuleDef).answer(
@@ -156,12 +129,5 @@ describe('CreateStreamUc — отказы', () => {
     expectErr(res, 'MODULE_NOT_FOUND');
     expect(env.streams.saved).toEqual([]);
     expect(env.ctx.published).toEqual([]);
-  });
-
-  it('ввод вне схемы (пустой заголовок) — INPUT_VALIDATION, ничего не записано', async () => {
-    const res = await uc.handle({ ...input, title: '  ' }, mentor, REQ);
-
-    expectErr(res, 'INPUT_VALIDATION');
-    expect(env.streams.saved).toEqual([]);
   });
 });
