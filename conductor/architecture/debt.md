@@ -556,7 +556,7 @@
 - **Трек / фаза:** `questionnaire-dmg`, Ф2 (orchestrator, 2026-11-05)
 - **Контекст:** stories анкет переводятся на `dispatchUc` и Def-подписки (бриф `conductor/tracks/questionnaire-dmg_20261104/slices/ui.md`). В базовой story нет Result-аналога legacy `handleError` (экран «⚠️ …» с «⬅️ Меню»), `ucErrorNotify` добавляет префикс «Ошибка валидации».
 - **Решение:**
-  - (1) Экран ошибки — локальный `ucErrorScreen` в `stories/render.ts` с ветками legacy `handleError`; `CHOICE_EXPECTED`/`EMPTY_ANSWER_CODE` — `warn` с `label` без префикса. Видимое поведение не меняется.
+  - (1) Ветки навигации по кнопкам — экран `ucErrorScreen` (`stories/render.ts`, тексты как у `ucErrorNotify`, «⬅️ Меню»): нажатие на устаревшем сообщении заменяет его объяснением и выходом, а не оставляет мёртвые кнопки (UX, решение orchestrator по поручению Нурболата). Ветки ввода — `ucErrorNotify`; у `CHOICE_EXPECTED`/`EMPTY_ANSWER_CODE` появляется приставка «Ошибка валидации» (видимая правка, Нурболат, 2026-11-05).
   - (2) `invited`: экран приглашения — `GetCurrentUcDef` от профиля респондента; отказ или не-`invited` ответ → fallback «Заполните, пожалуйста, анкету.» без «Зачем» и `warn`.
   - (3) e2e `abandonWarning`/`continueInvite`/`abandoned(timeout)` — публикацией Def-события в шину: часами `createTestApp` не управляет, Job покрыт в Ф1.
   - (4) Тестовый кит stories — реэкспорт `dmgDispatch`/`refuse` из `stream-dmg.test-kit`.

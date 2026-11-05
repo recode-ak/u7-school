@@ -83,7 +83,7 @@
 - [ ] Task: `dmg-test-designer` (Sonnet), шаг 1 брифа:
     - кит `questionnaire-dmg.test-kit.ts`;
     - red-тесты подписок на 5 Def-событий (адрес через `get-user`, `ownerInfo.courseId` из payload, `invited` — экран по `get-current`) и состава подписок;
-    - red-тесты вызовов 6 `*UcDef` и отказов (`ucErrorScreen`, `CHOICE_EXPECTED` без префикса);
+    - red-тесты вызовов 6 `*UcDef` и отказов (`ucErrorScreen`, `CHOICE_EXPECTED` с приставкой «Ошибка валидации»);
     - e2e `questionnaire-events.e2e.test.ts` на каждое событие, включая отрицательные
 - [ ] Task: `migrator` (flash), шаг 2 брифа: перевод остальных тестов `fill.dialog`, `invite.dialog`, `inventory`, e2e `questionnaire-ux`, `wish-questionnaire` на `dmgDispatch`/Def-имена (число тестов не сокращать)
 - [ ] Task: UI (Sonnet, `migrator`), шаг 3 брифа: `fill.story`, `invite.story`, `render.ts` (`ucErrorScreen`) на `dispatchUc` и Def-подписки; удалить `legacy-events.ts`; `ui-spec.md`. Снять TR-49 (1), (2) в `debt.md` (orchestrator)

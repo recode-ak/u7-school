@@ -5,7 +5,7 @@
 ## Решения orchestrator (TR-50)
 
 - Бриф принят без переписывания. Выборочно проверено: `dispatchUc`/`ucErrorNotify` в `u7-bot-ui-story.ts:157-181`, многострочные `execute(` в `fill.story.ts`, в `courses/*` вызовов UC анкет нет (только `Routes.questionnaire.*`).
-- Стратегических вопросов нет: видимое поведение сохраняется (Д5 (A), Д6 — тексты без префикса «Ошибка валидации»).
+- Видимая правка одна — приставка «Ошибка валидации» у отказов ввода (Д6, Нурболат, 2026-11-05). Экран ошибки в ветках навигации (Д5) — решение orchestrator по UX, поручено Нурболатом.
 - Т1–Т6 приняты по рекомендациям. Порядок задач Ф2 в `plan.md` изменён (Т5): red-тесты (test-designer) → механический перевод остальных тестов (flash) → реализация UI (Sonnet). Критерии приёмки Ф2 в `plan.md` заменены grep-критериями этого брифа.
 
 ## Расхождения plan/spec с кодом (6)
@@ -41,8 +41,9 @@
   - Профиль — полный `User`, годится как `actor` для `dispatchUc` (нужно для `invited`).
   - Общий приём — метод story или функция в `stories/`, не в `core`.
 - **Д4. `ownerInfo.courseId`** — из `event.payload.ownerInfo` (`Record<string, unknown>`), проверка `typeof courseId === 'string'` сохраняется.
-- **Д5. Экран ошибки (A).** Legacy `handleError` даёт `screen("⚠️ <текст>")` с кнопкой «⬅️ Меню» (`#handleResume`, `#showCurrent`, `#handleCancelConfirmed`, `#handleWhy`, `#handleInvite`, `#handleDeclineConfirm`, `#handleDeclineConfirmed`, `start:`; тест `invite.dialog.test.ts:74-90`). Result-аналога в базовой story нет. Локальная функция `ucErrorScreen(error: DomainError)` в `stories/render.ts` с ветками `handleError`: `validation` → issues или `label`; `access` → `denyMessage ?? label`; `not_found`/`conflict` → `label`; `internal`/`unauthorized` → общий текст и лог; клавиатура «⬅️ Меню» (`app:main-menu`). Для `errorNotify`-веток (`answer`, `next`, `handleMessage`) — `ucErrorNotify`, кроме Д6.
-- **Д6. `CHOICE_EXPECTED` / `EMPTY_ANSWER_CODE`** (`kind: 'validation'`): `ucErrorNotify` показал бы «*Ошибка валидации*\n\n<label>», legacy — только сообщение. Story ветвится по `error.code`: для этих двух кодов — `this.warn(md\`${error.label}\`)`. Текст «Ожидался ответ с выбором (нажатием кнопки)» — `fill.dialog.test.ts:320-338`.
+- **Д5. Экран ошибки (A).** Legacy `handleError` даёт `screen("⚠️ <текст>")` с кнопкой «⬅️ Меню» (`#handleResume`, `#showCurrent`, `#handleCancelConfirmed`, `#handleWhy`, `#handleInvite`, `#handleDeclineConfirm`, `#handleDeclineConfirmed`, `start:`; тест `invite.dialog.test.ts:74-90`). Result-аналога в базовой story нет. Локальная функция `ucErrorScreen(error: DomainError)` в `stories/render.ts`: тексты по веткам `kind` — как у `ucErrorNotify` (`platform/core/src/ui/bot/bot-ui-story.ts:367`; validation — «⚠️ *Ошибка валидации*…», `access` → `denyMessage ?? label`, `not_found`/`conflict` → `label`, `internal`/`unauthorized` → общий текст и лог), префикс «⚠️ », клавиатура «⬅️ Меню» (`app:main-menu`). Для веток ввода (`answer`, `next`, `handleMessage`) — `ucErrorNotify`.
+  - **Почему экран, а не уведомление** (решение orchestrator по поручению Нурболата, UX): эти ветки — нажатие кнопки на старом сообщении (приглашение, «Продолжить», «Зачем»), обычно когда анкета уже завершена, отклонена или закрыта по таймауту. Уведомление оставило бы сообщение с мёртвыми кнопками, и следующее нажатие дало бы ту же ошибку. Экран заменяет устаревшее сообщение объяснением и выходом в меню. В ветках ввода вопрос анкеты должен остаться на экране, чтобы ответить заново, — там уместно уведомление.
+- **Д6. Тексты отказов ввода — со стандартной приставкой** (Нурболат, 2026-11-05). `CHOICE_EXPECTED` / `EMPTY_ANSWER_CODE` (`kind: 'validation'`) идут через `ucErrorNotify`: «*Ошибка валидации*\n\n<label>». Видимая правка: в legacy было только сообщение; `fill.dialog.test.ts:320-338` переводится на новый текст.
 - **Д7. UC:**
 
 | Было (`execute`) | Станет (`dispatchUc`) | Заметки |
@@ -95,10 +96,10 @@
 - «📋 Анкета… Для вас подготовлена анкета — откройте её через /start»; без `courseId` — notify-подсказка, с `courseId` — «▶️ Заполнить анкету» (`questionnaire:fill:resume:<courseId>`);
 - S07 «⏳ Анкета приостановлена…» («▶️ Продолжить» только с `courseId`, «⏭️ Прервать»), S09 «Вы начали заполнять анкету — продолжим?» («▶️ Продолжить анкету», «⏭️ Прервать»), S08 «⏱ Анкета была закрыта из-за длительной неактивности» (только `timeout`);
 - канал `proactiveSender.invite`/`notify`, полные коды кнопок в проактивах;
-- отказы: «Анкета не найдена», «Анкета уже завершена», «Ожидался ответ с выбором (нажатием кнопки)», «Код ответа не может быть пустым», «Нет доступа к анкете» — те же тексты (`label`/`denyMessage`);
+- отказы: «Анкета не найдена», «Анкета уже завершена», «Ожидался ответ с выбором (нажатием кнопки)», «Код ответа не может быть пустым», «Нет доступа к анкете» — те же тексты (`label`/`denyMessage`); у двух отказов ввода — приставка «Ошибка валидации» (Д6);
 - нет профиля/`telegramId` — тишина и warn.
 
-Видимых пользователю изменений нет. Тесты состава подписок: `fill.dialog.test.ts:535-548`, `fill.story.warning.test.ts:43-48`, `fill.story.continue-invite.test.ts:27`, `inventory.test.ts:296-300`.
+Видимое изменение — только Д6. Тесты состава подписок: `fill.dialog.test.ts:535-548`, `fill.story.warning.test.ts:43-48`, `fill.story.continue-invite.test.ts:27`, `inventory.test.ts:296-300`.
 
 ## Шаги (по ролям)
 
@@ -111,7 +112,7 @@
      - `abandoned`: `timeout` → notify; `by_user`/`declined` → ничего; нет адреса → ничего;
      - `invited`: `inviteText`/`whyText` из `getCurrent` (actor — профиль респондента, MarkdownV2 `unsafeText`); без `whyText` → нет «Зачем»; без `inviteText` → fallback; `getCurrent` не `invited` или отказ → fallback + warn (Т2); нет адреса → тишина;
      - состав подписок: Fill — `[started, abandonWarning, continueInvite, abandoned].map(.name)`, Invite — `[invited.name]`.
-   - Тесты вызовов: `HandleActionUcDef`, `GetCurrentUcDef`, `AbandonUcDef`, `GetQuestionnairesByUserUcDef`, `StartByInviteUcDef`, `DeclineInviteUcDef` — `command.uc` и `input`; отказы: `CHOICE_EXPECTED` → warn без «Ошибка валидации» (Д6); `NOT_FOUND`/`NOT_IN_PROGRESS`/`NOT_INVITED` → `ucErrorScreen` с «⬅️ Меню»; internal → общий текст без утечки; `/cancel` при отказе `getCurrent` → «Отменено…».
+   - Тесты вызовов: `HandleActionUcDef`, `GetCurrentUcDef`, `AbandonUcDef`, `GetQuestionnairesByUserUcDef`, `StartByInviteUcDef`, `DeclineInviteUcDef` — `command.uc` и `input`; отказы: `CHOICE_EXPECTED`/`EMPTY_ANSWER_CODE` → warn «Ошибка валидации» + label (Д6); `NOT_FOUND`/`NOT_IN_PROGRESS`/`NOT_INVITED` → `ucErrorScreen` с «⬅️ Меню»; internal → общий текст без утечки; `/cancel` при отказе `getCurrent` → «Отменено…».
    - `ucErrorScreen` — юнит-тесты по веткам.
    - e2e `tests/e2e/questionnaire-events.e2e.test.ts` (Д10).
    - Отчёт: сценарии и соответствие «старый тест → новый».
@@ -136,7 +137,7 @@
 
 ## Тактические решения (TR-50)
 
-- **Т1.** Экран ошибки — (A) локальный `ucErrorScreen` в `stories/render.ts`. Метод в `U7BotUiStory` — вне среза, кандидат в долг.
+- **Т1.** Экран ошибки — (A) локальный `ucErrorScreen` в `stories/render.ts` для веток навигации (обоснование UX — Д5). Метод в `U7BotUiStory` — вне среза, кандидат в долг.
 - **Т2.** `invited`: отказ или не-`invited` ответ `getCurrent` → приглашение с fallback «Заполните, пожалуйста, анкету.», без «Зачем», `warn`.
 - **Т3.** e2e `abandonWarning`/`continueInvite`/`abandoned(timeout)` — публикацией Def-события; прогон Job по часам требует управления часами в `createTestApp` (вне среза).
 - **Т4.** Кит тестов — реэкспорт из `stream-dmg.test-kit`; общий кит — отдельный долг.
