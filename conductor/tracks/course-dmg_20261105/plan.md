@@ -54,7 +54,7 @@
 - Тест репозитория читает legacy ISO и даты без секунд.
 - `check` зелёный, тесты не ниже базовой линии, `git status data/` чист.
 
-## Фаза 2: Срез `lesson` + `step` + снимок
+## Фаза 2: Срез `lesson` + `step` + снимок [checkpoint: 39981831]
 
 - [x] Task: `migrator` S0 (flash): legacy `Lesson*`/`Step*` (Ar, Policy, Repo, JsonRepo) → `Legacy*` (бриф, шаг 0) 48ae3c7c
 - [x] Task: `dmg-test-designer`: red-тесты (Sonnet) ffca0443
