@@ -74,7 +74,8 @@
 
 ## Фаза 3: Срез `course` — программа, этапы, `stream`, данные
 
-- [ ] Task: `dmg-tech-lead`: бриф `slices/course.md` (Sonnet); приёмка — orchestrator (Opus)
+- [x] Task: `dmg-tech-lead`: бриф `slices/course.md` (Sonnet); приёмка — orchestrator (Opus); решения — TR-56
+- [ ] Task: `migrator` S0 (flash): legacy `CourseAr`/`CoursePolicy`/`CourseRepo`/`CourseJsonRepo` → `Legacy*`, снять реэкспорт legacy-типов из `contract.ts` (бриф, шаг 0)
 - [ ] Task: `dmg-test-designer`: характеризация и red-тесты (Sonnet)
     - [ ] state: `moduleIds`, `phases: [{ title, track?, fromModuleId }]`, `F.timestamp`; инварианты меток (в программе, по порядку, первый — с первого модуля);
     - [ ] DQS «этапы курса» (`stages`), «место модуля», «предыдущий модуль»; курс без этапов, с одним, с несколькими;

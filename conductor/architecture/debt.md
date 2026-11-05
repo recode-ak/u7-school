@@ -622,3 +622,14 @@
   - наблюдение к Ф4: DMG-вызов пишет в `data/oplog` ~9 КБ на снимок и ~18 КБ на `getStepsByLessons` — при вызове на каждый рендер навигации учесть рост лога;
   - DEBT-44, «Место»: адаптер `get-module-snapshot` снят.
 - **Пересмотреть:** `ModuleView.version` — Ф3; запрет записи — Ф5; CODE-04 (ссылки на фазы в комментариях) повторяется от Ф1 — кандидат в машинную проверку.
+
+### TR-56: решения брифа среза `course` (`course-dmg`, Ф3)
+- **Трек / фаза:** `course-dmg`, Ф3 (бриф `conductor/tracks/course-dmg_20261105/slices/course.md`; стратегические — Нурболат, 2026-11-05; тактические — orchestrator по рекомендациям `dmg-tech-lead`)
+- **Контекст:** legacy `get-course`/`get-course-by-module` отдают курс любого статуса любому вызывающему; «курс модуля» в трёх UC выбирается по трём правилам, `getCoursesStartingWithModule` привязан к месту модуля в одном курсе; строгий новый формат `courses.json` роняет legacy-чтение; инвариант меток с `v.check` не проходит `toJsonSchema` state.
+- **Решение:**
+  - (С1) видимость курсов — как v0.2.6, без Policy (`allowAll`); правило «неопубликованное видят автор и администратор» — в треке-кандидате [course-module-history.md](../roadmap/course-module-history.md) вместе с архивацией;
+  - (С2) правило «курс модуля» — как v0.2.6, собрано в одном `ModuleCoursesDqs`, фикстурные случаи с общим модулем закреплены тестами; единое правило и `getCoursesStartingWithModule` по кандидату — долг, запись `DEBT-<n>` с Местом `ModuleCoursesDqs` заводится вместе с кодом;
+  - (С3) мост чтения legacy → новый формат не делается: красная зона поимённо в `debt.md`, снимается в конце Ф4;
+  - (Т1–Т18) брифа — по рекомендациям, в том числе: S0 `Legacy*` для `CourseAr`/`CoursePolicy`/`CourseRepo`/`CourseJsonRepo`; вопросы одного курса — методы `CourseAr`, DQS — `ModuleCoursesDqs`, `ModulePrerequisiteDqs`; инвариант программы и меток — схема вне `state` + `v.parse` в конструкторе (прецедент `ReviewCampaignAr`), `dmg-core` не правится; единая ошибка `ModuleErrors.NOT_FOUND` (снятие `CourseErrors.MODULE_NOT_FOUND`); `passedModuleIds` — `PassedModulesDqs` в `stream`; legacy-deps (`CourseLegacy`, `U7LegacyFacades.course`) убираются в Ф3, а не Ф5; authoring-UC, `get-course-program`, `resolve-content-path`, `which-courses-include-module` — до Ф5; перевод `courses.json` — одноразовым скриптом вне репозитория.
+  - (Данные) после коммита переведённого `courses.json` legacy-чтение молча теряет записи и пишет `data/courses/backups/`: legacy-UC курса над `data/` не запускать до Ф5.
+- **Пересмотреть:** (С1) — в треке «История модулей курса»; (С2) — там же; (С3) — снять с красной зоной в Ф4.
