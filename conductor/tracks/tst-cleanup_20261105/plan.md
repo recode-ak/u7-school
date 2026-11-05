@@ -4,9 +4,9 @@
 
 > Обновляется в каждом коммите шага. При возврате — читать этот блок и `git log main..tst-cleanup`.
 
-- **Сделано:** Ф0; Ф1 (Б-1…Б-13, TST-09 / D-67, `ui/bot-test.md` §2 п. 5); Ф2 `wish`, `stream` (мёртвые экспорты `status.ts` удалены, Б-13); Ф2 `questionnaire` — домен 213 → 126, модуль 113 → 39, бот 134 → 88; покрытие собственных исходников не упало; `check` 4223 pass / 29 fail (TR-57, новых нет).
+- **Сделано:** Ф0; Ф1 (Б-1…Б-13, TST-09 / D-67, `ui/bot-test.md` §2 п. 5); Ф2 `wish`, `stream` (мёртвые экспорты `status.ts` удалены, Б-13); Ф2 `questionnaire` (мёртвый код `QuestionnaireEngine.getQuestionText/getAnswerText/getChoices` и экспорт `inviteKeyboard` удалены, Б-13; новая закономерность Б-14 — `test-bloat.md` §2) — домен 213 → 126, модуль 113 → 39, бот 134 → 88; покрытие собственных исходников не упало; `check` 4223 pass / 29 fail (TR-57, новых нет).
 - **Дальше:** Ф2 `peer-review` — покрытие «до» в `.cache/cov/`, инвентаризация с Б-ID (промпты по образцу `inventory/prompt-questionnaire-*.md`), таблицы, применение. Отложено до `course-dmg`: `wish-questionnaire.e2e.test.ts:460` (слить в `wish-flow.integration.test.ts:251`), `student-dmg.e2e.test.ts:122`, `:251`; `questionnaire-ux.e2e.test.ts` целиком (после `course-dmg` 4 из 5 — дубли, см. `questionnaire-bot-delete.md` «Итог»); `modules/questionnaire/src/questionnaire.module.test.ts:169` с `probe`-модулем (покрытие — красный `wish-questionnaire.e2e.test.ts:253`).
-- **Открытые вопросы к Нурболату:** Б-13 без тестов — удалить мёртвый код `QuestionnaireEngine.getQuestionText/getAnswerText/getChoices` и экспорт `inviteKeyboard` (`runners/u7-bot/.../questionnaire/stories/render.ts`)?
+- **Открытые вопросы к Нурболату:** нет.
 
 ---
 
