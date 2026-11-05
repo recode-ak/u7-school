@@ -3,7 +3,7 @@ import type { Course } from './course/entity';
 import { LessonAr } from './lesson/a-root';
 import type { CreateLessonCmd } from './lesson/commands/create-lesson-cmd';
 import type { Lesson } from './lesson/entity';
-import type { ModuleAr } from './module/a-root';
+import type { LegacyModuleAr } from './module/a-root';
 import type { Module } from './module/entity';
 import { Status } from './status';
 import { StepAr } from './step/a-root';
@@ -28,13 +28,13 @@ export class CourseDs {
 
   /**
    * Создаёт урок и добавляет его в проект модуля.
-   * Если проект не найден — ModuleAr.addLessonToProject выбросит badRequest.
+   * Если проект не найден — LegacyModuleAr.addLessonToProject выбросит badRequest.
    */
   createLesson(
-    module: ModuleAr,
+    module: LegacyModuleAr,
     cmd: CreateLessonCmd,
     projectId: string,
-  ): { module: ModuleAr; lesson: LessonAr } {
+  ): { module: LegacyModuleAr; lesson: LessonAr } {
     const lesson = LessonAr.create(cmd);
     module.addLessonToProject(projectId, lesson.state.uuid);
     return { module, lesson };

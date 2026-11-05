@@ -9,7 +9,7 @@ import type {
   ModuleNotFoundUcError,
   Step,
 } from '@u7-scl/domain/course';
-import { LessonAr, ModuleAr, StepAr } from '@u7-scl/domain/course';
+import { LegacyModuleAr, LessonAr, StepAr } from '@u7-scl/domain/course';
 
 /**
  * Базовый класс для всех use-case'ов модуля курсов.
@@ -47,11 +47,11 @@ export abstract class CourseUseCase<TMeta extends UcMeta> extends U7UseCase<
   // ──────────────── Выходные хелперы ────────────────
 
   /**
-   * Возвращает модуль в читаемом виде через ModuleAr.getVisibleFor.
+   * Возвращает модуль в читаемом виде через LegacyModuleAr.getVisibleFor.
    * Бросает ACCESS_DENIED если модуль не виден актору.
    */
   protected getOutModule(module: Module, actor?: User): Module {
-    const ar = new ModuleAr(module);
+    const ar = new LegacyModuleAr(module);
     const result = ar.getVisibleFor(actor);
     if (!result) {
       this.throwError(

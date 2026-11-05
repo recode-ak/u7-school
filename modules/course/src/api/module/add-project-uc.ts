@@ -4,8 +4,8 @@ import {
   type AddProjectCmd,
   type AddProjectCmdMeta,
   AddProjectCmdSchema,
-  ModuleAr,
-  ModulePolicy,
+  LegacyModuleAr,
+  LegacyModulePolicy,
   ModuleSchema,
 } from '@u7-scl/domain/course';
 import { CourseUseCase } from '../course-uc';
@@ -18,8 +18,8 @@ export class AddProjectUc extends CourseUseCase<AddProjectCmdMeta> {
   protected readonly ucName = 'add-project' as const;
   protected readonly ucLabel = 'Добавить проект в модуль' as const;
   protected readonly arMeta = {
-    arName: ModuleAr.arName as 'Module',
-    arLabel: ModuleAr.arLabel as 'Модуль',
+    arName: LegacyModuleAr.arName as 'Module',
+    arLabel: LegacyModuleAr.arLabel as 'Модуль',
   };
   protected readonly type = 'command' as const;
   protected readonly requiresAuth = true as const;
@@ -29,11 +29,11 @@ export class AddProjectUc extends CourseUseCase<AddProjectCmdMeta> {
   async execute(command: AddProjectCmd, actor: User): Promise<Module> {
     const module = await this.getModule(command.moduleId);
 
-    if (!ModulePolicy.canEdit(actor, module)) {
+    if (!LegacyModulePolicy.canEdit(actor, module)) {
       this.throwAccessDenied('Недостаточно прав для редактирования модуля');
     }
 
-    const ar = new ModuleAr(module);
+    const ar = new LegacyModuleAr(module);
     ar.addProject(command);
     await this.resolve.moduleRepo.save(ar.state);
 

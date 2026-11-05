@@ -12,7 +12,7 @@ export interface ModuleListFilter {
 }
 
 /** Интерфейс репозитория модулей */
-export interface ModuleRepo {
+export interface LegacyModuleRepo {
   save(module: Module): Promise<void>;
   getByUuid(uuid: string): Promise<Module | undefined>;
   getAll(filter?: ModuleListFilter): Promise<Module[]>;

@@ -6,7 +6,7 @@ import type {
 } from '@u7-scl/domain/course';
 import {
   GetModuleCmdSchema,
-  ModuleAr,
+  LegacyModuleAr,
   ModuleSchema,
 } from '@u7-scl/domain/course';
 import { CourseUseCase } from '../course-uc';
@@ -18,8 +18,8 @@ export class GetModuleUc extends CourseUseCase<GetModuleCmdMeta> {
   protected readonly ucName = 'get-module' as const;
   protected readonly ucLabel = 'Получить модуль по UUID' as const;
   protected readonly arMeta = {
-    arName: ModuleAr.arName as 'Module',
-    arLabel: ModuleAr.arLabel as 'Модуль',
+    arName: LegacyModuleAr.arName as 'Module',
+    arLabel: LegacyModuleAr.arLabel as 'Модуль',
   };
   protected readonly type = 'query' as const;
   protected readonly requiresAuth = false as const;

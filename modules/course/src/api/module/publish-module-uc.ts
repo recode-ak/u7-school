@@ -1,8 +1,8 @@
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { Module } from '@u7-scl/domain/course';
 import {
-  ModuleAr,
-  ModulePolicy,
+  LegacyModuleAr,
+  LegacyModulePolicy,
   ModuleSchema,
   type PublishModuleCmd,
   type PublishModuleCmdMeta,
@@ -18,8 +18,8 @@ export class PublishModuleUc extends CourseUseCase<PublishModuleCmdMeta> {
   protected readonly ucName = 'publish-module' as const;
   protected readonly ucLabel = 'Опубликовать модуль (этап 4)' as const;
   protected readonly arMeta = {
-    arName: ModuleAr.arName as 'Module',
-    arLabel: ModuleAr.arLabel as 'Модуль',
+    arName: LegacyModuleAr.arName as 'Module',
+    arLabel: LegacyModuleAr.arLabel as 'Модуль',
   };
   protected readonly type = 'command' as const;
   protected readonly requiresAuth = true as const;
@@ -29,11 +29,11 @@ export class PublishModuleUc extends CourseUseCase<PublishModuleCmdMeta> {
   async execute(command: PublishModuleCmd, actor: User): Promise<Module> {
     const module = await this.getModule(command.moduleId);
 
-    if (!ModulePolicy.canEdit(actor, module)) {
+    if (!LegacyModulePolicy.canEdit(actor, module)) {
       this.throwAccessDenied('Недостаточно прав для редактирования модуля');
     }
 
-    const ar = new ModuleAr(module);
+    const ar = new LegacyModuleAr(module);
     ar.publish();
     await this.resolve.moduleRepo.save(ar.state);
 

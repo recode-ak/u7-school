@@ -1,8 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type {
   CourseApiModuleResolver,
+  LegacyModuleRepo,
   Module,
-  ModuleRepo,
 } from '@u7-scl/domain/course';
 import { Status } from '@u7-scl/domain/course';
 import { ListModulesUc } from './list-modules-uc';
@@ -28,7 +28,7 @@ function makeModule(overrides: Partial<Module> = {}): Module {
 
 function setupUc() {
   const getAll = mock(async (): Promise<Module[]> => []);
-  const repo: ModuleRepo = {
+  const repo: LegacyModuleRepo = {
     save: mock(async () => {}),
     getByUuid: mock(async () => undefined),
     getAll,

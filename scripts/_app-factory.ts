@@ -6,10 +6,10 @@
  * Каждый скрипт получает готовый `app` и работает только через
  * `app.execute(useCase, ...)` — это гарантирует, что скрипт одновременно
  * является интеграционным тестом всего стека:
- *   - ModuleJsonRepo, LessonJsonRepo, StepJsonRepo
+ *   - LegacyModuleJsonRepo, LessonJsonRepo, StepJsonRepo
  *   - UserJsonRepo → UserApiModule → UserInProcFacade
  *   - CourseApiModule со всеми use-case'ами
- *   - Visibility-политики (ModuleAr.getVisibleFor, LessonAr.getVisibleFor)
+ *   - Visibility-политики (LegacyModuleAr.getVisibleFor, LessonAr.getVisibleFor)
  *   - safeConvert (форматирование Markdown → Telegram MarkdownV2)
  *
  * ## Требования к данным
@@ -42,7 +42,7 @@ import type { UserApiModuleMeta } from '@u7-scl/domain/user';
 import { CourseApiModule } from '../modules/course/src/api/module.ts';
 import { CourseJsonRepo } from '../modules/course/src/infra/db/course-json-repo.ts';
 import { LessonJsonRepo } from '../modules/course/src/infra/db/lesson-json-repo.ts';
-import { ModuleJsonRepo } from '../modules/course/src/infra/db/module-json-repo.ts';
+import { LegacyModuleJsonRepo } from '../modules/course/src/infra/db/module-json-repo.ts';
 import { StepJsonRepo } from '../modules/course/src/infra/db/step-json-repo.ts';
 import { UserApiModule } from '../modules/user/src/api/index.ts';
 import { UserJsonRepo } from '../modules/user/src/infra/db/user-json-repo.ts';
@@ -104,7 +104,7 @@ export function createApp(silent = false): ApiApp<ScriptAppMeta> {
     school: TEST_SCHOOL,
   };
 
-  const moduleRepo = new ModuleJsonRepo();
+  const moduleRepo = new LegacyModuleJsonRepo();
   const courseRepo = new CourseJsonRepo();
   const lessonRepo = new LessonJsonRepo();
   const stepRepo = new StepJsonRepo();

@@ -1,10 +1,10 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type {
   CourseApiModuleResolver,
+  LegacyModuleRepo,
   Lesson,
   LessonRepo,
   Module,
-  ModuleRepo,
   Step,
   StepRepo,
 } from '@u7-scl/domain/course';
@@ -39,7 +39,7 @@ function setupUc() {
   const courseGetByUuid = mock(
     async (_uuid: string): Promise<Module | undefined> => undefined,
   );
-  const moduleRepo: ModuleRepo = {
+  const moduleRepo: LegacyModuleRepo = {
     save: mock(async () => {}),
     getByUuid: courseGetByUuid,
     getAll: mock(async () => []),

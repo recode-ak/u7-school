@@ -2,7 +2,7 @@ import { Aggregate } from '@u7-scl/core/domain';
 import { isoNow } from '@u7-scl/core/shared';
 import type { User } from '@u7-scl/domain/user';
 import type { Module } from '../module/entity';
-import { ModulePolicy } from '../module/policy';
+import { LegacyModulePolicy } from '../module/policy';
 import { Status } from '../status';
 import type { CreateStepCmd } from './commands/create-step-cmd';
 import type { Step, StepArMeta } from './entity';
@@ -64,7 +64,7 @@ export class StepAr extends Aggregate<StepArMeta> {
     if (!actor) {
       return this.state.status === Status.PUBLISHED ? this.state : null;
     }
-    if (ModulePolicy.isAdminOrAuthor(actor, module)) return this.state;
+    if (LegacyModulePolicy.isAdminOrAuthor(actor, module)) return this.state;
     return this.state.status === Status.PUBLISHED ? this.state : null;
   }
 }

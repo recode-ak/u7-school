@@ -5,17 +5,17 @@ import {
   type CreateLessonCmd,
   type CreateLessonCmdMeta,
   CreateLessonCmdSchema,
+  LegacyModuleAr,
+  LegacyModulePolicy,
   LessonAr,
   LessonPolicy,
   LessonSchema,
-  ModuleAr,
-  ModulePolicy,
 } from '@u7-scl/domain/course';
 import { CourseUseCase } from '../course-uc';
 
 /**
  * Use-case создания урока.
- * Требует прав AUTHOR + проверка авторства курса через ModulePolicy.
+ * Требует прав AUTHOR + проверка авторства курса через LegacyModulePolicy.
  * Использует CourseDs для координации Course + Lesson + транзакционное сохранение.
  */
 export class CreateLessonUc extends CourseUseCase<CreateLessonCmdMeta> {
@@ -36,11 +36,11 @@ export class CreateLessonUc extends CourseUseCase<CreateLessonCmdMeta> {
     }
 
     const courseState = await this.getModule(command.moduleId);
-    if (!ModulePolicy.canEdit(actor, courseState)) {
+    if (!LegacyModulePolicy.canEdit(actor, courseState)) {
       this.throwAccessDenied('Вы не являетесь автором модуля');
     }
 
-    const courseAr = new ModuleAr(courseState);
+    const courseAr = new LegacyModuleAr(courseState);
     const ds = new CourseDs();
     const { module, lesson } = ds.createLesson(
       courseAr,

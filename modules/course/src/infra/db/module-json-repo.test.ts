@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Module } from '@u7-scl/domain/course';
 import { Status } from '@u7-scl/domain/course';
-import { ModuleJsonRepo } from './module-json-repo';
+import { LegacyModuleJsonRepo } from './module-json-repo';
 
 const tmpDir = mkdtempSync('/tmp/course-repo-test-');
 
@@ -24,14 +24,14 @@ function makeModule(overrides: Partial<Module> = {}): Module {
   } as Module;
 }
 
-describe('ModuleJsonRepo', () => {
+describe('LegacyModuleJsonRepo', () => {
   afterAll(() => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
   test('save и getByUuid', async () => {
     const path = coursePath();
-    const repo = new ModuleJsonRepo(path);
+    const repo = new LegacyModuleJsonRepo(path);
     const uuid = crypto.randomUUID();
     const course = makeModule({ uuid } as Partial<Module>);
 
@@ -44,7 +44,7 @@ describe('ModuleJsonRepo', () => {
 
   test('getByUuid возвращает undefined для несуществующего', async () => {
     const path = coursePath();
-    const repo = new ModuleJsonRepo(path);
+    const repo = new LegacyModuleJsonRepo(path);
 
     const found = await repo.getByUuid('550e8400-e29b-41d4-a716-446655440099');
     expect(found).toBeUndefined();
@@ -52,7 +52,7 @@ describe('ModuleJsonRepo', () => {
 
   test('getAll возвращает все курсы', async () => {
     const path = join(tmpDir, 'courses-all.json');
-    const repo = new ModuleJsonRepo(path);
+    const repo = new LegacyModuleJsonRepo(path);
     const c1 = makeModule({ uuid: crypto.randomUUID() } as Partial<Module>);
     const c2 = makeModule({
       uuid: crypto.randomUUID(),
@@ -68,7 +68,7 @@ describe('ModuleJsonRepo', () => {
 
   test('getAll с фильтром status', async () => {
     const path = join(tmpDir, 'courses-filter.json');
-    const repo = new ModuleJsonRepo(path);
+    const repo = new LegacyModuleJsonRepo(path);
     const draft = makeModule({ uuid: crypto.randomUUID() } as Partial<Module>);
     const pubUuid = crypto.randomUUID();
     const published = makeModule({
@@ -86,7 +86,7 @@ describe('ModuleJsonRepo', () => {
 
   test('save перезаписывает существующий курс', async () => {
     const path = join(tmpDir, 'courses-update.json');
-    const repo = new ModuleJsonRepo(path);
+    const repo = new LegacyModuleJsonRepo(path);
     const uuid = crypto.randomUUID();
     const course = makeModule({ uuid } as Partial<Module>);
     await repo.save(course);

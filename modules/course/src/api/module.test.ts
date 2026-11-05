@@ -7,7 +7,7 @@ import { Status } from '@u7-scl/domain/course';
 import type { User, UserFacade } from '@u7-scl/user/domain';
 import { Role } from '@u7-scl/user/domain';
 import { LessonJsonRepo } from '#infra-legacy/db/lesson-json-repo';
-import { ModuleJsonRepo } from '#infra-legacy/db/module-json-repo';
+import { LegacyModuleJsonRepo } from '#infra-legacy/db/module-json-repo';
 import { StepJsonRepo } from '#infra-legacy/db/step-json-repo';
 import { CourseApiModule } from './module';
 
@@ -114,7 +114,7 @@ function nextPath(prefix: string): string {
 
 function setupModule(facade: MockUserFacade) {
   return new CourseApiModule({
-    moduleRepo: new ModuleJsonRepo(nextPath('courses')),
+    moduleRepo: new LegacyModuleJsonRepo(nextPath('courses')),
     courseRepo: {
       save: mock(async () => {}),
       getByUuid: mock(async () => undefined),
@@ -232,7 +232,7 @@ describe('CourseApiModule', () => {
     const moduleId = crypto.randomUUID();
     const nextId = crypto.randomUUID();
     const mod = new CourseApiModule({
-      moduleRepo: new ModuleJsonRepo(nextPath('courses')),
+      moduleRepo: new LegacyModuleJsonRepo(nextPath('courses')),
       courseRepo: {
         save: mock(async () => {}),
         getByUuid: mock(async () => undefined),

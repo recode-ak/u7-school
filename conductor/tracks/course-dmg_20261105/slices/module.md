@@ -2,7 +2,7 @@
 
 Черновик — `dmg-tech-lead`, Ф0; проверка — orchestrator. Читать вместе с `../spec.md`, `../plan.md` (Ф1), D-64, D-65, TR-52, TR-40, эталоном `wish`, ближайшими `stream` (`domain/src/stream/stream`, `modules/stream/src`) и брифом `conductor/archive/questionnaire-dmg_20261104/slices/questionnaire.md`.
 
-Код `module` в `v0.2.6` (`../u7-school-v0.2.6/packages/course/src`) совпадает с HEAD с точностью до импортов и `biome-ignore` (проверено `diff` для `domain/module/{a-root,entity,policy}.ts`, `api/module/{get-module,list-modules}-uc.ts`, `api/course-uc.ts`). Характеризация строится на текущих тестах как ожиданиях нового кода.
+Код `module` в `v0.2.6` (worktree `../u7-school-v0.2.6`, пакет `course`) совпадает с HEAD с точностью до импортов и `biome-ignore` (проверено `diff` для `domain/module/{a-root,entity,policy}.ts`, `api/module/{get-module,list-modules}-uc.ts`, `api/course-uc.ts`). Характеризация строится на текущих тестах как ожиданиях нового кода.
 
 ## Расхождения spec/plan с кодом
 

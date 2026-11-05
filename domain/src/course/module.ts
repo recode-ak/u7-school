@@ -26,7 +26,7 @@ import type { GetModuleCmdMeta } from './module/commands/get-module-cmd';
 import type { GetModuleSnapshotCmdMeta } from './module/commands/get-module-snapshot-cmd';
 import type { ListModulesCmdMeta } from './module/commands/list-modules-cmd';
 import type { PublishModuleCmdMeta } from './module/commands/publish-module-cmd';
-import type { ModuleRepo } from './module/repo';
+import type { LegacyModuleRepo } from './module/repo';
 import type { CreateStepCmdMeta } from './step/commands/create-step-cmd';
 import type { GetStepCmdMeta } from './step/commands/get-step-cmd';
 import type { GetStepsByLessonsCmdMeta } from './step/commands/get-steps-by-lessons-cmd';
@@ -70,7 +70,7 @@ export interface CourseApiModuleMeta extends ApiModuleMeta {
 /** Резолвер зависимостей API-модуля курсов */
 export interface CourseApiModuleResolver extends U7ModuleResolver {
   db?: BaseJsonDb;
-  moduleRepo: ModuleRepo;
+  moduleRepo: LegacyModuleRepo;
   courseRepo: CourseRepo;
   lessonRepo: LessonRepo;
   stepRepo: StepRepo;

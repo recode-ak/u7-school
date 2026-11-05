@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/domain/user';
 import { Role } from '@u7-scl/domain/user';
-import { ModuleAr } from './a-root';
+import { LegacyModuleAr } from './a-root';
 
 function makeActor(roles: Role[], uuid = 'actor-uuid'): User {
   return {
@@ -16,15 +16,15 @@ function makeActor(roles: Role[], uuid = 'actor-uuid'): User {
 const authorId = crypto.randomUUID();
 const studentId = crypto.randomUUID();
 
-describe('ModuleAr.getVisibleFor', () => {
+describe('LegacyModuleAr.getVisibleFor', () => {
   describe('без актора', () => {
     test('DRAFT — null', () => {
-      const ar = ModuleAr.create('Модуль', 'Описание', authorId);
+      const ar = LegacyModuleAr.create('Модуль', 'Описание', authorId);
       expect(ar.getVisibleFor()).toBeNull();
     });
 
     test('PUBLISHED — виден', () => {
-      const ar = ModuleAr.create('Модуль', 'Описание', authorId);
+      const ar = LegacyModuleAr.create('Модуль', 'Описание', authorId);
       ar.publish();
       expect(ar.getVisibleFor()).not.toBeNull();
       expect(ar.getVisibleFor()?.title).toBe('Модуль');
@@ -33,7 +33,7 @@ describe('ModuleAr.getVisibleFor', () => {
 
   describe('DRAFT модуль', () => {
     test('автор видит модуль целиком', () => {
-      const ar = ModuleAr.create('Модуль', 'Описание', authorId);
+      const ar = LegacyModuleAr.create('Модуль', 'Описание', authorId);
       ar.addProject({
         moduleId: 'x',
         title: 'П1',
@@ -50,14 +50,14 @@ describe('ModuleAr.getVisibleFor', () => {
     });
 
     test('студент не видит DRAFT', () => {
-      const ar = ModuleAr.create('Модуль', 'Описание', authorId);
+      const ar = LegacyModuleAr.create('Модуль', 'Описание', authorId);
       expect(ar.getVisibleFor(makeActor([Role.STUDENT], studentId))).toBeNull();
     });
   });
 
   describe('PUBLISHED модуль', () => {
     test('студент видит PUBLISHED проекты, DRAFT — нет', () => {
-      const ar = ModuleAr.create('Модуль', 'Описание', authorId);
+      const ar = LegacyModuleAr.create('Модуль', 'Описание', authorId);
       ar.addProject({
         moduleId: 'x',
         title: 'П1',
@@ -75,7 +75,7 @@ describe('ModuleAr.getVisibleFor', () => {
     });
 
     test('студент не видит DRAFT проект в PUBLISHED модуле', () => {
-      const ar = ModuleAr.create('Модуль', 'Описание', authorId);
+      const ar = LegacyModuleAr.create('Модуль', 'Описание', authorId);
       ar.addProject({
         moduleId: 'x',
         title: 'DRAFT проект',

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/domain/user';
 import { Role } from '@u7-scl/domain/user';
 import { Status } from '../status';
-import { ModulePolicy } from './policy';
+import { LegacyModulePolicy } from './policy';
 
 function makeActor(roles: Role[], uuid = 'actor-uuid'): User {
   return {
@@ -24,35 +24,39 @@ const course = {
   projects: [],
 };
 
-describe('ModulePolicy', () => {
+describe('LegacyModulePolicy', () => {
   describe('canCreate', () => {
     test('ADMIN не может создавать', () => {
-      expect(ModulePolicy.canCreate(makeActor([Role.ADMIN]))).toBe(false);
+      expect(LegacyModulePolicy.canCreate(makeActor([Role.ADMIN]))).toBe(false);
     });
 
     test('AUTHOR может создавать', () => {
-      expect(ModulePolicy.canCreate(makeActor([Role.AUTHOR]))).toBe(true);
+      expect(LegacyModulePolicy.canCreate(makeActor([Role.AUTHOR]))).toBe(true);
     });
 
     test('MENTOR без AUTHOR не может создавать', () => {
-      expect(ModulePolicy.canCreate(makeActor([Role.MENTOR]))).toBe(false);
+      expect(LegacyModulePolicy.canCreate(makeActor([Role.MENTOR]))).toBe(
+        false,
+      );
     });
 
     test('пользователь с AUTHOR + MENTOR может создавать', () => {
       expect(
-        ModulePolicy.canCreate(makeActor([Role.MENTOR, Role.AUTHOR])),
+        LegacyModulePolicy.canCreate(makeActor([Role.MENTOR, Role.AUTHOR])),
       ).toBe(true);
     });
 
     test('STUDENT не может создавать', () => {
-      expect(ModulePolicy.canCreate(makeActor([Role.STUDENT]))).toBe(false);
+      expect(LegacyModulePolicy.canCreate(makeActor([Role.STUDENT]))).toBe(
+        false,
+      );
     });
   });
 
   describe('canRead', () => {
     test('студент может читать PUBLISHED курс', () => {
       expect(
-        ModulePolicy.canRead(makeActor([Role.STUDENT]), {
+        LegacyModulePolicy.canRead(makeActor([Role.STUDENT]), {
           ...course,
           status: Status.PUBLISHED,
         }),
@@ -60,14 +64,14 @@ describe('ModulePolicy', () => {
     });
 
     test('студент не может читать DRAFT курс', () => {
-      expect(ModulePolicy.canRead(makeActor([Role.STUDENT]), course)).toBe(
-        false,
-      );
+      expect(
+        LegacyModulePolicy.canRead(makeActor([Role.STUDENT]), course),
+      ).toBe(false);
     });
 
     test('автор может читать DRAFT курс', () => {
       expect(
-        ModulePolicy.canRead(
+        LegacyModulePolicy.canRead(
           makeActor([Role.MENTOR], '550e8400-e29b-41d4-a716-446655440000'),
           course,
         ),
@@ -75,20 +79,25 @@ describe('ModulePolicy', () => {
     });
 
     test('ADMIN может читать DRAFT курс', () => {
-      expect(ModulePolicy.canRead(makeActor([Role.ADMIN]), course)).toBe(true);
+      expect(LegacyModulePolicy.canRead(makeActor([Role.ADMIN]), course)).toBe(
+        true,
+      );
     });
   });
 
   describe('canEdit', () => {
     test('ADMIN может редактировать чужой курс', () => {
       expect(
-        ModulePolicy.canEdit(makeActor([Role.ADMIN], 'not-author'), course),
+        LegacyModulePolicy.canEdit(
+          makeActor([Role.ADMIN], 'not-author'),
+          course,
+        ),
       ).toBe(true);
     });
 
     test('автор может редактировать', () => {
       expect(
-        ModulePolicy.canEdit(
+        LegacyModulePolicy.canEdit(
           makeActor([Role.MENTOR], '550e8400-e29b-41d4-a716-446655440000'),
           course,
         ),
@@ -97,13 +106,16 @@ describe('ModulePolicy', () => {
 
     test('не-автор MENTOR не может редактировать', () => {
       expect(
-        ModulePolicy.canEdit(makeActor([Role.MENTOR], 'other-uuid'), course),
+        LegacyModulePolicy.canEdit(
+          makeActor([Role.MENTOR], 'other-uuid'),
+          course,
+        ),
       ).toBe(false);
     });
 
     test('STUDENT может редактировать свой курс', () => {
       expect(
-        ModulePolicy.canEdit(
+        LegacyModulePolicy.canEdit(
           makeActor([Role.STUDENT], '550e8400-e29b-41d4-a716-446655440000'),
           course,
         ),
@@ -112,13 +124,16 @@ describe('ModulePolicy', () => {
 
     test('STUDENT не может редактировать чужой курс', () => {
       expect(
-        ModulePolicy.canEdit(makeActor([Role.STUDENT], 'other-uuid'), course),
+        LegacyModulePolicy.canEdit(
+          makeActor([Role.STUDENT], 'other-uuid'),
+          course,
+        ),
       ).toBe(false);
     });
 
     test('AUTHOR-автор модуля может редактировать', () => {
       expect(
-        ModulePolicy.canEdit(
+        LegacyModulePolicy.canEdit(
           makeActor([Role.AUTHOR], '550e8400-e29b-41d4-a716-446655440000'),
           course,
         ),
@@ -127,7 +142,10 @@ describe('ModulePolicy', () => {
 
     test('AUTHOR без авторства не может редактировать чужой модуль', () => {
       expect(
-        ModulePolicy.canEdit(makeActor([Role.AUTHOR], 'other-uuid'), course),
+        LegacyModulePolicy.canEdit(
+          makeActor([Role.AUTHOR], 'other-uuid'),
+          course,
+        ),
       ).toBe(false);
     });
   });
@@ -135,7 +153,7 @@ describe('ModulePolicy', () => {
   describe('isAuthor', () => {
     test('автор — true', () => {
       expect(
-        ModulePolicy.isAuthor(
+        LegacyModulePolicy.isAuthor(
           makeActor([Role.STUDENT], '550e8400-e29b-41d4-a716-446655440000'),
           course,
         ),
@@ -144,7 +162,10 @@ describe('ModulePolicy', () => {
 
     test('не автор — false', () => {
       expect(
-        ModulePolicy.isAuthor(makeActor([Role.ADMIN], 'other-uuid'), course),
+        LegacyModulePolicy.isAuthor(
+          makeActor([Role.ADMIN], 'other-uuid'),
+          course,
+        ),
       ).toBe(false);
     });
   });
@@ -152,7 +173,7 @@ describe('ModulePolicy', () => {
   describe('isAdminOrAuthor', () => {
     test('ADMIN — true', () => {
       expect(
-        ModulePolicy.isAdminOrAuthor(
+        LegacyModulePolicy.isAdminOrAuthor(
           makeActor([Role.ADMIN], 'other-uuid'),
           course,
         ),
@@ -161,7 +182,7 @@ describe('ModulePolicy', () => {
 
     test('автор — true', () => {
       expect(
-        ModulePolicy.isAdminOrAuthor(
+        LegacyModulePolicy.isAdminOrAuthor(
           makeActor([Role.STUDENT], '550e8400-e29b-41d4-a716-446655440000'),
           course,
         ),
@@ -170,7 +191,7 @@ describe('ModulePolicy', () => {
 
     test('не автор и не ADMIN — false', () => {
       expect(
-        ModulePolicy.isAdminOrAuthor(
+        LegacyModulePolicy.isAdminOrAuthor(
           makeActor([Role.STUDENT], 'other-uuid'),
           course,
         ),
@@ -181,7 +202,7 @@ describe('ModulePolicy', () => {
   describe('canAddProject', () => {
     test('автор может', () => {
       expect(
-        ModulePolicy.canAddProject(
+        LegacyModulePolicy.canAddProject(
           makeActor([Role.MENTOR], '550e8400-e29b-41d4-a716-446655440000'),
           course,
         ),
@@ -189,14 +210,14 @@ describe('ModulePolicy', () => {
     });
 
     test('ADMIN не может (не автор)', () => {
-      expect(ModulePolicy.canAddProject(makeActor([Role.ADMIN]), course)).toBe(
-        false,
-      );
+      expect(
+        LegacyModulePolicy.canAddProject(makeActor([Role.ADMIN]), course),
+      ).toBe(false);
     });
 
     test('не автор не может', () => {
       expect(
-        ModulePolicy.canAddProject(
+        LegacyModulePolicy.canAddProject(
           makeActor([Role.MENTOR], 'other-uuid'),
           course,
         ),
@@ -225,7 +246,7 @@ describe('ModulePolicy', () => {
   describe('canReadProject', () => {
     test('автор может читать DRAFT проект', () => {
       expect(
-        ModulePolicy.canReadProject(
+        LegacyModulePolicy.canReadProject(
           makeActor([Role.MENTOR], '550e8400-e29b-41d4-a716-446655440000'),
           course,
           project,
@@ -235,7 +256,7 @@ describe('ModulePolicy', () => {
 
     test('студент может читать PUBLISHED проект', () => {
       expect(
-        ModulePolicy.canReadProject(
+        LegacyModulePolicy.canReadProject(
           makeActor([Role.STUDENT]),
           course,
           publishedProject,
@@ -245,7 +266,11 @@ describe('ModulePolicy', () => {
 
     test('студент не может читать DRAFT проект', () => {
       expect(
-        ModulePolicy.canReadProject(makeActor([Role.STUDENT]), course, project),
+        LegacyModulePolicy.canReadProject(
+          makeActor([Role.STUDENT]),
+          course,
+          project,
+        ),
       ).toBe(false);
     });
   });

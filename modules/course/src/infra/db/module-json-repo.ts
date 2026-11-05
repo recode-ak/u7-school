@@ -1,8 +1,8 @@
 import { JsonFileRepo } from '@u7-scl/core/infra';
 import type {
+  LegacyModuleRepo,
   Module,
   ModuleListFilter,
-  ModuleRepo,
 } from '@u7-scl/domain/course';
 import { ModuleSchema } from '@u7-scl/domain/course';
 
@@ -10,7 +10,7 @@ import { ModuleSchema } from '@u7-scl/domain/course';
  * JSON-файловая реализация репозитория модулей.
  * Хранит данные в JSON-файле через {@link JsonFileRepo}.
  */
-export class ModuleJsonRepo implements ModuleRepo {
+export class LegacyModuleJsonRepo implements LegacyModuleRepo {
   readonly #repo: JsonFileRepo<Module>;
 
   constructor(filePath = 'data/courses/modules.json') {

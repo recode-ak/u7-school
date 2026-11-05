@@ -116,7 +116,7 @@ export { LessonPolicy } from './lesson/policy';
 export type { LessonRepo } from './lesson/repo';
 export type { CourseApiModuleMeta, CourseApiModuleResolver } from './module';
 // Агрегат Module
-export { ModuleAr } from './module/a-root';
+export { LegacyModuleAr } from './module/a-root';
 export type {
   AddProjectCmd,
   AddProjectCmdError,
@@ -172,8 +172,8 @@ export {
   ModuleSchema,
   ProjectSchema,
 } from './module/entity';
-export { ModulePolicy } from './module/policy';
-export type { ModuleListFilter, ModuleRepo } from './module/repo';
+export { LegacyModulePolicy } from './module/policy';
+export type { LegacyModuleRepo, ModuleListFilter } from './module/repo';
 export type { ModuleId as ModuleEntityId } from './module/types';
 // Общие типы
 export { Status, StatusSchema } from './status';

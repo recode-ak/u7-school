@@ -6,8 +6,8 @@ import {
   type CreateStepCmd,
   type CreateStepCmdMeta,
   CreateStepCmdSchema,
+  LegacyModulePolicy,
   LessonAr,
-  ModulePolicy,
   StepAr,
   StepPolicy,
   StepSchema,
@@ -16,7 +16,7 @@ import { CourseUseCase } from '../course-uc';
 
 /**
  * Use-case создания шага.
- * Требует прав AUTHOR + проверка авторства курса через ModulePolicy.
+ * Требует прав AUTHOR + проверка авторства курса через LegacyModulePolicy.
  */
 export class CreateStepUc extends CourseUseCase<CreateStepCmdMeta> {
   protected readonly ucName = 'create-step' as const;
@@ -36,7 +36,7 @@ export class CreateStepUc extends CourseUseCase<CreateStepCmdMeta> {
     }
 
     const course = await this.getModule(command.moduleId);
-    if (!ModulePolicy.canEdit(actor, course)) {
+    if (!LegacyModulePolicy.canEdit(actor, course)) {
       this.throwAccessDenied('Вы не являетесь автором модуля');
     }
 

@@ -2,7 +2,7 @@
 
 Черновик — `dmg-tech-lead`, Ф0; проверка — orchestrator. Читать вместе с брифом Ф1 (`module.md`: решения Р1–Р9, Т1–Т13 считаются принятыми), `../spec.md`, `../plan.md` (Ф2), D-64, D-65, TR-52, TR-40, эталоном `wish`, ближайшим `stream`.
 
-Код `lesson`, `step`, снимка в `v0.2.6` (`../u7-school-v0.2.6/packages/course/src`) совпадает с HEAD с точностью до импортов, `biome-ignore` и правки комментария `content-snapshot.ts` (проверено `diff`: `domain/{lesson,step}/{a-root,policy,entity}.ts`, `course-ds.ts`, `api/{lesson/get-lesson,step/get-step,step/get-steps-by-lessons,module/get-module-snapshot}-uc.ts`). Характеризация — на текущих тестах и на чтении кода (у `get-steps-by-lessons` и legacy `get-module-snapshot` тестов нет).
+Код `lesson`, `step`, снимка в `v0.2.6` (worktree `../u7-school-v0.2.6`, пакет `course`) совпадает с HEAD с точностью до импортов, `biome-ignore` и правки комментария `content-snapshot.ts` (проверено `diff`: `domain/{lesson,step}/{a-root,policy,entity}.ts`, `course-ds.ts`, `api/{lesson/get-lesson,step/get-step,step/get-steps-by-lessons,module/get-module-snapshot}-uc.ts`). Характеризация — на текущих тестах и на чтении кода (у `get-steps-by-lessons` и legacy `get-module-snapshot` тестов нет).
 
 ## Расхождения spec/plan с кодом
 

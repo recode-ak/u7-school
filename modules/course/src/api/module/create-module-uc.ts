@@ -4,8 +4,8 @@ import {
   type CreateModuleCmd,
   type CreateModuleCmdMeta,
   CreateModuleCmdSchema,
-  ModuleAr,
-  ModulePolicy,
+  LegacyModuleAr,
+  LegacyModulePolicy,
   ModuleSchema,
 } from '@u7-scl/domain/course';
 import { CourseUseCase } from '../course-uc';
@@ -20,8 +20,8 @@ export class CreateModuleUc extends CourseUseCase<CreateModuleCmdMeta> {
   protected readonly ucName = 'create-module' as const;
   protected readonly ucLabel = 'Создать модуль' as const;
   protected readonly arMeta = {
-    arName: ModuleAr.arName as 'Module',
-    arLabel: ModuleAr.arLabel as 'Модуль',
+    arName: LegacyModuleAr.arName as 'Module',
+    arLabel: LegacyModuleAr.arLabel as 'Модуль',
   };
   protected readonly type = 'command' as const;
   protected readonly requiresAuth = true as const;
@@ -29,11 +29,15 @@ export class CreateModuleUc extends CourseUseCase<CreateModuleCmdMeta> {
   protected readonly outputSchema = ModuleSchema;
 
   async execute(command: CreateModuleCmd, actor: User): Promise<Module> {
-    if (!ModulePolicy.canCreate(actor)) {
+    if (!LegacyModulePolicy.canCreate(actor)) {
       this.throwAccessDenied('Недостаточно прав для создания модуля');
     }
 
-    const ar = ModuleAr.create(command.title, command.description, actor.uuid);
+    const ar = LegacyModuleAr.create(
+      command.title,
+      command.description,
+      actor.uuid,
+    );
     await this.resolve.moduleRepo.save(ar.state);
 
     return ar.state;

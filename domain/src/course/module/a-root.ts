@@ -6,13 +6,13 @@ import type { AddProjectCmd } from './commands/add-project-cmd';
 import type { EnrichModuleCmd } from './commands/enrich-module-cmd';
 import type { Module, ModuleArMeta, Project } from './entity';
 import { ModuleSchema } from './entity';
-import { ModulePolicy } from './policy';
+import { LegacyModulePolicy } from './policy';
 
 /**
  * Агрегат Module — корень образовательного модуля.
  * Project — value-object внутри Module.
  */
-export class ModuleAr extends Aggregate<ModuleArMeta> {
+export class LegacyModuleAr extends Aggregate<ModuleArMeta> {
   static readonly arName = 'Module';
   static readonly arLabel = 'Модуль';
 
@@ -25,7 +25,7 @@ export class ModuleAr extends Aggregate<ModuleArMeta> {
     title: string,
     description: string,
     authorId: string,
-  ): ModuleAr {
+  ): LegacyModuleAr {
     const candidate: Module = {
       uuid: crypto.randomUUID(),
       title,
@@ -37,7 +37,7 @@ export class ModuleAr extends Aggregate<ModuleArMeta> {
       createdAt: isoNow(),
     };
 
-    return new ModuleAr(candidate);
+    return new LegacyModuleAr(candidate);
   }
 
   /** Этап 2: обогащение дополнительными полями. */
@@ -120,8 +120,9 @@ export class ModuleAr extends Aggregate<ModuleArMeta> {
       return this.#filterPublished();
     }
 
-    if (!ModulePolicy.canRead(actor, this.state)) return null;
-    if (ModulePolicy.isAdminOrAuthor(actor, this.state)) return this.state;
+    if (!LegacyModulePolicy.canRead(actor, this.state)) return null;
+    if (LegacyModulePolicy.isAdminOrAuthor(actor, this.state))
+      return this.state;
 
     return this.#filterPublished();
   }

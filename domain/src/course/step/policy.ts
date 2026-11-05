@@ -1,13 +1,13 @@
 import type { User } from '@u7-scl/domain/user';
 import { UserPolicy } from '@u7-scl/domain/user';
 import type { Module } from '../module/entity';
-import { ModulePolicy } from '../module/policy';
+import { LegacyModulePolicy } from '../module/policy';
 import { Status } from '../status';
 import type { Step } from './entity';
 
 /**
  * Политика прав доступа для шагов.
- * Получает Course для самостоятельной проверки авторства через ModulePolicy.
+ * Получает Course для самостоятельной проверки авторства через LegacyModulePolicy.
  */
 export const StepPolicy = {
   canCreate(actor: User): boolean {
@@ -17,13 +17,13 @@ export const StepPolicy = {
   /** Читать: ADMIN/автор курса → всё; иначе PUBLISHED. */
   canRead(actor: User, target: Step, module: Module): boolean {
     return (
-      ModulePolicy.isAdminOrAuthor(actor, module) ||
+      LegacyModulePolicy.isAdminOrAuthor(actor, module) ||
       target.status === Status.PUBLISHED
     );
   },
 
   /** Редактировать: только ADMIN или автор курса. */
   canEdit(actor: User, _target: Step, module: Module): boolean {
-    return ModulePolicy.isAdminOrAuthor(actor, module);
+    return LegacyModulePolicy.isAdminOrAuthor(actor, module);
   },
 };

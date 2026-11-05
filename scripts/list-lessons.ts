@@ -4,7 +4,7 @@
  * ## Назначение
  * Выводит структуру курса: модули → проекты → уроки → количество шагов.
  * Одновременно является интеграционным тестом:
- *   - `list-modules` use-case (ModuleJsonRepo.getAll, visibility-политики)
+ *   - `list-modules` use-case (LegacyModuleJsonRepo.getAll, visibility-политики)
  *   - `get-module-snapshot` use-case (LessonJsonRepo, CourseDs.buildSnapshot)
  *   - Корректность связей moduleId/lessonIds/stepIds в JSON-файлах
  *
@@ -46,7 +46,7 @@ list-lessons — список модулей, проектов, уроков и 
 Формат: M[:P[:L]] — модуль, проект, урок (вложенность)
 
 Принцип: каждый запуск = интеграционный тест. Данные проходят
-ModuleJsonRepo → list-modules → get-module-snapshot → get-lesson.
+LegacyModuleJsonRepo → list-modules → get-module-snapshot → get-lesson.
 Если сломается схема в JSON-файлах, visibility-политика или любой
 use-case — скрипт упадёт с ошибкой.
 `);
@@ -146,7 +146,7 @@ async function main() {
     process.exit(1);
   }
 
-  // Получаем список модулей через API (тестирует list-modules + ModuleJsonRepo.getAll)
+  // Получаем список модулей через API (тестирует list-modules + LegacyModuleJsonRepo.getAll)
   type ModuleEntry = { uuid: string; title: string; status: string };
   const modules = (await app.execute(
     'list-modules',

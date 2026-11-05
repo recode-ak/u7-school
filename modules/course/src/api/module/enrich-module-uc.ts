@@ -4,8 +4,8 @@ import {
   type EnrichModuleCmd,
   type EnrichModuleCmdMeta,
   EnrichModuleCmdSchema,
-  ModuleAr,
-  ModulePolicy,
+  LegacyModuleAr,
+  LegacyModulePolicy,
   ModuleSchema,
 } from '@u7-scl/domain/course';
 import { CourseUseCase } from '../course-uc';
@@ -19,8 +19,8 @@ export class EnrichModuleUc extends CourseUseCase<EnrichModuleCmdMeta> {
   protected readonly ucName = 'enrich-module' as const;
   protected readonly ucLabel = 'Обогатить модуль' as const;
   protected readonly arMeta = {
-    arName: ModuleAr.arName as 'Module',
-    arLabel: ModuleAr.arLabel as 'Модуль',
+    arName: LegacyModuleAr.arName as 'Module',
+    arLabel: LegacyModuleAr.arLabel as 'Модуль',
   };
   protected readonly type = 'command' as const;
   protected readonly requiresAuth = true as const;
@@ -30,11 +30,11 @@ export class EnrichModuleUc extends CourseUseCase<EnrichModuleCmdMeta> {
   async execute(command: EnrichModuleCmd, actor: User): Promise<Module> {
     const module = await this.getModule(command.moduleId);
 
-    if (!ModulePolicy.canEdit(actor, module)) {
+    if (!LegacyModulePolicy.canEdit(actor, module)) {
       this.throwAccessDenied('Недостаточно прав для редактирования модуля');
     }
 
-    const ar = new ModuleAr(module);
+    const ar = new LegacyModuleAr(module);
     ar.enrich(command);
     await this.resolve.moduleRepo.save(ar.state);
 

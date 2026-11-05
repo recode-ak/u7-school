@@ -7,7 +7,7 @@ import type { Module, Project } from './entity';
  * Политика прав доступа для модулей.
  * Stateless — проверяет права на основе роли и авторства пользователя.
  */
-export const ModulePolicy = {
+export const LegacyModulePolicy = {
   /** Только AUTHOR может создавать модули. */
   canCreate(actor: User): boolean {
     return UserPolicy.isAuthor(actor);

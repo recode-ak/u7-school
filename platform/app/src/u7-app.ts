@@ -16,8 +16,8 @@ import { CourseApiModule } from '@u7-scl/course/api';
 import {
   CourseInProcFacade,
   CourseJsonRepo,
+  LegacyModuleJsonRepo,
   LessonJsonRepo,
-  ModuleJsonRepo,
   StepJsonRepo,
 } from '@u7-scl/course/infra';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
@@ -117,7 +117,9 @@ export class U7App {
     const userFacade = new UserInProcFacade(userModule);
 
     // ══ Course: репозитории, модуль и фасад ══
-    const moduleRepo = new ModuleJsonRepo(`${dbDir}/courses/modules.json`);
+    const moduleRepo = new LegacyModuleJsonRepo(
+      `${dbDir}/courses/modules.json`,
+    );
     const lessonRepo = new LessonJsonRepo(`${dbDir}/courses/lessons.json`);
     const stepRepo = new StepJsonRepo(`${dbDir}/courses/steps.json`);
 
