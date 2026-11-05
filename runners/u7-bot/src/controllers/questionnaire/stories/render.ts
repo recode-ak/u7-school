@@ -43,7 +43,7 @@ import { buttons } from '../../shared/buttons';
  */
 
 /** Клавиатура приглашения S01 (обработчики в invite-стори). */
-export function inviteKeyboard(
+function inviteKeyboard(
   qId: string,
   whyText?: string,
 ): KeyboardDescription | undefined {
