@@ -34,7 +34,7 @@
 - Решения spec записаны в TR и `decisions.md`.
 - Брифы `module` и `lesson-step` приняты; вопрос о роли в Policy закрыт или передан Нурболату.
 
-## Фаза 1: Срез `module`
+## Фаза 1: Срез `module` [checkpoint: 07e2c6eb]
 
 - [x] Task: `migrator` S0 (flash): legacy `ModuleAr`/`ModulePolicy`/`ModuleRepo`/`ModuleJsonRepo` → `Legacy*` (бриф, шаг 0) 3c4faa9d
 - [x] Task: `dmg-test-designer`: характеризация на `../u7-school-v0.2.6` и red-тесты (Sonnet) b035df66
