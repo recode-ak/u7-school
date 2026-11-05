@@ -554,7 +554,7 @@
 
 ### TR-50: решения брифа UI Ф2 `questionnaire-dmg`
 - **Трек / фаза:** `questionnaire-dmg`, Ф2 (orchestrator, 2026-11-05)
-- **Контекст:** stories анкет переводятся на `dispatchUc` и Def-подписки (бриф `conductor/tracks/questionnaire-dmg_20261104/slices/ui.md`). В базовой story нет Result-аналога legacy `handleError` (экран «⚠️ …» с «⬅️ Меню»), `ucErrorNotify` добавляет префикс «Ошибка валидации».
+- **Контекст:** stories анкет переводятся на `dispatchUc` и Def-подписки (бриф `conductor/archive/questionnaire-dmg_20261104/slices/ui.md`). В базовой story нет Result-аналога legacy `handleError` (экран «⚠️ …» с «⬅️ Меню»), `ucErrorNotify` добавляет префикс «Ошибка валидации».
 - **Решение:**
   - (1) Ветки навигации по кнопкам — экран `ucErrorScreen` (`stories/render.ts`, тексты как у `ucErrorNotify`, «⬅️ Меню»): нажатие на устаревшем сообщении заменяет его объяснением и выходом, а не оставляет мёртвые кнопки (UX, решение orchestrator по поручению Нурболата). Ветки ввода — `ucErrorNotify`; у `CHOICE_EXPECTED`/`EMPTY_ANSWER_CODE` появляется приставка «Ошибка валидации» (видимая правка, Нурболат, 2026-11-05).
   - (2) `invited`: экран приглашения — `GetCurrentUcDef` от профиля респондента; отказ или не-`invited` ответ → fallback «Заполните, пожалуйста, анкету.» без «Зачем» и `warn`.
@@ -568,7 +568,7 @@
 - **Пересмотреть:** (1), (8) — когда в `U7BotUiStory` появится общий экран отказа по `Result`; (9) — передача correlation из события в `dispatchUc` подписок (платформа бота); (3) — при управлении часами в `createTestApp`; (4) — общий тестовый кит DMG для stories.
 
 ### TR-51: границы среза сборки `questionnaire` (`questionnaire-dmg`, Ф3)
-- **Трек / фаза:** `questionnaire-dmg`, Ф3 (orchestrator, 2026-11-05; бриф — `conductor/tracks/questionnaire-dmg_20261104/slices/assembly.md`)
+- **Трек / фаза:** `questionnaire-dmg`, Ф3 (orchestrator, 2026-11-05; бриф — `conductor/archive/questionnaire-dmg_20261104/slices/assembly.md`)
 - **Контекст:** план Ф3 написан до Ф1: `api/*`, `module.ts`, `facade.ts`, фасады, `QuestionnaireUseCase`, legacy-Policy и legacy-репозиторий, поля `questionnaire`/`questionnaireFacade` в `U7App` удалены ещё в Ф1 (С1 TR-48), `external` у `QuestionnaireModuleDef` снят там же. `QuestionnairePolicy` в домене — новая Policy Def. Осталась оболочка метатипов: `domain/src/questionnaire/module.ts`, `commands/*-cmd.ts`, `entity.ts`, `QuestionnaireApiModuleMeta` в `U7BotAppMeta`; `call-uc` вызывает анкеты legacy `execute` — после Ф1 не работает.
 - **Решение:** бриф сам, без `tech-lead` (срез по образцу `stream`); задачи 2–4 плана — один шаг `migrator` (flash); критерий «`QuestionnairePolicy` удалён» относится к legacy-классу (удалён в Ф1), Policy Def остаётся; миры — на `QuestionnaireView` из контракта; `call-uc` — анкеты через `dispatch` по образцу `wish`. DEBT-34 в части questionnaire погашен снятием `external` (модуль проверяется через вход `contract`); общий пропуск пар legacy в `domain-check.ts` остаётся до последнего трека — в `debt.md` снимается только упоминание questionnaire.
 - **Ревью Ф3:** `modules/questionnaire/package.json` очищен от `./api`, `#*-legacy/*` и неиспользуемых зависимостей (warn вне границ, исправлено orchestrator'ом). `dmg-data-keeper` не вызывался: формат `questionnaires.json` не менялся; миры пишут во временный каталог тестов, `call-uc` пишет анкеты через тот же `QuestionnaireJsonRepo`, что и бот (совместимость — `data-keeper` Ф1). Формулировки DEBT-3 (barrel без внешних потребителей), TR-11 и TR-48 (4) — в Ф4.
