@@ -1,0 +1,5 @@
+Фаза 1 course-dmg (срез module) — верификация, автономно (agents.md §9).
+Команда: bun run check — зелёный, 4323 pass / 0 fail (базовая линия 4216).
+arch:check — 0 нарушений. git status data/ — пуст, sha256 data/courses/modules.json не изменился.
+dmg-data-keeper: совместимо (4/4 записи прод и фикстур). dmg-reviewer (Opus): 0 error, 8 warn — исправлены или в TR-54.
+Ручная верификация пропущена (автономный режим); вопрос DOM-11 — Нурболату на контрольной точке.
