@@ -6,3 +6,4 @@ export * from './course.module';
 export * from './domain';
 // Infra
 export * from './infra';
+export type { ModuleFilter, ModuleRepo } from './module/module.repo';

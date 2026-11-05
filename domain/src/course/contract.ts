@@ -47,7 +47,7 @@ export type {
   ModuleAccessDeniedUcError,
   ModuleNotFoundUcError,
 } from './module/commands/errors';
-export type { ModuleView } from './module/module.ar';
+export type { ModuleSummary, ModuleView } from './module/module.ar';
 export { ModuleErrors } from './module/module.errors';
 export { GetModuleUcDef } from './module/uc/get-module.uc';
 export { ListModulesUcDef } from './module/uc/list-modules.uc';

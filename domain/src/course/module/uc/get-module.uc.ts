@@ -4,9 +4,9 @@ import { ModuleArDef, ModuleView } from '../module.ar';
 import { ModuleErrors } from '../module.errors';
 
 /**
- * Модуль для показа: чтение открыто всем (`allowAll`), а право на
- * неопубликованное считает `ModulePolicy.rules.canSeeUnpublished` внутри
- * `execute` — гость субъекта не имеет, правилом целиком не выражается (T4).
+ * Модуль для показа: чтение открыто всем, право на неопубликованное считает
+ * `ModulePolicy` здесь — гость субъекта не имеет, правилом Def UC это не
+ * выражается, а `undefined` от `viewFor` становится отказом.
  */
 export const GetModuleUcDef = UseCaseDef.define({
   name: 'getModule',

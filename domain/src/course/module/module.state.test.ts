@@ -161,6 +161,7 @@ describe('ProjectVo (перенос ProjectSchema)', () => {
 
   it('не имеет собственных дат (value object)', () => {
     const res = v.safeParse(ProjectVo, { ...legacyProject, createdAt: 1 });
+    expect(res.success).toBe(true);
     if (res.success) {
       expect('createdAt' in res.output).toBe(false);
     }

@@ -18,7 +18,7 @@ type Input = ParsedInputOf<typeof GetModuleUcDef>;
 /**
  * Модуль для показа: чтение открыто всем, право на неопубликованное считает
  * `ModulePolicy` здесь — гость субъекта не имеет, правилом Def UC это не
- * выражается (Т4), а `undefined` от `viewFor` становится отказом.
+ * выражается, а `undefined` от `viewFor` становится отказом.
  */
 export class GetModuleUc extends UseCaseFromDef<
   typeof GetModuleUcDef,
@@ -43,17 +43,15 @@ export class GetModuleUc extends UseCaseFromDef<
     __: UnitOfWork,
     caller: Caller<CourseUser>,
   ) {
-    const { allowed } = ModulePolicy.rules.canSeeUnpublished.evaluate(
-      caller.subject(),
-      { module },
-    );
-    const view = module.viewFor(allowed);
-    if (view === undefined) {
-      return CoreErrors.ACCESS_DENIED.err({
-        rule: 'canSeeUnpublished',
-        denyMessage: ModulePolicy.rules.canSeeUnpublished.denyMessage,
-      });
-    }
-    return ok(view);
+    const rule = ModulePolicy.rules.canSeeUnpublished;
+    const decision = rule.evaluate(caller.subject(), { module });
+    const view = module.viewFor(decision.allowed);
+    if (view !== undefined) return ok(view);
+    // `viewFor` отдаёт `undefined` только при отказе правила: его `name` и
+    // `denyMessage` — те же, что в `Decision` отказа.
+    return CoreErrors.ACCESS_DENIED.err({
+      rule: rule.name,
+      denyMessage: rule.denyMessage,
+    });
   }
 }

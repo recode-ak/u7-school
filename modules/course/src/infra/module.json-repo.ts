@@ -11,11 +11,7 @@ const compareText = (a: string, b: string): number =>
 
 /**
  * Модули в JSON-файле: массив снапшотов. Только хранение — запись разбирает
- * `ModuleArDef.state` (он же переводит ISO-даты legacy в числа и дописывает
- * `updatedAt`/`version`, D-36), агрегат восстанавливает `ModuleAr.restore`.
- * Битая запись — исключение, файл не перезаписывается. Первая запись
- * переписывает весь файл в новом формате, поэтому до удаления legacy-чтения
- * (Ф5) `save` над `data/` не вызывается — она ждёт ISO-дат (Т11).
+ * `ModuleArDef.state`, битая запись — исключение, файл не перезаписывается.
  */
 export class ModuleJsonRepo
   extends VersionedRepository<ModuleAr>

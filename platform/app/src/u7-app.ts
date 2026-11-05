@@ -11,7 +11,7 @@ import {
 import { legacyClock, legacyEventBus } from '@u7-scl/core/legacy-bridge';
 import type { Logger } from '@u7-scl/core/shared';
 import { ConsoleLogger } from '@u7-scl/core/shared';
-import { type CourseModuleDeps, createCourseModule } from '@u7-scl/course';
+import { createCourseModule, type ModuleRepo } from '@u7-scl/course';
 import { CourseApiModule } from '@u7-scl/course/api';
 import {
   CourseInProcFacade,
@@ -242,7 +242,7 @@ export class U7App {
     context: AppContext,
     legacy: U7LegacyFacades,
     repos: {
-      readonly modules: CourseModuleDeps['modules'];
+      readonly modules: ModuleRepo;
       readonly wishes: WishRepo;
       readonly questionnaires: QuestionnaireRepo;
       readonly campaigns: ReviewCampaignRepo;

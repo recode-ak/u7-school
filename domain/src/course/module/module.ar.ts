@@ -44,7 +44,7 @@ export type ModuleSummary = v.InferOutput<typeof ModuleSummary>;
  * ли» и «кто автор», представление для показа собирает `viewFor` по
  * готовому решению Policy (решение о праве — не его).
  */
-export class ModuleAr extends Aggregate<typeof ModuleArDef, ModuleView> {
+export class ModuleAr extends Aggregate<typeof ModuleArDef> {
   private constructor(state: ModuleState) {
     super(ModuleArDef, state);
   }
@@ -56,7 +56,6 @@ export class ModuleAr extends Aggregate<typeof ModuleArDef, ModuleView> {
 
   // ── Вопросы ──
 
-  /** Опубликован ли модуль. */
   isPublished(): boolean {
     return this.state.status === 'published';
   }

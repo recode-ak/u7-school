@@ -13,7 +13,6 @@ export type ModuleFilter = {
 
 /** Порт репозитория модулей: принимает и возвращает Ar (API-03). */
 export type ModuleRepo = Repository<ModuleAr> & {
-  /** Модуль по UUID. */
   findById(uuid: string): Promise<ModuleAr | undefined>;
 
   /** Модули по фильтру; без условий — все записи файла по порядку. */

@@ -19,7 +19,7 @@ type Input = ParsedInputOf<typeof ListModulesUcDef>;
 
 /**
  * Модули карточками: выборку, сортировку и `limit` делает репозиторий, поэтому
- * `limit` отсекает **до** отбора видимых (как в v0.2.6, Т6): невидимые не
+ * `limit` отсекает **до** отбора видимых (как в прежней версии): невидимые не
  * отбрасываются с добором — ответ может быть короче `limit`.
  */
 export class ListModulesUc extends UseCaseFromDef<

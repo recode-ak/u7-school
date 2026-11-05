@@ -1,22 +1,6 @@
 import { F } from 'dmg-core';
 import * as v from 'valibot';
-
-/**
- * Заголовок или описание проекта: края обрезаются. Описание стоит до
- * преобразования — JSON Schema (`toJsonSchema`) обрывается на первом
- * `transform`.
- */
-const trimmed = (label: string) =>
-  v.pipe(
-    v.string(),
-    v.description(label),
-    v.transform((value) => value.trim()),
-    v.nonEmpty(`${label} не может быть пустым`),
-  );
-
-/** Необязательный текст карточки проекта: приходит как есть. */
-const text = (label: string) =>
-  v.pipe(v.optional(v.string()), v.description(label));
+import { text, trimmed } from './text-fields';
 
 /**
  * Проект модуля — VO без собственных дат (DOM-13). Живёт в `shared/`, а не в

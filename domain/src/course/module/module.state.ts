@@ -1,25 +1,10 @@
 import { BaseEntityFields, F } from 'dmg-core';
 import * as v from 'valibot';
 import { ProjectVo } from '../shared/project-vo';
+import { text, trimmed } from '../shared/text-fields';
 
 // VO проекта — в `shared/`: DOM-11 запрещает ключ `uuid` в `*.state.ts`.
 export { ProjectVo } from '../shared/project-vo';
-
-/**
- * Заголовок или описание: края обрезаются. Описание стоит до преобразования —
- * JSON Schema (`toJsonSchema`) обрывается на первом `transform`.
- */
-const trimmed = (label: string) =>
-  v.pipe(
-    v.string(),
-    v.description(label),
-    v.transform((value) => value.trim()),
-    v.nonEmpty(`${label} не может быть пустым`),
-  );
-
-/** Необязательный текст карточки: приходит как есть. */
-const text = (label: string) =>
-  v.pipe(v.optional(v.string()), v.description(label));
 
 /**
  * Entity модуля — единственное место структуры состояния. Legacy-записи
