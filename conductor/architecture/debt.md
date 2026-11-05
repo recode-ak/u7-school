@@ -103,7 +103,7 @@
 - **Место:**
   - `modules/user/src/domain/index.ts` — потребители (≈96 файлов) импортируют `@u7-scl/user/domain`
   - `modules/course/src/domain/index.ts` — потребители импортируют `@u7-scl/course/domain`
-  - `modules/questionnaire/src/domain/index.ts` — потребители импортируют `@u7-scl/questionnaire/domain`
+  - `modules/questionnaire/src/domain/index.ts` — потребителей нет (после `questionnaire-dmg` код импортирует `@u7-scl/domain/questionnaire` и контракт); удаляется вместе с остальными barrel'ами
   - `modules/stream/src/domain/index.ts` — потребители импортируют `@u7-scl/stream/domain`; погашает Ф3 трека `stream-dmg`
   - `modules/wish/src/domain/index.ts` — потребители импортируют `@u7-scl/wish/domain`
   - `modules/peer-review/src/domain/index.ts` — потребители импортируют `@u7-scl/peer-review/domain`
@@ -326,6 +326,7 @@
 - **Дополнено (Ф9):** `GetModuleEnrollmentUcDef` (`course`, query «модуль в программе опубликованного курса», `allowAll`) — адаптер `modules/course/src/course/uc/get-module-enrollment.uc.ts` над legacy `getModulePlace`.
 - **Пересмотреть:** при миграции `course`/`questionnaire` — адаптеры заменяются настоящими UC, `external` снимается, legacy-фасады удаляются.
 - **Снято для `stream`** (`stream-dmg`, Ф1): адаптеры `getStreamMembers`/`getStreamPresence` у `wish` и `peer-review` заменены настоящими UC модуля `stream`.
+- **Снято для `questionnaire`** (`questionnaire-dmg`, Ф1, Ф3): адаптер `start-questionnaire` заменён настоящим UC, правило «только за себя» — в `QuestionnairePolicy` Def (субъект `Identified`), `external` снят, legacy-фасад удалён. Остаётся для `course`.
 
 ### TR-12: решения по ревью Ф8
 - **Трек / фаза:** `golden-wish`, Ф8
@@ -545,11 +546,11 @@
   - (1) ~~Красная зона Ф1–Ф2~~ — снята в Ф2 (2026-11-05): 12 e2e `questionnaire-ux`/`wish-questionnaire` зелёные, stories на Def (TR-50).
   - (2) ~~Т16: временные типы legacy-событий~~ — `legacy-events.ts` удалён в Ф2, типы Def-событий — `stories/questionnaire-events.ts`.
   - (3) `AbandonUc` регистрирует агрегат в UoW только при росте версии: идемпотентный `abandon` на `abandoned` (Т3) иначе пишет запись без изменений.
-  - (4) Т20: мост `legacyEventBus` оставлен, маршрутов анкет в `inbound` нет; поле `questionnaireFacade` и legacy-модуль анкет из `U7App` удалены, метатип оболочки Т15 импортируется из корня `@u7-scl/questionnaire` (ARC-07).
+  - (4) Т20: мост `legacyEventBus` оставлен, маршрутов анкет в `inbound` нет; поле `questionnaireFacade` и legacy-модуль анкет из `U7App` удалены, метатип оболочки Т15 удалён в Ф3 вместе с `QuestionnaireApiModuleMeta` (TR-51).
   - (5) Дефекты red-тестов, исправленные по эскалации автора: события не забирались после `createStandard` (Ar глушил `started`); текст отказа доступа — в `payload.denyMessage`, не в `label`; один `requestId` на все команды smoke-теста (D-56).
   - (6) С2 (Нурболат, 2026-11-05): stories Ф2 берут адрес Telegram через legacy `get-user`, как `InactivityStory` (TR-43 С2); `GetTelegramAddressesUcDef` остаётся `system` для Job и ER (D-63).
   - (7) Д1 (Нурболат, 2026-11-05): живой `questionnaires.json` сверен read-only (84 записи, проблемных 0). Новый репозиторий при первой записи переписывает весь файл в числовых датах с `version` — legacy `v0.2.6` его не прочитает: перед выкаткой `bun run backup`, откат — только с восстановлением файла.
-- **Пересмотреть:** (6) — перевод `user` на Def; (7) — выкатка после ревизии; (3) — если UoW платформы научится пропускать неизменённые агрегаты (тогда условие убрать); (4) — Ф3.
+- **Пересмотреть:** (6) — перевод `user` на Def; (7) — выкатка после ревизии; (3) — если UoW платформы научится пропускать неизменённые агрегаты (тогда условие убрать); (4) — снято в Ф3 (TR-51).
 
 ### TR-50: решения брифа UI Ф2 `questionnaire-dmg`
 - **Трек / фаза:** `questionnaire-dmg`, Ф2 (orchestrator, 2026-11-05)
