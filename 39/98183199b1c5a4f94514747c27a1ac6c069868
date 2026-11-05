@@ -1,0 +1,6 @@
+Фаза 2 course-dmg (срез lesson + step + снимок) — верификация, автономно (agents.md §9).
+Команда: bun run check — зелёный, 4604 pass / 0 fail (базовая линия 4216, Ф1 4323).
+arch:check — 0 нарушений. git status data/ — пуст, sha256 data/courses/{lessons,steps,modules}.json не изменились.
+dmg-data-keeper: совместимо (248/248 уроков, 1161/1161 шаг; снимки 4/4 и getStepsByLessons совпали с legacy побайтово).
+dmg-reviewer (Opus): 0 error, 5 warn — 4 исправлены, 1 в TR-55.
+Ручная верификация пропущена (автономный режим).
