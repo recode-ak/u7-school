@@ -4,4 +4,6 @@ export { CourseJsonRepo } from './db/course-json-repo';
 export { LegacyLessonJsonRepo } from './db/lesson-json-repo';
 export { LegacyModuleJsonRepo } from './db/module-json-repo';
 export { LegacyStepJsonRepo } from './db/step-json-repo';
+export { LessonJsonRepo } from './lesson.json-repo';
 export { ModuleJsonRepo } from './module.json-repo';
+export { StepJsonRepo } from './step.json-repo';

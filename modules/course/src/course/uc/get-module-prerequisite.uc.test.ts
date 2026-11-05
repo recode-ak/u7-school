@@ -10,7 +10,9 @@ import {
 } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import { type CourseLegacy, createCourseModule } from '../../course.module';
+import { LessonRepoFake } from '../../lesson/lesson.repo.fake';
 import { ModuleRepoFake } from '../../module/module.repo.fake';
+import { StepRepoFake } from '../../step/step.repo.fake';
 
 // `getModulePrerequisite` — адаптер над legacy `getCourseByModuleId` +
 // `CourseAr.getPrevModuleId` + `getModule` (enroll-student-uc.ts:52-70):
@@ -59,7 +61,6 @@ function facadeOver(
     getModulePlace: async () => undefined,
     whichCoursesIncludeModule: async () => [],
     whichModulesAreSame: async () => [],
-    getModuleSnapshot: async () => [],
     getCourseByModuleId: async () => found,
     getModule,
   } as unknown as CourseLegacy;
@@ -69,6 +70,8 @@ function facadeOver(
       facades: new ModuleFacades(),
       legacy,
       modules: new ModuleRepoFake(),
+      lessons: new LessonRepoFake(),
+      steps: new StepRepoFake(),
     }),
   );
 }

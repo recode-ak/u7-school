@@ -2,6 +2,8 @@ import { describe, expect, it } from 'bun:test';
 import { ModuleAr } from './module.ar';
 import {
   AUTHOR,
+  LESSON_1,
+  LESSON_2,
   MODULE,
   OTHER,
   PROJECT_DRAFT,
@@ -134,5 +136,73 @@ describe('ModuleAr.summary', () => {
     expect(restore('published', { tags: undefined }).summary().tags).toBe(
       undefined,
     );
+  });
+});
+
+// Вклад в снимок контента (Ф2): проекты `published` в порядке модуля,
+// без уроков — их собирает `ModuleSnapshotDqs` (перенос фильтра
+// `Status.PUBLISHED` из `CourseDs.buildSnapshot`).
+describe('ModuleAr.publishedOutline', () => {
+  it('проект published: projectId, projectTitle, lessonIds', () => {
+    const ar = restore('published', {
+      projects: [project('published', { lessonIds: [LESSON_1, LESSON_2] })],
+    });
+    expect(ar.publishedOutline()).toEqual([
+      {
+        projectId: PROJECT_PUBLISHED,
+        projectTitle: 'Проект 1',
+        lessonIds: [LESSON_1, LESSON_2],
+      },
+    ]);
+  });
+
+  it('только опубликованные проекты: draft и archived исключены', () => {
+    const archived = {
+      ...project('draft'),
+      uuid: '55555555-5555-4555-8555-555555555556',
+      status: 'archived' as const,
+    };
+    const ar = restore('published', {
+      projects: [project('published'), project('draft'), archived],
+    });
+    expect(ar.publishedOutline().map((p) => p.projectId)).toEqual([
+      PROJECT_PUBLISHED,
+    ]);
+  });
+
+  it('порядок проектов модуля сохраняется', () => {
+    const second = {
+      ...project('published'),
+      uuid: '55555555-5555-4555-8555-555555555557',
+      title: 'Проект 2',
+    };
+    const ar = restore('published', {
+      projects: [second, project('published')],
+    });
+    expect(ar.publishedOutline().map((p) => p.projectTitle)).toEqual([
+      'Проект 2',
+      'Проект 1',
+    ]);
+  });
+
+  it('порядок lessonIds проекта сохраняется', () => {
+    const ar = restore('published', {
+      projects: [project('published', { lessonIds: [LESSON_2, LESSON_1] })],
+    });
+    expect(ar.publishedOutline()[0]?.lessonIds).toEqual([LESSON_2, LESSON_1]);
+  });
+
+  it('модуль без проектов — []', () => {
+    expect(restore('published').publishedOutline()).toEqual([]);
+  });
+
+  it('без опубликованных проектов — []', () => {
+    const ar = restore('published', { projects: [project('draft')] });
+    expect(ar.publishedOutline()).toEqual([]);
+  });
+
+  it('статус самого модуля не фильтрует: draft-модуль отдаёт опубликованные проекты', () => {
+    const ar = restore('draft', { projects: [project('published')] });
+    expect(ar.publishedOutline()).toHaveLength(1);
   });
 });

@@ -1,0 +1,279 @@
+import { beforeEach, describe, expect, it } from 'bun:test';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { expectErr, expectOk } from 'dmg-core/testing';
+import {
+  admin,
+  anonymous,
+  author,
+  LESSON_1,
+  LESSON_2,
+  LESSON_3,
+  lessonState,
+  MODULE,
+  makeContentEnv,
+  moduleState,
+  OTHER_ID,
+  OTHER_MODULE,
+  otherMentor,
+  REQ,
+  STEP_1,
+  STEP_2,
+  STEP_3,
+  STEP_4,
+  student,
+  system,
+  textStep,
+} from '../../content-uc.fixture';
+import { GetStepsByLessonsUc } from './get-steps-by-lessons.uc';
+
+// Тестов у `api/step/get-steps-by-lessons-uc.ts` не было — сценарии по коду:
+// шаги по порядку `stepIds`; невидимые и отсутствующие шаги пропускаются;
+// урок без видимых шагов не попадает в ответ; видимость самого урока не
+// проверяется (v0.2.6, Т5); уроки и шаги читаются одним запросом, модуль —
+// один раз на различный `moduleId` (Т6).
+
+let env: ReturnType<typeof makeContentEnv>;
+beforeEach(() => {
+  env = makeContentEnv();
+  env.modules.seed(moduleState('published'));
+});
+
+const uc = () => new GetStepsByLessonsUc(env.deps, CourseModuleDef);
+const get = (
+  lessonIds: string[],
+  caller: Parameters<GetStepsByLessonsUc['handle']>[1] = student,
+) => uc().handle({ lessonIds }, caller, REQ);
+
+/** Урок `id` из шагов `stepIds`, шаги опубликованы (описание — по номеру). */
+function seedLesson(id: string, stepIds: string[]) {
+  env.lessons.seed(lessonState(id, 'published', { stepIds }));
+  for (const stepId of stepIds) env.steps.seed(textStep(stepId, 'published'));
+}
+
+describe('GetStepsByLessonsUc — успех', () => {
+  it('шаги урока: uuid и description — и только они', async () => {
+    seedLesson(LESSON_1, [STEP_1]);
+
+    const result = expectOk(await get([LESSON_1]));
+
+    expect(result).toEqual({
+      [LESSON_1]: [{ uuid: STEP_1, description: 'Шаг 1' }],
+    });
+    expect(Object.keys(result[LESSON_1]?.[0] ?? {}).sort()).toEqual([
+      'description',
+      'uuid',
+    ]);
+  });
+
+  it('пустой список уроков — {}', async () => {
+    expect(expectOk(await get([]))).toEqual({});
+  });
+
+  it('уроков нет в репозитории — {}', async () => {
+    expect(expectOk(await get([LESSON_1, LESSON_2]))).toEqual({});
+  });
+
+  it('несколько уроков: ключ — lessonId каждого', async () => {
+    seedLesson(LESSON_1, [STEP_1]);
+    seedLesson(LESSON_2, [STEP_2, STEP_3]);
+
+    const result = expectOk(await get([LESSON_1, LESSON_2]));
+
+    expect(Object.keys(result).sort()).toEqual([LESSON_1, LESSON_2].sort());
+    expect(result[LESSON_2]?.map((s) => s.uuid)).toEqual([STEP_2, STEP_3]);
+  });
+
+  it('шаги — по порядку stepIds урока, а не выборки репозитория', async () => {
+    seedLesson(LESSON_1, [STEP_3, STEP_1, STEP_2]);
+    env.reversed.on = true;
+
+    const result = expectOk(await get([LESSON_1]));
+
+    expect(result[LESSON_1]?.map((s) => s.uuid)).toEqual([
+      STEP_3,
+      STEP_1,
+      STEP_2,
+    ]);
+  });
+
+  it('гость получает опубликованные шаги', async () => {
+    seedLesson(LESSON_1, [STEP_1]);
+    expect(expectOk(await get([LESSON_1], anonymous))[LESSON_1]).toHaveLength(
+      1,
+    );
+  });
+});
+
+describe('GetStepsByLessonsUc — видимость шагов', () => {
+  beforeEach(() => {
+    // STEP_2 — черновик, STEP_3 — archived
+    env.lessons.seed(
+      lessonState(LESSON_1, 'published', {
+        stepIds: [STEP_1, STEP_2, STEP_3],
+      }),
+    );
+    env.steps.seed(
+      textStep(STEP_1, 'published'),
+      textStep(STEP_2, 'draft'),
+      textStep(STEP_3, 'archived'),
+    );
+  });
+
+  it.each([
+    ['гость', anonymous],
+    ['студент', student],
+    ['чужой ментор', otherMentor],
+  ] as const)('%s: draft и archived шаги пропускаются', async (_, caller) => {
+    const result = expectOk(await get([LESSON_1], caller));
+    expect(result[LESSON_1]?.map((s) => s.uuid)).toEqual([STEP_1]);
+  });
+
+  it.each([
+    ['автор модуля', author],
+    ['администратор', admin],
+  ] as const)('%s: видит все шаги по порядку', async (_, caller) => {
+    const result = expectOk(await get([LESSON_1], caller));
+    expect(result[LESSON_1]?.map((s) => s.uuid)).toEqual([
+      STEP_1,
+      STEP_2,
+      STEP_3,
+    ]);
+  });
+
+  it('урок без видимых шагов в ответ не попадает', async () => {
+    seedLesson(LESSON_2, [STEP_4]);
+    env.steps.seed(textStep(STEP_4, 'draft'));
+
+    const result = expectOk(await get([LESSON_1, LESSON_2]));
+
+    expect(Object.keys(result)).toEqual([LESSON_1]);
+  });
+
+  it('все шаги урока невидимы — {} (не ошибка)', async () => {
+    env.steps.seed(
+      textStep(STEP_1, 'draft'),
+      textStep(STEP_2, 'draft'),
+      textStep(STEP_3, 'draft'),
+    );
+    expect(expectOk(await get([LESSON_1]))).toEqual({});
+  });
+
+  it('урок без шагов (stepIds пуст) в ответ не попадает', async () => {
+    env.lessons.seed(lessonState(LESSON_2, 'published'));
+    expect(Object.keys(expectOk(await get([LESSON_2])))).toEqual([]);
+  });
+
+  it('stepId урока, которого нет в репозитории шагов, пропускается', async () => {
+    env.lessons.seed(
+      lessonState(LESSON_2, 'published', { stepIds: [STEP_4, STEP_1] }),
+    );
+
+    const result = expectOk(await get([LESSON_2]));
+
+    expect(result[LESSON_2]?.map((s) => s.uuid)).toEqual([STEP_1]);
+  });
+
+  it('видимость самого урока не проверяется: шаги draft-урока отдаются (v0.2.6)', async () => {
+    env.lessons.seed(lessonState(LESSON_2, 'draft', { stepIds: [STEP_1] }));
+
+    const result = expectOk(await get([LESSON_2], anonymous));
+
+    expect(result[LESSON_2]?.map((s) => s.uuid)).toEqual([STEP_1]);
+  });
+});
+
+describe('GetStepsByLessonsUc — модули шагов', () => {
+  beforeEach(() => {
+    env.modules.seed(
+      moduleState('published', { uuid: OTHER_MODULE, authorId: OTHER_ID }),
+    );
+  });
+
+  it('право считается по модулю каждого шага: автор видит свои черновики и не видит чужие', async () => {
+    env.lessons.seed(
+      lessonState(LESSON_1, 'published', { stepIds: [STEP_1, STEP_2] }),
+    );
+    env.steps.seed(
+      textStep(STEP_1, 'draft', { moduleId: MODULE }),
+      textStep(STEP_2, 'draft', { moduleId: OTHER_MODULE }),
+    );
+
+    const result = expectOk(await get([LESSON_1], author));
+
+    expect(result[LESSON_1]?.map((s) => s.uuid)).toEqual([STEP_1]);
+  });
+
+  it('модуль шага не найден — шаг пропускается (v0.2.6, Т5), вызов не падает', async () => {
+    const missing = '4a3b2c1d-0e9f-4a8b-9c7d-000000000000';
+    env.lessons.seed(
+      lessonState(LESSON_1, 'published', { stepIds: [STEP_1, STEP_2] }),
+    );
+    env.steps.seed(
+      textStep(STEP_1, 'published', { moduleId: missing }),
+      textStep(STEP_2, 'published'),
+    );
+
+    const result = expectOk(await get([LESSON_1]));
+
+    expect(result[LESSON_1]?.map((s) => s.uuid)).toEqual([STEP_2]);
+  });
+
+  it('уроки — одним запросом, шаги — одним запросом', async () => {
+    seedLesson(LESSON_1, [STEP_1, STEP_2]);
+    seedLesson(LESSON_2, [STEP_3]);
+
+    await get([LESSON_1, LESSON_2]);
+
+    expect(env.asked.lessons).toEqual([[LESSON_1, LESSON_2]]);
+    expect(env.asked.steps).toHaveLength(1);
+    expect([...(env.asked.steps[0] ?? [])].sort()).toEqual(
+      [STEP_1, STEP_2, STEP_3].sort(),
+    );
+    expect(env.asked.lessonById).toEqual([]);
+    expect(env.asked.stepById).toEqual([]);
+  });
+
+  it('модуль спрашивается один раз на различный moduleId', async () => {
+    env.lessons.seed(
+      lessonState(LESSON_1, 'published', { stepIds: [STEP_1, STEP_2, STEP_3] }),
+    );
+    env.steps.seed(
+      textStep(STEP_1, 'published'),
+      textStep(STEP_2, 'published'),
+      textStep(STEP_3, 'published', { moduleId: OTHER_MODULE }),
+    );
+
+    await get([LESSON_1]);
+
+    expect([...env.asked.modules].sort()).toEqual(
+      [MODULE, OTHER_MODULE].sort(),
+    );
+  });
+
+  it('уроков нет — ни один модуль не запрашивается', async () => {
+    await get([LESSON_3]);
+
+    expect(env.asked.modules).toEqual([]);
+  });
+});
+
+describe('GetStepsByLessonsUc — вход и вызывающий', () => {
+  it('неверный uuid в списке — INPUT_VALIDATION', async () => {
+    expectErr(await get(['not-a-uuid']), 'INPUT_VALIDATION');
+  });
+
+  it('вызывающий system не допущен (callers: user, guest) — UNAUTHORIZED', async () => {
+    const res = await uc().handle({ lessonIds: [] }, system as never, REQ);
+
+    expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
+      callerKind: 'system',
+    });
+  });
+
+  it('только читает: ничего не записывается', async () => {
+    seedLesson(LESSON_1, [STEP_1]);
+    await get([LESSON_1]);
+    expect(env.lessons.saved).toEqual([]);
+    expect(env.steps.saved).toEqual([]);
+  });
+});

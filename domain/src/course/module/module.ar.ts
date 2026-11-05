@@ -28,6 +28,13 @@ export const ModuleView = v.object({ ...ModuleState.entries });
 
 export type ModuleView = v.InferOutput<typeof ModuleView>;
 
+/** Проект модуля в снимке контента: идентификатор, заголовок и уроки. */
+export type ProjectOutline = {
+  readonly projectId: string;
+  readonly projectTitle: string;
+  readonly lessonIds: string[];
+};
+
 /** Карточка модуля для списков — без проектов и текстов карточки. */
 export const ModuleSummary = v.object({
   uuid: ModuleState.entries.uuid,
@@ -80,6 +87,20 @@ export class ModuleAr extends Aggregate<typeof ModuleArDef> {
         (project) => project.status === 'published',
       ),
     };
+  }
+
+  /**
+   * Вклад модуля в снимок контента: опубликованные проекты в порядке модуля.
+   * Уроки собирает `ModuleSnapshotDqs` — здесь только состав проектов.
+   */
+  publishedOutline(): ProjectOutline[] {
+    return this.state.projects
+      .filter((project) => project.status === 'published')
+      .map((project) => ({
+        projectId: project.uuid,
+        projectTitle: project.title,
+        lessonIds: project.lessonIds,
+      }));
   }
 
   /** Карточка модуля для списков. */

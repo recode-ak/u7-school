@@ -8,8 +8,10 @@ import {
   GetModuleSnapshotUcDef,
 } from '../../contract';
 
-// Снимок контента модуля — Def UC `course`
-// для других модулей (`createStream` вызывает его в `calls`).
+// Переезд `course/uc/get-module-snapshot.uc.test.ts` (6): Def перенесён в
+// агрегат `module` (снимок — вопрос про модуль), вызывающие расширены до
+// `user`, `guest`, `system` (Т1, Т3). Ошибка прежняя — `COURSE_MODULE_NOT_FOUND`
+// (контракт `stream`), единую `MODULE_NOT_FOUND` вводит Ф3.
 
 const MODULE = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 const snapshot: ContentSnapshot = [
@@ -27,12 +29,12 @@ const snapshot: ContentSnapshot = [
 ];
 
 describe('GetModuleSnapshotUcDef', () => {
-  it('query для других модулей (system) над агрегатом курса, allowAll, ошибка — модуль не найден', () => {
+  it('query над агрегатом module для user, guest и system, allowAll, ошибка — модуль не найден', () => {
     expect(normalize(GetModuleSnapshotUcDef)).toMatchObject({
       name: 'getModuleSnapshot',
       type: 'query',
-      aggregate: 'course',
-      callers: ['system'],
+      aggregate: 'module',
+      callers: ['user', 'guest', 'system'],
       errors: ['COURSE_MODULE_NOT_FOUND'],
     });
     expect(GetModuleSnapshotUcDef.policy.op).toBe('allowAll');

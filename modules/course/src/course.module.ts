@@ -8,11 +8,16 @@ import { GetCoursesIncludingModuleUc } from './course/uc/get-courses-including-m
 import { GetCoursesStartingWithModuleUc } from './course/uc/get-courses-starting-with-module.uc';
 import { GetModuleEnrollmentUc } from './course/uc/get-module-enrollment.uc';
 import { GetModulePrerequisiteUc } from './course/uc/get-module-prerequisite.uc';
-import { GetModuleSnapshotUc } from './course/uc/get-module-snapshot.uc';
 import { GetSameModulesUc } from './course/uc/get-same-modules.uc';
+import type { LessonRepo } from './lesson/lesson.repo';
+import { GetLessonUc } from './lesson/uc/get-lesson.uc';
 import type { ModuleRepo } from './module/module.repo';
 import { GetModuleUc } from './module/uc/get-module.uc';
+import { GetModuleSnapshotUc } from './module/uc/get-module-snapshot.uc';
 import { ListModulesUc } from './module/uc/list-modules.uc';
+import type { StepRepo } from './step/step.repo';
+import { GetStepUc } from './step/uc/get-step.uc';
+import { GetStepsByLessonsUc } from './step/uc/get-steps-by-lessons.uc';
 
 /**
  * Что адаптеры над legacy-фасадом берут у legacy-фасада курсов: только вопросы,
@@ -25,7 +30,6 @@ export type CourseLegacy = Pick<
   | 'getModulePlace'
   | 'whichCoursesIncludeModule'
   | 'whichModulesAreSame'
-  | 'getModuleSnapshot'
   | 'getCourseByModuleId'
   | 'getModule'
 >;
@@ -35,16 +39,18 @@ export type CourseUser = Pick<User, 'uuid' | 'roles'>;
 
 /**
  * Резолвер DMG-модуля курсов: платформа, legacy-фасад (адаптеры внешнего
- * контракта) и репозиторий модулей (срез `module`).
+ * контракта) и репозитории срезов `module`, `lesson` и `step`.
  */
 export type CourseModuleDeps = ModuleDeps & {
   readonly legacy: CourseLegacy;
   readonly modules: ModuleRepo;
+  readonly lessons: LessonRepo;
+  readonly steps: StepRepo;
 };
 
 /**
  * Карта «Def → класс» внешнего модуля курсов (API-05, D-37): адаптеры над
- * legacy и UC среза `module`; ER и Job у модуля нет.
+ * legacy и UC срезов; ER и Job у модуля нет.
  */
 export const courseModuleMap = {
   useCases: {
@@ -57,6 +63,9 @@ export const courseModuleMap = {
     getModulePrerequisite: GetModulePrerequisiteUc,
     getModule: GetModuleUc,
     listModules: ListModulesUc,
+    getLesson: GetLessonUc,
+    getStep: GetStepUc,
+    getStepsByLessons: GetStepsByLessonsUc,
   },
   reactions: {},
   jobs: {},
@@ -65,7 +74,7 @@ export const courseModuleMap = {
 /**
  * DMG-модуль курсов — владелец UC внешнего контракта; фасад для других
  * модулей — `new ModuleFacade(createCourseModule(deps))` (D-43). Приложение
- * собирает его поверх legacy `CourseInProcFacade` и репозитория модулей.
+ * собирает его поверх legacy `CourseInProcFacade` и репозиториев срезов.
  */
 export function createCourseModule(deps: CourseModuleDeps) {
   return new ModuleFromDef<

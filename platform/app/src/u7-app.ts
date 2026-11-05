@@ -11,7 +11,12 @@ import {
 import { legacyClock, legacyEventBus } from '@u7-scl/core/legacy-bridge';
 import type { Logger } from '@u7-scl/core/shared';
 import { ConsoleLogger } from '@u7-scl/core/shared';
-import { createCourseModule, type ModuleRepo } from '@u7-scl/course';
+import {
+  createCourseModule,
+  type LessonRepo,
+  type ModuleRepo,
+  type StepRepo,
+} from '@u7-scl/course';
 import { CourseApiModule } from '@u7-scl/course/api';
 import {
   CourseInProcFacade,
@@ -19,7 +24,9 @@ import {
   LegacyLessonJsonRepo,
   LegacyModuleJsonRepo,
   LegacyStepJsonRepo,
+  LessonJsonRepo,
   ModuleJsonRepo,
+  StepJsonRepo,
 } from '@u7-scl/course/infra';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review/contract';
@@ -158,6 +165,8 @@ export class U7App {
       },
       {
         modules: new ModuleJsonRepo(`${dbDir}/courses/modules.json`),
+        lessons: new LessonJsonRepo(`${dbDir}/courses/lessons.json`),
+        steps: new StepJsonRepo(`${dbDir}/courses/steps.json`),
         wishes: new WishJsonRepo(`${dbDir}/wish/wishes.json`),
         questionnaires: new QuestionnaireJsonRepo(
           `${dbDir}/questionnaires/questionnaires.json`,
@@ -245,6 +254,8 @@ export class U7App {
     legacy: U7LegacyFacades,
     repos: {
       readonly modules: ModuleRepo;
+      readonly lessons: LessonRepo;
+      readonly steps: StepRepo;
       readonly wishes: WishRepo;
       readonly questionnaires: QuestionnaireRepo;
       readonly campaigns: ReviewCampaignRepo;
@@ -266,6 +277,8 @@ export class U7App {
             ...deps,
             legacy: legacy.course,
             modules: repos.modules,
+            lessons: repos.lessons,
+            steps: repos.steps,
           }),
       },
       {

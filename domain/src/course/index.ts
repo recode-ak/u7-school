@@ -91,7 +91,7 @@ export type { CourseListFilter, CourseRepo } from './course/repo';
 // Domain Service
 export { CourseDs } from './course-ds';
 export type { CourseFacade, CourseProgram, ModulePlace } from './facade';
-// Агрегат Lesson
+// Агрегат Lesson: новый и legacy (`Legacy*`) до Ф5
 export { LegacyLessonAr } from './lesson/a-root';
 export type {
   CreateLessonCmd,
@@ -112,6 +112,10 @@ export type {
 export { GetLessonCmdSchema } from './lesson/commands/get-lesson-cmd';
 export type { Lesson, LessonArMeta } from './lesson/entity';
 export { LessonSchema } from './lesson/entity';
+export type { LessonOutline, LessonView } from './lesson/lesson.ar';
+export { LessonAr, LessonArDef } from './lesson/lesson.ar';
+export { LessonErrors } from './lesson/lesson.errors';
+export type { LessonState } from './lesson/lesson.state';
 export { LegacyLessonPolicy } from './lesson/policy';
 export type { LegacyLessonRepo } from './lesson/repo';
 export type { CourseApiModuleMeta, CourseApiModuleResolver } from './module';
@@ -172,16 +176,18 @@ export {
   ModuleSchema,
   ProjectSchema,
 } from './module/entity';
-export type { ModuleSummary } from './module/module.ar';
+export type { ModuleSummary, ProjectOutline } from './module/module.ar';
 export { ModuleAr, ModuleArDef } from './module/module.ar';
 export { ModulePolicy } from './module/module.policy';
 export type { ModuleState } from './module/module.state';
 export { LegacyModulePolicy } from './module/policy';
 export type { LegacyModuleRepo, ModuleListFilter } from './module/repo';
 export type { ModuleId as ModuleEntityId } from './module/types';
+// DQS снимка контента модуля
+export { ModuleSnapshotDqs } from './module-snapshot.dqs';
 // Общие типы
 export { Status, StatusSchema } from './status';
-// Агрегат Step
+// Агрегат Step: новый и legacy (`Legacy*`) до Ф5
 export { LegacyStepAr } from './step/a-root';
 export type {
   CreateStepCmd,
@@ -216,6 +222,10 @@ export type {
 export { StepCommonSchema, StepSchema } from './step/entity';
 export { LegacyStepPolicy } from './step/policy';
 export type { LegacyStepRepo } from './step/repo';
+export type { StepSummary, StepView } from './step/step.ar';
+export { StepAr, StepArDef } from './step/step.ar';
+export { StepErrors } from './step/step.errors';
+export type { FileVo, StepState } from './step/step.state';
 export type {
   CourseId,
   LessonId,

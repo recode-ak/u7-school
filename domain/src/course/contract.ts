@@ -30,7 +30,6 @@ export {
   GetModulePrerequisiteUcDef,
   type ModulePrerequisite,
 } from './course/uc/get-module-prerequisite.uc';
-export { GetModuleSnapshotUcDef } from './course/uc/get-module-snapshot.uc';
 export {
   GetSameModulesUcDef,
   type SameModules,
@@ -42,6 +41,9 @@ export type {
   LessonModuleError,
   LessonNotFoundUcError,
 } from './lesson/commands/errors';
+export type { LessonView } from './lesson/lesson.ar';
+export { LessonErrors } from './lesson/lesson.errors';
+export { GetLessonUcDef } from './lesson/uc/get-lesson.uc';
 export type {
   CourseModuleError,
   ModuleAccessDeniedUcError,
@@ -50,9 +52,17 @@ export type {
 export type { ModuleSummary, ModuleView } from './module/module.ar';
 export { ModuleErrors } from './module/module.errors';
 export { GetModuleUcDef } from './module/uc/get-module.uc';
+export { GetModuleSnapshotUcDef } from './module/uc/get-module-snapshot.uc';
 export { ListModulesUcDef } from './module/uc/list-modules.uc';
 export type {
   StepAccessDeniedUcError,
   StepModuleError,
   StepNotFoundUcError,
 } from './step/commands/errors';
+export type { StepView } from './step/step.ar';
+export { StepErrors } from './step/step.errors';
+export { GetStepUcDef } from './step/uc/get-step.uc';
+export {
+  GetStepsByLessonsUcDef,
+  type StepsByLesson,
+} from './step/uc/get-steps-by-lessons.uc';

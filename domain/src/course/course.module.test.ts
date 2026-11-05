@@ -13,29 +13,43 @@ import { normalize } from 'dmg-core/graph';
 import * as v from 'valibot';
 import { CourseModuleDef, GetCourseEnrollmentUcDef } from './contract';
 import { CourseArDef } from './course/course.ar';
+import { LessonArDef } from './lesson/lesson.ar';
+import { LessonErrors } from './lesson/lesson.errors';
 import { ModuleArDef } from './module/module.ar';
 import { ModuleErrors } from './module/module.errors';
+import { StepArDef } from './step/step.ar';
+import { StepErrors } from './step/step.errors';
 
 describe('CourseModuleDef — внешний модуль (D-37)', () => {
-  it('паспорт: внешний, зависит от user, Def UC без реализации', () => {
+  it('паспорт: внешний, зависит от user, 4 агрегата, 12 Def UC', () => {
     expect(CourseModuleDef.external).toBe(true);
-    expect(normalize(CourseModuleDef)).toMatchObject({
+    const passport = normalize(CourseModuleDef);
+    expect(passport).toMatchObject({
       dependsOn: ['user'],
-      aggregates: ['course', 'module'],
-      useCases: [
+      reactions: [],
+      jobs: [],
+    });
+    // Порядок в паспорте не часть контракта: сверяем состав.
+    expect([...passport.aggregates].sort()).toEqual(
+      ['course', 'lesson', 'module', 'step'].sort(),
+    );
+    expect([...passport.useCases].sort()).toEqual(
+      [
         'getCourseEnrollment',
         'getModuleEnrollment',
         'getCoursesIncludingModule',
         'getSameModules',
         'getCoursesStartingWithModule',
-        'getModuleSnapshot',
         'getModulePrerequisite',
         'getModule',
         'listModules',
-      ],
-      reactions: [],
-      jobs: [],
-    });
+        'getLesson',
+        'getStep',
+        'getStepsByLessons',
+        'getModuleSnapshot',
+      ].sort(),
+    );
+    expect(passport.useCases).toHaveLength(12);
   });
 
   it('агрегат курса — минимальный контракт: без событий, ошибка — модуль не найден', () => {
@@ -54,6 +68,28 @@ describe('CourseModuleDef — внешний модуль (D-37)', () => {
     });
     expect(Object.values(ModuleErrors).map((e) => e.code)).toEqual([
       'MODULE_NOT_FOUND',
+    ]);
+  });
+
+  it('агрегат урока: без событий, одна ошибка — LESSON_NOT_FOUND', () => {
+    expect(normalize(LessonArDef)).toMatchObject({
+      name: 'lesson',
+      events: [],
+      errors: ['LESSON_NOT_FOUND'],
+    });
+    expect(Object.values(LessonErrors).map((e) => e.code)).toEqual([
+      'LESSON_NOT_FOUND',
+    ]);
+  });
+
+  it('агрегат шага: без событий, одна ошибка — STEP_NOT_FOUND', () => {
+    expect(normalize(StepArDef)).toMatchObject({
+      name: 'step',
+      events: [],
+      errors: ['STEP_NOT_FOUND'],
+    });
+    expect(Object.values(StepErrors).map((e) => e.code)).toEqual([
+      'STEP_NOT_FOUND',
     ]);
   });
 

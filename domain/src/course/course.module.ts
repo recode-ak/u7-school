@@ -6,11 +6,16 @@ import { GetCoursesIncludingModuleUcDef } from './course/uc/get-courses-includin
 import { GetCoursesStartingWithModuleUcDef } from './course/uc/get-courses-starting-with-module.uc';
 import { GetModuleEnrollmentUcDef } from './course/uc/get-module-enrollment.uc';
 import { GetModulePrerequisiteUcDef } from './course/uc/get-module-prerequisite.uc';
-import { GetModuleSnapshotUcDef } from './course/uc/get-module-snapshot.uc';
 import { GetSameModulesUcDef } from './course/uc/get-same-modules.uc';
+import { LessonArDef } from './lesson/lesson.ar';
+import { GetLessonUcDef } from './lesson/uc/get-lesson.uc';
 import { ModuleArDef } from './module/module.ar';
 import { GetModuleUcDef } from './module/uc/get-module.uc';
+import { GetModuleSnapshotUcDef } from './module/uc/get-module-snapshot.uc';
 import { ListModulesUcDef } from './module/uc/list-modules.uc';
+import { StepArDef } from './step/step.ar';
+import { GetStepUcDef } from './step/uc/get-step.uc';
+import { GetStepsByLessonsUcDef } from './step/uc/get-steps-by-lessons.uc';
 
 /**
  * Внешний модуль курсов (D-37): реализован legacy-кодом, здесь только
@@ -24,7 +29,7 @@ export const CourseModuleDef = ModuleDef.define({
   description: 'Курсы, модули, уроки и шаги учебного контента.',
   external: true,
   dependsOn: [UserModuleDef],
-  aggregates: [CourseArDef, ModuleArDef],
+  aggregates: [CourseArDef, ModuleArDef, LessonArDef, StepArDef],
   useCases: [
     GetCourseEnrollmentUcDef,
     GetModuleEnrollmentUcDef,
@@ -35,6 +40,9 @@ export const CourseModuleDef = ModuleDef.define({
     GetModulePrerequisiteUcDef,
     GetModuleUcDef,
     ListModulesUcDef,
+    GetLessonUcDef,
+    GetStepUcDef,
+    GetStepsByLessonsUcDef,
   ],
   reactions: [],
   jobs: [],

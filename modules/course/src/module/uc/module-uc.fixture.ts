@@ -3,7 +3,13 @@ import { Role } from '@u7-scl/domain/user/contract';
 import { GuestCaller, SystemCaller, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { testAppContext } from 'dmg-core/testing';
-import type { CourseLegacy, CourseModuleDeps } from '../../course.module';
+import type {
+  CourseLegacy,
+  CourseModuleDeps,
+  CourseUser,
+} from '../../course.module';
+import { LessonRepoFake } from '../../lesson/lesson.repo.fake';
+import { StepRepoFake } from '../../step/step.repo.fake';
 import { ModuleRepoFake } from '../module.repo.fake';
 
 /** Общие данные тестов UC модуля курса (фейк репозитория, вызывающие). */
@@ -28,7 +34,8 @@ export const otherMentor = new UserCaller({
   roles: [Role.MENTOR],
 });
 export const anonymous = new GuestCaller();
-export const system = new SystemCaller({
+/** Системный вызов без человека: субъекта нет, при человеке — `CourseUser`. */
+export const system = new SystemCaller<CourseUser>({
   kind: 'useCase',
   module: 'probe',
   name: 'probe',
@@ -67,11 +74,15 @@ export type Answered = { filter?: unknown };
 export function makeEnv() {
   const ctx = testAppContext({ at: T0 });
   const modules = new ModuleRepoFake();
+  const lessons = new LessonRepoFake();
+  const steps = new StepRepoFake();
   const deps: CourseModuleDeps = {
     app: ctx.app,
     facades: new ModuleFacades(),
     legacy: {} as CourseLegacy,
     modules,
+    lessons,
+    steps,
   };
   const asked: Answered = {};
   /** Выборка репозитория отвечает модулями из `states` (в этом порядке). */

@@ -5,9 +5,13 @@ import {
   GetCourseEnrollmentUcDef,
   GetCoursesIncludingModuleUcDef,
   GetCoursesStartingWithModuleUcDef,
+  GetLessonUcDef,
   GetModuleEnrollmentUcDef,
+  GetModuleSnapshotUcDef,
   GetModuleUcDef,
   GetSameModulesUcDef,
+  GetStepsByLessonsUcDef,
+  GetStepUcDef,
   ListModulesUcDef,
 } from '@u7-scl/domain/course/contract';
 import {
@@ -34,7 +38,9 @@ import {
 import { expectOk, testAppContext } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { type CourseLegacy, createCourseModule } from './course.module';
+import { LessonRepoFake } from './lesson/lesson.repo.fake';
 import { ModuleRepoFake } from './module/module.repo.fake';
+import { StepRepoFake } from './step/step.repo.fake';
 
 // Потребитель модуля курсов — UC другого модуля: объявляет
 // `getCourseEnrollment` в `calls` и вызывает его через `this.call` (D-43);
@@ -147,7 +153,6 @@ function legacy(
     },
     whichCoursesIncludeModule: async () => [],
     whichModulesAreSame: async () => [],
-    getModuleSnapshot: async () => [],
     getCourseByModuleId: async () => undefined,
     getModule: async () => {
       throw new Error('не вызывается');
@@ -167,6 +172,8 @@ function depsWith(courseLegacy: CourseLegacy): ModuleDeps {
     app,
     facades: new ModuleFacades(),
     modules: new ModuleRepoFake(),
+    lessons: new LessonRepoFake(),
+    steps: new StepRepoFake(),
     legacy: courseLegacy,
   });
   return { app, facades: new ModuleFacades([new ModuleFacade(course)]) };
@@ -209,6 +216,8 @@ describe('модуль курсов через фасад (D-43, адаптер 
         app,
         facades: new ModuleFacades(),
         modules: new ModuleRepoFake(),
+        lessons: new LessonRepoFake(),
+        steps: new StepRepoFake(),
         legacy: legacy(true).facade,
       }),
     );
@@ -223,6 +232,8 @@ describe('модуль курсов через фасад (D-43, адаптер 
         app,
         facades: new ModuleFacades(),
         modules: new ModuleRepoFake(),
+        lessons: new LessonRepoFake(),
+        steps: new StepRepoFake(),
         legacy: legacy(true).facade,
       }),
     );
@@ -235,11 +246,34 @@ describe('модуль курсов через фасад (D-43, адаптер 
         app,
         facades: new ModuleFacades(),
         modules: new ModuleRepoFake(),
+        lessons: new LessonRepoFake(),
+        steps: new StepRepoFake(),
         legacy: legacy(true).facade,
       }),
     );
     expect(facade.serves(GetModuleUcDef)).toBe(true);
     expect(facade.serves(ListModulesUcDef)).toBe(true);
+  });
+
+  it('модуль обслуживает UC срезов lesson, step и снимок модуля (Ф2)', () => {
+    const facade = new ModuleFacade(
+      createCourseModule({
+        app,
+        facades: new ModuleFacades(),
+        modules: new ModuleRepoFake(),
+        lessons: new LessonRepoFake(),
+        steps: new StepRepoFake(),
+        legacy: legacy(true).facade,
+      }),
+    );
+    for (const def of [
+      GetLessonUcDef,
+      GetStepUcDef,
+      GetStepsByLessonsUcDef,
+      GetModuleSnapshotUcDef,
+    ]) {
+      expect(facade.serves(def)).toBe(true);
+    }
   });
 });
 
@@ -256,6 +290,8 @@ describe('getModuleEnrollment: адаптер над getModulePlace', () => {
       app,
       facades: new ModuleFacades(),
       modules: new ModuleRepoFake(),
+      lessons: new LessonRepoFake(),
+      steps: new StepRepoFake(),
       legacy: courseLegacy,
     });
     return new ModuleFacade(course);
@@ -301,6 +337,8 @@ describe('батч-вопросы о зачислении: ответ legacy к�
         app,
         facades: new ModuleFacades(),
         modules: new ModuleRepoFake(),
+        lessons: new LessonRepoFake(),
+        steps: new StepRepoFake(),
         legacy: {
           ...base,
           whichCoursesIncludeModule: async (moduleId, ids) => {
@@ -357,6 +395,8 @@ describe('getCoursesStartingWithModule: адаптер над getModulePlace + w
         app,
         facades: new ModuleFacades(),
         modules: new ModuleRepoFake(),
+        lessons: new LessonRepoFake(),
+        steps: new StepRepoFake(),
         legacy: {
           ...base,
           getModulePlace: async (moduleId) => {
