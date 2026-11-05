@@ -57,13 +57,13 @@
 ## Фаза 2: Срез `lesson` + `step` + снимок
 
 - [x] Task: `migrator` S0 (flash): legacy `Lesson*`/`Step*` (Ar, Policy, Repo, JsonRepo) → `Legacy*` (бриф, шаг 0) 48ae3c7c
-- [ ] Task: `dmg-test-designer`: red-тесты (Sonnet)
-    - [ ] агрегаты `lesson`, `step`; UC `get-lesson`, `get-step`, `get-steps-by-lessons`; видимость от модуля;
-    - [ ] `GetModuleSnapshotUcDef` настоящим UC: снимок (`ContentSnapshotVo`, сборка — DQS вместо `CourseDs.buildSnapshot`) только из опубликованного;
-    - [ ] перенос сценариев `content-snapshot*.test.ts`, `course-ds.test.ts`, `lesson/*`, `step/*` (список — в отчёте).
-- [ ] Task: `migrator`, домен и прикладной слой (flash); адаптер `get-module-snapshot` заменён настоящим UC
-- [ ] Task: `dmg-data-keeper` (flash): чтение `lessons.json`, `steps.json`
-- [ ] Task: `dmg-reviewer` (Opus)
+- [x] Task: `dmg-test-designer`: red-тесты (Sonnet) ffca0443
+    - [x] агрегаты `lesson`, `step`; UC `get-lesson`, `get-step`, `get-steps-by-lessons`; видимость от модуля;
+    - [x] `GetModuleSnapshotUcDef` настоящим UC: снимок (`ContentSnapshotVo`, сборка — DQS вместо `CourseDs.buildSnapshot`) только из опубликованного;
+    - [x] перенос сценариев `content-snapshot*.test.ts`, `course-ds.test.ts`, `lesson/*`, `step/*` (список — в отчёте).
+- [x] Task: `migrator`, домен и прикладной слой (flash); адаптер `get-module-snapshot` заменён настоящим UC ffca0443
+- [x] Task: `dmg-data-keeper` (flash): чтение `lessons.json`, `steps.json` ffca0443
+- [~] Task: `dmg-reviewer` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 2:**

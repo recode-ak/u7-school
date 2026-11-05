@@ -237,3 +237,24 @@
 6. Сценарии таблицы «Legacy-тесты и их судьба» перенесены (список сверяет reviewer); `git diff --numstat` — старые тесты не потеряны, кроме перечисленных «не переносятся» и переехавших; тест снимка проверяет: гость + опубликованный модуль, гость + черновой модуль (`ACCESS_DENIED`), черновой урок пропущен, пустой модуль, не найден.
 7. `CourseModuleDef`: `external: true`, 4 агрегата, 12 UC; `ArchChecker.defsOf([CourseModuleDef]).report()` пуст; `stream` `createStream` продолжает проходить свои тесты без правок.
 8. `git status --short data/` пуст; `sha256sum data/courses/{lessons,steps,modules}.json` до и после одинаков; в `platform/app/tests/u7-app.test.ts` создание потока читает снимок через настоящий UC.
+
+## Отчёты
+
+### S0 — `migrator` (flash, `cd-F2-s0`), 48ae3c7c
+33 файла, 8 имён → `Legacy*` целым словом, `biome --write` (переносы строк, порядок импортов). Тесты `course` 535 → 535, `check` зелёный.
+
+### Шаг 1 — `dmg-test-designer` (Sonnet)
+Новые (домен): `lesson/lesson.{fixture,state.test,ar.test}.ts` (21+12), `step/step.{fixture,state.test,ar.test}.ts` (28+15), `module-snapshot.dqs.test.ts` (19), Def-тесты `lesson/uc/get-lesson` (6), `step/uc/{get-step,get-steps-by-lessons}` (6+5), `module/uc/get-module-snapshot` (6, переезд). Прикладной слой: порты и фейки `lesson/lesson.repo{,.fake}.ts`, `step/step.repo{,.fake}.ts`, стенд `content-uc.fixture.ts` (`makeContentEnv`), UC-тесты `get-lesson` (17), `get-step` (17), `get-steps-by-lessons` (21), `module/uc/get-module-snapshot` (20), `infra/{lesson,step}.json-repo.test.ts` (19+22, `mkdtemp`). Изменены: `module.ar.test.ts` (+7 `publishedOutline`), тесты состава/сборки (`course.module.test.ts` ×2, `get-module-prerequisite.uc.test.ts`). Удалены переехавшие тесты снимка (`course/uc/get-module-snapshot.uc.test.ts` ×2).
+Перенос — по таблице брифа целиком, сверх таблицы не перенесено ничего; legacy-тесты не тронуты.
+Ожидания: экспорт `LessonAr/ArDef/State`, `StepAr/ArDef/State` из `@u7-scl/domain/course`; контракт — `LessonErrors`, `StepErrors`, 3 новых Def, `GetModuleSnapshotUcDef` с `module/uc/`; `ModuleAr.publishedOutline()` (статус модуля не фильтрует); `new ModuleSnapshotDqs(module, lessons).build()`; `StepView` — variant по `kind`; `UNAUTHORIZED` для `system` у `getLesson/getStep/getStepsByLessons`; классы UC `(deps, CourseModuleDef)`; `LessonJsonRepo`/`StepJsonRepo(filePath)`, `findByIds` в порядке файла, нет файла → `[]`. Не закреплено: порядок «видимость модуля / чтение уроков» в снимке.
+Итог: 503 pass, 25 fail, 17 ошибок загрузки — 19 red-файлов (17 «Cannot find module/export», `module.ar.test.ts`, Def снимка со старым `aggregate`). Проверить после реализации: «No overload matches» `step.ar.test.ts:54,118`, `module/uc/get-module-snapshot.uc.test.ts:79`.
+
+### Шаг 2 — `migrator` (flash, `cd-F2-domain`)
+Файлы Р1–Р6, Р10 вручную (генератор блокировали готовые тесты). Отклонения: `version` во `LessonView`/`StepView` — своей обязательной схемой (тест требует отказа на `version: undefined`; `v.nonOptional` не переводится в JSON Schema); `StepsByLesson` — только через `contract` (в `index.ts` занят legacy). Эскалация: 4 ошибки `tsc` в тестах (расширение литералов, `readonly` в `it.each`) — правка типов отдана шагу 3.
+
+### Шаг 3 — `migrator` (flash, `cd-F2-app`), ffca0443
+UC `GetLessonUc`, `GetStepUc`, `GetStepsByLessonsUc` (модуль — один раз на `moduleId`, решение правила кешируется), `GetModuleSnapshotUc` (`ModuleSnapshotDqs`, `steps` не читаются); `LessonJsonRepo`, `StepJsonRepo`; сборка `u7-app.ts`; адаптер снимка удалён. Тесты — только типы: 4 по эскалации + стенд `module-uc.fixture.ts` (`SystemCaller<CourseUser>`) и `asSystemFor` в тесте снимка. `_app-factory.ts` не менялся (только legacy). `check` — 4601 pass.
+
+### Данные — `dmg-data-keeper` (flash, `cd-F2-data`)
+Совместимо на чтение. Строго читаются 248/248 уроков, 1161/1161 шаг, фикстуры 69/69 и 71/71. Снимки 4 модулей совпадают с legacy побайтово (184 урока, 918 шагов), 32 черновых шага в `stepIds` (С1 подтверждено), висячих ссылок 0. `getStepsByLessons` (гость): 1128 = 1129 − 1 шаг вне уроков, JSON совпал. Время: новый 24–32 мс, legacy 241–257 мс (Т7 — кеш не нужен). `sha256` до/после совпадает.
+Риски: первый `save` нового репозитория делает `lessons/steps.json` нечитаемым для legacy (0/248), следующий legacy `save` оставляет 1 запись — запрет Т11 до Ф5 и бэкап перед первым `save` (как Ф1). Наблюдение к Ф4: DMG-вызов пишет в `data/oplog` ~9 КБ на снимок и ~18 КБ на `getStepsByLessons` — при вызове на каждый рендер навигации лог заметно растёт.
