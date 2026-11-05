@@ -76,20 +76,20 @@
 
 - [x] Task: `dmg-tech-lead`: бриф `slices/course.md` (Sonnet); приёмка — orchestrator (Opus); решения — TR-56
 - [x] Task: `migrator` S0 (flash): legacy `CourseAr`/`CoursePolicy`/`CourseRepo`/`CourseJsonRepo` → `Legacy*`, снять реэкспорт legacy-типов из `contract.ts` (бриф, шаг 0) 82106df3
-- [ ] Task: `dmg-test-designer`: характеризация и red-тесты (Sonnet)
-    - [ ] state: `moduleIds`, `phases: [{ title, track?, fromModuleId }]`, `F.timestamp`; инварианты меток (в программе, по порядку, первый — с первого модуля);
-    - [ ] DQS «этапы курса» (`stages`), «место модуля», «предыдущий модуль»; курс без этапов, с одним, с несколькими;
-    - [ ] UC `get-course` (со `stages`), `list-courses`, `get-course-by-module`, `get-module-place`; шесть внешних UC; вердикт `getModulePrerequisite` (`admitted`);
-    - [ ] `stream`: правило `prerequisitePassed` и `EnrollStudentUc` на вердикте, `passedModuleIds` из пройденных потоков;
-    - [ ] репозиторий `courses.json`: строгий новый формат, старый — ошибка.
-- [ ] Task: `migrator`, домен и прикладной слой `course` (flash); адаптеры TR-11 сняты
-- [ ] Task: `migrator`, клиент `stream` (flash): `student.rules.ts` на вердикте, `enroll-student` собирает `passedModuleIds`, `StreamAr.teachesModule` и его тест удалены, стенд `student-uc.fixture.ts`
-- [ ] Task: `migrator`, тестовые миры (flash): `runners/u7-bot/tests/worlds/*` на новый формат, `bun run seed:fixtures`
+- [x] Task: `dmg-test-designer`: характеризация и red-тесты (Sonnet) 215964f3
+    - [x] state: `moduleIds`, `phases: [{ title, track?, fromModuleId }]`, `F.timestamp`; инварианты меток (в программе, по порядку, первый — с первого модуля);
+    - [x] DQS «этапы курса» (`stages`), «место модуля», «предыдущий модуль»; курс без этапов, с одним, с несколькими;
+    - [x] UC `get-course` (со `stages`), `list-courses`, `get-course-by-module`, `get-module-place`; шесть внешних UC; вердикт `getModulePrerequisite` (`admitted`);
+    - [x] `stream`: правило `prerequisitePassed` и `EnrollStudentUc` на вердикте, `passedModuleIds` из пройденных потоков;
+    - [x] репозиторий `courses.json`: строгий новый формат, старый — ошибка.
+- [x] Task: `migrator`, домен и прикладной слой `course` (flash); адаптеры TR-11 сняты 215964f3
+- [x] Task: `migrator`, клиент `stream` (flash): `student.rules.ts` на вердикте, `enroll-student` собирает `passedModuleIds`, `StreamAr.teachesModule` и его тест удалены, стенд `student-uc.fixture.ts` 215964f3
+- [x] Task: `migrator`, тестовые миры (flash): `runners/u7-bot/tests/worlds/*` на новый формат, `bun run seed:fixtures` 215964f3
 - [ ] Task: Перевод `data/courses/courses.json` (только этот файл):
     - [ ] `bun run backup:adhoc course-dmg-phases --courses` (Opus);
     - [ ] `dmg-data-keeper` (flash): перевод «Fullstack JS» (`moduleIds` — 4 id, этап «Основы JS» с `fromModuleId` первого), round-trip, откат из бэкапа, дата без секунд;
     - [ ] отдельный коммит `courses.json` (Opus).
-- [ ] Task: Записать красную зону в `debt.md`: поимённо legacy-UC курса, stories и тесты каталога/навигации, integration/e2e, тесты состава модуля; критерий снятия — конец Ф4 (Opus)
+- [x] Task: Записать красную зону в `debt.md` (TR-57): поимённо legacy-UC курса, stories и тесты каталога/навигации, integration/e2e, тесты состава модуля; критерий снятия — конец Ф4 (Opus) 215964f3
 - [ ] Task: `dmg-reviewer` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
 
