@@ -75,20 +75,20 @@
 - Сценарии старых тестов перенесены (список — в отчёте `dmg-test-designer`).
 - `bun run check` зелёный, кроме тестов из записи красной зоны. `git status data/` чист.
 
-## Фаза 2: Срез UI
+## Фаза 2: Срез UI [checkpoint: de93d4ce]
 
 Бриф — [slices/ui.md](./slices/ui.md), решения — TR-50. Порядок задач изменён (Т5): red → механический перевод остальных тестов → UI.
 
-- [x] Task: `dmg-tech-lead`: бриф `slices/ui.md` (Sonnet), приёмка orchestrator (Opus); TR-50
-- [ ] Task: `dmg-test-designer` (Sonnet), шаг 1 брифа:
+- [x] Task: `dmg-tech-lead`: бриф `slices/ui.md` (Sonnet), приёмка orchestrator (Opus); TR-50 ee017cbc
+- [x] Task: `dmg-test-designer` (Sonnet), шаг 1 брифа cfa58ba1:
     - кит `questionnaire-dmg.test-kit.ts`;
     - red-тесты подписок на 5 Def-событий (адрес через `get-user`, `ownerInfo.courseId` из payload, `invited` — экран по `get-current`) и состава подписок;
     - red-тесты вызовов 6 `*UcDef` и отказов (`ucErrorScreen`, `CHOICE_EXPECTED` с приставкой «Ошибка валидации»);
     - e2e `questionnaire-events.e2e.test.ts` на каждое событие, включая отрицательные
-- [ ] Task: `migrator` (flash), шаг 2 брифа: перевод остальных тестов `fill.dialog`, `invite.dialog`, `inventory`, e2e `questionnaire-ux`, `wish-questionnaire` на `dmgDispatch`/Def-имена (число тестов не сокращать)
-- [ ] Task: UI (Sonnet, `migrator`), шаг 3 брифа: `fill.story`, `invite.story`, `render.ts` (`ucErrorScreen`) на `dispatchUc` и Def-подписки; удалить `legacy-events.ts`; `ui-spec.md`. Снять TR-49 (1), (2) в `debt.md` (orchestrator)
-- [ ] Task: `dmg-reviewer` (Opus)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
+- [x] Task: `migrator` (flash), шаг 2 брифа: перевод остальных тестов `fill.dialog`, `invite.dialog`, `inventory`, e2e `questionnaire-ux`, `wish-questionnaire` на `dmgDispatch`/Def-имена (число тестов не сокращать) cfa58ba1
+- [x] Task: UI (Sonnet, `migrator`), шаг 3 брифа: `fill.story`, `invite.story`, `render.ts` (`ucErrorScreen`) на `dispatchUc` и Def-подписки; удалить `legacy-events.ts`; `ui-spec.md`. Снять TR-49 (1), (2) в `debt.md` (orchestrator) cfa58ba1
+- [x] Task: `dmg-reviewer` (Opus) cfa58ba1
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 2** (полностью — раздел «Критерии приёмки» брифа):
 - `grep -rnE "['\"]questionnaire:(start|invite|abandon-warning|continue-invite|abandon)['\"]" runners` пуст; `legacy-events.ts` удалён.
