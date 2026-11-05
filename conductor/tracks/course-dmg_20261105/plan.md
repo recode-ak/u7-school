@@ -72,7 +72,7 @@
 - Сценарии старых тестов перенесены (список в отчёте сверен).
 - `check` зелёный, тесты не ниже базовой линии, `git status data/` чист.
 
-## Фаза 3: Срез `course` — программа, этапы, `stream`, данные
+## Фаза 3: Срез `course` — программа, этапы, `stream`, данные [checkpoint: 21e17c7d]
 
 - [x] Task: `dmg-tech-lead`: бриф `slices/course.md` (Sonnet); приёмка — orchestrator (Opus); решения — TR-56
 - [x] Task: `migrator` S0 (flash): legacy `CourseAr`/`CoursePolicy`/`CourseRepo`/`CourseJsonRepo` → `Legacy*`, снять реэкспорт legacy-типов из `contract.ts` (бриф, шаг 0) 82106df3
@@ -91,7 +91,7 @@
     - [x] отдельный коммит `courses.json` (Opus).
 - [x] Task: Записать красную зону в `debt.md` (TR-57): поимённо legacy-UC курса, stories и тесты каталога/навигации, integration/e2e, тесты состава модуля; критерий снятия — конец Ф4 (Opus) 215964f3
 - [x] Task: `dmg-reviewer` (Opus); решения — TR-58, правки af6946b7
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 3:**
 - grep-критерии домена по `course` пусты (кроме удаляемого legacy).
