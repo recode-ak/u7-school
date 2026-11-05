@@ -346,3 +346,9 @@
 Бэкап `data/backup-adhoc/2026-11-05T145604Z-course-dmg-phases` (побайтово = исходному). На копии: эталон legacy (место 4 модулей, enrollment, пререквизит) = новому коду; `stages` = прежним `phases`; даты без секунд читаются; старый формат — `ValiError`; round-trip; откат из бэкапа побайтовый; фикстуры 6/6. Diff `courses.json` — только `moduleIds`/`fromModuleId`. Пустой снимок `…T145550Z-course-dmg-phases` (только `meta.txt`) — от вызова скрипта с флагом не на месте (`--courses` первым аргументом).
 
 Расход flash Ф3: 7 запусков, $0.67.
+
+### Ревью — `dmg-reviewer` (Opus)
+0 `error`, 4 `warn` (правило стартового модуля в UC мимо `ModuleCoursesDqs`; решение по статусу в `get-course-enrollment`; нет DEBT для С2; CODE-04 в комментариях), 8 `info`, 5 кандидатов в чистку тестов. Красная зона TR-57 полна, дефекта нового кода нет; уточнён механизм `wish-flow`. Решения — TR-58, долг С2 — DEBT-50.
+
+### Правки по ревью — `migrator` (flash, `cd-F3-fix`), af6946b7
+Все `warn` и `info` по коду, кроме общей `versionOut` (TR-58). Тесты затронутых файлов 202 → 191 (дубли UC ↔ DQS/Ar, журнал TST-08). `domain modules platform` 3561/0; полный прогон 4892 / 29 fail — ровно TR-57.

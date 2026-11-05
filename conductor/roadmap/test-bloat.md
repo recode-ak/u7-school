@@ -32,6 +32,7 @@
 | 2026-11-05 | `course-dmg` | `modules/course/src/course.module.test.ts` (блоки адаптеров над `legacy`) ↔ `modules/course/src/course/uc/get-*.uc.test.ts`, `course.module.serves.test.ts` | сценарии шести внешних UC после замены адаптеров | почищено в треке |
 | 2026-11-05 | `course-dmg` | `domain/src/stream/stream/stream.ar.student.test.ts` (`teachesModule`) ↔ `domain/src/stream/passed-modules.dqs.test.ts` | сравнение модуля потока после перевода пререквизита на вердикт | почищено в треке |
 | 2026-11-05 | `course-dmg` | legacy `modules/course/src/api/course/*-uc.test.ts`, `domain/src/course/course/{policy,a-root}.test.ts` ↔ `domain/src/course/course/course.{ar,state}.test.ts`, `module-prerequisite.dqs.test.ts`, `modules/course/src/course/uc/*.uc.test.ts` | сценарии legacy-UC курса, перенесённые в Def | удалить с legacy-кодом в Ф5 |
+| 2026-11-05 | `course-dmg` | `modules/course/src/course/uc/{get-module-prerequisite,get-course-by-module,get-module-place}.uc.test.ts`, `modules/stream/src/student/uc/enroll-student.uc.test.ts`, `course.module.serves.test.ts`, `student.rules.test.ts` ↔ `module-prerequisite.dqs.test.ts`, `module-courses.dqs.test.ts`, `course.ar.test.ts` (`placeOf`), `passed-modules.dqs.test.ts` | правила DQS/Ar, повторённые в тестах UC (ревью Ф3) | почищено в треке |
 
 ## 4. Как пополнять
 

@@ -44,3 +44,4 @@
 | Ф3 | `cd-F3-stream` (migrator, клиент `stream`) | flash | 0.068 | 68 | — | 0 | — |
 | Ф3 | `cd-F3-worlds` (migrator, тестовые миры) | flash | 0.103 | 75 | — | 0 | — |
 | Ф3 | `cd-F3-data` (dmg-data-keeper, перевод `courses.json`) | flash | 0.066 | 58 | — | 0 | — |
+| Ф3 | `cd-F3-fix` (migrator, правки ревью + чистка дублей) | flash | 0.102 | 53 | — | 0 | 0 (ревью до правок: 0 `error`, 4 `warn`) |

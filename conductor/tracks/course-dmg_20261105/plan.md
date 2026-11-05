@@ -90,7 +90,7 @@
     - [x] `dmg-data-keeper` (flash): перевод «Fullstack JS» (`moduleIds` — 4 id, этап «Основы JS» с `fromModuleId` первого), round-trip, откат из бэкапа, дата без секунд;
     - [x] отдельный коммит `courses.json` (Opus).
 - [x] Task: Записать красную зону в `debt.md` (TR-57): поимённо legacy-UC курса, stories и тесты каталога/навигации, integration/e2e, тесты состава модуля; критерий снятия — конец Ф4 (Opus) 215964f3
-- [ ] Task: `dmg-reviewer` (Opus)
+- [x] Task: `dmg-reviewer` (Opus); решения — TR-58, правки af6946b7
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 3:**
