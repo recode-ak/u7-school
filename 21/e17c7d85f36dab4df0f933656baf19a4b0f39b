@@ -1,0 +1,7 @@
+Фаза 3 course-dmg (срез course — программа, этапы, stream, данные) — верификация, автономно (agents.md §9).
+Команда: CI=true bun test — 4892 pass / 29 fail; все 29 — красная зона TR-57 (8 файлов runners/u7-bot, legacy-UC курса не читают новый формат), сверено поимённо. domain modules platform — 3561 / 0. bun run check красный только на списке TR-57 (гейт Ф3 по плану).
+arch:check — 0 нарушений. Критерии: teachesModule в stream — пусто; legacy. в modules/course/src/course — пусто; курс без этапов — тесты course.state/course.ar.
+Данные: бэкап data/backup-adhoc/2026-11-05T145604Z-course-dmg-phases до перевода; courses.json — отдельный коммит 5534ac1b (только moduleIds/fromModuleId); dmg-data-keeper: эталон legacy совпал, откат побайтовый. git status data/ — пуст.
+dmg-reviewer (Opus): 0 error, 4 warn — все исправлены (af6946b7), решения TR-58, долг С2 — DEBT-50.
+Решения Нурболата: С1 (видимость как v0.2.6), С2 (в debt), С3 (без моста).
+Ручная верификация пропущена (автономный режим).
