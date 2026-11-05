@@ -17,7 +17,7 @@
 
 **Красная зона Ф3–Ф4.** Ф1–Ф2 аддитивны: legacy-UC `course` живут рядом с Def, `check` зелёный. С Ф3 (строгий новый формат `courses.json`) падают legacy-UC курса, stories каталога/навигации и их integration/e2e. Гейт Ф3 — `check` зелёный, кроме поимённого списка в `debt.md`; критерий снятия — конец Ф4.
 
-## Фаза 0: База и решения
+## Фаза 0: База и решения [checkpoint: 1a576c04]
 
 - [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/course` и `modules/course`, `dmg-core` `bun test`. Каркас раздела «DeepSeek» (Opus) b1d57ddb
 - [x] Task: Записать решения spec в TR (`debt.md`) и `decisions.md` (Opus): cf07c035
@@ -27,7 +27,7 @@
     - [x] порядок срезов, аддитивные Ф1–Ф2, план красной зоны Ф3–Ф4.
 - [x] Task: `dmg-tech-lead`: брифы `slices/module.md`, `slices/lesson-step.md` (Sonnet). Обязательно: способ получить роль и авторство для Policy видимости при субъекте `Identified` (сверка с `wish`/`stream`; если нужен `user` — вопрос Нурболату, D-41); список legacy-тестов на перенос; ID `rules.md` 3dc0da16
 - [x] Task: orchestrator проверяет брифы (Opus). Вопросы перепроектирования — Нурболату 3dc0da16
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md; автономно) 1a576c04
 
 **Критерии приёмки Фазы 0:**
 - Базовая линия (pass/fail по командам) — в `summary.md`.
