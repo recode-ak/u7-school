@@ -36,7 +36,8 @@
 
 ## Фаза 1: Срез `module`
 
-- [ ] Task: `dmg-test-designer`: характеризация на `../u7-school-v0.2.6` и red-тесты (Sonnet)
+- [x] Task: `migrator` S0 (flash): legacy `ModuleAr`/`ModulePolicy`/`ModuleRepo`/`ModuleJsonRepo` → `Legacy*` (бриф, шаг 0) 3c4faa9d
+- [~] Task: `dmg-test-designer`: характеризация на `../u7-school-v0.2.6` и red-тесты (Sonnet)
     - [ ] state `Module` (проекты — VO, `status`, `tags`) с `F.timestamp`, чтение дат без секунд;
     - [ ] DQS/Policy видимости: автор/админ видит всё, остальным — опубликованное (замена `#filterPublished`, DEBT-10);
     - [ ] UC `get-module`, `list-modules`; ошибки `MODULE_NOT_FOUND`, `MODULE_ACCESS_DENIED`;
