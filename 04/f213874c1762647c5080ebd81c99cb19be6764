@@ -1,0 +1,3 @@
+Верификация Ф3 (автономно): bun run check — 4216 pass, 0 fail; test:bot — 1107 pass, 0 fail; tsc, lint, arch:check зелёные; grep-критерии плана Ф3 пусты, у QuestionnaireModuleDef нет external; git status data/ чист. dmg-reviewer (Opus): error нет, warn (package.json пакета) исправлен, 3 info — в Ф4. dmg-data-keeper не вызывался (TR-51: формат не менялся). Видимых изменений бота нет; call-uc для анкет снова работает.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
