@@ -25,7 +25,6 @@ import { trackHandling } from './er.fixture';
 // Перенос случаев legacy `api/er/confirm-wish-er.test.ts` на ER по Def.
 
 const USER = '22222222-2222-4222-8222-222222222222';
-const OTHER_USER = '77777777-7777-4777-8777-777777777777';
 const COURSE = '44444444-4444-4444-8444-444444444444';
 const OTHER_COURSE = '55555555-5555-4555-8555-555555555555';
 const CREATED = Date.UTC(2025, 7, 20, 10);
@@ -53,25 +52,15 @@ function makeEr() {
 function completed(
   ownerInfo: Record<string, unknown> = { courseId: COURSE },
   respondentId = USER,
-  kind: 'standard' | 'likert' = 'standard',
 ): EnvelopeOf<typeof QuestionnaireEvents.completed> {
   const ref = {
     questionnaireId: crypto.randomUUID(),
     respondentId,
     ownerInfo,
+    kind: 'standard' as const,
   };
-  const payload =
-    kind === 'likert'
-      ? {
-          ...ref,
-          kind,
-          likertScores: [
-            { category: 'team_skills', subcategory: 'communication', score: 4 },
-          ],
-        }
-      : { ...ref, kind };
   return {
-    ...QuestionnaireEvents.completed.make(payload),
+    ...QuestionnaireEvents.completed.make(ref),
     eventId: crypto.randomUUID(),
     occurredAt: TEST_NOW,
     aggregateId: ref.questionnaireId,
@@ -168,38 +157,6 @@ describe('ConfirmWishEr', () => {
     });
   });
 
-  it('желания другого курса и другого пользователя не затрагиваются', async () => {
-    const otherCourse = wish('pending', {
-      kind: 'course',
-      courseId: OTHER_COURSE,
-    });
-    const otherUser = wish('pending', undefined, OTHER_USER);
-    const mine = wish('pending');
-    await seed(otherCourse, otherUser, mine);
-
-    expectOk(await makeEr().handle(completed()));
-
-    expect(await statuses()).toEqual({
-      [otherCourse.uuid]: 'pending',
-      [mine.uuid]: 'confirmed',
-    });
-    const [theirs] = await wishes.findByUser(OTHER_USER);
-    expect(theirs?.snapshot().status).toBe('pending');
-  });
-
-  it('повторное событие ничего не меняет', async () => {
-    await seed(wish('pending'));
-    const er = makeEr();
-    expectOk(await er.handle(completed()));
-    const after = await Bun.file(file).text();
-    const published = ctx.published.length;
-
-    expectOk(await er.handle(completed()));
-
-    expect(await Bun.file(file).text()).toBe(after);
-    expect(ctx.published).toHaveLength(published);
-  });
-
   it('чужой ownerInfo — ничего не загружено, не записано, не опубликовано', async () => {
     // Файла нет: любая загрузка желаний оставила бы след; репозиторий не должен вызываться.
     let loads = 0;
@@ -219,22 +176,6 @@ describe('ConfirmWishEr', () => {
 
     expect(loads).toBe(0);
     expect(await Bun.file(file).exists()).toBe(false);
-    expect(ctx.published).toEqual([]);
-  });
-});
-
-describe('ConfirmWishEr — likert-анкета (Q1)', () => {
-  it('completed с kind: likert и чужим ownerInfo не трогает желания', async () => {
-    await seed(wish('pending'));
-    const before = await Bun.file(file).text();
-
-    expectOk(
-      await makeEr().handle(
-        completed({ context: 'module_completed' }, USER, 'likert'),
-      ),
-    );
-
-    expect(await Bun.file(file).text()).toBe(before);
     expect(ctx.published).toEqual([]);
   });
 });

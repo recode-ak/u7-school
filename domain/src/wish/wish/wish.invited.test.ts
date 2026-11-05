@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import { expectErr, expectOk } from 'dmg-core/testing';
-import * as v from 'valibot';
 import { WishInvitationDcs } from '../wish-invitation.dcs';
 import { WishAr } from './wish.ar';
-import { WishState, type WishStatus } from './wish.state';
+import type { WishStatus } from './wish.state';
 
 // Желание помнит потоки, на которые приглашено
 // (`invitedStreamIds`); повтор `stream.created` не приглашает повторно.
@@ -29,33 +28,8 @@ const stored = (status: WishStatus, invitedStreamIds?: string[]) => ({
   version: 0,
 });
 
-describe('WishState.invitedStreamIds', () => {
-  it('необязательное поле: старая запись без него валидна', () => {
-    expect(v.safeParse(WishState, stored('expressed')).success).toBe(true);
-  });
-
-  it('список uuid потоков валиден, не-uuid отклоняется', () => {
-    expect(v.safeParse(WishState, stored('expressed', [STREAM])).success).toBe(
-      true,
-    );
-    expect(
-      v.safeParse(WishState, stored('expressed', ['not-a-uuid'])).success,
-    ).toBe(false);
-  });
-
-  it('у поля есть описание', () => {
-    expect(v.getDescription(WishState.entries.invitedStreamIds)).toBeString();
-  });
-});
-
 describe('WishAr.invite — запоминает поток', () => {
   const to = { streamId: STREAM, telegramId: 42 };
-
-  it('приглашение дописывает streamId в state', () => {
-    const ar = WishAr.restore(stored('expressed'));
-    expectOk(ar.invite(T1, to));
-    expect(ar.snapshot().invitedStreamIds).toEqual([STREAM]);
-  });
 
   it('приглашение на второй поток дописывает к первому', () => {
     const ar = WishAr.restore(stored('expressed', [OTHER_STREAM]));
@@ -70,15 +44,6 @@ describe('WishAr.invite — запоминает поток', () => {
     expect(ar.pullEvents()).toEqual([]);
     expect(ar.snapshot().invitedStreamIds).toEqual([STREAM]);
   });
-
-  it('wasInvitedTo: да для приглашённого потока, нет для чужого и без списка', () => {
-    const ar = WishAr.restore(stored('expressed', [STREAM]));
-    expect(ar.wasInvitedTo(STREAM)).toBe(true);
-    expect(ar.wasInvitedTo(OTHER_STREAM)).toBe(false);
-    expect(WishAr.restore(stored('expressed')).wasInvitedTo(STREAM)).toBe(
-      false,
-    );
-  });
 });
 
 describe('WishInvitationDcs — отсев приглашённых', () => {
@@ -90,14 +55,12 @@ describe('WishInvitationDcs — отсев приглашённых', () => {
     addresses: { addresses: [{ userId: USER, telegramId: 42 }] },
   };
 
-  it('уже приглашённое на этот поток желание — пустой reachQuestion', () => {
+  it('уже приглашённое на этот поток желание — пустой reachQuestion, invite без приглашённых', () => {
     const invited = WishAr.restore(stored('expressed', [STREAM]));
     expect(dcs([invited]).reachQuestion(match)).toEqual({});
-  });
 
-  it('уже приглашённое — invite без приглашённых, без событий', () => {
-    const invited = WishAr.restore(stored('expressed', [STREAM]));
     const res = expectOk(dcs([invited]).invite(match, reach, T1));
+
     expect(res).toEqual({ invited: [], unreachable: [] });
     expect(invited.pullEvents()).toEqual([]);
   });

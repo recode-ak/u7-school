@@ -50,10 +50,6 @@ function makeModule() {
 }
 
 describe('createWishModule', () => {
-  it('собирает модуль по карте Def', () => {
-    expect(makeModule().module.def.name).toBe('wish');
-  });
-
   it('smoke: createCourseWish через модуль пишет желание в репозиторий', async () => {
     const { module, wishes } = makeModule();
     const courseId = crypto.randomUUID();

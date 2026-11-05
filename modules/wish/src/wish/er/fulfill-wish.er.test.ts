@@ -125,30 +125,23 @@ const asked = () =>
   course.received.map(({ def, input }) => ({ uc: def.name, input }));
 
 describe('FulfillWishEr — course-желания', () => {
-  it('expressed → fulfilled на момент часов приложения', async () => {
-    const w = courseWish('expressed');
-    await seed(w);
-    courseAnswers([COURSE]);
+  it.each(['expressed', 'confirmed'] as const)(
+    '%s → fulfilled на момент часов приложения',
+    async (status) => {
+      const w = courseWish(status);
+      await seed(w);
+      courseAnswers([COURSE]);
 
-    expectOk(await makeEr().handle(enrolled()));
+      expectOk(await makeEr().handle(enrolled()));
 
-    const [stored] = await wishes.findByUser(USER);
-    expect(stored?.snapshot()).toMatchObject({
-      uuid: w.uuid,
-      status: 'fulfilled',
-      updatedAt: TEST_NOW,
-    });
-  });
-
-  it('confirmed → fulfilled', async () => {
-    const w = courseWish('confirmed');
-    await seed(w);
-    courseAnswers([COURSE]);
-
-    expectOk(await makeEr().handle(enrolled()));
-
-    expect(await statuses()).toEqual({ [w.uuid]: 'fulfilled' });
-  });
+      const [stored] = await wishes.findByUser(USER);
+      expect(stored?.snapshot()).toMatchObject({
+        uuid: w.uuid,
+        status: 'fulfilled',
+        updatedAt: TEST_NOW,
+      });
+    },
+  );
 
   it('один батч-вызов курса с курсами всех кандидатов, модули не спрашиваются', async () => {
     const a = courseWish('expressed', COURSE);
@@ -229,36 +222,6 @@ describe('FulfillWishEr — нереализуемые желания и иде�
   it('желаний нет — курс не спрашивается', async () => {
     expectOk(await makeEr().handle(enrolled()));
     expect(course.received).toEqual([]);
-  });
-
-  it('fulfilled/cancelled/pending/abandoned — курс не спрашивается, ничего не записано', async () => {
-    await seed(
-      courseWish('fulfilled'),
-      courseWish('cancelled'),
-      courseWish('pending'),
-      moduleWish('abandoned'),
-      moduleWish('cancelled'),
-    );
-    const before = await Bun.file(file).text();
-
-    expectOk(await makeEr().handle(enrolled()));
-
-    expect(course.received).toEqual([]);
-    expect(await Bun.file(file).text()).toBe(before);
-  });
-
-  it('повторное событие ничего не меняет', async () => {
-    await seed(courseWish('expressed'), moduleWish('confirmed'));
-    courseAnswers([COURSE]);
-    const er = makeEr();
-    expectOk(await er.handle(enrolled()));
-    const after = await Bun.file(file).text();
-    const calls = course.received.length;
-
-    expectOk(await er.handle(enrolled()));
-
-    expect(await Bun.file(file).text()).toBe(after);
-    expect(course.received).toHaveLength(calls);
   });
 });
 

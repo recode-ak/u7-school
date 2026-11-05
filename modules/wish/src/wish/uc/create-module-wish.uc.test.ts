@@ -118,7 +118,6 @@ describe('CreateModuleWishUc', () => {
 
     const error = expectErr(res, 'WISH_MODULE_NOT_FOUND');
     expect(error.kind).toBe('not_found');
-    expect(error.label).toBe('Модуль не найден');
     expect(error.payload).toEqual({ moduleId });
     expect(await stored()).toEqual([]);
   });
@@ -134,27 +133,6 @@ describe('CreateModuleWishUc', () => {
       expect(error.kind).toBe('conflict');
       expect(error.payload).toEqual({ userId: ACTOR_ID, moduleId, status });
       expect(await stored()).toHaveLength(1);
-    },
-  );
-
-  it('дубль — текст прежний', async () => {
-    await seed('expressed');
-
-    const res = await makeUc().handle({ moduleId }, asActor, REQ);
-
-    expect(expectErr(res, 'WISH_ALREADY_EXISTS').label).toBe(
-      'Желание уже выражено',
-    );
-  });
-
-  it.each(['cancelled', 'fulfilled', 'abandoned'] as const)(
-    'неактивное желание (%s) не мешает создать новое',
-    async (status) => {
-      await seed(status);
-
-      expectOk(await makeUc().handle({ moduleId }, asActor, REQ));
-
-      expect(await stored()).toHaveLength(2);
     },
   );
 

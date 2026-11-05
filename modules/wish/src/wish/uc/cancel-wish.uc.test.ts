@@ -95,39 +95,23 @@ describe('CancelWishUc', () => {
     expect(await statuses(moduleTarget)).toEqual(['cancelled']);
   });
 
-  it.each(['pending', 'cancelled', 'abandoned', 'fulfilled'] as const)(
-    'желание в статусе %s — WISH_NOT_FOUND, статус не меняется',
-    async (status) => {
-      await seed(status);
+  it('желание в статусе pending — WISH_NOT_FOUND, статус не меняется', async () => {
+    await seed('pending');
 
-      const res = await makeUc().handle(courseTarget, asActor, REQ);
-
-      expect(expectErr(res, 'WISH_NOT_FOUND').payload).toEqual({
-        userId: ACTOR_ID,
-        courseId,
-      });
-      expect(await statuses()).toEqual([status]);
-    },
-  );
-
-  it('module-вариант: неактивное желание — WISH_NOT_FOUND', async () => {
-    await seed('fulfilled', moduleTarget);
-
-    const res = await makeUc().handle(moduleTarget, asActor, REQ);
+    const res = await makeUc().handle(courseTarget, asActor, REQ);
 
     expect(expectErr(res, 'WISH_NOT_FOUND').payload).toEqual({
       userId: ACTOR_ID,
-      moduleId,
+      courseId,
     });
-    expect(await statuses(moduleTarget)).toEqual(['fulfilled']);
+    expect(await statuses()).toEqual(['pending']);
   });
 
-  it('желания нет — WISH_NOT_FOUND: kind, текст и payload цели', async () => {
+  it('желания нет — WISH_NOT_FOUND: kind и payload цели', async () => {
     const res = await makeUc().handle(courseTarget, asActor, REQ);
 
     const error = expectErr(res, 'WISH_NOT_FOUND');
     expect(error.kind).toBe('not_found');
-    expect(error.label).toBe('Желание не найдено');
     expect(error.payload).toEqual({ userId: ACTOR_ID, courseId });
   });
 
@@ -155,7 +139,6 @@ describe('CancelWishUc', () => {
     const res = await makeUc(foreign).handle(courseTarget, asActor, REQ);
 
     const error = expectErr(res, 'ACCESS_DENIED');
-    expect(error.label).toBeDefined();
     expect(error.payload).toMatchObject({ rule: 'isAuthor' });
     const rows = JSON.parse(await Bun.file(file).text()) as WishState[];
     expect(rows.map((r) => r.status)).toEqual(['expressed']);

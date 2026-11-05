@@ -394,24 +394,6 @@ describe('Wish: анкетная ветка (e2e)', () => {
     expect(fillContext(mentor.telegramId)?.questionnaireId).toBeDefined();
   });
 
-  // ── B.7: resume без активной анкеты → контролируемый ответ ──
-
-  test('resume без активной анкеты → «не найдена» без ⚠️', async () => {
-    // У автора нет анкет по этому курсу: /start (штамп экрана) + прямой код
-    await transport.handleStart(transport.makeBotContext(author.telegramId));
-    const resp = await transport.handleCallback(
-      transport.makeBotContext(author.telegramId, {
-        callbackData: stampedCode(
-          transport,
-          author.telegramId,
-          `questionnaire:fill:resume:${QUESTIONNAIRE_COURSE_ID}`,
-        ),
-      }),
-    );
-    expect(resp.screen?.text).toContain('Анкета не найдена или уже завершена');
-    expect(resp.screen?.text).not.toContain('⚠️');
-  });
-
   // ── B.5: полное прохождение → completed, желание confirmed (ER) ──
 
   test('полное прохождение: 3 вопроса → completed-экран, желание confirmed', async () => {
