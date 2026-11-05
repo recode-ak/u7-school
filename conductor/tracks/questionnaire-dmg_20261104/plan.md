@@ -97,7 +97,7 @@
 - На каждое событие, которое бот получает по подписке, есть e2e.
 - `bun run check` полностью зелёный, `test:bot` не ниже базовой линии. Записи красной зоны в `debt.md` нет. `git diff` без `domain/`, `modules/`, `platform/`, `core/`. `git status data/` чист.
 
-## Фаза 3: Сборка и снятие legacy [checkpoint: CKPT]
+## Фаза 3: Сборка и снятие legacy [checkpoint: 04f21387]
 
 - [x] Task: orchestrator (TR-45): бриф `slices/assembly.md` по образцу `stream` (Opus); TR-51 — задачи 2–4 одним шагом `migrator`
 - [x] Task: `migrator` (flash): `QuestionnaireModuleDef` без `external`; фабрика в `U7App` без legacy-резолвера и `inbound`; `@u7-scl/questionnaire/**` — в группу ARC-07 `biome.json` da39edfd
