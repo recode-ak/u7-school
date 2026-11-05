@@ -36,3 +36,4 @@
 | Ф2 | `cd-F2-data` (dmg-data-keeper) | flash | 0.066 | 47 | 98% | 0 | — |
 | Ф2 | `cd-F2-fix` (migrator, правки ревью) | flash | 0.051 | 47 | 98% | 0 | 0 (ревью до правок: 0 `error`, 5 `warn`) |
 | Ф2 | `cd-F2-dqs` (migrator, `LessonStepsDqs` после контрольной точки) | flash | 0.030 | 27+ | 97% | 1 (тип из legacy `commands/`) | — |
+| Ф2 | `cd-F2-tst08` (migrator, чистка дублей TST-08 по списку orchestrator) | flash | 0.031 | — | — | 0 | — |
