@@ -30,3 +30,4 @@
 | Ф1 | `cd-F1-data` (dmg-data-keeper) | flash | 0.028 | 20 | 96% | 0 | — |
 | Ф1 | `cd-F1-fix` (migrator, правки ревью) | flash | 0.062 | 51 | 98% | 0 | 0 (ревью до правок: 0 `error`, 8 `warn`) |
 | Ф1 | `cd-F1-entity` (migrator, `ProjectEntity` в state) | flash | 0.020 | 18 | 95% | 0 | — |
+| Ф2 | `cd-F2-s0` (migrator, S0 переименование) | flash | 0.019 | 21 | 96% | 0 | — |

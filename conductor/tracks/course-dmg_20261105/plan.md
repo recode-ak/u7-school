@@ -56,6 +56,7 @@
 
 ## Фаза 2: Срез `lesson` + `step` + снимок
 
+- [x] Task: `migrator` S0 (flash): legacy `Lesson*`/`Step*` (Ar, Policy, Repo, JsonRepo) → `Legacy*` (бриф, шаг 0) 48ae3c7c
 - [ ] Task: `dmg-test-designer`: red-тесты (Sonnet)
     - [ ] агрегаты `lesson`, `step`; UC `get-lesson`, `get-step`, `get-steps-by-lessons`; видимость от модуля;
     - [ ] `GetModuleSnapshotUcDef` настоящим UC: снимок (`ContentSnapshotVo`, сборка — DQS вместо `CourseDs.buildSnapshot`) только из опубликованного;
