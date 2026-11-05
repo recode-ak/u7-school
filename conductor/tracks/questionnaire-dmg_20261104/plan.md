@@ -123,10 +123,10 @@
 
 ## Фаза 4: Итог
 
-- [ ] Task: Гейт закрытия: `CI=true bun test`, `bun run test:bot`, `dmg-core` `bun test`. Сравнение с базовой линией — в `summary.md`
-- [ ] Task: Итоги в `summary.md`: «Пилот ролей» и «DeepSeek» (шаги, модель, $, круги доработок, `error` ревью). Сверка с §2 `deepseek.md`, правка документа при расхождении; в §1 — «`dmg-tech-lead` — Sonnet, приёмка брифа — Opus» (источник — пилот ролей)
-- [ ] Task: `debt.md`: снять DEBT-1, 2, 5, 10, 32, 34, 44 и TR-11 в части questionnaire, завести новые долги. `migration.md` §6: состояние модуля, входной долг, следующий трек — `course`
-- [ ] Task: Сверить критерии приёмки spec с итогом (таблица в `summary.md`)
+- [x] Task: Гейт закрытия: `CI=true bun test`, `bun run test:bot`, `dmg-core` `bun test`. Сравнение с базовой линией — в `summary.md` 67898aa8
+- [x] Task: Итоги в `summary.md`: «Пилот ролей» и «DeepSeek» (шаги, модель, $, круги доработок, `error` ревью). Сверка с §2 `deepseek.md`, правка документа при расхождении; в §1 — «`dmg-tech-lead` — Sonnet, приёмка брифа — Opus» (источник — пилот ролей) 67898aa8
+- [x] Task: `debt.md`: снять DEBT-1, 2, 5, 10, 32, 34, 44 и TR-11 в части questionnaire, завести новые долги. `migration.md` §6: состояние модуля, входной долг, следующий трек — `course` 67898aa8
+- [x] Task: Сверить критерии приёмки spec с итогом (таблица в `summary.md`) 67898aa8
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 4:** все критерии приёмки spec выполнены, `arch:check` чист, `debt.md` и `migration.md` синхронны с кодом, разделы `summary.md` заполнены.
