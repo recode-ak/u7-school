@@ -252,3 +252,23 @@
 ### Данные — `dmg-data-keeper` (flash, `cd-F1-data`)
 Совместимо. `data/courses/modules.json` (4 записи, 24 проекта, `additional` у 11 проектов) и `data/fixtures/courses/modules.json` (4, без `updatedAt`) читаются новым репозиторием 4/4, даты → числа UTC, `version = 0`, расхождений полей 0. `sha256` до/после совпадает, `git status data/` пуст. `save` нового репозитория в прод-путях нет.
 **Уточнение Т11:** legacy `LegacyModuleJsonRepo` на числовых датах не падает, а молча отбрасывает записи (`JsonFileRepo.readAll`, `safeParse` + автобэкап в `data/courses/backups/`) → следующий legacy `save` опустошит файл. Запрет `save` нового репозитория над `data/` до Ф5 обязателен; перед первым `save` в Ф5 — `backup:adhoc`. Бэкап Ф3 (`--courses`) включает `modules.json`.
+
+### Ревью — `dmg-reviewer` (Opus)
+Без `error`; критерии 2–6, 8 выполнены, сохранённое поведение перенесено полностью, Т6 и Т11 соблюдены.
+
+| ID | файл | суть | severity | решение |
+|---|---|---|---|---|
+| DOM-11 / CODE-01 | `shared/project-vo.ts` | вынос `ProjectVo` — обход ложного срабатывания grit (`uuid: F.uuid` во вложенной схеме) | info | TR-54; правка DOM-11 в `dmg-core` — вопрос Нурболату |
+| domain-modeling §4 | `shared/project-vo.ts` | у проекта есть идентичность — не VO | warn | TR-54, переименование вместе с возвратом в state |
+| — | `project-vo.ts`, `module.state.ts` | дублирование `trimmed`/`text` | warn | исправлено (`shared/text-fields.ts`) |
+| DOM-17 / D-44 | `module.ar.ts` | объявлен `V` без `view()` | warn | исправлено |
+| ARC-04 | `contract.ts` | нет `ModuleSummary` | warn | исправлено |
+| — | `get-module.uc.ts` | `rule` строкой | warn | исправлено (`rule.name`/`denyMessage`) |
+| — | `list-modules.uc.ts` | view ради флага видимости | warn | оставлено, TR-54 |
+| CODE-04 | UC, `module.json-repo.ts`, `module.ar.ts`, `module.repo.ts` | ссылки на Т/Ф, пересказ имени | warn | исправлено |
+| TST-04 | `module.state.test.ts` | `expect` внутри `if` | warn | исправлено |
+| TST-04 | `u7-app.test.ts` | нет smoke через `U7App` | info | к Ф4, TR-54 |
+| CODE-01 / D-52 | `modules/course/src/index.ts` | порт не экспортирован | warn | исправлено |
+
+### Правки по ревью — `migrator` (flash, `cd-F1-fix`), 6e4363ae
+Все исправляемые `warn`; payload отказа — из `rule.name`/`rule.denyMessage` (значения те же). `check` — 4323 pass.

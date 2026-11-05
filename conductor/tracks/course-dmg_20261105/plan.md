@@ -45,8 +45,8 @@
     - [x] перенос сценариев legacy-тестов `module` (список — в отчёте).
 - [x] Task: `migrator`, домен и прикладной слой (flash): Def, Ar без `#` и `throw*`, `UseCaseFromDef`, репозиторий через UoW со строгим разбором; `CourseModuleDef` пока с `external` b035df66
 - [x] Task: `dmg-data-keeper` (flash): чтение `data/courses/modules.json` (копия и `DB_DIR=./data/fixtures`), откат 42352b72
-- [~] Task: `dmg-reviewer` (Opus). Замечания без `error` решает orchestrator (TR), перепроектирование — Нурболату
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
+- [x] Task: `dmg-reviewer` (Opus). Замечания без `error` решает orchestrator (TR), перепроектирование — Нурболату 6e4363ae
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 1:**
 - `grep -rnE "throw[A-Z]|new [A-Za-z]*Ar\b|#[a-z]|@u7-scl/(core|app-legacy)"` по Def-файлам `module` пуст (legacy-файлы, удаляемые в Ф5, — исключение поимённо).

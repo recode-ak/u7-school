@@ -596,3 +596,14 @@
   - (Т `lesson-step`) Т1–Т11 брифа — по рекомендациям: снимок — в агрегат `module`, `callers` `['user','guest','system']`; своих Policy у `lesson`/`step` нет; ошибка снимка `COURSE_MODULE_NOT_FOUND` до Ф3; висячие `lessonId`/`stepId` и шаг без модуля в `getStepsByLessons` пропускаются молча (как v0.2.6); `CourseDs` и `content-snapshot.ts` — до Ф5.
   - (Расхождение) маркер DEBT-10 (`#filterPublished` legacy `module/a-root.ts`) уходит в Ф5 вместе с legacy-UC, а не в Ф1: критерий Ф1 относится к Def-файлам.
 - **Пересмотреть:** (С1 `lesson-step`) — при правке данных автором контента или в треке «История модулей курса»; TR-40 — добавлен `course`; (Т11 `module`) — снять в Ф5; висячие ссылки — в треке «История модулей курса».
+
+### TR-54: итоги среза `module` (`course-dmg`, Ф1)
+- **Трек / фаза:** `course-dmg`, Ф1 (бриф `conductor/tracks/course-dmg_20261105/slices/module.md`, отчёты авторов и `dmg-reviewer`; orchestrator)
+- **Контекст:** GritQL `dom-11-base-fields.grit` ловит любой ключ `uuid:` в `*.state.ts`, включая `uuid: F.uuid(…)` вложенного проекта; legacy `JsonFileRepo.readAll` на невалидной записи не падает, а отбрасывает её (`safeParse` + автобэкап); ревью Ф1 — без `error`, 8 `warn`.
+- **Решение:**
+  - схема проекта модуля (`ProjectVo`) — в `domain/src/course/shared/project-vo.ts` с реэкспортом из `module.state.ts`: вернуть в state без правки DOM-11 нельзя (ключ на диске — `uuid`, `biome-ignore` запрещён); имя `ProjectVo` неточно (у проекта есть идентичность — вложенная сущность), переименование — вместе с возвратом в state;
+  - (Т11, уточнено `dmg-data-keeper`) первый `save` нового `ModuleJsonRepo` над `data/courses/modules.json` при живом legacy делает чтение legacy пустым, а следующий legacy `save` опустошает файл: запрет записи до Ф5 обязателен, перед первым `save` — `backup:adhoc`;
+  - `listModules` проверяет видимость через `viewFor(...) !== undefined` (строит view ради флага) — форма, не поведение; оставлено;
+  - smoke `getModule`/`listModules` через собранный `U7App` — не в Ф1 (потребителей нет), к Ф4;
+  - остальные `warn` ревью (дублирование хелперов, лишний generic view, `ModuleSummary` в контракте, payload отказа из `Decision`, CODE-04, TST-04, экспорт порта) — исправлены в срезе.
+- **Пересмотреть:** правка DOM-11 в `dmg-core` (разрешить вложенный `uuid: F.uuid`) — вопрос Нурболату на контрольной точке Ф1; после неё — `ProjectVo` обратно в `module.state.ts` с новым именем; Т11 — снять в Ф5.
