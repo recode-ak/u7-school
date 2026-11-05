@@ -32,6 +32,12 @@
 | Ф2 | `T2-stream-domain-apply` | flash | 0.105 | 56 | 98% | 0 |
 | Ф2 | `T2-stream-app-apply` | flash | 0.173 | 118 | 99% | 0 |
 | Ф2 | `T2-stream-bot-apply` | flash | 0.227 | 162 | 99% | 0 |
+| Ф2 | `T2-inv-questionnaire-domain` | flash | 0.157 | 76 | 97% | 0 |
+| Ф2 | `T2-inv-questionnaire-app` | flash | 0.093 | 37 | 97% | 0 |
+| Ф2 | `T2-inv-questionnaire-bot` | flash | 0.154 | 60 | 97% | 0 |
+| Ф2 | `T2-questionnaire-domain-table` | flash | 0.168 | 68 | 97% | 0 |
+| Ф2 | `T2-questionnaire-app-table` | flash | 0.148 | 57 | 97% | 0 (приёмка: `module.test.ts:169` отложен — покрытие красное) |
+| Ф2 | `T2-questionnaire-bot-table` | flash | 0.148 | 47 | 96% | 0 |
 
 Инвентаризация — роль `dmg-tech-lead` (только чтение, файл отчёта через bash). Три `stream` шли параллельно в одном дереве без конфликтов: код не меняют, файлы разные.
 
