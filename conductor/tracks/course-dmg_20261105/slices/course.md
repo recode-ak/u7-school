@@ -329,3 +329,20 @@
 - **Для шага 3:** `module-uc.fixture.ts`, `content-uc.fixture.ts` — `legacy: {} as CourseLegacy` перевести на `courses`; `CourseRepoFake` — наследник `MemoryRepo`, как `ModuleRepoFake`.
 - **Для шага 4:** `StreamAr.teachesModule` и тест `stream.ar.student.test.ts:67-72` удалить (покрытие — `passed-modules.dqs.test.ts`).
 - **Кандидаты в чистку:** блоки адаптеров над `legacy` в `modules/course/src/course.module.test.ts:237-460` — переписать под сборку без `legacy` в шаге 3; legacy-тесты `api/course/*`, `policy.test`, `a-root.test` — с кодом в Ф5.
+
+### Шаг 2 — `migrator` (flash, `cd-F3-domain`; правка тестов `cd-F3-tstfix`), 215964f3
+Домен по раскладке `module`, генератор не запускался (коллизии с legacy). Инвариант программы — `CourseProgramInvariant` вне `state` + `v.parse` в конструкторе; legacy `ModulePlace` → `LegacyModulePlace`. Эскалации — дефекты red-тестов, исправлены отдельным шагом: ISO с секундами без зоны (`F.timestamp` не читает; в данных нет) → дописан `Z` в двух тестах; `as const` у статуса в `list-courses.uc.test.ts`; ID реестра в `describe`. `domain/src/course` 636/0.
+
+### Шаг 3 — `migrator` (flash, `cd-F3-app`), 215964f3
+`CourseRepo`/`CourseRepoFake`/`CourseJsonRepo`, четыре UC чтения, шесть внешних UC над репозиториями и DQS, `CourseLegacy` и `legacy` из сборки убраны. Блоки адаптеров в `course.module.test.ts` удалены (покрыты тестами UC, журнал TST-08). Эскалации: тест «save нового курса дописывает запись» удалён (у `CourseAr` нет `create`, по D-36 — `VersionConflict`, покрыто); glob адаптеров в «Месте» DEBT-44 снят orchestrator.
+
+### Шаг 4 — `migrator` (flash, `cd-F3-stream`), 215964f3
+`PassedModulesDqs`, правило пререквизита на вердикте, `enroll-student` передаёт `passedModuleIds`; `StreamAr.teachesModule` и тест удалены. `domain modules platform` 3572/0, `tsc` 0.
+
+### Шаг 5 — `migrator` (flash, `cd-F3-worlds`), 215964f3
+Миры на `WorldCourse`, кеш очищен вручную, `seed:fixtures`. Полный прогон 4903 / 29 fail — красная зона TR-57 (8 файлов бота, legacy-UC курса не читают новый формат). Наблюдение: `computeSourceHash` не учитывает вложенные поля определения мира (TR-57 (4)).
+
+### Шаг 7 — `dmg-data-keeper` (flash, `cd-F3-data`), 5534ac1b
+Бэкап `data/backup-adhoc/2026-11-05T145604Z-course-dmg-phases` (побайтово = исходному). На копии: эталон legacy (место 4 модулей, enrollment, пререквизит) = новому коду; `stages` = прежним `phases`; даты без секунд читаются; старый формат — `ValiError`; round-trip; откат из бэкапа побайтовый; фикстуры 6/6. Diff `courses.json` — только `moduleIds`/`fromModuleId`. Пустой снимок `…T145550Z-course-dmg-phases` (только `meta.txt`) — от вызова скрипта с флагом не на месте (`--courses` первым аргументом).
+
+Расход flash Ф3: 7 запусков, $0.67.

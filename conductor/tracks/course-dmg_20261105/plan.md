@@ -85,10 +85,10 @@
 - [x] Task: `migrator`, домен и прикладной слой `course` (flash); адаптеры TR-11 сняты 215964f3
 - [x] Task: `migrator`, клиент `stream` (flash): `student.rules.ts` на вердикте, `enroll-student` собирает `passedModuleIds`, `StreamAr.teachesModule` и его тест удалены, стенд `student-uc.fixture.ts` 215964f3
 - [x] Task: `migrator`, тестовые миры (flash): `runners/u7-bot/tests/worlds/*` на новый формат, `bun run seed:fixtures` 215964f3
-- [ ] Task: Перевод `data/courses/courses.json` (только этот файл):
-    - [ ] `bun run backup:adhoc course-dmg-phases --courses` (Opus);
-    - [ ] `dmg-data-keeper` (flash): перевод «Fullstack JS» (`moduleIds` — 4 id, этап «Основы JS» с `fromModuleId` первого), round-trip, откат из бэкапа, дата без секунд;
-    - [ ] отдельный коммит `courses.json` (Opus).
+- [x] Task: Перевод `data/courses/courses.json` (только этот файл): 5534ac1b
+    - [x] `bun run backup:adhoc --courses course-dmg-phases` (Opus);
+    - [x] `dmg-data-keeper` (flash): перевод «Fullstack JS» (`moduleIds` — 4 id, этап «Основы JS» с `fromModuleId` первого), round-trip, откат из бэкапа, дата без секунд;
+    - [x] отдельный коммит `courses.json` (Opus).
 - [x] Task: Записать красную зону в `debt.md` (TR-57): поимённо legacy-UC курса, stories и тесты каталога/навигации, integration/e2e, тесты состава модуля; критерий снятия — конец Ф4 (Opus) 215964f3
 - [ ] Task: `dmg-reviewer` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)

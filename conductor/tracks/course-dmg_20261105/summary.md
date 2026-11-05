@@ -37,3 +37,10 @@
 | Ф2 | `cd-F2-fix` (migrator, правки ревью) | flash | 0.051 | 47 | 98% | 0 | 0 (ревью до правок: 0 `error`, 5 `warn`) |
 | Ф2 | `cd-F2-dqs` (migrator, `LessonStepsDqs` после контрольной точки) | flash | 0.030 | 27+ | 97% | 1 (тип из legacy `commands/`) | — |
 | Ф2 | `cd-F2-tst08` (migrator, чистка дублей TST-08 по списку orchestrator) | flash | 0.031 | — | — | 0 | — |
+| Ф3 | `cd-F3-s0` (migrator, S0 переименование) | flash | 0.032 | 24 | 96% | 0 | — |
+| Ф3 | `cd-F3-domain` (migrator, домен) | flash | 0.194 | 135 | 99% | 0 (эскалации: 3 дефекта red-тестов Sonnet) | — |
+| Ф3 | `cd-F3-tstfix` (migrator, правка 3 red-тестов по эскалации) | flash | 0.012 | 9 | — | 0 | — |
+| Ф3 | `cd-F3-app` (migrator, прикладной слой + `u7-app`) | flash | 0.195 | 128 | — | 0 (эскалации: тест против D-36, glob DEBT-44) | — |
+| Ф3 | `cd-F3-stream` (migrator, клиент `stream`) | flash | 0.068 | 68 | — | 0 | — |
+| Ф3 | `cd-F3-worlds` (migrator, тестовые миры) | flash | 0.103 | 75 | — | 0 | — |
+| Ф3 | `cd-F3-data` (dmg-data-keeper, перевод `courses.json`) | flash | 0.066 | 58 | — | 0 | — |
