@@ -1,0 +1,1 @@
+Верификация Фазы 4 questionnaire-dmg. Автотесты: CI=true bun test 4216/0, bun run test:bot 1107/0, dmg-core bun test 1397/0, bun run check зелёный, git status data/ чист. Ручная проверка: Нурболат просмотрел итоги (summary.md, deepseek.md §1, debt.md, migration.md §6) и подтвердил «да» (2026-11-05); barrel questionnaire/domain остаётся по DEBT-3, новых DEBT нет.
