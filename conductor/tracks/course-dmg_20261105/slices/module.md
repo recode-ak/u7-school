@@ -248,3 +248,7 @@
 
 ### Шаг 3 — `migrator` (flash, `cd-F1-app`), b035df66
 Порт, фейк, `GetModuleUc`/`ListModulesUc`, `ModuleJsonRepo`, `CourseUser`, `u7-app.ts`. Отклонения: экспорт `ModuleArDef`, `ModulePolicy`, `ModuleSummary` из `domain/src/course/index.ts` (deep-import закрыт `exports`); классы UC не экспортируются из индекса пакета (имена заняты legacy `api/`); `_app-factory.ts` не менялся (там только legacy). Адаптерам TR-11 четвёртый generic не понадобился. `sha256 data/courses/modules.json` не изменился; `save` в прод-путях не вызывается (Т11). `check` — 4323 pass.
+
+### Данные — `dmg-data-keeper` (flash, `cd-F1-data`)
+Совместимо. `data/courses/modules.json` (4 записи, 24 проекта, `additional` у 11 проектов) и `data/fixtures/courses/modules.json` (4, без `updatedAt`) читаются новым репозиторием 4/4, даты → числа UTC, `version = 0`, расхождений полей 0. `sha256` до/после совпадает, `git status data/` пуст. `save` нового репозитория в прод-путях нет.
+**Уточнение Т11:** legacy `LegacyModuleJsonRepo` на числовых датах не падает, а молча отбрасывает записи (`JsonFileRepo.readAll`, `safeParse` + автобэкап в `data/courses/backups/`) → следующий legacy `save` опустошит файл. Запрет `save` нового репозитория над `data/` до Ф5 обязателен; перед первым `save` в Ф5 — `backup:adhoc`. Бэкап Ф3 (`--courses`) включает `modules.json`.

@@ -27,3 +27,4 @@
 | Ф1 | `cd-F1-s0` (migrator, S0 переименование) | flash | 0.024 | 26 | 96% | 0 (красный — бриф orchestrator, старый путь v0.2.6 в брифе) | — |
 | Ф1 | `cd-F1-domain` (migrator, домен) | flash | 0.107 | 79 | 99% | 0 (эскалации: маркер DEBT-10 в комментарии теста — снят orchestrator; `ProjectVo` в `shared/` из-за DOM-11) | — |
 | Ф1 | `cd-F1-app` (migrator, прикладной слой + `u7-app`) | flash | 0.102 | 75 | 99% | 0 (экспорт `ModuleArDef`/`ModulePolicy` из `domain/src/course/index.ts` — принято) | — |
+| Ф1 | `cd-F1-data` (dmg-data-keeper) | flash | 0.028 | 20 | 96% | 0 | — |

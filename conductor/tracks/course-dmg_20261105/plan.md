@@ -44,8 +44,8 @@
     - [x] репозиторий: legacy ISO → число, round-trip, невалидная запись;
     - [x] перенос сценариев legacy-тестов `module` (список — в отчёте).
 - [x] Task: `migrator`, домен и прикладной слой (flash): Def, Ar без `#` и `throw*`, `UseCaseFromDef`, репозиторий через UoW со строгим разбором; `CourseModuleDef` пока с `external` b035df66
-- [ ] Task: `dmg-data-keeper` (flash): чтение `data/courses/modules.json` (копия и `DB_DIR=./data/fixtures`), откат
-- [ ] Task: `dmg-reviewer` (Opus). Замечания без `error` решает orchestrator (TR), перепроектирование — Нурболату
+- [x] Task: `dmg-data-keeper` (flash): чтение `data/courses/modules.json` (копия и `DB_DIR=./data/fixtures`), откат 42352b72
+- [~] Task: `dmg-reviewer` (Opus). Замечания без `error` решает orchestrator (TR), перепроектирование — Нурболату
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 1:**
