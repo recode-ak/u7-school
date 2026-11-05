@@ -14,17 +14,17 @@
  *   bun run scripts/call-uc.ts create-module '{"title":"Основы JS","description":"Описание"}'
  *   bun run scripts/call-uc.ts enrich-module '{"moduleId":"<uuid>","goal":"Цель","tags":["js"]}'
  *   bun run scripts/call-uc.ts get-questionnaires-by-user '{"userId":"<uuid>"}'
- *   bun run scripts/call-uc.ts get-current '{"userId":"<uuid>"}'
+ *   bun run scripts/call-uc.ts get-current '{"questionnaireId":"<uuid>"}'
  *   bun run scripts/call-uc.ts create-course-wish '{"courseId":"<uuid>"}'
  *
- * UC модуля wish — DMG (Ф12): команда через `ApiApp.dispatch` (D-49) над той
- * же сборкой DMG, что и в боте (`U7App`), субъект — резолвер `app.callers`;
- * имя — kebab-case (`create-course-wish`) или имя Def (`createCourseWish`).
- * Отказ — `Err` с кодом в stderr и выход с кодом 1. Лог операций DMG
- * пишется в `data/oplog/`, как у бота.
+ * UC модулей wish и questionnaire — DMG: команда через `ApiApp.dispatch` (D-49)
+ * над той же сборкой DMG, что и в боте (`U7App`), субъект — резолвер
+ * `app.callers`; имя — kebab-case (`create-course-wish`) или имя Def
+ * (`createCourseWish`). Отказ — `Err` с кодом в stderr и выход с кодом 1.
+ * Лог операций DMG пишется в `data/oplog/`, как у бота.
  *
  * UC `stream` перешли на DMG (модуль `stream`), но через `call-uc` пока не
- * вызываются: скрипт знает только DMG-модуль `wish`. До Ф3 их вызов — в боте.
+ * вызываются: скрипт знает DMG-модули `wish` и `questionnaire`.
  *
  * ⚠️ Команды (не query) пишут в боевые JSON-файлы: перед изменяющими
  * вызовами убедись, что бот остановлен (pm2 stop u7-school-bot).
@@ -39,8 +39,14 @@
 import { U7App, type U7BotAppMeta } from '@u7-scl/app';
 import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import { ConsoleLogger } from '@u7-scl/core/shared';
+import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import { WishModuleDef } from '@u7-scl/domain/wish/contract';
-import { type InputOf, UseCaseDef } from 'dmg-core';
+import {
+  type AnyModuleDef,
+  type AnyUseCaseDef,
+  type InputOf,
+  UseCaseDef,
+} from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 
 const NUR_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';
@@ -49,13 +55,23 @@ const NUR_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';
 const kebab = (name: string) =>
   name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 
-type WishUc = (typeof WishModuleDef)['useCases'][number];
+/** DMG-модули, UC которых вызываются через `dispatch` (D-49). */
+const DMG_MODULES: readonly AnyModuleDef[] = [
+  WishModuleDef,
+  QuestionnaireModuleDef,
+];
 
-/** UC модуля wish (DMG) по имени: kebab-case или имя Def. */
-function wishUcDef(ucName: string): WishUc | undefined {
-  return WishModuleDef.useCases.find(
-    (def) => def.name === ucName || kebab(def.name) === ucName,
-  );
+/** UC DMG-модуля по имени: kebab-case или имя Def. */
+function findDmgUc(
+  ucName: string,
+): { moduleDef: AnyModuleDef; ucDef: AnyUseCaseDef } | undefined {
+  for (const moduleDef of DMG_MODULES) {
+    const ucDef = moduleDef.useCases.find(
+      (def) => def.name === ucName || kebab(def.name) === ucName,
+    );
+    if (ucDef !== undefined) return { moduleDef, ucDef };
+  }
+  return undefined;
 }
 
 function printHelp() {
@@ -68,8 +84,8 @@ function printHelp() {
   json-params  — параметры в JSON (обязательно, можно '{}')
   actorId      — UUID пользователя (опционально, по умолчанию Nur)
 
-Доступные модули: user, course, questionnaire (legacy-вызов), wish (DMG).
-UC stream (DMG) через call-uc пока не вызываются — до Ф3.
+Доступные модули: user, course (legacy-вызов), wish, questionnaire (DMG).
+UC stream (DMG) через call-uc пока не вызываются.
 
 Примеры:
   bun run scripts/call-uc.ts list-modules '{}'
@@ -81,7 +97,7 @@ UC stream (DMG) через call-uc пока не вызываются — до �
   bun run scripts/call-uc.ts create-step   '{"moduleId":"<uuid>","lessonId":"<uuid>","description":"...","kind":"code","content":"..."}'
   bun run scripts/call-uc.ts publish-module '{"moduleId":"<uuid>"}'
   bun run scripts/call-uc.ts get-questionnaires-by-user '{"userId":"<uuid>"}'
-  bun run scripts/call-uc.ts get-current '{"userId":"<uuid>"}'
+  bun run scripts/call-uc.ts get-current '{"questionnaireId":"<uuid>"}'
   bun run scripts/call-uc.ts create-course-wish '{"courseId":"<uuid>"}'
   bun run scripts/call-uc.ts --help
 `);
@@ -136,17 +152,20 @@ async function main() {
   }
 
   // ─── Вызов UseCase ────────────────────────────────
-  const dmgUc = wishUcDef(ucName);
+  const dmgUc = findDmgUc(ucName);
   if (dmgUc) {
     // Вход из командной строки не типизирован — его проверит UC.
-    const command = UseCaseDef.commandOf(dmgUc, params as InputOf<WishUc>);
+    const command = UseCaseDef.commandOf(
+      dmgUc.ucDef,
+      params as InputOf<AnyUseCaseDef>,
+    );
     const trace = Trace.fromRequest({
       requestId: crypto.randomUUID(),
       channel: { name: 'cli' },
     });
     const caller = await app.callers.resolve(actor.uuid, trace);
     const res = await app.apiApp.dispatch(
-      WishModuleDef,
+      dmgUc.moduleDef,
       command,
       caller,
       trace,

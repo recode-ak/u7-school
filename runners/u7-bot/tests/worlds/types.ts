@@ -3,7 +3,7 @@ import type {
   ReviewDirection,
   StudentOutcome,
 } from '@u7-scl/domain/peer-review/contract';
-import type { Questionnaire } from '@u7-scl/questionnaire/domain';
+import type { QuestionnaireView } from '@u7-scl/domain/questionnaire/contract';
 import type {
   StreamState,
   StreamStatus,
@@ -60,7 +60,7 @@ export interface WorldState {
   campaigns: WorldCampaign[];
   reviews: WorldReview[];
   wishes: WishState[];
-  questionnaires: Questionnaire[];
+  questionnaires: QuestionnaireView[];
   sessions: unknown[];
   shortIds: unknown[];
 }
@@ -223,7 +223,7 @@ export interface WorldDefinition {
   campaigns?: CampaignDef[];
   reviews?: ReviewDef[];
   wishes?: WishState[];
-  questionnaires?: Questionnaire[];
+  questionnaires?: QuestionnaireView[];
 }
 
 /** Зарегистрированный мир с готовой функцией сборки состояния */

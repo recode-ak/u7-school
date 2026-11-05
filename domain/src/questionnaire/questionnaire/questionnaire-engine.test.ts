@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import * as v from 'valibot';
-import type { Answer } from './entity';
 import type { Question } from './question';
+import type { AnswerVo } from './questionnaire.state';
 import { QuestionnaireEngine } from './questionnaire-engine';
 
 describe('QuestionnaireEngine', () => {
@@ -204,7 +204,7 @@ describe('QuestionnaireEngine', () => {
         questionCode: 'q1',
         answerCode: 'text',
         answerText: 'hello',
-        answeredAt: '2024-01-01T00:00',
+        answeredAt: Date.parse('2024-01-01T00:00Z'),
       },
     ]);
     expect(next2?.questionCode).toBe('q2');
@@ -235,7 +235,7 @@ describe('QuestionnaireEngine', () => {
     ];
     const engine = new QuestionnaireEngine(pool);
 
-    const baseAnswer = { answeredAt: '2024-01-01T00:00' };
+    const baseAnswer = { answeredAt: Date.parse('2024-01-01T00:00Z') };
 
     // С ответом 'yes' -> q2
     const nextWithYes = engine.getNextQuestion('q1', [
@@ -278,8 +278,8 @@ describe('QuestionnaireEngine.getNextQuestion — any-of на multiple-вопр�
     { question: 'Финальный', questionCode: 'final', type: 'text' },
   ];
 
-  const answeredAt = '2024-01-01T00:00';
-  const daysAnswer = (answerCode: string): Answer[] => [
+  const answeredAt = Date.parse('2024-01-01T00:00Z');
+  const daysAnswer = (answerCode: string): AnswerVo[] => [
     { questionCode: 'days', answerCode, answeredAt },
   ];
 
@@ -396,15 +396,15 @@ describe('QuestionnaireEngine.getProgress — динамический марш�
     },
   ];
 
-  const answeredAt = '2024-01-01T00:00';
-  const answer = (questionCode: string, answerCode: string): Answer => ({
+  const answeredAt = Date.parse('2024-01-01T00:00Z');
+  const answer = (questionCode: string, answerCode: string): AnswerVo => ({
     questionCode,
     answerCode,
     answeredAt,
   });
 
   // Ответы на все вопросы до intensity включительно (как в реальном флоу)
-  const baseAnswers: Answer[] = [
+  const baseAnswers: AnswerVo[] = [
     answer('how_found', 'telegram'),
     answer('interest_reason', 'professionals'),
     answer('experience', 'beginner'),
@@ -414,7 +414,7 @@ describe('QuestionnaireEngine.getProgress — динамический марш�
     answer('intensity', 'base'),
   ];
 
-  const intensiveAnswers: Answer[] = baseAnswers.map((a) =>
+  const intensiveAnswers: AnswerVo[] = baseAnswers.map((a) =>
     a.questionCode === 'intensity' ? answer('intensity', 'intensive') : a,
   );
 

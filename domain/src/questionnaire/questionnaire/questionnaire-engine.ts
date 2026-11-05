@@ -1,7 +1,7 @@
 import * as v from 'valibot';
-import type { Answer } from './entity';
 import type { Condition, Question } from './question';
 import { QuestionSchema } from './question';
+import type { AnswerVo } from './questionnaire.state';
 
 /**
  * Движок анкеты.
@@ -27,7 +27,7 @@ export class QuestionnaireEngine {
    */
   getNextQuestion(
     currentCode: string | null,
-    answers: Answer[],
+    answers: AnswerVo[],
   ): Question | null {
     let foundCurrent = currentCode === null;
 
@@ -55,11 +55,11 @@ export class QuestionnaireEngine {
    */
   private isConditionMet(
     condition: Condition | undefined,
-    answers: Answer[],
+    answers: AnswerVo[],
   ): boolean {
     if (!condition) return true;
     const conditionAnswer = answers.find(
-      (a: Answer) => a.questionCode === condition.questionCode,
+      (a: AnswerVo) => a.questionCode === condition.questionCode,
     );
     if (!conditionAnswer) return false;
     const selectedCodes = conditionAnswer.answerCode.split(',').filter(Boolean);
@@ -89,7 +89,7 @@ export class QuestionnaireEngine {
    */
   getProgress(
     questionCode: string,
-    answers: Answer[],
+    answers: AnswerVo[],
   ): { index: number; total: number } | undefined {
     const route: string[] = [];
     for (const question of this.pool) {

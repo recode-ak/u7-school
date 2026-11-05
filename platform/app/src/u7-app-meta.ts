@@ -1,7 +1,6 @@
 import type { U7ApiApp } from '@u7-scl/app-legacy/domain';
 import type { AppMeta } from '@u7-scl/core/domain';
 import type { CourseApiModuleMeta } from '@u7-scl/course/domain';
-import type { QuestionnaireApiModuleMeta } from '@u7-scl/questionnaire';
 import type { UserApiModuleMeta } from '@u7-scl/user/domain';
 
 /**
@@ -9,10 +8,7 @@ import type { UserApiModuleMeta } from '@u7-scl/user/domain';
  */
 export interface U7BotAppMeta extends AppMeta {
   name: 'u7-bot-app';
-  moduleMetas:
-    | UserApiModuleMeta
-    | CourseApiModuleMeta
-    | QuestionnaireApiModuleMeta;
+  moduleMetas: UserApiModuleMeta | CourseApiModuleMeta;
 }
 
 /** Тип API-приложения U7 бота (актор закрыт на User в модуле app) */

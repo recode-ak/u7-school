@@ -177,11 +177,6 @@ async function writeWorldFiles(
     JSON.stringify(state.questionnaires ?? [], null, 2),
     'utf-8',
   );
-  await writeFile(
-    path.join(targetDir, 'questionnaires', 'responses.json'),
-    '[]\n',
-    'utf-8',
-  );
 
   await writeFile(
     path.join(targetDir, 'bot', 'sessions.json'),

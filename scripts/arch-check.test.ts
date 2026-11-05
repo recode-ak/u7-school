@@ -55,6 +55,7 @@ describe('arch:check domain', () => {
     });
     const external = DOMAIN_MODULES.filter((m) => m.external);
     expect(external.map((m) => m.name)).not.toContain('peer-review');
+    expect(external.map((m) => m.name)).not.toContain('questionnaire');
     expect(external.map((m) => m.name)).toContain('dossier');
   });
 
