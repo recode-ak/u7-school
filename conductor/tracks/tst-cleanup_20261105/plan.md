@@ -4,9 +4,9 @@
 
 > Обновляется в каждом коммите шага. При возврате — читать этот блок и `git log main..tst-cleanup`.
 
-- **Сделано:** Ф0; Ф1 (Б-1…Б-13, TST-09 / D-67, `ui/bot-test.md` §2 п. 5); Ф2 `wish`, `stream` (мёртвые экспорты `status.ts` удалены, Б-13); Ф2 `questionnaire` (мёртвый код `QuestionnaireEngine.getQuestionText/getAnswerText/getChoices` и экспорт `inviteKeyboard` удалены, Б-13; новая закономерность Б-14 — `test-bloat.md` §2) — домен 213 → 126, модуль 113 → 39, бот 134 → 88; покрытие собственных исходников не упало; `check` 4223 pass / 29 fail (TR-57, новых нет).
-- **Дальше:** Ф2 `peer-review` — таблицы приняты (`inventory/peer-review-*-delete.md`), покрытие «до» в `.cache/cov/peer-review-*.before.txt`; применение: домен ‖ бот, затем модуль (`inventory/prompt-peer-review-*-apply.md`); после — мёртвый код `hasParticipant`, `authorLine` (Б-13), решение по `onlyLives` (вход UC не читается). Отложено до `course-dmg`: `wish-questionnaire.e2e.test.ts:460` (слить в `wish-flow.integration.test.ts:251`), `student-dmg.e2e.test.ts:122`, `:251`; `questionnaire-ux.e2e.test.ts` целиком (после `course-dmg` 4 из 5 — дубли, см. `questionnaire-bot-delete.md` «Итог»); `modules/questionnaire/src/questionnaire.module.test.ts:169` с `probe`-модулем (покрытие — красный `wish-questionnaire.e2e.test.ts:253`).
-- **Открытые вопросы к Нурболату:** нет.
+- **Сделано:** Ф0; Ф1 (Б-1…Б-13, TST-09 / D-67, `ui/bot-test.md` §2 п. 5); Ф2 `wish`, `stream` (мёртвые экспорты `status.ts` удалены, Б-13); Ф2 `questionnaire` (мёртвый код `QuestionnaireEngine.getQuestionText/getAnswerText/getChoices` и экспорт `inviteKeyboard` удалены, Б-13; новая закономерность Б-14 — `test-bloat.md` §2) — домен 213 → 126, модуль 113 → 39, бот 134 → 88; покрытие собственных исходников не упало; Ф2 `peer-review` — домен 184 → 72, модуль 141 → 73, бот 127 → 104; мёртвый код `hasParticipant`, `authorLine` удалён (Б-13); новые Б-15, Б-16 (`test-bloat.md` §2); покрытие собственных исходников не упало; `check` 4021 pass / 29 fail (TR-57, новых нет).
+- **Дальше:** Ф2 `user`, `dossier` — покрытие «до» в `.cache/cov/`, инвентаризация с Б-ID (промпты по образцу `inventory/prompt-peer-review-*.md`), таблицы, применение; проверка цепочек между таблицами — скриптом с учётом строк-продолжений. Отложено до `course-dmg`: `wish-questionnaire.e2e.test.ts:460` (слить в `wish-flow.integration.test.ts:251`), `student-dmg.e2e.test.ts:122`, `:251`; `questionnaire-ux.e2e.test.ts` целиком (после `course-dmg` 4 из 5 — дубли, см. `questionnaire-bot-delete.md` «Итог»); `modules/questionnaire/src/questionnaire.module.test.ts:169` с `probe`-модулем (покрытие — красный `wish-questionnaire.e2e.test.ts:253`).
+- **Открытые вопросы к Нурболату:** `GetMyCampaignsUcDef.input.onlyLives` — мёртвый вход контракта (`execute` не читает, репозиторий всегда отдаёт только живые окна; бот передаёт `true` в `my-reviews.story.ts:76`): удалить поле из Def и вызова бота или оставить.
 
 ---
 
@@ -31,7 +31,7 @@
 - [x] Task: `wish`
 - [x] Task: `stream`
 - [x] Task: `questionnaire`
-- [ ] Task: `peer-review`
+- [x] Task: `peer-review`
 - [ ] Task: `user`, `dossier`
 
 ## Фаза 3: Итог
