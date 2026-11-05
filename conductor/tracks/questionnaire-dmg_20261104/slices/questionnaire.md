@@ -676,3 +676,8 @@ DOM-01…06, DOM-10…12, DOM-14, DOM-15, DOM-17; API-01…07; MAN-01…06, MAN-
 Кандидат в машинную проверку (ratchet): CODE-04 — ID брифа (`Т\d+`, `Р\d+`) в комментариях кода.
 
 Правки по ревью — migrator (flash, 1 круг, $0.06): `bun test domain/src/questionnaire modules/questionnaire` — 326 pass; `tsc`, `biome`, `arch:check` зелёные.
+
+**Ответы Нурболата (2026-11-05):**
+- **С2** — вариант (b): в stories Ф2 адрес через legacy `get-user`, как `InactivityStory` (TR-43 С2); D-63 остаётся для Job и ER. Запись — TR-49 (6).
+- **Д1** — сверка выполнена (orchestrator, по поручению): `ssh kalki_server 'cat /srv/u7-school/data/questionnaires/questionnaires.json'` потоком в локальный скрипт (`v.safeParse(QuestionnaireArDef.state)` + `QuestionnaireAr.restore` + `screen()` для `in_progress`), на сервере только чтение, файл не копировался. Итог: 84 записи (`standard/completed` 81, `standard/abandoned` 3), проблемных 0. В `last-runs.json` ключ `sweep-abandoned-questionnaires` — первый запуск Job под новым ключом через 3 ч, как и ожидалось. Перед выкаткой остаются `bun run backup` и правило «откат — только с восстановлением файла» (TR-49 (7)).
+
