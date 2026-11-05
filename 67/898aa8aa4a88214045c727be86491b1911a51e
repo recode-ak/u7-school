@@ -1,0 +1,1 @@
+Ф4 questionnaire-dmg, задачи 1–4 (документация, текущая сессия): гейт закрытия CI=true bun test 4216/0, test:bot 1107/0, dmg-core 1397/0; summary.md — итоги ролей и DeepSeek, сверка критериев spec; deepseek.md §1; debt.md (TR-11, DEBT-3, TR-48 (4), TR-49 (4)); migration.md §6 — следующий трек course. Мест questionnaire в DEBT-1, 2, 5, 10, 32, 34, 44 не было уже к Ф3 (arch:check).
