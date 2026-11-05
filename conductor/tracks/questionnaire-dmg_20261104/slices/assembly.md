@@ -56,3 +56,25 @@
 ## Правила (ID)
 
 ARC-04, ARC-07, MAN-06, D-36, D-45 (вход модуля — `contract`), D-53.
+
+## Отчёт migrator (Ф3)
+
+flash, `F3-migrator-assembly`, 1 круг, $0.09. Удалены `domain/src/questionnaire/module.ts`, каталог `questionnaire/commands/` (9 `*-cmd.ts` и `errors.ts`), `questionnaire/entity.ts` с реэкспортами в `index.ts`; своих тестов у них не было (`grep` по `CmdSchema`/`BaseQuestionnaire*` пуст) — сценарии не теряются. `questionnaire-engine` — на `AnswerVo` (23 теста, ожидания не менялись; `answeredAt` в фикстурах — `Date.parse(...)`, движок поле не читает). `QuestionnaireApiModuleMeta` убран из `U7BotAppMeta`; ARC-07-группа `@u7-scl/questionnaire/**`; миры — `QuestionnaireView` из контракта, `responses.json` не пишется; `arch-check.test` — `questionnaire` не `external`. `call-uc.ts`: общий `findDmgUc` по `DMG_MODULES` (`wish`, `questionnaire`) → `dispatch`, legacy `execute` — только `user`/`course`; пример `get-current` — по входу Def (`questionnaireId`, а не `respondentId` из брифа).
+
+**Эскалация:** `arch:check` — устаревшее место DEBT-1 (`domain/src/questionnaire/module.ts`). Снято orchestrator'ом, заодно `questionnaire` убран из причины DEBT-34.
+
+**Итог (гейт orchestrator'а):** `check` зелёный, `bun test` 4216 pass / 0 fail, `test:bot` 1107 / 0, `data/` чист.
+
+## Отчёт reviewer (Ф3)
+
+Opus, `error` нет. Проверены границы, grep-критерии, ARC-04/07, D-45/53, тест движка (не ослаблен), маршрутизация `call-uc` (имена DMG и legacy не пересекаются), миры, `debt.md` (мест questionnaire в DEBT-1, 2, 5, 10, 34, 44 не осталось — `arch:check`).
+
+| ID | файл | суть | severity | решение |
+|---|---|---|---|---|
+| — | `modules/questionnaire/package.json` | `exports["./api"]` на удалённый файл, мёртвые `#*-legacy/*`, неиспользуемые `app-legacy`/`core`/`user` | warn (вне границ) | исправлено orchestrator'ом (конфиг, потребителей нет), `bun.lock` −3 строки |
+| DEBT-3 | `debt.md` | причина barrel `questionnaire/domain` устарела — внешних потребителей нет | info | Ф4 |
+| TR-11 | `debt.md` | условие пересмотра для анкет наступило | info | Ф4 (по плану) |
+| TR-48 (4) | `debt.md` | фраза о метатипе Т15 устарела | info | Ф4 |
+| — | бриф, grep №1 | `CmdMeta` ловит `TestCmdMeta` в `app-legacy` | info | принято: совпадение вне анкет |
+
+**Итог после правок:** `check` 4216 / 0, `test:bot` 1107 / 0, `data/` чист.

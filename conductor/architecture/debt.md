@@ -59,7 +59,6 @@
 - **Место:**
   - `domain/src/user/**` — `facade.ts`, `module.ts`, `user/a-root.ts`, `user/events.ts`, `user/commands/{errors,notify-user-cmd,register-guest-cmd}.ts`; погашает перевод `user` на Def
   - `domain/src/course/**` — `module.ts`, `*/a-root.ts`, `*/entity.ts`, `*/commands/errors.ts`, `content-path/commands/resolve-content-path-cmd.ts`; подпути `core/domain`, `core/shared`, `core/infra`; погашает перевод `course` на Def
-  - `domain/src/questionnaire/module.ts` — оболочка метатипов до Ф3 `questionnaire-dmg` (TR-48 Т15); погашает удаление оболочки в Ф3
 - **Признак:** `from '@u7-scl/core`
 - **Корень:** `domain/src/**`
 - **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `NotifyKind`, ошибки (`AccessDeniedError`, `NotFoundError`, `errConflict`, `throwError`), `isoNow`, `now`, `UcMeta`, `FileMetadataSchema`, `ApiModuleMeta`, `BaseJsonDb` живут в `core`; механический перенос не меняет базовые классы.
@@ -226,7 +225,7 @@
 - **Место:** `scripts/domain-check.ts` — `checkContractImports` пропускает пары legacy-модулей; `checkDomainImports` разрешает `index`
 - **Признак:** `sub !== 'index'`
 - **Корень:** `scripts/domain-check.ts`
-- **Причина:** D-45 — чужой модуль только через `contract`; legacy-код `user`, `course`, `questionnaire`, `dossier` импортирует `index` друг друга (entity `User`, `Role`, фасады) — около 100 импортов.
+- **Причина:** D-45 — чужой модуль только через `contract`; legacy-код `user`, `course`, `dossier` (`questionnaire` и `stream` переведены на Def) импортирует `index` друг друга (entity `User`, `Role`, фасады) — около 100 импортов.
 - **Погашает:** перевод каждого модуля на Def — модуль попадает в проверку автоматически (`external` снят)
 - **Критерий снятия:** все модули на Def; пропуск legacy-пар и `index` в `checkDomainImports` удалены
 
@@ -571,3 +570,4 @@
 - **Трек / фаза:** `questionnaire-dmg`, Ф3 (orchestrator, 2026-11-05; бриф — `conductor/tracks/questionnaire-dmg_20261104/slices/assembly.md`)
 - **Контекст:** план Ф3 написан до Ф1: `api/*`, `module.ts`, `facade.ts`, фасады, `QuestionnaireUseCase`, legacy-Policy и legacy-репозиторий, поля `questionnaire`/`questionnaireFacade` в `U7App` удалены ещё в Ф1 (С1 TR-48), `external` у `QuestionnaireModuleDef` снят там же. `QuestionnairePolicy` в домене — новая Policy Def. Осталась оболочка метатипов: `domain/src/questionnaire/module.ts`, `commands/*-cmd.ts`, `entity.ts`, `QuestionnaireApiModuleMeta` в `U7BotAppMeta`; `call-uc` вызывает анкеты legacy `execute` — после Ф1 не работает.
 - **Решение:** бриф сам, без `tech-lead` (срез по образцу `stream`); задачи 2–4 плана — один шаг `migrator` (flash); критерий «`QuestionnairePolicy` удалён» относится к legacy-классу (удалён в Ф1), Policy Def остаётся; миры — на `QuestionnaireView` из контракта; `call-uc` — анкеты через `dispatch` по образцу `wish`. DEBT-34 в части questionnaire погашен снятием `external` (модуль проверяется через вход `contract`); общий пропуск пар legacy в `domain-check.ts` остаётся до последнего трека — в `debt.md` снимается только упоминание questionnaire.
+- **Ревью Ф3:** `modules/questionnaire/package.json` очищен от `./api`, `#*-legacy/*` и неиспользуемых зависимостей (warn вне границ, исправлено orchestrator'ом). `dmg-data-keeper` не вызывался: формат `questionnaires.json` не менялся; миры пишут во временный каталог тестов, `call-uc` пишет анкеты через тот же `QuestionnaireJsonRepo`, что и бот (совместимость — `data-keeper` Ф1). Формулировки DEBT-3 (barrel без внешних потребителей), TR-11 и TR-48 (4) — в Ф4.

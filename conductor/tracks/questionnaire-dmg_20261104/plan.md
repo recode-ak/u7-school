@@ -97,22 +97,22 @@
 - На каждое событие, которое бот получает по подписке, есть e2e.
 - `bun run check` полностью зелёный, `test:bot` не ниже базовой линии. Записи красной зоны в `debt.md` нет. `git diff` без `domain/`, `modules/`, `platform/`, `core/`. `git status data/` чист.
 
-## Фаза 3: Сборка и снятие legacy
+## Фаза 3: Сборка и снятие legacy [checkpoint: CKPT]
 
 - [x] Task: orchestrator (TR-45): бриф `slices/assembly.md` по образцу `stream` (Opus); TR-51 — задачи 2–4 одним шагом `migrator`
-- [ ] Task: `migrator` (flash): `QuestionnaireModuleDef` без `external`; фабрика в `U7App` без legacy-резолвера и `inbound`; `@u7-scl/questionnaire/**` — в группу ARC-07 `biome.json`
-- [ ] Task: `migrator` (flash), удаление legacy:
+- [x] Task: `migrator` (flash): `QuestionnaireModuleDef` без `external`; фабрика в `U7App` без legacy-резолвера и `inbound`; `@u7-scl/questionnaire/**` — в группу ARC-07 `biome.json` da39edfd
+- [x] Task: `migrator` (flash), удаление legacy:
     - `api/*`, `module.ts`, `facade.ts` и `commands/*-cmd.ts`;
     - `QuestionnaireFacade`, `QuestionnaireInProcFacade`, `QuestionnaireUseCase` и legacy-`QuestionnairePolicy`;
     - legacy-репозиторий;
     - поля `questionnaire`/`questionnaireFacade` в `u7-app.ts`, `u7-app-meta.ts`, `u7-app.types.ts`.
-  Также погасить DEBT-34 в части questionnaire.
-- [ ] Task: `migrator` (flash): перевести на модуль Def:
+  Также погасить DEBT-34 в части questionnaire. da39edfd (TR-51: большая часть удалена ещё в Ф1)
+- [x] Task: `migrator` (flash): перевести на модуль Def:
     - `tests/helpers/test-app.ts` и тестовые миры (`types`, `builder`, `minimal`, `materializer` — без `responses.json`);
     - `scripts/{call-uc,domain-arch}.ts` (исправить устаревший пример `get-current`);
-    - `platform/app/tests/u7-app.test.ts`, `scripts/arch-check.test.ts`, `questionnaire.module.test`.
-- [ ] Task: `dmg-data-keeper` (flash), если скрипты или миры пишут `questionnaires`; `dmg-reviewer` (Opus)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
+    - `platform/app/tests/u7-app.test.ts`, `scripts/arch-check.test.ts`, `questionnaire.module.test`. da39edfd
+- [x] Task: `dmg-data-keeper` (flash), если скрипты или миры пишут `questionnaires`; `dmg-reviewer` (Opus) da39edfd — data-keeper не нужен (TR-51), ревью: `error` нет
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 3:**
 - `grep -rn "QuestionnaireApiModule\|QuestionnaireInProcFacade\|QuestionnaireFacade\|questionnaireLegacyInbound" --include=*.ts .` пуст.
