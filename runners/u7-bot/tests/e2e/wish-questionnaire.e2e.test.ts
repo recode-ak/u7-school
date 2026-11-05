@@ -9,7 +9,11 @@ import {
 import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
-import type { QuestionnaireState } from '@u7-scl/questionnaire/domain';
+import {
+  GetQuestionnairesByUserUcDef,
+  QuestionnaireModuleDef,
+  type QuestionnaireView,
+} from '@u7-scl/domain/questionnaire/contract';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import type {
@@ -23,6 +27,9 @@ import {
   stampedCode,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import type { WishStatus } from '@u7-scl/wish/domain';
+import { UserCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
+import { expectOk } from 'dmg-core/testing';
 import { QuestionnaireController } from '../../src/controllers/questionnaire/controller';
 
 /**
@@ -38,6 +45,8 @@ import { QuestionnaireController } from '../../src/controllers/questionnaire/con
 // Фикстурный курс с опасным названием и малым пулом анкеты (3 вопроса)
 const QUESTIONNAIRE_COURSE_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
+
+const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
 describe('Wish: анкетная ветка (e2e)', () => {
   let app: TestApp;
@@ -140,11 +149,14 @@ describe('Wish: анкетная ветка (e2e)', () => {
   async function questionnaireStatus(
     user: User,
     courseId: string,
-  ): Promise<QuestionnaireState['status'] | undefined> {
-    const states = await app.apiApp.execute(
-      'get-questionnaires-by-user',
-      { userId: user.uuid },
-      user,
+  ): Promise<QuestionnaireView['status'] | undefined> {
+    const states = expectOk(
+      await app.apiApp.dispatch(
+        QuestionnaireModuleDef,
+        GetQuestionnairesByUserUcDef.command({ userId: user.uuid }),
+        new UserCaller(user),
+        trace(),
+      ),
     );
     return states.find(
       (s) => s.kind === 'standard' && s.ownerInfo.courseId === courseId,

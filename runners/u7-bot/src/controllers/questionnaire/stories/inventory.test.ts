@@ -1,9 +1,18 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
-import type { U7BotApp } from '@u7-scl/bot/u7-bot-app-meta';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
+import { QuestionnaireEvents } from '@u7-scl/domain/questionnaire/contract';
 import { FillStory } from './fill.story';
 import { InviteStory } from './invite.story';
+import {
+  initStory,
+  invitedEvent,
+  invitedView,
+  newQuestionView,
+  RESPONDENT_ID,
+  respondentProfile,
+  subscriptionOf,
+} from './questionnaire-dmg.test-kit';
 import { renderActionResponse } from './render';
 
 /**
@@ -18,6 +27,8 @@ import { renderActionResponse } from './render';
 
 // ══ Хелперы ══
 
+const users = { [RESPONDENT_ID]: respondentProfile() };
+
 const actor = { uuid: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee' } as User;
 
 /** Сессия активного fill-диалога (ожидание ввода с анкетой). */
@@ -29,40 +40,6 @@ function fillSession(qId = 'q-1'): BotSession {
       input: { context: { questionnaireId: qId } },
     },
   };
-}
-
-/** Мок proactiveSender нового контракта (notify/invite, send удалён). */
-function makeSender() {
-  return {
-    notify: mock(async () => {}),
-    invite: mock(async () => {}),
-    execute: mock(async () => {}),
-    kickFromGroup: mock(async () => {}),
-  };
-}
-
-function makeFillStory(
-  execute: (name: string, cmd: unknown, actorId: string) => Promise<unknown>,
-) {
-  const appApi = { execute: mock(execute) } as unknown as U7BotApp;
-  const story = new FillStory();
-  const sender = makeSender();
-  story.init({ appApi } as never, sender);
-  return { story, appApi, sender };
-}
-
-function makeInviteStory(
-  execute: (
-    name: string,
-    cmd: unknown,
-    actorId: string,
-  ) => Promise<unknown> = async () => ({}),
-) {
-  const appApi = { execute: mock(execute) } as unknown as U7BotApp;
-  const story = new InviteStory();
-  const sender = makeSender();
-  story.init({ appApi } as never, sender);
-  return { story, appApi, sender };
 }
 
 /** Одиночный выбор: три варианта. */
@@ -106,13 +83,17 @@ function flatButtons(res: DialogResponse): Array<[string, string]> {
 
 describe('Инвентаризация FillStory', () => {
   test('S02a single: кнопки-варианты в одном ряду, коды fill:answer:{qId}:{aCode}', async () => {
-    const { story } = makeFillStory(async () => ({
-      type: 'new_question',
-      questionnaireId: 'q-1',
-      question: radioQuestion,
-      questionIndex: 1,
-      poolSize: 3,
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        getCurrent: () => ({
+          type: 'new_question',
+          questionnaireId: 'q-1',
+          question: radioQuestion,
+          questionIndex: 1,
+          poolSize: 3,
+        }),
+      },
+    });
 
     const res = await story.handleCallback('current:q-1', actor, fillSession());
 
@@ -125,13 +106,17 @@ describe('Инвентаризация FillStory', () => {
   });
 
   test('S02b multiple: варианты + «Далее -->» отдельным рядом, код fill:next:{qId}:{qCode}', async () => {
-    const { story } = makeFillStory(async () => ({
-      type: 'wait_next',
-      questionnaireId: 'q-1',
-      currentQuestion: multiQuestion,
-      selectedAnswers: ['fe'],
-      nextButton: 'next:qc1',
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => ({
+          type: 'wait_next',
+          questionnaireId: 'q-1',
+          currentQuestion: multiQuestion,
+          selectedAnswers: ['fe'],
+          nextButton: 'next:qc1',
+        }),
+      },
+    });
 
     const res = await story.handleCallback(
       'answer:q-1:be',
@@ -152,13 +137,17 @@ describe('Инвентаризация FillStory', () => {
   });
 
   test('S03 text: без клавиатуры, подсказка «Введите ваш ответ текстом...»', async () => {
-    const { story } = makeFillStory(async () => ({
-      type: 'new_question',
-      questionnaireId: 'q-1',
-      question: textQuestion,
-      questionIndex: 2,
-      poolSize: 3,
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        getCurrent: () => ({
+          type: 'new_question',
+          questionnaireId: 'q-1',
+          question: textQuestion,
+          questionIndex: 2,
+          poolSize: 3,
+        }),
+      },
+    });
 
     const res = await story.handleCallback('current:q-1', actor, fillSession());
 
@@ -167,13 +156,17 @@ describe('Инвентаризация FillStory', () => {
   });
 
   test('S04 completed: кнопка «↩️ Главное меню» (app:main-menu) + release', async () => {
-    const { story } = makeFillStory(async () => ({
-      type: 'completed',
-      questionnaireId: 'q-1',
-      previousQuestion: radioQuestion,
-      previousSelectedAnswers: ['novice'],
-      completionText: 'Спасибо! Анкета принята.',
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => ({
+          type: 'completed',
+          questionnaireId: 'q-1',
+          previousQuestion: radioQuestion,
+          previousSelectedAnswers: ['novice'],
+          completionText: 'Спасибо! Анкета принята.',
+        }),
+      },
+    });
 
     const res = await story.handleCallback(
       'answer:q-1:novice',
@@ -187,12 +180,16 @@ describe('Инвентаризация FillStory', () => {
   });
 
   test('S05a cancel: confirm-кнопки «Да, прервать» / «Нет, продолжить» с qId', async () => {
-    const { story } = makeFillStory(async () => ({
-      type: 'new_question',
-      questionnaireId: 'q-1',
-      question: radioQuestion,
-      cancelWarning: 'Данные не сохранятся.',
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        getCurrent: () => ({
+          type: 'new_question',
+          questionnaireId: 'q-1',
+          question: radioQuestion,
+          cancelWarning: 'Данные не сохранятся.',
+        }),
+      },
+    });
 
     const res = await story.handleCallback('cancel:q-1', actor, fillSession());
 
@@ -207,7 +204,9 @@ describe('Инвентаризация FillStory', () => {
   });
 
   test('S05b cancel-confirm: «Анкета прервана.» + главное меню + release', async () => {
-    const { story } = makeFillStory(async () => undefined);
+    const { story } = initStory(new FillStory(), {
+      answers: { abandon: () => undefined },
+    });
 
     const res = await story.handleCallback(
       'cancel-confirm:q-1',
@@ -221,25 +220,22 @@ describe('Инвентаризация FillStory', () => {
   });
 
   test('fill:resume:{courseId}: экран вопроса + awaitInput с questionnaireId', async () => {
-    const { story } = makeFillStory(async (name) => {
-      if (name === 'get-questionnaires-by-user') {
-        return [
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        getQuestionnairesByUser: () => [
           {
             kind: 'standard',
             uuid: 'q-1',
             status: 'in_progress',
             ownerInfo: { courseId: 'course-1' },
           },
-        ];
-      }
-      if (name === 'get-current') {
-        return {
+        ],
+        getCurrent: () => ({
           type: 'new_question',
           questionnaireId: 'q-1',
           question: textQuestion,
-        };
-      }
-      throw new Error(`Неожиданный UC: ${name}`);
+        }),
+      },
     });
 
     const res = await story.handleCallback(
@@ -253,7 +249,9 @@ describe('Инвентаризация FillStory', () => {
   });
 
   test('fill:resume — анкета не найдена: экран с главным меню', async () => {
-    const { story } = makeFillStory(async () => []);
+    const { story } = initStory(new FillStory(), {
+      answers: { getQuestionnairesByUser: () => [] },
+    });
 
     const res = await story.handleCallback(
       'resume:course-1',
@@ -266,11 +264,15 @@ describe('Инвентаризация FillStory', () => {
   });
 
   test('fill:current:{qId}: экран вопроса + awaitInput (восстановление флоу)', async () => {
-    const { story } = makeFillStory(async () => ({
-      type: 'new_question',
-      questionnaireId: 'q-1',
-      question: textQuestion,
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        getCurrent: () => ({
+          type: 'new_question',
+          questionnaireId: 'q-1',
+          question: textQuestion,
+        }),
+      },
+    });
 
     const res = await story.handleCallback('current:q-1', actor, {
       dialog: { path: 'app/menu', seq: 5 },
@@ -281,7 +283,7 @@ describe('Инвентаризация FillStory', () => {
   });
 
   test('неизвестный action: экран «⚠️ Неизвестная команда» без кнопок', async () => {
-    const { story } = makeFillStory(async () => ({}));
+    const { story } = initStory(new FillStory());
 
     const res = await story.handleCallback('nonsense:1', actor, fillSession());
 
@@ -293,26 +295,26 @@ describe('Инвентаризация FillStory', () => {
 // ══ InviteStory — инвентаризация экранов ══
 
 describe('Инвентаризация InviteStory', () => {
-  test('S01 (подписка questionnaire:invite): invite-канал, ПОЛНЫЕ коды кнопок', async () => {
-    const { story, sender } = makeInviteStory();
-
-    const sub = story
-      .getEventSubscriptions()
-      .find((s) => s.eventName === 'questionnaire:invite');
-    expect(sub).toBeDefined();
-
-    await sub!.handle({
-      eventName: 'questionnaire:invite',
-      payload: {
-        telegramId: 456,
-        response: {
-          type: 'invited',
-          questionnaireId: 'q1',
-          inviteText: 'Заполните анкету',
-          whyText: 'Для обучения',
-        },
+  test('S01 (подписка invited): invite-канал, ПОЛНЫЕ коды кнопок', async () => {
+    const { story, sender } = initStory(new InviteStory(), {
+      users,
+      answers: {
+        getCurrent: () =>
+          invitedView({
+            questionnaireId: 'q1',
+            inviteText: 'Заполните анкету',
+            whyText: 'Для обучения',
+          }),
       },
-    } as never);
+    });
+
+    expect(story.getEventSubscriptions().map((s) => s.eventName)).toEqual([
+      QuestionnaireEvents.invited.name,
+    ]);
+
+    await subscriptionOf(story, QuestionnaireEvents.invited.name).handle(
+      invitedEvent({ questionnaireId: 'q1' }),
+    );
 
     expect(sender.invite).toHaveBeenCalledTimes(1);
     const [telegramId, payload] = sender.invite.mock.calls[0] as unknown as [
@@ -333,19 +335,14 @@ describe('Инвентаризация InviteStory', () => {
   });
 
   test('S01 без whyText: кнопка «Зачем это нужно?» не показывается', async () => {
-    const { story, sender } = makeInviteStory();
+    const { story, sender } = initStory(new InviteStory(), {
+      users,
+      answers: { getCurrent: () => invitedView({ questionnaireId: 'q1' }) },
+    });
 
-    const sub = story
-      .getEventSubscriptions()
-      .find((s) => s.eventName === 'questionnaire:invite')!;
-
-    await sub.handle({
-      eventName: 'questionnaire:invite',
-      payload: {
-        telegramId: 456,
-        response: { type: 'invited', questionnaireId: 'q1' },
-      },
-    } as never);
+    await subscriptionOf(story, QuestionnaireEvents.invited.name).handle(
+      invitedEvent({ questionnaireId: 'q1' }),
+    );
 
     const [, payload] = sender.invite.mock.calls[0] as unknown as [
       number,
@@ -358,11 +355,12 @@ describe('Инвентаризация InviteStory', () => {
   });
 
   test('invite:why:{qId}: экран whyText + кнопка «✅ Хорошо» → invite:invite', async () => {
-    const { story } = makeInviteStory(async () => ({
-      type: 'invited',
-      questionnaireId: 'q1',
-      whyText: 'Для обучения',
-    }));
+    const { story } = initStory(new InviteStory(), {
+      answers: {
+        getCurrent: () =>
+          invitedView({ questionnaireId: 'q1', whyText: 'Для обучения' }),
+      },
+    });
 
     const res = await story.handleCallback('why:q1', actor, fillSession());
 
@@ -371,12 +369,16 @@ describe('Инвентаризация InviteStory', () => {
   });
 
   test('invite:invite:{qId}: повторный S01, кнопки start/why/decline', async () => {
-    const { story } = makeInviteStory(async () => ({
-      type: 'invited',
-      questionnaireId: 'q1',
-      inviteText: 'Заполните анкету',
-      whyText: 'Для обучения',
-    }));
+    const { story } = initStory(new InviteStory(), {
+      answers: {
+        getCurrent: () =>
+          invitedView({
+            questionnaireId: 'q1',
+            inviteText: 'Заполните анкету',
+            whyText: 'Для обучения',
+          }),
+      },
+    });
 
     const res = await story.handleCallback('invite:q1', actor, fillSession());
 
@@ -389,11 +391,15 @@ describe('Инвентаризация InviteStory', () => {
   });
 
   test('invite:decline:{qId} (S06a): confirm-кнопки с cancelWarning', async () => {
-    const { story } = makeInviteStory(async () => ({
-      type: 'invited',
-      questionnaireId: 'q1',
-      cancelWarning: 'Придётся заполнять с начала.',
-    }));
+    const { story } = initStory(new InviteStory(), {
+      answers: {
+        getCurrent: () =>
+          invitedView({
+            questionnaireId: 'q1',
+            cancelWarning: 'Придётся заполнять с начала.',
+          }),
+      },
+    });
 
     const res = await story.handleCallback('decline:q1', actor, fillSession());
 
@@ -408,7 +414,9 @@ describe('Инвентаризация InviteStory', () => {
   });
 
   test('invite:decline-confirm:{qId} (S06b): «Анкета пропущена.» + меню + release', async () => {
-    const { story } = makeInviteStory(async () => undefined);
+    const { story } = initStory(new InviteStory(), {
+      answers: { declineInvite: () => undefined },
+    });
 
     const res = await story.handleCallback(
       'decline-confirm:q1',
@@ -422,16 +430,11 @@ describe('Инвентаризация InviteStory', () => {
   });
 
   test('invite:start:{qId}: delegate в fill:current:{qId} (диалог fill, не invite)', async () => {
-    const { story } = makeInviteStory(async (name) => {
-      if (name === 'start-by-invite') return { ok: true };
-      if (name === 'get-current') {
-        return {
-          type: 'new_question',
-          questionnaireId: 'q-1',
-          question: textQuestion,
-        };
-      }
-      throw new Error(`Неожиданный UC: ${name}`);
+    const { story } = initStory(new InviteStory(), {
+      answers: {
+        startByInvite: () => ({ ok: true }),
+        getCurrent: () => newQuestionView({ question: textQuestion }),
+      },
     });
 
     const res = await story.handleCallback('start:q-1', actor, fillSession());

@@ -1,15 +1,25 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
-import type { U7BotApp } from '@u7-scl/bot/u7-bot-app-meta';
-import { AppException, errBadRequest } from '@u7-scl/core/domain';
-import {
-  assertMarkdownV2Safe,
-  type Logger,
-  LogLevel,
-  setGlobalLogger,
-} from '@u7-scl/core/shared';
+import { assertMarkdownV2Safe } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
+import {
+  AbandonUcDef,
+  QuestionnaireErrors,
+  QuestionnaireEvents,
+} from '@u7-scl/domain/questionnaire/contract';
 import { FillStory } from './fill.story';
+import {
+  buttonsOf,
+  dispatchedOf,
+  initStory,
+  RESPONDENT_ID,
+  refuse,
+  respondentProfile,
+  startedEvent,
+  subscriptionOf,
+  useMockLogger,
+  warnsOf,
+} from './questionnaire-dmg.test-kit';
 
 /**
  * Поведенческие тесты FillStory на контракте «Диалог и Экран»
@@ -60,53 +70,23 @@ function menuSession(): BotSession {
   return { dialog: { path: 'app/menu', seq: 2 } };
 }
 
-function makeStory(
-  execute: (name: string, cmd: unknown, actorId: string) => Promise<unknown>,
-) {
-  const executeMock = mock(execute);
-  const appApi = { execute: executeMock } as unknown as U7BotApp;
-  const story = new FillStory();
-  const sender = {
-    name: 'questionnaire',
-    notify: mock(async () => {}),
-    invite: mock(async () => {}),
-    execute: mock(async () => {}),
-    kickFromGroup: mock(async () => {}),
-  };
-  story.init({ appApi } as never, sender);
-  return { story, appApi, executeMock };
-}
-
-function createMockLogger(): Logger & { warn: ReturnType<typeof mock> } {
-  return {
-    debug: mock(() => {}),
-    info: mock(() => {}),
-    warn: mock(() => {}),
-    error: mock(() => {}),
-    setLogLevel: mock(() => {}),
-    getLogLevel: mock(() => LogLevel.DEBUG),
-    setSourceLevel: mock(() => {}),
-  } as unknown as Logger & { warn: ReturnType<typeof mock> };
-}
-
-/** Ошибка UC как из домена: bad-request (текст при choice-вопросе). */
-function badRequest(message: string): AppException {
-  return new AppException(errBadRequest('BAD_REQUEST', message, undefined));
-}
-
 // ══ Finalize-паттерн ══
 
 describe('FillStory — finalize-паттерн («зафиксируй выбор → следующий вопрос»)', () => {
   test('single answer: finalize с финальными маркерами \\(x\\)/\\( \\), screen — следующий вопрос, ввод живёт', async () => {
-    const { story, executeMock } = makeStory(async () => ({
-      type: 'new_question',
-      questionnaireId: 'q-1',
-      question: nextTextQuestion,
-      previousQuestion: radioQuestion,
-      previousSelectedAnswers: ['novice'],
-      questionIndex: 2,
-      poolSize: 2,
-    }));
+    const { story, dispatch } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => ({
+          type: 'new_question',
+          questionnaireId: 'q-1',
+          question: nextTextQuestion,
+          previousQuestion: radioQuestion,
+          previousSelectedAnswers: ['novice'],
+          questionIndex: 2,
+          poolSize: 2,
+        }),
+      },
+    });
 
     const res = await story.handleCallback(
       'answer:q-1:novice',
@@ -115,11 +95,12 @@ describe('FillStory — finalize-паттерн («зафиксируй выбо
     );
 
     // UC вызван с выбором варианта
-    expect(executeMock).toHaveBeenCalledWith(
-      'handle-action',
-      { questionnaireId: 'q-1', type: 'callback', value: 'novice' },
-      actor,
-    );
+    expect(dispatchedOf(dispatch)).toEqual([
+      {
+        uc: 'handleAction',
+        input: { questionnaireId: 'q-1', type: 'callback', value: 'novice' },
+      },
+    ]);
 
     // Предыдущий вопрос зафиксирован: выбранный отмечен, прочие — нет
     expect(res.finalize).toBeDefined();
@@ -137,22 +118,26 @@ describe('FillStory — finalize-паттерн («зафиксируй выбо
   });
 
   test('multiple «Далее»: finalize с маркерами \\[x\\] экрана мультивыбора', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'new_question',
-      questionnaireId: 'q-1',
-      question: nextTextQuestion,
-      previousQuestion: {
-        questionCode: 'qc1',
-        type: 'choice' as const,
-        multiple: true,
-        question: 'Что интересно?',
-        answers: [
-          { answer: 'Фронтенд', answerCode: 'fe' },
-          { answer: 'Бэкенд', answerCode: 'be' },
-        ],
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => ({
+          type: 'new_question',
+          questionnaireId: 'q-1',
+          question: nextTextQuestion,
+          previousQuestion: {
+            questionCode: 'qc1',
+            type: 'choice' as const,
+            multiple: true,
+            question: 'Что интересно?',
+            answers: [
+              { answer: 'Фронтенд', answerCode: 'fe' },
+              { answer: 'Бэкенд', answerCode: 'be' },
+            ],
+          },
+          previousSelectedAnswers: ['fe', 'be'],
+        }),
       },
-      previousSelectedAnswers: ['fe', 'be'],
-    }));
+    });
 
     const res = await story.handleCallback(
       'next:q-1:qc1',
@@ -166,13 +151,17 @@ describe('FillStory — finalize-паттерн («зафиксируй выбо
   });
 
   test('текстовый ответ: finalize предыдущего вопроса + screen следующего', async () => {
-    const { story, executeMock } = makeStory(async () => ({
-      type: 'new_question',
-      questionnaireId: 'q-1',
-      question: nextTextQuestion,
-      previousQuestion: radioQuestion,
-      previousSelectedAnswers: [],
-    }));
+    const { story, dispatch } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => ({
+          type: 'new_question',
+          questionnaireId: 'q-1',
+          question: nextTextQuestion,
+          previousQuestion: radioQuestion,
+          previousSelectedAnswers: [],
+        }),
+      },
+    });
 
     const res = await story.handleMessage(
       { type: 'message', text: '3 года фронтенда', telegramId: 1 },
@@ -181,11 +170,16 @@ describe('FillStory — finalize-паттерн («зафиксируй выбо
     );
 
     // UC вызван с type:'text' и значением из сообщения
-    expect(executeMock).toHaveBeenCalledWith(
-      'handle-action',
-      { questionnaireId: 'q-1', type: 'text', value: '3 года фронтенда' },
-      actor,
-    );
+    expect(dispatchedOf(dispatch)).toEqual([
+      {
+        uc: 'handleAction',
+        input: {
+          questionnaireId: 'q-1',
+          type: 'text',
+          value: '3 года фронтенда',
+        },
+      },
+    ]);
 
     expect(res.finalize?.text).toContain('Какой у тебя опыт?');
     expect(String(res.screen?.text)).toContain('Расскажи о себе');
@@ -193,13 +187,17 @@ describe('FillStory — finalize-паттерн («зафиксируй выбо
   });
 
   test('completed: finalize + completionText + главное меню + release', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'completed',
-      questionnaireId: 'q-1',
-      previousQuestion: nextTextQuestion,
-      previousSelectedAnswers: [],
-      completionText: 'Спасибо! Анкета принята.',
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => ({
+          type: 'completed',
+          questionnaireId: 'q-1',
+          previousQuestion: nextTextQuestion,
+          previousSelectedAnswers: [],
+          completionText: 'Спасибо! Анкета принята.',
+        }),
+      },
+    });
 
     const res = await story.handleCallback(
       'answer:q-1:novice',
@@ -215,10 +213,11 @@ describe('FillStory — finalize-паттерн («зафиксируй выбо
   });
 
   test('completed без предыдущего вопроса: только screen + release, без finalize', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'completed',
-      questionnaireId: 'q-1',
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => ({ type: 'completed', questionnaireId: 'q-1' }),
+      },
+    });
 
     const res = await story.handleCallback(
       'answer:q-1:novice',
@@ -232,10 +231,11 @@ describe('FillStory — finalize-паттерн («зафиксируй выбо
   });
 
   test('fallback completionText: «Спасибо! Твоя анкета принята.»', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'completed',
-      questionnaireId: 'q-1',
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => ({ type: 'completed', questionnaireId: 'q-1' }),
+      },
+    });
 
     const res = await story.handleCallback(
       'answer:q-1:novice',
@@ -247,22 +247,26 @@ describe('FillStory — finalize-паттерн («зафиксируй выбо
   });
 
   test('wait_next (тоггл): только screen без finalize — edit-in-place, клавиатура жива', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'wait_next',
-      questionnaireId: 'q-1',
-      currentQuestion: {
-        questionCode: 'qc1',
-        type: 'choice' as const,
-        multiple: true,
-        question: 'Что интересно?',
-        answers: [
-          { answer: 'Фронтенд', answerCode: 'fe' },
-          { answer: 'Бэкенд', answerCode: 'be' },
-        ],
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => ({
+          type: 'wait_next',
+          questionnaireId: 'q-1',
+          currentQuestion: {
+            questionCode: 'qc1',
+            type: 'choice' as const,
+            multiple: true,
+            question: 'Что интересно?',
+            answers: [
+              { answer: 'Фронтенд', answerCode: 'fe' },
+              { answer: 'Бэкенд', answerCode: 'be' },
+            ],
+          },
+          selectedAnswers: ['fe'],
+          nextButton: 'next:qc1',
+        }),
       },
-      selectedAnswers: ['fe'],
-      nextButton: 'next:qc1',
-    }));
+    });
 
     const res = await story.handleCallback(
       'answer:q-1:fe',
@@ -283,13 +287,17 @@ describe('FillStory — finalize-паттерн («зафиксируй выбо
 
 describe('FillStory — awaitInput при входе', () => {
   test('первый вопрос (без предыдущего): подсказка /cancel + awaitInput', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'new_question',
-      questionnaireId: 'q-1',
-      question: radioQuestion,
-      questionIndex: 1,
-      poolSize: 3,
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        getCurrent: () => ({
+          type: 'new_question',
+          questionnaireId: 'q-1',
+          question: radioQuestion,
+          questionIndex: 1,
+          poolSize: 3,
+        }),
+      },
+    });
 
     const res = await story.handleCallback('current:q-1', actor, menuSession());
 
@@ -298,15 +306,19 @@ describe('FillStory — awaitInput при входе', () => {
   });
 
   test('не первый вопрос: без подсказки /cancel', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'new_question',
-      questionnaireId: 'q-1',
-      question: nextTextQuestion,
-      previousQuestion: radioQuestion,
-      previousSelectedAnswers: ['novice'],
-      questionIndex: 2,
-      poolSize: 3,
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        getCurrent: () => ({
+          type: 'new_question',
+          questionnaireId: 'q-1',
+          question: nextTextQuestion,
+          previousQuestion: radioQuestion,
+          previousSelectedAnswers: ['novice'],
+          questionIndex: 2,
+          poolSize: 3,
+        }),
+      },
+    });
 
     const res = await story.handleCallback('current:q-1', actor, menuSession());
 
@@ -317,9 +329,17 @@ describe('FillStory — awaitInput при входе', () => {
 // ══ Валидация — errorNotify (ввод живёт) ══
 
 describe('FillStory — валидация ответов: errorNotify-переспрос', () => {
-  test('текст при choice-вопросе (bad-request UC): warn-реплика, экран не трогаем, ввод живёт', async () => {
-    const { story } = makeStory(async () => {
-      throw badRequest('Ожидался ответ с выбором (нажатием кнопки)');
+  test('текст при choice-вопросе (CHOICE_EXPECTED): warn «Ошибка валидации», экран не трогаем, ввод живёт', async () => {
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () =>
+          refuse(
+            QuestionnaireErrors.CHOICE_EXPECTED.code,
+            QuestionnaireErrors.CHOICE_EXPECTED.kind,
+            undefined,
+            QuestionnaireErrors.CHOICE_EXPECTED.label,
+          ),
+      },
     });
 
     const res = await story.handleMessage(
@@ -330,6 +350,7 @@ describe('FillStory — валидация ответов: errorNotify-пере�
 
     expect(res.notify?.kind).toBe('warn');
     expect(res.notify?.text).toContain('Ожидался ответ с выбором');
+    expect(res.notify?.text).toContain('Ошибка валидации');
     expect(res.screen).toBeUndefined();
     expect(res.finalize).toBeUndefined();
     // Переспрос: ввод НЕ отпущен
@@ -338,8 +359,16 @@ describe('FillStory — валидация ответов: errorNotify-пере�
   });
 
   test('internal-ошибка UC: общая реплика без утечки деталей, ввод живёт', async () => {
-    const { story } = makeStory(async () => {
-      throw new Error('секретная внутренняя деталь');
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () =>
+          refuse(
+            'INTERNAL',
+            'internal',
+            undefined,
+            'секретная внутренняя деталь',
+          ),
+      },
     });
 
     const res = await story.handleCallback(
@@ -357,16 +386,7 @@ describe('FillStory — валидация ответов: errorNotify-пере�
 // ══ stale_answer — warn-реплика без перерисовки ══
 
 describe('FillStory — stale_answer: реплика поверх, экран и ввод не трогаем', () => {
-  let mockLogger: Logger & { warn: ReturnType<typeof mock> };
-
-  beforeEach(() => {
-    mockLogger = createMockLogger();
-    setGlobalLogger(mockLogger);
-  });
-
-  afterEach(() => {
-    setGlobalLogger(undefined as unknown as Logger);
-  });
+  const mockLogger = useMockLogger();
 
   const staleResponse = (overrides: Record<string, unknown> = {}) => ({
     type: 'stale_answer',
@@ -378,7 +398,9 @@ describe('FillStory — stale_answer: реплика поверх, экран и
   });
 
   test('stale_button: warn-реплика «относится к предыдущему вопросу», без перерисовки', async () => {
-    const { story } = makeStory(async () => staleResponse());
+    const { story } = initStory(new FillStory(), {
+      answers: { handleAction: () => staleResponse() },
+    });
 
     const res = await story.handleCallback(
       'answer:q-1:alien',
@@ -394,9 +416,11 @@ describe('FillStory — stale_answer: реплика поверх, экран и
   });
 
   test('empty_selection: warn-реплика «выбери хотя бы один вариант»', async () => {
-    const { story } = makeStory(async () =>
-      staleResponse({ reason: 'empty_selection' }),
-    );
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => staleResponse({ reason: 'empty_selection' }),
+      },
+    });
 
     const res = await story.handleCallback(
       'next:q-1:qc1',
@@ -410,13 +434,21 @@ describe('FillStory — stale_answer: реплика поверх, экран и
   });
 
   test('наблюдаемость: logger.warn с нажатым значением, вопросом и причиной', async () => {
-    const { story } = makeStory(async () => staleResponse());
+    const { story } = initStory(new FillStory(), {
+      answers: { handleAction: () => staleResponse() },
+    });
 
     await story.handleCallback('answer:q-1:alien', actor, fillSession());
 
-    expect(mockLogger.warn).toHaveBeenCalledTimes(1);
-    const [source, message, meta] = mockLogger.warn.mock
-      .calls[0] as unknown as [string, string, Record<string, unknown>];
+    type WarnCall = [string, string, Record<string, unknown>];
+    const staleWarns = (
+      mockLogger.warn.mock.calls as unknown as WarnCall[]
+    ).filter(
+      ([source, message]) =>
+        source === 'fill-story' && message.includes('Неактуальный ответ'),
+    );
+    expect(staleWarns).toHaveLength(1);
+    const [source, message, meta] = staleWarns[0] as WarnCall;
     expect(source).toBe('fill-story');
     expect(message).toContain('Неактуальный ответ');
     expect(meta.pressed).toBe('alien');
@@ -430,13 +462,17 @@ describe('FillStory — stale_answer: реплика поверх, экран и
 
 describe('FillStory — шапка «Вопрос N из M»', () => {
   test('new_question: шапка с индексом и размером пула', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'new_question',
-      questionnaireId: 'q-1',
-      question: radioQuestion,
-      questionIndex: 2,
-      poolSize: 5,
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        getCurrent: () => ({
+          type: 'new_question',
+          questionnaireId: 'q-1',
+          question: radioQuestion,
+          questionIndex: 2,
+          poolSize: 5,
+        }),
+      },
+    });
 
     const res = await story.handleCallback('current:q-1', actor, menuSession());
 
@@ -444,21 +480,25 @@ describe('FillStory — шапка «Вопрос N из M»', () => {
   });
 
   test('wait_next: прогресс тоже показывается', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'wait_next',
-      questionnaireId: 'q-1',
-      currentQuestion: {
-        questionCode: 'qc1',
-        type: 'choice' as const,
-        multiple: true,
-        question: 'Что интересно?',
-        answers: [{ answer: 'Фронтенд', answerCode: 'fe' }],
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => ({
+          type: 'wait_next',
+          questionnaireId: 'q-1',
+          currentQuestion: {
+            questionCode: 'qc1',
+            type: 'choice' as const,
+            multiple: true,
+            question: 'Что интересно?',
+            answers: [{ answer: 'Фронтенд', answerCode: 'fe' }],
+          },
+          selectedAnswers: ['fe'],
+          nextButton: 'next:qc1',
+          questionIndex: 1,
+          poolSize: 3,
+        }),
       },
-      selectedAnswers: ['fe'],
-      nextButton: 'next:qc1',
-      questionIndex: 1,
-      poolSize: 3,
-    }));
+    });
 
     const res = await story.handleCallback(
       'answer:q-1:fe',
@@ -483,13 +523,17 @@ describe('FillStory — кнопка «Далее» мультивыбора', (
   };
 
   test('выбран хотя бы один вариант — «Далее» присутствует', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'wait_next',
-      questionnaireId: 'q-1',
-      currentQuestion: multiQ,
-      selectedAnswers: ['fe'],
-      nextButton: 'next:qc1',
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => ({
+          type: 'wait_next',
+          questionnaireId: 'q-1',
+          currentQuestion: multiQ,
+          selectedAnswers: ['fe'],
+          nextButton: 'next:qc1',
+        }),
+      },
+    });
 
     const res = await story.handleCallback(
       'answer:q-1:fe',
@@ -502,13 +546,17 @@ describe('FillStory — кнопка «Далее» мультивыбора', (
   });
 
   test('все варианты сняты (пустой драфт) — «Далее» исчезает', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'wait_next',
-      questionnaireId: 'q-1',
-      currentQuestion: multiQ,
-      selectedAnswers: [],
-      nextButton: undefined,
-    }));
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        handleAction: () => ({
+          type: 'wait_next',
+          questionnaireId: 'q-1',
+          currentQuestion: multiQ,
+          selectedAnswers: [],
+          nextButton: undefined,
+        }),
+      },
+    });
 
     const res = await story.handleCallback(
       'answer:q-1:fe',
@@ -524,51 +572,31 @@ describe('FillStory — кнопка «Далее» мультивыбора', (
 // ══ Подписки (вариант A: сервер только зовёт) ══
 
 describe('FillStory — подписки вариант A (invite-канал)', () => {
-  const senderOf = () => ({
-    name: 'questionnaire',
-    notify: mock(async () => {}),
-    invite: mock(async () => {}),
-    execute: mock(async () => {}),
-    kickFromGroup: mock(async () => {}),
-  });
+  const logger = useMockLogger();
+  const users = { [RESPONDENT_ID]: respondentProfile() };
 
-  test('getEventSubscriptions: start, abandon-warning, continue-invite, abandon', () => {
-    const story = new FillStory();
-    story.init(
-      { appApi: { execute: mock(async () => ({})) } } as never,
-      senderOf(),
-    );
+  test('getEventSubscriptions: started, abandonWarning, continueInvite, abandoned', () => {
+    const { story } = initStory(new FillStory());
 
     const names = story.getEventSubscriptions().map((s) => s.eventName);
-    expect(names).toEqual([
-      'questionnaire:start',
-      'questionnaire:abandon-warning',
-      'questionnaire:continue-invite',
-      'questionnaire:abandon',
-    ]);
+    expect(names).toEqual(
+      [
+        QuestionnaireEvents.started,
+        QuestionnaireEvents.abandonWarning,
+        QuestionnaireEvents.continueInvite,
+        QuestionnaireEvents.abandoned,
+      ].map((e) => e.name),
+    );
   });
 
-  test('questionnaire:start с courseId: invite «заполнить анкету» с кнопкой-мостом resume', async () => {
-    const story = new FillStory();
-    const sender = senderOf();
-    story.init(
-      { appApi: { execute: mock(async () => ({})) } } as never,
-      sender,
+  test('started с courseId: invite «заполнить анкету» с кнопкой-мостом resume, адрес — get-user по respondentId', async () => {
+    const { story, sender, execute } = initStory(new FillStory(), { users });
+
+    await subscriptionOf(story, QuestionnaireEvents.started.name).handle(
+      startedEvent({ ownerInfo: { courseId: 'course-1' } }),
     );
 
-    const sub = story
-      .getEventSubscriptions()
-      .find((s) => s.eventName === 'questionnaire:start')!;
-
-    await sub.handle({
-      eventName: 'questionnaire:start',
-      payload: {
-        telegramId: 456,
-        response: { type: 'new_question', questionnaireId: 'q-1' },
-      },
-      ownerInfo: { courseId: 'course-1' },
-    } as never);
-
+    expect(execute).toHaveBeenCalledWith('get-user', { uuid: RESPONDENT_ID });
     expect(sender.invite).toHaveBeenCalledTimes(1);
     const [telegramId, payload] = sender.invite.mock.calls[0] as unknown as [
       number,
@@ -581,26 +609,12 @@ describe('FillStory — подписки вариант A (invite-канал)', 
     ]);
   });
 
-  test('questionnaire:start без courseId: notify-подсказка входа через меню', async () => {
-    const story = new FillStory();
-    const sender = senderOf();
-    story.init(
-      { appApi: { execute: mock(async () => ({})) } } as never,
-      sender,
+  test('started без courseId: notify-подсказка входа через меню', async () => {
+    const { story, sender } = initStory(new FillStory(), { users });
+
+    await subscriptionOf(story, QuestionnaireEvents.started.name).handle(
+      startedEvent({ ownerInfo: {} }),
     );
-
-    const sub = story
-      .getEventSubscriptions()
-      .find((s) => s.eventName === 'questionnaire:start')!;
-
-    await sub.handle({
-      eventName: 'questionnaire:start',
-      payload: {
-        telegramId: 456,
-        response: { type: 'new_question', questionnaireId: 'q-1' },
-      },
-      ownerInfo: {},
-    } as never);
 
     expect(sender.invite).not.toHaveBeenCalled();
     expect(sender.notify).toHaveBeenCalledTimes(1);
@@ -611,15 +625,73 @@ describe('FillStory — подписки вариант A (invite-канал)', 
     expect(telegramId).toBe(456);
     expect(payload.text).toContain('/start');
   });
+
+  test('started: courseId не строка — как без courseId (notify)', async () => {
+    const { story, sender } = initStory(new FillStory(), { users });
+
+    await subscriptionOf(story, QuestionnaireEvents.started.name).handle(
+      startedEvent({ ownerInfo: { courseId: 42 } }),
+    );
+
+    expect(sender.invite).not.toHaveBeenCalled();
+    expect(sender.notify).toHaveBeenCalledTimes(1);
+  });
+
+  test('started: профиля нет — тишина и warn', async () => {
+    const { story, sender } = initStory(new FillStory(), { users: {} });
+
+    await subscriptionOf(story, QuestionnaireEvents.started.name).handle(
+      startedEvent(),
+    );
+
+    expect(sender.invite).not.toHaveBeenCalled();
+    expect(sender.notify).not.toHaveBeenCalled();
+    expect(
+      warnsOf(logger, 'fill', 'профиль респондента не найден'),
+    ).toHaveLength(1);
+  });
+
+  test('started: профиль без telegramId — тишина и warn', async () => {
+    const { telegramId: _tg, ...noTelegram } = respondentProfile();
+    const { story, sender } = initStory(new FillStory(), {
+      users: { [RESPONDENT_ID]: noTelegram },
+    });
+
+    await subscriptionOf(story, QuestionnaireEvents.started.name).handle(
+      startedEvent(),
+    );
+
+    expect(sender.invite).not.toHaveBeenCalled();
+    expect(sender.notify).not.toHaveBeenCalled();
+    expect(warnsOf(logger, 'fill', 'нет telegramId респондента')).toHaveLength(
+      1,
+    );
+  });
+
+  test('started: сбой get-user — тишина и warn, без падения', async () => {
+    const { story, sender } = initStory(new FillStory(), {
+      getUserFails: true,
+    });
+
+    await subscriptionOf(story, QuestionnaireEvents.started.name).handle(
+      startedEvent(),
+    );
+
+    expect(sender.invite).not.toHaveBeenCalled();
+    expect(sender.notify).not.toHaveBeenCalled();
+    const warns = warnsOf(logger, 'fill', 'сбой чтения профиля');
+    expect(warns).toHaveLength(1);
+    expect(warns[0]?.[2]?.error).toContain('сбой get-user');
+  });
 });
 
 // ══ Resume: фильтр активных standard-анкет ══
 
 describe('FillStory — resume по курсу: фильтрация', () => {
   test('completed и likert-анкеты того же курса игнорируются', async () => {
-    const { story } = makeStory(async (name) => {
-      if (name === 'get-questionnaires-by-user') {
-        return [
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        getQuestionnairesByUser: () => [
           {
             kind: 'standard',
             status: 'completed',
@@ -638,9 +710,8 @@ describe('FillStory — resume по курсу: фильтрация', () => {
             ownerInfo: { courseId: 'course-2' },
             uuid: 'q-other',
           },
-        ];
-      }
-      throw new Error(`Неожиданный UC: ${name}`);
+        ],
+      },
     });
 
     const res = await story.handleCallback(
@@ -658,16 +729,15 @@ describe('FillStory — resume по курсу: фильтрация', () => {
 
 describe('FillStory — /cancel: подтверждение перед прерыванием', () => {
   test('активная fill: stop с confirm-экраном, abandon НЕ вызывается', async () => {
-    const { story, executeMock } = makeStory(async (name) => {
-      if (name === 'get-current') {
-        return {
+    const { story, dispatch } = initStory(new FillStory(), {
+      answers: {
+        getCurrent: () => ({
           type: 'new_question',
           questionnaireId: 'q-1',
           question: radioQuestion,
           cancelWarning: 'Данные не сохранятся.',
-        };
-      }
-      throw new Error(`Неожиданный UC: ${name}`);
+        }),
+      },
     });
 
     const reaction = await story.handleCommand(
@@ -691,13 +761,21 @@ describe('FillStory — /cancel: подтверждение перед прер�
     ]);
 
     // Прерывание — только после подтверждения: abandon не звали
-    const ucNames = (executeMock.mock.calls as unknown[][]).map((c) => c[0]);
-    expect(ucNames).not.toContain('abandon');
+    const ucNames = dispatchedOf(dispatch).map((c) => c.uc);
+    expect(ucNames).not.toContain(AbandonUcDef.name);
   });
 
   test('get-current недоступен (анкеты нет): дефолтный сброс «Отменено. Наберите /start»', async () => {
-    const { story } = makeStory(async () => {
-      throw badRequest('Анкета уже завершена');
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        getCurrent: () =>
+          refuse(
+            QuestionnaireErrors.NOT_FOUND.code,
+            QuestionnaireErrors.NOT_FOUND.kind,
+            { questionnaireId: 'q-1' },
+            QuestionnaireErrors.NOT_FOUND.label,
+          ),
+      },
     });
 
     const reaction = await story.handleCommand(
@@ -713,7 +791,7 @@ describe('FillStory — /cancel: подтверждение перед прер�
   });
 
   test('неактивная fill: pass без побочных действий', async () => {
-    const { story, executeMock } = makeStory(async () => ({}));
+    const { story, dispatch } = initStory(new FillStory());
 
     const reaction = await story.handleCommand(
       { type: 'command', command: 'cancel', args: '', telegramId: 1 },
@@ -722,11 +800,11 @@ describe('FillStory — /cancel: подтверждение перед прер�
     );
 
     expect(reaction).toEqual({ reaction: 'pass' });
-    expect(executeMock).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
   test('прочая команда (/help): pass — дефолт контракта U7BotUiStory', async () => {
-    const { story } = makeStory(async () => ({}));
+    const { story } = initStory(new FillStory());
 
     const reaction = await story.handleCommand(
       { type: 'command', command: 'help', args: '', telegramId: 1 },
@@ -735,5 +813,28 @@ describe('FillStory — /cancel: подтверждение перед прер�
     );
 
     expect(reaction).toEqual({ reaction: 'pass' });
+  });
+});
+
+// ══ Callback cancel:{qId} — экран ошибки при отказе UC ══
+
+describe('FillStory — cancel:{qId}: отказ getCurrent — экран ошибки', () => {
+  test('отказ getCurrent: экран «⚠️ Анкета не найдена» с кнопкой «⬅️ Меню»', async () => {
+    const { story } = initStory(new FillStory(), {
+      answers: {
+        getCurrent: () =>
+          refuse(
+            QuestionnaireErrors.NOT_FOUND.code,
+            QuestionnaireErrors.NOT_FOUND.kind,
+            { questionnaireId: 'q-1' },
+            QuestionnaireErrors.NOT_FOUND.label,
+          ),
+      },
+    });
+
+    const res = await story.handleCallback('cancel:q-1', actor, fillSession());
+
+    expect(String(res.screen?.text)).toContain('Анкета не найдена');
+    expect(buttonsOf(res)).toEqual([['⬅️ Меню', 'app:main-menu']]);
   });
 });

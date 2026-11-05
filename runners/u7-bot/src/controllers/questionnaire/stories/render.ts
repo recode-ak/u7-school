@@ -1,4 +1,12 @@
-import { escapeMarkdown, type MdText, mdRaw } from '@u7-scl/core/shared';
+import {
+  escapeMarkdown,
+  getGlobalLogger,
+  type MdText,
+  md,
+  mdConcat,
+  mdJoin,
+  mdRaw,
+} from '@u7-scl/core/shared';
 import {
   btn,
   type DialogResponse,
@@ -12,6 +20,7 @@ import type {
   Question,
   QuestionnaireActionResponse,
 } from '@u7-scl/domain/questionnaire/contract';
+import type { DomainError } from 'dmg-core';
 import { buttons } from '../../shared/buttons';
 
 /**
@@ -214,4 +223,63 @@ function getKeyboard(
 
   // Мультивыбор — осознанный dynamic multiple (кнопки-тогглы)
   return kb(rows, { multiple: question.multiple });
+}
+
+/**
+ * Экран отказа UC DMG для веток навигации по кнопкам: заменяет устаревшее
+ * сообщение объяснением и кнопкой выхода в меню. Тексты — как у
+ * `ucErrorNotify` базовой story; ветвление по `kind`, не по тексту.
+ */
+export function ucErrorScreen(error: DomainError): DialogResponse {
+  const exit = kb([[buttons.mainMenu('⬅️ Меню')]]);
+
+  switch (error.kind) {
+    case 'validation': {
+      const issues = issuesOf(error.payload);
+      if (issues.length > 0) {
+        const lines = issues.map((i) => md`• *${i.path}*: ${i.message}`);
+        return screen(
+          mdConcat(md`⚠️ *Ошибка валидации*\n\n`, mdJoin(lines)),
+          exit,
+        );
+      }
+      return screen(md`⚠️ *Ошибка валидации*\n\n${error.label}`, exit);
+    }
+
+    case 'access':
+      return screen(md`⚠️ ${denyMessageOf(error.payload) ?? error.label}`, exit);
+
+    case 'not_found':
+    case 'conflict':
+      return screen(md`⚠️ ${error.label}`, exit);
+
+    case 'internal':
+    case 'unauthorized':
+      getGlobalLogger()?.error('bot', 'Отказ UC в story', {
+        code: error.code,
+        kind: error.kind,
+        payload: error.payload,
+      });
+      return screen(
+        md`⚠️ *Произошла внутренняя ошибка*\n\nПожалуйста, попробуйте позже или обратитесь к администратору\\.`,
+        exit,
+      );
+  }
+}
+
+function issuesOf(
+  payload: unknown,
+): ReadonlyArray<{ path: string; message: string }> {
+  if (typeof payload !== 'object' || payload === null) return [];
+  if (!('issues' in payload) || !Array.isArray(payload.issues)) return [];
+  return payload.issues;
+}
+
+function denyMessageOf(payload: unknown): string | undefined {
+  return typeof payload === 'object' &&
+    payload !== null &&
+    'denyMessage' in payload &&
+    typeof payload.denyMessage === 'string'
+    ? payload.denyMessage
+    : undefined;
 }

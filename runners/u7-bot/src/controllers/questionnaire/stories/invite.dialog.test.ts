@@ -1,10 +1,22 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
-import type { U7BotApp } from '@u7-scl/bot/u7-bot-app-meta';
-import { AppException, errBadRequest } from '@u7-scl/core/domain';
 import { assertMarkdownV2Safe } from '@u7-scl/core/shared';
 import type { BotSession } from '@u7-scl/core/ui';
+import {
+  QuestionnaireErrors,
+  QuestionnaireEvents,
+} from '@u7-scl/domain/questionnaire/contract';
 import { InviteStory } from './invite.story';
+import {
+  dispatchedOf,
+  initStory,
+  invitedEvent,
+  invitedView,
+  RESPONDENT_ID,
+  refuse,
+  respondentProfile,
+  subscriptionOf,
+} from './questionnaire-dmg.test-kit';
 
 /**
  * Поведенческие тесты InviteStory на контракте «Диалог и Экран»:
@@ -21,25 +33,7 @@ const session: BotSession = {
   dialog: { path: 'questionnaire/invite', seq: 3 },
 };
 
-function makeStory(
-  execute: (
-    name: string,
-    cmd: unknown,
-    actorId: string,
-  ) => Promise<unknown> = async () => ({}),
-) {
-  const appApi = { execute: mock(execute) } as unknown as U7BotApp;
-  const story = new InviteStory();
-  const sender = {
-    name: 'questionnaire',
-    notify: mock(async () => {}),
-    invite: mock(async () => {}),
-    execute: mock(async () => {}),
-    kickFromGroup: mock(async () => {}),
-  };
-  story.init({ appApi } as never, sender);
-  return { story, appApi, sender };
-}
+const users = { [RESPONDENT_ID]: respondentProfile() };
 
 /** Доменный текст со спецсимволами MarkdownV2 (инцидент 2026-09-03). */
 const unsafeText = 'Иванов_Иван (senior). Backend / Node.js!';
@@ -48,34 +42,37 @@ const unsafeText = 'Иванов_Иван (senior). Backend / Node.js!';
 
 describe('InviteStory — invite:start: делегирование fill-стори', () => {
   test('start:q → start-by-invite + delegate fill:current:{qId} — ввод адресуется fill-диалогу', async () => {
-    const { story, appApi } = makeStory(async (name) => {
-      if (name === 'start-by-invite') {
-        return {
+    const { story, dispatch } = initStory(new InviteStory(), {
+      answers: {
+        startByInvite: () => ({
           type: 'new_question',
           questionnaireId: 'q-1',
           question: { questionCode: 'qc1', type: 'text', question: 'О себе' },
-        };
-      }
-      throw new Error(`Неожиданный UC: ${name}`);
+        }),
+      },
     });
 
     const res = await story.handleCallback('start:q-1', actor, session);
 
-    expect(appApi.execute).toHaveBeenCalledWith(
-      'start-by-invite',
-      { questionnaireId: 'q-1' },
-      actor,
-    );
+    expect(dispatchedOf(dispatch)).toEqual([
+      { uc: 'startByInvite', input: { questionnaireId: 'q-1' } },
+    ]);
 
     // Делегат строится cbFor: контроллер префиксует до dispatch
     expect(res.delegate?.path).toBe('fill:current:q-1');
   });
 
   test('start:q при недоступной анкете: экран ошибки с выходом в меню', async () => {
-    const { story } = makeStory(async () => {
-      throw new AppException(
-        errBadRequest('BAD_REQUEST', 'Анкета уже завершена', undefined),
-      );
+    const { story } = initStory(new InviteStory(), {
+      answers: {
+        startByInvite: () =>
+          refuse(
+            QuestionnaireErrors.NOT_IN_PROGRESS.code,
+            QuestionnaireErrors.NOT_IN_PROGRESS.kind,
+            undefined,
+            QuestionnaireErrors.NOT_IN_PROGRESS.label,
+          ),
+      },
     });
 
     const res = await story.handleCallback('start:q-1', actor, session);
@@ -91,24 +88,15 @@ describe('InviteStory — invite:start: делегирование fill-стор
 // ══ MarkdownV2-безопасность доменных текстов ══
 
 describe('InviteStory — MarkdownV2-безопасность (инцидент 2026-09-03)', () => {
-  test('подписка questionnaire:invite: текст с спецсимволами безопасен', async () => {
-    const { story, sender } = makeStory();
+  test('подписка invited: текст с спецсимволами безопасен', async () => {
+    const { story, sender } = initStory(new InviteStory(), {
+      users,
+      answers: { getCurrent: () => invitedView({ inviteText: unsafeText }) },
+    });
 
-    const sub = story
-      .getEventSubscriptions()
-      .find((s) => s.eventName === 'questionnaire:invite')!;
-
-    await sub.handle({
-      eventName: 'questionnaire:invite',
-      payload: {
-        telegramId: 456,
-        response: {
-          type: 'invited',
-          questionnaireId: 'q1',
-          inviteText: unsafeText,
-        },
-      },
-    } as never);
+    await subscriptionOf(story, QuestionnaireEvents.invited.name).handle(
+      invitedEvent({ questionnaireId: 'q1' }),
+    );
 
     const [telegramId, payload] = sender.invite.mock.calls[0] as unknown as [
       number,
@@ -120,11 +108,15 @@ describe('InviteStory — MarkdownV2-безопасность (инцидент 
   });
 
   test('invite:why: whyText с спецсимволами безопасен', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'invited',
-      questionnaireId: 'q1',
-      whyText: unsafeText,
-    }));
+    const { story } = initStory(new InviteStory(), {
+      answers: {
+        getCurrent: () => ({
+          type: 'invited',
+          questionnaireId: 'q1',
+          whyText: unsafeText,
+        }),
+      },
+    });
 
     const res = await story.handleCallback('why:q1', actor, session);
 
@@ -133,11 +125,15 @@ describe('InviteStory — MarkdownV2-безопасность (инцидент 
   });
 
   test('invite:invite: повторный S01 с небезопасным inviteText', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'invited',
-      questionnaireId: 'q1',
-      inviteText: unsafeText,
-    }));
+    const { story } = initStory(new InviteStory(), {
+      answers: {
+        getCurrent: () => ({
+          type: 'invited',
+          questionnaireId: 'q1',
+          inviteText: unsafeText,
+        }),
+      },
+    });
 
     const res = await story.handleCallback('invite:q1', actor, session);
 
@@ -145,11 +141,15 @@ describe('InviteStory — MarkdownV2-безопасность (инцидент 
   });
 
   test('cancelWarning в confirm-экране пропуска (decline) безопасен', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'invited',
-      questionnaireId: 'q1',
-      cancelWarning: unsafeText,
-    }));
+    const { story } = initStory(new InviteStory(), {
+      answers: {
+        getCurrent: () => ({
+          type: 'invited',
+          questionnaireId: 'q1',
+          cancelWarning: unsafeText,
+        }),
+      },
+    });
 
     const res = await story.handleCallback('decline:q1', actor, session);
 
@@ -162,19 +162,14 @@ describe('InviteStory — MarkdownV2-безопасность (инцидент 
 
 describe('InviteStory — fallback-реплики при пустых текстах пула', () => {
   test('подписка: без inviteText — «Заполните, пожалуйста, анкету.»', async () => {
-    const { story, sender } = makeStory();
+    const { story, sender } = initStory(new InviteStory(), {
+      users,
+      answers: { getCurrent: () => invitedView() },
+    });
 
-    const sub = story
-      .getEventSubscriptions()
-      .find((s) => s.eventName === 'questionnaire:invite')!;
-
-    await sub.handle({
-      eventName: 'questionnaire:invite',
-      payload: {
-        telegramId: 456,
-        response: { type: 'invited', questionnaireId: 'q1' },
-      },
-    } as never);
+    await subscriptionOf(story, QuestionnaireEvents.invited.name).handle(
+      invitedEvent({ questionnaireId: 'q1' }),
+    );
 
     const [, payload] = sender.invite.mock.calls[0] as unknown as [
       number,
@@ -184,10 +179,14 @@ describe('InviteStory — fallback-реплики при пустых текст
   });
 
   test('invite:why: без whyText — «Нет дополнительной информации.»', async () => {
-    const { story } = makeStory(async () => ({
-      type: 'invited',
-      questionnaireId: 'q1',
-    }));
+    const { story } = initStory(new InviteStory(), {
+      answers: {
+        getCurrent: () => ({
+          type: 'invited',
+          questionnaireId: 'q1',
+        }),
+      },
+    });
 
     const res = await story.handleCallback('why:q1', actor, session);
 

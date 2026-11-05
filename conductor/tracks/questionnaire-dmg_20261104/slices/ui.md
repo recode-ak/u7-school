@@ -161,3 +161,38 @@ ARC-08, D-45, D-49 (UI видит контракт и вызывает чере�
 - 12 e2e красной зоны TR-49 (1) зелёные; `test:bot` не ниже базовой линии Ф0; число тестов в переписанных файлах не меньше исходного.
 - `bun run check` полностью зелёный; записи красной зоны в `debt.md` нет; `git status data/` чист.
 - `git diff --stat` не содержит `domain/`, `modules/`, `platform/`, `core/`, `courses/`.
+
+## Отчёт `dmg-test-designer` (Ф2, шаг 1; Sonnet)
+
+- Новые: `stories/questionnaire-events.ts` (типы), `stories/questionnaire-dmg.test-kit.ts` (`dmgDispatch`, `refuse`, `testCallers`, билдеры view и событий, `initStory` — `appApi.execute` только `get-user`), `fill.story.dmg.test.ts`, `invite.story.dmg.test.ts`, `render.error-screen.test.ts`, `tests/e2e/questionnaire-events.e2e.test.ts` (9).
+- Переписаны блоки подписок: `fill.dialog`, `fill.story.warning`, `fill.story.continue-invite`, `invite.dialog`, `inventory` — сценарии и тексты те же, Def-имена, `payload.ownerInfo`, адрес через `get-user`.
+- Прогон: stories 49 pass / 67 fail, e2e 2 pass / 7 fail — red по причинам «нет подписки на FQN», «`execute('get-current')` вместо `dispatch`», «`ucErrorScreen` не экспортирован». `by_user`/`declined` в e2e проходят тривиально до появления подписок.
+- Шагу 2 оставлено: блоки `executeMock`/`badRequest` в `fill.dialog`, `invite.dialog`, `inventory`; e2e `wish-questionnaire`, `questionnaire-ux`.
+- Решения orchestrator по замечаниям: (а) `ucErrorScreen` логирует `internal`/`unauthorized` глобальным логгером — принято; (б) callback `cancel:{qId}` при отказе `getCurrent` — ветка навигации, экран `ucErrorScreen` (Д5); тест добавляет шаг 2; (в) профиль без `telegramId` — только юнит-тестами (тип `User` в e2e требует `telegramId`).
+
+## Отчёт `migrator`, перевод тестов (Ф2, шаг 2; flash, 1 круг, $0.15)
+
+- Переведены `fill.dialog`, `invite.dialog`, `inventory` (`executeMock`/`badRequest` → кит, `refuse`), e2e `wish-questionnaire` (`dispatch(GetQuestionnairesByUserUcDef)`, `QuestionnaireView`) и `questionnaire-ux` (`publishContinueInvite` по FQN; параметр — `respondent: User`, адрес через `get-user`). Добавлен тест callback `cancel:{qId}` при отказе `getCurrent`. Число тестов не уменьшилось; дубли с тестами шага 1 сохранены.
+- Эскалации (решены orchestrator): (1) тест шага 1 «`start:` — при отказе делегат в fill» противоречил v0.2.6 (`invite.story.ts:76-85` — экран ошибки) — разбит на `ok` → fill и отказ → `ucErrorScreen`; (2) литерал `'abandon'` в `fill.story.dmg.test.ts` → `AbandonUcDef.name`.
+- Прогон: stories 12 pass / 106 fail, e2e анкет все red — причина одна: story ещё на legacy. `tsc`, `biome` зелёные; падений вне файлов анкет нет.
+
+## Отчёт `migrator`, UI (Ф2, шаг 3; Sonnet)
+
+- `fill.story.ts`, `invite.story.ts` — на `dispatchUc` и подписки `QuestionnaireEvents.<x>.name`; новый `stories/questionnaire-story.ts` — абстрактный `QuestionnaireStory` с `resolveRespondent` (legacy `get-user`, нет профиля/`telegramId`/сбой → `warn`, выход), чтобы не дублировать адрес в двух story (отклонение от брифа — принято). `render.ts` — `ucErrorScreen` (глобальный логгер для `internal`/`unauthorized`). `legacy-events.ts` удалён. `ui-spec.md` — имена Def-событий в S07–S09.
+- Ветки ввода — общий `#handleInput` → `ucErrorNotify`; навигация — `ucErrorScreen`; `/cancel` при отказе `getCurrent` — «Отменено…» (`onRefusal`).
+- Эскалации — 5 ошибок в тестах, все подтверждены orchestrator и исправлены flash (`F2-tests-fix-ui`, $0.03): лишний штатный `warn` ERR-07 вне `BotRequestContext`; MarkdownV2-экранирование в `ucErrorNotify`; в «resume без активной анкеты» по v0.2.6 кнопка `buttons.mainMenu()`, не «⬅️ Меню»; сжатие uuid в кодах кнопок транспортом; uuid «нет профиля» оказался существующим ментором (`school.ts:115`).
+- Итог: stories 118/118, e2e анкет 21/21, `agent-gate` зелёный, grep-критерии брифа пусты.
+
+## Отчёт `dmg-reviewer` (Ф2; Opus)
+
+| ID | файл:строка | суть | severity | решение |
+|---|---|---|---|---|
+| TST-03/05 | `invite.story.dmg.test.ts:311,330` | проверка `warn` впустую (штатный warn ERR-07 `dispatchUc`) | warn | исправлено: фильтр по источнику и тексту, ровно один вызов |
+| ERR-07 | `invite.story.ts:59-63` | `GetCurrentUcDef` из подписки вне контекста апдейта — warn «нет requestId» на каждое событие | info | TR-50 (9), вне границ |
+| ERR-07 | `questionnaire-story.ts:22-33` | `catch {}` глотает сбой `get-user`, три случая — один warn | info | исправлено: три разных warn, сбой — с причиной |
+| CODE-04 | `questionnaire-dmg.test-kit.ts:284-297` | устаревший динамический импорт red-фазы | info | исправлено: статический импорт |
+| — | `render.ts:233-285` | `ucErrorScreen` дублирует `ucErrorNotify` | info | оставлено (Т1), TR-50 (8) |
+| — | `render.ts:246` | текст validation короче legacy `handleError` | info | принято, TR-50 (8) |
+| Д10 | `questionnaire-events.e2e.test.ts:315-333` | «нет профиля» для `invited` только в юнит-тестах | info | исправлено: e2e добавлен |
+
+Вывод ревьюера: `error` нет; поведение совпадает с v0.2.6, кроме одобренной Д6; тесты не ослаблены; отклонение `QuestionnaireStory` уместно. Правки — flash (`F2-review-fix`, 1 круг). Итог: `bun run check` 4216 pass / 0 fail, `test:bot` 1107 / 0.

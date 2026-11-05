@@ -1,61 +1,46 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { assertMarkdownV2Safe } from '@u7-scl/core/shared';
+import { QuestionnaireEvents } from '@u7-scl/domain/questionnaire/contract';
 import { FillStory } from './fill.story';
+import {
+  abandonedEvent,
+  abandonWarningEvent,
+  initStory,
+  RESPONDENT_ID,
+  respondentProfile,
+  subscriptionOf,
+  useMockLogger,
+} from './questionnaire-dmg.test-kit';
 
 /**
- * Подписка questionnaire:abandon-warning (S07, ступень 6ч планировщика)
- * и questionnaire:abandon (S08) на контракте «Диалог и Экран»:
- * кнопочный проактив — ТОЛЬКО канал invite (ФР-6, «никогда срезка в
- * notify»), полные коды кнопок (транспорт проактивы не префиксует),
- * подсказка /start на случай устаревшего экрана. Прерывание — через
- * confirm-экран (fill:cancel), не сразу abandon.
+ * Подписка abandonWarning (S07, ступень 6ч планировщика) и abandoned (S08)
+ * на контракте «Диалог и Экран»: кнопочный проактив — ТОЛЬКО канал invite
+ * (ФР-6, «никогда срезка в notify»), полные коды кнопок (транспорт проактивы
+ * не префиксует), подсказка /start на случай устаревшего экрана. Прерывание —
+ * через confirm-экран (fill:cancel), не сразу abandon. Адрес события не
+ * несёт: telegramId — по профилю респондента (`get-user`).
  */
-//
-// ══ Помощники ══
 
-function makeStory() {
-  const story = new FillStory();
-  const sender = {
-    name: 'questionnaire',
-    notify: mock(async () => {}),
-    invite: mock(async () => {}),
-    execute: mock(async () => {}),
-    kickFromGroup: mock(async () => {}),
-  };
-  story.init({ appApi: { execute: mock(async () => ({})) } } as never, sender);
-  return { story, sender };
-}
+const users = { [RESPONDENT_ID]: respondentProfile() };
 
-function warningEvent(overrides: Record<string, unknown> = {}) {
-  return {
-    eventName: 'questionnaire:abandon-warning',
-    payload: {
-      questionnaireId: 'q-1',
-      respondentId: 'r-1',
-      telegramId: 456,
-    },
-    ownerInfo: { courseId: 'course-1' },
-    ...overrides,
-  };
-}
+describe('FillStory — abandonWarning (S07): invite-канал', () => {
+  const logger = useMockLogger();
 
-describe('FillStory — abandon-warning (S07): invite-канал', () => {
-  test('подписки включают questionnaire:abandon-warning и questionnaire:abandon', () => {
-    const { story } = makeStory();
+  test('подписки включают abandonWarning и abandoned', () => {
+    const { story } = initStory(new FillStory());
     const names = story.getEventSubscriptions().map((s) => s.eventName);
-    expect(names).toContain('questionnaire:abandon-warning');
-    expect(names).toContain('questionnaire:abandon');
+    expect(names).toContain(QuestionnaireEvents.abandonWarning.name);
+    expect(names).toContain(QuestionnaireEvents.abandoned.name);
   });
 
   test('с courseId: кнопки «Продолжить» (мост resume) и «Прервать» (confirm), подсказка /start', async () => {
-    const { story, sender } = makeStory();
+    const { story, sender, execute } = initStory(new FillStory(), { users });
 
-    const sub = story
-      .getEventSubscriptions()
-      .find((s) => s.eventName === 'questionnaire:abandon-warning')!;
+    await subscriptionOf(story, QuestionnaireEvents.abandonWarning.name).handle(
+      abandonWarningEvent({ ownerInfo: { courseId: 'course-1' } }),
+    );
 
-    await sub.handle(warningEvent() as never);
-
+    expect(execute).toHaveBeenCalledWith('get-user', { uuid: RESPONDENT_ID });
     expect(sender.invite).toHaveBeenCalledTimes(1);
     const [telegramId, payload] = sender.invite.mock.calls[0] as unknown as [
       number,
@@ -74,13 +59,11 @@ describe('FillStory — abandon-warning (S07): invite-канал', () => {
   });
 
   test('без courseId — кнопка только «Прервать»', async () => {
-    const { story, sender } = makeStory();
+    const { story, sender } = initStory(new FillStory(), { users });
 
-    const sub = story
-      .getEventSubscriptions()
-      .find((s) => s.eventName === 'questionnaire:abandon-warning')!;
-
-    await sub.handle(warningEvent({ ownerInfo: {} }) as never);
+    await subscriptionOf(story, QuestionnaireEvents.abandonWarning.name).handle(
+      abandonWarningEvent({ ownerInfo: {} }),
+    );
 
     const [, payload] = sender.invite.mock.calls[0] as unknown as [
       number,
@@ -90,20 +73,29 @@ describe('FillStory — abandon-warning (S07): invite-канал', () => {
       ['⏭️ Прервать', 'questionnaire:fill:cancel:q-1'],
     ]);
   });
+
+  test('нет адреса (профиля нет) — тишина и warn', async () => {
+    const { story, sender } = initStory(new FillStory(), { users: {} });
+
+    await subscriptionOf(story, QuestionnaireEvents.abandonWarning.name).handle(
+      abandonWarningEvent(),
+    );
+
+    expect(sender.invite).not.toHaveBeenCalled();
+    expect(sender.notify).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalled();
+  });
 });
 
-describe('FillStory — abandon (S08): notify о закрытии по таймауту', () => {
+describe('FillStory — abandoned (S08): notify о закрытии по таймауту', () => {
+  const logger = useMockLogger();
+
   test('reason=timeout — notify без кнопок', async () => {
-    const { story, sender } = makeStory();
+    const { story, sender } = initStory(new FillStory(), { users });
 
-    const sub = story
-      .getEventSubscriptions()
-      .find((s) => s.eventName === 'questionnaire:abandon')!;
-
-    await sub.handle({
-      eventName: 'questionnaire:abandon',
-      payload: { reason: 'timeout', questionnaireId: 'q-1', telegramId: 456 },
-    } as never);
+    await subscriptionOf(story, QuestionnaireEvents.abandoned.name).handle(
+      abandonedEvent({ reason: 'timeout' }),
+    );
 
     expect(sender.invite).not.toHaveBeenCalled();
     expect(sender.notify).toHaveBeenCalledTimes(1);
@@ -117,33 +109,35 @@ describe('FillStory — abandon (S08): notify о закрытии по тайм�
   });
 
   test('reason=by_user (ручное прерывание) — дубля нет, ничего не шлём', async () => {
-    const { story, sender } = makeStory();
+    const { story, sender } = initStory(new FillStory(), { users });
 
-    const sub = story
-      .getEventSubscriptions()
-      .find((s) => s.eventName === 'questionnaire:abandon')!;
-
-    await sub.handle({
-      eventName: 'questionnaire:abandon',
-      payload: { reason: 'by_user', questionnaireId: 'q-1', telegramId: 456 },
-    } as never);
+    await subscriptionOf(story, QuestionnaireEvents.abandoned.name).handle(
+      abandonedEvent({ reason: 'by_user' }),
+    );
 
     expect(sender.notify).not.toHaveBeenCalled();
     expect(sender.invite).not.toHaveBeenCalled();
   });
 
-  test('timeout без telegramId — слать некому', async () => {
-    const { story, sender } = makeStory();
+  test('reason=declined (отказ от приглашения) — ничего не шлём', async () => {
+    const { story, sender } = initStory(new FillStory(), { users });
 
-    const sub = story
-      .getEventSubscriptions()
-      .find((s) => s.eventName === 'questionnaire:abandon')!;
-
-    await sub.handle({
-      eventName: 'questionnaire:abandon',
-      payload: { reason: 'timeout', questionnaireId: 'q-1' },
-    } as never);
+    await subscriptionOf(story, QuestionnaireEvents.abandoned.name).handle(
+      abandonedEvent({ reason: 'declined' }),
+    );
 
     expect(sender.notify).not.toHaveBeenCalled();
+    expect(sender.invite).not.toHaveBeenCalled();
+  });
+
+  test('timeout без адреса (профиля нет) — слать некому, warn', async () => {
+    const { story, sender } = initStory(new FillStory(), { users: {} });
+
+    await subscriptionOf(story, QuestionnaireEvents.abandoned.name).handle(
+      abandonedEvent({ reason: 'timeout' }),
+    );
+
+    expect(sender.notify).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalled();
   });
 });

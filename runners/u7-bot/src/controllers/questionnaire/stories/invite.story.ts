@@ -7,11 +7,18 @@ import {
   type KbButton,
   type UiEventSubscription,
 } from '@u7-scl/core/ui';
-import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
+import {
+  DeclineInviteUcDef,
+  GetCurrentUcDef,
+  QuestionnaireEvents,
+  QuestionnaireModuleDef,
+  StartByInviteUcDef,
+} from '@u7-scl/domain/questionnaire/contract';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
-import type { QuestionnaireInviteEvent } from './legacy-events';
-import { renderActionResponse } from './render';
+import type { QuestionnaireInvitedEvent } from './questionnaire-events';
+import { QuestionnaireStory } from './questionnaire-story';
+import { renderActionResponse, ucErrorScreen } from './render';
 
 /**
  * InviteStory — сценарий приглашения в анкету (S01, S06).
@@ -20,34 +27,59 @@ import { renderActionResponse } from './render';
  * (`invite:start`) делегирует fill-стори: диалог с вопросами (и ввод
  * текстовых ответов) принадлежит fill, а не invite.
  *
- * Подписка questionnaire:invite — вариант A (ФР-6): кнопочный проактив
+ * Подписка invited — вариант A (ФР-6): кнопочный проактив
  * через ProactiveSender.invite с ПОЛНЫМИ кодами (транспорт проактивы
  * не префиксует контроллером); в тексте — подсказка /start на случай
  * устаревшего экрана.
  */
-export class InviteStory extends U7BotUiStory {
+export class InviteStory extends QuestionnaireStory {
   readonly name = 'invite';
 
   // ── Подписки на доменные события ──
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<QuestionnaireInviteEvent>(
-        'questionnaire:invite',
+      eventSubscription<QuestionnaireInvitedEvent>(
+        QuestionnaireEvents.invited.name,
         (event) => this.#handleInviteEvent(event),
       ),
     ];
   }
 
-  /** questionnaire:invite — рендерит S01 (приглашение) в канале invite */
-  async #handleInviteEvent(event: QuestionnaireInviteEvent): Promise<void> {
-    const { telegramId, response } = event.payload;
-    const qId = response.questionnaireId;
+  /**
+   * invited — рендерит S01 (приглашение) в канале invite. Тексты берутся
+   * из `getCurrent` от имени респондента; отказ или иное состояние —
+   * приглашение с текстом по умолчанию и без «Зачем».
+   */
+  async #handleInviteEvent(event: QuestionnaireInvitedEvent): Promise<void> {
+    const { questionnaireId: qId, respondentId } = event.payload;
+    const target = await this.resolveRespondent(respondentId, qId);
+    if (!target) return;
+
+    const current = await this.dispatchUc(
+      QuestionnaireModuleDef,
+      GetCurrentUcDef.command({ questionnaireId: qId }),
+      target.user,
+    );
+    const invited =
+      current.ok && current.value.type === 'invited'
+        ? current.value
+        : undefined;
+    if (!invited) {
+      this.logger?.warn(
+        this.name,
+        'Тексты приглашения недоступны, отправлен текст по умолчанию',
+        {
+          questionnaireId: qId,
+          refusal: current.ok ? undefined : current.error.code,
+        },
+      );
+    }
 
     const rows: KbButton[][] = [
       [this.btn('▶️ Начать заполнение', Routes.questionnaire.inviteStart(qId))],
     ];
-    if (response.whyText) {
+    if (invited?.whyText) {
       rows.push([
         this.btn('❔ Зачем это нужно?', Routes.questionnaire.inviteWhy(qId)),
       ]);
@@ -56,8 +88,8 @@ export class InviteStory extends U7BotUiStory {
       this.btn('⏭️ Пропустить', Routes.questionnaire.inviteDecline(qId)),
     ]);
 
-    await this.proactiveSender.invite(telegramId, {
-      text: md`📋 *Анкета*\n\n${response.inviteText ?? 'Заполните, пожалуйста, анкету.'}\n\nДля отмены в любой момент нажмите /cancel\\.`,
+    await this.proactiveSender.invite(target.telegramId, {
+      text: md`📋 *Анкета*\n\n${invited?.inviteText ?? 'Заполните, пожалуйста, анкету.'}\n\nДля отмены в любой момент нажмите /cancel\\.`,
       keyboard: this.kb(rows),
     });
   }
@@ -73,16 +105,13 @@ export class InviteStory extends U7BotUiStory {
     // адресуется fill-диалогу, не invite)
     if (action.startsWith('start:')) {
       const qId = action.slice(6);
-      try {
-        await this.appApi.execute(
-          'start-by-invite',
-          { questionnaireId: qId },
-          actor,
-        );
-        return this.go(this.cbFor('fill', 'current', qId));
-      } catch (err) {
-        return this.handleError(err);
-      }
+      const res = await this.dispatchUc(
+        QuestionnaireModuleDef,
+        StartByInviteUcDef.command({ questionnaireId: qId }),
+        actor,
+      );
+      if (!res.ok) return ucErrorScreen(res.error);
+      return this.go(this.cbFor('fill', 'current', qId));
     }
 
     // invite:why:{qId}
@@ -115,94 +144,80 @@ export class InviteStory extends U7BotUiStory {
   // ── Приватные обработчики ──
 
   async #handleWhy(qId: string, actor: User): Promise<DialogResponse> {
-    try {
-      const current = await this.appApi.execute(
-        'get-current',
-        { questionnaireId: qId },
-        actor,
-      );
-      // whyText/inviteText определены только в состоянии invited
-      const invited = current.type === 'invited' ? current : undefined;
+    const res = await this.dispatchUc(
+      QuestionnaireModuleDef,
+      GetCurrentUcDef.command({ questionnaireId: qId }),
+      actor,
+    );
+    if (!res.ok) return ucErrorScreen(res.error);
+    // whyText/inviteText определены только в состоянии invited
+    const invited = res.value.type === 'invited' ? res.value : undefined;
 
-      return this.screen(
-        md`${invited?.whyText ?? 'Нет дополнительной информации.'}`,
-        this.kb([[this.btn('✅ Хорошо', this.cb('invite', qId))]]),
-      );
-    } catch (err) {
-      return this.handleError(err);
-    }
+    return this.screen(
+      md`${invited?.whyText ?? 'Нет дополнительной информации.'}`,
+      this.kb([[this.btn('✅ Хорошо', this.cb('invite', qId))]]),
+    );
   }
 
   async #handleInvite(qId: string, actor: User): Promise<DialogResponse> {
-    try {
-      const current = await this.appApi.execute(
-        'get-current',
-        { questionnaireId: qId },
-        actor,
-      );
-      // inviteText/whyText определены только в состоянии invited
-      const invited = current.type === 'invited' ? current : undefined;
+    const res = await this.dispatchUc(
+      QuestionnaireModuleDef,
+      GetCurrentUcDef.command({ questionnaireId: qId }),
+      actor,
+    );
+    if (!res.ok) return ucErrorScreen(res.error);
+    // inviteText/whyText определены только в состоянии invited
+    const invited = res.value.type === 'invited' ? res.value : undefined;
 
-      return renderActionResponse({
-        type: 'invited',
-        questionnaireId: qId,
-        inviteText: invited?.inviteText,
-        whyText: invited?.whyText,
-      });
-    } catch (err) {
-      return this.handleError(err);
-    }
+    return renderActionResponse({
+      type: 'invited',
+      questionnaireId: qId,
+      inviteText: invited?.inviteText,
+      whyText: invited?.whyText,
+    });
   }
 
   async #handleDeclineConfirm(
     qId: string,
     actor: User,
   ): Promise<DialogResponse> {
-    try {
-      const current = await this.appApi.execute(
-        'get-current',
-        { questionnaireId: qId },
-        actor,
-      );
-      // cancelWarning есть у всех вариантов ответа, кроме completed
-      const warningRaw =
-        current.type === 'completed' ? undefined : current.cancelWarning;
+    const res = await this.dispatchUc(
+      QuestionnaireModuleDef,
+      GetCurrentUcDef.command({ questionnaireId: qId }),
+      actor,
+    );
+    if (!res.ok) return ucErrorScreen(res.error);
+    const current = res.value;
+    // cancelWarning есть у всех вариантов ответа, кроме completed
+    const warningRaw =
+      current.type === 'completed' ? undefined : current.cancelWarning;
 
-      return this.confirm(
-        'decline',
-        qId,
-        md`Вы уверены, что хотите пропустить анкету?${warningRaw ? `\n\n${warningRaw}` : ''}`,
-        {
-          confirmButton: '✅ Да, пропустить',
-          cancelButton: '❌ Нет, вернуться',
-          cancelCode: this.cb('invite', qId),
-        },
-      );
-    } catch (err) {
-      return this.handleError(err);
-    }
+    return this.confirm(
+      'decline',
+      qId,
+      md`Вы уверены, что хотите пропустить анкету?${warningRaw ? `\n\n${warningRaw}` : ''}`,
+      {
+        confirmButton: '✅ Да, пропустить',
+        cancelButton: '❌ Нет, вернуться',
+        cancelCode: this.cb('invite', qId),
+      },
+    );
   }
 
   async #handleDeclineConfirmed(
     qId: string,
     actor: User,
   ): Promise<DialogResponse> {
-    try {
-      await this.appApi.execute(
-        'decline-invite',
-        { questionnaireId: qId },
-        actor,
-      );
+    const res = await this.dispatchUc(
+      QuestionnaireModuleDef,
+      DeclineInviteUcDef.command({ questionnaireId: qId }),
+      actor,
+    );
+    if (!res.ok) return ucErrorScreen(res.error);
 
-      return {
-        ...this.screen(
-          md`Анкета пропущена\\.`,
-          this.kb([[buttons.mainMenu()]]),
-        ),
-        release: true,
-      };
-    } catch (err) {
-      return this.handleError(err);
-    }
+    return {
+      ...this.screen(md`Анкета пропущена\\.`, this.kb([[buttons.mainMenu()]])),
+      release: true,
+    };
   }
 }

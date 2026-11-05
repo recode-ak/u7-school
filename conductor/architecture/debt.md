@@ -543,14 +543,14 @@
 - **Трек / фаза:** `questionnaire-dmg`, Ф1 (orchestrator, 2026-11-05)
 - **Контекст:** в Ф1 модуль анкет переведён на Def целиком (TR-48 С1), а stories бота до Ф2 остаются на legacy-именах `questionnaire:*` и `appApi.execute`; legacy-UC удалены вместе с `a-root`.
 - **Решение:**
-  - (1) **Красная зона Ф1–Ф2** — 12 e2e бота падают («UC не найден», нет legacy-событий): `runners/u7-bot/tests/e2e/questionnaire-ux.e2e.test.ts` — «radio: выбор → финализация Q1…», «multiple: тоггл редактирует на месте…», ««Далее» → финализация Q3…», «при чужом активном флоу…», «без сессии (якорь app/invite)…»; `runners/u7-bot/tests/e2e/wish-questionnaire.e2e.test.ts` — «apply анкетного курса → приглашение…», «выбор в вопросе 1 → текстовый «Вопрос 2 из 3»…», «/cancel посреди анкеты…», «confirmed → на карточке кнопка «Отменить желание»…», «повторный apply при незавершённой анкете…», «resume без активной анкеты…», «полное прохождение: 3 вопроса…». Story-тесты на `executeMock` зелёные. Критерий снятия — конец Ф2: все 12 зелёные, запись (1) снимается.
-  - (2) Т16: временные типы legacy-событий — `runners/u7-bot/src/controllers/questionnaire/stories/legacy-events.ts`; удаляется в Ф2 вместе с подписками на `questionnaire:*`.
+  - (1) ~~Красная зона Ф1–Ф2~~ — снята в Ф2 (2026-11-05): 12 e2e `questionnaire-ux`/`wish-questionnaire` зелёные, stories на Def (TR-50).
+  - (2) ~~Т16: временные типы legacy-событий~~ — `legacy-events.ts` удалён в Ф2, типы Def-событий — `stories/questionnaire-events.ts`.
   - (3) `AbandonUc` регистрирует агрегат в UoW только при росте версии: идемпотентный `abandon` на `abandoned` (Т3) иначе пишет запись без изменений.
   - (4) Т20: мост `legacyEventBus` оставлен, маршрутов анкет в `inbound` нет; поле `questionnaireFacade` и legacy-модуль анкет из `U7App` удалены, метатип оболочки Т15 импортируется из корня `@u7-scl/questionnaire` (ARC-07).
   - (5) Дефекты red-тестов, исправленные по эскалации автора: события не забирались после `createStandard` (Ar глушил `started`); текст отказа доступа — в `payload.denyMessage`, не в `label`; один `requestId` на все команды smoke-теста (D-56).
   - (6) С2 (Нурболат, 2026-11-05): stories Ф2 берут адрес Telegram через legacy `get-user`, как `InactivityStory` (TR-43 С2); `GetTelegramAddressesUcDef` остаётся `system` для Job и ER (D-63).
   - (7) Д1 (Нурболат, 2026-11-05): живой `questionnaires.json` сверен read-only (84 записи, проблемных 0). Новый репозиторий при первой записи переписывает весь файл в числовых датах с `version` — legacy `v0.2.6` его не прочитает: перед выкаткой `bun run backup`, откат — только с восстановлением файла.
-- **Пересмотреть:** (1), (2) — конец Ф2; (6) — перевод `user` на Def; (7) — выкатка после ревизии; (3) — если UoW платформы научится пропускать неизменённые агрегаты (тогда условие убрать); (4) — Ф3.
+- **Пересмотреть:** (6) — перевод `user` на Def; (7) — выкатка после ревизии; (3) — если UoW платформы научится пропускать неизменённые агрегаты (тогда условие убрать); (4) — Ф3.
 
 ### TR-50: решения брифа UI Ф2 `questionnaire-dmg`
 - **Трек / фаза:** `questionnaire-dmg`, Ф2 (orchestrator, 2026-11-05)
@@ -562,4 +562,7 @@
   - (4) Тестовый кит stories — реэкспорт `dmgDispatch`/`refuse` из `stream-dmg.test-kit`.
   - (5) Порядок задач Ф2: red (test-designer) → механический перевод остальных тестов (flash) → реализация UI (Sonnet); критерии приёмки плана заменены grep-критериями брифа (многострочные вызовы).
   - (6) Типы Def-событий для stories — `stories/questionnaire-events.ts`, в контракт не реэкспортируются.
-- **Пересмотреть:** (1) — когда в `U7BotUiStory` появится общий экран отказа по `Result`; (3) — при управлении часами в `createTestApp`; (4) — общий тестовый кит DMG для stories.
+  - (7) Общий абстрактный `stories/questionnaire-story.ts` (`QuestionnaireStory.resolveRespondent`) — адрес респондента для двух story; сбой `get-user`, нет профиля, нет `telegramId` различаются в `warn`.
+  - (8) Ревью Ф2: `ucErrorScreen` оставлен функцией `render.ts` (Т1), хотя дублирует ветки `ucErrorNotify`; текст validation на экране — без хвоста legacy «Пожалуйста, исправьте…» (тексты как у `ucErrorNotify`, срабатывает лишь при битом `qId`).
+  - (9) `dispatchUc` из подписки `invited` (и `InactivityStory`) идёт вне контекста апдейта: штатный `warn` ERR-07 «нет requestId» на каждое событие, корреляции с исходной командой нет.
+- **Пересмотреть:** (1), (8) — когда в `U7BotUiStory` появится общий экран отказа по `Result`; (9) — передача correlation из события в `dispatchUc` подписок (платформа бота); (3) — при управлении часами в `createTestApp`; (4) — общий тестовый кит DMG для stories.

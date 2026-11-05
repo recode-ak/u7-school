@@ -10,24 +10,33 @@ import {
   type KbButton,
   type UiEventSubscription,
 } from '@u7-scl/core/ui';
-import type { QuestionnaireActionResponse } from '@u7-scl/domain/questionnaire/contract';
-import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
+import {
+  AbandonUcDef,
+  GetCurrentUcDef,
+  GetQuestionnairesByUserUcDef,
+  HandleActionUcDef,
+  type QuestionnaireActionResponse,
+  QuestionnaireEvents,
+  QuestionnaireModuleDef,
+} from '@u7-scl/domain/questionnaire/contract';
+import type { DomainError } from 'dmg-core';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
 import type {
-  QuestionnaireAbandonEvent,
+  QuestionnaireAbandonedEvent,
   QuestionnaireAbandonWarningEvent,
   QuestionnaireContinueInviteEvent,
-  QuestionnaireStartEvent,
-} from './legacy-events';
-import { renderActionResponse } from './render';
+  QuestionnaireStartedEvent,
+} from './questionnaire-events';
+import { QuestionnaireStory } from './questionnaire-story';
+import { renderActionResponse, ucErrorScreen } from './render';
 
 /**
  * FillStory — сценарий заполнения анкеты (S02–S05, S07–S09).
  *
  * Вопросы, ответы, отмена и жизненный цикл брошенной анкеты
  * (предупреждение, приглашение продолжить, закрытие по таймауту).
- * Вызовы UC — через this.appApi (объект приложения, канон BotUiStory).
+ * Вызовы UC — через dispatchUc (модуль DMG), адрес проактивов — по профилю респондента.
  *
  * Контракт «Диалог и Экран»: анкета держит ввод (awaitInput с контекстом
  * { questionnaireId }) с момента входа в диалог (resume/current/start) до
@@ -35,40 +44,43 @@ import { renderActionResponse } from './render';
  * подтверждения: /cancel и кнопка «Прервать»
  * из S07/S09 показывают confirm-экран S05a.
  */
-export class FillStory extends U7BotUiStory {
+export class FillStory extends QuestionnaireStory {
   readonly name = 'fill';
 
   // ── Подписки на доменные события (вариант A: invite-канал, ФР-6) ──
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<QuestionnaireStartEvent>(
-        'questionnaire:start',
+      eventSubscription<QuestionnaireStartedEvent>(
+        QuestionnaireEvents.started.name,
         (event) => this.#handleStartEvent(event),
       ),
       eventSubscription<QuestionnaireAbandonWarningEvent>(
-        'questionnaire:abandon-warning',
+        QuestionnaireEvents.abandonWarning.name,
         (event) => this.#handleWarningEvent(event),
       ),
       eventSubscription<QuestionnaireContinueInviteEvent>(
-        'questionnaire:continue-invite',
+        QuestionnaireEvents.continueInvite.name,
         (event) => this.#handleContinueInviteEvent(event),
       ),
-      eventSubscription<QuestionnaireAbandonEvent>(
-        'questionnaire:abandon',
+      eventSubscription<QuestionnaireAbandonedEvent>(
+        QuestionnaireEvents.abandoned.name,
         (event) => this.#handleAbandonEvent(event),
       ),
     ];
   }
 
   /**
-   * questionnaire:start (старт из каталога) — вариант A: сервер только
+   * started (старт из каталога) — вариант A: сервер только
    * зовёт, диалог открывается действием пользователя. Кнопка-мост
    * fill:resume:{courseId}; без courseId — подсказка входа через меню.
    */
-  async #handleStartEvent(event: QuestionnaireStartEvent): Promise<void> {
-    const { telegramId } = event.payload;
-    const courseId = event.ownerInfo.courseId;
+  async #handleStartEvent(event: QuestionnaireStartedEvent): Promise<void> {
+    const { questionnaireId, respondentId, ownerInfo } = event.payload;
+    const target = await this.resolveRespondent(respondentId, questionnaireId);
+    if (!target) return;
+    const { telegramId } = target;
+    const courseId = ownerInfo.courseId;
 
     if (typeof courseId !== 'string') {
       await this.proactiveSender.notify(telegramId, {
@@ -86,16 +98,19 @@ export class FillStory extends U7BotUiStory {
   }
 
   /**
-   * questionnaire:abandon-warning (S07, ступень 6ч) — кнопочный проактив
+   * abandonWarning (S07, ступень 6ч) — кнопочный проактив
    * через invite-канал: «Продолжить» (кнопка-мост по курсу) / «Прервать»
    * (confirm-экран S05a — прерывание только после подтверждения).
    */
   async #handleWarningEvent(
     event: QuestionnaireAbandonWarningEvent,
   ): Promise<void> {
-    const { telegramId, questionnaireId } = event.payload;
+    const { questionnaireId, respondentId, ownerInfo } = event.payload;
+    const target = await this.resolveRespondent(respondentId, questionnaireId);
+    if (!target) return;
+    const { telegramId } = target;
     const rows = this.#lifecycleRows(
-      event.ownerInfo.courseId,
+      ownerInfo.courseId,
       questionnaireId,
       '▶️ Продолжить',
     );
@@ -107,15 +122,18 @@ export class FillStory extends U7BotUiStory {
   }
 
   /**
-   * questionnaire:continue-invite (S09, ступень 3ч) — приглашение
+   * continueInvite (S09, ступень 3ч) — приглашение
    * продолжить брошенную анкету, канал invite (ФР-6).
    */
   async #handleContinueInviteEvent(
     event: QuestionnaireContinueInviteEvent,
   ): Promise<void> {
-    const { telegramId, questionnaireId } = event.payload;
+    const { questionnaireId, respondentId, ownerInfo } = event.payload;
+    const target = await this.resolveRespondent(respondentId, questionnaireId);
+    if (!target) return;
+    const { telegramId } = target;
     const rows = this.#lifecycleRows(
-      event.ownerInfo.courseId,
+      ownerInfo.courseId,
       questionnaireId,
       '▶️ Продолжить анкету',
     );
@@ -127,16 +145,18 @@ export class FillStory extends U7BotUiStory {
   }
 
   /**
-   * questionnaire:abandon — уведомление о принудительном закрытии (S08).
+   * abandoned — уведомление о принудительном закрытии (S08).
    * Только reason='timeout': при ручном прерывании пользователь уже
-   * получил экран «Анкета прервана» — дублировать не нужно. Без telegramId
-   * слать некому.
+   * получил экран «Анкета прервана» — дублировать не нужно.
    */
-  async #handleAbandonEvent(event: QuestionnaireAbandonEvent): Promise<void> {
-    const { reason, telegramId } = event.payload;
-    if (reason !== 'timeout' || telegramId === undefined) {
+  async #handleAbandonEvent(event: QuestionnaireAbandonedEvent): Promise<void> {
+    const { reason, respondentId, questionnaireId } = event.payload;
+    if (reason !== 'timeout') {
       return;
     }
+    const target = await this.resolveRespondent(respondentId, questionnaireId);
+    if (!target) return;
+    const { telegramId } = target;
 
     await this.proactiveSender.notify(telegramId, {
       text: md`⏱ Анкета была закрыта из\\-за длительной неактивности\\.`,
@@ -183,7 +203,7 @@ export class FillStory extends U7BotUiStory {
     // fill:cancel:{qId} — confirm-экран прерывания (S05a)
     if (action.startsWith('cancel:')) {
       const qId = action.slice(7);
-      return this.#cancelConfirmScreen(qId, actor);
+      return this.#cancelConfirmScreen(qId, actor, ucErrorScreen);
     }
 
     // fill:current:{qId} — восстановление флоу (кнопка «Нет, продолжить»)
@@ -199,17 +219,8 @@ export class FillStory extends U7BotUiStory {
       if (colonIdx === -1) return this.unknownCommand(action, actor, session);
       const qId = rest.slice(0, colonIdx);
       const aCode = rest.slice(colonIdx + 1);
-      try {
-        const response = await this.appApi.execute(
-          'handle-action',
-          // Протокол UC: выбор — callback (value = код ответа)
-          { questionnaireId: qId, type: 'callback', value: aCode },
-          actor,
-        );
-        return this.#renderUc(response, qId, aCode);
-      } catch (err) {
-        return this.errorNotify(err);
-      }
+      // Протокол UC: выбор — callback (value = код ответа)
+      return this.#handleInput(qId, 'callback', aCode, actor);
     }
 
     // fill:next:{qId}:{qCode}
@@ -219,16 +230,7 @@ export class FillStory extends U7BotUiStory {
       if (colonIdx === -1) return this.unknownCommand(action, actor, session);
       const qId = rest.slice(0, colonIdx);
       const qCode = rest.slice(colonIdx + 1);
-      try {
-        const response = await this.appApi.execute(
-          'handle-action',
-          { questionnaireId: qId, type: 'callback', value: `next:${qCode}` },
-          actor,
-        );
-        return this.#renderUc(response, qId, `next:${qCode}`);
-      } catch (err) {
-        return this.errorNotify(err);
-      }
+      return this.#handleInput(qId, 'callback', `next:${qCode}`, actor);
     }
 
     return this.unknownCommand(action, actor, session);
@@ -257,16 +259,23 @@ export class FillStory extends U7BotUiStory {
       };
     }
 
-    try {
-      const response = await this.appApi.execute(
-        'handle-action',
-        { questionnaireId: qId, type: 'text', value: update.text },
-        actor,
-      );
-      return this.#renderUc(response, qId, update.text);
-    } catch (err) {
-      return this.errorNotify(err);
-    }
+    return this.#handleInput(qId, 'text', update.text, actor);
+  }
+
+  /** Ввод пользователя: ответ UC в экран, отказ — warn поверх вопроса. */
+  async #handleInput(
+    qId: string,
+    type: 'callback' | 'text',
+    value: string,
+    actor: User,
+  ): Promise<DialogResponse> {
+    const res = await this.dispatchUc(
+      QuestionnaireModuleDef,
+      HandleActionUcDef.command({ questionnaireId: qId, type, value }),
+      actor,
+    );
+    if (!res.ok) return this.ucErrorNotify(res.error);
+    return this.#renderUc(res.value, qId, value);
   }
 
   // ── Команды: /cancel — подтверждение перед прерыванием ──
@@ -285,17 +294,12 @@ export class FillStory extends U7BotUiStory {
           response: this.notify(md`Отменено\\. Наберите /start`),
         };
       }
-      try {
-        return {
-          reaction: 'stop',
-          response: await this.#cancelConfirmScreen(qId, actor),
-        };
-      } catch {
-        return {
-          reaction: 'stop',
-          response: this.notify(md`Отменено\\. Наберите /start`),
-        };
-      }
+      return {
+        reaction: 'stop',
+        response: await this.#cancelConfirmScreen(qId, actor, () =>
+          this.notify(md`Отменено\\. Наберите /start`),
+        ),
+      };
     }
 
     return super.handleCommand(update, actor, session);
@@ -309,69 +313,65 @@ export class FillStory extends U7BotUiStory {
    * рендерит её текущий вопрос с захватом ввода.
    */
   async #handleResume(courseId: string, actor: User): Promise<DialogResponse> {
-    try {
-      const states = await this.appApi.execute(
-        'get-questionnaires-by-user',
-        { userId: actor.uuid },
-        actor,
+    const res = await this.dispatchUc(
+      QuestionnaireModuleDef,
+      GetQuestionnairesByUserUcDef.command({ userId: actor.uuid }),
+      actor,
+    );
+    if (!res.ok) return ucErrorScreen(res.error);
+
+    const active = res.value.find(
+      (s) =>
+        s.kind === 'standard' &&
+        s.status === 'in_progress' &&
+        s.ownerInfo.courseId === courseId,
+    );
+
+    if (!active) {
+      return this.screen(
+        md`Анкета не найдена или уже завершена\\.`,
+        this.kb([[buttons.mainMenu()]]),
       );
-
-      const active = (
-        states as Array<{
-          kind: string;
-          status: string;
-          ownerInfo: { courseId?: string };
-          uuid: string;
-        }>
-      ).find(
-        (s) =>
-          s.kind === 'standard' &&
-          s.status === 'in_progress' &&
-          s.ownerInfo.courseId === courseId,
-      );
-
-      if (!active) {
-        return this.screen(
-          md`Анкета не найдена или уже завершена\\.`,
-          this.kb([[buttons.mainMenu()]]),
-        );
-      }
-
-      return this.#showCurrent(active.uuid, actor);
-    } catch (err) {
-      return this.handleError(err);
     }
+
+    return this.#showCurrent(active.uuid, actor);
   }
 
   /** Показ текущего вопроса с захватом ввода (resume/current/возврат). */
   async #showCurrent(qId: string, actor: User): Promise<DialogResponse> {
-    try {
-      const response = await this.appApi.execute(
-        'get-current',
-        { questionnaireId: qId },
-        actor,
-      );
-      const res = renderActionResponse(response);
-      // Ввод ждём только пока есть вопрос; completed сам несёт release
-      if (response.type === 'new_question' || response.type === 'wait_next') {
-        res.awaitInput = { context: { questionnaireId: qId } };
-      }
-      return res;
-    } catch (err) {
-      return this.handleError(err);
+    const res = await this.dispatchUc(
+      QuestionnaireModuleDef,
+      GetCurrentUcDef.command({ questionnaireId: qId }),
+      actor,
+    );
+    if (!res.ok) return ucErrorScreen(res.error);
+
+    const response = res.value;
+    const screen = renderActionResponse(response);
+    // Ввод ждём только пока есть вопрос; completed сам несёт release
+    if (response.type === 'new_question' || response.type === 'wait_next') {
+      screen.awaitInput = { context: { questionnaireId: qId } };
     }
+    return screen;
   }
 
-  /** Confirm-экран прерывания S05a: вопрос + cancelWarning анкеты. */
+  /**
+   * Confirm-экран прерывания S05a: вопрос + cancelWarning анкеты.
+   * Отказ `getCurrent` отображает `onRefusal`: кнопка — экран ошибки,
+   * `/cancel` — реплика «Отменено».
+   */
   async #cancelConfirmScreen(
     qId: string,
     actor: User,
+    onRefusal: (error: DomainError) => DialogResponse,
   ): Promise<DialogResponse> {
-    const current = await this.appApi.execute(
-      'get-current',
-      { questionnaireId: qId },
+    const res = await this.dispatchUc(
+      QuestionnaireModuleDef,
+      GetCurrentUcDef.command({ questionnaireId: qId }),
       actor,
     );
+    if (!res.ok) return onRefusal(res.error);
+    const current = res.value;
     // cancelWarning есть у всех вариантов ответа, кроме completed
     const warningRaw =
       current.type === 'completed' ? undefined : current.cancelWarning;
@@ -393,16 +393,17 @@ export class FillStory extends U7BotUiStory {
     qId: string,
     actor: User,
   ): Promise<DialogResponse> {
-    try {
-      await this.appApi.execute('abandon', { questionnaireId: qId }, actor);
+    const res = await this.dispatchUc(
+      QuestionnaireModuleDef,
+      AbandonUcDef.command({ questionnaireId: qId }),
+      actor,
+    );
+    if (!res.ok) return ucErrorScreen(res.error);
 
-      return {
-        ...this.screen(md`Анкета прервана\\.`, this.kb([[buttons.mainMenu()]])),
-        release: true,
-      };
-    } catch (err) {
-      return this.handleError(err);
-    }
+    return {
+      ...this.screen(md`Анкета прервана\\.`, this.kb([[buttons.mainMenu()]])),
+      release: true,
+    };
   }
 
   /** Рендеринг ответа UC: наблюдаемость stale + декларативный рендер. */

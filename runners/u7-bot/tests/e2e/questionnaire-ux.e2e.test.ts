@@ -11,6 +11,7 @@ import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import { QuestionnaireEvents } from '@u7-scl/domain/questionnaire/contract';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import type {
@@ -22,6 +23,7 @@ import {
   pressedCode,
   screensNewFirst,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import * as v from 'valibot';
 import { QuestionnaireController } from '../../src/controllers/questionnaire/controller';
 
 /**
@@ -318,19 +320,19 @@ describe('Questionnaire UX (e2e)', () => {
   // ── FR-5 (вариант A): приглашение продолжить — кнопка-мост ──
 
   /** Публикует событие приглашения продолжить (как SweepAbandonedJob на 3ч). */
-  function publishContinueInvite(telegramId: number): void {
+  function publishContinueInvite(respondent: User): void {
     app.eventBus.publish({
       eventId: crypto.randomUUID(),
-      eventName: 'questionnaire:continue-invite',
+      eventName: QuestionnaireEvents.continueInvite.name,
       occurredAt: new Date().toISOString(),
       aggregateName: 'Questionnaire',
       aggregateId: QUESTIONNAIRE_COURSE_ID,
-      ownerInfo: { courseId: QUESTIONNAIRE_COURSE_ID },
-      payload: {
+      payload: v.parse(QuestionnaireEvents.continueInvite.payload, {
         questionnaireId: QUESTIONNAIRE_COURSE_ID,
-        respondentId: fillGuest.uuid,
-        telegramId,
-      },
+        respondentId: respondent.uuid,
+        kind: 'standard',
+        ownerInfo: { courseId: QUESTIONNAIRE_COURSE_ID },
+      }),
     } as never);
   }
 
@@ -371,8 +373,8 @@ describe('Questionnaire UX (e2e)', () => {
     expect(enrollDialog?.input).toBeDefined();
     expect(enrollDialog?.path).not.toBe('questionnaire/fill');
 
-    // 3. Приглашение продолжить: кнопка-мост
-    publishContinueInvite(fillGuest.telegramId);
+    // 3. Приглашение продолжить: кнопка-мост (адрес — профиль респондента)
+    publishContinueInvite(fillGuest);
     const invite = await waitForSent(
       fillGuest.telegramId,
       'Вы начали заполнять анкету',
@@ -422,7 +424,7 @@ describe('Questionnaire UX (e2e)', () => {
 
     // Приглашение без диалога: транспорт открывает якорь (seq = 1),
     // кнопки заштампованы — приглашение не умирает
-    publishContinueInvite(admin.telegramId);
+    publishContinueInvite(admin);
     const invite = await waitForSent(
       admin.telegramId,
       'Вы начали заполнять анкету',
