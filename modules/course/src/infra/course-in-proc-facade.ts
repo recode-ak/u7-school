@@ -7,7 +7,7 @@ import type {
   Module,
   ModulePlace,
 } from '@u7-scl/domain/course';
-import { CoursePolicy } from '@u7-scl/domain/course';
+import { LegacyCoursePolicy } from '@u7-scl/domain/course';
 import type { CourseApiModule } from '../api/module';
 
 /**
@@ -64,11 +64,11 @@ export class CourseInProcFacade implements CourseFacade {
 
   /**
    * Простая операция (существует + опубликован) — остаётся в фасаде:
-   * один вызов UC + проверка статуса через CoursePolicy.
+   * один вызов UC + проверка статуса через LegacyCoursePolicy.
    */
   async isCourseEnrollable(courseId: string): Promise<boolean> {
     const course = await this.#getCourse(courseId);
-    return !!course && CoursePolicy.isPublished(course);
+    return !!course && LegacyCoursePolicy.isPublished(course);
   }
 
   /**

@@ -1,7 +1,7 @@
 import type { User } from '@u7-scl/domain/user';
 import { UserPolicy } from '@u7-scl/domain/user';
 import { Status } from '../status';
-import { CourseAr } from './a-root';
+import { LegacyCourseAr } from './a-root';
 import type { Course } from './entity';
 
 /**
@@ -12,7 +12,7 @@ import type { Course } from './entity';
  * Гейтинг (допуск к модулям курса) — здесь, так как решение принимается
  * на основе структуры курса (фазы, порядок модулей) и списка завершённых модулей.
  */
-export const CoursePolicy = {
+export const LegacyCoursePolicy = {
   /** Только AUTHOR может создавать курсы. */
   canCreate(actor: User): boolean {
     return UserPolicy.isAuthor(actor);
@@ -48,7 +48,9 @@ export const CoursePolicy = {
     targetModuleId: string,
     completedModuleIds: string[],
   ): boolean {
-    const prevModuleId = new CourseAr(course).getPrevModuleId(targetModuleId);
+    const prevModuleId = new LegacyCourseAr(course).getPrevModuleId(
+      targetModuleId,
+    );
 
     // Модуль не принадлежит курсу — отказ
     if (prevModuleId === null) return false;

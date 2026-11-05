@@ -3,7 +3,7 @@ import type { User } from '@u7-scl/domain/user';
 import { Role } from '@u7-scl/domain/user';
 import { Status } from '../status';
 import type { Course } from './entity';
-import { CoursePolicy } from './policy';
+import { LegacyCoursePolicy } from './policy';
 
 function makeUser(roles: Role[]): User {
   return {
@@ -39,32 +39,34 @@ function makeCourse(authorId: string): Course {
   };
 }
 
-describe('CoursePolicy', () => {
+describe('LegacyCoursePolicy', () => {
   const authorId = crypto.randomUUID();
   const otherId = crypto.randomUUID();
 
   describe('canCreate', () => {
     it('AUTHOR может создавать', () => {
-      expect(CoursePolicy.canCreate(makeUser([Role.AUTHOR]))).toBe(true);
+      expect(LegacyCoursePolicy.canCreate(makeUser([Role.AUTHOR]))).toBe(true);
     });
 
     it('ADMIN не может создавать', () => {
-      expect(CoursePolicy.canCreate(makeUser([Role.ADMIN]))).toBe(false);
+      expect(LegacyCoursePolicy.canCreate(makeUser([Role.ADMIN]))).toBe(false);
     });
 
     it('MENTOR не может создавать', () => {
-      expect(CoursePolicy.canCreate(makeUser([Role.MENTOR]))).toBe(false);
+      expect(LegacyCoursePolicy.canCreate(makeUser([Role.MENTOR]))).toBe(false);
     });
 
     it('STUDENT не может создавать', () => {
-      expect(CoursePolicy.canCreate(makeUser([Role.STUDENT]))).toBe(false);
+      expect(LegacyCoursePolicy.canCreate(makeUser([Role.STUDENT]))).toBe(
+        false,
+      );
     });
   });
 
   describe('canRead', () => {
     it('любой авторизованный может читать', () => {
-      expect(CoursePolicy.canRead(makeUser([Role.STUDENT]))).toBe(true);
-      expect(CoursePolicy.canRead(makeUser([Role.ADMIN]))).toBe(true);
+      expect(LegacyCoursePolicy.canRead(makeUser([Role.STUDENT]))).toBe(true);
+      expect(LegacyCoursePolicy.canRead(makeUser([Role.ADMIN]))).toBe(true);
     });
   });
 
@@ -72,18 +74,25 @@ describe('CoursePolicy', () => {
     it('автор может редактировать свой курс', () => {
       const course = makeCourse(authorId);
       expect(
-        CoursePolicy.canEdit(makeUserWithId(authorId, [Role.AUTHOR]), course),
+        LegacyCoursePolicy.canEdit(
+          makeUserWithId(authorId, [Role.AUTHOR]),
+          course,
+        ),
       ).toBe(true);
     });
 
     it('ADMIN может редактировать чужой курс', () => {
       const course = makeCourse(otherId);
-      expect(CoursePolicy.canEdit(makeUser([Role.ADMIN]), course)).toBe(true);
+      expect(LegacyCoursePolicy.canEdit(makeUser([Role.ADMIN]), course)).toBe(
+        true,
+      );
     });
 
     it('не-автор без ADMIN не может редактировать', () => {
       const course = makeCourse(otherId);
-      expect(CoursePolicy.canEdit(makeUser([Role.MENTOR]), course)).toBe(false);
+      expect(LegacyCoursePolicy.canEdit(makeUser([Role.MENTOR]), course)).toBe(
+        false,
+      );
     });
   });
 
@@ -101,7 +110,7 @@ describe('CoursePolicy', () => {
         },
       ];
       expect(
-        CoursePolicy.canEnrollNextModule(
+        LegacyCoursePolicy.canEnrollNextModule(
           course,
           '33333333-3333-4333-8333-333333333333',
           [],
@@ -122,7 +131,7 @@ describe('CoursePolicy', () => {
         },
       ];
       expect(
-        CoursePolicy.canEnrollNextModule(
+        LegacyCoursePolicy.canEnrollNextModule(
           course,
           'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
           ['33333333-3333-4333-8333-333333333333'],
@@ -143,7 +152,7 @@ describe('CoursePolicy', () => {
         },
       ];
       expect(
-        CoursePolicy.canEnrollNextModule(
+        LegacyCoursePolicy.canEnrollNextModule(
           course,
           'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
           [],
@@ -168,7 +177,7 @@ describe('CoursePolicy', () => {
         },
       ];
       expect(
-        CoursePolicy.canEnrollNextModule(
+        LegacyCoursePolicy.canEnrollNextModule(
           course,
           'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
           ['33333333-3333-4333-8333-333333333333'],
@@ -185,7 +194,7 @@ describe('CoursePolicy', () => {
         },
       ];
       expect(
-        CoursePolicy.canEnrollNextModule(
+        LegacyCoursePolicy.canEnrollNextModule(
           course,
           'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
           ['33333333-3333-4333-8333-333333333333'],
@@ -196,7 +205,7 @@ describe('CoursePolicy', () => {
     it('пустой курс → отказ', () => {
       const course = makeCourse(authorId);
       expect(
-        CoursePolicy.canEnrollNextModule(
+        LegacyCoursePolicy.canEnrollNextModule(
           course,
           'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
           [],

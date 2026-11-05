@@ -11,7 +11,7 @@ export interface CourseListFilter {
 }
 
 /** Интерфейс репозитория курсов */
-export interface CourseRepo {
+export interface LegacyCourseRepo {
   save(course: Course): Promise<void>;
   getByUuid(uuid: string): Promise<Course | undefined>;
   getAll(filter?: CourseListFilter): Promise<Course[]>;

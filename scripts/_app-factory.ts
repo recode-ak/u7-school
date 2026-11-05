@@ -40,7 +40,7 @@ import { type Logger, LogLevel } from '@u7-scl/core/shared';
 import type { CourseApiModuleMeta } from '@u7-scl/domain/course';
 import type { UserApiModuleMeta } from '@u7-scl/domain/user';
 import { CourseApiModule } from '../modules/course/src/api/module.ts';
-import { CourseJsonRepo } from '../modules/course/src/infra/db/course-json-repo.ts';
+import { LegacyCourseJsonRepo } from '../modules/course/src/infra/db/course-json-repo.ts';
 import { LegacyLessonJsonRepo } from '../modules/course/src/infra/db/lesson-json-repo.ts';
 import { LegacyModuleJsonRepo } from '../modules/course/src/infra/db/module-json-repo.ts';
 import { LegacyStepJsonRepo } from '../modules/course/src/infra/db/step-json-repo.ts';
@@ -105,7 +105,7 @@ export function createApp(silent = false): ApiApp<ScriptAppMeta> {
   };
 
   const moduleRepo = new LegacyModuleJsonRepo();
-  const courseRepo = new CourseJsonRepo();
+  const courseRepo = new LegacyCourseJsonRepo();
   const lessonRepo = new LegacyLessonJsonRepo();
   const stepRepo = new LegacyStepJsonRepo();
   const userRepo = new UserJsonRepo();

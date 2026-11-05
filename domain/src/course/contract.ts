@@ -35,7 +35,6 @@ export {
   type SameModules,
 } from './course/uc/get-same-modules.uc';
 export { CourseModuleDef } from './course.module';
-export type { CourseFacade, CourseProgram, ModulePlace } from './facade';
 export type {
   LessonAccessDeniedUcError,
   LessonModuleError,

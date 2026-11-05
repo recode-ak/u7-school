@@ -2,7 +2,7 @@ import { JsonFileRepo } from '@u7-scl/core/infra';
 import type {
   Course,
   CourseListFilter,
-  CourseRepo,
+  LegacyCourseRepo,
 } from '@u7-scl/domain/course';
 import { CourseSchema } from '@u7-scl/domain/course';
 
@@ -10,7 +10,7 @@ import { CourseSchema } from '@u7-scl/domain/course';
  * JSON-файловая реализация репозитория курсов.
  * Хранит данные в JSON-файле через {@link JsonFileRepo}.
  */
-export class CourseJsonRepo implements CourseRepo {
+export class LegacyCourseJsonRepo implements LegacyCourseRepo {
   readonly #repo: JsonFileRepo<Course>;
 
   constructor(filePath = 'data/courses/courses.json') {

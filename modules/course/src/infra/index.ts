@@ -1,6 +1,6 @@
 // Infra слой @u7-scl/course
 export { CourseInProcFacade } from './course-in-proc-facade';
-export { CourseJsonRepo } from './db/course-json-repo';
+export { LegacyCourseJsonRepo } from './db/course-json-repo';
 export { LegacyLessonJsonRepo } from './db/lesson-json-repo';
 export { LegacyModuleJsonRepo } from './db/module-json-repo';
 export { LegacyStepJsonRepo } from './db/step-json-repo';

@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from 'bun:test';
 import type {
   Course,
   CourseApiModuleResolver,
-  CourseRepo,
+  LegacyCourseRepo,
 } from '@u7-scl/domain/course';
 import type { User } from '@u7-scl/user/domain';
 import { Role } from '@u7-scl/user/domain';
@@ -26,7 +26,7 @@ function makeCourseRepo() {
   );
   const getAll = mock(async (): Promise<Course[]> => []);
 
-  return { save, getByUuid, getAll } as CourseRepo;
+  return { save, getByUuid, getAll } as LegacyCourseRepo;
 }
 
 function setupUc() {

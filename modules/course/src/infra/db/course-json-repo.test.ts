@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Course } from '@u7-scl/domain/course';
 import { Status } from '@u7-scl/domain/course';
-import { CourseJsonRepo } from './course-json-repo';
+import { LegacyCourseJsonRepo } from './course-json-repo';
 
 const tmpDir = mkdtempSync('/tmp/course-json-repo-test-');
 
@@ -24,14 +24,14 @@ function makeCourse(overrides: Partial<Course> = {}): Course {
   };
 }
 
-describe('CourseJsonRepo', () => {
+describe('LegacyCourseJsonRepo', () => {
   afterAll(() => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
   describe('save и getByUuid', () => {
     test('сохраняет и находит курс по uuid', async () => {
-      const repo = new CourseJsonRepo(filePath());
+      const repo = new LegacyCourseJsonRepo(filePath());
       const uuid = crypto.randomUUID();
       const course = makeCourse({ uuid });
 
@@ -43,7 +43,7 @@ describe('CourseJsonRepo', () => {
     });
 
     test('getByUuid возвращает undefined для несуществующего', async () => {
-      const repo = new CourseJsonRepo(filePath());
+      const repo = new LegacyCourseJsonRepo(filePath());
 
       const found = await repo.getByUuid(
         '550e8400-e29b-41d4-a716-446655440099',
@@ -52,7 +52,7 @@ describe('CourseJsonRepo', () => {
     });
 
     test('save перезаписывает существующий курс', async () => {
-      const repo = new CourseJsonRepo(filePath('courses-update.json'));
+      const repo = new LegacyCourseJsonRepo(filePath('courses-update.json'));
       const uuid = crypto.randomUUID();
       const course = makeCourse({ uuid });
       await repo.save(course);
@@ -67,7 +67,7 @@ describe('CourseJsonRepo', () => {
 
   describe('getAll', () => {
     test('возвращает все курсы', async () => {
-      const repo = new CourseJsonRepo(filePath('courses-all.json'));
+      const repo = new LegacyCourseJsonRepo(filePath('courses-all.json'));
       const c1 = makeCourse({ uuid: crypto.randomUUID() });
       const c2 = makeCourse({
         uuid: crypto.randomUUID(),
@@ -82,7 +82,7 @@ describe('CourseJsonRepo', () => {
     });
 
     test('возвращает пустой массив если файла нет', async () => {
-      const repo = new CourseJsonRepo(filePath('courses-empty.json'));
+      const repo = new LegacyCourseJsonRepo(filePath('courses-empty.json'));
       const all = await repo.getAll();
       expect(all).toEqual([]);
     });
@@ -90,7 +90,7 @@ describe('CourseJsonRepo', () => {
 
   describe('getAll с фильтрами', () => {
     test('фильтрует по статусу', async () => {
-      const repo = new CourseJsonRepo(filePath('courses-status.json'));
+      const repo = new LegacyCourseJsonRepo(filePath('courses-status.json'));
       const draft = makeCourse({ uuid: crypto.randomUUID() });
       const pubUuid = crypto.randomUUID();
       const published = makeCourse({ uuid: pubUuid, status: Status.PUBLISHED });
@@ -104,7 +104,7 @@ describe('CourseJsonRepo', () => {
     });
 
     test('фильтрует по authorId', async () => {
-      const repo = new CourseJsonRepo(filePath('courses-author.json'));
+      const repo = new LegacyCourseJsonRepo(filePath('courses-author.json'));
       const authorA = crypto.randomUUID();
       const authorB = crypto.randomUUID();
       const c1 = makeCourse({ uuid: crypto.randomUUID(), authorId: authorA });
@@ -119,7 +119,7 @@ describe('CourseJsonRepo', () => {
     });
 
     test('фильтрует по title (частичное совпадение)', async () => {
-      const repo = new CourseJsonRepo(filePath('courses-title.json'));
+      const repo = new LegacyCourseJsonRepo(filePath('courses-title.json'));
       const c1 = makeCourse({
         uuid: crypto.randomUUID(),
         title: 'Основы JavaScript',
@@ -138,7 +138,7 @@ describe('CourseJsonRepo', () => {
     });
 
     test('фильтрует по нескольким параметрам одновременно', async () => {
-      const repo = new CourseJsonRepo(filePath('courses-combined.json'));
+      const repo = new LegacyCourseJsonRepo(filePath('courses-combined.json'));
       const authorA = crypto.randomUUID();
       const pubUuid = crypto.randomUUID();
       const c1 = makeCourse({
@@ -173,7 +173,9 @@ describe('CourseJsonRepo', () => {
     });
 
     test('сортирует по title asc', async () => {
-      const repo = new CourseJsonRepo(filePath('courses-sort-title.json'));
+      const repo = new LegacyCourseJsonRepo(
+        filePath('courses-sort-title.json'),
+      );
       const c1 = makeCourse({ uuid: crypto.randomUUID(), title: 'Бета' });
       const c2 = makeCourse({ uuid: crypto.randomUUID(), title: 'Альфа' });
 
@@ -187,7 +189,7 @@ describe('CourseJsonRepo', () => {
     });
 
     test('сортирует по createdAt desc', async () => {
-      const repo = new CourseJsonRepo(filePath('courses-sort-date.json'));
+      const repo = new LegacyCourseJsonRepo(filePath('courses-sort-date.json'));
       const c1 = makeCourse({
         uuid: crypto.randomUUID(),
         createdAt: '2026-01-01T00:00',
@@ -207,7 +209,7 @@ describe('CourseJsonRepo', () => {
     });
 
     test('ограничивает по limit', async () => {
-      const repo = new CourseJsonRepo(filePath('courses-limit.json'));
+      const repo = new LegacyCourseJsonRepo(filePath('courses-limit.json'));
       const c1 = makeCourse({ uuid: crypto.randomUUID() });
       const c2 = makeCourse({ uuid: crypto.randomUUID() });
       const c3 = makeCourse({ uuid: crypto.randomUUID() });

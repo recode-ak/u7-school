@@ -27,7 +27,7 @@ export {
   LessonSnapshotSchema,
 } from './content-snapshot';
 // Агрегат Course
-export { CourseAr } from './course/a-root';
+export { LegacyCourseAr } from './course/a-root';
 export type {
   AddModuleToCourseCmd,
   AddModuleToCourseCmdMeta,
@@ -86,8 +86,8 @@ export type {
 export { WhichCoursesIncludeModuleCmdSchema } from './course/commands/which-courses-include-module-cmd';
 export type { Course, CourseArMeta, Phase } from './course/entity';
 export { CourseSchema, PhaseSchema } from './course/entity';
-export { CoursePolicy } from './course/policy';
-export type { CourseListFilter, CourseRepo } from './course/repo';
+export { LegacyCoursePolicy } from './course/policy';
+export type { CourseListFilter, LegacyCourseRepo } from './course/repo';
 // Domain Service
 export { CourseDs } from './course-ds';
 export type { CourseFacade, CourseProgram, ModulePlace } from './facade';

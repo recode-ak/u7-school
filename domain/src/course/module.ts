@@ -15,7 +15,7 @@ import type {
   ListCoursesCmdMeta,
   WhichCoursesIncludeModuleCmdMeta,
 } from './course/commands';
-import type { CourseRepo } from './course/repo';
+import type { LegacyCourseRepo } from './course/repo';
 import type { CreateLessonCmdMeta } from './lesson/commands/create-lesson-cmd';
 import type { GetLessonCmdMeta } from './lesson/commands/get-lesson-cmd';
 import type { LegacyLessonRepo } from './lesson/repo';
@@ -71,7 +71,7 @@ export interface CourseApiModuleMeta extends ApiModuleMeta {
 export interface CourseApiModuleResolver extends U7ModuleResolver {
   db?: BaseJsonDb;
   moduleRepo: LegacyModuleRepo;
-  courseRepo: CourseRepo;
+  courseRepo: LegacyCourseRepo;
   lessonRepo: LegacyLessonRepo;
   stepRepo: LegacyStepRepo;
   userFacade: UserFacade;

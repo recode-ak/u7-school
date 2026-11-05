@@ -5,7 +5,7 @@ import { CourseErrors } from './course.errors';
 /**
  * Def агрегата внешнего модуля (D-37): нужен Def UC модуля (`aggregate`).
  * Состояние и события — пустой минимум, ошибки — только контрактные; агрегат реализует legacy-код
- * (`CourseAr`). При миграции модуля Def наполняется.
+ * (`LegacyCourseAr`). При миграции модуля Def наполняется.
  */
 export const CourseArDef = AggregateDef.define({
   name: 'course',

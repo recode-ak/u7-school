@@ -15,7 +15,7 @@ import { ModuleRepoFake } from '../../module/module.repo.fake';
 import { StepRepoFake } from '../../step/step.repo.fake';
 
 // `getModulePrerequisite` — адаптер над legacy `getCourseByModuleId` +
-// `CourseAr.getPrevModuleId` + `getModule` (enroll-student-uc.ts:52-70):
+// `LegacyCourseAr.getPrevModuleId` + `getModule` (enroll-student-uc.ts:52-70):
 // курса нет или модуль входной → none; модуля нет в курсе → closed;
 // иначе module { moduleId, title }; `getModule` упал → title = moduleId.
 

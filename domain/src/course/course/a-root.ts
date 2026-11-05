@@ -9,7 +9,7 @@ import { CourseSchema } from './entity';
  * Фаза идентифицируется по title (уникален в пределах курса).
  * Инвариант: названия фаз уникальны.
  */
-export class CourseAr extends Aggregate<CourseArMeta> {
+export class LegacyCourseAr extends Aggregate<CourseArMeta> {
   static readonly arName = 'Course';
   static readonly arLabel = 'Курс';
 
@@ -34,7 +34,7 @@ export class CourseAr extends Aggregate<CourseArMeta> {
     title: string,
     description: string,
     authorId: string,
-  ): CourseAr {
+  ): LegacyCourseAr {
     const candidate: Course = {
       uuid: crypto.randomUUID(),
       title,
@@ -45,7 +45,7 @@ export class CourseAr extends Aggregate<CourseArMeta> {
       createdAt: isoNow(),
     };
 
-    return new CourseAr(candidate);
+    return new LegacyCourseAr(candidate);
   }
 
   /** Добавление фазы в курс. Title должен быть уникален. */

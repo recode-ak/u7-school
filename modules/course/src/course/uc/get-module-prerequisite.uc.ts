@@ -1,5 +1,5 @@
 // Адаптер UC внешнего контракта над legacy-фасадом курсов.
-import { CourseAr } from '@u7-scl/domain/course';
+import { LegacyCourseAr } from '@u7-scl/domain/course';
 import {
   type CourseModuleDef,
   GetModulePrerequisiteUcDef,
@@ -10,7 +10,7 @@ import type { CourseModuleDeps } from '../../course.module';
 
 /**
  * `getModulePrerequisite` поверх legacy `getCourseByModuleId` +
- * `CourseAr.getPrevModuleId` + `getModule`: курса нет или модуль входной —
+ * `LegacyCourseAr.getPrevModuleId` + `getModule`: курса нет или модуль входной —
  * `none`; модуля нет в порядке курса — `closed`; иначе `module`. Название
  * предыдущего модуля не получено — вместо него его id.
  */
@@ -31,7 +31,7 @@ export class GetModulePrerequisiteUc extends UseCaseFromDef<
     const { legacy } = this.resolve;
     const course = await legacy.getCourseByModuleId(moduleId);
     if (!course) return ok({ gate: 'none' as const });
-    const prevModuleId = new CourseAr(course).getPrevModuleId(moduleId);
+    const prevModuleId = new LegacyCourseAr(course).getPrevModuleId(moduleId);
     if (prevModuleId === undefined) return ok({ gate: 'none' as const });
     if (prevModuleId === null) return ok({ gate: 'closed' as const });
     try {
