@@ -63,6 +63,41 @@ describe('Материализатор и кеш миров (World Materializer)
     expect(hash1).not.toBe(hash3);
   });
 
+  it('sourceHash учитывает вложенные поля определения', () => {
+    const changed: WorldDefinition = {
+      ...sampleWorldDef1,
+      persons: sampleWorldDef1.persons?.map((p) => ({
+        ...p,
+        telegramId: 2002,
+      })),
+    };
+
+    expect(computeSourceHash(changed)).not.toBe(
+      computeSourceHash(sampleWorldDef1),
+    );
+  });
+
+  it('sourceHash не зависит от порядка ключей во вложенных объектах', () => {
+    const reordered: WorldDefinition = {
+      ...sampleWorldDef1,
+      streams: [
+        {
+          startedAt: 'T-5d',
+          status: StreamStatus.ACTIVE,
+          mentorKey: 'u1',
+          courseKey: 'c1',
+          description: 'Тестовый поток',
+          title: 'Поток 1',
+          key: 's1',
+        },
+      ],
+    };
+
+    expect(computeSourceHash(reordered)).toBe(
+      computeSourceHash(sampleWorldDef1),
+    );
+  });
+
   it('первый вызов материализует мир в кеш (wasCached: false)', async () => {
     const res1 = await materializeWorld(sampleWorldDef1, {
       cacheDir: TEST_CACHE_DIR,

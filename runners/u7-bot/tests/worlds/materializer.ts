@@ -61,8 +61,15 @@ const DEFAULT_CACHE_DIR = path.resolve(process.cwd(), '.cache/worlds');
  * Вычисляет стабильный SHA-256 хеш от исходников/определения мира (первые 16 символов).
  */
 export function computeSourceHash(def: WorldDefinition): string {
-  // Каноническая сериализация с сортировкой ключей
-  const canonicalString = JSON.stringify(def, Object.keys(def).sort());
+  // Каноническая сериализация: ключи сортируются на каждом уровне вложенности
+  // (массив-реплэйсер оставил бы только ключи верхнего уровня)
+  const canonicalString = JSON.stringify(def, (_key, value: unknown) =>
+    value !== null && typeof value === 'object' && !Array.isArray(value)
+      ? Object.fromEntries(
+          Object.entries(value).sort(([a], [b]) => a.localeCompare(b)),
+        )
+      : value,
+  );
   return createHash('sha256')
     .update(canonicalString)
     .digest('hex')
