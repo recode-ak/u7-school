@@ -45,7 +45,7 @@ interface HubPayload {
  * US: Хаб «Мои отзывы» (S02) — список живых кампаний автора.
  *
  * Вход: `hub` — кнопка главного меню «💬 Отзывы» (видна при наличии живых
- * кампаний — UC `get-my-campaigns` с `onlyLives`, асинхронная проверка).
+ * кампаний — UC `get-my-campaigns`, асинхронная проверка).
  * Экран (ui-spec 2026-09-22): абстрактное интро «что это за место» →
  * нумерованные мини-карточки кампаний (контекст судьбы по паре
  * «роль-судьба» + краткие метрики `M/K (N дн.)`) → кнопки внизу с номером
@@ -69,11 +69,11 @@ export class MyReviewsStory extends U7BotUiStory {
   /** Ключ кеша страниц хаба (DialogCache — эпоха диалога). */
   #cacheKey = 'my-reviews:hub';
 
-  /** Живые кампании актора — UC DMG `getMyCampaigns` с `onlyLives`. */
+  /** Живые кампании актора — UC DMG `getMyCampaigns` (отдаёт только живые). */
   async #liveCardsOf(actor: User): Promise<MyCampaignCard[]> {
     const res = await this.dispatchUc(
       PeerReviewModuleDef,
-      GetMyCampaignsUcDef.command({ onlyLives: true }),
+      GetMyCampaignsUcDef.command({}),
       actor,
     );
     if (!res.ok) throw new Error(res.error.code);

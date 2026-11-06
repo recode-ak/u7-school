@@ -90,7 +90,7 @@ describe('U7App (smoke: сборка с модулем peer-review)', () => {
     // Кампании — модуль DMG: UC доступен через единый вход приложения
     const res = await bundle.apiApp.dispatch(
       PeerReviewModuleDef,
-      GetMyCampaignsUcDef.command({ onlyLives: true }),
+      GetMyCampaignsUcDef.command({}),
       new UserCaller(ACTOR),
       Trace.fromRequest({ requestId: crypto.randomUUID() }),
     );

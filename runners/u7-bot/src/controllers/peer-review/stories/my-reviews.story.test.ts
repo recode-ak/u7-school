@@ -89,13 +89,13 @@ describe('MyReviewsStory — кнопка меню «💬 Отзывы» (S02)',
     expect(buttons).toEqual([]);
   });
 
-  test('проверка — UC DMG getMyCampaigns (onlyLives) и list-my-reviews от id актора', async () => {
+  test('проверка — UC DMG getMyCampaigns и list-my-reviews от id актора', async () => {
     const { story, appApi } = makeStory(1);
 
     await story.menuButtons(actor);
 
     expect(appApi.dispatch.mock.calls.map(([, command]) => command)).toEqual([
-      GetMyCampaignsUcDef.command({ onlyLives: true }),
+      GetMyCampaignsUcDef.command({}),
       ListMyReviewsUcDef.command({}),
     ]);
   });

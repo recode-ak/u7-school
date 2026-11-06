@@ -129,11 +129,7 @@ describe('createPeerReviewModule', () => {
     const subject = new UserCaller<Identified>({ uuid: SUBJECT });
     const mentor = new UserCaller<Identified>({ uuid: MENTOR });
     const mine = expectOk(
-      await module.dispatch(
-        GetMyCampaignsUcDef.command({ onlyLives: true }),
-        subject,
-        REQ,
-      ),
+      await module.dispatch(GetMyCampaignsUcDef.command({}), subject, REQ),
     );
     expect(mine.map((c) => [c.myRole, c.progress])).toEqual([
       ['subject', { done: 0, total: 2 }],
@@ -209,11 +205,7 @@ describe('createPeerReviewModule: отзывы', () => {
 
     // прогресс кампании видит новые отзывы
     const cards = expectOk(
-      await module.dispatch(
-        GetMyCampaignsUcDef.command({ onlyLives: true }),
-        subject,
-        REQ,
-      ),
+      await module.dispatch(GetMyCampaignsUcDef.command({}), subject, REQ),
     );
     expect(cards[0]?.progress).toEqual({ done: 1, total: 2 });
 
