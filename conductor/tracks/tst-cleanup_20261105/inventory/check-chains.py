@@ -1,6 +1,7 @@
 import re,os,sys
 # Проверка цепочек «покрыт удаляемым» между таблицами <m>-{domain,app,bot}-delete.md.
-# Запуск: python3 check-chains.py <каталог inventory> <модуль>
+# Запуск: python3 check-chains.py <каталог inventory> <модуль> [<уровень>=<файл> ...]
+# Без пар уровень=файл — таблицы <модуль>-{domain,app,bot}-delete.md.
 os.chdir(sys.argv[1]); M=sys.argv[2]
 removed={};rows=[]
 def full(f,lvl):
@@ -8,9 +9,10 @@ def full(f,lvl):
     if f.startswith(M+'/'): return 'domain/src/'+f
     if lvl=='domain' and not f.startswith(('domain/','modules/','runners/','node_modules/')): return f'domain/src/{M}/'+f
     return f
-for lvl in ['domain','app','bot']:
+tables=[a.split('=',1) for a in sys.argv[3:]] or [(lvl,f'{M}-{lvl}-delete.md') for lvl in ['domain','app','bot']]
+for lvl,path in tables:
     cur=None
-    for l in open(f'{M}-{lvl}-delete.md'):
+    for l in open(path):
         if not l.startswith('|'): continue
         c=[x.strip() for x in l.strip().strip('|').split('|')]
         if len(c)<6 or not c[1].isdigit(): continue
