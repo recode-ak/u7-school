@@ -20,7 +20,7 @@ import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
  * без экранирования: в точке доставки конвертируется в MarkdownV2 через
  * safeConvert (пунктуация экранируется, разметка конвертируется) —
  * отправителю знать диалект канала не нужно.
- * Пользователь не найден / нет telegramId → лог-ошибка, пропуск,
+ * Пользователь не найден / профиль недоступен → лог-ошибка, пропуск,
  * приложение не падает. Ошибки доставки изолирует шина (InProcEventBus).
  */
 export class NotifyStory extends U7BotUiStory {
@@ -55,14 +55,6 @@ export class NotifyStory extends U7BotUiStory {
       this.logger?.error('notify-story', 'Адресат уведомления не найден', {
         userId,
       });
-      return;
-    }
-    if (user.telegramId === undefined) {
-      this.logger?.error(
-        'notify-story',
-        'У адресата нет telegramId — уведомление не доставлено',
-        { userId },
-      );
       return;
     }
 
