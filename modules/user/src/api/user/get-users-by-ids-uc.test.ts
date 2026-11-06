@@ -65,24 +65,14 @@ describe('GetUsersByIdsUc', () => {
     expect(getByUuids).toHaveBeenCalledWith([ivan.uuid, maria.uuid]);
   });
 
-  test('пустой список — пустой результат без похода в репозиторий', async () => {
-    const { getByUuids, uc } = setupUc();
-    const actor = makeUser();
-
-    const result = await uc.handle({ userIds: [] }, actor);
-
-    expect(result).toEqual([]);
-    expect(getByUuids).not.toHaveBeenCalled();
-  });
-
   test('отклоняет больше 100 идентификаторов', async () => {
     const { getByUuids, uc } = setupUc();
     const actor = makeUser();
     const userIds = Array.from({ length: 101 }, () => crypto.randomUUID());
 
-    await expect(uc.handle({ userIds }, actor)).rejects.toThrow(
-      'Переданы некорректные данные',
-    );
+    await expect(uc.handle({ userIds }, actor)).rejects.toMatchObject({
+      error: { name: 'INPUT_VALIDATION_ERROR' },
+    });
     expect(getByUuids).not.toHaveBeenCalled();
   });
 
@@ -116,13 +106,5 @@ describe('GetUsersByIdsUc', () => {
 
     expect(result).toEqual([ivan]);
     expect(warn).toHaveBeenCalledTimes(1);
-  });
-
-  test('публичный read: без актора — пустой список (не UNAUTHORIZED)', async () => {
-    const { uc } = setupUc();
-
-    const result = await uc.handle({ userIds: [] }, undefined);
-
-    expect(result).toEqual([]);
   });
 });

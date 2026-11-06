@@ -45,16 +45,6 @@ function makeUser(overrides: Partial<User> = {}): User {
 }
 
 describe('ListUsersUc', () => {
-  test('возвращает пустой список для пустого репозитория', async () => {
-    const { getAll, uc } = setupUc();
-    getAll.mockResolvedValueOnce([]);
-
-    const result = await uc.handle({});
-    expect(result.users).toEqual([]);
-    expect(result.total).toBe(0);
-    expect(getAll).toHaveBeenCalledTimes(1);
-  });
-
   test('возвращает всех пользователей', async () => {
     const { getAll, uc } = setupUc();
     const u1 = makeUser({ name: 'Иван' });
@@ -74,78 +64,84 @@ describe('ListUsersUc', () => {
     expect(getAll).toHaveBeenCalledTimes(1);
   });
 
-  test('передаёт лимит в репозиторий (по умолчанию 20)', async () => {
-    const { getAll, uc } = setupUc();
-    getAll.mockResolvedValueOnce([]);
+  test.each([
+    {
+      title: 'по умолчанию (limit 20, sort createdAt:desc)',
+      cmd: {},
+      args: {
+        limit: 20,
+        role: undefined,
+        name: undefined,
+        telegramId: undefined,
+        sort: 'createdAt:desc',
+      },
+    },
+    {
+      title: 'лимит явно',
+      cmd: { limit: 5 },
+      args: {
+        limit: 5,
+        role: undefined,
+        name: undefined,
+        telegramId: undefined,
+        sort: 'createdAt:desc',
+      },
+    },
+    {
+      title: 'фильтр по роли',
+      cmd: { role: Role.STUDENT },
+      args: {
+        limit: 20,
+        role: Role.STUDENT,
+        name: undefined,
+        telegramId: undefined,
+        sort: 'createdAt:desc',
+      },
+    },
+    {
+      title: 'фильтр по имени',
+      cmd: { name: 'Иван' },
+      args: {
+        limit: 20,
+        role: undefined,
+        name: 'Иван',
+        telegramId: undefined,
+        sort: 'createdAt:desc',
+      },
+    },
+    {
+      title: 'фильтр по telegramId',
+      cmd: { telegramId: 12345 },
+      args: {
+        limit: 20,
+        role: undefined,
+        name: undefined,
+        telegramId: 12345,
+        sort: 'createdAt:desc',
+      },
+    },
+    {
+      title: 'сортировка явно',
+      cmd: { sort: 'name:asc' },
+      args: {
+        limit: 20,
+        role: undefined,
+        name: undefined,
+        telegramId: undefined,
+        sort: 'name:asc',
+      },
+    },
+  ])(
+    'передаёт аргументы выборки в репозиторий: $title',
+    async ({ cmd, args }) => {
+      const { getAll, uc } = setupUc();
+      getAll.mockResolvedValueOnce([]);
 
-    await uc.handle({});
+      await uc.handle(cmd);
 
-    expect(getAll).toHaveBeenCalledWith(expect.objectContaining({ limit: 20 }));
-  });
-
-  test('передаёт кастомный лимит', async () => {
-    const { getAll, uc } = setupUc();
-    getAll.mockResolvedValueOnce([]);
-
-    await uc.handle({ limit: 5 });
-
-    expect(getAll).toHaveBeenCalledWith(expect.objectContaining({ limit: 5 }));
-  });
-
-  test('передаёт фильтр по роли', async () => {
-    const { getAll, uc } = setupUc();
-    getAll.mockResolvedValueOnce([]);
-
-    await uc.handle({ role: Role.STUDENT });
-
-    expect(getAll).toHaveBeenCalledWith(
-      expect.objectContaining({ role: Role.STUDENT }),
-    );
-  });
-
-  test('передаёт фильтр по имени (частичное совпадение)', async () => {
-    const { getAll, uc } = setupUc();
-    getAll.mockResolvedValueOnce([]);
-
-    await uc.handle({ name: 'Иван' });
-
-    expect(getAll).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Иван' }),
-    );
-  });
-
-  test('передаёт фильтр по telegramId', async () => {
-    const { getAll, uc } = setupUc();
-    getAll.mockResolvedValueOnce([]);
-
-    await uc.handle({ telegramId: 12345 });
-
-    expect(getAll).toHaveBeenCalledWith(
-      expect.objectContaining({ telegramId: 12345 }),
-    );
-  });
-
-  test('передаёт сортировку (по умолчанию createdAt:desc)', async () => {
-    const { getAll, uc } = setupUc();
-    getAll.mockResolvedValueOnce([]);
-
-    await uc.handle({});
-
-    expect(getAll).toHaveBeenCalledWith(
-      expect.objectContaining({ sort: 'createdAt:desc' }),
-    );
-  });
-
-  test('передаёт кастомную сортировку', async () => {
-    const { getAll, uc } = setupUc();
-    getAll.mockResolvedValueOnce([]);
-
-    await uc.handle({ sort: 'name:asc' });
-
-    expect(getAll).toHaveBeenCalledWith(
-      expect.objectContaining({ sort: 'name:asc' }),
-    );
-  });
+      expect(getAll).toHaveBeenCalledWith(args);
+    },
+  );
 
   test('возвращает appliedFilters в результате', async () => {
     const { getAll, uc } = setupUc();

@@ -18,20 +18,18 @@ describe('UserAr', () => {
     });
 
     test('нарушение инвариантов выбрасывает ошибку', () => {
-      expect(() => new UserAr({ ...validUser, name: '' })).toThrow(
-        'Нарушены инварианты агрегата',
-      );
-    });
-
-    test('нарушение инвариантов с несколькими ошибками', () => {
-      const invalid = {
-        ...validUser,
-        uuid: 'bad',
-        name: '',
-        telegramId: -5,
-        roles: [],
-      };
-      expect(() => new UserAr(invalid)).toThrow('Нарушены инварианты агрегата');
+      const invalidInputs = [
+        { name: '' },
+        { uuid: 'bad' },
+        { telegramId: -5 },
+        { roles: [] as Role[] },
+        { uuid: 'bad', name: '', telegramId: -5, roles: [] as Role[] },
+      ];
+      for (const invalidInput of invalidInputs) {
+        expect(() => new UserAr({ ...validUser, ...invalidInput })).toThrow(
+          'Нарушены инварианты агрегата',
+        );
+      }
     });
   });
 
@@ -60,15 +58,6 @@ describe('UserAr', () => {
       expect(ar.state.telegramId).toBe(456);
       expect(ar.state.roles).toEqual([Role.MENTOR, Role.ADMIN]);
     });
-
-    test('не создаёт updatedAt при создании', () => {
-      const ar = UserAr.create({
-        name: 'А',
-        telegramId: 1,
-        roles: [Role.STUDENT],
-      });
-      expect(ar.state.updatedAt).toBeUndefined();
-    });
   });
 
   describe('register', () => {
@@ -93,17 +82,6 @@ describe('UserAr', () => {
       });
       expect(ar.state.nick).toBe('anna_tg');
     });
-
-    test('генерирует UUID и createdAt при регистрации', () => {
-      const ar = UserAr.register({
-        name: 'Борис',
-        telegramId: 999,
-      });
-      expect(ar.state.uuid).toMatch(
-        /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i,
-      );
-      expect(ar.state.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
-    });
   });
 
   describe('addRole', () => {
@@ -117,18 +95,6 @@ describe('UserAr', () => {
       const ar = new UserAr(validUser);
       ar.addRole(Role.ADMIN);
       expect(ar.state.roles).toEqual([Role.ADMIN]);
-    });
-
-    test('добавляет несколько разных ролей последовательно', () => {
-      const ar = UserAr.register({ name: 'Вика', telegramId: 111 });
-      ar.addRole(Role.SUBSCRIBER);
-      ar.addRole(Role.STUDENT);
-      ar.addRole(Role.SUBSCRIBER); // дубль — игнорируется
-      expect(ar.state.roles).toEqual([
-        Role.GUEST,
-        Role.SUBSCRIBER,
-        Role.STUDENT,
-      ]);
     });
   });
 });

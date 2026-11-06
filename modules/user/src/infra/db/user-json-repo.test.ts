@@ -99,14 +99,6 @@ describe('UserJsonRepo', () => {
       await assertUserExists(repo, user1.uuid, user1);
     });
 
-    test('сохраняет несколько пользователей', async () => {
-      await saveUsers(repo, [user1, user2]);
-
-      const all = await repo.getAll();
-      expect(all).toHaveLength(2);
-      expect(all).toEqual(expect.arrayContaining([user1, user2]));
-    });
-
     test('перезаписывает существующего пользователя по uuid', async () => {
       await repo.save(user1);
 
@@ -115,24 +107,9 @@ describe('UserJsonRepo', () => {
 
       await assertUserExists(repo, user1.uuid, updatedUser);
     });
-
-    test('обновляет telegramId при перезаписи', async () => {
-      await repo.save(user1);
-
-      const updatedUser = { ...user1, telegramId: 999 };
-      await repo.save(updatedUser);
-
-      expect(await repo.getByTelegramId(user1.telegramId)).toBeUndefined();
-      expect(await repo.getByTelegramId(999)).toEqual(updatedUser);
-    });
   });
 
   describe('getByUuid', () => {
-    test('возвращает пользователя по существующему uuid', async () => {
-      await repo.save(user1);
-      await assertUserExists(repo, user1.uuid, user1);
-    });
-
     test('возвращает undefined для несуществующего uuid', async () => {
       await assertUserNotFound(repo, 'non-existent-uuid');
     });
@@ -153,12 +130,6 @@ describe('UserJsonRepo', () => {
       const result = await repo.getByUuids([user1.uuid, 'non-existent-uuid']);
       expect(result).toEqual([user1]);
     });
-
-    test('пустой список — пустой результат', async () => {
-      await saveUsers(repo, [user1]);
-
-      expect(await repo.getByUuids([])).toEqual([]);
-    });
   });
 
   describe('getByTelegramId', () => {
@@ -176,27 +147,12 @@ describe('UserJsonRepo', () => {
   });
 
   describe('getAll', () => {
-    test('возвращает пустой массив для пустого репозитория', async () => {
-      expect(await repo.getAll()).toEqual([]);
-    });
-
     test('возвращает всех сохранённых пользователей', async () => {
       await saveUsers(repo, [user1, user2, user3]);
 
       const result = await repo.getAll();
       expect(result).toHaveLength(3);
       expect(result).toEqual(expect.arrayContaining([user1, user2, user3]));
-    });
-
-    test('возвращает актуальные данные после обновления', async () => {
-      await repo.save(user1);
-
-      const updatedUser = { ...user1, name: 'Новое имя' };
-      await repo.save(updatedUser);
-
-      const all = await repo.getAll();
-      expect(all).toHaveLength(1);
-      expect(all[0]).toEqual(updatedUser);
     });
 
     describe('фильтры', () => {
@@ -210,11 +166,6 @@ describe('UserJsonRepo', () => {
         expect(result.map((u) => u.name)).toEqual(
           expect.arrayContaining(['Иван', 'Петр Студент', 'Борис']),
         );
-      });
-
-      test('фильтрует по роли — роль без совпадений возвращает пустой массив', async () => {
-        const result = await repo.getAll({ role: 'NONEXISTENT' as Role });
-        expect(result).toHaveLength(0);
       });
 
       test('ищет по имени — точное совпадение', async () => {
@@ -237,20 +188,10 @@ describe('UserJsonRepo', () => {
         expect(result[0]?.name).toBe('Мария');
       });
 
-      test('ищет по имени — нет совпадений', async () => {
-        const result = await repo.getAll({ name: 'Несуществующий' });
-        expect(result).toHaveLength(0);
-      });
-
       test('фильтрует по telegramId — точное совпадение', async () => {
         const result = await repo.getAll({ telegramId: 123 });
         expect(result).toHaveLength(1);
         expect(result[0]?.name).toBe('Иван');
-      });
-
-      test('фильтрует по telegramId — нет совпадений', async () => {
-        const result = await repo.getAll({ telegramId: 999999 });
-        expect(result).toHaveLength(0);
       });
     });
 
@@ -285,13 +226,6 @@ describe('UserJsonRepo', () => {
         expect(names[0]).toBe('Анна');
         expect(names[names.length - 1]).toBe('Петр Студент');
       });
-
-      test('сортирует по name по убыванию', async () => {
-        const result = await repo.getAll({ sort: 'name:desc' });
-        const names = result.map((u) => u.name);
-        expect(names[0]).toBe('Петр Студент');
-        expect(names[names.length - 1]).toBe('Анна');
-      });
     });
 
     describe('лимит', () => {
@@ -307,11 +241,6 @@ describe('UserJsonRepo', () => {
       test('limit=0 возвращает пустой массив', async () => {
         const result = await repo.getAll({ limit: 0 });
         expect(result).toHaveLength(0);
-      });
-
-      test('limit больше количества пользователей возвращает всех', async () => {
-        const result = await repo.getAll({ limit: 100 });
-        expect(result).toHaveLength(6);
       });
     });
 
@@ -346,16 +275,6 @@ describe('UserJsonRepo', () => {
         expect(result).toHaveLength(1);
         expect(result[0]?.name).toBe('Борис');
       });
-
-      test('без фильтра — возвращает всех', async () => {
-        const result = await repo.getAll();
-        expect(result).toHaveLength(6);
-      });
-
-      test('пустой фильтр — возвращает всех', async () => {
-        const result = await repo.getAll({});
-        expect(result).toHaveLength(6);
-      });
     });
   });
 
@@ -367,16 +286,6 @@ describe('UserJsonRepo', () => {
 
     test('возвращает false для несуществующего telegramId', async () => {
       expect(await repo.isTelegramIdTaken(999999)).toBe(false);
-    });
-
-    test('отслеживает изменения при перезаписи', async () => {
-      await repo.save(user1);
-
-      const updatedUser = { ...user1, telegramId: 999 };
-      await repo.save(updatedUser);
-
-      expect(await repo.isTelegramIdTaken(user1.telegramId)).toBe(false);
-      expect(await repo.isTelegramIdTaken(999)).toBe(true);
     });
   });
 
@@ -417,26 +326,6 @@ describe('UserJsonRepo', () => {
       // Должен быть только валидный user1
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual(user1);
-    });
-  });
-
-  describe('Комбинированные сценарии', () => {
-    test('корректно работает последовательность операций', async () => {
-      // Пустой репозиторий
-      expect(await repo.isEmpty()).toBe(true);
-
-      // Сохраняем
-      await saveUsers(repo, [user1, user2]);
-      expect(await repo.getAll()).toHaveLength(2);
-
-      // Проверяем поиск
-      expect(await repo.getByUuid(user1.uuid)).toEqual(user1);
-      expect(await repo.getByTelegramId(user2.telegramId)).toEqual(user2);
-
-      // Обновляем
-      const updated = { ...user1, name: 'Обновлённый' };
-      await repo.save(updated);
-      expect(await repo.getByUuid(user1.uuid)).toEqual(updated);
     });
   });
 

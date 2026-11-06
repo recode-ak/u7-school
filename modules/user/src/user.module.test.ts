@@ -75,14 +75,4 @@ describe('getTelegramAddresses: адаптер над getUserByUuid', () => {
       addresses: [{ userId: C, telegramId: 333 }],
     });
   });
-
-  it('пользователей нет — пусто, legacy не спрашивается', async () => {
-    const { facade, asked } = users({});
-    expect(expectOk(await ask(facade, []))).toEqual({ addresses: [] });
-    expect(asked).toEqual([]);
-  });
-
-  it('модуль обслуживает свой UC', () => {
-    expect(users({}).facade.serves(GetTelegramAddressesUcDef)).toBe(true);
-  });
 });

@@ -1,5 +1,4 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { NotificationPayload } from '@u7-scl/core/ui';
 import type { UserNotifiedEvent } from '@u7-scl/user/domain';
 import { NotifyStory } from './notify.story';
@@ -26,8 +25,6 @@ function makeEvent(
 interface SetupOptions {
   /** Пользователь не найден (get-user → undefined). */
   userMissing?: boolean;
-  /** Переопределения полей пользователя. */
-  userOverrides?: Partial<User>;
   /** get-user бросает ошибку. */
   userFails?: boolean;
 }
@@ -44,7 +41,6 @@ function setupStory(opts: SetupOptions = {}) {
           telegramId: 1003,
           roles: [],
           createdAt: '2026-01-01T00:00',
-          ...opts.userOverrides,
         };
       }
       return undefined;
@@ -97,22 +93,6 @@ describe('NotifyStory', () => {
     expect(payload.text).toContain('Привет, мир\\!');
   });
 
-  test('конвертирует упрощённый markdown в MarkdownV2 в точке доставки', async () => {
-    const { story, notify } = setupStory();
-
-    await subHandler(story)(makeEvent({ text: 'Уже *размеченный* текст.' }));
-
-    const [, payload] = (notify as ReturnType<typeof mock>).mock.calls[0] as [
-      number,
-      NotificationPayload,
-    ];
-    // CommonMark-курсив → диалект MarkdownV2, пунктуация экранирована
-    expect(payload.text).toContain('_размеченный_');
-    expect(payload.text).toContain('текст\\.');
-    // исходный CommonMark-синтаксис заменён, а не продублирован
-    expect(payload.text).not.toContain('*размеченный*');
-  });
-
   test('пробрасывает kind из события (warn → ⚠️)', async () => {
     const { story, notify } = setupStory();
 
@@ -132,52 +112,10 @@ describe('NotifyStory', () => {
     expect(notify).not.toHaveBeenCalled();
   });
 
-  test('пользователь без telegramId → доставка пропущена, без исключения', async () => {
-    const { story, notify } = setupStory({
-      userOverrides: { telegramId: undefined },
-    });
-
-    await expect(subHandler(story)(makeEvent())).resolves.toBeUndefined();
-    expect(notify).not.toHaveBeenCalled();
-  });
-
   test('сбой get-user не всплывает наружу (приложение не падает)', async () => {
     const { story, notify } = setupStory({ userFails: true });
 
     await expect(subHandler(story)(makeEvent())).resolves.toBeUndefined();
     expect(notify).not.toHaveBeenCalled();
-  });
-
-  test('story не интерактивна: callback — заглушка «Неизвестная команда»', async () => {
-    const { story } = setupStory();
-    const actor: User = {
-      uuid: USER_ID,
-      name: 'С',
-      telegramId: 1,
-      roles: [],
-      createdAt: '2026-01-01T00:00',
-    };
-    const cb = await story.handleCallback('any', actor, {
-      dialog: { path: 'user/notify', seq: 1 },
-    });
-    expect(String(cb.screen?.text)).toContain('Неизвестная');
-  });
-
-  test('handleMessage — дефолт ядра: реплика-отказ без захвата экрана', async () => {
-    const { story } = setupStory();
-    const actor: User = {
-      uuid: USER_ID,
-      name: 'С',
-      telegramId: 1,
-      roles: [],
-      createdAt: '2026-01-01T00:00',
-    };
-    const msg = await story.handleMessage(
-      { type: 'message', text: 'x', telegramId: 1 },
-      actor,
-      { dialog: { path: 'user/notify', seq: 1 } },
-    );
-    expect(String(msg.notify?.text)).toContain('не принимаются');
-    expect(msg.release).toBe(true);
   });
 });

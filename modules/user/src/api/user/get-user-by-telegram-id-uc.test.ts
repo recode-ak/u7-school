@@ -64,8 +64,8 @@ describe('GetUserByTelegramIdUc', () => {
     const { getByTelegramId, uc } = setupUc();
     getByTelegramId.mockResolvedValueOnce(undefined);
 
-    await expect(uc.handle({ telegramId: 99999 })).rejects.toThrow(
-      'Пользователь не найден',
-    );
+    await expect(uc.handle({ telegramId: 99999 })).rejects.toMatchObject({
+      error: { name: 'USER_NOT_FOUND', payload: { telegramId: 99999 } },
+    });
   });
 });

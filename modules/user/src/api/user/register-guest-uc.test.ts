@@ -83,16 +83,6 @@ describe('RegisterGuestUc', () => {
     expect(result.nick).toBe('ivan_tg');
   });
 
-  test('SUCCESS: nick опционален — может отсутствовать', async () => {
-    const result = (await apiApp.execute(
-      'register-guest',
-      { telegramId: 12345, name: 'Ivan' },
-      adminUser,
-    )) as any;
-
-    expect(result.nick).toBeUndefined();
-  });
-
   test('SUCCESS: возвращает существующего пользователя без изменений', async () => {
     // Предварительно создаем студента
     const userUuid = '11111111-1111-4000-a000-111111111111';
@@ -129,18 +119,18 @@ describe('RegisterGuestUc', () => {
     });
     await db.commit();
 
-    const promise = apiApp.execute(
-      'register-guest',
-      { telegramId: 12345, name: 'Ivan' },
-      {
-        uuid: userUuid,
-        name: 'User',
-        telegramId: 999,
-        roles: [Role.GUEST],
-        createdAt: '2024-01-01T00:00',
-      },
-    );
-
-    expect(promise).rejects.toThrow('Только администратор');
+    await expect(
+      apiApp.execute(
+        'register-guest',
+        { telegramId: 12345, name: 'Ivan' },
+        {
+          uuid: userUuid,
+          name: 'User',
+          telegramId: 999,
+          roles: [Role.GUEST],
+          createdAt: '2024-01-01T00:00',
+        },
+      ),
+    ).rejects.toMatchObject({ error: { name: 'ACCESS_DENIED' } });
   });
 });

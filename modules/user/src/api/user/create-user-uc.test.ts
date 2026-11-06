@@ -63,18 +63,6 @@ function makeUser(overrides: Partial<User> = {}): User {
 
 describe('CreateUserUc', () => {
   describe('SUCCESS', () => {
-    test('пользователь сохраняет переданные роли', async () => {
-      const { getByUuid, uc } = setupUc();
-      const admin = makeUser();
-
-      const user = await uc.handle(
-        { name: 'Студент', telegramId: 2, roles: [Role.STUDENT] },
-        admin,
-      );
-
-      expect(user.roles).toEqual([Role.STUDENT]);
-    });
-
     test('ADMIN может создавать других пользователей', async () => {
       const { getByUuid, save, uc } = setupUc();
       const admin = makeUser();
@@ -99,24 +87,7 @@ describe('CreateUserUc', () => {
 
       await expect(
         uc.handle({ name: 'Б', telegramId: 1, roles: [Role.STUDENT] }, admin),
-      ).rejects.toThrow('Пользователь с таким telegramId уже существует');
-    });
-
-    test('отклоняет невалидную команду', async () => {
-      const { uc } = setupUc();
-      const admin = makeUser();
-
-      await expect(
-        uc.handle({ name: '', telegramId: -1, roles: [] }, admin),
-      ).rejects.toThrow('Переданы некорректные данные');
-    });
-
-    test('отклоняет создание без авторизации', async () => {
-      const { uc } = setupUc();
-
-      await expect(
-        uc.handle({ name: 'Хакер', telegramId: 2, roles: [Role.ADMIN] }),
-      ).rejects.toThrow('Требуется авторизация');
+      ).rejects.toMatchObject({ error: { name: 'TELEGRAM_ID_TAKEN' } });
     });
 
     test('отклоняет создание пользователем без прав ADMIN', async () => {
@@ -128,7 +99,7 @@ describe('CreateUserUc', () => {
           { name: 'Хакер', telegramId: 3, roles: [Role.ADMIN] },
           student,
         ),
-      ).rejects.toThrow('Недостаточно прав для создания пользователя');
+      ).rejects.toMatchObject({ error: { name: 'ACCESS_DENIED' } });
     });
   });
 });

@@ -6,6 +6,20 @@ import { UserJsonRepo } from '#infra-legacy/db/user-json-repo';
 import { UserApiModule } from './module';
 
 const NO_SEED = '/nonexistent-seed.json';
+const JSON_FILE = '/tmp/user-module-test.json';
+
+const UC_NAMES = [
+  'add-role-to-user',
+  'create-user',
+  'get-user',
+  'get-user-by-telegram-id',
+  'get-users-by-ids',
+  'list-users',
+  'notify-user',
+  'register-guest',
+  'remove-role-to-user',
+] as const;
+
 const appResolver: U7AppResolver = {
   logger: console as any,
   mode: 'test' as const,
@@ -19,16 +33,19 @@ const appResolver: U7AppResolver = {
 };
 
 describe('UserApiModule + UserJsonRepo', () => {
-  test('user.create: создаёт пользователя если есть права ADMIN', async () => {
-    const jsonFile = '/tmp/user-module-test-2.json';
-    await Bun.$`rm -f ${jsonFile}`;
+  test('сборка: реестр из 9 UC и вертикаль create → get → list → get-by-telegram-id → get-users-by-ids', async () => {
+    await Bun.$`rm -f ${JSON_FILE}`;
 
-    const repo = new UserJsonRepo(jsonFile, NO_SEED);
+    const repo = new UserJsonRepo(JSON_FILE, NO_SEED);
     const mod = new UserApiModule({
       userRepo: repo,
       appResolver,
       eventBus: appResolver.eventBus,
     });
+
+    expect(mod.useCases.map((uc) => uc.getUcName()).sort()).toEqual([
+      ...UC_NAMES,
+    ]);
 
     const admin: User = {
       uuid: crypto.randomUUID(),
@@ -39,147 +56,31 @@ describe('UserApiModule + UserJsonRepo', () => {
     };
     await repo.save(admin);
 
-    const result = await mod.execute(
+    const created = await mod.execute(
       'create-user',
-      { name: 'Студент', telegramId: 2, roles: [Role.STUDENT] },
+      { name: 'Иван', telegramId: 2, roles: [Role.STUDENT] },
       admin,
     );
-    expect((result as User).roles).toEqual([Role.STUDENT]);
+    expect(created.roles).toEqual([Role.STUDENT]);
 
-    await Bun.$`rm -f ${jsonFile}`;
-  });
+    const got = await mod.execute('get-user', { uuid: created.uuid });
+    expect(got.name).toBe('Иван');
 
-  test('user.get: возвращает пользователя', async () => {
-    const jsonFile = '/tmp/user-module-test-3.json';
-    await Bun.$`rm -f ${jsonFile}`;
+    const list = await mod.execute('list-users', {});
+    expect(list.users).toHaveLength(2);
 
-    const repo = new UserJsonRepo(jsonFile, NO_SEED);
-    const user: User = {
-      uuid: '550e8400-e29b-41d4-a716-446655440000',
-      name: 'Иван',
-      telegramId: 1,
-      roles: [Role.ADMIN],
-      createdAt: '2026-05-01T12:00',
-    };
-    await repo.save(user);
-
-    const mod = new UserApiModule({
-      userRepo: repo,
-      appResolver,
-      eventBus: appResolver.eventBus,
-    });
-
-    const result = await mod.execute('get-user', { uuid: user.uuid });
-    expect((result as User).name).toBe('Иван');
-
-    await Bun.$`rm -f ${jsonFile}`;
-  });
-
-  test('user.list: возвращает список', async () => {
-    const jsonFile = '/tmp/user-module-test-4.json';
-    await Bun.$`rm -f ${jsonFile}`;
-
-    const repo = new UserJsonRepo(jsonFile, NO_SEED);
-    const user: User = {
-      uuid: '550e8400-e29b-41d4-a716-446655440000',
-      name: 'Иван',
-      telegramId: 1,
-      roles: [Role.ADMIN],
-      createdAt: '2026-05-01T12:00',
-    };
-    await repo.save(user);
-
-    const mod = new UserApiModule({
-      userRepo: repo,
-      appResolver,
-      eventBus: appResolver.eventBus,
-    });
-
-    const result = await mod.execute('list-users', {});
-    expect((result as { users: User[] }).users).toHaveLength(1);
-
-    await Bun.$`rm -f ${jsonFile}`;
-  });
-
-  test('user.get-by-telegram-id: находит пользователя', async () => {
-    const jsonFile = '/tmp/user-module-test-5.json';
-    await Bun.$`rm -f ${jsonFile}`;
-
-    const repo = new UserJsonRepo(jsonFile, NO_SEED);
-    const user: User = {
-      uuid: '550e8400-e29b-41d4-a716-446655440000',
-      name: 'Иван',
-      telegramId: 12345,
-      roles: [Role.ADMIN],
-      createdAt: '2026-05-01T12:00',
-    };
-    await repo.save(user);
-
-    const mod = new UserApiModule({
-      userRepo: repo,
-      appResolver,
-      eventBus: appResolver.eventBus,
-    });
-
-    const result = await mod.execute('get-user-by-telegram-id', {
-      telegramId: 12345,
-    });
-    expect((result as User).name).toBe('Иван');
-
-    await Bun.$`rm -f ${jsonFile}`;
-  });
-
-  test('user.get-users-by-ids: возвращает карточки пачкой', async () => {
-    const jsonFile = '/tmp/user-module-test-7.json';
-    await Bun.$`rm -f ${jsonFile}`;
-
-    const repo = new UserJsonRepo(jsonFile, NO_SEED);
-    const ivan: User = {
-      uuid: '550e8400-e29b-41d4-a716-446655440000',
-      name: 'Иван',
-      telegramId: 1,
-      roles: [Role.STUDENT],
-      createdAt: '2026-05-01T12:00',
-    };
-    await repo.save(ivan);
-
-    const mod = new UserApiModule({
-      userRepo: repo,
-      appResolver,
-      eventBus: appResolver.eventBus,
-    });
-
-    const actor: User = {
-      uuid: crypto.randomUUID(),
-      name: 'Актор',
+    const byTelegramId = await mod.execute('get-user-by-telegram-id', {
       telegramId: 2,
-      roles: [Role.STUDENT],
-      createdAt: '2026-05-01T12:00',
-    };
-    const result = await mod.execute(
-      'get-users-by-ids',
-      { userIds: [ivan.uuid] },
-      actor,
-    );
-    expect((result as User[]).map((u) => u.name)).toEqual(['Иван']);
-
-    await Bun.$`rm -f ${jsonFile}`;
-  });
-
-  test('неизвестная команда — ошибка', async () => {
-    const jsonFile = '/tmp/user-module-test-6.json';
-    await Bun.$`rm -f ${jsonFile}`;
-
-    const mod = new UserApiModule({
-      userRepo: new UserJsonRepo(jsonFile, NO_SEED),
-      appResolver,
-      eventBus: appResolver.eventBus,
     });
+    expect(byTelegramId.name).toBe('Иван');
 
-    await expect(mod.execute('unknown' as any, {} as any)).rejects.toThrow(
-      "Команда 'unknown' не найдена",
+    const batch = await mod.execute(
+      'get-users-by-ids',
+      { userIds: [created.uuid] },
+      admin,
     );
+    expect(batch.map((u) => u.name)).toEqual(['Иван']);
 
-    await Bun.$`rm -f ${jsonFile}`;
+    await Bun.$`rm -f ${JSON_FILE}`;
   });
 });

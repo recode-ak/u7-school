@@ -63,10 +63,11 @@ describe('GetUserUc', () => {
 
   test('выбрасывает при несуществующем UUID', async () => {
     const { getByUuid, uc } = setupUc();
+    const uuid = '550e8400-e29b-41d4-a716-446655440999';
     getByUuid.mockResolvedValueOnce(undefined);
 
-    await expect(
-      uc.handle({ uuid: '550e8400-e29b-41d4-a716-446655440999' }),
-    ).rejects.toThrow('Пользователь не найден');
+    await expect(uc.handle({ uuid })).rejects.toMatchObject({
+      error: { name: 'USER_NOT_FOUND', payload: { uuid } },
+    });
   });
 });

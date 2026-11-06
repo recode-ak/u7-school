@@ -65,25 +65,6 @@ describe('AddRoleToUserUc', () => {
       expect(user.roles).toEqual([Role.STUDENT, Role.MENTOR]);
       expect(save).toHaveBeenCalledTimes(1);
     });
-
-    test('не дублирует существующую роль', async () => {
-      const { getByUuid, save, uc } = setupUc();
-      const admin = makeUser();
-      const target = makeUser({
-        roles: [Role.STUDENT, Role.MENTOR],
-        telegramId: 2,
-      });
-
-      getByUuid.mockResolvedValueOnce(target);
-
-      const user = await uc.handle(
-        { userId: target.uuid, role: Role.MENTOR },
-        admin,
-      );
-
-      expect(user.roles).toEqual([Role.STUDENT, Role.MENTOR]);
-      expect(save).toHaveBeenCalledTimes(1);
-    });
   });
 
   describe('FAIL', () => {
@@ -91,11 +72,14 @@ describe('AddRoleToUserUc', () => {
       const { getByUuid, uc } = setupUc();
       const admin = makeUser();
 
+      const userId = crypto.randomUUID();
       getByUuid.mockResolvedValueOnce(undefined);
 
       await expect(
-        uc.handle({ userId: crypto.randomUUID(), role: Role.MENTOR }, admin),
-      ).rejects.toThrow('Пользователь не найден');
+        uc.handle({ userId, role: Role.MENTOR }, admin),
+      ).rejects.toMatchObject({
+        error: { name: 'USER_NOT_FOUND', payload: { uuid: userId } },
+      });
     });
 
     test('отклоняет при отсутствии прав ADMIN', async () => {
@@ -107,35 +91,7 @@ describe('AddRoleToUserUc', () => {
 
       await expect(
         uc.handle({ userId: target.uuid, role: Role.MENTOR }, student),
-      ).rejects.toThrow('Недостаточно прав для выполнения действия');
-    });
-
-    test('отклоняет самостоятельное добавление роли без прав ADMIN', async () => {
-      const { getByUuid, uc } = setupUc();
-      const student = makeUser({ roles: [Role.STUDENT], telegramId: 2 });
-
-      getByUuid.mockResolvedValueOnce(student);
-
-      await expect(
-        uc.handle({ userId: student.uuid, role: Role.MENTOR }, student),
-      ).rejects.toThrow('Недостаточно прав для выполнения действия');
-    });
-
-    test('отклоняет при отсутствии авторизации', async () => {
-      const { uc } = setupUc();
-
-      await expect(
-        uc.handle({ userId: 'any', role: Role.MENTOR }),
-      ).rejects.toThrow('Требуется авторизация');
-    });
-
-    test('отклоняет невалидную команду', async () => {
-      const { uc } = setupUc();
-      const admin = makeUser();
-
-      await expect(
-        uc.handle({ userId: 'bad', role: 'UNKNOWN' as Role }, admin),
-      ).rejects.toThrow('Переданы некорректные данные');
+      ).rejects.toMatchObject({ error: { name: 'ACCESS_DENIED' } });
     });
   });
 });

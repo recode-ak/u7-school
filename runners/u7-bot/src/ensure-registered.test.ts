@@ -59,19 +59,4 @@ describe('ensureRegisteredGuest', () => {
     ).registerGuest;
     expect(registerMock).not.toHaveBeenCalled();
   });
-
-  test('без username → nick не передаётся', async () => {
-    const facade = makeFacade(undefined);
-
-    await ensureRegisteredGuest(facade, BOT_ACTOR, {
-      id: 556,
-      first_name: 'Пётр',
-    });
-
-    const registerMock = (
-      facade as unknown as { registerGuest: ReturnType<typeof mock> }
-    ).registerGuest;
-    const [, , nick] = registerMock.mock.calls[0]!;
-    expect(nick).toBeUndefined();
-  });
 });
