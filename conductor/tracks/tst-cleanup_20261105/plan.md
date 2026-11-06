@@ -4,9 +4,9 @@
 
 > Обновляется в каждом коммите шага. При возврате — читать этот блок и `git log main..tst-cleanup`.
 
-- **Сделано:** Ф0; Ф1 (Б-1…Б-13, TST-09 / D-67, `ui/bot-test.md` §2 п. 5); Ф2 `wish`, `stream` (мёртвые экспорты `status.ts` удалены, Б-13); Ф2 `questionnaire` (мёртвый код `QuestionnaireEngine.getQuestionText/getAnswerText/getChoices` и экспорт `inviteKeyboard` удалены, Б-13; новая закономерность Б-14 — `test-bloat.md` §2) — домен 213 → 126, модуль 113 → 39, бот 134 → 88; покрытие собственных исходников не упало; Ф2 `peer-review` — домен 184 → 72, модуль 141 → 73, бот 127 → 104; мёртвый код `hasParticipant`, `authorLine` и вход `onlyLives` у `GetMyCampaignsUcDef` удалены (Б-13, TR-38 п. 3); новые Б-15, Б-16 (`test-bloat.md` §2); покрытие собственных исходников не упало; `check` 4020 pass / 29 fail (TR-57, новых нет).
-- **Дальше:** Ф2 `user`, `dossier` — покрытие «до» в `.cache/cov/`, инвентаризация с Б-ID (промпты по образцу `inventory/prompt-peer-review-*.md`), таблицы, применение; проверка цепочек между таблицами — `python3 inventory/check-chains.py inventory <модуль>` (из каталога трека; приёмники слияний допустимы). Отложено до `course-dmg`: `wish-questionnaire.e2e.test.ts:460` (слить в `wish-flow.integration.test.ts:251`), `student-dmg.e2e.test.ts:122`, `:251`; `questionnaire-ux.e2e.test.ts` целиком (после `course-dmg` 4 из 5 — дубли, см. `questionnaire-bot-delete.md` «Итог»); `modules/questionnaire/src/questionnaire.module.test.ts:169` с `probe`-модулем (покрытие — красный `wish-questionnaire.e2e.test.ts:253`).
-- **Открытые вопросы к Нурболату:** нет.
+- **Сделано:** Ф0; Ф1 (Б-1…Б-13, TST-09 / D-67, `ui/bot-test.md` §2 п. 5); Ф2 `wish`, `stream` (мёртвые экспорты `status.ts` удалены, Б-13); Ф2 `questionnaire` (мёртвый код `QuestionnaireEngine.getQuestionText/getAnswerText/getChoices` и экспорт `inviteKeyboard` удалены, Б-13; новая закономерность Б-14 — `test-bloat.md` §2) — домен 213 → 126, модуль 113 → 39, бот 134 → 88; покрытие собственных исходников не упало; Ф2 `peer-review` — домен 184 → 72, модуль 141 → 73, бот 127 → 104; мёртвый код `hasParticipant`, `authorLine` и вход `onlyLives` у `GetMyCampaignsUcDef` удалены (Б-13, TR-38 п. 3); новые Б-15, Б-16 (`test-bloat.md` §2); покрытие собственных исходников не упало; Ф2 `user`, `dossier` — домен 70 → 33, модуль 103 → 68, бот 15 → 10; мёртвый код `UserPolicy.canRead/canEdit/isSubscriber/isGuest/isStudent` и ветка `telegramId === undefined` в `notify.story.ts` удалены (Б-13); `dossier` и `userFacade.notify` — задел, код остаётся; `check` 3943 pass / 29 fail (TR-57, новых нет).
+- **Дальше:** Ф3 — итог (`summary.md`: число тестов до/после по всем модулям, расход; поправка базовой линии `course-dmg`), журнал `test-bloat.md` (отметки «почищено»; кандидат в `tracks.md` — снять или сузить до `course`). Отложено до удаления кода: `list-users-uc.test.ts:150` и `expect(result.total)` в `:58` — поля `total`/`appliedFilters` ответа `list-users` без потребителей (контракт `domain/src/user/user/commands/list-users-cmd.ts`). Отложено до `course-dmg`: `wish-questionnaire.e2e.test.ts:460` (слить в `wish-flow.integration.test.ts:251`), `student-dmg.e2e.test.ts:122`, `:251`; `questionnaire-ux.e2e.test.ts` целиком (после `course-dmg` 4 из 5 — дубли, см. `questionnaire-bot-delete.md` «Итог»); `modules/questionnaire/src/questionnaire.module.test.ts:169` с `probe`-модулем (покрытие — красный `wish-questionnaire.e2e.test.ts:253`).
+- **Открытые вопросы к Нурболату:** (1) тесты типов — закономерность Б-17 (позитивные — удалять, негативные `@ts-expect-error` на гарантии платформы — оставлять) и аудит `dmg-core` отдельным кандидатом; (2) удалять ли `total`/`appliedFilters` из контракта `list-users`.
 
 ---
 
@@ -32,7 +32,7 @@
 - [x] Task: `stream`
 - [x] Task: `questionnaire`
 - [x] Task: `peer-review`
-- [ ] Task: `user`, `dossier`
+- [x] Task: `user`, `dossier`
 
 ## Фаза 3: Итог
 
