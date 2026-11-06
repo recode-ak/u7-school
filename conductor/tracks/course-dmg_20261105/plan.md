@@ -102,6 +102,8 @@
 
 ## Фаза 4: UI
 
+**Вход для брифов Ф4–Ф5 — ветка `tst-cleanup`** (на `main` этих файлов нет): `git show tst-cleanup:conductor/roadmap/test-bloat.md` — §2 закономерности Б-1…Б-17 (не переносить лишние тесты), §6 «Рекомендации для `course`».
+
 - [ ] Task: `dmg-tech-lead`: бриф `slices/ui.md` с «Сохраняемым поведением» (Sonnet); приёмка — Opus
 - [ ] Task: `dmg-test-designer`: перевод тестов бота на Def-имена и red-тесты навигации по `stages` (курс без этапов / один / несколько) (Sonnet)
 - [ ] Task: UI-stories (Sonnet): `courses/*` (`course-nav-resolver`, `course-catalog`, `wish-*`), `learning/*`, `streams/*`, `mentor/create-stream` — на `dispatchUc` и `stages`; `ui-spec.md`
@@ -144,3 +146,17 @@
 **Критерии приёмки Фазы 6:**
 - Все критерии приёмки spec выполнены (таблица в `summary.md`).
 - `arch:check` чист, `debt.md` и `migration.md` синхронны с кодом.
+
+## Фаза 7: Слияние ветки `tst-cleanup`
+
+Трек чистки тестов (TST-08) закрыт в ветке `tst-cleanup` (worktree `../u7-school-tst-cleanup`, от `816908b1`): −952 теста в `wish`, `stream`, `questionnaire`, `peer-review`, `user`, `dossier`. Вливается после Ф6, порядок — `git show tst-cleanup:conductor/tracks/tst-cleanup_20261105/summary.md`, раздел «Поправка базовой линии `course-dmg`».
+
+- [ ] Task: Замер `main` перед слиянием: `CI=true bun test`, `bun run test:bot` — в `summary.md` (Opus)
+- [ ] Task: `git merge tst-cleanup` (без fast-forward). Конфликты: в тестах — по таблицам `inventory/*-delete.md` ветки (удалённый там тест, который Ф4–Ф5 переписали, — сверить с таблицей, а не воскрешать); в `tracks.md` — оставить запись трека `tst-cleanup` и кандидата по `course` из ветки (Opus)
+- [ ] Task: Добить отложенное до `course-dmg` (список «Дальше» в `plan.md` трека `tst-cleanup`): `wish-questionnaire.e2e.test.ts:460` → `wish-flow.integration.test.ts:251`, `student-dmg.e2e.test.ts:122`, `:251`, `questionnaire-ux.e2e.test.ts`, `questionnaire.module.test.ts:169` (`probe`) — таблица удаления → приёмка → удаление; отметки в журнале `test-bloat.md` (flash, приёмка Opus)
+- [ ] Task: Гейт: `check` зелёный, число тестов ≈ замер − 952 (± правки Ф4–Ф5 в почищенных файлах), `course` не уменьшился, покрытие собственных исходников модулей не упало; новая базовая линия — в `summary.md` (Opus)
+- [ ] Task: Удалить worktree `../u7-school-tst-cleanup` и ветку — только с подтверждения Нурболата
+
+**Критерии приёмки Фазы 7:**
+- `git branch --no-merged main` не содержит `tst-cleanup`.
+- В журнале `test-bloat.md` нет строк «ждёт `course-dmg`».
