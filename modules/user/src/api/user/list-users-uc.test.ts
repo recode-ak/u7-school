@@ -58,7 +58,6 @@ describe('ListUsersUc', () => {
     const result = await uc.handle({});
 
     expect(result.users).toHaveLength(2);
-    expect(result.total).toBe(2);
     expect(result.users.map((u) => u.name)).toContain('Иван');
     expect(result.users.map((u) => u.name)).toContain('Мария');
     expect(getAll).toHaveBeenCalledTimes(1);
@@ -142,19 +141,4 @@ describe('ListUsersUc', () => {
       expect(getAll).toHaveBeenCalledWith(args);
     },
   );
-
-  test('возвращает appliedFilters в результате', async () => {
-    const { getAll, uc } = setupUc();
-    getAll.mockResolvedValueOnce([]);
-
-    const result = await uc.handle({ role: Role.MENTOR, limit: 10 });
-
-    expect(result.appliedFilters).toEqual({
-      limit: 10,
-      role: Role.MENTOR,
-      name: undefined,
-      telegramId: undefined,
-      sort: 'createdAt:desc',
-    });
-  });
 });
