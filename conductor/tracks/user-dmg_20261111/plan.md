@@ -59,7 +59,7 @@
     - [x] репозиторий через UoW: строгое чтение, legacy ISO → число, round-trip, невалидная запись.
 - [x] Task: `migrator`, прикладной слой (flash): Def 7 UC в домене и их регистрация в `UserModuleDef` (перенесено из Ф1, TR-61); UC через `UseCaseFromDef`, репозиторий; legacy-UC живут рядом; тесты состава модуля (`user.module.test.ts`, `u7-app*.test.ts`, `scripts/*.test.ts`) 54b5f76a — эскалации: smoke с одним `requestId` (D-56) исправлен; DEBT-44 снят из `debt.md` уже в Ф2 (`arch:check` требует снять запись без маркера)
 - [x] Task: `dmg-data-keeper` (flash): чтение `users.json` (копия заготовки и `DB_DIR=./data/fixtures`), записи в живые данные нет — совместимо; риск выкатки (оба писателя на один файл) — в отчёте брифа
-- [ ] Task: `dmg-reviewer` (Opus)
+- [x] Task: `dmg-reviewer` (Opus) 2291a904 — `error` нет, 2 warn и 6 info закрыты в срезе
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 2:**
