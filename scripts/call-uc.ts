@@ -10,6 +10,8 @@
  *
  * Примеры:
  *   bun run scripts/call-uc.ts list-modules '{}'
+ *   bun run scripts/call-uc.ts get-user '{"uuid":"<uuid>"}'
+ *   bun run scripts/call-uc.ts list-users '{}'
  *   bun run scripts/call-uc.ts get-module '{"moduleId":"<uuid>"}'
  *   bun run scripts/call-uc.ts get-module-snapshot '{"moduleId":"<uuid>"}'
  *   bun run scripts/call-uc.ts get-lesson '{"lessonId":"<uuid>"}'
@@ -18,15 +20,15 @@
  *   bun run scripts/call-uc.ts get-current '{"questionnaireId":"<uuid>"}'
  *   bun run scripts/call-uc.ts create-course-wish '{"courseId":"<uuid>"}'
  *
- * UC модулей course, wish и questionnaire — DMG: команда через `ApiApp.dispatch`
- * (D-49)
- * над той же сборкой DMG, что и в боте (`U7App`), субъект — резолвер
- * `app.callers`; имя — kebab-case (`create-course-wish`) или имя Def
- * (`createCourseWish`). Отказ — `Err` с кодом в stderr и выход с кодом 1.
- * Лог операций DMG пишется в `data/oplog/`, как у бота.
+ * UC модулей user, course, wish и questionnaire — DMG: команда через
+ * `ApiApp.dispatch` (D-49) над той же сборкой, что и в боте (`U7App`),
+ * субъект — резолвер `app.callers`; имя — kebab-case (`create-course-wish`)
+ * или имя Def (`createCourseWish`). Отказ — `Err` с кодом в stderr и выход
+ * с кодом 1. Лог операций DMG пишется в `data/oplog/`, как у бота.
  *
  * UC `stream` перешли на DMG (модуль `stream`), но через `call-uc` пока не
- * вызываются: скрипт знает DMG-модули `course`, `wish` и `questionnaire`.
+ * вызываются: скрипт знает DMG-модули `user`, `course`, `wish` и
+ * `questionnaire`.
  *
  * ⚠️ Команды (не query) пишут в боевые JSON-файлы: перед изменяющими
  * вызовами убедись, что бот остановлен (pm2 stop u7-school-bot).
@@ -38,11 +40,12 @@
  * actorId можно переопределить третьим аргументом.
  */
 
-import { U7App, type U7BotAppMeta } from '@u7-scl/app';
+import { U7App } from '@u7-scl/app';
 import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
+import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import {
   type AnyModuleDef,
@@ -59,6 +62,7 @@ const kebab = (name: string) =>
 
 /** DMG-модули, UC которых вызываются через `dispatch` (D-49). */
 const DMG_MODULES: readonly AnyModuleDef[] = [
+  UserModuleDef,
   CourseModuleDef,
   WishModuleDef,
   QuestionnaireModuleDef,
@@ -87,11 +91,13 @@ function printHelp() {
   json-params  — параметры в JSON (обязательно, можно '{}')
   actorId      — UUID пользователя (опционально, по умолчанию Nur)
 
-Доступные модули: course, wish, questionnaire (DMG); user (legacy).
+Доступные модули: user, course, wish, questionnaire (DMG).
 UC stream (DMG) через call-uc пока не вызываются.
 
 Примеры:
   bun run scripts/call-uc.ts list-modules '{}'
+  bun run scripts/call-uc.ts get-user '{"uuid":"<uuid>"}'
+  bun run scripts/call-uc.ts list-users '{}'
   bun run scripts/call-uc.ts get-module '{"moduleId":"<uuid>"}'
   bun run scripts/call-uc.ts get-module-snapshot '{"moduleId":"<uuid>"}'
   bun run scripts/call-uc.ts get-lesson '{"lessonId":"<uuid>"}'
@@ -144,59 +150,45 @@ async function main() {
     { logger: new ConsoleLogger() },
   );
 
-  // Актор — полный User-объект (по умолчанию Nur)
+  // Актор — `Caller` из резолвера приложения (по умолчанию Nur)
   const actorId = actorIdOverride || NUR_UUID;
-  const actor = await app.userFacade.getUserByUuid(actorId);
-  if (!actor) {
+  const trace = Trace.fromRequest({
+    requestId: crypto.randomUUID(),
+    channel: { name: 'cli' },
+  });
+  const caller = await app.callers.resolve(actorId, trace);
+  if (caller.kind === 'guest') {
     console.error(`❌ Ошибка: пользователь ${actorId} не найден`);
     process.exit(1);
   }
 
   // ─── Вызов UseCase ────────────────────────────────
   const dmgUc = findDmgUc(ucName);
-  if (dmgUc) {
-    // Вход из командной строки не типизирован — его проверит UC.
-    const command = UseCaseDef.commandOf(
-      dmgUc.ucDef,
-      params as InputOf<AnyUseCaseDef>,
+  if (!dmgUc) {
+    console.error(
+      `❌ Ошибка: use case «${ucName}» не найден. Доступные модули: ` +
+        DMG_MODULES.map((module) => module.name).join(', '),
     );
-    const trace = Trace.fromRequest({
-      requestId: crypto.randomUUID(),
-      channel: { name: 'cli' },
-    });
-    const caller = await app.callers.resolve(actor.uuid, trace);
-    const res = await app.apiApp.dispatch(
-      dmgUc.moduleDef,
-      command,
-      caller,
-      trace,
-    );
-    if (!res.ok) {
-      const { code, label, payload } = res.error;
-      console.error(`❌ ${code}: ${label}`, payload ?? '');
-      process.exit(1);
-    }
-    console.log(JSON.stringify(res.value, null, 2));
-    return;
-  }
-
-  try {
-    // Имя UC из командной строки не типизировано — неизвестное отвергнет ApiApp.
-    const result = await app.apiApp.execute(
-      ucName as U7BotAppMeta['moduleMetas']['ucMetas']['ucName'],
-      params,
-      actor,
-    );
-    console.log(JSON.stringify(result, null, 2));
-  } catch (e: unknown) {
-    const err = e as {
-      name?: string;
-      message?: string;
-      error?: { message?: string };
-    };
-    console.error('❌ Ошибка:', err.error?.message || err.message || String(e));
     process.exit(1);
   }
+
+  // Вход из командной строки не типизирован — его проверит UC.
+  const command = UseCaseDef.commandOf(
+    dmgUc.ucDef,
+    params as InputOf<AnyUseCaseDef>,
+  );
+  const res = await app.apiApp.dispatch(
+    dmgUc.moduleDef,
+    command,
+    caller,
+    trace,
+  );
+  if (!res.ok) {
+    const { code, label, payload } = res.error;
+    console.error(`❌ ${code}: ${label}`, payload ?? '');
+    process.exit(1);
+  }
+  console.log(JSON.stringify(res.value, null, 2));
 }
 
 main();

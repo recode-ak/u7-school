@@ -57,6 +57,7 @@ describe('arch:check domain', () => {
     expect(external.map((m) => m.name)).not.toContain('peer-review');
     expect(external.map((m) => m.name)).not.toContain('questionnaire');
     expect(external.map((m) => m.name)).not.toContain('course');
+    expect(external.map((m) => m.name)).not.toContain('user');
     expect(external.map((m) => m.name)).toContain('dossier');
   });
 

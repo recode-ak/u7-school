@@ -55,44 +55,17 @@
 
 ## 1. Импорты `app` / `core` в домене
 
-### DEBT-1: импорты `@u7-scl/core` в домене
-- **Место:**
-  - `domain/src/user/**` — `facade.ts`, `module.ts`, `user/a-root.ts`, `user/events.ts`, `user/commands/{errors,notify-user-cmd,register-guest-cmd}.ts`; погашает перевод `user` на Def
-- **Признак:** `from '@u7-scl/core`
-- **Корень:** `domain/src/**`
-- **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `NotifyKind`, ошибки (`AccessDeniedError`, `NotFoundError`, `errConflict`, `throwError`), `isoNow`, `now`, `UcMeta`, `FileMetadataSchema`, `ApiModuleMeta`, `BaseJsonDb` живут в `core`; механический перенос не меняет базовые классы.
-- **Погашает:** трек перевода модуля на Def (из `dmg-core-extract` Ф4 снято — Нурболат, 2026-10-26); glob снимают по мере перевода
-- **Критерий снятия:** в `domain/src/**` нет импортов `@u7-scl/core`
+### DEBT-6: импорты `@u7-scl/core` в domain/course — слит в DEBT-1 (погашен, `user-dmg` Ф6)
 
-### DEBT-2: импорты `@u7-scl/app-legacy` в домене
-- **Место:**
-  - `domain/src/user/module.ts` — тип `U7ModuleResolver`; погашает перевод `user` на Def
-- **Признак:** `from '@u7-scl/app-legacy`
-- **Корень:** `domain/src/**`
-- **Причина:** тип резолвера модулей и `U7_SCHOOL_ID` определены в `app`; создаёт циклическую зависимость пакетов `app` ↔ `domain` (только типы, в рантайме импорт стирается); сам цикл пакетов также снимается этим долгом.
-- **Погашает:** перевод модуля на Def; glob снимают по мере перевода
-- **Критерий снятия:** `domain/src/**` не импортирует `@u7-scl/app-legacy`
+### DEBT-7: импорт `@u7-scl/app-legacy/domain` в domain/course/module.ts — слит в DEBT-2 (погашен, `user-dmg` Ф6)
 
-### DEBT-5: `v.isoDateTime` в схемах домена (DOM-12)
-- **Место:**
-  - `domain/src/user/user/entity.ts` — `createdAt`, `updatedAt`; `biome-ignore lint/plugin`; погашает перевод `user` на Def (`F.timestamp`)
-- **Признак:** `v\.isoDateTime`
-- **Корень:** `domain/src/**`
-- **Причина:** схемы перенесены из `app` без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена.
-- **Погашает:** перевод модуля на Def; glob снимают по мере перевода
-- **Критерий снятия:** `biome-ignore` с `DEBT-5` удалены, даты описаны через поля Def
+### DEBT-11: импорты `@u7-scl/core` в domain/questionnaire — слит в DEBT-1 (погашен, `user-dmg` Ф6)
 
-### DEBT-6: импорты `@u7-scl/core` в domain/course — слит в DEBT-1
+### DEBT-12: импорт `@u7-scl/app-legacy/domain` в domain/questionnaire/module.ts — слит в DEBT-2 (погашен, `user-dmg` Ф6)
 
-### DEBT-7: импорт `@u7-scl/app-legacy/domain` в domain/course/module.ts — слит в DEBT-2
+### DEBT-16: импорты `@u7-scl/core` в domain/stream — слит в DEBT-1 (погашен, `user-dmg` Ф6)
 
-### DEBT-11: импорты `@u7-scl/core` в domain/questionnaire — слит в DEBT-1
-
-### DEBT-12: импорт `@u7-scl/app-legacy/domain` в domain/questionnaire/module.ts — слит в DEBT-2
-
-### DEBT-16: импорты `@u7-scl/core` в domain/stream — слит в DEBT-1
-
-### DEBT-17: импорты `@u7-scl/app-legacy/domain` в domain/stream — слит в DEBT-2
+### DEBT-17: импорты `@u7-scl/app-legacy/domain` в domain/stream — слит в DEBT-2 (погашен, `user-dmg` Ф6)
 
 ## 2. Реэкспорты старых путей
 
@@ -105,7 +78,6 @@
   - `modules/wish/src/domain/index.ts` — потребители импортируют `@u7-scl/wish/domain`
   - `modules/peer-review/src/domain/index.ts` — потребители импортируют `@u7-scl/peer-review/domain`
   - `modules/dossier/src/index.ts` — пакет `@u7-scl/dossier` публикует корень `.`; потребителей в коде нет, но публичный путь сохранён на время миграции
-  - `platform/app-legacy/src/domain/user.ts` — реэкспорт `User`, `UserSchema`, `Role`, `RoleSchema`, `UserArMeta`: их импортируют из `@u7-scl/app-legacy/domain` во всём репозитории; канонический владелец — `domain/user`
 - **Признак:** `export \* from '@u7-scl/domain/`
 - **Корень:** `{modules,platform}/*/src/**`
 - **Причина:** переписывать потребителей старых путей не входит в трек; реэкспорты сохраняют пути на время миграции.
@@ -128,13 +100,13 @@
 
 ## 4. Прочее
 
-### DEBT-9: `v.isoDateTime` в схемах domain/course (DOM-12) — слит в DEBT-5
+### DEBT-9: `v.isoDateTime` в схемах domain/course (DOM-12) — слит в DEBT-5 (погашен, `user-dmg` Ф6)
 
-### DEBT-14: `v.isoDateTime` в схемах domain/questionnaire (DOM-12) — слит в DEBT-5
+### DEBT-14: `v.isoDateTime` в схемах domain/questionnaire (DOM-12) — слит в DEBT-5 (погашен, `user-dmg` Ф6)
 
 ### DEBT-15: приватные члены `#…` в QuestionnaireAr (CODE-02) — слит в DEBT-10 (погашен, `course-dmg` Ф5)
 
-### DEBT-19: `v.isoDateTime` в схемах domain/stream (DOM-12) — слит в DEBT-5
+### DEBT-19: `v.isoDateTime` в схемах domain/stream (DOM-12) — слит в DEBT-5 (погашен, `user-dmg` Ф6)
 
 ### DEBT-20: приватные методы `#…` в StudentAr (CODE-02) — слит в DEBT-10 (погашен, `course-dmg` Ф5)
 
@@ -160,7 +132,7 @@
 - **Место:** `runners/u7-cli/src/main.ts`, `scripts/call-uc.ts` — с ними `runners/u7-cli/src/cli-controller.ts`
 - **Признак:** `dbDir: 'data'`
 - **Корень:** `{runners,scripts}/**`
-- **Причина:** после перехода на `U7App` (TR-33, TR-34) оба собираются как бот, но остались разными самописными инструментами. `u7-cli` — интерактивная консоль только для legacy-UC (`apiApp.execute`): UC DMG из неё не вызвать; при старте требует `modules/<m>/about.md` у каждого legacy-модуля и **сейчас не стартует** (нет `about.md` у `stream`, `questionnaire`, `peer-review`); `dbDir: 'data'` захардкожен, `DB_DIR` не читается; тестов нет. `call-uc` — разовый вызов (legacy + `wish`, лог операций), со своим разбором аргументов и актором по умолчанию. Назначение, отличия и порядок безопасной работы (бот остановлен, `backup`, `DB_DIR=./data/fixtures`) нигде не описаны.
+- **Причина:** после перехода на `U7App` (TR-33, TR-34) оба собираются как бот, но остались разными самописными инструментами. `u7-cli` — интерактивная консоль legacy-UC: после `user-dmg` Ф6 legacy-модулей нет, вызов UC заменён сообщением «вызов UC — `call-uc`» (UC DMG из неё не вызвать; `controller/format-valibot-errors.ts` остался без потребителей); при старте требует `modules/<m>/about.md` и **не стартует** (нет `about.md` у `stream`, `questionnaire`, `peer-review`); `dbDir: 'data'` захардкожен, `DB_DIR` не читается; тестов нет. `call-uc` — разовый вызов UC DMG (лог операций), со своим разбором аргументов и актором по умолчанию; `dbDir: 'data'` захардкожен — проверка на fixtures возможна только из временного каталога (`user-dmg` Ф6: запуск на живом `data/` дописал строку в `oplog`). Назначение, отличия и порядок безопасной работы (бот остановлен, `backup`, `DB_DIR=./data/fixtures`) нигде не описаны.
 - **Погашает:** после перехода (последний legacy-модуль на DMG). Кандидат — вынести в `dmg-core` как общий инструмент над `ApiApp.dispatchByName` (D-54: интерактивная консоль и разовый `call`), проект подключает его своим корнем сборки и резолвером `Caller`.
 - **Критерий снятия:** один инструмент (или пара с общим ядром) вызывает любой UC по имени (D-54) через корень сборки, `Caller` — через резолвер приложения, каталог данных — из окружения; есть тесты старта и вызова; документ (в `dmg-core`, если инструмент переезжает в пакет) — что это, когда что использовать, как работать с живыми данными безопасно.
 
@@ -205,12 +177,12 @@
 - **Критерий снятия:** показ карточки курса и этапа — без вызова `getModuleSnapshot` на каждый модуль
 
 ### DEBT-52: нет пути завести первого администратора новой школы
-- **Место:** `modules/user/src/infra/db/user-json-repo.ts` — seed `data/users/seed.json` при отсутствии `users.json` (legacy, удаляется в `user-dmg` Ф6); новый `UserJsonRepo` seed не переносит
-- **Признак:** `#seedPath`
+- **Место:** `modules/user/src/infra/user.json-repo.ts` — `UserJsonRepo` без seed: legacy-seed `data/users/seed.json` удалён в `user-dmg` Ф6, bootstrap появится здесь или в UC
+- **Признак:** `export class UserJsonRepo`
 - **Корень:** `modules/user/src/**`
 - **Причина:** TR-61 (С4) — `create-user` удалён (вызывающих нет), seed в новый репозиторий не переносится; после Ф6 `user-dmg` первого ADMIN новой школы завести нечем, кроме ручной правки данных. Действующая школа не затронута.
 - **Погашает:** трек `schools-system` ([schools-system.md](../roadmap/schools-system.md)) — bootstrap школы
-- **Критерий снятия:** первый администратор новой школы заводится штатным путём (команда, UC или seed нового репозитория) с тестом. Признак держит legacy-seed; при его удалении (Ф6 `user-dmg`) — перенести признак на место, где появится bootstrap (комментарий `DEBT-52` в новом `UserJsonRepo`)
+- **Критерий снятия:** первый администратор новой школы заводится штатным путём (команда, UC или seed нового репозитория) с тестом. Признак — класс репозитория без seed (legacy-seed удалён в Ф6 `user-dmg`); при появлении bootstrap — перенести признак туда
 
 ## 5. Инструменты проверки
 
@@ -690,4 +662,5 @@
   - **Ф3 (orchestrator):** код-часть DEBT-48 погашена (`Role.STUDENT`, `STUDENT` в `UserState`, исключения legacy `canAddRole`/`canRemoveRole`), запись снята из `debt.md` (`arch:check`); данные `data/users` — скрипт `scripts/migrate-users-drop-student.ts` по чек-листу релиза (С5), сухой прогон перечисляет все невалидные записи, не только со `STUDENT`. В тестах `STUDENT` → `GUEST` (роль без прав, TR-44), где `GUEST` уже есть — удалён; бриф `slices/user-data.md`. Скрипт пишет файл `writeFile` без temp+rename — прикрыто защищённым снимком `bun run backup --name=before-drop-student` (ревью Ф3, info). Миграция данных — до выкатки нового кода (отчёт `dmg-data-keeper` Ф3).
   - **Ф4 (Нурболат — фикстура, orchestrator — остальное):** фикстура субъекта — общий хелпер владельца `userSubject` в `domain/src/user/testing.ts` (`@u7-scl/domain/user/testing`); вход `testing` введён в платформу (D-70 `dmg-core@d2128ce`: только тестовому коду, проверка TST-07 в `arch:check`), проектный дубль проверки не заводится. Мост до Ф5: `U7BotUiStory.subjectOf(actor)` читает субъект через `callers.resolve` (лишнее чтение `getUser` в подменю, TR-34 (2)). `main.ts` проверяет `BOT_ADMIN_UUID` через субъект резолвера. Общий след `requestTrace` (`runners/u7-bot/src/core/dispatch-uc.ts`) берёт `requestId`/`correlationId` из `BotRequestContext` и в `#dispatchAsGuest` контроллера потоков — исправление сквозного следа (ревью Ф4). `U7CallerResolver` переписан на месте и в Ф6 не удаляется (только legacy-зависимости). Бриф — `slices/caller.md`.
   - **Ф5 (Нурболат — актор, orchestrator — остальное):** актор UI — `Caller`: `platform/core/src/ui/bot` — `TActor extends PersonCaller` (на вырост), бот — `U7BotActor = UserCaller<ReadonlyAr<UserAr>>` (регистрация гарантирована, иначе исключение `actorResolver`); права в UI — API субъекта/Policy домена. `actorResolver` — `U7CallerResolver.resolveByTelegramId` (восстановление `UserAr` только в корне сборки, D-69). `dispatchAs` передаёт актора как `caller` без повторного резолва — двойное чтение Ф4 и мост `subjectOf` сняты. `UserController`/`NotifyStory` удалены (С3). `u7-cli`: `currentActor: UserView`, приведение к legacy `execute` — DEBT-42. Гонка `registerGuest` → `USER_TELEGRAM_ID_TAKEN` — тихий успех (итог как в legacy). Негативные проверки «поля `userFacade`/`botAdminUser`/`subjectOf` нет» в тестах оставлены, grep-критерий Ф5 — по обращениям к полю. **Мост до Ф6:** `scripts/call-uc.ts`, `scripts/_course-client.ts` читают `users.json` через legacy `userFacade` — запись бота с числовыми датами они не увидят («не найден»); деплоя до релиза нет, снимается в Ф6. Ревью Ф5 (принято): `getModulePlace` в `hub.ts` вызывается от гостя (Def допускает `guest`, видимого отличия нет); второй кит моков `user-api.test-kit.ts` рядом с `dmgDispatch`, обёртка `dispatchModuleUc` трижды (`school`/`streams` контроллеры, `invite.story`) — кандидат на общий метод, негативные проверки удалённых полей и тавтология «отказ резолвера → исключение» в `create-ui-app.test.ts`, два теста одной ветки в `ensure-registered.test.ts` — на ревизию. Бриф — `slices/ui.md`.
+  - **Ф6 (orchestrator):** бриф сам, без `tech-lead` (образец `course-dmg` Ф5, TR-60): (1) клиенты сборки, (2) удаление legacy — шаги flash подряд, коммит общий (снятие `external` включает ARC-04/06 по живому legacy). `user` — последний legacy-модуль legacy `ApiApp`: остаётся `new ApiApp([])` — оболочка над DMG (`withDmg`) и планировщиком, его снятие — вне трека. Актор legacy-типов `U7ApiApp`/`U7ApiExecutor` — `UserView`; `U7UseCase`/`U7ApiModule`/`U7ModuleResolver` без потребителей удаляются с `api.test.ts`. Legacy `User` (entity, DEBT-5) удаляется в Ф6 — миры и тесты `platform/app` на state/view Def; `Role`/`RoleSchema` и barrel — Ф7. `call-uc`: legacy-ветка `execute` удалена, `user` — в `DMG_MODULES` (имена UC — Def). Мост Ф5 (`call-uc`/`_course-client` на `userFacade`) снят: субъект — `callers.resolve`. Эскалации шага 1: ветка legacy `execute` в `u7-cli` (мёртвая) заменена сообщением «вызов UC — `call-uc`» (DEBT-42); `platform/app-legacy/src/domain/user.ts` удалён в Ф6, а не Ф7 (ARC-04 после снятия `external`, потребителей нет); `migrate-users-drop-student.ts` берёт `UserArDef` через barrel `@u7-scl/user/domain` до Ф7 — `ArDef` в контракт не входит. Бриф — `slices/assembly.md`.
 - **Пересмотреть:** на ревизии — достаточно ли `UserCaller` в боте, когда появятся stories для гостя (абстрактный уровень уже `PersonCaller`); аудит других модулей на последствия прежнего запрета D-45 — кандидат [contract-audit](../roadmap/contract-audit.md).

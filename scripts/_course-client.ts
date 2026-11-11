@@ -34,8 +34,11 @@ export const NUR_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';
 /** UC модуля курсов: команда собирается только для его Def. */
 type CourseUcDef = (typeof CourseModuleDef)['useCases'][number];
 
-/** Субъект запросов: человек из резолвера приложения. */
-type CourseCaller = Awaited<ReturnType<U7App['callers']['resolve']>>;
+/** Субъект запросов: администратор из резолвера приложения. */
+type CourseCaller = Extract<
+  Awaited<ReturnType<U7App['callers']['resolve']>>,
+  { kind: 'user' }
+>;
 
 /** No-op логгер — консольная утилита не показывает служебные логи модулей. */
 const silentLogger: Logger = {
@@ -80,14 +83,13 @@ export class CourseClient {
       requestId: crypto.randomUUID(),
       channel: { name: 'cli' },
     });
-    const admin = await app.userFacade.getUserByUuid(NUR_UUID);
-    if (!admin) {
+    const caller = await app.callers.resolve(NUR_UUID, trace);
+    if (caller.kind !== 'user') {
       throw new Error(
         `пользователь ${NUR_UUID} не найден в ${dbDir}/users/users.json: ` +
           'скрипт работает от имени администратора, гостевой субъект недопустим',
       );
     }
-    const caller = await app.callers.resolve(admin.uuid, trace);
     return new CourseClient(app, caller, trace);
   }
 

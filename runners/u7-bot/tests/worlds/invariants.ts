@@ -1,11 +1,10 @@
 import { CourseArDef, CourseProgramInvariant } from '@u7-scl/course/domain';
 import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
 import type { StreamState } from '@u7-scl/stream/domain';
-import type { User } from '@u7-scl/user/domain';
 import { Role } from '@u7-scl/user/domain';
 import * as v from 'valibot';
 import { isoMinute, utcMs } from './relative-time';
-import type { WorldState } from './types';
+import type { WorldState, WorldUser } from './types';
 
 /** Нарушение инварианта мира */
 export interface InvariantViolation {
@@ -29,7 +28,9 @@ const OUTCOME_TO_STATUSES: Record<StudentOutcome, string[]> = {
 export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
   const violations: InvariantViolation[] = [];
 
-  const usersById = new Map<string, User>(state.users.map((u) => [u.uuid, u]));
+  const usersById = new Map<string, WorldUser>(
+    state.users.map((u) => [u.uuid, u]),
+  );
   const streamsById = new Map<string, StreamState>(
     state.streams.map((s) => [s.uuid, s]),
   );

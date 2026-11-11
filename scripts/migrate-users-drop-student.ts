@@ -23,7 +23,7 @@
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { UserArDef } from '@u7-scl/domain/user';
+import { UserArDef } from '@u7-scl/user/domain';
 import * as v from 'valibot';
 
 /** Роль, снимаемая миграцией; в схеме домена её больше нет (ERR-01). */

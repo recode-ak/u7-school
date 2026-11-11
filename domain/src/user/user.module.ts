@@ -10,14 +10,13 @@ import { RemoveRoleFromUserUcDef } from './user/uc/remove-role-from-user.uc';
 import { UserArDef } from './user/user.ar';
 
 /**
- * Внешний модуль пользователей (D-37): реализован legacy-кодом, здесь только
- * контракт для `dependsOn`. При миграции `external` снимается.
+ * Модуль пользователей: UC на Def, репозиторий сборки — `<dbDir>/users/users.json`.
+ * Субъект операций — `UserAr` (D-69).
  */
 export const UserModuleDef = ModuleDef.define({
   name: 'user',
   label: 'Пользователи',
   description: 'Учётные записи пользователей школы и их роли.',
-  external: true,
   dependsOn: [],
   aggregates: [UserArDef],
   useCases: [

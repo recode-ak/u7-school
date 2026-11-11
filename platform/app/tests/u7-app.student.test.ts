@@ -2,7 +2,6 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Role, type User } from '@u7-scl/app-legacy';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import {
   CompleteStudentUcDef,
@@ -83,13 +82,6 @@ const env = (dbDir: string): U7AppEnv => ({
   studentGroup: { id: 2, inviteUrl: 'https://t.me/test-stud' },
 });
 
-const user = (uuid: string, roles: Role[]): User => ({
-  uuid,
-  name: 'Тест',
-  telegramId: 1,
-  roles,
-  createdAt: '2026-06-01T00:00',
-});
 const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
 async function oplogRecords(dbDir: string): Promise<OperationRecord[]> {
@@ -147,7 +139,9 @@ describe('U7App: события студента от UoW модуля stream д
       await app.apiApp.dispatch(
         StreamModuleDef,
         EnrollStudentUcDef.command({ streamId: STREAM }),
-        new UserCaller(user(RESPONDENT, [Role.SUBSCRIBER])),
+        new UserCaller(
+          userSubject({ uuid: RESPONDENT, roles: ['SUBSCRIBER'] }),
+        ),
         trace(),
       ),
     );
@@ -187,7 +181,7 @@ describe('U7App: события студента от UoW модуля stream д
       await app.apiApp.dispatch(
         StreamModuleDef,
         DropStudentUcDef.command({ streamId: STREAM, studentId: LEAVER_ROW }),
-        new UserCaller(user(LEAVER, [Role.GUEST])),
+        new UserCaller(userSubject({ uuid: LEAVER, roles: ['GUEST'] })),
         trace(),
       ),
     );

@@ -2,7 +2,6 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Role, type User } from '@u7-scl/app-legacy';
 import { InProcJobScheduler } from '@u7-scl/core/infra';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
@@ -30,6 +29,11 @@ import {
   EnrollStudentUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
+import {
+  ListUsersUcDef,
+  UserModuleDef,
+  type UserView,
+} from '@u7-scl/domain/user/contract';
 import { userSubject } from '@u7-scl/domain/user/testing';
 import {
   CancelWishUcDef,
@@ -47,13 +51,15 @@ import {
 import { U7App } from '../src/u7-app';
 import type { U7AppEnv } from '../src/u7-app.types';
 
-/** Актор для UC с requiresAuth: checkAuth проверяет только наличие. */
-const ACTOR: User = {
+/** Пользователь-субъект для вызовов UC через `dispatch`. */
+const ACTOR: UserView = {
   uuid: '22222222-2222-4222-8222-222222222222',
   name: 'Тестовый актор',
   telegramId: 1,
-  roles: [Role.GUEST],
-  createdAt: '2026-06-01T00:00',
+  roles: ['GUEST'],
+  createdAt: Date.UTC(2026, 5, 1),
+  updatedAt: Date.UTC(2026, 5, 1),
+  version: 0,
 };
 
 /** Минимальное окружение для сборки приложения (как прежний тестовый `BotConfig`). */
@@ -136,13 +142,23 @@ describe('U7App: сборка', () => {
   test('отдаёт поля бандла для UI раннера и резолвер callers', () => {
     expect(app.apiApp).toBeDefined();
     expect(app.eventBus).toBe(app.appResolver.eventBus);
-    expect(app.userFacade).toBeDefined();
-    expect(app.userRepo).toBeDefined();
+    expect(app.apiApp.getModule('user')).toBeUndefined();
     expect(app.apiApp.getModule('questionnaire')).toBeUndefined();
     expect(app.apiApp.getModule('stream')).toBeUndefined();
     expect(app.apiApp.getModule('course')).toBeUndefined();
     expect(app.school).toBe(app.appResolver.school);
     expect(app.callers).toBeDefined();
+  });
+
+  test('UC пользователей — в модуле DMG', async () => {
+    const res = await app.apiApp.dispatch(
+      UserModuleDef,
+      ListUsersUcDef.command({}),
+      new UserCaller(ACTOR),
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+    );
+
+    expect(res).toEqual({ ok: true, value: [] });
   });
 
   test('UC курса — в модуле DMG', async () => {

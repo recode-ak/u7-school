@@ -14,7 +14,7 @@ import type {
   StreamStatus,
   StudentState,
 } from '@u7-scl/stream/domain';
-import type { Role, User } from '@u7-scl/user/domain';
+import type { Role, UserState } from '@u7-scl/user/domain';
 import type { WishState } from '@u7-scl/wish/domain';
 
 /**
@@ -79,11 +79,16 @@ export type WorldLesson = StateInput<LessonState>;
 export type WorldStep = StateInput<StepState>;
 
 /**
+ * Пользователь в мире: ввод state `UserArDef` — даты ISO, `version` необязательна.
+ */
+export type WorldUser = StateInput<UserState>;
+
+/**
  * WorldState — центральный объект состояния мира.
  * Коллекции state-объектов агрегатов, нейтральные к хранилищу (plain-данные).
  */
 export interface WorldState {
-  users: User[];
+  users: WorldUser[];
   streams: StreamState[];
   students: StudentState[];
   courses: WorldCourse[];

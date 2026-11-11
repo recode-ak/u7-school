@@ -3,7 +3,7 @@ import * as v from 'valibot';
 import { UserArDef } from './user.ar';
 import { USER } from './user.fixture';
 
-// Перенос схемных проверок `UserSchema` (TST-09: логика модуля, не поля).
+// Проверки схемы состояния пользователя (TST-09: логика модуля, не поля).
 // Фолбэки дат работают только в `UserArDef.state` (D-36).
 const legacy = {
   uuid: USER,

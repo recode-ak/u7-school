@@ -3,7 +3,7 @@ import type { ProjectEntity } from '@u7-scl/course/domain';
 import { Status } from '@u7-scl/course/domain';
 import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
 import type { StreamState, StudentState } from '@u7-scl/stream/domain';
-import type { Role, User } from '@u7-scl/user/domain';
+import type { UserRole } from '@u7-scl/user/domain';
 import { assertWorldInvariants } from './invariants';
 import { isoMinute, resolveRelativeTime, utcMs } from './relative-time';
 import type {
@@ -20,6 +20,7 @@ import type {
   WorldReview,
   WorldState,
   WorldStep,
+  WorldUser,
 } from './types';
 import { deterministicUuid } from './uuid';
 
@@ -88,8 +89,8 @@ export function buildWorldState(
   const streamUuidByKey = new Map<string, string>();
   const campaignUuidByKey = new Map<string, string>();
 
-  // 1. Сборка пользователей (PersonDef -> User)
-  const users: User[] = (def.persons ?? []).map((p: PersonDef) => {
+  // 1. Сборка пользователей (PersonDef -> WorldUser)
+  const users: WorldUser[] = (def.persons ?? []).map((p: PersonDef) => {
     const uuid = p.uuid ?? deterministicUuid(`person:${p.key}`);
     userUuidByKey.set(p.key, uuid);
 
@@ -98,11 +99,11 @@ export function buildWorldState(
       anchorDate,
     );
 
-    const user: User = {
+    const user: WorldUser = {
       uuid,
       name: p.name,
       telegramId: p.telegramId,
-      roles: p.roles as Role[],
+      roles: p.roles as UserRole[],
       createdAt,
     };
 

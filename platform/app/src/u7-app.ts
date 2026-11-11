@@ -3,7 +3,6 @@ import { createSchool, TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import { ApiApp } from '@u7-scl/core/api';
 import type { EventBus } from '@u7-scl/core/domain';
 import {
-  BaseJsonDb,
   InProcEventBus,
   InProcJobScheduler,
   JobRunJsonRepo,
@@ -47,8 +46,6 @@ import {
   StudentJsonRepo,
 } from '@u7-scl/stream';
 import { createUserModule, UserJsonRepo, type UserRepo } from '@u7-scl/user';
-import { UserApiModule } from '@u7-scl/user/api';
-import { LegacyUserJsonRepo, UserInProcFacade } from '@u7-scl/user/infra';
 import { createWishModule, WishJsonRepo, type WishRepo } from '@u7-scl/wish';
 import type { Identified } from 'dmg-core';
 import {
@@ -66,25 +63,20 @@ import { U7CallerResolver } from './u7-caller-resolver';
 
 /**
  * Приложение u7-school — корень сборки (D-50): по окружению
- * строит репозитории `<dbDir>/…`, legacy-фасад `user`, приложение DMG
- * (модули по `dependsOn`: `user` — адаптер над legacy-фасадом, `course`,
- * `wish`, `peer-review`, `questionnaire` и `stream` — на своих репозиториях)
- * и legacy `ApiApp` с ним (`withDmg`), инициализированный планировщиком
- * заданий. Отдаёт поля, нужные UI раннера, и резолвер `callers`.
- * Контроллеры и транспорт строит раннер.
+ * строит репозитории `<dbDir>/…`, приложение DMG (все модули по `dependsOn`
+ * на своих репозиториях) и оболочку legacy `ApiApp` над ним (`withDmg`),
+ * инициализированную планировщиком заданий. Отдаёт поля, нужные UI раннера,
+ * и резолвер `callers`. Контроллеры и транспорт строит раннер.
  */
 export class U7App {
   readonly apiApp: ApiApp<U7BotAppMeta>;
   readonly eventBus: EventBus;
-  readonly userFacade: UserInProcFacade;
-  readonly userRepo: LegacyUserJsonRepo;
   readonly school: School;
   readonly appResolver: U7AppResolver;
   readonly callers: U7CallerResolver;
 
   constructor(env: U7AppEnv, ports: U7AppPorts = {}) {
     const { dbDir } = env;
-    const db = new BaseJsonDb();
 
     const mentors =
       env.mentors ??
@@ -104,20 +96,6 @@ export class U7App {
       school,
     };
 
-    const userRepo = new LegacyUserJsonRepo(
-      `${dbDir}/users/users.json`,
-      `${dbDir}/users/seed.json`,
-      db,
-    );
-
-    // ══ Модули: резолвер в конструкторе ══
-    const userModule = new UserApiModule({
-      userRepo,
-      appResolver,
-      eventBus: appResolver.eventBus,
-    });
-    const userFacade = new UserInProcFacade(userModule);
-
     // ══ Peer-review: репозитории кампаний и отзывов (DMG) ══
     const reviewCampaignRepo = new ReviewCampaignJsonRepo(
       `${dbDir}/peer-review/campaigns.json`,
@@ -126,7 +104,7 @@ export class U7App {
 
     // ══ DMG: модули по `dependsOn` — каждый на своих репозиториях ══
     // Шина DMG — поверх общей legacy-шины: события wish и peer-review видят
-    // stories, legacy-события stream доходят до ER (D-37).
+    // stories, события stream доходят до ER (D-37).
     const dmg = U7App.dmgApp(
       U7App.dmgContext(env, appResolver.eventBus, logger),
       {
@@ -147,11 +125,8 @@ export class U7App {
       },
     );
 
-    // ══ ApiApp: legacy-модули (user) + модули DMG ══
-    const apiApp = new ApiApp<U7BotAppMeta>([userModule]).withDmg(
-      dmg.api,
-      dmg.modules,
-    );
+    // ══ ApiApp: оболочка над модулями DMG (legacy-модулей не осталось) ══
+    const apiApp = new ApiApp<U7BotAppMeta>([]).withDmg(dmg.api, dmg.modules);
 
     // Планировщик — техническая зависимость: передаётся через init(),
     // lastRunAt персистится — задания переживают перезагрузку (misfire-политика).
@@ -164,8 +139,6 @@ export class U7App {
 
     this.apiApp = apiApp;
     this.eventBus = appResolver.eventBus;
-    this.userFacade = userFacade;
-    this.userRepo = userRepo;
     this.school = school;
     this.appResolver = appResolver;
     this.callers = new U7CallerResolver(apiApp);
@@ -211,11 +184,10 @@ export class U7App {
   }
 
   /**
-   * Приложение DMG: модули по `dependsOn` — `user` (адаптер над
-   * legacy-фасадом) и `course`, `wish`, `peer-review` (кампании),
-   * `questionnaire`, `stream` — на своих репозиториях, собранные `ApiApp`
-   * пакета (D-50). `modules` — их Def для заданий legacy-планировщика
-   * (`ApiApp.withDmg`).
+   * Приложение DMG: все модули по `dependsOn` — `user`, `course`, `wish`,
+   * `peer-review` (кампании), `questionnaire`, `stream` — на своих
+   * репозиториях, собранные `ApiApp` пакета (D-50). `modules` — их Def для
+   * заданий legacy-планировщика (`ApiApp.withDmg`).
    */
   private static dmgApp(
     context: AppContext,

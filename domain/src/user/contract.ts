@@ -1,16 +1,7 @@
 /**
- * Контракт модуля user: паспорт внешнего модуля (D-37), фасад, агрегат `UserAr`
- * (субъект `Caller`, D-69), `UserView`, Def UC, события, ошибки.
+ * Контракт модуля user: агрегат `UserAr` (субъект `Caller`, D-69), `UserView`,
+ * Def UC, ошибки.
  */
-export type { UserFacade } from './facade';
-export type {
-  AccessDeniedUcError,
-  TelegramIdTakenUcError,
-  UserModuleError,
-  UserNotFoundUcError,
-} from './user/commands/errors';
-export type { User } from './user/entity';
-export type { UserNotifiedEvent } from './user/events';
 export { AddRoleToUserUcDef } from './user/uc/add-role-to-user.uc';
 export {
   GetTelegramAddressesUcDef,

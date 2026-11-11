@@ -13,8 +13,6 @@ import {
 } from '@u7-scl/domain/user/contract';
 import { type Command, GuestCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
-import type * as v from 'valibot';
-import { formatValibotErrors } from './controller/format-valibot-errors';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -79,40 +77,6 @@ function printSchemaPrompt(schema: ObjectSchemaLike | undefined) {
   console.log('*: обязательные');
 }
 
-function parseKeyValueLines(
-  payloadStr: string,
-  schema: ObjectSchemaLike | undefined,
-): Record<string, unknown> {
-  const payload: Record<string, unknown> = {};
-  const lines = payloadStr.split('\n');
-  for (const line of lines) {
-    const colonIdx = line.indexOf(':');
-    if (colonIdx === -1) continue;
-    const key = line.substring(0, colonIdx).trim();
-    const valStr = line.substring(colonIdx + 1).trim();
-
-    const propSchema = schema?.entries?.[key];
-    const actualProp =
-      propSchema?.type === 'optional' ? propSchema.wrapped : propSchema;
-    const typeStr = actualProp?.type;
-
-    if (typeStr === 'array') {
-      payload[key] = valStr
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-    } else if (typeStr === 'number') {
-      payload[key] = Number(valStr);
-    } else if (typeStr === 'boolean') {
-      payload[key] = valStr === 'true';
-    } else {
-      payload[key] = valStr;
-    }
-  }
-  return payload;
-}
-
-// TODO: [Refactor] Вынести общую логику текстового UI (bot/cli) в BaseTextController в platform/core
 export class CliController {
   private currentActor: UserView | null = null;
   private rl: readline.Interface;
@@ -246,7 +210,7 @@ export class CliController {
       } else {
         // Режим буферизации данных
         if (text === '') {
-          await this.executeBuffer(buffer);
+          this.executeBuffer(buffer);
           buffer = [];
           isBuffering = false;
           this.prompt();
@@ -291,91 +255,15 @@ export class CliController {
     }
   }
 
-  private async executeBuffer(buffer: string[]) {
+  /**
+   * Legacy-UC нет: модули работают на DMG, UC вызывается по имени извне
+   * (`scripts/call-uc.ts`).
+   */
+  private executeBuffer(buffer: string[]) {
     const commandPath = buffer[0]?.trim() || '';
-    const parts = commandPath.split('/').filter(Boolean);
-
-    const modName = parts[0] as string;
-    const ucName = parts[parts.length - 1] as string; // Берем последний кусок как usecase
-
-    const payloadStr = buffer.slice(1).join('\n').trim();
-    let payload = {};
-
-    const mod = this.app.getModule(modName);
-    const ucDoc = mod
-      ?.getDocTypes()
-      .find((d: UcDocType) => d.ucName === ucName);
-    const inputSchema = ucDoc?.inputSchema;
-
-    if (payloadStr) {
-      // Пытаемся распарсить как JSON, иначе как key: value
-      if (payloadStr.startsWith('{')) {
-        try {
-          payload = JSON.parse(payloadStr);
-        } catch (e) {
-          console.error('Ошибка парсинга JSON payload:', (e as Error).message);
-          return;
-        }
-      } else {
-        payload = parseKeyValueLines(
-          payloadStr,
-          inputSchema as unknown as ObjectSchemaLike,
-        );
-      }
-    }
-
-    try {
-      // Актор CLI — `UserView` из Def-чтения (`/login`). Legacy `execute`
-      // принимает актора без типа (`ApiApp<U7BotAppMeta>` → `unknown`), а
-      // legacy-UC читают из него `uuid` и `roles` — долг `u7-cli` в debt.md.
-      const result = await this.app.execute(
-        ucName as U7BotAppMeta['moduleMetas']['ucMetas']['ucName'],
-        payload,
-        this.currentActor ?? undefined,
-      );
-      console.log('\nУспех:');
-      console.log(JSON.stringify(result, null, 2));
-    } catch (e: unknown) {
-      console.error('\nОшибка:');
-      if (
-        e &&
-        typeof e === 'object' &&
-        'name' in e &&
-        e.name === 'AppException'
-      ) {
-        const ex = e as {
-          error?: {
-            name?: string;
-            payload?: { rawIssues?: unknown[] };
-            message?: string;
-          };
-          message?: string;
-        };
-        if (
-          ex.error?.name === 'INPUT_VALIDATION_ERROR' &&
-          ex.error?.payload?.rawIssues
-        ) {
-          const formatted = formatValibotErrors(
-            ex.error.payload.rawIssues as v.BaseIssue<unknown>[],
-          );
-          console.log(formatted);
-        } else {
-          console.log(ex.error?.message || ex.message);
-        }
-      } else if (
-        e &&
-        typeof e === 'object' &&
-        'name' in e &&
-        e.name === 'ValidationError'
-      ) {
-        const formatted = formatValibotErrors(
-          (e as { issues?: v.BaseIssue<unknown>[] }).issues ?? [],
-        );
-        console.log(formatted);
-      } else {
-        console.log((e as Error).message || String(e));
-      }
-    }
+    console.log(
+      `Команда ${commandPath}: legacy-UC нет; вызов UC — \`bun run scripts/call-uc.ts\``,
+    );
   }
 
   private async handleLogin(args?: string) {
