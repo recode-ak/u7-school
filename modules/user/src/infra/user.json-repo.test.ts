@@ -108,11 +108,10 @@ describe('UserJsonRepo', () => {
     test('в файл пишутся числовые даты', async () => {
       const path = filePath('numbers.json');
       const repo = new UserJsonRepo(path);
-      const user = UserAr.restore(makeState());
       await repo.save(
         expectOk(
           UserAr.create(
-            { uuid: user.uuid, name: 'Иван', telegramId: 5 },
+            { uuid: crypto.randomUUID(), name: 'Иван', telegramId: 5 },
             T(5, 1),
           ),
         ),

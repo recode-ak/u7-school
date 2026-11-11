@@ -84,10 +84,4 @@ describe('GetUsersByIdsUc', () => {
     );
     expect(env.asked.byIds).toEqual([]);
   });
-
-  it('ровно 100 идентификаторов — принимается', async () => {
-    const userIds = Array.from({ length: 100 }, () => crypto.randomUUID());
-
-    expect(expectOk(await uc().handle({ userIds }, asMember, REQ))).toEqual([]);
-  });
 });

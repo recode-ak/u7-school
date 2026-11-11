@@ -4,7 +4,7 @@ import {
   UserErrors,
   type UserModuleDef,
 } from '@u7-scl/domain/user/contract';
-import { type Caller, type Identified, ok } from 'dmg-core';
+import { type Identified, ok } from 'dmg-core';
 import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
 import type { UserDeps } from '../../user.module';
 
@@ -23,7 +23,7 @@ export class GetUserByTelegramIdUc extends UseCaseFromDef<
     super(GetUserByTelegramIdUcDef, deps, module);
   }
 
-  protected async load({ telegramId }: Input, _caller: Caller<Identified>) {
+  protected async load({ telegramId }: Input) {
     const user = await this.resolve.users.findByTelegramId(telegramId);
     return user ? ok({ user }) : UserErrors.NOT_FOUND.err({ telegramId });
   }

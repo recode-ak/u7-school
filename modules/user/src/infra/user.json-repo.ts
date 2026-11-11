@@ -1,7 +1,7 @@
 import { UserAr, UserArDef } from '@u7-scl/domain/user';
 import { type StoredRecord, VersionedRepository } from 'dmg-core/app';
 import * as v from 'valibot';
-import type { UserFilter, UserRepo } from '../user/user.repo';
+import type { UserFilter, UserRepo, UserSort } from '../user/user.repo';
 
 /**
  * Схема файла: разбирает только Def агрегата (D-36) — он же дописывает
@@ -12,7 +12,7 @@ const Rows = v.array(UserArDef.state);
 type Row = v.InferOutput<typeof Rows>[number];
 
 /** Порядок legacy: `<`/`>` по значению поля, `dir` меняет знак. */
-function comparator(sort: string): (a: Row, b: Row) => number {
+function comparator(sort: UserSort): (a: Row, b: Row) => number {
   const sign = sort.endsWith(':asc') ? 1 : -1;
   if (sort.startsWith('name')) {
     return (a, b) => sign * (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
@@ -74,13 +74,11 @@ export class UserJsonRepo
 
   /** Записи по фильтру и в порядке сортировки; лимит применяет вызывающий. */
   private async matching(filter: UserFilter): Promise<Row[]> {
-    const { role } = filter;
-    const { name } = filter;
-    const { sort } = filter;
+    const { role, name, telegramId, sort } = filter;
     let rows = await this.rows();
     if (role !== undefined) rows = rows.filter((r) => r.roles.includes(role));
-    if (filter.telegramId !== undefined) {
-      rows = rows.filter((r) => r.telegramId === filter.telegramId);
+    if (telegramId !== undefined) {
+      rows = rows.filter((r) => r.telegramId === telegramId);
     }
     if (name !== undefined) {
       const wanted = name.toLowerCase();

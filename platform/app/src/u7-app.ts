@@ -46,13 +46,9 @@ import {
   StreamJsonRepo,
   StudentJsonRepo,
 } from '@u7-scl/stream';
-import { createUserModule, type UserRepo } from '@u7-scl/user';
+import { createUserModule, UserJsonRepo, type UserRepo } from '@u7-scl/user';
 import { UserApiModule } from '@u7-scl/user/api';
-import {
-  LegacyUserJsonRepo,
-  UserInProcFacade,
-  UserJsonRepo,
-} from '@u7-scl/user/infra';
+import { LegacyUserJsonRepo, UserInProcFacade } from '@u7-scl/user/infra';
 import { createWishModule, WishJsonRepo, type WishRepo } from '@u7-scl/wish';
 import type { Identified } from 'dmg-core';
 import {

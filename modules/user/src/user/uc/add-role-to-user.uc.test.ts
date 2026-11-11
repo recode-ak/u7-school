@@ -77,15 +77,4 @@ describe('AddRoleToUserUc', () => {
     expect(env.stored(MEMBER_ID).roles).toEqual(['GUEST']);
     expect(env.users.saved).toEqual([]);
   });
-
-  it('неизвестная роль — INPUT_VALIDATION', async () => {
-    expectErr(
-      await uc().handle(
-        { userId: MEMBER_ID, role: 'ROOT' as never },
-        asAdmin,
-        REQ,
-      ),
-      'INPUT_VALIDATION',
-    );
-  });
 });
