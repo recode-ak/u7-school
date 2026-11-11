@@ -72,6 +72,7 @@
 | 2026-11-06 | `tst-cleanup` | `domain/src/peer-review`, `modules/peer-review`, тесты бота (peer-review) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 184 → 72, 141 → 73, бот 127 → 104 | почищено в треке |
 | 2026-11-06 | `tst-cleanup` | `domain/src/{user,dossier}`, `modules/user`, тесты бота (user, dossier) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 70 → 33, 103 → 67, бот 15 → 10 | почищено в треке |
 | 2026-11-06 | `tst-cleanup` | `wish-questionnaire.e2e.test.ts:460`, `student-dmg.e2e.test.ts:122`, `:251`, `questionnaire-ux.e2e.test.ts`, `modules/questionnaire/src/questionnaire.module.test.ts:169` | дубли e2e и `probe`-модуль — см. «Дальше» в [plan.md](../tracks/tst-cleanup_20261105/plan.md) | почищено 2026-11-11 в `course-dmg` Ф7: −8, `questionnaire-ux.e2e.test.ts:339` оставлен ([deferred-delete.md](../tracks/course-dmg_20261105/inventory/deferred-delete.md)) |
+| 2026-11-11 | `course-dmg` Ф8 | `domain/src/course`, `modules/course`, тесты бота каталога и навигации курса (course) | Б-1…Б-19 по таблицам `conductor/tracks/course-dmg_20261105/inventory/course-*-delete.md`; тесты: 442 → 225, 330 → 162, бот 104 → 66; мёртвый `StatusSchema` удалён (Б-13); оставлены по §6 строгое чтение `courses.json` и даты репозиториев | почищено в треке |
 
 ## 4. Как пополнять
 
@@ -88,6 +89,6 @@
 `course` в трек чистки не входит: его меняет `course-dmg`. Замер признаков (2026-11-05): `normalize`/`ArchChecker` — 17 тестовых файлов (Б-7), `safeParse`/`v.parse` — 174 вызова (Б-8), legacy-тесты `modules/course/src/api` — 21 файл, тесты бота по курсу — 13 файлов.
 
 - **Профилактика в `course-dmg` Ф4–Ф5.** При переводе тестов бота на Def-имена не переносить Б-4 и Б-9: integration/e2e каталога и навигации — один сквозной сценарий на файл, умолчания платформы story не повторять. Legacy-тесты `api/**` удалять вместе с кодом (журнал), не переносить.
-- **Ф8 трека `course-dmg`** (после слияния `tst-cleanup`, Ф7) — по схеме `tst-cleanup`: инвентаризация по слоям (домен, модуль, бот) на flash с промптом `inventory/prompt-*.md`, затем таблицы удаления.
+- **Ф8 трека `course-dmg`** (после слияния `tst-cleanup`, Ф7) — по схеме `tst-cleanup`: инвентаризация по слоям (домен, модуль, бот) на flash с промптом `inventory/prompt-*.md`, затем таблицы удаления. Выполнено 2026-11-11 (журнал §3).
 - **Порядок:** Б-7 и Б-8 (механически, большой объём) → Б-1/Б-2 (UC ↔ DQS, уже частично почищено в треке) → бот (Б-4, Б-9) после зелёной базовой линии `test:bot`.
 - **Не трогать:** строгое чтение `courses.json` (инвариант программы при чтении — защита данных), тесты этапов-меток (курс без этапов / один / несколько).
