@@ -1,6 +1,6 @@
-# Лишние тесты — каталог боли
+# Лишние тесты — каталог закономерностей
 
-**Назначение:** разбор кандидата в трек «чистка тестов»: что считается лишним тестом, по каким признакам его искать и журнал найденных случаев. Правило — TST-08 и D-66 пакета (`node_modules/dmg-core/docs/reference/testing.md` §5).
+**Назначение:** признаки лишнего теста и журнал найденных, но ещё не почищенных случаев. Правило — TST-08 и D-66 пакета (`node_modules/dmg-core/docs/reference/testing.md` §5).
 
 ---
 
@@ -12,7 +12,7 @@
 
 ## 2. Закономерности
 
-Сводка инвентаризаций `wish`, `stream`, `questionnaire` и `peer-review` (трек `tst-cleanup`, файлы `conductor/archive/tst-cleanup_20261105/inventory/*.md`: там признаки grep, примеры и номера З1–З14 по файлам). Кандидатов — 31–62% тестов слоя; больше всего в прикладном слое (UC повторяет домен).
+Источник — инвентаризации треков `tst-cleanup_20261105` и `course-dmg_20261105` (`conductor/archive/<трек>/inventory/`: признаки grep, примеры по файлам).
 
 Вопрос к тесту: **«какая реальная ошибка в коде модуля уронит этот тест и только его?»** Нет такой — кандидат.
 
@@ -52,43 +52,19 @@
 
 **Корни.** (1) Перенос копирует тесты вместе с кодом; (2) тесты первого шага TDD (схема, паспорт) остаются как «контракт»; (3) образец эталона размножается копированием; (4) правило «Схемы — все поля» само порождает Б-8; (5) нет правила «один сценарий — один файл».
 
+**Не кандидаты.** Тесты, охраняющие инвариант данных при чтении (строгое чтение `courses.json`), и тесты вариантов модели, которые различает только тест (курс без этапов / один / несколько этапов).
+
 Новый случай — новой строкой; подробности — в журнал.
 
 ## 3. Журнал
 
-Строка — найденный случай: дата, трек, файлы, что дублирует, решение (почищено / ждёт трека).
+Только открытые случаи: дата, трек, файлы, что дублирует, чем закрыть. Почищенный случай уходит из журнала в `summary.md` трека, который его почистил.
 
 | Дата | Трек | Файлы | Что дублирует | Решение |
 |---|---|---|---|---|
-| 2026-11-05 | `course-dmg` | `modules/course/src/step/uc/get-steps-by-lessons.uc.test.ts` ↔ `domain/src/course/lesson-steps.dqs.test.ts` | правила сборки ответа (порядок, висячие ссылки, пустые уроки, статусы) после выноса в `LessonStepsDqs` | почищено в треке |
-| 2026-11-05 | `course-dmg` | `modules/course/src/module/uc/get-module-snapshot.uc.test.ts` ↔ `domain/src/course/module-snapshot.dqs.test.ts` | правила сборки снимка после выноса в `ModuleSnapshotDqs` | почищено в треке |
-| 2026-11-05 | `course-dmg` | `modules/course/src/course.module.test.ts` (блоки адаптеров над `legacy`) ↔ `modules/course/src/course/uc/get-*.uc.test.ts`, `course.module.serves.test.ts` | сценарии шести внешних UC после замены адаптеров | почищено в треке |
-| 2026-11-05 | `course-dmg` | `domain/src/stream/stream/stream.ar.student.test.ts` (`teachesModule`) ↔ `domain/src/stream/passed-modules.dqs.test.ts` | сравнение модуля потока после перевода пререквизита на вердикт | почищено в треке |
-| 2026-11-05 | `course-dmg` | legacy `modules/course/src/api/course/*-uc.test.ts`, `domain/src/course/course/{policy,a-root}.test.ts` ↔ `domain/src/course/course/course.{ar,state}.test.ts`, `module-prerequisite.dqs.test.ts`, `modules/course/src/course/uc/*.uc.test.ts` | сценарии legacy-UC курса, перенесённые в Def | удалить с legacy-кодом в Ф5 |
-| 2026-11-05 | `course-dmg` | `modules/course/src/course/uc/{get-module-prerequisite,get-course-by-module,get-module-place}.uc.test.ts`, `modules/stream/src/student/uc/enroll-student.uc.test.ts`, `course.module.serves.test.ts`, `student.rules.test.ts` ↔ `module-prerequisite.dqs.test.ts`, `module-courses.dqs.test.ts`, `course.ar.test.ts` (`placeOf`), `passed-modules.dqs.test.ts` | правила DQS/Ar, повторённые в тестах UC (ревью Ф3) | почищено в треке |
-| 2026-11-06 | `tst-cleanup` | `domain/src/wish`, `modules/wish`, e2e бота (wish) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 213 → 133, 135 → 104 | почищено в треке |
-| 2026-11-06 | `tst-cleanup` | `domain/src/stream`, `modules/stream`, тесты бота `stream` (stream) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 416 → 261, 226 → 112, бот 335 → 252 | почищено в треке |
-| 2026-11-06 | `tst-cleanup` | `domain/src/questionnaire`, `modules/questionnaire`, тесты бота (questionnaire) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 213 → 126, 113 → 39, бот 134 → 88 | почищено в треке |
-| 2026-11-06 | `tst-cleanup` | `domain/src/peer-review`, `modules/peer-review`, тесты бота (peer-review) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 184 → 72, 141 → 73, бот 127 → 104 | почищено в треке |
-| 2026-11-06 | `tst-cleanup` | `domain/src/{user,dossier}`, `modules/user`, тесты бота (user, dossier) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 70 → 33, 103 → 67, бот 15 → 10 | почищено в треке |
-| 2026-11-06 | `tst-cleanup` | `wish-questionnaire.e2e.test.ts:460`, `student-dmg.e2e.test.ts:122`, `:251`, `questionnaire-ux.e2e.test.ts`, `modules/questionnaire/src/questionnaire.module.test.ts:169` | дубли e2e и `probe`-модуль — см. «Дальше» в [plan.md](../archive/tst-cleanup_20261105/plan.md) | почищено 2026-11-11 в `course-dmg` Ф7: −8, `questionnaire-ux.e2e.test.ts:339` оставлен ([deferred-delete.md](../archive/course-dmg_20261105/inventory/deferred-delete.md)) |
-| 2026-11-11 | `course-dmg` Ф8 | `domain/src/course`, `modules/course`, тесты бота каталога и навигации курса (course) | Б-1…Б-19 по таблицам `conductor/archive/course-dmg_20261105/inventory/course-*-delete.md`; тесты: 442 → 225, 330 → 162, бот 104 → 66; мёртвый `StatusSchema` удалён (Б-13); оставлены по §6 строгое чтение `courses.json` и даты репозиториев | почищено в треке |
 
 ## 4. Как пополнять
 
 - Ревьюер и авторы пишут в отчёте строку «Кандидат в чистку тестов: файл — что дублирует» (роль `dmg-reviewer`); orchestrator переносит её в журнал.
 - Случай с новым признаком — строка в §2; если из него следует правило — правка `testing.md` пакета или проектного документа и ссылка оттуда.
-- Дубли в коде текущего среза чистятся в срезе (TST-08); сюда — для учёта. Накопленное до правила — ждёт трека.
-
-## 5. Трек чистки
-
-Трек `tst-cleanup_20261105` (ветка `tst-cleanup`): Ф1 — закономерности §2 на `wish`/`stream`; Ф2 — чистка `wish`, `stream`, `questionnaire`, `peer-review`, `user`, `dossier`. Для каждого удаления — «удалён → закономерность → где покрыт»; критерий — число тестов падает, покрытие строк не падает, `check` зелёный. Итог (2026-11-06): −952 теста (домен −471, модуль −323, бот −158), покрытие собственных исходников не упало, падения — только TR-57; цифры — [summary.md](../archive/tst-cleanup_20261105/summary.md). Следующий — трек по `course` после `course-dmg` (§6).
-
-## 6. Рекомендации для `course`
-
-`course` в трек чистки не входит: его меняет `course-dmg`. Замер признаков (2026-11-05): `normalize`/`ArchChecker` — 17 тестовых файлов (Б-7), `safeParse`/`v.parse` — 174 вызова (Б-8), legacy-тесты `modules/course/src/api` — 21 файл, тесты бота по курсу — 13 файлов.
-
-- **Профилактика в `course-dmg` Ф4–Ф5.** При переводе тестов бота на Def-имена не переносить Б-4 и Б-9: integration/e2e каталога и навигации — один сквозной сценарий на файл, умолчания платформы story не повторять. Legacy-тесты `api/**` удалять вместе с кодом (журнал), не переносить.
-- **Ф8 трека `course-dmg`** (после слияния `tst-cleanup`, Ф7) — по схеме `tst-cleanup`: инвентаризация по слоям (домен, модуль, бот) на flash с промптом `inventory/prompt-*.md`, затем таблицы удаления. Выполнено 2026-11-11 (журнал §3).
-- **Порядок:** Б-7 и Б-8 (механически, большой объём) → Б-1/Б-2 (UC ↔ DQS, уже частично почищено в треке) → бот (Б-4, Б-9) после зелёной базовой линии `test:bot`.
-- **Не трогать:** строгое чтение `courses.json` (инвариант программы при чтении — защита данных), тесты этапов-меток (курс без этапов / один / несколько).
+- Дубли в коде текущего среза чистятся в срезе (TST-08) и в журнал не попадают. Накопленное вне среза — в журнал, ждёт трека.

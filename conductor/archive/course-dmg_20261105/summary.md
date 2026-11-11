@@ -137,3 +137,25 @@
 Приёмка: проверка цепочек дала 38 «покрыт удаляемым» между таблицами домена и модуля. Две — настоящие петли (`course.ar.test.ts:295`/`:305` ↔ `get-course.uc.test.ts`), доменные тесты оставлены как тесты владельца. Остальные 36 — транзитивные: опора доменной строки — остающийся тест домена или гарантия платформы (Б-8). Оставлены `curious-showcase.e2e:401` (единственный путь гость → поток → «Студенты») и `pagination.e2e:222` (S03, учёба — не курс).
 
 **DeepSeek Ф8:** 9 запусков flash, **$1.23**, 0 кругов доработок, `error` ревью нет (ревью Opus по чистке тестов не запускался — таблицы приняты до применения, гейт и `check` зелёные). Инвентаризация $0.41 (30–50 ходов), таблицы $0.42 (33–60), применение $0.39 (72–106). Рычаги `deepseek.md` §4.1: список тестов файлом и выжимка правил в промпте — инвентаризация 30–50 ходов против 26–76 у `tst-cleanup` при большем объёме; стоимость на модуль та же (`questionnaire` $1.19). Нарушение: исполнитель `cd-F8-apply-bot` дважды откатывал свои пробные правки через `git checkout --` (чужих правок в файлах не было) — в промпт применения добавлен запрет `checkout`/`restore`/`reset`/`stash`.
+
+## Журнал `test-bloat.md` (перенесён 2026-11-11)
+
+| Дата | Трек | Файлы | Что дублирует | Решение |
+|---|---|---|---|---|
+| 2026-11-05 | `course-dmg` | `modules/course/src/step/uc/get-steps-by-lessons.uc.test.ts` ↔ `domain/src/course/lesson-steps.dqs.test.ts` | правила сборки ответа (порядок, висячие ссылки, пустые уроки, статусы) после выноса в `LessonStepsDqs` | почищено в треке |
+| 2026-11-05 | `course-dmg` | `modules/course/src/module/uc/get-module-snapshot.uc.test.ts` ↔ `domain/src/course/module-snapshot.dqs.test.ts` | правила сборки снимка после выноса в `ModuleSnapshotDqs` | почищено в треке |
+| 2026-11-05 | `course-dmg` | `modules/course/src/course.module.test.ts` (блоки адаптеров над `legacy`) ↔ `modules/course/src/course/uc/get-*.uc.test.ts`, `course.module.serves.test.ts` | сценарии шести внешних UC после замены адаптеров | почищено в треке |
+| 2026-11-05 | `course-dmg` | `domain/src/stream/stream/stream.ar.student.test.ts` (`teachesModule`) ↔ `domain/src/stream/passed-modules.dqs.test.ts` | сравнение модуля потока после перевода пререквизита на вердикт | почищено в треке |
+| 2026-11-05 | `course-dmg` | legacy `modules/course/src/api/course/*-uc.test.ts`, `domain/src/course/course/{policy,a-root}.test.ts` ↔ `domain/src/course/course/course.{ar,state}.test.ts`, `module-prerequisite.dqs.test.ts`, `modules/course/src/course/uc/*.uc.test.ts` | сценарии legacy-UC курса, перенесённые в Def | удалить с legacy-кодом в Ф5 |
+| 2026-11-05 | `course-dmg` | `modules/course/src/course/uc/{get-module-prerequisite,get-course-by-module,get-module-place}.uc.test.ts`, `modules/stream/src/student/uc/enroll-student.uc.test.ts`, `course.module.serves.test.ts`, `student.rules.test.ts` ↔ `module-prerequisite.dqs.test.ts`, `module-courses.dqs.test.ts`, `course.ar.test.ts` (`placeOf`), `passed-modules.dqs.test.ts` | правила DQS/Ar, повторённые в тестах UC (ревью Ф3) | почищено в треке |
+| 2026-11-06 | `tst-cleanup` | `wish-questionnaire.e2e.test.ts:460`, `student-dmg.e2e.test.ts:122`, `:251`, `questionnaire-ux.e2e.test.ts`, `modules/questionnaire/src/questionnaire.module.test.ts:169` | дубли e2e и `probe`-модуль — см. «Дальше» в [plan.md](../tst-cleanup_20261105/plan.md) | почищено 2026-11-11 в `course-dmg` Ф7: −8, `questionnaire-ux.e2e.test.ts:339` оставлен ([deferred-delete.md](./inventory/deferred-delete.md)) |
+| 2026-11-11 | `course-dmg` Ф8 | `domain/src/course`, `modules/course`, тесты бота каталога и навигации курса (course) | Б-1…Б-19 по таблицам `conductor/archive/course-dmg_20261105/inventory/course-*-delete.md`; тесты: 442 → 225, 330 → 162, бот 104 → 66; мёртвый `StatusSchema` удалён (Б-13); оставлены по §6 строгое чтение `courses.json` и даты репозиториев | почищено в треке |
+
+### Рекомендации для `course` (бывш. §6 `test-bloat.md`)
+
+`course` в трек чистки не входит: его меняет `course-dmg`. Замер признаков (2026-11-05): `normalize`/`ArchChecker` — 17 тестовых файлов (Б-7), `safeParse`/`v.parse` — 174 вызова (Б-8), legacy-тесты `modules/course/src/api` — 21 файл, тесты бота по курсу — 13 файлов.
+
+- **Профилактика в `course-dmg` Ф4–Ф5.** При переводе тестов бота на Def-имена не переносить Б-4 и Б-9: integration/e2e каталога и навигации — один сквозной сценарий на файл, умолчания платформы story не повторять. Legacy-тесты `api/**` удалять вместе с кодом (журнал), не переносить.
+- **Ф8 трека `course-dmg`** (после слияния `tst-cleanup`, Ф7) — по схеме `tst-cleanup`: инвентаризация по слоям (домен, модуль, бот) на flash с промптом `inventory/prompt-*.md`, затем таблицы удаления. Выполнено 2026-11-11 (журнал §3).
+- **Порядок:** Б-7 и Б-8 (механически, большой объём) → Б-1/Б-2 (UC ↔ DQS, уже частично почищено в треке) → бот (Б-4, Б-9) после зелёной базовой линии `test:bot`.
+- **Не трогать:** строгое чтение `courses.json` (инвариант программы при чтении — защита данных), тесты этапов-меток (курс без этапов / один / несколько).

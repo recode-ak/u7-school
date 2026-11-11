@@ -107,3 +107,13 @@
 - ожидаемое `CI=true bun test` = значение на `main` перед слиянием − 952 (± тесты, которые `course-dmg` Ф4–Ф5 добавит или удалит в файлах, почищенных здесь — конфликты слияния разрешать в пользу удаления по таблицам `inventory/*-delete.md`);
 - `runners/u7-bot/` — −158; `domain/src/course`, `modules/course` — без изменений;
 - новая базовая линия последующих треков — замер на `main` после слияния, записать в `summary.md` трека, идущего следом.
+
+## Журнал `test-bloat.md` (перенесён 2026-11-11)
+
+| Дата | Трек | Файлы | Что дублирует | Решение |
+|---|---|---|---|---|
+| 2026-11-06 | `tst-cleanup` | `domain/src/wish`, `modules/wish`, e2e бота (wish) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 213 → 133, 135 → 104 | почищено в треке |
+| 2026-11-06 | `tst-cleanup` | `domain/src/stream`, `modules/stream`, тесты бота `stream` (stream) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 416 → 261, 226 → 112, бот 335 → 252 | почищено в треке |
+| 2026-11-06 | `tst-cleanup` | `domain/src/questionnaire`, `modules/questionnaire`, тесты бота (questionnaire) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 213 → 126, 113 → 39, бот 134 → 88 | почищено в треке |
+| 2026-11-06 | `tst-cleanup` | `domain/src/peer-review`, `modules/peer-review`, тесты бота (peer-review) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 184 → 72, 141 → 73, бот 127 → 104 | почищено в треке |
+| 2026-11-06 | `tst-cleanup` | `domain/src/{user,dossier}`, `modules/user`, тесты бота (user, dossier) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 70 → 33, 103 → 67, бот 15 → 10 | почищено в треке |
