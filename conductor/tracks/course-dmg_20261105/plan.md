@@ -161,7 +161,7 @@
 - `git branch --no-merged main` не содержит `tst-cleanup`.
 - В журнале `test-bloat.md` нет строк «ждёт `course-dmg`».
 
-## Фаза 8: Чистка тестов `course` (TST-08)
+## Фаза 8: Чистка тестов `course` (TST-08) [checkpoint: cd14f0bd]
 
 Та же работа, что `tst-cleanup` для шести модулей, — для `course`: домен `domain/src/course`, модуль `modules/course`, тесты бота по курсу (`runners/u7-bot`). Идёт после Ф7: закономерности, промпты и скрипт — уже на `main`. Схема и образцы — `conductor/tracks/tst-cleanup_20261105/` (`plan.md` Ф2, `inventory/prompt-*.md`, `inventory/check-chains.py`); признаки — `test-bloat.md` §2, порядок и «не трогать» — §6.
 
@@ -171,7 +171,7 @@
 - [x] Task: Приёмка таблиц (Opus); новые закономерности — в `test-bloat.md` §2 a9677d40 (Н-1 → Б-18, Н1 бота → Б-19; оставлены `curious-showcase.e2e:401`, `pagination.e2e:222` вне области)
 - [x] Task: Удаление по таблицам: домен ‖ бот → модуль (flash); мёртвый код, найденный при чистке, — удалить (Б-13), строкой в отчёт f81f3e8b, 1b3b0b32 (Б-13: `StatusSchema`, мёртвые хелперы фикстур)
 - [x] Task: Гейт: `check` зелёный; покрытие собственных исходников `course` не ниже; `git diff --numstat` — только тестовые файлы (кроме Б-13); строки расхода — в `summary.md` «DeepSeek» (Opus) 1b3b0b32 (3179 pass; покрытие без падения, фабрика модуля — сборкой)
-- [x] Task: Журнал `test-bloat.md` — строки «почищено»; в `tracks.md` снять кандидата «чистка тестов `course`» (Opus)
+- [x] Task: Журнал `test-bloat.md` — строки «почищено»; в `tracks.md` снять кандидата «чистка тестов `course`» (Opus) cd14f0bd
 
 **Критерии приёмки Фазы 8:**
 - Число тестов `course` упало, покрытие строк его исходников не упало, `check` зелёный.
