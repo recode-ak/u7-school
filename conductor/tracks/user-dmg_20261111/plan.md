@@ -81,7 +81,7 @@
 - Тест скрипта: сухой прогон, запись, повтор.
 - `check` зелёный, кроме поимённой красной зоны в `debt.md`; `git status data/` чист.
 
-## Фаза 4: Резолвер `Caller` и Policy клиентов
+## Фаза 4: Резолвер `Caller` и Policy клиентов [checkpoint: aa874174]
 
 - [x] Task: `dmg-tech-lead`: бриф `slices/caller.md` (Sonnet; шага не было в плане — форма фикстуры субъекта отложена на бриф Ф4, Р9 `user-domain`); фикстура — общий `@u7-scl/domain/user/testing` (Нурболат) 26d341b6
 - [x] Task: `dmg-test-designer`: red-тесты (Sonnet): резолвер `Caller` на Def (`dispatch` UC `user`; сбой — ERR-01); Policy `course`/`stream`/`questionnaire` и `submenu` — на API ролей (способ — решение Ф0) 26d341b6
