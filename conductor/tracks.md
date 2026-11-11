@@ -8,11 +8,6 @@
 
 ---
 
-- [x] **Track: Перевод модуля course на DMG (трек 6 migration.md) — этап как метка программы, контракты-вопросы для клиентов, исполнители на DeepSeek**
-*Link: [./tracks/course-dmg_20261105/](./tracks/course-dmg_20261105/)*
-
----
-
 - [?] **Кандидат: история модулей курса — архив вместо удаления, связь «предок» у модуля, операции автора (fork, publish-replace, archive), ответы `course` по истории. После `course-dmg`**
 *Разбор: [course-module-history](./roadmap/course-module-history.md) — что сделано в `course-dmg`, состав трека, точка рассмотрения «где хранить историю», перенос прогресса. Основа — [content-management](./roadmap/content-management.md) §3.2–3.7. Папки трека нет: это заготовка, не трек.*
 

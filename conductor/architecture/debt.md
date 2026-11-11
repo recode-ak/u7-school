@@ -589,7 +589,7 @@
 - **Пересмотреть:** (3) — в треке «История модулей курса»; (5) — снять в Ф4.
 
 ### TR-53: решения брифов `module` и `lesson-step` (`course-dmg`, Ф0)
-- **Трек / фаза:** `course-dmg`, Ф0 (брифы `conductor/tracks/course-dmg_20261105/slices/module.md`, `lesson-step.md`; стратегические — Нурболат, 2026-11-05; тактические — orchestrator по рекомендациям `dmg-tech-lead`)
+- **Трек / фаза:** `course-dmg`, Ф0 (брифы `conductor/archive/course-dmg_20261105/slices/module.md`, `lesson-step.md`; стратегические — Нурболат, 2026-11-05; тактические — orchestrator по рекомендациям `dmg-tech-lead`)
 - **Контекст:** бот читает контент курса без актора, поэтому автор черновиков не видит; `listModules` отдаёт модуль целиком, а потребители (`create-stream`, `list-lessons`, `distribute-lesson`) берут `uuid`, `title`, `status`; legacy-снимок падает на первом невидимом уроке (`getOutLesson`), хотя фильтр задуман; новые имена `ModuleAr`/`ModulePolicy`/`ModuleRepo` совпадают с legacy в `export *`.
 - **Решение:**
   - (С1 `module`) после Ф4 (`dispatch` с реальным вызывающим) автор и администратор видят черновые проекты, уроки и шаги; для студента без изменений — принято.
@@ -602,7 +602,7 @@
 - **Пересмотреть:** (С1 `lesson-step`) — при правке данных автором контента или в треке «История модулей курса»; TR-40 — добавлен `course`; (Т11 `module`) — снять в Ф5; висячие ссылки — в треке «История модулей курса».
 
 ### TR-54: итоги среза `module` (`course-dmg`, Ф1)
-- **Трек / фаза:** `course-dmg`, Ф1 (бриф `conductor/tracks/course-dmg_20261105/slices/module.md`, отчёты авторов и `dmg-reviewer`; orchestrator)
+- **Трек / фаза:** `course-dmg`, Ф1 (бриф `conductor/archive/course-dmg_20261105/slices/module.md`, отчёты авторов и `dmg-reviewer`; orchestrator)
 - **Контекст:** GritQL `dom-11-base-fields.grit` ловит любой ключ `uuid:` в `*.state.ts`, включая `uuid: F.uuid(…)` вложенного проекта; legacy `JsonFileRepo.readAll` на невалидной записи не падает, а отбрасывает её (`safeParse` + автобэкап); ревью Ф1 — без `error`, 8 `warn`.
 - **Решение:**
   - проект модуля — вложенная сущность `ProjectEntity` в `module.state.ts` (Нурболат, 2026-11-05): у проекта есть идентичность (`uuid`, на него ссылаются снимок и бот), номера вместо `uuid` отклонены — сменили бы формат `modules.json` и контракт снимка. DOM-11 в `dmg-core` сужен (`15a74a6`): `uuid: F.uuid(…)` вложенной сущности разрешён; суффикс `Entity` — в `naming.md` пакета;
@@ -613,7 +613,7 @@
 - **Пересмотреть:** Т11 — снять в Ф5.
 
 ### TR-55: итоги среза `lesson` + `step` + снимок (`course-dmg`, Ф2)
-- **Трек / фаза:** `course-dmg`, Ф2 (бриф `conductor/tracks/course-dmg_20261105/slices/lesson-step.md`, отчёты авторов, `dmg-data-keeper` и `dmg-reviewer`; orchestrator)
+- **Трек / фаза:** `course-dmg`, Ф2 (бриф `conductor/archive/course-dmg_20261105/slices/lesson-step.md`, отчёты авторов, `dmg-data-keeper` и `dmg-reviewer`; orchestrator)
 - **Контекст:** ревью — без `error`, 5 `warn`; данные совместимы на чтение (снимки 4 модулей и `getStepsByLessons` совпали с legacy побайтово), запись новыми репозиториями при живом legacy делает `lessons.json`/`steps.json` нечитаемыми для legacy.
 - **Решение:**
   - исправлены в срезе: ссылки на фазы/вопросы в комментариях (CODE-04), копии массивов из `outline()`/`publishedOutline()` (DOM-17), вопрос `LessonAr.stepIds()` для `getStepsByLessons` вместо `outline()`, проверка доступа снимка до чтения уроков, мёртвая ветка в группировке шагов;
@@ -628,7 +628,7 @@
 - **Пересмотреть:** `ModuleView.version` — Ф3; запрет записи — Ф5; CODE-04 (ссылки на фазы в комментариях) повторяется от Ф1 — кандидат в машинную проверку.
 
 ### TR-56: решения брифа среза `course` (`course-dmg`, Ф3)
-- **Трек / фаза:** `course-dmg`, Ф3 (бриф `conductor/tracks/course-dmg_20261105/slices/course.md`; стратегические — Нурболат, 2026-11-05; тактические — orchestrator по рекомендациям `dmg-tech-lead`)
+- **Трек / фаза:** `course-dmg`, Ф3 (бриф `conductor/archive/course-dmg_20261105/slices/course.md`; стратегические — Нурболат, 2026-11-05; тактические — orchestrator по рекомендациям `dmg-tech-lead`)
 - **Контекст:** legacy `get-course`/`get-course-by-module` отдают курс любого статуса любому вызывающему; «курс модуля» в трёх UC выбирается по трём правилам, `getCoursesStartingWithModule` привязан к месту модуля в одном курсе; строгий новый формат `courses.json` роняет legacy-чтение; инвариант меток с `v.check` не проходит `toJsonSchema` state.
 - **Решение:**
   - (С1) видимость курсов — как v0.2.6, без Policy (`allowAll`); правило «неопубликованное видят автор и администратор» — в треке-кандидате [course-module-history.md](../roadmap/course-module-history.md) вместе с архивацией;
