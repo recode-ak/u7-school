@@ -25,8 +25,8 @@
     - [x] варианты получения API ролей субъектом `Caller` в Policy клиентов (сверка с `wish`/`stream`, D-41);
     - [x] сверка `notify-user`/`user.notified` с `../u7-school-v0.2.6` (есть ли продюсер);
     - [x] список legacy-тестов на перенос (с учётом TST-08) и тестов состава модуля; ID `rules.md`.
-- [~] Task: orchestrator проверяет брифы (Opus); вопросы Нурболату — субъект Policy, состав UC (`create-user`, `list-users`, `notify-user`), имя `remove-role-from-user`
-- [ ] Task: Записать решения в TR (`debt.md`) и `decisions.md` (Opus)
+- [x] Task: orchestrator проверяет брифы (Opus); вопросы Нурболату — субъект Policy, состав UC (`create-user`, `list-users`, `notify-user`), имя `remove-role-from-user` 19ff0c2
+- [x] Task: Записать решения в TR (`debt.md`) и `decisions.md` (Opus) 19ff0c2 — TR-61, DEBT-52; решение пакета — D-69 `dmg-core` (проектный `decisions.md` не менялся)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 0:**
