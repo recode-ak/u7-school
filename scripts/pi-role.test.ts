@@ -69,6 +69,17 @@ describe('PiUsage.fromJsonl', () => {
     expect(PiUsage.fromJsonl(jsonl).error).toBe('402: Insufficient Balance');
   });
 
+  it('misses — ходы после первого, где некэшированный вход больше кэшированного', () => {
+    const jsonl = [
+      assistant(usage(9000, 0, 1, 0)),
+      assistant(usage(500, 9000, 1, 0)),
+      assistant(usage(8000, 2000, 1, 0)),
+      assistant(usage(300, 10000, 1, 0)),
+    ].join('\n');
+
+    expect(PiUsage.fromJsonl(jsonl).misses).toBe(1);
+  });
+
   it('пустой вывод — нули, без деления на ноль', () => {
     const u = PiUsage.fromJsonl('');
     expect(u.turns).toBe(0);

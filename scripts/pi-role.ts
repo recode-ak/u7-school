@@ -2,14 +2,15 @@
  * Запуск роли агента через pi на DeepSeek с учётом расхода.
  *
  * Роль — `.pi/agents/<role>.md` (дописывается к системному промпту), задание —
- * файл промпта. Расширения pi отключены: `pi-dcp` ломает префиксный кэш
- * DeepSeek. Повторный запуск с тем же `--label` продолжает сессию (доработка
+ * файл промпта. Расширения pi включены (`pi-dcp` после обновления не ломает
+ * префиксный кэш); `--no-ext` отключает их — для сравнения hitRate.
+ * Повторный запуск с тем же `--label` продолжает сессию (доработка
  * по гейту). Вывод pi — `.cache/pi-runs/<label>.<n>.jsonl`, строка расхода —
  * `.cache/pi-runs/usage.jsonl`. Гейт после запуска гоняет orchestrator.
  *
  * Правила постановки задач: `conductor/architecture/deepseek.md`.
  *
- * Запуск: `bun run scripts/pi-role.ts <role> <prompt-file> [--model flash|pro] [--label <имя>] [--cwd <каталог>]`.
+ * Запуск: `bun run scripts/pi-role.ts <role> <prompt-file> [--model flash|pro] [--label <имя>] [--cwd <каталог>] [--no-ext]`.
  */
 
 import { appendFile, mkdir, readdir, readFile } from 'node:fs/promises';
@@ -27,6 +28,8 @@ export class PiUsage {
   cacheRead = 0;
   output = 0;
   cost = 0;
+  /** Ходы (кроме первого) с попаданием в кэш < 50% — след обрезки контекста */
+  misses = 0;
   /** Последний непустой текст ассистента — отчёт роли */
   answer = '';
   /** Ошибка провайдера в последнем ходе (баланс, сеть) */
@@ -39,8 +42,11 @@ export class PiUsage {
       const m = event?.type === 'message_end' ? event.message : undefined;
       if (m?.role !== 'assistant') continue;
       u.turns++;
-      u.input += m.usage?.input ?? 0;
-      u.cacheRead += m.usage?.cacheRead ?? 0;
+      const input = m.usage?.input ?? 0;
+      const cacheRead = m.usage?.cacheRead ?? 0;
+      if (u.turns > 1 && cacheRead < input) u.misses++;
+      u.input += input;
+      u.cacheRead += cacheRead;
       u.output += m.usage?.output ?? 0;
       u.cost += m.usage?.cost?.total ?? 0;
       u.error = m.stopReason === 'error' ? m.errorMessage : undefined;
@@ -96,6 +102,7 @@ class PiRoleRun {
     private readonly model: string,
     private readonly label: string,
     private readonly cwd: string,
+    private readonly extensions: boolean,
   ) {}
 
   async run(): Promise<PiUsage> {
@@ -115,7 +122,7 @@ class PiRoleRun {
         this.model,
         '--thinking',
         'high',
-        '--no-extensions',
+        ...(this.extensions ? [] : ['--no-extensions']),
         '--session-dir',
         join(this.#runs, 'sessions'),
         '--session-id',
@@ -133,6 +140,7 @@ class PiRoleRun {
       label: this.label,
       role: this.role,
       model: this.model,
+      ext: this.extensions,
       secs: Math.round((Date.now() - started) / 1000),
       code,
       turns: usage.turns,
@@ -140,6 +148,7 @@ class PiRoleRun {
       cacheRead: usage.cacheRead,
       output: usage.output,
       hitRate: usage.hitRate,
+      misses: usage.misses,
       cost: Number(usage.cost.toFixed(4)),
       error: usage.error,
     };
@@ -168,10 +177,12 @@ if (import.meta.main) {
   const model = MODELS[opt('model') ?? 'flash'];
   const label = opt('label');
   const cwd = resolve(opt('cwd') ?? '.');
+  const noExt = args.indexOf('--no-ext');
+  if (noExt >= 0) args.splice(noExt, 1);
   const [role, promptFile] = args;
   if (!role || !promptFile || !model) {
     console.error(
-      'Использование: bun run scripts/pi-role.ts <role> <prompt-file> [--model flash|pro] [--label <имя>] [--cwd <каталог>]',
+      'Использование: bun run scripts/pi-role.ts <role> <prompt-file> [--model flash|pro] [--label <имя>] [--cwd <каталог>] [--no-ext]',
     );
     process.exit(1);
   }
@@ -181,6 +192,7 @@ if (import.meta.main) {
     model,
     label ?? `${role}-${Date.now()}`,
     cwd,
+    noExt < 0,
   ).run();
   if (usage.error) console.error(`Ошибка провайдера: ${usage.error}`);
   console.log('--- отчёт роли ---');
