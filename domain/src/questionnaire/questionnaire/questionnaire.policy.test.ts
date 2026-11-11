@@ -38,7 +38,7 @@ describe('QuestionnairePolicy.isRespondent', () => {
   });
 
   it.each([
-    ['другой пользователь', who(OTHER_USER, Role.STUDENT)],
+    ['другой пользователь', who(OTHER_USER, Role.GUEST)],
     ['admin, не респондент', who(ADMIN_USER, Role.ADMIN)],
   ])('%s — denied', (_, subject) => {
     expect(isRespondent.evaluate(subject, ctx).allowed).toBe(false);
@@ -56,7 +56,7 @@ describe('QuestionnairePolicy.isAdmin', () => {
     );
   });
 
-  it.each([Role.STUDENT, Role.MENTOR])('роль %s — denied', (role) => {
+  it.each([Role.GUEST, Role.MENTOR])('роль %s — denied', (role) => {
     expect(isAdmin.evaluate(who(OTHER_USER, role), {}).allowed).toBe(false);
   });
 
@@ -67,7 +67,7 @@ describe('QuestionnairePolicy.isAdmin', () => {
 
 describe('QuestionnairePolicy.canAccess', () => {
   it('респондент — allowed', () => {
-    expect(canAccess.evaluate(who(RESPONDENT, Role.STUDENT), ctx).allowed).toBe(
+    expect(canAccess.evaluate(who(RESPONDENT, Role.GUEST), ctx).allowed).toBe(
       true,
     );
   });
@@ -79,7 +79,7 @@ describe('QuestionnairePolicy.canAccess', () => {
   });
 
   it.each([
-    ['чужой студент', who(OTHER_USER, Role.STUDENT)],
+    ['чужой гость', who(OTHER_USER, Role.GUEST)],
     ['чужой ментор', who(OTHER_USER, Role.MENTOR)],
     ['без субъекта', undefined],
   ])('%s — denied', (_, subject) => {
@@ -91,7 +91,7 @@ describe('QuestionnairePolicy.canAccess', () => {
 describe('QuestionnairePolicy.canListFor', () => {
   it('свой список — allowed', () => {
     expect(
-      canListFor.evaluate(who(RESPONDENT, Role.STUDENT), { userId: RESPONDENT })
+      canListFor.evaluate(who(RESPONDENT, Role.GUEST), { userId: RESPONDENT })
         .allowed,
     ).toBe(true);
   });
@@ -104,7 +104,7 @@ describe('QuestionnairePolicy.canListFor', () => {
   });
 
   it.each([
-    ['чужой список', who(OTHER_USER, Role.STUDENT)],
+    ['чужой список', who(OTHER_USER, Role.GUEST)],
     ['без субъекта', undefined],
   ])('%s — denied', (_, subject) => {
     const decision = canListFor.evaluate(subject, { userId: RESPONDENT });

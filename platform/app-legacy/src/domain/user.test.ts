@@ -6,7 +6,6 @@ describe('Роли пользователей (Roles)', () => {
   test('должны быть определены все роли', () => {
     expect(Role.GUEST as string).toBe('GUEST');
     expect(Role.SUBSCRIBER as string).toBe('SUBSCRIBER');
-    expect(Role.STUDENT as string).toBe('STUDENT');
     expect(Role.MENTOR as string).toBe('MENTOR');
     expect(Role.AUTHOR as string).toBe('AUTHOR');
     expect(Role.ADMIN as string).toBe('ADMIN');
@@ -15,7 +14,6 @@ describe('Роли пользователей (Roles)', () => {
   test('RoleSchema должна пропускать валидные значения ролей', () => {
     expect(v.safeParse(RoleSchema, Role.GUEST).success).toBe(true);
     expect(v.safeParse(RoleSchema, Role.SUBSCRIBER).success).toBe(true);
-    expect(v.safeParse(RoleSchema, Role.STUDENT).success).toBe(true);
     expect(v.safeParse(RoleSchema, Role.MENTOR).success).toBe(true);
     expect(v.safeParse(RoleSchema, Role.AUTHOR).success).toBe(true);
     expect(v.safeParse(RoleSchema, Role.ADMIN).success).toBe(true);
@@ -33,7 +31,7 @@ describe('Схема пользователя', () => {
     uuid: '550e8400-e29b-41d4-a716-446655440000',
     name: 'Иван',
     telegramId: 123,
-    roles: [Role.STUDENT],
+    roles: [Role.GUEST],
     createdAt: '2026-05-01T12:00',
     updatedAt: '2026-05-01T13:00',
   };
@@ -163,7 +161,7 @@ describe('Схема пользователя', () => {
     test('принимает массив с одной ролью', () => {
       const result = v.safeParse(UserSchema, {
         ...valid,
-        roles: [Role.STUDENT],
+        roles: [Role.GUEST],
       });
       expect(result.success).toBe(true);
     });
@@ -171,7 +169,7 @@ describe('Схема пользователя', () => {
     test('принимает массив с несколькими ролями', () => {
       const result = v.safeParse(UserSchema, {
         ...valid,
-        roles: [Role.STUDENT, Role.MENTOR, Role.ADMIN],
+        roles: [Role.GUEST, Role.MENTOR, Role.ADMIN],
       });
       expect(result.success).toBe(true);
     });
@@ -188,7 +186,7 @@ describe('Схема пользователя', () => {
     });
 
     test('отклоняет roles не массивом', () => {
-      const invalidTypes = ['STUDENT', 123, true, null, undefined, {}];
+      const invalidTypes = ['GUEST', 123, true, null, undefined, {}];
       invalidTypes.forEach((roles) => {
         const result = v.safeParse(UserSchema, { ...valid, roles });
         expect(result.success).toBe(false);
@@ -198,7 +196,7 @@ describe('Схема пользователя', () => {
     test('отклоняет массив с некорректными значениями ролей', () => {
       const invalidRolesArrays = [
         ['INVALID_ROLE'],
-        [Role.STUDENT, 'INVALID'],
+        [Role.GUEST, 'INVALID'],
         [123],
         [null],
       ];

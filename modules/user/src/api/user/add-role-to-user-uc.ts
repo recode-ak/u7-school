@@ -35,7 +35,7 @@ export class AddRoleToUserUc extends UserUseCase<AddRoleToUserCmdMeta> {
       });
     }
 
-    if (!LegacyUserPolicy.canAddRole(actor, target, command.role)) {
+    if (!LegacyUserPolicy.canAddRole(actor)) {
       this.throwAccessDenied('Недостаточно прав для выполнения действия');
     }
 

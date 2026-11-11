@@ -1,12 +1,9 @@
 import { BaseEntityFields, F } from 'dmg-core';
 import * as v from 'valibot';
 
-/**
- * Роль пользователя. `STUDENT` держится в списке: фикстуры и живые записи его
- * содержат, строгий разбор без него уронил бы их.
- */
+/** Роль пользователя. */
 export const UserRoleName = F.picklist(
-  ['GUEST', 'SUBSCRIBER', 'STUDENT', 'MENTOR', 'AUTHOR', 'ADMIN'],
+  ['GUEST', 'SUBSCRIBER', 'MENTOR', 'AUTHOR', 'ADMIN'],
   'Роль пользователя',
 );
 

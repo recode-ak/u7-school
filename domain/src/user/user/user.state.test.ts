@@ -33,8 +33,11 @@ describe('UserState — роли и имя', () => {
     expect(res.success && res.output.name).toBe('Иван');
   });
 
-  it('запись со STUDENT проходит: фикстуры и живые данные его содержат', () => {
-    expect(parse({ ...legacy, roles: ['STUDENT'] }).success).toBe(true);
+  it('запись со STUDENT отклоняется: роль снята (скрипт миграции чистит данные)', () => {
+    expect(parse({ ...legacy, roles: ['STUDENT'] }).success).toBe(false);
+    expect(parse({ ...legacy, roles: ['GUEST', 'STUDENT'] }).success).toBe(
+      false,
+    );
   });
 
   it.each([

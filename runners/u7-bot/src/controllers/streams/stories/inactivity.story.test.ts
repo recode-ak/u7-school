@@ -30,7 +30,7 @@ const student: User = {
   uuid: STUDENT_USER_ID,
   name: 'Иван Студент',
   telegramId: 1003,
-  roles: [Role.STUDENT],
+  roles: [Role.GUEST],
   createdAt: '2026-01-01T00:00',
 };
 

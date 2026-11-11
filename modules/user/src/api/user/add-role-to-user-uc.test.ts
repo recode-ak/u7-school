@@ -53,7 +53,7 @@ describe('AddRoleToUserUc', () => {
     test('ADMIN добавляет роль существующему пользователю', async () => {
       const { getByUuid, save, uc } = setupUc();
       const admin = makeUser();
-      const target = makeUser({ roles: [Role.STUDENT], telegramId: 2 });
+      const target = makeUser({ roles: [Role.GUEST], telegramId: 2 });
 
       getByUuid.mockResolvedValueOnce(target);
 
@@ -62,7 +62,7 @@ describe('AddRoleToUserUc', () => {
         admin,
       );
 
-      expect(user.roles).toEqual([Role.STUDENT, Role.MENTOR]);
+      expect(user.roles).toEqual([Role.GUEST, Role.MENTOR]);
       expect(save).toHaveBeenCalledTimes(1);
     });
   });
@@ -84,8 +84,8 @@ describe('AddRoleToUserUc', () => {
 
     test('отклоняет при отсутствии прав ADMIN', async () => {
       const { getByUuid, uc } = setupUc();
-      const student = makeUser({ roles: [Role.STUDENT], telegramId: 2 });
-      const target = makeUser({ roles: [Role.STUDENT], telegramId: 3 });
+      const student = makeUser({ roles: [Role.GUEST], telegramId: 2 });
+      const target = makeUser({ roles: [Role.GUEST], telegramId: 3 });
 
       getByUuid.mockResolvedValueOnce(target);
 

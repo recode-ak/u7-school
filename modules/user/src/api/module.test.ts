@@ -59,10 +59,10 @@ describe('UserApiModule + LegacyUserJsonRepo', () => {
 
     const created = await mod.execute(
       'create-user',
-      { name: 'Иван', telegramId: 2, roles: [Role.STUDENT] },
+      { name: 'Иван', telegramId: 2, roles: [Role.GUEST] },
       admin,
     );
-    expect(created.roles).toEqual([Role.STUDENT]);
+    expect(created.roles).toEqual([Role.GUEST]);
 
     const got = await mod.execute('get-user', { uuid: created.uuid });
     expect(got.name).toBe('Иван');

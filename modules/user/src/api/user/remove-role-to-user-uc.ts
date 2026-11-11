@@ -11,7 +11,7 @@ import { UserUseCase } from '#api-legacy/user-uc';
 
 /**
  * Use-case удаления роли у пользователя.
- * ADMIN может удалить любую роль. Обычный пользователь — только STUDENT у себя.
+ * Требует прав ADMIN.
  */
 export class RemoveRoleToUserUc extends UserUseCase<RemoveRoleToUserCmdMeta> {
   protected readonly ucName = 'remove-role-to-user' as const;
@@ -35,7 +35,7 @@ export class RemoveRoleToUserUc extends UserUseCase<RemoveRoleToUserCmdMeta> {
       });
     }
 
-    if (!LegacyUserPolicy.canRemoveRole(actor, target, command.role)) {
+    if (!LegacyUserPolicy.canRemoveRole(actor)) {
       this.throwAccessDenied('Недостаточно прав для выполнения действия');
     }
 

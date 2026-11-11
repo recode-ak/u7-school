@@ -7,7 +7,7 @@ import type { UserRole } from './user.state';
 
 // Перенос `policy.test.ts` (TST-08): canAddRole/canRemoveRole → canManageRoles,
 // canCreate → canRegisterGuest по тому же правилу «только ADMIN». Ветки
-// STUDENT, canCreate (С2) и isAuthor (Т4) не переносятся.
+// canCreate (С2) и isAuthor (Т4) не переносятся.
 
 const who = (...roles: UserRole[]) => UserAr.restore(stored({ roles }));
 
@@ -24,7 +24,7 @@ describe('UserPolicy.canManageRoles', () => {
     );
   });
 
-  it.each(['MENTOR', 'GUEST', 'SUBSCRIBER', 'STUDENT', 'AUTHOR'] as const)(
+  it.each(['MENTOR', 'GUEST', 'SUBSCRIBER', 'AUTHOR'] as const)(
     'роль %s — denied с прежним текстом',
     (role) => {
       expect(canManageRoles.evaluate(who(role), {})).toEqual(
@@ -45,7 +45,7 @@ describe('UserPolicy.canRegisterGuest', () => {
     );
   });
 
-  it.each(['MENTOR', 'GUEST', 'SUBSCRIBER', 'STUDENT', 'AUTHOR'] as const)(
+  it.each(['MENTOR', 'GUEST', 'SUBSCRIBER', 'AUTHOR'] as const)(
     'роль %s — denied с прежним текстом',
     (role) => {
       expect(canRegisterGuest.evaluate(who(role), {})).toEqual(

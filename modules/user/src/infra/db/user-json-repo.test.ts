@@ -8,7 +8,7 @@ const createTestUser = (overrides: Partial<User> = {}): User => ({
   uuid: crypto.randomUUID(),
   name: 'Тестовый пользователь',
   telegramId: Math.floor(Math.random() * 1000000),
-  roles: [Role.STUDENT],
+  roles: [Role.GUEST],
   createdAt: '2026-05-01T12:00',
   ...overrides,
 });
@@ -70,7 +70,7 @@ describe('LegacyUserJsonRepo', () => {
     uuid: '880e8400-e29b-41d4-a716-446655440003',
     name: 'Петр Студент',
     telegramId: 111,
-    roles: [Role.STUDENT],
+    roles: [Role.GUEST],
     createdAt: '2026-01-01T10:00',
   });
 
@@ -86,7 +86,7 @@ describe('LegacyUserJsonRepo', () => {
     uuid: 'aa0e8400-e29b-41d4-a716-446655440005',
     name: 'Борис',
     telegramId: 333,
-    roles: [Role.STUDENT, Role.MENTOR],
+    roles: [Role.GUEST, Role.MENTOR],
     createdAt: '2026-06-01T08:00',
   });
 
@@ -164,7 +164,7 @@ describe('LegacyUserJsonRepo', () => {
       });
 
       test('фильтрует по роли — только STUDENT', async () => {
-        const result = await repo.getAll({ role: Role.STUDENT });
+        const result = await repo.getAll({ role: Role.GUEST });
         expect(result).toHaveLength(3);
         expect(result.map((u) => u.name)).toEqual(
           expect.arrayContaining(['Иван', 'Петр Студент', 'Борис']),
@@ -254,7 +254,7 @@ describe('LegacyUserJsonRepo', () => {
 
       test('фильтр по роли + сортировка', async () => {
         const result = await repo.getAll({
-          role: Role.STUDENT,
+          role: Role.GUEST,
           sort: 'name:asc',
         });
         expect(result).toHaveLength(3);

@@ -51,7 +51,7 @@ describe('ListUsersUc', () => {
     const u2 = makeUser({
       name: 'Мария',
       telegramId: 2,
-      roles: [Role.STUDENT],
+      roles: [Role.GUEST],
     });
     getAll.mockResolvedValueOnce([u1, u2]);
 
@@ -88,10 +88,10 @@ describe('ListUsersUc', () => {
     },
     {
       title: 'фильтр по роли',
-      cmd: { role: Role.STUDENT },
+      cmd: { role: Role.GUEST },
       args: {
         limit: 20,
-        role: Role.STUDENT,
+        role: Role.GUEST,
         name: undefined,
         telegramId: undefined,
         sort: 'createdAt:desc',

@@ -34,7 +34,7 @@ const actor: User = {
   uuid: 'user-reader',
   name: 'Читатель',
   telegramId: 123,
-  roles: [Role.STUDENT],
+  roles: [Role.GUEST],
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 

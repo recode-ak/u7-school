@@ -45,7 +45,7 @@ export const respondentProfile = (overrides: Partial<User> = {}): User => ({
   uuid: RESPONDENT_ID,
   name: 'Респондент',
   telegramId: RESPONDENT_TG,
-  roles: [Role.STUDENT],
+  roles: [Role.GUEST],
   createdAt: '2026-01-01T00:00:00.000Z',
   ...overrides,
 });

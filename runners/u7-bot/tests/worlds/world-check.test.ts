@@ -17,7 +17,7 @@ describe('world:check — валидатор мира', () => {
       key: 'andrey',
       name: 'Андрей',
       telegramId: 1003,
-      roles: ['STUDENT'],
+      roles: ['GUEST'],
       registeredAt: 'T-60d',
     });
 

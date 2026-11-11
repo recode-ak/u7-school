@@ -38,7 +38,7 @@ describe('LegacyUserAr', () => {
       const ar = LegacyUserAr.create({
         name: 'А',
         telegramId: 1,
-        roles: [Role.STUDENT],
+        roles: [Role.GUEST],
       });
       expect(ar.state.uuid).toBeString();
       expect(ar.state.uuid).toMatch(

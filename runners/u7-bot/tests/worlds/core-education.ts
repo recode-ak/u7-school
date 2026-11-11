@@ -94,7 +94,7 @@ export const CORE_EDUCATION_WORLD: WorldDefinition = {
       uuid: '33333333-3333-3333-3333-333333333333',
       name: 'Андрей',
       telegramId: 1003,
-      roles: [Role.STUDENT],
+      roles: [Role.GUEST],
       registeredAt: 'T-90d',
     },
     {
@@ -174,7 +174,7 @@ export const CORE_EDUCATION_WORLD: WorldDefinition = {
       uuid: '10101010-1010-4010-8010-101010101010',
       name: 'Дмитрий',
       telegramId: 1010,
-      roles: [Role.STUDENT],
+      roles: [Role.GUEST],
       registeredAt: 'T-90d',
     },
     {
@@ -182,7 +182,7 @@ export const CORE_EDUCATION_WORLD: WorldDefinition = {
       uuid: '10111011-1011-4011-8011-101110111011',
       name: 'Иван',
       telegramId: 1011,
-      roles: [Role.STUDENT],
+      roles: [Role.GUEST],
       registeredAt: 'T-90d',
     },
   ],

@@ -23,8 +23,8 @@ const ctx = { student, stream };
 const { isSelf, canComplete, canMarkAbandoned } = StudentPolicy.rules;
 
 describe('StudentPolicy.isSelf', () => {
-  it('сам студент — allowed', () => {
-    expect(isSelf.evaluate(who(USER, Role.STUDENT), { student })).toEqual(
+  it('сам студент с ролью SUBSCRIBER — allowed', () => {
+    expect(isSelf.evaluate(who(USER, Role.SUBSCRIBER), { student })).toEqual(
       allowed,
     );
   });
@@ -36,7 +36,7 @@ describe('StudentPolicy.isSelf', () => {
   });
 
   it.each([
-    ['другой студент', who(OTHER_USER, Role.STUDENT)],
+    ['другой студент', who(OTHER_USER, Role.GUEST)],
     ['ментор потока', who(MENTOR, Role.MENTOR)],
     ['админ', who(OTHER_USER, Role.ADMIN)],
   ])('%s — denied', (_, subject) => {
@@ -66,7 +66,7 @@ describe.each([
 
   it.each([
     ['ментор чужого потока', who(OTHER_MENTOR, Role.MENTOR)],
-    ['сам студент', who(USER, Role.STUDENT)],
+    ['сам студент', who(USER, Role.GUEST)],
     ['пользователь с ролью GUEST', who(OTHER_USER, Role.GUEST)],
   ])('%s — denied', (_, subject) => {
     expect(rule.evaluate(subject, ctx).allowed).toBe(false);

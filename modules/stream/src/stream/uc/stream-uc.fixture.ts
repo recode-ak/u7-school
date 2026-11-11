@@ -44,7 +44,7 @@ export const otherMentor = new UserCaller({
 export const admin = new UserCaller({ uuid: OTHER_ID, roles: [Role.ADMIN] });
 export const student = new UserCaller({
   uuid: OTHER_ID,
-  roles: [Role.STUDENT],
+  roles: [Role.GUEST],
 });
 export const guestRole = new UserCaller({
   uuid: OTHER_ID,

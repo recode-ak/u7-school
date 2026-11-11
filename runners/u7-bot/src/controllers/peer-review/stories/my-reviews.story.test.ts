@@ -29,7 +29,7 @@ describe('MyReviewsStory — кнопка меню «💬 Отзывы» (S02)',
     uuid: 'user-1',
     name: 'Аня',
     telegramId: 123,
-    roles: [Role.STUDENT],
+    roles: [Role.GUEST],
     createdAt: '2026-01-01T00:00:00.000Z',
   };
 
@@ -124,7 +124,7 @@ describe('MyReviewsStory — экран S02 «Мои отзывы» (мини-к
     uuid: 'user-1',
     name: 'Аня',
     telegramId: 123,
-    roles: [Role.STUDENT],
+    roles: [Role.GUEST],
     createdAt: '2026-01-01T00:00:00.000Z',
   };
 
@@ -397,7 +397,7 @@ describe('MyReviewsStory — пагинация хаба S02 (BotPaginator + Dia
     uuid: 'user-1',
     name: 'Аня',
     telegramId: 123,
-    roles: [Role.STUDENT],
+    roles: [Role.GUEST],
     createdAt: '2026-01-01T00:00:00.000Z',
   };
 

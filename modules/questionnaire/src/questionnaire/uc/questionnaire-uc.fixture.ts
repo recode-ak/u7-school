@@ -24,13 +24,13 @@ export const REQ = Trace.fromRequest({ requestId: 'r-1' });
 
 export const respondent = new UserCaller({
   uuid: RESPONDENT,
-  roles: [Role.STUDENT],
+  roles: [Role.GUEST],
 });
 
 const FROM: OperationRef = { kind: 'useCase', module: 'probe', name: 'probe' };
 /** Вызов другого модуля за человека (`this.call`) и без человека (ER/Job). */
 export const systemFor = (uuid = RESPONDENT) =>
-  new SystemCaller(FROM, new UserCaller({ uuid, roles: [Role.STUDENT] }));
+  new SystemCaller(FROM, new UserCaller({ uuid, roles: [Role.GUEST] }));
 export const systemAlone = new SystemCaller<QuestionnaireUser>(FROM);
 
 export const pool = (): QuestionnairePool => ({

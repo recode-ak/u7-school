@@ -186,7 +186,7 @@ describe('U7App: события студента от UoW модуля stream д
       await app.apiApp.dispatch(
         StreamModuleDef,
         DropStudentUcDef.command({ streamId: STREAM, studentId: LEAVER_ROW }),
-        new UserCaller(user(LEAVER, [Role.STUDENT])),
+        new UserCaller(user(LEAVER, [Role.GUEST])),
         trace(),
       ),
     );

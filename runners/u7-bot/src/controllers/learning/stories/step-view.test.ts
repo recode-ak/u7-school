@@ -30,7 +30,7 @@ describe('StepViewStory', () => {
     uuid: 'user-1',
     name: 'Студент',
     telegramId: 123,
-    roles: [Role.STUDENT],
+    roles: [Role.GUEST],
     createdAt: '2026-01-01T00:00:00.000Z',
   };
 

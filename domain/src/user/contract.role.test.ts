@@ -9,7 +9,6 @@ describe('contract user: Role', () => {
     expect(roles).toEqual({
       GUEST: 'GUEST',
       SUBSCRIBER: 'SUBSCRIBER',
-      STUDENT: 'STUDENT',
       MENTOR: 'MENTOR',
       AUTHOR: 'AUTHOR',
       ADMIN: 'ADMIN',

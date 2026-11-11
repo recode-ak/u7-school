@@ -16,13 +16,7 @@ describe('CommunityStory (school)', () => {
     const story = new CommunityStory();
     expect(story.name).toBe('community');
 
-    const roles = [
-      Role.GUEST,
-      Role.SUBSCRIBER,
-      Role.STUDENT,
-      Role.MENTOR,
-      Role.ADMIN,
-    ];
+    const roles = [Role.GUEST, Role.SUBSCRIBER, Role.MENTOR, Role.ADMIN];
     for (const role of roles) {
       const user: User = {
         uuid: `user-${role}`,

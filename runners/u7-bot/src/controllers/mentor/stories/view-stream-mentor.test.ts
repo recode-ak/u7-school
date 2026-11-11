@@ -227,7 +227,7 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
       uuid: 'stranger-1',
       name: 'Чужой',
       telegramId: 999,
-      roles: [Role.STUDENT],
+      roles: [Role.GUEST],
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     };

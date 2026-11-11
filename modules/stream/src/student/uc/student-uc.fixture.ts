@@ -51,10 +51,10 @@ export const PREV_MODULE = '12345678-1234-4234-8234-123456789012';
 export const DAY = 24 * 60 * 60 * 1000;
 
 /** Владелец записи студента и посторонний пользователь. */
-export const owner = new UserCaller({ uuid: USER, roles: [Role.STUDENT] });
+export const owner = new UserCaller({ uuid: USER, roles: [Role.GUEST] });
 export const stranger = new UserCaller({
   uuid: OTHER_ID,
-  roles: [Role.STUDENT],
+  roles: [Role.GUEST],
 });
 
 /** Вердикт курса (D-65) — ответ заглушки `getModulePrerequisite`. */

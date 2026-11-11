@@ -25,7 +25,7 @@ describe('StreamPolicy.canCreate', () => {
     expect(canCreate.evaluate(who(MENTOR, Role.ADMIN), {}).allowed).toBe(false);
   });
 
-  it.each([Role.GUEST, Role.SUBSCRIBER, Role.STUDENT, Role.AUTHOR])(
+  it.each([Role.GUEST, Role.SUBSCRIBER, Role.AUTHOR])(
     'роль %s — denied',
     (role) => {
       expect(canCreate.evaluate(who(MENTOR, role), {}).allowed).toBe(false);
@@ -58,7 +58,6 @@ describe('StreamPolicy.canManage', () => {
 
   it.each([
     { title: 'чужой ментор', roles: [Role.MENTOR] },
-    { title: 'студент', roles: [Role.STUDENT] },
     { title: 'гость (роль GUEST)', roles: [Role.GUEST] },
   ])('$title — denied', ({ roles }) => {
     expect(canManage.evaluate(who(OTHER_MENTOR, ...roles), ctx).allowed).toBe(

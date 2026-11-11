@@ -15,7 +15,7 @@ const KNOWN: User = {
   uuid: '22222222-2222-4222-8222-222222222222',
   name: 'Известный пользователь',
   telegramId: 1,
-  roles: [Role.STUDENT],
+  roles: [Role.GUEST],
   createdAt: '2026-06-01T00:00',
 };
 const UNKNOWN = '33333333-3333-4333-8333-333333333333';

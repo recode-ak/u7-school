@@ -12,7 +12,7 @@ function makeUser(overrides: Partial<User> = {}): User {
     uuid: crypto.randomUUID(),
     name: 'Тест',
     telegramId: 1,
-    roles: [Role.STUDENT],
+    roles: [Role.GUEST],
     createdAt: '2026-05-01T12:00',
     ...overrides,
   };

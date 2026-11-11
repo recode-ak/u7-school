@@ -188,15 +188,6 @@
 - **Погашает:** интеграция менторских шагов в уроки через API
 - **Критерий снятия:** скрипты получают менторские файлы через `get-step` (`kind: 'file'`) по `mentorStepIds`, чтений `manifest.json` с диска нет
 
-### DEBT-48: роль `STUDENT` в модуле `user`
-- **Место:** `domain/src/user/user/{roles,policy}.ts` — значение `Role.STUDENT`, `UserPolicy.isStudent`, исключения `canAddRole`/`canRemoveRole` («ментор — любому, пользователь — себе»)
-- **Признак:** `Role\.STUDENT`
-- **Корень:** `**/*policy.ts`
-- **Причина:** с трека `stream-dmg` (Ф2) `stream` не выдаёт и не снимает роль — студента определяет `getActiveStudent`. Роль осталась в `user` и в живых `data/users` (spec `stream-dmg`, «Роль `STUDENT`»); удаление — перевод `user`. В тестах `course`, `stream` и бота `Role.STUDENT` — роль без прав (TR-44), Корень их не ловит.
-- **Погашает:** трек перевода `user` на Def
-- **Критерий снятия:** `Role.STUDENT` и исключения удалены; `STUDENT` убран из `roles` в `data/users` — миграция данных с `bun run backup` и разрешения Нурболата
-
-
 ### DEBT-50: правило «курс модуля» — две ветки по статусу и порядок файла
 - **Место:** `domain/src/course/module-courses.dqs.ts` — `firstIncluding` (любой статус) и `firstPublishedIncluding` (опубликованный), выбор первого курса в порядке файла, стартовый модуль — по одному курсу
 - **Признак:** `^\s+first(Published)?Including\(`
@@ -694,4 +685,5 @@
   - **С4 — seed не переносится**, долг — DEBT-52.
   - **С5 — строгое чтение `users.json`**; порядок релиза в чек-листе `migration.md` (Ф8): `bun run backup` → сухой прогон скрипта миграции (перечисляет записи со `STUDENT` и невалидные) → запуск с подтверждения Нурболата → рестарт на новом коде.
   - **Т1–Т17 — по разбору:** `registerGuest` на занятый `telegramId` → `USER_TELEGRAM_ID_TAKEN` (идемпотентность `/start` держит `ensureRegisteredGuest`); S0 `Legacy*`; Def UC и их регистрация — в Ф2 одним коммитом с реализациями (уточнено в Ф1: незарегистрированный Def в домене даёт MAN-06 `arch:check`); без `isAuthor()` и событий; `STUDENT` в picklist до Ф3; выходы `UserView[]`; `UserLegacy`/`U7LegacyFacades` снимаются в Ф2 (план — Ф6); скрипт миграции по сырому JSON, пустые роли → `GUEST`; grep-критерии Ф1–Ф3 уточнены (собственная фабрика `new UserAr(`, `Role\.STUDENT` + литералы `'STUDENT'`); Ф5 переводит чтение и запись `user` одним коммитом (новый репозиторий пишет числовые даты).
+  - **Ф3 (orchestrator):** код-часть DEBT-48 погашена (`Role.STUDENT`, `STUDENT` в `UserState`, исключения legacy `canAddRole`/`canRemoveRole`), запись снята из `debt.md` (`arch:check`); данные `data/users` — скрипт `scripts/migrate-users-drop-student.ts` по чек-листу релиза (С5), сухой прогон перечисляет все невалидные записи, не только со `STUDENT`. В тестах `STUDENT` → `GUEST` (роль без прав, TR-44), где `GUEST` уже есть — удалён; бриф `slices/user-data.md`.
 - **Пересмотреть:** способ фикстуры субъекта (Ф4); аудит других модулей на последствия прежнего запрета D-45 — кандидат [contract-audit](../roadmap/contract-audit.md).

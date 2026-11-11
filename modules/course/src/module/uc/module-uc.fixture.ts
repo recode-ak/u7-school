@@ -23,7 +23,7 @@ export const T0 = Date.UTC(2026, 6, 8, 18, 35);
 export const author = new UserCaller({ uuid: AUTHOR_ID, roles: [Role.MENTOR] });
 export const student = new UserCaller({
   uuid: OTHER_ID,
-  roles: [Role.STUDENT],
+  roles: [Role.GUEST],
 });
 export const otherMentor = new UserCaller({
   uuid: OTHER_ID,

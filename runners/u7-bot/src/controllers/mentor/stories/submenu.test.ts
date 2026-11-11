@@ -46,10 +46,9 @@ describe('SubmenuStory (S02m) — контракт «Диалог и Экран�
     expect(await story.menuButtons(actor([Role.ADMIN]))).toHaveLength(1);
   });
 
-  test('menuButtons: GUEST и STUDENT — нет кнопки', async () => {
+  test('menuButtons: GUEST — нет кнопки', async () => {
     const story = createStory();
     expect(await story.menuButtons(actor([Role.GUEST]))).toEqual([]);
-    expect(await story.menuButtons(actor([Role.STUDENT]))).toEqual([]);
   });
 
   // ── handleCallback "start": экран подменю с точной клавиатурой ──

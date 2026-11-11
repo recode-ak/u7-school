@@ -39,8 +39,8 @@ describe('ModulePolicy.canSeeUnpublished', () => {
     ).toBe(false);
   });
 
-  it('студент — denied', () => {
-    const decision = canSeeUnpublished.evaluate(who(OTHER, Role.STUDENT), ctx);
+  it('пользователь с ролью GUEST — denied', () => {
+    const decision = canSeeUnpublished.evaluate(who(OTHER, Role.GUEST), ctx);
     expect(decision.allowed).toBe(false);
   });
 

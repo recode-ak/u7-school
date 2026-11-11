@@ -68,11 +68,11 @@ describe('CreateUserUc', () => {
       const admin = makeUser();
 
       const user = await uc.handle(
-        { name: 'Новый студент', telegramId: 2, roles: [Role.STUDENT] },
+        { name: 'Новый студент', telegramId: 2, roles: [Role.GUEST] },
         admin,
       );
 
-      expect(user.roles).toEqual([Role.STUDENT]);
+      expect(user.roles).toEqual([Role.GUEST]);
       expect(user.name).toBe('Новый студент');
       expect(save).toHaveBeenCalledTimes(1);
     });
@@ -86,13 +86,13 @@ describe('CreateUserUc', () => {
       isTelegramIdTaken.mockResolvedValueOnce(true);
 
       await expect(
-        uc.handle({ name: 'Б', telegramId: 1, roles: [Role.STUDENT] }, admin),
+        uc.handle({ name: 'Б', telegramId: 1, roles: [Role.GUEST] }, admin),
       ).rejects.toMatchObject({ error: { name: 'TELEGRAM_ID_TAKEN' } });
     });
 
     test('отклоняет создание пользователем без прав ADMIN', async () => {
       const { getByUuid, uc } = setupUc();
-      const student = makeUser({ roles: [Role.STUDENT], telegramId: 2 });
+      const student = makeUser({ roles: [Role.GUEST], telegramId: 2 });
 
       await expect(
         uc.handle(

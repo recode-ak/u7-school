@@ -24,7 +24,7 @@ describe('world-kit: инварианты роли/статуса и хроно�
       key: 'andrey',
       name: 'Андрей',
       telegramId: 1003,
-      roles: ['STUDENT'],
+      roles: ['GUEST'],
       registeredAt: 'T-60d',
     });
 
@@ -120,7 +120,7 @@ describe('world-kit: инварианты роли/статуса и хроно�
         key: 'andrey',
         name: 'Андрей',
         telegramId: 1003,
-        roles: ['STUDENT'],
+        roles: ['GUEST'],
         registeredAt: 'T-20d',
       });
 
@@ -150,7 +150,7 @@ describe('world-kit: инварианты роли/статуса и хроно�
         key: 'andrey',
         name: 'Андрей',
         telegramId: 1003,
-        roles: ['STUDENT'],
+        roles: ['GUEST'],
         registeredAt: 'T-10d',
       });
 

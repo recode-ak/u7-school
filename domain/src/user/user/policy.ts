@@ -22,26 +22,13 @@ export const LegacyUserPolicy = {
     return this.isAdmin(actor);
   },
 
-  /**
-   * ADMIN может добавлять любую роль любому пользователю.
-   * MENTOR может добавить роль STUDENT любому пользователю.
-   * Обычный пользователь — роль STUDENT самому себе.
-   */
-  canAddRole(actor: User, target: User, role: Role): boolean {
-    if (this.isAdmin(actor)) return true;
-    if (this.isMentor(actor) && role === Role.STUDENT) return true;
-    if (actor.uuid !== target.uuid) return false;
-    return role === Role.STUDENT;
+  /** Добавлять роли может только ADMIN. */
+  canAddRole(actor: User): boolean {
+    return this.isAdmin(actor);
   },
-  /**
-   * ADMIN может удалять любую роль у любого пользователя.
-   * MENTOR может снять роль STUDENT у любого пользователя.
-   * Обычный пользователь — роль STUDENT у самого себя.
-   */
-  canRemoveRole(actor: User, target: User, role: Role): boolean {
-    if (this.isAdmin(actor)) return true;
-    if (this.isMentor(actor) && role === Role.STUDENT) return true;
-    if (actor.uuid !== target.uuid) return false;
-    return role === Role.STUDENT;
+
+  /** Снимать роли может только ADMIN. */
+  canRemoveRole(actor: User): boolean {
+    return this.isAdmin(actor);
   },
 };

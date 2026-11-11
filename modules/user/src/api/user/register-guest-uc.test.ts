@@ -95,7 +95,7 @@ describe('RegisterGuestUc', () => {
       uuid: userUuid,
       name: 'Existing',
       telegramId: 12345,
-      roles: [Role.STUDENT],
+      roles: [Role.GUEST],
       createdAt: '2024-01-01T00:00',
     });
     await db.commit();
@@ -108,7 +108,7 @@ describe('RegisterGuestUc', () => {
 
     expect(result.uuid).toBe(userUuid);
     expect(result.name).toBe('Existing'); // Имя не изменилось
-    expect(result.roles).toEqual([Role.STUDENT]); // Роли не изменились
+    expect(result.roles).toEqual([Role.GUEST]); // Роли не изменились
   });
 
   test('FAIL: отклоняет вызов не от админа', async () => {
