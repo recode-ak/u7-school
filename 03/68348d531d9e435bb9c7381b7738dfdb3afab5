@@ -1,0 +1,4 @@
+Фаза 6 course-dmg (итог) — верификация, автономно (agents.md §9).
+Команды: CI=true bun run check — зелёный, bun test 4562/0; bun run test:bot — 1097/0; dmg-core bun test — 1401/0; course: домен 442/0, модуль 330/0.
+Критерии spec — все ✅ (summary.md). debt.md: мест course в DEBT-1,2,5,34,44 нет, DEBT-10 и TR-11 закрыты (Ф5). git status data/ — пуст.
+Ручная верификация пропущена (автономный режим).
