@@ -83,10 +83,11 @@
 
 ## Фаза 4: Резолвер `Caller` и Policy клиентов
 
-- [ ] Task: `dmg-test-designer`: red-тесты (Sonnet): резолвер `Caller` на Def (`dispatch` UC `user`; сбой — ERR-01); Policy `course`/`stream`/`questionnaire` и `submenu` — на API ролей (способ — решение Ф0)
-- [ ] Task: `migrator` (flash): резолвер вместо `U7CallerResolver`; 5 Policy и `submenu.ts`; `Role` убран из `contract.ts`; фикстуры клиентов
-- [ ] Task: `dmg-reviewer` (Opus)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md; автономно)
+- [x] Task: `dmg-tech-lead`: бриф `slices/caller.md` (Sonnet; шага не было в плане — форма фикстуры субъекта отложена на бриф Ф4, Р9 `user-domain`); фикстура — общий `@u7-scl/domain/user/testing` (Нурболат) 26d341b6
+- [x] Task: `dmg-test-designer`: red-тесты (Sonnet): резолвер `Caller` на Def (`dispatch` UC `user`; сбой — ERR-01); Policy `course`/`stream`/`questionnaire` и `submenu` — на API ролей (способ — решение Ф0) 26d341b6
+- [x] Task: `migrator` (flash): резолвер вместо `U7CallerResolver`; 5 Policy и `submenu.ts`; `Role` убран из `contract.ts`; фикстуры клиентов 26d341b6 — эскалация: вход `testing` в платформе (D-70, `dmg-core@d2128ce`, Opus — решение Нурболата), проектный дубль проверки удалён
+- [x] Task: `dmg-reviewer` (Opus) 26d341b6 — `error` нет; 1 warn (TST-08) и 4 info закрыты в срезе, остальные приняты (TR-61 «Ф4»)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 4:**
 - `grep -rn "roles.includes(Role\.\|roles.some(" domain/src modules runners/u7-bot/src` пуст вне `user` (`tests/worlds/invariants.ts` — по решению).
