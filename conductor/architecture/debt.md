@@ -172,15 +172,6 @@
 - **Погашает:** трек персональных зон — поле зоны в `user`, форматирование и разбор ввода по зоне пользователя (зона проекта — значение по умолчанию)
 - **Критерий снятия:** даты для пользователя форматируются и разбираются по его зоне из `user`; жёстко заданная UTC+5 остаётся только как значение по умолчанию; маркер удалён
 
-### DEBT-44: UC-адаптеры над legacy-фасадами
-- **Место:**
-  - `modules/user/src/user/uc/get-telegram-addresses.uc.ts` — адаптер над фасадом пользователей; погашает миграция модуля `user`
-- **Признак:** `Адаптер .* над legacy`
-- **Корень:** `modules/*/src/**/uc/*.uc.ts`
-- **Причина:** TR-11 — модули не на DMG (D-37), внешний контракт закрыт UC-адаптером над legacy-фасадом; паттерн описан в [migration.md](./migration.md), раздел «UC-адаптер над legacy-фасадом».
-- **Погашает:** миграция соответствующего модуля (по glob'у)
-- **Критерий снятия:** адаптер заменён настоящим UC модуля, `external` снят, legacy-фасад удалён, заголовок адаптера удалён
-
 ### DEBT-45: проактив с кнопками `invite` (ФР-6)
 - **Место:** `platform/core/src/ui/bot/{types,ui-app,bot-controller,bot-controller.test}.ts`, `runners/u7-bot/src/infra/{bot-transport,bot-transport.test}.ts`, `runners/u7-bot/src/controllers/{peer-review/stories/invite.story,courses/stories/wish-invite.story,learning/stories/{hub,hub.test},questionnaire/stories/{invite.story,fill.story,fill.story.events.test}}.ts`; погашает `tasks-system`
 - **Признак:** `ФР-6`

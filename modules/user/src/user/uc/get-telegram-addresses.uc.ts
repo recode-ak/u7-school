@@ -1,25 +1,25 @@
-// Адаптер UC внешнего контракта над legacy-фасадом пользователей.
 import {
   GetTelegramAddressesUcDef,
   type UserModuleDef,
 } from '@u7-scl/domain/user/contract';
-import { ok } from 'dmg-core';
+import { type Identified, ok } from 'dmg-core';
 import { type ParsedInputOf, UseCaseFromDef } from 'dmg-core/app';
-import type { UserModuleDeps } from '../../user.module';
+import type { UserDeps } from '../../user.module';
 
 type Input = ParsedInputOf<typeof GetTelegramAddressesUcDef>;
 
 /**
- * `getTelegramAddresses` поверх legacy
- * `getUserByUuid` (батча в legacy нет — по одному): пользователь без
- * профиля или без `telegramId` в ответ не попадает.
+ * Адреса за один запрос к порту (`findByIds`): в ответ попадают только
+ * пользователи с профилем, порядок — как во входе, отсутствующие просто
+ * не попадают в ответ (без ошибки).
  */
 export class GetTelegramAddressesUc extends UseCaseFromDef<
   typeof GetTelegramAddressesUcDef,
-  UserModuleDeps,
-  undefined
+  UserDeps,
+  undefined,
+  Identified
 > {
-  constructor(deps: UserModuleDeps, module: typeof UserModuleDef) {
+  constructor(deps: UserDeps, module: typeof UserModuleDef) {
     super(GetTelegramAddressesUcDef, deps, module);
   }
 
@@ -28,13 +28,12 @@ export class GetTelegramAddressesUc extends UseCaseFromDef<
   }
 
   protected async execute({ userIds }: Input) {
-    const addresses: { userId: string; telegramId: number }[] = [];
-    for (const userId of userIds) {
-      const user = await this.resolve.legacy.getUserByUuid(userId);
-      if (user?.telegramId !== undefined) {
-        addresses.push({ userId, telegramId: user.telegramId });
-      }
-    }
+    const users = await this.resolve.users.findByIds(userIds);
+    const byUuid = new Map(users.map((user) => [user.uuid, user]));
+    const addresses = userIds.flatMap((userId) => {
+      const telegramId = byUuid.get(userId)?.view().telegramId;
+      return telegramId === undefined ? [] : [{ userId, telegramId }];
+    });
     return ok({ addresses });
   }
 }

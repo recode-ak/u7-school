@@ -8,7 +8,16 @@ describe('UserModuleDef — внешний модуль (D-37)', () => {
     expect(normalize(UserModuleDef)).toMatchObject({
       dependsOn: [],
       aggregates: ['user'],
-      useCases: ['getTelegramAddresses'],
+      useCases: [
+        'addRoleToUser',
+        'getTelegramAddresses',
+        'getUser',
+        'getUserByTelegramId',
+        'getUsersByIds',
+        'listUsers',
+        'registerGuest',
+        'removeRoleFromUser',
+      ],
       reactions: [],
       jobs: [],
     });

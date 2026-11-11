@@ -46,9 +46,13 @@ import {
   StreamJsonRepo,
   StudentJsonRepo,
 } from '@u7-scl/stream';
-import { createUserModule } from '@u7-scl/user';
+import { createUserModule, type UserRepo } from '@u7-scl/user';
 import { UserApiModule } from '@u7-scl/user/api';
-import { LegacyUserJsonRepo, UserInProcFacade } from '@u7-scl/user/infra';
+import {
+  LegacyUserJsonRepo,
+  UserInProcFacade,
+  UserJsonRepo,
+} from '@u7-scl/user/infra';
 import { createWishModule, WishJsonRepo, type WishRepo } from '@u7-scl/wish';
 import type { Identified } from 'dmg-core';
 import {
@@ -60,7 +64,7 @@ import {
   JsonlOperationLog,
   type ModuleFactory,
 } from 'dmg-core/app';
-import type { U7AppEnv, U7AppPorts, U7LegacyFacades } from './u7-app.types';
+import type { U7AppEnv, U7AppPorts } from './u7-app.types';
 import type { U7BotAppMeta } from './u7-app-meta';
 import { U7CallerResolver } from './u7-caller-resolver';
 
@@ -129,8 +133,8 @@ export class U7App {
     // stories, legacy-события stream доходят до ER (D-37).
     const dmg = U7App.dmgApp(
       U7App.dmgContext(env, appResolver.eventBus, logger),
-      { user: userFacade },
       {
+        users: new UserJsonRepo(`${dbDir}/users/users.json`),
         courses: new CourseJsonRepo(`${dbDir}/courses/courses.json`),
         modules: new ModuleJsonRepo(`${dbDir}/courses/modules.json`),
         lessons: new LessonJsonRepo(`${dbDir}/courses/lessons.json`),
@@ -219,8 +223,8 @@ export class U7App {
    */
   private static dmgApp(
     context: AppContext,
-    legacy: U7LegacyFacades,
     repos: {
+      readonly users: UserRepo;
       readonly courses: CourseRepo;
       readonly modules: ModuleRepo;
       readonly lessons: LessonRepo;
@@ -237,7 +241,7 @@ export class U7App {
     const factories: ModuleFactory<Identified>[] = [
       {
         def: UserModuleDef,
-        create: (deps) => createUserModule({ ...deps, legacy: legacy.user }),
+        create: (deps) => createUserModule({ ...deps, users: repos.users }),
       },
       {
         def: CourseModuleDef,
