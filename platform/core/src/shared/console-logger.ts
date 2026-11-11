@@ -13,7 +13,14 @@ const LEVEL_LABELS: Record<LogLevel, string> = {
  * Использует console.log / console.warn / console.error.
  */
 export class ConsoleLogger implements Logger {
-  #level: LogLevel = LogLevel.DEBUG;
+  /**
+   * Уровень новых логгеров. Меняет точка входа (ARC-09): preload `bun test`
+   * (`scripts/test-preload.ts`) ставит WARN, чтобы INFO-логи UC не засоряли
+   * вывод тестов.
+   */
+  static defaultLevel: LogLevel = LogLevel.DEBUG;
+
+  #level: LogLevel = ConsoleLogger.defaultLevel;
   readonly #sourceLevels = new Map<string, LogLevel>();
 
   setLogLevel(level: LogLevel): void {

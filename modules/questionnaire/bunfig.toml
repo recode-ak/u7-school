@@ -1,0 +1,3 @@
+[test]
+# Тихие логи ConsoleLogger в тестах (см. корневой bunfig.toml)
+preload = ["../../scripts/test-preload.ts"]

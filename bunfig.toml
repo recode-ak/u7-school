@@ -1,0 +1,3 @@
+[test]
+# Тихие логи ConsoleLogger в тестах (LOG_LEVEL переопределяет)
+preload = ["./scripts/test-preload.ts"]
