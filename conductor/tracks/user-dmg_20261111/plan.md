@@ -108,7 +108,7 @@
 - Поведение — как в `v0.2.6` (характеризация), кроме одобренных перепроектирований.
 - `check` целиком зелёный, `test:bot` и e2e не ниже базовой линии с поправкой на удалённые UC; красной зоны в `debt.md` нет.
 
-## Фаза 6: Сборка и снятие legacy
+## Фаза 6: Сборка и снятие legacy [checkpoint: d59a475d]
 
 - [x] Task: Бриф `slices/assembly.md` (Opus, решения — TR) — сам, без `tech-lead` (образец `course-dmg` Ф5); задачи 2–3 — два шага flash подряд, общий коммит
 - [x] Task: `migrator`, сборка (flash): `UserModuleDef` без `external`, фабрика в `U7App`, `@u7-scl/user/**` — в ARC-07 `biome.json` 6f6435b6 — эскалации: `u7-cli` (ветка `execute` снята), `app-legacy/domain/user.ts` удалён в Ф6 (ARC-04), TR-61 «Ф6»
