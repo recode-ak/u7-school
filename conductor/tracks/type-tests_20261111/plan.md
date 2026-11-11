@@ -37,21 +37,21 @@
 - [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
     - Разница с базовой линией: 1401 → 1379 (−22 `it`: 19 по таблице, 3 дубля после доработки), файлов 132 → 131, маркеров 72 → 62
 
-## Фаза 3: Правило в документации и закрытие
+## Фаза 3: Правило в документации и закрытие [checkpoint: 28e20a3]
 *Приёмка фазы: правило есть в `docs/testing.md` пакета; u7-school на новом SHA зелёный; кандидат Б-17 снят.*
 
 - [x] Task: Правило §2 → `docs/testing.md` пакета; при необходимости `llms.txt`; `check` пакета; коммит `dmg-core@93333e8`
     - Итог: `docs/reference/testing.md` §5.2, TST-10 в `rules.md`, D-68, строка в `llms.txt`; check пакета зелёный, 1379 pass
 - [x] Task: u7-school на новом пакете
     - [x] `bun install`, `bun run dmg:sync`, `bun run check` — зелёный, 3179 pass
-- [x] Task: Документы conductor (по `conductor-docs`)
+- [x] Task: Документы conductor (по `conductor-docs`) `49b5a55`
     - [x] `test-bloat.md`: Б-17 отмечена закрытой, новые закономерности — в журнал
     - [x] Снять кандидата из `tracks.md`; `roadmap/type-tests.md` удалить, ссылки поправить
-- [x] Task: Финальный гейт
+- [x] Task: Финальный гейт `49b5a55`
     - [x] `CI=true bun test` в u7-school, триаж по workflow; сравнение с базовой линией обоих репо
     - [x] `summary.md`: числа, расход flash (`usage.jsonl`), итог по таблице
     - [x] Коммит u7-school с SHA пакета
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 ---
 
