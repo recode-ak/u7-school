@@ -116,7 +116,7 @@
 - Курс из одного этапа: карточка сразу показывает модули этапа, этап виден в крошках (TR-59); остальное — как в `v0.2.6` (характеризация). Курс из двух этапов и больше — как в `v0.2.6`.
 - `check` целиком зелёный, `test:bot` и e2e не ниже базовой линии, пересчитанной по TR-59 (удалённые UC — без тестов), красной зоны в `debt.md` нет.
 
-## Фаза 5: Сборка и снятие legacy
+## Фаза 5: Сборка и снятие legacy [checkpoint: 3e0f68e2]
 
 - [x] Task: Бриф `slices/assembly.md` (Opus, TR-45; решения — TR-60) e17c7c12
 - [x] Task: `migrator`, сборка (flash): `CourseModuleDef` без `external`, фабрика в `U7App`, `@u7-scl/course/**` — в ARC-07 `biome.json` bd13f3df
@@ -124,7 +124,7 @@
 - [x] Task: `migrator`, клиенты сборки (flash): `tests/helpers/test-app.ts`, `scripts/_app-factory.ts`, `scripts/{call-uc,domain-arch,stream-snapshot-sync,update-stream-snapshot,list-lessons,distribute-lesson,distribute-mentor}.ts`, тесты `u7-app` и `arch-check` bd13f3df (TR-60: шаги «клиенты» → «удаление», общий коммит)
 - [x] Task: `dmg-data-keeper` (flash): скрипты `distribute-*`, `list-lessons` на `DB_DIR=./data/fixtures` — вывод совпадает с `v0.2.6`, запись — только через репозитории Def (`cd-F5-data`: вывод совпал; `distribute-mentor` не запускался — шлёт в Telegram, курс не использует)
 - [x] Task: `dmg-reviewer` (Opus): 0 `error`, 1 `warn` — исправлены (`cd-F5-fix`), решения — TR-60
-- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md; автономно) 3e0f68e2
 
 **Критерии приёмки Фазы 5:**
 - `grep -rn "CourseApiModule\|CourseInProcFacade\|CourseFacade\|CourseLegacy" --include=*.ts .` пуст (вне `node_modules`).
