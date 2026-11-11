@@ -83,7 +83,7 @@
 - Публичность `listUsers`/`getUser*` (в том числе для гостя) — как legacy (`requiresAuth: false`); при выносе в HTTP пересмотреть (запись в TR).
 - Порядок проверок: в `addRoleToUser`/`removeRoleFromUser` `load` (NOT_FOUND) идёт перед Policy — как в legacy (`add-role-to-user-uc.ts:29-40`: «не найден» раньше «нет прав»); сохраняется.
 
-**Р7. Регистрация в паспорте.** Ф1 создаёт Def-файлы UC, но **не добавляет** их в `UserModuleDef.useCases` и в контракт: карта `satisfies ModuleMap<typeof UserModuleDef, …>` в `modules/user/src/user.module.ts` требует реализации каждого Def, и `check` стал бы красным до Ф2. Регистрация, экспорт в `contract.ts`, `index.ts`, `user.module.test.ts` — в Ф2 одним коммитом с реализациями. `external: true` остаётся.
+**Р7. Регистрация в паспорте.** _Уточнено в Ф1 (TR-61): Def UC без регистрации валят `arch:check` (MAN-06), поэтому Def 7 UC создаются в Ф2 вместе с регистрацией и реализациями; в Ф1 их нет. Текст ниже — исходный._ Ф1 создаёт Def-файлы UC, но **не добавляет** их в `UserModuleDef.useCases` и в контракт: карта `satisfies ModuleMap<typeof UserModuleDef, …>` в `modules/user/src/user.module.ts` требует реализации каждого Def, и `check` стал бы красным до Ф2. Регистрация, экспорт в `contract.ts`, `index.ts`, `user.module.test.ts` — в Ф2 одним коммитом с реализациями. `external: true` остаётся.
 
 **Р8. Контракт Ф1.** Добавляются: `UserView` (тип), `UserErrors`, `UserAr` (D-69: субъект `Caller` и вопросы ролей для Policy клиентов; чужой код видит `ReadonlyAr<UserAr>`). Сохраняются до Ф4/Ф6: `UserFacade`, `Role`, `User`, `UserNotifiedEvent`, типы ошибок.
 
@@ -172,3 +172,24 @@ ARC-02 (домен: только `dmg-core` и `valibot`), ARC-04 (чужой �
 ## Решения Ф0
 
 TR-61 (`conductor/architecture/debt.md`), D-69 пакета `dmg-core` (`d71ccd4`). Тактические Т1–Т17 приняты по предложению `dmg-tech-lead`.
+
+## Отчёт `dmg-test-designer` (Ф1, Sonnet)
+
+Red-тесты: `user.state.test.ts` (18), `user.ar.test.ts` (18), `user.policy.test.ts` (16), `user.rules.test.ts` (2) — падают на отсутствии `./user.fixture` и реализаций; legacy 27 pass.
+
+**TST-08.** Из `a-root.test.ts`: «из состояния» → `restore`+`snapshot()`; `create`/`register` → `UserAr.create`; `addRole` (2) → `user.ar.test.ts`; «инварианты бросают» не переносится (TST-09), проверки полей — в `user.state.test.ts`. Из `policy.test.ts`: ADMIN — `canRegisterGuest`/`canManageRoles`, остальные — отказ; не переносятся ветки `STUDENT`, `canCreate`, `isAuthor`. Legacy-тесты не тронуты (до Ф6).
+
+**Ожидаемые сигнатуры (для автора):**
+1. `user.ar.ts`: `UserArDef.state` содержит D-36 (фолбэки дат и `version`; тесты читают через `v.safeParse`). `UserAr.create({ uuid, telegramId, name, nick? }, at): Result<UserAr, never>`; `UserAr.restore(state)`. `snapshot()` → `{ uuid, telegramId, name, roles: ['GUEST'], createdAt: at, updatedAt: at, version: 0 }`, ключа `nick` нет при пустом/пробельном/`undefined`. `addRole(role, at)`/`removeRole(role, at)` → `ok`; новая роль — `version + 1`, `updatedAt = at`, добавляется в конец; повтор/отсутствие — состояние не меняется; снятие последней → `['GUEST']`. Вопросы `hasRole(role)`, `isAdmin()`, `isMentor()`.
+2. `user.state.ts`: `UserRole` (GUEST|SUBSCRIBER|STUDENT|MENTOR|AUTHOR|ADMIN), `UserState`; trim имени и nick, nick непустой, `telegramId` целое ≥ 1, `roles` непустой, неизвестная роль — отказ.
+3. `user.policy.ts`: `UserPolicy.rules.canManageRoles` / `canRegisterGuest`, `evaluate(subject | undefined, {})`; отказ `denied('<ключ>', '<текст Р4>')`.
+4. `user.rules.ts`: `UserRules.rules.telegramIdFree.check({ holder? })`: нет → `ok`; есть → `err` `USER_TELEGRAM_ID_TAKEN`, `kind: 'conflict'`, `payload: { telegramId }` из holder.
+5. `user.fixture.ts`: `USER` (uuid), `T0 = Date.UTC(2026, 5, 1, 10)`, `T1 = Date.UTC(2026, 5, 2)`, `stored(overrides: Partial<UserState> = {})` → `{ uuid: USER, name: 'Иван', telegramId: 123, roles: ['GUEST'], createdAt: T0, updatedAt: T0, version: 0, ...overrides }`.
+
+Решение orchestrator: `telegramId` в payload `TELEGRAM_ID_TAKEN` — из holder (принято).
+
+Кандидаты в чистку: новых нет (`platform/app-legacy/src/domain/user.test.ts` — уже в брифе).
+
+## Отчёт `migrator` (Ф1, flash, `ud-F1-domain`)
+
+Файлы: `user.{state,errors,ar,policy,rules,fixture}.ts`, `contract.ts` (+`UserView`, `UserErrors`, `UserAr`), `index.ts`, `state.ts` (реэкспорт по D-45). Отклонения: `UserView` — схема `= UserState` (нужна как `output` UC); ID `DEBT-48`/`TR-61` убраны из комментариев (`arch:check` запрещает их вне `biome-ignore`); `roles` с `v.description` (MAN-02). Эскалации: MAN-06 по Def UC → решение orchestrator (Р7 уточнён); `DEBT-48` в комментариях тестов → снят с разрешения. Итог: `bun test domain/src/user` 83 pass, `check` зелёный (3235 pass), `arch:check` 0.

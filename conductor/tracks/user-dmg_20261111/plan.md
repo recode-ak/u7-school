@@ -37,12 +37,12 @@
 ## Фаза 1: Домен `user` (аддитивно)
 
 - [x] Task: `migrator` S0 (flash): legacy `UserAr`/`UserPolicy`/`UserRepo`/`UserJsonRepo` → `Legacy*` (бриф, шаг 0) 6d840c14
-- [ ] Task: `dmg-test-designer`: характеризация на `../u7-school-v0.2.6` и red-тесты (Sonnet):
-    - [ ] state `User` с `F.timestamp`, чтение legacy ISO;
-    - [ ] `UserAr.create`/`restore`, API ролей (по решению Ф0), ошибки;
-    - [ ] Policy, правила, DCS/DQS; события — по утверждённому составу;
-    - [ ] перенос сценариев `a-root.test.ts`, `policy.test.ts` (список — в отчёте, TST-08).
-- [ ] Task: `migrator`, домен (flash): Def, Ar без `#` и `throw*`, правила, ошибки; `UserModuleDef` пока с `external`
+- [x] Task: `dmg-test-designer`: характеризация на `../u7-school-v0.2.6` и red-тесты (Sonnet): 03d6b4f4
+    - [x] state `User` с `F.timestamp`, чтение legacy ISO;
+    - [x] `UserAr.create`/`restore`, API ролей (по решению Ф0), ошибки;
+    - [x] Policy, правила; события — по утверждённому составу (нет, MAN-06); DCS/DQS бриф не предусматривает;
+    - [x] перенос сценариев `a-root.test.ts`, `policy.test.ts` (список — в отчёте, TST-08).
+- [x] Task: `migrator`, домен (flash): Def, Ar без `#` и `throw*`, правила, ошибки; `UserModuleDef` пока с `external` 03d6b4f4
 - [ ] Task: `dmg-reviewer` (Opus). Замечания без `error` решает orchestrator (TR), перепроектирование — Нурболату
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
 
@@ -57,7 +57,7 @@
     - [ ] UC по утверждённому составу (query и команды);
     - [ ] `get-telegram-addresses` настоящим UC (вместо адаптера над `getUserByUuid`);
     - [ ] репозиторий через UoW: строгое чтение, legacy ISO → число, round-trip, невалидная запись.
-- [ ] Task: `migrator`, прикладной слой (flash): UC через `UseCaseFromDef`, репозиторий; legacy-UC живут рядом; тесты состава модуля (`user.module.test.ts`, `u7-app*.test.ts`, `scripts/*.test.ts`)
+- [ ] Task: `migrator`, прикладной слой (flash): Def 7 UC в домене и их регистрация в `UserModuleDef` (перенесено из Ф1, TR-61); UC через `UseCaseFromDef`, репозиторий; legacy-UC живут рядом; тесты состава модуля (`user.module.test.ts`, `u7-app*.test.ts`, `scripts/*.test.ts`)
 - [ ] Task: `dmg-data-keeper` (flash): чтение `users.json` (копия заготовки и `DB_DIR=./data/fixtures`), записи в живые данные нет
 - [ ] Task: `dmg-reviewer` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
