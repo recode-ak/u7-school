@@ -62,3 +62,37 @@
 | Ф5 | `cd-F5-remove` (migrator, удаление legacy) | flash | 0.090 | 64 | 98% | 0 (эскалация: места в `debt.md`) | — |
 | Ф5 | `cd-F5-data` (dmg-data-keeper, скрипты против v0.2.6) | flash | 0.054 | 41 | 98% | 0 | — |
 | Ф5 | `cd-F5-fix` (migrator, правки ревью) | flash | 0.039 | 33 | 97% | 0 | 0 (ревью до правок: 0 `error`, 1 `warn`) |
+
+**Итог трека (flash):** 29 шагов, $2.37 (Ф1 $0.34, Ф2 $0.49, Ф3 $0.77, Ф4 $0.33, Ф5 $0.45); кругов доработки — 1 (Ф2, `cd-F2-dqs`); `error` ревью Opus по шагам flash — 0 за пять фаз (`warn` — 8, 5, 4, 6, 1, все исправлены). Эскалации flash обоснованы: дефекты red-тестов Sonnet, устаревшие места в брифе и `debt.md`.
+
+## Сверка с `deepseek.md`
+
+- §2 подтверждён: flash — `migrator` по готовым тестам, `dmg-data-keeper`, правки ревью; Sonnet — брифы `tech-lead`, red-тесты, stories этапов; Opus — приёмка, бриф сборки (TR-60), ревью.
+- Отклонение (Ф4): механика stories без смены поведения (`cd-F4-calls`, `cd-F4-tests`) — на flash, а не Sonnet; регрессий видимого поведения нет. Отклонение (Ф5): сборка и удаление legacy одним шагом flash ($0.27, 166 ходов) — без замечаний. Строка «механический перенос» таблицы §2 расширена.
+- Red-тесты Sonnet тоже дают дефекты (Ф3 — 3 по эскалации `cd-F3-domain`): правило «тест кажется неверным — эскалация» (§3) держит качество. В §2 дописано.
+
+## Гейт закрытия (2026-11-11)
+
+| Где | Команда | Базовая линия | Итог |
+|---|---|---|---|
+| u7-school (`1b4f3562`) | `CI=true bun run check` (`bun test`) | 4216 pass, 0 fail (397 файлов) | зелёный; 4562 pass, 0 fail (393 файла) |
+| u7-school (`1b4f3562`) | `bun run test:bot` | 1107 pass, 0 fail (101 файл) | 1097 pass, 0 fail (98 файлов) |
+| u7-school (`1b4f3562`) | `CI=true bun test domain/src/course` | 258 pass (26 файлов) | 442 pass, 0 fail (31 файл) |
+| u7-school (`1b4f3562`) | `CI=true bun test modules/course` | 170 pass (29 файлов) | 330 pass, 0 fail (22 файла) |
+| dmg-core (`eea2a24`) | `CI=true bun test` | 1397 pass, 0 fail | 1401 pass, 0 fail |
+
+Прирост `course`: +344 (домен и прикладной слой на Def, репозитории со строгим разбором, DQS этапов и пререквизита). Общий `bun test`: пик 4910 после Ф4, −350 в Ф5 — тесты удалённого legacy (сценарии перенесены, сверка — `slices/assembly.md`). Бот: −10 — тесты удалённых UC и дубли (TR-59).
+
+## Критерии приёмки spec
+
+| Критерий | Итог | Проверка |
+|---|---|---|
+| нет `throw*` для штатных отказов, `new …Ar`, `#` в Ar, импортов `core`/`app-legacy` | ✅ | `grep` по `domain/src/course`, `modules/course/src` (без тестов): `throw` и `#` нет, импортов нет; `new …Ar` — только в фабриках самих Ar |
+| программа — `moduleIds`, этапы — метки `fromModuleId`; курс без этапов валиден и виден ботом | ✅ | D-64; `course.state.test.ts`, тесты навигации по `stages` (Ф4: без этапов / один / несколько) |
+| `courses.json` в новом формате, ad-hoc бэкап до перевода | ✅ | `backup:adhoc --courses course-dmg-phases`, коммит `5534ac1b` |
+| клиенты не сравнивают id модулей курса; нет `teachesModule` в `student.rules.ts` | ✅ | `grep teachesModule domain/src/stream modules/stream` пуст; `wish` сравнивает свою цель с ответом курса (`FulfillmentTargets`) |
+| долг погашен, TR-11 закрыт, `arch:check` синхронен | ✅ | мест `course` в DEBT-1, 2, 5, 34, 44 нет, DEBT-10 закрыт, TR-11 «закрыта для всех модулей» (Ф5, TR-60); `arch:check` в `check` зелёный; остаются DEBT-3 (barrel, по spec), DEBT-50, DEBT-51 (новые, с владельцами) |
+| нет `external`; legacy-фасад, адаптеры, `CourseApiModule` удалены | ✅ | `course.module.test.ts`; `grep "CourseApiModule\|CourseInProcFacade\|CourseFacade\|CourseLegacy"` пуст |
+| `check` зелёный, у reviewer нет `error`, красной зоны нет | ✅ | гейт закрытия; ревью Ф1–Ф5 — `error` 0; красная зона TR-57 снята в Ф4 |
+| `git status data/` чист, кроме одобренного коммита `courses.json` | ✅ | пусто |
+| перепроектирования одобрены и записаны | ✅ | D-64, D-65; TR-52…60 |

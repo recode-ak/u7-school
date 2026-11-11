@@ -8,6 +8,8 @@
 >
 > **Принцип рефакторинга:** трек может ломать нижележащий функционал, если тот восстанавливается в следующем треке. Промежуточные сломанные состояния допустимы.
 >
+> **Устарело после `course-dmg` (2026-11-11):** этап курса — метка программы, а не контейнер модулей (D-64): курс хранит `moduleIds`, этап — `phases: [{ title, track?, fromModuleId }]`. Где ниже `phase.moduleIds` и `addModuleToPhase` (§1, §3.1, §3.6, §11.6) — читать в новой модели; `CourseDs`, `CourseFacade`, `content-path` и authoring-команды удалены. Что сделано и что осталось — [course-module-history.md](./course-module-history.md) §2.
+>
 > **Связанные conductor-документы:**
 > - [`conductor/development-roadmap.md`](./development-roadmap.md) — **дорожная карта:** порядок релизов, миграции, зависимости между инициативами
 > - `conductor/workflow.md` — процесс работы conductor (создание треков, генерация планов)
@@ -934,7 +936,7 @@ data/courses/      # JSON-хранилище (в будущем — БД)
 
 ### 11.6. Текущий формат данных (v5, для справки)
 
-**Course:** `{ uuid, title, description, authorId, phases: [{ title, track?, moduleIds[] }], status, createdAt, updatedAt? }`
+**Course:** `{ uuid, title, description, authorId, phases: [{ title, track?, moduleIds[] }], status, createdAt, updatedAt? }` — устарело: с `course-dmg` `moduleIds[]` у курса, у этапа — `fromModuleId` (D-64)
 
 **Module:** `{ uuid, title, description, authorId, targetAudience?, goal?, result?, rules?, additional?, tags?, status, projects: [{ uuid, title, goal?, result?, additional?, status, lessonIds[] }], createdAt, updatedAt? }`
 
