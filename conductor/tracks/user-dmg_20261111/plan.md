@@ -67,7 +67,7 @@
 - В `get-telegram-addresses.uc.ts` нет `legacy.`; маркера DEBT-44 в коде нет.
 - `check` зелёный, тесты не ниже базовой линии, `git status data/` чист.
 
-## Фаза 3: Данные и роль `STUDENT` (DEBT-48)
+## Фаза 3: Данные и роль `STUDENT` (DEBT-48) [checkpoint: fbdcae4]
 
 - [x] Task: `dmg-test-designer`: red-тесты (Sonnet): скрипт `scripts/migrate-users-drop-student.ts` (сухой прогон по умолчанию, запись по флагу, идемпотентность); строгое чтение записи со `STUDENT` — ошибка e7298e73
 - [x] Task: `migrator` (flash): скрипт; удалить `Role.STUDENT`, `isStudent`, исключения `canAddRole`/`canRemoveRole`; убрать `STUDENT` из фикстур модулей, тестовых миров и тестов; `bun run seed:fixtures` e7298e73 — DEBT-48 снят из `debt.md` (`arch:check`), итог в TR-61
