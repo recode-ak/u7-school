@@ -12,7 +12,7 @@
 
 ## 2. Закономерности
 
-Сводка инвентаризаций `wish`, `stream`, `questionnaire` и `peer-review` (трек `tst-cleanup`, файлы `conductor/tracks/tst-cleanup_20261105/inventory/*.md` в ветке `tst-cleanup`: там признаки grep, примеры и номера З1–З14 по файлам). Кандидатов — 31–62% тестов слоя; больше всего в прикладном слое (UC повторяет домен).
+Сводка инвентаризаций `wish`, `stream`, `questionnaire` и `peer-review` (трек `tst-cleanup`, файлы `conductor/archive/tst-cleanup_20261105/inventory/*.md`: там признаки grep, примеры и номера З1–З14 по файлам). Кандидатов — 31–62% тестов слоя; больше всего в прикладном слое (UC повторяет домен).
 
 Вопрос к тесту: **«какая реальная ошибка в коде модуля уронит этот тест и только его?»** Нет такой — кандидат.
 
@@ -71,7 +71,7 @@
 | 2026-11-06 | `tst-cleanup` | `domain/src/questionnaire`, `modules/questionnaire`, тесты бота (questionnaire) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 213 → 126, 113 → 39, бот 134 → 88 | почищено в треке |
 | 2026-11-06 | `tst-cleanup` | `domain/src/peer-review`, `modules/peer-review`, тесты бота (peer-review) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 184 → 72, 141 → 73, бот 127 → 104 | почищено в треке |
 | 2026-11-06 | `tst-cleanup` | `domain/src/{user,dossier}`, `modules/user`, тесты бота (user, dossier) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 70 → 33, 103 → 67, бот 15 → 10 | почищено в треке |
-| 2026-11-06 | `tst-cleanup` | `wish-questionnaire.e2e.test.ts:460`, `student-dmg.e2e.test.ts:122`, `:251`, `questionnaire-ux.e2e.test.ts`, `modules/questionnaire/src/questionnaire.module.test.ts:169` | дубли e2e и `probe`-модуль — см. «Дальше» в [plan.md](../tracks/tst-cleanup_20261105/plan.md) | почищено 2026-11-11 в `course-dmg` Ф7: −8, `questionnaire-ux.e2e.test.ts:339` оставлен ([deferred-delete.md](../archive/course-dmg_20261105/inventory/deferred-delete.md)) |
+| 2026-11-06 | `tst-cleanup` | `wish-questionnaire.e2e.test.ts:460`, `student-dmg.e2e.test.ts:122`, `:251`, `questionnaire-ux.e2e.test.ts`, `modules/questionnaire/src/questionnaire.module.test.ts:169` | дубли e2e и `probe`-модуль — см. «Дальше» в [plan.md](../archive/tst-cleanup_20261105/plan.md) | почищено 2026-11-11 в `course-dmg` Ф7: −8, `questionnaire-ux.e2e.test.ts:339` оставлен ([deferred-delete.md](../archive/course-dmg_20261105/inventory/deferred-delete.md)) |
 | 2026-11-11 | `course-dmg` Ф8 | `domain/src/course`, `modules/course`, тесты бота каталога и навигации курса (course) | Б-1…Б-19 по таблицам `conductor/archive/course-dmg_20261105/inventory/course-*-delete.md`; тесты: 442 → 225, 330 → 162, бот 104 → 66; мёртвый `StatusSchema` удалён (Б-13); оставлены по §6 строгое чтение `courses.json` и даты репозиториев | почищено в треке |
 
 ## 4. Как пополнять
@@ -82,7 +82,7 @@
 
 ## 5. Трек чистки
 
-Трек `tst-cleanup_20261105` (ветка `tst-cleanup`): Ф1 — закономерности §2 на `wish`/`stream`; Ф2 — чистка `wish`, `stream`, `questionnaire`, `peer-review`, `user`, `dossier`. Для каждого удаления — «удалён → закономерность → где покрыт»; критерий — число тестов падает, покрытие строк не падает, `check` зелёный. Итог (2026-11-06): −952 теста (домен −471, модуль −323, бот −158), покрытие собственных исходников не упало, падения — только TR-57; цифры — [summary.md](../tracks/tst-cleanup_20261105/summary.md). Следующий — трек по `course` после `course-dmg` (§6).
+Трек `tst-cleanup_20261105` (ветка `tst-cleanup`): Ф1 — закономерности §2 на `wish`/`stream`; Ф2 — чистка `wish`, `stream`, `questionnaire`, `peer-review`, `user`, `dossier`. Для каждого удаления — «удалён → закономерность → где покрыт»; критерий — число тестов падает, покрытие строк не падает, `check` зелёный. Итог (2026-11-06): −952 теста (домен −471, модуль −323, бот −158), покрытие собственных исходников не упало, падения — только TR-57; цифры — [summary.md](../archive/tst-cleanup_20261105/summary.md). Следующий — трек по `course` после `course-dmg` (§6).
 
 ## 6. Рекомендации для `course`
 
