@@ -94,7 +94,7 @@
 - `Role` не экспортируется из `domain/src/user/contract.ts`; TR-33, TR-40 — к снятию.
 - `check` зелёный, кроме поимённой красной зоны в `debt.md`.
 
-## Фаза 5: UI бота [checkpoint: PENDING]
+## Фаза 5: UI бота [checkpoint: bcec82bc]
 
 - [x] Task: `dmg-tech-lead`: бриф `slices/ui.md` с «Сохраняемым поведением» — регистрация, роли, меню, анкеты, уведомления; эталон `../u7-school-v0.2.6` (Sonnet); приёмка — Opus d006057a — О1: актор `ReadonlyAr<UserAr>` (Нурболат), мост Р5 снимается в Ф5
 - [x] Task: `dmg-test-designer`: перевод тестов бота на Def-имена (литералы `'get-user'` и др., кит анкет) и red-тесты (Sonnet) 99c6da92 — 2 круга (смена О1 на `Caller`, Нурболат)
