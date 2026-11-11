@@ -149,3 +149,11 @@ ARC-02 (модуль: `domain` по контракту, `core` и `app-legacy` �
 ## Решения Ф0
 
 TR-61 (`conductor/architecture/debt.md`), D-69 пакета `dmg-core` (`d71ccd4`). Тактические Т1–Т17 приняты по предложению `dmg-tech-lead`.
+
+## Отчёты Ф2
+
+**`dmg-test-designer` (Sonnet).** 9 тестовых файлов (7 UC, `user.json-repo.test.ts`, переписан `user.module.test.ts`) и фикстура `user/uc/user-uc.fixture.ts`; перенос legacy — по таблице TST-08 брифа; новых кандидатов в чистку нет. Red: 64 pass / 9 fail («Cannot find module»).
+
+**`migrator` (flash, `ud-F2-app`, $0.18).** Код по Р1–Р6, гейт зелёный. Эскалации: (1) smoke отдавал один `requestId` четырём командам → `REQUEST_CONFLICT` (D-56) — тест исправлен; (2) маркер DEBT-44 исчез — `arch:check` требует снять запись, orchestrator снял DEBT-44 в Ф2. Отклонения: query-UC типизированы `Identified` (Policy ролей — на командах); `v.trim()` убран из входа `registerGuest` (MAN-03, обрезает `UserAr.create`); `v.description` у полей `listUsers` (MAN-02).
+
+**`dmg-data-keeper` (flash, `ud-F2-data`, $0.04).** Совместимо для чтения: копия `data/fixtures/users/users.json` — 14/14 записей строго разобраны (3 со `STUDENT`), ISO → число. Прод до Ф5 новый `save` не вызывает (grep `dispatch` в `runners/**`, `platform/**` пуст). **Риск выкатки:** первый `save` нового репозитория переписывает весь файл числами → legacy читает 0 записей, следующий legacy-`save` оставляет в файле только свои (на копии 14 → 1). Окно «пишут оба» недопустимо: конвертация и снятие legacy-писателя — в одном релизе, перед ним `bun run backup` (чек-лист `migration.md`, Ф8). Чтение живого файла не выполнялось: legacy-репозиторий при чтении пишет `data/users/backups/` — проверка на релизе (С5).

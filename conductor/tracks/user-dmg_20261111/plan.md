@@ -58,7 +58,7 @@
     - [x] `get-telegram-addresses` настоящим UC (вместо адаптера над `getUserByUuid`);
     - [x] репозиторий через UoW: строгое чтение, legacy ISO → число, round-trip, невалидная запись.
 - [x] Task: `migrator`, прикладной слой (flash): Def 7 UC в домене и их регистрация в `UserModuleDef` (перенесено из Ф1, TR-61); UC через `UseCaseFromDef`, репозиторий; legacy-UC живут рядом; тесты состава модуля (`user.module.test.ts`, `u7-app*.test.ts`, `scripts/*.test.ts`) 54b5f76a — эскалации: smoke с одним `requestId` (D-56) исправлен; DEBT-44 снят из `debt.md` уже в Ф2 (`arch:check` требует снять запись без маркера)
-- [ ] Task: `dmg-data-keeper` (flash): чтение `users.json` (копия заготовки и `DB_DIR=./data/fixtures`), записи в живые данные нет
+- [x] Task: `dmg-data-keeper` (flash): чтение `users.json` (копия заготовки и `DB_DIR=./data/fixtures`), записи в живые данные нет — совместимо; риск выкатки (оба писателя на один файл) — в отчёте брифа
 - [ ] Task: `dmg-reviewer` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md; автономно)
 
@@ -139,7 +139,7 @@
 - [ ] Task: Гейт закрытия: `CI=true bun test`, `bun run test:bot`, `dmg-core` `bun test` — сравнение с базовой линией в `summary.md` (Opus)
 - [ ] Task: Документы (Opus):
     - [ ] `debt.md` — снять DEBT-1, 2, 5, 34, 48 (user; DEBT-44 снят в Ф2), DEBT-3 (кроме `dossier`); закрыть TR-33, TR-40, TR-49 (6);
-    - [ ] `migration.md` §6 — состояние, чек-лист релиза (`bun run backup` → скрипт миграции `STUDENT` → подтверждение Нурболата), следующий трек;
+    - [ ] `migration.md` §6 — состояние, чек-лист релиза (`bun run backup` → скрипт миграции `STUDENT` → подтверждение Нурболата; legacy-писателя `users.json` в релизе нет — иначе потеря записей, отчёт data-keeper Ф2), следующий трек;
     - [ ] `deepseek.md` — сверка таблицы §2 с данными трека;
     - [ ] `summary.md` — таблица критериев spec и строка «DeepSeek».
 - [ ] Task: Conductor - User Manual Verification 'Фаза 8' (Protocol in workflow.md; автономно)
