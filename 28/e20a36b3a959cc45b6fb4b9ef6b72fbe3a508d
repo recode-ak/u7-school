@@ -1,0 +1,1 @@
+Фаза 3 (type-tests): правило TST-10/D-68 в dmg-core@93333e8 (testing.md §5.2, rules.md, decisions.md, llms.txt). Проверка: check пакета зелёный (1379 pass); u7-school bun install + dmg:sync + bun run check (CI=true) зелёный, 3179 pass. Ручная верификация: план выдан, подтверждение Нурболата 2026-11-11 («ок, если завершили, то трек в архив»).
