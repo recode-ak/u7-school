@@ -1,6 +1,6 @@
 # Бриф среза: `user` / прикладной слой (Ф2)
 
-> **Статус:** черновик `dmg-tech-lead` (Ф0) записан orchestrator без переписывания; ждёт решений С1–С5 Нурболата (Ф0, задача 3). Полный разбор С/Т — `../summary.md` → «Ф0: вопросы».
+> **Статус:** принят orchestrator (Ф0). Решения С1–С5 (Нурболат) и Т1–Т17 — TR-61 (`conductor/architecture/debt.md`); полный разбор — `../summary.md` → «Ф0: вопросы». Где текст ниже расходится с TR-61 — прав TR-61 и раздел «Решения Ф0» в конце брифа.
 
 Черновик — `dmg-tech-lead`, Ф0; проверка — orchestrator. Читать вместе с `../spec.md`, `../plan.md` (Ф2), `../slices/user-domain.md` (Ф1 принят), эталоном `wish` (`modules/wish/src`), `modules/stream/src` и `conductor/archive/course-dmg_20261105/slices/module.md`.
 
@@ -52,7 +52,7 @@
 - `addRoleToUser`, `removeRoleFromUser`: `load` — `findById` (нет → `NOT_FOUND`); Policy `canManageRoles`; `execute` — `user.addRole(role, at)`/`removeRole` → `uow.register`; ошибки Ar возвращаются как есть.
 - `getTelegramAddresses`: настоящий UC: `findByIds(userIds)`, адреса только достижимых пользователей, порядок — как во входе, ненайденные просто отсутствуют (без ошибки и без warn — как в Def). Заголовок «Адаптер … над legacy» и `legacy.` удаляются (DEBT-44 закрывается в этой точке; формально снимается в Ф8).
 
-**Р5. Модуль** (`user.module.ts`): `UserDeps = ModuleDeps & { readonly users: UserRepo }`; карта `userModuleMap` (8 UC, `reactions: {}`, `jobs: {}`) `satisfies ModuleMap<typeof UserModuleDef, UserDeps, Identified>`; `createUserModule(deps)`. `UserLegacy` и поле `legacy` удаляются. Тип субъекта карты — `Identified`, пока С1 не решён; при варианте А — `AppUser`.
+**Р5. Модуль** (`user.module.ts`): `UserDeps = ModuleDeps & { readonly users: UserRepo }`; карта `userModuleMap` (8 UC, `reactions: {}`, `jobs: {}`) `satisfies ModuleMap<typeof UserModuleDef, UserDeps, Identified>`; `createUserModule(deps)`. `UserLegacy` и поле `legacy` удаляются. Тип субъекта карты — `ReadonlyAr<UserAr>` (TR-61 С1). До Ф4 резолвер `Caller` отдаёт legacy `User` без методов: Def-команды `user` с Policy (`registerGuest`, `addRoleToUser`, `removeRoleFromUser`) прод в Ф2–Ф3 не вызывает, тесты берут субъект-`UserAr`.
 
 **Р6. Сборка.** `U7App.dmgApp`: фабрика `{ def: UserModuleDef, create: (deps) => createUserModule({ ...deps, users: repos.users }) }`; legacy `UserApiModule`, `userFacade`, `userRepo` (теперь `LegacyUserJsonRepo`) остаются. Два репозитория (legacy и новый) смотрят на один `users/users.json`; новый в Ф2 в проде только читает (через `getTelegramAddresses` для ER `wish.invite-wishers`).
 
@@ -125,7 +125,7 @@
 
 ## Открытые вопросы
 
-- **С1** (тип субъекта; влияет на тип карты модуля), **С2** (`create-user`, `list-users`, имя `remove-role-from-user`), **С3** (`notify-user`), **С4** (seed/bootstrap), **С5** (порядок выкатки и строгое чтение).
+- С1–С5 решены (TR-61): субъект — `ReadonlyAr<UserAr>`; состав UC по брифу; `notify-user` удалён; seed не переносится (DEBT-52); строгое чтение, порядок выкатки — чек-лист `migration.md`.
 - **Т1** (идемпотентность `registerGuest`), **Т3**, **Т7**, **Т8**, **Т13**, **Т15**.
 
 ## Правила (ID)
@@ -145,3 +145,7 @@ ARC-02 (модуль: `domain` по контракту, `core` и `app-legacy` �
 - `bun test modules/user domain/src/user platform/app` — не ниже базовой линии (94 pass на `domain/src/user` + `modules/user`; пока legacy-тесты живы число не падает).
 - Тест репозитория: round-trip legacy-записи, невалидная запись → исключение и файл не перезаписан.
 - `bun run check` зелёный; `git status data/` чист; чтение `data/fixtures` data-keeper'ом прошло.
+
+## Решения Ф0
+
+TR-61 (`conductor/architecture/debt.md`), D-69 пакета `dmg-core` (`d71ccd4`). Тактические Т1–Т17 приняты по предложению `dmg-tech-lead`.

@@ -1,24 +1,24 @@
 # Бриф среза: `user` / домен (Ф1)
 
-> **Статус:** черновик `dmg-tech-lead` (Ф0) записан orchestrator без переписывания; ждёт решений С1–С5 Нурболата (Ф0, задача 3). Полный разбор С/Т — `../summary.md` → «Ф0: вопросы».
+> **Статус:** принят orchestrator (Ф0). Решения С1–С5 (Нурболат) и Т1–Т17 — TR-61 (`conductor/architecture/debt.md`); полный разбор — `../summary.md` → «Ф0: вопросы». Где текст ниже расходится с TR-61 — прав TR-61 и раздел «Решения Ф0» в конце брифа.
 
 Черновик — `dmg-tech-lead`, Ф0; проверка — orchestrator. Читать вместе с `../spec.md`, `../plan.md` (Ф1), `../slices/user-app.md`, D-37, D-45, D-53, D-64, TR-40, эталоном `wish` (`domain/src/wish`) и образцом формы `conductor/archive/course-dmg_20261105/slices/module.md`.
 
-Код `user` в `../u7-school-v0.2.6` (`packages/user`) совпадает с HEAD по логике (`diff` для `a-root.ts`, `policy.ts`, `register-guest-uc.ts`, `add-role-to-user-uc.ts`, `user-json-repo.ts`, `user-in-proc-facade.ts` — только импорты и удалённые `isStudent`/`isSubscriber`/`isGuest`). Характеризация строится на текущих тестах и логике `a-root.ts` как ожиданиях нового кода.
+Код `user` в `../u7-school-v0.2.6` (пакет `user` релиза) совпадает с HEAD по логике (`diff` для `a-root.ts`, `policy.ts`, `register-guest-uc.ts`, `add-role-to-user-uc.ts`, `user-json-repo.ts`, `user-in-proc-facade.ts` — только импорты и удалённые `isStudent`/`isSubscriber`/`isGuest`). Характеризация строится на текущих тестах и логике `a-root.ts` как ожиданиях нового кода.
 
 ## Расхождения spec/plan с кодом
 
 (пп. 1, 2, 5, 6, 11, 12, 14 сводки; для Ф1 существенны:)
 1. Grep `new [A-Za-z]*Ar\b` ловит `new UserAr(` внутри собственной фабрики; критерий — с исключением собственного класса.
 2. `UserPolicy.isStudent` в HEAD нет.
-3. `domain/src/shared` ломает `checkDomainDirs` (`scripts/domain-check.ts:200`); тип субъекта — в `contract.ts` (С1).
+3. ~~`domain/src/shared` ломает `checkDomainDirs`; тип субъекта — в `contract.ts`~~ — снято: субъект `Caller` — `ReadonlyAr<UserAr>` из контракта (D-69, TR-61 С1), `AppUser` и `shared` не заводятся.
 4. Новые имена `UserAr`, `UserPolicy`, `UserRepo` занимают имена legacy (`domain/src/user/index.ts:4,67,68`, `module.ts:13,35`): нужен шаг S0.
 
 ## Границы
 
 **Домен `domain/src/user`.**
 - Новое: `user/user.state.ts` (`UserState`, `UserView` не здесь), `user/user.errors.ts`, `user/user.policy.ts`, `user/user.rules.ts`, `user/user.fixture.ts`, `user/uc/{get-user,get-user-by-telegram-id,get-users-by-ids,list-users,register-guest,add-role-to-user,remove-role-from-user}.uc.ts` (только Def, без регистрации в `UserModuleDef` — Р7), тесты рядом: `user.state.test.ts`, `user.ar.test.ts`, `user.policy.test.ts`, `user.rules.test.ts`.
-- Изменяется: `user/user.ar.ts` (заглушка `UserArDef` → полный Def + `UserAr`), `state.ts`, `contract.ts` (+ `UserView`, `UserErrors`, `AppUser`), `index.ts` (экспорты нового; legacy под `Legacy*`), `user.module.test.ts`.
+- Изменяется: `user/user.ar.ts` (заглушка `UserArDef` → полный Def + `UserAr`), `state.ts`, `contract.ts` (+ `UserView`, `UserErrors`, `UserAr` с JSDoc «субъект `Caller`, Policy клиентов», D-69), `index.ts` (экспорты нового; legacy под `Legacy*`), `user.module.test.ts`.
 - Шаг S0 (переименование legacy): `user/a-root.ts` (`UserAr` → `LegacyUserAr`), `user/policy.ts` (`UserPolicy` → `LegacyUserPolicy`), `user/repo.ts` (`UserRepo` → `LegacyUserRepo`; `UserListFilter` не трогать — конфликта нет), и все ссылки: `index.ts:4,67,68`, `module.ts:13,35`, `a-root.test.ts`, `policy.test.ts`.
 
 **Вне домена (только механика S0 — подмена импортов, логика не меняется).**
@@ -85,9 +85,9 @@
 
 **Р7. Регистрация в паспорте.** Ф1 создаёт Def-файлы UC, но **не добавляет** их в `UserModuleDef.useCases` и в контракт: карта `satisfies ModuleMap<typeof UserModuleDef, …>` в `modules/user/src/user.module.ts` требует реализации каждого Def, и `check` стал бы красным до Ф2. Регистрация, экспорт в `contract.ts`, `index.ts`, `user.module.test.ts` — в Ф2 одним коммитом с реализациями. `external: true` остаётся.
 
-**Р8. Контракт Ф1.** Добавляются: `UserView` (тип), `UserErrors`, `AppUser` (тип; С1). Сохраняются до Ф4/Ф6: `UserFacade`, `Role`, `User`, `UserNotifiedEvent`, типы ошибок.
+**Р8. Контракт Ф1.** Добавляются: `UserView` (тип), `UserErrors`, `UserAr` (D-69: субъект `Caller` и вопросы ролей для Policy клиентов; чужой код видит `ReadonlyAr<UserAr>`). Сохраняются до Ф4/Ф6: `UserFacade`, `Role`, `User`, `UserNotifiedEvent`, типы ошибок.
 
-**Р9. Фикстура `user.fixture.ts`.** Общие uuid и `stored(overrides)` по образцу `stream.fixture.ts`; `appUserFixture({ uuid, roles })` — реализация `AppUser` для тестов клиентов Ф4 (при утверждении варианта А).
+**Р9. Фикстура `user.fixture.ts`.** Общие uuid и `stored(overrides)` по образцу `stream.fixture.ts`; фикстура субъекта для тестов клиентов (`UserAr` по `{ uuid, roles }`) — форма и место экспорта решаются брифом Ф4 (TR-61).
 
 ## Шаги (по ролям)
 
@@ -149,9 +149,7 @@
 
 ## Открытые вопросы
 
-- **С1** — субъект Policy клиентов и UI (раздел 2 отчёта; влияет на `AppUser`, `user.fixture.ts`, Ф4).
-- **С2** — `create-user` (удалить), `list-users` (перенести), имя `remove-role-from-user`.
-- **С3** — `notify-user`/`user.notified` (удалить).
+- С1–С3 решены (TR-61): субъект — `ReadonlyAr<UserAr>`; `create-user` удалён, `list-users` переносится, `removeRoleFromUser`; `notify-user` удалён.
 - **Т1, Т4, Т5, Т6, Т14** — см. списки ниже.
 
 ## Правила (ID)
@@ -170,3 +168,7 @@ ARC-02 (домен: только `dmg-core` и `valibot`), ARC-04 (чужой �
 - `UserModuleDef` по-прежнему `external: true`, `useCases` — `['getTelegramAddresses']`; Def UC не зарегистрированы (Р7).
 - `bun run check` зелёный, `bun run arch:check` синхронен, `git status data/` чист.
 - Сценарии `a-root`/`policy` перенесены (список выше сверен).
+
+## Решения Ф0
+
+TR-61 (`conductor/architecture/debt.md`), D-69 пакета `dmg-core` (`d71ccd4`). Тактические Т1–Т17 приняты по предложению `dmg-tech-lead`.
