@@ -3,13 +3,15 @@
  * `STUDENT`: снимает её из `roles` записей `users.json`, опустевший список
  * заменяет на `['GUEST']`. Остальные поля и порядок записей не трогает (D-36).
  *
- * ⚠️ Порядок на проде:
- * 1. Бот остановлен (pm2 stop).
- * 2. `bun run backup before-drop-student`.
+ * ⚠️ Порядок на проде. Миграция — ДО выкатки нового кода: новый код читает
+ * `users.json` строгой схемой и на записи со `STUDENT` роняет все чтения `user`.
+ * 1. Остановить бота: `bun run start:prod:stop`.
+ * 2. Защищённый снимок: `bun run backup --name=before-drop-student`.
  * 3. Сухой прогон: `bun run scripts/migrate-users-drop-student.ts`.
  * 4. Разобрать `invalid` из итога — записи не чинятся и не удаляются.
  * 5. Запись: `bun run scripts/migrate-users-drop-student.ts --write`.
- * 6. Старт бота на новом коде.
+ * 6. Контрольное чтение `data/users/users.json`: `STUDENT` не осталось.
+ * 7. Деплой нового кода, затем `bun run start:prod`.
  *
  * Без подтверждения владельца данных на проде не запускать.
  *

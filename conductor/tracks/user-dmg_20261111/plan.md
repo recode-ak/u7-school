@@ -71,9 +71,9 @@
 
 - [x] Task: `dmg-test-designer`: red-тесты (Sonnet): скрипт `scripts/migrate-users-drop-student.ts` (сухой прогон по умолчанию, запись по флагу, идемпотентность); строгое чтение записи со `STUDENT` — ошибка e7298e73
 - [x] Task: `migrator` (flash): скрипт; удалить `Role.STUDENT`, `isStudent`, исключения `canAddRole`/`canRemoveRole`; убрать `STUDENT` из фикстур модулей, тестовых миров и тестов; `bun run seed:fixtures` e7298e73 — DEBT-48 снят из `debt.md` (`arch:check`), итог в TR-61
-- [x] Task: `dmg-data-keeper` (flash): прогон скрипта на копии фикстур и копии заготовки; откат; живые данные не трогаются SHA_FIX — дефект проверки `invalid` (`UserState` → `UserArDef.state`) исправлен в срезе; порядок релиза — миграция до выкатки
-- [ ] Task: Записать красную зону в `debt.md` поимённо (если есть), критерий снятия — конец Ф5 (Opus)
-- [ ] Task: `dmg-reviewer` (Opus)
+- [x] Task: `dmg-data-keeper` (flash): прогон скрипта на копии фикстур и копии заготовки; откат; живые данные не трогаются e26d667b — дефект проверки `invalid` (`UserState` → `UserArDef.state`) исправлен в срезе; порядок релиза — миграция до выкатки
+- [x] Task: Записать красную зону в `debt.md` поимённо (если есть), критерий снятия — конец Ф5 (Opus) — красной зоны нет: полный `check` зелёный (3171 pass)
+- [x] Task: `dmg-reviewer` (Opus) — `error` нет; 1 warn + 2 info закрыты в срезе, 2 info приняты (TR-61 «Ф3»)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 3:**
@@ -142,6 +142,8 @@
     - [ ] `migration.md` §6 — состояние, чек-лист релиза (`bun run backup` → скрипт миграции `STUDENT` → подтверждение Нурболата; legacy-писателя `users.json` в релизе нет — иначе потеря записей, отчёт data-keeper Ф2), следующий трек;
     - [ ] `deepseek.md` — сверка таблицы §2 с данными трека;
     - [ ] `summary.md` — таблица критериев spec и строка «DeepSeek».
+    - [ ] упоминания роли `STUDENT` в документах (`README.md`, `runners/u7-bot/src/controllers/learning/ui-spec.md`, `courses/content-nav.md`, `modules/stream/src/analysis.md`, `TODO.md`) — ревью Ф3;
+    - [ ] чек-лист релиза: миграция `STUDENT` — ДО выкатки нового кода, бэкап `--name=before-drop-student`; проверка живого `users.json` (записи со `STUDENT`, без `updatedAt`) — Нурболат (отчёт `dmg-data-keeper` Ф3).
 - [ ] Task: Conductor - User Manual Verification 'Фаза 8' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 8:**

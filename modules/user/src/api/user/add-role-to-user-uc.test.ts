@@ -84,13 +84,13 @@ describe('AddRoleToUserUc', () => {
 
     test('отклоняет при отсутствии прав ADMIN', async () => {
       const { getByUuid, uc } = setupUc();
-      const student = makeUser({ roles: [Role.GUEST], telegramId: 2 });
+      const guest = makeUser({ roles: [Role.GUEST], telegramId: 2 });
       const target = makeUser({ roles: [Role.GUEST], telegramId: 3 });
 
       getByUuid.mockResolvedValueOnce(target);
 
       await expect(
-        uc.handle({ userId: target.uuid, role: Role.MENTOR }, student),
+        uc.handle({ userId: target.uuid, role: Role.MENTOR }, guest),
       ).rejects.toMatchObject({ error: { name: 'ACCESS_DENIED' } });
     });
   });
