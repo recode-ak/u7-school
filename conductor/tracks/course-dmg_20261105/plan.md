@@ -134,13 +134,13 @@
 
 ## Фаза 6: Итог
 
-- [ ] Task: Гейт закрытия: `CI=true bun test`, `bun run test:bot`, `dmg-core` `bun test` — сравнение с базовой линией в `summary.md` (Opus)
-- [ ] Task: Документы (Opus):
-    - [ ] `debt.md` — снять DEBT-1, 2, 5, 10, 34, 44 (course), закрыть TR-11;
-    - [ ] `course-module-history.md` — сверить §2 с итогом трека; `content-management.md` — пометка о новой модели этапов;
-    - [ ] `migration.md` §6 — состояние, следующий трек `user`;
-    - [ ] `deepseek.md` — сверка таблицы §2 с данными трека;
-    - [ ] `summary.md` — таблица критериев spec и строка «DeepSeek».
+- [x] Task: Гейт закрытия: `CI=true bun test`, `bun run test:bot`, `dmg-core` `bun test` — сравнение с базовой линией в `summary.md` (Opus) d6881f0a
+- [x] Task: Документы (Opus): d6881f0a
+    - [x] `debt.md` — снять DEBT-1, 2, 5, 10, 34, 44 (course), закрыть TR-11 (сделано в Ф5, TR-60; сверено);
+    - [x] `course-module-history.md` — сверить §2 с итогом трека; `content-management.md` — пометка о новой модели этапов;
+    - [x] `migration.md` §6 — состояние, следующий трек `user`;
+    - [x] `deepseek.md` — сверка таблицы §2 с данными трека;
+    - [x] `summary.md` — таблица критериев spec и строка «DeepSeek».
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 6:**
