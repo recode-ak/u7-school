@@ -96,7 +96,7 @@
 
 ## Фаза 5: UI бота
 
-- [ ] Task: `dmg-tech-lead`: бриф `slices/ui.md` с «Сохраняемым поведением» — регистрация, роли, меню, анкеты, уведомления; эталон `../u7-school-v0.2.6` (Sonnet); приёмка — Opus
+- [~] Task: `dmg-tech-lead`: бриф `slices/ui.md` с «Сохраняемым поведением» — регистрация, роли, меню, анкеты, уведомления; эталон `../u7-school-v0.2.6` (Sonnet); приёмка — Opus
 - [ ] Task: `dmg-test-designer`: перевод тестов бота на Def-имена (литералы `'get-user'` и др., кит анкет) и red-тесты (Sonnet)
 - [ ] Task: UI-stories: `ensure-registered`, `school/controller`, `ui-app`/`create-ui-app`, адрес респондента анкет (TR-49 (6)) — Sonnet; механика `get-user`/`get-users-by-ids` в `streams`, `learning`, `peer-review`, `u7-cli`, `test-bot-transport` — flash
 - [ ] Task: Снять красную зону в `debt.md` (Opus)
