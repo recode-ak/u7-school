@@ -147,7 +147,7 @@
 - Все критерии приёмки spec выполнены (таблица в `summary.md`).
 - `arch:check` чист, `debt.md` и `migration.md` синхронны с кодом.
 
-## Фаза 7: Слияние ветки `tst-cleanup`
+## Фаза 7: Слияние ветки `tst-cleanup` [checkpoint: 09d28d47]
 
 Трек чистки тестов (TST-08) закрыт в ветке `tst-cleanup` (worktree `../u7-school-tst-cleanup`, от `816908b1`): −952 теста в `wish`, `stream`, `questionnaire`, `peer-review`, `user`, `dossier`. Вливается после Ф6, порядок — `git show tst-cleanup:conductor/tracks/tst-cleanup_20261105/summary.md`, раздел «Поправка базовой линии `course-dmg`».
 
