@@ -22,7 +22,7 @@
  *   bun run scripts/distribute-lesson.ts 2:1:3 --group
  *
  *   # Отправить один шаг (№2) конкретному человеку
- *   bun run scripts/distribute-lesson.ts 2:1:3 2 --to=773084180
+ *   bun run scripts/distribute-lesson.ts 2:1:3:2 --to=123456
  *
  *   # Предпросмотр в консоли (без отправки) — как увидит студент
  *   bun run scripts/distribute-lesson.ts 2:1:3 --preview
@@ -64,10 +64,10 @@ import type { StepView } from '@u7-scl/domain/course/contract';
 import { safeConvert } from '../platform/core/src/shared/markdown.ts';
 import { CourseClient } from './_course-client';
 
-// Токен и группа — из окружения (.env.production), чтобы не хардкодить секреты
+// Токен и получатели — из окружения, чтобы не хардкодить секреты
 const BOT_TOKEN = process.env.BOT_TOKEN ?? '';
-const DEFAULT_CHAT_ID = process.env.SCHOOL_GROUP_ID ?? ''; // группа потока
-const MENTOR_CHAT_ID = process.env.MENTOR_CHAT_ID ?? '773084180'; // личка ментора
+const GROUP_CHAT_ID = process.env.STUDENT_GROUP_ID ?? ''; // группа потока
+const MENTOR_CHAT_ID = process.env.MENTOR_CHAT_ID ?? ''; // личка ментора
 
 // ─── Справка ───
 
@@ -315,9 +315,21 @@ async function main() {
   if (toId) {
     chatId = toId;
   } else if (groupMode) {
-    chatId = DEFAULT_CHAT_ID;
+    chatId = GROUP_CHAT_ID;
   } else {
     chatId = MENTOR_CHAT_ID;
+  }
+  if (!preview) {
+    if (!BOT_TOKEN) {
+      console.error('❌ Не задан BOT_TOKEN в окружении');
+      process.exit(1);
+    }
+    if (!chatId) {
+      console.error(
+        '❌ Не задан получатель: STUDENT_GROUP_ID (--group), MENTOR_CHAT_ID или --to=<id>',
+      );
+      process.exit(1);
+    }
   }
 
   // ─── Получаем данные через API ───

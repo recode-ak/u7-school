@@ -2,14 +2,14 @@
  * distribute-mentor.ts — рассылка менторских шагов в личку ментору.
  *
  * Использование:
- *   bun run scripts/distribute-mentor.ts mA-pB-lC [номер_файла] [chat_id]
- *   bun run scripts/distribute-mentor.ts A-B-C [номер_файла] [chat_id]
- *   bun run scripts/distribute-mentor.ts A:B:C [номер_файла] [chat_id]
+ *   bun run scripts/distribute-mentor.ts M:P:L[:S] [--to=<id>]
  *
  * Примеры:
- *   bun run scripts/distribute-mentor.ts m1-p2-l3
- *   bun run scripts/distribute-mentor.ts 1:2:3
- *   bun run scripts/distribute-mentor.ts 1-2-3 2 --me
+ *   bun run scripts/distribute-mentor.ts 1:2:3        # все ментор-файлы → MENTOR_CHAT_ID
+ *   bun run scripts/distribute-mentor.ts 1:2:3:2      # файл №2
+ *   bun run scripts/distribute-mentor.ts 1:2:3 --to=123456
+ *
+ * Окружение: BOT_TOKEN, MENTOR_CHAT_ID (получатель по умолчанию).
  */
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
