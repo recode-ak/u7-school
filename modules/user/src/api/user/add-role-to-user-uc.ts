@@ -3,8 +3,8 @@ import {
   type AddRoleToUserCmd,
   type AddRoleToUserCmdMeta,
   AddRoleToUserCmdSchema,
-  UserAr,
-  UserPolicy,
+  LegacyUserAr,
+  LegacyUserPolicy,
   UserSchema,
 } from '@u7-scl/domain/user';
 import { UserUseCase } from '#api-legacy/user-uc';
@@ -17,8 +17,8 @@ export class AddRoleToUserUc extends UserUseCase<AddRoleToUserCmdMeta> {
   protected readonly ucName = 'add-role-to-user' as const;
   protected readonly ucLabel = 'Добавить роль пользователю' as const;
   protected readonly arMeta = {
-    arName: UserAr.arName as 'User',
-    arLabel: UserAr.arLabel as 'Пользователь',
+    arName: LegacyUserAr.arName as 'User',
+    arLabel: LegacyUserAr.arLabel as 'Пользователь',
   };
   protected readonly type = 'command' as const;
   protected readonly requiresAuth = true as const;
@@ -35,11 +35,11 @@ export class AddRoleToUserUc extends UserUseCase<AddRoleToUserCmdMeta> {
       });
     }
 
-    if (!UserPolicy.canAddRole(actor, target, command.role)) {
+    if (!LegacyUserPolicy.canAddRole(actor, target, command.role)) {
       this.throwAccessDenied('Недостаточно прав для выполнения действия');
     }
 
-    const ar = new UserAr(target);
+    const ar = new LegacyUserAr(target);
     ar.addRole(command.role);
     await repo.save(ar.state);
 

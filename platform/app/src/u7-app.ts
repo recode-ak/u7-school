@@ -48,7 +48,7 @@ import {
 } from '@u7-scl/stream';
 import { createUserModule } from '@u7-scl/user';
 import { UserApiModule } from '@u7-scl/user/api';
-import { UserInProcFacade, UserJsonRepo } from '@u7-scl/user/infra';
+import { LegacyUserJsonRepo, UserInProcFacade } from '@u7-scl/user/infra';
 import { createWishModule, WishJsonRepo, type WishRepo } from '@u7-scl/wish';
 import type { Identified } from 'dmg-core';
 import {
@@ -77,7 +77,7 @@ export class U7App {
   readonly apiApp: ApiApp<U7BotAppMeta>;
   readonly eventBus: EventBus;
   readonly userFacade: UserInProcFacade;
-  readonly userRepo: UserJsonRepo;
+  readonly userRepo: LegacyUserJsonRepo;
   readonly school: School;
   readonly appResolver: U7AppResolver;
   readonly callers: U7CallerResolver;
@@ -104,7 +104,7 @@ export class U7App {
       school,
     };
 
-    const userRepo = new UserJsonRepo(
+    const userRepo = new LegacyUserJsonRepo(
       `${dbDir}/users/users.json`,
       `${dbDir}/users/seed.json`,
       db,

@@ -5,7 +5,7 @@ import { Role } from './roles';
  * Политика прав доступа для пользователей.
  * Stateless — проверяет права на основе роли действующего пользователя.
  */
-export const UserPolicy = {
+export const LegacyUserPolicy = {
   isAdmin(actor: User): boolean {
     return actor.roles.includes(Role.ADMIN);
   },

@@ -1,8 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type {
+  LegacyUserRepo,
   User,
   UserApiModuleResolver,
-  UserRepo,
 } from '@u7-scl/domain/user';
 import { Role } from '@u7-scl/domain/user';
 import { CreateUserUc } from './create-user-uc';
@@ -26,7 +26,7 @@ function setupUc() {
   );
   const isEmpty = mock(async (): Promise<boolean> => true);
 
-  const repo: UserRepo = {
+  const repo: LegacyUserRepo = {
     save,
     getByUuid,
     getByUuids,

@@ -10,7 +10,7 @@ import { Role } from './roles';
  * Агрегат пользователя.
  * Инкапсулирует состояние User и логику его изменения.
  */
-export class UserAr extends Aggregate<UserArMeta> {
+export class LegacyUserAr extends Aggregate<UserArMeta> {
   static readonly arName = 'User';
   static readonly arLabel = 'Пользователь';
 
@@ -21,7 +21,7 @@ export class UserAr extends Aggregate<UserArMeta> {
   /**
    * Фабричный метод создания нового пользователя из команды.
    */
-  static create(command: CreateUserCmd): UserAr {
+  static create(command: CreateUserCmd): LegacyUserAr {
     const candidate: User = {
       uuid: crypto.randomUUID(),
       name: command.name,
@@ -30,14 +30,14 @@ export class UserAr extends Aggregate<UserArMeta> {
       createdAt: isoNow(),
     };
 
-    return new UserAr(candidate);
+    return new LegacyUserAr(candidate);
   }
 
   /**
    * Фабричный метод регистрации пользователя при первом /start в боте.
    * Создаёт пользователя с ролью GUEST.
    */
-  static register(command: RegisterGuestCmd): UserAr {
+  static register(command: RegisterGuestCmd): LegacyUserAr {
     const candidate: User = {
       uuid: crypto.randomUUID(),
       name: command.name,
@@ -50,7 +50,7 @@ export class UserAr extends Aggregate<UserArMeta> {
       candidate.nick = command.nick;
     }
 
-    return new UserAr(candidate);
+    return new LegacyUserAr(candidate);
   }
 
   /**

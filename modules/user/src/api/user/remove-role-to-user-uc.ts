@@ -1,10 +1,10 @@
 import type { User } from '@u7-scl/domain/user';
 import {
+  LegacyUserAr,
+  LegacyUserPolicy,
   type RemoveRoleToUserCmd,
   type RemoveRoleToUserCmdMeta,
   RemoveRoleToUserCmdSchema,
-  UserAr,
-  UserPolicy,
   UserSchema,
 } from '@u7-scl/domain/user';
 import { UserUseCase } from '#api-legacy/user-uc';
@@ -17,8 +17,8 @@ export class RemoveRoleToUserUc extends UserUseCase<RemoveRoleToUserCmdMeta> {
   protected readonly ucName = 'remove-role-to-user' as const;
   protected readonly ucLabel = 'Удалить роль у пользователя' as const;
   protected readonly arMeta = {
-    arName: UserAr.arName as 'User',
-    arLabel: UserAr.arLabel as 'Пользователь',
+    arName: LegacyUserAr.arName as 'User',
+    arLabel: LegacyUserAr.arLabel as 'Пользователь',
   };
   protected readonly type = 'command' as const;
   protected readonly requiresAuth = true as const;
@@ -35,11 +35,11 @@ export class RemoveRoleToUserUc extends UserUseCase<RemoveRoleToUserCmdMeta> {
       });
     }
 
-    if (!UserPolicy.canRemoveRole(actor, target, command.role)) {
+    if (!LegacyUserPolicy.canRemoveRole(actor, target, command.role)) {
       this.throwAccessDenied('Недостаточно прав для выполнения действия');
     }
 
-    const ar = new UserAr(target);
+    const ar = new LegacyUserAr(target);
     ar.removeRole(command.role);
     await repo.save(ar.state);
 

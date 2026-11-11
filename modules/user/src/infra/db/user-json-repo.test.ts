@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/domain/user';
 import { Role } from '@u7-scl/domain/user';
-import { UserJsonRepo } from './user-json-repo';
+import { LegacyUserJsonRepo } from './user-json-repo';
 
 // Хелперы для создания тестовых данных
 const createTestUser = (overrides: Partial<User> = {}): User => ({
@@ -13,14 +13,17 @@ const createTestUser = (overrides: Partial<User> = {}): User => ({
   ...overrides,
 });
 
-const saveUsers = async (repo: UserJsonRepo, users: User[]): Promise<void> => {
+const saveUsers = async (
+  repo: LegacyUserJsonRepo,
+  users: User[],
+): Promise<void> => {
   for (const user of users) {
     await repo.save(user);
   }
 };
 
 const assertUserExists = async (
-  repo: UserJsonRepo,
+  repo: LegacyUserJsonRepo,
   uuid: string,
   expected: User,
 ): Promise<void> => {
@@ -29,7 +32,7 @@ const assertUserExists = async (
 };
 
 const assertUserNotFound = async (
-  repo: UserJsonRepo,
+  repo: LegacyUserJsonRepo,
   uuid: string,
 ): Promise<void> => {
   const found = await repo.getByUuid(uuid);
@@ -39,8 +42,8 @@ const assertUserNotFound = async (
 // Путь к временному файлу для тестов
 const TEST_FILE = '/tmp/user-json-repo-test.json';
 
-describe('UserJsonRepo', () => {
-  let repo: UserJsonRepo;
+describe('LegacyUserJsonRepo', () => {
+  let repo: LegacyUserJsonRepo;
 
   const user1 = createTestUser({
     uuid: '550e8400-e29b-41d4-a716-446655440000',
@@ -90,7 +93,7 @@ describe('UserJsonRepo', () => {
   beforeEach(async () => {
     // Удаляем тестовый файл перед каждым тестом
     await Bun.$`rm -f ${TEST_FILE}`;
-    repo = new UserJsonRepo(TEST_FILE, '/nonexistent-seed.json');
+    repo = new LegacyUserJsonRepo(TEST_FILE, '/nonexistent-seed.json');
   });
 
   describe('save', () => {
@@ -320,7 +323,7 @@ describe('UserJsonRepo', () => {
       await Bun.write(TEST_FILE, JSON.stringify(raw, null, 2));
 
       // Создаём новый репо на том же файле
-      const repo2 = new UserJsonRepo(TEST_FILE, '/nonexistent-seed.json');
+      const repo2 = new LegacyUserJsonRepo(TEST_FILE, '/nonexistent-seed.json');
       const result = await repo2.getAll();
 
       // Должен быть только валидный user1
@@ -349,7 +352,7 @@ describe('UserJsonRepo', () => {
       // Убеждаемся, что data-файла нет
       await Bun.$`rm -f ${DATA_FILE}`;
 
-      const seedRepo = new UserJsonRepo(DATA_FILE, SEED_FILE);
+      const seedRepo = new LegacyUserJsonRepo(DATA_FILE, SEED_FILE);
 
       // Первый вызов — должен загрузить seed
       const all = await seedRepo.getAll();
@@ -381,7 +384,7 @@ describe('UserJsonRepo', () => {
       await Bun.write(SEED_FILE, JSON.stringify(seedUsers, null, 2));
 
       // Новый репо на тот же data-файл (где уже есть user1)
-      const seedRepo = new UserJsonRepo(TEST_FILE, SEED_FILE);
+      const seedRepo = new LegacyUserJsonRepo(TEST_FILE, SEED_FILE);
       const all = await seedRepo.getAll();
 
       // Должен быть user1, а не seed-данные
@@ -395,7 +398,7 @@ describe('UserJsonRepo', () => {
       await Bun.write(SEED_FILE, '{not json');
       await Bun.$`rm -f ${DATA_FILE}`;
 
-      const seedRepo = new UserJsonRepo(DATA_FILE, SEED_FILE);
+      const seedRepo = new LegacyUserJsonRepo(DATA_FILE, SEED_FILE);
       const all = await seedRepo.getAll();
 
       // Пустой — seed не загрузился

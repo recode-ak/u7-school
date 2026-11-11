@@ -1,7 +1,7 @@
 import type { BaseJsonDb } from '@u7-scl/core/infra';
 import { JsonFileRepo } from '@u7-scl/core/infra';
 import { getGlobalLogger } from '@u7-scl/core/shared';
-import type { User, UserListFilter, UserRepo } from '@u7-scl/domain/user';
+import type { LegacyUserRepo, User, UserListFilter } from '@u7-scl/domain/user';
 import { UserSchema } from '@u7-scl/domain/user';
 
 /**
@@ -9,7 +9,7 @@ import { UserSchema } from '@u7-scl/domain/user';
  * Хранит данные в JSON-файле через {@link JsonFileRepo}.
  * При первом обращении, если файл данных отсутствует, загружает seed.
  */
-export class UserJsonRepo implements UserRepo {
+export class LegacyUserJsonRepo implements LegacyUserRepo {
   readonly #repo: JsonFileRepo<User>;
   readonly #seedPath: string;
   #initialized = false;

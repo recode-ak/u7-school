@@ -1,10 +1,10 @@
 import type { User } from '@u7-scl/domain/user';
 import {
+  LegacyUserAr,
   type RegisterGuestCmd,
   type RegisterGuestCmdMeta,
   RegisterGuestCmdSchema,
   Role,
-  UserAr,
   UserSchema,
 } from '@u7-scl/domain/user';
 import { UserUseCase } from '../user-uc';
@@ -40,7 +40,7 @@ export class RegisterGuestUc extends UserUseCase<RegisterGuestCmdMeta> {
       return existing;
     }
 
-    const ar = UserAr.register({
+    const ar = LegacyUserAr.register({
       name: command.name,
       telegramId: command.telegramId,
       nick: command.nick,

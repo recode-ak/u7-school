@@ -3,7 +3,7 @@ import {
   type GetUsersByIdsCmd,
   type GetUsersByIdsCmdMeta,
   GetUsersByIdsCmdSchema,
-  UserAr,
+  LegacyUserAr,
   UserSchema,
 } from '@u7-scl/domain/user';
 import * as v from 'valibot';
@@ -20,8 +20,8 @@ export class GetUsersByIdsUc extends UserUseCase<GetUsersByIdsCmdMeta> {
   protected readonly ucLabel =
     'Пакетное получение пользователей по UUID' as const;
   protected readonly arMeta = {
-    arName: UserAr.arName as 'User',
-    arLabel: UserAr.arLabel as 'Пользователь',
+    arName: LegacyUserAr.arName as 'User',
+    arLabel: LegacyUserAr.arLabel as 'Пользователь',
   };
   protected readonly type = 'query' as const;
   /** Публичный read (как get-user / list-users): системные проактивы

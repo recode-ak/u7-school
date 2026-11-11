@@ -10,12 +10,12 @@ import {
 } from '@u7-scl/core/infra';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import { Role } from '@u7-scl/domain/user';
-import { UserJsonRepo } from '#infra-legacy/db/user-json-repo';
+import { LegacyUserJsonRepo } from '#infra-legacy/db/user-json-repo';
 import { UserApiModule } from '../module';
 
 describe('RegisterGuestUc', () => {
   let db: BaseJsonDb;
-  let userRepo: UserJsonRepo;
+  let userRepo: LegacyUserJsonRepo;
   let mod: UserApiModule;
   let apiApp: ApiApp<any>;
   let tmpDir: string;
@@ -31,7 +31,11 @@ describe('RegisterGuestUc', () => {
   beforeEach(async () => {
     tmpDir = mkdtempSync('/tmp/user-reg-test-');
     db = new BaseJsonDb();
-    userRepo = new UserJsonRepo(join(tmpDir, 'users.json'), undefined, db);
+    userRepo = new LegacyUserJsonRepo(
+      join(tmpDir, 'users.json'),
+      undefined,
+      db,
+    );
     mod = new UserApiModule({
       userRepo,
       eventBus: new InProcEventBus(),

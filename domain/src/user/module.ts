@@ -10,7 +10,7 @@ import type { ListUsersCmdMeta } from './user/commands/list-users-cmd';
 import type { NotifyUserCmdMeta } from './user/commands/notify-user-cmd';
 import type { RegisterGuestCmdMeta } from './user/commands/register-guest-cmd';
 import type { RemoveRoleToUserCmdMeta } from './user/commands/remove-role-to-user-cmd';
-import type { UserRepo } from './user/repo';
+import type { LegacyUserRepo } from './user/repo';
 
 export type UserUcMetas =
   | AddRoleToUserCmdMeta
@@ -32,5 +32,5 @@ export interface UserApiModuleMeta extends ApiModuleMeta {
 
 /** Резолвер зависимостей API-модуля пользователей */
 export interface UserApiModuleResolver extends U7ModuleResolver {
-  userRepo: UserRepo;
+  userRepo: LegacyUserRepo;
 }

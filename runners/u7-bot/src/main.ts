@@ -11,7 +11,7 @@ import {
   serializeError,
   setGlobalLogger,
 } from '@u7-scl/core/shared';
-import { UserPolicy } from '@u7-scl/user/domain';
+import { LegacyUserPolicy } from '@u7-scl/user/domain';
 import { webhookCallback } from 'grammy';
 import type { DevPersonaPanel } from '../scripts/dev-persona';
 import { createBot } from './bot';
@@ -152,7 +152,7 @@ if (!adminUser) {
     `BOT_ADMIN_UUID не найден: пользователь ${config.botAdminUuid} не существует`,
   );
 }
-if (!UserPolicy.isAdmin(adminUser)) {
+if (!LegacyUserPolicy.isAdmin(adminUser)) {
   throw new Error(
     `BOT_ADMIN_UUID имеет недостаточные права: у пользователя ${config.botAdminUuid} нет роли ADMIN`,
   );

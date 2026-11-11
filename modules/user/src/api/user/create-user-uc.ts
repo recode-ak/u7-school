@@ -4,8 +4,8 @@ import {
   type CreateUserCmd,
   type CreateUserCmdMeta,
   CreateUserCmdSchema,
-  UserAr,
-  UserPolicy,
+  LegacyUserAr,
+  LegacyUserPolicy,
   UserSchema,
 } from '@u7-scl/domain/user';
 import { UserUseCase } from '#api-legacy/user-uc';
@@ -18,8 +18,8 @@ export class CreateUserUc extends UserUseCase<CreateUserCmdMeta> {
   protected readonly ucName = 'create-user' as const;
   protected readonly ucLabel = 'Создать пользователя' as const;
   protected readonly arMeta = {
-    arName: UserAr.arName as 'User',
-    arLabel: UserAr.arLabel as 'Пользователь',
+    arName: LegacyUserAr.arName as 'User',
+    arLabel: LegacyUserAr.arLabel as 'Пользователь',
   };
   protected readonly type = 'command' as const;
   protected readonly requiresAuth = true as const;
@@ -29,7 +29,7 @@ export class CreateUserUc extends UserUseCase<CreateUserCmdMeta> {
   async execute(command: CreateUserCmd, actor: User): Promise<User> {
     const repo = this.resolve.userRepo;
 
-    if (!UserPolicy.canCreate(actor)) {
+    if (!LegacyUserPolicy.canCreate(actor)) {
       this.throwAccessDenied('Недостаточно прав для создания пользователя');
     }
 
@@ -44,7 +44,7 @@ export class CreateUserUc extends UserUseCase<CreateUserCmdMeta> {
       );
     }
 
-    const ar = UserAr.create(command);
+    const ar = LegacyUserAr.create(command);
     await repo.save(ar.state);
 
     return ar.state;

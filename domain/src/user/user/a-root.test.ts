@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { UserAr } from './a-root';
+import { LegacyUserAr } from './a-root';
 import { Role } from './roles';
 
 const validUser = {
@@ -10,10 +10,10 @@ const validUser = {
   createdAt: '2026-05-01T12:00',
 };
 
-describe('UserAr', () => {
+describe('LegacyUserAr', () => {
   describe('constructor', () => {
     test('создаётся из существующего состояния', () => {
-      const ar = new UserAr(validUser);
+      const ar = new LegacyUserAr(validUser);
       expect(ar.state).toEqual(validUser);
     });
 
@@ -26,16 +26,16 @@ describe('UserAr', () => {
         { uuid: 'bad', name: '', telegramId: -5, roles: [] as Role[] },
       ];
       for (const invalidInput of invalidInputs) {
-        expect(() => new UserAr({ ...validUser, ...invalidInput })).toThrow(
-          'Нарушены инварианты агрегата',
-        );
+        expect(
+          () => new LegacyUserAr({ ...validUser, ...invalidInput }),
+        ).toThrow('Нарушены инварианты агрегата');
       }
     });
   });
 
   describe('create', () => {
     test('генерирует UUID и createdAt', () => {
-      const ar = UserAr.create({
+      const ar = LegacyUserAr.create({
         name: 'А',
         telegramId: 1,
         roles: [Role.STUDENT],
@@ -49,7 +49,7 @@ describe('UserAr', () => {
     });
 
     test('сохраняет переданные поля', () => {
-      const ar = UserAr.create({
+      const ar = LegacyUserAr.create({
         name: 'Петр',
         telegramId: 456,
         roles: [Role.MENTOR, Role.ADMIN],
@@ -62,7 +62,7 @@ describe('UserAr', () => {
 
   describe('register', () => {
     test('создаёт пользователя с ролью GUEST', () => {
-      const ar = UserAr.register({
+      const ar = LegacyUserAr.register({
         name: 'Анна',
         telegramId: 789,
       });
@@ -75,7 +75,7 @@ describe('UserAr', () => {
     });
 
     test('сохраняет nick если передан', () => {
-      const ar = UserAr.register({
+      const ar = LegacyUserAr.register({
         name: 'Анна',
         telegramId: 789,
         nick: 'anna_tg',
@@ -86,13 +86,13 @@ describe('UserAr', () => {
 
   describe('addRole', () => {
     test('добавляет роль, если её ещё нет', () => {
-      const ar = new UserAr(validUser);
+      const ar = new LegacyUserAr(validUser);
       ar.addRole(Role.SUBSCRIBER);
       expect(ar.state.roles).toEqual([Role.ADMIN, Role.SUBSCRIBER]);
     });
 
     test('не дублирует существующую роль', () => {
-      const ar = new UserAr(validUser);
+      const ar = new LegacyUserAr(validUser);
       ar.addRole(Role.ADMIN);
       expect(ar.state.roles).toEqual([Role.ADMIN]);
     });

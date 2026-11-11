@@ -4,7 +4,7 @@ import {
   type GetUserByTelegramIdCmd,
   type GetUserByTelegramIdCmdMeta,
   GetUserByTelegramIdCmdSchema,
-  UserAr,
+  LegacyUserAr,
   UserSchema,
 } from '@u7-scl/domain/user';
 import { UserUseCase } from '#api-legacy/user-uc';
@@ -17,8 +17,8 @@ export class GetUserByTelegramIdUc extends UserUseCase<GetUserByTelegramIdCmdMet
   protected readonly ucName = 'get-user-by-telegram-id' as const;
   protected readonly ucLabel = 'Найти пользователя по Telegram ID' as const;
   protected readonly arMeta = {
-    arName: UserAr.arName as 'User',
-    arLabel: UserAr.arLabel as 'Пользователь',
+    arName: LegacyUserAr.arName as 'User',
+    arLabel: LegacyUserAr.arLabel as 'Пользователь',
   };
   protected readonly type = 'query' as const;
   protected readonly requiresAuth = false as const;

@@ -11,7 +11,7 @@ export interface UserListFilter {
 }
 
 /** Интерфейс репозитория пользователей */
-export interface UserRepo {
+export interface LegacyUserRepo {
   save(user: User): Promise<void>;
   getByUuid(uuid: string): Promise<User | undefined>;
   /** Пакетное чтение по набору UUID (один запрос, без N+1).

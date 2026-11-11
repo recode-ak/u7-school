@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app-legacy/domain';
 import type { User } from '@u7-scl/domain/user';
 import { Role } from '@u7-scl/domain/user';
-import { UserJsonRepo } from '#infra-legacy/db/user-json-repo';
+import { LegacyUserJsonRepo } from '#infra-legacy/db/user-json-repo';
 import { UserApiModule } from './module';
 
 const NO_SEED = '/nonexistent-seed.json';
@@ -32,11 +32,11 @@ const appResolver: U7AppResolver = {
   school: TEST_SCHOOL,
 };
 
-describe('UserApiModule + UserJsonRepo', () => {
+describe('UserApiModule + LegacyUserJsonRepo', () => {
   test('сборка: реестр из 9 UC и вертикаль create → get → list → get-by-telegram-id → get-users-by-ids', async () => {
     await Bun.$`rm -f ${JSON_FILE}`;
 
-    const repo = new UserJsonRepo(JSON_FILE, NO_SEED);
+    const repo = new LegacyUserJsonRepo(JSON_FILE, NO_SEED);
     const mod = new UserApiModule({
       userRepo: repo,
       appResolver,

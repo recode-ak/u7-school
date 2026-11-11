@@ -1,10 +1,10 @@
 import type { User } from '@u7-scl/domain/user';
 import {
+  LegacyUserAr,
   type ListUsersCmd,
   type ListUsersCmdMeta,
   ListUsersCmdSchema,
   type ListUsersResult,
-  UserAr,
   UserSchema,
 } from '@u7-scl/domain/user';
 import * as v from 'valibot';
@@ -19,8 +19,8 @@ export class ListUsersUc extends UserUseCase<ListUsersCmdMeta> {
   protected readonly ucLabel =
     'Список всех пользователей с фильтрацией' as const;
   protected readonly arMeta = {
-    arName: UserAr.arName as 'User',
-    arLabel: UserAr.arLabel as 'Пользователь',
+    arName: LegacyUserAr.arName as 'User',
+    arLabel: LegacyUserAr.arLabel as 'Пользователь',
   };
   protected readonly type = 'query' as const;
   protected readonly requiresAuth = false as const;

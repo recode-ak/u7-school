@@ -1,7 +1,7 @@
 // Domain слой @u7-scl/user
 export type { UserFacade } from './facade';
 export type { UserApiModuleMeta, UserApiModuleResolver } from './module';
-export { UserAr } from './user/a-root';
+export { LegacyUserAr } from './user/a-root';
 export type {
   AddRoleToUserCmd,
   AddRoleToUserCmdError,
@@ -64,7 +64,7 @@ export { RemoveRoleToUserCmdSchema } from './user/commands/remove-role-to-user-c
 export type { User, UserArMeta } from './user/entity';
 export { UserSchema } from './user/entity';
 export type { UserNotifiedEvent } from './user/events';
-export { UserPolicy } from './user/policy';
-export type { UserListFilter, UserRepo } from './user/repo';
+export { LegacyUserPolicy } from './user/policy';
+export type { LegacyUserRepo, UserListFilter } from './user/repo';
 export { Role, RoleSchema } from './user/roles';
 export type { TelegramId, UserId } from './user/types';

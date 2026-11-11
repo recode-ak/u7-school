@@ -3,7 +3,7 @@ import {
   type GetUserCmd,
   type GetUserCmdMeta,
   GetUserCmdSchema,
-  UserAr,
+  LegacyUserAr,
   UserSchema,
 } from '@u7-scl/domain/user';
 import { UserUseCase } from '#api-legacy/user-uc';
@@ -16,8 +16,8 @@ export class GetUserUc extends UserUseCase<GetUserCmdMeta> {
   protected readonly ucName = 'get-user' as const;
   protected readonly ucLabel = 'Получить пользователя по UUID' as const;
   protected readonly arMeta = {
-    arName: UserAr.arName as 'User',
-    arLabel: UserAr.arLabel as 'Пользователь',
+    arName: LegacyUserAr.arName as 'User',
+    arLabel: LegacyUserAr.arLabel as 'Пользователь',
   };
   protected readonly type = 'query' as const;
   protected readonly requiresAuth = false as const;

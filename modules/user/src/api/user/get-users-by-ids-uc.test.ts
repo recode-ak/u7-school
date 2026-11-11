@@ -1,8 +1,8 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type {
+  LegacyUserRepo,
   User,
   UserApiModuleResolver,
-  UserRepo,
 } from '@u7-scl/domain/user';
 import { Role } from '@u7-scl/domain/user';
 import { GetUsersByIdsUc } from './get-users-by-ids-uc';
@@ -25,7 +25,7 @@ function setupUc() {
 
   const repo = {
     getByUuids,
-  } as unknown as UserRepo;
+  } as unknown as LegacyUserRepo;
   const uc = new GetUsersByIdsUc();
   uc.init({
     userRepo: repo,

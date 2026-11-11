@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { UserPolicy } from './policy';
+import { LegacyUserPolicy } from './policy';
 import { Role } from './roles';
 
 const admin = {
@@ -42,29 +42,29 @@ const guest = {
   createdAt: '2026-05-01T12:00',
 };
 
-describe('UserPolicy', () => {
+describe('LegacyUserPolicy', () => {
   describe('isAuthor', () => {
     test('AUTHOR — true', () => {
-      expect(UserPolicy.isAuthor(author)).toBe(true);
+      expect(LegacyUserPolicy.isAuthor(author)).toBe(true);
     });
 
     test('MENTOR без AUTHOR — false', () => {
-      expect(UserPolicy.isAuthor(teacher)).toBe(false);
+      expect(LegacyUserPolicy.isAuthor(teacher)).toBe(false);
     });
 
     test('пользователь с AUTHOR + MENTOR — true', () => {
       const authorMentor = { ...teacher, roles: [Role.MENTOR, Role.AUTHOR] };
-      expect(UserPolicy.isAuthor(authorMentor)).toBe(true);
+      expect(LegacyUserPolicy.isAuthor(authorMentor)).toBe(true);
     });
   });
 
   describe('canCreate', () => {
     test('ADMIN может создавать пользователей', () => {
-      expect(UserPolicy.canCreate(admin)).toBe(true);
+      expect(LegacyUserPolicy.canCreate(admin)).toBe(true);
     });
 
     test('STUDENT не может создавать пользователей', () => {
-      expect(UserPolicy.canCreate(student)).toBe(false);
+      expect(LegacyUserPolicy.canCreate(student)).toBe(false);
     });
 
     test('пользователь с несколькими ролями включая ADMIN может создавать', () => {
@@ -72,85 +72,105 @@ describe('UserPolicy', () => {
         ...student,
         roles: [Role.STUDENT, Role.ADMIN],
       };
-      expect(UserPolicy.canCreate(userWithMultipleRoles)).toBe(true);
+      expect(LegacyUserPolicy.canCreate(userWithMultipleRoles)).toBe(true);
     });
   });
 
   describe('canAddRole', () => {
     test('ADMIN может добавить любую роль любому пользователю', () => {
-      expect(UserPolicy.canAddRole(admin, student, Role.STUDENT)).toBe(true);
-      expect(UserPolicy.canAddRole(admin, teacher, Role.ADMIN)).toBe(true);
-      expect(UserPolicy.canAddRole(admin, guest, Role.SUBSCRIBER)).toBe(true);
+      expect(LegacyUserPolicy.canAddRole(admin, student, Role.STUDENT)).toBe(
+        true,
+      );
+      expect(LegacyUserPolicy.canAddRole(admin, teacher, Role.ADMIN)).toBe(
+        true,
+      );
+      expect(LegacyUserPolicy.canAddRole(admin, guest, Role.SUBSCRIBER)).toBe(
+        true,
+      );
     });
 
     test('пользователь или MENTOR НЕ может выдать роль SUBSCRIBER', () => {
-      expect(UserPolicy.canAddRole(guest, guest, Role.SUBSCRIBER)).toBe(false);
-      expect(UserPolicy.canAddRole(student, student, Role.SUBSCRIBER)).toBe(
+      expect(LegacyUserPolicy.canAddRole(guest, guest, Role.SUBSCRIBER)).toBe(
         false,
       );
-      expect(UserPolicy.canAddRole(teacher, guest, Role.SUBSCRIBER)).toBe(
+      expect(
+        LegacyUserPolicy.canAddRole(student, student, Role.SUBSCRIBER),
+      ).toBe(false);
+      expect(LegacyUserPolicy.canAddRole(teacher, guest, Role.SUBSCRIBER)).toBe(
         false,
       );
     });
 
     test('GUEST может добавить себе роль STUDENT', () => {
-      expect(UserPolicy.canAddRole(guest, guest, Role.STUDENT)).toBe(true);
+      expect(LegacyUserPolicy.canAddRole(guest, guest, Role.STUDENT)).toBe(
+        true,
+      );
     });
 
     test('GUEST НЕ может добавить роль другому пользователю', () => {
-      expect(UserPolicy.canAddRole(guest, student, Role.STUDENT)).toBe(false);
+      expect(LegacyUserPolicy.canAddRole(guest, student, Role.STUDENT)).toBe(
+        false,
+      );
     });
 
     test('MENTOR может добавить STUDENT роль, но не другие', () => {
-      expect(UserPolicy.canAddRole(teacher, student, Role.STUDENT)).toBe(true);
-      expect(UserPolicy.canAddRole(teacher, teacher, Role.MENTOR)).toBe(false);
+      expect(LegacyUserPolicy.canAddRole(teacher, student, Role.STUDENT)).toBe(
+        true,
+      );
+      expect(LegacyUserPolicy.canAddRole(teacher, teacher, Role.MENTOR)).toBe(
+        false,
+      );
     });
 
     test('пользователь с ADMIN + другими ролями может всё', () => {
       const userWithAdmin = { ...student, roles: [Role.STUDENT, Role.ADMIN] };
-      expect(UserPolicy.canAddRole(userWithAdmin, student, Role.MENTOR)).toBe(
-        true,
-      );
+      expect(
+        LegacyUserPolicy.canAddRole(userWithAdmin, student, Role.MENTOR),
+      ).toBe(true);
     });
   });
 
   describe('canRemoveRole', () => {
     test('ADMIN может удалить любую роль у любого пользователя', () => {
-      expect(UserPolicy.canRemoveRole(admin, student, Role.STUDENT)).toBe(true);
-      expect(UserPolicy.canRemoveRole(admin, teacher, Role.MENTOR)).toBe(true);
-      expect(UserPolicy.canRemoveRole(admin, guest, Role.SUBSCRIBER)).toBe(
+      expect(LegacyUserPolicy.canRemoveRole(admin, student, Role.STUDENT)).toBe(
         true,
       );
+      expect(LegacyUserPolicy.canRemoveRole(admin, teacher, Role.MENTOR)).toBe(
+        true,
+      );
+      expect(
+        LegacyUserPolicy.canRemoveRole(admin, guest, Role.SUBSCRIBER),
+      ).toBe(true);
     });
 
     test('пользователь или MENTOR НЕ может снять роль SUBSCRIBER', () => {
-      expect(UserPolicy.canRemoveRole(guest, guest, Role.SUBSCRIBER)).toBe(
-        false,
-      );
-      expect(UserPolicy.canRemoveRole(student, student, Role.SUBSCRIBER)).toBe(
-        false,
-      );
-      expect(UserPolicy.canRemoveRole(teacher, guest, Role.SUBSCRIBER)).toBe(
-        false,
-      );
+      expect(
+        LegacyUserPolicy.canRemoveRole(guest, guest, Role.SUBSCRIBER),
+      ).toBe(false);
+      expect(
+        LegacyUserPolicy.canRemoveRole(student, student, Role.SUBSCRIBER),
+      ).toBe(false);
+      expect(
+        LegacyUserPolicy.canRemoveRole(teacher, guest, Role.SUBSCRIBER),
+      ).toBe(false);
     });
 
     test('пользователь может удалить STUDENT у себя', () => {
-      expect(UserPolicy.canRemoveRole(student, student, Role.STUDENT)).toBe(
-        true,
-      );
+      expect(
+        LegacyUserPolicy.canRemoveRole(student, student, Role.STUDENT),
+      ).toBe(true);
     });
 
     test('GUEST НЕ может удалить роль у другого', () => {
-      expect(UserPolicy.canRemoveRole(guest, student, Role.STUDENT)).toBe(
+      expect(LegacyUserPolicy.canRemoveRole(guest, student, Role.STUDENT)).toBe(
         false,
       );
     });
 
     test('MENTOR может удалить STUDENT у других, но не другие роли', () => {
-      expect(UserPolicy.canRemoveRole(teacher, student, Role.STUDENT)).toBe(
-        true,
-      );
+      expect(
+        LegacyUserPolicy.canRemoveRole(teacher, student, Role.STUDENT),
+      ).toBe(true);
     });
   });
 });
