@@ -43,7 +43,7 @@
     - [x] Policy, правила; события — по утверждённому составу (нет, MAN-06); DCS/DQS бриф не предусматривает;
     - [x] перенос сценариев `a-root.test.ts`, `policy.test.ts` (список — в отчёте, TST-08).
 - [x] Task: `migrator`, домен (flash): Def, Ar без `#` и `throw*`, правила, ошибки; `UserModuleDef` пока с `external` 03d6b4f4
-- [ ] Task: `dmg-reviewer` (Opus). Замечания без `error` решает orchestrator (TR), перепроектирование — Нурболату
+- [x] Task: `dmg-reviewer` (Opus). Замечания без `error` решает orchestrator (TR), перепроектирование — Нурболату 16a77b00 — `error` нет, 5 info закрыты в срезе
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 1:**

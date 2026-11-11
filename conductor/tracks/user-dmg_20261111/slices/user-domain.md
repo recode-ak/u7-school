@@ -193,3 +193,7 @@ Red-тесты: `user.state.test.ts` (18), `user.ar.test.ts` (18), `user.policy.
 ## Отчёт `migrator` (Ф1, flash, `ud-F1-domain`)
 
 Файлы: `user.{state,errors,ar,policy,rules,fixture}.ts`, `contract.ts` (+`UserView`, `UserErrors`, `UserAr`), `index.ts`, `state.ts` (реэкспорт по D-45). Отклонения: `UserView` — схема `= UserState` (нужна как `output` UC); ID `DEBT-48`/`TR-61` убраны из комментариев (`arch:check` запрещает их вне `biome-ignore`); `roles` с `v.description` (MAN-02). Эскалации: MAN-06 по Def UC → решение orchestrator (Р7 уточнён); `DEBT-48` в комментариях тестов → снят с разрешения. Итог: `bun test domain/src/user` 83 pass, `check` зелёный (3235 pass), `arch:check` 0.
+
+## Отчёт `dmg-reviewer` (Ф1, Opus)
+
+Вердикт: принят, `error` нет. Info (все закрыты в `16a77b00`, `ud-F1-review-fix`): CODE-04 — привязка к фазе в JSDoc `user.state.ts`; вопрос о trim в `create` (поведение уже верно — конструктор `Aggregate` разбирает state; нормализация сделана явной, тест добавлен); TST-09 — `user.state.test.ts` 19 → 6, `hasRole` `it.each` по 6 ролям → один случай, «без субъекта — denied» в Policy (поведение `Rule.of`) удалены; шапка `contract.ts` обновлена. S0 — только подмена идентификаторов. Итог: `bun test domain/src/user` 64 pass, `check` 3216 pass.
