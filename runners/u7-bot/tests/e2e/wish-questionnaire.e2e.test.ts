@@ -56,7 +56,6 @@ describe('Wish: анкетная ветка (e2e)', () => {
   let student: User;
   let mentor: User;
   let admin: User;
-  let author: User;
 
   beforeAll(async () => {
     app = await createTestApp('wish-questionnaire-e2e');
@@ -73,7 +72,6 @@ describe('Wish: анкетная ветка (e2e)', () => {
     student = (await app.userFacade.getUserByTelegramId(1003))!;
     mentor = (await app.userFacade.getUserByTelegramId(1004))!;
     admin = (await app.userFacade.getUserByTelegramId(1005))!;
-    author = (await app.userFacade.getUserByTelegramId(1006))!;
   });
 
   beforeEach(() => {
@@ -434,43 +432,6 @@ describe('Wish: анкетная ветка (e2e)', () => {
     ).toBe('confirmed');
     expect(await questionnaireStatus(admin, QUESTIONNAIRE_COURSE_ID)).toBe(
       'completed',
-    );
-  });
-
-  // ── B.6: confirmed → на карточке «Отменить желание» → cancelled ──
-
-  test('confirmed → на карточке кнопка «Отменить желание»; отмена → cancelled', async () => {
-    dropSession(author.telegramId);
-    // Прогоняем анкету до конца (confirmed); после последнего ответа
-    // ввод освобождён, но сессию сбрасываем — как после рестарта бота
-    await startQuestionnaire(author.telegramId);
-    await click(author.telegramId, '2');
-    await transport.handleMessage(
-      transport.makeBotContext(author.telegramId, { text: 'Цель' }),
-    );
-    await click(author.telegramId, '1');
-    await click(author.telegramId, '2');
-    const done = await click(author.telegramId, 'Далее -->');
-    expect(done.release).toBe(true);
-    expect(
-      await waitForWishStatus(author, QUESTIONNAIRE_COURSE_ID, 'confirmed'),
-    ).toBe('confirmed');
-
-    // На карточке confirmed-курса — кнопка отмены (вместо apply)
-    dropSession(author.telegramId);
-    await openCatalog(author.telegramId);
-    const card = await click(author.telegramId, '🗑️ Отменить желание');
-    expect(card.screen?.text).toContain('Отменить желание пройти курс?');
-
-    // Отмена из confirmed: подтверждение → W05 «отменено»
-    const w05 = await click(author.telegramId, '✅ Да');
-    expect(w05.screen?.text).toContain('отменено');
-
-    expect(
-      await waitForWishStatus(author, QUESTIONNAIRE_COURSE_ID, 'cancelled'),
-    ).toBe('cancelled');
-    expect(await wishStatuses(author, QUESTIONNAIRE_COURSE_ID)).not.toContain(
-      'confirmed',
     );
   });
 });

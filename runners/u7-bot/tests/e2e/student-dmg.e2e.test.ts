@@ -4,11 +4,7 @@ import { LearningController } from '@u7-scl/bot/learning/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import {
-  ActivateStreamUcDef,
   CompleteStudentUcDef,
-  CreateStreamUcDef,
-  EnrollStudentUcDef,
-  GetStudentByUserUcDef,
   InactivitySweepJobDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
@@ -27,10 +23,8 @@ import { UserController } from '../../src/controllers/user/controller';
  * E2E событий студента потока на DMG (срез `student`): события публикует UoW
  * модуля `stream` при настоящем UC (`dispatch`) или Job (`runJob`), а не
  * публикация legacy-имени `student.*` на шине.
- *   1) `completed` (advanced, последний модуль) → студенту «🎉 Курс завершён!» (7c);
- *   2) `completed` (advanced, есть следующий модуль) → студенту ничего (7a/7b —
- *      кнопки HubStory);
- *   3) повторный `runJob` в тот же день → ничего не шлёт (маркер бездействия).
+ * Текущий сценарий: повторный `runJob` в тот же день → ничего не шлёт
+ * (маркер бездействия).
  *
  * Допущение о стенде: `TestApp.runJob(module, jobDef)` запускает Job через
  * приложение DMG (в `createTestApp` его нет — добавляет автор, тесты
@@ -41,11 +35,7 @@ import { UserController } from '../../src/controllers/user/controller';
 
 const MENTOR_TG = 1004;
 const STUDENT_TG = 1003;
-const STUDENT_ADV_TG = 1007; // «Марина» (прошла a0a0a0a0)
-const STUDENT_F0 = 'f0f0f0f0-f0f0-f0f0-f0f0-f0f0f0f0f0f0';
-const STREAM2_ID = 'e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1';
 const GROUP2_ID = '-1002222222222';
-const LAST_MODULE = 'a1a1a1a1-b1b1-4b1b-8b1b-b1b1b1b1b1b1'; // Алгоритмика (последняя фаза)
 
 const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
@@ -83,107 +73,6 @@ async function createStand(tag: string): Promise<Stand> {
   const mentor = (await app.userFacade.getUserByTelegramId(MENTOR_TG))!;
   return { app, transport, mentor };
 }
-
-describe('E2E: completed → уведомление студенту (7a/7b/7c)', () => {
-  let stand: Stand;
-  beforeAll(async () => {
-    stand = await createStand('student-dmg-completed');
-  });
-  afterAll(async () => {
-    await stand.app.cleanup();
-  });
-
-  test('advanced на последнем модуле → «🎉 Курс завершён!» (7c)', async () => {
-    const { app, transport, mentor } = stand;
-    transport.reset();
-    const marina = (await app.userFacade.getUserByTelegramId(STUDENT_ADV_TG))!;
-
-    const stream = expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        CreateStreamUcDef.command({
-          title: 'Алгоритмика — Финальный поток',
-          description: 'Последний модуль программы',
-          moduleId: LAST_MODULE,
-          startDate: Date.UTC(2026, 10, 1),
-        }),
-        new UserCaller(mentor),
-        trace(),
-      ),
-    );
-    expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        EnrollStudentUcDef.command({ streamId: stream.streamId }),
-        new UserCaller(marina),
-        trace(),
-      ),
-    );
-    const record = expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        GetStudentByUserUcDef.command({ userId: marina.uuid }),
-        new UserCaller(mentor),
-        trace(),
-      ),
-    );
-    expect(record.streamId).toBe(stream.streamId);
-    expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        ActivateStreamUcDef.command({ streamId: stream.streamId }),
-        new UserCaller(mentor),
-        trace(),
-      ),
-    );
-
-    expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        CompleteStudentUcDef.command({
-          streamId: stream.streamId,
-          studentId: record.uuid,
-          outcome: 'advanced',
-        }),
-        new UserCaller(mentor),
-        trace(),
-      ),
-    );
-
-    const text = await waitMessageFor(transport, STUDENT_ADV_TG);
-    expect(text).toContain('Курс завершён');
-    expect(text).toContain('Поздравляем');
-  });
-
-  test('advanced на модуле со следующим → студенту уведомления нет', async () => {
-    const { app, transport, mentor } = stand;
-    transport.reset();
-
-    expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        CompleteStudentUcDef.command({
-          streamId: STREAM2_ID,
-          studentId: STUDENT_F0,
-          outcome: 'advanced',
-        }),
-        new UserCaller(mentor),
-        trace(),
-      ),
-    );
-    await new Promise((r) => setTimeout(r, 200));
-
-    // HubStory (стенд с LearningController) шлёт кнопочное приглашение 7a;
-    // безкнопочного текста 7c/7d нет
-    const toStudent = transport.api.sentMessages.filter(
-      (m) => m.telegramId === STUDENT_TG,
-    );
-    expect(toStudent.map((m) => m.text).join('\n')).toContain(
-      'записаться на следующий',
-    );
-    expect(toStudent.some((m) => m.text.includes('Курс завершён'))).toBe(false);
-  });
-});
 
 describe('E2E: Job бездействия → проактивы студенту и ментору', () => {
   let stand: Stand;

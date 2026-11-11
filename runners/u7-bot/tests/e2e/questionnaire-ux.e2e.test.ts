@@ -45,13 +45,8 @@ const ENROLL_KEY_STREAM = 'e4e4e4e4-e4e4-e4e4-e4e4-e4e4e4e4e4e4';
 describe('Questionnaire UX (e2e)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  // Отдельный пользователь на тест: apply выдаёт одну активную анкету на курс.
-  // fillGuest — для сценария приглашения: GUEST (видит «Записаться» в карточке потока).
-  let guest: User;
-  let candidate: User;
-  let student: User;
+  // fillGuest — сценарий приглашения: GUEST (видит «Записаться» в карточке потока).
   let fillGuest: User;
-  let admin: User;
 
   beforeAll(async () => {
     app = await createTestApp('questionnaire-ux-e2e');
@@ -62,11 +57,7 @@ describe('Questionnaire UX (e2e)', () => {
       new StreamsController(),
       new QuestionnaireController(),
     ]);
-    guest = (await app.userFacade.getUserByTelegramId(1001))!;
-    candidate = (await app.userFacade.getUserByTelegramId(1002))!;
-    student = (await app.userFacade.getUserByTelegramId(1003))!;
     fillGuest = (await app.userFacade.getUserByTelegramId(1007))!;
-    admin = (await app.userFacade.getUserByTelegramId(1005))!;
   });
 
   beforeEach(() => {
@@ -195,128 +186,6 @@ describe('Questionnaire UX (e2e)', () => {
     return q1;
   }
 
-  // ── FR-1: radio — финализация (маркер, клавиатура снята), история живёт ──
-
-  test('radio: выбор → финализация Q1 с маркером (x) и БЕЗ клавиатуры → новый вопрос новым сообщением', async () => {
-    const q1 = await startQuestionnaire(guest.telegramId);
-    expect(q1.messageId).toBeDefined();
-
-    // Выбор «2» → Q2 (text) новым сообщением
-    await click(guest.telegramId, '2');
-    const q2 = await waitForSent(guest.telegramId, 'Вопрос 2 из 3');
-    expect(q2.text).toContain('Опиши свою цель');
-    expect(q2.keyboard).toBeUndefined();
-
-    // История: Q1 отредактирован, а не заменён — тот же messageId.
-    // Берём ПОСЛЕДНИЙ edit — раньше могло пройти снятие клавиатуры экрана
-    // каталога (retire при смене диалога).
-    const edits = transport.api.editedMessages.filter(
-      (e) => e.telegramId === guest.telegramId && e.messageId === q1.messageId,
-    );
-    expect(edits.length).toBeGreaterThanOrEqual(1);
-    const q1Edit = edits[edits.length - 1]!;
-    expect(q1Edit.text).toContain('Какой у тебя опыт?');
-    // Маркер radio: (x) у выбранного, ( ) у остальных
-    expect(q1Edit.text).toContain('\\(x\\)');
-    expect(q1Edit.text).toContain('\\( \\)');
-    // Клавиатура снята (finalize гасит экран вопроса)
-    expect(q1Edit.keyboard).toBeUndefined();
-  });
-
-  // ── FR-2: multiple — тогглы на месте, «Далее» по выбору ──
-
-  test('multiple: тоггл редактирует на месте (клавиатура жива), «Далее» появляется/исчезает', async () => {
-    // Дойти до Q3 (multiple)
-    const q1 = await startQuestionnaire(candidate.telegramId);
-    await click(candidate.telegramId, '2');
-    await transport.handleMessage(
-      transport.makeBotContext(candidate.telegramId, { text: 'Цель' }),
-    );
-    const q3 = await waitForSent(candidate.telegramId, 'Вопрос 3 из 3');
-    // FR-2: «Далее» НЕ рендерится, пока не выбран ни один вариант
-    expect(q3.keyboard?.rows.flat().map((b) => b.text)).toEqual(['1', '2']);
-    expect(q3.messageId).toBeDefined();
-
-    // Тоггл «1» → editMessage того же сообщения (messageId совпадает)
-    await click(candidate.telegramId, '1');
-    const toggleEdit = await waitFor('edit тоггла', () =>
-      transport.api.editedMessages.find(
-        (e) =>
-          e.telegramId === candidate.telegramId &&
-          e.messageId === q3.messageId &&
-          e.text.includes('\\[x\\]'),
-      ),
-    );
-    expect(toggleEdit.messageId).toBe(q3.messageId);
-    expect(toggleEdit.text).toContain('Как удобнее учиться');
-    // Клавиатура жива: варианты + «Далее»
-    expect(toggleEdit.keyboard?.rows.flat().map((b) => b.text)).toEqual([
-      '1',
-      '2',
-      'Далее -->',
-    ]);
-
-    // Снятие выбора → «Далее» исчезает из отредактированного сообщения
-    await click(candidate.telegramId, '1');
-    const untoggleEdit = await waitFor('edit снятия выбора', () =>
-      transport.api.editedMessages.find(
-        (e) =>
-          e.telegramId === candidate.telegramId &&
-          e.messageId === q3.messageId &&
-          !e.text.includes('\\[x\\]') &&
-          e.keyboard !== undefined,
-      ),
-    );
-    expect(untoggleEdit.keyboard?.rows.flat().map((b) => b.text)).toEqual([
-      '1',
-      '2',
-    ]);
-  });
-
-  test('«Далее» → финализация Q3 с финальными маркерами без клавиатуры + completed новым сообщением', async () => {
-    const q1 = await startQuestionnaire(student.telegramId);
-    await click(student.telegramId, '2');
-    await transport.handleMessage(
-      transport.makeBotContext(student.telegramId, { text: 'Цель' }),
-    );
-    const q3 = await waitForSent(student.telegramId, 'Вопрос 3 из 3');
-    await click(student.telegramId, '1');
-
-    // «Далее» появляется в отредактированной клавиатуре после выбора
-    await waitFor('edit тоггла с «Далее»', () =>
-      transport.api.editedMessages.find(
-        (e) =>
-          e.telegramId === student.telegramId &&
-          e.messageId === q3.messageId &&
-          e.keyboard?.rows.flat().some((b) => b.text === 'Далее -->'),
-      ),
-    );
-    await click(student.telegramId, 'Далее -->');
-
-    // Финальные маркеры в Q3, клавиатура снята
-    const finalEdit = await waitFor('финальный edit Q3', () =>
-      transport.api.editedMessages.find(
-        (e) =>
-          e.telegramId === student.telegramId &&
-          e.messageId === q3.messageId &&
-          e.keyboard === undefined,
-      ),
-    );
-    expect(finalEdit.text).toContain('\\[x\\]');
-
-    // completed — новым сообщением, шапка S04 + кнопка главного меню
-    const doneMsg = await waitForSent(
-      student.telegramId,
-      'Желание пройти курс закреплено',
-    );
-    expect(doneMsg.text).toContain('Анкета завершена');
-    expect(doneMsg.keyboard?.rows.flat().map((b) => b.text)).toEqual([
-      '↩️ Главное меню',
-    ]);
-    // Ввод отпущен: текст после completed не адресуется анкете
-    expect(transport.dialogOf(student.telegramId)?.input).toBeUndefined();
-  });
-
   // ── FR-5 (вариант A): приглашение продолжить — кнопка-мост ──
 
   /** Публикует событие приглашения продолжить (как SweepAbandonedJob на 3ч). */
@@ -415,35 +284,5 @@ describe('Questionnaire UX (e2e)', () => {
         e.text.includes('\\(x\\)'),
     );
     expect(edit).toBeDefined();
-  });
-
-  test('без сессии (якорь app/invite): приглашение живо, кнопка открывает анкету', async () => {
-    // Юзер с активной анкетой, но без сессии (закрыл/перезапустил бот)
-    await startQuestionnaire(admin.telegramId);
-    transport.dropSession(admin.telegramId);
-
-    // Приглашение без диалога: транспорт открывает якорь (seq = 1),
-    // кнопки заштампованы — приглашение не умирает
-    publishContinueInvite(admin);
-    const invite = await waitForSent(
-      admin.telegramId,
-      'Вы начали заполнять анкету',
-    );
-    expect(invite.text).toContain('продолжим?');
-    const resumeBtn = invite.keyboard?.rows
-      .flat()
-      .find((b) => b.text === '▶️ Продолжить анкету');
-    expect(resumeBtn).toBeDefined();
-
-    // Клик по кнопке-мосту открывает анкету и без /start
-    await transport.handleCallback(
-      transport.makeBotContext(admin.telegramId, {
-        callbackData: resumeBtn!.code,
-      }),
-    );
-    await waitForSent(admin.telegramId, 'Вопрос 1 из 3');
-    expect(transport.dialogOf(admin.telegramId)?.path).toBe(
-      'questionnaire/fill',
-    );
   });
 });

@@ -69,7 +69,7 @@
 | 2026-11-06 | `tst-cleanup` | `domain/src/questionnaire`, `modules/questionnaire`, тесты бота (questionnaire) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 213 → 126, 113 → 39, бот 134 → 88 | почищено в треке |
 | 2026-11-06 | `tst-cleanup` | `domain/src/peer-review`, `modules/peer-review`, тесты бота (peer-review) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 184 → 72, 141 → 73, бот 127 → 104 | почищено в треке |
 | 2026-11-06 | `tst-cleanup` | `domain/src/{user,dossier}`, `modules/user`, тесты бота (user, dossier) | Б-1…Б-17 по таблицам `inventory/*-delete.md` трека; тесты: 70 → 33, 103 → 67, бот 15 → 10 | почищено в треке |
-| 2026-11-06 | `tst-cleanup` | `wish-questionnaire.e2e.test.ts:460`, `student-dmg.e2e.test.ts:122`, `:251`, `questionnaire-ux.e2e.test.ts`, `modules/questionnaire/src/questionnaire.module.test.ts:169` | дубли e2e и `probe`-модуль — см. «Дальше» в [plan.md](../tracks/tst-cleanup_20261105/plan.md) | ждёт `course-dmg` |
+| 2026-11-06 | `tst-cleanup` | `wish-questionnaire.e2e.test.ts:460`, `student-dmg.e2e.test.ts:122`, `:251`, `questionnaire-ux.e2e.test.ts`, `modules/questionnaire/src/questionnaire.module.test.ts:169` | дубли e2e и `probe`-модуль — см. «Дальше» в [plan.md](../tracks/tst-cleanup_20261105/plan.md) | почищено 2026-11-11 в `course-dmg` Ф7: −8, `questionnaire-ux.e2e.test.ts:339` оставлен ([deferred-delete.md](../tracks/course-dmg_20261105/inventory/deferred-delete.md)) |
 
 ## 4. Как пополнять
 

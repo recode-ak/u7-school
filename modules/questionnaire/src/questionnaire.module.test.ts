@@ -14,111 +14,27 @@ import {
   StartByInviteUcDef,
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
-import {
-  AggregateDef,
-  allowAll,
-  BaseEntityFields,
-  type Caller,
-  ModuleDef,
-  ok,
-  UseCaseDef,
-} from 'dmg-core';
-import {
-  type AppContext,
-  type ModuleDeps,
-  ModuleFacade,
-  ModuleFacades,
-  type ParsedInputOf,
-  Trace,
-  type UnitOfWork,
-  UseCaseFromDef,
-} from 'dmg-core/app';
+import { type AppContext, ModuleFacades, Trace } from 'dmg-core/app';
 import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
-import * as v from 'valibot';
 import { QuestionnaireJsonRepo } from './infra/questionnaire.json-repo';
 import { QuestionnaireRepoFake } from './questionnaire/questionnaire.repo.fake';
 import {
   likertPool,
   OWNER_INFO,
   pool,
-  REQ,
   RESPONDENT,
   respondent,
   systemFor,
 } from './questionnaire/uc/questionnaire-uc.fixture';
-import {
-  createQuestionnaireModule,
-  type QuestionnaireUser,
-} from './questionnaire.module';
+import { createQuestionnaireModule } from './questionnaire.module';
 
 // Модуль анкет на DMG: заменяет адаптерный тест над legacy-фасадом
-// (`QuestionnaireLegacy`, `startStandard`). Потребитель вызывает
-// `startQuestionnaire` через фасад (D-43); smoke каждого UC — на реальном
+// (`QuestionnaireLegacy`, `startStandard`). Smoke каждого UC — на реальном
 // репозитории во временном каталоге.
 
-const ProbeArDef = AggregateDef.define({
-  name: 'probe',
-  label: 'Проба',
-  description: 'Агрегат модуля-потребителя фасада анкет.',
-  state: v.object({ ...BaseEntityFields }),
-  events: {},
-  errors: {},
-});
-const probeSpec = {
-  name: 'probeQuestionnaire',
-  label: 'Проба анкеты',
-  description: 'Запускает анкету через фасад модуля анкет.',
-  type: 'command',
-  aggregate: ProbeArDef,
-  callers: ['user'],
-  policy: allowAll,
-  input: StartQuestionnaireUcDef.input,
-  output: v.object({}),
-  errors: [],
-} as const;
-const ProbeUcDef = UseCaseDef.define({
-  ...probeSpec,
-  calls: [StartQuestionnaireUcDef],
-});
-const ProbeModuleDef = ModuleDef.define({
-  name: 'probe',
-  label: 'Проба',
-  description: 'Модуль-потребитель фасада анкет.',
-  dependsOn: [QuestionnaireModuleDef],
-  aggregates: [ProbeArDef],
-  useCases: [ProbeUcDef],
-  reactions: [],
-  jobs: [],
-});
-
-class ProbeUc extends UseCaseFromDef<
-  typeof ProbeUcDef,
-  ModuleDeps,
-  undefined,
-  QuestionnaireUser
-> {
-  constructor(deps: ModuleDeps, module: typeof ProbeModuleDef) {
-    super(ProbeUcDef, deps, module);
-  }
-  protected async load() {
-    return ok(undefined);
-  }
-  protected async execute(
-    input: ParsedInputOf<typeof ProbeUcDef>,
-    _: undefined,
-    __: UnitOfWork,
-    caller: Caller<QuestionnaireUser>,
-    trace: Trace,
-  ) {
-    return this.call(StartQuestionnaireUcDef, input, caller, trace);
-  }
-}
-
 let app: AppContext;
-let questionnaires: QuestionnaireRepoFake;
 beforeEach(() => {
   app = testAppContext().app;
-  questionnaires = new QuestionnaireRepoFake();
 });
 
 const moduleOn = (repo: QuestionnaireRepoFake | QuestionnaireJsonRepo) =>
@@ -127,35 +43,6 @@ const moduleOn = (repo: QuestionnaireRepoFake | QuestionnaireJsonRepo) =>
     facades: new ModuleFacades(),
     questionnaires: repo,
   });
-
-describe('модуль анкет через фасад потребителя (D-43)', () => {
-  const probe = () =>
-    new ProbeUc(
-      {
-        app,
-        facades: new ModuleFacades([
-          new ModuleFacade(moduleOn(questionnaires)),
-        ]),
-      },
-      ProbeModuleDef,
-    );
-
-  it('запуск через фасад создаёт анкету за субъекта, ownerInfo сохранён', async () => {
-    const res = await probe().handle(
-      { pool: pool(), ownerInfo: OWNER_INFO },
-      respondent,
-      REQ,
-    );
-    expect(expectOk(res)).toEqual({});
-    expect(questionnaires.saved).toHaveLength(1);
-    expect(questionnaires.saved[0]).toMatchObject({
-      respondentId: RESPONDENT,
-      kind: 'standard',
-      status: 'in_progress',
-      ownerInfo: OWNER_INFO,
-    });
-  });
-});
 
 describe('smoke: каждый UC на реальном репозитории (mkdtemp)', () => {
   const dir = mkdtempSync(join(tmpdir(), 'questionnaire-module-test-'));
