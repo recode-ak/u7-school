@@ -115,7 +115,7 @@
 - [x] Task: `migrator`, удаление legacy и клиенты сборки (flash): `UserInProcFacade`, `UserApiModule`, `api/*`, `module.ts`, `facade.ts`, `commands/*`, legacy-репозиторий, поле `userFacade` и тип `UserLegacy` в `platform/app`; `tests/helpers/test-app.ts`, `scripts/{call-uc,_course-client,domain-arch}.ts`, тестовые миры
 - [x] Task: `dmg-data-keeper` (flash): скрипты на `DB_DIR=./data/fixtures` — вывод совпадает с `v0.2.6` 6f6435b6 — ок; первая команда нового кода делает `users.json` нечитаемым для `v0.2.6` (откат — бэкап, чек-лист Ф8)
 - [x] Task: `dmg-reviewer` (Opus) 6f6435b6 — `error` нет; 1 warn и 4 info исправлены, остальные — Ф7/DEBT-42
-- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 6:**
 - `grep -rn "UserApiModule\|UserInProcFacade\|UserFacade\|UserLegacy" --include=*.ts .` пуст; `U7CallerResolver` — на Def с Ф4 (вне `node_modules`).
