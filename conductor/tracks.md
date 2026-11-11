@@ -8,5 +8,5 @@
 
 ---
 
-- [ ] **Track: Перевод модуля `user` на DMG и снятие barrel-реэкспортов (DEBT-3)**
+- [~] **Track: Перевод модуля `user` на DMG и снятие barrel-реэкспортов (DEBT-3)**
 *Link: [./tracks/user-dmg_20261111/](./tracks/user-dmg_20261111/)*
