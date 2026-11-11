@@ -15,8 +15,9 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 
 const DATA_DIR = 'data/fullstack-js';
-const BOT_TOKEN = '8781337572:AAGWv3f924aZisUW3z47n8BPDusyfKAjIWg';
-const DEFAULT_CHAT_ID = '773084180';
+// Токен и личка ментора — из окружения, чтобы не хардкодить секреты
+const BOT_TOKEN = process.env.BOT_TOKEN ?? '';
+const MENTOR_CHAT_ID = process.env.MENTOR_CHAT_ID ?? '';
 
 // Автоопределение имён папок модулей: m1-syntax, m2-algorithm, ...
 const moduleDirs = readdirSync(DATA_DIR).sort();
@@ -151,7 +152,17 @@ async function main() {
   }
 
   const fileNumberArg = parsed.fileNum;
-  const chatId = toId ?? DEFAULT_CHAT_ID;
+  const chatId = toId ?? MENTOR_CHAT_ID;
+  if (!BOT_TOKEN) {
+    console.error('❌ Не задан BOT_TOKEN в окружении');
+    process.exit(1);
+  }
+  if (!chatId) {
+    console.error(
+      '❌ Не задан получатель: MENTOR_CHAT_ID в окружении или --to=<id>',
+    );
+    process.exit(1);
+  }
   const { module: Nm, project: Np, lesson: Nl } = parsed;
 
   // Найти папку модуля
