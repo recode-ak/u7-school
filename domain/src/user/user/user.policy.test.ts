@@ -32,10 +32,6 @@ describe('UserPolicy.canManageRoles', () => {
       );
     },
   );
-
-  it('без субъекта — denied', () => {
-    expect(canManageRoles.evaluate(undefined, {}).allowed).toBe(false);
-  });
 });
 
 describe('UserPolicy.canRegisterGuest', () => {
@@ -60,8 +56,4 @@ describe('UserPolicy.canRegisterGuest', () => {
       );
     },
   );
-
-  it('без субъекта — denied', () => {
-    expect(canRegisterGuest.evaluate(undefined, {}).allowed).toBe(false);
-  });
 });

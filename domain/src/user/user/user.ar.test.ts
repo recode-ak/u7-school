@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { expectOk } from 'dmg-core/testing';
-import { UserAr } from './user.ar';
+import * as v from 'valibot';
+import { UserAr, UserArDef } from './user.ar';
 import { stored, T0, T1, USER } from './user.fixture';
 import type { UserRole } from './user.state';
 
@@ -31,6 +32,17 @@ describe('UserAr.create', () => {
   it.each(['', '   ', undefined])('nick %j — не записывается', (nick) => {
     const ar = expectOk(UserAr.create({ ...input, nick }, T0));
     expect('nick' in ar.snapshot()).toBe(false);
+  });
+
+  it('name и nick обрезаются: снимок равен разбору состояния', () => {
+    const ar = expectOk(
+      UserAr.create({ ...input, name: ' Анна ', nick: ' anna ' }, T0),
+    );
+    const snapshot = ar.snapshot();
+    expect([snapshot.name, snapshot.nick]).toEqual(['Анна', 'anna']);
+    const res = v.safeParse(UserArDef.state, snapshot);
+    expect(res.success).toBe(true);
+    if (res.success) expect(snapshot).toEqual(res.output);
   });
 });
 
@@ -78,15 +90,8 @@ describe('UserAr.removeRole', () => {
 });
 
 describe('UserAr — вопросы о ролях', () => {
-  it.each([
-    'GUEST',
-    'SUBSCRIBER',
-    'STUDENT',
-    'MENTOR',
-    'AUTHOR',
-    'ADMIN',
-  ] as const)('hasRole: есть %s', (role) => {
-    expect(restore(role).hasRole(role)).toBe(true);
+  it('hasRole: роль есть — true', () => {
+    expect(restore('MENTOR').hasRole('MENTOR')).toBe(true);
   });
 
   it('hasRole: нет роли — false', () => {

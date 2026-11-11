@@ -47,16 +47,17 @@ export class UserAr extends Aggregate<typeof UserArDef, UserView> {
     super(UserArDef, state);
   }
 
-  /** Новый гость: роль `GUEST`, пустой ник не записывается. */
+  /** Новый гость: роль `GUEST`, имя и ник — без краевых пробелов, пустой ник не пишется. */
   static create(input: CreateUser, at: Timestamp): Result<UserAr, never> {
+    const nick = input.nick?.trim();
     const state: UserState = {
       ...UserAr.newState(input.uuid, at),
-      name: input.name,
+      name: input.name.trim(),
       telegramId: input.telegramId,
       roles: ['GUEST'],
     };
-    if (input.nick !== undefined && input.nick.trim() !== '') {
-      state.nick = input.nick;
+    if (nick !== undefined && nick !== '') {
+      state.nick = nick;
     }
     return ok(new UserAr(state));
   }
