@@ -1,5 +1,5 @@
 import { now } from '@u7-scl/core/shared';
-import type { ContentSnapshot } from '@u7-scl/course/domain';
+import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
 import { StudentArDef, type StudentState } from '@u7-scl/stream/domain';
 import * as v from 'valibot';
 

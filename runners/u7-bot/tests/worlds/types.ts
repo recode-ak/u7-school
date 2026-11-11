@@ -1,4 +1,9 @@
-import type { CourseState, Lesson, Module, Step } from '@u7-scl/course/domain';
+import type {
+  CourseState,
+  LessonState,
+  ModuleState,
+  StepState,
+} from '@u7-scl/course/domain';
 import type {
   ReviewDirection,
   StudentOutcome,
@@ -46,18 +51,32 @@ export interface WorldReview {
 }
 
 /**
- * Курс в мире — ввод state (не state): даты ISO, как в legacy-файле, `version`
- * необязательна; `CourseArDef.state` переводит даты в число UTC и дописывает
- * `updatedAt`, `version` по умолчанию 0 (D-36).
+ * Запись мира — ввод state (не state): структура state агрегата Def, но даты
+ * ISO, как в legacy-файле; `ArDef.state` переводит их в число UTC и дописывает
+ * `updatedAt`, `version` по умолчанию 0 (D-36). Распределяется по вариантам
+ * (шаг).
  */
-export type WorldCourse = Omit<
-  CourseState,
-  'createdAt' | 'updatedAt' | 'version'
-> & {
-  createdAt: string;
-  updatedAt?: string;
-  version?: number;
-};
+type StateInput<T> = T extends unknown
+  ? Omit<T, 'createdAt' | 'updatedAt' | 'version'> & {
+      createdAt: string;
+      updatedAt?: string;
+      version?: number;
+    }
+  : never;
+
+/**
+ * Курс в мире: ввод state `CourseArDef` — даты ISO, `version` необязательна.
+ */
+export type WorldCourse = StateInput<CourseState>;
+
+/** Модуль в мире: ввод state `ModuleArDef` — даты ISO, `version` необязательна. */
+export type WorldModule = StateInput<ModuleState>;
+
+/** Урок в мире: ввод state `LessonArDef` — даты ISO, `version` необязательна. */
+export type WorldLesson = StateInput<LessonState>;
+
+/** Шаг в мире: ввод state `StepArDef` — даты ISO, `version` необязательна. */
+export type WorldStep = StateInput<StepState>;
 
 /**
  * WorldState — центральный объект состояния мира.
@@ -68,9 +87,9 @@ export interface WorldState {
   streams: StreamState[];
   students: StudentState[];
   courses: WorldCourse[];
-  modules: Module[];
-  lessons: Lesson[];
-  steps: Step[];
+  modules: WorldModule[];
+  lessons: WorldLesson[];
+  steps: WorldStep[];
   campaigns: WorldCampaign[];
   reviews: WorldReview[];
   wishes: WishState[];

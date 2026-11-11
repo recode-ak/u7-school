@@ -29,7 +29,6 @@
       "@u7-scl/core/ui": ["./platform/core/src/ui/index.ts"],
       "@u7-scl/core/shared": ["./platform/core/src/shared/index.ts"],
       "@u7-scl/course": ["./modules/course/src/index.ts"],
-      "@u7-scl/course/api": ["./modules/course/src/api/index.ts"],
       "@u7-scl/course/infra": ["./modules/course/src/infra/index.ts"],
       "@u7-scl/course/domain": ["./modules/course/src/domain/index.ts"],
       "@u7-scl/stream": ["./modules/stream/src/index.ts"],

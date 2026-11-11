@@ -4,9 +4,9 @@
  * ## Назначение
  * Отправляет шаги уроков в Telegram точно так же, как это делает бот
  * в реальном приложении. Одновременно является интеграционным тестом:
- *   - `get-module-snapshot` use-case (структура проектов и уроков)
- *   - `get-lesson` use-case (LegacyLessonJsonRepo, visibility-политики)
- *   - `get-step` use-case (LegacyStepJsonRepo, все kind: text/code/file)
+ *   - `getModuleSnapshot` (структура проектов и уроков)
+ *   - `getLesson` (репозиторий уроков, visibility-политики)
+ *   - `getStep` (репозиторий шагов, все kind: text/code/file)
  *   - `safeConvert` — конвертация Markdown → Telegram MarkdownV2
  *   - Полный пайплайн форматирования и отправки (parse_mode: 'MarkdownV2')
  *
@@ -60,31 +60,14 @@
  *   не с mentorStepIds. Когда менторские шаги будут интегрированы,
  *   добавится флаг `--mentor` для их рассылки.
  */
+import type { StepView } from '@u7-scl/domain/course/contract';
 import { safeConvert } from '../platform/core/src/shared/markdown.ts';
-import { createApp, NUR_UUID, resolveActor } from './_app-factory';
+import { CourseClient } from './_course-client';
 
 // Токен и группа — из окружения (.env.production), чтобы не хардкодить секреты
 const BOT_TOKEN = process.env.BOT_TOKEN ?? '';
 const DEFAULT_CHAT_ID = process.env.SCHOOL_GROUP_ID ?? ''; // группа потока
 const MENTOR_CHAT_ID = process.env.MENTOR_CHAT_ID ?? '773084180'; // личка ментора
-
-// ─── Типы данных API ───
-
-type SnapshotLesson = { lessonId: string; lessonTitle: string };
-type SnapshotProject = { projectTitle: string; lessons: SnapshotLesson[] };
-
-interface LessonDetail {
-  stepIds: string[];
-  mentorStepIds: string[];
-}
-
-interface StepDetail {
-  description: string;
-  kind: 'text' | 'code' | 'file';
-  content?: string;
-  code?: string;
-  order?: number;
-}
 
 // ─── Справка ───
 
@@ -114,8 +97,7 @@ distribute-lesson — рассылка шагов урока в Telegram.
   --all         Все шаги всех уроков проекта (формат M:P)
 
 Принцип: каждый запуск = интеграционный тест. Данные проходят
-LegacyModuleJsonRepo → list-modules → get-module-snapshot → get-lesson → get-step.
-Форматирование — safeConvert (Markdown → Telegram MarkdownV2).
+listModules → getModuleSnapshot → getLesson → getStep через dispatch (D-49). Форматирование — safeConvert (Markdown → Telegram MarkdownV2).
 Если сломается любое звено — скрипт упадёт с ошибкой.
 `);
 }
@@ -207,7 +189,7 @@ function parseLessonId(arg: string): LessonId | null {
 function formatStep(
   lessonLabel: string,
   lessonTitle: string,
-  step: StepDetail,
+  step: StepView,
   order: number,
   total: number,
 ): string {
@@ -237,7 +219,7 @@ function formatStep(
 async function sendStep(
   lessonLabel: string,
   lessonTitle: string,
-  step: StepDetail,
+  step: StepView,
   order: number,
   total: number,
   chatId: string,
@@ -339,16 +321,10 @@ async function main() {
 
   // ─── Получаем данные через API ───
 
-  const app = createApp(preview);
-  const actor = await resolveActor(app, NUR_UUID);
+  const course = await CourseClient.create({ silent: preview });
 
   // Загружаем список модулей для получения UUID
-  type ModuleEntry = { uuid: string; title: string };
-  const modules = (await app.execute(
-    'list-modules',
-    {},
-    actor,
-  )) as ModuleEntry[];
+  const modules = await course.listModules();
 
   const moduleEntry = modules[parsed.module - 1];
   if (!moduleEntry) {
@@ -359,11 +335,7 @@ async function main() {
   }
 
   // Получаем снимок модуля
-  const snapshot = (await app.execute(
-    'get-module-snapshot',
-    { moduleId: moduleEntry.uuid },
-    actor,
-  )) as SnapshotProject[];
+  const snapshot = await course.moduleSnapshot(moduleEntry.uuid);
 
   const project = snapshot[parsed.project - 1];
   if (!project) {
@@ -397,24 +369,16 @@ async function main() {
       console.log(`${'═'.repeat(60)}`);
       console.log(`📚 ${lessonLabel}: ${lesson.lessonTitle}`);
 
-      const detail = (await app.execute(
-        'get-lesson',
-        { uuid: lesson.lessonId },
-        actor,
-      )) as LessonDetail;
+      const detail = await course.lesson(lesson.lessonId);
 
       console.log(`   Шагов: ${detail.stepIds.length}`);
 
       for (let si = 0; si < detail.stepIds.length; si++) {
         const stepId = detail.stepIds[si];
         if (!stepId) continue;
-        const step = (await app.execute(
-          'get-step',
-          { uuid: stepId },
-          actor,
-        )) as StepDetail;
+        const step = await course.step(stepId);
 
-        const order = step.order ?? si + 1;
+        const order = si + 1;
         console.log(
           `   [${order}/${detail.stepIds.length}] ${step.kind}: ${step.description}`,
         );
@@ -474,11 +438,7 @@ async function main() {
   }
 
   const lessonLabel = `m${parsed.module}-p${parsed.project}-l${parsed.lesson}`;
-  const detail = (await app.execute(
-    'get-lesson',
-    { uuid: lesson.lessonId },
-    actor,
-  )) as LessonDetail;
+  const detail = await course.lesson(lesson.lessonId);
 
   console.log(
     `📖 ${lessonLabel}: ${lesson.lessonTitle}${preview ? ' (предпросмотр)' : ''}`,
@@ -504,13 +464,9 @@ async function main() {
     const stepId = stepsToSend[i];
     if (!stepId) continue;
 
-    const step = (await app.execute(
-      'get-step',
-      { uuid: stepId },
-      actor,
-    )) as StepDetail;
+    const step = await course.step(stepId);
 
-    const order = step.order ?? detail.stepIds.indexOf(stepId) + 1;
+    const order = detail.stepIds.indexOf(stepId) + 1;
     const kindEmoji = step.kind === 'code' ? '📝' : '📄';
 
     console.log(`  ${'─'.repeat(50)}`);

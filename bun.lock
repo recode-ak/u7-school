@@ -48,10 +48,7 @@
       "name": "@u7-scl/course",
       "version": "0.1.0",
       "dependencies": {
-        "@u7-scl/app-legacy": "workspace:*",
-        "@u7-scl/core": "workspace:*",
         "@u7-scl/domain": "workspace:*",
-        "@u7-scl/user": "workspace:*",
         "dmg-core": "file:../../../../tools/dmg/dmg-core",
         "valibot": "^1.0.0",
       },

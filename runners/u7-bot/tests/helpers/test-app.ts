@@ -3,8 +3,6 @@ import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import type { U7BotApp } from '@u7-scl/bot/u7-bot-app-meta';
 import type { EventBus } from '@u7-scl/core/domain';
 import { ConsoleLogger } from '@u7-scl/core/shared';
-import type { CourseApiModule } from '@u7-scl/course/api';
-import { CourseInProcFacade } from '@u7-scl/course/infra';
 import { ReviewCampaignJsonRepo, ReviewJsonRepo } from '@u7-scl/peer-review';
 import type { UserInProcFacade } from '@u7-scl/user/infra';
 import { WishJsonRepo } from '@u7-scl/wish/infra';
@@ -17,8 +15,6 @@ import { cleanupFixtures, loadFixtures } from './fixture-loader';
 export interface TestApp {
   /** Полноценный ApiApp со всеми модулями */
   apiApp: U7BotApp;
-  /** API модуля курсов (для создания CoursesController) */
-  courseModule: CourseApiModule;
   /** Общая шина событий (та же, что внутри apiApp) — для TestBotTransport */
   eventBus: EventBus;
   /** Резолвер `Caller` приложения — субъект команд DMG из stories */
@@ -36,8 +32,6 @@ export interface TestApp {
   ): Promise<Result<JobReport, DomainError>>;
   /** Фасад пользователей (для получения тестовых акторов) */
   userFacade: UserInProcFacade;
-  /** Фасад курсов */
-  courseFacade: CourseInProcFacade;
   /** Пути к временным фикстурам */
   fixtures: FixturePaths;
   /** Удаляет временную директорию с фикстурами */
@@ -71,7 +65,6 @@ export async function createTestApp(
 
   return {
     apiApp: app.apiApp,
-    courseModule: app.courseModule,
     eventBus: app.eventBus,
     callers: app.callers,
     runJob: (module, job) => app.apiApp.runJob(module, job, Trace.forJob(job)),
@@ -81,7 +74,6 @@ export async function createTestApp(
     ),
     reviewRepo: new ReviewJsonRepo(fixtures.peerReview.reviews),
     userFacade: app.userFacade,
-    courseFacade: new CourseInProcFacade(app.courseModule),
     fixtures,
     cleanup: () => cleanupFixtures(fixtures),
   };

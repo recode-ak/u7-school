@@ -16,12 +16,12 @@
  * (числовые даты, `version`; ключи вне схемы отбрасываются — как первая запись
  * `StudentJsonRepo`). Битая запись останавливает скрипт до любой записи.
  *
- * Снапшот строится из актуальных данных модуля потока (get-module-snapshot):
+ * Снапшот строится из актуальных данных модуля потока (`getModuleSnapshot`):
  * только published-проекты и published-уроки.
  */
 
-import type { ContentSnapshot } from '@u7-scl/course/domain';
-import { createApp } from './_app-factory';
+import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
+import { CourseClient } from './_course-client';
 import {
   analyzeSnapshotDelta,
   readStudentRows,
@@ -114,14 +114,12 @@ async function main() {
 
   // ── Получение свежего снапшота ──────────────────
   console.log(`\n📦 Поднимаю приложение...`);
-  const app = createApp(true);
+  const course = await CourseClient.create({ silent: true });
 
   console.log(
     `🔍 Получаю снапшот модуля ${stream.moduleId} (поток «${stream.title}»)...`,
   );
-  const newSnapshot = await app.execute('get-module-snapshot', {
-    moduleId: stream.moduleId,
-  });
+  const newSnapshot = await course.moduleSnapshot(stream.moduleId);
 
   const projectCount = newSnapshot.length;
   const lessonCount = newSnapshot.reduce((sum, p) => sum + p.lessons.length, 0);
@@ -147,11 +145,7 @@ async function main() {
   const students = await readStudentRows(STUDENTS_FILE);
 
   const streamStudents = students.filter((s) => s.streamId === stream.uuid);
-  const delta = analyzeSnapshotDelta(
-    oldSnapshot,
-    newSnapshot as ContentSnapshot,
-    streamStudents,
-  );
+  const delta = analyzeSnapshotDelta(oldSnapshot, newSnapshot, streamStudents);
 
   if (delta.addedStepIds.length > 0) {
     console.log(
@@ -212,7 +206,7 @@ async function main() {
       `\n⚙️ Передан флаг --sync-students: выполняю синхронизацию профилей студентов...`,
     );
     const syncResult = syncAheadStudents(
-      newSnapshot as ContentSnapshot,
+      newSnapshot,
       streamStudents,
       delta.addedStepIds,
     );

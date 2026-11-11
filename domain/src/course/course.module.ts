@@ -22,16 +22,13 @@ import { GetStepUcDef } from './step/uc/get-step.uc';
 import { GetStepsByLessonsUcDef } from './step/uc/get-steps-by-lessons.uc';
 
 /**
- * Внешний модуль курсов (D-37): реализован legacy-кодом, здесь только
- * контракт для `dependsOn` и Def UC без реализации, которые вызывают другие
- * модули (D-42; исполняет адаптер над legacy-фасадом). При миграции
- * `external` снимается.
+ * Паспорт модуля курсов: четыре агрегата (курс, модуль, урок, шаг) и UC чтения
+ * курсов и срезов; ER и Job у модуля нет.
  */
 export const CourseModuleDef = ModuleDef.define({
   name: 'course',
   label: 'Курсы',
   description: 'Курсы, модули, уроки и шаги учебного контента.',
-  external: true,
   dependsOn: [UserModuleDef],
   aggregates: [CourseArDef, ModuleArDef, LessonArDef, StepArDef],
   useCases: [

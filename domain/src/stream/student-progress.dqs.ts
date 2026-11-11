@@ -216,7 +216,7 @@ export class StudentProgressDqs {
 
   /**
    * Позиция шага в снимке: индексы (с 1), заголовки, число шагов урока.
-   * Шага нет — `null`. Копия `CourseDs.findStepPosition`: домен не импортирует
+   * Шага нет — `null`. Свой разбор индексов шага: домен не импортирует
    * чужой индекс.
    */
   stepPosition(stepId: string): StepPosition | null {

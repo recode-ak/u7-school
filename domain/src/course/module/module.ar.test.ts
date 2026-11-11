@@ -142,8 +142,8 @@ describe('ModuleAr.summary', () => {
 });
 
 // Вклад в снимок контента (Ф2): проекты `published` в порядке модуля,
-// без уроков — их собирает `ModuleSnapshotDqs` (перенос фильтра
-// `Status.PUBLISHED` из `CourseDs.buildSnapshot`).
+// без уроков — их собирает `ModuleSnapshotDqs` (тот же фильтр
+// `Status.PUBLISHED`).
 describe('ModuleAr.publishedOutline', () => {
   it('проект published: projectId, projectTitle, lessonIds', () => {
     const ar = restore('published', {

@@ -12,23 +12,16 @@ import { legacyClock, legacyEventBus } from '@u7-scl/core/legacy-bridge';
 import type { Logger } from '@u7-scl/core/shared';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import {
+  CourseJsonRepo,
   type CourseRepo,
   createCourseModule,
+  LessonJsonRepo,
   type LessonRepo,
+  ModuleJsonRepo,
   type ModuleRepo,
+  StepJsonRepo,
   type StepRepo,
 } from '@u7-scl/course';
-import { CourseApiModule } from '@u7-scl/course/api';
-import {
-  CourseJsonRepo,
-  LegacyCourseJsonRepo,
-  LegacyLessonJsonRepo,
-  LegacyModuleJsonRepo,
-  LegacyStepJsonRepo,
-  LessonJsonRepo,
-  ModuleJsonRepo,
-  StepJsonRepo,
-} from '@u7-scl/course/infra';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review/contract';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
@@ -73,18 +66,18 @@ import { U7CallerResolver } from './u7-caller-resolver';
 
 /**
  * Приложение u7-school — корень сборки (D-50): по окружению
- * строит репозитории `<dbDir>/…`, legacy-модули и фасады, приложение DMG
- * (внешние модули зависимостей над legacy-фасадами и `wish`, фасады по
- * `dependsOn`) и legacy `ApiApp` с ним (`withDmg`), инициализированный
- * планировщиком заданий. Отдаёт поля, нужные UI раннера, и резолвер
- * `callers`. Контроллеры и транспорт строит раннер.
+ * строит репозитории `<dbDir>/…`, legacy-фасад `user`, приложение DMG
+ * (модули по `dependsOn`: `user` — адаптер над legacy-фасадом, `course`,
+ * `wish`, `peer-review`, `questionnaire` и `stream` — на своих репозиториях)
+ * и legacy `ApiApp` с ним (`withDmg`), инициализированный планировщиком
+ * заданий. Отдаёт поля, нужные UI раннера, и резолвер `callers`.
+ * Контроллеры и транспорт строит раннер.
  */
 export class U7App {
   readonly apiApp: ApiApp<U7BotAppMeta>;
   readonly eventBus: EventBus;
   readonly userFacade: UserInProcFacade;
   readonly userRepo: UserJsonRepo;
-  readonly courseModule: CourseApiModule;
   readonly school: School;
   readonly appResolver: U7AppResolver;
   readonly callers: U7CallerResolver;
@@ -125,37 +118,13 @@ export class U7App {
     });
     const userFacade = new UserInProcFacade(userModule);
 
-    // ══ Course: репозитории, модуль и фасад ══
-    const moduleRepo = new LegacyModuleJsonRepo(
-      `${dbDir}/courses/modules.json`,
-    );
-    const lessonRepo = new LegacyLessonJsonRepo(
-      `${dbDir}/courses/lessons.json`,
-    );
-    const stepRepo = new LegacyStepJsonRepo(`${dbDir}/courses/steps.json`);
-
-    const courseRepo = new LegacyCourseJsonRepo(
-      `${dbDir}/courses/courses.json`,
-    );
-
-    const courseModule = new CourseApiModule({
-      db,
-      moduleRepo,
-      courseRepo,
-      lessonRepo,
-      stepRepo,
-      userFacade,
-      appResolver,
-      eventBus: appResolver.eventBus,
-    });
-
     // ══ Peer-review: репозитории кампаний и отзывов (DMG) ══
     const reviewCampaignRepo = new ReviewCampaignJsonRepo(
       `${dbDir}/peer-review/campaigns.json`,
     );
     const reviewRepo = new ReviewJsonRepo(`${dbDir}/peer-review/reviews.json`);
 
-    // ══ DMG: wish, peer-review и внешние модули зависимостей (адаптеры над legacy) ══
+    // ══ DMG: модули по `dependsOn` — каждый на своих репозиториях ══
     // Шина DMG — поверх общей legacy-шины: события wish и peer-review видят
     // stories, legacy-события stream доходят до ER (D-37).
     const dmg = U7App.dmgApp(
@@ -178,8 +147,8 @@ export class U7App {
       },
     );
 
-    // ══ ApiApp: модули (legacy + DMG) ══
-    const apiApp = new ApiApp<U7BotAppMeta>([userModule, courseModule]).withDmg(
+    // ══ ApiApp: legacy-модули (user) + модули DMG ══
+    const apiApp = new ApiApp<U7BotAppMeta>([userModule]).withDmg(
       dmg.api,
       dmg.modules,
     );
@@ -197,7 +166,6 @@ export class U7App {
     this.eventBus = appResolver.eventBus;
     this.userFacade = userFacade;
     this.userRepo = userRepo;
-    this.courseModule = courseModule;
     this.school = school;
     this.appResolver = appResolver;
     this.callers = new U7CallerResolver(userFacade);
@@ -243,10 +211,10 @@ export class U7App {
   }
 
   /**
-   * Приложение DMG: внешние модули зависимостей (`user` — адаптер над
-   * legacy-фасадом, `course` — на своих репозиториях), `wish`, `peer-review`
-   * (кампании) и `questionnaire`, собранные `ApiApp` пакета — фасады по
-   * `dependsOn` (D-50). `modules` — их Def для заданий legacy-планировщика
+   * Приложение DMG: модули по `dependsOn` — `user` (адаптер над
+   * legacy-фасадом) и `course`, `wish`, `peer-review` (кампании),
+   * `questionnaire`, `stream` — на своих репозиториях, собранные `ApiApp`
+   * пакета (D-50). `modules` — их Def для заданий legacy-планировщика
    * (`ApiApp.withDmg`).
    */
   private static dmgApp(

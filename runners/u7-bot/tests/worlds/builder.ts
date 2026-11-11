@@ -1,5 +1,5 @@
 import { U7_SCHOOL_ID } from '@u7-scl/app-legacy/domain';
-import type { Lesson, Module, Project, Step } from '@u7-scl/course/domain';
+import type { ProjectEntity } from '@u7-scl/course/domain';
 import { Status } from '@u7-scl/course/domain';
 import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
 import type { StreamState, StudentState } from '@u7-scl/stream/domain';
@@ -15,8 +15,11 @@ import type {
   WorldCampaign,
   WorldCourse,
   WorldDefinition,
+  WorldLesson,
+  WorldModule,
   WorldReview,
   WorldState,
+  WorldStep,
 } from './types';
 import { deterministicUuid } from './uuid';
 
@@ -112,9 +115,9 @@ export function buildWorldState(
 
   // 2. Сборка курсов, модулей, уроков, шагов
   const courses: WorldCourse[] = [];
-  const modules: Module[] = [];
-  const lessons: Lesson[] = [];
-  const steps: Step[] = [];
+  const modules: WorldModule[] = [];
+  const lessons: WorldLesson[] = [];
+  const steps: WorldStep[] = [];
 
   for (const c of def.courses ?? []) {
     const courseUuid = c.uuid ?? deterministicUuid(`course:${c.key}`);
@@ -131,7 +134,7 @@ export function buildWorldState(
       moduleUuidByKey.set(m.key, moduleUuid);
       declaredModuleIds.push(moduleUuid);
 
-      const moduleProjects: Project[] = [];
+      const moduleProjects: ProjectEntity[] = [];
 
       for (const prj of m.projects ?? []) {
         const prjUuid = prj.uuid ?? deterministicUuid(`project:${prj.key}`);
@@ -151,7 +154,7 @@ export function buildWorldState(
             stepUuidByKey.set(st.key, stUuid);
             stepIds.push(stUuid);
 
-            const stepEntity: Step = {
+            const stepEntity: WorldStep = {
               uuid: stUuid,
               moduleId: moduleUuid,
               description: st.description ?? st.title ?? 'Описание шага',
@@ -163,7 +166,7 @@ export function buildWorldState(
             steps.push(stepEntity);
           }
 
-          const lessonEntity: Lesson = {
+          const lessonEntity: WorldLesson = {
             uuid: lsnUuid,
             moduleId: moduleUuid,
             title: lsn.title,
@@ -183,7 +186,7 @@ export function buildWorldState(
         });
       }
 
-      const moduleEntity: Module = {
+      const moduleEntity: WorldModule = {
         uuid: moduleUuid,
         title: m.title,
         description: m.description ?? `Описание модуля ${m.title}`,

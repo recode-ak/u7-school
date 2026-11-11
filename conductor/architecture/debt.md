@@ -58,7 +58,6 @@
 ### DEBT-1: импорты `@u7-scl/core` в домене
 - **Место:**
   - `domain/src/user/**` — `facade.ts`, `module.ts`, `user/a-root.ts`, `user/events.ts`, `user/commands/{errors,notify-user-cmd,register-guest-cmd}.ts`; погашает перевод `user` на Def
-  - `domain/src/course/**` — `module.ts`, `*/a-root.ts`, `*/entity.ts`, `*/commands/errors.ts`, `content-path/commands/resolve-content-path-cmd.ts`; подпути `core/domain`, `core/shared`, `core/infra`; погашает перевод `course` на Def
 - **Признак:** `from '@u7-scl/core`
 - **Корень:** `domain/src/**`
 - **Причина:** `Aggregate`, `ArMeta`, `DomainEvent`, `NotifyKind`, ошибки (`AccessDeniedError`, `NotFoundError`, `errConflict`, `throwError`), `isoNow`, `now`, `UcMeta`, `FileMetadataSchema`, `ApiModuleMeta`, `BaseJsonDb` живут в `core`; механический перенос не меняет базовые классы.
@@ -68,7 +67,6 @@
 ### DEBT-2: импорты `@u7-scl/app-legacy` в домене
 - **Место:**
   - `domain/src/user/module.ts` — тип `U7ModuleResolver`; погашает перевод `user` на Def
-  - `domain/src/course/module.ts` — тип `U7ModuleResolver`; погашает перевод `course` на Def
 - **Признак:** `from '@u7-scl/app-legacy`
 - **Корень:** `domain/src/**`
 - **Причина:** тип резолвера модулей и `U7_SCHOOL_ID` определены в `app`; создаёт циклическую зависимость пакетов `app` ↔ `domain` (только типы, в рантайме импорт стирается); сам цикл пакетов также снимается этим долгом.
@@ -78,7 +76,6 @@
 ### DEBT-5: `v.isoDateTime` в схемах домена (DOM-12)
 - **Место:**
   - `domain/src/user/user/entity.ts` — `createdAt`, `updatedAt`; `biome-ignore lint/plugin`; погашает перевод `user` на Def (`F.timestamp`)
-  - `domain/src/course/*/entity.ts` — `course`, `lesson`, `module`, `step`: `createdAt`, `updatedAt`; `biome-ignore lint/plugin`; погашает перевод `course` на Def (`F.timestamp`)
 - **Признак:** `v\.isoDateTime`
 - **Корень:** `domain/src/**`
 - **Причина:** схемы перенесены из `app` без изменений; DOM-12 запрещает `v.isoDateTime` в схемах домена.
@@ -133,22 +130,13 @@
 
 ### DEBT-9: `v.isoDateTime` в схемах domain/course (DOM-12) — слит в DEBT-5
 
-### DEBT-10: приватные члены `#…` в Ar (CODE-02)
-- **Место:**
-  - `domain/src/course/module/a-root.ts` — `#filterPublished`; `biome-ignore lint/plugin`; погашает перевод `course` на Def (фильтрация — в Policy/DQS)
-- **Признак:** `^\s*(static\s+)?(async\s+)?(get\s+)?#\w+`
-- **Корень:** `domain/src/**/a-root.ts`
-- **Причина:** перенос без изменения кода; CODE-02 запрещает приватные члены в Ar.
-- **Погашает:** перевод модуля на Def; glob снимают по мере перевода
-- **Критерий снятия:** `biome-ignore` с `DEBT-10` удалены, методы вынесены по правилам
-
 ### DEBT-14: `v.isoDateTime` в схемах domain/questionnaire (DOM-12) — слит в DEBT-5
 
-### DEBT-15: приватные члены `#…` в QuestionnaireAr (CODE-02) — слит в DEBT-10
+### DEBT-15: приватные члены `#…` в QuestionnaireAr (CODE-02) — слит в DEBT-10 (погашен, `course-dmg` Ф5)
 
 ### DEBT-19: `v.isoDateTime` в схемах domain/stream (DOM-12) — слит в DEBT-5
 
-### DEBT-20: приватные методы `#…` в StudentAr (CODE-02) — слит в DEBT-10
+### DEBT-20: приватные методы `#…` в StudentAr (CODE-02) — слит в DEBT-10 (погашен, `course-dmg` Ф5)
 
 ### DEBT-30: barrel `modules/dossier/src/index.ts` — слит в DEBT-3
 
@@ -240,7 +228,7 @@
 - **Место:** `scripts/domain-check.ts` — `checkContractImports` пропускает пары legacy-модулей; `checkDomainImports` разрешает `index`
 - **Признак:** `sub !== 'index'`
 - **Корень:** `scripts/domain-check.ts`
-- **Причина:** D-45 — чужой модуль только через `contract`; legacy-код `user`, `course`, `dossier` (`questionnaire` и `stream` переведены на Def) импортирует `index` друг друга (entity `User`, `Role`, фасады) — около 100 импортов.
+- **Причина:** D-45 — чужой модуль только через `contract`; legacy-код `user`, `dossier` (`questionnaire`, `stream` и `course` переведены на Def) импортирует `index` друг друга (entity `User`, `Role`, фасады) — около 100 импортов.
 - **Погашает:** перевод каждого модуля на Def — модуль попадает в проверку автоматически (`external` снят)
 - **Критерий снятия:** все модули на Def; пропуск legacy-пар и `index` в `checkDomainImports` удалены
 
@@ -692,4 +680,5 @@
 - **Трек / фаза:** `course-dmg`, Ф5 (orchestrator, 2026-11-11; бриф — `slices/assembly.md`)
 - **Контекст:** план Ф5 писался до Ф4: поля `courseFacade` и тип `CourseLegacy` в `platform/app` уже удалены; рантайм бота legacy `course` не использует. Legacy держат только `U7App`, тестовый хелпер бота, миры, `scripts/_app-factory.ts` и три скрипта на нём.
 - **Решение:** бриф сам, без `tech-lead` (срез по образцу `questionnaire`/`stream`). Три задачи `migrator` плана — два шага в обратном порядке: (1) сборка + клиенты (legacy ещё на месте, `check` зелёный), (2) удаление legacy — иначе промежуточный шаг красный. `_app-factory.ts` удаляется, скрипты — на `U7App` и `dispatch` через общий класс `scripts/_course-client.ts`. Barrel `@u7-scl/course/domain` (DEBT-3) остаётся; миры — на state-типы Def. DEBT-34 снимает orchestrator в `debt.md` (`course` попадает в проверку ARC-04 сам, без `external`).
+- **Дополнено (эскалация шага 1):** снятие `external` сразу включает ARC-04/ARC-06 по ещё живому legacy-коду `course` — «`check` зелёный после шага 1» невыполним; шаги 1–2 идут подряд, коммит общий. Места `course` сняты из DEBT-1, 2, 5; DEBT-10 закрыт (единственное место — legacy `module/a-root.ts`); причина DEBT-34 — без `course`. Скрипты на `dispatch` пишут query в `<dbDir>/oplog` (раньше legacy не писал) — принято, как у `call-uc`.
 - **Пересмотреть:** —

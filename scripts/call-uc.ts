@@ -11,20 +11,22 @@
  * Примеры:
  *   bun run scripts/call-uc.ts list-modules '{}'
  *   bun run scripts/call-uc.ts get-module '{"moduleId":"<uuid>"}'
- *   bun run scripts/call-uc.ts create-module '{"title":"Основы JS","description":"Описание"}'
- *   bun run scripts/call-uc.ts enrich-module '{"moduleId":"<uuid>","goal":"Цель","tags":["js"]}'
+ *   bun run scripts/call-uc.ts get-module-snapshot '{"moduleId":"<uuid>"}'
+ *   bun run scripts/call-uc.ts get-lesson '{"lessonId":"<uuid>"}'
+ *   bun run scripts/call-uc.ts get-step '{"stepId":"<uuid>"}'
  *   bun run scripts/call-uc.ts get-questionnaires-by-user '{"userId":"<uuid>"}'
  *   bun run scripts/call-uc.ts get-current '{"questionnaireId":"<uuid>"}'
  *   bun run scripts/call-uc.ts create-course-wish '{"courseId":"<uuid>"}'
  *
- * UC модулей wish и questionnaire — DMG: команда через `ApiApp.dispatch` (D-49)
+ * UC модулей course, wish и questionnaire — DMG: команда через `ApiApp.dispatch`
+ * (D-49)
  * над той же сборкой DMG, что и в боте (`U7App`), субъект — резолвер
  * `app.callers`; имя — kebab-case (`create-course-wish`) или имя Def
  * (`createCourseWish`). Отказ — `Err` с кодом в stderr и выход с кодом 1.
  * Лог операций DMG пишется в `data/oplog/`, как у бота.
  *
  * UC `stream` перешли на DMG (модуль `stream`), но через `call-uc` пока не
- * вызываются: скрипт знает DMG-модули `wish` и `questionnaire`.
+ * вызываются: скрипт знает DMG-модули `course`, `wish` и `questionnaire`.
  *
  * ⚠️ Команды (не query) пишут в боевые JSON-файлы: перед изменяющими
  * вызовами убедись, что бот остановлен (pm2 stop u7-school-bot).
@@ -39,6 +41,7 @@
 import { U7App, type U7BotAppMeta } from '@u7-scl/app';
 import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import { ConsoleLogger } from '@u7-scl/core/shared';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import {
@@ -57,6 +60,7 @@ const kebab = (name: string) =>
 
 /** DMG-модули, UC которых вызываются через `dispatch` (D-49). */
 const DMG_MODULES: readonly AnyModuleDef[] = [
+  CourseModuleDef,
   WishModuleDef,
   QuestionnaireModuleDef,
 ];
@@ -84,18 +88,16 @@ function printHelp() {
   json-params  — параметры в JSON (обязательно, можно '{}')
   actorId      — UUID пользователя (опционально, по умолчанию Nur)
 
-Доступные модули: user, course (legacy-вызов), wish, questionnaire (DMG).
+Доступные модули: course, wish, questionnaire (DMG); user (legacy).
 UC stream (DMG) через call-uc пока не вызываются.
 
 Примеры:
   bun run scripts/call-uc.ts list-modules '{}'
   bun run scripts/call-uc.ts get-module '{"moduleId":"<uuid>"}'
-  bun run scripts/call-uc.ts create-module '{"title":"Мой модуль","description":"Описание"}'
-  bun run scripts/call-uc.ts enrich-module '{"moduleId":"<uuid>","goal":"Цель","tags":["js"]}'
-  bun run scripts/call-uc.ts add-project   '{"moduleId":"<uuid>","title":"Проект 1"}'
-  bun run scripts/call-uc.ts create-lesson '{"moduleId":"<uuid>","projectId":"<uuid>","title":"Урок 1","estimatedMinutes":30}'
-  bun run scripts/call-uc.ts create-step   '{"moduleId":"<uuid>","lessonId":"<uuid>","description":"...","kind":"code","content":"..."}'
-  bun run scripts/call-uc.ts publish-module '{"moduleId":"<uuid>"}'
+  bun run scripts/call-uc.ts get-module-snapshot '{"moduleId":"<uuid>"}'
+  bun run scripts/call-uc.ts get-lesson '{"lessonId":"<uuid>"}'
+  bun run scripts/call-uc.ts get-step '{"stepId":"<uuid>"}'
+  bun run scripts/call-uc.ts list-courses '{}'
   bun run scripts/call-uc.ts get-questionnaires-by-user '{"userId":"<uuid>"}'
   bun run scripts/call-uc.ts get-current '{"questionnaireId":"<uuid>"}'
   bun run scripts/call-uc.ts create-course-wish '{"courseId":"<uuid>"}'

@@ -21,9 +21,15 @@ import { ModuleErrors } from './module/module.errors';
 import { StepArDef } from './step/step.ar';
 import { StepErrors } from './step/step.errors';
 
-describe('CourseModuleDef — внешний модуль (D-37)', () => {
-  it('паспорт: внешний, зависит от user, 4 агрегата, 16 Def UC', () => {
-    expect(CourseModuleDef.external).toBe(true);
+// Паспорт модуля после среза: `external` снят, 4 агрегата, 16 UC, ER и Job нет; заменяет
+// ожидания внешнего модуля (external, 16 UC без реализации).
+
+describe('CourseModuleDef', () => {
+  it('модуль не внешний', () => {
+    expect(CourseModuleDef.external).toBeFalsy();
+  });
+
+  it('паспорт: зависит от user, 4 агрегата, 16 Def UC', () => {
     const passport = normalize(CourseModuleDef);
     expect(passport).toMatchObject({
       dependsOn: ['user'],

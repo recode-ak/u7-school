@@ -15,7 +15,7 @@ import {
 import type { ModuleState } from './module/module.state';
 import { ModuleSnapshotDqs } from './module-snapshot.dqs';
 
-// Перенос двух сценариев `buildSnapshot` из `course-ds.test.ts` («исключает
+// Перенос двух сценариев `buildSnapshot` из прежнего доменного сервиса («исключает
 // archived-проект», «исключает archived-урок опубликованного проекта») и
 // сценарии по коду: порядок, пропуск висячих (долг, DOM-13), `stepIds` без
 // фильтра по шагам (С1), невидимый урок пропускается, а не роняет (С2).

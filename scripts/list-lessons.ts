@@ -4,8 +4,8 @@
  * ## Назначение
  * Выводит структуру курса: модули → проекты → уроки → количество шагов.
  * Одновременно является интеграционным тестом:
- *   - `list-modules` use-case (LegacyModuleJsonRepo.getAll, visibility-политики)
- *   - `get-module-snapshot` use-case (LegacyLessonJsonRepo, CourseDs.buildSnapshot)
+ *   - `listModules` (репозиторий модулей, visibility-политики)
+ *   - `getModuleSnapshot` (репозитории уроков и шагов, DQS снимка контента)
  *   - Корректность связей moduleId/lessonIds/stepIds в JSON-файлах
  *
  * ## Использование
@@ -24,10 +24,10 @@
  *   (mentorStepIds в Lesson есть, но get-step для file-шагов не
  *   используется скриптами). Когда менторские шаги будут добавлены
  *   в уроки через create-step (kind: 'file'), функция будет заменена
- *   на `app.execute('get-step', { uuid })`.
+ *   на `getStep`.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { createApp, NUR_UUID, resolveActor } from './_app-factory';
+import { CourseClient } from './_course-client';
 
 const DATA_DIR = 'data/fullstack-js';
 
@@ -46,7 +46,7 @@ list-lessons — список модулей, проектов, уроков и 
 Формат: M[:P[:L]] — модуль, проект, урок (вложенность)
 
 Принцип: каждый запуск = интеграционный тест. Данные проходят
-LegacyModuleJsonRepo → list-modules → get-module-snapshot → get-lesson.
+listModules → getModuleSnapshot → getLesson через dispatch (D-49).
 Если сломается схема в JSON-файлах, visibility-политика или любой
 use-case — скрипт упадёт с ошибкой.
 `);
@@ -135,8 +135,7 @@ async function main() {
     process.exit(0);
   }
 
-  const app = createApp(true); // всегда silent — консольная утилита
-  const actor = await resolveActor(app, NUR_UUID);
+  const course = await CourseClient.create({ silent: true }); // всегда silent — консольная утилита
 
   const filter = args[0] ? parseFilter(args[0]) : undefined;
 
@@ -146,13 +145,8 @@ async function main() {
     process.exit(1);
   }
 
-  // Получаем список модулей через API (тестирует list-modules + LegacyModuleJsonRepo.getAll)
-  type ModuleEntry = { uuid: string; title: string; status: string };
-  const modules = (await app.execute(
-    'list-modules',
-    {},
-    actor,
-  )) as ModuleEntry[];
+  // Получаем список модулей через DMG-модуль курсов (тестирует listModules)
+  const modules = await course.listModules();
 
   let mi = 0;
   for (const mod of modules) {
@@ -163,17 +157,8 @@ async function main() {
     if (!mod || !moduleDir) continue;
     if (filter?.module !== undefined && filter.module !== M) continue;
 
-    // Получаем снимок модуля через API (тестирует get-module-snapshot + LegacyLessonJsonRepo)
-    type SnapshotLesson = { lessonId: string; lessonTitle: string };
-    type SnapshotProject = {
-      projectTitle: string;
-      lessons: SnapshotLesson[];
-    };
-    const snapshot = (await app.execute(
-      'get-module-snapshot',
-      { moduleId: mod.uuid },
-      actor,
-    )) as SnapshotProject[];
+    // Получаем снимок модуля (тестирует getModuleSnapshot)
+    const snapshot = await course.moduleSnapshot(mod.uuid);
 
     // Детальный вывод одного урока
     if (filter?.lesson !== undefined && filter?.project !== undefined) {
@@ -190,13 +175,8 @@ async function main() {
         process.exit(1);
       }
 
-      // Получаем урок через API для получения stepIds (тестирует get-lesson)
-      type LessonDetail = { stepIds: string[]; mentorStepIds: string[] };
-      const lessonDetail = (await app.execute(
-        'get-lesson',
-        { uuid: lesson.lessonId },
-        actor,
-      )) as LessonDetail;
+      // Получаем урок для получения stepIds (тестирует getLesson)
+      const lessonDetail = await course.lesson(lesson.lessonId);
 
       const dir = findLessonDir(
         moduleDir,
@@ -247,12 +227,7 @@ async function main() {
         const prefix = `p${P}-l${L}-`;
         const dir = findLessonDir(moduleDir, prefix);
 
-        type LessonDetail = { stepIds: string[]; mentorStepIds: string[] };
-        const detail = (await app.execute(
-          'get-lesson',
-          { uuid: lesson.lessonId },
-          actor,
-        )) as LessonDetail;
+        const detail = await course.lesson(lesson.lessonId);
 
         totalSteps += detail.stepIds.length;
         totalMentorSteps += detail.mentorStepIds.length;
@@ -275,12 +250,7 @@ async function main() {
         if (!lesson) continue;
         const L = li + 1;
 
-        type LessonDetail = { stepIds: string[] };
-        const detail = (await app.execute(
-          'get-lesson',
-          { uuid: lesson.lessonId },
-          actor,
-        )) as LessonDetail;
+        const detail = await course.lesson(lesson.lessonId);
 
         const steps = detail.stepIds.length;
         console.log(`       l${L}: ${lesson.lessonTitle} (${steps} шагов)`);

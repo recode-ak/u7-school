@@ -5,7 +5,11 @@ import { join } from 'node:path';
 import { Role, type User } from '@u7-scl/app-legacy';
 import { InProcJobScheduler } from '@u7-scl/core/infra';
 import { ConsoleLogger } from '@u7-scl/core/shared';
-import type { ContentSnapshot } from '@u7-scl/domain/course';
+import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
+import {
+  CourseModuleDef,
+  ListModulesUcDef,
+} from '@u7-scl/domain/course/contract';
 import {
   GetMyCampaignsUcDef,
   ListScopeFactsUcDef,
@@ -135,9 +139,20 @@ describe('U7App: сборка', () => {
     expect(app.userRepo).toBeDefined();
     expect(app.apiApp.getModule('questionnaire')).toBeUndefined();
     expect(app.apiApp.getModule('stream')).toBeUndefined();
-    expect(app.apiApp.getModule('course')).toBe(app.courseModule);
+    expect(app.apiApp.getModule('course')).toBeUndefined();
     expect(app.school).toBe(app.appResolver.school);
     expect(app.callers).toBeDefined();
+  });
+
+  test('UC курса — в модуле DMG', async () => {
+    const res = await app.apiApp.dispatch(
+      CourseModuleDef,
+      ListModulesUcDef.command({}),
+      new UserCaller(ACTOR),
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+    );
+
+    expect(res).toEqual({ ok: true, value: [] });
   });
 
   test('UC wish исполняется через apiApp.dispatch', async () => {
