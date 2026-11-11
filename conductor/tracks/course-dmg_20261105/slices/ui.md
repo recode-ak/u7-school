@@ -1,6 +1,6 @@
 # Бриф среза: `u7-bot` / `ui` — UI курса на `dispatchUc` и `stages` (Ф4)
 
-Черновик — `dmg-tech-lead` (Sonnet), Ф4; приёмка — orchestrator (Opus). Читать вместе с `../spec.md` (решения про этапы и «Клиент спрашивает — курс разруливает»), `../plan.md` (Ф4), `course.md` (контракты UC, красная зона), TR-52…TR-58, `debt.md` TR-57. Эталон поведения — релиз в worktree `../u7-school-v0.2.6/apps/u7-bot/...`. Вход по тестам — `git show tst-cleanup:conductor/roadmap/test-bloat.md` §2 (Б-1…Б-17) и §6.
+Черновик — `dmg-tech-lead` (Sonnet), Ф4; приёмка — orchestrator (Opus). Читать вместе с `../spec.md` (решения про этапы и «Клиент спрашивает — курс разруливает»), `../plan.md` (Ф4), `course.md` (контракты UC, красная зона), TR-52…TR-58, `debt.md` TR-57. Эталон поведения — релиз v0.2.6 в worktree `../u7-school-v0.2.6` (бот — в старой раскладке каталогов). Вход по тестам — `git show tst-cleanup:conductor/roadmap/test-bloat.md` §2 (Б-1…Б-17) и §6.
 
 ## Расхождения spec/plan с кодом
 
@@ -198,4 +198,10 @@ ARC-08, ARC-09, ERR-01, ERR-06, ERR-07, CODE-02, CODE-04, TST-04, TST-05, TST-06
 
 ## Отчёты
 
-(заполняет orchestrator по шагам)
+- **Шаг 3 (flash `cd-F4-calls`, первым):** 8 stories на `dispatchUc`; отклонения — `actor` проброшен во внутренние методы, `?? sid`/`kind ?? 'text'` убраны (поля Def обязательны).
+- **Шаг 1 (Sonnet):** kit `course-dmg.test-kit.ts`, тесты резолвера и story каталога на `stages`, integration на мирах; удалены `content-path`, `course-program`, `course-access` (таблица «где покрыт» — в отчёте шага, тесты UC в `modules/course`); `wish-flow` урезан по О4. Эскалации: `createTestApp` без параметра мира (решено в шаге 4), С9 — в шаг 2.
+- **Шаг 2 (flash `cd-F4-tests`):** 10 тестовых файлов на kit, + тест С9; `expect` не удалены.
+- **Шаг 4 (Sonnet):** резолвер и story каталога на `stages` (О1–О3), `ui-spec.md`, `createTestApp(tag, world)`. Отклонения от границ: `tests/helpers/{test-app,fixture-loader}.ts` (по поручению), `tests/e2e/pagination.e2e.test.ts` (следствие О1, шаг `cd-F4-fix`).
+- **`cd-F4-fix` (flash):** тесты под О1 (`pagination`, `wish-flow`), ошибка ожидания шага 1 (префикс «Шаг N:»), мок `controller.test.ts`, `phase` → `stage` в резолвере.
+- **Ревью (Opus):** 0 `error`, 6 `warn` (ERR-06 `listCourses`/`listModules`, ветка `getStep` без теста, 3 × TST-08), CODE-04 — метки брифа в коде; всё исправлено (`cd-F4-review`). Вопрос «автор видит заголовки неопубликованных модулей» — принято, TR-59.
+- **Гейт:** `CI=true bun run check` зелёный (4910 / 0), `test:bot` 1097 / 0, G1–G5 пусто, `git status data/` чист.

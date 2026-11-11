@@ -105,10 +105,10 @@
 **Вход для брифов Ф4–Ф5 — ветка `tst-cleanup`** (на `main` этих файлов нет): `git show tst-cleanup:conductor/roadmap/test-bloat.md` — §2 закономерности Б-1…Б-17 (не переносить лишние тесты), §6 «Рекомендации для `course`».
 
 - [x] Task: `dmg-tech-lead`: бриф `slices/ui.md` с «Сохраняемым поведением» (Sonnet); приёмка — Opus, решения — TR-59
-- [ ] Task: `dmg-test-designer`: перевод тестов бота на Def-имена и red-тесты навигации по `stages` (курс без этапов / один / несколько) (Sonnet)
-- [ ] Task: UI-stories (Sonnet): `courses/*` (`course-nav-resolver`, `course-catalog`, `wish-*`), `learning/*`, `streams/*`, `mentor/create-stream` — на `dispatchUc` и `stages`; `ui-spec.md`
-- [ ] Task: Снять красную зону в `debt.md` (Opus)
-- [ ] Task: `dmg-reviewer` (Opus)
+- [x] Task: `dmg-test-designer`: перевод тестов бота на Def-имена и red-тесты навигации по `stages` (курс без этапов / один / несколько) (Sonnet — курс и kit; flash `cd-F4-tests` — остальные stories) eee83a10
+- [x] Task: UI-stories (Sonnet): `courses/*` (`course-nav-resolver`, `course-catalog`, `wish-*`), `learning/*`, `streams/*`, `mentor/create-stream` — на `dispatchUc` и `stages`; `ui-spec.md` (Sonnet — этапы; flash `cd-F4-calls` — механика) eee83a10
+- [x] Task: Снять красную зону в `debt.md` (Opus) — TR-57 (1)–(2), DEBT-51
+- [x] Task: `dmg-reviewer` (Opus): 0 `error`, 6 `warn` — исправлены (`cd-F4-review`) eee83a10
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 4:**
