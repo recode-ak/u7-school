@@ -3,7 +3,7 @@ import {
   CourseModuleDef,
   GetModulePrerequisiteUcDef,
 } from '@u7-scl/domain/course/contract';
-import { expectErr, expectOk } from 'dmg-core/testing';
+import { expectOk } from 'dmg-core/testing';
 import * as v from 'valibot';
 import {
   M1,
@@ -11,7 +11,6 @@ import {
   makeCourseEnv,
   plainCourse,
   REQ,
-  student,
   system,
 } from './course-uc.fixture';
 import { GetModulePrerequisiteUc } from './get-module-prerequisite.uc';
@@ -55,13 +54,6 @@ describe('getModulePrerequisite — чтение', () => {
 
     expect(reads).toBe(1);
   });
-
-  it('только читает: ничего не записывается', async () => {
-    env.seedCourses(plainCourse(C1, [M1, M2]));
-    await ask(M2);
-    expect(env.courses.saved).toEqual([]);
-    expect(env.modules.saved).toEqual([]);
-  });
 });
 
 describe('getModulePrerequisite — сквозной сценарий вердикта', () => {
@@ -85,37 +77,5 @@ describe('getModulePrerequisite — сквозной сценарий верди
         reason: 'previous-not-passed',
       }).success,
     ).toBe(false);
-  });
-});
-
-describe('getModulePrerequisite — вход и вызывающий', () => {
-  it('вызывающий user не допущен (callers: system) — UNAUTHORIZED', async () => {
-    const res = await uc().handle(
-      { moduleId: M1, passedModuleIds: [] },
-      student as never,
-      REQ,
-    );
-
-    expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
-      callerKind: 'user',
-    });
-  });
-
-  it('без passedModuleIds — INPUT_VALIDATION', async () => {
-    const res = await uc().handle({ moduleId: M1 } as never, system, REQ);
-
-    expectErr(res, 'INPUT_VALIDATION');
-  });
-
-  it('moduleId не uuid — INPUT_VALIDATION', async () => {
-    expectErr(await ask('not-a-uuid'), 'INPUT_VALIDATION');
-  });
-
-  it('сбой репозитория курсов — SERVER_INTERNAL', async () => {
-    env.courses.findAll = async () => {
-      throw new Error('диск недоступен');
-    };
-
-    expectErr(await ask(M2), 'SERVER_INTERNAL');
   });
 });

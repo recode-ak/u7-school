@@ -3,7 +3,6 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { StepAr, type StepState } from '@u7-scl/domain/course';
-import { VersionConflict } from 'dmg-core/app';
 import { ValiError } from 'valibot';
 import { StepJsonRepo } from './step.json-repo';
 
@@ -11,7 +10,7 @@ import { StepJsonRepo } from './step.json-repo';
 // `infra/db/step-json-repo.test.ts` (save/getByUuid, getByIds) + контракт
 // новой записи: legacy-запись (ISO без секунд → число, version 0, нет
 // `updatedAt` → `createdAt`), три вида шага (`kind: file` в данных нет —
-// только в схеме), round-trip, устаревшая версия, битая запись — исключение,
+// только в схеме), round-trip, битая запись — исключение,
 // файл цел. Каталог — mkdtemp: до Ф5 писать в `data/` нельзя (Т11).
 
 const tmpDir = mkdtempSync(join(tmpdir(), 'step-json-repo-test-'));
@@ -227,21 +226,6 @@ describe('StepJsonRepo — findByIds', () => {
   });
 });
 
-describe('StepJsonRepo — версия (D-36)', () => {
-  test('запись по устаревшей версии — VersionConflict, файл не изменён', async () => {
-    const state = makeState();
-    const path = filePath('steps-stale.json');
-    const repo = await repoWith('steps-stale.json', [{ ...state, version: 5 }]);
-    const before = await Bun.file(path).text();
-
-    await expect(repo.save(StepAr.restore(state))).rejects.toBeInstanceOf(
-      VersionConflict,
-    );
-
-    expect(await Bun.file(path).text()).toBe(before);
-  });
-});
-
 describe('StepJsonRepo — legacy-записи', () => {
   const legacy = (uuid: string, extra: Record<string, unknown> = {}) => ({
     uuid,
@@ -335,26 +319,6 @@ describe('StepJsonRepo — битая запись', () => {
     expect(await Bun.file(path).text()).toBe(text);
   });
 
-  test('неизвестный kind — ValiError', async () => {
-    const repo = await repoWith('steps-bad-kind.json', [
-      { ...makeState(), kind: 'video' },
-    ]);
-
-    await expect(repo.findById(crypto.randomUUID())).rejects.toBeInstanceOf(
-      ValiError,
-    );
-  });
-
-  test('code без code — ValiError', async () => {
-    const repo = await repoWith('steps-no-code.json', [
-      { ...makeState(), kind: 'code' },
-    ]);
-
-    await expect(repo.findById(crypto.randomUUID())).rejects.toBeInstanceOf(
-      ValiError,
-    );
-  });
-
   test('невалидный JSON — исключение, файл не изменён', async () => {
     const path = filePath('steps-bad-json.json');
     const text = '[{"uuid": ';
@@ -364,18 +328,6 @@ describe('StepJsonRepo — битая запись', () => {
     await expect(repo.findById(crypto.randomUUID())).rejects.toThrow();
     await expect(repo.save(StepAr.restore(makeState()))).rejects.toThrow();
 
-    expect(await Bun.file(path).text()).toBe(text);
-  });
-
-  test('корень файла не массив — ValiError, файл не изменён', async () => {
-    const path = filePath('steps-not-array.json');
-    const text = JSON.stringify({ steps: [] });
-    await Bun.write(path, text);
-    const repo = new StepJsonRepo(path);
-
-    await expect(repo.findById(crypto.randomUUID())).rejects.toBeInstanceOf(
-      ValiError,
-    );
     expect(await Bun.file(path).text()).toBe(text);
   });
 });

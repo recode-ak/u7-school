@@ -15,7 +15,6 @@ import type { CourseFilter } from '../course.repo';
 import { CourseRepoFake } from '../course.repo.fake';
 
 export {
-  admin,
   anonymous,
   author,
   otherMentor,
@@ -26,8 +25,7 @@ export {
 } from '../../module/uc/module-uc.fixture';
 
 /**
- * Общие данные тестов UC курса: идентификаторы курсов и модулей (в том числе
- * общий модуль `a1a1…` — второй в `fafa…` и первый в `cccc…`), построители
+ * Общие данные тестов UC курса: идентификаторы курсов и модулей, построители
  * state курса и этапа.
  */
 export const COURSE = '29adc3be-873e-47ec-aa30-61f5e6e25d4e';
@@ -39,10 +37,6 @@ export const M3 = '33333333-3333-4333-8333-333333333333';
 export const M4 = '44444444-4444-4444-8444-444444444444';
 /** Модуль вне всех программ тестов. */
 export const OUTSIDE = '99999999-9999-4999-8999-999999999999';
-export const FAFA = 'fafafafa-baba-4aba-8aba-babababababa';
-export const CCCC = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
-export const A0 = 'a0a0a0a0-a0a0-4a0a-8a0a-a0a0a0a0a0a0';
-export const A1 = 'a1a1a1a1-b1b1-4b1b-8b1b-b1b1b1b1b1b1';
 
 /** Метка этапа. */
 export const phase = (

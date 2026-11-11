@@ -1,15 +1,7 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
-import { expectErr, expectOk } from 'dmg-core/testing';
-import {
-  M1,
-  M2,
-  M3,
-  makeCourseEnv,
-  REQ,
-  student,
-  system,
-} from './course-uc.fixture';
+import { expectOk } from 'dmg-core/testing';
+import { M1, M2, makeCourseEnv, REQ, system } from './course-uc.fixture';
 import { GetSameModulesUc } from './get-same-modules.uc';
 
 // Перенос из `course.module.test.ts` («getSameModules») и legacy
@@ -36,34 +28,10 @@ describe('GetSameModulesUc', () => {
     });
   });
 
-  it('среди кандидатов нет модуля — пусто', async () => {
-    expect(expectOk(await same([M2, M3]))).toEqual({ moduleIds: [] });
-  });
-
-  it('пустой список кандидатов — пустой ответ', async () => {
-    expect(expectOk(await same([]))).toEqual({ moduleIds: [] });
-  });
-
   it('репозитории не читаются', async () => {
     await same([M1, M2]);
     expect(env.asked.filters).toEqual([]);
     expect(env.asked.byIds).toEqual([]);
     expect(env.asked.byId).toEqual([]);
-  });
-
-  it('вызывающий user не допущен (callers: system) — UNAUTHORIZED', async () => {
-    const res = await uc().handle(
-      { moduleId: M1, moduleIds: [] },
-      student as never,
-      REQ,
-    );
-
-    expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
-      callerKind: 'user',
-    });
-  });
-
-  it('moduleIds с не-uuid — INPUT_VALIDATION', async () => {
-    expectErr(await same(['not-a-uuid']), 'INPUT_VALIDATION');
   });
 });

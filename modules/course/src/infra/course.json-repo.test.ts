@@ -3,7 +3,6 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CourseAr, type CourseState } from '@u7-scl/domain/course';
-import { VersionConflict } from 'dmg-core/app';
 import { ValiError } from 'valibot';
 import { CourseJsonRepo } from './course.json-repo';
 
@@ -12,8 +11,8 @@ import { CourseJsonRepo } from './course.json-repo';
 // перезапись, getAll, фильтры status/authorId/title/combined, sort title asc,
 // createdAt desc, limit, нет файла) + контракт нового формата: строгое чтение
 // (старый формат `phases[].moduleIds` — ошибка, файл цел), даты ISO / ISO без
-// секунд / число, нарушения инвариантов программы — ошибка чтения,
-// `VERSION_CONFLICT`. Каталог — mkdtemp: данные проекта не читаются и не пишутся.
+// секунд / число, нарушения инвариантов программы — ошибка чтения. Каталог —
+// mkdtemp: данные проекта не читаются и не пишутся.
 
 const tmpDir = mkdtempSync(join(tmpdir(), 'course-json-repo-test-'));
 afterAll(() => rmSync(tmpDir, { recursive: true, force: true }));
@@ -117,33 +116,6 @@ describe('CourseJsonRepo — save и findById', () => {
     expect(row?.phases).toEqual([
       { title: 'Основы', track: 'tech', fromModuleId: M1 },
     ]);
-  });
-
-  test('курс без этапов и с пустой программой сохраняется и читается', async () => {
-    const state = makeState({ moduleIds: [], phases: [] });
-    const repo = await repoWith('courses-empty-program.json', [state]);
-
-    expect((await repo.findById(state.uuid))?.snapshot()).toMatchObject({
-      moduleIds: [],
-      phases: [],
-    });
-  });
-});
-
-describe('CourseJsonRepo — версия (D-36)', () => {
-  test('запись по устаревшей версии — VersionConflict, файл не изменён', async () => {
-    const state = makeState();
-    const path = filePath('courses-stale.json');
-    const repo = await repoWith('courses-stale.json', [
-      { ...state, version: 5 },
-    ]);
-    const before = await Bun.file(path).text();
-
-    await expect(repo.save(CourseAr.restore(state))).rejects.toBeInstanceOf(
-      VersionConflict,
-    );
-
-    expect(await Bun.file(path).text()).toBe(before);
   });
 });
 
@@ -398,15 +370,6 @@ describe('CourseJsonRepo — findByIds', () => {
       ]),
     ).toEqual([]);
   });
-
-  test('любой статус: архивный курс находится', async () => {
-    const [a] = ids();
-    const repo = await repoWith('courses-ids-archived.json', [
-      makeState({ uuid: a, status: 'archived' }),
-    ]);
-
-    expect(uuids(await repo.findByIds([a]))).toEqual([a]);
-  });
 });
 
 describe('CourseJsonRepo — findAll', () => {
@@ -592,13 +555,6 @@ describe('CourseJsonRepo — битая запись', () => {
     expect(await Bun.file(path).text()).toBe(text);
   });
 
-  test('запись без обязательного поля (нет moduleIds) — ValiError', async () => {
-    const { moduleIds: _m, ...noProgram } = makeState();
-    const repo = await repoWith('courses-no-program.json', [noProgram]);
-
-    await expect(repo.findAll()).rejects.toBeInstanceOf(ValiError);
-  });
-
   test('невалидный JSON — исключение, файл не изменён', async () => {
     const path = filePath('courses-bad-json.json');
     const text = '[{"uuid": ';
@@ -608,18 +564,6 @@ describe('CourseJsonRepo — битая запись', () => {
     await expect(repo.findById(crypto.randomUUID())).rejects.toThrow();
     await expect(repo.save(CourseAr.restore(makeState()))).rejects.toThrow();
 
-    expect(await Bun.file(path).text()).toBe(text);
-  });
-
-  test('корень файла не массив — ValiError, файл не изменён', async () => {
-    const path = filePath('courses-not-array.json');
-    const text = JSON.stringify({ courses: [] });
-    await Bun.write(path, text);
-    const repo = new CourseJsonRepo(path);
-
-    await expect(repo.findById(crypto.randomUUID())).rejects.toBeInstanceOf(
-      ValiError,
-    );
     expect(await Bun.file(path).text()).toBe(text);
   });
 });

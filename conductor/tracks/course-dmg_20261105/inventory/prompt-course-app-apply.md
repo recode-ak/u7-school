@@ -40,3 +40,8 @@ bunx biome check modules/course/src
 ## Отчёт
 
 Изменённые и удалённые файлы; число тестов до и после; строки таблицы, которые не применены, с причиной; итог команд.
+
+## Дополнительно (хвост Ф7)
+
+- `runners/u7-bot/tests/e2e/student-dmg.e2e.test.ts`: удалить неиспользуемые импорты `CompleteStudentUcDef` и `UserCaller` (предупреждение biome после удаления тестов в Ф7). Только импорты, тесты файла не трогать. Проверка: `bunx biome check runners/u7-bot/tests/e2e/student-dmg.e2e.test.ts` без предупреждений.
+- **Запрещено** `git checkout`, `git restore`, `git reset`, `git stash` — откат своих правок только правкой файла.

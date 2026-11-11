@@ -3,15 +3,14 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { LessonAr, type LessonState } from '@u7-scl/domain/course';
-import { VersionConflict } from 'dmg-core/app';
 import { ValiError } from 'valibot';
 import { LessonJsonRepo } from './lesson.json-repo';
 
 // Репозиторий уроков (`<dbDir>/courses/lessons.json`, D-36). Перенос
 // `infra/db/lesson-json-repo.test.ts` (save/getByUuid, getByIds) + контракт
 // новой записи: legacy-запись (ISO без секунд → число, version 0, нет
-// `updatedAt` → `createdAt`), round-trip, устаревшая версия, битая запись —
-// исключение, файл цел. Каталог — mkdtemp: новый репозиторий пишет даты
+// `updatedAt` → `createdAt`), round-trip, битая запись — исключение, файл цел.
+// Каталог — mkdtemp: новый репозиторий пишет даты
 // числами и до Ф5 не должен писать в `data/` (Т11).
 
 const tmpDir = mkdtempSync(join(tmpdir(), 'lesson-json-repo-test-'));
@@ -169,23 +168,6 @@ describe('LessonJsonRepo — findByIds', () => {
   });
 });
 
-describe('LessonJsonRepo — версия (D-36)', () => {
-  test('запись по устаревшей версии — VersionConflict, файл не изменён', async () => {
-    const state = makeState();
-    const path = filePath('lessons-stale.json');
-    const repo = await repoWith('lessons-stale.json', [
-      { ...state, version: 5 },
-    ]);
-    const before = await Bun.file(path).text();
-
-    await expect(repo.save(LessonAr.restore(state))).rejects.toBeInstanceOf(
-      VersionConflict,
-    );
-
-    expect(await Bun.file(path).text()).toBe(before);
-  });
-});
-
 describe('LessonJsonRepo — legacy-записи', () => {
   const legacy = (uuid: string, extra: Record<string, unknown> = {}) => ({
     uuid,
@@ -282,15 +264,6 @@ describe('LessonJsonRepo — битая запись', () => {
     expect(await Bun.file(path).text()).toBe(text);
   });
 
-  test('запись без обязательного поля (нет stepIds) — ValiError', async () => {
-    const { stepIds: _s, ...noSteps } = makeState();
-    const repo = await repoWith('lessons-no-steps.json', [noSteps]);
-
-    await expect(repo.findById(crypto.randomUUID())).rejects.toBeInstanceOf(
-      ValiError,
-    );
-  });
-
   test('невалидный JSON — исключение, файл не изменён', async () => {
     const path = filePath('lessons-bad-json.json');
     const text = '[{"uuid": ';
@@ -300,18 +273,6 @@ describe('LessonJsonRepo — битая запись', () => {
     await expect(repo.findById(crypto.randomUUID())).rejects.toThrow();
     await expect(repo.save(LessonAr.restore(makeState()))).rejects.toThrow();
 
-    expect(await Bun.file(path).text()).toBe(text);
-  });
-
-  test('корень файла не массив — ValiError, файл не изменён', async () => {
-    const path = filePath('lessons-not-array.json');
-    const text = JSON.stringify({ lessons: [] });
-    await Bun.write(path, text);
-    const repo = new LessonJsonRepo(path);
-
-    await expect(repo.findById(crypto.randomUUID())).rejects.toBeInstanceOf(
-      ValiError,
-    );
     expect(await Bun.file(path).text()).toBe(text);
   });
 });

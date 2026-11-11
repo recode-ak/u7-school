@@ -4,7 +4,6 @@ import { LearningController } from '@u7-scl/bot/learning/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import {
-  CompleteStudentUcDef,
   InactivitySweepJobDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
@@ -13,7 +12,6 @@ import {
   createTestBotTransport,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import { CoursesController } from '../../src/controllers/courses/controller';

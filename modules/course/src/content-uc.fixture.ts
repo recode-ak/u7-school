@@ -10,13 +10,11 @@ import { StepRepoFake } from './step/step.repo.fake';
 
 export {
   AUTHOR_ID,
-  admin,
   anonymous,
   author,
   MODULE,
   OTHER_ID,
   otherMentor,
-  PROJECT_DRAFT,
   PROJECT_PUBLISHED,
   projectState,
   REQ,

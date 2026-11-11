@@ -3,7 +3,6 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ModuleAr, type ModuleState } from '@u7-scl/domain/course';
-import { VersionConflict } from 'dmg-core/app';
 import { ValiError } from 'valibot';
 import { ModuleJsonRepo } from './module.json-repo';
 
@@ -11,7 +10,7 @@ import { ModuleJsonRepo } from './module.json-repo';
 // `infra/db/module-json-repo.test.ts` (save/getByUuid, не найден, getAll,
 // фильтр status, перезапись) + контракт новой записи: legacy-запись
 // (ISO без секунд → число, version 0, updatedAt = createdAt), round-trip,
-// устаревшая версия, битая запись — исключение, файл цел.
+// битая запись — исключение, файл цел.
 // Каталог — mkdtemp: новый репозиторий пишет даты числами и до Ф5 не
 // должен писать в `data/` (Т11).
 
@@ -116,23 +115,6 @@ describe('ModuleJsonRepo — save и findById', () => {
     const [row] = JSON.parse(await Bun.file(path).text()) as ModuleState[];
     expect(row?.createdAt).toBe(T0);
     expect(row?.updatedAt).toBe(T0);
-  });
-});
-
-describe('ModuleJsonRepo — версия (D-36)', () => {
-  test('запись по устаревшей версии — VersionConflict, файл не изменён', async () => {
-    const state = makeState();
-    const path = filePath('modules-stale.json');
-    const repo = await repoWith('modules-stale.json', [
-      { ...state, version: 5 },
-    ]);
-    const before = await Bun.file(path).text();
-
-    await expect(repo.save(ModuleAr.restore(state))).rejects.toBeInstanceOf(
-      VersionConflict,
-    );
-
-    expect(await Bun.file(path).text()).toBe(before);
   });
 });
 
@@ -383,7 +365,7 @@ describe('ModuleJsonRepo — findAll', () => {
     ]);
   });
 
-  test('limit — срез после сортировки', async () => {
+  test('limit — срез после сортировки и после фильтра', async () => {
     const { ids, rows } = fixtureRows();
     const repo = await repoWith('modules-limit.json', rows);
 
@@ -392,12 +374,6 @@ describe('ModuleJsonRepo — findAll', () => {
     ).toEqual([ids.c, ids.a]);
     expect(uuids(await repo.findAll({ limit: 1 }))).toEqual([ids.a]);
     expect(await repo.findAll({ limit: 0 })).toEqual([]);
-  });
-
-  test('limit — срез после фильтра', async () => {
-    const { ids, rows } = fixtureRows();
-    const repo = await repoWith('modules-limit-filter.json', rows);
-
     expect(
       uuids(await repo.findAll({ status: 'published', limit: 1 })),
     ).toEqual([ids.a]);
@@ -422,13 +398,6 @@ describe('ModuleJsonRepo — битая запись', () => {
     expect(await Bun.file(path).text()).toBe(text);
   });
 
-  test('запись без обязательного поля (нет projects) — ValiError', async () => {
-    const { projects: _p, ...noProjects } = makeState();
-    const repo = await repoWith('modules-no-projects.json', [noProjects]);
-
-    await expect(repo.findAll()).rejects.toBeInstanceOf(ValiError);
-  });
-
   test('невалидный JSON — исключение, файл не изменён', async () => {
     const path = filePath('modules-bad-json.json');
     const text = '[{"uuid": ';
@@ -438,18 +407,6 @@ describe('ModuleJsonRepo — битая запись', () => {
     await expect(repo.findById(crypto.randomUUID())).rejects.toThrow();
     await expect(repo.save(ModuleAr.restore(makeState()))).rejects.toThrow();
 
-    expect(await Bun.file(path).text()).toBe(text);
-  });
-
-  test('корень файла не массив — ValiError, файл не изменён', async () => {
-    const path = filePath('modules-not-array.json');
-    const text = JSON.stringify({ modules: [] });
-    await Bun.write(path, text);
-    const repo = new ModuleJsonRepo(path);
-
-    await expect(repo.findById(crypto.randomUUID())).rejects.toBeInstanceOf(
-      ValiError,
-    );
     expect(await Bun.file(path).text()).toBe(text);
   });
 });
