@@ -1,0 +1,1 @@
+Ф0 (автономно, agents.md §9). Проверка: CI=true bun run check — зелёный, 3179 pass / 0 fail. Кода в фазе нет (документы conductor и docs dmg-core), dmg-reviewer не требуется. Решения записаны: TR-61, DEBT-52, D-69 (dmg-core d71ccd4). Стратегические вопросы С1–С5 решены Нурболатом в сессии.
