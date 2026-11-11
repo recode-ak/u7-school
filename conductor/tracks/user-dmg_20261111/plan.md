@@ -19,8 +19,8 @@
 
 ## Фаза 0: База и решения
 
-- [ ] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/user` и `modules/user`, `dmg-core` `bun test`. Каркас раздела «DeepSeek» (Opus)
-- [ ] Task: `dmg-tech-lead`: разбор и брифы `slices/user-domain.md`, `slices/user-app.md` (Sonnet):
+- [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/user` и `modules/user`, `dmg-core` `bun test`. Каркас раздела «DeepSeek» (Opus) 5843f1a
+- [~] Task: `dmg-tech-lead`: разбор и брифы `slices/user-domain.md`, `slices/user-app.md` (Sonnet):
     - [ ] состав UC «переносим / удаляем / перепроектировать» по 9 legacy-UC и методам `UserFacade` с вызывающими;
     - [ ] варианты получения API ролей субъектом `Caller` в Policy клиентов (сверка с `wish`/`stream`, D-41);
     - [ ] сверка `notify-user`/`user.notified` с `../u7-school-v0.2.6` (есть ли продюсер);
