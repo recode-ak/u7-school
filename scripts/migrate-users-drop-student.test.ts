@@ -115,6 +115,22 @@ describe('migrateUsersData', () => {
     expect(result.invalid.map((i) => i.id)).toEqual([A]);
   });
 
+  test('legacy-запись без updatedAt/version с ISO createdAt не попадает в invalid', () => {
+    const { updatedUsers, result } = migrateUsersData([
+      {
+        uuid: A,
+        name: 'Иван',
+        telegramId: 123,
+        roles: ['STUDENT'],
+        createdAt: '2026-06-25T12:00',
+      },
+    ]);
+
+    expect(updatedUsers[0]?.roles).toEqual(['GUEST']);
+    expect(result.migrated).toBe(1);
+    expect(result.invalid).toEqual([]);
+  });
+
   test('запись без uuid в invalid идентифицируется индексом', () => {
     const { result } = migrateUsersData([
       record(A, ['GUEST']),

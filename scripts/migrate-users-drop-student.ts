@@ -21,7 +21,7 @@
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { UserState } from '@u7-scl/domain/user';
+import { UserArDef } from '@u7-scl/domain/user';
 import * as v from 'valibot';
 
 /** Роль, снимаемая миграцией; в схеме домена её больше нет (ERR-01). */
@@ -32,7 +32,7 @@ const FALLBACK_ROLE = 'GUEST';
 export interface InvalidUser {
   /** `uuid` записи, без него — индекс в файле строкой. */
   id: string;
-  /** Текст первой ошибки разбора `UserState`. */
+  /** Текст первой ошибки разбора `UserArDef.state`. */
   issue: string;
 }
 
@@ -53,6 +53,8 @@ const issueText = (issue: v.BaseIssue<unknown>): string => {
 /**
  * Идемпотентно снимает `STUDENT` с сырых записей `users.json`. Записи без
  * `STUDENT` возвращаются теми же объектами; исходный массив не мутируется.
+ * Проверка — строгая схема записи (`UserArDef.state`): она же читает legacy
+ * без `updatedAt`/`version` (D-36), поэтому он не считается невалидным.
  */
 export function migrateUsersData(users: Array<Record<string, unknown>>): {
   updatedUsers: Array<Record<string, unknown>>;
@@ -76,7 +78,7 @@ export function migrateUsersData(users: Array<Record<string, unknown>>): {
       next = { ...user, roles: kept };
     }
 
-    const parsed = v.safeParse(UserState, next);
+    const parsed = v.safeParse(UserArDef.state, next);
     if (!parsed.success) {
       const [issue] = parsed.issues;
       invalid.push({

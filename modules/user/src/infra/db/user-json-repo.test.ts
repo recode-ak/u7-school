@@ -163,7 +163,7 @@ describe('LegacyUserJsonRepo', () => {
         await saveUsers(repo, [user1, user2, user3, petrStudent, anna, boris]);
       });
 
-      test('фильтрует по роли — только STUDENT', async () => {
+      test('фильтрует по роли — только GUEST', async () => {
         const result = await repo.getAll({ role: Role.GUEST });
         expect(result).toHaveLength(3);
         expect(result.map((u) => u.name)).toEqual(

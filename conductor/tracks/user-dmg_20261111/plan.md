@@ -69,9 +69,9 @@
 
 ## Фаза 3: Данные и роль `STUDENT` (DEBT-48)
 
-- [x] Task: `dmg-test-designer`: red-тесты (Sonnet): скрипт `scripts/migrate-users-drop-student.ts` (сухой прогон по умолчанию, запись по флагу, идемпотентность); строгое чтение записи со `STUDENT` — ошибка
-- [x] Task: `migrator` (flash): скрипт; удалить `Role.STUDENT`, `isStudent`, исключения `canAddRole`/`canRemoveRole`; убрать `STUDENT` из фикстур модулей, тестовых миров и тестов; `bun run seed:fixtures`
-- [ ] Task: `dmg-data-keeper` (flash): прогон скрипта на копии фикстур и копии заготовки; откат; живые данные не трогаются
+- [x] Task: `dmg-test-designer`: red-тесты (Sonnet): скрипт `scripts/migrate-users-drop-student.ts` (сухой прогон по умолчанию, запись по флагу, идемпотентность); строгое чтение записи со `STUDENT` — ошибка e7298e73
+- [x] Task: `migrator` (flash): скрипт; удалить `Role.STUDENT`, `isStudent`, исключения `canAddRole`/`canRemoveRole`; убрать `STUDENT` из фикстур модулей, тестовых миров и тестов; `bun run seed:fixtures` e7298e73 — DEBT-48 снят из `debt.md` (`arch:check`), итог в TR-61
+- [x] Task: `dmg-data-keeper` (flash): прогон скрипта на копии фикстур и копии заготовки; откат; живые данные не трогаются SHA_FIX — дефект проверки `invalid` (`UserState` → `UserArDef.state`) исправлен в срезе; порядок релиза — миграция до выкатки
 - [ ] Task: Записать красную зону в `debt.md` поимённо (если есть), критерий снятия — конец Ф5 (Opus)
 - [ ] Task: `dmg-reviewer` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md; автономно)
