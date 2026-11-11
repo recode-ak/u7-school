@@ -34,7 +34,7 @@
 - Состав UC, субъект Policy и судьба `notify-user` утверждены Нурболатом и записаны.
 - Брифы `user-domain` и `user-app` приняты.
 
-## Фаза 1: Домен `user` (аддитивно)
+## Фаза 1: Домен `user` (аддитивно) [checkpoint: aab0d4f]
 
 - [x] Task: `migrator` S0 (flash): legacy `UserAr`/`UserPolicy`/`UserRepo`/`UserJsonRepo` → `Legacy*` (бриф, шаг 0) 6d840c14
 - [x] Task: `dmg-test-designer`: характеризация на `../u7-school-v0.2.6` и red-тесты (Sonnet): 03d6b4f4
@@ -44,7 +44,7 @@
     - [x] перенос сценариев `a-root.test.ts`, `policy.test.ts` (список — в отчёте, TST-08).
 - [x] Task: `migrator`, домен (flash): Def, Ar без `#` и `throw*`, правила, ошибки; `UserModuleDef` пока с `external` 03d6b4f4
 - [x] Task: `dmg-reviewer` (Opus). Замечания без `error` решает orchestrator (TR), перепроектирование — Нурболату 16a77b00 — `error` нет, 5 info закрыты в срезе
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md; автономно) aab0d4f
 
 **Критерии приёмки Фазы 1:**
 - `grep -rnE "throw[A-Z]|new [A-Za-z]*Ar\b|#[a-z]|@u7-scl/(core|app-legacy)"` по Def-файлам `domain/src/user` пуст (удаляемый legacy — исключение поимённо).
