@@ -111,3 +111,15 @@
 - `notify.story.ts:64–73` — делегат `handleCallback → unknownCommand` (принято в `tst-cleanup`, Б-9);
 - `stream-nav-resolver.ts:275` — обрезка тела шага > 3200 символов: ни до, ни после её не утверждал ни один тест;
 - `user-in-proc-facade.ts:68–82` (`registerGuest`) — legacy-фасад `user`, снимается треком `user`.
+
+## Чистка тестов `course` (Ф8)
+
+**Базовая линия (2026-11-11, `d80654fb`):**
+
+| Слой | Область | Тестов | Покрытие строк собственных исходников |
+|---|---|---|---|
+| домен | `cd domain && bun test src/course` | 442 (31 файл) | 100% у всех файлов `src/course` |
+| модуль | `cd modules/course && bun test` | 330 (22 файла) | 100% у всех файлов `src` |
+| бот | `src/controllers/courses/{course-nav-resolver,controller}.test.ts`, `stories/course-catalog.story.test.ts`, `tests/courses/course-catalog.integration.test.ts`, `tests/e2e/{curious-showcase,pagination}.e2e.test.ts` | 104 (6 файлов) | `course-nav-resolver.ts` 98.76%, `course-catalog.story.ts` 96.05%, `controller.ts` 100% |
+
+Область бота — экраны каталога и навигации курса. Не входят: `wish-*` (почищены с `wish`), `learning/*` (с `stream`), `main-menu.e2e` (общее меню), `content-markdown.integration` (проверка контента `data/`).
