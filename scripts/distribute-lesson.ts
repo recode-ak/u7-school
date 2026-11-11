@@ -97,7 +97,8 @@ distribute-lesson — рассылка шагов урока в Telegram.
   --all         Все шаги всех уроков проекта (формат M:P)
 
 Принцип: каждый запуск = интеграционный тест. Данные проходят
-listModules → getModuleSnapshot → getLesson → getStep через dispatch (D-49). Форматирование — safeConvert (Markdown → Telegram MarkdownV2).
+listModules → getModuleSnapshot → getLesson → getStep через dispatch (D-49).
+Форматирование — safeConvert (Markdown → Telegram MarkdownV2).
 Если сломается любое звено — скрипт упадёт с ошибкой.
 `);
 }

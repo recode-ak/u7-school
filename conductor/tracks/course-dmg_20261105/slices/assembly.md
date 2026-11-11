@@ -87,3 +87,34 @@ ARC-04, ARC-07, ARC-09, MAN-06, D-36, D-45 (вход модуля — `contract`
 ## Отчёт (формат)
 
 Файлы (создано / изменено / удалено), отклонения от брифа с причиной, сверка сценариев (шаг 2), сравнение вывода скриптов (шаг 1), итог команд, эскалации.
+
+## Отчёт migrator (Ф5)
+
+**Шаг 1** — flash, `cd-F5-clients`, $0.26, 166 ходов. `external` снят (`course.module.test.ts` — проверка переведена, вне таблицы брифа), `U7App` без legacy, ARC-07 `@u7-scl/course/**`, миры на `ModuleState`/`LessonState`/`StepState`/`CourseState`/`ProjectEntity` (`invariants.ts` без правок), `_app-factory.ts` → класс `scripts/_course-client.ts`, `call-uc` — `course` в `DMG_MODULES`. В `distribute-lesson` `step.order ?? i + 1` → `i + 1` (поля `order` нет ни в legacy-схеме, ни в данных). Скрипты теперь читают курсы из `DB_DIR` (раньше фабрика его игнорировала). Вывод скриптов на одном стенде до/после — без расхождений. `dispatch` query пишет `<dbDir>/oplog`.
+**Эскалация:** снятие `external` включает ARC-04/06 по живому legacy — `check` между шагами красный; решение — шаги подряд, общий коммит (TR-60).
+
+**Шаг 2** — flash, `cd-F5-remove`, $0.09, 64 хода. Удалены 41 тестовый файл (350 `it`) с legacy-кодом; сверка сценариев — каждый файл указан с Def-тестом или «authoring/`content-path` удалены по spec, TR-52 (3)», непокрытых нет. Удалены также 5 `types.ts` и `module/get-visible-for.test.ts` (импорт удалённого `a-root`, сценарии — в `module.ar.test.ts`); `status.ts` и `*.fixture.ts` остаются. `bun test` 4910 → 4562.
+**Эскалация:** устаревшие места DEBT-1, 2, 5, 10 в `debt.md` — сняты orchestrator'ом, DEBT-10 закрыт.
+
+**Итог (гейт orchestrator'а, `bd13f3df`):** `check` зелёный, 4562 pass / 0 fail; `test:bot` 1097 / 0; `data/` чист.
+
+## Отчёт dmg-data-keeper (Ф5)
+
+flash, `cd-F5-data`, $0.05. Стенды-копии (fixtures-курсы и потоки, реальные пользователи) для текущей версии и `../u7-school-v0.2.6`: `list-lessons`, `distribute-lesson 1:1:1 --preview`, `update-stream-snapshot --dry-run` (3 потока) — diff пустой, коды выхода совпадают. `distribute-mentor` не запускался (нет режима без отправки в Telegram; курс не использует, diff — одна строка справки). Запись: `streams.json` сырым JSON — TR-45; `students.json` — через строгий разбор Def; oplog — до 143 записей / 134 КБ на полный `list-lessons`. Миграция и бэкап перед выкаткой не нужны. Вердикт — ок.
+
+## Отчёт reviewer (Ф5)
+
+Opus, 0 `error`.
+
+| ID | файл | суть | severity | решение |
+|---|---|---|---|---|
+| ERR-01 | `scripts/_course-client.ts` | без `NUR_UUID` в `DB_DIR` скрипт молча работает гостем | warn | исправлено (`cd-F5-fix`): ошибка «гостевой субъект недопустим» |
+| — | `scripts/update-stream-snapshot.ts` | снимок теперь от админа, а не анонимно | question | принято (TR-60) |
+| — | `modules/course/package.json`, `tsconfig.json` | подпуть `./infra` без потребителей | info | убран |
+| — | `scripts/_course-client.ts` | `NUR_UUID` дублируется в `call-uc` | info | одна константа |
+| CODE-04 | `modules/course/src/index.ts`, `module-snapshot.dqs.ts`, `course.module.test.ts` | устаревшие и «исторические» комментарии | info | исправлено |
+| — | `scripts/distribute-lesson.ts` | `--help`: слиты две строки | info | исправлено |
+| TR-11 | `debt.md` | «Остаётся для `course`» | вне границ | снято orchestrator'ом |
+| — | `TODO.md`, `modules/stream/src/analysis.md` | ссылки на удалённые имена | вне границ | `TODO.md` — переформулирован (flash); `analysis.md` — исторический разбор, оставлен |
+
+**Итог после правок** (`cd-F5-fix`, flash, $0.04): `check` 4562 / 0, `data/` чист.

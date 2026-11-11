@@ -21,8 +21,7 @@ import { ModuleErrors } from './module/module.errors';
 import { StepArDef } from './step/step.ar';
 import { StepErrors } from './step/step.errors';
 
-// Паспорт модуля после среза: `external` снят, 4 агрегата, 16 UC, ER и Job нет; заменяет
-// ожидания внешнего модуля (external, 16 UC без реализации).
+// Паспорт модуля: не внешний, 4 агрегата, 16 Def UC, ER и Job нет.
 
 describe('CourseModuleDef', () => {
   it('модуль не внешний', () => {

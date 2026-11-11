@@ -17,7 +17,6 @@
     "valibot": "^1.0.0"
   },
   "exports": {
-    "./domain": "./src/domain/index.ts",
-    "./infra": "./src/infra/index.ts"
+    "./domain": "./src/domain/index.ts"
   }
 }

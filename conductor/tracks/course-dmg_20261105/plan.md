@@ -118,12 +118,12 @@
 
 ## Фаза 5: Сборка и снятие legacy
 
-- [ ] Task: Бриф `slices/assembly.md` (Opus, TR-45)
-- [ ] Task: `migrator`, сборка (flash): `CourseModuleDef` без `external`, фабрика в `U7App`, `@u7-scl/course/**` — в ARC-07 `biome.json`
-- [ ] Task: `migrator`, удаление legacy (flash): `api/*`, `module.ts`, `facade.ts`, `commands/*-cmd.ts`, `CourseInProcFacade`, `CourseApiModule`, legacy-репозитории, `content-path`, поля `courseModule`/`courseFacade` и тип `CourseLegacy` в `platform/app`
-- [ ] Task: `migrator`, клиенты сборки (flash): `tests/helpers/test-app.ts`, `scripts/_app-factory.ts`, `scripts/{call-uc,domain-arch,stream-snapshot-sync,update-stream-snapshot,list-lessons,distribute-lesson,distribute-mentor}.ts`, тесты `u7-app` и `arch-check`
-- [ ] Task: `dmg-data-keeper` (flash): скрипты `distribute-*`, `list-lessons` на `DB_DIR=./data/fixtures` — вывод совпадает с `v0.2.6`, запись — только через репозитории Def
-- [ ] Task: `dmg-reviewer` (Opus)
+- [x] Task: Бриф `slices/assembly.md` (Opus, TR-45; решения — TR-60) e17c7c12
+- [x] Task: `migrator`, сборка (flash): `CourseModuleDef` без `external`, фабрика в `U7App`, `@u7-scl/course/**` — в ARC-07 `biome.json` bd13f3df
+- [x] Task: `migrator`, удаление legacy (flash): `api/*`, `module.ts`, `facade.ts`, `commands/*-cmd.ts`, `CourseInProcFacade`, `CourseApiModule`, legacy-репозитории, `content-path`, поля `courseModule`/`courseFacade` и тип `CourseLegacy` в `platform/app` bd13f3df
+- [x] Task: `migrator`, клиенты сборки (flash): `tests/helpers/test-app.ts`, `scripts/_app-factory.ts`, `scripts/{call-uc,domain-arch,stream-snapshot-sync,update-stream-snapshot,list-lessons,distribute-lesson,distribute-mentor}.ts`, тесты `u7-app` и `arch-check` bd13f3df (TR-60: шаги «клиенты» → «удаление», общий коммит)
+- [x] Task: `dmg-data-keeper` (flash): скрипты `distribute-*`, `list-lessons` на `DB_DIR=./data/fixtures` — вывод совпадает с `v0.2.6`, запись — только через репозитории Def (`cd-F5-data`: вывод совпал; `distribute-mentor` не запускался — шлёт в Telegram, курс не использует)
+- [x] Task: `dmg-reviewer` (Opus): 0 `error`, 1 `warn` — исправлены (`cd-F5-fix`), решения — TR-60
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 5:**

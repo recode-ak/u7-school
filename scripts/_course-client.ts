@@ -28,7 +28,7 @@ import {
 import { type InputOf, type OutputOf, UseCaseDef } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 
-/** UUID автора-ментора (Нур) — субъект запросов скриптов. */
+/** UUID автора-ментора (Нур) — субъект запросов скриптов (`call-uc` тоже). */
 export const NUR_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';
 
 /** UC модуля курсов: команда собирается только для его Def. */
@@ -59,14 +59,17 @@ export class CourseClient {
   /**
    * Собирает приложение над каталогом данных `DB_DIR` (по умолчанию `data`) и
    * готовит субъект администратора. `silent` — без служебных логов модулей.
+   * Нет пользователя `NUR_UUID` в каталоге — исключение: гостевой субъект
+   * видел бы не то, что видит администратор.
    */
   static async create(
     options: { silent?: boolean } = {},
   ): Promise<CourseClient> {
+    const dbDir = process.env.DB_DIR ?? 'data';
     const app = new U7App(
       {
         mode: 'development',
-        dbDir: process.env.DB_DIR ?? 'data',
+        dbDir,
         communityGroup: TEST_SCHOOL.communityGroup,
         studentGroup: TEST_SCHOOL.studentGroup,
         mentors: [...TEST_SCHOOL.mentors],
@@ -77,7 +80,14 @@ export class CourseClient {
       requestId: crypto.randomUUID(),
       channel: { name: 'cli' },
     });
-    const caller = await app.callers.resolve(NUR_UUID, trace);
+    const admin = await app.userFacade.getUserByUuid(NUR_UUID);
+    if (!admin) {
+      throw new Error(
+        `пользователь ${NUR_UUID} не найден в ${dbDir}/users/users.json: ` +
+          'скрипт работает от имени администратора, гостевой субъект недопустим',
+      );
+    }
+    const caller = await app.callers.resolve(admin.uuid, trace);
     return new CourseClient(app, caller, trace);
   }
 

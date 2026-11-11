@@ -35,7 +35,7 @@
    - `learning.story.ts`: `appApi.execute('get-step', ...)` (модуль course)
    - `progress.story.ts`: `appApi.execute('get-user', ...)`
 
-   Чтобы `appApi.execute('get-user', {uuid})` был **типизирован** (имя UC + input + output), story обязана знать `U7BotAppMeta` — композитный тип `moduleMetas: UserApiModuleMeta | OnboardingApiModuleMeta | StreamApiModuleMeta | CourseApiModuleMeta` (см. `platform/app/src/domain/u7-bot-app-meta.ts`). `U7BotAppMeta` живёт в `platform/app`, поэтому stream-story импортирует `U7BotApp` из app → **stream → app**, при этом app → stream (для `StreamApiModuleMeta` в union). Двунаправленный цикл.
+   Чтобы `appApi.execute('get-user', {uuid})` был **типизирован** (имя UC + input + output), story обязана знать `U7BotAppMeta`. В мете (`platform/app/src/u7-app-meta.ts`) сейчас только `moduleMetas: UserApiModuleMeta`: legacy-модулей `course`, `stream` и `onboarding` не осталось, их UC вызываются DMG-путём (`ApiApp.dispatch`, `CourseModuleDef` и др.), а union `UserApiModuleMeta | OnboardingApiModuleMeta | StreamApiModuleMeta | CourseApiModuleMeta` — исторический. `U7BotAppMeta` живёт в `platform/app` и нужен story-слою (`runners/u7-bot/src/core/u7-bot-ui-story.ts`); модули его больше не тянут — импортов `@u7-scl/app` в `modules/` нет.
 
    ### Текущая карта зависимостей
    ```
@@ -163,7 +163,7 @@
 - Событие `wish.fulfilled` + уведомления на его основе (студент узнаёт, что желание реализовано). Сейчас событие не публикуется.
 - Миграция `FillStory` на `notify()` (уведомления без кнопок, заголовок 🔔).
 - Интеграционные/e2e-тесты сквозной синхронизации модулей (wish → поток → fulfill) — отдельный трек перед релизом.
-- Версионность/форки модулей: `CourseFacade.isSameModule` — тривиальное равенство id; контракт фасада готов под копии модулей (расширение — в `CourseDs`, см. `includesModule`), реализация — вместе с initiative content-management (`basedOn`/fork).
+- Версионность/форки модулей: `GetSameModulesUc` (`domain/src/course/course/uc/get-same-modules.uc.ts`, Def — `GetSameModulesUcDef`) — идентичность модулей сегодня тривиальна: равенство id, повторы кандидатов сохраняются (D-65); UC берёт батч модулей-кандидатов и готов к копиям модуля с другим id, реализация `basedOn`/fork — вместе с initiative content-management.
 
 ## Планировщик Job (после трека job-scheduler_20260827)
 

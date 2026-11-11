@@ -1,6 +1,6 @@
 // Порт репозитория курсов
 export type { CourseFilter, CourseRepo } from './course/course.repo';
-// DMG: внешний контракт курсов (D-42)
+// DMG: модуль курсов
 export * from './course.module';
 // Domain
 export * from './domain';

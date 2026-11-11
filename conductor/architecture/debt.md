@@ -329,7 +329,8 @@
 - **Дополнено (Ф9):** `GetModuleEnrollmentUcDef` (`course`, query «модуль в программе опубликованного курса», `allowAll`) — адаптер `modules/course/src/course/uc/get-module-enrollment.uc.ts` над legacy `getModulePlace`.
 - **Пересмотреть:** при миграции `course`/`questionnaire` — адаптеры заменяются настоящими UC, `external` снимается, legacy-фасады удаляются.
 - **Снято для `stream`** (`stream-dmg`, Ф1): адаптеры `getStreamMembers`/`getStreamPresence` у `wish` и `peer-review` заменены настоящими UC модуля `stream`.
-- **Снято для `questionnaire`** (`questionnaire-dmg`, Ф1, Ф3): адаптер `start-questionnaire` заменён настоящим UC, правило «только за себя» — в `QuestionnairePolicy` Def (субъект `Identified`), `external` снят, legacy-фасад удалён. Остаётся для `course`.
+- **Снято для `questionnaire`** (`questionnaire-dmg`, Ф1, Ф3): адаптер `start-questionnaire` заменён настоящим UC, правило «только за себя» — в `QuestionnairePolicy` Def (субъект `Identified`), `external` снят, legacy-фасад удалён.
+- **Снято для `course`** (`course-dmg`, Ф3, Ф5): адаптеры `course` заменены настоящими UC (Ф3), `external` снят, legacy-фасад и `CourseApiModule` удалены (Ф5). Запись закрыта для всех модулей.
 
 ### TR-12: решения по ревью Ф8
 - **Трек / фаза:** `golden-wish`, Ф8
@@ -681,4 +682,5 @@
 - **Контекст:** план Ф5 писался до Ф4: поля `courseFacade` и тип `CourseLegacy` в `platform/app` уже удалены; рантайм бота legacy `course` не использует. Legacy держат только `U7App`, тестовый хелпер бота, миры, `scripts/_app-factory.ts` и три скрипта на нём.
 - **Решение:** бриф сам, без `tech-lead` (срез по образцу `questionnaire`/`stream`). Три задачи `migrator` плана — два шага в обратном порядке: (1) сборка + клиенты (legacy ещё на месте, `check` зелёный), (2) удаление legacy — иначе промежуточный шаг красный. `_app-factory.ts` удаляется, скрипты — на `U7App` и `dispatch` через общий класс `scripts/_course-client.ts`. Barrel `@u7-scl/course/domain` (DEBT-3) остаётся; миры — на state-типы Def. DEBT-34 снимает orchestrator в `debt.md` (`course` попадает в проверку ARC-04 сам, без `external`).
 - **Дополнено (эскалация шага 1):** снятие `external` сразу включает ARC-04/ARC-06 по ещё живому legacy-коду `course` — «`check` зелёный после шага 1» невыполним; шаги 1–2 идут подряд, коммит общий. Места `course` сняты из DEBT-1, 2, 5; DEBT-10 закрыт (единственное место — legacy `module/a-root.ts`); причина DEBT-34 — без `course`. Скрипты на `dispatch` пишут query в `<dbDir>/oplog` (раньше legacy не писал) — принято, как у `call-uc`.
+- **Ревью (Opus, 0 `error`):** `CourseClient` падает, если админа `NUR_UUID` нет в `DB_DIR` (раньше `get-user` бросал — без проверки скрипт молча работал бы гостем); `update-stream-snapshot` запрашивает снимок от админа, а не анонимно — состав тот же (DQS берёт только опубликованное), черновой модуль потока даёт снимок вместо отказа — принято; подпуть `@u7-scl/course/infra` убран (потребителей нет); `modules/stream/src/analysis.md` со ссылками на удалённый `CourseDs` — исторический разбор, не правится.
 - **Пересмотреть:** —

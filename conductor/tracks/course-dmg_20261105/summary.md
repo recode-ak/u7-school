@@ -58,3 +58,7 @@
 | Ф4 | `cd-F4-tests` (migrator, тесты stories на kit + С9) | flash | 0.123 | 66 | 99% | 0 | — |
 | Ф4 | `cd-F4-fix` (migrator, тесты под TR-59 + переименование) | flash | 0.051 | 37 | 98% | 0 (эскалации Sonnet шага 4 — 4 теста) | — |
 | Ф4 | `cd-F4-review` (migrator, правки ревью + TST-08) | flash | 0.082 | 67 | 98% | 0 | 0 (ревью до правок: 0 `error`, 6 `warn`) |
+| Ф5 | `cd-F5-clients` (migrator, сборка + клиенты) | flash | 0.265 | 166 | 99% | 0 (эскалация: `external` и `arch:check` между шагами — бриф orchestrator, TR-60) | — |
+| Ф5 | `cd-F5-remove` (migrator, удаление legacy) | flash | 0.090 | 64 | 98% | 0 (эскалация: места в `debt.md`) | — |
+| Ф5 | `cd-F5-data` (dmg-data-keeper, скрипты против v0.2.6) | flash | 0.054 | 41 | 98% | 0 | — |
+| Ф5 | `cd-F5-fix` (migrator, правки ревью) | flash | 0.039 | 33 | 97% | 0 | 0 (ревью до правок: 0 `error`, 1 `warn`) |

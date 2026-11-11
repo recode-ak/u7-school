@@ -51,8 +51,7 @@ import {
   UseCaseDef,
 } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
-
-const NUR_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';
+import { NUR_UUID } from './_course-client';
 
 /** `createCourseWish` → `create-course-wish`. */
 const kebab = (name: string) =>
