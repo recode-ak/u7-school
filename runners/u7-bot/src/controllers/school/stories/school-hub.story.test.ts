@@ -1,20 +1,21 @@
-import { describe, expect, mock, test } from 'bun:test';
-import { TEST_SCHOOL, type User } from '@u7-scl/app-legacy/domain';
+import { describe, expect, test } from 'bun:test';
+import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
-import { Role } from '@u7-scl/user/domain';
+import { userActor } from '../../../core/user-actor.test-kit';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
+import { dmgDispatch } from '../../streams/stories/stream-dmg.test-kit';
 import { SchoolHubStory } from './school-hub.story';
 
 const MENTOR_1_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';
 const MENTOR_2_UUID = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
 
-const actor: User = {
-  uuid: 'user-guest',
+const actor = userActor({
+  uuid: '11111111-1111-4111-8111-aaaaaaaaaaa5',
   name: 'Гость',
   telegramId: 123456,
-  roles: [Role.GUEST],
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+  roles: ['GUEST'],
+});
 
 const session: BotSession = {
   dialog: { path: 'school/hub', seq: 1 },
@@ -25,14 +26,9 @@ function makeStory(opts: {
   mockMentors?: Array<{ uuid: string; name: string }>;
 }) {
   const story = new SchoolHubStory();
-  const execute = mock(
-    async (ucName: string, _attrs: Record<string, unknown>) => {
-      if (ucName === 'get-users-by-ids') {
-        return opts.mockMentors ?? [];
-      }
-      throw new Error(`Неизвестный UC: ${ucName}`);
-    },
-  );
+  const dispatch = dmgDispatch({
+    getUsersByIds: () => opts.mockMentors ?? [],
+  });
 
   story.init({
     school: {
@@ -41,15 +37,16 @@ function makeStory(opts: {
       description: 'Крутая школа программирования',
       mentors: opts.mentors ?? [],
     },
-    appApi: { execute },
+    appApi: { dispatch },
+    callers: testCallers,
   } as any);
 
-  return { story, execute };
+  return { story, dispatch };
 }
 
 describe('SchoolHubStory (SH01)', () => {
   test('карточка показывает имя школы, описание и менторов (резолв uuid → имена)', async () => {
-    const { story, execute } = makeStory({
+    const { story, dispatch } = makeStory({
       mentors: [MENTOR_1_UUID, MENTOR_2_UUID],
       mockMentors: [
         { uuid: MENTOR_1_UUID, name: 'Алиса' },
@@ -64,9 +61,9 @@ describe('SchoolHubStory (SH01)', () => {
     );
     assertDialogResponseMarkdownSafe(response);
 
-    expect(execute).toHaveBeenCalledWith('get-users-by-ids', {
-      userIds: [MENTOR_1_UUID, MENTOR_2_UUID],
-    });
+    expect(dispatch.mock.calls.map(([, command]) => command.input)).toEqual([
+      { userIds: [MENTOR_1_UUID, MENTOR_2_UUID] },
+    ]);
 
     const text = String(response.screen?.text);
     expect(text).toContain('Batys IT School');
@@ -75,7 +72,7 @@ describe('SchoolHubStory (SH01)', () => {
   });
 
   test('пустой список менторов — строка «Наши менторы» не выводится и get-users-by-ids не вызывается', async () => {
-    const { story, execute } = makeStory({
+    const { story, dispatch } = makeStory({
       mentors: [],
     });
 
@@ -86,7 +83,7 @@ describe('SchoolHubStory (SH01)', () => {
     );
     assertDialogResponseMarkdownSafe(response);
 
-    expect(execute).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
 
     const text = String(response.screen?.text);
     expect(text).toContain('Batys IT School');
@@ -95,7 +92,7 @@ describe('SchoolHubStory (SH01)', () => {
   });
 
   test('если get-users-by-ids вернул пустой список — строка «Наши менторы» не выводится', async () => {
-    const { story, execute } = makeStory({
+    const { story, dispatch } = makeStory({
       mentors: [MENTOR_1_UUID],
       mockMentors: [],
     });
@@ -107,9 +104,9 @@ describe('SchoolHubStory (SH01)', () => {
     );
     assertDialogResponseMarkdownSafe(response);
 
-    expect(execute).toHaveBeenCalledWith('get-users-by-ids', {
-      userIds: [MENTOR_1_UUID],
-    });
+    expect(dispatch.mock.calls.map(([, command]) => command.input)).toEqual([
+      { userIds: [MENTOR_1_UUID] },
+    ]);
 
     const text = String(response.screen?.text);
     expect(text).toContain('Batys IT School');

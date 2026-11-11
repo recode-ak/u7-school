@@ -1,13 +1,12 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import { CoursesController } from '../../src/controllers/courses/controller';
-import { UserController } from '../../src/controllers/user/controller';
 
 /**
  * E2E шины бота на DMG: событие «ушёл из группы» → контроллер потоков →
@@ -37,16 +36,15 @@ async function waitMessageFor(
 describe('E2E: поток на DMG', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let mentor: User;
+  let mentor: U7BotActor;
 
   beforeAll(async () => {
     app = await createTestApp('stream-dmg-e2e');
     transport = createTestBotTransport(app, [
       new StreamsController(),
-      new UserController(),
       new CoursesController(),
     ]);
-    mentor = (await app.userFacade.getUserByTelegramId(MENTOR_TG))!;
+    mentor = await app.userByTelegramId(MENTOR_TG);
   });
 
   afterAll(async () => {

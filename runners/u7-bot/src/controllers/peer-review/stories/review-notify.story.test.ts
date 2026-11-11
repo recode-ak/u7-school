@@ -1,7 +1,13 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { assertMarkdownV2Safe, type MdText } from '@u7-scl/core/shared';
+import { BotRequestContext } from '@u7-scl/core/ui';
 import { ReviewEvents } from '@u7-scl/domain/peer-review/contract';
+import {
+  GetUsersByIdsUcDef,
+  UserModuleDef,
+  type UserView,
+} from '@u7-scl/domain/user/contract';
+import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
 import {
   type ReviewCreatedEvent,
   ReviewNotifyStory,
@@ -39,13 +45,15 @@ function createdEvent(
   };
 }
 
-type Profile = Omit<User, 'telegramId'> & { telegramId?: number };
-const user = (uuid: string, name: string, telegramId?: number): Profile => ({
+type Profile = UserView;
+const user = (uuid: string, name: string, telegramId: number): Profile => ({
   uuid,
   name,
-  ...(telegramId !== undefined ? { telegramId } : {}),
-  roles: [],
-  createdAt: '2026-01-01T00:00',
+  telegramId,
+  roles: ['GUEST'],
+  createdAt: 1,
+  updatedAt: 1,
+  version: 0,
 });
 
 interface Sent {
@@ -56,29 +64,26 @@ interface Sent {
 function setupStory(profiles: Profile[]) {
   const sent: Sent[] = [];
   const warns: unknown[][] = [];
-  const execute = mock(
-    async (name: string, params?: Record<string, unknown>) => {
-      if (name === 'get-users-by-ids') {
-        const ids = (params?.userIds ?? []) as string[];
-        return profiles.filter((p) => ids.includes(p.uuid));
-      }
-      return undefined;
+  const dispatch = peerReviewDispatch({
+    getUsersByIds: (input) => {
+      const ids = (input as { userIds: string[] }).userIds;
+      return profiles.filter((p) => ids.includes(p.uuid));
     },
-  );
+  });
   const story = new ReviewNotifyStory();
-  Object.assign(story, {
-    appApi: { execute },
-    proactiveSender: {
+  story.init(
+    { appApi: { dispatch }, callers: testCallers } as never,
+    {
       notify: mock(async (telegramId: number, payload: Sent['payload']) => {
         sent.push({ telegramId, payload });
       }),
       invite: mock(async () => {}),
-    },
-  } as unknown);
+    } as never,
+  );
   Object.defineProperty(story, 'logger', {
     get: () => ({ warn: (...a: unknown[]) => warns.push(a) }),
   });
-  return { story, sent, warns, execute };
+  return { story, sent, warns, dispatch };
 }
 
 function handler(story: ReviewNotifyStory) {
@@ -89,6 +94,14 @@ function handler(story: ReviewNotifyStory) {
   return sub.handle as (event: ReviewCreatedEvent) => Promise<void>;
 }
 
+/** Подписка в контексте апдейта Telegram: `requestId` для следа вызовов UC. */
+async function run(
+  story: ReviewNotifyStory,
+  event: ReviewCreatedEvent,
+): Promise<void> {
+  await BotRequestContext.run(1, () => handler(story)(event));
+}
+
 describe('ReviewNotifyStory — уведомление адресату о новом отзыве', () => {
   test('соученик написал: уведомление адресату с именем и ролью автора', async () => {
     const { story, sent, warns } = setupStory([
@@ -96,7 +109,7 @@ describe('ReviewNotifyStory — уведомление адресату о но�
       user(BOB, 'Боб', 202),
     ]);
 
-    await handler(story)(createdEvent('student_student'));
+    await run(story, createdEvent('student_student'));
 
     expect(sent).toHaveLength(1);
     expect(sent[0]?.telegramId).toBe(202);
@@ -115,9 +128,7 @@ describe('ReviewNotifyStory — уведомление адресату о но�
       user(MENTOR, 'Ментор', 303),
     ]);
 
-    await handler(story)(
-      createdEvent('student_mentor', { recipientId: MENTOR }),
-    );
+    await run(story, createdEvent('student_mentor', { recipientId: MENTOR }));
 
     expect(sent[0]?.telegramId).toBe(303);
     expect(String(sent[0]?.payload.text)).toContain('твой студент');
@@ -129,7 +140,8 @@ describe('ReviewNotifyStory — уведомление адресату о но�
       user(ALICE, 'Алиса', 101),
     ]);
 
-    await handler(story)(
+    await run(
+      story,
       createdEvent('mentor_student', { authorId: MENTOR, recipientId: ALICE }),
     );
 
@@ -137,31 +149,31 @@ describe('ReviewNotifyStory — уведомление адресату о но�
     expect(String(sent[0]?.payload.text)).toContain('твой ментор');
   });
 
-  test('имена автора и адресата — один batch-запрос get-users-by-ids', async () => {
-    const { story, execute } = setupStory([
+  test('имена автора и адресата — один batch-запрос getUsersByIds', async () => {
+    const { story, dispatch } = setupStory([
       user(ALICE, 'Алиса', 101),
       user(BOB, 'Боб', 202),
     ]);
 
-    await handler(story)(createdEvent('student_student'));
+    await run(story, createdEvent('student_student'));
 
-    const calls = execute.mock.calls.filter((c) => c[0] === 'get-users-by-ids');
-    expect(calls).toHaveLength(1);
-    const input = calls[0]?.[1] as { userIds: string[] };
-    expect([...input.userIds].sort()).toEqual([ALICE, BOB].sort());
+    expect(dispatch.mock.calls).toHaveLength(1);
+    const [module, command] = dispatch.mock.calls[0] as unknown as [
+      unknown,
+      { uc: string; input: { userIds: string[] } },
+    ];
+    expect(module).toBe(UserModuleDef);
+    expect(command.uc).toBe(GetUsersByIdsUcDef.name);
+    expect([...command.input.userIds].sort()).toEqual([ALICE, BOB].sort());
   });
 
   test.each<[string, Profile[]]>([
-    [
-      'у адресата нет telegramId',
-      [user(ALICE, 'Алиса', 101), user(BOB, 'Боб')],
-    ],
     ['автор не найден', [user(BOB, 'Боб', 202)]],
     ['адресат не найден', [user(ALICE, 'Алиса', 101)]],
   ])('%s — предупреждение, сообщение не отправляется', async (_, profiles) => {
     const { story, sent, warns } = setupStory(profiles);
 
-    await handler(story)(createdEvent('student_student'));
+    await run(story, createdEvent('student_student'));
 
     expect(sent).toHaveLength(0);
     expect(warns).toHaveLength(1);

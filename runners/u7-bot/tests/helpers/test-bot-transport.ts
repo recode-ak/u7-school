@@ -1,5 +1,4 @@
-import { Role } from '@u7-scl/app-legacy';
-import { TEST_SCHOOL, type User } from '@u7-scl/app-legacy/domain';
+import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import type { U7BotApp } from '@u7-scl/bot/u7-bot-app-meta';
 import type { U7BotController } from '@u7-scl/bot/u7-bot-controller';
 import { InProcEventBus } from '@u7-scl/core/infra';
@@ -11,13 +10,16 @@ import type {
 } from '@u7-scl/core/ui';
 import type { Api } from 'grammy';
 import type { BotContext } from '../../src/context';
-import type { U7BotUiAppResolve } from '../../src/core/u7-bot-app-meta';
+import type {
+  U7BotActor,
+  U7BotUiAppResolve,
+} from '../../src/core/u7-bot-app-meta';
 import { U7BotUiApp } from '../../src/core/ui-app';
 import { BotTransport } from '../../src/infra/bot-transport';
 import type { TestApp } from './test-app';
 
-/** Валидный нейтральный UUID (системный актор по умолчанию в e2e). */
-const EMPTY_UUID = '00000000-0000-4000-8000-000000000000';
+/** Администратор мира `core-education` (tg 1005) — от его имени бот регистрирует гостей. */
+const WORLD_ADMIN_UUID = '55555555-5555-5555-5555-555555555555';
 
 // ── Записи вызовов мок-Api ──
 
@@ -148,7 +150,7 @@ export class RecordingBotApi {
  * расширяет — метод открывается protected-членом подкласса.
  */
 class ExposedMenuUiApp extends U7BotUiApp {
-  collectMainMenu(actor: User) {
+  collectMainMenu(actor: U7BotActor) {
     return this.collectMenuButtons(actor);
   }
 }
@@ -179,16 +181,14 @@ export class TestBotTransport {
 
   constructor(
     apiApp: U7BotApp,
-    actorResolver: (tgId: number) => Promise<User>,
+    actorResolver: (tgId: number) => Promise<U7BotActor>,
     controllers: U7BotController[],
     opts: {
       eventBus?: U7BotUiAppResolve['eventBus'];
       /** Резолвер `Caller` приложения — субъект команд DMG из stories (`dispatchUc`). */
       callers?: U7BotUiAppResolve['callers'];
-      /** Фасад пользователей — гост-регистрация на /start (см. ensureRegisteredGuest). */
-      userFacade?: U7BotUiAppResolve['userFacade'];
-      /** Системный актор-бот: от его имени регистрируются гости. */
-      botAdminUser?: User;
+      /** Админ бота: от его имени регистрируются гости (по умолчанию — админ мира). */
+      botAdminUuid?: string;
     } = {},
   ) {
     this.uiApp = new ExposedMenuUiApp(controllers);
@@ -200,20 +200,7 @@ export class TestBotTransport {
         eventBus: opts.eventBus ?? new InProcEventBus(),
         actorResolver,
         appApi: apiApp,
-        userFacade:
-          opts.userFacade ??
-          ({
-            // Гост-регистрация в e2e не тестируется (все акторы из фикстур);
-            // заглушка сохраняет форму resolve, не пишя в хранилище.
-            registerGuest: async () => undefined,
-          } as unknown as U7BotUiAppResolve['userFacade']),
-        botAdminUser: opts.botAdminUser ?? {
-          uuid: EMPTY_UUID,
-          name: 'Бот-админ',
-          telegramId: 0,
-          roles: [Role.ADMIN],
-          createdAt: '2026-01-01T00:00',
-        },
+        botAdminUuid: opts.botAdminUuid ?? WORLD_ADMIN_UUID,
         school: TEST_SCHOOL,
         callers: opts.callers ?? {
           resolve: async () => {
@@ -260,10 +247,22 @@ export class TestBotTransport {
    */
   makeBotContext(
     tgId: number,
-    opts: { callbackData?: string; text?: string } = {},
+    opts: {
+      callbackData?: string;
+      text?: string;
+      /** Отправитель: имя и ник в Telegram (по умолчанию — «Test», без ника). */
+      from?: { first_name?: string; username?: string };
+    } = {},
   ): BotContext {
     return {
-      from: { id: tgId, first_name: 'Test', is_bot: false },
+      from: {
+        id: tgId,
+        first_name: opts.from?.first_name ?? 'Test',
+        ...(opts.from?.username !== undefined
+          ? { username: opts.from.username }
+          : {}),
+        is_bot: false,
+      },
       chat: { id: tgId, type: 'private' },
       reply: async () => ({ message_id: 0 }),
       answerCallbackQuery: async () => true,
@@ -278,7 +277,7 @@ export class TestBotTransport {
   // ── Меню ──
 
   /** menuButtons актора (приоритеты, kind, action) — сбор реального uiApp. */
-  collectMainMenu(actor: User) {
+  collectMainMenu(actor: U7BotActor) {
     return this.uiApp.collectMainMenu(actor);
   }
 
@@ -410,17 +409,10 @@ export function createTestBotTransport(
 ): TestBotTransport {
   return new TestBotTransport(
     app.apiApp,
-    async (tgId) => {
-      const user = await app.userFacade.getUserByTelegramId(tgId);
-      if (!user) {
-        throw new Error(`Пользователь с telegramId ${tgId} не найден`);
-      }
-      return user;
-    },
+    (tgId) => app.userByTelegramId(tgId),
     controllers,
     {
       eventBus: app.eventBus,
-      userFacade: app.userFacade,
       callers: app.callers,
     },
   );

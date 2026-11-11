@@ -8,7 +8,6 @@ import {
   createTestBotTransport,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 import { completeStudent } from '../helpers/student-fate';
@@ -69,7 +68,7 @@ describe('E2E peer-review: уведомление адресата о новом
       STREAM_ID,
       SUBJECT_USER_ID,
     ))!;
-    const subject = (await app.userFacade.getUserByTelegramId(SUBJECT_TG))!;
+    const subject = await app.userByTelegramId(SUBJECT_TG);
 
     const write = (text: string) =>
       app.apiApp.dispatch(
@@ -79,7 +78,7 @@ describe('E2E peer-review: уведомление адресата о новом
           recipientId: MENTOR_USER_ID,
           text,
         }),
-        new UserCaller(subject),
+        subject,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       );
 

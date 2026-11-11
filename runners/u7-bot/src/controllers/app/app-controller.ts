@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotController } from '@u7-scl/bot/u7-bot-controller';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import { md, parseLogLevel } from '@u7-scl/core/shared';
@@ -33,7 +33,7 @@ export class AppController extends U7BotController {
 
   // ── Главное меню (декларативные кнопки) ──
 
-  override async menuButtons(_actor: User): Promise<MenuButton[]> {
+  override async menuButtons(_actor: U7BotActor): Promise<MenuButton[]> {
     return [
       {
         kind: 'callback',
@@ -52,7 +52,7 @@ export class AppController extends U7BotController {
    */
   override async handleCommand(
     update: CommandUpdate,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<CommandReaction> {
     if (update.command === 'log_level') {
@@ -99,7 +99,7 @@ export class AppController extends U7BotController {
 
   override async handleCallback(
     data: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     // Делегируем в stories (например, CommunityStory)

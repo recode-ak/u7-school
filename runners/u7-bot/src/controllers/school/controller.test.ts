@@ -1,20 +1,29 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { TEST_SCHOOL, type User } from '@u7-scl/app-legacy/domain';
+import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
+import { setGlobalLogger } from '@u7-scl/core/shared';
 import type { BotSession } from '@u7-scl/core/ui';
-import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
-import { Role } from '@u7-scl/user/domain';
+import {
+  assertDialogResponseMarkdownSafe,
+  BotRequestContext,
+} from '@u7-scl/core/ui';
+import {
+  AddRoleToUserUcDef,
+  GetUserByTelegramIdUcDef,
+  RemoveRoleFromUserUcDef,
+  UserModuleDef,
+} from '@u7-scl/domain/user/contract';
+import { userActor } from '../../core/user-actor.test-kit';
 import { testCallers } from '../peer-review/stories/peer-review-dmg.test-kit';
-import { dmgDispatch } from '../streams/stories/stream-dmg.test-kit';
+import { dmgDispatch, refuse } from '../streams/stories/stream-dmg.test-kit';
 import { SchoolController } from './controller';
 
 describe('SchoolController (реестр)', () => {
-  const actor: User = {
-    uuid: 'u1',
+  const actor = userActor({
+    uuid: '11111111-1111-4111-8111-111111111111',
     name: 'Гость',
     telegramId: 123456,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
   const session: BotSession = {
     dialog: { path: 'school/hub', seq: 1 },
@@ -40,7 +49,8 @@ describe('SchoolController (реестр)', () => {
     const controller = new SchoolController();
     controller.init({
       school: TEST_SCHOOL,
-      appApi: { execute: mock(async () => []) },
+      appApi: { dispatch: dmgDispatch({ getUsersByIds: () => [] }) },
+      callers: testCallers,
     } as any);
 
     const items = await controller.menuButtons(actor);
@@ -58,7 +68,8 @@ describe('SchoolController (реестр)', () => {
     const controller = new SchoolController();
     controller.init({
       school: TEST_SCHOOL,
-      appApi: { execute: mock(async () => []) },
+      appApi: { dispatch: dmgDispatch({ getUsersByIds: () => [] }) },
+      callers: testCallers,
     } as any);
 
     const response = await controller.handleCallback(
@@ -86,7 +97,8 @@ describe('SchoolController (реестр)', () => {
     const controller = new SchoolController();
     controller.init({
       school: TEST_SCHOOL,
-      appApi: { execute: mock(async () => []) },
+      appApi: { dispatch: dmgDispatch({ getUsersByIds: () => [] }) },
+      callers: testCallers,
     } as any);
 
     const response = await controller.handleCallback(
@@ -114,7 +126,6 @@ describe('SchoolController (реестр)', () => {
     controller.init({
       school: TEST_SCHOOL,
       appApi: {
-        execute: mock(async () => ({ recipients: [] })),
         dispatch: dmgDispatch({ listStreams: () => [] }),
       },
       callers: testCallers,
@@ -136,46 +147,56 @@ describe('SchoolController (реестр)', () => {
   });
 
   describe('handleMessengerEvent', () => {
-    const adminActor: User = {
-      uuid: 'admin-1',
-      name: 'Admin',
-      telegramId: 999999,
-      roles: [Role.ADMIN],
-      createdAt: '2026-01-01T00:00:00.000Z',
-    };
+    const ADMIN_UUID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const TARGET_UUID = '77777777-7777-4777-8777-777777777777';
 
-    const targetUser: User = {
-      uuid: 'user-777',
+    const targetView = {
+      uuid: TARGET_UUID,
       name: 'Иван',
       telegramId: 777,
-      roles: [Role.GUEST],
-      createdAt: '2026-01-01T00:00:00.000Z',
+      roles: ['GUEST'],
+      createdAt: 1,
+      updatedAt: 1,
+      version: 0,
     };
 
-    function setupController(
-      userFacadeOverrides: Record<string, unknown> = {},
-    ) {
+    /** Ответы модуля `user`: `777` известен, остальные — `USER_NOT_FOUND`. */
+    function setupController(answers: Record<string, () => unknown> = {}) {
       const controller = new SchoolController();
-      const userFacade = {
-        getUserByTelegramId: mock(async (tgId: number) =>
-          tgId === 777 ? targetUser : null,
-        ),
-        addRoleToUser: mock(async () => targetUser),
-        removeRoleFromUser: mock(async () => targetUser),
-        ...userFacadeOverrides,
-      };
+      const dispatch = dmgDispatch(
+        {
+          getUserByTelegramId: (input) =>
+            (input as { telegramId: number }).telegramId === 777
+              ? targetView
+              : refuse('USER_NOT_FOUND', 'not_found'),
+          addRoleToUser: () => targetView,
+          removeRoleFromUser: () => targetView,
+          ...answers,
+        },
+        [UserModuleDef],
+      );
+      const resolve = mock(async (uuid: string | undefined) => ({ uuid }));
 
       controller.init({
         school: TEST_SCHOOL,
-        userFacade,
-        botAdminUser: adminActor,
+        appApi: { dispatch },
+        callers: { resolve },
+        botAdminUuid: ADMIN_UUID,
       } as any);
 
-      return { controller, userFacade };
+      const commands = () => dispatch.mock.calls.map((c) => c[1]);
+      const callerUuids = () => resolve.mock.calls.map((c) => c[0]);
+      return { controller, commands, callerUuids };
     }
 
-    test('bot_membership(status: added) в группе школы выдаёт роль SUBSCRIBER и возвращает stop', async () => {
-      const { controller, userFacade } = setupController();
+    const lookup = GetUserByTelegramIdUcDef.command({ telegramId: 777 });
+    const subscriberCmd = {
+      userId: TARGET_UUID,
+      role: 'SUBSCRIBER' as const,
+    };
+
+    test('bot_membership(status: added) в группе школы выдаёт роль SUBSCRIBER от botAdminUuid и возвращает stop', async () => {
+      const { controller, commands, callerUuids } = setupController();
 
       const result = await controller.handleMessengerEvent({
         kind: 'bot_membership',
@@ -185,16 +206,15 @@ describe('SchoolController (реестр)', () => {
       });
 
       expect(result).toBe('stop');
-      expect(userFacade.getUserByTelegramId).toHaveBeenCalledWith(777);
-      expect(userFacade.addRoleToUser).toHaveBeenCalledWith(
-        'user-777',
-        Role.SUBSCRIBER,
-        adminActor,
-      );
+      expect(commands()).toEqual([
+        lookup,
+        AddRoleToUserUcDef.command(subscriberCmd),
+      ]);
+      expect(callerUuids()).toEqual([undefined, ADMIN_UUID]);
     });
 
     test('member_joined в группе школы выдаёт роль SUBSCRIBER и возвращает stop', async () => {
-      const { controller, userFacade } = setupController();
+      const { controller, commands } = setupController();
 
       const result = await controller.handleMessengerEvent({
         kind: 'member_joined',
@@ -203,16 +223,14 @@ describe('SchoolController (реестр)', () => {
       });
 
       expect(result).toBe('stop');
-      expect(userFacade.getUserByTelegramId).toHaveBeenCalledWith(777);
-      expect(userFacade.addRoleToUser).toHaveBeenCalledWith(
-        'user-777',
-        Role.SUBSCRIBER,
-        adminActor,
-      );
+      expect(commands()).toEqual([
+        lookup,
+        AddRoleToUserUcDef.command(subscriberCmd),
+      ]);
     });
 
     test('member_left в группе школы снимает роль SUBSCRIBER и возвращает stop', async () => {
-      const { controller, userFacade } = setupController();
+      const { controller, commands, callerUuids } = setupController();
 
       const result = await controller.handleMessengerEvent({
         kind: 'member_left',
@@ -221,16 +239,15 @@ describe('SchoolController (реестр)', () => {
       });
 
       expect(result).toBe('stop');
-      expect(userFacade.getUserByTelegramId).toHaveBeenCalledWith(777);
-      expect(userFacade.removeRoleFromUser).toHaveBeenCalledWith(
-        'user-777',
-        Role.SUBSCRIBER,
-        adminActor,
-      );
+      expect(commands()).toEqual([
+        lookup,
+        RemoveRoleFromUserUcDef.command(subscriberCmd),
+      ]);
+      expect(callerUuids()).toEqual([undefined, ADMIN_UUID]);
     });
 
-    test('bot_membership(status: removed) в группе школы возвращает stop без изменения ролей', async () => {
-      const { controller, userFacade } = setupController();
+    test('bot_membership(status: removed) в группе школы возвращает stop без вызовов user', async () => {
+      const { controller, commands } = setupController();
 
       const result = await controller.handleMessengerEvent({
         kind: 'bot_membership',
@@ -240,12 +257,11 @@ describe('SchoolController (реестр)', () => {
       });
 
       expect(result).toBe('stop');
-      expect(userFacade.addRoleToUser).not.toHaveBeenCalled();
-      expect(userFacade.removeRoleFromUser).not.toHaveBeenCalled();
+      expect(commands()).toEqual([]);
     });
 
-    test('события в чужой группе возвращают pass и не трогают userFacade', async () => {
-      const { controller, userFacade } = setupController();
+    test('события в чужой группе возвращают pass и не вызывают user', async () => {
+      const { controller, commands } = setupController();
 
       const result = await controller.handleMessengerEvent({
         kind: 'member_joined',
@@ -254,8 +270,63 @@ describe('SchoolController (реестр)', () => {
       });
 
       expect(result).toBe('pass');
-      expect(userFacade.getUserByTelegramId).not.toHaveBeenCalled();
-      expect(userFacade.addRoleToUser).not.toHaveBeenCalled();
+      expect(commands()).toEqual([]);
+    });
+
+    test('нет пользователя с таким telegramId — пропуск: stop, роль не меняется', async () => {
+      const { controller, commands } = setupController();
+
+      const result = await controller.handleMessengerEvent({
+        kind: 'member_joined',
+        chatId: String(TEST_SCHOOL.communityGroup.id),
+        user: { id: 404, firstName: 'Чужой' },
+      });
+
+      expect(result).toBe('stop');
+      expect(commands()).toEqual([
+        GetUserByTelegramIdUcDef.command({ telegramId: 404 }),
+      ]);
+    });
+
+    test('Err поиска (не NOT_FOUND) — warn «Ошибка при обработке события…» и stop', async () => {
+      const warn = mock(() => {});
+      setGlobalLogger({ warn } as never);
+      const { controller } = setupController({
+        getUserByTelegramId: () => refuse('CORE_INTERNAL', 'internal'),
+      });
+
+      const result = await BotRequestContext.run(1, () =>
+        controller.handleMessengerEvent({
+          kind: 'member_joined',
+          chatId: String(TEST_SCHOOL.communityGroup.id),
+          user: { id: 777, firstName: 'Иван' },
+        }),
+      );
+
+      expect(result).toBe('stop');
+      expect(warn).toHaveBeenCalledTimes(1);
+      const [source, message] = warn.mock.calls[0] as unknown as string[];
+      expect(source).toBe('school-controller');
+      expect(message).toContain('Ошибка при обработке события школьной группы');
+    });
+
+    test('отказ выдачи роли — warn «Ошибка при обработке события…» и stop', async () => {
+      const warn = mock(() => {});
+      setGlobalLogger({ warn } as never);
+      const { controller } = setupController({
+        addRoleToUser: () => refuse('CORE_ACCESS_DENIED', 'access_denied'),
+      });
+
+      const result = await BotRequestContext.run(1, () =>
+        controller.handleMessengerEvent({
+          kind: 'member_joined',
+          chatId: String(TEST_SCHOOL.communityGroup.id),
+          user: { id: 777, firstName: 'Иван' },
+        }),
+      );
+
+      expect(result).toBe('stop');
+      expect(warn).toHaveBeenCalledTimes(1);
     });
   });
 });

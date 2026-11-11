@@ -10,7 +10,7 @@
 |---|---|---|
 | `UiStory` | `@u7-scl/core/ui` | Канально-независимая базовая стори; объявляет подписки на доменные события (`getEventSubscriptions()`) |
 | `BotUiStory<TAppMeta, TActor>` | `@u7-scl/core/ui` | Абстрактный сценарий бота (extends `UiStory`) |
-| `U7BotUiStory` | `@u7-scl/bot/u7-bot-ui-story` | Специализация для U7-бота: `TAppMeta = U7BotAppMeta`, `TActor = User`, добавляет `menuButtons` (кнопка меню), `contextHelp`, `/cancel` в pipe |
+| `U7BotUiStory` | `@u7-scl/bot/u7-bot-ui-story` | Специализация для U7-бота: `TAppMeta = U7BotAppMeta`, `TActor = U7BotActor` (`UserCaller<ReadonlyAr<UserAr>>`), добавляет `menuButtons` (кнопка меню), `contextHelp`, `/cancel` в pipe |
 
 Контроллер, в котором живёт стори — см. [bot-controller.md](./bot-controller.md).
 
@@ -24,10 +24,10 @@
    const [, studentId, streamId, stepId] = action.split(':'); // пропустить префикс
    ```
 2. **`this.appApi`** — доменных модулей.
-3. **Запрещено `as unknown as`** для результатов `execute()` и **`as any`** в моках — строгая типизация. Если TS ругается — проблема в типах команд/меты.
-4. **Не дублируй UC** в своём модуле для фасадов других модулей — вызывай через `this.appApi.execute(...)`.
-5. **Актор всегда `User`** из `@u7-scl/app-legacy/domain` — не `unknown`, не локальные интерфейсы.
-6. **Права — через Policy-объекты** (`UserPolicy.isStudent(...)`, `StreamPolicy.canEnroll(...)`), не ручные проверки `actor.roles.includes(...)`.
+3. **Запрещено `as unknown as`** для результатов `dispatch` (legacy — `execute()`) и **`as any`** в моках — строгая типизация. Если TS ругается — проблема в типах команд/меты.
+4. **Не дублируй UC** в своём модуле для фасадов других модулей — вызывай модуль на Def через `dispatchUc` (Def UC, актор — `caller`), немигрированный — через legacy `this.appApi.execute(...)`.
+5. **Актор — `Caller`.** Абстрактный уровень (`@u7-scl/core/ui`): `TActor extends PersonCaller` (гость, пользователь, заместитель — на вырост). Бот: `U7BotActor = UserCaller<ReadonlyAr<UserAr>>` — регистрация гарантирована (`ensureRegisteredGuest`), нет пользователя — исключение `actorResolver`. Поля — `actor.user.uuid`, `actor.user.view().name`; актор уходит в `dispatch` как `caller` без повторного резолва. Чтение других пользователей — `findUser`/`findUsers` (`U7BotUiStory`).
+6. **Права — через API субъекта и Policy домена** (`actor.user.isMentor()`, `XPolicy.canY(actor.subject(), …)`) — та же логика, что в UC; не `roles.includes(...)`.
 7. **Кросс-стори вызовы — через `this.cbFor(storyName, action, ...args)`**. Стори не импортируют другие стори напрямую. **Только в пределах одного контроллера** — `storyName` должен быть зарегистрирован в том же контроллере, что и текущая стори.
 8. **Кросс-контроллерные переходы — через реестр `Routes` и готовые кнопки `buttons`.** `cbFor` работает только для стори того же контроллера. Чужие адреса бери из `Routes` (`runners/u7-bot/src/controllers/shared/routes.ts`), готовые кнопки — из `buttons` (`runners/u7-bot/src/controllers/shared/buttons.ts`): `buttons.mainMenu(text?)` возвращает `{ text, code }` (текст по умолчанию «↩️ Главное меню», можно переопределить), `Routes.app.mainMenu` — только адрес. `delegate.path` — всегда полный маршрут: относительный путь (`this.cb`/`this.cbFor`) префиксуется контроллером.
 
@@ -137,7 +137,7 @@ Wizard (пошаговый ввод) — конечный автомат на `a
 
 См. [bot-test.md](./bot-test.md) — уровни и правила. Специфика unit-тестов сторис:
 
-- **Актор:** полный объект `User`, роли через enum `Role` из `@u7-scl/user/domain`.
+- **Актор:** `userActor({ uuid, roles })` (`runners/u7-bot/src/core/user-actor.test-kit.ts`) — `UserCaller` над `userSubject` (`@u7-scl/domain/user/testing`); чтения пользователей — ответы `getUser`/`getUsersByIds` в `dmgDispatch` кита.
 - **Моки API:** `as unknown as <реальный тип>` (`StreamApiModule`, `U7BotApp`). Никаких `as any` и общих `test-helpers.ts` — каждый тест самодостаточен.
 - **Локальный хелпер** внутри `describe` для одинаковых моков — допустим и поощряется.
 - **Без вызовов API** (например, `menuButtons`) — `init()` не нужен.

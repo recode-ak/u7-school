@@ -1,5 +1,4 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { assertMarkdownV2Safe, type MdText } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -8,7 +7,8 @@ import type {
 } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { StudentEvents } from '@u7-scl/domain/stream/contract';
-import { Role } from '@u7-scl/user/domain';
+import type { UserView } from '@u7-scl/domain/user/contract';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { InactivityStory } from './inactivity.story';
 import {
@@ -26,13 +26,18 @@ const STUDENT_USER_ID = '11111111-1111-4111-8111-111111111111';
 const MENTOR_USER_ID = '66666666-6666-4666-8666-666666666666';
 const GROUP_ID = '-1002222222222';
 
-const student: User = {
+/** Профиль студента (`getUser`); тот же uuid — у актора бота. */
+const studentProfile: UserView = {
   uuid: STUDENT_USER_ID,
   name: 'Иван Студент',
   telegramId: 1003,
-  roles: [Role.GUEST],
-  createdAt: '2026-01-01T00:00',
+  roles: ['GUEST'],
+  createdAt: 0,
+  updatedAt: 0,
+  version: 0,
 };
+
+const student = userActor(studentProfile);
 
 const stream = streamView({
   uuid: STREAM_ID,
@@ -45,14 +50,11 @@ const stream = streamView({
   status: 'active',
 });
 
-/** Профиль, который вернёт `get-user`; `telegramId` может отсутствовать */
-type ProfileOverride = Omit<User, 'telegramId'> & { telegramId?: number };
-
-/** Профили, которые возвращает `get-user` по умолчанию */
-const PROFILES: Record<string, ProfileOverride | undefined> = {
-  [STUDENT_USER_ID]: student,
+/** Профили, которые возвращает `getUser` по умолчанию (`undefined` — не найден) */
+const PROFILES: Record<string, UserView | undefined> = {
+  [STUDENT_USER_ID]: studentProfile,
   [MENTOR_USER_ID]: {
-    ...student,
+    ...studentProfile,
     uuid: MENTOR_USER_ID,
     name: 'Ментор',
     telegramId: 1004,
@@ -124,7 +126,7 @@ function setupStory(
   opts: {
     streamOverrides?: Record<string, unknown>;
     stream?: 'ok' | 'missing';
-    profiles?: Record<string, ProfileOverride | undefined>;
+    profiles?: Record<string, UserView | undefined>;
   } = {},
 ): {
   story: InactivityStory;
@@ -137,7 +139,6 @@ function setupStory(
     };
   }>;
   kicks: Array<{ groupId: number | string; userId: number }>;
-  execute: ReturnType<typeof mock>;
   dispatch: ReturnType<typeof dmgDispatch>;
 } {
   const notifies: Array<{
@@ -152,13 +153,13 @@ function setupStory(
     };
   }> = [];
   const kicks: Array<{ groupId: number | string; userId: number }> = [];
-  const execute = mock(
-    async (name: string, params?: Record<string, unknown>) =>
-      name === 'get-user'
-        ? (opts.profiles ?? PROFILES)[params?.uuid as string]
-        : undefined,
-  );
   const dispatch = dmgDispatch({
+    getUser: (input) => {
+      const profile = (opts.profiles ?? PROFILES)[
+        (input as { uuid: string }).uuid
+      ];
+      return profile ?? refuse('USER_NOT_FOUND', 'not_found');
+    },
     getStream: () =>
       opts.stream === 'missing'
         ? streamNotFound()
@@ -186,10 +187,7 @@ function setupStory(
   const story = new InactivityStory();
   story.init(
     {
-      appApi: {
-        execute,
-        dispatch,
-      },
+      appApi: { dispatch },
       callers: testCallers,
     } as never,
     {
@@ -224,7 +222,7 @@ function setupStory(
     } as never,
   );
 
-  return { story, notifies, invites, kicks, execute, dispatch };
+  return { story, notifies, invites, kicks, dispatch };
 }
 
 /** Достаёт обработчик подписки по имени события */
@@ -301,10 +299,7 @@ describe('InactivityStory', () => {
 
   test.each([
     ['профиля нет', {}],
-    [
-      'у профиля нет telegramId',
-      { [STUDENT_USER_ID]: { ...student, telegramId: undefined } },
-    ],
+    ['профиль недоступен', { [STUDENT_USER_ID]: undefined }],
   ])('%s — пропуск без исключения и без отправки', async (_, profiles) => {
     const { story, invites } = setupStory({ profiles });
 
@@ -387,16 +382,11 @@ describe('InactivityStory', () => {
     expect(invites).toHaveLength(0);
   });
 
-  test('candidate: у ментора нет telegramId — отправки нет', async () => {
+  test('candidate: профиль ментора недоступен — отправки нет', async () => {
     const { story, invites } = setupStory({
       profiles: {
-        [STUDENT_USER_ID]: student,
-        [MENTOR_USER_ID]: {
-          ...student,
-          uuid: MENTOR_USER_ID,
-          name: 'Ментор',
-          telegramId: undefined,
-        },
+        [STUDENT_USER_ID]: studentProfile,
+        [MENTOR_USER_ID]: undefined,
       },
     });
 
@@ -440,16 +430,16 @@ describe('InactivityStory', () => {
       streamOverrides: { telegramGroupId: GROUP_ID },
     });
 
-    // get-user вернул студента без telegramId — кику некому
-    const userWithoutTg = { ...student, telegramId: undefined };
+    // Профиль без адреса доставлен транспортом — кику некому
     story.init({
       appApi: {
-        execute: mock(async (name: string) => {
-          if (name === 'get-user') return userWithoutTg;
-          return undefined;
-        }),
         dispatch: dmgDispatch({
           getStream: () => ({ ...stream, telegramGroupId: GROUP_ID }),
+          getUser: () => ({
+            uuid: STUDENT_USER_ID,
+            name: 'Иван Студент',
+            roles: ['GUEST'],
+          }),
         }),
       },
       callers: testCallers,
@@ -463,9 +453,9 @@ describe('InactivityStory', () => {
     expect(kicks).toHaveLength(0);
   });
 
-  test('abandoned: у студента нет telegramId — уведомление студенту невозможно', async () => {
+  test('abandoned: профиль студента недоступен — уведомление невозможно', async () => {
     const { story, kicks, notifies } = setupStory({
-      profiles: { [STUDENT_USER_ID]: { ...student, telegramId: undefined } },
+      profiles: { [STUDENT_USER_ID]: undefined },
     });
 
     await subHandler(

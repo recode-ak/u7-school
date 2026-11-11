@@ -4,7 +4,6 @@ import {
   MarkAbandonedUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import type { TestApp } from './test-app';
@@ -18,12 +17,6 @@ import type { TestApp } from './test-app';
 
 const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
-async function userByTelegram(app: TestApp, telegramId: number) {
-  const user = await app.userFacade.getUserByTelegramId(telegramId);
-  if (!user) throw new Error(`Нет пользователя фикстуры tg=${telegramId}`);
-  return user;
-}
-
 export async function completeStudent(
   app: TestApp,
   args: {
@@ -33,7 +26,7 @@ export async function completeStudent(
     outcome: 'advanced' | 'not_advanced';
   },
 ): Promise<void> {
-  const caller = await userByTelegram(app, args.callerTelegramId);
+  const caller = await app.userByTelegramId(args.callerTelegramId);
   expectOk(
     await app.apiApp.dispatch(
       StreamModuleDef,
@@ -42,7 +35,7 @@ export async function completeStudent(
         studentId: args.studentId,
         outcome: args.outcome,
       }),
-      new UserCaller(caller),
+      caller,
       trace(),
     ),
   );
@@ -52,7 +45,7 @@ export async function dropStudent(
   app: TestApp,
   args: { studentTelegramId: number; streamId: string; studentId: string },
 ): Promise<void> {
-  const caller = await userByTelegram(app, args.studentTelegramId);
+  const caller = await app.userByTelegramId(args.studentTelegramId);
   expectOk(
     await app.apiApp.dispatch(
       StreamModuleDef,
@@ -60,7 +53,7 @@ export async function dropStudent(
         streamId: args.streamId,
         studentId: args.studentId,
       }),
-      new UserCaller(caller),
+      caller,
       trace(),
     ),
   );
@@ -75,7 +68,7 @@ export async function markAbandoned(
     cause: 'inactivity' | 'by_mentor';
   },
 ): Promise<void> {
-  const caller = await userByTelegram(app, args.callerTelegramId);
+  const caller = await app.userByTelegramId(args.callerTelegramId);
   expectOk(
     await app.apiApp.dispatch(
       StreamModuleDef,
@@ -84,7 +77,7 @@ export async function markAbandoned(
         studentId: args.studentId,
         cause: args.cause,
       }),
-      new UserCaller(caller),
+      caller,
       trace(),
     ),
   );

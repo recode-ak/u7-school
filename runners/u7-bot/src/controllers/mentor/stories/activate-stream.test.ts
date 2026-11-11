@@ -1,23 +1,21 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import {
   ActivateStreamUcDef,
   StreamErrors,
 } from '@u7-scl/domain/stream/contract';
-import { Role } from '@u7-scl/user/domain';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { dmgDispatch, refuse } from '../../streams/stories/stream-dmg.test-kit';
 import { ActivateStreamStory } from './activate-stream';
 
-const actor: User = {
-  uuid: 'mentor-1',
+const actor = userActor({
+  uuid: '11111111-1111-4111-8111-aaaaaaaab013',
   name: 'Ментор',
   telegramId: 123,
-  roles: [Role.MENTOR],
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+  roles: ['MENTOR'],
+});
 
 const session: BotSession = {
   dialog: { path: 'mentor/activate-stream', seq: 2 },

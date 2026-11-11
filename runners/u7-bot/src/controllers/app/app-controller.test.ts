@@ -1,19 +1,17 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { type Logger, LogLevel, setGlobalLogger } from '@u7-scl/core/shared';
 import type { CommandReaction, CommandUpdate } from '@u7-scl/core/ui';
-import { Role } from '@u7-scl/user/domain';
+import { userActor } from '../../core/user-actor.test-kit';
 
 const SCHOOL_URL = 'https://t.me/u7_school_group';
 
-const actor: User = {
-  uuid: 'user-1',
+const actor = userActor({
+  uuid: '11111111-1111-4111-8111-aaaaaaaab005',
   name: 'Гость',
   telegramId: 123,
-  roles: [Role.GUEST],
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+  roles: ['GUEST'],
+});
 
 function makeLogger(): Logger & { setLogLevel: ReturnType<typeof mock> } {
   return {

@@ -19,6 +19,7 @@ import {
   type ModuleView,
   StepErrors,
 } from '@u7-scl/domain/course/contract';
+import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import {
   dmgDispatch as dispatchOver,
@@ -29,10 +30,10 @@ import {
 
 export { type Refusal, refuse, type UcAnswers };
 
-/** Мок `appApi.dispatch`: модули `course` и `wish`, если не указано иное. */
+/** Мок `appApi.dispatch`: модули `course`, `wish` и `user` (профили), если не указано иное. */
 export function dmgDispatch(
   answers: UcAnswers,
-  modules: readonly unknown[] = [CourseModuleDef, WishModuleDef],
+  modules: readonly unknown[] = [CourseModuleDef, WishModuleDef, UserModuleDef],
 ) {
   return dispatchOver(answers, modules);
 }

@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { assertMarkdownV2Safe } from '@u7-scl/core/shared';
 import type { BotSession } from '@u7-scl/core/ui';
 import {
   QuestionnaireErrors,
   QuestionnaireEvents,
 } from '@u7-scl/domain/questionnaire/contract';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { InviteStory } from './invite.story';
 import {
   buttonsOf,
@@ -19,6 +19,7 @@ import {
   respondentProfile,
   subscriptionOf,
   useMockLogger,
+  userReadsOf,
   warnsOf,
 } from './questionnaire-dmg.test-kit';
 
@@ -30,7 +31,10 @@ import {
  * 2026-09-03).
  */
 
-const actor = { uuid: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee' } as User;
+const actor = userActor({
+  uuid: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+  roles: ['GUEST'],
+});
 const session: BotSession = {
   dialog: { path: 'questionnaire/invite', seq: 3 },
 };
@@ -58,7 +62,7 @@ describe('InviteStory — вызовы UC через dispatchUc', () => {
     expect(dispatchedOf(dispatch)).toEqual([
       { uc: 'startByInvite', input: { questionnaireId: 'q-1' } },
     ]);
-    expect(callers).toEqual([actor.uuid]);
+    expect(callers).toEqual([actor.user.uuid]);
     expect(res.delegate?.path).toBe('fill:current:q-1');
   });
 
@@ -194,9 +198,9 @@ describe('InviteStory — отказы: ucErrorScreen с «⬅️ Меню»', (
 describe('InviteStory — подписка invited: экран из getCurrent', () => {
   const logger = useMockLogger();
 
-  test('getCurrent вызывается от имени респондента, адрес — get-user', async () => {
+  test('getCurrent вызывается от имени респондента, адрес — getUser', async () => {
     const callers: string[] = [];
-    const { story, dispatch, execute, sender } = initStory(new InviteStory(), {
+    const { story, dispatch, sender } = initStory(new InviteStory(), {
       users,
       answers: {
         getCurrent: (_input, caller) => {
@@ -210,7 +214,7 @@ describe('InviteStory — подписка invited: экран из getCurrent',
       invitedEvent(),
     );
 
-    expect(execute).toHaveBeenCalledWith('get-user', { uuid: RESPONDENT_ID });
+    expect(userReadsOf(dispatch)).toEqual([RESPONDENT_ID]);
     expect(dispatchedOf(dispatch)).toEqual([
       { uc: 'getCurrent', input: { questionnaireId: 'q-1' } },
     ]);
@@ -343,11 +347,12 @@ describe('InviteStory — подписка invited: экран из getCurrent',
     ).toHaveLength(1);
   });
 
-  test('профиль без telegramId — тишина и warn', async () => {
-    const { telegramId: _tg, ...noTelegram } = respondentProfile();
+  test('Err getUser, кроме USER_NOT_FOUND — тишина и warn «сбой чтения профиля»', async () => {
     const { story, sender } = initStory(new InviteStory(), {
-      users: { [RESPONDENT_ID]: noTelegram },
-      answers: { getCurrent: () => invitedView() },
+      answers: {
+        getUser: () => refuse('CORE_INTERNAL', 'internal'),
+        getCurrent: () => invitedView(),
+      },
     });
 
     await subscriptionOf(story, QuestionnaireEvents.invited.name).handle(
@@ -355,12 +360,14 @@ describe('InviteStory — подписка invited: экран из getCurrent',
     );
 
     expect(sender.invite).not.toHaveBeenCalled();
+    expect(sender.notify).not.toHaveBeenCalled();
+    expect(warnsOf(logger, 'invite', 'сбой чтения профиля')).toHaveLength(1);
     expect(
-      warnsOf(logger, 'invite', 'нет telegramId респондента'),
-    ).toHaveLength(1);
+      warnsOf(logger, 'invite', 'профиль респондента не найден'),
+    ).toHaveLength(0);
   });
 
-  test('сбой get-user — тишина и warn с причиной', async () => {
+  test('сбой getUser — тишина и warn с причиной', async () => {
     const { story, sender } = initStory(new InviteStory(), {
       getUserFails: true,
       answers: { getCurrent: () => invitedView() },
@@ -374,7 +381,7 @@ describe('InviteStory — подписка invited: экран из getCurrent',
     expect(sender.notify).not.toHaveBeenCalled();
     const warns = warnsOf(logger, 'invite', 'сбой чтения профиля');
     expect(warns).toHaveLength(1);
-    expect(warns[0]?.[2]?.error).toContain('сбой get-user');
+    expect(warns[0]?.[2]?.error).toContain('сбой getUser');
   });
 });
 

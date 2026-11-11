@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import {
   type MdText,
@@ -126,7 +126,7 @@ export class CreateStreamStory extends U7BotUiStory {
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     // Старт wizard-а
@@ -194,7 +194,7 @@ export class CreateStreamStory extends U7BotUiStory {
 
   override async handleMessage(
     update: BotUpdate,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     if (update.type !== 'message') {
@@ -247,7 +247,7 @@ export class CreateStreamStory extends U7BotUiStory {
   /** /cancel: активный wizard — сброс с репликой; неактивный — pass. */
   override async handleCommand(
     update: CommandUpdate,
-    _actor: User,
+    _actor: U7BotActor,
     session: BotSession,
   ): Promise<CommandReaction> {
     if (update.command === 'cancel' && this.isActive(session)) {
@@ -265,13 +265,13 @@ export class CreateStreamStory extends U7BotUiStory {
 
   // ── Приватные шаги wizard-а ──
 
-  async #startWizard(actor: User): Promise<DialogResponse> {
+  async #startWizard(actor: U7BotActor): Promise<DialogResponse> {
     return this.#handleModuleMessage(this.#emptyCtx(), actor);
   }
 
   async #handleModuleMessage(
     ctx: CreateStreamWizardContext,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const listed = await this.dispatchUc(
       CourseModuleDef,
@@ -299,7 +299,7 @@ export class CreateStreamStory extends U7BotUiStory {
   async #onModuleSelected(
     action: string,
     session: BotSession,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const moduleId = action.split(':')[1];
     if (!moduleId) {
@@ -762,7 +762,7 @@ export class CreateStreamStory extends U7BotUiStory {
   }
 
   async #handleConfirm(
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     const context = session.dialog?.input?.context as

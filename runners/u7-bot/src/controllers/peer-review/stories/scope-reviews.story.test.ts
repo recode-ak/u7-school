@@ -1,11 +1,10 @@
-import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
+import { describe, expect, test } from 'bun:test';
 import {
   assertDialogResponseMarkdownSafe,
   type BotSession,
   type DialogResponse,
 } from '@u7-scl/core/ui';
-import { Role } from '@u7-scl/user/domain';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { streamView } from '../../streams/stories/stream-dmg.test-kit';
 import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
 import { ScopeReviewsStory } from './scope-reviews.story';
@@ -30,13 +29,12 @@ const AUTHOR_2 = 'ffffffff-0000-0000-0000-000000000002';
 const session: BotSession = {
   dialog: { path: 'peer-review/scope-reviews', seq: 1 },
 };
-const actor: User = {
-  uuid: 'user-reader',
+const actor = userActor({
+  uuid: '11111111-1111-4111-8111-aaaaaaaab007',
   name: 'Читатель',
   telegramId: 123,
-  roles: [Role.GUEST],
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+  roles: ['GUEST'],
+});
 
 /** Снимок отзыва — как отдаёт list-scope-reviews (scope-reviews-ds). */
 interface Snapshot {
@@ -76,21 +74,16 @@ function makeAppApi(groups: Group[], opts: { emptyNames?: boolean } = {}) {
           uuid: (input as { streamId: string }).streamId,
           title: 'Поток решения',
         }),
-    }),
-    execute: mock(async (ucName: string) => {
-      switch (ucName) {
-        case 'get-users-by-ids':
-          if (opts.emptyNames) return [];
-          return [
-            { uuid: MENTOR_ID, name: 'Марина' },
-            { uuid: STUDENT_1, name: 'Борис' },
-            { uuid: STUDENT_2, name: 'Вера' },
-            { uuid: AUTHOR_1, name: 'Анна' },
-            { uuid: AUTHOR_2, name: 'Глеб' },
-          ];
-        default:
-          throw new Error(`неизвестный UC: ${ucName}`);
-      }
+      getUsersByIds: () => {
+        if (opts.emptyNames) return [];
+        return [
+          { uuid: MENTOR_ID, name: 'Марина' },
+          { uuid: STUDENT_1, name: 'Борис' },
+          { uuid: STUDENT_2, name: 'Вера' },
+          { uuid: AUTHOR_1, name: 'Анна' },
+          { uuid: AUTHOR_2, name: 'Глеб' },
+        ];
+      },
     }),
   };
 }
@@ -232,13 +225,11 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
 
     await story.handleCallback(`view:${SCOPE_ID}`, actor, session);
 
-    const calls = (
-      appApi.execute.mock.calls as unknown as Array<
-        [string, Record<string, unknown>]
-      >
-    ).filter(([uc]) => uc === 'get-users-by-ids');
+    const calls = appApi.dispatch.mock.calls.filter(
+      ([, command]) => command.uc === 'getUsersByIds',
+    );
     expect(calls).toHaveLength(1);
-    expect(calls[0]?.[1]).toEqual({
+    expect(calls[0]?.[1].input).toEqual({
       userIds: [STUDENT_1, AUTHOR_1, MENTOR_ID, AUTHOR_2],
     });
   });

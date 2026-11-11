@@ -6,13 +6,13 @@ import {
   expect,
   test,
 } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
 import { LearningController } from '@u7-scl/bot/learning/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -88,7 +88,7 @@ function pressedCode(
 describe('E2E: Витрина для любопытного', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let guest: User;
+  let guest: U7BotActor;
 
   beforeAll(async () => {
     app = await createTestApp('e2e-curious');
@@ -106,7 +106,7 @@ describe('E2E: Витрина для любопытного', () => {
       learningController,
       mentorController,
     ]);
-    guest = (await app.userFacade.getUserByTelegramId(1001))!;
+    guest = await app.userByTelegramId(1001);
   });
 
   beforeEach(() => {
@@ -120,7 +120,7 @@ describe('E2E: Витрина для любопытного', () => {
   // ── «Потоки курсов»: curious-режим карточки потока ──
   describe('«Потоки курсов» — curious-режим карточки потока', () => {
     test('гость → enrollment-поток: карточка без менторских кнопок (S02)', async () => {
-      const tgId = guest.telegramId;
+      const tgId = guest.user.view().telegramId;
       await transport.handleStart(transport.makeBotContext(tgId));
       await transport.handleCallback(
         transport.makeBotContext(tgId, {
@@ -172,7 +172,7 @@ describe('E2E: Витрина для любопытного', () => {
   // ── «Курсы» — drill-up (обратная навигация) ──
   describe('«Курсы» — обратная навигация', () => {
     test('drill-down 5 уровней → drill-up 4 уровня обратно', async () => {
-      const tgId = guest.telegramId;
+      const tgId = guest.user.view().telegramId;
       await transport.handleStart(transport.makeBotContext(tgId));
       const press = (label: string) =>
         transport.handleCallback(
@@ -213,7 +213,7 @@ describe('E2E: Витрина для любопытного', () => {
   // ── «Потоки курсов» — отказы ──
   describe('«Потоки курсов» — round-trip навигация', () => {
     test('несуществующий поток — экран ошибки', async () => {
-      const tgId = guest.telegramId;
+      const tgId = guest.user.view().telegramId;
       await transport.handleStart(transport.makeBotContext(tgId));
       // Крафтовый код с АКТУАЛЬНЫМ штампом экрана: по форме валиден,
       // но поток не существует — экран ошибки, без падений
@@ -230,7 +230,7 @@ describe('E2E: Витрина для любопытного', () => {
   // ── Сквозной: курсы ↔ потоки ──
   describe('Сквозная навигация: курсы ↔ потоки', () => {
     test('главное меню → курсы → назад → потоки → карточка → назад', async () => {
-      const tgId = guest.telegramId;
+      const tgId = guest.user.view().telegramId;
       await transport.handleStart(transport.makeBotContext(tgId));
       const press = (label: string) =>
         transport.handleCallback(

@@ -1,4 +1,3 @@
-import type { User } from '@u7-scl/app-legacy/domain';
 import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import type { DialogResponse, NavNodeStatus } from '@u7-scl/core/ui';
 import {
@@ -21,6 +20,7 @@ import {
   type StudentView,
 } from '@u7-scl/domain/stream/contract';
 import type { Command, OutputOf, Result, UseCaseErrorOf } from 'dmg-core';
+import type { U7BotActor } from '../../core/u7-bot-app-meta';
 
 /** Студент в представлении контракта `stream`. */
 export type Student = StudentView;
@@ -54,13 +54,13 @@ export type ProgressView = NonNullable<StudentProgress['progress']>;
  */
 export async function getStudent(
   dispatch: StreamDispatch,
-  actor: User,
+  actor: U7BotActor,
 ): Promise<
   { ok: true; value: Student } | { ok: false; value: DialogResponse }
 > {
   try {
     const res = await dispatch(
-      GetStudentByUserUcDef.command({ userId: actor.uuid }),
+      GetStudentByUserUcDef.command({ userId: actor.user.uuid }),
     );
     return res.ok
       ? { ok: true, value: res.value }
@@ -86,7 +86,7 @@ export type StreamSnapshotView = {
  */
 export async function getStudentAndStream(
   dispatch: StreamDispatch,
-  actor: User,
+  actor: U7BotActor,
   loadStream: (streamId: string) => Promise<StreamSnapshotView | undefined>,
 ): Promise<{
   student: Student | null;

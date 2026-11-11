@@ -6,9 +6,9 @@ import {
   expect,
   test,
 } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import type { DialogResponse } from '@u7-scl/core/ui';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
@@ -17,7 +17,6 @@ import {
   stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { Role } from '@u7-scl/user/domain';
 import type { WorldDefinition } from '../worlds';
 
 /**
@@ -50,13 +49,13 @@ const FLAT_COURSE_WORLD: WorldDefinition = {
       key: 'dev',
       name: 'Автор',
       telegramId: 1004,
-      roles: [Role.MENTOR, Role.AUTHOR],
+      roles: ['MENTOR', 'AUTHOR'],
     },
     {
       key: 'guest',
       name: 'Гость',
       telegramId: GUEST_TELEGRAM_ID,
-      roles: [Role.GUEST],
+      roles: ['GUEST'],
     },
   ],
   courses: [
@@ -196,7 +195,7 @@ describe('CourseCatalogStory (интеграционный): курс с эта�
 describe('CourseCatalogStory (интеграционный): курс без этапов', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let guest: User;
+  let guest: U7BotActor;
 
   beforeAll(async () => {
     app = await createTestApp('course-flat', FLAT_COURSE_WORLD);
@@ -204,7 +203,7 @@ describe('CourseCatalogStory (интеграционный): курс без э�
       new AppController(SCHOOL_GROUP_URL),
       new CoursesController(),
     ]);
-    guest = (await app.userFacade.getUserByTelegramId(GUEST_TELEGRAM_ID))!;
+    guest = await app.userByTelegramId(GUEST_TELEGRAM_ID);
   });
 
   beforeEach(() => {
@@ -216,7 +215,7 @@ describe('CourseCatalogStory (интеграционный): курс без э�
   });
 
   test('модули кликабельны до урока: список модулей курса → модуль → проект → урок, этапов нет', async () => {
-    const tg = guest.telegramId;
+    const tg = guest.user.view().telegramId;
 
     const list = await openCatalog(transport, tg, 'course:course-catalog:list');
     expect(list.screen?.text).toContain('Курс без этапов');

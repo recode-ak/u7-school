@@ -1,5 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
+import { describe, expect, test } from 'bun:test';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
@@ -11,7 +10,8 @@ import {
   StreamModuleDef,
   StreamStatus,
 } from '@u7-scl/domain/stream/contract';
-import { Role } from '@u7-scl/user/domain';
+import { UserModuleDef } from '@u7-scl/domain/user/contract';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { dmgDispatch } from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { refuse, streamView } from '../../streams/stories/stream-dmg.test-kit';
@@ -23,16 +23,20 @@ import {
 } from '../../streams/stories/student-dmg.test-kit';
 import { ViewStreamMentorStory } from './view-stream-mentor';
 
-/** Модули карточки потока ментора: потоки, отзывы и курсы. */
-const MODULES = [CourseModuleDef, StreamModuleDef, PeerReviewModuleDef];
+/** Модули карточки потока ментора: потоки, отзывы, курсы и пользователи. */
+const MODULES = [
+  CourseModuleDef,
+  StreamModuleDef,
+  PeerReviewModuleDef,
+  UserModuleDef,
+];
 
-const mentorActor: User = {
-  uuid: 'mentor-1',
+const mentorActor = userActor({
+  uuid: '11111111-1111-4111-8111-aaaaaaaab009',
   name: 'Ментор',
   telegramId: 123,
-  roles: [Role.MENTOR],
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+  roles: ['MENTOR'],
+});
 
 const session: BotSession = {
   dialog: { path: 'mentor/view-stream-mentor', seq: 2 },
@@ -43,7 +47,7 @@ const mockStream = {
   title: 'Тестовый поток',
   description: 'Описание потока',
   status: StreamStatus.ENROLLMENT,
-  mentorId: 'mentor-1',
+  mentorId: '11111111-1111-4111-8111-aaaaaaaab009',
   moduleId: 'module-1',
   startDate: Date.parse('2026-06-01T10:00:00.000Z'),
   contentSnapshot: [
@@ -73,8 +77,8 @@ const mockStudent: LegacyStudent = {
 };
 
 /**
- * Обработчик ответов: имена legacy-UC (`execute`) и UC потока DMG
- * (`getStream`, `completeStream`, `archiveStream`).
+ * Обработчик ответов: имена UC DMG потока (`getStream`, `completeStream`,
+ * `archiveStream`) и профилей (`getUser`).
  */
 type Handler = (name: string, params?: Record<string, unknown>) => unknown;
 
@@ -90,15 +94,10 @@ function createStory(handler?: Handler) {
     ((name) => {
       if (name === 'getStream') return mockStream;
       if (name === 'list-stream-students') return [];
-      if (name === 'get-user') return { name: 'Ментор Тест', roles: [] };
+      if (name === 'getUser') return { name: 'Ментор Тест', roles: ['GUEST'] };
       return undefined;
     });
-  const appApi = {
-    execute: mock(async (name: string, params?: Record<string, unknown>) =>
-      answer(name, params),
-    ),
-  };
-  // поток и факты отзывов скоупа — UC DMG через dispatch
+  // поток, пользователи и факты отзывов скоупа — UC DMG через dispatch
   const dispatch = dmgDispatch(
     {
       getStream: (input, caller) => {
@@ -110,7 +109,7 @@ function createStory(handler?: Handler) {
       // состав потока и расчёты студента строятся по ответу 'list-stream-students'
       getStreamMembers: () =>
         streamMembers(
-          'mentor-1',
+          '11111111-1111-4111-8111-aaaaaaaab009',
           (answer('list-stream-students') ?? []) as LegacyStudent[],
         ),
       getStudentProgress: (input) => {
@@ -133,14 +132,13 @@ function createStory(handler?: Handler) {
       getStepsByLessons: (input) =>
         answer('getStepsByLessons', input as Record<string, unknown>),
       getStep: (input) => answer('getStep', input as Record<string, unknown>),
+      // имена ментора и студентов — ответом теста
+      getUser: (input) => answer('getUser', input as Record<string, unknown>),
     },
     MODULES,
   );
-  story.init({
-    appApi: { ...appApi, dispatch },
-    callers: testCallers,
-  } as never);
-  return { story, appApi, dispatch };
+  story.init({ appApi: { dispatch }, callers: testCallers } as never);
+  return { story, dispatch };
 }
 
 function flat(response: DialogResponse) {
@@ -187,7 +185,6 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
       if (name === 'getStream')
         return { ...mockStream, status: StreamStatus.ACTIVE };
       if (name === 'list-stream-students') return [];
-      if (name === 'get-user') return { name: 'Ментор Тест', roles: [] };
       return undefined;
     });
     const response = await story.handleCallback(
@@ -206,7 +203,6 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
       if (name === 'getStream')
         return { ...mockStream, status: StreamStatus.COMPLETED };
       if (name === 'list-stream-students') return [];
-      if (name === 'get-user') return { name: 'Ментор Тест', roles: [] };
       return undefined;
     });
     const response = await story.handleCallback(
@@ -223,14 +219,12 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
 
   test('program: не-ментор потока получает отказ доступа', async () => {
     const { story } = createStory();
-    const guestActor: User = {
-      uuid: 'stranger-1',
+    const guestActor = userActor({
+      uuid: '11111111-1111-4111-8111-aaaaaaaab0fe',
       name: 'Чужой',
       telegramId: 999,
-      roles: [Role.GUEST],
-      createdAt: '2026-01-01T00:00:00.000Z',
-      updatedAt: '2026-01-01T00:00:00.000Z',
-    };
+      roles: ['GUEST'],
+    });
     const response = await story.handleCallback(
       'program:stream-1',
       guestActor,
@@ -255,8 +249,8 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
       if (name === 'getStream')
         return { ...mockStream, status: StreamStatus.ACTIVE };
       if (name === 'list-stream-students') return [mockStudent];
-      if (name === 'get-user')
-        return { uuid: 'user-id-1', name: 'Студент Один', roles: [] };
+      if (name === 'getUser')
+        return { uuid: 'user-id-1', name: 'Студент Один', roles: ['GUEST'] };
       return undefined;
     });
     const response = await story.handleCallback(
@@ -294,8 +288,8 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
         return { ...mockStream, status: StreamStatus.ACTIVE };
       if (name === 'list-stream-students')
         return [{ ...mockStudent, status: 'advanced' }];
-      if (name === 'get-user')
-        return { uuid: 'user-id-1', name: 'Прошёл Студент', roles: [] };
+      if (name === 'getUser')
+        return { uuid: 'user-id-1', name: 'Прошёл Студент', roles: ['GUEST'] };
       return undefined;
     });
     const response = await story.handleCallback(
@@ -316,8 +310,8 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
       if (name === 'getStream')
         return { ...mockStream, status: StreamStatus.ACTIVE, mentorId: 'x' };
       if (name === 'list-stream-students') return [mockStudent];
-      if (name === 'get-user')
-        return { uuid: 'user-id-1', name: 'Студент Один', roles: [] };
+      if (name === 'getUser')
+        return { uuid: 'user-id-1', name: 'Студент Один', roles: ['GUEST'] };
       return undefined;
     });
     const response = await story.handleCallback(

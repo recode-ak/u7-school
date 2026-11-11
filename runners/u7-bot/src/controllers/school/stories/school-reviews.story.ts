@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { type MdText, md } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
@@ -29,7 +29,7 @@ export class SchoolReviewsStory extends U7BotUiStory {
 
   override async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     const [cmd, pageSeg] = action.split(':');
@@ -41,7 +41,7 @@ export class SchoolReviewsStory extends U7BotUiStory {
   }
 
   async #showReviews(
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
     pageIndex: number,
   ): Promise<DialogResponse> {
@@ -59,13 +59,13 @@ export class SchoolReviewsStory extends U7BotUiStory {
       pageIndex,
       cbPage: (n) => this.cb('list', String(n)),
       session,
-      tgId: actor.telegramId,
+      tgId: actor.user.view().telegramId,
     });
   }
 
   async #buildCards(
     schoolId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<{ title: MdText; cards: MdText[]; payload: undefined }> {
     const listed = await this.dispatchUc(
       StreamModuleDef,
@@ -121,15 +121,14 @@ export class SchoolReviewsStory extends U7BotUiStory {
     };
   }
 
-  async #namesOf(userIds: string[], actor: User): Promise<Map<string, string>> {
+  async #namesOf(
+    userIds: string[],
+    actor: U7BotActor,
+  ): Promise<Map<string, string>> {
     const names = new Map<string, string>();
     if (userIds.length === 0) return names;
 
-    const users = (await this.appApi.execute(
-      'get-users-by-ids',
-      { userIds },
-      actor,
-    )) as Array<{ uuid: string; name: string }>;
+    const users = await this.findUsers(userIds, actor);
 
     for (const user of users) {
       names.set(user.uuid, user.name);

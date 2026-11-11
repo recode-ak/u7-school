@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { md, mdJoin } from '@u7-scl/core/shared';
 import type {
@@ -44,7 +44,7 @@ export class StepViewStory extends U7BotUiStory {
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     if (action === 'my-study:continue') {
@@ -64,7 +64,7 @@ export class StepViewStory extends U7BotUiStory {
   }
 
   /** Команды модуля `stream` от имени актора — для хелперов раздела learning. */
-  #dispatchFor(actor: User): StreamDispatch {
+  #dispatchFor(actor: U7BotActor): StreamDispatch {
     return (command) => this.dispatchUc(StreamModuleDef, command, actor);
   }
 
@@ -73,7 +73,7 @@ export class StepViewStory extends U7BotUiStory {
    * необходимости. Потока нет или отказ — `undefined`.
    */
   async #loadProgress(
-    actor: User,
+    actor: U7BotActor,
     input: { studentId: string; stepId?: string; lessonId?: string },
   ): Promise<ProgressView | undefined> {
     const res = await this.dispatchUc(
@@ -87,7 +87,7 @@ export class StepViewStory extends U7BotUiStory {
   // ── Приватные методы: основной поток ──
 
   async #showCurrentStep(
-    actor: User,
+    actor: U7BotActor,
     _overrideStepId?: string,
   ): Promise<DialogResponse> {
     const studentResult = await getStudent(this.#dispatchFor(actor), actor);
@@ -133,7 +133,10 @@ export class StepViewStory extends U7BotUiStory {
     );
   }
 
-  async #handleComplete(action: string, actor: User): Promise<DialogResponse> {
+  async #handleComplete(
+    action: string,
+    actor: U7BotActor,
+  ): Promise<DialogResponse> {
     const [, streamId, stepId] = action.split(':');
     if (!streamId || !stepId) {
       return this.unknownCommand(action, actor);
@@ -184,7 +187,7 @@ export class StepViewStory extends U7BotUiStory {
 
   /** Просмотр завершённого шага с ◀️/▶️ навигацией. */
   async #showStepView(
-    actor: User,
+    actor: U7BotActor,
     streamId: string,
     stepId: string,
   ): Promise<DialogResponse> {
@@ -307,7 +310,7 @@ export class StepViewStory extends U7BotUiStory {
     stepId: string,
     streamId: string,
     progress: ProgressView | undefined,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const resolved = progress?.step?.position ?? null;
 
@@ -360,7 +363,7 @@ export class StepViewStory extends U7BotUiStory {
     },
     streamId: string,
     progress: ProgressView | undefined,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const loaded = await this.dispatchUc(
       StreamModuleDef,

@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { LearningController } from '@u7-scl/bot/learning/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import {
   InactivitySweepJobDef,
   StreamModuleDef,
@@ -15,7 +15,6 @@ import {
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import { CoursesController } from '../../src/controllers/courses/controller';
-import { UserController } from '../../src/controllers/user/controller';
 
 /**
  * E2E событий студента потока на DMG (срез `student`): события публикует UoW
@@ -56,7 +55,7 @@ async function waitMessageFor(
 interface Stand {
   app: TestApp;
   transport: TestBotTransport;
-  mentor: User;
+  mentor: U7BotActor;
 }
 
 async function createStand(tag: string): Promise<Stand> {
@@ -65,10 +64,9 @@ async function createStand(tag: string): Promise<Stand> {
     new StreamsController(),
     new LearningController(),
     new MentorController(),
-    new UserController(),
     new CoursesController(),
   ]);
-  const mentor = (await app.userFacade.getUserByTelegramId(MENTOR_TG))!;
+  const mentor = await app.userByTelegramId(MENTOR_TG);
   return { app, transport, mentor };
 }
 

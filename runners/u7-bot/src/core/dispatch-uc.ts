@@ -1,6 +1,7 @@
 import { BotRequestContext } from '@u7-scl/core/ui';
 import type {
   AnyModuleDef,
+  Caller,
   Command,
   OutputOf,
   Result,
@@ -12,8 +13,10 @@ import type { U7BotUiAppResolve } from './u7-bot-app-meta';
 /** Кто и в каком запросе исполняет команду DMG. */
 interface DispatchOpts {
   resolve: Pick<U7BotUiAppResolve, 'appApi' | 'callers'>;
-  /** Субъект; без него — гость. */
+  /** Субъект по uuid (резолвер `Caller`); без него — гость. */
   uuid?: string;
+  /** Готовый `Caller` (актор бота) — резолвер не вызывается; приоритетнее `uuid`. */
+  caller?: Caller;
   telegramId?: number;
   warn: (message: string, meta: { uc: string }) => void;
 }
@@ -44,7 +47,7 @@ export function requestTrace(
 
 /**
  * Исполняет команду модуля DMG в процессе бота: собирает `Trace` канала
- * telegram, резолвит `Caller` и диспетчит. Общая реализация `dispatchUc`
+ * telegram, берёт готовый `Caller` или резолвит по `uuid` и диспетчит. Общая реализация `dispatchUc`
  * стори и вызовов от гостя контроллеров.
  */
 export async function dispatchModuleUc<
@@ -58,6 +61,7 @@ export async function dispatchModuleUc<
   const trace = requestTrace(opts.telegramId, (message) =>
     opts.warn(message, { uc: command.uc }),
   );
-  const caller = await opts.resolve.callers.resolve(opts.uuid, trace);
+  const caller =
+    opts.caller ?? (await opts.resolve.callers.resolve(opts.uuid, trace));
   return opts.resolve.appApi.dispatch(module, command, caller, trace);
 }

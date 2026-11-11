@@ -1,12 +1,22 @@
 # Бриф среза: `user` / UI бота (Ф5)
 
-> Черновик `dmg-tech-lead` (Sonnet), на приёмку orchestrator. Читать с `../spec.md`, `../plan.md` (Ф5), `slices/user-app.md` (Def UC), `slices/caller.md` (Ф4, Р5), TR-61 (`conductor/architecture/debt.md`), `../summary.md` → Т14–Т16. Эталон поведения — `../u7-school-v0.2.6/apps/u7-bot/src` (читать только). Гайды UI — `conductor/architecture/ui/{bot-ui-story,bot-controller,bot-test,bot-architecture}.md`.
+> Черновик `dmg-tech-lead` (Sonnet), на приёмку orchestrator. Читать с `../spec.md`, `../plan.md` (Ф5), `slices/user-app.md` (Def UC), `slices/caller.md` (Ф4, Р5), TR-61 (`conductor/architecture/debt.md`), `../summary.md` → Т14–Т16. Эталон поведения — `u7-bot/src` эталона `../u7-school-v0.2.6` (читать только). Гайды UI — `conductor/architecture/ui/{bot-ui-story,bot-controller,bot-test,bot-architecture}.md`.
 
 ## Решения orchestrator
 
-- **О1 — вариант А, Нурболат 2026-11-11.** Актор stories — `U7BotActor = ReadonlyAr<UserAr>`; мост Р5 (`subjectOf`) снимается в Ф5; Т14 `summary.md` в части «alias `User` до Ф7» для `runners` отменяется.
+- **О1 — актор — `Caller`, Нурболат 2026-11-11** (заменяет вариант А «`ReadonlyAr<UserAr>`»). UI поддерживает Caller полностью: права проверяются на стороне UI той же Policy, что и в домене (`XPolicy.canY(actor.subject(), …)`), без `roles`.
+  - **Абстрактный уровень** (`platform/core/src/ui/bot/*`: `BotUiAppResolve`, `BotUiApp`, `BotController`, `BotUiStory`) — «на вырост»: `TActor extends PersonCaller = PersonCaller` (гость | пользователь | заместитель, `dmg-core`).
+  - **Бот** (`runners/u7-bot`): `U7BotActor = UserCaller<ReadonlyAr<UserAr>>` — система гарантирует регистрацию (`ensureRegisteredGuest` на `/start`/`member_joined`). `actorResolver`: `dispatch` `getUserByTelegramId` от `SystemCaller` → `new UserCaller(UserAr.restore(view))` (D-69, как резолвер Ф4); нет пользователя или прочий `Err` — исключение (текст «Пользователь с telegramId … не найден» сохраняется).
+  - Поля пользователя — `actor.user.view().name` / `.telegramId`, `uuid` — `actor.user.uuid`; роли — `actor.user.isMentor()` / `isAdmin()`.
+  - **`dispatchAs` (тактика, TR-61 «Ф5»):** актор передаётся в `dispatch` как `caller` напрямую — без повторного `callers.resolve` по `uuid` (снимается двойное чтение). Гостевые вызовы (`dispatchAsGuest`) — `GuestCaller` как прежде.
+  - Мост Р5 (`subjectOf`) снимается в Ф5; Т14 `summary.md` в части «alias `User` до Ф7» для `runners` отменяется.
+  - Фикстуры актора: `new UserCaller(userSubject({ uuid, roles }))` — хелпер `userActor(...)` в `runners/u7-bot` тестовой инфраструктуре (один, без копий).
 - **О3 — вариант (а), тактика (TR-61 «Ф5»).** `u7-cli`: `currentActor: UserView`, к legacy `execute` — явное приведение с пометкой DEBT-42; `/login` остаётся.
 - **Риск `call-uc`/`_course-client` между Ф5 и Ф6** — мост до Ф6, строка в `debt.md` (шаг 4).
+- **Эскалации шага 2 (тактика, TR-61 «Ф5»):**
+  - `UserAr.restore` и `SystemCaller` из `create-ui-app.ts` переносятся в корень сборки: метод `U7CallerResolver.resolveByTelegramId(tgId, trace): Promise<PersonCaller<ReadonlyAr<UserAr>>>` (`platform/app/src/u7-caller-resolver.ts`, тот же алгоритм Р1 Ф4 на `GetUserByTelegramIdUcDef`: найден → `UserCaller`, `NOT_FOUND` → `GuestCaller`, прочий `Err` → исключение) + тесты в `u7-caller-resolver.test.ts`. `actorResolver` бота: `callers.resolveByTelegramId` → не `UserCaller` → `Error('Пользователь с telegramId … не найден')`. В `runners` нет `Ar.restore` и `new SystemCaller`.
+  - `school/controller.test.ts` (2 теста «ровно один `warn`»): обработчик вызывается внутри `BotRequestContext.run` (как на проде), ERR-07 не глушится.
+  - `u7-bot-ui-story.test.ts:734` (`roles: string[]` в `profile()`) — тип теста под `UserView`.
 - Поведение для пользователя не меняется (О2 — «нет»): любое видимое отличие от `v0.2.6` в шагах — эскалация.
 
 ## Расхождения plan/spec с кодом
@@ -18,7 +28,7 @@
 5. **Т16: `dispatchByName` нет** в установленном `dmg-core` (grep по `node_modules/dmg-core` пуст). `u7-cli` — через `apiApp.dispatch(UserModuleDef, <Def>.command(…), caller, trace)`, как `scripts/call-uc.ts:160-170`. Выход `listUsers` — `UserView[]`, а не `{ users }` (`cli-controller.ts:374-379`).
 6. **«Красной зоны» нет:** Ф3 записала «красной зоны нет» (`plan.md`, Ф3). Задача «снять красную зону» сводится к записи в `debt.md`: мост Р5 (`subjectOf`) закрыт, TR-49 (6) и TR-61 «Ф5» — состояние (формальное снятие — Ф8).
 7. **`user-notify.e2e.test.ts` вводит в заблуждение:** файл не про `NotifyStory` — три сценария (приглашение желающих, «🎉 Курс завершён!», отсутствие уведомления) идут через `WishInviteStory`/`HubStory`; `UserController` в нём — лишний. Простое удаление теряет три e2e (`:107,187,255`) → Р7.
-8. **Продюсеры `user.notified` в `v0.2.6` были** (`packages/peer-review/src/api/er/notify-review-recipient-er.ts:49`, `complete-student`, `mark-abandoned`, `invite-wishers`); в HEAD их заменили Def-подписки stories (`ReviewNotifyStory`, `HubStory`, `InactivityStory`, `WishInviteStory`) — удаление `NotifyStory` поведения не меняет (С3). Но комментарии с `userFacade.notify`/`user.notified` остались: `inactivity.e2e.test.ts:37,64`, `streams/controller.ts:21`, `peer-review/ui-spec.md:9`, `bot-controller.md:16,28`.
+8. **Продюсеры `user.notified` в `v0.2.6` были** (`peer-review/src/api/er/notify-review-recipient-er.ts:49` эталона, `complete-student`, `mark-abandoned`, `invite-wishers`); в HEAD их заменили Def-подписки stories (`ReviewNotifyStory`, `HubStory`, `InactivityStory`, `WishInviteStory`) — удаление `NotifyStory` поведения не меняет (С3). Но комментарии с `userFacade.notify`/`user.notified` остались: `inactivity.e2e.test.ts:37,64`, `streams/controller.ts:21`, `peer-review/ui-spec.md:9`, `bot-controller.md:16,28`.
 9. **Ветка «нет `telegramId`» в `resolveRespondent`** (`questionnaire-story.ts:36-43`) недостижима: `telegramId` — обязательное поле state (`UserView`), строгое чтение. Удаляется вместе с тестом (не изменение поведения).
 10. **`getUsersByIds` не имеет `errors`** (`domain/src/user/user/uc/get-users-by-ids.uc.ts`): `Err` возможен только как ошибка входа (>100 id). Legacy при >100 тоже отказывал валидацией; сайты с `try/catch` ловят то же самое.
 
@@ -134,7 +144,7 @@
 
 ## Сохраняемое поведение
 
-Эталон — `../u7-school-v0.2.6/apps/u7-bot/src`; `ensure-registered.ts`, `school/controller.ts`, `submenu.ts` там совпадают с HEAD с точностью до импорта/Ф4.
+Эталон — `u7-bot/src` эталона `../u7-school-v0.2.6`; `ensure-registered.ts`, `school/controller.ts`, `submenu.ts` там совпадают с HEAD с точностью до импорта/Ф4.
 
 **Регистрация (`ensure-registered.ts`; тест `ensure-registered.test.ts`, `core/ui-app.test.ts:147-190,626-690`).**
 - Незнакомый `telegramId` на `/start` и на `member_joined`/`bot_membership` (с `byUser`) → создаётся `GUEST`: `telegramId` = id отправителя, имя = `first_name` (на `/start` — `update.name ?? 'друг'`), ник = `username` (без `username` — без ника). Регистрирует бот от лица `BOT_ADMIN_UUID` (политика UC не ослабляется — см. шапку файла).
@@ -226,3 +236,12 @@
 - Характеризация: сценарии раздела 3 существуют и зелёные (`ensure-registered`, `ui-app /start|member_joined|bot_membership`, `school/controller`, `submenu`, анкеты, e2e `main-menu`/`student-dmg`/`stream-dmg`/`inactivity`/`user-notify`); новые red→green: `TAKEN`, `createUiApp`, `findUser`/`findUsers`, e2e `/start`.
 - `bun run check` зелёный (lint, типы, `arch:check`, `gen:e2e`, `bun test`); `bun run test:bot` — не ниже 894 с поправкой на удалённые тесты `NotifyStory`/дубли; `git status data/` чист.
 - Ревью: `error` нет; `debt.md` — запись TR-61 «Ф5»; красной зоны нет.
+
+## Отчёты шагов (orchestrator)
+
+- **`dmg-test-designer` (Sonnet), 2 круга** (второй — смена О1 на `Caller`): kit-ы `user-api.test-kit.ts`, `user-actor.test-kit.ts` (`userActor`), `TestApp`/`TestBotTransport` на `botAdminUuid`, характеризация `ensure-registered`/`ui-app`/`school`/`submenu`/анкет, red Р1–Р6/Р10, e2e `guest-registration`; красный прогон 778/148 — все «нет реализации». Тест «нет `telegramId` респондента» удалён (недостижим).
+- **UI-stories (Sonnet, `migrator`), 2 круга:** `TActor extends PersonCaller` в `platform/core/src/ui/bot`, `U7BotActor`, `dispatchUc` с актором-`caller`, `findUser`/`findUsers`, `ensure-registered`/`school`/`create-ui-app` на Def, `subjectOf` снят, `UserController`/`NotifyStory` удалены. Эскалации: `UserAr.restore` в `runners` → `U7CallerResolver.resolveByTelegramId`; `school/controller.test` — `BotRequestContext.run`.
+- **Механика (flash, `F5-migrator-mech`):** остальные stories, `streams/controller`, `u7-cli`, ~65 тестов; эскалация grep `userFacade` (негативные проверки) — критерий по обращениям к полю (TR-61 «Ф5»).
+- **`dmg-reviewer` (Opus):** 1 `error` (актор целиком в мете `warn` → ~12 КБ, Telegram-лог админам не доходит), 4 `warn` (`bun.lock`, след старта вне `BotRequestContext`, комментарий `u7-cli`, мёртвый мок), 13 `info`. Исправлено (flash, `F5-migrator-fix`): `actor.toLog()` в мете, `bun.lock`, след, литералы → `UserErrors.*.code`, `callers: Pick<…,'resolve'>`, `TestApp` через боевой резолвер, `#personOf` резолвера, JSDoc; принято в TR-61 «Ф5»: п. 10, 11, 13, 14, 17; кандидаты вне diff — `conductor/roadmap/test-bloat.md`.
+- **Повторное ревью (Opus):** `error` нет; 2 minor (дубль теста проекции в боте, сброс глобального логгера) — исправлены в срезе.
+- Маркер `DEBT-42` в комментарии `u7-cli` давал `arch:check` «вне biome-ignore» — заменён ссылкой на долг (приведение не понадобилось).

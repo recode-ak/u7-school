@@ -1,30 +1,29 @@
 import { describe, expect, test } from 'bun:test';
-import { TEST_SCHOOL, type User } from '@u7-scl/app-legacy/domain';
-import { Role } from '@u7-scl/user/domain';
+import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
+import type { UserView } from '@u7-scl/domain/user/contract';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { CommunityStory } from './community.story';
 
 describe('CommunityStory (school)', () => {
-  const actor: User = {
-    uuid: 'user-1',
+  const actor = userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaaaaa2',
     name: 'Гость',
     telegramId: 123,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
   test('имя стори — community, menuButtons пуст для всех ролей (кнопка убрана из главного меню)', async () => {
     const story = new CommunityStory();
     expect(story.name).toBe('community');
 
-    const roles = [Role.GUEST, Role.SUBSCRIBER, Role.MENTOR, Role.ADMIN];
-    for (const role of roles) {
-      const user: User = {
-        uuid: `user-${role}`,
+    const roles: UserView['roles'] = ['GUEST', 'SUBSCRIBER', 'MENTOR', 'ADMIN'];
+    for (const [i, role] of roles.entries()) {
+      const user = userActor({
+        uuid: `11111111-1111-4111-8111-00000000000${i}`,
         name: role,
         telegramId: 100,
         roles: [role],
-        createdAt: '2026-01-01T00:00:00.000Z',
-      };
+      });
       const buttons = await story.menuButtons(user);
       expect(buttons).toEqual([]);
     }

@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { LearningController } from '@u7-scl/bot/learning/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -29,7 +29,7 @@ import {
 describe('LearningController (интеграционный)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let student: User;
+  let student: U7BotActor;
 
   const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
   const STREAM_ID = 'e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1';
@@ -45,7 +45,7 @@ describe('LearningController (интеграционный)', () => {
       streamController,
       learningController,
     ]);
-    student = (await app.userFacade.getUserByTelegramId(1003))!;
+    student = await app.userByTelegramId(1003);
   });
 
   afterAll(async () => {
@@ -54,14 +54,20 @@ describe('LearningController (интеграционный)', () => {
 
   /** Открывает диалог студента (/start → welcome-экран со штампом). */
   async function openDialog(): Promise<void> {
-    await transport.handleStart(transport.makeBotContext(student.telegramId));
+    await transport.handleStart(
+      transport.makeBotContext(student.user.view().telegramId),
+    );
   }
 
   /** Прямой вызов кода с актуальным штампом открытого экрана. */
   async function callRaw(code: string) {
     return transport.handleCallback(
-      transport.makeBotContext(student.telegramId, {
-        callbackData: stampedCode(transport, student.telegramId, code),
+      transport.makeBotContext(student.user.view().telegramId, {
+        callbackData: stampedCode(
+          transport,
+          student.user.view().telegramId,
+          code,
+        ),
       }),
     );
   }
@@ -198,7 +204,7 @@ describe('LearningController (интеграционный)', () => {
   // ── Политика рендера: «владеешь экраном — edit» (§5.2) ──
 
   test('drill-down внутри nav-tree — edit на месте, без новых сообщений', async () => {
-    const tgId = student.telegramId;
+    const tgId = student.user.view().telegramId;
     transport.reset();
     await openDialog();
 
@@ -241,7 +247,7 @@ describe('LearningController (интеграционный)', () => {
   });
 
   test('смена стори (hub → nav-tree) — send нового + retire хаба с маркером выбора', async () => {
-    const tgId = student.telegramId;
+    const tgId = student.user.view().telegramId;
     transport.reset();
     await openDialog();
 

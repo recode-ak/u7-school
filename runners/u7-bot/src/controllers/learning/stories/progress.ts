@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
@@ -19,7 +19,7 @@ export class ProgressStory extends U7BotUiStory {
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     if (action.startsWith('progress:')) {
@@ -32,7 +32,10 @@ export class ProgressStory extends U7BotUiStory {
     return this.unknownCommand(action, actor, session);
   }
 
-  async #showProgress(actor: User, streamId: string): Promise<DialogResponse> {
+  async #showProgress(
+    actor: U7BotActor,
+    streamId: string,
+  ): Promise<DialogResponse> {
     const studentResult = await getStudent(
       (command) => this.dispatchUc(StreamModuleDef, command, actor),
       actor,

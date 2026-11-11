@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -27,7 +27,7 @@ import {
 describe('CatalogStory (интеграционный)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let guest: User;
+  let guest: U7BotActor;
 
   const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
 
@@ -41,7 +41,7 @@ describe('CatalogStory (интеграционный)', () => {
       streamController,
       schoolController,
     ]);
-    guest = (await app.userFacade.getUserByTelegramId(1001))!;
+    guest = await app.userByTelegramId(1001);
   });
 
   afterAll(async () => {
@@ -49,7 +49,7 @@ describe('CatalogStory (интеграционный)', () => {
   });
 
   test('переключатель «Вкл. завершённые» работает кнопкой с экрана', async () => {
-    const tgId = guest.telegramId;
+    const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
     await transport.handleCallback(
       transport.makeBotContext(tgId, {

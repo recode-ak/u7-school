@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { TEST_SCHOOL, type User } from '@u7-scl/app-legacy/domain';
+import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import {
   type Logger,
   LogLevel,
@@ -15,24 +15,28 @@ import {
   type DialogResponse,
   type MessengerEvent,
 } from '@u7-scl/core/ui';
-import { Role, type UserFacade } from '@u7-scl/user/domain';
+import {
+  GetUserByTelegramIdUcDef,
+  RegisterGuestUcDef,
+} from '@u7-scl/domain/user/contract';
 import { AppController } from '../controllers/app/app-controller';
 import { APP_CODES } from '../shared/app-codes';
+import type { U7BotActor } from './u7-bot-app-meta';
 import { U7BotController } from './u7-bot-controller';
 import { U7BotUiStory } from './u7-bot-ui-story';
 import type { MenuButton } from './u7-menu';
 import { U7BotUiApp } from './ui-app';
+import { userActor } from './user-actor.test-kit';
+import { BOT_ADMIN_UUID, userApiMock, userView } from './user-api.test-kit';
 
 const SCHOOL_URL = 'https://t.me/u7_school_group';
-const BOT_ADMIN_UUID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 
-const actor: User = {
-  uuid: 'user-1',
+const actor = userActor({
+  uuid: '11111111-1111-4111-8111-111111111111',
   name: 'Иван',
   telegramId: 123,
-  roles: [Role.GUEST],
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+  roles: ['GUEST'],
+});
 
 function makeLogger(): Logger {
   return {
@@ -44,15 +48,6 @@ function makeLogger(): Logger {
     getLogLevel: mock(() => 0),
     setSourceLevel: mock(() => {}),
   } as unknown as Logger;
-}
-
-function makeUserFacade(
-  existing?: unknown,
-): UserFacade & { registerGuest: ReturnType<typeof mock> } {
-  return {
-    getUserByTelegramId: mock(async () => existing),
-    registerGuest: mock(async () => ({ uuid: 'new-guest' })),
-  } as unknown as UserFacade & { registerGuest: ReturnType<typeof mock> };
 }
 
 function makeCommand(
@@ -112,7 +107,8 @@ class HelpController extends U7BotController {
 function makeUiApp(
   opts: {
     adminTelegramIds?: number[];
-    userFacade?: UserFacade;
+    /** Модуль `user` на моках; по умолчанию пользователь уже есть. */
+    userApi?: ReturnType<typeof userApiMock>;
     spy?: SpyController;
     extra?: U7BotController[];
   } = {},
@@ -123,18 +119,13 @@ function makeUiApp(
   if (opts.spy) controllers.push(opts.spy);
   if (opts.extra) controllers.push(...opts.extra);
   const uiApp = new U7BotUiApp(controllers);
+  const userApi = opts.userApi ?? userApiMock({ lookup: userView() });
   uiApp.init({
-    appApi: {} as never,
     eventBus: { subscribe: () => () => {} } as never,
     actorResolver: async () => actor,
-    userFacade: opts.userFacade ?? makeUserFacade(),
-    botAdminUser: {
-      uuid: BOT_ADMIN_UUID,
-      name: 'Бот-админ',
-      telegramId: 0,
-      roles: [Role.ADMIN],
-      createdAt: '2026-01-01T00:00',
-    },
+    appApi: userApi.appApi,
+    callers: userApi.callers,
+    botAdminUuid: BOT_ADMIN_UUID,
     school: TEST_SCHOOL,
     adminTelegramIds: opts.adminTelegramIds,
   } as never);
@@ -146,9 +137,9 @@ function makeUiApp(
 describe('U7BotUiApp — /start', () => {
   test('гость регистрируется, диалог reopen меню seq++, welcome из menuButtons', async () => {
     setGlobalLogger(makeLogger());
-    const facade = makeUserFacade(undefined);
+    const api = userApiMock();
     const spy = new SpyController();
-    const uiApp = makeUiApp({ userFacade: facade, spy });
+    const uiApp = makeUiApp({ userApi: api, spy });
     const session = { dialog: { path: 'zz/old', seq: 4 } } as BotSession;
 
     const response = await uiApp.handleCommand(
@@ -157,12 +148,15 @@ describe('U7BotUiApp — /start', () => {
       session,
     );
 
-    expect(facade.registerGuest).toHaveBeenCalledTimes(1);
-    const [tgId, name, nick, actor] = facade.registerGuest.mock
-      .calls[0] as unknown[];
-    expect(tgId).toBe(777);
-    expect(name).toBe('Анна');
-    expect(actor).toMatchObject({ uuid: BOT_ADMIN_UUID });
+    expect(api.commands()).toEqual([
+      GetUserByTelegramIdUcDef.command({ telegramId: 777 }),
+      RegisterGuestUcDef.command({ telegramId: 777, name: 'Анна' }),
+    ]);
+    // регистрирует бот от имени BOT_ADMIN_UUID
+    expect(api.resolve.mock.calls.map((c) => c[0])).toEqual([
+      undefined,
+      BOT_ADMIN_UUID,
+    ]);
 
     // welcome-экран: приветствие + клавиатура menuButtons
     expect(String(response?.screen?.text)).toContain('Привет');
@@ -180,12 +174,12 @@ describe('U7BotUiApp — /start', () => {
 
   test('знакомый пользователь → регистрация не вызывается', async () => {
     setGlobalLogger(makeLogger());
-    const facade = makeUserFacade(actor);
-    const uiApp = makeUiApp({ userFacade: facade });
+    const api = userApiMock({ lookup: userView({ telegramId: 123 }) });
+    const uiApp = makeUiApp({ userApi: api });
 
     await uiApp.handleCommand(makeCommand('start'), 123, {} as BotSession);
 
-    expect(facade.registerGuest).not.toHaveBeenCalled();
+    expect(api.commands().map((c) => c.uc)).toEqual(['getUserByTelegramId']);
   });
 
   test('первый /start при закрытом диалоге → меню с seq=1', async () => {
@@ -463,22 +457,25 @@ describe('U7BotUiApp — системные кнопки', () => {
 /** Контроллер с настраиваемым menuButtons (эмуляция async-проверок). */
 class MenuController extends U7BotController {
   readonly name: string;
-  readonly #impl: (actor: User) => Promise<MenuButton[]>;
+  readonly #impl: (actor: U7BotActor) => Promise<MenuButton[]>;
 
-  constructor(name: string, impl: (actor: User) => Promise<MenuButton[]>) {
+  constructor(
+    name: string,
+    impl: (actor: U7BotActor) => Promise<MenuButton[]>,
+  ) {
     super();
     this.name = name;
     this.#impl = impl;
   }
 
-  override menuButtons(actor: User): Promise<MenuButton[]> {
+  override menuButtons(actor: U7BotActor): Promise<MenuButton[]> {
     return this.#impl(actor);
   }
 }
 
 /** Подкласс-экспонент protected-сбора меню. */
 class ExposedMenuUiApp extends U7BotUiApp {
-  collect(actor: User): Promise<MenuButton[]> {
+  collect(actor: U7BotActor): Promise<MenuButton[]> {
     return this.collectMenuButtons(actor);
   }
 }
@@ -626,8 +623,8 @@ describe('U7BotUiApp — delegate на системные коды', () => {
 describe('U7BotUiApp — handleMessengerEvent', () => {
   test('при member_joined автоматически вызывает ensureRegisteredGuest', async () => {
     setGlobalLogger(makeLogger());
-    const facade = makeUserFacade(undefined);
-    const uiApp = makeUiApp({ userFacade: facade });
+    const api = userApiMock();
+    const uiApp = makeUiApp({ userApi: api });
 
     const event: MessengerEvent = {
       kind: 'member_joined',
@@ -641,19 +638,20 @@ describe('U7BotUiApp — handleMessengerEvent', () => {
 
     await uiApp.handleMessengerEvent(event);
 
-    expect(facade.registerGuest).toHaveBeenCalledTimes(1);
-    expect(facade.registerGuest).toHaveBeenCalledWith(
-      777,
-      'Пётр',
-      'peter',
-      expect.anything(),
-    );
+    expect(api.commands()).toEqual([
+      GetUserByTelegramIdUcDef.command({ telegramId: 777 }),
+      RegisterGuestUcDef.command({
+        telegramId: 777,
+        name: 'Пётр',
+        nick: 'peter',
+      }),
+    ]);
   });
 
   test('при bot_membership с byUser регистрирует добавившего пользователя', async () => {
     setGlobalLogger(makeLogger());
-    const facade = makeUserFacade(undefined);
-    const uiApp = makeUiApp({ userFacade: facade });
+    const api = userApiMock();
+    const uiApp = makeUiApp({ userApi: api });
 
     const event: MessengerEvent = {
       kind: 'bot_membership',
@@ -667,12 +665,9 @@ describe('U7BotUiApp — handleMessengerEvent', () => {
 
     await uiApp.handleMessengerEvent(event);
 
-    expect(facade.registerGuest).toHaveBeenCalledTimes(1);
-    expect(facade.registerGuest).toHaveBeenCalledWith(
-      888,
-      'Админ',
-      undefined,
-      expect.anything(),
-    );
+    expect(api.commands()).toEqual([
+      GetUserByTelegramIdUcDef.command({ telegramId: 888 }),
+      RegisterGuestUcDef.command({ telegramId: 888, name: 'Админ' }),
+    ]);
   });
 });

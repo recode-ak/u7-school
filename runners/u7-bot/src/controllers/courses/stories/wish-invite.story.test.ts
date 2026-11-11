@@ -1,9 +1,10 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { MdText } from '@u7-scl/core/shared';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
-import { dmgDispatch } from '../../courses/stories/course-dmg.test-kit';
+import type { UserView } from '@u7-scl/domain/user/contract';
+import { UserModuleDef } from '@u7-scl/domain/user/contract';
+import { dmgDispatch, refuse } from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import {
   streamNotFound,
@@ -12,7 +13,7 @@ import {
 import { type WishInvitedEvent, WishInviteStory } from './wish-invite.story';
 
 /** Модули приглашения: потоки и курсы. */
-const MODULES = [CourseModuleDef, StreamModuleDef];
+const MODULES = [CourseModuleDef, StreamModuleDef, UserModuleDef];
 
 // ══ Фикстуры ══
 
@@ -35,7 +36,7 @@ const stream = streamView({
 const course = { uuid: COURSE_ID, title: 'JavaScript Основы' };
 const module_ = { uuid: MODULE_ID, title: 'JavaScript Основы', projects: [] };
 
-type TestMentor = Omit<User, 'telegramId'> & {
+type TestMentor = Omit<UserView, 'telegramId'> & {
   telegramId?: number;
   nick?: string;
 };
@@ -45,8 +46,10 @@ const mentor: TestMentor = {
   name: 'Dev',
   nick: 'devnick',
   telegramId: 555,
-  roles: [],
-  createdAt: '2026-01-01T00:00',
+  roles: ['GUEST'],
+  createdAt: 0,
+  updatedAt: 0,
+  version: 0,
 };
 
 /** Цель приглашения: курс (по умолчанию) или модуль. */
@@ -91,7 +94,6 @@ function setupStory(
       keyboard: { rows: Array<Array<{ text: string; code: string }>> };
     };
   }>;
-  execute: ReturnType<typeof mock>;
 } {
   // Явно переданный undefined — «недоступен»; не передан — дефолт
   const localStream = 'stream' in opts ? opts.stream : stream;
@@ -105,27 +107,16 @@ function setupStory(
     };
   }> = [];
 
-  const execute = mock(
-    async (name: string, params?: Record<string, unknown>) => {
-      if (name === 'get-user') {
-        const uuid = params?.uuid as string;
-        if (uuid === MENTOR_ID) return localMentor;
-        return undefined;
-      }
-      return undefined;
-    },
-  );
-
   const story = new WishInviteStory();
   story.init(
     {
       appApi: {
-        execute,
         dispatch: dmgDispatch(
           {
             getStream: () => localStream ?? streamNotFound(),
             getCourse: () => opts.course ?? course,
             getModule: () => opts.module ?? module_,
+            getUser: () => localMentor ?? refuse('USER_NOT_FOUND', 'not_found'),
           },
           MODULES,
         ),
@@ -147,7 +138,7 @@ function setupStory(
     } as never,
   );
 
-  return { story, invites, execute };
+  return { story, invites };
 }
 
 /** Достаёт обработчик подписки по имени события */

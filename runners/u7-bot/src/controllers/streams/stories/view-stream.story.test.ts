@@ -1,5 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
+import { describe, expect, test } from 'bun:test';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
@@ -14,7 +13,10 @@ import {
   GetStreamUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
-import { Role } from '@u7-scl/user/domain';
+import type { UserView } from '@u7-scl/domain/user/contract';
+import { GetUserUcDef, UserModuleDef } from '@u7-scl/domain/user/contract';
+import type { U7BotActor } from '../../../core/u7-bot-app-meta';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { dmgDispatch, refuse } from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { streamView } from './stream-dmg.test-kit';
@@ -27,7 +29,12 @@ import {
 import { ViewStreamStory } from './view-stream.story';
 
 /** Модули, которые вызывает карточка потока: потоки, отзывы и курсы. */
-const MODULES = [CourseModuleDef, StreamModuleDef, PeerReviewModuleDef];
+const MODULES = [
+  CourseModuleDef,
+  StreamModuleDef,
+  PeerReviewModuleDef,
+  UserModuleDef,
+];
 
 const STREAM_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -39,14 +46,13 @@ function makeStream(overrides: Record<string, unknown> = {}) {
   });
 }
 
-function makeActor(roles: Role[] = [Role.GUEST]): User {
-  return {
-    uuid: 'user-1',
+function makeActor(roles: UserView['roles'] = ['GUEST']): U7BotActor {
+  return userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaaaaa8',
     name: 'Гость',
     telegramId: 123,
     roles,
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+  });
 }
 
 describe('ViewStreamStory (S02-S04)', () => {
@@ -74,20 +80,6 @@ describe('ViewStreamStory (S02-S04)', () => {
   const listScopeFacts = () => ({ hasReviews: false, reviewsCount: 0 });
 
   function makeStory(opts: SetupOptions = {}) {
-    const mockAppApi = {
-      execute: mock(async (name: string, params?: Record<string, unknown>) => {
-        if (name === 'get-user')
-          return (
-            opts.users?.[String(params?.uuid)] ?? {
-              uuid: params?.uuid,
-              name: 'Ментор Менторович',
-              roles: [],
-            }
-          );
-        return undefined;
-      }),
-    };
-
     const students = (opts.students ?? []) as LegacyStudent[];
     const stream = opts.stream ?? makeStream();
     const dispatch = dmgDispatch(
@@ -135,16 +127,23 @@ describe('ViewStreamStory (S02-S04)', () => {
         },
         listScopeFacts,
         getStepsByLessons: () => ({}),
+        getUser: (input) => {
+          const { uuid } = input as { uuid: string };
+          return (
+            opts.users?.[uuid] ?? {
+              uuid,
+              name: 'Ментор Менторович',
+              roles: ['GUEST'],
+            }
+          );
+        },
       },
       MODULES,
     );
 
     const story = new ViewStreamStory();
-    story.init({
-      appApi: { ...mockAppApi, dispatch },
-      callers: testCallers,
-    } as never);
-    return { story, mockAppApi, dispatch };
+    story.init({ appApi: { dispatch }, callers: testCallers } as never);
+    return { story, dispatch };
   }
 
   // ── Карточка потока (view) ──
@@ -236,9 +235,9 @@ describe('ViewStreamStory (S02-S04)', () => {
   });
 
   test('MENTOR — владелец потока — НЕ видит lifecycle-кнопок', async () => {
-    const mentor = makeActor([Role.MENTOR]);
+    const mentor = makeActor(['MENTOR']);
     const { story } = makeStory({
-      stream: makeStream({ mentorId: mentor.uuid, canManage: true }),
+      stream: makeStream({ mentorId: mentor.user.uuid, canManage: true }),
     });
     const response = await story.handleCallback(
       `view:${STREAM_ID}`,
@@ -754,15 +753,7 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
             },
             MODULES,
           );
-    const mockAppApi = {
-      dispatch,
-      execute: mock(async (name: string) => {
-        if (name === 'list-stream-students') return [];
-        if (name === 'get-user')
-          return { uuid: 'm1', name: 'Ментор Менторович', roles: [] };
-        return undefined;
-      }),
-    };
+    const mockAppApi = { dispatch };
     const story = new ViewStreamStory();
     story.init({ appApi: mockAppApi, callers: testCallers } as never);
     return { story, mockAppApi };
@@ -848,7 +839,8 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
       GetStreamUcDef.command({ streamId: STREAM_ID }),
       GetStreamMembersUcDef.command({ streamId: STREAM_ID }),
       ListScopeFactsUcDef.command({ scopeId: STREAM_ID }),
-      GetActiveStudentUcDef.command({ userId: rvActor.uuid }),
+      GetUserUcDef.command({ uuid: 'm1-m1-m1' }),
+      GetActiveStudentUcDef.command({ userId: rvActor.user.uuid }),
     ]);
   });
 });

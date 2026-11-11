@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { LearningController } from '@u7-scl/bot/learning/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import {
   GetStudentByUserUcDef,
   StreamModuleDef,
@@ -14,7 +14,6 @@ import {
   pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 
@@ -30,7 +29,7 @@ import { expectOk } from 'dmg-core/testing';
 describe('E2E: Самовыход из учёбы (learning/hub, FR-4/FR-6)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let student: User;
+  let student: U7BotActor;
 
   const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
   const STREAM_GROUP_ID = -1002222222222;
@@ -45,7 +44,7 @@ describe('E2E: Самовыход из учёбы (learning/hub, FR-4/FR-6)', ()
       streamController,
       learningController,
     ]);
-    student = (await app.userFacade.getUserByTelegramId(1003))!;
+    student = await app.userByTelegramId(1003);
   });
 
   afterAll(async () => {
@@ -53,7 +52,7 @@ describe('E2E: Самовыход из учёбы (learning/hub, FR-4/FR-6)', ()
   });
 
   test('сценарий из меню: Моя учёба → Покинуть учёбу → confirm → кик из группы', async () => {
-    const tgId = student.telegramId;
+    const tgId = student.user.view().telegramId;
 
     // 1. /start — главное меню, диалог открыт
     await transport.handleStart(transport.makeBotContext(tgId));
@@ -105,8 +104,8 @@ describe('E2E: Самовыход из учёбы (learning/hub, FR-4/FR-6)', ()
     const studentAfter = expectOk(
       await app.apiApp.dispatch(
         StreamModuleDef,
-        GetStudentByUserUcDef.command({ userId: student.uuid }),
-        new UserCaller(student),
+        GetStudentByUserUcDef.command({ userId: student.user.uuid }),
+        student,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -116,9 +115,7 @@ describe('E2E: Самовыход из учёбы (learning/hub, FR-4/FR-6)', ()
   test('после самовыхода студент теряет кнопку «Моя учёба» в меню (нет живой записи)', async () => {
     // stream роль STUDENT не снимает: меню опирается на живую запись
     // студента (getActiveStudent), а не на роль
-    const fresh = (await app.userFacade.getUserByTelegramId(
-      student.telegramId,
-    ))!;
+    const fresh = await app.userByTelegramId(student.user.view().telegramId);
 
     const menu = await transport.collectMainMenu(fresh);
     expect(menu.some((i) => i.text.includes('Моя учёба'))).toBe(false);

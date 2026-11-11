@@ -1,21 +1,19 @@
 import { describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
-import { Role } from '@u7-scl/user/domain';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { CatalogStory } from './stream-catalog.story';
 import { dmgDispatch } from './stream-dmg.test-kit';
 
 describe('CatalogStory (S01)', () => {
   const session: BotSession = { dialog: { path: 'stream/catalog', seq: 1 } };
-  const guestActor: User = {
-    uuid: 'user-1',
+  const guestActor = userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaaaaa7',
     name: 'Гость',
     telegramId: 123,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
   /** Создаёт сторис с мокнутым appApi */
   function makeStory(streams: unknown[]) {

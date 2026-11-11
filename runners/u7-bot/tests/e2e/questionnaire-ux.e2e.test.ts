@@ -6,11 +6,11 @@ import {
   expect,
   test,
 } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { QuestionnaireEvents } from '@u7-scl/domain/questionnaire/contract';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
@@ -46,7 +46,7 @@ describe('Questionnaire UX (e2e)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
   // fillGuest — сценарий приглашения: GUEST (видит «Записаться» в карточке потока).
-  let fillGuest: User;
+  let fillGuest: U7BotActor;
 
   beforeAll(async () => {
     app = await createTestApp('questionnaire-ux-e2e');
@@ -57,7 +57,7 @@ describe('Questionnaire UX (e2e)', () => {
       new StreamsController(),
       new QuestionnaireController(),
     ]);
-    fillGuest = (await app.userFacade.getUserByTelegramId(1007))!;
+    fillGuest = await app.userByTelegramId(1007);
   });
 
   beforeEach(() => {
@@ -189,7 +189,7 @@ describe('Questionnaire UX (e2e)', () => {
   // ── FR-5 (вариант A): приглашение продолжить — кнопка-мост ──
 
   /** Публикует событие приглашения продолжить (как SweepAbandonedJob на 3ч). */
-  function publishContinueInvite(respondent: User): void {
+  function publishContinueInvite(respondent: U7BotActor): void {
     app.eventBus.publish({
       eventId: crypto.randomUUID(),
       eventName: QuestionnaireEvents.continueInvite.name,
@@ -198,7 +198,7 @@ describe('Questionnaire UX (e2e)', () => {
       aggregateId: QUESTIONNAIRE_COURSE_ID,
       payload: v.parse(QuestionnaireEvents.continueInvite.payload, {
         questionnaireId: QUESTIONNAIRE_COURSE_ID,
-        respondentId: respondent.uuid,
+        respondentId: respondent.user.uuid,
         kind: 'standard',
         ownerInfo: { courseId: QUESTIONNAIRE_COURSE_ID },
       }),
@@ -207,45 +207,59 @@ describe('Questionnaire UX (e2e)', () => {
 
   test('при чужом активном флоу: приглашение без предупреждения → «Продолжить анкету» переключает диалог', async () => {
     // 1. Анкета начата (in_progress)
-    await startQuestionnaire(fillGuest.telegramId);
+    await startQuestionnaire(fillGuest.user.view().telegramId);
 
     // 2. Сессия потеряна (рестарт бота): анкета остаётся in_progress,
     //    пользователь начинает чужой флоу (ввод кодового слова потока)
-    transport.dropSession(fillGuest.telegramId);
-    await transport.handleStart(transport.makeBotContext(fillGuest.telegramId));
-    await transport.handleCallback(
-      transport.makeBotContext(fillGuest.telegramId, {
-        callbackData: pressedCode(transport, fillGuest.telegramId, 'Школа'),
-      }),
+    transport.dropSession(fillGuest.user.view().telegramId);
+    await transport.handleStart(
+      transport.makeBotContext(fillGuest.user.view().telegramId),
     );
     await transport.handleCallback(
-      transport.makeBotContext(fillGuest.telegramId, {
-        callbackData: pressedCode(transport, fillGuest.telegramId, 'Потоки'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(fillGuest.telegramId, {
-        callbackData: pressedCode(transport, fillGuest.telegramId, 'Поток 5'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(fillGuest.telegramId, {
+      transport.makeBotContext(fillGuest.user.view().telegramId, {
         callbackData: pressedCode(
           transport,
-          fillGuest.telegramId,
+          fillGuest.user.view().telegramId,
+          'Школа',
+        ),
+      }),
+    );
+    await transport.handleCallback(
+      transport.makeBotContext(fillGuest.user.view().telegramId, {
+        callbackData: pressedCode(
+          transport,
+          fillGuest.user.view().telegramId,
+          'Потоки',
+        ),
+      }),
+    );
+    await transport.handleCallback(
+      transport.makeBotContext(fillGuest.user.view().telegramId, {
+        callbackData: pressedCode(
+          transport,
+          fillGuest.user.view().telegramId,
+          'Поток 5',
+        ),
+      }),
+    );
+    await transport.handleCallback(
+      transport.makeBotContext(fillGuest.user.view().telegramId, {
+        callbackData: pressedCode(
+          transport,
+          fillGuest.user.view().telegramId,
           'Записаться',
         ),
       }),
     );
-    await waitForScreen(fillGuest.telegramId, 'кодовое слово');
-    const enrollDialog = transport.dialogOf(fillGuest.telegramId);
+    await waitForScreen(fillGuest.user.view().telegramId, 'кодовое слово');
+    const enrollDialog = transport.dialogOf(fillGuest.user.view().telegramId);
     expect(enrollDialog?.input).toBeDefined();
     expect(enrollDialog?.path).not.toBe('questionnaire/fill');
 
     // 3. Приглашение продолжить: кнопка-мост (адрес — профиль респондента)
     publishContinueInvite(fillGuest);
     const invite = await waitForSent(
-      fillGuest.telegramId,
+      fillGuest.user.view().telegramId,
       'Вы начали заполнять анкету',
     );
     expect(invite.text).toContain('продолжим?');
@@ -261,25 +275,25 @@ describe('Questionnaire UX (e2e)', () => {
 
     // 4. Кнопка-мост: диалог switch-ится в fill, прошлый вопрос вернулся
     await transport.handleCallback(
-      transport.makeBotContext(fillGuest.telegramId, {
+      transport.makeBotContext(fillGuest.user.view().telegramId, {
         callbackData: pressedCode(
           transport,
-          fillGuest.telegramId,
+          fillGuest.user.view().telegramId,
           'Продолжить анкету',
         ),
       }),
     );
-    await waitForSent(fillGuest.telegramId, 'Вопрос 1 из 3');
-    expect(transport.dialogOf(fillGuest.telegramId)?.path).toBe(
+    await waitForSent(fillGuest.user.view().telegramId, 'Вопрос 1 из 3');
+    expect(transport.dialogOf(fillGuest.user.view().telegramId)?.path).toBe(
       'questionnaire/fill',
     );
 
     // 5. Анкета заполняется дальше: radio-ответ работает (вопрос → история)
-    await click(fillGuest.telegramId, '2');
-    await waitForSent(fillGuest.telegramId, 'Вопрос 2 из 3');
+    await click(fillGuest.user.view().telegramId, '2');
+    await waitForSent(fillGuest.user.view().telegramId, 'Вопрос 2 из 3');
     const edit = transport.api.editedMessages.find(
       (e) =>
-        e.telegramId === fillGuest.telegramId &&
+        e.telegramId === fillGuest.user.view().telegramId &&
         e.text.includes('Какой у тебя опыт?') &&
         e.text.includes('\\(x\\)'),
     );

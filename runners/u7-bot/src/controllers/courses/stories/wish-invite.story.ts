@@ -1,4 +1,3 @@
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { DomainEvent } from '@u7-scl/core/domain';
 import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import type {
@@ -17,8 +16,10 @@ import {
   StreamModuleDef,
   type StreamView,
 } from '@u7-scl/domain/stream/contract';
+import type { UserView } from '@u7-scl/domain/user/contract';
 import { WishEvents } from '@u7-scl/domain/wish/contract';
 import type * as v from 'valibot';
+import type { U7BotActor } from '../../../core/u7-bot-app-meta';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
 import { Routes } from '../../shared/routes';
 
@@ -31,11 +32,8 @@ export type WishInvitedEvent = DomainEvent & {
   payload: v.InferOutput<typeof WishEvents.invited.payload>;
 };
 
-/** Профиль ментора в карточке приглашения (telegramId может отсутствовать). */
-type Mentor = Omit<User, 'telegramId'> & {
-  telegramId?: number;
-  nick?: string;
-};
+/** Профиль ментора в карточке приглашения. */
+type Mentor = UserView;
 
 /**
  * S11 — приглашение желающему при открытии набора (проактивное, кнопочное).
@@ -198,7 +196,7 @@ export class WishInviteStory extends U7BotUiStory {
 
   async #fetchMentor(uuid: string): Promise<Mentor | undefined> {
     try {
-      return (await this.appApi.execute('get-user', { uuid })) as Mentor;
+      return await this.findUser(uuid);
     } catch {
       return undefined;
     }
@@ -220,7 +218,7 @@ export class WishInviteStory extends U7BotUiStory {
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     return this.unknownCommand(action, actor, session);

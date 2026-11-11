@@ -1,13 +1,12 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import {
   CreateStreamUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
-import { userSubject } from '@u7-scl/domain/user/testing';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -16,7 +15,6 @@ import {
   stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 
@@ -35,8 +33,8 @@ import { expectOk } from 'dmg-core/testing';
 describe('ViewStreamStory (интеграционный)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let guest: User;
-  let mentor: User;
+  let guest: U7BotActor;
+  let mentor: U7BotActor;
 
   const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
   const ENROLLMENT_ID = 'e0e0e0e0-e0e0-e0e0-e0e0-e0e0e0e0e0e0';
@@ -52,8 +50,8 @@ describe('ViewStreamStory (интеграционный)', () => {
       schoolController,
       streamController,
     ]);
-    guest = (await app.userFacade.getUserByTelegramId(1001))!;
-    mentor = (await app.userFacade.getUserByTelegramId(1004))!;
+    guest = await app.userByTelegramId(1001);
+    mentor = await app.userByTelegramId(1004);
   });
 
   afterAll(async () => {
@@ -62,16 +60,18 @@ describe('ViewStreamStory (интеграционный)', () => {
 
   /** Открывает диалог и вызывает сырой код view-stream с актуальным штампом. */
   async function openView(
-    user: User,
+    user: U7BotActor,
     action: 'view' | 'program' | 'details' | 'students',
     streamId: string,
   ) {
-    await transport.handleStart(transport.makeBotContext(user.telegramId));
+    await transport.handleStart(
+      transport.makeBotContext(user.user.view().telegramId),
+    );
     return transport.handleCallback(
-      transport.makeBotContext(user.telegramId, {
+      transport.makeBotContext(user.user.view().telegramId, {
         callbackData: stampedCode(
           transport,
-          user.telegramId,
+          user.user.view().telegramId,
           `stream:view-stream:${action}:${streamId}`,
         ),
       }),
@@ -99,7 +99,7 @@ describe('ViewStreamStory (интеграционный)', () => {
   });
 
   test('сквозной: каталог → карточка → программа → назад', async () => {
-    const tgId = guest.telegramId;
+    const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
     const press = (label: string) =>
       transport.handleCallback(
@@ -127,7 +127,7 @@ describe('ViewStreamStory (интеграционный)', () => {
   });
 
   test('сжатие UUID: кнопка потока сжимается и приходит обратно разжатой', async () => {
-    const tgId = guest.telegramId;
+    const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
     await transport.handleCallback(
       transport.makeBotContext(tgId, {
@@ -185,7 +185,7 @@ describe('ViewStreamStory (интеграционный)', () => {
     expect(viewResp.screen?.text).toContain('Поток 5');
 
     // 2-3. «Записаться» → бот запрашивает кодовое слово (awaitInput)
-    const tgId = guest.telegramId;
+    const tgId = guest.user.view().telegramId;
     const enrollResp = await transport.handleCallback(
       transport.makeBotContext(tgId, {
         callbackData: pressedCode(transport, tgId, 'Записаться'),
@@ -225,14 +225,14 @@ describe('ViewStreamStory (интеграционный)', () => {
           moduleId: 'a1a1a1a1-b1b1-4b1b-8b1b-b1b1b1b1b1b1',
           startDate: Date.UTC(2026, 10, 1),
         }),
-        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
+        mentor,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
 
-    const candidate = (await app.userFacade.getUserByTelegramId(1002))!;
+    const candidate = await app.userByTelegramId(1002);
     await openView(candidate, 'view', stream.streamId);
-    const tgId = candidate.telegramId;
+    const tgId = candidate.user.view().telegramId;
     const response = await transport.handleCallback(
       transport.makeBotContext(tgId, {
         callbackData: pressedCode(transport, tgId, 'Записаться'),

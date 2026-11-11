@@ -87,7 +87,7 @@
 
 - Нет uuid или пользователя → гость; сбой чтения (в т.ч. невалидный uuid) — исключение, не тихий гость.
 - Права как в `../u7-school-v0.2.6` и текущем коде: поток создаёт `MENTOR` (админ без `MENTOR` — нет), управляют ментор потока или админ; модуль — админ или автор модуля; анкеты — админ, респондент, владелец списка. Тексты отказов не меняются.
-- Подменю ментора (`../u7-school-v0.2.6/apps/u7-bot/src/controllers/mentor/stories/submenu.ts`): доступ `MENTOR` или `ADMIN`; кнопка `priority: 30`; отказ «⚠️ У вас нет доступа к инструментам ментора\\.».
+- Подменю ментора (`u7-bot/src/controllers/mentor/stories/submenu.ts` эталона `../u7-school-v0.2.6`): доступ `MENTOR` или `ADMIN`; кнопка `priority: 30`; отказ «⚠️ У вас нет доступа к инструментам ментора\\.».
 - Старт: тексты «BOT_ADMIN_UUID не найден…» / «…нет роли ADMIN», лог «Верификация бота пройдена: ADMIN подтверждён».
 - Тесты состава: `contract.role.test.ts` (удаляется), `domain/src/user/user.module.test.ts`, `modules/user/src/user.module.test.ts` (не меняются), `scripts/domain-check.test.ts` (+ сценарии `testing`), `platform/app/tests/u7-app.test.ts` (`app.callers`).
 

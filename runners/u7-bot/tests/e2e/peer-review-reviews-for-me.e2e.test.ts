@@ -10,7 +10,6 @@ import {
   pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 import { completeStudent } from '../helpers/student-fate';
@@ -97,8 +96,8 @@ describe('E2E peer-review: S08 «Отзывы мне»', () => {
   });
 
   test('отзыв появился → кнопка есть; S08: карточки 1/2 и 2/2, листание, лейблы, возврат', async () => {
-    const marina = (await app.userFacade.getUserByTelegramId(MARINA_TG))!;
-    const mentor = (await app.userFacade.getUserByTelegramId(MENTOR_TG))!;
+    const marina = await app.userByTelegramId(MARINA_TG);
+    const mentor = await app.userByTelegramId(MENTOR_TG);
     const campaign = (await app.reviewCampaignRepo.findBySubject(
       STREAM_ID,
       MARINA_ID,
@@ -109,10 +108,10 @@ describe('E2E peer-review: S08 «Отзывы мне»', () => {
       PeerReviewModuleDef,
       CreateReviewUcDef.command({
         campaignId: campaign.uuid,
-        recipientId: marina.uuid,
+        recipientId: marina.user.uuid,
         text: NEW_REVIEW_TEXT,
       }),
-      new UserCaller(mentor),
+      mentor,
       Trace.fromRequest({ requestId: crypto.randomUUID() }),
     );
     expect(written.ok).toBe(true);
@@ -158,7 +157,7 @@ describe('E2E peer-review: S08 «Отзывы мне»', () => {
   });
 
   test('меню: живых кампаний нет, но отзывы есть → кнопка «💬 Отзывы» видна', async () => {
-    const botAdmin = (await app.userFacade.getUserByTelegramId(BOT_ADMIN_TG))!;
+    const botAdmin = await app.userByTelegramId(BOT_ADMIN_TG);
 
     const menu = await transport.collectMainMenu(botAdmin);
 

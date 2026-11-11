@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import {
   CancelWishUcDef,
   ListUserWishesUcDef,
@@ -7,7 +7,6 @@ import {
 } from '@u7-scl/domain/wish/contract';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 
@@ -19,7 +18,7 @@ import { expectOk } from 'dmg-core/testing';
  */
 describe('Wish: legacy-записи в wishes.json (интеграционный)', () => {
   let app: TestApp;
-  let guest: User;
+  let guest: U7BotActor;
 
   const INSTANT_COURSE_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
   const OTHER_COURSE_ID = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
@@ -35,7 +34,7 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
 
   beforeAll(async () => {
     app = await createTestApp('wish-legacy-records');
-    guest = (await app.userFacade.getUserByTelegramId(1001))!;
+    guest = await app.userByTelegramId(1001);
     wishesPath = `${app.fixtures.dbDir}/wish/wishes.json`;
 
     // Сырые legacy-записи: без updatedAt/version, createdAt — ISO без зоны
@@ -44,14 +43,14 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
       JSON.stringify([
         {
           uuid: TARGET_UUID,
-          userId: guest.uuid,
+          userId: guest.user.uuid,
           target: { kind: 'course', courseId: INSTANT_COURSE_ID },
           status: 'expressed',
           createdAt: CREATED_ISO,
         },
         {
           uuid: NEIGHBOR_UUID,
-          userId: guest.uuid,
+          userId: guest.user.uuid,
           target: { kind: 'course', courseId: OTHER_COURSE_ID },
           status: 'expressed',
           createdAt: NEIGHBOR_ISO,
@@ -75,7 +74,7 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
       await app.apiApp.dispatch(
         WishModuleDef,
         ListUserWishesUcDef.command({}),
-        new UserCaller(guest),
+        guest,
         req(),
       ),
     );
@@ -94,7 +93,7 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
           kind: 'course',
           courseId: INSTANT_COURSE_ID,
         }),
-        new UserCaller(guest),
+        guest,
         req(),
       ),
     );

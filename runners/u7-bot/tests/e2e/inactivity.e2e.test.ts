@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import {
   GetStudentProgressUcDef,
   MarkAbandonedUcDef,
@@ -13,10 +13,8 @@ import {
   pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
-import { UserController } from '../../src/controllers/user/controller';
 
 /**
  * E2E проактивов бездействия и ухода из учёбы (контракт «Диалог и Экран»):
@@ -34,7 +32,7 @@ import { UserController } from '../../src/controllers/user/controller';
  * Канал invite: получателю без открытого диалога
  * открывается экран app/invite (seq=1), кнопки штампуются и валидны.
  * Текстовые уведомления UC (drop-student / mark-abandoned) доставляются
- * через userFacade.notify — механизм покрыт user-notify e2e.
+ * через Def-подписки stories — механизм покрыт user-notify e2e.
  *
  * События job'а публикуются на общую шину (как в бою после inactivity-sweep);
  * кик выполняет InactivityStory через transport.kickFromGroup (ban + unban).
@@ -52,20 +50,19 @@ const GROUP2_ID = '-1002222222222';
 interface Stand {
   app: TestApp;
   transport: TestBotTransport;
-  student: User;
-  mentor: User;
+  student: U7BotActor;
+  mentor: U7BotActor;
 }
 
 /** Стенд e2e: TestApp + TestBotTransport. */
 async function createInactivityStand(tag: string): Promise<Stand> {
   const app = await createTestApp(tag);
   const transport = createTestBotTransport(app, [
+    // Стори бездействия: kick из группы, уведомления о выбытии и завершении
     new StreamsController(),
-    // Доставка user.notified (уведомления UC mark-abandoned)
-    new UserController(),
   ]);
-  const student = (await app.userFacade.getUserByTelegramId(STUDENT_TG))!;
-  const mentor = (await app.userFacade.getUserByTelegramId(MENTOR_TG))!;
+  const student = await app.userByTelegramId(STUDENT_TG);
+  const mentor = await app.userByTelegramId(MENTOR_TG);
 
   return { app, transport, student, mentor };
 }
@@ -298,7 +295,7 @@ describe('E2E: выход из группы и снятие ментором', (
       await app.apiApp.dispatch(
         StreamModuleDef,
         GetStudentProgressUcDef.command({ studentId: STUDENT_F0 }),
-        new UserCaller(mentor),
+        mentor,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     ).student;
@@ -319,7 +316,7 @@ describe('E2E: выход из группы и снятие ментором', (
           streamId: STREAM2_ID,
           cause: 'inactivity',
         }),
-        new UserCaller(mentor),
+        mentor,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -329,7 +326,7 @@ describe('E2E: выход из группы и снятие ментором', (
       await app.apiApp.dispatch(
         StreamModuleDef,
         GetStudentProgressUcDef.command({ studentId: STUDENT_F0 }),
-        new UserCaller(mentor),
+        mentor,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     ).student;

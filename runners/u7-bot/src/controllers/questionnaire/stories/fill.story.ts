@@ -1,4 +1,3 @@
-import type { User } from '@u7-scl/app-legacy/domain';
 import { md } from '@u7-scl/core/shared';
 import {
   type BotSession,
@@ -20,6 +19,7 @@ import {
   QuestionnaireModuleDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import type { DomainError } from 'dmg-core';
+import type { U7BotActor } from '../../../core/u7-bot-app-meta';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
 import type {
@@ -185,7 +185,7 @@ export class FillStory extends QuestionnaireStory {
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     // fill:resume:{courseId}
@@ -240,7 +240,7 @@ export class FillStory extends QuestionnaireStory {
 
   override async handleMessage(
     update: BotUpdate,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     if (update.type !== 'message') {
@@ -267,7 +267,7 @@ export class FillStory extends QuestionnaireStory {
     qId: string,
     type: 'callback' | 'text',
     value: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       QuestionnaireModuleDef,
@@ -282,7 +282,7 @@ export class FillStory extends QuestionnaireStory {
 
   override async handleCommand(
     update: CommandUpdate,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<CommandReaction> {
     if (update.command === 'cancel' && this.isActive(session)) {
@@ -312,10 +312,13 @@ export class FillStory extends QuestionnaireStory {
    * standard-анкету пользователя с ownerInfo.courseId = courseId и
    * рендерит её текущий вопрос с захватом ввода.
    */
-  async #handleResume(courseId: string, actor: User): Promise<DialogResponse> {
+  async #handleResume(
+    courseId: string,
+    actor: U7BotActor,
+  ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       QuestionnaireModuleDef,
-      GetQuestionnairesByUserUcDef.command({ userId: actor.uuid }),
+      GetQuestionnairesByUserUcDef.command({ userId: actor.user.uuid }),
       actor,
     );
     if (!res.ok) return ucErrorScreen(res.error);
@@ -338,7 +341,7 @@ export class FillStory extends QuestionnaireStory {
   }
 
   /** Показ текущего вопроса с захватом ввода (resume/current/возврат). */
-  async #showCurrent(qId: string, actor: User): Promise<DialogResponse> {
+  async #showCurrent(qId: string, actor: U7BotActor): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       QuestionnaireModuleDef,
       GetCurrentUcDef.command({ questionnaireId: qId }),
@@ -362,7 +365,7 @@ export class FillStory extends QuestionnaireStory {
    */
   async #cancelConfirmScreen(
     qId: string,
-    actor: User,
+    actor: U7BotActor,
     onRefusal: (error: DomainError) => DialogResponse,
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
@@ -391,7 +394,7 @@ export class FillStory extends QuestionnaireStory {
   /** Подтверждённое прерывание (S05b): abandon UC + release. */
   async #handleCancelConfirmed(
     qId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       QuestionnaireModuleDef,

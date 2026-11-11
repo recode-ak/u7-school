@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { QuestionnaireEvents } from '@u7-scl/domain/questionnaire/contract';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { FillStory } from './fill.story';
 import { InviteStory } from './invite.story';
 import { initStory, invitedView } from './questionnaire-dmg.test-kit';
@@ -19,7 +19,10 @@ import { initStory, invitedView } from './questionnaire-dmg.test-kit';
 
 // ══ Хелперы ══
 
-const actor = { uuid: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee' } as User;
+const actor = userActor({
+  uuid: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+  roles: ['GUEST'],
+});
 
 /** Сессия активного fill-диалога (ожидание ввода с анкетой). */
 function fillSession(qId = 'q-1'): BotSession {

@@ -1,8 +1,8 @@
-import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
+import { describe, expect, test } from 'bun:test';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
-import { Role } from '@u7-scl/user/domain';
+import type { U7BotActor } from '../../../core/u7-bot-app-meta';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import {
   dmgDispatch,
@@ -20,14 +20,13 @@ import { MonitorStory } from './monitor';
 
 // ══ Фабрики ══
 
-function mentorActor(): User {
-  return {
-    uuid: 'mentor-1',
+function mentorActor(): U7BotActor {
+  return userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaab012',
     name: 'Ментор Тест',
     telegramId: 123,
-    roles: [Role.MENTOR],
-    createdAt: '2026-01-01T00:00',
-  };
+    roles: ['MENTOR'],
+  });
 }
 
 interface TestStudent {
@@ -123,7 +122,7 @@ function makeStream(overrides: Partial<TestStream> = {}): TestStream {
     uuid: '11111111-1111-4111-8111-111111111111',
     title: 'Тестовый Поток',
     status: 'active',
-    mentorId: 'mentor-1',
+    mentorId: '11111111-1111-4111-8111-aaaaaaaab012',
     contentSnapshot: [],
     ...overrides,
   };
@@ -149,16 +148,6 @@ function setupStory(
   } = opts;
 
   const story = new MonitorStory();
-  const appApi = {
-    execute: mock(async (name: string, params?: Record<string, unknown>) => {
-      if (name === 'get-user') {
-        if (userError) throw new Error('User not found');
-        const uuid = params?.uuid as string;
-        return { uuid, name: userNames[uuid] ?? uuid.slice(0, 8) };
-      }
-      return undefined;
-    }),
-  };
   // Поток читает UC getStream; право управления — у ментора потока (как Policy)
   const snapshot = (stream?.contentSnapshot ?? []) as Parameters<
     typeof progressProjection
@@ -173,7 +162,10 @@ function setupStory(
           })
         : streamNotFound(),
     getStreamMembers: () =>
-      streamMembers(stream?.mentorId ?? 'mentor-1', legacy),
+      streamMembers(
+        stream?.mentorId ?? '11111111-1111-4111-8111-aaaaaaaab012',
+        legacy,
+      ),
     getStudentProgress: (input) => {
       const found = legacy.find(
         (s) => s.uuid === (input as { studentId: string }).studentId,
@@ -191,12 +183,19 @@ function setupStory(
       apiErrors.has('complete-student')
         ? refuse('STUDENT_NOT_COMPLETABLE')
         : {},
+    // Имя пользователя — как в шапке карточки (нет профиля — отказ)
+    getUser: (input) => {
+      if (userError) return refuse('USER_NOT_FOUND', 'not_found');
+      const { uuid } = input as { uuid: string };
+      return {
+        uuid,
+        name: userNames[uuid] ?? uuid.slice(0, 8),
+        roles: ['GUEST'],
+      };
+    },
   });
-  story.init({
-    appApi: { ...appApi, dispatch },
-    callers: testCallers,
-  } as never);
-  return { story, appApi, dispatch };
+  story.init({ appApi: { dispatch }, callers: testCallers } as never);
+  return { story, dispatch };
 }
 
 const session: BotSession = {

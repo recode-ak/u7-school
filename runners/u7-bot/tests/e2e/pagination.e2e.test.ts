@@ -6,13 +6,13 @@ import {
   expect,
   test,
 } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
 import { LearningController } from '@u7-scl/bot/learning/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
@@ -45,7 +45,7 @@ interface ScreenRecord {
 describe('E2E: Пагинация (S03 + каталог уровня 3)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let guest: User;
+  let guest: U7BotActor;
 
   beforeAll(async () => {
     app = await createTestApp('e2e-pagination');
@@ -58,12 +58,12 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
       new MentorController(),
     ];
     transport = createTestBotTransport(app, controllers);
-    guest = (await app.userFacade.getUserByTelegramId(1001))!;
+    guest = await app.userByTelegramId(1001);
   });
 
   beforeEach(() => {
     transport.reset();
-    transport.dropSession(guest.telegramId);
+    transport.dropSession(guest.user.view().telegramId);
   });
 
   afterAll(async () => {
@@ -159,7 +159,7 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
   // ── S03: программа длинного потока (drill-down) ──
 
   test('S03: длинная программа — drill-down навигация по проектам', async () => {
-    const tgId = guest.telegramId;
+    const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
     await press(tgId, 'Школа');
     await press(tgId, 'Потоки');
@@ -213,7 +213,7 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
   }
 
   test('Каталог: длинный модуль — сквозной проход проектов до последнего и обратно', async () => {
-    const tgId = guest.telegramId;
+    const tgId = guest.user.view().telegramId;
     await openLongCourse(tgId);
 
     const modulesScreen = await press(tgId, 'Длинный модуль');

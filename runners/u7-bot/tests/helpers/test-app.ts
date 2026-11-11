@@ -3,10 +3,15 @@ import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import type { EventBus } from '@u7-scl/core/domain';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import { ReviewCampaignJsonRepo, ReviewJsonRepo } from '@u7-scl/peer-review';
-import type { UserInProcFacade } from '@u7-scl/user/infra';
 import { WishJsonRepo } from '@u7-scl/wish';
-import type { AnyModuleDef, DomainError, Result } from 'dmg-core';
+import {
+  type AnyModuleDef,
+  type DomainError,
+  type Result,
+  UserCaller,
+} from 'dmg-core';
 import { type JobReport, Trace } from 'dmg-core/app';
+import type { U7BotActor } from '../../src/core/u7-bot-app-meta';
 import type { WorldDefinition } from '../worlds';
 import type { FixturePaths } from './fixture-loader';
 import { cleanupFixtures, loadFixtures } from './fixture-loader';
@@ -29,8 +34,11 @@ export interface TestApp {
     module: M,
     job: M['jobs'][number],
   ): Promise<Result<JobReport, DomainError>>;
-  /** Фасад пользователей (для получения тестовых акторов) */
-  userFacade: UserInProcFacade;
+  /**
+   * Актор бота по telegramId фикстуры: `Caller` — боевым резолвером
+   * приложения; не человек (`UserCaller`) — ошибка теста.
+   */
+  userByTelegramId(telegramId: number): Promise<U7BotActor>;
   /** Пути к временным фикстурам */
   fixtures: FixturePaths;
   /** Удаляет временную директорию с фикстурами */
@@ -72,7 +80,14 @@ export async function createTestApp(
       fixtures.peerReview.campaigns,
     ),
     reviewRepo: new ReviewJsonRepo(fixtures.peerReview.reviews),
-    userFacade: app.userFacade,
+    userByTelegramId: async (telegramId) => {
+      const trace = Trace.fromRequest({ requestId: crypto.randomUUID() });
+      const caller = await app.callers.resolveByTelegramId(telegramId, trace);
+      if (!(caller instanceof UserCaller)) {
+        throw new Error(`Нет пользователя фикстуры tg=${telegramId}`);
+      }
+      return caller;
+    },
     fixtures,
     cleanup: () => cleanupFixtures(fixtures),
   };

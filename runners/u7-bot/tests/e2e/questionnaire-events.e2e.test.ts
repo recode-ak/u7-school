@@ -6,7 +6,7 @@ import {
   expect,
   test,
 } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import {
   LikertQuestionPoolSchema,
   QuestionnaireEvents,
@@ -22,11 +22,12 @@ import type {
   TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import { createTestBotTransport } from '@u7-scl/test-helpers/test-bot-transport';
-import { type OperationRef, SystemCaller, UserCaller } from 'dmg-core';
+import { type OperationRef, SystemCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { QuestionnaireController } from '../../src/controllers/questionnaire/controller';
+import { userActor } from '../../src/core/user-actor.test-kit';
 
 /**
  * E2E пяти Def-событий анкеты в боте (срез UI): подписки `FillStory`
@@ -89,12 +90,12 @@ const likertPool = () =>
 describe('Questionnaire: Def-события в боте (e2e)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let respondent: User;
+  let respondent: U7BotActor;
 
   beforeAll(async () => {
     app = await createTestApp('questionnaire-events-e2e');
     transport = createTestBotTransport(app, [new QuestionnaireController()]);
-    respondent = (await app.userFacade.getUserByTelegramId(1007))!;
+    respondent = await app.userByTelegramId(1007);
   });
 
   beforeEach(() => {
@@ -168,7 +169,7 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
 
   const base = (overrides: Record<string, unknown> = {}) => ({
     questionnaireId: crypto.randomUUID(),
-    respondentId: respondent.uuid,
+    respondentId: respondent.user.uuid,
     kind: 'standard' as const,
     ownerInfo: { courseId: COURSE_ID },
     ...overrides,
@@ -189,14 +190,14 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
           pool: standardPool(),
           ownerInfo: { courseId: COURSE_ID },
         }),
-        new SystemCaller(FROM, new UserCaller(respondent)),
+        new SystemCaller(FROM, respondent),
         trace(),
       ),
     );
 
     const msg = await waitFor('сообщение респонденту', () =>
       transport.api.sentMessages.find(
-        (m) => m.telegramId === respondent.telegramId,
+        (m) => m.telegramId === respondent.user.view().telegramId,
       ),
     );
     expect(actionsOf(msg)).toEqual([
@@ -214,12 +215,15 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
           pool: likertPool(),
           ownerInfo: { context: 'module_completed' },
         }),
-        new SystemCaller(FROM, new UserCaller(respondent)),
+        new SystemCaller(FROM, respondent),
         trace(),
       ),
     );
 
-    const msg = await waitForSent(respondent.telegramId, 'Оцените коллегу');
+    const msg = await waitForSent(
+      respondent.user.view().telegramId,
+      'Оцените коллегу',
+    );
     expect(msg.text).toContain('📋');
     expect(msg.text).toContain('Анкета');
     expect(actionsOf(msg)).toEqual([
@@ -248,7 +252,7 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
         }),
         new SystemCaller(
           FROM,
-          new UserCaller({ ...respondent, uuid: UNKNOWN_USER_ID }),
+          userActor({ uuid: UNKNOWN_USER_ID, roles: ['GUEST'] }),
         ),
         trace(),
       ),
@@ -270,6 +274,6 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
     expect(transport.api.sentMessages).toEqual([]);
 
     publish(QuestionnaireEvents.continueInvite, base());
-    await waitForSent(respondent.telegramId, 'продолжим?');
+    await waitForSent(respondent.user.view().telegramId, 'продолжим?');
   });
 });

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import {
   AppException,
   errAccessDenied,
@@ -26,24 +25,31 @@ import {
   type DialogResponse,
 } from '@u7-scl/core/ui';
 import {
+  GetUsersByIdsUcDef,
+  GetUserUcDef,
+  UserModuleDef,
+  type UserView,
+} from '@u7-scl/domain/user/contract';
+import {
   ListUserWishesUcDef,
   WishModuleDef,
 } from '@u7-scl/domain/wish/contract';
-import { Role } from '@u7-scl/user/domain';
 import {
   type AnyModuleDef,
   type Caller,
   type Command,
   CoreErrors,
   type DomainError,
+  GuestCaller,
   ok,
   type Result,
-  UserCaller,
 } from 'dmg-core';
 import type { Trace } from 'dmg-core/app';
 import { APP_CODES } from '../shared/app-codes';
+import type { U7BotActor } from './u7-bot-app-meta';
 import { U7BotController } from './u7-bot-controller';
 import { U7BotUiStory } from './u7-bot-ui-story';
+import { userActor } from './user-actor.test-kit';
 
 /**
  * Заглушка для доступа к protected методу handleError.
@@ -53,7 +59,7 @@ class TestStory extends U7BotUiStory {
 
   override handleMessage(
     _update: BotUpdate,
-    _actor: User,
+    _actor: U7BotActor,
     _session: BotSession,
   ): Promise<DialogResponse> {
     throw new Error('Method not implemented.');
@@ -67,15 +73,21 @@ class TestStory extends U7BotUiStory {
   testHandleError(err: unknown): DialogResponse {
     return this.handleError(err);
   }
+
+  /** Экспонируем protected unknownCommand (ветка внутри стори). */
+  testUnknownCommand(action: string): DialogResponse {
+    return this.unknownCommand(action, actor, {
+      dialog: { path: 'c/test-handle-error', seq: 1 },
+    });
+  }
 }
 
-const actor: User = {
-  uuid: 'u1',
+const actor = userActor({
+  uuid: '11111111-1111-4111-8111-111111111111',
   name: 'Тест',
   telegramId: 1,
-  roles: [Role.GUEST],
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+  roles: ['GUEST'],
+});
 
 /** Создаёт мок-логгер */
 function createMockLogger(): Logger & { error: ReturnType<typeof mock> } {
@@ -89,6 +101,36 @@ function createMockLogger(): Logger & { error: ReturnType<typeof mock> } {
     setSourceLevel: mock(() => {}),
   } as unknown as Logger & { error: ReturnType<typeof mock> };
 }
+
+describe('U7BotUiStory.unknownCommand — мета warn', () => {
+  test('в мете — проекция актора (kind + subjectId), а не субъект целиком', () => {
+    const warns: Array<Record<string, unknown> | undefined> = [];
+    setGlobalLogger({
+      debug() {},
+      info() {},
+      warn(_source, _message, meta) {
+        warns.push(meta);
+      },
+      error() {},
+      setLogLevel() {},
+      getLogLevel() {
+        return 0;
+      },
+      setSourceLevel() {},
+    });
+    const story = new TestStory();
+
+    story.testUnknownCommand('boom');
+
+    const meta = warns[0];
+    expect(meta?.actor).toEqual({
+      kind: 'user',
+      subjectId: actor.user.uuid,
+    });
+    expect(JSON.stringify(meta).length).toBeLessThan(500);
+    setGlobalLogger(undefined as unknown as Logger);
+  });
+});
 
 describe('U7BotUiStory.handleError', () => {
   let story: TestStory;
@@ -551,7 +593,7 @@ describe('U7BotUiStory.dispatchUc', () => {
     const callers = {
       resolve: async (uuid: string | undefined, trace: Trace) => {
         resolved.push({ uuid, trace });
-        return new UserCaller(actor);
+        throw new Error('callers.resolve не должен вызываться для актора');
       },
     };
     const story = new UcStory();
@@ -574,27 +616,20 @@ describe('U7BotUiStory.dispatchUc', () => {
     if (call === undefined) throw new Error('Команда не отправлена');
     expect(call.module).toBe(WishModuleDef);
     expect(call.command).toEqual(ListUserWishesUcDef.command({}));
-    expect(call.caller).toBeInstanceOf(UserCaller);
-    expect((call.caller as UserCaller<User>).user).toBe(actor);
+    expect(call.caller).toBe(actor);
     expect(call.trace.cause.kind).toBe('request');
     expect(call.trace.channel).toEqual({ name: 'telegram', visitorId: '1' });
   });
 
-  test('Caller — от резолвера приложения: uuid актора и след того же вызова', async () => {
+  test('caller — сам актор: без повторного резолва по uuid', async () => {
     const sent: Sent[] = [];
     const resolved: Resolved[] = [];
     setGlobalLogger(createMockLogger());
 
     await makeStory(sent, ok([]), resolved).list();
 
-    const [call] = sent;
-    const [lookup] = resolved;
-    if (call === undefined || lookup === undefined) {
-      throw new Error('Команда не отправлена или Caller не разрешён');
-    }
-    expect(resolved).toHaveLength(1);
-    expect(lookup.uuid).toBe(actor.uuid);
-    expect(lookup.trace).toBe(call.trace);
+    expect(sent[0]?.caller).toBe(actor);
+    expect(resolved).toHaveLength(0);
   });
 
   test('отказ UC — значение Err, не исключение', async () => {
@@ -654,5 +689,175 @@ describe('U7BotUiStory.dispatchUc', () => {
       'tg:7#1',
       'tg:7#1',
     ]);
+  });
+});
+
+// ── Профили пользователей: findUser / findUsers (Def модуля user) ──
+
+describe('U7BotUiStory.findUser / findUsers', () => {
+  const PROFILE_ID = '22222222-2222-4222-8222-222222222222';
+  const OTHER_ID = '33333333-3333-4333-8333-333333333333';
+
+  const profile = (uuid: string): UserView => ({
+    uuid,
+    name: `Имя ${uuid.slice(0, 2)}`,
+    telegramId: 10,
+    roles: ['GUEST'],
+    createdAt: 1,
+    updatedAt: 1,
+    version: 0,
+  });
+
+  type Sent = { module: AnyModuleDef; command: Command; caller: Caller };
+
+  class ProfileStory extends U7BotUiStory {
+    readonly name = 'profiles';
+
+    override handleCallback(): Promise<DialogResponse> {
+      throw new Error('Не используется');
+    }
+
+    one(uuid: string, as?: U7BotActor) {
+      return this.findUser(uuid, as);
+    }
+
+    many(uuids: string[], as?: U7BotActor) {
+      return this.findUsers(uuids, as);
+    }
+  }
+
+  /** Story над `dispatch`, который отвечает `answer`; резолвер запоминает uuid. */
+  function makeStory(
+    answer: (command: Command) => Result<unknown, DomainError>,
+    sent: Sent[] = [],
+  ) {
+    const story = new ProfileStory();
+    story.init({
+      appApi: {
+        dispatch: async (
+          module: AnyModuleDef,
+          command: Command,
+          caller: Caller,
+        ) => {
+          sent.push({ module, command, caller });
+          return answer(command);
+        },
+      },
+      eventBus: {},
+      actorResolver: async () => actor,
+      callers: {
+        resolve: async () => new GuestCaller(),
+      },
+    } as never);
+    return story;
+  }
+
+  const notFound = () =>
+    ({
+      ok: false,
+      error: { code: 'USER_NOT_FOUND', kind: 'not_found', label: 'Нет' },
+    }) as unknown as Result<unknown, DomainError>;
+
+  const failure = () =>
+    ({
+      ok: false,
+      error: { code: 'CORE_INTERNAL', kind: 'internal', label: 'Сбой' },
+    }) as unknown as Result<unknown, DomainError>;
+
+  test('findUser: найден — профиль, команда getUser модулю user', async () => {
+    setGlobalLogger(createMockLogger());
+    const sent: Sent[] = [];
+    const story = makeStory(() => ok(profile(PROFILE_ID)), sent);
+
+    expect(await story.one(PROFILE_ID, actor)).toEqual(profile(PROFILE_ID));
+
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.module).toBe(UserModuleDef);
+    expect(sent[0]?.command).toEqual(
+      GetUserUcDef.command({ uuid: PROFILE_ID }),
+    );
+  });
+
+  test('findUser: USER_NOT_FOUND — undefined', async () => {
+    setGlobalLogger(createMockLogger());
+    expect(await makeStory(notFound).one(PROFILE_ID, actor)).toBeUndefined();
+  });
+
+  test('findUser: прочий Err — исключение с кодом', async () => {
+    setGlobalLogger(createMockLogger());
+    await expect(makeStory(failure).one(PROFILE_ID, actor)).rejects.toThrow(
+      'CORE_INTERNAL',
+    );
+  });
+
+  test('findUser: исключение dispatch не глотается', async () => {
+    setGlobalLogger(createMockLogger());
+    const story = makeStory(() => {
+      throw new Error('диск недоступен');
+    });
+    await expect(story.one(PROFILE_ID, actor)).rejects.toThrow(
+      'диск недоступен',
+    );
+  });
+
+  test('findUser: с актором caller — сам актор', async () => {
+    setGlobalLogger(createMockLogger());
+    const sent: Sent[] = [];
+    await makeStory(() => ok(profile(PROFILE_ID)), sent).one(PROFILE_ID, actor);
+    expect(sent[0]?.caller).toBe(actor);
+  });
+
+  test('findUser: без актора — GuestCaller', async () => {
+    setGlobalLogger(createMockLogger());
+    const sent: Sent[] = [];
+    await makeStory(() => ok(profile(PROFILE_ID)), sent).one(PROFILE_ID);
+    expect(sent[0]?.caller).toBeInstanceOf(GuestCaller);
+  });
+
+  test('findUsers: команда getUsersByIds, результат — профили', async () => {
+    setGlobalLogger(createMockLogger());
+    const sent: Sent[] = [];
+    const story = makeStory(
+      () => ok([profile(PROFILE_ID), profile(OTHER_ID)]),
+      sent,
+    );
+
+    const users = await story.many([PROFILE_ID, OTHER_ID], actor);
+
+    expect(users.map((u) => u.uuid)).toEqual([PROFILE_ID, OTHER_ID]);
+    expect(sent[0]?.module).toBe(UserModuleDef);
+    expect(sent[0]?.command).toEqual(
+      GetUsersByIdsUcDef.command({ userIds: [PROFILE_ID, OTHER_ID] }),
+    );
+  });
+
+  test('findUsers: пустой вход — [] без вызова dispatch', async () => {
+    setGlobalLogger(createMockLogger());
+    const sent: Sent[] = [];
+    const story = makeStory(() => ok([]), sent);
+
+    expect(await story.many([])).toEqual([]);
+    expect(sent).toHaveLength(0);
+  });
+
+  test('findUsers: Err — исключение с кодом', async () => {
+    setGlobalLogger(createMockLogger());
+    await expect(makeStory(failure).many([PROFILE_ID], actor)).rejects.toThrow(
+      'CORE_INTERNAL',
+    );
+  });
+
+  test('findUsers: без актора — GuestCaller, с актором — сам актор', async () => {
+    setGlobalLogger(createMockLogger());
+    const sent: Sent[] = [];
+    const story = makeStory(() => ok([]), sent);
+    await story.many([PROFILE_ID]);
+    await story.many([PROFILE_ID], actor);
+    expect(sent[0]?.caller).toBeInstanceOf(GuestCaller);
+    expect(sent[1]?.caller).toBe(actor);
+  });
+
+  test('мост subjectOf удалён: актор сам субъект', () => {
+    expect('subjectOf' in U7BotUiStory.prototype).toBe(false);
   });
 });

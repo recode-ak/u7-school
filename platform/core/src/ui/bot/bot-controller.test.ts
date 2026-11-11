@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { GuestCaller, type PersonCaller, UserCaller } from 'dmg-core';
 import {
   errNotFound,
   errValidation,
@@ -20,7 +21,8 @@ import type {
   KeyboardDescription,
 } from './types';
 
-type TestActor = { id: string };
+/** Актор UI — `PersonCaller` (ограничение `TActor` платформы). */
+type TestActor = PersonCaller;
 
 /** Стори с записью вызовов и настраиваемым ответом. */
 class SpyStory extends BotUiStory<AppMeta, TestActor> {
@@ -145,7 +147,7 @@ describe('BotController — handleCommand: pipe стори', () => {
     return new TestController(stories);
   }
 
-  const actor: TestActor = { id: 'u1' };
+  const actor: TestActor = new GuestCaller();
 
   test('все стори pass → контроллер pass', async () => {
     const s1 = new PipeStory('one');
@@ -360,12 +362,12 @@ describe('BotController — маршрутизация callback', () => {
     ctrl.init({
       appApi: {} as never,
       eventBus: {} as never,
-      actorResolver: async () => ({ id: 'u' }),
+      actorResolver: async () => new GuestCaller(),
     } as never);
 
     const response = await ctrl.handleCallback(
       'hub:open',
-      { id: 'u' },
+      new GuestCaller(),
       makeSession(),
     );
 
@@ -384,7 +386,7 @@ describe('BotController — маршрутизация callback', () => {
 
     const response = await ctrl.handleCallback(
       'hub:open',
-      { id: 'u' },
+      new GuestCaller(),
       makeSession(),
     );
 
@@ -399,7 +401,7 @@ describe('BotController — маршрутизация callback', () => {
 
     const response = await ctrl.handleCallback(
       'zzz:act',
-      { id: 'u' },
+      new GuestCaller(),
       makeSession(),
     );
 
@@ -415,7 +417,7 @@ describe('BotController — маршрутизация callback', () => {
 
     const response = await ctrl.handleCallback(
       'hub:open',
-      { id: 'u' },
+      new GuestCaller(),
       makeSession(),
     );
 
@@ -435,12 +437,12 @@ describe('BotController — префиксация ответов handleMessage'
     ctrl.init({
       appApi: {} as never,
       eventBus: {} as never,
-      actorResolver: async () => ({ id: 'u' }),
+      actorResolver: async () => new GuestCaller(),
     } as never);
 
     const response = await ctrl.handleMessage(
       makeUpdate('ответ'),
-      { id: 'u' },
+      new GuestCaller(),
       makeSession(),
     );
 
@@ -467,12 +469,12 @@ describe('BotController — префиксация stop-ответов кома�
     ctrl.init({
       appApi: {} as never,
       eventBus: {} as never,
-      actorResolver: async () => ({ id: 'u' }),
+      actorResolver: async () => new GuestCaller(),
     } as never);
 
     const reaction = await ctrl.handleCommand(
       makeCommandUpdate('cancel'),
-      { id: 'u' },
+      new GuestCaller(),
       makeSession(),
     );
 
@@ -494,7 +496,7 @@ describe('BotController — префиксация delegate', () => {
 
     const response = await ctrl.handleCallback(
       'hub:go',
-      { id: 'u' },
+      new GuestCaller(),
       makeSession(),
     );
 
@@ -507,7 +509,7 @@ describe('BotController — префиксация delegate', () => {
 
     const response = await ctrl.handleCallback(
       'hub:go',
-      { id: 'u' },
+      new GuestCaller(),
       makeSession(),
     );
 
@@ -523,7 +525,7 @@ describe('BotController — handleMessage по dialog.path', () => {
 
     const response = await ctrl.handleMessage(
       makeUpdate(),
-      { id: 'u' },
+      new GuestCaller(),
       makeSession('learn/list', 2),
     );
 
@@ -538,7 +540,7 @@ describe('BotController — handleMessage по dialog.path', () => {
 
     const response = await ctrl.handleMessage(
       makeUpdate(),
-      { id: 'u' },
+      new GuestCaller(),
       makeSession('learn/zzz', 2),
     );
 
@@ -563,7 +565,7 @@ describe('BotController — handleError', () => {
     const ctrl2 = new TestController([story]);
 
     return ctrl2
-      .handleCallback('hub:open', { id: 'u' }, makeSession())
+      .handleCallback('hub:open', new GuestCaller(), makeSession())
       .then((response) => {
         expect(String(response.screen?.text)).toContain('Поле');
       });
@@ -587,7 +589,7 @@ describe('BotController — handleError: errorExitRows (§10.20)', () => {
 
     const response = await ctrl.handleCallback(
       'hub:open',
-      { id: 'u' },
+      new GuestCaller(),
       makeSession(),
     );
 
@@ -606,7 +608,7 @@ describe('BotController — handleError: errorExitRows (§10.20)', () => {
 
     const response = await ctrl.handleCallback(
       'hub:open',
-      { id: 'u' },
+      new GuestCaller(),
       makeSession(),
     );
 
@@ -629,7 +631,11 @@ describe('BotController — утилиты', () => {
     const story = new SpyStory('hub');
     const ctrl = new TestController([story]);
     const session = makeSession('learn/hub', 3);
-    const actor: TestActor = { id: 'u1' };
+    const subject = {
+      uuid: '11111111-1111-4111-8111-111111111111',
+      big: 'x'.repeat(10_000),
+    };
+    const actor: TestActor = new UserCaller(subject);
 
     const response = await ctrl.handleCallback('zzz:q', actor, session);
 
@@ -637,12 +643,13 @@ describe('BotController — утилиты', () => {
     expect(warns.length).toBe(1);
     expect(warns[0]?.[0]).toBe('bot');
     expect(warns[0]?.[1]).toContain('Кнопка без обработчика');
-    // полный код кнопки, какой видел пользователь + контекст диалога и актёр
-    expect(warns[0]?.[2]).toMatchObject({
+    // полный код кнопки, какой видел пользователь + контекст диалога и проекция актёра
+    expect(warns[0]?.[2]).toEqual({
       code: 'learn:zzz:q',
       dialogPath: 'learn/hub',
-      actor: { id: 'u1' },
+      actor: { kind: 'user', subjectId: subject.uuid },
     });
+    expect(JSON.stringify(warns[0]?.[2]).length).toBeLessThan(500);
     setGlobalLogger(undefined as unknown as Logger);
   });
 

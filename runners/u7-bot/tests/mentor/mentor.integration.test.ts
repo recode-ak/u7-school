@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import {
   ListStreamsUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
-import { type Command, UserCaller } from 'dmg-core';
+import type { Command } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import type { TestApp } from '../helpers/test-app';
@@ -18,11 +18,11 @@ import { createTestApp } from '../helpers/test-app';
  */
 describe('MentorController (интеграционный)', () => {
   let app: TestApp;
-  let mentor: User;
+  let mentor: U7BotActor;
 
   beforeAll(async () => {
     app = await createTestApp('mentor-int');
-    mentor = (await app.userFacade.getUserByTelegramId(1004))!;
+    mentor = await app.userByTelegramId(1004);
   });
 
   afterAll(async () => {
@@ -38,7 +38,7 @@ describe('MentorController (интеграционный)', () => {
     app.apiApp.dispatch(
       StreamModuleDef,
       command,
-      new UserCaller(mentor),
+      mentor,
       Trace.fromRequest({ requestId: crypto.randomUUID() }),
     );
 
@@ -46,7 +46,9 @@ describe('MentorController (интеграционный)', () => {
 
   test('ментор видит свои потоки (включая все 4 статуса)', async () => {
     const myStreams = expectOk(
-      await dispatchStream(ListStreamsUcDef.command({ mentorId: mentor.uuid })),
+      await dispatchStream(
+        ListStreamsUcDef.command({ mentorId: mentor.user.uuid }),
+      ),
     );
     expect(myStreams.length).toBeGreaterThanOrEqual(4);
     const statuses = new Set(myStreams.map((s) => s.status));

@@ -6,9 +6,9 @@ import {
   expect,
   test,
 } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import {
   assertDialogResponseMarkdownSafe,
   type DialogResponse,
@@ -40,7 +40,7 @@ import { WishAr } from '@u7-scl/wish/domain';
 describe('Wish: жизненный цикл желания курса (интеграционный)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let guest: User;
+  let guest: U7BotActor;
 
   const INSTANT_COURSE_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
   // Курс мира с опасным названием (MarkdownV2), запись через анкету (малый пул)
@@ -59,7 +59,7 @@ describe('Wish: жизненный цикл желания курса (инте�
     const courseController = new CoursesController();
     const appController = new AppController(SCHOOL_GROUP_URL);
     transport = createTestBotTransport(app, [appController, courseController]);
-    guest = (await app.userFacade.getUserByTelegramId(1001))!;
+    guest = await app.userByTelegramId(1001);
   });
 
   beforeEach(() => {
@@ -74,16 +74,18 @@ describe('Wish: жизненный цикл желания курса (инте�
 
   /** Открывает диалог гостя (актуальный штамп для нажатий). */
   async function openDialog(): Promise<void> {
-    await transport.handleStart(transport.makeBotContext(guest.telegramId));
+    await transport.handleStart(
+      transport.makeBotContext(guest.user.view().telegramId),
+    );
   }
 
   /** Прямой callback «Хочу пройти курс»: сырой код + актуальный штамп. */
   async function apply(courseId: string): Promise<DialogResponse> {
     return transport.handleCallback(
-      transport.makeBotContext(guest.telegramId, {
+      transport.makeBotContext(guest.user.view().telegramId, {
         callbackData: stampedCode(
           transport,
-          guest.telegramId,
+          guest.user.view().telegramId,
           `course:course-catalog:apply:${courseId}`,
         ),
       }),
@@ -98,8 +100,12 @@ describe('Wish: жизненный цикл желания курса (инте�
     const btn = buttonsOf(response).find((b) => b.text === buttonText);
     expect(btn, `Кнопка «${buttonText}» не найдена в ответе`).toBeDefined();
     return transport.handleCallback(
-      transport.makeBotContext(guest.telegramId, {
-        callbackData: stampedCode(transport, guest.telegramId, btn!.code),
+      transport.makeBotContext(guest.user.view().telegramId, {
+        callbackData: stampedCode(
+          transport,
+          guest.user.view().telegramId,
+          btn!.code,
+        ),
       }),
     );
   }
@@ -120,7 +126,7 @@ describe('Wish: жизненный цикл желания курса (инте�
    */
   async function wishStatuses(courseId: string): Promise<WishStatus[]> {
     return (
-      await app.wishRepo.findAllByUserAndTarget(guest.uuid, {
+      await app.wishRepo.findAllByUserAndTarget(guest.user.uuid, {
         kind: 'course',
         courseId,
       })
@@ -129,7 +135,7 @@ describe('Wish: жизненный цикл желания курса (инте�
 
   /** Изоляция тестов: гасит активные желания гостя (cancelled не мешает созданию). */
   async function deactivateWishes(): Promise<void> {
-    for (const ar of await app.wishRepo.findByUser(guest.uuid)) {
+    for (const ar of await app.wishRepo.findByUser(guest.user.uuid)) {
       const w = ar.snapshot();
       if (w.status !== 'cancelled' && w.status !== 'fulfilled') {
         await app.wishRepo.save(WishAr.restore({ ...w, status: 'cancelled' }));
@@ -170,10 +176,10 @@ describe('Wish: жизненный цикл желания курса (инте�
 
     // Курс мира с опасным названием: карточка курса из одного этапа
     const escapingCard = await transport.handleCallback(
-      transport.makeBotContext(guest.telegramId, {
+      transport.makeBotContext(guest.user.view().telegramId, {
         callbackData: stampedCode(
           transport,
-          guest.telegramId,
+          guest.user.view().telegramId,
           `course:course-catalog:course:${ESCAPING_COURSE_ID}`,
         ),
       }),
@@ -183,10 +189,10 @@ describe('Wish: жизненный цикл желания курса (инте�
 
     // Published-курс мира: опасное название в крошках и на кнопке
     const list = await transport.handleCallback(
-      transport.makeBotContext(guest.telegramId, {
+      transport.makeBotContext(guest.user.view().telegramId, {
         callbackData: stampedCode(
           transport,
-          guest.telegramId,
+          guest.user.view().telegramId,
           `course:course-catalog:course:${DANGEROUS_COURSE_ID}`,
         ),
       }),

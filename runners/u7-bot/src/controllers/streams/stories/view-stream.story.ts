@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import {
@@ -58,7 +58,7 @@ export class ViewStreamStory extends U7BotUiStory {
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     const [cmd, streamId] = action.split(':');
@@ -96,7 +96,7 @@ export class ViewStreamStory extends U7BotUiStory {
 
   override async handleMessage(
     update: BotUpdate,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     if (update.type !== 'message') {
@@ -122,7 +122,7 @@ export class ViewStreamStory extends U7BotUiStory {
 
   protected async handleView(
     streamId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const loaded = await this.dispatchUc(
       StreamModuleDef,
@@ -148,10 +148,8 @@ export class ViewStreamStory extends U7BotUiStory {
 
     let mentorName = '';
     try {
-      const mentor = await this.appApi.execute('get-user', {
-        uuid: stream.mentorId,
-      });
-      mentorName = mentor.name;
+      const mentor = await this.findUser(stream.mentorId, actor);
+      mentorName = mentor?.name ?? '';
     } catch {
       // имя ментора не критично для карточки
     }
@@ -198,11 +196,11 @@ export class ViewStreamStory extends U7BotUiStory {
    * Можно ли записаться: нет живой записи студента (учится или зачислен).
    * Ошибки домена карточку не ломают — запись разрешена, отказ даст зачисление.
    */
-  async #canEnroll(actor: User): Promise<boolean> {
+  async #canEnroll(actor: U7BotActor): Promise<boolean> {
     try {
       const active = await this.dispatchUc(
         StreamModuleDef,
-        GetActiveStudentUcDef.command({ userId: actor.uuid }),
+        GetActiveStudentUcDef.command({ userId: actor.user.uuid }),
         actor,
       );
       return !(active.ok && active.value.student);
@@ -212,22 +210,25 @@ export class ViewStreamStory extends U7BotUiStory {
   }
 
   /** Команды модуля `stream` от имени актора — для хелперов списков. */
-  #dispatchFor(actor: User): StreamDispatch {
+  #dispatchFor(actor: U7BotActor): StreamDispatch {
     return (command) => this.dispatchUc(StreamModuleDef, command, actor);
   }
 
   /** Имя пользователя по uuid (fallback — первые 8 символов id). */
-  async #userName(userId: string): Promise<string> {
+  async #userName(userId: string, actor: U7BotActor): Promise<string> {
     try {
-      const user = await this.appApi.execute('get-user', { uuid: userId });
-      return user.name;
+      const user = await this.findUser(userId, actor);
+      return user?.name ?? userId.slice(0, 8);
     } catch {
       return userId.slice(0, 8);
     }
   }
 
   /** Есть ли отзывы по потоку (S07): ошибки домена — карточку не ломают. */
-  async #streamHasReviews(streamId: string, actor: User): Promise<boolean> {
+  async #streamHasReviews(
+    streamId: string,
+    actor: U7BotActor,
+  ): Promise<boolean> {
     try {
       const facts = await this.dispatchUc(
         PeerReviewModuleDef,
@@ -248,7 +249,7 @@ export class ViewStreamStory extends U7BotUiStory {
    */
   protected async handleProgramView(
     actionOrStreamId: string,
-    actor: User,
+    actor: U7BotActor,
     _session: BotSession,
     _pageIndex = 0,
   ): Promise<DialogResponse> {
@@ -383,7 +384,7 @@ export class ViewStreamStory extends U7BotUiStory {
 
   protected async handleDetailsView(
     streamId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const loaded = await this.dispatchUc(
       StreamModuleDef,
@@ -428,7 +429,7 @@ export class ViewStreamStory extends U7BotUiStory {
 
   protected buildKeyboard(
     stream: StreamWithRights,
-    _actor: User,
+    _actor: U7BotActor,
     opts?: { hasReviews?: boolean; canEnroll?: boolean },
   ): KeyboardDescription {
     const canEnroll = opts?.canEnroll ?? false;
@@ -483,7 +484,7 @@ export class ViewStreamStory extends U7BotUiStory {
 
   protected async handleStudentsList(
     streamId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const loaded = await this.dispatchUc(
       StreamModuleDef,
@@ -506,7 +507,7 @@ export class ViewStreamStory extends U7BotUiStory {
 
     const built = await loadStudentRows(
       this.#dispatchFor(actor),
-      (userId) => this.#userName(userId),
+      (userId) => this.#userName(userId, actor),
       members,
       lagMap,
     );
@@ -654,7 +655,7 @@ export class ViewStreamStory extends U7BotUiStory {
    */
   async #handleStudentDetail(
     studentId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const loadedProgress = await this.dispatchUc(
       StreamModuleDef,
@@ -664,7 +665,7 @@ export class ViewStreamStory extends U7BotUiStory {
     if (!loadedProgress.ok) return this.ucErrorNotify(loadedProgress.error);
     const { student, progress } = loadedProgress.value;
 
-    const userName = await this.#userName(student.userId);
+    const userName = await this.#userName(student.userId, actor);
 
     if (!progress) return this.warn(md`Поток не найден`);
 
@@ -804,7 +805,7 @@ export class ViewStreamStory extends U7BotUiStory {
 
   protected async handleEnrollStart(
     streamId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const loaded = await this.dispatchUc(
       StreamModuleDef,
@@ -874,7 +875,7 @@ export class ViewStreamStory extends U7BotUiStory {
 
   async #doEnroll(
     streamId: string,
-    actor: User,
+    actor: U7BotActor,
     enrollmentKey?: string,
     attempts = 0,
   ): Promise<DialogResponse> {

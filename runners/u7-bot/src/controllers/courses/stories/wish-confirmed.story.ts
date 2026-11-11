@@ -1,4 +1,3 @@
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { DomainEvent } from '@u7-scl/core/domain';
 import { md, mdJoin } from '@u7-scl/core/shared';
 import type {
@@ -16,8 +15,10 @@ import {
   ListStreamsUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
+import type { UserView } from '@u7-scl/domain/user/contract';
 import { WishEvents } from '@u7-scl/domain/wish/contract';
 import type * as v from 'valibot';
+import type { U7BotActor } from '../../../core/u7-bot-app-meta';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
 
 /**
@@ -30,10 +31,8 @@ export type WishConfirmedEvent = DomainEvent & {
   payload: v.InferOutput<typeof WishEvents.confirmed.payload>;
 };
 
-/** Профиль ментора (telegramId может отсутствовать). */
-type Mentor = Omit<User, 'telegramId'> & {
-  telegramId?: number;
-};
+/** Профиль ментора. */
+type Mentor = UserView;
 
 /**
  * Уведомление менторам о подтверждённом желании (проактивное).
@@ -118,10 +117,10 @@ export class WishConfirmedStory extends U7BotUiStory {
     return mentors;
   }
 
-  /** appApi.execute, не бросающий исключений (undefined — не найдено). */
+  /** Профиль пользователя; сбой чтения — undefined (уведомление невозможно). */
   async #fetchUser(uuid: string): Promise<Mentor | undefined> {
     try {
-      return (await this.appApi.execute('get-user', { uuid })) as Mentor;
+      return await this.findUser(uuid);
     } catch {
       return undefined;
     }
@@ -149,7 +148,7 @@ export class WishConfirmedStory extends U7BotUiStory {
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     return this.unknownCommand(action, actor, session);

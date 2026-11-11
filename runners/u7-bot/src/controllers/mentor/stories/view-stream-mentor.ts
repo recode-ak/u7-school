@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { md } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -31,7 +31,7 @@ export class ViewStreamMentorStory extends ViewStreamStory {
 
   override async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     const [cmd, streamId] = action.split(':');
@@ -74,7 +74,7 @@ export class ViewStreamMentorStory extends ViewStreamStory {
 
   protected override buildKeyboard(
     stream: StreamWithRights,
-    _actor: User,
+    _actor: U7BotActor,
   ): KeyboardDescription {
     const canEdit = stream.canManage;
     const rows: KbButton[][] = [];
@@ -149,7 +149,7 @@ export class ViewStreamMentorStory extends ViewStreamStory {
    */
   protected override async handleStudentsList(
     streamId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     // Получаем базовый ответ от родителя (текст, статистика, форматирование)
     const baseResponse = await super.handleStudentsList(streamId, actor);
@@ -272,7 +272,7 @@ export class ViewStreamMentorStory extends ViewStreamStory {
 
   async #handleComplete(
     streamId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       StreamModuleDef,
@@ -299,7 +299,10 @@ export class ViewStreamMentorStory extends ViewStreamStory {
     );
   }
 
-  async #handleArchive(streamId: string, actor: User): Promise<DialogResponse> {
+  async #handleArchive(
+    streamId: string,
+    actor: U7BotActor,
+  ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       StreamModuleDef,
       ArchiveStreamUcDef.command({ streamId }),

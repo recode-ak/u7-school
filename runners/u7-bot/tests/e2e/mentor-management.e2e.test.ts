@@ -6,12 +6,12 @@ import {
   expect,
   test,
 } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
 import { LearningController } from '@u7-scl/bot/learning/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -57,7 +57,7 @@ function pressedCodeBy(
 describe('E2E: Ментор — управление студентами', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let mentor: User;
+  let mentor: U7BotActor;
   let tgId: number;
 
   beforeAll(async () => {
@@ -74,8 +74,8 @@ describe('E2E: Ментор — управление студентами', () =
       learningController,
       mentorController,
     ]);
-    mentor = (await app.userFacade.getUserByTelegramId(1004))!;
-    tgId = mentor.telegramId;
+    mentor = await app.userByTelegramId(1004);
+    tgId = mentor.user.view().telegramId;
   });
 
   beforeEach(() => {

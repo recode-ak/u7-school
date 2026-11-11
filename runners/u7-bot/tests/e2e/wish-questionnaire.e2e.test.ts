@@ -6,9 +6,9 @@ import {
   expect,
   test,
 } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import {
   GetQuestionnairesByUserUcDef,
   QuestionnaireModuleDef,
@@ -27,7 +27,6 @@ import {
   stampedCode,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import type { WishStatus } from '@u7-scl/wish/domain';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import { QuestionnaireController } from '../../src/controllers/questionnaire/controller';
@@ -51,11 +50,11 @@ const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 describe('Wish: анкетная ветка (e2e)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let guest: User;
-  let candidate: User;
-  let student: User;
-  let mentor: User;
-  let admin: User;
+  let guest: U7BotActor;
+  let candidate: U7BotActor;
+  let student: U7BotActor;
+  let mentor: U7BotActor;
+  let admin: U7BotActor;
 
   beforeAll(async () => {
     app = await createTestApp('wish-questionnaire-e2e');
@@ -67,11 +66,11 @@ describe('Wish: анкетная ветка (e2e)', () => {
       courseController,
       questionnaireController,
     ]);
-    guest = (await app.userFacade.getUserByTelegramId(1001))!;
-    candidate = (await app.userFacade.getUserByTelegramId(1002))!;
-    student = (await app.userFacade.getUserByTelegramId(1003))!;
-    mentor = (await app.userFacade.getUserByTelegramId(1004))!;
-    admin = (await app.userFacade.getUserByTelegramId(1005))!;
+    guest = await app.userByTelegramId(1001);
+    candidate = await app.userByTelegramId(1002);
+    student = await app.userByTelegramId(1003);
+    mentor = await app.userByTelegramId(1004);
+    admin = await app.userByTelegramId(1005);
   });
 
   beforeEach(() => {
@@ -119,11 +118,11 @@ describe('Wish: анкетная ветка (e2e)', () => {
 
   /** Статус желания пользователя на курс (по репозиторию). */
   async function wishStatuses(
-    user: User,
+    user: U7BotActor,
     courseId: string,
   ): Promise<WishStatus[]> {
     return (
-      await app.wishRepo.findAllByUserAndTarget(user.uuid, {
+      await app.wishRepo.findAllByUserAndTarget(user.user.uuid, {
         kind: 'course',
         courseId,
       })
@@ -132,7 +131,7 @@ describe('Wish: анкетная ветка (e2e)', () => {
 
   /** Ожидает появления статуса желания в репозитории (асинхронная ER). */
   function waitForWishStatus(
-    user: User,
+    user: U7BotActor,
     courseId: string,
     status: WishStatus,
   ): Promise<WishStatus> {
@@ -145,14 +144,14 @@ describe('Wish: анкетная ветка (e2e)', () => {
 
   /** Статус standard-анкеты пользователя по курсу (по UC модуля). */
   async function questionnaireStatus(
-    user: User,
+    user: U7BotActor,
     courseId: string,
   ): Promise<QuestionnaireView['status'] | undefined> {
     const states = expectOk(
       await app.apiApp.dispatch(
         QuestionnaireModuleDef,
-        GetQuestionnairesByUserUcDef.command({ userId: user.uuid }),
-        new UserCaller(user),
+        GetQuestionnairesByUserUcDef.command({ userId: user.user.uuid }),
+        user,
         trace(),
       ),
     );
@@ -250,8 +249,8 @@ describe('Wish: анкетная ветка (e2e)', () => {
 
   test('apply анкетного курса → приглашение «заполнить анкету» → кнопка-мост → Q1, желание pending', async () => {
     const response = await (async () => {
-      await openCatalog(guest.telegramId);
-      return applyQuestionnaire(guest.telegramId);
+      await openCatalog(guest.user.view().telegramId);
+      return applyQuestionnaire(guest.user.view().telegramId);
     })();
     // Анкетная ветка: стори ничего не шлёт — только событие start
     expect(response.screen).toBeUndefined();
@@ -259,7 +258,7 @@ describe('Wish: анкетная ветка (e2e)', () => {
     // Приглашение (вариант A): сервер только зовёт, диалог открывает
     // пользователь
     const invite = await waitForSent(
-      guest.telegramId,
+      guest.user.view().telegramId,
       'Для вас подготовлена анкета',
     );
     expect(invite.text).toContain('заполните, пожалуйста');
@@ -268,17 +267,22 @@ describe('Wish: анкетная ветка (e2e)', () => {
     ]);
 
     // Кнопка-мост открывает анкету: Q1 с подсказкой /cancel
-    const q1 = await startQuestionnaireContinue(guest.telegramId, invite);
+    const q1 = await startQuestionnaireContinue(
+      guest.user.view().telegramId,
+      invite,
+    );
     expect(q1.text).toContain('Какой у тебя опыт?');
     expect(q1.text).toContain('/cancel');
     // single-choice: кнопки-варианты «1»…«3»
     expect(q1.keyboard?.rows[0]?.map((b) => b.text)).toEqual(['1', '2', '3']);
 
     // Сессия: захват ввода fill-диалогом с questionnaireId в контексте
-    expect(transport.dialogOf(guest.telegramId)?.path).toBe(
+    expect(transport.dialogOf(guest.user.view().telegramId)?.path).toBe(
       'questionnaire/fill',
     );
-    expect(fillContext(guest.telegramId)?.questionnaireId).toBeDefined();
+    expect(
+      fillContext(guest.user.view().telegramId)?.questionnaireId,
+    ).toBeDefined();
 
     // Анкетная ветка создаёт желание в pending (по репозиторию)
     expect(
@@ -303,11 +307,14 @@ describe('Wish: анкетная ветка (e2e)', () => {
   // ── B.2: «Вопрос 2 из 3» без подсказки + опасный текст-ответ ──
 
   test('выбор в вопросе 1 → текстовый «Вопрос 2 из 3» без подсказки; опасный ответ не ломает бота', async () => {
-    await startQuestionnaire(candidate.telegramId);
-    const q1 = await waitForSent(candidate.telegramId, 'Вопрос 1 из 3');
+    await startQuestionnaire(candidate.user.view().telegramId);
+    const q1 = await waitForSent(
+      candidate.user.view().telegramId,
+      'Вопрос 1 из 3',
+    );
 
     // Выбор «1» (Новичок) → текстовый вопрос 2
-    const q2 = await click(candidate.telegramId, '2');
+    const q2 = await click(candidate.user.view().telegramId, '2');
     expect(q2.screen?.text).toContain('Вопрос 2 из 3');
     expect(q2.screen?.text).toContain('Опиши свою цель');
     // Подсказка про /cancel — только на первом вопросе
@@ -318,24 +325,24 @@ describe('Wish: анкетная ветка (e2e)', () => {
     // Опасный ответ (спецсимволы MarkdownV2) — бот не падает:
     // битый md не ушёл бы в Telegram (fail-fast транспорта), Q3 не пришёл бы
     const q3 = await transport.handleMessage(
-      transport.makeBotContext(candidate.telegramId, {
+      transport.makeBotContext(candidate.user.view().telegramId, {
         text: 'Да. Конечно - (тест) #1! +2=2',
       }),
     );
     expect(q3.screen?.text).toContain('Вопрос 3 из 3');
     expect(q3.screen?.text).toContain('Как удобнее учиться');
-    await waitForSent(candidate.telegramId, 'Вопрос 3 из 3');
+    await waitForSent(candidate.user.view().telegramId, 'Вопрос 3 из 3');
   });
 
   // ── B.3: /cancel посреди анкеты → abandoned (ER abandon-wish) ──
 
   test('/cancel посреди анкеты → подтверждение → анкета и желание abandoned', async () => {
-    await startQuestionnaire(student.telegramId);
-    await waitForSent(student.telegramId, 'Вопрос 1 из 3');
+    await startQuestionnaire(student.user.view().telegramId);
+    await waitForSent(student.user.view().telegramId, 'Вопрос 1 из 3');
 
     // /cancel при активной анкете — экран подтверждения с cancelWarning из пула
     const confirmScreen = await transport.handleCancel(
-      transport.makeBotContext(student.telegramId),
+      transport.makeBotContext(student.user.view().telegramId),
     );
     expect(confirmScreen.screen?.text).toContain('хотите прервать анкету');
     expect(confirmScreen.screen?.text).toContain('начать заново');
@@ -345,10 +352,12 @@ describe('Wish: анкетная ветка (e2e)', () => {
     );
 
     // «✅ Да, прервать» → abandon UC + ER abandon-wish
-    const done = await click(student.telegramId, '✅ Да, прервать');
+    const done = await click(student.user.view().telegramId, '✅ Да, прервать');
     expect(done.screen?.text).toContain('Анкета прервана');
     expect(done.release).toBe(true);
-    expect(transport.dialogOf(student.telegramId)?.input).toBeUndefined();
+    expect(
+      transport.dialogOf(student.user.view().telegramId)?.input,
+    ).toBeUndefined();
 
     // ER: желание pending → abandoned (по репозиторию)
     expect(
@@ -362,18 +371,18 @@ describe('Wish: анкетная ветка (e2e)', () => {
   // ── B.4: apply при незавершённой анкете → W04 pending → resume ──
 
   test('повторный apply при незавершённой анкете → W04 pending → «Продолжить анкету» → тот же вопрос', async () => {
-    await startQuestionnaire(mentor.telegramId);
-    await waitForSent(mentor.telegramId, 'Вопрос 1 из 3');
+    await startQuestionnaire(mentor.user.view().telegramId);
+    await waitForSent(mentor.user.view().telegramId, 'Вопрос 1 из 3');
 
     // Сессия потеряна (рестарт бота) — повторный apply доходит до UC:
     // активное желание pending → конфликт → W04 «начал заполнять анкету»
-    dropSession(mentor.telegramId);
-    await openCatalog(mentor.telegramId);
+    dropSession(mentor.user.view().telegramId);
+    await openCatalog(mentor.user.view().telegramId);
     const w04 = await transport.handleCallback(
-      transport.makeBotContext(mentor.telegramId, {
+      transport.makeBotContext(mentor.user.view().telegramId, {
         callbackData: stampedCode(
           transport,
-          mentor.telegramId,
+          mentor.user.view().telegramId,
           `course:course-catalog:apply:${QUESTIONNAIRE_COURSE_ID}`,
         ),
       }),
@@ -382,46 +391,54 @@ describe('Wish: анкетная ветка (e2e)', () => {
     expect(w04.screen?.text).not.toContain('⚠️');
 
     // «Продолжить анкету» → resume → текущий (первый) вопрос
-    const resume = await click(mentor.telegramId, 'Продолжить анкету');
+    const resume = await click(
+      mentor.user.view().telegramId,
+      'Продолжить анкету',
+    );
     expect(resume.screen?.text).toContain('Вопрос 1 из 3');
     expect(resume.screen?.text).toContain('Какой у тебя опыт?');
     // Сессия восстановлена: захват ввода fill-диалогом
-    expect(transport.dialogOf(mentor.telegramId)?.path).toBe(
+    expect(transport.dialogOf(mentor.user.view().telegramId)?.path).toBe(
       'questionnaire/fill',
     );
-    expect(fillContext(mentor.telegramId)?.questionnaireId).toBeDefined();
+    expect(
+      fillContext(mentor.user.view().telegramId)?.questionnaireId,
+    ).toBeDefined();
   });
 
   // ── B.5: полное прохождение → completed, желание confirmed (ER) ──
 
   test('полное прохождение: 3 вопроса → completed-экран, желание confirmed', async () => {
     // Вход в анкету: apply → приглашение → Q1
-    await startQuestionnaire(admin.telegramId);
-    const resume = await waitForSent(admin.telegramId, 'Вопрос 1 из 3');
+    await startQuestionnaire(admin.user.view().telegramId);
+    const resume = await waitForSent(
+      admin.user.view().telegramId,
+      'Вопрос 1 из 3',
+    );
 
     // В1 (single choice): «Средний» → В2
-    const q2 = await click(admin.telegramId, '2');
+    const q2 = await click(admin.user.view().telegramId, '2');
     expect(q2.screen?.text).toContain('Вопрос 2 из 3');
 
     // В2 (text): свободный ответ → В3
     const q3 = await transport.handleMessage(
-      transport.makeBotContext(admin.telegramId, {
+      transport.makeBotContext(admin.user.view().telegramId, {
         text: 'Хочу стать разработчиком',
       }),
     );
     expect(q3.screen?.text).toContain('Вопрос 3 из 3');
 
     // В3 (multiple): отметить оба варианта
-    const sel1 = await click(admin.telegramId, '1');
+    const sel1 = await click(admin.user.view().telegramId, '1');
     expect(sel1.screen?.text).toContain('\\[x\\]');
-    const sel2 = await click(admin.telegramId, '2');
+    const sel2 = await click(admin.user.view().telegramId, '2');
     expect(sel2.screen?.text).toContain('\\[x\\]');
     expect(sel2.screen?.keyboard?.rows.flat().some((b) => b.text === '1')).toBe(
       true,
     );
 
     // «Далее -->» → completed: шапка S04 + completionText из пула
-    const done = await click(admin.telegramId, 'Далее -->');
+    const done = await click(admin.user.view().telegramId, 'Далее -->');
     expect(done.screen?.text).toContain('Анкета завершена');
     expect(done.screen?.text).toContain('Желание пройти курс закреплено');
     expect(done.release).toBe(true);

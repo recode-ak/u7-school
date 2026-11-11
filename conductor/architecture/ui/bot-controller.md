@@ -11,9 +11,8 @@
 
 ```
 BotController<TAppMeta, TActor>                        (core, абстрактный)
-  └─ U7BotController                                    (runners/u7-bot) — закрывает U7BotAppMeta + User
+  └─ U7BotController                                    (runners/u7-bot) — закрывает U7BotAppMeta + U7BotActor
        ├─ StreamsController                            (runners/u7-bot) — реестр доменных сторис
-       ├─ UserController                                (runners/u7-bot) — доставка уведомлений (сторя notify)
        ├─ CoursesController                            (runners/u7-bot) — реестр доменных сторис
        ├─ LearningController                           (runners/u7-bot) — реестр доменных сторис
        ├─ MentorController                             (runners/u7-bot) — реестр доменных сторис
@@ -23,9 +22,8 @@ BotController<TAppMeta, TActor>                        (core, абстрактн
 ```
 
 - **`BotController`** (`@u7-scl/core/ui`) — базовый класс. Общие механизмы: префиксация кнопок, диспетчеризация в сторис, `handleError`.
-- **`U7BotController`** (`@u7-scl/bot/u7-bot-controller`) — специализация для U7-бота: фиксирует `TAppMeta = U7BotAppMeta`, `TActor = User`, добавляет систему меню (`menuButtons`, `errorExitRows`), `uiApp`.
+- **`U7BotController`** (`@u7-scl/bot/u7-bot-controller`) — специализация для U7-бота: фиксирует `TAppMeta = U7BotAppMeta`, `TActor = U7BotActor` (`UserCaller`, см. [bot-ui-story.md](./bot-ui-story.md) §2 п. 5), добавляет систему меню (`menuButtons`, `errorExitRows`), `uiApp`.
 - **Доменные контроллеры** (`StreamsController` и т.п.) — тонкий реестр: объявляют `name` и массив `stories`, делегируют всю логику в `U7BotUiStory`.
-- **`UserController`** — доставка уведомлений (сторя `notify`).
 - **`AppController`** (`runners/u7-bot/src/controllers/app/app-controller.ts`) — контроллер уровня приложения для сценариев, не привязанных к доменному модулю: кнопка «Сообщество школы» (сторя `community`), скрытая админ-команда `/log_level` (override `handleCommand`). Системные коды `app:main-menu`/`app:help` перехватывает `U7BotUiApp.dispatch` — до контроллера они не доезжают.
 
 ---

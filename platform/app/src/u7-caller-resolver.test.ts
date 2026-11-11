@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import {
+  GetUserByTelegramIdUcDef,
   GetUserUcDef,
   UserAr,
   UserErrors,
@@ -149,5 +150,67 @@ describe('U7CallerResolver: вызов getUser (подмена api)', () => {
 
     expect(caller).toBeInstanceOf(GuestCaller);
     expect(calls).toHaveLength(0);
+  });
+});
+
+describe('U7CallerResolver.resolveByTelegramId', () => {
+  type Call = Parameters<
+    ConstructorParameters<typeof U7CallerResolver>[0]['dispatch']
+  >;
+
+  const resolverOver = (answer: unknown, calls: Call[] = []) =>
+    new U7CallerResolver({
+      dispatch: async (...args: Call) => {
+        calls.push(args);
+        return answer;
+      },
+    } as never);
+
+  const view = UserAr.restore({
+    uuid: KNOWN.uuid,
+    name: KNOWN.name,
+    telegramId: 1,
+    roles: ['MENTOR'],
+    createdAt: 1,
+    updatedAt: 1,
+    version: 0,
+  }).view();
+
+  test('getUserByTelegramId — от SystemCaller с тем же следом; найден — UserCaller над UserAr', async () => {
+    const calls: Call[] = [];
+    const trace = req();
+
+    const caller = await resolverOver(ok(view), calls).resolveByTelegramId(
+      1,
+      trace,
+    );
+
+    const [call] = calls;
+    if (call === undefined) throw new Error('getUserByTelegramId не вызван');
+    const [module, command, from, passed] = call;
+    expect(module).toBe(UserModuleDef);
+    expect(command).toEqual(
+      GetUserByTelegramIdUcDef.command({ telegramId: 1 }),
+    );
+    expect(from).toBeInstanceOf(SystemCaller);
+    expect(passed).toBe(trace);
+    expect(caller).toBeInstanceOf(UserCaller);
+    expect(caller.subject()?.uuid).toBe(KNOWN.uuid);
+  });
+
+  test('USER_NOT_FOUND — GuestCaller', async () => {
+    const answer = err({ code: UserErrors.NOT_FOUND.code });
+
+    const caller = await resolverOver(answer).resolveByTelegramId(1, req());
+
+    expect(caller).toBeInstanceOf(GuestCaller);
+  });
+
+  test('прочий отказ — исключение с кодом (ERR-01)', async () => {
+    const answer = err({ code: 'UNAUTHORIZED' });
+
+    await expect(
+      resolverOver(answer).resolveByTelegramId(1, req()),
+    ).rejects.toThrow('UNAUTHORIZED');
   });
 });

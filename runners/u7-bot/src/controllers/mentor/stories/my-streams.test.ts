@@ -1,21 +1,20 @@
 import { describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { ListStreamsUcDef } from '@u7-scl/domain/stream/contract';
-import { Role } from '@u7-scl/user/domain';
+import type { U7BotActor } from '../../../core/u7-bot-app-meta';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { dmgDispatch } from '../../streams/stories/stream-dmg.test-kit';
 import { MyStreamsStory } from './my-streams';
 
-function mentorActor(): User {
-  return {
-    uuid: 'mentor-1',
+function mentorActor(): U7BotActor {
+  return userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaab010',
     name: 'Ментор',
     telegramId: 123,
-    roles: [Role.MENTOR],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['MENTOR'],
+  });
 }
 
 const session: BotSession = {
@@ -23,10 +22,30 @@ const session: BotSession = {
 };
 
 const mockStreams = [
-  { uuid: 's1', title: 'Поток 1', status: 'enrollment', mentorId: 'mentor-1' },
-  { uuid: 's2', title: 'Поток 2', status: 'active', mentorId: 'mentor-1' },
-  { uuid: 's3', title: 'Поток 3', status: 'completed', mentorId: 'mentor-1' },
-  { uuid: 's4', title: 'Поток 4', status: 'archived', mentorId: 'mentor-1' },
+  {
+    uuid: 's1',
+    title: 'Поток 1',
+    status: 'enrollment',
+    mentorId: '11111111-1111-4111-8111-aaaaaaaab010',
+  },
+  {
+    uuid: 's2',
+    title: 'Поток 2',
+    status: 'active',
+    mentorId: '11111111-1111-4111-8111-aaaaaaaab010',
+  },
+  {
+    uuid: 's3',
+    title: 'Поток 3',
+    status: 'completed',
+    mentorId: '11111111-1111-4111-8111-aaaaaaaab010',
+  },
+  {
+    uuid: 's4',
+    title: 'Поток 4',
+    status: 'archived',
+    mentorId: '11111111-1111-4111-8111-aaaaaaaab010',
+  },
   {
     uuid: 's5',
     title: 'Чужой поток',
@@ -137,7 +156,9 @@ describe('MyStreamsStory — контракт «Диалог и Экран»', (
     const story = setupStory();
     await story.handleCallback('list', mentorActor(), session);
     expect(story.dispatch.mock.calls.map(([, command]) => command)).toEqual([
-      ListStreamsUcDef.command({ mentorId: 'mentor-1' }),
+      ListStreamsUcDef.command({
+        mentorId: '11111111-1111-4111-8111-aaaaaaaab010',
+      }),
     ]);
   });
 

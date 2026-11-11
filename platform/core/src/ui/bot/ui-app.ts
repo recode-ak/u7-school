@@ -1,3 +1,4 @@
+import type { PersonCaller } from 'dmg-core';
 import { type MdText, mdJoin, mdRaw } from '../../shared/markdown';
 import { UiApp } from '../ui-app';
 import type { BotUiAppResolve } from './app-types';
@@ -26,7 +27,7 @@ import type {
 export abstract class BotUiApp<
     TAppMeta extends
       import('#domain-legacy/types').AppMeta = import('#domain-legacy/types').AppMeta,
-    TActor = unknown,
+    TActor extends PersonCaller = PersonCaller,
     TResolve extends BotUiAppResolve<TAppMeta, TActor> = BotUiAppResolve<
       TAppMeta,
       TActor

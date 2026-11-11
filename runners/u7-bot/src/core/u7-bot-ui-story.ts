@@ -1,4 +1,3 @@
-import type { User } from '@u7-scl/app-legacy/domain';
 import { type MdText, md, mdConcat, mdRaw } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -12,18 +11,27 @@ import type {
   ProactiveSender,
 } from '@u7-scl/core/ui';
 import { BotPaginator, BotUiStory } from '@u7-scl/core/ui';
-import type { UserAr } from '@u7-scl/domain/user/contract';
+import {
+  GetUsersByIdsUcDef,
+  GetUserUcDef,
+  UserErrors,
+  UserModuleDef,
+  type UserView,
+} from '@u7-scl/domain/user/contract';
 import type {
   AnyModuleDef,
   Command,
   OutputOf,
-  ReadonlyAr,
   Result,
   UseCaseErrorOf,
 } from 'dmg-core';
 import { APP_CODES } from '../shared/app-codes';
-import { dispatchModuleUc, requestTrace } from './dispatch-uc';
-import type { U7BotAppMeta, U7BotUiAppResolve } from './u7-bot-app-meta';
+import { dispatchModuleUc } from './dispatch-uc';
+import type {
+  U7BotActor,
+  U7BotAppMeta,
+  U7BotUiAppResolve,
+} from './u7-bot-app-meta';
 import type { MenuButton } from './u7-menu';
 
 /** Опции постраничного экрана (хелпер U7BotUiStory.pagedScreen). */
@@ -108,7 +116,7 @@ interface CachedCards<T> {
  */
 export abstract class U7BotUiStory extends BotUiStory<
   U7BotAppMeta,
-  User,
+  U7BotActor,
   U7BotUiAppResolve
 > {
   /** Имя контроллера-владельца — узнаётся при init. */
@@ -147,7 +155,7 @@ export abstract class U7BotUiStory extends BotUiStory<
    * проверки видимости могут требовать фасадов (ФР-7). Дефолт — стори
    * не участвует в меню.
    */
-  async menuButtons(_actor: User): Promise<MenuButton[]> {
+  async menuButtons(_actor: U7BotActor): Promise<MenuButton[]> {
     return [];
   }
 
@@ -158,8 +166,7 @@ export abstract class U7BotUiStory extends BotUiStory<
    * исполняет `appApi.dispatch` в процессе. Отказ — значение `Err`,
    * story ветвится по `code`, неожиданное — `ucErrorNotify`. След запроса
    * строит `dispatchModuleUc` (`requestTrace`: канал `telegram`, посетитель —
-   * `telegramId`); субъект (`Caller`) по uuid актора даёт резолвер
-   * приложения (`resolve.callers`, D-50).
+   * `telegramId`); актор сам является `Caller` — повторного резолва нет.
    */
   protected async dispatchUc<
     M extends AnyModuleDef,
@@ -167,9 +174,14 @@ export abstract class U7BotUiStory extends BotUiStory<
   >(
     module: M,
     command: Command<D>,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    return this.#dispatchAs(module, command, actor.uuid, actor.telegramId);
+    return this.#dispatchAs(
+      module,
+      command,
+      actor,
+      actor.user.view().telegramId,
+    );
   }
 
   /**
@@ -189,12 +201,12 @@ export abstract class U7BotUiStory extends BotUiStory<
   async #dispatchAs<M extends AnyModuleDef, D extends M['useCases'][number]>(
     module: M,
     command: Command<D>,
-    uuid: string | undefined,
+    caller: U7BotActor | undefined,
     telegramId: number | undefined,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
     return dispatchModuleUc(module, command, {
       resolve: this.resolve,
-      uuid,
+      caller,
       telegramId,
       warn: (message, meta) =>
         this.logger?.warn(this.dialogPath, message, meta),
@@ -202,17 +214,37 @@ export abstract class U7BotUiStory extends BotUiStory<
   }
 
   /**
-   * Субъект команд DMG по актору бота: `Caller` из резолвера приложения, а не
-   * поле `roles` актора (D-69). Гость — без субъекта.
+   * Профиль пользователя (`getUser`): не найден — `undefined`, прочий отказ
+   * — исключение с кодом. Без актора — от гостя (подписки на события).
    */
-  protected async subjectOf(
-    actor: User,
-  ): Promise<ReadonlyAr<UserAr> | undefined> {
-    const trace = requestTrace(actor.telegramId, (message) =>
-      this.logger?.warn(this.dialogPath, message, { op: 'resolveCaller' }),
-    );
-    const caller = await this.resolve.callers.resolve(actor.uuid, trace);
-    return caller.subject();
+  protected async findUser(
+    uuid: string,
+    actor?: U7BotActor,
+  ): Promise<UserView | undefined> {
+    const command = GetUserUcDef.command({ uuid });
+    const result = actor
+      ? await this.dispatchUc(UserModuleDef, command, actor)
+      : await this.dispatchUcAsGuest(UserModuleDef, command);
+    if (result.ok) return result.value;
+    if (result.error.code === UserErrors.NOT_FOUND.code) return undefined;
+    throw new Error(result.error.code);
+  }
+
+  /**
+   * Профили пользователей пачкой (`getUsersByIds`): пустой вход — без
+   * вызова; отказ — исключение с кодом. Без актора — от гостя.
+   */
+  protected async findUsers(
+    uuids: string[],
+    actor?: U7BotActor,
+  ): Promise<UserView[]> {
+    if (uuids.length === 0) return [];
+    const command = GetUsersByIdsUcDef.command({ userIds: uuids });
+    const result = actor
+      ? await this.dispatchUc(UserModuleDef, command, actor)
+      : await this.dispatchUcAsGuest(UserModuleDef, command);
+    if (result.ok) return result.value;
+    throw new Error(result.error.code);
   }
 
   // ── Постраничные экраны (трек pagination) ──
@@ -328,7 +360,7 @@ export abstract class U7BotUiStory extends BotUiStory<
    * механизм принадлежит uiApp). null — справки нет → общий help.
    */
   async contextHelp(
-    _actor: User,
+    _actor: U7BotActor,
     _session: BotSession,
   ): Promise<MdText | null> {
     return null;
@@ -336,7 +368,7 @@ export abstract class U7BotUiStory extends BotUiStory<
 
   override async handleCommand(
     update: CommandUpdate,
-    _actor: User,
+    _actor: U7BotActor,
     session: BotSession,
   ): Promise<CommandReaction> {
     switch (update.command) {

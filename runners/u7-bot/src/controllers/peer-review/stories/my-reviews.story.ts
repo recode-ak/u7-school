@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import { type MdText, md, mdJoin } from '@u7-scl/core/shared';
@@ -70,7 +70,7 @@ export class MyReviewsStory extends U7BotUiStory {
   #cacheKey = 'my-reviews:hub';
 
   /** Живые кампании актора — UC DMG `getMyCampaigns` (отдаёт только живые). */
-  async #liveCardsOf(actor: User): Promise<MyCampaignCard[]> {
+  async #liveCardsOf(actor: U7BotActor): Promise<MyCampaignCard[]> {
     const res = await this.dispatchUc(
       PeerReviewModuleDef,
       GetMyCampaignsUcDef.command({}),
@@ -81,7 +81,7 @@ export class MyReviewsStory extends U7BotUiStory {
   }
 
   /** Число отзывов мне — UC DMG `listMyReviews` (адресат — актор). */
-  async #incomingCountOf(actor: User): Promise<number> {
+  async #incomingCountOf(actor: U7BotActor): Promise<number> {
     const res = await this.dispatchUc(
       PeerReviewModuleDef,
       ListMyReviewsUcDef.command({}),
@@ -93,7 +93,7 @@ export class MyReviewsStory extends U7BotUiStory {
 
   // ── Главное меню (декларативная кнопка) ──
 
-  override async menuButtons(actor: User): Promise<MenuButton[]> {
+  override async menuButtons(actor: U7BotActor): Promise<MenuButton[]> {
     const [cards, incoming] = await Promise.all([
       this.#liveCardsOf(actor),
       this.#incomingCountOf(actor),
@@ -114,7 +114,7 @@ export class MyReviewsStory extends U7BotUiStory {
 
   override async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     const [cmd, pageSeg] = action.split(':');
@@ -135,7 +135,7 @@ export class MyReviewsStory extends U7BotUiStory {
    * свежим).
    */
   async showHub(
-    actor: User,
+    actor: U7BotActor,
     session?: BotSession,
     pageIndex = 0,
   ): Promise<DialogResponse> {
@@ -200,7 +200,7 @@ export class MyReviewsStory extends U7BotUiStory {
       pageIndex,
       cbPage: (n) => this.cb('hub-page', String(n)),
       session: session ?? {},
-      tgId: actor.telegramId,
+      tgId: actor.user.view().telegramId,
     });
   }
 
@@ -287,7 +287,7 @@ export class MyReviewsStory extends U7BotUiStory {
   /** Названия потоков по scopeId карточек. */
   async #titlesOf(
     scopeIds: string[],
-    actor: User,
+    actor: U7BotActor,
   ): Promise<Map<string, string>> {
     const titles = new Map<string, string>();
     for (const scopeId of scopeIds) {
@@ -303,14 +303,13 @@ export class MyReviewsStory extends U7BotUiStory {
   }
 
   /** Имена субъектов (для менторских карточек) — один batch-запрос. */
-  async #namesOf(userIds: string[], actor: User): Promise<Map<string, string>> {
+  async #namesOf(
+    userIds: string[],
+    actor: U7BotActor,
+  ): Promise<Map<string, string>> {
     const names = new Map<string, string>();
     if (userIds.length === 0) return names;
-    const users = await this.appApi.execute(
-      'get-users-by-ids',
-      { userIds },
-      actor,
-    );
+    const users = await this.findUsers(userIds, actor);
     for (const user of users) {
       names.set(user.uuid, user.name);
     }

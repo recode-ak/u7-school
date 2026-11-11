@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import { md } from '@u7-scl/core/shared';
@@ -26,13 +26,13 @@ export class CommunityStory extends U7BotUiStory {
   /**
    * Кнопка из главного меню убрана (FR-7: вход через карточку школы SH01).
    */
-  override async menuButtons(_actor: User): Promise<MenuButton[]> {
+  override async menuButtons(_actor: U7BotActor): Promise<MenuButton[]> {
     return [];
   }
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     return this.unknownCommand(action, actor, session);
@@ -40,7 +40,7 @@ export class CommunityStory extends U7BotUiStory {
 
   override async handleMessage(
     _update: BotUpdate,
-    _actor: User,
+    _actor: U7BotActor,
     _session: BotSession,
   ): Promise<DialogResponse> {
     return this.screen(md`⚠️ Неизвестное сообщение`);

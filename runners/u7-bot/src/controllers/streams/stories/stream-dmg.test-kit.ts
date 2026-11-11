@@ -1,6 +1,7 @@
 import { expect, mock } from 'bun:test';
 import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { type Command, ok } from 'dmg-core';
 
 /** Отказ UC в моке: ответ-значение, которое `dmgDispatch` превращает в `err`. */
@@ -36,7 +37,11 @@ export type UcAnswers = Record<
  */
 export function dmgDispatch(
   answers: UcAnswers,
-  modules: readonly unknown[] = [StreamModuleDef, PeerReviewModuleDef],
+  modules: readonly unknown[] = [
+    StreamModuleDef,
+    PeerReviewModuleDef,
+    UserModuleDef,
+  ],
 ) {
   return mock(
     async (

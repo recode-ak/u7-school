@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { DomainEvent } from '@u7-scl/core/domain';
 import { type MdText, md } from '@u7-scl/core/shared';
@@ -48,9 +48,7 @@ export class ReviewNotifyStory extends U7BotUiStory {
   async #handleCreated(event: ReviewCreatedEvent): Promise<void> {
     const { authorId, recipientId, direction, reviewId } = event.payload;
 
-    const users: Profile[] = await this.appApi.execute('get-users-by-ids', {
-      userIds: [authorId, recipientId],
-    });
+    const users: Profile[] = await this.findUsers([authorId, recipientId]);
     const author = users.find((u) => u.uuid === authorId);
     const telegramId = users.find((u) => u.uuid === recipientId)?.telegramId;
 
@@ -86,7 +84,7 @@ export class ReviewNotifyStory extends U7BotUiStory {
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     return this.unknownCommand(action, actor, session);

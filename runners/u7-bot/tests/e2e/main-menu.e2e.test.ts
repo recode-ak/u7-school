@@ -6,12 +6,12 @@ import {
   expect,
   test,
 } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
 import { LearningController } from '@u7-scl/bot/learning/controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import type { DialogResponse } from '@u7-scl/core/ui';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
@@ -59,9 +59,9 @@ function pressedCode(
 describe('Главное меню (интеграционные)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let guest: User;
-  let student: User;
-  let mentor: User;
+  let guest: U7BotActor;
+  let student: U7BotActor;
+  let mentor: U7BotActor;
 
   beforeAll(async () => {
     app = await createTestApp('main-menu-int');
@@ -77,9 +77,9 @@ describe('Главное меню (интеграционные)', () => {
       courseController,
       learningController,
     ]);
-    guest = (await app.userFacade.getUserByTelegramId(1001))!;
-    student = (await app.userFacade.getUserByTelegramId(1003))!;
-    mentor = (await app.userFacade.getUserByTelegramId(1004))!;
+    guest = await app.userByTelegramId(1001);
+    student = await app.userByTelegramId(1003);
+    mentor = await app.userByTelegramId(1004);
   });
 
   beforeEach(() => {
@@ -149,7 +149,7 @@ describe('Главное меню (интеграционные)', () => {
 
   test('/start возвращает приветствие с клавиатурой', async () => {
     const response = await transport.handleStart(
-      transport.makeBotContext(guest.telegramId),
+      transport.makeBotContext(guest.user.view().telegramId),
     );
     expect(response.screen?.text).toContain('Привет');
     expect(response.screen?.text).toContain('u7 schools');
@@ -160,7 +160,7 @@ describe('Главное меню (интеграционные)', () => {
 
   test('/start для ментора', async () => {
     const response = await transport.handleStart(
-      transport.makeBotContext(mentor.telegramId),
+      transport.makeBotContext(mentor.user.view().telegramId),
     );
     expect(response.screen?.text).toContain('Привет');
     expect(response.screen?.keyboard).toBeDefined();
@@ -170,7 +170,7 @@ describe('Главное меню (интеграционные)', () => {
 
   test('/help возвращает инструкцию и описания menuButtons', async () => {
     const response = await transport.handleHelp(
-      transport.makeBotContext(guest.telegramId),
+      transport.makeBotContext(guest.user.view().telegramId),
     );
     const text = response.notify?.text ?? '';
     expect(text).toContain('Как со мной работать?');
@@ -184,7 +184,7 @@ describe('Главное меню (интеграционные)', () => {
 
   test('/help для студента: список menuButtons', async () => {
     const response = await transport.handleHelp(
-      transport.makeBotContext(student.telegramId),
+      transport.makeBotContext(student.user.view().telegramId),
     );
     const text = response.notify?.text ?? '';
     // Справочник собирается из menuButtons актора: сюда входят
@@ -198,7 +198,7 @@ describe('Главное меню (интеграционные)', () => {
   // ── app:main-menu кнопкой (отштампованный код из Api-записи) ──
 
   test('app:main-menu из каталога возвращает короткое меню без приветствия', async () => {
-    const tgId = guest.telegramId;
+    const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
     // Реальный путь: меню → школа → каталог потоков → назад в школу → Главное меню
     await transport.handleCallback(
@@ -232,7 +232,7 @@ describe('Главное меню (интеграционные)', () => {
   // ── app:help кнопкой ──
 
   test('app:help возвращает инструкцию (реплика, без экрана)', async () => {
-    const tgId = guest.telegramId;
+    const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
     const response = await transport.handleCallback(
       transport.makeBotContext(tgId, {
@@ -247,7 +247,7 @@ describe('Главное меню (интеграционные)', () => {
   // ── Сырой код без штампа transport не пропускает (ФР-3, И2) ──
 
   test('нажатие сырым кодом (без штампа) не доезжает до uiApp', async () => {
-    const tgId = guest.telegramId;
+    const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
     const before = transport.api.sentMessages.length;
     const response = await transport.handleCallback(
@@ -275,7 +275,7 @@ describe('Главное меню (интеграционные)', () => {
 describe('E2E: Студент — «Моя учёба» (learning)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let student: User;
+  let student: U7BotActor;
 
   beforeAll(async () => {
     app = await createTestApp('student-my-study-e2e');
@@ -287,7 +287,7 @@ describe('E2E: Студент — «Моя учёба» (learning)', () => {
       streamController,
       learningController,
     ]);
-    student = (await app.userFacade.getUserByTelegramId(1003))!;
+    student = await app.userByTelegramId(1003);
   });
 
   beforeEach(() => {
@@ -300,10 +300,16 @@ describe('E2E: Студент — «Моя учёба» (learning)', () => {
 
   /** Открывает хаб студента: /start → «🎓 Моя учёба». */
   async function openHub(): Promise<DialogResponse> {
-    await transport.handleStart(transport.makeBotContext(student.telegramId));
+    await transport.handleStart(
+      transport.makeBotContext(student.user.view().telegramId),
+    );
     return transport.handleCallback(
-      transport.makeBotContext(student.telegramId, {
-        callbackData: pressedCode(transport, student.telegramId, 'Моя учёба'),
+      transport.makeBotContext(student.user.view().telegramId, {
+        callbackData: pressedCode(
+          transport,
+          student.user.view().telegramId,
+          'Моя учёба',
+        ),
       }),
     );
   }
@@ -320,7 +326,7 @@ describe('E2E: Студент — «Моя учёба» (learning)', () => {
   });
 
   test('студент: хаб → Начать учёбу → просмотр шага → Выполнено', async () => {
-    const tgId = student.telegramId;
+    const tgId = student.user.view().telegramId;
     const hubResp = await openHub();
 
     // 2. Нажимаем «▶️ Начать учёбу»
@@ -354,7 +360,7 @@ describe('E2E: Студент — «Моя учёба» (learning)', () => {
   });
 
   test('студент: хаб → Программа модуля → проект → урок → шаги', async () => {
-    const tgId = student.telegramId;
+    const tgId = student.user.view().telegramId;
     const hubResp = await openHub();
 
     // 2. Нажимаем «📖 Программа модуля»
@@ -385,7 +391,7 @@ describe('E2E: Студент — «Моя учёба» (learning)', () => {
   });
 
   test('студент: хаб → Мой прогресс → детализация метрик студента', async () => {
-    const tgId = student.telegramId;
+    const tgId = student.user.view().telegramId;
     const _hubResp = await openHub();
 
     // 2. Нажимаем «📊 Мой прогресс»
@@ -411,7 +417,7 @@ describe('E2E: Студент — «Моя учёба» (learning)', () => {
   });
 
   test('студент: хаб → Мой прогресс → назад к учёбе', async () => {
-    const tgId = student.telegramId;
+    const tgId = student.user.view().telegramId;
     await openHub();
 
     const progressResp = await transport.handleCallback(

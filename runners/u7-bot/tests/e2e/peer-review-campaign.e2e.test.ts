@@ -9,7 +9,6 @@ import {
   pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 import {
@@ -242,7 +241,7 @@ describe('E2E peer-review: судьба субъекта — написание'
     );
     expect(String(s06b.screen?.text)).toContain('О ком расскажешь?');
 
-    const subject = (await app.userFacade.getUserByTelegramId(SUBJECT_TG))!;
+    const subject = await app.userByTelegramId(SUBJECT_TG);
     const campaign = await app.reviewCampaignRepo.findBySubject(
       STREAM_ID,
       SUBJECT_USER_ID,
@@ -253,7 +252,7 @@ describe('E2E peer-review: судьба субъекта — написание'
         campaignId: campaign!.uuid,
         recipientId: MENTOR_USER_ID,
       }),
-      new UserCaller(subject),
+      subject,
       Trace.fromRequest({ requestId: crypto.randomUUID() }),
     );
     if (!res.ok) throw new Error(res.error.code);

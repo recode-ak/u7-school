@@ -1,11 +1,12 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { assertMarkdownV2Safe, type MdText } from '@u7-scl/core/shared';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import { UserModuleDef, type UserView } from '@u7-scl/domain/user/contract';
 import {
   courseNotFound,
   dmgDispatch,
+  refuse,
 } from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import {
@@ -14,7 +15,7 @@ import {
 } from './wish-confirmed.story';
 
 /** Модули рассылки: потоки и курсы. */
-const MODULES = [CourseModuleDef, StreamModuleDef];
+const MODULES = [CourseModuleDef, StreamModuleDef, UserModuleDef];
 
 // ══ Фикстуры ══
 
@@ -24,13 +25,20 @@ const USER_ID = '11111111-1111-8111-8111-111111111111';
 const MENTOR_1 = '66666666-6666-8666-8666-666666666661';
 const MENTOR_2 = '66666666-6666-8666-8666-666666666662';
 
-const user: User = {
+const profile = (overrides: Partial<UserView>): UserView => ({
   uuid: USER_ID,
   name: 'Иван',
   telegramId: 1001,
-  roles: [],
-  createdAt: '2026-09-01T00:00',
-};
+  roles: ['GUEST'],
+  createdAt: 1,
+  updatedAt: 1,
+  version: 0,
+  ...overrides,
+});
+
+const user = profile({});
+
+const userNotFound = () => refuse('USER_NOT_FOUND', 'not_found');
 
 const course = { uuid: COURSE_ID, title: 'Fullstack JS' };
 
@@ -54,7 +62,9 @@ function makeConfirmedEvent(): WishConfirmedEvent {
 
 // ══ Сборка стори с моками ══
 
-function setupStory(opts: { user?: User; course?: { title: string } } = {}): {
+function setupStory(
+  opts: { user?: UserView; course?: { title: string } } = {},
+): {
   story: WishConfirmedStory;
   notifies: Array<{ telegramId: number; payload: { text: MdText } }>;
 } {
@@ -67,39 +77,25 @@ function setupStory(opts: { user?: User; course?: { title: string } } = {}): {
   const localUser = 'user' in opts ? opts.user : user;
   const localCourse = 'course' in opts ? opts.course : course;
 
-  const execute = mock(
-    async (name: string, params?: Record<string, unknown>) => {
-      if (name === 'get-user') {
-        const uuid = params?.uuid as string;
-        if (uuid === USER_ID) return localUser;
-        if (uuid === MENTOR_1)
-          return {
-            uuid: MENTOR_1,
-            name: 'Ментор 1',
-            telegramId: 2001,
-            roles: [],
-            createdAt: '2026-08-01T00:00',
-          };
-        if (uuid === MENTOR_2)
-          return {
-            uuid: MENTOR_2,
-            name: 'Ментор 2',
-            roles: [],
-            createdAt: '2026-08-01T00:00',
-          }; // без telegramId
-        return undefined;
-      }
-      return undefined;
-    },
-  );
+  /** Ответ `getUser`: профиль, или `USER_NOT_FOUND`, если профиля нет. */
+  const getUser = (input: unknown) => {
+    const uuid = (input as { uuid: string }).uuid;
+    const found =
+      uuid === USER_ID
+        ? localUser
+        : uuid === MENTOR_1
+          ? profile({ uuid: MENTOR_1, name: 'Ментор 1', telegramId: 2001 })
+          : undefined; // MENTOR_2 — профиль недоступен
+    return found ?? userNotFound();
+  };
 
   const story = new WishConfirmedStory();
   story.init(
     {
       appApi: {
-        execute,
         dispatch: dmgDispatch(
           {
+            getUser,
             listStreams: () => streams,
             getCourse: () => localCourse ?? courseNotFound(),
             getCourseByModule: (input) => {
@@ -150,7 +146,7 @@ describe('WishConfirmedStory', () => {
 
     await handle(makeConfirmedEvent() as never);
 
-    // Ментор 2 без telegramId, автор-ментор исключается, дубль MENTOR_1 — один
+    // Профиль ментора 2 недоступен, автор-ментор исключается, дубль MENTOR_1 — один
     expect(notifies).toHaveLength(1);
     expect(notifies[0]!.telegramId).toBe(2001);
     assertMarkdownV2Safe(notifies[0]!.payload.text);

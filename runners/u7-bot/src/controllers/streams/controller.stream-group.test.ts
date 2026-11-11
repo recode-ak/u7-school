@@ -4,36 +4,46 @@ import {
   GetStreamMembersUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
-import { Role } from '@u7-scl/user/domain';
+import {
+  GetUserByTelegramIdUcDef,
+  GetUserUcDef,
+} from '@u7-scl/domain/user/contract';
 import { ok, UserCaller } from 'dmg-core';
 import { StreamsController } from './controller';
 
 // Перенос `controller.test.ts` (handleMessengerEvent, FR-7) на UC DMG
 // (поток по группе — `findStreamByTelegramGroup`, студенты —
 // `getStreamMembers` (`inProgress` вместо `new StudentAr` в контроллере).
-// Тексты уведомлений ментору — как в v0.2.6. Ментор и пользователь — по-прежнему
-// legacy-фасады (`get-user`, `getUserByTelegramId`).
+// Тексты уведомлений ментору — как в v0.2.6. Ментор и пользователь — UC DMG
+// модуля `user` (`getUser`, `getUserByTelegramId`).
 
 const GROUP = '-1001234567890';
+const MENTOR_ID = '11111111-1111-4111-8111-aaaaaaaaaaa6';
+const STUDENT_ID = '33333333-3333-4333-8333-333333333333';
 const STREAM = {
   uuid: '11111111-1111-4111-8111-111111111111',
   title: 'JavaScript с нуля',
   telegramGroupId: GROUP,
-  mentorId: 'mentor-1',
+  mentorId: MENTOR_ID,
 };
 const mentor = {
-  uuid: 'mentor-1',
+  uuid: MENTOR_ID,
   name: 'Ментор Иван',
   telegramId: 999999,
-  roles: [Role.MENTOR],
+  roles: ['MENTOR'],
 };
 const studentUser = {
-  uuid: 'student-1',
+  uuid: STUDENT_ID,
   name: 'Петр Студентов',
   telegramId: 777,
-  roles: [Role.GUEST],
-  createdAt: '2026-01-01T00:00:00.000Z',
+  roles: ['GUEST'],
 };
+
+/** Отказ UC «пользователь не найден» — как у `getUser`/`getUserByTelegramId`. */
+const userNotFound = () => ({
+  ok: false as const,
+  error: { code: 'USER_NOT_FOUND', kind: 'not_found', payload: {} },
+});
 
 type Member = {
   studentId: string;
@@ -44,7 +54,7 @@ type Member = {
 };
 const member = (status: 'active' | 'enrolled' | 'abandoned'): Member => ({
   studentId: '22222222-2222-4222-8222-222222222222',
-  userId: 'student-1',
+  userId: STUDENT_ID,
   status,
   neverStarted: false,
   inProgress: status !== 'abandoned',
@@ -69,25 +79,24 @@ function setup(options: { students?: Member[]; failOn?: string } = {}) {
           students: options.students ?? [],
         });
       }
+      if (command.uc === GetUserByTelegramIdUcDef.name) {
+        const { telegramId } = command.input as { telegramId: number };
+        return telegramId === studentUser.telegramId
+          ? ok(studentUser)
+          : userNotFound();
+      }
+      if (command.uc === GetUserUcDef.name) {
+        const { uuid } = command.input as { uuid: string };
+        return uuid === MENTOR_ID ? ok(mentor) : userNotFound();
+      }
       throw new Error(`неожиданная команда ${command.uc}`);
     },
   );
-  const appApi = {
-    dispatch,
-    execute: mock(async (name: string, payload: { uuid?: string }) =>
-      name === 'get-user' && payload.uuid === 'mentor-1' ? mentor : null,
-    ),
-  };
-  const userFacade = {
-    getUserByTelegramId: mock(async (id: number) =>
-      id === 777 ? studentUser : null,
-    ),
-  };
   const callers = {
     resolve: async () => new UserCaller(studentUser),
   };
   controller.init(
-    { appApi, userFacade, callers } as never,
+    { appApi: { dispatch }, callers } as never,
     { notify, execute: mock(async () => {}) } as never,
   );
   return { controller, notify, dispatched };
@@ -144,6 +153,8 @@ describe('StreamsController.handleMessengerEvent на UC DMG', () => {
     expect(dispatched.map((d) => d.uc)).toEqual([
       'findStreamByTelegramGroup',
       'getStreamMembers',
+      'getUserByTelegramId',
+      'getUser',
     ]);
     expect(dispatched[1]?.input).toEqual({ streamId: STREAM.uuid });
     expect(notify).toHaveBeenCalledTimes(1);

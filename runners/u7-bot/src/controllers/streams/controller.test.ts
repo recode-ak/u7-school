@@ -1,7 +1,6 @@
-import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
+import { describe, expect, test } from 'bun:test';
 import type { BotSession } from '@u7-scl/core/ui';
-import { Role } from '@u7-scl/user/domain';
+import { userActor } from '../../core/user-actor.test-kit';
 import { testCallers } from '../peer-review/stories/peer-review-dmg.test-kit';
 import { StreamsController } from './controller';
 import { dmgDispatch, streamView } from './stories/stream-dmg.test-kit';
@@ -26,23 +25,18 @@ describe('StreamsController (реестр)', () => {
         }),
       getStreamMembers: () => ({ mentorId: 'm1', students: [] }),
       listScopeFacts: () => ({ hasReviews: false, reviewsCount: 0 }),
-    }),
-    execute: mock((name: string) => {
-      if (name === 'list-stream-students') return [];
-      if (name === 'get-user') return { uuid: 'm1', name: 'Ментор', roles: [] };
-      return undefined;
+      getUser: () => ({ uuid: 'm1', name: 'Ментор', roles: ['GUEST'] }),
     }),
   } as never;
 
   const makeController = () => new StreamsController();
 
-  const guestActor: User = {
-    uuid: 'u1',
+  const guestActor = userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaaaaa9',
     name: 'Гость',
     telegramId: 123,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
   const session: BotSession = {
     dialog: { path: 'stream/catalog', seq: 1 },

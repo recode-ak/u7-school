@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import {
@@ -20,7 +19,6 @@ import {
   ListUserWishesUcDef,
   WishErrors,
 } from '@u7-scl/domain/wish/contract';
-import { Role } from '@u7-scl/user/domain';
 import {
   type Command,
   type DomainError,
@@ -29,6 +27,7 @@ import {
   type Result,
   UserCaller,
 } from 'dmg-core';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { Routes } from '../../shared/routes';
 import { CourseCatalogStory } from './course-catalog.story';
 import {
@@ -43,11 +42,11 @@ import {
 } from './course-dmg.test-kit';
 
 /** Актор UC DMG — субъект `UserCaller`, переданный в `appApi.dispatch`. */
-function subjectOf(caller: unknown): User {
+function callerOf(caller: unknown) {
   if (!(caller instanceof UserCaller)) {
     throw new Error('UC DMG вызван без UserCaller');
   }
-  return caller.user as User;
+  return caller;
 }
 
 /** Ответ UC в моке: успех — значением, отказ домена (`Err`) — отказом kit. */
@@ -63,20 +62,19 @@ function ucCall(dispatch: ReturnType<typeof dmgDispatch>, uc: string) {
     ([, command]: [unknown, Command, unknown]) => command.uc === uc,
   );
   if (call === undefined) throw new Error(`Команда ${uc} не отправлена`);
-  return { input: call[1].input, subject: subjectOf(call[2]) };
+  return { input: call[1].input, subject: callerOf(call[2]) };
 }
 
 describe('CourseCatalogStory', () => {
   const session: BotSession = {
     dialog: { path: 'course/course-catalog', seq: 1 },
   };
-  const actor: User = {
-    uuid: 'user-1',
+  const actor = userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaab014',
     name: 'Гость',
     telegramId: 123,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
   /**
    * Мок `appApi.dispatch` над данными курсов: ответы модуля `course`
@@ -124,7 +122,7 @@ describe('CourseCatalogStory', () => {
         );
       },
       [ListUserWishesUcDef.name]: (_input, caller) =>
-        wishes.filter((w) => w.userId === subjectOf(caller).uuid),
+        wishes.filter((w) => w.userId === callerOf(caller).user.uuid),
       ...overrides,
     });
   }
@@ -137,8 +135,8 @@ describe('CourseCatalogStory', () => {
     // Резолвер `Caller` приложения (D-50): актор бота зарегистрирован.
     const callers = {
       resolve: async (uuid: string | undefined) => {
-        expect(uuid).toBe(actor.uuid);
-        return new UserCaller(actor);
+        expect(uuid).toBe(actor.user.uuid);
+        return new UserCaller(actor.user);
       },
     };
     story.init({ appApi: { dispatch }, callers } as never);
@@ -796,7 +794,7 @@ describe('CourseCatalogStory', () => {
 
     test('желание уже есть: дружелюбное сообщение, не ошибка', async () => {
       const error = WishErrors.ALREADY_EXISTS.err({
-        userId: actor.uuid,
+        userId: actor.user.uuid,
         moduleId,
         status: 'expressed',
       });
@@ -889,7 +887,7 @@ describe('CourseCatalogStory', () => {
       async (status) => {
         const appApi = makeCatalogApi([
           {
-            userId: actor.uuid,
+            userId: actor.user.uuid,
             target: { kind: 'course', courseId },
             status,
           },
@@ -962,7 +960,7 @@ describe('CourseCatalogStory', () => {
       async (status) => {
         const appApi = makeApplyApi(
           WishErrors.ALREADY_EXISTS.err({
-            userId: actor.uuid,
+            userId: actor.user.uuid,
             courseId,
             status,
           }),
@@ -998,7 +996,7 @@ describe('CourseCatalogStory', () => {
     test('apply конфликт pending: W04 — продолжить анкету', async () => {
       const appApi = makeApplyApi(
         WishErrors.ALREADY_EXISTS.err({
-          userId: actor.uuid,
+          userId: actor.user.uuid,
           courseId,
           status: 'pending',
         }),
@@ -1118,7 +1116,7 @@ describe('CourseCatalogStory', () => {
 
     test('cancel-confirm: WISH_NOT_FOUND — мягкое сообщение без ошибки', async () => {
       const appApi = makeCancelApi(
-        WishErrors.NOT_FOUND.err({ userId: actor.uuid, courseId }),
+        WishErrors.NOT_FOUND.err({ userId: actor.user.uuid, courseId }),
       );
       const story = new CourseCatalogStory();
       initStory(story, appApi);
@@ -1168,7 +1166,7 @@ describe('CourseCatalogStory', () => {
 
     test('cancel-mod-confirm: WISH_NOT_FOUND — мягкое сообщение без ошибки', async () => {
       const appApi = makeCancelApi(
-        WishErrors.NOT_FOUND.err({ userId: actor.uuid, moduleId }),
+        WishErrors.NOT_FOUND.err({ userId: actor.user.uuid, moduleId }),
       );
       const story = new CourseCatalogStory();
       initStory(story, appApi);

@@ -1,10 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
-import { Role } from '@u7-scl/user/domain';
+import { userActor } from '../../../core/user-actor.test-kit';
 import {
   dmgDispatch,
   type Refusal,
@@ -26,13 +25,12 @@ describe('StepViewStory', () => {
     dialog: { path: 'learning/step-view', seq: 1 },
   };
 
-  const studentActor: User = {
-    uuid: 'user-1',
+  const studentActor = userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaab002',
     name: 'Студент',
     telegramId: 123,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
   const STREAM_ID = '11111111-1111-4111-8111-111111111111';
   const STEP1_ID = '22222222-2222-4222-8222-222222222222';

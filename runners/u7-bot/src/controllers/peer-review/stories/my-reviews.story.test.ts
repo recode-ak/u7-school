@@ -1,5 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
+import { describe, expect, test } from 'bun:test';
 import {
   assertDialogResponseMarkdownSafe,
   type BotSession,
@@ -9,7 +8,7 @@ import {
   GetMyCampaignsUcDef,
   ListMyReviewsUcDef,
 } from '@u7-scl/domain/peer-review/contract';
-import { Role } from '@u7-scl/user/domain';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { Routes } from '../../shared/routes';
 import { streamView } from '../../streams/stories/stream-dmg.test-kit';
 import { MyReviewsStory } from './my-reviews.story';
@@ -25,13 +24,12 @@ function findBtn(response: DialogResponse, needle: string) {
 }
 
 describe('MyReviewsStory — кнопка меню «💬 Отзывы» (S02)', () => {
-  const actor: User = {
-    uuid: 'user-1',
+  const actor = userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaab006',
     name: 'Аня',
     telegramId: 123,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
   function makeStory(campaignCount: number, reviewCount = 0) {
     const appApi = {
@@ -41,7 +39,7 @@ describe('MyReviewsStory — кнопка меню «💬 Отзывы» (S02)',
             campaignId: `aaaaaaaa-0000-0000-0000-00000000000${i}`,
             context: 'stream_fate',
             scopeId: 'bbbbbbbb-0000-0000-0000-000000000001',
-            subjectId: actor.uuid,
+            subjectId: actor.user.uuid,
             myRole: 'subject',
             subjectOutcome: 'completed_passed',
             expiresAt: Date.parse('2026-09-26T00:00'),
@@ -120,13 +118,12 @@ describe('MyReviewsStory — экран S02 «Мои отзывы» (мини-к
   const session: BotSession = {
     dialog: { path: 'peer-review/my-reviews', seq: 1 },
   };
-  const actor: User = {
-    uuid: 'user-1',
+  const actor = userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaab006',
     name: 'Аня',
     telegramId: 123,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
   /** Карточка «моей кампании» — как отдаёт get-my-campaigns. */
   interface Card {
@@ -146,7 +143,7 @@ describe('MyReviewsStory — экран S02 «Мои отзывы» (мини-к
   const subjectCard: Card = {
     campaignId: CAMPAIGN_1,
     scopeId: STREAM_1,
-    subjectId: actor.uuid,
+    subjectId: actor.user.uuid,
     myRole: 'subject',
     subjectOutcome: 'completed_passed',
     daysLeft: 5,
@@ -195,23 +192,20 @@ describe('MyReviewsStory — экран S02 «Мои отзывы» (мини-к
             title: streamId === STREAM_1 ? 'Первый поток' : 'Второй поток',
           });
         },
-      }),
-      execute: mock(async (ucName: string) => {
-        switch (ucName) {
-          case 'get-users-by-ids':
-            if (opts.missingSubject) return [];
-            return [
-              {
-                uuid: SUBJECT_ID,
-                name: 'Борис',
-                telegramId: 9,
-                roles: [],
-                createdAt: '2026-01-01T00:00:00.000Z',
-              },
-            ];
-          default:
-            throw new Error(`неизвестный UC: ${ucName}`);
-        }
+        getUsersByIds: () => {
+          if (opts.missingSubject) return [];
+          return [
+            {
+              uuid: SUBJECT_ID,
+              name: 'Борис',
+              telegramId: 9,
+              roles: ['GUEST'],
+              createdAt: 0,
+              updatedAt: 0,
+              version: 0,
+            },
+          ];
+        },
       }),
     };
   }
@@ -284,15 +278,10 @@ describe('MyReviewsStory — экран S02 «Мои отзывы» (мини-к
     expect(btn?.text).toBe('1. Отзыв об Борис');
     expect(btn?.code).toBe(`campaign:list:${CAMPAIGN_2}`);
 
-    const calls = (
-      appApi.execute.mock.calls as unknown as Array<
-        [string, Record<string, unknown>]
-      >
-    ).map(([ucName, attrs]) => [ucName, attrs]);
-    expect(calls).toContainEqual([
-      'get-users-by-ids',
-      { userIds: [SUBJECT_ID] },
-    ]);
+    const calls = appApi.dispatch.mock.calls
+      .filter(([, command]) => command.uc === 'getUsersByIds')
+      .map(([, command]) => command.input);
+    expect(calls).toEqual([{ userIds: [SUBJECT_ID] }]);
   });
 
   test('ментор «подопечный выбыл»: текст пары «роль-судьба»', async () => {
@@ -393,13 +382,12 @@ describe('MyReviewsStory — пагинация хаба S02 (BotPaginator + Dia
   const session: BotSession = {
     dialog: { path: 'peer-review/my-reviews', seq: 1 },
   };
-  const actor: User = {
-    uuid: 'user-1',
+  const actor = userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaab006',
     name: 'Аня',
     telegramId: 123,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
   const STREAM = 'bbbbbbbb-0000-0000-0000-000000000001';
 
@@ -407,7 +395,7 @@ describe('MyReviewsStory — пагинация хаба S02 (BotPaginator + Dia
     return Array.from({ length: n }, (_, i) => ({
       campaignId: `aaaaaaaa-0000-0000-0000-${String(i).padStart(12, '0')}`,
       scopeId: STREAM,
-      subjectId: actor.uuid,
+      subjectId: actor.user.uuid,
       myRole: 'subject' as const,
       subjectOutcome: 'completed_passed' as const,
       daysLeft: 5,
@@ -427,14 +415,7 @@ describe('MyReviewsStory — пагинация хаба S02 (BotPaginator + Dia
         getMyCampaigns: () => cards,
         listMyReviews: () => ({ reviews: [] }),
         getStream: () => streamView({ title: 'Первый поток' }),
-      }),
-      execute: mock(async (ucName: string) => {
-        switch (ucName) {
-          case 'get-users-by-ids':
-            return [];
-          default:
-            throw new Error(`неизвестный UC: ${ucName}`);
-        }
+        getUsersByIds: () => [],
       }),
     };
     const story = new MyReviewsStory();

@@ -1,5 +1,4 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { md } from '@u7-scl/core/shared';
 import {
   assertDialogResponseMarkdownSafe,
@@ -11,8 +10,8 @@ import {
   ReviewCampaignErrors,
   ReviewErrors,
 } from '@u7-scl/domain/peer-review/contract';
-import { Role } from '@u7-scl/user/domain';
 import { err } from 'dmg-core';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { streamView } from '../../streams/stories/stream-dmg.test-kit';
 import { CampaignStory } from './campaign.story';
 import { MyReviewsStory } from './my-reviews.story';
@@ -32,15 +31,16 @@ describe('CampaignStory (S03 — список адресатов)', () => {
   const session: BotSession = {
     dialog: { path: 'peer-review/campaign', seq: 1 },
   };
-  const actor: User = {
-    uuid: 'user-1',
+  const ACTOR_UUID = '11111111-1111-4111-8111-aaaaaaaab008';
+  const actor = userActor({
+    uuid: ACTOR_UUID,
     name: 'Аня',
     telegramId: 123,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
   const NAMES: Record<string, string> = {
+    [ACTOR_UUID]: 'Аня',
     [MENTOR_ID]: 'Пётр Петров',
     [PEER_ID]: 'Борис',
     [PEER2_ID]: 'Вера',
@@ -81,7 +81,7 @@ describe('CampaignStory (S03 — список адресатов)', () => {
             campaignId: CAMPAIGN_ID,
             context: 'stream_fate',
             scopeId: STREAM_ID,
-            subjectId: actor.uuid,
+            subjectId: actor.user.uuid,
             myRole,
             expiresAt: Date.parse('2026-09-26T00:00'),
             subjectOutcome: myOutcome ?? 'completed_passed',
@@ -116,22 +116,16 @@ describe('CampaignStory (S03 — список адресатов)', () => {
         },
         listMyReviews: () => ({ reviews: [] }),
         getStream: () => streamView({ uuid: STREAM_ID, title: 'Поток S' }),
-      }),
-      execute: mock(async (ucName: string, attrs: Record<string, unknown>) => {
-        if (ucName === failUc) {
-          throw new Error('имитация ошибки UC');
-        }
-        switch (ucName) {
-          case 'get-user':
-            return { uuid: attrs.uuid, name: NAMES[String(attrs.uuid)] ?? '' };
-          case 'get-users-by-ids':
-            return (attrs.userIds as string[]).map((uuid) => ({
-              uuid,
-              name: NAMES[uuid] ?? '',
-            }));
-          default:
-            throw new Error(`неизвестный UC: ${ucName}`);
-        }
+        getUser: (input) => {
+          if (failUc === 'getUser') {
+            throw new Error('имитация ошибки UC');
+          }
+          const { uuid } = input as { uuid: string };
+          const name = NAMES[uuid];
+          return name === undefined
+            ? refuse('USER_NOT_FOUND', 'not_found')
+            : { uuid, name };
+        },
       }),
     };
   }
@@ -321,7 +315,11 @@ describe('CampaignStory (S03 — список адресатов)', () => {
   // ── S05: ввод отзыва ──
 
   const message = (text: string) =>
-    ({ type: 'message', text, telegramId: actor.telegramId }) as const;
+    ({
+      type: 'message',
+      text,
+      telegramId: actor.user.view().telegramId,
+    }) as const;
 
   test('open: студент → о студенте — рекомендация двух частей, awaitInput, Назад', async () => {
     const appApi = makeAppApi([{ userId: PEER_ID, hasMyReview: false }]);

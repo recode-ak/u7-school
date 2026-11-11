@@ -1,4 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
+import { GuestCaller } from 'dmg-core';
 import type { AppMeta } from '#domain-legacy/types';
 import { md } from '../../shared/markdown';
 import { BotController } from './bot-controller';
@@ -19,7 +20,8 @@ import { BotUiApp } from './ui-app';
 
 // ── Тестовые контроллер и стори ──
 
-type TestActor = { id: string; name: string };
+/** Актор UI — `PersonCaller` (ограничение `TActor` платформы). */
+type TestActor = GuestCaller;
 
 /** Очередь ответов callback: первый вызов — первый элемент, дальше последний. */
 class Queue<T> {
@@ -137,7 +139,7 @@ function makeSession(
 }
 
 function makeActor(): TestActor {
-  return { id: 'u1', name: 'Тест' };
+  return new GuestCaller();
 }
 
 /** Конверт команды для конвейера handleCommand (ФР-4). */

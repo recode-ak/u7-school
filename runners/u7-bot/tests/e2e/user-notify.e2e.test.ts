@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { LearningController } from '@u7-scl/bot/learning/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import {
   ActivateStreamUcDef,
   CompleteStudentUcDef,
@@ -12,7 +12,6 @@ import {
   GetStudentByUserUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
-import { userSubject } from '@u7-scl/domain/user/testing';
 import {
   CreateCourseWishUcDef,
   WishModuleDef,
@@ -24,11 +23,9 @@ import {
   pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import { CoursesController } from '../../src/controllers/courses/controller';
-import { UserController } from '../../src/controllers/user/controller';
 
 /**
  * E2E механизма уведомлений:
@@ -41,7 +38,7 @@ import { UserController } from '../../src/controllers/user/controller';
  *   3) закрытие на модуле с следующим → уведомления нет (кнопка 7a
  *      рендерится HubStory — покрыто юнит-тестами хаба).
  *
- * Доставка текстовых уведомлений — сторя notify контроллера user;
+ * Доставку делают Def-подписки stories (`WishInviteStory`, `HubStory`):
  * приглашение — кнопочный проактив канала invite. Стенд: TestApp +
  * TestBotTransport.
  */
@@ -72,13 +69,13 @@ async function waitMessageFor(
   return undefined;
 }
 
-describe('E2E: механизм уведомлений userFacade.notify', () => {
+describe('E2E: адресные уведомления stories (приглашение желающих, «Курс завершён»)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let mentor: User;
-  let wisher: User;
-  let studentAdvanced: User;
-  let studentActive: User;
+  let mentor: U7BotActor;
+  let wisher: U7BotActor;
+  let studentAdvanced: U7BotActor;
+  let studentActive: U7BotActor;
 
   beforeAll(async () => {
     app = await createTestApp('user-notify-e2e');
@@ -87,17 +84,12 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
       new StreamsController(),
       new LearningController(),
       new MentorController(),
-      new UserController(),
       new CoursesController(),
     ]);
-    mentor = (await app.userFacade.getUserByTelegramId(MENTOR_TG))!;
-    wisher = (await app.userFacade.getUserByTelegramId(WISHER_TG))!;
-    studentAdvanced = (await app.userFacade.getUserByTelegramId(
-      STUDENT_ADV_TG,
-    ))!;
-    studentActive = (await app.userFacade.getUserByTelegramId(
-      STUDENT_ACTIVE_TG,
-    ))!;
+    mentor = await app.userByTelegramId(MENTOR_TG);
+    wisher = await app.userByTelegramId(WISHER_TG);
+    studentAdvanced = await app.userByTelegramId(STUDENT_ADV_TG);
+    studentActive = await app.userByTelegramId(STUDENT_ACTIVE_TG);
   });
 
   afterAll(async () => {
@@ -112,7 +104,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
       await app.apiApp.dispatch(
         WishModuleDef,
         CreateCourseWishUcDef.command({ courseId: COURSE_ID }),
-        new UserCaller(wisher),
+        wisher,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -127,7 +119,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
           moduleId: FIRST_MODULE,
           startDate: Date.UTC(2026, 9, 1),
         }),
-        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
+        mentor,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -172,7 +164,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
     expect(
       wishes.some((ar) => {
         const w = ar.snapshot();
-        return w.userId === wisher.uuid && w.target.kind === 'course';
+        return w.userId === wisher.user.uuid && w.target.kind === 'course';
       }),
     ).toBe(true);
 
@@ -197,7 +189,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
           moduleId: LAST_MODULE,
           startDate: Date.UTC(2026, 10, 1),
         }),
-        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
+        mentor,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -207,15 +199,15 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
       await app.apiApp.dispatch(
         StreamModuleDef,
         EnrollStudentUcDef.command({ streamId: stream.streamId }),
-        new UserCaller(studentAdvanced),
+        studentAdvanced,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
     const record = expectOk(
       await app.apiApp.dispatch(
         StreamModuleDef,
-        GetStudentByUserUcDef.command({ userId: studentAdvanced.uuid }),
-        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
+        GetStudentByUserUcDef.command({ userId: studentAdvanced.user.uuid }),
+        mentor,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -226,7 +218,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
       await app.apiApp.dispatch(
         StreamModuleDef,
         ActivateStreamUcDef.command({ streamId: stream.streamId }),
-        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
+        mentor,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -240,7 +232,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
           studentId: record.uuid,
           outcome: 'advanced',
         }),
-        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
+        mentor,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -259,8 +251,8 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
     const record = expectOk(
       await app.apiApp.dispatch(
         StreamModuleDef,
-        GetStudentByUserUcDef.command({ userId: studentActive.uuid }),
-        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
+        GetStudentByUserUcDef.command({ userId: studentActive.user.uuid }),
+        mentor,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -273,7 +265,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
           studentId: record.uuid,
           outcome: 'advanced',
         }),
-        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
+        mentor,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );

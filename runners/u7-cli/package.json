@@ -15,6 +15,8 @@
     "@u7-scl/app": "workspace:*",
     "@u7-scl/app-legacy": "workspace:*",
     "@u7-scl/core": "workspace:*",
+    "@u7-scl/domain": "workspace:*",
+    "dmg-core": "file:../../../../tools/dmg/dmg-core",
     "valibot": "^1.2.0"
   }
 }

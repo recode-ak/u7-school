@@ -1,4 +1,3 @@
-import type { User } from '@u7-scl/app-legacy/domain';
 import {
   getGlobalLogger,
   type Logger,
@@ -22,7 +21,11 @@ import {
 } from '@u7-scl/core/ui';
 import { ensureRegisteredGuest } from '../ensure-registered';
 import { APP_CODES, APP_DIALOG_PATHS } from '../shared/app-codes';
-import type { U7BotAppMeta, U7BotUiAppResolve } from './u7-bot-app-meta';
+import type {
+  U7BotActor,
+  U7BotAppMeta,
+  U7BotUiAppResolve,
+} from './u7-bot-app-meta';
 import type { U7BotController } from './u7-bot-controller';
 import { U7BotUiStory } from './u7-bot-ui-story';
 import type { MenuButton } from './u7-menu';
@@ -37,12 +40,12 @@ import type { MenuButton } from './u7-menu';
  * после пустого pipe (/cancel — короткое меню, прочее — подсказка), системные
  * кнопки из `APP_CODES` (mainMenu / help).
  *
- * Зависимости (фасад пользователей, актор-бот для гост-регистрации) —
+ * Зависимости (приложение `user`, uuid актора-бота для гост-регистрации) —
  * в `U7BotUiAppResolve`, приходят через init.
  */
 export class U7BotUiApp extends BotUiApp<
   U7BotAppMeta,
-  User,
+  U7BotActor,
   U7BotUiAppResolve
 > {
   declare protected readonly controllers: Map<string, U7BotController>;
@@ -67,17 +70,11 @@ export class U7BotUiApp extends BotUiApp<
   override async handleMessengerEvent(event: MessengerEvent): Promise<void> {
     const member = event.kind === 'bot_membership' ? event.byUser : event.user;
     if (member) {
-      await ensureRegisteredGuest(
-        this.resolve.userFacade,
-        this.resolve.botAdminUser,
-        {
-          id: member.id,
-          first_name: member.firstName,
-          ...(member.username !== undefined
-            ? { username: member.username }
-            : {}),
-        },
-      );
+      await ensureRegisteredGuest(this.resolve, {
+        id: member.id,
+        first_name: member.firstName,
+        ...(member.username !== undefined ? { username: member.username } : {}),
+      });
     }
     await super.handleMessengerEvent(event);
   }
@@ -176,15 +173,11 @@ export class U7BotUiApp extends BotUiApp<
       'top-menu',
       `Команда /start от пользователя ${tgId} (${update.name || '?'})`,
     );
-    await ensureRegisteredGuest(
-      this.resolve.userFacade,
-      this.resolve.botAdminUser,
-      {
-        id: tgId,
-        first_name: update.name ?? 'друг',
-        ...(update.username !== undefined ? { username: update.username } : {}),
-      },
-    );
+    await ensureRegisteredGuest(this.resolve, {
+      id: tgId,
+      first_name: update.name ?? 'друг',
+      ...(update.username !== undefined ? { username: update.username } : {}),
+    });
 
     const actor = await this.resolve.actorResolver(tgId);
     this.enterDialog(session, tgId, this.menuPath, 'reopen');
@@ -207,7 +200,7 @@ export class U7BotUiApp extends BotUiApp<
   protected override async dispatch(
     data: string,
     tgId: number,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     if (data === APP_CODES.mainMenu) {
@@ -231,7 +224,7 @@ export class U7BotUiApp extends BotUiApp<
    * protected (не private): тестовый стенд открывает сбор меню подклассом —
    * прод-API не расширяет.
    */
-  protected async collectMenuButtons(actor: User): Promise<MenuButton[]> {
+  protected async collectMenuButtons(actor: U7BotActor): Promise<MenuButton[]> {
     const chunks = await Promise.all(
       [...this.controllers.values()].map(async (controller) => {
         try {
@@ -250,7 +243,7 @@ export class U7BotUiApp extends BotUiApp<
   }
 
   /** Общий справочник: инструкция + описания кнопок из menuButtons. */
-  async #commonHelpScreen(actor: User): Promise<MdText> {
+  async #commonHelpScreen(actor: U7BotActor): Promise<MdText> {
     const header = md`Как со мной работать? 🤔
 
 В основном ты будешь нажимать на кнопки — это быстро и удобно\\. Иногда я попрошу написать что\\-то самому \\(например, ответ на вопрос анкеты\\)\\.
@@ -272,8 +265,8 @@ export class U7BotUiApp extends BotUiApp<
   }
 
   /** Welcome-экран /start: приветствие + клавиатура из menuButtons. */
-  async #welcomeScreen(actor: User): Promise<Screen> {
-    const greeting = md`Привет, ${actor.name}\\! 👋
+  async #welcomeScreen(actor: U7BotActor): Promise<Screen> {
+    const greeting = md`Привет, ${actor.user.view().name}\\! 👋
 
 Я бот\\-помощник школы «u7 schools» 🎓
 Я проведу тебя от знакомства до обучения на курсах\\.
@@ -286,7 +279,7 @@ export class U7BotUiApp extends BotUiApp<
   }
 
   /** Короткий экран меню (/cancel, «В меню», delegate): текст + клавиатура. */
-  async #shortMenuScreen(actor: User): Promise<Screen> {
+  async #shortMenuScreen(actor: U7BotActor): Promise<Screen> {
     const keyboard = this.#toKeyboard(await this.collectMenuButtons(actor));
     return {
       text: md`🏫 *Главное меню*\n\nВыберите раздел:`,

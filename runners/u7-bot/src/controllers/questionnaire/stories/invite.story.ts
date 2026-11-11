@@ -1,4 +1,3 @@
-import type { User } from '@u7-scl/app-legacy/domain';
 import { md } from '@u7-scl/core/shared';
 import {
   type BotSession,
@@ -14,6 +13,8 @@ import {
   QuestionnaireModuleDef,
   StartByInviteUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
+import { dispatchModuleUc } from '../../../core/dispatch-uc';
+import type { U7BotActor } from '../../../core/u7-bot-app-meta';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
 import type { QuestionnaireInvitedEvent } from './questionnaire-events';
@@ -56,10 +57,18 @@ export class InviteStory extends QuestionnaireStory {
     const target = await this.resolveRespondent(respondentId, qId);
     if (!target) return;
 
-    const current = await this.dispatchUc(
+    // В подписке актора нет: `Caller` собирается по `uuid` респондента
+    // (резолвер, D-50) — право `getCurrent` у него самого, как прежде.
+    const current = await dispatchModuleUc(
       QuestionnaireModuleDef,
       GetCurrentUcDef.command({ questionnaireId: qId }),
-      target.user,
+      {
+        resolve: this.resolve,
+        uuid: respondentId,
+        telegramId: target.telegramId,
+        warn: (message, meta) =>
+          this.logger?.warn(this.dialogPath, message, meta),
+      },
     );
     const invited =
       current.ok && current.value.type === 'invited'
@@ -98,7 +107,7 @@ export class InviteStory extends QuestionnaireStory {
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     // invite:start:{qId} — старт заполнения: делегат в fill (ввод анкеты
@@ -143,7 +152,7 @@ export class InviteStory extends QuestionnaireStory {
 
   // ── Приватные обработчики ──
 
-  async #handleWhy(qId: string, actor: User): Promise<DialogResponse> {
+  async #handleWhy(qId: string, actor: U7BotActor): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       QuestionnaireModuleDef,
       GetCurrentUcDef.command({ questionnaireId: qId }),
@@ -159,7 +168,7 @@ export class InviteStory extends QuestionnaireStory {
     );
   }
 
-  async #handleInvite(qId: string, actor: User): Promise<DialogResponse> {
+  async #handleInvite(qId: string, actor: U7BotActor): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       QuestionnaireModuleDef,
       GetCurrentUcDef.command({ questionnaireId: qId }),
@@ -179,7 +188,7 @@ export class InviteStory extends QuestionnaireStory {
 
   async #handleDeclineConfirm(
     qId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       QuestionnaireModuleDef,
@@ -206,7 +215,7 @@ export class InviteStory extends QuestionnaireStory {
 
   async #handleDeclineConfirmed(
     qId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       QuestionnaireModuleDef,

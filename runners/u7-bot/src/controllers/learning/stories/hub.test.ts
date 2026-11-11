@@ -1,10 +1,10 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { StreamModuleDef, StudentEvents } from '@u7-scl/domain/stream/contract';
-import { Role } from '@u7-scl/user/domain';
+import { UserModuleDef } from '@u7-scl/domain/user/contract';
+import { userActor } from '../../../core/user-actor.test-kit';
 import {
   dmgDispatch,
   moduleNotFound,
@@ -19,26 +19,24 @@ import {
 import { HubStory } from './hub';
 
 /** Модули, которые вызывает хаб: курсы (место модуля) и потоки. */
-const MODULES = [CourseModuleDef, StreamModuleDef];
+const MODULES = [CourseModuleDef, StreamModuleDef, UserModuleDef];
 
 describe('HubStory', () => {
   const session: BotSession = { dialog: { path: 'learning/hub', seq: 1 } };
 
-  const studentActor: User = {
-    uuid: 'user-1',
+  const studentActor = userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaab001',
     name: 'Студент',
     telegramId: 123,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
-  const guestActor: User = {
-    uuid: 'user-2',
+  const guestActor = userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaab0ff',
     name: 'Гость',
     telegramId: 456,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
   const STREAM_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -75,7 +73,7 @@ describe('HubStory', () => {
       {
         ...studentAnswers(student, []),
         getActiveStudent: (_input, caller) =>
-          student && caller.subject().uuid === studentActor.uuid
+          student && caller.subject().uuid === studentActor.user.uuid
             ? { student: studentView(student) }
             : {},
         dropStudent: () => overrides?.['drop-student'] ?? {},
@@ -288,7 +286,7 @@ describe('HubStory — подписка на StudentEvents.completed', () => {
       aggregateId: 'student-uuid',
       payload: {
         studentId: 'student-uuid',
-        userId: 'user-1',
+        userId: '11111111-1111-4111-8111-aaaaaaaab001',
         streamId: '11111111-1111-1111-1111-111111111111',
         moduleId,
         outcome,
@@ -298,18 +296,21 @@ describe('HubStory — подписка на StudentEvents.completed', () => {
 
   function makeStoryWithSender(place: unknown = undefined) {
     const mockAppApi = {
-      execute: mock(async (name: string) => {
-        if (name === 'get-user')
-          return {
-            uuid: 'user-1',
+      dispatch: dmgDispatch(
+        {
+          getModulePlace: () => place,
+          getUser: () => ({
+            uuid: '11111111-1111-4111-8111-aaaaaaaab001',
             name: 'Студент',
             telegramId: 123,
-            roles: [Role.GUEST],
-            createdAt: '2026-01-01T00:00:00.000Z',
-          };
-        return undefined;
-      }),
-      dispatch: dmgDispatch({ getModulePlace: () => place }, MODULES),
+            roles: ['GUEST'],
+            createdAt: 0,
+            updatedAt: 0,
+            version: 0,
+          }),
+        },
+        MODULES,
+      ),
     };
 
     const sender = {
@@ -420,18 +421,34 @@ describe('HubStory — подписка на StudentEvents.completed', () => {
     expect(String(payload.text)).toContain('Курс завершён');
   });
 
-  test('нет telegramId → сообщения не отправляются', async () => {
+  test('профиль студента недоступен → сообщения не отправляются', async () => {
     const { story, sender } = makeStoryWithSender({
       courseId: 'c-1',
       isLast: false,
       nextModuleId,
     });
     (
-      story as unknown as { appApi: { execute: ReturnType<typeof mock> } }
-    ).appApi.execute.mockImplementation(async (name: string) =>
-      name === 'get-user'
-        ? { uuid: 'user-1', telegramId: undefined }
-        : undefined,
+      story as unknown as { appApi: { dispatch: ReturnType<typeof mock> } }
+    ).appApi.dispatch.mockImplementation(
+      async (_module: unknown, command: { uc: string }) => {
+        if (command.uc === 'getUser') {
+          return {
+            ok: false as const,
+            error: {
+              code: 'USER_NOT_FOUND',
+              kind: 'not_found',
+              payload: {},
+            },
+          };
+        }
+        if (command.uc === 'getModulePlace') {
+          return {
+            ok: true as const,
+            value: { courseId: 'c-1', isLast: false, nextModuleId },
+          };
+        }
+        throw new Error(`неожиданная команда ${command.uc}`);
+      },
     );
 
     await getSub(story).handle(makeCompletedEvent('advanced'));

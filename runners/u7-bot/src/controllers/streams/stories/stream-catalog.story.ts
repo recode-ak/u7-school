@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import { type MdText, md, mdConcat } from '@u7-scl/core/shared';
@@ -27,13 +27,13 @@ const LEGEND = md`\n\n🟡 — идёт набор   🔵 — идёт обуч�
 export class CatalogStory extends U7BotUiStory {
   readonly name = 'catalog';
 
-  override async menuButtons(_actor: User): Promise<MenuButton[]> {
+  override async menuButtons(_actor: U7BotActor): Promise<MenuButton[]> {
     return [];
   }
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     const showCompleted =

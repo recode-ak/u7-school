@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { type MdText, md, mdJoin } from '@u7-scl/core/shared';
 import type { BotSession, BotUpdate, DialogResponse } from '@u7-scl/core/ui';
@@ -17,6 +17,7 @@ import {
   GetStreamUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
+import { UserErrors } from '@u7-scl/domain/user/contract';
 import type { DomainError } from 'dmg-core';
 import { campaignProfileOf } from './campaign-profiles';
 import type { MyReviewsStory } from './my-reviews.story';
@@ -51,7 +52,7 @@ export class CampaignStory extends U7BotUiStory {
 
   override async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     const [cmd, campaignId, third, fourth] = action.split(':');
@@ -71,7 +72,7 @@ export class CampaignStory extends U7BotUiStory {
 
   override async handleMessage(
     update: BotUpdate,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     const context = session.dialog?.input?.context as
@@ -158,7 +159,7 @@ export class CampaignStory extends U7BotUiStory {
    * `page` — страница хаба-родителя: все возвраты ведут на неё. */
   async #showRecipients(
     campaignId: string,
-    actor: User,
+    actor: U7BotActor,
     page?: number,
   ): Promise<DialogResponse> {
     const recipients = await this.#recipientsOf(campaignId, actor);
@@ -229,7 +230,7 @@ export class CampaignStory extends U7BotUiStory {
   async #askReview(
     campaignId: string,
     recipientId: string,
-    actor: User,
+    actor: U7BotActor,
     page?: number,
   ): Promise<DialogResponse> {
     const recipients = await this.#recipientsOf(campaignId, actor);
@@ -322,7 +323,7 @@ export class CampaignStory extends U7BotUiStory {
     campaignId: string,
     name: string,
     verb: 'отправлен' | 'обновлён',
-    actor: User,
+    actor: U7BotActor,
   ): Promise<{ text: MdText }> {
     const title = await this.#streamTitleOf(campaignId, actor);
     return {
@@ -339,7 +340,7 @@ export class CampaignStory extends U7BotUiStory {
    */
   async #afterSaveResponse(
     campaignId: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
     notice: MdText,
     finalize: { text: MdText },
@@ -384,7 +385,7 @@ export class CampaignStory extends U7BotUiStory {
   }
 
   /** Адресаты автора в окне — UC DMG `getCampaignRecipients` (автор — актор). */
-  #recipientsOf(campaignId: string, actor: User) {
+  #recipientsOf(campaignId: string, actor: U7BotActor) {
     return this.dispatchUc(
       PeerReviewModuleDef,
       GetCampaignRecipientsUcDef.command({ campaignId }),
@@ -393,7 +394,7 @@ export class CampaignStory extends U7BotUiStory {
   }
 
   /** Живые кампании актора — UC DMG `getMyCampaigns` (по умолчанию живые). */
-  async #cardsOf(actor: User): Promise<MyCampaignCard[]> {
+  async #cardsOf(actor: U7BotActor): Promise<MyCampaignCard[]> {
     const res = await this.dispatchUc(
       PeerReviewModuleDef,
       GetMyCampaignsUcDef.command({}),
@@ -414,7 +415,7 @@ export class CampaignStory extends U7BotUiStory {
   }
 
   /** Название потока кампании — для шапки экранов ввода. */
-  async #streamTitleOf(campaignId: string, actor: User): Promise<string> {
+  async #streamTitleOf(campaignId: string, actor: U7BotActor): Promise<string> {
     const cards = await this.#cardsOf(actor);
     const card = cards.find((c) => c.campaignId === campaignId);
     if (!card) return '';
@@ -428,14 +429,14 @@ export class CampaignStory extends U7BotUiStory {
   }
 
   /** Имена адресатов для подписей кнопок. */
-  async #namesOf(userIds: string[], actor: User): Promise<Map<string, string>> {
+  async #namesOf(
+    userIds: string[],
+    actor: U7BotActor,
+  ): Promise<Map<string, string>> {
     const names = new Map<string, string>();
     for (const userId of userIds) {
-      const user = await this.appApi.execute(
-        'get-user',
-        { uuid: userId },
-        actor,
-      );
+      const user = await this.findUser(userId, actor);
+      if (!user) throw new Error(UserErrors.NOT_FOUND.code);
       names.set(userId, user.name);
     }
     return names;

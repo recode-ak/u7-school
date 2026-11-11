@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { UserCaller } from 'dmg-core';
 import type { AppMeta } from '#domain-legacy/types';
 import { BotController } from './bot-controller';
 import { BotUiStory } from './bot-ui-story';
@@ -97,7 +98,8 @@ describe('DialogCache / эпохальный кеш', () => {
 
 // ── Интеграция с BotUiApp: каскад init и drop при смене диалога ──
 
-type TestActor = { tgId: number; name: string };
+/** Актор UI — `PersonCaller` (ограничение `TActor` платформы); ключ кеша — telegramId апдейта. */
+type TestActor = UserCaller<{ uuid: string; tgId: number }>;
 
 /** Стори-зонд: пишет и читает кеш при каждом callback. */
 class ProbeStory extends BotUiStory<AppMeta, TestActor> {
@@ -112,8 +114,13 @@ class ProbeStory extends BotUiStory<AppMeta, TestActor> {
     session: BotSession,
   ): Promise<DialogResponse> {
     this.seenCache = this.dialogCache;
-    this.dialogCache.set(actor.tgId, 'probe', `written:${action}`, session);
-    this.lastRead = this.dialogCache.get(actor.tgId, 'probe', session);
+    this.dialogCache.set(
+      actor.user.tgId,
+      'probe',
+      `written:${action}`,
+      session,
+    );
+    this.lastRead = this.dialogCache.get(actor.user.tgId, 'probe', session);
     return {};
   }
 }
@@ -153,7 +160,8 @@ function makeUiApp(controllers: BotController<AppMeta, TestActor>[]) {
   uiApp.init({
     appApi: {} as never,
     eventBus: {} as never,
-    actorResolver: async (tgId: number) => ({ tgId, name: 'Тест' }),
+    actorResolver: async (tgId: number) =>
+      new UserCaller({ uuid: `u${tgId}`, tgId }),
   });
   return uiApp;
 }

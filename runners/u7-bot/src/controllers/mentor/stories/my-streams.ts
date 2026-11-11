@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { md, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse, KbButton } from '@u7-scl/core/ui';
@@ -27,7 +27,7 @@ export class MyStreamsStory extends U7BotUiStory {
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     _session: BotSession,
   ): Promise<DialogResponse> {
     // Парсим фильтры: list[:completed:1][:archived:1]
@@ -45,7 +45,7 @@ export class MyStreamsStory extends U7BotUiStory {
   // ── Приватные методы ──
 
   async #handleList(
-    actor: User,
+    actor: U7BotActor,
     showCompleted: boolean,
     showArchived: boolean,
   ): Promise<DialogResponse> {
@@ -53,7 +53,7 @@ export class MyStreamsStory extends U7BotUiStory {
       // Только потоки текущего ментора
       const listed = await this.dispatchUc(
         StreamModuleDef,
-        ListStreamsUcDef.command({ mentorId: actor.uuid }),
+        ListStreamsUcDef.command({ mentorId: actor.user.uuid }),
         actor,
       );
       if (!listed.ok) return this.ucErrorNotify(listed.error);

@@ -14,7 +14,6 @@ import {
   stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 import { completeStudent } from '../helpers/student-fate';
@@ -40,7 +39,7 @@ const SUBJECT_USER_ID = '77777777-7777-4777-8777-777777777777';
 const MENTOR_TG = 1004;
 const MENTOR_USER_ID = '44444444-4444-4444-4444-444444444444';
 
-/** Прокси над apiApp: считает execute и dispatch по имени UC (для кеш-ассертов). */
+/** Прокси над apiApp: считает вызовы dispatch по имени UC (для кеш-ассертов). */
 function countingApi(app: TestApp): {
   api: typeof app.apiApp;
   count: (name: string) => number;
@@ -48,20 +47,6 @@ function countingApi(app: TestApp): {
   const counts = new Map<string, number>();
   const api = new Proxy(app.apiApp, {
     get(target, prop, receiver) {
-      if (prop === 'execute') {
-        return async (name: string, attrs: unknown, actor?: unknown) => {
-          counts.set(name, (counts.get(name) ?? 0) + 1);
-          return (
-            target as unknown as {
-              execute: (
-                n: string,
-                a: unknown,
-                ac?: unknown,
-              ) => Promise<unknown>;
-            }
-          ).execute(name, attrs, actor);
-        };
-      }
       if (prop === 'dispatch') {
         return async (
           module: unknown,
@@ -244,8 +229,8 @@ describe('E2E peer-review: S07 — пагинация и DialogCache', () => {
       await new Promise((r) => setTimeout(r, 20));
     }
 
-    const subject = (await app.userFacade.getUserByTelegramId(SUBJECT_TG))!;
-    const mentor = (await app.userFacade.getUserByTelegramId(MENTOR_TG))!;
+    const subject = await app.userByTelegramId(SUBJECT_TG);
+    const mentor = await app.userByTelegramId(MENTOR_TG);
     const campaign = (await app.reviewCampaignRepo.findBySubject(
       STREAM_WITH_REVIEWS,
       SUBJECT_USER_ID,
@@ -270,7 +255,7 @@ describe('E2E peer-review: S07 — пагинация и DialogCache', () => {
           recipientId,
           text,
         }),
-        new UserCaller(recipientId === SUBJECT_USER_ID ? mentor : subject),
+        recipientId === SUBJECT_USER_ID ? mentor : subject,
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       );
       expect(written.ok).toBe(true);

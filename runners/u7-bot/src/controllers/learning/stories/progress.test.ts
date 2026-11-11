@@ -1,8 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
-import { Role } from '@u7-scl/user/domain';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import {
   dmgDispatch,
@@ -15,13 +14,12 @@ import {
 import { ProgressStory } from './progress';
 
 describe('ProgressStory', () => {
-  const studentActor: User = {
-    uuid: 'user-1',
+  const studentActor = userActor({
+    uuid: '11111111-1111-4111-8111-aaaaaaaab004',
     name: 'Студент',
     telegramId: 123,
-    roles: [Role.GUEST],
-    createdAt: '2026-01-01T00:00:00.000Z',
-  };
+    roles: ['GUEST'],
+  });
 
   const session: BotSession = {
     dialog: { path: 'learning/progress', seq: 1 },
@@ -33,7 +31,7 @@ describe('ProgressStory', () => {
   const mockStudent = {
     uuid: 'student-uuid',
     streamId: STREAM_ID,
-    userId: 'user-1',
+    userId: '11111111-1111-4111-8111-aaaaaaaab004',
     status: 'active',
     currentStepId: STEP1_ID,
     steps: [

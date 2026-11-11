@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import type { DomainEvent } from '@u7-scl/core/domain';
@@ -61,16 +61,13 @@ export class HubStory extends U7BotUiStory {
   async #handleCompletedEvent(event: StudentCompletedEvent): Promise<void> {
     const { userId, moduleId, outcome } = event.payload;
 
-    const user = await this.appApi.execute('get-user', {
-      uuid: userId,
-    });
+    const user = await this.findUser(userId);
     if (!user?.telegramId) return;
 
     // Место модуля в программе — идёт через домен курсов
-    const placeRes = await this.dispatchUc(
+    const placeRes = await this.dispatchUcAsGuest(
       CourseModuleDef,
       GetModulePlaceUcDef.command({ moduleId }),
-      user,
     );
     const place = placeRes.ok ? placeRes.value : undefined;
 
@@ -108,7 +105,7 @@ export class HubStory extends U7BotUiStory {
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     if (action === 'my-study') {
@@ -125,13 +122,13 @@ export class HubStory extends U7BotUiStory {
 
   // ── Главное меню (декларативные кнопки) ──
 
-  override async menuButtons(actor: User): Promise<MenuButton[]> {
+  override async menuButtons(actor: U7BotActor): Promise<MenuButton[]> {
     // Меню — только при живой записи студента (учится или зачислен)
     let hasActiveStudent = false;
     try {
       const active = await this.dispatchUc(
         StreamModuleDef,
-        GetActiveStudentUcDef.command({ userId: actor.uuid }),
+        GetActiveStudentUcDef.command({ userId: actor.user.uuid }),
         actor,
       );
       hasActiveStudent = active.ok && active.value.student !== undefined;
@@ -153,14 +150,14 @@ export class HubStory extends U7BotUiStory {
   }
 
   /** Команды модуля `stream` от имени актора — для хелперов раздела learning. */
-  #dispatchFor(actor: User): StreamDispatch {
+  #dispatchFor(actor: U7BotActor): StreamDispatch {
     return (command) => this.dispatchUc(StreamModuleDef, command, actor);
   }
 
   // ── Приватные методы: хаб ──
 
   /** Экран хаба «Моя учёба» с кнопками действий. */
-  async #showHub(actor: User): Promise<DialogResponse> {
+  async #showHub(actor: U7BotActor): Promise<DialogResponse> {
     const studentResult = await getStudent(this.#dispatchFor(actor), actor);
     if (!studentResult.ok) return studentResult.value;
 
@@ -201,7 +198,7 @@ export class HubStory extends U7BotUiStory {
 
   // ── Приватные методы: самовыход из учёбы (FR-4) ──
 
-  async #showLeaveConfirm(actor: User): Promise<DialogResponse> {
+  async #showLeaveConfirm(actor: U7BotActor): Promise<DialogResponse> {
     const studentResult = await getStudent(this.#dispatchFor(actor), actor);
     if (!studentResult.ok) return studentResult.value;
 
@@ -216,7 +213,7 @@ export class HubStory extends U7BotUiStory {
     );
   }
 
-  async #executeLeave(actor: User): Promise<DialogResponse> {
+  async #executeLeave(actor: U7BotActor): Promise<DialogResponse> {
     const studentResult = await getStudent(this.#dispatchFor(actor), actor);
     if (!studentResult.ok) return studentResult.value;
 

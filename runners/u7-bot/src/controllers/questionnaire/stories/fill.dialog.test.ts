@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { assertMarkdownV2Safe } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import {
@@ -7,6 +6,7 @@ import {
   QuestionnaireErrors,
   QuestionnaireEvents,
 } from '@u7-scl/domain/questionnaire/contract';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { FillStory } from './fill.story';
 import {
   buttonsOf,
@@ -18,6 +18,7 @@ import {
   startedEvent,
   subscriptionOf,
   useMockLogger,
+  userReadsOf,
 } from './questionnaire-dmg.test-kit';
 
 /**
@@ -33,7 +34,10 @@ import {
 //
 // ══ Помощники ══
 
-const actor = { uuid: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee' } as User;
+const actor = userActor({
+  uuid: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+  roles: ['GUEST'],
+});
 
 const radioQuestion = {
   questionCode: 'qc1',
@@ -478,14 +482,14 @@ describe('FillStory — подписки вариант A (invite-канал)', 
     );
   });
 
-  test('started с courseId: invite «заполнить анкету» с кнопкой-мостом resume, адрес — get-user по respondentId', async () => {
-    const { story, sender, execute } = initStory(new FillStory(), { users });
+  test('started с courseId: invite «заполнить анкету» с кнопкой-мостом resume, адрес — getUser по respondentId', async () => {
+    const { story, sender, dispatch } = initStory(new FillStory(), { users });
 
     await subscriptionOf(story, QuestionnaireEvents.started.name).handle(
       startedEvent({ ownerInfo: { courseId: 'course-1' } }),
     );
 
-    expect(execute).toHaveBeenCalledWith('get-user', { uuid: RESPONDENT_ID });
+    expect(userReadsOf(dispatch)).toEqual([RESPONDENT_ID]);
     expect(sender.invite).toHaveBeenCalledTimes(1);
     const [telegramId, payload] = sender.invite.mock.calls[0] as unknown as [
       number,

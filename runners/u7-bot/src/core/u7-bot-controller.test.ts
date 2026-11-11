@@ -1,19 +1,18 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import { type Logger, setGlobalLogger } from '@u7-scl/core/shared';
 import type { BotSession, BotUpdate, DialogResponse } from '@u7-scl/core/ui';
-import { Role } from '@u7-scl/user/domain';
+import type { U7BotActor } from './u7-bot-app-meta';
 import { U7BotController } from './u7-bot-controller';
 import { U7BotUiStory } from './u7-bot-ui-story';
+import { userActor } from './user-actor.test-kit';
 
-const actor: User = {
-  uuid: 'u1',
+const actor = userActor({
+  uuid: '11111111-1111-4111-8111-aaaaaaaaaaa1',
   name: 'Тест',
   telegramId: 1,
-  roles: [Role.GUEST],
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+  roles: ['GUEST'],
+});
 
 function makeLogger(): Logger {
   return {
@@ -47,7 +46,7 @@ class ButtonedStory extends U7BotUiStory {
   }
   override async handleMessage(
     _update: BotUpdate,
-    _actor: User,
+    _actor: U7BotActor,
     _session: BotSession,
   ): Promise<DialogResponse> {
     return {};
@@ -194,5 +193,6 @@ describe('U7BotController — menuButtons', () => {
 
     expect(buttons.map((b) => b.text)).toEqual(['Живая']);
     expect(logger.warn).toHaveBeenCalledTimes(1);
+    setGlobalLogger(undefined as unknown as Logger);
   });
 });

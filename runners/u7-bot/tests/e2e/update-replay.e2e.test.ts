@@ -8,9 +8,9 @@ import {
 } from 'bun:test';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotController } from '@u7-scl/bot/u7-bot-controller';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { md } from '@u7-scl/core/shared';
@@ -48,7 +48,7 @@ class TwoCallsStory extends U7BotUiStory {
 
   override async handleCallback(
     _action: string,
-    actor: User,
+    actor: U7BotActor,
     _session: BotSession,
   ): Promise<DialogResponse> {
     await this.dispatchUc(
@@ -73,7 +73,7 @@ class ProbeController extends U7BotController {
 describe('Бот: requestId из update_id (e2e)', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let guest: User;
+  let guest: U7BotActor;
 
   beforeAll(async () => {
     app = await createTestApp('update-replay-e2e');
@@ -82,12 +82,14 @@ describe('Бот: requestId из update_id (e2e)', () => {
       new CoursesController(),
       new ProbeController(),
     ]);
-    guest = (await app.userFacade.getUserByTelegramId(1001))!;
+    guest = await app.userByTelegramId(1001);
   });
 
   beforeEach(async () => {
     transport.reset();
-    await transport.handleStart(transport.makeBotContext(guest.telegramId));
+    await transport.handleStart(
+      transport.makeBotContext(guest.user.view().telegramId),
+    );
   });
 
   afterAll(async () => {
@@ -117,8 +119,12 @@ describe('Бот: requestId из update_id (e2e)', () => {
   /** Нажатие кнопки с сырым кодом и актуальным штампом. */
   function press(code: string): Promise<DialogResponse> {
     return transport.handleCallback(
-      transport.makeBotContext(guest.telegramId, {
-        callbackData: stampedCode(transport, guest.telegramId, code),
+      transport.makeBotContext(guest.user.view().telegramId, {
+        callbackData: stampedCode(
+          transport,
+          guest.user.view().telegramId,
+          code,
+        ),
       }),
     );
   }

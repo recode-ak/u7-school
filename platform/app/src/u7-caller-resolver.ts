@@ -1,8 +1,10 @@
 import {
+  GetUserByTelegramIdUcDef,
   GetUserUcDef,
   UserAr,
   UserErrors,
   UserModuleDef,
+  type UserView,
 } from '@u7-scl/domain/user/contract';
 import {
   GuestCaller,
@@ -10,6 +12,7 @@ import {
   type OperationRef,
   type PersonCaller,
   type ReadonlyAr,
+  type Result,
   SystemCaller,
   UserCaller,
 } from 'dmg-core';
@@ -49,10 +52,35 @@ export class U7CallerResolver {
       this.system,
       trace,
     );
+    return this.#personOf(res, 'user.getUser');
+  }
+
+  /**
+   * Тот же разбор по telegramId (вход бота): `user.getUserByTelegramId`
+   * от системы; нет пользователя — гость, прочий отказ — исключение.
+   */
+  async resolveByTelegramId(
+    telegramId: number,
+    trace: Trace,
+  ): Promise<PersonCaller<ReadonlyAr<UserAr>>> {
+    const res = await this.api.dispatch(
+      UserModuleDef,
+      GetUserByTelegramIdUcDef.command({ telegramId }),
+      this.system,
+      trace,
+    );
+    return this.#personOf(res, 'user.getUserByTelegramId');
+  }
+
+  /** Разбор результата чтения пользователя: `Ok` → человек, `NOT_FOUND` → гость. */
+  #personOf<E extends { code: string }>(
+    res: Result<UserView, E>,
+    uc: string,
+  ): PersonCaller<ReadonlyAr<UserAr>> {
     if (!res.ok) {
       if (res.error.code === UserErrors.NOT_FOUND.code)
         return new GuestCaller();
-      throw new Error(`Резолвер Caller: user.getUser вернул ${res.error.code}`);
+      throw new Error(`Резолвер Caller: ${uc} вернул ${res.error.code}`);
     }
     return new UserCaller(UserAr.restore(res.value));
   }

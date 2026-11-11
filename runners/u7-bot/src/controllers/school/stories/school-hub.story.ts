@@ -1,15 +1,10 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import { type MdText, md, mdJoin } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse, KbButton } from '@u7-scl/core/ui';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
-
-interface MentorProfile {
-  uuid: string;
-  name: string;
-}
 
 /**
  * SH01: Карточка школы (Хаб «Школа»).
@@ -20,7 +15,7 @@ interface MentorProfile {
 export class SchoolHubStory extends U7BotUiStory {
   readonly name = 'hub';
 
-  override async menuButtons(_actor: User): Promise<MenuButton[]> {
+  override async menuButtons(_actor: U7BotActor): Promise<MenuButton[]> {
     return [
       {
         kind: 'callback',
@@ -35,7 +30,7 @@ export class SchoolHubStory extends U7BotUiStory {
 
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     if (action === 'open') {
@@ -57,9 +52,7 @@ export class SchoolHubStory extends U7BotUiStory {
     let mentorNames: string[] = [];
     if (school.mentors && school.mentors.length > 0) {
       try {
-        const users = (await this.appApi.execute('get-users-by-ids', {
-          userIds: school.mentors,
-        })) as MentorProfile[];
+        const users = await this.findUsers(school.mentors);
         mentorNames = users.map((u) => u.name).filter(Boolean);
       } catch {
         // Профили менторов временно недоступны — показываем без списка

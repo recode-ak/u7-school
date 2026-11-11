@@ -1,7 +1,15 @@
+import { dispatchModuleUc } from '@u7-scl/bot/dispatch-uc';
 import { U7BotController } from '@u7-scl/bot/u7-bot-controller';
 import { getGlobalLogger } from '@u7-scl/core/shared';
 import type { MessengerEvent, MessengerEventReaction } from '@u7-scl/core/ui';
-import { Role } from '@u7-scl/user/domain';
+import {
+  AddRoleToUserUcDef,
+  GetUserByTelegramIdUcDef,
+  RemoveRoleFromUserUcDef,
+  UserErrors,
+  UserModuleDef,
+} from '@u7-scl/domain/user/contract';
+import type { Command } from 'dmg-core';
 import { CommunityStory } from './stories/community.story';
 import { SchoolHubStory } from './stories/school-hub.story';
 import { SchoolInfoStory } from './stories/school-info.story';
@@ -43,45 +51,18 @@ export class SchoolController extends U7BotController {
     try {
       if (event.kind === 'bot_membership') {
         if (event.status === 'added' && event.byUser) {
-          const user = await this.resolve.userFacade.getUserByTelegramId(
-            event.byUser.id,
-          );
-          if (user) {
-            await this.resolve.userFacade.addRoleToUser(
-              user.uuid,
-              Role.SUBSCRIBER,
-              this.resolve.botAdminUser,
-            );
-          }
+          await this.#changeSubscriber('add', event.byUser.id);
         }
         return 'stop';
       }
 
       if (event.kind === 'member_joined') {
-        const user = await this.resolve.userFacade.getUserByTelegramId(
-          event.user.id,
-        );
-        if (user) {
-          await this.resolve.userFacade.addRoleToUser(
-            user.uuid,
-            Role.SUBSCRIBER,
-            this.resolve.botAdminUser,
-          );
-        }
+        await this.#changeSubscriber('add', event.user.id);
         return 'stop';
       }
 
       if (event.kind === 'member_left') {
-        const user = await this.resolve.userFacade.getUserByTelegramId(
-          event.user.id,
-        );
-        if (user) {
-          await this.resolve.userFacade.removeRoleFromUser(
-            user.uuid,
-            Role.SUBSCRIBER,
-            this.resolve.botAdminUser,
-          );
-        }
+        await this.#changeSubscriber('remove', event.user.id);
         return 'stop';
       }
     } catch (err) {
@@ -94,5 +75,51 @@ export class SchoolController extends U7BotController {
     }
 
     return 'stop';
+  }
+
+  /**
+   * Выдаёт или снимает `SUBSCRIBER`: пользователь ищется по telegramId от
+   * гостя, роль меняет бот от `botAdminUuid`. Нет пользователя — пропуск;
+   * любой отказ UC — исключение (ловит `handleMessengerEvent`).
+   */
+  async #changeSubscriber(
+    action: 'add' | 'remove',
+    telegramId: number,
+  ): Promise<void> {
+    const found = await this.#dispatch(
+      GetUserByTelegramIdUcDef.command({ telegramId }),
+      undefined,
+    );
+    if (!found.ok) {
+      if (found.error.code === UserErrors.NOT_FOUND.code) return;
+      throw new Error(found.error.code);
+    }
+    const uuid = found.value.uuid;
+    const changed =
+      action === 'add'
+        ? await this.#dispatch(
+            AddRoleToUserUcDef.command({ userId: uuid, role: 'SUBSCRIBER' }),
+            this.resolve.botAdminUuid,
+          )
+        : await this.#dispatch(
+            RemoveRoleFromUserUcDef.command({
+              userId: uuid,
+              role: 'SUBSCRIBER',
+            }),
+            this.resolve.botAdminUuid,
+          );
+    if (!changed.ok) throw new Error(changed.error.code);
+  }
+
+  #dispatch<D extends (typeof UserModuleDef)['useCases'][number]>(
+    command: Command<D>,
+    uuid: string | undefined,
+  ) {
+    return dispatchModuleUc(UserModuleDef, command, {
+      resolve: this.resolve,
+      uuid,
+      warn: (message, meta) =>
+        getGlobalLogger()?.warn('school-controller', message, meta),
+    });
   }
 }

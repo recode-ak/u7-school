@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, mock } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import {
   type Logger,
   LogLevel,
@@ -12,10 +11,15 @@ import {
   QuestionnaireEvents,
   QuestionnaireModuleDef,
 } from '@u7-scl/domain/questionnaire/contract';
-import { Role } from '@u7-scl/user/domain';
+import {
+  UserErrors,
+  UserModuleDef,
+  type UserView,
+} from '@u7-scl/domain/user/contract';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import {
   dmgDispatch as baseDmgDispatch,
+  refuse,
   type UcAnswers,
 } from '../../streams/stories/stream-dmg.test-kit';
 import type {
@@ -29,9 +33,12 @@ import type {
 export { Refusal, refuse } from '../../streams/stories/stream-dmg.test-kit';
 export { testCallers };
 
-/** Мок `appApi.dispatch` модуля анкет: допустим только `QuestionnaireModuleDef`. */
+/**
+ * Мок `appApi.dispatch`: модуль анкет и `user` (профиль респондента —
+ * `getUser`); любой другой модуль — ошибка теста.
+ */
 export const dmgDispatch = (answers: UcAnswers) =>
-  baseDmgDispatch(answers, [QuestionnaireModuleDef]);
+  baseDmgDispatch(answers, [QuestionnaireModuleDef, UserModuleDef]);
 
 // ══ Данные ══
 
@@ -40,13 +47,17 @@ export const RESPONDENT_ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 export const RESPONDENT_TG = 456;
 export const COURSE_ID = 'course-1';
 
-/** Профиль респондента из legacy `get-user` (полный `User`, годится как actor). */
-export const respondentProfile = (overrides: Partial<User> = {}): User => ({
+/** Профиль респондента — ответ `getUser` (`UserView`, даты — числа). */
+export const respondentProfile = (
+  overrides: Partial<UserView> = {},
+): UserView => ({
   uuid: RESPONDENT_ID,
   name: 'Респондент',
   telegramId: RESPONDENT_TG,
-  roles: [Role.GUEST],
-  createdAt: '2026-01-01T00:00:00.000Z',
+  roles: ['GUEST'],
+  createdAt: 1,
+  updatedAt: 1,
+  version: 0,
   ...overrides,
 });
 
@@ -193,51 +204,52 @@ type Initable = {
   init(deps: never, sender: never): void;
 };
 
-/** Профиль `get-user`; `telegramId` может отсутствовать (пользователь без Telegram). */
-export type ProfileOf = Omit<User, 'telegramId'> & { telegramId?: number };
-
 export type StoryEnvOpts = {
-  /** Профили `get-user` по uuid; нет записи — `undefined` (профиля нет). */
-  users?: Record<string, ProfileOf | undefined>;
-  /** `get-user` бросает исключение (сбой чтения профиля). */
+  /** Ответ `getUser` по uuid; нет записи — `USER_NOT_FOUND` (профиля нет). */
+  users?: Record<string, UserView | undefined>;
+  /** `getUser` бросает исключение (сбой чтения профиля). */
   getUserFails?: boolean;
   /** Ответы UC модуля анкет по имени UC (`getCurrent`, `handleAction`, …). */
   answers?: UcAnswers;
 };
 
 /**
- * Инициализирует story моками: legacy `get-user` в `appApi.execute`, DMG-мок
- * `appApi.dispatch` и резолвер субъекта. Любой другой legacy-вызов
- * `execute` — ошибка теста: UC анкет идут только через `dispatch`.
+ * Инициализирует story моками: DMG-мок `appApi.dispatch` (UC анкет и
+ * `getUser` профиля респондента) и резолвер субъекта. Legacy `execute` в
+ * моке нет: любой legacy-вызов UC — ошибка теста.
  */
 export function initStory<S extends Initable>(
   story: S,
   opts: StoryEnvOpts = {},
 ) {
   const sender = makeSender();
-  const execute = mock(
-    async (name: string, params?: Record<string, unknown>) => {
-      if (name !== 'get-user') {
-        throw new Error(`Неожиданный legacy-вызов UC: ${name}`);
-      }
-      if (opts.getUserFails) throw new Error('сбой get-user');
-      return opts.users?.[params?.uuid as string];
+  const dispatch = dmgDispatch({
+    getUser: (input) => {
+      if (opts.getUserFails) throw new Error('сбой getUser');
+      const profile = opts.users?.[(input as { uuid: string }).uuid];
+      return profile ?? refuse(UserErrors.NOT_FOUND.code, 'not_found');
     },
-  );
-  const dispatch = dmgDispatch(opts.answers ?? {});
+    ...opts.answers,
+  });
   story.init(
-    { appApi: { execute, dispatch }, callers: testCallers } as never,
+    { appApi: { dispatch }, callers: testCallers } as never,
     sender as never,
   );
-  return { story, sender, execute, dispatch };
+  return { story, sender, dispatch };
 }
 
-/** Команды, ушедшие в `dispatch`: имя UC и вход, по порядку. */
+/** Команды UC анкет, ушедшие в `dispatch`: имя UC и вход, по порядку (без чтений профиля). */
 export function dispatchedOf(dispatch: ReturnType<typeof dmgDispatch>) {
-  return dispatch.mock.calls.map(([, command]) => ({
-    uc: command.uc,
-    input: command.input,
-  }));
+  return dispatch.mock.calls
+    .map(([, command]) => ({ uc: command.uc, input: command.input }))
+    .filter((call) => call.uc !== 'getUser');
+}
+
+/** Чтения профиля (`getUser`), ушедшие в `dispatch`: `uuid` по порядку. */
+export function userReadsOf(dispatch: ReturnType<typeof dmgDispatch>) {
+  return dispatch.mock.calls
+    .filter(([, command]) => command.uc === 'getUser')
+    .map(([, command]) => (command.input as { uuid: string }).uuid);
 }
 
 // ══ Логгер ══

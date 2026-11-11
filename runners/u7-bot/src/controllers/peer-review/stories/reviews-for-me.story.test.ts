@@ -1,5 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
+import { describe, expect, test } from 'bun:test';
 import {
   assertDialogResponseMarkdownSafe,
   type BotSession,
@@ -7,7 +6,8 @@ import {
 } from '@u7-scl/core/ui';
 import { ListMyReviewsUcDef } from '@u7-scl/domain/peer-review/contract';
 import { GetStreamUcDef } from '@u7-scl/domain/stream/contract';
-import { Role } from '@u7-scl/user/domain';
+import { GetUsersByIdsUcDef } from '@u7-scl/domain/user/contract';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { Routes } from '../../shared/routes';
 import {
   streamNotFound,
@@ -40,13 +40,12 @@ const AUTHOR_2 = '34444444-4444-4444-8444-444444444444';
 const session: BotSession = {
   dialog: { path: 'peer-review/reviews-for-me', seq: 1 },
 };
-const actor: User = {
+const actor = userActor({
   uuid: READER,
   name: 'Читатель',
   telegramId: 123,
-  roles: [Role.GUEST],
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+  roles: ['GUEST'],
+});
 
 /** Снимок отзыва — как отдаёт list-my-reviews (новые наверху). */
 interface Snapshot {
@@ -63,7 +62,7 @@ interface Snapshot {
   createdAt: number;
 }
 
-/** appApi-мок: listMyReviews и getStream (DMG) + get-users-by-ids. */
+/** appApi-мок: listMyReviews, getStream и getUsersByIds (DMG). */
 function makeAppApi(
   reviews: Snapshot[],
   opts: { emptyNames?: boolean; streamFails?: boolean } = {},
@@ -71,6 +70,13 @@ function makeAppApi(
   return {
     dispatch: peerReviewDispatch({
       listMyReviews: () => ({ reviews }),
+      getUsersByIds: () => {
+        if (opts.emptyNames) return [];
+        return [
+          { uuid: AUTHOR_1, name: 'Анна' },
+          { uuid: AUTHOR_2, name: 'Глеб' },
+        ];
+      },
       getStream: (input) => {
         if (opts.streamFails) return streamNotFound();
         const { streamId } = input as { streamId: string };
@@ -78,18 +84,6 @@ function makeAppApi(
           ? streamView({ uuid: STREAM_2, title: 'JS Advanced — Поток 2' })
           : streamView({ uuid: STREAM_1, title: 'JS Core — Поток 1' });
       },
-    }),
-    execute: mock(async (ucName: string) => {
-      switch (ucName) {
-        case 'get-users-by-ids':
-          if (opts.emptyNames) return [];
-          return [
-            { uuid: AUTHOR_1, name: 'Анна' },
-            { uuid: AUTHOR_2, name: 'Глеб' },
-          ];
-        default:
-          throw new Error(`неизвестный UC: ${ucName}`);
-      }
     }),
   };
 }
@@ -154,6 +148,7 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
 
     expect(appApi.dispatch.mock.calls.map(([, command]) => command)).toEqual([
       ListMyReviewsUcDef.command({}),
+      GetUsersByIdsUcDef.command({ userIds: [AUTHOR_1] }),
       GetStreamUcDef.command({ streamId: STREAM_1 }),
     ]);
   });
@@ -189,13 +184,11 @@ describe('ReviewsForMeStory — формат карточки S08', () => {
 
     await story.handleCallback('view', actor, session);
 
-    const calls = (
-      appApi.execute.mock.calls as unknown as Array<
-        [string, Record<string, unknown>]
-      >
-    ).filter(([uc]) => uc === 'get-users-by-ids');
+    const calls = appApi.dispatch.mock.calls.filter(
+      ([, command]) => command.uc === 'getUsersByIds',
+    );
     expect(calls).toHaveLength(1);
-    expect(calls[0]?.[1]).toEqual({ userIds: [AUTHOR_1, AUTHOR_2] });
+    expect(calls[0]?.[1].input).toEqual({ userIds: [AUTHOR_1, AUTHOR_2] });
   });
 
   test('имя автора не найдено (batch пуст) — запасная «неизвестно»', async () => {

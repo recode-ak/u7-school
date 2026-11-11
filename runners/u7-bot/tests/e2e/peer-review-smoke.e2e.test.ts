@@ -1,12 +1,11 @@
 import { afterAll, beforeAll, describe, expect, spyOn, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import * as Shared from '@u7-scl/core/shared';
 import {
   GetMyCampaignsUcDef,
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
-import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { completeStudent } from '../helpers/student-fate';
 
@@ -52,11 +51,11 @@ describe('E2E peer-review: инфраструктура стенда (smoke)', (
   let nowSpy: ReturnType<typeof spyOn>;
 
   /** UC DMG `getMyCampaigns` от имени пользователя (как стори бота). */
-  const dispatchMyCampaigns = (user: User) =>
+  const dispatchMyCampaigns = (user: U7BotActor) =>
     app.apiApp.dispatch(
       PeerReviewModuleDef,
       GetMyCampaignsUcDef.command({}),
-      new UserCaller(user),
+      user,
       Trace.fromRequest({ requestId: crypto.randomUUID() }),
     );
 
@@ -93,7 +92,7 @@ describe('E2E peer-review: инфраструктура стенда (smoke)', (
     expect(campaign).toBeDefined();
 
     // UC видит кампанию у субъекта
-    const subject = (await app.userFacade.getUserByTelegramId(SUBJECT_TG))!;
+    const subject = await app.userByTelegramId(SUBJECT_TG);
     const subjectRes = await dispatchMyCampaigns(subject);
     const subjectCards = subjectRes.ok ? subjectRes.value : [];
     expect(subjectCards.some((c) => c.campaignId === campaign?.uuid)).toBe(

@@ -10,6 +10,7 @@ import {
   type KeyboardDescription,
   type Screen,
 } from '@u7-scl/core/ui';
+import { GuestCaller } from 'dmg-core';
 import type { Api } from 'grammy';
 import type { BotContext } from '../context';
 import type { DialogUiAppPort } from './bot-transport';
@@ -1551,7 +1552,7 @@ function makeLifecycleRig(): {
   uiApp.init({
     appApi: {} as never,
     eventBus: {} as never,
-    actorResolver: async () => ({ id: 'u1', name: 'Тест' }),
+    actorResolver: async () => new GuestCaller(),
   });
   const transport = new BotTransport(uiApp as unknown as DialogUiAppPort, api);
   return { api, uiApp, transport };

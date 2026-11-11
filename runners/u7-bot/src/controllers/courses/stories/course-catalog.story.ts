@@ -1,4 +1,4 @@
-import type { User } from '@u7-scl/app-legacy/domain';
+import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import { md } from '@u7-scl/core/shared';
@@ -67,7 +67,7 @@ export class CourseCatalogStory extends U7BotUiStory {
 
   // ── Главное меню (декларативные кнопки) ──
 
-  override async menuButtons(_actor: User): Promise<MenuButton[]> {
+  override async menuButtons(_actor: U7BotActor): Promise<MenuButton[]> {
     return [
       {
         kind: 'callback',
@@ -83,7 +83,7 @@ export class CourseCatalogStory extends U7BotUiStory {
 
   override async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     const [cmd, ...ids] = action.split(':');
@@ -207,7 +207,7 @@ export class CourseCatalogStory extends U7BotUiStory {
 
   async #handleCourse(
     courseId: string | undefined,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const loaded = await this.#loadCourses(actor, courseId);
     if (!loaded.ok) return loaded.response;
@@ -263,7 +263,7 @@ export class CourseCatalogStory extends U7BotUiStory {
   // ═══ Уровень 1: Этап (карточка этапа + модули подуровнем) ═══
 
   async #handlePhase(
-    actor: User,
+    actor: U7BotActor,
     courseId: string,
     phaseIdx: number,
   ): Promise<DialogResponse> {
@@ -305,7 +305,7 @@ export class CourseCatalogStory extends U7BotUiStory {
   // ═══ Уровень 2: Модуль (карточка модуля + проекты подуровнем) ═══
 
   async #handleModule(
-    actor: User,
+    actor: U7BotActor,
     courseId: string,
     phaseIdx: number,
     moduleId: string,
@@ -373,7 +373,7 @@ export class CourseCatalogStory extends U7BotUiStory {
   // ═══ Уровень 3: Проект (карточка проекта + уроки подуровнем) ═══
 
   async #handleProject(
-    actor: User,
+    actor: U7BotActor,
     moduleId: string,
     projectId: string,
     courseId?: string,
@@ -455,7 +455,7 @@ export class CourseCatalogStory extends U7BotUiStory {
   // ═══ Уровень 4: Урок (шаги только заголовками, закрытый уровень) ═══
 
   async #handleLesson(
-    actor: User,
+    actor: U7BotActor,
     projectId: string,
     lessonId: string,
     courseId?: string,
@@ -572,7 +572,10 @@ export class CourseCatalogStory extends U7BotUiStory {
 
   // ── Желание пройти курс (кнопка из карточки курса) ──
 
-  async #handleApply(courseId: string, actor: User): Promise<DialogResponse> {
+  async #handleApply(
+    courseId: string,
+    actor: U7BotActor,
+  ): Promise<DialogResponse> {
     if (!courseId) {
       return this.screen(md`⚠️ Курс не указан`);
     }
@@ -627,7 +630,7 @@ export class CourseCatalogStory extends U7BotUiStory {
 
   async #handleWishModule(
     moduleId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       WishModuleDef,
@@ -653,7 +656,7 @@ export class CourseCatalogStory extends U7BotUiStory {
 
   async #handleCancelConfirm(
     courseId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       WishModuleDef,
@@ -679,7 +682,7 @@ export class CourseCatalogStory extends U7BotUiStory {
 
   async #handleCancelModConfirm(
     moduleId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       WishModuleDef,
@@ -702,7 +705,7 @@ export class CourseCatalogStory extends U7BotUiStory {
   }
 
   async #handleLegacyProjectByIndex(
-    actor: User,
+    actor: U7BotActor,
     moduleId: string,
     projectIdxOrId: string,
   ): Promise<DialogResponse> {
@@ -730,7 +733,7 @@ export class CourseCatalogStory extends U7BotUiStory {
   // ═══ Загрузка доменных данных ═══
 
   async #loadCourses(
-    actor: User,
+    actor: U7BotActor,
     courseId?: string,
   ): Promise<LoadResult<CourseView[]>> {
     const listed = await this.dispatchUc(
@@ -754,7 +757,7 @@ export class CourseCatalogStory extends U7BotUiStory {
   }
 
   async #loadModulesInfo(
-    actor: User,
+    actor: U7BotActor,
     moduleIds: string[],
   ): Promise<Record<string, ModuleCardInfo>> {
     const result: Record<string, ModuleCardInfo> = {};
@@ -807,7 +810,7 @@ export class CourseCatalogStory extends U7BotUiStory {
   }
 
   async #loadStepTitles(
-    actor: User,
+    actor: U7BotActor,
     lessonIds: string[],
   ): Promise<Record<string, string>> {
     if (lessonIds.length === 0) return {};

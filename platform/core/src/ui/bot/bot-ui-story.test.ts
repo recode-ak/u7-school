@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { CoreErrors, type DomainError, ErrorDef } from 'dmg-core';
+import {
+  CoreErrors,
+  type DomainError,
+  ErrorDef,
+  GuestCaller,
+  type PersonCaller,
+  UserCaller,
+} from 'dmg-core';
 import {
   errAccessDenied,
   errBadRequest,
@@ -35,7 +42,8 @@ import type {
   KeyboardDescription,
 } from './types';
 
-type TestActor = { id: string };
+/** Актор UI — `PersonCaller` (ограничение `TActor` платформы). */
+type TestActor = PersonCaller;
 
 /** Логгер-шпион warn-вызовов (остальное — молчаливые заглушки). */
 function makeWarnSpyLogger(
@@ -79,7 +87,7 @@ class TestStory extends BotUiStory<AppMeta, TestActor> {
 
   override async handleCallback(
     _action: string,
-    _actor: { id: string },
+    _actor: TestActor,
     _session: BotSession,
   ): Promise<DialogResponse> {
     return {};
@@ -236,7 +244,7 @@ describe('BotUiStory — дефолты контракта команд (ФР-4,
     for (const command of ['cancel', 'help', 'start', 'tasks']) {
       const reaction = await story.handleCommand(
         { type: 'command', command, args: '', telegramId: 7 },
-        { id: 'u' },
+        new GuestCaller(),
         { dialog: { path: 'x/y', seq: 1 } },
       );
       expect(reaction).toEqual({ reaction: 'pass' });
@@ -254,13 +262,9 @@ describe('BotUiStory — дефолты контракта команд (ФР-4,
       telegramId: 7,
     };
 
-    const response = await story.handleMessage(
-      update,
-      { id: 'u' },
-      {
-        dialog: { path: 'x/anketa', seq: 3, input: {} },
-      },
-    );
+    const response = await story.handleMessage(update, new GuestCaller(), {
+      dialog: { path: 'x/anketa', seq: 3, input: {} },
+    });
 
     // Недостижимый при корректной стори путь — warn разработчику...
     expect(warns.length).toBe(1);
@@ -642,16 +646,26 @@ describe('BotUiStory — поверхность', () => {
     const story = new TestStory();
     const session: BotSession = { dialog: { path: 'quest/anketa', seq: 2 } };
 
-    const response = story.callUnknownCommand('boom:1', { id: 'u9' }, session);
+    const subject = {
+      uuid: '11111111-1111-4111-8111-111111111111',
+      big: 'x'.repeat(10_000),
+    };
+
+    const response = story.callUnknownCommand(
+      'boom:1',
+      new UserCaller(subject),
+      session,
+    );
 
     expect(String(response.screen?.text)).toContain('Неизвестная команда');
     expect(warns.length).toBe(1);
     expect(warns[0]?.[0]).toBe('bot');
-    expect(warns[0]?.[2]).toMatchObject({
+    expect(warns[0]?.[2]).toEqual({
       code: 'anketa:boom:1',
       dialogPath: 'quest/anketa',
-      actor: { id: 'u9' },
+      actor: { kind: 'user', subjectId: subject.uuid },
     });
+    expect(JSON.stringify(warns[0]?.[2]).length).toBeLessThan(500);
     setGlobalLogger(undefined as unknown as Logger);
   });
 
@@ -660,12 +674,13 @@ describe('BotUiStory — поверхность', () => {
     const session: BotSession = { dialog: { path: 'c/anketa', seq: 1 } };
     const update: BotUpdate = { type: 'message', text: 'текст', telegramId: 1 };
 
-    expect(await story.handleCallback('view', { id: 'u' }, session)).toEqual(
-      {},
-    );
+    expect(
+      await story.handleCallback('view', new GuestCaller(), session),
+    ).toEqual({});
     // Дефолт — реплика-отказ (контракт «обязана ответить» соблюдён ядром)
     expect(
-      (await story.handleMessage(update, { id: 'u' }, session)).notify?.text,
+      (await story.handleMessage(update, new GuestCaller(), session)).notify
+        ?.text,
     ).toContain('не принимаются');
   });
 });
@@ -700,5 +715,12 @@ describe('BotUiStory — делегаты билдеров ответов (ФР-
     const button = story.callBtn('Далее', story.callCb('next', 'id-7'));
 
     expect(button).toEqual({ text: 'Далее', code: 'anketa:next:id-7' });
+  });
+});
+
+describe('BotUiStory — ограничение типа актора', () => {
+  test('актор — PersonCaller: произвольный объект не подходит (проверка типов)', () => {
+    // @ts-expect-error TActor extends PersonCaller: `{ id: string }` — не Caller
+    type NotAllowed = BotUiStory<AppMeta, { id: string }>;
   });
 });

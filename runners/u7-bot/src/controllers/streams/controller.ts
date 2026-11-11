@@ -7,6 +7,13 @@ import {
   GetStreamMembersUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
+import {
+  GetUserByTelegramIdUcDef,
+  GetUserUcDef,
+  UserErrors,
+  UserModuleDef,
+  type UserView,
+} from '@u7-scl/domain/user/contract';
 import type { Command } from 'dmg-core';
 import { InactivityStory } from './stories/inactivity.story';
 import { CatalogStory } from './stories/stream-catalog.story';
@@ -18,7 +25,8 @@ import { ViewStreamStory } from './stories/view-stream.story';
  * Тонкий реестр — делегирует все действия в U7BotUiStory.
  * Содержит стори: catalog (S01), view-stream (S02-S04)
  * и inactivity (уведомления о бездействии и уходе из учёбы).
- * S11 (приглашение желающих) — ER invite-wishers (userFacade.notify).
+ * S11 (приглашение желающих) — подписка WishInviteStory на
+ * `wish.wish.invited` (адресная доставка через канал invite).
  */
 export class StreamsController extends U7BotController {
   readonly name = 'stream';
@@ -49,19 +57,15 @@ export class StreamsController extends U7BotController {
 
       if (event.kind === 'member_joined') {
         const students = await this.#studentsOf(stream.uuid);
-        const user = await this.resolve.userFacade.getUserByTelegramId(
-          event.user.id,
-        );
+        const user = await this.#userByTelegramId(event.user.id);
 
         const isStudentActive =
           Boolean(user) &&
           students.some((s) => s.userId === user?.uuid && s.inProgress);
 
         if (!isStudentActive) {
-          const mentor = await this.resolve.appApi.execute('get-user', {
-            uuid: stream.mentorId,
-          });
-          if (mentor?.telegramId && this.proactiveSender) {
+          const mentor = await this.#userById(stream.mentorId);
+          if (mentor.telegramId && this.proactiveSender) {
             const userName = user?.name ?? event.user.firstName;
             const usernamePart = event.user.username
               ? ` (@${event.user.username})`
@@ -75,19 +79,15 @@ export class StreamsController extends U7BotController {
       }
 
       if (event.kind === 'member_left') {
-        const user = await this.resolve.userFacade.getUserByTelegramId(
-          event.user.id,
-        );
+        const user = await this.#userByTelegramId(event.user.id);
         if (user) {
           const students = await this.#studentsOf(stream.uuid);
           const isActive = students.some(
             (s) => s.userId === user.uuid && s.inProgress,
           );
           if (isActive) {
-            const mentor = await this.resolve.appApi.execute('get-user', {
-              uuid: stream.mentorId,
-            });
-            if (mentor?.telegramId && this.proactiveSender) {
+            const mentor = await this.#userById(stream.mentorId);
+            if (mentor.telegramId && this.proactiveSender) {
               await this.proactiveSender.notify(mentor.telegramId, {
                 text: md`🚪 Студент ${user.name} покинул группу «${stream.title}»\\.`,
               });
@@ -117,6 +117,23 @@ export class StreamsController extends U7BotController {
     return members.value?.students ?? [];
   }
 
+  /** Пользователь по telegramId: не найден — `undefined`, прочий отказ — исключение. */
+  async #userByTelegramId(telegramId: number): Promise<UserView | undefined> {
+    const found = await this.#dispatchUser(
+      GetUserByTelegramIdUcDef.command({ telegramId }),
+    );
+    if (found.ok) return found.value;
+    if (found.error.code === UserErrors.NOT_FOUND.code) return undefined;
+    throw new Error(found.error.code);
+  }
+
+  /** Профиль пользователя по uuid; отказ — исключение (ловит обработчик события). */
+  async #userById(uuid: string): Promise<UserView> {
+    const found = await this.#dispatchUser(GetUserUcDef.command({ uuid }));
+    if (!found.ok) throw new Error(found.error.code);
+    return found.value;
+  }
+
   /**
    * Команда модулю потоков от гостя: событие группы приходит без актора
    * бота, а читают поток открытые запросы.
@@ -125,6 +142,17 @@ export class StreamsController extends U7BotController {
     command: Command<D>,
   ) {
     return dispatchModuleUc(StreamModuleDef, command, {
+      resolve: this.resolve,
+      warn: (message, meta) =>
+        getGlobalLogger()?.warn('stream-controller', message, meta),
+    });
+  }
+
+  /** Команда модулю `user` от гостя (событие группы приходит без актора). */
+  #dispatchUser<D extends (typeof UserModuleDef)['useCases'][number]>(
+    command: Command<D>,
+  ) {
+    return dispatchModuleUc(UserModuleDef, command, {
       resolve: this.resolve,
       warn: (message, meta) =>
         getGlobalLogger()?.warn('stream-controller', message, meta),

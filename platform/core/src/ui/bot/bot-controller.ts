@@ -1,3 +1,4 @@
+import type { PersonCaller } from 'dmg-core';
 import type { ApiApp } from '#api-legacy/app/api-app';
 import { fromError } from '#domain-legacy/errors/error-helpers';
 import type { AppMeta } from '#domain-legacy/types';
@@ -33,7 +34,7 @@ import type {
  */
 export abstract class BotController<
     TAppMeta extends AppMeta = AppMeta,
-    TActor = unknown,
+    TActor extends PersonCaller = PersonCaller,
     TResolve extends BotUiAppResolve<TAppMeta, TActor> = BotUiAppResolve<
       TAppMeta,
       TActor
@@ -287,7 +288,7 @@ export abstract class BotController<
     this.logger?.warn('bot', 'Кнопка без обработчика', {
       code: `${this.name}:${data}`,
       dialogPath: session.dialog?.path,
-      actor,
+      actor: actor.toLog(),
     });
     return rb.screen(md`⚠️ Неизвестная команда`);
   }

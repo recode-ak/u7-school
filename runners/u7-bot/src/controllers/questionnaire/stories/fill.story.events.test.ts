@@ -10,6 +10,7 @@ import {
   RESPONDENT_ID,
   respondentProfile,
   subscriptionOf,
+  userReadsOf,
 } from './questionnaire-dmg.test-kit';
 
 /**
@@ -18,20 +19,20 @@ import {
  * кнопочный проактив ТОЛЬКО каналом invite (ФР-6, «никогда срезка в notify»),
  * полные коды кнопок (транспорт проактивы не префиксует), прерывание — через
  * confirm-экран. abandoned (S08) — notify только при reason='timeout'.
- * Адрес события не несёт: telegramId — по профилю респондента (`get-user`).
+ * Адрес события не несёт: telegramId — по профилю респондента (`getUser`).
  */
 
 const users = { [RESPONDENT_ID]: respondentProfile() };
 
 describe('FillStory — abandonWarning (S07): invite-канал', () => {
   test('с courseId: «Продолжить» (мост resume) и «Прервать» (confirm)', async () => {
-    const { story, sender, execute } = initStory(new FillStory(), { users });
+    const { story, sender, dispatch } = initStory(new FillStory(), { users });
 
     await subscriptionOf(story, QuestionnaireEvents.abandonWarning.name).handle(
       abandonWarningEvent({ ownerInfo: { courseId: 'course-1' } }),
     );
 
-    expect(execute).toHaveBeenCalledWith('get-user', { uuid: RESPONDENT_ID });
+    expect(userReadsOf(dispatch)).toEqual([RESPONDENT_ID]);
     expect(sender.invite).toHaveBeenCalledTimes(1);
     const [telegramId, payload] = sender.invite.mock.calls[0] as unknown as [
       number,

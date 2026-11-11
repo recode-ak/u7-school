@@ -1,20 +1,25 @@
 import type { U7BotAppMeta, U7CallerResolver } from '@u7-scl/app';
-import type { User } from '@u7-scl/app-legacy';
 import type { School, U7AppResolver } from '@u7-scl/app-legacy/domain';
 import type { BotUiAppResolve } from '@u7-scl/core/ui';
-import type { UserFacade } from '@u7-scl/user/domain';
+import type { UserAr } from '@u7-scl/domain/user/contract';
+import type { ReadonlyAr, UserCaller } from 'dmg-core';
 //
 // ================= UI layer ===================
+
+/**
+ * Актор бота: зарегистрированный пользователь. Регистрацию гарантирует
+ * `ensureRegisteredGuest` на `/start` и входе в группу.
+ */
+export type U7BotActor = UserCaller<ReadonlyAr<UserAr>>;
 
 /**
  * Зависимости UI-слоя u7-бота: базовый резолв ядра + идемпотентная
  * гост-регистрация на /start (от имени системного актора-бота).
  */
-export interface U7BotUiAppResolve extends BotUiAppResolve<U7BotAppMeta, User> {
-  /** фасад пользователей — идемпотентная гост-регистрация на /start */
-  userFacade: UserFacade;
-  /** системный актор-бот (BOT_ADMIN_UUID, резолвится при старте) — регистрация гостя от его имени */
-  botAdminUser: User;
+export interface U7BotUiAppResolve
+  extends BotUiAppResolve<U7BotAppMeta, U7BotActor> {
+  /** uuid системного актора-бота (BOT_ADMIN_UUID) — регистрация гостя и роли от его имени */
+  botAdminUuid: string;
   /** сущность школы (FR-4) */
   school: School;
   /** резолвер `Caller` приложения (D-50): субъект команд DMG из `dispatchUc` */

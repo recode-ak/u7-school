@@ -1,23 +1,22 @@
-import { describe, expect, mock, test } from 'bun:test';
-import { TEST_SCHOOL, type User } from '@u7-scl/app-legacy/domain';
+import { describe, expect, test } from 'bun:test';
+import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { ListScopeReviewsUcDef } from '@u7-scl/domain/peer-review/contract';
 import { ListStreamsUcDef } from '@u7-scl/domain/stream/contract';
-import { Role } from '@u7-scl/user/domain';
+import { userActor } from '../../../core/user-actor.test-kit';
 import {
   peerReviewDispatch,
   testCallers,
 } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { SchoolReviewsStory } from './school-reviews.story';
 
-const actor: User = {
-  uuid: 'user-guest',
+const actor = userActor({
+  uuid: '11111111-1111-4111-8111-aaaaaaaaaaa4',
   name: 'Гость',
   telegramId: 123456,
-  roles: [Role.GUEST],
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+  roles: ['GUEST'],
+});
 
 const session: BotSession = {
   dialog: { path: 'school/reviews', seq: 1 },
@@ -62,40 +61,26 @@ function makeStory(opts?: {
     ...(opts?.names ?? {}),
   };
 
-  const executeMock = mock(
-    async (ucName: string, attrs: Record<string, unknown>) => {
-      switch (ucName) {
-        case 'get-users-by-ids': {
-          const ids = attrs.userIds as string[];
-          return ids.map((id) => ({
-            uuid: id,
-            name: namesMap[id] ?? 'Неизвестный',
-          }));
-        }
-        default:
-          throw new Error(`Unexpected UC call: ${ucName}`);
-      }
-    },
-  );
-
   const dispatchMock = peerReviewDispatch({
     listStreams: () => streams,
     listScopeReviews: (input) => ({
       scopeIds: (input as { scopeIds: string[] }).scopeIds,
       recipients,
     }),
+    getUsersByIds: (input) =>
+      (input as { userIds: string[] }).userIds.map((id) => ({
+        uuid: id,
+        name: namesMap[id] ?? 'Неизвестный',
+      })),
   });
 
   story.init({
     school: TEST_SCHOOL,
-    appApi: {
-      execute: executeMock,
-      dispatch: dispatchMock,
-    },
+    appApi: { dispatch: dispatchMock },
     callers: testCallers,
   } as any);
 
-  return { story, executeMock, dispatchMock };
+  return { story, dispatchMock };
 }
 
 describe('SchoolReviewsStory (SH03)', () => {

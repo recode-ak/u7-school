@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { AbandonUcDef } from '@u7-scl/domain/questionnaire/contract';
+import { userActor } from '../../../core/user-actor.test-kit';
 import { FillStory } from './fill.story';
 import {
   buttonsOf,
@@ -21,7 +21,10 @@ import {
  * «Отменено…». Ветвление по `code`/`kind`, не по тексту.
  */
 
-const actor = { uuid: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee' } as User;
+const actor = userActor({
+  uuid: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+  roles: ['GUEST'],
+});
 
 function fillSession(): BotSession {
   return {
@@ -62,7 +65,7 @@ describe('FillStory — вызовы UC через dispatchUc', () => {
         input: { questionnaireId: 'q-1', type: 'callback', value: 'novice' },
       },
     ]);
-    expect(callers).toEqual([actor.uuid]);
+    expect(callers).toEqual([actor.user.uuid]);
   });
 
   test('next:{qId}:{qCode} → handleAction callback со значением next:{qCode}', async () => {
@@ -164,7 +167,7 @@ describe('FillStory — вызовы UC через dispatchUc', () => {
     );
 
     expect(dispatchedOf(dispatch)).toEqual([
-      { uc: 'getQuestionnairesByUser', input: { userId: actor.uuid } },
+      { uc: 'getQuestionnairesByUser', input: { userId: actor.user.uuid } },
       { uc: 'getCurrent', input: { questionnaireId: 'q-active' } },
     ]);
     expect(res.awaitInput).toEqual({

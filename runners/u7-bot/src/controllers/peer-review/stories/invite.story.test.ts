@@ -1,7 +1,11 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { User } from '@u7-scl/app-legacy/domain';
 import { assertMarkdownV2Safe, type MdText } from '@u7-scl/core/shared';
 import { ReviewCampaignEvents } from '@u7-scl/domain/peer-review/contract';
+import {
+  GetUsersByIdsUcDef,
+  UserModuleDef,
+  type UserView,
+} from '@u7-scl/domain/user/contract';
 import {
   dmgDispatch,
   streamNotFound,
@@ -25,22 +29,26 @@ const stream = streamView({
   title: 'JavaScript Основы — Поток 1',
 });
 
-type Profile = Omit<User, 'telegramId'> & { telegramId?: number };
+type Profile = UserView;
 
 const subject: Profile = {
   uuid: SUBJECT_ID,
   name: 'Борис',
   telegramId: SUBJECT_TG,
-  roles: [],
-  createdAt: '2026-01-01T00:00',
+  roles: ['GUEST'],
+  createdAt: 0,
+  updatedAt: 0,
+  version: 0,
 };
 
 const mentor: Profile = {
   uuid: MENTOR_ID,
   name: 'Марина',
   telegramId: MENTOR_TG,
-  roles: [],
-  createdAt: '2026-01-01T00:00',
+  roles: ['GUEST'],
+  createdAt: 0,
+  updatedAt: 0,
+  version: 0,
 };
 
 function makeCreatedEvent(
@@ -83,7 +91,7 @@ function setupStory(
 ): {
   story: InviteStory;
   invites: InviteCall[];
-  execute: ReturnType<typeof mock>;
+  dispatch: ReturnType<typeof dmgDispatch>;
 } {
   // Явно переданный undefined — «недоступен»; не передан — дефолт
   const localStream = 'stream' in opts ? opts.stream : stream;
@@ -92,27 +100,20 @@ function setupStory(
 
   const invites: InviteCall[] = [];
 
-  const execute = mock(
-    async (name: string, params?: Record<string, unknown>) => {
-      if (name === 'get-users-by-ids') {
-        const ids = (params?.userIds ?? []) as string[];
-        return [localSubject, localMentor].filter(
-          (u): u is Profile => u !== undefined && ids.includes(u.uuid),
-        );
-      }
-      return undefined;
+  const dispatch = dmgDispatch({
+    getStream: () => localStream ?? streamNotFound(),
+    getUsersByIds: (input) => {
+      const { userIds } = input as { userIds: string[] };
+      return [localSubject, localMentor].filter(
+        (u): u is Profile => u !== undefined && userIds.includes(u.uuid),
+      );
     },
-  );
+  });
 
   const story = new InviteStory();
   story.init(
     {
-      appApi: {
-        execute,
-        dispatch: dmgDispatch({
-          getStream: () => localStream ?? streamNotFound(),
-        }),
-      },
+      appApi: { dispatch },
       callers: testCallers,
     } as never,
     {
@@ -124,7 +125,7 @@ function setupStory(
     } as never,
   );
 
-  return { story, invites, execute };
+  return { story, invites, dispatch };
 }
 
 /** Обработчик подписки peer-review.review-campaign.created. */
@@ -257,25 +258,19 @@ describe('InviteStory — приглашения по созданию камп�
     }
   });
 
-  test('профили обоих получателей — один batch-UC get-users-by-ids', async () => {
-    const { story, execute } = setupStory();
+  test('профили обоих получателей — один batch-UC getUsersByIds', async () => {
+    const { story, dispatch } = setupStory();
 
     await campaignCreatedHandler(story)(makeCreatedEvent());
 
-    expect(execute).toHaveBeenCalledWith('get-users-by-ids', {
+    const batchCalls = dispatch.mock.calls.filter(
+      ([module, command]) =>
+        module === UserModuleDef && command.uc === GetUsersByIdsUcDef.name,
+    );
+    expect(batchCalls).toHaveLength(1);
+    expect(batchCalls[0]![1].input).toEqual({
       userIds: [SUBJECT_ID, MENTOR_ID],
     });
-  });
-
-  test('у субъекта нет telegramId → только менторское приглашение', async () => {
-    const { story, invites } = setupStory({
-      subject: { ...subject, telegramId: undefined },
-    });
-
-    await campaignCreatedHandler(story)(makeCreatedEvent());
-
-    expect(invites).toHaveLength(1);
-    expect(invites[0]!.telegramId).toBe(MENTOR_TG);
   });
 
   test('ментор недоступен → приглашение только субъекту', async () => {
@@ -294,11 +289,10 @@ describe('InviteStory — приглашения по созданию камп�
     // batch не находит субъекта: перекроем мок — вернёт только ментора
     story.init({
       appApi: {
-        execute: mock(async (name: string) => {
-          if (name === 'get-users-by-ids') return [mentor];
-          return undefined;
+        dispatch: dmgDispatch({
+          getStream: () => stream,
+          getUsersByIds: () => [mentor],
         }),
-        dispatch: dmgDispatch({ getStream: () => stream }),
       },
       callers: testCallers,
     } as never);

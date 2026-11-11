@@ -1,4 +1,3 @@
-import type { User } from '@u7-scl/app-legacy/domain';
 import type { DomainEvent } from '@u7-scl/core/domain';
 import {
   type MdText,
@@ -24,6 +23,7 @@ import {
   type StudentView,
 } from '@u7-scl/domain/stream/contract';
 import type * as v from 'valibot';
+import type { U7BotActor } from '../../../core/u7-bot-app-meta';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
 import { Routes } from '../../shared/routes';
 
@@ -237,7 +237,7 @@ export class InactivityStory extends U7BotUiStory {
    */
   async handleCallback(
     action: string,
-    actor: User,
+    actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
     const [cmd, id] = action.split(':');
@@ -287,7 +287,10 @@ export class InactivityStory extends U7BotUiStory {
   // ── Приватные методы ──
 
   /** Самовыход студента (FR-4): UC drop-student + прощание. */
-  async #executeDrop(studentId: string, actor: User): Promise<DialogResponse> {
+  async #executeDrop(
+    studentId: string,
+    actor: U7BotActor,
+  ): Promise<DialogResponse> {
     const student = await this.#getStudent(studentId, actor);
     if (!student) {
       return this.screen(md`⚠️ Запись студента не найдена`);
@@ -309,7 +312,7 @@ export class InactivityStory extends U7BotUiStory {
   /** Снятие ментором за бездействие (FR-5): UC mark-abandoned. */
   async #executeMarkAbandoned(
     studentId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<DialogResponse> {
     const student = await this.#getStudent(studentId, actor);
     if (!student) {
@@ -337,7 +340,7 @@ export class InactivityStory extends U7BotUiStory {
   /** Запись студента (streamId для команды UC); недоступна — undefined. */
   async #getStudent(
     studentId: string,
-    actor: User,
+    actor: U7BotActor,
   ): Promise<StudentView | undefined> {
     try {
       const res = await this.dispatchUc(
@@ -351,11 +354,10 @@ export class InactivityStory extends U7BotUiStory {
     }
   }
 
-  /** Профиль пользователя по uuid (legacy `get-user`); недоступен — undefined. */
+  /** Профиль пользователя по uuid; недоступен — undefined. */
   async #resolveProfile(userId: string): Promise<Profile | undefined> {
     try {
-      const user = await this.appApi.execute('get-user', { uuid: userId });
-      return user ?? undefined;
+      return await this.findUser(userId);
     } catch {
       return undefined;
     }

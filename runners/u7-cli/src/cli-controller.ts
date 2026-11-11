@@ -4,8 +4,15 @@ import { stdin as input, stdout as output } from 'node:process';
 import * as readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 import type { U7BotAppMeta } from '@u7-scl/app';
-import type { User } from '@u7-scl/app-legacy';
 import type { ApiApp, UcDocType } from '@u7-scl/core/api';
+import {
+  GetUserUcDef,
+  ListUsersUcDef,
+  UserModuleDef,
+  type UserView,
+} from '@u7-scl/domain/user/contract';
+import { type Command, GuestCaller } from 'dmg-core';
+import { Trace } from 'dmg-core/app';
 import type * as v from 'valibot';
 import { formatValibotErrors } from './controller/format-valibot-errors';
 
@@ -107,7 +114,7 @@ function parseKeyValueLines(
 
 // TODO: [Refactor] Вынести общую логику текстового UI (bot/cli) в BaseTextController в platform/core
 export class CliController {
-  private currentActor: User | null = null;
+  private currentActor: UserView | null = null;
   private rl: readline.Interface;
 
   constructor(private app: ApiApp<U7BotAppMeta>) {
@@ -318,6 +325,9 @@ export class CliController {
     }
 
     try {
+      // Актор CLI — `UserView` из Def-чтения (`/login`). Legacy `execute`
+      // принимает актора без типа (`ApiApp<U7BotAppMeta>` → `unknown`), а
+      // legacy-UC читают из него `uuid` и `roles` — долг `u7-cli` в debt.md.
       const result = await this.app.execute(
         ucName as U7BotAppMeta['moduleMetas']['ucMetas']['ucName'],
         payload,
@@ -370,16 +380,9 @@ export class CliController {
 
   private async handleLogin(args?: string) {
     try {
-      const result = (await this.app.execute(
-        'list-users',
-        {},
-        this.currentActor ?? undefined,
-      )) as {
-        users: Array<{ uuid: string; name: string; telegramId: number }>;
-      };
-      const users = result.users;
+      const users = await this.#dispatchUser(ListUsersUcDef.command({}));
 
-      if (!users || users.length === 0) {
+      if (users.length === 0) {
         console.log('Нет пользователей. База пуста.');
         return;
       }
@@ -405,14 +408,11 @@ export class CliController {
       }
 
       if (targetUser) {
-        // Полный User-объект: актор передаётся в execute целиком
-        const fullUser = (await this.app.execute('get-user', {
-          uuid: targetUser.uuid,
-        })) as User;
-        this.currentActor = fullUser;
-        console.log(
-          `Вход выполнен. Активный пользователь: ${this.currentActor.name}`,
+        const fullUser = await this.#dispatchUser(
+          GetUserUcDef.command({ uuid: targetUser.uuid }),
         );
+        this.currentActor = fullUser;
+        console.log(`Вход выполнен. Активный пользователь: ${fullUser.name}`);
       } else {
         console.log(`Пользователь ${args} не найден.`);
       }
@@ -422,5 +422,23 @@ export class CliController {
         (e as Error).message,
       );
     }
+  }
+
+  /** Чтение модуля `user` от гостя: CLI не передаёт актора в запросы чтения. */
+  async #dispatchUser<D extends (typeof UserModuleDef)['useCases'][number]>(
+    command: Command<D>,
+  ) {
+    const trace = Trace.fromRequest({
+      requestId: crypto.randomUUID(),
+      channel: { name: 'cli' },
+    });
+    const res = await this.app.dispatch(
+      UserModuleDef,
+      command,
+      new GuestCaller(),
+      trace,
+    );
+    if (!res.ok) throw new Error(res.error.code);
+    return res.value;
   }
 }
