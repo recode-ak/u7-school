@@ -94,14 +94,14 @@
 - `Role` не экспортируется из `domain/src/user/contract.ts`; TR-33, TR-40 — к снятию.
 - `check` зелёный, кроме поимённой красной зоны в `debt.md`.
 
-## Фаза 5: UI бота
+## Фаза 5: UI бота [checkpoint: PENDING]
 
 - [x] Task: `dmg-tech-lead`: бриф `slices/ui.md` с «Сохраняемым поведением» — регистрация, роли, меню, анкеты, уведомления; эталон `../u7-school-v0.2.6` (Sonnet); приёмка — Opus d006057a — О1: актор `ReadonlyAr<UserAr>` (Нурболат), мост Р5 снимается в Ф5
-- [ ] Task: `dmg-test-designer`: перевод тестов бота на Def-имена (литералы `'get-user'` и др., кит анкет) и red-тесты (Sonnet)
-- [ ] Task: UI-stories: `ensure-registered`, `school/controller`, `ui-app`/`create-ui-app`, адрес респондента анкет (TR-49 (6)) — Sonnet; механика `get-user`/`get-users-by-ids` в `streams`, `learning`, `peer-review`, `u7-cli`, `test-bot-transport` — flash
-- [ ] Task: Снять красную зону в `debt.md` (Opus)
-- [ ] Task: `dmg-reviewer` (Opus)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md; автономно)
+- [x] Task: `dmg-test-designer`: перевод тестов бота на Def-имена (литералы `'get-user'` и др., кит анкет) и red-тесты (Sonnet) 99c6da92 — 2 круга (смена О1 на `Caller`, Нурболат)
+- [x] Task: UI-stories: `ensure-registered`, `school/controller`, `ui-app`/`create-ui-app`, адрес респондента анкет (TR-49 (6)) — Sonnet; механика `get-user`/`get-users-by-ids` в `streams`, `learning`, `peer-review`, `u7-cli`, `test-bot-transport` — flash 99c6da92 — актор `UserCaller<ReadonlyAr<UserAr>>`, `platform/core/src/ui/bot` — `TActor extends PersonCaller` (Нурболат); `resolveByTelegramId` в резолвере (TR-61 «Ф5»)
+- [x] Task: Снять красную зону в `debt.md` (Opus) 99c6da92 — красной зоны не было (Ф3); мост `subjectOf` снят, TR-61 «Ф5»; мост `call-uc`/`_course-client` до Ф6
+- [x] Task: `dmg-reviewer` (Opus) 99c6da92 — 1 `error` (актор в мете логов) и 4 `warn` исправлены, повторное ревью — `error` нет
+- [x] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 5:**
 - В `runners` нет вызовов legacy-имён UC `user` через `appApi.execute` (с учётом многострочных) и `userFacade.`.
