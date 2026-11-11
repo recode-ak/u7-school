@@ -40,7 +40,7 @@ describe('RegisterGuestUc', () => {
       userRepo,
       eventBus: new InProcEventBus(),
       appResolver: {
-        logger: console,
+        logger: new ConsoleLogger(),
         mode: 'test' as const,
         eventBus: new InProcEventBus(),
         school: TEST_SCHOOL,

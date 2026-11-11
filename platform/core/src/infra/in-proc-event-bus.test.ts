@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 import type { DomainEvent } from '../domain/events/domain-event';
 import { InProcEventBus } from './in-proc-event-bus';
 
@@ -68,7 +68,8 @@ describe('core/domain/events — InProcEventBus', () => {
     expect(calls).toHaveLength(0);
   });
 
-  test('изоляция ошибок: синхронное исключение не прерывает остальные обработчики', () => {
+  test('изоляция ошибок: синхронное исключение не прерывает остальные обработчики', async () => {
+    const errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     const bus = new InProcEventBus();
     const calls: string[] = [];
 
@@ -85,12 +86,18 @@ describe('core/domain/events — InProcEventBus', () => {
       bus.publish(makeEvent({ eventName: 'error.event' })),
     ).not.toThrow();
 
-    // Оба обработчика должны быть вызваны
+    // Обработчик async — исключение логируется после микротасков
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    // Ошибка залогирована, оба обработчика вызваны
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
     expect(calls).toContain('handler-1-start');
     expect(calls).toContain('handler-2-ok');
   });
 
   test('изоляция ошибок: rejected Promise не роняет шину', async () => {
+    const errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     const bus = new InProcEventBus();
     const calls: string[] = [];
 
@@ -111,7 +118,9 @@ describe('core/domain/events — InProcEventBus', () => {
     // Даём микротаскам выполниться
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    // Оба обработчика должны быть вызваны
+    // Ошибка залогирована, оба обработчика вызваны
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
     expect(calls).toContain('async-1-start');
     expect(calls).toContain('async-2-ok');
   });

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { AppException } from '@u7-scl/core/domain';
+import { ConsoleLogger } from '@u7-scl/core/shared';
 import * as v from 'valibot';
 import {
   U7ApiModule,
@@ -25,7 +26,7 @@ const school = createSchool({
 });
 
 const appResolver: U7AppResolver = {
-  logger: console as any,
+  logger: new ConsoleLogger(),
   mode: 'test',
   eventBus: eventBus as any,
   school,

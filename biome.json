@@ -603,7 +603,9 @@
                       "!@u7-scl/core/infra",
                       "!@u7-scl/core/infra/**",
                       "!@u7-scl/app-legacy/infra",
-                      "!@u7-scl/app-legacy/infra/**"
+                      "!@u7-scl/app-legacy/infra/**",
+                      "!./**",
+                      "!../**"
                     ],
                     "message": "ARC-08: apps работают через appApi; репозитории и реализации модулей не импортируют"
                   }

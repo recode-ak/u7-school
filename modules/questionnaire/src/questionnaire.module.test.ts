@@ -9,7 +9,6 @@ import {
   GetQuestionnairesByUserUcDef,
   GetQuestionnaireUcDef,
   HandleActionUcDef,
-  QuestionnaireModuleDef,
   SendLikertInviteUcDef,
   StartByInviteUcDef,
   StartQuestionnaireUcDef,
@@ -17,7 +16,7 @@ import {
 import { type AppContext, ModuleFacades, Trace } from 'dmg-core/app';
 import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
 import { QuestionnaireJsonRepo } from './infra/questionnaire.json-repo';
-import { QuestionnaireRepoFake } from './questionnaire/questionnaire.repo.fake';
+import type { QuestionnaireRepoFake } from './questionnaire/questionnaire.repo.fake';
 import {
   likertPool,
   OWNER_INFO,

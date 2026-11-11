@@ -6,6 +6,8 @@ import { EnrichmentService } from './enrichment-service';
 
 describe('EnrichmentService', () => {
   const TEST_OUTPUT_DIR = 'test-enrich-output';
+  // Прогресс обогащения — вывод CLI, в тестах не нужен
+  const logSpy = spyOn(console, 'log').mockImplementation(() => {});
 
   beforeAll(async () => {
     await mkdir(join(TEST_OUTPUT_DIR, 'html'), { recursive: true });
@@ -26,6 +28,7 @@ describe('EnrichmentService', () => {
   });
 
   afterAll(async () => {
+    logSpy.mockRestore();
     await rm(TEST_OUTPUT_DIR, { recursive: true, force: true });
   });
 

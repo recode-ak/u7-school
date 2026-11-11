@@ -156,7 +156,7 @@ describe('world:check — валидатор мира', () => {
       participants: [],
     });
 
-    const result = checkWorld(worldDef);
+    const result = checkWorld(worldDef, { logger: () => {} });
     expect(result.valid).toBe(false);
     expect(
       result.violations.some((v) => v.code === 'MENTOR_ROLE_MISMATCH'),

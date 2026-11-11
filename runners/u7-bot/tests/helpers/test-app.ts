@@ -5,7 +5,7 @@ import type { EventBus } from '@u7-scl/core/domain';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import { ReviewCampaignJsonRepo, ReviewJsonRepo } from '@u7-scl/peer-review';
 import type { UserInProcFacade } from '@u7-scl/user/infra';
-import { WishJsonRepo } from '@u7-scl/wish/infra';
+import { WishJsonRepo } from '@u7-scl/wish';
 import type { AnyModuleDef, DomainError, Result } from 'dmg-core';
 import { type JobReport, Trace } from 'dmg-core/app';
 import type { WorldDefinition } from '../worlds';

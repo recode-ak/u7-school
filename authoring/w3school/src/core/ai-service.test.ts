@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, mock, spyOn, test } from 'bun:test';
 import { AIService } from './ai-service';
 
 // Мокаем библиотеку openai для DeepSeek API
@@ -48,8 +48,11 @@ describe('AIService', () => {
       };
     });
 
+    const errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     const service = new AIService('test-key');
     const summary = await service.getSummary('Title', 'Content');
     expect(summary).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith('Error fetching summary: API Error');
+    errorSpy.mockRestore();
   });
 });

@@ -481,7 +481,7 @@ export class MonitorStory extends U7BotUiStory {
   ): Promise<DialogResponse> {
     const loadedStudent = await this.#loadStudent(studentId, actor);
     if (!loadedStudent.ok) return loadedStudent.response;
-    const { student, userName } = loadedStudent;
+    const { userName } = loadedStudent;
 
     return this.confirm(
       'mark-abandoned',
@@ -561,7 +561,7 @@ export class MonitorStory extends U7BotUiStory {
 
     const loadedStudent = await this.#loadStudent(studentId, actor);
     if (!loadedStudent.ok) return loadedStudent.response;
-    const { student, userName } = loadedStudent;
+    const { userName } = loadedStudent;
 
     // Связка «команда UC → подпись исхода»; термины — унифицированные литералы
     const outcomeLabels: Record<string, string> = {

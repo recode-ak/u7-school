@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { TEST_SCHOOL, type U7AppResolver } from '@u7-scl/app-legacy/domain';
+import { ConsoleLogger } from '@u7-scl/core/shared';
 import type { User } from '@u7-scl/domain/user';
 import { Role } from '@u7-scl/domain/user';
 import { LegacyUserJsonRepo } from '#infra-legacy/db/user-json-repo';
@@ -21,7 +22,7 @@ const UC_NAMES = [
 ] as const;
 
 const appResolver: U7AppResolver = {
-  logger: console as any,
+  logger: new ConsoleLogger(),
   mode: 'test' as const,
   eventBus: {
     publish() {},
