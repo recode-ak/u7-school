@@ -110,11 +110,11 @@
 
 ## Фаза 6: Сборка и снятие legacy
 
-- [ ] Task: Бриф `slices/assembly.md` (Opus, решения — TR)
-- [ ] Task: `migrator`, сборка (flash): `UserModuleDef` без `external`, фабрика в `U7App`, `@u7-scl/user/**` — в ARC-07 `biome.json`
-- [ ] Task: `migrator`, удаление legacy и клиенты сборки (flash): `UserInProcFacade`, `UserApiModule`, `api/*`, `module.ts`, `facade.ts`, `commands/*`, legacy-репозиторий, поле `userFacade` и тип `UserLegacy` в `platform/app`; `tests/helpers/test-app.ts`, `scripts/{call-uc,_course-client,domain-arch}.ts`, тестовые миры
-- [ ] Task: `dmg-data-keeper` (flash): скрипты на `DB_DIR=./data/fixtures` — вывод совпадает с `v0.2.6`
-- [ ] Task: `dmg-reviewer` (Opus)
+- [x] Task: Бриф `slices/assembly.md` (Opus, решения — TR) — сам, без `tech-lead` (образец `course-dmg` Ф5); задачи 2–3 — два шага flash подряд, общий коммит
+- [x] Task: `migrator`, сборка (flash): `UserModuleDef` без `external`, фабрика в `U7App`, `@u7-scl/user/**` — в ARC-07 `biome.json` 6f6435b6 — эскалации: `u7-cli` (ветка `execute` снята), `app-legacy/domain/user.ts` удалён в Ф6 (ARC-04), TR-61 «Ф6»
+- [x] Task: `migrator`, удаление legacy и клиенты сборки (flash): `UserInProcFacade`, `UserApiModule`, `api/*`, `module.ts`, `facade.ts`, `commands/*`, legacy-репозиторий, поле `userFacade` и тип `UserLegacy` в `platform/app`; `tests/helpers/test-app.ts`, `scripts/{call-uc,_course-client,domain-arch}.ts`, тестовые миры
+- [x] Task: `dmg-data-keeper` (flash): скрипты на `DB_DIR=./data/fixtures` — вывод совпадает с `v0.2.6` 6f6435b6 — ок; первая команда нового кода делает `users.json` нечитаемым для `v0.2.6` (откат — бэкап, чек-лист Ф8)
+- [x] Task: `dmg-reviewer` (Opus) 6f6435b6 — `error` нет; 1 warn и 4 info исправлены, остальные — Ф7/DEBT-42
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 6:**
@@ -144,7 +144,7 @@
     - [ ] `deepseek.md` — сверка таблицы §2 с данными трека;
     - [ ] `summary.md` — таблица критериев spec и строка «DeepSeek».
     - [ ] упоминания роли `STUDENT` в документах (`README.md`, `runners/u7-bot/src/controllers/learning/ui-spec.md`, `courses/content-nav.md`, `modules/stream/src/analysis.md`, `TODO.md`) — ревью Ф3;
-    - [ ] чек-лист релиза: миграция `STUDENT` — ДО выкатки нового кода, бэкап `--name=before-drop-student`; проверка живого `users.json` (записи со `STUDENT`, без `updatedAt`) — Нурболат (отчёт `dmg-data-keeper` Ф3).
+    - [ ] чек-лист релиза: миграция `STUDENT` — ДО выкатки нового кода, бэкап `--name=before-drop-student`; проверка живого `users.json` (записи со `STUDENT`, без `updatedAt`) — Нурболат (отчёт `dmg-data-keeper` Ф3). Первая команда нового кода переписывает `users.json` целиком в новый формат — `v0.2.6` его не читает, откат только из бэкапа (отчёт `dmg-data-keeper` Ф6).
 - [ ] Task: Conductor - User Manual Verification 'Фаза 8' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 8:**
