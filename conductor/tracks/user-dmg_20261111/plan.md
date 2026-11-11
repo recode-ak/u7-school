@@ -36,7 +36,7 @@
 
 ## Фаза 1: Домен `user` (аддитивно)
 
-- [ ] Task: `migrator` S0 (flash): legacy `UserAr`/`UserPolicy`/`UserRepo`/`UserJsonRepo` → `Legacy*` (бриф, шаг 0)
+- [x] Task: `migrator` S0 (flash): legacy `UserAr`/`UserPolicy`/`UserRepo`/`UserJsonRepo` → `Legacy*` (бриф, шаг 0) 6d840c14
 - [ ] Task: `dmg-test-designer`: характеризация на `../u7-school-v0.2.6` и red-тесты (Sonnet):
     - [ ] state `User` с `F.timestamp`, чтение legacy ISO;
     - [ ] `UserAr.create`/`restore`, API ролей (по решению Ф0), ошибки;
