@@ -1,0 +1,6 @@
+Фаза 4 course-dmg (UI) — верификация, автономно (agents.md §9).
+Команды: CI=true bun run check — зелёный, bun test 4910 pass / 0 fail; CI=true bun test runners/u7-bot/ — 1097 / 0 (было 1107: удалены тесты удалённых UC и дубли по TR-59).
+Критерии: G1, G1b, G3, G4, G5 — пусто; G2 — только get-user/get-users-by-ids/list-users. git status data/ — пуст.
+Решения Нурболата: курс без этапов — сразу модули; один этап — модули на карточке, этап в крошках; тесты — по ответственности (TR-59).
+dmg-reviewer (Opus): 0 error, 6 warn — исправлены (cd-F4-review). pi с расширениями: 4 запуска flash, hitRate 97–99%, misses 0, $0.33.
+Ручная верификация пропущена (автономный режим).
