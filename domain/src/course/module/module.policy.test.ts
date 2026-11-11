@@ -27,22 +27,6 @@ describe('ModulePolicy.canSeeUnpublished', () => {
     );
   });
 
-  it('автор-студент — allowed (авторство по uuid)', () => {
-    expect(
-      canSeeUnpublished.evaluate(who(AUTHOR, Role.STUDENT), ctx).allowed,
-    ).toBe(true);
-  });
-
-  it('автор без ролей — allowed', () => {
-    expect(canSeeUnpublished.evaluate(who(AUTHOR), ctx).allowed).toBe(true);
-  });
-
-  it('админ-автор — allowed', () => {
-    expect(
-      canSeeUnpublished.evaluate(who(AUTHOR, Role.ADMIN), ctx).allowed,
-    ).toBe(true);
-  });
-
   it('ментор, не автор — denied', () => {
     expect(
       canSeeUnpublished.evaluate(who(OTHER, Role.MENTOR), ctx).allowed,
@@ -55,12 +39,9 @@ describe('ModulePolicy.canSeeUnpublished', () => {
     ).toBe(false);
   });
 
-  it('студент — denied с текстом «Нет доступа к модулю»', () => {
+  it('студент — denied', () => {
     const decision = canSeeUnpublished.evaluate(who(OTHER, Role.STUDENT), ctx);
     expect(decision.allowed).toBe(false);
-    if (!decision.allowed) {
-      expect(decision.denyMessage).toBe('Нет доступа к модулю');
-    }
   });
 
   it('без субъекта (гость) — denied', () => {

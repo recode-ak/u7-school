@@ -46,7 +46,7 @@ export { ModulePrerequisiteDqs } from './module-prerequisite.dqs';
 // DQS снимка контента модуля
 export { ModuleSnapshotDqs } from './module-snapshot.dqs';
 // Общие типы
-export { Status, StatusSchema } from './status';
+export { Status } from './status';
 // Агрегат Step
 export type { StepSummary, StepView } from './step/step.ar';
 export { StepAr, StepArDef } from './step/step.ar';

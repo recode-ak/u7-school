@@ -120,10 +120,6 @@ describe('ModuleSnapshotDqs.build — состав проектов', () => {
     expect(v.safeParse(ContentSnapshotVo, snapshot).success).toBe(true);
   });
 
-  it('модуль без проектов — []', () => {
-    expect(build(moduleAr([]), lesson(LESSON_1))).toEqual([]);
-  });
-
   it('опубликованный проект без уроков остаётся с пустым lessons', () => {
     const snapshot = build(moduleAr([project('published', { lessonIds: [] })]));
 
@@ -226,16 +222,6 @@ describe('ModuleSnapshotDqs.build — отбор уроков', () => {
     ]);
   });
 
-  it('урок вне проектов модуля в снимок не попадает', () => {
-    const snapshot = build(
-      moduleAr([project('published')]),
-      lesson(LESSON_1),
-      lesson(LESSON_3),
-    );
-
-    expect(snapshot[0]?.lessons.map((l) => l.lessonId)).toEqual([LESSON_1]);
-  });
-
   it('урок черновика-проекта не попадает, даже если опубликован', () => {
     const snapshot = build(
       moduleAr([
@@ -278,15 +264,5 @@ describe('ModuleSnapshotDqs.build — stepIds (С1)', () => {
     );
 
     expect(snapshot[0]?.lessons[0]?.stepIds).toEqual([STEP_A, STEP_B]);
-  });
-
-  it('урок без шагов — stepIds пустой, урок остаётся', () => {
-    const snapshot = build(
-      moduleAr([project('published')]),
-      lesson(LESSON_1, 'published', { stepIds: [] }),
-    );
-
-    expect(snapshot[0]?.lessons).toHaveLength(1);
-    expect(snapshot[0]?.lessons[0]?.stepIds).toEqual([]);
   });
 });

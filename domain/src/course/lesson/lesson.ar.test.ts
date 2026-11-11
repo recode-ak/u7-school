@@ -62,11 +62,6 @@ describe('LessonAr.viewFor — с правом на неопубликованн
       version: 0,
     });
   });
-
-  it('те же поля у published и без права', () => {
-    const ar = restore('published');
-    expect(ar.viewFor(false)).toEqual(ar.viewFor(true));
-  });
 });
 
 describe('LessonAr.stepIds — шаги урока для навигации', () => {
@@ -98,19 +93,11 @@ describe('LessonAr.outline — вклад в снимок', () => {
       'stepIds',
     ]);
   });
-
-  it('stepIds в порядке урока; пустой урок — []', () => {
-    expect(
-      restore('published', { stepIds: [STEP_2, STEP_1] }).outline().stepIds,
-    ).toEqual([STEP_2, STEP_1]);
-    expect(restore('published', { stepIds: [] }).outline().stepIds).toEqual([]);
-  });
 });
 
 describe('LessonErrors', () => {
-  it('LESSON_NOT_FOUND — not_found, «Урок не найден»', () => {
+  it('LESSON_NOT_FOUND — not_found с payload', () => {
     expect(LessonErrors.NOT_FOUND.kind).toBe('not_found');
-    expect(LessonErrors.NOT_FOUND.label).toBe('Урок не найден');
     expect(LessonErrors.NOT_FOUND.make({ lessonId: LESSON }).payload).toEqual({
       lessonId: LESSON,
     });

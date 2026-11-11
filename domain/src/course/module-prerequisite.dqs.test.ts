@@ -80,11 +80,22 @@ describe('ModulePrerequisiteDqs.verdict — допущен', () => {
 });
 
 describe('ModulePrerequisiteDqs.verdict — previous-not-passed', () => {
-  it('предыдущий не пройден — отказ с названием предыдущего модуля', () => {
-    expect(verdict([course([M1, M2])], M2, [])).toEqual({
+  it.each<{ title: string; modules: ModuleAr[]; expectedTitle: string }>([
+    {
+      title: 'название модуля по его uuid',
+      modules: ALL,
+      expectedTitle: 'Модуль 11',
+    },
+    {
+      title: 'название берётся у записи именно предыдущего модуля',
+      modules: [moduleOf(M1, 'Синтаксис'), moduleOf(M2, 'Алгоритмика')],
+      expectedTitle: 'Синтаксис',
+    },
+  ])('предыдущий не пройден — $title', ({ modules, expectedTitle }) => {
+    expect(verdict([course([M1, M2])], M2, [], modules)).toEqual({
       admitted: false,
       reason: 'previous-not-passed',
-      title: 'Модуль 11',
+      title: expectedTitle,
     });
   });
 
@@ -93,15 +104,6 @@ describe('ModulePrerequisiteDqs.verdict — previous-not-passed', () => {
       admitted: false,
       reason: 'previous-not-passed',
       title: 'Модуль 22',
-    });
-  });
-
-  it('название берётся у записи именно предыдущего модуля', () => {
-    const named = [moduleOf(M1, 'Синтаксис'), moduleOf(M2, 'Алгоритмика')];
-    expect(verdict([course([M1, M2])], M2, [], named)).toEqual({
-      admitted: false,
-      reason: 'previous-not-passed',
-      title: 'Синтаксис',
     });
   });
 
@@ -119,13 +121,6 @@ describe('ModulePrerequisiteDqs.verdict — closed (Т6)', () => {
   it('записи предыдущего модуля нет среди модулей — closed, без названия', () => {
     const verdictOut = verdict([course([M1, M2])], M2, [], [moduleOf(M2)]);
     expect(verdictOut).toEqual({ admitted: false, reason: 'closed' });
-  });
-
-  it('модулей нет вовсе — closed', () => {
-    expect(verdict([course([M1, M2])], M2, [], [])).toEqual({
-      admitted: false,
-      reason: 'closed',
-    });
   });
 
   it('предыдущий пройден — запись модуля не нужна, допущен', () => {

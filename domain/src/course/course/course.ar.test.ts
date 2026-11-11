@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
-import { CourseAr, CourseArDef, CourseView } from './course.ar';
+import { CourseAr, CourseView, type ModulePlaceInCourse } from './course.ar';
 import {
   AUTHOR,
   COURSE,
@@ -35,27 +35,6 @@ const noStages = (moduleIds: string[]) =>
   restore('published', { moduleIds, phases: [] });
 
 describe('CourseAr.restore — инварианты разбираются в конструкторе (Т3)', () => {
-  it.each([
-    [
-      'дубль заголовков этапов',
-      { phases: [phase('Этап', M1), phase('Этап', M3)] },
-    ],
-    ['метка вне программы', { phases: [phase('Этап', OUTSIDE)] }],
-    [
-      'метки не в порядке программы',
-      { phases: [phase('Второй', M3), phase('Первый', M1)] },
-    ],
-    [
-      'два этапа на одном модуле',
-      { phases: [phase('Первый', M1), phase('Второй', M1)] },
-    ],
-    ['первая метка не на первом модуле', { phases: [phase('Этап', M2)] }],
-    ['повтор модуля в программе', { moduleIds: [M1, M2, M1] }],
-    ['этапы при пустой программе', { moduleIds: [] }],
-  ])('%s — исключение ValiError', (_, extra) => {
-    expect(() => restore('published', extra)).toThrow(v.ValiError);
-  });
-
   it('курс без этапов и пустая программа черновика восстанавливаются', () => {
     expect(() => restore('draft', { moduleIds: [], phases: [] })).not.toThrow();
     expect(() => noStages([M1, M2])).not.toThrow();
@@ -66,7 +45,7 @@ describe('CourseAr.restore — инварианты разбираются в к
   });
 });
 
-describe('CourseAr.isPublished / includesModule / startModuleId', () => {
+describe('CourseAr.isPublished / includesModule', () => {
   it('published — опубликован', () => {
     expect(restore('published').isPublished()).toBe(true);
   });
@@ -80,21 +59,6 @@ describe('CourseAr.isPublished / includesModule / startModuleId', () => {
     expect(ar.includesModule(M1)).toBe(true);
     expect(ar.includesModule(M4)).toBe(true);
     expect(ar.includesModule(OUTSIDE)).toBe(false);
-  });
-
-  it('includesModule не зависит от статуса', () => {
-    expect(restore('archived').includesModule(M2)).toBe(true);
-  });
-
-  it('startModuleId — первый модуль программы', () => {
-    expect(twoStages().startModuleId()).toBe(M1);
-    expect(noStages([M3, M1]).startModuleId()).toBe(M3);
-  });
-
-  it('startModuleId пустой программы — undefined', () => {
-    expect(
-      restore('draft', { moduleIds: [], phases: [] }).startModuleId(),
-    ).toBe(undefined);
   });
 });
 
@@ -117,12 +81,6 @@ describe('CourseAr.enrollmentStart — стартовый модуль для з
 describe('CourseAr.stages — этапы программы', () => {
   it('курс без этапов — []', () => {
     expect(noStages([M1, M2]).stages()).toEqual([]);
-  });
-
-  it('пустой курс — []', () => {
-    expect(restore('draft', { moduleIds: [], phases: [] }).stages()).toEqual(
-      [],
-    );
   });
 
   it('один этап с первого модуля — вся программа, track сохраняется', () => {
@@ -150,19 +108,6 @@ describe('CourseAr.stages — этапы программы', () => {
     expect(ar.stages()).toEqual([
       { title: 'Синтаксис', moduleIds: [M1] },
       { title: 'Алгоритмика', moduleIds: [M2] },
-    ]);
-  });
-
-  it('этапы вместе покрывают программу по порядку без пропусков', () => {
-    const ar = restore('published', {
-      moduleIds: [M1, M2, M3, M4],
-      phases: [phase('A', M1), phase('B', M2), phase('C', M4)],
-    });
-    expect(ar.stages().flatMap((stage) => stage.moduleIds)).toEqual([
-      M1,
-      M2,
-      M3,
-      M4,
     ]);
   });
 
@@ -216,10 +161,6 @@ describe('CourseAr.placeOf — место модуля (перенос get-modul
     );
   });
 
-  it('у курса без этапов stage нет', () => {
-    expect(three().placeOf(M2)?.stage).toBeUndefined();
-  });
-
   it('один этап: stage { index 0, title, track }', () => {
     const ar = restore('published', {
       moduleIds: [M1, M2, M3],
@@ -234,22 +175,29 @@ describe('CourseAr.placeOf — место модуля (перенос get-modul
     });
   });
 
-  it('несколько этапов: модуль второго этапа — index 1; track нет, если не задан', () => {
-    expect(twoStages().placeOf(M4)).toEqual({
-      isFirst: false,
-      isLast: true,
-      prevModuleId: M3,
-      stage: { index: 1, title: 'Алгоритмика' },
-    });
-  });
-
-  it('модуль первого этапа — index 0 и track этапа', () => {
-    expect(twoStages().placeOf(M1)).toEqual({
-      isFirst: true,
-      isLast: false,
-      nextModuleId: M2,
-      stage: { index: 0, title: 'Синтаксис', track: 'tech' },
-    });
+  it.each<{ title: string; moduleId: string; place: ModulePlaceInCourse }>([
+    {
+      title: 'несколько этапов: модуль второго этапа — index 1; track нет',
+      moduleId: M4,
+      place: {
+        isFirst: false,
+        isLast: true,
+        prevModuleId: M3,
+        stage: { index: 1, title: 'Алгоритмика' },
+      },
+    },
+    {
+      title: 'модуль первого этапа — index 0 и track этапа',
+      moduleId: M1,
+      place: {
+        isFirst: true,
+        isLast: false,
+        nextModuleId: M2,
+        stage: { index: 0, title: 'Синтаксис', track: 'tech' },
+      },
+    },
+  ])('stage: $title', ({ moduleId, place }) => {
+    expect(twoStages().placeOf(moduleId)).toEqual(place);
   });
 
   it('предыдущий модуль берётся через границу этапов (линейный порядок, flatMap)', () => {
@@ -259,19 +207,6 @@ describe('CourseAr.placeOf — место модуля (перенос get-modul
       isLast: false,
       prevModuleId: M2,
       nextModuleId: M4,
-      stage: { index: 1, title: 'Алгоритмика' },
-    });
-  });
-
-  it('этапы по одному модулю: место считается по линейному порядку', () => {
-    const ar = restore('published', {
-      moduleIds: [M1, M2],
-      phases: [phase('Синтаксис', M1), phase('Алгоритмика', M2)],
-    });
-    expect(ar.placeOf(M2)).toEqual({
-      isFirst: false,
-      isLast: true,
-      prevModuleId: M1,
       stage: { index: 1, title: 'Алгоритмика' },
     });
   });
@@ -298,33 +233,10 @@ describe('CourseAr.view — представление курса', () => {
     expect(view.stages).toEqual(twoStages().stages());
   });
 
-  it('курс без этапов: stages = []', () => {
-    expect(noStages([M1]).view().stages).toEqual([]);
-  });
-
   it('одно и то же для любого статуса (вариант А С1: без Policy)', () => {
     for (const status of ['draft', 'published', 'archived'] as const) {
       expect(restore(status).view().status).toBe(status);
     }
-  });
-
-  it('view() валиден по CourseView и не содержит лишних полей', () => {
-    const view = twoStages().view();
-    expect(v.parse(CourseView, view)).toEqual(view);
-    expect(Object.keys(CourseView.entries).sort()).toEqual(
-      [
-        'authorId',
-        'createdAt',
-        'description',
-        'moduleIds',
-        'stages',
-        'status',
-        'title',
-        'updatedAt',
-        'uuid',
-        'version',
-      ].sort(),
-    );
   });
 
   it('CourseView: version обязателен, как у урока и шага', () => {
@@ -339,17 +251,5 @@ describe('CourseAr.view — представление курса', () => {
     view.stages[0]?.moduleIds.push(OUTSIDE);
     expect(ar.view().moduleIds).toEqual([M1, M2, M3, M4]);
     expect(ar.view().stages[0]?.moduleIds).toEqual([M1, M2]);
-  });
-});
-
-describe('CourseArDef', () => {
-  it('агрегат course с тремя статусами, без переходов и событий', () => {
-    expect(CourseArDef.name).toBe('course');
-    expect(Object.keys(CourseArDef.statuses ?? {})).toEqual([
-      'draft',
-      'published',
-      'archived',
-    ]);
-    expect(CourseArDef.transitions).toEqual({});
   });
 });

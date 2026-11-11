@@ -14,7 +14,6 @@ import type { StepState } from './step/step.state';
 
 const LESSON_A = '33333333-3333-4333-8333-333333333331';
 const LESSON_B = '33333333-3333-4333-8333-333333333332';
-const LESSON_C = '33333333-3333-4333-8333-333333333333';
 const OTHER_MODULE = '3f2e1d0c-9b8a-4765-8432-10fedcba9877';
 const S1 = '55555555-5555-4555-8555-555555555551';
 const S2 = '55555555-5555-4555-8555-555555555552';
@@ -63,10 +62,6 @@ describe('LessonStepsDqs.build', () => {
     ).build();
     expect(Object.keys(result).sort()).toEqual([LESSON_A, LESSON_B]);
     expect(result[LESSON_B]).toEqual([{ uuid: S2, description: 'Шаг 2' }]);
-  });
-
-  it('пустые входы — пустой объект', () => {
-    expect(new LessonStepsDqs([], [], new Map()).build()).toEqual({});
   });
 
   it('порядок — по stepIds урока, не по порядку steps', () => {
@@ -139,15 +134,6 @@ describe('LessonStepsDqs.build', () => {
     expect(Object.keys(result)).toEqual([LESSON_B]);
   });
 
-  it('урок с пустым stepIds не попадает в ответ', () => {
-    const result = new LessonStepsDqs(
-      [lesson(LESSON_C, []), lesson(LESSON_A, [S1])],
-      [step(S1)],
-      closed,
-    ).build();
-    expect(Object.keys(result)).toEqual([LESSON_A]);
-  });
-
   it('видимость самого урока не проверяется: черновой урок отдаётся', () => {
     const result = new LessonStepsDqs(
       [lesson(LESSON_A, [S1], 'draft')],
@@ -155,11 +141,5 @@ describe('LessonStepsDqs.build', () => {
       closed,
     ).build();
     expect(result[LESSON_A]).toEqual([{ uuid: S1, description: 'Шаг 1' }]);
-  });
-
-  it('не меняет вход: stepIds уроков прежние', () => {
-    const lessons = [lesson(LESSON_A, [S3, S1, MISSING])];
-    new LessonStepsDqs(lessons, [step(S1), step(S3, 'draft')], closed).build();
-    expect(lessons[0]?.stepIds()).toEqual([S3, S1, MISSING]);
   });
 });

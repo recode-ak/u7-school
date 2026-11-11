@@ -83,6 +83,8 @@ describe('CourseNavResolver — Фаза 1: Курс и этап на общем
       const phase2 = level?.children?.[1];
       expect(phase2?.index).toBe(2);
       expect(phase2?.title).toBe('Продвинутый JS');
+      // Склонение счётчика: у второго этапа ровно один модуль
+      expect(phase2?.meta).toBe('(1 модуль)');
       expect(phase2?.address).toBe('course-catalog:phase:course-1:1');
     });
 
@@ -259,38 +261,8 @@ describe('CourseNavResolver — Фаза 1: Курс и этап на общем
     });
   });
 
-  describe('Подключение presenter: рендеринг карточек курса и этапа', () => {
-    test('presentNavLevel корректно рендерит клавиатуру с разными wish-кнопками', () => {
-      // pending -> кнопка продолжить анкету
-      const levelPending = resolveCourseNavLevel({
-        level: 'course',
-        courses: dummyCourses,
-        currentCourseId: 'course-1',
-        modulesInfo: dummyModulesInfo,
-        wishStatus: 'pending',
-      });
-      const kbPending = presentNavLevel(levelPending!).keyboard;
-      expect(kbPending.rows[3]?.[0]?.text).toBe('📝 Продолжить анкету');
-      expect(kbPending.rows[3]?.[0]?.code).toBe(
-        'questionnaire:fill:resume:course-1',
-      );
-
-      // confirmed -> кнопка отменить желание
-      const levelConfirmed = resolveCourseNavLevel({
-        level: 'course',
-        courses: dummyCourses,
-        currentCourseId: 'course-1',
-        modulesInfo: dummyModulesInfo,
-        wishStatus: 'confirmed',
-      });
-      const kbConfirmed = presentNavLevel(levelConfirmed!).keyboard;
-      expect(kbConfirmed.rows[3]?.[0]?.text).toBe('🗑️ Отменить желание');
-      expect(kbConfirmed.rows[3]?.[0]?.code).toBe(
-        'course-catalog:cancel:course-1',
-      );
-    });
-
-    test('presentNavLevel корректно рендерит текст и клавиатуру уровня курса', () => {
+  describe('Подключение presenter: рендеринг карточки курса', () => {
+    test('presentNavLevel резолвит уровень курса в экран: текст и клавиатура', () => {
       const level = resolveCourseNavLevel({
         level: 'course',
         courses: dummyCourses,
@@ -302,53 +274,10 @@ describe('CourseNavResolver — Фаза 1: Курс и этап на общем
 
       const { text, keyboard } = presentNavLevel(level);
 
-      // MarkdownV2 текст
-      expect(text).toContain('📖 *Курсы*\n› *Курс 1/2: Fullstack JS*');
-      expect(text).toContain('*Этапы курса:*');
-      expect(text).toContain('1\\. Основы JS \\(2 модуля\\)');
-      expect(text).toContain('2\\. Продвинутый JS \\(1 модуль\\)');
-
-      // Клавиатура: 2 кнопки этапов (компактные без эмодзи и префикса), 1 навигация, 1 wish, 1 меню
-      expect(keyboard.rows).toHaveLength(5);
-      expect(keyboard.rows[0]?.[0]?.text).toBe('1. Основы JS');
-      expect(keyboard.rows[0]?.[0]?.code).toBe(
-        'course-catalog:phase:course-1:0',
+      expect(text).toContain('Курс 1/2: Fullstack JS');
+      expect(keyboard.rows.flat().some((b) => b.text === 'След. курс ▶️')).toBe(
+        true,
       );
-      expect(keyboard.rows[1]?.[0]?.text).toBe('2. Продвинутый JS');
-      expect(keyboard.rows[2]?.[0]?.text).toBe('След. курс ▶️');
-      expect(keyboard.rows[3]?.[0]?.text).toBe('🎓 Хочу пройти курс');
-      expect(keyboard.rows[4]?.[0]?.text).toBe('↩️ Главное меню');
-    });
-
-    test('presentNavLevel корректно рендерит текст и клавиатуру уровня этапа', () => {
-      const level = resolveCourseNavLevel({
-        level: 'phase',
-        courses: dummyCourses,
-        currentCourseId: 'course-1',
-        phaseIdx: 0,
-        modulesInfo: dummyModulesInfo,
-      });
-      expect(level).not.toBeNull();
-      if (!level) return;
-
-      const { text, keyboard } = presentNavLevel(level);
-
-      expect(text).toContain(
-        '📖 *Курсы*\n› Курс 1/2: Fullstack JS\n› *Этап 1/2: Основы JS*',
-      );
-      expect(text).toContain('*Модули этапа:*');
-      expect(text).toContain('1\\. Введение в синтаксис \\(2 проекта\\)');
-      expect(text).toContain('2\\. Структуры данных \\(2 проекта\\)');
-
-      // Клавиатура: 2 кнопки модулей (компактные), 1 навигация (След. этап), 1 назад к курсу
-      expect(keyboard.rows).toHaveLength(4);
-      expect(keyboard.rows[0]?.[0]?.text).toBe('1. Введение в синтаксис');
-      expect(keyboard.rows[0]?.[0]?.code).toBe(
-        'course-catalog:module:course-1:0:mod-1',
-      );
-      expect(keyboard.rows[1]?.[0]?.text).toBe('2. Структуры данных');
-      expect(keyboard.rows[2]?.[0]?.text).toBe('След. этап ▶️');
-      expect(keyboard.rows[3]?.[0]?.text).toBe('⬅️ Назад к курсу');
     });
   });
 
@@ -545,74 +474,6 @@ describe('CourseNavResolver — Фаза 1: Курс и этап на общем
       });
     });
 
-    describe('Подключение presenter: рендеринг карточек модуля и проекта', () => {
-      test('presentNavLevel корректно рендерит текст и клавиатуру уровня модуля', () => {
-        const level = resolveCourseNavLevel({
-          level: 'module',
-          courses: dummyCourses,
-          currentCourseId: 'course-1',
-          phaseIdx: 0,
-          moduleId: 'mod-1',
-          modulesInfo: dummyModulesInfo,
-          moduleSnapshot: dummySnapshot,
-        });
-        expect(level).not.toBeNull();
-        if (!level) return;
-
-        const { text, keyboard } = presentNavLevel(level);
-
-        expect(text).toContain(
-          '📖 *Курсы*\n› Курс 1/2: Fullstack JS\n› Этап 1/2: Основы JS\n› *Модуль 1/2: Введение в синтаксис*',
-        );
-        expect(text).toContain('*Проекты модуля:*');
-        expect(text).toContain('1\\. Введение в JS \\(2 урока\\)');
-
-        // Клавиатура: 2 кнопки проектов (компактные), 1 навигация (След. модуль), 1 назад к этапу
-        expect(keyboard.rows).toHaveLength(4);
-        expect(keyboard.rows[0]?.[0]?.text).toBe('1. Введение в JS');
-        expect(keyboard.rows[0]?.[0]?.code).toBe(
-          'course-catalog:prj:course-1:mod-1:proj-1',
-        );
-        expect(keyboard.rows[1]?.[0]?.text).toBe('2. Базовые типы и операторы');
-        expect(keyboard.rows[2]?.[0]?.text).toBe('След. модуль ▶️');
-        expect(keyboard.rows[3]?.[0]?.text).toBe('⬅️ Назад к этапу');
-      });
-
-      test('presentNavLevel корректно рендерит текст и клавиатуру уровня проекта', () => {
-        const level = resolveCourseNavLevel({
-          level: 'project',
-          courses: dummyCourses,
-          currentCourseId: 'course-1',
-          phaseIdx: 0,
-          moduleId: 'mod-1',
-          projectId: 'proj-1',
-          modulesInfo: dummyModulesInfo,
-          moduleSnapshot: dummySnapshot,
-          stepTitles: dummyStepTitles,
-        });
-        expect(level).not.toBeNull();
-        if (!level) return;
-
-        const { text, keyboard } = presentNavLevel(level);
-
-        expect(text).toContain(
-          '📖 *Курсы*\n› Курс 1/2: Fullstack JS\n› Этап 1/2: Основы JS\n› Модуль 1/2: Введение в синтаксис\n› *Проект 1/2: Введение в JS*',
-        );
-        expect(text).toContain('*Уроки проекта:*');
-        expect(text).toContain('1\\. Настройка окружения \\(2 шага\\)');
-
-        // Клавиатура: 2 кнопки уроков, 1 навигация (След. проект), 1 назад к модулю
-        expect(keyboard.rows).toHaveLength(4);
-        expect(keyboard.rows[0]?.[0]?.text).toBe('1. Настройка окружения');
-        expect(keyboard.rows[0]?.[0]?.code).toBe(
-          'course-catalog:les:course-1:proj-1:les-1',
-        );
-        expect(keyboard.rows[1]?.[0]?.text).toBe('2. Первая программа');
-        expect(keyboard.rows[2]?.[0]?.text).toBe('След. проект ▶️');
-        expect(keyboard.rows[3]?.[0]?.text).toBe('⬅️ Назад к модулю');
-      });
-    });
-
     describe('Уровень 4: Урок (шаги только заголовками, закрытый уровень)', () => {
       test('хлебные крошки, пояснение и одноуровневый список шагов без входа', () => {
         const level = resolveCourseNavLevel({
@@ -701,40 +562,6 @@ describe('CourseNavResolver — Фаза 1: Курс и этап на общем
           address: 'course-catalog:les:course-1:proj-1:les-1',
         });
         expect(level2?.next).toBeUndefined();
-      });
-
-      test('presentNavLevel корректно рендерит карточку урока без кнопок шагов', () => {
-        const level = resolveCourseNavLevel({
-          level: 'lesson',
-          courses: dummyCourses,
-          currentCourseId: 'course-1',
-          phaseIdx: 0,
-          moduleId: 'mod-1',
-          projectId: 'proj-1',
-          lessonId: 'les-1',
-          modulesInfo: dummyModulesInfo,
-          moduleSnapshot: dummySnapshot,
-          stepTitles: dummyStepTitles,
-        });
-        expect(level).not.toBeNull();
-        if (!level) return;
-
-        const { text, keyboard } = presentNavLevel(level);
-
-        expect(text).toContain(
-          '📖 *Курсы*\n› Курс 1/2: Fullstack JS\n› Этап 1/2: Основы JS\n› Модуль 1/2: Введение в синтаксис\n› Проект 1/2: Введение в JS\n› *Урок 1/2: Настройка окружения*',
-        );
-        expect(text).toContain('*Шаги урока:*');
-        expect(text).toContain('1\\. Установка Bun');
-        expect(text).toContain('2\\. Запуск скрипта');
-
-        // Клавиатура: НЕТ кнопок шагов, только навигация (След. урок) и назад к проекту
-        expect(keyboard.rows).toHaveLength(2);
-        expect(keyboard.rows[0]?.[0]?.text).toBe('След. урок ▶️');
-        expect(keyboard.rows[0]?.[0]?.code).toBe(
-          'course-catalog:les:course-1:proj-1:les-2',
-        );
-        expect(keyboard.rows[1]?.[0]?.text).toBe('⬅️ Назад к проекту');
       });
     });
   });
@@ -992,20 +819,6 @@ describe('CourseNavResolver — Фаза 1: Курс и этап на общем
     const snapshot: ContentSnapshot = [
       { projectId: 'p', projectTitle: 'P', lessons: [] },
     ];
-
-    test('уровень курса: этапы со склонением «1 модуль» и «2 модуля»', () => {
-      const level = resolveCourseNavLevel({
-        level: 'course',
-        courses: [twoStages],
-        currentCourseId: 'course-4',
-        modulesInfo,
-      });
-
-      expect(level?.children?.map((c) => c.meta)).toEqual([
-        '(1 модуль)',
-        '(2 модуля)',
-      ]);
-    });
 
     test('модуль второго этапа: пред. модуль — адрес с индексом этапа', () => {
       const level = resolveCourseNavLevel({

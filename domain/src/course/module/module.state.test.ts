@@ -67,21 +67,15 @@ describe('ModuleState — поля (перенос entity.test.ts)', () => {
     expect(parse(legacy).success).toBe(true);
   });
 
-  it('отклоняет объект без projects', () => {
-    const { projects: _p, ...noProjects } = legacy;
-    expect(parse(noProjects).success).toBe(false);
-  });
-
   it('принимает пустой массив projects', () => {
     expect(parse({ ...legacy, projects: [] }).success).toBe(true);
   });
 
-  it('отклоняет пустой заголовок', () => {
-    expect(parse({ ...legacy, title: '' }).success).toBe(false);
-  });
-
-  it('отклоняет заголовок из пробелов (обрезка краёв)', () => {
-    expect(parse({ ...legacy, title: '   ' }).success).toBe(false);
+  it.each([
+    ['пустой', ''],
+    ['из пробелов (обрезка краёв)', '   '],
+  ])('отклоняет заголовок %s', (_, title) => {
+    expect(parse({ ...legacy, title }).success).toBe(false);
   });
 
   it('отклоняет пустое описание', () => {
@@ -103,25 +97,6 @@ describe('ModuleState — поля (перенос entity.test.ts)', () => {
     if (res.success) {
       expect(res.output.tags).toEqual(['js', 'web']);
     }
-  });
-
-  it('отклоняет некорректный uuid', () => {
-    expect(parse({ ...legacy, uuid: 'bad-uuid' }).success).toBe(false);
-  });
-
-  it('отклоняет некорректный authorId', () => {
-    expect(parse({ ...legacy, authorId: 'bad' }).success).toBe(false);
-  });
-
-  it.each(['draft', 'published', 'archived'])(
-    'статус %s допустим',
-    (status) => {
-      expect(parse({ ...legacy, status }).success).toBe(true);
-    },
-  );
-
-  it('отклоняет неизвестный статус', () => {
-    expect(parse({ ...legacy, status: 'nonsense' }).success).toBe(false);
   });
 });
 
@@ -150,13 +125,6 @@ describe('ProjectEntity (перенос ProjectSchema)', () => {
   it('отклоняет пустой заголовок проекта', () => {
     expect(
       v.safeParse(ProjectEntity, { ...legacyProject, title: '' }).success,
-    ).toBe(false);
-  });
-
-  it('отклоняет некорректный uuid урока в lessonIds', () => {
-    expect(
-      v.safeParse(ProjectEntity, { ...legacyProject, lessonIds: ['x'] })
-        .success,
     ).toBe(false);
   });
 

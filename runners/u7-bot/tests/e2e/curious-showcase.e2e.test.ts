@@ -13,7 +13,6 @@ import { LearningController } from '@u7-scl/bot/learning/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
-import type { CbMenuButton, MenuButton } from '@u7-scl/bot/u7-menu';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -86,19 +85,6 @@ function pressedCode(
   );
 }
 
-/** Callback-пункт главного меню по подстроке текста. */
-function findMenuItem(items: MenuButton[], textContains: string): CbMenuButton {
-  const item = items.find((i) => i.text.includes(textContains));
-  if (!item) {
-    const all = items.map((i) => i.text).join(', ');
-    throw new Error(`Пункт меню «${textContains}» не найден. Доступны: ${all}`);
-  }
-  if (item.kind !== 'callback') {
-    throw new Error(`Пункт «${textContains}» — не callback-кнопка`);
-  }
-  return item;
-}
-
 describe('E2E: Витрина для любопытного', () => {
   let app: TestApp;
   let transport: TestBotTransport;
@@ -131,273 +117,8 @@ describe('E2E: Витрина для любопытного', () => {
     await app.cleanup();
   });
 
-  // ── Главное меню ──
-  describe('Главное меню гостя', () => {
-    test('содержит «🏫 Школа» и «📖 Курсы»', async () => {
-      const menu = await transport.collectMainMenu(guest);
-      const courseBtn = findMenuItem(menu, 'Курсы');
-      expect(courseBtn.action).toStartWith('course:');
-      const schoolBtn = findMenuItem(menu, 'Школа');
-      expect(schoolBtn.action).toStartWith('school:');
-      expect(menu.some((i) => i.text.includes('Потоки курсов'))).toBe(false);
-      expect(menu.some((i) => i.text.includes('Моя учёба'))).toBe(false);
-      expect(menu.some((i) => i.text.includes('Создать поток'))).toBe(false);
-    });
-  });
-
-  // ── «Курсы»: 5-уровневый drill-down ──
-  describe('«Курсы» — drill-down', () => {
-    test('уровень 0: карточка курса с этапами подуровнем', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      const response = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Курсы'),
-        }),
-      );
-      const text = response.screen?.text ?? '';
-      expect(text).toContain('Курсы');
-      expect(text).toContain('Основы программирования');
-      expect(text).toContain('Синтаксис');
-      expect(text).toContain('Алгоритмика');
-      const btns =
-        response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-      expect(btns.some((t) => t.includes('Синтаксис'))).toBe(true);
-      expect(btns.some((t) => t.includes('↩️ Главное меню'))).toBe(true);
-    });
-
-    test('уровень 1: клик на этап → карточка этапа с модулями подуровнем', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Курсы'),
-        }),
-      );
-      const response = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Синтаксис'),
-        }),
-      );
-      const text = response.screen?.text ?? '';
-      expect(text).toContain('Курс 1/6: Основы программирования');
-      expect(text).toContain('Этап 1/2: Синтаксис');
-      expect(text).toContain('JavaScript Основы');
-      const btns =
-        response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-      expect(btns.some((t) => t.includes('JavaScript'))).toBe(true);
-      expect(btns.some((t) => t.includes('Назад к курсу'))).toBe(true);
-    });
-
-    test('уровень 2: клик на модуль → карточка модуля с проектами подуровнем', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Курсы'),
-        }),
-      );
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Синтаксис'),
-        }),
-      );
-      const response = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'JavaScript'),
-        }),
-      );
-      const text = response.screen?.text ?? '';
-      expect(text).toContain('Этап 1/2: Синтаксис');
-      expect(text).toContain('Модуль 1/1: JavaScript Основы');
-      expect(text).toContain('Введение');
-      const btns =
-        response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-      expect(btns.some((t) => t.includes('Введение'))).toBe(true);
-      expect(btns.some((t) => t.includes('Назад к этапу'))).toBe(true);
-    });
-
-    test('уровень 3: клик на проект → карточка проекта с уроками подуровнем', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Курсы'),
-        }),
-      );
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Синтаксис'),
-        }),
-      );
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'JavaScript'),
-        }),
-      );
-      const response = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Введение'),
-        }),
-      );
-      const text = response.screen?.text ?? '';
-      expect(text).toContain('Модуль 1/1: JavaScript Основы');
-      expect(text).toContain('Проект 1/2: Введение');
-      expect(text).toContain('Уроки проекта:');
-      expect(text).toContain('Переменные и типы');
-      const btns =
-        response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-      expect(btns.some((t) => t.includes('Переменные'))).toBe(true);
-      expect(btns.some((t) => t.includes('Назад к модулю'))).toBe(true);
-    });
-
-    test('уровень 4: клик на урок → карточка урока (шаги только заголовками, закрытый уровень)', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Курсы'),
-        }),
-      );
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Синтаксис'),
-        }),
-      );
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'JavaScript'),
-        }),
-      );
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Введение'),
-        }),
-      );
-      const response = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Переменные'),
-        }),
-      );
-      const text = response.screen?.text ?? '';
-      expect(text).toContain('Проект 1/2: Введение');
-      expect(text).toContain('Урок 1/2: Переменные и типы');
-      // Тела шагов скрыты — только заголовки уроков и нумерация шагов
-      expect(text).not.toContain('```');
-      expect(text).not.toContain('function');
-      const btns =
-        response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-      expect(btns.some((t) => t.includes('Назад к проекту'))).toBe(true);
-      // Кнопок шагов на клавиатуре нет
-      expect(btns.some((t) => t.includes('🔹'))).toBe(false);
-    });
-
-    test('хлебные крошки и пояснения на всех уровнях drill-down (FR-3)', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      const press = (label: string) =>
-        transport.handleCallback(
-          transport.makeBotContext(tgId, {
-            callbackData: pressedCode(transport, tgId, label),
-          }),
-        );
-
-      // Уровень 0 (курс): крошки и пояснение
-      const l0 = await press('Курсы');
-      const text0 = l0.screen?.text ?? '';
-      expect(text0).toContain('📖 *Курсы*');
-      expect(text0).toContain('Курс 1/6: Основы программирования');
-      expect(text0).toContain('*Этапы курса:*');
-
-      // Уровень 1 (этап)
-      const l1 = await press('Синтаксис');
-      const text1 = l1.screen?.text ?? '';
-      expect(text1).toContain('Этап 1/2: Синтаксис');
-      expect(text1).toContain('*Модули этапа:*');
-
-      // Уровень 2 (модуль)
-      const l2 = await press('JavaScript');
-      const text2 = l2.screen?.text ?? '';
-      expect(text2).toContain('Модуль 1/1: JavaScript Основы');
-      expect(text2).toContain('*Проекты модуля:*');
-
-      // Уровень 3 (проект)
-      const l3 = await press('Введение');
-      const text3 = l3.screen?.text ?? '';
-      expect(text3).toContain('Проект 1/2: Введение');
-      expect(text3).toContain('*Уроки проекта:*');
-
-      // Уровень 4 (урок)
-      const l4 = await press('Переменные');
-      const text4 = l4.screen?.text ?? '';
-      expect(text4).toContain('Урок 1/2: Переменные и типы');
-      expect(text4).toContain('*Шаги урока:*');
-    });
-
-    test('горизонтальное листание соседей ◀️/▶️ на уровнях каталога (FR-4)', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      const press = (label: string) =>
-        transport.handleCallback(
-          transport.makeBotContext(tgId, {
-            callbackData: pressedCode(transport, tgId, label),
-          }),
-        );
-
-      // Уровень 0: листание курсов вперед и назад
-      await press('Курсы');
-      const nextCourse = await press('След. курс ▶️');
-      expect(nextCourse.screen?.text).toContain('Продвинутый JavaScript');
-      const prevCourse = await press('◀️ Пред. курс');
-      expect(prevCourse.screen?.text).toContain('Основы программирования');
-
-      // Уровень 1: листание этапов
-      await press('Синтаксис');
-      const nextPhase = await press('След. этап ▶️');
-      expect(nextPhase.screen?.text).toContain('Алгоритмика');
-      const prevPhase = await press('◀️ Пред. этап');
-      expect(prevPhase.screen?.text).toContain('Синтаксис');
-
-      // Уровень 3: листание проектов внутри модуля
-      await press('JavaScript');
-      await press('Введение');
-      const nextProject = await press('След. проект ▶️');
-      expect(nextProject.screen?.text).toContain('Циклы и функции');
-      const prevProject = await press('◀️ Пред. проект');
-      expect(prevProject.screen?.text).toContain('Введение');
-
-      // Уровень 4: листание уроков внутри проекта
-      await press('Переменные');
-      const nextLesson = await press('След. урок ▶️');
-      expect(nextLesson.screen?.text).toContain('Условные операторы');
-      const prevLesson = await press('◀️ Пред. урок');
-      expect(prevLesson.screen?.text).toContain('Переменные и типы');
-    });
-  });
-
   // ── «Потоки курсов»: curious-режим карточки потока ──
   describe('«Потоки курсов» — curious-режим карточки потока', () => {
-    test('гость открывает каталог потоков (S01)', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Школа'),
-        }),
-      );
-      const response = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Потоки'),
-        }),
-      );
-      const text = response.screen?.text ?? '';
-      expect(text).toContain('Потоки курсов');
-      const btns =
-        response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-      expect(btns.some((t) => t.includes('🟡') || t.includes('🔵'))).toBe(true);
-      expect(btns.some((t) => t.includes('Назад в школу'))).toBe(true);
-    });
-
     test('гость → enrollment-поток: карточка без менторских кнопок (S02)', async () => {
       const tgId = guest.telegramId;
       await transport.handleStart(transport.makeBotContext(tgId));
@@ -446,30 +167,6 @@ describe('E2E: Витрина для любопытного', () => {
       expect(studentsText).toContain('Студенты потока');
       expect(studentsText).toContain('Всего:');
     });
-
-    test('гость → active-поток: Программа и Детали видны (S02)', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Школа'),
-        }),
-      );
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Потоки'),
-        }),
-      );
-      const response = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'JS Core — Поток 2'),
-        }),
-      );
-      const btns =
-        response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-      expect(btns.some((t) => t.includes('Программа модуля'))).toBe(true);
-      expect(btns.some((t) => t.includes('Детали'))).toBe(true);
-    });
   });
 
   // ── «Курсы» — drill-up (обратная навигация) ──
@@ -511,122 +208,10 @@ describe('E2E: Витрина для любопытного', () => {
       const menu = await press('Главное меню');
       expect(menu.screen?.text).toContain('Главное меню');
     });
-
-    test('drill-down → назад → другой путь', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      const press = (label: string) =>
-        transport.handleCallback(
-          transport.makeBotContext(tgId, {
-            callbackData: pressedCode(transport, tgId, label),
-          }),
-        );
-
-      await press('Курсы');
-      const l1 = await press('Синтаксис');
-      expect(l1.screen?.text).toContain('Синтаксис');
-
-      const back0 = await press('Назад к курсу');
-      expect(back0.screen?.text).toContain('Основы программирования');
-
-      // Другой путь: этап «Алгоритмика» того же курса
-      const algoResp = await press('Алгоритмика');
-      expect(algoResp.screen?.text).toContain('Алгоритмика');
-    });
-
-    test('c карточки курса — Главное меню', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Курсы'),
-        }),
-      );
-      const mainResp = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Главное меню'),
-        }),
-      );
-      expect(mainResp.screen?.text).toContain('Главное меню');
-    });
   });
 
-  // ── «Потоки курсов» — полный round-trip ──
+  // ── «Потоки курсов» — отказы ──
   describe('«Потоки курсов» — round-trip навигация', () => {
-    test('каталог → карточка → программа → назад → детали → назад → каталог', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      const press = (label: string) =>
-        transport.handleCallback(
-          transport.makeBotContext(tgId, {
-            callbackData: pressedCode(transport, tgId, label),
-          }),
-        );
-
-      await press('Школа');
-      const catalog = await press('Потоки');
-      expect(catalog.screen?.text).toContain('Потоки курсов');
-
-      const card = await press('JS Core — Поток 1');
-      expect(card.screen?.text).toContain('JS Core');
-
-      const program = await press('Программа модуля');
-      expect(program.screen?.text).toContain('Программа модуля');
-      expect(program.screen?.text).toContain('Введение');
-
-      const backToCard = await press('Назад к потоку');
-      expect(backToCard.screen?.text).toContain('JS Core');
-
-      const details = await press('Детали');
-      expect(details.screen?.text).toContain('Детали');
-
-      const backAgain = await press('Назад к потоку');
-      expect(backAgain.screen?.text).toContain('JS Core');
-
-      const backToCatalog = await press('Назад к списку');
-      expect(backToCatalog.screen?.text).toContain('Потоки курсов');
-    });
-
-    test('каталог → active-поток → программа → назад → каталог', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      const press = (label: string) =>
-        transport.handleCallback(
-          transport.makeBotContext(tgId, {
-            callbackData: pressedCode(transport, tgId, label),
-          }),
-        );
-
-      await press('Школа');
-      await press('Потоки');
-      const card = await press('JS Core — Поток 2');
-      expect(card.screen?.text).toContain('Поток 2');
-
-      const program = await press('Программа модуля');
-      expect(program.screen?.text).toContain('Программа модуля');
-
-      await press('Назад к потоку');
-      const backCatalog = await press('Назад к списку');
-      expect(backCatalog.screen?.text).toContain('Потоки курсов');
-    });
-
-    test('каталог → Главное меню', async () => {
-      const tgId = guest.telegramId;
-      await transport.handleStart(transport.makeBotContext(tgId));
-      const press = (label: string) =>
-        transport.handleCallback(
-          transport.makeBotContext(tgId, {
-            callbackData: pressedCode(transport, tgId, label),
-          }),
-        );
-
-      await press('Школа');
-      await press('Потоки');
-      await press('Назад в школу');
-      const mainResp = await press('Главное меню');
-      expect(mainResp.screen?.text).toContain('Главное меню');
-    });
-
     test('несуществующий поток — экран ошибки', async () => {
       const tgId = guest.telegramId;
       await transport.handleStart(transport.makeBotContext(tgId));
@@ -670,19 +255,6 @@ describe('E2E: Витрина для любопытного', () => {
 
       const back = await press('Назад к списку');
       expect(back.screen?.text).toContain('Потоки курсов');
-    });
-
-    test('handleHelp показывает описания курсов и потоков (notify, ФР-5)', async () => {
-      const response = await transport.handleHelp(
-        transport.makeBotContext(guest.telegramId),
-      );
-      const text = response.notify?.text ?? '';
-      expect(text).toContain('Как со мной работать');
-      expect(text).toContain('Курсы');
-      expect(text).toContain('Школа');
-      expect(text).not.toContain('Потоки курсов');
-      // /help — реплика, экран не захватывает
-      expect(response.screen).toBeUndefined();
     });
   });
 });

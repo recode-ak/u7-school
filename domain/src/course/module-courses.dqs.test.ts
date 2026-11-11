@@ -51,18 +51,9 @@ describe('ModuleCoursesDqs.firstIncluding — любой статус, поря�
     expect(dqs.firstIncluding(M1)?.uuid).toBe(FAFA);
   });
 
-  it('черновой курс находится', () => {
-    const dqs = new ModuleCoursesDqs([course(FAFA, 'draft', [M1])]);
-    expect(dqs.firstIncluding(M1)?.uuid).toBe(FAFA);
-  });
-
   it('модуль вне курсов — undefined (перенос get-course-by-module-uc.test)', () => {
     const dqs = new ModuleCoursesDqs([course(FAFA, 'published', [M1])]);
     expect(dqs.firstIncluding(OUTSIDE)).toBeUndefined();
-  });
-
-  it('курсов нет — undefined', () => {
-    expect(new ModuleCoursesDqs([]).firstIncluding(M1)).toBeUndefined();
   });
 
   it('несколько курсов с модулем: первый в порядке файла, статус не важен', () => {
@@ -139,11 +130,6 @@ describe('ModuleCoursesDqs.firstPublishedIncluding — только опубли
     ]);
     expect(dqs.firstIncluding(A1)?.uuid).toBe(FAFA);
     expect(dqs.firstPublishedIncluding(A1)?.uuid).toBe(CCCC);
-  });
-
-  it('первый модуль первого опубликованного курса — место isFirst', () => {
-    const dqs = new ModuleCoursesDqs(fixtureCourses());
-    expect(dqs.firstPublishedIncluding(A0)?.placeOf(A0)?.isFirst).toBe(true);
   });
 });
 

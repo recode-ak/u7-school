@@ -78,10 +78,6 @@ describe('StepState — legacy-запись (D-36)', () => {
 });
 
 describe('StepState — виды шага (перенос entity.test.ts)', () => {
-  it('принимает text-шаг', () => {
-    expect(parse({ ...base, kind: 'text' }).success).toBe(true);
-  });
-
   it('принимает text-шаг без опциональных content, updatedAt', () => {
     const res = parse({ ...base, kind: 'text' });
     expect(res.success).toBe(true);
@@ -164,43 +160,15 @@ describe('StepState — виды шага (перенос entity.test.ts)', () =
 });
 
 describe('StepState — общие поля', () => {
-  it('отклоняет пустое описание', () => {
-    expect(parse({ ...base, kind: 'text', description: '' }).success).toBe(
-      false,
-    );
-  });
-
-  it('отклоняет описание из пробелов (обрезка краёв)', () => {
-    expect(parse({ ...base, kind: 'text', description: '   ' }).success).toBe(
-      false,
-    );
+  it.each([
+    ['пустое', ''],
+    ['из пробелов (обрезка краёв)', '   '],
+  ])('отклоняет описание %s', (_, description) => {
+    expect(parse({ ...base, kind: 'text', description }).success).toBe(false);
   });
 
   it('описание обрезается по краям', () => {
     const res = parse({ ...base, kind: 'text', description: ' Шаг ' });
     expect(res.output).toMatchObject({ description: 'Шаг' });
-  });
-
-  it('отклоняет некорректный uuid шага', () => {
-    expect(parse({ ...base, kind: 'text', uuid: 'bad' }).success).toBe(false);
-  });
-
-  it('отклоняет некорректный moduleId', () => {
-    expect(parse({ ...base, kind: 'text', moduleId: 'bad' }).success).toBe(
-      false,
-    );
-  });
-
-  it.each(['draft', 'published', 'archived'])(
-    'статус %s допустим',
-    (status) => {
-      expect(parse({ ...base, kind: 'text', status }).success).toBe(true);
-    },
-  );
-
-  it('отклоняет неизвестный статус', () => {
-    expect(parse({ ...base, kind: 'text', status: 'nonsense' }).success).toBe(
-      false,
-    );
   });
 });

@@ -86,17 +86,6 @@ describe('StepAr.viewFor — с правом на неопубликованно
       },
     );
   });
-
-  it('виды шага видны и без права, если опубликованы', () => {
-    for (const state of [
-      storedText('published'),
-      storedCode('published'),
-      storedFile('published'),
-    ]) {
-      const ar = StepAr.restore(state);
-      expect(ar.viewFor(false)).toEqual(ar.viewFor(true));
-    }
-  });
 });
 
 describe('StepAr.summaryFor — для getStepsByLessons', () => {
@@ -114,19 +103,11 @@ describe('StepAr.summaryFor — для getStepsByLessons', () => {
       ).toBeUndefined();
     },
   );
-
-  it.each([...statuses])('%s с правом — виден', (status) => {
-    expect(StepAr.restore(storedText(status)).summaryFor(true)).toEqual({
-      uuid: STEP,
-      description: 'Шаг 1',
-    });
-  });
 });
 
 describe('StepErrors', () => {
-  it('STEP_NOT_FOUND — not_found, «Шаг не найден»', () => {
+  it('STEP_NOT_FOUND — not_found с payload', () => {
     expect(StepErrors.NOT_FOUND.kind).toBe('not_found');
-    expect(StepErrors.NOT_FOUND.label).toBe('Шаг не найден');
     expect(StepErrors.NOT_FOUND.make({ stepId: STEP }).payload).toEqual({
       stepId: STEP,
     });

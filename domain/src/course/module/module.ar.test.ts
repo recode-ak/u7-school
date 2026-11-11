@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'bun:test';
 import { toJsonSchema } from 'dmg-core';
-import * as v from 'valibot';
 import { ModuleAr, ModuleView } from './module.ar';
 import {
   AUTHOR,
@@ -61,20 +60,6 @@ describe('ModuleAr.viewFor — без права на неопубликован
     });
     const view = ar.viewFor(false);
     expect(view?.projects.map((p) => p.uuid)).toEqual([PROJECT_PUBLISHED]);
-  });
-
-  it('published: «студент не видит DRAFT проект» — остаётся 0 проектов', () => {
-    const ar = restore('published', { projects: [project('draft')] });
-    expect(ar.viewFor(false)?.projects).toHaveLength(0);
-  });
-
-  it('фильтрует только корневые проекты: опубликованный остаётся, черновик нет', () => {
-    const ar = restore('published', {
-      projects: [project('published'), project('draft')],
-    });
-    const view = ar.viewFor(false);
-    expect(view?.projects).toHaveLength(1);
-    expect(view?.projects[0]?.title).toBe('Проект 1');
   });
 });
 
@@ -194,34 +179,13 @@ describe('ModuleAr.publishedOutline', () => {
     expect(ar.publishedOutline()[0]?.lessonIds).toEqual([LESSON_2, LESSON_1]);
   });
 
-  it('модуль без проектов — []', () => {
-    expect(restore('published').publishedOutline()).toEqual([]);
-  });
-
   it('без опубликованных проектов — []', () => {
     const ar = restore('published', { projects: [project('draft')] });
     expect(ar.publishedOutline()).toEqual([]);
   });
-
-  it('статус самого модуля не фильтрует: draft-модуль отдаёт опубликованные проекты', () => {
-    const ar = restore('draft', { projects: [project('published')] });
-    expect(ar.publishedOutline()).toHaveLength(1);
-  });
 });
 
 describe('ModuleView — version обязателен', () => {
-  it('представление без version не проходит схему выхода', () => {
-    const { version: _omitted, ...withoutVersion } = restore(
-      'published',
-    ).viewFor(true) as ModuleView;
-    expect(v.safeParse(ModuleView, withoutVersion).success).toBe(false);
-  });
-
-  it('представление с version проходит', () => {
-    const view = restore('published').viewFor(true);
-    expect(v.safeParse(ModuleView, view).success).toBe(true);
-  });
-
   it('JSON Schema выхода требует version, как у урока и шага (MAN-03)', () => {
     const schema = toJsonSchema(ModuleView) as { required?: string[] };
     expect(schema.required).toContain('version');

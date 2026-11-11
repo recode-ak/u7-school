@@ -32,16 +32,15 @@ interface ScreenRecord {
 /**
  * E2E: Пагинация длинного контента (трек pagination, ФР-7).
  *
- * Полный цикл листания минимум на трёх страницах: вперёд до конца и
- * назад, edit на месте (messageId исходного экрана не меняется, новых
+ * Листание — edit на месте (messageId исходного экрана не меняется, новых
  * сообщений не приходит), каждый ответ — assertDialogResponseMarkdownSafe.
  *
  * Сценарии:
- * - S03 «Программа курса»: поток «JS Core — Длинная программа» (24 проекта,
- *   снапшот > 10000 символов — фикстура e6e6…)
+ * - S03 «Программа курса»: поток «JS Core — Длинная программа» (24 проекта —
+ *   фикстура e6e6…) — drill-down по проектам.
  * - Каталог, уровень 3 «Модуль»: курс «Длинный курс (пагинация)» →
  *   модуль «Длинный модуль (пагинация)» (16 проектов × 4 урока — фикстуры
- *   f1f1…/f2f2…)
+ *   f1f1…/f2f2…) — сквозной проход проектов вперёд до последнего и назад.
  */
 describe('E2E: Пагинация (S03 + каталог уровня 3)', () => {
   let app: TestApp;
@@ -122,15 +121,6 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
   }
 
   /**
-   * Индикатор страницы `Стр. N/M` → {index, total} (1-based) или null.
-   * Точка в тексте экрана экранирована для MarkdownV2 (`Стр\.`), слэш — нет.
-   */
-  function pageOf(text: string): { index: number; total: number } | null {
-    const m = /Стр\\\. (\d+)\/(\d+)/.exec(text);
-    return m ? { index: Number(m[1]), total: Number(m[2]) } : null;
-  }
-
-  /**
    * Собирает номера проектов со страницы: дубль — ошибка (проект разорван
    * между страницами или продублирован).
    */
@@ -164,57 +154,6 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
       .filter((s) => s.telegramId === tgId)
       .map((s) => s.messageId);
     expect(new Set(sentIds).size).toBe(sentIds.length);
-  }
-
-  /**
-   * Полный цикл листания: вперёд до конца (кнопка «След ›»), назад до
-   * первой (кнопка «‹ Пред»), edit на месте на каждом шаге.
-   */
-  async function pageThroughCycle(
-    tgId: number,
-    firstPageText: string,
-  ): Promise<{ index: number; total: number }> {
-    const first = pageOf(firstPageText);
-    expect(first).not.toBeNull();
-    expect(first!.index).toBe(1);
-    expect(first!.total).toBeGreaterThanOrEqual(3);
-    const originMessageId = lastSentMessageId(tgId);
-    expect(hasButton(tgId, '‹ Пред')).toBe(false);
-
-    // Вперёд до последней страницы (страховочный предел — total + 2)
-    let text = firstPageText;
-    let prevIndex = first!.index;
-    let steps = 0;
-    while (hasButton(tgId, 'След ›')) {
-      const response = await press(tgId, 'След ›');
-      text = String(response.screen?.text ?? '');
-      const pg = pageOf(text)!;
-      expect(pg.index).toBe(prevIndex + 1);
-      expect(pg.total).toBe(first!.total);
-      prevIndex = pg.index;
-      expectEditInPlace(tgId, originMessageId);
-      steps += 1;
-      if (steps > first!.total + 2) throw new Error('листание не завершилось');
-    }
-    expect(prevIndex).toBe(first!.total);
-    expect(hasButton(tgId, '‹ Пред')).toBe(true);
-
-    // Назад до первой страницы
-    while (hasButton(tgId, '‹ Пред')) {
-      const response = await press(tgId, '‹ Пред');
-      text = String(response.screen?.text ?? '');
-      const pg = pageOf(text)!;
-      expect(pg.index).toBe(prevIndex - 1);
-      expect(pg.total).toBe(first!.total);
-      prevIndex = pg.index;
-      expectEditInPlace(tgId, originMessageId);
-      steps += 1;
-      if (steps > first!.total * 2 + 4) {
-        throw new Error('обратное листание не завершилось');
-      }
-    }
-    expect(prevIndex).toBe(1);
-    return first!;
   }
 
   // ── S03: программа длинного потока (drill-down) ──
@@ -273,7 +212,7 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
     }
   }
 
-  test('Каталог: длинный модуль — drill-down навигация по проектам, edit на месте', async () => {
+  test('Каталог: длинный модуль — сквозной проход проектов до последнего и обратно', async () => {
     const tgId = guest.telegramId;
     await openLongCourse(tgId);
 
@@ -282,55 +221,50 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
     expect(modulesText).toContain('Длинный модуль');
     expect(modulesText).toContain('Проект 01');
 
+    // Состав уровня «Модуль»: каждый проект модуля — один раз
+    const moduleProjects = new Set<string>();
+    collectProjects(modulesText, moduleProjects);
+    expect(moduleProjects.size).toBeGreaterThanOrEqual(10);
+
     const originMessageId = lastSentMessageId(tgId);
 
-    // Переход в проект 01 через кнопку подуровня
-    const projectScreen = await press(tgId, 'Проект 01');
-    const projectText = String(projectScreen.screen?.text ?? '');
-    expect(projectText).toContain('Проект 01');
-    expect(hasButton(tgId, 'След. проект ▶️')).toBe(true);
+    // Вперёд: от первого проекта до последнего, edit на месте на каждом шаге
+    let screen = await press(tgId, 'Проект 01');
+    const visited = new Set<string>();
+    collectProjects(String(screen.screen?.text ?? ''), visited);
+    expect(hasButton(tgId, '◀️ Пред. проект')).toBe(false);
     expectEditInPlace(tgId, originMessageId);
 
-    // Листание проектов вперед
-    const nextProject = await press(tgId, 'След. проект ▶️');
-    expect(String(nextProject.screen?.text ?? '')).toContain('Проект 02');
+    let steps = 0;
+    while (hasButton(tgId, 'След. проект ▶️')) {
+      screen = await press(tgId, 'След. проект ▶️');
+      collectProjects(String(screen.screen?.text ?? ''), visited);
+      expectEditInPlace(tgId, originMessageId);
+      steps += 1;
+      if (steps > moduleProjects.size)
+        throw new Error('листание не завершилось');
+    }
     expect(hasButton(tgId, '◀️ Пред. проект')).toBe(true);
-    expectEditInPlace(tgId, originMessageId);
 
-    // Листание проектов назад
-    const prevProject = await press(tgId, '◀️ Пред. проект');
-    expect(String(prevProject.screen?.text ?? '')).toContain('Проект 01');
-    expectEditInPlace(tgId, originMessageId);
+    // Каждый проект модуля пройден ровно один раз: без дублей и разрывов
+    expect(visited).toEqual(moduleProjects);
+
+    // Назад до первого проекта
+    let backSteps = 0;
+    while (hasButton(tgId, '◀️ Пред. проект')) {
+      screen = await press(tgId, '◀️ Пред. проект');
+      expectEditInPlace(tgId, originMessageId);
+      backSteps += 1;
+      if (backSteps > moduleProjects.size) {
+        throw new Error('обратное листание не завершилось');
+      }
+    }
+    expect(backSteps).toBe(steps);
+    expect(String(screen.screen?.text ?? '')).toContain('Проект 01');
 
     // Возврат к модулю
     const backToModule = await press(tgId, 'Назад к модулю');
     expect(String(backToModule.screen?.text ?? '')).toContain('Длинный модуль');
     expectEditInPlace(tgId, originMessageId);
-  });
-
-  test('Каталог: сквозное листание проектов в пределах модуля', async () => {
-    const tgId = guest.telegramId;
-    await openLongCourse(tgId);
-    await press(tgId, 'Длинный модуль');
-
-    const originMessageId = lastSentMessageId(tgId);
-    let screen = await press(tgId, 'Проект 01');
-
-    const seen = new Set<string>();
-    for (let i = 0; i < 20; i++) {
-      const text = String(screen.screen?.text ?? '');
-      const match = text.match(
-        /Проект(?:\s+\d+(?:\s+из\s+|\/)\d+)?:\s*(Проект\s*\d+)/,
-      );
-      if (match?.[1]) seen.add(match[1]);
-
-      if (!hasButton(tgId, 'След. проект ▶️')) break;
-      screen = await press(tgId, 'След. проект ▶️');
-      expectEditInPlace(tgId, originMessageId);
-    }
-
-    expect(seen.size).toBeGreaterThanOrEqual(10);
-    expect(seen.has('Проект 01')).toBe(true);
-    expect(seen.has('Проект 02')).toBe(true);
   });
 });

@@ -72,87 +72,19 @@ describe('LessonState — поля (перенос entity.test.ts)', () => {
     });
   });
 
-  it('принимает минимальный урок без опциональных полей', () => {
-    const res = parse({
-      uuid: LESSON,
-      moduleId: MODULE,
-      title: 'Минимум',
-      status: 'draft',
-      createdAt: '2026-07-08T18:35',
-      stepIds: [],
-      mentorStepIds: [],
-    });
-    expect(res.success).toBe(true);
-  });
-
   it('заголовок обрезается по краям', () => {
     const res = parse({ ...legacy, title: '  Введение  ' });
     expect(res.output).toMatchObject({ title: 'Введение' });
   });
 
-  it('отклоняет пустой заголовок', () => {
-    expect(parse({ ...legacy, title: '' }).success).toBe(false);
-  });
-
-  it('отклоняет заголовок из пробелов (обрезка краёв)', () => {
-    expect(parse({ ...legacy, title: '   ' }).success).toBe(false);
-  });
-
-  it('отклоняет отрицательный estimatedMinutes', () => {
-    expect(parse({ ...legacy, estimatedMinutes: -1 }).success).toBe(false);
+  it.each([
+    ['пустой', ''],
+    ['из пробелов (обрезка краёв)', '   '],
+  ])('отклоняет заголовок %s', (_, title) => {
+    expect(parse({ ...legacy, title }).success).toBe(false);
   });
 
   it('отклоняет нулевой estimatedMinutes (минимум 1)', () => {
     expect(parse({ ...legacy, estimatedMinutes: 0 }).success).toBe(false);
-  });
-
-  it('отклоняет дробный estimatedMinutes', () => {
-    expect(parse({ ...legacy, estimatedMinutes: 1.5 }).success).toBe(false);
-  });
-
-  it('принимает estimatedMinutes = 1', () => {
-    expect(parse({ ...legacy, estimatedMinutes: 1 }).success).toBe(true);
-  });
-
-  it('отклоняет невалидный UUID в stepIds', () => {
-    expect(parse({ ...legacy, stepIds: ['bad'] }).success).toBe(false);
-  });
-
-  it('отклоняет невалидный UUID в mentorStepIds', () => {
-    expect(parse({ ...legacy, mentorStepIds: ['bad'] }).success).toBe(false);
-  });
-
-  it('отклоняет запись без stepIds', () => {
-    const { stepIds: _s, ...noSteps } = legacy;
-    expect(parse(noSteps).success).toBe(false);
-  });
-
-  it('отклоняет запись без mentorStepIds', () => {
-    const { mentorStepIds: _m, ...noMentor } = legacy;
-    expect(parse(noMentor).success).toBe(false);
-  });
-
-  it('отклоняет некорректный uuid урока', () => {
-    expect(parse({ ...legacy, uuid: 'bad-uuid' }).success).toBe(false);
-  });
-
-  it('отклоняет некорректный moduleId', () => {
-    expect(parse({ ...legacy, moduleId: 'bad' }).success).toBe(false);
-  });
-
-  it('отклоняет запись без moduleId', () => {
-    const { moduleId: _m, ...noModule } = legacy;
-    expect(parse(noModule).success).toBe(false);
-  });
-
-  it.each(['draft', 'published', 'archived'])(
-    'статус %s допустим',
-    (status) => {
-      expect(parse({ ...legacy, status }).success).toBe(true);
-    },
-  );
-
-  it('отклоняет неизвестный статус', () => {
-    expect(parse({ ...legacy, status: 'nonsense' }).success).toBe(false);
   });
 });

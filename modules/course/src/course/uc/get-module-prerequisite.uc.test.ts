@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
-import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import {
+  CourseModuleDef,
+  GetModulePrerequisiteUcDef,
+} from '@u7-scl/domain/course/contract';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import * as v from 'valibot';
 import {
   M1,
   M2,
@@ -70,6 +74,17 @@ describe('getModulePrerequisite — сквозной сценарий верди
       title: 'Модуль 11',
     });
     expect(expectOk(await ask(M2, [M1]))).toEqual({ admitted: true });
+  });
+
+  // Схема выхода: причина «предыдущий не пройден» всегда с названием модуля;
+  // реальный ответ без `title` не строится, отказ ловится только схемой.
+  it('схема выхода: previous-not-passed без title — отказ', () => {
+    expect(
+      v.safeParse(GetModulePrerequisiteUcDef.output, {
+        admitted: false,
+        reason: 'previous-not-passed',
+      }).success,
+    ).toBe(false);
   });
 });
 

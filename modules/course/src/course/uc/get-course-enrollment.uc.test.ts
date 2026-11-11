@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
-import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import {
+  CourseModuleDef,
+  GetCourseEnrollmentUcDef,
+} from '@u7-scl/domain/course/contract';
 import { expectErr, expectOk } from 'dmg-core/testing';
+import * as v from 'valibot';
 import {
   COURSE,
   courseState,
@@ -89,5 +93,14 @@ describe('GetCourseEnrollmentUc', () => {
     env.seedCourses(courseState('published'));
     await enrollment();
     expect(env.courses.saved).toEqual([]);
+  });
+
+  // Схема выхода — межпольная связка варианта: ответ «доступен» без стартового
+  // модуля не описывает ни один реальный вызов, его ловит только схема.
+  it('схема выхода: enrollable: true без startModuleId — отказ', () => {
+    expect(
+      v.safeParse(GetCourseEnrollmentUcDef.output, { enrollable: true })
+        .success,
+    ).toBe(false);
   });
 });

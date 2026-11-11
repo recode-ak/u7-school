@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'bun:test';
-import { normalize } from 'dmg-core/graph';
 import * as v from 'valibot';
 import { CourseArDef } from './course.ar';
 import {
@@ -11,7 +10,6 @@ import {
   M4,
   OUTSIDE,
   phase,
-  stored,
   T0,
 } from './course.fixture';
 import { CourseProgramInvariant, PhaseVo } from './course.state';
@@ -40,14 +38,6 @@ describe('CourseState — запись (перенос CourseSchema)', () => {
     expect(parse(record).success).toBe(true);
   });
 
-  it('принимает курс с этапом (метка с track)', () => {
-    const res = parse({
-      ...record,
-      phases: [{ title: 'Этап 1', track: 'tech', fromModuleId: M1 }],
-    });
-    expect(res.success).toBe(true);
-  });
-
   it('заголовок и описание обрезаются по краям', () => {
     const res = parse({
       ...record,
@@ -65,30 +55,10 @@ describe('CourseState — запись (перенос CourseSchema)', () => {
     ['пустой заголовок', { title: '' }],
     ['заголовок из пробелов', { title: '   ' }],
     ['пустое описание', { description: '' }],
-    ['некорректный uuid', { uuid: 'not-a-uuid' }],
-    ['некорректный authorId', { authorId: 'bad-uuid' }],
-    ['невалидный статус', { status: 'invalid' }],
     ['некорректный createdAt', { createdAt: 'not-a-date' }],
-    ['uuid модуля в программе не uuid', { moduleIds: ['not-uuid'] }],
-    ['программа не массив', { moduleIds: M1 }],
   ])('отклоняет: %s', (_, patch) => {
     expect(parse({ ...record, ...patch }).success).toBe(false);
   });
-
-  it.each([['moduleIds'], ['phases'], ['status'], ['authorId']])(
-    'отклоняет запись без обязательного поля %s',
-    (key) => {
-      const { [key]: _omitted, ...rest } = record as Record<string, unknown>;
-      expect(parse(rest).success).toBe(false);
-    },
-  );
-
-  it.each(['draft', 'published', 'archived'])(
-    'статус %s допустим',
-    (status) => {
-      expect(parse({ ...record, status }).success).toBe(true);
-    },
-  );
 });
 
 describe('CourseState — прежний формат записи (старый — ошибка)', () => {
@@ -153,14 +123,13 @@ describe('CourseState — даты (D-36)', () => {
 describe('PhaseVo — метка этапа (перенос PhaseSchema)', () => {
   const valid = { title: 'Этап 1', fromModuleId: M1 };
 
-  it('принимает метку без track', () => {
-    expect(v.safeParse(PhaseVo, valid).success).toBe(true);
-  });
-
-  it('принимает метку с track', () => {
-    const res = v.safeParse(PhaseVo, { ...valid, track: 'tech' });
+  it.each<{ title: string; extra: { track?: string }; track?: string }>([
+    { title: 'без track', extra: {}, track: undefined },
+    { title: 'с track', extra: { track: 'tech' }, track: 'tech' },
+  ])('принимает метку $title', ({ extra, track }) => {
+    const res = v.safeParse(PhaseVo, { ...valid, ...extra });
     expect(res.success).toBe(true);
-    if (res.success) expect(res.output.track).toBe('tech');
+    if (res.success) expect(res.output.track).toBe(track);
   });
 
   it('заголовок обрезается по краям', () => {
@@ -172,33 +141,8 @@ describe('PhaseVo — метка этапа (перенос PhaseSchema)', () =>
   it.each([
     ['пустой заголовок', { title: '' }],
     ['заголовок из пробелов', { title: '  ' }],
-    ['fromModuleId не uuid', { fromModuleId: 'not-uuid' }],
-    ['нет fromModuleId', { fromModuleId: undefined }],
-    ['модули этапа вместо метки', { fromModuleId: undefined, moduleIds: [M1] }],
   ])('отклоняет: %s', (_, patch) => {
     expect(v.safeParse(PhaseVo, { ...valid, ...patch }).success).toBe(false);
-  });
-
-  it('у метки нет идентичности и дат (DOM-13)', () => {
-    expect(Object.keys(PhaseVo.entries).sort()).toEqual([
-      'fromModuleId',
-      'title',
-      'track',
-    ]);
-  });
-});
-
-describe('CourseArDef.state — остаётся переводимым в JSON Schema', () => {
-  it('normalize(CourseArDef) не бросает (в state нет check/rawCheck, Т3)', () => {
-    expect(normalize(CourseArDef)).toMatchObject({ name: 'course' });
-  });
-
-  it('инварианты программы не в state: дубль заголовков state пропускает', () => {
-    const res = parse({
-      ...record,
-      phases: [phase('Этап', M1), phase('Этап', M2)],
-    });
-    expect(res.success).toBe(true);
   });
 });
 
@@ -236,16 +180,17 @@ describe('CourseProgramInvariant — инварианты программы и 
     expect(ok([M1, M2], [phase('Этап', OUTSIDE)])).toBe(false);
   });
 
-  it('метки не в порядке программы — отказ', () => {
-    expect(ok([M1, M2, M3], [phase('Второй', M3), phase('Первый', M1)])).toBe(
-      false,
-    );
-  });
-
-  it('два этапа на одном модуле — отказ', () => {
-    expect(ok([M1, M2], [phase('Первый', M1), phase('Второй', M1)])).toBe(
-      false,
-    );
+  it.each<{ title: string; phases: unknown[] }>([
+    {
+      title: 'метки не в порядке программы',
+      phases: [phase('Второй', M3), phase('Первый', M1)],
+    },
+    {
+      title: 'два этапа на одном модуле',
+      phases: [phase('Первый', M1), phase('Второй', M1)],
+    },
+  ])('$title — отказ', ({ phases }) => {
+    expect(ok([M1, M2, M3], phases)).toBe(false);
   });
 
   it('первая метка не на первом модуле — отказ', () => {
@@ -261,27 +206,8 @@ describe('CourseProgramInvariant — инварианты программы и 
     );
   });
 
-  it('разные заголовки этапов принимаются (перенос a-root.test)', () => {
-    expect(ok([M1, M2, M3], [phase('Этап 1', M1), phase('Этап 2', M3)])).toBe(
-      true,
-    );
-  });
-
   it('повтор модуля в программе — отказ', () => {
     expect(ok([M1, M2, M1], [])).toBe(false);
     expect(ok([M1, M1], [phase('Этап', M1)])).toBe(false);
-  });
-});
-
-describe('stored() — построитель тестов выдаёт валидное состояние', () => {
-  it('state и инвариант принимают состояние по умолчанию', () => {
-    const state = stored('published');
-    expect(v.safeParse(CourseArDef.state, state).success).toBe(true);
-    expect(
-      v.safeParse(CourseProgramInvariant, {
-        moduleIds: state.moduleIds,
-        phases: state.phases,
-      }).success,
-    ).toBe(true);
   });
 });

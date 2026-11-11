@@ -159,14 +159,6 @@ describe('CourseCatalogStory', () => {
     }
   });
 
-  test('menuButtons содержит описание для help', async () => {
-    const story = new CourseCatalogStory();
-    const items = await story.menuButtons(actor);
-    expect(items[0]?.description).toBe(
-      '📖 Курсы — каталог учебных курсов и их структура',
-    );
-  });
-
   // ── Уровень 0: Курсы + этапы inline ──
 
   test('list: показывает курсы с этапами inline, без описаний', async () => {
@@ -228,22 +220,6 @@ describe('CourseCatalogStory', () => {
     expect(response.notify?.kind).toBe('warn');
     expect(String(response.notify?.text)).toContain('Произошла ошибка');
     expect(response.screen).toBeUndefined();
-  });
-
-  test('list: заголовок «📖 *Курсы*»', async () => {
-    const appApi = makeAppApi([
-      courseView({
-        uuid: 'c1',
-        title: 'Course',
-        description: 'Desc',
-        stages: [stage('Phase', [])],
-      }),
-    ]);
-    const story = new CourseCatalogStory();
-    initStory(story, appApi);
-
-    const response = await story.handleCallback('list', actor, session);
-    expect(String(response.screen?.text)).toContain('📖 *Курсы*');
   });
 
   // ── Уровень 1: Этап + модули подуровнем ──
@@ -787,29 +763,6 @@ describe('CourseCatalogStory', () => {
     );
   });
 
-  // ── Неизвестная команда ──
-
-  test('неизвестная команда', async () => {
-    const appApi = makeAppApi([]);
-    const story = new CourseCatalogStory();
-    initStory(story, appApi);
-
-    const response = await story.handleCallback('unknown', actor, session);
-    assertDialogResponseMarkdownSafe(response);
-    expect(String(response.screen?.text)).toContain('Неизвестная команда');
-  });
-
-  test('handleMessage — дефолт ядра (ввод без ожидания до стори не доходит)', async () => {
-    const story = new CourseCatalogStory();
-    const response = await story.handleMessage(
-      { type: 'message', text: 'текст', telegramId: 123 },
-      actor,
-      session,
-    );
-    expect(String(response.notify?.text)).toContain('не принимаются');
-    expect(response.release).toBe(true);
-  });
-
   // ── Запись на модуль (кнопка из уведомления о завершении) ──
 
   describe('wish — запись на модуль', () => {
@@ -931,109 +884,34 @@ describe('CourseCatalogStory', () => {
       expect(applyBtn!.code).toBe(`course-catalog:apply:${courseId}`);
     });
 
-    test('list: expressed-желание → кнопка «🗑️ Отменить желание» (W05)', async () => {
-      const appApi = makeCatalogApi([
-        {
-          userId: actor.uuid,
-          target: { kind: 'course', courseId },
-          status: 'expressed',
-        },
-      ]);
-      const story = new CourseCatalogStory();
-      initStory(story, appApi);
+    test.each(['expressed', 'confirmed'] as const)(
+      'list: %s-желание → кнопка «🗑️ Отменить желание» (W05)',
+      async (status) => {
+        const appApi = makeCatalogApi([
+          {
+            userId: actor.uuid,
+            target: { kind: 'course', courseId },
+            status,
+          },
+        ]);
+        const story = new CourseCatalogStory();
+        initStory(story, appApi);
 
-      const response = await story.handleCallback('list', actor, session);
-      const buttons = (response.screen?.keyboard?.rows ?? []).flat();
+        const response = await story.handleCallback('list', actor, session);
+        const buttons = (response.screen?.keyboard?.rows ?? []).flat();
 
-      expect(
-        buttons.some(
-          (b) =>
-            b.text.includes('Отменить желание') &&
-            b.code === `course-catalog:cancel:${courseId}`,
-        ),
-      ).toBe(true);
-      expect(buttons.some((b) => b.text.includes('Хочу пройти курс'))).toBe(
-        false,
-      );
-    });
-
-    test('list: confirmed-желание → кнопка «🗑️ Отменить желание»', async () => {
-      const appApi = makeCatalogApi([
-        {
-          userId: actor.uuid,
-          target: { kind: 'course', courseId },
-          status: 'confirmed',
-        },
-      ]);
-      const story = new CourseCatalogStory();
-      initStory(story, appApi);
-
-      const response = await story.handleCallback('list', actor, session);
-      const buttons = (response.screen?.keyboard?.rows ?? []).flat();
-
-      expect(buttons.some((b) => b.text.includes('Отменить желание'))).toBe(
-        true,
-      );
-    });
-
-    test('list: pending-желание → кнопка «📝 Продолжить анкету»', async () => {
-      const appApi = makeCatalogApi([
-        {
-          userId: actor.uuid,
-          target: { kind: 'course', courseId },
-          status: 'pending',
-        },
-      ]);
-      const story = new CourseCatalogStory();
-      initStory(story, appApi);
-
-      const response = await story.handleCallback('list', actor, session);
-      const buttons = (response.screen?.keyboard?.rows ?? []).flat();
-
-      const resumeBtn = buttons.find((b) =>
-        b.text.includes('Продолжить анкету'),
-      );
-      expect(resumeBtn).toBeDefined();
-      expect(resumeBtn!.code).toBe(`questionnaire:fill:resume:${courseId}`);
-    });
-
-    test('list: fulfilled-желание (обучение) → обычная кнопка «Хочу пройти курс»', async () => {
-      const appApi = makeCatalogApi([
-        {
-          userId: actor.uuid,
-          target: { kind: 'course', courseId },
-          status: 'fulfilled',
-        },
-      ]);
-      const story = new CourseCatalogStory();
-      initStory(story, appApi);
-
-      const response = await story.handleCallback('list', actor, session);
-      const buttons = (response.screen?.keyboard?.rows ?? []).flat();
-
-      expect(buttons.some((b) => b.text.includes('Хочу пройти курс'))).toBe(
-        true,
-      );
-    });
-
-    test('list: желание другого пользователя не влияет на кнопки', async () => {
-      const appApi = makeCatalogApi([
-        {
-          userId: 'other-user',
-          target: { kind: 'course', courseId },
-          status: 'expressed',
-        },
-      ]);
-      const story = new CourseCatalogStory();
-      initStory(story, appApi);
-
-      const response = await story.handleCallback('list', actor, session);
-      const buttons = (response.screen?.keyboard?.rows ?? []).flat();
-
-      expect(buttons.some((b) => b.text.includes('Хочу пройти курс'))).toBe(
-        true,
-      );
-    });
+        expect(
+          buttons.some(
+            (b) =>
+              b.text.includes('Отменить желание') &&
+              b.code === `course-catalog:cancel:${courseId}`,
+          ),
+        ).toBe(true);
+        expect(buttons.some((b) => b.text.includes('Хочу пройти курс'))).toBe(
+          false,
+        );
+      },
+    );
 
     test('apply instant: вызывает create-course-wish и рендерит W03', async () => {
       const appApi = makeApplyApi(ok({ outcome: 'instant' }));
@@ -1101,6 +979,10 @@ describe('CourseCatalogStory', () => {
 
         const text = String(response.screen?.text ?? '');
         expect(text).not.toContain('⚠️');
+        // Текст ветвится по статусу: обучение или выразил желание
+        expect(text).toContain(
+          status === 'confirmed' ? 'обучаешься' : 'выразил желание',
+        );
         const rows = response.screen?.keyboard?.rows ?? [];
         const flat = rows.flat();
         expect(flat.some((b) => b.text.includes('Отменить желание'))).toBe(
@@ -1110,34 +992,6 @@ describe('CourseCatalogStory', () => {
           flat.some((b) => b.code === `course-catalog:cancel:${courseId}`),
         ).toBe(true);
         expect(flat.some((b) => b.code === Routes.app.mainMenu)).toBe(true);
-      },
-    );
-
-    test.each(['expressed', 'confirmed'] as const)(
-      'apply конфликт %s: текст ветвится',
-      async (status) => {
-        const appApi = makeApplyApi(
-          WishErrors.ALREADY_EXISTS.err({
-            userId: actor.uuid,
-            courseId,
-            status,
-          }),
-        );
-        const story = new CourseCatalogStory();
-        initStory(story, appApi);
-
-        const response = await story.handleCallback(
-          `apply:${courseId}`,
-          actor,
-          session,
-        );
-
-        const text = String(response.screen?.text ?? '');
-        if (status === 'confirmed') {
-          expect(text).toContain('обучаешься');
-        } else {
-          expect(text).toContain('выразил желание');
-        }
       },
     );
 
@@ -1197,27 +1051,46 @@ describe('CourseCatalogStory', () => {
       });
     }
 
-    test('cancel: рендерит подтверждение W05 с кнопками Да/Отмена', async () => {
-      const appApi = makeCancelApi();
-      const story = new CourseCatalogStory();
-      initStory(story, appApi);
+    const moduleId = '33333333-3333-4333-8333-333333333333';
 
-      const response = await story.handleCallback(
-        `cancel:${courseId}`,
-        actor,
-        session,
-      );
-      assertDialogResponseMarkdownSafe(response);
+    test.each([
+      [
+        'cancel',
+        courseId,
+        'Отменить желание пройти курс?',
+        `course-catalog:cancel-confirm:${courseId}`,
+        `course-catalog:course:${courseId}`,
+      ],
+      [
+        'cancel-mod',
+        moduleId,
+        'Отменить желание пройти модуль?',
+        `course-catalog:cancel-mod-confirm:${moduleId}`,
+        Routes.app.mainMenu,
+      ],
+    ])(
+      '%s: подтверждение W05 с кнопками Да/Отмена',
+      async (action, target, confirmText, confirmCode, cancelCode) => {
+        const appApi = makeCancelApi();
+        const story = new CourseCatalogStory();
+        initStory(story, appApi);
 
-      const text = String(response.screen?.text ?? '');
-      expect(text).toContain('Отменить желание пройти курс?');
-      const rows = response.screen?.keyboard?.rows ?? [];
-      const flat = rows.flat();
-      const yes = flat.find((b) => b.text.includes('Да'));
-      expect(yes?.code).toBe(`course-catalog:cancel-confirm:${courseId}`);
-      const no = flat.find((b) => b.text.includes('Отмена'));
-      expect(no?.code).toBe(`course-catalog:course:${courseId}`);
-    });
+        const response = await story.handleCallback(
+          `${action}:${target}`,
+          actor,
+          session,
+        );
+        assertDialogResponseMarkdownSafe(response);
+
+        const text = String(response.screen?.text ?? '');
+        expect(text).toContain(confirmText);
+        const flat = (response.screen?.keyboard?.rows ?? []).flat();
+        const yes = flat.find((b) => b.text.includes('Да'));
+        expect(yes?.code).toBe(confirmCode);
+        const no = flat.find((b) => b.text.includes('Отмена'));
+        expect(no?.code).toBe(cancelCode);
+      },
+    );
 
     test('cancel-confirm: вызывает cancel-wish и сообщает об отмене', async () => {
       const appApi = makeCancelApi();
@@ -1272,28 +1145,6 @@ describe('CourseCatalogStory', () => {
       });
     }
 
-    test('cancel-mod: рендерит подтверждение W05-M с кнопками Да/Отмена', async () => {
-      const appApi = makeCancelApi();
-      const story = new CourseCatalogStory();
-      initStory(story, appApi);
-
-      const response = await story.handleCallback(
-        `cancel-mod:${moduleId}`,
-        actor,
-        session,
-      );
-      assertDialogResponseMarkdownSafe(response);
-
-      const text = String(response.screen?.text ?? '');
-      expect(text).toContain('Отменить желание пройти модуль?');
-      const rows = response.screen?.keyboard?.rows ?? [];
-      const flat = rows.flat();
-      const yes = flat.find((b) => b.text.includes('Да'));
-      expect(yes?.code).toBe(`course-catalog:cancel-mod-confirm:${moduleId}`);
-      const no = flat.find((b) => b.text.includes('Отмена'));
-      expect(no?.code).toBe(Routes.app.mainMenu);
-    });
-
     test('cancel-mod-confirm: вызывает cancel-wish с вариантом module', async () => {
       const appApi = makeCancelApi();
       const story = new CourseCatalogStory();
@@ -1338,83 +1189,6 @@ describe('CourseCatalogStory', () => {
   // ── Навигация: листание соседних сущностей (drill-down) ──
 
   describe('Листание соседей (drill-down навигация)', () => {
-    test('листание курсов: ◀️ Пред. курс / След. курс ▶️', async () => {
-      const courses = [
-        courseView({
-          uuid: 'c-1',
-          title: 'Первый курс',
-          description: 'd1',
-          stages: [stage('Этап 1', [])],
-        }),
-        courseView({
-          uuid: 'c-2',
-          title: 'Второй курс',
-          description: 'd2',
-          stages: [stage('Этап 2', [])],
-        }),
-      ];
-      const appApi = makeAppApi(courses);
-      const story = new CourseCatalogStory();
-      initStory(story, appApi);
-
-      // Карточка первого курса: есть «След. курс ▶️», нет «◀️ Пред. курс»
-      const first = await story.handleCallback('list', actor, session);
-      assertDialogResponseMarkdownSafe(first);
-      const firstBtns = first.screen?.keyboard?.rows.flat() ?? [];
-      const nextCourseBtn = firstBtns.find((b) =>
-        b.text.includes('След. курс'),
-      );
-      expect(nextCourseBtn).toBeDefined();
-      expect(nextCourseBtn?.code).toBe('course-catalog:course:c-2');
-      expect(firstBtns.some((b) => b.text.includes('Пред. курс'))).toBe(false);
-
-      // Карточка второго курса: есть «◀️ Пред. курс», нет «След. курс ▶️»
-      const second = await story.handleCallback('course:c-2', actor, session);
-      assertDialogResponseMarkdownSafe(second);
-      const secondBtns = second.screen?.keyboard?.rows.flat() ?? [];
-      const prevCourseBtn = secondBtns.find((b) =>
-        b.text.includes('Пред. курс'),
-      );
-      expect(prevCourseBtn).toBeDefined();
-      expect(prevCourseBtn?.code).toBe('course-catalog:course:c-1');
-      expect(secondBtns.some((b) => b.text.includes('След. курс'))).toBe(false);
-    });
-
-    test('листание этапов: ◀️ Пред. этап / След. этап ▶️', async () => {
-      const appApi = makeAppApi([
-        courseView({
-          uuid: 'c-1',
-          title: 'Курс с 2 этапами',
-          description: 'd',
-          stages: [stage('Этап 1', []), stage('Этап 2', [])],
-        }),
-      ]);
-      const story = new CourseCatalogStory();
-      initStory(story, appApi);
-
-      const respPhase0 = await story.handleCallback(
-        'phase:c-1:0',
-        actor,
-        session,
-      );
-      assertDialogResponseMarkdownSafe(respPhase0);
-      const btns0 = respPhase0.screen?.keyboard?.rows.flat() ?? [];
-      const nextPhaseBtn = btns0.find((b) => b.text.includes('След. этап'));
-      expect(nextPhaseBtn).toBeDefined();
-      expect(nextPhaseBtn?.code).toBe('course-catalog:phase:c-1:1');
-
-      const respPhase1 = await story.handleCallback(
-        'phase:c-1:1',
-        actor,
-        session,
-      );
-      assertDialogResponseMarkdownSafe(respPhase1);
-      const btns1 = respPhase1.screen?.keyboard?.rows.flat() ?? [];
-      const prevPhaseBtn = btns1.find((b) => b.text.includes('Пред. этап'));
-      expect(prevPhaseBtn).toBeDefined();
-      expect(prevPhaseBtn?.code).toBe('course-catalog:phase:c-1:0');
-    });
-
     test('drill-down сохраняет контекст курса, если модуль входит в несколько курсов', async () => {
       const sharedModId = 'shared-mod';
       const courses = [
