@@ -132,7 +132,7 @@
 - Маркеров DEBT-1, 2, 5, 10, 34, 44 и TR-11 (course) в коде нет.
 - `check` зелёный, `git status data/` чист.
 
-## Фаза 6: Итог
+## Фаза 6: Итог [checkpoint: 0368348d]
 
 - [x] Task: Гейт закрытия: `CI=true bun test`, `bun run test:bot`, `dmg-core` `bun test` — сравнение с базовой линией в `summary.md` (Opus) d6881f0a
 - [x] Task: Документы (Opus): d6881f0a
@@ -141,7 +141,7 @@
     - [x] `migration.md` §6 — состояние, следующий трек `user`;
     - [x] `deepseek.md` — сверка таблицы §2 с данными трека;
     - [x] `summary.md` — таблица критериев spec и строка «DeepSeek».
-- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md; автономно) 0368348d
 
 **Критерии приёмки Фазы 6:**
 - Все критерии приёмки spec выполнены (таблица в `summary.md`).
