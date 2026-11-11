@@ -25,7 +25,6 @@ export const LIKERT_OWNER_INFO = {
 };
 
 export type StandardState = Extract<QuestionnaireState, { kind: 'standard' }>;
-export type LikertState = Extract<QuestionnaireState, { kind: 'likert' }>;
 
 const single = (
   questionCode: string,
@@ -145,27 +144,6 @@ export const stored = (
   answers: [],
   questionPool: simplePool(),
   ownerInfo: OWNER_INFO,
-  completedAt: null,
-  createdAt: T0,
-  updatedAt: T0,
-  version: 0,
-  ...extra,
-});
-
-/** Состояние likert-анкеты в хранилище. */
-export const storedLikert = (
-  status: LikertState['status'],
-  extra: Partial<LikertState> = {},
-): LikertState => ({
-  kind: 'likert',
-  uuid: QUESTIONNAIRE,
-  respondentId: RESPONDENT,
-  status,
-  currentQuestionCode: status === 'in_progress' ? 'm1' : null,
-  draftAnswers: {},
-  answers: [],
-  questionPool: likertPool(),
-  ownerInfo: LIKERT_OWNER_INFO,
   completedAt: null,
   createdAt: T0,
   updatedAt: T0,

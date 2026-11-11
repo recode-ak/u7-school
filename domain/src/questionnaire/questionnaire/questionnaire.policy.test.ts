@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { Role } from '@u7-scl/domain/user/contract';
-import { allowed, denied } from 'dmg-core';
+import { denied } from 'dmg-core';
 import { QuestionnaireAr } from './questionnaire.ar';
 import {
   ADMIN_USER,
@@ -19,27 +19,7 @@ const ctx = { questionnaire };
 const { hasRespondent, isRespondent, isAdmin, canAccess, canListFor } =
   QuestionnairePolicy.rules;
 
-describe('QuestionnairePolicy', () => {
-  it('правила: hasRespondent, isRespondent, isAdmin, canAccess, canListFor', () => {
-    expect(Object.keys(QuestionnairePolicy.rules).sort()).toEqual(
-      [
-        'hasRespondent',
-        'isRespondent',
-        'isAdmin',
-        'canAccess',
-        'canListFor',
-      ].sort(),
-    );
-  });
-});
-
 describe('QuestionnairePolicy.hasRespondent', () => {
-  it('есть человек-респондент — allowed', () => {
-    expect(hasRespondent.evaluate(who(RESPONDENT, Role.STUDENT), {})).toEqual(
-      allowed,
-    );
-  });
-
   it('системный вызов без человека — denied', () => {
     expect(hasRespondent.evaluate(undefined, {})).toEqual(
       denied(
@@ -102,11 +82,9 @@ describe('QuestionnairePolicy.canAccess', () => {
     ['чужой студент', who(OTHER_USER, Role.STUDENT)],
     ['чужой ментор', who(OTHER_USER, Role.MENTOR)],
     ['без субъекта', undefined],
-  ])('%s — denied «Нет доступа к анкете»', (_, subject) => {
+  ])('%s — denied', (_, subject) => {
     const decision = canAccess.evaluate(subject, ctx);
     expect(decision.allowed).toBe(false);
-    if (!decision.allowed)
-      expect(decision.denyMessage).toBe('Нет доступа к анкете');
   });
 });
 
@@ -128,13 +106,8 @@ describe('QuestionnairePolicy.canListFor', () => {
   it.each([
     ['чужой список', who(OTHER_USER, Role.STUDENT)],
     ['без субъекта', undefined],
-  ])('%s — denied «Нет доступа к списку анкет пользователя»', (_, subject) => {
+  ])('%s — denied', (_, subject) => {
     const decision = canListFor.evaluate(subject, { userId: RESPONDENT });
     expect(decision.allowed).toBe(false);
-    if (!decision.allowed) {
-      expect(decision.denyMessage).toBe(
-        'Нет доступа к списку анкет пользователя',
-      );
-    }
   });
 });

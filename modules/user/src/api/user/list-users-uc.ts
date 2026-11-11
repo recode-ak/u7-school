@@ -4,7 +4,6 @@ import {
   type ListUsersCmdMeta,
   ListUsersCmdSchema,
   type ListUsersResult,
-  RoleSchema,
   UserAr,
   UserSchema,
 } from '@u7-scl/domain/user';
@@ -28,14 +27,6 @@ export class ListUsersUc extends UserUseCase<ListUsersCmdMeta> {
   protected readonly inputSchema = ListUsersCmdSchema;
   protected readonly outputSchema = v.object({
     users: v.array(UserSchema),
-    total: v.number(),
-    appliedFilters: v.object({
-      limit: v.number(),
-      role: v.optional(RoleSchema),
-      name: v.optional(v.string()),
-      telegramId: v.optional(v.number()),
-      sort: v.string(),
-    }),
   });
 
   async execute(cmd: ListUsersCmd): Promise<ListUsersResult> {
@@ -47,16 +38,6 @@ export class ListUsersUc extends UserUseCase<ListUsersCmdMeta> {
       sort: cmd.sort,
     });
 
-    return {
-      users,
-      total: users.length,
-      appliedFilters: {
-        limit: cmd.limit ?? 20,
-        role: cmd.role as User['roles'][number] | undefined,
-        name: cmd.name,
-        telegramId: cmd.telegramId,
-        sort: cmd.sort ?? 'createdAt:desc',
-      },
-    };
+    return { users };
   }
 }

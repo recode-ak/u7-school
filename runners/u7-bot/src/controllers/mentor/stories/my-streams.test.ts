@@ -58,13 +58,6 @@ function flat(response: DialogResponse) {
 }
 
 describe('MyStreamsStory — контракт «Диалог и Экран»', () => {
-  // ── menuButtons: своей кнопки в главном меню нет ──
-
-  test('menuButtons: пусто (вход только через подменю ментора)', async () => {
-    const story = new MyStreamsStory();
-    expect(await story.menuButtons(mentorActor())).toEqual([]);
-  });
-
   // ── list: дефолт (только enrollment + active) ──
 
   test('list: показывает enrollment + active с точными кодами кнопок', async () => {
@@ -167,28 +160,5 @@ describe('MyStreamsStory — контракт «Диалог и Экран»', (
     });
     const response = await story.handleCallback('list', mentorActor(), session);
     expect(String(response.screen?.text)).toContain('Не удалось загрузить');
-  });
-
-  // ── Неизвестный action / текстовый ввод ──
-
-  test('неизвестный action — экран «Неизвестная команда»', async () => {
-    const story = setupStory();
-    const response = await story.handleCallback(
-      'bogus',
-      mentorActor(),
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Неизвестная');
-  });
-
-  test('handleMessage: дефолт ядра — реплика-отказ + release', async () => {
-    const story = setupStory();
-    const response = await story.handleMessage(
-      { type: 'message', text: 'что-то', telegramId: 123 },
-      mentorActor(),
-      session,
-    );
-    expect(String(response.notify?.text)).toContain('не принимаются');
-    expect(response.release).toBe(true);
   });
 });

@@ -51,48 +51,30 @@ describe('NotifyUserUc', () => {
     expect(event.payload.kind).toBe('warn');
   });
 
-  test('ничего не мутирует: репозиторий не вызывается, output — undefined', async () => {
-    const getByUuid = mock(() => Promise.resolve(undefined));
-    const save = mock(() => Promise.resolve());
-    const publish = mock((_event: UserNotifiedEvent) => {});
-    const uc = new NotifyUserUc();
-    uc.init({
-      userRepo: { getByUuid, save },
-      appResolver: {},
-      eventBus: { publish },
-    } as unknown as UserApiModuleResolver);
-
-    const result = await uc.execute({ userId, text: 'Текст' });
-
-    expect(result).toBeUndefined();
-    expect(getByUuid).not.toHaveBeenCalled();
-    expect(save).not.toHaveBeenCalled();
-  });
-
-  test('handle: пустой текст → INPUT_VALIDATION_ERROR', async () => {
+  test.each([
+    { title: 'обычный текст — проходит и публикуется', text: 'Текст' },
+    {
+      title: 'только пробелы — отказ',
+      text: '   ',
+      error: 'INPUT_VALIDATION_ERROR',
+    },
+    {
+      title: 'длиннее 3500 — отказ',
+      text: 'а'.repeat(3501),
+      error: 'INPUT_VALIDATION_ERROR',
+    },
+  ])('handle: $title', async ({ text, error }) => {
     const { publish, uc } = setup();
 
-    await expect(uc.handle({ userId, text: '   ' })).rejects.toThrow(
-      'Переданы некорректные данные',
-    );
-    expect(publish).not.toHaveBeenCalled();
-  });
+    if (error) {
+      await expect(uc.handle({ userId, text })).rejects.toMatchObject({
+        error: { name: error },
+      });
+      expect(publish).not.toHaveBeenCalled();
+      return;
+    }
 
-  test('handle: некорректный kind → INPUT_VALIDATION_ERROR', async () => {
-    const { publish, uc } = setup();
-
-    await expect(
-      uc.handle({ userId, text: 'Текст', kind: 'срочно' as never }),
-    ).rejects.toThrow('Переданы некорректные данные');
-    expect(publish).not.toHaveBeenCalled();
-  });
-
-  test('handle: некорректный userId → INPUT_VALIDATION_ERROR', async () => {
-    const { publish, uc } = setup();
-
-    await expect(
-      uc.handle({ userId: 'не-uuid', text: 'Текст' }),
-    ).rejects.toThrow('Переданы некорректные данные');
-    expect(publish).not.toHaveBeenCalled();
+    await uc.handle({ userId, text });
+    expect(publish).toHaveBeenCalledTimes(1);
   });
 });

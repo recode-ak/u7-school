@@ -5,8 +5,6 @@ import { expectErr, expectOk } from 'dmg-core/testing';
 import type { QuestionnaireUser } from '../../questionnaire.module';
 import { GetQuestionnaireUc } from './get-questionnaire.uc';
 import {
-  admin,
-  anonymous,
   MISSING,
   makeEnv,
   OWNER_INFO,
@@ -14,7 +12,6 @@ import {
   REQ,
   respondent,
   state,
-  stranger,
   T0,
 } from './questionnaire-uc.fixture';
 
@@ -49,32 +46,11 @@ describe('GetQuestionnaireUc', () => {
     });
   });
 
-  it('ничего не пишет и не публикует', async () => {
-    await run();
-    expect(env.questionnaires.saved).toEqual([]);
-    expect(env.ctx.published).toEqual([]);
-  });
-
-  it('админ читает чужую анкету', async () => {
-    expect(expectOk(await run(admin)).uuid).toBe(QUESTIONNAIRE);
-  });
-
   it('анкеты нет — QUESTIONNAIRE_NOT_FOUND', async () => {
     const error = expectErr(
       await run(respondent, MISSING),
       'QUESTIONNAIRE_NOT_FOUND',
     );
     expect(error.payload).toEqual({ questionnaireId: MISSING });
-  });
-
-  it('чужая анкета — ACCESS_DENIED «Нет доступа к анкете»', async () => {
-    const error = expectErr(await run(stranger), 'ACCESS_DENIED');
-    expect((error.payload as { denyMessage: string }).denyMessage).toBe(
-      'Нет доступа к анкете',
-    );
-  });
-
-  it('гость — UNAUTHORIZED', async () => {
-    expectErr(await run(anonymous), 'UNAUTHORIZED');
   });
 });

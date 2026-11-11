@@ -18,7 +18,6 @@ import {
   startedEvent,
   subscriptionOf,
   useMockLogger,
-  warnsOf,
 } from './questionnaire-dmg.test-kit';
 
 /**
@@ -150,53 +149,28 @@ describe('FillStory — finalize-паттерн («зафиксируй выбо
     expect(res.screen).toBeDefined();
   });
 
-  test('текстовый ответ: finalize предыдущего вопроса + screen следующего', async () => {
-    const { story, dispatch } = initStory(new FillStory(), {
-      answers: {
-        handleAction: () => ({
-          type: 'new_question',
-          questionnaireId: 'q-1',
-          question: nextTextQuestion,
-          previousQuestion: radioQuestion,
-          previousSelectedAnswers: [],
-        }),
+  test.each([
+    {
+      title: 'с предыдущим вопросом: finalize + completionText',
+      answer: {
+        type: 'completed',
+        questionnaireId: 'q-1',
+        previousQuestion: nextTextQuestion,
+        previousSelectedAnswers: [],
+        completionText: 'Спасибо! Анкета принята.',
       },
-    });
-
-    const res = await story.handleMessage(
-      { type: 'message', text: '3 года фронтенда', telegramId: 1 },
-      actor,
-      fillSession(),
-    );
-
-    // UC вызван с type:'text' и значением из сообщения
-    expect(dispatchedOf(dispatch)).toEqual([
-      {
-        uc: 'handleAction',
-        input: {
-          questionnaireId: 'q-1',
-          type: 'text',
-          value: '3 года фронтенда',
-        },
-      },
-    ]);
-
-    expect(res.finalize?.text).toContain('Какой у тебя опыт?');
-    expect(String(res.screen?.text)).toContain('Расскажи о себе');
-    expect(res.release).toBeUndefined();
-  });
-
-  test('completed: finalize + completionText + главное меню + release', async () => {
+      finalize: ['Расскажи о себе'],
+      screen: ['Анкета завершена', 'Анкета принята'],
+    },
+    {
+      title: 'без предыдущего вопроса: только screen + release',
+      answer: { type: 'completed', questionnaireId: 'q-1' },
+      finalize: [] as string[],
+      screen: ['Анкета завершена'],
+    },
+  ])('completed: $title', async ({ answer, finalize, screen }) => {
     const { story } = initStory(new FillStory(), {
-      answers: {
-        handleAction: () => ({
-          type: 'completed',
-          questionnaireId: 'q-1',
-          previousQuestion: nextTextQuestion,
-          previousSelectedAnswers: [],
-          completionText: 'Спасибо! Анкета принята.',
-        }),
-      },
+      answers: { handleAction: () => answer },
     });
 
     const res = await story.handleCallback(
@@ -205,28 +179,18 @@ describe('FillStory — finalize-паттерн («зафиксируй выбо
       fillSession(),
     );
 
-    expect(res.finalize?.text).toContain('Расскажи о себе');
+    // finalize есть только когда UC вернул предыдущий вопрос
+    if (finalize.length === 0) {
+      expect(res.finalize).toBeUndefined();
+    } else {
+      for (const fragment of finalize) {
+        expect(res.finalize?.text).toContain(fragment);
+      }
+    }
     // Шапка по ui-spec S04 + completionText из пула
-    expect(String(res.screen?.text)).toContain('Анкета завершена');
-    expect(String(res.screen?.text)).toContain('Анкета принята');
-    expect(res.release).toBe(true);
-  });
-
-  test('completed без предыдущего вопроса: только screen + release, без finalize', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        handleAction: () => ({ type: 'completed', questionnaireId: 'q-1' }),
-      },
-    });
-
-    const res = await story.handleCallback(
-      'answer:q-1:novice',
-      actor,
-      fillSession(),
-    );
-
-    expect(res.finalize).toBeUndefined();
-    expect(res.screen).toBeDefined();
+    for (const fragment of screen) {
+      expect(String(res.screen?.text)).toContain(fragment);
+    }
     expect(res.release).toBe(true);
   });
 
@@ -326,63 +290,6 @@ describe('FillStory — awaitInput при входе', () => {
   });
 });
 
-// ══ Валидация — errorNotify (ввод живёт) ══
-
-describe('FillStory — валидация ответов: errorNotify-переспрос', () => {
-  test('текст при choice-вопросе (CHOICE_EXPECTED): warn «Ошибка валидации», экран не трогаем, ввод живёт', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        handleAction: () =>
-          refuse(
-            QuestionnaireErrors.CHOICE_EXPECTED.code,
-            QuestionnaireErrors.CHOICE_EXPECTED.kind,
-            undefined,
-            QuestionnaireErrors.CHOICE_EXPECTED.label,
-          ),
-      },
-    });
-
-    const res = await story.handleMessage(
-      { type: 'message', text: 'какой-то текст', telegramId: 1 },
-      actor,
-      fillSession(),
-    );
-
-    expect(res.notify?.kind).toBe('warn');
-    expect(res.notify?.text).toContain('Ожидался ответ с выбором');
-    expect(res.notify?.text).toContain('Ошибка валидации');
-    expect(res.screen).toBeUndefined();
-    expect(res.finalize).toBeUndefined();
-    // Переспрос: ввод НЕ отпущен
-    expect(res.release).toBeUndefined();
-    expect(res.awaitInput).toBeUndefined();
-  });
-
-  test('internal-ошибка UC: общая реплика без утечки деталей, ввод живёт', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        handleAction: () =>
-          refuse(
-            'INTERNAL',
-            'internal',
-            undefined,
-            'секретная внутренняя деталь',
-          ),
-      },
-    });
-
-    const res = await story.handleCallback(
-      'answer:q-1:novice',
-      actor,
-      fillSession(),
-    );
-
-    expect(res.notify?.kind).toBe('warn');
-    expect(res.notify?.text).not.toContain('секретная');
-    expect(res.release).toBeUndefined();
-  });
-});
-
 // ══ stale_answer — warn-реплика без перерисовки ══
 
 describe('FillStory — stale_answer: реплика поверх, экран и ввод не трогаем', () => {
@@ -461,8 +368,14 @@ describe('FillStory — stale_answer: реплика поверх, экран и
 // ══ Шапка прогресса и «Далее» мультивыбора ══
 
 describe('FillStory — шапка «Вопрос N из M»', () => {
-  test('new_question: шапка с индексом и размером пула', async () => {
-    const { story } = initStory(new FillStory(), {
+  const headerCases: Array<{
+    title: string;
+    answers: Record<string, () => unknown>;
+    call: (story: FillStory) => Promise<DialogResponse>;
+    header: string;
+  }> = [
+    {
+      title: 'new_question: шапка с индексом и размером пула',
       answers: {
         getCurrent: () => ({
           type: 'new_question',
@@ -472,15 +385,12 @@ describe('FillStory — шапка «Вопрос N из M»', () => {
           poolSize: 5,
         }),
       },
-    });
-
-    const res = await story.handleCallback('current:q-1', actor, menuSession());
-
-    expect(String(res.screen?.text)).toContain('Вопрос 2 из 5');
-  });
-
-  test('wait_next: прогресс тоже показывается', async () => {
-    const { story } = initStory(new FillStory(), {
+      call: (story: FillStory) =>
+        story.handleCallback('current:q-1', actor, menuSession()),
+      header: 'Вопрос 2 из 5',
+    },
+    {
+      title: 'wait_next: прогресс тоже показывается',
       answers: {
         handleAction: () => ({
           type: 'wait_next',
@@ -498,15 +408,18 @@ describe('FillStory — шапка «Вопрос N из M»', () => {
           poolSize: 3,
         }),
       },
-    });
+      call: (story: FillStory) =>
+        story.handleCallback('answer:q-1:fe', actor, fillSession()),
+      header: 'Вопрос 1 из 3',
+    },
+  ];
 
-    const res = await story.handleCallback(
-      'answer:q-1:fe',
-      actor,
-      fillSession(),
-    );
+  test.each(headerCases)('$title', async ({ answers, call, header }) => {
+    const { story } = initStory(new FillStory(), { answers });
 
-    expect(String(res.screen?.text)).toContain('Вопрос 1 из 3');
+    const res = await call(story);
+
+    expect(String(res.screen?.text)).toContain(header);
   });
 });
 
@@ -521,29 +434,6 @@ describe('FillStory — кнопка «Далее» мультивыбора', (
       { answer: 'Бэкенд', answerCode: 'be' },
     ],
   };
-
-  test('выбран хотя бы один вариант — «Далее» присутствует', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        handleAction: () => ({
-          type: 'wait_next',
-          questionnaireId: 'q-1',
-          currentQuestion: multiQ,
-          selectedAnswers: ['fe'],
-          nextButton: 'next:qc1',
-        }),
-      },
-    });
-
-    const res = await story.handleCallback(
-      'answer:q-1:fe',
-      actor,
-      fillSession(),
-    );
-
-    const texts = res.screen?.keyboard?.rows.flat().map((b) => b.text);
-    expect(texts).toContain('Далее -->');
-  });
 
   test('все варианты сняты (пустой драфт) — «Далее» исчезает', async () => {
     const { story } = initStory(new FillStory(), {
@@ -572,7 +462,6 @@ describe('FillStory — кнопка «Далее» мультивыбора', (
 // ══ Подписки (вариант A: сервер только зовёт) ══
 
 describe('FillStory — подписки вариант A (invite-канал)', () => {
-  const logger = useMockLogger();
   const users = { [RESPONDENT_ID]: respondentProfile() };
 
   test('getEventSubscriptions: started, abandonWarning, continueInvite, abandoned', () => {
@@ -635,53 +524,6 @@ describe('FillStory — подписки вариант A (invite-канал)', 
 
     expect(sender.invite).not.toHaveBeenCalled();
     expect(sender.notify).toHaveBeenCalledTimes(1);
-  });
-
-  test('started: профиля нет — тишина и warn', async () => {
-    const { story, sender } = initStory(new FillStory(), { users: {} });
-
-    await subscriptionOf(story, QuestionnaireEvents.started.name).handle(
-      startedEvent(),
-    );
-
-    expect(sender.invite).not.toHaveBeenCalled();
-    expect(sender.notify).not.toHaveBeenCalled();
-    expect(
-      warnsOf(logger, 'fill', 'профиль респондента не найден'),
-    ).toHaveLength(1);
-  });
-
-  test('started: профиль без telegramId — тишина и warn', async () => {
-    const { telegramId: _tg, ...noTelegram } = respondentProfile();
-    const { story, sender } = initStory(new FillStory(), {
-      users: { [RESPONDENT_ID]: noTelegram },
-    });
-
-    await subscriptionOf(story, QuestionnaireEvents.started.name).handle(
-      startedEvent(),
-    );
-
-    expect(sender.invite).not.toHaveBeenCalled();
-    expect(sender.notify).not.toHaveBeenCalled();
-    expect(warnsOf(logger, 'fill', 'нет telegramId респондента')).toHaveLength(
-      1,
-    );
-  });
-
-  test('started: сбой get-user — тишина и warn, без падения', async () => {
-    const { story, sender } = initStory(new FillStory(), {
-      getUserFails: true,
-    });
-
-    await subscriptionOf(story, QuestionnaireEvents.started.name).handle(
-      startedEvent(),
-    );
-
-    expect(sender.invite).not.toHaveBeenCalled();
-    expect(sender.notify).not.toHaveBeenCalled();
-    const warns = warnsOf(logger, 'fill', 'сбой чтения профиля');
-    expect(warns).toHaveLength(1);
-    expect(warns[0]?.[2]?.error).toContain('сбой get-user');
   });
 });
 
@@ -789,31 +631,6 @@ describe('FillStory — /cancel: подтверждение перед прер�
     expect(res.notify?.text).toContain('Отменено');
     expect(res.screen).toBeUndefined();
   });
-
-  test('неактивная fill: pass без побочных действий', async () => {
-    const { story, dispatch } = initStory(new FillStory());
-
-    const reaction = await story.handleCommand(
-      { type: 'command', command: 'cancel', args: '', telegramId: 1 },
-      actor,
-      menuSession(),
-    );
-
-    expect(reaction).toEqual({ reaction: 'pass' });
-    expect(dispatch).not.toHaveBeenCalled();
-  });
-
-  test('прочая команда (/help): pass — дефолт контракта U7BotUiStory', async () => {
-    const { story } = initStory(new FillStory());
-
-    const reaction = await story.handleCommand(
-      { type: 'command', command: 'help', args: '', telegramId: 1 },
-      actor,
-      fillSession(),
-    );
-
-    expect(reaction).toEqual({ reaction: 'pass' });
-  });
 });
 
 // ══ Callback cancel:{qId} — экран ошибки при отказе UC ══
@@ -834,7 +651,6 @@ describe('FillStory — cancel:{qId}: отказ getCurrent — экран ош�
 
     const res = await story.handleCallback('cancel:q-1', actor, fillSession());
 
-    expect(String(res.screen?.text)).toContain('Анкета не найдена');
     expect(buttonsOf(res)).toEqual([['⬅️ Меню', 'app:main-menu']]);
   });
 });

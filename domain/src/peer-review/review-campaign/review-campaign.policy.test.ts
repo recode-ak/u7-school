@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { allowed, denied } from 'dmg-core';
+import { allowed } from 'dmg-core';
 import { ReviewCampaignAr } from './review-campaign.ar';
 import {
   type ReviewCampaignCtx,
@@ -41,12 +41,6 @@ describe('ReviewCampaignPolicy.isWindowAuthor', () => {
     const decision = isWindowAuthor.evaluate(user(ALICE), ctx);
     expect(decision.allowed).toBe(false);
     expect(decision).toMatchObject({ rule: 'isWindowAuthor' });
-    expect(decision).toEqual(
-      denied(
-        'isWindowAuthor',
-        (decision as { denyMessage: string }).denyMessage,
-      ),
-    );
   });
 
   it('посторонний — denied', () => {

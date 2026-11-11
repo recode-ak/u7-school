@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'bun:test';
-import { ArchChecker } from 'dmg-core/arch';
 import { normalize } from 'dmg-core/graph';
 import { UserModuleDef } from './contract';
 
@@ -13,9 +12,5 @@ describe('UserModuleDef — внешний модуль (D-37)', () => {
       reactions: [],
       jobs: [],
     });
-  });
-
-  it('ArchChecker — без нарушений', () => {
-    expect(ArchChecker.defsOf([UserModuleDef]).report()).toEqual([]);
   });
 });

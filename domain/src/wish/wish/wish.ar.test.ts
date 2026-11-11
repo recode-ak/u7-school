@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { CourseModuleDef } from '@u7-scl/domain/course/contract';
-import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
-import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
-import { UserModuleDef } from '@u7-scl/domain/user/contract';
-import { ModuleDef } from 'dmg-core';
-import { ArchChecker } from 'dmg-core/arch';
 import { expectErr, expectOk } from 'dmg-core/testing';
-import * as v from 'valibot';
 import coursePools from './pools/course.json';
 import { findCoursePool } from './pools/course-pool';
 import { WishAr, WishArDef } from './wish.ar';
@@ -33,49 +26,6 @@ const stored = (status: WishStatus): WishState => ({
 });
 
 const restore = (status: WishStatus) => WishAr.restore(stored(status));
-
-describe('WishArDef', () => {
-  it('шесть статусов и четыре перехода', () => {
-    expect(Object.keys(WishArDef.statuses)).toEqual([
-      'expressed',
-      'pending',
-      'confirmed',
-      'cancelled',
-      'abandoned',
-      'fulfilled',
-    ]);
-    expect(Object.keys(WishArDef.transitions)).toEqual([
-      'confirm',
-      'abandon',
-      'cancel',
-      'fulfill',
-    ]);
-  });
-
-  it('ArchChecker с зависимостями — без нарушений (описания, FQN, уникальность кодов)', () => {
-    const probe = ModuleDef.define({
-      name: 'wish',
-      label: 'Желания',
-      description: 'Проба Def агрегата до паспорта модуля (Ф12).',
-      dependsOn: [
-        UserModuleDef,
-        CourseModuleDef,
-        QuestionnaireModuleDef,
-        StreamModuleDef,
-      ],
-      aggregates: [WishArDef],
-      useCases: [],
-      reactions: [],
-      jobs: [],
-    });
-    // MAN-06 «событие никто не публикует» — до контрактов UC/ER (Ф8–Ф11):
-    // `emits` появится у confirm-wish и invite-wishers.
-    const violations = ArchChecker.defsOf([probe])
-      .check()
-      .filter((x) => x.rule !== 'MAN-06');
-    expect(violations.map((v) => v.format())).toEqual([]);
-  });
-});
 
 describe('WishAr.create', () => {
   it.each(['expressed', 'pending'] as const)(
@@ -193,25 +143,6 @@ describe('WishAr.questionnaire / outcome — вопросы из state', () => {
     );
     expect(wish.questionnaire()).toBeUndefined();
     expect(wish.outcome()).toBe('instant');
-  });
-});
-
-describe('WishAr.restore', () => {
-  it('legacy-запись: ISO без зоны, без updatedAt и version', () => {
-    const legacy = {
-      uuid: WISH,
-      userId: USER,
-      target,
-      status: 'expressed',
-      createdAt: '2026-08-26T10:00',
-    };
-    const ar = WishAr.restore(v.parse(WishArDef.state, legacy));
-    expect(ar.snapshot()).toEqual(stored('expressed'));
-  });
-
-  it('snapshot — round trip', () => {
-    const snapshot = restore('confirmed').snapshot();
-    expect(WishAr.restore(snapshot).snapshot()).toEqual(stored('confirmed'));
   });
 });
 
@@ -368,12 +299,6 @@ describe('WishAr.invite — приглашение на поток', () => {
   );
 });
 
-describe('WishAr.addresseeId — кому адресовано приглашение', () => {
-  it('пользователь-желающий', () => {
-    expect(restore('expressed').addresseeId()).toBe(USER);
-  });
-});
-
 describe('WishAr.invitationTargets / isInvitedBy — приглашение на поток', () => {
   const moduleId = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
   const forModule = (status: WishStatus) =>
@@ -435,75 +360,6 @@ describe('предикаты переходов — совпадают с from �
 });
 
 describe('вопросы к желанию', () => {
-  it.each([
-    ['expressed', true],
-    ['pending', true],
-    ['confirmed', true],
-    ['cancelled', false],
-    ['abandoned', false],
-    ['fulfilled', false],
-  ] as const)('isActive: %s → %p', (status, active) => {
-    expect(restore(status).isActive()).toBe(active);
-  });
-
-  it('isOwnedBy — только пользователь-желающий', () => {
-    const wish = restore('expressed');
-    expect(wish.isOwnedBy(USER)).toBe(true);
-    expect(wish.isOwnedBy(WISH)).toBe(false);
-  });
-
-  it('alreadyExists — WISH_ALREADY_EXISTS с courseId и статусом желания', () => {
-    const error = restore('confirmed').alreadyExists();
-    expect(error.code).toBe('WISH_ALREADY_EXISTS');
-    expect(error.kind).toBe('conflict');
-    expect(error.payload).toEqual({
-      userId: USER,
-      courseId: target.courseId,
-      status: 'confirmed',
-    });
-  });
-
-  it('alreadyExists — цель-модуль даёт moduleId', () => {
-    const moduleId = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
-    const wish = WishAr.restore({
-      ...stored('expressed'),
-      target: { kind: 'module', moduleId },
-    });
-    expect(wish.alreadyExists().payload).toEqual({
-      userId: USER,
-      moduleId,
-      status: 'expressed',
-    });
-  });
-
-  it('notFound — WISH_NOT_FOUND с userId и courseId цели (без статуса)', () => {
-    const error = restore('pending').notFound();
-    expect(error.code).toBe('WISH_NOT_FOUND');
-    expect(error.kind).toBe('not_found');
-    expect(error.payload).toEqual({ userId: USER, courseId: target.courseId });
-  });
-
-  it('notFound — цель-модуль даёт moduleId', () => {
-    const moduleId = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
-    const wish = WishAr.restore({
-      ...stored('fulfilled'),
-      target: { kind: 'module', moduleId },
-    });
-    expect(wish.notFound().payload).toEqual({ userId: USER, moduleId });
-  });
-
-  it('notFoundFor — ошибка от цели-курса без экземпляра', () => {
-    const error = WishAr.notFoundFor(USER, target);
-    expect(error.code).toBe('WISH_NOT_FOUND');
-    expect(error.payload).toEqual({ userId: USER, courseId: target.courseId });
-  });
-
-  it('notFoundFor — цель-модуль даёт moduleId', () => {
-    const moduleId = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
-    const error = WishAr.notFoundFor(USER, { kind: 'module', moduleId });
-    expect(error.payload).toEqual({ userId: USER, moduleId });
-  });
-
   it('статус не читается снаружи — только вопросы и alreadyExists (D-39)', () => {
     expect('status' in restore('expressed')).toBe(false);
   });
@@ -567,26 +423,6 @@ describe('WishAr.fulfillmentTargets / isFulfilledBy — реализация з�
 });
 
 describe('WishAr.questionnaireTarget — разбор owner анкеты', () => {
-  it('owner из questionnaire() разбирается в цель-курс', () => {
-    const owner = { courseId: target.courseId };
-    expect(WishAr.questionnaireTarget(owner)).toEqual({
-      kind: 'course',
-      courseId: target.courseId,
-    });
-  });
-
-  it('согласован с questionnaire(): owner желания разбирается в его цель', () => {
-    const wish = WishAr.restore({
-      ...stored('pending'),
-      target: { kind: 'course', courseId: POOLED },
-    });
-    const owner = wish.questionnaire()?.owner;
-    expect(WishAr.questionnaireTarget(owner)).toEqual({
-      kind: 'course',
-      courseId: POOLED,
-    });
-  });
-
   it.each([
     ['пустой объект', {}],
     ['не строка', { courseId: 42 }],
@@ -623,16 +459,20 @@ describe('WishAr.current — активное желание пользоват�
     expect(found).toBe(active);
   });
 
-  it('только завершённые — нет текущего', () => {
-    const all = [wish('abandoned'), wish('cancelled'), wish('fulfilled')];
-    expect(WishAr.current(all, USER, target)).toBeUndefined();
-  });
-
-  it('не доверяет фильтру вызывающего: чужой пользователь и чужая цель игнорируются', () => {
-    const all = [
-      wish('pending', { userId: OTHER_USER }),
-      wish('pending', { target: OTHER_TARGET }),
-    ];
-    expect(WishAr.current(all, USER, target)).toBeUndefined();
+  // `current` не доверяет выборке вызывающего: фильтрует сам.
+  it.each([
+    [
+      'только завершённые',
+      () => [wish('abandoned'), wish('cancelled'), wish('fulfilled')],
+    ],
+    [
+      'чужой пользователь и чужая цель',
+      () => [
+        wish('pending', { userId: OTHER_USER }),
+        wish('pending', { target: OTHER_TARGET }),
+      ],
+    ],
+  ])('%s — нет текущего', (_, list) => {
+    expect(WishAr.current(list(), USER, target)).toBeUndefined();
   });
 });

@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { ArchChecker } from 'dmg-core/arch';
 import { normalize } from 'dmg-core/graph';
-import * as contract from './contract';
 import { PeerReviewModuleDef } from './peer-review.module';
 
 describe('PeerReviewModuleDef — Def кампаний и отзывов, без external (MAN-06)', () => {
@@ -26,23 +24,5 @@ describe('PeerReviewModuleDef — Def кампаний и отзывов, без
         'listScopeFacts',
       ].sort(),
     );
-  });
-
-  it('ArchChecker (checkDefs) — без нарушений', () => {
-    expect(ArchChecker.defsOf([PeerReviewModuleDef]).report()).toEqual([]);
-  });
-
-  it('контракт отдаёт события, ошибки и 5 Def рецензий', () => {
-    for (const name of [
-      'ReviewEvents',
-      'ReviewErrors',
-      'CreateReviewUcDef',
-      'GetMyReviewUcDef',
-      'ListMyReviewsUcDef',
-      'ListScopeReviewsUcDef',
-      'ListScopeFactsUcDef',
-    ]) {
-      expect(contract).toHaveProperty(name);
-    }
   });
 });

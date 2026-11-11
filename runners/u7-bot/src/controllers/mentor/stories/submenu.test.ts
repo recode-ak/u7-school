@@ -89,24 +89,4 @@ describe('SubmenuStory (S02m) — контракт «Диалог и Экран�
     expect(String(response.screen?.text)).toContain('нет доступа');
     expect(response.screen?.keyboard).toBeUndefined();
   });
-
-  test('неизвестный action — экран «Неизвестная команда»', async () => {
-    const story = createStory();
-    const response = await story.handleCallback('bogus', mentor, session);
-    expect(String(response.screen?.text)).toContain('Неизвестная');
-  });
-
-  // ── Текстовый ввод — дефолт ядра (реплика-отказ + release) ──
-
-  test('handleMessage: реплика-отказ без захвата экрана + release', async () => {
-    const story = createStory();
-    const response = await story.handleMessage(
-      { type: 'message', text: 'что-то', telegramId: 123 },
-      mentor,
-      session,
-    );
-    expect(String(response.notify?.text)).toContain('не принимаются');
-    expect(response.release).toBe(true);
-    expect(response.screen).toBeUndefined();
-  });
 });

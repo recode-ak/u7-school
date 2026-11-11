@@ -111,16 +111,20 @@ function completed(
   };
 }
 
-function abandoned(): EnvelopeOf<typeof StudentEvents.abandoned> {
+function abandoned(
+  userId: string = SUBJECT,
+  studentId: string = STUDENT,
+): EnvelopeOf<typeof StudentEvents.abandoned> {
   return {
     ...StudentEvents.abandoned.make({
-      studentId: STUDENT,
-      userId: SUBJECT,
+      studentId,
+      userId,
       streamId: SCOPE,
       who: 'self',
       cause: 'voluntary',
     }),
     ...envelope,
+    aggregateId: studentId,
     eventId: crypto.randomUUID(),
   };
 }
@@ -128,6 +132,10 @@ function abandoned(): EnvelopeOf<typeof StudentEvents.abandoned> {
 async function stored(): Promise<ReviewCampaignState[]> {
   return (await Bun.file(file).exists()) ? await Bun.file(file).json() : [];
 }
+
+// Второй субъект для проверки подписки на второе событие (ключ кампании — субъект).
+const SUBJECT2 = '77777777-7777-4777-8777-777777777778';
+const STUDENT2 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaab';
 
 describe('CreateStudentCampaignEr — создание кампании', () => {
   it('student.completed → кампания stream_fate с ключом (scopeId, subjectId), окно 7 суток от часов', async () => {
@@ -143,31 +151,6 @@ describe('CreateStudentCampaignEr — создание кампании', () => 
       expiresAt: TEST_NOW + 7 * DAY,
       version: 0,
     });
-  });
-
-  it('student.abandoned → кампания создаётся так же', async () => {
-    expectOk(await makeEr().handle(abandoned()));
-    const [saved] = await stored();
-    expect(saved).toMatchObject({ scopeId: SCOPE, subjectId: SUBJECT });
-  });
-
-  it('payload: mentorId из состава, исход — 4-значная проекция', async () => {
-    expectOk(await makeEr().handle(completed('advanced')));
-    expect((await stored())[0]?.payload).toEqual({
-      subjectOutcome: 'completed_passed',
-      mentorId: MENTOR,
-    });
-
-    rmSync(file);
-    expectOk(await makeEr().handle(completed('not_advanced')));
-    expect((await stored())[0]?.payload.subjectOutcome).toBe(
-      'completed_not_passed',
-    );
-  });
-
-  it('participants при «завершил»: завершившиеся и ещё учащиеся, без субъекта и abandoned', async () => {
-    expectOk(await makeEr().handle(completed()));
-    expect((await stored())[0]?.participants).toEqual([LIVE, DONE]);
   });
 
   it('«забросил»: пустой participants, исход dropped', async () => {
@@ -290,7 +273,13 @@ describe('CreateStudentCampaignEr.subscribe', () => {
 
     bus.publish(completed());
     await Promise.all(pending);
+    pending.length = 0;
 
-    expect((await stored()).map((c) => c.subjectId)).toEqual([SUBJECT]);
+    bus.publish(abandoned(SUBJECT2, STUDENT2));
+    await Promise.all(pending);
+
+    expect((await stored()).map((c) => c.subjectId).sort()).toEqual(
+      [SUBJECT, SUBJECT2].sort(),
+    );
   });
 });

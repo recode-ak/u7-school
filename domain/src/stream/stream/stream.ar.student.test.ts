@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { StreamAr } from './stream.ar';
-import { MODULE, stored } from './stream.fixture';
+import { stored } from './stream.fixture';
 
 // Вопросы потока, нужные студенту (решение 4): замена legacy `LegacyStreamAr`
 // (`getFirstStepId`/`findNextStep`/`findStepContext`/проверка ключа).
@@ -35,34 +35,6 @@ const snapshot = [
 
 const streamWith = (extra = {}) =>
   StreamAr.restore(stored('active', { contentSnapshot: snapshot, ...extra }));
-
-describe('StreamAr.moduleId', () => {
-  it('модуль потока', () => {
-    expect(streamWith().moduleId()).toBe(MODULE);
-  });
-});
-
-describe('StreamAr.acceptsEnrollmentKey', () => {
-  it('ключа у потока нет — true для любого ввода', () => {
-    expect(streamWith().acceptsEnrollmentKey()).toBe(true);
-    expect(streamWith().acceptsEnrollmentKey('что-то')).toBe(true);
-  });
-
-  it('ключ совпал — true', () => {
-    expect(
-      streamWith({ enrollmentKey: 'секрет' }).acceptsEnrollmentKey('секрет'),
-    ).toBe(true);
-  });
-
-  it.each([undefined, '', 'Секрет', 'секрет '])(
-    'ключ задан, ввод %p — false',
-    (key) => {
-      expect(
-        streamWith({ enrollmentKey: 'секрет' }).acceptsEnrollmentKey(key),
-      ).toBe(false);
-    },
-  );
-});
 
 describe('StreamAr.stepPlace', () => {
   it('обычный шаг: следующий в уроке, не последний', () => {

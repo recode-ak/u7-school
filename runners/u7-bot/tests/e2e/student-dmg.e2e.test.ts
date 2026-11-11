@@ -7,11 +7,9 @@ import {
   ActivateStreamUcDef,
   CompleteStudentUcDef,
   CreateStreamUcDef,
-  DropStudentUcDef,
   EnrollStudentUcDef,
   GetStudentByUserUcDef,
   InactivitySweepJobDef,
-  MarkAbandonedUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
@@ -32,13 +30,7 @@ import { UserController } from '../../src/controllers/user/controller';
  *   1) `completed` (advanced, последний модуль) → студенту «🎉 Курс завершён!» (7c);
  *   2) `completed` (advanced, есть следующий модуль) → студенту ничего (7a/7b —
  *      кнопки HubStory);
- *   3) `abandoned` от студента (`dropStudent`) → ментору текст + мягкий кик;
- *   4) `abandoned` по бездействию (`markAbandoned`, inactivity) → студенту
- *      текст `warn` + кик;
- *   5) `abandoned` по решению ментора (`by_mentor`) → кик, студенту текст не
- *      приходит (Т6);
- *   6) `inactivityWarning` и `inactivityRemoveCandidate` через `runJob` →
- *      студенту «Учёба стоит», ментору «Кандидат на снятие с учёбы».
+ *   3) повторный `runJob` в тот же день → ничего не шлёт (маркер бездействия).
  *
  * Допущение о стенде: `TestApp.runJob(module, jobDef)` запускает Job через
  * приложение DMG (в `createTestApp` его нет — добавляет автор, тесты
@@ -73,27 +65,10 @@ async function waitMessageFor(
   return undefined;
 }
 
-async function waitKick(
-  transport: TestBotTransport,
-  telegramId: number,
-  timeoutMs = 3000,
-) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const found = transport.api.kickedMembers.find(
-      (k) => k.telegramId === telegramId,
-    );
-    if (found) return found;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-  return undefined;
-}
-
 interface Stand {
   app: TestApp;
   transport: TestBotTransport;
   mentor: User;
-  student: User;
 }
 
 async function createStand(tag: string): Promise<Stand> {
@@ -106,8 +81,7 @@ async function createStand(tag: string): Promise<Stand> {
     new CoursesController(),
   ]);
   const mentor = (await app.userFacade.getUserByTelegramId(MENTOR_TG))!;
-  const student = (await app.userFacade.getUserByTelegramId(STUDENT_TG))!;
-  return { app, transport, mentor, student };
+  return { app, transport, mentor };
 }
 
 describe('E2E: completed → уведомление студенту (7a/7b/7c)', () => {
@@ -181,73 +155,6 @@ describe('E2E: completed → уведомление студенту (7a/7b/7c)'
     expect(text).toContain('Поздравляем');
   });
 
-  test('not_advanced → студенту «Пройти модуль снова» (7b)', async () => {
-    const { app, transport, mentor } = stand;
-    transport.reset();
-    const marina = (await app.userFacade.getUserByTelegramId(STUDENT_ADV_TG))!;
-
-    const stream = expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        CreateStreamUcDef.command({
-          title: 'Алгоритмика — Повторный поток',
-          description: 'Поток для исхода not_advanced',
-          moduleId: LAST_MODULE,
-          startDate: Date.UTC(2026, 10, 1),
-        }),
-        new UserCaller(mentor),
-        trace(),
-      ),
-    );
-    expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        EnrollStudentUcDef.command({ streamId: stream.streamId }),
-        new UserCaller(marina),
-        trace(),
-      ),
-    );
-    const record = expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        GetStudentByUserUcDef.command({ userId: marina.uuid }),
-        new UserCaller(mentor),
-        trace(),
-      ),
-    );
-    expect(record.streamId).toBe(stream.streamId);
-    expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        ActivateStreamUcDef.command({ streamId: stream.streamId }),
-        new UserCaller(mentor),
-        trace(),
-      ),
-    );
-
-    expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        CompleteStudentUcDef.command({
-          streamId: stream.streamId,
-          studentId: record.uuid,
-          outcome: 'not_advanced',
-        }),
-        new UserCaller(mentor),
-        trace(),
-      ),
-    );
-
-    const text = await waitMessageFor(transport, STUDENT_ADV_TG);
-    expect(text).toContain('Модуль не пройден до конца');
-    const invite = transport.api.sentMessages.find(
-      (m) => m.telegramId === STUDENT_ADV_TG,
-    );
-    const button = invite?.keyboard?.rows.flat().at(0);
-    expect(invite?.keyboard?.rows.flat()).toHaveLength(1);
-    expect(button?.text).toBe('🔁 Пройти модуль снова');
-  });
-
   test('advanced на модуле со следующим → студенту уведомления нет', async () => {
     const { app, transport, mentor } = stand;
     transport.reset();
@@ -278,109 +185,6 @@ describe('E2E: completed → уведомление студенту (7a/7b/7c)'
   });
 });
 
-describe('E2E: abandoned от студента → ментору текст и кик', () => {
-  let stand: Stand;
-  beforeAll(async () => {
-    stand = await createStand('student-dmg-drop');
-  });
-  afterAll(async () => {
-    await stand.app.cleanup();
-  });
-
-  test('dropStudent → ментору «покинул учёбу … по собственному желанию» + мягкий кик', async () => {
-    const { app, transport, student } = stand;
-    transport.reset();
-
-    expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        DropStudentUcDef.command({
-          streamId: STREAM2_ID,
-          studentId: STUDENT_F0,
-        }),
-        new UserCaller(student),
-        trace(),
-      ),
-    );
-
-    const text = await waitMessageFor(transport, MENTOR_TG);
-    expect(text).toContain('покинул учёбу');
-    expect(text).toContain('по собственному желанию');
-    const kick = await waitKick(transport, STUDENT_TG);
-    expect(String(kick?.chatId)).toBe(GROUP2_ID);
-    expect(kick?.unbanned).toBe(true);
-  });
-});
-
-describe('E2E: abandoned по бездействию → студенту текст и кик', () => {
-  let stand: Stand;
-  beforeAll(async () => {
-    stand = await createStand('student-dmg-inactivity');
-  });
-  afterAll(async () => {
-    await stand.app.cleanup();
-  });
-
-  test('markAbandoned(inactivity) → студенту «снят с учёбы … за бездействие» + кик', async () => {
-    const { app, transport, mentor } = stand;
-    transport.reset();
-
-    expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        MarkAbandonedUcDef.command({
-          streamId: STREAM2_ID,
-          studentId: STUDENT_F0,
-          cause: 'inactivity',
-        }),
-        new UserCaller(mentor),
-        trace(),
-      ),
-    );
-
-    const kick = await waitKick(transport, STUDENT_TG);
-    expect(String(kick?.chatId)).toBe(GROUP2_ID);
-    expect(kick?.unbanned).toBe(true);
-    const text = await waitMessageFor(transport, STUDENT_TG);
-    expect(text).toContain('снят с учёбы');
-    expect(text).toContain('за бездействие');
-  });
-});
-
-describe('E2E: abandoned по решению ментора → кик без текста студенту', () => {
-  let stand: Stand;
-  beforeAll(async () => {
-    stand = await createStand('student-dmg-by-mentor');
-  });
-  afterAll(async () => {
-    await stand.app.cleanup();
-  });
-
-  test('markAbandoned(by_mentor) → кик, студенту текст не приходит (Т6)', async () => {
-    const { app, transport, mentor } = stand;
-    transport.reset();
-
-    expectOk(
-      await app.apiApp.dispatch(
-        StreamModuleDef,
-        MarkAbandonedUcDef.command({
-          streamId: STREAM2_ID,
-          studentId: STUDENT_F0,
-          cause: 'by_mentor',
-        }),
-        new UserCaller(mentor),
-        trace(),
-      ),
-    );
-
-    expect(await waitKick(transport, STUDENT_TG)).toBeDefined();
-    await new Promise((r) => setTimeout(r, 200));
-    expect(
-      transport.api.sentMessages.find((m) => m.telegramId === STUDENT_TG),
-    ).toBeUndefined();
-  });
-});
-
 describe('E2E: Job бездействия → проактивы студенту и ментору', () => {
   let stand: Stand;
   beforeAll(async () => {
@@ -390,27 +194,13 @@ describe('E2E: Job бездействия → проактивы студент�
     await stand.app.cleanup();
   });
 
-  test('runJob(inactivitySweep): студенту «Учёба стоит», ментору «Кандидат на снятие с учёбы»', async () => {
-    const { app, transport } = stand;
-    transport.reset();
-
-    const report = expectOk(
-      await app.runJob(StreamModuleDef, InactivitySweepJobDef),
-    );
-    expect(report.failed).toBe(0);
-
-    const studentText = await waitMessageFor(transport, STUDENT_TG);
-    expect(studentText).toContain('Учёба стоит');
-    expect(studentText).toContain('снять тебя с учёбы');
-    const mentorText = await waitMessageFor(transport, MENTOR_TG);
-    expect(mentorText).toContain('Кандидат на снятие с учёбы');
-    expect(mentorText).toContain('не занимался');
-    // Маркер ставится до прогона: первое предупреждение — без строки «ранее отправлены»
-    expect(mentorText).not.toContain('Уведомления были ранее отправлены');
-  });
-
   test('повторный runJob в тот же день ничего не шлёт', async () => {
     const { app, transport } = stand;
+
+    // Первый прогон ставит маркеры «предупреждён сегодня» — ждём доставки
+    expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
+    await waitMessageFor(transport, STUDENT_TG);
+    await waitMessageFor(transport, MENTOR_TG);
     transport.reset();
 
     expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));

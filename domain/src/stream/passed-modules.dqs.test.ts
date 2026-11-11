@@ -36,16 +36,7 @@ describe('PassedModulesDqs.moduleIds', () => {
     ).toEqual([MODULE_A]);
   });
 
-  it('not_advanced не «прошёл»', () => {
-    expect(
-      moduleIds(
-        [studentIn('not_advanced', STREAM_A)],
-        [streamOf(STREAM_A, MODULE_A)],
-      ),
-    ).toEqual([]);
-  });
-
-  it.each(['enrolled', 'active', 'abandoned'] as const)(
+  it.each(['not_advanced', 'enrolled', 'active', 'abandoned'] as const)(
     'запись в статусе %s — не пройден',
     (status) => {
       expect(
@@ -57,21 +48,29 @@ describe('PassedModulesDqs.moduleIds', () => {
     },
   );
 
-  it('пройден другой модуль — только он и попадает в результат', () => {
-    expect(
-      moduleIds(
-        [studentIn('advanced', STREAM_B)],
-        [streamOf(STREAM_A, MODULE_A), streamOf(STREAM_B, MODULE_B)],
-      ),
-    ).toEqual([MODULE_B]);
-  });
-
-  it('записей нет — []', () => {
-    expect(moduleIds([], [streamOf(STREAM_A, MODULE_A)])).toEqual([]);
-  });
-
-  it('потоков нет — []', () => {
-    expect(moduleIds([studentIn('advanced', STREAM_A)], [])).toEqual([]);
+  it.each<{
+    title: string;
+    students: StudentAr[];
+    streams: StreamAr[];
+    expected: string[];
+  }>([
+    {
+      title: 'пройден другой модуль — только он и попадает в результат',
+      students: [studentIn('advanced', STREAM_B)],
+      streams: [streamOf(STREAM_A, MODULE_A), streamOf(STREAM_B, MODULE_B)],
+      expected: [MODULE_B],
+    },
+    {
+      title: 'прошёл один модуль, второй не завершил — только пройденный',
+      students: [
+        studentIn('advanced', STREAM_A, 1),
+        studentIn('not_advanced', STREAM_B, 2),
+      ],
+      streams: [streamOf(STREAM_A, MODULE_A), streamOf(STREAM_B, MODULE_B)],
+      expected: [MODULE_A],
+    },
+  ])('$title', ({ students, streams, expected }) => {
+    expect(moduleIds(students, streams)).toEqual(expected);
   });
 
   it('запись без своего потока среди переданных пропускается', () => {
@@ -91,18 +90,6 @@ describe('PassedModulesDqs.moduleIds', () => {
           studentIn('advanced', STREAM_A2, 2),
         ],
         [streamOf(STREAM_A, MODULE_A), streamOf(STREAM_A2, MODULE_A)],
-      ),
-    ).toEqual([MODULE_A]);
-  });
-
-  it('прошёл один модуль, второй не завершил — только пройденный', () => {
-    expect(
-      moduleIds(
-        [
-          studentIn('advanced', STREAM_A, 1),
-          studentIn('not_advanced', STREAM_B, 2),
-        ],
-        [streamOf(STREAM_A, MODULE_A), streamOf(STREAM_B, MODULE_B)],
       ),
     ).toEqual([MODULE_A]);
   });

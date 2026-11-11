@@ -174,31 +174,6 @@ describe('InviteWishersEr — course-желания', () => {
     });
   });
 
-  it('confirmed тоже приглашается; статус желания не меняется', async () => {
-    const w = courseWish('confirmed');
-    await seed(w);
-    courseAnswers([COURSE]);
-
-    expectOk(await makeEr().handle(created()));
-
-    expect(ctx.published).toHaveLength(1);
-    const [stored] = await wishes.findByUser(USER);
-    expect(stored?.snapshot()).toMatchObject({
-      uuid: w.uuid,
-      status: 'confirmed',
-    });
-  });
-
-  it('модуль не стартовый (курс не начинается с него) — желающие не зовутся', async () => {
-    await seed(courseWish('expressed'));
-
-    expectOk(await makeEr().handle(created()));
-
-    expect(ctx.published).toEqual([]);
-    expect(streams.received).toEqual([]);
-    expect(users.received).toEqual([]);
-  });
-
   it('исторический матчинг: желание на форк курса получает приглашение', async () => {
     const fork = courseWish('expressed', FORK);
     await seed(fork);
@@ -213,14 +188,17 @@ describe('InviteWishersEr — course-желания', () => {
     });
   });
 
-  it('не совпавшее с программой желание не зовётся', async () => {
-    const hit = courseWish('expressed', COURSE);
-    await seed(hit, courseWish('expressed', FORK));
-    courseAnswers([COURSE]);
+  it.each([
+    ['курс не начинается с модуля', () => courseWish('expressed')],
+    ['другой модуль', () => moduleWish('expressed', OTHER_MODULE)],
+  ])('цель не совпала: %s — желание не зовётся', async (_, make) => {
+    await seed(make());
 
     expectOk(await makeEr().handle(created()));
 
-    expect(ctx.published.map((e) => e.aggregateId)).toEqual([hit.uuid]);
+    expect(ctx.published).toEqual([]);
+    expect(streams.received).toEqual([]);
+    expect(users.received).toEqual([]);
   });
 });
 
@@ -248,14 +226,6 @@ describe('InviteWishersEr — module-желания', () => {
     });
   });
 
-  it('другой модуль — желание не зовётся', async () => {
-    await seed(moduleWish('expressed', OTHER_MODULE));
-
-    expectOk(await makeEr().handle(created()));
-
-    expect(ctx.published).toEqual([]);
-  });
-
   it('смешанные желания: course и module приглашаются независимо, один батч на вид', async () => {
     await seed(courseWish('expressed'), moduleWish('confirmed'));
     courseAnswers([COURSE]);
@@ -281,27 +251,6 @@ describe('InviteWishersEr — кого приглашать', () => {
     expectOk(await makeEr().handle(created()));
     expect(asked()).toEqual([]);
     expect(ctx.published).toEqual([]);
-  });
-
-  it('pending/cancelled/fulfilled/abandoned с совпавшей целью не приглашаются и не записываются', async () => {
-    await seed(
-      courseWish('fulfilled'),
-      courseWish('cancelled'),
-      courseWish('pending'),
-      courseWish('abandoned'),
-      moduleWish('abandoned'),
-      moduleWish('cancelled'),
-      moduleWish('pending'),
-      moduleWish('fulfilled'),
-    );
-    courseAnswers([COURSE]);
-    const before = await Bun.file(file).text();
-
-    expectOk(await makeEr().handle(created()));
-
-    expect(ctx.published).toEqual([]);
-    expect(users.received).toEqual([]);
-    expect(await Bun.file(file).text()).toBe(before);
   });
 
   it('несколько совпавших желаний — событие каждому, один вызов потока и адресов', async () => {

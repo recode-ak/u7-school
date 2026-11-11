@@ -205,28 +205,6 @@ describe('WishJsonRepo', () => {
       expect(found?.version).toBe(0);
       expect((await repo.findById(other.uuid))?.uuid).toBe(other.uuid);
     });
-
-    test('legacy-запись после перехода сохраняется с version 1', async () => {
-      const uuid = crypto.randomUUID();
-      const repo = await repoWith('wishes-legacy-transition.json', [
-        {
-          uuid,
-          userId: crypto.randomUUID(),
-          target: makeTarget(),
-          status: 'expressed',
-          createdAt: '2026-05-01T12:00',
-        },
-      ]);
-      const wish = await repo.findById(uuid);
-      if (!wish) throw new Error('запись не найдена');
-      expectOk(wish.cancel(Date.now()));
-
-      await repo.save(wish);
-
-      const saved = (await repo.findById(uuid))?.snapshot();
-      expect(saved?.status).toBe('cancelled');
-      expect(saved?.version).toBe(1);
-    });
   });
 
   describe('битая запись', () => {

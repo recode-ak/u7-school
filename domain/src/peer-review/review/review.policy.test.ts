@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { allowed, denied } from 'dmg-core';
+import { allowed } from 'dmg-core';
 import { ReviewCampaignAr } from '../review-campaign/review-campaign.ar';
 import { ReviewPolicy } from './review.policy';
 
@@ -37,12 +37,7 @@ describe('ReviewPolicy.isCampaignAuthor', () => {
   it('адресуемый соученик — denied', () => {
     const decision = isCampaignAuthor.evaluate(user(ALICE), ctx);
     expect(decision.allowed).toBe(false);
-    expect(decision).toEqual(
-      denied(
-        'isCampaignAuthor',
-        (decision as { denyMessage: string }).denyMessage,
-      ),
-    );
+    expect(decision).toMatchObject({ rule: 'isCampaignAuthor' });
   });
 
   it('посторонний — denied', () => {

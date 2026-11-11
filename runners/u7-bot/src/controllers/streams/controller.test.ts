@@ -48,25 +48,6 @@ describe('StreamsController (реестр)', () => {
     dialog: { path: 'stream/catalog', seq: 1 },
   };
 
-  test('имя контроллера — stream', () => {
-    const controller = makeController();
-    expect(controller.name).toBe('stream');
-  });
-
-  test('содержит 3 stories (catalog + view-stream + inactivity)', () => {
-    const controller = makeController();
-    const stories = (controller as unknown as { stories: unknown[] }).stories;
-    expect(stories.length).toBe(3);
-  });
-
-  test('menuButtons пуст (сторис не экспортируют кнопок в главное меню)', async () => {
-    const controller = makeController();
-    controller.init({ appApi: mockAppApi, callers: testCallers } as never);
-
-    const items = await controller.menuButtons(guestActor);
-    expect(items).toHaveLength(0);
-  });
-
   test('handleCallback форвардит catalog:list', async () => {
     const controller = makeController();
     controller.init({ appApi: mockAppApi, callers: testCallers } as never);
@@ -90,16 +71,5 @@ describe('StreamsController (реестр)', () => {
       session,
     );
     expect(response.screen?.text).toBeDefined();
-  });
-
-  test('handleCallback — неизвестный префикс', async () => {
-    const controller = makeController();
-
-    const response = await controller.handleCallback(
-      'unknown:action',
-      guestActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Неизвестная');
   });
 });

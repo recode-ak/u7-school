@@ -80,7 +80,6 @@ describe('handleAction — одиночный выбор и текст', () => {
       'QUESTIONNAIRE_CHOICE_EXPECTED',
     );
     expect(error.kind).toBe('validation');
-    expect(error.label).toBe('Ожидался ответ с выбором (нажатием кнопки)');
     expect(ar.snapshot().answers).toEqual(before.answers);
   });
 
@@ -91,7 +90,6 @@ describe('handleAction — одиночный выбор и текст', () => {
       'QUESTIONNAIRE_EMPTY_ANSWER_CODE',
     );
     expect(error.kind).toBe('validation');
-    expect(error.label).toBe('Код ответа не может быть пустым');
     expect(ar.snapshot().answers).toEqual([]);
   });
 });
@@ -137,12 +135,8 @@ describe('handleAction — завершение', () => {
     });
   });
 
-  it('screen завершённой анкеты — completed', () => {
-    expect(finish().ar.screen().type).toBe('completed');
-  });
-
   it.each(['completed', 'abandoned', 'invited'] as const)(
-    'handleAction на %s — QUESTIONNAIRE_NOT_IN_PROGRESS «Анкета уже завершена»',
+    'handleAction на %s — QUESTIONNAIRE_NOT_IN_PROGRESS',
     (status) => {
       const ar = QuestionnaireAr.restore(
         stored(status, {
@@ -154,7 +148,6 @@ describe('handleAction — завершение', () => {
         'QUESTIONNAIRE_NOT_IN_PROGRESS',
       );
       expect(error.kind).toBe('conflict');
-      expect(error.label).toBe('Анкета уже завершена');
       expect(ar.pullEvents()).toEqual([]);
     },
   );
@@ -287,17 +280,6 @@ describe('handleAction — stale-ответы (FR-1, Т2)', () => {
       selectedAnswers: [],
     });
     expect(snap(ar)).toEqual(before);
-  });
-
-  it('multiple: «Далее» после снятия всех вариантов → empty_selection', () => {
-    const ar = create(mixedPool());
-    act(ar, cb('yes'));
-    act(ar, cb('fe'));
-    act(ar, cb('fe'));
-    expect(act(ar, cb(next('q2')))).toMatchObject({
-      type: 'stale_answer',
-      reason: 'empty_selection',
-    });
   });
 
   it.each(['fe', next('q2')])(

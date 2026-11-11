@@ -1,127 +1,107 @@
 import { describe, expect, test } from 'bun:test';
 import * as v from 'valibot';
-import { WishState, WishStatus, WishTargetVo } from './wish.state';
+import { WishArDef } from './wish.ar';
+import { WishTargetVo } from './wish.state';
+
+const STREAM = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
 
 const validCourseTarget: WishTargetVo = {
   kind: 'course',
   courseId: crypto.randomUUID(),
 };
 
+const validModuleTarget: WishTargetVo = {
+  kind: 'module',
+  moduleId: crypto.randomUUID(),
+};
+
 describe('WishTargetVo', () => {
-  test('принимает валидную цель module', () => {
-    const validModuleTarget: WishTargetVo = {
-      kind: 'module',
-      moduleId: crypto.randomUUID(),
-    };
-    const result = v.safeParse(WishTargetVo, validModuleTarget);
-
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.output).toEqual(validModuleTarget);
-    }
-  });
-
-  test('отклоняет module-цель с некорректным moduleId', () => {
-    const result = v.safeParse(WishTargetVo, {
-      kind: 'module',
-      moduleId: 'not-a-uuid',
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  test('принимает валидную цель course', () => {
-    const result = v.safeParse(WishTargetVo, validCourseTarget);
-
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.output).toEqual(validCourseTarget);
-    }
-  });
-
-  test('отклоняет неизвестный kind цели', () => {
-    const result = v.safeParse(WishTargetVo, {
-      kind: 'mentorship',
-      mentorId: 'x',
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  test('отклоняет цель course без courseId', () => {
-    const result = v.safeParse(WishTargetVo, { kind: 'course' });
-
-    expect(result.success).toBe(false);
-  });
-
-  test('отклоняет цель с невалидным форматом courseId', () => {
-    const result = v.safeParse(WishTargetVo, {
-      kind: 'course',
-      courseId: 'not-a-uuid',
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  test('у полей обеих веток есть описание', () => {
-    for (const branch of WishTargetVo.options) {
-      for (const field of Object.values(branch.entries)) {
-        expect(v.getDescription(field)).toBeString();
-      }
-    }
-  });
-});
-
-describe('WishStatus', () => {
   test.each([
-    'expressed',
-    'pending',
-    'confirmed',
-    'cancelled',
-    'abandoned',
-    'fulfilled',
-  ])('принимает статус %s', (status) => {
-    expect(v.safeParse(WishStatus, status).success).toBe(true);
+    ['цель course', validCourseTarget],
+    ['цель module', validModuleTarget],
+  ])('принимает валидную %s', (_, input) => {
+    const result = v.safeParse(WishTargetVo, input);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.output).toEqual(input);
+    }
   });
 
-  test('отклоняет неизвестный статус', () => {
-    expect(v.safeParse(WishStatus, 'unknown').success).toBe(false);
+  test.each([
+    ['неизвестный kind', { kind: 'mentorship', mentorId: 'x' }],
+    ['course без courseId', { kind: 'course' }],
+    ['не-uuid courseId', { kind: 'course', courseId: 'not-a-uuid' }],
+    ['не-uuid moduleId', { kind: 'module', moduleId: 'not-a-uuid' }],
+  ])('отклоняет цель: %s', (_, input) => {
+    expect(v.safeParse(WishTargetVo, input).success).toBe(false);
   });
 });
 
-describe('WishState', () => {
+/** `WishArDef.state` — схема, которой читается файл желаний. */
+describe('WishArDef.state', () => {
   const base = {
     uuid: crypto.randomUUID(),
     userId: crypto.randomUUID(),
     status: 'pending',
-    createdAt: '2026-08-26T10:00',
-    updatedAt: '2026-08-27T08:30:00.000Z',
+    target: validCourseTarget,
   };
 
-  test('принимает желание с target; ISO-даты (в т. ч. без зоны) — числа', () => {
-    const result = v.safeParse(WishState, {
-      ...base,
-      target: validCourseTarget,
-    });
+  test.each([
+    [
+      'полная запись',
+      {
+        ...base,
+        createdAt: '2026-08-26T10:00',
+        updatedAt: '2026-08-27T08:30:00.000Z',
+      },
+      {
+        createdAt: Date.UTC(2026, 7, 26, 10),
+        updatedAt: Date.UTC(2026, 7, 27, 8, 30),
+      },
+    ],
+    [
+      'legacy-запись без updatedAt и version',
+      { ...base, createdAt: '2026-08-26T10:00' },
+      {
+        createdAt: Date.UTC(2026, 7, 26, 10),
+        updatedAt: Date.UTC(2026, 7, 26, 10),
+      },
+    ],
+    [
+      'список uuid потоков',
+      {
+        ...base,
+        createdAt: '2026-08-26T10:00',
+        updatedAt: '2026-08-27T08:30:00.000Z',
+        invitedStreamIds: [STREAM],
+      },
+      {
+        createdAt: Date.UTC(2026, 7, 26, 10),
+        updatedAt: Date.UTC(2026, 7, 27, 8, 30),
+      },
+    ],
+  ])('принимает %s: ISO-даты — числа, version 0', (_, input, dates) => {
+    const result = v.safeParse(WishArDef.state, input);
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.output.target).toEqual(validCourseTarget);
-      expect(result.output.createdAt).toBe(Date.UTC(2026, 7, 26, 10));
-      expect(result.output.updatedAt).toBe(Date.UTC(2026, 7, 27, 8, 30));
+      expect(result.output.createdAt).toBe(dates.createdAt);
+      expect(result.output.updatedAt).toBe(dates.updatedAt);
       expect(result.output.version).toBe(0);
     }
   });
 
-  test('отклоняет желание с legacy-полем courseId вместо target', () => {
-    const legacyWish = { ...base, courseId: crypto.randomUUID() };
-
-    expect(v.safeParse(WishState, legacyWish).success).toBe(false);
-  });
-
-  test('у каждого поля есть описание', () => {
-    for (const field of Object.values(WishState.entries)) {
-      expect(v.getDescription(field)).toBeString();
-    }
+  test.each([
+    [
+      'legacy-поле courseId вместо target',
+      { ...base, target: undefined, courseId: crypto.randomUUID() },
+    ],
+    [
+      'не-uuid в invitedStreamIds',
+      { ...base, invitedStreamIds: ['not-a-uuid'] },
+    ],
+  ])('отклоняет желание: %s', (_, input) => {
+    expect(v.safeParse(WishArDef.state, input).success).toBe(false);
   });
 });

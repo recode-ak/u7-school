@@ -1,8 +1,15 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { Role } from '@u7-scl/domain/user';
+import { Role, type User } from '@u7-scl/domain/user';
 import { UserInProcFacade } from './user-in-proc-facade';
 
 const userId = '550e8400-e29b-41d4-a716-446655440000';
+const actor: User = {
+  uuid: '11111111-1111-4111-8111-111111111111',
+  name: 'Иван',
+  telegramId: 1,
+  roles: [Role.ADMIN],
+  createdAt: '2026-05-01T12:00',
+};
 
 /** Мок UserApiModule с записью вызовов execute. */
 function makeMockModule() {
@@ -12,38 +19,34 @@ function makeMockModule() {
 }
 
 describe('UserInProcFacade.notify', () => {
-  test('делегирует в UC notify-user с payload {userId, text}', async () => {
-    const mod = makeMockModule();
-    const facade = new UserInProcFacade(mod as never);
-
-    await facade.notify(userId, 'Привет!');
-
-    expect(mod.execute).toHaveBeenCalledWith(
-      'notify-user',
-      { userId, text: 'Привет!', kind: undefined },
-      undefined,
-    );
-  });
-
-  test('передаёт kind и actor, если они указаны', async () => {
-    const mod = makeMockModule();
-    const facade = new UserInProcFacade(mod as never);
-    const actor = {
-      uuid: '11111111-1111-4111-8111-111111111111',
-      name: 'Иван',
-      telegramId: 1,
-      roles: [Role.ADMIN],
-      createdAt: '2026-05-01T12:00',
-    };
-
-    await facade.notify(userId, 'Текст', 'warn', actor);
-
-    expect(mod.execute).toHaveBeenCalledWith(
-      'notify-user',
-      { userId, text: 'Текст', kind: 'warn' },
+  test.each([
+    {
+      title: 'kind и actor не указаны',
+      text: 'Привет!',
+      kind: undefined,
+      actor: undefined,
+    },
+    {
+      title: 'kind и actor указаны',
+      text: 'Текст',
+      kind: 'warn' as const,
       actor,
-    );
-  });
+    },
+  ])(
+    'делегирует в UC notify-user: $title',
+    async ({ text, kind, actor: who }) => {
+      const mod = makeMockModule();
+      const facade = new UserInProcFacade(mod as never);
+
+      await facade.notify(userId, text, kind, who);
+
+      expect(mod.execute).toHaveBeenCalledWith(
+        'notify-user',
+        { userId, text, kind },
+        who,
+      );
+    },
+  );
 
   test('ошибка шины не глушится (прозрачность для вызывающего)', async () => {
     const mod = {

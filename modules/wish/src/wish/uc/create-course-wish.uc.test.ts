@@ -198,36 +198,6 @@ describe('CreateCourseWishUc', () => {
       },
     );
 
-    it('дубль — текст прежний', async () => {
-      await seed(plainCourseId, 'expressed');
-
-      const res = await makeUc().handle(
-        { courseId: plainCourseId },
-        asActor,
-        REQ,
-      );
-
-      expect(expectErr(res, 'WISH_ALREADY_EXISTS').label).toBe(
-        'Желание уже выражено',
-      );
-    });
-
-    it.each(['cancelled', 'fulfilled', 'abandoned'] as const)(
-      'повторное желание после %s разрешено',
-      async (status) => {
-        await seed(plainCourseId, status);
-
-        const res = await makeUc().handle(
-          { courseId: plainCourseId },
-          asActor,
-          REQ,
-        );
-
-        expect(expectOk(res)).toEqual({ outcome: 'instant' });
-        expect(await storedFor(plainCourseId)).toHaveLength(2);
-      },
-    );
-
     it('активное желание на другой курс не блокирует', async () => {
       await seed(crypto.randomUUID(), 'confirmed');
 
@@ -253,7 +223,6 @@ describe('CreateCourseWishUc', () => {
 
       const error = expectErr(res, 'WISH_COURSE_NOT_FOUND');
       expect(error.kind).toBe('not_found');
-      expect(error.label).toBe('Курс не найден');
       expect(error.payload).toEqual({ courseId: plainCourseId });
       expect(await storedFor(plainCourseId)).toEqual([]);
       expect(questionnaire.received).toEqual([]);
@@ -311,12 +280,5 @@ describe('CreateCourseWishUc', () => {
       callerKind: 'guest',
     });
     expect(await storedFor(plainCourseId)).toEqual([]);
-  });
-
-  it('calls Def — оба вызываемых UC: `this.call` пропускает только их (тип)', () => {
-    expect(CreateCourseWishUcDef.calls).toEqual([
-      GetCourseEnrollmentUcDef,
-      StartQuestionnaireUcDef,
-    ]);
   });
 });

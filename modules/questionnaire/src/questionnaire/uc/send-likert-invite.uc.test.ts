@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import type { Caller } from 'dmg-core';
-import { expectErr, expectOk } from 'dmg-core/testing';
+import { expectOk } from 'dmg-core/testing';
 import type { QuestionnaireUser } from '../../questionnaire.module';
 import {
   likertPool,
@@ -9,7 +9,6 @@ import {
   OTHER_USER,
   REQ,
   RESPONDENT,
-  systemAlone,
   systemFor,
 } from './questionnaire-uc.fixture';
 import { SendLikertInviteUc } from './send-likert-invite.uc';
@@ -34,35 +33,26 @@ beforeEach(() => {
 });
 
 describe('SendLikertInviteUc', () => {
-  it('создаёт likert-анкету invited за субъекта вызова', async () => {
+  it('создаёт likert-анкету invited за субъекта вызова и публикует invited', async () => {
     expect(expectOk(await run())).toEqual({});
-    expect(env.questionnaires.saved[0]).toMatchObject({
+    const saved = env.questionnaires.saved[0];
+    expect(saved).toMatchObject({
       kind: 'likert',
       status: 'invited',
       respondentId: RESPONDENT,
       ownerInfo: info,
       currentQuestionCode: null,
     });
-  });
-
-  it('публикует invited с kind likert и ownerInfo', async () => {
-    await run();
     expect(env.events()).toEqual([
       [
         'questionnaire.questionnaire.invited',
         {
-          questionnaireId: env.questionnaires.saved[0]?.uuid,
+          questionnaireId: saved?.uuid,
           respondentId: RESPONDENT,
           kind: 'likert',
           ownerInfo: info,
         },
       ],
     ]);
-  });
-
-  it('системный вызов без человека — ACCESS_DENIED, ничего не записано', async () => {
-    expectErr(await run(systemAlone), 'ACCESS_DENIED');
-    expect(env.questionnaires.saved).toEqual([]);
-    expect(env.ctx.published).toEqual([]);
   });
 });

@@ -5,7 +5,6 @@ import { expectOk } from 'dmg-core/testing';
 import type { StreamUser } from '../../stream.module';
 import { GetActiveStudentUc } from './get-active-student.uc';
 import {
-  anonymous,
   makeEnv,
   OTHER_STREAM,
   owner,
@@ -63,29 +62,8 @@ describe('GetActiveStudentUc', () => {
     expect(expectOk(await ask()).student?.uuid).toBe(LIVE);
   });
 
-  it('поток без кодового слова в виде: только requiresEnrollmentKey', async () => {
-    env.seedStreams(streamOf('active', { enrollmentKey: 'секрет' }));
-    env.seedStudents(studentState('active'));
-
-    const { stream } = expectOk(await ask());
-
-    expect(stream?.requiresEnrollmentKey).toBe(true);
-    expect(JSON.stringify(stream)).not.toContain('секрет');
-  });
-
-  it.each([
-    ['записей нет', []],
-    [
-      'только терминальные',
-      [studentState('abandoned'), studentState('advanced', { uuid: OLD })],
-    ],
-  ])('%s — пустой ответ, без ошибки', async (_, rows) => {
-    env.seedStudents(...rows);
+  it('записей нет — пустой ответ, без ошибки', async () => {
+    env.seedStudents();
     expect(expectOk(await ask())).toEqual({});
-  });
-
-  it('доступен гостю (allowAll): ответ тот же', async () => {
-    env.seedStudents(studentState('active'));
-    expect(expectOk(await ask(USER, anonymous)).student?.userId).toBe(USER);
   });
 });

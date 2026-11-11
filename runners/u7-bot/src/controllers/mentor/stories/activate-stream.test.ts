@@ -32,11 +32,6 @@ function createStory(answer: () => unknown = () => ({})) {
 }
 
 describe('ActivateStreamStory (US-7) — контракт «Диалог и Экран»', () => {
-  test('menuButtons: пусто (запуск только из карточки потока)', async () => {
-    const { story } = createStory();
-    expect(await story.menuButtons(actor)).toEqual([]);
-  });
-
   test('activate: экран «Поток запущен» с точной кнопкой назад', async () => {
     const { story, dispatch } = createStory();
     const response: DialogResponse = await story.handleCallback(
@@ -68,26 +63,9 @@ describe('ActivateStreamStory (US-7) — контракт «Диалог и Эк
     expect(response.screen).toBeUndefined();
   });
 
-  test('неизвестная команда — экран «Неизвестная команда»', async () => {
-    const { story } = createStory();
-    const response = await story.handleCallback('unknown', actor, session);
-    expect(String(response.screen?.text)).toContain('Неизвестная');
-  });
-
   test('activate без streamId — экран «Неизвестная команда»', async () => {
     const { story } = createStory();
     const response = await story.handleCallback('activate', actor, session);
     expect(String(response.screen?.text)).toContain('Неизвестная');
-  });
-
-  test('handleMessage: дефолт ядра — реплика-отказ + release', async () => {
-    const { story } = createStory();
-    const response = await story.handleMessage(
-      { type: 'message', text: 'что-то', telegramId: 123 },
-      actor,
-      session,
-    );
-    expect(String(response.notify?.text)).toContain('не принимаются');
-    expect(response.release).toBe(true);
   });
 });

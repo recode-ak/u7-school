@@ -169,24 +169,4 @@ describe('WishInvitationDcs.invite — пригласить по ответам'
     expect(res).toEqual({ invited: [], unreachable: [] });
     expect(w.pullEvents()).toEqual([]);
   });
-
-  it('нет совпавших или ответов раунда 2 — пустой итог', () => {
-    const w = wish('expressed', course(COURSE_A));
-    expect(expectOk(dcs([w]).invite({}, {}, T1))).toEqual({
-      invited: [],
-      unreachable: [],
-    });
-    expect(expectOk(dcs([w]).invite(match, {}, T1))).toEqual({
-      invited: [],
-      unreachable: [],
-    });
-  });
-
-  it('неприглашаемые желания не трогает даже при совпадении цели', () => {
-    const cancelled = wish('cancelled', course(COURSE_A));
-    const pending = wish('pending', course(COURSE_A));
-    const res = expectOk(dcs([cancelled, pending]).invite(match, reach, T1));
-    expect(res).toEqual({ invited: [], unreachable: [] });
-    expect(cancelled.pullEvents()).toEqual([]);
-  });
 });

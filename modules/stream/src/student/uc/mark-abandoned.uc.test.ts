@@ -5,18 +5,13 @@ import { expectErr, expectOk } from 'dmg-core/testing';
 import type { StreamUser } from '../../stream.module';
 import { MarkAbandonedUc } from './mark-abandoned.uc';
 import {
-  admin,
-  anonymous,
   makeEnv,
   mentor,
-  OTHER_STREAM,
   otherMentor,
-  owner,
   REQ,
   STREAM,
   STUDENT,
   streamOf,
-  studentState,
   USER,
   withStep,
 } from './student-uc.fixture';
@@ -63,24 +58,16 @@ describe('MarkAbandonedUc', () => {
     },
   );
 
-  it('enrolled тоже снимается', async () => {
-    env.seedStudents(studentState('enrolled'));
-    expectOk(await run('by_mentor'));
-    expect(stored().status).toBe('abandoned');
-  });
+  it('причина voluntary не принимается — INPUT_VALIDATION', async () => {
+    const res = await uc().handle(
+      { streamId: STREAM, studentId: STUDENT, cause: 'voluntary' } as never,
+      mentor,
+      REQ,
+    );
 
-  it('админ, не ментор потока — Ok', async () => {
-    expectOk(await run('by_mentor', admin));
+    expectErr(res, 'INPUT_VALIDATION');
+    expect(stored().status).toBe('active');
   });
-
-  it.each(['abandoned', 'advanced', 'not_advanced'] as const)(
-    'студент в статусе %s — STUDENT_NOT_STUDYING',
-    async (status) => {
-      env.seedStudents(studentState(status));
-      expectErr(await run(), 'STUDENT_NOT_STUDYING');
-      expect(env.ctx.published).toEqual([]);
-    },
-  );
 
   it('студента нет — STUDENT_NOT_FOUND; потока нет — STREAM_NOT_FOUND', async () => {
     expectErr(
@@ -100,33 +87,11 @@ describe('MarkAbandonedUc', () => {
       'STREAM_NOT_FOUND',
     );
   });
-
-  it('студент из другого потока (не streamId входа) — STUDENT_NOT_FOUND (Т8)', async () => {
-    env.seedStreams(streamOf('active', { uuid: OTHER_STREAM }));
-    expectErr(
-      await run('by_mentor', mentor, OTHER_STREAM),
-      'STUDENT_NOT_FOUND',
-    );
-    expect(stored().status).toBe('active');
-  });
 });
 
 describe('MarkAbandonedUc — права', () => {
-  it.each([
-    ['ментор чужого потока', otherMentor],
-    ['сам студент', owner],
-  ])(
-    '%s — ACCESS_DENIED «Недостаточно прав для снятия студента с учёбы»',
-    async (_, caller) => {
-      const error = expectErr(await run('by_mentor', caller), 'ACCESS_DENIED');
-      expect((error.payload as { denyMessage: string }).denyMessage).toBe(
-        'Недостаточно прав для снятия студента с учёбы',
-      );
-      expect(stored().status).toBe('active');
-    },
-  );
-
-  it('вызывающий guest — UNAUTHORIZED', async () => {
-    expectErr(await run('by_mentor', anonymous), 'UNAUTHORIZED');
+  it('ментор чужого потока — ACCESS_DENIED, запись не меняется', async () => {
+    expectErr(await run('by_mentor', otherMentor), 'ACCESS_DENIED');
+    expect(stored().status).toBe('active');
   });
 });

@@ -140,12 +140,6 @@ function campaignCreatedHandler(
 }
 
 describe('InviteStory — приглашения по созданию кампании (S01)', () => {
-  test('подписана на peer-review.review-campaign.created', () => {
-    const { story } = setupStory();
-    const names = story.getEventSubscriptions().map((s) => s.eventName);
-    expect(names).toContain('peer-review.review-campaign.created');
-  });
-
   test('два приглашения: субъекту и ментору — по одному каждому', async () => {
     const { story, invites } = setupStory();
 

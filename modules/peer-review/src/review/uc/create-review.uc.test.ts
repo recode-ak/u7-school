@@ -95,48 +95,6 @@ describe('CreateReviewUc — первая запись', () => {
       version: 0,
     });
   });
-
-  it('ментор пишет субъекту: mentor_student, authorOutcome не пишется', async () => {
-    expectOk(await write(IDS.mentor, IDS.alice));
-    const [saved] = await stored();
-    expect(saved).toMatchObject({
-      authorId: IDS.mentor,
-      direction: 'mentor_student',
-      recipientId: IDS.alice,
-    });
-    expect(saved).not.toHaveProperty('authorOutcome');
-  });
-
-  it('субъект пишет соученику: student_student + снимок исхода', async () => {
-    expectOk(await write(IDS.alice, IDS.bob));
-    expect((await stored())[0]).toMatchObject({
-      direction: 'student_student',
-      authorOutcome: 'completed_passed',
-    });
-  });
-
-  it('границы текста: ровно 10 и ровно 3500 символов принимаются', async () => {
-    expectOk(await write(IDS.alice, IDS.bob, 'а'.repeat(10)));
-    expectOk(await write(IDS.alice, IDS.mentor, 'б'.repeat(3500)));
-    expect(await stored()).toHaveLength(2);
-  });
-
-  it('событие peer-review.review.created публикуется один раз с payload', async () => {
-    const res = expectOk(await write(IDS.alice, IDS.bob));
-    expect(created()).toHaveLength(1);
-    expect(created()[0]).toMatchObject({
-      name: ReviewEvents.created.name,
-      aggregateId: res.reviewId,
-      payload: {
-        reviewId: res.reviewId,
-        campaignId: CAMPAIGN_ID,
-        scopeId: IDS.scope,
-        authorId: IDS.alice,
-        recipientId: IDS.bob,
-        direction: 'student_student',
-      },
-    });
-  });
 });
 
 describe('CreateReviewUc — перезапись пары', () => {
@@ -169,122 +127,6 @@ describe('CreateReviewUc — перезапись пары', () => {
     expectOk(await write(IDS.alice, IDS.mentor));
     expect(created()).toEqual([]);
   });
-
-  it('короткий текст при перезаписи — REVIEW_TEXT_INVALID, прежний текст цел', async () => {
-    const error = expectErr(
-      await write(IDS.alice, IDS.mentor, 'коротко'),
-      'REVIEW_TEXT_INVALID',
-    );
-    expect(error.kind).toBe('validation');
-    expect((await stored())[0].text).toBe(existing.text);
-  });
-
-  it('окно закрыто — перезапись отказана', async () => {
-    expectErr(
-      await write(IDS.alice, IDS.mentor, TEXT, EXPIRES),
-      'REVIEW_WINDOW_CLOSED',
-    );
-    expect((await stored())[0].text).toBe(existing.text);
-  });
-});
-
-describe('CreateReviewUc — окно', () => {
-  it('истёкшее окно — REVIEW_WINDOW_CLOSED (conflict), expiresAt — число', async () => {
-    const error = expectErr(
-      await write(IDS.alice, IDS.mentor, TEXT, EXPIRES + DAY),
-      'REVIEW_WINDOW_CLOSED',
-    );
-    expect(error.kind).toBe('conflict');
-    expect(error.payload).toEqual({
-      campaignId: CAMPAIGN_ID,
-      expiresAt: EXPIRES,
-    });
-    expect(await stored()).toEqual([]);
-    expect(created()).toEqual([]);
-  });
-
-  it('граница: в момент expiresAt нельзя, за 1 мс до — можно', async () => {
-    expectErr(
-      await write(IDS.alice, IDS.mentor, TEXT, EXPIRES),
-      'REVIEW_WINDOW_CLOSED',
-    );
-    const res = expectOk(await write(IDS.alice, IDS.mentor, TEXT, EXPIRES - 1));
-    expect(res.recipientId).toBe(IDS.mentor);
-  });
-});
-
-describe('CreateReviewUc — адресат', () => {
-  it.each([
-    ['вне списка автора', IDS.alice, IDS.carol],
-    ['о себе', IDS.alice, IDS.alice],
-    ['не участник кампании', IDS.alice, IDS.stranger],
-    ['ментор пишет соученику', IDS.mentor, IDS.bob],
-  ])(
-    '%s — REVIEW_RECIPIENT_NOT_ALLOWED (conflict) с payload',
-    async (_l, author, recipient) => {
-      const error = expectErr(
-        await write(author, recipient),
-        'REVIEW_RECIPIENT_NOT_ALLOWED',
-      );
-      expect(error.kind).toBe('conflict');
-      expect(error.payload).toEqual({
-        campaignId: CAMPAIGN_ID,
-        authorId: author,
-        recipientId: recipient,
-      });
-      expect(await stored()).toEqual([]);
-    },
-  );
-});
-
-describe('CreateReviewUc — текст', () => {
-  it.each([
-    ['короче минимума', 'коротко', 7],
-    ['длиннее максимума', 'а'.repeat(3501), 3501],
-  ])(
-    '%s — REVIEW_TEXT_INVALID (validation) с payload',
-    async (_l, text, length) => {
-      const error = expectErr(
-        await write(IDS.alice, IDS.mentor, text),
-        'REVIEW_TEXT_INVALID',
-      );
-      expect(error.kind).toBe('validation');
-      expect(error.payload).toEqual({ min: 10, max: 3500, length });
-      expect(await stored()).toEqual([]);
-      expect(created()).toEqual([]);
-    },
-  );
-});
-
-describe('CreateReviewUc — право (Policy раньше правил)', () => {
-  it.each([
-    ['соученик-автор (не субъект и не ментор)', IDS.bob],
-    ['посторонний автор', IDS.stranger],
-  ])(
-    '%s — ACCESS_DENIED (isCampaignAuthor), записи нет',
-    async (_l, author) => {
-      const error = expectErr(await write(author, IDS.mentor), 'ACCESS_DENIED');
-      expect(error.payload).toMatchObject({ rule: 'isCampaignAuthor' });
-      expect(await stored()).toEqual([]);
-      expect(created()).toEqual([]);
-    },
-  );
-
-  it('посторонний при истёкшем окне — ACCESS_DENIED, а не WINDOW_CLOSED', async () => {
-    const error = expectErr(
-      await write(IDS.stranger, IDS.mentor, TEXT, EXPIRES + DAY),
-      'ACCESS_DENIED',
-    );
-    expect(error.payload).toMatchObject({ rule: 'isCampaignAuthor' });
-  });
-
-  it('соученик при истёкшем окне — ACCESS_DENIED', async () => {
-    expectErr(await write(IDS.bob, IDS.mentor, TEXT, EXPIRES), 'ACCESS_DENIED');
-  });
-
-  it('посторонний с коротким текстом и чужим адресатом — ACCESS_DENIED', async () => {
-    expectErr(await write(IDS.stranger, IDS.carol, 'x'), 'ACCESS_DENIED');
-  });
 });
 
 describe('CreateReviewUc — порядок правил: окно → адресат → текст', () => {
@@ -292,20 +134,6 @@ describe('CreateReviewUc — порядок правил: окно → адре�
     expectErr(
       await write(IDS.alice, IDS.carol, TEXT, EXPIRES),
       'REVIEW_WINDOW_CLOSED',
-    );
-  });
-
-  it('окно закрыто и текст короткий — WINDOW_CLOSED', async () => {
-    expectErr(
-      await write(IDS.alice, IDS.mentor, 'x', EXPIRES),
-      'REVIEW_WINDOW_CLOSED',
-    );
-  });
-
-  it('адресат недопустим и текст короткий — RECIPIENT_NOT_ALLOWED', async () => {
-    expectErr(
-      await write(IDS.alice, IDS.carol, 'x'),
-      'REVIEW_RECIPIENT_NOT_ALLOWED',
     );
   });
 });

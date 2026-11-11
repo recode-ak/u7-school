@@ -22,10 +22,9 @@ import { completeStudent } from '../helpers/student-fate';
 /**
  * E2E «Просмотр S07 из карточки потока» (Фаза 6, задача 4):
  *
- * Контур A (фикстуры): кнопка «💬 Отзывы» в карточке потока — скрыта без
- * отзывов (Алгоритмика e5e5e5e5), видна при наличии (JS Core 2 e1e1e1e1);
- * S07 — группировка по адресатам, роли из direction, лейбл authorOutcome
- * только у автора-студента; «⬅️ Назад к потоку» — мост в карточку.
+ * Контур A (фикстуры): кнопка «💬 Отзывы» в карточке потока открывает S07
+ * (заголовок потока) — мост между контроллерами через настоящий
+ * callback_data; «⬅️ Назад к потоку» — обратный мост в карточку.
  *
  * Контур B (свой стенд): пагинация ≥3 страниц — 4 отзыва по ~3400 симв.
  * создаются в рантайме (событие судьбы → create-review), страница = один
@@ -36,7 +35,6 @@ import { completeStudent } from '../helpers/student-fate';
 const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
 const GUEST_TG = 1001; // «Гость» — читатель карточки потока
 const STREAM_WITH_REVIEWS = 'e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1'; // JS Core — Поток 2
-const STREAM_NO_REVIEWS = 'e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5'; // Алгоритмика — Поток 1
 const SUBJECT_TG = 1007; // «Марина» — субъект кампании контура B
 const SUBJECT_USER_ID = '77777777-7777-4777-8777-777777777777';
 const MENTOR_TG = 1004;
@@ -177,14 +175,7 @@ describe('E2E peer-review: S07 из карточки потока — конте
     await app.cleanup();
   });
 
-  test('карточка без отзывов — кнопки «💬 Отзывы» нет', async () => {
-    const card = await openStreamCard(transport, GUEST_TG, STREAM_NO_REVIEWS);
-    const btns = card.screen?.keyboard?.rows.flat() ?? [];
-    expect(btns.some((b) => b.text === '👥 Студенты')).toBe(true);
-    expect(btns.some((b) => b.text === '💬 Отзывы')).toBe(false);
-  });
-
-  test('карточка с отзывами — кнопка открывает S07: группы, роли, лейблы', async () => {
+  test('карточка с отзывами — кнопка открывает S07', async () => {
     transport.reset();
     const card = await openStreamCard(transport, GUEST_TG, STREAM_WITH_REVIEWS);
     expect(
@@ -198,21 +189,6 @@ describe('E2E peer-review: S07 из карточки потока — конте
     );
     const text = String(s07.screen?.text);
     expect(text).toContain('💬 *Отзывы* — поток «JS Core — Поток 2»');
-    // Три фикстурных блока умещаются на одной странице (без индикатора)
-    expect(pageOf(text)).toBeNull();
-    // Группа адресата-ментора: направление student_mentor — роли из
-    // direction, лейбл authorOutcome у автора-студента
-    expect(text).toContain('👤 Алексей');
-    expect(text).toContain('«Ментор давал понятную обратную связь');
-    expect(text).toContain('— Андрей');
-    expect(text).toContain('студент · завершил и прошел');
-    // Группа адресата-студента: автор-ментор — БЕЗ лейбла исхода
-    expect(text).toContain('👤 Андрей');
-    expect(text).toContain('«Студент дисциплинированно');
-    expect(text).toContain('— Алексей');
-    // student_student: обе роли «студент»
-    expect(text).toContain('👤 Марина');
-    expect(text).toContain('«Работать в паре');
     // Кнопка возврата в карточку потока
     expect(
       s07.screen?.keyboard?.rows

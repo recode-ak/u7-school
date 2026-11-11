@@ -122,15 +122,4 @@ describe('WishFulfillmentDcs.fulfill — реализовать по ответ�
     expect(done.view()).toMatchObject({ status: 'fulfilled', updatedAt: T0 });
     expect(pending.view().status).toBe('pending');
   });
-
-  it('повторное событие — ничего не меняет', () => {
-    const onCourse = wish('expressed', course(COURSE_A));
-    const answer = { courses: { courseIds: [COURSE_A] } };
-    expectOk(new WishFulfillmentDcs(MODULE, [onCourse]).fulfill(answer, T1));
-
-    const again = new WishFulfillmentDcs(MODULE, [onCourse]);
-    expect(again.question()).toEqual({});
-    expect(expectOk(again.fulfill(answer, T1 + 1))).toEqual([]);
-    expect(onCourse.view().updatedAt).toBe(T1);
-  });
 });

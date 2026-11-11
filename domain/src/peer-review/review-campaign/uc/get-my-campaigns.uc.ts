@@ -46,9 +46,6 @@ export const GetMyCampaignsUcDef = UseCaseDef.define({
   callers: ['user'],
   policy: allowAll,
   input: v.object({
-    onlyLives: v.optional(
-      v.pipe(v.boolean(), v.description('Только живые окна')),
-    ),
     filter: v.optional(
       v.pipe(
         v.object({

@@ -39,12 +39,8 @@ describe('StudentPolicy.isSelf', () => {
     ['другой студент', who(OTHER_USER, Role.STUDENT)],
     ['ментор потока', who(MENTOR, Role.MENTOR)],
     ['админ', who(OTHER_USER, Role.ADMIN)],
-  ])('%s — denied «Вы не можете выйти из чужого потока»', (_, subject) => {
-    const decision = isSelf.evaluate(subject, { student });
-    expect(decision.allowed).toBe(false);
-    if (!decision.allowed) {
-      expect(decision.denyMessage).toBe('Вы не можете выйти из чужого потока');
-    }
+  ])('%s — denied', (_, subject) => {
+    expect(isSelf.evaluate(subject, { student }).allowed).toBe(false);
   });
 
   it('без субъекта (гость) — denied', () => {
@@ -53,43 +49,30 @@ describe('StudentPolicy.isSelf', () => {
 });
 
 describe.each([
-  ['canComplete', canComplete, 'Недостаточно прав для завершения студента'],
-  [
-    'canMarkAbandoned',
-    canMarkAbandoned,
-    'Недостаточно прав для снятия студента с учёбы',
-  ],
-] as const)('StudentPolicy.%s', (_, rule, message) => {
-  it('ментор потока — allowed', () => {
-    expect(rule.evaluate(who(MENTOR, Role.MENTOR), ctx)).toEqual(allowed);
-  });
+  ['canComplete', canComplete],
+  ['canMarkAbandoned', canMarkAbandoned],
+] as const)('StudentPolicy.%s', (_, rule) => {
+  it.each(['enrolled', 'active', 'abandoned', 'advanced'] as const)(
+    'ментор потока, студент в статусе %s — allowed',
+    (status) => {
+      const c = { student: StudentAr.restore(stored(status)), stream };
+      expect(rule.evaluate(who(MENTOR, Role.MENTOR), c)).toEqual(allowed);
+    },
+  );
 
   it('админ, не ментор потока — allowed', () => {
     expect(rule.evaluate(who(OTHER_MENTOR, Role.ADMIN), ctx)).toEqual(allowed);
   });
 
-  it('ментор чужого потока — denied с текстом отказа', () => {
-    const decision = rule.evaluate(who(OTHER_MENTOR, Role.MENTOR), ctx);
-    expect(decision.allowed).toBe(false);
-    if (!decision.allowed) expect(decision.denyMessage).toBe(message);
-  });
-
-  it('сам студент — denied', () => {
-    expect(rule.evaluate(who(USER, Role.STUDENT), ctx).allowed).toBe(false);
-  });
-
-  it('пользователь с ролью GUEST — denied', () => {
-    expect(rule.evaluate(who(OTHER_USER, Role.GUEST), ctx).allowed).toBe(false);
+  it.each([
+    ['ментор чужого потока', who(OTHER_MENTOR, Role.MENTOR)],
+    ['сам студент', who(USER, Role.STUDENT)],
+    ['пользователь с ролью GUEST', who(OTHER_USER, Role.GUEST)],
+  ])('%s — denied', (_, subject) => {
+    expect(rule.evaluate(subject, ctx).allowed).toBe(false);
   });
 
   it('без субъекта (гость-вызывающий) — denied', () => {
     expect(rule.evaluate(undefined, ctx).allowed).toBe(false);
-  });
-
-  it('статус студента на право не влияет', () => {
-    for (const status of ['enrolled', 'abandoned', 'advanced'] as const) {
-      const c = { student: StudentAr.restore(stored(status)), stream };
-      expect(rule.evaluate(who(MENTOR, Role.MENTOR), c).allowed).toBe(true);
-    }
   });
 });

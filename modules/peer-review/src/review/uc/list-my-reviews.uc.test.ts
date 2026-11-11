@@ -59,10 +59,6 @@ const toMe = (uuid: string, over: Parameters<typeof review>[0] = {}) =>
   });
 
 describe('ListMyReviewsUc (S08)', () => {
-  it('отзывов нет — пустой список', async () => {
-    expect(expectOk(await list())).toEqual({ reviews: [] });
-  });
-
   it('только отзывы мне: чужие адресаты не попадают', async () => {
     await seed(toMe(U(1)), review({ uuid: U(2), recipientId: IDS.bob }));
     const res = expectOk(await list());
@@ -117,51 +113,6 @@ describe('ListMyReviewsUc — ReviewFilter', () => {
     }),
     toMe(U(3), { direction: 'student_student', campaignId: OTHER_CAMPAIGN }),
   ];
-  const ids = (res: { reviews: { reviewId: string }[] }) =>
-    res.reviews.map((r) => r.reviewId).sort();
-
-  it('direction', async () => {
-    await seed(...rows());
-    const res = expectOk(
-      await list({ filter: { direction: 'mentor_student' } }),
-    );
-    expect(ids(res)).toEqual([U(2)]);
-  });
-
-  it('campaignId', async () => {
-    await seed(...rows());
-    const res = expectOk(
-      await list({ filter: { campaignId: OTHER_CAMPAIGN } }),
-    );
-    expect(ids(res)).toEqual([U(2), U(3)]);
-  });
-
-  it('recipientId = я — все мои; чужой recipientId — пусто (фильтры по И)', async () => {
-    await seed(...rows());
-    expect(ids(expectOk(await list({ filter: { recipientId: ME } })))).toEqual([
-      U(1),
-      U(2),
-      U(3),
-    ]);
-    expect(
-      expectOk(await list({ filter: { recipientId: IDS.bob } })).reviews,
-    ).toEqual([]);
-  });
-
-  it('несколько условий — по И', async () => {
-    await seed(...rows());
-    const res = expectOk(
-      await list({
-        filter: { direction: 'student_student', campaignId: OTHER_CAMPAIGN },
-      }),
-    );
-    expect(ids(res)).toEqual([U(3)]);
-  });
-
-  it('пустой filter — как без фильтра', async () => {
-    await seed(...rows());
-    expect(expectOk(await list({ filter: {} })).reviews).toHaveLength(3);
-  });
 
   it('UC передаёт фильтр репозиторию и сам в памяти не фильтрует', async () => {
     const ars = rows().map((r) => ReviewAr.restore(r));

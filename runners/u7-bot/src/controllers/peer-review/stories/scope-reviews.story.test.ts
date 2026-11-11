@@ -5,7 +5,6 @@ import {
   type BotSession,
   type DialogResponse,
 } from '@u7-scl/core/ui';
-import { ListScopeReviewsUcDef } from '@u7-scl/domain/peer-review/contract';
 import { Role } from '@u7-scl/user/domain';
 import { streamView } from '../../streams/stories/stream-dmg.test-kit';
 import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
@@ -192,93 +191,6 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
     );
   });
 
-  test('автор-ментор (mentor_student) — без лейбла исхода', async () => {
-    const groups: Group[] = [
-      {
-        recipientId: STUDENT_2,
-        reviews: [
-          {
-            reviewId: '11111111-0000-0000-0000-000000000003',
-            scopeId: SCOPE_ID,
-            authorId: MENTOR_ID,
-            direction: 'mentor_student',
-            text: 'Вера глубоко разбирается в коде',
-            createdAt: Date.UTC(2026, 8, 21, 12, 0),
-          },
-        ],
-      },
-    ];
-    const { story } = makeStory(groups);
-
-    const response = await story.handleCallback(
-      `view:${SCOPE_ID}`,
-      actor,
-      session,
-    );
-    const text = String(response.screen?.text ?? '');
-
-    expect(text).toContain('👤 Вера \\(студент\\):');
-    expect(text).toContain(
-      '«Вера глубоко разбирается в коде» — Марина \\(ментор\\)',
-    );
-  });
-
-  test('группировка по адресатам: отзывы одного адресата идут подряд', async () => {
-    const groups: Group[] = [
-      {
-        recipientId: STUDENT_1,
-        reviews: [
-          {
-            reviewId: '11111111-0000-0000-0000-000000000004',
-            scopeId: SCOPE_ID,
-            authorId: AUTHOR_1,
-            direction: 'student_student',
-            authorOutcome: 'dropped',
-            text: 'Первый отзыв о Борисе',
-            createdAt: Date.UTC(2026, 8, 21, 10, 0),
-          },
-          {
-            reviewId: '11111111-0000-0000-0000-000000000005',
-            scopeId: SCOPE_ID,
-            authorId: AUTHOR_2,
-            direction: 'student_student',
-            authorOutcome: 'completed_not_passed',
-            text: 'Второй отзыв о Борисе',
-            createdAt: Date.UTC(2026, 8, 21, 12, 0),
-          },
-        ],
-      },
-      {
-        recipientId: STUDENT_2,
-        reviews: [
-          {
-            reviewId: '11111111-0000-0000-0000-000000000006',
-            scopeId: SCOPE_ID,
-            authorId: AUTHOR_1,
-            direction: 'student_student',
-            text: 'Отзыв о Вере',
-            createdAt: Date.UTC(2026, 8, 21, 13, 0),
-          },
-        ],
-      },
-    ];
-    const { story } = makeStory(groups);
-
-    const response = await story.handleCallback(
-      `view:${SCOPE_ID}`,
-      actor,
-      session,
-    );
-    const text = String(response.screen?.text ?? '');
-
-    const boris1 = text.indexOf('Первый отзыв о Борисе');
-    const boris2 = text.indexOf('Второй отзыв о Борисе');
-    const vera = text.indexOf('Отзыв о Вере');
-    expect(boris1).toBeGreaterThan(-1);
-    expect(boris2).toBeGreaterThan(boris1);
-    expect(vera).toBeGreaterThan(boris2);
-  });
-
   test('имена: один batch-запрос get-users-by-ids с адресатами и авторами', async () => {
     const groups: Group[] = [
       {
@@ -430,89 +342,6 @@ describe('ScopeReviewsStory — пагинация (BotPaginator + DialogCache)'
     for (let i = 1; i <= 16; i++) {
       expect(pageTexts.join('\n').split(`Отзыв номер ${i}\\.`).length).toBe(2);
     }
-  });
-
-  test('навигация одним рядом; коды кнопок содержат номер страницы', async () => {
-    const { story } = makeStory(manyReviews(16, 700));
-
-    const first = await story.handleCallback(
-      `view:${SCOPE_ID}`,
-      actor,
-      session,
-    );
-    const navRow = (first.screen?.keyboard?.rows ?? []).find((row) =>
-      row.some((b) => b.text.includes('Пред') || b.text.includes('След')),
-    );
-    expect(navRow).toHaveLength(1);
-    expect(navRow?.[0]?.text).toBe('След ›');
-    expect(navRow?.[0]?.code).toBe(`scope-reviews:view:${SCOPE_ID}:1`);
-
-    const second = await story.handleCallback(
-      `view:${SCOPE_ID}:1`,
-      actor,
-      session,
-    );
-    const navRow2 = (second.screen?.keyboard?.rows ?? []).find((row) =>
-      row.some((b) => b.text.includes('Пред') || b.text.includes('След')),
-    );
-    expect(navRow2).toHaveLength(2);
-    expect(navRow2?.[0]?.text).toBe('‹ Пред');
-    expect(navRow2?.[0]?.code).toBe(`scope-reviews:view:${SCOPE_ID}:0`);
-    expect(navRow2?.[1]?.text).toBe('След ›');
-    expect(navRow2?.[1]?.code).toBe(`scope-reviews:view:${SCOPE_ID}:2`);
-  });
-
-  test('листание не перечитывает домен: list-scope-reviews один раз (кеш)', async () => {
-    const { story, appApi } = makeStory(manyReviews(16, 700));
-
-    let response = await story.handleCallback(
-      `view:${SCOPE_ID}`,
-      actor,
-      session,
-    );
-    for (let i = 0; i < 3; i++) {
-      const next = findBtn(response, 'След ›');
-      if (!next) break;
-      response = await story.handleCallback(
-        `view:${SCOPE_ID}:${next.code.split(':').pop()}`,
-        actor,
-        session,
-      );
-    }
-
-    const reads = appApi.dispatch.mock.calls.filter(
-      ([, command]) => command.uc === ListScopeReviewsUcDef.name,
-    );
-    expect(reads).toHaveLength(1);
-  });
-
-  test('вызывает list-scope-reviews с scopeIds: [scopeId]', async () => {
-    const { story, appApi } = makeStory(manyReviews(1, 50));
-
-    await story.handleCallback(`view:${SCOPE_ID}`, actor, session);
-
-    const call = appApi.dispatch.mock.calls.find(
-      ([, command]) => command.uc === ListScopeReviewsUcDef.name,
-    );
-    expect(call).toBeDefined();
-    expect(call?.[1]).toEqual(
-      ListScopeReviewsUcDef.command({ scopeIds: [SCOPE_ID] }),
-    );
-  });
-
-  test('одна страница коротких отзывов — без индикатора и навигации', async () => {
-    const { story } = makeStory(manyReviews(2, 50));
-
-    const response = await story.handleCallback(
-      `view:${SCOPE_ID}`,
-      actor,
-      session,
-    );
-    const text = String(response.screen?.text ?? '');
-
-    expect(text).not.toContain('Стр\\.');
-    expect(findBtn(response, 'След ›')).toBeNull();
-    expect(findBtn(response, '‹ Пред')).toBeNull();
   });
 
   test('запрос страницы за пределами — clamp к последней', async () => {

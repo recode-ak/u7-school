@@ -14,32 +14,12 @@ export const UserPolicy = {
     return actor.roles.includes(Role.MENTOR);
   },
 
-  isSubscriber(actor: User): boolean {
-    return actor.roles.includes(Role.SUBSCRIBER);
-  },
-
-  isGuest(actor: User): boolean {
-    return actor.roles.includes(Role.GUEST);
-  },
-
-  isStudent(actor: User): boolean {
-    return actor.roles.includes(Role.STUDENT);
-  },
-
   isAuthor(actor: User): boolean {
     return actor.roles.includes(Role.AUTHOR);
   },
 
   canCreate(actor: User): boolean {
     return this.isAdmin(actor);
-  },
-
-  canRead(_actor: User, _target: User): boolean {
-    return true;
-  },
-
-  canEdit(actor: User, target: User): boolean {
-    return this.isAdmin(actor) || actor.uuid === target.uuid;
   },
 
   /**

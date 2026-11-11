@@ -4,12 +4,7 @@ import type {
   QuestionnaireState,
 } from '@u7-scl/domain/questionnaire';
 import { Role } from '@u7-scl/domain/user/contract';
-import {
-  GuestCaller,
-  type OperationRef,
-  SystemCaller,
-  UserCaller,
-} from 'dmg-core';
+import { type OperationRef, SystemCaller, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { testAppContext } from 'dmg-core/testing';
 import type { QuestionnaireUser } from '../../questionnaire.module';
@@ -20,7 +15,6 @@ export const QUESTIONNAIRE = '00000000-0000-4000-8000-000000000042';
 export const OTHER_QUESTIONNAIRE = '00000000-0000-4000-8000-000000000043';
 export const RESPONDENT = '00000000-0000-4000-8000-000000000007';
 export const OTHER_USER = '00000000-0000-4000-8000-000000000008';
-export const ADMIN_USER = '00000000-0000-4000-8000-000000000009';
 export const MISSING = '00000000-0000-4000-8000-0000000000ff';
 export const COURSE = '7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
 export const OWNER_INFO = { courseId: COURSE };
@@ -32,12 +26,6 @@ export const respondent = new UserCaller({
   uuid: RESPONDENT,
   roles: [Role.STUDENT],
 });
-export const stranger = new UserCaller({
-  uuid: OTHER_USER,
-  roles: [Role.STUDENT],
-});
-export const admin = new UserCaller({ uuid: ADMIN_USER, roles: [Role.ADMIN] });
-export const anonymous = new GuestCaller();
 
 const FROM: OperationRef = { kind: 'useCase', module: 'probe', name: 'probe' };
 /** Вызов другого модуля за человека (`this.call`) и без человека (ER/Job). */

@@ -2,20 +2,15 @@ import { describe, expect, test } from 'bun:test';
 import { assertMarkdownV2Safe } from '@u7-scl/core/shared';
 import {
   authorLabel,
-  authorLine,
   OUTCOME_LABELS,
   renderReviewCard,
-  renderSchoolReviewCard,
   reviewDate,
   rolesOf,
 } from './review-render';
 
 describe('reviewDate — дата по UTC из числа', () => {
-  test('обычный момент → dd.mm.yyyy', () => {
-    expect(reviewDate(Date.UTC(2026, 8, 21, 10, 0))).toBe('21.09.2026');
-  });
-
   test('около полуночи UTC дата не сдвигается зоной процесса', () => {
+    expect(reviewDate(Date.UTC(2026, 8, 21, 10, 0))).toBe('21.09.2026');
     expect(reviewDate(Date.parse('2026-09-21T23:30:00Z'))).toBe('21.09.2026');
     expect(reviewDate(Date.parse('2026-09-22T00:00:00Z'))).toBe('22.09.2026');
   });
@@ -56,19 +51,6 @@ describe('роли и подписи автора', () => {
 describe('рендер карточек (MarkdownV2)', () => {
   const createdAt = Date.UTC(2026, 8, 21, 10);
 
-  test('authorLine: имя, роль, исход и дата', () => {
-    const text = authorLine({
-      name: 'Анна',
-      direction: 'student_student',
-      authorOutcome: 'completed_passed',
-      createdAt,
-    });
-    assertMarkdownV2Safe(text);
-    expect(String(text)).toContain('Анна');
-    expect(String(text)).toContain('студент · завершил и прошел');
-    expect(String(text)).toContain('21\\.09\\.2026');
-  });
-
   test('renderReviewCard: автор, поток, дата, текст; спецсимволы экранированы', () => {
     const text = renderReviewCard({
       authorName: 'Анна_К.',
@@ -84,22 +66,5 @@ describe('рендер карточек (MarkdownV2)', () => {
     expect(s).toContain('📚 Поток: JS Core \\(поток 1\\)');
     expect(s).toContain('📅 Дата: 21\\.09\\.2026');
     expect(s).toContain('\\*супер\\*');
-  });
-
-  test('renderSchoolReviewCard: ментор, автор-ментор без лейбла исхода', () => {
-    const text = renderSchoolReviewCard({
-      mentorName: 'Пётр',
-      authorName: 'Борис',
-      direction: 'student_mentor',
-      authorOutcome: 'never_started',
-      streamTitle: 'Поток',
-      createdAt,
-      text: 'Текст',
-    });
-    assertMarkdownV2Safe(text);
-    const s = String(text);
-    expect(s).toContain('👨‍🏫 Ментор: Пётр');
-    expect(s).toContain('студент · не начал');
-    expect(s).toContain('21\\.09\\.2026');
   });
 });

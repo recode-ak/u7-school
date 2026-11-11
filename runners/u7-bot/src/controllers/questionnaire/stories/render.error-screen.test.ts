@@ -26,17 +26,13 @@ const error = (
 describe('ucErrorScreen', () => {
   const logger = useMockLogger();
 
-  test('not_found: «⚠️ label» и кнопка меню', () => {
-    const res = ucErrorScreen(error('not_found', 'Анкета не найдена'));
+  test.each([
+    ['not_found', 'Анкета не найдена'],
+    ['conflict', 'Анкета уже завершена'],
+  ] as const)('%s: «⚠️ label» и кнопка меню', (kind, label) => {
+    const res = ucErrorScreen(error(kind, label));
 
-    expect(String(res.screen?.text)).toBe('⚠️ Анкета не найдена');
-    expect(buttonsOf(res)).toEqual(MENU_ROW);
-  });
-
-  test('conflict: «⚠️ label» и кнопка меню', () => {
-    const res = ucErrorScreen(error('conflict', 'Анкета уже завершена'));
-
-    expect(String(res.screen?.text)).toContain('Анкета уже завершена');
+    expect(String(res.screen?.text)).toBe(`⚠️ ${label}`);
     expect(buttonsOf(res)).toEqual(MENU_ROW);
   });
 

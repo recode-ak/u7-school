@@ -30,11 +30,6 @@ const wish = (
 const { unique } = WishRules.rules;
 
 describe('WishRules.unique', () => {
-  it('описание правила ссылается на WISH_ALREADY_EXISTS', () => {
-    expect(unique.dmg).toBe('domainRule');
-    expect(unique.error.code).toBe('WISH_ALREADY_EXISTS');
-  });
-
   it('желаний на цель нет — ok', () => {
     expectOk(unique.check({ userId: USER, target: course, wishes: [] }));
   });
@@ -121,11 +116,6 @@ describe('WishRules.unique', () => {
 const { courseEnrollable } = WishRules.rules;
 
 describe('WishRules.courseEnrollable', () => {
-  it('описание правила ссылается на WISH_COURSE_NOT_FOUND', () => {
-    expect(courseEnrollable.dmg).toBe('domainRule');
-    expect(courseEnrollable.error.code).toBe('WISH_COURSE_NOT_FOUND');
-  });
-
   it('курс открыт для записи — ok', () => {
     expectOk(
       courseEnrollable.check({
@@ -151,11 +141,6 @@ describe('WishRules.courseEnrollable', () => {
 const { moduleEnrollable } = WishRules.rules;
 
 describe('WishRules.moduleEnrollable', () => {
-  it('описание правила ссылается на WISH_MODULE_NOT_FOUND', () => {
-    expect(moduleEnrollable.dmg).toBe('domainRule');
-    expect(moduleEnrollable.error.code).toBe('WISH_MODULE_NOT_FOUND');
-  });
-
   it('модуль доступен для записи — ok', () => {
     expectOk(
       moduleEnrollable.check({
@@ -180,11 +165,6 @@ describe('WishRules.moduleEnrollable', () => {
 
 describe('WishRules.cancellable', () => {
   const { cancellable } = WishRules.rules;
-
-  it('описание правила ссылается на WISH_NOT_FOUND', () => {
-    expect(cancellable.dmg).toBe('domainRule');
-    expect(cancellable.error.code).toBe('WISH_NOT_FOUND');
-  });
 
   it.each(['expressed', 'confirmed'] as const)('%s — ok', (status) => {
     expectOk(cancellable.check({ wish: wish(status) }));

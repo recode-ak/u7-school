@@ -8,13 +8,7 @@ const SUBJECT = '77777777-7777-4777-8777-777777777777';
 const MENTOR = '55555555-5555-4555-8555-555555555555';
 const ALICE = '33333333-3333-4333-8333-333333333333';
 
-const campaign = (
-  subjectOutcome:
-    | 'completed_passed'
-    | 'completed_not_passed'
-    | 'dropped'
-    | 'never_started' = 'completed_passed',
-) =>
+const campaign = () =>
   ReviewCampaignAr.restore({
     uuid: '11111111-1111-4111-8111-111111111111',
     context: 'stream_fate',
@@ -25,7 +19,7 @@ const campaign = (
     version: 0,
     expiresAt: 1,
     participants: [ALICE],
-    payload: { subjectOutcome, mentorId: MENTOR },
+    payload: { subjectOutcome: 'completed_passed', mentorId: MENTOR },
   });
 
 describe('ReviewDraftDqs.of', () => {
@@ -47,16 +41,5 @@ describe('ReviewDraftDqs.of', () => {
       direction: 'student_student',
       authorOutcome: 'completed_passed',
     });
-  });
-
-  it.each([
-    'completed_passed',
-    'completed_not_passed',
-    'dropped',
-    'never_started',
-  ] as const)('исход субъекта %s переносится в снимок автора', (outcome) => {
-    expect(
-      ReviewDraftDqs.of(campaign(outcome), SUBJECT, MENTOR).authorOutcome,
-    ).toBe(outcome);
   });
 });

@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import type { User, UserArMeta } from '../entity';
-import { type Role, RoleSchema } from '../roles';
+import { RoleSchema } from '../roles';
 
 /** Схема валидации команды списка пользователей */
 export const ListUsersCmdSchema = v.object({
@@ -17,17 +17,9 @@ export const ListUsersCmdSchema = v.object({
 /** Входные данные команды списка пользователей */
 export type ListUsersCmd = v.InferInput<typeof ListUsersCmdSchema>;
 
-/** Отфильтрованный результат */
+/** Отфильтрованный список пользователей */
 export interface ListUsersResult {
   users: User[];
-  total: number;
-  appliedFilters: {
-    limit: number;
-    role?: Role;
-    name?: string;
-    telegramId?: number;
-    sort: string;
-  };
 }
 
 /** Мета команды списка пользователей */

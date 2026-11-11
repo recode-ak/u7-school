@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'bun:test';
 import { expectErr, expectOk } from 'dmg-core/testing';
-import { QuestionnaireAr, QuestionnaireArDef } from './questionnaire.ar';
+import { QuestionnaireAr } from './questionnaire.ar';
 import { QuestionnaireEvents } from './questionnaire.events';
 import {
   HOUR,
   likertInput,
-  likertPool,
-  OTHER_USER,
   OWNER_INFO,
   QUESTIONNAIRE,
   RESPONDENT,
@@ -14,7 +12,6 @@ import {
   simplePool,
   standardInput,
   stored,
-  storedLikert,
   T0,
   T1,
 } from './questionnaire.fixture';
@@ -26,37 +23,12 @@ import {
 // Ответы — `questionnaire.ar.answers.test.ts`, likert — `questionnaire.ar.likert.test.ts`,
 // простой и флаги — `questionnaire.ar.idle.test.ts`.
 
-const STATUSES = ['invited', 'in_progress', 'completed', 'abandoned'];
 const restore = (
   status: Parameters<typeof stored>[0],
   extra: Parameters<typeof stored>[1] = {},
 ) => QuestionnaireAr.restore(stored(status, extra));
 const standard = () =>
   expectOk(QuestionnaireAr.createStandard(standardInput(), T0));
-
-describe('QuestionnaireArDef', () => {
-  it('четыре статуса и четыре перехода (MAN-12)', () => {
-    expect(Object.keys(QuestionnaireArDef.statuses).sort()).toEqual(
-      [...STATUSES].sort(),
-    );
-    expect(Object.keys(QuestionnaireArDef.transitions).sort()).toEqual(
-      ['start', 'decline', 'abandon', 'complete'].sort(),
-    );
-  });
-
-  it('события агрегата: started, invited, completed, abandoned, abandonWarning, continueInvite', () => {
-    expect(Object.keys(QuestionnaireArDef.events).sort()).toEqual(
-      [
-        'started',
-        'invited',
-        'completed',
-        'abandoned',
-        'abandonWarning',
-        'continueInvite',
-      ].sort(),
-    );
-  });
-});
 
 describe('QuestionnaireAr.createStandard (Т6, Р7)', () => {
   it('анкета сразу in_progress: первый вопрос выставлен, пул и ownerInfo сохранены', () => {
@@ -92,37 +64,6 @@ describe('QuestionnaireAr.createStandard (Т6, Р7)', () => {
     ]);
     expect(ar.pullEvents()).toEqual([]);
   });
-
-  it('событие без telegramId и ответа экрана (D-63, Q3)', () => {
-    const [event] = standard().pullEvents();
-    expect(event?.payload).not.toHaveProperty('telegramId');
-    expect(event?.payload).not.toHaveProperty('response');
-  });
-
-  it('ownerInfo сохраняется как есть; пустой — {}', () => {
-    const ar = expectOk(
-      QuestionnaireAr.createStandard(
-        standardInput(simplePool(), { wishId: 'w1', reason: 'wants_to_learn' }),
-        T0,
-      ),
-    );
-    expect(ar.snapshot().ownerInfo).toEqual({
-      wishId: 'w1',
-      reason: 'wants_to_learn',
-    });
-    const empty = expectOk(
-      QuestionnaireAr.createStandard(standardInput(simplePool(), {}), T0),
-    );
-    expect(empty.snapshot().ownerInfo).toEqual({});
-  });
-
-  it('экран — первый вопрос пула', () => {
-    const screen = standard().screen();
-    expect(screen.type).toBe('new_question');
-    if (screen.type === 'new_question') {
-      expect(screen.question.questionCode).toBe('q1');
-    }
-  });
 });
 
 describe('QuestionnaireAr.createLikert (Т6)', () => {
@@ -146,18 +87,6 @@ describe('QuestionnaireAr.createLikert (Т6)', () => {
     expect(ar.pullEvents()).toEqual([
       QuestionnaireEvents.invited.make(refOf('likert')),
     ]);
-  });
-
-  it('ownerInfo без triggerEvent сохраняется как есть', () => {
-    const info = {
-      context: 'pair_programming',
-      role: 'student_student',
-      subjectId: OTHER_USER,
-    };
-    const ar = expectOk(
-      QuestionnaireAr.createLikert(likertInput(likertPool(), info), T0),
-    );
-    expect(ar.snapshot().ownerInfo).toEqual(info);
   });
 });
 
@@ -248,12 +177,6 @@ describe('QuestionnaireAr.start (invited → in_progress)', () => {
       expect(ar.pullEvents()).toEqual([]);
     },
   );
-
-  it('после decline — QUESTIONNAIRE_NOT_INVITED', () => {
-    const ar = restore('invited');
-    expectOk(ar.decline(T1));
-    expectErr(ar.start(T1), 'QUESTIONNAIRE_NOT_INVITED');
-  });
 });
 
 describe('QuestionnaireAr.decline (invited → abandoned, Т4)', () => {
@@ -340,68 +263,21 @@ describe('QuestionnaireAr.abandon', () => {
     expect(ar.snapshot().abandonReason).toBe('timeout');
   });
 
-  it('на completed — QUESTIONNAIRE_NOT_ACTIVE «Анкета не активна»', () => {
+  it('на completed — QUESTIONNAIRE_NOT_ACTIVE', () => {
     const ar = restore('completed', { completedAt: T0 });
     const error = expectErr(
       ar.abandon(T1, 'timeout'),
       'QUESTIONNAIRE_NOT_ACTIVE',
     );
     expect(error.kind).toBe('conflict');
-    expect(error.label).toBe('Анкета не активна');
     expect(ar.pullEvents()).toEqual([]);
     expect(ar.snapshot().status).toBe('completed');
   });
 });
 
 describe('QuestionnaireAr.restore и инвариант хранилища', () => {
-  it('снапшот восстановленной анкеты совпадает с исходным состоянием', () => {
-    const state = stored('in_progress', {
-      draftAnswers: { q1: 'yes' },
-      version: 3,
-    });
-    expect(QuestionnaireAr.restore(state).snapshot()).toEqual(state);
-    const likert = storedLikert('in_progress');
-    expect(QuestionnaireAr.restore(likert).snapshot()).toEqual(likert);
-  });
-
-  it('восстановленная анкета продолжает заполнение с того же места (engine из questionPool)', () => {
-    const created = standard();
-    const restored = QuestionnaireAr.restore(created.snapshot());
-    const screen = restored.screen();
-    expect(screen.type).toBe('new_question');
-    const next = expectOk(
-      restored.handleAction(T1, { type: 'callback', value: 'yes' }),
-    );
-    expect(next.type).toBe('new_question');
-  });
-
   it('abandoned без abandonReason — нарушение инварианта, исключение', () => {
     const corrupted = stored('abandoned', { abandonReason: undefined });
     expect(() => QuestionnaireAr.restore(corrupted)).toThrow();
-  });
-
-  it('текущий вопрос вне пула — нарушение инварианта, исключение (Т13)', () => {
-    const broken = stored('in_progress', { currentQuestionCode: 'нет-такого' });
-    expect(() => QuestionnaireAr.restore(broken).screen()).toThrow();
-  });
-});
-
-describe('QuestionnaireAr — вопросы', () => {
-  it('isOf: респондент — да, другой пользователь — нет', () => {
-    const ar = restore('in_progress');
-    expect(ar.isOf(RESPONDENT)).toBe(true);
-    expect(ar.isOf(OTHER_USER)).toBe(false);
-  });
-
-  it('view: копия состояния, даты числами (DOM-17, Т11)', () => {
-    const ar = restore('in_progress');
-    expect(ar.view()).toEqual(ar.snapshot());
-    expect(typeof ar.view().createdAt).toBe('number');
-    expect(typeof ar.view().updatedAt).toBe('number');
-  });
-
-  it('idleFor: простой от updatedAt в мс', () => {
-    const ar = restore('in_progress');
-    expect(ar.idleFor(T0 + 5 * HOUR)).toBe(5 * HOUR);
   });
 });

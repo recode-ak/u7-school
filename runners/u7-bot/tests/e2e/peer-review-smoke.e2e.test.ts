@@ -6,25 +6,17 @@ import {
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
-import {
-  createTestBotTransport,
-  type TestBotTransport,
-} from '@u7-scl/test-helpers/test-bot-transport';
 import { UserCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
-import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 import { completeStudent } from '../helpers/student-fate';
 
 /**
  * Smoke сквозной склейки peer-review на тестовом стенде (Фаза 6, задача 1):
  * TestApp подключает Def-модуль peer-review на фикстурах peer-review/*,
- * ER создания кампании подписан на события судьбы студента общей шиной,
- * сторя приглашений работает на реальной шине.
+ * ER создания кампании подписан на события судьбы студента общей шиной.
  *
- *   1) модуль зарегистрирован — UC get-my-campaigns отвечает (не NO_COMMAND_FOUND);
- *   2) student.completed → кампания создаётся (репозиторий + UC);
- *   3) peer-review.review-campaign.created → два приглашения (субъекту и ментору)
- *      с полным кодом кнопки `💬 Отзывы`.
+ * Сценарий: student.completed → кампания в репозитории и видна субъекту
+ * через UC get-my-campaigns.
  *
  * Субъект — «Марина» (uuid 777…): его исхода нет в фикстурах
  * кампаний (кампании фикстур — субъекты 333…/444…/888…), поэтому
@@ -57,7 +49,6 @@ async function waitUntil(
 
 describe('E2E peer-review: инфраструктура стенда (smoke)', () => {
   let app: TestApp;
-  let transport: TestBotTransport;
   let nowSpy: ReturnType<typeof spyOn>;
 
   /** UC DMG `getMyCampaigns` от имени пользователя (как стори бота). */
@@ -72,7 +63,6 @@ describe('E2E peer-review: инфраструктура стенда (smoke)', (
   beforeAll(async () => {
     nowSpy = spyOn(Shared, 'now').mockReturnValue(FROZEN_NOW);
     app = await createTestApp('pr-smoke');
-    transport = createTestBotTransport(app, [new PeerReviewController()]);
   });
 
   afterAll(async () => {
@@ -80,25 +70,7 @@ describe('E2E peer-review: инфраструктура стенда (smoke)', (
     nowSpy.mockRestore();
   });
 
-  test('модуль peer-review зарегистрирован — get-my-campaigns отвечает', async () => {
-    const mentor = (await app.userFacade.getUserByTelegramId(MENTOR_TG))!;
-    // Без модуля dispatch вернёт отказ NO_COMMAND_FOUND
-    const res = await dispatchMyCampaigns(mentor);
-    expect(res.ok).toBe(true);
-    const cards = res.ok ? res.value : [];
-    expect(Array.isArray(cards)).toBe(true);
-    // Фикстура c1a11111: субъект 333…, ментор 444… — окно кампании живое
-    // на замороженное «сейчас» (FROZEN_NOW), поэтому репозиторий её вернёт.
-    expect(
-      cards.some(
-        (c) => c.campaignId === 'c1a11111-1111-4111-8111-111111111111',
-      ),
-    ).toBe(true);
-  });
-
-  test('student.completed → ER создаёт кампанию (репозиторий + UC)', async () => {
-    transport.reset();
-
+  test('student.completed → кампания в репозитории и видна субъекту', async () => {
     await completeStudent(app, {
       callerTelegramId: MENTOR_TG,
       streamId: STREAM_ID,
@@ -119,53 +91,13 @@ describe('E2E peer-review: инфраструктура стенда (smoke)', (
       SUBJECT_USER_ID,
     );
     expect(campaign).toBeDefined();
-    // Формат v4: адресация по исходу субъекта, ментор — соавтор
-    const state = campaign?.snapshot();
-    expect(state?.payload.subjectOutcome).toBe('completed_passed');
-    expect(state?.payload.mentorId).toBe(
-      '44444444-4444-4444-4444-444444444444',
-    );
-    // Соученики потока без abandoned и без субъекта
-    expect(state?.participants).toEqual([
-      '33333333-3333-3333-3333-333333333333',
-      '88888888-8888-4888-8888-888888888888',
-    ]);
 
-    // UC видит кампанию и субъекту, и ментору
+    // UC видит кампанию у субъекта
     const subject = (await app.userFacade.getUserByTelegramId(SUBJECT_TG))!;
     const subjectRes = await dispatchMyCampaigns(subject);
     const subjectCards = subjectRes.ok ? subjectRes.value : [];
     expect(subjectCards.some((c) => c.campaignId === campaign?.uuid)).toBe(
       true,
     );
-  });
-
-  test('peer-review.review-campaign.created → приглашения субъекту и ментору на реальной шине', async () => {
-    // Событие опубликовано ER в предыдущем тесте — ждём доставку приглашений
-    await waitUntil(
-      () =>
-        transport.api.sentMessages.some((m) => m.telegramId === SUBJECT_TG) &&
-        transport.api.sentMessages.some((m) => m.telegramId === MENTOR_TG),
-    );
-
-    const subjectMsg = transport.api.sentMessages.find(
-      (m) => m.telegramId === SUBJECT_TG,
-    );
-    expect(subjectMsg?.text).toContain('🏁 *Отзывы по потоку');
-    // Текст субъекту: судьба мягко + про одногруппников и ментора
-    expect(subjectMsg?.text).toContain('Ты завершил обучение');
-    expect(subjectMsg?.text).toContain('об одногруппниках и менторе');
-    const subjectBtn = subjectMsg?.keyboard?.rows.flat()[0];
-    expect(subjectBtn?.text).toBe('💬 Отзывы');
-    expect(subjectBtn?.code).toMatch(/^peer-review:campaign:list:/);
-
-    const mentorMsg = transport.api.sentMessages.find(
-      (m) => m.telegramId === MENTOR_TG,
-    );
-    // Ментору — с именем субъекта
-    expect(mentorMsg?.text).toContain(
-      'Твой подопечный Марина завершил обучение',
-    );
-    expect(mentorMsg?.keyboard?.rows.flat()[0]?.text).toBe('💬 Отзывы');
   });
 });

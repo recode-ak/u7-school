@@ -143,7 +143,7 @@ describe('StudentProgressDqs.buildNavigationTree', () => {
 });
 
 describe('StudentProgressDqs.buildLessonSteps', () => {
-  it('шаги урока: completed + current, индексы 1-based, заголовки', () => {
+  it('шаги урока: completed + current, невыданный — locked, индексы 1-based, заголовки', () => {
     const view = dqs(studentOf([done(A), open(B)])).buildLessonSteps(L11);
     expect(view).toEqual({
       lessonTitle: 'У1.1',
@@ -155,11 +155,8 @@ describe('StudentProgressDqs.buildLessonSteps', () => {
         { stepId: B, status: 'current', index: 2 },
       ],
     });
-  });
-
-  it('невыданный шаг — locked', () => {
-    const view = dqs(studentOf([done(A)])).buildLessonSteps(L11);
-    expect(view?.steps.map((s) => s.status)).toEqual(['completed', 'locked']);
+    const locked = dqs(studentOf([done(A)])).buildLessonSteps(L11);
+    expect(locked?.steps.map((s) => s.status)).toEqual(['completed', 'locked']);
   });
 
   it('урока нет — null', () => {
@@ -246,16 +243,13 @@ describe('StudentProgressDqs.getStepLessonProgress', () => {
 });
 
 describe('StudentProgressDqs.stepPosition', () => {
-  it('индексы и заголовки (1-based) и размер урока', () => {
+  it('индексы и заголовки (1-based) и размер урока; неизвестный шаг — null', () => {
     expect(dqs(studentOf([])).stepPosition(C)).toMatchObject({
       projectIndex: 1,
       projectTitle: 'П1',
       lessonIndex: 2,
       lessonTitle: 'У1.2',
     });
-  });
-
-  it('шага нет — null', () => {
     expect(dqs(studentOf([])).stepPosition(UNKNOWN)).toBeNull();
   });
 });
@@ -309,21 +303,18 @@ describe('StudentProgressDqs.computeAvgTime', () => {
 });
 
 describe('StudentProgressDqs.computeStudentRowSummary', () => {
-  it('студент без шагов — 0%, времени нет', () => {
-    expect(dqs(studentOf([])).computeStudentRowSummary()).toEqual({
-      progress: { completed: 0, total: 4, percent: 0 },
-      medianTimeMinutes: null,
-      dominantCategory: null,
-    });
-  });
-
-  it('2 из 4 шагов — 50%, медиана и доминирующая категория', () => {
+  it('2 из 4 шагов — 50%, медиана и доминирующая категория; без шагов — 0%, времени нет', () => {
     const res = dqs(
       studentOf([done(A, 2), done(B, 2)]),
     ).computeStudentRowSummary();
     expect(res.progress).toEqual({ completed: 2, total: 4, percent: 50 });
     expect(res.medianTimeMinutes).toBe(2);
     expect(res.dominantCategory).toMatchObject({ name: 'Спринтер', count: 2 });
+    expect(dqs(studentOf([])).computeStudentRowSummary()).toEqual({
+      progress: { completed: 0, total: 4, percent: 0 },
+      medianTimeMinutes: null,
+      dominantCategory: null,
+    });
   });
 });
 

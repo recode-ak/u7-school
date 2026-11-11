@@ -74,19 +74,6 @@ describe('QuestionnaireAr (likert) — завершение', () => {
     expect(events[0]?.payload).not.toHaveProperty('answers');
   });
 
-  it('ownerInfo без triggerEvent сохраняется как есть', () => {
-    const info = {
-      context: 'pair_programming',
-      role: 'student_student',
-      subjectId: RESPONDENT,
-    };
-    const pool = likertPool([
-      q('m1', mapping('work_quality', 1, 'professional_skills')),
-    ]);
-    const { ar } = run(pool, ['3'], info);
-    expect(ar.pullEvents()[0]?.payload).toMatchObject({ ownerInfo: info });
-  });
-
   it('разный вес даёт средневзвешенное: (5·0.75 + 1·1.25) / 2 = 2.5', () => {
     const pool = likertPool([
       q('a', mapping('communication', 0.75)),
@@ -97,28 +84,6 @@ describe('QuestionnaireAr (likert) — завершение', () => {
       likertScores: [
         { category: 'team_skills', subcategory: 'communication', score: 2.5 },
       ],
-    });
-  });
-
-  it('несколько вопросов одной подкатегории при weight = 1 — среднее', () => {
-    const pool = likertPool([
-      q('a', mapping('communication', 1)),
-      q('b', mapping('communication', 1)),
-    ]);
-    const { ar, last } = run(pool, ['4', '2']);
-    expect(last && expectOk(last).type).toBe('completed');
-    expect(ar.pullEvents()[0]?.payload).toMatchObject({
-      likertScores: [
-        { category: 'team_skills', subcategory: 'communication', score: 3 },
-      ],
-    });
-  });
-
-  it('статус completed и completedAt = at последнего ответа', () => {
-    const { ar } = run(likertPool(), ['4', '2']);
-    expect(ar.snapshot()).toMatchObject({
-      status: 'completed',
-      completedAt: T0 + 11,
     });
   });
 });

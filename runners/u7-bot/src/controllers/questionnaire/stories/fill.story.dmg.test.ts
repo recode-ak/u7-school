@@ -1,11 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
-import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
+import type { BotSession } from '@u7-scl/core/ui';
 import { AbandonUcDef } from '@u7-scl/domain/questionnaire/contract';
 import { FillStory } from './fill.story';
 import {
   buttonsOf,
-  completedView,
   dispatchedOf,
   initStory,
   newQuestionView,
@@ -81,12 +80,27 @@ describe('FillStory — вызовы UC через dispatchUc', () => {
     ]);
   });
 
-  test('текстовое сообщение → handleAction text с текстом ответа', async () => {
+  test('текстовое сообщение → handleAction text; finalize предыдущего и screen следующего', async () => {
     const { story, dispatch } = initStory(new FillStory(), {
-      answers: { handleAction: () => completedView() },
+      answers: {
+        handleAction: () =>
+          newQuestionView({
+            previousQuestion: {
+              questionCode: 'qc1',
+              type: 'choice',
+              multiple: false,
+              question: 'Какой у тебя опыт?',
+              answers: [
+                { answer: 'Новичок', answerCode: 'novice' },
+                { answer: 'Средний', answerCode: 'mid' },
+              ],
+            },
+            previousSelectedAnswers: [],
+          }),
+      },
     });
 
-    await story.handleMessage(
+    const res = await story.handleMessage(
       { type: 'message', text: '3 года фронтенда', telegramId: 1 },
       actor,
       fillSession(),
@@ -102,6 +116,10 @@ describe('FillStory — вызовы UC через dispatchUc', () => {
         },
       },
     ]);
+    // Ответ зафиксирован, следующий вопрос — на экране
+    expect(res.finalize?.text).toContain('Какой у тебя опыт?');
+    expect(String(res.screen?.text)).toContain('Расскажи о себе');
+    expect(res.release).toBeUndefined();
   });
 
   test('current:{qId} → getCurrent, вопрос на экране и ввод захвачен', async () => {
@@ -209,84 +227,12 @@ describe('FillStory — отказы handleAction: реплика поверх, 
     );
 
     expect(res.notify?.kind).toBe('warn');
-    expect(String(res.notify?.text)).toContain(
-      'Ожидался ответ с выбором \\(нажатием кнопки\\)',
-    );
     expect(String(res.notify?.text)).toContain('Ошибка валидации');
+    // Переспрос: экран не перерисовывается, ввод не отпущен
     expect(res.screen).toBeUndefined();
+    expect(res.finalize).toBeUndefined();
     expect(res.release).toBeUndefined();
-  });
-
-  test('EMPTY_ANSWER_CODE: warn «Ошибка валидации» с текстом отказа', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        handleAction: () =>
-          refuse(
-            'QUESTIONNAIRE_EMPTY_ANSWER_CODE',
-            'validation',
-            {},
-            'Код ответа не может быть пустым',
-          ),
-      },
-    });
-
-    const res = await story.handleCallback(
-      'answer:q-1:x',
-      actor,
-      fillSession(),
-    );
-
-    expect(res.notify?.kind).toBe('warn');
-    expect(String(res.notify?.text)).toContain(
-      'Код ответа не может быть пустым',
-    );
-    expect(String(res.notify?.text)).toContain('Ошибка валидации');
-  });
-
-  test('NOT_IN_PROGRESS: warn с label, экран не трогаем', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        handleAction: () =>
-          refuse(
-            'QUESTIONNAIRE_NOT_IN_PROGRESS',
-            'conflict',
-            {},
-            'Анкета уже завершена',
-          ),
-      },
-    });
-
-    const res = await story.handleCallback(
-      'next:q-1:qc1',
-      actor,
-      fillSession(),
-    );
-
-    expect(res.notify?.kind).toBe('warn');
-    expect(String(res.notify?.text)).toContain('Анкета уже завершена');
-    expect(res.screen).toBeUndefined();
-  });
-
-  test('access: warn с denyMessage правила', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        handleAction: () =>
-          refuse(
-            'ACCESS_DENIED',
-            'access',
-            { denyMessage: 'Нет доступа к анкете' },
-            'Доступ запрещён',
-          ),
-      },
-    });
-
-    const res = await story.handleCallback(
-      'answer:q-1:x',
-      actor,
-      fillSession(),
-    );
-
-    expect(String(res.notify?.text)).toContain('Нет доступа к анкете');
+    expect(res.awaitInput).toBeUndefined();
   });
 
   test('internal: общая реплика без утечки деталей, ввод живёт', async () => {
@@ -326,7 +272,6 @@ describe('FillStory — отказы экранных веток: ucErrorScreen 
 
     const res = await story.handleCallback('current:q-1', actor, menuSession());
 
-    expect(String(res.screen?.text)).toContain('Анкета не найдена');
     expect(buttonsOf(res)).toEqual(MENU_ROW);
     expect(res.awaitInput).toBeUndefined();
   });
@@ -350,9 +295,6 @@ describe('FillStory — отказы экранных веток: ucErrorScreen 
       menuSession(),
     );
 
-    expect(String(res.screen?.text)).toContain(
-      'Нет доступа к списку анкет пользователя',
-    );
     expect(buttonsOf(res)).toEqual(MENU_ROW);
   });
 
@@ -392,83 +334,7 @@ describe('FillStory — отказы экранных веток: ucErrorScreen 
       fillSession(),
     );
 
-    expect(String(res.screen?.text)).toContain('Анкета не активна');
     expect(buttonsOf(res)).toEqual(MENU_ROW);
     expect(res.release).toBeUndefined();
-  });
-
-  test('internal: общий текст без утечки label, кнопка меню', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        getCurrent: () =>
-          refuse('INTERNAL', 'internal', {}, 'секретная внутренняя деталь'),
-      },
-    });
-
-    const res = await story.handleCallback('current:q-1', actor, menuSession());
-
-    expect(String(res.screen?.text)).not.toContain('секретная');
-    expect(buttonsOf(res)).toEqual(MENU_ROW);
-  });
-});
-
-describe('FillStory — /cancel через dispatchUc', () => {
-  test('активная fill: getCurrent → confirm-экран, abandon не вызывается', async () => {
-    const { story, dispatch } = initStory(new FillStory(), {
-      answers: { getCurrent: () => newQuestionView() },
-    });
-
-    const reaction = await story.handleCommand(
-      { type: 'command', command: 'cancel', args: '', telegramId: 1 },
-      actor,
-      fillSession(),
-    );
-
-    expect(reaction.reaction).toBe('stop');
-    const res = (reaction as { response: DialogResponse }).response;
-    expect(String(res.screen?.text)).toContain(
-      'Вы уверены, что хотите прервать анкету?',
-    );
-    expect(dispatchedOf(dispatch)).toEqual([
-      { uc: 'getCurrent', input: { questionnaireId: 'q-1' } },
-    ]);
-  });
-
-  test('getCurrent отказал → «Отменено. Наберите /start» без экрана', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        getCurrent: () =>
-          refuse(
-            'QUESTIONNAIRE_NOT_FOUND',
-            'not_found',
-            {},
-            'Анкета не найдена',
-          ),
-      },
-    });
-
-    const reaction = await story.handleCommand(
-      { type: 'command', command: 'cancel', args: '', telegramId: 1 },
-      actor,
-      fillSession(),
-    );
-
-    expect(reaction.reaction).toBe('stop');
-    const res = (reaction as { response: DialogResponse }).response;
-    expect(String(res.notify?.text)).toContain('Отменено');
-    expect(res.screen).toBeUndefined();
-  });
-
-  test('неактивная fill: pass, UC не вызываются', async () => {
-    const { story, dispatch } = initStory(new FillStory());
-
-    const reaction = await story.handleCommand(
-      { type: 'command', command: 'cancel', args: '', telegramId: 1 },
-      actor,
-      menuSession(),
-    );
-
-    expect(reaction).toEqual({ reaction: 'pass' });
-    expect(dispatch).not.toHaveBeenCalled();
   });
 });

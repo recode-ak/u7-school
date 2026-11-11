@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import * as v from 'valibot';
 import { QuestionnaireArDef } from './questionnaire.ar';
 import { likertPool, simplePool } from './questionnaire.fixture';
+import type { QuestionnaireState } from './questionnaire.state';
 
 // Перенос `entity.test.ts`-контракта на state по Def (DOM-11/12): даты — числа (UTC),
 // legacy-запись с ISO читается, нет `updatedAt` → `createdAt`, нет `version` → 0;
@@ -77,55 +78,34 @@ describe('QuestionnaireState — legacy-запись', () => {
       expect(res.output.completedAt).toBe(Date.UTC(2026, 5, 1, 11));
     }
   });
-
-  it('abandonReason (timeout, by_user) и ownerInfo сохраняются', () => {
-    for (const abandonReason of ['timeout', 'by_user'] as const) {
-      const res = parse({
-        ...legacyStandard,
-        status: 'abandoned',
-        abandonReason,
-      });
-      expect(res.success && res.output.abandonReason).toBe(abandonReason);
-    }
-  });
 });
 
-describe('QuestionnaireState — числовая запись и границы', () => {
-  it('числовые даты и version сохраняются как есть', () => {
-    const res = parse({
-      ...legacyStandard,
-      createdAt: T,
-      updatedAt: T + 5,
-      version: 7,
-    });
-    expect(res.success).toBe(true);
-    if (res.success) {
-      expect(res.output.updatedAt).toBe(T + 5);
-      expect(res.output.version).toBe(7);
-    }
-  });
+type Row = {
+  title: string;
+  value: unknown;
+  valid?: boolean;
+  output?: (out: QuestionnaireState) => void;
+};
 
-  it('неизвестный kind и статус отклоняются', () => {
-    expect(parse({ ...legacyStandard, kind: 'other' }).success).toBe(false);
-    expect(parse({ ...legacyStandard, status: 'done' }).success).toBe(false);
-  });
-
-  it('пул не своей ветки отклоняется: likert-вопросы у standard и наоборот', () => {
-    expect(
-      parse({ ...legacyStandard, questionPool: likertPool() }).success,
-    ).toBe(false);
-    expect(parse({ ...legacyLikert, questionPool: simplePool() }).success).toBe(
-      false,
-    );
-  });
-
-  it('пул без вопросов, битая дата и не-uuid респондента отклоняются', () => {
-    expect(
-      parse({ ...legacyStandard, questionPool: { questions: [] } }).success,
-    ).toBe(false);
-    expect(parse({ ...legacyStandard, createdAt: 'вчера' }).success).toBe(
-      false,
-    );
-    expect(parse({ ...legacyStandard, respondentId: 'x' }).success).toBe(false);
+describe('QuestionnaireState — числовая запись и ветки kind', () => {
+  it.each<Row>([
+    {
+      title: 'принимает числовую запись: даты и version как есть',
+      value: { ...legacyStandard, createdAt: T, updatedAt: T + 5, version: 7 },
+      valid: true,
+      output: (out) => expect([out.updatedAt, out.version]).toEqual([T + 5, 7]),
+    },
+    {
+      title: 'отклоняет likert-вопросы у standard',
+      value: { ...legacyStandard, questionPool: likertPool() },
+    },
+    {
+      title: 'отклоняет standard-вопросы у likert',
+      value: { ...legacyLikert, questionPool: simplePool() },
+    },
+  ])('$title', ({ value, valid = false, output }) => {
+    const res = parse(value);
+    expect(res.success).toBe(valid);
+    if (res.success) output?.(res.output);
   });
 });

@@ -70,6 +70,57 @@ const MOD_FIELDS: WizardCtx = {
   moduleAdditional: 'Доп',
 };
 
+/**
+ * Пять необязательных полей wizard-а (шаги 4–8): шаг показа, значение из
+ * модуля (`moduleKey`), следующий шаг и фрагмент его экрана. Зеркалит таблицу
+ * `OPTIONAL_FIELDS` из `create-stream.ts`.
+ */
+interface OptionalField {
+  fieldName: 'goal' | 'result' | 'rules' | 'targetAudience' | 'additional';
+  moduleKey: keyof WizardCtx;
+  step: number;
+  nextStep: number;
+  nextMarker: string;
+}
+
+const OPTIONAL_FIELDS: OptionalField[] = [
+  {
+    fieldName: 'goal',
+    moduleKey: 'moduleGoal',
+    step: 4,
+    nextStep: 5,
+    nextMarker: 'Результат',
+  },
+  {
+    fieldName: 'result',
+    moduleKey: 'moduleResult',
+    step: 5,
+    nextStep: 6,
+    nextMarker: 'Правила',
+  },
+  {
+    fieldName: 'rules',
+    moduleKey: 'moduleRules',
+    step: 6,
+    nextStep: 7,
+    nextMarker: 'Целевая аудитория',
+  },
+  {
+    fieldName: 'targetAudience',
+    moduleKey: 'moduleTargetAudience',
+    step: 7,
+    nextStep: 8,
+    nextMarker: 'Дополнительно',
+  },
+  {
+    fieldName: 'additional',
+    moduleKey: 'moduleAdditional',
+    step: 8,
+    nextStep: 9,
+    nextMarker: 'Telegram',
+  },
+] as const;
+
 function createStory(
   apiOverrides?: { listModules?: unknown[] | Refusal },
   createStream: () => unknown = () => ({
@@ -119,11 +170,6 @@ function ctxOf(response: DialogResponse): WizardCtx {
 }
 
 describe('CreateStreamStory (US-6) — контракт «Диалог и Экран»', () => {
-  test('menuButtons: пусто (создание только через подменю)', async () => {
-    const { story } = createStory();
-    expect(await story.menuButtons(mentorActor)).toEqual([]);
-  });
-
   // ── Шаг 0: выбор модуля ──
 
   test('start: список модулей + awaitInput (контекст wizard-а)', async () => {
@@ -312,177 +358,64 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
 
   // ── Шаги 4-8: необязательные поля (accept/skip/ввод) ──
 
-  test('accept-goal: цель из модуля → шаг 5 (Результат)', async () => {
-    const { story } = createStory();
-    const session = wizardSession(4, {
-      title: 'Поток',
-      description: 'Описание',
-      startDate: '2026-09-01T00:00',
-      moduleGoal: 'Стать разработчиком',
-      moduleResult: 'Сможете создать своё приложение',
-      moduleRules: 'Дедлайны',
-      moduleTargetAudience: 'Все желающие',
-      moduleAdditional: 'Компьютер',
-    });
-    const response = await story.handleCallback(
-      'accept-goal',
-      mentorActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Результат');
-    const ctx = ctxOf(response);
-    expect(ctx.step).toBe(5);
-    expect(ctx.goal).toBe('Стать разработчиком');
-  });
+  const optionalBase = {
+    title: 'Поток',
+    description: 'Описание',
+    startDate: '2026-09-01T00:00',
+    ...MOD_FIELDS,
+  };
 
-  test('skip-goal: пустая цель → шаг 5', async () => {
-    const { story } = createStory();
-    const session = wizardSession(4, {
-      title: 'Поток',
-      startDate: '2026-09-01T00:00',
-      moduleGoal: 'Стать разработчиком',
-      moduleResult: 'Рез',
-      moduleRules: 'Прав',
-      moduleTargetAudience: 'Ауд',
-      moduleAdditional: 'Доп',
-    });
-    const response = await story.handleCallback(
-      'skip-goal',
-      mentorActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Результат');
-    const ctx = ctxOf(response);
-    expect(ctx.step).toBe(5);
-    expect(ctx.goal).toBe('');
-  });
+  test.each(OPTIONAL_FIELDS)(
+    'accept-$fieldName: значение из модуля → шаг $nextStep ($nextMarker)',
+    async (field) => {
+      const { story } = createStory();
+      const session = wizardSession(field.step, optionalBase);
+      const response = await story.handleCallback(
+        `accept-${field.fieldName}`,
+        mentorActor,
+        session,
+      );
+      expect(String(response.screen?.text)).toContain(field.nextMarker);
+      const ctx = ctxOf(response);
+      expect(ctx.step).toBe(field.nextStep);
+      expect(ctx[field.fieldName]).toBe(MOD_FIELDS[field.moduleKey]);
+    },
+  );
 
-  test('accept-result → шаг 6 (Правила)', async () => {
-    const { story } = createStory();
-    const session = wizardSession(5, {
-      title: 'Поток',
-      goal: 'Цель',
-      moduleResult: 'Выпускной проект',
-      moduleRules: 'Дедлайны раз в неделю',
-      moduleTargetAudience: 'Все желающие',
-      moduleAdditional: 'Компьютер',
-    });
-    const response = await story.handleCallback(
-      'accept-result',
-      mentorActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Правила');
-    const ctx = ctxOf(response);
-    expect(ctx.step).toBe(6);
-    expect(ctx.result).toBe('Выпускной проект');
-  });
+  test.each(OPTIONAL_FIELDS)(
+    'skip-$fieldName: пустое поле → шаг $nextStep ($nextMarker)',
+    async (field) => {
+      const { story } = createStory();
+      const session = wizardSession(field.step, optionalBase);
+      const response = await story.handleCallback(
+        `skip-${field.fieldName}`,
+        mentorActor,
+        session,
+      );
+      expect(String(response.screen?.text)).toContain(field.nextMarker);
+      const ctx = ctxOf(response);
+      expect(ctx.step).toBe(field.nextStep);
+      expect(ctx[field.fieldName]).toBe('');
+    },
+  );
 
-  test('skip-rules → шаг 7 (Целевая аудитория)', async () => {
-    const { story } = createStory();
-    const session = wizardSession(6, {
-      title: 'Поток',
-      goal: 'Цель',
-      result: 'Результат',
-      moduleRules: 'Дедлайны',
-      moduleTargetAudience: 'Новички',
-      moduleAdditional: 'Компьютер',
-    });
-    const response = await story.handleCallback(
-      'skip-rules',
-      mentorActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Целевая аудитория');
-    const ctx = ctxOf(response);
-    expect(ctx.step).toBe(7);
-    expect(ctx.rules).toBe('');
-  });
-
-  test('accept-targetAudience → шаг 8 (Дополнительно)', async () => {
-    const { story } = createStory();
-    const session = wizardSession(7, {
-      title: 'Поток',
-      goal: 'Цель',
-      result: 'Рез',
-      rules: 'Прав',
-      moduleTargetAudience: 'Новички в IT',
-      moduleAdditional: 'Нужен ноутбук',
-    });
-    const response = await story.handleCallback(
-      'accept-targetAudience',
-      mentorActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Дополнительно');
-    const ctx = ctxOf(response);
-    expect(ctx.step).toBe(8);
-    expect(ctx.targetAudience).toBe('Новички в IT');
-  });
-
-  test('skip-additional → шаг 9 (Telegram-группа)', async () => {
-    const { story } = createStory();
-    const session = wizardSession(8, {
-      title: 'Поток',
-      goal: 'Цель',
-      result: 'Рез',
-      rules: 'Прав',
-      targetAudience: 'Ауд',
-      moduleAdditional: 'Нужен ноутбук',
-    });
-    const response = await story.handleCallback(
-      'skip-additional',
-      mentorActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Telegram');
-    const ctx = ctxOf(response);
-    expect(ctx.step).toBe(9);
-    expect(ctx.additional).toBe('');
-  });
-
-  test('ввод шаг 4 — цель вручную → шаг 5', async () => {
-    const { story } = createStory();
-    const session = wizardSession(4, {
-      title: 'Поток',
-      startDate: '2026-09-01T00:00',
-      moduleGoal: 'Цель из модуля',
-      moduleResult: 'Рез',
-      moduleRules: 'Прав',
-      moduleTargetAudience: 'Ауд',
-      moduleAdditional: 'Доп',
-    });
-    const response = await story.handleMessage(
-      inputMsg('Моя цель'),
-      mentorActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Результат');
-    const ctx = ctxOf(response);
-    expect(ctx.step).toBe(5);
-    expect(ctx.goal).toBe('Моя цель');
-  });
-
-  test('ввод шаг 8 — дополнительно → шаг 9 (группа)', async () => {
-    const { story } = createStory();
-    const session = wizardSession(8, {
-      title: 'Поток',
-      goal: 'Цель',
-      result: 'Рез',
-      rules: 'Прав',
-      targetAudience: 'Ауд',
-      moduleAdditional: '',
-    });
-    const response = await story.handleMessage(
-      inputMsg('Дополнительная информация'),
-      mentorActor,
-      session,
-    );
-    expect(String(response.screen?.text)).toContain('Telegram');
-    const ctx = ctxOf(response);
-    expect(ctx.step).toBe(9);
-    expect(ctx.additional).toBe('Дополнительная информация');
-  });
+  test.each(OPTIONAL_FIELDS)(
+    'ввод шаг $step ($fieldName) → шаг $nextStep ($nextMarker)',
+    async (field) => {
+      const { story } = createStory();
+      const session = wizardSession(field.step, optionalBase);
+      const text = `Своё значение: ${field.fieldName}`;
+      const response = await story.handleMessage(
+        inputMsg(text),
+        mentorActor,
+        session,
+      );
+      expect(String(response.screen?.text)).toContain(field.nextMarker);
+      const ctx = ctxOf(response);
+      expect(ctx.step).toBe(field.nextStep);
+      expect(ctx[field.fieldName]).toBe(text);
+    },
+  );
 
   // ── Шаги 9-11: группа, инвайт, кодовое слово ──
 
@@ -792,16 +725,6 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
       wizardSession(1),
     );
     expect(String(response.notify?.text)).toContain('текстовое сообщение');
-  });
-
-  test('неизвестная кнопка — экран «Неизвестная команда»', async () => {
-    const { story } = createStory();
-    const response = await story.handleCallback(
-      'unknown',
-      mentorActor,
-      NO_SESSION,
-    );
-    expect(String(response.screen?.text)).toContain('Неизвестная');
   });
 
   // ── /cancel через pipe (CommandReaction) ──

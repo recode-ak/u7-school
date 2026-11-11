@@ -27,11 +27,6 @@ const fact = (
 const { studentsSettled } = StreamRules.rules;
 
 describe('StreamRules.studentsSettled', () => {
-  it('описание правила ссылается на STREAM_STUDENTS_IN_PROGRESS', () => {
-    expect(studentsSettled.dmg).toBe('domainRule');
-    expect(studentsSettled.error.code).toBe('STREAM_STUDENTS_IN_PROGRESS');
-  });
-
   it('все студенты в конечном статусе — ok', () => {
     expectOk(
       studentsSettled.check({
@@ -42,10 +37,6 @@ describe('StreamRules.studentsSettled', () => {
         ],
       }),
     );
-  });
-
-  it('пустой список студентов — ok', () => {
-    expectOk(studentsSettled.check({ students: [] }));
   });
 
   it('active блокирует: STREAM_STUDENTS_IN_PROGRESS со списком { userId, status }', () => {

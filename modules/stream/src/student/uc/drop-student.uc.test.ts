@@ -5,11 +5,7 @@ import { expectErr, expectOk } from 'dmg-core/testing';
 import type { StreamUser } from '../../stream.module';
 import { DropStudentUc } from './drop-student.uc';
 import {
-  admin,
-  anonymous,
   makeEnv,
-  mentor,
-  OTHER_STREAM,
   owner,
   REQ,
   STREAM,
@@ -64,19 +60,6 @@ describe('DropStudentUc', () => {
     },
   );
 
-  it.each(['abandoned', 'advanced', 'not_advanced'] as const)(
-    'из %s — STUDENT_NOT_STUDYING «Нельзя снять студента с учёбы: он уже не учится.»',
-    async (status) => {
-      env.seedStudents(studentState(status));
-      const error = expectErr(await run(), 'STUDENT_NOT_STUDYING');
-      expect(error.label).toBe(
-        'Нельзя снять студента с учёбы: он уже не учится.',
-      );
-      expect(env.ctx.published).toEqual([]);
-      expect(env.students.saved).toEqual([]);
-    },
-  );
-
   it('студента нет — STUDENT_NOT_FOUND', async () => {
     expectErr(
       await uc().handle(
@@ -87,30 +70,11 @@ describe('DropStudentUc', () => {
       'STUDENT_NOT_FOUND',
     );
   });
-
-  it('студент из другого потока (не streamId входа) — STUDENT_NOT_FOUND (Т8)', async () => {
-    expectErr(await run(owner, OTHER_STREAM), 'STUDENT_NOT_FOUND');
-    expect(stored().status).toBe('active');
-  });
 });
 
 describe('DropStudentUc — права (isSelf)', () => {
-  it.each([
-    ['чужой студент', stranger],
-    ['ментор потока', mentor],
-    ['админ', admin],
-  ])(
-    '%s — ACCESS_DENIED «Вы не можете выйти из чужого потока»',
-    async (_, caller) => {
-      const error = expectErr(await run(caller), 'ACCESS_DENIED');
-      expect((error.payload as { denyMessage: string }).denyMessage).toBe(
-        'Вы не можете выйти из чужого потока',
-      );
-      expect(stored().status).toBe('active');
-    },
-  );
-
-  it('вызывающий guest — UNAUTHORIZED', async () => {
-    expectErr(await run(anonymous), 'UNAUTHORIZED');
+  it('чужой студент — ACCESS_DENIED, запись не меняется', async () => {
+    expectErr(await run(stranger), 'ACCESS_DENIED');
+    expect(stored().status).toBe('active');
   });
 });

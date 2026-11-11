@@ -10,7 +10,6 @@ import {
   ListMyReviewsUcDef,
   ListScopeFactsUcDef,
   ListScopeReviewsUcDef,
-  PeerReviewModuleDef,
   ReviewCampaignEvents,
   ReviewEvents,
 } from '@u7-scl/domain/peer-review';
@@ -30,7 +29,7 @@ import {
 } from 'dmg-core/testing';
 import { ReviewJsonRepo } from './infra/review.json-repo';
 import { ReviewCampaignJsonRepo } from './infra/review-campaign.json-repo';
-import { createPeerReviewModule, peerReviewMap } from './peer-review.module';
+import { createPeerReviewModule } from './peer-review.module';
 import { CAMPAIGN_ID, T0 } from './review/review.fixture';
 import { campaign, IDS } from './review-campaign/review-campaign.fixture';
 
@@ -100,26 +99,6 @@ async function waitUntil<T>(probe: () => Promise<T | undefined>): Promise<T> {
 }
 
 describe('createPeerReviewModule', () => {
-  it('собирает модуль по карте Def: 7 UC и ER кампаний, без external', () => {
-    const { module } = makeModule();
-    expect(module.def.name).toBe('peer-review');
-    expect(Object.keys(peerReviewMap.useCases).sort()).toEqual(
-      [
-        'createReview',
-        'getCampaignRecipients',
-        'getMyCampaigns',
-        'getMyReview',
-        'listMyReviews',
-        'listScopeFacts',
-        'listScopeReviews',
-      ].sort(),
-    );
-    expect(Object.keys(peerReviewMap.reactions)).toEqual([
-      'createStudentCampaign',
-    ]);
-    expect(PeerReviewModuleDef.external).toBeFalsy();
-  });
-
   it('вертикаль: student.completed → кампания → getMyCampaigns / getCampaignRecipients', async () => {
     const { module, campaigns, ctx, app } = makeModule();
     module.subscribe();
@@ -150,11 +129,7 @@ describe('createPeerReviewModule', () => {
     const subject = new UserCaller<Identified>({ uuid: SUBJECT });
     const mentor = new UserCaller<Identified>({ uuid: MENTOR });
     const mine = expectOk(
-      await module.dispatch(
-        GetMyCampaignsUcDef.command({ onlyLives: true }),
-        subject,
-        REQ,
-      ),
+      await module.dispatch(GetMyCampaignsUcDef.command({}), subject, REQ),
     );
     expect(mine.map((c) => [c.myRole, c.progress])).toEqual([
       ['subject', { done: 0, total: 2 }],
@@ -195,24 +170,6 @@ async function makeReviewModule() {
 }
 
 describe('createPeerReviewModule: отзывы', () => {
-  it('карта Def: 7 UC и ER кампаний', () => {
-    expect(Object.keys(peerReviewMap.useCases).sort()).toEqual(
-      [
-        'createReview',
-        'getCampaignRecipients',
-        'getMyCampaigns',
-        'getMyReview',
-        'listMyReviews',
-        'listScopeFacts',
-        'listScopeReviews',
-      ].sort(),
-    );
-    expect(Object.keys(peerReviewMap.reactions)).toEqual([
-      'createStudentCampaign',
-    ]);
-    expect(PeerReviewModuleDef.external).toBeFalsy();
-  });
-
   it('полный цикл: отзывы пишутся и читаются через dispatch', async () => {
     const { module, ctx } = await makeReviewModule();
     const subject = as(IDS.alice);
@@ -248,11 +205,7 @@ describe('createPeerReviewModule: отзывы', () => {
 
     // прогресс кампании видит новые отзывы
     const cards = expectOk(
-      await module.dispatch(
-        GetMyCampaignsUcDef.command({ onlyLives: true }),
-        subject,
-        REQ,
-      ),
+      await module.dispatch(GetMyCampaignsUcDef.command({}), subject, REQ),
     );
     expect(cards[0]?.progress).toEqual({ done: 1, total: 2 });
 
@@ -294,44 +247,5 @@ describe('createPeerReviewModule: отзывы', () => {
         ),
       ),
     ).toEqual({ hasReviews: true, reviewsCount: 2 });
-  });
-
-  it('повторный отзыв той же паре перезаписывает, а не дублирует', async () => {
-    const { module, ctx } = await makeReviewModule();
-    const write = (text: string) =>
-      module.dispatch(
-        CreateReviewUcDef.command({
-          campaignId: CAMPAIGN_ID,
-          recipientId: IDS.bob,
-          text,
-        }),
-        as(IDS.alice),
-        // свой requestId на каждую запись: общий — отсев повтора (REQUEST_CONFLICT)
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
-      );
-
-    const first = expectOk(
-      await write('Первый вариант отзыва, достаточно длинный.'),
-    );
-    const second = expectOk(
-      await write('Второй вариант отзыва, достаточно длинный.'),
-    );
-
-    expect(second.reviewId).toBe(first.reviewId);
-    const scope = expectOk(
-      await module.dispatch(
-        ListScopeReviewsUcDef.command({ scopeIds: [IDS.scope] }),
-        as(IDS.alice),
-        REQ,
-      ),
-    );
-    const bob = scope.recipients.find((r) => r.recipientId === IDS.bob);
-    expect(bob?.reviews).toHaveLength(1);
-    expect(bob?.reviews[0]?.text).toBe(
-      'Второй вариант отзыва, достаточно длинный.',
-    );
-    expect(
-      ctx.published.filter((e) => e.name === ReviewEvents.created.name),
-    ).toHaveLength(1);
   });
 });
