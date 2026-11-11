@@ -1,6 +1,12 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { StudentEvents } from '@u7-scl/domain/stream/contract';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { StreamModuleDef, StudentEvents } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
+import {
+  dmgDispatch,
+  moduleNotFound,
+} from '../../courses/stories/course-dmg.test-kit';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { HubStory } from './hub';
 
 // Уведомление 7c/7d, которое раньше слал UC `complete-student`, теперь шлёт
@@ -8,6 +14,8 @@ import { HubStory } from './hub';
 // `outcome = advanced` и нет следующего модуля → `proactiveSender.notify`,
 // kind `info`; остальное — без изменений (7a/7b — invite). Событие приходит в
 // legacy-форме шины: `eventName` — FQN Def.
+
+const MODULES = [CourseModuleDef, StreamModuleDef];
 
 const USER = '22222222-2222-4222-8222-222222222222';
 const MODULE = '33333333-3333-4333-8333-333333333333';
@@ -42,9 +50,9 @@ function makeStory(
           telegramId,
           roles: [Role.STUDENT],
         };
-      if (name === 'get-module-place') return place;
       return undefined;
     }),
+    dispatch: dmgDispatch({ getModulePlace: () => place }, MODULES),
   };
   const sender = {
     notify: mock(async () => {}),
@@ -52,7 +60,7 @@ function makeStory(
     kickFromGroup: mock(async () => {}),
   };
   const story = new HubStory();
-  story.init({ appApi } as never, sender as never);
+  story.init({ appApi, callers: testCallers } as never, sender as never);
   const sub = story
     .getEventSubscriptions()
     .find((s) => s.eventName === StudentEvents.completed.name);
@@ -85,6 +93,16 @@ describe('HubStory — подписка на StudentEvents.completed', () => {
 
   test('advanced, место неизвестно → notify «Модуль завершён» (7d)', async () => {
     const { sender, sub } = makeStory(undefined);
+    await sub?.handle(event('advanced') as never);
+
+    expect(sender.notify).toHaveBeenCalledTimes(1);
+    const [, payload] = (sender.notify as ReturnType<typeof mock>).mock
+      .calls[0] as [number, { text: unknown; kind: string }];
+    expect(String(payload.text)).toContain('Модуль завершён');
+  });
+
+  test('advanced, место модуля не определено (отказ UC) → notify «Модуль завершён» (7d)', async () => {
+    const { sender, sub } = makeStory(moduleNotFound());
     await sub?.handle(event('advanced') as never);
 
     expect(sender.notify).toHaveBeenCalledTimes(1);

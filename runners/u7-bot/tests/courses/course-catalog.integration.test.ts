@@ -9,6 +9,7 @@ import {
 import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
+import type { DialogResponse } from '@u7-scl/core/ui';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -16,38 +17,132 @@ import {
   stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { Role } from '@u7-scl/user/domain';
+import type { WorldDefinition } from '../worlds';
 
 /**
- * Интеграционный тест CourseCatalogStory (S00 + drill-down)
+ * Интеграционный тест CourseCatalogStory: настоящий ApiApp с модулем курсов
+ * над данными мира, без моков внутри модуля.
  *
- * Контракт «Диалог и Экран»: ассерты — по DialogResponse, захваченному
- * на границе uiApp. Коды прямых вызовов штампуются актуальным штампом
- * открытого экрана (transport валидирует штампы на входе).
+ * Контракт «Диалог и Экран»: ассерты — по DialogResponse, захваченному на
+ * границе uiApp. Переходы — кликом по кнопке предыдущего ответа (код с
+ * актуальным штампом экрана).
  *
- * 5 уровней:
- *   list     — курсы + этапы inline
- *   phases   — этапы + модули inline
- *   modules  — модули + проекты inline
- *   projects — проекты + уроки inline
- *   lessons  — уроки + заголовки шагов
+ * Здесь только то, что не проверить на моках stories: UC курса подключены
+ * и дрилл-даун доходит до заголовков шагов — у курса с этапами и у курса
+ * без этапов. Ветки экранов, тексты и отказы — в
+ * `course-catalog.story.test.ts`, пагинация — в e2e `pagination`.
  */
-describe('CourseCatalogStory (интеграционный)', () => {
+
+const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
+const GUEST_TELEGRAM_ID = 1001;
+
+/** Курс `course-js-basics` мира core-education: два этапа, модуль «JavaScript Основы» в первом. */
+const JS_BASICS_COURSE_ID = 'fafafafa-baba-4aba-8aba-babababababa';
+
+/** Мир с курсом без этапов: программа из двух модулей, `phases: []`. */
+const FLAT_COURSE_WORLD: WorldDefinition = {
+  name: 'course-without-stages',
+  description: 'Курс без этапов: два модуля подряд',
+  anchorDate: new Date('2026-10-01T12:00:00.000Z'),
+  persons: [
+    {
+      key: 'dev',
+      name: 'Автор',
+      telegramId: 1004,
+      roles: [Role.MENTOR, Role.AUTHOR],
+    },
+    {
+      key: 'guest',
+      name: 'Гость',
+      telegramId: GUEST_TELEGRAM_ID,
+      roles: [Role.GUEST],
+    },
+  ],
+  courses: [
+    {
+      key: 'course-flat',
+      title: 'Курс без этапов',
+      description: 'Программа из двух модулей без деления на этапы.',
+      authorKey: 'dev',
+      phases: [],
+      modules: [
+        {
+          key: 'mod-flat-1',
+          title: 'Первый модуль',
+          projects: [
+            {
+              key: 'proj-flat-1',
+              title: 'Первый проект',
+              lessons: [
+                {
+                  key: 'less-flat-1',
+                  title: 'Первый урок',
+                  steps: [
+                    {
+                      key: 'step-flat-1',
+                      description: 'Заголовок первого шага',
+                      content: 'Тело шага не показывается в каталоге',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        { key: 'mod-flat-2', title: 'Второй модуль' },
+      ],
+    },
+  ],
+};
+
+/** Кнопки экрана — плоским списком. */
+function buttonsOf(
+  response: DialogResponse,
+): Array<{ text: string; code: string }> {
+  return response.screen?.keyboard?.rows.flat() ?? [];
+}
+
+/** Нажимает кнопку ответа с текстом, содержащим `fragment`, штампом текущего экрана. */
+async function clickButton(
+  transport: TestBotTransport,
+  telegramId: number,
+  response: DialogResponse,
+  fragment: string,
+): Promise<DialogResponse> {
+  const button = buttonsOf(response).find((b) => b.text.includes(fragment));
+  expect(button, `Кнопка «${fragment}» не найдена в ответе`).toBeDefined();
+  return transport.handleCallback(
+    transport.makeBotContext(telegramId, {
+      callbackData: stampedCode(transport, telegramId, button!.code),
+    }),
+  );
+}
+
+/** Открывает диалог и вызывает сырой код стори с актуальным штампом. */
+async function openCatalog(
+  transport: TestBotTransport,
+  telegramId: number,
+  rawCode: string,
+): Promise<DialogResponse> {
+  await transport.handleStart(transport.makeBotContext(telegramId));
+  return transport.handleCallback(
+    transport.makeBotContext(telegramId, {
+      callbackData: stampedCode(transport, telegramId, rawCode),
+    }),
+  );
+}
+
+describe('CourseCatalogStory (интеграционный): курс с этапами', () => {
   let app: TestApp;
   let transport: TestBotTransport;
-  let guest: User;
-  let author: User;
-
-  const FIXTURE_MODULE_UUID = 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0';
-
-  const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
 
   beforeAll(async () => {
     app = await createTestApp('course-catalog-v2');
-    const courseController = new CoursesController();
-    const appController = new AppController(SCHOOL_GROUP_URL);
-    transport = createTestBotTransport(app, [appController, courseController]);
-    guest = (await app.userFacade.getUserByTelegramId(1001))!;
-    author = (await app.userFacade.getUserByTelegramId(1004))!;
+    transport = createTestBotTransport(app, [
+      new AppController(SCHOOL_GROUP_URL),
+      new CoursesController(),
+    ]);
   });
 
   beforeEach(() => {
@@ -58,167 +153,94 @@ describe('CourseCatalogStory (интеграционный)', () => {
     await app.cleanup();
   });
 
-  /** Открывает диалог гостя и вызывает сырой код стори с актуальным штампом. */
-  async function openCourse(rawCode: string) {
-    await transport.handleStart(transport.makeBotContext(guest.telegramId));
-    return transport.handleCallback(
-      transport.makeBotContext(guest.telegramId, {
-        callbackData: stampedCode(transport, guest.telegramId, rawCode),
-      }),
-    );
-  }
+  test('drill-down курса из мира: этап → модуль → проект → урок до заголовков шагов, тела скрыты', async () => {
+    const tg = GUEST_TELEGRAM_ID;
 
-  async function createCourseWithModule(
-    title: string,
-  ): Promise<{ courseId: string; moduleId: string }> {
-    const course = await app.apiApp.execute(
-      'create-course',
-      { title, description: 'Интеграционный тест' },
-      author,
+    const course = await openCatalog(
+      transport,
+      tg,
+      `course:course-catalog:course:${JS_BASICS_COURSE_ID}`,
     );
-    const mod = await app.apiApp.execute(
-      'create-module',
-      { title: 'Модуль', description: 'Тестовый модуль' },
-      author,
-    );
-    await app.apiApp.execute('publish-module', { moduleId: mod.uuid }, author);
-    await app.apiApp.execute(
-      'add-phase-to-course',
-      { courseId: course.uuid, title: 'Этап 1', track: 'tech' },
-      author,
-    );
-    await app.apiApp.execute(
-      'add-module-to-course',
-      { courseId: course.uuid, phaseTitle: 'Этап 1', moduleId: mod.uuid },
-      author,
-    );
-    return { courseId: course.uuid, moduleId: mod.uuid };
-  }
+    expect(course.screen?.text).toContain('Основы программирования');
+    expect(course.screen?.text).toContain('Этапы курса');
 
-  // ── Уровень 0: Курсы ──
+    const stage = await clickButton(transport, tg, course, 'Синтаксис');
+    expect(stage.screen?.text).toContain('Этап 1/2: Синтаксис');
 
-  test('list: курсы + этапы inline', async () => {
-    const response = await openCourse('course:course-catalog:list');
-    const text = response.screen?.text ?? '';
-    expect(text).toContain('Курсы');
-    expect(text).toContain('Основы программирования');
-    expect(text).toContain('Синтаксис');
+    const mod = await clickButton(transport, tg, stage, 'JavaScript Основы');
+    expect(mod.screen?.text).toContain('Проекты модуля');
+    expect(buttonsOf(mod).some((b) => b.text.includes('Назад к этапу'))).toBe(
+      true,
+    );
+
+    const project = await clickButton(transport, tg, mod, 'Введение');
+    expect(project.screen?.text).toContain('Уроки проекта');
+
+    const lesson = await clickButton(
+      transport,
+      tg,
+      project,
+      'Переменные и типы',
+    );
+    const text = lesson.screen?.text ?? '';
+    expect(text).toContain('Шаги урока');
+    expect(text).toContain('1\\. знакомство с переменными');
+    // Тела шагов в каталоге не видны
+    expect(text).not.toContain('рекомендуется объявлять переменные');
+    expect(
+      buttonsOf(lesson).some((b) => b.text.includes('Назад к проекту')),
+    ).toBe(true);
+  });
+});
+
+describe('CourseCatalogStory (интеграционный): курс без этапов', () => {
+  let app: TestApp;
+  let transport: TestBotTransport;
+  let guest: User;
+
+  beforeAll(async () => {
+    app = await createTestApp('course-flat', FLAT_COURSE_WORLD);
+    transport = createTestBotTransport(app, [
+      new AppController(SCHOOL_GROUP_URL),
+      new CoursesController(),
+    ]);
+    guest = (await app.userFacade.getUserByTelegramId(GUEST_TELEGRAM_ID))!;
   });
 
-  // ── Уровень 1: Этапы ──
-
-  test('phases: этапы + модули inline', async () => {
-    const { courseId } = await createCourseWithModule('Тестовый курс');
-
-    const response = await openCourse(
-      `course:course-catalog:phases:${courseId}`,
-    );
-
-    const text = response.screen?.text ?? '';
-    expect(text).toContain('Тестовый курс');
-    expect(text).toContain('Этап 1');
-
-    const rows = response.screen?.keyboard?.rows ?? [];
-    expect(rows.some((r) => r[0]?.text?.includes('Этап 1'))).toBe(true);
-    expect(rows.some((r) => r[0]?.text?.includes('Главное меню'))).toBe(true);
+  beforeEach(() => {
+    transport.reset();
   });
 
-  test('phases: несуществующий курс — ошибка', async () => {
-    const response = await openCourse('course:course-catalog:phases:bad-uuid');
-    expect(response.screen?.text).toContain('не найден');
+  afterAll(async () => {
+    await app.cleanup();
   });
 
-  // ── Уровень 2: Модули ──
+  test('модули кликабельны до урока: список модулей курса → модуль → проект → урок, этапов нет', async () => {
+    const tg = guest.telegramId;
 
-  test('modules: модули + проекты inline', async () => {
-    const { courseId } = await createCourseWithModule('Курс M');
-
-    const response = await openCourse(
-      `course:course-catalog:modules:${courseId}:0`,
+    const list = await openCatalog(transport, tg, 'course:course-catalog:list');
+    expect(list.screen?.text).toContain('Курс без этапов');
+    expect(list.screen?.text).toContain('Модули курса');
+    expect(list.screen?.text).not.toContain('Этап');
+    expect(buttonsOf(list).some((b) => b.text.includes('Второй модуль'))).toBe(
+      true,
     );
 
-    const text = response.screen?.text ?? '';
-    expect(text).toContain('Этап 1');
-    expect(text).toContain('Модуль');
-
-    const rows = response.screen?.keyboard?.rows ?? [];
-    expect(rows.some((r) => r[0]?.text?.includes('Модуль'))).toBe(true);
-    expect(rows.some((r) => r[0]?.text?.includes('Назад к курсу'))).toBe(true);
-  });
-
-  // ── Уровень 3: Проекты ──
-
-  test('projects: проекты + уроки inline (фикстурный модуль)', async () => {
-    const course = await app.apiApp.execute(
-      'create-course',
-      { title: 'Курс с проектами', description: 'Тест' },
-      author,
-    );
-    await app.apiApp.execute(
-      'add-phase-to-course',
-      { courseId: course.uuid, title: 'Этап', track: 'tech' },
-      author,
-    );
-    await app.apiApp.execute(
-      'add-module-to-course',
-      {
-        courseId: course.uuid,
-        phaseTitle: 'Этап',
-        moduleId: FIXTURE_MODULE_UUID,
-      },
-      author,
+    const mod = await clickButton(transport, tg, list, 'Первый модуль');
+    expect(mod.screen?.text).toContain('Модуль 1/2: Первый модуль');
+    expect(mod.screen?.text).not.toContain('Этап');
+    expect(buttonsOf(mod).some((b) => b.text.includes('Назад к курсу'))).toBe(
+      true,
     );
 
-    const response = await openCourse(
-      `course:course-catalog:projects:${course.uuid}:0:${FIXTURE_MODULE_UUID}`,
-    );
+    const project = await clickButton(transport, tg, mod, 'Первый проект');
+    expect(project.screen?.text).toContain('Уроки проекта');
 
-    const text = response.screen?.text ?? '';
-    expect(text).toContain('Введение');
-    expect(text).toContain('урок');
-
-    const rows = response.screen?.keyboard?.rows ?? [];
-    // Кнопки — проекты, не уроки
-    expect(rows.some((r) => r[0]?.text?.includes('Введение'))).toBe(true);
-    expect(rows.some((r) => r[0]?.text?.includes('Назад к этапу'))).toBe(true);
-  });
-
-  // ── Уровень 4: Уроки ──
-
-  test('lessons: уроки + заголовки шагов, тела скрыты', async () => {
-    const course = await app.apiApp.execute(
-      'create-course',
-      { title: 'Курс с шагами', description: 'Тест' },
-      author,
-    );
-    await app.apiApp.execute(
-      'add-phase-to-course',
-      { courseId: course.uuid, title: 'Этап', track: 'tech' },
-      author,
-    );
-    await app.apiApp.execute(
-      'add-module-to-course',
-      {
-        courseId: course.uuid,
-        phaseTitle: 'Этап',
-        moduleId: FIXTURE_MODULE_UUID,
-      },
-      author,
-    );
-
-    const response = await openCourse(
-      `course:course-catalog:lessons:${course.uuid}:0:${FIXTURE_MODULE_UUID}:0`,
-    );
-
-    const text = response.screen?.text ?? '';
-    expect(text).toContain('Введение');
-    expect(text).toContain('Переменные и типы');
-
-    // Тела шагов не видны
-    expect(text).not.toContain('<html');
-    expect(text).not.toContain('function');
-
-    const rows = response.screen?.keyboard?.rows ?? [];
-    expect(rows.some((r) => r[0]?.text?.includes('Назад к модулю'))).toBe(true);
+    const lesson = await clickButton(transport, tg, project, 'Первый урок');
+    const text = lesson.screen?.text ?? '';
+    expect(text).toContain('Шаги урока');
+    expect(text).toContain('Заголовок первого шага');
+    expect(text).not.toContain('Этап');
+    expect(text).not.toContain('Тело шага');
   });
 });

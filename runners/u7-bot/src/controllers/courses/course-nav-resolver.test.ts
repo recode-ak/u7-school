@@ -1,52 +1,37 @@
 import { describe, expect, test } from 'bun:test';
 import { presentNavLevel } from '@u7-scl/core/ui';
-import {
-  type ContentSnapshot,
-  type Course,
-  Status,
-} from '@u7-scl/course/domain';
+import type {
+  ContentSnapshot,
+  CourseView,
+} from '@u7-scl/domain/course/contract';
 import { Routes } from '../shared/routes';
 import {
   type ModuleNavInfo,
   resolveCourseNavLevel,
 } from './course-nav-resolver';
+import { courseView, stage } from './stories/course-dmg.test-kit';
+
+/** Адрес перехода: `prev`/`next`/`back` — строка или `{ label, address }`. */
+const addressOf = (target: string | { address: string } | undefined) =>
+  typeof target === 'string' ? target : target?.address;
 
 describe('CourseNavResolver — Фаза 1: Курс и этап на общем ядре (TDD)', () => {
-  const dummyCourses: Course[] = [
-    {
+  const dummyCourses: CourseView[] = [
+    courseView({
       uuid: 'course-1',
       title: 'Fullstack JS',
       description: 'Полный курс JavaScript',
-      authorId: 'author-1',
-      status: Status.PUBLISHED,
-      createdAt: '2026-01-01T00:00:00Z',
-      phases: [
-        {
-          title: 'Основы JS',
-          track: 'tech',
-          moduleIds: ['mod-1', 'mod-2'],
-        },
-        {
-          title: 'Продвинутый JS',
-          track: 'tech',
-          moduleIds: ['mod-3'],
-        },
+      stages: [
+        stage('Основы JS', ['mod-1', 'mod-2'], 'tech'),
+        stage('Продвинутый JS', ['mod-3'], 'tech'),
       ],
-    },
-    {
+    }),
+    courseView({
       uuid: 'course-2',
       title: 'Python Backend',
       description: 'Курс по Python',
-      authorId: 'author-1',
-      status: Status.PUBLISHED,
-      createdAt: '2026-01-01T00:00:00Z',
-      phases: [
-        {
-          title: 'Основы Python',
-          moduleIds: ['mod-py-1'],
-        },
-      ],
-    },
+      stages: [stage('Основы Python', ['mod-py-1'])],
+    }),
   ];
 
   const dummyModulesInfo: Record<string, ModuleNavInfo> = {
@@ -61,6 +46,10 @@ describe('CourseNavResolver — Фаза 1: Курс и этап на общем
     'mod-3': {
       title: 'Асинхронный JS',
       projectTitles: ['Promise и async/await'],
+    },
+    'mod-py-1': {
+      title: 'Синтаксис Python',
+      projectTitles: ['Hello World'],
     },
   };
 
@@ -747,6 +736,291 @@ describe('CourseNavResolver — Фаза 1: Курс и этап на общем
         );
         expect(keyboard.rows[1]?.[0]?.text).toBe('⬅️ Назад к проекту');
       });
+    });
+  });
+
+  describe('Курс из одного этапа: карточка курса сразу показывает модули этапа', () => {
+    const snapshot: ContentSnapshot = [
+      {
+        projectId: 'proj-py',
+        projectTitle: 'Hello World',
+        lessons: [{ lessonId: 'les-py', lessonTitle: 'Старт', stepIds: [] }],
+      },
+    ];
+
+    test('уровень курса: крошки с этапом, «Модули этапа:», модули этапа, кнопки желания и соседних курсов', () => {
+      const level = resolveCourseNavLevel({
+        level: 'course',
+        courses: dummyCourses,
+        currentCourseId: 'course-2',
+        modulesInfo: dummyModulesInfo,
+      });
+
+      expect(level?.breadcrumbs).toEqual([
+        '📖 Курсы',
+        'Курс 2/2: Python Backend',
+        'Этап 1/1: Основы Python',
+      ]);
+      expect(level?.subtitle).toBe('Модули этапа:');
+      expect(level?.children).toHaveLength(1);
+      expect(level?.children?.[0]).toMatchObject({
+        index: 1,
+        title: 'Синтаксис Python',
+        meta: '(1 проект)',
+        enterable: true,
+        address: 'course-catalog:module:course-2:0:mod-py-1',
+      });
+      expect(level?.extraRows?.[0]?.[0]?.code).toBe(
+        'course-catalog:apply:course-2',
+      );
+      expect(addressOf(level?.prev)).toBe('course-catalog:course:course-1');
+      expect(addressOf(level?.back)).toBe(Routes.app.mainMenu);
+    });
+
+    test('уровень модуля: крошки с этапом, «Назад к курсу» вместо «Назад к этапу»', () => {
+      const level = resolveCourseNavLevel({
+        level: 'module',
+        courses: dummyCourses,
+        currentCourseId: 'course-2',
+        phaseIdx: 0,
+        moduleId: 'mod-py-1',
+        modulesInfo: dummyModulesInfo,
+        moduleSnapshot: snapshot,
+      });
+
+      expect(level?.breadcrumbs).toEqual([
+        '📖 Курсы',
+        'Курс 2/2: Python Backend',
+        'Этап 1/1: Основы Python',
+        'Модуль 1/1: Синтаксис Python',
+      ]);
+      expect(level?.back).toEqual({
+        label: '⬅️ Назад к курсу',
+        address: 'course-catalog:course:course-2',
+      });
+    });
+
+    test('уровень этапа (колбэк старых сообщений): прежний экран этапа', () => {
+      const level = resolveCourseNavLevel({
+        level: 'phase',
+        courses: dummyCourses,
+        currentCourseId: 'course-2',
+        phaseIdx: 0,
+        modulesInfo: dummyModulesInfo,
+      });
+
+      expect(level?.breadcrumbs).toEqual([
+        '📖 Курсы',
+        'Курс 2/2: Python Backend',
+        'Этап 1/1: Основы Python',
+      ]);
+      expect(level?.subtitle).toBe('Модули этапа:');
+      expect(level?.children?.[0]?.address).toBe(
+        'course-catalog:module:course-2:0:mod-py-1',
+      );
+      expect(addressOf(level?.back)).toBe('course-catalog:course:course-2');
+    });
+  });
+
+  describe('Курс без этапов: область — вся программа, уровня этапа нет', () => {
+    const noStages = courseView({
+      uuid: 'course-3',
+      title: 'Курс без этапов',
+      moduleIds: ['mod-1', 'mod-2'],
+      stages: [],
+    });
+    // Курс в середине списка: есть и «Пред. курс», и «След. курс».
+    const courses = [dummyCourses[0]!, noStages, dummyCourses[1]!];
+    const snapshot: ContentSnapshot = [
+      {
+        projectId: 'proj-1',
+        projectTitle: 'Введение в JS',
+        lessons: [
+          { lessonId: 'les-1', lessonTitle: 'Окружение', stepIds: ['s-1'] },
+        ],
+      },
+    ];
+    const modulesInfo: Record<string, ModuleNavInfo> = {
+      'mod-1': { title: 'Введение в синтаксис', projectTitles: ['A', 'B'] },
+      'mod-2': { title: 'Структуры данных', projectTitles: ['C'] },
+    };
+
+    test('уровень курса: «Модули курса:», строки модулей, кнопки желания и соседних курсов', () => {
+      const level = resolveCourseNavLevel({
+        level: 'course',
+        courses,
+        currentCourseId: 'course-3',
+        modulesInfo,
+      });
+
+      expect(level?.breadcrumbs).toEqual([
+        '📖 Курсы',
+        'Курс 2/3: Курс без этапов',
+      ]);
+      expect(level?.subtitle).toBe('Модули курса:');
+      expect(level?.children).toHaveLength(2);
+      expect(level?.children?.[0]).toMatchObject({
+        index: 1,
+        title: 'Введение в синтаксис',
+        meta: '(2 проекта)',
+        enterable: true,
+        address: 'course-catalog:module:course-3:0:mod-1',
+      });
+      expect(level?.children?.[1]).toMatchObject({
+        index: 2,
+        title: 'Структуры данных',
+        meta: '(1 проект)',
+        address: 'course-catalog:module:course-3:0:mod-2',
+      });
+      expect(level?.extraRows?.[0]?.[0]?.code).toBe(
+        'course-catalog:apply:course-3',
+      );
+      expect(addressOf(level?.prev)).toBe('course-catalog:course:course-1');
+      expect(addressOf(level?.next)).toBe('course-catalog:course:course-2');
+    });
+
+    test('уровень модуля: крошки без этапа, листание по всей программе, «Назад к курсу»', () => {
+      const first = resolveCourseNavLevel({
+        level: 'module',
+        courses,
+        currentCourseId: 'course-3',
+        phaseIdx: 0,
+        moduleId: 'mod-1',
+        modulesInfo,
+        moduleSnapshot: snapshot,
+      });
+
+      expect(first?.breadcrumbs).toEqual([
+        '📖 Курсы',
+        'Курс 2/3: Курс без этапов',
+        'Модуль 1/2: Введение в синтаксис',
+      ]);
+      expect(first?.prev).toBeUndefined();
+      expect(first?.next).toEqual({
+        label: 'След. модуль ▶️',
+        address: 'course-catalog:module:course-3:0:mod-2',
+      });
+      expect(first?.back).toEqual({
+        label: '⬅️ Назад к курсу',
+        address: 'course-catalog:course:course-3',
+      });
+
+      const last = resolveCourseNavLevel({
+        level: 'module',
+        courses,
+        currentCourseId: 'course-3',
+        phaseIdx: 0,
+        moduleId: 'mod-2',
+        modulesInfo,
+        moduleSnapshot: snapshot,
+      });
+      expect(addressOf(last?.prev)).toBe(
+        'course-catalog:module:course-3:0:mod-1',
+      );
+      expect(last?.next).toBeUndefined();
+    });
+
+    test('уровни проекта и урока: крошки без этапа, «Назад к модулю» с :0:<модуль>', () => {
+      const project = resolveCourseNavLevel({
+        level: 'project',
+        courses,
+        currentCourseId: 'course-3',
+        phaseIdx: 0,
+        moduleId: 'mod-1',
+        projectId: 'proj-1',
+        modulesInfo,
+        moduleSnapshot: snapshot,
+      });
+      expect(project?.breadcrumbs).toEqual([
+        '📖 Курсы',
+        'Курс 2/3: Курс без этапов',
+        'Модуль 1/2: Введение в синтаксис',
+        'Проект 1/1: Введение в JS',
+      ]);
+      expect(addressOf(project?.back)).toBe(
+        'course-catalog:module:course-3:0:mod-1',
+      );
+
+      const lesson = resolveCourseNavLevel({
+        level: 'lesson',
+        courses,
+        currentCourseId: 'course-3',
+        phaseIdx: 0,
+        moduleId: 'mod-1',
+        projectId: 'proj-1',
+        lessonId: 'les-1',
+        modulesInfo,
+        moduleSnapshot: snapshot,
+        stepTitles: { 's-1': 'Установка' },
+      });
+      expect(lesson?.breadcrumbs).toEqual([
+        '📖 Курсы',
+        'Курс 2/3: Курс без этапов',
+        'Модуль 1/2: Введение в синтаксис',
+        'Проект 1/1: Введение в JS',
+        'Урок 1/1: Окружение',
+      ]);
+      expect(addressOf(lesson?.back)).toBe(
+        'course-catalog:prj:course-3:mod-1:proj-1',
+      );
+    });
+
+    test('уровня этапа нет — phase даёт null', () => {
+      expect(
+        resolveCourseNavLevel({
+          level: 'phase',
+          courses,
+          currentCourseId: 'course-3',
+          phaseIdx: 0,
+          modulesInfo,
+        }),
+      ).toBeNull();
+    });
+  });
+
+  describe('Два этапа — поведение этапов без изменений', () => {
+    const twoStages = courseView({
+      uuid: 'course-4',
+      title: 'Два этапа',
+      stages: [stage('Первый', ['m-a']), stage('Второй', ['m-b', 'm-c'])],
+    });
+    const modulesInfo: Record<string, ModuleNavInfo> = {
+      'm-a': { title: 'A', projectTitles: [] },
+      'm-b': { title: 'B', projectTitles: [] },
+      'm-c': { title: 'C', projectTitles: [] },
+    };
+    const snapshot: ContentSnapshot = [
+      { projectId: 'p', projectTitle: 'P', lessons: [] },
+    ];
+
+    test('уровень курса: этапы со склонением «1 модуль» и «2 модуля»', () => {
+      const level = resolveCourseNavLevel({
+        level: 'course',
+        courses: [twoStages],
+        currentCourseId: 'course-4',
+        modulesInfo,
+      });
+
+      expect(level?.children?.map((c) => c.meta)).toEqual([
+        '(1 модуль)',
+        '(2 модуля)',
+      ]);
+    });
+
+    test('модуль второго этапа: пред. модуль — адрес с индексом этапа', () => {
+      const level = resolveCourseNavLevel({
+        level: 'module',
+        courses: [twoStages],
+        currentCourseId: 'course-4',
+        phaseIdx: 1,
+        moduleId: 'm-c',
+        modulesInfo,
+        moduleSnapshot: snapshot,
+      });
+
+      expect(addressOf(level?.prev)).toBe(
+        'course-catalog:module:course-4:1:m-b',
+      );
     });
   });
 });

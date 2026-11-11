@@ -2,16 +2,20 @@ import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
-import { StudentEvents } from '@u7-scl/domain/stream/contract';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { StreamModuleDef, StudentEvents } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
+import { dmgDispatch, refuse } from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
-import { dmgDispatch, refuse } from '../../streams/stories/stream-dmg.test-kit';
 import {
   type LegacyStudent,
   studentAnswers,
   studentView,
 } from '../../streams/stories/student-dmg.test-kit';
 import { HubStory } from './hub';
+
+/** Модули, которые вызывает хаб: курсы (место модуля) и потоки. */
+const MODULES = [CourseModuleDef, StreamModuleDef];
 
 describe('HubStory', () => {
   const session: BotSession = { dialog: { path: 'learning/hub', seq: 1 } };
@@ -63,14 +67,17 @@ describe('HubStory', () => {
       typeof studentOverride === 'function'
         ? undefined
         : ((studentOverride ?? mockStudent) as LegacyStudent);
-    const dispatch = dmgDispatch({
-      ...studentAnswers(student, []),
-      getActiveStudent: (_input, caller) =>
-        student && caller.subject().uuid === studentActor.uuid
-          ? { student: studentView(student) }
-          : {},
-      dropStudent: () => overrides?.['drop-student'] ?? {},
-    });
+    const dispatch = dmgDispatch(
+      {
+        ...studentAnswers(student, []),
+        getActiveStudent: (_input, caller) =>
+          student && caller.subject().uuid === studentActor.uuid
+            ? { student: studentView(student) }
+            : {},
+        dropStudent: () => overrides?.['drop-student'] ?? {},
+      },
+      MODULES,
+    );
 
     const story = new HubStory();
     story.init({
@@ -307,9 +314,9 @@ describe('HubStory — подписка на StudentEvents.completed', () => {
             roles: [Role.STUDENT],
             createdAt: '2026-01-01T00:00:00.000Z',
           };
-        if (name === 'get-module-place') return place;
         return undefined;
       }),
+      dispatch: dmgDispatch({ getModulePlace: () => place }, MODULES),
     };
 
     const sender = {
@@ -319,7 +326,10 @@ describe('HubStory — подписка на StudentEvents.completed', () => {
     };
 
     const story = new HubStory();
-    story.init({ appApi: mockAppApi } as never, sender as never);
+    story.init(
+      { appApi: mockAppApi, callers: testCallers } as never,
+      sender as never,
+    );
     return { story, sender };
   }
 

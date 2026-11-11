@@ -10,7 +10,10 @@ import type {
   UiEventSubscription,
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
-import type { ModulePlace } from '@u7-scl/course/domain';
+import {
+  CourseModuleDef,
+  GetModulePlaceUcDef,
+} from '@u7-scl/domain/course/contract';
 import {
   DropStudentUcDef,
   GetActiveStudentUcDef,
@@ -63,10 +66,13 @@ export class HubStory extends U7BotUiStory {
     });
     if (!user?.telegramId) return;
 
-    // Место модуля в программе — идёт через домен курсов (appApi-запрос)
-    const place = (await this.appApi.execute('get-module-place', {
-      moduleId,
-    })) as ModulePlace | undefined;
+    // Место модуля в программе — идёт через домен курсов
+    const placeRes = await this.dispatchUc(
+      CourseModuleDef,
+      GetModulePlaceUcDef.command({ moduleId }),
+      user,
+    );
+    const place = placeRes.ok ? placeRes.value : undefined;
 
     if (outcome === 'not_advanced') {
       // Повтор того же модуля (7b) — кнопочный проактив, канал invite

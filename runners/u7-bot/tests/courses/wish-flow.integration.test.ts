@@ -9,7 +9,10 @@ import {
 import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
-import type { DialogResponse } from '@u7-scl/core/ui';
+import {
+  assertDialogResponseMarkdownSafe,
+  type DialogResponse,
+} from '@u7-scl/core/ui';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -21,8 +24,12 @@ import type { WishStatus } from '@u7-scl/wish/domain';
 import { WishAr } from '@u7-scl/wish/domain';
 
 /**
- * Интеграционный тест wish-флоу (ветка A — instant):
- *   apply → W03 → повторный apply → W04 → cancel → confirm → W05
+ * Интеграционный тест wish-флоу (ветка A — instant): модуль wish подключён
+ * к каталогу курсов, один самый длинный путь
+ *   apply → повторный apply → W04 → cancel → confirm → W05 → apply
+ * и экранирование MarkdownV2 в карточках курсов мира с опасными названиями.
+ * Ветки W04 (expressed, pending, confirmed), «уже нет» и экран отмены —
+ * в `course-catalog.story.test.ts`.
  *
  * Контракт «Диалог и Экран»: ассерты — по DialogResponse, захваченному
  * на границе uiApp. Реальный ApiApp (wish-модуль включён) + реальный
@@ -34,13 +41,17 @@ describe('Wish: жизненный цикл желания курса (инте�
   let app: TestApp;
   let transport: TestBotTransport;
   let guest: User;
-  let author: User;
 
   const INSTANT_COURSE_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  // Курс мира с опасным названием (MarkdownV2), запись через анкету (малый пул)
+  const ESCAPING_COURSE_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+  // Начало названия `course-test-escaping` в экранированном виде
+  const ESCAPED_ESCAPING_PREFIX = 'Тест\\. Курс \\(v2\\.0\\)';
   // Published-фикстурный курс с опасным названием (MarkdownV2), без пула
   const DANGEROUS_COURSE_ID = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
-  // Начало опасного названия в экранированном виде (esc: . ( ) ! + = { } | ~)
-  const ESCAPED_DANGEROUS_PREFIX = 'Опас\\. Название \\(v9\\.9\\)';
+  // Опасное название на карточке курса: средняя крошка усечена до 34 символов
+  // (у курса из одного этапа три крошки), точки экранированы
+  const ESCAPED_DANGEROUS_PREFIX = 'Опас\\. Название\\.\\.\\.';
   const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
 
   beforeAll(async () => {
@@ -49,7 +60,6 @@ describe('Wish: жизненный цикл желания курса (инте�
     const appController = new AppController(SCHOOL_GROUP_URL);
     transport = createTestBotTransport(app, [appController, courseController]);
     guest = (await app.userFacade.getUserByTelegramId(1001))!;
-    author = (await app.userFacade.getUserByTelegramId(1004))!;
   });
 
   beforeEach(() => {
@@ -65,32 +75,6 @@ describe('Wish: жизненный цикл желания курса (инте�
   /** Открывает диалог гостя (актуальный штамп для нажатий). */
   async function openDialog(): Promise<void> {
     await transport.handleStart(transport.makeBotContext(guest.telegramId));
-  }
-
-  /** Создаёт draft-курс с модулем и этапом (для проверки карточки). */
-  async function createDraftCourseWithModule(title: string): Promise<string> {
-    const course = await app.apiApp.execute(
-      'create-course',
-      { title, description: 'Интеграционный тест' },
-      author,
-    );
-    const mod = await app.apiApp.execute(
-      'create-module',
-      { title: 'Модуль', description: 'Тестовый модуль' },
-      author,
-    );
-    await app.apiApp.execute('publish-module', { moduleId: mod.uuid }, author);
-    await app.apiApp.execute(
-      'add-phase-to-course',
-      { courseId: course.uuid, title: 'Этап 1', track: 'tech' },
-      author,
-    );
-    await app.apiApp.execute(
-      'add-module-to-course',
-      { courseId: course.uuid, phaseTitle: 'Этап 1', moduleId: mod.uuid },
-      author,
-    );
-    return course.uuid;
   }
 
   /** Прямой callback «Хочу пройти курс»: сырой код + актуальный штамп. */
@@ -162,54 +146,6 @@ describe('Wish: жизненный цикл желания курса (инте�
     return click(confirmScreen, '✅ Да');
   }
 
-  // ── A1: apply → W03 ──
-
-  test('apply instant-курса → W03 «зафиксировано», в репо expressed', async () => {
-    await deactivateWishes();
-    await openDialog();
-
-    const response = await apply(INSTANT_COURSE_ID);
-    expect(response.screen?.text).toContain('зафиксировано');
-    expect(hasButton(response, 'Главное меню')).toBe(true);
-
-    expect(await wishStatuses(INSTANT_COURSE_ID)).toContain('expressed');
-  });
-
-  // ── A2: повторный apply → W04 expressed ──
-
-  test('повторный apply → W04 «уже выразил» с кнопкой отмены желания', async () => {
-    await deactivateWishes();
-    await openDialog();
-    await apply(INSTANT_COURSE_ID);
-
-    const response = await apply(INSTANT_COURSE_ID);
-    expect(response.screen?.text).toContain('уже выразил');
-    expect(hasButton(response, '🗑️ Отменить желание')).toBe(true);
-
-    expect(await wishStatuses(INSTANT_COURSE_ID)).toContain('expressed');
-  });
-
-  // ── A3: cancel-экран, «❌ Отмена» возвращает в карточку без изменений ──
-
-  test('cancel: экран подтверждения; «❌ Отмена» → карточка курса, статус прежний', async () => {
-    await deactivateWishes();
-    await openDialog();
-    await apply(INSTANT_COURSE_ID);
-    const w04 = await apply(INSTANT_COURSE_ID);
-
-    const confirmScreen = await click(w04, '🗑️ Отменить желание');
-    expect(confirmScreen.screen?.text).toContain(
-      'Отменить желание пройти курс?',
-    );
-    expect(hasButton(confirmScreen, '✅ Да')).toBe(true);
-    expect(hasButton(confirmScreen, '❌ Отмена')).toBe(true);
-    expect(await wishStatuses(INSTANT_COURSE_ID)).toContain('expressed');
-
-    const card = await click(confirmScreen, '❌ Отмена');
-    expect(card.screen?.text).toContain('Продвинутый JavaScript');
-    expect(await wishStatuses(INSTANT_COURSE_ID)).toContain('expressed');
-  });
-
   // ── A4: «✅ Да» → W05, повторное желание возможно ──
 
   test('cancel: «✅ Да» → «отменено», в репо cancelled; apply после отмены → W03', async () => {
@@ -227,78 +163,25 @@ describe('Wish: жизненный цикл желания курса (инте�
     expect(await wishStatuses(INSTANT_COURSE_ID)).toContain('expressed');
   });
 
-  // ── A5: двойное подтверждение (устаревший экран) ──
-
-  test('двойное «✅ Да» (устаревший экран) → мягкое «уже нет», статус не меняется', async () => {
-    await deactivateWishes();
-    await openDialog();
-    await apply(INSTANT_COURSE_ID);
-    const w04 = await apply(INSTANT_COURSE_ID);
-    const confirmScreen = await click(w04, '🗑️ Отменить желание');
-    await click(confirmScreen, '✅ Да');
-    expect(await wishStatuses(INSTANT_COURSE_ID)).toContain('cancelled');
-
-    // Повторный клик по той же кнопке «✅ Да» (устаревший cancel-confirm):
-    // активного желания уже нет — мягкое сообщение вместо ошибки
-    const stale = await click(confirmScreen, '✅ Да');
-    expect(stale.screen?.text).toContain('уже нет');
-    expect(await wishStatuses(INSTANT_COURSE_ID)).toContain('cancelled');
-    expect(await wishStatuses(INSTANT_COURSE_ID)).not.toContain('expressed');
-  });
-
-  // ── A6: W04 confirmed ──
-
-  test('confirmed-желание → W04 «обучаешься»; отмена из confirmed → cancelled', async () => {
-    await deactivateWishes();
-    await openDialog();
-    await apply(INSTANT_COURSE_ID);
-    // Переводим свежее желание в confirmed напрямую через репозиторий
-    const wishes = await app.wishRepo.findAllByUserAndTarget(guest.uuid, {
-      kind: 'course',
-      courseId: INSTANT_COURSE_ID,
-    });
-    const expressed = wishes
-      .map((w) => w.snapshot())
-      .find((w) => w.status === 'expressed');
-    expect(expressed).toBeDefined();
-    await app.wishRepo.save(
-      WishAr.restore({ ...expressed!, status: 'confirmed' }),
-    );
-
-    const response = await apply(INSTANT_COURSE_ID);
-    expect(response.screen?.text).toContain('обучаешься');
-    expect(hasButton(response, '🗑️ Отменить желание')).toBe(true);
-
-    const confirmScreen = await click(response, '🗑️ Отменить желание');
-    const w05 = await click(confirmScreen, '✅ Да');
-    expect(w05.screen?.text).toContain('отменено');
-    expect(await wishStatuses(INSTANT_COURSE_ID)).toContain('cancelled');
-    expect(await wishStatuses(INSTANT_COURSE_ID)).not.toContain('confirmed');
-  });
-
   // ── A7: экранирование опасного названия ──
 
-  test('опасное название курса — все экраны markdown-safe', async () => {
-    await deactivateWishes();
+  test('опасные названия курсов — карточки markdown-safe', async () => {
     await openDialog();
 
-    // Карточка draft-курса с опасным названием (создан через create-course)
-    const draftId = await createDraftCourseWithModule(
-      'Чернов. Курс (v1.0) - #3! Draft+тест=ок {draft} |дерево| ~волна~',
-    );
-
-    const draftCard = await transport.handleCallback(
+    // Курс мира с опасным названием: карточка курса из одного этапа
+    const escapingCard = await transport.handleCallback(
       transport.makeBotContext(guest.telegramId, {
         callbackData: stampedCode(
           transport,
           guest.telegramId,
-          `course:course-catalog:phases:${draftId}`,
+          `course:course-catalog:course:${ESCAPING_COURSE_ID}`,
         ),
       }),
     );
-    expect(draftCard.screen?.text).toContain('Чернов\\. Курс \\(v1\\.0\\)');
+    expect(escapingCard.screen?.text).toContain(ESCAPED_ESCAPING_PREFIX);
+    assertDialogResponseMarkdownSafe(escapingCard);
 
-    // Карточка published-курса: опасное название — markdown-safe
+    // Published-курс мира: опасное название в крошках и на кнопке
     const list = await transport.handleCallback(
       transport.makeBotContext(guest.telegramId, {
         callbackData: stampedCode(
@@ -309,28 +192,6 @@ describe('Wish: жизненный цикл желания курса (инте�
       }),
     );
     expect(list.screen?.text).toContain(ESCAPED_DANGEROUS_PREFIX);
-
-    // Полный wish-цикл на published-курсе с опасным названием
-    const card = await transport.handleCallback(
-      transport.makeBotContext(guest.telegramId, {
-        callbackData: stampedCode(
-          transport,
-          guest.telegramId,
-          `course:course-catalog:phases:${DANGEROUS_COURSE_ID}`,
-        ),
-      }),
-    );
-    expect(card.screen?.text).toContain(ESCAPED_DANGEROUS_PREFIX);
-
-    const w03 = await apply(DANGEROUS_COURSE_ID);
-    expect(w03.screen?.text).toContain('зафиксировано');
-
-    const w04 = await apply(DANGEROUS_COURSE_ID);
-    expect(w04.screen?.text).toContain('уже выразил');
-
-    const confirmScreen = await click(w04, '🗑️ Отменить желание');
-    const w05 = await click(confirmScreen, '✅ Да');
-    expect(w05.screen?.text).toContain('отменено');
-    expect(await wishStatuses(DANGEROUS_COURSE_ID)).toContain('cancelled');
+    assertDialogResponseMarkdownSafe(list);
   });
 });

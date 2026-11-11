@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { ContentSnapshot } from '@u7-scl/course/domain';
+import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
 import { StreamStatus, type StreamView } from '@u7-scl/domain/stream/contract';
 import { resolveStreamNavLevel } from './stream-nav-resolver';
 

@@ -10,6 +10,10 @@ import type { User } from '@u7-scl/app-legacy/domain';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import {
+  CourseModuleDef,
+  ListModulesUcDef,
+} from '@u7-scl/domain/course/contract';
+import {
   GetStreamMembersUcDef,
   GetStreamUcDef,
   ListStreamsUcDef,
@@ -112,7 +116,14 @@ describe('MentorController (интеграционный)', () => {
   // ── Создание потока (wizard: модули) ──
 
   test('wizard: список модулей для создания потока', async () => {
-    const modules = await app.apiApp.execute('list-modules', {});
+    const modules = expectOk(
+      await app.apiApp.dispatch(
+        CourseModuleDef,
+        ListModulesUcDef.command({ status: 'published' }),
+        new UserCaller(mentor),
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    );
     expect(Array.isArray(modules)).toBe(true);
   });
 });

@@ -1,18 +1,25 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
-import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import {
   dmgDispatch,
-  streamView,
-} from '../../streams/stories/stream-dmg.test-kit';
+  type Refusal,
+  stepNotFound,
+} from '../../courses/stories/course-dmg.test-kit';
+import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
+import { streamView } from '../../streams/stories/stream-dmg.test-kit';
 import {
   type LegacyStudent,
   studentAnswers,
 } from '../../streams/stories/student-dmg.test-kit';
 import { StepViewStory } from './step-view';
+
+/** Модули, которые вызывает просмотр шага: потоки и курсы. */
+const MODULES = [CourseModuleDef, StreamModuleDef];
 
 describe('StepViewStory', () => {
   const session: BotSession = {
@@ -80,7 +87,7 @@ describe('StepViewStory', () => {
    */
   function makeStory(
     appApiOverrides?: Record<string, unknown>,
-    customStep?: Record<string, unknown>,
+    customStep?: Record<string, unknown> | Refusal,
   ) {
     const studentOverride = appApiOverrides?.['get-student-by-user'];
     const student =
@@ -92,36 +99,31 @@ describe('StepViewStory', () => {
       currentStepId: STEP2_ID,
     };
 
-    const appApiSpy = mock(
-      (name: string, _params?: Record<string, unknown>) => {
-        if (name === 'get-step') {
-          return (
-            customStep ?? {
-              uuid: STEP1_ID,
-              moduleId: 'mod-1',
-              kind: 'text',
-              description: 'Изучите основы',
-              content: 'Контент шага',
-              status: 'published',
-              createdAt: '2026-01-01T00:00:00.000Z',
-            }
-          );
-        }
-        return undefined;
+    const step = customStep ?? {
+      uuid: STEP1_ID,
+      moduleId: 'mod-1',
+      kind: 'text',
+      description: 'Изучите основы',
+      content: 'Контент шага',
+      status: 'published',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    };
+    const dispatch = dmgDispatch(
+      {
+        getStream: () => streamView(mockStream),
+        ...studentAnswers(student, mockStream.contentSnapshot),
+        completeStep: () => completeStep,
+        getStep: () => step,
       },
+      MODULES,
     );
-    const dispatch = dmgDispatch({
-      getStream: () => streamView(mockStream),
-      ...studentAnswers(student, mockStream.contentSnapshot),
-      completeStep: () => completeStep,
-    });
 
     const story = new StepViewStory();
     story.init({
-      appApi: { execute: appApiSpy, dispatch },
+      appApi: { dispatch },
       callers: testCallers,
     } as never);
-    return { story, appApiSpy, dispatch };
+    return { story, dispatch };
   }
 
   test('my-study:continue — экран текущего шага с телом', async () => {
@@ -151,6 +153,19 @@ describe('StepViewStory', () => {
     expect(btnTexts.some((t) => t.includes('Выполнено'))).toBe(true);
     // Шаг выдаётся новым сообщением (история пройденных шагов)
     expect(response.newMessage).toBe(true);
+  });
+
+  test('my-study:continue — отказ getStep: экран ошибки ucErrorNotify', async () => {
+    const { story } = makeStory(undefined, stepNotFound());
+
+    const response = await story.handleCallback(
+      'my-study:continue',
+      studentActor,
+      session,
+    );
+    expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toContain('Шаг не найден');
+    expect(response.screen).toBeUndefined();
   });
 
   test('my-study:continue — «↩️ Главное меню» последней строкой', async () => {

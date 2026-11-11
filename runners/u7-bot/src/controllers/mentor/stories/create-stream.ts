@@ -16,7 +16,12 @@ import type {
   DialogResponse,
   KbButton,
 } from '@u7-scl/core/ui';
-import { Status } from '@u7-scl/course/domain';
+import {
+  CourseModuleDef,
+  GetModuleUcDef,
+  ListModulesUcDef,
+  type ModuleView,
+} from '@u7-scl/domain/course/contract';
 import {
   CreateStreamUcDef,
   StreamModuleDef,
@@ -48,15 +53,16 @@ interface CreateStreamWizardContext {
 }
 
 /** Минимум полей модуля, которые wizard забирает в подсказки */
-interface ModuleRow {
-  title?: string;
-  description?: string;
-  goal?: string;
-  result?: string;
-  rules?: string;
-  targetAudience?: string;
-  additional?: string;
-}
+type ModuleRow = Pick<
+  ModuleView,
+  | 'title'
+  | 'description'
+  | 'goal'
+  | 'result'
+  | 'rules'
+  | 'targetAudience'
+  | 'additional'
+>;
 
 /** Описание одного необязательного поля */
 interface OptionalFieldConfig {
@@ -125,12 +131,12 @@ export class CreateStreamStory extends U7BotUiStory {
   ): Promise<DialogResponse> {
     // Старт wizard-а
     if (action === 'start') {
-      return this.#startWizard();
+      return this.#startWizard(actor);
     }
 
     // Клик по кнопке выбора модуля: module:<moduleId>
     if (action.startsWith('module:')) {
-      return this.#onModuleSelected(action, session);
+      return this.#onModuleSelected(action, session, actor);
     }
 
     // Подтверждение создания на шаге превью
@@ -188,7 +194,7 @@ export class CreateStreamStory extends U7BotUiStory {
 
   override async handleMessage(
     update: BotUpdate,
-    _actor: User,
+    actor: User,
     session: BotSession,
   ): Promise<DialogResponse> {
     if (update.type !== 'message') {
@@ -216,7 +222,7 @@ export class CreateStreamStory extends U7BotUiStory {
 
     switch (context.step) {
       case 0:
-        return this.#handleModuleMessage(context);
+        return this.#handleModuleMessage(context, actor);
       case 1:
         return this.#handleTitleInput(context, update.text);
       case 2:
@@ -259,18 +265,23 @@ export class CreateStreamStory extends U7BotUiStory {
 
   // ── Приватные шаги wizard-а ──
 
-  async #startWizard(): Promise<DialogResponse> {
-    return this.#handleModuleMessage(this.#emptyCtx());
+  async #startWizard(actor: User): Promise<DialogResponse> {
+    return this.#handleModuleMessage(this.#emptyCtx(), actor);
   }
 
   async #handleModuleMessage(
     ctx: CreateStreamWizardContext,
+    actor: User,
   ): Promise<DialogResponse> {
-    const modules = (await this.appApi.execute('list-modules', {
-      status: Status.PUBLISHED,
-    })) as Array<{ uuid: string; title: string }>;
+    const listed = await this.dispatchUc(
+      CourseModuleDef,
+      ListModulesUcDef.command({ status: 'published' }),
+      actor,
+    );
+    if (!listed.ok) return this.ucErrorNotify(listed.error);
+    const modules = listed.value;
 
-    if (!modules || modules.length === 0) {
+    if (modules.length === 0) {
       return this.ask(
         md`📦 *Нет доступных модулей*\n\nУ вас нет опубликованных модулей\\. Создайте модуль в конструкторе курсов\\.`,
         ctx,
@@ -288,6 +299,7 @@ export class CreateStreamStory extends U7BotUiStory {
   async #onModuleSelected(
     action: string,
     session: BotSession,
+    actor: User,
   ): Promise<DialogResponse> {
     const moduleId = action.split(':')[1];
     if (!moduleId) {
@@ -303,10 +315,14 @@ export class CreateStreamStory extends U7BotUiStory {
     let moduleTargetAudience = '';
     let moduleAdditional = '';
 
-    try {
-      const module = (await this.appApi.execute('get-module', {
-        uuid: moduleId,
-      })) as ModuleRow;
+    // Отказ модуля курсов не ломает wizard: подсказки остаются пустыми
+    const loaded = await this.dispatchUc(
+      CourseModuleDef,
+      GetModuleUcDef.command({ moduleId }),
+      actor,
+    );
+    if (loaded.ok) {
+      const module: ModuleRow = loaded.value;
       moduleTitle = module.title ?? '';
       moduleDescription = module.description ?? '';
       moduleGoal = module.goal ?? '';
@@ -314,8 +330,6 @@ export class CreateStreamStory extends U7BotUiStory {
       moduleRules = module.rules ?? '';
       moduleTargetAudience = module.targetAudience ?? '';
       moduleAdditional = module.additional ?? '';
-    } catch {
-      // Модуль не найден — оставляем поля пустыми
     }
 
     const existingCtx =

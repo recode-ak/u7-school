@@ -1,12 +1,15 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { Role } from '@u7-scl/user/domain';
+import { UserCaller } from 'dmg-core';
 import { CoursesController } from './controller';
+import { dmgDispatch } from './stories/course-dmg.test-kit';
 
 describe('CoursesController (реестр)', () => {
+  // Каталог читает UC listCourses (DMG): доступных курсов нет
   const mockAppApi = {
-    execute: mock(() => []),
+    dispatch: dmgDispatch({ listCourses: () => [] }),
   } as never;
 
   const makeController = () => new CoursesController();
@@ -23,6 +26,11 @@ describe('CoursesController (реестр)', () => {
     dialog: { path: 'course/course-catalog', seq: 1 },
   };
 
+  /** Резолвер `Caller` приложения (D-50): актор бота зарегистрирован. */
+  const callers = {
+    resolve: async () => new UserCaller(guestActor),
+  };
+
   test('имя контроллера — course', () => {
     const controller = makeController();
     expect(controller.name).toBe('course');
@@ -36,7 +44,7 @@ describe('CoursesController (реестр)', () => {
 
   test('menuButtons агрегирует кнопки от stories с префиксом контроллера', async () => {
     const controller = makeController();
-    controller.init({ appApi: mockAppApi } as never);
+    controller.init({ appApi: mockAppApi, callers } as never);
 
     const items = await controller.menuButtons(guestActor);
 
@@ -51,7 +59,7 @@ describe('CoursesController (реестр)', () => {
 
   test('handleCallback форвардит по префиксу story', async () => {
     const controller = makeController();
-    controller.init({ appApi: mockAppApi } as never);
+    controller.init({ appApi: mockAppApi, callers } as never);
 
     const response = await controller.handleCallback(
       'course-catalog:list',

@@ -1,12 +1,20 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import { assertMarkdownV2Safe, type MdText } from '@u7-scl/core/shared';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import {
+  courseNotFound,
+  dmgDispatch,
+} from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
-import { dmgDispatch } from '../../streams/stories/stream-dmg.test-kit';
 import {
   type WishConfirmedEvent,
   WishConfirmedStory,
 } from './wish-confirmed.story';
+
+/** Модули рассылки: потоки и курсы. */
+const MODULES = [CourseModuleDef, StreamModuleDef];
 
 // ══ Фикстуры ══
 
@@ -81,14 +89,6 @@ function setupStory(opts: { user?: User; course?: { title: string } } = {}): {
           }; // без telegramId
         return undefined;
       }
-      if (name === 'get-course') return localCourse;
-      if (name === 'get-course-by-module') {
-        const moduleId = params?.moduleId as string;
-        if (['module-a', 'module-b', 'module-c'].includes(moduleId)) {
-          return { uuid: COURSE_ID, title: 'Fullstack JS' };
-        }
-        return { uuid: OTHER_COURSE_ID, title: 'Другой курс' };
-      }
       return undefined;
     },
   );
@@ -98,7 +98,20 @@ function setupStory(opts: { user?: User; course?: { title: string } } = {}): {
     {
       appApi: {
         execute,
-        dispatch: dmgDispatch({ listStreams: () => streams }),
+        dispatch: dmgDispatch(
+          {
+            listStreams: () => streams,
+            getCourse: () => localCourse ?? courseNotFound(),
+            getCourseByModule: (input) => {
+              const { moduleId } = input as { moduleId: string };
+              if (['module-a', 'module-b', 'module-c'].includes(moduleId)) {
+                return { uuid: COURSE_ID, title: 'Fullstack JS' };
+              }
+              return { uuid: OTHER_COURSE_ID, title: 'Другой курс' };
+            },
+          },
+          MODULES,
+        ),
       },
       callers: testCallers,
     } as never,

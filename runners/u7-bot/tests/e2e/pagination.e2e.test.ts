@@ -249,6 +249,11 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
 
   // ── Каталог: уровень 3 длинного модуля (drill-down) ──
 
+  /**
+   * Открывает карточку курса «Длинный курс (пагинация)». У курса один этап,
+   * поэтому модули этапа видны сразу на карточке курса: шага «нажать
+   * этап» нет, признак целевой карточки — кнопка её модуля.
+   */
   async function openLongCourse(tgId: number): Promise<void> {
     await transport.handleStart(transport.makeBotContext(tgId));
     await press(tgId, 'Курсы');
@@ -256,7 +261,7 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
       const screens = screensNewFirst(tgId);
       const isTarget = screens[0]?.keyboard?.rows
         .flat()
-        .some((b) => b.text.includes('Полный трек'));
+        .some((b) => b.text.includes('Длинный модуль'));
       if (isTarget) break;
       const nextBtn = screens[0]?.keyboard?.rows
         .flat()
@@ -271,7 +276,6 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
   test('Каталог: длинный модуль — drill-down навигация по проектам, edit на месте', async () => {
     const tgId = guest.telegramId;
     await openLongCourse(tgId);
-    await press(tgId, 'Полный трек');
 
     const modulesScreen = await press(tgId, 'Длинный модуль');
     const modulesText = String(modulesScreen.screen?.text ?? '');
@@ -307,7 +311,6 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
   test('Каталог: сквозное листание проектов в пределах модуля', async () => {
     const tgId = guest.telegramId;
     await openLongCourse(tgId);
-    await press(tgId, 'Полный трек');
     await press(tgId, 'Длинный модуль');
 
     const originMessageId = lastSentMessageId(tgId);

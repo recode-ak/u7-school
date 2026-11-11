@@ -7,7 +7,17 @@ import {
   type DialogResponse,
   presentNavLevel,
 } from '@u7-scl/core/ui';
-import type { ContentSnapshot, Course } from '@u7-scl/course/domain';
+import {
+  type ContentSnapshot,
+  CourseModuleDef,
+  type CourseView,
+  GetCourseByModuleUcDef,
+  GetCourseUcDef,
+  GetModuleSnapshotUcDef,
+  GetModuleUcDef,
+  GetStepsByLessonsUcDef,
+  ListCoursesUcDef,
+} from '@u7-scl/domain/course/contract';
 import {
   CancelWishUcDef,
   CreateCourseWishUcDef,
@@ -19,6 +29,31 @@ import {
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
 import { resolveCourseNavLevel } from '../course-nav-resolver';
+
+/** Карточка модуля для списка: заголовок и проекты. */
+interface ModuleCardInfo {
+  title: string;
+  projectCount?: number;
+  lessonCount?: number;
+  projects?: Array<{ title: string; lessonCount?: number }>;
+  projectTitles?: string[];
+}
+
+/**
+ * Ответ загрузчика: данные или экран отказа UC. Решает обработчик, не загрузчик
+ * (ERR-06): ошибка списка курсов не превращается в «нет курсов».
+ */
+type LoadResult<T> =
+  | { ok: true; value: T }
+  | { ok: false; response: DialogResponse };
+
+/** Индекс этапа модуля; без этапов или без модуля в этапах — 0 (в адресе игнорируется). */
+function stageIndexOf(course: CourseView, moduleId: string): number {
+  return Math.max(
+    0,
+    course.stages.findIndex((s) => s.moduleIds.includes(moduleId)),
+  );
+}
 
 /**
  * Story «Программы курсов» — каталог учебных курсов школы.
@@ -58,34 +93,44 @@ export class CourseCatalogStory extends U7BotUiStory {
       case 'course':
         return this.#handleCourse(ids[0], actor);
       case 'phase':
-        return this.#handlePhase(ids[0] ?? '', Number(ids[1]));
+        return this.#handlePhase(actor, ids[0] ?? '', Number(ids[1]));
       case 'phases':
         // Совместимость со старыми колбэками: phases:<courseId> -> карточка курса
         return this.#handleCourse(ids[0], actor);
       case 'module':
-        return this.#handleModule(ids[0] ?? '', Number(ids[1]), ids[2] ?? '');
+        return this.#handleModule(
+          actor,
+          ids[0] ?? '',
+          Number(ids[1]),
+          ids[2] ?? '',
+        );
       case 'modules':
         // Совместимость со старыми колбэками: modules:<courseId>:<phaseIdx> -> карточка этапа
-        return this.#handlePhase(ids[0] ?? '', Number(ids[1]));
+        return this.#handlePhase(actor, ids[0] ?? '', Number(ids[1]));
       case 'prj':
       case 'project':
       case 'projects': {
         // Старый формат: projects:<courseId>:<phaseIdx>:<moduleId> -> карточка модуля
         if (cmd === 'projects' && ids.length === 3) {
-          return this.#handleModule(ids[0] ?? '', Number(ids[1]), ids[2] ?? '');
+          return this.#handleModule(
+            actor,
+            ids[0] ?? '',
+            Number(ids[1]),
+            ids[2] ?? '',
+          );
         }
         // Формат 4 сегмента: project:<courseId>:<phaseIdx>:<moduleId>:<projId>
         if (ids.length >= 4) {
-          return this.#handleProject(ids[2] ?? '', ids[3] ?? '', ids[0]);
+          return this.#handleProject(actor, ids[2] ?? '', ids[3] ?? '', ids[0]);
         }
         // Новый компактный формат: prj:<courseId>:<moduleId>:<projId>
         if (ids.length === 3) {
-          return this.#handleProject(ids[1] ?? '', ids[2] ?? '', ids[0]);
+          return this.#handleProject(actor, ids[1] ?? '', ids[2] ?? '', ids[0]);
         }
         // Предыдущий формат: project:<moduleId>:<projId>
         const modId = ids[0] ?? '';
         const projId = ids[1] ?? '';
-        return this.#handleProject(modId, projId);
+        return this.#handleProject(actor, modId, projId);
       }
       case 'les':
       case 'lesson':
@@ -94,24 +139,36 @@ export class CourseCatalogStory extends U7BotUiStory {
         if (cmd === 'lessons' && ids.length === 4) {
           const modId = ids[2] ?? '';
           const pIdxOrId = ids[3] ?? '';
-          return this.#handleLegacyProjectByIndex(modId, pIdxOrId);
+          return this.#handleLegacyProjectByIndex(actor, modId, pIdxOrId);
         }
         // Формат 5 сегментов: lesson:<courseId>:<phaseIdx>:<moduleId>:<projId>:<lesId>
         if (ids.length >= 5) {
-          return this.#handleLesson(ids[3] ?? '', ids[4] ?? '', ids[0], ids[2]);
+          return this.#handleLesson(
+            actor,
+            ids[3] ?? '',
+            ids[4] ?? '',
+            ids[0],
+            ids[2],
+          );
         }
         // Формат 4 сегмента: les:<courseId>:<moduleId>:<projId>:<lesId>
         if (ids.length === 4) {
-          return this.#handleLesson(ids[2] ?? '', ids[3] ?? '', ids[0], ids[1]);
+          return this.#handleLesson(
+            actor,
+            ids[2] ?? '',
+            ids[3] ?? '',
+            ids[0],
+            ids[1],
+          );
         }
         // Новый 3-UUID формат: les:<courseId>:<projId>:<lesId>
         if (ids.length === 3) {
-          return this.#handleLesson(ids[1] ?? '', ids[2] ?? '', ids[0]);
+          return this.#handleLesson(actor, ids[1] ?? '', ids[2] ?? '', ids[0]);
         }
         // Предыдущий формат: lesson:<projId>:<lesId>
         const projId = ids[0] ?? '';
         const lesId = ids[1] ?? '';
-        return this.#handleLesson(projId, lesId);
+        return this.#handleLesson(actor, projId, lesId);
       }
       case 'wish':
         return this.#handleWishModule(ids[0] ?? '', actor);
@@ -152,7 +209,9 @@ export class CourseCatalogStory extends U7BotUiStory {
     courseId: string | undefined,
     actor: User,
   ): Promise<DialogResponse> {
-    const courses = await this.#loadCourses(courseId);
+    const loaded = await this.#loadCourses(actor, courseId);
+    if (!loaded.ok) return loaded.response;
+    const courses = loaded.value;
     if (courses.length === 0) {
       if (courseId) {
         return this.screen(md`⚠️ Курс не найден или недоступен`);
@@ -171,8 +230,8 @@ export class CourseCatalogStory extends U7BotUiStory {
       return this.screen(md`⚠️ Курс не найден или недоступен`);
     }
 
-    const allModIds = currentCourse.phases.flatMap((p) => p.moduleIds ?? []);
-    const modulesInfo = await this.#loadModulesInfo(allModIds);
+    const allModIds = currentCourse.moduleIds;
+    const modulesInfo = await this.#loadModulesInfo(actor, allModIds);
 
     const wishes = await this.dispatchUc(
       WishModuleDef,
@@ -204,6 +263,7 @@ export class CourseCatalogStory extends U7BotUiStory {
   // ═══ Уровень 1: Этап (карточка этапа + модули подуровнем) ═══
 
   async #handlePhase(
+    actor: User,
     courseId: string,
     phaseIdx: number,
   ): Promise<DialogResponse> {
@@ -211,18 +271,20 @@ export class CourseCatalogStory extends U7BotUiStory {
       return this.screen(md`⚠️ Курс не указан`);
     }
 
-    const courses = await this.#loadCourses(courseId);
+    const loaded = await this.#loadCourses(actor, courseId);
+    if (!loaded.ok) return loaded.response;
+    const courses = loaded.value;
     const course = courses.find((c) => c.uuid === courseId);
     if (!course) {
       return this.screen(md`⚠️ Курс не найден или недоступен`);
     }
 
-    const phase = course.phases[phaseIdx];
-    if (!phase) {
+    const stage = course.stages[phaseIdx];
+    if (!stage) {
       return this.screen(md`⚠️ Этап не найден или недоступен`);
     }
 
-    const modulesInfo = await this.#loadModulesInfo(phase.moduleIds ?? []);
+    const modulesInfo = await this.#loadModulesInfo(actor, stage.moduleIds);
 
     const navLevel = resolveCourseNavLevel({
       level: 'phase',
@@ -243,6 +305,7 @@ export class CourseCatalogStory extends U7BotUiStory {
   // ═══ Уровень 2: Модуль (карточка модуля + проекты подуровнем) ═══
 
   async #handleModule(
+    actor: User,
     courseId: string,
     phaseIdx: number,
     moduleId: string,
@@ -251,43 +314,43 @@ export class CourseCatalogStory extends U7BotUiStory {
       return this.screen(md`⚠️ Модуль не указан`);
     }
 
-    const courses = await this.#loadCourses(courseId);
+    const loaded = await this.#loadCourses(actor, courseId);
+    if (!loaded.ok) return loaded.response;
+    const courses = loaded.value;
     let course = courses.find((c) => c.uuid === courseId);
     if (!course) {
-      try {
-        const c = (await this.appApi.execute('get-course-by-module', {
-          moduleId,
-        })) as Course | undefined;
-        if (c) {
-          course = c;
-          if (!courses.some((x) => x.uuid === c.uuid)) courses.push(c);
-        }
-      } catch {
-        // fallback
+      const byModule = await this.dispatchUc(
+        CourseModuleDef,
+        GetCourseByModuleUcDef.command({ moduleId }),
+        actor,
+      );
+      if (byModule.ok && byModule.value) {
+        const c = byModule.value;
+        course = c;
+        if (!courses.some((x) => x.uuid === c.uuid)) courses.push(c);
       }
     }
     if (!course) {
       return this.screen(md`⚠️ Курс не найден или недоступен`);
     }
 
-    let snapshot: ContentSnapshot;
-    try {
-      snapshot = (await this.appApi.execute('get-module-snapshot', {
-        moduleId,
-      })) as ContentSnapshot;
-    } catch {
+    const loadedSnapshot = await this.dispatchUc(
+      CourseModuleDef,
+      GetModuleSnapshotUcDef.command({ moduleId }),
+      actor,
+    );
+    if (!loadedSnapshot.ok) {
       return this.screen(md`⚠️ Модуль не найден или недоступен`);
     }
+    const snapshot: ContentSnapshot = loadedSnapshot.value;
 
     let modTitle = `Модуль ${moduleId.slice(0, 8)}`;
-    try {
-      const mod = (await this.appApi.execute('get-module', {
-        uuid: moduleId,
-      })) as { title: string };
-      if (mod?.title) modTitle = mod.title;
-    } catch {
-      // fallback
-    }
+    const mod = await this.dispatchUc(
+      CourseModuleDef,
+      GetModuleUcDef.command({ moduleId }),
+      actor,
+    );
+    if (mod.ok && mod.value.title) modTitle = mod.value.title;
 
     const navLevel = resolveCourseNavLevel({
       level: 'module',
@@ -310,30 +373,30 @@ export class CourseCatalogStory extends U7BotUiStory {
   // ═══ Уровень 3: Проект (карточка проекта + уроки подуровнем) ═══
 
   async #handleProject(
+    actor: User,
     moduleId: string,
     projectId: string,
     courseId?: string,
   ): Promise<DialogResponse> {
-    const courses = await this.#loadCourses(courseId);
+    const loaded = await this.#loadCourses(actor, courseId);
+    if (!loaded.ok) return loaded.response;
+    const courses = loaded.value;
     let course = courseId
       ? courses.find((c) => c.uuid === courseId)
       : undefined;
     if (!course) {
-      course = courses.find((c) =>
-        c.phases.some((p) => p.moduleIds?.includes(moduleId)),
-      );
+      course = courses.find((c) => c.moduleIds.includes(moduleId));
     }
     if (!course) {
-      try {
-        const c = (await this.appApi.execute('get-course-by-module', {
-          moduleId,
-        })) as Course | undefined;
-        if (c) {
-          course = c;
-          if (!courses.some((x) => x.uuid === c.uuid)) courses.push(c);
-        }
-      } catch {
-        // fallback
+      const byModule = await this.dispatchUc(
+        CourseModuleDef,
+        GetCourseByModuleUcDef.command({ moduleId }),
+        actor,
+      );
+      if (byModule.ok && byModule.value) {
+        const c = byModule.value;
+        course = c;
+        if (!courses.some((x) => x.uuid === c.uuid)) courses.push(c);
       }
     }
     course ??= courses[0];
@@ -341,19 +404,17 @@ export class CourseCatalogStory extends U7BotUiStory {
       return this.screen(md`⚠️ Курс не найден или недоступен`);
     }
 
-    const phaseIdx = Math.max(
-      0,
-      course.phases.findIndex((p) => p.moduleIds?.includes(moduleId)),
-    );
+    const phaseIdx = stageIndexOf(course, moduleId);
 
-    let snapshot: ContentSnapshot;
-    try {
-      snapshot = (await this.appApi.execute('get-module-snapshot', {
-        moduleId,
-      })) as ContentSnapshot;
-    } catch {
+    const loadedSnapshot = await this.dispatchUc(
+      CourseModuleDef,
+      GetModuleSnapshotUcDef.command({ moduleId }),
+      actor,
+    );
+    if (!loadedSnapshot.ok) {
       return this.screen(md`⚠️ Модуль не найден или недоступен`);
     }
+    const snapshot: ContentSnapshot = loadedSnapshot.value;
 
     const project = snapshot.find((p) => p.projectId === projectId);
     if (!project) {
@@ -361,17 +422,15 @@ export class CourseCatalogStory extends U7BotUiStory {
     }
 
     let modTitle = `Модуль ${moduleId.slice(0, 8)}`;
-    try {
-      const mod = (await this.appApi.execute('get-module', {
-        uuid: moduleId,
-      })) as { title: string };
-      if (mod?.title) modTitle = mod.title;
-    } catch {
-      // fallback
-    }
+    const mod = await this.dispatchUc(
+      CourseModuleDef,
+      GetModuleUcDef.command({ moduleId }),
+      actor,
+    );
+    if (mod.ok && mod.value.title) modTitle = mod.value.title;
 
     const lessonIds = project.lessons.map((l) => l.lessonId);
-    const stepTitles = await this.#loadStepTitles(lessonIds);
+    const stepTitles = await this.#loadStepTitles(actor, lessonIds);
 
     const navLevel = resolveCourseNavLevel({
       level: 'project',
@@ -396,12 +455,15 @@ export class CourseCatalogStory extends U7BotUiStory {
   // ═══ Уровень 4: Урок (шаги только заголовками, закрытый уровень) ═══
 
   async #handleLesson(
+    actor: User,
     projectId: string,
     lessonId: string,
     courseId?: string,
     moduleId?: string,
   ): Promise<DialogResponse> {
-    const courses = await this.#loadCourses(courseId);
+    const loaded = await this.#loadCourses(actor, courseId);
+    if (!loaded.ok) return loaded.response;
+    const courses = loaded.value;
     let course = courseId
       ? courses.find((c) => c.uuid === courseId)
       : undefined;
@@ -410,27 +472,23 @@ export class CourseCatalogStory extends U7BotUiStory {
     let snapshot: ContentSnapshot | undefined;
 
     if (course && !foundModId) {
-      const allModIds = course.phases.flatMap((p) => p.moduleIds ?? []);
+      const allModIds = course.moduleIds;
       for (const mId of allModIds) {
-        try {
-          const snap = (await this.appApi.execute('get-module-snapshot', {
-            moduleId: mId,
-          })) as ContentSnapshot;
-          if (snap.some((p) => p.projectId === projectId)) {
-            foundModId = mId;
-            snapshot = snap;
-            break;
-          }
-        } catch {
-          // fallback
+        const snap = await this.dispatchUc(
+          CourseModuleDef,
+          GetModuleSnapshotUcDef.command({ moduleId: mId }),
+          actor,
+        );
+        if (snap.ok && snap.value.some((p) => p.projectId === projectId)) {
+          foundModId = mId;
+          snapshot = snap.value;
+          break;
         }
       }
     }
 
     if (!course) {
-      course = courses.find((c) =>
-        c.phases.some((p) => p.moduleIds?.includes(foundModId ?? '')),
-      );
+      course = courses.find((c) => c.moduleIds.includes(foundModId ?? ''));
     }
     course ??= courses[0];
     if (!course) {
@@ -438,19 +496,17 @@ export class CourseCatalogStory extends U7BotUiStory {
     }
 
     if (!foundModId) {
-      const allModIds = course.phases.flatMap((p) => p.moduleIds ?? []);
+      const allModIds = course.moduleIds;
       for (const mId of allModIds) {
-        try {
-          const snap = (await this.appApi.execute('get-module-snapshot', {
-            moduleId: mId,
-          })) as ContentSnapshot;
-          if (snap.some((p) => p.projectId === projectId)) {
-            foundModId = mId;
-            snapshot = snap;
-            break;
-          }
-        } catch {
-          // fallback
+        const snap = await this.dispatchUc(
+          CourseModuleDef,
+          GetModuleSnapshotUcDef.command({ moduleId: mId }),
+          actor,
+        );
+        if (snap.ok && snap.value.some((p) => p.projectId === projectId)) {
+          foundModId = mId;
+          snapshot = snap.value;
+          break;
         }
       }
     }
@@ -459,19 +515,18 @@ export class CourseCatalogStory extends U7BotUiStory {
       return this.screen(md`⚠️ Модуль не найден или недоступен`);
     }
 
-    const phaseIdx = Math.max(
-      0,
-      course.phases.findIndex((p) => p.moduleIds?.includes(foundModId!)),
-    );
+    const phaseIdx = stageIndexOf(course, foundModId);
 
     if (!snapshot) {
-      try {
-        snapshot = (await this.appApi.execute('get-module-snapshot', {
-          moduleId: foundModId,
-        })) as ContentSnapshot;
-      } catch {
+      const loadedSnapshot = await this.dispatchUc(
+        CourseModuleDef,
+        GetModuleSnapshotUcDef.command({ moduleId: foundModId }),
+        actor,
+      );
+      if (!loadedSnapshot.ok) {
         return this.screen(md`⚠️ Модуль не найден или недоступен`);
       }
+      snapshot = loadedSnapshot.value;
     }
 
     const project = snapshot.find((p) => p.projectId === projectId);
@@ -485,16 +540,14 @@ export class CourseCatalogStory extends U7BotUiStory {
     }
 
     let modTitle = `Модуль ${foundModId.slice(0, 8)}`;
-    try {
-      const mod = (await this.appApi.execute('get-module', {
-        uuid: foundModId,
-      })) as { title: string };
-      if (mod?.title) modTitle = mod.title;
-    } catch {
-      // fallback
-    }
+    const mod = await this.dispatchUc(
+      CourseModuleDef,
+      GetModuleUcDef.command({ moduleId: foundModId }),
+      actor,
+    );
+    if (mod.ok && mod.value.title) modTitle = mod.value.title;
 
-    const stepTitles = await this.#loadStepTitles([lessonId]);
+    const stepTitles = await this.#loadStepTitles(actor, [lessonId]);
 
     const navLevel = resolveCourseNavLevel({
       level: 'lesson',
@@ -649,17 +702,19 @@ export class CourseCatalogStory extends U7BotUiStory {
   }
 
   async #handleLegacyProjectByIndex(
+    actor: User,
     moduleId: string,
     projectIdxOrId: string,
   ): Promise<DialogResponse> {
-    let snapshot: ContentSnapshot;
-    try {
-      snapshot = (await this.appApi.execute('get-module-snapshot', {
-        moduleId,
-      })) as ContentSnapshot;
-    } catch {
+    const loadedSnapshot = await this.dispatchUc(
+      CourseModuleDef,
+      GetModuleSnapshotUcDef.command({ moduleId }),
+      actor,
+    );
+    if (!loadedSnapshot.ok) {
       return this.screen(md`⚠️ Модуль не найден или недоступен`);
     }
+    const snapshot: ContentSnapshot = loadedSnapshot.value;
 
     const idx = Number(projectIdxOrId);
     const project = Number.isNaN(idx)
@@ -669,84 +724,68 @@ export class CourseCatalogStory extends U7BotUiStory {
     if (!project) {
       return this.screen(md`⚠️ Проект не найден`);
     }
-    return this.#handleProject(moduleId, project.projectId);
+    return this.#handleProject(actor, moduleId, project.projectId);
   }
 
   // ═══ Загрузка доменных данных ═══
 
-  async #loadCourses(courseId?: string): Promise<Course[]> {
-    const list = ((await this.appApi.execute('list-courses', {})) ??
-      []) as Course[];
-    if (courseId && !list.some((c) => c.uuid === courseId)) {
-      try {
-        const c = (await this.appApi.execute('get-course', {
-          uuid: courseId,
-        })) as Course;
-        if (c) list.push(c);
-      } catch {
-        // не найден
-      }
+  async #loadCourses(
+    actor: User,
+    courseId?: string,
+  ): Promise<LoadResult<CourseView[]>> {
+    const listed = await this.dispatchUc(
+      CourseModuleDef,
+      ListCoursesUcDef.command({}),
+      actor,
+    );
+    if (!listed.ok) {
+      return { ok: false, response: this.ucErrorNotify(listed.error) };
     }
-    return list;
+    const list: CourseView[] = [...listed.value];
+    if (courseId && !list.some((c) => c.uuid === courseId)) {
+      const loaded = await this.dispatchUc(
+        CourseModuleDef,
+        GetCourseUcDef.command({ courseId }),
+        actor,
+      );
+      if (loaded.ok) list.push(loaded.value);
+    }
+    return { ok: true, value: list };
   }
 
-  async #loadModulesInfo(moduleIds: string[]): Promise<
-    Record<
-      string,
-      {
-        title: string;
-        projectCount?: number;
-        lessonCount?: number;
-        projects?: Array<{ title: string; lessonCount?: number }>;
-        projectTitles?: string[];
-      }
-    >
-  > {
-    const result: Record<
-      string,
-      {
-        title: string;
-        projectCount?: number;
-        lessonCount?: number;
-        projects?: Array<{ title: string; lessonCount?: number }>;
-        projectTitles?: string[];
-      }
-    > = {};
+  async #loadModulesInfo(
+    actor: User,
+    moduleIds: string[],
+  ): Promise<Record<string, ModuleCardInfo>> {
+    const result: Record<string, ModuleCardInfo> = {};
 
     for (const modId of moduleIds) {
       let modTitle = `Модуль ${modId.slice(0, 8)}`;
       let projects: Array<{ title: string; lessonCount?: number }> = [];
 
-      try {
-        const mod = (await this.appApi.execute('get-module', {
-          uuid: modId,
-        })) as {
-          title: string;
-          projects?: Array<{ title?: string; lessonIds?: string[] }>;
-        };
-        if (mod?.title) modTitle = mod.title;
-        if (mod?.projects) {
-          projects = mod.projects.map((p) => ({
-            title: p.title ?? 'Проект',
-            lessonCount: p.lessonIds?.length ?? 0,
-          }));
-        }
-      } catch {
-        // fallback
+      const mod = await this.dispatchUc(
+        CourseModuleDef,
+        GetModuleUcDef.command({ moduleId: modId }),
+        actor,
+      );
+      if (mod.ok) {
+        if (mod.value.title) modTitle = mod.value.title;
+        projects = mod.value.projects.map((p) => ({
+          title: p.title ?? 'Проект',
+          lessonCount: p.lessonIds?.length ?? 0,
+        }));
       }
 
-      try {
-        const snapshot = (await this.appApi.execute('get-module-snapshot', {
-          moduleId: modId,
-        })) as ContentSnapshot;
-        if (Array.isArray(snapshot) && snapshot.length > 0) {
-          projects = snapshot.map((p) => ({
-            title: p.projectTitle,
-            lessonCount: p.lessons?.length ?? 0,
-          }));
-        }
-      } catch {
-        // fallback
+      const snapshot = await this.dispatchUc(
+        CourseModuleDef,
+        GetModuleSnapshotUcDef.command({ moduleId: modId }),
+        actor,
+      );
+      if (snapshot.ok && snapshot.value.length > 0) {
+        projects = snapshot.value.map((p) => ({
+          title: p.projectTitle,
+          lessonCount: p.lessons?.length ?? 0,
+        }));
       }
 
       const projectCount = projects.length;
@@ -767,22 +806,24 @@ export class CourseCatalogStory extends U7BotUiStory {
     return result;
   }
 
-  async #loadStepTitles(lessonIds: string[]): Promise<Record<string, string>> {
+  async #loadStepTitles(
+    actor: User,
+    lessonIds: string[],
+  ): Promise<Record<string, string>> {
     if (lessonIds.length === 0) return {};
-    try {
-      const stepsMap = (await this.appApi.execute('get-steps-by-lessons', {
-        lessonIds,
-      })) as Record<string, Array<{ uuid: string; description: string }>>;
+    const loaded = await this.dispatchUc(
+      CourseModuleDef,
+      GetStepsByLessonsUcDef.command({ lessonIds }),
+      actor,
+    );
+    if (!loaded.ok) return {};
 
-      const result: Record<string, string> = {};
-      for (const steps of Object.values(stepsMap ?? {})) {
-        for (const step of steps ?? []) {
-          result[step.uuid] = step.description;
-        }
+    const result: Record<string, string> = {};
+    for (const steps of Object.values(loaded.value)) {
+      for (const step of steps) {
+        result[step.uuid] = step.description;
       }
-      return result;
-    } catch {
-      return {};
     }
+    return result;
   }
 }

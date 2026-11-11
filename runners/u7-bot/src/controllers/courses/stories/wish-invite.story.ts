@@ -8,6 +8,11 @@ import type {
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
 import {
+  CourseModuleDef,
+  GetCourseUcDef,
+  GetModuleUcDef,
+} from '@u7-scl/domain/course/contract';
+import {
   GetStreamUcDef,
   StreamModuleDef,
   type StreamView,
@@ -173,25 +178,22 @@ export class WishInviteStory extends U7BotUiStory {
     return [mdConcat(mdRaw('👤 Ментор: '), label)];
   }
 
-  /** appApi.execute, не бросающий исключений (undefined — не найдено). */
-  async #fetchCourse(uuid: string): Promise<{ title: string } | undefined> {
-    try {
-      return (await this.appApi.execute('get-course', {
-        uuid,
-      })) as { title: string };
-    } catch {
-      return undefined;
-    }
+  /** Курс для заголовка карточки; отказ — undefined. */
+  async #fetchCourse(courseId: string) {
+    const res = await this.dispatchUcAsGuest(
+      CourseModuleDef,
+      GetCourseUcDef.command({ courseId }),
+    );
+    return res.ok ? res.value : undefined;
   }
 
-  async #fetchModule(uuid: string): Promise<{ title: string } | undefined> {
-    try {
-      return (await this.appApi.execute('get-module', {
-        uuid,
-      })) as { title: string };
-    } catch {
-      return undefined;
-    }
+  /** Модуль для заголовка карточки; отказ — undefined. */
+  async #fetchModule(moduleId: string) {
+    const res = await this.dispatchUcAsGuest(
+      CourseModuleDef,
+      GetModuleUcDef.command({ moduleId }),
+    );
+    return res.ok ? res.value : undefined;
   }
 
   async #fetchMentor(uuid: string): Promise<Mentor | undefined> {

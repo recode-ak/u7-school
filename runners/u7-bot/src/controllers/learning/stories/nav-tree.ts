@@ -8,7 +8,11 @@ import {
   presentNavLevel,
   type StepContentData,
 } from '@u7-scl/core/ui';
-import type { ContentSnapshot } from '@u7-scl/course/domain';
+import {
+  type ContentSnapshot,
+  CourseModuleDef,
+  GetStepUcDef,
+} from '@u7-scl/domain/course/contract';
 import {
   GetStreamUcDef,
   GetStudentProgressUcDef,
@@ -69,7 +73,10 @@ export class NavTreeStory extends U7BotUiStory {
         p.lessons.map((l) => l.lessonId),
       );
       if (lessonIds.length > 0) {
-        const byLesson = await loadStepDescriptions(this.appApi, lessonIds);
+        const byLesson = await loadStepDescriptions(
+          (command) => this.dispatchUc(CourseModuleDef, command, actor),
+          lessonIds,
+        );
         for (const steps of Object.values(byLesson)) {
           for (const s of steps) {
             stepDescriptions[s.uuid] = s.description;
@@ -77,34 +84,28 @@ export class NavTreeStory extends U7BotUiStory {
         }
       }
     } else if (navAddress.level === 'lesson' && navAddress.targetId) {
-      const byLesson = await loadStepDescriptions(this.appApi, [
-        navAddress.targetId,
-      ]);
+      const byLesson = await loadStepDescriptions(
+        (command) => this.dispatchUc(CourseModuleDef, command, actor),
+        [navAddress.targetId],
+      );
       for (const steps of Object.values(byLesson)) {
         for (const s of steps) {
           stepDescriptions[s.uuid] = s.description;
         }
       }
     } else if (navAddress.level === 'step' && navAddress.targetId) {
-      try {
-        const step = (await this.appApi.execute('get-step', {
-          uuid: navAddress.targetId,
-        })) as {
-          description?: string;
-          kind?: string;
-          code?: string;
-          content?: string;
+      const loaded = await this.dispatchUc(
+        CourseModuleDef,
+        GetStepUcDef.command({ stepId: navAddress.targetId }),
+        actor,
+      );
+      if (loaded.ok) {
+        stepDescriptions[navAddress.targetId] = loaded.value.description;
+        stepContent = {
+          kind: loaded.value.kind,
+          code: loaded.value.kind === 'code' ? loaded.value.code : undefined,
+          content: loaded.value.content,
         };
-        if (step) {
-          stepDescriptions[navAddress.targetId] = step.description ?? '';
-          stepContent = {
-            kind: step.kind ?? 'text',
-            code: step.code,
-            content: step.content,
-          };
-        }
-      } catch {
-        // Если шаг не загружен — резолвер обработает отсутствие контента
       }
     }
 

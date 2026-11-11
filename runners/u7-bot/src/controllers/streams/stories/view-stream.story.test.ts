@@ -2,16 +2,22 @@ import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
-import type { ContentSnapshot } from '@u7-scl/course/domain';
-import { ListScopeFactsUcDef } from '@u7-scl/domain/peer-review/contract';
+import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import {
+  ListScopeFactsUcDef,
+  PeerReviewModuleDef,
+} from '@u7-scl/domain/peer-review/contract';
 import {
   GetActiveStudentUcDef,
   GetStreamMembersUcDef,
   GetStreamUcDef,
+  StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
+import { dmgDispatch, refuse } from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
-import { dmgDispatch, refuse, streamView } from './stream-dmg.test-kit';
+import { streamView } from './stream-dmg.test-kit';
 import {
   type LegacyStudent,
   progressProjection,
@@ -19,6 +25,9 @@ import {
   studentView,
 } from './student-dmg.test-kit';
 import { ViewStreamStory } from './view-stream.story';
+
+/** Модули, которые вызывает карточка потока: потоки, отзывы и курсы. */
+const MODULES = [CourseModuleDef, StreamModuleDef, PeerReviewModuleDef];
 
 const STREAM_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -81,48 +90,54 @@ describe('ViewStreamStory (S02-S04)', () => {
 
     const students = (opts.students ?? []) as LegacyStudent[];
     const stream = opts.stream ?? makeStream();
-    const dispatch = dmgDispatch({
-      getStream: () => stream,
-      getStreamMembers: () => streamMembers('m1-m1-m1', students),
-      getStudentProgress: (input) => {
-        const found = students.find(
-          (s) => s.uuid === (input as { studentId: string }).studentId,
-        );
-        return found
-          ? {
-              student: studentView(found),
-              progress: progressProjection(
-                (stream.contentSnapshot ?? []) as Parameters<
-                  typeof progressProjection
-                >[0],
-                found,
-              ),
-            }
-          : refuse('STUDENT_NOT_FOUND', 'not_found');
-      },
-      getActiveStudent: () =>
-        opts.activeStudent
-          ? { student: studentView(makeStudent() as unknown as LegacyStudent) }
-          : {},
-      enrollStudent: () => {
-        if (opts.wrongKey)
-          return refuse(
-            'STUDENT_WRONG_ENROLLMENT_KEY',
-            'validation',
-            undefined,
-            'Неверное кодовое слово',
+    const dispatch = dmgDispatch(
+      {
+        getStream: () => stream,
+        getStreamMembers: () => streamMembers('m1-m1-m1', students),
+        getStudentProgress: (input) => {
+          const found = students.find(
+            (s) => s.uuid === (input as { studentId: string }).studentId,
           );
-        if (opts.enrollFails)
-          return refuse(
-            'STUDENT_NO_STEPS',
-            'conflict',
-            undefined,
-            'В потоке нет доступных шагов',
-          );
-        return { studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001' };
+          return found
+            ? {
+                student: studentView(found),
+                progress: progressProjection(
+                  (stream.contentSnapshot ?? []) as Parameters<
+                    typeof progressProjection
+                  >[0],
+                  found,
+                ),
+              }
+            : refuse('STUDENT_NOT_FOUND', 'not_found');
+        },
+        getActiveStudent: () =>
+          opts.activeStudent
+            ? {
+                student: studentView(makeStudent() as unknown as LegacyStudent),
+              }
+            : {},
+        enrollStudent: () => {
+          if (opts.wrongKey)
+            return refuse(
+              'STUDENT_WRONG_ENROLLMENT_KEY',
+              'validation',
+              undefined,
+              'Неверное кодовое слово',
+            );
+          if (opts.enrollFails)
+            return refuse(
+              'STUDENT_NO_STEPS',
+              'conflict',
+              undefined,
+              'В потоке нет доступных шагов',
+            );
+          return { studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001' };
+        },
+        listScopeFacts,
+        getStepsByLessons: () => ({}),
       },
-      listScopeFacts,
-    });
+      MODULES,
+    );
 
     const story = new ViewStreamStory();
     story.init({
@@ -621,39 +636,32 @@ describe('ViewStreamStory — публичная drill-down программа �
   ];
 
   function makePublicStory() {
-    const mockAppApi = {
-      execute: mock(async (name: string, params?: Record<string, unknown>) => {
-        if (name === 'get-steps-by-lessons') {
-          return {
-            'lesson-1': [
-              { uuid: 'step-1', description: 'Шаг 1: Описание первого шага' },
-              { uuid: 'step-2', description: 'Шаг 2: Описание второго шага' },
-            ],
-          };
-        }
-        if (name === 'get-step') {
-          return {
-            uuid: params?.uuid,
-            description: 'Шаг 1',
-            kind: 'text',
-            content: 'Секретное тело шага',
-          };
-        }
-        return undefined;
-      }),
-    };
     const story = new ViewStreamStory();
     story.init({
       appApi: {
-        ...mockAppApi,
-        dispatch: dmgDispatch({
-          getStream: () =>
-            makeStream({ uuid: STREAM_ID_PUB, contentSnapshot: snapshot }),
-        }),
+        dispatch: dmgDispatch(
+          {
+            getStream: () =>
+              makeStream({ uuid: STREAM_ID_PUB, contentSnapshot: snapshot }),
+            getStepsByLessons: () => ({
+              'lesson-1': [
+                { uuid: 'step-1', description: 'Шаг 1: Описание первого шага' },
+                { uuid: 'step-2', description: 'Шаг 2: Описание второго шага' },
+              ],
+            }),
+            getStep: (input) => ({
+              uuid: (input as { stepId: string }).stepId,
+              description: 'Шаг 1',
+              kind: 'text',
+              content: 'Секретное тело шага',
+            }),
+          },
+          MODULES,
+        ),
       },
       callers: testCallers,
     } as never);
-    return { story, mockAppApi };
+    return { story };
   }
 
   test('root: карточка модуля — список проектов без статусов и кнопка назад', async () => {
@@ -786,18 +794,24 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
     };
     const dispatch =
       facts === 'throw' || facts === 'fail'
-        ? dmgDispatch({
-            ...streamAnswers,
-            listScopeFacts: () => {
-              if (facts === 'throw') throw new Error('диспетчер недоступен');
-              return refuse('REVIEW_UNAVAILABLE', 'internal');
+        ? dmgDispatch(
+            {
+              ...streamAnswers,
+              listScopeFacts: () => {
+                if (facts === 'throw') throw new Error('диспетчер недоступен');
+                return refuse('REVIEW_UNAVAILABLE', 'internal');
+              },
             },
-          })
-        : dmgDispatch({
-            ...streamAnswers,
-            listScopeFacts: () =>
-              facts ?? { hasReviews: false, reviewsCount: 0 },
-          });
+            MODULES,
+          )
+        : dmgDispatch(
+            {
+              ...streamAnswers,
+              listScopeFacts: () =>
+                facts ?? { hasReviews: false, reviewsCount: 0 },
+            },
+            MODULES,
+          );
     const mockAppApi = {
       dispatch,
       execute: mock(async (name: string) => {

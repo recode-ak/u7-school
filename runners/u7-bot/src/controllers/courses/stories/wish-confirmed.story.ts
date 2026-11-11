@@ -8,6 +8,11 @@ import type {
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
 import {
+  CourseModuleDef,
+  GetCourseByModuleUcDef,
+  GetCourseUcDef,
+} from '@u7-scl/domain/course/contract';
+import {
   ListStreamsUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
@@ -122,26 +127,22 @@ export class WishConfirmedStory extends U7BotUiStory {
     }
   }
 
-  async #fetchCourse(uuid: string): Promise<{ title: string } | undefined> {
-    try {
-      return (await this.appApi.execute('get-course', {
-        uuid,
-      })) as { title: string };
-    } catch {
-      return undefined;
-    }
+  /** Курс для карточки уведомления; отказ — undefined. */
+  async #fetchCourse(courseId: string) {
+    const res = await this.dispatchUcAsGuest(
+      CourseModuleDef,
+      GetCourseUcDef.command({ courseId }),
+    );
+    return res.ok ? res.value : undefined;
   }
 
-  async #fetchCourseByModule(
-    moduleId: string,
-  ): Promise<{ uuid: string } | undefined> {
-    try {
-      return (await this.appApi.execute('get-course-by-module', {
-        moduleId,
-      })) as { uuid: string };
-    } catch {
-      return undefined;
-    }
+  /** Курс модуля; отказ или модуль вне курсов — undefined. */
+  async #fetchCourseByModule(moduleId: string) {
+    const res = await this.dispatchUcAsGuest(
+      CourseModuleDef,
+      GetCourseByModuleUcDef.command({ moduleId }),
+    );
+    return res.ok ? res.value : undefined;
   }
 
   // ── Story не интерактивна: callback не обрабатывает ──

@@ -10,6 +10,7 @@ import {
   presentNavLevel,
   type StepContentData,
 } from '@u7-scl/core/ui';
+import { CourseModuleDef, GetStepUcDef } from '@u7-scl/domain/course/contract';
 import {
   ListScopeFactsUcDef,
   PeerReviewModuleDef,
@@ -318,7 +319,10 @@ export class ViewStreamStory extends U7BotUiStory {
       if (snapProject) {
         const lessonIds = snapProject.lessons.map((l) => l.lessonId);
         const byLesson =
-          (await loadStepDescriptions(this.appApi, lessonIds)) ?? {};
+          (await loadStepDescriptions(
+            (command) => this.dispatchUc(CourseModuleDef, command, actor),
+            lessonIds,
+          )) ?? {};
         for (const steps of Object.values(byLesson)) {
           if (Array.isArray(steps)) {
             for (const s of steps) {
@@ -329,7 +333,10 @@ export class ViewStreamStory extends U7BotUiStory {
       }
     } else if (level === 'lesson' && targetId) {
       const byLesson =
-        (await loadStepDescriptions(this.appApi, [targetId])) ?? {};
+        (await loadStepDescriptions(
+          (command) => this.dispatchUc(CourseModuleDef, command, actor),
+          [targetId],
+        )) ?? {};
       for (const steps of Object.values(byLesson)) {
         if (Array.isArray(steps)) {
           for (const s of steps) {
@@ -338,25 +345,18 @@ export class ViewStreamStory extends U7BotUiStory {
         }
       }
     } else if (level === 'step' && targetId) {
-      try {
-        const step = (await this.appApi.execute('get-step', {
-          uuid: targetId,
-        })) as {
-          description?: string;
-          kind?: string;
-          code?: string;
-          content?: string;
-        } | null;
-        if (step) {
-          stepDescriptions[targetId] = step.description ?? '';
-          stepContent = {
-            kind: step.kind ?? 'text',
-            content: step.content,
-            code: step.code,
-          };
-        }
-      } catch {
-        // Шаг не найден
+      const loaded = await this.dispatchUc(
+        CourseModuleDef,
+        GetStepUcDef.command({ stepId: targetId }),
+        actor,
+      );
+      if (loaded.ok) {
+        stepDescriptions[targetId] = loaded.value.description;
+        stepContent = {
+          kind: loaded.value.kind,
+          content: loaded.value.content,
+          code: loaded.value.kind === 'code' ? loaded.value.code : undefined,
+        };
       }
     }
 

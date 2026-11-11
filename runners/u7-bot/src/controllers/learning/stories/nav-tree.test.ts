@@ -1,18 +1,21 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
+import { dmgDispatch } from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
-import {
-  dmgDispatch,
-  streamView,
-} from '../../streams/stories/stream-dmg.test-kit';
+import { streamView } from '../../streams/stories/stream-dmg.test-kit';
 import {
   type LegacyStudent,
   studentAnswers,
 } from '../../streams/stories/student-dmg.test-kit';
 import { NavTreeStory } from './nav-tree';
+
+/** Модули, которые вызывает навигация: потоки и курсы. */
+const MODULES = [CourseModuleDef, StreamModuleDef];
 
 describe('NavTreeStory — drill-down навигация студента (TDD)', () => {
   const studentActor: User = {
@@ -192,50 +195,45 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
         ? undefined
         : ((studentOverride ?? richStudent) as LegacyStudent);
 
-    const appApiSpy = mock((name: string, params?: Record<string, unknown>) => {
-      if (name === 'get-step') {
-        const p = params as { uuid: string };
-        return allSteps[p.uuid] as unknown;
-      }
-      if (name === 'get-steps-by-lessons') {
-        const p = params as { lessonIds: string[] };
-        const result: Record<
-          string,
-          Array<{ uuid: string; description: string }>
-        > = {};
-        for (const lid of p.lessonIds) {
-          const ids =
-            lid === LESSON1_ID
-              ? [STEP1_ID, STEP2_ID]
-              : lid === LESSON2_ID
-                ? [STEP3_ID, STEP4_ID]
-                : lid === LESSON3_ID
-                  ? [STEP5_ID, STEP6_ID]
-                  : lid === LESSON4_ID
-                    ? [STEP7_ID, STEP8_ID]
-                    : [];
-          result[lid] = ids.map((sid) => ({
-            uuid: sid,
-            description: (allSteps[sid]?.description as string) ?? '',
-          }));
-        }
-        return result;
-      }
-      return undefined;
-    });
-
     const story = new NavTreeStory();
     story.init({
       appApi: {
-        execute: appApiSpy,
-        dispatch: dmgDispatch({
-          getStream: () => streamView(richStream),
-          ...studentAnswers(student, richSnapshot),
-        }),
+        dispatch: dmgDispatch(
+          {
+            getStream: () => streamView(richStream),
+            ...studentAnswers(student, richSnapshot),
+            getStep: (input) => allSteps[(input as { stepId: string }).stepId],
+            getStepsByLessons: (input) => {
+              const p = input as { lessonIds: string[] };
+              const result: Record<
+                string,
+                Array<{ uuid: string; description: string }>
+              > = {};
+              for (const lid of p.lessonIds) {
+                const ids =
+                  lid === LESSON1_ID
+                    ? [STEP1_ID, STEP2_ID]
+                    : lid === LESSON2_ID
+                      ? [STEP3_ID, STEP4_ID]
+                      : lid === LESSON3_ID
+                        ? [STEP5_ID, STEP6_ID]
+                        : lid === LESSON4_ID
+                          ? [STEP7_ID, STEP8_ID]
+                          : [];
+                result[lid] = ids.map((sid) => ({
+                  uuid: sid,
+                  description: (allSteps[sid]?.description as string) ?? '',
+                }));
+              }
+              return result;
+            },
+          },
+          MODULES,
+        ),
       },
       callers: testCallers,
     } as never);
-    return { story, appApiSpy };
+    return { story };
   }
 
   // ── Уровень 1: Root (Модуль / Проекты) ──

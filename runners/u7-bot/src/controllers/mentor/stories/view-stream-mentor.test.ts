@@ -2,19 +2,19 @@ import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review/contract';
 import {
   ArchiveStreamUcDef,
   CompleteStreamUcDef,
   StreamErrors,
+  StreamModuleDef,
   StreamStatus,
 } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
+import { dmgDispatch } from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
-import {
-  dmgDispatch,
-  refuse,
-  streamView,
-} from '../../streams/stories/stream-dmg.test-kit';
+import { refuse, streamView } from '../../streams/stories/stream-dmg.test-kit';
 import {
   type LegacyStudent,
   progressProjection,
@@ -22,6 +22,9 @@ import {
   studentView,
 } from '../../streams/stories/student-dmg.test-kit';
 import { ViewStreamMentorStory } from './view-stream-mentor';
+
+/** Модули карточки потока ментора: потоки, отзывы и курсы. */
+const MODULES = [CourseModuleDef, StreamModuleDef, PeerReviewModuleDef];
 
 const mentorActor: User = {
   uuid: 'mentor-1',
@@ -96,37 +99,43 @@ function createStory(handler?: Handler) {
     ),
   };
   // поток и факты отзывов скоупа — UC DMG через dispatch
-  const dispatch = dmgDispatch({
-    getStream: (input, caller) => {
-      const stream = answer('getStream', input as Record<string, unknown>);
-      return stream instanceof Object && 'uuid' in stream
-        ? viewOf(stream as Record<string, unknown>, caller.subject().uuid)
-        : stream;
+  const dispatch = dmgDispatch(
+    {
+      getStream: (input, caller) => {
+        const stream = answer('getStream', input as Record<string, unknown>);
+        return stream instanceof Object && 'uuid' in stream
+          ? viewOf(stream as Record<string, unknown>, caller.subject().uuid)
+          : stream;
+      },
+      // состав потока и расчёты студента строятся по ответу 'list-stream-students'
+      getStreamMembers: () =>
+        streamMembers(
+          'mentor-1',
+          (answer('list-stream-students') ?? []) as LegacyStudent[],
+        ),
+      getStudentProgress: (input) => {
+        const list = (answer('list-stream-students') ?? []) as LegacyStudent[];
+        const found = list.find(
+          (s) => s.uuid === (input as { studentId: string }).studentId,
+        );
+        return found
+          ? {
+              student: studentView(found),
+              progress: progressProjection(mockStream.contentSnapshot, found),
+            }
+          : refuse('STUDENT_NOT_FOUND', 'not_found');
+      },
+      completeStream: (input) =>
+        answer('completeStream', input as Record<string, unknown>),
+      archiveStream: (input) =>
+        answer('archiveStream', input as Record<string, unknown>),
+      listScopeFacts: () => ({ hasReviews: false, reviewsCount: 0 }),
+      getStepsByLessons: (input) =>
+        answer('getStepsByLessons', input as Record<string, unknown>),
+      getStep: (input) => answer('getStep', input as Record<string, unknown>),
     },
-    // состав потока и расчёты студента строятся по ответу 'list-stream-students'
-    getStreamMembers: () =>
-      streamMembers(
-        'mentor-1',
-        (answer('list-stream-students') ?? []) as LegacyStudent[],
-      ),
-    getStudentProgress: (input) => {
-      const list = (answer('list-stream-students') ?? []) as LegacyStudent[];
-      const found = list.find(
-        (s) => s.uuid === (input as { studentId: string }).studentId,
-      );
-      return found
-        ? {
-            student: studentView(found),
-            progress: progressProjection(mockStream.contentSnapshot, found),
-          }
-        : refuse('STUDENT_NOT_FOUND', 'not_found');
-    },
-    completeStream: (input) =>
-      answer('completeStream', input as Record<string, unknown>),
-    archiveStream: (input) =>
-      answer('archiveStream', input as Record<string, unknown>),
-    listScopeFacts: () => ({ hasReviews: false, reviewsCount: 0 }),
-  });
+    MODULES,
+  );
   story.init({
     appApi: { ...appApi, dispatch },
     callers: testCallers,
@@ -263,7 +272,7 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
   test('program: карточка урока — все шаги доступны для ментора', async () => {
     const { story } = createStory((name) => {
       if (name === 'getStream') return mockStream;
-      if (name === 'get-steps-by-lessons') {
+      if (name === 'getStepsByLessons') {
         return {
           'lesson-1': [
             { uuid: 'step-1', description: 'Шаг первый' },
@@ -295,9 +304,9 @@ describe('ViewStreamMentorStory (S02m-карточка) — контракт «�
   test('program: карточка шага — ментор видит тело шага (readOnly)', async () => {
     const { story } = createStory((name, params) => {
       if (name === 'getStream') return mockStream;
-      if (name === 'get-step') {
+      if (name === 'getStep') {
         return {
-          uuid: params?.uuid,
+          uuid: params?.stepId,
           description: 'Шаг первый',
           kind: 'text',
           content: 'Теория протокола HTTP.',

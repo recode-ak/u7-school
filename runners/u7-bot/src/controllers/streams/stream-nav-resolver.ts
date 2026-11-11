@@ -6,7 +6,7 @@ import {
   parseNavAddress,
   type StepContentData,
 } from '@u7-scl/core/ui';
-import type { ContentSnapshot } from '@u7-scl/course/domain';
+import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
 
 export type StreamNavMode = 'mentor' | 'viewer';
 

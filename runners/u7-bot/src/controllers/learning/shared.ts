@@ -1,5 +1,4 @@
 import type { User } from '@u7-scl/app-legacy/domain';
-import type { ApiApp } from '@u7-scl/core/api';
 import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import type { DialogResponse, NavNodeStatus } from '@u7-scl/core/ui';
 import {
@@ -8,7 +7,12 @@ import {
   STATUS_ICONS,
   screen,
 } from '@u7-scl/core/ui';
-import type { ContentSnapshot } from '@u7-scl/course/domain';
+import {
+  type ContentSnapshot,
+  type CourseModuleDef,
+  GetStepsByLessonsUcDef,
+  GetStepUcDef,
+} from '@u7-scl/domain/course/contract';
 import {
   GetStudentByUserUcDef,
   type Progress,
@@ -17,7 +21,6 @@ import {
   type StudentView,
 } from '@u7-scl/domain/stream/contract';
 import type { Command, OutputOf, Result, UseCaseErrorOf } from 'dmg-core';
-import type { U7BotAppMeta } from '../../core/u7-bot-app-meta';
 
 /** Студент в представлении контракта `stream`. */
 export type Student = StudentView;
@@ -28,6 +31,16 @@ export type Student = StudentView;
  */
 export type StreamDispatch = <
   D extends (typeof StreamModuleDef)['useCases'][number],
+>(
+  command: Command<D>,
+) => Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
+
+/**
+ * Исполнитель команд модуля `course` от имени актора: стори отдаёт замыкание
+ * над `dispatchUc` (метод защищён, хелперы раздела learning его не видят).
+ */
+export type CourseDispatch = <
+  D extends (typeof CourseModuleDef)['useCases'][number],
 >(
   command: Command<D>,
 ) => Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
@@ -116,7 +129,7 @@ export function getCompletedStepsInOrder(student: Student): string[] {
 
 /** Строит список шагов урока с маркерами для отображения в просмотре шага. */
 export async function buildStepList(
-  appApi: ApiApp<U7BotAppMeta>,
+  dispatch: CourseDispatch,
   snapshot: ContentSnapshot,
   lessonId: string,
   student: Student,
@@ -153,13 +166,8 @@ export async function buildStepList(
       marker = '🔒';
     }
 
-    let desc: string;
-    try {
-      const step = await appApi.execute('get-step', { uuid: sid });
-      desc = (step as { description?: string }).description ?? sid;
-    } catch {
-      desc = sid;
-    }
+    const loaded = await dispatch(GetStepUcDef.command({ stepId: sid }));
+    const desc = loaded.ok ? loaded.value.description : sid;
 
     lines.push(md`${marker} _${desc}_`);
   }
@@ -171,16 +179,11 @@ export async function buildStepList(
  * Загружает описания шагов через get-steps-by-lessons.
  */
 export async function loadStepDescriptions(
-  appApi: ApiApp<U7BotAppMeta>,
+  dispatch: CourseDispatch,
   lessonIds: string[],
 ): Promise<Record<string, Array<{ uuid: string; description: string }>>> {
-  try {
-    return (await appApi.execute('get-steps-by-lessons', {
-      lessonIds,
-    })) as Record<string, Array<{ uuid: string; description: string }>>;
-  } catch {
-    return {};
-  }
+  const res = await dispatch(GetStepsByLessonsUcDef.command({ lessonIds }));
+  return res.ok ? res.value : {};
 }
 
 /**

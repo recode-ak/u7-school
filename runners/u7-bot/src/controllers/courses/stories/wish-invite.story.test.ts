@@ -1,13 +1,18 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { MdText } from '@u7-scl/core/shared';
+import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import { dmgDispatch } from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import {
-  dmgDispatch,
   streamNotFound,
   streamView,
 } from '../../streams/stories/stream-dmg.test-kit';
 import { type WishInvitedEvent, WishInviteStory } from './wish-invite.story';
+
+/** Модули приглашения: потоки и курсы. */
+const MODULES = [CourseModuleDef, StreamModuleDef];
 
 // ══ Фикстуры ══
 
@@ -107,8 +112,6 @@ function setupStory(
         if (uuid === MENTOR_ID) return localMentor;
         return undefined;
       }
-      if (name === 'get-course') return opts.course ?? course;
-      if (name === 'get-module') return opts.module ?? module_;
       return undefined;
     },
   );
@@ -118,9 +121,14 @@ function setupStory(
     {
       appApi: {
         execute,
-        dispatch: dmgDispatch({
-          getStream: () => localStream ?? streamNotFound(),
-        }),
+        dispatch: dmgDispatch(
+          {
+            getStream: () => localStream ?? streamNotFound(),
+            getCourse: () => opts.course ?? course,
+            getModule: () => opts.module ?? module_,
+          },
+          MODULES,
+        ),
       },
       callers: testCallers,
     } as never,

@@ -1,18 +1,27 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import type { User } from '@u7-scl/app-legacy/domain';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
+import {
+  type ContentSnapshot,
+  type CourseView,
+  GetCourseByModuleUcDef,
+  GetCourseUcDef,
+  GetModuleSnapshotUcDef,
+  GetModuleUcDef,
+  GetStepsByLessonsUcDef,
+  ListCoursesUcDef,
+  type ModuleView,
+} from '@u7-scl/domain/course/contract';
 import {
   CancelWishUcDef,
   CreateCourseWishUcDef,
   CreateModuleWishUcDef,
   ListUserWishesUcDef,
   WishErrors,
-  WishModuleDef,
 } from '@u7-scl/domain/wish/contract';
 import { Role } from '@u7-scl/user/domain';
 import {
-  type AnyModuleDef,
   type Command,
   type DomainError,
   type Err,
@@ -22,6 +31,16 @@ import {
 } from 'dmg-core';
 import { Routes } from '../../shared/routes';
 import { CourseCatalogStory } from './course-catalog.story';
+import {
+  courseNotFound,
+  courseView,
+  dmgDispatch,
+  moduleNotFound,
+  moduleView,
+  refuse,
+  stage,
+  type UcAnswers,
+} from './course-dmg.test-kit';
 
 /** Актор UC DMG — субъект `UserCaller`, переданный в `appApi.dispatch`. */
 function subjectOf(caller: unknown): User {
@@ -31,27 +50,20 @@ function subjectOf(caller: unknown): User {
   return caller.user as User;
 }
 
-/** Ответ модуля wish на команду: `command`, `caller` — как их отдал транспорт. */
-type WishAnswer = (
-  command: Command,
-  caller: unknown,
-) => Promise<Result<unknown, DomainError>>;
-
-/**
- * Мок модуля wish: отвечает `answer` на команду `uc`, на прочие — пустым
- * списком желаний.
- */
-function wishModule(uc: string, answer: Result<unknown, DomainError>) {
-  return mock<WishAnswer>(async (command) =>
-    command.uc === uc ? answer : ok([]),
-  );
+/** Ответ UC в моке: успех — значением, отказ домена (`Err`) — отказом kit. */
+function answerOf(result: Result<unknown, DomainError>) {
+  if (result.ok) return result.value;
+  const { code, kind, label, payload } = result.error;
+  return refuse(code, kind, payload, label);
 }
 
-/** Вызов модуля wish с командой `uc`: команда и субъект. */
-function wishCall(wish: ReturnType<typeof mock<WishAnswer>>, uc: string) {
-  const call = wish.mock.calls.find(([command]) => command.uc === uc);
+/** Вызов UC `uc` в моке `dispatch`: вход команды и субъект. */
+function ucCall(dispatch: ReturnType<typeof dmgDispatch>, uc: string) {
+  const call = dispatch.mock.calls.find(
+    ([, command]: [unknown, Command, unknown]) => command.uc === uc,
+  );
   if (call === undefined) throw new Error(`Команда ${uc} не отправлена`);
-  return { input: call[0].input, subject: subjectOf(call[1]) };
+  return { input: call[1].input, subject: subjectOf(call[2]) };
 }
 
 describe('CourseCatalogStory', () => {
@@ -66,45 +78,15 @@ describe('CourseCatalogStory', () => {
     createdAt: '2026-01-01T00:00:00.000Z',
   };
 
+  /**
+   * Мок `appApi.dispatch` над данными курсов: ответы модуля `course`
+   * (`getModule` без модуля — отказ, `getModuleSnapshot` без снимка — пустой)
+   * и список желаний пользователя. `overrides` заменяют ответы по имени UC.
+   */
   function makeAppApi(
-    courses: Array<{
-      uuid: string;
-      title: string;
-      description: string;
-      authorId: string;
-      phases: Array<{
-        title: string;
-        track?: string;
-        moduleIds: string[];
-      }>;
-      status: string;
-      createdAt: string;
-    }>,
-    modules: Record<
-      string,
-      {
-        uuid: string;
-        title: string;
-        description: string;
-        projects: Array<{
-          uuid: string;
-          title: string;
-          lessonIds: string[];
-        }>;
-      }
-    > = {},
-    snapshots: Record<
-      string,
-      Array<{
-        projectId: string;
-        projectTitle: string;
-        lessons: Array<{
-          lessonId: string;
-          lessonTitle: string;
-          stepIds: string[];
-        }>;
-      }>
-    > = {},
+    courses: CourseView[],
+    modules: Record<string, ModuleView> = {},
+    snapshots: Record<string, ContentSnapshot> = {},
     steps: Record<string, Array<{ uuid: string; description: string }>> = {},
     wishes: Array<{
       userId: string;
@@ -113,67 +95,45 @@ describe('CourseCatalogStory', () => {
         | { kind: 'module'; moduleId: string };
       status: string;
     }> = [],
+    overrides: UcAnswers = {},
   ) {
-    return {
-      wish: mock<WishAnswer>(async (command, caller) =>
-        command.uc === ListUserWishesUcDef.name
-          ? ok(wishes.filter((w) => w.userId === subjectOf(caller).uuid))
-          : ok(undefined),
-      ),
-      execute: mock(async (ucName: unknown, attrs: Record<string, unknown>) => {
-        if (ucName === 'list-courses') return courses;
-        if (ucName === 'get-course') {
-          const found = courses.find((c) => c.uuid === attrs.uuid);
-          if (!found)
-            throw Object.assign(new Error('Курс не найден'), {
-              name: 'COURSE_NOT_FOUND',
-            });
-          return found;
-        }
-        if (ucName === 'get-module') {
-          const mod = modules[attrs.uuid as string];
-          if (!mod)
-            throw Object.assign(new Error('Модуль не найден'), {
-              name: 'MODULE_NOT_FOUND',
-            });
-          return mod;
-        }
-        if (ucName === 'get-module-snapshot') {
-          return snapshots[attrs.moduleId as string] ?? [];
-        }
-        if (ucName === 'get-steps-by-lessons') {
-          const result: Record<
-            string,
-            Array<{ uuid: string; description: string }>
-          > = {};
-          for (const id of attrs.lessonIds as string[]) {
-            if (steps[id]) result[id] = steps[id]!;
-          }
-          return result;
-        }
-        return undefined;
-      }),
-    };
+    return dmgDispatch({
+      [ListCoursesUcDef.name]: () => courses,
+      [GetCourseUcDef.name]: (input) => {
+        const { courseId } = input as { courseId: string };
+        return (
+          courses.find((c) => c.uuid === courseId) ?? courseNotFound(courseId)
+        );
+      },
+      [GetCourseByModuleUcDef.name]: (input) => {
+        const { moduleId } = input as { moduleId: string };
+        return courses.find((c) => c.moduleIds.includes(moduleId));
+      },
+      [GetModuleUcDef.name]: (input) => {
+        const { moduleId } = input as { moduleId: string };
+        return modules[moduleId] ?? moduleNotFound(moduleId);
+      },
+      [GetModuleSnapshotUcDef.name]: (input) => {
+        const { moduleId } = input as { moduleId: string };
+        return snapshots[moduleId] ?? [];
+      },
+      [GetStepsByLessonsUcDef.name]: (input) => {
+        const { lessonIds } = input as { lessonIds: string[] };
+        return Object.fromEntries(
+          lessonIds.filter((id) => steps[id]).map((id) => [id, steps[id]]),
+        );
+      },
+      [ListUserWishesUcDef.name]: (_input, caller) =>
+        wishes.filter((w) => w.userId === subjectOf(caller).uuid),
+      ...overrides,
+    });
   }
 
-  /**
-   * Story над моками: legacy UC — `appApi.execute`, команды DMG —
-   * `appApi.dispatch` (модуль wish отвечает моком `wish`), субъект —
-   * резолвер `callers`.
-   */
+  /** Story над моком `dispatch`; субъект — резолвер `callers` приложения. */
   function initStory(
     story: CourseCatalogStory,
-    api: { execute: unknown; wish?: ReturnType<typeof mock<WishAnswer>> },
+    dispatch: ReturnType<typeof dmgDispatch>,
   ) {
-    const wish = api.wish ?? mock<WishAnswer>(async () => ok([]));
-    const dispatch = (
-      module: AnyModuleDef,
-      command: Command,
-      caller: unknown,
-    ) => {
-      expect(module).toBe(WishModuleDef);
-      return wish(command, caller);
-    };
     // Резолвер `Caller` приложения (D-50): актор бота зарегистрирован.
     const callers = {
       resolve: async (uuid: string | undefined) => {
@@ -181,10 +141,7 @@ describe('CourseCatalogStory', () => {
         return new UserCaller(actor);
       },
     };
-    story.init({
-      appApi: { execute: api.execute, dispatch },
-      callers,
-    } as never);
+    story.init({ appApi: { dispatch }, callers } as never);
   }
 
   // ── Главное меню (декларативные menuButtons) ──
@@ -214,18 +171,12 @@ describe('CourseCatalogStory', () => {
 
   test('list: показывает курсы с этапами inline, без описаний', async () => {
     const appApi = makeAppApi([
-      {
+      courseView({
         uuid: 'c1',
         title: 'JS Basics',
         description: 'Описание курса — не должно быть видно',
-        authorId: 'author-1',
-        phases: [
-          { title: 'Синтаксис', track: 'tech', moduleIds: ['m1', 'm2'] },
-          { title: 'Практика', moduleIds: ['m3'] },
-        ],
-        status: 'published',
-        createdAt: '2026-01-01T00:00:00.000Z',
-      },
+        stages: [stage('Синтаксис', ['m1', 'm2']), stage('Практика', ['m3'])],
+      }),
     ]);
 
     const story = new CourseCatalogStory();
@@ -266,17 +217,27 @@ describe('CourseCatalogStory', () => {
     );
   });
 
+  test('list: отказ listCourses — реплика ucErrorNotify, а не «нет курсов»', async () => {
+    const appApi = makeAppApi([], {}, {}, {}, [], {
+      [ListCoursesUcDef.name]: () => refuse('SERVER_INTERNAL', 'internal'),
+    });
+    const story = new CourseCatalogStory();
+    initStory(story, appApi);
+
+    const response = await story.handleCallback('list', actor, session);
+    expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toContain('Произошла ошибка');
+    expect(response.screen).toBeUndefined();
+  });
+
   test('list: заголовок «📖 *Курсы*»', async () => {
     const appApi = makeAppApi([
-      {
+      courseView({
         uuid: 'c1',
         title: 'Course',
         description: 'Desc',
-        authorId: 'a',
-        phases: [{ title: 'Phase', moduleIds: [] }],
-        status: 'published',
-        createdAt: '2026-01-01T00:00:00.000Z',
-      },
+        stages: [stage('Phase', [])],
+      }),
     ]);
     const story = new CourseCatalogStory();
     initStory(story, appApi);
@@ -291,34 +252,40 @@ describe('CourseCatalogStory', () => {
     const courseUuid = 'c2';
     const appApi = makeAppApi(
       [
-        {
+        courseView({
           uuid: courseUuid,
           title: 'Fullstack JS',
           description: '...',
-          authorId: 'a',
-          phases: [
-            { title: 'Синтаксис', track: 'tech', moduleIds: ['m-1'] },
-            { title: 'Алгоритмика', track: 'tech', moduleIds: ['m-2'] },
-          ],
-          status: 'published',
-          createdAt: '2026-01-01T00:00:00.000Z',
-        },
+          stages: [stage('Синтаксис', ['m-1']), stage('Алгоритмика', ['m-2'])],
+        }),
       ],
       {
-        'm-1': {
+        'm-1': moduleView({
           uuid: 'm-1',
           title: 'Переменные',
           description: '...',
           projects: [
-            { uuid: 'p1', title: 'Введение', lessonIds: ['l1', 'l2'] },
+            {
+              uuid: 'p1',
+              title: 'Введение',
+              lessonIds: ['l1', 'l2'],
+              status: 'published',
+            },
           ],
-        },
-        'm-2': {
+        }),
+        'm-2': moduleView({
           uuid: 'm-2',
           title: 'Алгоритмы',
           description: '...',
-          projects: [{ uuid: 'p2', title: 'Сортировка', lessonIds: ['l3'] }],
-        },
+          projects: [
+            {
+              uuid: 'p2',
+              title: 'Сортировка',
+              lessonIds: ['l3'],
+              status: 'published',
+            },
+          ],
+        }),
       },
     );
 
@@ -353,29 +320,20 @@ describe('CourseCatalogStory', () => {
     const courseUuid = 'c3';
     const appApi = makeAppApi(
       [
-        {
+        courseView({
           uuid: courseUuid,
           title: 'Course',
           description: '...',
-          authorId: 'a',
-          phases: [
-            {
-              title: 'Синтаксис',
-              track: 'tech',
-              moduleIds: ['m-a'],
-            },
-          ],
-          status: 'published',
-          createdAt: '2026-01-01T00:00:00.000Z',
-        },
+          stages: [stage('Синтаксис', ['m-a'])],
+        }),
       ],
       {
-        'm-a': {
+        'm-a': moduleView({
           uuid: 'm-a',
           title: 'Модуль A',
           description: '...',
           projects: [],
-        },
+        }),
       },
       {
         'm-a': [
@@ -411,8 +369,9 @@ describe('CourseCatalogStory', () => {
     expect(projBtn).toBeDefined();
     expect(projBtn![0]!.code).toBe(`course-catalog:prj:${courseUuid}:m-a:pa`);
 
-    // Кнопка «Назад к этапу»
-    expect(rows.some((r) => r[0]?.text?.includes('Назад к этапу'))).toBe(true);
+    // Курс из одного этапа: уровня этапа в навигации нет — «Назад к курсу»
+    expect(rows.some((r) => r[0]?.text?.includes('Назад к курсу'))).toBe(true);
+    expect(rows.some((r) => r[0]?.text?.includes('Назад к этапу'))).toBe(false);
   });
 
   // ── Уровень 3: Проект + уроки с шагами-заголовками подуровнем ──
@@ -421,23 +380,20 @@ describe('CourseCatalogStory', () => {
     const courseUuid = 'c4';
     const appApi = makeAppApi(
       [
-        {
+        courseView({
           uuid: courseUuid,
           title: 'Course',
           description: '...',
-          authorId: 'a',
-          phases: [{ title: 'Основы', track: 'tech', moduleIds: ['m-x'] }],
-          status: 'published',
-          createdAt: '2026-01-01T00:00:00.000Z',
-        },
+          stages: [stage('Основы', ['m-x'])],
+        }),
       ],
       {
-        'm-x': {
+        'm-x': moduleView({
           uuid: 'm-x',
           title: 'Модуль X',
           description: '...',
           projects: [],
-        },
+        }),
       },
       {
         'm-x': [
@@ -499,23 +455,20 @@ describe('CourseCatalogStory', () => {
     const courseUuid = 'c5';
     const appApi = makeAppApi(
       [
-        {
+        courseView({
           uuid: courseUuid,
           title: 'Course',
           description: '...',
-          authorId: 'a',
-          phases: [{ title: 'Phase', moduleIds: ['m-z'] }],
-          status: 'published',
-          createdAt: '2026-01-01T00:00:00.000Z',
-        },
+          stages: [stage('Phase', ['m-z'])],
+        }),
       ],
       {
-        'm-z': {
+        'm-z': moduleView({
           uuid: 'm-z',
           title: 'Модуль Z',
           description: '...',
           projects: [],
-        },
+        }),
       },
       {
         'm-z': [
@@ -568,6 +521,218 @@ describe('CourseCatalogStory', () => {
     expect(flatBtns.some((b) => b.text.includes('Назад к проекту'))).toBe(true);
   });
 
+  test('list: курс из одного этапа сразу показывает модули этапа', async () => {
+    const appApi = makeAppApi(
+      [
+        courseView({
+          uuid: 'c-one',
+          title: 'Один этап',
+          stages: [stage('Единственный', ['m-1'])],
+        }),
+      ],
+      {
+        'm-1': moduleView({
+          uuid: 'm-1',
+          title: 'Переменные',
+          projects: [
+            {
+              uuid: 'p1',
+              title: 'Введение',
+              lessonIds: ['l1'],
+              status: 'published',
+            },
+          ],
+        }),
+      },
+    );
+    const story = new CourseCatalogStory();
+    initStory(story, appApi);
+
+    const response = await story.handleCallback('list', actor, session);
+    assertDialogResponseMarkdownSafe(response);
+    const text = String(response.screen?.text ?? '');
+
+    expect(text).toContain('Этап 1/1: Единственный');
+    expect(text).toContain('*Модули этапа:*');
+    const rows = response.screen?.keyboard?.rows ?? [];
+    const modBtn = rows.find((r) => r[0]?.text?.includes('Переменные'));
+    expect(modBtn![0]!.code).toBe('course-catalog:module:c-one:0:m-1');
+    // кнопки этапа в списке нет
+    expect(
+      rows.some((r) => r[0]?.code === 'course-catalog:phase:c-one:0'),
+    ).toBe(false);
+  });
+
+  describe('курс без этапов', () => {
+    const noStages = courseView({
+      uuid: 'c-flat',
+      title: 'Без этапов',
+      moduleIds: ['m-1', 'm-2'],
+      stages: [],
+    });
+    const modules = {
+      'm-1': moduleView({ uuid: 'm-1', title: 'Первый модуль' }),
+      'm-2': moduleView({ uuid: 'm-2', title: 'Второй модуль' }),
+    };
+    const snapshots = {
+      'm-1': [
+        {
+          projectId: 'pa',
+          projectTitle: 'Проект A',
+          lessons: [{ lessonId: 'la', lessonTitle: 'Урок A', stepIds: [] }],
+        },
+      ],
+    };
+
+    test('project — курс найден по модулю, «Назад к модулю» с :0:', async () => {
+      const appApi = makeAppApi([noStages], modules, snapshots);
+      const story = new CourseCatalogStory();
+      initStory(story, appApi);
+
+      const response = await story.handleCallback(
+        'prj:c-flat:m-1:pa',
+        actor,
+        session,
+      );
+      assertDialogResponseMarkdownSafe(response);
+
+      const text = String(response.screen?.text ?? '');
+      expect(text).toContain('Проект 1/1: Проект A');
+      expect(text).not.toContain('Этап');
+      const flat = (response.screen?.keyboard?.rows ?? []).flat();
+      expect(flat.find((b) => b.text.includes('Назад к модулю'))?.code).toBe(
+        'course-catalog:module:c-flat:0:m-1',
+      );
+    });
+
+    test('lesson без модуля в адресе — модуль ищется по программе курса', async () => {
+      const appApi = makeAppApi([noStages], modules, snapshots);
+      const story = new CourseCatalogStory();
+      initStory(story, appApi);
+
+      const response = await story.handleCallback(
+        'les:c-flat:pa:la',
+        actor,
+        session,
+      );
+      assertDialogResponseMarkdownSafe(response);
+
+      const text = String(response.screen?.text ?? '');
+      expect(text).toContain('Модуль 1/2: Первый модуль');
+      expect(text).toContain('Урок 1/1: Урок A');
+      expect(text).not.toContain('Этап');
+    });
+
+    test('phase — «Этап не найден или недоступен»', async () => {
+      const appApi = makeAppApi([noStages], modules, snapshots);
+      const story = new CourseCatalogStory();
+      initStory(story, appApi);
+
+      const response = await story.handleCallback(
+        'phase:c-flat:0',
+        actor,
+        session,
+      );
+      assertDialogResponseMarkdownSafe(response);
+
+      expect(String(response.screen?.text)).toContain(
+        'Этап не найден или недоступен',
+      );
+    });
+  });
+
+  // ── Загрузка курса и отказы UC ──
+
+  test('курс вне listCourses подгружается через getCourse', async () => {
+    const hidden = courseView({
+      uuid: 'c-hidden',
+      title: 'Скрытый курс',
+      stages: [stage('Первый', []), stage('Второй', [])],
+    });
+    const appApi = makeAppApi([hidden], {}, {}, {}, [], {
+      [ListCoursesUcDef.name]: () => [],
+    });
+    const story = new CourseCatalogStory();
+    initStory(story, appApi);
+
+    const response = await story.handleCallback(
+      'course:c-hidden',
+      actor,
+      session,
+    );
+    assertDialogResponseMarkdownSafe(response);
+
+    expect(String(response.screen?.text)).toContain('Скрытый курс');
+    expect(ucCall(appApi, GetCourseUcDef.name).input).toEqual({
+      courseId: 'c-hidden',
+    });
+  });
+
+  test('отказ getModule — заголовок модуля «Модуль <8 символов uuid>»', async () => {
+    const moduleId = 'abcdef12-0000-4000-8000-000000000000';
+    const appApi = makeAppApi(
+      [
+        courseView({
+          uuid: 'c-two',
+          title: 'Курс',
+          stages: [stage('Первый', [moduleId]), stage('Второй', [])],
+        }),
+      ],
+      {},
+      { [moduleId]: [] },
+    );
+    const story = new CourseCatalogStory();
+    initStory(story, appApi);
+
+    const response = await story.handleCallback(
+      `module:c-two:0:${moduleId}`,
+      actor,
+      session,
+    );
+    assertDialogResponseMarkdownSafe(response);
+
+    expect(String(response.screen?.text)).toContain('Модуль abcdef12');
+  });
+
+  test('отказ getStepsByLessons — шаги урока без описаний: «Шаг n»', async () => {
+    const appApi = makeAppApi(
+      [
+        courseView({
+          uuid: 'c-two',
+          title: 'Курс',
+          stages: [stage('Первый', ['m-1']), stage('Второй', [])],
+        }),
+      ],
+      { 'm-1': moduleView({ uuid: 'm-1', title: 'Модуль' }) },
+      {
+        'm-1': [
+          {
+            projectId: 'pa',
+            projectTitle: 'Проект',
+            lessons: [{ lessonId: 'la', lessonTitle: 'Урок', stepIds: ['s1'] }],
+          },
+        ],
+      },
+      {},
+      [],
+      {
+        [GetStepsByLessonsUcDef.name]: () =>
+          refuse('SERVER_INTERNAL', 'internal'),
+      },
+    );
+    const story = new CourseCatalogStory();
+    initStory(story, appApi);
+
+    const response = await story.handleCallback(
+      'lesson:c-two:0:m-1:pa:la',
+      actor,
+      session,
+    );
+    assertDialogResponseMarkdownSafe(response);
+
+    expect(String(response.screen?.text)).toContain('Шаг 1');
+  });
+
   // ── Ошибки ──
 
   test('phases: несуществующий курс — ошибка', async () => {
@@ -598,29 +763,18 @@ describe('CourseCatalogStory', () => {
     expect(String(response.screen?.text)).toContain('не найден');
   });
 
-  test('projects: несуществующий модуль — ошибка', async () => {
-    const appApi = {
-      execute: mock(async (ucName: unknown, _attrs: unknown) => {
-        if (ucName === 'list-courses') {
-          return [
-            {
-              uuid: 'c1',
-              title: 'C',
-              phases: [{ title: 'P', moduleIds: ['bad'] }],
-            },
-          ];
-        }
-        if (ucName === 'get-module-snapshot') {
-          throw Object.assign(new Error('Модуль не найден'), {
-            name: 'MODULE_NOT_FOUND',
-          });
-        }
-        return undefined;
-      }),
-    };
+  test('projects: отказ getModuleSnapshot — «Модуль не найден или недоступен»', async () => {
+    const appApi = makeAppApi(
+      [courseView({ uuid: 'c1', title: 'C', stages: [stage('P', ['bad'])] })],
+      {},
+      {},
+      {},
+      [],
+      { [GetModuleSnapshotUcDef.name]: () => moduleNotFound('bad') },
+    );
 
     const story = new CourseCatalogStory();
-    initStory(story, appApi as never);
+    initStory(story, appApi);
 
     const response = await story.handleCallback(
       'projects:c1:0:bad',
@@ -628,7 +782,9 @@ describe('CourseCatalogStory', () => {
       session,
     );
     assertDialogResponseMarkdownSafe(response);
-    expect(String(response.screen?.text)).toContain('не найден');
+    expect(String(response.screen?.text)).toContain(
+      'Модуль не найден или недоступен',
+    );
   });
 
   // ── Неизвестная команда ──
@@ -660,10 +816,9 @@ describe('CourseCatalogStory', () => {
     const moduleId = '33333333-3333-4333-8333-333333333333';
 
     function makeWishApi(error?: Err<DomainError>) {
-      return {
-        execute: mock(async () => undefined),
-        wish: wishModule(CreateModuleWishUcDef.name, error ?? ok(undefined)),
-      };
+      return dmgDispatch({
+        [CreateModuleWishUcDef.name]: () => answerOf(error ?? ok(undefined)),
+      });
     }
 
     test('успех: вызывает create-module-wish и подтверждает', async () => {
@@ -678,7 +833,7 @@ describe('CourseCatalogStory', () => {
       );
       assertDialogResponseMarkdownSafe(response);
 
-      expect(wishCall(api.wish, CreateModuleWishUcDef.name)).toEqual({
+      expect(ucCall(api, CreateModuleWishUcDef.name)).toEqual({
         input: { moduleId },
         subject: actor,
       });
@@ -730,10 +885,9 @@ describe('CourseCatalogStory', () => {
     const courseId = 'c1';
 
     function makeApplyApi(answer: Result<unknown, DomainError>) {
-      return {
-        execute: mock(async () => undefined),
-        wish: wishModule(CreateCourseWishUcDef.name, answer),
-      };
+      return dmgDispatch({
+        [CreateCourseWishUcDef.name]: () => answerOf(answer),
+      });
     }
 
     function makeCatalogApi(
@@ -747,15 +901,12 @@ describe('CourseCatalogStory', () => {
     ) {
       return makeAppApi(
         [
-          {
+          courseView({
             uuid: courseId,
             title: 'JS Basics',
             description: '...',
-            authorId: 'a',
-            phases: [{ title: 'Синтаксис', track: 'tech', moduleIds: [] }],
-            status: 'published',
-            createdAt: '2026-01-01T00:00:00.000Z',
-          },
+            stages: [stage('Синтаксис', [])],
+          }),
         ],
         {},
         {},
@@ -896,7 +1047,7 @@ describe('CourseCatalogStory', () => {
       );
       assertDialogResponseMarkdownSafe(response);
 
-      expect(wishCall(appApi.wish, CreateCourseWishUcDef.name)).toEqual({
+      expect(ucCall(appApi, CreateCourseWishUcDef.name)).toEqual({
         input: { courseId },
         subject: actor,
       });
@@ -920,7 +1071,7 @@ describe('CourseCatalogStory', () => {
         session,
       );
 
-      expect(wishCall(appApi.wish, CreateCourseWishUcDef.name).input).toEqual({
+      expect(ucCall(appApi, CreateCourseWishUcDef.name).input).toEqual({
         courseId,
       });
       // Стори ничего не отправляет — анкету проактивно рендерит FillStory
@@ -1041,10 +1192,9 @@ describe('CourseCatalogStory', () => {
     const courseId = 'c1';
 
     function makeCancelApi(error?: Err<DomainError>) {
-      return {
-        execute: mock(async () => undefined),
-        wish: wishModule(CancelWishUcDef.name, error ?? ok(undefined)),
-      };
+      return dmgDispatch({
+        [CancelWishUcDef.name]: () => answerOf(error ?? ok(undefined)),
+      });
     }
 
     test('cancel: рендерит подтверждение W05 с кнопками Да/Отмена', async () => {
@@ -1081,7 +1231,7 @@ describe('CourseCatalogStory', () => {
       );
       assertDialogResponseMarkdownSafe(response);
 
-      expect(wishCall(appApi.wish, CancelWishUcDef.name)).toEqual({
+      expect(ucCall(appApi, CancelWishUcDef.name)).toEqual({
         input: { kind: 'course', courseId },
         subject: actor,
       });
@@ -1117,10 +1267,9 @@ describe('CourseCatalogStory', () => {
     const moduleId = '33333333-3333-4333-8333-333333333333';
 
     function makeCancelApi(error?: Err<DomainError>) {
-      return {
-        execute: mock(async () => undefined),
-        wish: wishModule(CancelWishUcDef.name, error ?? ok(undefined)),
-      };
+      return dmgDispatch({
+        [CancelWishUcDef.name]: () => answerOf(error ?? ok(undefined)),
+      });
     }
 
     test('cancel-mod: рендерит подтверждение W05-M с кнопками Да/Отмена', async () => {
@@ -1157,7 +1306,7 @@ describe('CourseCatalogStory', () => {
       );
       assertDialogResponseMarkdownSafe(response);
 
-      expect(wishCall(appApi.wish, CancelWishUcDef.name)).toEqual({
+      expect(ucCall(appApi, CancelWishUcDef.name)).toEqual({
         input: { kind: 'module', moduleId },
         subject: actor,
       });
@@ -1191,24 +1340,18 @@ describe('CourseCatalogStory', () => {
   describe('Листание соседей (drill-down навигация)', () => {
     test('листание курсов: ◀️ Пред. курс / След. курс ▶️', async () => {
       const courses = [
-        {
+        courseView({
           uuid: 'c-1',
           title: 'Первый курс',
           description: 'd1',
-          authorId: 'a',
-          phases: [{ title: 'Этап 1', moduleIds: [] }],
-          status: 'published',
-          createdAt: '2026-01-01T00:00:00.000Z',
-        },
-        {
+          stages: [stage('Этап 1', [])],
+        }),
+        courseView({
           uuid: 'c-2',
           title: 'Второй курс',
           description: 'd2',
-          authorId: 'a',
-          phases: [{ title: 'Этап 2', moduleIds: [] }],
-          status: 'published',
-          createdAt: '2026-01-01T00:00:00.000Z',
-        },
+          stages: [stage('Этап 2', [])],
+        }),
       ];
       const appApi = makeAppApi(courses);
       const story = new CourseCatalogStory();
@@ -1239,18 +1382,12 @@ describe('CourseCatalogStory', () => {
 
     test('листание этапов: ◀️ Пред. этап / След. этап ▶️', async () => {
       const appApi = makeAppApi([
-        {
+        courseView({
           uuid: 'c-1',
           title: 'Курс с 2 этапами',
           description: 'd',
-          authorId: 'a',
-          phases: [
-            { title: 'Этап 1', moduleIds: [] },
-            { title: 'Этап 2', moduleIds: [] },
-          ],
-          status: 'published',
-          createdAt: '2026-01-01T00:00:00.000Z',
-        },
+          stages: [stage('Этап 1', []), stage('Этап 2', [])],
+        }),
       ]);
       const story = new CourseCatalogStory();
       initStory(story, appApi);
@@ -1281,34 +1418,28 @@ describe('CourseCatalogStory', () => {
     test('drill-down сохраняет контекст курса, если модуль входит в несколько курсов', async () => {
       const sharedModId = 'shared-mod';
       const courses = [
-        {
+        courseView({
           uuid: 'course-first',
           title: 'Основы программирования',
           description: 'Первый курс',
-          authorId: 'a',
-          phases: [{ title: 'Этап 1', moduleIds: [sharedModId] }],
-          status: 'published',
-          createdAt: '2026-01-01T00:00:00.000Z',
-        },
-        {
+          stages: [stage('Этап 1', [sharedModId])],
+        }),
+        courseView({
           uuid: 'course-second',
           title: 'Тест курс (v2)',
           description: 'Второй курс',
-          authorId: 'a',
-          phases: [{ title: 'Этап 1', moduleIds: [sharedModId] }],
-          status: 'published',
-          createdAt: '2026-01-01T00:00:00.000Z',
-        },
+          stages: [stage('Этап 1', [sharedModId])],
+        }),
       ];
       const appApi = makeAppApi(
         courses,
         {
-          [sharedModId]: {
+          [sharedModId]: moduleView({
             uuid: sharedModId,
             title: 'Общий модуль',
             description: '...',
             projects: [],
-          },
+          }),
         },
         {
           [sharedModId]: [

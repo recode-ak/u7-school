@@ -7,7 +7,11 @@ import type {
   KbButton,
   KeyboardDescription,
 } from '@u7-scl/core/ui';
-import type { ContentSnapshot, Step } from '@u7-scl/course/domain';
+import {
+  type ContentSnapshot,
+  CourseModuleDef,
+  GetStepUcDef,
+} from '@u7-scl/domain/course/contract';
 import {
   CompleteStepUcDef,
   GetStreamUcDef,
@@ -120,7 +124,13 @@ export class StepViewStory extends U7BotUiStory {
       return this.#streamCompletedScreen();
     }
 
-    return this.#buildStepView(stream, stepId, student.streamId, progress);
+    return this.#buildStepView(
+      stream,
+      stepId,
+      student.streamId,
+      progress,
+      actor,
+    );
   }
 
   async #handleComplete(action: string, actor: User): Promise<DialogResponse> {
@@ -213,7 +223,14 @@ export class StepViewStory extends U7BotUiStory {
       return this.screen(md`⚠️ Шаг не найден в программе потока\\.`);
     }
 
-    const step = await this.appApi.execute('get-step', { uuid: stepId });
+    const loaded = await this.dispatchUc(
+      CourseModuleDef,
+      GetStepUcDef.command({ stepId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
+    const step = loaded.value;
+
     const stepRecord = student.steps.find((s) => s.stepId === stepId);
     const isCompleted = stepRecord?.status === 'completed';
 
@@ -221,7 +238,7 @@ export class StepViewStory extends U7BotUiStory {
     const mainMessage = formatStepMessage(
       stream.title,
       resolved,
-      step as Step,
+      step,
       progress?.step?.lessonProgress,
     );
 
@@ -229,7 +246,7 @@ export class StepViewStory extends U7BotUiStory {
     const lessonId = findLessonIdForStep(stream.contentSnapshot, stepId);
     const stepList = lessonId
       ? await buildStepList(
-          this.appApi,
+          (command) => this.dispatchUc(CourseModuleDef, command, actor),
           stream.contentSnapshot,
           lessonId,
           student,
@@ -290,14 +307,20 @@ export class StepViewStory extends U7BotUiStory {
     stepId: string,
     streamId: string,
     progress: ProgressView | undefined,
+    actor: User,
   ): Promise<DialogResponse> {
     const resolved = progress?.step?.position ?? null;
 
-    const step = await this.appApi.execute('get-step', { uuid: stepId });
+    const loaded = await this.dispatchUc(
+      CourseModuleDef,
+      GetStepUcDef.command({ stepId }),
+      actor,
+    );
+    if (!loaded.ok) return this.ucErrorNotify(loaded.error);
     const message = formatStepMessage(
       stream.title,
       resolved,
-      step as Step,
+      loaded.value,
       progress?.step?.lessonProgress,
     );
     const keyboard = this.#buildStepKeyboard(streamId, stepId);

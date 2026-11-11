@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { TEST_SCHOOL, type User } from '@u7-scl/app-legacy/domain';
 import type {
   BotSession,
@@ -6,12 +6,22 @@ import type {
   DialogResponse,
 } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
-import { ModuleErrors } from '@u7-scl/domain/course/contract';
-import { CreateStreamUcDef } from '@u7-scl/domain/stream/contract';
+import { CourseModuleDef, ModuleErrors } from '@u7-scl/domain/course/contract';
+import {
+  CreateStreamUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/user/domain';
+import {
+  dmgDispatch,
+  type Refusal,
+  refuse,
+} from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
-import { dmgDispatch, refuse } from '../../streams/stories/stream-dmg.test-kit';
 import { CreateStreamStory } from './create-stream';
+
+/** Модули мастера: курсы (модули) и потоки (создание). */
+const MODULES = [CourseModuleDef, StreamModuleDef];
 
 /** Контекст wizard-а (живёт в dialog.input.context) */
 type WizardCtx = Record<string, unknown>;
@@ -61,40 +71,34 @@ const MOD_FIELDS: WizardCtx = {
 };
 
 function createStory(
-  apiOverrides?: Record<string, unknown>,
+  apiOverrides?: { listModules?: unknown[] | Refusal },
   createStream: () => unknown = () => ({
     streamId: '11111111-1111-4111-8111-111111111111',
   }),
 ) {
   const story = new CreateStreamStory();
-  const appApi = {
-    execute: mock(async (name: string, params?: Record<string, unknown>) => {
-      if (apiOverrides && name in apiOverrides) {
-        const val = apiOverrides[name];
-        if (typeof val === 'function') return (val as () => unknown)();
-        if (val instanceof Error) throw val;
-        return val;
-      }
-      if (name === 'list-modules') return [mockModule];
-      if (name === 'get-module') {
-        const uuid = params?.uuid;
-        if (uuid === mockModule.uuid) return mockModule;
+  const dispatch = dmgDispatch(
+    {
+      createStream,
+      listModules: () => apiOverrides?.listModules ?? [mockModule],
+      getModule: (input) => {
+        const { moduleId } = input as { moduleId: string };
+        if (moduleId === mockModule.uuid) return mockModule;
         return { title: '', description: '' };
-      }
-      return undefined;
-    }),
-  };
-  const dispatch = dmgDispatch({ createStream });
+      },
+    },
+    MODULES,
+  );
   // Второй аргумент — имя контроллера (для isActive в pipe-командах)
   story.init(
     {
-      appApi: { ...appApi, dispatch },
+      appApi: { dispatch },
       callers: testCallers,
       school: TEST_SCHOOL,
     } as never,
     { name: 'mentor' } as never,
   );
-  return { story, appApi, dispatch };
+  return { story, dispatch };
 }
 
 const inputMsg = (text: string) => ({
@@ -139,7 +143,7 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
   });
 
   test('start: нет модулей — экран с кнопкой «Обновить список»', async () => {
-    const { story } = createStory({ 'list-modules': [] });
+    const { story } = createStory({ listModules: [] });
     const response = await story.handleCallback(
       'start',
       mentorActor,
@@ -150,6 +154,20 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
       [{ text: '🔄 Обновить список', code: 'create-stream:start' }],
     ]);
     expect(response.awaitInput).toBeDefined();
+  });
+
+  test('start: отказ listModules — реплика ucErrorNotify, а не «нет модулей»', async () => {
+    const { story } = createStory({
+      listModules: refuse('SERVER_INTERNAL', 'internal'),
+    });
+    const response = await story.handleCallback(
+      'start',
+      mentorActor,
+      NO_SESSION,
+    );
+    expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toContain('Произошла ошибка');
+    expect(response.screen).toBeUndefined();
   });
 
   // ── Шаг 1: модуль выбран → название ──

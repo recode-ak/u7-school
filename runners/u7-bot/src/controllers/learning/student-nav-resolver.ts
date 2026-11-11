@@ -6,7 +6,7 @@ import {
   type NavNodeStatus,
   type StepContentData,
 } from '@u7-scl/core/ui';
-import type { ContentSnapshot } from '@u7-scl/course/domain';
+import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
 import type { NavigationTree } from '@u7-scl/domain/stream/contract';
 
 export interface StudentNavAddress {
