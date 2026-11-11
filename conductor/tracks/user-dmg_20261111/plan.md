@@ -20,12 +20,12 @@
 ## Фаза 0: База и решения
 
 - [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/user` и `modules/user`, `dmg-core` `bun test`. Каркас раздела «DeepSeek» (Opus) 5843f1a
-- [~] Task: `dmg-tech-lead`: разбор и брифы `slices/user-domain.md`, `slices/user-app.md` (Sonnet):
-    - [ ] состав UC «переносим / удаляем / перепроектировать» по 9 legacy-UC и методам `UserFacade` с вызывающими;
-    - [ ] варианты получения API ролей субъектом `Caller` в Policy клиентов (сверка с `wish`/`stream`, D-41);
-    - [ ] сверка `notify-user`/`user.notified` с `../u7-school-v0.2.6` (есть ли продюсер);
-    - [ ] список legacy-тестов на перенос (с учётом TST-08) и тестов состава модуля; ID `rules.md`.
-- [ ] Task: orchestrator проверяет брифы (Opus); вопросы Нурболату — субъект Policy, состав UC (`create-user`, `list-users`, `notify-user`), имя `remove-role-from-user`
+- [x] Task: `dmg-tech-lead`: разбор и брифы `slices/user-domain.md`, `slices/user-app.md` (Sonnet): 847b3b7
+    - [x] состав UC «переносим / удаляем / перепроектировать» по 9 legacy-UC и методам `UserFacade` с вызывающими;
+    - [x] варианты получения API ролей субъектом `Caller` в Policy клиентов (сверка с `wish`/`stream`, D-41);
+    - [x] сверка `notify-user`/`user.notified` с `../u7-school-v0.2.6` (есть ли продюсер);
+    - [x] список legacy-тестов на перенос (с учётом TST-08) и тестов состава модуля; ID `rules.md`.
+- [~] Task: orchestrator проверяет брифы (Opus); вопросы Нурболату — субъект Policy, состав UC (`create-user`, `list-users`, `notify-user`), имя `remove-role-from-user`
 - [ ] Task: Записать решения в TR (`debt.md`) и `decisions.md` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md; автономно)
 
