@@ -1,0 +1,6 @@
+Фаза 5 course-dmg (сборка и снятие legacy) — верификация, автономно (agents.md §9).
+Команды: CI=true bun run check — зелёный, bun test 4562 pass / 0 fail (было 4910: +2 новых, −350 legacy-тестов удалённого кода, сверка сценариев — в брифе); bun run test:bot — 1097 / 0.
+Критерии: grep CourseApiModule|CourseInProcFacade|CourseFacade|CourseLegacy — пусто; CourseModuleDef без external; lint, arch:check — зелёные; маркеров DEBT-1, 2, 5, 10, 34, 44 и TR-11 в course нет; git status data/ — пуст.
+data-keeper (flash): list-lessons, distribute-lesson --preview, update-stream-snapshot --dry-run — вывод совпадает с v0.2.6.
+dmg-reviewer (Opus): 0 error, 1 warn — исправлены (cd-F5-fix). flash: 4 запуска, hitRate 97–99%, $0.45.
+Ручная верификация пропущена (автономный режим).
