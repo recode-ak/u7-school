@@ -100,7 +100,7 @@
 - `courses.json` в новом формате, бэкап снят до перевода, в `git status data/` — только одобренный коммит.
 - `check` зелёный, кроме поимённого списка красной зоны в `debt.md`.
 
-## Фаза 4: UI
+## Фаза 4: UI [checkpoint: e1631b6d]
 
 **Вход для брифов Ф4–Ф5 — ветка `tst-cleanup`** (на `main` этих файлов нет): `git show tst-cleanup:conductor/roadmap/test-bloat.md` — §2 закономерности Б-1…Б-17 (не переносить лишние тесты), §6 «Рекомендации для `course`».
 
@@ -109,7 +109,7 @@
 - [x] Task: UI-stories (Sonnet): `courses/*` (`course-nav-resolver`, `course-catalog`, `wish-*`), `learning/*`, `streams/*`, `mentor/create-stream` — на `dispatchUc` и `stages`; `ui-spec.md` (Sonnet — этапы; flash `cd-F4-calls` — механика) eee83a10
 - [x] Task: Снять красную зону в `debt.md` (Opus) — TR-57 (1)–(2), DEBT-51
 - [x] Task: `dmg-reviewer` (Opus): 0 `error`, 6 `warn` — исправлены (`cd-F4-review`) eee83a10
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 4:**
 - В `runners` нет вызовов legacy-имён UC курса через `appApi.execute` (с учётом многострочных) и чтения `phase.moduleIds`.
