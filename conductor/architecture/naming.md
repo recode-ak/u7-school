@@ -26,4 +26,4 @@
 
 Затем `bun install` и `bun run gen module <m> --write`.
 
-Вход модуля домена для других — `contract.ts` (D-45): генератор его не создаёт, он пишется по образцу `domain/src/wish/contract.ts`.
+Вход модуля домена для других — `contract.ts` (D-45): генератор его не создаёт, он пишется по образцу `domain/src/wish/contract.ts`. Второй вход — `testing.ts` (D-70): фикстуры владельца для тестов зависимых (`@u7-scl/domain/<m>/testing`), импортирует только тестовый код; образец — `domain/src/user/testing.ts`.

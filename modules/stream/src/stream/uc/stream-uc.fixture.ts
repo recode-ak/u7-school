@@ -3,7 +3,7 @@ import {
   GetModuleSnapshotUcDef,
 } from '@u7-scl/domain/course/contract';
 import { StreamAr, type StreamState } from '@u7-scl/domain/stream';
-import { Role } from '@u7-scl/domain/user/contract';
+import { userSubject } from '@u7-scl/domain/user/testing';
 import { GuestCaller, ok, SystemCaller, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { StubFacade, testAppContext } from 'dmg-core/testing';
@@ -36,20 +36,30 @@ export const contentSnapshot = [
   },
 ];
 
-export const mentor = new UserCaller({ uuid: MENTOR_ID, roles: [Role.MENTOR] });
-export const otherMentor = new UserCaller({
-  uuid: OTHER_ID,
-  roles: [Role.MENTOR],
-});
-export const admin = new UserCaller({ uuid: OTHER_ID, roles: [Role.ADMIN] });
-export const student = new UserCaller({
-  uuid: OTHER_ID,
-  roles: [Role.GUEST],
-});
-export const guestRole = new UserCaller({
-  uuid: OTHER_ID,
-  roles: [Role.GUEST],
-});
+export const mentor = new UserCaller(
+  userSubject({ uuid: MENTOR_ID, roles: ['MENTOR'] }),
+);
+export const otherMentor = new UserCaller(
+  userSubject({
+    uuid: OTHER_ID,
+    roles: ['MENTOR'],
+  }),
+);
+export const admin = new UserCaller(
+  userSubject({ uuid: OTHER_ID, roles: ['ADMIN'] }),
+);
+export const student = new UserCaller(
+  userSubject({
+    uuid: OTHER_ID,
+    roles: ['GUEST'],
+  }),
+);
+export const guestRole = new UserCaller(
+  userSubject({
+    uuid: OTHER_ID,
+    roles: ['GUEST'],
+  }),
+);
 export const anonymous = new GuestCaller();
 export const system = new SystemCaller({
   kind: 'useCase',

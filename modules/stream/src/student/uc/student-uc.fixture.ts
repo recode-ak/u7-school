@@ -9,7 +9,7 @@ import type {
   StudentAr,
   StudentState,
 } from '@u7-scl/domain/stream';
-import { Role } from '@u7-scl/domain/user/contract';
+import { userSubject } from '@u7-scl/domain/user/testing';
 import { ok, type Result, UserCaller } from 'dmg-core';
 import { ModuleFacades } from 'dmg-core/app';
 import { StubFacade, testAppContext } from 'dmg-core/testing';
@@ -51,11 +51,15 @@ export const PREV_MODULE = '12345678-1234-4234-8234-123456789012';
 export const DAY = 24 * 60 * 60 * 1000;
 
 /** Владелец записи студента и посторонний пользователь. */
-export const owner = new UserCaller({ uuid: USER, roles: [Role.GUEST] });
-export const stranger = new UserCaller({
-  uuid: OTHER_ID,
-  roles: [Role.GUEST],
-});
+export const owner = new UserCaller(
+  userSubject({ uuid: USER, roles: ['GUEST'] }),
+);
+export const stranger = new UserCaller(
+  userSubject({
+    uuid: OTHER_ID,
+    roles: ['GUEST'],
+  }),
+);
 
 /** Вердикт курса (D-65) — ответ заглушки `getModulePrerequisite`. */
 type Prerequisite = Result<ModulePrerequisite, never>;

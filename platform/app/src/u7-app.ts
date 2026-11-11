@@ -168,7 +168,7 @@ export class U7App {
     this.userRepo = userRepo;
     this.school = school;
     this.appResolver = appResolver;
-    this.callers = new U7CallerResolver(userFacade);
+    this.callers = new U7CallerResolver(apiApp);
   }
 
   /** Запускает периодические задания (Job) legacy `ApiApp`. */

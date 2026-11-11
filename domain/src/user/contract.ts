@@ -11,7 +11,6 @@ export type {
 } from './user/commands/errors';
 export type { User } from './user/entity';
 export type { UserNotifiedEvent } from './user/events';
-export { Role } from './user/roles';
 export { AddRoleToUserUcDef } from './user/uc/add-role-to-user.uc';
 export {
   GetTelegramAddressesUcDef,

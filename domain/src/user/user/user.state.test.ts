@@ -40,6 +40,12 @@ describe('UserState — роли и имя', () => {
     );
   });
 
+  it('принимает все роли платформы: список ролей — часть контракта', () => {
+    for (const role of ['GUEST', 'SUBSCRIBER', 'MENTOR', 'AUTHOR', 'ADMIN']) {
+      expect(parse({ ...legacy, roles: [role] }).success).toBe(true);
+    }
+  });
+
   it.each([
     { title: 'пустой roles', value: { ...legacy, roles: [] } },
     { title: 'неизвестная роль', value: { ...legacy, roles: ['OWNER'] } },

@@ -11,16 +11,18 @@ import type {
   Paged,
   ProactiveSender,
 } from '@u7-scl/core/ui';
-import { BotPaginator, BotRequestContext, BotUiStory } from '@u7-scl/core/ui';
+import { BotPaginator, BotUiStory } from '@u7-scl/core/ui';
+import type { UserAr } from '@u7-scl/domain/user/contract';
 import type {
   AnyModuleDef,
   Command,
   OutputOf,
+  ReadonlyAr,
   Result,
   UseCaseErrorOf,
 } from 'dmg-core';
 import { APP_CODES } from '../shared/app-codes';
-import { dispatchModuleUc } from './dispatch-uc';
+import { dispatchModuleUc, requestTrace } from './dispatch-uc';
 import type { U7BotAppMeta, U7BotUiAppResolve } from './u7-bot-app-meta';
 import type { MenuButton } from './u7-menu';
 
@@ -154,14 +156,10 @@ export abstract class U7BotUiStory extends BotUiStory<
   /**
    * Команда модулю DMG от имени актора бота (D-49): адрес — Def модуля,
    * исполняет `appApi.dispatch` в процессе. Отказ — значение `Err`,
-   * story ветвится по `code`, неожиданное — `ucErrorNotify`. Единственное
-   * место, где UI строит след запроса (`Trace.fromRequest`, канал
-   * `telegram`, посетитель — `telegramId`); субъект (`Caller`) по uuid
-   * актора даёт резолвер приложения (`resolve.callers`, D-50).
-   *
-   * `requestId` и `correlationId` — из контекста апдейта Telegram
-   * (`BotRequestContext`, транспорт). Вне обработки апдейта контекста нет:
-   * id создаётся на вызов с `warn` (ERR-07, caller.md §2 п. 5).
+   * story ветвится по `code`, неожиданное — `ucErrorNotify`. След запроса
+   * строит `dispatchModuleUc` (`requestTrace`: канал `telegram`, посетитель —
+   * `telegramId`); субъект (`Caller`) по uuid актора даёт резолвер
+   * приложения (`resolve.callers`, D-50).
    */
   protected async dispatchUc<
     M extends AnyModuleDef,
@@ -194,16 +192,27 @@ export abstract class U7BotUiStory extends BotUiStory<
     uuid: string | undefined,
     telegramId: number | undefined,
   ): Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>> {
-    const request = BotRequestContext.current();
     return dispatchModuleUc(module, command, {
       resolve: this.resolve,
       uuid,
       telegramId,
-      requestId: request?.nextRequestId(),
-      correlationId: request?.correlationId,
       warn: (message, meta) =>
         this.logger?.warn(this.dialogPath, message, meta),
     });
+  }
+
+  /**
+   * Субъект команд DMG по актору бота: `Caller` из резолвера приложения, а не
+   * поле `roles` актора (D-69). Гость — без субъекта.
+   */
+  protected async subjectOf(
+    actor: User,
+  ): Promise<ReadonlyAr<UserAr> | undefined> {
+    const trace = requestTrace(actor.telegramId, (message) =>
+      this.logger?.warn(this.dialogPath, message, { op: 'resolveCaller' }),
+    );
+    const caller = await this.resolve.callers.resolve(actor.uuid, trace);
+    return caller.subject();
   }
 
   // ── Постраничные экраны (трек pagination) ──

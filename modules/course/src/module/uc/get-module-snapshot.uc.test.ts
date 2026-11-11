@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { userSubject } from '@u7-scl/domain/user/testing';
 import { SystemCaller, UserCaller } from 'dmg-core';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import {
@@ -88,7 +89,9 @@ describe('GetModuleSnapshotUc — успех', () => {
       moduleState('draft', { projects: [projectState('published')] }),
     );
     env.lessons.seed(lessonState(LESSON_1, 'published'));
-    const mentor = new UserCaller({ uuid: AUTHOR_ID, roles: [] });
+    const mentor = new UserCaller(
+      userSubject({ uuid: AUTHOR_ID, roles: ['GUEST'] }),
+    );
 
     expect(expectOk(await snapshot(asSystemFor(mentor)))).toHaveLength(1);
   });

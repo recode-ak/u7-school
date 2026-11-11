@@ -1,6 +1,5 @@
 import { U7App, type U7CallerResolver } from '@u7-scl/app';
 import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
-import type { U7BotApp } from '@u7-scl/bot/u7-bot-app-meta';
 import type { EventBus } from '@u7-scl/core/domain';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import { ReviewCampaignJsonRepo, ReviewJsonRepo } from '@u7-scl/peer-review';
@@ -14,7 +13,7 @@ import { cleanupFixtures, loadFixtures } from './fixture-loader';
 
 export interface TestApp {
   /** Полноценный ApiApp со всеми модулями */
-  apiApp: U7BotApp;
+  apiApp: U7App['apiApp'];
   /** Общая шина событий (та же, что внутри apiApp) — для TestBotTransport */
   eventBus: EventBus;
   /** Резолвер `Caller` приложения — субъект команд DMG из stories */

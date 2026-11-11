@@ -12,6 +12,7 @@ import {
   GetStudentByUserUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
+import { userSubject } from '@u7-scl/domain/user/testing';
 import {
   CreateCourseWishUcDef,
   WishModuleDef,
@@ -126,7 +127,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
           moduleId: FIRST_MODULE,
           startDate: Date.UTC(2026, 9, 1),
         }),
-        new UserCaller(mentor),
+        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -196,7 +197,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
           moduleId: LAST_MODULE,
           startDate: Date.UTC(2026, 10, 1),
         }),
-        new UserCaller(mentor),
+        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -214,7 +215,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
       await app.apiApp.dispatch(
         StreamModuleDef,
         GetStudentByUserUcDef.command({ userId: studentAdvanced.uuid }),
-        new UserCaller(mentor),
+        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -225,7 +226,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
       await app.apiApp.dispatch(
         StreamModuleDef,
         ActivateStreamUcDef.command({ streamId: stream.streamId }),
-        new UserCaller(mentor),
+        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -239,7 +240,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
           studentId: record.uuid,
           outcome: 'advanced',
         }),
-        new UserCaller(mentor),
+        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -259,7 +260,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
       await app.apiApp.dispatch(
         StreamModuleDef,
         GetStudentByUserUcDef.command({ userId: studentActive.uuid }),
-        new UserCaller(mentor),
+        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );
@@ -272,7 +273,7 @@ describe('E2E: механизм уведомлений userFacade.notify', () =>
           studentId: record.uuid,
           outcome: 'advanced',
         }),
-        new UserCaller(mentor),
+        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );

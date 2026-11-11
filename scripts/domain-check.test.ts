@@ -130,6 +130,27 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
   });
 });
 
+describe('подпуть @u7-scl/domain/<m>/testing: публичный, но только тестам (TST-07)', () => {
+  const TESTING = "import { userSubject } from '@u7-scl/domain/user/testing';";
+
+  it('checkDomainImports: testing чужого модуля из dependsOn — не ARC-04', () => {
+    const files = [file('domain/src/course/module/a.policy.test.ts', TESTING)];
+    expect(checkDomainImports(files, DEPENDS)).toEqual([]);
+  });
+
+  it('checkContractImports: testing модуля на Def — не ARC-04', () => {
+    const files = [
+      file('modules/course/src/module/uc/module-uc.fixture.ts', TESTING),
+    ];
+    expect(
+      checkContractImports(files, {
+        all: ['user', 'course'],
+        dmg: ['user', 'course'],
+      }),
+    ).toEqual([]);
+  });
+});
+
 describe('checkModuleImports: ARC-06 (D-53)', () => {
   // Пакеты корня сборки и раннеров — из package.json (`assemblyPackages`).
   const ASSEMBLY = ['@u7-scl/app', '@u7-scl/bot', '@u7-scl/cli'];

@@ -1,9 +1,9 @@
-import { Role, type User } from '@u7-scl/domain/user/contract';
+import type { UserAr } from '@u7-scl/domain/user/contract';
 import { PolicyDef, type ReadonlyAr, Rule } from 'dmg-core';
 import type { StreamAr } from './stream.ar';
 
-/** Субъект прав потока: кто спрашивает и какие у него роли. */
-type StreamSubject = Pick<User, 'uuid' | 'roles'>;
+/** Субъект прав потока: вопросы ролей — у `UserAr` (D-69). */
+type StreamSubject = Pick<ReadonlyAr<UserAr>, 'uuid' | 'isMentor' | 'isAdmin'>;
 
 /** Контекст прав на поток: поток, над которым действие. */
 export type StreamCtx = { readonly stream: ReadonlyAr<StreamAr> };
@@ -12,7 +12,7 @@ const canCreate = Rule.of({
   name: 'canCreate',
   label: 'Ментор',
   denyMessage: 'Недостаточно прав для создания потока',
-  check: (subject: StreamSubject) => subject.roles.includes(Role.MENTOR),
+  check: (subject: StreamSubject) => subject.isMentor(),
 });
 
 const isStreamMentor = Rule.of({
@@ -27,7 +27,7 @@ const isAdmin = Rule.of({
   name: 'isAdmin',
   label: 'Администратор',
   denyMessage: 'Недостаточно прав для управления потоком',
-  check: (subject: StreamSubject) => subject.roles.includes(Role.ADMIN),
+  check: (subject: StreamSubject) => subject.isAdmin(),
 });
 
 /**

@@ -1,5 +1,6 @@
 import { StreamModuleDef } from '@u7-scl/domain/stream';
-import type { User } from '@u7-scl/domain/user/contract';
+import type { UserAr } from '@u7-scl/domain/user/contract';
+import type { ReadonlyAr } from 'dmg-core';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import type { StreamRepo } from './stream/stream.repo';
 import { ActivateStreamUc } from './stream/uc/activate-stream.uc';
@@ -22,8 +23,8 @@ import { GetStudentByUserUc } from './student/uc/get-student-by-user.uc';
 import { GetStudentProgressUc } from './student/uc/get-student-progress.uc';
 import { MarkAbandonedUc } from './student/uc/mark-abandoned.uc';
 
-/** Субъект потока: права зависят только от `uuid` и ролей (`StreamPolicy`). */
-export type StreamUser = Pick<User, 'uuid' | 'roles'>;
+/** Субъект потока: права спрашиваются у `UserAr` (`StreamPolicy`). */
+export type StreamUser = ReadonlyAr<UserAr>;
 
 /**
  * Резолвер модуля: платформа (фасад `course` — в `facades`, вызываемый UC — в

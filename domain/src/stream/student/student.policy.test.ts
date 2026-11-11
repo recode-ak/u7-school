@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { Role } from '@u7-scl/domain/user/contract';
+import type { UserView } from '@u7-scl/domain/user/contract';
+import { userSubject } from '@u7-scl/domain/user/testing';
 import { allowed } from 'dmg-core';
 import { StreamAr } from '../stream/stream.ar';
 import {
@@ -12,10 +13,11 @@ import { OTHER_USER, stored, USER } from './student.fixture';
 import { StudentPolicy } from './student.policy';
 
 // Перенос `policy.test.ts` (canViewProgress, canCompleteStep, canManageStudent)
-// на Policy по Def (TST-02). Субъект — `Pick<User, 'uuid' | 'roles'>`.
+// на Policy по Def (TST-02). Субъект — `UserAr` через `userSubject`.
 // `canCompleteStep` теперь действует: `isSelf` — для завершения шага и выхода.
 
-const who = (uuid: string, ...roles: Role[]) => ({ uuid, roles });
+const who = (uuid: string, ...roles: UserView['roles']) =>
+  userSubject({ uuid, roles });
 const student = StudentAr.restore(stored('active'));
 const stream = StreamAr.restore(streamStored('active'));
 const ctx = { student, stream };
@@ -24,21 +26,19 @@ const { isSelf, canComplete, canMarkAbandoned } = StudentPolicy.rules;
 
 describe('StudentPolicy.isSelf', () => {
   it('сам студент с ролью SUBSCRIBER — allowed', () => {
-    expect(isSelf.evaluate(who(USER, Role.SUBSCRIBER), { student })).toEqual(
+    expect(isSelf.evaluate(who(USER, 'SUBSCRIBER'), { student })).toEqual(
       allowed,
     );
   });
 
   it('роли не важны: владелец записи проходит и с ролью GUEST', () => {
-    expect(isSelf.evaluate(who(USER, Role.GUEST), { student }).allowed).toBe(
-      true,
-    );
+    expect(isSelf.evaluate(who(USER, 'GUEST'), { student }).allowed).toBe(true);
   });
 
   it.each([
-    ['другой студент', who(OTHER_USER, Role.GUEST)],
-    ['ментор потока', who(MENTOR, Role.MENTOR)],
-    ['админ', who(OTHER_USER, Role.ADMIN)],
+    ['другой студент', who(OTHER_USER, 'GUEST')],
+    ['ментор потока', who(MENTOR, 'MENTOR')],
+    ['админ', who(OTHER_USER, 'ADMIN')],
   ])('%s — denied', (_, subject) => {
     expect(isSelf.evaluate(subject, { student }).allowed).toBe(false);
   });
@@ -56,18 +56,18 @@ describe.each([
     'ментор потока, студент в статусе %s — allowed',
     (status) => {
       const c = { student: StudentAr.restore(stored(status)), stream };
-      expect(rule.evaluate(who(MENTOR, Role.MENTOR), c)).toEqual(allowed);
+      expect(rule.evaluate(who(MENTOR, 'MENTOR'), c)).toEqual(allowed);
     },
   );
 
   it('админ, не ментор потока — allowed', () => {
-    expect(rule.evaluate(who(OTHER_MENTOR, Role.ADMIN), ctx)).toEqual(allowed);
+    expect(rule.evaluate(who(OTHER_MENTOR, 'ADMIN'), ctx)).toEqual(allowed);
   });
 
   it.each([
-    ['ментор чужого потока', who(OTHER_MENTOR, Role.MENTOR)],
-    ['сам студент', who(USER, Role.GUEST)],
-    ['пользователь с ролью GUEST', who(OTHER_USER, Role.GUEST)],
+    ['ментор чужого потока', who(OTHER_MENTOR, 'MENTOR')],
+    ['сам студент', who(USER, 'GUEST')],
+    ['пользователь с ролью GUEST', who(OTHER_USER, 'GUEST')],
   ])('%s — denied', (_, subject) => {
     expect(rule.evaluate(subject, ctx).allowed).toBe(false);
   });

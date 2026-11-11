@@ -1,5 +1,6 @@
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire';
-import type { User } from '@u7-scl/domain/user/contract';
+import type { UserAr } from '@u7-scl/domain/user/contract';
+import type { ReadonlyAr } from 'dmg-core';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import { SweepAbandonedQuestionnairesJob } from './questionnaire/job/sweep-abandoned-questionnaires.job';
 import type { QuestionnaireRepo } from './questionnaire/questionnaire.repo';
@@ -13,8 +14,8 @@ import { SendLikertInviteUc } from './questionnaire/uc/send-likert-invite.uc';
 import { StartByInviteUc } from './questionnaire/uc/start-by-invite.uc';
 import { StartQuestionnaireUc } from './questionnaire/uc/start-questionnaire.uc';
 
-/** Субъект анкеты: права зависят только от `uuid` и ролей (`QuestionnairePolicy`). */
-export type QuestionnaireUser = Pick<User, 'uuid' | 'roles'>;
+/** Субъект анкеты: права спрашиваются у `UserAr` (`QuestionnairePolicy`). */
+export type QuestionnaireUser = ReadonlyAr<UserAr>;
 
 /** Резолвер модуля анкет: платформа и репозиторий анкет. */
 export type QuestionnaireDeps = ModuleDeps & {

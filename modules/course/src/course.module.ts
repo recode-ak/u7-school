@@ -1,6 +1,7 @@
 // DMG-модуль курсов: UC чтения курсов и срезов `module`, `lesson`, `step`.
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
-import type { User } from '@u7-scl/domain/user/contract';
+import type { UserAr } from '@u7-scl/domain/user/contract';
+import type { ReadonlyAr } from 'dmg-core';
 import { type ModuleDeps, ModuleFromDef, type ModuleMap } from 'dmg-core/app';
 import type { CourseRepo } from './course/course.repo';
 import { GetCourseUc } from './course/uc/get-course.uc';
@@ -23,8 +24,8 @@ import type { StepRepo } from './step/step.repo';
 import { GetStepUc } from './step/uc/get-step.uc';
 import { GetStepsByLessonsUc } from './step/uc/get-steps-by-lessons.uc';
 
-/** Субъект курсов: права зависят только от `uuid` и ролей (`ModulePolicy`). */
-export type CourseUser = Pick<User, 'uuid' | 'roles'>;
+/** Субъект курсов: права спрашиваются у `UserAr` (`ModulePolicy`). */
+export type CourseUser = ReadonlyAr<UserAr>;
 
 /**
  * Резолвер DMG-модуля курсов: платформа и репозитории срезов `course`,

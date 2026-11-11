@@ -30,6 +30,7 @@ import {
   EnrollStudentUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
+import { userSubject } from '@u7-scl/domain/user/testing';
 import {
   CancelWishUcDef,
   CreateCourseWishUcDef,
@@ -345,7 +346,9 @@ async function seedCourse(dbDir: string): Promise<void> {
 }
 
 const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
-const MENTOR = new UserCaller({ ...ACTOR, roles: [Role.MENTOR] });
+const MENTOR = new UserCaller(
+  userSubject({ uuid: ACTOR.uuid, roles: ['MENTOR'] }),
+);
 
 /** Поток создаёт ментор (Def UC `createStream`); возвращает его uuid. */
 async function createStream(bundle: U7App): Promise<string> {
@@ -514,7 +517,7 @@ describe('U7App: событие completeStudent доходит до ER createStu
         studentId,
         outcome: 'advanced',
       }),
-      new UserCaller({ ...ACTOR, roles: [Role.ADMIN] }),
+      new UserCaller(userSubject({ uuid: ACTOR.uuid, roles: ['ADMIN'] })),
       trace(),
     );
     expect(completed.ok).toBe(true);

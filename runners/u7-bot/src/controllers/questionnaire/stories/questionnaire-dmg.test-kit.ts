@@ -12,7 +12,7 @@ import {
   QuestionnaireEvents,
   QuestionnaireModuleDef,
 } from '@u7-scl/domain/questionnaire/contract';
-import { Role } from '@u7-scl/domain/user/contract';
+import { Role } from '@u7-scl/user/domain';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import {
   dmgDispatch as baseDmgDispatch,

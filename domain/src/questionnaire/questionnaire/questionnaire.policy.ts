@@ -1,9 +1,9 @@
-import { Role, type User } from '@u7-scl/domain/user/contract';
+import type { UserAr } from '@u7-scl/domain/user/contract';
 import { PolicyDef, type ReadonlyAr, Rule } from 'dmg-core';
 import type { QuestionnaireAr } from './questionnaire.ar';
 
-/** Субъект прав анкеты: кто спрашивает и какие у него роли. */
-type QuestionnaireSubject = Pick<User, 'uuid' | 'roles'>;
+/** Субъект прав анкеты: вопросы ролей — у `UserAr` (D-69). */
+type QuestionnaireSubject = Pick<ReadonlyAr<UserAr>, 'uuid' | 'isAdmin'>;
 
 /** Контекст прав на анкету: анкета, над которой действие. */
 export type QuestionnaireCtx = {
@@ -31,7 +31,7 @@ const isAdmin = Rule.of<QuestionnaireSubject, unknown>({
   name: 'isAdmin',
   label: 'Администратор',
   denyMessage: 'Недостаточно прав',
-  check: (subject) => subject.roles.includes(Role.ADMIN),
+  check: (subject) => subject.isAdmin(),
 });
 
 const isSelf = Rule.of<QuestionnaireSubject, QuestionnairesCtx>({

@@ -3,12 +3,11 @@ import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import { md } from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
-import { Role } from '@u7-scl/user/domain';
 import { buttons } from '../../shared/buttons';
 
 /**
  * Подменю «🛠️ Инструменты ментора».
- * Доступно только ролям MENTOR и ADMIN.
+ * Доступно ментору и администратору — по субъекту резолвера `Caller`.
  */
 export class SubmenuStory extends U7BotUiStory {
   readonly name = 'submenu';
@@ -18,7 +17,7 @@ export class SubmenuStory extends U7BotUiStory {
     actor: User,
     session: BotSession,
   ): Promise<DialogResponse> {
-    if (!this.#isMentor(actor)) {
+    if (!(await this.#isMentor(actor))) {
       return this.screen(md`⚠️ У вас нет доступа к инструментам ментора\\.`);
     }
 
@@ -30,7 +29,7 @@ export class SubmenuStory extends U7BotUiStory {
   }
 
   override async menuButtons(actor: User): Promise<MenuButton[]> {
-    if (this.#isMentor(actor)) {
+    if (await this.#isMentor(actor)) {
       return [
         {
           kind: 'callback',
@@ -47,10 +46,9 @@ export class SubmenuStory extends U7BotUiStory {
 
   // ── Приватные методы ──
 
-  #isMentor(actor: User): boolean {
-    return (
-      actor.roles.includes(Role.MENTOR) || actor.roles.includes(Role.ADMIN)
-    );
+  async #isMentor(actor: User): Promise<boolean> {
+    const subject = await this.subjectOf(actor);
+    return subject?.isMentor() === true || subject?.isAdmin() === true;
   }
 
   #buildSubmenu(): DialogResponse {

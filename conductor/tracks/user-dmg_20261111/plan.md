@@ -111,13 +111,13 @@
 
 - [ ] Task: Бриф `slices/assembly.md` (Opus, решения — TR)
 - [ ] Task: `migrator`, сборка (flash): `UserModuleDef` без `external`, фабрика в `U7App`, `@u7-scl/user/**` — в ARC-07 `biome.json`
-- [ ] Task: `migrator`, удаление legacy и клиенты сборки (flash): `UserInProcFacade`, `UserApiModule`, `api/*`, `module.ts`, `facade.ts`, `commands/*`, legacy-репозиторий, `U7CallerResolver`, поле `userFacade` и тип `UserLegacy` в `platform/app`; `tests/helpers/test-app.ts`, `scripts/{call-uc,_course-client,domain-arch}.ts`, тестовые миры
+- [ ] Task: `migrator`, удаление legacy и клиенты сборки (flash): `UserInProcFacade`, `UserApiModule`, `api/*`, `module.ts`, `facade.ts`, `commands/*`, legacy-репозиторий, поле `userFacade` и тип `UserLegacy` в `platform/app`; `tests/helpers/test-app.ts`, `scripts/{call-uc,_course-client,domain-arch}.ts`, тестовые миры
 - [ ] Task: `dmg-data-keeper` (flash): скрипты на `DB_DIR=./data/fixtures` — вывод совпадает с `v0.2.6`
 - [ ] Task: `dmg-reviewer` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 6:**
-- `grep -rn "UserApiModule\|UserInProcFacade\|UserFacade\|UserLegacy\|U7CallerResolver" --include=*.ts .` пуст (вне `node_modules`).
+- `grep -rn "UserApiModule\|UserInProcFacade\|UserFacade\|UserLegacy" --include=*.ts .` пуст; `U7CallerResolver` — на Def с Ф4 (вне `node_modules`).
 - У `UserModuleDef` нет `external`; `lint` (ARC-07) и `arch:check` зелёные.
 - Маркеров DEBT-1, 2, 5, 34, 44 в `user` нет.
 - `check` зелёный, `git status data/` чист.

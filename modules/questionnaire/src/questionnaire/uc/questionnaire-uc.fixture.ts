@@ -3,7 +3,7 @@ import type {
   QuestionnairePool,
   QuestionnaireState,
 } from '@u7-scl/domain/questionnaire';
-import { Role } from '@u7-scl/domain/user/contract';
+import { userSubject } from '@u7-scl/domain/user/testing';
 import { type OperationRef, SystemCaller, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { testAppContext } from 'dmg-core/testing';
@@ -22,15 +22,20 @@ export const HOUR = 60 * 60 * 1000;
 export const T0 = Date.UTC(2026, 5, 1, 10);
 export const REQ = Trace.fromRequest({ requestId: 'r-1' });
 
-export const respondent = new UserCaller({
-  uuid: RESPONDENT,
-  roles: [Role.GUEST],
-});
+export const respondent = new UserCaller(
+  userSubject({
+    uuid: RESPONDENT,
+    roles: ['GUEST'],
+  }),
+);
 
 const FROM: OperationRef = { kind: 'useCase', module: 'probe', name: 'probe' };
 /** Вызов другого модуля за человека (`this.call`) и без человека (ER/Job). */
 export const systemFor = (uuid = RESPONDENT) =>
-  new SystemCaller(FROM, new UserCaller({ uuid, roles: [Role.GUEST] }));
+  new SystemCaller(
+    FROM,
+    new UserCaller(userSubject({ uuid, roles: ['GUEST'] })),
+  );
 export const systemAlone = new SystemCaller<QuestionnaireUser>(FROM);
 
 export const pool = (): QuestionnairePool => ({

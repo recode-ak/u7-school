@@ -11,7 +11,7 @@ import {
   serializeError,
   setGlobalLogger,
 } from '@u7-scl/core/shared';
-import { LegacyUserPolicy } from '@u7-scl/user/domain';
+import { Trace } from 'dmg-core/app';
 import { webhookCallback } from 'grammy';
 import type { DevPersonaPanel } from '../scripts/dev-persona';
 import { createBot } from './bot';
@@ -146,13 +146,18 @@ if (config.adminTelegramIds.length > 0) {
 }
 
 // ══ Верификация бота при старте ══
-const adminUser = await app.userFacade.getUserByUuid(config.botAdminUuid);
-if (!adminUser) {
+const adminSubject = (
+  await app.callers.resolve(
+    config.botAdminUuid,
+    Trace.fromRequest({ requestId: crypto.randomUUID() }),
+  )
+).subject();
+if (adminSubject === undefined) {
   throw new Error(
     `BOT_ADMIN_UUID не найден: пользователь ${config.botAdminUuid} не существует`,
   );
 }
-if (!LegacyUserPolicy.isAdmin(adminUser)) {
+if (!adminSubject.isAdmin()) {
   throw new Error(
     `BOT_ADMIN_UUID имеет недостаточные права: у пользователя ${config.botAdminUuid} нет роли ADMIN`,
   );

@@ -7,6 +7,7 @@ import {
   CreateStreamUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
+import { userSubject } from '@u7-scl/domain/user/testing';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -224,7 +225,7 @@ describe('ViewStreamStory (интеграционный)', () => {
           moduleId: 'a1a1a1a1-b1b1-4b1b-8b1b-b1b1b1b1b1b1',
           startDate: Date.UTC(2026, 10, 1),
         }),
-        new UserCaller(mentor),
+        new UserCaller(userSubject({ uuid: mentor.uuid, roles: mentor.roles })),
         Trace.fromRequest({ requestId: crypto.randomUUID() }),
       ),
     );

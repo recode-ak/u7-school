@@ -10,6 +10,7 @@ import {
   EnrollStudentUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
+import { userSubject } from '@u7-scl/domain/user/testing';
 import { UserCaller } from 'dmg-core';
 import { type OperationRecord, Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
@@ -167,7 +168,7 @@ describe('U7App: события студента от UoW модуля stream д
           studentId: LEARNER_ROW,
           outcome: 'advanced',
         }),
-        new UserCaller(user(MENTOR, [Role.MENTOR])),
+        new UserCaller(userSubject({ uuid: MENTOR, roles: ['MENTOR'] })),
         trace(),
       ),
     );

@@ -1,24 +1,59 @@
-import type { User, UserFacade } from '@u7-scl/domain/user/contract';
-import { GuestCaller, type PersonCaller, UserCaller } from 'dmg-core';
-import type { Trace } from 'dmg-core/app';
+import {
+  GetUserUcDef,
+  UserAr,
+  UserErrors,
+  UserModuleDef,
+} from '@u7-scl/domain/user/contract';
+import {
+  GuestCaller,
+  type Identified,
+  type OperationRef,
+  type PersonCaller,
+  type ReadonlyAr,
+  SystemCaller,
+  UserCaller,
+} from 'dmg-core';
+import type { ApiApp, Trace } from 'dmg-core/app';
 
 /**
- * Резолвер `Caller` приложения (D-50): идентичность из транспорта →
- * человек на входе. Пользователя ищет legacy-фасад `user` (адаптер над legacy-фасадом):
- * найден — `UserCaller` над ним; нет идентичности или пользователя нет —
- * гость. Сбой фасада — исключение (ERR-01): тихий гость спрятал бы дефект
- * транспорта или конфигурации за отказом в правах.
+ * Откуда вызов `user.getUser` при разборе вызывающего (D-51): `getUser`
+ * допускает системного вызывающего, резолвер — вход корня сборки.
+ */
+const RESOLVER: OperationRef = {
+  kind: 'app',
+  module: 'u7-app',
+  name: 'resolveCaller',
+};
+
+/**
+ * Резолвер `Caller` приложения: идентичность из транспорта →
+ * человек на входе. Пользователя читает UC `user.getUser` от системы;
+ * субъект — `UserAr` (D-69), восстановленный вне модуля. Нет идентичности
+ * или пользователя нет — гость; прочий отказ UC — исключение (ERR-01):
+ * тихий гость спрятал бы дефект транспорта или конфигурации за отказом в
+ * правах.
  */
 export class U7CallerResolver {
-  constructor(private readonly users: Pick<UserFacade, 'getUserByUuid'>) {}
+  private readonly system = new SystemCaller<ReadonlyAr<UserAr>>(RESOLVER);
 
-  // `trace` — по контракту резолвера (D-50): legacy-фасад след не принимает.
+  constructor(private readonly api: Pick<ApiApp<Identified>, 'dispatch'>) {}
+
   async resolve(
     uuid: string | undefined,
-    _trace: Trace,
-  ): Promise<PersonCaller<User>> {
+    trace: Trace,
+  ): Promise<PersonCaller<ReadonlyAr<UserAr>>> {
     if (uuid === undefined) return new GuestCaller();
-    const user = await this.users.getUserByUuid(uuid);
-    return user === undefined ? new GuestCaller() : new UserCaller(user);
+    const res = await this.api.dispatch(
+      UserModuleDef,
+      GetUserUcDef.command({ uuid }),
+      this.system,
+      trace,
+    );
+    if (!res.ok) {
+      if (res.error.code === UserErrors.NOT_FOUND.code)
+        return new GuestCaller();
+      throw new Error(`Резолвер Caller: user.getUser вернул ${res.error.code}`);
+    }
+    return new UserCaller(UserAr.restore(res.value));
   }
 }

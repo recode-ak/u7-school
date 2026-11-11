@@ -1,5 +1,5 @@
 import { ModuleAr, type ModuleState } from '@u7-scl/domain/course';
-import { Role } from '@u7-scl/domain/user/contract';
+import { userSubject } from '@u7-scl/domain/user/testing';
 import { GuestCaller, SystemCaller, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { testAppContext } from 'dmg-core/testing';
@@ -20,15 +20,21 @@ export const REQ = Trace.fromRequest({ requestId: 'r-1' });
 export const T0 = Date.UTC(2026, 6, 8, 18, 35);
 
 /** Автор модуля — без роли AUTHOR (авторство по uuid). */
-export const author = new UserCaller({ uuid: AUTHOR_ID, roles: [Role.MENTOR] });
-export const student = new UserCaller({
-  uuid: OTHER_ID,
-  roles: [Role.GUEST],
-});
-export const otherMentor = new UserCaller({
-  uuid: OTHER_ID,
-  roles: [Role.MENTOR],
-});
+export const author = new UserCaller(
+  userSubject({ uuid: AUTHOR_ID, roles: ['MENTOR'] }),
+);
+export const student = new UserCaller(
+  userSubject({
+    uuid: OTHER_ID,
+    roles: ['GUEST'],
+  }),
+);
+export const otherMentor = new UserCaller(
+  userSubject({
+    uuid: OTHER_ID,
+    roles: ['MENTOR'],
+  }),
+);
 export const anonymous = new GuestCaller();
 /** Системный вызов без человека: субъекта нет, при человеке — `CourseUser`. */
 export const system = new SystemCaller<CourseUser>({

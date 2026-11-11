@@ -1,9 +1,9 @@
-import { Role, type User } from '@u7-scl/domain/user/contract';
+import type { UserAr } from '@u7-scl/domain/user/contract';
 import { PolicyDef, type ReadonlyAr, Rule } from 'dmg-core';
 import type { ModuleAr } from './module.ar';
 
-/** Субъект прав модуля: кто спрашивает и какие у него роли. */
-type ModuleSubject = Pick<User, 'uuid' | 'roles'>;
+/** Субъект прав модуля: вопросы ролей — у `UserAr` (D-69). */
+type ModuleSubject = Pick<ReadonlyAr<UserAr>, 'uuid' | 'isAdmin'>;
 
 /** Контекст прав на модуль: модуль, над которым действие. */
 export type ModuleCtx = { readonly module: ReadonlyAr<ModuleAr> };
@@ -12,7 +12,7 @@ const isAdmin = Rule.of({
   name: 'isAdmin',
   label: 'Администратор',
   denyMessage: 'Нет доступа к модулю',
-  check: (subject: ModuleSubject) => subject.roles.includes(Role.ADMIN),
+  check: (subject: ModuleSubject) => subject.isAdmin(),
 });
 
 const isModuleAuthor = Rule.of({

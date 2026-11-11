@@ -24,7 +24,7 @@ const DOMAIN_SRC = 'domain/src/';
 // Корень сборки `@u7-scl/app` — не платформа: домену запрещён (ARC-06).
 const PLATFORM = /^@u7-scl\/(app-legacy|core)(\/|$)/;
 const DOMAIN_PKG = /^@u7-scl\/domain(?:\/([^/]+)(?:\/(.+))?)?$/;
-const PUBLIC_SUBPATHS = new Set(['contract']);
+const PUBLIC_SUBPATHS = new Set(['contract', 'testing']);
 const IMPORT_RE =
   /(?:\b(?:import|export)\b[^;'"]*?\bfrom\s*|\bimport\s*(?:\(\s*)?)(['"])([^'"\n]+)\1/g;
 
@@ -177,7 +177,8 @@ export function checkContractImports(
     for (const { spec } of importsOf(f.text)) {
       const m = DOMAIN_PKG.exec(spec);
       const other = m?.[1];
-      if (!other || other === own || m?.[2] === 'contract') continue;
+      if (!other || other === own) continue;
+      if (m?.[2] === 'contract' || m?.[2] === 'testing') continue;
       const dmg =
         modules.dmg.includes(other) || modules.dmg.includes(own ?? '');
       if (dmg)

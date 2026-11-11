@@ -1,10 +1,10 @@
-import { Role, type User } from '@u7-scl/domain/user/contract';
+import type { UserAr } from '@u7-scl/domain/user/contract';
 import { PolicyDef, type ReadonlyAr, Rule } from 'dmg-core';
 import type { StreamAr } from '../stream/stream.ar';
 import type { StudentAr } from './student.ar';
 
-/** Субъект прав студента: кто спрашивает и какие у него роли. */
-type StudentSubject = Pick<User, 'uuid' | 'roles'>;
+/** Субъект прав студента: вопросы ролей — у `UserAr` (D-69). */
+type StudentSubject = Pick<ReadonlyAr<UserAr>, 'uuid' | 'isAdmin'>;
 
 /** Контекст прав на запись студента. */
 export type StudentCtx = { readonly student: ReadonlyAr<StudentAr> };
@@ -36,7 +36,7 @@ const isAdmin = (denyMessage: string) =>
     name: 'isAdmin',
     label: 'Администратор',
     denyMessage,
-    check: (subject: StudentSubject) => subject.roles.includes(Role.ADMIN),
+    check: (subject: StudentSubject) => subject.isAdmin(),
   });
 
 const mentorOrAdmin = (name: string, denyMessage: string) =>

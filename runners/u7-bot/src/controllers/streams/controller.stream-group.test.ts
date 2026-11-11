@@ -4,7 +4,7 @@ import {
   GetStreamMembersUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
-import { Role } from '@u7-scl/domain/user/contract';
+import { Role } from '@u7-scl/user/domain';
 import { ok, UserCaller } from 'dmg-core';
 import { StreamsController } from './controller';
 
