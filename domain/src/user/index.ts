@@ -68,3 +68,8 @@ export { LegacyUserPolicy } from './user/policy';
 export type { LegacyUserRepo, UserListFilter } from './user/repo';
 export { Role, RoleSchema } from './user/roles';
 export type { TelegramId, UserId } from './user/types';
+export * from './user/user.ar';
+export { UserErrors } from './user/user.errors';
+export { UserPolicy } from './user/user.policy';
+export { UserRules } from './user/user.rules';
+export * from './user/user.state';
