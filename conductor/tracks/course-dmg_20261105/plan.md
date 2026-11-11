@@ -153,8 +153,8 @@
 
 - [x] Task: Замер `main` перед слиянием: `CI=true bun test`, `bun run test:bot` — в `summary.md` (Opus) 4e7e1d3a
 - [x] Task: `git merge tst-cleanup` (без fast-forward). Конфликты: в тестах — по таблицам `inventory/*-delete.md` ветки (удалённый там тест, который Ф4–Ф5 переписали, — сверить с таблицей, а не воскрешать); в `tracks.md` — оставить запись трека `tst-cleanup` и кандидата по `course` из ветки (Opus) 4e7e1d3a (3 конфликта — по `stream-bot-delete.md`; новый тест Ф4 «отказ UC → 7d» перенесён в `hub.test.ts`)
-- [~] Task: Добить отложенное до `course-dmg` (список «Дальше» в `plan.md` трека `tst-cleanup`): `wish-questionnaire.e2e.test.ts:460` → `wish-flow.integration.test.ts:251`, `student-dmg.e2e.test.ts:122`, `:251`, `questionnaire-ux.e2e.test.ts`, `questionnaire.module.test.ts:169` (`probe`) — таблица удаления → приёмка → удаление; отметки в журнале `test-bloat.md` (flash, приёмка Opus)
-- [ ] Task: Гейт: `check` зелёный, число тестов ≈ замер − 952 (± правки Ф4–Ф5 в почищенных файлах), `course` не уменьшился, покрытие собственных исходников модулей не упало; новая базовая линия — в `summary.md` (Opus)
+- [x] Task: Добить отложенное до `course-dmg` (список «Дальше» в `plan.md` трека `tst-cleanup`): `wish-questionnaire.e2e.test.ts:460` → `wish-flow.integration.test.ts:251`, `student-dmg.e2e.test.ts:122`, `:251`, `questionnaire-ux.e2e.test.ts`, `questionnaire.module.test.ts:169` (`probe`) — таблица удаления → приёмка → удаление; отметки в журнале `test-bloat.md` (flash, приёмка Opus) f8c8b29b (−8; `:460` удалён, а не слит — приёмник снят в Ф4)
+- [x] Task: Гейт: `check` зелёный, число тестов ≈ замер − 952 (± правки Ф4–Ф5 в почищенных файлах), `course` не уменьшился, покрытие собственных исходников модулей не упало; новая базовая линия — в `summary.md` (Opus) — 3602 / бот 932; потери покрытия — 3 побочных, `summary.md` «Слияние `tst-cleanup`»
 - [ ] Task: Удалить worktree `../u7-school-tst-cleanup` и ветку — только с подтверждения Нурболата
 
 **Критерии приёмки Фазы 7:**

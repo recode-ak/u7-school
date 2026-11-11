@@ -102,3 +102,12 @@
 | Замер | `CI=true bun test` | `bun run test:bot` |
 |---|---|---|
 | `main` перед слиянием (`676dd487`) | 4562 pass, 0 fail (393 файла) | 1097 pass, 0 fail (98 файлов) |
+| после слияния (`4e7e1d3a`) | 3610 pass (353 файла) — ровно −952 | 939 pass (94 файла) — ровно −158 |
+| после отложенного (`f8c8b29b`) — **новая базовая линия** | 3602 pass, 0 fail (353 файла) | 932 pass, 0 fail (94 файла) |
+
+`domain/src/course` — 442, `modules/course` — 330: без изменений. Отложенное до `course-dmg` — −8 по [`inventory/deferred-delete.md`](./inventory/deferred-delete.md) (`cd-F7-table` flash $0.078, 39 ходов, hit 97%; `cd-F7-apply` flash $0.035, 29 ходов, hit 97%). Конфликты слияния — 3 файла, все по `stream-bot-delete.md`; тест Ф4 «отказ UC → 7d» из удалённого `hub.student-events.test.ts` перенесён в `hub.test.ts`.
+
+**Покрытие строк** (`bun test --coverage`, собственные исходники без тестов и `dmg-core`; `676dd487` против `f8c8b29b`): из 12 файлов с меньшим LH у 9 изменилось и LF — мёртвый код снят в `tst-cleanup`, покрытие 100% или выше прежнего. Реальные потери — побочное покрытие без утверждающего теста:
+- `notify.story.ts:64–73` — делегат `handleCallback → unknownCommand` (принято в `tst-cleanup`, Б-9);
+- `stream-nav-resolver.ts:275` — обрезка тела шага > 3200 символов: ни до, ни после её не утверждал ни один тест;
+- `user-in-proc-facade.ts:68–82` (`registerGuest`) — legacy-фасад `user`, снимается треком `user`.
