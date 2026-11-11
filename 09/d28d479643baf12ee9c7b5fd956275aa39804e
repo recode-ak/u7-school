@@ -1,0 +1,5 @@
+Фаза 7 course-dmg (слияние tst-cleanup) — верификация.
+Команды: CI=true bun run check — зелёный, bun test 3602/0; bun run test:bot — 932/0; course: домен 442/0, модуль 330/0.
+Критерии фазы: git branch --no-merged main пуст; в test-bloat.md нет «ждёт course-dmg».
+Покрытие: 3 побочных потери без утверждающих тестов — summary.md «Слияние tst-cleanup».
+Worktree и ветка tst-cleanup удалены с подтверждения Нурболата.
