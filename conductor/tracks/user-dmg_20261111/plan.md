@@ -17,7 +17,7 @@
 
 **Красная зона Ф3–Ф5.** Ф1–Ф2 аддитивны: legacy-UC `user` живут рядом с Def, `check` зелёный. С Ф3 (строгое чтение без `STUDENT`) и Ф4 (резолвер, Policy) могут падать legacy-UC, stories и их integration/e2e. Гейт — `check` зелёный, кроме поимённого списка в `debt.md`; критерий снятия — конец Ф5.
 
-## Фаза 0: База и решения
+## Фаза 0: База и решения [checkpoint: ca01960]
 
 - [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, тесты `domain/src/user` и `modules/user`, `dmg-core` `bun test`. Каркас раздела «DeepSeek» (Opus) 5843f1a
 - [x] Task: `dmg-tech-lead`: разбор и брифы `slices/user-domain.md`, `slices/user-app.md` (Sonnet): 847b3b7
@@ -27,7 +27,7 @@
     - [x] список legacy-тестов на перенос (с учётом TST-08) и тестов состава модуля; ID `rules.md`.
 - [x] Task: orchestrator проверяет брифы (Opus); вопросы Нурболату — субъект Policy, состав UC (`create-user`, `list-users`, `notify-user`), имя `remove-role-from-user` 19ff0c2
 - [x] Task: Записать решения в TR (`debt.md`) и `decisions.md` (Opus) 19ff0c2 — TR-61, DEBT-52; решение пакета — D-69 `dmg-core` (проектный `decisions.md` не менялся)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md; автономно) ca01960
 
 **Критерии приёмки Фазы 0:**
 - Базовая линия (pass/fail по командам) — в `summary.md`.
