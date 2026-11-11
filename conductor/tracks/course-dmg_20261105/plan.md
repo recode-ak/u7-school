@@ -151,9 +151,9 @@
 
 Трек чистки тестов (TST-08) закрыт в ветке `tst-cleanup` (worktree `../u7-school-tst-cleanup`, от `816908b1`): −952 теста в `wish`, `stream`, `questionnaire`, `peer-review`, `user`, `dossier`. Вливается после Ф6, порядок — `git show tst-cleanup:conductor/tracks/tst-cleanup_20261105/summary.md`, раздел «Поправка базовой линии `course-dmg`».
 
-- [ ] Task: Замер `main` перед слиянием: `CI=true bun test`, `bun run test:bot` — в `summary.md` (Opus)
-- [ ] Task: `git merge tst-cleanup` (без fast-forward). Конфликты: в тестах — по таблицам `inventory/*-delete.md` ветки (удалённый там тест, который Ф4–Ф5 переписали, — сверить с таблицей, а не воскрешать); в `tracks.md` — оставить запись трека `tst-cleanup` и кандидата по `course` из ветки (Opus)
-- [ ] Task: Добить отложенное до `course-dmg` (список «Дальше» в `plan.md` трека `tst-cleanup`): `wish-questionnaire.e2e.test.ts:460` → `wish-flow.integration.test.ts:251`, `student-dmg.e2e.test.ts:122`, `:251`, `questionnaire-ux.e2e.test.ts`, `questionnaire.module.test.ts:169` (`probe`) — таблица удаления → приёмка → удаление; отметки в журнале `test-bloat.md` (flash, приёмка Opus)
+- [x] Task: Замер `main` перед слиянием: `CI=true bun test`, `bun run test:bot` — в `summary.md` (Opus) 4e7e1d3a
+- [x] Task: `git merge tst-cleanup` (без fast-forward). Конфликты: в тестах — по таблицам `inventory/*-delete.md` ветки (удалённый там тест, который Ф4–Ф5 переписали, — сверить с таблицей, а не воскрешать); в `tracks.md` — оставить запись трека `tst-cleanup` и кандидата по `course` из ветки (Opus) 4e7e1d3a (3 конфликта — по `stream-bot-delete.md`; новый тест Ф4 «отказ UC → 7d» перенесён в `hub.test.ts`)
+- [~] Task: Добить отложенное до `course-dmg` (список «Дальше» в `plan.md` трека `tst-cleanup`): `wish-questionnaire.e2e.test.ts:460` → `wish-flow.integration.test.ts:251`, `student-dmg.e2e.test.ts:122`, `:251`, `questionnaire-ux.e2e.test.ts`, `questionnaire.module.test.ts:169` (`probe`) — таблица удаления → приёмка → удаление; отметки в журнале `test-bloat.md` (flash, приёмка Opus)
 - [ ] Task: Гейт: `check` зелёный, число тестов ≈ замер − 952 (± правки Ф4–Ф5 в почищенных файлах), `course` не уменьшился, покрытие собственных исходников модулей не упало; новая базовая линия — в `summary.md` (Opus)
 - [ ] Task: Удалить worktree `../u7-school-tst-cleanup` и ветку — только с подтверждения Нурболата
 
