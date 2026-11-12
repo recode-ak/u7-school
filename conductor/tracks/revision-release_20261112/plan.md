@@ -25,16 +25,17 @@
 
 ## Фаза 1: Каталог сценариев (ФР-1)
 
-- [ ] Task: `dmg-test-designer` (Sonnet): выписать сценарии v0.2.6 (`ui-spec.md` контроллеров, stories, контроллеры, UC, Job, ER, e2e, события мессенджера) порциями
-    - [ ] П1 — гость, регистрация, `school`, события мессенджера
-    - [ ] П2 — студент: каталог курсов
-    - [ ] П3 — студент: обучение, `stream` (студент)
-    - [ ] П4 — ментор: потоки, inactivity
-    - [ ] П5 — админ: курсы, роли, менторы
-    - [ ] П6 — `peer-review`
-    - [ ] П7 — `questionnaire` + `wish`, Job `sweep-abandoned`
-    - [ ] П8 — сквозное: Job `inactivity-sweep`, планировщик, replay, сессии бота
-- [ ] Task: orchestrator: свести в `scenarios.md` (ID, роль, вход, ожидание, `файл:строка` в v0.2.6) (Opus)
+- [x] Task: `dmg-test-designer` (Sonnet): выписать сценарии v0.2.6 (`ui-spec.md` контроллеров, stories, контроллеры, UC, Job, ER, e2e, события мессенджера) порциями `6f9f117`
+    - [x] П1 — гость, регистрация, `school`, события мессенджера
+    - [x] П2 — студент: каталог курсов
+    - [x] П3 — студент: обучение, `stream` (студент)
+    - [x] П4 — ментор: потоки, inactivity
+    - [x] П5 — админ: курсы, роли, менторы
+    - [x] П6 — `peer-review`
+    - [x] П7 — `questionnaire` + `wish`, Job `sweep-abandoned`
+    - [x] П8 — сквозное: Job `inactivity-sweep`, планировщик, replay, сессии бота
+- [x] Task: orchestrator: свести в `scenarios.md` (ID, роль, вход, ожидание, `файл:строка` в v0.2.6) (Opus) `6f9f117`
+    - Итог: 483 строки + 8 служебных П0; UC фактически 66 (71 — с 5 базовыми классами), Job 2, ER 6, story 31 — все покрыты; дубли размечены, вопросы к Ф2 — Q-01…Q-19
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 1:**
