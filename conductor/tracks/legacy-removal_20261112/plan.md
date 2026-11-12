@@ -58,14 +58,14 @@
 - В `dmg-core` тесты планировщика зелёные, `bun run check` и `bun run e2e` зелёные, D-NN записано, документы по `covers:` обновлены.
 - В u7-school `core/infra` ещё на месте (аддитивно), `check` зелёный; коммит u7-school содержит SHA пакета.
 
-## Фаза 3: `core/ui` без legacy
+## Фаза 3: `core/ui` без legacy [checkpoint: fed33b9c]
 
-- [ ] Task: `dmg-test-designer`: red-тесты (Sonnet)
-    - [ ] тесты `ui` и 8 stories `u7-bot` (14 подписок), `questionnaire-dmg.test-kit.ts`, 4 e2e с legacy-публикацией в `app.eventBus` — на конверты событий DMG по Def (`name`, `payload`, `occurredAt` числом); помощник `envelopeOf`; `tests/helpers/{test-app,test-bot-transport}.ts` на шину DMG
-    - [ ] `handleError`/`errorNotify`: необработанное исключение → `internal`; тесты `AppException` в `u7-bot-ui-story.test`, `bot-ui-story.test`, `bot-controller.test` — удалить или переписать (список в отчёте)
-- [ ] Task: `migrator` 3a (Sonnet — видимое поведение): `ui` (`handleError`, подписки по Def, типы без `TAppMeta`), `serialize-error`; 3b (flash): stories, `questionnaire-events.ts`, `config.ts`, закрывающие типы бота, `U7App` наружу — dmg `ApiApp` и шина DMG (оболочка приватна до Ф4, TR-62). Исходная формулировка: `ui` на dmg `ApiApp` (без дженерика `TAppMeta`) и `EventBus`/`EnvelopeOf` пакета; закрывающие типы `u7-bot-ui-story`, `u7-bot-controller`, `u7-bot-app-meta`, `ui-app`; stories — `eventSubscription(def, …)`; `fromError` → локальный разбор `unknown`; `NotifyKind` → `ui/bot/types.ts`; `#*-legacy` внутри `ui` → относительные импорты
-- [ ] Task: `dmg-reviewer` (Opus)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: `dmg-test-designer`: red-тесты (Sonnet) 65ef072
+    - [x] тесты `ui` и 8 stories `u7-bot` (14 подписок), `questionnaire-dmg.test-kit.ts`, 4 e2e с legacy-публикацией в `app.eventBus` — на конверты событий DMG по Def (`name`, `payload`, `occurredAt` числом); помощник `envelopeOf`; `tests/helpers/{test-app,test-bot-transport}.ts` на шину DMG
+    - [x] `handleError`/`errorNotify`: необработанное исключение → `internal`; тесты `AppException` в `u7-bot-ui-story.test`, `bot-ui-story.test`, `bot-controller.test` — удалить или переписать (список в отчёте)
+- [x] Task: `migrator` 3a (Sonnet — видимое поведение): `ui` (`handleError`, подписки по Def, типы без `TAppMeta`), `serialize-error`; 3b (flash): stories, `questionnaire-events.ts`, `config.ts`, закрывающие типы бота, `U7App` наружу — dmg `ApiApp` и шина DMG (оболочка приватна до Ф4, TR-62) 65ef072. Исходная формулировка: `ui` на dmg `ApiApp` (без дженерика `TAppMeta`) и `EventBus`/`EnvelopeOf` пакета; закрывающие типы `u7-bot-ui-story`, `u7-bot-controller`, `u7-bot-app-meta`, `ui-app`; stories — `eventSubscription(def, …)`; `fromError` → локальный разбор `unknown`; `NotifyKind` → `ui/bot/types.ts`; `#*-legacy` внутри `ui` → относительные импорты
+- [x] Task: `dmg-reviewer` (Opus) 65ef072
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (автономно: `check` зелёный, 3065 pass; ревью без `error`, TR-65) (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 3:**
 - `grep -rn "#[a-z]*-legacy/\|@u7-scl/core/domain\|@u7-scl/core/api" platform/core/src/ui runners/u7-bot` пуст; `grep -rn "DomainEvent" platform/core/src/ui runners` пуст.
