@@ -32,13 +32,13 @@
 
 ## Фаза 1: `dossier` на Def, DEBT-3 и DEBT-34
 
-- [ ] Task: `dmg-test-designer`: red-тесты (Sonnet)
-    - [ ] `modules/dossier/src/dossier.module.test.ts` — пустой модуль собирается, граф содержит `dossier` без `external`
-    - [ ] правка `scripts/arch-check.test.ts` (ожидание `external` у `dossier`), `scripts/domain-check.test.ts` (нет пропуска legacy-пар и `index`)
-- [ ] Task: `migrator` (flash): `DossierModuleDef` без `external`, `description` — текущее понимание; `createDossierModule` с пустыми картами; `modules/dossier/src/index.ts` — вход модуля вместо реэкспорта домена; фабрика в `U7App`; `domain-check.ts` без `sub !== 'index'` (оба места) и пропуска legacy-пар; `arch-check.ts` — `modules.dmg` → `modules.all`, если применимо
-- [ ] Task: Opus: `modules/dossier/README.md` — назначение, источники фактов (peer-review, sessions, stream), связь с `passport`, ссылка на `roadmap/metrics`; DEBT-3 и DEBT-34 сняты в `debt.md` — **до гейта** после `migrator` (`checkDebt`, TR-62)
-- [ ] Task: `dmg-reviewer` (Opus)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: `dmg-test-designer`: red-тесты (Sonnet) ff7727d
+    - [x] `modules/dossier/src/dossier.module.test.ts` — пустой модуль собирается, граф содержит `dossier` без `external`
+    - [x] правка `scripts/arch-check.test.ts` (ожидание `external` у `dossier`), `scripts/domain-check.test.ts` (нет пропуска legacy-пар и `index`)
+- [x] Task: `migrator` (flash): `DossierModuleDef` без `external`, `description` — текущее понимание; `createDossierModule` с пустыми картами; `modules/dossier/src/index.ts` — вход модуля вместо реэкспорта домена; фабрика в `U7App`; `domain-check.ts` без `sub !== 'index'` (оба места) и пропуска legacy-пар; `arch-check.ts` — `modules.dmg` → `modules.all`, если применимо ff7727d
+- [x] Task: Opus: `modules/dossier/README.md` — назначение, источники фактов (peer-review, sessions, stream), связь с `passport`, ссылка на `roadmap/metrics`; DEBT-3 и DEBT-34 сняты в `debt.md` — **до гейта** после `migrator` (`checkDebt`, TR-62) ff7727d
+- [x] Task: `dmg-reviewer` (Opus) ff7727d
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (автономно: `check` зелёный, ревью без `error`, TR-63) (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 1:**
 - `grep -rn "external" domain/src/dossier` пуст; `grep -n "sub !== 'index'" scripts/domain-check.ts` пуст; `modules/dossier/src/index.ts` не содержит `@u7-scl/domain`.
