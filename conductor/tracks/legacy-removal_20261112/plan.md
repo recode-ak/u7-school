@@ -90,12 +90,12 @@
 - `grep -rn "@u7-scl/core/infra\|@u7-scl/app-legacy" --include=*.ts runners platform/app scripts` пуст.
 - `check` зелёный, `test:bot` и e2e не ниже базовой; записи красной зоны в `debt.md` сняты; бот стартует на fixtures.
 
-## Фаза 5: Удаление legacy
+## Фаза 5: Удаление legacy [checkpoint: 189b331b]
 
-- [x] Task: `migrator` (flash): удалить `platform/core/src/{api,domain,infra,legacy-bridge}`, `shared/iso-now`; сузить `exports` `@u7-scl/core` до `./ui`, `./shared`, убрать `paths` в `tsconfig`; удалить `platform/app-legacy`; убрать `#*-legacy/*` и `@u7-scl/app-legacy` из всех `package.json`; ARC-02 (`PLATFORM` в `domain-check.ts`) — только `core`; переписать строки `@u7-scl/app-legacy` в `scripts/*.test.ts`; `biome.json` (override `app-legacy`, исключения `core/infra`); мёртвая `@u7-scl/core` в `modules/*/package.json`; `bun install`
-- [x] Task: orchestrator: список удалённых тестов в `summary.md` (Opus)
-- [ ] Task: `dmg-reviewer` (Opus)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
+- [x] Task: `migrator` (flash): удалить `platform/core/src/{api,domain,infra,legacy-bridge}`, `shared/iso-now`; сузить `exports` `@u7-scl/core` до `./ui`, `./shared`, убрать `paths` в `tsconfig`; удалить `platform/app-legacy`; убрать `#*-legacy/*` и `@u7-scl/app-legacy` из всех `package.json`; ARC-02 (`PLATFORM` в `domain-check.ts`) — только `core`; переписать строки `@u7-scl/app-legacy` в `scripts/*.test.ts`; `biome.json` (override `app-legacy`, исключения `core/infra`); мёртвая `@u7-scl/core` в `modules/*/package.json`; `bun install` 189b331
+- [x] Task: orchestrator: список удалённых тестов в `summary.md` (Opus) 189b331
+- [x] Task: `dmg-reviewer` (Opus) 189b331
+- [x] Task: Conductor - User Manual Verification 'Фаза 5' (автономно: `check` зелёный, 2899 pass; `test:bot` 924; ревью без `error`, TR-67) (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 5:**
 - `grep -rn "app-legacy\|legacy-bridge\|-legacy/" --include=*.ts --include=*.json .` пуст вне `node_modules` и архива (`runners/u7-cli` уже удалён в Ф6).
