@@ -1,0 +1,5 @@
+Фаза 8 «Итог» — автономно (agents.md §9).
+Область: документы conductor/, README.md, TODO.md, ui-spec/content-nav/analysis.md, domain/package.json, bun.lock — кодовых файлов нет, новых тестов не требуется.
+Команды: CI=true bun test — 3083/0; bun run test:bot — 921/0; dmg-core CI=true bun test — 1384/0; bun run check — зелёный (в т.ч. arch:check).
+Ревью: кода в фазе нет, diff документов прочитан orchestrator. TR — в debt.md (TR-33/40/49 закрыты, TR-61).
+Критерии spec — все выполнены (summary.md).
