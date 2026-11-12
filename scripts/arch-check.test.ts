@@ -34,11 +34,7 @@ describe('arch:check', () => {
 
 describe('assemblyPackages: ARC-06 (D-53)', () => {
   it('пакеты корня сборки и всех раннеров', async () => {
-    expect(await assemblyPackages('.')).toEqual([
-      '@u7-scl/app',
-      '@u7-scl/bot',
-      '@u7-scl/cli',
-    ]);
+    expect(await assemblyPackages('.')).toEqual(['@u7-scl/app', '@u7-scl/bot']);
   });
 });
 

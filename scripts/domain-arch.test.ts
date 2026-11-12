@@ -22,10 +22,7 @@ describe('DomainArch: корень сборки и раннеры (D-52)', () =>
   });
 
   it('раннеры — src каждого runners/*', () => {
-    expect(DomainArch.runners).toEqual([
-      join(ROOT, 'runners/u7-bot/src'),
-      join(ROOT, 'runners/u7-cli/src'),
-    ]);
+    expect(DomainArch.runners).toEqual([join(ROOT, 'runners/u7-bot/src')]);
   });
 
   describe('фикстура: раннер импортирует прикладной пакет', () => {

@@ -99,13 +99,13 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
     const files = [
       file(
         'domain/src/user/a.ts',
-        "import { X } from '../../../user/src/infra/repo';\nimport { B } from '@u7-scl/bot';\nimport { Y } from '@u7-scl/cli';",
+        "import { X } from '../../../user/src/infra/repo';\nimport { B } from '@u7-scl/bot';\nimport { Y } from '@u7-scl/admin';",
       ),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([
       "ARC-06: domain/src/user/a.ts: домен не импортирует прикладной слой (import '../../../user/src/infra/repo')",
       "ARC-06: domain/src/user/a.ts: домен не импортирует прикладной слой (import '@u7-scl/bot')",
-      "ARC-06: domain/src/user/a.ts: домен не импортирует прикладной слой (import '@u7-scl/cli')",
+      "ARC-06: domain/src/user/a.ts: домен не импортирует прикладной слой (import '@u7-scl/admin')",
     ]);
   });
 
@@ -167,7 +167,7 @@ describe('подпуть @u7-scl/domain/<m>/testing: публичный, но т
 
 describe('checkModuleImports: ARC-06 (D-53)', () => {
   // Пакеты корня сборки и раннеров — из package.json (`assemblyPackages`).
-  const ASSEMBLY = ['@u7-scl/app', '@u7-scl/bot', '@u7-scl/cli'];
+  const ASSEMBLY = ['@u7-scl/app', '@u7-scl/bot', '@u7-scl/admin'];
 
   it('пакет нового раннера из списка — ARC-06', () => {
     const files = [
@@ -205,12 +205,12 @@ describe('checkModuleImports: ARC-06 (D-53)', () => {
     const files = [
       file(
         'modules/user/src/infra/a.ts',
-        "import { B } from '@u7-scl/bot';\nimport { C } from '@u7-scl/cli';\nimport { M } from '../../../../runners/u7-bot/src/main';\nimport { U } from '../../../../platform/app/src/u7-app';",
+        "import { B } from '@u7-scl/bot';\nimport { C } from '@u7-scl/admin';\nimport { M } from '../../../../runners/u7-bot/src/main';\nimport { U } from '../../../../platform/app/src/u7-app';",
       ),
     ];
     expect(checkModuleImports(files, ASSEMBLY)).toEqual([
       "ARC-06: modules/user/src/infra/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '@u7-scl/bot')",
-      "ARC-06: modules/user/src/infra/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '@u7-scl/cli')",
+      "ARC-06: modules/user/src/infra/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '@u7-scl/admin')",
       "ARC-06: modules/user/src/infra/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '../../../../runners/u7-bot/src/main')",
       "ARC-06: modules/user/src/infra/a.ts: прикладной пакет не импортирует корень сборки и раннеры (import '../../../../platform/app/src/u7-app')",
     ]);

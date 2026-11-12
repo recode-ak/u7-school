@@ -40,6 +40,7 @@
 | 8 | **Контент, Релиз 6**: Import/Export, Fork, publish-replace, gating | не начат | [content-management.md](./roadmap/content-management.md), треки 3–4; [course-module-history.md](./roadmap/course-module-history.md) |
 | 9 | **Модуль отзывов peer-review** (этап «отзывы»): кампании `stream_completed` («студент завершил поток») + текстовые отзывы; далее анкеты в кампании (техдолг) | 🔥 треки созданы: статусы студента, домен+API, UI | [peer-review-system.md](./roadmap/metrics/peer-review-system.md) |
 | 10 | **Цифровой паспорт** (passport): витрина профиля, PDF+QR, портфолио, рекомендация | 📋 концепция; после п. 4 (поглощает витрину трека 3.4 документа 3) | [digital-passport.md](./roadmap/metrics/digital-passport.md) |
+| 11 | **`dmg-cli`** — автоматический текстовый интерфейс к бэку на `dmg-core`: модули и UC из графа Def, ввод по схеме входа, `dispatch`/`dispatchByName`, подмена `Caller`; одно ядро для терминала и бота; заменит `scripts/call-uc.ts` (DEBT-42) | кандидат; заготовка вынесена из `runners/u7-cli` (трек `legacy-removal`, Ф6), не собирается | `~/dev/tools/dmg/dmg-cli/README.md` |
 
 ### Заметки к последовательности
 
