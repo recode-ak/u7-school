@@ -396,6 +396,7 @@
 - **Пересмотреть:** при переводе `user` на DMG резолвер идёт через `ApiApp.dispatch` (`getUser`), как в учебном приложении; `@u7-scl/app-legacy` удаляется вместе с последним legacy-модулем.
 - **Состояние после Ф4 `user-dmg`:** резолвер `U7CallerResolver(apiApp)` идёт через `dispatch` `getUser` от `SystemCaller` (`kind: 'app'`), субъект — `UserAr`; legacy `userFacade` в резолвере нет. Остаток — `@u7-scl/app-legacy` (последний legacy-модуль).
 - **Закрыто для `user`** (`user-dmg`, Ф8): часть «резолвер через `dispatch`» выполнена, домен `user` из `app-legacy` удалён (Ф6–Ф7). В `@u7-scl/app-legacy` остались `School`, `api.ts` и логгер — пакет снимается вместе с `dossier`.
+- **Закрыто** (`legacy-removal`, Ф4–Ф5, TR-66, TR-67): `School` — `platform/app/src/school/`, логгер — `runners/u7-bot/src/infra/logger/`, пакет `platform/app-legacy` удалён. Legacy-кода в репозитории нет; остаток перехода (не legacy) — [migration.md](./migration.md) §4.
 
 ### TR-34: решения по ревью Ф2 `app-assembly` (корень сборки)
 - **Трек / фаза:** `app-assembly`, Ф2

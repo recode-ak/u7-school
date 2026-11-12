@@ -429,8 +429,7 @@ const TR_ID = /\bTR-\d+\b/g;
 
 /**
  * Записи реестра `TR-<n>` живут в `debt.md` §6: в коде ссылка устаревает
- * вместе с адаптером. Где она объясняла «почему» — «адаптер над
- * legacy-фасадом» (`migration.md` §2.2).
+ * вместе с решением, которое она объясняла.
  */
 export function checkTrMarkers(code: readonly DomainFile[]): string[] {
   const out: string[] = [];
