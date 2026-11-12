@@ -8,8 +8,8 @@
 
 ---
 
-- [x] **Track: Перевод модуля `user` на DMG и снятие barrel-реэкспортов (DEBT-3)**
-*Link: [./tracks/user-dmg_20261111/](./tracks/user-dmg_20261111/)*
+- [?] **Кандидат: перевод модуля `dossier` на DMG — последний legacy-модуль (DEBT-3, DEBT-34, `app-legacy`)**
+*Разбор: [migration.md §6 «Старт следующих треков»](./architecture/migration.md) — что снимает трек, шаблон (`conductor/archive/user-dmg_20261111`), входной долг; чек-лист релиза — там же. Папки трека нет: это заготовка, не трек.*
 
 ---
 
