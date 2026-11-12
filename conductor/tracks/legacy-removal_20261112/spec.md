@@ -12,7 +12,7 @@
 2. **DEBT-3.** Barrel `modules/dossier/src/index.ts` удалён; реэкспортов домена в пакетах нет.
 3. **DEBT-34.** В `scripts/domain-check.ts` удалены пропуск legacy-пар и разрешение `index`; все модули проверяются через `contract`.
 4. **Раскладка: «нужное новой архитектуре — на своё место».**
-   - **`@u7-scl/core`** — только `ui` и часть `shared`, нужная `ui`. Пакет — кандидат на удаление при переводе UI в dmg (`dmg-ui`), это записано в документации.
+   - **`@u7-scl/core`** — только `ui` и `shared` (целиком, кроме `iso-now`: его используют бот, `app`, `scripts` — С3, TR-62). Пакет — кандидат на удаление при переводе UI в dmg (`dmg-ui`), это записано в документации.
    - **`dmg-core`** — интерфейсы, нужные новой архитектуре; реализации — только при явной заинтересованности будущих проектов. Решение трека: порты `JobScheduler`/`JobRunRepo` и in-proc планировщик (planner, runner, scheduler, Memory-репо запусков) — в пакет (аналога нет, любой проект с Job нуждается в нём; запись D-NN в `docs/decisions.md` пакета до кода). Правки — в репо пакета по порядку `architecture/index.md` («Правка платформы `dmg-core`»).
    - **`@u7-scl/app`** — архитектурные решения проекта за пределами `dmg-core`, каталоги по содержимому: `platform/app/src/school/` (`School`, `SchoolSchema`, `createSchool`, `U7_SCHOOL_*`, `TEST_SCHOOL` — конфигурация школы корня сборки до модуля `schools`), `platform/app/src/infra/` (файловые адаптеры портов пакета: `FileReplayStore`, `JobRunJsonRepo`). `U7AppResolver` заменяется явным типом в `app` (его читает `u7-bot-app-meta`).
    - **`runners/u7-bot/src/infra`** — `CompositeLogger` и `JsonFileRepo` (без `BaseJsonDb`): единственный потребитель — бот (логгер, сессии бота).
@@ -34,7 +34,7 @@
 ## Критерии приёмки
 
 1. `grep -rn "app-legacy\|legacy-bridge\|-legacy/"` по `*.ts`/`*.json` вне `node_modules` и архива — пусто; каталогов `platform/app-legacy` и `runners/u7-cli` нет.
-2. В `@u7-scl/core` только `ui` и используемая ими часть `shared`; legacy-`UseCase`/`ApiModule`/`ApiApp`/`Aggregate`/`AppError` нет; остаток legacy расписан в `debt.md`.
+2. В `@u7-scl/core` только `ui` и `shared` (TR-62); legacy-`UseCase`/`ApiModule`/`ApiApp`/`Aggregate`/`AppError` нет; остаток legacy расписан в `debt.md`.
 3. `DossierModuleDef` без `external`, README модуля описывает текущее понимание; `arch:check` проверяет `dossier` как обычный модуль.
 4. В `domain-check.ts` нет `sub !== 'index'` и пропуска legacy-пар; DEBT-3 и DEBT-34 сняты в `debt.md`.
 5. `legacy.md` удалён, битых ссылок на него нет; `migration.md` фиксирует завершение перехода.

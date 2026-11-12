@@ -10,7 +10,7 @@
 
 **Правки `dmg-core`** (Ф2, Ф3 при необходимости) — в репо `~/dev/tools/dmg/dmg-core` по порядку `architecture/index.md` («Правка платформы `dmg-core`»): решение D-NN в `docs/decisions.md` пакета до кода → `bun run check` и `bun run e2e` пакета → коммит там → `bun install`, `dmg:sync`, `agents:sync` в u7-school → коммит u7-school с SHA пакета.
 
-**Красная зона Ф3–Ф4.** Смена шины событий и типа `appApi` затрагивает stories и миры `u7-bot`. Гейт — `check` зелёный, кроме поимённого списка в `debt.md`; критерий снятия — конец Ф4.
+**Красная зона Ф3–Ф4 — избегается** (TR-62): в Ф3 `U7App` отдаёт наружу dmg `ApiApp` и шину DMG, legacy-оболочка приватна до Ф4. Если не удастся — гейт `check` зелёный, кроме поимённого списка в `debt.md`; критерий снятия — конец Ф4.
 
 **Перепроектирование** — только с явного разрешения Нурболата: вопрос «сейчас или в `debt.md`», ответ — в TR до выполнения.
 
@@ -18,16 +18,16 @@
 
 - [x] Task: Зафиксировать свежую базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, `bun run check`, `bun test` в `dmg-core`; каркас раздела «DeepSeek» (Opus) 9894083d
     - [x] проверить состояние `runners/u7-bot/tests/courses/course-catalog.integration.test.ts` (tsc в редакторе: `@u7-scl/user/domain`, `userFacade` — остаток `user-dmg`): входит ли в прогон, сообщить Нурболату до правки
-- [ ] Task: `dmg-tech-lead`: брифы срезов `slices/dossier.md`, `slices/job-scheduler.md`, `slices/core-ui.md`, `slices/assembly.md`, `slices/removal.md` с таблицей раскладки «файл → куда / удалить» и «Сохраняемым поведением» (Sonnet)
-    - [ ] список тестов на перенос (TST-08) и на удаление вместе с legacy-кодом
-    - [ ] список тестов состава модуля и графа (`scripts/{arch-check,domain-check,domain-arch,agent-gate}.test.ts`)
-- [ ] Task: orchestrator проверяет брифы (Opus); вопросы Нурболату — только стратегические
-- [ ] Task: Записать решения в TR (`debt.md`): раскладка, реализации в пакете vs проекте, подписки по Def (Opus)
+- [x] Task: `dmg-tech-lead`: брифы срезов `slices/dossier.md`, `slices/job-scheduler.md`, `slices/core-ui.md`, `slices/assembly.md`, `slices/removal.md` с таблицей раскладки «файл → куда / удалить» и «Сохраняемым поведением» (Sonnet)
+    - [x] список тестов на перенос (TST-08) и на удаление вместе с legacy-кодом
+    - [x] список тестов состава модуля и графа (`scripts/{arch-check,domain-check,domain-arch,agent-gate}.test.ts`)
+- [x] Task: orchestrator проверяет брифы (Opus); вопросы Нурболату — только стратегические
+- [x] Task: Записать решения в TR (`debt.md`): раскладка, реализации в пакете vs проекте, подписки по Def (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 0:**
 - Базовая линия (pass/fail по командам) — в `summary.md`.
-- Брифы приняты, таблица раскладки покрывает каждый файл `platform/core/src`, `platform/app-legacy/src`, `runners/u7-cli`.
+- Брифы приняты (`slices/`, факты — `slices/inventory.md`), таблица раскладки покрывает каждый файл `platform/core/src`, `platform/app-legacy/src`, `runners/u7-cli`.
 - Решения записаны в TR.
 
 ## Фаза 1: `dossier` на Def, DEBT-3 и DEBT-34
@@ -36,7 +36,7 @@
     - [ ] `modules/dossier/src/dossier.module.test.ts` — пустой модуль собирается, граф содержит `dossier` без `external`
     - [ ] правка `scripts/arch-check.test.ts` (ожидание `external` у `dossier`), `scripts/domain-check.test.ts` (нет пропуска legacy-пар и `index`)
 - [ ] Task: `migrator` (flash): `DossierModuleDef` без `external`, `description` — текущее понимание; `createDossierModule` с пустыми картами; `modules/dossier/src/index.ts` — вход модуля вместо реэкспорта домена; фабрика в `U7App`; `domain-check.ts` без `sub !== 'index'` (оба места) и пропуска legacy-пар; `arch-check.ts` — `modules.dmg` → `modules.all`, если применимо
-- [ ] Task: Opus: `modules/dossier/README.md` — назначение, источники фактов (peer-review, sessions, stream), связь с `passport`, ссылка на `roadmap/metrics`; DEBT-3 и DEBT-34 сняты в `debt.md`
+- [ ] Task: Opus: `modules/dossier/README.md` — назначение, источники фактов (peer-review, sessions, stream), связь с `passport`, ссылка на `roadmap/metrics`; DEBT-3 и DEBT-34 сняты в `debt.md` — **до гейта** после `migrator` (`checkDebt`, TR-62)
 - [ ] Task: `dmg-reviewer` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
@@ -61,9 +61,9 @@
 ## Фаза 3: `core/ui` без legacy
 
 - [ ] Task: `dmg-test-designer`: red-тесты (Sonnet)
-    - [ ] тесты `ui` и 8 stories `u7-bot` — на конверты событий DMG по Def (`name`, `payload`, `occurredAt` числом)
-    - [ ] `handleError`/`errorNotify`: необработанное исключение → `internal`; тесты `AppException` в `u7-bot-ui-story.test`, `bot-ui-story.test` — удалить (список в отчёте)
-- [ ] Task: `migrator` (flash): `ui` на dmg `ApiApp` (без дженерика `TAppMeta`) и `EventBus`/`EnvelopeOf` пакета; закрывающие типы `u7-bot-ui-story`, `u7-bot-controller`, `u7-bot-app-meta`, `ui-app`; stories — `eventSubscription(def, …)`; `fromError` → локальный разбор `unknown`; `NotifyKind` → `ui/bot/types.ts`; `#*-legacy` внутри `ui` → относительные импорты
+    - [ ] тесты `ui` и 8 stories `u7-bot` (14 подписок), `questionnaire-dmg.test-kit.ts`, 4 e2e с legacy-публикацией в `app.eventBus` — на конверты событий DMG по Def (`name`, `payload`, `occurredAt` числом); помощник `envelopeOf`; `tests/helpers/{test-app,test-bot-transport}.ts` на шину DMG
+    - [ ] `handleError`/`errorNotify`: необработанное исключение → `internal`; тесты `AppException` в `u7-bot-ui-story.test`, `bot-ui-story.test`, `bot-controller.test` — удалить или переписать (список в отчёте)
+- [ ] Task: `migrator` 3a (Sonnet — видимое поведение): `ui` (`handleError`, подписки по Def, типы без `TAppMeta`), `serialize-error`; 3b (flash): stories, `questionnaire-events.ts`, `config.ts`, закрывающие типы бота, `U7App` наружу — dmg `ApiApp` и шина DMG (оболочка приватна до Ф4, TR-62). Исходная формулировка: `ui` на dmg `ApiApp` (без дженерика `TAppMeta`) и `EventBus`/`EnvelopeOf` пакета; закрывающие типы `u7-bot-ui-story`, `u7-bot-controller`, `u7-bot-app-meta`, `ui-app`; stories — `eventSubscription(def, …)`; `fromError` → локальный разбор `unknown`; `NotifyKind` → `ui/bot/types.ts`; `#*-legacy` внутри `ui` → относительные импорты
 - [ ] Task: `dmg-reviewer` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
@@ -91,13 +91,13 @@
 
 ## Фаза 5: Удаление legacy
 
-- [ ] Task: `migrator` (flash): удалить `platform/core/src/{api,domain,infra,legacy-bridge}`, `shared/iso-now`; сузить `exports` `@u7-scl/core` до `./ui`, `./shared`, убрать `paths` в `tsconfig`; удалить `platform/app-legacy`; убрать `#*-legacy/*` и `@u7-scl/app-legacy` из всех `package.json`; ARC-02 (`PLATFORM` в `domain-check.ts`) — только `core`; переписать строки `@u7-scl/app-legacy` в `scripts/*.test.ts`; `bun install`
+- [ ] Task: `migrator` (flash): удалить `platform/core/src/{api,domain,infra,legacy-bridge}`, `shared/iso-now`; сузить `exports` `@u7-scl/core` до `./ui`, `./shared`, убрать `paths` в `tsconfig`; удалить `platform/app-legacy`; убрать `#*-legacy/*` и `@u7-scl/app-legacy` из всех `package.json`; ARC-02 (`PLATFORM` в `domain-check.ts`) — только `core`; переписать строки `@u7-scl/app-legacy` в `scripts/*.test.ts`; `biome.json` (override `app-legacy`, исключения `core/infra`); мёртвая `@u7-scl/core` в `modules/*/package.json`; `bun install`
 - [ ] Task: orchestrator: список удалённых тестов в `summary.md` (Opus)
 - [ ] Task: `dmg-reviewer` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 5:**
-- `grep -rn "app-legacy\|legacy-bridge\|-legacy/" --include=*.ts --include=*.json .` пуст вне `node_modules` и архива (кроме `runners/u7-cli` до Ф6).
+- `grep -rn "app-legacy\|legacy-bridge\|-legacy/" --include=*.ts --include=*.json .` пуст вне `node_modules` и архива (`runners/u7-cli` уже удалён в Ф6).
 - Каталога `platform/app-legacy` нет; `@u7-scl/core` экспортирует только `ui` и `shared`; классов `UseCase`, `ApiModule`, `ApiApp`, `Aggregate`, `AppError` в `core` нет.
 - `check` зелёный; число тестов сверено с базой, удалённые перечислены.
 
@@ -105,7 +105,7 @@
 
 - [ ] Task: Opus: `~/dev/tools/dmg/dmg-cli` — `git init`, перенос `src/` без `package.json` и `node_modules`; README: «нерабочая заготовка — не собирается, не используется» и концепция (автоматический текстовый интерфейс к бэку на dmg-core: модули и UC из графа Def, ввод по схеме входа, `dispatch`, выполнение от чужого имени — подмена `Caller`; одна механика для терминала и бота с адаптацией под канал; заменит `call-uc`); первый коммит
 - [ ] Task: `migrator` (flash): удалить `runners/u7-cli`, правка `scripts/domain-arch.test.ts`, упоминаний в `README.md`; `bun install`
-- [ ] Task: Opus: DEBT-42 переформулировать (`call-uc` остаётся); кандидат «`dmg-cli`» в `roadmap.md` со ссылкой на README
+- [ ] Task: Opus: DEBT-42 переформулировать (`call-uc` остаётся) — **до гейта** удаления `u7-cli` (`checkDebt`, TR-62); кандидат «`dmg-cli`» в `roadmap.md` со ссылкой на README
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 6:**
@@ -127,4 +127,4 @@
 
 ## Порядок
 
-Ф0 → Ф1 и Ф2 (независимы) → Ф3 → Ф4 → Ф5 → Ф6 → Ф7. Ф6 можно вести параллельно Ф3–Ф5.
+Ф0 → Ф1 → Ф2 → **Ф6** → Ф3 → Ф4 → Ф5 → Ф7 (TR-62): `runners/u7-cli` компилируется корневым `tsc` и держит legacy — с Ф3 `tsc` красный, поэтому Ф6 раньше Ф3. Номера фаз не меняются.
