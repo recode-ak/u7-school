@@ -13,7 +13,7 @@
 
 ## Фаза 0: Подготовка
 
-- [~] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, `bun run check`; сверить с «Гейтом закрытия» `legacy-removal` (3083 / 921 pass) (Opus)
+- [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, `bun run check`; сверить с «Гейтом закрытия» `legacy-removal` (3083 / 921 pass) (Opus) `bde49599`
 - [ ] Task: Проверить worktree `../u7-school-v0.2.6`: `git describe --tags` = `v0.2.6`, дерево чистое
 - [ ] Task: Каркас артефактов: шаблоны строки сверки, триажа, карточки (суть / варианты / рекомендация / решение)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
