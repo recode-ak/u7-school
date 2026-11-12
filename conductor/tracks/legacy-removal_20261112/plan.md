@@ -116,8 +116,8 @@
 
 ## Фаза 7: Документы, аудит `throw*`, итог
 
-- [ ] Task: Opus: удалить `legacy.md`; вычистить ссылки в источниках: `AGENTS.md`, `conductor/architecture/{index,rules,migration,decisions}.md`, `.agents-core/`, `.pi/skills/*`, `conductor/roadmap/tasks-system-*.md`; `bun run agents:sync`
-- [ ] Task: Opus: `migration.md` §2/§5/§6 — переход завершён, остаётся чек-лист релиза; `debt.md` — DEBT-3, DEBT-34, TR-33 закрыты, остаток legacy расписан; `architecture/index.md` — пометка «`@u7-scl/core` — кандидат на удаление при `dmg-ui`»
+- [x] Task: Opus: удалить `legacy.md`; вычистить ссылки в источниках: `AGENTS.md`, `conductor/architecture/{index,rules,migration,decisions}.md`, `.agents-core/`, `.pi/skills/*`, `conductor/roadmap/tasks-system-*.md`; `bun run agents:sync` 9df0227
+- [~] Task: Opus: `migration.md` §2/§5/§6 — переход завершён, остаётся чек-лист релиза; `debt.md` — DEBT-3, DEBT-34, TR-33 закрыты, остаток legacy расписан; `architecture/index.md` — пометка «`@u7-scl/core` — кандидат на удаление при `dmg-ui`»
 - [ ] Task: `dmg-reviewer` (Opus): аудит `throw*` для штатных отказов в живом коде → `summary.md`
 - [ ] Task: Opus: гейт закрытия — полный `check`, сравнение с базовой линией Ф0, таблица критериев spec в `summary.md`, строка «DeepSeek»
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
