@@ -32,7 +32,7 @@
 | `📚 Потоки` | `stream:catalog:list` (или `school:hub:streams` → delegate) | всегда | ✅ |
 | `💬 Отзывы` | `school:reviews:list` (или `school:hub:reviews` → delegate) | всегда | ✅ |
 | `ℹ️ Инфо` | `school:info:view` | всегда | ✅ |
-| `💬 Сообщество` | `URL: {School.communityGroup.url}` | всегда | ✅ |
+| `👥 Сообщество` | `URL: {School.communityGroup.url}` | всегда | ✅ |
 | `↩️ Главное меню` | `app:main-menu` | всегда | ✅ |
 
 ---
@@ -92,7 +92,7 @@
 
 ## SH04 — Сообщество школы
 
-**Как попасть:** Кнопка `💬 Сообщество` на экране SH01 (URL-кнопка в группу школы).
+**Как попасть:** Кнопка `👥 Сообщество` на экране SH01 (URL-кнопка в группу школы).
 **Кому:** Всем ролям.
 **Действие:** Прямой переход по ссылке `school.communityGroup.url`.
 **Стори:** `CommunityStory` (перенесена из `AppController` в `SchoolController`, кнопка из главного меню убрана). Статус: ✅
