@@ -86,7 +86,8 @@
 
 - [x] Task: orchestrator: `e2e-gaps.md` — сценарии со столбцом «e2e» = «нет», сгруппированные по `runners/u7-bot/tests/e2e/*` (дописать в существующий файл или новый); вход Ф5 (Opus) `fbd96e9`
     - Итог: 290 строк — 247 в 25 файлов (11 новых), 43 на решение «без e2e»; блокеры харнеса — часы (TR-50 (3)), события групп, сбои транспорта
-- [ ] Task: orchestrator: чек-лист ручной проверки `manual-run.md` — ключевые сценарии по персонам `/persona guest|dev|andrey|marina|oleg` + проактив + события мессенджера, с шагами и ожидаемым результатом (по `ui-spec.md` / коду v0.2.6)
+- [x] Task: orchestrator: чек-лист ручной проверки `manual-run.md` — ключевые сценарии по персонам `/persona guest|dev|andrey|marina|oleg` + проактив + события мессенджера, с шагами и ожидаемым результатом (по `ui-spec.md` / коду v0.2.6) `4fae826`
+    - Итог: 34 пункта M-01…M-34 по персонам `guest`, `candidate`, `andrey`/`marina`/`oleg`, `dev`/`mentor2`, проактив; ограничения мира — нет персоны-админа и потоков с кодовым словом (только e2e)
 - [ ] Task: Нурболат: ручная проверка текущего бота (`bun run dev:fixtures`); находки → `regressions.md` или «намеренно»
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
