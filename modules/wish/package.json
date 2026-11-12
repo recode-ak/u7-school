@@ -12,8 +12,6 @@
     "check": "bun run lint && bun run tslint && bun test"
   },
   "dependencies": {
-    "@u7-scl/app-legacy": "workspace:*",
-    "@u7-scl/core": "workspace:*",
     "@u7-scl/course": "workspace:*",
     "@u7-scl/questionnaire": "workspace:*",
     "@u7-scl/stream": "workspace:*",
@@ -24,8 +22,5 @@
     ".": "./src/index.ts",
     "./wish": "./src/wish/index.ts",
     "./infra": "./src/infra/index.ts"
-  },
-  "imports": {
-    "#infra-legacy/*": "./src/infra/*.ts"
   }
 }

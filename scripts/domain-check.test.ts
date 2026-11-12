@@ -120,12 +120,9 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
     ]);
   });
 
-  it('app-legacy/core без маркера DEBT — не ошибка (ARC-02 — через checkDebt)', () => {
+  it('core без маркера DEBT — не ошибка (ARC-02 — через checkDebt)', () => {
     const files = [
-      file(
-        'domain/src/user/a.ts',
-        "import { A } from '@u7-scl/app-legacy';\nimport { C } from '@u7-scl/core';",
-      ),
+      file('domain/src/user/a.ts', "import { A } from '@u7-scl/core';"),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([]);
   });
@@ -141,9 +138,7 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
   });
 
   it('файлы вне domain/src/<m>/ игнорируются', () => {
-    const files = [
-      file('modules/user/src/a.ts', "import '@u7-scl/app-legacy';"),
-    ];
+    const files = [file('modules/user/src/a.ts', "import '@u7-scl/core';")];
     expect(checkDomainImports(files, DEPENDS)).toEqual([]);
   });
 });
@@ -181,7 +176,7 @@ describe('checkModuleImports: ARC-06 (D-53)', () => {
     const files = [
       file(
         'modules/wish/src/a.ts',
-        "import { A } from '@u7-scl/app-legacy';\nimport { C } from '@u7-scl/core';\nimport { W } from '@u7-scl/domain/wish';\nimport { R } from './wish/wish.repo';",
+        "import { C } from '@u7-scl/core';\nimport { W } from '@u7-scl/domain/wish';\nimport { R } from './wish/wish.repo';",
       ),
     ];
     expect(checkModuleImports(files, ASSEMBLY)).toEqual([]);
@@ -342,7 +337,6 @@ describe('checkContractImports: ARC-04 (D-45)', () => {
 
 describe('checkDebt: allowlist долгов в debt.md', () => {
   const CORE = "import { A } from '@u7-scl/core';";
-  const LEGACY = "import { L } from '@u7-scl/app-legacy/domain';";
   const ISO =
     '  // biome-ignore lint/plugin: DEBT-5 — дата\n  at: v.isoDateTime(),';
 
@@ -530,18 +524,18 @@ describe('checkDebt: allowlist долгов в debt.md', () => {
       ]);
     });
 
-    it('ARC-02 без маркера: импорт app-legacy в домене вне Места — долг без записи', () => {
+    it('ARC-02 без маркера: импорт core в домене вне Места — долг без записи', () => {
       const debtMd = md(
         [
-          '### DEBT-2: импорт `@u7-scl/app-legacy` в домене',
+          '### DEBT-2: импорт `@u7-scl/core` в домене',
           '- **Место:** `domain/src/user/module.ts`',
-          "- **Признак:** `from '@u7-scl/app-legacy`",
+          "- **Признак:** `from '@u7-scl/core`",
           '- **Корень:** `domain/src/**`',
         ].join('\n'),
       );
       const code = [
-        file('domain/src/user/module.ts', LEGACY),
-        file('domain/src/course/module.ts', LEGACY),
+        file('domain/src/user/module.ts', CORE),
+        file('domain/src/course/module.ts', CORE),
       ];
       expect(run(code, debtMd)).toEqual([
         'DEBT: DEBT-2: долг без записи — domain/src/course/module.ts:1',

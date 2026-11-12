@@ -706,3 +706,14 @@
   - Живого `data/jobs/last-runs.json` в рабочем каталоге нет: ключи истории на бою (ожидаемо `inactivitySweep`, `sweepAbandonedQuestionnaires` — `def.name`, D-71) сверить на ревизии перед деплоем (`jq -r '.lastRuns | keys'`); чужие ключи инертны.
   - Новое жёсткое ограничение пакета: коллизия имён заданий — ошибка `start()` (D-71); сейчас имена уникальны.
 - **Пересмотреть:** на ревизии — сверка ключей `last-runs.json` на бою.
+
+### TR-67: решения Ф5 трека `legacy-removal` (удаление legacy)
+- **Трек / фаза:** `legacy-removal`, Ф5 (orchestrator; бриф `slices/removal.md`)
+- **Контекст:** удалены `platform/core/src/{api,domain,infra,legacy-bridge,index.ts}`, `shared/iso-now`, `platform/app-legacy`; `@u7-scl/core` экспортирует только `./ui`, `./shared`; `PLATFORM` в `domain-check.ts` — только `core`. Ревью: 1 warn (лишняя зависимость `@u7-scl/questionnaire` в `modules/stream/package.json` — исправлено той же сессией migrator), 5 info, `error` нет.
+- **Решение:**
+  - Мёртвая `@u7-scl/core` удалена из `modules/{peer-review,stream,wish}/package.json` по задаче плана Ф5 (бриф п. 4 «не трогать» устарел); импортов `@u7-scl/core` в `modules/**` нет.
+  - Фикстура `lint-fixtures/platform/app-legacy/src/arc-07.ts.txt` удалена вместе с override `platform/app-legacy/**` в `biome.json`: предмет проверки исчез; ARC-07 для `platform/app` покрыт своими фикстурами.
+  - Фикстуры `scripts/domain-check.test.ts` переведены с `@u7-scl/app-legacy` на голый `@u7-scl/core` (info ревью: экспорта `.` у пакета нет) — оставлено: проверяется регэксп `PLATFORM`, а не резолв.
+  - JSDoc `checkTrMarkers` (`domain-check.ts`, «адаптер над legacy-фасадом») — правится в Ф7 вместе с `migration.md`.
+  - Висячие симлинки `node_modules/@u7-scl/{app-legacy,cli}` после `bun install` — вне репо, на `check` не влияют.
+- **Пересмотреть:** нет.

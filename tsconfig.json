@@ -20,8 +20,6 @@
     "noPropertyAccessFromIndexSignature": false,
     "types": ["bun", "node"],
     "paths": {
-      "@u7-scl/core/domain": ["./platform/core/src/domain/index.ts"],
-      "@u7-scl/core/api": ["./platform/core/src/api/index.ts"],
       "@u7-scl/core/ui": ["./platform/core/src/ui/index.ts"],
       "@u7-scl/core/shared": ["./platform/core/src/shared/index.ts"],
       "@u7-scl/course": ["./modules/course/src/index.ts"],
@@ -38,10 +36,6 @@
       ],
       "@u7-scl/w3school": ["./authoring/w3school/src/index.ts"],
       "@u7-scl/app": ["./platform/app/src/index.ts"],
-      "@u7-scl/app-legacy": ["./platform/app-legacy/src/index.ts"],
-      "@u7-scl/app-legacy/domain": [
-        "./platform/app-legacy/src/domain/index.ts"
-      ],
       "@u7-scl/bot/u7-bot-controller": [
         "./runners/u7-bot/src/core/u7-bot-controller.ts"
       ],

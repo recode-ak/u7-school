@@ -92,8 +92,8 @@
 
 ## Фаза 5: Удаление legacy
 
-- [ ] Task: `migrator` (flash): удалить `platform/core/src/{api,domain,infra,legacy-bridge}`, `shared/iso-now`; сузить `exports` `@u7-scl/core` до `./ui`, `./shared`, убрать `paths` в `tsconfig`; удалить `platform/app-legacy`; убрать `#*-legacy/*` и `@u7-scl/app-legacy` из всех `package.json`; ARC-02 (`PLATFORM` в `domain-check.ts`) — только `core`; переписать строки `@u7-scl/app-legacy` в `scripts/*.test.ts`; `biome.json` (override `app-legacy`, исключения `core/infra`); мёртвая `@u7-scl/core` в `modules/*/package.json`; `bun install`
-- [ ] Task: orchestrator: список удалённых тестов в `summary.md` (Opus)
+- [x] Task: `migrator` (flash): удалить `platform/core/src/{api,domain,infra,legacy-bridge}`, `shared/iso-now`; сузить `exports` `@u7-scl/core` до `./ui`, `./shared`, убрать `paths` в `tsconfig`; удалить `platform/app-legacy`; убрать `#*-legacy/*` и `@u7-scl/app-legacy` из всех `package.json`; ARC-02 (`PLATFORM` в `domain-check.ts`) — только `core`; переписать строки `@u7-scl/app-legacy` в `scripts/*.test.ts`; `biome.json` (override `app-legacy`, исключения `core/infra`); мёртвая `@u7-scl/core` в `modules/*/package.json`; `bun install`
+- [x] Task: orchestrator: список удалённых тестов в `summary.md` (Opus)
 - [ ] Task: `dmg-reviewer` (Opus)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 

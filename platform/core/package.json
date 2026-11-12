@@ -1,7 +1,6 @@
 {
   "name": "@u7-scl/core",
   "version": "0.1.0",
-  "module": "src/index.ts",
   "type": "module",
   "private": true,
   "scripts": {
@@ -12,18 +11,8 @@
     "check": "bun run lint && bun run tslint && bun test"
   },
   "exports": {
-    "./domain": "./src/domain/index.ts",
-    "./api": "./src/api/index.ts",
     "./ui": "./src/ui/index.ts",
-    "./shared": "./src/shared/index.ts",
-    "./infra": "./src/infra/index.ts",
-    "./legacy-bridge": "./src/legacy-bridge/index.ts"
-  },
-  "imports": {
-    "#domain-legacy/*": "./src/domain/*.ts",
-    "#api-legacy/*": "./src/api/*.ts",
-    "#ui-legacy/*": "./src/ui/*.ts",
-    "#shared-legacy/*": "./src/shared/*.ts"
+    "./shared": "./src/shared/index.ts"
   },
   "dependencies": {
     "dmg-core": "file:../../../../tools/dmg/dmg-core"

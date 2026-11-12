@@ -335,3 +335,9 @@ ARC-01 (core не импортирует домен/приложение), ARC-0
 - `grep -n "app-legacy" biome.json tsconfig.json` — пусто; `grep -n "PLATFORM" scripts/domain-check.ts` — `core` без `app-legacy`.
 - `bun run check` зелёный; число тестов: база Ф0 − 159 удалённых − 30 перенесённых в `dmg-core` + новые Ф1–Ф4 (список в `summary.md`; сверка по файлам таблицы).
 - `bun run arch:check` зелёный; `bun run test:bot` и e2e не ниже базовой Ф0 с поправкой.
+
+## Отчёты Ф5
+
+**`migrator` (flash, `F5-legacy-removal-migrator`):** удалены 4 каталога `platform/core/src`, `index.ts`, `shared/iso-now*`, `platform/app-legacy`, фикстура `lint-fixtures/platform/app-legacy/src/arc-07.ts.txt` (отклонение: предмет проверки удалён); изменены `platform/core/package.json`, `tsconfig.json`, `biome.json`, `package.json` пяти пакетов (`app-legacy`, `imports`, мёртвая `@u7-scl/core`), `domain-check.ts` (`PLATFORM`), `domain-check.test.ts` (фикстуры → `core`, число `it()` 71 без изменений), `now.test.ts`, `README.md`. `check` зелёный: 2899 pass. Доработка по warn ревью — 1 круг.
+
+**`dmg-reviewer` (Opus):** `error` нет; warn — лишняя `@u7-scl/questionnaire` в `modules/stream/package.json` (исправлено); info — перестановка строк в `modules/wish/package.json` (исправлено), удаление `@u7-scl/core` по плану, JSDoc `checkTrMarkers` (Ф7), голый `@u7-scl/core` в фикстурах, висячие симлинки `node_modules`. Решения — TR-67. Кандидат в чистку — `scripts/domain-check.test.ts:527-543` (журнал `test-bloat`).

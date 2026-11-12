@@ -22,7 +22,7 @@ export type DomainGraph = Readonly<Record<string, readonly string[]>>;
 
 const DOMAIN_SRC = 'domain/src/';
 // Корень сборки `@u7-scl/app` — не платформа: домену запрещён (ARC-06).
-const PLATFORM = /^@u7-scl\/(app-legacy|core)(\/|$)/;
+const PLATFORM = /^@u7-scl\/core(\/|$)/;
 const DOMAIN_PKG = /^@u7-scl\/domain(?:\/([^/]+)(?:\/(.+))?)?$/;
 const PUBLIC_SUBPATHS = new Set(['contract', 'testing']);
 const IMPORT_RE =

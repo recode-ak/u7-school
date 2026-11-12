@@ -26,6 +26,35 @@
 | Ф3 | `lr-F3-3b` (stories, закрывающие типы бота, `config.ts`, `U7App` вариант A + 1 доработка по ревью) | flash | 0.1259 | 97 | 99–100 | 1 (5 warn ревью) | 0 |
 | Ф4 | `lr-F4-migrator` (сборка `U7App` без legacy, перенос адаптеров + 2 доработки: ревью, чистка `test-bloat`) | flash | 0.1027 | 66 | 98–100 | 2 (2 warn, 1 question, info ревью; журнал `test-bloat`) | 0 |
 | Ф4 | `lr-F4-data-keeper` (совместимость `last-runs.json`, сессий бота, `replay/`) | flash | 0.0331 | 31 | 97 | 0 | — |
+| Ф5 | `F5-legacy-removal-migrator` (удаление `core/{api,domain,infra,legacy-bridge}`, `app-legacy`, конфигурация, `PLATFORM`) | flash | 0.0709 | 70 | 99 | 1 (warn ревью: лишняя зависимость в `modules/stream/package.json`) | 0 |
+
+## Удалённые тесты Ф5 (TST-08)
+
+`bun test`: 3072 pass (конец Ф4) → **2899 pass** (−173): 172 `test()` в 25 удалённых файлах + 1 кейс `scripts/lint-rules.test.ts` (фикстура `lint-fixtures/platform/app-legacy/src/arc-07.ts.txt` — проверяла ARC-07 удалённого пакета).
+
+**Перенесены в `dmg-core` в Ф2 (30), здесь удалены старые копии:** `core/infra/job-schedule-planner.test.ts` (16), `scheduled-job-runner.test.ts` (11), `in-proc-job-scheduler.test.ts` — 3 из 5 (`InProcJobScheduler`; 3 теста `JobRunJsonRepo` переехали в `platform/app/src/infra` в Ф4).
+
+**Удалены вместе с legacy-кодом (142)** — где покрыто: таблица «На удаление» в [slices/removal.md](./slices/removal.md#тесты):
+
+| Файл | `test()` |
+|---|--:|
+| `app-legacy/src/dmg-core.smoke.test.ts` | 1 |
+| `core/api/app/{api-app-dmg,api-app}.test.ts` | 10 + 8 |
+| `core/api/er/event-reaction.test.ts` | 6 |
+| `core/api/job/job.test.ts` | 8 |
+| `core/api/module/api-module.test.ts` | 14 |
+| `core/api/uc/{use-case-auth,use-case-output,use-case-publish-events,use-case}.test.ts` | 5 + 3 + 3 + 5 |
+| `core/domain/ar/aggregate.test.ts` | 13 |
+| `core/domain/common/file-metadata.test.ts` | 6 |
+| `core/domain/errors/{error-helpers,errors}.test.ts` | 9 + 3 |
+| `core/domain/types.test.ts` | 4 |
+| `core/infra/base-json-db.test.ts` | 5 |
+| `core/infra/in-proc-event-bus.test.ts` | 9 |
+| `core/infra/in-proc-job-scheduler.test.ts` (`InProcJobExecutor`) | 2 |
+| `core/legacy-bridge/{example-app,legacy-clock,legacy-event-bus,legacy-job}.test.ts` | 8 + 1 + 12 + 4 |
+| `core/shared/iso-now.test.ts` | 3 |
+
+Сходится с брифом: 140 + 2 удалено, 30 перенесено. Сверка с базой Ф0 (3083) — в гейте закрытия Ф7.
 
 ## Почищенные случаи `test-bloat`
 

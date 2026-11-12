@@ -1,4 +1,0 @@
-// expect: ARC-07 error
-import { x } from '@u7-scl/user';
-
-export const a = x;

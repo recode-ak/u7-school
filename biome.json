@@ -512,32 +512,6 @@
       }
     },
     {
-      "includes": ["platform/app-legacy/**"],
-      "linter": {
-        "rules": {
-          "style": {
-            "noRestrictedImports": {
-              "level": "error",
-              "options": {
-                "patterns": [
-                  {
-                    "group": [
-                      "@u7-scl/**",
-                      "!@u7-scl/core",
-                      "!@u7-scl/core/**",
-                      "!@u7-scl/domain",
-                      "!@u7-scl/domain/**"
-                    ],
-                    "message": "ARC-07: app-legacy импортирует только core и domain"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "includes": ["platform/app/src/**"],
       "linter": {
         "rules": {
@@ -604,10 +578,6 @@
                       "**/*-repo",
                       "!@u7-scl/core",
                       "!@u7-scl/core/**",
-                      "!@u7-scl/core/infra",
-                      "!@u7-scl/core/infra/**",
-                      "!@u7-scl/app-legacy/infra",
-                      "!@u7-scl/app-legacy/infra/**",
                       "!./**",
                       "!../**"
                     ],

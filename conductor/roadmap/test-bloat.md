@@ -67,6 +67,7 @@
 | 2026-11-11 | `user-dmg` Ф5 | `runners/u7-bot/src/core/ui-app.test.ts:151-159` | повторяет проверки команд регистрации `ensure-registered.test.ts` | оставить одно утверждение «регистрация вызвана» |
 | 2026-11-11 | `user-dmg` Ф5 | `runners/u7-bot/src/create-ui-app.test.ts`, `core/u7-bot-ui-story.test.ts` | негативные проверки удалённых полей (`userFacade`, `userController`, `subjectOf`) — гарантирует тип (TST-09); тавтология «отказ резолвера → исключение» | удалить на ревизии (TR-61 «Ф5») |
 | 2026-11-12 | `legacy-removal` Ф3 | `runners/u7-bot/src/controllers/{streams/stories/inactivity.story,courses/stories/wish-invite.story,courses/stories/wish-confirmed.story}.test.ts`, `questionnaire/stories/questionnaire-dmg.test-kit.ts` | локальные помощники `subHandler`/`subscriptionOf` (поиск подписки по `def.name`) повторены в 4 файлах | один помощник в `tests/helpers` |
+| 2026-11-12 | `legacy-removal` Ф5 | `scripts/domain-check.test.ts:527-543` | фикстура DEBT-2 «долг вне Места» повторяет `scripts/arch-check.test.ts` и `runDebtCheck` | оставить одну проверку |
 
 ## 4. Как пополнять
 
