@@ -114,13 +114,13 @@
 - Каталога `runners/u7-cli` нет; `~/dev/tools/dmg/dmg-cli/README.md` есть, код перенесён, первый коммит сделан.
 - Критерий spec 1 выполнен полностью; `check` зелёный.
 
-## Фаза 7: Документы, аудит `throw*`, итог
+## Фаза 7: Документы, аудит `throw*`, итог [checkpoint: 664cc8a3]
 
 - [x] Task: Opus: удалить `legacy.md`; вычистить ссылки в источниках: `AGENTS.md`, `conductor/architecture/{index,rules,migration,decisions}.md`, `.agents-core/`, `.pi/skills/*`, `conductor/roadmap/tasks-system-*.md`; `bun run agents:sync` 9df0227
 - [x] Task: Opus: `migration.md` §2/§5/§6 — переход завершён, остаётся чек-лист релиза; `debt.md` — DEBT-3, DEBT-34, TR-33 закрыты, остаток legacy расписан; `architecture/index.md` — пометка «`@u7-scl/core` — кандидат на удаление при `dmg-ui`» 6c9f80b
 - [x] Task: `dmg-reviewer` (Opus): аудит `throw*` для штатных отказов в живом коде → `summary.md` 6b17ef9f
 - [x] Task: Opus: гейт закрытия — полный `check`, сравнение с базовой линией Ф0, таблица критериев spec в `summary.md`, строка «DeepSeek» 0a5175cd
-- [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 7' (подтверждено Нурболатом; `check` зелёный, 2899 pass) (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 7:**
 - `legacy.md` нет; `grep -rn "legacy.md" --include=*.md --include=*.ts .` вне архива пуст.
