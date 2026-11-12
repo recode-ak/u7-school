@@ -1,0 +1,1 @@
+Верификация Ф7 legacy-removal: CI=true bun run check — зелёный, 2899 pass; test:bot 924; dmg-core 1415; arch:check чист; grep legacy.md вне архива пуст; критерии spec 1–8 — summary.md. Подтверждение Нурболата: «да, трек в архив» (2026-11-12).
