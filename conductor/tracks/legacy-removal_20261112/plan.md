@@ -14,7 +14,7 @@
 
 **Перепроектирование** — только с явного разрешения Нурболата: вопрос «сейчас или в `debt.md`», ответ — в TR до выполнения.
 
-## Фаза 0: База и решения
+## Фаза 0: База и решения [checkpoint: 5855ee9e]
 
 - [x] Task: Зафиксировать свежую базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, `bun run check`, `bun test` в `dmg-core`; каркас раздела «DeepSeek» (Opus) 9894083d
     - [x] проверить состояние `runners/u7-bot/tests/courses/course-catalog.integration.test.ts` (tsc в редакторе: `@u7-scl/user/domain`, `userFacade` — остаток `user-dmg`): входит ли в прогон, сообщить Нурболату до правки
