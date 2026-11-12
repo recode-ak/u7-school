@@ -22,11 +22,13 @@ import {
   type StepRepo,
 } from '@u7-scl/course';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
+import { DossierModuleDef } from '@u7-scl/domain/dossier/contract';
 import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review/contract';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { WishModuleDef } from '@u7-scl/domain/wish/contract';
+import { createDossierModule } from '@u7-scl/dossier';
 import {
   createPeerReviewModule,
   ReviewCampaignJsonRepo,
@@ -185,7 +187,7 @@ export class U7App {
 
   /**
    * Приложение DMG: все модули по `dependsOn` — `user`, `course`, `wish`,
-   * `peer-review` (кампании), `questionnaire`, `stream` — на своих
+   * `peer-review` (кампании), `questionnaire`, `stream`, `dossier` — на своих
    * репозиториях, собранные `ApiApp` пакета (D-50). `modules` — их Def для
    * заданий legacy-планировщика (`ApiApp.withDmg`).
    */
@@ -252,6 +254,10 @@ export class U7App {
             campaigns: repos.campaigns,
             reviews: repos.reviews,
           }),
+      },
+      {
+        def: DossierModuleDef,
+        create: (deps) => createDossierModule(deps),
       },
     ];
     return {

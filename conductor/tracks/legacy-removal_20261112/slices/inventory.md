@@ -200,7 +200,7 @@
 
 | Файл:строка | Строка |
 |---|---|
-| `CHANGELOG.md:15` | - **Раскладка монорепо по осям архитектуры** (трек repo-layout): `packages/*` + `apps/*` → `platform/` (`dmg-core`, `app`, `core`), `domain/`, `modules/<m>`, `runners/` (`u7-bot`, `u7-cli`), `authoring/` (`w3school`, `video-summarizer`). Имена пакетов `@u7-scl/*` не менялись. |
+| `CHANGELOG.md:15` | запись «Раскладка монорепо по осям архитектуры» (трек repo-layout): упоминает `runners/` (`u7-bot`, `u7-cli`) — история, не правится |
 | `scripts/domain-arch.test.ts:27` | join(ROOT, 'runners/u7-cli/src'), |
 | `scripts/domain-check.test.ts:83` | "import { X } from '../../../user/src/infra/repo';\nimport { B } from '@u7-scl/bot';\nimport { Y } from '@u7-scl/cli';", |
 | `scripts/domain-check.test.ts:89` | "ARC-06: domain/src/user/a.ts: домен не импортирует прикладной слой (import '@u7-scl/cli')", |

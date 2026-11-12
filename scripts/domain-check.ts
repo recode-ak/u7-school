@@ -63,10 +63,10 @@ export function checkDomainImports(
           'ARC-04',
           `модуль ${own} не зависит от ${other} (import '${spec}')`,
         );
-      } else if (sub && sub !== 'index' && !PUBLIC_SUBPATHS.has(sub)) {
+      } else if (!PUBLIC_SUBPATHS.has(sub)) {
         fail(
           'ARC-04',
-          `чужой модуль ${other} — только через contract или index (import '${spec}')`,
+          `чужой модуль ${other} — только через contract (import '${spec}')`,
         );
       }
     };
@@ -82,18 +82,7 @@ export function checkDomainImports(
           continue;
         }
         const [first, ...rest] = target.slice(DOMAIN_SRC.length).split('/');
-        const other = first ?? '';
-        if (other === own) continue;
-        const sub = rest.join('/');
-        // относительным путём публичны только корень модуля и index
-        if (sub && sub !== 'index') {
-          if (!deps.includes(other)) crossModule(other, sub, spec);
-          else
-            fail(
-              'ARC-04',
-              `чужой модуль ${other} — только через contract или index (import '${spec}')`,
-            );
-        } else crossModule(other, '', spec);
+        crossModule(first ?? '', rest.join('/'), spec);
       } else if (PLATFORM.test(spec)) {
         // ARC-02: допустим только как учтённый долг — проверяет `checkDebt`
         // (записи с Корнем `domain/src/**`)
@@ -121,7 +110,7 @@ const ASSEMBLY_DIR = /^(platform\/app|runners)\//;
  * сборки и раннеры — пакетом из `packages` (имена — из `package.json`
  * корня и раннеров, `assemblyPackages`) или относительным путём в их
  * каталоги. Для модулей на Def то же ловит `AssemblyChecker`
- * (`DomainArch`), здесь — для всех пакетов, включая legacy внешних модулей.
+ * (`DomainArch`), здесь — для всех пакетов.
  * Маркер DEBT не спасает.
  */
 export function checkModuleImports(
@@ -145,12 +134,6 @@ export function checkModuleImports(
   return out;
 }
 
-/** Модули домена для ARC-04 (D-45): все и переведённые на Def. */
-export interface DomainModules {
-  all: readonly string[];
-  dmg: readonly string[];
-}
-
 /** Модуль, которому принадлежит файл: домен `domain/src/<m>` или пакет `modules/<m>`. */
 function ownerOf(path: string, all: readonly string[]): string | undefined {
   const parts = path.split('/');
@@ -164,31 +147,26 @@ function ownerOf(path: string, all: readonly string[]): string | undefined {
 }
 
 /**
- * ARC-04 (D-45): чужой модуль — только через `contract`. Блокирует, если
- * модуль на Def импортирует или импортируется; пары legacy-модулей — по
- * долгу до миграции. Отступление проекта от D-45: `scripts/` вне проверки —
- * инструменты репозитория берут полный вход модуля (решение Ф7 трека
- * `user-dmg`, запись — `conductor/architecture/debt.md`).
+ * ARC-04 (D-45): чужой модуль — только через `contract`. Отступление проекта
+ * от D-45: `scripts/` вне проверки — инструменты репозитория берут полный
+ * вход модуля (решение Ф7 трека `user-dmg`, запись — `conductor/architecture/debt.md`).
  */
 export function checkContractImports(
   files: readonly DomainFile[],
-  modules: DomainModules,
+  modules: readonly string[],
 ): string[] {
   const out: string[] = [];
   for (const f of files) {
     if (f.path.startsWith(SCRIPTS_DIR)) continue;
-    const own = ownerOf(f.path, modules.all);
+    const own = ownerOf(f.path, modules);
     for (const { spec } of importsOf(f.text)) {
       const m = DOMAIN_PKG.exec(spec);
       const other = m?.[1];
       if (!other || other === own) continue;
       if (m?.[2] === 'contract' || m?.[2] === 'testing') continue;
-      const dmg =
-        modules.dmg.includes(other) || modules.dmg.includes(own ?? '');
-      if (dmg)
-        out.push(
-          `ARC-04: ${f.path}: модуль ${other} — только через contract (import '${spec}')`,
-        );
+      out.push(
+        `ARC-04: ${f.path}: модуль ${other} — только через contract (import '${spec}')`,
+      );
     }
   }
   return out;
@@ -409,13 +387,18 @@ class DebtRegistry {
     return out;
   }
 
-  /** Маркер временности допустим только в файле из Места открытой записи. */
+  /**
+   * Маркер временности допустим только в файле из Места открытой записи.
+   * Область — исходники пакетов (`<пакет>/src`, `domain/src`) по правилу
+   * `debt.md`: в `scripts/` те же слова описывают правила и шаблоны проверки.
+   */
   private checkTempMarkers(code: readonly DomainFile[]): string[] {
     const places = [...this.entries.values()]
       .filter((e) => !e.mergedInto)
       .flatMap((e) => e.places.map((p) => new Glob(p)));
     const out: string[] = [];
     for (const f of code) {
+      if (f.path.startsWith(SCRIPTS_DIR)) continue;
       if (places.some((g) => g.match(f.path))) continue;
       f.text.split('\n').forEach((line, i) => {
         for (const re of TEMP_MARKERS)

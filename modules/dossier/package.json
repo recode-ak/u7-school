@@ -12,7 +12,7 @@
     "check": "bun run lint && bun run tslint && bun test"
   },
   "dependencies": {
-    "valibot": "^1.0.0"
+    "dmg-core": "file:../../../../tools/dmg/dmg-core"
   },
   "exports": {
     ".": "./src/index.ts"

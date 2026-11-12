@@ -19,6 +19,7 @@
     "@u7-scl/app-legacy": "workspace:*",
     "@u7-scl/domain": "workspace:*",
     "@u7-scl/course": "workspace:*",
+    "@u7-scl/dossier": "workspace:*",
     "@u7-scl/questionnaire": "workspace:*",
     "@u7-scl/wish": "workspace:*",
     "@u7-scl/peer-review": "workspace:*",

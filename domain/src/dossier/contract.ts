@@ -1,2 +1,2 @@
-/** Контракт модуля dossier: паспорт внешнего модуля (D-37). */
+/** Контракт модуля dossier: паспорт модуля-заготовки. */
 export { DossierModuleDef } from './dossier.module';

@@ -1,1 +1,1 @@
-export * from '@u7-scl/domain/dossier';
+export * from './dossier.module';

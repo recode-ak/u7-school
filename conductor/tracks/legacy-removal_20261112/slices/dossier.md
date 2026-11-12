@@ -93,3 +93,11 @@ MAN-01 (label/description), MAN-06 (снятие `external`), MAN-10, API-05 (к
 - `bun run arch:check` — зелёный; `dossier` в `ArchChecker.defsOf(...)` как обычный модуль; DEBT-3 и DEBT-34 закрыты в `debt.md`.
 - `bun run check` зелёный; число тестов не ниже базовой линии Ф0 (+1…2 нового `dossier.module.test.ts`, −2 удалённых в `domain-check.test.ts` по списку выше; удалённые перечислены в отчёте).
 - `bun test modules/dossier scripts/domain-check.test.ts scripts/arch-check.test.ts` — зелёный.
+
+## Отчёты (Ф1)
+
+**`dmg-test-designer` (Sonnet):** новый `modules/dossier/src/dossier.module.test.ts` (2 теста: сборка без репозиториев, пустой состав Def); `arch-check.test.ts` — `filter(external) toEqual([])`; `domain-check.test.ts` — вариант A (корень без подпути — нарушение, +тест «подпуть index»), тексты «только через contract», фикстуры — массив. Удалены 2: «модуль на Def импортирует чужой legacy — тоже только contract», «пары legacy-модулей не проверяются (долг до миграции)». Red: 12 fail + файл `dossier.module.test.ts` не загружался.
+
+**`migrator` (flash, `lr-F1-migrator`, 3 запуска):** Def без `external`, `description` по брифу; `modules/dossier/src/dossier.module.ts` руками (генератор не принимает модуль с готовым паспортом, TR-63); `index.ts` — вход модуля; фабрика в `U7App`; `domain-check.ts` — `DomainModules` упразднён, вариант A, ветка legacy-пар удалена. Эскалации: (1) неверный формат закрытия DEBT-3/34 — orchestrator удалил записи; (2) маркеры временности в самом `domain-check.ts` прикрывало Место DEBT-34 — `checkTempMarkers` без `scripts/` (вариант A, TR-63). R1 не сработал. Доработка по ревью: тест относительного `../user/contract`, JSDoc `contract.ts`/`checkModuleImports`, снята мёртвая `valibot`.
+
+**`dmg-reviewer` (Opus):** `error` нет. warn — относительная форма `contract`/`testing` стала разрешённой (раньше только корень и `index`): принято (D-45), закреплено тестом и TR-63. info — `checkTempMarkers` без `scripts/` (принято), устаревшие JSDoc, мёртвая `valibot` (исправлено), TST-09 по тестам модуля (по брифу, оставлено). Ссылки на закрытые DEBT-3/34 и «пары legacy» в `rules.md:23,25`, `migration.md:40,93,102,114`, `roadmap/contract-audit.md:20` — Ф7. Кандидатов в чистку тестов нет.

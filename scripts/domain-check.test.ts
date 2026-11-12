@@ -17,14 +17,26 @@ const DEPENDS = { user: [], course: ['user'], stream: ['course'] };
 const file = (path: string, text: string): DomainFile => ({ path, text });
 
 describe('checkDomainImports: ARC-04 / ARC-06', () => {
-  it('импорт модуля из dependsOn через index — без нарушений', () => {
+  it('корень модуля из dependsOn без подпути — ARC-04 (только contract)', () => {
     const files = [
       file(
         'domain/src/course/a.ts',
         "import { U } from '../user';\nimport { V } from '@u7-scl/domain/user';",
       ),
     ];
-    expect(checkDomainImports(files, DEPENDS)).toEqual([]);
+    expect(checkDomainImports(files, DEPENDS)).toEqual([
+      "ARC-04: domain/src/course/a.ts: чужой модуль user — только через contract (import '../user')",
+      "ARC-04: domain/src/course/a.ts: чужой модуль user — только через contract (import '@u7-scl/domain/user')",
+    ]);
+  });
+
+  it('подпуть index чужого модуля — ARC-04', () => {
+    const files = [
+      file('domain/src/course/a.ts', "import { U } from '../user/index';"),
+    ];
+    expect(checkDomainImports(files, DEPENDS)).toEqual([
+      "ARC-04: domain/src/course/a.ts: чужой модуль user — только через contract (import '../user/index')",
+    ]);
   });
 
   it('импорт модуля вне dependsOn — ARC-04', () => {
@@ -41,7 +53,7 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
       file('domain/src/course/a.ts', "import { U } from '../user/state';"),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([
-      "ARC-04: domain/src/course/a.ts: чужой модуль user — только через contract или index (import '../user/state')",
+      "ARC-04: domain/src/course/a.ts: чужой модуль user — только через contract (import '../user/state')",
     ]);
   });
 
@@ -55,6 +67,13 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
     expect(checkDomainImports(files, DEPENDS)).toEqual([]);
   });
 
+  it('относительный путь ../user/contract разрешён публичным', () => {
+    const files = [
+      file('domain/src/course/a.ts', "import { U } from '../user/contract';"),
+    ];
+    expect(checkDomainImports(files, DEPENDS)).toEqual([]);
+  });
+
   it('подпуть /state не публичный (D-45) — ARC-04', () => {
     const files = [
       file(
@@ -63,7 +82,7 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
       ),
     ];
     expect(checkDomainImports(files, DEPENDS)).toEqual([
-      "ARC-04: domain/src/course/a.ts: чужой модуль user — только через contract или index (import '@u7-scl/domain/user/state')",
+      "ARC-04: domain/src/course/a.ts: чужой модуль user — только через contract (import '@u7-scl/domain/user/state')",
     ]);
   });
 
@@ -142,12 +161,7 @@ describe('подпуть @u7-scl/domain/<m>/testing: публичный, но т
     const files = [
       file('modules/course/src/module/uc/module-uc.fixture.ts', TESTING),
     ];
-    expect(
-      checkContractImports(files, {
-        all: ['user', 'course'],
-        dmg: ['user', 'course'],
-      }),
-    ).toEqual([]);
+    expect(checkContractImports(files, ['user', 'course'])).toEqual([]);
   });
 });
 
@@ -268,7 +282,7 @@ describe('checkDomainDirs: ARC-05', () => {
 });
 
 describe('checkContractImports: ARC-04 (D-45)', () => {
-  const MODULES = { all: ['user', 'wish'], dmg: ['wish'] };
+  const MODULES = ['user', 'wish'];
   const run = (path: string, text: string) =>
     checkContractImports([file(path, text)], MODULES);
 
@@ -295,19 +309,6 @@ describe('checkContractImports: ARC-04 (D-45)', () => {
     ).toEqual([]);
   });
 
-  it('модуль на Def импортирует чужой legacy — тоже только contract', () => {
-    expect(
-      run('domain/src/wish/a.ts', "import { U } from '@u7-scl/domain/user';"),
-    ).toEqual([
-      "ARC-04: domain/src/wish/a.ts: модуль user — только через contract (import '@u7-scl/domain/user')",
-    ]);
-    expect(
-      run('modules/wish/src/a.ts', "import { U } from '@u7-scl/domain/user';"),
-    ).toEqual([
-      "ARC-04: modules/wish/src/a.ts: модуль user — только через contract (import '@u7-scl/domain/user')",
-    ]);
-  });
-
   it('state, export from и import() модуля на Def — ARC-04', () => {
     expect(
       run(
@@ -327,12 +328,6 @@ describe('checkContractImports: ARC-04 (D-45)', () => {
     ).toEqual([
       "ARC-04: domain/src/shared/a.ts: модуль wish — только через contract (import '@u7-scl/domain/wish')",
     ]);
-  });
-
-  it('пары legacy-модулей не проверяются (долг до миграции)', () => {
-    expect(
-      run('runners/bot/src/a.ts', "import { U } from '@u7-scl/domain/user';"),
-    ).toEqual([]);
   });
 
   it('scripts/ — вне ARC-04: полный вход модуля на Def разрешён', () => {
@@ -674,6 +669,15 @@ describe('checkDebt: маркеры временности вне Места о�
 
   it('«ВРЕМЕННЫЙ» — только заглавными', () => {
     expect(run('modules/user/src/b.ts', '// временный адаптер')).toEqual([]);
+  });
+
+  it('маркер в `scripts/*.ts` — не нарушение (область — исходники пакетов)', () => {
+    expect(
+      run(
+        'scripts/x.ts',
+        '// Временное решение: ВРЕМЕННЫЙ, уходит с миграцией',
+      ),
+    ).toEqual([]);
   });
 
   it.each([

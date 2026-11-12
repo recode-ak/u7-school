@@ -1,15 +1,11 @@
 import { ModuleDef } from 'dmg-core';
 
-/**
- * Внешний модуль досье (D-37): реализован legacy-кодом, здесь только паспорт
- * для графа зависимостей. Агрегатов, UC, ER и Job в Def нет. При миграции
- * `external` снимается.
- */
+/** Модуль-заготовка: поведения нет. */
 export const DossierModuleDef = ModuleDef.define({
   name: 'dossier',
   label: 'Досье',
-  description: 'Категории и оценки досье студента.',
-  external: true,
+  description:
+    'Агрегация фактов об учёбе студента (peer-review, sessions, stream) в досье; предъявление — модуль passport. Пока — только схемы навыков (категории, баллы); агрегатов, UC, ER и Job нет.',
   dependsOn: [],
   aggregates: [],
   useCases: [],

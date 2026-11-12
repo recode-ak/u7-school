@@ -69,28 +69,19 @@
 
 ## 2. Реэкспорты старых путей
 
-### DEBT-3: корень пакета `modules/dossier/src/index.ts`
-- **Место:**
-  - `modules/dossier/src/index.ts` — пакет `@u7-scl/dossier` публикует корень `.`; потребителей в коде нет, но публичный путь сохранён на время миграции
-- **Признак:** `export \* from '@u7-scl/domain/`
-- **Корень:** `{modules,platform}/*/src/**`
-- **Причина:** реэкспорт сохраняет публичный путь пакета до миграции `dossier`. Barrel'ы `modules/{course,peer-review,questionnaire,stream,user,wish}/src/domain/index.ts` и `platform/app-legacy/src/domain/user.ts` удалены (`user-dmg` Ф6–Ф7, TR-61 «Ф7»).
-- **Погашает:** трек `dossier`
-- **Критерий снятия:** корень `modules/dossier/src/index.ts` без реэкспорта домена; потребители (если появятся) — `@u7-scl/domain/dossier`
+### DEBT-8: barrel `modules/course/src/domain/index.ts` — слит в DEBT-3 (погашен, `legacy-removal` Ф1)
 
-### DEBT-8: barrel `modules/course/src/domain/index.ts` — слит в DEBT-3
+### DEBT-13: barrel `modules/questionnaire/src/domain/index.ts` — слит в DEBT-3 (погашен, `legacy-removal` Ф1)
 
-### DEBT-13: barrel `modules/questionnaire/src/domain/index.ts` — слит в DEBT-3
+### DEBT-18: barrel `modules/stream/src/domain/index.ts` — слит в DEBT-3 (погашен, `legacy-removal` Ф1)
 
-### DEBT-18: barrel `modules/stream/src/domain/index.ts` — слит в DEBT-3
+### DEBT-23: barrel `modules/wish/src/domain/index.ts` — слит в DEBT-3 (погашен, `legacy-removal` Ф1)
 
-### DEBT-23: barrel `modules/wish/src/domain/index.ts` — слит в DEBT-3
-
-### DEBT-27: barrel `modules/peer-review/src/domain/index.ts` — слит в DEBT-3
+### DEBT-27: barrel `modules/peer-review/src/domain/index.ts` — слит в DEBT-3 (погашен, `legacy-removal` Ф1)
 
 ## 3. `User` в `app`
 
-### DEBT-4: реэкспорт `User`/`Role` в app-legacy — слит в DEBT-3
+### DEBT-4: реэкспорт `User`/`Role` в app-legacy — слит в DEBT-3 (погашен, `legacy-removal` Ф1)
 
 ## 4. Прочее
 
@@ -104,7 +95,7 @@
 
 ### DEBT-20: приватные методы `#…` в StudentAr (CODE-02) — слит в DEBT-10 (погашен, `course-dmg` Ф5)
 
-### DEBT-30: barrel `modules/dossier/src/index.ts` — слит в DEBT-3
+### DEBT-30: barrel `modules/dossier/src/index.ts` — слит в DEBT-3 (погашен, `legacy-removal` Ф1)
 
 ### DEBT-40: тесты UC/ER/Job u7-school на JSON-репозитории во временном каталоге
 - **Место:** `modules/wish/src/**/*.{uc,er,job}.test.ts`, `modules/peer-review/src/**/*.{uc,er,job}.test.ts` — тесты UC/ER на `mkdtemp`
@@ -179,14 +170,6 @@
 - **Критерий снятия:** первый администратор новой школы заводится штатным путём (команда, UC или seed нового репозитория) с тестом. Признак — класс репозитория без seed (legacy-seed удалён в Ф6 `user-dmg`); при появлении bootstrap — перенести признак туда
 
 ## 5. Инструменты проверки
-
-### DEBT-34: legacy-модули импортируют чужой `index`
-- **Место:** `scripts/domain-check.ts` — `checkContractImports` пропускает пары legacy-модулей; `checkDomainImports` разрешает `index`
-- **Признак:** `sub !== 'index'`
-- **Корень:** `scripts/domain-check.ts`
-- **Причина:** D-45 — чужой модуль только через `contract`; из legacy остался только `dossier` (`questionnaire`, `stream`, `course`, `user` переведены на Def; `user` — трек `user-dmg`, Ф6–Ф7).
-- **Погашает:** перевод каждого модуля на Def — модуль попадает в проверку автоматически (`external` снят)
-- **Критерий снятия:** все модули на Def; пропуск legacy-пар и `index` в `checkDomainImports` удалены
 
 ### DEBT-49: расширение pi `subagent` привязано к скриптам u7-school
 - **Место:** `scripts/subagent-gate.ts` — гейт расширения `.pi/extensions/subagent` зашит на проектный `scripts/agent-gate.ts`; само расширение импортирует `scripts/subagent-config.ts` и `scripts/subagent-gate.ts` (`.pi/` реестр не проверяет)
@@ -676,3 +659,15 @@
   - **Ф5 дополнена:** `biome.json` (override `app-legacy`, исключения `core/infra`); `@u7-scl/core` в `modules/*/package.json` (мёртвая зависимость) снимается там же.
   - **DeepSeek по максимуму без потери качества** (Нурболат): механические списки (инвентаризация) — flash; брифы, приёмка, ревью — Claude; red-тесты и UI со «Сохраняемым поведением» — Sonnet (`deepseek.md` §2).
 - **Пересмотреть:** на ревизии — судьба `core/shared` при `dmg-ui`; нужен ли `JobExecutor` (воркер) в пакете.
+
+### TR-63: решения Ф1 трека `legacy-removal` (`dossier`, проверки домена)
+- **Трек / фаза:** `legacy-removal`, Ф1 (orchestrator; бриф `slices/dossier.md`)
+- **Контекст:** снятие `external` у `dossier` и закрытие DEBT-34 открыли, что `checkTempMarkers` сканирует и `scripts/**`, а правило `debt.md` задаёт область маркеров — исходники пакетов; литерал `TEMP_MARKERS` и JSDoc самого `scripts/domain-check.ts` прикрывало Место DEBT-34.
+- **Решение:**
+  - Вариант A п. 5 брифа: корень чужого модуля без подпути и подпуть `index` — нарушение ARC-04; публичны только `contract` и `testing` — в пакетной и относительной форме (`../<m>/contract` разрешён наравне с `@u7-scl/domain/<m>/contract`, D-45; раньше относительная форма разрешала только корень и `index`). R1 брифа не сработал: пустой Def без `external` проходит `ArchChecker`.
+  - `checkTempMarkers` — только исходники пакетов (`*/src`, `domain/src`, с тестами), без `scripts/`: код приведён к правилу `debt.md`, а не исключение своего файла.
+  - Закрытие DEBT-3/DEBT-34 — удаление записей; слитые в DEBT-3 заголовки помечены «погашен».
+  - `bun run gen module dossier` неприменим к модулю с готовым паспортом (`--adopt` — только legacy-каталог без `*.module.ts`); `modules/dossier/src/dossier.module.ts` — руками по шаблону генератора.
+  - По ревью Ф1: устаревшие JSDoc «внешний модуль» (`domain/src/dossier/contract.ts`, `checkModuleImports`) поправлены в срезе; мёртвая `valibot` снята из `modules/dossier/package.json`.
+  - Исключение TR-26 (пары `external` в `ArchChecker` пакета) стало пустым: внешних модулей в u7-school нет; ветка в `dmg-core` остаётся (поведение пакета для других проектов).
+- **Пересмотреть:** нужны ли маркеры временности в `scripts/` (утилиты данных) — при выделении утилит из `scripts/`; ветка `external` в `ArchChecker` пакета — на ревизии API `dmg-core`.

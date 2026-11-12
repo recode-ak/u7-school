@@ -107,10 +107,7 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
   })
     .filter((d) => d.isDirectory())
     .map((d) => d.name);
-  const modules = {
-    all: DOMAIN_MODULES.map((m) => m.name),
-    dmg: DOMAIN_MODULES.filter((m) => !m.external).map((m) => m.name),
-  };
+  const modules = DOMAIN_MODULES.map((m) => m.name);
   return [
     ...ArchChecker.defsOf(DOMAIN_MODULES).report(),
     ...checkContractImports([...code, ...appCode], modules),
