@@ -66,13 +66,14 @@
 
 Может идти параллельно Ф1–Ф2.
 
-- [ ] Task: `dmg-tech-lead`: триаж 62 TR с «Пересмотреть» и 10 открытых DEBT порциями по модулям (stream, course, user, questionnaire, peer-review, wish, платформа/раннер) → `triage.md`
-- [ ] Task: Обязательные карточки «решение Нурболата» в `cards.md`
-    - [ ] TR-68: отказ «гость без `/start`», `includes` ERR-01 на `modules/*/src`
-    - [ ] TR-43 С1: проекции UI в выходе query UC `stream`
-    - [ ] TR-50 (6): типы событий анкет вне контракта
-    - [ ] проход по `domain/src/*/contract.ts` после D-69 (по модулю)
-- [ ] Task: orchestrator: приёмка `triage.md` и `cards.md` (Opus)
+- [x] Task: `dmg-tech-lead`: триаж 62 TR с «Пересмотреть» и 10 открытых DEBT порциями по модулям (stream, course, user, questionnaire, peer-review, wish, платформа/раннер) → `triage.md`
+- [x] Task: Обязательные карточки «решение Нурболата» в `cards.md`
+    - [x] TR-68: отказ «гость без `/start`», `includes` ERR-01 на `modules/*/src`
+    - [x] TR-43 С1: проекции UI в выходе query UC `stream`
+    - [x] TR-50 (6): типы событий анкет вне контракта
+    - [x] проход по `domain/src/*/contract.ts` после D-69 (по модулю)
+- [x] Task: orchestrator: приёмка `triage.md` и `cards.md` (Opus)
+    - Итог: 67 записей (57 TR + 10 DEBT; оценка плана 62 + 10 — 7 TR без «Пересмотреть» по существу вне триажа) — оставить 49, погасить 9, решение 9; карточек 11 (C-01…C-11: TR-68 — две, C-05 — проход по контрактам); влияет на выкатку — C-08 (TR-66), TR-8, TR-49 (7)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 3:**
