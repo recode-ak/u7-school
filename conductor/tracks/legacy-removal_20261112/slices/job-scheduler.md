@@ -111,3 +111,13 @@ API-06 (пороги — экспортируемые константы, рас
 - D-71 записано до реализации (`git log --reverse` пакета: коммит решения не позже кода; в одном коммите допустимо, если запись есть).
 - Число тестов планировщика в пакете: 16 + 11 + 3 + 1 = 31 (без `test.each`).
 - В u7-school: `git status` — изменены только `node_modules/`-связанное (`bun.lock`), `.agents-core/`, `.pi/`, `.claude/` (результат `dmg:sync`/`agents:sync`); `platform/core/src/infra` **не изменён** (`git diff --stat platform/core` пуст); `bun run check` зелёный; коммит u7-school содержит SHA пакета.
+
+## Отчёты (Ф2)
+
+**`dmg-test-designer` (Sonnet):** `src/app/job/{job-schedule-planner,scheduled-job-runner,in-proc-job-scheduler}.test.ts` — 16 + 11 + 4 = 31; общая фикстура `job-scheduler.fixture.ts` (`FakeJobApi`, `jobDefOf`, `moduleOf`, `waitFor`). Тест ошибки прогона — `Err` и исключение в одном сценарии; тест `lastRunAt` проверяет и аргументы `runJob`. Не перенесены: 2 теста `InProcJobExecutor`, 3 теста `JobRunJsonRepo` (Ф4). Red: 3 файла не загружались.
+
+**`migrator` (flash, `lr-F2-migrator`, 2 запуска):** 5 файлов `src/app/job/`, экспорт `dmg-core/app`, `job.md` §7, строка в `app.md`. Отклонения: `DEFAULT_START_DELAY_MS` в раннере, `JobRunApi` в порте, TS `private` вместо `#` (CODE-02). Эскалаций нет. Доработка по ревью — `waitFor` падает по дедлайну, усилен тест сбоя, JSDoc (CODE-04), раннер убран из экспорта, оговорка о параллельном прогоне после `stop`/`start`.
+
+**`dmg-reviewer` (Opus):** `error` нет. warn — тест сбоя не доказывал армирование после исключения, молчаливый таймаут `waitFor`, CODE-04 в JSDoc раннера: исправлено. info — пересказ сигнатур в JSDoc, дубль `JobApi`, экспорт раннера, `app.md`, пустая строка: исправлено; параллельный прогон после `stop`/`start` и модуль вне `api` — TR-64. Арифметика календаря сверена построчно — без изменений. Кандидатов в чистку тестов нет.
+
+**Итог:** `dmg-core` `bun run check` — 1415 pass, `e2e` ok; u7-school `bun run check` — 3086 pass; `platform/core` не изменён.

@@ -671,3 +671,15 @@
   - По ревью Ф1: устаревшие JSDoc «внешний модуль» (`domain/src/dossier/contract.ts`, `checkModuleImports`) поправлены в срезе; мёртвая `valibot` снята из `modules/dossier/package.json`.
   - Исключение TR-26 (пары `external` в `ArchChecker` пакета) стало пустым: внешних модулей в u7-school нет; ветка в `dmg-core` остаётся (поведение пакета для других проектов).
 - **Пересмотреть:** нужны ли маркеры временности в `scripts/` (утилиты данных) — при выделении утилит из `scripts/`; ветка `external` в `ArchChecker` пакета — на ревизии API `dmg-core`.
+
+### TR-64: решения Ф2 трека `legacy-removal` (планировщик Job в `dmg-core`)
+- **Трек / фаза:** `legacy-removal`, Ф2 (orchestrator; бриф `slices/job-scheduler.md`; пакет `dmg-core@bbc4484`, D-71)
+- **Контекст:** перенос планировщика из `platform/core/src/infra` в `dmg-core/app`; ревью дало 3 warn и 8 info без `error`.
+- **Решение:**
+  - `DEFAULT_START_DELAY_MS` — в `scheduled-job-runner.ts` (единственный пользователь, как в legacy), экспорт из `dmg-core/app`; тип исполнителя `JobRunApi = Pick<ApiApp, 'runJob'>` — в файле порта `job-scheduler.ts`.
+  - `ScheduledJobRunner` в публичный экспорт не входит: деталь `InProcJobScheduler`, потребителю (`U7App`, Ф4) не нужен.
+  - `waitFor` фикстуры падает по дедлайну (раньше молча — часть проверок могла пройти впустую); тест сбоя прогона проверяет и `Err`, и исключение.
+  - `stop()` → `start()` во время идущего прогона может запустить то же задание параллельно — унаследовано от legacy, записано в `job.md` §7, не исправляется.
+  - Модуль из `modules` планировщика, не подключённый к `api`, — повторяющийся `warn` на каждом тике, а не ошибка `start()` (D-71); в Ф4 оба списка — из `dmgApp().modules`.
+  - Фикстура `job-scheduler.fixture.ts` с фейком `FakeJobApi` — по прецеденту `app.fixture.ts`, не `.fake.ts`.
+- **Пересмотреть:** проверка состава `modules` против `api` в `start()` — если появится сборка, где списки расходятся.
