@@ -18,12 +18,12 @@
 
 - [x] Task: Зафиксировать свежую базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, `bun run check`, `bun test` в `dmg-core`; каркас раздела «DeepSeek» (Opus) 9894083d
     - [x] проверить состояние `runners/u7-bot/tests/courses/course-catalog.integration.test.ts` (tsc в редакторе: `@u7-scl/user/domain`, `userFacade` — остаток `user-dmg`): входит ли в прогон, сообщить Нурболату до правки
-- [x] Task: `dmg-tech-lead`: брифы срезов `slices/dossier.md`, `slices/job-scheduler.md`, `slices/core-ui.md`, `slices/assembly.md`, `slices/removal.md` с таблицей раскладки «файл → куда / удалить» и «Сохраняемым поведением» (Sonnet)
+- [x] Task: `dmg-tech-lead`: брифы срезов `slices/dossier.md`, `slices/job-scheduler.md`, `slices/core-ui.md`, `slices/assembly.md`, `slices/removal.md` с таблицей раскладки «файл → куда / удалить» и «Сохраняемым поведением» (Sonnet) db05a24
     - [x] список тестов на перенос (TST-08) и на удаление вместе с legacy-кодом
     - [x] список тестов состава модуля и графа (`scripts/{arch-check,domain-check,domain-arch,agent-gate}.test.ts`)
-- [x] Task: orchestrator проверяет брифы (Opus); вопросы Нурболату — только стратегические
-- [x] Task: Записать решения в TR (`debt.md`): раскладка, реализации в пакете vs проекте, подписки по Def (Opus)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
+- [x] Task: orchestrator проверяет брифы (Opus); вопросы Нурболату — только стратегические db05a24
+- [x] Task: Записать решения в TR (`debt.md`): раскладка, реализации в пакете vs проекте, подписки по Def (Opus) db05a24
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (автономно: документы, `check` зелёный) (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 0:**
 - Базовая линия (pass/fail по командам) — в `summary.md`.
