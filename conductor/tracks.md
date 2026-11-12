@@ -8,8 +8,8 @@
 
 ---
 
-- [?] **Кандидат: перевод модуля `dossier` на DMG — последний legacy-модуль (DEBT-3, DEBT-34, `app-legacy`)**
-*Разбор: [migration.md §6 «Старт следующих треков»](./architecture/migration.md) — что снимает трек, шаблон (`conductor/archive/user-dmg_20261111`), входной долг; чек-лист релиза — там же. Папки трека нет: это заготовка, не трек.*
+- [ ] **Track: Завершение перехода — `dossier` на Def и удаление legacy (DEBT-3, DEBT-34, TR-33, `u7-cli` → `dmg-cli`)**
+*Link: [./tracks/legacy-removal_20261112/](./tracks/legacy-removal_20261112/)*
 
 ---
 
