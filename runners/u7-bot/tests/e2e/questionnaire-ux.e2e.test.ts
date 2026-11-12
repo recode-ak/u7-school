@@ -12,6 +12,7 @@ import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { QuestionnaireEvents } from '@u7-scl/domain/questionnaire/contract';
+import { envelopeOf } from '@u7-scl/test-helpers/envelope-of';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import type {
@@ -190,19 +191,21 @@ describe('Questionnaire UX (e2e)', () => {
 
   /** Публикует событие приглашения продолжить (как SweepAbandonedJob на 3ч). */
   function publishContinueInvite(respondent: U7BotActor): void {
-    app.eventBus.publish({
-      eventId: crypto.randomUUID(),
-      eventName: QuestionnaireEvents.continueInvite.name,
-      occurredAt: new Date().toISOString(),
-      aggregateName: 'Questionnaire',
-      aggregateId: QUESTIONNAIRE_COURSE_ID,
-      payload: v.parse(QuestionnaireEvents.continueInvite.payload, {
-        questionnaireId: QUESTIONNAIRE_COURSE_ID,
-        respondentId: respondent.user.uuid,
-        kind: 'standard',
-        ownerInfo: { courseId: QUESTIONNAIRE_COURSE_ID },
-      }),
-    } as never);
+    app.eventBus.publish(
+      envelopeOf(
+        QuestionnaireEvents.continueInvite,
+        v.parse(QuestionnaireEvents.continueInvite.payload, {
+          questionnaireId: QUESTIONNAIRE_COURSE_ID,
+          respondentId: respondent.user.uuid,
+          kind: 'standard',
+          ownerInfo: { courseId: QUESTIONNAIRE_COURSE_ID },
+        }),
+        {
+          occurredAt: Date.now(),
+          aggregateId: QUESTIONNAIRE_COURSE_ID,
+        },
+      ),
+    );
   }
 
   test('при чужом активном флоу: приглашение без предупреждения → «Продолжить анкету» переключает диалог', async () => {

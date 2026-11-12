@@ -6,6 +6,7 @@ import {
   UserModuleDef,
   type UserView,
 } from '@u7-scl/domain/user/contract';
+import { envelopeOf } from '../../../../tests/helpers/envelope-of';
 import {
   dmgDispatch,
   streamNotFound,
@@ -54,13 +55,9 @@ const mentor: Profile = {
 function makeCreatedEvent(
   overrides: Partial<ReviewCampaignCreatedEvent['payload']> = {},
 ): ReviewCampaignCreatedEvent {
-  return {
-    eventId: crypto.randomUUID(),
-    eventName: ReviewCampaignEvents.created.name,
-    occurredAt: '2026-09-21T12:00',
-    aggregateName: 'ReviewCampaign',
-    aggregateId: CAMPAIGN_ID,
-    payload: {
+  return envelopeOf(
+    ReviewCampaignEvents.created,
+    {
       campaignId: CAMPAIGN_ID,
       context: 'stream_fate',
       scopeId: STREAM_ID,
@@ -69,7 +66,8 @@ function makeCreatedEvent(
       subjectOutcome: 'completed_passed',
       ...overrides,
     },
-  };
+    { aggregateId: CAMPAIGN_ID },
+  );
 }
 
 // ══ Сборка стори с моками ══
@@ -134,7 +132,7 @@ function campaignCreatedHandler(
 ): (event: ReviewCampaignCreatedEvent) => Promise<void> {
   const sub = story
     .getEventSubscriptions()
-    .find((s) => s.eventName === 'peer-review.review-campaign.created');
+    .find((s) => s.def.name === 'peer-review.review-campaign.created');
   if (!sub)
     throw new Error('Подписка peer-review.review-campaign.created не найдена');
   return sub.handle as (event: ReviewCampaignCreatedEvent) => Promise<void>;

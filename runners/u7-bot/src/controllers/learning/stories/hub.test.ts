@@ -4,6 +4,7 @@ import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { StreamModuleDef, StudentEvents } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
+import { envelopeOf } from '../../../../tests/helpers/envelope-of';
 import { userActor } from '../../../core/user-actor.test-kit';
 import {
   dmgDispatch,
@@ -278,20 +279,17 @@ describe('HubStory — подписка на StudentEvents.completed', () => {
   const nextModuleId = '55555555-5555-4555-8555-555555555555';
 
   function makeCompletedEvent(outcome: 'advanced' | 'not_advanced') {
-    return {
-      eventId: 'ev-2',
-      eventName: StudentEvents.completed.name,
-      occurredAt: '2026-08-28T12:00:00.000Z',
-      aggregateName: 'Student' as const,
-      aggregateId: 'student-uuid',
-      payload: {
+    return envelopeOf(
+      StudentEvents.completed,
+      {
         studentId: 'student-uuid',
         userId: '11111111-1111-4111-8111-aaaaaaaab001',
         streamId: '11111111-1111-1111-1111-111111111111',
         moduleId,
         outcome,
       },
-    };
+      { aggregateId: 'student-uuid' },
+    );
   }
 
   function makeStoryWithSender(place: unknown = undefined) {
@@ -330,7 +328,7 @@ describe('HubStory — подписка на StudentEvents.completed', () => {
   function getSub(story: ReturnType<typeof makeStoryWithSender>['story']) {
     const sub = story
       .getEventSubscriptions()
-      .find((s) => s.eventName === StudentEvents.completed.name);
+      .find((s) => s.def.name === StudentEvents.completed.name);
     if (!sub) throw new Error('подписка на student.completed не найдена');
     return sub;
   }
@@ -338,8 +336,9 @@ describe('HubStory — подписка на StudentEvents.completed', () => {
   test('подписка идёт на FQN Def, а не на legacy-имя student.completed', () => {
     const { story } = makeStoryWithSender();
     const sub = getSub(story);
-    expect(sub.eventName).toBe('stream.student.completed');
-    const names = story.getEventSubscriptions().map((s) => s.eventName);
+    expect(sub.def).toBe(StudentEvents.completed);
+    expect(sub.def.name).toBe('stream.student.completed');
+    const names = story.getEventSubscriptions().map((s) => s.def.name);
     expect(names).not.toContain('student.completed');
   });
 

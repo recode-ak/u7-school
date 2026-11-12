@@ -1,4 +1,4 @@
-import type { AppEnvMode } from '@u7-scl/core/domain';
+import type { AppMode } from 'dmg-core/app';
 import * as v from 'valibot';
 
 /**
@@ -24,11 +24,7 @@ export const BotConfigSchema = v.object({
     v.nonEmpty('STUDENT_GROUP_INVITE не может быть пустым'),
   ),
   mode: v.picklist(
-    [
-      'test',
-      'development',
-      'production',
-    ] as const satisfies readonly AppEnvMode[],
+    ['test', 'development', 'production'] as const satisfies readonly AppMode[],
     'NODE_ENV должен быть test, development или production',
   ),
   botAdminUuid: v.pipe(

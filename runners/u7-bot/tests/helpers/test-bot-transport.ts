@@ -1,13 +1,14 @@
 import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
-import type { U7BotApp } from '@u7-scl/bot/u7-bot-app-meta';
 import type { U7BotController } from '@u7-scl/bot/u7-bot-controller';
-import { InProcEventBus } from '@u7-scl/core/infra';
+import { ConsoleLogger } from '@u7-scl/core/shared';
 import type {
   BotSession,
   DialogResponse,
   DialogState,
   KeyboardDescription,
 } from '@u7-scl/core/ui';
+import type { Identified } from 'dmg-core';
+import { type ApiApp, InProcEventBus } from 'dmg-core/app';
 import type { Api } from 'grammy';
 import type { BotContext } from '../../src/context';
 import type {
@@ -180,7 +181,7 @@ export class TestBotTransport {
   };
 
   constructor(
-    apiApp: U7BotApp,
+    apiApp: ApiApp<Identified>,
     actorResolver: (tgId: number) => Promise<U7BotActor>,
     controllers: U7BotController[],
     opts: {
@@ -197,7 +198,7 @@ export class TestBotTransport {
       {
         // Общая с apiApp шина — события модулей (напр. questionnaire:start)
         // долетают до подписок стори (как в бою: create-ui-app + main.ts)
-        eventBus: opts.eventBus ?? new InProcEventBus(),
+        eventBus: opts.eventBus ?? new InProcEventBus(new ConsoleLogger()),
         actorResolver,
         appApi: apiApp,
         botAdminUuid: opts.botAdminUuid ?? WORLD_ADMIN_UUID,

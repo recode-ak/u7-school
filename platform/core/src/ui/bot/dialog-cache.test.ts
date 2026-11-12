@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 import { UserCaller } from 'dmg-core';
-import type { AppMeta } from '#domain-legacy/types';
 import { BotController } from './bot-controller';
 import { BotUiStory } from './bot-ui-story';
 import { DialogCache } from './dialog-cache';
@@ -102,7 +101,7 @@ describe('DialogCache / эпохальный кеш', () => {
 type TestActor = UserCaller<{ uuid: string; tgId: number }>;
 
 /** Стори-зонд: пишет и читает кеш при каждом callback. */
-class ProbeStory extends BotUiStory<AppMeta, TestActor> {
+class ProbeStory extends BotUiStory<TestActor> {
   readonly name = 'probe';
   /** Кеш, увиденный стори при последнем callback (проверка каскада). */
   seenCache?: DialogCache;
@@ -126,7 +125,7 @@ class ProbeStory extends BotUiStory<AppMeta, TestActor> {
 }
 
 /** Контроллер с реальной стори-зондом (роутинг BotController). */
-class ProbeController extends BotController<AppMeta, TestActor> {
+class ProbeController extends BotController<TestActor> {
   name = 'a';
 
   protected override readonly stories = [new ProbeStory()];
@@ -137,11 +136,11 @@ class ProbeController extends BotController<AppMeta, TestActor> {
 }
 
 /** Заглушка контроллера «b» для кнопки-моста в чужую стори. */
-class OtherController extends BotController<AppMeta, TestActor> {
+class OtherController extends BotController<TestActor> {
   name = 'b';
   callbackData: string[] = [];
 
-  protected override readonly stories: BotUiStory<AppMeta, TestActor>[] = [];
+  protected override readonly stories: BotUiStory<TestActor>[] = [];
 
   override async handleCallback(
     data: string,
@@ -153,9 +152,9 @@ class OtherController extends BotController<AppMeta, TestActor> {
   }
 }
 
-function makeUiApp(controllers: BotController<AppMeta, TestActor>[]) {
+function makeUiApp(controllers: BotController<TestActor>[]) {
   // BotUiApp абстрактен — минимальный конкретный подкласс
-  class TestUiApp extends BotUiApp<AppMeta, TestActor> {}
+  class TestUiApp extends BotUiApp<TestActor> {}
   const uiApp = new TestUiApp(controllers);
   uiApp.init({
     appApi: {} as never,

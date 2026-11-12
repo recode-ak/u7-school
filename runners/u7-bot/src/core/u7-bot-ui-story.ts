@@ -27,11 +27,7 @@ import type {
 } from 'dmg-core';
 import { APP_CODES } from '../shared/app-codes';
 import { dispatchModuleUc } from './dispatch-uc';
-import type {
-  U7BotActor,
-  U7BotAppMeta,
-  U7BotUiAppResolve,
-} from './u7-bot-app-meta';
+import type { U7BotActor, U7BotUiAppResolve } from './u7-bot-app-meta';
 import type { MenuButton } from './u7-menu';
 
 /** Опции постраничного экрана (хелпер U7BotUiStory.pagedScreen). */
@@ -115,7 +111,6 @@ interface CachedCards<T> {
  * - прочее → pass (доменные команды — в переопределениях наследников).
  */
 export abstract class U7BotUiStory extends BotUiStory<
-  U7BotAppMeta,
   U7BotActor,
   U7BotUiAppResolve
 > {

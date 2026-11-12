@@ -108,3 +108,11 @@ ARC-01 (core не импортирует домен/приложение), ARC-0
 - Вариант A: `grep -n "ApiApp<U7BotAppMeta>\|legacyEventBus\b" platform/app/src/u7-app.ts` — только приватные поля/комментарий до Ф4; `U7App['apiApp']` — dmg `ApiApp`.
 - `bun run test:bot` и e2e зелёные (A) либо падения — поимённо в `debt.md` (B); `bun run check` зелёный (A); число тестов: база Ф0 − 17 удалённых вызовов (с учётом `test.each`) — все прочие сценарии на месте.
 - `bun run arch:check` зелёный.
+
+## Отчёты (Ф3)
+
+- **`dmg-test-designer` (Sonnet):** red-тесты `ui`, 8 stories, test-kit анкеты, 3 e2e (5 публикаций → `envelopeOf`), помощники бота на шину DMG, `u7-app.test.ts` по варианту A; новый `tests/helpers/envelope-of.ts`. Удалено 17 вызовов `test()` `AppException` (`bot-ui-story` 6, `u7-bot-ui-story` 10, `bot-controller` 1) — покрытие: internal-тесты на `new Error`, «обычный Error», «неизвестный тип ошибки», `ucErrorNotify`. Отклонения: два теста хука `errorExitRows` слиты в один (виды ошибок сузились до internal); +1 тест «подписка хранит Def»; тесты берут типы через `EnvelopeOf<typeof …>`, а не экспорты stories. Эскалаций нет.
+- **`migrator` 3a (Sonnet):** `ui/**` и `serialize-error` по п. 2, 4, 5, 6. Отклонение: явный `export type { NotifyKind } from './ui'` в `platform/core/src/index.ts` (TS2308 от двух `export *`; снять в Ф5). Тесты `ui` 174 pass.
+- **`migrator` 3b (flash, `lr-F3-3b`):** stories (14 подписок), `questionnaire-events.ts`, закрывающие типы, `config.ts`, `U7App` по варианту A; импорты `#shared-legacy/logger` в двух тестах `ui/bot`. Отклонение: тип `apiApp` в `tests/helpers/test-bot-transport.ts` → `ApiApp<Identified>` (следствие варианта A). Доработка по ревью — 5 warn (см. TR-65).
+- **Гейт orchestrator:** `check` зелёный, 3065 pass (база 3086: −21 = 17 удалённых вызовов с кейсами `test.each`, слияние хука, +1 новый); имена тестов сверены с HEAD; grep-критерии пусты; `arch:check` чист.
+- **`dmg-reviewer` (Opus):** `error` нет; 5 warn поправлены в срезе; question: `appResolver.eventBus` (legacy-транспорт) → Ф4 (`assembly.md`), снос `NotifyKind` → Ф5 (`removal.md`). Доставка событий: шина одна (`context.bus`), публикаторов в legacy-транспорт нет. Кандидаты в чистку — `test-bloat.md`.

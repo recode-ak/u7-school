@@ -66,6 +66,8 @@
 | 2026-11-11 | `user-dmg` Ф5 | `runners/u7-bot/src/controllers/{learning/stories/hub,mentor/stories/activate-stream,learning/stories/progress,school/stories/school-info.story}.test.ts` | мёртвые моки `appApi.execute` (stories legacy-UC не вызывают) | удалить моки (`user-dmg` Ф6 — при снятии legacy `execute` у `user`, или трек чистки) |
 | 2026-11-11 | `user-dmg` Ф5 | `runners/u7-bot/src/core/ui-app.test.ts:151-159` | повторяет проверки команд регистрации `ensure-registered.test.ts` | оставить одно утверждение «регистрация вызвана» |
 | 2026-11-11 | `user-dmg` Ф5 | `runners/u7-bot/src/create-ui-app.test.ts`, `core/u7-bot-ui-story.test.ts` | негативные проверки удалённых полей (`userFacade`, `userController`, `subjectOf`) — гарантирует тип (TST-09); тавтология «отказ резолвера → исключение» | удалить на ревизии (TR-61 «Ф5») |
+| 2026-11-12 | `legacy-removal` Ф3 | `platform/app/tests/u7-app.test.ts` (`'init' in`/`'getModule' in apiApp`) | структурные проверки повторяют тип dmg `ApiApp` (TST-09) | удалить в Ф4 при переписке `u7-app.test.ts` |
+| 2026-11-12 | `legacy-removal` Ф3 | `runners/u7-bot/src/controllers/{streams/stories/inactivity.story,courses/stories/wish-invite.story,courses/stories/wish-confirmed.story}.test.ts`, `questionnaire/stories/questionnaire-dmg.test-kit.ts` | локальные помощники `subHandler`/`subscriptionOf` (поиск подписки по `def.name`) повторены в 4 файлах | один помощник в `tests/helpers` |
 
 ## 4. Как пополнять
 

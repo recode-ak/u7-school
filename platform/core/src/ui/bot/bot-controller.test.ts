@@ -1,13 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { GuestCaller, type PersonCaller, UserCaller } from 'dmg-core';
-import {
-  errNotFound,
-  errValidation,
-} from '#domain-legacy/errors/error-helpers';
-import { AppException } from '#domain-legacy/errors/errors';
-import type { AppMeta } from '#domain-legacy/types';
-import type { Logger } from '#shared-legacy/logger';
-import { setGlobalLogger } from '#shared-legacy/logger';
+import type { Logger } from '../../shared/logger';
+import { setGlobalLogger } from '../../shared/logger';
 import { md } from '../../shared/markdown';
 import { assertMarkdownV2Safe } from '../../shared/markdown-validator';
 import { BotController } from './bot-controller';
@@ -25,7 +19,7 @@ import type {
 type TestActor = PersonCaller;
 
 /** Стори с записью вызовов и настраиваемым ответом. */
-class SpyStory extends BotUiStory<AppMeta, TestActor> {
+class SpyStory extends BotUiStory<TestActor> {
   constructor(
     readonly name: string,
     private callbackResult: DialogResponse = {},
@@ -67,10 +61,10 @@ class SpyStory extends BotUiStory<AppMeta, TestActor> {
   }
 }
 
-class TestController extends BotController<AppMeta, TestActor> {
+class TestController extends BotController<TestActor> {
   name = 'learn';
 
-  constructor(stories: BotUiStory<AppMeta, TestActor>[]) {
+  constructor(stories: BotUiStory<TestActor>[]) {
     super();
     this.stories.push(...stories);
   }
@@ -113,7 +107,7 @@ function makeUpdate(text = 'ответ'): BotUpdate {
 function makeCommandUpdate(
   command: string,
   args = '',
-): Parameters<BotUiStory<AppMeta, TestActor>['handleCommand']>[0] {
+): Parameters<BotUiStory<TestActor>['handleCommand']>[0] {
   return { type: 'command', command, args, telegramId: 7 };
 }
 
@@ -121,7 +115,7 @@ function makeCommandUpdate(
 
 describe('BotController — handleCommand: pipe стори', () => {
   /** Стори с записью вызовов и запрограммированной реакцией. */
-  class PipeStory extends BotUiStory<AppMeta, TestActor> {
+  class PipeStory extends BotUiStory<TestActor> {
     commandCalls = 0;
     reaction: CommandReaction = { reaction: 'pass' };
     throwError: unknown = null;
@@ -332,9 +326,7 @@ describe('BotController — handleCommand: pipe стори', () => {
   test('ошибка стори → stop с handleError-экраном, обход прерывается', async () => {
     setGlobalLogger(makeWarnSpyLogger([]));
     const s1 = new PipeStory('one');
-    s1.throwError = new AppException(
-      errNotFound('NotFound', 'Анкета не найдена', undefined),
-    );
+    s1.throwError = new Error('Анкета не найдена');
     const s2 = new PipeStory('two');
     const ctrl = makeCtrl([s1, s2]);
 
@@ -346,9 +338,9 @@ describe('BotController — handleCommand: pipe стори', () => {
 
     expect(reaction.reaction).toBe('stop');
     if (reaction.reaction !== 'stop') return;
-    expect(String(reaction.response.screen?.text)).toContain(
-      'Анкета не найдена',
-    );
+    const text = String(reaction.response.screen?.text);
+    expect(text).toContain('Произошла внутренняя ошибка');
+    expect(text).not.toContain('Анкета не найдена');
     expect(s2.commandCalls).toBe(0);
   });
 });
@@ -410,9 +402,7 @@ describe('BotController — маршрутизация callback', () => {
 
   test('ошибка стори → handleError-экран, не исключение', async () => {
     const story = new SpyStory('hub');
-    story.throwError = new AppException(
-      errNotFound('ERR', 'Курс не найден (id [x])', undefined),
-    );
+    story.throwError = new Error('Курс не найден (id [x])');
     const ctrl = new TestController([story]);
 
     const response = await ctrl.handleCallback(
@@ -422,7 +412,8 @@ describe('BotController — маршрутизация callback', () => {
     );
 
     const text = String(response.screen?.text);
-    expect(text).toContain('Курс не найден');
+    expect(text).toContain('Произошла внутренняя ошибка');
+    expect(text).not.toContain('Курс не найден');
     expect(() => assertMarkdownV2Safe(text)).not.toThrow();
   });
 });
@@ -549,29 +540,6 @@ describe('BotController — handleMessage по dialog.path', () => {
   });
 });
 
-describe('BotController — handleError', () => {
-  test('validation с issues → экран-список', () => {
-    const ctrl = new TestController([]);
-
-    // handleError protected — доступ через подкласс не нужен: тестируем через callback-путь
-    // (косвенно в «ошибка стори»); здесь прямой вызов через any-мост недопустим,
-    // поэтому проверяем через throw в стори
-    const story = new SpyStory('hub');
-    story.throwError = new AppException(
-      errValidation('VALIDATION', 'Bad', {
-        issues: [{ path: 'Поле', message: 'плохое' }],
-      }),
-    );
-    const ctrl2 = new TestController([story]);
-
-    return ctrl2
-      .handleCallback('hub:open', new GuestCaller(), makeSession())
-      .then((response) => {
-        expect(String(response.screen?.text)).toContain('Поле');
-      });
-  });
-});
-
 describe('BotController — handleError: errorExitRows (§10.20)', () => {
   /** Контроллер с кнопкой выхода на экранах ошибок. */
   class ExitController extends TestController {
@@ -582,9 +550,7 @@ describe('BotController — handleError: errorExitRows (§10.20)', () => {
 
   test('хук подставляет кнопки в экран ошибки контроллера', async () => {
     const story = new SpyStory('hub');
-    story.throwError = new AppException(
-      errNotFound('E', 'Объект не найден', undefined),
-    );
+    story.throwError = new Error('Объект не найден');
     const ctrl = new ExitController([story]);
 
     const response = await ctrl.handleCallback(
@@ -593,7 +559,9 @@ describe('BotController — handleError: errorExitRows (§10.20)', () => {
       makeSession(),
     );
 
-    expect(String(response.screen?.text)).toContain('Объект не найден');
+    expect(String(response.screen?.text)).toContain(
+      'Произошла внутренняя ошибка',
+    );
     expect(response.screen?.keyboard?.rows).toEqual([
       [{ text: '⬅️ Меню', code: 'app:main-menu' }],
     ]);
@@ -601,9 +569,7 @@ describe('BotController — handleError: errorExitRows (§10.20)', () => {
 
   test('без переопределения — экран ошибки без клавиатуры, по умолчанию', async () => {
     const story = new SpyStory('hub');
-    story.throwError = new AppException(
-      errNotFound('E', 'Объект не найден', undefined),
-    );
+    story.throwError = new Error('Объект не найден');
     const ctrl = new TestController([story]);
 
     const response = await ctrl.handleCallback(

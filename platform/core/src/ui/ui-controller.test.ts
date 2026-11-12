@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { DomainEvent } from '#domain-legacy/events/domain-event';
+import { TaskEvents } from 'dmg-core/testing/example/todo/contract';
 import type { UiEventSubscription } from './event-subscription';
 import { eventSubscription } from './event-subscription';
 import { UiController } from './ui-controller';
@@ -27,9 +27,9 @@ class TestController extends UiController {
 
 describe('UiController', () => {
   test('getEventSubscriptions агрегирует подписки всех стори', () => {
-    const sub1 = eventSubscription<DomainEvent>('event-1', async () => {});
-    const sub2 = eventSubscription<DomainEvent>('event-2', async () => {});
-    const sub3 = eventSubscription<DomainEvent>('event-3', async () => {});
+    const sub1 = eventSubscription(TaskEvents.created, async () => {});
+    const sub2 = eventSubscription(TaskEvents.completed, async () => {});
+    const sub3 = eventSubscription(TaskEvents.archived, async () => {});
 
     const storyA = new TestStory([sub1]);
     const storyB = new TestStory([sub2, sub3]);
@@ -38,10 +38,10 @@ describe('UiController', () => {
     const subs = ctrl.getEventSubscriptions();
 
     expect(subs).toHaveLength(3);
-    expect(subs.map((s) => s.eventName)).toEqual([
-      'event-1',
-      'event-2',
-      'event-3',
+    expect(subs.map((s) => s.def.name)).toEqual([
+      TaskEvents.created.name,
+      TaskEvents.completed.name,
+      TaskEvents.archived.name,
     ]);
   });
 

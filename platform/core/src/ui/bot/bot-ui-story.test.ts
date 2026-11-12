@@ -7,19 +7,8 @@ import {
   type PersonCaller,
   UserCaller,
 } from 'dmg-core';
-import {
-  errAccessDenied,
-  errBadRequest,
-  errConflict,
-  errInternal,
-  errNotFound,
-  errUnauthorized,
-  errValidation,
-} from '#domain-legacy/errors/error-helpers';
-import { AppException } from '#domain-legacy/errors/errors';
-import type { AppMeta } from '#domain-legacy/types';
-import type { Logger } from '#shared-legacy/logger';
-import { setGlobalLogger } from '#shared-legacy/logger';
+import type { Logger } from '../../shared/logger';
+import { setGlobalLogger } from '../../shared/logger';
 import { md, type mdRaw } from '../../shared/markdown';
 import { assertMarkdownV2Safe } from '../../shared/markdown-validator';
 import { BotUiStory } from './bot-ui-story';
@@ -82,7 +71,7 @@ function makeErrorSpyLogger(errors: unknown[]): Logger {
 }
 
 /** Стори-заглушка: открывает protected API (confirm/handleError). */
-class TestStory extends BotUiStory<AppMeta, TestActor> {
+class TestStory extends BotUiStory<TestActor> {
   readonly name = 'anketa';
 
   override async handleCallback(
@@ -135,38 +124,38 @@ class TestStory extends BotUiStory<AppMeta, TestActor> {
   callScreen(
     text: ReturnType<typeof mdRaw>,
     keyboard?: KeyboardDescription,
-  ): ReturnType<BotUiStory<AppMeta, TestActor>['screen']> {
+  ): ReturnType<BotUiStory<TestActor>['screen']> {
     return this.screen(text, keyboard);
   }
   callAsk(
     text: ReturnType<typeof mdRaw>,
     context: unknown,
     keyboard?: KeyboardDescription,
-  ): ReturnType<BotUiStory<AppMeta, TestActor>['ask']> {
+  ): ReturnType<BotUiStory<TestActor>['ask']> {
     return this.ask(text, context, keyboard);
   }
   callWarn(
     text: ReturnType<typeof mdRaw>,
-  ): ReturnType<BotUiStory<AppMeta, TestActor>['warn']> {
+  ): ReturnType<BotUiStory<TestActor>['warn']> {
     return this.warn(text);
   }
   callNotify(
     text: ReturnType<typeof mdRaw>,
-  ): ReturnType<BotUiStory<AppMeta, TestActor>['notify']> {
+  ): ReturnType<BotUiStory<TestActor>['notify']> {
     return this.notify(text);
   }
   callNote(
     text: ReturnType<typeof mdRaw>,
-  ): ReturnType<BotUiStory<AppMeta, TestActor>['note']> {
+  ): ReturnType<BotUiStory<TestActor>['note']> {
     return this.note(text);
   }
-  callGo(path: string): ReturnType<BotUiStory<AppMeta, TestActor>['go']> {
+  callGo(path: string): ReturnType<BotUiStory<TestActor>['go']> {
     return this.go(path);
   }
   callKb(
     rows: KbButton[][],
     opts?: { multiple?: boolean },
-  ): ReturnType<BotUiStory<AppMeta, TestActor>['kb']> {
+  ): ReturnType<BotUiStory<TestActor>['kb']> {
     return this.kb(rows, opts);
   }
   callBtn(text: string, code: string): KbButton {
@@ -284,90 +273,6 @@ describe('BotUiStory — дефолты контракта команд (ФР-4,
   });
 });
 
-describe('BotUiStory — handleError', () => {
-  test('validation с issues → экран-список полей, валидный md', () => {
-    const story = new TestStory();
-
-    const response = story.callHandleError(
-      new AppException(
-        errValidation('VALIDATION', 'Некорректные данные', {
-          issues: [
-            { path: 'Имя', message: 'слишком *короткое*' },
-            { path: 'Email', message: 'невалиден' },
-          ],
-        }),
-      ),
-    );
-
-    const text = String(response.screen?.text);
-    expect(text).toContain('Имя');
-    expect(text).toContain('слишком \\*короткое\\*');
-    expect(() => assertMarkdownV2Safe(text)).not.toThrow();
-  });
-
-  test('validation без issues → общий экран валидации', () => {
-    const story = new TestStory();
-
-    const response = story.callHandleError(
-      new AppException(
-        errValidation('VALIDATION', 'Что-то не так (скобки) [тут]', undefined),
-      ),
-    );
-
-    const text = String(response.screen?.text);
-    expect(text).toContain('Что\\-то не так \\(скобки\\)');
-    expect(() => assertMarkdownV2Safe(text)).not.toThrow();
-  });
-
-  test.each([
-    [
-      'not-found',
-      new AppException(errNotFound('ERR', 'Объект [не] найден_', undefined)),
-      'Объект',
-    ],
-    [
-      'conflict',
-      new AppException(errConflict('ERR', 'Конфликт [x] _y_', undefined)),
-      'Конфликт',
-    ],
-    [
-      'access-denied',
-      new AppException(errAccessDenied('ERR', 'Доступ (закрыт)', undefined)),
-      'Доступ',
-    ],
-    [
-      'bad-request',
-      new AppException(errBadRequest('ERR', 'Плохой запрос _[1]', undefined)),
-      'Плохой',
-    ],
-  ])('%s → экран с текстом ошибки, валидный md', (_kind, error, snippet) => {
-    const story = new TestStory();
-
-    const response = story.callHandleError(error);
-
-    const text = String(response.screen?.text);
-    expect(text).toContain(snippet);
-    expect(() => assertMarkdownV2Safe(text)).not.toThrow();
-  });
-
-  test.each([
-    [
-      'internal',
-      new AppException(errInternal('ERR', 'boom [x] _y_', undefined)),
-    ],
-    ['unauthorized', new AppException(errUnauthorized('ERR', 'нет доступа'))],
-  ])('%s → общий экран, доменные данные не утекают', (_kind, error) => {
-    const story = new TestStory();
-
-    const response = story.callHandleError(error);
-
-    const text = String(response.screen?.text);
-    expect(text).not.toContain('внутренняя деталь');
-    expect(text).not.toContain('boom');
-    expect(() => assertMarkdownV2Safe(text)).not.toThrow();
-  });
-});
-
 describe('BotUiStory — errorExitRows (кнопки выхода на экранах ошибок, §10.20)', () => {
   /** Стори с кнопкой выхода на экранах ошибок. */
   class ExitStory extends TestStory {
@@ -376,120 +281,37 @@ describe('BotUiStory — errorExitRows (кнопки выхода на экра�
     }
   }
 
-  test('хук подставляет кнопки во все виды экранов ошибок', () => {
+  test('хук подставляет кнопки на экран ошибки (internal)', () => {
     const story = new ExitStory();
 
-    const validation = story.callHandleError(
-      new AppException(
-        errValidation('V', 'Некорректные данные', {
-          issues: [{ path: 'Имя', message: 'короткое' }],
-        }),
-      ),
-    );
-    const validationNoIssues = story.callHandleError(
-      new AppException(errValidation('V', 'Что-то не так', undefined)),
-    );
-    const notFound = story.callHandleError(
-      new AppException(errNotFound('E', 'Объект не найден', undefined)),
-    );
-    const internal = story.callHandleError(
-      new AppException(errInternal('E', 'boom', undefined)),
-    );
+    const response = story.callHandleError(new Error('boom'));
 
-    const expected = [[{ text: '⬅️ Меню', code: 'app:main-menu' }]];
-    for (const response of [
-      validation,
-      validationNoIssues,
-      notFound,
-      internal,
-    ]) {
-      expect(response.screen?.keyboard?.rows).toEqual(expected);
-      expect(response.screen?.keyboard?.isMultiple).toBe(false);
-      expect(() =>
-        assertMarkdownV2Safe(String(response.screen?.text)),
-      ).not.toThrow();
-    }
+    expect(response.screen?.keyboard?.rows).toEqual([
+      [{ text: '⬅️ Меню', code: 'app:main-menu' }],
+    ]);
+    expect(response.screen?.keyboard?.isMultiple).toBe(false);
+    expect(() =>
+      assertMarkdownV2Safe(String(response.screen?.text)),
+    ).not.toThrow();
   });
 
   test('без переопределения — экраны ошибок без клавиатуры, по умолчанию', () => {
     const story = new TestStory();
 
-    const response = story.callHandleError(
-      new AppException(errNotFound('E', 'Объект не найден', undefined)),
-    );
+    const response = story.callHandleError(new Error('boom'));
 
     expect(response.screen?.keyboard).toBeUndefined();
   });
 });
 
 describe('BotUiStory — errorNotify (ФР-5)', () => {
-  test('validation с issues → warn-реплика со списком полей, без экрана', () => {
-    const story = new TestStory();
-
-    const response = story.callErrorNotify(
-      new AppException(
-        errValidation('VALIDATION', 'Некорректные данные', {
-          issues: [
-            { path: 'Email', message: 'невалиден' },
-            { path: 'Имя', message: 'слишком *короткое*' },
-          ],
-        }),
-      ),
-    );
-
-    // Реплика, а не экран: экран диалога не захвачен
-    expect(response.screen).toBeUndefined();
-    // Ввод не снят и не переустановлен — awaitInput-контекст живёт (переспрос)
-    expect(response.release).toBeUndefined();
-    expect(response.awaitInput).toBeUndefined();
-    expect(response.notify?.kind).toBe('warn');
-    const text = String(response.notify?.text);
-    expect(text).toContain('Email');
-    expect(text).toContain('невалиден');
-    expect(text).toContain('слишком \\*короткое\\*');
-    expect(() => assertMarkdownV2Safe(text)).not.toThrow();
-  });
-
-  test.each([
-    [
-      'not-found',
-      new AppException(errNotFound('ERR', 'Объект [не] найден_', undefined)),
-      'Объект',
-    ],
-    [
-      'conflict',
-      new AppException(errConflict('ERR', 'Конфликт [x] _y_', undefined)),
-      'Конфликт',
-    ],
-    [
-      'bad-request',
-      new AppException(errBadRequest('ERR', 'Плохой запрос _[1]', undefined)),
-      'Плохой',
-    ],
-  ])(
-    '%s → warn-реплика с текстом ошибки, без экрана',
-    (_kind, error, snippet) => {
-      const story = new TestStory();
-
-      const response = story.callErrorNotify(error);
-
-      expect(response.screen).toBeUndefined();
-      expect(response.notify?.kind).toBe('warn');
-      const text = String(response.notify?.text);
-      expect(text).toContain(snippet);
-      expect(() => assertMarkdownV2Safe(text)).not.toThrow();
-    },
-  );
-
   test('internal → общее сообщение, доменные данные не утекают, error-лог', () => {
     const errors: unknown[] = [];
     setGlobalLogger(makeErrorSpyLogger(errors));
     const story = new TestStory();
 
     const response = story.callErrorNotify(
-      new AppException(
-        errInternal('ERR', 'boom [секретная деталь] _y_', undefined),
-      ),
+      new Error('boom [секретная деталь] _y_'),
     );
 
     expect(response.screen).toBeUndefined();
@@ -498,6 +320,9 @@ describe('BotUiStory — errorNotify (ФР-5)', () => {
     expect(text).not.toContain('boom');
     expect(text).not.toContain('секретная деталь');
     expect(() => assertMarkdownV2Safe(text)).not.toThrow();
+    // Ввод не снят и не переустановлен — awaitInput-контекст живёт (переспрос)
+    expect(response.release).toBeUndefined();
+    expect(response.awaitInput).toBeUndefined();
     expect(errors.length).toBe(1);
     setGlobalLogger(undefined as unknown as Logger);
   });
@@ -721,6 +546,6 @@ describe('BotUiStory — делегаты билдеров ответов (ФР-
 describe('BotUiStory — ограничение типа актора', () => {
   test('актор — PersonCaller: произвольный объект не подходит (проверка типов)', () => {
     // @ts-expect-error TActor extends PersonCaller: `{ id: string }` — не Caller
-    type NotAllowed = BotUiStory<AppMeta, { id: string }>;
+    type NotAllowed = BotUiStory<{ id: string }>;
   });
 });

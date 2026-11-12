@@ -471,7 +471,7 @@ describe('FillStory — подписки вариант A (invite-канал)', 
   test('getEventSubscriptions: started, abandonWarning, continueInvite, abandoned', () => {
     const { story } = initStory(new FillStory());
 
-    const names = story.getEventSubscriptions().map((s) => s.eventName);
+    const names = story.getEventSubscriptions().map((s) => s.def.name);
     expect(names).toEqual(
       [
         QuestionnaireEvents.started,

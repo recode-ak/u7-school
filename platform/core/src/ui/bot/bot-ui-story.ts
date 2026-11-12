@@ -1,11 +1,9 @@
-import type { DomainError, PersonCaller } from 'dmg-core';
-import type { ApiApp } from '#api-legacy/app/api-app';
-import { fromError } from '#domain-legacy/errors/error-helpers';
-import type { AppMeta } from '#domain-legacy/types';
-import type { Logger } from '#shared-legacy/logger';
-import { getGlobalLogger } from '#shared-legacy/logger';
-import { type MdText, md, mdConcat, mdJoin } from '#shared-legacy/markdown';
-import { serializeError } from '#shared-legacy/serialize-error';
+import type { DomainError, Identified, PersonCaller } from 'dmg-core';
+import type { ApiApp } from 'dmg-core/app';
+import type { Logger } from '../../shared/logger';
+import { getGlobalLogger } from '../../shared/logger';
+import { type MdText, md, mdConcat, mdJoin } from '../../shared/markdown';
+import { serializeError } from '../../shared/serialize-error';
 import { UiStory } from '../ui-story';
 import type { BotUiAppResolve } from './app-types';
 import { DialogCache } from './dialog-cache';
@@ -25,17 +23,13 @@ import type {
  * Абстрактная стори на контракте «Диалог и Экран».
  */
 export abstract class BotUiStory<
-  TAppMeta extends AppMeta = AppMeta,
   TActor extends PersonCaller = PersonCaller,
-  TResolve extends BotUiAppResolve<TAppMeta, TActor> = BotUiAppResolve<
-    TAppMeta,
-    TActor
-  >,
+  TResolve extends BotUiAppResolve<TActor> = BotUiAppResolve<TActor>,
 > extends UiStory<TResolve> {
   abstract readonly name: string;
 
   /** API приложения — для вызовов useCases */
-  protected appApi!: ApiApp<TAppMeta>;
+  protected appApi!: ApiApp<Identified>;
 
   /** Родитель (BotController) — получается через init отдельным аргументом */
   protected proactiveSender!: ProactiveSender;
@@ -297,62 +291,19 @@ export abstract class BotUiStory<
   /**
    * Универсальный обработчик ошибок: ошибка.
    *
-   * - `validation` — перечисляет поля из `payload.issues`
-   * - `not-found`, `conflict`, `access-denied`, `bad-request` — текст ошибки
-   * - `internal`, `unauthorized` — логирует и возвращает общее сообщение
+   * Любое необработанное исключение — internal: логирует и возвращает
+   * общее сообщение (доменные данные не утекают).
    */
   protected handleError(err: unknown): DialogResponse {
-    const appError = fromError(err);
-
     // Клавиатура выхода на экране ошибки (errorExitRows), если задана
     const exitRows = this.errorExitRows();
     const errorKb = exitRows.length > 0 ? this.kb(exitRows) : undefined;
 
-    switch (appError.kind) {
-      case 'validation': {
-        const payload = appError.payload as
-          | { issues?: Array<{ path?: string; message: string }> }
-          | undefined;
-        const issues = payload?.issues;
-
-        if (issues && issues.length > 0) {
-          const lines = issues.map(
-            (i) => md`• *${i.path ?? ''}*: ${i.message}`,
-          );
-          return this.screen(
-            mdConcat(
-              md`⚠️ *Ошибка валидации*\n\n`,
-              mdJoin(lines),
-              md`\n\nПожалуйста, попробуйте снова начав с команды /start с исправленными значениями\\.`,
-            ),
-            errorKb,
-          );
-        }
-
-        return this.screen(
-          md`⚠️ *Ошибка валидации*\n\n${appError.message}\n\nПожалуйста, исправьте и попробуйте снова\\.`,
-          errorKb,
-        );
-      }
-
-      case 'not-found':
-      case 'conflict':
-      case 'access-denied':
-      case 'bad-request':
-        return this.screen(md`⚠️ ${appError.message}`, errorKb);
-
-      // biome-ignore lint/complexity/noUselessSwitchCase: явно документирует обрабатываемые типы ошибок
-      case 'internal':
-      // biome-ignore lint/complexity/noUselessSwitchCase: явно документирует обрабатываемые типы ошибок
-      case 'unauthorized':
-      default: {
-        this.logger?.error('bot', 'Ошибка в story', serializeError(err));
-        return this.screen(
-          md`⚠️ *Произошла внутренняя ошибка*\n\nПожалуйста, попробуйте позже или обратитесь к администратору\\.`,
-          errorKb,
-        );
-      }
-    }
+    this.logger?.error('bot', 'Ошибка в story', serializeError(err));
+    return this.screen(
+      md`⚠️ *Произошла внутренняя ошибка*\n\nПожалуйста, попробуйте позже или обратитесь к администратору\\.`,
+      errorKb,
+    );
   }
 
   /**
@@ -401,49 +352,14 @@ export abstract class BotUiStory<
    * при валидации ввода awaitInput-контекст сохраняется (переспрос),
    * в pipe-командах — ошибка без перерисовки экрана.
    *
-   * Различает типы ошибок через `fromError()`:
-   * - `validation` — перечисляет поля из `payload.issues`;
-   * - `not-found`, `conflict`, `access-denied`, `bad-request` — текст ошибки;
-   * - `internal`, `unauthorized` — логирует и возвращает общее сообщение
-   *   (доменные данные не утекают).
+   * Любое исключение — internal: логирует и возвращает общее сообщение
+   * (доменные данные не утекают).
    */
   protected errorNotify(err: unknown): DialogResponse {
-    const appError = fromError(err);
-
-    switch (appError.kind) {
-      case 'validation': {
-        const payload = appError.payload as
-          | { issues?: Array<{ path?: string; message: string }> }
-          | undefined;
-        const issues = payload?.issues;
-
-        if (issues && issues.length > 0) {
-          const lines = issues.map(
-            (i) => md`• *${i.path ?? ''}*: ${i.message}`,
-          );
-          return this.warn(mdConcat(md`*Ошибка валидации*\n\n`, mdJoin(lines)));
-        }
-
-        return this.warn(md`*Ошибка валидации*\n\n${appError.message}`);
-      }
-
-      case 'not-found':
-      case 'conflict':
-      case 'access-denied':
-      case 'bad-request':
-        return this.warn(md`${appError.message}`);
-
-      // biome-ignore lint/complexity/noUselessSwitchCase: явно документирует обрабатываемые типы ошибок
-      case 'internal':
-      // biome-ignore lint/complexity/noUselessSwitchCase: явно документирует обрабатываемые типы ошибок
-      case 'unauthorized':
-      default: {
-        this.logger?.error('bot', 'Ошибка в story', serializeError(err));
-        return this.warn(
-          md`Произошла ошибка\\. Попробуйте ещё раз или обратитесь к администратору\\.`,
-        );
-      }
-    }
+    this.logger?.error('bot', 'Ошибка в story', serializeError(err));
+    return this.warn(
+      md`Произошла ошибка\\. Попробуйте ещё раз или обратитесь к администратору\\.`,
+    );
   }
 }
 

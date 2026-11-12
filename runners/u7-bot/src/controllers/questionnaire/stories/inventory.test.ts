@@ -155,7 +155,7 @@ describe('Инвентаризация InviteStory', () => {
   test('подписка InviteStory — только invited', () => {
     const { story } = initStory(new InviteStory());
 
-    expect(story.getEventSubscriptions().map((s) => s.eventName)).toEqual([
+    expect(story.getEventSubscriptions().map((s) => s.def.name)).toEqual([
       QuestionnaireEvents.invited.name,
     ]);
   });

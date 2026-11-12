@@ -51,21 +51,17 @@ export class FillStory extends QuestionnaireStory {
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<QuestionnaireStartedEvent>(
-        QuestionnaireEvents.started.name,
-        (event) => this.#handleStartEvent(event),
+      eventSubscription(QuestionnaireEvents.started, (event) =>
+        this.#handleStartEvent(event),
       ),
-      eventSubscription<QuestionnaireAbandonWarningEvent>(
-        QuestionnaireEvents.abandonWarning.name,
-        (event) => this.#handleWarningEvent(event),
+      eventSubscription(QuestionnaireEvents.abandonWarning, (event) =>
+        this.#handleWarningEvent(event),
       ),
-      eventSubscription<QuestionnaireContinueInviteEvent>(
-        QuestionnaireEvents.continueInvite.name,
-        (event) => this.#handleContinueInviteEvent(event),
+      eventSubscription(QuestionnaireEvents.continueInvite, (event) =>
+        this.#handleContinueInviteEvent(event),
       ),
-      eventSubscription<QuestionnaireAbandonedEvent>(
-        QuestionnaireEvents.abandoned.name,
-        (event) => this.#handleAbandonEvent(event),
+      eventSubscription(QuestionnaireEvents.abandoned, (event) =>
+        this.#handleAbandonEvent(event),
       ),
     ];
   }

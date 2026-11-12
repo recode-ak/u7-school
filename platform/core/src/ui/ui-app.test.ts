@@ -1,49 +1,31 @@
 import { describe, expect, test } from 'bun:test';
-import type { DomainEvent } from '#domain-legacy/events/domain-event';
-import type { EventBus } from '#domain-legacy/events/event-bus';
+import { type EnvelopeOf, type EventBus, InProcEventBus } from 'dmg-core/app';
+import { MemoryLogger } from 'dmg-core/testing';
+import { TaskEvents } from 'dmg-core/testing/example/todo/contract';
 import type { UiEventSubscription } from './event-subscription';
 import { eventSubscription } from './event-subscription';
 import { UiApp } from './ui-app';
 import { UiController } from './ui-controller';
 import { UiStory } from './ui-story';
 
-// ── Тестовое событие с конкретным именем ──
+// ── Тестовое событие: Def учебного модуля dmg-core ──
 
-interface TestEvent extends DomainEvent {
-  eventName: 'test-event';
-  payload: { value: string };
-}
+const testDef = TaskEvents.created;
+type TestEnvelope = EnvelopeOf<typeof testDef>;
 
-// ── Фейковая шина событий ──
+/** Шина DMG; подписки и публикации считает обёртка поверх `InProcEventBus`. */
+class CountingEventBus implements EventBus {
+  readonly inner = new InProcEventBus(new MemoryLogger());
+  readonly subscribed: string[] = [];
 
-class FakeEventBus implements EventBus {
-  readonly handlers = new Map<
-    string,
-    Array<(event: DomainEvent) => Promise<void>>
-  >();
-
-  publish<E extends DomainEvent>(event: E): void {
-    for (const handler of this.handlers.get(event.eventName) ?? []) {
-      void handler(event);
-    }
+  publish(envelope: Parameters<EventBus['publish']>[0]): void {
+    this.inner.publish(envelope);
   }
 
-  subscribe<E extends DomainEvent>(
-    eventName: string,
-    handler: (event: E) => Promise<void>,
-  ): () => void {
-    const typed = handler as (event: DomainEvent) => Promise<void>;
-    const list = this.handlers.get(eventName) ?? [];
-    list.push(typed);
-    this.handlers.set(eventName, list);
-    return () => {
-      const updated = (this.handlers.get(eventName) ?? []).filter(
-        (h) => h !== typed,
-      );
-      if (updated.length === 0) this.handlers.delete(eventName);
-      else this.handlers.set(eventName, updated);
-    };
-  }
+  subscribe: EventBus['subscribe'] = (def, handler) => {
+    this.subscribed.push(def.name);
+    return this.inner.subscribe(def, handler);
+  };
 }
 
 // ── Тестовые стори/контроллер ──
@@ -68,14 +50,15 @@ class TestController extends UiController {
   }
 }
 
-function makeEvent(): TestEvent {
+function makeEvent(): TestEnvelope {
   return {
+    name: testDef.name,
+    payload: { taskId: 't1', ownerId: 'o1', title: 'hello' },
     eventId: 'e1',
-    eventName: 'test-event',
-    occurredAt: '2026-01-01T00:00:00.000Z',
-    aggregateName: 'Test',
+    occurredAt: Date.parse('2026-01-01T00:00:00.000Z'),
     aggregateId: 'a1',
-    payload: { value: 'hello' },
+    cause: { kind: 'request', requestId: 'r1' },
+    correlationId: 'c1',
   };
 }
 
@@ -87,25 +70,31 @@ function makeResolve(bus: EventBus) {
 }
 
 describe('UiApp (общий слой)', () => {
-  test('subscribeEvents регистрирует подписку с правильным eventName', () => {
-    const bus = new FakeEventBus();
-    const story = new TestStory([
-      eventSubscription<TestEvent>('test-event', async () => {}),
-    ]);
+  test('subscribeEvents регистрирует подписку по имени Def события', () => {
+    const bus = new CountingEventBus();
+    const story = new TestStory([eventSubscription(testDef, async () => {})]);
     const app = new UiApp([new TestController('ctrl', [story])]);
 
     app.init(makeResolve(bus));
     app.subscribeEvents();
 
-    expect(bus.handlers.has('test-event')).toBe(true);
-    expect(bus.handlers.get('test-event')).toHaveLength(1);
+    expect(bus.subscribed).toEqual([testDef.name]);
+  });
+
+  test('подписка хранит Def события, а не имя', () => {
+    const story = new TestStory([eventSubscription(testDef, async () => {})]);
+    const app = new UiApp([new TestController('ctrl', [story])]);
+
+    const [subscription] = app.getEventSubscriptions();
+
+    expect(subscription?.def).toBe(testDef);
   });
 
   test('publish события вызывает handle', () => {
-    const bus = new FakeEventBus();
-    const received: TestEvent[] = [];
+    const bus = new CountingEventBus();
+    const received: TestEnvelope[] = [];
     const story = new TestStory([
-      eventSubscription<TestEvent>('test-event', async (event) => {
+      eventSubscription(testDef, async (event) => {
         received.push(event);
       }),
     ]);
@@ -117,15 +106,15 @@ describe('UiApp (общий слой)', () => {
     bus.publish(event);
 
     expect(received).toHaveLength(1);
-    expect(received[0]!.eventName).toBe('test-event');
-    expect(received[0]!.payload.value).toBe('hello');
+    expect(received[0]!.name).toBe(testDef.name);
+    expect(received[0]!.payload.title).toBe('hello');
   });
 
   test('unsubscribeAll отписывает: повторный publish не вызывает handle', () => {
-    const bus = new FakeEventBus();
-    const received: TestEvent[] = [];
+    const bus = new CountingEventBus();
+    const received: TestEnvelope[] = [];
     const story = new TestStory([
-      eventSubscription<TestEvent>('test-event', async (event) => {
+      eventSubscription(testDef, async (event) => {
         received.push(event);
       }),
     ]);
@@ -140,10 +129,10 @@ describe('UiApp (общий слой)', () => {
   });
 
   test('повторный subscribeEvents не дублирует обработчики', () => {
-    const bus = new FakeEventBus();
-    const received: TestEvent[] = [];
+    const bus = new CountingEventBus();
+    const received: TestEnvelope[] = [];
     const story = new TestStory([
-      eventSubscription<TestEvent>('test-event', async (event) => {
+      eventSubscription(testDef, async (event) => {
         received.push(event);
       }),
     ]);
@@ -157,16 +146,16 @@ describe('UiApp (общий слой)', () => {
     expect(received).toHaveLength(1);
   });
 
-  test('две стори на один eventName — обе подписки вызываются', () => {
-    const bus = new FakeEventBus();
+  test('две стори на один Def — обе подписки вызываются', () => {
+    const bus = new CountingEventBus();
     const received: string[] = [];
     const storyA = new TestStory([
-      eventSubscription<TestEvent>('test-event', async () => {
+      eventSubscription(testDef, async () => {
         received.push('story-a');
       }),
     ]);
     const storyB = new TestStory([
-      eventSubscription<TestEvent>('test-event', async () => {
+      eventSubscription(testDef, async () => {
         received.push('story-b');
       }),
     ]);
@@ -190,11 +179,11 @@ describe('UiApp (общий слой)', () => {
   });
 
   test('start() подписывает сторин на события, stop() отписывает', () => {
-    const bus = new FakeEventBus();
+    const bus = new CountingEventBus();
     const received: string[] = [];
     const story = new TestStory([
-      eventSubscription<TestEvent>('test-event', async (event) => {
-        received.push(event.payload.value);
+      eventSubscription(testDef, async (event) => {
+        received.push(event.payload.title);
       }),
     ]);
     const app = new UiApp([new TestController('ctrl', [story])]);
@@ -215,7 +204,7 @@ describe('UiApp (общий слой)', () => {
   });
 
   test('stop() до start() — безопасен', () => {
-    const bus = new FakeEventBus();
+    const bus = new CountingEventBus();
     const app = new UiApp([]);
     app.init(makeResolve(bus));
     expect(() => app.stop()).not.toThrow();

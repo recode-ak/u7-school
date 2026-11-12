@@ -5,23 +5,18 @@ import {
   type ProactiveSender,
 } from '@u7-scl/core/ui';
 import { APP_CODES } from '../shared/app-codes';
-import type {
-  U7BotActor,
-  U7BotAppMeta,
-  U7BotUiAppResolve,
-} from './u7-bot-app-meta';
+import type { U7BotActor, U7BotUiAppResolve } from './u7-bot-app-meta';
 import type { U7BotUiStory } from './u7-bot-ui-story';
 import type { MenuButton } from './u7-menu';
 
 /**
  * Специализированный контроллер для U7 Telegram-бота.
  *
- * Закрывает дженерики `U7BotAppMeta`, `U7BotActor`; в pipe команд — дефолт ядра
+ * Закрывает дженерики `U7BotActor`, `U7BotUiAppResolve`; в pipe команд — дефолт ядра
  * (свои стори с агрегацией). Меню — декларативные `menuButtons`,
  * welcome/help-тексты — U7BotUiApp.
  */
 export abstract class U7BotController extends BotController<
-  U7BotAppMeta,
   U7BotActor,
   U7BotUiAppResolve
 > {

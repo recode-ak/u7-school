@@ -1,7 +1,7 @@
 import type { School, U7AppResolver } from '@u7-scl/app-legacy/domain';
 import { createSchool, TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
-import { ApiApp } from '@u7-scl/core/api';
-import type { EventBus } from '@u7-scl/core/domain';
+import { ApiApp as LegacyApiApp } from '@u7-scl/core/api';
+import type { EventBus as LegacyEventBus } from '@u7-scl/core/domain';
 import {
   InProcEventBus,
   InProcJobScheduler,
@@ -53,6 +53,7 @@ import type { Identified } from 'dmg-core';
 import {
   type AppContext,
   ApiApp as DmgApiApp,
+  type EventBus,
   InProcInbox,
   InProcOutbox,
   InProcReplayStore,
@@ -66,16 +67,22 @@ import { U7CallerResolver } from './u7-caller-resolver';
 /**
  * Приложение u7-school — корень сборки (D-50): по окружению
  * строит репозитории `<dbDir>/…`, приложение DMG (все модули по `dependsOn`
- * на своих репозиториях) и оболочку legacy `ApiApp` над ним (`withDmg`),
- * инициализированную планировщиком заданий. Отдаёт поля, нужные UI раннера,
- * и резолвер `callers`. Контроллеры и транспорт строит раннер.
+ * на своих репозиториях), шину DMG, а рядом — legacy-оболочку `ApiApp`
+ * с планировщиком заданий (strangler до Ф4). Наружу отдаёт приложение DMG
+ * (`apiApp`), шину DMG (`eventBus`), школу и резолвер `callers`.
+ * Контроллеры и транспорт строит раннер.
  */
 export class U7App {
-  readonly apiApp: ApiApp<U7BotAppMeta>;
+  /** Приложение DMG — единственный вход в модули (D-49). */
+  readonly apiApp: DmgApiApp<Identified>;
+  /** Шина DMG: подписка по Def, публикация конвертов. */
   readonly eventBus: EventBus;
   readonly school: School;
   readonly appResolver: U7AppResolver;
   readonly callers: U7CallerResolver;
+
+  /** Legacy-оболочка `ApiApp` — нужна только планировщику заданий, до Ф4. */
+  readonly #legacyApiApp: LegacyApiApp<U7BotAppMeta>;
 
   constructor(env: U7AppEnv, ports: U7AppPorts = {}) {
     const { dbDir } = env;
@@ -91,10 +98,11 @@ export class U7App {
     });
 
     const logger = ports.logger ?? new ConsoleLogger();
+    const legacyBus = new InProcEventBus();
     const appResolver: U7AppResolver = {
       logger,
       mode: env.mode,
-      eventBus: new InProcEventBus(),
+      eventBus: legacyBus,
       school,
     };
 
@@ -107,53 +115,55 @@ export class U7App {
     // ══ DMG: модули по `dependsOn` — каждый на своих репозиториях ══
     // Шина DMG — поверх общей legacy-шины: события wish и peer-review видят
     // stories, события stream доходят до ER (D-37).
-    const dmg = U7App.dmgApp(
-      U7App.dmgContext(env, appResolver.eventBus, logger),
-      {
-        users: new UserJsonRepo(`${dbDir}/users/users.json`),
-        courses: new CourseJsonRepo(`${dbDir}/courses/courses.json`),
-        modules: new ModuleJsonRepo(`${dbDir}/courses/modules.json`),
-        lessons: new LessonJsonRepo(`${dbDir}/courses/lessons.json`),
-        steps: new StepJsonRepo(`${dbDir}/courses/steps.json`),
-        wishes: new WishJsonRepo(`${dbDir}/wish/wishes.json`),
-        questionnaires: new QuestionnaireJsonRepo(
-          `${dbDir}/questionnaires/questionnaires.json`,
-        ),
-        campaigns: reviewCampaignRepo,
-        reviews: reviewRepo,
-        streams: new StreamJsonRepo(`${dbDir}/streams/streams.json`),
-        students: new StudentJsonRepo(`${dbDir}/streams/students.json`),
-        schoolId: school.id,
-      },
-    );
+    const context = U7App.dmgContext(env, legacyBus, logger);
+    const dmg = U7App.dmgApp(context, {
+      users: new UserJsonRepo(`${dbDir}/users/users.json`),
+      courses: new CourseJsonRepo(`${dbDir}/courses/courses.json`),
+      modules: new ModuleJsonRepo(`${dbDir}/courses/modules.json`),
+      lessons: new LessonJsonRepo(`${dbDir}/courses/lessons.json`),
+      steps: new StepJsonRepo(`${dbDir}/courses/steps.json`),
+      wishes: new WishJsonRepo(`${dbDir}/wish/wishes.json`),
+      questionnaires: new QuestionnaireJsonRepo(
+        `${dbDir}/questionnaires/questionnaires.json`,
+      ),
+      campaigns: reviewCampaignRepo,
+      reviews: reviewRepo,
+      streams: new StreamJsonRepo(`${dbDir}/streams/streams.json`),
+      students: new StudentJsonRepo(`${dbDir}/streams/students.json`),
+      schoolId: school.id,
+    });
 
-    // ══ ApiApp: оболочка над модулями DMG (legacy-модулей не осталось) ══
-    const apiApp = new ApiApp<U7BotAppMeta>([]).withDmg(dmg.api, dmg.modules);
+    // ══ Legacy-оболочка: только планировщик заданий (legacy-модулей не осталось) ══
+    const legacyApiApp = new LegacyApiApp<U7BotAppMeta>([]).withDmg(
+      dmg.api,
+      dmg.modules,
+    );
 
     // Планировщик — техническая зависимость: передаётся через init(),
     // lastRunAt персистится — задания переживают перезагрузку (misfire-политика).
-    apiApp.init(
+    legacyApiApp.init(
       new InProcJobScheduler({
         logger,
         store: new JobRunJsonRepo(`${dbDir}/jobs/last-runs.json`),
       }),
     );
 
-    this.apiApp = apiApp;
-    this.eventBus = appResolver.eventBus;
+    this.apiApp = dmg.api;
+    this.eventBus = context.bus;
     this.school = school;
     this.appResolver = appResolver;
-    this.callers = new U7CallerResolver(apiApp);
+    this.callers = new U7CallerResolver(dmg.api);
+    this.#legacyApiApp = legacyApiApp;
   }
 
   /** Запускает периодические задания (Job) legacy `ApiApp`. */
   start(): void {
-    this.apiApp.start();
+    this.#legacyApiApp.start();
   }
 
   /** Останавливает периодические задания. */
   stop(): void {
-    this.apiApp.stop();
+    this.#legacyApiApp.stop();
   }
 
   /**
@@ -165,7 +175,7 @@ export class U7App {
    */
   private static dmgContext(
     env: U7AppEnv,
-    legacyBus: EventBus,
+    legacyBus: LegacyEventBus,
     logger: Logger,
   ): AppContext {
     const bus = legacyEventBus(legacyBus, {

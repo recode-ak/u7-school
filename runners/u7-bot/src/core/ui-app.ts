@@ -21,11 +21,7 @@ import {
 } from '@u7-scl/core/ui';
 import { ensureRegisteredGuest } from '../ensure-registered';
 import { APP_CODES, APP_DIALOG_PATHS } from '../shared/app-codes';
-import type {
-  U7BotActor,
-  U7BotAppMeta,
-  U7BotUiAppResolve,
-} from './u7-bot-app-meta';
+import type { U7BotActor, U7BotUiAppResolve } from './u7-bot-app-meta';
 import type { U7BotController } from './u7-bot-controller';
 import { U7BotUiStory } from './u7-bot-ui-story';
 import type { MenuButton } from './u7-menu';
@@ -43,11 +39,7 @@ import type { MenuButton } from './u7-menu';
  * Зависимости (приложение `user`, uuid актора-бота для гост-регистрации) —
  * в `U7BotUiAppResolve`, приходят через init.
  */
-export class U7BotUiApp extends BotUiApp<
-  U7BotAppMeta,
-  U7BotActor,
-  U7BotUiAppResolve
-> {
+export class U7BotUiApp extends BotUiApp<U7BotActor, U7BotUiAppResolve> {
   declare protected readonly controllers: Map<string, U7BotController>;
 
   /** Диалог меню после /start (сущностной стори нет — якорь для seq/штампов). */

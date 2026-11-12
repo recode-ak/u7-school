@@ -1,4 +1,3 @@
-import type { DomainEvent } from '@u7-scl/core/domain';
 import {
   type MdText,
   md,
@@ -22,27 +21,21 @@ import {
   StudentEvents,
   type StudentView,
 } from '@u7-scl/domain/stream/contract';
-import type * as v from 'valibot';
+import type { EnvelopeOf } from 'dmg-core/app';
 import type { U7BotActor } from '../../../core/u7-bot-app-meta';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
 import { Routes } from '../../shared/routes';
 
 /**
- * События студента в legacy-форме, как их доставляет `legacyEventBus`:
- * `eventName` — FQN Def, `payload` — по схеме события.
+ * События студента — конверты DMG, `payload` — по схеме события.
  */
-type StudentEventOf<E extends { name: string; payload: v.GenericSchema }> =
-  DomainEvent & { eventName: E['name']; payload: v.InferOutput<E['payload']> };
-
-export type StudentInactivityWarningEvent = StudentEventOf<
+export type StudentInactivityWarningEvent = EnvelopeOf<
   typeof StudentEvents.inactivityWarning
 >;
-export type StudentInactivityRemoveCandidateEvent = StudentEventOf<
+export type StudentInactivityRemoveCandidateEvent = EnvelopeOf<
   typeof StudentEvents.inactivityRemoveCandidate
 >;
-export type StudentAbandonedEvent = StudentEventOf<
-  typeof StudentEvents.abandoned
->;
+export type StudentAbandonedEvent = EnvelopeOf<typeof StudentEvents.abandoned>;
 
 /** Профиль пользователя в части, нужной уведомлениям. */
 type Profile = { name: string; telegramId?: number };
@@ -60,17 +53,14 @@ export class InactivityStory extends U7BotUiStory {
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<StudentInactivityWarningEvent>(
-        StudentEvents.inactivityWarning.name,
-        (event) => this.#handleWarningEvent(event),
+      eventSubscription(StudentEvents.inactivityWarning, (event) =>
+        this.#handleWarningEvent(event),
       ),
-      eventSubscription<StudentInactivityRemoveCandidateEvent>(
-        StudentEvents.inactivityRemoveCandidate.name,
-        (event) => this.#handleCandidateEvent(event),
+      eventSubscription(StudentEvents.inactivityRemoveCandidate, (event) =>
+        this.#handleCandidateEvent(event),
       ),
-      eventSubscription<StudentAbandonedEvent>(
-        StudentEvents.abandoned.name,
-        (event) => this.#handleAbandonedEvent(event),
+      eventSubscription(StudentEvents.abandoned, (event) =>
+        this.#handleAbandonedEvent(event),
       ),
     ];
   }

@@ -1,11 +1,9 @@
-import type { PersonCaller } from 'dmg-core';
-import type { ApiApp } from '#api-legacy/app/api-app';
-import { fromError } from '#domain-legacy/errors/error-helpers';
-import type { AppMeta } from '#domain-legacy/types';
-import type { Logger } from '#shared-legacy/logger';
-import { getGlobalLogger } from '#shared-legacy/logger';
-import { type MdText, md, mdConcat, mdJoin } from '#shared-legacy/markdown';
-import { serializeError } from '#shared-legacy/serialize-error';
+import type { Identified, PersonCaller } from 'dmg-core';
+import type { ApiApp } from 'dmg-core/app';
+import type { Logger } from '../../shared/logger';
+import { getGlobalLogger } from '../../shared/logger';
+import { type MdText, md, mdJoin } from '../../shared/markdown';
+import { serializeError } from '../../shared/serialize-error';
 import { UiController } from '../ui-controller';
 import type { BotUiAppResolve } from './app-types';
 import type { BotUiStory } from './bot-ui-story';
@@ -33,25 +31,21 @@ import type {
  * Сессией и маршрутом диалога владеет uiApp; экраном — транспорт.
  */
 export abstract class BotController<
-    TAppMeta extends AppMeta = AppMeta,
     TActor extends PersonCaller = PersonCaller,
-    TResolve extends BotUiAppResolve<TAppMeta, TActor> = BotUiAppResolve<
-      TAppMeta,
-      TActor
-    >,
+    TResolve extends BotUiAppResolve<TActor> = BotUiAppResolve<TActor>,
   >
   extends UiController<TResolve>
   implements ProactiveSender
 {
-  declare protected readonly stories: BotUiStory<TAppMeta, TActor, TResolve>[];
+  declare protected readonly stories: BotUiStory<TActor, TResolve>[];
 
   /** Публичный доступ к stories */
-  getStories(): BotUiStory<TAppMeta, TActor>[] {
+  getStories(): BotUiStory<TActor>[] {
     return this.stories;
   }
 
   /** API приложения (для вызовов к useCases) */
-  protected appApi!: ApiApp<TAppMeta>;
+  protected appApi!: ApiApp<Identified>;
 
   /** Родитель (BotUiApp) */
   protected proactiveSender!: ProactiveSender;
@@ -217,9 +211,7 @@ export abstract class BotController<
   }
 
   /** Активная стори этого контроллера — первой, далее по регистрации. */
-  #commandPipeOrder(
-    session: BotSession,
-  ): BotUiStory<TAppMeta, TActor, TResolve>[] {
+  #commandPipeOrder(session: BotSession): BotUiStory<TActor, TResolve>[] {
     const path = session.dialog?.path;
     if (!path || path.split('/')[0] !== this.name) return this.stories;
     const activeName = path.split('/')[1];
@@ -261,14 +253,12 @@ export abstract class BotController<
   }
 
   /** Поиск стори по имени */
-  protected findStory(name: string): BotUiStory<TAppMeta, TActor> | undefined {
+  protected findStory(name: string): BotUiStory<TActor> | undefined {
     return this.stories.find((s) => s.name === name);
   }
 
   /** Стори активного диалога по `controller/story` (dialog.path). */
-  #storyByPath(
-    path: string | undefined,
-  ): BotUiStory<TAppMeta, TActor> | undefined {
+  #storyByPath(path: string | undefined): BotUiStory<TActor> | undefined {
     if (!path) return undefined;
     const parts = path.split('/').filter(Boolean);
     if (parts.length >= 2) {
@@ -348,62 +338,23 @@ export abstract class BotController<
 
   /**
    * Универсальный обработчик ошибок: ошибка — ЭКРАН.
-   * Различает типы ошибок через `fromError()` и возвращает подходящее
-   * пользовательское сообщение (валидный MarkdownV2 — md-интерполяция
-   * экранирует доменные данные).
+   * Любое исключение — internal: логирует и возвращает общее сообщение
+   * (валидный MarkdownV2).
    */
   protected handleError(err: unknown): DialogResponse {
-    const appError = fromError(err);
-
     // Клавиатура выхода на экране ошибки (errorExitRows), если задана
     const exitRows = this.errorExitRows();
     const errorKb = exitRows.length > 0 ? rb.kb(exitRows) : undefined;
 
-    switch (appError.kind) {
-      case 'validation': {
-        const payload = appError.payload as
-          | { issues?: Array<{ path?: string; message: string }> }
-          | undefined;
-        const issues = payload?.issues;
+    this.logger?.error(
+      'bot',
+      'Необработанная ошибка в контроллере',
+      serializeError(err),
+    );
 
-        if (issues && issues.length > 0) {
-          const lines = issues.map(
-            (i) => md`• *${i.path ?? ''}*: ${i.message}`,
-          );
-          return rb.screen(
-            mdConcat(
-              md`⚠️ *Некорректные данные*\n\n`,
-              mdJoin(lines),
-              md`\n\nПожалуйста, нажмите /start и попробуйте снова\\.`,
-            ),
-            errorKb,
-          );
-        }
-
-        return rb.screen(
-          md`⚠️ *Некорректные данные*\n\n${appError.message}\n\nПожалуйста, исправьте и попробуйте снова\\.`,
-          errorKb,
-        );
-      }
-
-      case 'not-found':
-      case 'conflict':
-      case 'access-denied':
-      case 'bad-request':
-        return rb.screen(md`⚠️ ${appError.message}`, errorKb);
-
-      default: {
-        this.logger?.error(
-          'bot',
-          'Необработанная ошибка в контроллере',
-          serializeError(err),
-        );
-
-        return rb.screen(
-          md`⚠️ *Произошла внутренняя ошибка*\n\nПожалуйста, попробуйте позже или обратитесь к администратору\\.`,
-          errorKb,
-        );
-      }
-    }
+    return rb.screen(
+      md`⚠️ *Произошла внутренняя ошибка*\n\nПожалуйста, попробуйте позже или обратитесь к администратору\\.`,
+      errorKb,
+    );
   }
 }

@@ -2,7 +2,6 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { InProcJobScheduler } from '@u7-scl/core/infra';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
 import {
@@ -39,6 +38,7 @@ import {
   CancelWishUcDef,
   CreateCourseWishUcDef,
   ListUserWishesUcDef,
+  WishEvents,
   WishModuleDef,
 } from '@u7-scl/domain/wish/contract';
 import { type OperationRef, SystemCaller, UserCaller } from 'dmg-core';
@@ -86,7 +86,8 @@ describe('U7App (smoke: сборка с модулем peer-review)', () => {
   test('приложение собирается: peer-review — только Def-модуль DMG, legacy-модуля нет', () => {
     const bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
 
-    expect(bundle.apiApp.getModule('peer-review')).toBeUndefined();
+    // apiApp — приложение DMG (D-50), а не legacy-оболочка с реестром модулей
+    expect('getModule' in bundle.apiApp).toBe(false);
     expect(bundle.school.communityGroup.url).toBe('https://t.me/test-comm');
     expect(bundle.appResolver.mode).toBe('test');
     expect(bundle.appResolver.school.studentGroup.inviteUrl).toBe(
@@ -94,9 +95,9 @@ describe('U7App (smoke: сборка с модулем peer-review)', () => {
     );
   });
 
-  test('init(): подписка ER проходит, query-UC модуля (DMG) отвечает', async () => {
+  test('query-UC модуля (DMG) отвечает через apiApp без init планировщика', async () => {
     const bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
-    bundle.apiApp.init(new InProcJobScheduler({ logger: new ConsoleLogger() }));
+    expect('init' in bundle.apiApp).toBe(false);
 
     // Кампании — модуль DMG: UC доступен через единый вход приложения
     const res = await bundle.apiApp.dispatch(
@@ -141,13 +142,32 @@ describe('U7App: сборка', () => {
 
   test('отдаёт поля бандла для UI раннера и резолвер callers', () => {
     expect(app.apiApp).toBeDefined();
-    expect(app.eventBus).toBe(app.appResolver.eventBus);
-    expect(app.apiApp.getModule('user')).toBeUndefined();
-    expect(app.apiApp.getModule('questionnaire')).toBeUndefined();
-    expect(app.apiApp.getModule('stream')).toBeUndefined();
-    expect(app.apiApp.getModule('course')).toBeUndefined();
+    expect('getModule' in app.apiApp).toBe(false);
     expect(app.school).toBe(app.appResolver.school);
     expect(app.callers).toBeDefined();
+  });
+
+  test('eventBus — шина DMG: конверт доходит до подписки по Def', async () => {
+    const received: string[] = [];
+    const unsubscribe = app.eventBus.subscribe(
+      WishEvents.confirmed,
+      async (envelope) => {
+        received.push(envelope.payload.courseId);
+      },
+    );
+
+    app.eventBus.publish({
+      name: WishEvents.confirmed.name,
+      payload: { userId: ACTOR.uuid, courseId: COURSE },
+      eventId: crypto.randomUUID(),
+      occurredAt: Date.now(),
+      aggregateId: crypto.randomUUID(),
+      cause: { kind: 'request', requestId: crypto.randomUUID() },
+      correlationId: crypto.randomUUID(),
+    });
+    unsubscribe();
+
+    expect(received).toEqual([COURSE]);
   });
 
   test('UC пользователей — в модуле DMG', async () => {

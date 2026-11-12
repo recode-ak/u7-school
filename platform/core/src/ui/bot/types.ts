@@ -1,6 +1,5 @@
 /** Общие типы для UI-слоя Telegram-бота */
 
-import type { NotifyKind } from '#domain-legacy/common/notify-kind';
 import type { MdText } from '../../shared/markdown';
 
 /**
@@ -15,10 +14,12 @@ export interface KeyboardDescription {
   isMultiple: boolean;
 }
 
+/** Вид уведомления (словарь событий доменов). */
+export type NotifyKind = 'notify' | 'info' | 'warn';
+
 /**
- * Вид уведомления — алиас доменного словаря NotifyKind (core/domain).
- * Источник истины один: домены публикуют события с NotifyKind,
- * UI-слой отображает его в оформление реплики (таблица ФР-5).
+ * Вид уведомления: UI-слой отображает его в оформление реплики
+ * (таблица ФР-5).
  */
 export type NoticeKind = NotifyKind;
 

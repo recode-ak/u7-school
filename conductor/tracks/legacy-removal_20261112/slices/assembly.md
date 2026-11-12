@@ -40,6 +40,8 @@
 4. **Smoke бота (Opus):** `DB_DIR` — **временная копия** `data/fixtures` (не сам каталог: бот пишет `oplog`, `replay`, `bot/`), `git status data/` до/после — чисто. Если запуск `main.ts` без боевого токена невозможен — smoke = e2e/`createTestApp` + новый тест `start/stop`; зафиксировать в отчёте.
 5. **`dmg-reviewer` (Opus).**
 
+**Из Ф3 (TR-65):** `u7-app.test.ts` уже переписан по варианту A (`apiApp` — dmg `ApiApp`, шина DMG, без повторного `init`) — п. 1 сводится к тестам `start/stop` и часов. Удалить приватные `#legacyApiApp` и legacy-шину `legacyBus` в `u7-app.ts`; публичный `appResolver.eventBus` ещё отдаёт legacy-шину — перевести на шину DMG (ревью Ф3, question). Проверки `'init' in`/`'getModule' in apiApp` в `u7-app.test.ts` — кандидат в чистку (`test-bloat.md`).
+
 ## Было → станет
 
 | Было | Станет | Ссылка |

@@ -40,9 +40,8 @@ export class InviteStory extends QuestionnaireStory {
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<QuestionnaireInvitedEvent>(
-        QuestionnaireEvents.invited.name,
-        (event) => this.#handleInviteEvent(event),
+      eventSubscription(QuestionnaireEvents.invited, (event) =>
+        this.#handleInviteEvent(event),
       ),
     ];
   }

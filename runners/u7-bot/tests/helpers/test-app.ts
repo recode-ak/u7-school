@@ -1,6 +1,5 @@
 import { U7App, type U7CallerResolver } from '@u7-scl/app';
 import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
-import type { EventBus } from '@u7-scl/core/domain';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import { ReviewCampaignJsonRepo, ReviewJsonRepo } from '@u7-scl/peer-review';
 import { WishJsonRepo } from '@u7-scl/wish';
@@ -10,7 +9,7 @@ import {
   type Result,
   UserCaller,
 } from 'dmg-core';
-import { type JobReport, Trace } from 'dmg-core/app';
+import { type EventBus, type JobReport, Trace } from 'dmg-core/app';
 import type { U7BotActor } from '../../src/core/u7-bot-app-meta';
 import type { WorldDefinition } from '../worlds';
 import type { FixturePaths } from './fixture-loader';

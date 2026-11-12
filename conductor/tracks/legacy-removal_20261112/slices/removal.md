@@ -32,7 +32,7 @@
 4. **Гейт**, `dmg-reviewer` (Opus).
 
 ### Ф5 (после Ф4)
-1. **`migrator` (flash):** удалить по таблице; правки конфигурации (п. 4); `domain-check.ts` (п. 5) и строки в тестах; `bun install`. Для flash — grep-критерии ниже; каждое поручение «правка старых тестов» — отдельной строкой (строки `app-legacy` в `domain-check.test.ts`, `shared/now.test.ts`).
+1. **`migrator` (flash):** удалить по таблице; в `platform/core/src/index.ts` снять явный `export type { NotifyKind } from './ui'` (временный, Ф3: TS2308 из-за `export *` из `./domain` и `./ui`, TR-65); правки конфигурации (п. 4); `domain-check.ts` (п. 5) и строки в тестах; `bun install`. Для flash — grep-критерии ниже; каждое поручение «правка старых тестов» — отдельной строкой (строки `app-legacy` в `domain-check.test.ts`, `shared/now.test.ts`).
 2. **Opus (orchestrator):** список удалённых тестов в `summary.md` (из раздела «Тесты» ниже) и сверка числа с базой Ф0.
 3. **`dmg-reviewer` (Opus).**
 

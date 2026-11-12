@@ -1,19 +1,20 @@
-import type { DomainEvent } from '#domain-legacy/events/domain-event';
+import type { AnyEventDef } from 'dmg-core';
+import type { EnvelopeOf } from 'dmg-core/app';
 
 /**
- * Подписка UI на доменное событие.
+ * Подписка UI на событие по его Def.
  */
-export interface UiEventSubscription<TEvent extends DomainEvent = DomainEvent> {
-  readonly eventName: TEvent['eventName'];
-  handle(event: TEvent): Promise<void>;
+export interface UiEventSubscription<D extends AnyEventDef = AnyEventDef> {
+  readonly def: D;
+  handle(envelope: EnvelopeOf<D>): Promise<void>;
 }
 
 /**
  * Фабрика типизированной подписки.
  */
-export function eventSubscription<TEvent extends DomainEvent>(
-  eventName: TEvent['eventName'],
-  handle: (event: TEvent) => Promise<void>,
-): UiEventSubscription<TEvent> {
-  return { eventName, handle };
+export function eventSubscription<D extends AnyEventDef>(
+  def: D,
+  handle: (envelope: EnvelopeOf<D>) => Promise<void>,
+): UiEventSubscription<D> {
+  return { def, handle };
 }

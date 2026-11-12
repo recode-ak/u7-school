@@ -683,3 +683,14 @@
   - Модуль из `modules` планировщика, не подключённый к `api`, — повторяющийся `warn` на каждом тике, а не ошибка `start()` (D-71); в Ф4 оба списка — из `dmgApp().modules`.
   - Фикстура `job-scheduler.fixture.ts` с фейком `FakeJobApi` — по прецеденту `app.fixture.ts`, не `.fake.ts`.
 - **Пересмотреть:** проверка состава `modules` против `api` в `start()` — если появится сборка, где списки расходятся.
+
+### TR-65: решения Ф3 трека `legacy-removal` (`core/ui` и бот без legacy)
+- **Трек / фаза:** `legacy-removal`, Ф3 (orchestrator; бриф `slices/core-ui.md`)
+- **Контекст:** UI и бот переведены на dmg `ApiApp`, `EventBus` и подписки по Def; ревью дало 5 warn и 2 question без `error`.
+- **Решение:**
+  - Вариант A брифа: красной зоны Ф3–Ф4 нет — `U7App` отдаёт наружу `dmg.api` и шину DMG (`context.bus`); legacy-оболочка `#legacyApiApp` приватна (только `init`/`start`/`stop` планировщика), legacy-транспорт под мостом `legacyEventBus` — локальный. Шина одна: модули публикуют через `InProcOutbox` на `context.bus`, `UiApp` подписывается на неё же по `def`.
+  - `handleError`/`errorNotify`: любое исключение → internal; ветки `AppException` удалены (живых источников нет) — 17 вызовов `test()` (21 сценарий с кейсами `test.each`) удалены, покрытие — internal-тесты и `ucErrorNotify`.
+  - Явный `export type { NotifyKind } from './ui'` в `platform/core/src/index.ts` — снимается в Ф5 (`removal.md`).
+  - Публичный `appResolver.eventBus` ещё отдаёт legacy-транспорт (публикаторов нет) — перевод в Ф4 (`assembly.md`).
+  - По ревью (warn) поправлено в срезе: инвариант переспроса `errorNotify` (нет `release`/`awaitInput`) возвращён в internal-тест; затенение `legacyEventBus` в `u7-app.ts`; мёртвый реэкспорт `U7BotApp`; дубли типов событий в тестах `peer-review`; `as never` в `baseEvent` тест-кита анкеты.
+- **Пересмотреть:** —

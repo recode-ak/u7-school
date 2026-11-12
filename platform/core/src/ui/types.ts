@@ -1,4 +1,4 @@
-import type { EventBus } from '#domain-legacy/events/event-bus';
+import type { EventBus } from 'dmg-core/app';
 
 /**
  * Разрешает зависимости уровня UI-приложения.

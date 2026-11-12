@@ -3,16 +3,15 @@ import { assertMarkdownV2Safe, type MdText } from '@u7-scl/core/shared';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef, type UserView } from '@u7-scl/domain/user/contract';
+import { WishEvents } from '@u7-scl/domain/wish/contract';
+import { envelopeOf } from '../../../../tests/helpers/envelope-of';
 import {
   courseNotFound,
   dmgDispatch,
   refuse,
 } from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
-import {
-  type WishConfirmedEvent,
-  WishConfirmedStory,
-} from './wish-confirmed.story';
+import { WishConfirmedStory } from './wish-confirmed.story';
 
 /** Модули рассылки: потоки и курсы. */
 const MODULES = [CourseModuleDef, StreamModuleDef, UserModuleDef];
@@ -49,15 +48,12 @@ const streams = [
   { mentorId: '77777777-7777-8777-8777-777777777777', moduleId: 'module-x' }, // чужой курс
 ];
 
-function makeConfirmedEvent(): WishConfirmedEvent {
-  return {
-    eventId: crypto.randomUUID(),
-    eventName: 'wish.wish.confirmed',
-    occurredAt: '2026-09-14T12:00',
-    aggregateName: 'wish.wish',
-    aggregateId: crypto.randomUUID(),
-    payload: { userId: USER_ID, courseId: COURSE_ID },
-  };
+function makeConfirmedEvent() {
+  return envelopeOf(
+    WishEvents.confirmed,
+    { userId: USER_ID, courseId: COURSE_ID },
+    { aggregateId: crypto.randomUUID() },
+  );
 }
 
 // ══ Сборка стори с моками ══
@@ -128,7 +124,7 @@ function subHandler(
 ): (event: never) => Promise<void> {
   const sub = story
     .getEventSubscriptions()
-    .find((s) => s.eventName === eventName);
+    .find((s) => s.def.name === eventName);
   if (!sub) throw new Error(`Подписка ${eventName} не найдена`);
   return sub.handle as (event: never) => Promise<void>;
 }
@@ -136,7 +132,7 @@ function subHandler(
 describe('WishConfirmedStory', () => {
   test('подписана на wish.wish.confirmed (FQN Def)', () => {
     const { story } = setupStory();
-    const names = story.getEventSubscriptions().map((s) => s.eventName);
+    const names = story.getEventSubscriptions().map((s) => s.def.name);
     expect(names).toContain('wish.wish.confirmed');
   });
 

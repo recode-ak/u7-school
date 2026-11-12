@@ -1,7 +1,6 @@
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
-import type { DomainEvent } from '@u7-scl/core/domain';
 import { md, mdRaw, safeConvert } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -20,18 +19,15 @@ import {
   StreamModuleDef,
   StudentEvents,
 } from '@u7-scl/domain/stream/contract';
-import type * as v from 'valibot';
+import type { EnvelopeOf } from 'dmg-core/app';
 import { buttons } from '../../shared/buttons';
 import { getStudent, type StreamDispatch } from '../shared';
 
 /**
- * Событие в legacy-форме, как его доставляет `legacyEventBus`:
- * `eventName` — FQN Def, `payload` — по схеме `StudentEvents.completed`.
+ * Завершение модуля студентом — конверт DMG, `payload` — по схеме
+ * `StudentEvents.completed`.
  */
-export type StudentCompletedEvent = DomainEvent & {
-  eventName: typeof StudentEvents.completed.name;
-  payload: v.InferOutput<typeof StudentEvents.completed.payload>;
-};
+export type StudentCompletedEvent = EnvelopeOf<typeof StudentEvents.completed>;
 
 /**
  * Хаб «Моя учёба» — главное меню обучения: самовыход (FR-4) через UC
@@ -45,9 +41,8 @@ export class HubStory extends U7BotUiStory {
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<StudentCompletedEvent>(
-        StudentEvents.completed.name,
-        (event) => this.#handleCompletedEvent(event),
+      eventSubscription(StudentEvents.completed, (event) =>
+        this.#handleCompletedEvent(event),
       ),
     ];
   }

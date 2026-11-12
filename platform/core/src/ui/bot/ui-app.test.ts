@@ -1,6 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { GuestCaller } from 'dmg-core';
-import type { AppMeta } from '#domain-legacy/types';
 import { md } from '../../shared/markdown';
 import { BotController } from './bot-controller';
 import { BotUiStory } from './bot-ui-story';
@@ -33,7 +32,7 @@ class Queue<T> {
   }
 }
 
-class TestStory extends BotUiStory<AppMeta, TestActor> {
+class TestStory extends BotUiStory<TestActor> {
   readonly name: string;
 
   /** Вызовы handleCommand (pipe ФР-4). */
@@ -60,7 +59,7 @@ class TestStory extends BotUiStory<AppMeta, TestActor> {
   }
 }
 
-class TestController extends BotController<AppMeta, TestActor> {
+class TestController extends BotController<TestActor> {
   name = '';
   fakeStories: TestStory[] = [];
 
@@ -90,7 +89,7 @@ class TestController extends BotController<AppMeta, TestActor> {
     return this;
   }
 
-  override getStories(): BotUiStory<AppMeta, TestActor>[] {
+  override getStories(): BotUiStory<TestActor>[] {
     return this.fakeStories;
   }
 
@@ -122,7 +121,7 @@ class TestController extends BotController<AppMeta, TestActor> {
 }
 
 /** Тестовый uiApp: чистый BotUiApp без прикладных переопределений. */
-class TestUiApp extends BotUiApp<AppMeta, TestActor> {}
+class TestUiApp extends BotUiApp<TestActor> {}
 
 function makeController(name: string): TestController {
   const c = new TestController();
@@ -631,7 +630,7 @@ describe('BotUiApp — инварианты: операция входа', () =>
 describe('BotUiApp — handleMessengerEvent и execute', () => {
   test('handleMessengerEvent последовательно опрашивает контроллеры и останавливается на stop', async () => {
     const calls: string[] = [];
-    class Ctrl1 extends BotController<AppMeta, TestActor> {
+    class Ctrl1 extends BotController<TestActor> {
       readonly name = 'ctrl1';
       protected override readonly stories = [];
       override async handleMessengerEvent(
@@ -641,7 +640,7 @@ describe('BotUiApp — handleMessengerEvent и execute', () => {
         return 'pass';
       }
     }
-    class Ctrl2 extends BotController<AppMeta, TestActor> {
+    class Ctrl2 extends BotController<TestActor> {
       readonly name = 'ctrl2';
       protected override readonly stories = [];
       override async handleMessengerEvent(
@@ -651,7 +650,7 @@ describe('BotUiApp — handleMessengerEvent и execute', () => {
         return 'stop';
       }
     }
-    class Ctrl3 extends BotController<AppMeta, TestActor> {
+    class Ctrl3 extends BotController<TestActor> {
       readonly name = 'ctrl3';
       protected override readonly stories = [];
       override async handleMessengerEvent(

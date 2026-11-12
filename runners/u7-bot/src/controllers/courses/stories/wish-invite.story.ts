@@ -1,4 +1,3 @@
-import type { DomainEvent } from '@u7-scl/core/domain';
 import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -18,19 +17,15 @@ import {
 } from '@u7-scl/domain/stream/contract';
 import type { UserView } from '@u7-scl/domain/user/contract';
 import { WishEvents } from '@u7-scl/domain/wish/contract';
-import type * as v from 'valibot';
+import type { EnvelopeOf } from 'dmg-core/app';
 import type { U7BotActor } from '../../../core/u7-bot-app-meta';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
 import { Routes } from '../../shared/routes';
 
 /**
- * Приглашение в legacy-форме, как его доставляет `legacyEventBus`:
- * `eventName` — FQN Def, `payload` — по схеме `WishEvents.invited`.
+ * Приглашение желающему — конверт DMG, `payload` — по схеме `WishEvents.invited`.
  */
-export type WishInvitedEvent = DomainEvent & {
-  eventName: typeof WishEvents.invited.name;
-  payload: v.InferOutput<typeof WishEvents.invited.payload>;
-};
+export type WishInvitedEvent = EnvelopeOf<typeof WishEvents.invited>;
 
 /** Профиль ментора в карточке приглашения. */
 type Mentor = UserView;
@@ -54,7 +49,7 @@ export class WishInviteStory extends U7BotUiStory {
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<WishInvitedEvent>(WishEvents.invited.name, (event) =>
+      eventSubscription(WishEvents.invited, (event) =>
         this.#handleInvited(event),
       ),
     ];

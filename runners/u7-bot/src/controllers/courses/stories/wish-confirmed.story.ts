@@ -1,4 +1,3 @@
-import type { DomainEvent } from '@u7-scl/core/domain';
 import { md, mdJoin } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -17,19 +16,14 @@ import {
 } from '@u7-scl/domain/stream/contract';
 import type { UserView } from '@u7-scl/domain/user/contract';
 import { WishEvents } from '@u7-scl/domain/wish/contract';
-import type * as v from 'valibot';
+import type { EnvelopeOf } from 'dmg-core/app';
 import type { U7BotActor } from '../../../core/u7-bot-app-meta';
 import { U7BotUiStory } from '../../../core/u7-bot-ui-story';
 
 /**
- * Подтверждение желания в legacy-форме, как его доставляет
- * `legacyEventBus`: `eventName` — FQN Def, `payload` — по схеме
- * `WishEvents.confirmed`.
+ * Подтверждение желания — конверт DMG, `payload` — по схеме Def.
  */
-export type WishConfirmedEvent = DomainEvent & {
-  eventName: typeof WishEvents.confirmed.name;
-  payload: v.InferOutput<typeof WishEvents.confirmed.payload>;
-};
+export type WishConfirmedEvent = EnvelopeOf<typeof WishEvents.confirmed>;
 
 /** Профиль ментора. */
 type Mentor = UserView;
@@ -52,9 +46,8 @@ export class WishConfirmedStory extends U7BotUiStory {
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<WishConfirmedEvent>(
-        WishEvents.confirmed.name,
-        (event) => this.#handleConfirmed(event),
+      eventSubscription(WishEvents.confirmed, (event) =>
+        this.#handleConfirmed(event),
       ),
     ];
   }

@@ -16,19 +16,14 @@ import {
   UserModuleDef,
   type UserView,
 } from '@u7-scl/domain/user/contract';
+import type { AnyEventDef, EventOf } from 'dmg-core';
+import { envelopeOf } from '../../../../tests/helpers/envelope-of';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import {
   dmgDispatch as baseDmgDispatch,
   refuse,
   type UcAnswers,
 } from '../../streams/stories/stream-dmg.test-kit';
-import type {
-  QuestionnaireAbandonedEvent,
-  QuestionnaireAbandonWarningEvent,
-  QuestionnaireContinueInviteEvent,
-  QuestionnaireInvitedEvent,
-  QuestionnaireStartedEvent,
-} from './questionnaire-events';
 
 export { Refusal, refuse } from '../../streams/stories/stream-dmg.test-kit';
 export { testCallers };
@@ -103,67 +98,67 @@ export const completedView = (
 
 // ══ События ══
 
-const baseEvent = <P extends Record<string, unknown>>(
-  eventName: string,
-  payload: P,
-) => ({
-  eventId: crypto.randomUUID(),
-  eventName,
-  occurredAt: new Date().toISOString(),
-  aggregateName: 'Questionnaire',
-  aggregateId: QUESTIONNAIRE_ID,
-  payload,
-});
+/** Payload события анкеты по схеме его Def. */
+type PayloadOf<D extends AnyEventDef> = EventOf<D>['payload'];
 
-const payloadOf = (overrides: Record<string, unknown>) => ({
+/** Конверт DMG события анкеты: payload — по схеме Def, `aggregateId` — анкета. */
+const baseEvent = <D extends AnyEventDef>(def: D, payload: PayloadOf<D>) =>
+  envelopeOf(def, payload, { aggregateId: QUESTIONNAIRE_ID });
+
+/** Общие поля события анкеты (payload по схеме Def). */
+const questionnairePayload = (kind: 'standard' | 'likert' = 'standard') => ({
   questionnaireId: QUESTIONNAIRE_ID,
   respondentId: RESPONDENT_ID,
-  kind: 'standard' as const,
-  ownerInfo: { courseId: COURSE_ID } as Record<string, unknown>,
-  ...overrides,
+  kind,
+  ownerInfo: { courseId: COURSE_ID },
 });
 
 /** `started` (payload по схеме Def, без `telegramId`/`response`). */
 export const startedEvent = (
-  overrides: Record<string, unknown> = {},
-): QuestionnaireStartedEvent =>
-  baseEvent(QuestionnaireEvents.started.name, payloadOf(overrides)) as never;
+  overrides: Partial<PayloadOf<typeof QuestionnaireEvents.started>> = {},
+) =>
+  baseEvent(QuestionnaireEvents.started, {
+    ...questionnairePayload(),
+    ...overrides,
+  });
 
 /** `invited` (likert-приглашение). */
 export const invitedEvent = (
-  overrides: Record<string, unknown> = {},
-): QuestionnaireInvitedEvent =>
-  baseEvent(
-    QuestionnaireEvents.invited.name,
-    payloadOf({ kind: 'likert', ownerInfo: {}, ...overrides }),
-  ) as never;
+  overrides: Partial<PayloadOf<typeof QuestionnaireEvents.invited>> = {},
+) =>
+  baseEvent(QuestionnaireEvents.invited, {
+    ...questionnairePayload('likert'),
+    ownerInfo: {},
+    ...overrides,
+  });
 
 /** `abandonWarning` (ступень 6 ч). */
 export const abandonWarningEvent = (
-  overrides: Record<string, unknown> = {},
-): QuestionnaireAbandonWarningEvent =>
-  baseEvent(
-    QuestionnaireEvents.abandonWarning.name,
-    payloadOf(overrides),
-  ) as never;
+  overrides: Partial<PayloadOf<typeof QuestionnaireEvents.abandonWarning>> = {},
+) =>
+  baseEvent(QuestionnaireEvents.abandonWarning, {
+    ...questionnairePayload(),
+    ...overrides,
+  });
 
 /** `continueInvite` (ступень 3 ч). */
 export const continueInviteEvent = (
-  overrides: Record<string, unknown> = {},
-): QuestionnaireContinueInviteEvent =>
-  baseEvent(
-    QuestionnaireEvents.continueInvite.name,
-    payloadOf(overrides),
-  ) as never;
+  overrides: Partial<PayloadOf<typeof QuestionnaireEvents.continueInvite>> = {},
+) =>
+  baseEvent(QuestionnaireEvents.continueInvite, {
+    ...questionnairePayload(),
+    ...overrides,
+  });
 
 /** `abandoned` (по умолчанию `timeout`). */
 export const abandonedEvent = (
-  overrides: Record<string, unknown> = {},
-): QuestionnaireAbandonedEvent =>
-  baseEvent(
-    QuestionnaireEvents.abandoned.name,
-    payloadOf({ reason: 'timeout', ...overrides }),
-  ) as never;
+  overrides: Partial<PayloadOf<typeof QuestionnaireEvents.abandoned>> = {},
+) =>
+  baseEvent(QuestionnaireEvents.abandoned, {
+    ...questionnairePayload(),
+    reason: 'timeout',
+    ...overrides,
+  });
 
 /** Подписка story на событие по FQN Def; нет подписки — ошибка теста. */
 export function subscriptionOf(
@@ -172,7 +167,7 @@ export function subscriptionOf(
 ): UiEventSubscription {
   const sub = story
     .getEventSubscriptions()
-    .find((s) => s.eventName === eventName);
+    .find((s) => s.def.name === eventName);
   if (!sub) throw new Error(`Нет подписки на ${eventName}`);
   return sub;
 }

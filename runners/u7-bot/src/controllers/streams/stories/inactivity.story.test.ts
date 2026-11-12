@@ -8,6 +8,8 @@ import type {
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import type { UserView } from '@u7-scl/domain/user/contract';
+import type { EventOf } from 'dmg-core';
+import { envelopeOf } from '../../../../tests/helpers/envelope-of';
 import { userActor } from '../../../core/user-actor.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { InactivityStory } from './inactivity.story';
@@ -21,6 +23,7 @@ import { studentView } from './student-dmg.test-kit';
 
 // ══ Фикстуры ══
 
+const STUDENT_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const STREAM_ID = '77777777-7777-4777-8777-777777777777';
 const STUDENT_USER_ID = '11111111-1111-4111-8111-111111111111';
 const MENTOR_USER_ID = '66666666-6666-4666-8666-666666666666';
@@ -62,62 +65,57 @@ const PROFILES: Record<string, UserView | undefined> = {
 };
 
 function makeWarningEvent(
-  overrides: Partial<Record<string, unknown>> = {},
-): Record<string, unknown> {
-  return {
-    eventId: crypto.randomUUID(),
-    eventName: StudentEvents.inactivityWarning.name,
-    occurredAt: '2026-08-30T19:00',
-    aggregateName: 'Student',
-    aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-    payload: {
-      studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  overrides: Partial<
+    EventOf<typeof StudentEvents.inactivityWarning>['payload']
+  > = {},
+) {
+  return envelopeOf(
+    StudentEvents.inactivityWarning,
+    {
+      studentId: STUDENT_ID,
       userId: STUDENT_USER_ID,
       streamId: STREAM_ID,
       days: 5,
       ...overrides,
     },
-  };
+    { aggregateId: STUDENT_ID },
+  );
 }
 
 function makeCandidateEvent(
-  overrides: Partial<Record<string, unknown>> = {},
-): Record<string, unknown> {
-  return {
-    eventId: crypto.randomUUID(),
-    eventName: StudentEvents.inactivityRemoveCandidate.name,
-    occurredAt: '2026-08-30T19:00',
-    aggregateName: 'Student',
-    aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-    payload: {
-      studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  overrides: Partial<
+    EventOf<typeof StudentEvents.inactivityRemoveCandidate>['payload']
+  > = {},
+) {
+  return envelopeOf(
+    StudentEvents.inactivityRemoveCandidate,
+    {
+      studentId: STUDENT_ID,
       userId: STUDENT_USER_ID,
       streamId: STREAM_ID,
       days: 7,
       wasWarned: false,
       ...overrides,
     },
-  };
+    { aggregateId: STUDENT_ID },
+  );
 }
 
 function makeAbandonedEvent(
-  overrides: Partial<Record<string, unknown>> = {},
-): Record<string, unknown> {
-  return {
-    eventId: crypto.randomUUID(),
-    eventName: StudentEvents.abandoned.name,
-    occurredAt: '2026-08-30T19:00',
-    aggregateName: 'Student',
-    aggregateId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-    payload: {
-      studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  overrides: Partial<EventOf<typeof StudentEvents.abandoned>['payload']> = {},
+) {
+  return envelopeOf(
+    StudentEvents.abandoned,
+    {
+      studentId: STUDENT_ID,
       userId: STUDENT_USER_ID,
       streamId: STREAM_ID,
       who: 'self',
       cause: 'voluntary',
       ...overrides,
     },
-  };
+    { aggregateId: STUDENT_ID },
+  );
 }
 
 // ══ Сборка стори с моками ══
@@ -232,7 +230,7 @@ function subHandler(
 ): (event: never) => Promise<void> {
   const sub = story
     .getEventSubscriptions()
-    .find((s) => s.eventName === eventName);
+    .find((s) => s.def.name === eventName);
   if (!sub) throw new Error(`Подписка ${eventName} не найдена`);
   return sub.handle as (event: never) => Promise<void>;
 }
@@ -244,7 +242,7 @@ describe('InactivityStory', () => {
     const { story } = setupStory();
     const names = story
       .getEventSubscriptions()
-      .map((s) => s.eventName)
+      .map((s) => s.def.name)
       .sort();
     expect(names).toEqual(
       [

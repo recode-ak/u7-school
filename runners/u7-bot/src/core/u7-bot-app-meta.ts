@@ -1,4 +1,4 @@
-import type { U7BotAppMeta, U7CallerResolver } from '@u7-scl/app';
+import type { U7CallerResolver } from '@u7-scl/app';
 import type { School, U7AppResolver } from '@u7-scl/app-legacy/domain';
 import type { BotUiAppResolve } from '@u7-scl/core/ui';
 import type { UserAr } from '@u7-scl/domain/user/contract';
@@ -16,8 +16,7 @@ export type U7BotActor = UserCaller<ReadonlyAr<UserAr>>;
  * Зависимости UI-слоя u7-бота: базовый резолв ядра + идемпотентная
  * гост-регистрация на /start (от имени системного актора-бота).
  */
-export interface U7BotUiAppResolve
-  extends BotUiAppResolve<U7BotAppMeta, U7BotActor> {
+export interface U7BotUiAppResolve extends BotUiAppResolve<U7BotActor> {
   /** uuid системного актора-бота (BOT_ADMIN_UUID) — регистрация гостя и роли от его имени */
   botAdminUuid: string;
   /** сущность школы (FR-4) */
@@ -29,7 +28,5 @@ export interface U7BotUiAppResolve
 }
 
 // ================= API layer ===================
-// Метаданные legacy API-приложения — в корне сборки `@u7-scl/app` (D-50).
-export type { U7BotApp, U7BotAppMeta } from '@u7-scl/app';
 
 export type { U7AppResolver };

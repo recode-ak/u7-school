@@ -7,6 +7,7 @@ import {
   StreamModuleDef,
   StudentEvents,
 } from '@u7-scl/domain/stream/contract';
+import { envelopeOf } from '@u7-scl/test-helpers/envelope-of';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
@@ -103,19 +104,18 @@ async function waitKick(
 
 /** Публикует событие-предупреждение job'а (ступень 5+ дней). */
 function publishWarning(app: TestApp, daysInactive: number): void {
-  app.eventBus.publish({
-    eventId: crypto.randomUUID(),
-    eventName: StudentEvents.inactivityWarning.name,
-    occurredAt: '2026-09-09T12:00',
-    aggregateName: 'Student',
-    aggregateId: STUDENT_F0,
-    payload: {
-      studentId: STUDENT_F0,
-      userId: STUDENT_USER_ID,
-      streamId: STREAM2_ID,
-      days: daysInactive,
-    },
-  });
+  app.eventBus.publish(
+    envelopeOf(
+      StudentEvents.inactivityWarning,
+      {
+        studentId: STUDENT_F0,
+        userId: STUDENT_USER_ID,
+        streamId: STREAM2_ID,
+        days: daysInactive,
+      },
+      { aggregateId: STUDENT_F0 },
+    ),
+  );
 }
 
 /** Публикует событие-кандидата на снятие (ступень 7+ дней). */
@@ -124,38 +124,36 @@ function publishCandidate(
   daysInactive: number,
   wasWarned: boolean,
 ): void {
-  app.eventBus.publish({
-    eventId: crypto.randomUUID(),
-    eventName: StudentEvents.inactivityRemoveCandidate.name,
-    occurredAt: '2026-09-09T12:00',
-    aggregateName: 'Student',
-    aggregateId: STUDENT_F0,
-    payload: {
-      studentId: STUDENT_F0,
-      userId: STUDENT_USER_ID,
-      streamId: STREAM2_ID,
-      days: daysInactive,
-      wasWarned,
-    },
-  });
+  app.eventBus.publish(
+    envelopeOf(
+      StudentEvents.inactivityRemoveCandidate,
+      {
+        studentId: STUDENT_F0,
+        userId: STUDENT_USER_ID,
+        streamId: STREAM2_ID,
+        days: daysInactive,
+        wasWarned,
+      },
+      { aggregateId: STUDENT_F0 },
+    ),
+  );
 }
 
 /** Публикует событие ухода из учёбы (подписчик — мягкий кик, FR-6). */
 function publishAbandoned(app: TestApp): void {
-  app.eventBus.publish({
-    eventId: crypto.randomUUID(),
-    eventName: StudentEvents.abandoned.name,
-    occurredAt: '2026-09-09T12:00',
-    aggregateName: 'Student',
-    aggregateId: STUDENT_F0,
-    payload: {
-      studentId: STUDENT_F0,
-      userId: STUDENT_USER_ID,
-      streamId: STREAM2_ID,
-      who: 'self',
-      cause: 'voluntary',
-    },
-  });
+  app.eventBus.publish(
+    envelopeOf(
+      StudentEvents.abandoned,
+      {
+        studentId: STUDENT_F0,
+        userId: STUDENT_USER_ID,
+        streamId: STREAM2_ID,
+        who: 'self',
+        cause: 'voluntary',
+      },
+      { aggregateId: STUDENT_F0 },
+    ),
+  );
 }
 
 // ═══ Контур A: проактивы бездействия (FR-1) + callback-тупик (И3) ═══

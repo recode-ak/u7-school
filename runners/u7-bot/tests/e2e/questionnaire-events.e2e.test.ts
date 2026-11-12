@@ -15,6 +15,7 @@ import {
   SendLikertInviteUcDef,
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
+import { envelopeOf } from '@u7-scl/test-helpers/envelope-of';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import type {
@@ -22,7 +23,7 @@ import type {
   TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import { createTestBotTransport } from '@u7-scl/test-helpers/test-bot-transport';
-import { type OperationRef, SystemCaller } from 'dmg-core';
+import { type AnyEventDef, type OperationRef, SystemCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import * as v from 'valibot';
@@ -153,18 +154,16 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
       b.code.split(':').find((p) => p.startsWith('~')),
     );
   /** Публикует Def-событие анкеты под FQN (payload валидируется схемой Def). */
-  function publish<E extends { name: string; payload: v.GenericSchema }>(
+  function publish<E extends AnyEventDef>(
     event: E,
     payload: v.InferInput<E['payload']>,
   ): void {
-    app.eventBus.publish({
-      eventId: crypto.randomUUID(),
-      eventName: event.name,
-      occurredAt: new Date().toISOString(),
-      aggregateName: 'Questionnaire',
-      aggregateId: crypto.randomUUID(),
-      payload: v.parse(event.payload, payload),
-    } as never);
+    app.eventBus.publish(
+      envelopeOf(event, v.parse(event.payload, payload) as never, {
+        occurredAt: Date.now(),
+        aggregateId: crypto.randomUUID(),
+      }),
+    );
   }
 
   const base = (overrides: Record<string, unknown> = {}) => ({

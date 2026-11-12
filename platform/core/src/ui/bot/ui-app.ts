@@ -21,24 +21,18 @@ import type {
  * Центральный хаб UI-слоя бота на контракте «Диалог и Экран».
  * Экран и Telegram-механика — транспорт; uiApp только решает КУДА.
  *
- * @typeParam TAppMeta — тип метаданных приложения
  * @typeParam TActor — тип актора (пользователя)
  */
 export abstract class BotUiApp<
-    TAppMeta extends
-      import('#domain-legacy/types').AppMeta = import('#domain-legacy/types').AppMeta,
     TActor extends PersonCaller = PersonCaller,
-    TResolve extends BotUiAppResolve<TAppMeta, TActor> = BotUiAppResolve<
-      TAppMeta,
-      TActor
-    >,
+    TResolve extends BotUiAppResolve<TActor> = BotUiAppResolve<TActor>,
   >
   extends UiApp<TResolve>
   implements ProactiveSender
 {
   declare protected readonly controllers: Map<
     string,
-    BotController<TAppMeta, TActor, TResolve>
+    BotController<TActor, TResolve>
   >;
 
   protected transport!: ProactiveSender;
@@ -46,7 +40,7 @@ export abstract class BotUiApp<
   /** Системный эпохальный кеш стори (сброс при смене диалога, не персистится). */
   readonly dialogCache = new DialogCache();
 
-  constructor(controllers: BotController<TAppMeta, TActor, TResolve>[]) {
+  constructor(controllers: BotController<TActor, TResolve>[]) {
     super(controllers);
   }
 
@@ -68,7 +62,7 @@ export abstract class BotUiApp<
   /** Возвращает контроллер по имени */
   override getController(
     name: string,
-  ): BotController<TAppMeta, TActor, TResolve> | undefined {
+  ): BotController<TActor, TResolve> | undefined {
     return this.controllers.get(name);
   }
 
@@ -125,9 +119,7 @@ export abstract class BotUiApp<
   }
 
   /** Порядок опроса контроллеров: активный первым, далее регистрация. */
-  #commandPipeOrder(
-    session: BotSession,
-  ): BotController<TAppMeta, TActor, TResolve>[] {
+  #commandPipeOrder(session: BotSession): BotController<TActor, TResolve>[] {
     const list = [...this.controllers.values()];
     const activeName = session.dialog?.path.split('/')[0];
     const active = activeName
@@ -304,7 +296,7 @@ export abstract class BotUiApp<
   /** Контроллер активного диалога по `controller/story`. */
   #controllerByPath(
     path: string | undefined,
-  ): BotController<TAppMeta, TActor, TResolve> | undefined {
+  ): BotController<TActor, TResolve> | undefined {
     if (!path) return undefined;
     const [ctrlName] = path.split('/');
     if (!ctrlName) return undefined;

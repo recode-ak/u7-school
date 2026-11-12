@@ -72,7 +72,7 @@ export class UiApp<TResolve extends UiAppResolve = UiAppResolve> {
     }
     for (const subscription of this.getEventSubscriptions()) {
       const unsubscribe = this.resolve.eventBus.subscribe(
-        subscription.eventName,
+        subscription.def,
         subscription.handle,
       );
       this.unsubscribers.push(unsubscribe);

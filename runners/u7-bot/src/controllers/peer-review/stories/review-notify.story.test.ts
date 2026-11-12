@@ -7,6 +7,7 @@ import {
   UserModuleDef,
   type UserView,
 } from '@u7-scl/domain/user/contract';
+import { envelopeOf } from '../../../../tests/helpers/envelope-of';
 import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
 import {
   type ReviewCreatedEvent,
@@ -27,13 +28,9 @@ function createdEvent(
   direction: ReviewCreatedEvent['payload']['direction'],
   overrides: Partial<ReviewCreatedEvent['payload']> = {},
 ): ReviewCreatedEvent {
-  return {
-    eventId: crypto.randomUUID(),
-    eventName: ReviewEvents.created.name,
-    occurredAt: '2026-09-20T10:00',
-    aggregateName: 'Review',
-    aggregateId: REVIEW_ID,
-    payload: {
+  return envelopeOf(
+    ReviewEvents.created,
+    {
       reviewId: REVIEW_ID,
       campaignId: CAMPAIGN_ID,
       scopeId: SCOPE,
@@ -42,7 +39,8 @@ function createdEvent(
       direction,
       ...overrides,
     },
-  };
+    { aggregateId: REVIEW_ID },
+  );
 }
 
 type Profile = UserView;
@@ -89,7 +87,7 @@ function setupStory(profiles: Profile[]) {
 function handler(story: ReviewNotifyStory) {
   const sub = story
     .getEventSubscriptions()
-    .find((s) => s.eventName === 'peer-review.review.created');
+    .find((s) => s.def.name === 'peer-review.review.created');
   if (!sub) throw new Error('Подписка peer-review.review.created не найдена');
   return sub.handle as (event: ReviewCreatedEvent) => Promise<void>;
 }

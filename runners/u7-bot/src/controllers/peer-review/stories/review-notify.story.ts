@@ -1,6 +1,5 @@
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
-import type { DomainEvent } from '@u7-scl/core/domain';
 import { type MdText, md } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -9,16 +8,12 @@ import type {
 } from '@u7-scl/core/ui';
 import { eventSubscription } from '@u7-scl/core/ui';
 import { ReviewEvents } from '@u7-scl/domain/peer-review/contract';
-import type * as v from 'valibot';
+import type { EnvelopeOf } from 'dmg-core/app';
 
 /**
- * Событие в legacy-форме, как его доставляет `legacyEventBus`:
- * `eventName` — FQN Def, `payload` — по схеме `ReviewEvents.created`.
+ * Новый отзыв — конверт DMG, `payload` — по схеме `ReviewEvents.created`.
  */
-export type ReviewCreatedEvent = DomainEvent & {
-  eventName: typeof ReviewEvents.created.name;
-  payload: v.InferOutput<typeof ReviewEvents.created.payload>;
-};
+export type ReviewCreatedEvent = EnvelopeOf<typeof ReviewEvents.created>;
 
 /** Профиль участника (telegramId может отсутствовать). */
 type Profile = { uuid: string; name: string; telegramId?: number };
@@ -38,9 +33,8 @@ export class ReviewNotifyStory extends U7BotUiStory {
 
   override getEventSubscriptions(): UiEventSubscription[] {
     return [
-      eventSubscription<ReviewCreatedEvent>(
-        ReviewEvents.created.name,
-        (event) => this.#handleCreated(event),
+      eventSubscription(ReviewEvents.created, (event) =>
+        this.#handleCreated(event),
       ),
     ];
   }

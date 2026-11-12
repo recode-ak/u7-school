@@ -23,3 +23,4 @@
 | Ф1 | `lr-F1-migrator` (green среза `dossier` + 2 доработки: `checkTempMarkers` по эскалации, правки по ревью) | flash | 0.0941 | 77 | 98–100 | 2 (эскалация `checkDebt` — формат закрытия долга orchestrator'а; info ревью) | 0 |
 | Ф2 | `lr-F2-migrator` (планировщик в `dmg-core` + 1 доработка по ревью) | flash | 0.0647 | 43 | 96–99 | 1 (warn/info ревью) | 0 |
 | Ф6 | `F6-migrator-remove-cli` (удаление `runners/u7-cli`, правки `scripts/*.test.ts`, `README.md`) | flash | 0.0302 | 27 | 96 | 0 | — (ревью — orchestrator по diff, шаг механический) |
+| Ф3 | `lr-F3-3b` (stories, закрывающие типы бота, `config.ts`, `U7App` вариант A + 1 доработка по ревью) | flash | 0.1259 | 97 | 99–100 | 1 (5 warn ревью) | 0 |
