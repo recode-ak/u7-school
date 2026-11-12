@@ -27,6 +27,9 @@
 | Ф4 | `lr-F4-migrator` (сборка `U7App` без legacy, перенос адаптеров + 2 доработки: ревью, чистка `test-bloat`) | flash | 0.1027 | 66 | 98–100 | 2 (2 warn, 1 question, info ревью; журнал `test-bloat`) | 0 |
 | Ф4 | `lr-F4-data-keeper` (совместимость `last-runs.json`, сессий бота, `replay/`) | flash | 0.0331 | 31 | 97 | 0 | — |
 | Ф5 | `F5-legacy-removal-migrator` (удаление `core/{api,domain,infra,legacy-bridge}`, `app-legacy`, конфигурация, `PLATFORM`) | flash | 0.0709 | 70 | 99 | 1 (warn ревью: лишняя зависимость в `modules/stream/package.json`) | 0 |
+| Ф7 | — (документы, аудит `throw*`, гейт — Claude: Opus по плану) | — | 0 | — | — | 0 | — |
+
+**Итого DeepSeek:** 8 шагов flash, $0.5944; `error` ревью — 0.
 
 ## Удалённые тесты Ф5 (TST-08)
 
@@ -83,3 +86,29 @@
 **Допустимые (54):** инварианты/ошибки программиста — 12; UI: переброс базовых ошибок UC с `errors: []` и битых ссылок — 16 (часть ловится локально с `warn`, ERR-07); конфигурация и контент при старте — 11; I/O и повреждённые данные — 2 (`json-file-repo.ts`); CLI `scripts/` — 13.
 
 **Вывод:** критерий [migration.md](../../architecture/migration.md) §5 «нет `throw*` для штатных отказов» выполнен не полностью: 1 штатный отказ в раннере бота и 8 пограничных мест — кандидаты на ревизию.
+
+## Гейт закрытия (Ф7, 2026-11-12)
+
+От `6b17ef9f`, рабочее дерево чистое.
+
+| Команда | База Ф0 | Итог | Разница |
+|---|---|---|---|
+| `CI=true bun test` (`bun run check`) | 3083 | **2899 pass**, 0 fail, 297 файлов | −184 = +3 (Ф1, `dossier.module`) −21 (Ф3, `AppException`, сверено по именам) +7 (Ф4, адаптеры `app`) −173 (Ф5, удалены с legacy — таблица выше) |
+| `bun run test:bot` | 921 | **924 pass**, 0 fail | +3 |
+| `bun run check` | зелёный | **зелёный** (`arch:check` — нарушений нет) | — |
+| `bun test` в `dmg-core` (`bbc4484`) | 1384 | **1415 pass**, 0 fail | +31 (30 перенесены из `core/infra` в Ф2, +1 новый) |
+
+Триаж: красных тестов нет; промежуточных состояний и регрессов нет. Удалённые тесты — перенесены (Ф2, Ф4) или ушли вместе с удалённым кодом (Ф3, Ф5), списки — выше и в git notes контрольных точек.
+
+### Критерии spec
+
+| # | Критерий | Итог | Проверка |
+|---|---|---|---|
+| 1 | нет `app-legacy`/`legacy-bridge`/`-legacy/` в `*.ts`/`*.json`; нет `platform/app-legacy`, `runners/u7-cli` | ✅ | grep пуст вне `node_modules` и архива; каталогов нет |
+| 2 | `@u7-scl/core` — только `ui` и `shared`; legacy-классов нет; остаток расписан | ✅ | `exports` — `./ui`, `./shared`; остаток — `migration.md` §4, `debt.md` (TR-33 закрыт) |
+| 3 | `DossierModuleDef` без `external`, README модуля, `arch:check` — обычный модуль | ✅ | `grep external domain/src/dossier` пуст; `modules/dossier/README.md` |
+| 4 | нет `sub !== 'index'` и пропуска legacy-пар; DEBT-3, DEBT-34 сняты | ✅ | Ф1, `ff7727d` |
+| 5 | `legacy.md` удалён, битых ссылок нет; `migration.md` фиксирует завершение | ✅ | `9df0227`, `6c9f80b`; grep `legacy.md` вне архива и трека пуст |
+| 6 | `~/dev/tools/dmg/dmg-cli` с кодом и README; кандидат в `roadmap` | ✅ | `dmg-cli@848afee`; `roadmap.md` п. 11 |
+| 7 | `check` зелёный; число тестов сверено, удалённые перечислены | ✅ | таблица выше |
+| 8 | аудит `throw*` в `summary.md` | ✅ | раздел «Аудит `throw*`»; критерий `migration.md` §5 по `throw*` — не полностью (1 штатный отказ, 8 пограничных) |
