@@ -9,5 +9,6 @@
 - [Каталог сценариев](./scenarios.md)
 - [Сверка](./reconcile.md)
 - [Регрессии](./regressions.md)
+- [Сценарии без e2e](./e2e-gaps.md)
 - [Триаж TR и DEBT](./triage.md)
 - [Карточки решений](./cards.md)
