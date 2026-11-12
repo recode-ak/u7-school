@@ -16,7 +16,6 @@
     "dmg-core": "file:../../../../tools/dmg/dmg-core"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./domain": "./src/domain/index.ts"
+    ".": "./src/index.ts"
   }
 }

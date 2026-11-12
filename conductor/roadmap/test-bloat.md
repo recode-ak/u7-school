@@ -62,7 +62,6 @@
 
 | Дата | Трек | Файлы | Что дублирует | Решение |
 |---|---|---|---|---|
-| 2026-11-11 | `user-dmg` Ф3 | `platform/app-legacy/src/domain/user.test.ts` | схемные проверки `UserSchema`/`RoleSchema` дублируют `domain/src/user/user/user.state.test.ts` (TST-09) | удалить вместе с `platform/app-legacy/src/domain/user.ts` (`user-dmg` Ф7) |
 | 2026-11-11 | `user-dmg` Ф3 | `domain/src/stream/student/student.policy.test.ts` | «сам студент» (`SUBSCRIBER`) и «роли не важны» (`GUEST`) — одно правило `isSelf` | свести в один `it.each` |
 | 2026-11-11 | `user-dmg` Ф5 | `runners/u7-bot/src/controllers/{learning/stories/hub,mentor/stories/activate-stream,learning/stories/progress,school/stories/school-info.story}.test.ts` | мёртвые моки `appApi.execute` (stories legacy-UC не вызывают) | удалить моки (`user-dmg` Ф6 — при снятии legacy `execute` у `user`, или трек чистки) |
 | 2026-11-11 | `user-dmg` Ф5 | `runners/u7-bot/src/core/ui-app.test.ts:151-159` | повторяет проверки команд регистрации `ensure-registered.test.ts` | оставить одно утверждение «регистрация вызвана» |

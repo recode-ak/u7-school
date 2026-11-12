@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { StreamStatus } from '@u7-scl/stream/domain';
-import { Role } from '@u7-scl/user/domain';
+import { StreamStatus } from '@u7-scl/domain/stream/contract';
+import { Role } from '@u7-scl/domain/user/testing';
 import {
   cleanupWorldFixtures,
   computeSourceHash,

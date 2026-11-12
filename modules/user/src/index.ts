@@ -1,5 +1,3 @@
-// Domain
-export * from './domain';
 // Infra
 export * from './infra';
 // Порт репозитория пользователей

@@ -112,6 +112,7 @@ export function checkDomainImports(
 }
 
 const MODULES_DIR = 'modules/';
+const SCRIPTS_DIR = 'scripts/';
 // Каталоги корня сборки и раннеров — для относительных импортов.
 const ASSEMBLY_DIR = /^(platform\/app|runners)\//;
 
@@ -165,7 +166,9 @@ function ownerOf(path: string, all: readonly string[]): string | undefined {
 /**
  * ARC-04 (D-45): чужой модуль — только через `contract`. Блокирует, если
  * модуль на Def импортирует или импортируется; пары legacy-модулей — по
- * долгу до миграции.
+ * долгу до миграции. Отступление проекта от D-45: `scripts/` вне проверки —
+ * инструменты репозитория берут полный вход модуля (решение Ф7 трека
+ * `user-dmg`, запись — `conductor/architecture/debt.md`).
  */
 export function checkContractImports(
   files: readonly DomainFile[],
@@ -173,6 +176,7 @@ export function checkContractImports(
 ): string[] {
   const out: string[] = [];
   for (const f of files) {
+    if (f.path.startsWith(SCRIPTS_DIR)) continue;
     const own = ownerOf(f.path, modules.all);
     for (const { spec } of importsOf(f.text)) {
       const m = DOMAIN_PKG.exec(spec);

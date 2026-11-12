@@ -1,7 +1,10 @@
-import { CourseArDef, CourseProgramInvariant } from '@u7-scl/course/domain';
+import {
+  CourseArDef,
+  CourseProgramInvariant,
+} from '@u7-scl/domain/course/testing';
 import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
-import type { StreamState } from '@u7-scl/stream/domain';
-import { Role } from '@u7-scl/user/domain';
+import type { StreamState } from '@u7-scl/domain/stream/testing';
+import { Role } from '@u7-scl/domain/user/testing';
 import * as v from 'valibot';
 import { isoMinute, utcMs } from './relative-time';
 import type { WorldState, WorldUser } from './types';

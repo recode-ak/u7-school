@@ -17,7 +17,6 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./domain": "./src/domain/index.ts",
     "./infra": "./src/infra/index.ts"
   }
 }

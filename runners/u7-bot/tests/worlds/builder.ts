@@ -1,9 +1,9 @@
 import { U7_SCHOOL_ID } from '@u7-scl/app-legacy/domain';
-import type { ProjectEntity } from '@u7-scl/course/domain';
-import { Status } from '@u7-scl/course/domain';
+import type { ProjectEntity } from '@u7-scl/domain/course/testing';
+import { Status } from '@u7-scl/domain/course/testing';
 import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
-import type { StreamState, StudentState } from '@u7-scl/stream/domain';
-import type { UserRole } from '@u7-scl/user/domain';
+import type { StreamState, StudentState } from '@u7-scl/domain/stream/testing';
+import type { UserRole } from '@u7-scl/domain/user/testing';
 import { assertWorldInvariants } from './invariants';
 import { isoMinute, resolveRelativeTime, utcMs } from './relative-time';
 import type {

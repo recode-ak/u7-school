@@ -22,7 +22,6 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./domain": "./src/domain/index.ts",
     "./wish": "./src/wish/index.ts",
     "./infra": "./src/infra/index.ts"
   },

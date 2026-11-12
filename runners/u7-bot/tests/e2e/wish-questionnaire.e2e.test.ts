@@ -14,6 +14,7 @@ import {
   QuestionnaireModuleDef,
   type QuestionnaireView,
 } from '@u7-scl/domain/questionnaire/contract';
+import type { WishStatus } from '@u7-scl/domain/wish/testing';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import type {
@@ -26,7 +27,6 @@ import {
   screensNewFirst,
   stampedCode,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import type { WishStatus } from '@u7-scl/wish/domain';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import { QuestionnaireController } from '../../src/controllers/questionnaire/controller';

@@ -1,4 +1,4 @@
-import { Role } from '@u7-scl/user/domain';
+import { Role } from '@u7-scl/domain/user/testing';
 import type { WorldDefinition } from './types';
 
 /**

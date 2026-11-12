@@ -15,8 +15,5 @@
     "@u7-scl/domain": "workspace:*",
     "dmg-core": "file:../../../../tools/dmg/dmg-core",
     "valibot": "^1.0.0"
-  },
-  "exports": {
-    "./domain": "./src/domain/index.ts"
   }
 }

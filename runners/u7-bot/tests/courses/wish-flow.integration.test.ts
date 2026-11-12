@@ -13,6 +13,8 @@ import {
   assertDialogResponseMarkdownSafe,
   type DialogResponse,
 } from '@u7-scl/core/ui';
+import type { WishStatus } from '@u7-scl/domain/wish/testing';
+import { WishAr } from '@u7-scl/domain/wish/testing';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -20,8 +22,6 @@ import {
   stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import type { WishStatus } from '@u7-scl/wish/domain';
-import { WishAr } from '@u7-scl/wish/domain';
 
 /**
  * Интеграционный тест wish-флоу (ветка A — instant): модуль wish подключён

@@ -1,4 +1,4 @@
-import { Role } from '@u7-scl/user/domain';
+import { Role } from '@u7-scl/domain/user/testing';
 import { buildWorldState } from './builder';
 import { registerWorld } from './registry';
 import type { RegisteredWorld, WorldDefinition } from './types';

@@ -334,6 +334,17 @@ describe('checkContractImports: ARC-04 (D-45)', () => {
       run('runners/bot/src/a.ts', "import { U } from '@u7-scl/domain/user';"),
     ).toEqual([]);
   });
+
+  it('scripts/ — вне ARC-04: полный вход модуля на Def разрешён', () => {
+    expect(
+      run('scripts/x.ts', "import { S } from '@u7-scl/domain/wish';"),
+    ).toEqual([]);
+    expect(
+      run('modules/user/src/a.ts', "import { S } from '@u7-scl/domain/wish';"),
+    ).toEqual([
+      "ARC-04: modules/user/src/a.ts: модуль wish — только через contract (import '@u7-scl/domain/wish')",
+    ]);
+  });
 });
 
 describe('checkDebt: allowlist долгов в debt.md', () => {

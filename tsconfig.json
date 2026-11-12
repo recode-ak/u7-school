@@ -20,24 +20,18 @@
     "noPropertyAccessFromIndexSignature": false,
     "types": ["bun", "node"],
     "paths": {
-      "@u7-scl/user/domain": ["./modules/user/src/domain/index.ts"],
       "@u7-scl/core/domain": ["./platform/core/src/domain/index.ts"],
       "@u7-scl/core/api": ["./platform/core/src/api/index.ts"],
       "@u7-scl/core/ui": ["./platform/core/src/ui/index.ts"],
       "@u7-scl/core/shared": ["./platform/core/src/shared/index.ts"],
       "@u7-scl/course": ["./modules/course/src/index.ts"],
-      "@u7-scl/course/domain": ["./modules/course/src/domain/index.ts"],
       "@u7-scl/stream": ["./modules/stream/src/index.ts"],
       "@u7-scl/domain": ["./domain/src/index.ts"],
       "@u7-scl/domain/*/contract": ["./domain/src/*/contract.ts"],
       "@u7-scl/domain/*": ["./domain/src/*/index.ts"],
       "@u7-scl/wish": ["./modules/wish/src/index.ts"],
-      "@u7-scl/wish/domain": ["./modules/wish/src/domain/index.ts"],
       "@u7-scl/wish/infra": ["./modules/wish/src/infra/index.ts"],
       "@u7-scl/questionnaire": ["./modules/questionnaire/src/index.ts"],
-      "@u7-scl/questionnaire/domain": [
-        "./modules/questionnaire/src/domain/index.ts"
-      ],
       "@u7-scl/questionnaire/api": ["./modules/questionnaire/src/api/index.ts"],
       "@u7-scl/questionnaire/infra": [
         "./modules/questionnaire/src/infra/index.ts"

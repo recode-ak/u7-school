@@ -46,6 +46,7 @@
 | Ф6 | `ud-F6-clients` (клиенты сборки; 2 запуска — таймаут провайдера) | flash | 0.1619 | 121 | 98–100 | 1 (продолжение после таймаута; 4 эскалации) | 0 |
 | Ф6 | `ud-F6-remove` (удаление legacy) | flash | 0.1188 | 95 | — | 0 (эскалация `debt.md`) | 0 |
 | Ф6 | `ud-F6-data` (`dmg-data-keeper`) | flash | 0.0623 | 54 | — | 0 | — |
+| Ф7 | `ud-F7-barrel` (3 круга: механика, `testing` + `scripts/` вне ARC-04, правки ревью) | flash | 0.1089 | 73 | 98–100 | 2 (эскалация ARC-04 → решение Нурболата; minor ревью) | 0 |
 
 ## Ф0: вопросы (разбор `dmg-tech-lead`)
 
@@ -103,3 +104,7 @@
 - **Т15. Порядок Ф5.** Новый репозиторий пишет числовые даты, legacy их не читает. Поэтому в Ф5 переход чтений и записей `user` — одним коммитом (не раздельно); иначе legacy `getUserByTelegramId` начнёт отбрасывать записи, записанные новым `registerGuest`.
 - **Т16. `u7-cli`.** Два вызова (`list-users:374`, `get-user:409`) — в Ф5 на `dispatchByName`; иначе при удалении `UserApiModuleMeta` ломается типизация `app.execute`. Остальное — DEBT-42.
 - **Т17. `scripts/call-uc.ts`.** `app.userFacade.getUserByUuid(actorId)` (`:149`) и `_course-client.ts:83` — на `callers.resolve` + `getUser` в Ф6 (скрипты по плану).
+
+## Почищено из журнала `test-bloat.md`
+
+- Ф6: `platform/app-legacy/src/domain/user.test.ts` (дубль схемных проверок `UserSchema`/`RoleSchema`, TST-09) — удалён вместе с legacy-доменом `user` (`6f6435b6`); строка снята из журнала в Ф7.

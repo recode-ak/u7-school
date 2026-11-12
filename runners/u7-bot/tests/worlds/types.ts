@@ -3,19 +3,16 @@ import type {
   LessonState,
   ModuleState,
   StepState,
-} from '@u7-scl/course/domain';
+} from '@u7-scl/domain/course/testing';
 import type {
   ReviewDirection,
   StudentOutcome,
 } from '@u7-scl/domain/peer-review/contract';
 import type { QuestionnaireView } from '@u7-scl/domain/questionnaire/contract';
-import type {
-  StreamState,
-  StreamStatus,
-  StudentState,
-} from '@u7-scl/stream/domain';
-import type { Role, UserState } from '@u7-scl/user/domain';
-import type { WishState } from '@u7-scl/wish/domain';
+import type { StreamStatus } from '@u7-scl/domain/stream/contract';
+import type { StreamState, StudentState } from '@u7-scl/domain/stream/testing';
+import type { Role, UserState } from '@u7-scl/domain/user/testing';
+import type { WishState } from '@u7-scl/domain/wish/testing';
 
 /**
  * Кампания в мире — ввод state (не state): даты ISO, как в legacy-файле;

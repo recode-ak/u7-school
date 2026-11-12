@@ -13,3 +13,8 @@ export function userSubject(
 ): ReadonlyAr<UserAr> {
   return UserAr.restore(stored(init));
 }
+
+/** Миры u7-bot: роль в записи пользователя на диске (`users.json`). */
+export { Role } from './user/roles';
+/** Миры u7-bot: запись пользователя на диске (`users.json`) и её роли. */
+export type { UserRole, UserState } from './user/user.state';

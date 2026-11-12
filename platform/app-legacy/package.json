@@ -17,6 +17,7 @@
     "./infra": "./src/infra/logger/index.ts"
   },
   "dependencies": {
-    "@u7-scl/core": "workspace:*"
+    "@u7-scl/core": "workspace:*",
+    "@u7-scl/domain": "workspace:*"
   }
 }

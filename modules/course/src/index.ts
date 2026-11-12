@@ -2,8 +2,6 @@
 export type { CourseFilter, CourseRepo } from './course/course.repo';
 // DMG: модуль курсов
 export * from './course.module';
-// Domain
-export * from './domain';
 // Infra
 export * from './infra';
 export type { LessonRepo } from './lesson/lesson.repo';

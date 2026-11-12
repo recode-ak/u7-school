@@ -3,7 +3,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
-import { StudentJsonRepo, type StudentState } from '@u7-scl/stream';
+import type { StudentState } from '@u7-scl/domain/stream';
+import { StudentJsonRepo } from '@u7-scl/stream';
 import * as v from 'valibot';
 import {
   analyzeSnapshotDelta,

@@ -19,8 +19,7 @@
     "valibot": "^1.0.0"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./domain": "./src/domain/index.ts"
+    ".": "./src/index.ts"
   },
   "imports": {
     "#api-legacy/*": "./src/api/*.ts"

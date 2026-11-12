@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { Role } from '@u7-scl/user/domain';
+import { Role } from '@u7-scl/domain/user/testing';
 import {
   formatWorldList,
   logActiveWorldIfPresent,
