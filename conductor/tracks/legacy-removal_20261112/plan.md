@@ -71,7 +71,7 @@
 - `grep -rn "#[a-z]*-legacy/\|@u7-scl/core/domain\|@u7-scl/core/api" platform/core/src/ui runners/u7-bot` пуст; `grep -rn "DomainEvent" platform/core/src/ui runners` пуст.
 - `test:bot` и e2e не ниже базовой линии с поправкой на удалённые тесты `AppException` (список в отчёте); падения красной зоны — поимённо в `debt.md`.
 
-## Фаза 4: Сборка — `U7App` без legacy
+## Фаза 4: Сборка — `U7App` без legacy [checkpoint: 29c458ee]
 
 - [x] Task: `dmg-test-designer`: red-тесты `platform/app/tests` — `apiApp` = dmg `ApiApp`, планировщик пакета, `School` из `platform/app/src/school`; тесты `FileReplayStore`/`JobRunJsonRepo` переезжают в `platform/app/src/infra` (Sonnet) 25f6125
 - [x] Task: `migrator` (flash): 25f6125
