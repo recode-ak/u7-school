@@ -73,16 +73,17 @@
 
 ## Фаза 4: Сборка — `U7App` без legacy
 
-- [~] Task: `dmg-test-designer`: red-тесты `platform/app/tests` — `apiApp` = dmg `ApiApp`, планировщик пакета, `School` из `platform/app/src/school`; тесты `FileReplayStore`/`JobRunJsonRepo` переезжают в `platform/app/src/infra` (Sonnet)
-- [ ] Task: `migrator` (flash):
-    - [ ] `School` → `platform/app/src/school/`; `U7AppResolver` → явный тип в `app`
-    - [ ] `U7App` на dmg `ApiApp`, `InProcEventBus` и планировщик пакета, `systemClock`; `legacyEventBus`/`legacyClock`/`legacyJobsOf` не используются
-    - [ ] `FileReplayStore`, `JobRunJsonRepo` → `platform/app/src/infra/`
-    - [ ] `JsonFileRepo` (без `BaseJsonDb`) → `runners/u7-bot/src/infra/`; `CompositeLogger` → `runners/u7-bot/src/infra/logger/`
-    - [ ] импорты в `scripts/*`, мирах и тестах `u7-bot`; проверка тестов с `spyOn(Shared,'now')` (замороженное время)
-- [ ] Task: smoke бота на `DB_DIR=./data/fixtures` (без записи в живые данные; `git status data/` чист) (Opus)
-- [ ] Task: `dmg-reviewer` (Opus)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: `dmg-test-designer`: red-тесты `platform/app/tests` — `apiApp` = dmg `ApiApp`, планировщик пакета, `School` из `platform/app/src/school`; тесты `FileReplayStore`/`JobRunJsonRepo` переезжают в `platform/app/src/infra` (Sonnet) 25f6125
+- [x] Task: `migrator` (flash): 25f6125
+    - [x] `School` → `platform/app/src/school/`; `U7AppResolver` → явный тип в `app`
+    - [x] `U7App` на dmg `ApiApp`, `InProcEventBus` и планировщик пакета, `systemClock`; `legacyEventBus`/`legacyClock`/`legacyJobsOf` не используются
+    - [x] `FileReplayStore`, `JobRunJsonRepo` → `platform/app/src/infra/`
+    - [x] `JsonFileRepo` (без `BaseJsonDb`) → `runners/u7-bot/src/infra/`; `CompositeLogger` → `runners/u7-bot/src/infra/logger/`
+    - [x] импорты в `scripts/*`, мирах и тестах `u7-bot`; проверка тестов с `spyOn(Shared,'now')` (замороженное время)
+- [x] Task: smoke бота на `DB_DIR=./data/fixtures` (без записи в живые данные; `git status data/` чист) (Opus) 25f6125
+    - скрипт по пути `main.ts` до верификации админа на временной копии фикстур, без Telegram (TR-66); `dmg-data-keeper` (flash) по подсказке гейта — миграция не нужна
+- [x] Task: `dmg-reviewer` (Opus) 25f6125
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (автономно: `check` зелёный, 3072 pass; `test:bot` 924; ревью без `error`, TR-66) (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 4:**
 - `grep -rn "legacy-bridge\|U7ApiApp\|U7AppResolver\|legacyClock\|legacyEventBus" --include=*.ts .` пуст вне `node_modules`, архива и самого `platform/core/src/legacy-bridge`.
