@@ -135,7 +135,7 @@
 - `modules/*/src/domain/index.ts` нет; DEBT-3 в `debt.md` — только `modules/dossier/src/index.ts`.
 - `check` зелёный, `arch:check` синхронен.
 
-## Фаза 8: Итог
+## Фаза 8: Итог [checkpoint: 1628b73f]
 
 - [x] Task: Гейт закрытия: `CI=true bun test`, `bun run test:bot`, `dmg-core` `bun test` — сравнение с базовой линией в `summary.md` (Opus) fd51464c
 - [x] Task: Документы (Opus): c1d76bf8
@@ -146,7 +146,7 @@
     - [x] `domain/package.json` — мёртвая зависимость `@u7-scl/app-legacy` (в `domain/src` не импортируется; с `app-legacy → domain` — цикл манифестов; ревью Ф7) — снять; заодно снята мёртвая `@u7-scl/core` (в `domain/src` не импортируется, DEBT-1 погашен);
     - [x] упоминания роли `STUDENT` в документах (`README.md`, `runners/u7-bot/src/controllers/learning/ui-spec.md`, `courses/content-nav.md`, `modules/stream/src/analysis.md`, `TODO.md`) — ревью Ф3;
     - [x] чек-лист релиза: миграция `STUDENT` — ДО выкатки нового кода, бэкап `--name=before-drop-student`; проверка живого `users.json` (записи со `STUDENT`, без `updatedAt`) — Нурболат (отчёт `dmg-data-keeper` Ф3). Первая команда нового кода переписывает `users.json` целиком в новый формат — `v0.2.6` его не читает, откат только из бэкапа (отчёт `dmg-data-keeper` Ф6).
-- [ ] Task: Conductor - User Manual Verification 'Фаза 8' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 8' (Protocol in workflow.md; автономно) 1628b73f
 
 **Критерии приёмки Фазы 8:**
 - Все критерии приёмки spec выполнены (таблица в `summary.md`).
