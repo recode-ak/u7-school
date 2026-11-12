@@ -1,0 +1,1 @@
+Задача Ф7.3 legacy-removal: аудит throw* (dmg-reviewer, Opus, только чтение) — 1 штатный отказ (create-ui-app.ts:102, warn, подтверждён orchestrator'ом), 8 пограничных, 54 допустимых; пробел ERR-01 в biome.json (modules/*/src). Исправление — за рамками трека.
