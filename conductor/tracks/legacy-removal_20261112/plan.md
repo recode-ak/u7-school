@@ -30,7 +30,7 @@
 - Брифы приняты (`slices/`, факты — `slices/inventory.md`), таблица раскладки покрывает каждый файл `platform/core/src`, `platform/app-legacy/src`, `runners/u7-cli`.
 - Решения записаны в TR.
 
-## Фаза 1: `dossier` на Def, DEBT-3 и DEBT-34
+## Фаза 1: `dossier` на Def, DEBT-3 и DEBT-34 [checkpoint: 87c6623f]
 
 - [x] Task: `dmg-test-designer`: red-тесты (Sonnet) ff7727d
     - [x] `modules/dossier/src/dossier.module.test.ts` — пустой модуль собирается, граф содержит `dossier` без `external`
