@@ -125,13 +125,13 @@
 
 ## Фаза 7: Barrel-реэкспорты (DEBT-3)
 
-- [ ] Task: `migrator`, механика (flash): импорты `@u7-scl/user/domain` (46), `@u7-scl/app-legacy/domain` ради `User`/`Role` (102), корень `app-legacy` (8), `@u7-scl/{course,stream,wish}/domain` (11) — на контракт `user` / `@u7-scl/domain/<m>`; удалить 6 `modules/*/src/domain/index.ts`, их пути в `tsconfig.json`, `exports "./domain"`, `platform/app-legacy/src/domain/user.ts`. После шага — `tsc --noEmit` и grep
-- [ ] Task: Записать остаток DEBT-3 — `modules/dossier/src/index.ts`, владелец — трек `dossier` (Opus)
-- [ ] Task: `dmg-reviewer` (Opus)
+- [x] Task: `migrator`, механика (flash): импорты `@u7-scl/user/domain` (46), `@u7-scl/app-legacy/domain` ради `User`/`Role` (102), корень `app-legacy` (8), `@u7-scl/{course,stream,wish}/domain` (11) — на контракт `user` / `@u7-scl/domain/<m>`; удалить 6 `modules/*/src/domain/index.ts`, их пути в `tsconfig.json`, `exports "./domain"`, `platform/app-legacy/src/domain/user.ts`. После шага — `tsc --noEmit` и grep 9901eb58 — эскалация: barrel'ы прятали 23 × ARC-04 (миры, скрипты) → Нурболат: тесты — вход `testing` (D-70) `user`/`course`/`stream`/`wish`, `scripts/` вне ARC-04 (отступление от D-45, TR-61 «Ф7»); `app-legacy/domain` и `core/domain` — не barrel'ы модулей, остаются (grep-критерий сужен)
+- [x] Task: Записать остаток DEBT-3 — `modules/dossier/src/index.ts`, владелец — трек `dossier` (Opus) 9901eb58
+- [x] Task: `dmg-reviewer` (Opus) 9901eb58 — `error` нет; 4 minor исправлены в срезе, мёртвая зависимость `domain → app-legacy` — Ф8
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 7:**
-- `grep -rn "@u7-scl/[a-z-]*/domain['\"]" --include=*.ts --include=*.json .` пуст (вне `node_modules`, `conductor`).
+- `grep -rnE "@u7-scl/(user|course|stream|wish|questionnaire|peer-review)/domain\b" --include=*.ts --include=*.json .` пуст (вне `node_modules`, `conductor`; сужен в Ф7 — `core/domain`, `app-legacy/domain` не barrel'ы модулей).
 - `modules/*/src/domain/index.ts` нет; DEBT-3 в `debt.md` — только `modules/dossier/src/index.ts`.
 - `check` зелёный, `arch:check` синхронен.
 
@@ -143,6 +143,7 @@
     - [ ] `migration.md` §6 — состояние, чек-лист релиза (`bun run backup` → скрипт миграции `STUDENT` → подтверждение Нурболата; legacy-писателя `users.json` в релизе нет — иначе потеря записей, отчёт data-keeper Ф2), следующий трек;
     - [ ] `deepseek.md` — сверка таблицы §2 с данными трека;
     - [ ] `summary.md` — таблица критериев spec и строка «DeepSeek».
+    - [ ] `domain/package.json` — мёртвая зависимость `@u7-scl/app-legacy` (в `domain/src` не импортируется; с `app-legacy → domain` — цикл манифестов; ревью Ф7) — снять;
     - [ ] упоминания роли `STUDENT` в документах (`README.md`, `runners/u7-bot/src/controllers/learning/ui-spec.md`, `courses/content-nav.md`, `modules/stream/src/analysis.md`, `TODO.md`) — ревью Ф3;
     - [ ] чек-лист релиза: миграция `STUDENT` — ДО выкатки нового кода, бэкап `--name=before-drop-student`; проверка живого `users.json` (записи со `STUDENT`, без `updatedAt`) — Нурболат (отчёт `dmg-data-keeper` Ф3). Первая команда нового кода переписывает `users.json` целиком в новый формат — `v0.2.6` его не читает, откат только из бэкапа (отчёт `dmg-data-keeper` Ф6).
 - [ ] Task: Conductor - User Manual Verification 'Фаза 8' (Protocol in workflow.md; автономно)
