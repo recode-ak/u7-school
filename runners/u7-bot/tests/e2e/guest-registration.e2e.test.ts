@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
+import { TEST_SCHOOL } from '@u7-scl/app';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';

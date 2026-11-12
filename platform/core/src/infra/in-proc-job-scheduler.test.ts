@@ -1,12 +1,8 @@
 import { afterAll, describe, expect, mock, test } from 'bun:test';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import type { Job, JobSchedule } from '../api/job/job';
 import { LogLevel } from '../shared/logger';
 import { InProcJobExecutor } from './in-proc-job-executor';
 import { InProcJobScheduler } from './in-proc-job-scheduler';
-import { JobRunJsonRepo } from './job-run-json-repo';
 import { MemoryJobRunRepo } from './job-run-repo';
 
 // ══ Хелперы ══
@@ -139,38 +135,5 @@ describe('InProcJobExecutor', () => {
     const executor = new InProcJobExecutor();
 
     await expect(executor.execute(job)).rejects.toThrow('boom');
-  });
-});
-
-describe('JobRunJsonRepo', () => {
-  const tmpDir = mkdtempSync(join(tmpdir(), 'job-run-store-'));
-  const filePath = join(tmpDir, 'sub', 'last-runs.json');
-
-  afterAll(() => {
-    rmSync(tmpDir, { recursive: true, force: true });
-  });
-
-  test('get без записи — undefined', () => {
-    const store = new JobRunJsonRepo(filePath);
-    expect(store.getLastRunAt('job-a')).toBeUndefined();
-  });
-
-  test('set → новый экземпляр читает записанное (переживание перезагрузки)', () => {
-    const writer = new JobRunJsonRepo(filePath);
-    writer.setLastRunAt('job-a', '2026-01-01T12:00:00.000Z');
-
-    const reader = new JobRunJsonRepo(filePath);
-    expect(reader.getLastRunAt('job-a')).toBe('2026-01-01T12:00:00.000Z');
-  });
-
-  test('повреждённый файл — история начинается заново, без падения', () => {
-    writeFileSync(filePath, 'не-json{{{');
-
-    const store = new JobRunJsonRepo(filePath);
-    expect(store.getLastRunAt('job-a')).toBeUndefined();
-    store.setLastRunAt('job-b', '2026-02-01T00:00:00.000Z');
-    expect(new JobRunJsonRepo(filePath).getLastRunAt('job-b')).toBe(
-      '2026-02-01T00:00:00.000Z',
-    );
   });
 });

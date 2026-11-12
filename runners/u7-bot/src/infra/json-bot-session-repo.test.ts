@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { JsonFileRepoError } from '@u7-scl/core/infra';
 import type { BotSession } from '@u7-scl/core/ui';
 import { JsonBotSessionRepo } from './json-bot-session-repo';
+import { JsonFileRepoError } from './json-file-repo';
 
 /**
  * Тесты JSON-хранилища сессий (трек bot-ui-session-persist):

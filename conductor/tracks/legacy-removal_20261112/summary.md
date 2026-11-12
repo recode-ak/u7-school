@@ -24,3 +24,9 @@
 | Ф2 | `lr-F2-migrator` (планировщик в `dmg-core` + 1 доработка по ревью) | flash | 0.0647 | 43 | 96–99 | 1 (warn/info ревью) | 0 |
 | Ф6 | `F6-migrator-remove-cli` (удаление `runners/u7-cli`, правки `scripts/*.test.ts`, `README.md`) | flash | 0.0302 | 27 | 96 | 0 | — (ревью — orchestrator по diff, шаг механический) |
 | Ф3 | `lr-F3-3b` (stories, закрывающие типы бота, `config.ts`, `U7App` вариант A + 1 доработка по ревью) | flash | 0.1259 | 97 | 99–100 | 1 (5 warn ревью) | 0 |
+| Ф4 | `lr-F4-migrator` (сборка `U7App` без legacy, перенос адаптеров + 2 доработки: ревью, чистка `test-bloat`) | flash | 0.1027 | 66 | 98–100 | 2 (2 warn, 1 question, info ревью; журнал `test-bloat`) | 0 |
+| Ф4 | `lr-F4-data-keeper` (совместимость `last-runs.json`, сессий бота, `replay/`) | flash | 0.0331 | 31 | 97 | 0 | — |
+
+## Почищенные случаи `test-bloat`
+
+- Ф4: `platform/app/tests/u7-app.test.ts` — структурные проверки `'init' in`/`'getModule' in apiApp` (TST-09, запись Ф3) удалены.

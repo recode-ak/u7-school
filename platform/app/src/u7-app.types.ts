@@ -1,5 +1,6 @@
 import type { Logger } from '@u7-scl/core/shared';
-import type { AppMode, ReplayStore } from 'dmg-core/app';
+import type { AppMode, EventBus, ReplayStore } from 'dmg-core/app';
+import type { School } from './school';
 
 /**
  * Окружение приложения u7-school (D-50) — простые данные: раннер собирает
@@ -21,8 +22,23 @@ export type U7AppEnv = {
 
 /**
  * Подмена портов — для тестов и встраивания. Не задан — боевой:
- * `ConsoleLogger`.
+ * `ConsoleLogger`, история прогонов в `<dbDir>/jobs/last-runs.json`,
+ * задержка первого прогона задания по умолчанию пакета (D-71).
  */
 export type U7AppPorts = {
   readonly logger?: Logger;
+  /** Задержка первого прогона задания после `start()`, мс (D-71). */
+  readonly jobStartDelayMs?: number;
+};
+
+/**
+ * Глобальные зависимости уровня приложения u7-school (D-50): логгер, режим,
+ * шина DMG и школа. Содержит `School` — сущность, которой живут UI, бот и скрипты.
+ */
+export type U7AppResolver = {
+  readonly logger: Logger;
+  readonly mode: AppMode;
+  /** Шина DMG — та же, на которой работает `apiApp`. */
+  readonly eventBus: EventBus;
+  readonly school: School;
 };

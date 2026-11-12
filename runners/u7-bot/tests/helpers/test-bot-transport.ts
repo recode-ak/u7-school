@@ -1,4 +1,4 @@
-import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
+import { TEST_SCHOOL, type U7App } from '@u7-scl/app';
 import type { U7BotController } from '@u7-scl/bot/u7-bot-controller';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import type {
@@ -7,8 +7,7 @@ import type {
   DialogState,
   KeyboardDescription,
 } from '@u7-scl/core/ui';
-import type { Identified } from 'dmg-core';
-import { type ApiApp, InProcEventBus } from 'dmg-core/app';
+import { InProcEventBus } from 'dmg-core/app';
 import type { Api } from 'grammy';
 import type { BotContext } from '../../src/context';
 import type {
@@ -181,7 +180,7 @@ export class TestBotTransport {
   };
 
   constructor(
-    apiApp: ApiApp<Identified>,
+    apiApp: U7App['apiApp'],
     actorResolver: (tgId: number) => Promise<U7BotActor>,
     controllers: U7BotController[],
     opts: {

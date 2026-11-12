@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
+import { TEST_SCHOOL } from '@u7-scl/app';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { userActor } from '../../../core/user-actor.test-kit';

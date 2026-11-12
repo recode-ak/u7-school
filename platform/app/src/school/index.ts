@@ -1,6 +1,3 @@
-// @u7-scl/app-legacy/domain — доменные типы уровня приложения
-
-export type { U7ApiApp, U7AppResolver } from './api';
 export type { School } from './school';
 export {
   createSchool,

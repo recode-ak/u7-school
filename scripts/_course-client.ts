@@ -11,8 +11,7 @@
  * const modules = await course.listModules();
  * ```
  */
-import { U7App } from '@u7-scl/app';
-import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
+import { TEST_SCHOOL, U7App } from '@u7-scl/app';
 import { type Logger, LogLevel } from '@u7-scl/core/shared';
 import {
   type ContentSnapshot,

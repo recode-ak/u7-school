@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { U7_SCHOOL_ID } from '@u7-scl/app-legacy/domain';
+import { U7_SCHOOL_ID } from '@u7-scl/app';
 import { migrateStreamsData } from './migrate-streams-school-id';
 
 describe('migrateStreamsData', () => {

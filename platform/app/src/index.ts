@@ -1,4 +1,12 @@
+export { appClock } from './app-clock';
+export { FileReplayStore } from './infra/file-replay-store';
+export type { School } from './school';
+export {
+  createSchool,
+  SchoolSchema,
+  TEST_SCHOOL,
+  U7_SCHOOL_ID,
+} from './school';
 export { U7App } from './u7-app';
-export type { U7AppEnv, U7AppPorts } from './u7-app.types';
-export type { U7BotApp, U7BotAppMeta } from './u7-app-meta';
+export type { U7AppEnv, U7AppPorts, U7AppResolver } from './u7-app.types';
 export { U7CallerResolver } from './u7-caller-resolver';

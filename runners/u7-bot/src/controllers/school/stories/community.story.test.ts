@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
+import { TEST_SCHOOL } from '@u7-scl/app';
 import type { UserView } from '@u7-scl/domain/user/contract';
 import { userActor } from '../../../core/user-actor.test-kit';
 import { CommunityStory } from './community.story';

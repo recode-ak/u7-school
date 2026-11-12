@@ -1,10 +1,8 @@
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { isoNow } from '@u7-scl/core/shared';
+import { getGlobalLogger, now } from '@u7-scl/core/shared';
 import type { GenericSchema } from 'valibot';
 import * as v from 'valibot';
-import { getGlobalLogger } from '#shared-legacy/logger';
-import type { BaseJsonDb } from './base-json-db';
 
 /**
  * Ошибка, возникающая при повреждении структуры JSON-файла.
@@ -30,8 +28,6 @@ export class JsonFileRepoError extends Error {
 export class JsonFileRepo<T> {
   readonly #schema: GenericSchema<T>;
   readonly #filePath: string;
-  readonly #db?: BaseJsonDb;
-  readonly #collectionName: string;
   /** Уже создан бэкап текущих невалидных данных (защита от дублей) */
   #invalidBackedUp = false;
 
@@ -43,23 +39,10 @@ export class JsonFileRepo<T> {
   /**
    * @param schema — Valibot-схема для валидации каждого объекта
    * @param filePath — путь к JSON-файлу
-   * @param db — опционально: экземпляр BaseJsonDb для транзакционной поддержки
-   * @param collectionName — имя коллекции (обязательно при передаче db)
    */
-  constructor(
-    schema: GenericSchema<T>,
-    filePath: string,
-    db?: BaseJsonDb,
-    collectionName?: string,
-  ) {
+  constructor(schema: GenericSchema<T>, filePath: string) {
     this.#schema = schema;
     this.#filePath = filePath;
-    this.#db = db;
-    this.#collectionName = collectionName ?? filePath;
-
-    if (db) {
-      db.registerCollection(this.#collectionName, filePath);
-    }
   }
 
   /**
@@ -72,33 +55,26 @@ export class JsonFileRepo<T> {
   async readAll(): Promise<T[]> {
     let raw: unknown[];
 
-    if (this.#db) {
-      raw = (await this.#db.readCollection(
-        this.#collectionName,
+    const file = Bun.file(this.#filePath);
+
+    if (!(await file.exists())) {
+      return [];
+    }
+
+    try {
+      raw = await file.json();
+    } catch (cause) {
+      throw new JsonFileRepoError(
+        `Не удалось распарсить JSON: ${cause instanceof Error ? cause.message : String(cause)}`,
         this.#filePath,
-      )) as unknown[];
-    } else {
-      const file = Bun.file(this.#filePath);
+      );
+    }
 
-      if (!(await file.exists())) {
-        return [];
-      }
-
-      try {
-        raw = await file.json();
-      } catch (cause) {
-        throw new JsonFileRepoError(
-          `Не удалось распарсить JSON: ${cause instanceof Error ? cause.message : String(cause)}`,
-          this.#filePath,
-        );
-      }
-
-      if (!Array.isArray(raw)) {
-        throw new JsonFileRepoError(
-          `Ожидался JSON-массив, получен ${typeof raw}`,
-          this.#filePath,
-        );
-      }
+    if (!Array.isArray(raw)) {
+      throw new JsonFileRepoError(
+        `Ожидался JSON-массив, получен ${typeof raw}`,
+        this.#filePath,
+      );
     }
 
     const result: T[] = [];
@@ -134,15 +110,7 @@ export class JsonFileRepo<T> {
   async writeAll(items: T[]): Promise<void> {
     this.#invalidBackedUp = false;
 
-    if (this.#db) {
-      await this.#db.writeCollection(
-        this.#collectionName,
-        this.#filePath,
-        items,
-      );
-    } else {
-      await Bun.write(this.#filePath, JSON.stringify(items, null, 2));
-    }
+    await Bun.write(this.#filePath, JSON.stringify(items, null, 2));
   }
 
   /**
@@ -159,7 +127,7 @@ export class JsonFileRepo<T> {
     const dir = path.dirname(this.#filePath);
     const ext = path.extname(this.#filePath);
     const base = path.basename(this.#filePath, ext);
-    const stamp = isoNow().replace(/[:.]/g, '-');
+    const stamp = now().toISOString().slice(0, 16).replace(/[:.]/g, '-');
     const backupPath = path.join(
       dir,
       'backups',

@@ -1,5 +1,4 @@
-import type { U7CallerResolver } from '@u7-scl/app';
-import type { School, U7AppResolver } from '@u7-scl/app-legacy/domain';
+import type { School, U7CallerResolver } from '@u7-scl/app';
 import type { BotUiAppResolve } from '@u7-scl/core/ui';
 import type { UserAr } from '@u7-scl/domain/user/contract';
 import type { ReadonlyAr, UserCaller } from 'dmg-core';
@@ -26,7 +25,3 @@ export interface U7BotUiAppResolve extends BotUiAppResolve<U7BotActor> {
   /** telegramId администраторов для админ-команд (/log_level и др.) (FR-4) */
   adminTelegramIds?: number[];
 }
-
-// ================= API layer ===================
-
-export type { U7AppResolver };

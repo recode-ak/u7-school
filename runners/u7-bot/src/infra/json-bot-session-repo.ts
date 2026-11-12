@@ -1,6 +1,6 @@
-import { JsonFileRepo } from '@u7-scl/core/infra';
 import type { BotSession, BotSessionRepo } from '@u7-scl/core/ui';
 import * as v from 'valibot';
+import { JsonFileRepo } from './json-file-repo';
 
 /**
  * JSON-файловая реализация порта BotSessionRepo (трек

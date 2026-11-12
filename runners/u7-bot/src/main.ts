@@ -1,8 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { U7App } from '@u7-scl/app';
-import { CompositeLogger } from '@u7-scl/app-legacy/infra';
-import { FileReplayStore } from '@u7-scl/core/infra';
-import { legacyClock } from '@u7-scl/core/legacy-bridge';
+import { appClock, FileReplayStore, U7App } from '@u7-scl/app';
 import {
   ConsoleLogger,
   type Logger,
@@ -19,7 +16,7 @@ import { loadConfig } from './config';
 import { createUiApp } from './create-ui-app';
 import { BotTransport } from './infra/bot-transport';
 import { JsonBotSessionRepo } from './infra/json-bot-session-repo';
-import { FileLogger, TelegramLogger } from './infra/logger';
+import { CompositeLogger, FileLogger, TelegramLogger } from './infra/logger';
 
 const config = loadConfig(process.env);
 
@@ -60,7 +57,7 @@ const bot = createBot(config.botToken);
 // доставляет апдейт, не дождавшись ответа упавшего процесса.
 const replay = await FileReplayStore.open({
   dir: `${config.dbDir}/replay`,
-  clock: legacyClock(),
+  clock: appClock,
 });
 // Корень сборки (D-50): окружение — простые данные из конфига (ARC-09).
 const app = new U7App(

@@ -1,7 +1,16 @@
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  spyOn,
+  test,
+} from 'bun:test';
 import { mkdir, mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import * as Shared from '@u7-scl/core/shared';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
 import {
@@ -41,7 +50,12 @@ import {
   WishEvents,
   WishModuleDef,
 } from '@u7-scl/domain/wish/contract';
-import { type OperationRef, SystemCaller, UserCaller } from 'dmg-core';
+import {
+  type OperationRef,
+  SystemCaller,
+  type Timestamp,
+  UserCaller,
+} from 'dmg-core';
 import {
   type OperationRecord,
   type ReplayClaim,
@@ -83,11 +97,9 @@ describe('U7App (smoke: сборка с модулем peer-review)', () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  test('приложение собирается: peer-review — только Def-модуль DMG, legacy-модуля нет', () => {
+  test('приложение собирается: школа и резолвер из окружения', () => {
     const bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
 
-    // apiApp — приложение DMG (D-50), а не legacy-оболочка с реестром модулей
-    expect('getModule' in bundle.apiApp).toBe(false);
     expect(bundle.school.communityGroup.url).toBe('https://t.me/test-comm');
     expect(bundle.appResolver.mode).toBe('test');
     expect(bundle.appResolver.school.studentGroup.inviteUrl).toBe(
@@ -95,9 +107,8 @@ describe('U7App (smoke: сборка с модулем peer-review)', () => {
     );
   });
 
-  test('query-UC модуля (DMG) отвечает через apiApp без init планировщика', async () => {
+  test('query-UC модуля (DMG) отвечает через apiApp', async () => {
     const bundle = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
-    expect('init' in bundle.apiApp).toBe(false);
 
     // Кампании — модуль DMG: UC доступен через единый вход приложения
     const res = await bundle.apiApp.dispatch(
@@ -142,8 +153,8 @@ describe('U7App: сборка', () => {
 
   test('отдаёт поля бандла для UI раннера и резолвер callers', () => {
     expect(app.apiApp).toBeDefined();
-    expect('getModule' in app.apiApp).toBe(false);
     expect(app.school).toBe(app.appResolver.school);
+    expect(app.appResolver.eventBus).toBe(app.eventBus);
     expect(app.callers).toBeDefined();
   });
 
@@ -570,5 +581,154 @@ describe('U7App: событие completeStudent доходит до ER createStu
     expect(
       await Bun.file(join(dir, 'peer-review', 'campaigns.json')).exists(),
     ).toBe(true);
+  });
+});
+
+// ══ Планировщик заданий пакета: start()/stop() (D-71) ══
+
+/** Прогон давно в прошлом: у каждого задания — упущенный запуск (misfire). */
+const LONG_AGO: Timestamp = Date.UTC(2026, 0, 1);
+
+/** Задания модулей бота — история прогонов ведётся по их именам (D-71). */
+const JOBS = ['inactivitySweep', 'sweepAbandonedQuestionnaires'] as const;
+
+/** Файл истории прогонов приложения (`<dbDir>/jobs/last-runs.json`). */
+const lastRunsPath = (dir: string) => join(dir, 'jobs', 'last-runs.json');
+
+/** Записывает историю «оба задания упущены» — даты давно в прошлом. */
+async function seedLongAgoRuns(dir: string): Promise<void> {
+  await mkdir(join(dir, 'jobs'), { recursive: true });
+  const longAgo = new Date(LONG_AGO).toISOString();
+  await Bun.write(
+    lastRunsPath(dir),
+    JSON.stringify({
+      version: 1,
+      lastRuns: {
+        inactivitySweep: longAgo,
+        sweepAbandonedQuestionnaires: longAgo,
+      },
+    }),
+  );
+}
+
+/** История прогонов из файла: имя задания → ISO-дата. */
+async function readLastRuns(dir: string): Promise<Record<string, string>> {
+  const parsed = JSON.parse(await readFile(lastRunsPath(dir), 'utf8')) as {
+    lastRuns: Record<string, string>;
+  };
+  return parsed.lastRuns;
+}
+
+/** Ждёт, пока даты всех заданий станут новее `after` (не дольше 3 с). */
+async function waitRunsAfter(dir: string, after: Timestamp): Promise<void> {
+  const deadline = Date.now() + 3000;
+  while (Date.now() < deadline) {
+    const runs = await readLastRuns(dir);
+    if (JOBS.every((name) => Date.parse(runs[name] ?? '') > after)) return;
+    await new Promise((r) => setTimeout(r, 10));
+  }
+}
+
+describe('U7App: планировщик заданий', () => {
+  let dir: string;
+
+  beforeAll(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'u7-app-jobs-'));
+  });
+
+  afterAll(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test('start() запускает упущенные задания обоих модулей и обновляет историю прогонов', async () => {
+    await seedLongAgoRuns(dir);
+    const app = new U7App(makeEnv(dir), {
+      logger: new ConsoleLogger(),
+      jobStartDelayMs: 10,
+    });
+
+    app.start();
+    await waitRunsAfter(dir, LONG_AGO);
+    app.stop();
+
+    const runs = await readLastRuns(dir);
+    expect(Object.keys(runs).sort()).toEqual([...JOBS].sort());
+    for (const name of JOBS) {
+      expect(Date.parse(runs[name] ?? '')).toBeGreaterThan(LONG_AGO);
+    }
+  });
+
+  test('stop() до стартовой задержки: прогонов нет; после stop() start() снова возможен', async () => {
+    await seedLongAgoRuns(dir);
+    const before = await readLastRuns(dir);
+    const app = new U7App(makeEnv(dir), {
+      logger: new ConsoleLogger(),
+      jobStartDelayMs: 100,
+    });
+
+    app.start();
+    app.stop();
+    await new Promise((r) => setTimeout(r, 250));
+    expect(await readLastRuns(dir)).toEqual(before);
+
+    app.start();
+    await waitRunsAfter(dir, LONG_AGO);
+    app.stop();
+
+    const runs = await readLastRuns(dir);
+    for (const name of JOBS) {
+      expect(Date.parse(runs[name] ?? '')).toBeGreaterThan(LONG_AGO);
+    }
+  });
+
+  test('конструктор планировщик не запускает', async () => {
+    await seedLongAgoRuns(dir);
+    const before = await readLastRuns(dir);
+    new U7App(makeEnv(dir), {
+      logger: new ConsoleLogger(),
+      jobStartDelayMs: 10,
+    });
+
+    await new Promise((r) => setTimeout(r, 100));
+    expect(await readLastRuns(dir)).toEqual(before);
+  });
+});
+
+// ══ Часы корня сборки: заморозка now() действует и на DMG ══
+
+describe('U7App: часы', () => {
+  let dir: string;
+  let nowSpy: ReturnType<typeof spyOn> | undefined;
+
+  beforeAll(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'u7-app-clock-'));
+  });
+
+  afterEach(() => {
+    nowSpy?.mockRestore();
+  });
+
+  afterAll(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  test('часы U7App следуют now(): запись oplog несёт замороженное время', async () => {
+    const frozen = new Date(Date.UTC(2026, 9, 20, 12, 0));
+    nowSpy = spyOn(Shared, 'now').mockReturnValue(frozen);
+    const app = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
+
+    const res = await app.apiApp.dispatch(
+      UserModuleDef,
+      ListUsersUcDef.command({}),
+      new UserCaller(ACTOR),
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+    );
+    expect(res.ok).toBe(true);
+
+    const records = (await oplogRecords(dir)).filter(
+      (r) => r.module === 'user' && r.op === 'listUsers',
+    );
+    expect(records).toHaveLength(1);
+    expect(records[0]?.at).toBe(frozen.getTime());
   });
 });

@@ -110,3 +110,15 @@ ARC-06/ARC-07 (корень сборки — домен только `contract`,
 - `grep -rn "isoNow" --include=*.ts runners platform/app scripts` — пусто.
 - `bun run check` зелёный; `bun run test:bot` и e2e не ниже базовой Ф0 (тесты Ф4 переносятся, +4 новых); записи красной зоны Ф3–Ф4 в `debt.md` сняты (если были); бот поднимается на копии фикстур (шаг 4); `git status data/` чист.
 - `git diff --numstat` на перенесённых тестах: счёт `test()` у файла-назначения равен источнику (9, 14, 13; 3 + 2 новых).
+
+## Отчёты Ф4
+
+**`dmg-test-designer` (Sonnet).** Red: +4 теста в `u7-app.test.ts` (start/stop ×2, «конструктор не стартует», часы следуют `now()` — замена `legacy-clock.test`); `git mv` `school.test.ts` (9), `file-replay-store.test.ts` (14), `json-file-repo.test.ts` (13; тестов на `BaseJsonDb` не было); `job-run-json-repo.test.ts` — 3 перенесено из `in-proc-job-scheduler.test.ts` + 2 новых; импорты `@u7-scl/app` в 13 файлах бота и `scripts`. Нужный шов — `U7AppPorts.jobStartDelayMs`.
+
+**`migrator` (flash, `lr-F4-migrator`).** Green по п. 1–11 промпта; отклонения: `U7BotApp`/`U7BotAppMeta` удалены (потребителей нет), функция отписки `subscribe()` не хранится. Гейт зелёный, `test:bot` 924 pass, grep-критерии пусты. Доработка 1 (ревью): `Logger` и `warn` в `JobRunJsonRepo` (ERR-07), комментарии CODE-04, порт `jobRunRepo` убран — тесты через файл `<dbDir>/jobs/last-runs.json`, `appResolver.eventBus === eventBus`, без псевдонима `clock`, экспорт `JobRunJsonRepo` снят, тест «`set` сохраняет ключи других заданий». Доработка 2: удалены структурные проверки `'init' in`/`'getModule' in apiApp` (журнал `test-bloat`, Ф3).
+
+**`dmg-data-keeper` (flash, подсказка гейта).** Форматы `jobs/last-runs.json`, `bot/{sessions,short-ids}.json`, `replay/` не менялись; путь `JsonFileRepo` через `BaseJsonDb` в проде не использовался; миграция не нужна, откат безопасен. Ключи живой истории — сверить на ревизии (TR-66).
+
+**Smoke (Opus).** Скрипт по пути `main.ts` до верификации админа на временной копии `data/fixtures` (без Telegram): `U7App`, `createUiApp`, админ подтверждён; с давней историей оба задания прогнаны, `last-runs.json` записан в ISO, oplog пишется; `git status data/` чист.
+
+**`dmg-reviewer` (Opus).** 0 error, 2 warn (ERR-07 и CODE-04 в `JobRunJsonRepo`), 6 info, 1 question (порт `jobRunRepo`) — всё принято и исправлено в доработке 1, кроме info: CODE-02 (`#`-поля — обычай `platform/app`), отбрасывание отписки (по брифу), документы `README.md`/`TODO.md` — Ф7. Решения — TR-66.

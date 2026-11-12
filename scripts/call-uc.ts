@@ -40,8 +40,7 @@
  * actorId можно переопределить третьим аргументом.
  */
 
-import { U7App } from '@u7-scl/app';
-import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
+import { TEST_SCHOOL, U7App } from '@u7-scl/app';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';

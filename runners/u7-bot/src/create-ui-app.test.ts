@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
+import { TEST_SCHOOL } from '@u7-scl/app';
 import { userSubject } from '@u7-scl/domain/user/testing';
 import { GuestCaller, UserCaller } from 'dmg-core';
 import { createUiApp, type UiAppSource } from './create-ui-app';

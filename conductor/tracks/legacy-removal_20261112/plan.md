@@ -73,7 +73,7 @@
 
 ## Фаза 4: Сборка — `U7App` без legacy
 
-- [ ] Task: `dmg-test-designer`: red-тесты `platform/app/tests` — `apiApp` = dmg `ApiApp`, планировщик пакета, `School` из `platform/app/src/school`; тесты `FileReplayStore`/`JobRunJsonRepo` переезжают в `platform/app/src/infra` (Sonnet)
+- [~] Task: `dmg-test-designer`: red-тесты `platform/app/tests` — `apiApp` = dmg `ApiApp`, планировщик пакета, `School` из `platform/app/src/school`; тесты `FileReplayStore`/`JobRunJsonRepo` переезжают в `platform/app/src/infra` (Sonnet)
 - [ ] Task: `migrator` (flash):
     - [ ] `School` → `platform/app/src/school/`; `U7AppResolver` → явный тип в `app`
     - [ ] `U7App` на dmg `ApiApp`, `InProcEventBus` и планировщик пакета, `systemClock`; `legacyEventBus`/`legacyClock`/`legacyJobsOf` не используются

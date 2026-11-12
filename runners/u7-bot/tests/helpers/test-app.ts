@@ -1,5 +1,4 @@
-import { U7App, type U7CallerResolver } from '@u7-scl/app';
-import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
+import { TEST_SCHOOL, U7App, type U7CallerResolver } from '@u7-scl/app';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import { ReviewCampaignJsonRepo, ReviewJsonRepo } from '@u7-scl/peer-review';
 import { WishJsonRepo } from '@u7-scl/wish';

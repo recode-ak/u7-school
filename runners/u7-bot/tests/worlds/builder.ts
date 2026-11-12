@@ -1,4 +1,4 @@
-import { U7_SCHOOL_ID } from '@u7-scl/app-legacy/domain';
+import { U7_SCHOOL_ID } from '@u7-scl/app';
 import type { ProjectEntity } from '@u7-scl/domain/course/testing';
 import { Status } from '@u7-scl/domain/course/testing';
 import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';

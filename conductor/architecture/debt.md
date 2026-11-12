@@ -694,3 +694,15 @@
   - Публичный `appResolver.eventBus` ещё отдаёт legacy-транспорт (публикаторов нет) — перевод в Ф4 (`assembly.md`).
   - По ревью (warn) поправлено в срезе: инвариант переспроса `errorNotify` (нет `release`/`awaitInput`) возвращён в internal-тест; затенение `legacyEventBus` в `u7-app.ts`; мёртвый реэкспорт `U7BotApp`; дубли типов событий в тестах `peer-review`; `as never` в `baseEvent` тест-кита анкеты.
 - **Пересмотреть:** —
+
+### TR-66: решения Ф4 трека `legacy-removal` (сборка `U7App` без legacy)
+- **Трек / фаза:** `legacy-removal`, Ф4 (orchestrator; бриф `slices/assembly.md`)
+- **Контекст:** `U7App` переведён на dmg `ApiApp`, одну шину DMG, `appClock` и планировщик пакета; проектные адаптеры (`School`, `FileReplayStore`, `JobRunJsonRepo`, `JsonFileRepo`, `CompositeLogger`) перенесены из legacy. Ревью дало 2 warn, 6 info и 1 question без `error`; `dmg-data-keeper` (по подсказке гейта) — миграция данных не нужна.
+- **Решение:**
+  - Тестовый шов планировщика — только `U7AppPorts.jobStartDelayMs`; порт `jobRunRepo` не вводится (question ревью): тесты start/stop идут через файл `<dbDir>/jobs/last-runs.json`, боевой путь под тестом.
+  - `JobRunJsonRepo` получает `Logger`: повреждённый файл и нечитаемая дата — `warn` (ERR-07), поведение прежнее («история начинается заново»); из публичного экспорта `@u7-scl/app` не выходит.
+  - `U7BotApp`/`U7BotAppMeta` удалены, а не переведены на `U7App['apiApp']` (потребителей нет); функция отписки `subscribe()` не хранится — `stop()` ER не отписывает (как в брифе).
+  - Smoke бота — скрипт по пути `main.ts` до верификации админа на временной копии `data/fixtures` (без Telegram): задания прогоняются, `last-runs.json` в прежнем формате ISO, `data/` не тронут. Полный `main.ts` без боевого токена не стартует (`bot.start`).
+  - Живого `data/jobs/last-runs.json` в рабочем каталоге нет: ключи истории на бою (ожидаемо `inactivitySweep`, `sweepAbandonedQuestionnaires` — `def.name`, D-71) сверить на ревизии перед деплоем (`jq -r '.lastRuns | keys'`); чужие ключи инертны.
+  - Новое жёсткое ограничение пакета: коллизия имён заданий — ошибка `start()` (D-71); сейчас имена уникальны.
+- **Пересмотреть:** на ревизии — сверка ключей `last-runs.json` на бою.

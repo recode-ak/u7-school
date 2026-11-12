@@ -5,5 +5,6 @@
  * для отправки WARN/ERROR администраторам.
  */
 
+export { CompositeLogger } from './composite-logger';
 export { FileLogger } from './file-logger';
 export { TelegramLogger } from './telegram-logger';

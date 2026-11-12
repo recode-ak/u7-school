@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { TEST_SCHOOL } from '@u7-scl/app-legacy/domain';
+import { TEST_SCHOOL } from '@u7-scl/app';
 import { setGlobalLogger } from '@u7-scl/core/shared';
 import type { BotSession } from '@u7-scl/core/ui';
 import {

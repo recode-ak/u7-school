@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
-import { JsonFileRepoError } from '@u7-scl/core/infra';
 import { type Logger, mdRaw, setGlobalLogger } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -13,6 +12,7 @@ import type { BotContext } from '../context';
 import type { DialogUiAppPort } from './bot-transport';
 import { BotTransport } from './bot-transport';
 import { JsonBotSessionRepo } from './json-bot-session-repo';
+import { JsonFileRepoError } from './json-file-repo';
 
 /**
  * Тесты персистентности транспорта (трек bot-ui-session-persist):
