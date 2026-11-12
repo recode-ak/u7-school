@@ -45,14 +45,14 @@
 - `bun run arch:check` зелёный, `dossier` проверяется как обычный модуль; DEBT-3, DEBT-34 сняты.
 - `check` зелёный, тесты не ниже базовой линии.
 
-## Фаза 2: `dmg-core` — планировщик заданий
+## Фаза 2: `dmg-core` — планировщик заданий [checkpoint: 5b120181]
 
 - [x] Task: Opus: решение D-71 (было D-NN) в `docs/decisions.md` пакета — порты `JobScheduler`/`JobRunRepo`, in-proc реализация (planner, runner, scheduler, Memory-репо запусков); вход — `AnyJobDef` + `ApiApp.runJob`, `Clock` из `AppContext`, `Logger` пакета dmg-core@bbc4484
 - [x] Task: `dmg-test-designer`: перенос тестов `core/infra/{job-schedule-planner,scheduled-job-runner,in-proc-job-scheduler,in-proc-job-executor,job-run-repo}` в пакет (TST-08), red под новый вход (Sonnet) dmg-core@bbc4484
 - [x] Task: `migrator` (flash): реализация в `~/dev/tools/dmg/dmg-core`; документы пакета по `bun run docs:impact` dmg-core@bbc4484
 - [x] Task: orchestrator: `check` и `e2e` пакета, коммит пакета; `bun install`, `dmg:sync`, `agents:sync` в u7-school; `check` u7-school dmg-core@bbc4484
 - [x] Task: `dmg-reviewer` (Opus) dmg-core@bbc4484
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (автономно: `check` пакета и u7-school зелёные, ревью без `error`, TR-64) (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 2:**
 - В `dmg-core` тесты планировщика зелёные, `bun run check` и `bun run e2e` зелёные, D-NN записано, документы по `covers:` обновлены.
