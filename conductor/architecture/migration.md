@@ -70,13 +70,13 @@
 
 ## 4. Сосуществование
 
-- Старые `UseCase`/`EventReaction`/`Job`, `throw*`, Ds работают до миграции своего модуля; паттерны — [legacy.md](./legacy.md).
+- Старые `UseCase`/`EventReaction`/`Job`, `throw*`, Ds работали до миграции своего модуля.
 - UC legacy — `appApi.execute` по строковому имени (бросает); UC DMG — команда `appApi.dispatch(moduleDef, …)` (`Result`, D-49).
 - Схемы с `F.timestamp` читают ISO-строку и число, пишут число — данные мигрируют лениво до трека 7.
 
 ## 5. Критерий завершения
 
-Все модули в `@u7-scl/domain`, нет реэкспортов в старых пакетах, нет `throw*` для штатных отказов, нет строковых дат, все проверки [rules.md](./rules.md) машинные — блокирующие, кроме помеченных `review`; `legacy.md` удалён.
+Все модули в `@u7-scl/domain`, нет реэкспортов в старых пакетах, нет `throw*` для штатных отказов, нет строковых дат, все проверки [rules.md](./rules.md) машинные — блокирующие, кроме помеченных `review`; документ паттернов legacy удалён (трек `legacy-removal`).
 
 Общее видение процесса и оправдавшие себя роли переехали в пакет (трек `agent-roles-wave2`): [process.md](../../node_modules/dmg-core/docs/process.md) и `agents/` пакета; проектные документы ([agents.md](./agents.md), [agent-roles.md](./agent-roles.md)) оставляют только привязку к проекту. Роли пакета с префиксом `dmg-*` ([agent-roles.md](./agent-roles.md) §1, п. 6): `dmg-domain-author`, `dmg-api-author`, `dmg-reviewer`, `dmg-tech-lead`, `dmg-test-designer`, `dmg-data-keeper`; проектные роли без префикса.
 

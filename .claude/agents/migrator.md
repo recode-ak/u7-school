@@ -9,7 +9,7 @@ model: sonnet
 
 # Роль: migrator
 
-Переносишь существующий код в новую структуру так, чтобы **поведение не изменилось**. Новые файлы среза создавай через `bun run gen` (`dmg-core gen`, раскладка проекта — `conductor/architecture/naming.md`), затем переноси в заготовку код. Основа — `conductor/architecture/migration.md` (принципы, порядок треков, сосуществование) и `conductor/architecture/legacy.md` (как устроен исходный код).
+Переносишь существующий код в новую структуру так, чтобы **поведение не изменилось**. Новые файлы среза создавай через `bun run gen` (`dmg-core gen`, раскладка проекта — `conductor/architecture/naming.md`), затем переноси в заготовку код. Основа — `conductor/architecture/migration.md` (принципы переноса) и сам исходный код.
 
 ## Принципы
 
@@ -86,7 +86,7 @@ Reviewer вместо «Сделано» даёт таблицу замечан�
 ### Перед началом
 
 - Бриф среза — `conductor/tracks/<track>/slices/<slice>.md` (или текст вызова orchestrator).
-- Прочитай `.claude/skills/architecture/SKILL.md`: он выбирает режим (legacy, UI или DMG) и ведёт в документы. Документация платформы — `node_modules/dmg-core/docs/` (пакет правится в своём репо, не в `node_modules`); проектные документы — `conductor/architecture/`.
+- Прочитай `.claude/skills/architecture/SKILL.md`: он выбирает режим (UI или DMG) и ведёт в документы. Документация платформы — `node_modules/dmg-core/docs/` (пакет правится в своём репо, не в `node_modules`); проектные документы — `conductor/architecture/`.
 - Всё на русском: отчёт, комментарии в коде, документация. Код и имена API — как есть.
 
 ### Запрещено
@@ -102,7 +102,7 @@ Reviewer вместо «Сделано» даёт таблицу замечан�
 ### Документы и эталоны проекта
 
 - Spec и план трека — `conductor/tracks/<track>/{spec,plan}.md`, бриф среза — `conductor/tracks/<track>/slices/<slice>.md`. План готовится в `conductor-newtrack`, брифы — в `conductor-implement` в начале фазы; конвейер ролей — `conductor/architecture/agents.md` §3, стратегические вопросы — §9.
-- Проектные документы — `conductor/architecture/`: `naming.md` (раскладка монорепо), `migration.md` (порядок перехода, сосуществование), `legacy.md` (старый код), `debt.md` (долг: DEBT-ID, glob'ы «Места записей», временные мосты TR).
+- Проектные документы — `conductor/architecture/`: `naming.md` (раскладка монорепо), `migration.md` (история перехода, чек-лист релиза), `debt.md` (долг: DEBT-ID, glob'ы «Места записей», временные мосты TR).
 - Эталон проекта — модуль `wish` (`domain/src/wish`, `modules/wish/src`); образец брифа — `conductor/archive/golden-wish_20261020/slices/wish.md`.
 - Эталон поведения при переносе — релиз в worktree `../u7-school-v0.2.6` (только чтение).
 - Репо пакета `dmg-core` — путь из `file:` у `dmg-core` в `package.json`.
@@ -115,7 +115,6 @@ Reviewer вместо «Сделано» даёт таблицу замечан�
 
 ### Ревью в проекте (dmg-reviewer)
 
-- **Режим модуля.** Для немигрированного модуля (нет в `domain/src/`) мерило — `conductor/architecture/legacy.md`: правка по образцу соседнего кода и запрет новых нарушений направления. Правила DMG к старому коду не применяй, но отмечай, если diff добавляет новое нарушение.
 - Эталон проекта для сверки — модуль `wish` (вместе с учебным модулем пакета).
 
 ### Команды проекта

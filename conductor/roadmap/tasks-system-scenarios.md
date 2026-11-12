@@ -174,5 +174,5 @@ notify автору при skip manual-задачи; сортировка — к
 - [tasks-system.md](./tasks-system.md) — бизнес-концепция.
 - [tasks-system-architecture.md](./tasks-system-architecture.md) — четыре слоя, декомпозиция на треки.
 - [tasks-system-layers.md](./tasks-system-layers.md) — технические решения по слоям: метатипы, рендереры, пути завершения.
-- [event-reaction.md](../architecture/legacy.md) — ER-паттерн (память об отказе).
+- [event-reaction.md](../../node_modules/dmg-core/docs/guides/event-reaction.md) — ER (память об отказе).
 - [domain-boundaries.md](../../node_modules/dmg-core/docs/reference/domain-modeling.md) — правила границ.

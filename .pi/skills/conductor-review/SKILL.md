@@ -56,7 +56,7 @@ description: Проверяет завершённую работу трека �
 1.  **Загрузи контекст проекта:**
     -   Прочитай `product-guidelines.md` и `tech-stack.md`.
     -   **КРИТИЧНО:** Загрузи skill `architecture` и прочитай `conductor/architecture/index.md`, `conductor/architecture/rules.md`, `naming.md` и в `node_modules/dmg-core/docs/reference/` — `rules.md`, `layers.md`, `domain-modeling.md`. Каталог `rules.md` — это **Закон**: каждое замечание ссылается на ID правила; нарушения машинно-проверяемых правил — **Высокая** серьёзность.
-    -   Для немигрированных модулей сверяйся с `conductor/architecture/legacy.md`, для бота — с `conductor/architecture/ui/`.
+    -   Для бота сверяйся с `conductor/architecture/ui/`.
 2.  **Загрузи контекст трека (если проверяется трек):**
     -   Прочитай `plan.md` трека.
     -   **Извлеки коммиты:** Разбери `plan.md`, чтобы найти записанные хеши git-коммитов.

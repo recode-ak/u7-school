@@ -156,4 +156,4 @@ job бездействия (stream) → taskFacade.upsert({ kind: 'stream.inacti
 - [tasks-system-layers.md](./tasks-system-layers.md) — детальная проработка слоёв: метатипы TaskKindMeta/TaskTypeMeta, kind-рендереры, сопоставление.
 - [development-roadmap.md](./development-roadmap.md) — место инициативы V в очереди релизов.
 - [dmg-core/docs/reference/domain-modeling.md](../../node_modules/dmg-core/docs/reference/domain-modeling.md) — правила границ (фасады, ER).
-- [architecture/legacy.md](../architecture/legacy.md) — ER-паттерн для памяти об отказе.
+- [dmg-core/docs/guides/event-reaction.md](../../node_modules/dmg-core/docs/guides/event-reaction.md) — ER (память об отказе).

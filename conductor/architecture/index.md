@@ -1,8 +1,8 @@
 # Архитектура
 
-**Назначение:** вход в техническую документацию u7-school. Платформа DMG (Domain Manifest Graph) документирована в пакете `dmg-core` — [node_modules/dmg-core/docs/index.md](../../node_modules/dmg-core/docs/index.md). Здесь — проектное: раскладка монорепо, переход, legacy, UI, процесс агентов, решения проекта.
+**Назначение:** вход в техническую документацию u7-school. Платформа DMG (Domain Manifest Graph) документирована в пакете `dmg-core` — [node_modules/dmg-core/docs/index.md](../../node_modules/dmg-core/docs/index.md). Здесь — проектное: раскладка монорепо, переход, UI, процесс агентов, решения проекта.
 
-> Статус: **переход идёт.** Эталонный модуль `wish` переведён на DMG (трек golden-wish); гайды по видам артефактов — в пакете ([guides/](../../node_modules/dmg-core/docs/guides/index.md)), образец — учебный модуль пакета. Состояние переноса — [migration.md](./migration.md) §6. Немигрированный код сопровождается по [legacy.md](./legacy.md). UI-слой — концепция в [ui-manifests.md](./ui-manifests.md), реализация позже.
+> Статус: **переход завершён** (трек `legacy-removal`): все модули на DMG, legacy-кода нет; до релиза — ревизия и чек-лист ([migration.md](./migration.md) §6). Эталон проекта — модуль `wish`; гайды по видам артефактов — в пакете ([guides/](../../node_modules/dmg-core/docs/guides/index.md)), образец — учебный модуль пакета. UI-слой — концепция в [ui-manifests.md](./ui-manifests.md), реализация позже.
 
 ---
 
@@ -10,7 +10,7 @@
 
 | Ось ([layers.md](../../node_modules/dmg-core/docs/reference/layers.md)) | Пакеты u7-school |
 |---|---|
-| Платформа | `dmg-core` (репо `~/dev/tools/dmg/dmg-core`, в проекте — `node_modules/dmg-core`, D-61), приложение `@u7-scl/app`; legacy `@u7-scl/core`, legacy-ядро приложения `@u7-scl/app-legacy` (TR-33) и мосты `platform/core/src/legacy-bridge` |
+| Платформа | `dmg-core` (репо `~/dev/tools/dmg/dmg-core`, в проекте — `node_modules/dmg-core`, D-61), приложение `@u7-scl/app` (корень сборки `U7App`, `school/`, файловые адаптеры `infra/`); `@u7-scl/core` — только `ui` и `shared`, кандидат на удаление при `dmg-ui` |
 | Домен | `@u7-scl/domain` (`domain/src/<m>`; вход модуля — `@u7-scl/domain/<m>/contract`) |
 | Прикладной слой | `modules/<m>/src` (1:1 с модулем домена) |
 | Входные адаптеры | `runners/*`: бот `u7-bot`, позже web и транспорты; операции — через `appApi` |
@@ -24,7 +24,6 @@
 | Понять устройство DMG | [layers.md](../../node_modules/dmg-core/docs/reference/layers.md) → [domain-modeling.md](../../node_modules/dmg-core/docs/reference/domain-modeling.md) |
 | Создать файл / объект | [naming.md пакета](../../node_modules/dmg-core/docs/reference/naming.md), генератор в проекте — [naming.md](./naming.md) → [rules.md](./rules.md) |
 | Написать артефакт по образцу | [guides/](../../node_modules/dmg-core/docs/guides/index.md) + эталон `wish` |
-| Править немигрированный модуль | [legacy.md](./legacy.md) |
 | Работать с ботом | [ui/](./ui/bot-architecture.md) |
 | Работать агентом | [agents.md](./agents.md), [agent-roles.md](./agent-roles.md), скилы `architecture` и `dmg-architecture` |
 | Отдать шаг DeepSeek | [deepseek.md](./deepseek.md) |
@@ -49,8 +48,7 @@
 - [naming.md](./naming.md) — генератор в проекте: раскладка `dmg-core.json`, новый прикладной пакет
 
 **Переход и процесс**
-- [migration.md](./migration.md) — треки перехода, что исправляется, сосуществование
-- [legacy.md](./legacy.md) — паттерны немигрированного кода (удаляется после перехода)
+- [migration.md](./migration.md) — история перехода, что он исправил, чек-лист релиза
 - [debt.md](./debt.md) — реестр долга `DEBT-<n>` и тактических решений `TR-<n>`
 - [agents.md](./agents.md) — роли агентов, контуры качества, связь с conductor, среды Claude Code и pi
 - [process.md](../../node_modules/dmg-core/docs/process.md) — общее видение процесса (уровни постановки, роли, срез, SDD и без него), в пакете `dmg-core`
