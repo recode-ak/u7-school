@@ -101,12 +101,13 @@
 - Каталога `platform/app-legacy` нет; `@u7-scl/core` экспортирует только `ui` и `shared`; классов `UseCase`, `ApiModule`, `ApiApp`, `Aggregate`, `AppError` в `core` нет.
 - `check` зелёный; число тестов сверено с базой, удалённые перечислены.
 
-## Фаза 6: `u7-cli` → `dmg-cli`
+## Фаза 6: `u7-cli` → `dmg-cli` [checkpoint: 9b8e71e3]
 
-- [ ] Task: Opus: `~/dev/tools/dmg/dmg-cli` — `git init`, перенос `src/` без `package.json` и `node_modules`; README: «нерабочая заготовка — не собирается, не используется» и концепция (автоматический текстовый интерфейс к бэку на dmg-core: модули и UC из графа Def, ввод по схеме входа, `dispatch`, выполнение от чужого имени — подмена `Caller`; одна механика для терминала и бота с адаптацией под канал; заменит `call-uc`); первый коммит
-- [ ] Task: `migrator` (flash): удалить `runners/u7-cli`, правка `scripts/domain-arch.test.ts`, упоминаний в `README.md`; `bun install`
-- [ ] Task: Opus: DEBT-42 переформулировать (`call-uc` остаётся) — **до гейта** удаления `u7-cli` (`checkDebt`, TR-62); кандидат «`dmg-cli`» в `roadmap.md` со ссылкой на README
-- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
+- [x] Task: Opus: `~/dev/tools/dmg/dmg-cli` — `git init`, перенос `src/` без `package.json` и `node_modules`; README: «нерабочая заготовка — не собирается, не используется» и концепция (автоматический текстовый интерфейс к бэку на dmg-core: модули и UC из графа Def, ввод по схеме входа, `dispatch`, выполнение от чужого имени — подмена `Caller`; одна механика для терминала и бота с адаптацией под канал; заменит `call-uc`); первый коммит dmg-cli@848afee
+- [x] Task: `migrator` (flash): удалить `runners/u7-cli`, правка `scripts/domain-arch.test.ts`, упоминаний в `README.md`; `bun install` 35ddaa6
+    - ещё `scripts/arch-check.test.ts` (`assemblyPackages`), фикстуры `@u7-scl/cli` → `@u7-scl/admin` в `domain-check.test.ts`, комментарий `call-uc.ts` (без ID долга — ID только в `debt.md`); ревью — orchestrator по diff (шаг механический, `dmg-reviewer` в Ф6 не запланирован)
+- [x] Task: Opus: DEBT-42 переформулировать (`call-uc` остаётся) — **до гейта** удаления `u7-cli` (`checkDebt`, TR-62); кандидат «`dmg-cli`» в `roadmap.md` (п. 11) со ссылкой на README 35ddaa6
+- [x] Task: Conductor - User Manual Verification 'Фаза 6' (автономно: `check` зелёный, 3086 pass; ревью diff — orchestrator) (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 6:**
 - Каталога `runners/u7-cli` нет; `~/dev/tools/dmg/dmg-cli/README.md` есть, код перенесён, первый коммит сделан.
