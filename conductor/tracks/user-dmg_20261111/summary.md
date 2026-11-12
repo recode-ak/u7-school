@@ -10,6 +10,17 @@
 | u7-school (`b3b44aea`) | `CI=true bun test modules/user` | 67 pass, 0 fail (12 файлов) |
 | dmg-core (`93333e8`) | `CI=true bun test` | 1379 pass, 0 fail (131 файл) |
 
+## Гейт закрытия (2026-11-12, Ф8)
+
+| Где | Команда | Результат | Против базовой линии |
+|---|---|---|---|
+| u7-school (`15a919ad`) | `CI=true bun test` | 3083 pass, 0 fail (320 файлов) | 3179 → 3083: −113 тестов контента `data/**` исключены из `bun test` (`6d3af7b6`); без них 3066 → 3083 (+17) |
+| u7-school (`15a919ad`) | `bun run test:bot` | 921 pass, 0 fail (94 файла) | +27 |
+| u7-school (`15a919ad`) | `CI=true bun test domain/src/user` | 38 pass, 0 fail (6 файлов) | +11 |
+| u7-school (`15a919ad`) | `CI=true bun test modules/user` | 56 pass, 0 fail (9 файлов) | −11: тесты legacy-UC, фасада и репозитория удалены в Ф6 вместе с кодом (пик Ф2 с legacy рядом — 184 на оба пакета) |
+| u7-school (`15a919ad`) | `bun run check` | зелёный | — |
+| dmg-core (`d2128ce`) | `CI=true bun test` | 1384 pass, 0 fail (131 файл) | +5 (вход `testing`, D-70) |
+
 ## Пилот ролей
 
 Строка на каждый вызов роли ([agent-roles.md](../../architecture/agent-roles.md) §5).
