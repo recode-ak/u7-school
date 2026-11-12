@@ -13,7 +13,7 @@
 
 ## Фаза 0: Подготовка
 
-- [ ] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, `bun run check`; сверить с «Гейтом закрытия» `legacy-removal` (3083 / 921 pass) (Opus)
+- [~] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, `bun run check`; сверить с «Гейтом закрытия» `legacy-removal` (3083 / 921 pass) (Opus)
 - [ ] Task: Проверить worktree `../u7-school-v0.2.6`: `git describe --tags` = `v0.2.6`, дерево чистое
 - [ ] Task: Каркас артефактов: шаблоны строки сверки, триажа, карточки (суть / варианты / рекомендация / решение)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
@@ -114,7 +114,7 @@
     - [ ] порядок на prod-машине (отдельная сессия): `git pull` → остановить прод → бэкап → миграции → запустить новую версию
     - [ ] миграции: `migrate-users-drop-student` (сухой прогон → `--write`), `questionnaires.json` (TR-49 (7)), `replay/`, `last-runs.json`, сессии бота
     - [ ] бэкапы и откат (только из снимка — v0.2.6 новый формат не прочтёт)
-    - [ ] diff env относительно v0.2.6; остатки `apps/`/`packages/`; `deploy.sh`
+    - [ ] diff env относительно v0.2.6; остатки старых каталогов `apps` и `packages`; `deploy.sh`
 - [ ] Task: orchestrator: ссылка из `migration.md` §6 на `rollout.md`, синхронизация чек-листа
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 

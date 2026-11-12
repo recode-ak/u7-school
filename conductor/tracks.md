@@ -8,5 +8,5 @@
 
 ---
 
-- [ ] **Track: Ревизия перехода по v0.2.6 и релиз v0.3.0**
+- [~] **Track: Ревизия перехода по v0.2.6 и релиз v0.3.0**
 *Link: [./tracks/revision-release_20261112/](./tracks/revision-release_20261112/)*
