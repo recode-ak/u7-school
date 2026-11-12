@@ -59,3 +59,27 @@
 ## Почищенные случаи `test-bloat`
 
 - Ф4: `platform/app/tests/u7-app.test.ts` — структурные проверки `'init' in`/`'getModule' in apiApp` (TST-09, запись Ф3) удалены.
+
+## Аудит `throw*` (Ф7, `dmg-reviewer`, Opus)
+
+Область — `domain/src`, `modules/*/src`, `platform/*/src`, `runners/*/src`, `scripts/*.ts` без тестов. Мерило — `errors-result.md` §1, §3 пакета, ERR-01/06/07. Бывших `throw*`-хелперов нет; в домене все броски — инварианты с обоснованием (`biome-ignore`). Всего 63 `throw` и 10 `assert*`; исправление — за рамками трека.
+
+**Штатный отказ (1, warn):**
+
+| Место | Что | Как должно быть |
+|---|---|---|
+| `runners/u7-bot/src/create-ui-app.ts:102` | `actorResolver` бросает, если `Caller` не `UserCaller`: незарегистрированный пишет боту без `/start` — `bot.catch` логирует `error`, пользователь ответа не получает | гость — штатный исход: актор допускает гостя, либо вход UiApp делает `ensureRegisteredGuest`/отвечает «наберите /start» (ERR-01, ERR-06) |
+
+**Пограничные (8, info):**
+
+| Место | Суть | Рекомендация |
+|---|---|---|
+| `modules/peer-review/src/infra/review.json-repo.ts:98`, `review-campaign.json-repo.ts:73` | дубль ключа нового агрегата при гонке → `SERVER_INTERNAL` | `VersionConflict` → `VERSION_CONFLICT` (§3) |
+| `runners/u7-bot/.../scope-reviews.story.ts:92` | `STREAM_NOT_FOUND` по `scopeId` из callback_data (устаревшая/подделанная) | ветка `NOT_FOUND` с экраном |
+| `.../campaign.story.ts:427`, `.../my-reviews.story.ts:299` | `NOT_FOUND` потока по ссылке из записи — дефект данных | оставить, при случае — `switch` |
+| `runners/u7-bot/src/ensure-registered.ts:53` | `first_name` из одних пробелов → `INPUT_VALIDATION`, регистрации нет | имя по умолчанию или обработка ветки |
+| `modules/stream/src/student/uc/enroll-student.uc.ts:91`, `stream/uc/activate-stream.uc.ts:54` | по смыслу инварианты, но ERR-01 в `biome.json` не охватывает `modules/*/src` — нет `biome-ignore` с причиной | расширить `includes` ERR-01 на `modules/*/src/**/*.{uc,er}.ts` |
+
+**Допустимые (54):** инварианты/ошибки программиста — 12; UI: переброс базовых ошибок UC с `errors: []` и битых ссылок — 16 (часть ловится локально с `warn`, ERR-07); конфигурация и контент при старте — 11; I/O и повреждённые данные — 2 (`json-file-repo.ts`); CLI `scripts/` — 13.
+
+**Вывод:** критерий [migration.md](../../architecture/migration.md) §5 «нет `throw*` для штатных отказов» выполнен не полностью: 1 штатный отказ в раннере бота и 8 пограничных мест — кандидаты на ревизию.
