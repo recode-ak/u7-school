@@ -138,14 +138,14 @@
 ## Фаза 8: Итог
 
 - [x] Task: Гейт закрытия: `CI=true bun test`, `bun run test:bot`, `dmg-core` `bun test` — сравнение с базовой линией в `summary.md` (Opus) fd51464c
-- [ ] Task: Документы (Opus):
-    - [ ] `debt.md` — снять DEBT-1, 2, 5, 34, 48 (user; DEBT-44 снят в Ф2), DEBT-3 (кроме `dossier`); закрыть TR-33, TR-40, TR-49 (6);
-    - [ ] `migration.md` §6 — состояние, чек-лист релиза (`bun run backup` → скрипт миграции `STUDENT` → подтверждение Нурболата; legacy-писателя `users.json` в релизе нет — иначе потеря записей, отчёт data-keeper Ф2), следующий трек;
-    - [ ] `deepseek.md` — сверка таблицы §2 с данными трека;
-    - [ ] `summary.md` — таблица критериев spec и строка «DeepSeek».
-    - [ ] `domain/package.json` — мёртвая зависимость `@u7-scl/app-legacy` (в `domain/src` не импортируется; с `app-legacy → domain` — цикл манифестов; ревью Ф7) — снять;
-    - [ ] упоминания роли `STUDENT` в документах (`README.md`, `runners/u7-bot/src/controllers/learning/ui-spec.md`, `courses/content-nav.md`, `modules/stream/src/analysis.md`, `TODO.md`) — ревью Ф3;
-    - [ ] чек-лист релиза: миграция `STUDENT` — ДО выкатки нового кода, бэкап `--name=before-drop-student`; проверка живого `users.json` (записи со `STUDENT`, без `updatedAt`) — Нурболат (отчёт `dmg-data-keeper` Ф3). Первая команда нового кода переписывает `users.json` целиком в новый формат — `v0.2.6` его не читает, откат только из бэкапа (отчёт `dmg-data-keeper` Ф6).
+- [x] Task: Документы (Opus):
+    - [x] `debt.md` — снять DEBT-1, 2, 5, 34, 48 (user; DEBT-44 снят в Ф2), DEBT-3 (кроме `dossier`); закрыть TR-33, TR-40, TR-49 (6); — DEBT-1, 2, 5, 48 сняты раньше (Ф2–Ф6); DEBT-34 остаётся за `dossier` (`user` убран из причины); TR-33 закрыт для `user` (`app-legacy` — с `dossier`);
+    - [x] `migration.md` §6 — состояние, чек-лист релиза (`bun run backup` → скрипт миграции `STUDENT` → подтверждение Нурболата; legacy-писателя `users.json` в релизе нет — иначе потеря записей, отчёт data-keeper Ф2), следующий трек;
+    - [x] `deepseek.md` — сверка таблицы §2 с данными трека;
+    - [x] `summary.md` — таблица критериев spec и строка «DeepSeek».
+    - [x] `domain/package.json` — мёртвая зависимость `@u7-scl/app-legacy` (в `domain/src` не импортируется; с `app-legacy → domain` — цикл манифестов; ревью Ф7) — снять; заодно снята мёртвая `@u7-scl/core` (в `domain/src` не импортируется, DEBT-1 погашен);
+    - [x] упоминания роли `STUDENT` в документах (`README.md`, `runners/u7-bot/src/controllers/learning/ui-spec.md`, `courses/content-nav.md`, `modules/stream/src/analysis.md`, `TODO.md`) — ревью Ф3;
+    - [x] чек-лист релиза: миграция `STUDENT` — ДО выкатки нового кода, бэкап `--name=before-drop-student`; проверка живого `users.json` (записи со `STUDENT`, без `updatedAt`) — Нурболат (отчёт `dmg-data-keeper` Ф3). Первая команда нового кода переписывает `users.json` целиком в новый формат — `v0.2.6` его не читает, откат только из бэкапа (отчёт `dmg-data-keeper` Ф6).
 - [ ] Task: Conductor - User Manual Verification 'Фаза 8' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 8:**

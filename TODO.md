@@ -101,7 +101,7 @@
 - Enriched статусы: `enrolled | active | abandoned | completed | wants_next | advanced | not_advanced` (+ `abandonReason`).
 - `StudentAr` методы: `activate`, `drop`, `markAbandoned`, `complete`, `markWantsNext`, `advance`, `markNotAdvanced`.
 - UC: `complete-student` (ментор), `drop-student` (self), `mark-abandoned` (mentor).
-- `CompleteStreamUc`: при завершении потока active/enrolled → `completed`, снять `STUDENT`.
+- `CompleteStreamUc`: при завершении потока active/enrolled → `completed` (роль `STUDENT` снята из модели в треке `user-dmg`).
 - `User.nick` (опц. поле).
 - Confirm-хелпер в `core/ui` (формализовать convention `action`/`action-confirm`).
 - Миграция: `dropped`→`abandoned(voluntary)`, `expelled`→`abandoned(by_mentor)` — на месте.
@@ -151,7 +151,6 @@
 - Типы шагов (тест/квиз, практическое задание с ревью).
 - Заморозка студента (академический отпуск).
 - Синхронизация контента (обновление `contentSnapshot` при изменении модуля).
-- Снятие `CANDIDATE` при `+STUDENT` (сейчас: только добавление `STUDENT`).
 - Отзывы выпускников на карточке completed-потока.
 
 ## Stream: зачисление в активный поток

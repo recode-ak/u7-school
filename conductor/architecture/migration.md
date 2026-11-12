@@ -87,9 +87,10 @@
 - **На Def (DMG):** `stream` — домен `domain/src/stream` (агрегаты `stream`, `student`; DCS/DQS, правило зачисления по фактам Def UC `course`), прикладной слой `modules/stream/src` (UC через `UseCaseFromDef`, «состав потока», `findStreamByTelegramGroup`, `getActiveStudent`, Job `inactivity-sweep` через `JobFromDef`, JSON-репозитории через UoW со строгим разбором), `StreamModuleDef` без `external`, legacy `StreamApiModule` и legacy-домен удалены. Роль `STUDENT` stream не выдаёт — студента определяет `getActiveStudent` (сама роль — DEBT-48 трека `user`). Права ментора — `Role` из контракта `user` (TR-40). Бот подписан на Def-события `stream.created` и `student.*`. Трек: `conductor/archive/stream-dmg_20261103`.
 - **На Def (DMG):** `questionnaire` — домен `domain/src/questionnaire` (один агрегат `questionnaire`, state — variant `kind`: standard и likert; чистый `QuestionnaireEngine`; 6 Def-событий без `telegramId`/`response`, имя `ownerInfo` во всех слоях — TR-46), прикладной слой `modules/questionnaire/src` (9 UC через `UseCaseFromDef`, в т.ч. 3 query-UC; Job `sweep-abandoned-questionnaires` через `JobFromDef`; JSON-репозиторий через UoW со строгим разбором), `QuestionnaireModuleDef` без `external`, legacy-фасад, inbound, адаптер `start-questionnaire` и метатипы удалены. Правило «только за себя» — `QuestionnairePolicy` (субъект `Identified`). Stories бота — на `dispatchUc` и подписках на 5 Def-событий; адрес респондента — через legacy `get-user` до перевода `user` (TR-49 (6)). Перед выкаткой — `bun run backup`: первая запись переписывает `questionnaires.json` в числовых датах (TR-49 (7)). Трек: `conductor/archive/questionnaire-dmg_20261104`.
 - **На Def (DMG):** `course` — домен `domain/src/course` (агрегаты `course`, `module`, `lesson`, `step`; DQS видимости, снимка, «курсы модуля», пререквизита), прикладной слой `modules/course/src` (16 query-UC через `UseCaseFromDef`, JSON-репозитории через UoW со строгим разбором), `CourseModuleDef` без `external`, legacy-фасад, `CourseApiModule`, `CourseDs`, `content-path` и authoring-команды удалены (операций автора нет — кандидат [course-module-history.md](../roadmap/course-module-history.md)). Программа курса — `moduleIds`, этап — метка `fromModuleId` (D-64), в ответе `get-course` — `stages`. Клиенты (`stream`, `wish`) спрашивают курс, а не сравнивают id сами; пререквизит — вердикт `admitted` (D-65). Скрипты контента — на `U7App` и `dispatch` (`scripts/_course-client.ts`). Трек: `conductor/archive/course-dmg_20261105`.
-- **Корень сборки (D-50, D-52):** `@u7-scl/app` (`platform/app`) — `U7App` собирает всё приложение по `AppEnv`: legacy-модули, `AppContext` DMG, модули DMG через `ApiApp` пакета (фабрики `ModuleFactory`, фасады по `dependsOn`), резолвер `Caller` (`U7CallerResolver` над legacy `userFacade`). Legacy-ядро приложения — `@u7-scl/app-legacy` (`platform/app-legacy`, TR-33). Раннеры (`u7-bot`, `u7-cli`) и `scripts/call-uc.ts` получают приложение из `U7App`; ARC-07/08/09 и D-53 (ARC-06) — машинные (`arch:check`, `biome`).
-- **Внешние модули (D-37):** `user`, `dossier` — `ModuleDef.define({ external: true })` в домене; UC, которые зовут модули на Def, исполняют адаптеры над legacy-фасадами (TR-11) — фабрики в `U7App`, legacy-события входят через `legacyEventBus` (`inbound`).
-- **Механически перенесены** (трек 3): domain-слои всех модулей в `@u7-scl/domain`; старые `modules/<m>/src/domain/index.ts` и `modules/dossier/src/index.ts` — barrel-реэкспорты (долг — в Месте записи `debt.md`).
+- **На Def (DMG):** `user` — домен `domain/src/user` (агрегат `user`, API ролей `isAdmin()`/`isMentor()`/`hasRole()`, роли — литеральный `UserRole` без `STUDENT`; событий нет), прикладной слой `modules/user/src` (8 UC через `UseCaseFromDef`, в т.ч. `get-telegram-addresses`; JSON-репозиторий через UoW со строгим чтением, legacy ISO → число), `UserModuleDef` без `external`; legacy-фасад, `UserApiModule`, legacy-домен и barrel'ы удалены. Субъект Policy клиентов — `UserAr` из резолвера `Caller`. Трек `user-dmg_20261111` (TR-61).
+- **Корень сборки (D-50, D-52):** `@u7-scl/app` (`platform/app`) — `U7App` собирает всё приложение по `AppEnv`: legacy-модули, `AppContext` DMG, модули DMG через `ApiApp` пакета (фабрики `ModuleFactory`, фасады по `dependsOn`), резолвер `Caller` (`U7CallerResolver` — `dispatch` `getUser` от `SystemCaller`, субъект `UserAr`). Legacy-ядро приложения — `@u7-scl/app-legacy` (`platform/app-legacy`: `School`, `api.ts`, логгер; TR-33) — снимается с `dossier`. Раннеры (`u7-bot`, `u7-cli`) и `scripts/call-uc.ts` получают приложение из `U7App`; ARC-07/08/09 и D-53 (ARC-06) — машинные (`arch:check`, `biome`).
+- **Внешние модули (D-37):** только `dossier` — `ModuleDef.define({ external: true })` в домене; клиентов на Def у него нет, адаптеров над legacy-фасадами (TR-11) в коде не осталось.
+- **Механически перенесены** (трек 3): domain-слои всех модулей в `@u7-scl/domain`; barrel'ы `modules/<m>/src/domain/index.ts` удалены (`user-dmg`, Ф7); остался `modules/dossier/src/index.ts` (DEBT-3).
 - **Граф `dependsOn`** строится из `ModuleDef` (`scripts/domain-arch.ts`, `DomainArch` с `root` и `runners`); `arch:check` сверяет код с реестром [debt.md](./debt.md) по полям Место/Признак/Корень; тактические решения перехода — `TR-<n>` там же (в код не пишутся).
 
 ### Входной долг для следующих треков
@@ -98,19 +99,32 @@ ID — канонические: слитые записи (DEBT-6, 7, 9, 11, 12
 
 | Владелец | Долги |
 |---|---|
-| перевод `user` | glob'ы `user` в DEBT-1, 2, 5; legacy-пары `user`/`dossier` в DEBT-34; роль `STUDENT` и данные `data/users` — DEBT-48; экспорт `Role` из контракта `user` — TR-40; адаптер `get-telegram-addresses` — DEBT-44; `U7CallerResolver` — TR-33; адрес респондента анкет через legacy `get-user` в stories — TR-49 (6) |
+| перевод `dossier` | barrel `modules/dossier/src/index.ts` — DEBT-3; пропуск legacy-пар и `index` в `scripts/domain-check.ts` — DEBT-34; `@u7-scl/app-legacy` — TR-33 |
+| трек `schools-system` | первый администратор новой школы (seed не перенесён, TR-61 С4) — запись `UserJsonRepo` в `debt.md` |
 | по мере касания | тесты UC/ER/Job на JSON во временном каталоге — DEBT-40; `update-stream-snapshot.ts` — запись через репозитории Def и UoW (TR-45); чтение `students.json` один раз на UoW (TR-44) |
 | трек «История модулей курса» | одно правило «курс модуля» — DEBT-50 |
 | при росте каталога | два вызова на модуль в карточке курса — DEBT-51 |
 | `ui-manifests` / `dmg-ui` | id апдейта Telegram неявным контекстом — DEBT-41 |
 | после перехода | `u7-cli` и `call-uc` — общий инструмент вызова UC — DEBT-42 |
-| последний трек миграции | barrel-реэкспорты и `User` в `app-legacy` — DEBT-3 (в т.ч. `@u7-scl/stream/domain` для скриптов снимков, TR-44) |
 
 ### Старт следующих треков
 
 - **Трек волны 2 выполнен** (`agent-roles-wave2_20261104`, [agent-roles.md](./agent-roles.md) §4): каркас ролей `dmg-tech-lead`, `dmg-test-designer`, `dmg-data-keeper` в `dmg-core` с префиксом `dmg-*`, проектная часть — в `.agents-core/`; критерий 6 проверен пилотом на учебном модуле пакета (`summary.md` трека).
-- **Следующий модуль — `user`** (трек 6, последний, §2.1): все его клиенты (`course`, `questionnaire`, `stream`, `peer-review`, `wish`) уже на Def, обратных мостов нет. Трек создаётся через `conductor-newtrack` (ID вида `user-dmg_<дата>`) по шаблону `course-dmg` (`conductor/archive/course-dmg_20261105`):
-  - **Конвейер среза** — как у `course-dmg` (`plan.md` трека); исполнители — §2 [deepseek.md](./deepseek.md).
-  - **Мосты:** адаптер `get-telegram-addresses` (DEBT-44) — настоящим UC; `U7CallerResolver` над legacy `userFacade` (TR-33) — резолвер `Caller` на Def; адрес респондента анкет через legacy `get-user` (TR-49 (6)).
-  - **Учесть:** `User`/`Role` импортируют ≈ 96 файлов через barrel `@u7-scl/user/domain` и реэкспорт `app-legacy` (DEBT-3); роль `STUDENT` в коде и в живых `data/users` (DEBT-48) — миграция данных только с бэкапом и разрешения Нурболата; `Role` в контракте (TR-40).
-- Базовая линия тестов на конец `course`: `conductor/archive/course-dmg_20261105/summary.md` («Гейт закрытия»).
+- **Трек `user` выполнен** (`user-dmg_20261111`): все модули, кроме `dossier`, на Def.
+- **Следующий трек — `dossier`** (последний legacy-модуль, §2 п. 6): клиентов на Def нет, мостов не нужно. Снимает DEBT-3 (корень `modules/dossier/src/index.ts`), DEBT-34 и `@u7-scl/app-legacy` (TR-33). Создаётся через `conductor-newtrack` по шаблону `user-dmg`. Кандидат рядом — аудит контрактов после D-69 ([contract-audit](../roadmap/contract-audit.md)).
+- Базовая линия тестов на конец `user`: `summary.md` трека `user-dmg_20261111` («Гейт закрытия»).
+
+### Чек-лист релиза (после перехода)
+
+Выкатка — после ревизии по `../u7-school-v0.2.6`; каждый пункт с данными — с подтверждения Нурболата.
+
+1. **`users.json` (трек `user-dmg`).** До выкатки нового кода:
+   1. `bun run backup --name=before-drop-student` — защищённый снимок (скрипт миграции пишет файл без temp+rename).
+   2. `bun run scripts/migrate-users-drop-student.ts` — сухой прогон: записи со `STUDENT` и все записи, не проходящие строгую схему (в т.ч. без `updatedAt`). Нурболат сверяет вывод с живым файлом.
+   3. `bun run scripts/migrate-users-drop-student.ts --write` — с подтверждения Нурболата; повтор идемпотентен.
+   4. Только после этого — рестарт на новом коде. Строгое чтение: одна невалидная запись останавливает все чтения `user`, в том числе резолвер `Caller` (ERR-01).
+   - Legacy-писателя `users.json` в релизе нет — оба писателя на один файл теряют записи (отчёт `dmg-data-keeper` Ф2).
+   - Первая команда нового кода переписывает `users.json` целиком в новом формате (числовые даты, `version`) — `v0.2.6` его не прочтёт; откат — только из снимка шага 1 (отчёт `dmg-data-keeper` Ф6).
+2. **`questionnaires.json`** (TR-49 (7)): перед выкаткой `bun run backup`, откат — только с восстановлением файла.
+
+

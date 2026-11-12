@@ -21,6 +21,22 @@
 | u7-school (`15a919ad`) | `bun run check` | зелёный | — |
 | dmg-core (`d2128ce`) | `CI=true bun test` | 1384 pass, 0 fail (131 файл) | +5 (вход `testing`, D-70) |
 
+## Критерии приёмки spec (Ф8)
+
+| Критерий | Итог | Проверка |
+|---|---|---|
+| `domain/src/user`, `modules/user`: нет `throw*`, `new …Ar`, `#` в Ar, импортов `core`/`app-legacy` | ✅ | grep пуст |
+| Нет `Role.STUDENT`/`isStudent`; нет `roles.includes(Role.…)`/`roles.some(` в Policy клиентов и `submenu.ts`; `Role` не в контракте | ✅ | grep пуст (`isStudentAheadOfStep`, `isStudentActive` — другие имена) |
+| Нет адаптера `get-telegram-addresses`, `U7CallerResolver` над legacy, legacy `get-user` в stories | ✅ | UC на Def (Ф2), резолвер через `dispatch` (Ф4), stories анкет — UC `user` (Ф5) |
+| Нет `@u7-scl/<m>/domain`, реэкспорта `User` из `app-legacy`, barrel'ов `modules/*/src/domain/index.ts`; остаток DEBT-3 — `dossier` | ✅ | grep пуст, файлов нет (Ф7) |
+| У `UserModuleDef` нет `external`; legacy-фасад и `UserApiModule` удалены | ✅ | `user.module.test.ts`; grep пуст (Ф6) |
+| Скрипт миграции `STUDENT` с тестом; шаг прода — в чек-листе релиза | ✅ | `scripts/migrate-users-drop-student.test.ts`; `migration.md` §6 «Чек-лист релиза» |
+| `check` зелёный, `arch:check` синхронен, `error` ревью нет, красной зоны нет | ✅ | гейт закрытия; `error` Ф5 исправлен, повторное ревью чистое |
+| `git status data/` чист | ✅ | пусто |
+| Перепроектирования одобрены и записаны | ✅ | TR-61 (Ф0–Ф7), D-69, D-70 пакета `dmg-core` |
+
+**DeepSeek за трек:** flash ≈ $1.80 (Ф1 0.164, Ф2 0.248, Ф3 0.137, Ф4 0.248, Ф5 0.551, Ф6 0.343, Ф7 0.109), 18 шагов; `error` ревью в коде flash — 0 (единственный `error`, Ф5, — в коде Sonnet). Отклонения от §2 [deepseek.md](../../architecture/deepseek.md): Ф6 — бриф без `tech-lead` (образец `course-dmg` Ф5), задачи 2–3 одним коммитом; сверка §2 — две поправки строк (механика до $0.44, находки `data-keeper`).
+
 ## Пилот ролей
 
 Строка на каждый вызов роли ([agent-roles.md](../../architecture/agent-roles.md) §5).

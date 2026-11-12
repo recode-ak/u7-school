@@ -184,7 +184,7 @@
 - **Место:** `scripts/domain-check.ts` — `checkContractImports` пропускает пары legacy-модулей; `checkDomainImports` разрешает `index`
 - **Признак:** `sub !== 'index'`
 - **Корень:** `scripts/domain-check.ts`
-- **Причина:** D-45 — чужой модуль только через `contract`; legacy-код `user`, `dossier` (`questionnaire`, `stream` и `course` переведены на Def) импортирует `index` друг друга (entity `User`, `Role`, фасады) — около 100 импортов.
+- **Причина:** D-45 — чужой модуль только через `contract`; из legacy остался только `dossier` (`questionnaire`, `stream`, `course`, `user` переведены на Def; `user` — трек `user-dmg`, Ф6–Ф7).
 - **Погашает:** перевод каждого модуля на Def — модуль попадает в проверку автоматически (`external` снят)
 - **Критерий снятия:** все модули на Def; пропуск legacy-пар и `index` в `checkDomainImports` удалены
 
@@ -412,6 +412,7 @@
 - **Решение:** legacy-содержимое переезжает в `@u7-scl/app-legacy` (`platform/app-legacy`), `@u7-scl/app` становится корнем сборки всего приложения (legacy и DMG, класс `U7App` по `AppEnv`). Резолвер `Caller` — над legacy `userFacade` (мост TR-11). Разбор — `conductor/archive/app-assembly_20261029/summary.md`.
 - **Пересмотреть:** при переводе `user` на DMG резолвер идёт через `ApiApp.dispatch` (`getUser`), как в учебном приложении; `@u7-scl/app-legacy` удаляется вместе с последним legacy-модулем.
 - **Состояние после Ф4 `user-dmg`:** резолвер `U7CallerResolver(apiApp)` идёт через `dispatch` `getUser` от `SystemCaller` (`kind: 'app'`), субъект — `UserAr`; legacy `userFacade` в резолвере нет. Остаток — `@u7-scl/app-legacy` (последний legacy-модуль).
+- **Закрыто для `user`** (`user-dmg`, Ф8): часть «резолвер через `dispatch`» выполнена, домен `user` из `app-legacy` удалён (Ф6–Ф7). В `@u7-scl/app-legacy` остались `School`, `api.ts` и логгер — пакет снимается вместе с `dossier`.
 
 ### TR-34: решения по ревью Ф2 `app-assembly` (корень сборки)
 - **Трек / фаза:** `app-assembly`, Ф2
@@ -455,7 +456,8 @@
 - **Контекст:** Policy `stream` проверяет права ментора, а `user` не переведён на Def: у субъекта `Caller` нет API `UserAr`.
 - **Решение:** субъект `Caller` — legacy-entity `User` с `roles`; контракт `domain/src/user/contract.ts` дополнительно экспортирует `Role`; Policy `stream` проверяет `subject.roles.includes(Role.MENTOR)`. Расширять контракт `user` дальше — только если это меньше движений; небольшой долг предпочтительнее выхода за пределы модуля `stream`.
 - **Пересмотреть:** при переводе `user` на Def — проверки переходят на API `UserAr` (`isMentor()`, `isAdmin()`), экспорт `Role` из контракта снимается. Передано треку `user` вместе с DEBT-48 (`stream-dmg`, Ф4).
-- **Состояние после Ф4 `user-dmg`:** погашено — Policy `course`/`stream`/`questionnaire` и `submenu.ts` на `isMentor()`/`isAdmin()`, `Role` из контракта снят. Запись закрывается в Ф8.
+- **Состояние после Ф4 `user-dmg`:** погашено — Policy `course`/`stream`/`questionnaire` и `submenu.ts` на `isMentor()`/`isAdmin()`, `Role` из контракта снят.
+- **Закрыто** (`user-dmg`, Ф8).
 
 ### TR-41: решения брифа среза `stream` (`stream-dmg`)
 - **Трек / фаза:** `stream-dmg`, Ф0 (бриф `slices/stream.md`; С1–С4 — Нурболат, 2026-11-03, по рекомендациям; Т1–Т13 — orchestrator)
@@ -512,7 +514,7 @@
   - (5) Дефекты red-тестов, исправленные по эскалации автора: события не забирались после `createStandard` (Ar глушил `started`); текст отказа доступа — в `payload.denyMessage`, не в `label`; один `requestId` на все команды smoke-теста (D-56).
   - (6) С2 (Нурболат, 2026-11-05): stories Ф2 берут адрес Telegram через legacy `get-user`, как `InactivityStory` (TR-43 С2); `GetTelegramAddressesUcDef` остаётся `system` для Job и ER (D-63).
   - (7) Д1 (Нурболат, 2026-11-05): живой `questionnaires.json` сверен read-only (84 записи, проблемных 0). Новый репозиторий при первой записи переписывает весь файл в числовых датах с `version` — legacy `v0.2.6` его не прочитает: перед выкаткой `bun run backup`, откат — только с восстановлением файла.
-- **Пересмотреть:** (6) — перевод `user` на Def; (7) — выкатка после ревизии; (3) — если UoW платформы научится пропускать неизменённые агрегаты (тогда условие убрать); (4) — снято в Ф3 (TR-51).
+- **Пересмотреть:** ~~(6) — перевод `user` на Def~~ — закрыто (`user-dmg`, Ф5): stories анкет берут адрес через UC `user` на Def; (7) — выкатка после ревизии; (3) — если UoW платформы научится пропускать неизменённые агрегаты (тогда условие убрать); (4) — снято в Ф3 (TR-51).
 
 ### TR-50: решения брифа UI Ф2 `questionnaire-dmg`
 - **Трек / фаза:** `questionnaire-dmg`, Ф2 (orchestrator, 2026-11-05)
