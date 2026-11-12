@@ -8,7 +8,7 @@
 
 ---
 
-- [ ] **Track: Завершение перехода — `dossier` на Def и удаление legacy (DEBT-3, DEBT-34, TR-33, `u7-cli` → `dmg-cli`)**
+- [~] **Track: Завершение перехода — `dossier` на Def и удаление legacy (DEBT-3, DEBT-34, TR-33, `u7-cli` → `dmg-cli`)**
 *Link: [./tracks/legacy-removal_20261112/](./tracks/legacy-removal_20261112/)*
 
 ---

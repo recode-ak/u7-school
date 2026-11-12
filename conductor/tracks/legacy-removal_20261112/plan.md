@@ -16,7 +16,7 @@
 
 ## Фаза 0: База и решения
 
-- [ ] Task: Зафиксировать свежую базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, `bun run check`, `bun test` в `dmg-core`; каркас раздела «DeepSeek» (Opus)
+- [~] Task: Зафиксировать свежую базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, `bun run check`, `bun test` в `dmg-core`; каркас раздела «DeepSeek» (Opus)
     - [ ] проверить состояние `runners/u7-bot/tests/courses/course-catalog.integration.test.ts` (tsc в редакторе: `@u7-scl/user/domain`, `userFacade` — остаток `user-dmg`): входит ли в прогон, сообщить Нурболату до правки
 - [ ] Task: `dmg-tech-lead`: брифы срезов `slices/dossier.md`, `slices/job-scheduler.md`, `slices/core-ui.md`, `slices/assembly.md`, `slices/removal.md` с таблицей раскладки «файл → куда / удалить» и «Сохраняемым поведением» (Sonnet)
     - [ ] список тестов на перенос (TST-08) и на удаление вместе с legacy-кодом
