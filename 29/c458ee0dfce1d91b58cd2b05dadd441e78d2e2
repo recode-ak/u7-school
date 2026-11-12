@@ -1,0 +1,3 @@
+Ф4 legacy-removal — автономно (agents.md §9). 25f6125: U7App на dmg ApiApp, одна шина DMG, appClock, InProcJobScheduler пакета (D-71); School/FileReplayStore/JobRunJsonRepo → platform/app, JsonFileRepo (без BaseJsonDb)/CompositeLogger → u7-bot; U7BotAppMeta удалён; TR-66. check зелёный: 3072 pass (Ф3 3065, +7 новых; перенесено 9/14/13/3). test:bot 924 pass. Smoke на копии фикстур: задания прогнаны, last-runs.json в ISO, data/ чист. data-keeper: миграция не нужна. Ревью Opus: 0 error, 2 warn + question исправлены. Flash: $0.14, 97 ходов, 2 круга. Критерии: grep legacy-bridge/U7ApiApp/legacyClock/legacyEventBus/core/infra/app-legacy/BaseJsonDb/isoNow пуст; app-legacy/src — только smoke-тест.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
