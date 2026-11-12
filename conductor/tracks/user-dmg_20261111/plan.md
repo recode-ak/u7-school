@@ -123,12 +123,12 @@
 - Маркеров DEBT-1, 2, 5, 34, 44 в `user` нет.
 - `check` зелёный, `git status data/` чист.
 
-## Фаза 7: Barrel-реэкспорты (DEBT-3)
+## Фаза 7: Barrel-реэкспорты (DEBT-3) [checkpoint: af67030a]
 
 - [x] Task: `migrator`, механика (flash): импорты `@u7-scl/user/domain` (46), `@u7-scl/app-legacy/domain` ради `User`/`Role` (102), корень `app-legacy` (8), `@u7-scl/{course,stream,wish}/domain` (11) — на контракт `user` / `@u7-scl/domain/<m>`; удалить 6 `modules/*/src/domain/index.ts`, их пути в `tsconfig.json`, `exports "./domain"`, `platform/app-legacy/src/domain/user.ts`. После шага — `tsc --noEmit` и grep 9901eb58 — эскалация: barrel'ы прятали 23 × ARC-04 (миры, скрипты) → Нурболат: тесты — вход `testing` (D-70) `user`/`course`/`stream`/`wish`, `scripts/` вне ARC-04 (отступление от D-45, TR-61 «Ф7»); `app-legacy/domain` и `core/domain` — не barrel'ы модулей, остаются (grep-критерий сужен)
 - [x] Task: Записать остаток DEBT-3 — `modules/dossier/src/index.ts`, владелец — трек `dossier` (Opus) 9901eb58
 - [x] Task: `dmg-reviewer` (Opus) 9901eb58 — `error` нет; 4 minor исправлены в срезе, мёртвая зависимость `domain → app-legacy` — Ф8
-- [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md; автономно)
+- [x] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md; автономно)
 
 **Критерии приёмки Фазы 7:**
 - `grep -rnE "@u7-scl/(user|course|stream|wish|questionnaire|peer-review)/domain\b" --include=*.ts --include=*.json .` пуст (вне `node_modules`, `conductor`; сужен в Ф7 — `core/domain`, `app-legacy/domain` не barrel'ы модулей).
