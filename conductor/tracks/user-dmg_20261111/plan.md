@@ -138,7 +138,7 @@
 ## Фаза 8: Итог
 
 - [x] Task: Гейт закрытия: `CI=true bun test`, `bun run test:bot`, `dmg-core` `bun test` — сравнение с базовой линией в `summary.md` (Opus) fd51464c
-- [x] Task: Документы (Opus):
+- [x] Task: Документы (Opus): c1d76bf8
     - [x] `debt.md` — снять DEBT-1, 2, 5, 34, 48 (user; DEBT-44 снят в Ф2), DEBT-3 (кроме `dossier`); закрыть TR-33, TR-40, TR-49 (6); — DEBT-1, 2, 5, 48 сняты раньше (Ф2–Ф6); DEBT-34 остаётся за `dossier` (`user` убран из причины); TR-33 закрыт для `user` (`app-legacy` — с `dossier`);
     - [x] `migration.md` §6 — состояние, чек-лист релиза (`bun run backup` → скрипт миграции `STUDENT` → подтверждение Нурболата; legacy-писателя `users.json` в релизе нет — иначе потеря записей, отчёт data-keeper Ф2), следующий трек;
     - [x] `deepseek.md` — сверка таблицы §2 с данными трека;
