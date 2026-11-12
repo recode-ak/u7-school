@@ -11,7 +11,7 @@
 
 **Живые `data/` не трогаются.** `.env.development` в корне содержит `DB_DIR=./data` — бот локально только через `bun run dev:fixtures`, прямой `main.ts` запрещён.
 
-## Фаза 0: Подготовка
+## Фаза 0: Подготовка [checkpoint: 3701cbc0]
 
 - [x] Task: Зафиксировать базовую линию в `summary.md`: `CI=true bun test`, `bun run test:bot`, `bun run check`; сверить с «Гейтом закрытия» `legacy-removal` (3083 / 921 pass) (Opus) `bde49599`
 - [x] Task: Проверить worktree `../u7-school-v0.2.6`: `git describe --tags` = `v0.2.6`, дерево чистое `6a9ecee6`
