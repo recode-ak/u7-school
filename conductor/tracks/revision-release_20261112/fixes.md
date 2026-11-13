@@ -22,11 +22,11 @@
 
 | ID | Источник | Что | Размер | Срез | Коммит |
 |---|---|---|---|---|---|
-| F-01 | e2e-gaps, TR-50 (3) | Управляемые часы в `createTestApp` — блокер P8-04, P8-05, P7-49…P7-51, P7-54 | M | Ф5.1 | |
-| F-02 | e2e-gaps (Q-01/Q-02) | Хелпер событий групп `chat_member` / `my_chat_member` в `TestBotTransport` **через транспорт**, не `uiApp.handleMessengerEvent` | S | Ф5.1 | |
-| F-03 | e2e-gaps, `transport` | Хелперы транспорта: нажатие до `/start`, неизвестный shortId (`dropSession`), дубль-тап, текст без `/`, сбой `RecordingBotApi`, параллельные апдейты | M | Ф5.1 | |
-| F-04 | TR-57 | Хеш кеша миров не видит правку `builder.ts` — `runners/u7-bot/tests/worlds/materializer.ts:63` (`computeSourceHash`) | S | Ф5.1 | |
-| F-05 | C-13 (попутно) | Мир `core-education`: у Андрея уже есть кампания `c1a11111…` по Потоку 2 — ER `createStudentCampaign` выходит по `unique`; убрать, чтобы приглашение на отзыв проверялось вручную. **Итог:** мир не меняется (кампания нужна 4 тестам), приглашение — e2e `peer-review-campaign` и ручная проверка на Марине | S | Ф5.1 | |
+| F-01 | e2e-gaps, TR-50 (3) | Управляемые часы в `createTestApp` — блокер P8-04, P8-05, P7-49…P7-51, P7-54 | M | Ф5.1 | af4593e9 |
+| F-02 | e2e-gaps (Q-01/Q-02) | Хелпер событий групп `chat_member` / `my_chat_member` в `TestBotTransport` **через транспорт**, не `uiApp.handleMessengerEvent` | S | Ф5.1 | af4593e9 |
+| F-03 | e2e-gaps, `transport` | Хелперы транспорта: нажатие до `/start`, неизвестный shortId (`dropSession`), дубль-тап, текст без `/`, сбой `RecordingBotApi`, параллельные апдейты | M | Ф5.1 | af4593e9 |
+| F-04 | TR-57 | Хеш кеша миров не видит правку `builder.ts` — `runners/u7-bot/tests/worlds/materializer.ts:63` (`computeSourceHash`) | S | Ф5.1 | af4593e9 |
+| F-05 | C-13 (попутно) | Мир `core-education`: у Андрея уже есть кампания `c1a11111…` по Потоку 2 — ER `createStudentCampaign` выходит по `unique`; убрать, чтобы приглашение на отзыв проверялось вручную. **Итог:** мир не меняется (кампания нужна 4 тестам), приглашение — e2e `peer-review-campaign` и ручная проверка на Марине | S | Ф5.1 | af4593e9 |
 
 ## Ф5.2 Недостающие e2e (247 строк в 25 файлов)
 
