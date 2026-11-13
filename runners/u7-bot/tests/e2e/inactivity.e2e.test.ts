@@ -1,8 +1,11 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { AppController } from '@u7-scl/bot/app/app-controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import {
+  CompleteStepUcDef,
   GetStudentProgressUcDef,
+  InactivitySweepJobDef,
   MarkAbandonedUcDef,
   StreamModuleDef,
   StudentEvents,
@@ -12,6 +15,7 @@ import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
   pressedCode,
+  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import { Trace } from 'dmg-core/app';
@@ -78,6 +82,24 @@ async function waitMessageFor(
   while (Date.now() < deadline) {
     const found = transport.api.sentMessages.find(
       (m) => m.telegramId === telegramId,
+    );
+    if (found) return found.text;
+    await new Promise((r) => setTimeout(r, 20));
+  }
+  return undefined;
+}
+
+/** Ждёт проактивного сообщения с указанным фрагментом (poll sentMessages). */
+async function waitMessageContaining(
+  transport: TestBotTransport,
+  telegramId: number,
+  textContains: string,
+  timeoutMs = 3000,
+): Promise<string | undefined> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const found = transport.api.sentMessages.find(
+      (m) => m.telegramId === telegramId && m.text.includes(textContains),
     );
     if (found) return found.text;
     await new Promise((r) => setTimeout(r, 20));
@@ -357,5 +379,350 @@ describe('E2E: выход из группы и снятие ментором', (
     );
     // Студент уже abandoned — ментору «покинул группу» не приходит
     expect(noticed?.text ?? '').not.toContain('покинул группу');
+  });
+});
+
+// ═══ Контур C: подтверждения ухода (callback-сцены стори inactivity) ═══
+
+/** Студент и ментор, нужные сценам подтверждения (свои у каждого актора). */
+const OLEG_TG = 1008; // «Олег» — запись f2f2 со статусом not_advanced
+const OLEG_STUDENT_ID = 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2';
+const MARINA_STUDENT_ID = 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1';
+
+/** Стенд сцен подтверждения: экран `/start` имеет кнопки (AppController). */
+async function createConfirmStand(tag: string): Promise<Stand> {
+  const app = await createTestApp(tag);
+  const transport = createTestBotTransport(app, [
+    new AppController('https://t.me/u7_school_group'),
+    new StreamsController(),
+  ]);
+  return {
+    app,
+    transport,
+    student: await app.userByTelegramId(STUDENT_TG),
+    mentor: await app.userByTelegramId(MENTOR_TG),
+  };
+}
+
+describe('E2E: подтверждения ухода из учёбы (callback-сцены)', () => {
+  let stand: Stand;
+  let oleg: U7BotActor;
+
+  beforeAll(async () => {
+    // Свой стенд: `/start` даёт экран с кнопками (AppController — системные
+    // и главное меню), по штампу которого крафтятся коды сцен подтверждения
+    stand = await createConfirmStand('inactivity-confirms');
+    oleg = await stand.app.userByTelegramId(OLEG_TG);
+  });
+
+  afterAll(async () => {
+    await stand.app.cleanup();
+  });
+
+  test('P8-11: «⚠️ Снять с учёбы» → экран подтверждения с именем студента', async () => {
+    const { transport } = stand;
+    transport.reset();
+    await transport.handleStart(transport.makeBotContext(MENTOR_TG));
+
+    const response = await transport.handleCallback(
+      transport.makeBotContext(MENTOR_TG, {
+        callbackData: stampedCode(
+          transport,
+          MENTOR_TG,
+          `stream:inactivity:mark-abandoned:${STUDENT_F0}`,
+        ),
+      }),
+    );
+
+    const text = String(response.screen?.text);
+    expect(text).toContain('Снять студента *Андрей* с учёбы за бездействие?');
+    expect(text).toContain('исключён из группы потока');
+    const buttons = response.screen?.keyboard?.rows.flat() ?? [];
+    expect(buttons.map((b) => b.text)).toEqual([
+      '⚠️ Да, снять с учёбы',
+      '❌ Отмена',
+    ]);
+    // Отмена возвращает в главное меню — это якорь, не действие стори
+    expect(buttons[1]?.code).toBe('app:main-menu');
+  });
+
+  test('P8-12: «⚠️ Снять с учёбы» с недоступной записью → «Запись студента не найдена»', async () => {
+    const { transport } = stand;
+    transport.reset();
+    await transport.handleStart(transport.makeBotContext(MENTOR_TG));
+
+    const response = await transport.handleCallback(
+      transport.makeBotContext(MENTOR_TG, {
+        callbackData: stampedCode(
+          transport,
+          MENTOR_TG,
+          `stream:inactivity:mark-abandoned:${crypto.randomUUID()}`,
+        ),
+      }),
+    );
+
+    expect(String(response.screen?.text)).toContain(
+      '⚠️ Запись студента не найдена',
+    );
+    expect(response.screen?.keyboard).toBeUndefined();
+  });
+
+  test('P8-09: `drop-student-confirm` с недоступной записью → «Запись студента не найдена»', async () => {
+    const { transport } = stand;
+    transport.reset();
+    await transport.handleStart(transport.makeBotContext(STUDENT_TG));
+
+    const response = await transport.handleCallback(
+      transport.makeBotContext(STUDENT_TG, {
+        callbackData: stampedCode(
+          transport,
+          STUDENT_TG,
+          `stream:inactivity:drop-student-confirm:${crypto.randomUUID()}`,
+        ),
+      }),
+    );
+
+    expect(String(response.screen?.text)).toContain(
+      '⚠️ Запись студента не найдена',
+    );
+  });
+
+  test('P8-10: `drop-student-confirm` с отказом UC (уже не учится) → warn-реплика вместо экрана', async () => {
+    const { transport } = stand;
+    transport.reset();
+    await transport.handleStart(transport.makeBotContext(OLEG_TG));
+
+    const response = await transport.handleCallback(
+      transport.makeBotContext(OLEG_TG, {
+        callbackData: stampedCode(
+          transport,
+          OLEG_TG,
+          `stream:inactivity:drop-student-confirm:${OLEG_STUDENT_ID}`,
+        ),
+      }),
+    );
+
+    // Намеренное отличие от v0.2.6 (там — общий экран ошибки): отказ UC
+    // отдаётся репликой `ucErrorNotify` с текстом ошибки домена
+    expect(response.screen).toBeUndefined();
+    expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toContain(
+      'Нельзя снять студента с учёбы: он уже не учится',
+    );
+    // Запись олега не тронута — он по-прежнему not_advanced
+    const olegRecord = expectOk(
+      await stand.app.apiApp.dispatch(
+        StreamModuleDef,
+        GetStudentProgressUcDef.command({ studentId: OLEG_STUDENT_ID }),
+        oleg,
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    ).student;
+    expect(olegRecord.status).toBe('not_advanced');
+  });
+
+  test('P8-14: `mark-abandoned-confirm` с отказом UC → warn-реплика, снятия нет', async () => {
+    const { transport, mentor } = stand;
+    transport.reset();
+    await transport.handleStart(transport.makeBotContext(MENTOR_TG));
+
+    const response = await transport.handleCallback(
+      transport.makeBotContext(MENTOR_TG, {
+        callbackData: stampedCode(
+          transport,
+          MENTOR_TG,
+          `stream:inactivity:mark-abandoned-confirm:${MARINA_STUDENT_ID}`,
+        ),
+      }),
+    );
+
+    expect(response.screen).toBeUndefined();
+    expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toContain(
+      'Нельзя снять студента с учёбы: он уже не учится',
+    );
+    // Марина осталась advanced — статус не изменился
+    const record = expectOk(
+      await stand.app.apiApp.dispatch(
+        StreamModuleDef,
+        GetStudentProgressUcDef.command({ studentId: MARINA_STUDENT_ID }),
+        mentor,
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    ).student;
+    expect(record.status).toBe('advanced');
+  });
+
+  test('P8-16: callback невалидного вида внутри `inactivity` → «⚠️ Неизвестная команда»', async () => {
+    const { transport } = stand;
+    transport.reset();
+    await transport.handleStart(transport.makeBotContext(STUDENT_TG));
+
+    const response = await transport.handleCallback(
+      transport.makeBotContext(STUDENT_TG, {
+        callbackData: stampedCode(
+          transport,
+          STUDENT_TG,
+          'stream:inactivity:xyz',
+        ),
+      }),
+    );
+
+    expect(String(response.screen?.text)).toContain('⚠️ Неизвестная команда');
+  });
+
+  test('P8-08: самовыход целиком — confirm → прощание, ментор получает уведомление (P1-55)', async () => {
+    const { app, transport, student } = stand;
+
+    // Студент — через предупреждение бездействия: экран invite с кнопкой
+    publishWarning(app, 5);
+    await waitMessageContaining(transport, STUDENT_TG, 'Учёба стоит');
+    const dropCode = transport.api.sentMessages
+      .filter((m) => m.telegramId === STUDENT_TG)
+      .at(-1)
+      ?.keyboard?.rows.flat()[0]?.code;
+    if (dropCode === undefined) {
+      throw new Error('invite без кнопки самовыхода');
+    }
+
+    // Шаг 1: кнопка «Покинуть учёбу» → confirm
+    const confirm = await transport.handleCallback(
+      transport.makeBotContext(STUDENT_TG, { callbackData: dropCode }),
+    );
+    expect(String(confirm.screen?.text)).toContain('Покинуть учёбу?');
+
+    // Шаг 2: «🚪 Да, покинуть» → прощание + UC drop-student
+    const done = await transport.handleCallback(
+      transport.makeBotContext(STUDENT_TG, {
+        callbackData: pressedCode(transport, STUDENT_TG, 'Да, покинуть'),
+      }),
+    );
+    expect(String(done.screen?.text)).toContain('Ты покинул учёбу');
+    expect(String(done.screen?.text)).toContain('возвращайся');
+
+    // Ментору — уведомление о самовыходе (P1-55)
+    const mentorNotice = await waitMessageContaining(
+      transport,
+      MENTOR_TG,
+      'покинул учёбу',
+    );
+    expect(mentorNotice).toBeDefined();
+    expect(mentorNotice).toContain('ℹ️ *Информация:*');
+    expect(mentorNotice).toContain('Студент Андрей покинул учёбу');
+    expect(mentorNotice).toContain('JS Core — Поток 2');
+    expect(mentorNotice).toContain('по собственному желанию');
+
+    // Статус записи — abandoned
+    const record = expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        GetStudentProgressUcDef.command({ studentId: STUDENT_F0 }),
+        student,
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    ).student;
+    expect(record.status).toBe('abandoned');
+  });
+});
+
+// ═══ Контур D: Job бездействия по дням (управляемые часы) ═══
+
+describe('E2E: Job бездействия — повторы по дням', () => {
+  let stand: Stand;
+  let app: TestApp & { clock: NonNullable<TestApp['clock']> };
+
+  beforeAll(async () => {
+    app = (await createTestApp('inactivity-clock', undefined, {
+      clock: {},
+    })) as TestApp & { clock: NonNullable<TestApp['clock']> };
+    const transport = createTestBotTransport(app, [new StreamsController()]);
+    stand = {
+      app,
+      transport,
+      student: await app.userByTelegramId(STUDENT_TG),
+      mentor: await app.userByTelegramId(MENTOR_TG),
+    };
+  });
+
+  afterAll(async () => {
+    await stand.app.cleanup();
+  });
+
+  test('P8-04: прогон в якорный день, тишина через день, повтор через два', async () => {
+    const { transport } = stand;
+    transport.reset();
+
+    // День 0 (якорь 2026-09-23): 15 дней бездействия — обе ступени
+    expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
+    const toStudent = await waitMessageFor(transport, STUDENT_TG);
+    expect(toStudent).toContain('Ты не занимаешься уже 15 дней');
+    const toMentor = await waitMessageFor(transport, MENTOR_TG);
+    expect(toMentor).toContain('не занимался 15 дней');
+    expect(toMentor).not.toContain('Уведомления были ранее отправлены');
+
+    // +1 день: окно повтора (2 дня) не открылось — тишина
+    transport.reset();
+    app.clock.advance(24 * 60 * 60 * 1000);
+    expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
+    await new Promise((r) => setTimeout(r, 200));
+    expect(transport.api.sentMessages).toEqual([]);
+
+    // +2 дня: повтор обеим ступеням, ментор видит «уведомления были»
+    app.clock.advance(24 * 60 * 60 * 1000);
+    expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
+    const secondStudent = await waitMessageFor(transport, STUDENT_TG);
+    expect(secondStudent).toContain('Ты не занимаешься уже 17 дней');
+    const secondMentor = await waitMessageFor(transport, MENTOR_TG);
+    expect(secondMentor).toContain('не занимался 17 дней');
+    expect(secondMentor).toContain('Уведомления были ранее отправлены');
+  });
+
+  test('P8-04: завершение шага сбрасывает цепочку — Job молчит', async () => {
+    const { transport, student } = stand;
+    transport.reset();
+
+    // Студент вернулся к учёбе: шаг завершён — активность обновилась
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        CompleteStepUcDef.command({
+          studentId: STUDENT_F0,
+          streamId: STREAM2_ID,
+          stepId: 'd0d0d0d0-d0d0-d0d0-d0d0-d0d0d0d0d0d0',
+        }),
+        student,
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    );
+
+    // Через 3 дня окно повтора открыто (маркер старше 2 дней), но
+    // бездействие — 3 дня < порога 5: цепочка сброшена активностью
+    app.clock.advance(3 * 24 * 60 * 60 * 1000);
+    expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
+    await new Promise((r) => setTimeout(r, 200));
+    expect(transport.api.sentMessages).toEqual([]);
+  });
+
+  test.skip('P8-05: нет telegramId у студента — маркер не ставится, попытка повторяется', async () => {
+    // находка: P8-05 — сейчас маркер бездействия ставится в Job до резолва
+    // адреса (`StudentAr.noticeInactivity`), а стори при недоступном
+    // адресате пишет warn и пропускает: уведомление теряется до следующего
+    // окна (2 дня). Ожидание v0.2.6: маркер после резолва адреса — повтор
+    // в следующий прогон.
+    //
+    // Данных нет: в мире у всех персон есть telegramId, а снять его у
+    // пользователя в фикстуре нечем — нужен студент/ментор без telegramId.
+    const { transport } = stand;
+    transport.reset();
+
+    expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
+    app.clock.advance(24 * 60 * 60 * 1000);
+    expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
+
+    // Повторная попытка в следующий прогон (сейчас — маркер уже стоит)
+    const retried = transport.api.sentMessages.filter(
+      (m) => m.telegramId === STUDENT_TG,
+    );
+    expect(retried.length).toBeGreaterThan(0);
   });
 });

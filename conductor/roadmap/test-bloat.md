@@ -68,6 +68,7 @@
 | 2026-11-11 | `user-dmg` Ф5 | `runners/u7-bot/src/create-ui-app.test.ts`, `core/u7-bot-ui-story.test.ts` | негативные проверки удалённых полей (`userFacade`, `userController`, `subjectOf`) — гарантирует тип (TST-09); тавтология «отказ резолвера → исключение» | удалить на ревизии (TR-61 «Ф5») |
 | 2026-11-12 | `legacy-removal` Ф3 | `runners/u7-bot/src/controllers/{streams/stories/inactivity.story,courses/stories/wish-invite.story,courses/stories/wish-confirmed.story}.test.ts`, `questionnaire/stories/questionnaire-dmg.test-kit.ts` | локальные помощники `subHandler`/`subscriptionOf` (поиск подписки по `def.name`) повторены в 4 файлах | один помощник в `tests/helpers` |
 | 2026-11-12 | `legacy-removal` Ф5 | `scripts/domain-check.test.ts:527-543` | фикстура DEBT-2 «долг вне Места» повторяет `scripts/arch-check.test.ts` и `runDebtCheck` | оставить одну проверку |
+| 2026-11-13 | `revision-release` Ф5.2 | `runners/u7-bot/tests/e2e/student-dmg.e2e.test.ts:86` | повтор Job в тот же день — частный случай P8-04 в `inactivity.e2e.test.ts` | оставить один (в `inactivity.e2e`) |
 
 ## 4. Как пополнять
 

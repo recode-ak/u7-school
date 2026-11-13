@@ -4,6 +4,7 @@ import { LearningController } from '@u7-scl/bot/learning/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
+import { md } from '@u7-scl/core/shared';
 import {
   ActivateStreamUcDef,
   CompleteStudentUcDef,
@@ -11,11 +12,13 @@ import {
   EnrollStudentUcDef,
   GetStudentByUserUcDef,
   StreamModuleDef,
+  StudentEvents,
 } from '@u7-scl/domain/stream/contract';
 import {
   CreateCourseWishUcDef,
   WishModuleDef,
 } from '@u7-scl/domain/wish/contract';
+import { envelopeOf } from '@u7-scl/test-helpers/envelope-of';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -23,8 +26,10 @@ import {
   pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import type { AnyEventDef } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
+import * as v from 'valibot';
 import { CoursesController } from '../../src/controllers/courses/controller';
 
 /**
@@ -62,6 +67,24 @@ async function waitMessageFor(
   while (Date.now() < deadline) {
     const found = transport.api.sentMessages.find(
       (m) => m.telegramId === telegramId,
+    );
+    if (found) return found.text;
+    await new Promise((r) => setTimeout(r, 20));
+  }
+  return undefined;
+}
+
+/** Ждёт проактивного сообщения с указанным фрагментом (poll sentMessages). */
+async function waitMessageContaining(
+  transport: TestBotTransport,
+  telegramId: number,
+  textContains: string,
+  timeoutMs = 3000,
+): Promise<string | undefined> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const found = transport.api.sentMessages.find(
+      (m) => m.telegramId === telegramId && m.text.includes(textContains),
     );
     if (found) return found.text;
     await new Promise((r) => setTimeout(r, 20));
@@ -283,4 +306,181 @@ describe('E2E: адресные уведомления stories (приглаше
     );
     expect(toStudent.some((m) => m.text.includes('Курс завершён'))).toBe(false);
   });
+
+  // ── Прямые уведомления вместо `user.notified` ──
+
+  test('P1-50: уведомление уходит через `proactiveSender.notify` — заголовок вида и без кнопок', async () => {
+    const tgId = STUDENT_ACTIVE_TG;
+    const expected: Array<['notify' | 'info' | 'warn', string]> = [
+      ['notify', '🔔 *Уведомление:*'],
+      ['info', 'ℹ️ *Информация:*'],
+      ['warn', '⚠️ *Внимание:*'],
+    ];
+
+    for (const [kind, header] of expected) {
+      transport.reset();
+      await transport.transport.notify(tgId, {
+        text: md`Текст вида ${kind}`,
+        kind,
+      });
+
+      const sent = transport.api.sentMessages.at(-1);
+      expect(sent?.telegramId).toBe(tgId);
+      expect(sent?.text).toStartWith(header);
+      expect(sent?.text).toContain(`Текст вида ${kind}`);
+      // Ранее кнопки ставил NotifyStory — теперь их нет
+      expect(sent?.keyboard).toBeUndefined();
+    }
+  });
+
+  test('P1-51: событие на несуществующего адресата — тишина без исключения', async () => {
+    transport.reset();
+
+    publish(StudentEvents.completed, {
+      studentId: 'f0f0f0f0-f0f0-f0f0-f0f0-f0f0f0f0f0f0',
+      userId: crypto.randomUUID(),
+      streamId: 'e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1',
+      moduleId: FIRST_MODULE,
+      outcome: 'advanced',
+    });
+
+    await new Promise((r) => setTimeout(r, 200));
+    expect(transport.api.sentMessages).toEqual([]);
+  });
+
+  test('P3-35: хаб подписан на student.completed — событие доходит до стори', async () => {
+    transport.reset();
+
+    publish(StudentEvents.completed, {
+      studentId: 'f0f0f0f0-f0f0-f0f0-f0f0-f0f0f0f0f0f0',
+      userId: studentActive.user.uuid,
+      streamId: 'e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1',
+      moduleId: FIRST_MODULE,
+      outcome: 'advanced',
+    });
+
+    const text = await waitMessageContaining(
+      transport,
+      STUDENT_ACTIVE_TG,
+      'Модуль завершён',
+    );
+    expect(text).toBeDefined();
+    expect(text).toContain('Хочешь записаться на следующий');
+  });
+
+  test('P3-36: outcome=not_advanced — приглашение повторить тот же модуль', async () => {
+    transport.reset();
+
+    publish(StudentEvents.completed, {
+      studentId: 'f0f0f0f0-f0f0-f0f0-f0f0-f0f0f0f0f0f0',
+      userId: studentActive.user.uuid,
+      streamId: 'e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1',
+      moduleId: FIRST_MODULE,
+      outcome: 'not_advanced',
+    });
+
+    const text = await waitMessageContaining(
+      transport,
+      STUDENT_ACTIVE_TG,
+      'Модуль не пройден до конца',
+    );
+    expect(text).toBeDefined();
+
+    // Кнопка ведёт в тот же модуль (wish → create-module-wish)
+    const sent = transport.api.sentMessages.find(
+      (m) => m.telegramId === STUDENT_ACTIVE_TG,
+    );
+    const retry = sent?.keyboard?.rows
+      .flat()
+      .find((b) => b.text.includes('Пройти модуль снова'));
+    expect(retry).toBeDefined();
+    expect(retry!.code).toStartWith('course:course-catalog:wish:');
+    expect(retry!.code).toContain(FIRST_MODULE.slice(0, 8));
+  });
+
+  test('P3-37: advanced со следующим модулем → «🏁 Модуль завершён!» и кнопка на следующий', async () => {
+    transport.reset();
+
+    // Поток на первом модуле программы кидает событие completed(advanced) из UC
+    const stream = expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        CreateStreamUcDef.command({
+          title: 'Основы JS — повторный запуск',
+          description: 'Проверка ветки 7a',
+          moduleId: FIRST_MODULE,
+          startDate: Date.UTC(2026, 11, 1),
+        }),
+        mentor,
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    );
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        EnrollStudentUcDef.command({ streamId: stream.streamId }),
+        studentAdvanced,
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    );
+    const record = expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        GetStudentByUserUcDef.command({ userId: studentAdvanced.user.uuid }),
+        mentor,
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    );
+    expect(record.streamId).toBe(stream.streamId);
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        ActivateStreamUcDef.command({ streamId: stream.streamId }),
+        mentor,
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    );
+    expectOk(
+      await app.apiApp.dispatch(
+        StreamModuleDef,
+        CompleteStudentUcDef.command({
+          streamId: stream.streamId,
+          studentId: record.uuid,
+          outcome: 'advanced',
+        }),
+        mentor,
+        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      ),
+    );
+
+    const text = await waitMessageContaining(
+      transport,
+      STUDENT_ADV_TG,
+      'Модуль завершён',
+    );
+    expect(text).toBeDefined();
+    expect(text).toContain('Хочешь записаться на следующий');
+
+    // Кнопка ведёт на следующий модуль программы (a1a1…)
+    const sent = transport.api.sentMessages.find(
+      (m) => m.telegramId === STUDENT_ADV_TG,
+    );
+    const next = sent?.keyboard?.rows.flat()[0];
+    expect(next?.text).toBe('➡️ Следующий модуль');
+    expect(next?.code).toStartWith('course:course-catalog:wish:');
+    expect(next?.code).toContain(LAST_MODULE.slice(0, 8));
+  });
+
+  /** Публикует Def-событие под FQN (payload валидируется схемой Def). */
+  function publish<E extends AnyEventDef>(
+    event: E,
+    payload: v.InferInput<E['payload']>,
+  ): void {
+    app.eventBus.publish(
+      envelopeOf(event, v.parse(event.payload, payload) as never, {
+        occurredAt: Date.now(),
+        aggregateId: crypto.randomUUID(),
+      }),
+    );
+  }
 });
