@@ -126,8 +126,8 @@
 #### Ф5.2 Недостающие e2e (`dmg-test-designer`; пилот flash → flash или Sonnet)
 - [x] Task: пилот flash — F-10 `main-menu`, F-11 `school`; приёмка тестов Opus `f1d3640`
     - Итог: качество flash принято — дальше flash; порция 2 (`transport`, `group-events`, `user-notify`, `inactivity`) — `bcec3df`
-- [~] Task: F-12…F-34 порциями (≈5 файлов на сессию); падающие — в `regressions.md`
-    - Порции 1–8 (F-10…F-34) — сделаны; журнал — `slices/f5-2-e2e.md`, промпты — `slices/f5-2-prompts/`. Осталось: `dmg-reviewer` (Opus) на весь Ф5.2 (от `bcec3df`, порции 1–2 — от `af4593e`)
+- [x] Task: F-12…F-34 порциями (≈5 файлов на сессию); падающие — в `regressions.md` `bcd8c75`
+    - Итог: порции 1–8, ≈8.9k строк e2e в 25 файлах, flash ≈ $1.6; находки — P1-26 (F-49), P3-63 (F-4C), P8-05 (F-91), P8-32 (F-4D); мёртвые ветки сторей — F-4B; ревью Opus — принять с правками (журнал — `slices/f5-2-e2e.md`)
 
 #### Ф5.3 Бот-раннер (Sonnet; F-41, F-42 — flash)
 - [ ] Task: F-40 гость без `/start`, F-43 ветвление stories → признаки ответа UC
