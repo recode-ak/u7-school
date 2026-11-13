@@ -8,13 +8,18 @@ import {
 } from 'bun:test';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
+import { LearningController } from '@u7-scl/bot/learning/controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
+import type { DialogResponse } from '@u7-scl/core/ui';
 import {
   GetQuestionnairesByUserUcDef,
   QuestionnaireModuleDef,
   type QuestionnaireView,
 } from '@u7-scl/domain/questionnaire/contract';
+import { StreamEvents, StudentEvents } from '@u7-scl/domain/stream/contract';
+import { WishEvents } from '@u7-scl/domain/wish/contract';
 import type { WishStatus } from '@u7-scl/domain/wish/testing';
+import { envelopeOf } from '@u7-scl/test-helpers/envelope-of';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import type {
@@ -27,9 +32,12 @@ import {
   screensNewFirst,
   stampedCode,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import type { AnyEventDef } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
+import * as v from 'valibot';
 import { QuestionnaireController } from '../../src/controllers/questionnaire/controller';
+import { CORE_EDUCATION_WORLD, type WorldDefinition } from '../worlds';
 
 /**
  * E2E тест wish-флоу (ветка B — анкетная):
@@ -46,6 +54,126 @@ const QUESTIONNAIRE_COURSE_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
 
 const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
+
+/** Курсы и модули мира `core-education`, нужные веткам желаний. */
+const COURSE_JS_BASICS = 'fafafafa-baba-4aba-8aba-babababababa';
+const COURSE_ALGORITHMS = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+const MODULE_JS_SYNTAX = 'a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0';
+const MODULE_ALGORITHMS = 'a1a1a1a1-b1b1-4b1b-8b1b-b1b1b1b1b1b1';
+const MODULE_UX_RESEARCH = 'a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a2';
+const STREAM_ENROLLMENT = 'e0e0e0e0-e0e0-e0e0-e0e0-e0e0e0e0e0e0';
+const UNKNOWN_ID = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+
+/** Пользователи мира `core-education` (uuid фикстур). */
+const USER_GUEST = '11111111-1111-1111-1111-111111111111';
+const USER_CANDIDATE = '22222222-2222-2222-2222-222222222222';
+const USER_ANDREY = '33333333-3333-3333-3333-333333333333';
+const USER_DEV = '44444444-4444-4444-4444-444444444444';
+const USER_MARINA = '77777777-7777-4777-8777-777777777777';
+const USER_OLEG = '88888888-8888-4888-8888-888888888888';
+/** Желание без профиля: такого пользователя в мире нет. */
+const USER_WITHOUT_PROFILE = 'abababab-abab-4bab-8bab-abababababab';
+
+const WISH_CREATED_AT = Date.UTC(2026, 8, 20, 12, 0, 0);
+
+/**
+ * Мир веток желаний: `core-education` с желаниями во всех статусах.
+ *
+ * - Марина: `pending` на анкетный курс (карточка → «Продолжить анкету»);
+ * - Олег: `expressed`/Гость: `confirmed` на «Основы программирования»;
+ * - Андрей: желание на модуль (кнопка из уведомления → «уже записан»);
+ * - Кандидат: желание на модуль для отмены (W05-M);
+ * - без профиля: желание на курс с несуществующим пользователем.
+ */
+const WISH_FLOWS_WORLD: WorldDefinition = {
+  ...CORE_EDUCATION_WORLD,
+  name: 'wish-flows',
+  description:
+    'core-education с желаниями: pending, expressed, confirmed, желание на модуль',
+  wishes: [
+    {
+      uuid: 'aa000001-0000-4000-8000-000000000001',
+      userId: USER_MARINA,
+      target: { kind: 'course', courseId: QUESTIONNAIRE_COURSE_ID },
+      status: 'pending',
+      createdAt: WISH_CREATED_AT,
+      updatedAt: WISH_CREATED_AT,
+      version: 0,
+    },
+    {
+      uuid: 'aa000002-0000-4000-8000-000000000002',
+      userId: USER_MARINA,
+      target: { kind: 'course', courseId: COURSE_JS_BASICS },
+      status: 'expressed',
+      createdAt: WISH_CREATED_AT,
+      updatedAt: WISH_CREATED_AT,
+      version: 0,
+    },
+    {
+      uuid: 'aa000003-0000-4000-8000-000000000003',
+      userId: USER_MARINA,
+      target: { kind: 'course', courseId: COURSE_ALGORITHMS },
+      status: 'expressed',
+      createdAt: WISH_CREATED_AT,
+      updatedAt: WISH_CREATED_AT,
+      version: 0,
+    },
+    {
+      uuid: 'aa000004-0000-4000-8000-000000000004',
+      userId: USER_OLEG,
+      target: { kind: 'course', courseId: COURSE_JS_BASICS },
+      status: 'expressed',
+      createdAt: WISH_CREATED_AT,
+      updatedAt: WISH_CREATED_AT,
+      version: 0,
+    },
+    {
+      uuid: 'aa000005-0000-4000-8000-000000000005',
+      userId: USER_GUEST,
+      target: { kind: 'course', courseId: COURSE_JS_BASICS },
+      status: 'confirmed',
+      createdAt: WISH_CREATED_AT,
+      updatedAt: WISH_CREATED_AT,
+      version: 0,
+    },
+    {
+      uuid: 'aa000006-0000-4000-8000-000000000006',
+      userId: USER_ANDREY,
+      target: { kind: 'module', moduleId: MODULE_UX_RESEARCH },
+      status: 'expressed',
+      createdAt: WISH_CREATED_AT,
+      updatedAt: WISH_CREATED_AT,
+      version: 0,
+    },
+    {
+      uuid: 'aa000007-0000-4000-8000-000000000007',
+      userId: USER_CANDIDATE,
+      target: { kind: 'module', moduleId: MODULE_UX_RESEARCH },
+      status: 'expressed',
+      createdAt: WISH_CREATED_AT,
+      updatedAt: WISH_CREATED_AT,
+      version: 0,
+    },
+    {
+      uuid: 'aa000009-0000-4000-8000-000000000009',
+      userId: USER_CANDIDATE,
+      target: { kind: 'course', courseId: COURSE_JS_BASICS },
+      status: 'expressed',
+      createdAt: WISH_CREATED_AT,
+      updatedAt: WISH_CREATED_AT,
+      version: 0,
+    },
+    {
+      uuid: 'aa000008-0000-4000-8000-000000000008',
+      userId: USER_WITHOUT_PROFILE,
+      target: { kind: 'course', courseId: COURSE_JS_BASICS },
+      status: 'expressed',
+      createdAt: WISH_CREATED_AT,
+      updatedAt: WISH_CREATED_AT,
+      version: 0,
+    },
+  ],
+};
 
 describe('Wish: анкетная ветка (e2e)', () => {
   let app: TestApp;
@@ -450,5 +578,465 @@ describe('Wish: анкетная ветка (e2e)', () => {
     expect(await questionnaireStatus(admin, QUESTIONNAIRE_COURSE_ID)).toBe(
       'completed',
     );
+  });
+});
+
+/**
+ * E2E веток желаний вне анкеты: карточка курса по статусу желания, отмена
+ * курса и модуля (W05/W05-M), запись на модуль из уведомления о завершении,
+ * уведомление менторам о подтверждении, реализация желаний зачислением и
+ * приглашение на открывшийся набор (ER `fulfill-wish` / `invite-wishers`).
+ *
+ * Мир — `core-education` с желаниями во всех статусах (`WISH_FLOWS_WORLD`).
+ */
+describe('Wish: карточка курса, модуль и события (e2e)', () => {
+  let app: TestApp;
+  let transport: TestBotTransport;
+
+  beforeAll(async () => {
+    app = await createTestApp('wish-flows-e2e', WISH_FLOWS_WORLD);
+    transport = createTestBotTransport(app, [
+      new AppController(SCHOOL_GROUP_URL),
+      new CoursesController(),
+      new LearningController(),
+    ]);
+  });
+
+  beforeEach(() => {
+    transport.reset();
+  });
+
+  afterAll(async () => {
+    await app.cleanup();
+  });
+
+  // ── Хелперы ──
+
+  /** Текст экрана ответа (пустая строка, если экрана не было). */
+  function screenText(response: DialogResponse): string {
+    return String(response.screen?.text ?? '');
+  }
+
+  /** Подписи кнопок экрана. */
+  function buttonTexts(response: DialogResponse): string[] {
+    return (response.screen?.keyboard?.rows.flat() ?? []).map((b) => b.text);
+  }
+
+  /** Коды кнопок экрана (со штампом транспорта). */
+  function buttonCodes(response: DialogResponse): string[] {
+    return (response.screen?.keyboard?.rows.flat() ?? []).map((b) => b.code);
+  }
+
+  /** Нажатие кнопки с текстом (код — отштампованный, из Api-записи). */
+  function press(tgId: number, buttonText: string): Promise<DialogResponse> {
+    return transport.handleCallback(
+      transport.makeBotContext(tgId, {
+        callbackData: pressedCode(transport, tgId, buttonText),
+      }),
+    );
+  }
+
+  /** Нажатие «крафтового» адреса с актуальным штампом экрана. */
+  function pressRaw(tgId: number, rawCode: string): Promise<DialogResponse> {
+    return transport.handleCallback(
+      transport.makeBotContext(tgId, {
+        callbackData: stampedCode(transport, tgId, rawCode),
+      }),
+    );
+  }
+
+  /** /start → карточка курса по адресу (каталог листать не нужно). */
+  async function openCourseCard(
+    tgId: number,
+    courseId: string,
+  ): Promise<DialogResponse> {
+    await transport.handleStart(transport.makeBotContext(tgId));
+    return pressRaw(tgId, `course:course-catalog:course:${courseId}`);
+  }
+
+  /** Ожидает проактивное сообщение адресату (poll по Api-записям). */
+  async function waitForSentTo(
+    tgId: number,
+    textContains: string,
+  ): Promise<SentMessage> {
+    const deadline = Date.now() + 3000;
+    for (;;) {
+      const found = transport.api.sentMessages.find(
+        (m) => m.telegramId === tgId && m.text.includes(textContains),
+      );
+      if (found) return found;
+      if (Date.now() > deadline) {
+        throw new Error(`Таймаут ожидания «${textContains}» для ${tgId}`);
+      }
+      await Bun.sleep(25);
+    }
+  }
+
+  /** Статусы желаний пользователя на курс (по репозиторию). */
+  async function courseWishStatuses(
+    userId: string,
+    courseId: string,
+  ): Promise<WishStatus[]> {
+    return (
+      await app.wishRepo.findAllByUserAndTarget(userId, {
+        kind: 'course',
+        courseId,
+      })
+    ).map((w) => w.snapshot().status);
+  }
+
+  /** Статусы желаний пользователя на модуль (по репозиторию). */
+  async function moduleWishStatuses(
+    userId: string,
+    moduleId: string,
+  ): Promise<WishStatus[]> {
+    return (
+      await app.wishRepo.findAllByUserAndTarget(userId, {
+        kind: 'module',
+        moduleId,
+      })
+    ).map((w) => w.snapshot().status);
+  }
+
+  /** Публикует Def-событие под FQN (payload валидируется схемой). */
+  function publish<E extends AnyEventDef>(
+    event: E,
+    payload: v.InferInput<E['payload']>,
+  ): void {
+    app.eventBus.publish(
+      envelopeOf(event, v.parse(event.payload, payload) as never, {
+        occurredAt: Date.now(),
+        aggregateId: crypto.randomUUID(),
+      }),
+    );
+  }
+
+  // ── Карточка курса по статусу желания ──
+
+  test('P2-40: карточка курса с pending-желанием — «📝 Продолжить анкету»', async () => {
+    const response = await openCourseCard(1007, QUESTIONNAIRE_COURSE_ID);
+
+    expect(buttonTexts(response)).toContainEqual(
+      expect.stringContaining('Продолжить анкету'),
+    );
+    expect(
+      buttonCodes(response).some((code) =>
+        code.startsWith(`questionnaire:fill:resume:${QUESTIONNAIRE_COURSE_ID}`),
+      ),
+    ).toBe(true);
+  });
+
+  test('P2-41 / P7-63: карточка курса с expressed/confirmed-желанием — «🗑️ Отменить желание»', async () => {
+    const expressed = await openCourseCard(1008, COURSE_JS_BASICS);
+    expect(buttonTexts(expressed)).toContainEqual(
+      expect.stringContaining('Отменить желание'),
+    );
+    expect(
+      buttonCodes(expressed).some((code) =>
+        code.startsWith(`course:course-catalog:cancel:${COURSE_JS_BASICS}`),
+      ),
+    ).toBe(true);
+
+    const confirmed = await openCourseCard(1001, COURSE_JS_BASICS);
+    expect(buttonTexts(confirmed)).toContainEqual(
+      expect.stringContaining('Отменить желание'),
+    );
+    expect(
+      buttonCodes(confirmed).some((code) =>
+        code.startsWith(`course:course-catalog:cancel:${COURSE_JS_BASICS}`),
+      ),
+    ).toBe(true);
+  });
+
+  test('P2-45: повторный apply при expressed — «уже выразил желание» и кнопки отмены', async () => {
+    await openCourseCard(1008, COURSE_JS_BASICS);
+    const response = await pressRaw(
+      1008,
+      `course:course-catalog:apply:${COURSE_JS_BASICS}`,
+    );
+
+    expect(screenText(response)).toContain('Ты уже выразил желание');
+    const texts = buttonTexts(response);
+    expect(texts).toContainEqual(expect.stringContaining('Отменить желание'));
+    expect(texts).toContainEqual(expect.stringContaining('Главное меню'));
+  });
+
+  test('P2-46: повторный apply при confirmed — «уже обучаешься на этом курсе»', async () => {
+    await openCourseCard(1001, COURSE_JS_BASICS);
+    const response = await pressRaw(
+      1001,
+      `course:course-catalog:apply:${COURSE_JS_BASICS}`,
+    );
+
+    expect(screenText(response)).toContain('уже обучаешься на этом курсе');
+    const texts = buttonTexts(response);
+    expect(texts).toContainEqual(expect.stringContaining('Отменить желание'));
+    expect(texts).toContainEqual(expect.stringContaining('Главное меню'));
+  });
+
+  test('P2-47: apply без courseId — «⚠️ Курс не указан»', async () => {
+    await transport.handleStart(transport.makeBotContext(1008));
+    const response = await pressRaw(1008, 'course:course-catalog:apply');
+
+    expect(screenText(response)).toContain('Курс не указан');
+  });
+
+  test('P2-48: apply с неизвестным курсом — warn-реплика без экрана', async () => {
+    await openCourseCard(1008, COURSE_JS_BASICS);
+    const response = await pressRaw(
+      1008,
+      `course:course-catalog:apply:${UNKNOWN_ID}`,
+    );
+
+    expect(response.screen).toBeUndefined();
+    expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toContain('Курс не найден');
+  });
+
+  test('P2-51: cancel-confirm без желания — мягкое «уже нет» без ⚠️', async () => {
+    await openCourseCard(1008, COURSE_ALGORITHMS);
+    const response = await pressRaw(
+      1008,
+      `course:course-catalog:cancel-confirm:${COURSE_ALGORITHMS}`,
+    );
+
+    const text = screenText(response);
+    expect(text).toContain('Активного желания на этот курс уже нет');
+    expect(response.notify).toBeUndefined();
+    expect(buttonTexts(response)).toContainEqual(
+      expect.stringContaining('Главное меню'),
+    );
+  });
+
+  test('P2-52: cancel-confirm с битым адресом — warn-реплика', async () => {
+    await openCourseCard(1008, COURSE_ALGORITHMS);
+    const response = await pressRaw(
+      1008,
+      'course:course-catalog:cancel-confirm:not-a-uuid',
+    );
+
+    expect(response.screen).toBeUndefined();
+    expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toContain('Ошибка валидации');
+  });
+
+  // ── Запись на модуль из уведомления о завершении ──
+
+  test('P2-53: «➡️ Следующий модуль» из приглашения — «Записали» без открытого бота', async () => {
+    // Сессия потеряна (рестарт бота): диалога нет, приглашение его создаёт
+    transport.dropSession(1003);
+    expect(transport.dialogOf(1003)).toBeUndefined();
+
+    publish(StudentEvents.completed, {
+      studentId: 'f0f0f0f0-f0f0-f0f0-f0f0-f0f0f0f0f0f0',
+      userId: USER_ANDREY,
+      streamId: 'e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1',
+      moduleId: MODULE_JS_SYNTAX,
+      outcome: 'advanced',
+    });
+
+    const invite = await waitForSentTo(1003, 'Хочешь записаться');
+    const next = invite.keyboard?.rows.flat()[0];
+    expect(next?.text).toBe('➡️ Следующий модуль');
+
+    // Нажатие кнопки канала invite — без /start
+    const response = await transport.handleCallback(
+      transport.makeBotContext(1003, { callbackData: next!.code }),
+    );
+
+    expect(screenText(response)).toContain('Записали');
+    expect(buttonTexts(response)).toContainEqual(
+      expect.stringContaining('Главное меню'),
+    );
+    expect(await moduleWishStatuses(USER_ANDREY, MODULE_ALGORITHMS)).toEqual([
+      'expressed',
+    ]);
+  });
+
+  test('P2-54: та же кнопка, желание на модуль уже есть — «уже записан»', async () => {
+    await transport.handleStart(transport.makeBotContext(1003));
+    const response = await pressRaw(
+      1003,
+      `course:course-catalog:wish:${MODULE_UX_RESEARCH}`,
+    );
+
+    expect(screenText(response)).toContain('уже записан на этот модуль');
+    expect(buttonTexts(response)).toContainEqual(
+      expect.stringContaining('Главное меню'),
+    );
+  });
+
+  test('P2-55: та же кнопка, неизвестный модуль — warn-реплика', async () => {
+    await transport.handleStart(transport.makeBotContext(1003));
+    const response = await pressRaw(
+      1003,
+      `course:course-catalog:wish:${UNKNOWN_ID}`,
+    );
+
+    expect(response.screen).toBeUndefined();
+    expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toContain('Модуль не найден');
+  });
+
+  // ── Отмена желания на модуль (W05-M) ──
+
+  test('P2-56: «🗑️ Отменить желание» модуля — подтверждение, «❌ Отмена» в меню', async () => {
+    await transport.handleStart(transport.makeBotContext(1002));
+    const confirm = await pressRaw(
+      1002,
+      `course:course-catalog:cancel-mod:${MODULE_UX_RESEARCH}`,
+    );
+
+    expect(screenText(confirm)).toContain('Отменить желание пройти модуль');
+    const texts = buttonTexts(confirm);
+    expect(texts).toContainEqual(expect.stringContaining('Да'));
+    expect(texts).toContainEqual(expect.stringContaining('Отмена'));
+
+    const cancelled = await press(1002, 'Отмена');
+    expect(screenText(cancelled)).toContain('Главное меню');
+    // Отмена подтверждения желание не трогает
+    expect(
+      await moduleWishStatuses(USER_CANDIDATE, MODULE_UX_RESEARCH),
+    ).toEqual(['expressed']);
+  });
+
+  test('P2-57: «✅ Да» — «Желание пройти модуль отменено» и главное меню', async () => {
+    await transport.handleStart(transport.makeBotContext(1002));
+    const response = await pressRaw(
+      1002,
+      `course:course-catalog:cancel-mod-confirm:${MODULE_UX_RESEARCH}`,
+    );
+
+    expect(screenText(response)).toContain('Желание пройти модуль отменено');
+    expect(buttonTexts(response)).toContainEqual(
+      expect.stringContaining('Главное меню'),
+    );
+    expect(
+      await moduleWishStatuses(USER_CANDIDATE, MODULE_UX_RESEARCH),
+    ).toEqual(['cancelled']);
+  });
+
+  test('P2-58: cancel-mod-confirm без желания — «Активного желания на этот модуль уже нет»', async () => {
+    await transport.handleStart(transport.makeBotContext(1001));
+    const response = await pressRaw(
+      1001,
+      `course:course-catalog:cancel-mod-confirm:${MODULE_ALGORITHMS}`,
+    );
+
+    expect(screenText(response)).toContain(
+      'Активного желания на этот модуль уже нет',
+    );
+    expect(buttonTexts(response)).toContainEqual(
+      expect.stringContaining('Главное меню'),
+    );
+  });
+
+  test('P2-59: cancel-mod-confirm с битым адресом — warn-реплика', async () => {
+    await transport.handleStart(transport.makeBotContext(1001));
+    const response = await pressRaw(
+      1001,
+      'course:course-catalog:cancel-mod-confirm:not-a-uuid',
+    );
+
+    expect(response.screen).toBeUndefined();
+    expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toContain('Ошибка валидации');
+  });
+
+  // ── События: подтверждение, зачисление, открытие набора ──
+
+  test('P7-56: wish.confirmed — notify каждому ментору, автор пропускается', async () => {
+    publish(WishEvents.confirmed, {
+      userId: USER_MARINA,
+      courseId: COURSE_JS_BASICS,
+    });
+
+    const notified = await waitForSentTo(1004, 'подтвердил желание');
+    expect(notified.text).toContain('Марина');
+    expect(notified.text).toContain('Основы программирования');
+
+    // Автор желания (сам ментор курса) уведомления не получает
+    transport.reset();
+    publish(WishEvents.confirmed, {
+      userId: USER_DEV,
+      courseId: COURSE_JS_BASICS,
+    });
+    await Bun.sleep(200);
+    expect(transport.api.sentMessages).toEqual([]);
+  });
+
+  test('P7-58: student.enrolled — fulfill только совпадающих по модулю желаний', async () => {
+    publish(StudentEvents.enrolled, {
+      studentId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
+      userId: USER_MARINA,
+      streamId: STREAM_ENROLLMENT,
+      moduleId: MODULE_JS_SYNTAX,
+    });
+
+    const deadline = Date.now() + 3000;
+    while (
+      !(await courseWishStatuses(USER_MARINA, COURSE_JS_BASICS)).includes(
+        'fulfilled',
+      )
+    ) {
+      if (Date.now() > deadline) {
+        throw new Error('Таймаут ожидания статуса fulfilled');
+      }
+      await Bun.sleep(25);
+    }
+
+    expect(await courseWishStatuses(USER_MARINA, COURSE_JS_BASICS)).toEqual([
+      'fulfilled',
+    ]);
+    // Модуль другого курса и незавершённая анкета — не тронуты
+    expect(await courseWishStatuses(USER_MARINA, COURSE_ALGORITHMS)).toEqual([
+      'expressed',
+    ]);
+    expect(
+      await courseWishStatuses(USER_MARINA, QUESTIONNAIRE_COURSE_ID),
+    ).toEqual(['pending']);
+  });
+
+  test('P7-60: stream.created — без адреса warn и пропуск, нет потока/модуль вне программ — тишина', async () => {
+    publish(StreamEvents.created, {
+      streamId: STREAM_ENROLLMENT,
+      moduleId: MODULE_JS_SYNTAX,
+    });
+
+    // Желающие с адресом приглашены, желание без профиля пропущено
+    const toGuest = await waitForSentTo(1001, 'Открылся набор');
+    expect(toGuest.text).toContain('JS Core — Поток 1');
+    await waitForSentTo(1002, 'Открылся набор');
+
+    // Потока нет — приглашений нет
+    transport.reset();
+    publish(StreamEvents.created, {
+      streamId: UNKNOWN_ID,
+      moduleId: MODULE_JS_SYNTAX,
+    });
+    await Bun.sleep(200);
+    expect(transport.api.sentMessages).toEqual([]);
+
+    // Модуль вне опубликованных программ — совпадений нет
+    publish(StreamEvents.created, {
+      streamId: STREAM_ENROLLMENT,
+      moduleId: UNKNOWN_ID,
+    });
+    await Bun.sleep(200);
+    expect(transport.api.sentMessages).toEqual([]);
+  });
+
+  test('P7-62: wish.invited с недоступным потоком — приглашение не отправляется', async () => {
+    transport.reset();
+    publish(WishEvents.invited, {
+      userId: USER_GUEST,
+      telegramId: 1001,
+      streamId: UNKNOWN_ID,
+      targetKind: 'course',
+      courseId: COURSE_JS_BASICS,
+    });
+
+    await Bun.sleep(200);
+    expect(transport.api.sentMessages).toEqual([]);
   });
 });
