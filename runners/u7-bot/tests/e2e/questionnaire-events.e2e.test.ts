@@ -1,19 +1,24 @@
 import {
   afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
   describe,
   expect,
   test,
 } from 'bun:test';
+import { AppController } from '@u7-scl/bot/app/app-controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import {
+  GetQuestionnairesByUserUcDef,
+  GetQuestionnaireUcDef,
   LikertQuestionPoolSchema,
   QuestionnaireEvents,
   QuestionnaireModuleDef,
   QuestionnairePoolSchema,
   SendLikertInviteUcDef,
   StartQuestionnaireUcDef,
+  SweepAbandonedQuestionnairesJobDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import { envelopeOf } from '@u7-scl/test-helpers/envelope-of';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
@@ -22,13 +27,18 @@ import type {
   SentMessage,
   TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { createTestBotTransport } from '@u7-scl/test-helpers/test-bot-transport';
+import {
+  createTestBotTransport,
+  stampedCode,
+} from '@u7-scl/test-helpers/test-bot-transport';
+import type { TestClock } from '@u7-scl/test-helpers/test-clock';
 import { type AnyEventDef, type OperationRef, SystemCaller } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { QuestionnaireController } from '../../src/controllers/questionnaire/controller';
 import { userActor } from '../../src/core/user-actor.test-kit';
+import { CORE_EDUCATION_WORLD } from '../worlds';
 
 /**
  * E2E пяти Def-событий анкеты в боте (срез UI): подписки `FillStory`
@@ -45,6 +55,31 @@ import { userActor } from '../../src/core/user-actor.test-kit';
  */
 
 const COURSE_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+/** Пул одного вопроса — для анкет, которые обходит Job. */
+const sweepPool = () =>
+  v.parse(QuestionnairePoolSchema, {
+    inviteText: 'Приглашаем пройти опрос',
+    questions: [
+      {
+        question: 'Какой у тебя опыт?',
+        questionCode: 'q1',
+        type: 'choice',
+        multiple: false,
+        answers: [
+          { answer: 'Новичок', answerCode: 'novice' },
+          { answer: 'Средний', answerCode: 'mid' },
+        ],
+      },
+      // Второй вопрос: ответ на первый оставляет анкету in_progress
+      {
+        question: 'Готов продолжить?',
+        questionCode: 'q2',
+        type: 'choice',
+        multiple: false,
+        answers: [{ answer: 'Да', answerCode: 'yes' }],
+      },
+    ],
+  });
 const FROM: OperationRef = {
   kind: 'useCase',
   module: 'probe',
@@ -67,6 +102,14 @@ const standardPool = () =>
           { answer: 'Новичок', answerCode: 'novice' },
           { answer: 'Средний', answerCode: 'mid' },
         ],
+      },
+      // Второй вопрос: ответ на первый оставляет анкету in_progress
+      {
+        question: 'Готов продолжить?',
+        questionCode: 'q2',
+        type: 'choice',
+        multiple: false,
+        answers: [{ answer: 'Да', answerCode: 'yes' }],
       },
     ],
   });
@@ -274,5 +317,308 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
 
     publish(QuestionnaireEvents.continueInvite, base());
     await waitForSent(respondent.user.view().telegramId, 'продолжим?');
+  });
+});
+
+// ═══ F-32: Job обхода брошенных анкет (P7-49…P7-54) ═══
+
+const HOUR_MS = 60 * 60 * 1000;
+const SWEEP_MARINA_TG = 1007;
+
+interface SweepStand {
+  app: TestApp & { clock: TestClock };
+  transport: TestBotTransport;
+  marina: U7BotActor;
+}
+
+/**
+ * Стенд с управляемыми часами: старт — якорь мира. Анкеты создаются
+ * реальным UC, затем простой доводится правкой `updatedAt` во ВРЕМЕННЫХ
+ * фикстурах (`app.fixtures.dbDir`), как в образце сбоя репозитория.
+ */
+async function createSweepStand(tag: string): Promise<SweepStand> {
+  const app = await createTestApp(tag, CORE_EDUCATION_WORLD, { clock: {} });
+  // AppController — чтобы после /start был экран с кнопкой (штамп для
+  // прямого вызова стори), анкета — чтобы пришёл приглашённый диалог
+  const transport = createTestBotTransport(app, [
+    new AppController('https://t.me/u7_school_group'),
+    new QuestionnaireController(),
+  ]);
+  const marina = await app.userByTelegramId(SWEEP_MARINA_TG);
+  return { app, transport, marina };
+}
+
+describe('Questionnaire: Job обхода брошенных (e2e)', () => {
+  let stand: SweepStand;
+
+  afterEach(async () => {
+    await stand?.app.cleanup();
+  });
+
+  // ── Хелперы ──
+
+  const questionnairesFile = () =>
+    `${stand.app.fixtures.dbDir}/questionnaires/questionnaires.json`;
+
+  /** Настоящая анкета in_progress (старт из каталога) — её обходит Job. */
+  async function createStandard(courseId: string): Promise<string> {
+    expectOk(
+      await stand.app.apiApp.dispatch(
+        QuestionnaireModuleDef,
+        StartQuestionnaireUcDef.command({
+          pool: sweepPool(),
+          ownerInfo: { courseId },
+        }),
+        new SystemCaller(FROM, stand.marina),
+        trace(),
+      ),
+    );
+    const list = expectOk(
+      await stand.app.apiApp.dispatch(
+        QuestionnaireModuleDef,
+        GetQuestionnairesByUserUcDef.command({
+          userId: stand.marina.user.uuid,
+        }),
+        stand.marina,
+        trace(),
+      ),
+    );
+    const created = list.find((q) => String(q.ownerInfo.courseId) === courseId);
+    if (!created) throw new Error('Созданная анкета не найдена');
+    return created.uuid;
+  }
+
+  /** Возраст последней активности: `updatedAt` = «сейчас» минус простой. */
+  async function setIdle(qId: string, idleMs: number): Promise<void> {
+    const rows = (await Bun.file(questionnairesFile()).json()) as Array<
+      Record<string, unknown>
+    >;
+    const row = rows.find((r) => r.uuid === qId);
+    if (!row) throw new Error('Анкета не найдена в фикстурах');
+    row.updatedAt = stand.app.clock.now() - idleMs;
+    await Bun.write(questionnairesFile(), JSON.stringify(rows));
+  }
+
+  /** Состояние анкеты после прогона Job. */
+  async function viewOf(qId: string) {
+    return expectOk(
+      await stand.app.apiApp.dispatch(
+        QuestionnaireModuleDef,
+        GetQuestionnaireUcDef.command({ questionnaireId: qId }),
+        stand.marina,
+        trace(),
+      ),
+    );
+  }
+
+  const tgIdOf = () => stand.marina.user.view().telegramId;
+
+  const waitForSent = async (
+    textContains: string,
+  ): Promise<SentMessage | undefined> => {
+    const deadline = Date.now() + 3000;
+    for (;;) {
+      const found = stand.transport.api.sentMessages.find(
+        (m) => m.telegramId === tgIdOf() && m.text.includes(textContains),
+      );
+      if (found) return found;
+      if (Date.now() > deadline) return undefined;
+      await Bun.sleep(25);
+    }
+  };
+
+  const actionOf = (code: string): string => {
+    const parts = code.split(':');
+    const short = parts.findIndex((p) => p.startsWith('~'));
+    return `${(short === -1 ? parts : parts.slice(0, short)).join(':')}:`;
+  };
+
+  const actionsOf = (m: SentMessage) =>
+    (m.keyboard?.rows.flat() ?? []).map((b) => [b.text, actionOf(b.code)]);
+
+  const publish = (
+    event: typeof QuestionnaireEvents.abandoned,
+    payload: { questionnaireId: string; respondentId: string; reason: string },
+  ): void => {
+    stand.app.eventBus.publish(
+      envelopeOf(
+        event,
+        v.parse(event.payload, {
+          ...payload,
+          kind: 'standard',
+          ownerInfo: { courseId: COURSE_ID },
+        }) as never,
+        { occurredAt: Date.now(), aggregateId: crypto.randomUUID() },
+      ),
+    );
+  };
+
+  // ── Ступени простоя ──
+
+  test('P7-49: простой 3 ч — приглашение продолжить, метка continueInvitedAt', async () => {
+    stand = await createSweepStand('sweep-invite');
+    const qId = await createStandard(crypto.randomUUID());
+    stand.transport.reset();
+    await setIdle(qId, 4 * HOUR_MS);
+
+    expectOk(
+      await stand.app.runJob(
+        QuestionnaireModuleDef,
+        SweepAbandonedQuestionnairesJobDef,
+      ),
+    );
+
+    const message = await waitForSent('продолжим?');
+    expect(message).toBeDefined();
+    expect(actionsOf(message as SentMessage)).toEqual([
+      ['▶️ Продолжить анкету', 'questionnaire:fill:resume:'],
+      ['⏭️ Прервать', 'questionnaire:fill:cancel:'],
+    ]);
+
+    const view = await viewOf(qId);
+    expect(view.status).toBe('in_progress');
+    expect(view.continueInvitedAt).toBe(stand.app.clock.now());
+    expect(view.warnedAt).toBeUndefined();
+  });
+
+  test('P7-50: простой 6 ч — предупреждение о закрытии, метка warnedAt', async () => {
+    stand = await createSweepStand('sweep-warn');
+    const qId = await createStandard(crypto.randomUUID());
+    stand.transport.reset();
+    await setIdle(qId, 7 * HOUR_MS);
+
+    expectOk(
+      await stand.app.runJob(
+        QuestionnaireModuleDef,
+        SweepAbandonedQuestionnairesJobDef,
+      ),
+    );
+
+    const message = await waitForSent('Анкета приостановлена');
+    expect(message).toBeDefined();
+    expect(message?.text).toContain('Продолжить?');
+    expect(actionsOf(message as SentMessage)).toEqual([
+      ['▶️ Продолжить', 'questionnaire:fill:resume:'],
+      ['⏭️ Прервать', 'questionnaire:fill:cancel:'],
+    ]);
+
+    const view = await viewOf(qId);
+    expect(view.warnedAt).toBe(stand.app.clock.now());
+    expect(view.status).toBe('in_progress');
+  });
+
+  test('P7-51: простой 9 ч — закрытие по таймауту и уведомление без кнопок', async () => {
+    stand = await createSweepStand('sweep-abandon');
+    const qId = await createStandard(crypto.randomUUID());
+    stand.transport.reset();
+    await setIdle(qId, 10 * HOUR_MS);
+
+    expectOk(
+      await stand.app.runJob(
+        QuestionnaireModuleDef,
+        SweepAbandonedQuestionnairesJobDef,
+      ),
+    );
+
+    const message = await waitForSent('Анкета была закрыта');
+    expect(message).toBeDefined();
+    expect(message?.keyboard).toBeUndefined();
+
+    const view = await viewOf(qId);
+    expect(view.status).toBe('abandoned');
+    expect(view.abandonReason).toBe('timeout');
+  });
+
+  test('P7-52: ручное прерывание и таймаут без профиля — тишина', async () => {
+    stand = await createSweepStand('sweep-silence');
+    stand.transport.reset();
+    // Ручное прерывание: экран «Анкета прервана» уже показан, дубля нет
+    publish(QuestionnaireEvents.abandoned, {
+      questionnaireId: crypto.randomUUID(),
+      respondentId: stand.marina.user.uuid,
+      reason: 'by_user',
+    });
+    // Таймаут с неизвестным профилю respondentId — адресата нет
+    publish(QuestionnaireEvents.abandoned, {
+      questionnaireId: crypto.randomUUID(),
+      respondentId: UNKNOWN_USER_ID,
+      reason: 'timeout',
+    });
+    await Bun.sleep(200);
+    expect(stand.transport.api.sentMessages).toEqual([]);
+
+    // Следующее событие доходит: подписка не сломалась
+    publish(QuestionnaireEvents.abandoned, {
+      questionnaireId: crypto.randomUUID(),
+      respondentId: stand.marina.user.uuid,
+      reason: 'timeout',
+    });
+    expect(await waitForSent('Анкета была закрыта')).toBeDefined();
+  });
+
+  test('P7-54: активность сбрасывает метки — ступень простоя начинается заново', async () => {
+    stand = await createSweepStand('sweep-reset');
+    const courseId = crypto.randomUUID();
+    const qId = await createStandard(courseId);
+    stand.transport.reset();
+    await setIdle(qId, 4 * HOUR_MS);
+
+    expectOk(
+      await stand.app.runJob(
+        QuestionnaireModuleDef,
+        SweepAbandonedQuestionnairesJobDef,
+      ),
+    );
+    expect(await waitForSent('продолжим?')).toBeDefined();
+
+    // Ожидаемый простой 5 ч: метка приглашения стоит — повтора нет
+    stand.app.clock.advance(HOUR_MS);
+    const before = stand.transport.api.sentMessages.length;
+    expectOk(
+      await stand.app.runJob(
+        QuestionnaireModuleDef,
+        SweepAbandonedQuestionnairesJobDef,
+      ),
+    );
+    await Bun.sleep(200);
+    expect(stand.transport.api.sentMessages.length).toBe(before);
+
+    // Пользователь вернулся: /start открывает диалог, resume — по курсу
+    await stand.transport.handleStart(stand.transport.makeBotContext(tgIdOf()));
+    await stand.transport.handleCallback(
+      stand.transport.makeBotContext(tgIdOf(), {
+        callbackData: stampedCode(
+          stand.transport,
+          tgIdOf(),
+          `questionnaire:fill:resume:${courseId}`,
+        ),
+      }),
+    );
+    const answer = stand.transport.api.sentMessages
+      .at(-1)
+      ?.keyboard?.rows.flat()
+      .find((b) => b.text === '1');
+    if (!answer) throw new Error('Нет кнопки ответа');
+    await stand.transport.handleCallback(
+      stand.transport.makeBotContext(tgIdOf(), {
+        callbackData: answer.code,
+      }),
+    );
+
+    const afterAnswer = await viewOf(qId);
+    expect(afterAnswer.status).toBe('in_progress');
+    expect(afterAnswer.continueInvitedAt).toBeUndefined();
+    expect(afterAnswer.warnedAt).toBeUndefined();
+
+    // Цепочка заново: через 3 ч простоя — новое приглашение
+    stand.app.clock.advance(3 * HOUR_MS + 5 * 60 * 1000);
+    stand.transport.reset();
+    expectOk(
+      await stand.app.runJob(
+        QuestionnaireModuleDef,
+        SweepAbandonedQuestionnairesJobDef,
+      ),
+    );
+    expect(await waitForSent('продолжим?')).toBeDefined();
   });
 });

@@ -6,6 +6,7 @@ import {
   expect,
   test,
 } from 'bun:test';
+import { TEST_SCHOOL } from '@u7-scl/app';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
 import { LearningController } from '@u7-scl/bot/learning/controller';
@@ -13,6 +14,7 @@ import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
+import { mdRaw } from '@u7-scl/core/shared';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
@@ -266,5 +268,44 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
     const backToModule = await press(tgId, 'Назад к модулю');
     expect(String(backToModule.screen?.text ?? '')).toContain('Длинный модуль');
     expectEditInPlace(tgId, originMessageId);
+  });
+
+  // ── P8-44: кеш пагинатора и смена диалога ──
+
+  test('P8-44: запись кеша чужой эпохи — промах, страницы пересобираются', async () => {
+    const tgId = guest.user.view().telegramId;
+    await transport.handleStart(transport.makeBotContext(tgId));
+    await press(tgId, 'Школа');
+    const first = await press(tgId, 'Отзывы');
+    expect(String(first.screen?.text)).toMatch(/· 1\/\d+/);
+
+    const key = `school-reviews:${TEST_SCHOOL.id}`;
+    const dialog = transport.dialogOf(tgId);
+    if (!dialog) throw new Error('диалог отзывов не открыт');
+
+    // В эпохе своего диалога запись читается (попадание)
+    const cached = transport.uiApp.dialogCache.get(tgId, key, { dialog });
+    expect(cached).toBeDefined();
+
+    // Подмена эпохой «из будущего»: та же запись становится промахом
+    transport.uiApp.dialogCache.set(
+      tgId,
+      key,
+      { title: mdRaw('ЧУЖАЯ ЭПОХА'), cards: [mdRaw('поддельная карточка')] },
+      { dialog: { ...dialog, seq: dialog.seq + 50 } },
+    );
+    expect(
+      transport.uiApp.dialogCache.get(tgId, key, { dialog }),
+    ).toBeUndefined();
+
+    // Страницы пересобраны с домена: листание работает, подмены нет
+    const second = await press(tgId, 'След. ▶️');
+    expect(String(second.screen?.text)).toMatch(/· 2\/\d+/);
+    expect(String(second.screen?.text)).not.toContain('ЧУЖАЯ ЭПОХА');
+
+    // Без открытого диалога кеш — no-op
+    transport.dropSession(tgId);
+    transport.uiApp.dialogCache.set(tgId, key, cached, {});
+    expect(transport.uiApp.dialogCache.get(tgId, key, {})).toBeUndefined();
   });
 });
