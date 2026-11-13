@@ -51,6 +51,7 @@ export class ActivateStreamUc extends UseCaseFromDef<
       // Ошибки студентов недостижимы: DCS трогает только зачисленных и без шагов
       const { error } = launched;
       if (error.code === StreamErrors.NOT_ENROLLING.code) return err(error);
+      // biome-ignore lint/plugin: ERR-01: недостижимо — ошибки студентов StreamLaunchDcs не возникают (см. выше)
       throw new Error(`Запуск потока: ${error.code}`);
     }
     uow.register(stream, this.resolve.streams);

@@ -647,6 +647,9 @@
         "domain/**/*.facade.ts",
         "domain/**/*.uc.ts",
         "domain/**/*.er.ts",
+        "modules/**/*.facade.ts",
+        "modules/**/*.uc.ts",
+        "modules/**/*.er.ts",
         "!**/*.test.ts"
       ],
       "plugins": ["./node_modules/dmg-core/biome-plugins/err-01-no-throw.grit"]
@@ -659,6 +662,10 @@
         "domain/**/*.uc.ts",
         "domain/**/*.er.ts",
         "domain/**/*.job.ts",
+        "modules/**/*.facade.ts",
+        "modules/**/*.uc.ts",
+        "modules/**/*.er.ts",
+        "modules/**/*.job.ts",
         "!**/*.test.ts"
       ],
       "plugins": [

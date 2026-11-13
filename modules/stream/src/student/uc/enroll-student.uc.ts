@@ -88,6 +88,7 @@ export class EnrollStudentUc extends UseCaseFromDef<
   ) {
     const firstStepId = stream.firstStepId();
     if (firstStepId === undefined) {
+      // biome-ignore lint/plugin: ERR-01: недостижимо — правило streamHasSteps отказывает потоку без шагов до execute
       throw new Error('Правило streamHasSteps пропустило поток без шагов');
     }
     const enrolled = StudentAr.enroll(
