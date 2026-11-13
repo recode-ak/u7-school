@@ -17,10 +17,14 @@ import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
+  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 
 const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
+
+/** Администратор мира `core-education` — имеет доступ к /log_level. */
+const ADMIN_TELEGRAM_ID = 1005;
 
 /**
  * Интеграционные тесты: главное меню, /start, /help (домен app).
@@ -433,5 +437,183 @@ describe('E2E: Студент — «Моя учёба» (learning)', () => {
       }),
     );
     expect(String(backResp.screen?.text)).toContain('Моя учёба');
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════
+// E2E системных сценариев приложения (P1-07, P1-09, P1-11, P1-23…P1-27):
+// /help в активной стори, /cancel вне диалога, неизвестная команда,
+// callback с неизвестным префиксом, админ-команда /log_level.
+// ══════════════════════════════════════════════════════════════════
+
+describe('E2E: системные команды приложения (app)', () => {
+  let app: TestApp;
+  let transport: TestBotTransport;
+  let guest: U7BotActor;
+  let student: U7BotActor;
+  let admin: U7BotActor;
+
+  beforeAll(async () => {
+    app = await createTestApp('app-commands-e2e');
+    // adminTelegramIds — как в бою (main.ts передаёт config.adminTelegramIds)
+    const appController = new AppController(SCHOOL_GROUP_URL, [
+      ADMIN_TELEGRAM_ID,
+    ]);
+    const schoolController = new SchoolController();
+    transport = createTestBotTransport(app, [appController, schoolController]);
+    guest = await app.userByTelegramId(1001);
+    student = await app.userByTelegramId(1003);
+    admin = await app.userByTelegramId(ADMIN_TELEGRAM_ID);
+  });
+
+  beforeEach(() => {
+    transport.reset();
+  });
+
+  afterAll(async () => {
+    await app.cleanup();
+  });
+
+  /** /start → «🏫 Школа»: диалог переключается на стори school/hub. */
+  async function openSchoolHub(tgId: number): Promise<DialogResponse> {
+    await transport.handleStart(transport.makeBotContext(tgId));
+    const hub = await transport.handleCallback(
+      transport.makeBotContext(tgId, {
+        callbackData: pressedCode(transport, tgId, 'Школа'),
+      }),
+    );
+    expect(transport.dialogOf(tgId)?.path).toBe('school/hub');
+    return hub;
+  }
+
+  test('P1-07: /help внутри активной стори — общий справочник (у базовой стори contextHelp = null)', async () => {
+    const tgId = guest.user.view().telegramId;
+    await openSchoolHub(tgId);
+
+    const response = await transport.handleHelp(transport.makeBotContext(tgId));
+
+    // Контекстной справки у school/hub нет → общий справочник из menuButtons
+    expect(response.notify?.text).toContain('Как со мной работать?');
+    expect(response.notify?.text).toContain('Школа');
+    // Реплика, не экран: клавиатура прежнего экрана остаётся
+    expect(response.screen).toBeUndefined();
+  });
+
+  test('P1-09: /cancel вне диалога — короткое меню без приветствия', async () => {
+    const tgId = guest.user.view().telegramId;
+    await transport.handleStart(transport.makeBotContext(tgId));
+
+    const response = await transport.handleCancel(
+      transport.makeBotContext(tgId),
+    );
+
+    expect(String(response.screen?.text)).toBe(
+      '🏫 *Главное меню*\n\nВыберите раздел:',
+    );
+    expect(response.screen?.text).not.toContain('Привет');
+    expect(response.screen?.keyboard).toBeDefined();
+    expect(response.notify).toBeUndefined();
+    // Диалог снова на якоре меню
+    expect(transport.dialogOf(tgId)?.path).toBe('app/menu');
+  });
+
+  test('P1-11: неизвестная команда — подсказка про /help', async () => {
+    const tgId = guest.user.view().telegramId;
+    await transport.handleStart(transport.makeBotContext(tgId));
+
+    const response = await transport.handleCommand(
+      transport.makeBotContext(tgId),
+      '/foo',
+    );
+
+    expect(response.notify?.text).toContain('Неизвестная команда');
+    expect(response.notify?.text).toContain('/help');
+    expect(response.screen).toBeUndefined();
+  });
+
+  test('P1-23: callback app:* без системного кода — экран «⚠️ Неизвестная команда»', async () => {
+    const tgId = guest.user.view().telegramId;
+
+    // Каждый код — с экрана свежего меню (/start двигает seq: старый штамп мёртв)
+    for (const raw of ['app:unknown-action', 'app:xyz']) {
+      await transport.handleStart(transport.makeBotContext(tgId));
+      const response = await transport.handleCallback(
+        transport.makeBotContext(tgId, {
+          callbackData: stampedCode(transport, tgId, raw),
+        }),
+      );
+      expect(String(response.screen?.text)).toContain('Неизвестная команда');
+    }
+  });
+
+  test('P1-24: /log_level без аргумента (админ) — инструкция со списком уровней', async () => {
+    const tgId = admin.user.view().telegramId;
+    await transport.handleStart(transport.makeBotContext(tgId));
+
+    const response = await transport.handleCommand(
+      transport.makeBotContext(tgId),
+      '/log_level',
+    );
+
+    const text = response.notify?.text ?? '';
+    expect(text).toContain('Использование');
+    expect(text).toContain('log\\_level');
+    expect(text).toContain('Доступные уровни: debug, info, warn, error, all');
+    expect(response.screen).toBeUndefined();
+  });
+
+  test('P1-25: /log_level <уровень> (админ) — реплика об изменении уровня в чат', async () => {
+    const tgId = admin.user.view().telegramId;
+    await transport.handleStart(transport.makeBotContext(tgId));
+
+    const sentBefore = transport.api.sentMessages.length;
+    const response = await transport.handleCommand(
+      transport.makeBotContext(tgId),
+      '/log_level info',
+    );
+
+    expect(response.notify?.text).toContain(
+      'Уровень логирования изменён на: info',
+    );
+    // Реплика доставлена в чат отдельным сообщением (экран не перерисован)
+    const delivered = transport.api.sentMessages.slice(sentBefore);
+    expect(
+      delivered.some((m) => m.text.includes('Уровень логирования изменён')),
+    ).toBe(true);
+  });
+
+  // находка: P1-26 — реплика «Неизвестный уровень: "…". Доступные: …» не
+  // проходит MarkdownV2 (статическая точка после кавычки не экранирована),
+  // транспорт падает на assertDialogResponseMarkdownSafe и в чат ничего не уходит.
+  // Строка — app-controller.ts, #logLevelResponse, ветка parseLogLevel === undefined.
+  test.skip('P1-26: /log_level <неизвестный> (админ) — реплика про неизвестный уровень', async () => {
+    const tgId = admin.user.view().telegramId;
+    await transport.handleStart(transport.makeBotContext(tgId));
+
+    const response = await transport.handleCommand(
+      transport.makeBotContext(tgId),
+      '/log_level bogus',
+    );
+
+    const text = response.notify?.text ?? '';
+    expect(text).toContain('Неизвестный уровень: "bogus"');
+    expect(text).toContain('Доступные: debug, info, warn, error, all');
+  });
+
+  test('P1-27: /log_level не-админом — тишина в чате', async () => {
+    const tgId = student.user.view().telegramId;
+    await transport.handleStart(transport.makeBotContext(tgId));
+    const sentBefore = transport.api.sentMessages.length;
+    const editedBefore = transport.api.editedMessages.length;
+
+    const response = await transport.handleCommand(
+      transport.makeBotContext(tgId),
+      '/log_level debug',
+    );
+
+    // Пустой ответ: команда поглощена (stop{}), но в чат ничего не ушло
+    expect(response).toEqual({});
+    expect(transport.api.sentMessages.length).toBe(sentBefore);
+    expect(transport.api.editedMessages.length).toBe(editedBefore);
   });
 });

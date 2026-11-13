@@ -10,7 +10,7 @@
 |---|---|---|---|
 | Ф5.1 Харнес e2e | F-01…F-04 | `dmg-test-designer` (Opus — инфраструктура тестов) | — |
 | Ф5.2 Недостающие e2e | F-10…F-34 | `dmg-test-designer` (Sonnet, порциями по файлам) | Ф5.1 |
-| Ф5.3 Бот-раннер | F-40…F-48, F-91 | `dmg-api-author` / Opus по месту | Ф5.2 (red-тесты) |
+| Ф5.3 Бот-раннер | F-40…F-49, F-91 | `dmg-api-author` / Opus по месту | Ф5.2 (red-тесты) |
 | Ф5.4 Линт и правила | F-50…F-52 | orchestrator + `dmg-api-author` | — |
 | Ф5.5 Платформа `dmg-core` | F-60…F-63 | Opus (платформа) | — |
 | Ф5.6 Домен и модули | F-70…F-74 | `dmg-domain-author` / `dmg-api-author` (Sonnet) | Ф5.4 (линт видит `modules/**`) |
@@ -73,6 +73,7 @@
 | F-46 | TR-68 | Имя по умолчанию в `ensure-registered.ts:57` | S | Ф5.3 | |
 | F-47 | TR-59 | `controllers/courses/ui-spec.md:25-27` — курс без этапов / с одним этапом: спеку под код | S | Ф5.3 | |
 | F-48 | ревью Ф5.1 | `Date.now()` в `controllers/learning/stories/progress.ts:144` — мимо `now()` из `@u7-scl/core/shared`, тестовые часы его не видят | S | Ф5.3 | |
+| F-49 | regressions P1-26 | `/log_level <неизвестный>` — экранирование MarkdownV2 в `app-controller.ts`, снять `skip` в `main-menu.e2e` | S | Ф5.3 | |
 
 ## Ф5.4 Линт и правила
 
