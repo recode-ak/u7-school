@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { TEST_SCHOOL, type U7App } from '@u7-scl/app';
 import type { U7BotController } from '@u7-scl/bot/u7-bot-controller';
 import { ConsoleLogger } from '@u7-scl/core/shared';
@@ -44,6 +45,35 @@ export interface KickedMember {
   unbanned: boolean;
 }
 
+/** Ответ на нажатие (`answerCallbackQuery`): `text` — alert, без текста — тихое подтверждение. */
+export interface CallbackAnswer {
+  telegramId: number;
+  text?: string;
+}
+
+/** Методы мок-Api, у которых можно запросить сбой (`failNext`). */
+export type FailableApiMethod =
+  | 'sendMessage'
+  | 'editMessageText'
+  | 'banChatMember'
+  | 'unbanChatMember';
+
+/** Статус участника чата для `chatMember`/`myChatMember`. */
+export type ChatMemberStatus =
+  | 'creator'
+  | 'administrator'
+  | 'member'
+  | 'restricted'
+  | 'left'
+  | 'kicked';
+
+interface TgUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+}
+
 interface RawReplyMarkup {
   inline_keyboard: Array<
     Array<{ text: string; callback_data?: string; url?: string }>
@@ -64,8 +94,28 @@ export class RecordingBotApi {
   readonly editedMessages: EditedMessage[] = [];
   readonly kickedMembers: KickedMember[] = [];
   #nextMessageId = 1;
+  readonly #failures = new Map<FailableApiMethod, Error[]>();
+
+  /**
+   * Следующий вызов `method` бросит `error` (одноразово; вызовы можно
+   * поставить в очередь). Неудавшийся вызов в записи не попадает.
+   */
+  failNext(
+    method: FailableApiMethod,
+    error: Error = new Error(`RecordingBotApi: сбой ${method}`),
+  ): void {
+    const queue = this.#failures.get(method) ?? [];
+    queue.push(error);
+    this.#failures.set(method, queue);
+  }
+
+  #throwIfFailing(method: FailableApiMethod): void {
+    const error = this.#failures.get(method)?.shift();
+    if (error) throw error;
+  }
 
   reset(): void {
+    this.#failures.clear();
     this.sentMessages.length = 0;
     this.editedMessages.length = 0;
     this.kickedMembers.length = 0;
@@ -77,6 +127,7 @@ export class RecordingBotApi {
     text: string,
     other?: { reply_markup?: RawReplyMarkup; parse_mode?: 'MarkdownV2' },
   ): Promise<{ message_id: number }> {
+    this.#throwIfFailing('sendMessage');
     const messageId = this.#nextMessageId++;
     this.sentMessages.push({
       telegramId,
@@ -93,6 +144,7 @@ export class RecordingBotApi {
     text: string,
     other?: { reply_markup?: RawReplyMarkup; parse_mode?: 'MarkdownV2' },
   ): Promise<{ message_id: number }> {
+    this.#throwIfFailing('editMessageText');
     this.editedMessages.push({
       telegramId,
       messageId,
@@ -108,6 +160,7 @@ export class RecordingBotApi {
     telegramId: number,
     _other?: { until_date?: number },
   ): Promise<true> {
+    this.#throwIfFailing('banChatMember');
     this.kickedMembers.push({ chatId, telegramId, unbanned: false });
     return true;
   }
@@ -116,6 +169,7 @@ export class RecordingBotApi {
     chatId: string | number,
     telegramId: number,
   ): Promise<true> {
+    this.#throwIfFailing('unbanChatMember');
     const record =
       this.kickedMembers.find(
         (k) =>
@@ -169,7 +223,13 @@ export class TestBotTransport {
   readonly api = new RecordingBotApi();
   readonly uiApp: ExposedMenuUiApp;
   readonly transport: BotTransport;
-  #lastResponse: DialogResponse | null = null;
+  /** Ответы на нажатия (`answerCallbackQuery`) — alert-ы и подтверждения. */
+  readonly answers: CallbackAnswer[] = [];
+  /**
+   * Приёмник ответа текущего апдейта: слот привязан к цепочке вызова
+   * (`AsyncLocalStorage`), поэтому параллельные апдейты не путают ответы.
+   */
+  readonly #slot = new AsyncLocalStorage<{ response: DialogResponse | null }>();
   /** Последний выданный update_id: каждый вызов обработчика — новый апдейт. */
   #updateSeq = 0;
   /** Последний апдейт и сессия до него — для повторной доставки (`redeliver`). */
@@ -215,10 +275,15 @@ export class TestBotTransport {
     this.#captureResponses();
   }
 
-  /** Сбрасывает накопленные сообщения и последний ответ (изоляция тестов). */
+  /** Сбрасывает записи Api, ответы на нажатия и заданные сбои (изоляция тестов). */
   reset(): void {
     this.api.reset();
-    this.#lastResponse = null;
+    this.answers.length = 0;
+  }
+
+  /** Тексты alert-ов (`answerCallbackQuery` с текстом), по порядку. */
+  get alerts(): string[] {
+    return this.answers.flatMap((a) => (a.text ? [a.text] : []));
   }
 
   // ── Доступ к сессиям (e2e: ассерты диалога, эмуляция рестарта) ──
@@ -265,7 +330,13 @@ export class TestBotTransport {
       },
       chat: { id: tgId, type: 'private' },
       reply: async () => ({ message_id: 0 }),
-      answerCallbackQuery: async () => true,
+      answerCallbackQuery: async (other?: { text?: string }) => {
+        this.answers.push({
+          telegramId: tgId,
+          ...(other?.text !== undefined ? { text: other.text } : {}),
+        });
+        return true;
+      },
       callbackQuery:
         opts.callbackData !== undefined
           ? { data: opts.callbackData }
@@ -317,6 +388,107 @@ export class TestBotTransport {
     return this.#run(ctx, () => this.transport.handleMessage(ctx));
   }
 
+  // ── Граничные случаи транспорта (F-03) ──
+
+  /**
+   * Нажатие до /start: сессия сброшена, диалога нет — транспорт отвечает
+   * alert-ом «Наберите /start» и до uiApp не доходит.
+   */
+  async pressWithoutDialog(
+    tgId: number,
+    callbackData: string,
+  ): Promise<DialogResponse> {
+    this.dropSession(tgId);
+    return this.handleCallback(this.makeBotContext(tgId, { callbackData }));
+  }
+
+  /**
+   * Кнопка с shortId, которого нет в мапе (из прошлой жизни сервиса), при
+   * живом диалоге: штамп актуальный, поэтому срабатывает именно разжатие.
+   * Диалог должен быть открыт (`/start`).
+   */
+  async pressUnknownShortId(
+    tgId: number,
+    action: string,
+  ): Promise<DialogResponse> {
+    const callbackData = `${action}:~deadbeef:${currentStamp(this, tgId)}`;
+    return this.handleCallback(this.makeBotContext(tgId, { callbackData }));
+  }
+
+  /** Дубль-тап: одна кнопка нажата дважды подряд (второй — со старым штампом). */
+  async doubleTap(
+    tgId: number,
+    code: string,
+  ): Promise<[DialogResponse, DialogResponse]> {
+    const first = await this.handleCallback(
+      this.makeBotContext(tgId, { callbackData: code }),
+    );
+    const second = await this.handleCallback(
+      this.makeBotContext(tgId, { callbackData: code }),
+    );
+    return [first, second];
+  }
+
+  /**
+   * `count` апдейтов с одним кодом без `await` между ними (гонка в очереди
+   * чата). Ответы — в порядке доставки.
+   */
+  async pressConcurrently(
+    tgId: number,
+    code: string,
+    count = 2,
+  ): Promise<DialogResponse[]> {
+    return Promise.all(
+      Array.from({ length: count }, () =>
+        this.handleCallback(this.makeBotContext(tgId, { callbackData: code })),
+      ),
+    );
+  }
+
+  /** Текст без «/» (ввод в ожидающий диалог или подсказка). */
+  async sendText(tgId: number, text: string): Promise<DialogResponse> {
+    return this.handleMessage(this.makeBotContext(tgId, { text }));
+  }
+
+  // ── События групп (F-02): через обработчики транспорта, как в main.ts ──
+
+  /** Апдейт `chat_member`: идёт в `transport.handleChatMember`. */
+  async chatMember(opts: {
+    chatId: number | string;
+    user: TgUser;
+    oldStatus: ChatMemberStatus;
+    newStatus: ChatMemberStatus;
+  }): Promise<void> {
+    const ctx = {
+      chatMember: {
+        chat: { id: opts.chatId, type: 'supergroup' },
+        from: opts.user,
+        old_chat_member: { status: opts.oldStatus, user: opts.user },
+        new_chat_member: { status: opts.newStatus, user: opts.user },
+      },
+    } as unknown as BotContext;
+    await this.transport.handleChatMember(ctx);
+  }
+
+  /** Апдейт `my_chat_member` (статус бота): идёт в `transport.handleMyChatMember`. */
+  async myChatMember(opts: {
+    chatId: number | string;
+    from?: TgUser;
+    oldStatus: ChatMemberStatus;
+    newStatus: ChatMemberStatus;
+  }): Promise<void> {
+    const bot: TgUser = { id: 1, first_name: 'bot' };
+    const ctx = {
+      myChatMember: {
+        chat: { id: opts.chatId, type: 'supergroup' },
+        ...(opts.from ? { from: opts.from } : {}),
+        old_chat_member: { status: opts.oldStatus, user: bot },
+        new_chat_member: { status: opts.newStatus, user: bot },
+      },
+    } as unknown as BotContext;
+    await this.transport.handleMyChatMember(ctx);
+  }
+
   /** update_id последнего апдейта (`tg:<update_id>` — его correlationId). */
   get lastUpdateId(): number {
     return this.#updateSeq;
@@ -362,7 +534,8 @@ export class TestBotTransport {
       if (!original) continue;
       ui[key] = async (...args: never[]) => {
         const response = await original(...args);
-        this.#lastResponse = response;
+        const slot = this.#slot.getStore();
+        if (slot) slot.response = response;
         return response;
       };
     }
@@ -393,9 +566,9 @@ export class TestBotTransport {
   }
 
   async #deliver(fn: () => Promise<void>): Promise<DialogResponse> {
-    this.#lastResponse = null;
-    await fn();
-    return this.#lastResponse ?? {};
+    const slot: { response: DialogResponse | null } = { response: null };
+    await this.#slot.run(slot, fn);
+    return slot.response ?? {};
   }
 }
 

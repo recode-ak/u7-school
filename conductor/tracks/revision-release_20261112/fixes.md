@@ -10,7 +10,7 @@
 |---|---|---|---|
 | Ф5.1 Харнес e2e | F-01…F-04 | `dmg-test-designer` (Opus — инфраструктура тестов) | — |
 | Ф5.2 Недостающие e2e | F-10…F-34 | `dmg-test-designer` (Sonnet, порциями по файлам) | Ф5.1 |
-| Ф5.3 Бот-раннер | F-40…F-47, F-91 | `dmg-api-author` / Opus по месту | Ф5.2 (red-тесты) |
+| Ф5.3 Бот-раннер | F-40…F-48, F-91 | `dmg-api-author` / Opus по месту | Ф5.2 (red-тесты) |
 | Ф5.4 Линт и правила | F-50…F-52 | orchestrator + `dmg-api-author` | — |
 | Ф5.5 Платформа `dmg-core` | F-60…F-63 | Opus (платформа) | — |
 | Ф5.6 Домен и модули | F-70…F-74 | `dmg-domain-author` / `dmg-api-author` (Sonnet) | Ф5.4 (линт видит `modules/**`) |
@@ -26,7 +26,7 @@
 | F-02 | e2e-gaps (Q-01/Q-02) | Хелпер событий групп `chat_member` / `my_chat_member` в `TestBotTransport` **через транспорт**, не `uiApp.handleMessengerEvent` | S | Ф5.1 | |
 | F-03 | e2e-gaps, `transport` | Хелперы транспорта: нажатие до `/start`, неизвестный shortId (`dropSession`), дубль-тап, текст без `/`, сбой `RecordingBotApi`, параллельные апдейты | M | Ф5.1 | |
 | F-04 | TR-57 | Хеш кеша миров не видит правку `builder.ts` — `runners/u7-bot/tests/worlds/materializer.ts:63` (`computeSourceHash`) | S | Ф5.1 | |
-| F-05 | C-13 (попутно) | Мир `core-education`: у Андрея уже есть кампания `c1a11111…` по Потоку 2 — ER `createStudentCampaign` выходит по `unique`; убрать, чтобы приглашение на отзыв проверялось вручную | S | Ф5.1 | |
+| F-05 | C-13 (попутно) | Мир `core-education`: у Андрея уже есть кампания `c1a11111…` по Потоку 2 — ER `createStudentCampaign` выходит по `unique`; убрать, чтобы приглашение на отзыв проверялось вручную. **Итог:** мир не меняется (кампания нужна 4 тестам), приглашение — e2e `peer-review-campaign` и ручная проверка на Марине | S | Ф5.1 | |
 
 ## Ф5.2 Недостающие e2e (247 строк в 25 файлов)
 
@@ -72,6 +72,7 @@
 | F-45 | TR-68 | `NOT_FOUND` в `scope-reviews.story.ts:92` — штатный отказ вместо `throw` | S | Ф5.3 | |
 | F-46 | TR-68 | Имя по умолчанию в `ensure-registered.ts:57` | S | Ф5.3 | |
 | F-47 | TR-59 | `controllers/courses/ui-spec.md:25-27` — курс без этапов / с одним этапом: спеку под код | S | Ф5.3 | |
+| F-48 | ревью Ф5.1 | `Date.now()` в `controllers/learning/stories/progress.ts:144` — мимо `now()` из `@u7-scl/core/shared`, тестовые часы его не видят | S | Ф5.3 | |
 
 ## Ф5.4 Линт и правила
 

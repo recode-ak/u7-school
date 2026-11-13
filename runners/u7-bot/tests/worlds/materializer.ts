@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync } from 'node:fs';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { buildWorldState } from './builder';
@@ -58,9 +59,23 @@ export interface MaterializeOptions {
 const DEFAULT_CACHE_DIR = path.resolve(process.cwd(), '.cache/worlds');
 
 /**
- * Вычисляет стабильный SHA-256 хеш от исходников/определения мира (первые 16 символов).
+ * Исходники сборки миров (`worlds/*.ts` без тестов): билдер, его импорты и
+ * запись файлов определяют результат, поэтому входят в ключ кеша.
  */
-export function computeSourceHash(def: WorldDefinition): string {
+const WORLD_SOURCES = readdirSync(import.meta.dir)
+  .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
+  .sort()
+  .map((f) => readFileSync(path.join(import.meta.dir, f), 'utf-8'))
+  .join('\0');
+
+/**
+ * Вычисляет стабильный SHA-256 хеш от определения мира и исходников сборки
+ * (первые 16 символов). `sources` — подмена исходников для тестов.
+ */
+export function computeSourceHash(
+  def: WorldDefinition,
+  sources: string = WORLD_SOURCES,
+): string {
   // Каноническая сериализация: ключи сортируются на каждом уровне вложенности
   // (массив-реплэйсер оставил бы только ключи верхнего уровня)
   const canonicalString = JSON.stringify(def, (_key, value: unknown) =>
@@ -72,6 +87,8 @@ export function computeSourceHash(def: WorldDefinition): string {
   );
   return createHash('sha256')
     .update(canonicalString)
+    .update('\0')
+    .update(sources)
     .digest('hex')
     .slice(0, 16);
 }

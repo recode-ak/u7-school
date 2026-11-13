@@ -10,9 +10,10 @@ import {
 } from 'dmg-core';
 import { type EventBus, type JobReport, Trace } from 'dmg-core/app';
 import type { U7BotActor } from '../../src/core/u7-bot-app-meta';
-import type { WorldDefinition } from '../worlds';
+import { getWorld, type WorldDefinition } from '../worlds';
 import type { FixturePaths } from './fixture-loader';
 import { cleanupFixtures, loadFixtures } from './fixture-loader';
+import { TestClock } from './test-clock';
 
 export interface TestApp {
   /** Полноценный ApiApp со всеми модулями */
@@ -37,10 +38,18 @@ export interface TestApp {
    * приложения; не человек (`UserCaller`) — ошибка теста.
    */
   userByTelegramId(telegramId: number): Promise<U7BotActor>;
+  /** Управляемые часы — только если заданы опцией `clock` */
+  clock?: TestClock;
   /** Пути к временным фикстурам */
   fixtures: FixturePaths;
   /** Удаляет временную директорию с фикстурами */
   cleanup: () => Promise<void>;
+}
+
+/** Якорь мира: `anchorDate` определения (по имени — из реестра) или реальное «сейчас». */
+function worldAnchor(world: string | WorldDefinition = 'core-education'): Date {
+  const def = typeof world === 'string' ? getWorld(world) : world;
+  return def?.anchorDate ?? new Date();
 }
 
 /**
@@ -51,12 +60,30 @@ export interface TestApp {
  *
  * @param tag — метка для временной директории (обычно имя describe-блока)
  * @param world — имя или определение мира (по умолчанию `core-education`)
+ * @param opts.clock — управляемые часы; `startAt` (мс или Date) не задан —
+ *   старт с якоря мира (`anchorDate`), на который опираются относительные
+ *   даты фикстур (`T-2d`). Без опции — реальное время. Подмена глобальна:
+ *   `cleanup` возвращает её.
  */
+export function createTestApp(
+  tag: string | undefined,
+  world: string | WorldDefinition | undefined,
+  opts: { clock: { startAt?: number | Date } },
+): Promise<TestApp & { clock: TestClock }>;
+export function createTestApp(
+  tag?: string,
+  world?: string | WorldDefinition,
+): Promise<TestApp>;
 export async function createTestApp(
   tag?: string,
   world?: string | WorldDefinition,
+  opts: { clock?: { startAt?: number | Date } } = {},
 ): Promise<TestApp> {
   const fixtures = await loadFixtures(tag, world);
+  // Часы — после загрузки фикстур: сбой загрузки не оставит подмену `now`
+  const clock = opts.clock
+    ? new TestClock(opts.clock.startAt ?? worldAnchor(world))
+    : undefined;
   const app = new U7App(
     {
       mode: 'test',
@@ -86,7 +113,11 @@ export async function createTestApp(
       }
       return caller;
     },
+    ...(clock ? { clock } : {}),
     fixtures,
-    cleanup: () => cleanupFixtures(fixtures),
+    cleanup: async () => {
+      clock?.restore();
+      await cleanupFixtures(fixtures);
+    },
   };
 }

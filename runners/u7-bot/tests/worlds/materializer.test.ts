@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { readFile, rm, writeFile } from 'node:fs/promises';
+import { readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { StreamStatus } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/domain/user/testing';
@@ -74,6 +74,35 @@ describe('Материализатор и кеш миров (World Materializer)
 
     expect(computeSourceHash(changed)).not.toBe(
       computeSourceHash(sampleWorldDef1),
+    );
+  });
+
+  it('sourceHash учитывает исходники сборки: правка билдера сбрасывает кеш', () => {
+    const before = computeSourceHash(sampleWorldDef1, '// builder v1');
+    const after = computeSourceHash(sampleWorldDef1, '// builder v2');
+    expect(after).not.toBe(before);
+    expect(computeSourceHash(sampleWorldDef1, '// builder v1')).toBe(before);
+  });
+
+  it('sourceHash по умолчанию берёт все worlds/*.ts без тестов', async () => {
+    const files = (await readdir(import.meta.dir))
+      .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
+      .sort();
+    expect(files).toContain('builder.ts');
+    expect(files).toContain('materializer.ts');
+    const sources = (
+      await Promise.all(
+        files.map((f) => readFile(path.join(import.meta.dir, f), 'utf-8')),
+      )
+    ).join('\0');
+    expect(computeSourceHash(sampleWorldDef1)).toBe(
+      computeSourceHash(sampleWorldDef1, sources),
+    );
+    expect(computeSourceHash(sampleWorldDef1)).not.toBe(
+      computeSourceHash(
+        sampleWorldDef1,
+        sources.replace('buildWorldState', 'buildWorldStat_'),
+      ),
     );
   });
 
