@@ -8,6 +8,7 @@ import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
   pressedCode,
+  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import { Trace } from 'dmg-core/app';
@@ -162,5 +163,97 @@ describe('E2E peer-review: S08 «Отзывы мне»', () => {
     const menu = await transport.collectMainMenu(botAdmin);
 
     expect(menu.some((b) => b.text === '💬 Отзывы')).toBe(true);
+  });
+});
+
+const CANDIDATE_TG = 1002; // «Кандидат» — ни кампаний, ни отзывов
+const CANDIDATE_ID = '22222222-2222-2222-2222-222222222222';
+/** Автор и поток, которых нет в мире: карточка S08 рисует «неизвестно». */
+const LOST_AUTHOR_ID = 'dead0004-0000-4000-8000-000000000004';
+const LOST_STREAM_ID = 'dead0005-0000-4000-8000-000000000005';
+
+describe('E2E peer-review: S08 — пусто и неизвестные ссылки', () => {
+  let app: TestApp;
+  let transport: TestBotTransport;
+
+  beforeAll(async () => {
+    app = await createTestApp('pr-s08-gaps');
+    transport = createTestBotTransport(app, [
+      new AppController(SCHOOL_GROUP_URL),
+      new PeerReviewController(),
+    ]);
+  });
+
+  afterAll(async () => {
+    await app.cleanup();
+  });
+
+  test('P6-42: отзывов нет — заглушка S08 с возвратом в хаб', async () => {
+    await transport.handleStart(transport.makeBotContext(CANDIDATE_TG));
+    // Гонка: кнопка в хабе скрыта (отзывов нет), но экран S08 открыт по коду
+    const s08 = await transport.handleCallback(
+      transport.makeBotContext(CANDIDATE_TG, {
+        callbackData: stampedCode(
+          transport,
+          CANDIDATE_TG,
+          'peer-review:reviews-for-me:view',
+        ),
+      }),
+    );
+    expect(String(s08.screen?.text)).toContain(
+      'Тебе пока не написали ни одного отзыва',
+    );
+    const buttons = (s08.screen?.keyboard?.rows.flat() ?? []).map(
+      (b) => b.text,
+    );
+    expect(buttons[0]).toBe('↩️ Мои отзывы');
+    expect(buttons.at(-1)).toContain('Главное меню');
+  });
+
+  test('P6-43: имени автора и потока нет в мире — «неизвестно» в карточке', async () => {
+    const reviewsPath = app.fixtures.peerReview.reviews;
+    const original = await Bun.file(reviewsPath).text();
+    const rows = JSON.parse(original) as Array<Record<string, unknown>>;
+    const sample = rows[0]!;
+    await Bun.write(
+      reviewsPath,
+      JSON.stringify(
+        [
+          ...rows,
+          {
+            ...sample,
+            // Отзыв Кандидату от несуществующего автора о несуществующем потоке
+            uuid: 'dead0006-0000-4000-8000-000000000006',
+            campaignId: 'dead0007-0000-4000-8000-000000000007',
+            scopeId: LOST_STREAM_ID,
+            authorId: LOST_AUTHOR_ID,
+            recipientId: CANDIDATE_ID,
+            direction: 'student_mentor',
+          },
+        ],
+        undefined,
+        2,
+      ),
+    );
+
+    try {
+      await transport.handleStart(transport.makeBotContext(CANDIDATE_TG));
+      const s08 = await transport.handleCallback(
+        transport.makeBotContext(CANDIDATE_TG, {
+          callbackData: stampedCode(
+            transport,
+            CANDIDATE_TG,
+            'peer-review:reviews-for-me:view',
+          ),
+        }),
+      );
+      const text = String(s08.screen?.text);
+      expect(text).toContain('👤 От: неизвестно');
+      expect(text).toContain('📚 Поток: неизвестно');
+      // Сам текст отзыва показывается: ссылки не резолвятся, карточка цела
+      expect(text).toContain('Ментор давал понятную обратную связь');
+    } finally {
+      await Bun.write(reviewsPath, original);
+    }
   });
 });

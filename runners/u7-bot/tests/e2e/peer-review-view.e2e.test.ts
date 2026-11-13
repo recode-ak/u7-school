@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { AppController } from '@u7-scl/bot/app/app-controller';
+import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import {
   CreateReviewUcDef,
@@ -342,3 +343,80 @@ describe('E2E peer-review: S07 — пагинация и DialogCache', () => {
     expect(counter?.count(ListScopeReviewsUcDef.name)).toBe(1);
   });
 });
+
+// ═══ Контур C: S07 без отзывов и менторская карточка (P6-47, P4-70) ═══
+
+const EMPTY_STREAM_ID = 'e0e0e0e0-e0e0-e0e0-e0e0-e0e0e0e0e0e0'; // «JS Core — Поток 1»
+
+describe('E2E peer-review: S07 без отзывов и менторская карточка', () => {
+  let app: TestApp;
+  let transport: TestBotTransport;
+
+  beforeAll(async () => {
+    app = await createTestApp('pr-view-gaps');
+    transport = createTestBotTransport(app, [
+      new AppController(SCHOOL_GROUP_URL),
+      new StreamsController(),
+      new MentorController(),
+      new PeerReviewController(),
+    ]);
+  });
+
+  afterAll(async () => {
+    await app.cleanup();
+  });
+
+  test('P6-47: отзывов по потоку нет — заглушка S07 с возвратом к потоку', async () => {
+    await transport.handleStart(transport.makeBotContext(GUEST_TG));
+    // Кнопка в карточке скрыта (отзывов нет) — экран открыт по коду, как из гонки
+    const s07 = await transport.handleCallback(
+      transport.makeBotContext(GUEST_TG, {
+        callbackData: stampedCode(
+          transport,
+          GUEST_TG,
+          `peer-review:scope-reviews:view:${EMPTY_STREAM_ID}`,
+        ),
+      }),
+    );
+    expect(String(s07.screen?.text)).toContain('Отзывов по потоку пока нет');
+    const back = (s07.screen?.keyboard?.rows.flat() ?? []).find(
+      (b) => b.text === '⬅️ Назад к потоку',
+    );
+    expect(back?.code).toContain(EMPTY_STREAM_ID);
+  });
+
+  test('P4-70: менторская карточка потока — «💬 Отзывы» не показывается', async () => {
+    await transport.handleStart(transport.makeBotContext(MENTOR_TG));
+    await transport.handleCallback(
+      transport.makeBotContext(MENTOR_TG, {
+        callbackData: pressedCode(transport, MENTOR_TG, 'Инструменты ментора'),
+      }),
+    );
+    await transport.handleCallback(
+      transport.makeBotContext(MENTOR_TG, {
+        callbackData: pressedCode(transport, MENTOR_TG, 'Мои потоки'),
+      }),
+    );
+    await transport.handleCallback(
+      transport.makeBotContext(MENTOR_TG, {
+        callbackData: pressedCode(transport, MENTOR_TG, '🔵'),
+      }),
+    );
+
+    // ui-spec (Q-05): в менторской карточке отзывы не дублируются —
+    // они читаются из публичной карточки потока S02
+    const buttons = (lastScreenButtons(transport, MENTOR_TG) ?? []).map(
+      (b) => b.text,
+    );
+    expect(buttons.some((t) => t.includes('Студенты'))).toBe(true);
+    expect(buttons.some((t) => t.includes('Отзывы'))).toBe(false);
+  });
+});
+
+/** Кнопки последнего экрана пользователя (send или edit). */
+function lastScreenButtons(transport: TestBotTransport, tgId: number) {
+  return transport.api.sentMessages
+    .filter((s) => s.telegramId === tgId)
+    .at(-1)
+    ?.keyboard?.rows.flat();
+}

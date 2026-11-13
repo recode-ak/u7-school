@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { AppController } from '@u7-scl/bot/app/app-controller';
+import type { DialogResponse } from '@u7-scl/core/ui';
+import { Role } from '@u7-scl/domain/user/testing';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
@@ -9,6 +11,14 @@ import {
 } from '@u7-scl/test-helpers/test-bot-transport';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 import { completeStudent } from '../helpers/student-fate';
+import {
+  type CampaignDef,
+  CORE_EDUCATION_WORLD,
+  deterministicUuid,
+  type PersonDef,
+  type StudentDef,
+  type WorldDefinition,
+} from '../worlds';
 
 /**
  * E2E «Хаб и меню» (Фаза 6, задача 3):
@@ -167,5 +177,178 @@ describe('E2E peer-review: хаб «Мои отзывы» и меню', () => {
     );
     expect(String(s03.screen?.text)).toContain('⚠️ Кампания не найдена');
     expect(s03.screen?.keyboard?.rows.flat()[0]?.text).toBe('↩️ Мои отзывы');
+  });
+});
+
+// ═══ Пагинация хаба и заглушка «окна истекли» (много кампаний) ═══
+
+const BULK_SIZE = 30;
+
+const BULK_PERSONS: PersonDef[] = Array.from({ length: BULK_SIZE }, (_, i) => ({
+  key: `bulk-${i}`,
+  uuid: deterministicUuid(`person:bulk-${i}`),
+  name: `Ученик ${i + 1}`,
+  telegramId: 2100 + i,
+  roles: [Role.GUEST],
+  registeredAt: 'T-20d',
+}));
+
+const BULK_STUDENTS: StudentDef[] = Array.from(
+  { length: BULK_SIZE },
+  (_, i) => ({
+    key: `student-bulk-${i}`,
+    uuid: deterministicUuid(`student:bulk-${i}`),
+    personKey: `bulk-${i}`,
+    streamKey: 'stream-2-active',
+    enrolledAt: 'T-20d',
+    status: 'advanced',
+    steps: [],
+  }),
+);
+
+const BULK_CAMPAIGNS: CampaignDef[] = Array.from(
+  { length: BULK_SIZE },
+  (_, i) => ({
+    key: `camp-bulk-${i}`,
+    uuid: deterministicUuid(`campaign:bulk-${i}`),
+    context: 'stream_fate',
+    streamKey: 'stream-2-active',
+    subjectPersonKey: `bulk-${i}`,
+    mentorPersonKey: 'dev',
+    subjectOutcome: 'completed_passed',
+    createdAt: 'T-2d',
+    expiresAt: 'T+5d',
+    participants: ['marina'],
+  }),
+);
+
+/** Мир `core-education` плюс 30 живых кампаний ментора — хаб на 2+ страницы. */
+const MANY_CAMPAIGNS_WORLD: WorldDefinition = {
+  ...CORE_EDUCATION_WORLD,
+  name: 'core-education-many-campaigns',
+  description: 'Мир с 30 кампаниями ментора: хаб не влезает в одну страницу',
+  persons: [...(CORE_EDUCATION_WORLD.persons ?? []), ...BULK_PERSONS],
+  students: [...(CORE_EDUCATION_WORLD.students ?? []), ...BULK_STUDENTS],
+  campaigns: [...(CORE_EDUCATION_WORLD.campaigns ?? []), ...BULK_CAMPAIGNS],
+};
+
+describe('E2E peer-review: хаб — пагинация и истёкшие окна', () => {
+  let app: TestApp;
+  let clock: NonNullable<TestApp['clock']>;
+  let transport: TestBotTransport;
+
+  beforeAll(async () => {
+    // Часы на якорь мира: 30 кампаний живут (окно T+5d)
+    app = await createTestApp('pr-hub-pages', MANY_CAMPAIGNS_WORLD, {
+      clock: {},
+    });
+    if (!app.clock) throw new Error('ожидались управляемые часы');
+    clock = app.clock;
+    transport = createTestBotTransport(app, [
+      new AppController(SCHOOL_GROUP_URL),
+      new PeerReviewController(),
+    ]);
+  });
+
+  afterAll(async () => {
+    await app.cleanup();
+  });
+
+  /** Номера карточек из текстов кнопок текущего экрана. */
+  const cardNumbers = (response: DialogResponse): number[] =>
+    (response.screen?.keyboard?.rows.flat() ?? [])
+      .map((b) => /^(\d+)\./.exec(b.text))
+      .filter((m): m is RegExpExecArray => m !== null)
+      .map((m) => Number(m[1]));
+
+  test('P6-17: хаб на две страницы — сквозная нумерация и листание «След ›»', async () => {
+    await transport.handleStart(transport.makeBotContext(MENTOR_TG));
+    const page1 = await transport.handleCallback(
+      transport.makeBotContext(MENTOR_TG, {
+        callbackData: pressedCode(transport, MENTOR_TG, '💬 Отзывы'),
+      }),
+    );
+    expect(String(page1.screen?.text)).toContain('💬 *Мои отзывы*');
+    expect(String(page1.screen?.text)).toContain('Стр\\. 1/2');
+    const nums1 = cardNumbers(page1);
+    // Первая страница: все карточки с номерами, последняя — 17 (бюджет текста)
+    expect(nums1.length).toBeGreaterThan(5);
+    // Номера на странице идут подряд (часть карточек с ✅ — текст кнопки иной)
+    expect(nums1).toEqual(
+      Array.from({ length: nums1.length }, (_, i) => nums1[0]! + i),
+    );
+
+    const page2 = await transport.handleCallback(
+      transport.makeBotContext(MENTOR_TG, {
+        callbackData: pressedCode(transport, MENTOR_TG, 'След ›'),
+      }),
+    );
+    expect(String(page2.screen?.text)).toContain('Стр\\. 2/2');
+    const nums2 = cardNumbers(page2);
+    // Нумерация карточек сквозная: страница 2 продолжает номера страницы 1
+    expect(Math.min(...nums2)).toBe(Math.max(...nums1) + 1);
+    // Навигация обеих сторон: назад есть, дальше — нет
+    const navTexts2 = (page2.screen?.keyboard?.rows.flat() ?? []).map(
+      (b) => b.text,
+    );
+    expect(navTexts2).toContain('‹ Пред');
+  });
+
+  test('P6-18: окна истекли после рендера меню — заглушка хаба с входящими', async () => {
+    await transport.handleStart(transport.makeBotContext(MENTOR_TG));
+    // Меню отрисовано с живыми кампаниями; пока пользователь думал — окна истекли
+    clock.advance(8 * 24 * 60 * 60 * 1000);
+
+    const stub = await transport.handleCallback(
+      transport.makeBotContext(MENTOR_TG, {
+        callbackData: pressedCode(transport, MENTOR_TG, '💬 Отзывы'),
+      }),
+    );
+    const text = String(stub.screen?.text);
+    expect(text).toContain('Открытых окон отзывов нет');
+    const buttons = (stub.screen?.keyboard?.rows.flat() ?? []).map(
+      (b) => b.text,
+    );
+    // Входящие отзывы остались (их читают всегда) — кнопка S08 на месте
+    expect(buttons).toContain('📥 Отзывы мне');
+    expect(buttons.at(-1)).toContain('Главное меню');
+  });
+});
+
+describe('E2E peer-review: неизвестные callback-и стори', () => {
+  let app: TestApp;
+  let transport: TestBotTransport;
+
+  beforeAll(async () => {
+    app = await createTestApp('pr-hub-unknown');
+    transport = createTestBotTransport(app, [
+      new AppController(SCHOOL_GROUP_URL),
+      new PeerReviewController(),
+    ]);
+  });
+
+  afterAll(async () => {
+    await app.cleanup();
+  });
+
+  test('P6-49: неизвестный peer-review:* — «Неизвестная команда»', async () => {
+    const unknown = [
+      'peer-review:my-reviews:foo',
+      'peer-review:reviews-for-me:foo',
+      'peer-review:scope-reviews:foo',
+      'peer-review:invite:foo',
+    ];
+    for (const code of unknown) {
+      // Свежий /start: штамп кнопок текущего экрана под каждый крафтовый код
+      await transport.handleStart(transport.makeBotContext(MENTOR_TG));
+      const response = await transport.handleCallback(
+        transport.makeBotContext(MENTOR_TG, {
+          callbackData: stampedCode(transport, MENTOR_TG, code),
+        }),
+      );
+      expect(String(response.screen?.text), code).toContain(
+        'Неизвестная команда',
+      );
+    }
   });
 });

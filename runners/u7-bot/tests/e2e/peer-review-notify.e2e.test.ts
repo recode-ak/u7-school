@@ -2,13 +2,17 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import {
   CreateReviewUcDef,
   PeerReviewModuleDef,
+  ReviewEvents,
 } from '@u7-scl/domain/peer-review/contract';
+import { envelopeOf } from '@u7-scl/test-helpers/envelope-of';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { Trace } from 'dmg-core/app';
+import type { AnyEventDef } from 'dmg-core';
+import { type EventBus, Trace } from 'dmg-core/app';
+import * as v from 'valibot';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 import { completeStudent } from '../helpers/student-fate';
 
@@ -93,5 +97,98 @@ describe('E2E peer-review: уведомление адресата о новом
     );
     await new Promise((r) => setTimeout(r, 150));
     expect(notices()).toHaveLength(1);
+  });
+});
+
+const LOST_USER_ID = 'dead0003-0000-4000-8000-000000000003';
+
+/** Публикует Def-событие на общей шине (payload валидируется схемой Def). */
+function publish<E extends AnyEventDef>(
+  bus: EventBus,
+  event: E,
+  payload: v.InferInput<E['payload']>,
+): void {
+  bus.publish(
+    envelopeOf(event, v.parse(event.payload, payload) as never, {
+      eventId: crypto.randomUUID(),
+    }),
+  );
+}
+
+describe('E2E peer-review: уведомление — направление и молчаливые пропуски', () => {
+  let app: TestApp;
+  let transport: TestBotTransport;
+
+  beforeAll(async () => {
+    app = await createTestApp('pr-notify-gaps');
+    transport = createTestBotTransport(app, [new PeerReviewController()]);
+    await completeStudent(app, {
+      callerTelegramId: MENTOR_TG,
+      streamId: STREAM_ID,
+      studentId: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
+      outcome: 'advanced',
+    });
+    await waitUntil(async () =>
+      Boolean(
+        await app.reviewCampaignRepo.findBySubject(STREAM_ID, SUBJECT_USER_ID),
+      ),
+    );
+  });
+
+  afterAll(async () => {
+    await app.cleanup();
+  });
+
+  test('P6-38: ментор написал студенту — «автор …, твой ментор»', async () => {
+    const campaign = (await app.reviewCampaignRepo.findBySubject(
+      STREAM_ID,
+      SUBJECT_USER_ID,
+    ))!;
+    const mentor = await app.userByTelegramId(MENTOR_TG);
+
+    const written = await app.apiApp.dispatch(
+      PeerReviewModuleDef,
+      CreateReviewUcDef.command({
+        campaignId: campaign.uuid,
+        recipientId: SUBJECT_USER_ID,
+        text: 'Марина стабильно выполняла задания и задавала точные вопросы.',
+      }),
+      mentor,
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+    );
+    expect(written.ok).toBe(true);
+
+    await waitUntil(() =>
+      transport.api.sentMessages.some(
+        (m) => m.telegramId === SUBJECT_TG && String(m.text).includes(NOTICE),
+      ),
+    );
+    const notice = transport.api.sentMessages.find(
+      (m) => m.telegramId === SUBJECT_TG && String(m.text).includes(NOTICE),
+    );
+    // Роль автора — по направлению mentor→student; имя — из batch-профиля
+    expect(String(notice?.text)).toContain('Алексей');
+    expect(String(notice?.text)).toContain('твой ментор');
+    expect(String(notice?.text)).toContain('💬 Отзывы');
+  });
+
+  test('P6-39: автор отзыва не найден — уведомление молча не отправлено', async () => {
+    const before = transport.api.sentMessages.length;
+    publish(app.eventBus, ReviewEvents.created, {
+      reviewId: crypto.randomUUID(),
+      campaignId: crypto.randomUUID(),
+      scopeId: STREAM_ID,
+      authorId: LOST_USER_ID,
+      recipientId: SUBJECT_USER_ID,
+      direction: 'mentor_student',
+    });
+    await new Promise((r) => setTimeout(r, 250));
+
+    // Ни сообщения адресату, ни исключения в шине: только warn в лог
+    expect(
+      transport.api.sentMessages
+        .slice(before)
+        .filter((m) => String(m.text).includes(NOTICE)),
+    ).toHaveLength(0);
   });
 });
