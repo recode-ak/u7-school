@@ -74,7 +74,7 @@
 | F-47 | TR-59 | `controllers/courses/ui-spec.md:25-27` — курс без этапов / с одним этапом: спеку под код | S | Ф5.3 | |
 | F-48 | ревью Ф5.1 | `Date.now()` в `controllers/learning/stories/progress.ts:144` — мимо `now()` из `@u7-scl/core/shared`, тестовые часы его не видят | S | Ф5.3 | |
 | F-49 | regressions P1-26 | `/log_level <неизвестный>` — экранирование MarkdownV2 в `app-controller.ts`, снять `skip` в `main-menu.e2e` | S | Ф5.3 | |
-| F-4B | regressions P3-61, P3-62 | Удалить мёртвые ветки `view-stream.story.ts` (реплики «сообщения не принимаются», «Ожидалось текстовое сообщение») | S | Ф5.3 | |
+| F-4B | regressions P3-61, P3-62, P4-49 | Удалить мёртвые ветки `view-stream.story.ts` (реплики «сообщения не принимаются», «Ожидалось текстовое сообщение») и `create-stream.ts` (`update.type !== 'message'`, P4-49) | S | Ф5.3 | |
 | F-4C | regressions P3-63 | `StreamAr.enroll` — отказ, если поток не в наборе; снять `skip` в `stream-enroll.e2e` (решение Нурболата, 2026-11-14) | S | Ф5.3 | |
 | F-4A | Ф5.2 порция 2 | P4-68: unit-тест ветки «сбой `FindStreamByTelegramGroup`/`getStreamMembers`/`getUser` → warn и стоп» у контроллера событий группы (e2e не инъецирует сбой) | S | Ф5.3 | |
 

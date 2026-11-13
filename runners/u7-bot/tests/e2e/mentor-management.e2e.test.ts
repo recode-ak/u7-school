@@ -12,14 +12,24 @@ import { LearningController } from '@u7-scl/bot/learning/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
+import type { DialogResponse } from '@u7-scl/core/ui';
+import { Role } from '@u7-scl/domain/user/testing';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
   pressedCode,
   screensNewFirst,
+  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import type {
+  PersonDef,
+  StreamDef,
+  StudentDef,
+  WorldDefinition,
+} from '../worlds';
+import { deterministicUuid } from '../worlds/uuid';
 
 const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
 
@@ -420,4 +430,496 @@ describe('E2E: Ментор — управление студентами', () =
       expect(cancelResp.release).toBe(true);
     });
   });
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// Экранные ветки инструментов ментора (подменю, список потоков, программа,
+// детали, wizard создания) — на производном мире со всеми статусами потоков.
+// ═══════════════════════════════════════════════════════════════════════
+
+const MGMT_ANCHOR = new Date('2026-10-01T12:00:00.000Z');
+
+const MGMT_COURSE_ID = 'cb300001-0000-4000-8000-000000000001';
+const MGMT_MODULE_ID = 'ab300001-0000-4000-8000-000000000001';
+const MGMT_PROJECT_ID = 'bb300001-0000-4000-8000-000000000001';
+const MGMT_LESSON_ID = 'cb300001-0000-4000-8000-000000000002';
+const MGMT_STEP1_ID = 'db300001-0000-4000-8000-000000000001';
+const MGMT_STEP2_ID = 'db300002-0000-4000-8000-000000000002';
+const MGMT_UNKNOWN_STREAM = 'ffffffff-ffff-4fff-8fff-ffffffffffff';
+
+const mgmtStreamId = (key: string): string =>
+  deterministicUuid(`stream:${key}`);
+
+const MGMT_TG = {
+  mentor: 1004,
+  otherMentor: 1009,
+  mentorNoStreams: 1010,
+  guest: 1201,
+};
+
+function mgmtMentor(key: string, name: string, telegramId: number): PersonDef {
+  return {
+    key,
+    name,
+    telegramId,
+    roles: [Role.MENTOR, Role.AUTHOR],
+    registeredAt: 'T-90d',
+  };
+}
+
+const mgmtCourse = {
+  key: 'course-mgmt',
+  uuid: MGMT_COURSE_ID,
+  title: 'Курс ментора',
+  description: 'Курс для экранных ветвей инструментов ментора.',
+  authorKey: 'dev',
+  modules: [
+    {
+      key: 'mod-mgmt',
+      uuid: MGMT_MODULE_ID,
+      title: 'Модуль ментора',
+      description: 'Модуль с одним проектом.',
+      projects: [
+        {
+          key: 'proj-mgmt',
+          uuid: MGMT_PROJECT_ID,
+          title: 'Проект ментора',
+          lessons: [
+            {
+              key: 'less-mgmt',
+              uuid: MGMT_LESSON_ID,
+              title: 'Урок ментора',
+              steps: [
+                {
+                  key: 'step-one',
+                  uuid: MGMT_STEP1_ID,
+                  description: 'Первый шаг',
+                  content: 'Тело первого шага.',
+                },
+                {
+                  key: 'step-two',
+                  uuid: MGMT_STEP2_ID,
+                  description: 'Второй шаг',
+                  content: 'Тело второго шага.',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+/** Поток ментора `dev`; `foreign` — поток второго ментора. */
+function mgmtStream(
+  key: string,
+  title: string,
+  status: 'enrollment' | 'active' | 'completed' | 'archived',
+  ownerKey = 'dev',
+  extra: Partial<StreamDef> = {},
+): StreamDef {
+  return {
+    key,
+    uuid: mgmtStreamId(key),
+    title,
+    description: `Поток «${title}» для e2e экранов ментора.`,
+    courseKey: 'course-mgmt',
+    moduleKey: 'mod-mgmt',
+    mentorKey: ownerKey,
+    status,
+    startedAt: 'T-20d',
+    telegramGroupId: `-10099999999${key.length}`,
+    ...extra,
+  };
+}
+
+const MGMT_WORLD: WorldDefinition = {
+  name: 'mentor-mgmt-screens',
+  description: 'Потоки во всех статусах, чужой поток, поток без программы',
+  anchorDate: MGMT_ANCHOR,
+  persons: [
+    mgmtMentor('dev', 'Ментор', MGMT_TG.mentor),
+    mgmtMentor('mentor2', 'Второй ментор', MGMT_TG.otherMentor),
+    mgmtMentor('mentor3', 'Ментор без потоков', MGMT_TG.mentorNoStreams),
+    {
+      key: 'guest',
+      name: 'Гость',
+      telegramId: MGMT_TG.guest,
+      roles: [Role.GUEST],
+      registeredAt: 'T-90d',
+    },
+  ],
+  courses: [mgmtCourse],
+  streams: [
+    mgmtStream('stream-enroll', 'Поток набора', 'enrollment'),
+    mgmtStream('stream-live', 'Поток в обучении', 'active'),
+    mgmtStream('stream-done', 'Поток завершён', 'completed'),
+    mgmtStream('stream-archived', 'Поток в архиве', 'archived'),
+    mgmtStream(
+      'stream-nosnapshot',
+      'Поток без программы',
+      'enrollment',
+      'dev',
+      {
+        contentSnapshot: [],
+      },
+    ),
+    mgmtStream('stream-empty', 'Поток без деталей', 'enrollment', 'dev', {
+      goal: '',
+      result: '',
+    }),
+    mgmtStream('stream-foreign', 'Чужой поток', 'enrollment', 'mentor2'),
+  ],
+  students: [
+    {
+      key: 'stud-live',
+      uuid: deterministicUuid('student:stud-live'),
+      personKey: 'guest',
+      streamKey: 'stream-live',
+      enrolledAt: 'T-19d',
+      status: 'active',
+      currentStepKey: 'step-one',
+      steps: [{ stepKey: 'step-one', status: 'issued', issuedAt: 'T-18d' }],
+    } satisfies StudentDef,
+  ],
+};
+
+/** Мир без опубликованных модулей — шаг 0 wizard-а «Создать поток». */
+const MGMT_NO_MODULES_WORLD: WorldDefinition = {
+  ...MGMT_WORLD,
+  name: 'mentor-mgmt-no-modules',
+  description: 'Тот же мир без курсов: wizard не находит модулей',
+  courses: [],
+  streams: [],
+  students: [],
+};
+
+describe('E2E: инструменты ментора — экранные ветки', () => {
+  let app: TestApp;
+  let transport: TestBotTransport;
+  let emptyApp: TestApp;
+  let emptyTransport: TestBotTransport;
+
+  beforeAll(async () => {
+    app = await createTestApp('mentor-mgmt-screens', MGMT_WORLD);
+    transport = createTestBotTransport(app, [
+      new AppController(SCHOOL_GROUP_URL),
+      new StreamsController(),
+      new CoursesController(),
+      new LearningController(),
+      new MentorController(),
+    ]);
+    emptyApp = await createTestApp(
+      'mentor-mgmt-no-modules',
+      MGMT_NO_MODULES_WORLD,
+    );
+    emptyTransport = createTestBotTransport(emptyApp, [
+      new AppController(SCHOOL_GROUP_URL),
+      new StreamsController(),
+      new CoursesController(),
+      new LearningController(),
+      new MentorController(),
+    ]);
+  });
+
+  beforeEach(() => {
+    transport.reset();
+    emptyTransport.reset();
+  });
+
+  afterAll(async () => {
+    await app.cleanup();
+    await emptyApp.cleanup();
+  });
+
+  // ── Хелперы ──
+
+  const textOf = (response: DialogResponse): string =>
+    String(response.screen?.text ?? '');
+
+  const notifyOf = (response: DialogResponse): string =>
+    String(response.notify?.text ?? '');
+
+  const buttonsOf = (response: DialogResponse): string[] =>
+    response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
+
+  const codesOf = (response: DialogResponse): string[] =>
+    response.screen?.keyboard?.rows.flat().map((b) => b.code) ?? [];
+
+  async function press(
+    tgId: number,
+    textContains: string,
+  ): Promise<DialogResponse> {
+    return transport.handleCallback(
+      transport.makeBotContext(tgId, {
+        callbackData: pressedCode(transport, tgId, textContains),
+      }),
+    );
+  }
+
+  /** Крафтовый адрес с актуальным штампом свежего экрана. */
+  async function craft(tgId: number, rawCode: string): Promise<DialogResponse> {
+    await transport.handleStart(transport.makeBotContext(tgId));
+    return transport.handleCallback(
+      transport.makeBotContext(tgId, {
+        callbackData: stampedCode(transport, tgId, rawCode),
+      }),
+    );
+  }
+
+  /** /start → подменю → «Мои потоки». */
+  async function openMyStreams(tgId: number): Promise<DialogResponse> {
+    await transport.handleStart(transport.makeBotContext(tgId));
+    await press(tgId, 'Инструменты ментора');
+    return press(tgId, 'Мои потоки');
+  }
+
+  // ── Доступ к подменю ──
+
+  test('P4-02: у гостя в главном меню нет кнопки «Инструменты ментора»', async () => {
+    const welcome = await transport.handleStart(
+      transport.makeBotContext(MGMT_TG.guest),
+    );
+
+    expect(
+      buttonsOf(welcome).some((t) => t.includes('Инструменты ментора')),
+    ).toBe(false);
+    expect(buttonsOf(welcome)).toContain('📖 Курсы');
+  });
+
+  test('P4-03: гость по прямому адресу подменю — экран «нет доступа»', async () => {
+    const response = await craft(MGMT_TG.guest, 'mentor:submenu:start');
+
+    expect(textOf(response)).toContain(
+      'У вас нет доступа к инструментам ментора',
+    );
+  });
+
+  // ── Список потоков ──
+
+  test('P4-05: переключатели завершённых и архивных потоков', async () => {
+    const fresh = await openMyStreams(MGMT_TG.mentor);
+    expect(buttonsOf(fresh)).toContain('🟢 Вкл. завершённые');
+    expect(buttonsOf(fresh)).toContain('⚫ Вкл. архивированные');
+    expect(buttonsOf(fresh).some((t) => t.includes('Поток набора'))).toBe(true);
+    expect(buttonsOf(fresh).some((t) => t.includes('Поток в обучении'))).toBe(
+      true,
+    );
+    expect(buttonsOf(fresh).some((t) => t.includes('Поток завершён'))).toBe(
+      false,
+    );
+
+    const withCompleted = await press(MGMT_TG.mentor, 'Вкл. завершённые');
+    expect(
+      buttonsOf(withCompleted).some((t) => t.includes('Поток завершён')),
+    ).toBe(true);
+    expect(
+      buttonsOf(withCompleted).some((t) => t.includes('Поток в архиве')),
+    ).toBe(false);
+    expect(buttonsOf(withCompleted)).toContain('⚫ Вкл. архивированные');
+    expect(buttonsOf(withCompleted)).not.toContain('🟢 Вкл. завершённые');
+
+    const all = await press(MGMT_TG.mentor, 'Вкл. архивированные');
+    expect(buttonsOf(all).some((t) => t.includes('Поток завершён'))).toBe(true);
+    expect(buttonsOf(all).some((t) => t.includes('Поток в архиве'))).toBe(true);
+    expect(buttonsOf(all)).not.toContain('⚫ Вкл. архивированные');
+  });
+
+  test('P4-06: у ментора нет потоков — «У вас пока нет потоков»', async () => {
+    const response = await openMyStreams(MGMT_TG.mentorNoStreams);
+
+    expect(textOf(response)).toContain('У вас пока нет потоков');
+    expect(buttonsOf(response)).toContain('🔙 Назад');
+  });
+
+  test('P4-07: сбой чтения потоков — реплика warn, а не экран списка', async () => {
+    // Бот читает <dbDir>/streams/streams.json (в фикстурах есть и legacy-копия)
+    const file = `${app.fixtures.dbDir}/streams/streams.json`;
+    const original = await Bun.file(file).text();
+    try {
+      await Bun.write(file, '{{{ not json');
+
+      await transport.handleStart(transport.makeBotContext(MGMT_TG.mentor));
+      await press(MGMT_TG.mentor, 'Инструменты ментора');
+      const response = await press(MGMT_TG.mentor, 'Мои потоки');
+
+      expect(response.notify?.kind).toBe('warn');
+      expect(notifyOf(response)).toContain('Произошла ошибка');
+    } finally {
+      await Bun.write(file, original);
+    }
+  });
+
+  // ── Программа модуля ──
+
+  test('P4-17: программа модуля — проект → урок → шаг с телом', async () => {
+    await openMyStreams(MGMT_TG.mentor);
+    await press(MGMT_TG.mentor, 'Поток в обучении');
+    const program = await press(MGMT_TG.mentor, 'Программа модуля');
+
+    expect(textOf(program)).toContain('Программа модуля');
+    expect(textOf(program)).toContain('Проект ментора');
+
+    const project = await press(MGMT_TG.mentor, 'Проект ментора');
+    expect(textOf(project)).toContain('Уроки проекта');
+
+    const lesson = await press(MGMT_TG.mentor, 'Урок ментора');
+    expect(textOf(lesson)).toContain('Шаги урока');
+
+    const step = await press(MGMT_TG.mentor, 'Первый шаг');
+    expect(textOf(step)).toContain('Тело первого шага');
+  });
+
+  test('P4-18: поток без снимка программы — «Программа пока не загружена»', async () => {
+    await openMyStreams(MGMT_TG.mentor);
+    await press(MGMT_TG.mentor, 'Поток без программы');
+
+    const response = await press(MGMT_TG.mentor, 'Программа модуля');
+
+    expect(textOf(response)).toContain('Программа пока не загружена');
+    expect(buttonsOf(response)).toContain('⬅️ Назад к потоку');
+  });
+
+  test('P4-19: программа чужого потока у ментора — «нет прав»', async () => {
+    const response = await craft(
+      MGMT_TG.mentor,
+      `mentor:view-stream-mentor:program:${mgmtStreamId('stream-foreign')}`,
+    );
+
+    expect(textOf(response)).toContain(
+      'У вас нет прав для управления этим потоком',
+    );
+  });
+
+  test('P4-20: поток не найден в программе — реплика warn «Поток не найден»', async () => {
+    const response = await craft(
+      MGMT_TG.mentor,
+      `mentor:view-stream-mentor:program:${MGMT_UNKNOWN_STREAM}`,
+    );
+
+    expect(response.notify?.kind).toBe('warn');
+    expect(notifyOf(response)).toContain('Поток не найден');
+  });
+
+  // ── Детали потока ──
+
+  test('P4-21: «Детали» — заполненные поля и заглушка для пустых', async () => {
+    await openMyStreams(MGMT_TG.mentor);
+    await press(MGMT_TG.mentor, 'Поток в обучении');
+    const filled = await press(MGMT_TG.mentor, 'Детали');
+
+    expect(textOf(filled)).toContain('Детали: Поток в обучении');
+    expect(textOf(filled)).toContain('🎯 Цель');
+    expect(textOf(filled)).toContain('🏆 Результат');
+    expect(textOf(filled)).not.toContain('Расширенная информация');
+
+    await openMyStreams(MGMT_TG.mentor);
+    await press(MGMT_TG.mentor, 'Поток без деталей');
+    const empty = await press(MGMT_TG.mentor, 'Детали');
+
+    expect(textOf(empty)).toContain('Расширенная информация пока не добавлена');
+    expect(buttonsOf(empty).some((t) => t.includes('Назад'))).toBe(true);
+  });
+
+  // ── Wizard создания потока: отказы ──
+
+  test('P4-38: wizard без опубликованных модулей — «Нет доступных модулей»', async () => {
+    await emptyTransport.handleStart(
+      emptyTransport.makeBotContext(MGMT_TG.mentor),
+    );
+    await emptyTransport.handleCallback(
+      emptyTransport.makeBotContext(MGMT_TG.mentor, {
+        callbackData: pressedCode(
+          emptyTransport,
+          MGMT_TG.mentor,
+          'Инструменты ментора',
+        ),
+      }),
+    );
+    const response = await emptyTransport.handleCallback(
+      emptyTransport.makeBotContext(MGMT_TG.mentor, {
+        callbackData: pressedCode(
+          emptyTransport,
+          MGMT_TG.mentor,
+          'Создать поток',
+        ),
+      }),
+    );
+
+    expect(String(response.screen?.text)).toContain('Нет доступных модулей');
+    expect(String(response.screen?.text)).toContain('опубликованных модулей');
+  });
+
+  /** Wizard до экрана подтверждения: модуль, название, описание, дата, пропуски. */
+  async function wizardToPreview(
+    tgId: number,
+    dateText: string,
+  ): Promise<DialogResponse> {
+    await transport.handleStart(transport.makeBotContext(tgId));
+    await press(tgId, 'Инструменты ментора');
+    await press(tgId, 'Создать поток');
+    const step1 = await press(tgId, 'Модуль ментора');
+    expect(textOf(step1)).toContain('название потока');
+    await press(tgId, 'Принять');
+    await press(tgId, 'Принять');
+    await transport.sendText(tgId, dateText);
+    for (let i = 0; i < 5; i++) await press(tgId, 'Пропустить');
+    await press(tgId, 'Пропустить');
+    await press(tgId, 'Пропустить');
+    return press(tgId, 'Пропустить');
+  }
+
+  test('P4-48: wizard с неверной датой — отказ валидации, поток не создан', async () => {
+    const preview = await wizardToPreview(MGMT_TG.mentor, 'не-дата');
+    expect(textOf(preview)).toContain('Превью потока');
+
+    const refused = await press(MGMT_TG.mentor, 'Создать');
+
+    expect(refused.notify?.kind).toBe('warn');
+    expect(notifyOf(refused)).toContain('Ошибка валидации');
+  });
+
+  test('P4-50: устаревшая кнопка «Создать» после снятия ввода — «Контекст потерян»', async () => {
+    const preview = await wizardToPreview(MGMT_TG.mentor, '2026-12-15');
+    expect(textOf(preview)).toContain('Превью потока');
+
+    // /cancel отпускает диалог: ввод (и контекст wizard-а) снят, экран — меню
+    const cancelled = await transport.handleCancel(
+      transport.makeBotContext(MGMT_TG.mentor),
+    );
+    expect(notifyOf(cancelled)).toContain('Создание потока отменено');
+
+    // Кнопка «✅ Создать» со старого экрана, но с актуальным штампом диалога
+    const stale = await transport.handleCallback(
+      transport.makeBotContext(MGMT_TG.mentor, {
+        callbackData: stampedCode(
+          transport,
+          MGMT_TG.mentor,
+          'mentor:create-stream:confirm',
+        ),
+      }),
+    );
+
+    expect(stale.notify?.kind).toBe('warn');
+    // В тексте MarkdownV2 дефис экранирован: `wizard\-а`
+    expect(notifyOf(stale)).toContain('Контекст wizard');
+    expect(notifyOf(stale)).toContain('потерян');
+    expect(notifyOf(stale)).toContain('Начните заново');
+    expect(stale.release).toBe(true);
+  });
+
+  test('P4-52: /cancel без активного wizard — короткое меню без реплики об отмене', async () => {
+    await transport.handleStart(transport.makeBotContext(MGMT_TG.mentor));
+
+    const response = await transport.handleCancel(
+      transport.makeBotContext(MGMT_TG.mentor),
+    );
+
+    expect(textOf(response)).toContain('Главное меню');
+    expect(notifyOf(response)).not.toContain('Создание потока отменено');
+  });
+
+  // P4-49: ветка стори недостижима — бот принимает только текстовые
+  // сообщения (подписка message:text), так же в v0.2.6.
 });

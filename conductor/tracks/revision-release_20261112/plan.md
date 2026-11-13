@@ -127,7 +127,7 @@
 - [x] Task: пилот flash — F-10 `main-menu`, F-11 `school`; приёмка тестов Opus `f1d3640`
     - Итог: качество flash принято — дальше flash; порция 2 (`transport`, `group-events`, `user-notify`, `inactivity`) — `bcec3df`
 - [~] Task: F-12…F-34 порциями (≈5 файлов на сессию); падающие — в `regressions.md`
-    - Порции 1–5 (F-10…F-20, F-22, F-25) — сделаны; журнал — `slices/f5-2-e2e.md`, промпты — `slices/f5-2-prompts/` (`mk.sh <n> "<шаг>"` из `f5-2-p2.md`). Осталось: порции 6 — F-21 + F-23 + F-24; 7 — F-26…F-30; 8 — F-31…F-34; в конце — `dmg-reviewer` (Opus) на весь Ф5.2. Приёмка порции — покрытие ID по `e2e-gaps.md`, `check` целиком (гейт не гоняет `arch:check`)
+    - Порции 1–6 (F-10…F-25) — сделаны; журнал — `slices/f5-2-e2e.md`, промпты — `slices/f5-2-prompts/` (`mk.sh <n> "<шаг>"` из `f5-2-p2.md`). Осталось: порции 7 — F-26…F-30; 8 — F-31…F-34; в конце — `dmg-reviewer` (Opus) на весь Ф5.2. Приёмка порции — покрытие ID по `e2e-gaps.md`, `check` целиком (гейт не гоняет `arch:check`)
 
 #### Ф5.3 Бот-раннер (Sonnet; F-41, F-42 — flash)
 - [ ] Task: F-40 гость без `/start`, F-43 ветвление stories → признаки ответа UC
