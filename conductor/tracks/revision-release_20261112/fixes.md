@@ -10,7 +10,7 @@
 |---|---|---|---|
 | Ф5.1 Харнес e2e | F-01…F-04 | `dmg-test-designer` (Opus — инфраструктура тестов) | — |
 | Ф5.2 Недостающие e2e | F-10…F-34 | `dmg-test-designer` (Sonnet, порциями по файлам) | Ф5.1 |
-| Ф5.3 Бот-раннер | F-40…F-47 | `dmg-api-author` / Opus по месту | Ф5.2 (red-тесты) |
+| Ф5.3 Бот-раннер | F-40…F-47, F-91 | `dmg-api-author` / Opus по месту | Ф5.2 (red-тесты) |
 | Ф5.4 Линт и правила | F-50…F-52 | orchestrator + `dmg-api-author` | — |
 | Ф5.5 Платформа `dmg-core` | F-60…F-63 | Opus (платформа) | — |
 | Ф5.6 Домен и модули | F-70…F-74 | `dmg-domain-author` / `dmg-api-author` (Sonnet) | Ф5.4 (линт видит `modules/**`) |
@@ -66,7 +66,7 @@
 |---|---|---|---|---|---|
 | F-40 | C-01 (TR-68) | Гость без `/start`: резолвер `create-ui-app.ts:94-104` → `U7BotActor \| null`, `ui-app` на `null` отвечает «Нажмите /start» (≈5 мест); сначала e2e на нынешнее поведение и сверка с v0.2.6 | S–M | Ф5.3 | |
 | F-41 | C-13 | `answerCallbackQuery` сразу (до обработки; отказы с `show_alert` — как сейчас), снятие кнопок старого экрана — параллельно с отправкой нового (`infra/bot-transport.ts:296-302`) | S | Ф5.3 | |
-| F-42 | regressions Q-01/Q-02 | Зарегистрировать `chat_member` / `my_chat_member` → `transport.handleChatMember/handleMyChatMember` в `main.ts:193-194` (на `bot`, не `privateBot`); red — F-13 | S | решение (рек. — чинить) | |
+| F-42 | regressions Q-01/Q-02 | Зарегистрировать `chat_member` / `my_chat_member` → `transport.handleChatMember/handleMyChatMember` в `main.ts:193-194` (на `bot`, не `privateBot`); red — F-13 | S | Ф5.3 | |
 | F-43 | C-03 (исполнение) | Ветвление stories по полям view (`view-stream-mentor.ts:105-123`, `my-streams.ts:65-70`, `stream-catalog.story.ts:57-66`, `view-stream.story.ts:184, 467`, `fill.story.ts:325`) → признаки в готовом ответе UC (D-72) | M | Ф5.3 | |
 | F-44 | C-04 (TR-50 (6)) | Алиасы `questionnaire-events.ts` → в `fill.story.ts`, `invite.story.ts`; файл удалить; попутно проверить TR-50 (9) correlation | S | Ф5.3 | |
 | F-45 | TR-68 | `NOT_FOUND` в `scope-reviews.story.ts:92` — штатный отказ вместо `throw` | S | Ф5.3 | |
@@ -108,12 +108,14 @@
 
 ## Решения Нурболата (до подфаз)
 
+Все рекомендации приняты (Нурболат, 2026-11-13).
+
 | ID | Источник | Вопрос | Рекомендация |
 |---|---|---|---|
 | F-90 | regressions P3-27 | Пустая программа потока: экран «⚠️ Программа потока не найдена.» (v0.2.6) против нулевого прогресса | намеренно — снимок в контракте всегда есть, пустая программа = нулевой прогресс; e2e на нынешнее поведение |
 | F-91 | regressions P8-05 | `inactivity-sweep` без `telegramId`: маркер ставится, уведомление теряется до следующего окна | исправить (S): маркер — после резолва адреса; red — F-15 |
 | F-92 | regressions Q-01/Q-02 | События групп на проде не работают (дефект v0.2.6) | исправить в релизе — F-42 (S) |
-| F-93 | e2e-gaps g-25 | Проводка `main.ts` (6 строк) | без e2e; F-42 закрывается e2e через `TestBotTransport` (F-13) |
+| F-93 | e2e-gaps g-25 ([C-14](./cards.md#c-14)) | Проводка `main.ts` (6 строк) | без e2e; F-42 закрывается e2e через `TestBotTransport` (F-13) |
 | F-94 | e2e-gaps g-26 | Планировщик `dmg-core` (4) | без e2e — unit-тесты пакета |
 | F-95 | e2e-gaps g-27 | UC удалён (22) | без e2e — путь удалён намеренно |
 | F-96 | e2e-gaps g-28 | Служебный UC без UI (11) | без e2e — тесты модуля |

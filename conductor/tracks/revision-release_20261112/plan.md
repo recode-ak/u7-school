@@ -104,11 +104,41 @@
 - [x] Task: orchestrator: `fixes.md` — недостающие e2e (`e2e-gaps.md`) + регрессии + «погасить тактически» + малые решения; у строки источник, размер S/M/L, срез или `[?]` `77ff5e2`
     - Итог: срезы Ф5.1…Ф5.7 (харнес → e2e → бот → линт → `dmg-core` → домен → скрипты); на решение — F-90…F-96 (3 регрессии, 43 строки «без e2e»); без кода — F-100…F-108; кандидаты — F-110, F-111
 - [ ] Task: `dmg-test-designer`: недостающие e2e по `e2e-gaps.md` (до правок регрессий — они станут их red-тестами); тест, падающий на текущем коде, — в `regressions.md`
-- [ ] Task: Нурболат: разбор `cards.md` и `fixes.md` одним проходом; решения — в карточки с датой
-- [ ] Task: orchestrator: дописать в план подфазы Ф5.N — срез на модуль или однородную группу (бриф → red → green → гейт → `dmg-reviewer`; `dmg-data-keeper` — если трогается state/репозитории/снимки)
+- [x] Task: Нурболат: разбор `cards.md` и `fixes.md` одним проходом; решения — в карточки с датой
+    - Итог (2026-11-13): F-90…F-96 — по рекомендации; «без e2e» — [C-14](./cards.md#c-14); исполнители — DeepSeek, где не страдает качество
+- [x] Task: orchestrator: дописать в план подфазы Ф5.N — срез на модуль или однородную группу (бриф → red → green → гейт → `dmg-reviewer`; `dmg-data-keeper` — если трогается state/репозитории/снимки)
 - [ ] Task: Крупное (L) — кандидатами `[?]` в `tracks.md` с заготовкой в `conductor/roadmap/`
 - [ ] Task: «Оставить» — перенос в `decisions.md` или гайды, закрытие TR в `debt.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
+
+### Подфазы Ф5 (по [fixes.md](./fixes.md))
+
+Исполнители — [deepseek.md](../../architecture/deepseek.md) §2; пилот flash на e2e — первые два файла Ф5.2, дальше по итогу приёмки.
+
+#### Ф5.4 Линт и правила (orchestrator, S)
+- [ ] Task: F-50…F-52 — `includes` ERR-01/API-02 на `modules/**`, `biome-ignore` недостижимых `throw`, текст ERR-01 в `dmg-core`, оговорка `rules.md:15`; новые находки — строками в `fixes.md`
+
+#### Ф5.1 Харнес e2e (`dmg-test-designer`, Sonnet)
+- [ ] Task: F-01…F-05 — часы `createTestApp`, события групп через транспорт, хелперы сбоев транспорта, хеш кеша миров, мир `core-education`
+
+#### Ф5.2 Недостающие e2e (`dmg-test-designer`; пилот flash → flash или Sonnet)
+- [ ] Task: пилот flash — F-10 `main-menu`, F-11 `school`; приёмка тестов Opus
+- [ ] Task: F-12…F-34 порциями (≈5 файлов на сессию); падающие — в `regressions.md`
+
+#### Ф5.3 Бот-раннер (Sonnet; F-41, F-42 — flash)
+- [ ] Task: F-40 гость без `/start`, F-43 ветвление stories → признаки ответа UC
+- [ ] Task: F-41 `answerCallbackQuery` сразу, F-42 события групп, F-91 маркер `inactivity-sweep`
+- [ ] Task: F-44…F-47 — алиасы событий анкет, штатные отказы TR-68, `ui-spec` курсов
+
+#### Ф5.5 Платформа `dmg-core` (Opus)
+- [ ] Task: F-60, F-61 — лог операций (`writes`, сводка query, порог размера), D-NN пакета
+- [ ] Task: F-62 `module` в UoW обязателен; F-63 правка D-69 (JSDoc только Ar/Policy/DQS)
+
+#### Ф5.6 Домен и модули (flash)
+- [ ] Task: F-70…F-74 — выбор текущего желания в Ar, `versionOut`, `StreamStudents`, `VERSION_CONFLICT`, шапки контрактов
+
+#### Ф5.7 Скрипты снимков (flash + `dmg-data-keeper`)
+- [ ] Task: F-80 — `update-stream-snapshot`, `stream-snapshot-sync` через репозитории и UoW
 
 **Критерии приёмки Фазы 5:**
 - Каждая строка `fixes.md` закрыта коммитом или кандидатом `[?]`; регрессий без решения нет.
