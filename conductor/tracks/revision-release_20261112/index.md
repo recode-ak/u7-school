@@ -10,6 +10,7 @@
 - [Сверка](./reconcile.md)
 - [Регрессии](./regressions.md)
 - [Сценарии без e2e](./e2e-gaps.md)
+- [Исправления Ф5](./fixes.md)
 - [Ручная проверка](./manual-run.md)
 - [Триаж TR и DEBT](./triage.md)
 - [Карточки решений](./cards.md)
