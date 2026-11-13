@@ -254,6 +254,10 @@ describe('E2E: экраны ошибок UI-слоя (F-33)', () => {
     expect(String(response.notify?.text)).toContain(
       'Уведомление перед падением',
     );
+    // Нотис — над экраном ошибки, экран не подменяется
+    expect(String(response.screen?.text)).toContain(
+      'Произошла внутренняя ошибка',
+    );
   });
 
   // ── Отказы UC в стори ──

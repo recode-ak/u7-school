@@ -10,6 +10,10 @@ import { AppController } from '@u7-scl/bot/app/app-controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import type { DialogResponse } from '@u7-scl/core/ui';
+import {
+  GetStudentByUserUcDef,
+  StreamModuleDef,
+} from '@u7-scl/domain/stream/contract';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
@@ -19,6 +23,7 @@ import {
   stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { Trace } from 'dmg-core/app';
 import { CORE_EDUCATION_WORLD, type WorldDefinition } from '../worlds';
 
 const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
@@ -109,6 +114,18 @@ describe('E2E: запись на поток', () => {
   beforeEach(() => {
     transport.reset();
   });
+
+  /** Поток живой записи пользователя (`get-student-by-user`), нет записи — undefined. */
+  async function enrolledStreamOf(tgId: number): Promise<string | undefined> {
+    const actor = await app.userByTelegramId(tgId);
+    const result = await app.apiApp.dispatch(
+      StreamModuleDef,
+      GetStudentByUserUcDef.command({ userId: actor.user.uuid }),
+      actor,
+      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+    );
+    return result.ok ? result.value.streamId : undefined;
+  }
 
   afterAll(async () => {
     await app.cleanup();
@@ -224,6 +241,8 @@ describe('E2E: запись на поток', () => {
 
   test('P3-63: уже есть живая запись — отказ без зачисления', async () => {
     const tgId = 1003;
+    const before = await enrolledStreamOf(tgId);
+    expect(before).toBeDefined();
 
     await openStreamCard(transport, tgId, 'Поток 1');
     // Кнопки «Записаться» нет (запись уже есть) — адрес набирается вручную
@@ -240,6 +259,7 @@ describe('E2E: запись на поток', () => {
     expect(String(refused.notify?.text ?? '')).not.toContain(
       'Вы успешно записаны',
     );
+    expect(await enrolledStreamOf(tgId)).toBe(before);
   });
 
   test('P3-63: поток не найден — отказ без зачисления', async () => {
@@ -273,6 +293,7 @@ describe('E2E: запись на поток', () => {
     expect(String(refused.notify?.text ?? '')).not.toContain(
       'Вы успешно записаны',
     );
+    expect(await enrolledStreamOf(tgId)).not.toBe(STREAM_ACTIVE);
   });
 });
 
