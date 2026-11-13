@@ -77,9 +77,9 @@
 
 | ID | Источник | Что | Размер | Срез | Коммит |
 |---|---|---|---|---|---|
-| F-50 | C-02 (TR-68) | `includes` ERR-01 и API-02 в `biome.json` → `modules/**/*.{uc,er,facade,job}.ts`; 2 недостижимых `throw` (`activate-stream.uc.ts:54`, `enroll-student.uc.ts:91`) — `biome-ignore` «ERR-01: недостижимо — <правило>»; прочие находки — новыми строками сюда | S | Ф5.4 | |
-| F-51 | C-02 | Исключение «недостижимый `throw` с `biome-ignore`» — в текст ERR-01 (`dmg-core`, `docs/reference/rules.md`) | S | Ф5.4 | |
-| F-52 | C-03 (1) | Снять оговорку «до миграции UI» в `conductor/architecture/rules.md:15` | S | Ф5.4 | |
+| F-50 | C-02 (TR-68) | `includes` ERR-01 и API-02 в `biome.json` → `modules/**/*.{uc,er,facade,job}.ts`; 2 недостижимых `throw` (`activate-stream.uc.ts:54`, `enroll-student.uc.ts:91`) — `biome-ignore` «ERR-01: недостижимо — <правило>»; прочие находки — новыми строками сюда | S | Ф5.4 | afc1b8f1 |
+| F-51 | C-02 | Исключение «недостижимый `throw` с `biome-ignore`» — в текст ERR-01 (`dmg-core`, `docs/reference/rules.md`) | S | Ф5.4 | afc1b8f1 |
+| F-52 | C-03 (1) | Снять оговорку «до миграции UI» в `conductor/architecture/rules.md:15` | S | Ф5.4 | afc1b8f1 |
 
 ## Ф5.5 Платформа `dmg-core`
 

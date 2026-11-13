@@ -116,7 +116,8 @@
 Исполнители — [deepseek.md](../../architecture/deepseek.md) §2; пилот flash на e2e — первые два файла Ф5.2, дальше по итогу приёмки.
 
 #### Ф5.4 Линт и правила (orchestrator, S)
-- [ ] Task: F-50…F-52 — `includes` ERR-01/API-02 на `modules/**`, `biome-ignore` недостижимых `throw`, текст ERR-01 в `dmg-core`, оговорка `rules.md:15`; новые находки — строками в `fixes.md`
+- [x] Task: F-50…F-52 — `includes` ERR-01/API-02 на `modules/**`, `biome-ignore` недостижимых `throw`, текст ERR-01 в `dmg-core`, оговорка `rules.md:15`; новые находки — строками в `fixes.md` `afc1b8f1`
+    - Итог: новых нарушений нет (только 2 известных `throw` в `stream`); `dmg-core` `487a42c`
 
 #### Ф5.1 Харнес e2e (`dmg-test-designer`, Sonnet)
 - [ ] Task: F-01…F-05 — часы `createTestApp`, события групп через транспорт, хелперы сбоев транспорта, хеш кеша миров, мир `core-education`
