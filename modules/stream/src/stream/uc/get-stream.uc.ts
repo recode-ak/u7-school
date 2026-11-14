@@ -33,7 +33,10 @@ export class GetStreamUc extends UseCaseFromDef<
       : err(StreamErrors.NOT_FOUND.make({ streamId }));
   }
 
-  /** Право управления считает Policy, UI его не вычисляет (гость — `false`). */
+  /**
+   * Право управления считает Policy, UI его не вычисляет (гость — `false`).
+   * `canX` = право И переход допустим; `isEnrolling` от права не зависит.
+   */
   protected async execute(
     _: Input,
     { stream }: Loaded,
@@ -46,6 +49,13 @@ export class GetStreamUc extends UseCaseFromDef<
         stream,
       },
     );
-    return ok({ ...stream.view(), canManage: allowed });
+    return ok({
+      ...stream.view(),
+      canManage: allowed,
+      canActivate: allowed && stream.canActivate(),
+      canComplete: allowed && stream.canComplete(),
+      canArchive: allowed && stream.canArchive(),
+      isEnrolling: stream.isEnrolling(),
+    });
   }
 }

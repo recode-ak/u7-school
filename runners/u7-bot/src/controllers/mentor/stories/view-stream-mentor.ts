@@ -76,7 +76,6 @@ export class ViewStreamMentorStory extends ViewStreamStory {
     stream: StreamWithRights,
     _actor: U7BotActor,
   ): KeyboardDescription {
-    const canEdit = stream.canManage;
     const rows: KbButton[][] = [];
 
     // ── Публичные кнопки (всем) ──
@@ -98,40 +97,38 @@ export class ViewStreamMentorStory extends ViewStreamStory {
       this.btn('👥 Студенты', this.cbFor('monitor', 'students', stream.uuid)),
     ]);
 
-    // ── Lifecycle-кнопки (только для владельца / ADMIN) ──
-    if (canEdit) {
-      const lifecycleRow: KbButton[] = [];
+    // ── Lifecycle-кнопки: признаки готового ответа UC (D-72) ──
+    const lifecycleRow: KbButton[] = [];
 
-      if (stream.status === 'enrollment') {
-        lifecycleRow.push(
-          this.btn(
-            '🚀 Запустить',
-            this.cbFor('activate-stream', 'activate', stream.uuid),
-          ),
-        );
-      }
+    if (stream.canActivate) {
+      lifecycleRow.push(
+        this.btn(
+          '🚀 Запустить',
+          this.cbFor('activate-stream', 'activate', stream.uuid),
+        ),
+      );
+    }
 
-      if (stream.status === 'active') {
-        lifecycleRow.push(
-          this.btn(
-            '✅ Завершить',
-            this.cbFor('view-stream-mentor', 'complete', stream.uuid),
-          ),
-        );
-      }
+    if (stream.canComplete) {
+      lifecycleRow.push(
+        this.btn(
+          '✅ Завершить',
+          this.cbFor('view-stream-mentor', 'complete', stream.uuid),
+        ),
+      );
+    }
 
-      if (stream.status === 'completed') {
-        lifecycleRow.push(
-          this.btn(
-            '📁 В архив',
-            this.cbFor('view-stream-mentor', 'archive', stream.uuid),
-          ),
-        );
-      }
+    if (stream.canArchive) {
+      lifecycleRow.push(
+        this.btn(
+          '📁 В архив',
+          this.cbFor('view-stream-mentor', 'archive', stream.uuid),
+        ),
+      );
+    }
 
-      if (lifecycleRow.length > 0) {
-        rows.push(lifecycleRow);
-      }
+    if (lifecycleRow.length > 0) {
+      rows.push(lifecycleRow);
     }
 
     // Кнопка «Назад» — возврат к моим потокам (не в catalog)

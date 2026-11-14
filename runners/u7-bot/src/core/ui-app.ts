@@ -99,27 +99,43 @@ export class U7BotUiApp extends BotUiApp<U7BotActor, U7BotUiAppResolve> {
       return this.#commandHelp(tgId, session);
     }
 
-    const response = await super.handleCommand(update, tgId, session);
     if (update.command === 'cancel') {
-      // Глобальный сброс диалога — всегда: сброс активной делает
-      // стори в pipe, меню — уровень приложения.
-      this.enterDialog(session, tgId, this.menuPath, 'reopen');
-      if (!response) {
-        const actor = await this.resolve.actorResolver(tgId);
-        const menu = await this.#shortMenuScreen(actor);
-        return screen(menu.text, menu.keyboard);
-      }
-      // Ответ стори без экрана — дополняем экраном меню (notify сохраняется:
-      // транспорт рендерит реплику первой, затем retire+send меню — уже умеет).
-      if (!response.screen) {
-        const actor = await this.resolve.actorResolver(tgId);
-        return { ...response, screen: await this.#shortMenuScreen(actor) };
-      }
-      return response;
+      return this.#commandCancel(update, tgId, session);
     }
+
+    const response = await super.handleCommand(update, tgId, session);
     if (response) return response;
 
     return notify(md`Неизвестная команда\\. Наберите /help — справка\\.`);
+  }
+
+  /**
+   * /cancel сбрасывает диалог — гостю без записи только notify (F-40).
+   * `super.handleCommand` резолвит актора сам и не принимает готового,
+   * поэтому резолвер здесь вызывается дважды.
+   */
+  async #commandCancel(
+    update: CommandUpdate,
+    tgId: number,
+    session: BotSession,
+  ): Promise<DialogResponse> {
+    const actor = await this.resolve.actorResolver(tgId);
+    if (!actor) return this.noActorResponse();
+
+    const response = await super.handleCommand(update, tgId, session);
+    // Глобальный сброс диалога — всегда: сброс активной делает
+    // стори в pipe, меню — уровень приложения.
+    this.enterDialog(session, tgId, this.menuPath, 'reopen');
+    if (!response) {
+      const menu = await this.#shortMenuScreen(actor);
+      return screen(menu.text, menu.keyboard);
+    }
+    // Ответ стори без экрана — дополняем экраном меню (notify сохраняется:
+    // транспорт рендерит реплику первой, затем retire+send меню — уже умеет).
+    if (!response.screen) {
+      return { ...response, screen: await this.#shortMenuScreen(actor) };
+    }
+    return response;
   }
 
   /**
@@ -133,6 +149,7 @@ export class U7BotUiApp extends BotUiApp<U7BotActor, U7BotUiAppResolve> {
     session: BotSession,
   ): Promise<DialogResponse> {
     const actor = await this.resolve.actorResolver(tgId);
+    if (!actor) return this.noActorResponse();
     const story = this.#activeStory(session);
     const context = story ? await story.contextHelp(actor, session) : null;
     if (context) return notify(context);
@@ -172,6 +189,7 @@ export class U7BotUiApp extends BotUiApp<U7BotActor, U7BotUiAppResolve> {
     });
 
     const actor = await this.resolve.actorResolver(tgId);
+    if (!actor) return this.noActorResponse();
     this.enterDialog(session, tgId, this.menuPath, 'reopen');
     const welcome = await this.#welcomeScreen(actor);
     return screen(welcome.text, welcome.keyboard);

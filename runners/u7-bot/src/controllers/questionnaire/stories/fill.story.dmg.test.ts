@@ -145,12 +145,6 @@ describe('FillStory — вызовы UC через dispatchUc', () => {
         getQuestionnairesByUser: () => [
           {
             kind: 'standard',
-            status: 'completed',
-            ownerInfo: { courseId: 'course-1' },
-            uuid: 'q-done',
-          },
-          {
-            kind: 'standard',
             status: 'in_progress',
             ownerInfo: { courseId: 'course-1' },
             uuid: 'q-active',
@@ -167,7 +161,15 @@ describe('FillStory — вызовы UC через dispatchUc', () => {
     );
 
     expect(dispatchedOf(dispatch)).toEqual([
-      { uc: 'getQuestionnairesByUser', input: { userId: actor.user.uuid } },
+      {
+        uc: 'getQuestionnairesByUser',
+        input: {
+          userId: actor.user.uuid,
+          status: 'in_progress',
+          kind: 'standard',
+          courseId: 'course-1',
+        },
+      },
       { uc: 'getCurrent', input: { questionnaireId: 'q-active' } },
     ]);
     expect(res.awaitInput).toEqual({

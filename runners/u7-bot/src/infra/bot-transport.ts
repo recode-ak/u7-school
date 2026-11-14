@@ -17,6 +17,7 @@ import {
   type KeyboardDescription,
   type MessengerAction,
   type MessengerEvent,
+  NO_ACTOR_MESSAGE,
   type NoticeKind,
   type NotificationPayload,
   type ProactiveSender,
@@ -52,7 +53,7 @@ const CALLBACK_DATA_MAX_BYTES = 64;
 const callbackDataEncoder = new TextEncoder();
 
 /** Сообщение при нажатии на кнопку без открытого диалога (до /start). */
-const NO_DIALOG_MESSAGE = 'Наберите /start';
+const NO_DIALOG_MESSAGE = NO_ACTOR_MESSAGE;
 
 /** Сообщение при нажатии на кнопку чужого/устаревшего экрана (штамп не совпал). */
 const STALE_STAMP_MESSAGE = 'Экран устарел — нажмите /start';

@@ -741,3 +741,60 @@ describe('BotUiApp — init-каскад', () => {
     expect(uiApp.getController('a')?.name).toBe('a');
   });
 });
+
+// F-40: резолвер вернул null — у человека нет записи пользователя.
+describe('BotUiApp — актор не найден (actorResolver → null)', () => {
+  const NO_ACTOR_TEXT = 'Наберите /start';
+
+  function makeGhostUiApp(controller: TestController): TestUiApp {
+    const uiApp = new TestUiApp([controller]);
+    uiApp.init({
+      appApi: {} as never,
+      eventBus: {} as never,
+      actorResolver: async () => null,
+    });
+    return uiApp;
+  }
+
+  test('handleCommand: ответ notify «Наберите /start», контроллеры не опрашиваются', async () => {
+    const ctrl = makeController('a');
+    const uiApp = makeGhostUiApp(ctrl);
+
+    const response = await uiApp.handleCommand(
+      makeCommand('help'),
+      42,
+      makeSession(),
+    );
+
+    expect(String(response?.notify?.text)).toContain(NO_ACTOR_TEXT);
+    expect(ctrl.commandCalls).toEqual([]);
+  });
+
+  test('handleCallback: ответ notify «Наберите /start», маршрутизации нет', async () => {
+    const ctrl = makeController('a');
+    const uiApp = makeGhostUiApp(ctrl);
+
+    const response = await uiApp.handleCallback(
+      'a:one:view',
+      42,
+      makeSession(),
+    );
+
+    expect(String(response?.notify?.text)).toContain(NO_ACTOR_TEXT);
+    expect(ctrl.callbackData).toEqual([]);
+  });
+
+  test('handleMessage: ответ notify «Наберите /start», контроллер не вызывается', async () => {
+    const ctrl = makeController('a');
+    const uiApp = makeGhostUiApp(ctrl);
+
+    const response = await uiApp.handleMessage(
+      { type: 'message', text: 'привет', telegramId: 42 } as BotUpdate,
+      42,
+      makeSession('a/one', 3, { context: {} }),
+    );
+
+    expect(String(response?.notify?.text)).toContain(NO_ACTOR_TEXT);
+    expect(ctrl.messageCalled).toBe(0);
+  });
+});

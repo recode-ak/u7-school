@@ -5,6 +5,8 @@ import type { BotSession, DialogResponse, KbButton } from '@u7-scl/core/ui';
 import {
   ListStreamsUcDef,
   StreamModuleDef,
+  StreamStatus,
+  type StreamView,
 } from '@u7-scl/domain/stream/contract';
 
 const STATUS_EMOJI: Record<string, string> = {
@@ -50,26 +52,21 @@ export class MyStreamsStory extends U7BotUiStory {
     showArchived: boolean,
   ): Promise<DialogResponse> {
     try {
-      // Только потоки текущего ментора
-      const listed = await this.dispatchUc(
-        StreamModuleDef,
-        ListStreamsUcDef.command({ mentorId: actor.user.uuid }),
-        actor,
-      );
-      if (!listed.ok) return this.ucErrorNotify(listed.error);
-      let myStreams = listed.value;
-
-      // Фильтрация по умолчанию — только enrollment + active
-      if (!showArchived && !showCompleted) {
-        myStreams = myStreams.filter(
-          (s) => s.status === 'enrollment' || s.status === 'active',
+      // Только потоки текущего ментора; группы по статусу — фильтр UC (D-72)
+      const byStatus = (status: StreamStatus) =>
+        this.dispatchUc(
+          StreamModuleDef,
+          ListStreamsUcDef.command({ mentorId: actor.user.uuid, status }),
+          actor,
         );
-      } else {
-        myStreams = myStreams.filter((s) => {
-          if (s.status === 'archived') return showArchived;
-          if (s.status === 'completed') return showCompleted;
-          return true; // enrollment, active — всегда видно
-        });
+      const statuses = [StreamStatus.ENROLLMENT, StreamStatus.ACTIVE];
+      if (showCompleted) statuses.push(StreamStatus.COMPLETED);
+      if (showArchived) statuses.push(StreamStatus.ARCHIVED);
+      let myStreams: StreamView[] = [];
+      for (const status of statuses) {
+        const listed = await byStatus(status);
+        if (!listed.ok) return this.ucErrorNotify(listed.error);
+        myStreams = [...myStreams, ...listed.value];
       }
 
       // Кнопки-переключатели

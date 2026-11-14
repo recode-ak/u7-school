@@ -91,17 +91,14 @@ export async function createUiApp(
   }
   const resolve: U7BotUiAppResolve = {
     eventBus: app.eventBus,
-    actorResolver: async (tgId: number): Promise<U7BotActor> => {
+    actorResolver: async (tgId: number): Promise<U7BotActor | null> => {
       const trace = requestTrace(tgId, (message) =>
         getGlobalLogger()?.warn('create-ui-app', message, {
           op: 'actorResolver',
         }),
       );
       const caller = await app.callers.resolveByTelegramId(tgId, trace);
-      if (!(caller instanceof UserCaller)) {
-        throw new Error(`Пользователь с telegramId ${tgId} не найден`);
-      }
-      return caller;
+      return caller instanceof UserCaller ? caller : null;
     },
     appApi: app.apiApp,
     botAdminUuid: options.botAdminUuid,

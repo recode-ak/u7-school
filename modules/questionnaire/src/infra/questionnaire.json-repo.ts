@@ -6,6 +6,7 @@ import {
 import { type StoredRecord, VersionedRepository } from 'dmg-core/app';
 import * as v from 'valibot';
 import type {
+  QuestionnaireFilter,
   QuestionnaireIdle,
   QuestionnaireRepo,
 } from '../questionnaire/questionnaire.repo';
@@ -34,9 +35,18 @@ export class QuestionnaireJsonRepo
     return row && QuestionnaireAr.restore(row);
   }
 
-  async findByRespondent(userId: string): Promise<QuestionnaireAr[]> {
+  async findByRespondent(
+    userId: string,
+    { status, kind, courseId }: QuestionnaireFilter = {},
+  ): Promise<QuestionnaireAr[]> {
     return (await this.rows())
-      .filter((r) => r.respondentId === userId)
+      .filter(
+        (r) =>
+          r.respondentId === userId &&
+          (status === undefined || r.status === status) &&
+          (kind === undefined || r.kind === kind) &&
+          (courseId === undefined || r.ownerInfo.courseId === courseId),
+      )
       .map(QuestionnaireAr.restore);
   }
 

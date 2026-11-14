@@ -138,6 +138,29 @@ export class StreamAr extends Aggregate<typeof StreamArDef, StreamView> {
     return undefined;
   }
 
+  /** Допустим ли запуск в текущем статусе — по `StreamArDef.transitions.activate.from`. */
+  canActivate(): boolean {
+    return this.allows('activate');
+  }
+
+  /** Допустимо ли завершение в текущем статусе. */
+  canComplete(): boolean {
+    return this.allows('complete');
+  }
+
+  /** Допустим ли перенос в архив в текущем статусе. */
+  canArchive(): boolean {
+    return this.allows('archive');
+  }
+
+  /**
+   * Поток в наборе: студент может записаться. Сегодня совпадает с
+   * `canActivate()`, но смысл другой (запись студента, а не запуск).
+   */
+  isEnrolling(): boolean {
+    return this.canActivate();
+  }
+
   /** Модуль, по которому идёт поток. */
   moduleId(): string {
     return this.state.moduleId;
@@ -181,6 +204,11 @@ export class StreamAr extends Aggregate<typeof StreamArDef, StreamView> {
   override view(): StreamView {
     const { enrollmentKey, ...rest } = structuredClone(this.state);
     return { ...rest, requiresEnrollmentKey: Boolean(enrollmentKey) };
+  }
+
+  private allows(op: keyof typeof StreamArDef.transitions): boolean {
+    const from: readonly string[] = StreamArDef.transitions[op].from;
+    return from.includes(this.state.status);
   }
 
   // ── Переходы ──

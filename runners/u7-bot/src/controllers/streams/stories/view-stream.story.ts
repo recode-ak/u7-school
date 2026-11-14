@@ -181,7 +181,7 @@ export class ViewStreamStory extends U7BotUiStory {
     // Запись доступна, пока нет живой записи студента: спрашиваем, только
     // если кнопка «Записаться» вообще возможна
     const canEnroll =
-      !stream.canManage && stream.status === 'enrollment'
+      !stream.canManage && stream.isEnrolling
         ? await this.#canEnroll(actor)
         : false;
     const keyboard = this.buildKeyboard(stream, actor, {
@@ -464,7 +464,7 @@ export class ViewStreamStory extends U7BotUiStory {
 
     // ── Гостевые кнопки ──
     if (!isOwnerMentor) {
-      if (stream.status === 'enrollment' && canEnroll) {
+      if (stream.isEnrolling && canEnroll) {
         rows.push([
           this.btn(
             '📝 Записаться',

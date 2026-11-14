@@ -29,9 +29,14 @@ export class GetQuestionnairesByUserUc extends UseCaseFromDef<
     return ok({ userId });
   }
 
-  protected async execute({ userId }: Input, _: Loaded) {
-    const questionnaires =
-      await this.resolve.questionnaires.findByRespondent(userId);
+  protected async execute(
+    { userId, status, kind, courseId }: Input,
+    _: Loaded,
+  ) {
+    const questionnaires = await this.resolve.questionnaires.findByRespondent(
+      userId,
+      { status, kind, courseId },
+    );
     return ok(questionnaires.map((questionnaire) => questionnaire.view()));
   }
 }

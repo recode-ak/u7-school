@@ -17,6 +17,9 @@ import type {
   ProactiveSender,
 } from './types';
 
+/** Текст человеку без записи пользователя (нет `/start`, F-40); его же показывает транспорт без диалога. */
+export const NO_ACTOR_MESSAGE = 'Наберите /start';
+
 /**
  * Центральный хаб UI-слоя бота на контракте «Диалог и Экран».
  * Экран и Telegram-механика — транспорт; uiApp только решает КУДА.
@@ -95,6 +98,7 @@ export abstract class BotUiApp<
     session: BotSession,
   ): Promise<DialogResponse | null> {
     const actor = await this.resolve.actorResolver(tgId);
+    if (!actor) return this.noActorResponse();
     const notices: MdText[] = [];
 
     for (const controller of this.#commandPipeOrder(session)) {
@@ -116,6 +120,11 @@ export abstract class BotUiApp<
       return rb.notify(mdJoin(notices, '\n\n'));
     }
     return null;
+  }
+
+  /** Ответ человеку без записи пользователя (F-40): только notify, диалог не трогаем. */
+  protected noActorResponse(): DialogResponse {
+    return rb.notify(mdRaw(NO_ACTOR_MESSAGE));
   }
 
   /** Порядок опроса контроллеров: активный первым, далее регистрация. */
@@ -150,6 +159,7 @@ export abstract class BotUiApp<
     session: BotSession,
   ): Promise<DialogResponse | null> {
     const actor = await this.resolve.actorResolver(tgId);
+    if (!actor) return this.noActorResponse();
     const initiator = await this.dispatch(data, tgId, actor, session);
     return this.#resolveDelegate(initiator, tgId, actor, session);
   }
@@ -163,6 +173,7 @@ export abstract class BotUiApp<
     session: BotSession,
   ): Promise<DialogResponse | null> {
     const actor = await this.resolve.actorResolver(tgId);
+    if (!actor) return this.noActorResponse();
     const controller = this.#controllerByPath(session.dialog?.path);
     if (!controller) return null;
     return controller.handleMessage(update, actor, session);

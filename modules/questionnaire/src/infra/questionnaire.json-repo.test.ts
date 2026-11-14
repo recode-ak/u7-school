@@ -183,6 +183,27 @@ describe('QuestionnaireJsonRepo — findByRespondent', () => {
   });
 });
 
+describe('QuestionnaireJsonRepo — findByRespondent с фильтром', () => {
+  test('status, kind, courseId сочетаются через «и»; likert без курса отсеивается по courseId', async () => {
+    const repo = new QuestionnaireJsonRepo(
+      filePath('by-respondent-filter.json'),
+    );
+    const a = makeStandard();
+    const c = makeLikert();
+    for (const ar of [a, c]) await repo.save(ar);
+    const ids = async (f: object) =>
+      (await repo.findByRespondent(USER, f)).map((q) => q.uuid);
+
+    expect(await ids({ kind: 'likert' })).toEqual([c.uuid]);
+    expect(await ids({ courseId: 'c-1' })).toEqual([a.uuid]);
+    expect(await ids({ courseId: 'c-1', kind: 'likert' })).toEqual([]);
+    expect(await ids({ status: a.view().status, kind: 'standard' })).toEqual([
+      a.uuid,
+    ]);
+    expect(await ids({ status: 'completed' })).toEqual([]);
+  });
+});
+
 describe('QuestionnaireJsonRepo — findIdle (брошенные анкеты)', () => {
   const NOW = T0 + 10 * HOUR;
   const stored = (name: string, ...ars: QuestionnaireAr[]) => {

@@ -27,7 +27,7 @@ import {
   pressedCode,
   RecordingBotApi,
   screensNewFirst,
-  type TestBotTransport,
+  TestBotTransport,
 } from '../helpers/test-bot-transport';
 
 const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
@@ -600,4 +600,50 @@ describe('E2E: транспорт — сбои, очередь, callback_data, �
       rmSync(dir, { recursive: true, force: true });
     }
   });
+});
+
+/**
+ * F-40: человек без записи пользователя (нет `/start`, есть сессия — или запись
+ * удалена): резолвер актора возвращает `null`, любая команда получает «Наберите
+ * /start» вместо молчания (раньше резолвер бросал исключение).
+ */
+describe('E2E: транспорт — команда без записи пользователя (F-40)', () => {
+  const GHOST_TG = 1999;
+  let app: TestApp;
+  let transport: TestBotTransport;
+
+  beforeAll(async () => {
+    app = await createTestApp('transport-no-user-e2e');
+    transport = new TestBotTransport(
+      app.apiApp,
+      async (tgId) => (tgId === GHOST_TG ? null : app.userByTelegramId(tgId)),
+      [
+        new AppController(SCHOOL_GROUP_URL, [ADMIN_TG]),
+        new SchoolController(),
+        new CoursesController(),
+        new MentorController(),
+      ],
+      { eventBus: app.eventBus, callers: app.callers },
+    );
+  });
+
+  beforeEach(() => {
+    transport.reset();
+  });
+
+  afterAll(async () => {
+    await app.cleanup();
+  });
+
+  for (const command of ['/help', '/cancel', '/no_such_command']) {
+    test(`${command} без записи пользователя — «Наберите /start»`, async () => {
+      const response = await transport.handleCommand(
+        transport.makeBotContext(GHOST_TG),
+        command,
+      );
+
+      expect(String(response.notify?.text)).toContain(NO_DIALOG);
+      expect(response.screen).toBeUndefined();
+    });
+  }
 });

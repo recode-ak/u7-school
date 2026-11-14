@@ -5,6 +5,7 @@ import {
 } from '@u7-scl/domain/questionnaire';
 import { MemoryRepo } from 'dmg-core/testing';
 import type {
+  QuestionnaireFilter,
   QuestionnaireIdle,
   QuestionnaireRepo,
 } from './questionnaire.repo';
@@ -23,9 +24,10 @@ export class QuestionnaireRepoFake
   }
 
   findById = async (uuid: string) => this.restored(uuid);
-  findByRespondent = this.unanswered<[userId: string], QuestionnaireAr[]>(
-    'findByRespondent',
-  );
+  findByRespondent = this.unanswered<
+    [userId: string, filter?: QuestionnaireFilter],
+    QuestionnaireAr[]
+  >('findByRespondent');
   findIdle = this.unanswered<[params: QuestionnaireIdle], QuestionnaireAr[]>(
     'findIdle',
   );

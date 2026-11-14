@@ -64,8 +64,7 @@ export function dmgDispatch(
 export const streamNotFound = () =>
   refuse('STREAM_NOT_FOUND', 'not_found', {}, 'Поток не найден');
 
-/** Ответ `getStream` по умолчанию: поток в наборе без кодового слова, управлять им нельзя. */
-export const streamView = (overrides: Record<string, unknown> = {}) => ({
+const streamViewBase = (overrides: Record<string, unknown> = {}) => ({
   uuid: '11111111-1111-4111-8111-111111111111',
   schoolId: 'school-1',
   title: 'Поток «JS Core — Поток 2»',
@@ -82,3 +81,19 @@ export const streamView = (overrides: Record<string, unknown> = {}) => ({
   version: 0,
   ...overrides,
 });
+
+/**
+ * Ответ `getStream` по умолчанию: поток в наборе без кодового слова, управлять им нельзя.
+ * Признаки переходов считаются как в UC: `canX` = `canManage` и переход допустим по статусу.
+ */
+export const streamView = (overrides: Record<string, unknown> = {}) => {
+  const base = streamViewBase(overrides);
+  const manage = base.canManage === true;
+  return {
+    canActivate: manage && base.status === 'enrollment',
+    canComplete: manage && base.status === 'active',
+    canArchive: manage && base.status === 'completed',
+    isEnrolling: base.status === 'enrollment',
+    ...base,
+  };
+};

@@ -241,7 +241,7 @@ export class TestBotTransport {
 
   constructor(
     apiApp: U7App['apiApp'],
-    actorResolver: (tgId: number) => Promise<U7BotActor>,
+    actorResolver: (tgId: number) => Promise<U7BotActor | null>,
     controllers: U7BotController[],
     opts: {
       eventBus?: U7BotUiAppResolve['eventBus'];

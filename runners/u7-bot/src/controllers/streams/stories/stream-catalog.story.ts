@@ -43,28 +43,25 @@ export class CatalogStory extends U7BotUiStory {
       return this.unknownCommand(action, actor, session);
     }
 
-    // Получаем все потоки одним запросом (без фильтра по статусу)
-    const listed = await this.dispatchUc(
-      StreamModuleDef,
-      ListStreamsUcDef.command({}),
-      actor,
-    );
-    if (!listed.ok) return this.ucErrorNotify(listed.error);
-    const allStreams = listed.value;
-
-    // Разделяем по статусам
-    const enrollmentStreams = allStreams.filter(
-      (s) => s.status === StreamStatus.ENROLLMENT,
-    );
-    const activeStreams = allStreams.filter(
-      (s) => s.status === StreamStatus.ACTIVE,
-    );
-    const completedStreams = allStreams.filter(
-      (s) => s.status === StreamStatus.COMPLETED,
-    );
-    const archivedStreams = allStreams.filter(
-      (s) => s.status === StreamStatus.ARCHIVED,
-    );
+    // Группы по статусу — фильтр UC, статус из view не читаем (D-72)
+    const byStatus = (status: StreamStatus) =>
+      this.dispatchUc(
+        StreamModuleDef,
+        ListStreamsUcDef.command({ status }),
+        actor,
+      );
+    const enrollment = await byStatus(StreamStatus.ENROLLMENT);
+    if (!enrollment.ok) return this.ucErrorNotify(enrollment.error);
+    const active = await byStatus(StreamStatus.ACTIVE);
+    if (!active.ok) return this.ucErrorNotify(active.error);
+    const completed = await byStatus(StreamStatus.COMPLETED);
+    if (!completed.ok) return this.ucErrorNotify(completed.error);
+    const archived = await byStatus(StreamStatus.ARCHIVED);
+    if (!archived.ok) return this.ucErrorNotify(archived.error);
+    const enrollmentStreams = enrollment.value;
+    const activeStreams = active.value;
+    const completedStreams = completed.value;
+    const archivedStreams = archived.value;
 
     const hasCompleted = completedStreams.length > 0;
     const hasArchived = archivedStreams.length > 0;

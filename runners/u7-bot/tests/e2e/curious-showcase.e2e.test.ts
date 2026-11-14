@@ -358,6 +358,23 @@ describe('E2E: Витрина для любопытного', () => {
       );
     });
 
+    test('F-43: группы каталога идут в порядке набор → идёт → завершён → архив', async () => {
+      await openStreamsCatalog(transport, tgId);
+      await pressByText(transport, tgId, 'Вкл. завершённые');
+      const all = await pressByText(transport, tgId, 'Вкл. архивированные');
+
+      const jsCore = buttonsOfResponse(all).filter((t) =>
+        t.includes('JS Core — Поток'),
+      );
+      expect(jsCore.map((t) => t.match(/Поток (\d)/)?.[1])).toEqual([
+        '1',
+        '5',
+        '2',
+        '3',
+        '4',
+      ]);
+    });
+
     test('P3-43: неизвестное действие каталога — «Неизвестная команда»', async () => {
       await openStreamsCatalog(transport, tgId);
       const response = await pressRawAddress(

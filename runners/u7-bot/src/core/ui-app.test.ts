@@ -671,3 +671,79 @@ describe('U7BotUiApp — handleMessengerEvent', () => {
     ]);
   });
 });
+
+// ── F-40: резолвер вернул null — у человека нет записи пользователя ──
+
+describe('U7BotUiApp — актор не найден (actorResolver → null)', () => {
+  const NO_ACTOR_TEXT = 'Наберите /start';
+
+  function makeGhostUiApp(spy: SpyController): U7BotUiApp {
+    const uiApp = new U7BotUiApp([new AppController(SCHOOL_URL, []), spy]);
+    const userApi = userApiMock({ lookup: userView() });
+    uiApp.init({
+      eventBus: { subscribe: () => () => {} } as never,
+      actorResolver: async () => null,
+      appApi: userApi.appApi,
+      callers: userApi.callers,
+      botAdminUuid: BOT_ADMIN_UUID,
+      school: TEST_SCHOOL,
+      adminTelegramIds: [],
+    } as never);
+    return uiApp;
+  }
+
+  for (const command of ['help', 'cancel', 'unknown-cmd']) {
+    test(`/${command}: notify «Наберите /start», pipe не опрашивается`, async () => {
+      setGlobalLogger(makeLogger());
+      const spy = new SpyController();
+      const uiApp = makeGhostUiApp(spy);
+
+      const response = await uiApp.handleCommand(
+        makeCommand(command),
+        404,
+        {} as BotSession,
+      );
+
+      expect(String(response?.notify?.text)).toContain(NO_ACTOR_TEXT);
+      expect(response?.screen).toBeUndefined();
+      expect(spy.commandCalls).toBe(0);
+    });
+  }
+
+  test('/cancel: диалог сессии не меняется', async () => {
+    setGlobalLogger(makeLogger());
+    const uiApp = makeGhostUiApp(new SpyController());
+    const session = {
+      dialog: { path: 'app/menu', seq: 3 },
+    } as BotSession;
+
+    await uiApp.handleCommand(makeCommand('cancel'), 404, session);
+
+    expect(session.dialog).toEqual({ path: 'app/menu', seq: 3 });
+  });
+
+  test('кнопка: notify «Наберите /start», маршрутизации нет', async () => {
+    setGlobalLogger(makeLogger());
+    const uiApp = makeGhostUiApp(new SpyController());
+
+    const response = await uiApp.handleCallback('app:help', 404, {
+      dialog: { path: 'app/menu', seq: 1 },
+    } as BotSession);
+
+    expect(String(response?.notify?.text)).toContain(NO_ACTOR_TEXT);
+    expect(response?.screen).toBeUndefined();
+  });
+
+  test('текстовый ввод: notify «Наберите /start»', async () => {
+    setGlobalLogger(makeLogger());
+    const uiApp = makeGhostUiApp(new SpyController());
+
+    const response = await uiApp.handleMessage(
+      { type: 'message', text: 'привет', telegramId: 404 } as never,
+      404,
+      { dialog: { path: 'app/menu', seq: 1 } } as BotSession,
+    );
+
+    expect(String(response?.notify?.text)).toContain(NO_ACTOR_TEXT);
+  });
+});

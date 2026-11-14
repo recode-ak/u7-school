@@ -531,46 +531,6 @@ describe('FillStory — подписки вариант A (invite-канал)', 
   });
 });
 
-// ══ Resume: фильтр активных standard-анкет ══
-
-describe('FillStory — resume по курсу: фильтрация', () => {
-  test('completed и likert-анкеты того же курса игнорируются', async () => {
-    const { story } = initStory(new FillStory(), {
-      answers: {
-        getQuestionnairesByUser: () => [
-          {
-            kind: 'standard',
-            status: 'completed',
-            ownerInfo: { courseId: 'course-1' },
-            uuid: 'q-done',
-          },
-          {
-            kind: 'likert',
-            status: 'in_progress',
-            ownerInfo: { courseId: 'course-1' },
-            uuid: 'q-likert',
-          },
-          {
-            kind: 'standard',
-            status: 'in_progress',
-            ownerInfo: { courseId: 'course-2' },
-            uuid: 'q-other',
-          },
-        ],
-      },
-    });
-
-    const res = await story.handleCallback(
-      'resume:course-1',
-      actor,
-      menuSession(),
-    );
-
-    // Ни одна не подошла — экран «не найдена»
-    expect(String(res.screen?.text)).toContain('Анкета не найдена');
-  });
-});
-
 // ══ Команда /cancel — подтверждение перед abandon ══
 
 describe('FillStory — /cancel: подтверждение перед прерыванием', () => {

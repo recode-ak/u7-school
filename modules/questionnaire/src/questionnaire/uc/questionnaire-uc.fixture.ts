@@ -8,6 +8,7 @@ import { type OperationRef, SystemCaller, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { testAppContext } from 'dmg-core/testing';
 import type { QuestionnaireUser } from '../../questionnaire.module';
+import type { QuestionnaireFilter } from '../questionnaire.repo';
 import { QuestionnaireRepoFake } from '../questionnaire.repo.fake';
 
 /** Общие данные тестов UC и Job анкет: фейк репозитория, вызывающие, состояния. */
@@ -149,8 +150,19 @@ export function makeEnv(at = T0) {
   const seed = (...states: QuestionnaireState[]) => {
     questionnaires.seed(...states);
     for (const s of states) if (!ids.includes(s.uuid)) ids.push(s.uuid);
-    questionnaires.findByRespondent = async (userId: string) =>
-      rows().filter((q) => q.isOf(userId));
+    questionnaires.findByRespondent = async (
+      userId: string,
+      { status, kind, courseId }: QuestionnaireFilter = {},
+    ) =>
+      rows().filter((q) => {
+        const s = q.view();
+        return (
+          q.isOf(userId) &&
+          (status === undefined || s.status === status) &&
+          (kind === undefined || s.kind === kind) &&
+          (courseId === undefined || s.ownerInfo.courseId === courseId)
+        );
+      });
     questionnaires.findIdle = async ({ idleMs, at: now, kinds }) =>
       rows().filter((q) => {
         const s = q.view();

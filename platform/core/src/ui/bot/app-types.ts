@@ -7,7 +7,7 @@ import type { UiAppResolve } from '../types';
  */
 export interface BotUiAppResolve<TActor extends PersonCaller = PersonCaller>
   extends UiAppResolve {
-  /** Резолвер актора по Telegram ID */
-  actorResolver: (tgId: number) => Promise<TActor>;
+  /** Резолвер актора по Telegram ID; `null` — у человека нет записи пользователя (F-40). */
+  actorResolver: (tgId: number) => Promise<TActor | null>;
   appApi: ApiApp<Identified>;
 }

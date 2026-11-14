@@ -56,9 +56,13 @@ const mockStreams = [
 
 /** Ответ listStreams по умолчанию — как UC: только потоки запрошенного ментора. */
 const ownStreams = (input: unknown) =>
-  mockStreams.filter((s) => s.mentorId === (input as ListInput).mentorId);
+  mockStreams.filter(
+    (s) =>
+      s.mentorId === (input as ListInput).mentorId &&
+      s.status === (input as ListInput).status,
+  );
 
-type ListInput = { mentorId?: string };
+type ListInput = { mentorId?: string; status?: string };
 
 function setupStory(
   answer: (input: unknown) => unknown = ownStreams,
@@ -155,9 +159,15 @@ describe('MyStreamsStory — контракт «Диалог и Экран»', (
   test('list: потоки запрашиваются UC listStreams с mentorId актора', async () => {
     const story = setupStory();
     await story.handleCallback('list', mentorActor(), session);
+    // группы по статусу — фильтр UC; по умолчанию набор и обучение
     expect(story.dispatch.mock.calls.map(([, command]) => command)).toEqual([
       ListStreamsUcDef.command({
         mentorId: '11111111-1111-4111-8111-aaaaaaaab010',
+        status: 'enrollment',
+      }),
+      ListStreamsUcDef.command({
+        mentorId: '11111111-1111-4111-8111-aaaaaaaab010',
+        status: 'active',
       }),
     ]);
   });

@@ -18,7 +18,13 @@ describe('CatalogStory (S01)', () => {
   /** Создаёт сторис с мокнутым appApi */
   function makeStory(streams: unknown[]) {
     const mockAppApi = {
-      dispatch: dmgDispatch({ listStreams: () => streams }),
+      dispatch: dmgDispatch({
+        // как UC: фильтр `status` применяет модуль
+        listStreams: (input) =>
+          (streams as { status: string }[]).filter(
+            (s) => s.status === (input as { status: string }).status,
+          ),
+      }),
     };
 
     const story = new CatalogStory();

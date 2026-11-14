@@ -43,7 +43,7 @@ const baseEntries = {
   ownerInfo: v.pipe(
     v.record(v.string(), v.unknown()),
     v.description(
-      'Данные владельца анкеты: модуль анкет их не толкует и передаёт как есть',
+      'Данные владельца анкеты; `courseId` — известный ключ, по нему модуль фильтрует, прочее модуль не толкует и передаёт как есть',
     ),
   ),
   warnedAt: v.optional(

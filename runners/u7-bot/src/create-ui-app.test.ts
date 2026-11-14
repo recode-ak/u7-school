@@ -106,20 +106,18 @@ describe('createUiApp — actorResolver', () => {
     const actor = await uiResolve.actorResolver(555);
 
     expect(actor).toBeInstanceOf(UserCaller);
-    expect(actor.user.isMentor()).toBe(true);
-    expect(actor.user.uuid).toBe(MENTOR_UUID);
+    expect(actor?.user.isMentor()).toBe(true);
+    expect(actor?.user.uuid).toBe(MENTOR_UUID);
     expect(resolveByTelegramId.mock.calls[0]?.[0]).toBe(555);
   });
 
-  test('незнакомый telegramId (гость) → Error «Пользователь с telegramId … не найден»', async () => {
+  test('незнакомый telegramId (гость, нет записи пользователя) → null', async () => {
     const { source } = makeSource();
     const { resolve } = await createUiApp(source, {
       botAdminUuid: BOT_ADMIN_UUID,
     });
 
-    await expect(resolve.actorResolver(404)).rejects.toThrow(
-      'Пользователь с telegramId 404 не найден',
-    );
+    expect(await resolve.actorResolver(404)).toBeNull();
   });
 
   test('прочий отказ резолвера → исключение', async () => {

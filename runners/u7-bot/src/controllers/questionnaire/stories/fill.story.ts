@@ -314,17 +314,17 @@ export class FillStory extends QuestionnaireStory {
   ): Promise<DialogResponse> {
     const res = await this.dispatchUc(
       QuestionnaireModuleDef,
-      GetQuestionnairesByUserUcDef.command({ userId: actor.user.uuid }),
+      GetQuestionnairesByUserUcDef.command({
+        userId: actor.user.uuid,
+        status: 'in_progress',
+        kind: 'standard',
+        courseId,
+      }),
       actor,
     );
     if (!res.ok) return ucErrorScreen(res.error);
 
-    const active = res.value.find(
-      (s) =>
-        s.kind === 'standard' &&
-        s.status === 'in_progress' &&
-        s.ownerInfo.courseId === courseId,
-    );
+    const active = res.value[0];
 
     if (!active) {
       return this.screen(
