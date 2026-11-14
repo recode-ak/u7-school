@@ -42,7 +42,7 @@
 
 **Критерии:** `bun test modules/stream domain/src/stream` зелёный; тестами UC покрыты spec 2, 3, 5, 6; запись `writes` проверена (spec 7, на уровне UoW); прямой записи JSON в UC нет; отчёт `dmg-data-keeper` без блокеров; полный `bun run check` зелёный.
 
-## Фаза 3: Скрипт, данные, документы
+## Фаза 3: Скрипт, данные, документы [checkpoint: 14a3ba47]
 
 - [x] Task: S (`dmg-api-author`) — `call-uc.ts`: добавить `StreamModuleDef` в `DMG_MODULES`, поправить шапку и `printHelp`
 - [x] Task: S (`dmg-api-author`) — переписать `scripts/update-stream-snapshot.ts` на `U7App` + `dispatch` от субъекта: выбор потока (`enrollment`/`active`) → предпросмотр → подтверждение (`prompt`) → применение; `--dry-run` — только предпросмотр; код отказа → понятное сообщение и выход 1. Общую сборку приложения со `_course-client.ts`/`call-uc.ts` — вынести в `scripts/_app.ts`, если упрощает (решение в задаче)
