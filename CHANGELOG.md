@@ -17,7 +17,7 @@ Added / Changed / Fixed / Migration.
 ### Changed
 
 - **Все модули на DMG** (`wish`, `peer-review`, `stream`, `questionnaire`, `course`, `user`, `dossier`): домен — `@u7-scl/domain` (Ar, Policy, DCS/DQS, Def операций и событий), прикладной слой — `modules/<m>`, отказы — `Result` вместо исключений, сохранение — UoW с оптимистичной блокировкой по `version`. Legacy-кода нет; история — [migration.md](./conductor/architecture/migration.md).
-- **Платформа `dmg-core`** — отдельный пакет (`~/dev/tools/dmg/dmg-core`, подключён как `file:`): Def-классы, `*FromDef`, UoW, outbox/inbox, планировщик Job, `arch:check`, GritQL-правила линтера, генератор `dmg-core gen`, роли агентов.
+- **Платформа `dmg-core`** — отдельный пакет (репо `recode-ak/dmg-core`, подключён по тегу `v0.1.1`): Def-классы, `*FromDef`, UoW, outbox/inbox, планировщик Job, `arch:check`, GritQL-правила линтера, генератор `dmg-core gen`, роли агентов.
 - **Раскладка монорепо по осям архитектуры:** `packages/*` + `apps/*` → `platform/` (`app`, `core`), `domain/`, `modules/<m>`, `runners/u7-bot`, `authoring/`. Имена пакетов `@u7-scl/*` не менялись. `u7-cli` удалён (ручной вход — `scripts/call-uc.ts`).
 - Скрипты по пакетам: `test:p`/`test:a`, `lint:*`, `tslint:*`, `check:*` → `test:w`/`lint:w`/`tslint:w`/`check:w <путь>` (например, `bun run test:w modules/wish`).
 - `scripts/deploy.sh`: бот останавливается до бэкапа, запуск — по `pm2.config.cjs` (`delete` → `start` → `save`) вместо `pm2 restart` по имени.
@@ -38,6 +38,7 @@ Added / Changed / Fixed / Migration.
 
 ### Migration
 
+- **`dmg-core` ставится из git** (`git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1`): на сервере нужен deploy key репо `recode-ak/dmg-core` (только чтение), иначе `bun install` упадёт.
 - **`data/users/users.json` — до запуска нового кода:** снимок (`bash scripts/backup.sh --name=before-0.3.0`), `migrate-users-drop-student` сухим прогоном, затем `--write` (роль `STUDENT` снята; без миграции одна такая запись останавливает все чтения пользователей).
 - Остальные файлы данных читаются в старом формате и переписываются в новом при первой записи — миграции не нужны, нужен снимок до запуска. Ключи `last-runs.json` не мигрируются: первые прогоны Job — в следующее окно.
 - **Порядок:** стоп → бэкап → `git pull` → `bun install --frozen-lockfile` → миграция `users.json` → `pm2 delete u7-school-bot` → `bun run start:prod` → `pm2 save`. `scripts/deploy.sh` с prod (версия v0.2.6) для этого релиза не запускать.

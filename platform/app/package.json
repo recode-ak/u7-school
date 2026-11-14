@@ -24,6 +24,6 @@
     "@u7-scl/peer-review": "workspace:*",
     "@u7-scl/stream": "workspace:*",
     "@u7-scl/user": "workspace:*",
-    "dmg-core": "file:../../../../tools/dmg/dmg-core"
+    "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1"
   }
 }

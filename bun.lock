@@ -16,7 +16,7 @@
         "@biomejs/biome": "^2.5.13",
         "@types/bun": "latest",
         "@types/markdown-it": "^14.2.0",
-        "dmg-core": "file:../../tools/dmg/dmg-core",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1",
       },
     },
     "authoring/video-summarizer": {
@@ -38,7 +38,7 @@
       "name": "@u7-scl/domain",
       "version": "0.1.0",
       "dependencies": {
-        "dmg-core": "file:../../../tools/dmg/dmg-core",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1",
         "valibot": "^1.0.0",
       },
     },
@@ -47,7 +47,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@u7-scl/domain": "workspace:*",
-        "dmg-core": "file:../../../../tools/dmg/dmg-core",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1",
         "valibot": "^1.0.0",
       },
     },
@@ -55,7 +55,7 @@
       "name": "@u7-scl/dossier",
       "version": "0.1.0",
       "dependencies": {
-        "dmg-core": "file:../../../../tools/dmg/dmg-core",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1",
       },
     },
     "modules/peer-review": {
@@ -72,7 +72,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@u7-scl/domain": "workspace:*",
-        "dmg-core": "file:../../../../tools/dmg/dmg-core",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1",
       },
     },
     "modules/stream": {
@@ -82,7 +82,7 @@
         "@u7-scl/course": "workspace:*",
         "@u7-scl/domain": "workspace:*",
         "@u7-scl/user": "workspace:*",
-        "dmg-core": "file:../../../../tools/dmg/dmg-core",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1",
         "valibot": "^1.0.0",
       },
     },
@@ -91,7 +91,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@u7-scl/domain": "workspace:*",
-        "dmg-core": "file:../../../../tools/dmg/dmg-core",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1",
       },
     },
     "modules/wish": {
@@ -102,7 +102,7 @@
         "@u7-scl/questionnaire": "workspace:*",
         "@u7-scl/stream": "workspace:*",
         "@u7-scl/user": "workspace:*",
-        "dmg-core": "file:../../../../tools/dmg/dmg-core",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1",
       },
     },
     "platform/app": {
@@ -118,14 +118,14 @@
         "@u7-scl/stream": "workspace:*",
         "@u7-scl/user": "workspace:*",
         "@u7-scl/wish": "workspace:*",
-        "dmg-core": "file:../../../../tools/dmg/dmg-core",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1",
       },
     },
     "platform/core": {
       "name": "@u7-scl/core",
       "version": "0.1.0",
       "dependencies": {
-        "dmg-core": "file:../../../../tools/dmg/dmg-core",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1",
       },
     },
     "runners/u7-bot": {
@@ -142,7 +142,7 @@
         "@u7-scl/stream": "workspace:*",
         "@u7-scl/user": "workspace:*",
         "@u7-scl/wish": "workspace:*",
-        "dmg-core": "file:../../../../tools/dmg/dmg-core",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1",
         "elysia": "^1.4.27",
         "grammy": "^1.41.1",
         "valibot": "^1.2.0",
@@ -330,7 +330,7 @@
 
     "devlop": ["devlop@1.1.0", "", { "dependencies": { "dequal": "^2.0.0" } }, "sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA=="],
 
-    "dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
+    "dmg-core": ["dmg-core@git+ssh://git@github.com/recode-ak/dmg-core.git#b22bb235ea6bfa775d5cbaecf670b91016e8ed4d", { "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }, "b22bb235ea6bfa775d5cbaecf670b91016e8ed4d"],
 
     "dom-serializer": ["dom-serializer@2.0.0", "", { "dependencies": { "domelementtype": "^2.3.0", "domhandler": "^5.0.2", "entities": "^4.2.0" } }, "sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg=="],
 
@@ -568,74 +568,10 @@
 
     "zwitch": ["zwitch@2.0.4", "", {}, "sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A=="],
 
-    "@u7-scl/app/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
-
-    "@u7-scl/bot/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
-
-    "@u7-scl/core/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
-
-    "@u7-scl/course/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
-
-    "@u7-scl/domain/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
-
-    "@u7-scl/dossier/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
-
-    "@u7-scl/questionnaire/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
-
-    "@u7-scl/stream/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
-
-    "@u7-scl/user/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
-
-    "@u7-scl/wish/dmg-core": ["dmg-core@file:../../tools/dmg/dmg-core", { "devDependencies": { "@biomejs/biome": "2.5.13", "@types/bun": "latest", "typescript": "^7.0.2" }, "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }],
-
-    "dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
-
     "gaxios/node-fetch": ["node-fetch@3.3.2", "", { "dependencies": { "data-uri-to-buffer": "^4.0.0", "fetch-blob": "^3.1.4", "formdata-polyfill": "^4.0.10" } }, "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA=="],
 
     "htmlparser2/entities": ["entities@7.0.1", "", {}, "sha512-TWrgLOFUQTH994YUyl1yT4uyavY5nNB5muff+RtWaqNVCAK408b5ZnnbNAUEWLTCpum9w6arT70i1XdQ4UeOPA=="],
 
     "parse5/entities": ["entities@6.0.1", "", {}, "sha512-aN97NXWF6AWBTahfVOIrB/NShkzi5H7F9r1s9mD3cDj4Ko5f2qhhVoYMibXF7GlLveb/D2ioWay8lxI97Ven3g=="],
-
-    "@u7-scl/app/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
-
-    "@u7-scl/bot/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
-
-    "@u7-scl/core/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
-
-    "@u7-scl/course/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
-
-    "@u7-scl/domain/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
-
-    "@u7-scl/dossier/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
-
-    "@u7-scl/questionnaire/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
-
-    "@u7-scl/stream/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
-
-    "@u7-scl/user/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
-
-    "@u7-scl/wish/dmg-core/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
-
-    "dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
-
-    "@u7-scl/app/dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
-
-    "@u7-scl/bot/dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
-
-    "@u7-scl/core/dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
-
-    "@u7-scl/course/dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
-
-    "@u7-scl/domain/dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
-
-    "@u7-scl/dossier/dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
-
-    "@u7-scl/questionnaire/dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
-
-    "@u7-scl/stream/dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
-
-    "@u7-scl/user/dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
-
-    "@u7-scl/wish/dmg-core/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
   }
 }
