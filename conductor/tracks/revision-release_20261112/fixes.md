@@ -68,10 +68,10 @@
 | F-41 | C-13 | `answerCallbackQuery` сразу (до обработки; отказы с `show_alert` — как сейчас), снятие кнопок старого экрана — параллельно с отправкой нового (`infra/bot-transport.ts:296-302`) | S | Ф5.3 | e614c381 |
 | F-42 | regressions Q-01/Q-02 | Зарегистрировать `chat_member` / `my_chat_member` → `transport.handleChatMember/handleMyChatMember` в `main.ts:193-194` (на `bot`, не `privateBot`); red — F-13 | S | Ф5.3 | e614c381 |
 | F-43 | C-03 (исполнение) | Ветвление stories по полям view (`view-stream-mentor.ts:105-123`, `my-streams.ts:65-70`, `stream-catalog.story.ts:57-66`, `view-stream.story.ts:184, 467`, `fill.story.ts:325`) → признаки в готовом ответе UC (D-72) | M | Ф5.3 | fbdb8504 |
-| F-44 | C-04 (TR-50 (6)) | Алиасы `questionnaire-events.ts` → в `fill.story.ts`, `invite.story.ts`; файл удалить; попутно проверить TR-50 (9) correlation | S | Ф5.3 || acdcc131 |
-| F-45 | TR-68 | `NOT_FOUND` в `scope-reviews.story.ts:92` — штатный отказ вместо `throw` | S | Ф5.3 || acdcc131 |
-| F-46 | TR-68 | Имя по умолчанию в `ensure-registered.ts:57` | S | Ф5.3 || acdcc131 |
-| F-47 | TR-59 | `controllers/courses/ui-spec.md:25-27` — курс без этапов / с одним этапом: спеку под код | S | Ф5.3 || acdcc131 |
+| F-44 | C-04 (TR-50 (6)) | Алиасы `questionnaire-events.ts` → в `fill.story.ts`, `invite.story.ts`; файл удалить; попутно проверить TR-50 (9) correlation | S | Ф5.3 | acdcc131 |
+| F-45 | TR-68 | `NOT_FOUND` в `scope-reviews.story.ts:92` — штатный отказ вместо `throw` | S | Ф5.3 | acdcc131 |
+| F-46 | TR-68 | Имя по умолчанию в `ensure-registered.ts:57` | S | Ф5.3 | acdcc131 |
+| F-47 | TR-59 | `controllers/courses/ui-spec.md:25-27` — курс без этапов / с одним этапом: спеку под код | S | Ф5.3 | acdcc131 |
 | F-48 | ревью Ф5.1 | `Date.now()` в `controllers/learning/stories/progress.ts:144` — мимо `now()` из `@u7-scl/core/shared`, тестовые часы его не видят | S | Ф5.3 | |
 | F-49 | regressions P1-26 | `/log_level <неизвестный>` — экранирование MarkdownV2 в `app-controller.ts`, снять `skip` в `main-menu.e2e` | S | Ф5.3 | |
 | F-4B | regressions P3-61, P3-62, P4-49, P7-40, P7-41 | Удалить мёртвые ветки `view-stream.story.ts` (реплики «сообщения не принимаются», «Ожидалось текстовое сообщение») `create-stream.ts` (`update.type !== 'message'`, P4-49), `fill.story.ts` (P7-40, P7-41) | S | Ф5.3 | |
