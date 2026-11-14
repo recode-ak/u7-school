@@ -49,3 +49,37 @@ $G -l -- '<шаблон>' . | wc -l # файлов
 - **Тесты проекта:** 3211 → 3170 (−41), `test:bot` 1207 без изменений. Удалены (TST-08, сценарии в `dmg-core/src/arch/debt-checker.test.ts`): `scripts/domain-check.test.ts` — describe «checkDebt: allowlist…», «checkDebt: маркеры временности…»; `scripts/arch-check.test.ts` — «runDebtCheck: реестр долга как allowlist». Без переноса: `checkTrMarkers` (журнала TR нет), переходный режим и закрытые записи (их нет по README долга).
 - **Находка новой проверки:** у C-DEBT-54 не было «Погашает» — дописан.
 - **Ловушка:** bun держит кешированный клон git-зависимости (`~/.bun/install/cache/<hash>.git`) и новых тегов не видит — `no commit matching "vX.Y.Z"`; лечится `git -C <клон> fetch <url> 'refs/tags/*:refs/tags/*'`. На prod — то же при следующем релизе.
+
+## Фаза 3. Разбор `TODO.md` (2026-11-14)
+
+Сверка с кодом — Sonnet (`Explore`), адреса — orchestrator. Новые записи: D-DEBT-4…6, C-DEBT-55; идеи — `roadmap.md` «Идеи без проработки»; вход dmg-ui — черновик [roadmap/dmg-ui-entry.md](../../roadmap/dmg-ui-entry.md).
+
+| Пункт `TODO.md` | Состояние в коде | Адрес |
+|---|---|---|
+| Мастер потока: `telegramGroupId` и `telegramGroupInvite` | сделано (`create-stream.ts`, два шага) | закрыт |
+| Автоподключение к группе на `student.enrolled` | нет | вход dmg-ui §3 |
+| `WizardStory` | один мастер | вход dmg-ui §1 (форма по схеме входа UC) |
+| Дубликат `User`/`Role`, цикл `app ↔ модули` | `platform/app/src/domain` и `U7BotAppMeta` нет | закрыт; остаток — C-DEBT-55 (`Role` и `UserRoleName`) |
+| Р1 A: роль `AUTHOR` | роль есть; команды автора удалены из домена | закрыт; операции автора — `roadmap.md` п. 7 |
+| Р1 0: агрегат `Course` | `CourseAr` с этапами (D-64); команд создания нет | закрыт; команды — п. 7 |
+| Р1 1: жизненный цикл студента | статусы и UC есть; `wants_next`, `abandonReason`, confirm-хелпер не понадобились; `statusLabels` монитора нет | закрыт |
+| Р1 2: `ContentPath` | удалён без вызывающих (`course-dmg`) | закрыт |
+| Р2 3: gating; `courseId` в `Stream` | gating есть (`module-prerequisite.dqs.ts`); курс модуля — C-DEBT-50 | закрыт; учтено в C-DEBT-50 |
+| Р2 4: навигация студента | хаб, дерево, ◀️/▶️, выход — есть | закрыт |
+| Р2 5: витрина | каталог и программа есть; «ждать новый набор» — модуль `wish`; инструментов автора нет | закрыт; автор — «Идеи», п. 7 |
+| Р3 6: мониторинг | «отстаёт» (пороги 4/7 суток, 1,3 медианы — эталон код), сводка, сортировка — есть; `history:*` — заглушка | закрыт; история — D-DEBT-5 |
+| Бэклог: рассылки, обратная связь, типы шагов, заморозка, отзывы выпускников | нет | `roadmap.md` «Идеи» |
+| Бэклог: синхронизация `contentSnapshot` | нет | учтено: п. 7, F-80, C-DEBT-54 |
+| Зачисление в активный поток | запрещено правилом `streamEnrolling` | D-DEBT-4 (с возвратом `abandoned`) |
+| `wish.fulfilled` | события нет | D-DEBT-6 |
+| `FillStory` на `notify()` | `notify` уже; кнопки — канал `invite` | учтено в C-DEBT-45 |
+| e2e wish → поток → fulfill | e2e и тесты DCS есть | закрыт |
+| `GetSameModulesUc`, `basedOn` | как описано | учтено: D-65, `course-module-history.md`, п. 7 |
+| Таймзоны `isoNow` в анкетах | `isoNow` нет, время — `Timestamp` | закрыт; ISO в файле `job-run-json-repo.ts` — формат хранения адаптера, порт отдаёт `Timestamp` |
+| `JobExecutor` → воркер | порт отвергнут (D-71 пакета) | закрыт |
+| `init`/`start`/`stop` по слоям | решение spec ФР-3 | закрыт |
+| Необязательные вопросы анкет | нет | `roadmap.md` «Идеи» |
+| Чистка старых `draftAnswers` | инцидентов нет | закрыт |
+| `questionCode` в callback | вариант A (`stale_answer`) работает | закрыт |
+| `JsonFileRepo` теряет невалидные записи | доменные JSON-репозитории — fail-fast (`v.parse`); `JsonFileRepo` остался для сессий бота и сохраняет невалидное в `backups/` | закрыт |
+| Экран отказа по `Result` (TR-50, план Ф3) | дубль `ucErrorScreen`/`ucErrorNotify` | вход dmg-ui §2 |
