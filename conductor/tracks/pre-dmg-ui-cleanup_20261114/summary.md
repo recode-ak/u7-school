@@ -118,3 +118,30 @@ $G -l -- '<шаблон>' . | wc -l # файлов
   - `list-scope-reviews.uc.test.ts` «filter.direction: отбирает по направлению; scopeId в снимке» → `review.json-repo.test.ts` (эхо `scopeIds`/`scopeId` перенесено в оставшийся тест).
 
 Добавлен: `campaign-facts.dqs.test.ts` — чужой отзыв не даёт признак «мой отзыв есть».
+
+## Фаза 6. Roadmap, документация, архив (2026-11-15)
+
+### Ревизия roadmap (задача 1, Sonnet)
+
+| Файл | Действие | Что сохранить и куда |
+|---|---|---|
+| `roadmap.md` | переписать | видение по инициативам с опорными D-NN; пул вопросов, session-persist, DMG — убрать (сделано); «Выполнено» — 3–4 строки |
+| `bot-ui-dialog-lifecycle.md`, `bot-ui-refactoring.md`, `development-roadmap.md` | удалить | ничего: история (архив, CHANGELOG, `architecture/ui/`) |
+| `bot-ui-session-architecture.md` | удалить | инварианты и контракты рендера — сверить с `ui/bot-architecture.md`, `bot-ui-story.md`; TTL ввода и совместимость с задачами — во вход dmg-ui |
+| `tasks-system-architecture.md`, `-layers.md`, `-scenarios.md` | удалить | в `tasks-system.md`: задача — конверт данных, рендерит канал; завершение по критерию; касания — в модуле задач; открытые вопросы; идея manual-задач. Слои на `ArMeta` — мёртвые |
+| `metrics/metrics-questionnaire-and-events.md`, `metrics/metrics-pipeline-and-modules.md` | удалить | поток данных — абзацем в `metrics-system.md`; остальное реализовано на dmg-core |
+| `content-management.md`, `course-module-history.md`, `tasks-system.md`, `metrics/metrics-system.md`, `metrics/metrics-conception.md`, `metrics/peer-review-system.md` | упростить | контуры решений и опорные D-NN; детали реализации, карта старого кода и формат файлов — убрать |
+| `contribution-system.md`, `sessions-system.md`, `schools-system.md`, `metrics/digital-passport.md`, `dmg-ui-entry.md` | оставить | правка ссылок на удаляемые |
+| `stream-snapshot-dmg.md`, `stream-front-domain.md`, `oplog-state-patch.md` | оставить | разборы кандидатов `[?]` |
+
+### Живое знание в архиве треков (задача 4, Sonnet, 4 агента по ~38 треков)
+
+152 трека, 605 технических файлов. Живое знание нашлось в трёх местах, остальное — история, чек-листы, описание legacy или уже в `decisions.md`/гайдах/коде.
+
+| Трек | Файл | Знание | Куда |
+|---|---|---|---|
+| `agent-roles-wave2_20261104` | `pilot-task.md` | воспроизводимое задание пилота ролей | перенесён в `conductor/research/agent-roles-pilot-2026-11-task.md` |
+| `golden-wish_20261020` | `slices/wish.md` | «образец брифа» для ролей (`.agents-core/common.md`) | ссылка заменена на формат брифа — `agents.md` §5 и свежие брифы треков; 690 строк старого брифа образцом не служат |
+| `questionnaire-dmg_20261104` | `slices/questionnaire.md` | ловушка: `Aggregate.change`/`transition` ставят `updatedAt = at`; мутация, не являющаяся активностью (флаги простоя), передаёт прежний `updatedAt` как `at` (`questionnaire.ar.ts`, `lastActivityAt()`) | гайд `aggregate` пакета `dmg-core` |
+
+Ссылки на технические файлы из `spec.md`/`summary.md` архивных треков снимаются при чистке (задача 6).
