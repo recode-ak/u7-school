@@ -81,8 +81,8 @@
 
 - [x] Task: S (`dmg-tech-lead`) — разбор по образцу `stream`/`course` (модель, UC, DQS/DCS, `dependsOn`, фейки, тесты), бриф с находками — [slices/early-modules.md](./slices/early-modules.md)
 - [x] Task: O — крупное — вопросом Нурболату с вариантами; мелкое — сам; решения — `decisions.md` — крупного нет; вертикали модулей — на фейки, вход `wish` не правим (бриф, «Решения»); знания для `decisions.md` нет
-- [x] Task: S — `wish`: фейк репозитория, перевод тестов UC/ER, правки по брифу
-- [x] Task: S — `peer-review`: удалить `QuestionnaireModuleDef` из `dependsOn` и `peer-review-question-pool` (код, экспорт, тест), DQS — классы, фейки, перевод тестов, `dmg:sync`
+- [x] Task: S — `wish`: фейк репозитория, перевод тестов UC/ER, правки по брифу `322f5513`
+- [x] Task: S — `peer-review`: удалить `QuestionnaireModuleDef` из `dependsOn` и `peer-review-question-pool` (код, экспорт, тест), DQS — классы, фейки, перевод тестов, `dmg:sync` `322f5513` — `dmg:sync` к `dependsOn` не относится, граф сверяют `dmg:check`/`arch:check`; 3 теста фильтра фейка — в infra (`summary.md`)
 - [ ] Task: O — закрыть C-DEBT-40 (коммит `закрыть C-DEBT-40`), `dmg-reviewer`, CHANGELOG `[0.3.1]`; **стоп: тег и выкатка — с подтверждения Нурболата**
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
