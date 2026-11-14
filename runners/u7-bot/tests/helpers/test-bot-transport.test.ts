@@ -186,6 +186,52 @@ describe('TestBotTransport: хелперы транспорта (F-03)', () => {
     );
   });
 
+  test('press: нажатие кнопки по фрагменту текста с последнего экрана', async () => {
+    await transport.handleStart(transport.makeBotContext(TG));
+    const text = transport.api.sentMessages
+      .find((m) => m.telegramId === TG)
+      ?.keyboard?.rows.flat()[0]?.text;
+    const response = await transport.press(TG, text ?? '');
+    expect(response).not.toEqual({});
+  });
+
+  test('press: кнопки нет — «Кнопка «…» не найдена»', async () => {
+    await transport.handleStart(transport.makeBotContext(TG));
+    await expect(transport.press(TG, 'нет-такой-кнопки')).rejects.toThrow(
+      'Кнопка «нет-такой-кнопки» не найдена',
+    );
+  });
+
+  test('pressRaw: сырой код штампуется актуальным штампом экрана', async () => {
+    await transport.handleStart(transport.makeBotContext(TG));
+    const stamped = firstButtonCode(transport);
+    const raw = stamped.slice(0, stamped.lastIndexOf(':'));
+    const response = await transport.pressRaw(TG, raw);
+    expect(response).not.toEqual({});
+    expect(alerts()).toEqual([]);
+  });
+
+  test('waitForMessage: находит проактивное сообщение, в т.ч. появившееся позже', async () => {
+    setTimeout(() => {
+      void transport.api.sendMessage(TG, 'Привет, мир');
+    }, 50);
+    expect(await transport.waitForMessage(TG)).toBe('Привет, мир');
+    expect(await transport.waitForMessage(TG, { contains: 'мир' })).toBe(
+      'Привет, мир',
+    );
+  });
+
+  test('waitForMessage: нет сообщения — undefined по таймауту, чужой адресат не считается', async () => {
+    await transport.api.sendMessage(TG + 1, 'другому');
+    expect(
+      await transport.waitForMessage(TG, { timeoutMs: 80 }),
+    ).toBeUndefined();
+    await transport.api.sendMessage(TG, 'abc');
+    expect(
+      await transport.waitForMessage(TG, { contains: 'xyz', timeoutMs: 80 }),
+    ).toBeUndefined();
+  });
+
   test('api.failNext: следующий вызов метода бросает, затем всё работает; запись не ведётся', async () => {
     transport.api.failNext('sendMessage', new Error('telegram down'));
     await expect(transport.api.sendMessage(TG, 'a')).rejects.toThrow(

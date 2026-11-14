@@ -18,6 +18,7 @@ import type {
 import { U7BotUiApp } from '../../src/core/ui-app';
 import { BotTransport } from '../../src/infra/bot-transport';
 import type { TestApp } from './test-app';
+import { waitUntil } from './wait-until';
 
 /** Администратор мира `core-education` (tg 1005) — от его имени бот регистрирует гостей. */
 const WORLD_ADMIN_UUID = '55555555-5555-5555-5555-555555555555';
@@ -443,6 +444,42 @@ export class TestBotTransport {
         this.handleCallback(this.makeBotContext(tgId, { callbackData: code })),
       ),
     );
+  }
+
+  /** Нажатие кнопки с последнего экрана по фрагменту текста (код — из клавиатуры). */
+  async press(tgId: number, textContains: string): Promise<DialogResponse> {
+    return this.handleCallback(
+      this.makeBotContext(tgId, {
+        callbackData: pressedCode(this, tgId, textContains),
+      }),
+    );
+  }
+
+  /** Нажатие готового сырого кода: штампуется актуальным штампом экрана. */
+  async pressRaw(tgId: number, rawCode: string): Promise<DialogResponse> {
+    return this.handleCallback(
+      this.makeBotContext(tgId, {
+        callbackData: stampedCode(this, tgId, rawCode),
+      }),
+    );
+  }
+
+  /**
+   * Ждёт проактивное сообщение адресату (опрос `api.sentMessages`, 20 мс);
+   * `contains` — фрагмент текста. Не найдено за таймаут — `undefined`.
+   */
+  async waitForMessage(
+    tgId: number,
+    opts: { contains?: string; timeoutMs?: number } = {},
+  ): Promise<string | undefined> {
+    const find = () =>
+      this.api.sentMessages.find(
+        (m) =>
+          m.telegramId === tgId &&
+          (opts.contains === undefined || m.text.includes(opts.contains)),
+      );
+    await waitUntil(() => find() !== undefined, opts.timeoutMs ?? 3000);
+    return find()?.text;
   }
 
   /** Текст без «/» (ввод в ожидающий диалог или подсказка). */
