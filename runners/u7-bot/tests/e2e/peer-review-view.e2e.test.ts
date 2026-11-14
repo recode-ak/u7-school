@@ -11,11 +11,9 @@ import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { Trace } from 'dmg-core/app';
+import { testTrace } from 'dmg-core/testing';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 import { completeStudent } from '../helpers/student-fate';
 
@@ -91,15 +89,7 @@ async function openStreamCard(
   streamId: string,
 ) {
   await transport.handleStart(transport.makeBotContext(tgId));
-  return transport.handleCallback(
-    transport.makeBotContext(tgId, {
-      callbackData: stampedCode(
-        transport,
-        tgId,
-        `stream:view-stream:view:${streamId}`,
-      ),
-    }),
-  );
+  return transport.pressRaw(tgId, `stream:view-stream:view:${streamId}`);
 }
 
 /** Экран в хронологии отображения (sent, затем его edits по порядку). */
@@ -168,11 +158,7 @@ describe('E2E peer-review: S07 из карточки потока — конте
       card.screen?.keyboard?.rows.flat().some((b) => b.text === '💬 Отзывы'),
     ).toBe(true);
 
-    const s07 = await transport.handleCallback(
-      transport.makeBotContext(GUEST_TG, {
-        callbackData: pressedCode(transport, GUEST_TG, '💬 Отзывы'),
-      }),
-    );
+    const s07 = await transport.press(GUEST_TG, '💬 Отзывы');
     const text = String(s07.screen?.text);
     expect(text).toContain('💬 *Отзывы* — поток «JS Core — Поток 2»');
     // Кнопка возврата в карточку потока
@@ -184,11 +170,7 @@ describe('E2E peer-review: S07 из карточки потока — конте
   });
 
   test('«⬅️ Назад к потоку» — мост в карточку потока', async () => {
-    const back = await transport.handleCallback(
-      transport.makeBotContext(GUEST_TG, {
-        callbackData: pressedCode(transport, GUEST_TG, '⬅️ Назад к потоку'),
-      }),
-    );
+    const back = await transport.press(GUEST_TG, '⬅️ Назад к потоку');
     const text = String(back.screen?.text);
     expect(text).toContain('JS Core — Поток 2');
     // Карточка потока (streams S02): ментор и кнопки карточки
@@ -257,18 +239,14 @@ describe('E2E peer-review: S07 — пагинация и DialogCache', () => {
           text,
         }),
         recipientId === SUBJECT_USER_ID ? mentor : subject,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       );
       expect(written.ok).toBe(true);
     }
 
     // Открываем S07: карточка потока → кнопка «💬 Отзывы»
     await openStreamCard(transport, GUEST_TG, STREAM_WITH_REVIEWS);
-    await transport.handleCallback(
-      transport.makeBotContext(GUEST_TG, {
-        callbackData: pressedCode(transport, GUEST_TG, '💬 Отзывы'),
-      }),
-    );
+    await transport.press(GUEST_TG, '💬 Отзывы');
   });
 
   afterAll(async () => {
@@ -291,11 +269,7 @@ describe('E2E peer-review: S07 — пагинация и DialogCache', () => {
     const pageTexts: string[] = [];
     const editInPlaceSteps: number[] = [];
     const pressNav = async (label: string) => {
-      await transport.handleCallback(
-        transport.makeBotContext(GUEST_TG, {
-          callbackData: pressedCode(transport, GUEST_TG, label),
-        }),
-      );
+      await transport.press(GUEST_TG, label);
       pageTexts.push(lastScreenText(transport, GUEST_TG));
       const lastEdit = transport.api.editedMessages
         .filter((e) => e.telegramId === GUEST_TG)
@@ -369,14 +343,9 @@ describe('E2E peer-review: S07 без отзывов и менторская к�
   test('P6-47: отзывов по потоку нет — заглушка S07 с возвратом к потоку', async () => {
     await transport.handleStart(transport.makeBotContext(GUEST_TG));
     // Кнопка в карточке скрыта (отзывов нет) — экран открыт по коду, как из гонки
-    const s07 = await transport.handleCallback(
-      transport.makeBotContext(GUEST_TG, {
-        callbackData: stampedCode(
-          transport,
-          GUEST_TG,
-          `peer-review:scope-reviews:view:${EMPTY_STREAM_ID}`,
-        ),
-      }),
+    const s07 = await transport.pressRaw(
+      GUEST_TG,
+      `peer-review:scope-reviews:view:${EMPTY_STREAM_ID}`,
     );
     expect(String(s07.screen?.text)).toContain('Отзывов по потоку пока нет');
     const back = (s07.screen?.keyboard?.rows.flat() ?? []).find(
@@ -387,21 +356,9 @@ describe('E2E peer-review: S07 без отзывов и менторская к�
 
   test('P4-70: менторская карточка потока — «💬 Отзывы» не показывается', async () => {
     await transport.handleStart(transport.makeBotContext(MENTOR_TG));
-    await transport.handleCallback(
-      transport.makeBotContext(MENTOR_TG, {
-        callbackData: pressedCode(transport, MENTOR_TG, 'Инструменты ментора'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(MENTOR_TG, {
-        callbackData: pressedCode(transport, MENTOR_TG, 'Мои потоки'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(MENTOR_TG, {
-        callbackData: pressedCode(transport, MENTOR_TG, '🔵'),
-      }),
-    );
+    await transport.press(MENTOR_TG, 'Инструменты ментора');
+    await transport.press(MENTOR_TG, 'Мои потоки');
+    await transport.press(MENTOR_TG, '🔵');
 
     // ui-spec (Q-05): в менторской карточке отзывы не дублируются —
     // они читаются из публичной карточки потока S02

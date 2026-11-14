@@ -41,9 +41,3 @@
 - **Дублирует:** `scripts/arch-check.test.ts` и `runDebtCheck`
 - **Решение:** оставить одну проверку при переносе проверки долга в `dmg-core`
 - **Погашает:** трек `pre-dmg-ui-cleanup`, Ф2
-
-### T-DEBT-7: повтор Job в тот же день проверен в двух e2e
-- **Файлы:** `runners/u7-bot/tests/e2e/student-dmg.e2e.test.ts` — тест «повторный runJob в тот же день ничего не шлёт»
-- **Дублирует:** частный случай P8-04 в `inactivity.e2e.test.ts` (Б-4)
-- **Решение:** оставить один, в `inactivity.e2e`
-- **Погашает:** трек `pre-dmg-ui-cleanup`, Ф4

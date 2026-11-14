@@ -14,13 +14,12 @@ import { StreamsController } from '@u7-scl/bot/streams/controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import type { DialogResponse } from '@u7-scl/core/ui';
 import { Role } from '@u7-scl/domain/user/testing';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
   screensNewFirst,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import type {
@@ -99,26 +98,10 @@ describe('E2E: Ментор — управление студентами', () =
   /** Меню → подменю → мои потоки → активный поток → «Студенты». */
   async function openStudents() {
     await transport.handleStart(transport.makeBotContext(tgId));
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Инструменты ментора'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Мои потоки'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, '🔵'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Студенты'),
-      }),
-    );
+    await transport.press(tgId, 'Инструменты ментора');
+    await transport.press(tgId, 'Мои потоки');
+    await transport.press(tgId, '🔵');
+    await transport.press(tgId, 'Студенты');
   }
 
   // ── Список студентов через менторскую карточку ──
@@ -127,23 +110,11 @@ describe('E2E: Ментор — управление студентами', () =
     await transport.handleStart(transport.makeBotContext(tgId));
 
     // 2. Подменю: «📋 Мои потоки»
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Инструменты ментора'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Мои потоки'),
-      }),
-    );
+    await transport.press(tgId, 'Инструменты ментора');
+    await transport.press(tgId, 'Мои потоки');
 
     // 3. Список моих потоков → активный (🔵)
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, '🔵'),
-      }),
-    );
+    await transport.press(tgId, '🔵');
 
     // 4. Менторская карточка потока: «👥 Студенты» + lifecycle «Завершить»
     const card = lastScreen(transport, tgId);
@@ -152,11 +123,7 @@ describe('E2E: Ментор — управление студентами', () =
     expect(cardBtns.some((t) => t.includes('Завершить'))).toBe(true);
 
     // 5. Нажимаем «👥 Студенты» → менторский список (monitor)
-    const studentsResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Студенты'),
-      }),
-    );
+    const studentsResp = await transport.press(tgId, 'Студенты');
     expect(String(studentsResp.screen?.text)).not.toContain('Неизвестная');
     expect(String(studentsResp.screen?.text)).toContain('Студенты потока');
 
@@ -191,11 +158,7 @@ describe('E2E: Ментор — управление студентами', () =
     await openStudents();
 
     // 2. ⛔ на первом студенте → confirm-диалог
-    const confirmResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, '⛔'),
-      }),
-    );
+    const confirmResp = await transport.press(tgId, '⛔');
 
     // Диалог подтверждения с репликой-экраном
     expect(String(confirmResp.screen?.text)).toContain('Снять студента');
@@ -208,11 +171,7 @@ describe('E2E: Ментор — управление студентами', () =
     expect(confirmBtns.some((t) => t.includes('Отмена'))).toBe(true);
 
     // 3. Отмена → возврат к детальной карточке студента (monitor:detail)
-    const cancelResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Отмена'),
-      }),
-    );
+    const cancelResp = await transport.press(tgId, 'Отмена');
     expect(String(cancelResp.screen?.text)).not.toContain('Неизвестная');
     expect(String(cancelResp.screen?.text)).toContain('Прогресс студента');
   });
@@ -222,16 +181,8 @@ describe('E2E: Ментор — управление студентами', () =
 
     // 2. ⛔ на первом студенте → confirm-диалог → «⚠️ Да, неактивен»:
     //    реплика результата + delegate к списку студентов
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, '⛔'),
-      }),
-    );
-    const resultResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Да, неактивен'),
-      }),
-    );
+    await transport.press(tgId, '⛔');
+    const resultResp = await transport.press(tgId, 'Да, неактивен');
     expect(resultResp.notify?.text).toContain('снят с учёбы');
     expect(String(resultResp.screen?.text)).toContain('Студенты потока');
   });
@@ -240,34 +191,18 @@ describe('E2E: Ментор — управление студентами', () =
     await openStudents();
 
     // Дефолт — только активные; показываем всех (FR-8)
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Показать выбывших'),
-      }),
-    );
+    await transport.press(tgId, 'Показать выбывших');
 
     // 2. 🔄 у перезавершаемого студента → выбор исхода
-    const choiceResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, '🔄'),
-      }),
-    );
+    const choiceResp = await transport.press(tgId, '🔄');
     expect(String(choiceResp.screen?.text)).toContain('Выберите исход');
 
     // 3. Выбираем «✅ окончил» (словарь меток stream) → confirm-диалог
-    const confirmResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, '✅ окончил'),
-      }),
-    );
+    const confirmResp = await transport.press(tgId, '✅ окончил');
     expect(String(confirmResp.screen?.text)).toContain('окончил');
 
     // 4. Подтверждаем: реплика + delegate к списку
-    const resultResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Завершить'),
-      }),
-    );
+    const resultResp = await transport.press(tgId, 'Завершить');
     expect(resultResp.notify?.text).toContain('завершён');
     expect(String(resultResp.screen?.text)).toContain('Студенты потока');
   });
@@ -276,11 +211,7 @@ describe('E2E: Ментор — управление студентами', () =
     await openStudents();
 
     // Карточка advanced-студента — только в режиме «все» (FR-8)
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Показать выбывших'),
-      }),
-    );
+    await transport.press(tgId, 'Показать выбывших');
 
     // 2. Кликаем на кнопку-имя студента (monitor:detail)
     const detailResp = await transport.handleCallback(
@@ -310,16 +241,8 @@ describe('E2E: Ментор — управление студентами', () =
       await transport.handleStart(transport.makeBotContext(tgId));
 
       // 1-2. Инструменты ментора → Создать поток (шаг 0: выбор модуля)
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Инструменты ментора'),
-        }),
-      );
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Создать поток'),
-        }),
-      );
+      await transport.press(tgId, 'Инструменты ментора');
+      await transport.press(tgId, 'Создать поток');
       const step0 = lastScreen(transport, tgId);
       expect(String(step0.text)).toContain('Выберите модуль');
       expect(
@@ -329,20 +252,12 @@ describe('E2E: Ментор — управление студентами', () =
       ).toBe(true);
 
       // Шаг 1: название
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'JavaScript Основы'),
-        }),
-      );
+      await transport.press(tgId, 'JavaScript Основы');
       const step1 = lastScreen(transport, tgId);
       expect(String(step1.text)).toContain('название потока');
 
       // Принимаем название
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Принять'),
-        }),
-      );
+      await transport.press(tgId, 'Принять');
       const step2 = lastScreen(transport, tgId);
       expect(String(step2.text)).toContain('описание потока');
 
@@ -360,65 +275,37 @@ describe('E2E: Ментор — управление студентами', () =
 
       // Шаги 4-8: пропускаем все необязательные поля
       for (let i = 0; i < 5; i++) {
-        await transport.handleCallback(
-          transport.makeBotContext(tgId, {
-            callbackData: pressedCode(transport, tgId, 'Пропустить'),
-          }),
-        );
+        await transport.press(tgId, 'Пропустить');
       }
       expect(String(lastScreen(transport, tgId).text)).toContain('Telegram');
 
       // Шаг 9: группа (ID) — пропускаем
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Пропустить'),
-        }),
-      );
+      await transport.press(tgId, 'Пропустить');
       expect(String(lastScreen(transport, tgId).text)).toContain('инвайт');
 
       // Шаг 10: инвайт-ссылка — пропускаем
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Пропустить'),
-        }),
-      );
+      await transport.press(tgId, 'Пропустить');
       expect(String(lastScreen(transport, tgId).text)).toContain(
         'кодовое слово',
       );
 
       // Шаг 11: кодовое слово — пропускаем → превью
-      const previewResp = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Пропустить'),
-        }),
-      );
+      const previewResp = await transport.press(tgId, 'Пропустить');
       const preview = String(previewResp.screen?.text);
       expect(preview).toContain('Превью потока');
       expect(preview).toContain('JavaScript Основы');
       expect(preview).toContain('E2E Тестовый Поток');
 
       // Подтверждаем: поток создан, ввод освобождён
-      const finalResp = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Создать'),
-        }),
-      );
+      const finalResp = await transport.press(tgId, 'Создать');
       expect(String(finalResp.screen?.text)).toContain('успешно создан');
       expect(finalResp.release).toBe(true);
     });
 
     test('отмена создания потока', async () => {
       await transport.handleStart(transport.makeBotContext(tgId));
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Инструменты ментора'),
-        }),
-      );
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Создать поток'),
-        }),
-      );
+      await transport.press(tgId, 'Инструменты ментора');
+      await transport.press(tgId, 'Создать поток');
       const step0 = lastScreen(transport, tgId);
       expect(String(step0.text)).toContain('Выберите модуль');
 
@@ -641,38 +528,17 @@ describe('E2E: инструменты ментора — экранные вет
   const notifyOf = (response: DialogResponse): string =>
     String(response.notify?.text ?? '');
 
-  const buttonsOf = (response: DialogResponse): string[] =>
-    response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-
-  const codesOf = (response: DialogResponse): string[] =>
-    response.screen?.keyboard?.rows.flat().map((b) => b.code) ?? [];
-
-  async function press(
-    tgId: number,
-    textContains: string,
-  ): Promise<DialogResponse> {
-    return transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, textContains),
-      }),
-    );
-  }
-
   /** Крафтовый адрес с актуальным штампом свежего экрана. */
   async function craft(tgId: number, rawCode: string): Promise<DialogResponse> {
     await transport.handleStart(transport.makeBotContext(tgId));
-    return transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: stampedCode(transport, tgId, rawCode),
-      }),
-    );
+    return transport.pressRaw(tgId, rawCode);
   }
 
   /** /start → подменю → «Мои потоки». */
   async function openMyStreams(tgId: number): Promise<DialogResponse> {
     await transport.handleStart(transport.makeBotContext(tgId));
-    await press(tgId, 'Инструменты ментора');
-    return press(tgId, 'Мои потоки');
+    await transport.press(tgId, 'Инструменты ментора');
+    return transport.press(tgId, 'Мои потоки');
   }
 
   // ── Доступ к подменю ──
@@ -683,9 +549,11 @@ describe('E2E: инструменты ментора — экранные вет
     );
 
     expect(
-      buttonsOf(welcome).some((t) => t.includes('Инструменты ментора')),
+      Screen.of(welcome)
+        .texts()
+        .some((t) => t.includes('Инструменты ментора')),
     ).toBe(false);
-    expect(buttonsOf(welcome)).toContain('📖 Курсы');
+    expect(Screen.of(welcome).texts()).toContain('📖 Курсы');
   });
 
   test('P4-03: гость по прямому адресу подменю — экран «нет доступа»', async () => {
@@ -700,37 +568,64 @@ describe('E2E: инструменты ментора — экранные вет
 
   test('P4-05: переключатели завершённых и архивных потоков', async () => {
     const fresh = await openMyStreams(MGMT_TG.mentor);
-    expect(buttonsOf(fresh)).toContain('🟢 Вкл. завершённые');
-    expect(buttonsOf(fresh)).toContain('⚫ Вкл. архивированные');
-    expect(buttonsOf(fresh).some((t) => t.includes('Поток набора'))).toBe(true);
-    expect(buttonsOf(fresh).some((t) => t.includes('Поток в обучении'))).toBe(
-      true,
-    );
-    expect(buttonsOf(fresh).some((t) => t.includes('Поток завершён'))).toBe(
-      false,
-    );
-
-    const withCompleted = await press(MGMT_TG.mentor, 'Вкл. завершённые');
+    expect(Screen.of(fresh).texts()).toContain('🟢 Вкл. завершённые');
+    expect(Screen.of(fresh).texts()).toContain('⚫ Вкл. архивированные');
     expect(
-      buttonsOf(withCompleted).some((t) => t.includes('Поток завершён')),
+      Screen.of(fresh)
+        .texts()
+        .some((t) => t.includes('Поток набора')),
     ).toBe(true);
     expect(
-      buttonsOf(withCompleted).some((t) => t.includes('Поток в архиве')),
+      Screen.of(fresh)
+        .texts()
+        .some((t) => t.includes('Поток в обучении')),
+    ).toBe(true);
+    expect(
+      Screen.of(fresh)
+        .texts()
+        .some((t) => t.includes('Поток завершён')),
     ).toBe(false);
-    expect(buttonsOf(withCompleted)).toContain('⚫ Вкл. архивированные');
-    expect(buttonsOf(withCompleted)).not.toContain('🟢 Вкл. завершённые');
 
-    const all = await press(MGMT_TG.mentor, 'Вкл. архивированные');
-    expect(buttonsOf(all).some((t) => t.includes('Поток завершён'))).toBe(true);
-    expect(buttonsOf(all).some((t) => t.includes('Поток в архиве'))).toBe(true);
-    expect(buttonsOf(all)).not.toContain('⚫ Вкл. архивированные');
+    const withCompleted = await transport.press(
+      MGMT_TG.mentor,
+      'Вкл. завершённые',
+    );
+    expect(
+      Screen.of(withCompleted)
+        .texts()
+        .some((t) => t.includes('Поток завершён')),
+    ).toBe(true);
+    expect(
+      Screen.of(withCompleted)
+        .texts()
+        .some((t) => t.includes('Поток в архиве')),
+    ).toBe(false);
+    expect(Screen.of(withCompleted).texts()).toContain(
+      '⚫ Вкл. архивированные',
+    );
+    expect(Screen.of(withCompleted).texts()).not.toContain(
+      '🟢 Вкл. завершённые',
+    );
+
+    const all = await transport.press(MGMT_TG.mentor, 'Вкл. архивированные');
+    expect(
+      Screen.of(all)
+        .texts()
+        .some((t) => t.includes('Поток завершён')),
+    ).toBe(true);
+    expect(
+      Screen.of(all)
+        .texts()
+        .some((t) => t.includes('Поток в архиве')),
+    ).toBe(true);
+    expect(Screen.of(all).texts()).not.toContain('⚫ Вкл. архивированные');
   });
 
   test('P4-06: у ментора нет потоков — «У вас пока нет потоков»', async () => {
     const response = await openMyStreams(MGMT_TG.mentorNoStreams);
 
     expect(textOf(response)).toContain('У вас пока нет потоков');
-    expect(buttonsOf(response)).toContain('🔙 Назад');
+    expect(Screen.of(response).texts()).toContain('🔙 Назад');
   });
 
   test('P4-07: сбой чтения потоков — реплика warn, а не экран списка', async () => {
@@ -741,8 +636,8 @@ describe('E2E: инструменты ментора — экранные вет
       await Bun.write(file, '{{{ not json');
 
       await transport.handleStart(transport.makeBotContext(MGMT_TG.mentor));
-      await press(MGMT_TG.mentor, 'Инструменты ментора');
-      const response = await press(MGMT_TG.mentor, 'Мои потоки');
+      await transport.press(MGMT_TG.mentor, 'Инструменты ментора');
+      const response = await transport.press(MGMT_TG.mentor, 'Мои потоки');
 
       expect(response.notify?.kind).toBe('warn');
       expect(notifyOf(response)).toContain('Произошла ошибка');
@@ -755,30 +650,30 @@ describe('E2E: инструменты ментора — экранные вет
 
   test('P4-17: программа модуля — проект → урок → шаг с телом', async () => {
     await openMyStreams(MGMT_TG.mentor);
-    await press(MGMT_TG.mentor, 'Поток в обучении');
-    const program = await press(MGMT_TG.mentor, 'Программа модуля');
+    await transport.press(MGMT_TG.mentor, 'Поток в обучении');
+    const program = await transport.press(MGMT_TG.mentor, 'Программа модуля');
 
     expect(textOf(program)).toContain('Программа модуля');
     expect(textOf(program)).toContain('Проект ментора');
 
-    const project = await press(MGMT_TG.mentor, 'Проект ментора');
+    const project = await transport.press(MGMT_TG.mentor, 'Проект ментора');
     expect(textOf(project)).toContain('Уроки проекта');
 
-    const lesson = await press(MGMT_TG.mentor, 'Урок ментора');
+    const lesson = await transport.press(MGMT_TG.mentor, 'Урок ментора');
     expect(textOf(lesson)).toContain('Шаги урока');
 
-    const step = await press(MGMT_TG.mentor, 'Первый шаг');
+    const step = await transport.press(MGMT_TG.mentor, 'Первый шаг');
     expect(textOf(step)).toContain('Тело первого шага');
   });
 
   test('P4-18: поток без снимка программы — «Программа пока не загружена»', async () => {
     await openMyStreams(MGMT_TG.mentor);
-    await press(MGMT_TG.mentor, 'Поток без программы');
+    await transport.press(MGMT_TG.mentor, 'Поток без программы');
 
-    const response = await press(MGMT_TG.mentor, 'Программа модуля');
+    const response = await transport.press(MGMT_TG.mentor, 'Программа модуля');
 
     expect(textOf(response)).toContain('Программа пока не загружена');
-    expect(buttonsOf(response)).toContain('⬅️ Назад к потоку');
+    expect(Screen.of(response).texts()).toContain('⬅️ Назад к потоку');
   });
 
   test('P4-19: программа чужого потока у ментора — «нет прав»', async () => {
@@ -806,8 +701,8 @@ describe('E2E: инструменты ментора — экранные вет
 
   test('P4-21: «Детали» — заполненные поля и заглушка для пустых', async () => {
     await openMyStreams(MGMT_TG.mentor);
-    await press(MGMT_TG.mentor, 'Поток в обучении');
-    const filled = await press(MGMT_TG.mentor, 'Детали');
+    await transport.press(MGMT_TG.mentor, 'Поток в обучении');
+    const filled = await transport.press(MGMT_TG.mentor, 'Детали');
 
     expect(textOf(filled)).toContain('Детали: Поток в обучении');
     expect(textOf(filled)).toContain('🎯 Цель');
@@ -815,11 +710,15 @@ describe('E2E: инструменты ментора — экранные вет
     expect(textOf(filled)).not.toContain('Расширенная информация');
 
     await openMyStreams(MGMT_TG.mentor);
-    await press(MGMT_TG.mentor, 'Поток без деталей');
-    const empty = await press(MGMT_TG.mentor, 'Детали');
+    await transport.press(MGMT_TG.mentor, 'Поток без деталей');
+    const empty = await transport.press(MGMT_TG.mentor, 'Детали');
 
     expect(textOf(empty)).toContain('Расширенная информация пока не добавлена');
-    expect(buttonsOf(empty).some((t) => t.includes('Назад'))).toBe(true);
+    expect(
+      Screen.of(empty)
+        .texts()
+        .some((t) => t.includes('Назад')),
+    ).toBe(true);
   });
 
   // ── Wizard создания потока: отказы ──
@@ -828,23 +727,10 @@ describe('E2E: инструменты ментора — экранные вет
     await emptyTransport.handleStart(
       emptyTransport.makeBotContext(MGMT_TG.mentor),
     );
-    await emptyTransport.handleCallback(
-      emptyTransport.makeBotContext(MGMT_TG.mentor, {
-        callbackData: pressedCode(
-          emptyTransport,
-          MGMT_TG.mentor,
-          'Инструменты ментора',
-        ),
-      }),
-    );
-    const response = await emptyTransport.handleCallback(
-      emptyTransport.makeBotContext(MGMT_TG.mentor, {
-        callbackData: pressedCode(
-          emptyTransport,
-          MGMT_TG.mentor,
-          'Создать поток',
-        ),
-      }),
+    await emptyTransport.press(MGMT_TG.mentor, 'Инструменты ментора');
+    const response = await emptyTransport.press(
+      MGMT_TG.mentor,
+      'Создать поток',
     );
 
     expect(String(response.screen?.text)).toContain('Нет доступных модулей');
@@ -857,24 +743,24 @@ describe('E2E: инструменты ментора — экранные вет
     dateText: string,
   ): Promise<DialogResponse> {
     await transport.handleStart(transport.makeBotContext(tgId));
-    await press(tgId, 'Инструменты ментора');
-    await press(tgId, 'Создать поток');
-    const step1 = await press(tgId, 'Модуль ментора');
+    await transport.press(tgId, 'Инструменты ментора');
+    await transport.press(tgId, 'Создать поток');
+    const step1 = await transport.press(tgId, 'Модуль ментора');
     expect(textOf(step1)).toContain('название потока');
-    await press(tgId, 'Принять');
-    await press(tgId, 'Принять');
+    await transport.press(tgId, 'Принять');
+    await transport.press(tgId, 'Принять');
     await transport.sendText(tgId, dateText);
-    for (let i = 0; i < 5; i++) await press(tgId, 'Пропустить');
-    await press(tgId, 'Пропустить');
-    await press(tgId, 'Пропустить');
-    return press(tgId, 'Пропустить');
+    for (let i = 0; i < 5; i++) await transport.press(tgId, 'Пропустить');
+    await transport.press(tgId, 'Пропустить');
+    await transport.press(tgId, 'Пропустить');
+    return transport.press(tgId, 'Пропустить');
   }
 
   test('P4-48: wizard с неверной датой — отказ валидации, поток не создан', async () => {
     const preview = await wizardToPreview(MGMT_TG.mentor, 'не-дата');
     expect(textOf(preview)).toContain('Превью потока');
 
-    const refused = await press(MGMT_TG.mentor, 'Создать');
+    const refused = await transport.press(MGMT_TG.mentor, 'Создать');
 
     expect(refused.notify?.kind).toBe('warn');
     expect(notifyOf(refused)).toContain('Ошибка валидации');
@@ -891,14 +777,9 @@ describe('E2E: инструменты ментора — экранные вет
     expect(notifyOf(cancelled)).toContain('Создание потока отменено');
 
     // Кнопка «✅ Создать» со старого экрана, но с актуальным штампом диалога
-    const stale = await transport.handleCallback(
-      transport.makeBotContext(MGMT_TG.mentor, {
-        callbackData: stampedCode(
-          transport,
-          MGMT_TG.mentor,
-          'mentor:create-stream:confirm',
-        ),
-      }),
+    const stale = await transport.pressRaw(
+      MGMT_TG.mentor,
+      'mentor:create-stream:confirm',
     );
 
     expect(stale.notify?.kind).toBe('warn');

@@ -14,16 +14,15 @@ import {
   GetStudentByUserUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
   screensNewFirst,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { Trace } from 'dmg-core/app';
+import { testTrace } from 'dmg-core/testing';
 import { CORE_EDUCATION_WORLD, type WorldDefinition } from '../worlds';
 
 const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
@@ -37,37 +36,6 @@ const STREAM_KEY = 'secret123';
 const STREAM_ACTIVE = 'e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1';
 const UNKNOWN_STREAM = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 
-/** Тексты кнопок экрана — плоским списком. */
-function buttonsOf(response: DialogResponse): string[] {
-  return (response.screen?.keyboard?.rows.flat() ?? []).map((b) => b.text);
-}
-
-/** Нажатие кнопки по подстроке текста: код берётся отштампованным из Api-записей. */
-async function press(
-  transport: TestBotTransport,
-  tgId: number,
-  textContains: string,
-): Promise<DialogResponse> {
-  return transport.handleCallback(
-    transport.makeBotContext(tgId, {
-      callbackData: pressedCode(transport, tgId, textContains),
-    }),
-  );
-}
-
-/** Нажатие «крафтового» кода (адрес вручную) с актуальным штампом экрана. */
-async function pressRaw(
-  transport: TestBotTransport,
-  tgId: number,
-  rawCode: string,
-): Promise<DialogResponse> {
-  return transport.handleCallback(
-    transport.makeBotContext(tgId, {
-      callbackData: stampedCode(transport, tgId, rawCode),
-    }),
-  );
-}
-
 /** /start → «Школа» → «Потоки» → карточка потока по подстроке названия. */
 async function openStreamCard(
   transport: TestBotTransport,
@@ -75,9 +43,9 @@ async function openStreamCard(
   titleContains: string,
 ): Promise<DialogResponse> {
   await transport.handleStart(transport.makeBotContext(tgId));
-  await press(transport, tgId, 'Школа');
-  await press(transport, tgId, 'Потоки');
-  return press(transport, tgId, titleContains);
+  await transport.press(tgId, 'Школа');
+  await transport.press(tgId, 'Потоки');
+  return transport.press(tgId, titleContains);
 }
 
 /** Текст без MarkdownV2-экранирования — для проверки вставленных значений. */
@@ -122,7 +90,7 @@ describe('E2E: запись на поток', () => {
       StreamModuleDef,
       GetStudentByUserUcDef.command({ userId: actor.user.uuid }),
       actor,
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      testTrace(),
     );
     return result.ok ? result.value.streamId : undefined;
   }
@@ -135,11 +103,11 @@ describe('E2E: запись на поток', () => {
     const tgId = 1001;
 
     const card = await openStreamCard(transport, tgId, 'Поток 1');
-    expect(buttonsOf(card)).toContainEqual(
+    expect(Screen.of(card).texts()).toContainEqual(
       expect.stringContaining('Записаться'),
     );
 
-    const enrolled = await press(transport, tgId, 'Записаться');
+    const enrolled = await transport.press(tgId, 'Записаться');
     const notice = String(enrolled.notify?.text ?? '');
     expect(notice).toContain('Вы успешно записаны на поток');
     expect(notice).toContain('JS Core — Поток 1');
@@ -152,21 +120,25 @@ describe('E2E: запись на поток', () => {
 
     // Запись заведена: повторно «Записаться» не предлагается
     const reopened = await openStreamCard(transport, tgId, 'Поток 1');
-    expect(buttonsOf(reopened).some((t) => t.includes('Записаться'))).toBe(
-      false,
-    );
+    expect(
+      Screen.of(reopened)
+        .texts()
+        .some((t) => t.includes('Записаться')),
+    ).toBe(false);
   });
 
   test('P3-56: поток с кодовым словом — запрос слова и кнопка отмены', async () => {
     const tgId = 100000011;
 
     await openStreamCard(transport, tgId, 'Поток 5');
-    const asked = await press(transport, tgId, 'Записаться');
+    const asked = await transport.press(tgId, 'Записаться');
 
     expect(String(asked.screen?.text ?? '')).toContain(
       'Введите кодовое слово для записи на поток',
     );
-    expect(buttonsOf(asked)).toContainEqual(expect.stringContaining('Отмена'));
+    expect(Screen.of(asked).texts()).toContainEqual(
+      expect.stringContaining('Отмена'),
+    );
     // Диалог ждёт текстовый ввод
     expect(asked.awaitInput).toBeDefined();
     expect(transport.dialogOf(tgId)?.input).toBeDefined();
@@ -176,7 +148,7 @@ describe('E2E: запись на поток', () => {
     const tgId = 100000012;
 
     await openStreamCard(transport, tgId, 'Поток 5');
-    await press(transport, tgId, 'Записаться');
+    await transport.press(tgId, 'Записаться');
     const enrolled = await transport.sendText(tgId, STREAM_KEY);
 
     const notice = String(enrolled.notify?.text ?? '');
@@ -188,7 +160,7 @@ describe('E2E: запись на поток', () => {
     const tgId = 1010;
 
     await openStreamCard(transport, tgId, 'Поток 5');
-    await press(transport, tgId, 'Записаться');
+    await transport.press(tgId, 'Записаться');
 
     const first = await transport.sendText(tgId, 'не-то');
     expect(first.notify?.kind).toBe('warn');
@@ -205,13 +177,13 @@ describe('E2E: запись на поток', () => {
     const tgId = 1008;
 
     await openStreamCard(transport, tgId, 'Поток 5');
-    await press(transport, tgId, 'Записаться');
+    await transport.press(tgId, 'Записаться');
     await transport.sendText(tgId, 'не-то');
     await transport.sendText(tgId, 'не-то');
 
     const third = await transport.sendText(tgId, 'не-то');
     expect(String(third.screen?.text ?? '')).toContain('Попытки исчерпаны');
-    expect(buttonsOf(third)).toContainEqual(
+    expect(Screen.of(third).texts()).toContainEqual(
       expect.stringContaining('Назад к потоку'),
     );
     expect(third.awaitInput).toBeUndefined();
@@ -227,9 +199,9 @@ describe('E2E: запись на поток', () => {
     const tgId = 1007;
 
     await openStreamCard(transport, tgId, 'Поток 5');
-    await press(transport, tgId, 'Записаться');
+    await transport.press(tgId, 'Записаться');
 
-    const back = await press(transport, tgId, 'Отмена');
+    const back = await transport.press(tgId, 'Отмена');
     expect(String(back.screen?.text ?? '')).toContain('JS Core — Поток 5');
     expect(back.awaitInput).toBeUndefined();
     expect(transport.dialogOf(tgId)?.input).toBeUndefined();
@@ -246,8 +218,7 @@ describe('E2E: запись на поток', () => {
 
     await openStreamCard(transport, tgId, 'Поток 1');
     // Кнопки «Записаться» нет (запись уже есть) — адрес набирается вручную
-    const refused = await pressRaw(
-      transport,
+    const refused = await transport.pressRaw(
       tgId,
       `stream:view-stream:enroll:${STREAM_WITHOUT_KEY}`,
     );
@@ -266,8 +237,7 @@ describe('E2E: запись на поток', () => {
     const tgId = 1005;
 
     await openStreamCard(transport, tgId, 'Поток 1');
-    const refused = await pressRaw(
-      transport,
+    const refused = await transport.pressRaw(
       tgId,
       `stream:view-stream:enroll:${UNKNOWN_STREAM}`,
     );
@@ -281,8 +251,7 @@ describe('E2E: запись на поток', () => {
     const tgId = 1009;
 
     await openStreamCard(transport, tgId, 'Поток 2');
-    const refused = await pressRaw(
-      transport,
+    const refused = await transport.pressRaw(
       tgId,
       `stream:view-stream:enroll:${STREAM_ACTIVE}`,
     );
@@ -359,11 +328,11 @@ describe('E2E: запись на поток — допуск к модулю', (
     const tgId = 1001;
 
     const card = await openStreamCard(transport, tgId, 'Поток 6');
-    expect(buttonsOf(card)).toContainEqual(
+    expect(Screen.of(card).texts()).toContainEqual(
       expect.stringContaining('Записаться'),
     );
 
-    const refused = await press(transport, tgId, 'Записаться');
+    const refused = await transport.press(tgId, 'Записаться');
     expect(refused.notify?.kind).toBe('warn');
     expect(String(refused.notify?.text ?? '')).toContain(
       'Сначала пройдите модуль',

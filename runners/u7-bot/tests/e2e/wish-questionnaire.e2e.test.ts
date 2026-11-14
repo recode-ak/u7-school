@@ -20,6 +20,7 @@ import { StreamEvents, StudentEvents } from '@u7-scl/domain/stream/contract';
 import { WishEvents } from '@u7-scl/domain/wish/contract';
 import type { WishStatus } from '@u7-scl/domain/wish/testing';
 import { envelopeOf } from '@u7-scl/test-helpers/envelope-of';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import type {
@@ -30,11 +31,9 @@ import {
   createTestBotTransport,
   pressedCode,
   screensNewFirst,
-  stampedCode,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import type { AnyEventDef } from 'dmg-core';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { QuestionnaireController } from '../../src/controllers/questionnaire/controller';
 import { CORE_EDUCATION_WORLD, type WorldDefinition } from '../worlds';
@@ -52,8 +51,6 @@ import { CORE_EDUCATION_WORLD, type WorldDefinition } from '../worlds';
 // Фикстурный курс с опасным названием и малым пулом анкеты (3 вопроса)
 const QUESTIONNAIRE_COURSE_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
-
-const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
 /** Курсы и модули мира `core-education`, нужные веткам желаний. */
 const COURSE_JS_BASICS = 'fafafafa-baba-4aba-8aba-babababababa';
@@ -280,7 +277,7 @@ describe('Wish: анкетная ветка (e2e)', () => {
         QuestionnaireModuleDef,
         GetQuestionnairesByUserUcDef.command({ userId: user.user.uuid }),
         user,
-        trace(),
+        testTrace(),
       ),
     );
     return states.find(
@@ -298,11 +295,7 @@ describe('Wish: анкетная ветка (e2e)', () => {
 
   /** Клик по кнопке с текстом (код — отштампованный, из Api-записи). */
   function click(tgId: number, buttonText: string) {
-    return transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, buttonText),
-      }),
-    );
+    return transport.press(tgId, buttonText);
   }
 
   /** apply-кнопка анкетного курса на открытой карточке. */
@@ -313,11 +306,7 @@ describe('Wish: анкетная ветка (e2e)', () => {
   /** /start → «Курсы» → листание к анкетному курсу (уровень 0 с apply-кнопкой). */
   async function openCatalog(tgId: number): Promise<void> {
     await transport.handleStart(transport.makeBotContext(tgId));
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Курсы'),
-      }),
-    );
+    await transport.press(tgId, 'Курсы');
     const shortId = QUESTIONNAIRE_COURSE_ID.slice(0, 8);
     while (true) {
       const screens = screensNewFirst(transport, tgId);
@@ -506,14 +495,9 @@ describe('Wish: анкетная ветка (e2e)', () => {
     // активное желание pending → конфликт → W04 «начал заполнять анкету»
     dropSession(mentor.user.view().telegramId);
     await openCatalog(mentor.user.view().telegramId);
-    const w04 = await transport.handleCallback(
-      transport.makeBotContext(mentor.user.view().telegramId, {
-        callbackData: stampedCode(
-          transport,
-          mentor.user.view().telegramId,
-          `course:course-catalog:apply:${QUESTIONNAIRE_COURSE_ID}`,
-        ),
-      }),
+    const w04 = await transport.pressRaw(
+      mentor.user.view().telegramId,
+      `course:course-catalog:apply:${QUESTIONNAIRE_COURSE_ID}`,
     );
     expect(w04.screen?.text).toContain('начал заполнять анкету');
     expect(w04.screen?.text).not.toContain('⚠️');
@@ -617,41 +601,13 @@ describe('Wish: карточка курса, модуль и события (e2e
     return String(response.screen?.text ?? '');
   }
 
-  /** Подписи кнопок экрана. */
-  function buttonTexts(response: DialogResponse): string[] {
-    return (response.screen?.keyboard?.rows.flat() ?? []).map((b) => b.text);
-  }
-
-  /** Коды кнопок экрана (со штампом транспорта). */
-  function buttonCodes(response: DialogResponse): string[] {
-    return (response.screen?.keyboard?.rows.flat() ?? []).map((b) => b.code);
-  }
-
-  /** Нажатие кнопки с текстом (код — отштампованный, из Api-записи). */
-  function press(tgId: number, buttonText: string): Promise<DialogResponse> {
-    return transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, buttonText),
-      }),
-    );
-  }
-
-  /** Нажатие «крафтового» адреса с актуальным штампом экрана. */
-  function pressRaw(tgId: number, rawCode: string): Promise<DialogResponse> {
-    return transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: stampedCode(transport, tgId, rawCode),
-      }),
-    );
-  }
-
   /** /start → карточка курса по адресу (каталог листать не нужно). */
   async function openCourseCard(
     tgId: number,
     courseId: string,
   ): Promise<DialogResponse> {
     await transport.handleStart(transport.makeBotContext(tgId));
-    return pressRaw(tgId, `course:course-catalog:course:${courseId}`);
+    return transport.pressRaw(tgId, `course:course-catalog:course:${courseId}`);
   }
 
   /** Ожидает проактивное сообщение адресату (poll по Api-записям). */
@@ -716,74 +672,85 @@ describe('Wish: карточка курса, модуль и события (e2e
   test('P2-40: карточка курса с pending-желанием — «📝 Продолжить анкету»', async () => {
     const response = await openCourseCard(1007, QUESTIONNAIRE_COURSE_ID);
 
-    expect(buttonTexts(response)).toContainEqual(
+    expect(Screen.of(response).texts()).toContainEqual(
       expect.stringContaining('Продолжить анкету'),
     );
     expect(
-      buttonCodes(response).some((code) =>
-        code.startsWith(`questionnaire:fill:resume:${QUESTIONNAIRE_COURSE_ID}`),
-      ),
+      Screen.of(response)
+        .codes()
+        .some((code) =>
+          code.startsWith(
+            `questionnaire:fill:resume:${QUESTIONNAIRE_COURSE_ID}`,
+          ),
+        ),
     ).toBe(true);
   });
 
   test('P2-41 / P7-63: карточка курса с expressed/confirmed-желанием — «🗑️ Отменить желание»', async () => {
     const expressed = await openCourseCard(1008, COURSE_JS_BASICS);
-    expect(buttonTexts(expressed)).toContainEqual(
+    expect(Screen.of(expressed).texts()).toContainEqual(
       expect.stringContaining('Отменить желание'),
     );
     expect(
-      buttonCodes(expressed).some((code) =>
-        code.startsWith(`course:course-catalog:cancel:${COURSE_JS_BASICS}`),
-      ),
+      Screen.of(expressed)
+        .codes()
+        .some((code) =>
+          code.startsWith(`course:course-catalog:cancel:${COURSE_JS_BASICS}`),
+        ),
     ).toBe(true);
 
     const confirmed = await openCourseCard(1001, COURSE_JS_BASICS);
-    expect(buttonTexts(confirmed)).toContainEqual(
+    expect(Screen.of(confirmed).texts()).toContainEqual(
       expect.stringContaining('Отменить желание'),
     );
     expect(
-      buttonCodes(confirmed).some((code) =>
-        code.startsWith(`course:course-catalog:cancel:${COURSE_JS_BASICS}`),
-      ),
+      Screen.of(confirmed)
+        .codes()
+        .some((code) =>
+          code.startsWith(`course:course-catalog:cancel:${COURSE_JS_BASICS}`),
+        ),
     ).toBe(true);
   });
 
   test('P2-45: повторный apply при expressed — «уже выразил желание» и кнопки отмены', async () => {
     await openCourseCard(1008, COURSE_JS_BASICS);
-    const response = await pressRaw(
+    const response = await transport.pressRaw(
       1008,
       `course:course-catalog:apply:${COURSE_JS_BASICS}`,
     );
 
     expect(screenText(response)).toContain('Ты уже выразил желание');
-    const texts = buttonTexts(response);
+    const texts = Screen.of(response).texts();
     expect(texts).toContainEqual(expect.stringContaining('Отменить желание'));
     expect(texts).toContainEqual(expect.stringContaining('Главное меню'));
   });
 
   test('P2-46: повторный apply при confirmed — «уже обучаешься на этом курсе»', async () => {
     await openCourseCard(1001, COURSE_JS_BASICS);
-    const response = await pressRaw(
+    const response = await transport.pressRaw(
       1001,
       `course:course-catalog:apply:${COURSE_JS_BASICS}`,
     );
 
     expect(screenText(response)).toContain('уже обучаешься на этом курсе');
-    const texts = buttonTexts(response);
+    const texts = Screen.of(response).texts();
     expect(texts).toContainEqual(expect.stringContaining('Отменить желание'));
     expect(texts).toContainEqual(expect.stringContaining('Главное меню'));
   });
 
   test('P2-47: apply без courseId — «⚠️ Курс не указан»', async () => {
     await transport.handleStart(transport.makeBotContext(1008));
-    const response = await pressRaw(1008, 'course:course-catalog:apply');
+    const response = await transport.pressRaw(
+      1008,
+      'course:course-catalog:apply',
+    );
 
     expect(screenText(response)).toContain('Курс не указан');
   });
 
   test('P2-48: apply с неизвестным курсом — warn-реплика без экрана', async () => {
     await openCourseCard(1008, COURSE_JS_BASICS);
-    const response = await pressRaw(
+    const response = await transport.pressRaw(
       1008,
       `course:course-catalog:apply:${UNKNOWN_ID}`,
     );
@@ -795,7 +762,7 @@ describe('Wish: карточка курса, модуль и события (e2e
 
   test('P2-51: cancel-confirm без желания — мягкое «уже нет» без ⚠️', async () => {
     await openCourseCard(1008, COURSE_ALGORITHMS);
-    const response = await pressRaw(
+    const response = await transport.pressRaw(
       1008,
       `course:course-catalog:cancel-confirm:${COURSE_ALGORITHMS}`,
     );
@@ -803,14 +770,14 @@ describe('Wish: карточка курса, модуль и события (e2e
     const text = screenText(response);
     expect(text).toContain('Активного желания на этот курс уже нет');
     expect(response.notify).toBeUndefined();
-    expect(buttonTexts(response)).toContainEqual(
+    expect(Screen.of(response).texts()).toContainEqual(
       expect.stringContaining('Главное меню'),
     );
   });
 
   test('P2-52: cancel-confirm с битым адресом — warn-реплика', async () => {
     await openCourseCard(1008, COURSE_ALGORITHMS);
-    const response = await pressRaw(
+    const response = await transport.pressRaw(
       1008,
       'course:course-catalog:cancel-confirm:not-a-uuid',
     );
@@ -845,7 +812,7 @@ describe('Wish: карточка курса, модуль и события (e2e
     );
 
     expect(screenText(response)).toContain('Записали');
-    expect(buttonTexts(response)).toContainEqual(
+    expect(Screen.of(response).texts()).toContainEqual(
       expect.stringContaining('Главное меню'),
     );
     expect(await moduleWishStatuses(USER_ANDREY, MODULE_ALGORITHMS)).toEqual([
@@ -855,20 +822,20 @@ describe('Wish: карточка курса, модуль и события (e2e
 
   test('P2-54: та же кнопка, желание на модуль уже есть — «уже записан»', async () => {
     await transport.handleStart(transport.makeBotContext(1003));
-    const response = await pressRaw(
+    const response = await transport.pressRaw(
       1003,
       `course:course-catalog:wish:${MODULE_UX_RESEARCH}`,
     );
 
     expect(screenText(response)).toContain('уже записан на этот модуль');
-    expect(buttonTexts(response)).toContainEqual(
+    expect(Screen.of(response).texts()).toContainEqual(
       expect.stringContaining('Главное меню'),
     );
   });
 
   test('P2-55: та же кнопка, неизвестный модуль — warn-реплика', async () => {
     await transport.handleStart(transport.makeBotContext(1003));
-    const response = await pressRaw(
+    const response = await transport.pressRaw(
       1003,
       `course:course-catalog:wish:${UNKNOWN_ID}`,
     );
@@ -882,17 +849,17 @@ describe('Wish: карточка курса, модуль и события (e2e
 
   test('P2-56: «🗑️ Отменить желание» модуля — подтверждение, «❌ Отмена» в меню', async () => {
     await transport.handleStart(transport.makeBotContext(1002));
-    const confirm = await pressRaw(
+    const confirm = await transport.pressRaw(
       1002,
       `course:course-catalog:cancel-mod:${MODULE_UX_RESEARCH}`,
     );
 
     expect(screenText(confirm)).toContain('Отменить желание пройти модуль');
-    const texts = buttonTexts(confirm);
+    const texts = Screen.of(confirm).texts();
     expect(texts).toContainEqual(expect.stringContaining('Да'));
     expect(texts).toContainEqual(expect.stringContaining('Отмена'));
 
-    const cancelled = await press(1002, 'Отмена');
+    const cancelled = await transport.press(1002, 'Отмена');
     expect(screenText(cancelled)).toContain('Главное меню');
     // Отмена подтверждения желание не трогает
     expect(
@@ -902,13 +869,13 @@ describe('Wish: карточка курса, модуль и события (e2e
 
   test('P2-57: «✅ Да» — «Желание пройти модуль отменено» и главное меню', async () => {
     await transport.handleStart(transport.makeBotContext(1002));
-    const response = await pressRaw(
+    const response = await transport.pressRaw(
       1002,
       `course:course-catalog:cancel-mod-confirm:${MODULE_UX_RESEARCH}`,
     );
 
     expect(screenText(response)).toContain('Желание пройти модуль отменено');
-    expect(buttonTexts(response)).toContainEqual(
+    expect(Screen.of(response).texts()).toContainEqual(
       expect.stringContaining('Главное меню'),
     );
     expect(
@@ -918,7 +885,7 @@ describe('Wish: карточка курса, модуль и события (e2e
 
   test('P2-58: cancel-mod-confirm без желания — «Активного желания на этот модуль уже нет»', async () => {
     await transport.handleStart(transport.makeBotContext(1001));
-    const response = await pressRaw(
+    const response = await transport.pressRaw(
       1001,
       `course:course-catalog:cancel-mod-confirm:${MODULE_ALGORITHMS}`,
     );
@@ -926,14 +893,14 @@ describe('Wish: карточка курса, модуль и события (e2e
     expect(screenText(response)).toContain(
       'Активного желания на этот модуль уже нет',
     );
-    expect(buttonTexts(response)).toContainEqual(
+    expect(Screen.of(response).texts()).toContainEqual(
       expect.stringContaining('Главное меню'),
     );
   });
 
   test('P2-59: cancel-mod-confirm с битым адресом — warn-реплика', async () => {
     await transport.handleStart(transport.makeBotContext(1001));
-    const response = await pressRaw(
+    const response = await transport.pressRaw(
       1001,
       'course:course-catalog:cancel-mod-confirm:not-a-uuid',
     );

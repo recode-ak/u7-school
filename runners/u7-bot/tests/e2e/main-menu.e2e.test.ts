@@ -17,7 +17,6 @@ import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 
@@ -35,30 +34,6 @@ const ADMIN_TELEGRAM_ID = 1005;
  * клиент), а содержимое ответа ассертится по DialogResponse, захваченному
  * на границе uiApp (notify и screen разделены).
  */
-
-/** Отштампованный код кнопки с последнего экрана пользователя (Api-запись). */
-function pressedCode(
-  transport: TestBotTransport,
-  tgId: number,
-  textContains: string,
-): string {
-  const screens = [
-    ...transport.api.editedMessages,
-    ...transport.api.sentMessages,
-  ]
-    .filter((m) => m.telegramId === tgId)
-    .reverse();
-  for (const screen of screens) {
-    const btn = screen.keyboard?.rows
-      .flat()
-      .find((b) => b.text.includes(textContains));
-    if (btn) return btn.code;
-  }
-  throw new Error(
-    `Кнопка «${textContains}» не найдена на экранах ${tgId} ` +
-      `(перед нажатием открой экран через /start или кнопку).`,
-  );
-}
 
 describe('Главное меню (интеграционные)', () => {
   let app: TestApp;
@@ -205,26 +180,10 @@ describe('Главное меню (интеграционные)', () => {
     const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
     // Реальный путь: меню → школа → каталог потоков → назад в школу → Главное меню
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Школа'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Потоки'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Назад в школу'),
-      }),
-    );
-    const response = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Главное меню'),
-      }),
-    );
+    await transport.press(tgId, 'Школа');
+    await transport.press(tgId, 'Потоки');
+    await transport.press(tgId, 'Назад в школу');
+    const response = await transport.press(tgId, 'Главное меню');
 
     expect(String(response.screen?.text)).toBe(
       '🏫 *Главное меню*\n\nВыберите раздел:',
@@ -238,11 +197,7 @@ describe('Главное меню (интеграционные)', () => {
   test('app:help возвращает инструкцию (реплика, без экрана)', async () => {
     const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
-    const response = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Помощь'),
-      }),
-    );
+    const response = await transport.press(tgId, 'Помощь');
 
     expect(response.notify?.text).toContain('Как со мной работать?');
     expect(response.screen).toBeUndefined();
@@ -307,15 +262,7 @@ describe('E2E: Студент — «Моя учёба» (learning)', () => {
     await transport.handleStart(
       transport.makeBotContext(student.user.view().telegramId),
     );
-    return transport.handleCallback(
-      transport.makeBotContext(student.user.view().telegramId, {
-        callbackData: pressedCode(
-          transport,
-          student.user.view().telegramId,
-          'Моя учёба',
-        ),
-      }),
-    );
+    return transport.press(student.user.view().telegramId, 'Моя учёба');
   }
 
   test('студент: главное меню → Моя учёба → хаб', async () => {
@@ -334,22 +281,14 @@ describe('E2E: Студент — «Моя учёба» (learning)', () => {
     const hubResp = await openHub();
 
     // 2. Нажимаем «▶️ Начать учёбу»
-    const stepResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Начать учёбу'),
-      }),
-    );
+    const stepResp = await transport.press(tgId, 'Начать учёбу');
     expect(String(stepResp.screen?.text)).toContain('JS Core');
     expect(String(stepResp.screen?.text)).toContain('Шаг 1');
 
     // 3. Нажимаем «✅ Выполнено»
     const sentBefore = transport.api.sentMessages.length;
     const editedBefore = transport.api.editedMessages.length;
-    const completeResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Выполнено'),
-      }),
-    );
+    const completeResp = await transport.press(tgId, 'Выполнено');
     // После выполнения — либо следующий шаг, либо завершение урока
     const text = String(completeResp.screen?.text);
     expect(
@@ -368,27 +307,15 @@ describe('E2E: Студент — «Моя учёба» (learning)', () => {
     const hubResp = await openHub();
 
     // 2. Нажимаем «📖 Программа модуля»
-    const projectsResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Программа модуля'),
-      }),
-    );
+    const projectsResp = await transport.press(tgId, 'Программа модуля');
     expect(String(projectsResp.screen?.text)).toContain('Введение');
 
     // 3. Нажимаем проект «Введение»
-    const lessonsListResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Введение'),
-      }),
-    );
+    const lessonsListResp = await transport.press(tgId, 'Введение');
     expect(String(lessonsListResp.screen?.text)).toContain('Переменные и типы');
 
     // 4. Нажимаем урок «Переменные и типы»
-    const stepsResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Переменные и типы'),
-      }),
-    );
+    const stepsResp = await transport.press(tgId, 'Переменные и типы');
     expect(String(stepsResp.screen?.text)).toContain(
       'знакомство с переменными',
     );
@@ -399,11 +326,7 @@ describe('E2E: Студент — «Моя учёба» (learning)', () => {
     const _hubResp = await openHub();
 
     // 2. Нажимаем «📊 Мой прогресс»
-    const progressResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Мой прогресс'),
-      }),
-    );
+    const progressResp = await transport.press(tgId, 'Мой прогресс');
 
     const text = String(progressResp.screen?.text);
     // Заголовок
@@ -424,18 +347,10 @@ describe('E2E: Студент — «Моя учёба» (learning)', () => {
     const tgId = student.user.view().telegramId;
     await openHub();
 
-    const progressResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Мой прогресс'),
-      }),
-    );
+    const progressResp = await transport.press(tgId, 'Мой прогресс');
 
     // 2. «Назад к учёбе» → возврат в хаб
-    const backResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Назад к учёбе'),
-      }),
-    );
+    const backResp = await transport.press(tgId, 'Назад к учёбе');
     expect(String(backResp.screen?.text)).toContain('Моя учёба');
   });
 });
@@ -477,11 +392,7 @@ describe('E2E: системные команды приложения (app)', ()
   /** /start → «🏫 Школа»: диалог переключается на стори school/hub. */
   async function openSchoolHub(tgId: number): Promise<DialogResponse> {
     await transport.handleStart(transport.makeBotContext(tgId));
-    const hub = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Школа'),
-      }),
-    );
+    const hub = await transport.press(tgId, 'Школа');
     expect(transport.dialogOf(tgId)?.path).toBe('school/hub');
     return hub;
   }
@@ -537,11 +448,7 @@ describe('E2E: системные команды приложения (app)', ()
     // Каждый код — с экрана свежего меню (/start двигает seq: старый штамп мёртв)
     for (const raw of ['app:unknown-action', 'app:xyz']) {
       await transport.handleStart(transport.makeBotContext(tgId));
-      const response = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: stampedCode(transport, tgId, raw),
-        }),
-      );
+      const response = await transport.pressRaw(tgId, raw);
       expect(String(response.screen?.text)).toContain('Неизвестная команда');
     }
   });

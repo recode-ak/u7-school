@@ -10,11 +10,11 @@ import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import type { DialogResponse } from '@u7-scl/core/ui';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import type { WorldDefinition } from '../worlds';
@@ -95,29 +95,6 @@ const FLAT_COURSE_WORLD: WorldDefinition = {
   ],
 };
 
-/** Кнопки экрана — плоским списком. */
-function buttonsOf(
-  response: DialogResponse,
-): Array<{ text: string; code: string }> {
-  return response.screen?.keyboard?.rows.flat() ?? [];
-}
-
-/** Нажимает кнопку ответа с текстом, содержащим `fragment`, штампом текущего экрана. */
-async function clickButton(
-  transport: TestBotTransport,
-  telegramId: number,
-  response: DialogResponse,
-  fragment: string,
-): Promise<DialogResponse> {
-  const button = buttonsOf(response).find((b) => b.text.includes(fragment));
-  expect(button, `Кнопка «${fragment}» не найдена в ответе`).toBeDefined();
-  return transport.handleCallback(
-    transport.makeBotContext(telegramId, {
-      callbackData: stampedCode(transport, telegramId, button!.code),
-    }),
-  );
-}
-
 /** Открывает диалог и вызывает сырой код стори с актуальным штампом. */
 async function openCatalog(
   transport: TestBotTransport,
@@ -125,11 +102,7 @@ async function openCatalog(
   rawCode: string,
 ): Promise<DialogResponse> {
   await transport.handleStart(transport.makeBotContext(telegramId));
-  return transport.handleCallback(
-    transport.makeBotContext(telegramId, {
-      callbackData: stampedCode(transport, telegramId, rawCode),
-    }),
-  );
+  return transport.pressRaw(telegramId, rawCode);
 }
 
 describe('CourseCatalogStory (интеграционный): курс с этапами', () => {
@@ -163,23 +136,32 @@ describe('CourseCatalogStory (интеграционный): курс с эта�
     expect(course.screen?.text).toContain('Основы программирования');
     expect(course.screen?.text).toContain('Этапы курса');
 
-    const stage = await clickButton(transport, tg, course, 'Синтаксис');
+    const stage = await transport.pressRaw(
+      tg,
+      Screen.of(course).button('Синтаксис').code,
+    );
     expect(stage.screen?.text).toContain('Этап 1/2: Синтаксис');
 
-    const mod = await clickButton(transport, tg, stage, 'JavaScript Основы');
-    expect(mod.screen?.text).toContain('Проекты модуля');
-    expect(buttonsOf(mod).some((b) => b.text.includes('Назад к этапу'))).toBe(
-      true,
+    const mod = await transport.pressRaw(
+      tg,
+      Screen.of(stage).button('JavaScript Основы').code,
     );
+    expect(mod.screen?.text).toContain('Проекты модуля');
+    expect(
+      Screen.of(mod)
+        .buttons()
+        .some((b) => b.text.includes('Назад к этапу')),
+    ).toBe(true);
 
-    const project = await clickButton(transport, tg, mod, 'Введение');
+    const project = await transport.pressRaw(
+      tg,
+      Screen.of(mod).button('Введение').code,
+    );
     expect(project.screen?.text).toContain('Уроки проекта');
 
-    const lesson = await clickButton(
-      transport,
+    const lesson = await transport.pressRaw(
       tg,
-      project,
-      'Переменные и типы',
+      Screen.of(project).button('Переменные и типы').code,
     );
     const text = lesson.screen?.text ?? '';
     expect(text).toContain('Шаги урока');
@@ -187,7 +169,9 @@ describe('CourseCatalogStory (интеграционный): курс с эта�
     // Тела шагов в каталоге не видны
     expect(text).not.toContain('рекомендуется объявлять переменные');
     expect(
-      buttonsOf(lesson).some((b) => b.text.includes('Назад к проекту')),
+      Screen.of(lesson)
+        .buttons()
+        .some((b) => b.text.includes('Назад к проекту')),
     ).toBe(true);
   });
 });
@@ -221,21 +205,34 @@ describe('CourseCatalogStory (интеграционный): курс без э�
     expect(list.screen?.text).toContain('Курс без этапов');
     expect(list.screen?.text).toContain('Модули курса');
     expect(list.screen?.text).not.toContain('Этап');
-    expect(buttonsOf(list).some((b) => b.text.includes('Второй модуль'))).toBe(
-      true,
-    );
+    expect(
+      Screen.of(list)
+        .buttons()
+        .some((b) => b.text.includes('Второй модуль')),
+    ).toBe(true);
 
-    const mod = await clickButton(transport, tg, list, 'Первый модуль');
+    const mod = await transport.pressRaw(
+      tg,
+      Screen.of(list).button('Первый модуль').code,
+    );
     expect(mod.screen?.text).toContain('Модуль 1/2: Первый модуль');
     expect(mod.screen?.text).not.toContain('Этап');
-    expect(buttonsOf(mod).some((b) => b.text.includes('Назад к курсу'))).toBe(
-      true,
-    );
+    expect(
+      Screen.of(mod)
+        .buttons()
+        .some((b) => b.text.includes('Назад к курсу')),
+    ).toBe(true);
 
-    const project = await clickButton(transport, tg, mod, 'Первый проект');
+    const project = await transport.pressRaw(
+      tg,
+      Screen.of(mod).button('Первый проект').code,
+    );
     expect(project.screen?.text).toContain('Уроки проекта');
 
-    const lesson = await clickButton(transport, tg, project, 'Первый урок');
+    const lesson = await transport.pressRaw(
+      tg,
+      Screen.of(project).button('Первый урок').code,
+    );
     const text = lesson.screen?.text ?? '';
     expect(text).toContain('Шаги урока');
     expect(text).toContain('Заголовок первого шага');

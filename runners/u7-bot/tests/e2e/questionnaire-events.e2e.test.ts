@@ -27,14 +27,10 @@ import type {
   SentMessage,
   TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import {
-  createTestBotTransport,
-  stampedCode,
-} from '@u7-scl/test-helpers/test-bot-transport';
+import { createTestBotTransport } from '@u7-scl/test-helpers/test-bot-transport';
 import type { TestClock } from '@u7-scl/test-helpers/test-clock';
 import { type AnyEventDef, type OperationRef, SystemCaller } from 'dmg-core';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { QuestionnaireController } from '../../src/controllers/questionnaire/controller';
 import { userActor } from '../../src/core/user-actor.test-kit';
@@ -86,8 +82,6 @@ const FROM: OperationRef = {
   name: 'probe',
 };
 const UNKNOWN_USER_ID = '00000000-0000-4000-8000-0000000000aa';
-
-const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
 const standardPool = () =>
   v.parse(QuestionnairePoolSchema, {
@@ -233,7 +227,7 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
           ownerInfo: { courseId: COURSE_ID },
         }),
         new SystemCaller(FROM, respondent),
-        trace(),
+        testTrace(),
       ),
     );
 
@@ -258,7 +252,7 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
           ownerInfo: { context: 'module_completed' },
         }),
         new SystemCaller(FROM, respondent),
-        trace(),
+        testTrace(),
       ),
     );
 
@@ -296,7 +290,7 @@ describe('Questionnaire: Def-события в боте (e2e)', () => {
           FROM,
           userActor({ uuid: UNKNOWN_USER_ID, roles: ['GUEST'] }),
         ),
-        trace(),
+        testTrace(),
       ),
     );
 
@@ -370,7 +364,7 @@ describe('Questionnaire: Job обхода брошенных (e2e)', () => {
           ownerInfo: { courseId },
         }),
         new SystemCaller(FROM, stand.marina),
-        trace(),
+        testTrace(),
       ),
     );
     const list = expectOk(
@@ -380,7 +374,7 @@ describe('Questionnaire: Job обхода брошенных (e2e)', () => {
           userId: stand.marina.user.uuid,
         }),
         stand.marina,
-        trace(),
+        testTrace(),
       ),
     );
     const created = list.find((q) => String(q.ownerInfo.courseId) === courseId);
@@ -406,7 +400,7 @@ describe('Questionnaire: Job обхода брошенных (e2e)', () => {
         QuestionnaireModuleDef,
         GetQuestionnaireUcDef.command({ questionnaireId: qId }),
         stand.marina,
-        trace(),
+        testTrace(),
       ),
     );
   }
@@ -585,14 +579,9 @@ describe('Questionnaire: Job обхода брошенных (e2e)', () => {
 
     // Пользователь вернулся: /start открывает диалог, resume — по курсу
     await stand.transport.handleStart(stand.transport.makeBotContext(tgIdOf()));
-    await stand.transport.handleCallback(
-      stand.transport.makeBotContext(tgIdOf(), {
-        callbackData: stampedCode(
-          stand.transport,
-          tgIdOf(),
-          `questionnaire:fill:resume:${courseId}`,
-        ),
-      }),
+    await stand.transport.pressRaw(
+      tgIdOf(),
+      `questionnaire:fill:resume:${courseId}`,
     );
     const answer = stand.transport.api.sentMessages
       .at(-1)

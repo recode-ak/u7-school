@@ -9,6 +9,7 @@ import {
   UserCaller,
 } from 'dmg-core';
 import { type EventBus, type JobReport, Trace } from 'dmg-core/app';
+import { testTrace } from 'dmg-core/testing';
 import type { U7BotActor } from '../../src/core/u7-bot-app-meta';
 import { getWorld, type WorldDefinition } from '../worlds';
 import type { FixturePaths } from './fixture-loader';
@@ -106,7 +107,7 @@ export async function createTestApp(
     ),
     reviewRepo: new ReviewJsonRepo(fixtures.peerReview.reviews),
     userByTelegramId: async (telegramId) => {
-      const trace = Trace.fromRequest({ requestId: crypto.randomUUID() });
+      const trace = testTrace();
       const caller = await app.callers.resolveByTelegramId(telegramId, trace);
       if (!(caller instanceof UserCaller)) {
         throw new Error(`Нет пользователя фикстуры tg=${telegramId}`);

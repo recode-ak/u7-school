@@ -6,7 +6,8 @@ import {
   PeerReviewModuleDef,
 } from '@u7-scl/domain/peer-review/contract';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
-import { Trace } from 'dmg-core/app';
+import { waitUntil } from '@u7-scl/test-helpers/wait-until';
+import { testTrace } from 'dmg-core/testing';
 import { completeStudent } from '../helpers/student-fate';
 
 /**
@@ -34,18 +35,6 @@ const MENTOR_TG = 1004; // «Ментор» — ментор потока e1e1e1
  */
 const FROZEN_NOW = new Date('2026-09-22T12:00');
 
-/** Ждёт условия (poll) — ER и стори обрабатывают событие асинхронно. */
-async function waitUntil(
-  probe: () => boolean | Promise<boolean>,
-  timeoutMs = 3000,
-): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await probe()) return;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-}
-
 describe('E2E peer-review: инфраструктура стенда (smoke)', () => {
   let app: TestApp;
   let nowSpy: ReturnType<typeof spyOn>;
@@ -56,7 +45,7 @@ describe('E2E peer-review: инфраструктура стенда (smoke)', (
       PeerReviewModuleDef,
       GetMyCampaignsUcDef.command({}),
       user,
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      testTrace(),
     );
 
   beforeAll(async () => {

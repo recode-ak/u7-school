@@ -5,10 +5,10 @@ import { Role } from '@u7-scl/domain/user/testing';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
   stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { waitUntil } from '@u7-scl/test-helpers/wait-until';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 import { completeStudent } from '../helpers/student-fate';
 import {
@@ -42,18 +42,6 @@ const SUBJECT_USER_ID = '77777777-7777-4777-8777-777777777777';
 const MENTOR_TG = 1004; // «Ментор» — ментор потока
 const DROPPED_TG = 1003; // «Студент» — субъект просроченной c4a44444
 const EXPIRED_CAMPAIGN_ID = 'c4a44444-4444-4444-8444-444444444444';
-
-/** Ждёт условия (poll) — ER обрабатывает событие асинхронно. */
-async function waitUntil(
-  probe: () => boolean | Promise<boolean>,
-  timeoutMs = 3000,
-): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await probe()) return;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-}
 
 describe('E2E peer-review: хаб «Мои отзывы» и меню', () => {
   let app: TestApp;
@@ -89,11 +77,7 @@ describe('E2E peer-review: хаб «Мои отзывы» и меню', () => {
     // /start открывает экран с меню (кнопка «💬 Отзывы» в нём)
     await transport.handleStart(transport.makeBotContext(SUBJECT_TG));
 
-    const hubResp = await transport.handleCallback(
-      transport.makeBotContext(SUBJECT_TG, {
-        callbackData: pressedCode(transport, SUBJECT_TG, '💬 Отзывы'),
-      }),
-    );
+    const hubResp = await transport.press(SUBJECT_TG, '💬 Отзывы');
     const hubText = String(hubResp.screen?.text);
     expect(hubText).toContain('💬 *Мои отзывы*');
     // myRole=subject: «одногруппники и ментор», окно свежей кампании — 7 дн
@@ -107,11 +91,7 @@ describe('E2E peer-review: хаб «Мои отзывы» и меню', () => {
     expect(hubBtn?.text).toBe(`1. Поток «${STREAM_TITLE}»`);
 
     // Выбор кампании — мост в S03
-    const s03 = await transport.handleCallback(
-      transport.makeBotContext(SUBJECT_TG, {
-        callbackData: pressedCode(transport, SUBJECT_TG, '1. Поток'),
-      }),
-    );
+    const s03 = await transport.press(SUBJECT_TG, '1. Поток');
     expect(String(s03.screen?.text)).toContain('О ком расскажешь?');
     expect(String(s03.screen?.text)).toContain('Написано отзывов: 0 из 3');
     expect(String(s03.screen?.text)).toContain(STREAM_TITLE);
@@ -120,11 +100,7 @@ describe('E2E peer-review: хаб «Мои отзывы» и меню', () => {
   test('S02 ментору: карточка «отзыв о {Имя}» по myRole=mentor', async () => {
     await transport.handleStart(transport.makeBotContext(MENTOR_TG));
 
-    const hubResp = await transport.handleCallback(
-      transport.makeBotContext(MENTOR_TG, {
-        callbackData: pressedCode(transport, MENTOR_TG, '💬 Отзывы'),
-      }),
-    );
+    const hubResp = await transport.press(MENTOR_TG, '💬 Отзывы');
     const hubText = String(hubResp.screen?.text);
     expect(hubText).toContain('💬 *Мои отзывы*');
     // Карточка ментора в новой кампании: «подопечный завершил» + кнопка с номером
@@ -137,11 +113,7 @@ describe('E2E peer-review: хаб «Мои отзывы» и меню', () => {
 
     // Автопровал «выбор без выбора»: у ментора единственный адресат —
     // клик по карточке открывает экран ввода, минуя список адресатов
-    const input = await transport.handleCallback(
-      transport.makeBotContext(MENTOR_TG, {
-        callbackData: pressedCode(transport, MENTOR_TG, 'Отзыв об Марина'),
-      }),
-    );
+    const input = await transport.press(MENTOR_TG, 'Отзыв об Марина');
     const inputText = String(input.screen?.text);
     expect(inputText).toContain('✍️ *Отзыв — поток «');
     expect(inputText).toContain('Предлагаем разделить отзыв на две части');
@@ -263,11 +235,7 @@ describe('E2E peer-review: хаб — пагинация и истёкшие о�
 
   test('P6-17: хаб на две страницы — сквозная нумерация и листание «След ›»', async () => {
     await transport.handleStart(transport.makeBotContext(MENTOR_TG));
-    const page1 = await transport.handleCallback(
-      transport.makeBotContext(MENTOR_TG, {
-        callbackData: pressedCode(transport, MENTOR_TG, '💬 Отзывы'),
-      }),
-    );
+    const page1 = await transport.press(MENTOR_TG, '💬 Отзывы');
     expect(String(page1.screen?.text)).toContain('💬 *Мои отзывы*');
     expect(String(page1.screen?.text)).toContain('Стр\\. 1/2');
     const nums1 = cardNumbers(page1);
@@ -278,11 +246,7 @@ describe('E2E peer-review: хаб — пагинация и истёкшие о�
       Array.from({ length: nums1.length }, (_, i) => nums1[0]! + i),
     );
 
-    const page2 = await transport.handleCallback(
-      transport.makeBotContext(MENTOR_TG, {
-        callbackData: pressedCode(transport, MENTOR_TG, 'След ›'),
-      }),
-    );
+    const page2 = await transport.press(MENTOR_TG, 'След ›');
     expect(String(page2.screen?.text)).toContain('Стр\\. 2/2');
     const nums2 = cardNumbers(page2);
     // Нумерация карточек сквозная: страница 2 продолжает номера страницы 1
@@ -299,11 +263,7 @@ describe('E2E peer-review: хаб — пагинация и истёкшие о�
     // Меню отрисовано с живыми кампаниями; пока пользователь думал — окна истекли
     clock.advance(8 * 24 * 60 * 60 * 1000);
 
-    const stub = await transport.handleCallback(
-      transport.makeBotContext(MENTOR_TG, {
-        callbackData: pressedCode(transport, MENTOR_TG, '💬 Отзывы'),
-      }),
-    );
+    const stub = await transport.press(MENTOR_TG, '💬 Отзывы');
     const text = String(stub.screen?.text);
     expect(text).toContain('Открытых окон отзывов нет');
     const buttons = (stub.screen?.keyboard?.rows.flat() ?? []).map(
@@ -341,11 +301,7 @@ describe('E2E peer-review: неизвестные callback-и стори', () =>
     for (const code of unknown) {
       // Свежий /start: штамп кнопок текущего экрана под каждый крафтовый код
       await transport.handleStart(transport.makeBotContext(MENTOR_TG));
-      const response = await transport.handleCallback(
-        transport.makeBotContext(MENTOR_TG, {
-          callbackData: stampedCode(transport, MENTOR_TG, code),
-        }),
-      );
+      const response = await transport.pressRaw(MENTOR_TG, code);
       expect(String(response.screen?.text), code).toContain(
         'Неизвестная команда',
       );

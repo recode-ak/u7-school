@@ -7,8 +7,7 @@ import {
 } from '@u7-scl/domain/wish/contract';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 
 /**
  * Интеграционный тест чтения и перезаписи legacy-записей желаний:
@@ -64,7 +63,6 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
   });
 
   /** След запроса: в тестах — новый requestId на вызов. */
-  const req = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
   const rawRows = async (): Promise<Array<Record<string, unknown>>> =>
     JSON.parse(await Bun.file(wishesPath).text());
@@ -75,7 +73,7 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
         WishModuleDef,
         ListUserWishesUcDef.command({}),
         guest,
-        req(),
+        testTrace(),
       ),
     );
 
@@ -94,7 +92,7 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
           courseId: INSTANT_COURSE_ID,
         }),
         guest,
-        req(),
+        testTrace(),
       ),
     );
 

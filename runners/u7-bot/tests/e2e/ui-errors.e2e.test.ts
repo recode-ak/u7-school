@@ -21,15 +21,14 @@ import {
   QuestionnairePoolSchema,
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import { type OperationRef, SystemCaller } from 'dmg-core';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { QuestionnaireController } from '../../src/controllers/questionnaire/controller';
 
@@ -58,8 +57,6 @@ const PROBE_FROM: OperationRef = {
   module: 'probe',
   name: 'probe',
 };
-
-const traceOf = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
 /** Стори «уведомление»: продолжает pipe и оставляет notice. */
 class LabNoticeStory extends U7BotUiStory {
@@ -179,17 +176,7 @@ describe('E2E: экраны ошибок UI-слоя (F-33)', () => {
   const textOf = (response: { screen?: { text: unknown } }): string =>
     String(response.screen?.text ?? '');
 
-  const buttonsOf = (response: DialogResponse): string[] =>
-    (response.screen?.keyboard?.rows.flat() ?? []).map((b) => b.text);
-
   const startMenu = () => transport.handleStart(ctx(MARINA_TG));
-
-  const pressRaw = (rawCode: string) =>
-    transport.handleCallback(
-      ctx(MARINA_TG, {
-        callbackData: stampedCode(transport, MARINA_TG, rawCode),
-      }),
-    );
 
   /** Настоящий `startQuestionnaire` — анкета in_progress (для conflict). */
   async function createStandard(courseId: string): Promise<string> {
@@ -201,7 +188,7 @@ describe('E2E: экраны ошибок UI-слоя (F-33)', () => {
           ownerInfo: { courseId },
         }),
         new SystemCaller(PROBE_FROM, marina),
-        traceOf(),
+        testTrace(),
       ),
     );
     const list = expectOk(
@@ -209,7 +196,7 @@ describe('E2E: экраны ошибок UI-слоя (F-33)', () => {
         QuestionnaireModuleDef,
         GetQuestionnairesByUserUcDef.command({ userId: marina.user.uuid }),
         marina,
-        traceOf(),
+        testTrace(),
       ),
     );
     const created = list.find((q) => String(q.ownerInfo.courseId) === courseId);
@@ -222,7 +209,7 @@ describe('E2E: экраны ошибок UI-слоя (F-33)', () => {
   test('P8-24: кнопка с несуществующим префиксом контроллера — «Неизвестная команда»', async () => {
     await startMenu();
 
-    const response = await pressRaw('ghost:hub:open');
+    const response = await transport.pressRaw(MARINA_TG, 'ghost:hub:open');
 
     expect(textOf(response)).toContain('Неизвестная команда');
     assertDialogResponseMarkdownSafe(response);
@@ -238,7 +225,7 @@ describe('E2E: экраны ошибок UI-слоя (F-33)', () => {
     expect(String(response.screen?.text)).toContain(
       'Произошла внутренняя ошибка',
     );
-    expect(buttonsOf(response)).toContain('⬅️ Меню');
+    expect(Screen.of(response).texts()).toContain('⬅️ Меню');
     assertDialogResponseMarkdownSafe(response);
   });
 
@@ -263,11 +250,14 @@ describe('E2E: экраны ошибок UI-слоя (F-33)', () => {
   test('P8-33: validation — «Ошибка валидации» со списком полей и выходом', async () => {
     await startMenu();
 
-    const response = await pressRaw('questionnaire:invite:start:not-a-uuid');
+    const response = await transport.pressRaw(
+      MARINA_TG,
+      'questionnaire:invite:start:not-a-uuid',
+    );
 
     expect(textOf(response)).toContain('Ошибка валидации');
     expect(textOf(response)).toContain('questionnaireId');
-    expect(buttonsOf(response)).toContain('⬅️ Меню');
+    expect(Screen.of(response).texts()).toContain('⬅️ Меню');
     assertDialogResponseMarkdownSafe(response);
   });
 
@@ -275,11 +265,14 @@ describe('E2E: экраны ошибок UI-слоя (F-33)', () => {
     const qId = await createStandard(crypto.randomUUID());
     await startMenu();
 
-    const response = await pressRaw(`questionnaire:invite:start:${qId}`);
+    const response = await transport.pressRaw(
+      MARINA_TG,
+      `questionnaire:invite:start:${qId}`,
+    );
 
     expect(textOf(response)).toContain('⚠️');
     expect(textOf(response)).toContain('не в статусе invited');
-    expect(buttonsOf(response)).toContain('⬅️ Меню');
+    expect(Screen.of(response).texts()).toContain('⬅️ Меню');
     assertDialogResponseMarkdownSafe(response);
   });
 
@@ -290,14 +283,15 @@ describe('E2E: экраны ошибок UI-слоя (F-33)', () => {
       await Bun.write(file, '{{{ not json');
       await startMenu();
 
-      const response = await pressRaw(
+      const response = await transport.pressRaw(
+        MARINA_TG,
         `questionnaire:invite:start:${crypto.randomUUID()}`,
       );
 
       expect(textOf(response)).toContain('Произошла внутренняя ошибка');
       expect(textOf(response)).not.toContain('not json');
       expect(textOf(response)).not.toContain('SyntaxError');
-      expect(buttonsOf(response)).toContain('⬅️ Меню');
+      expect(Screen.of(response).texts()).toContain('⬅️ Меню');
       assertDialogResponseMarkdownSafe(response);
     } finally {
       await Bun.write(file, original);
@@ -308,7 +302,7 @@ describe('E2E: экраны ошибок UI-слоя (F-33)', () => {
 
   test('P8-36: errorNotify при вводе — warn поверх диалога, ввод сохраняется', async () => {
     await startMenu();
-    const opened = await pressRaw('lab:fall:open');
+    const opened = await transport.pressRaw(MARINA_TG, 'lab:fall:open');
     expect(textOf(opened)).toContain('Лаборатория ошибок');
     expect(transport.dialogOf(MARINA_TG)?.input).toBeDefined();
 

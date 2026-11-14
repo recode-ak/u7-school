@@ -11,11 +11,9 @@ import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 
 /**
  * E2E самовыхода из учёбы (FR-4, восстановление интерактивности после
@@ -58,29 +56,17 @@ describe('E2E: Самовыход из учёбы (learning/hub, FR-4/FR-6)', ()
     await transport.handleStart(transport.makeBotContext(tgId));
 
     // 2. «🎓 Моя учёба» — хаб
-    const hubResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Моя учёба'),
-      }),
-    );
+    const hubResp = await transport.press(tgId, 'Моя учёба');
     expect(String(hubResp.screen?.text)).toContain('Моя учёба');
 
     // 3. «🚪 Покинуть учёбу» — confirm-диалог
-    const confirmResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Покинуть учёбу'),
-      }),
-    );
+    const confirmResp = await transport.press(tgId, 'Покинуть учёбу');
     const confirmText = String(confirmResp.screen?.text);
     expect(confirmText).toContain('Покинуть учёбу');
     expect(confirmText).toContain('Прогресс сохранится');
 
     // 4. «🚪 Да, покинуть» — UC drop-student, реплика прощания
-    const leaveResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Да, покинуть'),
-      }),
-    );
+    const leaveResp = await transport.press(tgId, 'Да, покинуть');
     const leaveText = String(leaveResp.screen?.text);
     expect(leaveText).toContain('Ты покинул учёбу');
 
@@ -106,7 +92,7 @@ describe('E2E: Самовыход из учёбы (learning/hub, FR-4/FR-6)', ()
         StreamModuleDef,
         GetStudentByUserUcDef.command({ userId: student.user.uuid }),
         student,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
     expect(studentAfter.status).toBe('abandoned');

@@ -6,9 +6,6 @@ import {
   expect,
   test,
 } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
 import { MentorController } from '@u7-scl/bot/mentor/controller';
@@ -16,6 +13,7 @@ import { SchoolController } from '@u7-scl/bot/school/controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { md, mdRaw } from '@u7-scl/core/shared';
 import type { DialogResponse } from '@u7-scl/core/ui';
+import { TempDir } from 'dmg-core/testing';
 import type { Api } from 'grammy';
 import type { BotContext } from '../../src/context';
 import { BotTransport } from '../../src/infra/bot-transport';
@@ -219,11 +217,7 @@ describe('E2E: транспорт — рендер-политика §5', () => 
   /** /start → «📖 Курсы»: экран каталога в диалоге course/course-catalog. */
   async function openCatalog(tgId: number): Promise<DialogResponse> {
     await transport.handleStart(transport.makeBotContext(tgId));
-    return transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Курсы'),
-      }),
-    );
+    return transport.press(tgId, 'Курсы');
   }
 
   test('P1-36: ответ своего диалога — edit на месте со штампом (drill-down каталога)', async () => {
@@ -253,11 +247,7 @@ describe('E2E: транспорт — рендер-политика §5', () => 
     await transport.handleStart(transport.makeBotContext(tgId));
     const menuMessageId = transport.api.sentMessages.at(-1)?.messageId;
 
-    const response = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Школа'),
-      }),
-    );
+    const response = await transport.press(tgId, 'Школа');
 
     expect(String(response.screen?.text)).toContain('U7 School');
     // Старый экран погашен с маркером выбора (текст кнопки)
@@ -274,11 +264,7 @@ describe('E2E: транспорт — рендер-политика §5', () => 
   test('P1-36: notify-реплика не трогает экран и клавиатуру диалога', async () => {
     const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Школа'),
-      }),
-    );
+    await transport.press(tgId, 'Школа');
     const editedBefore = transport.api.editedMessages.length;
     const sentBefore = transport.api.sentMessages.length;
 
@@ -296,11 +282,7 @@ describe('E2E: транспорт — рендер-политика §5', () => 
   test('P1-36: /start — прежний экран гасится без маркера, приветствие отправляется', async () => {
     const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Школа'),
-      }),
-    );
+    await transport.press(tgId, 'Школа');
     const hubMessageId = transport.api.sentMessages.at(-1)?.messageId;
     const hubText = transport.api.sentMessages.at(-1)?.text;
     const sentBefore = transport.api.sentMessages.length;
@@ -396,11 +378,7 @@ describe('E2E: транспорт — сбои, очередь, callback_data, �
   test('P1-39: UUID в callback_data сжимается в shortId, нажатие разжимается (round-trip)', async () => {
     const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Курсы'),
-      }),
-    );
+    await transport.press(tgId, 'Курсы');
 
     const catalog = transport.api.sentMessages.at(-1);
     const codes = (catalog?.keyboard?.rows.flat() ?? []).map((b) => b.code);
@@ -423,11 +401,7 @@ describe('E2E: транспорт — сбои, очередь, callback_data, �
   test('P1-39: код `app:` не сжимается — только штамп', async () => {
     const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Школа'),
-      }),
-    );
+    await transport.press(tgId, 'Школа');
 
     const menuCode = pressedCode(transport, tgId, 'Главное меню');
     expect(menuCode).toBe(`app:main-menu:${currentStamp(transport, tgId)}`);
@@ -448,16 +422,8 @@ describe('E2E: транспорт — сбои, очередь, callback_data, �
     const tgId = MENTOR_TG;
     // Ментор → «Инструменты ментора» → «Создать поток»: wizard ставит awaitInput
     await transport.handleStart(transport.makeBotContext(tgId));
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Инструменты ментора'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Создать поток'),
-      }),
-    );
+    await transport.press(tgId, 'Инструменты ментора');
+    await transport.press(tgId, 'Создать поток');
     expect(transport.dialogOf(tgId)?.input).toBeDefined();
     const editedBefore = transport.api.editedMessages.length;
 
@@ -529,76 +495,70 @@ describe('E2E: транспорт — сбои, очередь, callback_data, �
 
   test('P1-40: рестарт — сессии и shortId восстанавливаются, старые кнопки живы', async () => {
     const tgId = guest.user.view().telegramId;
-    const dir = mkdtempSync(join(tmpdir(), 'u7-bot-restart-'));
-    try {
-      const repoFiles = () =>
-        new JsonBotSessionRepo(
-          join(dir, 'sessions.json'),
-          join(dir, 'short-ids.json'),
-        );
-      /** Контекст с update_id: BotTransport ведёт апдейт в BotRequestContext. */
-      const ctx = (
-        updateId: number,
-        payload: { text: string } | { callbackData: string },
-      ): BotContext => {
-        const base = transport.makeBotContext(
-          tgId,
-          'callbackData' in payload
-            ? { callbackData: payload.callbackData }
-            : {},
-        );
-        (base as { update: unknown }).update = { update_id: updateId };
-        if ('text' in payload) {
-          (base as { message: unknown }).message = { text: payload.text };
-        }
-        return base;
-      };
-
-      // Первый процесс: /start → каталог курсов (кладёт сессию и shortId)
-      const apiFirst = new RecordingBotApi();
-      const before = new BotTransport(
-        transport.uiApp,
-        apiFirst as unknown as Api,
-        repoFiles(),
+    using dir = TempDir.create('u7-bot-restart-');
+    const repoFiles = () =>
+      new JsonBotSessionRepo(
+        dir.file('sessions.json'),
+        dir.file('short-ids.json'),
       );
-      await before.handleCommand(ctx(1, { text: '/start' }));
-      const menuCode = apiFirst.sentMessages
-        .at(-1)
-        ?.keyboard?.rows.flat()
-        .find((b) => b.text.includes('Курсы'))?.code;
-      if (menuCode === undefined) throw new Error('нет кнопки «Курсы»');
-      await before.handleCallback(ctx(2, { callbackData: menuCode }));
-
-      const catalogCode = apiFirst.sentMessages
-        .at(-1)
-        ?.keyboard?.rows.flat()[0]?.code;
-      if (catalogCode === undefined) {
-        throw new Error('каталог курсов без кнопок');
+    /** Контекст с update_id: BotTransport ведёт апдейт в BotRequestContext. */
+    const ctx = (
+      updateId: number,
+      payload: { text: string } | { callbackData: string },
+    ): BotContext => {
+      const base = transport.makeBotContext(
+        tgId,
+        'callbackData' in payload ? { callbackData: payload.callbackData } : {},
+      );
+      (base as { update: unknown }).update = { update_id: updateId };
+      if ('text' in payload) {
+        (base as { message: unknown }).message = { text: payload.text };
       }
-      const dialogBefore = apiFirst.sentMessages.length;
+      return base;
+    };
 
-      // Рестарт: новый процесс восстанавливает сессии и shortId из файлов
-      const apiAfter = new RecordingBotApi();
-      const after = new BotTransport(
-        transport.uiApp,
-        apiAfter as unknown as Api,
-        repoFiles(),
-      );
-      await after.restore();
+    // Первый процесс: /start → каталог курсов (кладёт сессию и shortId)
+    const apiFirst = new RecordingBotApi();
+    const before = new BotTransport(
+      transport.uiApp,
+      apiFirst as unknown as Api,
+      repoFiles(),
+    );
+    await before.handleCommand(ctx(1, { text: '/start' }));
+    const menuCode = apiFirst.sentMessages
+      .at(-1)
+      ?.keyboard?.rows.flat()
+      .find((b) => b.text.includes('Курсы'))?.code;
+    if (menuCode === undefined) throw new Error('нет кнопки «Курсы»');
+    await before.handleCallback(ctx(2, { callbackData: menuCode }));
 
-      // Старая кнопка (сжатый shortId из прошлого процесса) нажимается
-      await after.handleCallback(ctx(3, { callbackData: catalogCode }));
-      expect(transport.alerts).toEqual([]);
-      expect(
-        apiAfter.sentMessages.length + apiAfter.editedMessages.length,
-      ).toBeGreaterThan(0);
-      // Диалог продолжается: второй экран каталога, не меню и не ошибка
-      const screens = [...apiAfter.sentMessages, ...apiAfter.editedMessages];
-      expect(screens.map((s) => s.text).join('\n')).toContain('Курс');
-      expect(apiFirst.sentMessages.length).toBe(dialogBefore);
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
+    const catalogCode = apiFirst.sentMessages
+      .at(-1)
+      ?.keyboard?.rows.flat()[0]?.code;
+    if (catalogCode === undefined) {
+      throw new Error('каталог курсов без кнопок');
     }
+    const dialogBefore = apiFirst.sentMessages.length;
+
+    // Рестарт: новый процесс восстанавливает сессии и shortId из файлов
+    const apiAfter = new RecordingBotApi();
+    const after = new BotTransport(
+      transport.uiApp,
+      apiAfter as unknown as Api,
+      repoFiles(),
+    );
+    await after.restore();
+
+    // Старая кнопка (сжатый shortId из прошлого процесса) нажимается
+    await after.handleCallback(ctx(3, { callbackData: catalogCode }));
+    expect(transport.alerts).toEqual([]);
+    expect(
+      apiAfter.sentMessages.length + apiAfter.editedMessages.length,
+    ).toBeGreaterThan(0);
+    // Диалог продолжается: второй экран каталога, не меню и не ошибка
+    const screens = [...apiAfter.sentMessages, ...apiAfter.editedMessages];
+    expect(screens.map((s) => s.text).join('\n')).toContain('Курс');
+    expect(apiFirst.sentMessages.length).toBe(dialogBefore);
   });
 });
 

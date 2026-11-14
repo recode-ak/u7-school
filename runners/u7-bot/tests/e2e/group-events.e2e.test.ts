@@ -88,23 +88,6 @@ async function hasRole(
   return actor.user.hasRole(role);
 }
 
-/** Ждёт проактивного сообщения адресату (poll sentMessages). */
-async function waitMessageFor(
-  transport: Transport,
-  telegramId: number,
-  timeoutMs = 3000,
-): Promise<string | undefined> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const found = transport.api.sentMessages.find(
-      (m) => m.telegramId === telegramId,
-    );
-    if (found) return found.text;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-  return undefined;
-}
-
 describe('E2E: события школьной группы (SUBSCRIBER)', () => {
   let stand: Stand;
 
@@ -266,7 +249,7 @@ describe('E2E: события группы потока (ментору об у�
       newStatus: 'member',
     });
 
-    const notice = await waitMessageFor(transport, MENTOR_TG);
+    const notice = await transport.waitForMessage(MENTOR_TG);
     expect(notice).toBeDefined();
     expect(notice).toContain(
       '⚠️ В группу «JS Core — Поток 2» вступил неизвестный участник',

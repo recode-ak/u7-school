@@ -23,7 +23,6 @@ import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import type { OperationRecord } from 'dmg-core/app';
@@ -116,21 +115,9 @@ describe('Бот: requestId из update_id (e2e)', () => {
     return (await oplog()).filter((r) => r.module === 'wish' && r.op === op);
   }
 
-  /** Нажатие кнопки с сырым кодом и актуальным штампом. */
-  function press(code: string): Promise<DialogResponse> {
-    return transport.handleCallback(
-      transport.makeBotContext(guest.user.view().telegramId, {
-        callbackData: stampedCode(
-          transport,
-          guest.user.view().telegramId,
-          code,
-        ),
-      }),
-    );
-  }
-
   test('повтор апдейта после падения до сохранения сессии — UC не исполнен повторно, экран тот же', async () => {
-    const first = await press(
+    const first = await transport.pressRaw(
+      guest.user.view().telegramId,
       `course:course-catalog:apply:${INSTANT_COURSE_ID}`,
     );
     expect(String(first.screen?.text)).toContain('зафиксировано');
@@ -147,7 +134,10 @@ describe('Бот: requestId из update_id (e2e)', () => {
   });
 
   test('повтор апдейта со сменившимся экраном отклоняет транспорт — до UC не доходит', async () => {
-    await press(`course:course-catalog:apply:${INSTANT_COURSE_ID}`);
+    await transport.pressRaw(
+      guest.user.view().telegramId,
+      `course:course-catalog:apply:${INSTANT_COURSE_ID}`,
+    );
     const before = (await oplog()).length;
 
     const repeated = await transport.redeliver();
@@ -157,7 +147,10 @@ describe('Бот: requestId из update_id (e2e)', () => {
   });
 
   test('два UC одного апдейта — общий correlationId tg:<update_id>, свои requestId', async () => {
-    await press('probe:two-calls:go');
+    await transport.pressRaw(
+      guest.user.view().telegramId,
+      'probe:two-calls:go',
+    );
     const updateId = transport.lastUpdateId;
 
     const runs = (await wishOps('listUserWishes')).filter(

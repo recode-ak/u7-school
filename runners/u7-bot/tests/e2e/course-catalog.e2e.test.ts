@@ -9,12 +9,11 @@ import {
 import { AppController } from '@u7-scl/bot/app/app-controller';
 import { CoursesController } from '@u7-scl/bot/courses/controller';
 import type { DialogResponse } from '@u7-scl/core/ui';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import { CORE_EDUCATION_WORLD, type WorldDefinition } from '../worlds';
@@ -34,46 +33,9 @@ const LESSON_VARIABLES = 'c0c0c0c0-c0c0-c0c0-c0c0-c0c0c0c0c0c0';
 
 const UNKNOWN_ID = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 
-/** Кнопки экрана — плоским списком (текст и код). */
-function buttonsOf(
-  response: DialogResponse,
-): Array<{ text: string; code: string }> {
-  return response.screen?.keyboard?.rows.flat() ?? [];
-}
-
-function buttonTexts(response: DialogResponse): string[] {
-  return buttonsOf(response).map((b) => b.text);
-}
-
 /** Экранный текст ответа. */
 function textOf(response: DialogResponse): string {
   return String(response.screen?.text ?? '');
-}
-
-/** Нажатие кнопки по подстроке текста: код берётся отштампованным из Api-записей. */
-async function press(
-  transport: TestBotTransport,
-  tgId: number,
-  textContains: string,
-): Promise<DialogResponse> {
-  return transport.handleCallback(
-    transport.makeBotContext(tgId, {
-      callbackData: pressedCode(transport, tgId, textContains),
-    }),
-  );
-}
-
-/** Нажатие «крафтового» кода (адрес вручную) с актуальным штампом экрана. */
-async function pressRaw(
-  transport: TestBotTransport,
-  tgId: number,
-  rawCode: string,
-): Promise<DialogResponse> {
-  return transport.handleCallback(
-    transport.makeBotContext(tgId, {
-      callbackData: stampedCode(transport, tgId, rawCode),
-    }),
-  );
 }
 
 /** /start → «📖 Курсы»: каталог открыт, экран готов к нажатиям. */
@@ -82,7 +44,7 @@ async function openCatalog(
   tgId: number,
 ): Promise<DialogResponse> {
   await transport.handleStart(transport.makeBotContext(tgId));
-  return press(transport, tgId, 'Курсы');
+  return transport.press(tgId, 'Курсы');
 }
 
 /**
@@ -115,8 +77,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-04: неизвестный курс — «Курс не найден или недоступен»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:course:${UNKNOWN_ID}`,
     );
@@ -126,8 +87,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-07: legacy `phases:<courseId>` — та же карточка курса', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:phases:${COURSE_JS_BASICS}`,
     );
@@ -139,8 +99,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-09: `phase` без courseId — «Курс не указан»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       'course:course-catalog:phase',
     );
@@ -150,8 +109,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-10: `phase` с неизвестным курсом — «Курс не найден или недоступен»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:phase:${UNKNOWN_ID}:0`,
     );
@@ -161,8 +119,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-11: `phase` с несуществующим индексом этапа — «Этап не найден или недоступен»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:phase:${COURSE_JS_BASICS}:99`,
     );
@@ -174,30 +131,33 @@ describe('E2E: каталог курсов', () => {
     const course = await openCatalog(transport, tgId);
     expect(textOf(course)).toContain('Этапы курса');
 
-    const second = await press(transport, tgId, 'Алгоритмика');
+    const second = await transport.press(tgId, 'Алгоритмика');
     expect(textOf(second)).toContain('Этап 2/2');
-    expect(buttonTexts(second)).toContainEqual(
+    expect(Screen.of(second).texts()).toContainEqual(
       expect.stringContaining('Пред. этап'),
     );
     // На границе курса кнопки «дальше» нет
-    expect(buttonTexts(second).some((t) => t.includes('След. этап'))).toBe(
-      false,
-    );
+    expect(
+      Screen.of(second)
+        .texts()
+        .some((t) => t.includes('След. этап')),
+    ).toBe(false);
 
-    const first = await press(transport, tgId, 'Пред. этап');
+    const first = await transport.press(tgId, 'Пред. этап');
     expect(textOf(first)).toContain('Этап 1/2');
-    expect(buttonTexts(first)).toContainEqual(
+    expect(Screen.of(first).texts()).toContainEqual(
       expect.stringContaining('След. этап'),
     );
-    expect(buttonTexts(first).some((t) => t.includes('Пред. этап'))).toBe(
-      false,
-    );
+    expect(
+      Screen.of(first)
+        .texts()
+        .some((t) => t.includes('Пред. этап')),
+    ).toBe(false);
   });
 
   test('P2-14: legacy `modules:<courseId>:<phaseIdx>` — карточка этапа', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:modules:${COURSE_JS_BASICS}:0`,
     );
@@ -209,8 +169,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-16: `module` без moduleId — «Модуль не указан»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:module:${COURSE_JS_BASICS}:0`,
     );
@@ -220,8 +179,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-17: `module`, курс не определился даже по модулю — «Курс не найден или недоступен»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:module:${UNKNOWN_ID}:0:${UNKNOWN_ID}`,
     );
@@ -231,8 +189,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-18: `module`, снимок модуля недоступен — «Модуль не найден или недоступен»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:module:${COURSE_JS_BASICS}:0:${UNKNOWN_ID}`,
     );
@@ -243,8 +200,7 @@ describe('E2E: каталог курсов', () => {
   test('P2-19: `module` не из этапа — «Модуль не найден или недоступен»', async () => {
     await openCatalog(transport, tgId);
     // Модуль «JavaScript Основы» входит в программу js-basics, но не в курс алгоритмов
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:module:${COURSE_ALGORITHMS}:0:${MODULE_JS_SYNTAX}`,
     );
@@ -254,8 +210,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-22: legacy `projects:<courseId>:<phaseIdx>:<moduleId>` — карточка модуля', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:projects:${COURSE_JS_BASICS}:0:${MODULE_JS_SYNTAX}`,
     );
@@ -267,8 +222,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-25: `prj`, снимок модуля недоступен — «Модуль не найден или недоступен»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:prj:${COURSE_JS_BASICS}:${UNKNOWN_ID}:${PROJECT_INTRO}`,
     );
@@ -278,8 +232,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-26: `prj`, проекта нет в модуле — «Проект не найден»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:prj:${COURSE_JS_BASICS}:${MODULE_JS_SYNTAX}:${UNKNOWN_ID}`,
     );
@@ -289,8 +242,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-29: legacy `lessons:<courseId>:<phaseIdx>:<moduleId>:<projectIdx>` — карточка проекта', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:lessons:${COURSE_JS_BASICS}:0:${MODULE_JS_SYNTAX}:0`,
     );
@@ -300,8 +252,7 @@ describe('E2E: каталог курсов', () => {
     expect(text).toContain('Введение');
 
     // Несуществующий индекс проекта — «Проект не найден»
-    const missing = await pressRaw(
-      transport,
+    const missing = await transport.pressRaw(
       tgId,
       `course:course-catalog:lessons:${COURSE_JS_BASICS}:0:${MODULE_JS_SYNTAX}:99`,
     );
@@ -310,8 +261,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-31: `les`, проект не найден ни в одном модуле курса — «Модуль не найден или недоступен»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:les:${COURSE_JS_BASICS}:${UNKNOWN_ID}:${LESSON_VARIABLES}`,
     );
@@ -321,8 +271,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-32: `les`, проекта нет в снимке модуля — «Проект не найден»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:les:${COURSE_JS_BASICS}:${MODULE_JS_SYNTAX}:${UNKNOWN_ID}:${LESSON_VARIABLES}`,
     );
@@ -332,8 +281,7 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-33: `les`, урока нет в проекте — «Урок не найден»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:les:${COURSE_JS_BASICS}:${MODULE_JS_SYNTAX}:${PROJECT_INTRO}:${UNKNOWN_ID}`,
     );
@@ -343,36 +291,40 @@ describe('E2E: каталог курсов', () => {
 
   test('P2-35: «◀️ Пред. урок» / «След. урок ▶️» в пределах проекта', async () => {
     await openCatalog(transport, tgId);
-    await press(transport, tgId, 'Синтаксис');
-    await press(transport, tgId, 'JavaScript Основы');
-    await press(transport, tgId, 'Введение');
+    await transport.press(tgId, 'Синтаксис');
+    await transport.press(tgId, 'JavaScript Основы');
+    await transport.press(tgId, 'Введение');
 
-    const first = await press(transport, tgId, 'Переменные и типы');
+    const first = await transport.press(tgId, 'Переменные и типы');
     expect(textOf(first)).toContain('Урок 1/2');
-    expect(buttonTexts(first)).toContainEqual(
+    expect(Screen.of(first).texts()).toContainEqual(
       expect.stringContaining('След. урок'),
     );
-    expect(buttonTexts(first).some((t) => t.includes('Пред. урок'))).toBe(
-      false,
-    );
+    expect(
+      Screen.of(first)
+        .texts()
+        .some((t) => t.includes('Пред. урок')),
+    ).toBe(false);
 
-    const second = await press(transport, tgId, 'След. урок');
+    const second = await transport.press(tgId, 'След. урок');
     expect(textOf(second)).toContain('Урок 2/2');
     expect(textOf(second)).toContain('Условные операторы');
-    expect(buttonTexts(second)).toContainEqual(
+    expect(Screen.of(second).texts()).toContainEqual(
       expect.stringContaining('Пред. урок'),
     );
-    expect(buttonTexts(second).some((t) => t.includes('След. урок'))).toBe(
-      false,
-    );
+    expect(
+      Screen.of(second)
+        .texts()
+        .some((t) => t.includes('След. урок')),
+    ).toBe(false);
   });
 
   test('P2-37: тело шага на уровне урока не показывается — только заголовки', async () => {
     await openCatalog(transport, tgId);
-    await press(transport, tgId, 'Синтаксис');
-    await press(transport, tgId, 'JavaScript Основы');
-    await press(transport, tgId, 'Введение');
-    const lesson = await press(transport, tgId, 'Переменные и типы');
+    await transport.press(tgId, 'Синтаксис');
+    await transport.press(tgId, 'JavaScript Основы');
+    await transport.press(tgId, 'Введение');
+    const lesson = await transport.press(tgId, 'Переменные и типы');
 
     const text = textOf(lesson);
     expect(text).toContain('Шаги урока');
@@ -382,35 +334,35 @@ describe('E2E: каталог курсов', () => {
     expect(text).not.toContain('рекомендуется объявлять переменные');
     // Кнопок входа в шаг нет: адреса с id шага не встречаются
     expect(
-      buttonsOf(lesson).some((b) => b.code.includes('d0d0d0d0-d0d0')),
+      Screen.of(lesson)
+        .buttons()
+        .some((b) => b.code.includes('d0d0d0d0-d0d0')),
     ).toBe(false);
   });
 
   test('P2-38: модуль в нескольких курсах — drill-down остаётся в выбранном курсе', async () => {
     await openCatalog(transport, tgId);
-    const course = await pressRaw(
-      transport,
+    const course = await transport.pressRaw(
       tgId,
       `course:course-catalog:course:${COURSE_WITH_SHARED_MODULE}`,
     );
     expect(textOf(course)).toContain('Курс 5/6');
 
-    const module = await press(transport, tgId, 'JavaScript Основы');
+    const module = await transport.press(tgId, 'JavaScript Основы');
     const moduleText = textOf(module);
     expect(moduleText).toContain('Проекты модуля');
     // Крошки и навигация — в контексте выбранного курса, не первого в каталоге
     expect(moduleText).toContain('Курс 5/6');
     expect(moduleText).not.toContain('Курс 1/6');
 
-    const back = await press(transport, tgId, 'Назад к курсу');
+    const back = await transport.press(tgId, 'Назад к курсу');
     expect(textOf(back)).toContain('Курс 5/6');
     expect(textOf(back)).toContain('Модули этапа');
   });
 
   test('P2-60: неизвестный action у `course:course-catalog:*` — «Неизвестная команда»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       'course:course-catalog:xyz',
     );
@@ -459,15 +411,14 @@ describe('E2E: каталог курсов без опубликованных �
 
     const text = textOf(response);
     expect(text).toContain('Пока нет доступных курсов');
-    expect(buttonTexts(response)).toContainEqual(
+    expect(Screen.of(response).texts()).toContainEqual(
       expect.stringContaining('Главное меню'),
     );
   });
 
   test('P2-24: `prj`, курс не определён — «Курс не найден или недоступен»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:prj:${UNKNOWN_ID}:${MODULE_JS_SYNTAX}:${PROJECT_INTRO}`,
     );
@@ -477,8 +428,7 @@ describe('E2E: каталог курсов без опубликованных �
 
   test('P2-34: `les`, курс не определён — «Курс не найден или недоступен»', async () => {
     await openCatalog(transport, tgId);
-    const response = await pressRaw(
-      transport,
+    const response = await transport.pressRaw(
       tgId,
       `course:course-catalog:les:${UNKNOWN_ID}:${PROJECT_INTRO}:${LESSON_VARIABLES}`,
     );
@@ -573,22 +523,26 @@ describe('E2E: каталог курсов — соседи модулей', () 
     const course = await openCatalog(transport, tgId);
     expect(textOf(course)).toContain('Модули этапа');
 
-    const first = await press(transport, tgId, 'Первый модуль');
+    const first = await transport.press(tgId, 'Первый модуль');
     expect(textOf(first)).toContain('Модуль 1/2');
-    expect(buttonTexts(first)).toContainEqual(
+    expect(Screen.of(first).texts()).toContainEqual(
       expect.stringContaining('След. модуль'),
     );
-    expect(buttonTexts(first).some((t) => t.includes('Пред. модуль'))).toBe(
-      false,
-    );
+    expect(
+      Screen.of(first)
+        .texts()
+        .some((t) => t.includes('Пред. модуль')),
+    ).toBe(false);
 
-    const second = await press(transport, tgId, 'След. модуль');
+    const second = await transport.press(tgId, 'След. модуль');
     expect(textOf(second)).toContain('Модуль 2/2');
-    expect(buttonTexts(second)).toContainEqual(
+    expect(Screen.of(second).texts()).toContainEqual(
       expect.stringContaining('Пред. модуль'),
     );
-    expect(buttonTexts(second).some((t) => t.includes('След. модуль'))).toBe(
-      false,
-    );
+    expect(
+      Screen.of(second)
+        .texts()
+        .some((t) => t.includes('След. модуль')),
+    ).toBe(false);
   });
 });

@@ -16,15 +16,13 @@ import {
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/domain/user/testing';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 import type {
   PersonDef,
   StepDef,
@@ -360,37 +358,10 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
   const notifyOf = (response: DialogResponse): string =>
     String(response.notify?.text ?? '');
 
-  const buttonsOf = (response: DialogResponse): string[] =>
-    response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-
-  /** Нажатие кнопки с текущего экрана (код берётся отштампованным). */
-  async function press(
-    tgId: number,
-    textContains: string,
-  ): Promise<DialogResponse> {
-    return stand.transport.handleCallback(
-      stand.transport.makeBotContext(tgId, {
-        callbackData: pressedCode(stand.transport, tgId, textContains),
-      }),
-    );
-  }
-
-  /** Нажатие кода, которого нет на экране: ветка «устаревший экран»/адрес вручную. */
-  async function pressCode(
-    tgId: number,
-    rawCode: string,
-  ): Promise<DialogResponse> {
-    return stand.transport.handleCallback(
-      stand.transport.makeBotContext(tgId, {
-        callbackData: stampedCode(stand.transport, tgId, rawCode),
-      }),
-    );
-  }
-
   /** /start → «🎓 Моя учёба»: экран хаба. */
   async function openHub(tgId: number): Promise<DialogResponse> {
     await stand.transport.handleStart(stand.transport.makeBotContext(tgId));
-    return press(tgId, 'Моя учёба');
+    return stand.transport.press(tgId, 'Моя учёба');
   }
 
   /**
@@ -399,13 +370,13 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
    */
   async function openHubViaCode(tgId: number): Promise<DialogResponse> {
     await stand.transport.handleStart(stand.transport.makeBotContext(tgId));
-    return pressCode(tgId, 'learning:hub:my-study');
+    return stand.transport.pressRaw(tgId, 'learning:hub:my-study');
   }
 
   /** Хаб → «Продолжить/Начать учёбу»: экран текущего шага. */
   async function openCurrentStep(tgId: number): Promise<DialogResponse> {
     await openHub(tgId);
-    return press(tgId, 'учёбу');
+    return stand.transport.press(tgId, 'учёбу');
   }
 
   /** Запись студента после сценария (чтение через UC, вызывающий — ментор). */
@@ -415,7 +386,7 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
         StreamModuleDef,
         GetStudentProgressUcDef.command({ studentId }),
         stand.mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     ).student;
   }
@@ -447,14 +418,14 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const hub = await openHub(TG.lesson);
 
     expect(textOf(hub)).toContain('Моя учёба');
-    expect(buttonsOf(hub)[0]).toBe('▶️ Продолжить учёбу');
-    expect(buttonsOf(hub)).toContain('📖 Программа модуля');
-    expect(buttonsOf(hub)).toContain('📊 Мой прогресс');
+    expect(Screen.of(hub).texts()[0]).toBe('▶️ Продолжить учёбу');
+    expect(Screen.of(hub).texts()).toContain('📖 Программа модуля');
+    expect(Screen.of(hub).texts()).toContain('📊 Мой прогресс');
   });
 
   test('P3-05: хаб завершившего студента — нет «учёбы» и программы, остаются прогресс, уход и меню', async () => {
     const hub = await openHubViaCode(TG.finished);
-    const buttons = buttonsOf(hub);
+    const buttons = Screen.of(hub).texts();
 
     expect(textOf(hub)).toContain('Моя учёба');
     expect(buttons.some((t) => t.includes('Продолжить'))).toBe(false);
@@ -469,7 +440,10 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     await stand.transport.handleStart(
       stand.transport.makeBotContext(TG.noRecord),
     );
-    const response = await pressCode(TG.noRecord, 'learning:hub:my-study');
+    const response = await stand.transport.pressRaw(
+      TG.noRecord,
+      'learning:hub:my-study',
+    );
 
     expect(textOf(response)).toContain('Вы не записаны ни на один поток');
   });
@@ -480,13 +454,13 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const tgId = TG.finished;
     await openHubViaCode(tgId);
 
-    const response = await pressCode(
+    const response = await stand.transport.pressRaw(
       tgId,
       'learning:step-view:my-study:continue',
     );
 
     expect(textOf(response)).toContain('Вы завершили обучение в потоке');
-    expect(buttonsOf(response)).toEqual([]);
+    expect(Screen.of(response).texts()).toEqual([]);
   });
 
   test('P3-09: все шаги пройдены, итог не поставлен — экран «Поток полностью завершён»', async () => {
@@ -494,13 +468,13 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     await openHub(tgId);
     const before = stand.transport.api.sentMessages.length;
 
-    const response = await press(tgId, 'учёбу');
+    const response = await stand.transport.press(tgId, 'учёбу');
 
     expect(textOf(response)).toContain('Поток полностью завершён');
     expect(textOf(response)).toContain(
       'Поздравляю с успешным окончанием обучения',
     );
-    expect(buttonsOf(response)).toContain('↩️ Главное меню');
+    expect(Screen.of(response).texts()).toContain('↩️ Главное меню');
     // Экран — новое сообщение, а не правка карточки шага
     expect(stand.transport.api.sentMessages.length).toBeGreaterThan(before);
   });
@@ -510,37 +484,39 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const step = await openCurrentStep(tgId);
     expect(textOf(step)).toContain('Шаг 2');
 
-    const transition = await press(tgId, 'Выполнено');
+    const transition = await stand.transport.press(tgId, 'Выполнено');
     const text = textOf(transition);
 
     expect(text).toContain('Урок «Ввод и вывод» завершён');
     expect(text).toContain('Прогресс по модулю');
     expect(text).toContain('Прогресс по проекту');
-    expect(buttonsOf(transition)).toContain('▶️ Начать следующий урок');
-    expect(buttonsOf(transition)).toContain('↩️ Главное меню');
+    expect(Screen.of(transition).texts()).toContain('▶️ Начать следующий урок');
+    expect(Screen.of(transition).texts()).toContain('↩️ Главное меню');
   });
 
   test('P3-12: «Выполнено» на последнем шаге проекта — экран «Проект завершён»', async () => {
     const tgId = TG.project;
     await openCurrentStep(tgId);
 
-    const transition = await press(tgId, 'Выполнено');
+    const transition = await stand.transport.press(tgId, 'Выполнено');
     const text = textOf(transition);
 
     expect(text).toContain('Проект «Введение» завершён');
     expect(text).toContain('Прогресс по модулю');
-    expect(buttonsOf(transition)).toContain('▶️ Начать следующий проект');
-    expect(buttonsOf(transition)).toContain('↩️ Главное меню');
+    expect(Screen.of(transition).texts()).toContain(
+      '▶️ Начать следующий проект',
+    );
+    expect(Screen.of(transition).texts()).toContain('↩️ Главное меню');
   });
 
   test('P3-13: «Выполнено» на последнем шаге программы — экран «Поток полностью завершён»', async () => {
     const tgId = TG.stream;
     await openCurrentStep(tgId);
 
-    const transition = await press(tgId, 'Выполнено');
+    const transition = await stand.transport.press(tgId, 'Выполнено');
 
     expect(textOf(transition)).toContain('Поток полностью завершён');
-    expect(buttonsOf(transition)).toContain('↩️ Главное меню');
+    expect(Screen.of(transition).texts()).toContain('↩️ Главное меню');
 
     const record = await studentRecord(studentId('stud-stream'));
     expect(record.status).toBe('active');
@@ -550,13 +526,13 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const tgId = TG.view;
     await openHub(tgId);
 
-    const first = await pressCode(
+    const first = await stand.transport.pressRaw(
       tgId,
       `learning:step-view:complete:${STREAM_ID}:${STEP_SETUP}`,
     );
     expect(textOf(first)).toContain('Шаг 2');
 
-    const repeat = await pressCode(
+    const repeat = await stand.transport.pressRaw(
       tgId,
       `learning:step-view:complete:${STREAM_ID}:${STEP_SETUP}`,
     );
@@ -568,7 +544,7 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const tgId = TG.continueStudy;
     await openHub(tgId);
 
-    const response = await pressCode(
+    const response = await stand.transport.pressRaw(
       tgId,
       `learning:step-view:complete:${FOREIGN_STREAM_ID}:${STEP_SETUP}`,
     );
@@ -582,7 +558,10 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const tgId = TG.continueStudy;
     await openHub(tgId);
 
-    const response = await pressCode(tgId, 'learning:step-view:complete');
+    const response = await stand.transport.pressRaw(
+      tgId,
+      'learning:step-view:complete',
+    );
 
     expect(textOf(response)).toContain('Неизвестная команда');
   });
@@ -593,9 +572,12 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const tgId = TG.view;
     await openHub(tgId);
 
-    const card = await pressCode(tgId, `learning:nav-tree:step:${STEP_SETUP}`);
+    const card = await stand.transport.pressRaw(
+      tgId,
+      `learning:nav-tree:step:${STEP_SETUP}`,
+    );
     const text = textOf(card);
-    const buttons = buttonsOf(card);
+    const buttons = Screen.of(card).texts();
 
     expect(text).toContain('Программа модуля');
     expect(text).toContain('Введение');
@@ -610,7 +592,10 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const tgId = TG.longBody;
     await openHub(tgId);
 
-    const card = await pressCode(tgId, `learning:nav-tree:step:${STEP_TYPES}`);
+    const card = await stand.transport.pressRaw(
+      tgId,
+      `learning:nav-tree:step:${STEP_TYPES}`,
+    );
     const text = textOf(card);
 
     expect(text).toContain('Контент сокращён');
@@ -622,7 +607,7 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const tgId = TG.continueStudy;
     await openHub(tgId);
 
-    const response = await pressCode(
+    const response = await stand.transport.pressRaw(
       tgId,
       `learning:nav-tree:step:${STEP_VARS}`,
     );
@@ -636,7 +621,10 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const tgId = TG.continueStudy;
     await openHub(tgId);
 
-    const response = await pressCode(tgId, 'learning:nav-tree:unknown:xyz');
+    const response = await stand.transport.pressRaw(
+      tgId,
+      'learning:nav-tree:unknown:xyz',
+    );
 
     expect(textOf(response)).toContain('Неизвестная команда');
   });
@@ -646,7 +634,10 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
       stand.transport.makeBotContext(TG.noRecord),
     );
 
-    const response = await pressCode(TG.noRecord, 'learning:nav-tree:root');
+    const response = await stand.transport.pressRaw(
+      TG.noRecord,
+      'learning:nav-tree:root',
+    );
 
     expect(textOf(response)).toContain('Вы не записаны ни на один поток');
   });
@@ -657,7 +648,7 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const tgId = TG.continueStudy;
     await openHub(tgId);
 
-    const response = await pressCode(
+    const response = await stand.transport.pressRaw(
       tgId,
       `learning:progress:progress:${FOREIGN_STREAM_ID}`,
     );
@@ -673,7 +664,7 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const tgId = TG.noSnapshot;
     await openHub(tgId);
 
-    const response = await press(tgId, 'Мой прогресс');
+    const response = await stand.transport.press(tgId, 'Мой прогресс');
     const text = textOf(response);
 
     expect(text).toContain('Мой прогресс');
@@ -687,7 +678,7 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
       stand.transport.makeBotContext(TG.noRecord),
     );
 
-    const response = await pressCode(
+    const response = await stand.transport.pressRaw(
       TG.noRecord,
       `learning:progress:progress:${STREAM_ID}`,
     );
@@ -701,33 +692,36 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
     const tgId = TG.leave;
     await openHub(tgId);
 
-    const confirm = await press(tgId, 'Покинуть учёбу');
+    const confirm = await stand.transport.press(tgId, 'Покинуть учёбу');
 
     expect(textOf(confirm)).toContain('Покинуть учёбу?');
     expect(textOf(confirm)).toContain('Прогресс сохранится');
-    expect(buttonsOf(confirm)).toEqual(['🚪 Да, покинуть', '❌ Остаться']);
+    expect(Screen.of(confirm).texts()).toEqual([
+      '🚪 Да, покинуть',
+      '❌ Остаться',
+    ]);
   });
 
   test('P3-30: подтверждение → «Остаться» — возврат в хаб', async () => {
     const tgId = TG.leave;
     await openHub(tgId);
-    await press(tgId, 'Покинуть учёбу');
+    await stand.transport.press(tgId, 'Покинуть учёбу');
 
-    const back = await press(tgId, 'Остаться');
+    const back = await stand.transport.press(tgId, 'Остаться');
 
     expect(textOf(back)).toContain('Моя учёба');
-    expect(buttonsOf(back)).toContain('▶️ Начать учёбу');
+    expect(Screen.of(back).texts()).toContain('▶️ Начать учёбу');
   });
 
   test('P3-31: «Да, покинуть» — экран ухода, abandoned, кик из группы и уведомление ментору', async () => {
     const tgId = TG.drop;
     await openHub(tgId);
-    await press(tgId, 'Покинуть учёбу');
+    await stand.transport.press(tgId, 'Покинуть учёбу');
 
-    const left = await press(tgId, 'Да, покинуть');
+    const left = await stand.transport.press(tgId, 'Да, покинуть');
 
     expect(textOf(left)).toContain('Ты покинул учёбу');
-    expect(buttonsOf(left)).toContain('⬅️ В меню');
+    expect(Screen.of(left).texts()).toContain('⬅️ В меню');
 
     const record = await studentRecord(studentId('stud-drop'));
     expect(record.status).toBe('abandoned');
@@ -749,9 +743,9 @@ describe('E2E: «Моя учёба» — хаб, шаги, программа, �
   test('P3-34: уход студента с итоговым статусом — отказ «Нельзя снять студента с учёбы»', async () => {
     const tgId = TG.finished;
     await openHubViaCode(tgId);
-    await press(tgId, 'Покинуть учёбу');
+    await stand.transport.press(tgId, 'Покинуть учёбу');
 
-    const refused = await press(tgId, 'Да, покинуть');
+    const refused = await stand.transport.press(tgId, 'Да, покинуть');
 
     expect(refused.notify?.kind).toBe('warn');
     expect(notifyOf(refused)).toContain('Нельзя снять студента с учёбы');

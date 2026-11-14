@@ -19,11 +19,12 @@ import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
   pressedCode,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { waitUntil } from '@u7-scl/test-helpers/wait-until';
 import type { AnyEventDef } from 'dmg-core';
-import { type EventBus, Trace } from 'dmg-core/app';
+import type { EventBus } from 'dmg-core/app';
+import { testTrace } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 import {
@@ -60,18 +61,6 @@ const DROPPED_USER_ID = '88888888-8888-4888-8888-888888888888';
 
 const GOOD_TEXT = 'Ментор спокойно разбирал мои ошибки и не давал застрять.';
 const GOOD_TEXT_2 = 'Вторая правка: ментор был внимателен к деталям.';
-
-/** Ждёт условия (poll) — ER и стори обрабатывают событие асинхронно. */
-async function waitUntil(
-  probe: () => boolean | Promise<boolean>,
-  timeoutMs = 3000,
-): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await probe()) return;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-}
 
 describe('E2E peer-review: судьба субъекта — написание', () => {
   let app: TestApp;
@@ -177,11 +166,7 @@ describe('E2E peer-review: судьба субъекта — написание'
     );
 
     // справка — инфо-сообщение, экран и ввод не трогаются
-    const how = await transport.handleCallback(
-      transport.makeBotContext(SUBJECT_TG, {
-        callbackData: pressedCode(transport, SUBJECT_TG, 'Как писать отзыв'),
-      }),
-    );
+    const how = await transport.press(SUBJECT_TG, 'Как писать отзыв');
     expect(String(how.notify?.text ?? '')).toContain('Как писать отзыв');
     expect(String(how.notify?.text ?? '')).toContain(
       'Экран ввода остаётся активным',
@@ -269,7 +254,7 @@ describe('E2E peer-review: судьба субъекта — написание'
         recipientId: MENTOR_USER_ID,
       }),
       subject,
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      testTrace(),
     );
     if (!res.ok) throw new Error(res.error.code);
     expect(res.value.found).toBe(true);
@@ -280,21 +265,13 @@ describe('E2E peer-review: судьба субъекта — написание'
   // отзыв ментору уже сохранён — 1/3, ✅ у ментора.
   test('несколько адресатов: одногруппник — выбор из списка, метрики 1/3 → 2/3', async () => {
     // ── Хаб: карточка кампании с прогрессом 1/3 ──
-    const hub = await transport.handleCallback(
-      transport.makeBotContext(SUBJECT_TG, {
-        callbackData: pressedCode(transport, SUBJECT_TG, '↩️ Мои отзывы'),
-      }),
-    );
+    const hub = await transport.press(SUBJECT_TG, '↩️ Мои отзывы');
     expect(String(hub.screen?.text)).toContain('💬 *Мои отзывы*');
     expect(String(hub.screen?.text)).toContain('Метрики: 1/3');
     expect(String(hub.screen?.text)).toContain('Ты завершил обучение');
 
     // ── Карточка кампании → S03: ✅ у ментора, одногруппники без ✅ ──
-    const s03 = await transport.handleCallback(
-      transport.makeBotContext(SUBJECT_TG, {
-        callbackData: pressedCode(transport, SUBJECT_TG, 'Поток «'),
-      }),
-    );
+    const s03 = await transport.press(SUBJECT_TG, 'Поток «');
     expect(String(s03.screen?.text)).toContain('Написано отзывов: 1 из 3');
     expect(s03.screen?.keyboard?.rows.flat().map((b) => b.text)).toEqual([
       'Одногруппник — Андрей',
@@ -304,11 +281,7 @@ describe('E2E peer-review: судьба субъекта — написание'
     ]);
 
     // ── Одногруппник → S05: подсказка с именем адресата ──
-    const s05 = await transport.handleCallback(
-      transport.makeBotContext(SUBJECT_TG, {
-        callbackData: pressedCode(transport, SUBJECT_TG, 'Андрей'),
-      }),
-    );
+    const s05 = await transport.press(SUBJECT_TG, 'Андрей');
     const s05Text = String(s05.screen?.text);
     expect(s05Text).toContain('`Отзыв для {Имя}:`');
     expect(s05Text).toContain('расскажи, как Андрей');
@@ -629,16 +602,9 @@ describe('E2E peer-review: ошибочные пути кампании', () => 
     await app.cleanup();
   });
 
-  /** Нажатие кнопки/сырого кода со штампом текущего экрана автора кампании. */
-  const press = (rawCode: string) =>
-    transport.handleCallback(
-      transport.makeBotContext(ANDREY_TG, {
-        callbackData: stampedCode(transport, ANDREY_TG, rawCode),
-      }),
-    );
-
   test('P6-22: кампании нет в БД — «Кампания не найдена» и возврат в хаб', async () => {
-    const response = await press(
+    const response = await transport.pressRaw(
+      ANDREY_TG,
       `peer-review:campaign:list:${crypto.randomUUID()}`,
     );
     expect(String(response.screen?.text)).toContain('Кампания не найдена');
@@ -648,7 +614,8 @@ describe('E2E peer-review: ошибочные пути кампании', () => 
   });
 
   test('P6-26: адресат вне списка кампании — «Адресат недоступен»', async () => {
-    const response = await press(
+    const response = await transport.pressRaw(
+      ANDREY_TG,
       `peer-review:campaign:open:${LIVE_CAMPAIGN_ID}:${CANDIDATE_USER_ID}`,
     );
     expect(String(response.screen?.text)).toContain('Адресат недоступен');
@@ -658,7 +625,8 @@ describe('E2E peer-review: ошибочные пути кампании', () => 
   });
 
   test('P6-28: неизвестный campaign:* — «Неизвестная команда»', async () => {
-    const response = await press(
+    const response = await transport.pressRaw(
+      ANDREY_TG,
       `peer-review:campaign:foo:${LIVE_CAMPAIGN_ID}`,
     );
     expect(String(response.screen?.text)).toContain('Неизвестная команда');
@@ -669,7 +637,8 @@ describe('E2E peer-review: ошибочные пути кампании', () => 
   // handleMessage стори (P1-33 покрыт в transport.e2e.test.ts).
 
   test('P6-30: текст длиннее 3500 символов — предупреждение, ввод сохранён', async () => {
-    await press(
+    await transport.pressRaw(
+      ANDREY_TG,
       `peer-review:campaign:open:${LIVE_CAMPAIGN_ID}:${MENTOR_USER_ID}`,
     );
     const response = await transport.sendText(ANDREY_TG, 'а'.repeat(3501));
@@ -685,7 +654,8 @@ describe('E2E peer-review: ошибочные пути кампании', () => 
   test('P6-35: кампания исчезла, пока писали — короткая реплика домена', async () => {
     const campaignsPath = app.fixtures.peerReview.campaigns;
     const original = await Bun.file(campaignsPath).text();
-    await press(
+    await transport.pressRaw(
+      ANDREY_TG,
       `peer-review:campaign:open:${LIVE_CAMPAIGN_ID}:${MENTOR_USER_ID}`,
     );
     try {
@@ -709,7 +679,8 @@ describe('E2E peer-review: ошибочные пути кампании', () => 
   });
 
   test('P6-34: окно закрылось, пока писали — финализация и экран-заглушка', async () => {
-    await press(
+    await transport.pressRaw(
+      ANDREY_TG,
       `peer-review:campaign:open:${LIVE_CAMPAIGN_ID}:${MENTOR_USER_ID}`,
     );
     // Окно (7 сут.) истекло за время написания текста

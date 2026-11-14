@@ -16,15 +16,13 @@ import {
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
 import { Role } from '@u7-scl/domain/user/testing';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 import type {
   PersonDef,
   StreamDef,
@@ -240,31 +238,6 @@ describe('E2E: жизненный цикл потока — запуск, зав
   const notifyOf = (response: DialogResponse): string =>
     String(response.notify?.text ?? '');
 
-  const buttonsOf = (response: DialogResponse): string[] =>
-    response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-
-  async function press(
-    tgId: number,
-    textContains: string,
-  ): Promise<DialogResponse> {
-    return stand.transport.handleCallback(
-      stand.transport.makeBotContext(tgId, {
-        callbackData: pressedCode(stand.transport, tgId, textContains),
-      }),
-    );
-  }
-
-  async function pressCode(
-    tgId: number,
-    rawCode: string,
-  ): Promise<DialogResponse> {
-    return stand.transport.handleCallback(
-      stand.transport.makeBotContext(tgId, {
-        callbackData: stampedCode(stand.transport, tgId, rawCode),
-      }),
-    );
-  }
-
   /**
    * Код со штампом заново открытого экрана: каждый апдейт сдвигает
    * `dialog.seq`, поэтому реплика-отказ (без экрана) оставляет старый штамп
@@ -272,14 +245,14 @@ describe('E2E: жизненный цикл потока — запуск, зав
    */
   async function craft(tgId: number, rawCode: string): Promise<DialogResponse> {
     await stand.transport.handleStart(stand.transport.makeBotContext(tgId));
-    return pressCode(tgId, rawCode);
+    return stand.transport.pressRaw(tgId, rawCode);
   }
 
   /** /start → «🛠️ Инструменты ментора» → «📋 Мои потоки». */
   async function openMyStreams(tgId: number): Promise<DialogResponse> {
     await stand.transport.handleStart(stand.transport.makeBotContext(tgId));
-    await press(tgId, 'Инструменты ментора');
-    return press(tgId, 'Мои потоки');
+    await stand.transport.press(tgId, 'Инструменты ментора');
+    return stand.transport.press(tgId, 'Мои потоки');
   }
 
   /** Карточка потока из списка ментора (с включением нужных фильтров). */
@@ -289,8 +262,8 @@ describe('E2E: жизненный цикл потока — запуск, зав
     opts: { completed?: boolean } = {},
   ): Promise<DialogResponse> {
     await openMyStreams(tgId);
-    if (opts.completed) await press(tgId, 'Вкл. завершённые');
-    return press(tgId, title);
+    if (opts.completed) await stand.transport.press(tgId, 'Вкл. завершённые');
+    return stand.transport.press(tgId, title);
   }
 
   /** Поток после сценария: статус и право управления с точки зрения ментора. */
@@ -300,7 +273,7 @@ describe('E2E: жизненный цикл потока — запуск, зав
         StreamModuleDef,
         GetStreamUcDef.command({ streamId: streamId(key) }),
         stand.mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
   }
@@ -312,7 +285,7 @@ describe('E2E: жизненный цикл потока — запуск, зав
         StreamModuleDef,
         GetStudentProgressUcDef.command({ studentId: studentId(key) }),
         stand.mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     ).student;
   }
@@ -321,13 +294,13 @@ describe('E2E: жизненный цикл потока — запуск, зав
 
   test('P4-09: «🚀 Запустить» на наборе — поток идёт, первый шаг выдан студентам', async () => {
     const card = await openStreamCard(TG.mentor, 'JS Core — набор');
-    expect(buttonsOf(card)).toContain('🚀 Запустить');
+    expect(Screen.of(card).texts()).toContain('🚀 Запустить');
 
-    const launched = await press(TG.mentor, 'Запустить');
+    const launched = await stand.transport.press(TG.mentor, 'Запустить');
 
     expect(textOf(launched)).toContain('Поток запущен');
     expect(textOf(launched)).toContain('Первые задания выданы студентам');
-    expect(buttonsOf(launched)).toContain('⬅️ Назад к потоку');
+    expect(Screen.of(launched).texts()).toContain('⬅️ Назад к потоку');
 
     const stream = await streamState('stream-launch');
     expect(stream.status).toBe('active');
@@ -343,37 +316,40 @@ describe('E2E: жизненный цикл потока — запуск, зав
 
   test('P4-10: «✅ Завершить» на идущем потоке — подтверждение, «❌ Отмена» возвращает карточку', async () => {
     const card = await openStreamCard(TG.mentor, 'JS Core — идёт');
-    expect(buttonsOf(card)).toContain('✅ Завершить');
+    expect(Screen.of(card).texts()).toContain('✅ Завершить');
 
-    const confirm = await press(TG.mentor, 'Завершить');
+    const confirm = await stand.transport.press(TG.mentor, 'Завершить');
     expect(textOf(confirm)).toContain('Завершить поток?');
     expect(textOf(confirm)).toContain('остановит обучение');
-    expect(buttonsOf(confirm)).toEqual(['✅ Да, завершить', '❌ Отмена']);
+    expect(Screen.of(confirm).texts()).toEqual([
+      '✅ Да, завершить',
+      '❌ Отмена',
+    ]);
 
-    const back = await press(TG.mentor, 'Отмена');
+    const back = await stand.transport.press(TG.mentor, 'Отмена');
 
     expect(textOf(back)).toContain('JS Core — идёт');
-    expect(buttonsOf(back)).toContain('✅ Завершить');
+    expect(Screen.of(back).texts()).toContain('✅ Завершить');
   });
 
   test('P4-11: «✅ Да, завершить» — поток завершён, экран «Поток завершён!»', async () => {
     await openStreamCard(TG.mentor, 'JS Core — к завершению');
-    await press(TG.mentor, 'Завершить');
+    await stand.transport.press(TG.mentor, 'Завершить');
 
-    const completed = await press(TG.mentor, 'Да, завершить');
+    const completed = await stand.transport.press(TG.mentor, 'Да, завершить');
 
     expect(textOf(completed)).toContain('Поток завершён');
     expect(textOf(completed)).toContain('Обучение окончено');
-    expect(buttonsOf(completed)).toEqual(['⬅️ Назад к списку']);
+    expect(Screen.of(completed).texts()).toEqual(['⬅️ Назад к списку']);
 
     expect((await streamState('stream-complete')).status).toBe('completed');
   });
 
   test('P4-12: завершение с учащимся — отказ «Нельзя завершить поток… ещё учатся»', async () => {
     await openStreamCard(TG.mentor, 'JS Core — с учащимся');
-    await press(TG.mentor, 'Завершить');
+    await stand.transport.press(TG.mentor, 'Завершить');
 
-    const refused = await press(TG.mentor, 'Да, завершить');
+    const refused = await stand.transport.press(TG.mentor, 'Да, завершить');
 
     expect(refused.notify?.kind).toBe('warn');
     expect(notifyOf(refused)).toContain('Нельзя завершить поток');
@@ -390,17 +366,17 @@ describe('E2E: жизненный цикл потока — запуск, зав
     const card = await openStreamCard(TG.mentor, 'JS Core — завершён', {
       completed: true,
     });
-    expect(buttonsOf(card)).toContain('📁 В архив');
+    expect(Screen.of(card).texts()).toContain('📁 В архив');
 
-    const confirm = await press(TG.mentor, 'В архив');
+    const confirm = await stand.transport.press(TG.mentor, 'В архив');
     expect(textOf(confirm)).toContain('Отправить поток в архив?');
     expect(textOf(confirm)).toContain('будет скрыт из витрины');
-    expect(buttonsOf(confirm)).toEqual(['✅ Да, в архив', '❌ Отмена']);
+    expect(Screen.of(confirm).texts()).toEqual(['✅ Да, в архив', '❌ Отмена']);
 
-    const back = await press(TG.mentor, 'Отмена');
+    const back = await stand.transport.press(TG.mentor, 'Отмена');
 
     expect(textOf(back)).toContain('JS Core — завершён');
-    expect(buttonsOf(back)).toContain('📁 В архив');
+    expect(Screen.of(back).texts()).toContain('📁 В архив');
     expect((await streamState('stream-done')).status).toBe('completed');
   });
 
@@ -408,12 +384,12 @@ describe('E2E: жизненный цикл потока — запуск, зав
     await openStreamCard(TG.mentor, 'JS Core — в архив', {
       completed: true,
     });
-    await press(TG.mentor, 'В архив');
+    await stand.transport.press(TG.mentor, 'В архив');
 
-    const archived = await press(TG.mentor, 'Да, в архив');
+    const archived = await stand.transport.press(TG.mentor, 'Да, в архив');
 
     expect(textOf(archived)).toContain('Поток перемещён в архив');
-    expect(buttonsOf(archived)).toEqual(['⬅️ Назад к списку']);
+    expect(Screen.of(archived).texts()).toEqual(['⬅️ Назад к списку']);
 
     expect((await streamState('stream-archive')).status).toBe('archived');
   });
@@ -464,11 +440,11 @@ describe('E2E: жизненный цикл потока — запуск, зав
     const tgId = TG.otherMentor;
     await openMyStreams(tgId);
 
-    const card = await pressCode(
+    const card = await stand.transport.pressRaw(
       tgId,
       `mentor:view-stream-mentor:view:${streamId('stream-foreign')}`,
     );
-    const buttons = buttonsOf(card);
+    const buttons = Screen.of(card).texts();
 
     expect(textOf(card)).toContain('JS Core — чужой');
     expect(buttons.some((t) => t.includes('Запустить'))).toBe(false);
@@ -476,7 +452,7 @@ describe('E2E: жизненный цикл потока — запуск, зав
     expect(buttons.some((t) => t.includes('В архив'))).toBe(false);
     expect(buttons).toContain('⬅️ Назад к моим потокам');
 
-    const refused = await pressCode(
+    const refused = await stand.transport.pressRaw(
       tgId,
       `mentor:activate-stream:activate:${streamId('stream-foreign')}`,
     );
@@ -494,12 +470,12 @@ describe('E2E: жизненный цикл потока — запуск, зав
     expect(textOf(list)).toContain('Мои потоки');
     expect(textOf(list)).toContain('У вас пока нет потоков');
 
-    const card = await pressCode(
+    const card = await stand.transport.pressRaw(
       tgId,
       `mentor:view-stream-mentor:view:${streamId('stream-foreign')}`,
     );
 
     expect(textOf(card)).toContain('JS Core — чужой');
-    expect(buttonsOf(card)).toContain('🚀 Запустить');
+    expect(Screen.of(card).texts()).toContain('🚀 Запустить');
   });
 });

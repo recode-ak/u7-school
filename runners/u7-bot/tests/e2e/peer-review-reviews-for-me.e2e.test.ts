@@ -8,10 +8,10 @@ import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
   pressedCode,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { Trace } from 'dmg-core/app';
+import { waitUntil } from '@u7-scl/test-helpers/wait-until';
+import { testTrace } from 'dmg-core/testing';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 import { completeStudent } from '../helpers/student-fate';
 
@@ -41,18 +41,6 @@ const FIXTURE_REVIEW_TEXT = 'Работать в паре было легко';
 // Без двоеточий/дефисов — MarkdownV2 экранирует спецсимволы в данных
 const NEW_REVIEW_TEXT = 'Свежий отзыв за новый поток';
 
-/** Ждёт условия (poll) — ER обрабатывает событие асинхронно. */
-async function waitUntil(
-  probe: () => boolean | Promise<boolean>,
-  timeoutMs = 3000,
-): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await probe()) return;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-}
-
 /** Судьба студента потока (исход «завершил и прошел») — настоящим UC ментора. */
 function completeFate(app: TestApp, studentId: string) {
   return completeStudent(app, {
@@ -66,11 +54,7 @@ function completeFate(app: TestApp, studentId: string) {
 /** /start → хаб по кнопке меню «💬 Отзывы». */
 async function openHub(transport: TestBotTransport, tgId: number) {
   await transport.handleStart(transport.makeBotContext(tgId));
-  return transport.handleCallback(
-    transport.makeBotContext(tgId, {
-      callbackData: pressedCode(transport, tgId, '💬 Отзывы'),
-    }),
-  );
+  return transport.press(tgId, '💬 Отзывы');
 }
 
 describe('E2E peer-review: S08 «Отзывы мне»', () => {
@@ -113,7 +97,7 @@ describe('E2E peer-review: S08 «Отзывы мне»', () => {
         text: NEW_REVIEW_TEXT,
       }),
       mentor,
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      testTrace(),
     );
     expect(written.ok).toBe(true);
 
@@ -122,11 +106,7 @@ describe('E2E peer-review: S08 «Отзывы мне»', () => {
     expect(hubBtns.some((b) => b.text === '📥 Отзывы мне')).toBe(true);
 
     // Штампованный код кнопки — из записанного экрана (как реальный клиент)
-    const s08 = await transport.handleCallback(
-      transport.makeBotContext(MARINA_TG, {
-        callbackData: pressedCode(transport, MARINA_TG, 'Отзывы мне'),
-      }),
-    );
+    const s08 = await transport.press(MARINA_TG, 'Отзывы мне');
     const text = String(s08.screen?.text);
     expect(text).toContain('📥 *Отзывы мне* · 1/2');
     expect(text).toContain('👤 От: Алексей \\(ментор\\)');
@@ -149,11 +129,7 @@ describe('E2E peer-review: S08 «Отзывы мне»', () => {
     expect(text2).not.toContain(NEW_REVIEW_TEXT);
 
     // Возврат «↩️ Мои отзывы» → хаб S02
-    const hub2 = await transport.handleCallback(
-      transport.makeBotContext(MARINA_TG, {
-        callbackData: pressedCode(transport, MARINA_TG, 'Мои отзывы'),
-      }),
-    );
+    const hub2 = await transport.press(MARINA_TG, 'Мои отзывы');
     expect(String(hub2.screen?.text)).toContain('💬 *Мои отзывы*');
   });
 
@@ -191,14 +167,9 @@ describe('E2E peer-review: S08 — пусто и неизвестные ссыл
   test('P6-42: отзывов нет — заглушка S08 с возвратом в хаб', async () => {
     await transport.handleStart(transport.makeBotContext(CANDIDATE_TG));
     // Гонка: кнопка в хабе скрыта (отзывов нет), но экран S08 открыт по коду
-    const s08 = await transport.handleCallback(
-      transport.makeBotContext(CANDIDATE_TG, {
-        callbackData: stampedCode(
-          transport,
-          CANDIDATE_TG,
-          'peer-review:reviews-for-me:view',
-        ),
-      }),
+    const s08 = await transport.pressRaw(
+      CANDIDATE_TG,
+      'peer-review:reviews-for-me:view',
     );
     expect(String(s08.screen?.text)).toContain(
       'Тебе пока не написали ни одного отзыва',
@@ -238,14 +209,9 @@ describe('E2E peer-review: S08 — пусто и неизвестные ссыл
 
     try {
       await transport.handleStart(transport.makeBotContext(CANDIDATE_TG));
-      const s08 = await transport.handleCallback(
-        transport.makeBotContext(CANDIDATE_TG, {
-          callbackData: stampedCode(
-            transport,
-            CANDIDATE_TG,
-            'peer-review:reviews-for-me:view',
-          ),
-        }),
+      const s08 = await transport.pressRaw(
+        CANDIDATE_TG,
+        'peer-review:reviews-for-me:view',
       );
       const text = String(s08.screen?.text);
       expect(text).toContain('👤 От: неизвестно');

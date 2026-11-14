@@ -20,16 +20,11 @@ import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
+  screensNewFirst,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 
 const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
-
-/** Экран в хронологии отображения: sent или edit (text + keyboard). */
-interface ScreenRecord {
-  text: string;
-  keyboard?: { rows: Array<Array<{ text: string; code: string }>> };
-}
 
 /**
  * E2E: Пагинация длинного контента (трек pagination, ФР-7).
@@ -74,38 +69,9 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
 
   // ── Внутренние хелперы ──
 
-  /** Экраны пользователя от новых к старым (см. curious-showcase e2e). */
-  function screensNewFirst(tgId: number): ScreenRecord[] {
-    const editsByMessageId = new Map<number, ScreenRecord[]>();
-    for (const e of transport.api.editedMessages) {
-      if (e.telegramId !== tgId) continue;
-      const list = editsByMessageId.get(e.messageId) ?? [];
-      list.push(e);
-      editsByMessageId.set(e.messageId, list);
-    }
-    const merged: ScreenRecord[] = [];
-    for (const s of transport.api.sentMessages) {
-      if (s.telegramId !== tgId) continue;
-      merged.push(s);
-      merged.push(...(editsByMessageId.get(s.messageId) ?? []));
-    }
-    return merged.reverse();
-  }
-
-  /** Отштампованный код кнопки с последнего экрана пользователя. */
-  function pressedCode(tgId: number, label: string): string {
-    for (const screen of screensNewFirst(tgId)) {
-      const btn = screen.keyboard?.rows
-        .flat()
-        .find((b) => b.text.includes(label));
-      if (btn) return btn.code;
-    }
-    throw new Error(`Кнопка «${label}» не найдена на экранах ${tgId}`);
-  }
-
   /** Есть ли кнопка с меткой на последнем экране. */
   function hasButton(tgId: number, label: string): boolean {
-    const screen = screensNewFirst(tgId)[0];
+    const screen = screensNewFirst(transport, tgId)[0];
     return (
       screen?.keyboard?.rows.flat().some((b) => b.text.includes(label)) ?? false
     );
@@ -113,11 +79,7 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
 
   /** Нажать кнопку по метке; ответ ассертится на валидность MarkdownV2. */
   async function press(tgId: number, label: string) {
-    const response = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(tgId, label),
-      }),
-    );
+    const response = await transport.press(tgId, label);
     assertDialogResponseMarkdownSafe(response);
     return response;
   }
@@ -199,7 +161,7 @@ describe('E2E: Пагинация (S03 + каталог уровня 3)', () => 
     await transport.handleStart(transport.makeBotContext(tgId));
     await press(tgId, 'Курсы');
     while (true) {
-      const screens = screensNewFirst(tgId);
+      const screens = screensNewFirst(transport, tgId);
       const isTarget = screens[0]?.keyboard?.rows
         .flat()
         .some((b) => b.text.includes('Длинный модуль'));

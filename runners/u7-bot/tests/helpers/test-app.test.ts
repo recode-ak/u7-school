@@ -9,8 +9,7 @@ import {
   SweepAbandonedQuestionnairesJobDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import { type OperationRef, SystemCaller } from 'dmg-core';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { CORE_EDUCATION_ANCHOR } from '../worlds';
 import { createTestApp, type TestApp } from './test-app';
@@ -77,7 +76,7 @@ describe('createTestApp: управляемые часы (F-01)', () => {
           ownerInfo: { courseId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' },
         }),
         new SystemCaller(FROM, respondent),
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
 

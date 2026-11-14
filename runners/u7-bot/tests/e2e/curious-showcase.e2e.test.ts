@@ -15,11 +15,12 @@ import { StreamsController } from '@u7-scl/bot/streams/controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import type { DialogResponse } from '@u7-scl/core/ui';
 import { Role } from '@u7-scl/domain/user/testing';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  stampedCode,
+  pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import {
@@ -30,103 +31,18 @@ import {
 
 const SCHOOL_GROUP_URL = 'https://t.me/u7_school_group';
 
-/** Экран в хронологии отображения: sent или edit (text + keyboard). */
-interface ScreenRecord {
-  text: string;
-  keyboard?: { rows: Array<Array<{ text: string; code: string }>> };
-}
-
 /**
  * E2E: Витрина для любопытного (курсы + потоки, контракт «Диалог и Экран»).
  *
  * Паттерн нажатий: перед нажатием экран открыт (/start или предыдущая
- * кнопка), код берётся отштампованным из Api-записи (pressedCode) —
+ * кнопка), код берётся отштампованным из Api-записи (`pressedCode`) —
  * как реальный клиент. Содержимое ответа ассертится по DialogResponse,
  * захваченному на границе uiApp (screen/notify разделены).
  */
 
-/**
- * Экраны пользователя в порядке отображения (новые первее).
- *
- * Api-записи ведут два массива (sent/edited); edit рендерит СУЩЕСТВУЮЩЕЕ
- * сообщение (messageId оригинала), поэтому хронология восстанавливается
- * так: sent-ы по порядку, каждый edit — сразу за своим sent. Простая
- * склейка [...edited, ...sent] даёт неверный порядок, когда edit-экраны
- * (дрill-down одной стори) чередуются с send-экранами (смена стори).
- */
-function screensNewFirst(
-  transport: TestBotTransport,
-  tgId: number,
-): ScreenRecord[] {
-  const editsByMessageId = new Map<number, ScreenRecord[]>();
-  for (const e of transport.api.editedMessages) {
-    if (e.telegramId !== tgId) continue;
-    const list = editsByMessageId.get(e.messageId) ?? [];
-    list.push(e);
-    editsByMessageId.set(e.messageId, list);
-  }
-  const merged: ScreenRecord[] = [];
-  for (const s of transport.api.sentMessages) {
-    if (s.telegramId !== tgId) continue;
-    merged.push(s);
-    merged.push(...(editsByMessageId.get(s.messageId) ?? []));
-  }
-  return merged.reverse();
-}
-
-/** Отштампованный код кнопки с последнего экрана пользователя (Api-запись). */
-function pressedCode(
-  transport: TestBotTransport,
-  tgId: number,
-  textContains: string,
-): string {
-  const screens = screensNewFirst(transport, tgId);
-  for (const screen of screens) {
-    const btn = screen.keyboard?.rows
-      .flat()
-      .find((b) => b.text.includes(textContains));
-    if (btn) return btn.code;
-  }
-  throw new Error(
-    `Кнопка «${textContains}» не найдена на экранах ${tgId} ` +
-      `(перед нажатием открой экран через /start или кнопку).`,
-  );
-}
-
 /** Текст экрана ответа (пустая строка, если экрана не было). */
 function textOfResponse(response: DialogResponse): string {
   return String(response.screen?.text ?? '');
-}
-
-/** Подписи кнопок экрана. */
-function buttonsOfResponse(response: DialogResponse): string[] {
-  return (response.screen?.keyboard?.rows.flat() ?? []).map((b) => b.text);
-}
-
-/** Нажатие кнопки по подстроке подписи (код — из Api-записей). */
-function pressByText(
-  transport: TestBotTransport,
-  tgId: number,
-  textContains: string,
-): Promise<DialogResponse> {
-  return transport.handleCallback(
-    transport.makeBotContext(tgId, {
-      callbackData: pressedCode(transport, tgId, textContains),
-    }),
-  );
-}
-
-/** Нажатие «крафтового» адреса с актуальным штампом экрана. */
-function pressRawAddress(
-  transport: TestBotTransport,
-  tgId: number,
-  rawCode: string,
-): Promise<DialogResponse> {
-  return transport.handleCallback(
-    transport.makeBotContext(tgId, {
-      callbackData: stampedCode(transport, tgId, rawCode),
-    }),
-  );
 }
 
 /** /start → «Школа» → «Потоки»: каталог потоков открыт. */
@@ -135,8 +51,8 @@ async function openStreamsCatalog(
   tgId: number,
 ): Promise<DialogResponse> {
   await transport.handleStart(transport.makeBotContext(tgId));
-  await pressByText(transport, tgId, 'Школа');
-  return pressByText(transport, tgId, 'Потоки');
+  await transport.press(tgId, 'Школа');
+  return transport.press(tgId, 'Потоки');
 }
 
 describe('E2E: Витрина для любопытного', () => {
@@ -176,21 +92,9 @@ describe('E2E: Витрина для любопытного', () => {
     test('гость → enrollment-поток: карточка без менторских кнопок (S02)', async () => {
       const tgId = guest.user.view().telegramId;
       await transport.handleStart(transport.makeBotContext(tgId));
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Школа'),
-        }),
-      );
-      await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Потоки'),
-        }),
-      );
-      const response = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'JS Core — Поток 1'),
-        }),
-      );
+      await transport.press(tgId, 'Школа');
+      await transport.press(tgId, 'Потоки');
+      const response = await transport.press(tgId, 'JS Core — Поток 1');
       const text = response.screen?.text ?? '';
       expect(text).toContain('JS Core');
       expect(text).toContain('Ментор');
@@ -211,11 +115,7 @@ describe('E2E: Витрина для любопытного', () => {
       expect(btns.some((t) => t.includes('Студенты'))).toBe(true);
 
       // Нажатие на «Студенты» работает (кросс-стори callback)
-      const studentsResp = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, 'Студенты'),
-        }),
-      );
+      const studentsResp = await transport.press(tgId, 'Студенты');
       const studentsText = studentsResp.screen?.text ?? '';
       expect(studentsText).not.toContain('Неизвестная команда');
       expect(studentsText).toContain('Студенты потока');
@@ -228,12 +128,7 @@ describe('E2E: Витрина для любопытного', () => {
     test('drill-down 5 уровней → drill-up 4 уровня обратно', async () => {
       const tgId = guest.user.view().telegramId;
       await transport.handleStart(transport.makeBotContext(tgId));
-      const press = (label: string) =>
-        transport.handleCallback(
-          transport.makeBotContext(tgId, {
-            callbackData: pressedCode(transport, tgId, label),
-          }),
-        );
+      const press = (label: string) => transport.press(tgId, label);
 
       await press('Курсы');
       await press('Синтаксис');
@@ -286,12 +181,7 @@ describe('E2E: Витрина для любопытного', () => {
     test('главное меню → курсы → назад → потоки → карточка → назад', async () => {
       const tgId = guest.user.view().telegramId;
       await transport.handleStart(transport.makeBotContext(tgId));
-      const press = (label: string) =>
-        transport.handleCallback(
-          transport.makeBotContext(tgId, {
-            callbackData: pressedCode(transport, tgId, label),
-          }),
-        );
+      const press = (label: string) => transport.press(tgId, label);
 
       const courses = await press('Курсы');
       expect(courses.screen?.text).toContain('Курсы');
@@ -319,7 +209,7 @@ describe('E2E: Витрина для любопытного', () => {
 
     test('P3-40: «Вкл. завершённые» / «Вкл. архивированные» / «Только активные»', async () => {
       const initial = await openStreamsCatalog(transport, tgId);
-      const initialButtons = buttonsOfResponse(initial);
+      const initialButtons = Screen.of(initial).texts();
       expect(initialButtons).toContainEqual(
         expect.stringContaining('Вкл. завершённые'),
       );
@@ -329,28 +219,24 @@ describe('E2E: Витрина для любопытного', () => {
       expect(initialButtons.some((t) => t.includes('Поток 3'))).toBe(false);
       expect(initialButtons.some((t) => t.includes('Поток 4'))).toBe(false);
 
-      const withCompleted = await pressByText(
-        transport,
-        tgId,
-        'Вкл. завершённые',
-      );
-      expect(buttonsOfResponse(withCompleted)).toContainEqual(
+      const withCompleted = await transport.press(tgId, 'Вкл. завершённые');
+      expect(Screen.of(withCompleted).texts()).toContainEqual(
         expect.stringContaining('Поток 3'),
       );
-      expect(buttonsOfResponse(withCompleted)).toContainEqual(
+      expect(Screen.of(withCompleted).texts()).toContainEqual(
         expect.stringContaining('Вкл. архивированные'),
       );
 
-      const withAll = await pressByText(transport, tgId, 'Вкл. архивированные');
-      expect(buttonsOfResponse(withAll)).toContainEqual(
+      const withAll = await transport.press(tgId, 'Вкл. архивированные');
+      expect(Screen.of(withAll).texts()).toContainEqual(
         expect.stringContaining('Поток 4'),
       );
-      expect(buttonsOfResponse(withAll)).toContainEqual(
+      expect(Screen.of(withAll).texts()).toContainEqual(
         expect.stringContaining('Только активные'),
       );
 
-      const activeOnly = await pressByText(transport, tgId, 'Только активные');
-      const activeButtons = buttonsOfResponse(activeOnly);
+      const activeOnly = await transport.press(tgId, 'Только активные');
+      const activeButtons = Screen.of(activeOnly).texts();
       expect(activeButtons.some((t) => t.includes('Поток 3'))).toBe(false);
       expect(activeButtons.some((t) => t.includes('Поток 4'))).toBe(false);
       expect(activeButtons).toContainEqual(
@@ -360,12 +246,12 @@ describe('E2E: Витрина для любопытного', () => {
 
     test('F-43: группы каталога идут в порядке набор → идёт → завершён → архив', async () => {
       await openStreamsCatalog(transport, tgId);
-      await pressByText(transport, tgId, 'Вкл. завершённые');
-      const all = await pressByText(transport, tgId, 'Вкл. архивированные');
+      await transport.press(tgId, 'Вкл. завершённые');
+      const all = await transport.press(tgId, 'Вкл. архивированные');
 
-      const jsCore = buttonsOfResponse(all).filter((t) =>
-        t.includes('JS Core — Поток'),
-      );
+      const jsCore = Screen.of(all)
+        .texts()
+        .filter((t) => t.includes('JS Core — Поток'));
       expect(jsCore.map((t) => t.match(/Поток (\d)/)?.[1])).toEqual([
         '1',
         '5',
@@ -377,11 +263,7 @@ describe('E2E: Витрина для любопытного', () => {
 
     test('P3-43: неизвестное действие каталога — «Неизвестная команда»', async () => {
       await openStreamsCatalog(transport, tgId);
-      const response = await pressRawAddress(
-        transport,
-        tgId,
-        'stream:catalog:bogus',
-      );
+      const response = await transport.pressRaw(tgId, 'stream:catalog:bogus');
 
       expect(textOfResponse(response)).toContain('Неизвестная команда');
     });
@@ -397,12 +279,12 @@ describe('E2E: Витрина для любопытного', () => {
 
     test('P3-45: карточка потока без отзывов — кнопки «Отзывы» нет, карточка жива', async () => {
       await openStreamsCatalog(transport, tgId);
-      const card = await pressByText(transport, tgId, 'JS Core — Поток 1');
+      const card = await transport.press(tgId, 'JS Core — Поток 1');
 
       const text = textOfResponse(card);
       expect(text).toContain('JS Core');
       expect(text).not.toContain('Неизвестная команда');
-      const buttons = buttonsOfResponse(card);
+      const buttons = Screen.of(card).texts();
       expect(buttons.some((t) => t.includes('Отзывы'))).toBe(false);
       expect(buttons).toContainEqual(
         expect.stringContaining('Программа модуля'),
@@ -411,8 +293,7 @@ describe('E2E: Витрина для любопытного', () => {
 
     test('P3-48: программа потока на уровне «step» — тела шагов недоступны', async () => {
       await openStreamsCatalog(transport, tgId);
-      const response = await pressRawAddress(
-        transport,
+      const response = await transport.pressRaw(
         tgId,
         `stream:view-stream:program:${enrollmentStream}:step:${guestStep}`,
       );
@@ -424,8 +305,7 @@ describe('E2E: Витрина для любопытного', () => {
 
     test('P3-49: программа — несуществующий уровень и несуществующий поток', async () => {
       await openStreamsCatalog(transport, tgId);
-      const unknownLevel = await pressRawAddress(
-        transport,
+      const unknownLevel = await transport.pressRaw(
         tgId,
         `stream:view-stream:program:${enrollmentStream}:lesson:${unknownId}`,
       );
@@ -435,8 +315,7 @@ describe('E2E: Витрина для любопытного', () => {
 
       // После ответа без экрана штамп устарел: переоткрываем каталог
       await openStreamsCatalog(transport, tgId);
-      const unknownStream = await pressRawAddress(
-        transport,
+      const unknownStream = await transport.pressRaw(
         tgId,
         `stream:view-stream:program:${unknownId}`,
       );
@@ -445,30 +324,30 @@ describe('E2E: Витрина для любопытного', () => {
 
     test('P3-50: «📋 Детали» — заполненные поля и возврат к потоку', async () => {
       await openStreamsCatalog(transport, tgId);
-      await pressByText(transport, tgId, 'JS Core — Поток 1');
-      const details = await pressByText(transport, tgId, 'Детали');
+      await transport.press(tgId, 'JS Core — Поток 1');
+      const details = await transport.press(tgId, 'Детали');
 
       const text = textOfResponse(details);
       expect(text).toContain('Детали');
       expect(text).toContain('Цель');
       expect(text).toContain('Результат');
-      expect(buttonsOfResponse(details)).toContainEqual(
+      expect(Screen.of(details).texts()).toContainEqual(
         expect.stringContaining('Назад к потоку'),
       );
     });
 
     test('P3-53: «Студенты» → студент — публичная карточка без менторских действий', async () => {
       await openStreamsCatalog(transport, tgId);
-      await pressByText(transport, tgId, 'JS Core — Поток 2');
-      const list = await pressByText(transport, tgId, 'Студенты');
+      await transport.press(tgId, 'JS Core — Поток 2');
+      const list = await transport.press(tgId, 'Студенты');
       expect(textOfResponse(list)).toContain('Студенты потока');
 
-      const card = await pressByText(transport, tgId, 'Марина');
+      const card = await transport.press(tgId, 'Марина');
       const text = textOfResponse(card);
       expect(text).toContain('Прогресс студента');
       expect(text).toContain('Усидчивость студента');
       expect(text).toContain('Активность студента');
-      const buttons = buttonsOfResponse(card);
+      const buttons = Screen.of(card).texts();
       expect(buttons).toContainEqual(expect.stringContaining('Назад к списку'));
       expect(buttons.some((t) => t.includes('Снять'))).toBe(false);
       expect(buttons.some((t) => t.includes('Отметить'))).toBe(false);
@@ -477,32 +356,30 @@ describe('E2E: Витрина для любопытного', () => {
     test('P3-64: «📝 Записаться» — только не-владельцу и только в статусе набора', async () => {
       // Владелец потока (ментор) записи не видит
       await openStreamsCatalog(transport, 1004);
-      const ownerCard = await pressByText(transport, 1004, 'JS Core — Поток 1');
+      const ownerCard = await transport.press(1004, 'JS Core — Поток 1');
       expect(
-        buttonsOfResponse(ownerCard).some((t) => t.includes('Записаться')),
+        Screen.of(ownerCard)
+          .texts()
+          .some((t) => t.includes('Записаться')),
       ).toBe(false);
 
       // Ментор-зритель (не владелец потока) видит гостевую кнопку записи
       await openStreamsCatalog(transport, 1009);
-      const viewerCard = await pressByText(
-        transport,
-        1009,
-        'JS Core — Поток 1',
-      );
+      const viewerCard = await transport.press(1009, 'JS Core — Поток 1');
       expect(
-        buttonsOfResponse(viewerCard).some((t) => t.includes('Записаться')),
+        Screen.of(viewerCard)
+          .texts()
+          .some((t) => t.includes('Записаться')),
       ).toBe(true);
 
       // Не в наборе — записи нет ни у зрителя, ни у гостя
-      await pressByText(transport, 1009, 'Назад к списку');
-      await pressByText(transport, 1009, 'Вкл. завершённые');
-      const completedCard = await pressByText(
-        transport,
-        1009,
-        'JS Core — Поток 3',
-      );
+      await transport.press(1009, 'Назад к списку');
+      await transport.press(1009, 'Вкл. завершённые');
+      const completedCard = await transport.press(1009, 'JS Core — Поток 3');
       expect(
-        buttonsOfResponse(completedCard).some((t) => t.includes('Записаться')),
+        Screen.of(completedCard)
+          .texts()
+          .some((t) => t.includes('Записаться')),
       ).toBe(false);
     });
   });
@@ -553,19 +430,15 @@ describe('E2E: Витрина — только завершённые поток
     const list = await openStreamsCatalog(transport, 1001);
 
     expect(textOfResponse(list)).toContain('Нет активных потоков');
-    const buttons = buttonsOfResponse(list);
+    const buttons = Screen.of(list).texts();
     expect(buttons).toContainEqual(expect.stringContaining('Вкл. завершённые'));
     expect(buttons).toContainEqual(
       expect.stringContaining('Вкл. архивированные'),
     );
     expect(buttons).toContainEqual(expect.stringContaining('Назад в школу'));
 
-    const withCompleted = await pressByText(
-      transport,
-      1001,
-      'Вкл. завершённые',
-    );
-    expect(buttonsOfResponse(withCompleted)).toContainEqual(
+    const withCompleted = await transport.press(1001, 'Вкл. завершённые');
+    expect(Screen.of(withCompleted).texts()).toContainEqual(
       expect.stringContaining('Поток 3'),
     );
   });
@@ -609,7 +482,7 @@ describe('E2E: Витрина — потоков нет совсем', () => {
 
     const text = textOfResponse(list);
     expect(text).toContain('Нет доступных потоков');
-    expect(buttonsOfResponse(list)).toContainEqual(
+    expect(Screen.of(list).texts()).toContainEqual(
       expect.stringContaining('Назад в школу'),
     );
   });
@@ -717,32 +590,31 @@ describe('E2E: Витрина — пустая программа и пропа�
 
   test('P3-47: программа потока с пустым снапшотом — «Программа пока не загружена»', async () => {
     await openStreamsCatalog(transport, tgId);
-    await pressByText(transport, tgId, 'Поток без программы');
-    const program = await pressByText(transport, tgId, 'Программа модуля');
+    await transport.press(tgId, 'Поток без программы');
+    const program = await transport.press(tgId, 'Программа модуля');
 
     expect(textOfResponse(program)).toContain('Программа пока не загружена');
-    expect(buttonsOfResponse(program)).toContainEqual(
+    expect(Screen.of(program).texts()).toContainEqual(
       expect.stringContaining('Назад к потоку'),
     );
   });
 
   test('P3-51: «Детали» без единого заполненного поля — «Расширенная информация пока не добавлена»', async () => {
     await openStreamsCatalog(transport, tgId);
-    await pressByText(transport, tgId, 'Поток без программы');
-    const details = await pressByText(transport, tgId, 'Детали');
+    await transport.press(tgId, 'Поток без программы');
+    const details = await transport.press(tgId, 'Детали');
 
     expect(textOfResponse(details)).toContain(
       'Расширенная информация пока не добавлена',
     );
-    expect(buttonsOfResponse(details)).toContainEqual(
+    expect(Screen.of(details).texts()).toContainEqual(
       expect.stringContaining('Назад к потоку'),
     );
   });
 
   test('P3-54: «Студенты»/карточка студента, поток не найден — «⚠️ Поток не найден»', async () => {
     await openStreamsCatalog(transport, tgId);
-    const list = await pressRawAddress(
-      transport,
+    const list = await transport.pressRaw(
       tgId,
       `stream:view-stream:students:${unknownId}`,
     );
@@ -750,8 +622,7 @@ describe('E2E: Витрина — пустая программа и пропа�
 
     // После ответа без экрана штамп устарел: переоткрываем каталог
     await openStreamsCatalog(transport, tgId);
-    const card = await pressRawAddress(
-      transport,
+    const card = await transport.pressRaw(
       tgId,
       `stream:view-stream:student-detail:${GHOST_STUDENT}`,
     );

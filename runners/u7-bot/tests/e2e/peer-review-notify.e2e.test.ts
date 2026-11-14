@@ -10,8 +10,10 @@ import {
   createTestBotTransport,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
+import { waitUntil } from '@u7-scl/test-helpers/wait-until';
 import type { AnyEventDef } from 'dmg-core';
-import { type EventBus, Trace } from 'dmg-core/app';
+import type { EventBus } from 'dmg-core/app';
+import { testTrace } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { PeerReviewController } from '../../src/controllers/peer-review/controller';
 import { completeStudent } from '../helpers/student-fate';
@@ -28,17 +30,6 @@ const SUBJECT_USER_ID = '77777777-7777-4777-8777-777777777777';
 const MENTOR_TG = 1004;
 const MENTOR_USER_ID = '44444444-4444-4444-4444-444444444444';
 const NOTICE = 'У тебя новый отзыв';
-
-async function waitUntil(
-  probe: () => boolean | Promise<boolean>,
-  timeoutMs = 3000,
-): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await probe()) return;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-}
 
 describe('E2E peer-review: уведомление адресата о новом отзыве', () => {
   let app: TestApp;
@@ -83,7 +74,7 @@ describe('E2E peer-review: уведомление адресата о новом
           text,
         }),
         subject,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       );
 
     expect((await write('Ментор объяснял терпеливо и по делу.')).ok).toBe(true);
@@ -154,7 +145,7 @@ describe('E2E peer-review: уведомление — направление и 
         text: 'Марина стабильно выполняла задания и задавала точные вопросы.',
       }),
       mentor,
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      testTrace(),
     );
     expect(written.ok).toBe(true);
 

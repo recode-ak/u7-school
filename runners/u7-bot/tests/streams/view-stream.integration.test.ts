@@ -11,12 +11,9 @@ import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 
 /**
  * Интеграционный тест S02: карточка потока и навигация вокруг неё.
@@ -67,14 +64,9 @@ describe('ViewStreamStory (интеграционный)', () => {
     await transport.handleStart(
       transport.makeBotContext(user.user.view().telegramId),
     );
-    return transport.handleCallback(
-      transport.makeBotContext(user.user.view().telegramId, {
-        callbackData: stampedCode(
-          transport,
-          user.user.view().telegramId,
-          `stream:view-stream:${action}:${streamId}`,
-        ),
-      }),
+    return transport.pressRaw(
+      user.user.view().telegramId,
+      `stream:view-stream:${action}:${streamId}`,
     );
   }
 
@@ -101,12 +93,7 @@ describe('ViewStreamStory (интеграционный)', () => {
   test('сквозной: каталог → карточка → программа → назад', async () => {
     const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
-    const press = (label: string) =>
-      transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: pressedCode(transport, tgId, label),
-        }),
-      );
+    const press = (label: string) => transport.press(tgId, label);
 
     // 1. Каталог потоков
     await press('Школа');
@@ -129,16 +116,8 @@ describe('ViewStreamStory (интеграционный)', () => {
   test('сжатие UUID: кнопка потока сжимается и приходит обратно разжатой', async () => {
     const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Школа'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Потоки'),
-      }),
-    );
+    await transport.press(tgId, 'Школа');
+    await transport.press(tgId, 'Потоки');
 
     // 1. Что ушло в Telegram: полный UUID не должен попасть в callback_data
     //    (Api-запись последнего экрана каталога)
@@ -186,11 +165,7 @@ describe('ViewStreamStory (интеграционный)', () => {
 
     // 2-3. «Записаться» → бот запрашивает кодовое слово (awaitInput)
     const tgId = guest.user.view().telegramId;
-    const enrollResp = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Записаться'),
-      }),
-    );
+    const enrollResp = await transport.press(tgId, 'Записаться');
     expect(enrollResp.screen?.text).toContain('кодовое слово');
     expect(enrollResp.awaitInput).toBeDefined();
 
@@ -226,18 +201,14 @@ describe('ViewStreamStory (интеграционный)', () => {
           startDate: Date.UTC(2026, 10, 1),
         }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
 
     const candidate = await app.userByTelegramId(1002);
     await openView(candidate, 'view', stream.streamId);
     const tgId = candidate.user.view().telegramId;
-    const response = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Записаться'),
-      }),
-    );
+    const response = await transport.press(tgId, 'Записаться');
 
     const text = (response.notify?.text ??
       response.screen?.text ??

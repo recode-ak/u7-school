@@ -5,8 +5,7 @@ import {
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
 import type { Command } from 'dmg-core';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 import type { TestApp } from '../helpers/test-app';
 import { createTestApp } from '../helpers/test-app';
 
@@ -34,13 +33,7 @@ describe('MentorController (интеграционный)', () => {
     D extends (typeof StreamModuleDef)['useCases'][number],
   >(
     command: Command<D>,
-  ) =>
-    app.apiApp.dispatch(
-      StreamModuleDef,
-      command,
-      mentor,
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
-    );
+  ) => app.apiApp.dispatch(StreamModuleDef, command, mentor, testTrace());
 
   // ── Мои потоки ──
 

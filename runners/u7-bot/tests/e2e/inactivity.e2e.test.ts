@@ -14,12 +14,9 @@ import { envelopeOf } from '@u7-scl/test-helpers/envelope-of';
 import { createTestApp, type TestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 
 /**
  * E2E проактивов бездействия и ухода из учёбы (контракт «Диалог и Экран»):
@@ -70,41 +67,6 @@ async function createInactivityStand(tag: string): Promise<Stand> {
   const mentor = await app.userByTelegramId(MENTOR_TG);
 
   return { app, transport, student, mentor };
-}
-
-/** Ждёт появления проактивного сообщения адресату (poll sentMessages). */
-async function waitMessageFor(
-  transport: TestBotTransport,
-  telegramId: number,
-  timeoutMs = 3000,
-): Promise<string | undefined> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const found = transport.api.sentMessages.find(
-      (m) => m.telegramId === telegramId,
-    );
-    if (found) return found.text;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-  return undefined;
-}
-
-/** Ждёт проактивного сообщения с указанным фрагментом (poll sentMessages). */
-async function waitMessageContaining(
-  transport: TestBotTransport,
-  telegramId: number,
-  textContains: string,
-  timeoutMs = 3000,
-): Promise<string | undefined> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const found = transport.api.sentMessages.find(
-      (m) => m.telegramId === telegramId && m.text.includes(textContains),
-    );
-    if (found) return found.text;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-  return undefined;
 }
 
 /** Ждёт мягкого кика адресата (poll kickedMembers). */
@@ -197,7 +159,7 @@ describe('E2E: проактивы бездействия', () => {
 
     publishWarning(app, 5);
 
-    const text = await waitMessageFor(transport, STUDENT_TG);
+    const text = await transport.waitForMessage(STUDENT_TG);
     expect(text).toBeDefined();
     expect(text).toContain('Учёба стоит');
     expect(text).toContain('5 дней');
@@ -218,7 +180,7 @@ describe('E2E: проактивы бездействия', () => {
 
     publishCandidate(app, 7, true);
 
-    const text = await waitMessageFor(transport, MENTOR_TG);
+    const text = await transport.waitForMessage(MENTOR_TG);
     expect(text).toBeDefined();
     expect(text).toContain('Кандидат на снятие с учёбы');
     // Имя студента и группа резолвятся из профиля/потока
@@ -255,7 +217,7 @@ describe('E2E: проактивы бездействия', () => {
 
     // Предупреждение приносит экран invite студенту (seq=1)
     publishWarning(app, 5);
-    await waitMessageFor(transport, STUDENT_TG);
+    await transport.waitForMessage(STUDENT_TG);
 
     // Нажимаем отштампованную кнопку из invite
     const msg = transport.api.sentMessages.find(
@@ -274,11 +236,7 @@ describe('E2E: проактивы бездействия', () => {
     expect(cancelBtn?.code).toBe('app:main-menu');
 
     // Отмена → главное меню (нажатие — отштампованной кнопкой)
-    const menuResp = await transport.handleCallback(
-      transport.makeBotContext(STUDENT_TG, {
-        callbackData: pressedCode(transport, STUDENT_TG, 'Остаться'),
-      }),
-    );
+    const menuResp = await transport.press(STUDENT_TG, 'Остаться');
     expect(String(menuResp.screen?.text)).toContain('Главное меню');
   });
 });
@@ -306,7 +264,7 @@ describe('E2E: выход из группы и снятие ментором', (
       user: { id: STUDENT_TG, firstName: 'Студент' },
     });
 
-    const notice = await waitMessageFor(transport, MENTOR_TG);
+    const notice = await transport.waitForMessage(MENTOR_TG);
     expect(notice).toBeDefined();
     expect(notice).toContain('покинул группу');
 
@@ -316,7 +274,7 @@ describe('E2E: выход из группы и снятие ментором', (
         StreamModuleDef,
         GetStudentProgressUcDef.command({ studentId: STUDENT_F0 }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     ).student;
     expect(record.status).toBe('active');
@@ -337,7 +295,7 @@ describe('E2E: выход из группы и снятие ментором', (
           cause: 'inactivity',
         }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
 
@@ -347,7 +305,7 @@ describe('E2E: выход из группы и снятие ментором', (
         StreamModuleDef,
         GetStudentProgressUcDef.command({ studentId: STUDENT_F0 }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     ).student;
     expect(record.status).toBe('abandoned');
@@ -359,7 +317,7 @@ describe('E2E: выход из группы и снятие ментором', (
     expect(kick?.unbanned).toBe(true);
 
     // Студенту доставлено уведомление UC (полный механизм — user-notify e2e)
-    const studentNotice = await waitMessageFor(transport, STUDENT_TG);
+    const studentNotice = await transport.waitForMessage(STUDENT_TG);
     expect(studentNotice).toContain('снят с учёбы');
   });
 
@@ -424,14 +382,9 @@ describe('E2E: подтверждения ухода из учёбы (callback-�
     transport.reset();
     await transport.handleStart(transport.makeBotContext(MENTOR_TG));
 
-    const response = await transport.handleCallback(
-      transport.makeBotContext(MENTOR_TG, {
-        callbackData: stampedCode(
-          transport,
-          MENTOR_TG,
-          `stream:inactivity:mark-abandoned:${STUDENT_F0}`,
-        ),
-      }),
+    const response = await transport.pressRaw(
+      MENTOR_TG,
+      `stream:inactivity:mark-abandoned:${STUDENT_F0}`,
     );
 
     const text = String(response.screen?.text);
@@ -451,14 +404,9 @@ describe('E2E: подтверждения ухода из учёбы (callback-�
     transport.reset();
     await transport.handleStart(transport.makeBotContext(MENTOR_TG));
 
-    const response = await transport.handleCallback(
-      transport.makeBotContext(MENTOR_TG, {
-        callbackData: stampedCode(
-          transport,
-          MENTOR_TG,
-          `stream:inactivity:mark-abandoned:${crypto.randomUUID()}`,
-        ),
-      }),
+    const response = await transport.pressRaw(
+      MENTOR_TG,
+      `stream:inactivity:mark-abandoned:${crypto.randomUUID()}`,
     );
 
     expect(String(response.screen?.text)).toContain(
@@ -472,14 +420,9 @@ describe('E2E: подтверждения ухода из учёбы (callback-�
     transport.reset();
     await transport.handleStart(transport.makeBotContext(STUDENT_TG));
 
-    const response = await transport.handleCallback(
-      transport.makeBotContext(STUDENT_TG, {
-        callbackData: stampedCode(
-          transport,
-          STUDENT_TG,
-          `stream:inactivity:drop-student-confirm:${crypto.randomUUID()}`,
-        ),
-      }),
+    const response = await transport.pressRaw(
+      STUDENT_TG,
+      `stream:inactivity:drop-student-confirm:${crypto.randomUUID()}`,
     );
 
     expect(String(response.screen?.text)).toContain(
@@ -492,14 +435,9 @@ describe('E2E: подтверждения ухода из учёбы (callback-�
     transport.reset();
     await transport.handleStart(transport.makeBotContext(OLEG_TG));
 
-    const response = await transport.handleCallback(
-      transport.makeBotContext(OLEG_TG, {
-        callbackData: stampedCode(
-          transport,
-          OLEG_TG,
-          `stream:inactivity:drop-student-confirm:${OLEG_STUDENT_ID}`,
-        ),
-      }),
+    const response = await transport.pressRaw(
+      OLEG_TG,
+      `stream:inactivity:drop-student-confirm:${OLEG_STUDENT_ID}`,
     );
 
     // Намеренное отличие от v0.2.6 (там — общий экран ошибки): отказ UC
@@ -515,7 +453,7 @@ describe('E2E: подтверждения ухода из учёбы (callback-�
         StreamModuleDef,
         GetStudentProgressUcDef.command({ studentId: OLEG_STUDENT_ID }),
         oleg,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     ).student;
     expect(olegRecord.status).toBe('not_advanced');
@@ -526,14 +464,9 @@ describe('E2E: подтверждения ухода из учёбы (callback-�
     transport.reset();
     await transport.handleStart(transport.makeBotContext(MENTOR_TG));
 
-    const response = await transport.handleCallback(
-      transport.makeBotContext(MENTOR_TG, {
-        callbackData: stampedCode(
-          transport,
-          MENTOR_TG,
-          `stream:inactivity:mark-abandoned-confirm:${MARINA_STUDENT_ID}`,
-        ),
-      }),
+    const response = await transport.pressRaw(
+      MENTOR_TG,
+      `stream:inactivity:mark-abandoned-confirm:${MARINA_STUDENT_ID}`,
     );
 
     expect(response.screen).toBeUndefined();
@@ -547,7 +480,7 @@ describe('E2E: подтверждения ухода из учёбы (callback-�
         StreamModuleDef,
         GetStudentProgressUcDef.command({ studentId: MARINA_STUDENT_ID }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     ).student;
     expect(record.status).toBe('advanced');
@@ -558,14 +491,9 @@ describe('E2E: подтверждения ухода из учёбы (callback-�
     transport.reset();
     await transport.handleStart(transport.makeBotContext(STUDENT_TG));
 
-    const response = await transport.handleCallback(
-      transport.makeBotContext(STUDENT_TG, {
-        callbackData: stampedCode(
-          transport,
-          STUDENT_TG,
-          'stream:inactivity:xyz',
-        ),
-      }),
+    const response = await transport.pressRaw(
+      STUDENT_TG,
+      'stream:inactivity:xyz',
     );
 
     expect(String(response.screen?.text)).toContain('⚠️ Неизвестная команда');
@@ -576,7 +504,7 @@ describe('E2E: подтверждения ухода из учёбы (callback-�
 
     // Студент — через предупреждение бездействия: экран invite с кнопкой
     publishWarning(app, 5);
-    await waitMessageContaining(transport, STUDENT_TG, 'Учёба стоит');
+    await transport.waitForMessage(STUDENT_TG, { contains: 'Учёба стоит' });
     const dropCode = transport.api.sentMessages
       .filter((m) => m.telegramId === STUDENT_TG)
       .at(-1)
@@ -592,20 +520,14 @@ describe('E2E: подтверждения ухода из учёбы (callback-�
     expect(String(confirm.screen?.text)).toContain('Покинуть учёбу?');
 
     // Шаг 2: «🚪 Да, покинуть» → прощание + UC drop-student
-    const done = await transport.handleCallback(
-      transport.makeBotContext(STUDENT_TG, {
-        callbackData: pressedCode(transport, STUDENT_TG, 'Да, покинуть'),
-      }),
-    );
+    const done = await transport.press(STUDENT_TG, 'Да, покинуть');
     expect(String(done.screen?.text)).toContain('Ты покинул учёбу');
     expect(String(done.screen?.text)).toContain('возвращайся');
 
     // Ментору — уведомление о самовыходе (P1-55)
-    const mentorNotice = await waitMessageContaining(
-      transport,
-      MENTOR_TG,
-      'покинул учёбу',
-    );
+    const mentorNotice = await transport.waitForMessage(MENTOR_TG, {
+      contains: 'покинул учёбу',
+    });
     expect(mentorNotice).toBeDefined();
     expect(mentorNotice).toContain('ℹ️ *Информация:*');
     expect(mentorNotice).toContain('Студент Андрей покинул учёбу');
@@ -618,7 +540,7 @@ describe('E2E: подтверждения ухода из учёбы (callback-�
         StreamModuleDef,
         GetStudentProgressUcDef.command({ studentId: STUDENT_F0 }),
         student,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     ).student;
     expect(record.status).toBe('abandoned');
@@ -654,9 +576,9 @@ describe('E2E: Job бездействия — повторы по дням', () 
 
     // День 0 (якорь 2026-09-23): 15 дней бездействия — обе ступени
     expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
-    const toStudent = await waitMessageFor(transport, STUDENT_TG);
+    const toStudent = await transport.waitForMessage(STUDENT_TG);
     expect(toStudent).toContain('Ты не занимаешься уже 15 дней');
-    const toMentor = await waitMessageFor(transport, MENTOR_TG);
+    const toMentor = await transport.waitForMessage(MENTOR_TG);
     expect(toMentor).toContain('не занимался 15 дней');
     expect(toMentor).not.toContain('Уведомления были ранее отправлены');
 
@@ -670,9 +592,9 @@ describe('E2E: Job бездействия — повторы по дням', () 
     // +2 дня: повтор обеим ступеням, ментор видит «уведомления были»
     app.clock.advance(24 * 60 * 60 * 1000);
     expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
-    const secondStudent = await waitMessageFor(transport, STUDENT_TG);
+    const secondStudent = await transport.waitForMessage(STUDENT_TG);
     expect(secondStudent).toContain('Ты не занимаешься уже 17 дней');
-    const secondMentor = await waitMessageFor(transport, MENTOR_TG);
+    const secondMentor = await transport.waitForMessage(MENTOR_TG);
     expect(secondMentor).toContain('не занимался 17 дней');
     expect(secondMentor).toContain('Уведомления были ранее отправлены');
   });
@@ -691,7 +613,7 @@ describe('E2E: Job бездействия — повторы по дням', () 
           stepId: 'd0d0d0d0-d0d0-d0d0-d0d0-d0d0d0d0d0d0',
         }),
         student,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
 

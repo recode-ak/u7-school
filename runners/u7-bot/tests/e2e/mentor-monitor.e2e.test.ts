@@ -14,8 +14,6 @@ import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import type {
@@ -202,34 +200,19 @@ describe('E2E: отказы мониторинга студентов', () => {
   const notifyOf = (response: DialogResponse): string =>
     String(response.notify?.text ?? '');
 
-  async function press(
-    id: number,
-    textContains: string,
-  ): Promise<DialogResponse> {
-    return transport.handleCallback(
-      transport.makeBotContext(id, {
-        callbackData: pressedCode(transport, id, textContains),
-      }),
-    );
-  }
-
   /** Крафтовый адрес с актуальным штампом открытого экрана. */
   async function craft(id: number, rawCode: string): Promise<DialogResponse> {
     await transport.handleStart(transport.makeBotContext(id));
-    return transport.handleCallback(
-      transport.makeBotContext(id, {
-        callbackData: stampedCode(transport, id, rawCode),
-      }),
-    );
+    return transport.pressRaw(id, rawCode);
   }
 
   /** /start → «Инструменты ментора» → «Мои потоки» → карточка → «Студенты». */
   async function openMonitor(id: number): Promise<DialogResponse> {
     await transport.handleStart(transport.makeBotContext(id));
-    await press(id, 'Инструменты ментора');
-    await press(id, 'Мои потоки');
-    await press(id, 'Поток мониторинга');
-    return press(id, 'Студенты');
+    await transport.press(id, 'Инструменты ментора');
+    await transport.press(id, 'Мои потоки');
+    await transport.press(id, 'Поток мониторинга');
+    return transport.press(id, 'Студенты');
   }
 
   // ── Отказы прав ──

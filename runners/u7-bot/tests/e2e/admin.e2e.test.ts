@@ -13,12 +13,11 @@ import { StreamsController } from '@u7-scl/bot/streams/controller';
 import type { DialogResponse } from '@u7-scl/core/ui';
 import { Role } from '@u7-scl/domain/user/testing';
 import type { WishState } from '@u7-scl/domain/wish/testing';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import type {
@@ -274,48 +273,29 @@ describe('E2E: админские экраны бота', () => {
   const notifyOf = (response: DialogResponse): string =>
     String(response.notify?.text ?? '');
 
-  const buttonsOf = (response: DialogResponse): string[] =>
-    response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
-
-  const codesOf = (response: DialogResponse): string[] =>
-    response.screen?.keyboard?.rows.flat().map((b) => b.code) ?? [];
-
-  async function press(
-    tgId: number,
-    textContains: string,
-  ): Promise<DialogResponse> {
-    return transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, textContains),
-      }),
-    );
-  }
-
   /** Крафтовый адрес с актуальным штампом свежего экрана. */
   async function craft(tgId: number, rawCode: string): Promise<DialogResponse> {
     await transport.handleStart(transport.makeBotContext(tgId));
-    return transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: stampedCode(transport, tgId, rawCode),
-      }),
-    );
+    return transport.pressRaw(tgId, rawCode);
   }
 
   // ── «Мои потоки» и чужая карточка ──
 
   test('P5-08: админ — «Мои потоки» пуст, чужие потоки не показываются', async () => {
     await transport.handleStart(transport.makeBotContext(TG.admin));
-    await press(TG.admin, 'Инструменты ментора');
+    await transport.press(TG.admin, 'Инструменты ментора');
 
-    const response = await press(TG.admin, 'Мои потоки');
+    const response = await transport.press(TG.admin, 'Мои потоки');
 
     expect(textOf(response)).toContain('У вас пока нет потоков');
-    expect(buttonsOf(response)).toContain('⚫ Вкл. архивированные');
-    expect(buttonsOf(response)).toContain('🟢 Вкл. завершённые');
+    expect(Screen.of(response).texts()).toContain('⚫ Вкл. архивированные');
+    expect(Screen.of(response).texts()).toContain('🟢 Вкл. завершённые');
     // Своих потоков нет — потоки ментора dev в списке не появляются
-    expect(buttonsOf(response).some((t) => t.includes('Поток набора'))).toBe(
-      false,
-    );
+    expect(
+      Screen.of(response)
+        .texts()
+        .some((t) => t.includes('Поток набора')),
+    ).toBe(false);
   });
 
   test('P5-09: админ — менторская карточка чужого потока с lifecycle-кнопками', async () => {
@@ -324,11 +304,17 @@ describe('E2E: админские экраны бота', () => {
       `mentor:view-stream-mentor:view:${streamId('stream-active')}`,
     );
 
-    const activeButtons = buttonsOf(active);
-    expect(buttonsOf(active).some((t) => t.includes('Программа модуля'))).toBe(
-      true,
-    );
-    expect(buttonsOf(active).some((t) => t.includes('Детали'))).toBe(true);
+    const activeButtons = Screen.of(active).texts();
+    expect(
+      Screen.of(active)
+        .texts()
+        .some((t) => t.includes('Программа модуля')),
+    ).toBe(true);
+    expect(
+      Screen.of(active)
+        .texts()
+        .some((t) => t.includes('Детали')),
+    ).toBe(true);
     expect(activeButtons.some((t) => t.includes('Студенты'))).toBe(true);
     expect(activeButtons).toContain('✅ Завершить');
 
@@ -336,57 +322,48 @@ describe('E2E: админские экраны бота', () => {
       TG.admin,
       `mentor:view-stream-mentor:view:${streamId('stream-enrollment')}`,
     );
-    expect(buttonsOf(enrollment)).toContain('🚀 Запустить');
+    expect(Screen.of(enrollment).texts()).toContain('🚀 Запустить');
   });
 
   test('P5-10: админ в публичной карточке — режим ментора, тело шага открыто; чужому ментору — нет', async () => {
     // Админ: публичная карточка → программа → проект → урок → шаг
     await transport.handleStart(transport.makeBotContext(TG.admin));
-    await transport.handleCallback(
-      transport.makeBotContext(TG.admin, {
-        callbackData: stampedCode(
-          transport,
-          TG.admin,
-          `stream:view-stream:view:${streamId('stream-active')}`,
-        ),
-      }),
+    await transport.pressRaw(
+      TG.admin,
+      `stream:view-stream:view:${streamId('stream-active')}`,
     );
-    await press(TG.admin, 'Программа модуля');
-    await press(TG.admin, 'Проект админа');
-    const lesson = await press(TG.admin, 'Урок админа');
+    await transport.press(TG.admin, 'Программа модуля');
+    await transport.press(TG.admin, 'Проект админа');
+    const lesson = await transport.press(TG.admin, 'Урок админа');
     expect(textOf(lesson)).toContain('Шаги урока');
     // Шаги открываются на чтение только в режиме ментора
-    expect(buttonsOf(lesson).some((t) => t.includes('Первый шаг'))).toBe(true);
+    expect(
+      Screen.of(lesson)
+        .texts()
+        .some((t) => t.includes('Первый шаг')),
+    ).toBe(true);
 
-    const step = await press(TG.admin, 'Первый шаг');
+    const step = await transport.press(TG.admin, 'Первый шаг');
     expect(textOf(step)).toContain('Тело первого шага');
 
     // Ментор не владелец и не админ: шаги не открываются
     await transport.handleStart(transport.makeBotContext(TG.otherMentor));
-    await transport.handleCallback(
-      transport.makeBotContext(TG.otherMentor, {
-        callbackData: stampedCode(
-          transport,
-          TG.otherMentor,
-          `stream:view-stream:view:${streamId('stream-active')}`,
-        ),
-      }),
+    await transport.pressRaw(
+      TG.otherMentor,
+      `stream:view-stream:view:${streamId('stream-active')}`,
     );
-    await press(TG.otherMentor, 'Программа модуля');
-    await press(TG.otherMentor, 'Проект админа');
-    const viewerLesson = await press(TG.otherMentor, 'Урок админа');
-    expect(buttonsOf(viewerLesson).some((t) => t.includes('Первый шаг'))).toBe(
-      false,
-    );
+    await transport.press(TG.otherMentor, 'Программа модуля');
+    await transport.press(TG.otherMentor, 'Проект админа');
+    const viewerLesson = await transport.press(TG.otherMentor, 'Урок админа');
+    expect(
+      Screen.of(viewerLesson)
+        .texts()
+        .some((t) => t.includes('Первый шаг')),
+    ).toBe(false);
 
-    const denied = await transport.handleCallback(
-      transport.makeBotContext(TG.otherMentor, {
-        callbackData: stampedCode(
-          transport,
-          TG.otherMentor,
-          `stream:view-stream:prog:${streamId('stream-active')}:step:${STEP1_ID}`,
-        ),
-      }),
+    const denied = await transport.pressRaw(
+      TG.otherMentor,
+      `stream:view-stream:prog:${streamId('stream-active')}:step:${STEP1_ID}`,
     );
     expect(textOf(denied)).toContain('Тела шагов недоступны');
   });
@@ -398,34 +375,36 @@ describe('E2E: админские экраны бота', () => {
     );
 
     expect(textOf(list)).toContain('Студенты потока');
-    expect(buttonsOf(list)).toContain('⛔');
-    expect(buttonsOf(list)).toContain('✅');
-    expect(buttonsOf(list).some((t) => t.includes('Показать выбывших'))).toBe(
-      true,
-    );
+    expect(Screen.of(list).texts()).toContain('⛔');
+    expect(Screen.of(list).texts()).toContain('✅');
+    expect(
+      Screen.of(list)
+        .texts()
+        .some((t) => t.includes('Показать выбывших')),
+    ).toBe(true);
 
-    const all = await press(TG.admin, 'Показать выбывших');
+    const all = await transport.press(TG.admin, 'Показать выбывших');
     expect(textOf(all)).toContain('Студенты потока');
-    expect(buttonsOf(all)).toContain('🔄');
+    expect(Screen.of(all).texts()).toContain('🔄');
   });
 
   test('P5-12: админ — «Создать поток»: визард открыт, UC отказывает в правах', async () => {
     await transport.handleStart(transport.makeBotContext(TG.admin));
-    await press(TG.admin, 'Инструменты ментора');
-    await press(TG.admin, 'Создать поток');
+    await transport.press(TG.admin, 'Инструменты ментора');
+    await transport.press(TG.admin, 'Создать поток');
 
-    const modules = await press(TG.admin, 'Модуль админа');
+    const modules = await transport.press(TG.admin, 'Модуль админа');
     expect(textOf(modules)).toContain('название потока');
-    await press(TG.admin, 'Принять');
-    await press(TG.admin, 'Принять');
+    await transport.press(TG.admin, 'Принять');
+    await transport.press(TG.admin, 'Принять');
     await transport.sendText(TG.admin, '2026-12-15');
-    for (let i = 0; i < 5; i++) await press(TG.admin, 'Пропустить');
-    await press(TG.admin, 'Пропустить');
-    await press(TG.admin, 'Пропустить');
-    const preview = await press(TG.admin, 'Пропустить');
+    for (let i = 0; i < 5; i++) await transport.press(TG.admin, 'Пропустить');
+    await transport.press(TG.admin, 'Пропустить');
+    await transport.press(TG.admin, 'Пропустить');
+    const preview = await transport.press(TG.admin, 'Пропустить');
     expect(textOf(preview)).toContain('Превью потока');
 
-    const refused = await press(TG.admin, 'Создать');
+    const refused = await transport.press(TG.admin, 'Создать');
 
     expect(refused.notify?.kind).toBe('warn');
     expect(notifyOf(refused)).toContain(
@@ -437,51 +416,55 @@ describe('E2E: админские экраны бота', () => {
 
   test('P5-13: админ — каталог до урока, содержимое модуля видно полностью', async () => {
     await transport.handleStart(transport.makeBotContext(TG.admin));
-    const card = await press(TG.admin, 'Курсы');
+    const card = await transport.press(TG.admin, 'Курсы');
     // Каталог — карусель: сразу карточка первого курса
     expect(textOf(card)).toContain('Курс админа');
     expect(textOf(card)).toContain('Модуль админа');
 
-    const module = await press(TG.admin, 'Модуль админа');
+    const module = await transport.press(TG.admin, 'Модуль админа');
     expect(textOf(module)).toContain('Проекты модуля');
     expect(textOf(module)).toContain('Проект админа');
 
-    const project = await press(TG.admin, 'Проект админа');
+    const project = await transport.press(TG.admin, 'Проект админа');
     expect(textOf(project)).toContain('Уроки проекта');
 
-    const lesson = await press(TG.admin, 'Урок админа');
+    const lesson = await transport.press(TG.admin, 'Урок админа');
     expect(textOf(lesson)).toContain('Шаги урока');
     expect(textOf(lesson)).toContain('Первый шаг');
   });
 
   test('P5-14: уровень «Урок» в каталоге — шаги заголовками, тела шага нет', async () => {
     await transport.handleStart(transport.makeBotContext(TG.admin));
-    await press(TG.admin, 'Курсы');
-    await press(TG.admin, 'Модуль админа');
-    await press(TG.admin, 'Проект админа');
+    await transport.press(TG.admin, 'Курсы');
+    await transport.press(TG.admin, 'Модуль админа');
+    await transport.press(TG.admin, 'Проект админа');
 
-    const lesson = await press(TG.admin, 'Урок админа');
+    const lesson = await transport.press(TG.admin, 'Урок админа');
 
     // Наблюдаемое сейчас: шаги — только заголовки, адреса шага нет ни у
     // одной роли (UC сводки шага `content`/`code` удалён без вызывающих)
     expect(textOf(lesson)).toContain('Первый шаг');
     expect(textOf(lesson)).not.toContain('Тело первого шага');
-    expect(codesOf(lesson).some((c) => c.includes(STEP1_ID))).toBe(false);
+    expect(
+      Screen.of(lesson)
+        .codes()
+        .some((c) => c.includes(STEP1_ID)),
+    ).toBe(false);
   });
 
   test('P5-15: карточка курса у админа — wish-кнопки как у студента', async () => {
     await transport.handleStart(transport.makeBotContext(TG.admin));
 
-    const noWish = await press(TG.admin, 'Курсы');
+    const noWish = await transport.press(TG.admin, 'Курсы');
     expect(textOf(noWish)).toContain('Курс админа');
-    expect(buttonsOf(noWish)).toContain('🎓 Хочу пройти курс');
+    expect(Screen.of(noWish).texts()).toContain('🎓 Хочу пройти курс');
 
-    const pending = await press(TG.admin, 'След. курс');
+    const pending = await transport.press(TG.admin, 'След. курс');
     expect(textOf(pending)).toContain('Курс с черновиком анкеты');
-    expect(buttonsOf(pending)).toContain('📝 Продолжить анкету');
+    expect(Screen.of(pending).texts()).toContain('📝 Продолжить анкету');
 
-    const expressed = await press(TG.admin, 'След. курс');
+    const expressed = await transport.press(TG.admin, 'След. курс');
     expect(textOf(expressed)).toContain('Курс с желанием');
-    expect(buttonsOf(expressed)).toContain('🗑️ Отменить желание');
+    expect(Screen.of(expressed).texts()).toContain('🗑️ Отменить желание');
   });
 });

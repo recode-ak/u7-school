@@ -15,11 +15,11 @@ import {
 } from '@u7-scl/core/ui';
 import type { WishStatus } from '@u7-scl/domain/wish/testing';
 import { WishAr } from '@u7-scl/domain/wish/testing';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 
@@ -81,14 +81,9 @@ describe('Wish: жизненный цикл желания курса (инте�
 
   /** Прямой callback «Хочу пройти курс»: сырой код + актуальный штамп. */
   async function apply(courseId: string): Promise<DialogResponse> {
-    return transport.handleCallback(
-      transport.makeBotContext(guest.user.view().telegramId, {
-        callbackData: stampedCode(
-          transport,
-          guest.user.view().telegramId,
-          `course:course-catalog:apply:${courseId}`,
-        ),
-      }),
+    return transport.pressRaw(
+      guest.user.view().telegramId,
+      `course:course-catalog:apply:${courseId}`,
     );
   }
 
@@ -97,27 +92,17 @@ describe('Wish: жизненный цикл желания курса (инте�
     response: DialogResponse,
     buttonText: string,
   ): Promise<DialogResponse> {
-    const btn = buttonsOf(response).find((b) => b.text === buttonText);
+    const btn = Screen.of(response)
+      .buttons()
+      .find((b) => b.text === buttonText);
     expect(btn, `Кнопка «${buttonText}» не найдена в ответе`).toBeDefined();
-    return transport.handleCallback(
-      transport.makeBotContext(guest.user.view().telegramId, {
-        callbackData: stampedCode(
-          transport,
-          guest.user.view().telegramId,
-          btn!.code,
-        ),
-      }),
-    );
+    return transport.pressRaw(guest.user.view().telegramId, btn!.code);
   }
 
   function hasButton(response: DialogResponse, text: string): boolean {
-    return buttonsOf(response).some((b) => b.text.includes(text));
-  }
-
-  function buttonsOf(
-    response: DialogResponse,
-  ): Array<{ text: string; code: string }> {
-    return response.screen?.keyboard?.rows.flat() ?? [];
+    return Screen.of(response)
+      .buttons()
+      .some((b) => b.text.includes(text));
   }
 
   /**
@@ -175,27 +160,17 @@ describe('Wish: жизненный цикл желания курса (инте�
     await openDialog();
 
     // Курс мира с опасным названием: карточка курса из одного этапа
-    const escapingCard = await transport.handleCallback(
-      transport.makeBotContext(guest.user.view().telegramId, {
-        callbackData: stampedCode(
-          transport,
-          guest.user.view().telegramId,
-          `course:course-catalog:course:${ESCAPING_COURSE_ID}`,
-        ),
-      }),
+    const escapingCard = await transport.pressRaw(
+      guest.user.view().telegramId,
+      `course:course-catalog:course:${ESCAPING_COURSE_ID}`,
     );
     expect(escapingCard.screen?.text).toContain(ESCAPED_ESCAPING_PREFIX);
     assertDialogResponseMarkdownSafe(escapingCard);
 
     // Published-курс мира: опасное название в крошках и на кнопке
-    const list = await transport.handleCallback(
-      transport.makeBotContext(guest.user.view().telegramId, {
-        callbackData: stampedCode(
-          transport,
-          guest.user.view().telegramId,
-          `course:course-catalog:course:${DANGEROUS_COURSE_ID}`,
-        ),
-      }),
+    const list = await transport.pressRaw(
+      guest.user.view().telegramId,
+      `course:course-catalog:course:${DANGEROUS_COURSE_ID}`,
     );
     expect(list.screen?.text).toContain(ESCAPED_DANGEROUS_PREFIX);
     assertDialogResponseMarkdownSafe(list);

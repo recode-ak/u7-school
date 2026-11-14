@@ -7,9 +7,7 @@ import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
   screensNewFirst,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 
@@ -61,15 +59,7 @@ describe('LearningController (интеграционный)', () => {
 
   /** Прямой вызов кода с актуальным штампом открытого экрана. */
   async function callRaw(code: string) {
-    return transport.handleCallback(
-      transport.makeBotContext(student.user.view().telegramId, {
-        callbackData: stampedCode(
-          transport,
-          student.user.view().telegramId,
-          code,
-        ),
-      }),
-    );
+    return transport.pressRaw(student.user.view().telegramId, code);
   }
 
   // ── Главное меню ──
@@ -211,31 +201,15 @@ describe('LearningController (интеграционный)', () => {
     const sentBefore = transport.api.sentMessages.length;
 
     // Мост в nav-tree: /start → «Моя учёба» (хаб) → «📖 Программа модуля» (смена диалога → send)
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Моя учёба'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Программа модуля'),
-      }),
-    );
+    await transport.press(tgId, 'Моя учёба');
+    await transport.press(tgId, 'Программа модуля');
     // send-ы: welcome + хаб + дерево (retire старых экранов — это edit-ы)
     const sentAfterEnter = transport.api.sentMessages.length;
     const editsAfterEnter = transport.api.editedMessages.length;
 
     // Drill-down: проект → урок — тот же dialog.path, экран наш → edit
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Введение'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Переменные и типы'),
-      }),
-    );
+    await transport.press(tgId, 'Введение');
+    await transport.press(tgId, 'Переменные и типы');
 
     // Новых сообщений нет — оба перехода отрендерены edit'ом
     expect(transport.api.sentMessages.length).toBe(sentAfterEnter);
@@ -252,19 +226,11 @@ describe('LearningController (интеграционный)', () => {
     await openDialog();
 
     // Открываем хаб кнопкой из меню
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Моя учёба'),
-      }),
-    );
+    await transport.press(tgId, 'Моя учёба');
     const hubScreenMessageId = transport.api.sentMessages.at(-1)!.messageId;
 
     // Мост «📖 Программа модуля» — смена диалога (learning/hub → learning/nav-tree)
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Программа модуля'),
-      }),
-    );
+    await transport.press(tgId, 'Программа модуля');
 
     // Retire хаба: edit его сообщения — маркер выбора, клавиатура снята
     const retireEdit = transport.api.editedMessages.find(

@@ -7,7 +7,6 @@ import {
   CompleteStudentUcDef,
   DropStudentUcDef,
   EnrollStudentUcDef,
-  InactivitySweepJobDef,
   MarkAbandonedUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
@@ -16,26 +15,18 @@ import {
   createTestBotTransport,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 import { CoursesController } from '../../src/controllers/courses/controller';
 import { CORE_EDUCATION_WORLD, type WorldDefinition } from '../worlds';
 
 /**
  * E2E событий студента потока на DMG (срез `student`): события публикует UoW
- * модуля `stream` при настоящем UC (`dispatch`) или Job (`runJob`), а не
- * публикация legacy-имени `student.*` на шине.
- * Текущий сценарий: повторный `runJob` в тот же день → ничего не шлёт
- * (маркер бездействия).
- *
- * `TestApp.runJob(module, jobDef)` запускает Job через приложение DMG.
- * Фикстура: студент f0f0 (1003) active на потоке e1e1 (ментор 1004, группа
- * GROUP2_ID); последняя активность — 2026-09-08, поэтому Job видит 5+/7+ дней.
+ * модуля `stream` при настоящем UC (`dispatch`), а не публикация legacy-имени
+ * `student.*` на шине.
  */
 
 const MENTOR_TG = 1004;
 const STUDENT_TG = 1003;
-const GROUP2_ID = '-1002222222222';
 
 // ── Мир ролей (сценарии P5-44/P5-45) ──
 
@@ -72,24 +63,6 @@ const ROLES_WORLD: WorldDefinition = {
   ],
 };
 
-const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
-
-async function waitMessageFor(
-  transport: TestBotTransport,
-  telegramId: number,
-  timeoutMs = 3000,
-) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const found = transport.api.sentMessages.find(
-      (m) => m.telegramId === telegramId,
-    );
-    if (found) return found.text;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-  return undefined;
-}
-
 interface Stand {
   app: TestApp;
   transport: TestBotTransport;
@@ -110,35 +83,6 @@ async function createStandWithWorld(
   const mentor = await app.userByTelegramId(MENTOR_TG);
   return { app, transport, mentor };
 }
-
-async function createStand(tag: string): Promise<Stand> {
-  return createStandWithWorld(tag);
-}
-
-describe('E2E: Job бездействия → проактивы студенту и ментору', () => {
-  let stand: Stand;
-  beforeAll(async () => {
-    stand = await createStand('student-dmg-job');
-  });
-  afterAll(async () => {
-    await stand.app.cleanup();
-  });
-
-  test('повторный runJob в тот же день ничего не шлёт', async () => {
-    const { app, transport } = stand;
-
-    // Первый прогон ставит маркеры «предупреждён сегодня» — ждём доставки
-    expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
-    await waitMessageFor(transport, STUDENT_TG);
-    await waitMessageFor(transport, MENTOR_TG);
-    transport.reset();
-
-    expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
-    await new Promise((r) => setTimeout(r, 200));
-
-    expect(transport.api.sentMessages).toEqual([]);
-  });
-});
 
 /**
  * Роль `STUDENT` из модели убрана (роли пользователя — только GUEST,
@@ -174,7 +118,7 @@ describe('E2E: роли пользователя при зачислении и 
         StreamModuleDef,
         EnrollStudentUcDef.command({ streamId: STREAM0_ID }),
         actor,
-        trace(),
+        testTrace(),
       ),
     );
 
@@ -195,7 +139,7 @@ describe('E2E: роли пользователя при зачислении и 
           outcome: 'not_advanced',
         }),
         mentor,
-        trace(),
+        testTrace(),
       ),
     );
     expect(await rolesOf(MARINA_TG)).toEqual(['GUEST']);
@@ -210,7 +154,7 @@ describe('E2E: роли пользователя при зачислении и 
           studentId: STUDENT_DROPPED_S2,
         }),
         dropping,
-        trace(),
+        testTrace(),
       ),
     );
     expect(await rolesOf(DROPPING_TG)).toEqual(['GUEST']);
@@ -225,7 +169,7 @@ describe('E2E: роли пользователя при зачислении и 
           cause: 'inactivity',
         }),
         mentor,
-        trace(),
+        testTrace(),
       ),
     );
     expect(await rolesOf(STUDENT_TG)).toEqual(['GUEST']);

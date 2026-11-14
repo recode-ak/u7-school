@@ -7,7 +7,6 @@ import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 
@@ -51,21 +50,9 @@ describe('CatalogStory (интеграционный)', () => {
   test('переключатель «Вкл. завершённые» работает кнопкой с экрана', async () => {
     const tgId = guest.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Школа'),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Потоки'),
-      }),
-    );
-    const response = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Вкл. завершённые'),
-      }),
-    );
+    await transport.press(tgId, 'Школа');
+    await transport.press(tgId, 'Потоки');
+    const response = await transport.press(tgId, 'Вкл. завершённые');
     const btns =
       response.screen?.keyboard?.rows.flat().map((b) => b.text) ?? [];
     expect(btns.some((t) => t.includes('Поток 3'))).toBe(true);

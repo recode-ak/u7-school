@@ -27,8 +27,7 @@ import {
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import type { AnyEventDef } from 'dmg-core';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { CoursesController } from '../../src/controllers/courses/controller';
 
@@ -56,41 +55,6 @@ const MENTOR_TG = 1004;
 const WISHER_TG = 1002; // «Кандидат» (SUBSCRIBER)
 const STUDENT_ADV_TG = 1007; // «Марина» (прошла a0a0a0a0)
 const STUDENT_ACTIVE_TG = 1003; // «Студент» (active на e1e1e1e1, a0a0a0a0)
-
-/** Ждёт появления проактивного сообщения адресату (poll sentMessages). */
-async function waitMessageFor(
-  transport: TestBotTransport,
-  telegramId: number,
-  timeoutMs = 3000,
-): Promise<string | undefined> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const found = transport.api.sentMessages.find(
-      (m) => m.telegramId === telegramId,
-    );
-    if (found) return found.text;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-  return undefined;
-}
-
-/** Ждёт проактивного сообщения с указанным фрагментом (poll sentMessages). */
-async function waitMessageContaining(
-  transport: TestBotTransport,
-  telegramId: number,
-  textContains: string,
-  timeoutMs = 3000,
-): Promise<string | undefined> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const found = transport.api.sentMessages.find(
-      (m) => m.telegramId === telegramId && m.text.includes(textContains),
-    );
-    if (found) return found.text;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-  return undefined;
-}
 
 describe('E2E: адресные уведомления stories (приглашение желающих, «Курс завершён»)', () => {
   let app: TestApp;
@@ -128,7 +92,7 @@ describe('E2E: адресные уведомления stories (приглаше
         WishModuleDef,
         CreateCourseWishUcDef.command({ courseId: COURSE_ID }),
         wisher,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
 
@@ -143,13 +107,13 @@ describe('E2E: адресные уведомления stories (приглаше
           startDate: Date.UTC(2026, 9, 1),
         }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
 
     // 3. Желающему доставлено ровно одно кнопочное приглашение (канал
     //    invite): курс, поток, дата, ментор, кнопка отмены (MarkdownV2)
-    const text = await waitMessageFor(transport, WISHER_TG);
+    const text = await transport.waitForMessage(WISHER_TG);
     expect(text).toBeDefined();
     expect(text).toContain('📣 *Открылся набор\\!*');
     expect(text).toContain('У тебя было желание пройти курс');
@@ -213,7 +177,7 @@ describe('E2E: адресные уведомления stories (приглаше
           startDate: Date.UTC(2026, 10, 1),
         }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
 
@@ -223,7 +187,7 @@ describe('E2E: адресные уведомления stories (приглаше
         StreamModuleDef,
         EnrollStudentUcDef.command({ streamId: stream.streamId }),
         studentAdvanced,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
     const record = expectOk(
@@ -231,7 +195,7 @@ describe('E2E: адресные уведомления stories (приглаше
         StreamModuleDef,
         GetStudentByUserUcDef.command({ userId: studentAdvanced.user.uuid }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
     expect(record.streamId).toBe(stream.streamId);
@@ -242,7 +206,7 @@ describe('E2E: адресные уведомления stories (приглаше
         StreamModuleDef,
         ActivateStreamUcDef.command({ streamId: stream.streamId }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
 
@@ -256,12 +220,12 @@ describe('E2E: адресные уведомления stories (приглаше
           outcome: 'advanced',
         }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
 
     // 5. Студенту доставлено поздравление с завершением курса
-    const text = await waitMessageFor(transport, STUDENT_ADV_TG);
+    const text = await transport.waitForMessage(STUDENT_ADV_TG);
     expect(text).toBeDefined();
     expect(text).toContain('Курс завершён');
     expect(text).toContain('Поздравляем');
@@ -276,7 +240,7 @@ describe('E2E: адресные уведомления stories (приглаше
         StreamModuleDef,
         GetStudentByUserUcDef.command({ userId: studentActive.user.uuid }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
 
@@ -289,7 +253,7 @@ describe('E2E: адресные уведомления stories (приглаше
           outcome: 'advanced',
         }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
 
@@ -359,11 +323,9 @@ describe('E2E: адресные уведомления stories (приглаше
       outcome: 'advanced',
     });
 
-    const text = await waitMessageContaining(
-      transport,
-      STUDENT_ACTIVE_TG,
-      'Модуль завершён',
-    );
+    const text = await transport.waitForMessage(STUDENT_ACTIVE_TG, {
+      contains: 'Модуль завершён',
+    });
     expect(text).toBeDefined();
     expect(text).toContain('Хочешь записаться на следующий');
   });
@@ -379,11 +341,9 @@ describe('E2E: адресные уведомления stories (приглаше
       outcome: 'not_advanced',
     });
 
-    const text = await waitMessageContaining(
-      transport,
-      STUDENT_ACTIVE_TG,
-      'Модуль не пройден до конца',
-    );
+    const text = await transport.waitForMessage(STUDENT_ACTIVE_TG, {
+      contains: 'Модуль не пройден до конца',
+    });
     expect(text).toBeDefined();
 
     // Кнопка ведёт в тот же модуль (wish → create-module-wish)
@@ -412,7 +372,7 @@ describe('E2E: адресные уведомления stories (приглаше
           startDate: Date.UTC(2026, 11, 1),
         }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
     expectOk(
@@ -420,7 +380,7 @@ describe('E2E: адресные уведомления stories (приглаше
         StreamModuleDef,
         EnrollStudentUcDef.command({ streamId: stream.streamId }),
         studentAdvanced,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
     const record = expectOk(
@@ -428,7 +388,7 @@ describe('E2E: адресные уведомления stories (приглаше
         StreamModuleDef,
         GetStudentByUserUcDef.command({ userId: studentAdvanced.user.uuid }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
     expect(record.streamId).toBe(stream.streamId);
@@ -437,7 +397,7 @@ describe('E2E: адресные уведомления stories (приглаше
         StreamModuleDef,
         ActivateStreamUcDef.command({ streamId: stream.streamId }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
     expectOk(
@@ -449,15 +409,13 @@ describe('E2E: адресные уведомления stories (приглаше
           outcome: 'advanced',
         }),
         mentor,
-        Trace.fromRequest({ requestId: crypto.randomUUID() }),
+        testTrace(),
       ),
     );
 
-    const text = await waitMessageContaining(
-      transport,
-      STUDENT_ADV_TG,
-      'Модуль завершён',
-    );
+    const text = await transport.waitForMessage(STUDENT_ADV_TG, {
+      contains: 'Модуль завершён',
+    });
     expect(text).toBeDefined();
     expect(text).toContain('Хочешь записаться на следующий');
 

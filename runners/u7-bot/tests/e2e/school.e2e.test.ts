@@ -10,12 +10,11 @@ import { AppController } from '@u7-scl/bot/app/app-controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import type { DialogResponse } from '@u7-scl/core/ui';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import {
   createTestBotTransport,
-  pressedCode,
-  stampedCode,
   type TestBotTransport,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import { CORE_EDUCATION_WORLD, type WorldDefinition } from '../worlds';
@@ -29,43 +28,13 @@ const SCHOOL_SITE_PLACEHOLDER = 'сайта пока нет, но скоро б�
 /** Сообщество школы из TEST_SCHOOL — URL-кнопка хаба SH01. */
 const SCHOOL_COMMUNITY_URL = 'https://t.me/+communityInvite';
 
-/** Кнопки экрана плоским списком. */
-function buttonsOf(
-  response: DialogResponse,
-): Array<{ text: string; code: string; url?: string }> {
-  return response.screen?.keyboard?.rows.flat() ?? [];
-}
-
 /** Открывает хаб школы: /start → «🏫 Школа» (диалог school/hub). */
 async function openSchool(
   transport: TestBotTransport,
   tgId: number,
 ): Promise<DialogResponse> {
   await transport.handleStart(transport.makeBotContext(tgId));
-  return transport.handleCallback(
-    transport.makeBotContext(tgId, {
-      callbackData: pressedCode(transport, tgId, 'Школа'),
-    }),
-  );
-}
-
-/**
- * Нажимает кнопку экрана `response` (код штампуется текущим экраном —
- * как реальный клиент, нажимающий кнопку последнего сообщения).
- */
-async function press(
-  transport: TestBotTransport,
-  tgId: number,
-  response: DialogResponse,
-  textContains: string,
-): Promise<DialogResponse> {
-  const button = buttonsOf(response).find((b) => b.text.includes(textContains));
-  if (!button) throw new Error(`Кнопка «${textContains}» не найдена на экране`);
-  return transport.handleCallback(
-    transport.makeBotContext(tgId, {
-      callbackData: stampedCode(transport, tgId, button.code),
-    }),
-  );
+  return transport.press(tgId, 'Школа');
 }
 
 /**
@@ -105,7 +74,10 @@ describe('E2E: хаб школы и его разделы (SH01–SH03)', () => 
     const hub = await openSchool(transport, tgId);
     expect(String(hub.screen?.text)).toContain('U7 School');
 
-    const info = await press(transport, tgId, hub, 'Инфо');
+    const info = await transport.pressRaw(
+      tgId,
+      Screen.of(hub).button('Инфо').code,
+    );
     const text = String(info.screen?.text);
 
     expect(text).toContain('U7 School');
@@ -116,17 +88,17 @@ describe('E2E: хаб школы и его разделы (SH01–SH03)', () => 
     expect(text).toContain('287 8182');
     expect(text).toContain('🌐 *Сайт:*');
 
-    const back = buttonsOf(info).find((b) => b.text.includes('Назад в школу'));
+    const back = Screen.of(info)
+      .buttons()
+      .find((b) => b.text.includes('Назад в школу'));
     expect(back).toBeDefined();
     expect(back?.code).toBe('school:hub:open');
   });
 
   test('P1-15: «Инфо» без заданного сайта — заглушка вместо ссылки', async () => {
-    const info = await press(
-      transport,
+    const info = await transport.pressRaw(
       tgId,
-      await openSchool(transport, tgId),
-      'Инфо',
+      Screen.of(await openSchool(transport, tgId)).button('Инфо').code,
     );
 
     expect(String(info.screen?.text)).toContain(SCHOOL_SITE_PLACEHOLDER);
@@ -135,7 +107,10 @@ describe('E2E: хаб школы и его разделы (SH01–SH03)', () => 
   test('P1-16: хаб → «💬 Отзывы» — карточка отзыва студента о менторе из потоков школы', async () => {
     const hub = await openSchool(transport, tgId);
 
-    const reviews = await press(transport, tgId, hub, 'Отзывы');
+    const reviews = await transport.pressRaw(
+      tgId,
+      Screen.of(hub).button('Отзывы').code,
+    );
     const text = String(reviews.screen?.text);
 
     // Заголовок с индикатором карточки: отзывы собраны по всем потокам школы
@@ -148,43 +123,62 @@ describe('E2E: хаб школы и его разделы (SH01–SH03)', () => 
     expect(text).toMatch(/📅 Дата: \d{2}\\\.\d{2}\\\.\d{4}/);
     expect(text).toContain('💬 «');
 
-    const back = buttonsOf(reviews).find((b) =>
-      b.text.includes('Назад в школу'),
-    );
+    const back = Screen.of(reviews)
+      .buttons()
+      .find((b) => b.text.includes('Назад в школу'));
     expect(back).toBeDefined();
     expect(back?.code).toBe('school:hub:open');
   });
 
   test('P1-17: «Отзывы» — листание ◀️ Пред. / След. ▶️ и границы карточек', async () => {
-    const page0 = await press(
-      transport,
+    const page0 = await transport.pressRaw(
       tgId,
-      await openSchool(transport, tgId),
-      'Отзывы',
+      Screen.of(await openSchool(transport, tgId)).button('Отзывы').code,
     );
     // На первой карточке «Пред.» нет, «След.» есть
     expect(String(page0.screen?.text)).toMatch(/· 1\/\d+/);
-    expect(buttonsOf(page0).some((b) => b.text.includes('◀️ Пред.'))).toBe(
-      false,
-    );
-    expect(buttonsOf(page0).some((b) => b.text.includes('След. ▶️'))).toBe(true);
+    expect(
+      Screen.of(page0)
+        .buttons()
+        .some((b) => b.text.includes('◀️ Пред.')),
+    ).toBe(false);
+    expect(
+      Screen.of(page0)
+        .buttons()
+        .some((b) => b.text.includes('След. ▶️')),
+    ).toBe(true);
 
-    const page1 = await press(transport, tgId, page0, 'След. ▶️');
+    const page1 = await transport.pressRaw(
+      tgId,
+      Screen.of(page0).button('След. ▶️').code,
+    );
     expect(String(page1.screen?.text)).toMatch(/· 2\/\d+/);
-    expect(buttonsOf(page1).some((b) => b.text.includes('◀️ Пред.'))).toBe(true);
+    expect(
+      Screen.of(page1)
+        .buttons()
+        .some((b) => b.text.includes('◀️ Пред.')),
+    ).toBe(true);
 
     // Последняя карточка: «След.» нет, «Пред.» есть
-    const page2 = await press(transport, tgId, page1, 'След. ▶️');
+    const page2 = await transport.pressRaw(
+      tgId,
+      Screen.of(page1).button('След. ▶️').code,
+    );
     const total = /· (\d+)\/\d+/.exec(String(page2.screen?.text))?.[1];
     expect(total).toBeDefined();
     const lastText = String(page2.screen?.text);
     expect(lastText).toMatch(new RegExp(`· ${total}/\\d+`));
-    expect(buttonsOf(page2).some((b) => b.text.includes('След. ▶️'))).toBe(
-      false,
-    );
+    expect(
+      Screen.of(page2)
+        .buttons()
+        .some((b) => b.text.includes('След. ▶️')),
+    ).toBe(false);
 
     // Назад на предыдущую карточку
-    const backPage = await press(transport, tgId, page2, '◀️ Пред.');
+    const backPage = await transport.pressRaw(
+      tgId,
+      Screen.of(page2).button('◀️ Пред.').code,
+    );
     expect(String(backPage.screen?.text)).toMatch(
       new RegExp(`· ${Number(total) - 1}/\\d+`),
     );
@@ -193,11 +187,7 @@ describe('E2E: хаб школы и его разделы (SH01–SH03)', () => 
   test('P1-17: номер страницы не число — показывается первая карточка', async () => {
     await transport.handleStart(transport.makeBotContext(tgId));
 
-    const response = await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: stampedCode(transport, tgId, 'school:reviews:list:abc'),
-      }),
-    );
+    const response = await transport.pressRaw(tgId, 'school:reviews:list:abc');
 
     expect(String(response.screen?.text)).toMatch(/· 1\/\d+/);
   });
@@ -205,7 +195,9 @@ describe('E2E: хаб школы и его разделы (SH01–SH03)', () => 
   test('P1-20: хаб → «👥 Сообщество» — URL-кнопка на группу школы, без callback', async () => {
     const hub = await openSchool(transport, tgId);
 
-    const community = buttonsOf(hub).find((b) => b.text.includes('Сообщество'));
+    const community = Screen.of(hub)
+      .buttons()
+      .find((b) => b.text.includes('Сообщество'));
     expect(community).toBeDefined();
     expect(community?.url).toBe(SCHOOL_COMMUNITY_URL);
     // Внешний переход: callback_data у кнопки не создаётся
@@ -228,11 +220,7 @@ describe('E2E: хаб школы и его разделы (SH01–SH03)', () => 
     ]) {
       // Свежий экран меню: /start двигает seq, старый штамп мёртв
       await transport.handleStart(transport.makeBotContext(tgId));
-      const response = await transport.handleCallback(
-        transport.makeBotContext(tgId, {
-          callbackData: stampedCode(transport, tgId, raw),
-        }),
-      );
+      const response = await transport.pressRaw(tgId, raw);
       expect(String(response.screen?.text)).toContain('Неизвестная команда');
     }
   });
@@ -271,12 +259,15 @@ describe('E2E: «Отзывы» без данных (SH03)', () => {
     // Хаб школы открывается и при пустом срезе отзывов
     expect(String(hub.screen?.text)).toContain('U7 School');
 
-    const reviews = await press(transport, GUEST_TG, hub, 'Отзывы');
+    const reviews = await transport.pressRaw(
+      GUEST_TG,
+      Screen.of(hub).button('Отзывы').code,
+    );
 
     expect(String(reviews.screen?.text)).toContain('Пока нет отзывов о школе');
-    const back = buttonsOf(reviews).find((b) =>
-      b.text.includes('Назад в школу'),
-    );
+    const back = Screen.of(reviews)
+      .buttons()
+      .find((b) => b.text.includes('Назад в школу'));
     expect(back).toBeDefined();
     expect(back?.code).toBe('school:hub:open');
   });
@@ -346,11 +337,9 @@ describe('E2E: «Отзывы» с неизвестными именами (SH03
   });
 
   test('P1-19: имя ментора и автора не нашлось — подставляется «неизвестно»', async () => {
-    const reviews = await press(
-      transport,
+    const reviews = await transport.pressRaw(
       GUEST_TG,
-      await openSchool(transport, GUEST_TG),
-      'Отзывы',
+      Screen.of(await openSchool(transport, GUEST_TG)).button('Отзывы').code,
     );
 
     const text = String(reviews.screen?.text);

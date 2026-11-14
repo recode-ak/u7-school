@@ -4,8 +4,7 @@ import {
   MarkAbandonedUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 import type { TestApp } from './test-app';
 
 /**
@@ -14,8 +13,6 @@ import type { TestApp } from './test-app';
  * (legacy-шина отдаёт DMG-подписчикам только по карте `inbound`).
  * Вызывающий — ментор потока (или сам студент для `dropStudent`).
  */
-
-const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
 export async function completeStudent(
   app: TestApp,
@@ -36,7 +33,7 @@ export async function completeStudent(
         outcome: args.outcome,
       }),
       caller,
-      trace(),
+      testTrace(),
     ),
   );
 }
@@ -54,7 +51,7 @@ export async function dropStudent(
         studentId: args.studentId,
       }),
       caller,
-      trace(),
+      testTrace(),
     ),
   );
 }
@@ -78,7 +75,7 @@ export async function markAbandoned(
         cause: args.cause,
       }),
       caller,
-      trace(),
+      testTrace(),
     ),
   );
 }

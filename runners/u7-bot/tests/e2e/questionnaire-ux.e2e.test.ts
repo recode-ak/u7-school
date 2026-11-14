@@ -11,7 +11,6 @@ import { CoursesController } from '@u7-scl/bot/courses/controller';
 import { SchoolController } from '@u7-scl/bot/school/controller';
 import { StreamsController } from '@u7-scl/bot/streams/controller';
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
-import type { DialogResponse } from '@u7-scl/core/ui';
 import {
   GetQuestionnairesByUserUcDef,
   LikertQuestionPoolSchema,
@@ -22,6 +21,7 @@ import {
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import { envelopeOf } from '@u7-scl/test-helpers/envelope-of';
+import { Screen } from '@u7-scl/test-helpers/screen';
 import type { TestApp } from '@u7-scl/test-helpers/test-app';
 import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import type {
@@ -32,11 +32,9 @@ import {
   createTestBotTransport,
   pressedCode,
   screensNewFirst,
-  stampedCode,
 } from '@u7-scl/test-helpers/test-bot-transport';
 import { type OperationRef, SystemCaller } from 'dmg-core';
-import { Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, testTrace } from 'dmg-core/testing';
 import * as v from 'valibot';
 import { QuestionnaireController } from '../../src/controllers/questionnaire/controller';
 
@@ -132,11 +130,7 @@ describe('Questionnaire UX (e2e)', () => {
 
   /** Клик по кнопке с текстом (код — отштампованный, из Api-записи). */
   function click(tgId: number, buttonText: string): Promise<unknown> {
-    return transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, buttonText),
-      }),
-    );
+    return transport.press(tgId, buttonText);
   }
 
   /** apply-кнопка анкетного курса на открытой карточке. */
@@ -147,11 +141,7 @@ describe('Questionnaire UX (e2e)', () => {
   /** /start → «Курсы» → листание к анкетному курсу (уровень 0 с apply-кнопкой). */
   async function openCatalog(tgId: number): Promise<void> {
     await transport.handleStart(transport.makeBotContext(tgId));
-    await transport.handleCallback(
-      transport.makeBotContext(tgId, {
-        callbackData: pressedCode(transport, tgId, 'Курсы'),
-      }),
-    );
+    await transport.press(tgId, 'Курсы');
     const shortId = QUESTIONNAIRE_COURSE_ID.slice(0, 8);
     while (true) {
       const screens = screensNewFirst(transport, tgId);
@@ -231,42 +221,10 @@ describe('Questionnaire UX (e2e)', () => {
     await transport.handleStart(
       transport.makeBotContext(fillGuest.user.view().telegramId),
     );
-    await transport.handleCallback(
-      transport.makeBotContext(fillGuest.user.view().telegramId, {
-        callbackData: pressedCode(
-          transport,
-          fillGuest.user.view().telegramId,
-          'Школа',
-        ),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(fillGuest.user.view().telegramId, {
-        callbackData: pressedCode(
-          transport,
-          fillGuest.user.view().telegramId,
-          'Потоки',
-        ),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(fillGuest.user.view().telegramId, {
-        callbackData: pressedCode(
-          transport,
-          fillGuest.user.view().telegramId,
-          'Поток 5',
-        ),
-      }),
-    );
-    await transport.handleCallback(
-      transport.makeBotContext(fillGuest.user.view().telegramId, {
-        callbackData: pressedCode(
-          transport,
-          fillGuest.user.view().telegramId,
-          'Записаться',
-        ),
-      }),
-    );
+    await transport.press(fillGuest.user.view().telegramId, 'Школа');
+    await transport.press(fillGuest.user.view().telegramId, 'Потоки');
+    await transport.press(fillGuest.user.view().telegramId, 'Поток 5');
+    await transport.press(fillGuest.user.view().telegramId, 'Записаться');
     await waitForScreen(fillGuest.user.view().telegramId, 'кодовое слово');
     const enrollDialog = transport.dialogOf(fillGuest.user.view().telegramId);
     expect(enrollDialog?.input).toBeDefined();
@@ -290,14 +248,9 @@ describe('Questionnaire UX (e2e)', () => {
     ).toBe(true);
 
     // 4. Кнопка-мост: диалог switch-ится в fill, прошлый вопрос вернулся
-    await transport.handleCallback(
-      transport.makeBotContext(fillGuest.user.view().telegramId, {
-        callbackData: pressedCode(
-          transport,
-          fillGuest.user.view().telegramId,
-          'Продолжить анкету',
-        ),
-      }),
+    await transport.press(
+      fillGuest.user.view().telegramId,
+      'Продолжить анкету',
     );
     await waitForSent(fillGuest.user.view().telegramId, 'Вопрос 1 из 3');
     expect(transport.dialogOf(fillGuest.user.view().telegramId)?.path).toBe(
@@ -329,8 +282,6 @@ const PROBE_FROM: OperationRef = {
   module: 'probe',
   name: 'probe',
 };
-
-const traceOf = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
 /** Пул из трёх вопросов: радио → текст → мультивыбор. */
 const uxPool = () =>
@@ -421,9 +372,6 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
   const textOf = (response: { screen?: { text: unknown } }): string =>
     String(response.screen?.text ?? '');
 
-  const buttonsOf = (response: DialogResponse): string[] =>
-    (response.screen?.keyboard?.rows.flat() ?? []).map((b) => b.text);
-
   async function waitForSent(
     tgId: number,
     textContains: string,
@@ -457,10 +405,6 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
   const pressButton = (tgId: number, text: string) =>
     pressCode(tgId, btnCode(tgId, text));
 
-  /** Прямой вызов стори кнопкой с крафтовым кодом (штамп — текущего экрана). */
-  const pressRaw = (tgId: number, rawCode: string) =>
-    pressCode(tgId, stampedCode(transport, tgId, rawCode));
-
   const startMenu = (tgId: number) => transport.handleStart(ctx(tgId));
 
   const sendText = (tgId: number, text: string) =>
@@ -475,7 +419,7 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
         QuestionnaireModuleDef,
         StartQuestionnaireUcDef.command({ pool: uxPool(), ownerInfo }),
         new SystemCaller(PROBE_FROM, marina),
-        traceOf(),
+        testTrace(),
       ),
     );
   }
@@ -490,7 +434,7 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
         QuestionnaireModuleDef,
         SendLikertInviteUcDef.command({ pool: uxLikertPool(), ownerInfo }),
         new SystemCaller(PROBE_FROM, respondent),
-        traceOf(),
+        testTrace(),
       ),
     );
   }
@@ -502,7 +446,7 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
         QuestionnaireModuleDef,
         GetQuestionnairesByUserUcDef.command({ userId: actor.user.uuid }),
         actor,
-        traceOf(),
+        testTrace(),
       ),
     );
   }
@@ -531,7 +475,10 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
   /** /start → кнопка-мост «продолжить анкету по курсу». */
   async function resume(courseId: string) {
     await startMenu(MARINA_TG);
-    return pressRaw(MARINA_TG, `questionnaire:fill:resume:${courseId}`);
+    return transport.pressRaw(
+      MARINA_TG,
+      `questionnaire:fill:resume:${courseId}`,
+    );
   }
 
   // ── События и состояния ──
@@ -558,7 +505,7 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
     const completed = await resume(completedCourse);
     expect(textOf(completed)).toContain('Анкета не найдена или уже завершена');
     expect(textOf(completed)).not.toContain('⚠️');
-    expect(buttonsOf(completed)).toContain('↩️ Главное меню');
+    expect(Screen.of(completed).texts()).toContain('↩️ Главное меню');
 
     // likert того же курса и вовсе отсутствующий курс — та же заглушка
     const likertCourse = crypto.randomUUID();
@@ -576,14 +523,14 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
       await Bun.write(file, '{{{ not json');
       await startMenu(MARINA_TG);
 
-      const response = await pressRaw(
+      const response = await transport.pressRaw(
         MARINA_TG,
         `questionnaire:fill:resume:${crypto.randomUUID()}`,
       );
 
       expect(textOf(response)).toContain('Произошла внутренняя ошибка');
       expect(textOf(response)).not.toContain('not json');
-      expect(buttonsOf(response)).toContain('⬅️ Меню');
+      expect(Screen.of(response).texts()).toContain('⬅️ Меню');
     } finally {
       await Bun.write(file, original);
     }
@@ -603,7 +550,7 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
     const response = await pressCode(MARINA_TG, start!.code);
 
     expect(textOf(response)).toContain('Пишет код чисто');
-    expect(buttonsOf(response)).toEqual(['1', '2', '3', '4', '5']);
+    expect(Screen.of(response).texts()).toEqual(['1', '2', '3', '4', '5']);
     const dialog = transport.dialogOf(MARINA_TG);
     expect(dialog?.path).toBe('questionnaire/fill');
     const context = dialog?.input?.context as
@@ -614,26 +561,26 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
 
   test('P7-22: invite:start — не найдена и чужая анкета — экраны ошибки', async () => {
     await startMenu(MARINA_TG);
-    const missing = await pressRaw(
+    const missing = await transport.pressRaw(
       MARINA_TG,
       `questionnaire:invite:start:${crypto.randomUUID()}`,
     );
     expect(textOf(missing)).toContain('⚠️');
     expect(textOf(missing)).toContain('Анкета не найдена');
-    expect(buttonsOf(missing)).toContain('⬅️ Меню');
+    expect(Screen.of(missing).texts()).toContain('⬅️ Меню');
 
     const marker = `foreign-${crypto.randomUUID()}`;
     await createLikert({ marker }, oleg);
     const qId = await idByMarker(oleg, marker);
 
     await startMenu(MARINA_TG);
-    const foreign = await pressRaw(
+    const foreign = await transport.pressRaw(
       MARINA_TG,
       `questionnaire:invite:start:${qId}`,
     );
 
     expect(textOf(foreign)).toContain('Нет доступа к анкете');
-    expect(buttonsOf(foreign)).toContain('⬅️ Меню');
+    expect(Screen.of(foreign).texts()).toContain('⬅️ Меню');
   });
 
   test('P7-23: invite:why — текст «зачем» и «✅ Хорошо»', async () => {
@@ -648,7 +595,7 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
     const response = await pressCode(MARINA_TG, why!.code);
 
     expect(textOf(response)).toContain('Это помогает расти');
-    expect(buttonsOf(response)).toEqual(['✅ Хорошо']);
+    expect(Screen.of(response).texts()).toEqual(['✅ Хорошо']);
   });
 
   test('P7-24: «✅ Хорошо» возвращает приглашение S01 с теми же кнопками', async () => {
@@ -664,7 +611,7 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
 
     expect(textOf(back)).toContain('📋');
     expect(textOf(back)).toContain('Оцени коллегу');
-    expect(buttonsOf(back)).toEqual([
+    expect(Screen.of(back).texts()).toEqual([
       '▶️ Начать заполнение',
       '❔ Зачем это нужно?',
       '⏭️ Пропустить',
@@ -684,7 +631,7 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
     expect(textOf(confirmScreen)).toContain(
       'Вы уверены, что хотите пропустить анкету?',
     );
-    expect(buttonsOf(confirmScreen)).toEqual([
+    expect(Screen.of(confirmScreen).texts()).toEqual([
       '✅ Да, пропустить',
       '❌ Нет, вернуться',
     ]);
@@ -702,7 +649,7 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
     const done = await pressButton(MARINA_TG, '✅ Да, пропустить');
 
     expect(textOf(done)).toContain('Анкета пропущена');
-    expect(buttonsOf(done)).toContain('↩️ Главное меню');
+    expect(Screen.of(done).texts()).toContain('↩️ Главное меню');
     expect(transport.dialogOf(MARINA_TG)?.input).toBeUndefined();
 
     const qId = await idByMarker(marina, 'gap-26');
@@ -716,14 +663,14 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
     await createLikert({ marker }, oleg);
     const qId = await idByMarker(oleg, marker);
 
-    const response = await pressRaw(
+    const response = await transport.pressRaw(
       MARINA_TG,
       `questionnaire:invite:decline:${qId}`,
     );
 
     expect(textOf(response)).toContain('⚠️');
     expect(textOf(response)).toContain('Нет доступа к анкете');
-    expect(buttonsOf(response)).toContain('⬅️ Меню');
+    expect(Screen.of(response).texts()).toContain('⬅️ Меню');
   });
 
   test('P7-28: неизвестные invite/fill-действия — «Неизвестная команда»', async () => {
@@ -735,7 +682,7 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
       'questionnaire:fill:bogus',
     ]) {
       await startMenu(MARINA_TG);
-      const response = await pressRaw(MARINA_TG, raw);
+      const response = await transport.pressRaw(MARINA_TG, raw);
       expect(textOf(response)).toContain('Неизвестная команда');
     }
   });
@@ -855,7 +802,7 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
 
     const response = await transport.handleCancel(ctx(MARINA_TG));
 
-    expect(buttonsOf(response)).toContain('❓ Помощь');
+    expect(Screen.of(response).texts()).toContain('❓ Помощь');
     expect(textOf(response)).not.toContain('Вы уверены');
     expect(transport.dialogOf(MARINA_TG)?.path).toBe('app/menu');
     const qId = await idByCourse(courseId);
@@ -887,19 +834,19 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
     const qId = await idByMarker(oleg, marker);
 
     await startMenu(MARINA_TG);
-    const current = await pressRaw(
+    const current = await transport.pressRaw(
       MARINA_TG,
       `questionnaire:fill:current:${qId}`,
     );
     expect(textOf(current)).toContain('Нет доступа к анкете');
 
     await startMenu(MARINA_TG);
-    const confirmScreen = await pressRaw(
+    const confirmScreen = await transport.pressRaw(
       MARINA_TG,
       `questionnaire:fill:cancel-confirm:${qId}`,
     );
     expect(textOf(confirmScreen)).toContain('⚠️');
-    expect(buttonsOf(confirmScreen)).toContain('⬅️ Меню');
+    expect(Screen.of(confirmScreen).texts()).toContain('⬅️ Меню');
   });
 
   test('P7-48: «⏭️ Прервать» из напоминания — confirm S05a', async () => {
@@ -931,7 +878,7 @@ describe('E2E анкеты: состояния и отказы (F-31)', () => {
     expect(textOf(confirmScreen)).toContain(
       'Вы уверены, что хотите прервать анкету',
     );
-    expect(buttonsOf(confirmScreen)).toEqual([
+    expect(Screen.of(confirmScreen).texts()).toEqual([
       '✅ Да, прервать',
       '❌ Нет, продолжить',
     ]);

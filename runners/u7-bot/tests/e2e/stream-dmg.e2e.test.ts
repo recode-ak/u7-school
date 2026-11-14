@@ -17,22 +17,6 @@ const MENTOR_TG = 1004;
 const STUDENT_TG = 1003; // active на потоке e1e1e1e1, группа GROUP2_ID
 const GROUP2_ID = '-1002222222222';
 
-async function waitMessageFor(
-  transport: TestBotTransport,
-  telegramId: number,
-  timeoutMs = 3000,
-): Promise<string | undefined> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const found = transport.api.sentMessages.find(
-      (m) => m.telegramId === telegramId,
-    );
-    if (found) return found.text;
-    await new Promise((r) => setTimeout(r, 20));
-  }
-  return undefined;
-}
-
 describe('E2E: поток на DMG', () => {
   let app: TestApp;
   let transport: TestBotTransport;
@@ -60,7 +44,7 @@ describe('E2E: поток на DMG', () => {
       user: { id: STUDENT_TG, firstName: 'Студент' },
     });
 
-    const notice = await waitMessageFor(transport, MENTOR_TG);
+    const notice = await transport.waitForMessage(MENTOR_TG);
     expect(notice).toContain('покинул группу');
   });
 });
