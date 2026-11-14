@@ -1,8 +1,8 @@
 {
   "track_id": "revision-release_20261112",
   "type": "chore",
-  "status": "new",
+  "status": "completed",
   "created_at": "2026-11-12T12:32:52Z",
-  "updated_at": "2026-11-12T12:32:52Z",
+  "updated_at": "2026-11-14T08:10:00Z",
   "description": "Ревизия перехода по v0.2.6 и релиз v0.3.0"
 }
