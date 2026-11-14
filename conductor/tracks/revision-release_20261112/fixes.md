@@ -101,11 +101,11 @@
 
 | ID | Источник | Что | Размер | Срез | Коммит |
 |---|---|---|---|---|---|
-| F-70 | TR-7 | Выбор «текущего» желания — из репозитория в Ar/правило (`wish.repo.ts:20`, `wish.json-repo.ts:54`, API-03) | M | Ф5.6 | |
-| F-71 | TR-58 | Общая `versionOut` для 4 Ar `course` — в один файл | S | Ф5.6 | |
-| F-72 | TR-41 | Устаревшая ссылка `StreamStudents` в `stream.types.ts:4` | S | Ф5.6 | |
-| F-73 | TR-68 | `VERSION_CONFLICT` в `peer-review/src/infra/{review,review-campaign}.json-repo.ts` | S | Ф5.6 | |
-| F-74 | C-05 | Шапки контрактов `wish`, `peer-review`, `course` под D-69; JSDoc у Ar/Policy/DQS в контрактах; `ReviewState` убрать из контракта `peer-review`, если клиентов вне модуля нет | S | Ф5.6 | |
+| F-70 | TR-7 | Выбор «текущего» желания — из репозитория в Ar/правило (`wish.repo.ts:20`, `wish.json-repo.ts:54`, API-03) | M | Ф5.6 | 2b377e87 |
+| F-71 | TR-58 | Общая `versionOut` для 4 Ar `course` — в один файл | S | Ф5.6 | 2b377e87 |
+| F-72 | TR-41 | Устаревшая ссылка `StreamStudents` в `stream.types.ts:4` | S | Ф5.6 | 2b377e87 |
+| F-73 | TR-68 | `VERSION_CONFLICT` в `peer-review/src/infra/{review,review-campaign}.json-repo.ts` | S | Ф5.6 | 2b377e87 |
+| F-74 | C-05 | Шапки контрактов `wish`, `peer-review`, `course` под D-69; JSDoc у Ar/Policy/DQS в контрактах; `ReviewState` убрать из контракта `peer-review`, если клиентов вне модуля нет | S | Ф5.6 | 2b377e87 |
 
 ## Ф5.7 Скрипты снимков
 

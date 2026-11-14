@@ -147,7 +147,8 @@
 - [ ] Task: F-62 `module` в UoW обязателен; F-63 правка D-69 (JSDoc только Ar/Policy/DQS)
 
 #### Ф5.6 Домен и модули (flash)
-- [ ] Task: F-70…F-74 — выбор текущего желания в Ar, `versionOut`, `StreamStudents`, `VERSION_CONFLICT`, шапки контрактов
+- [x] Task: F-70…F-74 — выбор текущего желания в Ar, `versionOut`, `StreamStudents`, `VERSION_CONFLICT`, шапки контрактов `2b377e87`
+    - Итог: flash, одна сессия, $0.07; `WishAr.latest`; JSDoc «Кто / Зачем» дописывать не к чему (Ar/Policy/DQS в контрактах нет); журнал — `slices/f5-6-domain.md`
 
 #### Ф5.7 Скрипты снимков (flash + `dmg-data-keeper`)
 - [ ] Task: F-80 — `update-stream-snapshot`, `stream-snapshot-sync` через репозитории и UoW
