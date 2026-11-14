@@ -72,13 +72,13 @@
 | F-45 | TR-68 | `NOT_FOUND` в `scope-reviews.story.ts:92` — штатный отказ вместо `throw` | S | Ф5.3 | acdcc131 |
 | F-46 | TR-68 | Имя по умолчанию в `ensure-registered.ts:57` | S | Ф5.3 | acdcc131 |
 | F-47 | TR-59 | `controllers/courses/ui-spec.md:25-27` — курс без этапов / с одним этапом: спеку под код | S | Ф5.3 | acdcc131 |
-| F-48 | ревью Ф5.1 | `Date.now()` в `controllers/learning/stories/progress.ts:144` — мимо `now()` из `@u7-scl/core/shared`, тестовые часы его не видят | S | Ф5.3 | |
-| F-49 | regressions P1-26 | `/log_level <неизвестный>` — экранирование MarkdownV2 в `app-controller.ts`, снять `skip` в `main-menu.e2e` | S | Ф5.3 | |
-| F-4B | regressions P3-61, P3-62, P4-49, P7-40, P7-41 | Удалить мёртвые ветки `view-stream.story.ts` (реплики «сообщения не принимаются», «Ожидалось текстовое сообщение») `create-stream.ts` (`update.type !== 'message'`, P4-49), `fill.story.ts` (P7-40, P7-41) | S | Ф5.3 | |
-| F-4C | regressions P3-63 | `StreamAr.enroll` — отказ, если поток не в наборе; снять `skip` в `stream-enroll.e2e` (решение Нурболата, 2026-11-14) | S | Ф5.3 | |
-| F-4D | regressions P8-32 | `BotController.handleCommand`: ответ `handleError` из `catch` — через `#withNotices`; снять `skip` в `ui-errors.e2e` | S | Ф5.3 | |
-| F-4A | Ф5.2 порция 2 | P4-68: unit-тест ветки «сбой `FindStreamByTelegramGroup`/`getStreamMembers`/`getUser` → warn и стоп» у контроллера событий группы (e2e не инъецирует сбой) | S | Ф5.3 | |
-| F-4E | F-44 (TR-50 (9)) | Подтверждено: `dispatchUc` из подписок на события (`invite.story.ts`, `fill.story.ts`, `inactivity.story.ts` и др.) строит след через `requestTrace` вне `BotRequestContext` — `warn` ERR-07 на каждое событие, новый `correlationId`; конверт несёт `correlationId`, в `dmg-core` есть `Trace.fromEvent`. Правка — платформа бота: обработчик подписки исполнять в контексте события (след из конверта) | S–M | Ф5.3 | |
+| F-48 | ревью Ф5.1 | `Date.now()` в `controllers/learning/stories/progress.ts:144` — мимо `now()` из `@u7-scl/core/shared`, тестовые часы его не видят | S | Ф5.3 | 2ff15c47 |
+| F-49 | regressions P1-26 | `/log_level <неизвестный>` — экранирование MarkdownV2 в `app-controller.ts`, снять `skip` в `main-menu.e2e` | S | Ф5.3 | 2ff15c47 |
+| F-4B | regressions P3-61, P3-62, P4-49, P7-40, P7-41 | Удалить мёртвые ветки `view-stream.story.ts` (реплики «сообщения не принимаются», «Ожидалось текстовое сообщение») `create-stream.ts` (`update.type !== 'message'`, P4-49), `fill.story.ts` (P7-40, P7-41) | S | Ф5.3 | 2ff15c47 |
+| F-4C | regressions P3-63 | `StreamAr.enroll` — отказ, если поток не в наборе; снять `skip` в `stream-enroll.e2e` (решение Нурболата, 2026-11-14) | S | Ф5.3 | 2ff15c47 |
+| F-4D | regressions P8-32 | `BotController.handleCommand`: ответ `handleError` из `catch` — через `#withNotices`; снять `skip` в `ui-errors.e2e` | S | Ф5.3 | 2ff15c47 |
+| F-4A | Ф5.2 порция 2 | P4-68: unit-тест ветки «сбой `FindStreamByTelegramGroup`/`getStreamMembers`/`getUser` → warn и стоп» у контроллера событий группы (e2e не инъецирует сбой) | S | Ф5.3 | 2ff15c47 |
+| F-4E | F-44 (TR-50 (9)) | Подтверждено: `dispatchUc` из подписок на события (`invite.story.ts`, `fill.story.ts`, `inactivity.story.ts` и др.) строит след через `requestTrace` вне `BotRequestContext` — `warn` ERR-07 на каждое событие, новый `correlationId`; конверт несёт `correlationId`, в `dmg-core` есть `Trace.fromEvent`. Правка — платформа бота: обработчик подписки исполнять в контексте события (след из конверта) | S–M | Ф5.3 | 2ff15c47 |
 
 ## Ф5.4 Линт и правила
 
