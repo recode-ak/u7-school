@@ -57,7 +57,7 @@ $G -l -- '<шаблон>' . | wc -l # файлов
 | Пункт `TODO.md` | Состояние в коде | Адрес |
 |---|---|---|
 | Мастер потока: `telegramGroupId` и `telegramGroupInvite` | сделано (`create-stream.ts`, два шага) | закрыт |
-| Автоподключение к группе на `student.enrolled` | нет | вход dmg-ui §3 |
+| Автоподключение к группе на `student.enrolled` | нет | вход dmg-ui §6 |
 | `WizardStory` | один мастер | вход dmg-ui §1 (форма по схеме входа UC) |
 | Дубликат `User`/`Role`, цикл `app ↔ модули` | `platform/app/src/domain` и `U7BotAppMeta` нет | закрыт; остаток — C-DEBT-55 (`Role` и `UserRoleName`) |
 | Р1 A: роль `AUTHOR` | роль есть; команды автора удалены из домена | закрыт; операции автора — `roadmap.md` п. 7 |
