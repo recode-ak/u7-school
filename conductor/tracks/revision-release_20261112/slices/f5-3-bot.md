@@ -74,3 +74,13 @@ DOM-01, DOM-18 (D-72), ARC-08, API-02, ERR-01, TST-08; `node_modules/dmg-core/do
 - API-01 закрыто: фильтр в `findByRespondent(userId, filter)`, unit `questionnaire.json-repo.test.ts:186`; UC-тест фильтров сокращён до 2 сценариев, `get-stream.flags.uc.test.ts` — до 3, дубль `fill.dialog.test.ts` удалён (TST-08, в срезе). Двойной резолв на `/cancel` принят: `super.handleCommand` резолвит сам, иначе — правка контракта `platform/core`.
 - `dmg-data-keeper` не вызывался: формат записей не меняется — в репозитории только фильтр чтения, в state — текст описания `ownerInfo`.
 - `bun run check`: 3191 pass, 4 skip, 0 fail.
+
+## Порция 2: F-41, F-42, F-91
+
+Выполнена в текущей сессии orchestrator (§4.0 навыка: инфраструктура транспорта и проводка `main.ts`, размер S) — без субагентов и без брифа ролей; отклонение от плана («F-41, F-42 — flash»): постановка для исполнителя дороже самой правки.
+
+- F-41: `BotTransport.handleCallback` — `answerCallbackQuery` сразу после валидации (alert-отказы — как прежде), ожидание в `finally`: нажатие подтверждается и при сбое uiApp. `#render` — снятие кнопок чужого экрана параллельно с отправкой нового (`Promise.all`; edit вызывается первым — порядок вызовов API прежний); ранний retire «крошек» — только для ответа без `screen`. Red → green: 3 unit в `bot-transport.test.ts` («скорость ответа на нажатие»).
+- F-42: `bot.on('chat_member' | 'my_chat_member')` в `main.ts` (на `bot`, не `privateBot`). e2e нет по C-14 (g-25): обработчики покрыты `group-events.e2e` через `TestBotTransport`.
+- F-91: закрыто без кода (Нурболат, 2026-11-14) — `telegramId` в `UserState` обязателен, сценарий P8-05 не воспроизводится; skip-заглушка в `inactivity.e2e` удалена.
+- `dmg-reviewer` не вызывался: diff вне домена и модулей. `dmg-data-keeper` — не нужен.
+- `bun run check`: 3194 pass, 3 skip, 0 fail.

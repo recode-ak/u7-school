@@ -288,19 +288,26 @@ export class BotTransport implements BotUpdateHandler, ProactiveSender {
         return;
       }
 
-      // 3. Маршрутизация в uiApp и рендер ответа.
-      const response = await this.uiApp.handleCallback(
-        expanded.data,
-        tgId,
-        session,
-      );
-      if (response) {
-        await this.#render(tgId, session, response, {
-          pressedCode: expanded.data,
-        });
+      // 3. Кнопка валидна — «часики» снимаются сразу (C-13): подтверждение
+      //    идёт параллельно с обработкой и не ждёт ни uiApp, ни рендера.
+      //    Ошибки подтверждения #answerCallbackQuery гасит warn-логом.
+      const answered = this.#answerCallbackQuery(ctx);
+      try {
+        // 4. Маршрутизация в uiApp и рендер ответа.
+        const response = await this.uiApp.handleCallback(
+          expanded.data,
+          tgId,
+          session,
+        );
+        if (response) {
+          await this.#render(tgId, session, response, {
+            pressedCode: expanded.data,
+          });
+        }
+        await this.#persistUpdate(tgId, session);
+      } finally {
+        await answered;
       }
-      await this.#persistUpdate(tgId, session);
-      await this.#answerCallbackQuery(ctx);
     });
   }
 
@@ -605,9 +612,13 @@ export class BotTransport implements BotUpdateHandler, ProactiveSender {
     const dialog = session.dialog;
 
     // Гашение устаревшего экрана при любом ответе — «хлебные крошки» (§5.2a):
-    // смена диалога без screen не оставляет мёртвую клавиатуру. Идемпотентно
-    // — повторный retire из screen-ветки безопасен (guard на снятую клавиатуру).
-    if (session.screen?.keyboard && session.screen.ownerSeq !== dialog.seq) {
+    // смена диалога без screen не оставляет мёртвую клавиатуру. С screen
+    // чужой экран гасит screen-ветка — параллельно с отправкой нового (C-13).
+    if (
+      !response.screen &&
+      session.screen?.keyboard &&
+      session.screen.ownerSeq !== dialog.seq
+    ) {
       await this.#retireScreen(tgId, session, opts.pressedCode);
     }
 
@@ -651,12 +662,12 @@ export class BotTransport implements BotUpdateHandler, ProactiveSender {
         current.text = response.screen.text;
         current.keyboard = response.screen.keyboard;
       } else {
-        await this.#retireScreen(tgId, session, opts.pressedCode);
-        const messageId = await this.#sendScreen(
-          tgId,
-          dialog.seq,
-          response.screen,
-        );
+        // Снятие кнопок прошлого экрана и отправка нового — параллельно
+        // (C-13): edit прошлого уходит первым, порядок сообщений не меняется.
+        const [, messageId] = await Promise.all([
+          this.#retireScreen(tgId, session, opts.pressedCode),
+          this.#sendScreen(tgId, dialog.seq, response.screen),
+        ]);
         if (messageId !== undefined) {
           session.screen = {
             messageId,

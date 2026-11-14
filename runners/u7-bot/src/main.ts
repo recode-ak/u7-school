@@ -193,6 +193,11 @@ devPanel?.installCommandInterceptor(privateBot);
 privateBot.on('callback_query:data', (ctx) => transport.handleCallback(ctx));
 privateBot.on('message:text', (ctx) => transport.handleMessage(ctx));
 
+// ══ События групп: вход/выход участников и членство бота (Q-01/Q-02) ══
+// Приходят из групп — регистрация на исходный bot, не на privateBot.
+bot.on('chat_member', (ctx) => transport.handleChatMember(ctx));
+bot.on('my_chat_member', (ctx) => transport.handleMyChatMember(ctx));
+
 // ══ Глобальный catch — на исходный бот (ловит ошибки из всех веток) ══
 bot.catch((err) => {
   logger.error('bot', 'Необработанная ошибка бота', { error: String(err) });

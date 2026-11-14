@@ -702,27 +702,4 @@ describe('E2E: Job бездействия — повторы по дням', () 
     await new Promise((r) => setTimeout(r, 200));
     expect(transport.api.sentMessages).toEqual([]);
   });
-
-  test.skip('P8-05: нет telegramId у студента — маркер не ставится, попытка повторяется', async () => {
-    // находка: P8-05 — сейчас маркер бездействия ставится в Job до резолва
-    // адреса (`StudentAr.noticeInactivity`), а стори при недоступном
-    // адресате пишет warn и пропускает: уведомление теряется до следующего
-    // окна (2 дня). Ожидание v0.2.6: маркер после резолва адреса — повтор
-    // в следующий прогон.
-    //
-    // Данных нет: в мире у всех персон есть telegramId, а снять его у
-    // пользователя в фикстуре нечем — нужен студент/ментор без telegramId.
-    const { transport } = stand;
-    transport.reset();
-
-    expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
-    app.clock.advance(24 * 60 * 60 * 1000);
-    expectOk(await app.runJob(StreamModuleDef, InactivitySweepJobDef));
-
-    // Повторная попытка в следующий прогон (сейчас — маркер уже стоит)
-    const retried = transport.api.sentMessages.filter(
-      (m) => m.telegramId === STUDENT_TG,
-    );
-    expect(retried.length).toBeGreaterThan(0);
-  });
 });

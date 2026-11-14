@@ -1014,6 +1014,106 @@ describe('BotTransport — рендер-политика', () => {
   });
 });
 
+// ── Скорость ответа на нажатие (F-41, C-13) ──
+
+/** Ручной затвор: обещание, которое тест отпускает сам. */
+function gate(): { wait: Promise<void>; open: () => void } {
+  let open = () => {};
+  const wait = new Promise<void>((resolve) => {
+    open = resolve;
+  });
+  return { wait, open };
+}
+
+/** Даёт отработать уже запущенным микрозадачам и таймерам. */
+const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+describe('BotTransport — скорость ответа на нажатие', () => {
+  test('валидное нажатие: answerCallbackQuery уходит до ответа uiApp', async () => {
+    const uiAnswer = gate();
+    const { transport, pressed } = await startDialog({
+      seq: 5,
+      uiApp: {
+        handleCallback: mock(async () => {
+          await uiAnswer.wait;
+          return { screen: { text: mdRaw('Ок') } };
+        }),
+      },
+    });
+    const ctx = makeCtx({
+      callbackQuery: { data: pressed } as BotContext['callbackQuery'],
+    });
+
+    const done = transport.handleCallback(ctx);
+    await tick();
+
+    // «Часики» снимаются сразу, без alert-текста
+    expect(callsOf(ctx.answerCallbackQuery)).toEqual([[undefined]]);
+
+    uiAnswer.open();
+    await done;
+    expect(callsOf(ctx.answerCallbackQuery).length).toBe(1);
+  });
+
+  test('ошибка uiApp: нажатие всё равно подтверждено', async () => {
+    const { transport, pressed } = await startDialog({
+      seq: 5,
+      uiApp: {
+        handleCallback: mock(async () => {
+          throw new Error('сбой обработки');
+        }),
+      },
+    });
+    const ctx = makeCtx({
+      callbackQuery: { data: pressed } as BotContext['callbackQuery'],
+    });
+
+    await transport.handleCallback(ctx).catch(() => {});
+
+    expect(callsOf(ctx.answerCallbackQuery)).toEqual([[undefined]]);
+  });
+
+  test('смена экрана: снятие кнопок старого идёт параллельно с отправкой нового', async () => {
+    const { api, transport, pressed } = await startDialog({
+      seq: 5,
+      uiApp: {
+        handleCallback: mock(async (_d, _t, s: BotSession) => {
+          s.dialog = { path: 'streams/catalog', seq: 6 };
+          return { screen: { text: mdRaw('Каталог') } };
+        }),
+      },
+    });
+    // Снятие кнопок старого экрана «висит» в сети
+    const editDone = gate();
+    Object.assign(api, {
+      editMessageText: mock(async () => {
+        await editDone.wait;
+        return { message_id: 1 };
+      }),
+    });
+
+    const done = transport.handleCallback(
+      makeCtx({
+        callbackQuery: { data: pressed } as BotContext['callbackQuery'],
+      }),
+    );
+    await tick();
+
+    // Новый экран отправлен, не дожидаясь снятия кнопок старого
+    expect(
+      callsOf(api.sendMessage)
+        .map((c) => c[1])
+        .at(-1),
+    ).toBe('Каталог');
+    expect(callsOf(api.editMessageText)[0]?.[2]).toContain(
+      'Вы выбрали: 📂 Меню',
+    );
+
+    editDone.open();
+    await done;
+  });
+});
+
 // ── notify: проактив (И3: сессия не трогается) ──
 
 // ── Единый вход команд (ФР-4) ──
