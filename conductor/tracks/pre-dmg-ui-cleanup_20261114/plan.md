@@ -34,7 +34,7 @@
 - [x] Task: O — коммит пакета; **стоп: тег и push — с подтверждения Нурболата**; смена `#vX.Y.Z` в 11 `package.json`, `bun install` `3aebabee` — теги v0.2.0, v0.2.1 (D-75 занят в общей нумерации → D-84); bun кеширует клон пакета без новых тегов — fetch тегов в `~/.bun/install/cache/<hash>.git`
 - [x] Task: O — `scripts/arch-check.ts` вызывает функцию пакета на `conductor/debt/`; своя реализация и её тесты удалены из `scripts/` `fd33b29a`
     - `checkTrMarkers` и его фикстуры (`scripts/domain-check.test.ts`) удалить: журнала TR нет; до этого шага они — единственное исключение grep-критерия Ф1
-- [ ] Task: O — ревью фазы
+- [x] Task: O — ревью фазы `e93c3d22`, `dmg-core@4839648` — `dmg-reviewer`: error нет; 2 warn и 4 info исправлены (пакет — в `main` без тега, уйдёт в следующий релиз)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 **Критерии:** `check` пакета и проекта зелёные; негативный тест на каждое нарушение (ID не в реестре, запись без места, `T-DEBT` на несуществующий файл, ошибка формата `D-DEBT`); в `scripts/` нет своей реализации; пакет проверяет себя той же функцией.
