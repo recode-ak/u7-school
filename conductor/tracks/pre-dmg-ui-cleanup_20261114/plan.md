@@ -51,7 +51,7 @@
 
 ## Фаза 4: Перевод тестов на хелперы (4a — домен, модули, json-repo; 4b — бот)
 
-- [ ] Task: S — карта повторов → целевой хелпер; где нужен `domain/src/<m>/testing.ts`; список исключений (unit-тесты stories, которые перепишет dmg-ui); бриф для F с примерами «до/после»
+- [x] Task: S — карта повторов → целевой хелпер; где нужен `domain/src/<m>/testing.ts`; список исключений (unit-тесты stories, которые перепишет dmg-ui); бриф для F с примерами «до/после» — [slices/test-helpers.md](./slices/test-helpers.md); `mkdtemp` в UC/ER-тестах `wish`/`peer-review` — в Ф5 (фейки); база — 3170 тестов
 - [ ] Task: S — API `TestBotTransport` и `runners/u7-bot/tests/helpers` (`press`, `buttonsOf`, `findBtn`, `waitMessageFor`, `waitUntil`, `subHandler`, `makeUiApp`), `domain/src/<m>/testing.ts`
 - [ ] Task: S — массовый перевод пачками, `check` после каждой
 - [ ] Task: O — разбор открытых `T-DEBT`; ревью выборкой; дубли TST-08 и расход токенов — в `summary.md`
