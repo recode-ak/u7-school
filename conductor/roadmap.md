@@ -37,7 +37,7 @@
 | 3 | **Модуль сессий** (sessions): реестр взаимодействий людей (парное программирование, код-ревью, ...) → событие `session.completed` → анкеты peer-review | концепция готова; треки — при планировании | [sessions-system.md](./roadmap/sessions-system.md) |
 | 4 | **Модуль досье** (dossier, бывш. metrics; Релиз 4): `modules/dossier` — агрегация по модулю учёбы (объект для паспорта: метрики и отзывы по сессиям и по модулю) + досье студента, порог достоверности | 📋 запланирован; пакет-заготовка создан (схемы навыков), агрегация — при треке | [metrics-pipeline-and-modules.md](./roadmap/metrics/metrics-pipeline-and-modules.md) |
 | 5 | **Модуль вклада** (contribution): балл вклада из кросс-анкет командных задач + явные фиксации вклада; блок «член сообщества» в профиле | концепция (не начат), после п. 4 | [contribution-system.md](./roadmap/contribution-system.md) |
-| 6 | **DMG** — декларативные манифесты домена, сквозная типизация, `Result` вместо исключений, политики доступа, каузальный анализ | контур утверждён, треки — см. план перехода | [architecture/](./architecture/index.md), [migration.md](./architecture/migration.md) |
+| 6 | **DMG** — декларативные манифесты домена, сквозная типизация, `Result` вместо исключений, политики доступа, каузальный анализ | ✅ переход завершён, релиз v0.3.0 (2026-11-14); дальше — треки 7–10+ плана перехода | [architecture/](./architecture/index.md), [migration.md](./architecture/migration.md) |
 | 7 | **Контент, Релиз 5**: `basedOn`, visibility, CRUD, `contentSnapshot` → чистое UUID-дерево | не начат | [content-management.md](./roadmap/content-management.md), треки 1–2; после перехода — начать с [course-module-history.md](./roadmap/course-module-history.md) |
 | 8 | **Контент, Релиз 6**: Import/Export, Fork, publish-replace, gating | не начат | [content-management.md](./roadmap/content-management.md), треки 3–4; [course-module-history.md](./roadmap/course-module-history.md) |
 | 9 | **Модуль отзывов peer-review** (этап «отзывы»): кампании `stream_completed` («студент завершил поток») + текстовые отзывы; далее анкеты в кампании (техдолг) | 🔥 треки созданы: статусы студента, домен+API, UI | [peer-review-system.md](./roadmap/metrics/peer-review-system.md) |
@@ -63,6 +63,8 @@
 - **Tasks, этап A**: `userFacade.notify`, перенос чистых уведомлений (`user-notify_20260902`).
 - **core/api-актор** (`core-api-actor_20260914`): код готов, ручные верификации фаз — за владельцем.
 - **Уборка dmg-core и requestId бота** (`dmg-cleanup_20261028`): тесты UC/ER/Job пакета на фейках, отсев повторов команд по `requestId` (D-56), `update_id` Telegram → `requestId`/`correlationId`, показ ошибок DMG в боте без legacy-моста.
+
+- **Переход на DMG и релиз v0.3.0** (треки `core-dmg` … `legacy-removal`, ревизия `revision-release_20261112`): все модули на `dmg-core`, ревизия по v0.2.6 — поведение совпадает, кроме исправлений [CHANGELOG](../CHANGELOG.md) `[0.3.0]`; кандидаты после релиза — `[?]` в [tracks.md](./tracks.md).
 
 Полный список треков: [tracks.md](./tracks.md); завершённые — в [archive/](./archive/).
 
