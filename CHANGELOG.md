@@ -38,7 +38,7 @@ Added / Changed / Fixed / Migration.
 
 ### Migration
 
-- **`dmg-core` ставится из git** (`git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1`): на сервере нужен deploy key репо `recode-ak/dmg-core` (только чтение), иначе `bun install` упадёт.
+- **`dmg-core` ставится из git** (`git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1`): репо публичный, на сервере нужен SSH-ключ аккаунта GitHub (deploy key другого репо не подойдёт), иначе `bun install` упадёт.
 - **`data/users/users.json` — до запуска нового кода:** снимок (`bash scripts/backup.sh --name=before-0.3.0`), `migrate-users-drop-student` сухим прогоном, затем `--write` (роль `STUDENT` снята; без миграции одна такая запись останавливает все чтения пользователей).
 - Остальные файлы данных читаются в старом формате и переписываются в новом при первой записи — миграции не нужны, нужен снимок до запуска. Ключи `last-runs.json` не мигрируются: первые прогоны Job — в следующее окно.
 - **Порядок:** стоп → бэкап → `git pull` → `bun install --frozen-lockfile` → миграция `users.json` → `pm2 delete u7-school-bot` → `bun run start:prod` → `pm2 save`. `scripts/deploy.sh` с prod (версия v0.2.6) для этого релиза не запускать.

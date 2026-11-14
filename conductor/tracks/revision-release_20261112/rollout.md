@@ -6,10 +6,10 @@
 ## 1. Порядок (prod, одна сессия)
 
 0. **Pre-flight, только чтение:** `git status --short`, `git log --oneline origin/main..HEAD` (должно быть пусто), `git describe --tags` (`v0.2.6`), `bun --version`, наличие `.env.production`. Открытые вопросы — §6.
-   - **Доступ к `dmg-core`:** u7-school ставит пакет из git (`git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1`). На сервере — deploy key репо `recode-ak/dmg-core` (только чтение); проверка: `git ls-remote git@github.com:recode-ak/dmg-core.git v0.1.1`. Если ключей GitHub на сервере несколько — `Host`-алиас в `~/.ssh/config` (`RELEASING.md` пакета, п. 6). Без доступа `bun install` (п. 4) упадёт при остановленном боте.
+   - **Доступ к `dmg-core`:** u7-school ставит пакет из git по SSH (`git+ssh://git@github.com/recode-ak/dmg-core.git#v0.1.1`, репо публичный). Проверка: `ssh -T git@github.com` → `Hi <аккаунт>!` (ключ аккаунта — подходит; `Hi recode-ak/u7-school!` — deploy key одного репо, `dmg-core` им не прочитать) и `git ls-remote git@github.com:recode-ak/dmg-core.git v0.1.1` — строка с тегом. Не прошло — до остановки бота: добавить ключ сервера в аккаунт GitHub, иначе `bun install` (п. 4) упадёт.
 1. **Остановить прод:** `pm2 stop u7-school-bot` (или `bun run start:prod:stop`). Останавливаем **до** `git pull` — две причины: снимок из п. 2 получает в `manifest.json`/`meta.txt` версию кода `v0.2.6`, а именно её требует откат; `pull` под работающим Bun может сломать ленивый импорт.
 2. **Бэкап — с подтверждения Нурболата:** `bash scripts/backup.sh --name=before-0.3.0` (protected, ротация не тронет) и `bash scripts/backup.sh before-deploy`.
-3. `git pull --ff-only` — прод должен стоять на `main` = тег `v0.3.0`; локальных коммитов в проде быть не должно (иначе `pull` конфликтует).
+3. `git pull --ff-only` — прод встаёт на `main` (код = тег `v0.3.0`, сверху — только документы); локальных коммитов в проде быть не должно (иначе `pull` конфликтует).
 4. `bun install --frozen-lockfile` — workspaces переехали (`apps/`, `packages/` → `platform/`, `domain/`, `modules/`, `runners/`).
 5. **Миграции** (§2) — с подтверждения Нурболата, при остановленном боте.
 6. **Запуск:** `pm2 delete u7-school-bot` → `bun run start:prod` → `pm2 save`. `pm2 delete` обязателен: в сохранённом конфиге pm2 остались `args` старой раскладки (`apps/u7-bot/src/main.ts`), `pm2 restart u7-school-bot` перезапустил бы несуществующий файл — см. §5.
