@@ -39,7 +39,7 @@ type Mentor = UserView;
  * кнопочный проактив канала invite — с кнопкой «🗑️ Отменить желание»,
  * ведущей в существующие экраны отмены W05 / W05-M (course-catalog).
  *
- * Кнопочный проактив (ФР-6) — до переезда в tasks-system (см. TODO.md):
+ * Кнопочный проактив (ФР-6) — до переезда в tasks-system:
  * сторя уходит после ввода модуля задач.
  */
 export class WishInviteStory extends U7BotUiStory {

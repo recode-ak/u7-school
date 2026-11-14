@@ -2,7 +2,7 @@
 
 **Назначение:** что будущая spec `dmg-ui` (UI-слой поверх `dmg-core`) обязана учесть: задачи из долга и бэклога, которые решаются только вместе с новым контрактом story.
 
-> Черновик (трек `pre-dmg-ui-cleanup`, Ф3 — из `TODO.md`). Доводится в Ф7 по spec трека ФР-7: каскад `init` vs конструктор, F-110 (D-72 для `stream`), `@u7-scl/core` (`ui`, `shared`), [bot-ui-session-architecture.md](./bot-ui-session-architecture.md).
+> Черновик (трек `pre-dmg-ui-cleanup`, Ф3). Доводится в Ф7 по spec трека ФР-7: каскад `init` vs конструктор, F-110 (D-72 для `stream`), `@u7-scl/core` (`ui`, `shared`), [bot-ui-session-architecture.md](./bot-ui-session-architecture.md).
 
 ---
 
