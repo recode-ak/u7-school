@@ -55,7 +55,7 @@
 - [x] Task: S — API `TestBotTransport` и `runners/u7-bot/tests/helpers` (`press`, `buttonsOf`, `findBtn`, `waitMessageFor`, `waitUntil`, `subHandler`, `makeUiApp`), `domain/src/<m>/testing.ts` `62b4b9ce` — `Screen`, `press`/`pressRaw`/`waitForMessage`, `waitUntil`, test-kit'ы `mockLogger`/`bot-transport`/`subscriptionOf`; новых `domain/src/<m>/testing.ts` не понадобилось
 - [x] Task: S — массовый перевод пачками, `check` после каждой `f6617f0c`, `01f1b906`, `23c8309c` — П1–П4 по брифу; T-DEBT-1…7 закрыты (T-DEBT-6 погашен ещё в Ф2)
 - [x] Task: O — разбор открытых `T-DEBT`; ревью выборкой; дубли TST-08 и расход токенов — в `summary.md` — открытых `T-DEBT` нет; `dmg-reviewer`: error нет
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 **Критерии:** локальных повторов из Ф0 нет (кроме самих хелперов); `mkdtemp` — только в хелпере; тестов ≥ базы минус перечисленные дубли; у каждой `T-DEBT` есть Триггер или владелец.
 
