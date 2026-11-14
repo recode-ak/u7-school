@@ -6,7 +6,7 @@
 
 ---
 
-## Фаза 0: Базовая линия
+## Фаза 0: Базовая линия [checkpoint: 204521f]
 
 - [x] Task: O — прогнать `CI=true bun run check` и `bun run test:bot`, записать числа (pass/fail, число тестов) в `summary.md`
 - [x] Task: O — список сценариев `scripts/stream-snapshot-sync.test.ts` (11) в `summary.md` — основа таблицы переноса (TST-08)
