@@ -103,11 +103,11 @@
 
 **Критерии:** `find conductor/archive -type f ! -name spec.md ! -name summary.md` пуст; у каждой инициативы `roadmap.md` — ссылка на `D-NN`; ссылок на удалённые файлы нет; `check` и `docs:check` пакета зелёные.
 
-## Фаза 7: Вход dmg-ui и финал
+## Фаза 7: Вход dmg-ui и финал [checkpoint: 8103d840]
 
 - [x] Task: O — документ-вход dmg-ui (ФР-7); ссылка из `roadmap.md` `0ffbcb42` — ссылка из `roadmap.md` п. 4 уже была (Ф6)
-- [x] Task: O — гейт закрытия (сравнение с Ф0), `summary.md` (дубли TST-08, расход токенов), `tracks.md` `eb214c12` — гейт нашёл хвост Ф4/Ф5 (`'r-1'` и `mkdtemp` в `wish`/`peer-review`), исправлен; `tracks.md` — после проверки Ф7
-- [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
+- [x] Task: O — гейт закрытия (сравнение с Ф0), `summary.md` (дубли TST-08, расход токенов), `tracks.md` `eb214c12` — гейт нашёл хвост Ф4/Ф5 (`'r-1'` и `mkdtemp` в `wish`/`peer-review`), исправлен; `tracks.md` — после проверки Ф7, трек `[x]`
+- [x] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md) — Нурболат, 2026-11-15: без замечаний
 
 **Критерии:** документ есть и на него ссылается `roadmap.md`; `check` зелёный; все критерии приёмки spec закрыты.
 
