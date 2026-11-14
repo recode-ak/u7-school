@@ -1,14 +1,13 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review';
 import { type Identified, UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { expectOk, testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import { expectOk, TEST_TRACE, testAppContext } from 'dmg-core/testing';
 import { ReviewCampaignRepoFake } from '../../review-campaign/review-campaign.repo.fake';
 import { IDS, review } from '../review.fixture';
 import { ReviewRepoFake } from '../review.repo.fake';
 import { ListScopeFactsUc } from './list-scope-facts.uc';
 
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const caller = new UserCaller<Identified>({ uuid: IDS.alice });
 
 let reviews: ReviewRepoFake;
@@ -26,7 +25,7 @@ function ask(scopeId = IDS.scope) {
       reviews,
     },
     PeerReviewModuleDef,
-  ).handle({ scopeId }, caller, REQ);
+  ).handle({ scopeId }, caller, TEST_TRACE);
 }
 
 describe('ListScopeFactsUc (ФР-8)', () => {

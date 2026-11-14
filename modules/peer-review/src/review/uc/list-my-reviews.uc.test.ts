@@ -5,8 +5,8 @@ import {
   type ReviewState,
 } from '@u7-scl/domain/peer-review';
 import { type Identified, UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { expectOk, testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import { expectOk, TEST_TRACE, testAppContext } from 'dmg-core/testing';
 import { ReviewCampaignRepoFake } from '../../review-campaign/review-campaign.repo.fake';
 import { HOUR, IDS, review, T0 } from '../review.fixture';
 import { ReviewRepoFake } from '../review.repo.fake';
@@ -14,7 +14,6 @@ import { ListMyReviewsUc } from './list-my-reviews.uc';
 
 // Адресат — субъект вызова (userId во входе нет).
 
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const as = (uuid: string) => new UserCaller<Identified>({ uuid });
 const ME = IDS.alice;
 const U = (n: number) =>
@@ -44,7 +43,7 @@ function makeUc() {
   );
 }
 
-const list = (input: object = {}) => makeUc().handle(input, as(ME), REQ);
+const list = (input: object = {}) => makeUc().handle(input, as(ME), TEST_TRACE);
 
 /** Отзыв мне от автора. */
 const toMe = (uuid: string, over: Parameters<typeof review>[0] = {}) =>

@@ -1,18 +1,15 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import type { WishState, WishTargetVo } from '@u7-scl/domain/wish';
 import { WishAr } from '@u7-scl/domain/wish';
 import { VersionConflict } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, TempDir } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import { WishJsonRepo } from './wish.json-repo';
 
-const tmpDir = mkdtempSync(join(tmpdir(), 'wish-json-repo-test-'));
+const tmpDir = TempDir.create('wish-json-repo-test-');
 
 function filePath(filename = 'wishes.json'): string {
-  return join(tmpDir, filename);
+  return tmpDir.file(filename);
 }
 
 function makeTarget(courseId = crypto.randomUUID()): WishTargetVo {
@@ -67,7 +64,7 @@ async function repoWith(name: string, rows: unknown[]): Promise<WishJsonRepo> {
 
 describe('WishJsonRepo', () => {
   afterAll(() => {
-    rmSync(tmpDir, { recursive: true, force: true });
+    tmpDir.dispose();
   });
 
   describe('save и findById', () => {

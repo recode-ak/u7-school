@@ -6,15 +6,19 @@ import {
   type WishTargetVo,
 } from '@u7-scl/domain/wish';
 import { GuestCaller, type Identified, UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import {
+  expectErr,
+  expectOk,
+  TEST_TRACE,
+  testAppContext,
+} from 'dmg-core/testing';
 import { WishRepoFake } from '../wish.repo.fake';
 import { CancelWishUc } from './cancel-wish.uc';
 
 // «Чужое желание» — отказ Policy: репозиторий искал бы по субъекту и его не
 // нашёл, поэтому чужое желание подсовывается подменой поиска.
 
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const courseId = '22222222-2222-4222-8222-222222222222';
 const moduleId = '33333333-3333-4333-8333-333333333333';
 const courseTarget: WishTargetVo = { kind: 'course', courseId };
@@ -75,7 +79,7 @@ describe('CancelWishUc', () => {
       seed(status);
 
       expect(
-        expectOk(await makeUc().handle(courseTarget, asActor, REQ)),
+        expectOk(await makeUc().handle(courseTarget, asActor, TEST_TRACE)),
       ).toEqual({});
 
       expect(statuses()).toEqual(['cancelled']);
@@ -85,7 +89,7 @@ describe('CancelWishUc', () => {
   it('отменяет желание на модуль по варианту { kind: module }', async () => {
     seed('expressed', moduleTarget);
 
-    expectOk(await makeUc().handle(moduleTarget, asActor, REQ));
+    expectOk(await makeUc().handle(moduleTarget, asActor, TEST_TRACE));
 
     expect(statuses()).toEqual(['cancelled']);
   });
@@ -93,7 +97,7 @@ describe('CancelWishUc', () => {
   it('желание в статусе pending — WISH_NOT_FOUND, статус не меняется', async () => {
     seed('pending');
 
-    const res = await makeUc().handle(courseTarget, asActor, REQ);
+    const res = await makeUc().handle(courseTarget, asActor, TEST_TRACE);
 
     expect(expectErr(res, 'WISH_NOT_FOUND').payload).toEqual({
       userId: ACTOR_ID,
@@ -103,7 +107,7 @@ describe('CancelWishUc', () => {
   });
 
   it('желания нет — WISH_NOT_FOUND: kind и payload цели', async () => {
-    const res = await makeUc().handle(courseTarget, asActor, REQ);
+    const res = await makeUc().handle(courseTarget, asActor, TEST_TRACE);
 
     const error = expectErr(res, 'WISH_NOT_FOUND');
     expect(error.kind).toBe('not_found');
@@ -115,7 +119,7 @@ describe('CancelWishUc', () => {
     // Выборка по цели курса желания на модуль не находит.
     wishes.findAllByUserAndTarget = async () => [];
 
-    const res = await makeUc().handle(courseTarget, asActor, REQ);
+    const res = await makeUc().handle(courseTarget, asActor, TEST_TRACE);
 
     expectErr(res, 'WISH_NOT_FOUND');
     expect(statuses()).toEqual(['expressed']);
@@ -125,7 +129,7 @@ describe('CancelWishUc', () => {
     const authorId = crypto.randomUUID();
     seed('expressed', courseTarget, authorId);
 
-    const res = await makeUc().handle(courseTarget, asActor, REQ);
+    const res = await makeUc().handle(courseTarget, asActor, TEST_TRACE);
 
     const error = expectErr(res, 'ACCESS_DENIED');
     expect(error.payload).toMatchObject({ rule: 'isAuthor' });
@@ -136,7 +140,11 @@ describe('CancelWishUc', () => {
   it('вызывающий guest — UNAUTHORIZED, ничего не записано', async () => {
     seed('expressed');
 
-    const res = await makeUc().handle(courseTarget, new GuestCaller(), REQ);
+    const res = await makeUc().handle(
+      courseTarget,
+      new GuestCaller(),
+      TEST_TRACE,
+    );
 
     expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
       callerKind: 'guest',
@@ -154,7 +162,7 @@ describe('CancelWishUc — ожидаемая версия', () => {
       await makeUc().handle(
         { ...courseTarget, expectedVersion: 0 },
         asActor,
-        REQ,
+        TEST_TRACE,
       ),
     );
 
@@ -167,7 +175,7 @@ describe('CancelWishUc — ожидаемая версия', () => {
     const res = await makeUc().handle(
       { ...courseTarget, expectedVersion: 1 },
       asActor,
-      REQ,
+      TEST_TRACE,
     );
 
     expect(expectErr(res, 'VERSION_CONFLICT').payload).toEqual({

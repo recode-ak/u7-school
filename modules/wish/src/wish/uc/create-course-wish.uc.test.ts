@@ -22,12 +22,13 @@ import {
   ok,
   UserCaller,
 } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
+import { ModuleFacades } from 'dmg-core/app';
 import {
   expectErr,
   expectOk,
   type StubCall,
   StubFacade,
+  TEST_TRACE,
   testAppContext,
 } from 'dmg-core/testing';
 import coursePools from '../../../../../domain/src/wish/wish/pools/course.json';
@@ -39,8 +40,6 @@ import { CreateCourseWishUc } from './create-course-wish.uc';
 // стартового модуля» сводятся к `enrollable: false` в `modules/course`.
 
 const START_MODULE = '11111111-1111-4111-8111-111111111111';
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
-
 const ACTOR_ID = crypto.randomUUID();
 const ACTOR: Identified = { uuid: ACTOR_ID };
 const asActor = new UserCaller<Identified>(ACTOR);
@@ -118,7 +117,7 @@ describe('CreateCourseWishUc', () => {
       const res = await makeUc().handle(
         { courseId: plainCourseId },
         asActor,
-        REQ,
+        TEST_TRACE,
       );
 
       expect(expectOk(res)).toEqual({ outcome: 'instant' });
@@ -138,7 +137,7 @@ describe('CreateCourseWishUc', () => {
       const res = await makeUc().handle(
         { courseId: pooledCourseId },
         asActor,
-        REQ,
+        TEST_TRACE,
       );
 
       expect(expectOk(res)).toEqual({ outcome: 'questionnaire' });
@@ -165,7 +164,7 @@ describe('CreateCourseWishUc', () => {
       const res = await makeUc().handle(
         { courseId: pooledCourseId },
         asActor,
-        REQ,
+        TEST_TRACE,
       );
 
       expectErr(res, 'SERVER_INTERNAL');
@@ -182,7 +181,7 @@ describe('CreateCourseWishUc', () => {
         const res = await makeUc().handle(
           { courseId: plainCourseId },
           asActor,
-          REQ,
+          TEST_TRACE,
         );
 
         const error = expectErr(res, 'WISH_ALREADY_EXISTS');
@@ -204,7 +203,7 @@ describe('CreateCourseWishUc', () => {
       const res = await makeUc().handle(
         { courseId: plainCourseId },
         asActor,
-        REQ,
+        TEST_TRACE,
       );
 
       expect(expectOk(res)).toEqual({ outcome: 'instant' });
@@ -218,7 +217,7 @@ describe('CreateCourseWishUc', () => {
       const res = await makeUc().handle(
         { courseId: plainCourseId },
         asActor,
-        REQ,
+        TEST_TRACE,
       );
 
       const error = expectErr(res, 'WISH_COURSE_NOT_FOUND');
@@ -235,14 +234,14 @@ describe('CreateCourseWishUc', () => {
       const res = await makeUc().handle(
         { courseId: plainCourseId },
         asActor,
-        REQ,
+        TEST_TRACE,
       );
 
       expectErr(res, 'WISH_COURSE_NOT_FOUND');
     });
 
     it('курс спрашивается через фасад от имени UC и вызывающего', async () => {
-      await makeUc().handle({ courseId: plainCourseId }, asActor, REQ);
+      await makeUc().handle({ courseId: plainCourseId }, asActor, TEST_TRACE);
 
       expect(received(course)).toEqual([
         {
@@ -261,7 +260,7 @@ describe('CreateCourseWishUc', () => {
       const res = await makeUc().handle(
         { courseId: plainCourseId },
         asActor,
-        REQ,
+        TEST_TRACE,
       );
 
       expectErr(res, 'SERVER_INTERNAL');
@@ -273,7 +272,7 @@ describe('CreateCourseWishUc', () => {
     const res = await makeUc().handle(
       { courseId: plainCourseId },
       new GuestCaller(),
-      REQ,
+      TEST_TRACE,
     );
 
     expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({

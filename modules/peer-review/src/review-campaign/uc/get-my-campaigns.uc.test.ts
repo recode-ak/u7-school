@@ -5,8 +5,8 @@ import {
   type ReviewCampaignState,
 } from '@u7-scl/domain/peer-review';
 import { type Identified, UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { expectOk, testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import { expectOk, TEST_TRACE, testAppContext } from 'dmg-core/testing';
 import { factReviews } from '../../review/review.fixture';
 import { ReviewRepoFake } from '../../review/review.repo.fake';
 import { campaign, IDS, T0 } from '../review-campaign.fixture';
@@ -15,7 +15,6 @@ import { GetMyCampaignsUc } from './get-my-campaigns.uc';
 
 // Пользователь — из субъекта вызова (без userId во входе); часы — часы приложения.
 
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const as = (uuid: string) => new UserCaller<Identified>({ uuid });
 
 let campaigns: ReviewCampaignRepoFake;
@@ -49,7 +48,9 @@ describe('GetMyCampaignsUc (ФР-7)', () => {
     const own = campaign();
     answer([own]);
 
-    const cards = expectOk(await makeUc().handle({}, as(IDS.alice), REQ));
+    const cards = expectOk(
+      await makeUc().handle({}, as(IDS.alice), TEST_TRACE),
+    );
 
     expect(cards).toHaveLength(1);
     expect(cards[0]).toMatchObject({
@@ -78,7 +79,9 @@ describe('GetMyCampaignsUc (ФР-7)', () => {
       ),
     );
 
-    const [card] = expectOk(await makeUc().handle({}, as(IDS.alice), REQ));
+    const [card] = expectOk(
+      await makeUc().handle({}, as(IDS.alice), TEST_TRACE),
+    );
 
     // K — соученик + ментор; M — два отзыва от alice из трёх
     expect(card?.progress).toEqual({ done: 2, total: 2 });
@@ -93,7 +96,7 @@ describe('GetMyCampaignsUc (ФР-7)', () => {
       await makeUc().handle(
         { filter: { scopeId: IDS.scope2 } },
         as(IDS.alice),
-        REQ,
+        TEST_TRACE,
       ),
     );
     expect(byScope.map((c) => c.scopeId)).toEqual([IDS.scope2]);
@@ -102,7 +105,7 @@ describe('GetMyCampaignsUc (ФР-7)', () => {
       await makeUc().handle(
         { filter: { context: 'stream_fate' } },
         as(IDS.alice),
-        REQ,
+        TEST_TRACE,
       ),
     );
     expect(byContext).toHaveLength(2);
@@ -118,7 +121,9 @@ describe('GetMyCampaignsUc (ФР-7)', () => {
     });
     answer([asSubject], [asMentor]);
 
-    const cards = expectOk(await makeUc().handle({}, as(IDS.alice), REQ));
+    const cards = expectOk(
+      await makeUc().handle({}, as(IDS.alice), TEST_TRACE),
+    );
 
     expect(cards.map((c) => [c.campaignId, c.myRole])).toEqual([
       [asSubject.uuid, 'subject'],

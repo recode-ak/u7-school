@@ -17,12 +17,13 @@ import {
   ok,
   UserCaller,
 } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
+import { ModuleFacades } from 'dmg-core/app';
 import {
   expectErr,
   expectOk,
   type StubCall,
   StubFacade,
+  TEST_TRACE,
   testAppContext,
 } from 'dmg-core/testing';
 import { WishRepoFake } from '../wish.repo.fake';
@@ -31,7 +32,6 @@ import { CreateModuleWishUc } from './create-module-wish.uc';
 // Фасад курсов — `StubFacade` по Def из домена (ARC-06). Перевод «нет места
 // в программе» в `enrollable: false` проверяет `modules/course`.
 
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const moduleId = '33333333-3333-4333-8333-333333333333';
 
 const ACTOR_ID = crypto.randomUUID();
@@ -95,7 +95,7 @@ async function stored() {
 
 describe('CreateModuleWishUc', () => {
   it('создаёт expressed-желание на модуль без анкеты', async () => {
-    const res = await makeUc().handle({ moduleId }, asActor, REQ);
+    const res = await makeUc().handle({ moduleId }, asActor, TEST_TRACE);
 
     expect(expectOk(res)).toEqual({});
     const saved = await stored();
@@ -110,7 +110,7 @@ describe('CreateModuleWishUc', () => {
   it('модуль недоступен → WISH_MODULE_NOT_FOUND, ничего не записано', async () => {
     enrollment({ enrollable: false });
 
-    const res = await makeUc().handle({ moduleId }, asActor, REQ);
+    const res = await makeUc().handle({ moduleId }, asActor, TEST_TRACE);
 
     const error = expectErr(res, 'WISH_MODULE_NOT_FOUND');
     expect(error.kind).toBe('not_found');
@@ -123,7 +123,7 @@ describe('CreateModuleWishUc', () => {
     async (status) => {
       seed(status);
 
-      const res = await makeUc().handle({ moduleId }, asActor, REQ);
+      const res = await makeUc().handle({ moduleId }, asActor, TEST_TRACE);
 
       const error = expectErr(res, 'WISH_ALREADY_EXISTS');
       expect(error.kind).toBe('conflict');
@@ -136,13 +136,13 @@ describe('CreateModuleWishUc', () => {
     seed('expressed');
     enrollment({ enrollable: false });
 
-    const res = await makeUc().handle({ moduleId }, asActor, REQ);
+    const res = await makeUc().handle({ moduleId }, asActor, TEST_TRACE);
 
     expectErr(res, 'WISH_MODULE_NOT_FOUND');
   });
 
   it('модуль спрашивается через фасад от имени UC и вызывающего', async () => {
-    await makeUc().handle({ moduleId }, asActor, REQ);
+    await makeUc().handle({ moduleId }, asActor, TEST_TRACE);
 
     expect(received(course)).toEqual([
       {
@@ -158,14 +158,18 @@ describe('CreateModuleWishUc', () => {
       CoreErrors.SERVER_INTERNAL.err(),
     );
 
-    const res = await makeUc().handle({ moduleId }, asActor, REQ);
+    const res = await makeUc().handle({ moduleId }, asActor, TEST_TRACE);
 
     expectErr(res, 'SERVER_INTERNAL');
     expect(await stored()).toEqual([]);
   });
 
   it('вызывающий guest — UNAUTHORIZED, ничего не записано', async () => {
-    const res = await makeUc().handle({ moduleId }, new GuestCaller(), REQ);
+    const res = await makeUc().handle(
+      { moduleId },
+      new GuestCaller(),
+      TEST_TRACE,
+    );
 
     expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
       callerKind: 'guest',

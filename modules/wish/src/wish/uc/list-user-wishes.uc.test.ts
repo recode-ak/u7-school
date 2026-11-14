@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { WishModuleDef, type WishState } from '@u7-scl/domain/wish';
 import { GuestCaller, type Identified, UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import {
+  expectErr,
+  expectOk,
+  TEST_TRACE,
+  testAppContext,
+} from 'dmg-core/testing';
 import { WishRepoFake } from '../wish.repo.fake';
 import { ListUserWishesUc } from './list-user-wishes.uc';
 
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const ACTOR_ID = crypto.randomUUID();
 const ACTOR: Identified = { uuid: ACTOR_ID };
 const asActor = new UserCaller<Identified>(ACTOR);
@@ -48,7 +52,7 @@ describe('ListUserWishesUc', () => {
     ];
     wishes.seed(...all);
 
-    const res = expectOk(await makeUc().handle({}, asActor, REQ));
+    const res = expectOk(await makeUc().handle({}, asActor, TEST_TRACE));
 
     expect(res).toEqual(all);
   });
@@ -57,13 +61,13 @@ describe('ListUserWishesUc', () => {
     const own = makeWish();
     wishes.seed(makeWish({ userId: crypto.randomUUID() }), own);
 
-    const res = expectOk(await makeUc().handle({}, asActor, REQ));
+    const res = expectOk(await makeUc().handle({}, asActor, TEST_TRACE));
 
     expect(res).toEqual([own]);
   });
 
   it('желаний нет — пустой список', async () => {
-    const res = expectOk(await makeUc().handle({}, asActor, REQ));
+    const res = expectOk(await makeUc().handle({}, asActor, TEST_TRACE));
 
     expect(res).toEqual([]);
   });
@@ -71,7 +75,7 @@ describe('ListUserWishesUc', () => {
   it('вызывающий guest — UNAUTHORIZED', async () => {
     wishes.seed(makeWish());
 
-    const res = await makeUc().handle({}, new GuestCaller(), REQ);
+    const res = await makeUc().handle({}, new GuestCaller(), TEST_TRACE);
 
     expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
       callerKind: 'guest',
@@ -81,7 +85,7 @@ describe('ListUserWishesUc', () => {
   it('query ничего не пишет: файл не изменился', async () => {
     wishes.seed(makeWish());
 
-    expectOk(await makeUc().handle({}, asActor, REQ));
+    expectOk(await makeUc().handle({}, asActor, TEST_TRACE));
 
     expect(wishes.saved).toEqual([]);
   });

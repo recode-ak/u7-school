@@ -4,8 +4,13 @@ import {
   type ReviewCampaignState,
 } from '@u7-scl/domain/peer-review';
 import { type Identified, UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import {
+  expectErr,
+  expectOk,
+  TEST_TRACE,
+  testAppContext,
+} from 'dmg-core/testing';
 import { factReviews } from '../../review/review.fixture';
 import { ReviewRepoFake } from '../../review/review.repo.fake';
 import { campaign, DAY, IDS, T0 } from '../review-campaign.fixture';
@@ -14,7 +19,6 @@ import { GetCampaignRecipientsUc } from './get-campaign-recipients.uc';
 
 // authorId берётся из субъекта; посторонний — отказ Policy isWindowAuthor (ACCESS_DENIED).
 
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const as = (uuid: string) => new UserCaller<Identified>({ uuid });
 
 let campaigns: ReviewCampaignRepoFake;
@@ -46,7 +50,7 @@ describe('GetCampaignRecipientsUc', () => {
     );
 
     const res = expectOk(
-      await makeUc().handle({ campaignId: c.uuid }, as(IDS.alice), REQ),
+      await makeUc().handle({ campaignId: c.uuid }, as(IDS.alice), TEST_TRACE),
     );
 
     expect(res).toMatchObject({
@@ -71,7 +75,7 @@ describe('GetCampaignRecipientsUc', () => {
       await makeUc(c.expiresAt + DAY).handle(
         { campaignId: c.uuid },
         as(IDS.alice),
-        REQ,
+        TEST_TRACE,
       ),
     );
 
@@ -90,7 +94,7 @@ describe('GetCampaignRecipientsUc', () => {
       const res = await makeUc().handle(
         { campaignId: c.uuid },
         as(userId),
-        REQ,
+        TEST_TRACE,
       );
 
       const error = expectErr(res, 'ACCESS_DENIED');
@@ -104,7 +108,7 @@ describe('GetCampaignRecipientsUc', () => {
     const res = await makeUc().handle(
       { campaignId: missing },
       as(IDS.alice),
-      REQ,
+      TEST_TRACE,
     );
 
     const error = expectErr(res, 'REVIEW_CAMPAIGN_NOT_FOUND');

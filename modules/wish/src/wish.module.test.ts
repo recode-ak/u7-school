@@ -9,8 +9,13 @@ import {
 } from '@u7-scl/domain/questionnaire/contract';
 import { CreateCourseWishUcDef } from '@u7-scl/domain/wish';
 import { type Identified, ok, UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { expectOk, StubFacade, testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import {
+  expectOk,
+  StubFacade,
+  TEST_TRACE,
+  testAppContext,
+} from 'dmg-core/testing';
 import { WishRepoFake } from './wish/wish.repo.fake';
 import { createWishModule } from './wish.module';
 
@@ -49,7 +54,7 @@ describe('createWishModule', () => {
     const res = await module.dispatch(
       CreateCourseWishUcDef.command({ courseId }),
       new UserCaller(ACTOR),
-      Trace.fromRequest({ requestId: 'r-1' }),
+      TEST_TRACE,
     );
 
     expect(expectOk(res)).toEqual({ outcome: 'instant' });

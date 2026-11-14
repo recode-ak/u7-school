@@ -1,13 +1,11 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   ReviewCampaignAr,
   type ReviewCampaignState,
 } from '@u7-scl/domain/peer-review';
 import { VersionConflict } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, TempDir } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import { campaign, IDS, T0 } from '../review-campaign/review-campaign.fixture';
 import { ReviewCampaignJsonRepo } from './review-campaign.json-repo';
@@ -16,10 +14,10 @@ import { ReviewCampaignJsonRepo } from './review-campaign.json-repo';
 // + блок «legacy-записи» (образец — wish.json-repo.test.ts). Только временный каталог
 // и чтение фикстуры `data/fixtures` (запись — никогда).
 
-const tmpDir = mkdtempSync(join(tmpdir(), 'review-campaign-json-repo-'));
-afterAll(() => rmSync(tmpDir, { recursive: true, force: true }));
+const tmpDir = TempDir.create('review-campaign-json-repo-');
+afterAll(() => tmpDir.dispose());
 
-const path = (name: string) => join(tmpDir, name);
+const path = (name: string) => tmpDir.file(name);
 const FAR = Date.UTC(2099, 0, 1);
 const PAST = Date.UTC(2020, 0, 1);
 

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review';
 import { type Identified, UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { expectOk, testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import { expectOk, TEST_TRACE, testAppContext } from 'dmg-core/testing';
 import { ReviewCampaignRepoFake } from '../../review-campaign/review-campaign.repo.fake';
 import { CAMPAIGN_ID, IDS, review, TEXT } from '../review.fixture';
 import { ReviewRepoFake } from '../review.repo.fake';
@@ -10,7 +10,6 @@ import { GetMyReviewUc } from './get-my-review.uc';
 
 // Автор — субъект вызова.
 
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const as = (uuid: string) => new UserCaller<Identified>({ uuid });
 
 let reviews: ReviewRepoFake;
@@ -35,7 +34,7 @@ const ask = (
   userId: string,
   campaignId = CAMPAIGN_ID,
   recipientId = IDS.mentor,
-) => makeUc().handle({ campaignId, recipientId }, as(userId), REQ);
+) => makeUc().handle({ campaignId, recipientId }, as(userId), TEST_TRACE);
 
 describe('GetMyReviewUc (S04 — текст моего отзыва)', () => {
   it('отзыв есть — found: true и текст', async () => {

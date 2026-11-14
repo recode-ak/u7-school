@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { PeerReviewModuleDef, ReviewEvents } from '@u7-scl/domain/peer-review';
 import { type Identified, UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import {
+  expectErr,
+  expectOk,
+  TEST_TRACE,
+  testAppContext,
+} from 'dmg-core/testing';
 import { campaign } from '../../review-campaign/review-campaign.fixture';
 import { ReviewCampaignRepoFake } from '../../review-campaign/review-campaign.repo.fake';
 import {
@@ -19,7 +24,6 @@ import { CreateReviewUc } from './create-review.uc';
 
 // authorId — из субъекта; отказы — Result; порядок: право → окно → адресат → текст.
 
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const as = (uuid: string) => new UserCaller<Identified>({ uuid });
 /** Не кратно минуте: проверяет, что createdAt не усекается. */
 const AT = T0 + 90_000;
@@ -50,7 +54,12 @@ const write = (
   text = TEXT,
   at = AT,
   campaignId = CAMPAIGN_ID,
-) => makeUc(at).handle({ campaignId, recipientId, text }, as(authorId), REQ);
+) =>
+  makeUc(at).handle(
+    { campaignId, recipientId, text },
+    as(authorId),
+    TEST_TRACE,
+  );
 
 /** Что записано через `save` за вызов UC. */
 const stored = () => reviews.saved;

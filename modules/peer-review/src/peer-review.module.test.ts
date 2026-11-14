@@ -18,12 +18,13 @@ import {
   StudentEvents,
 } from '@u7-scl/domain/stream/contract';
 import { type Identified, ok, UserCaller } from 'dmg-core';
-import { InProcOutbox, ModuleFacades, Trace } from 'dmg-core/app';
+import { InProcOutbox, ModuleFacades } from 'dmg-core/app';
 import {
   expectOk,
   MemoryBus,
   StubFacade,
   TEST_NOW,
+  TEST_TRACE,
   testAppContext,
 } from 'dmg-core/testing';
 import { createPeerReviewModule } from './peer-review.module';
@@ -40,7 +41,6 @@ const SCOPE = IDS.scope;
 const SUBJECT = '77777777-7777-4777-8777-777777777777';
 const PEER = IDS.alice;
 const MENTOR = '66666666-6666-4666-8666-666666666666';
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const as = (uuid: string) => new UserCaller<Identified>({ uuid });
 
 function makeModule() {
@@ -127,13 +127,21 @@ describe('createPeerReviewModule', () => {
     const subject = new UserCaller<Identified>({ uuid: SUBJECT });
     const mentor = new UserCaller<Identified>({ uuid: MENTOR });
     const mine = expectOk(
-      await module.dispatch(GetMyCampaignsUcDef.command({}), subject, REQ),
+      await module.dispatch(
+        GetMyCampaignsUcDef.command({}),
+        subject,
+        TEST_TRACE,
+      ),
     );
     expect(mine.map((c) => [c.myRole, c.progress])).toEqual([
       ['subject', { done: 0, total: 2 }],
     ]);
     const asMentor = expectOk(
-      await module.dispatch(GetMyCampaignsUcDef.command({}), mentor, REQ),
+      await module.dispatch(
+        GetMyCampaignsUcDef.command({}),
+        mentor,
+        TEST_TRACE,
+      ),
     );
     expect(asMentor.map((c) => [c.myRole, c.progress])).toEqual([
       ['mentor', { done: 0, total: 1 }],
@@ -143,7 +151,7 @@ describe('createPeerReviewModule', () => {
       await module.dispatch(
         GetCampaignRecipientsUcDef.command({ campaignId: created.uuid }),
         subject,
-        REQ,
+        TEST_TRACE,
       ),
     );
     expect(recipients.recipients.map((r) => r.userId)).toEqual([PEER, MENTOR]);
@@ -192,7 +200,7 @@ describe('createPeerReviewModule: отзывы', () => {
           text,
         }),
         subject,
-        REQ,
+        TEST_TRACE,
       ),
     );
     expect(saved.recipientId).toBe(IDS.bob);
@@ -204,7 +212,7 @@ describe('createPeerReviewModule: отзывы', () => {
           text: 'Стабильный результат и сильный финальный проект',
         }),
         mentor,
-        REQ,
+        TEST_TRACE,
       ),
     );
     expect(
@@ -213,7 +221,11 @@ describe('createPeerReviewModule: отзывы', () => {
 
     // прогресс кампании видит новые отзывы
     const cards = expectOk(
-      await module.dispatch(GetMyCampaignsUcDef.command({}), subject, REQ),
+      await module.dispatch(
+        GetMyCampaignsUcDef.command({}),
+        subject,
+        TEST_TRACE,
+      ),
     );
     expect(cards[0]?.progress).toEqual({ done: 1, total: 2 });
 
@@ -225,7 +237,7 @@ describe('createPeerReviewModule: отзывы', () => {
             recipientId: IDS.bob,
           }),
           subject,
-          REQ,
+          TEST_TRACE,
         ),
       ),
     ).toEqual({ found: true, text });
@@ -234,7 +246,7 @@ describe('createPeerReviewModule: отзывы', () => {
       await module.dispatch(
         ListScopeReviewsUcDef.command({ scopeIds: [IDS.scope] }),
         subject,
-        REQ,
+        TEST_TRACE,
       ),
     );
     const by = new Map(scope.recipients.map((r) => [r.recipientId, r]));
@@ -242,7 +254,11 @@ describe('createPeerReviewModule: отзывы', () => {
     expect(by.get(IDS.alice)?.reviews[0]?.direction).toBe('mentor_student');
 
     const mine = expectOk(
-      await module.dispatch(ListMyReviewsUcDef.command({}), as(IDS.bob), REQ),
+      await module.dispatch(
+        ListMyReviewsUcDef.command({}),
+        as(IDS.bob),
+        TEST_TRACE,
+      ),
     );
     expect(mine.reviews.map((r) => r.authorId)).toEqual([IDS.alice]);
 
@@ -251,7 +267,7 @@ describe('createPeerReviewModule: отзывы', () => {
         await module.dispatch(
           ListScopeFactsUcDef.command({ scopeId: IDS.scope }),
           subject,
-          REQ,
+          TEST_TRACE,
         ),
       ),
     ).toEqual({ hasReviews: true, reviewsCount: 2 });

@@ -1,10 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ReviewAr, type ReviewState } from '@u7-scl/domain/peer-review';
 import { VersionConflict } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, TempDir } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import {
   CAMPAIGN_ID,
@@ -20,9 +18,9 @@ import { ReviewJsonRepo } from './review.json-repo';
 // + legacy-записи, строгий разбор, фильтр ReviewFilter.
 // Только временный каталог и чтение фикстуры `data/fixtures` (запись — никогда).
 
-const tmpDir = mkdtempSync(join(tmpdir(), 'review-json-repo-'));
-afterAll(() => rmSync(tmpDir, { recursive: true, force: true }));
-const path = (name: string) => join(tmpDir, name);
+const tmpDir = TempDir.create('review-json-repo-');
+afterAll(() => tmpDir.dispose());
+const path = (name: string) => tmpDir.file(name);
 
 const CAMPAIGN_B = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa02';
 const AUTHOR2 = 'cccccccc-cccc-4ccc-8ccc-cccccccccc02';
