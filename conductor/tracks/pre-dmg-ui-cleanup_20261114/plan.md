@@ -83,7 +83,7 @@
 - [x] Task: O — крупное — вопросом Нурболату с вариантами; мелкое — сам; решения — `decisions.md` — крупного нет; вертикали модулей — на фейки, вход `wish` не правим (бриф, «Решения»); знания для `decisions.md` нет
 - [x] Task: S — `wish`: фейк репозитория, перевод тестов UC/ER, правки по брифу `322f5513`
 - [x] Task: S — `peer-review`: удалить `QuestionnaireModuleDef` из `dependsOn` и `peer-review-question-pool` (код, экспорт, тест), DQS — классы, фейки, перевод тестов, `dmg:sync` `322f5513` — `dmg:sync` к `dependsOn` не относится, граф сверяют `dmg:check`/`arch:check`; 3 теста фильтра фейка — в infra (`summary.md`)
-- [ ] Task: O — закрыть C-DEBT-40 (коммит `закрыть C-DEBT-40`), `dmg-reviewer`, CHANGELOG `[0.3.1]`; **стоп: тег и выкатка — с подтверждения Нурболата**
+- [x] Task: O — закрыть C-DEBT-40 (коммит `закрыть C-DEBT-40`), `dmg-reviewer`, CHANGELOG `[0.3.1]`; **стоп: тег и выкатка — с подтверждения Нурболата** `a2673f5f` — тег `v0.3.1` локальный; push и выкатка — после выкатки v0.3.0 (решение Нурболата 2026-11-14)
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
 **Критерии:** у `peer-review` нет зависимости от `questionnaire`; у обоих модулей `*.repo.fake.ts`, тесты UC/ER без JSON во временном каталоге; C-DEBT-40 нет; e2e бота зелёные, поведение не изменилось; удалённые тесты `question-pool` — в `summary.md`.
