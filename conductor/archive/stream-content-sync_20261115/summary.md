@@ -1,5 +1,20 @@
 # Итог: обновление контента идущего потока (F-80)
 
+**Цель:** ментор потока или админ приводит идущий поток к текущей опубликованной версии модуля без потери прогресса студентов: предпросмотр → подтверждение → применение одной операцией UoW. Заменяет временные скрипты прямой записи JSON.
+
+## Сделано
+
+- **Ф1, домен** (`d55b90c`): `SnapshotDiffDqs` (сравнение снимков по позициям — заголовки, добавленные, удалённые, перенесённые; `shiftsAround` относительно текущего шага), `StreamContentSyncDcs` (`plan` — отчёт и блокеры, `apply` — проверки до мутаций), `StudentAr.creditStep` (пометка `completionSource: 'content_sync'`, без событий, идемпотентен), `StreamAr.canSyncContent`/`replaceContent`, событие `stream.stream.contentSynced`, ошибки `STREAM_CONTENT_NOT_SYNCABLE`, `STREAM_SYNC_REMOVES_CURRENT_STEP`, `STREAM_SYNC_NEEDS_CONFIRMATION`; схемы отчёта — `content-sync.types.ts`.
+- **Ф2, UC** (`db8224e`): `previewStreamContentSync` (query: план + `streamVersion`) и `syncStreamContent` (command: `expectVersion` первым, студенты в UoW раньше потока, поток — только при изменении); модуль `stream` — 21 UC.
+- **Ф3, скрипт и документы** (`14a3ba4`): `scripts/update-stream-snapshot.ts` на `U7App` + `dispatch` (`--dry-run`, отказ на неизвестных флагах), общая сборка `scripts/_app.ts`, `call-uc` видит `stream`; `stream-snapshot-sync.*` удалены; заготовка `roadmap/stream-snapshot-dmg.md` удалена, ссылки сняты; `AGENTS.md`, `content-management.md`, вход F-111 (`oplog-state-patch.md`), D-85.
+
+## Ограничения
+
+- Пройденный шаг, ушедший вперёд от студента, — только предупреждение: [D-DEBT-7](../../debt/product.md).
+- UoW без отката: при сбое посередине часть студентов зачтена, снимок потока старый; повтор доводит (ФР-8а).
+- Сценарий `sync` со студентами на реальных данных не прогонялся (на машине разработки их нет) — первый запуск на сервере: бот остановлен, `bun run backup`, `--dry-run`.
+- Экрана в боте нет — будущий `dmg-ui`.
+
 ## Базовая линия (Ф0, 2026-11-15, `544a1f6`)
 
 | Прогон | Результат |
