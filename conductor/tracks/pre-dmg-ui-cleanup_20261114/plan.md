@@ -67,7 +67,7 @@
 > - сборка и обновление снимка — неопубликованный элемент даёт `warn`.
 
 - [x] Task: O — открытые вопросы Нурболату (2026-11-14): неопубликованное видит **любой ментор** (роль); неопубликованный урок/шаг при сборке снимка — **пропустить с `warn`**; тем, кто видит неопубликованное, карточка урока/шага показывает отметку статуса, если он не «опубликован» (вид отметки — по UX, решает orchestrator в брифе)
-- [ ] Task: S (`dmg-tech-lead`) — бриф: правило `canSeeUnpublished` (+ментор), чтение шага из потока (UC `stream` поверх снимка или контекст потока у `get-step`; `dependsOn`), `warn` в `ModuleSnapshotDqs`/`get-module-snapshot` и `update-stream-snapshot`; потребители в боте (`step-view`, `nav-tree`, `learning/shared`, `view-stream`)
+- [x] Task: S (`dmg-tech-lead`) — бриф: правило `canSeeUnpublished` (+ментор), чтение шага из потока (UC `stream` поверх снимка или контекст потока у `get-step`; `dependsOn`), `warn` в `ModuleSnapshotDqs`/`get-module-snapshot` и `update-stream-snapshot`; потребители в боте (`step-view`, `nav-tree`, `learning/shared`, `view-stream`) — [slices/content-visibility.md](./slices/content-visibility.md); вариант A (UC `stream` поверх снимка + курсовой system-UC по `stepIds`)
 - [ ] Task: S — red-тесты по брифу (`dmg-test-designer`)
 - [ ] Task: O/S — домен и прикладной слой (`dmg-domain-author`, `dmg-api-author`), бот — точечно; `dmg-reviewer`
 - [ ] Task: O — CHANGELOG `[0.3.1]`: изменение видимости (поведение для пользователя меняется — spec ФР-5 уточнить)
