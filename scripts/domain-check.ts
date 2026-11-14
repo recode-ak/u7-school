@@ -1,11 +1,10 @@
 /**
- * Проверки домена `@u7-scl/domain` (ARC-02/04/05/06) и реестра долга.
+ * Проверки домена `@u7-scl/domain` (ARC-02/04/05/06).
  *
  *   bun run arch:check
  *
  * Чистые функции над файлами в памяти; чтение диска — в `readDomainFiles`.
- * Долг: allowlist `conductor/debt/code.md`; в коде `C-DEBT-<n>` — только в `biome-ignore`;
- * маркеры временности («Временное решение», «ВРЕМЕННЫЙ», «Уходит с миграцией») — только в Месте открытой записи.
+ * Долг сверяет `DebtChecker` пакета (ARC-12) — раскладка в `arch-check.ts`.
  */
 import { posix } from 'node:path';
 import type { AnyModuleDef } from 'dmg-core';

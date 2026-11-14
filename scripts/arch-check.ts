@@ -37,18 +37,23 @@ import {
 export const ARCH_APPS: readonly ArchApp[] = [ExampleArch, DomainArch];
 
 /**
- * Исходники для проверок домена и долга: все пакеты и скрипты (без тестов
+ * Исходники проверок домена и долга: все пакеты и скрипты (без тестов
  * скриптов — в них маркеры долга встречаются как данные).
  */
+const SOURCE_GLOBS = [
+  '{platform,modules,authoring,runners}/*/src/**/*.ts',
+  'domain/src/**/*.ts',
+  'scripts/**/*.ts',
+];
+const SOURCE_EXCLUDE = 'scripts/**/*.test.ts';
+
+/** Исходники по `SOURCE_GLOBS` без `SOURCE_EXCLUDE`. */
 export async function readPackageSources(root = '.'): Promise<DomainFile[]> {
   const files: DomainFile[] = [];
-  for (const pattern of [
-    '{platform,modules,authoring,runners}/*/src/**/*.ts',
-    'domain/src/**/*.ts',
-    'scripts/**/*.ts',
-  ]) {
+  const excluded = new Glob(SOURCE_EXCLUDE);
+  for (const pattern of SOURCE_GLOBS) {
     for await (const path of new Glob(pattern).scan(root)) {
-      if (path.startsWith('scripts/') && path.endsWith('.test.ts')) continue;
+      if (excluded.match(path)) continue;
       files.push({ path, text: await Bun.file(`${root}/${path}`).text() });
     }
   }
@@ -87,12 +92,8 @@ async function readAppSources(root: string): Promise<DomainFile[]> {
  * реестры — `conductor/debt/` (README долга).
  */
 const DEBT_LAYOUT: DebtLayout = {
-  code: [
-    '{platform,modules,authoring,runners}/*/src/**/*.ts',
-    'domain/src/**/*.ts',
-    'scripts/**/*.ts',
-  ],
-  exclude: ['scripts/**/*.test.ts'],
+  code: SOURCE_GLOBS,
+  exclude: [SOURCE_EXCLUDE],
   registries: {
     code: DEBT_MD,
     tests: 'conductor/debt/tests.md',
