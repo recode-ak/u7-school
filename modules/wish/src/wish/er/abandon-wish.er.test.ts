@@ -1,7 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import { QuestionnaireEvents } from '@u7-scl/domain/questionnaire/contract';
 import {
   WishModuleDef,
@@ -17,29 +14,23 @@ import {
   TEST_NOW,
   testAppContext,
 } from 'dmg-core/testing';
-import { WishJsonRepo } from '../../infra/wish.json-repo';
+import { WishRepoFake } from '../wish.repo.fake';
 import { AbandonWishEr } from './abandon-wish.er';
 import { trackHandling } from './er.fixture';
-
-// Перенос случаев legacy `api/er/abandon-wish-er.test.ts` на ER по Def.
 
 const USER = '22222222-2222-4222-8222-222222222222';
 const COURSE = '44444444-4444-4444-8444-444444444444';
 const OTHER_COURSE = '55555555-5555-4555-8555-555555555555';
 const CREATED = Date.UTC(2025, 7, 20, 10);
 
-let dir: string;
-let file: string;
-let wishes: WishJsonRepo;
+let wishes: WishRepoFake;
 let ctx: ReturnType<typeof testAppContext>;
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'abandon-wish-'));
-  file = join(dir, 'wishes.json');
-  wishes = new WishJsonRepo(file);
+  wishes = new WishRepoFake();
+  wishes.findAllByUserAndTarget = async () => [];
   ctx = testAppContext();
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 function makeEr() {
   return new AbandonWishEr(
@@ -85,8 +76,11 @@ function wish(
   };
 }
 
-async function seed(...states: WishState[]): Promise<void> {
-  await Bun.write(file, JSON.stringify(states));
+/** Желания в памяти; выборка по цели отдаёт их все (тест с разными целями задаёт ответ сам). */
+function seed(...states: WishState[]): void {
+  wishes.seed(...states);
+  wishes.findAllByUserAndTarget = async () =>
+    states.map((s) => wishes.restoredOrThrow(s.uuid));
 }
 
 async function statuses(): Promise<Record<string, WishStatus>> {
@@ -99,7 +93,7 @@ async function statuses(): Promise<Record<string, WishStatus>> {
 describe('AbandonWishEr', () => {
   it('pending → abandoned на момент часов приложения', async () => {
     const w = wish('pending');
-    await seed(w);
+    seed(w);
 
     expectOk(await makeEr().handle(abandoned()));
 
@@ -112,16 +106,15 @@ describe('AbandonWishEr', () => {
   });
 
   it('желание не pending — игнор: ничего не записано и не опубликовано', async () => {
-    await seed(
+    seed(
       wish('expressed'),
       wish('abandoned', { kind: 'course', courseId: OTHER_COURSE }),
     );
-    const before = await Bun.file(file).text();
 
     expectOk(await makeEr().handle(abandoned()));
     expectOk(await makeEr().handle(abandoned({ courseId: OTHER_COURSE })));
 
-    expect(await Bun.file(file).text()).toBe(before);
+    expect(wishes.saved).toEqual([]);
     expect(ctx.published).toEqual([]);
   });
 
@@ -133,7 +126,7 @@ describe('AbandonWishEr', () => {
   it('среди завершённых желаний на ту же цель выбирает активное pending', async () => {
     const old = wish('cancelled');
     const active = wish('pending');
-    await seed(old, active);
+    seed(old, active);
 
     expectOk(await makeEr().handle(abandoned()));
 
@@ -144,14 +137,14 @@ describe('AbandonWishEr', () => {
   });
 
   it('чужой ownerInfo — ничего не загружено, не записано, не опубликовано', async () => {
-    // Файла нет: любая загрузка желаний оставила бы след; репозиторий не должен вызываться.
+    // Репозиторий не должен вызываться вовсе: ни загрузок, ни записей.
     let loads = 0;
     const spy = Object.assign(Object.create(wishes), {
       findAllByUserAndTarget: async () => {
         loads++;
         return [];
       },
-    }) as WishJsonRepo;
+    }) as WishRepoFake;
     const er = new AbandonWishEr(
       { app: ctx.app, facades: new ModuleFacades([]), wishes: spy },
       WishModuleDef,
@@ -161,7 +154,7 @@ describe('AbandonWishEr', () => {
     expectOk(await er.handle(abandoned({})));
 
     expect(loads).toBe(0);
-    expect(await Bun.file(file).exists()).toBe(false);
+    expect(wishes.saved).toEqual([]);
     expect(ctx.published).toEqual([]);
   });
 });
@@ -169,7 +162,7 @@ describe('AbandonWishEr', () => {
 describe('AbandonWishEr.subscribe', () => {
   it('реагирует на questionnaire.abandoned из шины', async () => {
     const w = wish('pending');
-    await seed(w);
+    seed(w);
     const bus = new MemoryBus();
     const er = makeEr();
     const handled = trackHandling(er);
@@ -184,13 +177,13 @@ describe('AbandonWishEr.subscribe', () => {
 
 describe('AbandonWishEr — идемпотентность (D-47)', () => {
   it('повтор questionnaire.abandoned с новым eventId — без записей и событий', async () => {
-    await seed(wish('pending'));
+    seed(wish('pending'));
     const er = makeEr();
     await expectIdempotentReaction({
       event: abandoned(),
       deliver: (event) => er.handle(event),
       published: ctx.published,
-      state: () => Bun.file(file).text(),
+      state: () => structuredClone(wishes.saved),
     });
   });
 });

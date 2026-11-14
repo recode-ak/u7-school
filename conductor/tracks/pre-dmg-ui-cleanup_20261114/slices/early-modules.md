@@ -72,3 +72,9 @@ TST-08, D-55 (`testing.md` §3–4), DOM-01, DOM-07, CODE-04, ARC-04/06 (`biome.
 - Удалённый тест пула — в `summary.md`; упоминания пула в `conductor/roadmap.md`, `conductor/roadmap/metrics/metrics-pipeline-and-modules.md` — Ф6.
 
 ## Отчёты
+
+**domain-author (Sonnet):** шаги 1–5 сделаны; DQS — классы, тесты 1:1 (4/5/3/3); `recipientsWithMyReview` фильтрует `authorId === userId` сам (вызывающие и так передают отзывы автора).
+
+**api-author (Sonnet):** шаги 6–9; три фейка; `FactsReviewRepo` → `factReviews(facts, campaignId)` для `seed`; вертикали на фейках. Первая версия — нетривиальные выборки на `where` (отклонение от решения 1) — возвращена по ревью: `findAllByUserAndTarget`, `findByScopes`, `findByRecipient`, `findActiveBySubject`, `findActiveByMentor` → `unanswered`. Три `it`, проверявших фильтр фейка, удалены (список — `summary.md`), проверки маппинга ответа UC перенесены в соседние тесты. Ловушка: `bun install` после правки `package.json` вписал в `bun.lock` вложенные `@u7-scl/*/dmg-core` — дубль типов, сотни ошибок `tsc`; лишние блоки убраны, `bun install --frozen-lockfile`.
+
+**dmg-reviewer (Sonnet):** error нет; warn — выборки фейков (исправлено); info — тест на фильтр чужого отзыва в `CampaignFactsDqs` (добавлен). `list-user-wishes` «query ничего не пишет» — не дубль (проверяет UC), остаётся.

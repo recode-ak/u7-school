@@ -38,7 +38,7 @@ describe('arch:check domain', () => {
       questionnaire: ['user'],
       stream: ['user', 'course'],
       wish: ['user', 'course', 'questionnaire', 'stream'],
-      'peer-review': ['user', 'questionnaire', 'stream'],
+      'peer-review': ['user', 'stream'],
       dossier: [],
     });
     expect(DOMAIN_MODULES.filter((m) => m.external)).toEqual([]);

@@ -35,25 +35,25 @@ const members = (subject = student(SUBJECT, 'advanced')) => ({
 describe('StudentFateDqs.forCompleted', () => {
   it('advanced → completed_passed; not_advanced → completed_not_passed', () => {
     expect(
-      StudentFateDqs.forCompleted(
-        { userId: SUBJECT, outcome: 'advanced' },
-        members(),
-      ).outcome,
+      new StudentFateDqs(members()).forCompleted({
+        userId: SUBJECT,
+        outcome: 'advanced',
+      }).outcome,
     ).toBe('completed_passed');
     expect(
-      StudentFateDqs.forCompleted(
-        { userId: SUBJECT, outcome: 'not_advanced' },
-        members(),
-      ).outcome,
+      new StudentFateDqs(members()).forCompleted({
+        userId: SUBJECT,
+        outcome: 'not_advanced',
+      }).outcome,
     ).toBe('completed_not_passed');
   });
 
   it('участники: завершившиеся и ещё учащиеся, без субъекта и без abandoned (порядок состава)', () => {
     expect(
-      StudentFateDqs.forCompleted(
-        { userId: SUBJECT, outcome: 'advanced' },
-        members(),
-      ).participantIds,
+      new StudentFateDqs(members()).forCompleted({
+        userId: SUBJECT,
+        outcome: 'advanced',
+      }).participantIds,
     ).toEqual([LIVE, DONE]);
   });
 });
@@ -61,28 +61,27 @@ describe('StudentFateDqs.forCompleted', () => {
 describe('StudentFateDqs.forAbandoned', () => {
   it('participants всегда пуст (адресат только ментор)', () => {
     expect(
-      StudentFateDqs.forAbandoned({ userId: SUBJECT }, members())
+      new StudentFateDqs(members()).forAbandoned({ userId: SUBJECT })
         .participantIds,
     ).toEqual([]);
   });
 
   it('субъект никогда не начинал (neverStarted) → never_started', () => {
     const m = members(student(SUBJECT, 'abandoned', true));
-    expect(StudentFateDqs.forAbandoned({ userId: SUBJECT }, m).outcome).toBe(
-      'never_started',
-    );
+    expect(
+      new StudentFateDqs(m).forAbandoned({ userId: SUBJECT }).outcome,
+    ).toBe('never_started');
   });
 
   it('иначе → dropped; субъекта нет в составе → dropped', () => {
     const m = members(student(SUBJECT, 'abandoned', false));
-    expect(StudentFateDqs.forAbandoned({ userId: SUBJECT }, m).outcome).toBe(
-      'dropped',
-    );
     expect(
-      StudentFateDqs.forAbandoned(
-        { userId: '99999999-9999-4999-8999-999999999999' },
-        m,
-      ).outcome,
+      new StudentFateDqs(m).forAbandoned({ userId: SUBJECT }).outcome,
+    ).toBe('dropped');
+    expect(
+      new StudentFateDqs(m).forAbandoned({
+        userId: '99999999-9999-4999-8999-999999999999',
+      }).outcome,
     ).toBe('dropped');
   });
 });

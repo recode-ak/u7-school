@@ -24,7 +24,7 @@ const campaign = () =>
     payload: { subjectOutcome: 'completed_passed', mentorId: MENTOR },
   });
 
-describe('CampaignFactsDqs.myCampaignFacts', () => {
+describe('CampaignFactsDqs.myFacts', () => {
   it('роль из Ar, M — только мои рецензии, K — адресаты политики, daysLeft от at', () => {
     const reviews = [
       { authorId: SUBJECT, recipientId: MENTOR },
@@ -32,7 +32,7 @@ describe('CampaignFactsDqs.myCampaignFacts', () => {
       { authorId: BOB, recipientId: MENTOR },
     ];
     expect(
-      CampaignFactsDqs.myCampaignFacts(campaign(), SUBJECT, reviews, T0),
+      new CampaignFactsDqs(campaign(), reviews).myFacts(SUBJECT, T0),
     ).toEqual({
       myRole: 'subject',
       daysLeft: 7,
@@ -43,12 +43,9 @@ describe('CampaignFactsDqs.myCampaignFacts', () => {
   it('ментор: K = 1 (субъект), daysLeft истёкшей = 0', () => {
     const at = T0 + 8 * 24 * 3600 * 1000;
     expect(
-      CampaignFactsDqs.myCampaignFacts(
-        campaign(),
-        MENTOR,
-        [{ authorId: MENTOR, recipientId: SUBJECT }],
-        at,
-      ),
+      new CampaignFactsDqs(campaign(), [
+        { authorId: MENTOR, recipientId: SUBJECT },
+      ]).myFacts(MENTOR, at),
     ).toEqual({
       myRole: 'mentor',
       daysLeft: 0,
@@ -60,18 +57,29 @@ describe('CampaignFactsDqs.myCampaignFacts', () => {
 describe('CampaignFactsDqs.recipientsWithMyReview', () => {
   it('признак «мой отзыв есть» только там, где он есть; порядок — как у адресатов', () => {
     expect(
-      CampaignFactsDqs.recipientsWithMyReview(campaign(), SUBJECT, [
+      new CampaignFactsDqs(campaign(), [
         { authorId: SUBJECT, recipientId: MENTOR },
-      ]),
+      ]).recipientsWithMyReview(SUBJECT),
     ).toEqual([
       { userId: BOB, hasMyReview: false },
       { userId: MENTOR, hasMyReview: true },
     ]);
   });
 
+  it('чужой отзыв тому же адресату не даёт признак «мой отзыв есть»', () => {
+    expect(
+      new CampaignFactsDqs(campaign(), [
+        { authorId: BOB, recipientId: MENTOR },
+      ]).recipientsWithMyReview(SUBJECT),
+    ).toEqual([
+      { userId: BOB, hasMyReview: false },
+      { userId: MENTOR, hasMyReview: false },
+    ]);
+  });
+
   it('ментор: единственный адресат — субъект', () => {
     expect(
-      CampaignFactsDqs.recipientsWithMyReview(campaign(), MENTOR, []),
+      new CampaignFactsDqs(campaign(), []).recipientsWithMyReview(MENTOR),
     ).toEqual([{ userId: SUBJECT, hasMyReview: false }]);
   });
 });

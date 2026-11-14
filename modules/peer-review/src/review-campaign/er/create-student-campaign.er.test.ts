@@ -1,7 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import {
   PeerReviewModuleDef,
   ReviewCampaignEvents,
@@ -23,12 +20,11 @@ import {
   TEST_NOW,
   testAppContext,
 } from 'dmg-core/testing';
-import { ReviewCampaignJsonRepo } from '../../infra/review-campaign.json-repo';
-import { FactsReviewRepo } from '../../review/review.fixture';
+import { ReviewRepoFake } from '../../review/review.repo.fake';
 import { campaign, DAY } from '../review-campaign.fixture';
+import { ReviewCampaignRepoFake } from '../review-campaign.repo.fake';
 import { CreateStudentCampaignEr } from './create-student-campaign.er';
 
-// Перенос legacy `api/er/create-student-campaign-er.test.ts` на ER по Def.
 // Состав потока — StubFacade над GetStreamMembersUcDef (ARC-06).
 
 const SCOPE = '11111111-1111-4111-8111-111111111111';
@@ -59,22 +55,17 @@ const fullMembers = (subject = member(SUBJECT, 'advanced')) => ({
   ],
 });
 
-let dir: string;
-let file: string;
-let campaigns: ReviewCampaignJsonRepo;
+let campaigns: ReviewCampaignRepoFake;
 let streams: StubFacade<typeof StreamModuleDef>;
 let ctx: ReturnType<typeof testAppContext>;
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'create-student-campaign-'));
-  file = join(dir, 'campaigns.json');
-  campaigns = new ReviewCampaignJsonRepo(file);
+  campaigns = new ReviewCampaignRepoFake();
   streams = new StubFacade(StreamModuleDef).answer(GetStreamMembersUcDef, () =>
     ok(fullMembers()),
   );
   ctx = testAppContext();
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 const makeEr = () =>
   new CreateStudentCampaignEr(
@@ -82,7 +73,7 @@ const makeEr = () =>
       app: ctx.app,
       facades: new ModuleFacades([streams]),
       campaigns,
-      reviews: new FactsReviewRepo(),
+      reviews: new ReviewRepoFake(),
     },
     PeerReviewModuleDef,
   );
@@ -129,9 +120,9 @@ function abandoned(
   };
 }
 
-async function stored(): Promise<ReviewCampaignState[]> {
-  return (await Bun.file(file).exists()) ? await Bun.file(file).json() : [];
-}
+/** Что записано через `save` за вызов ER. */
+const stored = (): ReviewCampaignState[] =>
+  structuredClone([...campaigns.saved]);
 
 // Второй субъект для проверки подписки на второе событие (ключ кампании — субъект).
 const SUBJECT2 = '77777777-7777-4777-8777-777777777778';
@@ -141,7 +132,7 @@ describe('CreateStudentCampaignEr — создание кампании', () => 
   it('student.completed → кампания stream_fate с ключом (scopeId, subjectId), окно 7 суток от часов', async () => {
     expectOk(await makeEr().handle(completed()));
 
-    const [saved, ...rest] = await stored();
+    const [saved, ...rest] = stored();
     expect(rest).toEqual([]);
     expect(saved).toMatchObject({
       context: 'stream_fate',
@@ -155,7 +146,7 @@ describe('CreateStudentCampaignEr — создание кампании', () => 
 
   it('«забросил»: пустой participants, исход dropped', async () => {
     expectOk(await makeEr().handle(abandoned()));
-    const [saved] = await stored();
+    const [saved] = stored();
     expect(saved?.participants).toEqual([]);
     expect(saved?.payload.subjectOutcome).toBe('dropped');
   });
@@ -165,7 +156,7 @@ describe('CreateStudentCampaignEr — создание кампании', () => 
       ok(fullMembers(member(SUBJECT, 'abandoned', true))),
     );
     expectOk(await makeEr().handle(abandoned()));
-    const [saved] = await stored();
+    const [saved] = stored();
     expect(saved?.participants).toEqual([]);
     expect(saved?.payload.subjectOutcome).toBe('never_started');
   });
@@ -180,7 +171,7 @@ describe('CreateStudentCampaignEr — создание кампании', () => 
   it('публикует peer-review.review-campaign.created после сохранения, с данными для UI (ФР-5)', async () => {
     expectOk(await makeEr().handle(completed()));
 
-    const [saved] = await stored();
+    const [saved] = stored();
     expect(ctx.published).toHaveLength(1);
     expect(ctx.published[0]).toMatchObject({
       name: ReviewCampaignEvents.created.name,
@@ -199,23 +190,19 @@ describe('CreateStudentCampaignEr — создание кампании', () => 
 
 describe('CreateStudentCampaignEr — идемпотентность и деградация', () => {
   it('кампания окна уже есть — Ok без записи и без события (unique трактуется как успех)', async () => {
-    await Bun.write(
-      file,
-      JSON.stringify([
-        campaign({
-          scopeId: SCOPE,
-          subjectId: SUBJECT,
-          participants: [],
-          payload: { subjectOutcome: 'dropped', mentorId: MENTOR },
-        }),
-      ]),
+    campaigns.seed(
+      campaign({
+        scopeId: SCOPE,
+        subjectId: SUBJECT,
+        participants: [],
+        payload: { subjectOutcome: 'dropped', mentorId: MENTOR },
+      }),
     );
-    const before = await Bun.file(file).text();
 
     expectOk(await makeEr().handle(completed()));
     expectOk(await makeEr().handle(abandoned()));
 
-    expect(await Bun.file(file).text()).toBe(before);
+    expect(stored()).toEqual([]);
     expect(ctx.published).toEqual([]);
   });
 
@@ -234,7 +221,7 @@ describe('CreateStudentCampaignEr — идемпотентность и дегр
 
     expectOk(await makeEr().handle(completed()));
 
-    expect(await Bun.file(file).exists()).toBe(false);
+    expect(stored()).toEqual([]);
     expect(ctx.published).toEqual([]);
     expect(ctx.logs).toContainEqual(
       expect.objectContaining({
@@ -253,7 +240,7 @@ describe('CreateStudentCampaignEr — идемпотентность и дегр
 
     expectErr(await makeEr().handle(completed()), 'SERVER_INTERNAL');
 
-    expect(await Bun.file(file).exists()).toBe(false);
+    expect(stored()).toEqual([]);
     expect(ctx.published).toEqual([]);
   });
 });
@@ -278,8 +265,10 @@ describe('CreateStudentCampaignEr.subscribe', () => {
     bus.publish(abandoned(SUBJECT2, STUDENT2));
     await Promise.all(pending);
 
-    expect((await stored()).map((c) => c.subjectId).sort()).toEqual(
-      [SUBJECT, SUBJECT2].sort(),
-    );
+    expect(
+      stored()
+        .map((c) => c.subjectId)
+        .sort(),
+    ).toEqual([SUBJECT, SUBJECT2].sort());
   });
 });

@@ -1,7 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { describe, expect, it } from 'bun:test';
 import {
   CreateReviewUcDef,
   GetCampaignRecipientsUcDef,
@@ -10,6 +7,8 @@ import {
   ListMyReviewsUcDef,
   ListScopeFactsUcDef,
   ListScopeReviewsUcDef,
+  ReviewAr,
+  ReviewCampaignAr,
   ReviewCampaignEvents,
   ReviewEvents,
 } from '@u7-scl/domain/peer-review';
@@ -27,15 +26,15 @@ import {
   TEST_NOW,
   testAppContext,
 } from 'dmg-core/testing';
-import { ReviewJsonRepo } from './infra/review.json-repo';
-import { ReviewCampaignJsonRepo } from './infra/review-campaign.json-repo';
 import { createPeerReviewModule } from './peer-review.module';
 import { CAMPAIGN_ID, T0 } from './review/review.fixture';
+import { ReviewRepoFake } from './review/review.repo.fake';
 import { campaign, IDS } from './review-campaign/review-campaign.fixture';
+import { ReviewCampaignRepoFake } from './review-campaign/review-campaign.repo.fake';
 
-// Вертикаль legacy `api/peer-review-vertical.test.ts` для кампаний:
-// student.completed → ER → кампания → UC чтения; вертикаль `api/peer-review-vertical.test.ts` для отзывов:
-// полный цикл через `dispatch` и перезапись без дубля.
+// Вертикали на фейках репозиториев (диск проверяют контрактные тесты infra):
+// кампании — student.completed → ER → кампания → UC чтения; отзывы — полный
+// цикл через `dispatch` и перезапись без дубля.
 
 const SCOPE = IDS.scope;
 const SUBJECT = '77777777-7777-4777-8777-777777777777';
@@ -44,18 +43,12 @@ const MENTOR = '66666666-6666-4666-8666-666666666666';
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const as = (uuid: string) => new UserCaller<Identified>({ uuid });
 
-let dir: string;
-beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'peer-review-module-'));
-});
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
-
 function makeModule() {
   const ctx = testAppContext();
   // Шина `testAppContext` только записывает; ER ждёт доставки подписчикам.
   const bus = new MemoryBus(ctx.published);
   const app = { ...ctx.app, bus, outbox: new InProcOutbox(bus) };
-  const campaigns = new ReviewCampaignJsonRepo(join(dir, 'campaigns.json'));
+  const campaigns = new ReviewCampaignRepoFake();
   const streams = new StubFacade(StreamModuleDef).answer(
     GetStreamMembersUcDef,
     () =>
@@ -83,7 +76,7 @@ function makeModule() {
     app,
     facades: new ModuleFacades([streams]),
     campaigns,
-    reviews: new ReviewJsonRepo(join(dir, 'reviews.json')),
+    reviews: new ReviewRepoFake(),
   });
   return { module, campaigns, ctx, app };
 }
@@ -126,6 +119,11 @@ describe('createPeerReviewModule', () => {
       ctx.published.filter((e) => e.name === ReviewCampaignEvents.created.name),
     ).toHaveLength(1);
 
+    // Выборки активных кампаний (окно и роль — контрактный тест infra) отвечают созданной кампанией.
+    campaigns.findActiveBySubject = async (userId) =>
+      userId === SUBJECT ? [created] : [];
+    campaigns.findActiveByMentor = async (userId) =>
+      userId === MENTOR ? [created] : [];
     const subject = new UserCaller<Identified>({ uuid: SUBJECT });
     const mentor = new UserCaller<Identified>({ uuid: MENTOR });
     const mine = expectOk(
@@ -152,26 +150,36 @@ describe('createPeerReviewModule', () => {
   });
 });
 
-async function makeReviewModule() {
+function makeReviewModule() {
   const ctx = testAppContext({ at: T0 + 60_000 });
-  const campaigns = new ReviewCampaignJsonRepo(join(dir, 'campaigns.json'));
-  const reviews = new ReviewJsonRepo(join(dir, 'reviews.json'));
-  await Bun.write(
-    join(dir, 'campaigns.json'),
-    JSON.stringify([campaign({ uuid: CAMPAIGN_ID })]),
+  const campaigns = new ReviewCampaignRepoFake().seed(
+    campaign({ uuid: CAMPAIGN_ID }),
   );
+  const reviews = new ReviewRepoFake();
   const module = createPeerReviewModule({
     app: ctx.app,
     facades: new ModuleFacades(),
     campaigns,
     reviews,
   });
+  // Выборки по скоупу и адресату (фильтр — контрактный тест infra) отвечают записанными отзывами.
+  campaigns.findActiveBySubject = async (userId) =>
+    userId === IDS.alice
+      ? [ReviewCampaignAr.restore(campaign({ uuid: CAMPAIGN_ID }))]
+      : [];
+  campaigns.findActiveByMentor = async () => [];
+  reviews.findByScopes = async () =>
+    reviews.saved.map((s) => ReviewAr.restore(s));
+  reviews.findByRecipient = async (recipientId) =>
+    reviews.saved
+      .filter((s) => s.recipientId === recipientId)
+      .map((s) => ReviewAr.restore(s));
   return { module, ctx };
 }
 
 describe('createPeerReviewModule: отзывы', () => {
   it('полный цикл: отзывы пишутся и читаются через dispatch', async () => {
-    const { module, ctx } = await makeReviewModule();
+    const { module, ctx } = makeReviewModule();
     const subject = as(IDS.alice);
     const mentor = as(IDS.mentor);
     const text = 'Держал темп до конца потока, помогал с вопросами';

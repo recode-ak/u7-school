@@ -1,9 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import {
-  type WishAr,
   WishModuleDef,
   type WishState,
   type WishStatus,
@@ -12,10 +8,9 @@ import {
 import { GuestCaller, type Identified, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
-import { WishJsonRepo } from '../../infra/wish.json-repo';
+import { WishRepoFake } from '../wish.repo.fake';
 import { CancelWishUc } from './cancel-wish.uc';
 
-// Перенос случаев legacy `api/wish/cancel-wish-uc.test.ts` на UC по Def.
 // «Чужое желание» — отказ Policy: репозиторий искал бы по субъекту и его не
 // нашёл, поэтому чужое желание подсовывается подменой поиска.
 
@@ -29,31 +24,28 @@ const ACTOR_ID = crypto.randomUUID();
 const ACTOR: Identified = { uuid: ACTOR_ID };
 const asActor = new UserCaller<Identified>(ACTOR);
 
-let dir: string;
-let file: string;
-let wishes: WishJsonRepo;
+let wishes: WishRepoFake;
+let seeded: WishState;
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'cancel-wish-'));
-  file = join(dir, 'wishes.json');
-  wishes = new WishJsonRepo(file);
+  wishes = new WishRepoFake();
+  wishes.findAllByUserAndTarget = async () => [];
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-function makeUc(repo: WishJsonRepo = wishes) {
+function makeUc() {
   const { app } = testAppContext();
   return new CancelWishUc(
-    { app, facades: new ModuleFacades(), wishes: repo },
+    { app, facades: new ModuleFacades(), wishes },
     WishModuleDef,
   );
 }
 
-/** Желание в файле: по умолчанию — актора на курс. */
-async function seed(
+/** Желание в памяти (по умолчанию — актора на курс); выборка по цели отдаёт именно его. */
+function seed(
   status: WishStatus,
   target: WishTargetVo = courseTarget,
   userId: string = ACTOR_ID,
-): Promise<void> {
+): void {
   const at = Date.UTC(2026, 0, 1, 10);
   const state: WishState = {
     uuid: crypto.randomUUID(),
@@ -64,39 +56,42 @@ async function seed(
     updatedAt: at,
     version: 0,
   };
-  await Bun.write(file, JSON.stringify([state]));
+  wishes.seed(state);
+  wishes.findAllByUserAndTarget = async () => [
+    wishes.restoredOrThrow(state.uuid),
+  ];
+  seeded = state;
 }
 
-/** Статусы желаний актора на цель — то, что реально записано. */
-async function statuses(target: WishTargetVo = courseTarget) {
-  const found = await wishes.findAllByUserAndTarget(ACTOR_ID, target);
-  return found.map((wish) => wish.snapshot().status);
+/** Статус посеянного желания — то, что реально записано. */
+function statuses() {
+  return [wishes.restoredOrThrow(seeded.uuid).snapshot().status];
 }
 
 describe('CancelWishUc', () => {
   it.each(['expressed', 'confirmed'] as const)(
     'отменяет %s-желание на курс',
     async (status) => {
-      await seed(status);
+      seed(status);
 
       expect(
         expectOk(await makeUc().handle(courseTarget, asActor, REQ)),
       ).toEqual({});
 
-      expect(await statuses()).toEqual(['cancelled']);
+      expect(statuses()).toEqual(['cancelled']);
     },
   );
 
   it('отменяет желание на модуль по варианту { kind: module }', async () => {
-    await seed('expressed', moduleTarget);
+    seed('expressed', moduleTarget);
 
     expectOk(await makeUc().handle(moduleTarget, asActor, REQ));
 
-    expect(await statuses(moduleTarget)).toEqual(['cancelled']);
+    expect(statuses()).toEqual(['cancelled']);
   });
 
   it('желание в статусе pending — WISH_NOT_FOUND, статус не меняется', async () => {
-    await seed('pending');
+    seed('pending');
 
     const res = await makeUc().handle(courseTarget, asActor, REQ);
 
@@ -104,7 +99,7 @@ describe('CancelWishUc', () => {
       userId: ACTOR_ID,
       courseId,
     });
-    expect(await statuses()).toEqual(['pending']);
+    expect(statuses()).toEqual(['pending']);
   });
 
   it('желания нет — WISH_NOT_FOUND: kind и payload цели', async () => {
@@ -116,53 +111,44 @@ describe('CancelWishUc', () => {
   });
 
   it('желание на другую цель не отменяется — WISH_NOT_FOUND', async () => {
-    await seed('expressed', moduleTarget);
+    seed('expressed', moduleTarget);
+    // Выборка по цели курса желания на модуль не находит.
+    wishes.findAllByUserAndTarget = async () => [];
 
     const res = await makeUc().handle(courseTarget, asActor, REQ);
 
     expectErr(res, 'WISH_NOT_FOUND');
-    expect(await statuses(moduleTarget)).toEqual(['expressed']);
+    expect(statuses()).toEqual(['expressed']);
   });
 
   it('чужое желание — отказ Policy: ACCESS_DENIED, ничего не сохранено', async () => {
     const authorId = crypto.randomUUID();
-    await seed('expressed', courseTarget, authorId);
-    const foreign = new (class extends WishJsonRepo {
-      override findAllByUserAndTarget(
-        _userId: string,
-        target: WishTargetVo,
-      ): Promise<WishAr[]> {
-        return super.findAllByUserAndTarget(authorId, target);
-      }
-    })(file);
+    seed('expressed', courseTarget, authorId);
 
-    const res = await makeUc(foreign).handle(courseTarget, asActor, REQ);
+    const res = await makeUc().handle(courseTarget, asActor, REQ);
 
     const error = expectErr(res, 'ACCESS_DENIED');
     expect(error.payload).toMatchObject({ rule: 'isAuthor' });
-    const rows = JSON.parse(await Bun.file(file).text()) as WishState[];
-    expect(rows.map((r) => r.status)).toEqual(['expressed']);
+    expect(wishes.saved).toEqual([]);
+    expect(statuses()).toEqual(['expressed']);
   });
 
   it('вызывающий guest — UNAUTHORIZED, ничего не записано', async () => {
-    await seed('expressed');
+    seed('expressed');
 
     const res = await makeUc().handle(courseTarget, new GuestCaller(), REQ);
 
     expect(expectErr(res, 'UNAUTHORIZED').payload).toEqual({
       callerKind: 'guest',
     });
-    expect(await statuses()).toEqual(['expressed']);
+    expect(statuses()).toEqual(['expressed']);
   });
 });
 
 // Ожидаемая версия от клиента (D-57): устаревшее действие отклоняется без записи.
 describe('CancelWishUc — ожидаемая версия', () => {
-  const seededUuid = async () =>
-    (JSON.parse(await Bun.file(file).text()) as WishState[])[0]?.uuid ?? '';
-
   it('совпала (версия 0 из seed) — желание отменено', async () => {
-    await seed('expressed');
+    seed('expressed');
 
     expectOk(
       await makeUc().handle(
@@ -172,11 +158,11 @@ describe('CancelWishUc — ожидаемая версия', () => {
       ),
     );
 
-    expect(await statuses()).toEqual(['cancelled']);
+    expect(statuses()).toEqual(['cancelled']);
   });
 
   it('расходится — VERSION_CONFLICT, статус не изменился', async () => {
-    await seed('expressed');
+    seed('expressed');
 
     const res = await makeUc().handle(
       { ...courseTarget, expectedVersion: 1 },
@@ -186,8 +172,8 @@ describe('CancelWishUc — ожидаемая версия', () => {
 
     expect(expectErr(res, 'VERSION_CONFLICT').payload).toEqual({
       aggregate: 'wish',
-      uuid: await seededUuid(),
+      uuid: seeded.uuid,
     });
-    expect(await statuses()).toEqual(['expressed']);
+    expect(statuses()).toEqual(['expressed']);
   });
 });

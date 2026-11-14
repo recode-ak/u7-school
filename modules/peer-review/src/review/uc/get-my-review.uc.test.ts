@@ -1,28 +1,22 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review';
 import { type Identified, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
-import { ReviewJsonRepo } from '../../infra/review.json-repo';
-import { ReviewCampaignJsonRepo } from '../../infra/review-campaign.json-repo';
+import { ReviewCampaignRepoFake } from '../../review-campaign/review-campaign.repo.fake';
 import { CAMPAIGN_ID, IDS, review, TEXT } from '../review.fixture';
+import { ReviewRepoFake } from '../review.repo.fake';
 import { GetMyReviewUc } from './get-my-review.uc';
 
-// Перенос `api/review/get-my-review-uc.test.ts`: автор — субъект вызова.
+// Автор — субъект вызова.
 
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const as = (uuid: string) => new UserCaller<Identified>({ uuid });
 
-let dir: string;
-let file: string;
+let reviews: ReviewRepoFake;
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'get-my-review-'));
-  file = join(dir, 'reviews.json');
+  reviews = new ReviewRepoFake();
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 function makeUc() {
   const { app } = testAppContext();
@@ -30,8 +24,8 @@ function makeUc() {
     {
       app,
       facades: new ModuleFacades(),
-      campaigns: new ReviewCampaignJsonRepo(join(dir, 'campaigns.json')),
-      reviews: new ReviewJsonRepo(file),
+      campaigns: new ReviewCampaignRepoFake(),
+      reviews,
     },
     PeerReviewModuleDef,
   );
@@ -45,7 +39,7 @@ const ask = (
 
 describe('GetMyReviewUc (S04 — текст моего отзыва)', () => {
   it('отзыв есть — found: true и текст', async () => {
-    await Bun.write(file, JSON.stringify([review({ text: TEXT })]));
+    reviews.seed(review({ text: TEXT }));
     expect(expectOk(await ask(IDS.alice))).toEqual({ found: true, text: TEXT });
   });
 
@@ -54,7 +48,7 @@ describe('GetMyReviewUc (S04 — текст моего отзыва)', () => {
   });
 
   it('другой адресат или другая кампания — found: false', async () => {
-    await Bun.write(file, JSON.stringify([review({ text: TEXT })]));
+    reviews.seed(review({ text: TEXT }));
     expect(expectOk(await ask(IDS.alice, CAMPAIGN_ID, IDS.bob))).toEqual({
       found: false,
     });

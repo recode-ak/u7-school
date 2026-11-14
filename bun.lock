@@ -62,7 +62,6 @@
       "name": "@u7-scl/peer-review",
       "version": "0.1.0",
       "dependencies": {
-        "@u7-scl/questionnaire": "workspace:*",
         "@u7-scl/stream": "workspace:*",
         "valibot": "^1.0.0",
       },

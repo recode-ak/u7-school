@@ -13,22 +13,21 @@ export type ReviewDraft = {
  * DQS: направление отзыва и снимок исхода автора по данным кампании.
  * Только читает; допустимость пары проверяет `ReviewRules.recipientAllowed`.
  */
-export const ReviewDraftDqs = {
+export class ReviewDraftDqs {
+  constructor(private readonly campaign: ReadonlyAr<ReviewCampaignAr>) {}
+
   /**
    * Ментор → `mentor_student` без исхода. Субъект → ментору `student_mentor`,
    * соученику `student_student`, оба с исходом субъекта.
    */
-  of(
-    campaign: ReadonlyAr<ReviewCampaignAr>,
-    authorId: string,
-    recipientId: string,
-  ): ReviewDraft {
-    if (campaign.isMentor(authorId)) return { direction: 'mentor_student' };
+  of(authorId: string, recipientId: string): ReviewDraft {
+    if (this.campaign.isMentor(authorId))
+      return { direction: 'mentor_student' };
     return {
-      direction: campaign.isMentor(recipientId)
+      direction: this.campaign.isMentor(recipientId)
         ? 'student_mentor'
         : 'student_student',
-      authorOutcome: campaign.subjectOutcome,
+      authorOutcome: this.campaign.subjectOutcome,
     };
-  },
-};
+  }
+}

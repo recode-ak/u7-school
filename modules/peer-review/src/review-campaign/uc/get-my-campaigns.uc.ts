@@ -54,7 +54,7 @@ export class GetMyCampaignsUc extends UseCaseFromDef<
     const cards: MyCampaignCard[] = [];
     for (const ar of selected) {
       const mine = await reviews.findByCampaignAndAuthor(ar.uuid, userId);
-      const facts = CampaignFactsDqs.myCampaignFacts(ar, userId, mine, at);
+      const facts = new CampaignFactsDqs(ar, mine).myFacts(userId, at);
       if (!facts) continue;
       cards.push({
         campaignId: ar.uuid,

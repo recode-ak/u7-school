@@ -5,15 +5,15 @@ import type { RecipientReviewsGroup } from './review.types';
 /**
  * DQS: проекция отзывов скоупа (много агрегатов Review) для рендера.
  */
-export const ScopeReviewsDqs = {
+export class ScopeReviewsDqs {
+  constructor(private readonly reviews: readonly ReadonlyAr<ReviewAr>[]) {}
+
   /**
    * Группировка отзывов по адресатам: группы в порядке первого появления
    * (после сортировки), внутри — по времени создания, затем по uuid.
    */
-  groupByRecipient(
-    reviews: readonly ReadonlyAr<ReviewAr>[],
-  ): RecipientReviewsGroup[] {
-    const ordered = reviews
+  groupByRecipient(): RecipientReviewsGroup[] {
+    const ordered = this.reviews
       .map((r) => r.view())
       .sort(
         (a, b) => a.createdAt - b.createdAt || a.uuid.localeCompare(b.uuid),
@@ -37,5 +37,5 @@ export const ScopeReviewsDqs = {
       });
     }
     return [...groups.values()];
-  },
-};
+  }
+}

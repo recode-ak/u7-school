@@ -1,7 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import {
   CourseModuleDef,
   GetModuleEnrollmentUcDef,
@@ -28,12 +25,11 @@ import {
   StubFacade,
   testAppContext,
 } from 'dmg-core/testing';
-import { WishJsonRepo } from '../../infra/wish.json-repo';
+import { WishRepoFake } from '../wish.repo.fake';
 import { CreateModuleWishUc } from './create-module-wish.uc';
 
-// Перенос случаев legacy `api/wish/create-module-wish-uc.test.ts` на UC по
-// Def. Фасад курсов — `StubFacade` по Def из домена (ARC-06). Перевод
-// «нет места в программе» в `enrollable: false` проверяет `modules/course`.
+// Фасад курсов — `StubFacade` по Def из домена (ARC-06). Перевод «нет места
+// в программе» в `enrollable: false` проверяет `modules/course`.
 
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const moduleId = '33333333-3333-4333-8333-333333333333';
@@ -42,9 +38,7 @@ const ACTOR_ID = crypto.randomUUID();
 const ACTOR: Identified = { uuid: ACTOR_ID };
 const asActor = new UserCaller<Identified>(ACTOR);
 
-let dir: string;
-let file: string;
-let wishes: WishJsonRepo;
+let wishes: WishRepoFake;
 let course: StubFacade<typeof CourseModuleDef>;
 
 /** Ответ модуля курсов на запрос о записи на модуль. */
@@ -52,13 +46,11 @@ const enrollment = (answer: ModuleEnrollment) =>
   course.answer(GetModuleEnrollmentUcDef, () => ok(answer));
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'create-module-wish-'));
-  file = join(dir, 'wishes.json');
-  wishes = new WishJsonRepo(file);
+  wishes = new WishRepoFake();
+  wishes.findAllByUserAndTarget = async () => [];
   course = new StubFacade(CourseModuleDef);
   enrollment({ enrollable: true });
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 const received = (facade: { readonly received: readonly StubCall[] }) =>
   facade.received.map(({ caller, input }) => ({
@@ -73,8 +65,8 @@ function makeUc() {
   return new CreateModuleWishUc({ app, facades, wishes }, WishModuleDef);
 }
 
-/** Уже записанное желание актора на модуль — запись в файл. */
-async function seed(status: WishStatus): Promise<void> {
+/** Уже записанное желание актора на модуль; выборка по цели отдаёт его. */
+function seed(status: WishStatus): void {
   const at = Date.UTC(2026, 0, 1, 10);
   const state: WishState = {
     uuid: crypto.randomUUID(),
@@ -85,16 +77,20 @@ async function seed(status: WishStatus): Promise<void> {
     updatedAt: at,
     version: 0,
   };
-  await Bun.write(file, JSON.stringify([state]));
+  wishes.seed(state);
+  wishes.findAllByUserAndTarget = async () => [
+    wishes.restoredOrThrow(state.uuid),
+  ];
 }
 
 /** Желания актора на модуль — то, что реально записано. */
 async function stored() {
-  const found = await wishes.findAllByUserAndTarget(ACTOR_ID, {
-    kind: 'module',
-    moduleId,
-  });
-  return found.map((wish) => wish.snapshot());
+  const found = await wishes.findByUser(ACTOR_ID);
+  return found
+    .map((wish) => wish.snapshot())
+    .filter(
+      (s) => s.target.kind === 'module' && s.target.moduleId === moduleId,
+    );
 }
 
 describe('CreateModuleWishUc', () => {
@@ -125,7 +121,7 @@ describe('CreateModuleWishUc', () => {
   it.each(['expressed', 'pending', 'confirmed'] as const)(
     'WISH_ALREADY_EXISTS при активном желании в статусе %s',
     async (status) => {
-      await seed(status);
+      seed(status);
 
       const res = await makeUc().handle({ moduleId }, asActor, REQ);
 
@@ -137,7 +133,7 @@ describe('CreateModuleWishUc', () => {
   );
 
   it('порядок правил: при недоступном модуле и дубле — WISH_MODULE_NOT_FOUND', async () => {
-    await seed('expressed');
+    seed('expressed');
     enrollment({ enrollable: false });
 
     const res = await makeUc().handle({ moduleId }, asActor, REQ);

@@ -1,7 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { describe, expect, it } from 'bun:test';
 import {
   CourseModuleDef,
   GetCourseEnrollmentUcDef,
@@ -14,24 +11,19 @@ import { CreateCourseWishUcDef } from '@u7-scl/domain/wish';
 import { type Identified, ok, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { expectOk, StubFacade, testAppContext } from 'dmg-core/testing';
-import { WishJsonRepo } from './infra/wish.json-repo';
+import { WishRepoFake } from './wish/wish.repo.fake';
 import { createWishModule } from './wish.module';
 
 const ACTOR: Identified = { uuid: crypto.randomUUID() };
 
-let dir: string;
-beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'wish-module-'));
-});
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
-
 /**
- * Модуль на настоящем репозитории во временном каталоге; фасады
- * зависимостей — `StubFacade` по Def (ARC-06).
+ * Модуль на фейке репозитория (диск проверяет контрактный тест infra);
+ * фасады зависимостей — `StubFacade` по Def (ARC-06).
  */
 function makeModule() {
   const { app } = testAppContext();
-  const wishes = new WishJsonRepo(join(dir, 'wishes.json'));
+  const wishes = new WishRepoFake();
+  wishes.findAllByUserAndTarget = async () => [];
   const course = new StubFacade(CourseModuleDef).answer(
     GetCourseEnrollmentUcDef,
     () =>

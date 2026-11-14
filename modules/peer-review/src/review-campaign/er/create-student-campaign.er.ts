@@ -69,10 +69,11 @@ export class CreateStudentCampaignEr extends ReactionFromDef<
       return ok();
     }
 
+    const fates = new StudentFateDqs(members.value);
     const fate =
       event.name === StudentEvents.completed.name
-        ? StudentFateDqs.forCompleted(event.payload, members.value)
-        : StudentFateDqs.forAbandoned(event.payload, members.value);
+        ? fates.forCompleted(event.payload)
+        : fates.forAbandoned(event.payload);
 
     const created = ReviewCampaignAr.create(
       {

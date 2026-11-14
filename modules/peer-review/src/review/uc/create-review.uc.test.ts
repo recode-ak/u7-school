@@ -1,14 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import { PeerReviewModuleDef, ReviewEvents } from '@u7-scl/domain/peer-review';
 import { type Identified, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
-import { ReviewJsonRepo } from '../../infra/review.json-repo';
-import { ReviewCampaignJsonRepo } from '../../infra/review-campaign.json-repo';
 import { campaign } from '../../review-campaign/review-campaign.fixture';
+import { ReviewCampaignRepoFake } from '../../review-campaign/review-campaign.repo.fake';
 import {
   CAMPAIGN_ID,
   DAY,
@@ -18,9 +14,9 @@ import {
   T0,
   TEXT,
 } from '../review.fixture';
+import { ReviewRepoFake } from '../review.repo.fake';
 import { CreateReviewUc } from './create-review.uc';
 
-// Перенос `api/review/create-review-uc.test.ts` (16 сценариев) на UC по Def.
 // authorId — из субъекта; отказы — Result; порядок: право → окно → адресат → текст.
 
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
@@ -29,23 +25,16 @@ const as = (uuid: string) => new UserCaller<Identified>({ uuid });
 const AT = T0 + 90_000;
 const EXPIRES = T0 + 7 * DAY;
 
-let dir: string;
-let campaigns: ReviewCampaignJsonRepo;
-let reviews: ReviewJsonRepo;
-let reviewsFile: string;
+let campaigns: ReviewCampaignRepoFake;
+let reviews: ReviewRepoFake;
 let ctx: ReturnType<typeof testAppContext>;
 
-beforeEach(async () => {
-  dir = mkdtempSync(join(tmpdir(), 'create-review-'));
-  campaigns = new ReviewCampaignJsonRepo(join(dir, 'campaigns.json'));
-  reviewsFile = join(dir, 'reviews.json');
-  reviews = new ReviewJsonRepo(reviewsFile);
-  await Bun.write(
-    join(dir, 'campaigns.json'),
-    JSON.stringify([campaign({ uuid: CAMPAIGN_ID })]),
+beforeEach(() => {
+  campaigns = new ReviewCampaignRepoFake().seed(
+    campaign({ uuid: CAMPAIGN_ID }),
   );
+  reviews = new ReviewRepoFake();
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 function makeUc(at = AT) {
   ctx = testAppContext({ at });
@@ -63,10 +52,8 @@ const write = (
   campaignId = CAMPAIGN_ID,
 ) => makeUc(at).handle({ campaignId, recipientId, text }, as(authorId), REQ);
 
-const stored = async () =>
-  (await Bun.file(reviewsFile).exists())
-    ? await Bun.file(reviewsFile).json()
-    : [];
+/** Что записано через `save` за вызов UC. */
+const stored = () => reviews.saved;
 
 const created = () =>
   ctx.published.filter((e) => e.name === ReviewEvents.created.name);
@@ -79,7 +66,7 @@ describe('CreateReviewUc — первая запись', () => {
       campaignId: CAMPAIGN_ID,
       recipientId: IDS.mentor,
     });
-    const [saved, ...rest] = await stored();
+    const [saved, ...rest] = stored();
     expect(rest).toEqual([]);
     expect(saved).toMatchObject({
       uuid: res.reviewId,
@@ -102,15 +89,15 @@ describe('CreateReviewUc — перезапись пары', () => {
     uuid: 'aaaaaaaa-aaaa-4aaa-8aaa-000000000000',
     createdAt: T0 + HOUR,
   });
-  beforeEach(async () => {
-    await Bun.write(reviewsFile, JSON.stringify([existing]));
+  beforeEach(() => {
+    reviews.seed(existing);
   });
 
   it('меняются только text и updatedAt; uuid, createdAt, направление, исход сохраняются; version растёт', async () => {
     const res = expectOk(await write(IDS.alice, IDS.mentor));
 
     expect(res.reviewId).toBe(existing.uuid);
-    const all = await stored();
+    const all = stored();
     expect(all).toHaveLength(1);
     expect(all[0]).toMatchObject({
       uuid: existing.uuid,

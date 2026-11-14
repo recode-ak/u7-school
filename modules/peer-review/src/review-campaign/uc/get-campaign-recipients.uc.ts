@@ -64,11 +64,10 @@ export class GetCampaignRecipientsUc extends UseCaseFromDef<
       // Исход субъекта окна — тексты S03/S05 по парам «роль-судьба»
       subjectOutcome: campaign.subjectOutcome,
       daysLeft: campaign.daysLeft(this.now()),
-      recipients: CampaignFactsDqs.recipientsWithMyReview(
+      recipients: new CampaignFactsDqs(
         campaign,
-        userId,
         myReviews,
-      ),
+      ).recipientsWithMyReview(userId),
     });
   }
 }

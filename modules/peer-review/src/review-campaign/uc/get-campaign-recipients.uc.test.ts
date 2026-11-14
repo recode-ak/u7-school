@@ -1,59 +1,52 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review';
+import { beforeEach, describe, expect, it } from 'bun:test';
+import {
+  PeerReviewModuleDef,
+  type ReviewCampaignState,
+} from '@u7-scl/domain/peer-review';
 import { type Identified, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
-import { ReviewCampaignJsonRepo } from '../../infra/review-campaign.json-repo';
-import {
-  FactsReviewRepo,
-  type ReviewFactStub,
-} from '../../review/review.fixture';
+import { factReviews } from '../../review/review.fixture';
+import { ReviewRepoFake } from '../../review/review.repo.fake';
 import { campaign, DAY, IDS, T0 } from '../review-campaign.fixture';
+import { ReviewCampaignRepoFake } from '../review-campaign.repo.fake';
 import { GetCampaignRecipientsUc } from './get-campaign-recipients.uc';
 
-// Перенос legacy `api/review-campaign/get-campaign-recipients-uc.test.ts`.
 // authorId берётся из субъекта; посторонний — отказ Policy isWindowAuthor (ACCESS_DENIED).
 
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const as = (uuid: string) => new UserCaller<Identified>({ uuid });
 
-let dir: string;
-let file: string;
+let campaigns: ReviewCampaignRepoFake;
+let reviews: ReviewRepoFake;
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'get-campaign-recipients-'));
-  file = join(dir, 'campaigns.json');
+  campaigns = new ReviewCampaignRepoFake();
+  reviews = new ReviewRepoFake();
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-function makeUc(reviews: ReviewFactStub[] = [], at = T0) {
+function makeUc(at = T0) {
   const { app } = testAppContext({ at });
   return new GetCampaignRecipientsUc(
-    {
-      app,
-      facades: new ModuleFacades(),
-      campaigns: new ReviewCampaignJsonRepo(file),
-      reviews: new FactsReviewRepo(reviews),
-    },
+    { app, facades: new ModuleFacades(), campaigns, reviews },
     PeerReviewModuleDef,
   );
 }
 
-const seed = (...rows: unknown[]) => Bun.write(file, JSON.stringify(rows));
+const seed = (...rows: ReviewCampaignState[]) => campaigns.seed(...rows);
 
 describe('GetCampaignRecipientsUc', () => {
   it('субъект: соученик + ментор, признак hasMyReview', async () => {
     const c = campaign();
-    await seed(c);
+    seed(c);
+    reviews.seed(
+      ...factReviews(
+        [{ authorId: IDS.alice, recipientId: IDS.mentor }],
+        c.uuid,
+      ),
+    );
 
     const res = expectOk(
-      await makeUc([{ authorId: IDS.alice, recipientId: IDS.mentor }]).handle(
-        { campaignId: c.uuid },
-        as(IDS.alice),
-        REQ,
-      ),
+      await makeUc().handle({ campaignId: c.uuid }, as(IDS.alice), REQ),
     );
 
     expect(res).toMatchObject({
@@ -72,10 +65,10 @@ describe('GetCampaignRecipientsUc', () => {
 
   it('истёкшая кампания читается, daysLeft = 0', async () => {
     const c = campaign();
-    await seed(c);
+    seed(c);
 
     const res = expectOk(
-      await makeUc([], c.expiresAt + DAY).handle(
+      await makeUc(c.expiresAt + DAY).handle(
         { campaignId: c.uuid },
         as(IDS.alice),
         REQ,
@@ -92,7 +85,7 @@ describe('GetCampaignRecipientsUc', () => {
     '%s — ACCESS_DENIED (Policy isWindowAuthor), вместо PEER_REVIEW_NOT_PARTICIPANT',
     async (_l, userId) => {
       const c = campaign();
-      await seed(c);
+      seed(c);
 
       const res = await makeUc().handle(
         { campaignId: c.uuid },

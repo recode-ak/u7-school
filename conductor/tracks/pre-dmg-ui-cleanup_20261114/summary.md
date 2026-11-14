@@ -105,3 +105,16 @@ $G -l -- '<шаблон>' . | wc -l # файлов
 - **Отклонения:** `mkdtemp` и `'r-1'` в UC/ER-тестах `wish`/`peer-review` — в Ф5 (фейки вместо JSON во временном каталоге): критерий Ф4 «`mkdtemp` только в хелпере» — после Ф5. Остались локальные `waitFor<T>`/`waitForSent` (бросают и возвращают значение), `craft` (заново открывает экран), `click` с точным совпадением подписи — другая семантика; в stories — `handler()`/`getSub`/`campaignCreatedHandler` (не названы в T-DEBT-5, перепишет dmg-ui).
 - **Ревью** (`dmg-reviewer`, выборкой): error нет; warn T-DEBT-3 — по решению записи; minor — слабая проверка теста `press` (`not.toEqual({})`), не правилось.
 - **Расход:** Sonnet — карта 112k, П0 54k, П1–П2 79k, П3 120k, П4 72k, ревью 54k (≈ 491k). П0, П1–П2 и П3 шли параллельно (разные зоны), 0 кругов доработки.
+
+## Фаза 5. Ранние модули `wish`, `peer-review` (2026-11-14)
+
+Бриф — [slices/early-modules.md](./slices/early-modules.md). Тестов 3292 → 3290; поведение не менялось.
+
+Удалённые тесты:
+- `domain/src/peer-review/peer-review-question-pool.test.ts` — «схема пула: валидно/невалидно; questionCode уникальны внутри и между пулами» (модуль пула удалён, C-07 пересмотрен).
+- Проверяли фильтр выборки фейка (после перевода фейков на `unanswered`, D-84), покрыты контрактными тестами infra:
+  - `get-my-campaigns.uc.test.ts` «граница окна: ровно в expiresAt кампания уже не активна» → `review-campaign.json-repo.test.ts`;
+  - `list-my-reviews.uc.test.ts` «только отзывы мне: чужие адресаты не попадают» → `review.json-repo.test.ts` (маппинг полей ответа UC перенесён в «новые наверху»);
+  - `list-scope-reviews.uc.test.ts` «filter.direction: отбирает по направлению; scopeId в снимке» → `review.json-repo.test.ts` (эхо `scopeIds`/`scopeId` перенесено в оставшийся тест).
+
+Добавлен: `campaign-facts.dqs.test.ts` — чужой отзыв не даёт признак «мой отзыв есть».

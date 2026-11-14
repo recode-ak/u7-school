@@ -12,7 +12,6 @@
     "check": "bun run lint && bun run tslint && bun test"
   },
   "dependencies": {
-    "@u7-scl/questionnaire": "workspace:*",
     "@u7-scl/stream": "workspace:*",
     "valibot": "^1.0.0"
   },

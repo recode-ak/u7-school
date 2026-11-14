@@ -1,7 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import {
   type CourseEnrollment,
   CourseModuleDef,
@@ -34,14 +31,12 @@ import {
   testAppContext,
 } from 'dmg-core/testing';
 import coursePools from '../../../../../domain/src/wish/wish/pools/course.json';
-import { WishJsonRepo } from '../../infra/wish.json-repo';
+import { WishRepoFake } from '../wish.repo.fake';
 import { CreateCourseWishUc } from './create-course-wish.uc';
 
-// Перенос случаев legacy `api/wish/create-course-wish-uc.test.ts` на UC по
-// Def. Фасады курсов и анкет — `StubFacade` по Def из домена (ARC-06: пакеты
-// модулей друг друга не импортируют); ответы legacy-фасадов («не
-// опубликован», «без стартового модуля») сводит к `enrollable: false`
-// адаптер над legacy-фасадом — эти случаи проверяет `modules/course` (Ф8 шаг 2b).
+// Фасады курсов и анкет — `StubFacade` по Def из домена (ARC-06: пакеты
+// модулей друг друга не импортируют); случаи «не опубликован» и «без
+// стартового модуля» сводятся к `enrollable: false` в `modules/course`.
 
 const START_MODULE = '11111111-1111-4111-8111-111111111111';
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
@@ -53,9 +48,7 @@ const asActor = new UserCaller<Identified>(ACTOR);
 const plainCourseId = crypto.randomUUID();
 const pooledCourseId = Object.keys(coursePools)[0]!;
 
-let dir: string;
-let file: string;
-let wishes: WishJsonRepo;
+let wishes: WishRepoFake;
 let course: StubFacade<typeof CourseModuleDef>;
 let questionnaire: StubFacade<typeof QuestionnaireModuleDef>;
 
@@ -64,9 +57,8 @@ const enrollment = (answer: CourseEnrollment) =>
   course.answer(GetCourseEnrollmentUcDef, () => ok(answer));
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'create-course-wish-'));
-  file = join(dir, 'wishes.json');
-  wishes = new WishJsonRepo(file);
+  wishes = new WishRepoFake();
+  wishes.findAllByUserAndTarget = async () => [];
   course = new StubFacade(CourseModuleDef);
   enrollment({ enrollable: true, startModuleId: START_MODULE });
   questionnaire = new StubFacade(QuestionnaireModuleDef).answer(
@@ -74,7 +66,6 @@ beforeEach(() => {
     () => ok({}),
   );
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 /** Что получил фасад: от какой операции, от чьего имени и с каким входом. */
 const received = (facade: { readonly received: readonly StubCall[] }) =>
@@ -90,8 +81,11 @@ function makeUc() {
   return new CreateCourseWishUc({ app, facades, wishes }, WishModuleDef);
 }
 
-/** Уже записанное желание актора — запись в файл, как от прежних сессий. */
-async function seed(courseId: string, status: WishStatus): Promise<void> {
+/**
+ * Уже записанное желание актора — запись в памяти, как от прежних сессий;
+ * выборка по цели отдаёт его (тест, где цель запроса другая, сбрасывает ответ).
+ */
+function seed(courseId: string, status: WishStatus): void {
   const at = Date.UTC(2026, 0, 1, 10);
   const state: WishState = {
     uuid: crypto.randomUUID(),
@@ -102,16 +96,20 @@ async function seed(courseId: string, status: WishStatus): Promise<void> {
     updatedAt: at,
     version: 0,
   };
-  await Bun.write(file, JSON.stringify([state]));
+  wishes.seed(state);
+  wishes.findAllByUserAndTarget = async () => [
+    wishes.restoredOrThrow(state.uuid),
+  ];
 }
 
 /** Желания актора на курс — то, что реально записано. */
 async function storedFor(courseId: string) {
-  const found = await wishes.findAllByUserAndTarget(ACTOR_ID, {
-    kind: 'course',
-    courseId,
-  });
-  return found.map((wish) => wish.snapshot());
+  const found = await wishes.findByUser(ACTOR_ID);
+  return found
+    .map((wish) => wish.snapshot())
+    .filter(
+      (s) => s.target.kind === 'course' && s.target.courseId === courseId,
+    );
 }
 
 describe('CreateCourseWishUc', () => {
@@ -179,7 +177,7 @@ describe('CreateCourseWishUc', () => {
     it.each(['expressed', 'pending', 'confirmed'] as const)(
       'WISH_ALREADY_EXISTS при активном желании в статусе %s',
       async (status) => {
-        await seed(plainCourseId, status);
+        seed(plainCourseId, status);
 
         const res = await makeUc().handle(
           { courseId: plainCourseId },
@@ -199,7 +197,9 @@ describe('CreateCourseWishUc', () => {
     );
 
     it('активное желание на другой курс не блокирует', async () => {
-      await seed(crypto.randomUUID(), 'confirmed');
+      seed(crypto.randomUUID(), 'confirmed');
+      // Выборка по цели запроса (другой курс) активного желания не находит.
+      wishes.findAllByUserAndTarget = async () => [];
 
       const res = await makeUc().handle(
         { courseId: plainCourseId },
@@ -229,7 +229,7 @@ describe('CreateCourseWishUc', () => {
     });
 
     it('сначала курс, затем дубль: при недоступном курсе — WISH_COURSE_NOT_FOUND', async () => {
-      await seed(plainCourseId, 'expressed');
+      seed(plainCourseId, 'expressed');
       enrollment({ enrollable: false });
 
       const res = await makeUc().handle(

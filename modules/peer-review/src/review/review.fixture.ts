@@ -1,11 +1,5 @@
-import {
-  ReviewAr,
-  ReviewArDef,
-  type ReviewFilter,
-  type ReviewState,
-} from '@u7-scl/domain/peer-review';
+import type { ReviewState } from '@u7-scl/domain/peer-review';
 import { DAY, IDS, T0 } from '../review-campaign/review-campaign.fixture';
-import type { ReviewRepo } from './review.repo';
 
 export { DAY, IDS, T0 };
 
@@ -53,62 +47,12 @@ export function legacyReview(over: Record<string, unknown> = {}) {
 export type ReviewFactStub = { authorId: string; recipientId: string };
 
 /**
- * Репозиторий отзывов в памяти для тестов кампаний: отзывы собраны из фактов
- * «автор → адресат». Факты не привязаны к кампании, поэтому
- * `findByCampaignAndAuthor` не сверяет `campaignId`; остальные запросы
- * честные; `findByPair` сверяет `campaignId` как есть, а отзывы из фактов
- * лежат в фиксированной кампании `CAMPAIGN_ID`. Запись не нужна — `save` кладёт агрегат в список.
+ * Записи отзывов из фактов «автор → адресат» для `ReviewRepoFake.seed`;
+ * `campaignId` — кампания теста (выборки сверяют её).
  */
-export class FactsReviewRepo implements ReviewRepo {
-  readonly aggregate = ReviewArDef;
-  private readonly all: ReviewAr[];
-
-  constructor(facts: readonly ReviewFactStub[] = []) {
-    this.all = facts.map((f) => ReviewAr.restore(review({ ...f })));
-  }
-
-  async save(ar: ReviewAr): Promise<void> {
-    this.all.push(ar);
-  }
-
-  async findById(uuid: string) {
-    return this.all.find((r) => r.uuid === uuid);
-  }
-
-  async findByPair(campaignId: string, authorId: string, recipientId: string) {
-    return this.all.find(
-      (r) =>
-        r.campaignId === campaignId &&
-        r.authorId === authorId &&
-        r.recipientId === recipientId,
-    );
-  }
-
-  async findByCampaignAndAuthor(_campaignId: string, authorId: string) {
-    return this.all.filter((r) => r.authorId === authorId);
-  }
-
-  async findByScope(scopeId: string) {
-    return this.all.filter((r) => r.scopeId === scopeId);
-  }
-
-  async findByScopes(scopeIds: readonly string[], filter?: ReviewFilter) {
-    return this.all.filter(
-      (r) => scopeIds.includes(r.scopeId) && matchesFilter(r, filter),
-    );
-  }
-
-  async findByRecipient(recipientId: string, filter?: ReviewFilter) {
-    return this.all.filter(
-      (r) => r.recipientId === recipientId && matchesFilter(r, filter),
-    );
-  }
-}
-
-function matchesFilter(r: ReviewAr, f?: ReviewFilter): boolean {
-  return (
-    (f?.direction === undefined || r.direction === f.direction) &&
-    (f?.recipientId === undefined || r.recipientId === f.recipientId) &&
-    (f?.campaignId === undefined || r.campaignId === f.campaignId)
-  );
+export function factReviews(
+  facts: readonly ReviewFactStub[],
+  campaignId = CAMPAIGN_ID,
+): ReviewState[] {
+  return facts.map((f) => review({ ...f, campaignId }));
 }

@@ -6,14 +6,6 @@
 
 ---
 
-### C-DEBT-40: тесты UC/ER/Job на JSON-репозитории во временном каталоге
-- **Место:** `modules/wish/src/**/*.{uc,er,job}.test.ts`, `modules/peer-review/src/**/*.{uc,er,job}.test.ts` — тесты UC/ER на `mkdtemp`
-- **Признак:** `mkdtemp`
-- **Корень:** `modules/*/src/**/*.{uc,er,job}.test.ts`
-- **Причина:** пирамида пакета `dmg-core` (`testing.md` §4): UC/ER/Job тестируются на фейке порта (`<a>.repo.fake.ts`, `MemoryRepo`), выборку проверяет контрактный тест репозитория. У `wish` и `peer-review` фейков репозиториев ещё нет.
-- **Погашает:** трек `pre-dmg-ui-cleanup`, Ф5 — фейки репозиториев и перевод тестов (сценарии 1:1)
-- **Критерий снятия:** тесты UC/ER/Job без `mkdtemp`/`*JsonRepo`
-
 ### C-DEBT-41: id апдейта Telegram до story — неявным контекстом
 - **Место:**
   - `platform/core/src/ui/bot/bot-request-context.ts` — `BotRequestContext`; читает `U7BotUiStory.dispatchUc`, ставит `BotTransport`

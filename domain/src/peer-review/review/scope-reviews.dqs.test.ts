@@ -32,7 +32,7 @@ function review(uuid: string, over: Partial<ReviewState>): ReviewAr {
 
 describe('ScopeReviewsDqs.groupByRecipient', () => {
   test('группы по адресатам в порядке первого появления, отзывы по createdAt', () => {
-    const groups = ScopeReviewsDqs.groupByRecipient([
+    const groups = new ScopeReviewsDqs([
       review('aaaaaaaa-aaaa-4aaa-8aaa-000000000001', { recipientId: MENTOR }),
       review('aaaaaaaa-aaaa-4aaa-8aaa-000000000002', {
         recipientId: BOB,
@@ -46,7 +46,7 @@ describe('ScopeReviewsDqs.groupByRecipient', () => {
         authorOutcome: undefined,
         createdAt: H(10),
       }),
-    ]);
+    ]).groupByRecipient();
 
     // порядок групп — по первому появлению ПОСЛЕ сортировки по createdAt
     expect(groups.map((g) => g.recipientId)).toEqual([BOB, MENTOR]);
@@ -63,17 +63,17 @@ describe('ScopeReviewsDqs.groupByRecipient', () => {
   });
 
   test('снимок студента несёт authorOutcome', () => {
-    const [group] = ScopeReviewsDqs.groupByRecipient([
+    const [group] = new ScopeReviewsDqs([
       review('aaaaaaaa-aaaa-4aaa-8aaa-000000000001', {}),
-    ]);
+    ]).groupByRecipient();
     expect(group?.reviews[0]?.authorOutcome).toBe('completed_passed');
   });
 
   test('равный createdAt — порядок по uuid', () => {
-    const [group] = ScopeReviewsDqs.groupByRecipient([
+    const [group] = new ScopeReviewsDqs([
       review('aaaaaaaa-aaaa-4aaa-8aaa-000000000009', {}),
       review('aaaaaaaa-aaaa-4aaa-8aaa-000000000001', {}),
-    ]);
+    ]).groupByRecipient();
     expect(group?.reviews.map((r) => r.reviewId)).toEqual([
       'aaaaaaaa-aaaa-4aaa-8aaa-000000000001',
       'aaaaaaaa-aaaa-4aaa-8aaa-000000000009',

@@ -24,20 +24,20 @@ const campaign = () =>
 
 describe('ReviewDraftDqs.of', () => {
   it('ментор → субъект: mentor_student, исхода автора нет', () => {
-    const draft = ReviewDraftDqs.of(campaign(), MENTOR, SUBJECT);
+    const draft = new ReviewDraftDqs(campaign()).of(MENTOR, SUBJECT);
     expect(draft.direction).toBe('mentor_student');
     expect(draft.authorOutcome).toBeUndefined();
   });
 
   it('субъект → ментор: student_mentor + исход субъекта', () => {
-    expect(ReviewDraftDqs.of(campaign(), SUBJECT, MENTOR)).toEqual({
+    expect(new ReviewDraftDqs(campaign()).of(SUBJECT, MENTOR)).toEqual({
       direction: 'student_mentor',
       authorOutcome: 'completed_passed',
     });
   });
 
   it('субъект → соученик: student_student + исход субъекта', () => {
-    expect(ReviewDraftDqs.of(campaign(), SUBJECT, ALICE)).toEqual({
+    expect(new ReviewDraftDqs(campaign()).of(SUBJECT, ALICE)).toEqual({
       direction: 'student_student',
       authorOutcome: 'completed_passed',
     });

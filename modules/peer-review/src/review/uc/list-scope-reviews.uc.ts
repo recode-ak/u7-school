@@ -28,7 +28,7 @@ export class ListScopeReviewsUc extends UseCaseFromDef<
     const reviews = await this.resolve.reviews.findByScopes(scopeIds, filter);
     return ok({
       scopeIds,
-      recipients: ScopeReviewsDqs.groupByRecipient(reviews),
+      recipients: new ScopeReviewsDqs(reviews).groupByRecipient(),
     });
   }
 }

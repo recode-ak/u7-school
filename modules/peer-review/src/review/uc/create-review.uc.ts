@@ -88,7 +88,7 @@ export class CreateReviewUc extends UseCaseFromDef<
           authorId,
           recipientId,
           text,
-          ...ReviewDraftDqs.of(campaign, authorId, recipientId),
+          ...new ReviewDraftDqs(campaign).of(authorId, recipientId),
         },
         at,
       );

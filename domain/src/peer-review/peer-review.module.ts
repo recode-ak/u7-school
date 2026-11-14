@@ -1,4 +1,3 @@
-import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { ModuleDef } from 'dmg-core';
@@ -22,7 +21,7 @@ export const PeerReviewModuleDef = ModuleDef.define({
   name: 'peer-review',
   label: 'Взаимные проверки',
   description: 'Кампании и рецензии взаимных проверок студентов.',
-  dependsOn: [UserModuleDef, QuestionnaireModuleDef, StreamModuleDef],
+  dependsOn: [UserModuleDef, StreamModuleDef],
   aggregates: [ReviewCampaignArDef, ReviewArDef],
   useCases: [
     GetMyCampaignsUcDef,

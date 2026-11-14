@@ -1,7 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import {
   CourseModuleDef,
   GetCoursesIncludingModuleUcDef,
@@ -25,11 +22,10 @@ import {
   TEST_NOW,
   testAppContext,
 } from 'dmg-core/testing';
-import { WishJsonRepo } from '../../infra/wish.json-repo';
+import { WishRepoFake } from '../wish.repo.fake';
 import { trackHandling } from './er.fixture';
 import { FulfillWishEr } from './fulfill-wish.er';
 
-// Перенос случаев legacy `api/er/fulfill-wish-er.test.ts` на ER по Def.
 // Фасад курсов — `StubFacade` по Def из домена (ARC-06); историческую
 // идентичность курсов и модулей решает модуль курсов — здесь его ответы.
 
@@ -40,9 +36,7 @@ const COURSE = '44444444-4444-4444-8444-444444444444';
 const FORK = '55555555-5555-4555-8555-555555555555';
 const CREATED = Date.UTC(2025, 7, 20, 10);
 
-let dir: string;
-let file: string;
-let wishes: WishJsonRepo;
+let wishes: WishRepoFake;
 let course: StubFacade<typeof CourseModuleDef>;
 let ctx: ReturnType<typeof testAppContext>;
 
@@ -60,14 +54,11 @@ function courseAnswers(includedCourseIds: string[]) {
 }
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'fulfill-wish-'));
-  file = join(dir, 'wishes.json');
-  wishes = new WishJsonRepo(file);
+  wishes = new WishRepoFake();
   course = new StubFacade(CourseModuleDef);
   courseAnswers([]);
   ctx = testAppContext();
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 function makeEr() {
   const facades = new ModuleFacades([course]);
@@ -108,8 +99,8 @@ const moduleWish = (status: WishStatus, moduleId = MODULE) =>
   wish(status, { kind: 'module', moduleId });
 
 /** Желания, как от прежних сессий, — запись в файл. */
-async function seed(...states: WishState[]): Promise<void> {
-  await Bun.write(file, JSON.stringify(states));
+function seed(...states: WishState[]): void {
+  wishes.seed(...states);
 }
 
 /** Статусы записанных желаний по uuid. */
@@ -129,7 +120,7 @@ describe('FulfillWishEr — course-желания', () => {
     '%s → fulfilled на момент часов приложения',
     async (status) => {
       const w = courseWish(status);
-      await seed(w);
+      seed(w);
       courseAnswers([COURSE]);
 
       expectOk(await makeEr().handle(enrolled()));
@@ -146,7 +137,7 @@ describe('FulfillWishEr — course-желания', () => {
   it('один батч-вызов курса с курсами всех кандидатов, модули не спрашиваются', async () => {
     const a = courseWish('expressed', COURSE);
     const b = courseWish('confirmed', FORK);
-    await seed(a, b);
+    seed(a, b);
     courseAnswers([COURSE, FORK]);
 
     expectOk(await makeEr().handle(enrolled()));
@@ -166,7 +157,7 @@ describe('FulfillWishEr — course-желания', () => {
 
   it('курс не включает модуль — желание не меняется', async () => {
     const w = courseWish('expressed');
-    await seed(w);
+    seed(w);
 
     expectOk(await makeEr().handle(enrolled()));
 
@@ -177,7 +168,7 @@ describe('FulfillWishEr — course-желания', () => {
 describe('FulfillWishEr — module-желания', () => {
   it('тот же модуль → fulfilled; спрошен getSameModules, курсы — нет', async () => {
     const w = moduleWish('expressed');
-    await seed(w);
+    seed(w);
 
     expectOk(await makeEr().handle(enrolled()));
 
@@ -192,7 +183,7 @@ describe('FulfillWishEr — module-желания', () => {
 
   it('другой модуль — желание не меняется', async () => {
     const w = moduleWish('confirmed', OTHER_MODULE);
-    await seed(w);
+    seed(w);
 
     expectOk(await makeEr().handle(enrolled()));
 
@@ -202,7 +193,7 @@ describe('FulfillWishEr — module-желания', () => {
   it('смешанные желания: course и module реализуются независимо', async () => {
     const c = courseWish('expressed');
     const m = moduleWish('expressed');
-    await seed(c, m);
+    seed(c, m);
     courseAnswers([COURSE]);
 
     expectOk(await makeEr().handle(enrolled()));
@@ -225,12 +216,11 @@ describe('FulfillWishEr — нереализуемые желания и иде�
   });
 });
 
-/** Два желания (course и module); курс отвечает на модули отказом. Возвращает файл до реакции. */
-async function seedWithModuleRefusal(): Promise<string> {
-  await seed(courseWish('expressed'), moduleWish('expressed'));
+/** Два желания (course и module); курс отвечает на модули отказом. */
+function seedWithModuleRefusal(): void {
+  seed(courseWish('expressed'), moduleWish('expressed'));
   courseAnswers([COURSE]);
   course.answer(GetSameModulesUcDef, () => CoreErrors.SERVER_INTERNAL.err());
-  return Bun.file(file).text();
 }
 
 /** Запись oplog о реакции, завершившейся ошибкой. */
@@ -244,14 +234,14 @@ const failedRecord = (error: unknown) =>
 
 describe('FulfillWishEr — отказ курса', () => {
   it('отказ вызова → ошибка, ничего не записано, лог и запись в oplog', async () => {
-    const before = await seedWithModuleRefusal();
+    seedWithModuleRefusal();
 
     const error = expectErr(
       await makeEr().handle(enrolled()),
       'SERVER_INTERNAL',
     );
 
-    expect(await Bun.file(file).text()).toBe(before);
+    expect(wishes.saved).toEqual([]);
     expect(ctx.logs).toContainEqual(
       expect.objectContaining({ level: 'error', source: 'fulfillWish' }),
     );
@@ -259,15 +249,14 @@ describe('FulfillWishEr — отказ курса', () => {
   });
 
   it('сбой вызова (исключение) → SERVER_INTERNAL, ничего не записано', async () => {
-    await seed(courseWish('expressed'));
+    seed(courseWish('expressed'));
     course.answer(GetCoursesIncludingModuleUcDef, () => {
       throw new Error('курсы недоступны');
     });
-    const before = await Bun.file(file).text();
 
     expectErr(await makeEr().handle(enrolled()), 'SERVER_INTERNAL');
 
-    expect(await Bun.file(file).text()).toBe(before);
+    expect(wishes.saved).toEqual([]);
     expect(ctx.logs.map((l) => l.level)).toEqual(['error']);
   });
 });
@@ -275,7 +264,7 @@ describe('FulfillWishEr — отказ курса', () => {
 describe('FulfillWishEr.subscribe', () => {
   it('реагирует на stream.student.enrolled из шины', async () => {
     const w = courseWish('expressed');
-    await seed(w);
+    seed(w);
     courseAnswers([COURSE]);
     const bus = new MemoryBus();
     const er = makeEr();
@@ -291,14 +280,14 @@ describe('FulfillWishEr.subscribe', () => {
 
 describe('FulfillWishEr — идемпотентность (D-47)', () => {
   it('повтор stream.student.enrolled с новым eventId — без записей и событий', async () => {
-    await seed(courseWish('expressed'), moduleWish('confirmed'));
+    seed(courseWish('expressed'), moduleWish('confirmed'));
     courseAnswers([COURSE]);
     const er = makeEr();
     await expectIdempotentReaction({
       event: enrolled(),
       deliver: (event) => er.handle(event),
       published: ctx.published,
-      state: () => Bun.file(file).text(),
+      state: () => structuredClone(wishes.saved),
     });
   });
 });

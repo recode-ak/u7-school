@@ -1,28 +1,20 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import { PeerReviewModuleDef } from '@u7-scl/domain/peer-review';
 import { type Identified, UserCaller } from 'dmg-core';
 import { ModuleFacades, Trace } from 'dmg-core/app';
 import { expectOk, testAppContext } from 'dmg-core/testing';
-import { ReviewJsonRepo } from '../../infra/review.json-repo';
-import { ReviewCampaignJsonRepo } from '../../infra/review-campaign.json-repo';
+import { ReviewCampaignRepoFake } from '../../review-campaign/review-campaign.repo.fake';
 import { IDS, review } from '../review.fixture';
+import { ReviewRepoFake } from '../review.repo.fake';
 import { ListScopeFactsUc } from './list-scope-facts.uc';
-
-// Перенос `api/review/list-scope-facts-uc.test.ts`.
 
 const REQ = Trace.fromRequest({ requestId: 'r-1' });
 const caller = new UserCaller<Identified>({ uuid: IDS.alice });
 
-let dir: string;
-let file: string;
+let reviews: ReviewRepoFake;
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'list-scope-facts-'));
-  file = join(dir, 'reviews.json');
+  reviews = new ReviewRepoFake();
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 function ask(scopeId = IDS.scope) {
   const { app } = testAppContext();
@@ -30,8 +22,8 @@ function ask(scopeId = IDS.scope) {
     {
       app,
       facades: new ModuleFacades(),
-      campaigns: new ReviewCampaignJsonRepo(join(dir, 'campaigns.json')),
-      reviews: new ReviewJsonRepo(file),
+      campaigns: new ReviewCampaignRepoFake(),
+      reviews,
     },
     PeerReviewModuleDef,
   ).handle({ scopeId }, caller, REQ);
@@ -46,7 +38,7 @@ describe('ListScopeFactsUc (ФР-8)', () => {
   });
 
   it('отзывы есть — hasReviews true, count N', async () => {
-    await Bun.write(file, JSON.stringify([review(), review()]));
+    reviews.seed(review(), review());
     expect(expectOk(await ask())).toEqual({
       hasReviews: true,
       reviewsCount: 2,
@@ -54,10 +46,7 @@ describe('ListScopeFactsUc (ФР-8)', () => {
   });
 
   it('считаются только отзывы этого скоупа', async () => {
-    await Bun.write(
-      file,
-      JSON.stringify([review(), review({ scopeId: IDS.scope2 })]),
-    );
+    reviews.seed(review(), review({ scopeId: IDS.scope2 }));
     expect(expectOk(await ask())).toEqual({
       hasReviews: true,
       reviewsCount: 1,

@@ -1,7 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import {
   CourseModuleDef,
   GetCoursesStartingWithModuleUcDef,
@@ -34,11 +31,10 @@ import {
   TEST_NOW,
   testAppContext,
 } from 'dmg-core/testing';
-import { WishJsonRepo } from '../../infra/wish.json-repo';
+import { WishRepoFake } from '../wish.repo.fake';
 import { trackHandling } from './er.fixture';
 import { InviteWishersEr } from './invite-wishers.er';
 
-// Перенос случаев legacy `api/er/invite-wishers-er.test.ts` на ER по Def.
 // Фасады курсов, потоков и пользователей — `StubFacade` по Def из домена
 // (ARC-06). «Стартовый ли модуль» и историческую идентичность решает модуль
 // курсов — здесь его ответы.
@@ -53,9 +49,7 @@ const FORK = '55555555-5555-4555-8555-555555555555';
 const CREATED = Date.UTC(2025, 7, 20, 10);
 const TELEGRAM = 777;
 
-let dir: string;
-let file: string;
-let wishes: WishJsonRepo;
+let wishes: WishRepoFake;
 let course: StubFacade<typeof CourseModuleDef>;
 let streams: StubFacade<typeof StreamModuleDef>;
 let users: StubFacade<typeof UserModuleDef>;
@@ -89,9 +83,7 @@ const addressed = (...userIds: string[]) =>
   );
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'invite-wishers-'));
-  file = join(dir, 'wishes.json');
-  wishes = new WishJsonRepo(file);
+  wishes = new WishRepoFake();
   course = new StubFacade(CourseModuleDef);
   streams = new StubFacade(StreamModuleDef);
   users = new StubFacade(UserModuleDef);
@@ -100,7 +92,6 @@ beforeEach(() => {
   addressed(USER);
   ctx = testAppContext();
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 function makeEr() {
   const facades = new ModuleFacades([course, streams, users]);
@@ -140,8 +131,8 @@ const moduleWish = (status: WishStatus, moduleId = MODULE, userId = USER) =>
   wish(status, { kind: 'module', moduleId }, userId);
 
 /** Желания, как от прежних сессий, — запись в файл. */
-async function seed(...states: WishState[]): Promise<void> {
-  await Bun.write(file, JSON.stringify(states));
+function seed(...states: WishState[]): void {
+  wishes.seed(...states);
 }
 
 /** Что спросили у других модулей: UC и вход, по порядку. */
@@ -155,7 +146,7 @@ const warnings = () => ctx.logs.filter((l) => l.level === 'warn');
 describe('InviteWishersEr — course-желания', () => {
   it('курс начинается с модуля потока — публикуется wish.invited с адресацией', async () => {
     const w = courseWish('expressed');
-    await seed(w);
+    seed(w);
     courseAnswers([COURSE]);
 
     expectOk(await makeEr().handle(created()));
@@ -176,7 +167,7 @@ describe('InviteWishersEr — course-желания', () => {
 
   it('исторический матчинг: желание на форк курса получает приглашение', async () => {
     const fork = courseWish('expressed', FORK);
-    await seed(fork);
+    seed(fork);
     courseAnswers([FORK]);
 
     expectOk(await makeEr().handle(created()));
@@ -192,7 +183,7 @@ describe('InviteWishersEr — course-желания', () => {
     ['курс не начинается с модуля', () => courseWish('expressed')],
     ['другой модуль', () => moduleWish('expressed', OTHER_MODULE)],
   ])('цель не совпала: %s — желание не зовётся', async (_, make) => {
-    await seed(make());
+    seed(make());
 
     expectOk(await makeEr().handle(created()));
 
@@ -205,7 +196,7 @@ describe('InviteWishersEr — course-желания', () => {
 describe('InviteWishersEr — module-желания', () => {
   it('поток на любой модуль: тот же модуль приглашается; спрошен getSameModules', async () => {
     const w = moduleWish('expressed');
-    await seed(w);
+    seed(w);
 
     expectOk(await makeEr().handle(created()));
 
@@ -227,7 +218,7 @@ describe('InviteWishersEr — module-желания', () => {
   });
 
   it('смешанные желания: course и module приглашаются независимо, один батч на вид', async () => {
-    await seed(courseWish('expressed'), moduleWish('confirmed'));
+    seed(courseWish('expressed'), moduleWish('confirmed'));
     courseAnswers([COURSE]);
 
     expectOk(await makeEr().handle(created()));
@@ -254,7 +245,7 @@ describe('InviteWishersEr — кого приглашать', () => {
   });
 
   it('несколько совпавших желаний — событие каждому, один вызов потока и адресов', async () => {
-    await seed(
+    seed(
       moduleWish('expressed', MODULE, USER),
       moduleWish('confirmed', MODULE, OTHER_USER),
     );
@@ -275,7 +266,7 @@ describe('InviteWishersEr — кого приглашать', () => {
 
 describe('InviteWishersEr — поток и адресаты', () => {
   it('поток не найден — событий нет, без ошибки и без предупреждения', async () => {
-    await seed(moduleWish('expressed'));
+    seed(moduleWish('expressed'));
     streamExists(false);
 
     expectOk(await makeEr().handle(created()));
@@ -286,7 +277,7 @@ describe('InviteWishersEr — поток и адресаты', () => {
 
   it('у адресата нет telegramId — пропуск с предупреждением, остальные приглашены', async () => {
     const reachable = moduleWish('expressed', MODULE, USER);
-    await seed(reachable, moduleWish('expressed', MODULE, OTHER_USER));
+    seed(reachable, moduleWish('expressed', MODULE, OTHER_USER));
 
     expectOk(await makeEr().handle(created()));
 
@@ -300,7 +291,7 @@ describe('InviteWishersEr — поток и адресаты', () => {
   });
 
   it('пользователь с несколькими желаниями без адреса — одно предупреждение', async () => {
-    await seed(
+    seed(
       moduleWish('expressed', MODULE, OTHER_USER),
       courseWish('expressed', COURSE, OTHER_USER),
     );
@@ -315,7 +306,7 @@ describe('InviteWishersEr — поток и адресаты', () => {
 
 describe('InviteWishersEr — отказ других модулей', () => {
   it('отказ курсов → ошибка, ничего не опубликовано, лог и запись в oplog', async () => {
-    await seed(moduleWish('expressed'));
+    seed(moduleWish('expressed'));
     course.answer(GetSameModulesUcDef, () => CoreErrors.SERVER_INTERNAL.err());
 
     const error = expectErr(
@@ -338,7 +329,7 @@ describe('InviteWishersEr — отказ других модулей', () => {
   });
 
   it('сбой потоков (исключение) → SERVER_INTERNAL, ничего не опубликовано', async () => {
-    await seed(moduleWish('expressed'));
+    seed(moduleWish('expressed'));
     streams.answer(GetStreamPresenceUcDef, () => {
       throw new Error('потоки недоступны');
     });
@@ -349,7 +340,7 @@ describe('InviteWishersEr — отказ других модулей', () => {
   });
 
   it('отказ пользователей → ошибка, ничего не опубликовано', async () => {
-    await seed(moduleWish('expressed'));
+    seed(moduleWish('expressed'));
     users.answer(GetTelegramAddressesUcDef, () =>
       CoreErrors.SERVER_INTERNAL.err(),
     );
@@ -362,7 +353,7 @@ describe('InviteWishersEr — отказ других модулей', () => {
 
 describe('InviteWishersEr.subscribe', () => {
   it('реагирует на stream.stream.created из шины', async () => {
-    await seed(moduleWish('expressed'));
+    seed(moduleWish('expressed'));
     const bus = new MemoryBus();
     const er = makeEr();
     const handled = trackHandling(er);
@@ -379,14 +370,14 @@ describe('InviteWishersEr — идемпотентность (D-47)', () => {
   // Желание помнит приглашённые потоки (`invitedStreamIds`),
   // повторное stream.created (новый eventId) не публикует wish.invited.
   it('повтор stream.created с новым eventId — Ok, хранилище и события не меняются', async () => {
-    await seed(moduleWish('expressed'));
+    seed(moduleWish('expressed'));
     const er = makeEr();
     await expect(
       expectIdempotentReaction({
         event: created(),
         deliver: (event) => er.handle(event),
         published: ctx.published,
-        state: () => Bun.file(file).text(),
+        state: () => structuredClone(wishes.saved),
       }),
     ).resolves.toBeUndefined();
   });

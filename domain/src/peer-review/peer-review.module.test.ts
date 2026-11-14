@@ -8,7 +8,7 @@ describe('PeerReviewModuleDef — Def кампаний и отзывов, без
     expect(PeerReviewModuleDef.external).toBeFalsy();
     expect(n).toMatchObject({
       name: 'peer-review',
-      dependsOn: ['user', 'questionnaire', 'stream'],
+      dependsOn: ['user', 'stream'],
       aggregates: ['review-campaign', 'review'],
       reactions: ['createStudentCampaign'],
       jobs: [],
