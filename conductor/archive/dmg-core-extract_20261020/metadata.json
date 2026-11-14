@@ -1,8 +1,0 @@
-{
-  "track_id": "dmg-core-extract_20261020",
-  "type": "feature",
-  "status": "completed",
-  "created_at": "2026-10-20T00:00:00Z",
-  "updated_at": "2026-10-26T00:00:00Z",
-  "description": "dmg-core-extract — подготовка платформы DMG к выносу из монорепо: пакет dmg-core (npm), развязка от legacy, самодостаточные конфиги, готовность к распределённому запуску модулей"
-}

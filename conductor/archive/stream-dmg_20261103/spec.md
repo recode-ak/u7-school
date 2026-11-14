@@ -2,7 +2,7 @@
 
 ## Обзор
 
-Трек 6 из [migration.md](../../architecture/migration.md), первый из группы «остальные модули». Модуль `stream` (домен `domain/src/stream`, прикладной слой `modules/stream`) переводится с legacy на Def по эталону `wish`. Работу выполняет конвейер агентов, шаблон трека — `conductor/archive/peer-review-dmg_20261029`. Для ролей это второй трек пилота ([agent-roles.md](../../architecture/agent-roles.md) §5).
+Трек 6 из migration.md, первый из группы «остальные модули». Модуль `stream` (домен `domain/src/stream`, прикладной слой `modules/stream`) переводится с legacy на Def по эталону `wish`. Работу выполняет конвейер агентов, шаблон трека — `conductor/archive/peer-review-dmg_20261029`. Для ролей это второй трек пилота ([agent-roles.md](../../architecture/agent-roles.md) §5).
 
 ## Решения
 
@@ -55,7 +55,7 @@
 | TR-11 (stream) | адаптеры `GetStreamMembers`/`GetStreamPresence`, `inbound` | снимаются |
 | DEBT-3 (stream) | barrel `modules/stream/src/domain/index.ts` | остаётся до последнего трека |
 
-Реестр — [debt.md](../../architecture/debt.md).
+Реестр — debt.md.
 
 ## Функциональные требования
 

@@ -78,7 +78,7 @@
 - единый формат адреса уровня со стабильными id (без индексов `phaseIdx`/`projectIdx`);
 - резолверы контекста: источник `stream` (студент, ментор).
 
-Контракт и каркас — в [courses/content-nav.md](../../../apps/u7-bot/src/controllers/courses/content-nav.md).
+Контракт и каркас — в courses/content-nav.md.
 Код: `NavLevel`/`NavChild` + presenter — в `packages/core/src/ui/content-nav/`;
 резолверы и стори — в `apps/u7-bot`.
 

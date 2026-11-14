@@ -1,8 +1,0 @@
-{
-  "track_id": "app-assembly_20261029",
-  "type": "chore",
-  "status": "new",
-  "created_at": "2026-10-28T19:43:33Z",
-  "updated_at": "2026-10-28T19:43:33Z",
-  "description": "Корень сборки DMG в @u7-scl/app (DEBT-39, D-52), шаг fetch после Policy в UC (TR-27), гигиена TR-28/TR-29 и migration.md перед stream-student"
-}

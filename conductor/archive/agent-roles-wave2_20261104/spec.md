@@ -2,7 +2,7 @@
 
 ## Обзор
 
-Пилот ролей волны 1 (`stream-dmg`, `summary.md`, итог 2026-11-04) признал `tech-lead`, `test-designer`, `data-keeper` годными по критериям 1–5 ([agent-roles.md](../../architecture/agent-roles.md) §5). Каркас трёх ролей переезжает в пакет `dmg-core` (`agents/roles/`), специфика u7-school — в общий блок проекта `.agents-core/common.md`. Заодно все роли пакета получают префикс `dmg-*` (agent-roles.md §1 п. 6), черновик `dmg-process.md` переезжает в пакет как `docs/process.md`. Трек — рефакторинг процесса, поведение приложения не меняется. Идёт перед треком `questionnaire` ([migration.md](../../architecture/migration.md) §6).
+Пилот ролей волны 1 (`stream-dmg`, `summary.md`, итог 2026-11-04) признал `tech-lead`, `test-designer`, `data-keeper` годными по критериям 1–5 ([agent-roles.md](../../architecture/agent-roles.md) §5). Каркас трёх ролей переезжает в пакет `dmg-core` (`agents/roles/`), специфика u7-school — в общий блок проекта `.agents-core/common.md`. Заодно все роли пакета получают префикс `dmg-*` (agent-roles.md §1 п. 6), черновик `dmg-process.md` переезжает в пакет как `docs/process.md`. Трек — рефакторинг процесса, поведение приложения не меняется. Идёт перед треком `questionnaire` (migration.md §6).
 
 ## Функциональные требования
 

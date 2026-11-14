@@ -2,8 +2,8 @@
 
 **Трек:** `pagination_20260919`
 **Дата:** 2026-09-19 – 2026-09-19
-**Контракты UX:** [streams/ui-spec.md S03](../../../apps/u7-bot/src/controllers/streams/ui-spec.md),
-[courses/ui-spec.md S00](../../../apps/u7-bot/src/controllers/courses/ui-spec.md)
+**Контракты UX:** streams/ui-spec.md S03,
+courses/ui-spec.md S00
 
 ## Цель
 
@@ -94,5 +94,5 @@ peer-review-ui (S07 — просмотр отзывов).
 
 ## Потребители
 
-Трек [peer-review-ui_20260916](../peer-review-ui_20260916/index.md) (S07 —
+Трек peer-review-ui_20260916 (S07 —
 просмотр отзывов) строится на готовом `BotPaginator` + `DialogCache`.

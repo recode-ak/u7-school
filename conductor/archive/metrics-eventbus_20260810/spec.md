@@ -78,5 +78,5 @@ Unit-тесты в `packages/core/src/domain/events/`:
 ## Контекст и связанные документы
 
 - [Система сбора метрик (родитель)](../../roadmap/metrics/metrics-system.md) — видение, архитектурные решения
-- [2. Questionnaire + EventBus](../../roadmap/metrics/metrics-questionnaire-and-events.md) — техническая спецификация
-- [Дорожная карта](../../roadmap/development-roadmap.md) — Релиз 3
+- 2. Questionnaire + EventBus — техническая спецификация
+- Дорожная карта — Релиз 3

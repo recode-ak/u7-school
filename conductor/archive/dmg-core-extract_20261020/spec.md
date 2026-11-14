@@ -2,11 +2,11 @@
 
 ## Обзор
 
-Трек #1б из [migration.md](../../architecture/migration.md) (после [core-dmg](../../archive/core-dmg_20261018/spec.md)). Платформа DMG (`packages/core/src/dmg`) становится самостоятельным пакетом **`dmg-core`** (npm), который можно вынести в отдельный репозиторий и ставить как внешнюю зависимость. Параллельно закрепляется готовность модулей к выносу в отдельные репо и сервисы ([D-28](../../architecture/decisions.md)).
+Трек #1б из migration.md (после [core-dmg](../../archive/core-dmg_20261018/spec.md)). Платформа DMG (`packages/core/src/dmg`) становится самостоятельным пакетом **`dmg-core`** (npm), который можно вынести в отдельный репозиторий и ставить как внешнюю зависимость. Параллельно закрепляется готовность модулей к выносу в отдельные репо и сервисы ([D-28](../../architecture/decisions.md)).
 
 ## Решения
 
-- **Выносим только DMG, legacy остаётся.** Legacy-часть `@u7-scl/core` (`domain/api/ui/shared/infra`) исчезнет вместе с переходом ([legacy.md](../../architecture/legacy.md) §6) и в `dmg-core` не попадает.
+- **Выносим только DMG, legacy остаётся.** Legacy-часть `@u7-scl/core` (`domain/api/ui/shared/infra`) исчезнет вместе с переходом (legacy.md §6) и в `dmg-core` не попадает.
 - **Мосты к legacy — на стороне монорепо.** 6 файлов `dmg/app/**/legacy-*`, `run-logged`, часть `use-case-from-def` и `context` зависят от `#*-legacy`. Они уезжают в `@u7-scl/core` (подпуть `legacy-bridge`) и зависят от `dmg-core`, не наоборот. `dmg-core` не знает о legacy.
 - **Установка — из npm по semver.** До первой публикации и в разработке — workspace-пакет `packages/dmg-core` плюс проверка `bun pm pack` в чистом каталоге. Никаких git-зависимостей и `bun link`.
 - **Алиас внутри пакета — `#core/*`** (вместо `#dmg/*`), так как после выноса `src/dmg` станет `src`. Переименование — одним скриптом.
@@ -17,7 +17,7 @@
 Трек делится на две части с паузой между ними; на этот раздел ссылаются планы соседних треков (`generators`, `domain-package`, `golden-wish`).
 
 1. **Часть А — Фазы 1–3** (развязка, пакет `dmg-core`, самодостаточность). Выполняется **до** `generators`. После Фазы 3 путь пакета (`packages/dmg-core`), имя импорта (`dmg-core`, `dmg-core/testing`) и алиас `#core/*` **финальные**: генераторы и эталонный модуль пишутся на них без переименований.
-2. **Пауза.** После контрольной точки Фазы 3 трек остаётся открытым (`tracks.md`: `[~]`), работа переходит к `generators`, затем `domain-package` и `golden-wish` ([migration.md](../../architecture/migration.md) §2).
+2. **Пауза.** После контрольной точки Фазы 3 трек остаётся открытым (`tracks.md`: `[~]`), работа переходит к `generators`, затем `domain-package` и `golden-wish` (migration.md §2).
 3. **Часть Б — Фазы 4–6** (готовность к распределённому запуску, документация и инструменты в пакете, вынос и публикация). Стартует **после** `golden-wish`: контракты `domain/<m>/contract` требуют `domain-package`; outbox и идемпотентность реакций проверяются на реальном модуле; гайды Фазы 5 пишутся по эталону.
 
 **Что гарантирует часть А соседним трекам:** `dmg-core` не импортирует legacy и `@u7-scl/*` (ARC-10); legacy-мост `packages/core/src/legacy-bridge` остаётся рабочим для `wish`, пока тот на legacy-шине и legacy-`Job`; `bun run check` включает `extract-check`.
@@ -50,7 +50,7 @@
 
 ## Разметка: что в пакет, что остаётся в проекте (Фаза 5)
 
-Язык документации пакета — русский (Нурболат, 2026-10-26). Перенесённые файлы из `conductor/architecture/` удаляются, проект ссылается на `packages/dmg-core/docs/` (после Ф6 — `node_modules/dmg-core/docs/`). Образец в гайдах — учебный модуль `src/testing/example` (todo/users), обогащается задачей Ф5 по [slices/example-enrich.md](./slices/example-enrich.md).
+Язык документации пакета — русский (Нурболат, 2026-10-26). Перенесённые файлы из `conductor/architecture/` удаляются, проект ссылается на `packages/dmg-core/docs/` (после Ф6 — `node_modules/dmg-core/docs/`). Образец в гайдах — учебный модуль `src/testing/example` (todo/users), обогащается задачей Ф5 по slices/example-enrich.md.
 
 **Нейтрализация** при переносе: `packages/domain/src/<m>` → «пакет домена» (`<domain>/<m>`), `packages/<m>/src` → «прикладной пакет модуля», `apps/*` / бот → «входной адаптер», `wish` → `todo`/`users`, `@u7-scl/*` → «пакеты приложения», `bun run check` → «`check` проекта». Абзацы про legacy, strangler, переход и бота — остаются в проекте (в `legacy.md`, `migration.md`, `ui/`), в пакете их нет.
 

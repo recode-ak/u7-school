@@ -1,8 +1,0 @@
-{
-  "track_id": "generators_20261020",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-10-20T12:00:00Z",
-  "updated_at": "2026-10-20T12:00:00Z",
-  "description": "generators — трек 2 из conductor/architecture/migration.md: bun run gen для всех видов артефактов по naming.md (module, aggregate, uc, er, job, dcs, dqs; пары контракт↔реализация; заготовки тестов)"
-}

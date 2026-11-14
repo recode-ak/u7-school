@@ -22,7 +22,7 @@
 
 Сравнение сред и рекомендации — [research/agent-roles-pilot-2026-11.md](../../research/agent-roles-pilot-2026-11.md).
 
-Срез «Отложить задачу до даты» в учебном модуле `todo` пакета ([pilot-task.md](./pilot-task.md)). Worktree `~/dev/tools/dmg/dmg-core-pilot-{claude,pi}` от `de89c2f`. Артефакты лежат в `pilot/` каждого worktree: бриф, отчёты ролей, допущения, `result.md`.
+Срез «Отложить задачу до даты» в учебном модуле `todo` пакета (pilot-task.md). Worktree `~/dev/tools/dmg/dmg-core-pilot-{claude,pi}` от `de89c2f`. Артефакты лежат в `pilot/` каждого worktree: бриф, отчёты ролей, допущения, `result.md`.
 
 ### Среды и расход
 

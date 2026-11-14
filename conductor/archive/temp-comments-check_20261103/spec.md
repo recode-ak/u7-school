@@ -1,6 +1,6 @@
 # Spec: проверка «временных» комментариев в `arch:check`
 
-Источник: кандидат [../../roadmap/temp-comments-check.md](../../roadmap/temp-comments-check.md) (ревью Ф6 трека `debt-markers_20261103`).
+Источник: кандидат ../../roadmap/temp-comments-check.md (ревью Ф6 трека `debt-markers_20261103`).
 
 ## Обзор
 

@@ -86,4 +86,4 @@ total_rating = Σ (category_score × category_weight) / Σ category_weight
 
 - [Система сбора метрик (родитель)](../../roadmap/metrics/metrics-system.md) — видение, архитектурные решения
 - [Концепция метрик](../../roadmap/metrics/metrics-conception.md) — откуда взята структура
-- [Дорожная карта](../../roadmap/development-roadmap.md) — Релиз 3, порядок инициатив
+- Дорожная карта — Релиз 3, порядок инициатив

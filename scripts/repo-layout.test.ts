@@ -73,3 +73,18 @@ describe('раскладка монорепо', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+/** Файл архива трека: `conductor/archive/<трек>/spec.md` или `summary.md` */
+const ARCHIVE_FILE = /^conductor\/archive\/[^/]+\/(spec|summary)\.md$/;
+
+describe('архив треков', () => {
+  it('в архиве только spec.md и summary.md (conductor-docs, «Архив треков»)', () => {
+    const offenders = trackedFiles().filter(
+      (file) =>
+        file.startsWith('conductor/archive/') &&
+        isFile(join(ROOT, file)) &&
+        !ARCHIVE_FILE.test(file),
+    );
+    expect(offenders).toEqual([]);
+  });
+});

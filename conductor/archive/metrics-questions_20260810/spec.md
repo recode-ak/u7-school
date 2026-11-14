@@ -129,5 +129,5 @@ interface MetricQuestion {
 
 - [Система сбора метрик (родитель)](../../roadmap/metrics/metrics-system.md) — видение, архитектурные решения
 - [Концепция метрик](../../roadmap/metrics/metrics-conception.md) — категории и шкалы
-- [Дорожная карта](../../roadmap/development-roadmap.md) — Релиз 3
-- [Трек 1.1 — структура](../tracks/metrics-structure_20260810/spec.md) — откуда взяты подкатегории
+- Дорожная карта — Релиз 3
+- Трек 1.1 — структура — откуда взяты подкатегории

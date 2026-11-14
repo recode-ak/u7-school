@@ -1,8 +1,0 @@
-{
-  "track_id": "dmg-cleanup_20261028",
-  "type": "chore",
-  "status": "new",
-  "created_at": "2026-10-28T17:40:22Z",
-  "updated_at": "2026-10-28T17:40:22Z",
-  "description": "Уборка dmg-core и requestId бота: параллельная разработка платформы, тесты UC/ER/Job на фейках, отсев повторов команд (DEBT-1 dmg-core), requestId из update_id (DEBT-38), показ ошибок DMG в боте (DEBT-37)"
-}

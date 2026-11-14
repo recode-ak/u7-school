@@ -2,11 +2,11 @@
 
 ## Обзор
 
-Трек 5 из [migration.md](../../architecture/migration.md). Модуль `peer-review` (домен `domain/src/peer-review`, прикладной слой `modules/peer-review`) переводится с legacy на Def по эталону `wish`. Это первый модуль, который проходит через конвейер агентов. В Ф0 пилотируются роли волны 1 ([agent-roles.md](../../architecture/agent-roles.md) §4): `architect`, `test-designer` и `data-keeper`.
+Трек 5 из migration.md. Модуль `peer-review` (домен `domain/src/peer-review`, прикладной слой `modules/peer-review`) переводится с legacy на Def по эталону `wish`. Это первый модуль, который проходит через конвейер агентов. В Ф0 пилотируются роли волны 1 ([agent-roles.md](../../architecture/agent-roles.md) §4): `architect`, `test-designer` и `data-keeper`.
 
 ## Решения
 
-- **Порядок.** Модули переводятся сверху вниз по графу ([migration.md](../../architecture/migration.md) §2.1). `peer-review` стоит на вершине, legacy-клиентов у него нет, поэтому обратных мостов нет. Зависимости `user`, `questionnaire` и `stream` подключаются как внешние `ModuleDef` с адаптерами TR-11. Событие `stream.completed` приходит через `inbound`.
+- **Порядок.** Модули переводятся сверху вниз по графу (migration.md §2.1). `peer-review` стоит на вершине, legacy-клиентов у него нет, поэтому обратных мостов нет. Зависимости `user`, `questionnaire` и `stream` подключаются как внешние `ModuleDef` с адаптерами TR-11. Событие `stream.completed` приходит через `inbound`.
 - **Срезы:** `review-campaign` (2 UC и ER `create-student-campaign`), затем `review` (5 UC и ER `notify-review-recipient`). Job нет.
 - **Конвейер среза:** `tech-lead` пишет бриф → `test-designer` пишет характеризацию поведения `v0.2.6` (red) → `migrator` переносит → гейт → `data-keeper`, если diff затрагивает `state`, `*.repo.ts` или снимки → `reviewer`.
 - **Режим.** Ф0 проверяется вместе с Нурболатом. С Ф1 работа идёт автономно ([agents.md](../../architecture/agents.md) §9): тактические решения записываются в `TR-<n>`, к Нурболату — только стратегические вопросы.
@@ -25,7 +25,7 @@
 | DEBT-27 | barrel `modules/peer-review/src/domain/index.ts` | остаётся до последнего трека |
 | DEBT-34 | импорты чужого `index` (peer-review: 2) | погашается в части `peer-review` |
 
-Реестр — [debt.md](../../architecture/debt.md).
+Реестр — debt.md.
 
 ## Функциональные требования
 
@@ -53,7 +53,7 @@
 
 **Ф4. Итог пилота.**
 - Оценить роли по критериям §5 [agent-roles.md](../../architecture/agent-roles.md) и предварительно решить судьбу каждой. Окончательное решение — после трека `stream`.
-- Обновить [migration.md](../../architecture/migration.md) §6: состояние переноса, входной долг, следующий трек — `stream`.
+- Обновить migration.md §6: состояние переноса, входной долг, следующий трек — `stream`.
 
 ## Нефункциональные требования
 

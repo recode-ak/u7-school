@@ -37,7 +37,7 @@
 
 **Перенесены в `dmg-core` в Ф2 (30), здесь удалены старые копии:** `core/infra/job-schedule-planner.test.ts` (16), `scheduled-job-runner.test.ts` (11), `in-proc-job-scheduler.test.ts` — 3 из 5 (`InProcJobScheduler`; 3 теста `JobRunJsonRepo` переехали в `platform/app/src/infra` в Ф4).
 
-**Удалены вместе с legacy-кодом (142)** — где покрыто: таблица «На удаление» в [slices/removal.md](./slices/removal.md#тесты):
+**Удалены вместе с legacy-кодом (142)** — где покрыто: таблица «На удаление» в slices/removal.md:
 
 | Файл | `test()` |
 |---|--:|

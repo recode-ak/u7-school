@@ -2,7 +2,7 @@
 
 ## Обзор
 
-Трек 6 из [migration.md](../../architecture/migration.md), третий модуль группы «остальные модули». Модуль `course` (домен `domain/src/course`, прикладной слой `modules/course`) переводится с legacy на Def по эталону `wish`. Шаблон трека — `conductor/archive/questionnaire-dmg_20261104`. Конвейер ролей: `dmg-tech-lead` → `dmg-test-designer` → `migrator` → гейт → `dmg-data-keeper` (по триггеру) → `dmg-reviewer`. Бриф механической сборки готовит orchestrator (TR-45).
+Трек 6 из migration.md, третий модуль группы «остальные модули». Модуль `course` (домен `domain/src/course`, прикладной слой `modules/course`) переводится с legacy на Def по эталону `wish`. Шаблон трека — `conductor/archive/questionnaire-dmg_20261104`. Конвейер ролей: `dmg-tech-lead` → `dmg-test-designer` → `migrator` → гейт → `dmg-data-keeper` (по триггеру) → `dmg-reviewer`. Бриф механической сборки готовит orchestrator (TR-45).
 
 **Исполнители — по таблице §2 [deepseek.md](../../architecture/deepseek.md)** (решение Нурболата): orchestrator и `dmg-reviewer` — Opus; `dmg-tech-lead` — Sonnet (приёмка брифа — Opus); red-тесты `dmg-test-designer` и UI-stories — Sonnet; `migrator` (домен, прикладной слой, подписчики, механика), `dmg-data-keeper`, точечные правки тестов — DeepSeek `flash` через `scripts/pi-role.ts`. После каждого шага на DeepSeek — гейт, `git diff --numstat`, grep-критерии брифа; строка расхода — в `summary.md`.
 
@@ -45,7 +45,7 @@
 | DEBT-34 (legacy-пары course) | погашается |
 | DEBT-3 (barrel `modules/course/src/domain`) | остаётся до последнего трека |
 
-Реестр — [debt.md](../../architecture/debt.md).
+Реестр — debt.md.
 
 ## Функциональные требования
 

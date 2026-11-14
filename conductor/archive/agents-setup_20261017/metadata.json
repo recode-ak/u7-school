@@ -1,8 +1,0 @@
-{
-  "track_id": "agents-setup_20261017",
-  "type": "chore",
-  "status": "completed",
-  "created_at": "2026-10-17T12:00:00Z",
-  "updated_at": "2026-10-18T22:00:00Z",
-  "description": "agents-setup — трек 0 из conductor/architecture/migration.md: роли агентов для Claude Code и pi из одного источника, хук гейта в обеих средах, режим оркестратора и передача между средами в conductor-implement (agents.md §8)"
-}

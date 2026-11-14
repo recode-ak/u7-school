@@ -78,6 +78,6 @@ Unit-тесты в `packages/core/src/domain/ar/`:
 ## Контекст и связанные документы
 
 - [Система сбора метрик (родитель)](../../roadmap/metrics/metrics-system.md) — видение, архитектурные решения
-- [2. Questionnaire + EventBus](../../roadmap/metrics/metrics-questionnaire-and-events.md) — техническая спецификация
-- [Дорожная карта](../../roadmap/development-roadmap.md) — Релиз 3
-- [Трек 2.1 — EventBus](../tracks/metrics-eventbus_20260810/spec.md) — интерфейс DomainEvent
+- 2. Questionnaire + EventBus — техническая спецификация
+- Дорожная карта — Релиз 3
+- Трек 2.1 — EventBus — интерфейс DomainEvent

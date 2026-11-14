@@ -6,7 +6,7 @@
 > [peer-review-domain_20260916](../../archive/peer-review-domain_20260916/spec.md):
 > зона stream (событие `stream.completed`, инвариант терминальности, read-API
 > студента) в силе без изменений; домен peer-review переделывается.
-> Спека экранов — [ui-spec.md](../../../apps/u7-bot/src/controllers/peer-review/ui-spec.md)
+> Спека экранов — ui-spec.md
 > (обновляется треком peer-review-ui).
 
 ## Обзор

@@ -1,8 +1,0 @@
-{
-  "track_id": "core-dmg_20261018",
-  "type": "feature",
-  "status": "completed",
-  "created_at": "2026-10-18T17:21:22Z",
-  "updated_at": "2026-10-20T12:00:00Z",
-  "description": "core-dmg — трек 1 из conductor/architecture/migration.md: платформа DMG в @u7-scl/core/dmg (Result, define*, F.*, Timestamp, Caller, агрегат v2, ReadonlyAr, UoW, *FromDef, appApi.run, граф, arch:check, линт-правила) на учебном модуле"
-}

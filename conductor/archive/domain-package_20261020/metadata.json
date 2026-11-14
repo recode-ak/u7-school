@@ -1,8 +1,0 @@
-{
-  "track_id": "domain-package_20261020",
-  "type": "feature",
-  "status": "completed",
-  "created_at": "2026-10-20T00:00:00Z",
-  "updated_at": "2026-10-20T00:00:00Z",
-  "description": "domain-package — наполнить @u7-scl/domain: механически перенести domain-слои модулей (user → course → questionnaire → stream → wish → peer-review → dossier) с реестром долга и проверками arch:check"
-}

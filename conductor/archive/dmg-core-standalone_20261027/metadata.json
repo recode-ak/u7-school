@@ -1,8 +1,0 @@
-{
-  "track_id": "dmg-core-standalone_20261027",
-  "type": "feature",
-  "status": "completed",
-  "created_at": "2026-10-27T14:00:31Z",
-  "updated_at": "2026-10-28T23:00:00Z",
-  "description": "dmg-core-standalone: пакет самодостаточен для старта нового проекта (профили single и monorepo: init --profile, учебное приложение и раннер, гайды project/app, агентная приёмка) и локальный вынос в отдельный репозиторий ~/dev/tools/dmg/dmg-core"
-}

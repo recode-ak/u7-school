@@ -7,7 +7,7 @@ Domain-слои семи модулей перенесены в `@u7-scl/domain`
 - `CI=true bun test`: **3211 pass, 0 fail** (343 файла); число совпадает со значением до переноса `dossier` — тесты не потеряны.
 - `bun run check` зелёный, `bun run arch:check`: нарушений нет (example 0, domain 0).
 
-## Реестр долга и владельцы (D-1…D-30, подробности — [debt.md](../../architecture/debt.md), ID `D-<n>` = `DEBT-<n>`)
+## Реестр долга и владельцы (D-1…D-30, подробности — debt.md, ID `D-<n>` = `DEBT-<n>`)
 | Владелец | Долги |
 |---|---|
 | `golden-wish` | D-21, D-22, D-23, D-24 (wish); D-1, D-2 (общие `core`) |

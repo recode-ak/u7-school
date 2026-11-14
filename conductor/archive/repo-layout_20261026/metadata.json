@@ -1,8 +1,0 @@
-{
-  "track_id": "repo-layout_20261026",
-  "type": "chore",
-  "status": "new",
-  "created_at": "2026-10-26T18:45:42Z",
-  "updated_at": "2026-10-26T18:45:42Z",
-  "description": "Перепроектирование раскладки монорепо: platform/ (dmg-core, app, legacy core), domain/ (@u7-scl/domain), modules/ (прикладной слой, включая dossier), runners/ (u7-bot, u7-cli — бывшие apps), authoring/ (w3school, video-summarizer — данные и инструменты генерации учебных уроков); ui/ — позже. DomainArch.layout строится по gen из dmg-core.json."
-}

@@ -2,7 +2,7 @@
 
 **Трек:** `peer-review-outcomes_20260920`
 **Дата:** 2026-09-20 – 2026-09-21
-**Контракты UX:** [peer-review/ui-spec.md](../../../apps/u7-bot/src/controllers/peer-review/ui-spec.md) (обновлён 2026-09-20)
+**Контракты UX:** peer-review/ui-spec.md (обновлён 2026-09-20)
 **Концепция:** [peer-review-system.md](../../roadmap/metrics/peer-review-system.md) (v4.1)
 
 ## Цель
@@ -61,6 +61,6 @@
 
 ## Дальше
 
-- Трек [peer-review-ui_20260916](../peer-review-ui_20260916/index.md)
+- Трек peer-review-ui_20260916
   разблокирован: Фаза 2 (хаб S02 + async-меню), Фаза 3 (приглашения S01),
   Фаза 4 (просмотр S07 + batch-имена + пагинация).

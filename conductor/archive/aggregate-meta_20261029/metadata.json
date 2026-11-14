@@ -1,8 +1,0 @@
-{
-  "track_id": "aggregate-meta_20261029",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-10-28T19:43:33Z",
-  "updated_at": "2026-10-28T19:43:33Z",
-  "description": "Ожидаемая версия от клиента во входе UC (F.expectedVersion, expectVersion → VERSION_CONFLICT); VO meta отвергнут (D-57)"
-}

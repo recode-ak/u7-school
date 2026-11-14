@@ -1,8 +1,0 @@
-{
-  "track_id": "peer-review-dmg_20261029",
-  "type": "chore",
-  "status": "new",
-  "created_at": "2026-10-29T09:38:19Z",
-  "updated_at": "2026-10-29T09:38:19Z",
-  "description": "Перевод peer-review на DMG + пилот ролей волны 1 (architect, test-designer, data-keeper)"
-}

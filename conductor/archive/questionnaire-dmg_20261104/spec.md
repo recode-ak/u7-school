@@ -2,7 +2,7 @@
 
 ## Обзор
 
-Трек 6 из [migration.md](../../architecture/migration.md), второй модуль группы «остальные модули». Модуль `questionnaire` (домен `domain/src/questionnaire`, прикладной слой `modules/questionnaire`) переводится с legacy на Def по эталону `wish`. Шаблон трека — `conductor/archive/stream-dmg_20261103`. Работает конвейер ролей из пакета `dmg-core`: `dmg-tech-lead` → `dmg-test-designer` → `migrator` → гейт → `dmg-data-keeper` (по триггеру) → `dmg-reviewer`. Бриф механической сборки готовит orchestrator (TR-45).
+Трек 6 из migration.md, второй модуль группы «остальные модули». Модуль `questionnaire` (домен `domain/src/questionnaire`, прикладной слой `modules/questionnaire`) переводится с legacy на Def по эталону `wish`. Шаблон трека — `conductor/archive/stream-dmg_20261103`. Работает конвейер ролей из пакета `dmg-core`: `dmg-tech-lead` → `dmg-test-designer` → `migrator` → гейт → `dmg-data-keeper` (по триггеру) → `dmg-reviewer`. Бриф механической сборки готовит orchestrator (TR-45).
 
 **Исполнители — по таблице §2 [deepseek.md](../../architecture/deepseek.md)** (решение Нурболата): orchestrator и `dmg-reviewer` — Opus; `dmg-tech-lead` — Sonnet (итог пилота ролей, `migration.md` §6; приёмка брифа — orchestrator на Opus), red-тесты `dmg-test-designer` и UI-stories — Sonnet; `migrator` (домен, прикладной слой, подписчики, механика), `dmg-data-keeper`, точечные правки тестов — DeepSeek `flash` через `scripts/pi-role.ts`. После каждого шага на DeepSeek — гейт, `git diff --numstat`, grep-критерии брифа; строка расхода — в `summary.md`.
 
@@ -45,7 +45,7 @@
 | TR-11 (часть questionnaire) | снимается |
 | DEBT-3 (barrel `modules/questionnaire/src/domain`) | остаётся до последнего трека |
 
-Реестр — [debt.md](../../architecture/debt.md).
+Реестр — debt.md.
 
 ## Функциональные требования
 

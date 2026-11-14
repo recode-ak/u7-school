@@ -1,9 +1,0 @@
-[$T1=2026-06-01T12:00:00Z]
-{
-  "track_id": "stream_api_bot_20260601",
-  "type": "feature",
-  "status": "done",
-  "created_at": "$T1",
-  "updated_at": "$T1",
-  "description": "Реализовать API, контроллер и интеграцию в бот u7-bot для модуля потока курсов"
-}

@@ -1,6 +1,6 @@
 # Трек 5: Контроллер `learning` — «Моя учёба»
 
-**Контекст:** [bot-ui-refactoring.md](../../roadmap/bot-ui-refactoring.md#трек-5-контроллер-learning--моя-учёба)
+**Контекст:** bot-ui-refactoring.md
 
 ---
 
@@ -54,7 +54,7 @@
 - Тесты: unit рядом с исходниками, integration/e2e в `apps/u7-bot/tests/`
 - Покрытие >80%
 - `tsc --noEmit` и `biome check` — чисто
-- Именование согласно [ddd-naming](../../.pi/skills/ddd-naming/SKILL.md)
+- Именование согласно ddd-naming
 
 ## 4. Критерии приёмки
 

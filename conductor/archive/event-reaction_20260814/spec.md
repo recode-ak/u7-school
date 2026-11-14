@@ -130,9 +130,9 @@ export abstract class EventReaction<
 
 ## Контекст и связанные документы
 
-- [arch-boundary-design](../../.pi/skills/arch-boundary-design/SKILL.md) — где размещать логику (загружать первым).
-- [ddd-api](../../.pi/skills/ddd-api/SKILL.md) — шаблоны API-слоя (UseCase/Module).
-- [use-case.ts](../../packages/core/src/api/uc/use-case.ts) — образец для ER.
-- [api-module.ts](../../packages/core/src/api/module/api-module.ts) — точка интеграции `reactions`.
-- [event-bus.ts](../../packages/core/src/domain/events/event-bus.ts) — шина событий.
+- arch-boundary-design — где размещать логику (загружать первым).
+- ddd-api — шаблоны API-слоя (UseCase/Module).
+- use-case.ts — образец для ER.
+- api-module.ts — точка интеграции `reactions`.
+- event-bus.ts — шина событий.
 - [Рабочий процесс](../../workflow.md) — жизненный цикл задач (TDD, верификация фаз).

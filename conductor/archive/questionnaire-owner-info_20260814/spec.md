@@ -180,11 +180,11 @@ packages/peer-review/src/
 
 ## Контекст и связанные документы
 
-- [arch-boundary-design](../../.pi/skills/arch-boundary-design/SKILL.md) — где размещать логику.
-- [ddd-domain](../../.pi/skills/ddd-domain/SKILL.md) — шаблоны Domain-слоя.
-- [ddd-api](../../.pi/skills/ddd-api/SKILL.md) — шаблоны API-слоя.
-- [Границы доменной логики](../../code_styleguides/domain-boundaries.md) — межмодульные взаимодействия.
-- [Пайплайн + модули](../../roadmap/metrics/metrics-pipeline-and-modules.md) — контекст модулей `peer-review` и метрик.
-- [questionnaire/ui-spec.md](../../apps/u7-bot/src/controllers/questionnaire/ui-spec.md) — экраны анкеты.
-- [course/ui-spec.md](../../apps/u7-bot/src/controllers/courses/ui-spec.md) — потребитель ownerInfo («Желание пройти курс»).
+- arch-boundary-design — где размещать логику.
+- ddd-domain — шаблоны Domain-слоя.
+- ddd-api — шаблоны API-слоя.
+- Границы доменной логики — межмодульные взаимодействия.
+- Пайплайн + модули — контекст модулей `peer-review` и метрик.
+- questionnaire/ui-spec.md — экраны анкеты.
+- course/ui-spec.md — потребитель ownerInfo («Желание пройти курс»).
 - [Рабочий процесс](../../workflow.md) — жизненный цикл задач.

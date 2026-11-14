@@ -3,7 +3,7 @@
 **Трек:** `m2-content-sync_20261001`
 **Ветка:** `track/m2-content-sync`
 **Дата:** 2026-10-01 – 2026-10-05
-**Документы:** [spec.md](./spec.md) · [plan.md](./plan.md)
+**Документы:** [spec.md](./spec.md) · plan.md
 
 ## Цель
 

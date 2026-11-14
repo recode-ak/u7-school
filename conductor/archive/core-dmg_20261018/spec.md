@@ -2,7 +2,7 @@
 
 ## Обзор
 
-Трек #1 из [migration.md](../../architecture/migration.md): реализовать в `@u7-scl/core` фреймворк целевой архитектуры — `Result`, семейство `define*`, `F.*`/`Timestamp`, агрегат v2 с `ReadonlyAr`, UoW, `Caller`, базовые классы `*FromDef`, `appApi.run`, граф-движок, `arch:check` и линт-правила. Legacy-код core не меняется и работает параллельно (strangler). Новый код — в `packages/core/src/dmg/`, экспорт `@u7-scl/core/dmg`. Работоспособность доказывается на учебном модуле в тестах core.
+Трек #1 из migration.md: реализовать в `@u7-scl/core` фреймворк целевой архитектуры — `Result`, семейство `define*`, `F.*`/`Timestamp`, агрегат v2 с `ReadonlyAr`, UoW, `Caller`, базовые классы `*FromDef`, `appApi.run`, граф-движок, `arch:check` и линт-правила. Legacy-код core не меняется и работает параллельно (strangler). Новый код — в `packages/core/src/dmg/`, экспорт `@u7-scl/core/dmg`. Работоспособность доказывается на учебном модуле в тестах core.
 
 *Почему отдельный подпуть:* в legacy-индексах core заняты имена `Aggregate`, `ErrorKind`, `AppError`, у старых ошибок другой набор `kind`. Отдельный подпуть исключает конфликты имён; удаление legacy — удаление старых папок, финальное переименование подпути — механическое.
 
@@ -45,7 +45,7 @@
 ## Нефункциональные требования
 
 - TDD, покрытие нового кода > 80%. Без новых зависимостей, кроме уже имеющихся (`valibot`, `@valibot/to-json-schema`).
-- [typescript.md](../../architecture/typescript.md): без `any`, `as`, `#private`.
+- typescript.md: без `any`, `as`, `#private`.
 - Регресс legacy запрещён: `bun run check` зелёный после каждой задачи.
 - Документация: окончательный API `define*` фиксируется в `manifests.md`, `errors-result.md`, `caller.md`, `testing.md`; новые решения — `D-NN` в `decisions.md`; в `rules.md` проверки переводятся из `review` в фактические `lint`/`test`.
 

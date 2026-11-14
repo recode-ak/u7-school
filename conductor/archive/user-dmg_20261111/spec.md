@@ -2,7 +2,7 @@
 
 ## Обзор
 
-Трек 6 из [migration.md](../../architecture/migration.md), последний модуль группы «остальные модули». Модуль `user` (домен `domain/src/user`, прикладной слой `modules/user`) переводится с legacy на Def по эталону `wish`; вместе с ним снимаются barrel-реэкспорты (DEBT-3). Шаблон трека — `conductor/archive/course-dmg_20261105`. Конвейер ролей: `dmg-tech-lead` → `dmg-test-designer` → `migrator` → гейт → `dmg-data-keeper` (по триггеру) → `dmg-reviewer`.
+Трек 6 из migration.md, последний модуль группы «остальные модули». Модуль `user` (домен `domain/src/user`, прикладной слой `modules/user`) переводится с legacy на Def по эталону `wish`; вместе с ним снимаются barrel-реэкспорты (DEBT-3). Шаблон трека — `conductor/archive/course-dmg_20261105`. Конвейер ролей: `dmg-tech-lead` → `dmg-test-designer` → `migrator` → гейт → `dmg-data-keeper` (по триггеру) → `dmg-reviewer`.
 
 **Исполнители — по таблице §2 [deepseek.md](../../architecture/deepseek.md).** После каждого шага на DeepSeek — гейт, `git diff --numstat`, grep-критерии брифа; строка расхода — в `summary.md`.
 
@@ -38,7 +38,7 @@
 | DEBT-44, TR-33, TR-40, TR-49 (6), DEBT-48 | погашаются |
 | DEBT-3 (barrel, `User` в `app-legacy`) | погашается; остаток — `modules/dossier/src/index.ts` (трек `dossier`) |
 
-Реестр — [debt.md](../../architecture/debt.md).
+Реестр — debt.md.
 
 ## Функциональные требования
 
