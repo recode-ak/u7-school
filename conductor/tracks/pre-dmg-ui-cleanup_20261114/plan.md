@@ -26,7 +26,7 @@
 ## Фаза 2: dmg-core — проверка долга и тестовые хелперы (один релиз пакета)
 
 - [x] Task: O — из журнала TR (TR-8) в пакет: публикация событий UoW в `finally` — исключение шины подменяет результат, повтор после `VERSION_CONFLICT` повторяет события (ER идемпотентны); при внешней шине — публикация вне `finally`. Проверить по коду пакета, записать в его документы или `debt.md` `dmg-core@ad38a74` — `finally` нет с D-47 (outbox, шина не бросает); остаток — повтор после конфликта не на первом агрегате, дописан в `aggregate-lifecycle.md` и D-56
-- [ ] Task: S (`dmg-tech-lead`) — бриф для репо пакета: сверка форматов `dmg-core/scripts/debt-check.ts` и `checkDebt`/`checkTempMarkers` проекта, API `dmg-core/arch`, набор `dmg-core/testing` (`TEST_TRACE`, `testUuid(n)`, выборки `MemoryRepo` по предикату, временный каталог с автоочисткой), `docs:impact`
+- [x] Task: S (`dmg-tech-lead`) — бриф для репо пакета ([slices/dmg-core-debt-testing.md](./slices/dmg-core-debt-testing.md)) `1e34a3d`: сверка форматов `dmg-core/scripts/debt-check.ts` и `checkDebt`/`checkTempMarkers` проекта, API `dmg-core/arch`, набор `dmg-core/testing` (`TEST_TRACE`, `testUuid(n)`, выборки `MemoryRepo` по предикату, временный каталог с автоочисткой), `docs:impact`
     - Префикс ID долга кода — параметр проверки: пакет — `DEBT-<n>`, проект — `C-DEBT-<n>` (README долга §2); голый `DEBT-<n>` в коде проекта — ошибка
 - [ ] Task: O — TDD в `~/dev/tools/dmg/dmg-core`: проверка трёх реестров и маркеров временности; хелперы testing; перенос сценариев старых тестов; `debt.md` пакета — на новую проверку
     - [ ] Тесты (red) → запуск → реализация (green)
