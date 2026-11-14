@@ -469,7 +469,7 @@
 - **Трек / фаза:** `stream-dmg`, Ф3 (orchestrator, 2026-11-04; бриф — `slices/assembly.md`)
 - **Контекст:** критерий плана Ф3 `grep "…|StreamJsonRepo"` написан до Ф1: `StreamJsonRepo`/`StudentJsonRepo` в `modules/stream/src/infra/` — новые репозитории (UoW, `VersionedRepository`), а не legacy. `StreamFacade`, `StreamInProcFacade`, `streamLegacyInbound`, `commands/*-cmd.ts`, `stream-uc.ts` удалены ещё в Ф1–Ф2; `external` у `StreamModuleDef` уже нет.
 - **Решение:** `StreamJsonRepo` из критерия исключён; бриф сам, без `tech-lead` (срез по образцу `peer-review`); задачи 2–4 плана — один шаг `migrator`; legacy-entity потока и студента удаляются, если после перевода миров и скриптов потребителей не осталось (удалены). Ревью: `update-stream-snapshot.ts` правит `contentSnapshot` в `streams.json` сырым JSON, без `version`/`updatedAt` — оставлено (репозиторий читает, бриф не требовал); `students.json` пишется через строгий разбор `StudentArDef.state`, при сбое разбора — отказ до записи; справка — бэкап и запуск при остановленном боте (гонка перезаписи).
-- **Пересмотреть:** `update-stream-snapshot.ts` — запись потока и студентов через репозитории Def и UoW (снимает гонку с ботом и обход `version`).
+- **Пересмотреть:** `update-stream-snapshot.ts` — запись потока и студентов через репозитории Def и UoW (снимает гонку с ботом и обход `version`) — кандидат `[?]` [stream-snapshot-dmg](../roadmap/stream-snapshot-dmg.md) после релиза (ревизия, F-80).
 
 ### TR-46: контракт событий и входа `questionnaire` (`questionnaire-dmg`)
 - **Трек / фаза:** `questionnaire-dmg`, Ф0 (Q1–Q3, Q5 — Нурболат, 2026-11-04)

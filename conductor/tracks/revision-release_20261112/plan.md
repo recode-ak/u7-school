@@ -108,7 +108,8 @@
 - [x] Task: Нурболат: разбор `cards.md` и `fixes.md` одним проходом; решения — в карточки с датой
     - Итог (2026-11-13): F-90…F-96 — по рекомендации; «без e2e» — [C-14](./cards.md#c-14); исполнители — DeepSeek, где не страдает качество
 - [x] Task: orchestrator: дописать в план подфазы Ф5.N — срез на модуль или однородную группу (бриф → red → green → гейт → `dmg-reviewer`; `dmg-data-keeper` — если трогается state/репозитории/снимки)
-- [ ] Task: Крупное (L) — кандидатами `[?]` в `tracks.md` с заготовкой в `conductor/roadmap/`
+- [x] Task: Крупное (L) — кандидатами `[?]` в `tracks.md` с заготовкой в `conductor/roadmap/`
+    - Итог: F-80 → `stream-snapshot-dmg`, F-110 → `stream-front-domain`, F-111 → `oplog-state-patch`
 - [ ] Task: «Оставить» — перенос в `decisions.md` или гайды, закрытие TR в `debt.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
@@ -153,7 +154,8 @@
     - Итог: flash, одна сессия, $0.07; `WishAr.latest`; JSDoc «Кто / Зачем» дописывать не к чему (Ar/Policy/DQS в контрактах нет); журнал — `slices/f5-6-domain.md`
 
 #### Ф5.7 Скрипты снимков (flash + `dmg-data-keeper`)
-- [ ] Task: F-80 — `update-stream-snapshot`, `stream-snapshot-sync` через репозитории и UoW
+- [x] Task: F-80 — `update-stream-snapshot`, `stream-snapshot-sync` через репозитории и UoW
+    - Итог: без кода — кандидат `[?]` [stream-snapshot-dmg](../../roadmap/stream-snapshot-dmg.md) (Нурболат, 2026-11-14): доменные правила в скрипте и нет операций Ar — перепроектирование, не исправление; скрипт работает, справка — бэкап и остановленный бот
 
 **Критерии приёмки Фазы 5:**
 - Каждая строка `fixes.md` закрыта коммитом или кандидатом `[?]`; регрессий без решения нет.
