@@ -1,7 +1,6 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { TEST_SCHOOL } from '@u7-scl/app';
 import {
-  type Logger,
   LogLevel,
   type MdText,
   md,
@@ -21,6 +20,7 @@ import {
 } from '@u7-scl/domain/user/contract';
 import { AppController } from '../controllers/app/app-controller';
 import { APP_CODES } from '../shared/app-codes';
+import { mockLogger } from './logger.test-kit';
 import type { U7BotActor } from './u7-bot-app-meta';
 import { U7BotController } from './u7-bot-controller';
 import { U7BotUiStory } from './u7-bot-ui-story';
@@ -37,18 +37,6 @@ const actor = userActor({
   telegramId: 123,
   roles: ['GUEST'],
 });
-
-function makeLogger(): Logger {
-  return {
-    debug: mock(() => {}),
-    info: mock(() => {}),
-    warn: mock(() => {}),
-    error: mock(() => {}),
-    setLogLevel: mock(() => {}),
-    getLogLevel: mock(() => 0),
-    setSourceLevel: mock(() => {}),
-  } as unknown as Logger;
-}
 
 function makeCommand(
   command: string,
@@ -136,7 +124,7 @@ function makeUiApp(
 
 describe('U7BotUiApp — /start', () => {
   test('гость регистрируется, диалог reopen меню seq++, welcome из menuButtons', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const api = userApiMock();
     const spy = new SpyController();
     const uiApp = makeUiApp({ userApi: api, spy });
@@ -148,15 +136,8 @@ describe('U7BotUiApp — /start', () => {
       session,
     );
 
-    expect(api.commands()).toEqual([
-      GetUserByTelegramIdUcDef.command({ telegramId: 777 }),
-      RegisterGuestUcDef.command({ telegramId: 777, name: 'Анна' }),
-    ]);
-    // регистрирует бот от имени BOT_ADMIN_UUID
-    expect(api.resolve.mock.calls.map((c) => c[0])).toEqual([
-      undefined,
-      BOT_ADMIN_UUID,
-    ]);
+    // состав и субъекты команд регистрации — в ensure-registered.test.ts
+    expect(api.commands().map((c) => c.uc)).toContain('registerGuest');
 
     // welcome-экран: приветствие + клавиатура menuButtons
     expect(String(response?.screen?.text)).toContain('Привет');
@@ -173,7 +154,7 @@ describe('U7BotUiApp — /start', () => {
   });
 
   test('знакомый пользователь → регистрация не вызывается', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const api = userApiMock({ lookup: userView({ telegramId: 123 }) });
     const uiApp = makeUiApp({ userApi: api });
 
@@ -183,7 +164,7 @@ describe('U7BotUiApp — /start', () => {
   });
 
   test('первый /start при закрытом диалоге → меню с seq=1', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeUiApp();
     const session = {} as BotSession;
 
@@ -194,7 +175,7 @@ describe('U7BotUiApp — /start', () => {
   });
 
   test('повторный /start — reopen: seq++ даже «меню → меню»', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeUiApp();
     const session = { dialog: { path: 'app/menu', seq: 5 } } as BotSession;
 
@@ -208,7 +189,7 @@ describe('U7BotUiApp — /start', () => {
 
 describe('U7BotUiApp — дефолты команд', () => {
   test('/help при пустом pipe → общий help: инструкция + описания menuButtons', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const dummy = new MenuController('dummy', async () => [
       {
         kind: 'callback',
@@ -236,7 +217,7 @@ describe('U7BotUiApp — дефолты команд', () => {
   });
 
   test('/help при закрытом диалоге → общий help (без фиктивной сессии)', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeUiApp();
 
     const response = await uiApp.handleCommand(
@@ -249,7 +230,7 @@ describe('U7BotUiApp — дефолты команд', () => {
   });
 
   test('/cancel при пустом pipe → reopen меню + КОРОТКОЕ меню без приветствия', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeUiApp();
     const session = { dialog: { path: 'zz/old', seq: 4 } } as BotSession;
 
@@ -269,7 +250,7 @@ describe('U7BotUiApp — дефолты команд', () => {
   });
 
   test('неизвестная команда при пустом pipe → info-подсказка, диалог не тронут', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeUiApp();
     const session = { dialog: { path: 'app/menu', seq: 2 } } as BotSession;
 
@@ -290,7 +271,7 @@ describe('U7BotUiApp — дефолты команд', () => {
 
 describe('U7BotUiApp — pipe перед дефолтами', () => {
   test('/cancel с ответом стори: notify сохраняется + экран меню (seq++)', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const spy = new SpyController();
     spy.commandReaction = {
       reaction: 'stop',
@@ -323,7 +304,7 @@ describe('U7BotUiApp — pipe перед дефолтами', () => {
   });
 
   test('/cancel с ответом стори, содержащим screen — экран стори, меню не добавляется', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const spy = new SpyController();
     spy.commandReaction = {
       reaction: 'stop',
@@ -345,7 +326,7 @@ describe('U7BotUiApp — pipe перед дефолтами', () => {
   });
 
   test('/help активной стори со справкой → ТОЛЬКО её контекстная справка', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const story = new HelpStory();
     story.help = md`Вы в анкете, вопрос 3 из 10`;
     const uiApp = makeUiApp({ extra: [new HelpController(story)] });
@@ -358,7 +339,7 @@ describe('U7BotUiApp — pipe перед дефолтами', () => {
   });
 
   test('/help активной стори БЕЗ справки → общий help (fallback)', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeUiApp({ extra: [new HelpController(new HelpStory())] });
 
     const response = await uiApp.handleCommand(makeCommand('help'), 123, {
@@ -369,7 +350,7 @@ describe('U7BotUiApp — pipe перед дефолтами', () => {
   });
 
   test('/help при неактивной стори → общий help, даже при наличии справки', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const story = new HelpStory();
     story.help = md`Справка анкеты`;
     const uiApp = makeUiApp({ extra: [new HelpController(story)] });
@@ -383,7 +364,7 @@ describe('U7BotUiApp — pipe перед дефолтами', () => {
   });
 
   test('/log_level от админа через app-контроллер → stop{info}, уровень изменён', async () => {
-    const logger = makeLogger();
+    const logger = mockLogger();
     setGlobalLogger(logger);
     const uiApp = makeUiApp({ adminTelegramIds: [123] });
 
@@ -398,7 +379,7 @@ describe('U7BotUiApp — pipe перед дефолтами', () => {
   });
 
   test('/log_level от НЕ-админа → тишина: пустой ответ без реплики', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeUiApp({ adminTelegramIds: [999] });
 
     const response = await uiApp.handleCommand(
@@ -415,7 +396,7 @@ describe('U7BotUiApp — pipe перед дефолтами', () => {
 
 describe('U7BotUiApp — системные кнопки', () => {
   test('app:main-menu → вход в меню-диалог (seq++ с чужого пути) + экран меню', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeUiApp();
     const session = { dialog: { path: 'zz/old', seq: 3 } } as BotSession;
 
@@ -430,7 +411,7 @@ describe('U7BotUiApp — системные кнопки', () => {
   });
 
   test('app:main-menu из меню → seq не растёт (switch на тот же путь)', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeUiApp();
     const session = { dialog: { path: 'app/menu', seq: 3 } } as BotSession;
 
@@ -440,7 +421,7 @@ describe('U7BotUiApp — системные кнопки', () => {
   });
 
   test('app:help → общий help info-репликой, диалог не тронут', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeUiApp();
     const session = { dialog: { path: 'app/menu', seq: 3 } } as BotSession;
 
@@ -482,7 +463,7 @@ class ExposedMenuUiApp extends U7BotUiApp {
 
 describe('U7BotUiApp — сбор menuButtons', () => {
   test('параллельный сбор контроллеров: обе проверки стартуют до резолва первой', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     let release!: () => void;
     const gate = new Promise<void>((resolve) => {
       release = resolve;
@@ -510,7 +491,7 @@ describe('U7BotUiApp — сбор menuButtons', () => {
   });
 
   test('упавший контроллер скрывает свои кнопки — меню остальных цело + warn', async () => {
-    const logger = makeLogger();
+    const logger = mockLogger();
     setGlobalLogger(logger);
     const uiApp = new ExposedMenuUiApp([
       new AppController(SCHOOL_URL, []),
@@ -554,7 +535,7 @@ class DelegateController extends U7BotController {
 
 describe('U7BotUiApp — delegate на системные коды', () => {
   test('delegate app:main-menu → меню-диалог (seq++) + экран меню, notify инициатора сохранён', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const story = new DelegateStory();
     story.initiator = { notify: { text: md`🎉 Успех\\!` } };
     const uiApp = makeUiApp({ extra: [new DelegateController(story)] });
@@ -573,7 +554,7 @@ describe('U7BotUiApp — delegate на системные коды', () => {
   });
 
   test('delegate app:main-menu из закрытого диалога → меню (seq растёт дважды: nav, menu)', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const story = new DelegateStory();
     const uiApp = makeUiApp({ extra: [new DelegateController(story)] });
     const session = {} as BotSession;
@@ -589,7 +570,7 @@ describe('U7BotUiApp — delegate на системные коды', () => {
   });
 
   test('delegate app:help → общий help-реплика, notify инициатора сохранён', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const story = new DelegateStory();
     story.delegatePath = APP_CODES.help;
     story.initiator = { notify: { text: md`Контекст\.` } };
@@ -608,7 +589,7 @@ describe('U7BotUiApp — delegate на системные коды', () => {
   });
 
   test('delegate в несуществующий контроллер — экран ошибки (перехват не мешает)', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const story = new DelegateStory();
     story.delegatePath = 'zzz:one:x';
     const uiApp = makeUiApp({ extra: [new DelegateController(story)] });
@@ -622,7 +603,7 @@ describe('U7BotUiApp — delegate на системные коды', () => {
 
 describe('U7BotUiApp — handleMessengerEvent', () => {
   test('при member_joined автоматически вызывает ensureRegisteredGuest', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const api = userApiMock();
     const uiApp = makeUiApp({ userApi: api });
 
@@ -649,7 +630,7 @@ describe('U7BotUiApp — handleMessengerEvent', () => {
   });
 
   test('при bot_membership с byUser регистрирует добавившего пользователя', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const api = userApiMock();
     const uiApp = makeUiApp({ userApi: api });
 
@@ -694,7 +675,7 @@ describe('U7BotUiApp — актор не найден (actorResolver → null)',
 
   for (const command of ['help', 'cancel', 'unknown-cmd']) {
     test(`/${command}: notify «Наберите /start», pipe не опрашивается`, async () => {
-      setGlobalLogger(makeLogger());
+      setGlobalLogger(mockLogger());
       const spy = new SpyController();
       const uiApp = makeGhostUiApp(spy);
 
@@ -711,7 +692,7 @@ describe('U7BotUiApp — актор не найден (actorResolver → null)',
   }
 
   test('/cancel: диалог сессии не меняется', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeGhostUiApp(new SpyController());
     const session = {
       dialog: { path: 'app/menu', seq: 3 },
@@ -723,7 +704,7 @@ describe('U7BotUiApp — актор не найден (actorResolver → null)',
   });
 
   test('кнопка: notify «Наберите /start», маршрутизации нет', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeGhostUiApp(new SpyController());
 
     const response = await uiApp.handleCallback('app:help', 404, {
@@ -735,7 +716,7 @@ describe('U7BotUiApp — актор не найден (actorResolver → null)',
   });
 
   test('текстовый ввод: notify «Наберите /start»', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const uiApp = makeGhostUiApp(new SpyController());
 
     const response = await uiApp.handleMessage(

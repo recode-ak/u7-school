@@ -6,6 +6,7 @@ import {
   QuestionnaireErrors,
   QuestionnaireEvents,
 } from '@u7-scl/domain/questionnaire/contract';
+import { subscriptionOf } from '../../../core/story.test-kit';
 import { userActor } from '../../../core/user-actor.test-kit';
 import { FillStory } from './fill.story';
 import {
@@ -16,7 +17,6 @@ import {
   refuse,
   respondentProfile,
   startedEvent,
-  subscriptionOf,
   useMockLogger,
   userReadsOf,
 } from './questionnaire-dmg.test-kit';

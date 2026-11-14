@@ -1,16 +1,18 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { type Logger, mdRaw, setGlobalLogger } from '@u7-scl/core/shared';
+import { describe, expect, mock, test } from 'bun:test';
+import { mdRaw, setGlobalLogger } from '@u7-scl/core/shared';
 import type {
   BotSession,
   BotSessionRepo,
   CommandUpdate,
   DialogResponse,
 } from '@u7-scl/core/ui';
+import { useTempDir } from 'dmg-core/testing';
 import type { Api } from 'grammy';
 import type { BotContext } from '../context';
+import { mockLogger } from '../core/logger.test-kit';
 import type { DialogUiAppPort } from './bot-transport';
 import { BotTransport } from './bot-transport';
+import { kb, makeCtx, makeUiApp } from './bot-transport.test-kit';
 import { JsonBotSessionRepo } from './json-bot-session-repo';
 import { JsonFileRepoError } from './json-file-repo';
 
@@ -37,30 +39,6 @@ function makeMockBotApi(overrides: Record<string, unknown> = {}): Api {
   } as unknown as Api;
 }
 
-function makeUiApp(overrides: Partial<DialogUiAppPort> = {}): DialogUiAppPort {
-  return {
-    handleCommand: mock(async () => null),
-    handleCallback: mock(async () => ({ screen: { text: mdRaw('Ок') } })),
-    handleMessage: mock(async () => ({ screen: { text: mdRaw('Принято') } })),
-    ...overrides,
-  } as unknown as DialogUiAppPort;
-}
-
-function makeCtx(overrides: Partial<BotContext> = {}): BotContext {
-  return {
-    from: { id: 123, first_name: 'Test', is_bot: false } as BotContext['from'],
-    chat: { id: 123, type: 'private' } as BotContext['chat'],
-    reply: mock(async () => ({ message_id: 99 })),
-    answerCallbackQuery: mock(async () => true),
-    callbackQuery: {
-      data: 'app:menu:open',
-    } as BotContext['callbackQuery'],
-    message: { text: 'hello' } as BotContext['message'],
-    update: { update_id: 1 } as BotContext['update'],
-    ...overrides,
-  } as unknown as BotContext;
-}
-
 /** Контекст со слэш-текстом (единственный вход команд — ФР-4). */
 function makeCommandCtx(text: string, tgId = 123): BotContext {
   return makeCtx({
@@ -80,22 +58,6 @@ function makeSessionRepo(
     loadShortIds: mock(async () => shortIds),
     saveShortId: mock(async () => {}),
   };
-}
-
-function makeLogger(): Logger {
-  return {
-    debug: mock(() => {}),
-    info: mock(() => {}),
-    warn: mock(() => {}),
-    error: mock(() => {}),
-    setLogLevel: mock(() => {}),
-    getLogLevel: mock(() => 0),
-    setSourceLevel: mock(() => {}),
-  } as unknown as Logger;
-}
-
-function kb(code: string, text = 'Кнопка') {
-  return { rows: [[{ text, code }]], isMultiple: false };
 }
 
 type ApiMock = ReturnType<typeof mock>;
@@ -317,7 +279,7 @@ describe('BotTransport — персистентность апдейтов', () 
   });
 
   test('ошибка записи: warn-лог, апдейт не падает, следующий повторяет', async () => {
-    const logger = makeLogger();
+    const logger = mockLogger();
     setGlobalLogger(logger);
     const repo = makeSessionRepo();
     let calls = 0;
@@ -459,23 +421,15 @@ describe('BotTransport — shortId ↔ repo', () => {
 // ── Сценарий рестарта (сквозной: настоящий JsonBotSessionRepo) ──
 
 describe('BotTransport — сценарий рестарта (сквозной, JsonBotSessionRepo)', () => {
-  let tmpDir: string;
-
-  beforeEach(() => {
-    tmpDir = mkdtempSync('/tmp/bot-restart-scenario-test-');
-  });
-
-  afterEach(() => {
-    rmSync(tmpDir, { recursive: true, force: true });
-  });
+  const dir = useTempDir('bot-restart-scenario-test-');
 
   test('кнопка старого экрана после рестарта продолжает анкету с того же вопроса', async () => {
     const uuid = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
     // ── Жизнь 1: пользователь посреди fill-анкеты ──
     const repoA = new JsonBotSessionRepo(
-      `${tmpDir}/sessions.json`,
-      `${tmpDir}/short-ids.json`,
+      dir().file('sessions.json'),
+      dir().file('short-ids.json'),
     );
     const apiA = makeMockBotApi();
     const uiAppA = makeUiApp({
@@ -499,8 +453,8 @@ describe('BotTransport — сценарий рестарта (сквозной, 
 
     // ── Рестарт сервиса: новый транспорт над теми же файлами ──
     const repoB = new JsonBotSessionRepo(
-      `${tmpDir}/sessions.json`,
-      `${tmpDir}/short-ids.json`,
+      dir().file('sessions.json'),
+      dir().file('short-ids.json'),
     );
     const apiB = makeMockBotApi();
     let capturedAtEntry: BotSession | undefined;

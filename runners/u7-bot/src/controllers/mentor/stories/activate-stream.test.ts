@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import {
@@ -24,7 +24,7 @@ const session: BotSession = {
 function createStory(answer: () => unknown = () => ({})) {
   const story = new ActivateStreamStory();
   const dispatch = dmgDispatch({ activateStream: answer });
-  const appApi = { execute: mock(async () => undefined), dispatch };
+  const appApi = { dispatch };
   story.init({ appApi, callers: testCallers } as never);
   return { story, appApi, dispatch };
 }

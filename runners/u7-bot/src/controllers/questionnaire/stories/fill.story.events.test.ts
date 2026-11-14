@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { assertMarkdownV2Safe } from '@u7-scl/core/shared';
 import { QuestionnaireEvents } from '@u7-scl/domain/questionnaire/contract';
+import { subscriptionOf } from '../../../core/story.test-kit';
 import { FillStory } from './fill.story';
 import {
   abandonedEvent,
@@ -9,7 +10,6 @@ import {
   initStory,
   RESPONDENT_ID,
   respondentProfile,
-  subscriptionOf,
   userReadsOf,
 } from './questionnaire-dmg.test-kit';
 

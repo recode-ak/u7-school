@@ -1,6 +1,7 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import { readFileSync, writeFileSync } from 'node:fs';
 import type { BotSession } from '@u7-scl/core/ui';
+import { useTempDir } from 'dmg-core/testing';
 import { JsonBotSessionRepo } from './json-bot-session-repo';
 import { JsonFileRepoError } from './json-file-repo';
 
@@ -42,13 +43,11 @@ const fullSession: BotSession = {
 describe('JsonBotSessionRepo — сессии', () => {
   let repo: JsonBotSessionRepo;
 
-  beforeEach(() => {
-    tmpDir = mkdtempSync('/tmp/json-bot-session-repo-test-');
-    repo = new JsonBotSessionRepo(sessionsFile(), shortIdsFile());
-  });
+  const dir = useTempDir('json-bot-session-repo-test-');
 
-  afterEach(() => {
-    rmSync(tmpDir, { recursive: true, force: true });
+  beforeEach(() => {
+    tmpDir = dir().path;
+    repo = new JsonBotSessionRepo(sessionsFile(), shortIdsFile());
   });
 
   test('round-trip: save → loadAll возвращает сессию (dialog + screen)', async () => {
@@ -123,13 +122,11 @@ describe('JsonBotSessionRepo — сессии', () => {
 describe('JsonBotSessionRepo — shortId-маппинг', () => {
   let repo: JsonBotSessionRepo;
 
-  beforeEach(() => {
-    tmpDir = mkdtempSync('/tmp/json-bot-session-repo-test-');
-    repo = new JsonBotSessionRepo(sessionsFile(), shortIdsFile());
-  });
+  const dir = useTempDir('json-bot-session-repo-test-');
 
-  afterEach(() => {
-    rmSync(tmpDir, { recursive: true, force: true });
+  beforeEach(() => {
+    tmpDir = dir().path;
+    repo = new JsonBotSessionRepo(sessionsFile(), shortIdsFile());
   });
 
   test('round-trip: saveShortId → loadShortIds', async () => {
@@ -169,13 +166,11 @@ describe('JsonBotSessionRepo — shortId-маппинг', () => {
 describe('JsonBotSessionRepo — повреждение данных', () => {
   let repo: JsonBotSessionRepo;
 
-  beforeEach(() => {
-    tmpDir = mkdtempSync('/tmp/json-bot-session-repo-test-');
-    repo = new JsonBotSessionRepo(sessionsFile(), shortIdsFile());
-  });
+  const dir = useTempDir('json-bot-session-repo-test-');
 
-  afterEach(() => {
-    rmSync(tmpDir, { recursive: true, force: true });
+  beforeEach(() => {
+    tmpDir = dir().path;
+    repo = new JsonBotSessionRepo(sessionsFile(), shortIdsFile());
   });
 
   test('fail-fast: битый JSON сессий → JsonFileRepoError, файл не пересоздан', async () => {

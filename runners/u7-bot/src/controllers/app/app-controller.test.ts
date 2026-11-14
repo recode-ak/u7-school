@@ -1,7 +1,8 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { AppController } from '@u7-scl/bot/app/app-controller';
-import { type Logger, LogLevel, setGlobalLogger } from '@u7-scl/core/shared';
+import { LogLevel, setGlobalLogger } from '@u7-scl/core/shared';
 import type { CommandReaction, CommandUpdate } from '@u7-scl/core/ui';
+import { mockLogger } from '../../core/logger.test-kit';
 import { userActor } from '../../core/user-actor.test-kit';
 
 const SCHOOL_URL = 'https://t.me/u7_school_group';
@@ -12,18 +13,6 @@ const actor = userActor({
   telegramId: 123,
   roles: ['GUEST'],
 });
-
-function makeLogger(): Logger & { setLogLevel: ReturnType<typeof mock> } {
-  return {
-    debug: mock(() => {}),
-    info: mock(() => {}),
-    warn: mock(() => {}),
-    error: mock(() => {}),
-    setLogLevel: mock(() => {}),
-    getLogLevel: mock(() => 0),
-    setSourceLevel: mock(() => {}),
-  } as unknown as Logger & { setLogLevel: ReturnType<typeof mock> };
-}
 
 function makeCtrl(adminIds: number[] = []): AppController {
   return new AppController(SCHOOL_URL, adminIds);
@@ -53,7 +42,7 @@ describe('AppController — menuButtons', () => {
 
 describe('AppController — handleCommand: /log_level', () => {
   test('от НЕ-админа → stop{} (тишина), уровень не меняется', async () => {
-    const logger = makeLogger();
+    const logger = mockLogger();
     setGlobalLogger(logger);
     const ctrl = makeCtrl([999]);
 
@@ -71,7 +60,7 @@ describe('AppController — handleCommand: /log_level', () => {
   });
 
   test('от админа с аргументом → stop{notify}, уровень изменён', async () => {
-    const logger = makeLogger();
+    const logger = mockLogger();
     setGlobalLogger(logger);
     const ctrl = makeCtrl([123]);
 
@@ -88,7 +77,7 @@ describe('AppController — handleCommand: /log_level', () => {
   });
 
   test('от админа без аргументов → stop{notify} с инструкцией', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const ctrl = makeCtrl([123]);
 
     const reaction = await ctrl.handleCommand(
@@ -104,7 +93,7 @@ describe('AppController — handleCommand: /log_level', () => {
   });
 
   test('от админа с неизвестным уровнем → stop{notify} со списком уровней', async () => {
-    setGlobalLogger(makeLogger());
+    setGlobalLogger(mockLogger());
     const ctrl = makeCtrl([123]);
 
     const reaction = await ctrl.handleCommand(

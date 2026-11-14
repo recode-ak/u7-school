@@ -10,6 +10,7 @@ import { StudentEvents } from '@u7-scl/domain/stream/contract';
 import type { UserView } from '@u7-scl/domain/user/contract';
 import type { EventOf } from 'dmg-core';
 import { envelopeOf } from '../../../../tests/helpers/envelope-of';
+import { subscriptionOf } from '../../../core/story.test-kit';
 import { userActor } from '../../../core/user-actor.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
 import { InactivityStory } from './inactivity.story';
@@ -223,18 +224,6 @@ function setupStory(
   return { story, notifies, invites, kicks, dispatch };
 }
 
-/** Достаёт обработчик подписки по имени события */
-function subHandler(
-  story: InactivityStory,
-  eventName: string,
-): (event: never) => Promise<void> {
-  const sub = story
-    .getEventSubscriptions()
-    .find((s) => s.def.name === eventName);
-  if (!sub) throw new Error(`Подписка ${eventName} не найдена`);
-  return sub.handle as (event: never) => Promise<void>;
-}
-
 describe('InactivityStory', () => {
   // ── Подписки ──
 
@@ -259,10 +248,9 @@ describe('InactivityStory', () => {
   test('warning → студенту invite с кнопкой «🚪 Покинуть учёбу»', async () => {
     const { story, invites, notifies } = setupStory();
 
-    await subHandler(
-      story,
-      StudentEvents.inactivityWarning.name,
-    )(makeWarningEvent() as never);
+    await subscriptionOf(story, StudentEvents.inactivityWarning.name).handle(
+      makeWarningEvent() as never,
+    );
 
     // Кнопочный проактив — канал invite (не notify)
     expect(notifies).toHaveLength(0);
@@ -285,10 +273,9 @@ describe('InactivityStory', () => {
   test('warning: текст валиден для MarkdownV2', async () => {
     const { story, invites } = setupStory();
 
-    await subHandler(
-      story,
-      StudentEvents.inactivityWarning.name,
-    )(makeWarningEvent() as never);
+    await subscriptionOf(story, StudentEvents.inactivityWarning.name).handle(
+      makeWarningEvent() as never,
+    );
 
     expect(() =>
       assertMarkdownV2Safe(String(invites[0]?.payload.text)),
@@ -301,10 +288,9 @@ describe('InactivityStory', () => {
   ])('%s — пропуск без исключения и без отправки', async (_, profiles) => {
     const { story, invites } = setupStory({ profiles });
 
-    await subHandler(
-      story,
-      StudentEvents.inactivityWarning.name,
-    )(makeWarningEvent() as never);
+    await subscriptionOf(story, StudentEvents.inactivityWarning.name).handle(
+      makeWarningEvent() as never,
+    );
 
     expect(invites).toHaveLength(0);
   });
@@ -314,10 +300,10 @@ describe('InactivityStory', () => {
   test('candidate → ментору invite с кнопкой «⚠️ Снять с учёбы»', async () => {
     const { story, invites, notifies } = setupStory();
 
-    await subHandler(
+    await subscriptionOf(
       story,
       StudentEvents.inactivityRemoveCandidate.name,
-    )(makeCandidateEvent() as never);
+    ).handle(makeCandidateEvent() as never);
 
     // Кнопочный проактив — канал invite (не notify)
     expect(notifies).toHaveLength(0);
@@ -342,10 +328,10 @@ describe('InactivityStory', () => {
   test('candidate с wasWarned → строка «уведомления были ранее отправлены»', async () => {
     const { story, invites } = setupStory();
 
-    await subHandler(
+    await subscriptionOf(
       story,
       StudentEvents.inactivityRemoveCandidate.name,
-    )(makeCandidateEvent({ wasWarned: true }) as never);
+    ).handle(makeCandidateEvent({ wasWarned: true }) as never);
 
     const text = String(invites[0]?.payload.text);
     expect(text).toContain('Уведомления были ранее отправлены');
@@ -355,10 +341,10 @@ describe('InactivityStory', () => {
   test('candidate: имя не резолвится → fallback, первые 8 символов userId', async () => {
     const { story, invites } = setupStory();
 
-    await subHandler(
+    await subscriptionOf(
       story,
       StudentEvents.inactivityRemoveCandidate.name,
-    )(
+    ).handle(
       makeCandidateEvent({
         userId: '99999999-9999-4999-8999-999999999999',
       }) as never,
@@ -372,10 +358,10 @@ describe('InactivityStory', () => {
   test('candidate: поток недоступен — ментор неизвестен, отправки нет', async () => {
     const { story, invites } = setupStory({ stream: 'missing' });
 
-    await subHandler(
+    await subscriptionOf(
       story,
       StudentEvents.inactivityRemoveCandidate.name,
-    )(makeCandidateEvent() as never);
+    ).handle(makeCandidateEvent() as never);
 
     expect(invites).toHaveLength(0);
   });
@@ -388,10 +374,10 @@ describe('InactivityStory', () => {
       },
     });
 
-    await subHandler(
+    await subscriptionOf(
       story,
       StudentEvents.inactivityRemoveCandidate.name,
-    )(makeCandidateEvent() as never);
+    ).handle(makeCandidateEvent() as never);
 
     expect(invites).toHaveLength(0);
   });
@@ -403,10 +389,9 @@ describe('InactivityStory', () => {
       streamOverrides: { telegramGroupId: GROUP_ID },
     });
 
-    await subHandler(
-      story,
-      StudentEvents.abandoned.name,
-    )(makeAbandonedEvent() as never);
+    await subscriptionOf(story, StudentEvents.abandoned.name).handle(
+      makeAbandonedEvent() as never,
+    );
 
     expect(kicks).toHaveLength(1);
     expect(kicks[0]).toEqual({ groupId: GROUP_ID, userId: 1003 });
@@ -415,10 +400,9 @@ describe('InactivityStory', () => {
   test('abandoned: у потока нет группы — кик не вызывается, ошибок нет', async () => {
     const { story, kicks } = setupStory();
 
-    await subHandler(
-      story,
-      StudentEvents.abandoned.name,
-    )(makeAbandonedEvent() as never);
+    await subscriptionOf(story, StudentEvents.abandoned.name).handle(
+      makeAbandonedEvent() as never,
+    );
 
     expect(kicks).toHaveLength(0);
   });
@@ -443,10 +427,9 @@ describe('InactivityStory', () => {
       callers: testCallers,
     } as never);
 
-    await subHandler(
-      story,
-      StudentEvents.abandoned.name,
-    )(makeAbandonedEvent() as never);
+    await subscriptionOf(story, StudentEvents.abandoned.name).handle(
+      makeAbandonedEvent() as never,
+    );
 
     expect(kicks).toHaveLength(0);
   });
@@ -456,10 +439,9 @@ describe('InactivityStory', () => {
       profiles: { [STUDENT_USER_ID]: undefined },
     });
 
-    await subHandler(
-      story,
-      StudentEvents.abandoned.name,
-    )(makeAbandonedEvent({ who: 'mentor', cause: 'inactivity' }) as never);
+    await subscriptionOf(story, StudentEvents.abandoned.name).handle(
+      makeAbandonedEvent({ who: 'mentor', cause: 'inactivity' }) as never,
+    );
 
     expect(kicks).toHaveLength(0);
     expect(notifies).toHaveLength(0);
@@ -468,10 +450,9 @@ describe('InactivityStory', () => {
   test('abandoned: self — ментору notify kind info «покинул учёбу … по собственному желанию»', async () => {
     const { story, notifies } = setupStory();
 
-    await subHandler(
-      story,
-      StudentEvents.abandoned.name,
-    )(makeAbandonedEvent() as never);
+    await subscriptionOf(story, StudentEvents.abandoned.name).handle(
+      makeAbandonedEvent() as never,
+    );
 
     expect(notifies).toHaveLength(1);
     expect(notifies[0]?.telegramId).toBe(1004);
@@ -486,10 +467,9 @@ describe('InactivityStory', () => {
   test('abandoned: mentor + inactivity — студенту notify kind warn «снят с учёбы … за бездействие»', async () => {
     const { story, notifies } = setupStory();
 
-    await subHandler(
-      story,
-      StudentEvents.abandoned.name,
-    )(makeAbandonedEvent({ who: 'mentor', cause: 'inactivity' }) as never);
+    await subscriptionOf(story, StudentEvents.abandoned.name).handle(
+      makeAbandonedEvent({ who: 'mentor', cause: 'inactivity' }) as never,
+    );
 
     expect(notifies).toHaveLength(1);
     expect(notifies[0]?.telegramId).toBe(1003);
@@ -505,10 +485,9 @@ describe('InactivityStory', () => {
       streamOverrides: { telegramGroupId: GROUP_ID },
     });
 
-    await subHandler(
-      story,
-      StudentEvents.abandoned.name,
-    )(makeAbandonedEvent({ who: 'mentor', cause: 'by_mentor' }) as never);
+    await subscriptionOf(story, StudentEvents.abandoned.name).handle(
+      makeAbandonedEvent({ who: 'mentor', cause: 'by_mentor' }) as never,
+    );
 
     expect(notifies).toHaveLength(0);
     expect(kicks).toHaveLength(1);
@@ -517,10 +496,9 @@ describe('InactivityStory', () => {
   test('abandoned: поток недоступен — уведомления и кика нет, исключения нет', async () => {
     const { story, notifies, kicks } = setupStory({ stream: 'missing' });
 
-    await subHandler(
-      story,
-      StudentEvents.abandoned.name,
-    )(makeAbandonedEvent() as never);
+    await subscriptionOf(story, StudentEvents.abandoned.name).handle(
+      makeAbandonedEvent() as never,
+    );
 
     expect(notifies).toHaveLength(0);
     expect(kicks).toHaveLength(0);

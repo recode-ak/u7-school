@@ -25,15 +25,12 @@ const ctx = { student, stream };
 const { isSelf, canComplete, canMarkAbandoned } = StudentPolicy.rules;
 
 describe('StudentPolicy.isSelf', () => {
-  it('сам студент с ролью SUBSCRIBER — allowed', () => {
-    expect(isSelf.evaluate(who(USER, 'SUBSCRIBER'), { student })).toEqual(
-      allowed,
-    );
-  });
-
-  it('роли не важны: владелец записи проходит и с ролью GUEST', () => {
-    expect(isSelf.evaluate(who(USER, 'GUEST'), { student }).allowed).toBe(true);
-  });
+  it.each(['SUBSCRIBER', 'GUEST'] as const)(
+    'владелец записи с ролью %s — allowed (роли не важны)',
+    (role) => {
+      expect(isSelf.evaluate(who(USER, role), { student })).toEqual(allowed);
+    },
+  );
 
   it.each([
     ['другой студент', who(OTHER_USER, 'GUEST')],

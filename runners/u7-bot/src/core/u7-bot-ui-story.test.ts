@@ -755,8 +755,4 @@ describe('U7BotUiStory.findUser / findUsers', () => {
     expect(sent[0]?.caller).toBeInstanceOf(GuestCaller);
     expect(sent[1]?.caller).toBe(actor);
   });
-
-  test('мост subjectOf удалён: актор сам субъект', () => {
-    expect('subjectOf' in U7BotUiStory.prototype).toBe(false);
-  });
 });

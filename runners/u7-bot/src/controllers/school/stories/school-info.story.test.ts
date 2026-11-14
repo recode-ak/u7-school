@@ -29,11 +29,6 @@ function makeStory(contacts?: { phone: string; site?: string }) {
         phone: '+7 777 000 0000',
       },
     },
-    appApi: {
-      execute: async () => {
-        throw new Error('Not implemented');
-      },
-    },
   } as any);
 
   return { story };

@@ -1,7 +1,8 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import { type Logger, setGlobalLogger } from '@u7-scl/core/shared';
 import type { BotSession, BotUpdate, DialogResponse } from '@u7-scl/core/ui';
+import { mockLogger } from './logger.test-kit';
 import type { U7BotActor } from './u7-bot-app-meta';
 import { U7BotController } from './u7-bot-controller';
 import { U7BotUiStory } from './u7-bot-ui-story';
@@ -13,18 +14,6 @@ const actor = userActor({
   telegramId: 1,
   roles: ['GUEST'],
 });
-
-function makeLogger(): Logger {
-  return {
-    debug: mock(() => {}),
-    info: mock(() => {}),
-    warn: mock(() => {}),
-    error: mock(() => {}),
-    setLogLevel: mock(() => {}),
-    getLogLevel: mock(() => 0),
-    setSourceLevel: mock(() => {}),
-  } as unknown as Logger;
-}
 
 /** Стори с настраиваемыми кнопками меню. */
 class ButtonedStory extends U7BotUiStory {
@@ -175,7 +164,7 @@ describe('U7BotController — menuButtons', () => {
   });
 
   test('упавшая стори скрывает только свои кнопки: меню цело + warn', async () => {
-    const logger = makeLogger();
+    const logger = mockLogger();
     setGlobalLogger(logger);
     const ctrl = new ButtonedController([
       new FailingStory(),

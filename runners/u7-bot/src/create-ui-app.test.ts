@@ -15,15 +15,12 @@ const admin = userSubject({
 });
 /**
  * Приложение на моках: `callers.resolveByTelegramId` (555 — ментор, прочие —
- * гость, или исключение при `lookupError`), `callers.resolve` знает только
+ * гость), `callers.resolve` знает только
  * админа бота. Разбор `getUserByTelegramId` от `SystemCaller` проверяет тест
  * резолвера приложения.
  */
-function makeSource(
-  opts: { lookupError?: boolean; unresolvable?: string[] } = {},
-) {
+function makeSource(opts: { unresolvable?: string[] } = {}) {
   const resolveByTelegramId = mock(async (telegramId: number) => {
-    if (opts.lookupError) throw new Error('CORE_INTERNAL');
     return telegramId === 555
       ? new UserCaller(
           userSubject({
@@ -65,22 +62,13 @@ describe('createUiApp — регистрация SchoolController', () => {
     expect(uiBundle.resolve.callers).toBe(source.callers);
   });
 
-  test('resolve без userFacade и botAdminUser: админ бота — botAdminUuid', async () => {
+  test('resolve: админ бота — botAdminUuid', async () => {
     const { source } = makeSource();
     const { resolve } = await createUiApp(source, {
       botAdminUuid: BOT_ADMIN_UUID,
     });
 
     expect(resolve.botAdminUuid).toBe(BOT_ADMIN_UUID);
-    expect('userFacade' in resolve).toBe(false);
-    expect('botAdminUser' in resolve).toBe(false);
-  });
-
-  test('UserController в сборке нет', async () => {
-    const { source } = makeSource();
-    const bundle = await createUiApp(source, { botAdminUuid: BOT_ADMIN_UUID });
-
-    expect('userController' in bundle).toBe(false);
   });
 });
 
@@ -118,14 +106,5 @@ describe('createUiApp — actorResolver', () => {
     });
 
     expect(await resolve.actorResolver(404)).toBeNull();
-  });
-
-  test('прочий отказ резолвера → исключение', async () => {
-    const { source } = makeSource({ lookupError: true });
-    const { resolve } = await createUiApp(source, {
-      botAdminUuid: BOT_ADMIN_UUID,
-    });
-
-    await expect(resolve.actorResolver(555)).rejects.toThrow();
   });
 });

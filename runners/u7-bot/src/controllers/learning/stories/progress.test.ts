@@ -1,4 +1,4 @@
-import { describe, expect, mock, spyOn, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 import * as Shared from '@u7-scl/core/shared';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
@@ -64,12 +64,10 @@ describe('ProgressStory', () => {
 
   function makeStory(overrides: Partial<LegacyStudent> = {}) {
     const student = { ...mockStudent, ...overrides } as LegacyStudent;
-    const appApiSpy = mock((_name: string, ..._args: unknown[]) => undefined);
 
     const story = new ProgressStory();
     story.init({
       appApi: {
-        execute: appApiSpy,
         dispatch: dmgDispatch({
           getStream: () => streamView(mockStream),
           ...studentAnswers(student, mockStream.contentSnapshot),
@@ -77,7 +75,7 @@ describe('ProgressStory', () => {
       },
       callers: testCallers,
     } as never);
-    return { story, appApiSpy };
+    return { story };
   }
 
   test('progress:{streamId} — экран общего прогресса', async () => {

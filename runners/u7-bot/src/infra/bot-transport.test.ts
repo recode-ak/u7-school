@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { type Logger, mdRaw, setGlobalLogger } from '@u7-scl/core/shared';
+import { mdRaw, setGlobalLogger } from '@u7-scl/core/shared';
 import {
   BotController,
   BotRequestContext,
@@ -13,8 +13,10 @@ import {
 import { GuestCaller } from 'dmg-core';
 import type { Api } from 'grammy';
 import type { BotContext } from '../context';
+import { mockLogger } from '../core/logger.test-kit';
 import type { DialogUiAppPort } from './bot-transport';
 import { BotTransport, parseCommandText } from './bot-transport';
+import { kb, makeCtx, makeUiApp } from './bot-transport.test-kit';
 
 /**
  * Тесты транспорта на контракте «Диалог и Экран»:
@@ -42,50 +44,9 @@ function makeMockBotApi(overrides: Record<string, unknown> = {}): Api {
   } as unknown as Api;
 }
 
-function makeUiApp(overrides: Partial<DialogUiAppPort> = {}): DialogUiAppPort {
-  return {
-    handleCommand: mock(async () => null),
-    handleCallback: mock(async () => ({ screen: { text: mdRaw('Ок') } })),
-    handleMessage: mock(async () => ({ screen: { text: mdRaw('Принято') } })),
-    ...overrides,
-  } as unknown as DialogUiAppPort;
-}
-
-function makeCtx(overrides: Partial<BotContext> = {}): BotContext {
-  return {
-    from: { id: 123, first_name: 'Test', is_bot: false } as BotContext['from'],
-    chat: { id: 123, type: 'private' } as BotContext['chat'],
-    reply: mock(async () => ({ message_id: 99 })),
-    answerCallbackQuery: mock(async () => true),
-    callbackQuery: {
-      data: 'app:menu:open',
-    } as BotContext['callbackQuery'],
-    message: { text: 'hello' } as BotContext['message'],
-    update: { update_id: 1 } as BotContext['update'],
-    ...overrides,
-  } as unknown as BotContext;
-}
-
 /** Контекст со слэш-текстом (единственный вход команд — ФР-4). */
 function makeCommandCtx(text: string): BotContext {
   return makeCtx({ message: { text } as BotContext['message'] });
-}
-
-function makeLogger(): Logger {
-  return {
-    debug: mock(() => {}),
-    info: mock(() => {}),
-    warn: mock(() => {}),
-    error: mock(() => {}),
-    setLogLevel: mock(() => {}),
-    getLogLevel: mock(() => 0),
-    setSourceLevel: mock(() => {}),
-  } as unknown as Logger;
-}
-
-/** Клавиатура одной кнопки. */
-function kb(code: string, text = 'Кнопка') {
-  return { rows: [[{ text, code }]], isMultiple: false };
 }
 
 type ApiMock = ReturnType<typeof mock>;
@@ -773,7 +734,7 @@ describe('BotTransport — рендер-политика', () => {
   });
 
   test('finalize чужого экрана: крошки гасят экран, сам finalize — warn-лог и пропуск', async () => {
-    const logger = makeLogger();
+    const logger = mockLogger();
     setGlobalLogger(logger);
     const { api, transport, pressed } = await startDialog({
       seq: 5,
@@ -882,7 +843,7 @@ describe('BotTransport — рендер-политика', () => {
   });
 
   test('ошибка Telegram API: warn-лог вместо глушения, обработчик не падает', async () => {
-    const logger = makeLogger();
+    const logger = mockLogger();
     setGlobalLogger(logger);
     const api = makeMockBotApi({
       sendMessage: mock(async () => {

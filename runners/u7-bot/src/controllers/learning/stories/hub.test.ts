@@ -84,7 +84,7 @@ describe('HubStory', () => {
 
     const story = new HubStory();
     story.init({
-      appApi: { execute: mock(() => undefined), dispatch },
+      appApi: { dispatch },
       callers: testCallers,
     } as never);
     return { story, dispatch };

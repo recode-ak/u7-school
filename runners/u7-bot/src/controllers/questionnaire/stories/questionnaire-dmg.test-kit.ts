@@ -5,7 +5,7 @@ import {
   type MdText,
   setGlobalLogger,
 } from '@u7-scl/core/shared';
-import type { DialogResponse, UiEventSubscription } from '@u7-scl/core/ui';
+import type { DialogResponse } from '@u7-scl/core/ui';
 import {
   type QuestionnaireActionResponse,
   QuestionnaireEvents,
@@ -159,18 +159,6 @@ export const abandonedEvent = (
     reason: 'timeout',
     ...overrides,
   });
-
-/** Подписка story на событие по FQN Def; нет подписки — ошибка теста. */
-export function subscriptionOf(
-  story: { getEventSubscriptions(): UiEventSubscription[] },
-  eventName: string,
-): UiEventSubscription {
-  const sub = story
-    .getEventSubscriptions()
-    .find((s) => s.def.name === eventName);
-  if (!sub) throw new Error(`Нет подписки на ${eventName}`);
-  return sub;
-}
 
 // ══ Стенд story ══
 

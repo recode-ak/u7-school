@@ -5,6 +5,7 @@ import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef, type UserView } from '@u7-scl/domain/user/contract';
 import { WishEvents } from '@u7-scl/domain/wish/contract';
 import { envelopeOf } from '../../../../tests/helpers/envelope-of';
+import { subscriptionOf } from '../../../core/story.test-kit';
 import {
   courseNotFound,
   dmgDispatch,
@@ -117,18 +118,6 @@ function setupStory(
   return { story, notifies };
 }
 
-/** Достаёт обработчик подписки по имени события */
-function subHandler(
-  story: WishConfirmedStory,
-  eventName: string,
-): (event: never) => Promise<void> {
-  const sub = story
-    .getEventSubscriptions()
-    .find((s) => s.def.name === eventName);
-  if (!sub) throw new Error(`Подписка ${eventName} не найдена`);
-  return sub.handle as (event: never) => Promise<void>;
-}
-
 describe('WishConfirmedStory', () => {
   test('подписана на wish.wish.confirmed (FQN Def)', () => {
     const { story } = setupStory();
@@ -138,7 +127,7 @@ describe('WishConfirmedStory', () => {
 
   test('рассылка всем менторам курса: имя, курс, дедупликация, фильтры', async () => {
     const { story, notifies } = setupStory();
-    const handle = subHandler(story, 'wish.wish.confirmed');
+    const handle = subscriptionOf(story, 'wish.wish.confirmed').handle;
 
     await handle(makeConfirmedEvent() as never);
 
@@ -153,7 +142,7 @@ describe('WishConfirmedStory', () => {
 
   test('курс недоступен → уведомление с uuid курса, рассылка продолжается', async () => {
     const { story, notifies } = setupStory({ course: undefined });
-    const handle = subHandler(story, 'wish.wish.confirmed');
+    const handle = subscriptionOf(story, 'wish.wish.confirmed').handle;
 
     await handle(makeConfirmedEvent() as never);
 
@@ -166,7 +155,7 @@ describe('WishConfirmedStory', () => {
 
   test('пользователь недоступен → молчаливый пропуск', async () => {
     const { story, notifies } = setupStory({ user: undefined });
-    const handle = subHandler(story, 'wish.wish.confirmed');
+    const handle = subscriptionOf(story, 'wish.wish.confirmed').handle;
 
     await handle(makeConfirmedEvent() as never);
 
