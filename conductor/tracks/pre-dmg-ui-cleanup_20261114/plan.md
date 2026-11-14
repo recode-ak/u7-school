@@ -23,7 +23,7 @@
 
 **Критерии:** `check` зелёный (проверка пока старая, на новых путях); в реестрах только открытый долг, у каждой записи владелец или Триггер, есть «последний выданный ID»; grep старых путей и `TR-[0-9]` вне `archive/` и `revision-release_20261112` пуст; число тестов не изменилось.
 
-## Фаза 2: dmg-core — проверка долга и тестовые хелперы (один релиз пакета)
+## Фаза 2: dmg-core — проверка долга и тестовые хелперы (один релиз пакета) [checkpoint: f364593]
 
 - [x] Task: O — из журнала TR (TR-8) в пакет: публикация событий UoW в `finally` — исключение шины подменяет результат, повтор после `VERSION_CONFLICT` повторяет события (ER идемпотентны); при внешней шине — публикация вне `finally`. Проверить по коду пакета, записать в его документы или `debt.md` `dmg-core@ad38a74` — `finally` нет с D-47 (outbox, шина не бросает); остаток — повтор после конфликта не на первом агрегате, дописан в `aggregate-lifecycle.md` и D-56
 - [x] Task: S (`dmg-tech-lead`) — бриф для репо пакета ([slices/dmg-core-debt-testing.md](./slices/dmg-core-debt-testing.md)) `1e34a3d`: сверка форматов `dmg-core/scripts/debt-check.ts` и `checkDebt`/`checkTempMarkers` проекта, API `dmg-core/arch`, набор `dmg-core/testing` (`TEST_TRACE`, `testUuid(n)`, выборки `MemoryRepo` по предикату, временный каталог с автоочисткой), `docs:impact`
@@ -35,7 +35,7 @@
 - [x] Task: O — `scripts/arch-check.ts` вызывает функцию пакета на `conductor/debt/`; своя реализация и её тесты удалены из `scripts/` `fd33b29a`
     - `checkTrMarkers` и его фикстуры (`scripts/domain-check.test.ts`) удалить: журнала TR нет; до этого шага они — единственное исключение grep-критерия Ф1
 - [x] Task: O — ревью фазы `e93c3d22`, `dmg-core@4839648` — `dmg-reviewer`: error нет; 2 warn и 4 info исправлены (пакет — в `main` без тега, уйдёт в следующий релиз)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 **Критерии:** `check` пакета и проекта зелёные; негативный тест на каждое нарушение (ID не в реестре, запись без места, `T-DEBT` на несуществующий файл, ошибка формата `D-DEBT`); в `scripts/` нет своей реализации; пакет проверяет себя той же функцией.
 
