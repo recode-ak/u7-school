@@ -1,0 +1,4 @@
+Верификация Фазы 6 (2026-11-14)
+rollout.md (dmg-data-keeper flash, приёмка Opus), ссылка из migration.md §6; deploy.sh — стоп до бэкапа, запуск по pm2.config.cjs (7ba27050).
+Изменения фазы — документы и deploy.sh; check не менялся (3211 pass).
+Ручная проверка: подтверждена Нурболатом.
