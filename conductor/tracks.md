@@ -8,10 +8,6 @@
 
 ---
 
-- [x] **Track: Ревизия перехода по v0.2.6 и релиз v0.3.0**
-*Link: [./tracks/revision-release_20261112/](./tracks/revision-release_20261112/)*
-*Архив — после выкатки v0.3.0 на prod: [rollout.md](./tracks/revision-release_20261112/rollout.md) нужен по этому пути, находки выкатки дописываются в него; при переносе — ссылки в README, CHANGELOG, `migration.md`, `deploy.sh`, `roadmap/`, `scripts/repo-layout.test.ts`.*
-
 - [?] **Кандидат: снимок контента потока через домен и UoW (F-80)**
 *Разбор: [stream-snapshot-dmg](./roadmap/stream-snapshot-dmg.md) — правила «обогнал шаг» в домен, запись через репозитории. Папки трека нет: это заготовка, не трек.*
 

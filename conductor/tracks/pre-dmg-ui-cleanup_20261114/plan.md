@@ -84,11 +84,13 @@
 - [x] Task: S — `wish`: фейк репозитория, перевод тестов UC/ER, правки по брифу `322f5513`
 - [x] Task: S — `peer-review`: удалить `QuestionnaireModuleDef` из `dependsOn` и `peer-review-question-pool` (код, экспорт, тест), DQS — классы, фейки, перевод тестов, `dmg:sync` `322f5513` — `dmg:sync` к `dependsOn` не относится, граф сверяют `dmg:check`/`arch:check`; 3 теста фильтра фейка — в infra (`summary.md`)
 - [x] Task: O — закрыть C-DEBT-40 (коммит `закрыть C-DEBT-40`), `dmg-reviewer`, CHANGELOG `[0.3.1]`; **стоп: тег и выкатка — с подтверждения Нурболата** `a2673f5f` — тег `v0.3.1` локальный; push и выкатка — после выкатки v0.3.0 (решение Нурболата 2026-11-14)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md) — проверка на prod после выкатки v0.3.1 (Нурболат, 2026-11-14)
 
 **Критерии:** у `peer-review` нет зависимости от `questionnaire`; у обоих модулей `*.repo.fake.ts`, тесты UC/ER без JSON во временном каталоге; C-DEBT-40 нет; e2e бота зелёные, поведение не изменилось; удалённые тесты `question-pool` — в `summary.md`.
 
 ## Фаза 6: Roadmap, документация, архив
+
+> Старт — новая сессия. v0.3.0 и v0.3.1 на prod (2026-11-14); трек ревизии уже в архиве в виде `spec.md` + `summary.md`, уроки выкатки — README, «Деплой».
 
 - [ ] Task: S — таблица по `roadmap.md` и `roadmap/`: упростить / удалить / в долг / во вход dmg-ui; знание уже в `decisions.md`?
 - [ ] Task: O — переписать `roadmap.md` и дочерние как видение (функционал, взаимодействие модулей, опорные `D-NN`, контуры решений); последовательность: `timestamp-data` (v0.3.2), delegation, dmg-ui (+ ui-manifests), dmg-cli

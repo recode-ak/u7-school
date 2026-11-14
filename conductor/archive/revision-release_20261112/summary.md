@@ -32,3 +32,7 @@
 | `bun run test:bot` | 924 pass | **1207 pass**, 0 fail | +283 (e2e Ф5.1–Ф5.2, порции Ф5.3) |
 
 Не хуже базовой линии; удалений тестов — только переезд F-70 (`slices/f5-6-domain.md`).
+
+## Выкатка (2026-11-14)
+
+v0.3.0 на prod ~18:27Z: снимок `before-0.3.0` (protected), миграция `users.json` — `STUDENT` снят у 15 из 433, невалидных записей в `users`/`wish`/`streams`/`students` — 0; smoke пройден. v0.3.1 — следом, `deploy.sh`. Уроки выкатки — README, «Деплой»; подробности — `rollout.md` в git (`7fa932c0`).

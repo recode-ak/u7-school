@@ -17,13 +17,10 @@ const OLD_PATH = /(^|[^A-Za-z0-9_.-])(packages|apps)\/|\/(packages|apps)['"`]/;
 
 /**
  * Не проверяются: история (архив треков, CHANGELOG),
- * данные и внешний контент (скачанные уроки, шаблоны conductor-setup),
- * артефакты ревизии по v0.2.6 — сверка ссылается на её раскладку
- * (`файл:строка` в worktree); после архивации трек уходит в `conductor/archive/`
+ * данные и внешний контент (скачанные уроки, шаблоны conductor-setup).
  */
 const SKIP_DIRS = [
   'conductor/archive/',
-  'conductor/tracks/revision-release_20261112/',
   'CHANGELOG.md',
   'data/',
   'authoring/w3school/output/',

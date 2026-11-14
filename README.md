@@ -171,8 +171,15 @@ bash scripts/deploy.sh X.Y.Z
 продолжиться.
 
 Релиз с миграцией данных — по своему документу выкатки, не скриптом (миграции
-идут между checkout и запуском). v0.3.0 — вручную по
-[rollout.md](./conductor/tracks/revision-release_20261112/rollout.md).
+идут между checkout и запуском). Уроки выкатки v0.3.0:
+- бот останавливается **до** бэкапа: в `meta.txt` снимка — версия для отката;
+- миграция — только при остановленном боте: сухой прогон → сверка → `--write`;
+- `bun run` грузит `.env`/`.env.local`, но не `.env.production` — `DB_DIR`
+  задавай явно;
+- прод стоит в detached HEAD на теге (`deploy.sh` делает `checkout`):
+  `git pull` там не работает, только `checkout` тега;
+- после смены раскладки workspaces в `node_modules` остаются висячие
+  симлинки — лечит `rm -rf node_modules && bun install --frozen-lockfile`.
 
 **Откат:** `bash scripts/deploy.sh <предыдущая версия>`. Если менялась схема
 данных — сначала восстанови бэкап с совпадающей версией в `meta.txt`:
