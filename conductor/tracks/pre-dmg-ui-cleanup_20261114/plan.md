@@ -79,8 +79,8 @@
 
 ## Фаза 5: Ранние модули `wish`, `peer-review` → v0.3.1
 
-- [ ] Task: S (`dmg-tech-lead`) — разбор по образцу `stream`/`course` (модель, UC, DQS/DCS, `dependsOn`, фейки, тесты), бриф с находками
-- [ ] Task: O — крупное — вопросом Нурболату с вариантами; мелкое — сам; решения — `decisions.md`
+- [x] Task: S (`dmg-tech-lead`) — разбор по образцу `stream`/`course` (модель, UC, DQS/DCS, `dependsOn`, фейки, тесты), бриф с находками — [slices/early-modules.md](./slices/early-modules.md)
+- [x] Task: O — крупное — вопросом Нурболату с вариантами; мелкое — сам; решения — `decisions.md` — крупного нет; вертикали модулей — на фейки, вход `wish` не правим (бриф, «Решения»); знания для `decisions.md` нет
 - [ ] Task: S — `wish`: фейк репозитория, перевод тестов UC/ER, правки по брифу
 - [ ] Task: S — `peer-review`: удалить `QuestionnaireModuleDef` из `dependsOn` и `peer-review-question-pool` (код, экспорт, тест), DQS — классы, фейки, перевод тестов, `dmg:sync`
 - [ ] Task: O — закрыть C-DEBT-40 (коммит `закрыть C-DEBT-40`), `dmg-reviewer`, CHANGELOG `[0.3.1]`; **стоп: тег и выкатка — с подтверждения Нурболата**
