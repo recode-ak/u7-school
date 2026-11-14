@@ -2,7 +2,7 @@
 
 **Назначение:** вход в техническую документацию u7-school. Платформа DMG (Domain Manifest Graph) документирована в пакете `dmg-core` — [node_modules/dmg-core/docs/index.md](../../node_modules/dmg-core/docs/index.md). Здесь — проектное: раскладка монорепо, переход, UI, процесс агентов, решения проекта.
 
-> Статус: **переход завершён** (трек `legacy-removal`): все модули на DMG, legacy-кода нет; до релиза — ревизия и чек-лист ([migration.md](./migration.md) §6). Эталон проекта — модуль `wish`; гайды по видам артефактов — в пакете ([guides/](../../node_modules/dmg-core/docs/guides/index.md)), образец — учебный модуль пакета. UI-слой — концепция в [ui-manifests.md](./ui-manifests.md), реализация позже.
+> Статус: **переход на DMG завершён**, релизы v0.3.0–v0.3.1 на prod (2026-11-14); состояние — раздел «Состояние» ниже. Эталон проекта — модуль `wish`; гайды по видам артефактов — в пакете ([guides/](../../node_modules/dmg-core/docs/guides/index.md)), образец — учебный модуль пакета. UI-слой — концепция в [ui-manifests.md](./ui-manifests.md), реализация позже.
 
 ---
 
@@ -16,6 +16,14 @@
 | Входные адаптеры | `runners/*`: бот `u7-bot`, позже web и транспорты; операции — через `appApi` |
 
 Правила с ID и их привязка к пакетам проекта — [rules.md](./rules.md).
+
+## Состояние
+
+- **Модули на Def (DMG):** `wish` (эталон), `peer-review`, `stream`, `questionnaire`, `course`, `user`, `dossier` (пустой модуль без поведения — `modules/dossier/README.md`). Legacy-кода нет; история перехода — `summary.md` трека `legacy-removal` в `conductor/archive/`.
+- **Корень сборки (D-50, D-52):** `@u7-scl/app` (`platform/app`) — `U7App` по `AppEnv`: `AppContext` DMG, модули через `ApiApp` пакета, одна шина, планировщик Job пакета (D-71), резолвер `Caller` (`U7CallerResolver`, субъект `UserAr`); `school/` — конфигурация школы, `infra/` — файловые адаптеры портов пакета. Раннер `u7-bot` и `scripts/` получают приложение из `U7App`.
+- **Граф `dependsOn`** строится из `ModuleDef` (`scripts/domain-arch.ts`); `arch:check` сверяет код с реестром [code.md](../debt/code.md).
+- **Остаток** (владельцы — в [реестрах долга](../debt/README.md) и [roadmap.md](../roadmap.md)): схемы с `F.timestamp` читают ISO-строку и число, пишут число — данные мигрируют лениво до трека `timestamp-data` (комментарии «legacy-запись» в репозиториях — про формат данных); `@u7-scl/core` — только `ui` и `shared`, уходит с `dmg-ui`; `call-uc` — ручной вход до `dmg-cli` (C-DEBT-42).
+- **Деплой и релиз** — README, раздел «Деплой»; релиз с миграцией данных — по своему документу выкатки, каждый шаг с данными — с подтверждения Нурболата.
 
 ## Начни отсюда
 
@@ -50,8 +58,7 @@
 - [naming.md](./naming.md) — генератор в проекте: раскладка `dmg-core.json`, новый прикладной пакет
 - [conductor/debt/](../debt/README.md) — правила и три реестра долга: `code.md` (`C-DEBT-<n>`), `tests.md` (`T-DEBT-<n>`), `product.md` (`D-DEBT-<n>`)
 
-**Переход и процесс**
-- [migration.md](./migration.md) — история перехода, что он исправил, чек-лист релиза
+**Процесс**
 - [agents.md](./agents.md) — роли агентов, контуры качества, связь с conductor, среды Claude Code и pi
 - [process.md](../../node_modules/dmg-core/docs/process.md) — общее видение процесса (уровни постановки, роли, срез, SDD и без него), в пакете `dmg-core`
 - [agent-roles.md](./agent-roles.md) — новые роли агентов: состав, место в процессе, волны внедрения, критерии годности

@@ -82,12 +82,17 @@ description: Правила создания и ведения документ�
 
 ---
 
+### Архив треков:
+- `conductor/archive/<track_id>/` — только `spec.md` и `summary.md`: знание сохраняется, история удаляется (она в git).
+- Технические файлы трека (plan, slices, брифы, inventory, index, metadata) перед архивацией: живое знание (решение и причина, ловушка, неочевидный факт) — в `decisions.md`, гайды, `rules.md` или `conductor/debt/`; затем удалить и снять ссылки на них.
+- Ссылки извне архива — только на `spec.md`/`summary.md`.
+
 ## 5. Индексные файлы
 
 `conductor/index.md` — главный индекс. Он должен содержать ссылки на все styleguide-файлы.
 При добавлении/удалении файла — обнови `index.md`.
 
-Индексы треков (`conductor/tracks/<id>/index.md`) должны указывать на spec.md, plan.md, summary.md.
+Индексы активных треков (`conductor/tracks/<id>/index.md`) должны указывать на spec.md, plan.md, summary.md; в архив `index.md` не попадает.
 
 ---
 

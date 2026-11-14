@@ -10,7 +10,7 @@
 
 **D-21. Мультиагентный процесс на conductor.** Оркестратор + domain-author, api-author, migrator, reviewer. Conductor остаётся памятью проекта, `conductor-implement` получает режим оркестратора. См. [agents.md](./agents.md).
 
-**D-22. Поэтапный переход (strangler).** Старое и новое сосуществуют; перенос и перепроектирование — разные треки. См. [migration.md](./migration.md).
+**D-22. Поэтапный переход (strangler).** Старое и новое сосуществуют; перенос и перепроектирование — разные треки. Ход перехода — `summary.md` трека `legacy-removal` в `conductor/archive/`; завершён 2026-11-12.
 
 **D-23. Одно место для технической документации.** Всё техническое — в `conductor/architecture/` (уточнено D-30: документация платформы DMG — в пакете `dmg-core`, `node_modules/dmg-core/docs/`). Старые `code_styleguides/`, ddd-скиллы и `arch-boundary-design` удалены; паттерны немигрированного кода жили в отдельном документе (удалён с завершением перехода, трек `legacy-removal`).
 

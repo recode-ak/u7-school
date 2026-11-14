@@ -85,7 +85,7 @@
 
 **Допустимые (54):** инварианты/ошибки программиста — 12; UI: переброс базовых ошибок UC с `errors: []` и битых ссылок — 16 (часть ловится локально с `warn`, ERR-07); конфигурация и контент при старте — 11; I/O и повреждённые данные — 2 (`json-file-repo.ts`); CLI `scripts/` — 13.
 
-**Вывод:** критерий [migration.md](../../architecture/migration.md) §5 «нет `throw*` для штатных отказов» выполнен не полностью: 1 штатный отказ в раннере бота и 8 пограничных мест — кандидаты на ревизию.
+**Вывод:** критерий завершения перехода «нет `throw*` для штатных отказов» выполнен не полностью: 1 штатный отказ в раннере бота и 8 пограничных мест — кандидаты на ревизию.
 
 ## Гейт закрытия (Ф7, 2026-11-12)
 
@@ -112,3 +112,48 @@
 | 6 | `~/dev/tools/dmg/dmg-cli` с кодом и README; кандидат в `roadmap` | ✅ | `dmg-cli@848afee`; `roadmap.md` п. 11 |
 | 7 | `check` зелёный; число тестов сверено, удалённые перечислены | ✅ | таблица выше |
 | 8 | аудит `throw*` в `summary.md` | ✅ | раздел «Аудит `throw*`»; критерий `migration.md` §5 по `throw*` — не полностью (1 штатный отказ, 8 пограничных) |
+
+## Приложение: план перехода
+
+Из `conductor/architecture/migration.md` (удалён в треке `pre-dmg-ui-cleanup`, Ф6; принципы — D-22, текущее состояние — `conductor/architecture/index.md`, «Состояние»). Строки 7+ — дальнейшие треки, их последовательность ведёт `roadmap.md`.
+
+### Порядок треков
+
+| # | Трек | Суть | Исполнитель |
+|---|---|---|---|
+| 0 | **agents-setup** | роли агентов для Claude Code и pi из одного источника, хук гейта в обеих средах, режим оркестратора и передача между средами в `conductor-implement` ([agents.md](../../architecture/agents.md) §8) | orchestrator |
+| 1 ✅ | **core-dmg** | `Result`, Def-классы (`XxxDef.define`), `F.*`, `Timestamp`, `ReadonlyAr`, Aggregate v2, UoW, `Caller` и `callers`, `normalize(def)`, `*FromDef`, `appApi.run`, граф-движок, `arch:check`, линт-правила ARC/DOM/CODE | orchestrator + Нурболат |
+| 1б ✅ | **dmg-core-extract** | платформа DMG — отдельный пакет `dmg-core` (npm), развязка от legacy, самодостаточные конфиги, готовность модулей к выносу в сервисы ([D-28](../../architecture/decisions.md)); пакет готов к выносу, сам вынос — по чек-листу в spec трека после релиза. Трек: `conductor/archive/dmg-core-extract_20261020` | orchestrator + Нурболат |
+| 2 ✅ | **generators** | `bun run gen` для всех видов артефактов по [naming.md](../../architecture/naming.md) | orchestrator + Нурболат |
+| 3 ✅ | **domain-package** | трек: `conductor/archive/domain-package_20261020`, реестр долга — [conductor/debt/](../../debt/README.md). Пакет-каркас `@u7-scl/domain` создан в треке generators; наполнить: механически перенести domain-слои снизу вверх: user (+ `User` из app) → course → questionnaire → stream → wish → peer-review → dossier. Старые пути `@u7-scl/<m>/domain` временно реэкспортируют | migrator |
+| 4 ✅ | **golden-wish** | перевести `wish` на Def, `Result`, Policy, entity-правило, UoW, Timestamp. Эталон; по нему написаны гайды артефактов — [guides/](../../../node_modules/dmg-core/docs/guides/index.md). Трек: `conductor/archive/golden-wish_20261020` | orchestrator + Нурболат |
+| 5 ✅ | **peer-review** | первый модуль конвейером агентов; Ф0 — пилот ролей волны 1 ([agent-roles.md](../../architecture/agent-roles.md) §4). Трек: `conductor/archive/peer-review-dmg_20261029` | агенты |
+| 6 ✅ | остальные модули | сверху вниз по графу (§2.1): `stream` → `questionnaire` → `course` → `user`; последний — `legacy-removal` (`dossier` на Def, удаление legacy, `u7-cli` → `dmg-cli`). Трек: `conductor/archive/legacy-removal_20261112` | агенты |
+| 7 | **timestamp-data** | после релиза: пакетная миграция живых данных, удаление «чтения строки» (до выкатки `v0.2.6` пишет ISO — миграция до релиза бессмысленна) | orchestrator, с подтверждением |
+| 8 | **delegation** | агрегат `Delegation` в user, построение `delegate` в транспорте ([caller.md](../../../node_modules/dmg-core/docs/reference/caller.md) §4) | агенты |
+| 9 | **ui-manifests** | Def-манифесты UI, эталонный UI-срез, генерация спецификации экранов; `ui-spec.md` удаляются по мере перевода контроллеров ([ui-manifests.md](../../architecture/ui-manifests.md)) | orchestrator + Нурболат |
+| 10+ | потребители графа | CLI `domain`, `docs:domain`/`docs:tech`, `docs:llm`, http + OPTIONS, mcp; с ними — вычистка JSDoc, дублирующего `label`/`description` Def ([docs-strategy.md](../../architecture/docs-strategy.md) §6) | по roadmap |
+
+Треки 1 и 3 независимы; 1б и 2 — после 1; Фазы 1–3 трека 1б выполняются до 2 и 4, Фазы 4–6 — после 4 (golden-wish). Трек 1 выполнен (кроме выноса, он в 1б): 2 (generators) выполнен — `bun run gen` готов (с Ф5 трека 1б — `dmg-core gen` пакета); 3 (domain-package) выполнен и заархивирован; 4 (golden-wish) выполнен — разблокированы Фазы 4–6 трека 1б и трек 5.
+
+### Порядок модулей: сверху вниз по графу
+
+Модули переводились **от потребителей к поставщикам** (`wish` → `peer-review` → `stream` → `questionnaire` → `course` → `user`, `dossier` — последним): обратных мостов (legacy зовёт Def) не строили. Поставщик, ещё не переведённый, был внешним `ModuleDef` (`external: true`, D-37) с **адаптером над legacy-фасадом** — `UseCaseFromDef` над Def контракта, только перевод входа и ответа; адаптер снимался в треке поставщика. Внешних модулей и адаптеров в коде больше нет.
+
+### Что исправил переход
+
+| Сейчас | Становится |
+|---|---|
+| `_state` мутируется до валидации (`safeUpdate`) | черновик → валидация → фиксация, отказы через `Result` |
+| `new Ar(state)` и для создания, и для восстановления | `Ar.create(): Result<Ar>` и `Ar.restore()` |
+| геттер `state` клонирует на каждое чтение, все читают поля | `snapshot()` только для репозитория, доменный API |
+| domain импортирует api (`commands → api/errors`, Ds бросает UC-ошибки) | контракты и ошибки в domain |
+| события — интерфейсы со строками, payload без схемы | `EventDef.define` со схемой и FQN |
+| `CompleteStudentUc`: `switch` по исходу, снятие роли, выбор текста | `studentAr.complete(outcome)`; роль — ER модуля user; текст — UI |
+| Policy → `boolean`, текст отказа в UC | правила с `denyMessage` в Def |
+| фасад: `try/catch` по `kind`, `as Stream` | `Result` и `ReadonlyAr` |
+| `StreamDs` — запись и UI-чтение вместе | DCS и DQS |
+| `ApiModule`: список UC + union-мета + имя | карта Def → класс, пропуск — ошибка компиляции |
+| ER: сбой гасится `console.error` | `Result`, логирование, журнал сбоев |
+| `getDocType()` у инстансов | статический граф |
+

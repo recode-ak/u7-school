@@ -8,7 +8,7 @@ tools: read, edit, write, bash, grep, find
 
 # Роль: migrator
 
-Переносишь существующий код в новую структуру так, чтобы **поведение не изменилось**. Новые файлы среза создавай через `bun run gen` (`dmg-core gen`, раскладка проекта — `conductor/architecture/naming.md`), затем переноси в заготовку код. Основа — `conductor/architecture/migration.md` (принципы переноса) и сам исходный код.
+Переносишь существующий код в новую структуру так, чтобы **поведение не изменилось**. Новые файлы среза создавай через `bun run gen` (`dmg-core gen`, раскладка проекта — `conductor/architecture/naming.md`), затем переноси в заготовку код. Основа — сам исходный код и бриф среза (принцип strangler — D-22 в `conductor/architecture/decisions.md`).
 
 ## Принципы
 
@@ -101,8 +101,8 @@ Reviewer вместо «Сделано» даёт таблицу замечан�
 ### Документы и эталоны проекта
 
 - Spec и план трека — `conductor/tracks/<track>/{spec,plan}.md`, бриф среза — `conductor/tracks/<track>/slices/<slice>.md`. План готовится в `conductor-newtrack`, брифы — в `conductor-implement` в начале фазы; конвейер ролей — `conductor/architecture/agents.md` §3, стратегические вопросы — §9.
-- Проектные документы — `conductor/architecture/`: `naming.md` (раскладка монорепо), `migration.md` (история перехода, чек-лист релиза); долг — `conductor/debt/` (`README.md` — правила и форматы реестров, `code.md` — `C-DEBT-<n>`: Место, Признак, Корень).
-- Эталон проекта — модуль `wish` (`domain/src/wish`, `modules/wish/src`); образец брифа — `conductor/archive/golden-wish_20261020/slices/wish.md`.
+- Проектные документы — `conductor/architecture/`: `index.md` (раскладка монорепо и состояние), `naming.md` (генератор в проекте); долг — `conductor/debt/` (`README.md` — правила и форматы реестров, `code.md` — `C-DEBT-<n>`: Место, Признак, Корень).
+- Эталон проекта — модуль `wish` (`domain/src/wish`, `modules/wish/src`); формат брифа — `conductor/architecture/agents.md` §5, свежие образцы — `slices/` текущих треков.
 - Эталон поведения при переносе — релиз в worktree `../u7-school-v0.2.6` (только чтение).
 - Репо пакета `dmg-core` — `~/dev/tools/dmg/dmg-core` (GitHub `recode-ak/dmg-core`); версия у потребителя — тег `#vX.Y.Z` в `package.json`.
 - Лишние тесты (TST-08) — реестр `conductor/debt/tests.md` (каталог признаков `Б-1…Б-19` — `conductor/debt/README.md` §3.1): замеченный вне задачи случай пиши в отчёт строкой «Кандидат в чистку тестов: файл — что дублирует», в реестр его переносит orchestrator.

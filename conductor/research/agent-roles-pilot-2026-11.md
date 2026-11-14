@@ -2,11 +2,11 @@
 
 **Цель:** проверить, что шесть ролей пакета `dmg-core` (волна 2, D-62 пакета) проходят конвейер среза на учебном модуле без специфики u7-school (критерий 6, [agent-roles.md](../architecture/agent-roles.md) §5), и сравнить две среды-оркестратора.
 
-Трек: [agent-roles-wave2_20261104](../archive/agent-roles-wave2_20261104/), итог по фазе — `summary.md` трека, раздел «Пилот волны 2».
+Трек: `agent-roles-wave2_20261104` (архив), итог по фазе — `summary.md` трека, раздел «Пилот волны 2».
 
 ## Постановка
 
-- Срез «Отложить задачу до даты» в учебном модуле `todo` пакета: поле отсрочки в `TaskState`, метод Ar, ошибки, событие, UC. Задание одно на обе среды — [pilot-task.md](../archive/agent-roles-wave2_20261104/pilot-task.md).
+- Срез «Отложить задачу до даты» в учебном модуле `todo` пакета: поле отсрочки в `TaskState`, метод Ar, ошибки, событие, UC. Задание одно на обе среды — [agent-roles-pilot-2026-11-task.md](./agent-roles-pilot-2026-11-task.md).
 - Конвейер: `dmg-tech-lead` → `dmg-test-designer` → `dmg-domain-author` → `dmg-api-author` → `check` → `dmg-data-keeper` → `dmg-reviewer`.
 - Временные worktree пакета от `de89c2f` с самоссылкой `node_modules/dmg-core → ..`. Человек и основная сессия по ходу не вмешивались.
 - **Claude Code:** `claude -p`, оркестратор на Sonnet, роли по frontmatter (Opus — `dmg-domain-author`, остальные — Sonnet), `acceptEdits` с узким списком Bash.
