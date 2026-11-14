@@ -19,7 +19,7 @@
 | **documentarian** (пилот) | документы пакета сходятся с кодом: список расхождений после фазы, менявшей документы, и перед релизом пакета | только чтение |
 | ui-author | позже | — |
 
-Роли `dmg-tech-lead`, `dmg-test-designer`, `dmg-data-keeper` прошли пилот и доставляются пакетом (волна 2 [agent-roles.md](./agent-roles.md) §4); `documentarian` — в пилоте. Там же роли постановки (`user`, `product`, `architect`) и др., пилот и критерии переноса в пакет.
+Роли `dmg-tech-lead`, `dmg-test-designer`, `dmg-data-keeper` прошли пилот и доставляются пакетом (волна 2 [agent-roles.md](./agent-roles.md) §4); `documentarian` — в пилоте. Там же роли постановки (`dmg-user`, `dmg-ux`, `dmg-product`, `dmg-architect`) и др., пилот и критерии переноса в пакет. Роли людей и правило имён (`dmg-*` — агент, без префикса — человек) — [team-roles.md](./team-roles.md).
 
 **Автор ≠ ревьюер.** Ревьюер не исправляет код. Каждый агент получает минимум инструментов (dmg-reviewer — без write/edit).
 
@@ -59,7 +59,7 @@ orchestrator: задача среза
 
   | Документ | Отвечает | Готовит черновик | Когда |
   |---|---|---|---|
-  | `spec.md` | что и зачем; доменная модель; устройство | `user` → `ux` → `product` → `architect` (волна 3; до неё — orchestrator с Нурболатом) | `conductor-newtrack` |
+  | `spec.md` | что и зачем; доменная модель; устройство | `dmg-user` → `dmg-ux` → `dmg-product`, по триггеру `dmg-architect` (волна 3; до неё — orchestrator с Нурболатом) | `conductor-newtrack` |
   | `plan.md` | нарезка на срезы (фазы) и шаги по ролям (задачи) | `dmg-tech-lead` по spec и коду | `conductor-newtrack`, после утверждения spec |
   | `slices/<срез>.md` | как именно: файлы, Def, «было → станет», ID правил | `dmg-tech-lead` по spec, plan и текущему коду | `conductor-implement`, в начале фазы |
 
