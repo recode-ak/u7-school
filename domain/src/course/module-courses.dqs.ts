@@ -6,7 +6,7 @@ import type { CourseAr } from './course/course.ar';
  * `firstIncluding` — любой статус (`getCourseByModule`, `getModulePrerequisite`),
  * `firstPublishedIncluding` — только опубликованные (`getModulePlace`,
  * `getModuleEnrollment`); порядок массива — порядок файла, он часть поведения.
- * Правило — долг в реестре, см. `conductor/architecture/debt.md`. Только читает.
+ * Правило — долг в реестре, см. `conductor/debt/code.md`. Только читает.
  */
 export class ModuleCoursesDqs {
   constructor(private readonly courses: readonly ReadonlyAr<CourseAr>[]) {}

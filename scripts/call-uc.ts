@@ -1,6 +1,6 @@
 /**
  * call-uc — утилита для вызова UseCase из командной строки.
- * Ручной вход до готовности `dmg-cli` (долг — `conductor/architecture/debt.md`).
+ * Ручной вход до готовности `dmg-cli` (долг — `conductor/debt/code.md`).
  *
  * Собирает то же приложение, что и бот — корень сборки `U7App`
  * (`@u7-scl/app`, D-50) над `data/`, — но без Telegram-интерфейса.

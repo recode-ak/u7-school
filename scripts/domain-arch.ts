@@ -1,7 +1,7 @@
 /**
  * Данные проверок домена для `bun run arch:check`: модули домена по Def,
  * приложение домена для `ArchChecker` и путь к реестру долга
- * `conductor/architecture/debt.md`.
+ * `conductor/debt/code.md`.
  */
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';

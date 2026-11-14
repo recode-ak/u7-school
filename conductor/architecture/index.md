@@ -48,10 +48,10 @@
 - [decisions.md](./decisions.md) — решения проекта D-NN (платформенные — [в пакете](../../node_modules/dmg-core/docs/decisions.md))
 - [rules.md](./rules.md) — как каталог правил пакета применяется в проекте
 - [naming.md](./naming.md) — генератор в проекте: раскладка `dmg-core.json`, новый прикладной пакет
+- [conductor/debt/](../debt/README.md) — правила и три реестра долга: `code.md` (`DEBT-<n>`), `tests.md` (`T-DEBT-<n>`), `product.md` (`D-DEBT-<n>`)
 
 **Переход и процесс**
 - [migration.md](./migration.md) — история перехода, что он исправил, чек-лист релиза
-- [debt.md](./debt.md) — реестр долга `DEBT-<n>` и тактических решений `TR-<n>`
 - [agents.md](./agents.md) — роли агентов, контуры качества, связь с conductor, среды Claude Code и pi
 - [process.md](../../node_modules/dmg-core/docs/process.md) — общее видение процесса (уровни постановки, роли, срез, SDD и без него), в пакете `dmg-core`
 - [agent-roles.md](./agent-roles.md) — новые роли агентов: состав, место в процессе, волны внедрения, критерии годности

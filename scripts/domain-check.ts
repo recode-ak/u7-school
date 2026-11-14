@@ -4,7 +4,7 @@
  *   bun run arch:check
  *
  * Чистые функции над файлами в памяти; чтение диска — в `readDomainFiles`.
- * Долг: allowlist `conductor/architecture/debt.md`; в коде `DEBT-<n>` — только в `biome-ignore`;
+ * Долг: allowlist `conductor/debt/code.md`; в коде `DEBT-<n>` — только в `biome-ignore`;
  * маркеры временности («Временное решение», «ВРЕМЕННЫЙ», «Уходит с миграцией») — только в Месте открытой записи.
  */
 import { posix } from 'node:path';
@@ -240,7 +240,7 @@ const DEBT_ID = /\bDEBT-\d+\b/g;
 // Фразы, а не слово «временный»; `\b` для кириллицы не работает, «ВРЕМЕННЫЙ» — только заглавными.
 const TEMP_MARKERS = [/временное решение|уходит с миграцией/gi, /ВРЕМЕННЫЙ/g];
 
-/** Реестр долга `debt.md` как allowlist: записи и их сверка с кодом. */
+/** Реестр долга `conductor/debt/code.md` как allowlist: записи и их сверка с кодом. */
 class DebtRegistry {
   private constructor(
     private readonly entries: ReadonlyMap<string, DebtEntry>,
@@ -377,7 +377,7 @@ class DebtRegistry {
         for (const [id] of line.matchAll(DEBT_ID)) {
           const at = `DEBT: ${f.path}:${i + 1}: ${id}`;
           const e = this.entries.get(id);
-          if (!e) out.push(`${at} — нет записи в debt.md`);
+          if (!e) out.push(`${at} — нет записи в conductor/debt/code.md`);
           else if (e.mergedInto)
             out.push(`${at} закрыт (слит в ${e.mergedInto})`);
           else if (mode === 'strict' && !line.includes('biome-ignore'))
@@ -390,7 +390,7 @@ class DebtRegistry {
   /**
    * Маркер временности допустим только в файле из Места открытой записи.
    * Область — исходники пакетов (`<пакет>/src`, `domain/src`) по правилу
-   * `debt.md`: в `scripts/` те же слова описывают правила и шаблоны проверки.
+   * `conductor/debt/code.md`: в `scripts/` те же слова описывают правила и шаблоны проверки.
    */
   private checkTempMarkers(code: readonly DomainFile[]): string[] {
     const places = [...this.entries.values()]
@@ -404,7 +404,7 @@ class DebtRegistry {
         for (const re of TEMP_MARKERS)
           for (const [phrase] of line.matchAll(re))
             out.push(
-              `DEBT: ${f.path}:${i + 1}: маркер временности «${phrase}» вне Места открытой записи — заведи запись в debt.md или убери комментарий`,
+              `DEBT: ${f.path}:${i + 1}: маркер временности «${phrase}» вне Места открытой записи — заведи запись в conductor/debt/code.md или убери комментарий`,
             );
       });
     }
@@ -413,7 +413,7 @@ class DebtRegistry {
 }
 
 /**
- * Сверка кода с реестром долга `debt.md` (allowlist): у каждой открытой
+ * Сверка кода с реестром долга `conductor/debt/code.md` (allowlist): у каждой открытой
  * записи признак есть в каждом glob Места и нет в Корне вне Места;
  * `DEBT-<n>` в коде — только в `biome-ignore` (`strict`).
  */
@@ -428,7 +428,7 @@ export function checkDebt(input: {
 const TR_ID = /\bTR-\d+\b/g;
 
 /**
- * Записи реестра `TR-<n>` живут в `debt.md` §6: в коде ссылка устаревает
+ * Журнал TR закрыт, маркеров `TR-<n>` в коде быть не должно: ссылка устаревает
  * вместе с решением, которое она объясняла.
  */
 export function checkTrMarkers(code: readonly DomainFile[]): string[] {

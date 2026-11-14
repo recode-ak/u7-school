@@ -1,6 +1,6 @@
 # Снимок контента потока через домен — заготовка
 
-**Назначение:** перевод `scripts/update-stream-snapshot.ts` и `scripts/stream-snapshot-sync.ts` на домен `stream` и UoW. Источник — F-80 ревизии (`revision-release_20261112`, TR-45); решение Нурболата 2026-11-14 — кандидат после релиза.
+**Назначение:** перевод `scripts/update-stream-snapshot.ts` и `scripts/stream-snapshot-sync.ts` на домен `stream` и UoW. Источник — F-80 ревизии (`revision-release_20261112`); решение Нурболата 2026-11-14 — кандидат после релиза.
 
 ---
 

@@ -19,12 +19,12 @@
 | ID | В проекте |
 |---|---|
 | ARC-01 | платформа — `dmg-core` и `@u7-scl/core` (только `ui` и `shared`, кандидат на удаление при `dmg-ui`) |
-| ARC-02 | домен — `@u7-scl/domain` (`domain`); импорт `@u7-scl/core` — только в Месте открытой записи долга ([debt.md](./debt.md), поля Место/Признак/Корень), без маркера в коде |
-| ARC-04 | контракт модуля — `@u7-scl/domain/<m>/contract` (публичны только `contract` и `testing`, TR-63) |
+| ARC-02 | домен — `@u7-scl/domain` (`domain`); импорт `@u7-scl/core` — только в Месте открытой записи долга ([code.md](../debt/code.md), поля Место/Признак/Корень), без маркера в коде |
+| ARC-04 | контракт модуля — `@u7-scl/domain/<m>/contract` (публичны только `contract` и `testing`) |
 | ARC-06 | прикладной пакет модуля — `modules/<m>`; чужие пакеты — lint `warn` по модулю; корень сборки и раннеры — `arch:check` для всех пакетов (`checkModuleImports`, D-53) |
-| ARC-07 | приложение (корень сборки) — `@u7-scl/app` (`platform/app/src`, `DomainArch.root`): домен — только `contract`, прикладной пакет модуля — только вход (`index`) (TR-35). Lint дублирует для раннего сигнала: маска прикладных пакетов в `biome.json` пополняется с новым модулем |
+| ARC-07 | приложение (корень сборки) — `@u7-scl/app` (`platform/app/src`, `DomainArch.root`): домен — только `contract`, прикладной пакет модуля — только вход (`index`). Lint дублирует для раннего сигнала: маска прикладных пакетов в `biome.json` пополняется с новым модулем |
 | ARC-08 | входные адаптеры — `runners/*` (`src`, `DomainArch.runners` — все каталоги `runners/*`), вызов операций — через приложение; тесты вне `src` не проверяются |
-| ARC-09 | окружение читает только `runners/*/src/main.ts` (lint на `domain`, `platform/*/src`, `modules/*/src`, `runners/*/src`); `authoring/*` и `scripts/` — отдельные утилиты, вне правила (TR-36); данные школы — через резолвер (`resolve.school`) |
+| ARC-09 | окружение читает только `runners/*/src/main.ts` (lint на `domain`, `platform/*/src`, `modules/*/src`, `runners/*/src`); `authoring/*` и `scripts/` — отдельные утилиты, вне правила; данные школы — через резолвер (`resolve.school`) |
 | ARC-10 | код приложения — `@u7-scl/*` (отсекает белый список импортов в `biome.json` пакета) |
 | TST-06 | `bun run check` и `bun run arch:check` |
 

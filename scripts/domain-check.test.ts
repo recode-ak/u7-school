@@ -335,7 +335,7 @@ describe('checkContractImports: ARC-04 (D-45)', () => {
   });
 });
 
-describe('checkDebt: allowlist долгов в debt.md', () => {
+describe('checkDebt: allowlist долгов в conductor/debt/code.md', () => {
   const CORE = "import { A } from '@u7-scl/core';";
   const ISO =
     '  // biome-ignore lint/plugin: DEBT-5 — дата\n  at: v.isoDateTime(),';
@@ -571,7 +571,7 @@ describe('checkDebt: allowlist долгов в debt.md', () => {
       expect(
         run(bare('// DEBT-3\nexport {};'), undefined, 'transition'),
       ).toEqual([
-        'DEBT: modules/user/src/c.ts:1: DEBT-3 — нет записи в debt.md',
+        'DEBT: modules/user/src/c.ts:1: DEBT-3 — нет записи в conductor/debt/code.md',
       ]);
     });
 
@@ -583,7 +583,7 @@ describe('checkDebt: allowlist долгов в debt.md', () => {
 
     it('biome-ignore с неизвестным ID — ошибка', () => {
       expect(run(bare('// biome-ignore lint/plugin: DEBT-99 — x'))).toEqual([
-        'DEBT: modules/user/src/c.ts:1: DEBT-99 — нет записи в debt.md',
+        'DEBT: modules/user/src/c.ts:1: DEBT-99 — нет записи в conductor/debt/code.md',
       ]);
     });
 
@@ -625,7 +625,7 @@ describe('checkDebt: маркеры временности вне Места о�
       mode: 'strict',
     }).filter((e) => e.includes('маркер'));
   const err = (path: string, line: number, phrase: string) =>
-    `DEBT: ${path}:${line}: маркер временности «${phrase}» вне Места открытой записи — заведи запись в debt.md или убери комментарий`;
+    `DEBT: ${path}:${line}: маркер временности «${phrase}» вне Места открытой записи — заведи запись в conductor/debt/code.md или убери комментарий`;
 
   it.each([
     ['Временное решение', '// Временное решение: пока так'],
@@ -681,7 +681,7 @@ describe('checkDebt: маркеры временности вне Места о�
   });
 });
 
-describe('checkTrMarkers: записи TR-<n> живут в debt.md, не в коде', () => {
+describe('checkTrMarkers: маркеров TR-<n> в коде быть не должно', () => {
   it('TR-<n> в комментарии, JSDoc и имени теста — ошибка с путём и строкой', () => {
     const code = [
       file('modules/user/src/a.ts', '// TR-11: адаптер\nconst x = 1;'),

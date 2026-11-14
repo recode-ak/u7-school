@@ -69,4 +69,4 @@
 
 - Def несут документацию в `label`/`description` — JSDoc их не дублирует.
 - Комментарий объясняет *почему*, а не *что*. На русском.
-- Что допустимо в комментарии и предел JSDoc — CODE-04 пакета (`node_modules/dmg-core/docs/reference/rules.md`, решение D-59 пакета); действует и в u7-school. Маркеры `DEBT-<n>` — по [debt.md](./debt.md).
+- Что допустимо в комментарии и предел JSDoc — CODE-04 пакета (`node_modules/dmg-core/docs/reference/rules.md`, решение D-59 пакета); действует и в u7-school. Маркеры `DEBT-<n>` — по [conductor/debt/](../debt/README.md).

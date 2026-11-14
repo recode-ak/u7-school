@@ -79,7 +79,7 @@ describe('runDebtCheck: реестр долга как allowlist', () => {
       await put('domain/src/course/c.ts', '// DEBT-9\n');
       expect(await runDebtCheck(root)).toEqual([
         'DEBT: DEBT-1: долг без записи — domain/src/course/b.ts:1',
-        'DEBT: domain/src/course/c.ts:1: DEBT-9 — нет записи в debt.md',
+        'DEBT: domain/src/course/c.ts:1: DEBT-9 — нет записи в conductor/debt/code.md',
         'DEBT: domain/src/user/a.ts:2: DEBT-1 вне biome-ignore',
       ]);
     } finally {
