@@ -23,5 +23,5 @@
 
 ---
 
-- [ ] **Track: Уборка перед dmg-ui — долг, тестовые хелперы, ранние модули, roadmap и архив**
+- [~] **Track: Уборка перед dmg-ui — долг, тестовые хелперы, ранние модули, roadmap и архив**
 *Link: [./tracks/pre-dmg-ui-cleanup_20261114/](./tracks/pre-dmg-ui-cleanup_20261114/)*

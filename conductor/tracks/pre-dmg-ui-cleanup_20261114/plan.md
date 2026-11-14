@@ -6,8 +6,8 @@
 
 ## Фаза 0: Базовая линия
 
-- [ ] Task: Прогнать `CI=true bun run check` и `bun run test:bot`, записать числа в `summary.md`
-- [ ] Task: Зафиксировать базовые счётчики повторов в тестах (`Trace.fromRequest({ requestId` 46, `mkdtemp` 50, `repoWith` 11, `press` 11, `buttonsOf`/`findBtn` 9, `waitMessageFor`/`waitUntil` 11, `makeLogger` 5, `subHandler` 4, `makeUiApp` 5) — команды grep и числа в `summary.md`
+- [x] Task: Прогнать `CI=true bun run check` и `bun run test:bot`, записать числа в `summary.md`
+- [x] Task: Зафиксировать базовые счётчики повторов в тестах (`Trace.fromRequest({ requestId` 46, `mkdtemp` 50, `repoWith` 11, `press` 11, `buttonsOf`/`findBtn` 9, `waitMessageFor`/`waitUntil` 11, `makeLogger` 5, `subHandler` 4, `makeUiApp` 5) — команды grep и числа в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 ## Фаза 1: Реестры долга (`conductor/debt/`)
