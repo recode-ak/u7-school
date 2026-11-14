@@ -188,7 +188,7 @@
     - Итог: `check` 3211 pass (Ф0 — 2899), `test:bot` 1207 (Ф0 — 924), 0 fail; страж `repo-layout` поймал старый путь в `migration.md` — исправлено
 - [x] Task: **Остановка — подтверждение Нурболата** на push (1299 коммитов + тег); после «да» — `bash scripts/release.sh 0.3.0 "<описание>"` `004b6489`
     - Итог (2026-11-14): `release.sh 0.3.0` после «да» Нурболата — 1377 коммитов и тег `v0.3.0` в `origin`; до этого `dmg-core` переведён на git-тег `v0.1.1` (D-61, `d16610c4`) — `file:` на prod не ставился бы
-- [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 7:**
 - `## [0.3.0]` в `CHANGELOG.md`.
