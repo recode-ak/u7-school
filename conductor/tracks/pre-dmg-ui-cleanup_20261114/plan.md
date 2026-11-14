@@ -105,8 +105,8 @@
 
 ## Фаза 7: Вход dmg-ui и финал
 
-- [ ] Task: O — документ-вход dmg-ui (ФР-7); ссылка из `roadmap.md`
-- [ ] Task: O — гейт закрытия (сравнение с Ф0), `summary.md` (дубли TST-08, расход токенов), `tracks.md`
+- [x] Task: O — документ-вход dmg-ui (ФР-7); ссылка из `roadmap.md` `0ffbcb42` — ссылка из `roadmap.md` п. 4 уже была (Ф6)
+- [x] Task: O — гейт закрытия (сравнение с Ф0), `summary.md` (дубли TST-08, расход токенов), `tracks.md` `eb214c12` — гейт нашёл хвост Ф4/Ф5 (`'r-1'` и `mkdtemp` в `wish`/`peer-review`), исправлен; `tracks.md` — после проверки Ф7
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
 
 **Критерии:** документ есть и на него ссылается `roadmap.md`; `check` зелёный; все критерии приёмки spec закрыты.
