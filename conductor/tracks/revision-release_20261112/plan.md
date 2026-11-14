@@ -182,9 +182,10 @@
 
 ## Фаза 7: Релиз (ФР-7)
 
-- [ ] Task: `[0.3.0]` в `CHANGELOG.md`: свести `[Unreleased]` и итоги треков перехода (`summary.md` архива), убрать `runners/u7-cli`; коммит
-- [ ] Task: Актуализировать `tracks.md` (кандидаты `[?]`), `migration.md` («Дальше» → итог ревизии), `roadmap.md`
-- [ ] Task: Финальный гейт: `bun run check`, сравнение с базовой линией Ф0
+- [x] Task: `[0.3.0]` в `CHANGELOG.md`: свести `[Unreleased]` и итоги треков перехода (`summary.md` архива), убрать `runners/u7-cli`; коммит `e0423567`
+- [x] Task: Актуализировать `tracks.md` (кандидаты `[?]`), `migration.md` («Дальше» → итог ревизии), `roadmap.md` `9a3e2617`
+- [x] Task: Финальный гейт: `bun run check`, сравнение с базовой линией Ф0
+    - Итог: `check` 3211 pass (Ф0 — 2899), `test:bot` 1207 (Ф0 — 924), 0 fail; страж `repo-layout` поймал старый путь в `migration.md` — исправлено
 - [ ] Task: **Остановка — подтверждение Нурболата** на push (1299 коммитов + тег); после «да» — `bash scripts/release.sh 0.3.0 "<описание>"`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
 
