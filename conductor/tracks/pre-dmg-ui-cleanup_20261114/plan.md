@@ -32,7 +32,7 @@
     - [x] Тесты (red) → запуск → реализация (green)
 - [x] Task: S (`documentarian`) — документы пакета по `docs:impact` `dmg-core@b57c858`, `7eb4c7b` — 4 правки аудита; `caller`, `errors`, `process` сверены (`docs:covers --strict` зелёный)
 - [x] Task: O — коммит пакета; **стоп: тег и push — с подтверждения Нурболата**; смена `#vX.Y.Z` в 11 `package.json`, `bun install` `3aebabee` — теги v0.2.0, v0.2.1 (D-75 занят в общей нумерации → D-84); bun кеширует клон пакета без новых тегов — fetch тегов в `~/.bun/install/cache/<hash>.git`
-- [ ] Task: O — `scripts/arch-check.ts` вызывает функцию пакета на `conductor/debt/`; своя реализация и её тесты удалены из `scripts/`
+- [x] Task: O — `scripts/arch-check.ts` вызывает функцию пакета на `conductor/debt/`; своя реализация и её тесты удалены из `scripts/` `fd33b29a`
     - `checkTrMarkers` и его фикстуры (`scripts/domain-check.test.ts`) удалить: журнала TR нет; до этого шага они — единственное исключение grep-критерия Ф1
 - [ ] Task: O — ревью фазы
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
