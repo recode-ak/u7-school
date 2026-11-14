@@ -1,0 +1,4 @@
+Задача Ф5.3 порция 4: F-48, F-49, F-4A…F-4E.
+F-48 progress.ts now(); F-49 экранирование /log_level (app-controller.ts, main-menu.e2e P1-26); F-4A unit controller.stream-group.test.ts; F-4B MessageUpdate в platform/core/src/ui/bot/types.ts и сигнатурах handleMessage (ui-app, bot-controller, bot-ui-story, bot-transport, 5 stories); F-4C StudentRules.streamEnrolling + StudentErrors.ENROLLMENT_CLOSED (domain/src/stream/student, modules/stream тест, platform/app тест, stream-enroll.e2e P3-63); F-4D bot-controller.ts #withNotices для handleError (ui-errors.e2e P8-32); F-4E platform/core/src/ui/ui-event-context.ts, UiApp.subscribeEvents, requestTrace в dispatch-uc.ts.
+Документы: debt.md (TR-50 (9), DEBT-41), scenarios.md, бриф f5-3-bot.md.
+check: 3213 pass, 0 skip, 0 fail.
