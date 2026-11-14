@@ -677,6 +677,12 @@
       "plugins": [
         "./node_modules/dmg-core/biome-plugins/api-07-no-call-in-load.grit"
       ]
+    },
+    {
+      "includes": ["domain/**", "modules/**", "platform/**", "runners/**"],
+      "plugins": [
+        "./node_modules/dmg-core/biome-plugins/api-05-step-methods.grit"
+      ]
     }
   ]
 }
