@@ -739,7 +739,7 @@ describe('U7BotUiApp — актор не найден (actorResolver → null)',
     const uiApp = makeGhostUiApp(new SpyController());
 
     const response = await uiApp.handleMessage(
-      { type: 'message', text: 'привет', telegramId: 404 } as never,
+      { type: 'text', text: 'привет', telegramId: 404 } as never,
       404,
       { dialog: { path: 'app/menu', seq: 1 } } as BotSession,
     );

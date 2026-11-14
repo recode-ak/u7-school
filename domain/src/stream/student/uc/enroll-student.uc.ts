@@ -9,9 +9,11 @@ import { StudentRules } from '../student.rules';
 
 /**
  * Зачисление на поток. Студент — сам вызывающий (`userId` не во входе):
- * записать другого нельзя, поэтому `allowAll`. Порядок отказов — как в
- * legacy (`StudentRules`): кодовое слово (через контекст загрузки) → живая
- * запись → допуск к модулю → шаги. Статус потока не проверяется.
+ * записать другого нельзя, поэтому `allowAll`. Порядок отказов
+ * (`StudentRules`): набор открыт → кодовое слово (через контекст загрузки) →
+ * живая запись → допуск к модулю → шаги; всё после набора — как в legacy.
+ * Закрытому набору (поток не в
+ * наборе) кодовое слово не важно, поэтому его правило первое.
  */
 export const EnrollStudentUcDef = UseCaseDef.define({
   name: 'enrollStudent',
@@ -23,6 +25,7 @@ export const EnrollStudentUcDef = UseCaseDef.define({
   callers: ['user'],
   policy: allowAll,
   rules: [
+    StudentRules.rules.streamEnrolling,
     StudentRules.rules.enrollmentKeyAccepted,
     StudentRules.rules.notStudyingElsewhere,
     StudentRules.rules.prerequisitePassed,
@@ -39,6 +42,7 @@ export const EnrollStudentUcDef = UseCaseDef.define({
   output: v.object({ studentId: F.uuid('записи студента') }),
   errors: [
     StreamErrors.NOT_FOUND,
+    StudentErrors.ENROLLMENT_CLOSED,
     StudentErrors.WRONG_ENROLLMENT_KEY,
     StudentErrors.ALREADY_STUDYING,
     StudentErrors.PREREQUISITE_NOT_PASSED,

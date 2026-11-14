@@ -95,3 +95,35 @@ DOM-01, DOM-18 (D-72), ARC-08, API-02, ERR-01, TST-08; `node_modules/dmg-core/do
 - F-47: `courses/ui-spec.md` — таблица «Число этапов курса» (0 / 1 / ≥2) по `course-nav-resolver.ts`.
 - `dmg-reviewer` не вызывался: diff вне домена и модулей. `dmg-data-keeper` — не нужен (имя «друг» — допустимое значение схемы).
 - `bun run check`: 3196 pass, 3 skip, 0 fail.
+
+## Порция 4: F-48, F-49, F-4A…F-4E
+
+F-48, F-49, F-4A, F-4D, F-4E — в сессии orchestrator (S, бот-раннер и `platform/core`). F-4C (домен) — `dmg-domain-author`, ниже. F-4B — решение Нурболата (тип `handleMessage` в `platform/core`).
+
+### F-4C: зачисление только в наборе
+
+**Границы:** `domain/src/stream/student/{student.rules.ts, student.errors.ts, uc/enroll-student.uc.ts}` и их тесты; при нужде — `modules/stream/src/student/uc/enroll-student.uc.ts` (контекст правил уже несёт `stream`); снять `test.skip` P3-63 в `runners/u7-bot/tests/e2e/stream-enroll.e2e.test.ts` (комментарий «находка» — заменить строкой «P3-63 (F-4C): …»). Нельзя: `conductor/`, `data/`, `node_modules/`, `dmg-core`, `StreamErrors`, прочие модули; коммиты.
+
+**Было → станет.** Было: `enrollStudent` статус потока не проверяет (шапка Def: «Статус потока не проверяется») — устаревшая кнопка или адрес вручную зачисляют в поток в обучении / завершённый / в архиве. Станет:
+- правило `StudentRules.rules.streamEnrolling` — `stream.isEnrolling()` (вопрос `StreamAr` из порции 1), **первым** в `rules` UC (до кодового слова: закрытому набору слово не важно);
+- ошибка `StudentErrors.ENROLLMENT_CLOSED`, `kind: 'conflict'`, `label` «Набор на поток закрыт.» (`StreamErrors.NOT_ENROLLING` не годится: его текст — о запуске); добавить в `errors` UC; шапку Def поправить;
+- бот: отказ — `warn` через имеющийся путь отказа UC в `view-stream.story` (проверь, что текст ошибки доходит до пользователя; иначе — эскалация, не правь story сверх нужного).
+
+**Шаги (одним вызовом, TDD):** red — unit правила (по статусам потока: `enrollment` — ok, `active`/`completed`/`archived` — `ENROLLMENT_CLOSED`), unit UC (порядок: закрытый набор раньше кодового слова), снятый `skip` P3-63; запуск, убедиться в падении → green → `bun run scripts/agent-gate.ts`.
+
+**ID:** DOM-01, DOM-18, ERR-01, TST-08.
+
+**Приёмка:** P3-63 зелёный без `skip`; `bun test domain/src/stream` и e2e `stream-enroll` — зелёные.
+
+### Порция 4 · отчёты
+
+- F-48: `progress.ts` — `now()` вместо `Date.now()`. Red → green: unit «дни в обучении от `now()`».
+- F-49: `#logLevelResponse` — реплика о неизвестном уровне целиком в интерполяции `md` (экранирование); `skip` P1-26 снят.
+- F-4A: unit `controller.stream-group.test.ts` — сбой `findStreamByTelegramGroup` / `getStreamMembers` / `getUser` (исключение и отказ UC) → один `warn`, `stop`, ментору ничего; прежний тест «исключение при обработке» поглощён (TST-08, в срезе). Попутно: обработчик событий группы в unit — вне `BotRequestContext`, `warn` ERR-07 на каждый вызов (в проде транспорт ставит контекст).
+- F-4B (Нурболат, 2026-11-14): вход `handleMessage` — `MessageUpdate = TextMessage | DocumentMessage | PhotoMessage | VoiceMessage` (`platform/core/src/ui/bot/types.ts`), без команд и кнопок; дискриминатор текста `'message'` → `'text'`. Проверки «ждём текст» в `view-stream`, `create-stream`, `fill` — по контракту (транспорт пока отдаёт только текст). Ветки «ввод без контекста» (P3-61, P7-41) — страховка от битой/старой сессии, оставлены; `scenarios.md` поправлен. Тест wizard на нетекстовый ввод — на `document` (было `callback`, вне контракта).
+- F-4C — `dmg-domain-author` (Sonnet): правило `StudentRules.rules.streamEnrolling` (`stream.isEnrolling()`) первым в `enrollStudent`, ошибка `StudentErrors.ENROLLMENT_CLOSED`; `skip` P3-63 снят; удалён unit «статус active зачислению не мешает» (закреплял дефект). Вне границ: `platform/app/tests/u7-app.student.test.ts` — зачисление перенесено на поток в наборе (принято orchestrator).
+- F-4D: `BotController.handleCommand` — ответ `handleError` через `#withNotices`; `skip` P8-32 снят.
+- F-4E: `UiEventContext` (`platform/core/src/ui/ui-event-context.ts`, `AsyncLocalStorage`) — `UiApp.subscribeEvents` исполняет обработчик в контексте события; `requestTrace` в нём — `Trace.fromEvent` (приоритетнее апдейта). Отсев повторов D-56 следа события не касается (только `cause: request`). TR-50 (9) закрыто; `UiEventContext` — в «Место» DEBT-41 (тот же долг неявного контекста).
+- Ревью F-4C — `dmg-reviewer` (Opus): блокеров нет; minor исправлены автором — дубль матрицы статусов в unit UC (TST-08, в срезе: один сквозной отказ + тест порядка), комментарии «порядок как в legacy» (набор — новое правило), в P3-63 проверка текста «Набор на поток закрыт». Вопрос принят orchestrator как есть: у закрытого потока с кодовым словом бот сначала спрашивает слово, отказ — после ввода (кнопки на такой поток нет).
+- Прочие пункты порции (`platform/core`, бот-раннер) — без `dmg-reviewer`: вне домена и модулей. `dmg-data-keeper` — не нужен: форматы записей не менялись (`BotUpdate` не хранится).
+- `bun run check`: 3213 pass, 0 skip, 0 fail.

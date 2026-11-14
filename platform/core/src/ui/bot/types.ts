@@ -183,15 +183,44 @@ export interface BotSession {
 }
 
 /**
- * Данные сессии пользователя
+ * Апдейт бота: команда, нажатие кнопки или сообщение.
  */
 export type BotUpdate =
   | CommandUpdate
-  | { type: 'message'; text: string; telegramId: number }
-  | { type: 'callback'; data: string; telegramId: number; messageId: number }
-  | { type: 'document'; fileId: string; telegramId: number }
-  | { type: 'photo'; fileId: string; telegramId: number }
-  | { type: 'voice'; fileId: string; telegramId: number };
+  | MessageUpdate
+  | { type: 'callback'; data: string; telegramId: number; messageId: number };
+
+/** Текстовое сообщение. */
+export type TextMessage = { type: 'text'; text: string; telegramId: number };
+/** Документ. */
+export type DocumentMessage = {
+  type: 'document';
+  fileId: string;
+  telegramId: number;
+};
+/** Фото. */
+export type PhotoMessage = {
+  type: 'photo';
+  fileId: string;
+  telegramId: number;
+};
+/** Голосовое сообщение. */
+export type VoiceMessage = {
+  type: 'voice';
+  fileId: string;
+  telegramId: number;
+};
+
+/**
+ * Сообщение пользователя при ожидающем вводе — вход `handleMessage`. Сейчас
+ * транспорт отдаёт только `text` (бот подписан на `message:text`); прочие виды —
+ * контракт на вырост: story, ждущая текст, отвечает на них переспросом.
+ */
+export type MessageUpdate =
+  | TextMessage
+  | DocumentMessage
+  | PhotoMessage
+  | VoiceMessage;
 
 /**
  * Конверт слэш-команды

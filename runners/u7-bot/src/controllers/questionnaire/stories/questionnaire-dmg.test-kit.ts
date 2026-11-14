@@ -284,7 +284,8 @@ type WarnCall = [string, string, Record<string, unknown>];
 
 /**
  * Вызовы `warn` story по источнику и части текста. Отсекает штатный `warn`
- * `dispatchUc` о `requestId`: подписки событий работают вне `BotRequestContext`.
+ * `dispatchUc` о `requestId`: unit зовёт обработчик подписки напрямую — вне
+ * `UiEventContext` и `BotRequestContext`.
  */
 export function warnsOf(
   logger: MockLogger,

@@ -15,6 +15,16 @@ export type EnrollStudentCtx = {
   readonly prerequisite: ModulePrerequisite;
 };
 
+/** Поток в наборе: в обучающий, завершённый или архивный зачислять нельзя. */
+const streamEnrolling = DomainRuleDef.define({
+  name: 'streamEnrolling',
+  label: 'Поток в наборе',
+  description: 'Зачислить можно только в поток, который находится в наборе.',
+  error: StudentErrors.ENROLLMENT_CLOSED,
+  check: ({ stream }: EnrollStudentCtx) =>
+    stream.isEnrolling() ? ok() : StudentErrors.ENROLLMENT_CLOSED.err(),
+});
+
 /** Кодовое слово потока принято (потоку слово не задано — принято любое). */
 const enrollmentKeyAccepted = DomainRuleDef.define({
   name: 'enrollmentKeyAccepted',
@@ -73,13 +83,15 @@ const streamHasSteps = DomainRuleDef.define({
 });
 
 /**
- * Правила зачисления в порядке legacy: ключ → живая запись → допуск → шаги.
+ * Правила зачисления: набор открыт (нового, в legacy не было) → ключ → живая
+ * запись → допуск → шаги (хвост — порядок legacy).
  */
 export const StudentRules = RulesDef.define({
   name: 'student',
   label: 'Правила студентов',
   description: 'Допустимость зачисления студента на поток.',
   rules: {
+    streamEnrolling,
     enrollmentKeyAccepted,
     notStudyingElsewhere,
     prerequisitePassed,

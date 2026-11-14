@@ -316,7 +316,7 @@ describe('CampaignStory (S03 — список адресатов)', () => {
 
   const message = (text: string) =>
     ({
-      type: 'message',
+      type: 'text',
       text,
       telegramId: actor.user.view().telegramId,
     }) as const;

@@ -10,11 +10,11 @@ import {
   BotRequestContext,
   type BotSession,
   type BotSessionRepo,
-  type BotUpdate,
   type ChatMemberUser,
   type CommandUpdate,
   type DialogResponse,
   type KeyboardDescription,
+  type MessageUpdate,
   type MessengerAction,
   type MessengerEvent,
   NO_ACTOR_MESSAGE,
@@ -103,7 +103,7 @@ export interface DialogUiAppPort {
   ): Promise<DialogResponse | null>;
   /** Текстовый ввод при ожидающем диалоге */
   handleMessage(
-    update: BotUpdate,
+    update: MessageUpdate,
     tgId: number,
     session: BotSession,
   ): Promise<DialogResponse | null>;
@@ -352,8 +352,8 @@ export class BotTransport implements BotUpdateHandler, ProactiveSender {
         return;
       }
 
-      const update: BotUpdate = {
-        type: 'message',
+      const update: MessageUpdate = {
+        type: 'text',
         text,
         telegramId: tgId,
       };

@@ -3,10 +3,10 @@ import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
 import {
   type BotSession,
-  type BotUpdate,
   type DialogResponse,
   type KbButton,
   type KeyboardDescription,
+  type MessageUpdate,
   presentNavLevel,
   type StepContentData,
 } from '@u7-scl/core/ui';
@@ -95,11 +95,11 @@ export class ViewStreamStory extends U7BotUiStory {
   }
 
   override async handleMessage(
-    update: BotUpdate,
+    update: MessageUpdate,
     actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
-    if (update.type !== 'message') {
+    if (update.type !== 'text') {
       return this.warn(md`Ожидалось текстовое сообщение\\.`);
     }
 

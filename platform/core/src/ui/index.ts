@@ -15,4 +15,5 @@ export * from './pagination/paginator';
 export * from './types';
 export * from './ui-app';
 export * from './ui-controller';
+export * from './ui-event-context';
 export * from './ui-story';

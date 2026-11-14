@@ -1,6 +1,13 @@
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
-import { type MdText, md, mdConcat, mdJoin, mdRaw } from '@u7-scl/core/shared';
+import {
+  type MdText,
+  md,
+  mdConcat,
+  mdJoin,
+  mdRaw,
+  now,
+} from '@u7-scl/core/shared';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import {
   GetStreamUcDef,
@@ -141,7 +148,7 @@ export class ProgressStory extends U7BotUiStory {
       const days = Math.max(
         1,
         Math.floor(
-          (Date.now() - enrolledDate.getTime()) / (1000 * 60 * 60 * 24),
+          (now().getTime() - enrolledDate.getTime()) / (1000 * 60 * 60 * 24),
         ),
       );
       lines.push(

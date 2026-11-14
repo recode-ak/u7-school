@@ -82,7 +82,7 @@ export class AppController extends U7BotController {
     if (level === undefined) {
       return {
         notify: {
-          text: md`Неизвестный уровень: "${args}". Доступные: ${'debug, info, warn, error, all'}`,
+          text: md`${`Неизвестный уровень: "${args}". Доступные: debug, info, warn, error, all`}`,
         },
       };
     }

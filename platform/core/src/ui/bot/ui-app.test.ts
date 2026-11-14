@@ -5,11 +5,11 @@ import { BotController } from './bot-controller';
 import { BotUiStory } from './bot-ui-story';
 import type {
   BotSession,
-  BotUpdate,
   CommandReaction,
   CommandUpdate,
   DialogResponse,
   DialogState,
+  MessageUpdate,
   MessengerAction,
   MessengerEvent,
   MessengerEventReaction,
@@ -111,7 +111,7 @@ class TestController extends BotController<TestActor> {
   }
 
   override async handleMessage(
-    _update: BotUpdate,
+    _update: MessageUpdate,
     _actor: TestActor,
     _session: BotSession,
   ): Promise<DialogResponse> {
@@ -195,8 +195,8 @@ describe('BotUiApp — маршрутизация', () => {
     const uiApp = makeUiApp([ctrlA, ctrlB]);
     const session = makeSession('a/one', 2, { context: { q: 1 } });
 
-    const update: BotUpdate = {
-      type: 'message',
+    const update: MessageUpdate = {
+      type: 'text',
       text: 'привет',
       telegramId: 42,
     };
@@ -212,7 +212,7 @@ describe('BotUiApp — маршрутизация', () => {
     const uiApp = makeUiApp([ctrlA]);
     const session = makeSession('menu/main', 1, { context: {} });
 
-    const update: BotUpdate = { type: 'message', text: 'х', telegramId: 42 };
+    const update: MessageUpdate = { type: 'text', text: 'х', telegramId: 42 };
     const response = await uiApp.handleMessage(update, 42, session);
 
     expect(ctrlA.messageCalled).toBe(0);
@@ -615,8 +615,8 @@ describe('BotUiApp — инварианты: операция входа', () =>
     const uiApp = makeUiApp([ctrlA]);
     const session = {} as BotSession;
 
-    const update: BotUpdate = {
-      type: 'message',
+    const update: MessageUpdate = {
+      type: 'text',
       text: 'привет',
       telegramId: 42,
     };
@@ -789,7 +789,7 @@ describe('BotUiApp — актор не найден (actorResolver → null)', (
     const uiApp = makeGhostUiApp(ctrl);
 
     const response = await uiApp.handleMessage(
-      { type: 'message', text: 'привет', telegramId: 42 } as BotUpdate,
+      { type: 'text', text: 'привет', telegramId: 42 },
       42,
       makeSession('a/one', 3, { context: {} }),
     );

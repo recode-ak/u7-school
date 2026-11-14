@@ -1,4 +1,5 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, mock, spyOn, test } from 'bun:test';
+import * as Shared from '@u7-scl/core/shared';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { userActor } from '../../../core/user-actor.test-kit';
@@ -61,8 +62,8 @@ describe('ProgressStory', () => {
     ],
   };
 
-  function makeStory() {
-    const student = mockStudent as LegacyStudent;
+  function makeStory(overrides: Partial<LegacyStudent> = {}) {
+    const student = { ...mockStudent, ...overrides } as LegacyStudent;
     const appApiSpy = mock((_name: string, ..._args: unknown[]) => undefined);
 
     const story = new ProgressStory();
@@ -143,5 +144,22 @@ describe('ProgressStory', () => {
     );
 
     expect(String(response.screen?.text)).toContain('не соответствует');
+  });
+
+  test('progress:{streamId} — дни в обучении считаются от now() (часы приложения)', async () => {
+    const { story } = makeStory({ enrolledAt: '2026-06-01T12:00:00.000Z' });
+    const clock = spyOn(Shared, 'now').mockImplementation(
+      () => new Date('2026-06-11T12:00:00.000Z'),
+    );
+    try {
+      const response = await story.handleCallback(
+        `progress:${STREAM_ID}`,
+        studentActor,
+        session,
+      );
+      expect(String(response.screen?.text)).toContain('\\(10 дн\\.\\)');
+    } finally {
+      clock.mockRestore();
+    }
   });
 });

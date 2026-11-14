@@ -152,7 +152,7 @@ function createStory(
 }
 
 const inputMsg = (text: string) => ({
-  type: 'message' as const,
+  type: 'text' as const,
   text,
   telegramId: 123,
 });
@@ -716,10 +716,10 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
     expect(String(response.notify?.text)).toContain('Неизвестный шаг');
   });
 
-  test('не-message update — переспрос «текстовое сообщение»', async () => {
+  test('нетекстовое сообщение (документ) — переспрос «текстовое сообщение»', async () => {
     const { story } = createStory();
     const response = await story.handleMessage(
-      { type: 'callback', data: 'x', telegramId: 123, messageId: 1 },
+      { type: 'document', fileId: 'f-1', telegramId: 123 },
       mentorActor,
       wizardSession(1),
     );

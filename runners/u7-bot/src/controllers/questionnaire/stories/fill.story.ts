@@ -1,12 +1,12 @@
 import { md } from '@u7-scl/core/shared';
 import {
   type BotSession,
-  type BotUpdate,
   type CommandReaction,
   type CommandUpdate,
   type DialogResponse,
   eventSubscription,
   type KbButton,
+  type MessageUpdate,
   type UiEventSubscription,
 } from '@u7-scl/core/ui';
 import {
@@ -245,11 +245,11 @@ export class FillStory extends QuestionnaireStory {
   // ── Сообщения (текстовые ответы анкеты) ──
 
   override async handleMessage(
-    update: BotUpdate,
+    update: MessageUpdate,
     actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
-    if (update.type !== 'message') {
+    if (update.type !== 'text') {
       // Анкета ждёт текст: документ/фото/войс — переспрос, ввод живёт
       return this.warn(md`Пожалуйста, введите ваш ответ текстом\.`);
     }

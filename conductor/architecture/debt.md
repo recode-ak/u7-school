@@ -106,12 +106,14 @@
 - **Критерий снятия:** тесты UC/ER/Job без `mkdtemp`/`*JsonRepo`
 
 ### DEBT-41: id апдейта Telegram до story — неявным контекстом
-- **Место:** `platform/core/src/ui/bot/bot-request-context.ts` — `BotRequestContext`; читает `U7BotUiStory.dispatchUc`, ставит `BotTransport`
+- **Место:**
+  - `platform/core/src/ui/bot/bot-request-context.ts` — `BotRequestContext`; читает `U7BotUiStory.dispatchUc`, ставит `BotTransport`
+  - `platform/core/src/ui/ui-event-context.ts` — `UiEventContext` (след события для реакций UI, F-4E `revision-release`); ставит `UiApp.subscribeEvents`, читает тот же `requestTrace`
 - **Признак:** `AsyncLocalStorage`
 - **Корень:** `{platform,runners}/*/src/**`
 - **Причина:** контракт `handleCallback`/`handleMessage` ядра бота не несёт id запроса, а смена сигнатур затрагивает все stories (вариант A кандидата bot-request-id). Id апдейта передаётся через `AsyncLocalStorage` на время обработки (TR-30): зависимость story от транспорта неявная, вне апдейта `dispatchUc` пишет `warn`.
 - **Погашает:** `dmg-ui` / трек ui-manifests (D-26) — контракт story несёт id запроса явно
-- **Критерий снятия:** story получает id запроса аргументом контракта, `BotRequestContext` удалён
+- **Критерий снятия:** story получает id запроса (и след события в подписке) аргументом контракта, `BotRequestContext` и `UiEventContext` удалены
 
 ### DEBT-42: `call-uc` — ручной вход без общего устройства
 - **Место:** `scripts/call-uc.ts`
@@ -512,8 +514,8 @@
   - (6) Типы Def-событий для stories — `stories/questionnaire-events.ts`, в контракт не реэкспортируются.
   - (7) Общий абстрактный `stories/questionnaire-story.ts` (`QuestionnaireStory.resolveRespondent`) — адрес респондента для двух story; сбой `get-user`, нет профиля, нет `telegramId` различаются в `warn`.
   - (8) Ревью Ф2: `ucErrorScreen` оставлен функцией `render.ts` (Т1), хотя дублирует ветки `ucErrorNotify`; текст validation на экране — без хвоста legacy «Пожалуйста, исправьте…» (тексты как у `ucErrorNotify`, срабатывает лишь при битом `qId`).
-  - (9) `dispatchUc` из подписки `invited` (и `InactivityStory`) идёт вне контекста апдейта: штатный `warn` ERR-07 «нет requestId» на каждое событие, корреляции с исходной командой нет.
-- **Пересмотреть:** (1), (8) — когда в `U7BotUiStory` появится общий экран отказа по `Result`; (9) — передача correlation из события в `dispatchUc` подписок (платформа бота); (3) — при управлении часами в `createTestApp`; (4) — общий тестовый кит DMG для stories.
+  - (9) `dispatchUc` из подписки `invited` (и `InactivityStory`) идёт вне контекста апдейта: штатный `warn` ERR-07 «нет requestId» на каждое событие, корреляции с исходной командой нет. **Закрыто** (`revision-release`, F-4E, 2026-11-14): `UiApp` исполняет обработчик подписки в `UiEventContext`, `requestTrace` берёт след события (`Trace.fromEvent`).
+- **Пересмотреть:** (1), (8) — когда в `U7BotUiStory` появится общий экран отказа по `Result`; (3) — при управлении часами в `createTestApp`; (4) — общий тестовый кит DMG для stories.
 
 ### TR-51: границы среза сборки `questionnaire` (`questionnaire-dmg`, Ф3)
 - **Трек / фаза:** `questionnaire-dmg`, Ф3 (orchestrator, 2026-11-05; бриф — `conductor/archive/questionnaire-dmg_20261104/slices/assembly.md`)

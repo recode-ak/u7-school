@@ -8,11 +8,11 @@ import { BotController } from './bot-controller';
 import { BotUiStory } from './bot-ui-story';
 import type {
   BotSession,
-  BotUpdate,
   CommandReaction,
   CommandUpdate,
   DialogResponse,
   KeyboardDescription,
+  MessageUpdate,
 } from './types';
 
 /** Актор UI — `PersonCaller` (ограничение `TActor` платформы). */
@@ -44,7 +44,7 @@ class SpyStory extends BotUiStory<TestActor> {
   }
 
   override async handleMessage(
-    _update: BotUpdate,
+    _update: MessageUpdate,
     _actor: TestActor,
     _session: BotSession,
   ): Promise<DialogResponse> {
@@ -100,8 +100,8 @@ function makeWarnSpyLogger(
   };
 }
 
-function makeUpdate(text = 'ответ'): BotUpdate {
-  return { type: 'message', text, telegramId: 7 };
+function makeUpdate(text = 'ответ'): MessageUpdate {
+  return { type: 'text', text, telegramId: 7 };
 }
 
 function makeCommandUpdate(

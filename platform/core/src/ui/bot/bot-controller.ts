@@ -11,11 +11,11 @@ import type { DialogCache } from './dialog-cache';
 import * as rb from './response-builders';
 import type {
   BotSession,
-  BotUpdate,
   CommandReaction,
   CommandUpdate,
   DialogResponse,
   KeyboardDescription,
+  MessageUpdate,
   MessengerAction,
   MessengerEvent,
   MessengerEventReaction,
@@ -156,7 +156,7 @@ export abstract class BotController<
 
   /** Текстовый ввод активного стори (dialog.path = controller/story). null — адресата нет (ответит транспорт). */
   async handleMessage(
-    update: BotUpdate,
+    update: MessageUpdate,
     actor: TActor,
     session: BotSession,
   ): Promise<DialogResponse | null> {
@@ -189,7 +189,10 @@ export abstract class BotController<
       try {
         reaction = await story.handleCommand(update, actor, session);
       } catch (err) {
-        return { reaction: 'stop', response: this.handleError(err) };
+        return this.#withNotices(
+          { reaction: 'stop', response: this.handleError(err) },
+          notices,
+        );
       }
       if (reaction.reaction === 'pass') continue;
       if (reaction.reaction === 'stop') {

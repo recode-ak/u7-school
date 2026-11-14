@@ -10,11 +10,11 @@ import {
 } from '@u7-scl/core/shared';
 import type {
   BotSession,
-  BotUpdate,
   CommandReaction,
   CommandUpdate,
   DialogResponse,
   KbButton,
+  MessageUpdate,
 } from '@u7-scl/core/ui';
 import {
   CourseModuleDef,
@@ -193,12 +193,12 @@ export class CreateStreamStory extends U7BotUiStory {
   }
 
   override async handleMessage(
-    update: BotUpdate,
+    update: MessageUpdate,
     actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
-    if (update.type !== 'message') {
-      // Wizard ждёт текст: документ/фото/кнопка — переспрос, ввод живёт
+    if (update.type !== 'text') {
+      // Wizard ждёт текст: документ/фото/войс — переспрос, ввод живёт
       return this.warn(md`⚠️ Ожидалось текстовое сообщение\\.`);
     }
 

@@ -1,4 +1,5 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, mock, spyOn, test } from 'bun:test';
+import * as Shared from '@u7-scl/core/shared';
 import {
   FindStreamByTelegramGroupUcDef,
   GetStreamMembersUcDef,
@@ -60,14 +61,29 @@ const member = (status: 'active' | 'enrolled' | 'abandoned'): Member => ({
   inProgress: status !== 'abandoned',
 });
 
-function setup(options: { students?: Member[]; failOn?: string } = {}) {
+function setup(
+  options: {
+    students?: Member[];
+    failOn?: string;
+    /** Как падает `failOn`: исключение (по умолчанию) или отказ UC. */
+    failAs?: 'throw' | 'error';
+  } = {},
+) {
   const controller = new StreamsController();
   const notify = mock(async () => {});
   const dispatched: { uc: string; input: unknown; module: unknown }[] = [];
   const dispatch = mock(
     async (module: unknown, command: { uc: string; input: unknown }) => {
       dispatched.push({ uc: command.uc, input: command.input, module });
-      if (command.uc === options.failOn) throw new Error('сбой');
+      if (command.uc === options.failOn) {
+        if (options.failAs === 'error') {
+          return {
+            ok: false as const,
+            error: { code: 'STORAGE_FAILED', kind: 'internal', payload: {} },
+          };
+        }
+        throw new Error('сбой');
+      }
       if (command.uc === FindStreamByTelegramGroupUcDef.name) {
         const id = (command.input as { telegramGroupId: string })
           .telegramGroupId;
@@ -232,14 +248,60 @@ describe('StreamsController.handleMessengerEvent на UC DMG', () => {
     expect(notify).not.toHaveBeenCalled();
   });
 
-  test('исключение при обработке → stop, ментору ничего', async () => {
-    const { controller, notify } = setup({ failOn: 'getStreamMembers' });
+  // F-4A (P4-68): e2e сбой UC не инъецирует — ветка «warn и стоп» покрыта здесь.
+  describe('сбой UC → warn и stop, ментору ничего, дальше не идёт', () => {
+    const cases = [
+      {
+        uc: FindStreamByTelegramGroupUcDef.name,
+        kind: 'member_joined' as const,
+        tgId: 888,
+        students: [],
+      },
+      {
+        uc: GetStreamMembersUcDef.name,
+        kind: 'member_left' as const,
+        tgId: studentUser.telegramId,
+        students: [],
+      },
+      {
+        uc: GetUserUcDef.name,
+        kind: 'member_left' as const,
+        tgId: studentUser.telegramId,
+        students: [member('active')],
+      },
+    ];
+    for (const failAs of ['throw', 'error'] as const) {
+      for (const c of cases) {
+        test(`${c.uc} (${failAs})`, async () => {
+          const warn = mock((..._args: unknown[]) => {});
+          const logger = spyOn(Shared, 'getGlobalLogger').mockReturnValue({
+            warn,
+          } as unknown as Shared.Logger);
+          try {
+            const { controller, notify, dispatched } = setup({
+              students: c.students,
+              failOn: c.uc,
+              failAs,
+            });
 
-    const result = await controller.handleMessengerEvent(
-      event('member_joined', 888),
-    );
+            const result = await controller.handleMessengerEvent(
+              event(c.kind, c.tgId),
+            );
 
-    expect(result).toBe('stop');
-    expect(notify).not.toHaveBeenCalled();
+            expect(result).toBe('stop');
+            expect(notify).not.toHaveBeenCalled();
+            expect(dispatched.at(-1)?.uc).toBe(c.uc);
+            const failures = warn.mock.calls.filter((call) =>
+              String(call[1]).startsWith(
+                'Ошибка при обработке события студенческой группы потока',
+              ),
+            );
+            expect(failures).toHaveLength(1);
+          } finally {
+            logger.mockRestore();
+          }
+        });
+      }
+    }
   });
 });

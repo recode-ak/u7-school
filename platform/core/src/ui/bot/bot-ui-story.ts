@@ -11,11 +11,11 @@ import type { KbButton } from './response-builders';
 import * as rb from './response-builders';
 import type {
   BotSession,
-  BotUpdate,
   CommandReaction,
   CommandUpdate,
   DialogResponse,
   KeyboardDescription,
+  MessageUpdate,
   ProactiveSender,
 } from './types';
 
@@ -95,7 +95,7 @@ export abstract class BotUiStory<
    * до стори не доходит — его перехватывает транспорт.
    */
   async handleMessage(
-    _update: BotUpdate,
+    _update: MessageUpdate,
     _actor: TActor,
     session: BotSession,
   ): Promise<DialogResponse> {

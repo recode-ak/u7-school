@@ -7,10 +7,10 @@ import { DialogCache } from './dialog-cache';
 import * as rb from './response-builders';
 import type {
   BotSession,
-  BotUpdate,
   CommandUpdate,
   DialogResponse,
   KeyboardDescription,
+  MessageUpdate,
   MessengerAction,
   MessengerEvent,
   NotificationPayload,
@@ -168,7 +168,7 @@ export abstract class BotUiApp<
 
   /** Текстовый ввод при ожидающем диалоге (path — активный dialog.path). */
   async handleMessage(
-    update: BotUpdate,
+    update: MessageUpdate,
     tgId: number,
     session: BotSession,
   ): Promise<DialogResponse | null> {

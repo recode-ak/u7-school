@@ -13,6 +13,7 @@ import {
   type BotUpdate,
   type CommandUpdate,
   type DialogResponse,
+  UiEventContext,
 } from '@u7-scl/core/ui';
 import {
   GetUsersByIdsUcDef,
@@ -522,6 +523,71 @@ describe('U7BotUiStory.dispatchUc', () => {
       'tg:7#1',
       'tg:7#1',
     ]);
+  });
+});
+
+describe('U7BotUiStory.dispatchUc — реакция на событие (F-4E)', () => {
+  const envelope = { eventId: 'ev-1', correlationId: 'tg:42' };
+
+  function makeStory(sent: Trace[]) {
+    class UcStory extends U7BotUiStory {
+      readonly name = 'wish';
+      override handleCallback(): Promise<DialogResponse> {
+        throw new Error('Не используется');
+      }
+      list() {
+        return this.dispatchUc(
+          WishModuleDef,
+          ListUserWishesUcDef.command({}),
+          actor,
+        );
+      }
+    }
+    const story = new UcStory();
+    story.init({
+      appApi: {
+        dispatch: async (_m: unknown, _c: unknown, _a: unknown, t: Trace) => {
+          sent.push(t);
+          return ok([]);
+        },
+      },
+      eventBus: {},
+      actorResolver: async () => actor,
+      callers: { resolve: async () => actor },
+    } as never);
+    return story;
+  }
+
+  test('в контексте события: след из конверта (cause — событие, цепочка — его), без warn', async () => {
+    const sent: Trace[] = [];
+    const logger = createMockLogger();
+    setGlobalLogger(logger);
+    const story = makeStory(sent);
+
+    await UiEventContext.run(envelope, async () => {
+      await story.list();
+      await story.list();
+    });
+
+    expect(sent.map((t) => t.cause)).toEqual([
+      { kind: 'event', eventId: 'ev-1' },
+      { kind: 'event', eventId: 'ev-1' },
+    ]);
+    expect(sent.map((t) => t.correlationId)).toEqual(['tg:42', 'tg:42']);
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  test('событие, опубликованное внутри апдейта: причина — событие, не апдейт', async () => {
+    const sent: Trace[] = [];
+    setGlobalLogger(createMockLogger());
+    const story = makeStory(sent);
+
+    await BotRequestContext.run(100, () =>
+      UiEventContext.run(envelope, () => story.list()),
+    );
+
+    expect(sent[0]?.cause).toEqual({ kind: 'event', eventId: 'ev-1' });
+    expect(sent[0]?.correlationId).toBe('tg:42');
   });
 });
 

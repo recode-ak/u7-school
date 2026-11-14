@@ -502,7 +502,7 @@ describe('ViewStreamStory (S02-S04)', () => {
       stream: makeStream({ requiresEnrollmentKey: true }),
     });
     const response = await story.handleMessage(
-      { type: 'message', text: 'дракон', telegramId: 1 },
+      { type: 'text', text: 'дракон', telegramId: 1 },
       guest,
       enrollSession(0),
     );
@@ -521,7 +521,7 @@ describe('ViewStreamStory (S02-S04)', () => {
   test('handleMessage: неверное слово — warn-переспрос + awaitInput с попытками+1', async () => {
     const { story } = makeStory({ wrongKey: true });
     const response = await story.handleMessage(
-      { type: 'message', text: 'не то', telegramId: 1 },
+      { type: 'text', text: 'не то', telegramId: 1 },
       guest,
       enrollSession(0),
     );
@@ -538,7 +538,7 @@ describe('ViewStreamStory (S02-S04)', () => {
   test('handleMessage: попытки исчерпаны — release + экран возврата к потоку', async () => {
     const { story } = makeStory({ wrongKey: true });
     const response = await story.handleMessage(
-      { type: 'message', text: 'не то', telegramId: 1 },
+      { type: 'text', text: 'не то', telegramId: 1 },
       guest,
       enrollSession(2),
     );

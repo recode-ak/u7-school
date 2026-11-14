@@ -2,7 +2,11 @@ import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import type { MenuButton } from '@u7-scl/bot/u7-menu';
 import { md } from '@u7-scl/core/shared';
-import type { BotSession, BotUpdate, DialogResponse } from '@u7-scl/core/ui';
+import type {
+  BotSession,
+  DialogResponse,
+  MessageUpdate,
+} from '@u7-scl/core/ui';
 
 /**
  * CommunityStory: Стори сообщества школы.
@@ -39,7 +43,7 @@ export class CommunityStory extends U7BotUiStory {
   }
 
   override async handleMessage(
-    _update: BotUpdate,
+    _update: MessageUpdate,
     _actor: U7BotActor,
     _session: BotSession,
   ): Promise<DialogResponse> {

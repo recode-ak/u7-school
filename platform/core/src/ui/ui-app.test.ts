@@ -6,6 +6,7 @@ import type { UiEventSubscription } from './event-subscription';
 import { eventSubscription } from './event-subscription';
 import { UiApp } from './ui-app';
 import { UiController } from './ui-controller';
+import { UiEventContext } from './ui-event-context';
 import { UiStory } from './ui-story';
 
 // ── Тестовое событие: Def учебного модуля dmg-core ──
@@ -108,6 +109,38 @@ describe('UiApp (общий слой)', () => {
     expect(received).toHaveLength(1);
     expect(received[0]!.name).toBe(testDef.name);
     expect(received[0]!.payload.title).toBe('hello');
+  });
+
+  test('handle исполняется в контексте события: eventId и correlationId конверта', async () => {
+    const bus = new CountingEventBus();
+    const seen: { eventId: string; correlationId: string }[] = [];
+    let done: () => void = () => {};
+    const handled = new Promise<void>((resolve) => {
+      done = resolve;
+    });
+    const story = new TestStory([
+      eventSubscription(testDef, async () => {
+        // Контекст переживает await внутри обработчика
+        await Promise.resolve();
+        const context = UiEventContext.current();
+        if (context) {
+          seen.push({
+            eventId: context.eventId,
+            correlationId: context.correlationId,
+          });
+        }
+        done();
+      }),
+    ]);
+    const app = new UiApp([new TestController('ctrl', [story])]);
+    app.init(makeResolve(bus));
+    app.subscribeEvents();
+
+    bus.publish(makeEvent());
+    await handled;
+
+    expect(seen).toEqual([{ eventId: 'e1', correlationId: 'c1' }]);
+    expect(UiEventContext.current()).toBeUndefined();
   });
 
   test('unsubscribeAll отписывает: повторный publish не вызывает handle', () => {

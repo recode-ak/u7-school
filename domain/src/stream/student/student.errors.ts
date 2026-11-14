@@ -12,6 +12,11 @@ export const StudentErrors = ErrorDef.define('STUDENT', {
     label: 'Студент не найден',
     description: 'Записи студента с таким идентификатором нет.',
   },
+  ENROLLMENT_CLOSED: {
+    kind: 'conflict',
+    label: 'Набор на поток закрыт.',
+    description: 'Зачислить можно только в поток, который находится в наборе.',
+  },
   WRONG_ENROLLMENT_KEY: {
     kind: 'validation',
     label: 'Неверное кодовое слово',

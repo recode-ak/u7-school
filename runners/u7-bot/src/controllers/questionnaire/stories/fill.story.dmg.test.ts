@@ -104,7 +104,7 @@ describe('FillStory — вызовы UC через dispatchUc', () => {
     });
 
     const res = await story.handleMessage(
-      { type: 'message', text: '3 года фронтенда', telegramId: 1 },
+      { type: 'text', text: '3 года фронтенда', telegramId: 1 },
       actor,
       fillSession(),
     );
@@ -226,7 +226,7 @@ describe('FillStory — отказы handleAction: реплика поверх, 
     });
 
     const res = await story.handleMessage(
-      { type: 'message', text: 'текст', telegramId: 1 },
+      { type: 'text', text: 'текст', telegramId: 1 },
       actor,
       fillSession(),
     );

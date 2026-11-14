@@ -960,7 +960,7 @@ describe('BotTransport — рендер-политика', () => {
     );
 
     const msgs = callsOf(uiApp.handleMessage);
-    expect(msgs[0]?.[0]).toMatchObject({ type: 'message', text: 'Ответ' });
+    expect(msgs[0]?.[0]).toMatchObject({ type: 'text', text: 'Ответ' });
     // Экран диалога наш — ответ рендерится edit'ом на месте
     const edits = callsOf(api.editMessageText);
     expect(edits.at(-1)?.[2]).toBe('Принято');

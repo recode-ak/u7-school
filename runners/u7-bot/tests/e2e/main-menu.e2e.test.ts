@@ -582,11 +582,9 @@ describe('E2E: системные команды приложения (app)', ()
     ).toBe(true);
   });
 
-  // находка: P1-26 — реплика «Неизвестный уровень: "…". Доступные: …» не
-  // проходит MarkdownV2 (статическая точка после кавычки не экранирована),
-  // транспорт падает на assertDialogResponseMarkdownSafe и в чат ничего не уходит.
-  // Строка — app-controller.ts, #logLevelResponse, ветка parseLogLevel === undefined.
-  test.skip('P1-26: /log_level <неизвестный> (админ) — реплика про неизвестный уровень', async () => {
+  // P1-26 (F-49): реплика целиком экранируется — прежде статическая точка
+  // ломала MarkdownV2, и в чат ничего не уходило.
+  test('P1-26: /log_level <неизвестный> (админ) — реплика про неизвестный уровень', async () => {
     const tgId = admin.user.view().telegramId;
     await transport.handleStart(transport.makeBotContext(tgId));
 

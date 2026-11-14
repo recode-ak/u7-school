@@ -1,7 +1,11 @@
 import type { U7BotActor } from '@u7-scl/bot/u7-bot-app-meta';
 import { U7BotUiStory } from '@u7-scl/bot/u7-bot-ui-story';
 import { type MdText, md, mdJoin } from '@u7-scl/core/shared';
-import type { BotSession, BotUpdate, DialogResponse } from '@u7-scl/core/ui';
+import type {
+  BotSession,
+  DialogResponse,
+  MessageUpdate,
+} from '@u7-scl/core/ui';
 import {
   CreateReviewUcDef,
   GetCampaignRecipientsUcDef,
@@ -71,7 +75,7 @@ export class CampaignStory extends U7BotUiStory {
   }
 
   override async handleMessage(
-    update: BotUpdate,
+    update: MessageUpdate,
     actor: U7BotActor,
     session: BotSession,
   ): Promise<DialogResponse> {
@@ -81,7 +85,7 @@ export class CampaignStory extends U7BotUiStory {
     if (!context) {
       return this.screen(md`⚠️ Неизвестное сообщение`);
     }
-    const text = update.type === 'message' ? update.text : '';
+    const text = update.type === 'text' ? update.text : '';
     if (text.length < REVIEW_MIN_CHARS) {
       return this.warn(
         md`✍️ Отзыв — от ${REVIEW_MIN_CHARS} символов\\. Напиши чуть подробнее\\.`,

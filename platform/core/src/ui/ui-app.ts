@@ -1,6 +1,7 @@
 import type { UiEventSubscription } from './event-subscription';
 import type { UiAppResolve } from './types';
 import type { UiController } from './ui-controller';
+import { UiEventContext } from './ui-event-context';
 
 /**
  * UiApp — общий хаб UI-слоя.
@@ -71,9 +72,11 @@ export class UiApp<TResolve extends UiAppResolve = UiAppResolve> {
       throw new Error('UiApp не инициализирован: вызовите init(resolve)');
     }
     for (const subscription of this.getEventSubscriptions()) {
+      // Реакция — в контексте события: вызовы UC берут след из конверта
       const unsubscribe = this.resolve.eventBus.subscribe(
         subscription.def,
-        subscription.handle,
+        (envelope) =>
+          UiEventContext.run(envelope, () => subscription.handle(envelope)),
       );
       this.unsubscribers.push(unsubscribe);
     }

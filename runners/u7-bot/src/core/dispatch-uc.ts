@@ -1,4 +1,4 @@
-import { BotRequestContext } from '@u7-scl/core/ui';
+import { BotRequestContext, UiEventContext } from '@u7-scl/core/ui';
 import type {
   AnyModuleDef,
   Caller,
@@ -22,15 +22,20 @@ interface DispatchOpts {
 }
 
 /**
- * След запроса канала telegram: `requestId` и `correlationId` — из контекста
- * апдейта Telegram (`BotRequestContext`, транспорт); вне обработки апдейта
- * контекста нет — id создаётся на вызов с `warn` (ERR-07, caller.md §2).
+ * След вызова из бота. В реакции на событие (`UiEventContext`, подписки
+ * `UiApp`) — след события: причина — событие, цепочка — его;
+ * реакция ближе апдейта, поэтому приоритетнее. Иначе — запрос канала
+ * telegram: `requestId` и `correlationId` — из контекста апдейта Telegram
+ * (`BotRequestContext`, транспорт); вне апдейта контекста нет — id создаётся
+ * на вызов с `warn` (ERR-07, caller.md §2).
  * Единый способ построения следа для вызова UC и для резолва субъекта.
  */
 export function requestTrace(
   telegramId: number | undefined,
   warn: (message: string) => void,
 ): Trace {
+  const event = UiEventContext.current();
+  if (event) return Trace.fromEvent(event);
   const request = BotRequestContext.current();
   return Trace.fromRequest(
     {

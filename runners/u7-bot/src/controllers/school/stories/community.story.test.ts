@@ -60,7 +60,7 @@ describe('CommunityStory (school)', () => {
   test('handleMessage возвращает экран с предупреждением', async () => {
     const story = new CommunityStory();
     const response = await story.handleMessage(
-      { type: 'message', text: 'что-то', telegramId: 123 },
+      { type: 'text', text: 'что-то', telegramId: 123 },
       actor,
       { dialog: { path: 'school/community', seq: 1 } },
     );

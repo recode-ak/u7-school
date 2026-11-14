@@ -9,7 +9,8 @@ import { StudentRules } from './student.rules';
 
 // Перенос `LegacyStreamAr.enroll` (a-root.test.ts, ветки отказов) и
 // `canEnrollNextModule` (policy.test.ts) на правила зачисления (D-40).
-// Порядок: ключ → активная запись → допуск → нет шагов (legacy a-root.ts:42-77).
+// Порядок: набор → ключ → активная запись → допуск → нет шагов; набор в legacy
+// не проверялся (P3-63), хвост «ключ → … → шаги» — legacy a-root.ts:42-77.
 // Допуск к модулю — вердикт курса (D-65): правило ничего не сравнивает, а
 // переводит вердикт в отказ; «пройден» собирает `PassedModulesDqs` (TST-08).
 
@@ -26,11 +27,32 @@ const baseCtx = {
 };
 
 const {
+  streamEnrolling,
   enrollmentKeyAccepted,
   notStudyingElsewhere,
   prerequisitePassed,
   streamHasSteps,
 } = StudentRules.rules;
+
+describe('streamEnrolling', () => {
+  it('поток в наборе — ok', () => {
+    expectOk(streamEnrolling.check(baseCtx));
+  });
+
+  it.each(['active', 'completed', 'archived'] as const)(
+    'поток в статусе %s — STUDENT_ENROLLMENT_CLOSED',
+    (status) => {
+      const error = expectErr(
+        streamEnrolling.check({
+          ...baseCtx,
+          stream: StreamAr.restore(streamStored(status)),
+        }),
+        'STUDENT_ENROLLMENT_CLOSED',
+      );
+      expect(error.kind).toBe('conflict');
+    },
+  );
+});
 
 describe('enrollmentKeyAccepted', () => {
   it('у потока нет ключа — ok, что бы ни ввели', () => {

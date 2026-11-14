@@ -242,11 +242,9 @@ describe('E2E: экраны ошибок UI-слоя (F-33)', () => {
     assertDialogResponseMarkdownSafe(response);
   });
 
-  test.skip('P8-32: continue-нотисы склеиваются над ответом stop', async () => {
-    // находка: P8-32 — исключение стори в pipe теряет накопленные
-    // continue-нотисы: catch контроллера возвращает `stop` в обход
-    // `#withNotices` (bot-controller.ts, `handleCommand`). По сценарию
-    // нотис должен стоять над экраном ошибки, сейчас — пропадает.
+  test('P8-32: continue-нотисы склеиваются над ответом stop', async () => {
+    // F-4D: ответ `handleError` из `catch` контроллера — тоже через
+    // `#withNotices` (прежде нотисы пропадали).
     await startMenu();
 
     const response = await transport.handleCommand(ctx(MARINA_TG), '/explode');

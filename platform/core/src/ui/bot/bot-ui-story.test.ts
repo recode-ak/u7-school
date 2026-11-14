@@ -246,7 +246,7 @@ describe('BotUiStory — дефолты контракта команд (ФР-4,
     setGlobalLogger(makeWarnSpyLogger(warns));
     const story = new TestStory();
     const update: BotUpdate = {
-      type: 'message',
+      type: 'text',
       text: 'привет',
       telegramId: 7,
     };
@@ -497,7 +497,7 @@ describe('BotUiStory — поверхность', () => {
   test('handleCallback переопределён, handleMessage — дефолт ядра', async () => {
     const story = new TestStory();
     const session: BotSession = { dialog: { path: 'c/anketa', seq: 1 } };
-    const update: BotUpdate = { type: 'message', text: 'текст', telegramId: 1 };
+    const update: BotUpdate = { type: 'text', text: 'текст', telegramId: 1 };
 
     expect(
       await story.handleCallback('view', new GuestCaller(), session),

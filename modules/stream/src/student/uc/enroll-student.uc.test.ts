@@ -21,9 +21,9 @@ import {
   USER,
 } from './student-uc.fixture';
 
-// Перенос `api/student/enroll-student-uc.test.ts`. Порядок отказов: ключ →
+// Перенос `api/student/enroll-student-uc.test.ts`. Порядок отказов: набор → ключ →
 // активная запись (в том числе в этом же потоке) → допуск → нет шагов; курса нет —
-// допуск пропускается; статус потока не проверяется. Зачисляется субъект вызова
+// допуск пропускается; набор должен быть открыт (первым). Зачисляется субъект вызова
 // роль STUDENT stream не выдаёт. Допуск — вердикт курса (D-65): `passedModuleIds`
 // собирает `PassedModulesDqs` из `advanced`-записей и потоков (Т10); сравнений с
 // id курса в UC нет. Сценарии «пройден» — `advanced`, `not_advanced`, другой
@@ -77,11 +77,6 @@ describe('EnrollStudentUc — успех', () => {
     ]);
   });
 
-  it('статус потока active зачислению не мешает (как в legacy)', async () => {
-    env.seedStreams(streamOf('active'));
-    expectOk(await enroll());
-  });
-
   it('другой пользователь, чужой userId во входе игнорируется (С3)', async () => {
     const { studentId } = expectOk(
       await uc().handle(
@@ -97,6 +92,20 @@ describe('EnrollStudentUc — успех', () => {
 });
 
 describe('EnrollStudentUc — отказы', () => {
+  it('поток не в наборе — STUDENT_ENROLLMENT_CLOSED, студент не создан (матрица статусов — в правиле)', async () => {
+    env.seedStreams(streamOf('active'));
+    expectErr(await enroll(), 'STUDENT_ENROLLMENT_CLOSED');
+    expect(env.ctx.published).toEqual([]);
+  });
+
+  it('закрытый набор — раньше кодового слова', async () => {
+    env.seedStreams(streamOf('active', { enrollmentKey: 'секрет' }));
+    expectErr(
+      await enroll({ enrollmentKey: 'нет' }),
+      'STUDENT_ENROLLMENT_CLOSED',
+    );
+  });
+
   it('потока нет — STREAM_NOT_FOUND { streamId }', async () => {
     const other = '99999999-9999-4999-8999-999999999999';
     const res = await uc().handle({ streamId: other }, owner, REQ);

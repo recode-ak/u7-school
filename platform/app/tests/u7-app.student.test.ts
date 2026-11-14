@@ -62,6 +62,15 @@ const stream = {
   version: 0,
 };
 
+// Зачисление — только в поток в наборе (F-4C); остальные сценарии — в потоке в обучении.
+const ENROLL_STREAM = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+const enrollingStream = {
+  ...stream,
+  uuid: ENROLL_STREAM,
+  title: 'Поток JS-2',
+  status: 'enrollment',
+};
+
 const studentRow = (uuid: string, userId: string) => ({
   uuid,
   streamId: STREAM,
@@ -118,7 +127,7 @@ describe('U7App: события студента от UoW модуля stream д
     await mkdir(join(dir, 'streams'), { recursive: true });
     await Bun.write(
       join(dir, 'streams', 'streams.json'),
-      JSON.stringify([stream]),
+      JSON.stringify([stream, enrollingStream]),
     );
     await Bun.write(
       join(dir, 'streams', 'students.json'),
@@ -138,7 +147,7 @@ describe('U7App: события студента от UoW модуля stream д
     expectOk(
       await app.apiApp.dispatch(
         StreamModuleDef,
-        EnrollStudentUcDef.command({ streamId: STREAM }),
+        EnrollStudentUcDef.command({ streamId: ENROLL_STREAM }),
         new UserCaller(
           userSubject({ uuid: RESPONDENT, roles: ['SUBSCRIBER'] }),
         ),
