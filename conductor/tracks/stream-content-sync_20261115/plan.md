@@ -27,7 +27,7 @@
 
 **Критерии:** `bun test domain/src/stream` зелёный; покрыты все классы ФР-2, включая перестановку шага позади студента и перенос шага в другой урок/проект (spec 1); `creditStep` идемпотентен, без событий (spec 3); терминальные не меняются (spec 4); помеченные шаги вне статистики времени (spec 8а); прямой мутации `state.steps` вне Ar нет; `bun run check` зелёный.
 
-## Фаза 2: UC модуля `stream` — предпросмотр и применение
+## Фаза 2: UC модуля `stream` — предпросмотр и применение [checkpoint: db8224e3]
 
 - [x] Task: S (`dmg-tech-lead`) — бриф среза `slices/uc.md`: Def `previewStreamContentSync` (query) и `syncStreamContent` (command) — `aggregate: StreamArDef`, `callers: ['user']`, `policy: StreamPolicy.rules.canManage`, `calls: [GetModuleSnapshotUcDef]` (образец — `create-stream.uc.ts`); вход применения — список затронутых студентов из предпросмотра; загрузка потока и студентов, регистрация в UoW: студенты первыми, поток последним, `expectVersion` потока (образец — `activate-stream.uc.ts`, ФР-8а)
 - [x] Task: S (`dmg-test-designer`) — red-тесты UC на фейк-репозиториях: статусы потока; удалён текущий шаг — отказ без записи; подтверждение отсутствует / устарело — отказ; конфликт version потока — отказ до записи; сбой посередине → повтор доводит до конца; Policy (ментор потока, админ, чужой ментор, студент); `writes` и событие `contentSynced`; повторное применение — без изменений
