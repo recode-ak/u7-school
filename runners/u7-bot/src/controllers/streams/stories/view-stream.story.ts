@@ -10,7 +10,6 @@ import {
   presentNavLevel,
   type StepContentData,
 } from '@u7-scl/core/ui';
-import { CourseModuleDef, GetStepUcDef } from '@u7-scl/domain/course/contract';
 import {
   ListScopeFactsUcDef,
   PeerReviewModuleDef,
@@ -19,6 +18,7 @@ import {
   EnrollStudentUcDef,
   GetActiveStudentUcDef,
   GetStreamMembersUcDef,
+  GetStreamStepUcDef,
   GetStreamUcDef,
   GetStudentProgressUcDef,
   StreamModuleDef,
@@ -26,11 +26,10 @@ import {
   StudentErrors,
 } from '@u7-scl/domain/stream/contract';
 import {
-  loadMentorStepDescriptions,
+  loadStreamStepDescriptions,
   type StreamDispatch,
 } from '../../learning/shared';
 import { Routes } from '../../shared/routes';
-import { withStatusIcon, withStatusLabel } from '../../shared/status-mark';
 import {
   lagMarker,
   loadStudentRows,
@@ -314,52 +313,44 @@ export class ViewStreamStory extends U7BotUiStory {
     const stepDescriptions: Record<string, string> = {};
     let stepContent: StepContentData | undefined;
 
+    const dispatchStream: StreamDispatch = (command) =>
+      this.dispatchUc(StreamModuleDef, command, actor);
+
     if (level === 'project' && targetId) {
       const snapProject = stream.contentSnapshot?.find(
         (p) => p.projectId === targetId,
       );
       if (snapProject) {
-        const lessonIds = snapProject.lessons.map((l) => l.lessonId);
-        const byLesson =
-          (await loadMentorStepDescriptions(
-            (command) => this.dispatchUc(CourseModuleDef, command, actor),
-            lessonIds,
-          )) ?? {};
+        const byLesson = await loadStreamStepDescriptions(
+          dispatchStream,
+          streamId,
+          snapProject.lessons.map((l) => l.lessonId),
+        );
         for (const steps of Object.values(byLesson)) {
-          if (Array.isArray(steps)) {
-            for (const s of steps) {
-              stepDescriptions[s.uuid] = withStatusIcon(
-                s.description,
-                s.status,
-              );
-            }
+          for (const s of steps) {
+            stepDescriptions[s.uuid] = s.description;
           }
         }
       }
     } else if (level === 'lesson' && targetId) {
-      const byLesson =
-        (await loadMentorStepDescriptions(
-          (command) => this.dispatchUc(CourseModuleDef, command, actor),
-          [targetId],
-        )) ?? {};
+      const byLesson = await loadStreamStepDescriptions(
+        dispatchStream,
+        streamId,
+        [targetId],
+      );
       for (const steps of Object.values(byLesson)) {
-        if (Array.isArray(steps)) {
-          for (const s of steps) {
-            stepDescriptions[s.uuid] = withStatusIcon(s.description, s.status);
-          }
+        for (const s of steps) {
+          stepDescriptions[s.uuid] = s.description;
         }
       }
     } else if (level === 'step' && targetId) {
       const loaded = await this.dispatchUc(
-        CourseModuleDef,
-        GetStepUcDef.command({ stepId: targetId }),
+        StreamModuleDef,
+        GetStreamStepUcDef.command({ streamId, stepId: targetId }),
         actor,
       );
       if (loaded.ok) {
-        stepDescriptions[targetId] = withStatusLabel(
-          loaded.value.description,
-          loaded.value.status,
-        );
+        stepDescriptions[targetId] = loaded.value.description;
         stepContent = {
           kind: loaded.value.kind,
           content: loaded.value.content,

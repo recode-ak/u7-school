@@ -6,11 +6,7 @@ import {
   STATUS_ICONS,
   screen,
 } from '@u7-scl/core/ui';
-import {
-  type ContentSnapshot,
-  type CourseModuleDef,
-  GetStepsByLessonsUcDef,
-} from '@u7-scl/domain/course/contract';
+import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
 import {
   GetStreamLessonStepsUcDef,
   GetStudentByUserUcDef,
@@ -31,16 +27,6 @@ export type Student = StudentView;
  */
 export type StreamDispatch = <
   D extends (typeof StreamModuleDef)['useCases'][number],
->(
-  command: Command<D>,
-) => Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
-
-/**
- * Исполнитель команд модуля `course` от имени актора: стори отдаёт замыкание
- * над `dispatchUc` (метод защищён, хелперы раздела learning его не видят).
- */
-export type CourseDispatch = <
-  D extends (typeof CourseModuleDef)['useCases'][number],
 >(
   command: Command<D>,
 ) => Promise<Result<OutputOf<D>, UseCaseErrorOf<D>>>;
@@ -185,20 +171,6 @@ export async function buildStepList(
   }
 
   return mdJoin(lines);
-}
-
-/**
- * Загружает описания шагов через get-steps-by-lessons (чтение из курса:
- * ментор/администратор, видят неопубликованное — со `status`).
- */
-export async function loadMentorStepDescriptions(
-  dispatch: CourseDispatch,
-  lessonIds: string[],
-): Promise<
-  Record<string, Array<{ uuid: string; description: string; status: string }>>
-> {
-  const res = await dispatch(GetStepsByLessonsUcDef.command({ lessonIds }));
-  return res.ok ? res.value : {};
 }
 
 /**

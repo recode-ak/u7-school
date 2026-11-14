@@ -23,10 +23,7 @@ export const T0 = Date.UTC(2026, 6, 8, 18, 35);
 export const author = new UserCaller(
   userSubject({ uuid: AUTHOR_ID, roles: ['MENTOR'] }),
 );
-/**
- * Автор модуля без роли ментора: видит неопубликованное только своего
- * модуля (ментор — любого, `ModulePolicy.canSeeUnpublished`).
- */
+/** Автор модуля без роли ментора: авторство — по uuid. */
 export const plainAuthor = new UserCaller(
   userSubject({ uuid: AUTHOR_ID, roles: ['GUEST'] }),
 );
@@ -41,6 +38,18 @@ export const otherMentor = new UserCaller(
     uuid: OTHER_ID,
     roles: ['MENTOR'],
   }),
+);
+/** Администратор: видит неопубликованное в любом модуле. */
+export const admin = new UserCaller(
+  userSubject({ uuid: OTHER_ID, roles: ['ADMIN'] }),
+);
+/** Роль AUTHOR, но не автор этого модуля (читает тело шага, черновики — нет). */
+export const roleAuthor = new UserCaller(
+  userSubject({ uuid: OTHER_ID, roles: ['AUTHOR'] }),
+);
+/** Подписчик: как студент, права на тело шага нет. */
+export const subscriber = new UserCaller(
+  userSubject({ uuid: OTHER_ID, roles: ['SUBSCRIBER'] }),
 );
 export const anonymous = new GuestCaller();
 /** Системный вызов без человека: субъекта нет, при человеке — `CourseUser`. */

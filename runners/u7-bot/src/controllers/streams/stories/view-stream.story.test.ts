@@ -126,7 +126,7 @@ describe('ViewStreamStory (S02-S04)', () => {
           return { studentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001' };
         },
         listScopeFacts,
-        getStepsByLessons: () => ({}),
+        getStreamLessonSteps: () => ({}),
         getUser: (input) => {
           const { uuid } = input as { uuid: string };
           return (
@@ -623,13 +623,13 @@ describe('ViewStreamStory — публичная drill-down программа �
           {
             getStream: () =>
               makeStream({ uuid: STREAM_ID_PUB, contentSnapshot: snapshot }),
-            getStepsByLessons: () => ({
+            getStreamLessonSteps: () => ({
               'lesson-1': [
                 { uuid: 'step-1', description: 'Шаг 1: Описание первого шага' },
                 { uuid: 'step-2', description: 'Шаг 2: Описание второго шага' },
               ],
             }),
-            getStep: (input) => ({
+            getStreamStep: (input) => ({
               uuid: (input as { stepId: string }).stepId,
               description: 'Шаг 1',
               kind: 'text',

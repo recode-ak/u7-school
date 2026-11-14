@@ -9,7 +9,8 @@ import { ModulePolicy } from './module.policy';
 // Перенос `policy.test.ts`: canRead (4), isAuthor (2), isAdminOrAuthor (3),
 // canReadProject (через viewFor, см. module.ar.test.ts) на `canSeeUnpublished`.
 // canCreate / canEdit / canAddProject не переносятся (authoring удалён).
-// Ф4а: ментор (роль) видит неопубликованное в любом модуле.
+// Пересмотр Ф4а: неопубликованное видят только админ и автор модуля; тело
+// опубликованного шага — ещё и роли MENTOR и AUTHOR (canReadStepBody).
 
 const who = (uuid: string, ...roles: UserView['roles']) =>
   userSubject({ uuid, roles });
@@ -30,10 +31,16 @@ describe('ModulePolicy.canSeeUnpublished', () => {
     );
   });
 
-  it('ментор (роль), не автор — allowed (Ф4а)', () => {
-    expect(canSeeUnpublished.evaluate(who(OTHER, 'MENTOR'), ctx)).toEqual(
-      allowed,
+  it('ментор (роль), не автор — denied (пересмотр Ф4а)', () => {
+    expect(canSeeUnpublished.evaluate(who(OTHER, 'MENTOR'), ctx).allowed).toBe(
+      false,
     );
+  });
+
+  it('подписчик, не автор — denied', () => {
+    expect(
+      canSeeUnpublished.evaluate(who(OTHER, 'SUBSCRIBER'), ctx).allowed,
+    ).toBe(false);
   });
 
   it('ментор с ролью AUTHOR, но чужой модуль — denied', () => {
@@ -49,5 +56,47 @@ describe('ModulePolicy.canSeeUnpublished', () => {
 
   it('без субъекта (гость) — denied', () => {
     expect(canSeeUnpublished.evaluate(undefined, ctx).allowed).toBe(false);
+  });
+});
+
+describe('ModulePolicy.canReadStepBody', () => {
+  const { canReadStepBody } = ModulePolicy.rules;
+
+  it('админ, не автор — allowed', () => {
+    expect(canReadStepBody.evaluate(who(OTHER, 'ADMIN'), ctx)).toEqual(allowed);
+  });
+
+  it('автор модуля без ролей MENTOR/AUTHOR — allowed', () => {
+    expect(canReadStepBody.evaluate(who(AUTHOR, 'GUEST'), ctx)).toEqual(
+      allowed,
+    );
+  });
+
+  it('ментор (роль), не автор — allowed', () => {
+    expect(canReadStepBody.evaluate(who(OTHER, 'MENTOR'), ctx)).toEqual(
+      allowed,
+    );
+  });
+
+  it('роль AUTHOR, чужой модуль — allowed', () => {
+    expect(canReadStepBody.evaluate(who(OTHER, 'AUTHOR'), ctx)).toEqual(
+      allowed,
+    );
+  });
+
+  it('студент (GUEST) — denied', () => {
+    expect(canReadStepBody.evaluate(who(OTHER, 'GUEST'), ctx).allowed).toBe(
+      false,
+    );
+  });
+
+  it('подписчик — denied', () => {
+    expect(
+      canReadStepBody.evaluate(who(OTHER, 'SUBSCRIBER'), ctx).allowed,
+    ).toBe(false);
+  });
+
+  it('без субъекта (гость) — denied', () => {
+    expect(canReadStepBody.evaluate(undefined, ctx).allowed).toBe(false);
   });
 });

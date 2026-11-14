@@ -10,6 +10,7 @@ import { StepRepoFake } from './step/step.repo.fake';
 
 export {
   AUTHOR_ID,
+  admin,
   anonymous,
   author,
   MODULE,
@@ -19,8 +20,10 @@ export {
   plainAuthor,
   projectState,
   REQ,
+  roleAuthor,
   state as moduleState,
   student,
+  subscriber,
   system,
   T0,
 } from './module/uc/module-uc.fixture';

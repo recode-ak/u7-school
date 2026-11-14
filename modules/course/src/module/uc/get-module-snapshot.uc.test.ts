@@ -104,13 +104,13 @@ describe('GetModuleSnapshotUc — успех', () => {
     expect(expectOk(await snapshot(asSystemFor(mentor)))).toHaveLength(1);
   });
 
-  it('system от имени ментора (роль), не автора, получает снимок черновика (Ф4а)', async () => {
+  it('system от имени ментора (роль), не автора, снимок черновика не получает — ACCESS_DENIED (пересмотр Ф4а)', async () => {
     env.modules.seed(
       moduleState('draft', { projects: [projectState('published')] }),
     );
     env.lessons.seed(lessonState(LESSON_1, 'published'));
 
-    expect(expectOk(await snapshot(asSystemFor(otherMentor)))).toHaveLength(1);
+    expectErr(await snapshot(asSystemFor(otherMentor)), 'ACCESS_DENIED');
   });
 
   it('уроки запрашиваются одним запросом без повторов', async () => {

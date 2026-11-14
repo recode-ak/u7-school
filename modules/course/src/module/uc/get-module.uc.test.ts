@@ -7,7 +7,7 @@ import {
   author,
   MODULE,
   makeEnv,
-  otherMentor,
+  projectState,
   REQ,
   state,
   student,
@@ -15,6 +15,7 @@ import {
 
 // Перенос `api/module/get-module-uc.test.ts` (7) на Def UC. Видимость:
 // UC `allowAll`, право на неопубликованное считает Policy внутри execute,
+// пересмотр Ф4а: черновики видят только админ и автор модуля (ментор — нет);
 // отказ — базовый ACCESS_DENIED (не MODULE_ACCESS_DENIED). Правила видимости —
 // `domain/src/module/module.policy.test.ts`, проекты модуля — `module.ar.test.ts`
 // (TST-08).
@@ -44,14 +45,18 @@ describe('GetModuleUc — успех', () => {
     expect(expectOk(await get(author)).status).toBe('draft');
   });
 
-  it('ментор (роль), не автор, видит чужой черновик (Ф4а)', async () => {
-    env.modules.seed(state('draft'));
-    expect(expectOk(await get(otherMentor)).status).toBe('draft');
-  });
+  it('опубликованный модуль: проекты-черновики видит автор, студент — нет', async () => {
+    env.modules.seed(
+      state('published', {
+        projects: [projectState('published'), projectState('draft')],
+      }),
+    );
+    const statuses = async (
+      caller: Parameters<ReturnType<typeof uc>['handle']>[1],
+    ) => expectOk(await get(caller)).projects.map((p) => p.status);
 
-  it('студент не видит чужой черновик — ACCESS_DENIED (Ф4а)', async () => {
-    env.modules.seed(state('draft'));
-    expectErr(await get(student), 'ACCESS_DENIED');
+    expect(await statuses(author)).toEqual(['published', 'draft']);
+    expect(await statuses(student)).toEqual(['published']);
   });
 });
 

@@ -84,6 +84,11 @@ export class UserAr extends Aggregate<typeof UserArDef, UserView> {
     return this.hasRole('MENTOR');
   }
 
+  /** Автор контента (роль `AUTHOR`; не путать с автором конкретного модуля). */
+  isAuthor(): boolean {
+    return this.hasRole('AUTHOR');
+  }
+
   // ── Мутации ──
 
   /** Добавление роли; роль уже есть — ничего не меняется. */

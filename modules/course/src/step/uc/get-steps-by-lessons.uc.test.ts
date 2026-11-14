@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { expectOk } from 'dmg-core/testing';
 import {
+  anonymous,
   LESSON_1,
   LESSON_2,
   LESSON_3,
@@ -60,7 +61,7 @@ describe('GetStepsByLessonsUc — успех', () => {
     ]);
   });
 
-  it('ментор (роль), не автор, получает draft и archived шаги со статусом (Ф4а)', async () => {
+  it('автор модуля получает draft и archived шаги со статусом, ментор (роль) — только published (пересмотр Ф4а)', async () => {
     env.lessons.seed(
       lessonState(LESSON_1, 'published', { stepIds: [STEP_1, STEP_2, STEP_3] }),
     );
@@ -70,28 +71,29 @@ describe('GetStepsByLessonsUc — успех', () => {
       textStep(STEP_3, 'archived'),
     );
 
-    const result = expectOk(await get([LESSON_1], otherMentor));
+    const result = async (caller: Parameters<typeof get>[1]) =>
+      expectOk(await get([LESSON_1], caller))[LESSON_1]?.map((s) => [
+        s.uuid,
+        s.status,
+      ]);
 
-    expect(result[LESSON_1]?.map((s) => [s.uuid, s.status])).toEqual([
+    expect(await result(plainAuthor)).toEqual([
       [STEP_1, 'published'],
       [STEP_2, 'draft'],
       [STEP_3, 'archived'],
     ]);
+    expect(await result(otherMentor)).toEqual([[STEP_1, 'published']]);
   });
 
-  it('студент: draft и archived шаги пропускаются, published остаётся (Ф4а)', async () => {
-    env.lessons.seed(
-      lessonState(LESSON_1, 'published', { stepIds: [STEP_1, STEP_2, STEP_3] }),
-    );
-    env.steps.seed(
-      textStep(STEP_1, 'published'),
-      textStep(STEP_2, 'draft'),
-      textStep(STEP_3, 'archived'),
-    );
+  it('заголовки опубликованных шагов — гостю (тело не нужно)', async () => {
+    seedLesson(LESSON_1, [STEP_1, STEP_2]);
 
-    const result = expectOk(await get([LESSON_1], student));
+    const result = expectOk(await get([LESSON_1], anonymous));
 
-    expect(result[LESSON_1]?.map((s) => s.uuid)).toEqual([STEP_1]);
+    expect(result[LESSON_1]?.map((s) => s.description)).toEqual([
+      'Шаг 1',
+      'Шаг 2',
+    ]);
   });
 });
 

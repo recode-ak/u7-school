@@ -202,3 +202,32 @@ error нет. Чисто: Policy — только субъект и контек
 - Проекты: фильтр по статусу уже в `module.ar.ts:87-102` — проверить, что он зависит от `canSeeUnpublished` (админ/автор видят неопубликованные проекты).
 
 Шаги: red-тесты (`dmg-test-designer`) → домен → прикладной слой → бот → гейт → ревью.
+
+## Отчёт dmg-test-designer — пересмотр (Sonnet)
+
+23 red, прочее зелёное (3279 pass).
+- `ModulePolicy.canSeeUnpublished` — ментор снова denied; новое `canReadStepBody` = `canSeeUnpublished ∨ MENTOR ∨ AUTHOR` (7 тестов). Для `AUTHOR` у `UserAr` нужен `isAuthor()`.
+- `getStep`: published — тело по `canReadStepBody` (GUEST/SUBSCRIBER/гость → `ACCESS_DENIED`, `payload.rule: canReadStepBody`); draft/archived — по `canSeeUnpublished`. `getStepsByLessons` — заголовки опубликованных всем. `getLesson`/`getModule`/`listModules`/фильтр проектов — черновики только админ и автор модуля. `getModuleSnapshot` от ментора на черновике модуля → `ACCESS_DENIED` (перевёрнут; принято orchestrator — следствие пересмотра).
+- Бот: `view-stream` и `mentor/view-stream` — на `getStreamStep`/`getStreamLessonSteps`, меток нет (`view-stream.status-mark.test.ts` переписан). Каталог шаги не открывает и раньше (только заголовки) — закреплено характеризацией, прод-правок нет.
+- Фикстуры: `admin`, `roleAuthor`, `subscriber` в `module-uc.fixture.ts`.
+- Кандидат в чистку (не решено): матрицы «роль → видит» в UC-тестах поверх `module.policy.test.ts`.
+
+## Отчёт dmg-domain-author — пересмотр (Sonnet)
+
+`bun test domain modules` — 1563 pass; `tsc` вне бота, `arch:check`, `biome` — чисто.
+- `UserAr.isAuthor()`; `ModulePolicy`: `canSeeUnpublished` = админ ∨ автор модуля, `canReadStepBody` = админ ∨ автор модуля ∨ ментор ∨ роль AUTHOR («Нет доступа к содержимому шага»).
+- `GetStepUc`: опубликованный — `canReadStepBody`, черновик/архив — `canSeeUnpublished`; при отказе — `ACCESS_DENIED` сразу (`StepAr.viewFor(false)` отдаёт опубликованный шаг любому — одной смены правила мало), при разрешении — `viewFor(true)`.
+- Фильтр проектов `module.ar.ts` не менялся — зависит от `canSeeUnpublished`.
+
+## Отчёт dmg-reviewer — пересмотр (Sonnet) и правки
+
+Обхода `canReadStepBody` для GUEST/SUBSCRIBER нет (`getLesson`/`getModule`/`getModuleSnapshot`/`getStepsByLessons` тела не отдают; `getSnapshotSteps` — только `system`, право проверяет stream); DOM-15 чисто.
+
+| суть | severity | решение orchestrator |
+|---|---|---|
+| `canReadStepBody` не смотрит статус модуля — ментор/AUTHOR получали тело опубликованного шага черновика модуля | question | исправлено: `canReadStepBody` — только при опубликованных шаге **и** модуле, иначе `canSeeUnpublished` (трактовка «только опубликованное») |
+| `viewFor(true)` под разрешением размывает смысл флага | minor | исправлено: `step.view()` |
+| `denyMessage` у `hasAuthorRole` | minor | исправлено: «Нужна роль «Автор»» |
+| TST-08: матрицы ролей в UC-тестах поверх `module.policy.test.ts`; характеризация каталога по ролям | minor | исправлено: по одному allowed/denied на правило; каталог — один тест. Остался `test.each` по ролям «в уроке только заголовки» в `course-catalog.status-mark.test.ts` (dispatch замокан) — мелкий, оставлен |
+
+`check` — 3293 pass.

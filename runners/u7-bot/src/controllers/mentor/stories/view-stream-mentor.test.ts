@@ -129,9 +129,10 @@ function createStory(handler?: Handler) {
       archiveStream: (input) =>
         answer('archiveStream', input as Record<string, unknown>),
       listScopeFacts: () => ({ hasReviews: false, reviewsCount: 0 }),
-      getStepsByLessons: (input) =>
-        answer('getStepsByLessons', input as Record<string, unknown>),
-      getStep: (input) => answer('getStep', input as Record<string, unknown>),
+      getStreamLessonSteps: (input) =>
+        answer('getStreamLessonSteps', input as Record<string, unknown>),
+      getStreamStep: (input) =>
+        answer('getStreamStep', input as Record<string, unknown>),
       // имена ментора и студентов — ответом теста
       getUser: (input) => answer('getUser', input as Record<string, unknown>),
     },

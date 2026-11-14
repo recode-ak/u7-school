@@ -21,9 +21,8 @@ type Loaded = { readonly step: StepAr; readonly module: ModuleAr };
 type Input = ParsedInputOf<typeof GetStepUcDef>;
 
 /**
- * Шаг для показа: чтение открыто всем, а право видеть неопубликованное —
- * правило `ModulePolicy` модуля-владельца (в Def UC не выражается: контекст
- * правила — загруженный модуль, а не шаг). `undefined` от `viewFor` — отказ.
+ * Шаг для показа: доступ решают правила `ModulePolicy` модуля-владельца
+ * (в Def UC не выражается: контекст правила — загруженный модуль, а не шаг).
  */
 export class GetStepUc extends UseCaseFromDef<
   typeof GetStepUcDef,
@@ -52,10 +51,15 @@ export class GetStepUc extends UseCaseFromDef<
     __: UnitOfWork,
     caller: Caller<CourseUser>,
   ) {
-    const rule = ModulePolicy.rules.canSeeUnpublished;
+    // Тело — canReadStepBody, только если опубликованы и шаг, и его модуль;
+    // иначе (черновик, архив шага или модуля) — canSeeUnpublished.
+    const rules = ModulePolicy.rules;
+    const rule =
+      step.isPublished() && module.isPublished()
+        ? rules.canReadStepBody
+        : rules.canSeeUnpublished;
     const decision = rule.evaluate(caller.subject(), { module });
-    const view = step.viewFor(decision.allowed);
-    if (view !== undefined) return ok(view);
+    if (decision.allowed) return ok(step.view());
     return CoreErrors.ACCESS_DENIED.err({
       rule: rule.name,
       denyMessage: rule.denyMessage,

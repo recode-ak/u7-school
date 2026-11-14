@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import {
+  admin,
   anonymous,
   author,
   LESSON_1,
@@ -49,9 +50,14 @@ describe('GetLessonUc — успех', () => {
     expect(expectOk(await get(author)).title).toBe('Урок');
   });
 
-  it('ментор (роль), не автор, видит DRAFT урок (Ф4а)', async () => {
+  it('админ, не автор, видит DRAFT урок', async () => {
     env.lessons.seed(lessonState(LESSON_1, 'draft', { title: 'Урок' }));
-    expect(expectOk(await get(otherMentor)).title).toBe('Урок');
+    expect(expectOk(await get(admin)).title).toBe('Урок');
+  });
+
+  it('ментор (роль), не автор, DRAFT урок не видит — ACCESS_DENIED (пересмотр Ф4а)', async () => {
+    env.lessons.seed(lessonState(LESSON_1, 'draft'));
+    expectErr(await get(otherMentor), 'ACCESS_DENIED');
   });
 
   it('студент не видит DRAFT урок — ACCESS_DENIED, опубликованный виден (Ф4а)', async () => {
