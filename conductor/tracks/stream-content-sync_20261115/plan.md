@@ -14,7 +14,7 @@
 
 **Критерии:** числа базовой линии и список старых сценариев — в `summary.md`.
 
-## Фаза 1: Домен — сравнение снимков и операции Ar
+## Фаза 1: Домен — сравнение снимков и операции Ar [checkpoint: d55b90c2]
 
 - [x] Task: S (`dmg-tech-lead`) — бриф среза `slices/domain.md`: `SnapshotDiffDqs` (сравнение двух `ContentSnapshot` по позициям — заголовки, добавленные, удалённые, переставленные, перенесённые между уроками/проектами; агрегатов не знает); `StreamContentSyncDcs(stream, students)` — `plan(newSnapshot)` (отчёт, причины отказа) и `apply(...)`; таблица исходов для нетривиальных случаев (студент `active` с завершённым последним шагом, `enrolled` без шагов, перенос шага в другой урок, удалён и добавлен под новым id); форма отчёта (список изменений по ключам, не полное «было → стало» шагов); ID `rules.md`
 - [x] Task: S (`dmg-test-designer`) — red-тесты: `snapshot-diff.dqs.test.ts`, `stream-content-sync.dcs.test.ts` (впереди / хвост / позади; удалён текущий шаг; терминальные не трогаются; статусы потока), `StudentAr.creditStep` (нет записи / `issued` / `completed` — идемпотентность, без событий, `currentStepId` не меняется), `StreamAr.replaceContent`/`canSyncContent`, `StudentProgressDqs` — помеченные шаги вне статистики времени
