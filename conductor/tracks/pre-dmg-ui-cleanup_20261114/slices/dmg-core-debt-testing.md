@@ -18,7 +18,7 @@
 5. **Новые проверки сверх старых** (README их требует): «Погашает» XOR «Триггер» у записи любого реестра; строка «Последний выданный ID» есть и ≥ максимального ID реестра. Негативный тест на каждую.
 6. **ID чужих реестров в коде** (`T-DEBT-n`, `D-DEBT-n`): регулярка `(?<![A-Za-z])(?:[A-Z]-)?DEBT-\d+\b`; ID с другим префиксом, чем `idPrefix`, пропускается; голый `DEBT-n` при `idPrefix: 'C-DEBT'` — «нет записи».
 7. **Самопроверка временности:** `tempMarkers.skip` (glob). Проект — `['scripts/**']`, пакет — `['scripts/**', 'src/arch/debt-checker*.ts']`. `*.test.ts` в область кода не входят.
-8. **`dmg-core/testing`:** `TEST_TRACE` и `testTrace(requestId?)` (свежий след `r-<счётчик>`: отсев повторов D-56 требует разных `requestId` — замена `crypto.randomUUID()`), `testUuid(n)`, `TempDir`/`useTempDir`, `MemoryRepo.where`. Политика `where` — вопрос Нурболату (см. ниже).
+8. **`dmg-core/testing`:** `TEST_TRACE` и `testTrace(requestId?)` (свежий след `r-<счётчик>`: отсев повторов D-56 требует разных `requestId` — замена `crypto.randomUUID()`), `testUuid(n)`, `TempDir`/`useTempDir`, `MemoryRepo.where`. Политика `where` (Нурболат, 2026-11-14): `find*` фейка — через `where` (предикат по снимку), если выборка тривиальна; `unanswered` — когда тесту нужен заданный им ответ. Править `testing.md` §4 и `repo.md`.
 9. **Версия** — 0.2.0 (расширение `ArchRule`, новая публичная поверхность); подтверждается при теге.
 
 ## API (черновик, детали — на авторе)
