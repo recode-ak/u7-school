@@ -9,6 +9,7 @@ import { ModulePolicy } from './module.policy';
 // Перенос `policy.test.ts`: canRead (4), isAuthor (2), isAdminOrAuthor (3),
 // canReadProject (через viewFor, см. module.ar.test.ts) на `canSeeUnpublished`.
 // canCreate / canEdit / canAddProject не переносятся (authoring удалён).
+// Ф4а: ментор (роль) видит неопубликованное в любом модуле.
 
 const who = (uuid: string, ...roles: UserView['roles']) =>
   userSubject({ uuid, roles });
@@ -29,9 +30,9 @@ describe('ModulePolicy.canSeeUnpublished', () => {
     );
   });
 
-  it('ментор, не автор — denied', () => {
-    expect(canSeeUnpublished.evaluate(who(OTHER, 'MENTOR'), ctx).allowed).toBe(
-      false,
+  it('ментор (роль), не автор — allowed (Ф4а)', () => {
+    expect(canSeeUnpublished.evaluate(who(OTHER, 'MENTOR'), ctx)).toEqual(
+      allowed,
     );
   });
 
@@ -41,7 +42,7 @@ describe('ModulePolicy.canSeeUnpublished', () => {
     );
   });
 
-  it('пользователь с ролью GUEST — denied', () => {
+  it('студент (пользователь с ролью GUEST) — denied', () => {
     const decision = canSeeUnpublished.evaluate(who(OTHER, 'GUEST'), ctx);
     expect(decision.allowed).toBe(false);
   });

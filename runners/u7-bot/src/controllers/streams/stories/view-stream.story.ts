@@ -26,10 +26,11 @@ import {
   StudentErrors,
 } from '@u7-scl/domain/stream/contract';
 import {
-  loadStepDescriptions,
+  loadMentorStepDescriptions,
   type StreamDispatch,
 } from '../../learning/shared';
 import { Routes } from '../../shared/routes';
+import { withStatusIcon, withStatusLabel } from '../../shared/status-mark';
 import {
   lagMarker,
   loadStudentRows,
@@ -320,28 +321,31 @@ export class ViewStreamStory extends U7BotUiStory {
       if (snapProject) {
         const lessonIds = snapProject.lessons.map((l) => l.lessonId);
         const byLesson =
-          (await loadStepDescriptions(
+          (await loadMentorStepDescriptions(
             (command) => this.dispatchUc(CourseModuleDef, command, actor),
             lessonIds,
           )) ?? {};
         for (const steps of Object.values(byLesson)) {
           if (Array.isArray(steps)) {
             for (const s of steps) {
-              stepDescriptions[s.uuid] = s.description;
+              stepDescriptions[s.uuid] = withStatusIcon(
+                s.description,
+                s.status,
+              );
             }
           }
         }
       }
     } else if (level === 'lesson' && targetId) {
       const byLesson =
-        (await loadStepDescriptions(
+        (await loadMentorStepDescriptions(
           (command) => this.dispatchUc(CourseModuleDef, command, actor),
           [targetId],
         )) ?? {};
       for (const steps of Object.values(byLesson)) {
         if (Array.isArray(steps)) {
           for (const s of steps) {
-            stepDescriptions[s.uuid] = s.description;
+            stepDescriptions[s.uuid] = withStatusIcon(s.description, s.status);
           }
         }
       }
@@ -352,7 +356,10 @@ export class ViewStreamStory extends U7BotUiStory {
         actor,
       );
       if (loaded.ok) {
-        stepDescriptions[targetId] = loaded.value.description;
+        stepDescriptions[targetId] = withStatusLabel(
+          loaded.value.description,
+          loaded.value.status,
+        );
         stepContent = {
           kind: loaded.value.kind,
           content: loaded.value.content,

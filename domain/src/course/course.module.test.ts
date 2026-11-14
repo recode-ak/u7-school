@@ -2,10 +2,10 @@ import { describe, expect, it } from 'bun:test';
 import { normalize } from 'dmg-core/graph';
 import { CourseModuleDef } from './contract';
 
-// Паспорт модуля: не внешний, 4 агрегата, 16 Def UC, ER и Job нет.
+// Паспорт модуля: не внешний, 4 агрегата, 17 Def UC, ER и Job нет.
 
 describe('CourseModuleDef', () => {
-  it('паспорт: не внешний, зависит от user, 4 агрегата, 16 Def UC', () => {
+  it('паспорт: не внешний, зависит от user, 4 агрегата, 17 Def UC', () => {
     expect(CourseModuleDef.external).toBeFalsy();
     const passport = normalize(CourseModuleDef);
     expect(passport).toMatchObject({
@@ -30,6 +30,7 @@ describe('CourseModuleDef', () => {
         'getLesson',
         'getStep',
         'getStepsByLessons',
+        'getSnapshotSteps',
         'getModuleSnapshot',
         'getCourse',
         'listCourses',
@@ -37,6 +38,6 @@ describe('CourseModuleDef', () => {
         'getModulePlace',
       ].sort(),
     );
-    expect(passport.useCases).toHaveLength(16);
+    expect(passport.useCases).toHaveLength(17);
   });
 });

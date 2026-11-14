@@ -3,14 +3,14 @@ import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import type { Command } from 'dmg-core';
 import { userActor } from '../../../core/user-actor.test-kit';
 import {
   dmgDispatch,
-  type Refusal,
   stepNotFound,
 } from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
-import { streamView } from '../../streams/stories/stream-dmg.test-kit';
+import { Refusal, streamView } from '../../streams/stories/stream-dmg.test-kit';
 import {
   type LegacyStudent,
   studentAnswers,
@@ -111,7 +111,25 @@ describe('StepViewStory', () => {
         getStream: () => streamView(mockStream),
         ...studentAnswers(student, mockStream.contentSnapshot),
         completeStep: () => completeStep,
-        getStep: () => step,
+        // Шаги студент читает из потока по снимку (Ф4а): getStep курса не вызывается
+        getStreamStep: () => step,
+        getStreamLessonSteps: (input) =>
+          Object.fromEntries(
+            (input as { lessonIds: string[] }).lessonIds.map((lessonId) => [
+              lessonId,
+              step instanceof Refusal
+                ? []
+                : (
+                    mockStream.contentSnapshot
+                      .flatMap((p) => p.lessons)
+                      .find((l) => l.lessonId === lessonId)?.stepIds ?? []
+                  ).map((uuid) => ({
+                    uuid,
+                    description: (step as { description: string }).description,
+                    status: 'published',
+                  })),
+            ]),
+          ),
       },
       MODULES,
     );
@@ -123,6 +141,67 @@ describe('StepViewStory', () => {
     } as never);
     return { story, dispatch };
   }
+
+  // ── Ф4а: чтение из потока по снимку ──
+
+  const draftStep = {
+    uuid: STEP1_ID,
+    moduleId: 'mod-1',
+    kind: 'text',
+    description: 'Шаг снят с публикации',
+    content: 'Тело снятого шага',
+    status: 'draft',
+    createdAt: '2026-01-01T00:00:00.000Z',
+  };
+
+  test('Ф4а: шаг, снятый с публикации после сборки снимка, студенту открывается — без отметки статуса', async () => {
+    const { story } = makeStory(undefined, draftStep);
+
+    const response = await story.handleCallback(
+      'my-study:continue',
+      studentActor,
+      session,
+    );
+    assertDialogResponseMarkdownSafe(response);
+
+    const text = String(response.screen?.text);
+    expect(text).toContain('Тело снятого шага');
+    expect(text).not.toContain('🚧');
+    expect(text).not.toContain('Черновик');
+  });
+
+  test('Ф4а: шаг студенту читается через getStreamStep потока студента, getStep курса не вызывается', async () => {
+    const { story, dispatch } = makeStory(undefined, draftStep);
+
+    await story.handleCallback('my-study:continue', studentActor, session);
+
+    const calls = dispatch.mock.calls.map(
+      ([, command]: [unknown, Command, unknown]) => command,
+    );
+    expect(calls.map((c) => c.uc)).not.toContain('getStep');
+    expect(calls.map((c) => c.uc)).not.toContain('getStepsByLessons');
+    expect(calls.find((c) => c.uc === 'getStreamStep')?.input).toEqual({
+      streamId: STREAM_ID,
+      stepId: STEP1_ID,
+    });
+  });
+
+  test('Ф4а: просмотр пройденного шага из потока — список шагов урока через getStreamLessonSteps, без отметки', async () => {
+    const { story, dispatch } = makeStory(undefined, draftStep);
+
+    const response = await story.handleCallback(
+      `my-study:view:${STREAM_ID}:${STEP2_ID}`,
+      studentActor,
+      session,
+    );
+
+    const calls = dispatch.mock.calls.map(
+      ([, command]: [unknown, Command, unknown]) => command.uc,
+    );
+    expect(calls).toContain('getStreamLessonSteps');
+    expect(calls).not.toContain('getStepsByLessons');
+    expect(String(response.screen?.text)).not.toContain('🚧');
+  });
 
   test('my-study:continue — экран текущего шага с телом', async () => {
     const { story } = makeStory();
@@ -153,7 +232,7 @@ describe('StepViewStory', () => {
     expect(response.newMessage).toBe(true);
   });
 
-  test('my-study:continue — отказ getStep: экран ошибки ucErrorNotify', async () => {
+  test('my-study:continue — отказ getStreamStep: экран ошибки ucErrorNotify', async () => {
     const { story } = makeStory(undefined, stepNotFound());
 
     const response = await story.handleCallback(

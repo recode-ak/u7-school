@@ -7,6 +7,7 @@ import {
   author,
   MODULE,
   makeEnv,
+  otherMentor,
   REQ,
   state,
   student,
@@ -41,6 +42,16 @@ describe('GetModuleUc — успех', () => {
   it('автор видит свой черновик (без роли AUTHOR)', async () => {
     env.modules.seed(state('draft'));
     expect(expectOk(await get(author)).status).toBe('draft');
+  });
+
+  it('ментор (роль), не автор, видит чужой черновик (Ф4а)', async () => {
+    env.modules.seed(state('draft'));
+    expect(expectOk(await get(otherMentor)).status).toBe('draft');
+  });
+
+  it('студент не видит чужой черновик — ACCESS_DENIED (Ф4а)', async () => {
+    env.modules.seed(state('draft'));
+    expectErr(await get(student), 'ACCESS_DENIED');
   });
 });
 

@@ -38,10 +38,11 @@ export const StepView = v.variant('kind', [
 
 export type StepView = v.InferOutput<typeof StepView>;
 
-/** Шаг в списке шагов урока — для `getStepsByLessons`. */
+/** Шаг в списке шагов урока — для `getStepsByLessons`; `status` — для отметки у видящих неопубликованное. */
 export type StepSummary = {
   readonly uuid: string;
   readonly description: string;
+  readonly status: StepState['status'];
 };
 
 /**
@@ -83,6 +84,10 @@ export class StepAr extends Aggregate<typeof StepArDef> {
   summaryFor(canSeeUnpublished: boolean): StepSummary | undefined {
     const view = this.viewFor(canSeeUnpublished);
     if (view === undefined) return undefined;
-    return { uuid: view.uuid, description: view.description };
+    return {
+      uuid: view.uuid,
+      description: view.description,
+      status: view.status,
+    };
   }
 }

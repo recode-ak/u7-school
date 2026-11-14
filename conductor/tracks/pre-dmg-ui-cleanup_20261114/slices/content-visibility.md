@@ -105,3 +105,91 @@ DOM-13, DOM-15, DOM-18, ERR-07, API-05, TST-08, CODE-04, ARC-06/07/08; `referenc
 ### Документы
 
 `runners/u7-bot/src/controllers/learning/ui-spec.md` (отметка статуса), CHANGELOG; `conductor/architecture/` — grep `canSeeUnpublished`.
+
+## Отчёт dmg-test-designer (Sonnet)
+
+Тесты написаны, не закоммичены (уйдут в коммит реализации). Красных: 34 в `domain`/`modules`/`scripts` (4 файла — импорт несуществующих модулей), 27 в боте; зелёных — 772 и 726.
+
+**Предположения о Def (обязательны для авторов — тесты на них опираются):**
+- `GetSnapshotStepsUcDef` (`getSnapshotSteps`, `callers: ['system']`, `allowAll`): вход `{ stepIds }`, выход `StepView[]` в порядке `stepIds`, отсутствующие пропускаются; класс `modules/course/src/step/uc/get-snapshot-steps.uc.ts`; в `course` 17 UC.
+- `ModulePolicy.canSeeUnpublished` + MENTOR (студент = GUEST, роли STUDENT нет).
+- `StepSummary.status` — в `StepAr.summaryFor`, `LessonStepsDqs`, ответе `getStepsByLessons`.
+- `ModuleSnapshotDqs(module, lessons, steps)`: `build()` — `ContentSnapshot` только с published-шагами (шаг, которого нет среди переданных, — тоже пропуск); `skipped()` — `{kind:'lesson', lessonId} | {kind:'step', lessonId, stepId}`; урок без опубликованных шагов остаётся с пустым `stepIds`; пропущенный урок — одна запись без его шагов; урок в двух проектах — один пропуск.
+- `GetModuleSnapshotUc`: шаги одним запросом, по `logger.warn` на пропуск. `MemoryLogger` пакета хранит только `{level, source, message}` → `moduleId` и `lessonId`/`stepId` писать и в `message`, и в `meta`.
+- `GetStreamStepUcDef` (`getStreamStep`, `query`, `callers: ['user']`): вход `{ streamId, stepId }`, выход `StepView`; ошибки `STREAM_NOT_FOUND`, `STEP_NOT_FOUND` (вне снимка), `ACCESS_DENIED` (не студент потока / не ментор потока / не админ; ментор-роль чужого потока — тоже отказ); при отказе курс не вызывается, при успехе — `getSnapshotSteps({ stepIds: [stepId] })`.
+- `GetStreamLessonStepsUcDef` (`getStreamLessonSteps`): вход `{ streamId, lessonIds }`, выход `Record<lessonId, {uuid, description, status}[]>` в порядке снимка, урока вне снимка нет; один вызов `getSnapshotSteps`; в `stream` 19 UC; классы — `modules/stream/src/stream/uc/`.
+- Бот: `learning/*` — только stream-UC; метка зависит от `status` в ответе курсовых UC, на студенческом пути метки нет. `scripts/_course-client.ts` экспортирует `warnOnlyLogger` (warn → `console.warn`), подставляется при `silent`.
+
+**Изменённые существующие тесты:** `module.policy.test.ts` (ментор → allowed), `course.module.test.ts` и `course.module.serves.test.ts` (16 → 17), `stream.module.student.test.ts` (17 → 19), `lesson-steps.dqs.test.ts` и `step.ar.test.ts` (+`status`), `module-snapshot.dqs.test.ts` (блок «stepIds целиком» → «шаги (Ф4а)»), `get-module-snapshot.uc.test.ts` («шаги не читаются» → «одним запросом»; «system от ментора — ACCESS_DENIED» → студент denied, + «ментор получает снимок»), `get-steps-by-lessons.uc.test.ts` (+`status`), `get-{step,lesson,module}.uc.test.ts` (+ментор), `step-view.test.ts` и `nav-tree.test.ts` (моки → stream-UC). Новые: `get-snapshot-steps.uc.test.ts`, `get-stream-step.uc.test.ts`, `get-stream-lesson-steps.uc.test.ts`, `view-stream.status-mark.test.ts`, `course-catalog.status-mark.test.ts`, `scripts/course-client.test.ts`.
+
+**Не добавлено:** сценарий 8 (`createStream`) — дубль сценариев 3–4 (TST-08), тест «снимок как есть» уже есть. Дублей и кандидатов в чистку нет.
+
+**Проверить автору:** `view-stream.story.test.ts`, `mentor/stories/view-stream-mentor.test.ts` после `status`; `list-modules`, `list-courses`, e2e `runners/u7-bot/tests`.
+
+**Решение orchestrator — метка урока:** только где урок приходит из API курса (каталог); если в ответе нет статуса урока, автор добавляет его так же, как `StepSummary.status`. В `view-stream` уроки из снимка, черновиков там нет — метки урока нет.
+
+## Отчёт dmg-domain-author (Opus)
+
+`bun test domain/` — 902 pass; гейт красный только в `modules/course`, `modules/stream`, `scripts` (ждут реализаций).
+
+- Course: `ModulePolicy` + `isMentor`; `StepSummary.status`; схема ответа `getStepsByLessons` вынесена в `StepsByLessonVo` (переиспользует stream); `GetSnapshotStepsUcDef`; `ModuleSnapshotDqs(module, lessons, steps)` + `build()`/`skipped()`, тип `SkippedSnapshotItem` (висячий `stepId` — тоже пропуск с warn; отсутствующий урок — молча, как раньше); `StepView` экспортируется значением; 17 UC.
+- Stream: `StreamAr.hasStep`, `lessonSteps(lessonIds)`; `StreamPolicy.canReadContent` = студент этого потока ∨ ментор потока ∨ админ (контекст `{ stream, student }`); `StreamLessonStepsDqs`; `GetStreamStepUcDef`, `GetStreamLessonStepsUcDef` (`calls: [GetSnapshotStepsUcDef]`); 19 UC.
+- Отклонения: «шаг в снимке» — вопрос Ar, `STEP_NOT_FOUND` возвращает UC (ошибка группы course, DOM-16); статус урока в выход не добавлен — есть в `LessonView`; генератор `gen uc` отказал из-за red-теста на месте файла — Def вручную.
+- Для api-author: ARC-04 в red-тесте `get-stream-step.uc.test.ts` — импорт из `@u7-scl/domain/course` мимо `contract.ts` → `@u7-scl/domain/course/contract`, `StepView['status']`.
+
+**Открытый вопрос Нурболату (на контрольную точку):** студент потока = запись с любым статусом, включая ушедших и завершивших — им материалы снимка открыты. Так задумано?
+
+## Отчёт dmg-api-author (Sonnet)
+
+`bun test modules/course modules/stream scripts` — 523 pass; `tsc` вне бота чисто; `arch:check` — 0. Гейт: 3230 pass, 29 fail — только бот.
+
+- `GetSnapshotStepsUc` (пустой список — без запроса), `GetModuleSnapshotUc` (шаги одним запросом, warn на каждый пропуск, id в message и meta), `GetStreamStepUc`, `GetStreamLessonStepsUc` (`load`: поток + запись вызывающего в потоке через `students.findByUser` + `belongsToStream`; `hasStep` до вызова курса), `warnOnlyLogger` (`[source] message` → `console.warn`). ARC-04 в red-тесте исправлен.
+- Отклонение: фикстура `author` — ментор, после правила «ментор видит всё» два старых теста (`list-modules.uc.test.ts` «чужие черновики не видны», `get-steps-by-lessons.uc.test.ts` «право по модулю шага») теряли смысл. Добавлен `plainAuthor` (тот же uuid, роль GUEST) в `module-uc.fixture.ts`, тесты переведены на него, ожидания не менялись. Принято orchestrator.
+
+## Решение Нурболата — доступ студента по прогрессу (2026-11-14)
+
+Студент потока (любой статус записи: активен, ушёл, завершил) видит содержимое шагов, которые прошёл хоть раз; непройденные — только заголовки (🔒). Забросивший — так же; завершивший поток — так же (пройденное остаётся доступным).
+
+Решение orchestrator по исполнению:
+- Содержимое шага студенту — если шаг в его прогрессе `completed` или `issued` (выданный текущий); иначе `getStreamStep` → отказ (замок). Сейчас замок соблюдает только бот (`student-nav-resolver.ts:246`), сервер — нет: правило переносится в домен (`StudentAr`/`StudentProgressDqs` уже знают статусы шагов; `canReadContent` + проверка шага).
+- Ментор потока и админ — всё содержимое снимка.
+- `getStreamLessonSteps` (описания/заголовки) — без замка, как в nav-tree сейчас.
+- Исполнение — доработка домена и прикладного слоя после шага бота: red-тесты (студент: completed — видит, issued — видит, locked — отказ; ушедший и завершивший — completed видит, locked — отказ) → `dmg-domain-author` → `dmg-api-author`.
+
+## Отчёт dmg-api-author / бот (Sonnet, `general-purpose`)
+
+Студенческий путь `learning/*` — на `getStreamStep`/`getStreamLessonSteps` (`streamId` из `student.streamId`; `buildStepList` — один `getStreamLessonSteps` вместо `getStep` на шаг; в nav-tree описания грузятся только на уровне урока). Метка — `controllers/shared/status-mark.ts` (`withStatusIcon`, `withStatusLabel`), в `view-stream.story.ts` и `course-catalog.story.ts`. `learning/ui-spec.md` дополнен. Отклонение: `platform/core/src/ui/content-nav/presenter.ts` — `cleanChildButtonTitle` срезал значки → сохраняет `🚧`/`🗄`; принято orchestrator как C-DEBT-56 (погашает dmg-ui). Метки урока в каталоге нет — уроки из снимка.
+
+## Отчёт dmg-test-designer — замок (Sonnet)
+
+15 red; `u7-app.test.ts` починен (в `seedCourse` досеян опубликованный шаг — висячий шаг давал пустой снимок).
+- `StreamPolicy.rules.canReadStep`, контекст `{ stream, student, stepId }`: `anyOf(студент потока ∧ student.hasIssued(stepId), isStreamMentor, isAdmin)`; `StudentAr.hasIssued` уже покрывает issued и completed. Отказ — `ACCESS_DENIED` (Policy).
+- `GetStreamStepUcDef.policy`: `canReadContent` → `canReadStep`; `load` кладёт `stepId` в контекст. `STEP_NOT_FOUND` (вне снимка) — раньше замка (тест закрепляет): проверка снимка до Policy.
+- `getStreamLessonSteps` — на `canReadContent`, заголовки без замка (тесты green).
+- Изменено: `get-stream-step.uc.test.ts` — студент в `beforeEach` с `done(STEP_1)`.
+
+## Отчёт dmg-domain-author — замок (Sonnet)
+
+`StreamPolicy.rules.canReadStep` = `anyOf(hasIssuedStep, isStreamMentor, isAdmin)`, контекст `StreamStepCtx`; `GetStreamStepUcDef.policy` → `canReadStep`. Отклонение: платформа идёт `load → policy → fetch`, поэтому `hasStep` → `STEP_NOT_FOUND` перенесён в `load` (решение — по-прежнему `StreamAr.hasStep`). `check` — 3286 pass.
+
+## Данные (dmg-data-keeper + orchestrator)
+
+- Схемы state не менялись — миграция не нужна, старые `contentSnapshot` читаются как есть, откат совместим.
+- `data/courses` (git, только чтение, скрипт-счётчик в scratchpad): 1161 шаг, все `published`; висячих `stepIds` 0; неопубликованных уроков 0 → на текущем контенте сборка снимка ничего не пропустит, `update-stream-snapshot` не выбросит шагов. `data/streams/` локально нет (живые потоки — на prod).
+- Перед `update-stream-snapshot` на prod — `bun run backup` (скрипт переписывает `contentSnapshot`); прогресс студента по выпавшему шагу не удаляется, но снимок на него больше не ссылается.
+
+## Отчёт dmg-reviewer (Sonnet)
+
+error нет. Чисто: Policy — только субъект и контекст; system-UC `getSnapshotSteps` по `calls`, право до вызова курса; содержимое draft студенту — только через `getStreamStep` с замком; DOM-13/15, CODE-04.
+
+| ID | файл | суть | severity | решение orchestrator |
+|---|---|---|---|---|
+| TST-08 | `get-stream-step.uc.test.ts` | отказы Policy повторяют `stream.policy.test.ts` | warn | исправлено: 5 тестов удалены (покрыты `canReadContent`/`canReadStep`), остался один отказ + порядок «снимок раньше замка» |
+| TST-08 | `get-stream-lesson-steps.uc.test.ts` | то же | warn | исправлено: 1 тест удалён, один отказ на проводку |
+| TST-08 | `get-stream-lesson-steps.uc.test.ts` ↔ `stream-lesson-steps.dqs.test.ts` | сборка ответа проверена дважды | info | оставлено (исполнитель не удалил; дубль мелкий) |
+| нейминг | `learning/shared.ts` | `loadStepDescriptions` vs `loadStreamStepDescriptions` | info | исправлено: `loadMentorStepDescriptions` |
+| DOM-18 | `get-stream-lesson-steps.uc.ts` | студент получает `status` шагов в заголовках | info | принято: метку студенту бот не рисует, статус шага курса не секрет |
+
+Следствие порядка «снимок до Policy»: посторонний различает `STEP_NOT_FOUND`/`ACCESS_DENIED` — узнаёт состав снимка; принято.
+
+Итог: `check` — 3278 pass (база Ф4 — 3170 + новые тесты Ф4а, минус 6 дублей TST-08).

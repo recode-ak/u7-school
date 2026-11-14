@@ -3,6 +3,7 @@ import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
+import type { Command } from 'dmg-core';
 import { userActor } from '../../../core/user-actor.test-kit';
 import { dmgDispatch } from '../../courses/stories/course-dmg.test-kit';
 import { testCallers } from '../../peer-review/stories/peer-review-dmg.test-kit';
@@ -118,7 +119,11 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
     contentSnapshot: richSnapshot,
   };
 
-  function makeStory() {
+  /**
+   * `statuses` — статус шага в курсе на момент чтения: студенту поток отдаёт
+   * шаг из снимка независимо от него (Ф4а).
+   */
+  function makeStory(statuses: Record<string, string> = {}) {
     const allSteps: Record<string, Record<string, unknown>> = {
       [STEP1_ID]: {
         uuid: STEP1_ID,
@@ -186,48 +191,114 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
       },
     };
 
+    for (const [id, status] of Object.entries(statuses)) {
+      const step = allSteps[id];
+      if (step) step.status = status;
+    }
+
     const student = richStudent as LegacyStudent;
 
     const story = new NavTreeStory();
-    story.init({
-      appApi: {
-        dispatch: dmgDispatch(
-          {
-            getStream: () => streamView(richStream),
-            ...studentAnswers(student, richSnapshot),
-            getStep: (input) => allSteps[(input as { stepId: string }).stepId],
-            getStepsByLessons: (input) => {
-              const p = input as { lessonIds: string[] };
-              const result: Record<
-                string,
-                Array<{ uuid: string; description: string }>
-              > = {};
-              for (const lid of p.lessonIds) {
-                const ids =
-                  lid === LESSON1_ID
-                    ? [STEP1_ID, STEP2_ID]
-                    : lid === LESSON2_ID
-                      ? [STEP3_ID, STEP4_ID]
-                      : lid === LESSON3_ID
-                        ? [STEP5_ID, STEP6_ID]
-                        : lid === LESSON4_ID
-                          ? [STEP7_ID, STEP8_ID]
-                          : [];
-                result[lid] = ids.map((sid) => ({
-                  uuid: sid,
-                  description: (allSteps[sid]?.description as string) ?? '',
-                }));
-              }
-              return result;
-            },
-          },
-          MODULES,
-        ),
+    const dispatch = dmgDispatch(
+      {
+        getStream: () => streamView(richStream),
+        ...studentAnswers(student, richSnapshot),
+        // Ф4а: студент читает шаги из потока по снимку, не из курса
+        getStreamStep: (input) =>
+          allSteps[(input as { stepId: string }).stepId],
+        getStreamLessonSteps: (input) => {
+          const p = input as { lessonIds: string[] };
+          const result: Record<
+            string,
+            Array<{ uuid: string; description: string; status: string }>
+          > = {};
+          for (const lid of p.lessonIds) {
+            const ids =
+              richSnapshot
+                .flatMap((pr) => pr.lessons)
+                .find((l) => l.lessonId === lid)?.stepIds ?? [];
+            result[lid] = ids.map((sid) => ({
+              uuid: sid,
+              description: (allSteps[sid]?.description as string) ?? '',
+              status: (allSteps[sid]?.status as string) ?? 'published',
+            }));
+          }
+          return result;
+        },
       },
-      callers: testCallers,
-    } as never);
-    return { story };
+      MODULES,
+    );
+    story.init({ appApi: { dispatch }, callers: testCallers } as never);
+    return { story, dispatch };
   }
+
+  // ── Ф4а: чтение из потока по снимку ──
+
+  test('Ф4а: шаг снят с публикации после сборки снимка — уровень урока открывается, кнопка шага есть, без отметки статуса', async () => {
+    const { story } = makeStory({ [STEP4_ID]: 'draft' });
+
+    const response = await story.handleCallback(
+      `nav-tree:lesson:${LESSON2_ID}`,
+      studentActor,
+      session,
+    );
+    assertDialogResponseMarkdownSafe(response);
+
+    const flatBtns = response.screen?.keyboard?.rows.flat() ?? [];
+    const step4Btn = flatBtns.find((b) => b.text.includes('Четвёртый шаг'));
+    expect(step4Btn?.code).toBe(`nav-tree:step:${STEP4_ID}`);
+    expect(String(response.screen?.text)).toContain('2\\. ▶️ Четвёртый шаг');
+    expect(String(response.screen?.text)).not.toContain('🚧');
+    expect(flatBtns.some((b) => b.text.includes('🚧'))).toBe(false);
+  });
+
+  test('Ф4а: карточка снятого с публикации шага открывается студенту с телом и без отметки', async () => {
+    const { story } = makeStory({ [STEP4_ID]: 'archived' });
+
+    const response = await story.handleCallback(
+      `nav-tree:step:${STEP4_ID}`,
+      studentActor,
+      session,
+    );
+    assertDialogResponseMarkdownSafe(response);
+
+    const text = String(response.screen?.text);
+    expect(text).toContain('Контент четвёртого шага');
+    expect(text).not.toContain('🗄');
+    expect(text).not.toContain('В архиве');
+  });
+
+  test('Ф4а: студенческая навигация читает шаги через getStreamStep/getStreamLessonSteps, getStep и getStepsByLessons курса не вызываются', async () => {
+    const { story, dispatch } = makeStory();
+
+    await story.handleCallback('my-study:lessons', studentActor, session);
+    await story.handleCallback(
+      `nav-tree:lesson:${LESSON2_ID}`,
+      studentActor,
+      session,
+    );
+    await story.handleCallback(
+      `nav-tree:step:${STEP3_ID}`,
+      studentActor,
+      session,
+    );
+
+    const calls = dispatch.mock.calls.map(
+      ([, command]: [unknown, Command, unknown]) => command,
+    );
+    const names = calls.map((c) => c.uc);
+    expect(names).not.toContain('getStep');
+    expect(names).not.toContain('getStepsByLessons');
+    expect(names).toContain('getStreamLessonSteps');
+    expect(calls.find((c) => c.uc === 'getStreamStep')?.input).toEqual({
+      streamId: STREAM_ID,
+      stepId: STEP3_ID,
+    });
+    expect(calls.find((c) => c.uc === 'getStreamLessonSteps')?.input).toEqual({
+      streamId: STREAM_ID,
+      lessonIds: [LESSON2_ID],
+    });
+  });
 
   // ── Уровень 1: Root (Модуль / Проекты) ──
 

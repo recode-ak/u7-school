@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { expectOk } from 'dmg-core/testing';
 import {
-  author,
   LESSON_1,
   LESSON_2,
   LESSON_3,
@@ -12,6 +11,8 @@ import {
   moduleState,
   OTHER_ID,
   OTHER_MODULE,
+  otherMentor,
+  plainAuthor,
   REQ,
   STEP_1,
   STEP_2,
@@ -44,18 +45,53 @@ function seedLesson(id: string, stepIds: string[]) {
 }
 
 describe('GetStepsByLessonsUc — успех', () => {
-  it('шаги урока: uuid и description — и только они', async () => {
+  it('шаги урока: uuid, description и status — и только они', async () => {
     seedLesson(LESSON_1, [STEP_1]);
 
     const result = expectOk(await get([LESSON_1]));
 
     expect(result).toEqual({
-      [LESSON_1]: [{ uuid: STEP_1, description: 'Шаг 1' }],
+      [LESSON_1]: [{ uuid: STEP_1, description: 'Шаг 1', status: 'published' }],
     });
     expect(Object.keys(result[LESSON_1]?.[0] ?? {}).sort()).toEqual([
       'description',
+      'status',
       'uuid',
     ]);
+  });
+
+  it('ментор (роль), не автор, получает draft и archived шаги со статусом (Ф4а)', async () => {
+    env.lessons.seed(
+      lessonState(LESSON_1, 'published', { stepIds: [STEP_1, STEP_2, STEP_3] }),
+    );
+    env.steps.seed(
+      textStep(STEP_1, 'published'),
+      textStep(STEP_2, 'draft'),
+      textStep(STEP_3, 'archived'),
+    );
+
+    const result = expectOk(await get([LESSON_1], otherMentor));
+
+    expect(result[LESSON_1]?.map((s) => [s.uuid, s.status])).toEqual([
+      [STEP_1, 'published'],
+      [STEP_2, 'draft'],
+      [STEP_3, 'archived'],
+    ]);
+  });
+
+  it('студент: draft и archived шаги пропускаются, published остаётся (Ф4а)', async () => {
+    env.lessons.seed(
+      lessonState(LESSON_1, 'published', { stepIds: [STEP_1, STEP_2, STEP_3] }),
+    );
+    env.steps.seed(
+      textStep(STEP_1, 'published'),
+      textStep(STEP_2, 'draft'),
+      textStep(STEP_3, 'archived'),
+    );
+
+    const result = expectOk(await get([LESSON_1], student));
+
+    expect(result[LESSON_1]?.map((s) => s.uuid)).toEqual([STEP_1]);
   });
 });
 
@@ -75,7 +111,7 @@ describe('GetStepsByLessonsUc — модули шагов', () => {
       textStep(STEP_2, 'draft', { moduleId: OTHER_MODULE }),
     );
 
-    const result = expectOk(await get([LESSON_1], author));
+    const result = expectOk(await get([LESSON_1], plainAuthor));
 
     expect(result[LESSON_1]?.map((s) => s.uuid)).toEqual([STEP_1]);
   });

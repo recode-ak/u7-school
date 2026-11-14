@@ -86,3 +86,39 @@ describe('StreamAr.stepPlace', () => {
     expect(streamWith({ contentSnapshot: [] }).stepPlace(S1)).toBeUndefined();
   });
 });
+
+describe('StreamAr.hasStep', () => {
+  it('шаг из снимка — true', () => {
+    expect(streamWith().hasStep(S4)).toBe(true);
+  });
+
+  it('шага нет в снимке — false', () => {
+    expect(streamWith().hasStep(L1)).toBe(false);
+  });
+});
+
+describe('StreamAr.lessonSteps', () => {
+  it('шаги запрошенных уроков снимка — в порядке запроса', () => {
+    expect([...streamWith().lessonSteps([L3, L1])]).toEqual([
+      [L3, [S4, S5]],
+      [L1, [S1, S2]],
+    ]);
+  });
+
+  it('урока нет в снимке — в ответ не попадает', () => {
+    expect([...streamWith().lessonSteps([S1, L2]).keys()]).toEqual([L2]);
+  });
+
+  it('урок с пустым stepIds — с пустым списком', () => {
+    const stream = streamWith({
+      contentSnapshot: [
+        {
+          projectId: P1,
+          projectTitle: 'П1',
+          lessons: [{ lessonId: L1, lessonTitle: 'У1', stepIds: [] }],
+        },
+      ],
+    });
+    expect([...stream.lessonSteps([L1])]).toEqual([[L1, []]]);
+  });
+});

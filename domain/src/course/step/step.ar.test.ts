@@ -89,11 +89,28 @@ describe('StepAr.viewFor — с правом на неопубликованно
 });
 
 describe('StepAr.summaryFor — для getStepsByLessons', () => {
-  it('published: uuid и description — и только они', () => {
+  it('published: uuid, description и status — и только они', () => {
     const summary = StepAr.restore(storedCode('published')).summaryFor(false);
-    expect(summary).toEqual({ uuid: STEP, description: 'Шаг 1' });
-    expect(Object.keys(summary ?? {}).sort()).toEqual(['description', 'uuid']);
+    expect(summary).toEqual({
+      uuid: STEP,
+      description: 'Шаг 1',
+      status: 'published',
+    });
+    expect(Object.keys(summary ?? {}).sort()).toEqual([
+      'description',
+      'status',
+      'uuid',
+    ]);
   });
+
+  it.each(['draft', 'archived'] as const)(
+    '%s с правом — summary со статусом',
+    (status) => {
+      expect(StepAr.restore(storedText(status)).summaryFor(true)?.status).toBe(
+        status,
+      );
+    },
+  );
 
   it.each(['draft', 'archived'] as const)(
     '%s без права — undefined',

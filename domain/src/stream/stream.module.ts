@@ -8,8 +8,10 @@ import { CompleteStreamUcDef } from './stream/uc/complete-stream.uc';
 import { CreateStreamUcDef } from './stream/uc/create-stream.uc';
 import { FindStreamByTelegramGroupUcDef } from './stream/uc/find-stream-by-telegram-group.uc';
 import { GetStreamUcDef } from './stream/uc/get-stream.uc';
+import { GetStreamLessonStepsUcDef } from './stream/uc/get-stream-lesson-steps.uc';
 import { GetStreamMembersUcDef } from './stream/uc/get-stream-members.uc';
 import { GetStreamPresenceUcDef } from './stream/uc/get-stream-presence.uc';
+import { GetStreamStepUcDef } from './stream/uc/get-stream-step.uc';
 import { ListStreamsUcDef } from './stream/uc/list-streams.uc';
 import { InactivitySweepJobDef } from './student/job/inactivity-sweep.job';
 import { StudentArDef } from './student/student.ar';
@@ -22,7 +24,7 @@ import { GetStudentByUserUcDef } from './student/uc/get-student-by-user.uc';
 import { GetStudentProgressUcDef } from './student/uc/get-student-progress.uc';
 import { MarkAbandonedUcDef } from './student/uc/mark-abandoned.uc';
 
-/** Модуль потоков: поток (9 UC) и студент (8 UC, Job бездействия). */
+/** Модуль потоков: поток (11 UC) и студент (8 UC, Job бездействия). */
 export const StreamModuleDef = ModuleDef.define({
   name: 'stream',
   label: 'Потоки',
@@ -39,6 +41,8 @@ export const StreamModuleDef = ModuleDef.define({
     GetStreamMembersUcDef,
     GetStreamPresenceUcDef,
     FindStreamByTelegramGroupUcDef,
+    GetStreamStepUcDef,
+    GetStreamLessonStepsUcDef,
     EnrollStudentUcDef,
     CompleteStepUcDef,
     CompleteStudentUcDef,

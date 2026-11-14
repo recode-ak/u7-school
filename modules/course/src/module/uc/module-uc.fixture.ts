@@ -23,6 +23,13 @@ export const T0 = Date.UTC(2026, 6, 8, 18, 35);
 export const author = new UserCaller(
   userSubject({ uuid: AUTHOR_ID, roles: ['MENTOR'] }),
 );
+/**
+ * Автор модуля без роли ментора: видит неопубликованное только своего
+ * модуля (ментор — любого, `ModulePolicy.canSeeUnpublished`).
+ */
+export const plainAuthor = new UserCaller(
+  userSubject({ uuid: AUTHOR_ID, roles: ['GUEST'] }),
+);
 export const student = new UserCaller(
   userSubject({
     uuid: OTHER_ID,

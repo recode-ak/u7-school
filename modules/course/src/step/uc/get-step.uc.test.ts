@@ -8,8 +8,10 @@ import {
   makeContentEnv,
   moduleState,
   OTHER_MODULE,
+  otherMentor,
   REQ,
   STEP_1,
+  STEP_2,
   student,
   textStep,
 } from '../../content-uc.fixture';
@@ -45,6 +47,21 @@ describe('GetStepUc — успех', () => {
   it('автор модуля видит DRAFT шаг (без роли AUTHOR)', async () => {
     env.steps.seed(textStep(STEP_1, 'draft', { description: 'Шаг' }));
     expect(expectOk(await get(author)).description).toBe('Шаг');
+  });
+
+  it('ментор (роль), не автор, видит DRAFT и archived шаг (Ф4а)', async () => {
+    env.steps.seed(
+      textStep(STEP_1, 'draft', { description: 'Шаг' }),
+      textStep(STEP_2, 'archived', { description: 'Архив' }),
+    );
+    expect(expectOk(await get(otherMentor)).description).toBe('Шаг');
+    expect(expectOk(await get(otherMentor, STEP_2)).description).toBe('Архив');
+  });
+
+  it('студент: DRAFT шаг — ACCESS_DENIED, опубликованный виден (Ф4а)', async () => {
+    env.steps.seed(textStep(STEP_1, 'draft'), textStep(STEP_2, 'published'));
+    expectErr(await get(student), 'ACCESS_DENIED');
+    expectOk(await get(student, STEP_2));
   });
 });
 

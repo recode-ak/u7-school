@@ -43,15 +43,28 @@ const open = new Map([[MODULE, true]]);
 const closed = new Map([[MODULE, false]]);
 
 describe('LessonStepsDqs.build', () => {
-  it('отдаёт только uuid и description шага', () => {
+  it('отдаёт только uuid, description и status шага', () => {
     const result = new LessonStepsDqs(
       [lesson(LESSON_A, [S1])],
       [step(S1)],
       closed,
     ).build();
     expect(result).toEqual({
-      [LESSON_A]: [{ uuid: S1, description: 'Шаг 1' }],
+      [LESSON_A]: [{ uuid: S1, description: 'Шаг 1', status: 'published' }],
     });
+  });
+
+  it('status — фактический статус шага (draft и archived при canSee=true)', () => {
+    const result = new LessonStepsDqs(
+      [lesson(LESSON_A, [S1, S2, S3])],
+      [step(S1, 'draft'), step(S2, 'published'), step(S3, 'archived')],
+      open,
+    ).build();
+    expect(result[LESSON_A]?.map((it) => it.status)).toEqual([
+      'draft',
+      'published',
+      'archived',
+    ]);
   });
 
   it('несколько уроков — ключ lessonId каждого', () => {
@@ -61,7 +74,9 @@ describe('LessonStepsDqs.build', () => {
       closed,
     ).build();
     expect(Object.keys(result).sort()).toEqual([LESSON_A, LESSON_B]);
-    expect(result[LESSON_B]).toEqual([{ uuid: S2, description: 'Шаг 2' }]);
+    expect(result[LESSON_B]).toEqual([
+      { uuid: S2, description: 'Шаг 2', status: 'published' },
+    ]);
   });
 
   it('порядок — по stepIds урока, не по порядку steps', () => {
@@ -140,6 +155,8 @@ describe('LessonStepsDqs.build', () => {
       [step(S1)],
       closed,
     ).build();
-    expect(result[LESSON_A]).toEqual([{ uuid: S1, description: 'Шаг 1' }]);
+    expect(result[LESSON_A]).toEqual([
+      { uuid: S1, description: 'Шаг 1', status: 'published' },
+    ]);
   });
 });

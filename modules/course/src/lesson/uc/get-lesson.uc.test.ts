@@ -10,6 +10,7 @@ import {
   makeContentEnv,
   moduleState,
   OTHER_MODULE,
+  otherMentor,
   REQ,
   student,
 } from '../../content-uc.fixture';
@@ -46,6 +47,16 @@ describe('GetLessonUc — успех', () => {
   it('автор модуля видит DRAFT урок (без роли AUTHOR)', async () => {
     env.lessons.seed(lessonState(LESSON_1, 'draft', { title: 'Урок' }));
     expect(expectOk(await get(author)).title).toBe('Урок');
+  });
+
+  it('ментор (роль), не автор, видит DRAFT урок (Ф4а)', async () => {
+    env.lessons.seed(lessonState(LESSON_1, 'draft', { title: 'Урок' }));
+    expect(expectOk(await get(otherMentor)).title).toBe('Урок');
+  });
+
+  it('студент не видит DRAFT урок — ACCESS_DENIED, опубликованный виден (Ф4а)', async () => {
+    env.lessons.seed(lessonState(LESSON_1, 'draft'));
+    expectErr(await get(student), 'ACCESS_DENIED');
   });
 
   it('модуль спрашивается по moduleId урока', async () => {

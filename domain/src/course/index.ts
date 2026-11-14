@@ -44,7 +44,10 @@ export type { ModuleState, ProjectEntity } from './module/module.state';
 export { ModuleCoursesDqs } from './module-courses.dqs';
 export { ModulePrerequisiteDqs } from './module-prerequisite.dqs';
 // DQS снимка контента модуля
-export { ModuleSnapshotDqs } from './module-snapshot.dqs';
+export {
+  ModuleSnapshotDqs,
+  type SkippedSnapshotItem,
+} from './module-snapshot.dqs';
 // Общие типы
 export { Status } from './status';
 // Агрегат Step

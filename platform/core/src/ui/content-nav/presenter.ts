@@ -174,6 +174,12 @@ const MAX_BUTTON_LABEL_LENGTH = 44;
  * Очищает название дочернего элемента для отображения на кнопке (без эмодзи и префикса уровня).
  */
 function cleanChildButtonTitle(title: string): string {
+  // Значок статуса контента (🚧 черновик / 🗄 архив) — отметка, а не декор:
+  // сохраняем его перед очищенным названием.
+  const mark = /^(🚧|🗄)️?\s*/u.exec(title);
+  if (mark) {
+    return `${mark[1]} ${cleanChildButtonTitle(title.slice(mark[0].length))}`;
+  }
   // 1. Убираем ведущие эмодзи и пробелы
   let cleaned = title.replace(
     /^(?:\p{Extended_Pictographic}|\uFE0F|\u200D|\s)+/u,

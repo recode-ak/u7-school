@@ -16,6 +16,7 @@ export {
   OTHER_ID,
   otherMentor,
   PROJECT_PUBLISHED,
+  plainAuthor,
   projectState,
   REQ,
   state as moduleState,

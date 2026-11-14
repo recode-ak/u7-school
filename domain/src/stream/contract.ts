@@ -12,6 +12,7 @@ export {
   GetStreamUcDef,
   type StreamWithRights,
 } from './stream/uc/get-stream.uc';
+export { GetStreamLessonStepsUcDef } from './stream/uc/get-stream-lesson-steps.uc';
 export {
   GetStreamMembersUcDef,
   type StreamMembersView,
@@ -20,6 +21,7 @@ export {
   GetStreamPresenceUcDef,
   type StreamPresence,
 } from './stream/uc/get-stream-presence.uc';
+export { GetStreamStepUcDef } from './stream/uc/get-stream-step.uc';
 export { ListStreamsUcDef } from './stream/uc/list-streams.uc';
 export { StreamModuleDef } from './stream.module';
 export { InactivitySweepJobDef } from './student/job/inactivity-sweep.job';

@@ -18,6 +18,7 @@ import { GetModuleUcDef } from './module/uc/get-module.uc';
 import { GetModuleSnapshotUcDef } from './module/uc/get-module-snapshot.uc';
 import { ListModulesUcDef } from './module/uc/list-modules.uc';
 import { StepArDef } from './step/step.ar';
+import { GetSnapshotStepsUcDef } from './step/uc/get-snapshot-steps.uc';
 import { GetStepUcDef } from './step/uc/get-step.uc';
 import { GetStepsByLessonsUcDef } from './step/uc/get-steps-by-lessons.uc';
 
@@ -48,6 +49,7 @@ export const CourseModuleDef = ModuleDef.define({
     GetLessonUcDef,
     GetStepUcDef,
     GetStepsByLessonsUcDef,
+    GetSnapshotStepsUcDef,
   ],
   reactions: [],
   jobs: [],

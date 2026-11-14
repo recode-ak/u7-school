@@ -172,6 +172,31 @@ export class StreamAr extends Aggregate<typeof StreamArDef, StreamView> {
     return expected === undefined || expected === key;
   }
 
+  /** Есть ли шаг в снимке контента потока. */
+  hasStep(stepId: string): boolean {
+    return this.state.contentSnapshot.some((project) =>
+      project.lessons.some((lesson) => lesson.stepIds.includes(stepId)),
+    );
+  }
+
+  /**
+   * Шаги запрошенных уроков по снимку: `lessonId → stepIds` в порядке запроса;
+   * урока нет в снимке — нет и ключа.
+   */
+  lessonSteps(lessonIds: readonly string[]): ReadonlyMap<string, string[]> {
+    const inSnapshot = new Map(
+      this.state.contentSnapshot.flatMap((project) =>
+        project.lessons.map((lesson) => [lesson.lessonId, lesson.stepIds]),
+      ),
+    );
+    const result = new Map<string, string[]>();
+    for (const lessonId of lessonIds) {
+      const stepIds = inSnapshot.get(lessonId);
+      if (stepIds !== undefined) result.set(lessonId, [...stepIds]);
+    }
+    return result;
+  }
+
   /**
    * Место шага в снимке контента: следующий шаг (по порядку обхода проектов
    * и уроков), урок и проект шага, последний ли он в уроке, последний ли

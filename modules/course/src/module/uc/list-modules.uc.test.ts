@@ -4,8 +4,8 @@ import { expectOk } from 'dmg-core/testing';
 import { ListModulesUc } from './list-modules.uc';
 import {
   anonymous,
-  author,
   makeEnv,
+  plainAuthor,
   REQ,
   state,
   student,
@@ -63,7 +63,7 @@ describe('ListModulesUc — успех', () => {
       state('published', { uuid: U3, authorId: OTHER_AUTHOR }),
     );
 
-    expect(expectOk(await list({}, author)).map((m) => m.uuid)).toEqual([
+    expect(expectOk(await list({}, plainAuthor)).map((m) => m.uuid)).toEqual([
       U1,
       U3,
     ]);

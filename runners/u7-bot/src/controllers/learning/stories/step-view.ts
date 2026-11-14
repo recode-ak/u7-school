@@ -7,13 +7,10 @@ import type {
   KbButton,
   KeyboardDescription,
 } from '@u7-scl/core/ui';
-import {
-  type ContentSnapshot,
-  CourseModuleDef,
-  GetStepUcDef,
-} from '@u7-scl/domain/course/contract';
+import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
 import {
   CompleteStepUcDef,
+  GetStreamStepUcDef,
   GetStreamUcDef,
   GetStudentProgressUcDef,
   StreamModuleDef,
@@ -227,8 +224,8 @@ export class StepViewStory extends U7BotUiStory {
     }
 
     const loaded = await this.dispatchUc(
-      CourseModuleDef,
-      GetStepUcDef.command({ stepId }),
+      StreamModuleDef,
+      GetStreamStepUcDef.command({ streamId: student.streamId, stepId }),
       actor,
     );
     if (!loaded.ok) return this.ucErrorNotify(loaded.error);
@@ -249,7 +246,8 @@ export class StepViewStory extends U7BotUiStory {
     const lessonId = findLessonIdForStep(stream.contentSnapshot, stepId);
     const stepList = lessonId
       ? await buildStepList(
-          (command) => this.dispatchUc(CourseModuleDef, command, actor),
+          (command) => this.dispatchUc(StreamModuleDef, command, actor),
+          student.streamId,
           stream.contentSnapshot,
           lessonId,
           student,
@@ -315,8 +313,8 @@ export class StepViewStory extends U7BotUiStory {
     const resolved = progress?.step?.position ?? null;
 
     const loaded = await this.dispatchUc(
-      CourseModuleDef,
-      GetStepUcDef.command({ stepId }),
+      StreamModuleDef,
+      GetStreamStepUcDef.command({ streamId, stepId }),
       actor,
     );
     if (!loaded.ok) return this.ucErrorNotify(loaded.error);

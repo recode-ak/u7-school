@@ -39,10 +39,13 @@ type CourseCaller = Extract<
   { kind: 'user' }
 >;
 
-/** No-op логгер — консольная утилита не показывает служебные логи модулей. */
-const silentLogger: Logger = {
+/**
+ * Логгер режима `silent`: служебные логи модулей скрыты, но `warn` (например,
+ * пропуск неопубликованного при сборке снимка) оператор должен видеть.
+ */
+export const warnOnlyLogger: Logger = {
   info: () => {},
-  warn: () => {},
+  warn: (source, message) => console.warn(`[${source}] ${message}`),
   error: () => {},
   debug: () => {},
   setLogLevel: () => {},
@@ -76,7 +79,7 @@ export class CourseClient {
         studentGroup: TEST_SCHOOL.studentGroup,
         mentors: [...TEST_SCHOOL.mentors],
       },
-      options.silent ? { logger: silentLogger } : {},
+      options.silent ? { logger: warnOnlyLogger } : {},
     );
     const trace = Trace.fromRequest({
       requestId: crypto.randomUUID(),

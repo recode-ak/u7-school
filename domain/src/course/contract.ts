@@ -48,10 +48,12 @@ export { ModuleErrors } from './module/module.errors';
 export { GetModuleUcDef } from './module/uc/get-module.uc';
 export { GetModuleSnapshotUcDef } from './module/uc/get-module-snapshot.uc';
 export { ListModulesUcDef } from './module/uc/list-modules.uc';
-export type { StepView } from './step/step.ar';
+export { StepView } from './step/step.ar';
 export { StepErrors } from './step/step.errors';
+export { GetSnapshotStepsUcDef } from './step/uc/get-snapshot-steps.uc';
 export { GetStepUcDef } from './step/uc/get-step.uc';
 export {
   GetStepsByLessonsUcDef,
   type StepsByLesson,
+  StepsByLessonVo,
 } from './step/uc/get-steps-by-lessons.uc';

@@ -56,6 +56,8 @@
 - [process.md](../../node_modules/dmg-core/docs/process.md) — общее видение процесса (уровни постановки, роли, срез, SDD и без него), в пакете `dmg-core`
 - [agent-roles.md](./agent-roles.md) — новые роли агентов: состав, место в процессе, волны внедрения, критерии годности
 - [deepseek.md](./deepseek.md) — делегирование шагов ролей в DeepSeek: кому что, промпт, запуск и учёт
+- [feature-modeling.md](./feature-modeling.md) — моделирование фичи (черновик): от описания функциональности к доменной модели и карте треков, уровень над spec трека
+- [feature-model.md](./feature-model.md) — формат модели фичи (черновик): разделы, событийный штурм → Def, `.md` и `.json`
 - [docs-strategy.md](./docs-strategy.md) — доменная и техническая документация
 
 **UI (Telegram-бот)**

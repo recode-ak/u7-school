@@ -14,11 +14,21 @@ import {
 } from './module/module.fixture';
 import type { ModuleState } from './module/module.state';
 import { ModuleSnapshotDqs } from './module-snapshot.dqs';
+import { StepAr } from './step/step.ar';
+import { storedText } from './step/step.fixture';
+import type { StepState } from './step/step.state';
 
+// Ф4а: DQS получает шаги; в снимок идут только опубликованные шаги, пропущенное
+// (draft/archived урок и шаг) перечисляется в `skipped()` — warn пишет UC.
+// Предполагаемый контракт: `new ModuleSnapshotDqs(module, lessons, steps)`,
+// `build(): ContentSnapshot` без изменений, `skipped(): SkippedSnapshotItem[]`
+// = `{ kind: 'lesson', lessonId } | { kind: 'step', lessonId, stepId }`.
+//
 // Перенос двух сценариев `buildSnapshot` из прежнего доменного сервиса («исключает
 // archived-проект», «исключает archived-урок опубликованного проекта») и
-// сценарии по коду: порядок, пропуск висячих (долг, DOM-13), `stepIds` без
-// фильтра по шагам (С1), невидимый урок пропускается, а не роняет (С2).
+// сценарии по коду: порядок, пропуск висячих (долг, DOM-13), невидимый урок
+// пропускается, а не роняет (С2). Фильтр шагов (С1 v0.2.6 «stepIds целиком»)
+// заменён в Ф4а.
 
 const LESSON_3 = '77777777-7777-4777-8777-777777777771';
 const PROJECT_2 = '88888888-8888-4888-8888-888888888881';
@@ -44,11 +54,22 @@ const lesson = (
     }),
   );
 
+const step = (uuid: string, status: StepState['status'] = 'published') =>
+  StepAr.restore(storedText(status, { uuid }));
+
+/** Шаги по умолчанию — опубликованные `STEP_A`, `STEP_B`. */
+const PUBLISHED_STEPS = [step(STEP_A), step(STEP_B)];
+
+const dqs = (
+  module: ModuleAr,
+  lessons: LessonAr[],
+  steps: StepAr[] = PUBLISHED_STEPS,
+) => new ModuleSnapshotDqs(module, lessons, steps);
+
 const build = (
   module: ModuleAr,
   ...lessons: LessonAr[]
-): ReturnType<ModuleSnapshotDqs['build']> =>
-  new ModuleSnapshotDqs(module, lessons).build();
+): ReturnType<ModuleSnapshotDqs['build']> => dqs(module, lessons).build();
 
 describe('ModuleSnapshotDqs.build — перенос buildSnapshot', () => {
   it('исключает archived-проект', () => {
@@ -254,15 +275,107 @@ describe('ModuleSnapshotDqs.build — отбор уроков', () => {
   });
 });
 
-describe('ModuleSnapshotDqs.build — stepIds (С1)', () => {
-  it('stepIds урока включаются целиком: DQS не видит статусов шагов', () => {
-    // В данных 32 опубликованных урока содержат по одному черновому шагу;
-    // шаги DQS не получает, поэтому фильтровать нечего (поведение v0.2.6).
-    const snapshot = build(
-      moduleAr([project('published')]),
+describe('ModuleSnapshotDqs — шаги (Ф4а)', () => {
+  const published = moduleAr([project('published')]);
+
+  it('draft и archived шаги не попадают в stepIds урока, порядок оставшихся сохраняется', () => {
+    const STEP_C = '99999999-9999-4999-8999-999999999993';
+    const STEP_D = '99999999-9999-4999-8999-999999999994';
+    const snapshot = dqs(
+      published,
+      [
+        lesson(LESSON_1, 'published', {
+          stepIds: [STEP_C, STEP_A, STEP_D, STEP_B],
+        }),
+      ],
+      [
+        step(STEP_A),
+        step(STEP_B, 'draft'),
+        step(STEP_C),
+        step(STEP_D, 'archived'),
+      ],
+    ).build();
+
+    expect(snapshot[0]?.lessons[0]?.stepIds).toEqual([STEP_C, STEP_A]);
+  });
+
+  it('урок, где все шаги неопубликованы, остаётся в снимке с пустым stepIds', () => {
+    const snapshot = dqs(
+      published,
+      [lesson(LESSON_1, 'published', { stepIds: [STEP_A] })],
+      [step(STEP_A, 'draft')],
+    ).build();
+
+    expect(snapshot[0]?.lessons).toEqual([
+      { lessonId: LESSON_1, lessonTitle: expect.any(String), stepIds: [] },
+    ]);
+  });
+
+  it('stepId без шага среди переданных пропускается (в снимке только опубликованное)', () => {
+    const snapshot = dqs(
+      published,
+      [lesson(LESSON_1, 'published', { stepIds: [STEP_A, STEP_B] })],
+      [step(STEP_B)],
+    ).build();
+
+    expect(snapshot[0]?.lessons[0]?.stepIds).toEqual([STEP_B]);
+  });
+
+  it('skipped: draft-шаг и archived-шаг перечислены с lessonId и stepId', () => {
+    const skipped = dqs(
+      published,
+      [lesson(LESSON_1, 'published', { stepIds: [STEP_A, STEP_B] })],
+      [step(STEP_A, 'draft'), step(STEP_B, 'archived')],
+    ).skipped();
+
+    expect(skipped).toEqual([
+      { kind: 'step', lessonId: LESSON_1, stepId: STEP_A },
+      { kind: 'step', lessonId: LESSON_1, stepId: STEP_B },
+    ]);
+  });
+
+  it('skipped: draft-урок опубликованного проекта перечислен, его шаги отдельно не перечисляются', () => {
+    const skipped = dqs(
+      moduleAr([project('published', { lessonIds: [LESSON_1, LESSON_2] })]),
+      [
+        lesson(LESSON_1, 'draft', { stepIds: [STEP_A] }),
+        lesson(LESSON_2, 'archived', { stepIds: [STEP_B] }),
+      ],
+      [step(STEP_A, 'draft'), step(STEP_B)],
+    ).skipped();
+
+    expect(skipped).toEqual([
+      { kind: 'lesson', lessonId: LESSON_1 },
+      { kind: 'lesson', lessonId: LESSON_2 },
+    ]);
+  });
+
+  it('skipped: пусто, если всё опубликовано', () => {
+    const skipped = dqs(published, [
       lesson(LESSON_1, 'published', { stepIds: [STEP_A, STEP_B] }),
+    ]).skipped();
+
+    expect(skipped).toEqual([]);
+  });
+
+  it('урок в двух проектах: шаги отфильтрованы в обоих, пропуск перечислен один раз', () => {
+    const second = {
+      ...project('published'),
+      uuid: PROJECT_2,
+      lessonIds: [LESSON_1],
+    };
+    const d = dqs(
+      moduleAr([project('published'), second]),
+      [lesson(LESSON_1, 'published', { stepIds: [STEP_A, STEP_B] })],
+      [step(STEP_A, 'draft'), step(STEP_B)],
     );
 
-    expect(snapshot[0]?.lessons[0]?.stepIds).toEqual([STEP_A, STEP_B]);
+    expect(d.build().map((p) => p.lessons[0]?.stepIds)).toEqual([
+      [STEP_B],
+      [STEP_B],
+    ]);
+    expect(d.skipped()).toEqual([
+      { kind: 'step', lessonId: LESSON_1, stepId: STEP_A },
+    ]);
   });
 });

@@ -4,7 +4,7 @@ import type { StepAr } from './step/step.ar';
 import type { StepsByLesson } from './step/uc/get-steps-by-lessons.uc';
 
 /**
- * DQS шагов уроков: `lessonId → [{ uuid, description }]` в порядке `stepIds`
+ * DQS шагов уроков: `lessonId → [{ uuid, description, status }]` в порядке `stepIds`
  * урока. Только читает.
  *
  * Право на неопубликованное вызывающий решает заранее по модулю шага и

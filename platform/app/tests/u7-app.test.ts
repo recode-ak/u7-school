@@ -385,6 +385,17 @@ async function startQuestionnaire(
   return own.uuid;
 }
 
+/** Опубликованный шаг: снимок берёт только published-шаги (висячий шаг пропускается). */
+const legacyStep = {
+  uuid: STEP,
+  moduleId: MODULE,
+  kind: 'text',
+  description: 'Шаг 1',
+  content: 'Текст шага',
+  status: 'published',
+  createdAt: '2026-06-01T10:00',
+};
+
 /** Курс из legacy-файлов — источник снимка для `createStream`. */
 async function seedCourse(dbDir: string): Promise<void> {
   await mkdir(join(dbDir, 'courses'), { recursive: true });
@@ -395,6 +406,10 @@ async function seedCourse(dbDir: string): Promise<void> {
   await Bun.write(
     join(dbDir, 'courses', 'lessons.json'),
     JSON.stringify([legacyLesson]),
+  );
+  await Bun.write(
+    join(dbDir, 'courses', 'steps.json'),
+    JSON.stringify([legacyStep]),
   );
 }
 

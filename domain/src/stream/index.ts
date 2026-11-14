@@ -9,6 +9,7 @@ export { StreamRules } from './stream/stream.rules';
 export type { StreamState } from './stream/stream.state';
 export type { StepPlace, StreamStudentFact } from './stream/stream.types';
 export * from './stream-launch.dcs';
+export * from './stream-lesson-steps.dqs';
 export * from './stream-members.dqs';
 export * from './student/job/inactivity-sweep.job';
 export * from './student/student.ar';

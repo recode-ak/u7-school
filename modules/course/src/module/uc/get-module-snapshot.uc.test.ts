@@ -17,13 +17,18 @@ import {
   REQ,
   STEP_1,
   STEP_2,
+  STEP_3,
+  student,
+  textStep,
 } from '../../content-uc.fixture';
 import type { CourseUser } from '../../course.module';
 import { GetModuleSnapshotUc } from './get-module-snapshot.uc';
 
-// Ответственность UC: доступ к модулю через Policy, отказы, чтение только
-// одним запросом. Правила сборки снимка — на уровне `ModuleSnapshotDqs`
-// (TST-08).
+// Ответственность UC: доступ к модулю через Policy, отказы, чтение уроков и
+// шагов по одному запросу, warn о пропущенном. Правила сборки снимка — на
+// уровне `ModuleSnapshotDqs` (TST-08). Ф4а: снимок без неопубликованных
+// шагов, пропуск — `logger.warn`; LogRecord пакета без meta, поэтому moduleId
+// и id пропущенного проверяются по тексту сообщения.
 
 const PROJECT_2 = '88888888-8888-4888-8888-888888888881';
 const MISSING = '99999999-9999-4999-8999-999999999990';
@@ -50,7 +55,10 @@ function seedPublished() {
       stepIds: [STEP_1, STEP_2],
     }),
   );
+  env.steps.seed(textStep(STEP_1, 'published'), textStep(STEP_2, 'published'));
 }
+
+const warns = () => env.ctx.logs.filter((r) => r.level === 'warn');
 
 /** `system`-вызов от имени человека (ментор `createStream`). */
 const asSystemFor = (person: UserCaller<CourseUser>) =>
@@ -96,6 +104,15 @@ describe('GetModuleSnapshotUc — успех', () => {
     expect(expectOk(await snapshot(asSystemFor(mentor)))).toHaveLength(1);
   });
 
+  it('system от имени ментора (роль), не автора, получает снимок черновика (Ф4а)', async () => {
+    env.modules.seed(
+      moduleState('draft', { projects: [projectState('published')] }),
+    );
+    env.lessons.seed(lessonState(LESSON_1, 'published'));
+
+    expect(expectOk(await snapshot(asSystemFor(otherMentor)))).toHaveLength(1);
+  });
+
   it('уроки запрашиваются одним запросом без повторов', async () => {
     env.modules.seed(
       moduleState('published', {
@@ -116,13 +133,90 @@ describe('GetModuleSnapshotUc — успех', () => {
     expect(env.asked.lessonById).toEqual([]);
   });
 
-  it('шаги не читаются (С1)', async () => {
+  it('шаги читаются одним запросом по всем stepIds без повторов (Ф4а)', async () => {
     seedPublished();
 
     await snapshot(anonymous);
 
-    expect(env.asked.steps).toEqual([]);
+    expect(env.asked.steps).toHaveLength(1);
+    expect([...(env.asked.steps[0] ?? [])].sort()).toEqual(
+      [STEP_1, STEP_2].sort(),
+    );
     expect(env.asked.stepById).toEqual([]);
+  });
+});
+
+describe('GetModuleSnapshotUc — пропуск неопубликованного (Ф4а)', () => {
+  it('draft-шаг не попадает в снимок, warn назван moduleId и stepId', async () => {
+    seedPublished();
+    env.steps.seed(textStep(STEP_2, 'draft'));
+
+    const result = expectOk(await snapshot(anonymous));
+
+    expect(result[0]?.lessons[0]?.stepIds).toEqual([STEP_1]);
+    expect(warns()).toHaveLength(1);
+    expect(warns()[0]?.message).toContain(MODULE);
+    expect(warns()[0]?.message).toContain(STEP_2);
+  });
+
+  it('archived-шаг пропускается так же, как draft', async () => {
+    seedPublished();
+    env.steps.seed(textStep(STEP_1, 'archived'));
+
+    const result = expectOk(await snapshot(anonymous));
+
+    expect(result[0]?.lessons[0]?.stepIds).toEqual([STEP_2]);
+    expect(warns()[0]?.message).toContain(STEP_1);
+  });
+
+  it('draft-урок опубликованного проекта пропущен, warn назван moduleId и lessonId', async () => {
+    seedPublished();
+    env.lessons.seed(lessonState(LESSON_1, 'draft', { stepIds: [STEP_1] }));
+
+    const result = expectOk(await snapshot(anonymous));
+
+    expect(result[0]?.lessons).toEqual([]);
+    expect(warns()).toHaveLength(1);
+    expect(warns()[0]?.message).toContain(MODULE);
+    expect(warns()[0]?.message).toContain(LESSON_1);
+  });
+
+  it('по warn на каждый пропуск: два шага — две записи', async () => {
+    seedPublished();
+    env.steps.seed(textStep(STEP_1, 'draft'), textStep(STEP_2, 'draft'));
+
+    expectOk(await snapshot(anonymous));
+
+    expect(warns()).toHaveLength(2);
+  });
+
+  it('без пропусков warn нет', async () => {
+    seedPublished();
+
+    expectOk(await snapshot(anonymous));
+
+    expect(warns()).toEqual([]);
+  });
+
+  it('снимок для ментора (роль), не автора, тот же и warn тот же — права не влияют на состав', async () => {
+    seedPublished();
+    env.steps.seed(textStep(STEP_2, 'draft'));
+
+    const forGuest = expectOk(await snapshot(anonymous));
+    const forMentor = expectOk(await snapshot(otherMentor));
+
+    expect(forMentor).toEqual(forGuest);
+  });
+
+  it('шаг, которого нет в репозитории, в снимок не попадает', async () => {
+    seedPublished();
+    env.lessons.seed(
+      lessonState(LESSON_1, 'published', { stepIds: [STEP_1, STEP_3] }),
+    );
+
+    const result = expectOk(await snapshot(anonymous));
+
+    expect(result[0]?.lessons[0]?.stepIds).toEqual([STEP_1]);
   });
 });
 
@@ -149,14 +243,14 @@ describe('GetModuleSnapshotUc — отказы', () => {
     expect(error.payload).toMatchObject({ rule: 'canSeeUnpublished' });
   });
 
-  it('system от имени ментора, не автора, на черновом модуле — ACCESS_DENIED', async () => {
+  it('system от имени студента (GUEST) на черновом модуле — ACCESS_DENIED', async () => {
     env.modules.seed(
       moduleState('draft', { projects: [projectState('published')] }),
     );
     env.lessons.seed(lessonState(LESSON_1, 'published'));
 
     const error = expectErr(
-      await snapshot(asSystemFor(otherMentor)),
+      await snapshot(asSystemFor(student)),
       'ACCESS_DENIED',
     );
 

@@ -8,9 +8,9 @@ import { courseModuleMap } from './course.module';
 // Здесь остаётся только карта UC модуля на свои Def (TST-08).
 
 describe('createCourseModule — сборка модуля курсов (Р10, Т13)', () => {
-  it('карта использует ровно те же 16 UC, что объявлены в Def', () => {
+  it('карта использует ровно те же 17 UC, что объявлены в Def', () => {
     const declared = normalize(CourseModuleDef).useCases;
-    expect(declared).toHaveLength(16);
+    expect(declared).toHaveLength(17);
     expect(Object.keys(courseModuleMap.useCases).sort()).toEqual(
       [...declared].sort(),
     );

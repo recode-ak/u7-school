@@ -8,19 +8,16 @@ import {
   presentNavLevel,
   type StepContentData,
 } from '@u7-scl/core/ui';
+import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
 import {
-  type ContentSnapshot,
-  CourseModuleDef,
-  GetStepUcDef,
-} from '@u7-scl/domain/course/contract';
-import {
+  GetStreamStepUcDef,
   GetStreamUcDef,
   GetStudentProgressUcDef,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
 import {
   getStudentAndStream,
-  loadStepDescriptions,
+  loadStreamStepDescriptions,
   notEnrolled,
 } from '../shared';
 import {
@@ -68,24 +65,11 @@ export class NavTreeStory extends U7BotUiStory {
     const stepDescriptions: Record<string, string> = {};
     let stepContent: StepContentData | undefined;
 
-    if (navAddress.level === 'root' || navAddress.level === 'project') {
-      const lessonIds = stream.contentSnapshot.flatMap((p) =>
-        p.lessons.map((l) => l.lessonId),
-      );
-      if (lessonIds.length > 0) {
-        const byLesson = await loadStepDescriptions(
-          (command) => this.dispatchUc(CourseModuleDef, command, actor),
-          lessonIds,
-        );
-        for (const steps of Object.values(byLesson)) {
-          for (const s of steps) {
-            stepDescriptions[s.uuid] = s.description;
-          }
-        }
-      }
-    } else if (navAddress.level === 'lesson' && navAddress.targetId) {
-      const byLesson = await loadStepDescriptions(
-        (command) => this.dispatchUc(CourseModuleDef, command, actor),
+    // Названия шагов нужны только на уровне урока и шага.
+    if (navAddress.level === 'lesson' && navAddress.targetId) {
+      const byLesson = await loadStreamStepDescriptions(
+        (command) => this.dispatchUc(StreamModuleDef, command, actor),
+        student.streamId,
         [navAddress.targetId],
       );
       for (const steps of Object.values(byLesson)) {
@@ -95,8 +79,11 @@ export class NavTreeStory extends U7BotUiStory {
       }
     } else if (navAddress.level === 'step' && navAddress.targetId) {
       const loaded = await this.dispatchUc(
-        CourseModuleDef,
-        GetStepUcDef.command({ stepId: navAddress.targetId }),
+        StreamModuleDef,
+        GetStreamStepUcDef.command({
+          streamId: student.streamId,
+          stepId: navAddress.targetId,
+        }),
         actor,
       );
       if (loaded.ok) {

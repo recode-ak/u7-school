@@ -21,6 +21,7 @@ import { GetModuleUc } from './module/uc/get-module.uc';
 import { GetModuleSnapshotUc } from './module/uc/get-module-snapshot.uc';
 import { ListModulesUc } from './module/uc/list-modules.uc';
 import type { StepRepo } from './step/step.repo';
+import { GetSnapshotStepsUc } from './step/uc/get-snapshot-steps.uc';
 import { GetStepUc } from './step/uc/get-step.uc';
 import { GetStepsByLessonsUc } from './step/uc/get-steps-by-lessons.uc';
 
@@ -60,6 +61,7 @@ export const courseModuleMap = {
     getLesson: GetLessonUc,
     getStep: GetStepUc,
     getStepsByLessons: GetStepsByLessonsUc,
+    getSnapshotSteps: GetSnapshotStepsUc,
   },
   reactions: {},
   jobs: {},

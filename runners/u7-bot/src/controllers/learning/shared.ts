@@ -10,9 +10,9 @@ import {
   type ContentSnapshot,
   type CourseModuleDef,
   GetStepsByLessonsUcDef,
-  GetStepUcDef,
 } from '@u7-scl/domain/course/contract';
 import {
+  GetStreamLessonStepsUcDef,
   GetStudentByUserUcDef,
   type Progress,
   type StreamModuleDef,
@@ -129,7 +129,8 @@ export function getCompletedStepsInOrder(student: Student): string[] {
 
 /** Строит список шагов урока с маркерами для отображения в просмотре шага. */
 export async function buildStepList(
-  dispatch: CourseDispatch,
+  dispatch: StreamDispatch,
+  streamId: string,
   snapshot: ContentSnapshot,
   lessonId: string,
   student: Student,
@@ -155,6 +156,18 @@ export async function buildStepList(
 
   const lines: MdText[] = [md`_Шаги урока:_`];
 
+  // Описания шагов — из потока по снимку (Ф4а): шаг, снятый с публикации
+  // после сборки снимка, студенту по-прежнему виден.
+  const loaded = await dispatch(
+    GetStreamLessonStepsUcDef.command({ streamId, lessonIds: [lessonId] }),
+  );
+  const descriptions = new Map<string, string>(
+    (loaded.ok ? (loaded.value[lessonId] ?? []) : []).map((s) => [
+      s.uuid,
+      s.description,
+    ]),
+  );
+
   for (const sid of stepIds) {
     const status = stepStatuses.get(sid);
     let marker: string;
@@ -166,8 +179,7 @@ export async function buildStepList(
       marker = '🔒';
     }
 
-    const loaded = await dispatch(GetStepUcDef.command({ stepId: sid }));
-    const desc = loaded.ok ? loaded.value.description : sid;
+    const desc = descriptions.get(sid) ?? sid;
 
     lines.push(md`${marker} _${desc}_`);
   }
@@ -176,13 +188,31 @@ export async function buildStepList(
 }
 
 /**
- * Загружает описания шагов через get-steps-by-lessons.
+ * Загружает описания шагов через get-steps-by-lessons (чтение из курса:
+ * ментор/администратор, видят неопубликованное — со `status`).
  */
-export async function loadStepDescriptions(
+export async function loadMentorStepDescriptions(
   dispatch: CourseDispatch,
   lessonIds: string[],
-): Promise<Record<string, Array<{ uuid: string; description: string }>>> {
+): Promise<
+  Record<string, Array<{ uuid: string; description: string; status: string }>>
+> {
   const res = await dispatch(GetStepsByLessonsUcDef.command({ lessonIds }));
+  return res.ok ? res.value : {};
+}
+
+/**
+ * Загружает описания шагов студенческого пути через get-stream-lesson-steps:
+ * чтение из потока по снимку, без статусного фильтра курса.
+ */
+export async function loadStreamStepDescriptions(
+  dispatch: StreamDispatch,
+  streamId: string,
+  lessonIds: string[],
+): Promise<Record<string, Array<{ uuid: string; description: string }>>> {
+  const res = await dispatch(
+    GetStreamLessonStepsUcDef.command({ streamId, lessonIds }),
+  );
   return res.ok ? res.value : {};
 }
 

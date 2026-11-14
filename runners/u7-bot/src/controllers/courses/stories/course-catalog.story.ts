@@ -28,6 +28,7 @@ import {
 } from '@u7-scl/domain/wish/contract';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
+import { withStatusIcon } from '../../shared/status-mark';
 import { resolveCourseNavLevel } from '../course-nav-resolver';
 
 /** Карточка модуля для списка: заголовок и проекты. */
@@ -824,7 +825,7 @@ export class CourseCatalogStory extends U7BotUiStory {
     const result: Record<string, string> = {};
     for (const steps of Object.values(loaded.value)) {
       for (const step of steps) {
-        result[step.uuid] = step.description;
+        result[step.uuid] = withStatusIcon(step.description, step.status);
       }
     }
     return result;
