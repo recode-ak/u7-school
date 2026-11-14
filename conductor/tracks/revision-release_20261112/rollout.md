@@ -83,3 +83,23 @@ console.log(`записей: ${rows.length}, невалидных: ${bad.length}
 4. Состав `.env.production` (файл вне git) — какие из обязательных ключей реально есть.
 5. Чистота рабочей копии в проде: незакоммиченные правки, особенно сверх `data/courses/*.json` (tracked).
 6. Какие снимки уже лежат в `data/backup/` и есть ли среди них с `meta.txt` версии `v0.2.6` (страховка, если `before-0.3.0` не создастся: код возврата `10`/`1`).
+
+## 7. Итоги выкатки (2026-11-14, ~18:27Z)
+
+Выкачено по §1, прод на `main` = `v0.3.0` + документы (`0346345b`). Ответы на §6:
+
+1. `users.json`: 433 записи, `STUDENT` снят у 15, в `['GUEST']` — 0, невалидных — 0; контрольный прогон — 0.
+2. `wishes.json`: 91, невалидных 0.
+3. `streams.json` 9 / `students.json` 104 — невалидных 0.
+4. `.env.production` — все обязательные ключи есть.
+5. Рабочая копия чистая, локальных коммитов нет.
+6. Снимки `v0.2.6` были (scheduled); созданы `2026-11-14T182328Z-before-0.3.0` (protected) и `…182329Z-before-deploy`.
+
+Находки:
+
+- **Прод стоял в detached HEAD на теге `v0.2.6`** (так оставляет `deploy.sh`: `git checkout vX.Y.Z`), локальный `main` — на `v0.2.3`. `git pull --ff-only` (п. 3 §1) падает: `You are not currently on a branch`. Сделали `git checkout main && git merge --ff-only origin/main`. Следующие релизы — `deploy.sh` по тегу, `pull` не нужен.
+- Висячие ссылки в `node_modules` после переезда: `@u7-scl/onboarding` (→ `packages/onboarding`, удалена), остались `@u7-scl/cli`, `.bin/tsserver`, `.bin/openai` — старту не мешают; лечит `rm -rf node_modules && bun install --frozen-lockfile` при остановленном боте.
+- `apps/`, `packages/` после `pull` — только каталоги и `node_modules`, удалены.
+- Построчные `INFO … Обработан запрос` в `out.log` больше не пишутся — операции видны в `data/oplog/<дата>.jsonl` (189 за smoke, ошибок 0).
+- **TelegramLogger не доставляет** (`GrammyError 504` через 120 с): Telegram API висит на токене бота-логгера — и с prod, и локально, основной бот отвечает. Код логгера с v0.2.6 не менялся — проблема токена/бота, не релиза: проверить в BotFather, при необходимости перевыпустить `LOGGER_BOT_TOKEN`.
+- У prod не работает IPv6 до `api.telegram.org` (IPv4 — ок); Bun-fetch не страдает, `curl` без `-4` висит.
