@@ -14,6 +14,8 @@ import { GetStreamMembersUc } from './stream/uc/get-stream-members.uc';
 import { GetStreamPresenceUc } from './stream/uc/get-stream-presence.uc';
 import { GetStreamStepUc } from './stream/uc/get-stream-step.uc';
 import { ListStreamsUc } from './stream/uc/list-streams.uc';
+import { PreviewStreamContentSyncUc } from './stream/uc/preview-stream-content-sync.uc';
+import { SyncStreamContentUc } from './stream/uc/sync-stream-content.uc';
 import { InactivitySweepJob } from './student/job/inactivity-sweep.job';
 import type { StudentRepo } from './student/student.repo';
 import { CompleteStepUc } from './student/uc/complete-step.uc';
@@ -52,6 +54,8 @@ export const streamMap = {
     getStreamStep: GetStreamStepUc,
     getStreamLessonSteps: GetStreamLessonStepsUc,
     findStreamByTelegramGroup: FindStreamByTelegramGroupUc,
+    previewStreamContentSync: PreviewStreamContentSyncUc,
+    syncStreamContent: SyncStreamContentUc,
     enrollStudent: EnrollStudentUc,
     completeStep: CompleteStepUc,
     completeStudent: CompleteStudentUc,

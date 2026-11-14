@@ -240,11 +240,11 @@ export class StudentAr extends Aggregate<typeof StudentArDef, StudentView> {
     return this.state.steps.length === 0;
   }
 
-  /** Выбывший без единого завершённого шага. */
+  /** Выбывший без единого завершённого им самим шага (зачёт синхронизацией не в счёт). */
   neverStarted(): boolean {
     return (
       this.outcomeCategory() === 'abandoned' &&
-      !this.state.steps.some((step) => step.status === 'completed')
+      !this.ownSteps().some((step) => step.status === 'completed')
     );
   }
 
@@ -274,11 +274,12 @@ export class StudentAr extends Aggregate<typeof StudentArDef, StudentView> {
 
   /**
    * Время последней активности: максимум по шагам из `completedAt`,
-   * иначе `issuedAt`. `undefined` — шагов нет.
+   * иначе `issuedAt`; зачтённые синхронизацией — не активность (ФР-6а).
+   * `undefined` — своих шагов нет.
    */
   lastActivityAt(): Timestamp | undefined {
     let latest: Timestamp | undefined;
-    for (const step of this.state.steps) {
+    for (const step of this.ownSteps()) {
       const at = step.completedAt ?? step.issuedAt;
       if (latest === undefined || at > latest) latest = at;
     }
@@ -421,6 +422,35 @@ export class StudentAr extends Aggregate<typeof StudentArDef, StudentView> {
   }
 
   /**
+   * Зачёт шага синхронизацией контента (F-80, ФР-3): запись становится
+   * `completed` с пометкой `content_sync` (нет записи — создаётся). Текущий
+   * шаг, уведомления и события не меняются; завершённый — `already_credited`.
+   */
+  creditStep(
+    stepId: string,
+    at: Timestamp,
+  ): Result<'credited' | 'already_credited', never> {
+    if (this.hasCompleted(stepId)) return ok('already_credited');
+    return this.change(at, (draft) => {
+      const target = draft.steps.find((step) => step.stepId === stepId);
+      if (target === undefined) {
+        draft.steps.push({
+          stepId,
+          status: 'completed',
+          issuedAt: at,
+          completedAt: at,
+          completionSource: 'content_sync',
+        });
+      } else {
+        target.status = 'completed';
+        target.completedAt = at;
+        target.completionSource = 'content_sync';
+      }
+      return ok('credited');
+    });
+  }
+
+  /**
    * Уведомления о бездействии: студенту с 5-го дня, ментору с 7-го, затем
    * каждые 2 дня (цепочки независимы). Ставит маркеры с временем до минуты и
    * публикует `inactivityWarning` / `inactivityRemoveCandidate`; `wasWarned` —
@@ -466,6 +496,13 @@ export class StudentAr extends Aggregate<typeof StudentArDef, StudentView> {
       userId: this.state.userId,
       streamId: this.state.streamId,
     };
+  }
+
+  /** Записи шагов без зачтённых синхронизацией: работа самого студента. */
+  private ownSteps(): StudentState['steps'] {
+    return this.state.steps.filter(
+      (step) => step.completionSource === undefined,
+    );
   }
 
   private lastNoticeAt(kind: StudentNoticeKind): Timestamp | undefined {

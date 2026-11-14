@@ -354,3 +354,55 @@ describe('StudentProgressDqs.computeStudentCard', () => {
     expect(card.medianTimeMinutes).toBeNull();
   });
 });
+
+describe('StudentProgressDqs: зачтённые синхронизацией шаги (ФР-6а)', () => {
+  const credit = (stepId: string): Step => ({
+    stepId,
+    status: 'completed',
+    issuedAt: T,
+    completedAt: T,
+    completionSource: 'content_sync',
+  });
+
+  it('computeStepTimeStats: помеченный шаг не попадает ни в одну категорию', () => {
+    expect(dqs(studentOf([credit(A)])).computeStepTimeStats()).toEqual({
+      runner: 0,
+      fast: 0,
+      normal: 0,
+      deep: 0,
+    });
+  });
+
+  it('computeStepTimeStats: считаются только настоящие завершения', () => {
+    expect(
+      dqs(studentOf([credit(A), done(B, 20)])).computeStepTimeStats(),
+    ).toEqual({ runner: 0, fast: 0, normal: 0, deep: 1 });
+  });
+
+  it('computeAvgTime: только помеченные — null/null', () => {
+    expect(dqs(studentOf([credit(A)])).computeAvgTime()).toEqual({
+      medianMinutes: null,
+      dominant: null,
+    });
+  });
+
+  it('computeAvgTime: медиана без помеченных', () => {
+    expect(
+      dqs(studentOf([credit(A), done(B, 5)])).computeAvgTime().medianMinutes,
+    ).toBe(5);
+  });
+
+  it('computeProgress считает помеченный шаг завершённым', () => {
+    expect(
+      dqs(studentOf([credit(A), done(B), open(C)])).computeProgress(),
+    ).toEqual({ completed: 2, total: 4, percent: 50 });
+  });
+
+  it('buildNavigationTree показывает помеченный шаг как completed', () => {
+    const tree = dqs(studentOf([credit(A), open(B)])).buildNavigationTree();
+    expect(tree.projects[0]?.lessons[0]?.steps).toEqual([
+      { stepId: A, status: 'completed', index: 1 },
+      { stepId: B, status: 'current', index: 2 },
+    ]);
+  });
+});

@@ -1,4 +1,11 @@
 /** Контракт модуля stream: паспорт, Def UC, события, ошибки и виды (D-45). */
+
+export type {
+  ContentSyncPlan,
+  SnapshotDiff,
+  StudentImpact,
+  SyncBlocker,
+} from './content-sync.types';
 export * from './status';
 export type { StreamView } from './stream/stream.ar';
 export { StreamErrors } from './stream/stream.errors';
@@ -23,6 +30,8 @@ export {
 } from './stream/uc/get-stream-presence.uc';
 export { GetStreamStepUcDef } from './stream/uc/get-stream-step.uc';
 export { ListStreamsUcDef } from './stream/uc/list-streams.uc';
+export { PreviewStreamContentSyncUcDef } from './stream/uc/preview-stream-content-sync.uc';
+export { SyncStreamContentUcDef } from './stream/uc/sync-stream-content.uc';
 export { StreamModuleDef } from './stream.module';
 export { InactivitySweepJobDef } from './student/job/inactivity-sweep.job';
 export type { StudentView } from './student/student.ar';

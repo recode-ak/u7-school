@@ -66,9 +66,13 @@ function nodesOf(stepIds: readonly string[], student: Student): StepNode[] {
   });
 }
 
-/** Длительность завершённого шага в мс; незавершённые и отрицательные — `undefined`. */
+/**
+ * Длительность завершённого шага в мс; незавершённые, отрицательные и
+ * зачтённые синхронизацией (не работа студента, ФР-6а) — `undefined`.
+ */
 function durationOf(step: StepRecord): number | undefined {
   if (step.completedAt === undefined) return undefined;
+  if (step.completionSource !== undefined) return undefined;
   const duration = step.completedAt - step.issuedAt;
   return duration < 0 ? undefined : duration;
 }

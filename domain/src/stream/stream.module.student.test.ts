@@ -25,12 +25,14 @@ const STREAM_UC = [
   'findStreamByTelegramGroup',
   'getStreamStep',
   'getStreamLessonSteps',
+  'previewStreamContentSync',
+  'syncStreamContent',
 ];
 
 // Единственный тест состава модуля (TST-08): список UC и dependsOn ловят
 // и новую операцию, и новую связь модулей.
 describe('StreamModuleDef — состав', () => {
-  it('19 UC, агрегаты, Job, реакции и зависимости', () => {
+  it('21 UC, агрегаты, Job, реакции и зависимости', () => {
     const def = normalize(StreamModuleDef);
     expect([...def.useCases].sort()).toEqual(
       [...STREAM_UC, ...STUDENT_UC].sort(),
@@ -51,6 +53,8 @@ describe('StreamModuleDef — состав', () => {
       'StreamMembersDqs',
       'StreamLaunchDcs',
       'StepCompletionDcs',
+      'StreamContentSyncDcs',
+      'SnapshotDiffDqs',
     ]) {
       expect(name in contract).toBe(false);
     }

@@ -9,6 +9,8 @@
 - **S3** — принято spec, без изменений.
 - **Хвост (расхождение 6)** — подтверждено по ФР-5: студенту, завершившему последний шаг, добавленный в конец шаг не засчитывается, его выдаст `issueTail` при следующем действии. Отмечено в spec как намеренное изменение.
 - **Тактические T1–T11** — по рекомендациям ниже.
+- **Подтверждение (после red-тестов, orchestrator):** проверка `affected ⊆ confirmedStudentIds`. Отказ `SYNC_NEEDS_CONFIRMATION` — только если в `affected` есть студент, которого не подтвердили. Лишние подтверждённые (уже продвинулись или зачтены прошлым частичным прогоном) отказа не дают. Пустой `affected` — без проверки. Причина: повтор после сбоя посередине (ФР-8а) с тем же списком должен довести обновление до конца, а зачесть неподтверждённого по-прежнему нельзя.
+- **`tail` не входит в `ahead`**; коды `SyncBlocker.code` короткие, коды `Err` — полные `STREAM_*`; `affected` считается и при блокерах.
 - **Расхождения spec 1–8** — внесены в `spec.md` (ФР-6а через `durationOf`, `lastActivityAt`, `enrolled` без шагов, хвост).
 
 ## Границы
@@ -90,7 +92,7 @@ SyncBlocker =
 - `plan(newSnapshot): ContentSyncPlan`;
 - `apply(newSnapshot, confirmedStudentIds, at): Result<ContentSyncOutcome, ContentSyncError>`, `ContentSyncOutcome = { mode, changedStudents: readonly StudentAr[], credited: [{studentId, stepIds}] }`.
 
-Порядок `apply`: `plan` → первый блокер в `Err` → если `affected` непуст, сверка множеств `affected` и `confirmedStudentIds` без учёта порядка, несовпадение → `SYNC_NEEDS_CONFIRMATION { affected }` → все проверки до мутаций → `creditStep` по `behind` → `stream.replaceContent` последним. Повтор: `changedStudents` пуст, поток `unchanged`.
+Порядок `apply`: `plan` → первый блокер в `Err` → если в `affected` есть не подтверждённые (`affected ⊄ confirmedStudentIds`) → `SYNC_NEEDS_CONFIRMATION { affected }` → все проверки до мутаций → `creditStep` по `behind` → `stream.replaceContent` последним. Повтор: `changedStudents` пуст, поток `unchanged`.
 
 **Кто анализируется:** `enrollment` — `mode='replace'`, студентов не анализируем (`StreamLaunchDcs.launch` выдаст первый шаг нового снимка). `active` — `mode='sync'`, только `isInProgress()`; терминальные не попадают никуда. `hasNoSteps()` — `kind:'not_started'`, ничего не зачитывается, не блокирует (T5). Прочие: `c` нет в новом → `removesCurrent`, блокер; иначе `PivotShift` от `c`; `removedPassed` — удалённые шаги с записью.
 

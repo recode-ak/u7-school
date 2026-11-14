@@ -17,12 +17,13 @@
 ## Фаза 1: Домен — сравнение снимков и операции Ar
 
 - [x] Task: S (`dmg-tech-lead`) — бриф среза `slices/domain.md`: `SnapshotDiffDqs` (сравнение двух `ContentSnapshot` по позициям — заголовки, добавленные, удалённые, переставленные, перенесённые между уроками/проектами; агрегатов не знает); `StreamContentSyncDcs(stream, students)` — `plan(newSnapshot)` (отчёт, причины отказа) и `apply(...)`; таблица исходов для нетривиальных случаев (студент `active` с завершённым последним шагом, `enrolled` без шагов, перенос шага в другой урок, удалён и добавлен под новым id); форма отчёта (список изменений по ключам, не полное «было → стало» шагов); ID `rules.md`
-- [ ] Task: S (`dmg-test-designer`) — red-тесты: `snapshot-diff.dqs.test.ts`, `stream-content-sync.dcs.test.ts` (впереди / хвост / позади; удалён текущий шаг; терминальные не трогаются; статусы потока), `StudentAr.creditStep` (нет записи / `issued` / `completed` — идемпотентность, без событий, `currentStepId` не меняется), `StreamAr.replaceContent`/`canSyncContent`, `StudentProgressDqs` — помеченные шаги вне статистики времени
-    - [ ] Тесты (red) → запуск, убедиться, что падают по делу
-- [ ] Task: S (`dmg-domain-author`) — реализация: необязательное поле `completionSource: 'content_sync'` в `StepRecordVo`; `StudentAr.creditStep`; `StreamAr.replaceContent` + `canSyncContent` + событие `StreamEvents.contentSynced`; ошибки `CONTENT_NOT_SYNCABLE`, `SYNC_REMOVES_CURRENT_STEP`, `SYNC_NEEDS_CONFIRMATION` (вкл. устаревший список затронутых); `SnapshotDiffDqs`, `StreamContentSyncDcs`; исключение помеченных из `computeStepTimeStats`; экспорт из `domain/src/stream/index.ts`
-    - [ ] Реализация (green) → `bun test domain/src/stream`
-- [ ] Task: S (`dmg-reviewer`) — ревью домена по `rules.md`; замечания error/warn исправлены
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: S (`dmg-test-designer`) — red-тесты: `snapshot-diff.dqs.test.ts`, `stream-content-sync.dcs.test.ts` (впереди / хвост / позади; удалён текущий шаг; терминальные не трогаются; статусы потока), `StudentAr.creditStep` (нет записи / `issued` / `completed` — идемпотентность, без событий, `currentStepId` не меняется), `StreamAr.replaceContent`/`canSyncContent`, `StudentProgressDqs` — помеченные шаги вне статистики времени
+    - [x] Тесты (red) → запуск, убедиться, что падают по делу
+- [x] Task: S (`dmg-domain-author`) — реализация: необязательное поле `completionSource: 'content_sync'` в `StepRecordVo`; `StudentAr.creditStep`; `StreamAr.replaceContent` + `canSyncContent` + событие `StreamEvents.contentSynced`; ошибки `CONTENT_NOT_SYNCABLE`, `SYNC_REMOVES_CURRENT_STEP`, `SYNC_NEEDS_CONFIRMATION` (вкл. устаревший список затронутых); `SnapshotDiffDqs`, `StreamContentSyncDcs`; исключение помеченных из `computeStepTimeStats`; экспорт из `domain/src/stream/index.ts`
+    - [x] Реализация (green) → `bun test domain/src/stream` (400 pass)
+- [x] Task: S (`dmg-reviewer`) — ревью домена по `rules.md`; замечания error/warn исправлены (warn: `stepCount` по уникальным)
+- **Примечание:** код Ф1 не закоммичен отдельно — `arch:check` MAN-06 (`contentSynced` без публикующего UC) закрывает Def UC Ф2; Ф1 и Def Ф2 идут одним зелёным коммитом.
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (автопроверка, режим трека) (Protocol in workflow.md)
 
 **Критерии:** `bun test domain/src/stream` зелёный; покрыты все классы ФР-2, включая перестановку шага позади студента и перенос шага в другой урок/проект (spec 1); `creditStep` идемпотентен, без событий (spec 3); терминальные не меняются (spec 4); помеченные шаги вне статистики времени (spec 8а); прямой мутации `state.steps` вне Ar нет; `bun run check` зелёный.
 

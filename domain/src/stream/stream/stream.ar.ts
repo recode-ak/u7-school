@@ -1,6 +1,8 @@
+import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
 import {
   Aggregate,
   AggregateDef,
+  type ErrorOf,
   type ErrorsOf,
   type EventsOf,
   F,
@@ -15,8 +17,36 @@ import { StreamEvents } from './stream.events';
 import { StreamState } from './stream.state';
 import type { StepPlace } from './stream.types';
 
-const { NOT_ENROLLING, NOT_ACTIVE, NOT_COMPLETED, ALREADY_ARCHIVED } =
-  StreamErrors;
+const {
+  NOT_ENROLLING,
+  NOT_ACTIVE,
+  NOT_COMPLETED,
+  ALREADY_ARCHIVED,
+  CONTENT_NOT_SYNCABLE,
+} = StreamErrors;
+
+/**
+ * Статусы, в которых снимок контента можно заменить (F-80, ФР-1). Это не
+ * переход статуса, поэтому не в `transitions`.
+ */
+const SYNCABLE_STATUSES: readonly string[] = ['enrollment', 'active'];
+
+/** Число шагов снимка: дубликат `stepId` считается один раз, как в `stepPlace`. */
+function stepCount(snapshot: ContentSnapshot): number {
+  return new Set(snapshot.flatMap((p) => p.lessons.flatMap((l) => l.stepIds)))
+    .size;
+}
+
+/** Ключ снимка по значению: только поля схемы в фиксированном порядке. */
+function snapshotKey(snapshot: ContentSnapshot): string {
+  return JSON.stringify(
+    snapshot.map((p) => [
+      p.projectId,
+      p.projectTitle,
+      p.lessons.map((l) => [l.lessonId, l.lessonTitle, l.stepIds]),
+    ]),
+  );
+}
 
 export const StreamArDef = AggregateDef.define({
   name: 'stream',
@@ -231,6 +261,11 @@ export class StreamAr extends Aggregate<typeof StreamArDef, StreamView> {
     return { ...rest, requiresEnrollmentKey: Boolean(enrollmentKey) };
   }
 
+  /** Можно ли заменить снимок контента: поток в наборе или идёт (ФР-1). */
+  canSyncContent(): boolean {
+    return SYNCABLE_STATUSES.includes(this.state.status);
+  }
+
   private allows(op: keyof typeof StreamArDef.transitions): boolean {
     const from: readonly string[] = StreamArDef.transitions[op].from;
     return from.includes(this.state.status);
@@ -257,5 +292,31 @@ export class StreamAr extends Aggregate<typeof StreamArDef, StreamView> {
     at: Timestamp,
   ): Result<void, RejectOf<typeof StreamArDef, 'archive'>> {
     return this.transition('archive', at, () => ok());
+  }
+
+  /**
+   * Замена снимка контента (F-80): событие `contentSynced` со счётчиками
+   * шагов. Снимок совпадает по значению — `unchanged` без изменений.
+   * Судьбу студентов решает `StreamContentSyncDcs` до вызова.
+   */
+  replaceContent(
+    snapshot: ContentSnapshot,
+    at: Timestamp,
+  ): Result<'replaced' | 'unchanged', ErrorOf<typeof CONTENT_NOT_SYNCABLE>> {
+    if (!this.canSyncContent()) return CONTENT_NOT_SYNCABLE.err();
+    const before = this.state.contentSnapshot;
+    if (snapshotKey(before) === snapshotKey(snapshot)) return ok('unchanged');
+    return this.change(at, (draft, emit) => {
+      draft.contentSnapshot = structuredClone(snapshot);
+      emit(
+        StreamEvents.contentSynced.make({
+          streamId: this.state.uuid,
+          moduleId: this.state.moduleId,
+          stepsBefore: stepCount(before),
+          stepsAfter: stepCount(snapshot),
+        }),
+      );
+      return ok('replaced');
+    });
   }
 }

@@ -24,13 +24,19 @@ export const CompletionDetailsVo = v.pipe(
   v.description('Детали завершения модуля потока'),
 );
 
-/** Запись о прохождении шага: выдан или завершён. */
+/**
+ * Запись о прохождении шага: выдан или завершён. `completionSource` —
+ * шаг зачтён синхронизацией контента (F-80), а не пройден студентом.
+ */
 export const StepRecordVo = v.pipe(
   v.object({
     stepId: F.uuid('шага'),
     status: F.picklist(['issued', 'completed'], 'статуса прохождения шага'),
     issuedAt: F.timestamp('выдачи шага'),
     completedAt: v.optional(F.timestamp('завершения шага')),
+    completionSource: v.optional(
+      F.picklist(['content_sync'], 'источника завершения шага'),
+    ),
   }),
   v.description('Запись о прохождении шага студентом'),
 );

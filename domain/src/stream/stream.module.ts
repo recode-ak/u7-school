@@ -13,6 +13,8 @@ import { GetStreamMembersUcDef } from './stream/uc/get-stream-members.uc';
 import { GetStreamPresenceUcDef } from './stream/uc/get-stream-presence.uc';
 import { GetStreamStepUcDef } from './stream/uc/get-stream-step.uc';
 import { ListStreamsUcDef } from './stream/uc/list-streams.uc';
+import { PreviewStreamContentSyncUcDef } from './stream/uc/preview-stream-content-sync.uc';
+import { SyncStreamContentUcDef } from './stream/uc/sync-stream-content.uc';
 import { InactivitySweepJobDef } from './student/job/inactivity-sweep.job';
 import { StudentArDef } from './student/student.ar';
 import { CompleteStepUcDef } from './student/uc/complete-step.uc';
@@ -24,7 +26,7 @@ import { GetStudentByUserUcDef } from './student/uc/get-student-by-user.uc';
 import { GetStudentProgressUcDef } from './student/uc/get-student-progress.uc';
 import { MarkAbandonedUcDef } from './student/uc/mark-abandoned.uc';
 
-/** Модуль потоков: поток (11 UC) и студент (8 UC, Job бездействия). */
+/** Модуль потоков: поток (13 UC) и студент (8 UC, Job бездействия). */
 export const StreamModuleDef = ModuleDef.define({
   name: 'stream',
   label: 'Потоки',
@@ -43,6 +45,8 @@ export const StreamModuleDef = ModuleDef.define({
     FindStreamByTelegramGroupUcDef,
     GetStreamStepUcDef,
     GetStreamLessonStepsUcDef,
+    PreviewStreamContentSyncUcDef,
+    SyncStreamContentUcDef,
     EnrollStudentUcDef,
     CompleteStepUcDef,
     CompleteStudentUcDef,

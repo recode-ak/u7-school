@@ -515,3 +515,107 @@ describe('StudentAr — бездействие', () => {
     expect(ar.snapshot()).toEqual(stored('active'));
   });
 });
+
+const SYNC_AT = T1 + 60_000;
+const credited = (stepId: string, issuedAt: number, at: number) => ({
+  ...completed(stepId, issuedAt, at),
+  completionSource: 'content_sync' as const,
+});
+
+describe('StudentAr.creditStep (F-80: зачёт шага при синхронизации контента)', () => {
+  it('записи нет — добавляет completed с пометкой content_sync', () => {
+    const ar = restore('active', { steps: [issued(STEP_1, T0)] });
+    expect(expectOk(ar.creditStep(STEP_2, SYNC_AT))).toBe('credited');
+    expect(ar.snapshot().steps).toEqual([
+      issued(STEP_1, T0),
+      credited(STEP_2, SYNC_AT, SYNC_AT),
+    ]);
+  });
+
+  it('запись issued — становится completed с пометкой, issuedAt не трогается', () => {
+    const ar = restore('active', { steps: [issued(STEP_2, T0)] });
+    expect(expectOk(ar.creditStep(STEP_2, SYNC_AT))).toBe('credited');
+    expect(ar.snapshot().steps).toEqual([credited(STEP_2, T0, SYNC_AT)]);
+  });
+
+  it('запись completed — already_credited, version и updatedAt не растут', () => {
+    const ar = restore('active', { steps: [completed(STEP_2, T0, T0)] });
+    expect(expectOk(ar.creditStep(STEP_2, SYNC_AT))).toBe('already_credited');
+    expect(ar.snapshot()).toEqual(
+      stored('active', { steps: [completed(STEP_2, T0, T0)] }),
+    );
+  });
+
+  it('повторный зачёт помеченного шага — already_credited, version не растёт', () => {
+    const ar = restore('active', { steps: [issued(STEP_1, T0)] });
+    expectOk(ar.creditStep(STEP_2, SYNC_AT));
+    const version = ar.snapshot().version;
+    expect(expectOk(ar.creditStep(STEP_2, SYNC_AT + 1))).toBe(
+      'already_credited',
+    );
+    expect(ar.snapshot().version).toBe(version);
+  });
+
+  it('currentStepId и notices не меняются, событий нет', () => {
+    const notices = [{ kind: 'inactivity_warn_student' as const, sentAt: T0 }];
+    const ar = restore('active', {
+      currentStepId: STEP_1,
+      steps: [issued(STEP_1, T0)],
+      notices,
+    });
+    expectOk(ar.creditStep(STEP_2, SYNC_AT));
+    expect(ar.snapshot().currentStepId).toBe(STEP_1);
+    expect(ar.snapshot().notices).toEqual(notices);
+    expect(ar.pullEvents()).toEqual([]);
+  });
+
+  it('обновляет version и updatedAt при зачёте', () => {
+    const ar = restore('active', { steps: [issued(STEP_1, T0)] });
+    expectOk(ar.creditStep(STEP_2, SYNC_AT));
+    expect(ar.snapshot().version).toBe(1);
+    expect(ar.snapshot().updatedAt).toBe(SYNC_AT);
+  });
+
+  it('hasCompleted видит зачтённый шаг', () => {
+    const ar = restore('active', { steps: [issued(STEP_1, T0)] });
+    expectOk(ar.creditStep(STEP_2, SYNC_AT));
+    expect(ar.hasCompleted(STEP_2)).toBe(true);
+  });
+});
+
+describe('StudentAr — помеченные записи не считаются активностью (S2, T7)', () => {
+  it('lastActivityAt игнорирует запись с completionSource', () => {
+    const ar = restore('active', {
+      steps: [completed(STEP_1, T0, T0), credited(STEP_2, SYNC_AT, SYNC_AT)],
+    });
+    expect(ar.lastActivityAt()).toBe(T0);
+  });
+
+  it('lastActivityAt: только помеченные записи — undefined', () => {
+    const ar = restore('active', {
+      steps: [credited(STEP_2, SYNC_AT, SYNC_AT)],
+    });
+    expect(ar.lastActivityAt()).toBeUndefined();
+  });
+
+  it('neverStarted: выбывший с единственным помеченным завершением — true', () => {
+    const ar = restore('abandoned', {
+      steps: [credited(STEP_2, SYNC_AT, SYNC_AT)],
+    });
+    expect(ar.neverStarted()).toBe(true);
+  });
+
+  it('neverStarted: помеченный + настоящее завершение — false', () => {
+    const ar = restore('abandoned', {
+      steps: [credited(STEP_2, SYNC_AT, SYNC_AT), completed(STEP_1, T0, T0)],
+    });
+    expect(ar.neverStarted()).toBe(false);
+  });
+
+  it('view.steps сохраняет completionSource', () => {
+    const ar = restore('active', {
+      steps: [credited(STEP_2, SYNC_AT, SYNC_AT)],
+    });
+    expect(ar.view().steps).toEqual([credited(STEP_2, SYNC_AT, SYNC_AT)]);
+  });
+});

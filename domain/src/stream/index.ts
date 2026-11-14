@@ -1,6 +1,8 @@
 // Domain слой модуля stream (@u7-scl/domain/stream)
+export * from './content-sync.types';
 export * from './contract';
 export * from './passed-modules.dqs';
+export * from './snapshot-diff.dqs';
 export * from './state';
 export * from './step-completion.dcs';
 export * from './stream/stream.ar';
@@ -8,6 +10,7 @@ export { StreamPolicy } from './stream/stream.policy';
 export { StreamRules } from './stream/stream.rules';
 export type { StreamState } from './stream/stream.state';
 export type { StepPlace, StreamStudentFact } from './stream/stream.types';
+export * from './stream-content-sync.dcs';
 export * from './stream-launch.dcs';
 export * from './stream-lesson-steps.dqs';
 export * from './stream-members.dqs';

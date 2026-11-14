@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'bun:test';
 import { expectErr, expectOk } from 'dmg-core/testing';
 import { StreamAr } from './stream.ar';
+import { StreamEvents } from './stream.events';
 import {
   MENTOR,
   MODULE,
   SCHOOL,
   START,
   STEP_1,
+  STEP_2,
   STREAM,
   snapshot,
   stored,
@@ -14,6 +16,8 @@ import {
   T1,
 } from './stream.fixture';
 import type { StreamState } from './stream.state';
+
+const NEW_STEP = '99999999-9999-4999-8999-999999999990';
 
 const restore = (
   status: StreamState['status'],
@@ -178,6 +182,103 @@ describe('StreamAr.view (D-60, С1)', () => {
       const view = restore('enrollment', extra).view();
       expect('enrollmentKey' in view).toBe(false);
       expect(view.requiresEnrollmentKey).toBe(requires);
+    },
+  );
+});
+
+describe('StreamAr.canSyncContent (F-80)', () => {
+  it.each([
+    ['enrollment', true],
+    ['active', true],
+    ['completed', false],
+    ['archived', false],
+  ] as const)('%s: %s', (status, expected) => {
+    expect(restore(status).canSyncContent()).toBe(expected);
+  });
+});
+
+describe('StreamAr.replaceContent (F-80)', () => {
+  const next = [
+    {
+      ...snapshot[0],
+      lessons: [
+        { ...snapshot[0]?.lessons[0], stepIds: [STEP_2, STEP_1, NEW_STEP] },
+      ],
+    },
+  ] as typeof snapshot;
+
+  it.each(['enrollment', 'active'] as const)(
+    'из %s: пишет снимок, version растёт, событие contentSynced со счётчиками',
+    (status) => {
+      const ar = restore(status);
+      expect(expectOk(ar.replaceContent(next, T1))).toBe('replaced');
+      expect(ar.snapshot()).toEqual({
+        ...stored(status, { contentSnapshot: next }),
+        updatedAt: T1,
+        version: 1,
+      });
+      expect(ar.pullEvents()).toEqual([
+        StreamEvents.contentSynced.make({
+          streamId: STREAM,
+          moduleId: MODULE,
+          stepsBefore: 2,
+          stepsAfter: 3,
+        }),
+      ]);
+    },
+  );
+
+  it('идентичный снимок (по значению) — unchanged, без события и version', () => {
+    const ar = restore('active');
+    expect(expectOk(ar.replaceContent(structuredClone(snapshot), T1))).toBe(
+      'unchanged',
+    );
+    expect(ar.snapshot()).toEqual(stored('active'));
+    expect(ar.pullEvents()).toEqual([]);
+  });
+
+  it('счётчики шагов — уникальные stepId (дубликат — первое вхождение)', () => {
+    const doubled = [
+      {
+        ...snapshot[0],
+        lessons: [
+          {
+            ...snapshot[0]?.lessons[0],
+            stepIds: [STEP_1, STEP_2, STEP_1, NEW_STEP],
+          },
+        ],
+      },
+    ] as typeof snapshot;
+    const ar = restore('active');
+    expectOk(ar.replaceContent(doubled, T1));
+    expect(ar.pullEvents()).toEqual([
+      StreamEvents.contentSynced.make({
+        streamId: STREAM,
+        moduleId: MODULE,
+        stepsBefore: 2,
+        stepsAfter: 3,
+      }),
+    ]);
+  });
+
+  it('статус и остальные поля не меняются', () => {
+    const ar = restore('active');
+    expectOk(ar.replaceContent(next, T1));
+    expect(ar.snapshot().status).toBe('active');
+    expect(ar.snapshot().title).toBe(stored('active').title);
+  });
+
+  it.each(['completed', 'archived'] as const)(
+    'из %s — STREAM_CONTENT_NOT_SYNCABLE (conflict), state и события не меняются',
+    (status) => {
+      const ar = restore(status);
+      const error = expectErr(
+        ar.replaceContent(next, T1),
+        'STREAM_CONTENT_NOT_SYNCABLE',
+      );
+      expect(error.kind).toBe('conflict');
+      expect(ar.snapshot()).toEqual(stored(status));
+      expect(ar.pullEvents()).toEqual([]);
     },
   );
 });
