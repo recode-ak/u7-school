@@ -2,13 +2,15 @@
 
 > Spec — [spec.md](./spec.md). Исполнители: **O** — Opus (orchestrator), **S** — Sonnet (роли `conductor/architecture/agents.md` §4). Порядок строго Ф0 → Ф1 → Ф2 → Ф3: UC опираются на домен, скрипт — на UC. Одна фаза — одна сессия.
 
+> **Режим (Нурболат, 2026-11-15):** трек целиком в одной сессии-оркестраторе, шаги — свежие субагенты; ручная верификация фаз заменена автоматическими проверками, остановка — только на стратегических вопросах.
+
 ---
 
 ## Фаза 0: Базовая линия
 
-- [ ] Task: O — прогнать `CI=true bun run check` и `bun run test:bot`, записать числа (pass/fail, число тестов) в `summary.md`
-- [ ] Task: O — список сценариев `scripts/stream-snapshot-sync.test.ts` (11) в `summary.md` — основа таблицы переноса (TST-08)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
+- [x] Task: O — прогнать `CI=true bun run check` и `bun run test:bot`, записать числа (pass/fail, число тестов) в `summary.md`
+- [x] Task: O — список сценариев `scripts/stream-snapshot-sync.test.ts` (11) в `summary.md` — основа таблицы переноса (TST-08)
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (автопроверка, режим трека) (Protocol in workflow.md)
 
 **Критерии:** числа базовой линии и список старых сценариев — в `summary.md`.
 
