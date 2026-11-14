@@ -1,6 +1,6 @@
 # План: уборка перед dmg-ui
 
-> Spec — [spec.md](./spec.md). Исполнители: **O** — Opus, **S** — Sonnet, **F** — DeepSeek flash через pi (`scripts/pi-role.ts`, [deepseek.md](../../architecture/deepseek.md)). Порядок: Ф0 → Ф1 → Ф2 → Ф4 → Ф4а → Ф5 → Ф6 → Ф7; Ф3 — параллельно с Ф2 (разные репо). Одна фаза — одна сессия; Ф4 и Ф5 при объёме — по две.
+> Spec — [spec.md](./spec.md). Исполнители: **O** — Opus, **S** — Sonnet (с 2026-11-14 DeepSeek не используется — решение Нурболата; механика — S или orchestrator сам, где промпт дороже работы; F в закрытых задачах — история). Порядок: Ф0 → Ф1 → Ф2 → Ф4 → Ф4а → Ф5 → Ф6 → Ф7; Ф3 — параллельно с Ф2 (разные репо). Одна фаза — одна сессия; Ф4 и Ф5 при объёме — по две.
 
 ---
 
@@ -28,7 +28,7 @@
 - [x] Task: O — из журнала TR (TR-8) в пакет: публикация событий UoW в `finally` — исключение шины подменяет результат, повтор после `VERSION_CONFLICT` повторяет события (ER идемпотентны); при внешней шине — публикация вне `finally`. Проверить по коду пакета, записать в его документы или `debt.md` `dmg-core@ad38a74` — `finally` нет с D-47 (outbox, шина не бросает); остаток — повтор после конфликта не на первом агрегате, дописан в `aggregate-lifecycle.md` и D-56
 - [x] Task: S (`dmg-tech-lead`) — бриф для репо пакета ([slices/dmg-core-debt-testing.md](./slices/dmg-core-debt-testing.md)) `1e34a3d`: сверка форматов `dmg-core/scripts/debt-check.ts` и `checkDebt`/`checkTempMarkers` проекта, API `dmg-core/arch`, набор `dmg-core/testing` (`TEST_TRACE`, `testUuid(n)`, выборки `MemoryRepo` по предикату, временный каталог с автоочисткой), `docs:impact`
     - Префикс ID долга кода — параметр проверки: пакет — `DEBT-<n>`, проект — `C-DEBT-<n>` (README долга §2); голый `DEBT-<n>` в коде проекта — ошибка
-- [ ] Task: O — TDD в `~/dev/tools/dmg/dmg-core`: проверка трёх реестров и маркеров временности; хелперы testing; перенос сценариев старых тестов; `debt.md` пакета — на новую проверку
+- [~] Task: O — TDD в `~/dev/tools/dmg/dmg-core`: проверка трёх реестров и маркеров временности; хелперы testing; перенос сценариев старых тестов; `debt.md` пакета — на новую проверку
     - [ ] Тесты (red) → запуск → реализация (green)
 - [ ] Task: S (`documentarian`) — документы пакета по `docs:impact`
 - [ ] Task: O — коммит пакета; **стоп: тег и push — с подтверждения Нурболата**; смена `#vX.Y.Z` в 11 `package.json`, `bun install`
@@ -44,7 +44,7 @@
 - [ ] Task: S — таблица разбора: каждый пункт → закрыть / `DEBT` / `T-DEBT` / `D-DEBT` / `roadmap.md` / вход dmg-ui; принятые решения spec ФР-3 — без повторного вопроса
 - [ ] Task: O — записи в реестры (ID после «последнего выданного»), черновик входа dmg-ui
     - Во вход dmg-ui из журнала TR (TR-50): экран отказа по `Result` — `ucErrorScreen` (`stories/render.ts`) дублирует ветки `ucErrorNotify`; общий экран — вместе с контрактом story
-- [ ] Task: F — удалить `TODO.md`, ссылки
+- [ ] Task: S — удалить `TODO.md`, ссылки
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 **Критерии:** `TODO.md` нет; таблица разбора в `summary.md`, у каждого пункта адрес; `check` зелёный.
@@ -53,8 +53,8 @@
 
 - [ ] Task: S — карта повторов → целевой хелпер; где нужен `domain/src/<m>/testing.ts`; список исключений (unit-тесты stories, которые перепишет dmg-ui); бриф для F с примерами «до/после»
 - [ ] Task: S — API `TestBotTransport` и `runners/u7-bot/tests/helpers` (`press`, `buttonsOf`, `findBtn`, `waitMessageFor`, `waitUntil`, `subHandler`, `makeUiApp`), `domain/src/<m>/testing.ts`
-- [ ] Task: F — массовый перевод пачками, `check` после каждой
-- [ ] Task: O — разбор открытых `T-DEBT`; ревью выборкой; дубли TST-08 и расход DeepSeek — в `summary.md`
+- [ ] Task: S — массовый перевод пачками, `check` после каждой
+- [ ] Task: O — разбор открытых `T-DEBT`; ревью выборкой; дубли TST-08 и расход токенов — в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 **Критерии:** локальных повторов из Ф0 нет (кроме самих хелперов); `mkdtemp` — только в хелпере; тестов ≥ базы минус перечисленные дубли; у каждой `T-DEBT` есть Триггер или владелец.
@@ -79,8 +79,8 @@
 
 - [ ] Task: S (`dmg-tech-lead`) — разбор по образцу `stream`/`course` (модель, UC, DQS/DCS, `dependsOn`, фейки, тесты), бриф с находками
 - [ ] Task: O — крупное — вопросом Нурболату с вариантами; мелкое — сам; решения — `decisions.md`
-- [ ] Task: S/F — `wish`: фейк репозитория, перевод тестов UC/ER, правки по брифу
-- [ ] Task: S/F — `peer-review`: удалить `QuestionnaireModuleDef` из `dependsOn` и `peer-review-question-pool` (код, экспорт, тест), DQS — классы, фейки, перевод тестов, `dmg:sync`
+- [ ] Task: S — `wish`: фейк репозитория, перевод тестов UC/ER, правки по брифу
+- [ ] Task: S — `peer-review`: удалить `QuestionnaireModuleDef` из `dependsOn` и `peer-review-question-pool` (код, экспорт, тест), DQS — классы, фейки, перевод тестов, `dmg:sync`
 - [ ] Task: O — закрыть C-DEBT-40 (коммит `закрыть C-DEBT-40`), `dmg-reviewer`, CHANGELOG `[0.3.1]`; **стоп: тег и выкатка — с подтверждения Нурболата**
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
@@ -93,7 +93,7 @@
 - [ ] Task: O — `migration.md` в архив, состояние — `architecture/index.md`; `agents.md` §9 и автономный режим в `workflow.md` → режим после релиза; правило архива — в скилл `conductor-docs` и `workflow.md`
 - [ ] Task: S — по каждому треку архива: живое в plan/slices/брифах → список переноса
 - [ ] Task: O — перенос знания по списку
-- [ ] Task: F — архив к виду `spec.md` + `summary.md`; `scripts/repo-layout.test.ts` и ссылки на удалённое
+- [ ] Task: S — архив к виду `spec.md` + `summary.md`; `scripts/repo-layout.test.ts` и ссылки на удалённое
 - [ ] Task: S (`documentarian`) — проход по документам `dmg-core`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
@@ -102,7 +102,7 @@
 ## Фаза 7: Вход dmg-ui и финал
 
 - [ ] Task: O — документ-вход dmg-ui (ФР-7); ссылка из `roadmap.md`
-- [ ] Task: O — гейт закрытия (сравнение с Ф0), `summary.md` (дубли TST-08, расход DeepSeek), `tracks.md`
+- [ ] Task: O — гейт закрытия (сравнение с Ф0), `summary.md` (дубли TST-08, расход токенов), `tracks.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
 
 **Критерии:** документ есть и на него ссылается `roadmap.md`; `check` зелёный; все критерии приёмки spec закрыты.
