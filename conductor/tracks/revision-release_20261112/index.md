@@ -14,3 +14,4 @@
 - [Ручная проверка](./manual-run.md)
 - [Триаж TR и DEBT](./triage.md)
 - [Карточки решений](./cards.md)
+- [Выкатка v0.3.0](./rollout.md)

@@ -166,12 +166,13 @@
 
 ## Фаза 6: Контекст выкатки (ФР-8)
 
-- [ ] Task: `dmg-data-keeper`: `rollout.md`
-    - [ ] порядок на prod-машине (отдельная сессия): `git pull` → остановить прод → бэкап → миграции → запустить новую версию
-    - [ ] миграции: `migrate-users-drop-student` (сухой прогон → `--write`), `questionnaires.json` (TR-49 (7)), `replay/`, `last-runs.json`, сессии бота
-    - [ ] бэкапы и откат (только из снимка — v0.2.6 новый формат не прочтёт)
-    - [ ] diff env относительно v0.2.6; остатки старых каталогов `apps` и `packages`; `deploy.sh`
-- [ ] Task: orchestrator: ссылка из `migration.md` §6 на `rollout.md`, синхронизация чек-листа
+- [x] Task: `dmg-data-keeper`: `rollout.md`
+    - Итог: flash, $0.09; находки сверх источников — порядок «стоп → бэкап → pull» (снимок с версией v0.2.6 для отката), `pm2 delete` вместо `restart` (`deploy.sh` для 0.3.0 не годится), `migrate-streams-school-id` не запускать, `DB_DIR` явно
+    - [x] порядок на prod-машине (отдельная сессия): `git pull` → остановить прод → бэкап → миграции → запустить новую версию
+    - [x] миграции: `migrate-users-drop-student` (сухой прогон → `--write`), `questionnaires.json` (TR-49 (7)), `replay/`, `last-runs.json`, сессии бота
+    - [x] бэкапы и откат (только из снимка — v0.2.6 новый формат не прочтёт)
+    - [x] diff env относительно v0.2.6; остатки старых каталогов `apps` и `packages`; `deploy.sh`
+- [x] Task: orchestrator: ссылка из `migration.md` §6 на `rollout.md`, синхронизация чек-листа
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 6:**
