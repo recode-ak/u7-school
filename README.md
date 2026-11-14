@@ -162,15 +162,21 @@ pm2 logs u7-school-bot       # логи
 ```bash
 bash scripts/deploy.sh X.Y.Z
 ```
-Скрипт: проверит чистоту рабочей копии → сделает бэкап данных
-(`data/backup/<timestamp>-before-deploy/`, в `meta.txt` — версия и тег кода) →
-`git checkout vX.Y.Z` → `bun install --frozen-lockfile` → `pm2 restart` →
-покажет статус и хвост логов. После деплоя отправь боту тестовое сообщение
-и нажми кнопку старого экрана — диалог должен продолжиться.
+Скрипт: проверит чистоту рабочей копии и тег → остановит бота → сделает бэкап
+данных (`data/backup/<timestamp>-before-deploy/`, в `meta.txt` — версия ещё
+развёрнутого кода) → `git checkout vX.Y.Z` → `bun install --frozen-lockfile` →
+запустит по `pm2.config.cjs` (`pm2 delete` → `start` → `save`; restart по имени
+не видит смены точки входа) → покажет статус и хвост логов. После деплоя
+отправь боту тестовое сообщение и нажми кнопку старого экрана — диалог должен
+продолжиться.
+
+Релиз с миграцией данных — по своему документу выкатки, не скриптом (миграции
+идут между checkout и запуском). v0.3.0 — вручную по
+[rollout.md](./conductor/tracks/revision-release_20261112/rollout.md).
 
 **Откат:** `bash scripts/deploy.sh <предыдущая версия>`. Если менялась схема
 данных — сначала восстанови бэкап с совпадающей версией в `meta.txt`:
-`rsync -a --exclude meta.txt data/backup/<каталог>/ data/`.
+`rsync -a --exclude manifest.json --exclude meta.txt data/backup/<каталог>/ data/`.
 
 **Бэкап вручную:** `bash scripts/backup.sh planned` — копирует все
 JSON-хранилища (включая `data/bot/*` — сессии бота) в

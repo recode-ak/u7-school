@@ -5,17 +5,26 @@
 #   bash scripts/deploy.sh 0.1.0
 #
 # Что делает:
-#   1. Гейты: чистая рабочая копия, тег существует в origin
-#   2. Бэкап данных → data/backup/<timestamp>-before-deploy/ (с meta.txt)
-#   3. git checkout vX.Y.Z — деплой по тегу, не по main
-#   4. bun install --frozen-lockfile
-#   5. pm2 restart + smoke-check (статус, хвост логов)
+#   1. Гейты: чистая рабочая копия, тег существует в origin, нет коммитов вне тега
+#   2. Остановка бота — бэкап и checkout без параллельной записи
+#   3. Бэкап данных → data/backup/<timestamp>-before-deploy/ (в meta.txt —
+#      версия ещё развёрнутого кода: снимок для отката)
+#   4. git checkout vX.Y.Z — деплой по тегу, не по main
+#   5. bun install --frozen-lockfile
+#   6. Запуск по pm2.config.cjs (delete → start → save) + smoke-check
+#
+# Запуск — по конфигу, а не `pm2 restart <имя>`: restart по имени берёт
+# сохранённые в pm2 args и не видит смены пути точки входа в новом теге.
+#
+# Релиз с миграцией данных выкатывается по своему документу выкатки
+# (например, conductor/tracks/revision-release_20261112/rollout.md для 0.3.0):
+# миграции идут между checkout и запуском, скрипт их не делает.
 #
 # Откат на предыдущую версию:
 #   bash scripts/deploy.sh <предыдущая версия>
 #   Если схема данных менялась — сначала восстанови бэкап, чей meta.txt
-#   указывает на ту же версию кода:
-#     rsync -a --exclude meta.txt data/backup/<каталог>/ data/
+#   указывает на ту же версию кода (docs/backup.md, «Восстановление»):
+#     rsync -a --exclude manifest.json --exclude meta.txt data/backup/<каталог>/ data/
 #
 # После деплоя: отправь боту тестовое сообщение и нажми кнопку старого
 # экрана — диалог должен продолжиться (персистентность сессий).
@@ -56,11 +65,7 @@ main() {
     exit 1
   fi
 
-  # ── 1. Бэкап данных — ВСЕГДА перед обновлением ──
-  echo "▶ Бэкап данных (before-deploy)"
-  bash scripts/backup.sh before-deploy
-
-  # ── 1.5. Защита: в HEAD/main не должно быть коммитов вне тега ──
+  # ── Гейт: в HEAD/main не должно быть коммитов вне тега ──
   # Иначе checkout молча выкинет их содержимое из рабочего каталога
   # (например, контентную доставку, закоммиченную на сервере).
   for ref in HEAD main; do
@@ -75,20 +80,30 @@ main() {
     fi
   done
 
-  # ── 2. Checkout тега ──
+  # ── 1. Остановка: бэкап и checkout без параллельной записи бота ──
+  echo "▶ pm2 stop ${APP_NAME}"
+  pm2 stop "$APP_NAME" || echo "   (не запущен — продолжаем)"
+
+  # ── 2. Бэкап данных — ВСЕГДА перед обновлением ──
+  echo "▶ Бэкап данных (before-deploy)"
+  bash scripts/backup.sh before-deploy
+
+  # ── 3. Checkout тега ──
   echo "▶ git checkout ${tag}"
   git checkout --quiet "$tag"
   echo "   Развёрнута версия: $(git describe --tags)"
 
-  # ── 3. Зависимости ──
+  # ── 4. Зависимости ──
   echo "▶ bun install --frozen-lockfile"
   bun install --frozen-lockfile
 
-  # ── 4. Перезапуск ──
-  echo "▶ pm2 restart ${APP_NAME} --update-env"
-  pm2 restart "$APP_NAME" --update-env
+  # ── 5. Запуск по конфигу нового тега ──
+  echo "▶ pm2 delete ${APP_NAME} → start pm2.config.cjs → save"
+  pm2 delete "$APP_NAME" || true
+  pm2 start pm2.config.cjs --env production
+  pm2 save
 
-  # ── 5. Smoke-check ──
+  # ── 6. Smoke-check ──
   echo "▶ Ожидание старта (5 сек)…"
   sleep 5
   pm2 status "$APP_NAME"
