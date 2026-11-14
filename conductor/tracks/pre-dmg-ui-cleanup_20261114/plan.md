@@ -12,11 +12,11 @@
 
 ## Фаза 1: Реестры долга (`conductor/debt/`)
 
-- [ ] Task: S — разбор `conductor/architecture/debt.md` (DEBT, §6 TR) и `conductor/roadmap/test-bloat.md`: таблица «запись → реестр / закрыть / знание в `decisions.md` или гайд»
-- [ ] Task: O — решения по спорным записям; `conductor/debt/README.md`: форматы `DEBT-n` / `T-DEBT-n` / `D-DEBT-n`, поле Триггер, «последний выданный ID», закрытие = удаление + коммит `закрыть <ID>`, разбор долга в конце трека и перед релизом
-- [ ] Task: F — создать `conductor/debt/{code,tests,product}.md`, перенести открытые записи (закономерности test-bloat — в README)
-- [ ] Task: O — перенести живое знание TR в `decisions.md`/гайды, удалить §6
-- [ ] Task: O — завести `D-DEBT` «точный анализ совместимости контракта и гейт» из [vision.md](../../architecture/vision.md) §9 (триггер — перед web-ui); пункт в `vision.md` сократить до ссылки на запись
+- [x] Task: S — разбор `conductor/architecture/debt.md` (DEBT, §6 TR) и `conductor/roadmap/test-bloat.md`: таблица «запись → реестр / закрыть / знание в `decisions.md` или гайд» `afe161d`
+- [x] Task: O — решения по спорным записям; `conductor/debt/README.md`: форматы `DEBT-n` / `T-DEBT-n` / `D-DEBT-n`, поле Триггер, «последний выданный ID», закрытие = удаление + коммит `закрыть <ID>`, разбор долга в конце трека и перед релизом `afe161d`
+- [x] Task: F — создать `conductor/debt/{code,tests,product}.md`, перенести открытые записи (закономерности test-bloat — в README) `afe161d` — перенёс orchestrator: 9 записей и 7 строк, промпт F дороже работы
+- [x] Task: O — перенести живое знание TR в `decisions.md`/гайды, удалить §6 `afe161d` — §6 уходит вместе с файлом в следующей задаче; ловушка `computeSourceHash` (TR-57) уже исправлена в коде, `askMatch` (TR-20) не ведётся
+- [x] Task: O — завести `D-DEBT` «точный анализ совместимости контракта и гейт» из [vision.md](../../architecture/vision.md) §9 (триггер — перед web-ui); пункт в `vision.md` сократить до ссылки на запись `afe161d`
 - [ ] Task: F — ссылки по ФР-3а (`AGENTS.md`, `.agents-core/` → `agents:sync`, `.pi/skills/`, `CHANGELOG.md`, код, `conductor/`); удалить `architecture/debt.md`, `roadmap/test-bloat.md`
 - [ ] Task: O — ревью фазы
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
@@ -25,6 +25,7 @@
 
 ## Фаза 2: dmg-core — проверка долга и тестовые хелперы (один релиз пакета)
 
+- [ ] Task: O — из журнала TR (TR-8) в пакет: публикация событий UoW в `finally` — исключение шины подменяет результат, повтор после `VERSION_CONFLICT` повторяет события (ER идемпотентны); при внешней шине — публикация вне `finally`. Проверить по коду пакета, записать в его документы или `debt.md`
 - [ ] Task: S (`dmg-tech-lead`) — бриф для репо пакета: сверка форматов `dmg-core/scripts/debt-check.ts` и `checkDebt`/`checkTempMarkers` проекта, API `dmg-core/arch`, набор `dmg-core/testing` (`TEST_TRACE`, `testUuid(n)`, выборки `MemoryRepo` по предикату, временный каталог с автоочисткой), `docs:impact`
 - [ ] Task: O — TDD в `~/dev/tools/dmg/dmg-core`: проверка трёх реестров и маркеров временности; хелперы testing; перенос сценариев старых тестов; `debt.md` пакета — на новую проверку
     - [ ] Тесты (red) → запуск → реализация (green)
@@ -40,6 +41,7 @@
 
 - [ ] Task: S — таблица разбора: каждый пункт → закрыть / `DEBT` / `T-DEBT` / `D-DEBT` / `roadmap.md` / вход dmg-ui; принятые решения spec ФР-3 — без повторного вопроса
 - [ ] Task: O — записи в реестры (ID после «последнего выданного»), черновик входа dmg-ui
+    - Во вход dmg-ui из журнала TR (TR-50): экран отказа по `Result` — `ucErrorScreen` (`stories/render.ts`) дублирует ветки `ucErrorNotify`; общий экран — вместе с контрактом story
 - [ ] Task: F — удалить `TODO.md`, ссылки
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
