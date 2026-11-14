@@ -143,8 +143,10 @@
     - Итог: F-4C — `dmg-domain-author` (Sonnet) + ревью Opus (minor исправлены), прочее — в сессии orchestrator; F-4B — вход `handleMessage` `MessageUpdate` (Нурболат, 2026-11-14), страховка «нет контекста» оставлена; F-4E — `UiEventContext`, TR-50 (9) закрыто; `check` 3213 pass, 0 skip; журнал — `slices/f5-3-bot.md`
 
 #### Ф5.5 Платформа `dmg-core` (Opus)
-- [ ] Task: F-60, F-61 — лог операций (`writes`, сводка query, порог размера), D-NN пакета
-- [ ] Task: F-62 `module` в UoW обязателен; F-63 правка D-69 (JSDoc только Ar/Policy/DQS)
+- [x] Task: F-60, F-61 — лог операций (`writes`, сводка query, порог размера), D-NN пакета `4e9aba27`
+    - Итог: D-73 пакета (`dmg-core` `7365f01`); порог — `payload` ошибки (`events` без payload); плагин API-05 — пакет и `biome.json`, нарушений 0
+- [x] Task: F-62 `module` в UoW обязателен; F-63 правка D-69 (JSDoc только Ar/Policy/DQS) `4e9aba27`
+    - Итог: D-74 пакета (`dmg-core` `b22bb23`); вызовов `new UnitOfWork` в u7-school нет; проверка выкатки лога на проде — в `rollout.md` (Ф6)
 
 #### Ф5.6 Домен и модули (flash)
 - [x] Task: F-70…F-74 — выбор текущего желания в Ar, `versionOut`, `StreamStudents`, `VERSION_CONFLICT`, шапки контрактов `2b377e87`

@@ -92,10 +92,10 @@
 
 | ID | Источник | Что | Размер | Срез | Коммит |
 |---|---|---|---|---|---|
-| F-60 | C-12 | Лог операций: `writes` (`[{ aggregate, uuid, version: from → to }]` из UoW), выход query — `{ ok, size }`, команд — целиком, `durationMs` до 0,1 мс (`operation-run.ts`, `operation-record.ts`); D-NN пакета — уточнение D-43 | S–M | Ф5.5 | |
-| F-61 | TR-14 | Порог размера `events`/`payload` в `jsonl-operation-log.ts:6`; grit на поля-стрелки шагов. Пересечение с F-60 — делать вместе | M | Ф5.5 | |
-| F-62 | TR-25 | `module?` → обязательное в `unit-of-work.ts:34` (ломающее API пакета; правка вызовов u7-school) | M | Ф5.5 | |
-| F-63 | C-05 | JSDoc «Кто / Зачем» обязателен только для Ar/Policy/DQS в контракте — правка D-69/D-45 | S | Ф5.5 | |
+| F-60 | C-12 | Лог операций: `writes` (`[{ aggregate, uuid, version: from → to }]` из UoW), выход query — `{ ok, size }`, команд — целиком, `durationMs` до 0,1 мс (`operation-run.ts`, `operation-record.ts`); D-NN пакета — уточнение D-43 | S–M | Ф5.5 | 4e9aba27 |
+| F-61 | TR-14 | Порог размера `events`/`payload` в `jsonl-operation-log.ts:6`; grit на поля-стрелки шагов. Пересечение с F-60 — делать вместе | M | Ф5.5 | 4e9aba27 |
+| F-62 | TR-25 | `module?` → обязательное в `unit-of-work.ts:34` (ломающее API пакета; правка вызовов u7-school) | M | Ф5.5 | 4e9aba27 |
+| F-63 | C-05 | JSDoc «Кто / Зачем» обязателен только для Ar/Policy/DQS в контракте — правка D-69/D-45 | S | Ф5.5 | 4e9aba27 |
 
 ## Ф5.6 Домен и модули
 
