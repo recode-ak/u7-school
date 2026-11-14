@@ -55,4 +55,4 @@ export const DomainArch: ArchApp = {
   runners: RUNNERS,
 };
 
-export const DEBT_MD = 'conductor/architecture/debt.md';
+export const DEBT_MD = 'conductor/debt/code.md';

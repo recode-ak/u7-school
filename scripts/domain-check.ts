@@ -149,7 +149,7 @@ function ownerOf(path: string, all: readonly string[]): string | undefined {
 /**
  * ARC-04 (D-45): чужой модуль — только через `contract`. Отступление проекта
  * от D-45: `scripts/` вне проверки — инструменты репозитория берут полный
- * вход модуля (решение Ф7 трека `user-dmg`, запись — `conductor/architecture/debt.md`).
+ * вход модуля (D-84, `conductor/architecture/decisions.md`).
  */
 export function checkContractImports(
   files: readonly DomainFile[],
