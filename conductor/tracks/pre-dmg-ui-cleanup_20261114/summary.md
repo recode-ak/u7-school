@@ -42,3 +42,10 @@ $G -l -- '<шаблон>' . | wc -l # файлов
 - **Отклонения от плана:** реестры перенёс orchestrator (9 записей и 7 строк — промпт дороже работы). `checkTrMarkers` с фикстурами оставлен до Ф2 (удаляется вместе со своей реализацией проверки) — единственное исключение grep-критерия. Ссылки на `migration.md` и `TODO.md` — в Ф6 и Ф3, пока файлы живы.
 - **Проверки:** `check` зелёный, 3211 pass (число тестов не изменилось).
 - **Расход:** Sonnet — разбор (185k токенов); DeepSeek flash — `PDU-F1-links` (ссылки, удаление): $0.06, 37 ходов, hitRate 98%, 0 кругов доработки, замечаний приёмки — 3 мелких хвоста (доправил orchestrator).
+
+## Фаза 2. dmg-core — проверка долга и тестовые хелперы (2026-11-14)
+
+- **Пакет:** `dmg-core` v0.2.1 (`ad38a74`, `51d7f89`, `b57c858`, `7eb4c7b`, `dcca513`) — `DebtChecker` (ARC-12, D-84), `TEST_TRACE`, `testTrace`, `testUuid`, `TempDir`/`useTempDir`, `MemoryRepo.where`; TR-8 — остаток в `aggregate-lifecycle.md` и D-56. v0.2.0 был с номером D-75, занятым в общей нумерации проекта, — исправлен в v0.2.1.
+- **Тесты проекта:** 3211 → 3170 (−41), `test:bot` 1207 без изменений. Удалены (TST-08, сценарии в `dmg-core/src/arch/debt-checker.test.ts`): `scripts/domain-check.test.ts` — describe «checkDebt: allowlist…», «checkDebt: маркеры временности…»; `scripts/arch-check.test.ts` — «runDebtCheck: реестр долга как allowlist». Без переноса: `checkTrMarkers` (журнала TR нет), переходный режим и закрытые записи (их нет по README долга).
+- **Находка новой проверки:** у C-DEBT-54 не было «Погашает» — дописан.
+- **Ловушка:** bun держит кешированный клон git-зависимости (`~/.bun/install/cache/<hash>.git`) и новых тегов не видит — `no commit matching "vX.Y.Z"`; лечится `git -C <клон> fetch <url> 'refs/tags/*:refs/tags/*'`. На prod — то же при следующем релизе.

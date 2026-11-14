@@ -1,15 +1,7 @@
 import { describe, expect, it } from 'bun:test';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
 import { type ArchApp, reportArchCheck } from 'dmg-core/arch';
-import {
-  ARCH_APPS,
-  assemblyPackages,
-  runDebtCheck,
-  runDomainCheck,
-} from './arch-check';
-import { DEBT_MD as DEBT_MD_PATH, DOMAIN_MODULES } from './domain-arch';
+import { ARCH_APPS, assemblyPackages, runDomainCheck } from './arch-check';
+import { DOMAIN_MODULES } from './domain-arch';
 import { domainGraphOf } from './domain-check';
 
 function run(apps: readonly ArchApp[]) {
@@ -54,36 +46,5 @@ describe('arch:check domain', () => {
 
   it('репозиторий — без нарушений домена и долга', async () => {
     expect(await runDomainCheck()).toEqual([]);
-  });
-});
-
-describe('runDebtCheck: реестр долга как allowlist', () => {
-  const REGISTRY = [
-    '### C-DEBT-1: импорты `@u7-scl/core` в домене',
-    '- **Место:** `domain/src/user/**`',
-    "- **Признак:** `from '@u7-scl/core`",
-    '- **Корень:** `domain/src/**`',
-  ].join('\n');
-  const CORE = "import { A } from '@u7-scl/core';\n";
-
-  it('долг вне Места и неизвестный ID — нарушения; голый маркер — нарушение строгого режима', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'debt-check-'));
-    try {
-      const put = async (path: string, text: string) => {
-        await mkdir(join(root, dirname(path)), { recursive: true });
-        await writeFile(join(root, path), text);
-      };
-      await put(DEBT_MD_PATH, REGISTRY);
-      await put('domain/src/user/a.ts', `${CORE}// C-DEBT-1\n`);
-      await put('domain/src/course/b.ts', CORE);
-      await put('domain/src/course/c.ts', '// C-DEBT-9\n');
-      expect(await runDebtCheck(root)).toEqual([
-        'DEBT: C-DEBT-1: долг без записи — domain/src/course/b.ts:1',
-        'DEBT: domain/src/course/c.ts:1: C-DEBT-9 — нет записи в conductor/debt/code.md',
-        'DEBT: domain/src/user/a.ts:2: C-DEBT-1 вне biome-ignore',
-      ]);
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
   });
 });

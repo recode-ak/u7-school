@@ -13,6 +13,8 @@ import { Glob } from 'bun';
 import {
   type ArchApp,
   ArchChecker,
+  DebtChecker,
+  type DebtLayout,
   RULES_DOC,
   reportArchCheck,
 } from 'dmg-core/arch';
@@ -20,12 +22,10 @@ import { ExampleArch } from 'dmg-core/testing';
 import { DEBT_MD, DOMAIN_MODULES, DomainArch } from './domain-arch';
 import {
   checkContractImports,
-  checkDebt,
   checkDomainDirs,
   checkDomainGraph,
   checkDomainImports,
   checkModuleImports,
-  checkTrMarkers,
   type DomainFile,
   domainGraphOf,
 } from './domain-check';
@@ -83,15 +83,33 @@ async function readAppSources(root: string): Promise<DomainFile[]> {
 }
 
 /**
- * Сверка кода с реестром долга `conductor/debt/code.md` (allowlist, `checkDebt`). Строгий
- * режим: `C-DEBT-<n>` в коде допустим только в `biome-ignore`.
+ * Раскладка долга для `DebtChecker` (ARC-12): код — как в `readPackageSources`,
+ * реестры — `conductor/debt/` (README долга).
  */
+const DEBT_LAYOUT: DebtLayout = {
+  code: [
+    '{platform,modules,authoring,runners}/*/src/**/*.ts',
+    'domain/src/**/*.ts',
+    'scripts/**/*.ts',
+  ],
+  exclude: ['scripts/**/*.test.ts'],
+  registries: {
+    code: DEBT_MD,
+    tests: 'conductor/debt/tests.md',
+    product: 'conductor/debt/product.md',
+  },
+};
+
+/** Проверка долга пакета: префикс `C-DEBT`, маркеры временности в `scripts/` не ищутся. */
+const DEBT_CHECKER = new DebtChecker({
+  idPrefix: 'C-DEBT',
+  tempMarkers: { skip: ['scripts/**'] },
+  registryPaths: DEBT_LAYOUT.registries,
+});
+
+/** Сверка кода с реестрами долга `conductor/debt/` (`DebtChecker` пакета). */
 export async function runDebtCheck(root = '.'): Promise<string[]> {
-  return checkDebt({
-    code: await readPackageSources(root),
-    debtMd: await Bun.file(`${root}/${DEBT_MD}`).text(),
-    mode: 'strict',
-  });
+  return DEBT_CHECKER.report(await DebtChecker.read(root, DEBT_LAYOUT));
 }
 
 /**
@@ -116,7 +134,6 @@ export async function runDomainCheck(root = '.'): Promise<string[]> {
     ...checkDomainImports(code, graph),
     ...checkModuleImports(code, await assemblyPackages(root)),
     ...(await runDebtCheck(root)),
-    ...checkTrMarkers([...code, ...appCode]),
   ];
 }
 
