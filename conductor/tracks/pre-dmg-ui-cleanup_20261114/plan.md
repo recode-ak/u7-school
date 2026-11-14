@@ -49,7 +49,7 @@
 
 **Критерии:** `TODO.md` нет; таблица разбора в `summary.md`, у каждого пункта адрес; `check` зелёный.
 
-## Фаза 4: Перевод тестов на хелперы (4a — домен, модули, json-repo; 4b — бот)
+## Фаза 4: Перевод тестов на хелперы (4a — домен, модули, json-repo; 4b — бот) [checkpoint: cc36425e]
 
 - [x] Task: S — карта повторов → целевой хелпер; где нужен `domain/src/<m>/testing.ts`; список исключений (unit-тесты stories, которые перепишет dmg-ui); бриф для F с примерами «до/после» — [slices/test-helpers.md](./slices/test-helpers.md); `mkdtemp` в UC/ER-тестах `wish`/`peer-review` — в Ф5 (фейки); база — 3170 тестов
 - [x] Task: S — API `TestBotTransport` и `runners/u7-bot/tests/helpers` (`press`, `buttonsOf`, `findBtn`, `waitMessageFor`, `waitUntil`, `subHandler`, `makeUiApp`), `domain/src/<m>/testing.ts` `62b4b9ce` — `Screen`, `press`/`pressRaw`/`waitForMessage`, `waitUntil`, test-kit'ы `mockLogger`/`bot-transport`/`subscriptionOf`; новых `domain/src/<m>/testing.ts` не понадобилось
