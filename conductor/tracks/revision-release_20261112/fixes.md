@@ -64,10 +64,10 @@
 
 | ID | Источник | Что | Размер | Срез | Коммит |
 |---|---|---|---|---|---|
-| F-40 | C-01 (TR-68) | Гость без `/start`: резолвер `create-ui-app.ts:94-104` → `U7BotActor \| null`, `ui-app` на `null` отвечает «Нажмите /start» (≈5 мест); сначала e2e на нынешнее поведение и сверка с v0.2.6 | S–M | Ф5.3 | |
+| F-40 | C-01 (TR-68) | Гость без `/start`: резолвер `create-ui-app.ts:94-104` → `U7BotActor \| null`, `ui-app` на `null` отвечает «Нажмите /start» (≈5 мест); сначала e2e на нынешнее поведение и сверка с v0.2.6 | S–M | Ф5.3 | fbdb8504 |
 | F-41 | C-13 | `answerCallbackQuery` сразу (до обработки; отказы с `show_alert` — как сейчас), снятие кнопок старого экрана — параллельно с отправкой нового (`infra/bot-transport.ts:296-302`) | S | Ф5.3 | |
 | F-42 | regressions Q-01/Q-02 | Зарегистрировать `chat_member` / `my_chat_member` → `transport.handleChatMember/handleMyChatMember` в `main.ts:193-194` (на `bot`, не `privateBot`); red — F-13 | S | Ф5.3 | |
-| F-43 | C-03 (исполнение) | Ветвление stories по полям view (`view-stream-mentor.ts:105-123`, `my-streams.ts:65-70`, `stream-catalog.story.ts:57-66`, `view-stream.story.ts:184, 467`, `fill.story.ts:325`) → признаки в готовом ответе UC (D-72) | M | Ф5.3 | |
+| F-43 | C-03 (исполнение) | Ветвление stories по полям view (`view-stream-mentor.ts:105-123`, `my-streams.ts:65-70`, `stream-catalog.story.ts:57-66`, `view-stream.story.ts:184, 467`, `fill.story.ts:325`) → признаки в готовом ответе UC (D-72) | M | Ф5.3 | fbdb8504 |
 | F-44 | C-04 (TR-50 (6)) | Алиасы `questionnaire-events.ts` → в `fill.story.ts`, `invite.story.ts`; файл удалить; попутно проверить TR-50 (9) correlation | S | Ф5.3 | |
 | F-45 | TR-68 | `NOT_FOUND` в `scope-reviews.story.ts:92` — штатный отказ вместо `throw` | S | Ф5.3 | |
 | F-46 | TR-68 | Имя по умолчанию в `ensure-registered.ts:57` | S | Ф5.3 | |
