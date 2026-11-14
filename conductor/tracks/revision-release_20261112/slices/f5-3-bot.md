@@ -84,3 +84,14 @@ DOM-01, DOM-18 (D-72), ARC-08, API-02, ERR-01, TST-08; `node_modules/dmg-core/do
 - F-91: закрыто без кода (Нурболат, 2026-11-14) — `telegramId` в `UserState` обязателен, сценарий P8-05 не воспроизводится; skip-заглушка в `inactivity.e2e` удалена.
 - `dmg-reviewer` не вызывался: diff вне домена и модулей. `dmg-data-keeper` — не нужен.
 - `bun run check`: 3194 pass, 3 skip, 0 fail.
+
+## Порция 3: F-44…F-47
+
+Выполнена в текущей сессии orchestrator (размер S, бот-раннер), как порция 2.
+
+- F-44: алиасы `EnvelopeOf<typeof QuestionnaireEvents.*>` — локальными типами в `fill.story.ts` (4) и `invite.story.ts` (1), `questionnaire-events.ts` удалён. TR-50 (9) проверено — подтверждено: подписки зовут `dispatchUc` вне `BotRequestContext`, след не из конверта (`correlationId` есть, `Trace.fromEvent` в `dmg-core` есть) → строка F-4E, порция 4.
+- F-45: `ScopeReviewsStory` — `STREAM_NOT_FOUND` → `warn` «Поток не найден» через `emptyScreen` (признак `streamMissing` в payload кеша); прочие отказы — как прежде. Red → green: unit «штатные отказы».
+- F-46: `DEFAULT_GUEST_NAME = 'друг'` в `ensure-registered.ts`: `first_name.trim()` пуст → имя по умолчанию; `ui-app` берёт ту же константу. Red → green: unit «имя из одних пробелов».
+- F-47: `courses/ui-spec.md` — таблица «Число этапов курса» (0 / 1 / ≥2) по `course-nav-resolver.ts`.
+- `dmg-reviewer` не вызывался: diff вне домена и модулей. `dmg-data-keeper` — не нужен (имя «друг» — допустимое значение схемы).
+- `bun run check`: 3196 pass, 3 skip, 0 fail.

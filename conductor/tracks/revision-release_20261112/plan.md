@@ -137,8 +137,9 @@
     - Итог: `actorResolver` → `null` и «Наберите /start»; признаки `GetStream`, `listStreams({ status })`, фильтры анкет в репозитории; ревью Opus — принять (API-01 исправлено); журнал — `slices/f5-3-bot.md`
 - [x] Task: F-41 `answerCallbackQuery` сразу, F-42 события групп, F-91 маркер `inactivity-sweep` `e614c381`
     - Итог: F-41, F-42 — в сессии orchestrator (S, инфраструктура); F-91 закрыто без кода (`telegramId` обязателен, Нурболат 2026-11-14); журнал — `slices/f5-3-bot.md`
-- [ ] Task: F-44…F-47 — алиасы событий анкет, штатные отказы TR-68, `ui-spec` курсов
-- [ ] Task: F-48, F-49, F-4A…F-4D — `now()` в `progress.ts`, экранирование `/log_level`, unit сбоя событий группы, мёртвые ветки stories, `StreamAr.enroll` вне набора, нотисы в `handleError`
+- [x] Task: F-44…F-47 — алиасы событий анкет, штатные отказы TR-68, `ui-spec` курсов `acdcc131`
+    - Итог: в сессии orchestrator (S, бот-раннер); TR-50 (9) подтверждено → F-4E в следующую порцию; журнал — `slices/f5-3-bot.md`
+- [ ] Task: F-48, F-49, F-4A…F-4E — `now()` в `progress.ts`, экранирование `/log_level`, unit сбоя событий группы, мёртвые ветки stories, `StreamAr.enroll` вне набора, нотисы в `handleError`, след события в подписках
 
 #### Ф5.5 Платформа `dmg-core` (Opus)
 - [ ] Task: F-60, F-61 — лог операций (`writes`, сводка query, порог размера), D-NN пакета
