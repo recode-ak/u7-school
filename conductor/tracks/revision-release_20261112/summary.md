@@ -17,3 +17,8 @@
 ## Worktree `v0.2.6` (Ф0)
 
 `../u7-school-v0.2.6` — detached HEAD `dffa561b` (тег `v0.2.6`). Был изменён `bun.lock` (+5 строк `@u7-scl/app: workspace:*` у course, peer-review, questionnaire, stream, wish) — след `bun install`: в релизе lock отставал от `package.json`. Откачен (`git checkout -- bun.lock`, с разрешения Нурболата): worktree — точная копия тега, не запускается. Дерево чистое.
+
+## DeepSeek по фазам (deepseek.md §5)
+
+- **Ф5.6** (2026-11-14): `migrator` flash, одна сессия, 58 ходов, $0.07, hit 98%, доработок по гейту 0. Ревью Opus: принять; на приёмке — переименование `currentOf` → `latest` (путалось с `WishAr.current`) и ссылка `TR-7` в комментарии теста.
+- **Ловушка гейта:** `scripts/agent-gate.ts` гоняет `check` пакетов, но не корневой `arch:check` — ссылку на TR в коде он пропускает, ловит только полный `bun run check`. Перед коммитом шага flash — полный `check`.
