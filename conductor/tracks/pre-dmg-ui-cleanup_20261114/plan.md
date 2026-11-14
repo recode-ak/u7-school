@@ -17,8 +17,8 @@
 - [x] Task: F — создать `conductor/debt/{code,tests,product}.md`, перенести открытые записи (закономерности test-bloat — в README) `afe161d` — перенёс orchestrator: 9 записей и 7 строк, промпт F дороже работы
 - [x] Task: O — перенести живое знание TR в `decisions.md`/гайды, удалить §6 `afe161d` — §6 уходит вместе с файлом в следующей задаче; ловушка `computeSourceHash` (TR-57) уже исправлена в коде, `askMatch` (TR-20) не ведётся
 - [x] Task: O — завести `D-DEBT` «точный анализ совместимости контракта и гейт» из [vision.md](../../architecture/vision.md) §9 (триггер — перед web-ui); пункт в `vision.md` сократить до ссылки на запись `afe161d`
-- [ ] Task: F — ссылки по ФР-3а (`AGENTS.md`, `.agents-core/` → `agents:sync`, `.pi/skills/`, `CHANGELOG.md`, код, `conductor/`); удалить `architecture/debt.md`, `roadmap/test-bloat.md`
-- [ ] Task: O — ревью фазы
+- [x] Task: F — ссылки по ФР-3а (`AGENTS.md`, `.agents-core/` → `agents:sync`, `.pi/skills/`, `CHANGELOG.md`, код, `conductor/`); удалить `architecture/debt.md`, `roadmap/test-bloat.md` `4c819be`
+- [x] Task: O — ревью фазы `4c819be` — diff документов прочитан, хвосты (закрытые ID, висячие «С1») доправлены
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 **Критерии:** `check` зелёный (проверка пока старая, на новых путях); в реестрах только открытый долг, у каждой записи владелец или Триггер, есть «последний выданный ID»; grep старых путей и `TR-[0-9]` вне `archive/` и `revision-release_20261112` пуст; число тестов не изменилось.
@@ -32,6 +32,7 @@
 - [ ] Task: S (`documentarian`) — документы пакета по `docs:impact`
 - [ ] Task: O — коммит пакета; **стоп: тег и push — с подтверждения Нурболата**; смена `#vX.Y.Z` в 11 `package.json`, `bun install`
 - [ ] Task: O — `scripts/arch-check.ts` вызывает функцию пакета на `conductor/debt/`; своя реализация и её тесты удалены из `scripts/`
+    - `checkTrMarkers` и его фикстуры (`scripts/domain-check.test.ts`) удалить: журнала TR нет; до этого шага они — единственное исключение grep-критерия Ф1
 - [ ] Task: O — ревью фазы
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
