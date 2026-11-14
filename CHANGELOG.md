@@ -10,18 +10,38 @@ Added / Changed / Fixed / Migration.
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-11-14
+
+Переход на платформу DMG (`dmg-core`) завершён, ревизия по v0.2.6 пройдена: видимое поведение бота совпадает с v0.2.6, кроме исправлений ниже. **Формат данных меняется** (числовые даты, `version`) — v0.2.6 новые файлы не прочтёт, откат только из снимка. Выкатка — вручную по [rollout.md](./conductor/tracks/revision-release_20261112/rollout.md).
+
 ### Changed
 
-- **Раскладка монорепо по осям архитектуры** (трек repo-layout): `packages/*` + `apps/*` → `platform/` (`dmg-core`, `app`, `core`), `domain/`, `modules/<m>`, `runners/` (`u7-bot`, `u7-cli`), `authoring/` (`w3school`, `video-summarizer`). Имена пакетов `@u7-scl/*` не менялись.
+- **Все модули на DMG** (`wish`, `peer-review`, `stream`, `questionnaire`, `course`, `user`, `dossier`): домен — `@u7-scl/domain` (Ar, Policy, DCS/DQS, Def операций и событий), прикладной слой — `modules/<m>`, отказы — `Result` вместо исключений, сохранение — UoW с оптимистичной блокировкой по `version`. Legacy-кода нет; история — [migration.md](./conductor/architecture/migration.md).
+- **Платформа `dmg-core`** — отдельный пакет (`~/dev/tools/dmg/dmg-core`, подключён как `file:`): Def-классы, `*FromDef`, UoW, outbox/inbox, планировщик Job, `arch:check`, GritQL-правила линтера, генератор `dmg-core gen`, роли агентов.
+- **Раскладка монорепо по осям архитектуры:** `packages/*` + `apps/*` → `platform/` (`app`, `core`), `domain/`, `modules/<m>`, `runners/u7-bot`, `authoring/`. Имена пакетов `@u7-scl/*` не менялись. `u7-cli` удалён (ручной вход — `scripts/call-uc.ts`).
 - Скрипты по пакетам: `test:p`/`test:a`, `lint:*`, `tslint:*`, `check:*` → `test:w`/`lint:w`/`tslint:w`/`check:w <путь>` (например, `bun run test:w modules/wish`).
+- `scripts/deploy.sh`: бот останавливается до бэкапа, запуск — по `pm2.config.cjs` (`delete` → `start` → `save`) вместо `pm2 restart` по имени.
+
+### Added
+
+- **Лог операций** `data/oplog/<дата>.jsonl` (вне бэкапа): каждый вызов UC, реакция на событие и прогон Job — кто, вход, итог, опубликованные события и записанные агрегаты с версиями «было → стало»; выход query — сводкой размера.
+- **Отсев повторов команд** `data/replay/` (TTL 24 ч): повтор апдейта Telegram не исполняет команду второй раз.
+- Планировщик Job пакета (`inactivitySweep`, `sweepAbandonedQuestionnaires`), отметки прогонов — `data/jobs/last-runs.json`.
+
+### Fixed
+
+- Команда от человека без `/start` получает «Наберите /start» вместо молчания.
+- Нажатие кнопки подтверждается сразу — без «часиков» на время обработки.
+- События групп (вход и выход участников) снова доходят до бота: подписка на `chat_member` / `my_chat_member` (дефект перенесён из v0.2.6).
+- Запись на поток вне набора — штатный отказ (раньше проверки не было).
+- Ответ на ошибку команды несёт накопленные уведомления; `/log_level` с неизвестным уровнем не ломает разметку; дни в обучении считаются по часам приложения.
 
 ### Migration
 
-- **Прод-сервер, после `deploy.sh`:** git не удаляет игнорируемые файлы, поэтому старые `apps/*` и `packages/*` останутся (`.env.*` бота, `.cache/`, `coverage/`, `node_modules/`).
-  1. Посмотреть остатки: `git ls-files -o -i --exclude-standard apps packages | grep -v node_modules`.
-  2. Нужное перенести в новые каталоги (например, `apps/u7-bot/.env.*` → `runners/u7-bot/`).
-  3. Удалить `apps/` и `packages/`, иначе тест-страж `scripts/repo-layout.test.ts` упадёт.
-- pm2 читает `.env.production` из корня — запуск бота шаг не затрагивает.
+- **`data/users/users.json` — до запуска нового кода:** снимок (`bash scripts/backup.sh --name=before-0.3.0`), `migrate-users-drop-student` сухим прогоном, затем `--write` (роль `STUDENT` снята; без миграции одна такая запись останавливает все чтения пользователей).
+- Остальные файлы данных читаются в старом формате и переписываются в новом при первой записи — миграции не нужны, нужен снимок до запуска. Ключи `last-runs.json` не мигрируются: первые прогоны Job — в следующее окно.
+- **Порядок:** стоп → бэкап → `git pull` → `bun install --frozen-lockfile` → миграция `users.json` → `pm2 delete u7-school-bot` → `bun run start:prod` → `pm2 save`. `scripts/deploy.sh` с prod (версия v0.2.6) для этого релиза не запускать.
+- **Остатки `apps/` и `packages/`:** git не удаляет игнорируемые файлы (`.env.*`, `.cache/`, `node_modules/`). Посмотреть: `git ls-files -o -i --exclude-standard apps packages | grep -v node_modules`; нужное перенести (например, `apps/u7-bot/.env.*` → `runners/u7-bot/`), затем удалить каталоги — иначе страж `scripts/repo-layout.test.ts` упадёт.
 
 ## [0.2.6] — 2026-10-16
 
