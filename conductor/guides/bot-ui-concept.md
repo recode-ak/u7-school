@@ -57,5 +57,5 @@
 ## Связанные файлы
 
 - Спека трека контракта: `conductor/archive/bot-ui-dialog-lifecycle_20260905/spec.md`
-- Архитектура: `conductor/roadmap/bot-ui-session-architecture.md` (обновляется фазой 4)
+- Архитектура: `conductor/architecture/ui/bot-architecture.md`
 - Styleguide стори: `conductor/architecture/ui/bot-ui-story.md`

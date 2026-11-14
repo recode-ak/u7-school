@@ -29,7 +29,7 @@ Added / Changed / Fixed / Migration.
 
 ### Changed
 
-- **Все модули на DMG** (`wish`, `peer-review`, `stream`, `questionnaire`, `course`, `user`, `dossier`): домен — `@u7-scl/domain` (Ar, Policy, DCS/DQS, Def операций и событий), прикладной слой — `modules/<m>`, отказы — `Result` вместо исключений, сохранение — UoW с оптимистичной блокировкой по `version`. Legacy-кода нет; история — [migration.md](./conductor/architecture/migration.md).
+- **Все модули на DMG** (`wish`, `peer-review`, `stream`, `questionnaire`, `course`, `user`, `dossier`): домен — `@u7-scl/domain` (Ar, Policy, DCS/DQS, Def операций и событий), прикладной слой — `modules/<m>`, отказы — `Result` вместо исключений, сохранение — UoW с оптимистичной блокировкой по `version`. Legacy-кода нет; история — `migration.md` (с 2026-11-15 — в summary трека `legacy-removal`).
 - **Платформа `dmg-core`** — отдельный пакет (репо `recode-ak/dmg-core`, подключён по тегу `v0.1.1`): Def-классы, `*FromDef`, UoW, outbox/inbox, планировщик Job, `arch:check`, GritQL-правила линтера, генератор `dmg-core gen`, роли агентов.
 - **Раскладка монорепо по осям архитектуры:** `packages/*` + `apps/*` → `platform/` (`app`, `core`), `domain/`, `modules/<m>`, `runners/u7-bot`, `authoring/`. Имена пакетов `@u7-scl/*` не менялись. `u7-cli` удалён (ручной вход — `scripts/call-uc.ts`).
 - Скрипты по пакетам: `test:p`/`test:a`, `lint:*`, `tslint:*`, `check:*` → `test:w`/`lint:w`/`tslint:w`/`check:w <путь>` (например, `bun run test:w modules/wish`).

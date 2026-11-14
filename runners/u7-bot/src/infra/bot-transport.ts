@@ -169,7 +169,7 @@ export function parseCommandText(
 
 /**
  * Единый транспортный слой между Grammy и uiApp на контракте
- * «Диалог и Экран» (bot-ui-session-architecture.md §5).
+ * «Диалог и Экран» (conductor/architecture/ui/bot-architecture.md §3.3).
  *
  * Владеет:
  * - сессиями BotSession (диалог + активный экран) — внутренняя мапа;

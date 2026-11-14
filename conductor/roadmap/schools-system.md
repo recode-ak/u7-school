@@ -90,6 +90,7 @@
 ## Связанные документы
 
 - [school-config](../archive/school-config_20260928/spec.md) — тип `School`, резолвер школы.
-- [school-hub](../tracks/school-hub_20260928/spec.md) — хаб «Школа» (текущий трек).
+- хаб «Школа» (трек `school-hub_20260928`, архив).
 - [content-management](./content-management.md) — CRUD курсов авторами, видимость.
 - [peer-review-system](./metrics/peer-review-system.md) — источник отзывов.
+- Опорные решения: D-53 (тип пользователя приложения — в домене: где живёт активная школа), D-54 (вызов операции по имени и видимость для транспорта), D-82 (матрёшка приложений: школа как масштаб) — [проектные](../architecture/decisions.md), [платформенные](../../node_modules/dmg-core/docs/decisions.md).

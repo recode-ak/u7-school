@@ -122,7 +122,7 @@ export interface ProactiveSender {
   kickFromGroup(groupId: number | string, userId: number): Promise<void>;
 }
 
-// ── Контракт «Диалог и Экран» (bot-ui-session-architecture.md §4) ──
+// ── Контракт «Диалог и Экран» (conductor/architecture/ui/bot-architecture.md §2.5) ──
 
 /**
  * Экран — сообщение бота с (опц.) клавиатурой.

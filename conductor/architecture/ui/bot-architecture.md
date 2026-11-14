@@ -1,7 +1,7 @@
 # Архитектура Telegram-бота (bot-level)
 
 **Назначение:** единый архитектурный разрез UI-слоя Telegram-бота на контракте
-«Диалог и Экран» (инварианты и контракты — `conductor/roadmap/bot-ui-session-architecture.md`, §3–§5):
+«Диалог и Экран» (инварианты — §1, контракты — §2.5, рендер — §3.3, решения — §6):
 из чего собран UI, кто чем владеет, как течёт апдейт от Telegram до домена и обратно.
 
 Живой код:
@@ -21,7 +21,7 @@ Grammy (адаптер) → BotTransport (сессии, штампы, ренде
 | Слой | Объект | Где | Ответственность |
 |---|---|---|---|
 | Адаптер | `createBot`, `BotContext` | `runners/u7-bot/src/bot.ts`, `context.ts` | Grammy-бот; `Context` без сессий (Grammy-session нет) |
-| Транспорт | `BotTransport` | `runners/u7-bot/src/infra/bot-transport.ts` | Сессии `BotSession`, штампы `:~seq`, shortId-сжатие, рендер `DialogResponse` (§5), per-chat очередь, `ProactiveSender` |
+| Транспорт | `BotTransport` | `runners/u7-bot/src/infra/bot-transport.ts` | Сессии `BotSession`, штампы `:~seq`, shortId-сжатие, рендер `DialogResponse` (§3.3), per-chat очередь, `ProactiveSender` |
 | Хаб | `BotUiApp` / `U7BotUiApp` | `platform/core/src/ui/bot/ui-app.ts`, `runners/u7-bot/src/core/ui-app.ts` | Core: `dialog.path/seq`, `enterDialog`, `dispatch`, delegate-склейка, pipe команд (ФР-4). U7: `/start`, `/help`, `/cancel`, системные коды `app:*`, меню из `menuButtons` |
 | Диспетчер | `BotController` / `U7BotController` | `platform/core/src/ui/bot/bot-controller.ts`, `runners/u7-bot/src/core/u7-bot-controller.ts` | Реестр сторис, префиксация кодов `name:`, `handleError`, `errorExitRows` |
 | Сценарий | `BotUiStory` / `U7BotUiStory` | `platform/core/src/ui/bot/bot-ui-story.ts`, `runners/u7-bot/src/core/u7-bot-ui-story.ts` | Логика экрана: UC → `DialogResponse`; `awaitInput`-ввод, `contextHelp`, `menuButtons`, `/cancel` в pipe |
@@ -30,6 +30,8 @@ Grammy (адаптер) → BotTransport (сессии, штампы, ренде
 
 **Разделение владения:** сессиями и экраном владеет транспорт; диалогом
 (`path`/`seq`) — uiApp; логикой сценария — стори; домен никогда не знает о Telegram.
+
+**Инварианты.** И1 — диалог один (до первого `/start` не открыт), смена только через `enterDialog`. И2 — один живой экран: смена экрана или диалога гасит прежний («хлебные крошки», в т.ч. при ответе без `screen`); кнопки не текущего экрана отвергает транспорт без исключений. И3 — проактив не трогает диалог: `notify` — текст без кнопок, сессию не читает и не пишет; временное исключение — `invite` (ФР-6), до модуля задач.
 
 ---
 
@@ -46,10 +48,12 @@ Grammy (адаптер) → BotTransport (сессии, штампы, ренде
 - **валидацией callback без исключений (ФР-3)** — порядок: диалог открыт →
   штамп `:~<seq36>` совпал с `dialog.seq` → shortId разжат; иначе alert
   («Наберите /start» / «Экран устарел» / «кнопка устарела после рестарта»);
-- **рендер-политикой §5** (ниже);
+- **рендер-политикой** (§3.3);
 - **сжатием UUID** (`compressAction`/`expandAction` + `short-id.ts`),
   fail-fast лимит `callback_data ≤ 64 байта`;
 - **per-chat очередью** на все апдейты и проактивы (строгий порядок на чат).
+
+**Персистентность.** `BotSession` и shortId-мапа переживают рестарт: порт `BotSessionRepo` (`platform/core/src/ui/bot/bot-session-repo.ts`), реализация `JsonBotSessionRepo` (`runners/u7-bot/src/infra/json-bot-session-repo.ts`, `data/bot/`). Запись синхронная после каждого апдейта, восстановление — до старта polling/webhook; старые кнопки остаются нажимаемыми. Повреждённый файл — fail-fast, ошибка записи — warn и работа из памяти.
 
 ### 2.2. `BotUiApp` / `U7BotUiApp` (хаб)
 
@@ -134,10 +138,10 @@ Grammy callback_query.data
     → enterDialog(switch) → Controller.handleCallback → Story.handleCallback
       → appApi.execute(UC) → DialogResponse
   ← delegate? → #resolveDelegate (маршрут + склейка)
-  → BotTransport.#render (§5): notify → finalize → screen → awaitInput/release
+  → BotTransport.#render (§3.3): notify → finalize → screen → awaitInput/release
 ```
 
-### 3.3. Рендер-политика (§5, владелец — транспорт)
+### 3.3. Рендер-политика (владелец — транспорт)
 
 1. **`notify`** — реплика поверх диалога (первой, заголовок по `kind`:
    🔔/ℹ️/⚠️), сессию, экран и ввод не трогает.
@@ -201,10 +205,20 @@ Grammy callback_query.data
 
 ---
 
-## 6. Связанные документы
+## 6. Принятые решения
+
+- Диалог не открыт до `/start`; ленивого фиктивного меню нет, якорь `app/menu` нужен только для `seq`.
+- Проактивный запуск диалога запрещён: диалог открывает только действие пользователя, сервер лишь зовёт.
+- `/start` и `/help` идут мимо pipe команд: активность стори проверяет uiApp, неактивная стори на `/help` не отвечает.
+- Ядро имён команд не знает; меню — декларативные `menuButtons`, словаря команд и `setMyCommands` нет.
+- Серия экранов в контракт не входит (`newMessage` — единственный путь пошаговой выдачи); TTL ввода удалён как мёртвый — бездействие обслуживают доменные sweep и задачи.
+- Системные коды и якоря (`app:main-menu`, `app:help`, `app/menu`, `app/invite`) — один модуль `runners/u7-bot/src/shared/app-codes.ts`.
+- Экраны ошибок получают кнопку выхода от приложения (`errorExitRows`); `errorNotify` — реплика-переспрос без захвата экрана.
+
+## 7. Связанные документы
 
 - [BotController Styleguide](./bot-controller.md)
 - [BotUiStory Styleguide](./bot-ui-story.md)
 - [Тестирование бота](./bot-test.md)
 - [Границы архитектуры](../../../node_modules/dmg-core/docs/reference/layers.md), [Domain boundaries](../../../node_modules/dmg-core/docs/reference/domain-modeling.md)
-- Материнский документ контракта: `conductor/roadmap/bot-ui-session-architecture.md`
+- Концепция: [bot-ui-concept.md](../../guides/bot-ui-concept.md); вход будущего UI-слоя — [dmg-ui-entry.md](../../roadmap/dmg-ui-entry.md)
