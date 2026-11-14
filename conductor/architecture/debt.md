@@ -128,7 +128,7 @@
 - **Признак:** `getUTCHours\(`
 - **Корень:** `runners/u7-bot/src/**`
 - **Причина:** решение Нурболата (2026-10-29): сервер и хранение — UTC; всё, что вводит и видит пользователь, — в зоне проекта UTC+5 (`Asia/Oral`), одной на всех. Персональной зоны у пользователя пока нет.
-- **Погашает:** трек персональных зон — поле зоны в `user`, форматирование и разбор ввода по зоне пользователя (зона проекта — значение по умолчанию)
+- **Погашает:** трек персональных зон — цепочка зоны: зона пользователя → зона школы, с которой он взаимодействует → по умолчанию UTC+5 (Уральск) (Нурболат, 2026-11-12, C-09); поле зоны в `user` и в школе, форматирование и разбор ввода по этой цепочке; заготовка — [schools-system](../roadmap/schools-system.md)
 - **Критерий снятия:** даты для пользователя форматируются и разбираются по его зоне из `user`; жёстко заданная UTC+5 остаётся только как значение по умолчанию; маркер удалён
 
 ### DEBT-45: проактив с кнопками `invite` (ФР-6)
@@ -144,7 +144,7 @@
 - **Признак:** `manifest\.json`
 - **Корень:** `scripts/**`
 - **Причина:** менторские шаги не добавлены в уроки через API (`mentorStepIds`), поэтому скрипты читают `mentor-files/manifest.json` с диска.
-- **Погашает:** интеграция менторских шагов в уроки через API
+- **Погашает:** не запланировано — интеграция менторских шагов в уроки через API, [roadmap.md](../roadmap.md) (Нурболат, 2026-11-12, C-10)
 - **Критерий снятия:** скрипты получают менторские файлы через `get-step` (`kind: 'file'`) по `mentorStepIds`, чтений `manifest.json` с диска нет
 
 ### DEBT-50: правило «курс модуля» — две ветки по статусу и порядок файла
@@ -173,14 +173,6 @@
 
 ## 5. Инструменты проверки
 
-### DEBT-49: расширение pi `subagent` привязано к скриптам u7-school
-- **Место:** `scripts/subagent-gate.ts` — гейт расширения `.pi/extensions/subagent` зашит на проектный `scripts/agent-gate.ts`; само расширение импортирует `scripts/subagent-config.ts` и `scripts/subagent-gate.ts` (`.pi/` реестр не проверяет)
-- **Признак:** `'scripts/agent-gate\.ts'`
-- **Корень:** `scripts/subagent-*.ts`
-- **Причина:** вне u7-school расширение не загружается (пилот волны 2, `agent-roles-wave2_20261104/summary.md`); переносимость нужна, только если пакет `dmg-core` будет доставлять pi-расширение, а это новый API пакета — стратегическое решение.
-- **Погашает:** трек по решению о доставке pi-расширения пакетом
-- **Критерий снятия:** расширение без импортов из `scripts/`; конфиг в самом расширении, команда гейта — поле в `.pi/subagent.json`
-
 ## 6. Тактические решения перехода (TR)
 
 Решения, которые orchestrator принял сам в автономном режиме ([agents.md](./agents.md) §9). На ревизии по ним видно, что сделано временно ради перехода, а что задумано. Номера не переиспользуются. Шаблон:
@@ -199,32 +191,32 @@
 - **Решение:** в Ф2 `wish.errors.ts` содержит только ошибки отказов переходов, `wish.events.ts` — минимум, который требует `defineAggregate`; legacy `errors.ts`/`events.ts` живут параллельно. В UC/ER `err` переходов временно превращается в прежнее legacy-исключение — поведение не меняется.
 - **Состояние после Ф3–4:** параллельных групп нет (legacy `errors.ts`/`events.ts` удалены). Мост `modules/wish/src/api/legacy-reject.ts` (вне naming.md §3) остался и обобщён: `throwWishError` поднимает любую ошибку `WishErrors` через `toLegacyError` (код `WISH_*`, `kind` из Def) — UC/ER остаются legacy-классами до Ф8/Ф10. Тип `LegacyWishUcError` (`domain/wish/wish/commands/legacy-uc-error.ts`) — для `errors` legacy-мет команд.
 - **Состояние после Ф5:** отказ Policy в `cancel-wish-uc.ts` (`CoreErrors.ACCESS_DENIED`) поднимается свободной функцией `throwWishError` мимо типизированного `WishUseCase.throwWishError`: `LegacyWishUcError` не описывает базовые ошибки. Ветка недостижима (желание ищется по актору). Там же остался `if` по статусу перед `cancel` (API-01) — legacy UC.
-- **Пересмотреть:** в Ф8–11 (`UseCaseFromDef`/`ReactionFromDef`, `Result` через `appApi.execute`) `legacy-reject.ts` и `legacy-uc-error.ts` удалены. Policy подключается полем `policy` Def UC, `if` по статусу из `cancel-wish` уходит.
+- **Пересмотреть:** ~~в Ф8–11 (`UseCaseFromDef`/`ReactionFromDef`, `Result` через `appApi.execute`) `legacy-reject.ts` и `legacy-uc-error.ts` удалены. Policy подключается полем `policy` Def UC, `if` по статусу из `cancel-wish` уходит~~ — закрыто ревизией (триаж `revision-release`): снято кодом (файлов нет, `if` по статусу ушёл); исторический.
 
 ### TR-2: legacy-репозиторий `wish` на `WishArDef.state` через приведение типа
 - **Трек / фаза:** `golden-wish`, Ф2
 - **Контекст:** legacy `JsonFileRepo<T>` ждёт схему с одинаковым типом входа и выхода, а `F.timestamp` принимает строку или число и отдаёт число. Без разбора через `WishArDef.state` записи без `updatedAt` теряются (фолбэк D-36). Порт `WishRepo` в домене пока на `WishState`, поэтому `restore`/`snapshot()` вызывают UC/ER.
 - **Решение:** `WishArDef.state as unknown as v.GenericSchema<WishState>` в `wish-json-repo.ts`; `core` не меняется. Часы и uuid в UC/ER — `Date.now()`/`crypto.randomUUID()`, как у соседних legacy-UC. Первая запись перепишет `data/wish/wishes.json` с числовыми датами и полями `updatedAt`/`version` — это формат spec (`F.timestamp` пишет число), старые ISO-записи читаются.
-- **Пересмотреть:** в Ф6 (`WishJsonRepo`, порт на Ar/`Result`, UoW) приведения и `restore`/`snapshot` в UC/ER нет; часы — порт `Clock`.
+- **Пересмотреть:** ~~в Ф6 (`WishJsonRepo`, порт на Ar/`Result`, UoW) приведения и `restore`/`snapshot` в UC/ER нет; часы — порт `Clock`~~ — закрыто ревизией (триаж `revision-release`): снято: `this.now()` (`cancel-wish.uc.ts:48`); исторический.
 - **Состояние после Ф6–7:** приведение и `JsonFileRepo` ушли (`infra/wish.json-repo.ts` по шаблону gen, строгий разбор — решение Нурболата), порт `WishRepo` в `modules/wish/src/wish/wish.repo.ts` принимает и возвращает `WishAr`. Остаток — часы (`Date.now()` в UC/ER) — в Ф8.
 
 ### TR-3: `kind: 'conflict'` у ошибок отказа переходов `wish`
 - **Трек / фаза:** `golden-wish`, Ф2 (решение для Ф3–4; выбор поручен оркестратору Нурболатом)
 - **Контекст:** legacy поднимал `BAD_REQUEST` (400) на недопустимый переход; в `WishErrors.WISH_NOT_*` — `conflict`. Варианты: сохранить `bad-request` ради совместимости или `conflict`.
 - **Решение:** `conflict` — вход валиден, операция несовместима с текущим статусом агрегата (семантика 409). Код для вызывающих сменится в Ф3–4 вместе со снятием моста TR-1; тексты ошибок прежние. Ориентир для остальных модулей: отказ перехода жизненного цикла — `conflict`, невалидный вход — `validation` (legacy `bad-request`).
-- **Пересмотреть:** на ревизии — согласованность `kind` отказов переходов во всех модулях; нет ли клиентов, различающих 400/409.
+- **Пересмотреть:** ~~на ревизии — согласованность `kind` отказов переходов во всех модулях; нет ли клиентов, различающих 400/409~~ — закрыто ревизией (триаж `revision-release`): 27 `conflict`, бот по HTTP-коду не ветвится; правило «отказ перехода = conflict» → D-75 `decisions.md`.
 
 ### TR-4: публикация событий `wish` из legacy-ER через `legacyEventBus`
 - **Трек / фаза:** `golden-wish`, Ф3–4
 - **Контекст:** события стали Def с FQN, а UoW (Ф6) и `ReactionFromDef` (Ф10) ещё нет; legacy-ER получают из резолвера только legacy-шину. Варианты: новый контракт резолвера с шиной DMG (правка `app`/`core`) или обёртка на месте.
 - **Решение:** `modules/wish/src/api/legacy-publish.ts` (`publishWishEvents`, вне naming.md §3) строит конверт по образцу UoW (`systemCaller(<ER>)`, причина и `correlationId` — событие-причина) и публикует в `legacyEventBus(resolve.eventBus)`, который каждый ER создаёт сам. Legacy-подписчики (stories) получают FQN как `eventName`, `aggregateName` — `wish.wish`. Barrel `modules/wish/src/domain/index.ts` (DEBT-23) реэкспортирует `@u7-scl/domain/wish/contract`: у бота нет прямой зависимости от `@u7-scl/domain`.
-- **Пересмотреть:** в Ф10–12 конверт строит UoW, wiring раздаёт **один** экземпляр шины DMG — сейчас конверт живёт в экземпляре моста конкретного ER, и подписчики DMG других модулей событий `wish` не увидят (таких пока нет). `legacy-publish.ts` удалён.
+- **Пересмотреть:** ~~в Ф10–12 конверт строит UoW, wiring раздаёт **один** экземпляр шины DMG — сейчас конверт живёт в экземпляре моста конкретного ER, и подписчики DMG других модулей событий `wish` не увидят (таких пока нет). `legacy-publish.ts` удалён~~ — закрыто ревизией (триаж `revision-release`): снято; исторический.
 
 ### TR-5: решения модели событий и ошибок `wish`
 - **Трек / фаза:** `golden-wish`, Ф3–4
 - **Контекст:** `invited` не меняет состояние; у module-желания нет курса для payload `confirmed`; коды `COURSE_NOT_FOUND`/`MODULE_NOT_FOUND` заняты модулем `course`.
 - **Решение:** `invited` строит ER через `WishEvents.invited.make` (решение — на фасадах курсов и пользователей; метод Ar без перехода растил бы `version`), `telegramId` в payload оставлен — по нему UI отправляет карточку. `confirm` у module-желания в `pending` — `Err WISH_NOT_CONFIRMABLE` (ветка недостижима: module-желания создаются `expressed`). Отказы цели — `WISH_COURSE_NOT_FOUND`/`WISH_MODULE_NOT_FOUND` (`not_found`). Видимое пользователю не изменилось: бот ветвится по `kind`.
-- **Пересмотреть:** на ревизии — не протекает ли адресация (`telegramId`) в домен; не нужна ли ER своя публикация событий (риск для Ф10: UoW публикует только события агрегатов).
+- **Пересмотреть:** ~~на ревизии — не протекает ли адресация (`telegramId`) в домен; не нужна ли ER своя публикация событий (риск для Ф10: UoW публикует только события агрегатов)~~ — закрыто ревизией (триаж `revision-release`): `wish.events.ts:9` — осознанно (адресация карточки), ER событий не публикует; исторический.
 
 ### TR-6: Policy, DCS и метод-вопрос Ar в `wish`
 - **Трек / фаза:** `golden-wish`, Ф5
@@ -251,13 +243,13 @@
 - **Трек / фаза:** `golden-wish`, Ф8
 - **Контекст:** `gen uc` требует `<m>.module.ts`, а `WishModuleDef` по плану — Ф12; legacy-UC зарегистрированы в `api/module.ts` и вызываются ботом через `appApi.run('wish', 'create-course-wish', …)`.
 - **Решение:** `gen module wish --adopt` выполнен в Ф8 (каркас `wish.module.ts` в домене и пакете; `dependsOn`, резолвер — Ф12). Новый `CreateCourseWishUc` (`UseCaseFromDef`, имя `createCourseWish`) живёт рядом с legacy-классом и тестируется отдельно; бот до Ф12 ходит в legacy (дублирование логики на время перехода). Схема входа legacy-команды выводится из Def, без копии.
-- **Пересмотреть:** Ф12 — подключение `createWishModule` в приложение, перевод вызовов бота на новые имена, удаление legacy-классов и `commands/*-cmd.ts`.
+- **Пересмотреть:** ~~Ф12 — подключение `createWishModule` в приложение, перевод вызовов бота на новые имена, удаление legacy-классов и `commands/*-cmd.ts`~~ — закрыто ревизией (триаж `revision-release`): снято; исторический.
 
 ### TR-10: детали платформы D-42 (Ф8 шаг 1)
 - **Трек / фаза:** `golden-wish`, Ф8
 - **Контекст:** перевод `dmg-core` на фасад без манифеста; решения автора, не оговорённые в D-42.
 - **Решение:** (1) ошибки `load`/`execute` — `UseCaseErrorOf<D>` (с `CoreError`), чтобы потребитель отдавал отказ вызываемого UC как есть; ERR-02 для доменных ошибок сохраняется. (2) `module` с `origin = system` (ER/Job → фасад) — Policy вызываемого UC не проверяется, как у `system`; с `origin` пользователя — проверяется. (3) Отказ «UC нет в `calls` у `from`» — `UNAUTHORIZED` с необязательным `from` в payload. (4) `checkDefs` сверх брифа: вызываемый UC без `module` в `callers` — MAN-05. (5) `trace` — последний аргумент `load`/`execute`; `CallContext`, `Trace`, `Cause` — в `kernel` (их видит тип фасада в домене). (6) `asReadonlyAr` принимает класс Ar (Def агрегата `restore` не знает).
-- **Пересмотреть:** ~~(2) — при делегировании и аудите системных цепочек; конверт события несёт `from` как Def целиком~~
+- **Пересмотреть:** ~~(2) — при делегировании и аудите системных цепочек; конверт события несёт `from` как Def целиком~~; закрыто ревизией (триаж `revision-release`): знание в D-43 / гайде facade.
 - **Закрыто (Ф8а, Р7, D-43):** (1) остаётся — ошибки ядра чужого UC насквозь, необъявленная доменная не проходит по типу (закреплено тестами); (2) снято — Policy вызывается всегда (Р2); (3) снято — `UNAUTHORIZED` без `from`, рантайм-проверки `calls` нет; (4) снято — вида `module` нет, `calls` по типу только UC с `'system'` в `callers`, `checkDefs` остаётся; (5) остаётся (`CallContext` удалён); (6) снято — `Aggregate.readonly(state)`; `caller` удалён из конверта события и UoW.
 
 ### TR-11: UC-контракты внешних `course` и `questionnaire` с адаптерами
@@ -268,7 +260,7 @@
 - **Детали 2b:** адаптеры — `UseCaseFromDef` в `modules/{course,questionnaire}/src/<a>/uc/`, владелец — обычный `ModuleFromDef` (`createCourseModule`, `createQuestionnaireModule`), подключение — Ф12. `if` по ответам legacy в адаптере курса — перевод в контракт (уходит с адаптером). `emits: [started]` адаптер не публикует: `questionnaire:start` по-прежнему в legacy-шине, в `inbound` его нет — добавить, когда появится DMG-подписчик. Ошибки legacy `start` — `SERVER_INTERNAL`.
 - **Пересмотрено (Ф8а, Р9, D-43):** подход с Def UC во внешнем контракте и адаптерами принят; `callers: ['system']`; типы `CourseModuleFacade`/`QuestionnaireModuleFacade` удалены — `Facade<typeof <M>ModuleDef>` и `ModuleFacade`; `GetCourseEnrollmentUcDef.policy = allowAll` остаётся; `StartQuestionnaireUcDef.policy` — `QuestionnaireRespondentPolicy.rules.hasRespondent` (без субъекта — `ACCESS_DENIED`; имя — `QuestionnairePolicy` занято legacy).
 - **Дополнено (Ф9):** `GetModuleEnrollmentUcDef` (`course`, query «модуль в программе опубликованного курса», `allowAll`) — адаптер `modules/course/src/course/uc/get-module-enrollment.uc.ts` над legacy `getModulePlace`.
-- **Пересмотреть:** при миграции `course`/`questionnaire` — адаптеры заменяются настоящими UC, `external` снимается, legacy-фасады удаляются.
+- **Пересмотреть:** ~~при миграции `course`/`questionnaire` — адаптеры заменяются настоящими UC, `external` снимается, legacy-фасады удаляются~~ — закрыто ревизией (триаж `revision-release`): снято; исторический.
 - **Снято для `stream`** (`stream-dmg`, Ф1): адаптеры `getStreamMembers`/`getStreamPresence` у `wish` и `peer-review` заменены настоящими UC модуля `stream`.
 - **Снято для `questionnaire`** (`questionnaire-dmg`, Ф1, Ф3): адаптер `start-questionnaire` заменён настоящим UC, правило «только за себя» — в `QuestionnairePolicy` Def (субъект `Identified`), `external` снят, legacy-фасад удалён.
 - **Снято для `course`** (`course-dmg`, Ф3, Ф5): адаптеры `course` заменены настоящими UC (Ф3), `external` снят, legacy-фасад и `CourseApiModule` удалены (Ф5). Запись закрыта для всех модулей.
@@ -277,7 +269,7 @@
 - **Трек / фаза:** `golden-wish`, Ф8
 - **Контекст:** ревью Ф8 — ошибок нет; warn: гайд facade о `checkDefs`, тесты потребителя не проверяют `calls` (фейки фасадов), транзиентное поле `WishAr.questionnaireToStart()` вне state; info — ниже.
 - **Решение:** (1) гайды и domain-modeling поправлены (оговорка D-41 у антипаттерна «скрытые мутации», имя `<M>ModuleFacade` у внешних). (2) Фейк фасада в `dmg-core/testing`, отказывающий, если Def UC нет в `call.from.calls`; тесты `wish` — через него. (3) Вместо транзиентного поля — `createForCourse` возвращает `{ wish, questionnaire? }` (анкета — результат создания, не свойство Ar). (4) Тип `owner` фасада анкет выводится из входа Def. Принятые риски: `CallingOperation` — структурный тип (можно собрать `from` вручную) и прямой `handle` с `user` у UC, принимающего `user` и `module`, — закрываются ARC-06 и in-proc вызовом; `UseCaseOwner` стирает субъект до `unknown` (DEBT-21/22, TR-11).
-- **Пересмотреть:** при выходе модуля в сервис — подпись `from` (не структурный тип); при миграции анкет — типизация субъекта в `UseCaseOwner`.
+- **Пересмотреть:** ~~при выходе модуля в сервис — подпись `from` (не структурный тип); при миграции анкет — типизация субъекта в `UseCaseOwner`~~ — закрыто ревизией (триаж `revision-release`): выхода в сервис нет; исторический.
 - **Пересмотрено (Ф8а, Р10, D-43):** (3) снято — `createForCourse` → `Result<WishAr, never>`, анкета и ответ — методы-вопросы из state `questionnaire()`/`outcome()`, `CourseWishCreated` удалён; (2) — `StubFacade<M>` (Р4), проверка `calls` — типом (Р5); (4) — `owner` из Def через `Facade<M>`; риски `from`/прямого `handle` — сняты Р3/Р5. Остаётся: `SystemCaller<unknown>` на границе `Facade<M>` до миграции анкет (DEBT-21/22).
 
 ### TR-13: детали `Caller` по D-43 (Ф8а шаг 1)
@@ -289,7 +281,7 @@
 (10) Р6: запись лога берёт события из `published` всех UoW вызова (при `VERSION_CONFLICT` события записанных агрегатов уже опубликованы), у Job — одна запись на прогон; вход ER — событие без `caller`, Job — `null`; брошенное исключение пишется как `SERVER_INTERNAL` (стек — `logger.error`); сбой записи лога — `logger.warn`, результат операции не меняется (данные уже зафиксированы); `JsonlOperationLog` — в `dmg-core/app`. Прод-подключения нет: DMG-модули в приложении собираются в Ф12 — там `new JsonlOperationLog(`<DB_DIR>/oplog`)`.
 (11) Р7: в `Aggregate.readonly` — `biome-ignore noThisInStatic` (полиморфный `this` — суть формы); фикстура графа с `calls: readonly AnyUseCaseDef[]` обходит проверку типа — Def с общим типом ловит только `checkDefs`; из `publishWishEvents` убраны `caller` и `source`; legacy-подписчики вызывающего и раньше не получали. (4) снято на Р7.
 (12) Р8: класс `Trace` (`fromRequest` — две перегрузки: без `onMissing` `requestId` обязателен, с ним — создаётся с сообщением, ERR-07; `fromEvent`, `forJob(def)` — причина Job получила поле `job`; `toLog()`, `toEnvelope()` сверх D-43); `createUow(trace)` без `caller`; `ApiApp.run`/`execute` принимают `Trace` (след строит транспорт); `fromEvent` не переносит `channel` (в конверте его нет); символ-метка `create` vs `restore` остаётся, ставит её `newState`. (8) `jobTrace` снято на Р8.
-- **Пересмотреть:** (10) подключение JSONL — Ф12; (12) `channel` в конверте события — когда ER понадобится канал.
+- **Пересмотреть:** ~~(10) подключение JSONL — Ф12; (12) `channel` в конверте события — когда ER понадобится канал~~ — закрыто ревизией (триаж `revision-release`): JSONL подключён (`u7-app.ts:177`); `channel` — без триггера, знание в `caller.md` пакета.
 
 ### TR-14: решения по ревью Ф8а
 - **Трек / фаза:** `golden-wish`, Ф8а
@@ -310,7 +302,7 @@
 - **Трек / фаза:** `golden-wish`, Ф9а
 - **Контекст:** D-44 / DOM-17 — `.snapshot()` только в репозитории; legacy ER и UC `modules/wish/src/api/**` читают поля через `snapshot()` — 6 вызовов: 5 в ER (`fulfill-wish-er.ts`, `invite-wishers-er.ts`) и legacy `api/wish/list-user-wishes-uc.ts`.
 - **Решение:** путь исключён из плагина DOM-17 в корневом `biome.json` (одна строка), без `biome-ignore` по файлам.
-- **Пересмотреть:** при переводе ER (Ф10–11) и удалении legacy-UC (Ф12) — исключение снять.
+- **Пересмотреть:** ~~при переводе ER (Ф10–11) и удалении legacy-UC (Ф12) — исключение снять~~ — закрыто ревизией (триаж `revision-release`): снято (Ф12); исторический.
 - **Пересмотрено (Ф12, TR-21):** legacy `wish` удалён, исключение из DOM-17 снято.
 
 ### TR-17: решения по ревью Ф9а
@@ -323,13 +315,13 @@
 - **Трек / фаза:** `golden-wish`, Ф10
 - **Контекст:** первая ER `wish` на `ReactionFromDef`; запросы к курсу — внешние UC `getCoursesIncludingModule`, `getSameModules` (адаптеры TR-11).
 - **Решение:** (1) module-ветка — один батч `getSameModules` (legacy `whichModulesAreSame`) вместо цикла `isSameModule`: поведение то же, контракт фасада курсов это обещает; (2) решение «что спросить у курса и что реализовать» — `WishFulfillmentDcs` (первый DCS `wish`, DOM-06: батч по нескольким агрегатам), вопросы одного желания — методы `WishAr` (`fulfillmentTargets`, `isFulfilledBy`); (3) отказ любого вопроса к курсу прерывает реакцию целиком (UoW атомарен), legacy при сбое фасада успевал сохранить часть course-желаний — отличие только в сбойном случае; (4) новая ER живёт рядом с legacy `api/er/fulfill-wish-er.ts`, в приложение не подписана (как TR-9).
-- **Пересмотреть:** Ф12 — подписка `createWishModule`, удаление legacy ER; на ревизии — п. 3.
+- **Пересмотреть:** ~~Ф12 — подписка `createWishModule`, удаление legacy ER; на ревизии — п. 3~~ — закрыто ревизией (триаж `revision-release`): сделано; п. 3 — гайд `event-reaction.md` §3 (уже).
 
 ### TR-19: решения по ревью Ф10
 - **Трек / фаза:** `golden-wish`, Ф10
 - **Контекст:** ревью Ф10 (Opus, `23f27f3c..33018818`): error нет, 1 warning, 8 info.
 - **Решение:** (1) `*.types.ts` (`wish.types.ts`, `wish-fulfillment.types.ts`) — по указанию Нурболата «экспортируемые типы — в отдельный файл» (как `aggregate.types.ts`); внесено в naming.md §4 (Нурболат, 2026-10-26); (2) гайд «event reaction»: вспомогательные `private`-методы ER допустимы, прямой `subscribe(bus)` — только в тестах — поправлено; (3) необязательный раздел «Устройство реализации» в гайдах (use-case, event-reaction) — `_template.md` не меняем до Ф13 (сводка гайдов); (4) JSDoc `GetSameModulesUcDef` о legacy-реализации, длина теста отказа и ожидание опросом в тесте `subscribe`, перепутанные виды id в фикстурах DCS-теста — оставлены, поправить в Ф11 вместе с остальными ER (тот же файл теста и образец); (5) `FulfillmentTargets` — и вопрос, и ответ `isFulfilledBy` — принято, одна форма списков целей.
-- **Пересмотреть:** Ф11 — п. 4 (закрыт, TR-20 п. 6); Ф13 — п. 3.
+- **Пересмотреть:** ~~Ф11 — п. 4 (закрыт, TR-20 п. 6); Ф13 — п. 3~~ — закрыто ревизией (триаж `revision-release`): есть (`event-reaction.md:25`).
 
 ### TR-20: ER `confirm-wish`, `abandon-wish`, `invite-wishers` и ревью Ф11
 - **Трек / фаза:** `golden-wish`, Ф11
@@ -341,25 +333,25 @@
 - **Трек / фаза:** `golden-wish`, Ф12
 - **Контекст:** подключение DMG-модуля `wish` и адаптеров зависимостей к боту; удаление legacy `wish` после переключения.
 - **Решение:** (1) порядок задач Ф12: мост → сборка/stories → удаление legacy (иначе `check` между задачами красный); (2) мост: дефолт `onInvalid` — `console.warn` (исключение async-обработчика `InProcEventBus` глотает), маршрут `inbound` — одна подписка на legacy-шину; (3) одна сборка DMG для бота, test-app и `call-uc` — `runners/u7-bot/src/create-dmg-modules.ts` (`createDmgAppContext`, `createDmgModules`); (4) stories зовут UC по Def через `U7BotUiStory.executeUc` (`UserCaller`, `Trace.fromRequest` с каналом `telegram`); `requestId` генерируется с `warn` на каждый вызов — `update_id` до стори не доходит без смены контракта ядра бота; (5) `wishModule` убран из `ApiAppBundle` (потребителей нет); `call-uc` зовёт UC `wish` через DMG (oplog — `data/oplog`, как бот); (6) экспорт `"."` у `@u7-scl/user`, `./wish.module` у `@u7-scl/wish`; workspace-зависимости `dmg-core`, `@u7-scl/domain` у `runners/u7-bot`; (7) шаг 3: legacy `wish` удалён (`modules/wish/src/api/**`, резолвер, домен `module.ts` и `commands/**`, 67 legacy-тестов — случаи покрыты тестами DMG UC/ER и домена); исключение `modules/wish/src/api/**` из DOM-17 в `biome.json` и его фикстура сняты (TR-16 закрыт); DEBT-21/22 остаются в `modules/wish/src/{wish.module.ts,wish/uc/*.uc.ts}` — субъект `User` из `@u7-scl/app` (решается в Ф13).
-- **Пересмотреть:** п. 4 — протащить `update_id` до стори (контракт `BotUpdate`/`handleCallback`) в треке ui-manifests, тогда `warn` уйдёт; п. 3 — при миграции следующих модулей сборка растёт там же.
+- **Пересмотреть:** ~~п. 4 — протащить `update_id` до стори (контракт `BotUpdate`/`handleCallback`) в треке ui-manifests, тогда `warn` уйдёт; п. 3 — при миграции следующих модулей сборка растёт там же~~ — закрыто ревизией (триаж `revision-release`): дубль DEBT-41; исторический.
 
 ### TR-22: решения по ревью Ф12
 - **Трек / фаза:** `golden-wish`, Ф12
 - **Контекст:** ревью (Opus, `211dbdb3..HEAD`): error 0, warning 0, info 8.
 - **Решение:** (1) гайд «module»: место внешнего `defineModule` (`<m>.module.ts`, экспорт из `contract.ts`) и предупреждение о субъекте `User` (DEBT-21/22) — поправлены; (2) `warn` на каждый вызов `executeUc` — принято (TR-21 п. 4); (3) мост: пустой `Set` после отписки, обработчик для Def без маршрута `inbound`, лишняя проверка `isOf` — без влияния на поведение, принято; (4) шпион `console.error` в `legacy-event-bus.test.ts` снимается в теле теста, а не в `afterEach`; повтор сборки `UserCaller` + `Trace.fromRequest` в интеграционных тестах `u7-bot` — кандидат на хелпер `test-app`; (5) прямая зависимость `u7-bot` от `@u7-scl/domain` — повод пересмотреть barrel DEBT-23.
-- **Пересмотреть:** п. 3, 4 — в Ф13 (чистка вместе с DEBT-21/22); п. 5 — Ф13 / последний трек миграции (DEBT-23).
+- **Пересмотреть:** ~~п. 3, 4 — в Ф13 (чистка вместе с DEBT-21/22); п. 5 — Ф13 / последний трек миграции (DEBT-23)~~ — закрыто ревизией (триаж `revision-release`): DEBT-23 погашен, п. 3–4 приняты; исторический.
 
 ### TR-23: закрытие DEBT-21/22/31 (Ф13)
 - **Трек / фаза:** `golden-wish`, Ф13
 - **Контекст:** в домене `wish` импортов `core`/`app` не осталось с Ф12; DEBT-21/22 держал субъект `User` из `@u7-scl/app` в UC `modules/wish` и адаптере анкет. DEBT-31 — ручной `DOMAIN_GRAPH`; у `peer-review` и `dossier` не было `ModuleDef`. Подключение приложения домена в `ARCH_APPS` дало 92 нарушения `checkFiles` платформы.
 - **Решение:** (1) субъект модуля и UC `wish` — `Identified` (`dmg-core`); `this.call` к анкетам принимает его без изменений платформы; (2) адаптер анкет берёт `User` из `@u7-scl/domain/user` — DEBT-32; (3) внешние `PeerReviewModuleDef`, `DossierModuleDef`; граф ARC-04/05 — `domainGraphOf(DOMAIN_MODULES)` (`scripts/domain-arch.ts`, бывший `domain-debt.ts`), каталог домена без Def — ARC-05; `checkDefs` по модулям домена — в `runDomainCheck`; (4) `archCheck` домена не подключён — DEBT-33 (ARC-04 платформы без подпутей `/contract`, legacy внешних модулей); (5) тест `domain/src/domain.modules.test.ts` перенесён в `scripts/arch-check.test.ts`: файл в корне `domain/src` с импортами всех модулей нарушал ARC-04 проекта, а `checkDefs` по модулям теперь в `arch:check`; (6) DEBT-24 погашен ещё в Ф2.
-- **Пересмотреть:** п. 4 — стратегически: открыть ли подпути `/contract`, `/state` в ARC-04 платформы или перевести домен на импорт через `index.ts` (вопрос Нурболату); TR-22 п. 3, 4 — без влияния на поведение, остаются принятыми.
+- **Пересмотреть:** ~~п. 4 — стратегически: открыть ли подпути `/contract`, `/state` в ARC-04 платформы или перевести домен на импорт через `index.ts` (вопрос Нурболату); TR-22 п. 3, 4 — без влияния на поведение, остаются принятыми~~ — закрыто ревизией (триаж `revision-release`): решено TR-26 / D-45; ARC-04 пакета.
 
 ### TR-24: форма портов `Outbox` и `Inbox` (Ф4)
 - **Трек / фаза:** `dmg-core-extract`, Ф4 (шаг 2)
 - **Контекст:** D-47 задаёт outbox и отсев повторов; детали формы портов решены оркестратором.
 - **Решение:** (1) `Outbox.put(envelopes)` — асинхронный, партия одной фиксации; запись агрегатов и outbox не атомарна (JSON-хранилище, D-15); (2) `Inbox` — `claim`/`release`: доставка занимается до обработки, снимается при любом не-`Ok`; параллельный повтор во время первой доставки отбрасывается и теряется, если первая упала — для in-proc шины повторов нет, для relay «как минимум один раз» допустимо; (3) `outbox`, `inbox` в `AppContext` обязательные (ручных сборок две, остальные — `testAppContext`); (4) отсев — в `ReactionFromDef.handle`, а не в модуле: действует при любом пути доставки; повтор — `Ok`, без записи в лог операций, `debug`; (5) `InProcInbox` ограничен ёмкостью (`DEFAULT_INBOX_CAPACITY = 10_000`) — память процесса бота; (6) хелпер `expectIdempotentReaction` требует `Ok` и от второй доставки: отказ на повторе — нарушение. (7) по ревью: сбой `claim` — `SERVER_INTERNAL` без снятия доставки, сбой `release` — `error` в логгер; сбой `outbox.put` после сбоя сохранения — в `cause` исходного исключения.
-- **Пересмотреть:** п. 1, 2 — при первом персистентном outbox или внешней шине.
+- **Пересмотреть:** ~~п. 1, 2 — при первом персистентном outbox или внешней шине~~ — закрыто ревизией (триаж `revision-release`): без триггера; знание D-47.
 
 ### TR-25: MAN-13 в рантайме UoW — необязательный `module` (Ф4)
 - **Трек / фаза:** `dmg-core-extract`, Ф4 (шаг 4)
@@ -371,31 +363,31 @@
 - **Трек / фаза:** `dmg-core-extract`, Ф4 (шаг 5)
 - **Контекст:** подключение домена в `ARCH_APPS` со входом `contract` (D-45) дало 52 импорта чужого `index` из домена legacy-модулей (course 28, stream 19, questionnaire 3, peer-review 2) — это DEBT-34. Перевод на `/contract` невозможен: legacy-домену нужны legacy-классы, которых в контракте нет.
 - **Решение:** `checkFiles(index, layout, entry = 'index')` — вход модуля задаёт приложение (`ArchApp.entry`, у домена — `contract`). Импорт мимо входа не проверяется, только если оба модуля `external` (реализованы вне приложения) — так D-45 читает «пары legacy-модулей — по долгу»; модуль на Def импортирует и импортируется только через вход; `dependsOn` проверяется для всех. Прикладной слой внешнего модуля не сканируется (цикл импортов не учитывал `external`). DEBT-33 погашен: `DomainArch` в `ARCH_APPS`.
-- **Пересмотреть:** при переводе последнего legacy-модуля (DEBT-34) — исключение станет пустым.
+- **Пересмотреть:** ~~при переводе последнего legacy-модуля (DEBT-34) — исключение станет пустым~~ — закрыто ревизией (триаж `revision-release`): пусто; исторический.
 
 ### TR-30: контекст апдейта бота — `AsyncLocalStorage`, а не поле сессии
 - **Трек / фаза:** `dmg-cleanup_20261028`, Ф4 (контекст запроса, вариант B кандидата bot-request-id)
 - **Контекст:** вариант B велит положить id апдейта в объект, который story уже получает. `BotSession` сохраняется в JSON-репо на каждом апдейте (id апдейта в нём лишний), а `dispatchUc` сессию не получает — её пришлось бы протащить во все вызовы, то есть сменить сигнатуры (вариант A). Stories — общие для всех чатов, поэтому поле экземпляра даёт гонку между чатами.
 - **Решение:** `BotRequestContext` (`platform/core/src/ui/bot`) на `AsyncLocalStorage` (`node:async_hooks`, встроен в Bun, без зависимостей). Транспорт ставит апдейт в очередь чата внутри `BotRequestContext.run(update_id, …)` — контекст захватывается при постановке и виден, когда до апдейта дойдёт черёд; `dispatchUc` берёт `requestId = tg:<update_id>#<n>` и `correlationId = tg:<update_id>`. Вне апдейта (проактив, тесты) контекста нет — прежний `warn` (ERR-07). Тестовый стенд e2e выдаёт новый `update_id` на каждый вызов обработчика.
-- **Пересмотреть:** в `dmg-ui` — контракт story несёт id запроса явно (DEBT-41).
+- **Пересмотреть:** ~~в `dmg-ui` — контракт story несёт id запроса явно (DEBT-41)~~ — закрыто ревизией (триаж `revision-release`): остаток = DEBT-41; ALS-контекст → D-76 `decisions.md`.
 
 ### TR-31: вход `cancelWish` — плоская цель с `expectedVersion`, а не обёртка `{ target, expectedVersion }`
 - **Трек / фаза:** `aggregate-meta_20261029`, Ф3 (`cancelWish` с ожидаемой версией, D-57)
 - **Контекст:** вход `cancelWish` был союзом `WishTargetVo` по `kind`. Ожидаемую версию можно добавить обёрткой (`{ target, expectedVersion }`) или полем в каждый вариант союза.
 - **Решение:** поле в каждом варианте (`v.variant('kind', [{ ...WishCourseTargetVo.entries, expectedVersion }, { ...WishModuleTargetVo.entries, expectedVersion }])`): вызывающие (бот передаёт только цель) не меняются, `WishTargetVo` остаётся общим для других UC.
-- **Пересмотреть:** если ожидаемая версия понадобится ещё нескольким UC с целью желания — вынести схему «цель + версия» в `wish.state.ts`.
+- **Пересмотреть:** ~~если ожидаемая версия понадобится ещё нескольким UC с целью желания — вынести схему «цель + версия» в `wish.state.ts`~~ — закрыто ревизией (триаж `revision-release`): условие не наступило; исторический.
 
 ### TR-32: шаг `fetch` (D-58) — задан `F` без `fetch` тип не ловит; склейка `L & F` поверхностная
 - **Трек / фаза:** `app-assembly`, Ф1 (ревью reviewer)
 - **Контекст:** reviewer: (1) UC, задавший пятый параметр `F`, но не переопределивший `fetch`, компилируется — поля `F` в контексте правил и `execute` будут `undefined`; закрыть типом можно только условными типами в сигнатуре базы (`fetch` абстрактный при `F ≠ unknown`); (2) `merge` — `Object.assign`: общее поле `L` и `F` молча берётся из `fetch`; (3) API-07 не ловит `load` полем-стрелкой и вызов через приватный хелпер из `load`.
 - **Решение:** (1) принято как цена простых типов, ловит тест UC — описано в D-58 и гайде `use-case` §3, §7; (2) принято — контексты являются записями, ловушка в гайде §7, JSDoc `merge`; (3) стрелку уже запрещает гайд (§7, шаги — методами), хелпер — review (API-07 «lint + review»). `this.call<T>` и многоаргументные вызовы закрыты шаблоном и фикстурами (dmg-core `c8d0e93`). Подключение API-07 в корневом `biome.json` (`modules/*/src/**/*.uc.ts`) — правка оркестратора, не автора среза; карта ARC-07/LintMap сводится в Ф3.
-- **Пересмотреть:** если UC с `fetch` станет много и ошибка (1) повторится — абстрактный `fetch` при заданном `F`.
+- **Пересмотреть:** ~~если UC с `fetch` станет много и ошибка (1) повторится — абстрактный `fetch` при заданном `F`~~ — закрыто ревизией (триаж `revision-release`): знание в D-58, гайд `use-case` §3/§7; API-07 в lint.
 
 ### TR-33: корень сборки — `@u7-scl/app`, legacy-ядро — в `@u7-scl/app-legacy`
 - **Трек / фаза:** `app-assembly`, Ф2 (разбор, решение Нурболата)
 - **Контекст:** legacy-часть `@u7-scl/app` (`domain/`, `infra/logger`) импортируют `domain/` и все `modules/*`, поэтому корень сборки в этом пакете дал бы цикл пакетов (D-53). `create-api-app.ts` раннера собирает и legacy-, и DMG-модули. В DMG-модуле `user` нет `getUser`.
 - **Решение:** legacy-содержимое переезжает в `@u7-scl/app-legacy` (`platform/app-legacy`), `@u7-scl/app` становится корнем сборки всего приложения (legacy и DMG, класс `U7App` по `AppEnv`). Резолвер `Caller` — над legacy `userFacade` (мост TR-11). Разбор — `conductor/archive/app-assembly_20261029/summary.md`.
-- **Пересмотреть:** при переводе `user` на DMG резолвер идёт через `ApiApp.dispatch` (`getUser`), как в учебном приложении; `@u7-scl/app-legacy` удаляется вместе с последним legacy-модулем.
+- **Пересмотреть:** ~~при переводе `user` на DMG резолвер идёт через `ApiApp.dispatch` (`getUser`), как в учебном приложении; `@u7-scl/app-legacy` удаляется вместе с последним legacy-модулем~~ — закрыто ревизией (триаж `revision-release`): снято TR-66/67; исторический.
 - **Состояние после Ф4 `user-dmg`:** резолвер `U7CallerResolver(apiApp)` идёт через `dispatch` `getUser` от `SystemCaller` (`kind: 'app'`), субъект — `UserAr`; legacy `userFacade` в резолвере нет. Остаток — `@u7-scl/app-legacy` (последний legacy-модуль).
 - **Закрыто для `user`** (`user-dmg`, Ф8): часть «резолвер через `dispatch`» выполнена, домен `user` из `app-legacy` удалён (Ф6–Ф7). В `@u7-scl/app-legacy` остались `School`, `api.ts` и логгер — пакет снимается вместе с `dossier`.
 - **Закрыто** (`legacy-removal`, Ф4–Ф5, TR-66, TR-67): `School` — `platform/app/src/school/`, логгер — `runners/u7-bot/src/infra/logger/`, пакет `platform/app-legacy` удалён. Legacy-кода в репозитории нет; остаток перехода (не legacy) — [migration.md](./migration.md) §4.
@@ -404,32 +396,32 @@
 - **Трек / фаза:** `app-assembly`, Ф2
 - **Контекст:** reviewer: резолвер `Caller` над legacy-фасадом без `SystemCaller` (D-51); лишнее чтение пользователя в `dispatchUc`; плоские копии фикстур e2e не обновляются после записей.
 - **Решение:** (1) `SystemCaller` не вводится — legacy-фасад `Caller` не принимает и в лог операций не пишет; при переводе `user` на DMG — по TR-33 «Пересмотреть»; (2) чтение пользователя на вызов принято — цена одного пути построения `Caller` (D-50); (3) плоские копии фикстур читает только `fixture-loader.test` (начальное состояние) — принято. (4) CLI и `call-uc` собираются как бот — все UC и реакции (Нурболат, 2026-10-29: одна сборка на все входы, D-50); риск записи — в шапке `call-uc.ts`.
-- **Пересмотреть:** (2) — если чтение станет заметным по времени ответа бота; (3) — если новый тест прочтёт плоскую копию после записи.
+- **Пересмотреть:** ~~(2) — если чтение станет заметным по времени ответа бота; (3) — если новый тест прочтёт плоскую копию после записи~~ — закрыто ревизией (триаж `revision-release`): замеров нет; D-50.
 
 ### TR-35: нарушения ARC-07/08 при включении `root` и `runners` у `DomainArch`
 - **Трек / фаза:** `app-assembly`, Ф3
 - **Контекст:** `AssemblyChecker` с корнем `platform/app/src` и раннерами `runners/*/src` дал 8 нарушений: `U7App` — `@u7-scl/wish/{infra,wish}` мимо `index.ts`; резолвер `Caller` — `User` из `@u7-scl/domain/user` мимо контракта; тест `u7-app.test.ts` строит legacy-агрегаты (`StreamAr`, `QuestionnaireFactory`, `ContentSnapshot`) из домена внешних модулей; stories бота — `WishEvents` из barrel `@u7-scl/wish/domain` (DEBT-23).
 - **Решение:** (1) вход `@u7-scl/wish` — фабрика, репозиторий и тип порта `WishRepo`, как у учебного `todo`; `U7App` берёт их оттуда (часть задачи «ARC-07 корневого `biome.json`» сделана здесь — иначе `arch:check` красный между коммитами); (2) контракт `user` экспортирует тип `User` — его уже возвращает `UserFacade` из контракта, субъект резолвера — legacy-сущность (TR-33); (3) тест сосуществования — в `platform/app/tests/` (код слоя — `src`, тесты вне него не проверяются, как `runners/u7-bot/tests`); (4) stories бота — `WishEvents` из `@u7-scl/domain/wish/contract`. Список раннеров `DomainArch` — каталоги `runners/*`, новый раннер попадает под ARC-08 сам. (5) ARC-07 в корневом `biome.json` — блок `platform/app/src/**`: домен — только `@u7-scl/domain/<m>/contract`, прикладной пакет модуля на DMG — только вход (`@u7-scl/wish/**` запрещён); подпути пакетов внешних модулей разрешены — корень собирает и legacy (TR-33). В пакете ARC-07 только в `arch:check`; lint в корне — ранний сигнал в редакторе.
 - **Ревью Ф3 (reviewer, без `error`):** (6) маска ARC-07 по домену разрешает `@u7-scl/domain/shared` (D-53); (7) `checkModuleImports` берёт пакеты корня и раннеров из `package.json` (`assemblyPackages`: `platform/app`, `runners/*`) — новый раннер попадает под ARC-06 сам; (8) `config.test.ts` — тест на литеральный `env`; (9) `IMPORT_RE` без `require()` и тесты корня вне ARC-07 (п. 3) — приняты.
-- **Пересмотреть:** (5) — трек перевода модуля на Def добавляет `@u7-scl/<m>/**` в группу ARC-07 блока `platform/app/src/**` (шаг старта — `migration.md` §6); (2) — при переводе `user` на DMG (субъект — из `UserModuleDef`, entity из контракта уходит); (3) — если тесту корня понадобится проверка ARC-07 (сейчас тесты корня и раннеров вне правила).
+- **Пересмотреть:** ~~(5) — трек перевода модуля на Def добавляет `@u7-scl/<m>/**` в группу ARC-07 блока `platform/app/src/**` (шаг старта — `migration.md` §6); (2) — при переводе `user` на DMG (субъект — из `UserModuleDef`, entity из контракта уходит); (3) — если тесту корня понадобится проверка ARC-07 (сейчас тесты корня и раннеров вне правила)~~ — закрыто ревизией (триаж `revision-release`): исполнено треками `*-dmg`; исторический.
 
 ### TR-36: охват ARC-09 в корне
 - **Трек / фаза:** `app-assembly`, Ф3
 - **Контекст:** по D-52 ARC-09 — на все `src`, кроме точек входа раннеров; в корне плагин стоял только на `domain/**`. Расширение дало одно место: `runners/u7-bot/src/config.ts` (`loadConfig` читал `process.env`).
 - **Решение:** (1) плагин `arc-09-no-env.grit` — на `domain/**`, `platform/*/src/**`, `modules/*/src/**`, `runners/*/src/**`, кроме `runners/*/src/main.ts` и тестов; фикстуры на каждую область и на `main.ts`; (2) `loadConfig(env)` принимает окружение данными, `main.ts` передаёт `process.env`; тест `config.test.ts` — те же сценарии, вызов `loadConfig(process.env)`; (3) `authoring/*` и `scripts/` — вне правила: отдельные CLI-утилиты, не слои приложения, их файлы сами — точки входа.
-- **Пересмотреть:** (3) — если утилита `authoring` станет частью приложения (раннер или модуль).
+- **Пересмотреть:** ~~(3) — если утилита `authoring` станет частью приложения (раннер или модуль)~~ — закрыто ревизией (триаж `revision-release`): условие не наступило; D-52.
 
 ### TR-37: строгий разбор записей `peer-review`
 - **Трек / фаза:** `peer-review-dmg`, Ф0 (решение поручено orchestrator'у Нурболатом)
 - **Контекст:** legacy `JsonFileRepo` пропускает невалидную запись и копирует её в `backups/*.invalid.*`; репозиторий DMG по образцу `wish` (`v.parse`) бросает и не читает файл. Мягкий пропуск в DMG опасен: `write` переписывает файл целиком и затирает пропущенное.
 - **Решение:** строгий разбор, как TR-2 у `wish`: невалидная запись → исключение, файл не читается и не перезаписывается. На проде (2026-10-29, только чтение): 65 кампаний и 24 рецензии, даты — ISO-строки, каталога `backups/*.invalid` нет, то есть невалидных записей не было.
-- **Пересмотреть:** если строгий разбор остановит модуль на проде — нужен ли режим «карантин» в `VersionedRepository` пакета (общий вопрос для всех модулей).
+- **Пересмотреть:** ~~если строгий разбор остановит модуль на проде — нужен ли режим «карантин» в `VersionedRepository` пакета (общий вопрос для всех модулей)~~ — закрыто ревизией (триаж `revision-release`): остановок нет; строгий разбор — норма платформы.
 
 ### TR-38: red-тесты `review-campaign` до реализации и допущения `test-designer`
 - **Трек / фаза:** `peer-review-dmg`, Ф1
 - **Контекст:** `test-designer` пишет red-тесты до автора; отдельный red-коммит оставляет в истории красный `check` (ломает `bisect`), коммит на фазу слишком крупный для передачи и ревью. Бриф не фиксировал ошибку инвариантов адресации в `create` и поведение `onlyLives`.
 - **Решение:** (1) коммит = пара «red-тесты шага + реализация автора», `check` зелёный (Нурболат, 2026-10-29). `test-designer` вызывается один раз на срез; тесты следующих шагов лежат незакоммиченными, пока их не закроет свой автор. При передаче посреди фазы — `wip` по протоколу «Остановка». Задача `test-designer` в плане получает SHA последнего коммита, где закрыта его часть; (2) инварианты адресации (`a-root.ts:57-80`) → `PEER_REVIEW_INVALID_PARTICIPANTS`, kind `validation`; (3) `get-my-campaigns` возвращает только живые кампании и без `onlyLives`: legacy `findActive*` уже отсекает истёкшие, поведение `v0.2.6` сохраняется. (4) граница окна: тесты проверяют разбор legacy-ISO без зоны как UTC (`Date.UTC`) — от зоны процесса не зависят. Прогон с `TZ=Asia/Oral` (`test:tz`) введён и снят по решению Нурболата (2026-10-29): прод и хранение в UTC, новые записи — числа, зона пользователя — вопрос вывода (DEBT-43). (5) `peer-review.module.test.ts`: обвязка `testAppContext` заменена на `MemoryBus` + `InProcOutbox` (шина тестового контекста не доставляет события подписчикам), проверки не менялись; `scripts/arch-check.test.ts` больше не ждёт `external` у `peer-review`. (6) `CampaignNotFoundUcError` и три legacy-ошибки окна остаются в `domain/peer-review/errors.ts` для моста `create-review-uc` до Ф2. (7) Ревью Ф1: два `minor` (недостижимый `throw` в `get-campaign-recipients`, проверка числа записей после resave) исправлены; `throw` при дубле пары в `write` репозитория оставлен — инвариант хранилища, штатный отказ даёт `ReviewCampaignRules.unique`.
-- **Пересмотреть:** (1) — перенести правило в `workflow.md` (по итогам пилота `test-designer`, Ф4); (3) — закрыто: `onlyLives` удалён из входа (трек `tst-cleanup`, 2026-11-06).
+- **Пересмотреть:** ~~(1) — перенести правило в `workflow.md`~~ — закрыто ревизией (F-102): правило в `workflow.md` п. 8; (3) — закрыто: `onlyLives` удалён из входа (трек `tst-cleanup`, 2026-11-06).
 
 ### TR-39: тактические решения среза `review` (`peer-review`)
 - **Трек / фаза:** `peer-review-dmg`, Ф2 (бриф `slices/review.md`)
@@ -441,7 +433,7 @@
 - **Трек / фаза:** `stream-dmg`, Ф0 (решение Нурболата, 2026-11-03)
 - **Контекст:** Policy `stream` проверяет права ментора, а `user` не переведён на Def: у субъекта `Caller` нет API `UserAr`.
 - **Решение:** субъект `Caller` — legacy-entity `User` с `roles`; контракт `domain/src/user/contract.ts` дополнительно экспортирует `Role`; Policy `stream` проверяет `subject.roles.includes(Role.MENTOR)`. Расширять контракт `user` дальше — только если это меньше движений; небольшой долг предпочтительнее выхода за пределы модуля `stream`.
-- **Пересмотреть:** при переводе `user` на Def — проверки переходят на API `UserAr` (`isMentor()`, `isAdmin()`), экспорт `Role` из контракта снимается. Передано треку `user` вместе с DEBT-48 (`stream-dmg`, Ф4).
+- **Пересмотреть:** ~~при переводе `user` на Def — проверки переходят на API `UserAr` (`isMentor()`, `isAdmin()`), экспорт `Role` из контракта снимается. Передано треку `user` вместе с DEBT-48 (`stream-dmg`, Ф4)~~ — закрыто ревизией (триаж `revision-release`): снято (`user-dmg` Ф8); исторический.
 - **Состояние после Ф4 `user-dmg`:** погашено — Policy `course`/`stream`/`questionnaire` и `submenu.ts` на `isMentor()`/`isAdmin()`, `Role` из контракта снят.
 - **Закрыто** (`user-dmg`, Ф8).
 
@@ -449,7 +441,7 @@
 - **Трек / фаза:** `stream-dmg`, Ф0 (бриф `slices/stream.md`; С1–С4 — Нурболат, 2026-11-03, по рекомендациям; Т1–Т13 — orchestrator)
 - **Контекст:** перевод агрегата потока на Def; студент переводится в Ф2, а `activate`, `complete` и «состав потока» читают студентов.
 - **Решение:** (С1) выход потока без `enrollmentKey`, с `requiresEnrollmentKey`; ключ проверяет только `enroll` (Ф2). (С2) активация студентов при запуске — DCS в одном UoW `activateStream` (форма — бриф Ф2). (С3) вход `createStream` без `mentorId`/`schoolId`: ментор — субъект, школа — deps. (С4) мост к legacy-студентам — порт `StreamStudents` над legacy `StudentRepo` (DEBT-47, снятие — Ф2); вызовы `get-stream` в `learning/*`, `inactivity`, `monitor` переводятся в Ф1, их студенческая логика — Ф2. (Т1) legacy `StreamAr`/`StreamPolicy` → `LegacyStreamAr`/`LegacyStreamPolicy` до Ф2. (Т3) `launch` — в `execute` после `uow.register` (D-41, вариант 1), повтор безопасен. (Т4) `external` у `StreamModuleDef` — до Ф3. (Т5) legacy потока удаляется в Ф1; `list-stream-students` и legacy `StreamJsonRepo` — до Ф2. (Т6) `getStreamMembers` + `studentId`, `inProgress`, `callers` + `user`, `guest`, без фильтра `status`. (Т7) `canManage` в ответе `getStream`. (Т8) `findStreamByTelegramGroup` — первое совпадение. (Т9) `v.description` в `ContentSnapshot`, `v.uuid` не меняется. (Т10) DEBT-35 — DCS + вопрос Ar, повтор `invite` — `WISH_ALREADY_INVITED`. (Т11) даты в выходе — числа, `formatDate` получает ISO из story. (Т12) тест репозитория — `mkdtemp` (`data/fixtures` нет в git). (Т13) снят: остатка TR-8 нет после пересмотра D-60. (Т14) тексты отказов: `label` в `ErrorDef` статичен. `STREAM_STUDENTS_IN_PROGRESS` — «Нельзя завершить поток: есть студенты без исхода. Сначала укажите исход для каждого.»; story завершения ветвится по коду и показывает прежний текст с числом из `pending.length`. `STREAM_NOT_ENROLLING`/`STREAM_NOT_ACTIVE` — «Недопустимый переход статуса. Поток не может быть запущен.» / «… завершён.» без сырого статуса (кнопки и так скрыты по статусу). (Т15) отклонения migrator в домене: `commands/list-stream-students-cmd.ts` и legacy `stream/repo.ts` остаются до Ф2 (нужны legacy-студенту); `v.trim()` снят с заголовков `ContentSnapshot` (`toJsonSchema` не поддерживает), trim `title`/`description` в state — через `v.transform`. (Т16) прикладной слой: legacy `StreamJsonRepo` → `LegacyStreamJsonRepo` (имя занял новый репозиторий; только чтение для legacy-студента до Ф2); субъект UC потока — `StreamUser = Pick<User, 'uuid' | 'roles'>`, у `getStreamMembers`/`getStreamPresence` — `Identified` (`callers` с `system`); DEBT-35 закрыт доменной частью, код ER `invite-wishers` не менялся. (Т17) кодовое слово (С1): ключа в ответе потока нет, UI спрашивает слово при `requiresEnrollmentKey` и передаёт его в legacy `enroll-student`; лимит 3 попытки сохраняется — неверное слово story распознаёт по тексту legacy-отказа «Неверное кодовое слово» (у `throwBadRequest` нет своего кода). Stories: «несуществующий поток» — `ucErrorNotify` (`notify`, а не `screen`); `dispatchUcAsGuest` для обработчиков событий без актора.
-- **Пересмотреть:** (С4, Т1, Т5, Т15, Т16); (Т17) — в Ф2: распознавание по коду ошибки `enroll` на Def вместо текста — в Ф2 вместе с агрегатом студента; (Т4) — Ф3.
+- **Пересмотреть:** ~~(С4, Т1, Т5, Т15, Т16); (Т17) — в Ф2: распознавание по коду ошибки `enroll` на Def вместо текста — в Ф2 вместе с агрегатом студента; (Т4) — Ф3~~ — закрыто ревизией (триаж `revision-release`): исполнено; устаревшая ссылка `StreamStudents` в `stream.types.ts:4` — попутно (S).
 
 
 ### TR-43: решения брифа среза `student` (`stream-dmg`)
@@ -463,7 +455,7 @@
 - **Контекст:** срез влит из ветки A A/B-теста исполнителей; ревью: 1 error, 7 warn.
 - **Решение:** `runJob` в `ApiApp` (`platform/core`) и в `tests/helpers/test-app.ts` принят — нужен e2e Job через `runJob`; скрипты `update-stream-snapshot`/`stream-snapshot-sync` импортируют `Student`/`StepRecord` через barrel `@u7-scl/stream/domain` (DEBT-3) — в контракте этих типов нет, контракт не расширяется; остальные замечания — к правке (таблица брифа).
 - **Повторное ревью правок (8.5/10, без `error`):** `GetStudentProgressUc` считает отставание по всему составу потока — список монитора (`shared/student-rows.ts`) делает ≈2N+1 полных разборов `students.json` вместо N+1 (`StudentJsonRepo` без кэша); при десятках студентов терпимо, не правится. `view-stream-mentor.ts` (`STUDENTS_IN_PROGRESS`) оставлен на `as`: `ErrorDef.restore` строго валидирует схему, а story-тест мокает payload с не-uuid `userId`. Критерий приёмки Ф2 `grep "Role.STUDENT…"` относится к прод-коду: в тестах Policy потока и студента `Role.STUDENT` остаётся как роль, не дающая прав (роль ещё есть в `user`).
-- **Пересмотреть:** Ф3 — скрипты на типы контракта или репозиторий DMG, barrel удаляется; чтение файла один раз на UoW в `StudentJsonRepo` или пакетный запрос прогресса по потоку (тогда `lagById` в `loadStudentRows` не нужен); `restore` в `view-stream-mentor` вместе с правкой мока.
+- **Пересмотреть:** ~~Ф3 — скрипты на типы контракта или репозиторий DMG, barrel удаляется; чтение файла один раз на UoW в `StudentJsonRepo` или пакетный запрос прогресса по потоку (тогда `lagById` в `loadStudentRows` не нужен); `restore` в `view-stream-mentor` вместе с правкой мока~~ — закрыто ревизией (триаж `revision-release`): скрипты на `StudentArDef`; оптимизации без замеров; исторический.
 
 ### TR-45: границы среза сборки `stream` (`stream-dmg`, Ф3)
 - **Трек / фаза:** `stream-dmg`, Ф3 (orchestrator, 2026-11-04; бриф — `slices/assembly.md`)
@@ -475,19 +467,19 @@
 - **Трек / фаза:** `questionnaire-dmg`, Ф0 (Q1–Q3, Q5 — Нурболат, 2026-11-04)
 - **Контекст:** legacy публикует 10 событий `questionnaire:*` с `telegramId` и `response`; во входе и событиях — поле `owner`, в state — `ownerInfo`; likert-вариант без production-вызывающих.
 - **Решение:** (Q1) 6 Def-событий: `started`, `invited`, `completed`, `abandoned` (`reason`: `timeout` / `by_user` / `declined` — `decline` сливается с `abandoned`), `abandonWarning`, `continueInvite`; likert — поле `kind` в payload, `completed` likert несёт `likertScores`. (Q2) имя `ownerInfo` во всех слоях: state (формат на диске не меняется), события, вход `StartQuestionnaireUcDef`; клиенты `wish` (`create-course-wish`, ER `confirm-wish`/`abandon-wish`) переходят на `ownerInfo`, собственное поле `wish` (`questionnaire.owner` в его state) не трогается. (Q3) события без `telegramId` и `response` — D-63; Job `sweep-abandoned-questionnaires` доменный. (Q5) likert переносится (нужен будущим анкетам кампаний peer-review).
-- **Пересмотреть:** использование likert в кампаниях peer-review (техдолг peer-review).
+- **Пересмотреть:** ~~использование likert в кампаниях peer-review (техдолг peer-review)~~ — закрыто ревизией (триаж `revision-release`): решение Q5 действует.
 
 ### TR-47: тактические решения Ф0 `questionnaire-dmg`
 - **Трек / фаза:** `questionnaire-dmg`, Ф0 (orchestrator, 2026-11-04)
 - **Контекст:** два варианта анкеты (standard, likert) в одном файле `questionnaires.json`; бот читает анкеты через `appApi.execute`; фикстура `data/fixtures/questionnaires` пуста.
 - **Решение:** (Т1) один `QuestionnaireArDef`, state — `v.variant('kind')`; если `AggregateDef` не поддерживает variant-state — правка `dmg-core` отдельным коммитом. (Т2) `get-questionnaire`, `get-current`, `get-questionnaires-by-user` — query-UC, бот вызывает через `dispatch`. (Т3) мёртвый `questionnaires/responses.json` в `materializer.ts` тестовых миров удаляется в Ф3. (Т4) `dmg-data-keeper` проверяет совместимость на собственных фикстурах (ISO и число, оба `kind`, `warnedAt`, `abandonReason`).
-- **Пересмотреть:** (Т1) — если variant-state потребовал правки пакета, проверить её на учебном модуле `dmg-core`.
+- **Пересмотреть:** ~~(Т1) — если variant-state потребовал правки пакета, проверить её на учебном модуле `dmg-core`~~ — закрыто ревизией (триаж `revision-release`): работает (`questionnaire.state.ts:95`); исторический.
 
 ### TR-48: решения брифа среза `questionnaire` (`questionnaire-dmg`)
 - **Трек / фаза:** `questionnaire-dmg`, Ф0 (бриф `slices/questionnaire.md`; С1, С2, Т1 — Нурболат, 2026-11-04, по рекомендациям; Т2–Т20 — orchestrator)
 - **Контекст:** Job на внешнем модуле запрещён `checkDefs` (MAN-06); `GetTelegramAddressesUcDef` доступен только `system`, story вызывает UC как `user`/`guest`; `Aggregate.change` всегда ставит `updatedAt: at`, а пометки простоя не должны сдвигать таймер.
 - **Решение:** (С1) `external` и legacy-реализация анкет (`QuestionnaireApiModule`, фасад, inbound, legacy-репозиторий в `U7App`) снимаются в Ф1; Ф3 — ARC-07 `biome.json`, скрипты, миры, `test-app`, удаление оболочки Т15. (С2) адрес в stories Ф2 — legacy `get-user`, как `InactivityStory` (TR-43 С2); D-63 действует для событий, Job и ER. (Т1) `markWarned`/`markContinueInvited` вызывают `change(this.state.updatedAt, …)`: растёт только `version`; тест «не сдвигает `updatedAt`» обязателен. (Т2–Т20) — по рекомендациям брифа, раздел «Открытые вопросы».
-- **Пересмотреть:** (С2) — перевод `user` на Def; (Т1) — если платформа добавит проверку монотонности `at` или опцию «не трогать `updatedAt`»; (Т15, Т16) — Ф3/Ф2.
+- **Пересмотреть:** ~~(С2) — перевод `user` на Def; (Т1) — если платформа добавит проверку монотонности `at` или опцию «не трогать `updatedAt`»; (Т15, Т16) — Ф3/Ф2~~ — закрыто ревизией (триаж `revision-release`): исполнено; Т1 — без повода.
 
 ### TR-49: красная зона и тактика Ф1 `questionnaire-dmg`
 - **Трек / фаза:** `questionnaire-dmg`, Ф1 (orchestrator, 2026-11-05)
@@ -500,7 +492,7 @@
   - (5) Дефекты red-тестов, исправленные по эскалации автора: события не забирались после `createStandard` (Ar глушил `started`); текст отказа доступа — в `payload.denyMessage`, не в `label`; один `requestId` на все команды smoke-теста (D-56).
   - (6) С2 (Нурболат, 2026-11-05): stories Ф2 берут адрес Telegram через legacy `get-user`, как `InactivityStory` (TR-43 С2); `GetTelegramAddressesUcDef` остаётся `system` для Job и ER (D-63).
   - (7) Д1 (Нурболат, 2026-11-05): живой `questionnaires.json` сверен read-only (84 записи, проблемных 0). Новый репозиторий при первой записи переписывает весь файл в числовых датах с `version` — legacy `v0.2.6` его не прочитает: перед выкаткой `bun run backup`, откат — только с восстановлением файла.
-- **Пересмотреть:** ~~(6) — перевод `user` на Def~~ — закрыто (`user-dmg`, Ф5): stories анкет берут адрес через UC `user` на Def; (7) — выкатка после ревизии; (3) — если UoW платформы научится пропускать неизменённые агрегаты (тогда условие убрать); (4) — снято в Ф3 (TR-51).
+- **Пересмотреть:** ~~(6) — перевод `user` на Def~~ — закрыто (`user-dmg`, Ф5): stories анкет берут адрес через UC `user` на Def; (7) — выкатка после ревизии; (3) — если UoW платформы научится пропускать неизменённые агрегаты (тогда условие убрать); (4) — снято в Ф3 (TR-51); закрыто ревизией (триаж `revision-release`): (7) — в `rollout.md` (Ф6); (3) без повода.
 
 ### TR-50: решения брифа UI Ф2 `questionnaire-dmg`
 - **Трек / фаза:** `questionnaire-dmg`, Ф2 (orchestrator, 2026-11-05)
@@ -532,7 +524,7 @@
   - (3) Удаляются без вызывающих (вызывают только тесты): 9 authoring-команд (`create-course`, `add-phase-to-course`, `add-module-to-course`, `create-module`, `enrich-module`, `add-project`, `publish-module`, `create-lesson`, `create-step`), `get-course-program` (`CourseProgram`), `resolve-content-path` (с `content-path`). У `CourseAr` мутаций не остаётся: инварианты меток (D-64) проверяет схема state при строгом чтении. Операции автора — трек «История модулей курса» (отложен до конца перехода, [course-module-history.md](../roadmap/course-module-history.md)).
   - (4) Порядок срезов: `module` → `lesson` + `step` + снимок → `course` (программа, этапы, клиент `stream`, данные) → UI → сборка. `course` зависит от `module` и `lesson`. Ф1–Ф2 аддитивны: legacy-UC живут рядом с Def, `check` зелёный.
   - (5) Красная зона Ф3–Ф4: строгий новый формат `courses.json` (Ф3) роняет legacy-UC курса, stories каталога/навигации и их integration/e2e. Список — поимённо в `debt.md` в Ф3, критерий снятия — конец Ф4.
-- **Пересмотреть:** (3) — в треке «История модулей курса»; (5) — снять в Ф4.
+- **Пересмотреть:** ~~(3) — в треке «История модулей курса»; (5) — снять в Ф4~~ — закрыто ревизией (триаж `revision-release`): (3) — `roadmap/course-module-history.md`; (5) снята.
 
 ### TR-53: решения брифов `module` и `lesson-step` (`course-dmg`, Ф0)
 - **Трек / фаза:** `course-dmg`, Ф0 (брифы `conductor/archive/course-dmg_20261105/slices/module.md`, `lesson-step.md`; стратегические — Нурболат, 2026-11-05; тактические — orchestrator по рекомендациям `dmg-tech-lead`)
@@ -545,7 +537,7 @@
   - (Т `module`) Т1–Т13 брифа — по рекомендациям: legacy-классы переименовываются в `Legacy*` шагом S0 до red; субъект `CourseUser = Pick<User,'uuid'|'roles'>` (как TR-40, вызова `user` нет, D-41 не затронут); видимость — UC `allowAll` + правило `canSeeUnpublished` + `ModuleAr.viewFor`, отказ `CoreErrors.ACCESS_DENIED`; `ModuleErrors.NOT_FOUND` рядом с `COURSE_MODULE_NOT_FOUND` до Ф3; вход `{ moduleId }`; `limit` до отбора видимых (как v0.2.6); `CourseModuleDef` с `external` до Ф5 — вместо арх-проверок пар grep-критерии; новый `ModuleJsonRepo.save` над `data/` до Ф5 не вызывается (числовые даты не прочтёт legacy).
   - (Т `lesson-step`) Т1–Т11 брифа — по рекомендациям: снимок — в агрегат `module`, `callers` `['user','guest','system']`; своих Policy у `lesson`/`step` нет; ошибка снимка `COURSE_MODULE_NOT_FOUND` до Ф3; висячие `lessonId`/`stepId` и шаг без модуля в `getStepsByLessons` пропускаются молча (как v0.2.6); `CourseDs` и `content-snapshot.ts` — до Ф5.
   - (Расхождение) маркер DEBT-10 (`#filterPublished` legacy `module/a-root.ts`) уходит в Ф5 вместе с legacy-UC, а не в Ф1: критерий Ф1 относится к Def-файлам.
-- **Пересмотреть:** (С1 `lesson-step`) — при правке данных автором контента или в треке «История модулей курса»; TR-40 — добавлен `course`; (Т11 `module`) — снять в Ф5; висячие ссылки — в треке «История модулей курса».
+- **Пересмотреть:** ~~(С1 `lesson-step`) — при правке данных автором контента или в треке «История модулей курса»; TR-40 — добавлен `course`; (Т11 `module`) — снять в Ф5; висячие ссылки — в треке «История модулей курса»~~ — закрыто ревизией (триаж `revision-release`): С1 — контент; ссылки — `course-module-history.md`; Т11 снят.
 
 ### TR-54: итоги среза `module` (`course-dmg`, Ф1)
 - **Трек / фаза:** `course-dmg`, Ф1 (бриф `conductor/archive/course-dmg_20261105/slices/module.md`, отчёты авторов и `dmg-reviewer`; orchestrator)
@@ -556,7 +548,7 @@
   - `listModules` проверяет видимость через `viewFor(...) !== undefined` (строит view ради флага) — форма, не поведение; оставлено;
   - smoke `getModule`/`listModules` через собранный `U7App` — не в Ф1 (потребителей нет), к Ф4;
   - остальные `warn` ревью (дублирование хелперов, лишний generic view, `ModuleSummary` в контракте, payload отказа из `Decision`, CODE-04, TST-04, экспорт порта) — исправлены в срезе.
-- **Пересмотреть:** Т11 — снять в Ф5.
+- **Пересмотреть:** ~~Т11 — снять в Ф5~~ — закрыто ревизией (триаж `revision-release`): снято; исторический.
 
 ### TR-55: итоги среза `lesson` + `step` + снимок (`course-dmg`, Ф2)
 - **Трек / фаза:** `course-dmg`, Ф2 (бриф `conductor/archive/course-dmg_20261105/slices/lesson-step.md`, отчёты авторов, `dmg-data-keeper` и `dmg-reviewer`; orchestrator)
@@ -571,7 +563,7 @@
   - запрет `save` новых `LessonJsonRepo`/`StepJsonRepo` над `data/` до Ф5 — как Т11 (TR-53, TR-54);
   - наблюдение к Ф4: DMG-вызов пишет в `data/oplog` ~9 КБ на снимок и ~18 КБ на `getStepsByLessons` — при вызове на каждый рендер навигации учесть рост лога;
   - DEBT-44, «Место»: адаптер `get-module-snapshot` снят.
-- **Пересмотреть:** `ModuleView.version` — Ф3; запрет записи — Ф5; CODE-04 (ссылки на фазы в комментариях) повторяется от Ф1 — кандидат в машинную проверку.
+- **Пересмотреть:** ~~`ModuleView.version` — Ф3; запрет записи — Ф5; CODE-04 (ссылки на фазы в комментариях) повторяется от Ф1 — кандидат в машинную проверку~~ — закрыто ревизией (триаж `revision-release`): тест `module.ar.test.ts:188`; снято.
 
 ### TR-56: решения брифа среза `course` (`course-dmg`, Ф3)
 - **Трек / фаза:** `course-dmg`, Ф3 (бриф `conductor/archive/course-dmg_20261105/slices/course.md`; стратегические — Нурболат, 2026-11-05; тактические — orchestrator по рекомендациям `dmg-tech-lead`)
@@ -582,7 +574,7 @@
   - (С3) мост чтения legacy → новый формат не делается: красная зона поимённо в `debt.md`, снимается в конце Ф4;
   - (Т1–Т18) брифа — по рекомендациям, в том числе: S0 `Legacy*` для `CourseAr`/`CoursePolicy`/`CourseRepo`/`CourseJsonRepo`; вопросы одного курса — методы `CourseAr`, DQS — `ModuleCoursesDqs`, `ModulePrerequisiteDqs`; инвариант программы и меток — схема вне `state` + `v.parse` в конструкторе (прецедент `ReviewCampaignAr`), `dmg-core` не правится; единая ошибка `ModuleErrors.NOT_FOUND` (снятие `CourseErrors.MODULE_NOT_FOUND`); `passedModuleIds` — `PassedModulesDqs` в `stream`; legacy-deps (`CourseLegacy`, `U7LegacyFacades.course`) убираются в Ф3, а не Ф5; authoring-UC, `get-course-program`, `resolve-content-path`, `which-courses-include-module` — до Ф5; перевод `courses.json` — одноразовым скриптом вне репозитория.
   - (Данные) после коммита переведённого `courses.json` legacy-чтение молча теряет записи и пишет `data/courses/backups/`: legacy-UC курса над `data/` не запускать до Ф5.
-- **Пересмотреть:** (С1) — в треке «История модулей курса»; (С2) — там же; (С3) — снять с красной зоной в Ф4.
+- **Пересмотреть:** ~~(С1) — в треке «История модулей курса»; (С2) — там же; (С3) — снять с красной зоной в Ф4~~ — закрыто ревизией (триаж `revision-release`): С1 — `course-module-history.md`; С2 = DEBT-50; С3 снят.
 
 ### TR-57: красная зона Ф3–Ф4 `course-dmg`
 - **Трек / фаза:** `course-dmg`, Ф3 (orchestrator, 2026-11-05; TR-52 (5), TR-56 С3)
@@ -646,7 +638,7 @@
   - **Ф5 (Нурболат — актор, orchestrator — остальное):** актор UI — `Caller`: `platform/core/src/ui/bot` — `TActor extends PersonCaller` (на вырост), бот — `U7BotActor = UserCaller<ReadonlyAr<UserAr>>` (регистрация гарантирована, иначе исключение `actorResolver`); права в UI — API субъекта/Policy домена. `actorResolver` — `U7CallerResolver.resolveByTelegramId` (восстановление `UserAr` только в корне сборки, D-69). `dispatchAs` передаёт актора как `caller` без повторного резолва — двойное чтение Ф4 и мост `subjectOf` сняты. `UserController`/`NotifyStory` удалены (С3). `u7-cli`: `currentActor: UserView`, приведение к legacy `execute` — DEBT-42. Гонка `registerGuest` → `USER_TELEGRAM_ID_TAKEN` — тихий успех (итог как в legacy). Негативные проверки «поля `userFacade`/`botAdminUser`/`subjectOf` нет» в тестах оставлены, grep-критерий Ф5 — по обращениям к полю. **Мост до Ф6:** `scripts/call-uc.ts`, `scripts/_course-client.ts` читают `users.json` через legacy `userFacade` — запись бота с числовыми датами они не увидят («не найден»); деплоя до релиза нет, снимается в Ф6. Ревью Ф5 (принято): `getModulePlace` в `hub.ts` вызывается от гостя (Def допускает `guest`, видимого отличия нет); второй кит моков `user-api.test-kit.ts` рядом с `dmgDispatch`, обёртка `dispatchModuleUc` трижды (`school`/`streams` контроллеры, `invite.story`) — кандидат на общий метод, негативные проверки удалённых полей и тавтология «отказ резолвера → исключение» в `create-ui-app.test.ts`, два теста одной ветки в `ensure-registered.test.ts` — на ревизию. Бриф — `slices/ui.md`.
   - **Ф6 (orchestrator):** бриф сам, без `tech-lead` (образец `course-dmg` Ф5, TR-60): (1) клиенты сборки, (2) удаление legacy — шаги flash подряд, коммит общий (снятие `external` включает ARC-04/06 по живому legacy). `user` — последний legacy-модуль legacy `ApiApp`: остаётся `new ApiApp([])` — оболочка над DMG (`withDmg`) и планировщиком, его снятие — вне трека. Актор legacy-типов `U7ApiApp`/`U7ApiExecutor` — `UserView`; `U7UseCase`/`U7ApiModule`/`U7ModuleResolver` без потребителей удаляются с `api.test.ts`. Legacy `User` (entity, DEBT-5) удаляется в Ф6 — миры и тесты `platform/app` на state/view Def; `Role`/`RoleSchema` и barrel — Ф7. `call-uc`: legacy-ветка `execute` удалена, `user` — в `DMG_MODULES` (имена UC — Def). Мост Ф5 (`call-uc`/`_course-client` на `userFacade`) снят: субъект — `callers.resolve`. Эскалации шага 1: ветка legacy `execute` в `u7-cli` (мёртвая) заменена сообщением «вызов UC — `call-uc`» (DEBT-42); `platform/app-legacy/src/domain/user.ts` удалён в Ф6, а не Ф7 (ARC-04 после снятия `external`, потребителей нет); `migrate-users-drop-student.ts` берёт `UserArDef` через barrel `@u7-scl/user/domain` до Ф7 — `ArDef` в контракт не входит. Бриф — `slices/assembly.md`.
   - **Ф7 (orchestrator):** бриф сам, без `tech-lead`; один шаг flash. Ф5–Ф6 сократили объём плана: `@u7-scl/app-legacy/domain` уже без `User`/`Role` (остались `School` и legacy-типы приложения) — не barrel модуля, остаётся вместе с `app-legacy`; `@u7-scl/core/domain` — вход платформы. Grep-критерий плана Ф7 сужен до `@u7-scl/(user|course|stream|wish|questionnaire|peer-review)/domain`. Barrel'ы прятали от ARC-04 23 импорта полного входа домена в мирах u7-bot и двух скриптах (ARC-04 проверяет `runners/*/tests/**` и `scripts/**`, D-45). Решение Нурболата: (1) миры и тесты `runners/*/tests/**` берут символы вне контракта (state-типы, `Role`, Def агрегатов для инвариантов) из входа `@u7-scl/domain/<m>/testing` (D-70) модулей `user`, `course`, `stream`, `wish`; (2) `scripts/**` исключены из ARC-04 в `checkContractImports` — утилиты данных (`migrate-users-drop-student`, `stream-snapshot-sync`) читают state через `ArDef` полного входа. Это отступление проекта от D-45 пакета (там скрипты названы явно) — на ревизию при выделении утилит данных из `scripts/`. Остаток DEBT-3 — `modules/dossier/src/index.ts` (трек `dossier`). Бриф — `slices/barrel.md`.
-- **Пересмотреть:** на ревизии — достаточно ли `UserCaller` в боте, когда появятся stories для гостя (абстрактный уровень уже `PersonCaller`); аудит других модулей на последствия прежнего запрета D-45 — в составе ревизии ([migration.md](./migration.md) §6, «Дальше»).
+- **Пересмотреть:** ~~на ревизии — достаточно ли `UserCaller` в боте, когда появятся stories для гостя (абстрактный уровень уже `PersonCaller`); аудит других модулей на последствия прежнего запрета D-45 — в составе ревизии ([migration.md](./migration.md) §6, «Дальше»)~~ — закрыто ревизией (триаж `revision-release`): остаток — C-01, C-05.
 
 ### TR-62: решения Ф0 трека `legacy-removal` (раскладка, порядок фаз, планировщик в пакете)
 - **Трек / фаза:** `legacy-removal`, Ф0 (С1, С3 — Нурболат, 2026-11-12; остальное — orchestrator по разбору `dmg-tech-lead`; брифы `slices/{dossier,job-scheduler,core-ui,assembly,removal}.md`, раскладка «файл → куда» — `slices/removal.md`, факты — `slices/inventory.md`)
@@ -661,7 +653,7 @@
   - **Долг закрывается до гейта фазы** (`checkDebt` краснеет при исчезнувшем признаке): DEBT-3/DEBT-34 — до гейта Ф1, DEBT-42 переформулируется до гейта Ф6.
   - **Ф5 дополнена:** `biome.json` (override `app-legacy`, исключения `core/infra`); `@u7-scl/core` в `modules/*/package.json` (мёртвая зависимость) снимается там же.
   - **DeepSeek по максимуму без потери качества** (Нурболат): механические списки (инвентаризация) — flash; брифы, приёмка, ревью — Claude; red-тесты и UI со «Сохраняемым поведением» — Sonnet (`deepseek.md` §2).
-- **Пересмотреть:** на ревизии — судьба `core/shared` при `dmg-ui`; нужен ли `JobExecutor` (воркер) в пакете.
+- **Пересмотреть:** ~~на ревизии — судьба `core/shared` при `dmg-ui`; нужен ли `JobExecutor` (воркер) в пакете~~ — закрыто ревизией (триаж `revision-release`): `core/shared` ждёт `dmg-ui`; `JobExecutor` не нужен (D-71).
 
 ### TR-63: решения Ф1 трека `legacy-removal` (`dossier`, проверки домена)
 - **Трек / фаза:** `legacy-removal`, Ф1 (orchestrator; бриф `slices/dossier.md`)
@@ -673,7 +665,7 @@
   - `bun run gen module dossier` неприменим к модулю с готовым паспортом (`--adopt` — только legacy-каталог без `*.module.ts`); `modules/dossier/src/dossier.module.ts` — руками по шаблону генератора.
   - По ревью Ф1: устаревшие JSDoc «внешний модуль» (`domain/src/dossier/contract.ts`, `checkModuleImports`) поправлены в срезе; мёртвая `valibot` снята из `modules/dossier/package.json`.
   - Исключение TR-26 (пары `external` в `ArchChecker` пакета) стало пустым: внешних модулей в u7-school нет; ветка в `dmg-core` остаётся (поведение пакета для других проектов).
-- **Пересмотреть:** нужны ли маркеры временности в `scripts/` (утилиты данных) — при выделении утилит из `scripts/`; ветка `external` в `ArchChecker` пакета — на ревизии API `dmg-core`.
+- **Пересмотреть:** ~~нужны ли маркеры временности в `scripts/` (утилиты данных) — при выделении утилит из `scripts/`; ветка `external` в `ArchChecker` пакета — на ревизии API `dmg-core`~~ — закрыто ревизией (триаж `revision-release`): условие не наступило; `external` — возможность пакета.
 
 ### TR-64: решения Ф2 трека `legacy-removal` (планировщик Job в `dmg-core`)
 - **Трек / фаза:** `legacy-removal`, Ф2 (orchestrator; бриф `slices/job-scheduler.md`; пакет `dmg-core@bbc4484`, D-71)
@@ -685,7 +677,7 @@
   - `stop()` → `start()` во время идущего прогона может запустить то же задание параллельно — унаследовано от legacy, записано в `job.md` §7, не исправляется.
   - Модуль из `modules` планировщика, не подключённый к `api`, — повторяющийся `warn` на каждом тике, а не ошибка `start()` (D-71); в Ф4 оба списка — из `dmgApp().modules`.
   - Фикстура `job-scheduler.fixture.ts` с фейком `FakeJobApi` — по прецеденту `app.fixture.ts`, не `.fake.ts`.
-- **Пересмотреть:** проверка состава `modules` против `api` в `start()` — если появится сборка, где списки расходятся.
+- **Пересмотреть:** ~~проверка состава `modules` против `api` в `start()` — если появится сборка, где списки расходятся~~ — закрыто ревизией (триаж `revision-release`): оба из `dmgApp().modules`.
 
 ### TR-65: решения Ф3 трека `legacy-removal` (`core/ui` и бот без legacy)
 - **Трек / фаза:** `legacy-removal`, Ф3 (orchestrator; бриф `slices/core-ui.md`)

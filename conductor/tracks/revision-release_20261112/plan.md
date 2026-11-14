@@ -110,7 +110,8 @@
 - [x] Task: orchestrator: дописать в план подфазы Ф5.N — срез на модуль или однородную группу (бриф → red → green → гейт → `dmg-reviewer`; `dmg-data-keeper` — если трогается state/репозитории/снимки)
 - [x] Task: Крупное (L) — кандидатами `[?]` в `tracks.md` с заготовкой в `conductor/roadmap/`
     - Итог: F-80 → `stream-snapshot-dmg`, F-110 → `stream-front-domain`, F-111 → `oplog-state-patch`
-- [ ] Task: «Оставить» — перенос в `decisions.md` или гайды, закрытие TR в `debt.md`
+- [x] Task: «Оставить» — перенос в `decisions.md` или гайды, закрытие TR в `debt.md`
+    - Итог: 42 TR — «Пересмотреть» закрыто с пометкой триажа; без кода F-100…F-107: D-75 (TR-3), D-76 (TR-30), D-77 (C-06), `workflow.md` п. 8 (TR-38), пул вопросов — `roadmap.md` (C-07), цепочка зоны — DEBT-43 и `schools-system` (C-09), DEBT-46 «не запланировано» (C-10), DEBT-49 закрыт → `agents.md` §8 (C-11); F-108 — Ф6; DEBT группы «оставить» открыты — у них живые триггеры
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
 ### Подфазы Ф5 (по [fixes.md](./fixes.md))
