@@ -41,10 +41,10 @@
 
 ## Фаза 3: Разбор TODO.md
 
-- [ ] Task: S — таблица разбора: каждый пункт → закрыть / `DEBT` / `T-DEBT` / `D-DEBT` / `roadmap.md` / вход dmg-ui; принятые решения spec ФР-3 — без повторного вопроса
-- [ ] Task: O — записи в реестры (ID после «последнего выданного»), черновик входа dmg-ui
+- [x] Task: S — таблица разбора: каждый пункт → закрыть / `DEBT` / `T-DEBT` / `D-DEBT` / `roadmap.md` / вход dmg-ui; принятые решения spec ФР-3 — без повторного вопроса `11a76286` — сверка Sonnet (`Explore`), таблица в `summary.md`
+- [x] Task: O — записи в реестры (ID после «последнего выданного»), черновик входа dmg-ui `11a76286` — D-DEBT-4…6, C-DEBT-55, «Идеи без проработки» в `roadmap.md`, [roadmap/dmg-ui-entry.md](../../roadmap/dmg-ui-entry.md)
     - Во вход dmg-ui из журнала TR (TR-50): экран отказа по `Result` — `ucErrorScreen` (`stories/render.ts`) дублирует ветки `ucErrorNotify`; общий экран — вместе с контрактом story
-- [ ] Task: S — удалить `TODO.md`, ссылки
+- [x] Task: S — удалить `TODO.md`, ссылки `e0f1a2a9` — orchestrator: 4 ссылки, промпт дороже работы
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 **Критерии:** `TODO.md` нет; таблица разбора в `summary.md`, у каждого пункта адрес; `check` зелёный.
