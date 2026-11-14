@@ -86,7 +86,7 @@ $G -l -- '<шаблон>' . | wc -l # файлов
 
 ## Фаза 4. Перевод тестов на хелперы (2026-11-14)
 
-Бриф и карта — [slices/test-helpers.md](./slices/test-helpers.md). Хелперы: `dmg-core/testing` (`TEST_TRACE`, `testTrace`, `TempDir`, `useTempDir`, `testUuid`) и новые в боте — `Screen`, `TestBotTransport.press`/`pressRaw`/`waitForMessage`, `waitUntil`, test-kit'ы `mockLogger`, `bot-transport`, `subscriptionOf`.
+Бриф и карта — `slices/test-helpers.md`. Хелперы: `dmg-core/testing` (`TEST_TRACE`, `testTrace`, `TempDir`, `useTempDir`, `testUuid`) и новые в боте — `Screen`, `TestBotTransport.press`/`pressRaw`/`waitForMessage`, `waitUntil`, test-kit'ы `mockLogger`, `bot-transport`, `subscriptionOf`.
 
 | Повтор | Ф0 (вхожд. / файлов) | Ф4 | Остаток |
 |---|---|---|---|
@@ -108,7 +108,7 @@ $G -l -- '<шаблон>' . | wc -l # файлов
 
 ## Фаза 5. Ранние модули `wish`, `peer-review` (2026-11-14)
 
-Бриф — [slices/early-modules.md](./slices/early-modules.md). Тестов 3292 → 3290; поведение не менялось.
+Бриф — `slices/early-modules.md`. Тестов 3292 → 3290; поведение не менялось.
 
 Удалённые тесты:
 - `domain/src/peer-review/peer-review-question-pool.test.ts` — «схема пула: валидно/невалидно; questionCode уникальны внутри и между пулами» (модуль пула удалён, C-07 пересмотрен).
