@@ -16,6 +16,7 @@
 - [ ] Task: O — решения по спорным записям; `conductor/debt/README.md`: форматы `DEBT-n` / `T-DEBT-n` / `D-DEBT-n`, поле Триггер, «последний выданный ID», закрытие = удаление + коммит `закрыть <ID>`, разбор долга в конце трека и перед релизом
 - [ ] Task: F — создать `conductor/debt/{code,tests,product}.md`, перенести открытые записи (закономерности test-bloat — в README)
 - [ ] Task: O — перенести живое знание TR в `decisions.md`/гайды, удалить §6
+- [ ] Task: O — завести `D-DEBT` «точный анализ совместимости контракта и гейт» из [vision.md](../../architecture/vision.md) §9 (триггер — перед web-ui); пункт в `vision.md` сократить до ссылки на запись
 - [ ] Task: F — ссылки по ФР-3а (`AGENTS.md`, `.agents-core/` → `agents:sync`, `.pi/skills/`, `CHANGELOG.md`, код, `conductor/`); удалить `architecture/debt.md`, `roadmap/test-bloat.md`
 - [ ] Task: O — ревью фазы
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
