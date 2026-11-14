@@ -44,14 +44,16 @@
 
 ## Фаза 3: Скрипт, данные, документы
 
-- [ ] Task: S (`dmg-api-author`) — `call-uc.ts`: добавить `StreamModuleDef` в `DMG_MODULES`, поправить шапку и `printHelp`
-- [ ] Task: S (`dmg-api-author`) — переписать `scripts/update-stream-snapshot.ts` на `U7App` + `dispatch` от субъекта: выбор потока (`enrollment`/`active`) → предпросмотр → подтверждение (`prompt`) → применение; `--dry-run` — только предпросмотр; код отказа → понятное сообщение и выход 1. Общую сборку приложения со `_course-client.ts`/`call-uc.ts` — вынести в `scripts/_app.ts`, если упрощает (решение в задаче)
-- [ ] Task: S — удалить `scripts/stream-snapshot-sync.ts` и его тест; таблица переноса сценариев (перенесён / заменён новой логикой / отпал и почему) — в `summary.md` (spec 8)
-- [ ] Task: S (`dmg-data-keeper`) — копия `data/` в scratchpad, `DB_DIR` на копию: сухой прогон (`--dry-run`) и применение на реальном потоке; в `data/oplog/` копии — запись с `writes`. **Живые `data/` не трогать**
-- [ ] Task: O — документы: `conductor/debt/code.md` (записи про `stream-snapshot-sync` / «Погашает: F-80» — закрыть), `conductor/roadmap/stream-snapshot-dmg.md` (удалить, ссылки снять, запись-кандидат в `tracks.md`), `AGENTS.md` (описание `update-stream-snapshot.ts`), `content-management.md` («Есть сейчас», порядок работ п. 2); в `conductor/roadmap/oplog-state-patch.md` — пример: замена снимка как крупный патч (вход F-111)
-- [ ] Task: S (`dmg-reviewer`) — финальное ревью diff трека
-- [ ] Task: O — гейт закрытия (workflow.md): `CI=true bun test`, триаж красных, сравнение с базовой линией Ф0 — в `summary.md`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: S (`dmg-api-author`) — `call-uc.ts`: добавить `StreamModuleDef` в `DMG_MODULES`, поправить шапку и `printHelp`
+- [x] Task: S (`dmg-api-author`) — переписать `scripts/update-stream-snapshot.ts` на `U7App` + `dispatch` от субъекта: выбор потока (`enrollment`/`active`) → предпросмотр → подтверждение (`prompt`) → применение; `--dry-run` — только предпросмотр; код отказа → понятное сообщение и выход 1. Общую сборку приложения со `_course-client.ts`/`call-uc.ts` — вынести в `scripts/_app.ts`, если упрощает (решение в задаче)
+- [x] Task: S — удалить `scripts/stream-snapshot-sync.ts` и его тест; таблица переноса сценариев (перенесён / заменён новой логикой / отпал и почему) — в `summary.md` (spec 8)
+- [x] Task: O (вместо `dmg-data-keeper` — роль только читает) — копия `data/` в scratchpad, `DB_DIR` на копию: сухой прогон (`--dry-run`) и применение на реальном потоке; в `data/oplog/` копии — запись с `writes`. **Живые `data/` не трогать**
+- [x] Task: O — документы: `conductor/debt/code.md` (записи про `stream-snapshot-sync` / «Погашает: F-80» — закрыть), `conductor/roadmap/stream-snapshot-dmg.md` (удалить, ссылки снять, запись-кандидат в `tracks.md`), `AGENTS.md` (описание `update-stream-snapshot.ts`), `content-management.md` («Есть сейчас», порядок работ п. 2); в `conductor/roadmap/oplog-state-patch.md` — пример: замена снимка как крупный патч (вход F-111)
+- [x] Task: S (`dmg-reviewer`) — финальное ревью diff трека
+- [x] Task: O — гейт закрытия (workflow.md): `CI=true bun test`, триаж красных, сравнение с базовой линией Ф0 — в `summary.md`
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (автопроверка, режим трека)
+
+- **Примечание:** живых `streams`/`students` на машине разработки нет — прогон на копии `data/fixtures` (итог — `summary.md`); `scripts/_app.ts` — общая сборка `U7App` для скриптов (в C-DEBT-42).
 
 **Критерии:** `scripts/stream-snapshot-sync*` нет; в `scripts/` нет прямой записи `streams.json`/`students.json` (spec 8); сухой прогон и применение на копии отработали, в oplog копии — `writes` (spec 7, 9); grep `stream-snapshot-sync` вне `archive/` пуст; `bun run check` зелёный, тестов не меньше базовой линии за вычетом перенесённых (spec 10).
 

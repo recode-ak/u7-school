@@ -11,7 +11,6 @@
  * const modules = await course.listModules();
  * ```
  */
-import { TEST_SCHOOL, U7App } from '@u7-scl/app';
 import { type Logger, LogLevel } from '@u7-scl/core/shared';
 import {
   type ContentSnapshot,
@@ -24,20 +23,11 @@ import {
   type ModuleSummary,
   type StepView,
 } from '@u7-scl/domain/course/contract';
-import { type InputOf, type OutputOf, UseCaseDef } from 'dmg-core';
-import { Trace } from 'dmg-core/app';
-
-/** UUID автора-ментора (Нур) — субъект запросов скриптов (`call-uc` тоже). */
-export const NUR_UUID = '8d9a56f6-51e7-49f0-ba58-2832b157e718';
+import type { InputOf, OutputOf } from 'dmg-core';
+import { ScriptApp } from './_app';
 
 /** UC модуля курсов: команда собирается только для его Def. */
 type CourseUcDef = (typeof CourseModuleDef)['useCases'][number];
-
-/** Субъект запросов: администратор из резолвера приложения. */
-type CourseCaller = Extract<
-  Awaited<ReturnType<U7App['callers']['resolve']>>,
-  { kind: 'user' }
->;
 
 /**
  * Логгер режима `silent`: служебные логи модулей скрыты, но `warn` (например,
@@ -55,44 +45,19 @@ export const warnOnlyLogger: Logger = {
 
 /** Клиент курса: один экземпляр на запуск скрипта. */
 export class CourseClient {
-  private constructor(
-    private readonly app: U7App,
-    private readonly caller: CourseCaller,
-    private readonly trace: Trace,
-  ) {}
+  private constructor(private readonly app: ScriptApp) {}
 
   /**
-   * Собирает приложение над каталогом данных `DB_DIR` (по умолчанию `data`) и
-   * готовит субъект администратора. `silent` — без служебных логов модулей.
-   * Нет пользователя `NUR_UUID` в каталоге — исключение: гостевой субъект
-   * видел бы не то, что видит администратор.
+   * Собирает приложение над каталогом `DB_DIR` (по умолчанию `data`) от имени
+   * администратора. `silent` — без служебных логов модулей.
    */
   static async create(
     options: { silent?: boolean } = {},
   ): Promise<CourseClient> {
-    const dbDir = process.env.DB_DIR ?? 'data';
-    const app = new U7App(
-      {
-        mode: 'development',
-        dbDir,
-        communityGroup: TEST_SCHOOL.communityGroup,
-        studentGroup: TEST_SCHOOL.studentGroup,
-        mentors: [...TEST_SCHOOL.mentors],
-      },
+    const app = await ScriptApp.create(
       options.silent ? { logger: warnOnlyLogger } : {},
     );
-    const trace = Trace.fromRequest({
-      requestId: crypto.randomUUID(),
-      channel: { name: 'cli' },
-    });
-    const caller = await app.callers.resolve(NUR_UUID, trace);
-    if (caller.kind !== 'user') {
-      throw new Error(
-        `пользователь ${NUR_UUID} не найден в ${dbDir}/users/users.json: ` +
-          'скрипт работает от имени администратора, гостевой субъект недопустим',
-      );
-    }
-    return new CourseClient(app, caller, trace);
+    return new CourseClient(app);
   }
 
   /** Модули для показа — `listModules`. */
@@ -119,12 +84,7 @@ export class CourseClient {
     uc: D,
     input: InputOf<D>,
   ): Promise<OutputOf<D>> {
-    const res = await this.app.apiApp.dispatch(
-      CourseModuleDef,
-      UseCaseDef.commandOf(uc, input),
-      this.caller,
-      this.trace,
-    );
+    const res = await this.app.run(CourseModuleDef, uc, input);
     if (!res.ok) throw new Error(`${res.error.code}: ${res.error.label}`);
     return res.value;
   }

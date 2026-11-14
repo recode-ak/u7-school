@@ -1,257 +1,244 @@
 /**
- * update-stream-snapshot — обновляет contentSnapshot у ПОТОКА (точечно).
+ * update-stream-snapshot — обновляет контент потока из актуального модуля курса (F-80).
  *
- * ⚠️ История: раньше скрипт принимал moduleId и обновлял ВСЕ потоки модуля —
- * это затирало снапшот активных потоков. Теперь параметр — streamId:
- * обновляется ровно один выбранный поток.
+ * Работает через UC `stream`: `previewStreamContentSync` (отчёт, ничего не
+ * пишет) → подтверждение → `syncStreamContent` (поток и прогресс студентов
+ * пишет UoW модуля, скрипт файлов данных не трогает).
  *
  * Использование:
  *   bun run scripts/update-stream-snapshot.ts              # интерактивный выбор потока
  *   bun run scripts/update-stream-snapshot.ts <streamId>   # конкретный поток
+ *   bun run scripts/update-stream-snapshot.ts [<streamId>] --dry-run   # только отчёт
  *
- * Перед запуском на живых данных — `bun run backup`. Запускать при остановленном
- * боте или вне пиковых часов: скрипт перечитывает и перезаписывает файл целиком
- * без проверки `version`, запись бота между чтением и записью потеряется.
- * При `--sync-students` `students.json` переписывается целиком в формате Def
- * (числовые даты, `version`; ключи вне схемы отбрасываются — как первая запись
- * `StudentJsonRepo`). Битая запись останавливает скрипт до любой записи.
+ * Потоки — в статусе набора (`enrollment`) и идущие (`active`). Каталог данных —
+ * `DB_DIR` (по умолчанию `data`). Студентам, ушедшим вперёд от новых шагов,
+ * шаги зачитываются задним числом: их список `affected` показан в отчёте и
+ * подтверждается целиком. Версия потока из предпросмотра защищает от записи
+ * бота между отчётом и применением (отказ — повторите запуск).
  *
- * Снапшот строится из актуальных данных модуля потока (`getModuleSnapshot`):
- * только published-проекты и published-уроки.
+ * ⚠️ Перед запуском на живых данных: остановить бота (`pm2 stop u7-school-bot`)
+ * и сделать `bun run backup`; реакции модулей на событие обновления
+ * запускаются, как в боте.
  */
-
-import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
-import { CourseClient } from './_course-client';
+import type { StreamView } from '@u7-scl/domain/stream/contract';
 import {
-  analyzeSnapshotDelta,
-  readStudentRows,
-  syncAheadStudents,
-  writeStudentRows,
-} from './stream-snapshot-sync';
+  type ContentSyncPlan,
+  ListStreamsUcDef,
+  PreviewStreamContentSyncUcDef,
+  StreamModuleDef,
+  SyncStreamContentUcDef,
+} from '@u7-scl/domain/stream/contract';
+import { ScriptApp, type UcRejection } from './_app';
+import { warnOnlyLogger } from './_course-client';
 
-const STREAMS_FILE = 'data/streams/streams.json';
-const STUDENTS_FILE = 'data/streams/students.json';
-const USERS_FILE = 'data/users/users.json';
-
-interface StreamInfo {
-  index: number;
-  uuid: string;
-  title: string;
-  moduleId: string;
-  status: string;
-  projectCount: number;
+/** Ввод-вывод скрипта: подменяется в тестах. */
+export interface SyncIo {
+  log(line: string): void;
+  error(line: string): void;
+  /** Вопрос оператору; `null` — ввода нет. */
+  prompt(question: string): string | null;
 }
 
-async function main() {
-  // ── Чтение потоков ──────────────────────────────
-  const streamsFile = Bun.file(STREAMS_FILE);
-  const streams: Array<Record<string, unknown>> = await streamsFile.json();
+const consoleIo: SyncIo = {
+  log: (line) => console.log(line),
+  error: (line) => console.error(line),
+  prompt: (question) => prompt(question),
+};
 
-  const allStreams: StreamInfo[] = [];
-  for (let i = 0; i < streams.length; i++) {
-    const s = streams[i];
-    if (!s || s.uuid === undefined) continue;
-    const snap = s.contentSnapshot as Array<{ lessons: unknown[] }> | undefined;
-    allStreams.push({
-      index: i,
-      uuid: s.uuid as string,
-      title: (s.title as string) ?? '(без названия)',
-      moduleId: s.moduleId as string,
-      status: (s.status as string) ?? '?',
-      projectCount: snap?.length ?? 0,
-    });
-  }
+/** Статусы потока, контент которых обновляется. */
+const SYNCABLE = ['enrollment', 'active'] as const;
 
-  if (allStreams.length === 0) {
-    console.log('Потоки не найдены.');
-    return;
-  }
+/** Отказы, означающие, что поток изменился между предпросмотром и применением. */
+const STALE_CODES = ['VERSION_CONFLICT', 'SYNC_NEEDS_CONFIRMATION'];
 
-  // ── Парсинг аргументов командной строки ─────────
-  const args = process.argv.slice(2);
-  const syncStudentsFlag =
-    args.includes('--sync-students') ||
-    args.includes('--mark-passed-completed');
-  const dryRunFlag = args.includes('--dry-run');
-  const explicitId = args.find((a) => !a.startsWith('--'));
-  let selected: StreamInfo | undefined;
+const short = (id: string) => id.slice(0, 8);
 
-  if (explicitId) {
-    selected = allStreams.find((s) => s.uuid === explicitId);
-    if (!selected) {
-      console.error(`❌ Поток с uuid=${explicitId} не найден.`);
-      console.log('Доступные потоки:');
-      for (const s of allStreams) {
-        console.log(
-          `   ${s.uuid}  ${s.title} (${s.status}, ${s.projectCount} проектов)`,
-        );
-      }
-      process.exit(1);
-    }
+/** Отказ UC → сообщение оператору. */
+export function describeRejection(error: UcRejection): string {
+  const text = `${error.code}: ${error.label}`;
+  return STALE_CODES.includes(error.code)
+    ? `${text}\n   Поток изменился с момента предпросмотра — запусти скрипт заново.`
+    : text;
+}
+
+/** Печать плана: diff по ключам, студенты, блокеры. */
+export function renderPlan(plan: ContentSyncPlan): string[] {
+  const lines: string[] = [`Режим: ${plan.mode}`];
+  const { projects, lessons, steps } = plan.diff;
+  if (!plan.diff.changed) {
+    lines.push('Контент не изменился.');
   } else {
-    console.log('Потоки:\n');
-    for (const s of allStreams) {
-      console.log(
-        `  [${s.index + 1}] ${s.title}  (${s.status}, ${s.projectCount} проектов)  ${s.uuid}`,
+    lines.push('Различия контента:');
+    for (const p of projects.added) lines.push(`  + проект «${p.title}»`);
+    for (const p of projects.removed) lines.push(`  - проект «${p.title}»`);
+    for (const p of projects.renamed)
+      lines.push(`  ~ проект «${p.from}» → «${p.to}»`);
+    for (const l of lessons.added) lines.push(`  + урок «${l.title}»`);
+    for (const l of lessons.removed) lines.push(`  - урок «${l.title}»`);
+    for (const l of lessons.renamed)
+      lines.push(`  ~ урок «${l.from}» → «${l.to}»`);
+    for (const s of steps.added)
+      lines.push(`  + шаг #${s.index} ${short(s.stepId)}`);
+    for (const s of steps.removed)
+      lines.push(`  - шаг #${s.index} ${short(s.stepId)}`);
+    for (const s of steps.moved)
+      lines.push(
+        `  → шаг ${short(s.stepId)}: #${s.from.index} → #${s.to.index}`,
+      );
+  }
+  if (plan.students.length > 0) {
+    lines.push(`Студенты (${plan.students.length}):`);
+    for (const s of plan.students) {
+      const parts = [
+        `${s.kind === 'not_started' ? 'не начал' : 'идёт'}`,
+        `behind ${s.behind.length}`,
+        `ahead ${s.ahead.length}`,
+      ];
+      if (s.tail) parts.push(`tail ${short(s.tail)}`);
+      if (s.completedAhead.length > 0)
+        parts.push(`completedAhead ${s.completedAhead.length}`);
+      if (s.removedPassed.length > 0)
+        parts.push(`removedPassed ${s.removedPassed.length}`);
+      if (s.removesCurrent) parts.push('УДАЛЯЕТСЯ ТЕКУЩИЙ ШАГ');
+      lines.push(`  ${short(s.userId)} (${s.status}): ${parts.join(', ')}`);
+    }
+  }
+  lines.push(`Шаги будут зачтены студентам: ${plan.affected.length}`);
+  for (const b of plan.blockers) {
+    if (b.code === 'CONTENT_NOT_SYNCABLE') {
+      lines.push('БЛОКЕР: поток не в статусе набора или идущего.');
+    } else {
+      lines.push(
+        `БЛОКЕР: удаляется текущий шаг у студентов: ${b.students
+          .map((s) => short(s.userId))
+          .join(', ')}`,
       );
     }
-    console.log();
-    const input = prompt('Выбери номер потока (или Enter — выйти):');
-    if (!input?.trim()) {
-      console.log('Выход.');
-      return;
+  }
+  return lines;
+}
+
+/** Выбор потока: по аргументу или интерактивно. `exit` — пустой ввод, `undefined` — ошибка. */
+async function chooseStream(
+  streams: StreamView[],
+  explicitId: string | undefined,
+  io: SyncIo,
+): Promise<StreamView | 'exit' | undefined> {
+  if (explicitId !== undefined) {
+    const found = streams.find((s) => s.uuid === explicitId);
+    if (!found) {
+      io.error(
+        `❌ Поток ${explicitId} не найден среди потоков в наборе и идущих.`,
+      );
+      for (const s of streams) io.log(`   ${s.uuid}  ${s.title} (${s.status})`);
     }
-    const choice = Number.parseInt(input.trim(), 10);
-    selected = allStreams.find((s) => s.index + 1 === choice);
-    if (!selected) {
-      console.error(`Нет потока с номером ${choice}.`);
-      process.exit(1);
+    return found;
+  }
+  io.log('Потоки:\n');
+  streams.forEach((s, i) => {
+    io.log(`  [${i + 1}] ${s.title}  (${s.status})  ${s.uuid}`);
+  });
+  const input = io.prompt('Выбери номер потока (или Enter — выйти):');
+  if (!input?.trim()) return 'exit';
+  const found = /^\d+$/.test(input.trim())
+    ? streams[Number.parseInt(input.trim(), 10) - 1]
+    : undefined;
+  if (!found) io.error(`❌ Нет потока с номером «${input.trim()}».`);
+  return found;
+}
+
+/** Запуск скрипта; возвращает код выхода. */
+export async function run(
+  argv: string[],
+  dbDir: string = process.env.DB_DIR ?? 'data',
+  io: SyncIo = consoleIo,
+): Promise<number> {
+  const unknown = argv.filter((a) => a.startsWith('--') && a !== '--dry-run');
+  if (unknown.length > 0) {
+    io.error(
+      `❌ Неизвестный флаг: ${unknown.join(', ')}. Допустим только --dry-run.`,
+    );
+    return 1;
+  }
+  const dryRun = argv.includes('--dry-run');
+  const explicitId = argv.find((a) => !a.startsWith('--'));
+
+  const app = await ScriptApp.create({ dbDir, logger: warnOnlyLogger });
+
+  const streams: StreamView[] = [];
+  for (const status of SYNCABLE) {
+    const res = await app.run(StreamModuleDef, ListStreamsUcDef, { status });
+    if (!res.ok) {
+      io.error(`❌ ${describeRejection(res.error)}`);
+      return 1;
     }
+    streams.push(...res.value);
+  }
+  if (streams.length === 0) {
+    io.log('Потоки в наборе или идущие не найдены.');
+    return 0;
   }
 
-  const stream = selected;
-  if (!stream) throw new Error('Поток не выбран');
+  const stream = await chooseStream(streams, explicitId, io);
+  if (stream === 'exit') return 0;
+  if (!stream) return 1;
 
-  // ── Получение свежего снапшота ──────────────────
-  console.log(`\n📦 Поднимаю приложение...`);
-  const course = await CourseClient.create({ silent: true });
-
-  console.log(
-    `🔍 Получаю снапшот модуля ${stream.moduleId} (поток «${stream.title}»)...`,
+  const preview = await app.run(
+    StreamModuleDef,
+    PreviewStreamContentSyncUcDef,
+    {
+      streamId: stream.uuid,
+    },
   );
-  const newSnapshot = await course.moduleSnapshot(stream.moduleId);
+  if (!preview.ok) {
+    io.error(`❌ ${describeRejection(preview.error)}`);
+    return 1;
+  }
+  const { plan, streamVersion } = preview.value;
 
-  const projectCount = newSnapshot.length;
-  const lessonCount = newSnapshot.reduce((sum, p) => sum + p.lessons.length, 0);
-  const stepCount = newSnapshot.reduce(
-    (sum, p) => sum + p.lessons.reduce((s, l) => s + l.stepIds.length, 0),
+  io.log(`\n🔄 Поток «${stream.title}» (${stream.uuid}, v${streamVersion})`);
+  for (const line of renderPlan(plan)) io.log(line);
+
+  if (plan.blockers.length > 0) {
+    io.error('\n❌ Обновление невозможно: устрани блокеры.');
+    return 1;
+  }
+  if (!plan.diff.changed) return 0;
+  if (dryRun) {
+    io.log('\n🔍 DRY-RUN: данные НЕ изменены.');
+    return 0;
+  }
+
+  const answer = io.prompt('\nПрименить обновление? [y/N]:');
+  if (answer?.trim().toLowerCase() !== 'y') {
+    io.log('Отменено.');
+    return 0;
+  }
+
+  const sync = await app.run(StreamModuleDef, SyncStreamContentUcDef, {
+    streamId: stream.uuid,
+    confirmedStudentIds: plan.affected,
+    expectedVersion: streamVersion,
+  });
+  if (!sync.ok) {
+    io.error(`❌ ${describeRejection(sync.error)}`);
+    return 1;
+  }
+  const credited = sync.value.credited.reduce(
+    (sum, c) => sum + c.stepIds.length,
     0,
   );
-  console.log(
-    `   ${projectCount} проектов, ${lessonCount} уроков, ${stepCount} шагов:`,
+  io.log(
+    `✅ Готово (${sync.value.mode}): зачтено шагов ${credited} у ${sync.value.credited.length} студентов.`,
   );
-  for (const p of newSnapshot) {
-    console.log(`     • ${p.projectTitle} (${p.lessons.length} уроков)`);
-  }
-
-  // ── Старый поток и снапшот ─────────────────────
-  const oldStream = streams[stream.index];
-  if (!oldStream)
-    throw new Error(`Поток ${stream.uuid} не найден в ${STREAMS_FILE}`);
-  const oldSnapshot = (oldStream.contentSnapshot ?? []) as ContentSnapshot;
-
-  // ── Проверка дельты контента и студентов ────────
-  // Битый students.json — исключение: main завершает скрипт с кодом 1 до записи.
-  const students = await readStudentRows(STUDENTS_FILE);
-
-  const streamStudents = students.filter((s) => s.streamId === stream.uuid);
-  const delta = analyzeSnapshotDelta(oldSnapshot, newSnapshot, streamStudents);
-
-  if (delta.addedStepIds.length > 0) {
-    console.log(
-      `\n✨ Обнаружены новые шаги в программе (+${delta.addedStepIds.length}):`,
-    );
-    for (const sid of delta.addedStepIds) {
-      console.log(`     • ${sid}`);
-    }
-  }
-
-  if (delta.hasConflict) {
-    // Загрузим пользователей для красивого отчёта
-    let usersMap = new Map<string, string>();
-    try {
-      const usersFile = Bun.file(USERS_FILE);
-      if (await usersFile.exists()) {
-        const usersList = (await usersFile.json()) as Array<{
-          uuid: string;
-          name?: string;
-          nick?: string;
-        }>;
-        usersMap = new Map(
-          usersList.map((u) => [
-            u.uuid,
-            `${u.name ?? 'Студент'}${u.nick ? ` (@${u.nick})` : ''}`,
-          ]),
-        );
-      }
-    } catch {
-      // noop
-    }
-
-    console.log(
-      `\n⚠️ ВНИМАНИЕ: Новые шаги добавлены позади студентов, которые уже прошли эту точку!`,
-    );
-    console.log(`   Затронуто студентов: ${delta.aheadStudents.length}`);
-    for (const ah of delta.aheadStudents) {
-      const studentName = usersMap.get(ah.userId) ?? ah.studentUuid.slice(0, 8);
-      console.log(
-        `     - ${studentName}: текущий шаг #${ah.currentStepIndex + 1} (${ah.currentStepId}), новый шаг #${ah.newStepIndex + 1} (${ah.newStepId})`,
-      );
-    }
-
-    if (!syncStudentsFlag) {
-      console.error(
-        `\n❌ ОТКАЗ: Без синхронизации у этих студентов сломается прогресс уроков и статус проектов.`,
-      );
-      console.error(
-        `   Чтобы обновить снапшот И автоматически пометить добавленные шаги как пройденные у ушедших вперёд студентов, передайте флаг:`,
-      );
-      console.error(
-        `     bun run scripts/update-stream-snapshot.ts ${stream.uuid} --sync-students\n`,
-      );
-      process.exit(1);
-    }
-
-    console.log(
-      `\n⚙️ Передан флаг --sync-students: выполняю синхронизацию профилей студентов...`,
-    );
-    const syncResult = syncAheadStudents(
-      newSnapshot,
-      streamStudents,
-      delta.addedStepIds,
-    );
-    console.log(
-      `   ✅ Обновлено студентов: ${syncResult.updatedCount} (${syncResult.updatedStudentUuids.join(', ')})`,
-    );
-  }
-
-  // ── Обновление ТОЛЬКО выбранного потока ─────────
-  const oldCount = Array.isArray(oldSnapshot) ? oldSnapshot.length : 0;
-  const oldTitles = Array.isArray(oldSnapshot)
-    ? oldSnapshot
-        .map((p) => (p as { projectTitle?: string }).projectTitle)
-        .join(', ')
-    : '—';
-
-  console.log(`\n🔄 Поток «${stream.title}» (${stream.uuid}):`);
-  console.log(`   Было:  ${oldCount} проектов — ${oldTitles}`);
-  console.log(`   Стало: ${projectCount} проектов`);
-
-  if (dryRunFlag) {
-    console.log(`\n🔍 РЕЖИМ DRY-RUN: файлы НЕ были изменены.`);
-    return;
-  }
-
-  oldStream.contentSnapshot = newSnapshot;
-
-  // ── Сохранение ──────────────────────────────────
-  console.log(`\n💾 Записываю ${STREAMS_FILE}...`);
-  await Bun.write(STREAMS_FILE, JSON.stringify(streams, null, 2));
-
-  if (delta.hasConflict && syncStudentsFlag) {
-    console.log(`💾 Записываю ${STUDENTS_FILE}...`);
-    // Заменяем обновлённых студентов в общем массиве
-    const streamStudentsMap = new Map(streamStudents.map((s) => [s.uuid, s]));
-    const updatedAllStudents = students.map(
-      (s) => streamStudentsMap.get(s.uuid) ?? s,
-    );
-    await writeStudentRows(STUDENTS_FILE, updatedAllStudents);
-  }
-
-  console.log(`✅ Готово! Обновлён поток: ${selected.title}`);
+  return 0;
 }
 
-main().catch((err) => {
-  console.error('❌ Ошибка:', err.message || err);
-  process.exit(1);
-});
+if (import.meta.main) {
+  run(process.argv.slice(2))
+    .then((code) => process.exit(code))
+    .catch((err) => {
+      console.error('❌ Ошибка:', err.message || err);
+      process.exit(1);
+    });
+}

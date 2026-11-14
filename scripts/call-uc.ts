@@ -20,15 +20,11 @@
  *   bun run scripts/call-uc.ts get-current '{"questionnaireId":"<uuid>"}'
  *   bun run scripts/call-uc.ts create-course-wish '{"courseId":"<uuid>"}'
  *
- * UC модулей user, course, wish и questionnaire — DMG: команда через
+ * UC модулей user, course, wish, questionnaire и stream — DMG: команда через
  * `ApiApp.dispatch` (D-49) над той же сборкой, что и в боте (`U7App`),
  * субъект — резолвер `app.callers`; имя — kebab-case (`create-course-wish`)
  * или имя Def (`createCourseWish`). Отказ — `Err` с кодом в stderr и выход
  * с кодом 1. Лог операций DMG пишется в `data/oplog/`, как у бота.
- *
- * UC `stream` перешли на DMG (модуль `stream`), но через `call-uc` пока не
- * вызываются: скрипт знает DMG-модули `user`, `course`, `wish` и
- * `questionnaire`.
  *
  * ⚠️ Команды (не query) пишут в боевые JSON-файлы: перед изменяющими
  * вызовами убедись, что бот остановлен (pm2 stop u7-school-bot).
@@ -44,6 +40,7 @@ import { TEST_SCHOOL, U7App } from '@u7-scl/app';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { QuestionnaireModuleDef } from '@u7-scl/domain/questionnaire/contract';
+import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
 import { UserModuleDef } from '@u7-scl/domain/user/contract';
 import { WishModuleDef } from '@u7-scl/domain/wish/contract';
 import {
@@ -53,7 +50,7 @@ import {
   UseCaseDef,
 } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
-import { NUR_UUID } from './_course-client';
+import { NUR_UUID } from './_app';
 
 /** `createCourseWish` → `create-course-wish`. */
 const kebab = (name: string) =>
@@ -65,6 +62,7 @@ const DMG_MODULES: readonly AnyModuleDef[] = [
   CourseModuleDef,
   WishModuleDef,
   QuestionnaireModuleDef,
+  StreamModuleDef,
 ];
 
 /** UC DMG-модуля по имени: kebab-case или имя Def. */
@@ -90,8 +88,7 @@ function printHelp() {
   json-params  — параметры в JSON (обязательно, можно '{}')
   actorId      — UUID пользователя (опционально, по умолчанию Nur)
 
-Доступные модули: user, course, wish, questionnaire (DMG).
-UC stream (DMG) через call-uc пока не вызываются.
+Доступные модули: user, course, wish, questionnaire, stream (DMG).
 
 Примеры:
   bun run scripts/call-uc.ts list-modules '{}'
@@ -105,6 +102,7 @@ UC stream (DMG) через call-uc пока не вызываются.
   bun run scripts/call-uc.ts get-questionnaires-by-user '{"userId":"<uuid>"}'
   bun run scripts/call-uc.ts get-current '{"questionnaireId":"<uuid>"}'
   bun run scripts/call-uc.ts create-course-wish '{"courseId":"<uuid>"}'
+  bun run scripts/call-uc.ts list-streams '{"status":"active"}'
   bun run scripts/call-uc.ts --help
 `);
 }

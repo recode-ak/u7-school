@@ -40,7 +40,7 @@
 | **Контент** | frozen snapshot защищает потоки; `basedOn`, edit vs fork, Import/Export; история модулей курса | D-64, D-65, D-85 | — | [content-management.md](./roadmap/content-management.md), [course-module-history.md](./roadmap/course-module-history.md) |
 | **Школы** | школа — множественная сущность; связка автор–школа–ментор–поток | D-53, D-54, D-82 | — | [schools-system.md](./roadmap/schools-system.md) |
 
-Кандидаты в треки (`[?]` в [tracks.md](./tracks.md)) — разборы в `roadmap/`: [stream-snapshot-dmg](./roadmap/stream-snapshot-dmg.md), [oplog-state-patch](./roadmap/oplog-state-patch.md). Путь данных экранов `stream` (F-110) решается в spec `dmg-ui` — [вход](./roadmap/dmg-ui-entry.md) §4.
+Кандидаты в треки (`[?]` в [tracks.md](./tracks.md)) — разборы в `roadmap/`: [oplog-state-patch](./roadmap/oplog-state-patch.md). Путь данных экранов `stream` (F-110) решается в spec `dmg-ui` — [вход](./roadmap/dmg-ui-entry.md) §4.
 
 ## Выполнено
 

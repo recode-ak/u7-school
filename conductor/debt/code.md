@@ -17,7 +17,7 @@
 - **Критерий снятия:** story получает id запроса (и след события в подписке) аргументом контракта, `BotRequestContext` и `UiEventContext` удалены
 
 ### C-DEBT-42: `call-uc` — ручной вход без общего устройства
-- **Место:** `scripts/call-uc.ts`
+- **Место:** `scripts/call-uc.ts`; с ним (признаком не ловится) `scripts/_app.ts` — сборка `U7App` для скриптов с `mode: 'development'` и школой `TEST_SCHOOL` (UC скриптов школу бота не используют)
 - **Признак:** `dbDir: 'data'`
 - **Корень:** `scripts/**`
 - **Причина:** `call-uc` — разовый вызов UC DMG (лог операций), со своим разбором аргументов и актором по умолчанию; `dbDir: 'data'` захардкожен — проверка на fixtures возможна только из временного каталога (запуск на живом `data/` дописывает строку в `oplog`). Назначение и порядок безопасной работы (бот остановлен, `backup`, `DB_DIR=./data/fixtures`) описаны только в шапке скрипта. Второй ручной вход — интерактивная консоль — вынесен в нерабочую заготовку `~/dev/tools/dmg/dmg-cli`; `call-uc` остаётся до готовности `dmg-cli`.
@@ -74,12 +74,11 @@
 
 ### C-DEBT-54: скрипты данных читают state через полный вход домена
 - **Место:**
-  - `scripts/stream-snapshot-sync.ts` — `StudentArDef.state` для строгого разбора `students.json`; погашает кандидат F-80 ([stream-snapshot-dmg](../roadmap/stream-snapshot-dmg.md)) — снимок через домен и UoW
   - `scripts/migrate-users-drop-student.ts` — `UserArDef.state` для проверки записей `users.json`; разовая миграция v0.3.0, удаляется после её выполнения на проде
 - **Признак:** `from '@u7-scl/domain/[a-z-]+'`
 - **Корень:** `scripts/**`
 - **Причина:** скрипты пишут файлы данных в обход UoW и сверяют записи схемой state агрегата, а её нет в `contract` (ARC-04, D-45 пакета). Отдельного исключения для `scripts/` нет: новый скрипт с полным входом модуля — долг без записи.
-- **Погашает:** кандидат F-80 ([stream-snapshot-dmg](../roadmap/stream-snapshot-dmg.md)) — `stream-snapshot-sync.ts`; `migrate-users-drop-student.ts` удаляется после выкатки v0.3.0 на prod (трек `revision-release_20261112`)
+- **Погашает:** `migrate-users-drop-student.ts` удаляется после выкатки v0.3.0 на prod (трек `revision-release_20261112`)
 - **Критерий снятия:** скрипты в `scripts/` берут модули только через `contract` или работают через корень сборки; признака нет
 
 ### C-DEBT-55: список ролей объявлен дважды
