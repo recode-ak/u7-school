@@ -13,7 +13,7 @@
 ## Фаза 1: Реестры долга (`conductor/debt/`)
 
 - [x] Task: S — разбор `conductor/architecture/debt.md` (DEBT, §6 TR) и `conductor/roadmap/test-bloat.md`: таблица «запись → реестр / закрыть / знание в `decisions.md` или гайд» `afe161d`
-- [x] Task: O — решения по спорным записям; `conductor/debt/README.md`: форматы `DEBT-n` / `T-DEBT-n` / `D-DEBT-n`, поле Триггер, «последний выданный ID», закрытие = удаление + коммит `закрыть <ID>`, разбор долга в конце трека и перед релизом `afe161d`
+- [x] Task: O — решения по спорным записям; `conductor/debt/README.md`: форматы `C-DEBT-n` / `T-DEBT-n` / `D-DEBT-n`, поле Триггер, «последний выданный ID», закрытие = удаление + коммит `закрыть <ID>`, разбор долга в конце трека и перед релизом `afe161d`
 - [x] Task: F — создать `conductor/debt/{code,tests,product}.md`, перенести открытые записи (закономерности test-bloat — в README) `afe161d` — перенёс orchestrator: 9 записей и 7 строк, промпт F дороже работы
 - [x] Task: O — перенести живое знание TR в `decisions.md`/гайды, удалить §6 `afe161d` — §6 уходит вместе с файлом в следующей задаче; ловушка `computeSourceHash` (TR-57) уже исправлена в коде, `askMatch` (TR-20) не ведётся
 - [x] Task: O — завести `D-DEBT` «точный анализ совместимости контракта и гейт» из [vision.md](../../architecture/vision.md) §9 (триггер — перед web-ui); пункт в `vision.md` сократить до ссылки на запись `afe161d`
@@ -27,6 +27,7 @@
 
 - [ ] Task: O — из журнала TR (TR-8) в пакет: публикация событий UoW в `finally` — исключение шины подменяет результат, повтор после `VERSION_CONFLICT` повторяет события (ER идемпотентны); при внешней шине — публикация вне `finally`. Проверить по коду пакета, записать в его документы или `debt.md`
 - [ ] Task: S (`dmg-tech-lead`) — бриф для репо пакета: сверка форматов `dmg-core/scripts/debt-check.ts` и `checkDebt`/`checkTempMarkers` проекта, API `dmg-core/arch`, набор `dmg-core/testing` (`TEST_TRACE`, `testUuid(n)`, выборки `MemoryRepo` по предикату, временный каталог с автоочисткой), `docs:impact`
+    - Префикс ID долга кода — параметр проверки: пакет — `DEBT-<n>`, проект — `C-DEBT-<n>` (README долга §2); голый `DEBT-<n>` в коде проекта — ошибка
 - [ ] Task: O — TDD в `~/dev/tools/dmg/dmg-core`: проверка трёх реестров и маркеров временности; хелперы testing; перенос сценариев старых тестов; `debt.md` пакета — на новую проверку
     - [ ] Тесты (red) → запуск → реализация (green)
 - [ ] Task: S (`documentarian`) — документы пакета по `docs:impact`
@@ -64,10 +65,10 @@
 - [ ] Task: O — крупное — вопросом Нурболату с вариантами; мелкое — сам; решения — `decisions.md`
 - [ ] Task: S/F — `wish`: фейк репозитория, перевод тестов UC/ER, правки по брифу
 - [ ] Task: S/F — `peer-review`: удалить `QuestionnaireModuleDef` из `dependsOn` и `peer-review-question-pool` (код, экспорт, тест), DQS — классы, фейки, перевод тестов, `dmg:sync`
-- [ ] Task: O — закрыть DEBT-40 (коммит `закрыть DEBT-40`), `dmg-reviewer`, CHANGELOG `[0.3.1]`; **стоп: тег и выкатка — с подтверждения Нурболата**
+- [ ] Task: O — закрыть C-DEBT-40 (коммит `закрыть C-DEBT-40`), `dmg-reviewer`, CHANGELOG `[0.3.1]`; **стоп: тег и выкатка — с подтверждения Нурболата**
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 
-**Критерии:** у `peer-review` нет зависимости от `questionnaire`; у обоих модулей `*.repo.fake.ts`, тесты UC/ER без JSON во временном каталоге; DEBT-40 нет; e2e бота зелёные, поведение не изменилось; удалённые тесты `question-pool` — в `summary.md`.
+**Критерии:** у `peer-review` нет зависимости от `questionnaire`; у обоих модулей `*.repo.fake.ts`, тесты UC/ER без JSON во временном каталоге; C-DEBT-40 нет; e2e бота зелёные, поведение не изменилось; удалённые тесты `question-pool` — в `summary.md`.
 
 ## Фаза 6: Roadmap, документация, архив
 

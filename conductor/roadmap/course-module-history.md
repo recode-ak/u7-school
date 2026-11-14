@@ -13,7 +13,7 @@
 - **Клиент спрашивает, курс разруливает** (D-65). Контракты UC для клиентов — вопросы к `course`: пререквизит `GetModulePrerequisite` (вердикт `admitted` по пройденным id), `GetSameModules`, `GetCourseEnrollment`/`GetModuleEnrollment`, `GetCoursesIncludingModule`, `GetCoursesStartingWithModule`. Клиенты (`stream`, `wish`) не сравнивают id сами. Реализация пока — равенство id, поэтому трек истории меняет только `course`, клиенты остаются без изменений.
 - **Этап — метка программы** (D-64, `moduleIds` + `phases[].fromModuleId`), `get-course` отдаёт вычисленные `stages`. В [content-management.md](./content-management.md) старая форма `phase.moduleIds` (§3.1, §3.6) помечена как устаревшая — при создании трека привести к новой модели.
 - **Операций автора нет.** 9 authoring-команд, `get-course-program` и `resolve-content-path` удалены без вызывающих; у `CourseAr` нет мутаций, весь `course` — query-UC. Операции автора (fork, publish-replace, archive) трек пишет с нуля на Def.
-- **Правило «курс модуля» в двух ветках** — DEBT-50 (`ModuleCoursesDqs`: `firstIncluding` / `firstPublishedIncluding`, порядок файла). Погашает этот трек вместе с архивацией курсов.
+- **Правило «курс модуля» в двух ветках** — C-DEBT-50 (`ModuleCoursesDqs`: `firstIncluding` / `firstPublishedIncluding`, порядок файла). Погашает этот трек вместе с архивацией курсов.
 
 ## 3. Состав трека (основа — [content-management.md](./content-management.md) §3.2–3.7)
 

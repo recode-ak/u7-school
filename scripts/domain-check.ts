@@ -4,7 +4,7 @@
  *   bun run arch:check
  *
  * Чистые функции над файлами в памяти; чтение диска — в `readDomainFiles`.
- * Долг: allowlist `conductor/debt/code.md`; в коде `DEBT-<n>` — только в `biome-ignore`;
+ * Долг: allowlist `conductor/debt/code.md`; в коде `C-DEBT-<n>` — только в `biome-ignore`;
  * маркеры временности («Временное решение», «ВРЕМЕННЫЙ», «Уходит с миграцией») — только в Месте открытой записи.
  */
 import { posix } from 'node:path';
@@ -230,13 +230,13 @@ interface DebtEntry {
 }
 
 const HEADING = /^#{1,3}\s/;
-const DEBT_HEADING = /^###\s+(DEBT-\d+)\b(.*)$/;
-const MERGED = /слит в (DEBT-\d+)/;
+const DEBT_HEADING = /^###\s+(C-DEBT-\d+)\b(.*)$/;
+const MERGED = /слит в (C-DEBT-\d+)/;
 const FIELD = /^- \*\*([^*]+):\*\*(.*)$/;
 const SUB_ITEM = /^ {2}- (.*)$/;
 const FENCE = /^\s*```/;
 const TICK = /^`([^`]+)`\s*,?\s*/;
-const DEBT_ID = /\bDEBT-\d+\b/g;
+const DEBT_ID = /\b(?:C-)?DEBT-\d+\b/g;
 // Фразы, а не слово «временный»; `\b` для кириллицы не работает, «ВРЕМЕННЫЙ» — только заглавными.
 const TEMP_MARKERS = [/временное решение|уходит с миграцией/gi, /ВРЕМЕННЫЙ/g];
 
@@ -248,7 +248,7 @@ class DebtRegistry {
   ) {}
 
   /**
-   * Разбор: запись — заголовок `### DEBT-<n>` до следующего заголовка; блоки
+   * Разбор: запись — заголовок `### C-DEBT-<n>` до следующего заголовка; блоки
    * кода ``` пропускаются. Место — glob'ы в бэктиках в начале строки поля или
    * пунктов первого уровня под ним до пустой строки (после glob'ов —
    * пояснение); Признак и Корень — первый токен в бэктиках.
@@ -364,7 +364,7 @@ class DebtRegistry {
   }
 
   /**
-   * `DEBT-<n>` в коде: ID открытой записи и только в строке `biome-ignore`.
+   * `C-DEBT-<n>` в коде: ID открытой записи и только в строке `biome-ignore`.
    * Переходный режим допускает ID открытой записи вне `biome-ignore`.
    */
   private checkIds(
@@ -415,7 +415,7 @@ class DebtRegistry {
 /**
  * Сверка кода с реестром долга `conductor/debt/code.md` (allowlist): у каждой открытой
  * записи признак есть в каждом glob Места и нет в Корне вне Места;
- * `DEBT-<n>` в коде — только в `biome-ignore` (`strict`).
+ * `C-DEBT-<n>` в коде — только в `biome-ignore` (`strict`).
  */
 export function checkDebt(input: {
   code: readonly DomainFile[];

@@ -105,7 +105,7 @@ Reviewer вместо «Сделано» даёт таблицу замечан�
 ### Документы и эталоны проекта
 
 - Spec и план трека — `conductor/tracks/<track>/{spec,plan}.md`, бриф среза — `conductor/tracks/<track>/slices/<slice>.md`. План готовится в `conductor-newtrack`, брифы — в `conductor-implement` в начале фазы; конвейер ролей — `conductor/architecture/agents.md` §3, стратегические вопросы — §9.
-- Проектные документы — `conductor/architecture/`: `naming.md` (раскладка монорепо), `migration.md` (история перехода, чек-лист релиза); долг — `conductor/debt/` (`README.md` — правила и форматы реестров, `code.md` — `DEBT-<n>`: Место, Признак, Корень).
+- Проектные документы — `conductor/architecture/`: `naming.md` (раскладка монорепо), `migration.md` (история перехода, чек-лист релиза); долг — `conductor/debt/` (`README.md` — правила и форматы реестров, `code.md` — `C-DEBT-<n>`: Место, Признак, Корень).
 - Эталон проекта — модуль `wish` (`domain/src/wish`, `modules/wish/src`); образец брифа — `conductor/archive/golden-wish_20261020/slices/wish.md`.
 - Эталон поведения при переносе — релиз в worktree `../u7-school-v0.2.6` (только чтение).
 - Репо пакета `dmg-core` — `~/dev/tools/dmg/dmg-core` (GitHub `recode-ak/dmg-core`); версия у потребителя — тег `#vX.Y.Z` в `package.json`.

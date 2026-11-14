@@ -37,7 +37,7 @@
 - **Погашает:** трек `pre-dmg-ui-cleanup`, Ф4
 
 ### T-DEBT-6: фикстура «долг вне Места» повторена в тестах проверок
-- **Файлы:** `scripts/domain-check.test.ts` — фикстура `DEBT-2` (≈ строки 527–543)
+- **Файлы:** `scripts/domain-check.test.ts` — фикстура `C-DEBT-2` (≈ строки 527–543)
 - **Дублирует:** `scripts/arch-check.test.ts` и `runDebtCheck`
 - **Решение:** оставить одну проверку при переносе проверки долга в `dmg-core`
 - **Погашает:** трек `pre-dmg-ui-cleanup`, Ф2

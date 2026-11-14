@@ -84,7 +84,7 @@ async function readAppSources(root: string): Promise<DomainFile[]> {
 
 /**
  * Сверка кода с реестром долга `conductor/debt/code.md` (allowlist, `checkDebt`). Строгий
- * режим: `DEBT-<n>` в коде допустим только в `biome-ignore`.
+ * режим: `C-DEBT-<n>` в коде допустим только в `biome-ignore`.
  */
 export async function runDebtCheck(root = '.'): Promise<string[]> {
   return checkDebt({

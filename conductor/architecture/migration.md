@@ -57,7 +57,7 @@ Legacy-кода нет. Осталось — с владельцами в [ре�
 
 - Схемы с `F.timestamp` читают ISO-строку и число, пишут число — данные мигрируют лениво до трека 7 (`timestamp-data`); тесты и комментарии «legacy-запись» в репозиториях — про формат данных, не про код.
 - `@u7-scl/core` — только `ui` и `shared`; кандидат на удаление при переводе UI в `dmg-ui`.
-- `call-uc` — ручной вход до `dmg-cli` (DEBT-42).
+- `call-uc` — ручной вход до `dmg-cli` (C-DEBT-42).
 - `throw*` для штатных отказов — аудит в `summary.md` трека `legacy-removal` (исправление — отдельно).
 
 ## 5. Критерий завершения
@@ -72,19 +72,19 @@ Legacy-кода нет. Осталось — с владельцами в [ре�
 
 - **Все модули на Def (DMG):** `wish` (эталон, гайды — [guides/](../../node_modules/dmg-core/docs/guides/index.md)), `peer-review`, `stream`, `questionnaire`, `course`, `user`, `dossier` (пустой модуль без поведения — `modules/dossier/README.md`). Детали — `summary.md` треков в `conductor/archive/` (`golden-wish`, `peer-review-dmg`, `stream-dmg`, `questionnaire-dmg`, `course-dmg`, `user-dmg`, `legacy-removal`).
 - **Корень сборки (D-50, D-52):** `@u7-scl/app` (`platform/app`) — `U7App` по `AppEnv`: `AppContext` DMG, модули через `ApiApp` пакета, одна шина DMG, планировщик Job пакета (D-71 пакета), резолвер `Caller` (`U7CallerResolver`, субъект `UserAr`); `school/` — конфигурация школы, `infra/` — файловые адаптеры портов пакета. Раннер `u7-bot` и `scripts/` получают приложение из `U7App`.
-- **Граф `dependsOn`** строится из `ModuleDef` (`scripts/domain-arch.ts`); `arch:check` сверяет код с реестром [code.md](../debt/code.md); отдельного журнала тактических решений нет — знание идёт в `decisions.md`, временный код — в запись `DEBT-<n>` (в код не пишется).
+- **Граф `dependsOn`** строится из `ModuleDef` (`scripts/domain-arch.ts`); `arch:check` сверяет код с реестром [code.md](../debt/code.md); отдельного журнала тактических решений нет — знание идёт в `decisions.md`, временный код — в запись `C-DEBT-<n>` (в код не пишется).
 
 ### Входной долг для следующих треков
 
 | Владелец | Долги |
 |---|---|
 | трек 7 `timestamp-data` | строковые даты в данных, «чтение строки» в схемах |
-| трек `schools-system` | первый администратор новой школы — D-DEBT-1 |
-| по мере касания | тесты UC/ER/Job на JSON во временном каталоге — DEBT-40; чтение `students.json` один раз на UoW |
-| трек «История модулей курса» | одно правило «курс модуля» — DEBT-50 |
-| при росте каталога | два вызова на модуль в карточке курса — DEBT-51 |
-| `ui-manifests` / `dmg-ui` | id апдейта Telegram неявным контекстом — DEBT-41; `@u7-scl/core` (`ui`, `shared`) |
-| `dmg-cli` | `call-uc` — DEBT-42 |
+| трек `schools-system` | первый администратор новой школы — bootstrap школы ([schools-system](../roadmap/schools-system.md), вопрос 7) |
+| по мере касания | тесты UC/ER/Job на JSON во временном каталоге — C-DEBT-40; чтение `students.json` один раз на UoW |
+| трек «История модулей курса» | одно правило «курс модуля» — C-DEBT-50 |
+| при росте каталога | два вызова на модуль в карточке курса — C-DEBT-51 |
+| `ui-manifests` / `dmg-ui` | id апдейта Telegram неявным контекстом — C-DEBT-41; `@u7-scl/core` (`ui`, `shared`) |
+| `dmg-cli` | `call-uc` — C-DEBT-42 |
 
 ### Итог ревизии (`revision-release_20261112`, 2026-11-14)
 

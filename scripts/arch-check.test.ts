@@ -59,7 +59,7 @@ describe('arch:check domain', () => {
 
 describe('runDebtCheck: реестр долга как allowlist', () => {
   const REGISTRY = [
-    '### DEBT-1: импорты `@u7-scl/core` в домене',
+    '### C-DEBT-1: импорты `@u7-scl/core` в домене',
     '- **Место:** `domain/src/user/**`',
     "- **Признак:** `from '@u7-scl/core`",
     '- **Корень:** `domain/src/**`',
@@ -74,13 +74,13 @@ describe('runDebtCheck: реестр долга как allowlist', () => {
         await writeFile(join(root, path), text);
       };
       await put(DEBT_MD_PATH, REGISTRY);
-      await put('domain/src/user/a.ts', `${CORE}// DEBT-1\n`);
+      await put('domain/src/user/a.ts', `${CORE}// C-DEBT-1\n`);
       await put('domain/src/course/b.ts', CORE);
-      await put('domain/src/course/c.ts', '// DEBT-9\n');
+      await put('domain/src/course/c.ts', '// C-DEBT-9\n');
       expect(await runDebtCheck(root)).toEqual([
-        'DEBT: DEBT-1: долг без записи — domain/src/course/b.ts:1',
-        'DEBT: domain/src/course/c.ts:1: DEBT-9 — нет записи в conductor/debt/code.md',
-        'DEBT: domain/src/user/a.ts:2: DEBT-1 вне biome-ignore',
+        'DEBT: C-DEBT-1: долг без записи — domain/src/course/b.ts:1',
+        'DEBT: domain/src/course/c.ts:1: C-DEBT-9 — нет записи в conductor/debt/code.md',
+        'DEBT: domain/src/user/a.ts:2: C-DEBT-1 вне biome-ignore',
       ]);
     } finally {
       await rm(root, { recursive: true, force: true });
