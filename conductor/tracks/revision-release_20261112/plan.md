@@ -173,7 +173,7 @@
     - [x] бэкапы и откат (только из снимка — v0.2.6 новый формат не прочтёт)
     - [x] diff env относительно v0.2.6; остатки старых каталогов `apps` и `packages`; `deploy.sh`
 - [x] Task: orchestrator: ссылка из `migration.md` §6 на `rollout.md`, синхронизация чек-листа `690410be`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
 **Критерии приёмки Фазы 6:**
 - Разделы порядок / миграции / бэкапы / откат / env / остатки на месте.
