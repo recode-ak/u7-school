@@ -92,13 +92,13 @@
 
 > Старт — новая сессия. v0.3.0 и v0.3.1 на prod (2026-11-14); трек ревизии уже в архиве в виде `spec.md` + `summary.md`, уроки выкатки — README, «Деплой».
 
-- [ ] Task: S — таблица по `roadmap.md` и `roadmap/`: упростить / удалить / в долг / во вход dmg-ui; знание уже в `decisions.md`?
-- [ ] Task: O — переписать `roadmap.md` и дочерние как видение (функционал, взаимодействие модулей, опорные `D-NN`, контуры решений); последовательность: `timestamp-data` (v0.3.2), delegation, dmg-ui (+ ui-manifests), dmg-cli
-- [ ] Task: O — `migration.md` в архив, состояние — `architecture/index.md`; `agents.md` §9 и автономный режим в `workflow.md` → режим после релиза; правило архива — в скилл `conductor-docs` и `workflow.md`
-- [ ] Task: S — по каждому треку архива: живое в plan/slices/брифах → список переноса
-- [ ] Task: O — перенос знания по списку
-- [ ] Task: S — архив к виду `spec.md` + `summary.md`; `scripts/repo-layout.test.ts` и ссылки на удалённое
-- [ ] Task: S (`documentarian`) — проход по документам `dmg-core`
+- [x] Task: S — таблица по `roadmap.md` и `roadmap/`: упростить / удалить / в долг / во вход dmg-ui; знание уже в `decisions.md`? `57707136` — таблица в `summary.md`
+- [x] Task: O — переписать `roadmap.md` и дочерние как видение (функционал, взаимодействие модулей, опорные `D-NN`, контуры решений); последовательность: `timestamp-data` (v0.3.2), delegation, dmg-ui (+ ui-manifests), dmg-cli `56e95cba` — 3376 → 847 строк, 9 файлов удалены; черновики дочерних — Sonnet в scratchpad, приёмка orchestrator
+- [x] Task: O — `migration.md` в архив, состояние — `architecture/index.md`; `agents.md` §9 и автономный режим в `workflow.md` → режим после релиза; правило архива — в скилл `conductor-docs` и `workflow.md` `da8351f6` — план перехода — приложением к summary `legacy-removal`
+- [x] Task: S — по каждому треку архива: живое в plan/slices/брифах → список переноса `57707136` — 4 агента; живое — в 3 треках из 152
+- [x] Task: O — перенос знания по списку `da8351f6`, `dmg-core@1882e11` — задание пилота в `research/`, образец брифа → `agents.md` §5, ловушка `updatedAt` — гайд `aggregate` пакета (в `main` без тега)
+- [x] Task: S — архив к виду `spec.md` + `summary.md`; `scripts/repo-layout.test.ts` и ссылки на удалённое `6d70c144` — orchestrator скриптом (промпт дороже работы): 536 файлов, 133 ссылки; страж «только spec/summary» в `repo-layout.test.ts`
+- [x] Task: S (`documentarian`) — проход по документам `dmg-core` `dmg-core@72bdf0a` — 4 правки (RELEASING, `verified` двух концепций); `docs:covers` без warn
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
 **Критерии:** `find conductor/archive -type f ! -name spec.md ! -name summary.md` пуст; у каждой инициативы `roadmap.md` — ссылка на `D-NN`; ссылок на удалённые файлы нет; `check` и `docs:check` пакета зелёные.
