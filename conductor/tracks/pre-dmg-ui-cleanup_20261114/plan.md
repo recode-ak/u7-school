@@ -10,7 +10,7 @@
 - [x] Task: Зафиксировать базовые счётчики повторов в тестах (`Trace.fromRequest({ requestId` 46, `mkdtemp` 50, `repoWith` 11, `press` 11, `buttonsOf`/`findBtn` 9, `waitMessageFor`/`waitUntil` 11, `makeLogger` 5, `subHandler` 4, `makeUiApp` 5) — команды grep и числа в `summary.md` `596252e`
 - [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
-## Фаза 1: Реестры долга (`conductor/debt/`)
+## Фаза 1: Реестры долга (`conductor/debt/`) [checkpoint: fc388fc]
 
 - [x] Task: S — разбор `conductor/architecture/debt.md` (DEBT, §6 TR) и `conductor/roadmap/test-bloat.md`: таблица «запись → реестр / закрыть / знание в `decisions.md` или гайд» `afe161d`
 - [x] Task: O — решения по спорным записям; `conductor/debt/README.md`: форматы `C-DEBT-n` / `T-DEBT-n` / `D-DEBT-n`, поле Триггер, «последний выданный ID», закрытие = удаление + коммит `закрыть <ID>`, разбор долга в конце трека и перед релизом `afe161d`
@@ -19,7 +19,7 @@
 - [x] Task: O — завести `D-DEBT` «точный анализ совместимости контракта и гейт» из [vision.md](../../architecture/vision.md) §9 (триггер — перед web-ui); пункт в `vision.md` сократить до ссылки на запись `afe161d`
 - [x] Task: F — ссылки по ФР-3а (`AGENTS.md`, `.agents-core/` → `agents:sync`, `.pi/skills/`, `CHANGELOG.md`, код, `conductor/`); удалить `architecture/debt.md`, `roadmap/test-bloat.md` `4c819be`
 - [x] Task: O — ревью фазы `4c819be` — diff документов прочитан, хвосты (закрытые ID, висячие «С1») доправлены
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 **Критерии:** `check` зелёный (проверка пока старая, на новых путях); в реестрах только открытый долг, у каждой записи владелец или Триггер, есть «последний выданный ID»; grep старых путей и `TR-[0-9]` вне `archive/` и `revision-release_20261112` пуст; число тестов не изменилось.
 
