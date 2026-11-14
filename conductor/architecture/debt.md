@@ -236,7 +236,7 @@
 - **Трек / фаза:** `golden-wish`, Ф6–7
 - **Контекст:** legacy `getByUserAndTarget` выбирал среди желаний пользователя на цель «активное последнее созданное, иначе последнее» — решение в хранилище (API-03). Его зовут `cancel-wish` и ER `confirm`/`abandon`, которые остаются legacy-классами до Ф9–11.
 - **Решение:** порт `WishRepo.findCurrentByUserAndTarget` сохраняет выбор как есть (метод-вопрос Ar `isActive`); `WishAr` возвращается, `snapshot()` нужен репозиторию только для сортировки по `createdAt`. Резолвер `WishApiModuleResolver` (DEBT-22) переехал в `modules/wish/src/wish/wish.resolver.ts` — домен не импортирует порт прикладного слоя; подпуть `@u7-scl/wish/wish`.
-- **Пересмотреть:** в Ф9–11 выбор уходит из репозитория (UC/ER получают `findAllByUserAndTarget` и решают через Ar или доменное правило); резолвер заменяет `WishModuleDef` (Ф12).
+- **Пересмотреть:** ~~в Ф9–11 выбор уходит из репозитория~~ — закрыто (`revision-release`, Ф5.6, F-70): `WishRepo.findCurrentByUserAndTarget` удалён, `CancelWishUc` грузит `findAllByUserAndTarget` и выбирает `WishAr.latest`; резолвер заменяет `WishModuleDef` (Ф12).
 - **Ограничения до Ф8–11 (ревью Ф6–7):** `markStored()` зовёт только UoW — legacy-UC/ER, вызывающие `save` сами, не могут сохранить один экземпляр Ar дважды (второй `save` — `VersionConflict`; сейчас повторных нет). ER `fulfill-wish`, `invite-wishers` читают поля через `ar.snapshot()` и ветвятся по ним (как legacy, против D-39) — уходит вместе с переводом на `ReactionFromDef`.
 
 ### TR-8: решения по ревью Ф6–7 (платформа и правила)
@@ -609,7 +609,7 @@
   - долг С2 — DEBT-50;
   - дубли тестов (UC ↔ DQS/Ar) почищены в срезе (TST-08), журнал — [summary.md](../archive/course-dmg_20261105/summary.md) трека;
   - не сделано: общая схема `versionOut` для четырёх Ar `course` — форма, не поведение; к сборке (Ф5) или треку чистки; экспорт `CourseProgramInvariant` для тестовых миров — разрешён брифом.
-- **Пересмотреть:** CODE-04 (ссылки на фазы и ID брифа в комментариях) повторяется с Ф1 — кандидат в машинную проверку; `versionOut` — Ф5.
+- **Пересмотреть:** CODE-04 (ссылки на фазы и ID брифа в комментариях) повторяется с Ф1 — кандидат в машинную проверку; ~~`versionOut` — Ф5~~ — закрыто (`revision-release`, Ф5.6, F-71): `VersionOut` в `domain/src/course/version-out.ts`.
 
 ### TR-59: UI курса по этапам и судьба тестов бота (`course-dmg`, Ф4)
 - **Трек / фаза:** `course-dmg`, Ф4 (бриф `slices/ui.md`; решения Нурболата 2026-11-11 и orchestrator)
@@ -729,4 +729,4 @@
   - `rules.md` — привязка ARC-01/04/07/10 без legacy; ссылки ER в `roadmap/tasks-system-*` — на гайд пакета `event-reaction.md`.
   - **Релиз — после ревизии, не после критерия `migration.md` §5** (Нурболат, 2026-11-12): трек 7 `timestamp-data` — после релиза (до выкатки `v0.2.6` пишет ISO), пограничные `throw*` — по мере касания; кандидат `contract-audit` отдельным треком не создаётся — его остаток вошёл в ревизию (`migration.md` §6).
   - Аудит не исправляется в треке (spec «За рамками»): штатный отказ `create-ui-app.ts:102` (гость без `/start` не получает ответа) и пробел ERR-01 в `biome.json` (не охватывает `modules/*/src`) — на ревизию.
-- **Пересмотреть:** на ревизии — `actorResolver` и гость; `includes` ERR-01; пограничные места аудита.
+- **Пересмотреть:** ~~на ревизии — `actorResolver` и гость; `includes` ERR-01; пограничные места аудита~~ — закрыто (`revision-release`, Ф5): гость — F-40, `includes` — F-50, `scope-reviews` и `ensure-registered` — F-45, F-46, дубль ключа в репозиториях `peer-review` — `VersionConflict` (F-73).

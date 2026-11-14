@@ -4,7 +4,11 @@ import {
   type ReviewFilter,
   type ReviewState,
 } from '@u7-scl/domain/peer-review';
-import { type StoredRecord, VersionedRepository } from 'dmg-core/app';
+import {
+  type StoredRecord,
+  VersionConflict,
+  VersionedRepository,
+} from 'dmg-core/app';
 import * as v from 'valibot';
 import type { ReviewRepo } from '../review/review.repo';
 
@@ -18,7 +22,8 @@ const Rows = v.array(ReviewArDef.state);
  * не перезаписывается. Запись — под замком.
  *
  * Пара (кампания, автор, адресат) уникальна: штатный повтор — перезапись
- * того же агрегата, дубль с другим uuid — инвариант хранилища, он бросает.
+ * того же агрегата, дубль с другим uuid — гонка двух создателей, оба прошли
+ * правило `unique`, — `VersionConflict` (UoW вернёт `VERSION_CONFLICT`).
  */
 export class ReviewJsonRepo
   extends VersionedRepository<ReviewAr>
@@ -95,9 +100,7 @@ export class ReviewJsonRepo
           r.recipientId === state.recipientId,
       )
     ) {
-      throw new Error(
-        `[ReviewJsonRepo] Отзыв пары (campaignId=${state.campaignId}, authorId=${state.authorId}, recipientId=${state.recipientId}) уже существует`,
-      );
+      throw new VersionConflict(this.aggregate, ar.uuid);
     }
     others.push(state);
     await Bun.write(this.filePath, JSON.stringify(others, undefined, 2));

@@ -29,10 +29,11 @@ export class CancelWishUc extends UseCaseFromDef<
   /** Текущее желание субъекта на цель; нет желания — `WISH_NOT_FOUND`. */
   protected async load(target: Input, caller: Caller<Identified>) {
     const userId = this.subject(caller).uuid;
-    const wish = await this.resolve.wishes.findCurrentByUserAndTarget(
+    const wishes = await this.resolve.wishes.findAllByUserAndTarget(
       userId,
       target,
     );
+    const wish = WishAr.latest(wishes);
     if (wish) return ok({ wish });
     return err(WishAr.notFoundFor(userId, target));
   }

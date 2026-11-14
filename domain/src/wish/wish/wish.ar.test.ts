@@ -476,3 +476,33 @@ describe('WishAr.current — активное желание пользоват�
     expect(WishAr.current(list(), USER, target)).toBeUndefined();
   });
 });
+
+// Выбор «текущего» — решение домена, а не хранилища (TR-7): среди активных —
+// последнее созданное, иначе последнее созданное из всех.
+describe('WishAr.latest — последнее желание, активные в приоритете', () => {
+  const wish = (status: WishStatus, createdAt: number): WishAr =>
+    WishAr.restore({ ...stored(status), uuid: crypto.randomUUID(), createdAt });
+
+  it('нет желаний — нет текущего', () => {
+    expect(WishAr.latest([])).toBeUndefined();
+  });
+
+  it('активных нет — последнее созданное из всех', () => {
+    const older = wish('cancelled', T0);
+    const newer = wish('abandoned', T1);
+    expect(WishAr.latest([newer, older])).toBe(newer);
+  });
+
+  it('активное предпочитается более позднему неактивному', () => {
+    const active = wish('confirmed', T0);
+    const cancelled = wish('cancelled', T1);
+    expect(WishAr.latest([cancelled, active])).toBe(active);
+  });
+
+  it('несколько активных — последнее созданное', () => {
+    const first = wish('expressed', T0);
+    const middle = wish('pending', T1);
+    const last = wish('confirmed', T1 + 1);
+    expect(WishAr.latest([middle, last, first])).toBe(last);
+  });
+});

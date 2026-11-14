@@ -1,6 +1,7 @@
 /**
  * Контракт модуля course: вход для других модулей (D-42) — определения UC
- * через фасад `Facade<typeof CourseModuleDef>` (D-43) и общие типы снимка.
+ * через фасад `Facade<typeof CourseModuleDef>` (D-43), общие типы и схемы
+ * снимка; Ar, Policy и DQS — по нужде зависимых (D-45, D-69).
  */
 export type { ContentSnapshot } from './content-snapshot';
 export { ContentSnapshotVo } from './content-snapshot';

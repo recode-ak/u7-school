@@ -1,13 +1,13 @@
 /**
  * Контракт модуля peer-review: паспорт, Def операций кампаний, события и
- * ошибки. Ar, Policy, Rules, DQS, ArDef и схемы entity сюда не входят.
+ * ошибки; Ar, Policy и DQS — по нужде зависимых (D-45, D-69).
  */
 export { PeerReviewModuleDef } from './peer-review.module';
 export { ReviewErrors } from './review/review.errors';
 /** Кто: подписчик уведомления адресату (story бота). Зачем: событие первой записи отзыва. */
 export { ReviewEvents } from './review/review.events';
-/** Кто: stories и тесты бота. Зачем: направление, фильтр и снимки отзывов. */
-export type { ReviewDirection, ReviewState } from './review/review.state';
+/** Кто: stories и тесты бота. Зачем: направление отзывов и их снимки. */
+export type { ReviewDirection } from './review/review.state';
 export type {
   RecipientReviewsGroup,
   ReviewFilter,

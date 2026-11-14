@@ -1,7 +1,7 @@
 /**
  * Факт о студенте потока для домена потока: чужой агрегат (студент)
- * отвечает за исход, поток спрашивает только итог. Строит порт
- * `StreamStudents` прикладного слоя.
+ * отвечает за исход, поток спрашивает только итог. Строит UC
+ * `complete-stream.uc.ts` прикладного слоя через `StreamMembersDqs`.
  */
 export type StreamStudentFact = {
   readonly studentId: string;

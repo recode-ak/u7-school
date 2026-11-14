@@ -246,6 +246,21 @@ export class WishAr extends Aggregate<typeof WishArDef> {
     );
   }
 
+  /**
+   * Последнее желание из загруженных (отмена): среди активных — последнее созданное,
+   * иначе последнее созданное из всех; пусто — `undefined`. Фильтр по
+   * пользователю и цели — у выборки (`findAllByUserAndTarget`), метод его не
+   * повторяет.
+   */
+  static latest(wishes: readonly WishAr[]): WishAr | undefined {
+    const active = wishes.filter((wish) => wish.isActive());
+    const pool = active.length > 0 ? active : wishes;
+    if (pool.length === 0) return undefined;
+    return pool.reduce((latest, wish) =>
+      wish.state.createdAt > latest.state.createdAt ? wish : latest,
+    );
+  }
+
   // ── Вопросы ──
 
   /** Активно ли желание (expressed | pending | confirmed) — занимает ли цель. */

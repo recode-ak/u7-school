@@ -12,16 +12,6 @@ export type WishRepo = Repository<WishAr> & {
     target: WishTargetVo,
   ): Promise<WishAr[]>;
 
-  /**
-   * Текущее желание пользователя по цели: среди активных — последнее
-   * созданное, иначе последнее созданное из остальных.
-   * TR: выбор «текущего» — решение, а не хранение; уйдёт из репозитория (Ф9–11).
-   */
-  findCurrentByUserAndTarget(
-    userId: string,
-    target: WishTargetVo,
-  ): Promise<WishAr | undefined>;
-
   /** Все желания пользователя. */
   findByUser(userId: string): Promise<WishAr[]>;
 

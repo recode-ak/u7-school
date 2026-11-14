@@ -1,5 +1,6 @@
 import { Aggregate, AggregateDef } from 'dmg-core';
 import * as v from 'valibot';
+import { VersionOut } from '../version-out';
 import { CourseErrors } from './course.errors';
 import {
   CourseProgramInvariant,
@@ -28,19 +29,6 @@ export const CourseArDef = AggregateDef.define({
   events: {},
   errors: CourseErrors,
 });
-
-/**
- * Версия в представлении обязательна: клиент сверяет её при записи, а в state
- * поле необязательно — legacy-запись читается как версия 0 (D-36).
- * Своя схема, а не `BaseEntityFields.version`: `nonOptional` в JSON Schema
- * выхода не выражается (MAN-03).
- */
-const versionOut = v.pipe(
-  v.number(),
-  v.integer(),
-  v.minValue(0),
-  v.description('Версия сущности (оптимистичная блокировка)'),
-);
 
 /** Этап курса: заголовок, необязательный трек и срез программы. */
 export const CourseStage = v.object({
@@ -74,7 +62,7 @@ export const CourseView = v.object({
   ),
   createdAt: CourseState.entries.createdAt,
   updatedAt: CourseState.entries.updatedAt,
-  version: versionOut,
+  version: VersionOut,
 });
 
 export type CourseView = v.InferOutput<typeof CourseView>;

@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ReviewAr, type ReviewState } from '@u7-scl/domain/peer-review';
+import { VersionConflict } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import {
@@ -93,12 +94,14 @@ describe('ReviewJsonRepo: save и поиск', () => {
     expect(await raw('overwrite.json')).toHaveLength(1);
   });
 
-  test('дубль пары (кампания, автор, адресат) с другим uuid — save бросает, файл не изменён', async () => {
+  test('дубль пары (кампания, автор, адресат) с другим uuid — VersionConflict, файл не изменён', async () => {
     const repo = new ReviewJsonRepo(path('unique-pair.json'));
     await repo.save(make({ uuid: R(1) }));
     const before = await Bun.file(path('unique-pair.json')).text();
 
-    await expect(repo.save(make({ uuid: R(2) }))).rejects.toThrow();
+    await expect(repo.save(make({ uuid: R(2) }))).rejects.toBeInstanceOf(
+      VersionConflict,
+    );
 
     expect(await Bun.file(path('unique-pair.json')).text()).toBe(before);
   });

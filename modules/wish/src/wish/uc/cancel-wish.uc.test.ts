@@ -128,11 +128,11 @@ describe('CancelWishUc', () => {
     const authorId = crypto.randomUUID();
     await seed('expressed', courseTarget, authorId);
     const foreign = new (class extends WishJsonRepo {
-      override findCurrentByUserAndTarget(
+      override findAllByUserAndTarget(
         _userId: string,
         target: WishTargetVo,
-      ): Promise<WishAr | undefined> {
-        return super.findCurrentByUserAndTarget(authorId, target);
+      ): Promise<WishAr[]> {
+        return super.findAllByUserAndTarget(authorId, target);
       }
     })(file);
 

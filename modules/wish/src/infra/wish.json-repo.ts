@@ -51,21 +51,6 @@ export class WishJsonRepo
     );
   }
 
-  async findCurrentByUserAndTarget(
-    userId: string,
-    target: WishTargetVo,
-  ): Promise<WishAr | undefined> {
-    const matches = await this.findAllByUserAndTarget(userId, target);
-    // При равных createdAt порядок записей недетерминирован, поэтому
-    // сначала сужаем выборку до активных желаний (релевантных для
-    // потребителей: отмена, экран W04, ER-реакции), и только среди
-    // них берём последнее созданное.
-    const active = matches.filter((w) => w.isActive());
-    const pool = active.length > 0 ? active : matches;
-    pool.sort((a, b) => b.snapshot().createdAt - a.snapshot().createdAt);
-    return pool[0];
-  }
-
   async findByUser(userId: string): Promise<WishAr[]> {
     return this.where((r) => r.userId === userId);
   }

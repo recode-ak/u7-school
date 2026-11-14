@@ -6,6 +6,7 @@ import {
   ReviewCampaignAr,
   type ReviewCampaignState,
 } from '@u7-scl/domain/peer-review';
+import { VersionConflict } from 'dmg-core/app';
 import { expectOk } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import { campaign, IDS, T0 } from '../review-campaign/review-campaign.fixture';
@@ -93,12 +94,12 @@ describe('ReviewCampaignJsonRepo: save и поиск', () => {
     expect(await repo.findBySubject(IDS.scope2, IDS.alice)).toBeUndefined();
   });
 
-  test('дубль ключа (scopeId, subjectId) с другим uuid — save бросает, файл не изменён', async () => {
+  test('дубль ключа (scopeId, subjectId) с другим uuid — VersionConflict, файл не изменён', async () => {
     const repo = new ReviewCampaignJsonRepo(path('unique.json'));
     await repo.save(make());
     const before = await Bun.file(path('unique.json')).text();
 
-    await expect(repo.save(make())).rejects.toThrow();
+    await expect(repo.save(make())).rejects.toBeInstanceOf(VersionConflict);
 
     expect(await Bun.file(path('unique.json')).text()).toBe(before);
   });

@@ -1,5 +1,6 @@
 import { Aggregate, AggregateDef } from 'dmg-core';
 import * as v from 'valibot';
+import { VersionOut } from '../version-out';
 import { StepErrors } from './step.errors';
 import {
   StepCodeState,
@@ -28,24 +29,11 @@ export const StepArDef = AggregateDef.define({
   errors: StepErrors,
 });
 
-/**
- * Версия в представлении обязательна: клиент сверяет её при записи, а в state
- * поле необязательно — legacy-запись читается как версия 0 (D-36).
- * Своя схема, а не `BaseEntityFields.version`: `nonOptional` в JSON Schema
- * выхода не выражается (MAN-03).
- */
-const versionOut = v.pipe(
-  v.number(),
-  v.integer(),
-  v.minValue(0),
-  v.description('Версия сущности (оптимистичная блокировка)'),
-);
-
 /** Шаг наружу: state целиком, ветка по `kind`, даты числами. */
 export const StepView = v.variant('kind', [
-  v.object({ ...StepTextState.entries, version: versionOut }),
-  v.object({ ...StepCodeState.entries, version: versionOut }),
-  v.object({ ...StepFileState.entries, version: versionOut }),
+  v.object({ ...StepTextState.entries, version: VersionOut }),
+  v.object({ ...StepCodeState.entries, version: VersionOut }),
+  v.object({ ...StepFileState.entries, version: VersionOut }),
 ]);
 
 export type StepView = v.InferOutput<typeof StepView>;

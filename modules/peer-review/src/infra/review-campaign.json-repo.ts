@@ -3,7 +3,11 @@ import {
   ReviewCampaignArDef,
   type ReviewCampaignState,
 } from '@u7-scl/domain/peer-review';
-import { type StoredRecord, VersionedRepository } from 'dmg-core/app';
+import {
+  type StoredRecord,
+  VersionConflict,
+  VersionedRepository,
+} from 'dmg-core/app';
 import * as v from 'valibot';
 import type { ReviewCampaignRepo } from '../review-campaign/review-campaign.repo';
 
@@ -17,7 +21,8 @@ const Rows = v.array(ReviewCampaignArDef.state);
  * читается и не перезаписывается. Запись — под замком.
  *
  * Ключ окна (скоуп, субъект) уникален: штатный отказ даёт правило `unique`,
- * дубль на записи — инвариант хранилища, он бросает.
+ * дубль на записи — гонка двух создателей, оба прошли правило, —
+ * `VersionConflict` (UoW вернёт `VERSION_CONFLICT`).
  */
 export class ReviewCampaignJsonRepo
   extends VersionedRepository<ReviewCampaignAr>
@@ -70,9 +75,7 @@ export class ReviewCampaignJsonRepo
         (r) => r.scopeId === state.scopeId && r.subjectId === state.subjectId,
       )
     ) {
-      throw new Error(
-        `[ReviewCampaignJsonRepo] Кампания окна (scopeId=${state.scopeId}, subjectId=${state.subjectId}) уже существует`,
-      );
+      throw new VersionConflict(this.aggregate, ar.uuid);
     }
     others.push(state);
     await Bun.write(this.filePath, JSON.stringify(others, undefined, 2));
