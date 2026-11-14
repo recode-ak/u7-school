@@ -6,7 +6,11 @@ import {
 } from '@u7-scl/core/ui';
 import { userActor } from '../../../core/user-actor.test-kit';
 import { streamView } from '../../streams/stories/stream-dmg.test-kit';
-import { peerReviewDispatch, testCallers } from './peer-review-dmg.test-kit';
+import {
+  peerReviewDispatch,
+  refuse,
+  testCallers,
+} from './peer-review-dmg.test-kit';
 import { ScopeReviewsStory } from './scope-reviews.story';
 
 /**
@@ -62,7 +66,10 @@ function longText(n: number, pad = 700): string {
 }
 
 /** appApi-мок: listScopeReviews и getStream (DMG), get-users-by-ids. */
-function makeAppApi(groups: Group[], opts: { emptyNames?: boolean } = {}) {
+function makeAppApi(
+  groups: Group[],
+  opts: { emptyNames?: boolean; streamMissing?: boolean } = {},
+) {
   return {
     dispatch: peerReviewDispatch({
       listScopeReviews: (input) => ({
@@ -70,10 +77,12 @@ function makeAppApi(groups: Group[], opts: { emptyNames?: boolean } = {}) {
         recipients: groups,
       }),
       getStream: (input) =>
-        streamView({
-          uuid: (input as { streamId: string }).streamId,
-          title: 'Поток решения',
-        }),
+        opts.streamMissing
+          ? refuse('STREAM_NOT_FOUND', 'not_found')
+          : streamView({
+              uuid: (input as { streamId: string }).streamId,
+              title: 'Поток решения',
+            }),
       getUsersByIds: () => {
         if (opts.emptyNames) return [];
         return [
@@ -88,7 +97,10 @@ function makeAppApi(groups: Group[], opts: { emptyNames?: boolean } = {}) {
   };
 }
 
-function makeStory(groups: Group[], opts?: { emptyNames?: boolean }) {
+function makeStory(
+  groups: Group[],
+  opts?: { emptyNames?: boolean; streamMissing?: boolean },
+) {
   const appApi = makeAppApi(groups, opts);
   const story = new ScopeReviewsStory();
   story.init({ appApi, callers: testCallers } as never);
@@ -290,6 +302,22 @@ describe('ScopeReviewsStory — формат экрана S07', () => {
     expect(text).toContain('Отзывов по потоку пока нет');
     const back = findBtn(response, 'Назад к потоку');
     expect(back?.code).toBe(`stream:view-stream:view:${SCOPE_ID}`);
+  });
+});
+
+describe('ScopeReviewsStory — штатные отказы', () => {
+  test('поток не найден (устаревший scopeId в кнопке) — предупреждение, без исключения', async () => {
+    const { story } = makeStory(manyReviews(1), { streamMissing: true });
+
+    const response = await story.handleCallback(
+      `view:${SCOPE_ID}`,
+      actor,
+      session,
+    );
+
+    expect(response.notify?.kind).toBe('warn');
+    expect(String(response.notify?.text)).toContain('Поток не найден');
+    expect(response.screen).toBeUndefined();
   });
 });
 

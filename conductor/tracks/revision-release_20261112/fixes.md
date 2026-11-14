@@ -10,7 +10,7 @@
 |---|---|---|---|
 | Ф5.1 Харнес e2e | F-01…F-04 | `dmg-test-designer` (Opus — инфраструктура тестов) | — |
 | Ф5.2 Недостающие e2e | F-10…F-34 | `dmg-test-designer` (Sonnet, порциями по файлам) | Ф5.1 |
-| Ф5.3 Бот-раннер | F-40…F-4D, F-91 | `dmg-api-author` / Opus по месту | Ф5.2 (red-тесты) |
+| Ф5.3 Бот-раннер | F-40…F-4E, F-91 | `dmg-api-author` / Opus по месту | Ф5.2 (red-тесты) |
 | Ф5.4 Линт и правила | F-50…F-52 | orchestrator + `dmg-api-author` | — |
 | Ф5.5 Платформа `dmg-core` | F-60…F-63 | Opus (платформа) | — |
 | Ф5.6 Домен и модули | F-70…F-74 | `dmg-domain-author` / `dmg-api-author` (Sonnet) | Ф5.4 (линт видит `modules/**`) |
@@ -65,8 +65,8 @@
 | ID | Источник | Что | Размер | Срез | Коммит |
 |---|---|---|---|---|---|
 | F-40 | C-01 (TR-68) | Гость без `/start`: резолвер `create-ui-app.ts:94-104` → `U7BotActor \| null`, `ui-app` на `null` отвечает «Нажмите /start» (≈5 мест); сначала e2e на нынешнее поведение и сверка с v0.2.6 | S–M | Ф5.3 | fbdb8504 |
-| F-41 | C-13 | `answerCallbackQuery` сразу (до обработки; отказы с `show_alert` — как сейчас), снятие кнопок старого экрана — параллельно с отправкой нового (`infra/bot-transport.ts:296-302`) | S | Ф5.3 || e614c381 |
-| F-42 | regressions Q-01/Q-02 | Зарегистрировать `chat_member` / `my_chat_member` → `transport.handleChatMember/handleMyChatMember` в `main.ts:193-194` (на `bot`, не `privateBot`); red — F-13 | S | Ф5.3 || e614c381 |
+| F-41 | C-13 | `answerCallbackQuery` сразу (до обработки; отказы с `show_alert` — как сейчас), снятие кнопок старого экрана — параллельно с отправкой нового (`infra/bot-transport.ts:296-302`) | S | Ф5.3 | e614c381 |
+| F-42 | regressions Q-01/Q-02 | Зарегистрировать `chat_member` / `my_chat_member` → `transport.handleChatMember/handleMyChatMember` в `main.ts:193-194` (на `bot`, не `privateBot`); red — F-13 | S | Ф5.3 | e614c381 |
 | F-43 | C-03 (исполнение) | Ветвление stories по полям view (`view-stream-mentor.ts:105-123`, `my-streams.ts:65-70`, `stream-catalog.story.ts:57-66`, `view-stream.story.ts:184, 467`, `fill.story.ts:325`) → признаки в готовом ответе UC (D-72) | M | Ф5.3 | fbdb8504 |
 | F-44 | C-04 (TR-50 (6)) | Алиасы `questionnaire-events.ts` → в `fill.story.ts`, `invite.story.ts`; файл удалить; попутно проверить TR-50 (9) correlation | S | Ф5.3 | |
 | F-45 | TR-68 | `NOT_FOUND` в `scope-reviews.story.ts:92` — штатный отказ вместо `throw` | S | Ф5.3 | |
@@ -78,6 +78,7 @@
 | F-4C | regressions P3-63 | `StreamAr.enroll` — отказ, если поток не в наборе; снять `skip` в `stream-enroll.e2e` (решение Нурболата, 2026-11-14) | S | Ф5.3 | |
 | F-4D | regressions P8-32 | `BotController.handleCommand`: ответ `handleError` из `catch` — через `#withNotices`; снять `skip` в `ui-errors.e2e` | S | Ф5.3 | |
 | F-4A | Ф5.2 порция 2 | P4-68: unit-тест ветки «сбой `FindStreamByTelegramGroup`/`getStreamMembers`/`getUser` → warn и стоп» у контроллера событий группы (e2e не инъецирует сбой) | S | Ф5.3 | |
+| F-4E | F-44 (TR-50 (9)) | Подтверждено: `dispatchUc` из подписок на события (`invite.story.ts`, `fill.story.ts`, `inactivity.story.ts` и др.) строит след через `requestTrace` вне `BotRequestContext` — `warn` ERR-07 на каждое событие, новый `correlationId`; конверт несёт `correlationId`, в `dmg-core` есть `Trace.fromEvent`. Правка — платформа бота: обработчик подписки исполнять в контексте события (след из конверта) | S–M | Ф5.3 | |
 
 ## Ф5.4 Линт и правила
 

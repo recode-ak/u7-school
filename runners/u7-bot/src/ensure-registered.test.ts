@@ -49,6 +49,16 @@ describe('ensureRegisteredGuest', () => {
     );
   });
 
+  test('имя из одних пробелов → регистрация с именем по умолчанию «друг»', async () => {
+    const api = userApiMock();
+
+    await ensureRegisteredGuest(api, { id: 555, first_name: '   ' });
+
+    expect(api.commands()[1]).toEqual(
+      RegisterGuestUcDef.command({ telegramId: 555, name: 'друг' }),
+    );
+  });
+
   test('существующий пользователь → регистрация не вызывается', async () => {
     const api = userApiMock({ lookup: userView() });
 

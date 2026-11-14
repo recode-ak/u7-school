@@ -19,7 +19,10 @@ import {
   type Screen,
   screen,
 } from '@u7-scl/core/ui';
-import { ensureRegisteredGuest } from '../ensure-registered';
+import {
+  DEFAULT_GUEST_NAME,
+  ensureRegisteredGuest,
+} from '../ensure-registered';
 import { APP_CODES, APP_DIALOG_PATHS } from '../shared/app-codes';
 import type { U7BotActor, U7BotUiAppResolve } from './u7-bot-app-meta';
 import type { U7BotController } from './u7-bot-controller';
@@ -184,7 +187,7 @@ export class U7BotUiApp extends BotUiApp<U7BotActor, U7BotUiAppResolve> {
     );
     await ensureRegisteredGuest(this.resolve, {
       id: tgId,
-      first_name: update.name ?? 'друг',
+      first_name: update.name ?? DEFAULT_GUEST_NAME,
       ...(update.username !== undefined ? { username: update.username } : {}),
     });
 

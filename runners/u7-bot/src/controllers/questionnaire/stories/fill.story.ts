@@ -19,17 +19,27 @@ import {
   QuestionnaireModuleDef,
 } from '@u7-scl/domain/questionnaire/contract';
 import type { DomainError } from 'dmg-core';
+import type { EnvelopeOf } from 'dmg-core/app';
 import type { U7BotActor } from '../../../core/u7-bot-app-meta';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
-import type {
-  QuestionnaireAbandonedEvent,
-  QuestionnaireAbandonWarningEvent,
-  QuestionnaireContinueInviteEvent,
-  QuestionnaireStartedEvent,
-} from './questionnaire-events';
 import { QuestionnaireStory } from './questionnaire-story';
 import { renderActionResponse, ucErrorScreen } from './render';
+
+/**
+ * События анкеты — конверты DMG, `payload` — по схеме события (без адреса:
+ * telegramId бот берёт по профилю респондента).
+ */
+type QuestionnaireStartedEvent = EnvelopeOf<typeof QuestionnaireEvents.started>;
+type QuestionnaireAbandonWarningEvent = EnvelopeOf<
+  typeof QuestionnaireEvents.abandonWarning
+>;
+type QuestionnaireContinueInviteEvent = EnvelopeOf<
+  typeof QuestionnaireEvents.continueInvite
+>;
+type QuestionnaireAbandonedEvent = EnvelopeOf<
+  typeof QuestionnaireEvents.abandoned
+>;
 
 /**
  * FillStory — сценарий заполнения анкеты (S02–S05, S07–S09).

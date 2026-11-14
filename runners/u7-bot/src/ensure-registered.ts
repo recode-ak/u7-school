@@ -16,6 +16,12 @@ export interface TgSender {
 }
 
 /**
+ * Имя гостя, когда Telegram не дал пригодного: `first_name` нет или он из
+ * одних пробелов (схема имени — непустая строка после trim).
+ */
+export const DEFAULT_GUEST_NAME = 'друг';
+
+/**
  * Регистрирует гостя, если его ещё нет (сценарии /start и вход в группу):
  * `registerGuest` требует роль ADMIN, поэтому действует бот (`botAdminUuid`) —
  * ослаблять политику UC нельзя, после выноса API в web это открыло бы анонимную регистрацию.
@@ -43,7 +49,7 @@ export async function ensureRegisteredGuest(
     UserModuleDef,
     RegisterGuestUcDef.command({
       telegramId: sender.id,
-      name: sender.first_name,
+      name: sender.first_name.trim() || DEFAULT_GUEST_NAME,
       ...(sender.username !== undefined ? { nick: sender.username } : {}),
     }),
     { resolve, uuid: resolve.botAdminUuid, telegramId: sender.id, warn },

@@ -9,6 +9,7 @@ import {
 } from '@u7-scl/domain/peer-review/contract';
 import {
   GetStreamUcDef,
+  StreamErrors,
   StreamModuleDef,
 } from '@u7-scl/domain/stream/contract';
 import { Routes } from '../../shared/routes';
@@ -57,11 +58,13 @@ export class ScopeReviewsStory extends U7BotUiStory {
     // в DialogCache — build (чтение домена) только при промахе кеша.
     return this.pagedScreen({
       build: () => this.#buildBlocks(scopeId, actor),
-      emptyScreen: () =>
-        this.screen(
-          md`💬 Отзывов по потоку пока нет\\.`,
-          this.kb([[this.#backToStream(scopeId)]]),
-        ),
+      emptyScreen: ({ streamMissing }) =>
+        streamMissing
+          ? this.warn(md`Поток не найден`)
+          : this.screen(
+              md`💬 Отзывов по потоку пока нет\\.`,
+              this.kb([[this.#backToStream(scopeId)]]),
+            ),
       rows: () => [[this.#backToStream(scopeId)]],
       cacheKey: `scope-reviews:${scopeId}`,
       pageIndex,
@@ -71,11 +74,19 @@ export class ScopeReviewsStory extends U7BotUiStory {
     });
   }
 
-  /** Читает отзывы скоупа, резолвит имена и собирает блоки «адресат: отзыв». */
+  /**
+   * Читает отзывы скоупа, резолвит имена и собирает блоки «адресат: отзыв».
+   * Потока нет (устаревший `scopeId` в кнопке) — пустой набор с признаком
+   * `streamMissing`: штатный отказ рисует `emptyScreen`.
+   */
   async #buildBlocks(
     scopeId: string,
     actor: U7BotActor,
-  ): Promise<{ header: MdText; blocks: string[]; payload: undefined }> {
+  ): Promise<{
+    header: MdText;
+    blocks: string[];
+    payload: { streamMissing: boolean };
+  }> {
     const [res, stream] = await Promise.all([
       this.dispatchUc(
         PeerReviewModuleDef,
@@ -88,6 +99,9 @@ export class ScopeReviewsStory extends U7BotUiStory {
         actor,
       ),
     ]);
+    if (!stream.ok && stream.error.code === StreamErrors.NOT_FOUND.code) {
+      return { header: md``, blocks: [], payload: { streamMissing: true } };
+    }
     if (!res.ok) throw new Error(res.error.code);
     if (!stream.ok) throw new Error(stream.error.code);
     const projection = res.value;
@@ -107,7 +121,7 @@ export class ScopeReviewsStory extends U7BotUiStory {
     return {
       header: md`💬 *Отзывы* — поток «${stream.value.title}»`,
       blocks,
-      payload: undefined,
+      payload: { streamMissing: false },
     };
   }
 

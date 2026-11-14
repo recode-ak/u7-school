@@ -13,13 +13,16 @@ import {
   QuestionnaireModuleDef,
   StartByInviteUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
+import type { EnvelopeOf } from 'dmg-core/app';
 import { dispatchModuleUc } from '../../../core/dispatch-uc';
 import type { U7BotActor } from '../../../core/u7-bot-app-meta';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
-import type { QuestionnaireInvitedEvent } from './questionnaire-events';
 import { QuestionnaireStory } from './questionnaire-story';
 import { renderActionResponse, ucErrorScreen } from './render';
+
+/** Приглашение в анкету — конверт DMG (адрес — по профилю респондента). */
+type QuestionnaireInvitedEvent = EnvelopeOf<typeof QuestionnaireEvents.invited>;
 
 /**
  * InviteStory — сценарий приглашения в анкету (S01, S06).
