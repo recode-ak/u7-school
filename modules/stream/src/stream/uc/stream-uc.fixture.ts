@@ -3,6 +3,7 @@ import {
   GetModuleSnapshotUcDef,
 } from '@u7-scl/domain/course/contract';
 import { StreamAr, type StreamState } from '@u7-scl/domain/stream';
+import type { StudentState } from '@u7-scl/domain/stream/testing';
 import { userSubject } from '@u7-scl/domain/user/testing';
 import { GuestCaller, ok, SystemCaller, UserCaller } from 'dmg-core';
 import { ModuleFacades } from 'dmg-core/app';
@@ -86,6 +87,11 @@ export const state = (
   ...extra,
 });
 
+/** `findByStream` репозитория отдаёт посеянных студентов `ids` (по порядку). */
+export function serveByStream(repo: StudentRepoFake, ...ids: string[]) {
+  repo.findByStream = async () => ids.map((id) => repo.restoredOrThrow(id));
+}
+
 /** Что последним спросили у репозитория при выборках (ответ задаёт тест). */
 export type Answered = { filter?: unknown; telegramGroupId?: string };
 
@@ -121,3 +127,56 @@ export function makeEnv(moduleSnapshot = contentSnapshot) {
   };
   return { ctx, streams, students, course, deps, asked, answerWith };
 }
+
+/** Шаги и студенты тестов обновления контента (F-80): шаг — uuid по имени. */
+const stepUuid = (n: number) =>
+  `5ec00000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+export const [SA, SB, SC, SN] = [1, 2, 3, 4].map(stepUuid) as [
+  string,
+  string,
+  string,
+  string,
+];
+export const STUDENT_1 = '00000000-0000-4000-8000-000000000001';
+export const STUDENT_2 = '00000000-0000-4000-8000-000000000002';
+
+/** Снимок из одного проекта и урока с шагами `stepIds` по порядку. */
+export const snap = (...stepIds: string[]) => [
+  {
+    projectId: '11111111-1111-4111-8111-111111111111',
+    projectTitle: 'Введение',
+    lessons: [
+      {
+        lessonId: '22222222-2222-4222-8222-222222222222',
+        lessonTitle: 'Урок 1',
+        stepIds,
+      },
+    ],
+  },
+];
+
+/** Идущий студент потока: пройденные шаги `done`, текущий — `current` (выдан). */
+export const walking = (
+  uuid: string,
+  current: string,
+  done: string[],
+): StudentState => ({
+  uuid,
+  streamId: STREAM,
+  userId: `00000000-0000-4000-8000-1${uuid.slice(-11)}`,
+  enrolledAt: T0,
+  status: 'active',
+  currentStepId: current,
+  steps: [
+    ...done.map((stepId) => ({
+      stepId,
+      status: 'completed' as const,
+      issuedAt: T0,
+      completedAt: T0,
+    })),
+    { stepId: current, status: 'issued' as const, issuedAt: T0 },
+  ],
+  createdAt: T0,
+  updatedAt: T0,
+  version: 0,
+});

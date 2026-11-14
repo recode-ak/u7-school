@@ -29,14 +29,16 @@
 
 ## Фаза 2: UC модуля `stream` — предпросмотр и применение
 
-- [ ] Task: S (`dmg-tech-lead`) — бриф среза `slices/uc.md`: Def `previewStreamContentSync` (query) и `syncStreamContent` (command) — `aggregate: StreamArDef`, `callers: ['user']`, `policy: StreamPolicy.rules.canManage`, `calls: [GetModuleSnapshotUcDef]` (образец — `create-stream.uc.ts`); вход применения — список затронутых студентов из предпросмотра; загрузка потока и студентов, регистрация в UoW: студенты первыми, поток последним, `expectVersion` потока (образец — `activate-stream.uc.ts`, ФР-8а)
-- [ ] Task: S (`dmg-test-designer`) — red-тесты UC на фейк-репозиториях: статусы потока; удалён текущий шаг — отказ без записи; подтверждение отсутствует / устарело — отказ; конфликт version потока — отказ до записи; сбой посередине → повтор доводит до конца; Policy (ментор потока, админ, чужой ментор, студент); `writes` и событие `contentSynced`; повторное применение — без изменений
-    - [ ] Тесты (red) → запуск
-- [ ] Task: S (`dmg-api-author`) — Def в `domain/src/stream/stream/uc/`, реализации в `modules/stream/src/stream/uc/`, регистрация в модуле; обновить `stream.module.student.test.ts` (точный список UC: 19 → 21) и прочие точные списки UC/событий, если найдутся
-    - [ ] Реализация (green) → `bun test modules/stream domain/src/stream`
-- [ ] Task: S (`dmg-data-keeper`) — совместимость: живые `streams.json`/`students.json` читаются с новым необязательным полем, миграция не нужна; тесты `student.json-repo`
-- [ ] Task: S (`dmg-reviewer`) — ревью среза; замечания error/warn исправлены
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: S (`dmg-tech-lead`) — бриф среза `slices/uc.md`: Def `previewStreamContentSync` (query) и `syncStreamContent` (command) — `aggregate: StreamArDef`, `callers: ['user']`, `policy: StreamPolicy.rules.canManage`, `calls: [GetModuleSnapshotUcDef]` (образец — `create-stream.uc.ts`); вход применения — список затронутых студентов из предпросмотра; загрузка потока и студентов, регистрация в UoW: студенты первыми, поток последним, `expectVersion` потока (образец — `activate-stream.uc.ts`, ФР-8а)
+- [x] Task: S (`dmg-test-designer`) — red-тесты UC на фейк-репозиториях: статусы потока; удалён текущий шаг — отказ без записи; подтверждение отсутствует / устарело — отказ; конфликт version потока — отказ до записи; сбой посередине → повтор доводит до конца; Policy (ментор потока, админ, чужой ментор, студент); `writes` и событие `contentSynced`; повторное применение — без изменений
+    - [x] Тесты (red) → запуск
+- [x] Task: S (`dmg-api-author`) — Def в `domain/src/stream/stream/uc/`, реализации в `modules/stream/src/stream/uc/`, регистрация в модуле; обновить `stream.module.student.test.ts` (точный список UC: 19 → 21) и прочие точные списки UC/событий, если найдутся
+    - [x] Реализация (green) → `bun test modules/stream domain/src/stream`
+- [x] Task: S (`dmg-data-keeper`) — совместимость: живые `streams.json`/`students.json` читаются с новым необязательным полем, миграция не нужна; тесты `student.json-repo`
+- [x] Task: S (`dmg-reviewer`) — ревью среза; замечания error/warn исправлены
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (автопроверка, режим трека)
+
+- **Примечание:** Def UC — в коммите Ф1 (`d55b90c`), закрывали MAN-06. data-keeper: блокеров нет, миграция не нужна; живых `streams`/`students` на машине разработки нет — разобраны фикстуры (5/5), round-trip `completionSource` — `student.json-repo.test.ts`. Перед выкаткой — `bun run backup`.
 
 **Критерии:** `bun test modules/stream domain/src/stream` зелёный; тестами UC покрыты spec 2, 3, 5, 6; запись `writes` проверена (spec 7, на уровне UoW); прямой записи JSON в UC нет; отчёт `dmg-data-keeper` без блокеров; полный `bun run check` зелёный.
 

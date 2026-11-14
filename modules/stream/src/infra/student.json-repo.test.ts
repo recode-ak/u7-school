@@ -72,6 +72,36 @@ describe('StudentJsonRepo — save и findById', () => {
     );
   });
 
+  test('completionSource шага: round-trip; старая запись без поля читается без него', async () => {
+    const synced = {
+      stepId: STEP,
+      status: 'completed' as const,
+      issuedAt: T0,
+      completedAt: T0,
+      completionSource: 'content_sync' as const,
+    };
+    const old = { stepId: STEP, status: 'issued' as const, issuedAt: T0 };
+    const repo = new StudentJsonRepo(
+      filePath('students-completion-source.json'),
+    );
+    const a = makeState({ status: 'active', steps: [synced] });
+    const b = makeState({ status: 'active', steps: [old] });
+    await Bun.write(
+      filePath('students-completion-source.json'),
+      JSON.stringify([a, b]),
+    );
+
+    const readA = (await repo.findById(a.uuid))?.snapshot();
+    const readB = (await repo.findById(b.uuid))?.snapshot();
+    expect(readA?.steps[0]?.completionSource).toBe('content_sync');
+    expect(readB?.steps[0]).not.toHaveProperty('completionSource');
+    const reread = await repo.findById(a.uuid);
+    if (reread) await repo.save(reread);
+    expect(
+      (await repo.findById(a.uuid))?.snapshot().steps[0]?.completionSource,
+    ).toBe('content_sync');
+  });
+
   test('findById несуществующего — undefined, файл не создаётся', async () => {
     const path = filePath('students-missing.json');
     const repo = new StudentJsonRepo(path);
