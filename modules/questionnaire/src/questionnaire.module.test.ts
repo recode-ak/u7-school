@@ -1,7 +1,4 @@
 import { afterAll, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import {
   AbandonUcDef,
   DeclineInviteUcDef,
@@ -13,8 +10,14 @@ import {
   StartByInviteUcDef,
   StartQuestionnaireUcDef,
 } from '@u7-scl/domain/questionnaire/contract';
-import { type AppContext, ModuleFacades, Trace } from 'dmg-core/app';
-import { expectErr, expectOk, testAppContext } from 'dmg-core/testing';
+import { type AppContext, ModuleFacades } from 'dmg-core/app';
+import {
+  expectErr,
+  expectOk,
+  TempDir,
+  testAppContext,
+  testTrace,
+} from 'dmg-core/testing';
 import { QuestionnaireJsonRepo } from './infra/questionnaire.json-repo';
 import type { QuestionnaireRepoFake } from './questionnaire/questionnaire.repo.fake';
 import {
@@ -43,15 +46,13 @@ const moduleOn = (repo: QuestionnaireRepoFake | QuestionnaireJsonRepo) =>
     questionnaires: repo,
   });
 
-describe('smoke: каждый UC на реальном репозитории (mkdtemp)', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'questionnaire-module-test-'));
-  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+describe('smoke: каждый UC на реальном репозитории (временный каталог)', () => {
+  const dir = TempDir.create('questionnaire-module-test-');
+  afterAll(() => dir.dispose());
 
   it('запуск → ответ → завершение → список; likert → отказ; abandon; get*', async () => {
-    const repo = new QuestionnaireJsonRepo(join(dir, 'questionnaires.json'));
+    const repo = new QuestionnaireJsonRepo(dir.file('questionnaires.json'));
     const mod = moduleOn(repo);
-    // Своя команда — свой `requestId`: повтор входа отсеивает D-56.
-    const req = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 
     expectOk(
       await mod.dispatch(
@@ -60,14 +61,14 @@ describe('smoke: каждый UC на реальном репозитории (m
           ownerInfo: OWNER_INFO,
         }),
         systemFor(),
-        req(),
+        testTrace(),
       ),
     );
     expectOk(
       await mod.dispatch(
         SendLikertInviteUcDef.command({ pool: likertPool(), ownerInfo: {} }),
         systemFor(),
-        req(),
+        testTrace(),
       ),
     );
 
@@ -75,7 +76,7 @@ describe('smoke: каждый UC на реальном репозитории (m
       await mod.dispatch(
         GetQuestionnairesByUserUcDef.command({ userId: RESPONDENT }),
         respondent,
-        req(),
+        testTrace(),
       ),
     );
     expect(list.map((q) => q.kind)).toEqual(['standard', 'likert']);
@@ -87,7 +88,7 @@ describe('smoke: каждый UC на реальном репозитории (m
       await mod.dispatch(
         GetCurrentUcDef.command(id(standard.uuid)),
         respondent,
-        req(),
+        testTrace(),
       ),
     );
     expect(current.type).toBe('new_question');
@@ -99,7 +100,7 @@ describe('smoke: каждый UC на реальном репозитории (m
           value: 'yes',
         }),
         respondent,
-        req(),
+        testTrace(),
       ),
     );
     const done = expectOk(
@@ -110,7 +111,7 @@ describe('smoke: каждый UC на реальном репозитории (m
           value: 'ok',
         }),
         respondent,
-        req(),
+        testTrace(),
       ),
     );
     expect(done.type).toBe('completed');
@@ -119,7 +120,7 @@ describe('smoke: каждый UC на реальном репозитории (m
         await mod.dispatch(
           GetQuestionnaireUcDef.command(id(standard.uuid)),
           respondent,
-          req(),
+          testTrace(),
         ),
       ).status,
     ).toBe('completed');
@@ -129,7 +130,7 @@ describe('smoke: каждый UC на реальном репозитории (m
         await mod.dispatch(
           StartByInviteUcDef.command(id(likert.uuid)),
           respondent,
-          req(),
+          testTrace(),
         ),
       ).type,
     ).toBe('new_question');
@@ -137,14 +138,14 @@ describe('smoke: каждый UC на реальном репозитории (m
       await mod.dispatch(
         AbandonUcDef.command(id(likert.uuid)),
         respondent,
-        req(),
+        testTrace(),
       ),
     );
     expectErr(
       await mod.dispatch(
         DeclineInviteUcDef.command(id(likert.uuid)),
         respondent,
-        req(),
+        testTrace(),
       ),
       'QUESTIONNAIRE_NOT_INVITED',
     );

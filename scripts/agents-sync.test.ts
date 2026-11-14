@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Marker } from 'dmg-core/cli';
+import { TempDir } from 'dmg-core/testing';
 import {
   buildCopies,
   COMMON_FILE,
@@ -110,13 +110,10 @@ describe('compareCopies', () => {
 
 describe('runSync', () => {
   async function withRepo(fn: (root: string) => Promise<void>): Promise<void> {
-    const root = await mkdtemp(join(tmpdir(), 'agents-sync-'));
-    try {
-      await Bun.write(join(root, SRC), REVIEWER);
-      await fn(root);
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
+    using tmp = TempDir.create('agents-sync-');
+    const root = tmp.path;
+    await Bun.write(join(root, SRC), REVIEWER);
+    await fn(root);
   }
 
   test('sync пишет копии, после него check зелёный', async () => {

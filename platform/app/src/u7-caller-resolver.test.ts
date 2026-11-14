@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import {
@@ -11,7 +10,7 @@ import {
   UserModuleDef,
 } from '@u7-scl/domain/user/contract';
 import { err, GuestCaller, ok, SystemCaller, UserCaller } from 'dmg-core';
-import { Trace } from 'dmg-core/app';
+import { TempDir, testTrace } from 'dmg-core/testing';
 import { U7App } from './u7-app';
 import { U7CallerResolver } from './u7-caller-resolver';
 
@@ -29,14 +28,14 @@ const KNOWN = {
 };
 const UNKNOWN = '33333333-3333-4333-8333-333333333333';
 
-const req = (): Trace => Trace.fromRequest({ requestId: crypto.randomUUID() });
-
 describe('U7CallerResolver: приложение целиком', () => {
+  let tmp: TempDir;
   let dir: string;
   let app: U7App;
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'u7-app-callers-'));
+    tmp = TempDir.create('u7-app-callers-');
+    dir = tmp.path;
     await mkdir(join(dir, 'users'), { recursive: true });
     await Bun.write(join(dir, 'users', 'users.json'), JSON.stringify([KNOWN]));
     app = new U7App(
@@ -51,11 +50,11 @@ describe('U7CallerResolver: приложение целиком', () => {
   });
 
   afterAll(async () => {
-    await rm(dir, { recursive: true, force: true });
+    tmp.dispose();
   });
 
   test('найденный пользователь — UserCaller, субъект — UserAr с ролями записи', async () => {
-    const caller = await app.callers.resolve(KNOWN.uuid, req());
+    const caller = await app.callers.resolve(KNOWN.uuid, testTrace());
 
     expect(caller).toBeInstanceOf(UserCaller);
     const subject = caller.subject();
@@ -66,19 +65,19 @@ describe('U7CallerResolver: приложение целиком', () => {
   });
 
   test('неизвестный uuid — GuestCaller', async () => {
-    const caller = await app.callers.resolve(UNKNOWN, req());
+    const caller = await app.callers.resolve(UNKNOWN, testTrace());
 
     expect(caller).toBeInstanceOf(GuestCaller);
   });
 
   test('без uuid — GuestCaller', async () => {
-    const caller = await app.callers.resolve(undefined, req());
+    const caller = await app.callers.resolve(undefined, testTrace());
 
     expect(caller).toBeInstanceOf(GuestCaller);
   });
 
   test('невалидный uuid от транспорта — исключение наружу (ERR-01), не гость', async () => {
-    await expect(app.callers.resolve('не-uuid', req())).rejects.toThrow();
+    await expect(app.callers.resolve('не-uuid', testTrace())).rejects.toThrow();
   });
 });
 
@@ -97,7 +96,7 @@ describe('U7CallerResolver: вызов getUser (подмена api)', () => {
 
   test('getUser — от SystemCaller (D-51) с тем же следом', async () => {
     const calls: Call[] = [];
-    const trace = req();
+    const trace = testTrace();
     const view = UserAr.restore({
       uuid: KNOWN.uuid,
       name: KNOWN.name,
@@ -127,7 +126,7 @@ describe('U7CallerResolver: вызов getUser (подмена api)', () => {
   test('USER_NOT_FOUND — GuestCaller', async () => {
     const answer = err({ code: UserErrors.NOT_FOUND.code });
 
-    const caller = await resolverOver(answer).resolve(KNOWN.uuid, req());
+    const caller = await resolverOver(answer).resolve(KNOWN.uuid, testTrace());
 
     expect(caller).toBeInstanceOf(GuestCaller);
   });
@@ -136,7 +135,7 @@ describe('U7CallerResolver: вызов getUser (подмена api)', () => {
     const answer = err({ code: 'UNAUTHORIZED' });
 
     await expect(
-      resolverOver(answer).resolve(KNOWN.uuid, req()),
+      resolverOver(answer).resolve(KNOWN.uuid, testTrace()),
     ).rejects.toThrow('UNAUTHORIZED');
   });
 
@@ -145,7 +144,7 @@ describe('U7CallerResolver: вызов getUser (подмена api)', () => {
 
     const caller = await resolverOver(ok(undefined), calls).resolve(
       undefined,
-      req(),
+      testTrace(),
     );
 
     expect(caller).toBeInstanceOf(GuestCaller);
@@ -178,7 +177,7 @@ describe('U7CallerResolver.resolveByTelegramId', () => {
 
   test('getUserByTelegramId — от SystemCaller с тем же следом; найден — UserCaller над UserAr', async () => {
     const calls: Call[] = [];
-    const trace = req();
+    const trace = testTrace();
 
     const caller = await resolverOver(ok(view), calls).resolveByTelegramId(
       1,
@@ -201,7 +200,10 @@ describe('U7CallerResolver.resolveByTelegramId', () => {
   test('USER_NOT_FOUND — GuestCaller', async () => {
     const answer = err({ code: UserErrors.NOT_FOUND.code });
 
-    const caller = await resolverOver(answer).resolveByTelegramId(1, req());
+    const caller = await resolverOver(answer).resolveByTelegramId(
+      1,
+      testTrace(),
+    );
 
     expect(caller).toBeInstanceOf(GuestCaller);
   });
@@ -210,7 +212,7 @@ describe('U7CallerResolver.resolveByTelegramId', () => {
     const answer = err({ code: 'UNAUTHORIZED' });
 
     await expect(
-      resolverOver(answer).resolveByTelegramId(1, req()),
+      resolverOver(answer).resolveByTelegramId(1, testTrace()),
     ).rejects.toThrow('UNAUTHORIZED');
   });
 });

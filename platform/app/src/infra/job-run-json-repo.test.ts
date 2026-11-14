@@ -1,14 +1,7 @@
-import { afterAll, describe, expect, test } from 'bun:test';
-import {
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { type Logger, LogLevel } from '@u7-scl/core/shared';
+import { TempDir } from 'dmg-core/testing';
 import { JobRunJsonRepo } from './job-run-json-repo';
 
 /** Логгер-заглушка: помнит предупреждения (`источник: сообщение`). */
@@ -30,12 +23,15 @@ function recordingLogger(): Logger & { readonly warnings: string[] } {
 }
 
 describe('JobRunJsonRepo', () => {
-  const tmpDir = mkdtempSync(join(tmpdir(), 'job-run-store-'));
-  const filePath = join(tmpDir, 'sub', 'last-runs.json');
+  let tmpDir: TempDir;
+  let filePath: string;
 
-  afterAll(() => {
-    rmSync(tmpDir, { recursive: true, force: true });
+  beforeAll(() => {
+    tmpDir = TempDir.create('job-run-store-');
+    filePath = tmpDir.file('sub', 'last-runs.json');
   });
+
+  afterAll(() => tmpDir.dispose());
 
   test('get без записи — undefined', () => {
     const logger = recordingLogger();
@@ -71,7 +67,7 @@ describe('JobRunJsonRepo', () => {
   });
 
   test('set пишет в файл ISO-строку формата { version: 1, lastRuns }', () => {
-    const path = join(tmpDir, 'format', 'last-runs.json');
+    const path = tmpDir.file('format', 'last-runs.json');
     new JobRunJsonRepo(path, recordingLogger()).setLastRunAt(
       'job-a',
       Date.UTC(2026, 0, 1, 12),
@@ -84,8 +80,8 @@ describe('JobRunJsonRepo', () => {
   });
 
   test('set по существующему файлу сохраняет ключи других заданий', () => {
-    const path = join(tmpDir, 'keep-keys', 'last-runs.json');
-    mkdirSync(join(tmpDir, 'keep-keys'), { recursive: true });
+    const path = tmpDir.file('keep-keys', 'last-runs.json');
+    mkdirSync(tmpDir.file('keep-keys'), { recursive: true });
     writeFileSync(
       path,
       JSON.stringify({
@@ -112,7 +108,7 @@ describe('JobRunJsonRepo', () => {
   });
 
   test('get читает ISO-строку прежнего файла как число; нечитаемая дата — undefined и предупреждение', () => {
-    const path = join(tmpDir, 'legacy-file.json');
+    const path = tmpDir.file('legacy-file.json');
     writeFileSync(
       path,
       JSON.stringify({

@@ -1,16 +1,13 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { TempDir } from 'dmg-core/testing';
 import { readSubagentModel } from './subagent-config';
 
 async function withPiDir(fn: (dir: string) => Promise<void>): Promise<void> {
-  const dir = await mkdtemp(join(tmpdir(), 'subagent-config-'));
-  try {
-    await fn(dir);
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
+  using tmp = TempDir.create('subagent-config-');
+  const dir = tmp.path;
+  await fn(dir);
 }
 
 describe('readSubagentModel', () => {

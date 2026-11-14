@@ -1,8 +1,6 @@
-import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { CourseAr, type CourseState } from '@u7-scl/domain/course';
+import { TempDir } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import { CourseJsonRepo } from './course.json-repo';
 
@@ -12,10 +10,13 @@ import { CourseJsonRepo } from './course.json-repo';
 // createdAt desc, limit, нет файла) + контракт нового формата: строгое чтение
 // (старый формат `phases[].moduleIds` — ошибка, файл цел), даты ISO / ISO без
 // секунд / число, нарушения инвариантов программы — ошибка чтения. Каталог —
-// mkdtemp: данные проекта не читаются и не пишутся.
+// Временный каталог: данные проекта не читаются и не пишутся.
 
-const tmpDir = mkdtempSync(join(tmpdir(), 'course-json-repo-test-'));
-afterAll(() => rmSync(tmpDir, { recursive: true, force: true }));
+let tmpDir: TempDir;
+beforeAll(() => {
+  tmpDir = TempDir.create('course-json-repo-test-');
+});
+afterAll(() => tmpDir.dispose());
 
 const AUTHOR = '660e8400-e29b-41d4-a716-446655440004';
 const OTHER_AUTHOR = '880e8400-e29b-41d4-a716-446655440009';
@@ -24,7 +25,7 @@ const M2 = '22222222-2222-4222-8222-222222222222';
 const M3 = '33333333-3333-4333-8333-333333333333';
 const T0 = Date.UTC(2026, 6, 8, 18, 35);
 
-const filePath = (name: string) => join(tmpDir, name);
+const filePath = (name: string) => tmpDir.file(name);
 
 const makeState = (extra: Partial<CourseState> = {}): CourseState => ({
   uuid: crypto.randomUUID(),

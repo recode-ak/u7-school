@@ -1,10 +1,7 @@
-import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { StreamAr, type StreamState } from '@u7-scl/domain/stream';
 import { VersionConflict } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, TempDir } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import { StreamJsonRepo } from './stream.json-repo';
 
@@ -12,10 +9,13 @@ import { StreamJsonRepo } from './stream.json-repo';
 // `infra/db/stream-json-repo.test.ts` (фильтр по schoolId) + контракт новой
 // записи: legacy-запись (ISO → число, version 0, updatedAt = createdAt),
 // round-trip, устаревшая версия, битая запись — исключение, файл цел.
-// Каталог — mkdtemp, живые данные не читаются.
+// Каталог — временный, живые данные не читаются.
 
-const tmpDir = mkdtempSync(join(tmpdir(), 'stream-json-repo-test-'));
-afterAll(() => rmSync(tmpDir, { recursive: true, force: true }));
+let tmpDir: TempDir;
+beforeAll(() => {
+  tmpDir = TempDir.create('stream-json-repo-test-');
+});
+afterAll(() => tmpDir.dispose());
 
 const SCHOOL_A = 'a0000000-0000-4000-8000-000000000001';
 const SCHOOL_B = 'b0000000-0000-4000-8000-000000000002';
@@ -38,7 +38,7 @@ const snapshot = [
   },
 ];
 
-const filePath = (name: string) => join(tmpDir, name);
+const filePath = (name: string) => tmpDir.file(name);
 
 const makeState = (extra: Partial<StreamState> = {}): StreamState => ({
   uuid: crypto.randomUUID(),

@@ -5,8 +5,8 @@ import {
 import { StreamAr, type StreamState } from '@u7-scl/domain/stream';
 import { userSubject } from '@u7-scl/domain/user/testing';
 import { GuestCaller, ok, SystemCaller, UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { StubFacade, testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import { StubFacade, TEST_TRACE, testAppContext } from 'dmg-core/testing';
 import { StudentRepoFake } from '../../student/student.repo.fake';
 import { StreamRepoFake } from '../stream.repo.fake';
 
@@ -18,7 +18,7 @@ export const OTHER_ID = '77777777-7777-4777-8777-777777777778';
 export const MODULE = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
 export const STEP_1 = '33333333-3333-4333-8333-333333333333';
 export const STEP_2 = '44444444-4444-4444-8444-444444444444';
-export const REQ = Trace.fromRequest({ requestId: 'r-1' });
+export const REQ = TEST_TRACE;
 export const T0 = Date.UTC(2026, 5, 1, 10);
 export const START = Date.UTC(2026, 5, 1, 12);
 

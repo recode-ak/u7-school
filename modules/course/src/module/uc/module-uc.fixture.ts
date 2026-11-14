@@ -1,8 +1,8 @@
 import { ModuleAr, type ModuleState } from '@u7-scl/domain/course';
 import { userSubject } from '@u7-scl/domain/user/testing';
 import { GuestCaller, SystemCaller, UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import { TEST_TRACE, testAppContext } from 'dmg-core/testing';
 import { CourseRepoFake } from '../../course/course.repo.fake';
 import type { CourseModuleDeps, CourseUser } from '../../course.module';
 import { LessonRepoFake } from '../../lesson/lesson.repo.fake';
@@ -16,7 +16,7 @@ export const OTHER_ID = '77777777-7777-4777-8777-777777777778';
 export const PROJECT_PUBLISHED = '11111111-1111-4111-8111-111111111111';
 export const PROJECT_DRAFT = '22222222-2222-4222-8222-222222222222';
 export const LESSON = '33333333-3333-4333-8333-333333333333';
-export const REQ = Trace.fromRequest({ requestId: 'r-1' });
+export const REQ = TEST_TRACE;
 export const T0 = Date.UTC(2026, 6, 8, 18, 35);
 
 /** Автор модуля — без роли AUTHOR (авторство по uuid). */

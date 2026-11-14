@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test';
+import { testUuid } from 'dmg-core/testing';
 import { PassedModulesDqs } from './passed-modules.dqs';
 import { StreamAr } from './stream/stream.ar';
 import { stored as streamStored } from './stream/stream.fixture';
@@ -16,12 +17,11 @@ const MODULE_B = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
 const STREAM_A = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const STREAM_B = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const STREAM_A2 = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
-const id = (n: number) => `00000000-0000-4000-8000-00000000000${n}`;
 
 const streamOf = (uuid: string, moduleId: string) =>
   StreamAr.restore(streamStored('completed', { uuid, moduleId }));
 const studentIn = (status: StudentState['status'], streamId: string, n = 1) =>
-  StudentAr.restore(stored(status, { uuid: id(n), streamId }));
+  StudentAr.restore(stored(status, { uuid: testUuid(n), streamId }));
 
 const moduleIds = (students: StudentAr[], streams: StreamAr[]): string[] =>
   new PassedModulesDqs(students, streams).moduleIds();

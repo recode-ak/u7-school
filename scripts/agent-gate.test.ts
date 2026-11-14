@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { TempDir } from 'dmg-core/testing';
 import {
   changedPaths,
   dataKeeperHint,
@@ -228,16 +228,13 @@ describe('exec', () => {
 
 describe('changedPaths', () => {
   test('чистое дерево — пусто, новый файл — его путь', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'agent-gate-git-'));
-    try {
-      await exec(['git', 'init', '-q'], root);
-      expect(changedPaths(root)).toEqual([]);
-      await mkdir(join(root, 'modules/a'), { recursive: true });
-      await writeFile(join(root, 'modules/a/x.ts'), '');
-      expect(changedPaths(root)).toEqual(['modules/a/x.ts']);
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
+    using tmp = TempDir.create('agent-gate-git-');
+    const root = tmp.path;
+    await exec(['git', 'init', '-q'], root);
+    expect(changedPaths(root)).toEqual([]);
+    await mkdir(join(root, 'modules/a'), { recursive: true });
+    await writeFile(join(root, 'modules/a/x.ts'), '');
+    expect(changedPaths(root)).toEqual(['modules/a/x.ts']);
   });
 });
 
@@ -283,41 +280,35 @@ describe('docsWarning: правка платформы без документо
 
 describe('packageRepo', () => {
   test('file: в dependencies или devDependencies корня — абсолютный путь репо dmg-core', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'agent-gate-pkg-'));
-    try {
-      await writeFile(
-        join(root, 'package.json'),
-        JSON.stringify({
-          dependencies: { 'dmg-core': 'file:../tools/dmg-core' },
-        }),
-      );
-      expect(await packageRepo(root)).toBe(join(root, '../tools/dmg-core'));
-      await writeFile(
-        join(root, 'package.json'),
-        JSON.stringify({ devDependencies: { 'dmg-core': 'file:../dmg' } }),
-      );
-      expect(await packageRepo(root)).toBe(join(root, '../dmg'));
-      await writeFile(
-        join(root, 'package.json'),
-        JSON.stringify({ dependencies: { 'dmg-core': '^0.1.0' } }),
-      );
-      expect(await packageRepo(root)).toBeUndefined();
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
+    using tmp = TempDir.create('agent-gate-pkg-');
+    const root = tmp.path;
+    await writeFile(
+      join(root, 'package.json'),
+      JSON.stringify({
+        dependencies: { 'dmg-core': 'file:../tools/dmg-core' },
+      }),
+    );
+    expect(await packageRepo(root)).toBe(join(root, '../tools/dmg-core'));
+    await writeFile(
+      join(root, 'package.json'),
+      JSON.stringify({ devDependencies: { 'dmg-core': 'file:../dmg' } }),
+    );
+    expect(await packageRepo(root)).toBe(join(root, '../dmg'));
+    await writeFile(
+      join(root, 'package.json'),
+      JSON.stringify({ dependencies: { 'dmg-core': '^0.1.0' } }),
+    );
+    expect(await packageRepo(root)).toBeUndefined();
   });
 
   test('абсолютный file: — как есть', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'agent-gate-pkg-'));
-    try {
-      await writeFile(
-        join(root, 'package.json'),
-        JSON.stringify({ dependencies: { 'dmg-core': 'file:/opt/dmg-core' } }),
-      );
-      expect(await packageRepo(root)).toBe('/opt/dmg-core');
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
+    using tmp = TempDir.create('agent-gate-pkg-');
+    const root = tmp.path;
+    await writeFile(
+      join(root, 'package.json'),
+      JSON.stringify({ dependencies: { 'dmg-core': 'file:/opt/dmg-core' } }),
+    );
+    expect(await packageRepo(root)).toBe('/opt/dmg-core');
   });
 });
 
@@ -353,55 +344,49 @@ describe('dataKeeperHint', () => {
 
 describe('packageDocsWarning', () => {
   test('репо пакета нет или это не git — без предупреждения и без исключения', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'agent-gate-pkg-'));
-    try {
-      await writeFile(
-        join(root, 'package.json'),
-        JSON.stringify({ dependencies: { 'dmg-core': 'file:./missing' } }),
-      );
-      expect(await packageDocsWarning(root)).toBeUndefined();
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
+    using tmp = TempDir.create('agent-gate-pkg-');
+    const root = tmp.path;
+    await writeFile(
+      join(root, 'package.json'),
+      JSON.stringify({ dependencies: { 'dmg-core': 'file:./missing' } }),
+    );
+    expect(await packageDocsWarning(root)).toBeUndefined();
   });
 });
 
 describe('loadWorkspaces', () => {
   test('читает пакеты из workspaces корневого package.json', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'agent-gate-'));
-    try {
-      const pkg = async (dir: string, json: object) => {
-        await mkdir(join(root, dir), { recursive: true });
-        await writeFile(join(root, dir, 'package.json'), JSON.stringify(json));
-      };
-      await pkg('.', { workspaces: ['platform/*', 'runners/*'] });
-      await pkg('platform/core', {
-        name: '@u7-scl/core',
-        scripts: { check: 'x' },
-      });
-      await pkg('runners/bot', {
-        name: '@u7-scl/bot',
-        dependencies: { '@u7-scl/core': 'workspace:*', valibot: '^1' },
-        devDependencies: { '@u7-scl/dev': 'workspace:*' },
-      });
+    using tmp = TempDir.create('agent-gate-');
+    const root = tmp.path;
+    const pkg = async (dir: string, json: object) => {
+      await mkdir(join(root, dir), { recursive: true });
+      await writeFile(join(root, dir, 'package.json'), JSON.stringify(json));
+    };
+    await pkg('.', { workspaces: ['platform/*', 'runners/*'] });
+    await pkg('platform/core', {
+      name: '@u7-scl/core',
+      scripts: { check: 'x' },
+    });
+    await pkg('runners/bot', {
+      name: '@u7-scl/bot',
+      dependencies: { '@u7-scl/core': 'workspace:*', valibot: '^1' },
+      devDependencies: { '@u7-scl/dev': 'workspace:*' },
+    });
 
-      const list = await loadWorkspaces(root);
-      expect(list.sort((a, b) => a.dir.localeCompare(b.dir))).toEqual([
-        {
-          name: '@u7-scl/core',
-          dir: 'platform/core',
-          deps: [],
-          hasCheck: true,
-        },
-        {
-          name: '@u7-scl/bot',
-          dir: 'runners/bot',
-          deps: ['@u7-scl/core', '@u7-scl/dev', 'valibot'],
-          hasCheck: false,
-        },
-      ]);
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
+    const list = await loadWorkspaces(root);
+    expect(list.sort((a, b) => a.dir.localeCompare(b.dir))).toEqual([
+      {
+        name: '@u7-scl/core',
+        dir: 'platform/core',
+        deps: [],
+        hasCheck: true,
+      },
+      {
+        name: '@u7-scl/bot',
+        dir: 'runners/bot',
+        deps: ['@u7-scl/core', '@u7-scl/dev', 'valibot'],
+        hasCheck: false,
+      },
+    ]);
   });
 });

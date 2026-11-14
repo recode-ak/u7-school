@@ -1,7 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import { UserAr } from '@u7-scl/domain/user';
 import {
   AddRoleToUserUcDef,
@@ -12,13 +9,14 @@ import {
   type UserModuleDef,
 } from '@u7-scl/domain/user/contract';
 import { SystemCaller, UserCaller } from 'dmg-core';
+import { type AppContext, ModuleFacade, ModuleFacades } from 'dmg-core/app';
 import {
-  type AppContext,
-  ModuleFacade,
-  ModuleFacades,
-  Trace,
-} from 'dmg-core/app';
-import { expectOk, testAppContext } from 'dmg-core/testing';
+  expectOk,
+  TEST_TRACE,
+  testAppContext,
+  testTrace,
+  useTempDir,
+} from 'dmg-core/testing';
 import { UserJsonRepo } from './infra/user.json-repo';
 import { adminState, userState } from './user/uc/user-uc.fixture';
 import { UserRepoFake } from './user/user.repo.fake';
@@ -28,9 +26,6 @@ import { createUserModule } from './user.module';
 
 const A = '22222222-2222-4222-8222-222222222222';
 const B = '77777777-7777-4777-8777-777777777777';
-const REQ = Trace.fromRequest({ requestId: 'r-1' });
-/** Свежий `requestId` на команду: повтор запроса отсеивает replay (D-56). */
-const cmd = (n: number) => Trace.fromRequest({ requestId: `r-${n}` });
 const asSystem = () =>
   new SystemCaller({ kind: 'useCase', module: 'probe', name: 'probe' });
 
@@ -58,7 +53,7 @@ function users(profiles: Record<string, number>) {
 }
 
 const ask = (facade: ModuleFacade<typeof UserModuleDef>, userIds: string[]) =>
-  facade.handle(GetTelegramAddressesUcDef, { userIds }, asSystem(), REQ);
+  facade.handle(GetTelegramAddressesUcDef, { userIds }, asSystem(), TEST_TRACE);
 
 describe('getTelegramAddresses: UC над findByIds', () => {
   it('адреса как есть, в порядке входа, одним запросом', async () => {
@@ -83,14 +78,10 @@ describe('getTelegramAddresses: UC над findByIds', () => {
 });
 
 describe('createUserModule', () => {
-  let dir: string;
-  beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), 'user-module-'));
-  });
-  afterEach(() => rmSync(dir, { recursive: true, force: true }));
+  const dir = useTempDir('user-module-');
 
   it('smoke: registerGuest → getUser → addRoleToUser → listUsers на настоящем репозитории', async () => {
-    const repo = new UserJsonRepo(join(dir, 'users.json'));
+    const repo = new UserJsonRepo(dir().file('users.json'));
     const module = createUserModule({
       app,
       facades: new ModuleFacades(),
@@ -102,7 +93,7 @@ describe('createUserModule', () => {
       await module.dispatch(
         RegisterGuestUcDef.command({ telegramId: 501, name: 'Новичок' }),
         admin,
-        cmd(1),
+        testTrace(),
       ),
     );
     expect(registered.roles).toEqual(['GUEST']);
@@ -111,7 +102,7 @@ describe('createUserModule', () => {
       await module.dispatch(
         GetUserUcDef.command({ uuid: registered.uuid }),
         admin,
-        cmd(2),
+        testTrace(),
       ),
     );
     expect(found).toEqual(registered);
@@ -120,7 +111,7 @@ describe('createUserModule', () => {
       await module.dispatch(
         AddRoleToUserUcDef.command({ userId: registered.uuid, role: 'MENTOR' }),
         admin,
-        cmd(3),
+        testTrace(),
       ),
     );
     expect(promoted.roles).toEqual(['GUEST', 'MENTOR']);
@@ -129,7 +120,7 @@ describe('createUserModule', () => {
       await module.dispatch(
         ListUsersUcDef.command({ role: 'MENTOR' }),
         admin,
-        cmd(4),
+        testTrace(),
       ),
     );
     expect(listed.map((u) => u.uuid)).toEqual([registered.uuid]);

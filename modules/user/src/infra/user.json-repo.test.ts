@@ -1,10 +1,7 @@
-import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { UserAr, type UserState } from '@u7-scl/domain/user';
 import { VersionConflict } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, TempDir } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import { UserJsonRepo } from './user.json-repo';
 
@@ -12,8 +9,11 @@ import { UserJsonRepo } from './user.json-repo';
 // round-trip. Не переносятся: isTelegramIdTaken, isEmpty и seed;
 // «невалидные пропускаются» — теперь исключение.
 
-const tmpDir = mkdtempSync(join(tmpdir(), 'user-json-repo-test-'));
-const filePath = (name = 'users.json') => join(tmpDir, name);
+let tmpDir: TempDir;
+beforeAll(() => {
+  tmpDir = TempDir.create('user-json-repo-test-');
+});
+const filePath = (name = 'users.json') => tmpDir.file(name);
 
 const T = (month: number, day: number, hour = 12) =>
   Date.UTC(2026, month - 1, day, hour);
@@ -62,7 +62,7 @@ const boris = makeState({
 const six = [ivan, petr, maria, petrGuest, anna, boris];
 
 describe('UserJsonRepo', () => {
-  afterAll(() => rmSync(tmpDir, { recursive: true, force: true }));
+  afterAll(() => tmpDir.dispose());
 
   describe('save и findById', () => {
     test('сохраняет и находит пользователя по uuid', async () => {

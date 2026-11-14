@@ -1,8 +1,6 @@
-import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { LessonAr, type LessonState } from '@u7-scl/domain/course';
+import { TempDir } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import { LessonJsonRepo } from './lesson.json-repo';
 
@@ -10,17 +8,20 @@ import { LessonJsonRepo } from './lesson.json-repo';
 // `infra/db/lesson-json-repo.test.ts` (save/getByUuid, getByIds) + контракт
 // новой записи: legacy-запись (ISO без секунд → число, version 0, нет
 // `updatedAt` → `createdAt`), round-trip, битая запись — исключение, файл цел.
-// Каталог — mkdtemp: новый репозиторий пишет даты
+// Каталог — временный: новый репозиторий пишет даты
 // числами и до Ф5 не должен писать в `data/` (Т11).
 
-const tmpDir = mkdtempSync(join(tmpdir(), 'lesson-json-repo-test-'));
-afterAll(() => rmSync(tmpDir, { recursive: true, force: true }));
+let tmpDir: TempDir;
+beforeAll(() => {
+  tmpDir = TempDir.create('lesson-json-repo-test-');
+});
+afterAll(() => tmpDir.dispose());
 
 const MODULE = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
 const STEP = '55555555-5555-4555-8555-555555555555';
 const T0 = Date.UTC(2026, 6, 8, 18, 35);
 
-const filePath = (name: string) => join(tmpDir, name);
+const filePath = (name: string) => tmpDir.file(name);
 
 const makeState = (extra: Partial<LessonState> = {}): LessonState => ({
   uuid: crypto.randomUUID(),

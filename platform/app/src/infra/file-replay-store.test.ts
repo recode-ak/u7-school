@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import { readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { ReplayClaim } from 'dmg-core/app';
+import { useTempDir } from 'dmg-core/testing';
 import { FileReplayStore } from './file-replay-store';
 
 const T0 = Date.UTC(2026, 0, 1);
@@ -20,21 +20,16 @@ function tokenOf(claim: ReplayClaim): string {
   return claim.token;
 }
 
-let root: string;
+const root = useTempDir('replay-');
 let dir: string;
 let now: number;
 
 /** Хранилище над каталогом теста с часами, которые переводит тест. */
 const open = () => FileReplayStore.open({ dir, clock: () => now, ttlMs: TTL });
 
-beforeEach(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'replay-'));
-  dir = path.join(root, 'replay');
+beforeEach(() => {
+  dir = root().file('replay');
   now = T0;
-});
-
-afterEach(async () => {
-  await rm(root, { recursive: true, force: true });
 });
 
 describe('FileReplayStore — контракт ReplayStore', () => {

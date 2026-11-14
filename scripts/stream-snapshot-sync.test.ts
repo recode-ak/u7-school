@@ -1,10 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
 import type { StudentState } from '@u7-scl/domain/stream';
 import { StudentJsonRepo } from '@u7-scl/stream';
+import { TempDir, testUuid } from 'dmg-core/testing';
 import * as v from 'valibot';
 import {
   analyzeSnapshotDelta,
@@ -283,19 +282,20 @@ describe('stream-snapshot-sync', () => {
 });
 
 describe('запись студентов после синхронизации (формат Def)', () => {
-  const U = (n: number) => `a0000000-0000-4000-8000-00000000000${n}`;
-  const STEP_1 = U(1);
-  const STEP_2 = U(2);
-  const NEW_STEP = U(3);
-  const STREAM = U(4);
+  const STEP_1 = testUuid(1, 'a0000000');
+  const STEP_2 = testUuid(2, 'a0000000');
+  const NEW_STEP = testUuid(3, 'a0000000');
+  const STREAM = testUuid(4, 'a0000000');
+  let tmp: TempDir;
   let dir: string;
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'u7-snapshot-sync-'));
+    tmp = TempDir.create('u7-snapshot-sync-');
+    dir = tmp.path;
   });
 
   afterAll(async () => {
-    await rm(dir, { recursive: true, force: true });
+    tmp.dispose();
   });
 
   const snapshot = makeSnapshot([
@@ -308,9 +308,9 @@ describe('запись студентов после синхронизации 
   test('legacy-запись (ISO-даты, без version) и запись нового формата: после записи version и числовые даты сохранены, репозиторий читает файл', async () => {
     const file = join(dir, 'students.json');
     const legacy = {
-      uuid: U(5),
+      uuid: testUuid(5, 'a0000000'),
       streamId: STREAM,
-      userId: U(6),
+      userId: testUuid(6, 'a0000000'),
       status: 'active',
       enrolledAt: '2026-09-01T10:00',
       currentStepId: STEP_2,
@@ -327,8 +327,8 @@ describe('запись студентов после синхронизации 
     };
     const modern = {
       ...legacy,
-      uuid: U(7),
-      userId: U(8),
+      uuid: testUuid(7, 'a0000000'),
+      userId: testUuid(8, 'a0000000'),
       enrolledAt: T('2026-09-01T10:00'),
       createdAt: T('2026-09-01T10:00'),
       updatedAt: T('2026-09-02T10:00'),
@@ -372,7 +372,7 @@ describe('запись студентов после синхронизации 
     });
 
     const repo = new StudentJsonRepo(file);
-    const restored = await repo.findById(U(7));
+    const restored = await repo.findById(testUuid(7, 'a0000000'));
     expect(restored?.snapshot().version).toBe(3);
     expect(restored?.snapshot().steps.length).toBe(3);
     expect(await repo.findByStream(STREAM)).toHaveLength(2);

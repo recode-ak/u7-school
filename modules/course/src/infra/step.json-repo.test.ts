@@ -1,8 +1,6 @@
-import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { StepAr, type StepState } from '@u7-scl/domain/course';
+import { TempDir } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import { StepJsonRepo } from './step.json-repo';
 
@@ -11,16 +9,19 @@ import { StepJsonRepo } from './step.json-repo';
 // новой записи: legacy-запись (ISO без секунд → число, version 0, нет
 // `updatedAt` → `createdAt`), три вида шага (`kind: file` в данных нет —
 // только в схеме), round-trip, битая запись — исключение,
-// файл цел. Каталог — mkdtemp: до Ф5 писать в `data/` нельзя (Т11).
+// файл цел. Каталог — временный: до Ф5 писать в `data/` нельзя (Т11).
 
-const tmpDir = mkdtempSync(join(tmpdir(), 'step-json-repo-test-'));
-afterAll(() => rmSync(tmpDir, { recursive: true, force: true }));
+let tmpDir: TempDir;
+beforeAll(() => {
+  tmpDir = TempDir.create('step-json-repo-test-');
+});
+afterAll(() => tmpDir.dispose());
 
 const MODULE = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
 const FILE = '99999999-9999-4999-8999-999999999999';
 const T0 = Date.UTC(2026, 6, 8, 18, 35);
 
-const filePath = (name: string) => join(tmpDir, name);
+const filePath = (name: string) => tmpDir.file(name);
 
 const makeState = (
   extra: Partial<Extract<StepState, { kind: 'text' }>> = {},

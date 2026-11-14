@@ -5,8 +5,8 @@ import type {
 } from '@u7-scl/domain/questionnaire';
 import { userSubject } from '@u7-scl/domain/user/testing';
 import { type OperationRef, SystemCaller, UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import { TEST_TRACE, testAppContext } from 'dmg-core/testing';
 import type { QuestionnaireUser } from '../../questionnaire.module';
 import type { QuestionnaireFilter } from '../questionnaire.repo';
 import { QuestionnaireRepoFake } from '../questionnaire.repo.fake';
@@ -21,7 +21,7 @@ export const COURSE = '7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
 export const OWNER_INFO = { courseId: COURSE };
 export const HOUR = 60 * 60 * 1000;
 export const T0 = Date.UTC(2026, 5, 1, 10);
-export const REQ = Trace.fromRequest({ requestId: 'r-1' });
+export const REQ = TEST_TRACE;
 
 export const respondent = new UserCaller(
   userSubject({

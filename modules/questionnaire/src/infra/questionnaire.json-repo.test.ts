@@ -1,12 +1,9 @@
-import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import {
   QuestionnaireAr,
   type QuestionnaireState,
 } from '@u7-scl/domain/questionnaire';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, TempDir } from 'dmg-core/testing';
 import { QuestionnaireJsonRepo } from './questionnaire.json-repo';
 
 // Репозиторий анкет (`<dbDir>/questionnaires/questionnaires.json`). Перенос
@@ -14,16 +11,19 @@ import { QuestionnaireJsonRepo } from './questionnaire.json-repo';
 // (`getIdle` → `findIdle`) + контракт новой записи: legacy ISO → число, нет
 // `updatedAt` → `createdAt`, нет `version` → 0, round-trip обеих веток `kind`,
 // невалидная запись — исключение, файл цел. `getActive` не переносится (Т18).
-// Каталог — mkdtemp, живые данные не читаются.
+// Каталог — временный, живые данные не читаются.
 
-const tmpDir = mkdtempSync(join(tmpdir(), 'questionnaire-json-repo-test-'));
-afterAll(() => rmSync(tmpDir, { recursive: true, force: true }));
+let tmpDir: TempDir;
+beforeAll(() => {
+  tmpDir = TempDir.create('questionnaire-json-repo-test-');
+});
+afterAll(() => tmpDir.dispose());
 
 const HOUR = 60 * 60 * 1000;
 const T0 = Date.UTC(2026, 5, 1, 10);
 const USER = '11111111-1111-4111-8111-111111111111';
 const OTHER_USER = '22222222-2222-4222-8222-222222222222';
-const filePath = (name: string) => join(tmpDir, name);
+const filePath = (name: string) => tmpDir.file(name);
 
 const standardPool = () => ({
   inviteText: 'Приглашение',

@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ArchChecker } from 'dmg-core/arch';
+import { TempDir } from 'dmg-core/testing';
 import { DomainArch } from './domain-arch';
 
 const ROOT = join(import.meta.dir, '..');
@@ -26,10 +26,12 @@ describe('DomainArch: корень сборки и раннеры (D-52)', () =>
   });
 
   describe('фикстура: раннер импортирует прикладной пакет', () => {
+    let tmp: TempDir;
     let runner: string;
 
     beforeAll(async () => {
-      runner = await mkdtemp(join(tmpdir(), 'domain-arch-runner-'));
+      tmp = TempDir.create('domain-arch-runner-');
+      runner = tmp.path;
       await writeFile(
         join(runner, 'main.ts'),
         `import { WishJsonRepo } from '${join(ROOT, 'modules/wish/src/index')}';\n`,
@@ -37,7 +39,7 @@ describe('DomainArch: корень сборки и раннеры (D-52)', () =>
     });
 
     afterAll(async () => {
-      await rm(runner, { recursive: true, force: true });
+      tmp.dispose();
     });
 
     it('ARC-08', () => {

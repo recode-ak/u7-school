@@ -7,8 +7,7 @@ import {
   spyOn,
   test,
 } from 'bun:test';
-import { mkdir, mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import * as Shared from '@u7-scl/core/shared';
 import { ConsoleLogger } from '@u7-scl/core/shared';
@@ -62,6 +61,7 @@ import {
   type ReplayStore,
   Trace,
 } from 'dmg-core/app';
+import { TempDir, testTrace } from 'dmg-core/testing';
 import { U7App } from '../src/u7-app';
 import type { U7AppEnv } from '../src/u7-app.types';
 
@@ -87,14 +87,16 @@ function makeEnv(dbDir: string): U7AppEnv {
 }
 
 describe('U7App (smoke: сборка с модулем peer-review)', () => {
+  let tmp: TempDir;
   let dir: string;
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'u7-app-'));
+    tmp = TempDir.create('u7-app-');
+    dir = tmp.path;
   });
 
   afterAll(async () => {
-    await rm(dir, { recursive: true, force: true });
+    tmp.dispose();
   });
 
   test('приложение собирается: школа и резолвер из окружения', () => {
@@ -115,7 +117,7 @@ describe('U7App (smoke: сборка с модулем peer-review)', () => {
       PeerReviewModuleDef,
       GetMyCampaignsUcDef.command({}),
       new UserCaller(ACTOR),
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      testTrace(),
     );
     expect(res).toEqual({ ok: true, value: [] });
   });
@@ -127,7 +129,7 @@ describe('U7App (smoke: сборка с модулем peer-review)', () => {
       PeerReviewModuleDef,
       ListScopeFactsUcDef.command({ scopeId: crypto.randomUUID() }),
       new UserCaller(ACTOR),
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      testTrace(),
     );
     expect(res).toEqual({
       ok: true,
@@ -139,16 +141,18 @@ describe('U7App (smoke: сборка с модулем peer-review)', () => {
 // ══ Корень сборки (D-50): поля для UI раннера, wish через ApiApp, фасады по dependsOn ══
 
 describe('U7App: сборка', () => {
+  let tmp: TempDir;
   let dir: string;
   let app: U7App;
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'u7-app-assembly-'));
+    tmp = TempDir.create('u7-app-assembly-');
+    dir = tmp.path;
     app = new U7App(makeEnv(dir), { logger: new ConsoleLogger() });
   });
 
   afterAll(async () => {
-    await rm(dir, { recursive: true, force: true });
+    tmp.dispose();
   });
 
   test('отдаёт поля бандла для UI раннера и резолвер callers', () => {
@@ -186,7 +190,7 @@ describe('U7App: сборка', () => {
       UserModuleDef,
       ListUsersUcDef.command({}),
       new UserCaller(ACTOR),
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      testTrace(),
     );
 
     expect(res).toEqual({ ok: true, value: [] });
@@ -197,7 +201,7 @@ describe('U7App: сборка', () => {
       CourseModuleDef,
       ListModulesUcDef.command({}),
       new UserCaller(ACTOR),
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      testTrace(),
     );
 
     expect(res).toEqual({ ok: true, value: [] });
@@ -208,7 +212,7 @@ describe('U7App: сборка', () => {
       WishModuleDef,
       ListUserWishesUcDef.command({}),
       new UserCaller(ACTOR),
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      testTrace(),
     );
 
     expect(res).toEqual({ ok: true, value: [] });
@@ -219,7 +223,7 @@ describe('U7App: сборка', () => {
       WishModuleDef,
       CreateCourseWishUcDef.command({ courseId: COURSE }),
       new UserCaller(ACTOR),
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      testTrace(),
     );
 
     expect(res.ok).toBe(false);
@@ -231,14 +235,16 @@ describe('U7App: сборка', () => {
 // ══ Отсев повторов команд DMG: хранилище даёт раннер (D-56, Ф4 трека dmg-cleanup) ══
 
 describe('U7App: хранилище отсева повторов команд', () => {
+  let tmp: TempDir;
   let dir: string;
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'u7-app-replay-'));
+    tmp = TempDir.create('u7-app-replay-');
+    dir = tmp.path;
   });
 
   afterAll(async () => {
-    await rm(dir, { recursive: true, force: true });
+    tmp.dispose();
   });
 
   test('команда с requestId клиента идёт через переданное хранилище', async () => {
@@ -363,7 +369,7 @@ async function startQuestionnaire(
       FROM_WISH,
       new UserCaller({ ...ACTOR, uuid: respondentId }),
     ),
-    trace(),
+    testTrace(),
   );
   if (!started.ok) throw new Error('startQuestionnaire не выполнен');
 
@@ -371,7 +377,7 @@ async function startQuestionnaire(
     QuestionnaireModuleDef,
     GetQuestionnairesByUserUcDef.command({ userId: respondentId }),
     new UserCaller({ ...ACTOR, uuid: respondentId }),
-    trace(),
+    testTrace(),
   );
   if (!list.ok) throw new Error('getQuestionnairesByUser не выполнен');
   const [own] = list.value;
@@ -392,7 +398,6 @@ async function seedCourse(dbDir: string): Promise<void> {
   );
 }
 
-const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
 const MENTOR = new UserCaller(
   userSubject({ uuid: ACTOR.uuid, roles: ['MENTOR'] }),
 );
@@ -408,7 +413,7 @@ async function createStream(bundle: U7App): Promise<string> {
       startDate: Date.UTC(2026, 5, 1, 12),
     }),
     MENTOR,
-    trace(),
+    testTrace(),
   );
   if (!created.ok) throw new Error('createStream не выполнен');
   return created.value.streamId;
@@ -424,7 +429,7 @@ async function enroll(
     StreamModuleDef,
     EnrollStudentUcDef.command({ streamId }),
     new UserCaller({ ...ACTOR, uuid: userId }),
-    trace(),
+    testTrace(),
   );
   if (!res.ok) throw new Error('enrollStudent не выполнен');
   return res.value.studentId;
@@ -461,13 +466,15 @@ async function waitReactions(
 }
 
 describe('U7App: события студента доходят до ER DMG-модуля wish', () => {
+  let tmp: TempDir;
   let dir: string;
   let bundle: U7App;
   const CONFIRMED = '44444444-4444-4444-8444-444444444444';
   const ABANDONED = '55555555-5555-4555-8555-555555555555';
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'u7-app-dmg-'));
+    tmp = TempDir.create('u7-app-dmg-');
+    dir = tmp.path;
     await mkdir(join(dir, 'wish'), { recursive: true });
     await Bun.write(
       join(dir, 'wish', 'wishes.json'),
@@ -481,7 +488,7 @@ describe('U7App: события студента доходят до ER DMG-мо
   });
 
   afterAll(async () => {
-    await rm(dir, { recursive: true, force: true });
+    tmp.dispose();
   });
 
   test('enrollStudent, createStream, startQuestionnaire, handleAction/abandon → fulfillWish, inviteWishers, confirmWish, abandonWish', async () => {
@@ -497,7 +504,7 @@ describe('U7App: события студента доходят до ER DMG-мо
         value: 'yes',
       }),
       new UserCaller({ ...ACTOR, uuid: RESPONDENT }),
-      trace(),
+      testTrace(),
     );
     expect(answered.ok).toBe(true);
 
@@ -506,7 +513,7 @@ describe('U7App: события студента доходят до ER DMG-мо
       QuestionnaireModuleDef,
       AbandonUcDef.command({ questionnaireId: abandoned }),
       new UserCaller({ ...ACTOR, uuid: QUITTER }),
-      trace(),
+      testTrace(),
     );
     expect(interrupted.ok).toBe(true);
 
@@ -531,14 +538,16 @@ describe('U7App: события студента доходят до ER DMG-мо
 // ══ Сосуществование (Ф1 peer-review): legacy-событие stream → ER кампаний DMG ══
 
 describe('U7App: событие completeStudent доходит до ER createStudentCampaign', () => {
+  let tmp: TempDir;
   let dir: string;
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'u7-app-peer-review-'));
+    tmp = TempDir.create('u7-app-peer-review-');
+    dir = tmp.path;
   });
 
   afterAll(async () => {
-    await rm(dir, { recursive: true, force: true });
+    tmp.dispose();
   });
 
   test('реакция исполняется (в логе операций); кампания по потоку создана', async () => {
@@ -554,7 +563,7 @@ describe('U7App: событие completeStudent доходит до ER createStu
       StreamModuleDef,
       ActivateStreamUcDef.command({ streamId }),
       MENTOR,
-      trace(),
+      testTrace(),
     );
     expect(activated.ok).toBe(true);
     const completed = await bundle.apiApp.dispatch(
@@ -565,7 +574,7 @@ describe('U7App: событие completeStudent доходит до ER createStu
         outcome: 'advanced',
       }),
       new UserCaller(userSubject({ uuid: ACTOR.uuid, roles: ['ADMIN'] })),
-      trace(),
+      testTrace(),
     );
     expect(completed.ok).toBe(true);
 
@@ -630,14 +639,16 @@ async function waitRunsAfter(dir: string, after: Timestamp): Promise<void> {
 }
 
 describe('U7App: планировщик заданий', () => {
+  let tmp: TempDir;
   let dir: string;
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'u7-app-jobs-'));
+    tmp = TempDir.create('u7-app-jobs-');
+    dir = tmp.path;
   });
 
   afterAll(async () => {
-    await rm(dir, { recursive: true, force: true });
+    tmp.dispose();
   });
 
   test('start() запускает упущенные задания обоих модулей и обновляет историю прогонов', async () => {
@@ -697,11 +708,13 @@ describe('U7App: планировщик заданий', () => {
 // ══ Часы корня сборки: заморозка now() действует и на DMG ══
 
 describe('U7App: часы', () => {
+  let tmp: TempDir;
   let dir: string;
   let nowSpy: ReturnType<typeof spyOn> | undefined;
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'u7-app-clock-'));
+    tmp = TempDir.create('u7-app-clock-');
+    dir = tmp.path;
   });
 
   afterEach(() => {
@@ -709,7 +722,7 @@ describe('U7App: часы', () => {
   });
 
   afterAll(async () => {
-    await rm(dir, { recursive: true, force: true });
+    tmp.dispose();
   });
 
   test('часы U7App следуют now(): запись oplog несёт замороженное время', async () => {
@@ -721,7 +734,7 @@ describe('U7App: часы', () => {
       UserModuleDef,
       ListUsersUcDef.command({}),
       new UserCaller(ACTOR),
-      Trace.fromRequest({ requestId: crypto.randomUUID() }),
+      testTrace(),
     );
     expect(res.ok).toBe(true);
 

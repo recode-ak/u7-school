@@ -1,10 +1,7 @@
-import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { StudentAr, type StudentState } from '@u7-scl/domain/stream';
 import { VersionConflict } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import { expectOk, TempDir } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import { StudentJsonRepo } from './student.json-repo';
 
@@ -12,10 +9,13 @@ import { StudentJsonRepo } from './student.json-repo';
 // `infra/db/student-json-repo.test.ts` (выборка по статусам → `findStudying`) +
 // контракт новой записи: legacy-запись (ISO → число, version 0,
 // updatedAt = createdAt), round-trip, устаревшая версия, битая запись —
-// исключение, файл цел. Каталог — mkdtemp, живые данные не читаются.
+// исключение, файл цел. Каталог — временный, живые данные не читаются.
 
-const tmpDir = mkdtempSync(join(tmpdir(), 'student-json-repo-test-'));
-afterAll(() => rmSync(tmpDir, { recursive: true, force: true }));
+let tmpDir: TempDir;
+beforeAll(() => {
+  tmpDir = TempDir.create('student-json-repo-test-');
+});
+afterAll(() => tmpDir.dispose());
 
 const STREAM = '77777777-7777-4777-8777-777777777777';
 const OTHER_STREAM = '88888888-8888-4888-8888-888888888888';
@@ -24,7 +24,7 @@ const OTHER_USER = '22222222-2222-4222-8222-222222222222';
 const MODULE = '3f2e1d0c-9b8a-4765-8432-10fedcba9876';
 const STEP = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa01';
 const T0 = Date.UTC(2026, 5, 1, 10);
-const filePath = (name: string) => join(tmpDir, name);
+const filePath = (name: string) => tmpDir.file(name);
 
 const makeState = (extra: Partial<StudentState> = {}): StudentState => ({
   uuid: crypto.randomUUID(),

@@ -1,8 +1,6 @@
-import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { ModuleAr, type ModuleState } from '@u7-scl/domain/course';
+import { TempDir } from 'dmg-core/testing';
 import { ValiError } from 'valibot';
 import { ModuleJsonRepo } from './module.json-repo';
 
@@ -11,18 +9,21 @@ import { ModuleJsonRepo } from './module.json-repo';
 // фильтр status, перезапись) + контракт новой записи: legacy-запись
 // (ISO без секунд → число, version 0, updatedAt = createdAt), round-trip,
 // битая запись — исключение, файл цел.
-// Каталог — mkdtemp: новый репозиторий пишет даты числами и до Ф5 не
+// Каталог — временный: новый репозиторий пишет даты числами и до Ф5 не
 // должен писать в `data/` (Т11).
 
-const tmpDir = mkdtempSync(join(tmpdir(), 'module-json-repo-test-'));
-afterAll(() => rmSync(tmpDir, { recursive: true, force: true }));
+let tmpDir: TempDir;
+beforeAll(() => {
+  tmpDir = TempDir.create('module-json-repo-test-');
+});
+afterAll(() => tmpDir.dispose());
 
 const AUTHOR = '660e8400-e29b-41d4-a716-446655440004';
 const OTHER_AUTHOR = '880e8400-e29b-41d4-a716-446655440009';
 const LESSON = '33333333-3333-4333-8333-333333333333';
 const T0 = Date.UTC(2026, 6, 8, 18, 35);
 
-const filePath = (name: string) => join(tmpDir, name);
+const filePath = (name: string) => tmpDir.file(name);
 
 const makeState = (extra: Partial<ModuleState> = {}): ModuleState => ({
   uuid: crypto.randomUUID(),

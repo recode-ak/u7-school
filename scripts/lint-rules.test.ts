@@ -10,16 +10,9 @@
  * `scripts/lint-rules.test.ts` в репо `dmg-core`.
  */
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import {
-  cpSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
-import { tmpdir } from 'node:os';
+import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { TempDir } from 'dmg-core/testing';
 
 const ROOT = join(import.meta.dir, '..');
 const FIXTURES = join(ROOT, 'lint-fixtures');
@@ -43,6 +36,7 @@ const fixtures = [...new Bun.Glob('**/*.txt').scanSync(FIXTURES)].map(
 
 const DMG_CORE = 'node_modules/dmg-core';
 
+let tmp: TempDir;
 let work: string;
 let diagnostics: Diagnostic[];
 
@@ -56,7 +50,8 @@ function lint(dir: string): Diagnostic[] {
 }
 
 beforeAll(() => {
-  work = mkdtempSync(join(tmpdir(), 'lint-rules-'));
+  tmp = TempDir.create('lint-rules-');
+  work = tmp.path;
   const config = JSON.parse(readFileSync(join(ROOT, 'biome.json'), 'utf8'));
   config.vcs = undefined;
   writeFileSync(join(work, 'biome.json'), JSON.stringify(config));
@@ -75,7 +70,7 @@ beforeAll(() => {
   diagnostics = lint(work);
 });
 
-afterAll(() => rmSync(work, { recursive: true, force: true }));
+afterAll(() => tmp.dispose());
 
 const ruleDiagnostics = (target: string) =>
   diagnostics.filter(

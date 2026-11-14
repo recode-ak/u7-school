@@ -1,14 +1,7 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  stat,
-  writeFile,
-} from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { TempDir, useTempDir } from 'dmg-core/testing';
 import {
   migrateUsersData,
   resolveUsersFilePath,
@@ -155,12 +148,10 @@ describe('migrateUsersData', () => {
 });
 
 describe('resolveUsersFilePath', () => {
+  const tmp = useTempDir('drop-student-path-');
   let dbDir: string;
-  beforeEach(async () => {
-    dbDir = await mkdtemp(path.join(tmpdir(), 'drop-student-path-'));
-  });
-  afterEach(async () => {
-    await rm(dbDir, { recursive: true, force: true });
+  beforeEach(() => {
+    dbDir = tmp().path;
   });
 
   test('по умолчанию — вложенный <dbDir>/users/users.json', () => {
@@ -196,14 +187,13 @@ describe('runMigration', () => {
   ];
   const originalText = JSON.stringify(original, null, 2);
 
+  const tmp = useTempDir('drop-student-run-');
+
   beforeEach(async () => {
-    dbDir = await mkdtemp(path.join(tmpdir(), 'drop-student-run-'));
+    dbDir = tmp().path;
     await mkdir(path.join(dbDir, 'users'));
     file = path.join(dbDir, 'users', 'users.json');
     await writeFile(file, originalText, 'utf-8');
-  });
-  afterEach(async () => {
-    await rm(dbDir, { recursive: true, force: true });
   });
 
   test('сухой прогон по умолчанию: считает, но файл не пишет', async () => {
@@ -284,37 +274,31 @@ describe('runMigration', () => {
   });
 
   test('плоский <dbDir>/users.json обрабатывается, если вложенного нет', async () => {
-    const flatDir = await mkdtemp(path.join(tmpdir(), 'drop-student-flat-'));
-    try {
-      const flat = path.join(flatDir, 'users.json');
-      await writeFile(flat, originalText, 'utf-8');
+    using tmp = TempDir.create('drop-student-flat-');
+    const flatDir = tmp.path;
+    const flat = path.join(flatDir, 'users.json');
+    await writeFile(flat, originalText, 'utf-8');
 
-      const result = await runMigration(flatDir, { write: true });
+    const result = await runMigration(flatDir, { write: true });
 
-      expect(result.migrated).toBe(2);
-      expect(result.written).toBe(true);
-      expect(await readFile(flat, 'utf-8')).not.toContain('STUDENT');
-    } finally {
-      await rm(flatDir, { recursive: true, force: true });
-    }
+    expect(result.migrated).toBe(2);
+    expect(result.written).toBe(true);
+    expect(await readFile(flat, 'utf-8')).not.toContain('STUDENT');
   });
 
   test('файла нет — итог с нулями, ничего не создаётся', async () => {
-    const emptyDir = await mkdtemp(path.join(tmpdir(), 'drop-student-none-'));
-    try {
-      const result = await runMigration(emptyDir, { write: true });
+    using tmp = TempDir.create('drop-student-none-');
+    const emptyDir = tmp.path;
+    const result = await runMigration(emptyDir, { write: true });
 
-      expect(result).toEqual({
-        total: 0,
-        migrated: 0,
-        becameGuest: 0,
-        invalid: [],
-        written: false,
-      });
-      expect(await Bun.file(path.join(emptyDir, 'users')).exists()).toBe(false);
-    } finally {
-      await rm(emptyDir, { recursive: true, force: true });
-    }
+    expect(result).toEqual({
+      total: 0,
+      migrated: 0,
+      becameGuest: 0,
+      invalid: [],
+      written: false,
+    });
+    expect(await Bun.file(path.join(emptyDir, 'users')).exists()).toBe(false);
   });
 
   test('не массив в файле — ошибка', async () => {

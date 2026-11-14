@@ -1,11 +1,11 @@
 import { UserAr, type UserState } from '@u7-scl/domain/user';
 import { UserCaller } from 'dmg-core';
-import { ModuleFacades, Trace } from 'dmg-core/app';
-import { testAppContext } from 'dmg-core/testing';
+import { ModuleFacades } from 'dmg-core/app';
+import { TEST_TRACE, testAppContext } from 'dmg-core/testing';
 import { UserRepoFake } from '../user.repo.fake';
 
 /** Общие данные тестов UC пользователей (фейк репозитория, субъекты). */
-export const REQ = Trace.fromRequest({ requestId: 'r-1' });
+export const REQ = TEST_TRACE;
 export const T0 = Date.UTC(2026, 5, 1, 10);
 export const T1 = Date.UTC(2026, 5, 2, 12);
 

@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { mkdir, mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ConsoleLogger } from '@u7-scl/core/shared';
 import {
@@ -11,15 +10,15 @@ import {
 } from '@u7-scl/domain/stream/contract';
 import { userSubject } from '@u7-scl/domain/user/testing';
 import { UserCaller } from 'dmg-core';
-import { type OperationRecord, Trace } from 'dmg-core/app';
-import { expectOk } from 'dmg-core/testing';
+import type { OperationRecord } from 'dmg-core/app';
+import { expectOk, TempDir, testTrace } from 'dmg-core/testing';
 import { U7App } from '../src/u7-app';
 import type { U7AppEnv } from '../src/u7-app.types';
 
 // Замена legacy-публикаций `student.enrolled/completed/abandoned` в
 // `u7-app.test.ts:356-440`: события публикует UoW модуля `stream` при настоящем
 // UC (`dispatch`), и они доходят до ER `wish` (fulfillWish) и `peer-review`
-// (createStudentCampaign). Каталог — mkdtemp, сид — новый формат файлов.
+// (createStudentCampaign). Каталог — временный, сид — новый формат файлов.
 
 const STREAM = '0b6f2c1e-8a4d-4f3b-9c2e-1d5a7b9e3f10';
 const SCHOOL = 'a0000000-0000-4000-8000-000000000001';
@@ -91,8 +90,6 @@ const env = (dbDir: string): U7AppEnv => ({
   studentGroup: { id: 2, inviteUrl: 'https://t.me/test-stud' },
 });
 
-const trace = () => Trace.fromRequest({ requestId: crypto.randomUUID() });
-
 async function oplogRecords(dbDir: string): Promise<OperationRecord[]> {
   const dir = join(dbDir, 'oplog');
   const files = await readdir(dir).catch(() => [] as string[]);
@@ -119,11 +116,13 @@ async function waitReaction(dbDir: string, module: string, op: string) {
 }
 
 describe('U7App: события студента от UoW модуля stream доходят до ER', () => {
+  let tmp: TempDir;
   let dir: string;
   let app: U7App;
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'u7-app-student-'));
+    tmp = TempDir.create('u7-app-student-');
+    dir = tmp.path;
     await mkdir(join(dir, 'streams'), { recursive: true });
     await Bun.write(
       join(dir, 'streams', 'streams.json'),
@@ -140,7 +139,7 @@ describe('U7App: события студента от UoW модуля stream д
   });
 
   afterAll(async () => {
-    await rm(dir, { recursive: true, force: true });
+    tmp.dispose();
   });
 
   test('enrollStudent → stream.student.enrolled → ER fulfillWish (wish)', async () => {
@@ -151,7 +150,7 @@ describe('U7App: события студента от UoW модуля stream д
         new UserCaller(
           userSubject({ uuid: RESPONDENT, roles: ['SUBSCRIBER'] }),
         ),
-        trace(),
+        testTrace(),
       ),
     );
 
@@ -172,7 +171,7 @@ describe('U7App: события студента от UoW модуля stream д
           outcome: 'advanced',
         }),
         new UserCaller(userSubject({ uuid: MENTOR, roles: ['MENTOR'] })),
-        trace(),
+        testTrace(),
       ),
     );
 
@@ -191,7 +190,7 @@ describe('U7App: события студента от UoW модуля stream д
         StreamModuleDef,
         DropStudentUcDef.command({ streamId: STREAM, studentId: LEAVER_ROW }),
         new UserCaller(userSubject({ uuid: LEAVER, roles: ['GUEST'] })),
-        trace(),
+        testTrace(),
       ),
     );
 

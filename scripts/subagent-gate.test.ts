@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { TempDir } from 'dmg-core/testing';
 import {
   type GateRun,
   needsGate,
@@ -77,20 +77,17 @@ describe('withGate', () => {
 
 describe('runAgentGate', () => {
   test('запускает scripts/agent-gate.ts в каталоге и отдаёт код и вывод', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'subagent-gate-'));
-    try {
-      await mkdir(join(root, 'scripts'));
-      await writeFile(
-        join(root, 'scripts/agent-gate.ts'),
-        'console.log("из гейта " + process.cwd()); console.error("err"); process.exit(2);',
-      );
-      const res = await runAgentGate(root);
-      expect(res.code).toBe(2);
-      expect(res.stdout).toContain('из гейта');
-      expect(res.stdout).toContain(root);
-      expect(res.stderr).toContain('err');
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
+    using tmp = TempDir.create('subagent-gate-');
+    const root = tmp.path;
+    await mkdir(join(root, 'scripts'));
+    await writeFile(
+      join(root, 'scripts/agent-gate.ts'),
+      'console.log("из гейта " + process.cwd()); console.error("err"); process.exit(2);',
+    );
+    const res = await runAgentGate(root);
+    expect(res.code).toBe(2);
+    expect(res.stdout).toContain('из гейта');
+    expect(res.stdout).toContain(root);
+    expect(res.stderr).toContain('err');
   });
 });
