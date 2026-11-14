@@ -99,7 +99,7 @@
 - [x] Task: O — перенос знания по списку `da8351f6`, `dmg-core@1882e11` — задание пилота в `research/`, образец брифа → `agents.md` §5, ловушка `updatedAt` — гайд `aggregate` пакета (в `main` без тега)
 - [x] Task: S — архив к виду `spec.md` + `summary.md`; `scripts/repo-layout.test.ts` и ссылки на удалённое `6d70c144` — orchestrator скриптом (промпт дороже работы): 536 файлов, 133 ссылки; страж «только spec/summary» в `repo-layout.test.ts`
 - [x] Task: S (`documentarian`) — проход по документам `dmg-core` `dmg-core@72bdf0a` — 4 правки (RELEASING, `verified` двух концепций); `docs:covers` без warn
-- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md) — Нурболат, 2026-11-15: удалить неотслеживаемые файлы архива, видимость архивного — как сейчас, снимок — на решение orchestrator (D-85)
 
 **Критерии:** `find conductor/archive -type f ! -name spec.md ! -name summary.md` пуст; у каждой инициативы `roadmap.md` — ссылка на `D-NN`; ссылок на удалённые файлы нет; `check` и `docs:check` пакета зелёные.
 

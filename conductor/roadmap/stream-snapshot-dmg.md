@@ -15,7 +15,8 @@
 1. Операции Ar: `StreamAr` — замена снимка контента (с версией и `updatedAt`); `StudentAr` — зачёт вставленного шага (без событий прогресса или с отдельным событием — решить в брифе).
 2. Правило «обогнал вставленный шаг» — DCS потока и студентов (образец — `domain/src/stream/step-completion.dcs.ts`), тесты из `scripts/stream-snapshot-sync.test.ts` переезжают в домен (TST-08).
 3. Запись — через `StreamJsonRepo`/`StudentJsonRepo` и UoW: либо UC модуля `stream` (`callers: ['system']`, вызов как `scripts/call-uc.ts`), либо скрипт с UoW напрямую. Выбор — в брифе; UC даёт запись в лог операций (D-73).
-4. `dmg-data-keeper`: совместимость `streams.json`/`students.json`, сухой прогон на копии.
+4. Отдельный режим «только заголовки» — правка заголовка в курсе доходит до идущих потоков без смены структуры (D-85).
+5. `dmg-data-keeper`: совместимость `streams.json`/`students.json`, сухой прогон на копии.
 
 ## 3. Границы
 

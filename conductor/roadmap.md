@@ -37,7 +37,7 @@
 | **Досье** (`dossier`) | агрегация по модулю и студенту: категории, шкалы, формулы, порог достоверности | D-69, D-72 | анкеты, сессии | [metrics-conception.md](./roadmap/metrics/metrics-conception.md) |
 | **Вклад** (`contribution`) | балл вклада из кросс-анкет командных задач и явных фиксаций | D-65 | досье, задачи | [contribution-system.md](./roadmap/contribution-system.md) |
 | **Цифровой паспорт** (`passport`) | витрина профиля для внешнего мира | D-72, D-79 | досье | [digital-passport.md](./roadmap/metrics/digital-passport.md) |
-| **Контент** | frozen snapshot защищает потоки; `basedOn`, edit vs fork, Import/Export; история модулей курса | D-64, D-65 | — | [content-management.md](./roadmap/content-management.md), [course-module-history.md](./roadmap/course-module-history.md) |
+| **Контент** | frozen snapshot защищает потоки; `basedOn`, edit vs fork, Import/Export; история модулей курса | D-64, D-65, D-85 | — | [content-management.md](./roadmap/content-management.md), [course-module-history.md](./roadmap/course-module-history.md) |
 | **Школы** | школа — множественная сущность; связка автор–школа–ментор–поток | D-53, D-54, D-82 | — | [schools-system.md](./roadmap/schools-system.md) |
 
 Кандидаты в треки (`[?]` в [tracks.md](./tracks.md)) — разборы в `roadmap/`: [stream-snapshot-dmg](./roadmap/stream-snapshot-dmg.md), [stream-front-domain](./roadmap/stream-front-domain.md), [oplog-state-patch](./roadmap/oplog-state-patch.md).
