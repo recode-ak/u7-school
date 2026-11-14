@@ -83,3 +83,25 @@ $G -l -- '<шаблон>' . | wc -l # файлов
 | `questionCode` в callback | вариант A (`stale_answer`) работает | закрыт |
 | `JsonFileRepo` теряет невалидные записи | доменные JSON-репозитории — fail-fast (`v.parse`); `JsonFileRepo` остался для сессий бота и сохраняет невалидное в `backups/` | закрыт |
 | Экран отказа по `Result` (TR-50, план Ф3) | дубль `ucErrorScreen`/`ucErrorNotify` | вход dmg-ui §2 |
+
+## Фаза 4. Перевод тестов на хелперы (2026-11-14)
+
+Бриф и карта — [slices/test-helpers.md](./slices/test-helpers.md). Хелперы: `dmg-core/testing` (`TEST_TRACE`, `testTrace`, `TempDir`, `useTempDir`, `testUuid`) и новые в боте — `Screen`, `TestBotTransport.press`/`pressRaw`/`waitForMessage`, `waitUntil`, test-kit'ы `mockLogger`, `bot-transport`, `subscriptionOf`.
+
+| Повтор | Ф0 (вхожд. / файлов) | Ф4 | Остаток |
+|---|---|---|---|
+| `Trace.fromRequest({ requestId` | 77 / 48 | 15 / 15 | 13 — UC-тесты `wish`/`peer-review` (Ф5); 2 — прод-код бота |
+| `mkdtemp` | 129 / 51 | 43 / 22 | 21 файл `wish`/`peer-review` (Ф5); `.pi/extensions` — не тест |
+| `repoWith` | 11 / 11 | 11 / 11 | исключение: фабрика над конкретным классом репозитория |
+| `press` | 16 / 15 | 5 / 4 | каррирование `tgId` в `it` (3), `pagination` (+проверка Markdown), переменная в `transport.e2e` |
+| `buttonsOf` / `findBtn` | 16 / 16 | 5 / 5 | stories (4 `findBtn`), `buttonsOf` по рядам в `questionnaire-dmg.test-kit` |
+| `waitMessageFor` / `waitUntil` | 11 / 11 | 2 / 2 | общий `waitUntil`; `peer-review.module.test` — бросающая семантика |
+| `makeLogger` | 5 / 5 | 0 | — |
+| `subHandler` | 3 / 3 | 0 | — |
+| `makeUiApp` | 5 / 5 | 4 / 4 | общий test-kit; 3 разные функции (`platform/core`, `ui-app.test`) |
+
+- **Тесты:** 3170 → 3178: +12 тестов хелперов, −4 по TST-08: `create-ui-app.test.ts` — «UserController в сборке нет», «прочий отказ резолвера → исключение»; `u7-bot-ui-story.test.ts` — «мост subjectOf удалён» (T-DEBT-4: гарантирует тип / тавтология); `student-dmg.e2e` — «повторный runJob в тот же день» (T-DEBT-7: та же ветка `NOTICE_EVERY_DAYS`, покрыта P8-04 в `inactivity.e2e`). Ослаблено без удаления: T-DEBT-3 (`ui-app.test.ts` — «регистрация вызвана», состав — `ensure-registered.test.ts`), T-DEBT-1 (`it.each`). `test:bot` 1207 → 1215.
+- **Долг тестов:** T-DEBT-1…7 закрыты; T-DEBT-6 погашен ещё в Ф2 (фикстура ушла с `checkDebt`), запись не была снята. Открытых `T-DEBT` нет.
+- **Отклонения:** `mkdtemp` и `'r-1'` в UC/ER-тестах `wish`/`peer-review` — в Ф5 (фейки вместо JSON во временном каталоге): критерий Ф4 «`mkdtemp` только в хелпере» — после Ф5. Остались локальные `waitFor<T>`/`waitForSent` (бросают и возвращают значение), `craft` (заново открывает экран), `click` с точным совпадением подписи — другая семантика; в stories — `handler()`/`getSub`/`campaignCreatedHandler` (не названы в T-DEBT-5, перепишет dmg-ui).
+- **Ревью** (`dmg-reviewer`, выборкой): error нет; warn T-DEBT-3 — по решению записи; minor — слабая проверка теста `press` (`not.toEqual({})`), не правилось.
+- **Расход:** Sonnet — карта 112k, П0 54k, П1–П2 79k, П3 120k, П4 72k, ревью 54k (≈ 491k). П0, П1–П2 и П3 шли параллельно (разные зоны), 0 кругов доработки.
