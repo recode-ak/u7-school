@@ -30,8 +30,8 @@
     - Префикс ID долга кода — параметр проверки: пакет — `DEBT-<n>`, проект — `C-DEBT-<n>` (README долга §2); голый `DEBT-<n>` в коде проекта — ошибка
 - [x] Task: O — TDD в `~/dev/tools/dmg/dmg-core`: проверка трёх реестров и маркеров временности; хелперы testing; перенос сценариев старых тестов; `debt.md` пакета — на новую проверку `dmg-core@51d7f89`
     - [x] Тесты (red) → запуск → реализация (green)
-- [ ] Task: S (`documentarian`) — документы пакета по `docs:impact`
-- [ ] Task: O — коммит пакета; **стоп: тег и push — с подтверждения Нурболата**; смена `#vX.Y.Z` в 11 `package.json`, `bun install`
+- [x] Task: S (`documentarian`) — документы пакета по `docs:impact` `dmg-core@b57c858`, `7eb4c7b` — 4 правки аудита; `caller`, `errors`, `process` сверены (`docs:covers --strict` зелёный)
+- [~] Task: O — коммит пакета; **стоп: тег и push — с подтверждения Нурболата**; смена `#vX.Y.Z` в 11 `package.json`, `bun install`
 - [ ] Task: O — `scripts/arch-check.ts` вызывает функцию пакета на `conductor/debt/`; своя реализация и её тесты удалены из `scripts/`
     - `checkTrMarkers` и его фикстуры (`scripts/domain-check.test.ts`) удалить: журнала TR нет; до этого шага они — единственное исключение grep-критерия Ф1
 - [ ] Task: O — ревью фазы
