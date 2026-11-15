@@ -74,9 +74,9 @@
 
 ## Фаза 6: документы (ФР-9) — после Ф1–Ф5
 
-- [ ] Task: O — гайд `docs/guides/delegation.md`: что завести в приложении, рекомендованная запись (выдавший, причина), два сценария, какие UC пометить `personal`; D-25 и D-89 окончательно; `docs/index.md`, `docs/guides/index.md`
-- [ ] Task: O — запись в `debt.md` пакета: запись из query UC не запрещена (триггер — первое приложение включает «только чтение»)
-- [ ] Task: S (`documentarian`, аудит; правка — O) — `concepts/caller.md`, `reference/{caller,transport,oplog}.md`, `rules.md` (MAN-11), `guides/use-case.md`, `llms.txt`, скил `dmg-architecture`, роли `agents/roles/`
+- [~] Task: O — гайд `docs/guides/delegation.md`: что завести в приложении, рекомендованная запись (выдавший, причина), два сценария, какие UC пометить `personal`; D-25 и D-89 окончательно; `docs/index.md`, `docs/guides/index.md`
+- [~] Task: O — запись в `debt.md` пакета: запись из query UC не запрещена (триггер — первое приложение включает «только чтение»)
+- [~] Task: S (`documentarian`, аудит; правка — O) — `concepts/caller.md`, `reference/{caller,transport,oplog}.md`, `rules.md` (MAN-11), `guides/use-case.md`, `llms.txt`, скил `dmg-architecture`, роли `agents/roles/`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
 **Критерии:** `bun run docs:covers --strict` без предупреждений; гайд ссылается на `src/testing/example/app`; `documentarian` без расхождений; `grep -rn "'delegate'" docs llms.txt skills agents` — только вид класса и лог.
