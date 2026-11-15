@@ -102,7 +102,7 @@
 - [x] Task: O — `conductor/debt/product.md`: служебный доступ в боте (погашает трек после пилота `dmg-ui`) `c093cd65`
 - [x] Task: O — `conductor/roadmap/dmg-ui-entry.md` (актор сторис — возможно заместитель); `conductor/roadmap.md` (delegation убран из этапа 1) `c093cd65`
 - [x] Task: O — итог пилота `dmg-access-auditor`: `summary.md` и `conductor/architecture/agent-roles.md` `c093cd65`
-- [ ] Task: O — финальный гейт workflow: полный `CI=true bun test`, триаж и сравнение с базовой линией — в `summary.md`; разбор трёх реестров долга
+- [x] Task: O — финальный гейт workflow: полный `CI=true bun test`, триаж и сравнение с базовой линией — в `summary.md`; разбор трёх реестров долга `6f9cf63c`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 9' (Protocol in workflow.md)
 
 **Критерии:** `grep -n "служебный доступ" conductor/debt/product.md` не пуст; `grep -in "заместител" conductor/roadmap/dmg-ui-entry.md` не пуст; `grep -in "delegation\|DelegateCaller" conductor/roadmap.md` пуст; в `summary.md` есть «Пилот ролей» и числа гейта.
