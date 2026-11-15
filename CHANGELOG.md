@@ -10,6 +10,12 @@ Added / Changed / Fixed / Migration.
 
 ## [Unreleased]
 
+## [0.3.3] — 2026-11-15
+
+### Changed
+
+- `dmg-core` v0.3.0 → v0.3.1: геттеры состояния агрегата для лога операций переименованы (`baselineState`, `currentState`), обращение к ним вне UnitOfWork пакета — ошибка lint DOM-17 (`dom-17-state-uow-only` в `biome.json`). Поведение бота не меняется.
+
 ## [0.3.2] — 2026-11-15
 
 ### Added
