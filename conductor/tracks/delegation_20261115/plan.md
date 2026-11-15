@@ -19,15 +19,15 @@
 
 ## Фаза 1: допуск заместителя (ФР-1–4)
 
-- [ ] Task: S (`dmg-test-designer`) — red-тесты
-    - [ ] `DelegateCaller` проходит `callers: ['user']`; Policy получает замещаемого; в записи oplog оба идентификатора
-    - [ ] `'delegate'` в `callers` — ошибка типа (`@ts-expect-error`)
-    - [ ] `personal`: отказ заместителю прямо и от `SystemCaller` с заместителем
-    - [ ] `readOnly`: command — отказ (прямо и от `SystemCaller`), query — успех
-    - [ ] JSON и лог с `readOnly` и без него (старая форма читается)
-    - [ ] `normalize` и граф показывают `personal`
-    - [ ] Запуск — падают по делу
-- [ ] Task: O (`dmg-api-author`) — тип `DeclaredCaller` и метод вида у `Caller`; `readOnly` у `DelegateCaller`; приватный шаг допуска в `UseCaseFromDef` (не в `protected checkCaller`); нормализация; описание `UNAUTHORIZED`; образец и фикстуры без `delegate` в `callers`; документы — по `bun run docs:impact`
+- [x] Task: S (`dmg-test-designer`) — red-тесты
+    - [x] `DelegateCaller` проходит `callers: ['user']`; Policy получает замещаемого; в записи oplog оба идентификатора
+    - [x] `'delegate'` в `callers` — ошибка типа (`@ts-expect-error`)
+    - [x] `personal`: отказ заместителю прямо и от `SystemCaller` с заместителем
+    - [x] `readOnly`: command — отказ (прямо и от `SystemCaller`), query — успех
+    - [x] JSON и лог с `readOnly` и без него (старая форма читается)
+    - [x] `normalize` и граф показывают `personal`
+    - [x] Запуск — падают по делу
+- [~] Task: O (`dmg-api-author`) — тип `DeclaredCaller` и метод вида у `Caller`; `readOnly` у `DelegateCaller`; приватный шаг допуска в `UseCaseFromDef` (не в `protected checkCaller`); нормализация; описание `UNAUTHORIZED`; образец и фикстуры без `delegate` в `callers`; документы — по `bun run docs:impact`
 - [ ] Task: O (`dmg-reviewer`) — ревью; замечания error/warn исправлены
 - [ ] Task: S (`dmg-access-auditor`) — пилот: нет ли обхода допуска; запись в «Пилот ролей»
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
