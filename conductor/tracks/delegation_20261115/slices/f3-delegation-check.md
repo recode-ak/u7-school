@@ -56,6 +56,9 @@ Error нет. Minor (все автору): дубль «за 1 мс до» (TST-
 ## Открытые вопросы → Ф6
 
 - Причина места `DELEGATION_DENIED` в `CoreErrors` — в D-89 и `reference/errors-result.md`.
+- `guides/app.md:30-31` — резолвер образца с заявкой и `Result` (ревью Ф4).
+- Ratchet: число `D-NN` на блок JSDoc (CODE-04) — проверкой `docs:jsdoc` (ревью Ф4); решение — в Ф6.
+- Гайд: самоделегирование (`principalId === actorId`) запрещать при выдаче (аудит Ф4).
 
 ### Итог среза
 

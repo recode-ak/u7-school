@@ -55,8 +55,8 @@
 
 ## Фаза 4: каркас и образец (ФР-7) — после Ф3
 
-- [ ] Task: S (`dmg-test-designer`) — red: резолвер образца с заявкой (успех, каждый отказ, чужой заместитель, нет пользователя, `readOnly` из записи); резолвер каркаса без порта — отказ; раннер печатает отказ и выходит с кодом «отклонено»
-- [ ] Task: S (`dmg-api-author`) — `ExampleDelegationStore` и резолвер в `src/testing/example/app/`; `CallerResolver` возвращает `Result`; шаблоны `app-sources.ts`; раннеры каркаса и образца
+- [x] Task: S (`dmg-test-designer`) — red: резолвер образца с заявкой (успех, каждый отказ, чужой заместитель, нет пользователя, `readOnly` из записи); резолвер каркаса без порта — отказ; раннер печатает отказ и выходит с кодом «отклонено»
+- [~] Task: S (`dmg-api-author`) — `ExampleDelegationStore` и резолвер в `src/testing/example/app/`; `CallerResolver` возвращает `Result`; шаблоны `app-sources.ts`; раннеры каркаса и образца
 - [ ] Task: O (`dmg-reviewer`) — ревью
 - [ ] Task: S (`dmg-access-auditor`) — пилот
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
