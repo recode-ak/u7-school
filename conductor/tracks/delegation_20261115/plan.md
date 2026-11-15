@@ -55,10 +55,10 @@
 
 ## Фаза 4: каркас и образец (ФР-7) — после Ф3
 
-- [x] Task: S (`dmg-test-designer`) — red: резолвер образца с заявкой (успех, каждый отказ, чужой заместитель, нет пользователя, `readOnly` из записи); резолвер каркаса без порта — отказ; раннер печатает отказ и выходит с кодом «отклонено»
-- [~] Task: S (`dmg-api-author`) — `ExampleDelegationStore` и резолвер в `src/testing/example/app/`; `CallerResolver` возвращает `Result`; шаблоны `app-sources.ts`; раннеры каркаса и образца
-- [ ] Task: O (`dmg-reviewer`) — ревью
-- [ ] Task: S (`dmg-access-auditor`) — пилот
+- [x] Task: S (`dmg-test-designer`) — red: резолвер образца с заявкой (успех, каждый отказ, чужой заместитель, нет пользователя, `readOnly` из записи); резолвер каркаса без порта — отказ; раннер печатает отказ и выходит с кодом «отклонено» `57295883`
+- [x] Task: S (`dmg-api-author`) — `ExampleDelegationStore` и резолвер в `src/testing/example/app/`; `CallerResolver` возвращает `Result`; шаблоны `app-sources.ts`; раннеры каркаса и образца `57295883` (пакет `15a894d`)
+- [x] Task: O (`dmg-reviewer`) — ревью `57295883`
+- [x] Task: S (`dmg-access-auditor`) — пилот `57295883`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 **Критерии:** `bun run check && bun run e2e` зелёные; `grep -rln "DelegationStore" src/testing/example/app` не пуст.
