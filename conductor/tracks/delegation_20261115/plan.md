@@ -10,9 +10,9 @@
 
 ## Фаза 0: Базовая линия и решения
 
-- [ ] Task: O — `bun run check` и `bun run e2e` в пакете; `bun run check`, `CI=true bun test`, `arch:check` в u7-school (уже на v0.3.2); числа — в `summary.md`
-- [ ] Task: O — `docs/decisions.md` пакета: D-25 переписан, D-89 черновиком (словарь `callers`, `personal`, `readOnly`, заявка, ошибка) — решение раньше правки контракта
-- [ ] Task: O — роль `dmg-access-auditor` в проекте (рядом с `migrator`); раздел «Пилот ролей» в `summary.md`
+- [x] Task: O — `bun run check` и `bun run e2e` в пакете; `bun run check`, `CI=true bun test`, `arch:check` в u7-school (уже на v0.3.2); числа — в `summary.md` `2c49c654`
+- [x] Task: O — `docs/decisions.md` пакета: D-25 переписан, D-89 черновиком (словарь `callers`, `personal`, `readOnly`, заявка, ошибка) — решение раньше правки контракта `2c49c654` (пакет `f06480b`)
+- [x] Task: O — роль `dmg-access-auditor` в проекте (рядом с `migrator`); раздел «Пилот ролей» в `summary.md` `2c49c654`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 **Критерии:** числа обоих репо в `summary.md`; `grep -n "D-89" docs/decisions.md` не пуст; файл роли есть, субагент `dmg-access-auditor` запускается.
