@@ -78,11 +78,13 @@
 
 ## Фаза 5: контент, миры и литералы тестов (ФР-5)
 
-- [ ] Task: O — `migrate-timestamps --write` на `data/courses` (под git), отдельный коммит; `git diff --stat` — только поля дат
-- [ ] Task: S (`dmg-api-author`) — генератор миров на числа (`relative-time.ts`, `builder.ts`, `types.ts`, `invariants.ts`, `materializer.ts`); сброс кэша мира; `rm -rf data/fixtures && bun run seed:fixtures`
-- [ ] Task: S (`dmg-test-designer`) — литералы ISO в тестах и конструкторах фикстур → числа (≈116 строк вне `Date.parse`/`new Date`); сценарии сохранены
-- [ ] Task: S (`dmg-reviewer`) — ревью; кандидаты в чистку тестов — в отчёт
-- [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
+> Бриф — [slices/f5-content-worlds.md](./slices/f5-content-worlds.md)
+
+- [x] Task: O — `6794a92` — `migrate-timestamps --write` на `data/courses` (под git), отдельный коммит; `git diff --stat` — только поля дат
+- [x] Task: S (`dmg-api-author`) — `f8672738` — генератор миров на числа (`relative-time.ts`, `builder.ts`, `types.ts`, `invariants.ts`, `materializer.ts`); сброс кэша мира; `rm -rf data/fixtures && bun run seed:fixtures`
+- [x] Task: S (`dmg-test-designer`) — `f8672738` — литералы ISO в тестах и конструкторах фикстур → числа (≈116 строк вне `Date.parse`/`new Date`); сценарии сохранены
+- [x] Task: S (`dmg-reviewer`) — `f8672738` — ревью; кандидаты в чистку тестов — в отчёт
+- [x] Task: Conductor - User Manual Verification 'Фаза 5' (автопроверка: `check`, grep ISO по `data/courses`, `data/fixtures`) (Protocol in workflow.md)
 
 **Критерии:** ISO-дат в `data/courses`, `data/fixtures` (кроме логов) и `tests/worlds` нет; в `.ts` — только обёртки `Date.parse` и нарочные негативные тесты (список — в отчёте); `bun run check` и `CI=true bun test` зелёные, тестов не меньше.
 
