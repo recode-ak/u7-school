@@ -31,7 +31,7 @@
 
 **Критерии:** `bun run check` и `bun run e2e` пакета зелёные, тестов не меньше базовой линии; `grep -rn "isoDateTime\|isoTimestamp\|parseIso" src/kernel/fields` пуст; тест «отвергает ISO-строку» есть; тег `v0.3.2` на коммите с правкой; D-16 обновлён.
 
-## Фаза 2: зона проекта и `stream.startDate` (ФР-7: ввод и вывод)
+## Фаза 2: зона проекта и `stream.startDate` (ФР-7: ввод и вывод) [checkpoint: f596cf9f]
 
 > Бриф — [slices/f2-project-zone.md](./slices/f2-project-zone.md)
 
