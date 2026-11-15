@@ -33,3 +33,10 @@
 
 - `46b6a45b`: `JobRunJsonRepo` — `Record<string, number>`, guard Timestamp, без `toISOString`/`Date.parse`.
 - `check`: 3500 pass / 0 fail.
+
+## Фаза 4: скрипт миграции и контрольное чтение
+
+- `71bd810`: `scripts/migrate-timestamps.ts` (64 теста), `DataDirAudit`, `data-layout.ts` (`DATA_FILES`, `DATA_MODULES`); `U7App` на `DATA_FILES`.
+- Разбор ISO — строгий паритет с прежним `F.timestamp` v0.3.1; строже — только несуществующая дата и `+05`.
+- Копия `data/courses`: 2369 переведено, invalid 0, diff только в строках дат; повтор — 0 изменений.
+- `check`: 3571 pass / 0 fail.

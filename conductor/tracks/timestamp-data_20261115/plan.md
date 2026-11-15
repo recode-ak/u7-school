@@ -61,18 +61,18 @@
 
 > Бриф — [slices/f4-migrate-timestamps.md](./slices/f4-migrate-timestamps.md)
 
-- [ ] Task: S (`dmg-test-designer`) — red-тесты (временной каталог, `DB_DIR`)
-    - [ ] смешанный формат: число / ISO с зоной / ISO без зоны (как UTC) / мусор → `invalid`, файл не пишется
-    - [ ] идемпотентность: второй запуск — «уже число», файл не переписан
-    - [ ] сохраняются порядок записей, прочие поля, `version`, `updatedAt`; отсутствующие поля не добавляются
-    - [ ] вложенные пути (`steps[].issuedAt`, `steps[].completedAt?`, `notices[].sentAt`, `answers[].answeredAt`), optional/nullable
-    - [ ] `startDate`: без зоны → −5 ч; с зоной/`Z` — как есть; число → `invalid`; счёт «без зоны / с зоной / число» в итоге
-    - [ ] `last-runs.json` (значения по имени job); отсутствующий файл; сухой прогон по умолчанию, `--write`
-    - [ ] контрольное чтение: мигрированная копия — 0 ошибок; ошибка схемы — в отчёте «файл → запись → ошибка»
-    - [ ] Запуск — падают по делу
-- [ ] Task: S (`dmg-api-author`) — `scripts/migrate-timestamps.ts` (карта «файл → пути» по таблице тех-лида; без импорта домена); класс контрольного чтения в `platform/app` (строгие `ArDef.state` всех файлов, отчёт), вызов после `--write`; скрипт в `package.json`
-- [ ] Task: S (`dmg-reviewer`) — ревью; ARC-04 (скрипт импортирует только `@u7-scl/app`), `arch:check`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: S (`dmg-test-designer`) — `71bd810` — red-тесты (временной каталог, `DB_DIR`)
+    - [x] смешанный формат: число / ISO с зоной / ISO без зоны (как UTC) / мусор → `invalid`, файл не пишется
+    - [x] идемпотентность: второй запуск — «уже число», файл не переписан
+    - [x] сохраняются порядок записей, прочие поля, `version`, `updatedAt`; отсутствующие поля не добавляются
+    - [x] вложенные пути (`steps[].issuedAt`, `steps[].completedAt?`, `notices[].sentAt`, `answers[].answeredAt`), optional/nullable
+    - [x] `startDate`: без зоны → −5 ч; с зоной/`Z` — как есть; число → `invalid`; счёт «без зоны / с зоной / число» в итоге
+    - [x] `last-runs.json` (значения по имени job); отсутствующий файл; сухой прогон по умолчанию, `--write`
+    - [x] контрольное чтение: мигрированная копия — 0 ошибок; ошибка схемы — в отчёте «файл → запись → ошибка»
+    - [x] Запуск — падают по делу
+- [x] Task: S (`dmg-api-author`) — `71bd810` — `scripts/migrate-timestamps.ts` (карта «файл → пути» по таблице тех-лида; без импорта домена); класс контрольного чтения в `platform/app` (строгие `ArDef.state` всех файлов, отчёт), вызов после `--write`; скрипт в `package.json`
+- [x] Task: S (`dmg-reviewer`) — `71bd810` — ревью; ARC-04 (скрипт импортирует только `@u7-scl/app`), `arch:check`
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (автопроверка: `check`, `arch:check`, прогон на копии `data/courses`) (Protocol in workflow.md)
 
 **Критерии:** `bun run check` и `arch:check` зелёные, тестов не меньше; `grep -n "@u7-scl/domain" scripts/migrate-timestamps.ts` пуст; сухой прогон на копии `data/courses` — ≈2370 «переведено», `invalid = 0`.
 
@@ -101,12 +101,13 @@
 - [ ] Task: O — релиз u7-school (CHANGELOG, версия, тег), push
 - [ ] Task: O — прод:
     - [ ] `git status` / `git diff <тег> -- data/courses` пусты
-    - [ ] стоп бота; `bun run backup before-timestamp-data`
+    - [ ] сверить `ls -R data` с картой скрипта (`DATA_FILES` + `jobs/last-runs.json`)
+    - [ ] стоп бота; `bun run backup before-timestamp-data` (имя `before-*` — не пропускается ротацией), `bash scripts/backup.sh --verify data/backup/<снимок>`
     - [ ] чекаут релиза, `bun install` (бот не стартует)
     - [ ] сухой прогон; итог по файлам и счёт `startDate` — Нурболату; **ждать подтверждения**
     - [ ] `--write`, контрольное чтение (0 ошибок), поиск строковых дат в данных — ноль
     - [ ] старт бота; лог, `bun run oplog`; показ потока в UTC+5
-    - [ ] при сбое — откат: снимок (`docs/backup.md`) и предыдущий тег
+    - [ ] при сбое — откат: **весь** снимок (`docs/backup.md`) и предыдущий тег; откат только по коду нельзя — v0.3.5 читает `last-runs.json`-число как NaN (внеплановые sweep). `DB_DIR` задавать явно (`bun run` не грузит `.env.production`)
 - [ ] Task: O — удалить `migrate-timestamps.ts` (тест, скрипт `package.json`); убрать `timestamp-data` из `roadmap.md`; `summary.md`; разбор долга по трём реестрам
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
 
