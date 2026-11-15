@@ -1,6 +1,6 @@
 # План: `timezones` — часовые зоны школы и пользователя
 
-> Spec — [spec.md](./spec.md). Исполнители: **O** — Opus, **S** — Sonnet (роли `conductor/architecture/agents.md` §4). Весь трек — u7-school, репо `dmg-core` не затрагивается (тег `#v0.3.2`).
+> Spec — [spec.md](./spec.md). Исполнители: **O** — Opus, **S** — Sonnet (роли `conductor/architecture/agents.md` §4). Весь трек — u7-school, репо `dmg-core` не затрагивается (тег `#v0.4.0`).
 >
 > Порядок: Ф1 → Ф2 → Ф3, фаза = сессия.
 >
