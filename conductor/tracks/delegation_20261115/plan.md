@@ -65,8 +65,8 @@
 
 ## Фаза 5: oplog (ФР-8) — после Ф1
 
-- [ ] Task: S (`dmg-test-designer`) — red: `--actor` находит записи заместителя и системные с этим заместителем; `--request` по `requestId` находит цепочку его `correlationId`
-- [ ] Task: S (`dmg-api-author`) — фильтр `actor`, флаг CLI, лента; запись DEBT-1 удалена
+- [x] Task: S (`dmg-test-designer`) — red: `--actor` находит записи заместителя и системные с этим заместителем; `--request` по `requestId` находит цепочку его `correlationId`
+- [~] Task: S (`dmg-api-author`) — фильтр `actor`, флаг CLI, лента; запись DEBT-1 удалена
 - [ ] Task: S (`dmg-reviewer`) — ревью
 - [ ] Task: Conductor - User Manual Verification 'Фаза 5' (Protocol in workflow.md)
 

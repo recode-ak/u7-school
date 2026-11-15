@@ -30,3 +30,19 @@
 ARC-12 (долг), D-84, D-86, TST-09, CODE-04.
 
 ## Отчёты
+
+### dmg-test-designer (Sonnet)
+
+`operation-log-reader.test.ts`: `actor` (заместитель прямо и в `person` системного; не `subjectId`, не гость) — red; `request` по `requestId` `tg:7#1` → вся цепочка `tg:7` (UC, реакция, второй запрос), чужая не попадает — red; по `correlationId` и неизвестный — регрессия, green. `main-oplog.test.ts`: сквозной `--actor` — red («неизвестный флаг»). Теста `--subject` в CLI нет — образца не было.
+
+### dmg-api-author (Sonnet)
+
+`actor` (заместитель прямо и в `person`), `request` — `correlationId` или `cause.requestId` (два прохода по записям диапазона), `--actor`, справка, `reference/oplog.md`, DEBT-1 удалён. `check` 1718 pass.
+
+### dmg-reviewer (Sonnet)
+
+Error нет. Minor: цепочка ищется только в окне `--since/--until` — оговорка дописана orchestrator в `reference/oplog.md`. Вопросы без действия: память на большом диапазоне (все записи окна в памяти — по брифу); CLI-тест `--actor` частично повторяет тест читателя — сквозной случай передачи флага оставлен.
+
+### Итог среза
+
+Пакет `4aff700`. `check` — 1718 pass / 0 fail. `docs:covers --strict` — `concepts/caller.md` (правится в Ф6).
