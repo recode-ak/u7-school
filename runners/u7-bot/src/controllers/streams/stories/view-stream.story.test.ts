@@ -162,6 +162,49 @@ describe('ViewStreamStory (S02-S04)', () => {
     expect(text).toContain('🟡 Набор открыт');
   });
 
+  test('view: старт 10:00Z показан по зоне проекта — «01.10.2026» и «15:00»', async () => {
+    const { story } = makeStory();
+    const response = await story.handleCallback(
+      `view:${STREAM_ID}`,
+      guest,
+      session,
+    );
+    const text = String(response.screen?.text);
+    expect(text).toContain('📅 Старт: 01\\.10\\.2026');
+    expect(text).toContain('🕐 Время: 15:00');
+  });
+
+  test('view: 22:30Z — следующие сутки по зоне проекта («02.10.2026», «03:30»)', async () => {
+    const { story } = makeStory({
+      stream: makeStream({ startDate: Date.parse('2026-10-01T22:30:00.000Z') }),
+    });
+    const response = await story.handleCallback(
+      `view:${STREAM_ID}`,
+      guest,
+      session,
+    );
+    const text = String(response.screen?.text);
+    expect(text).toContain('📅 Старт: 02\\.10\\.2026');
+    expect(text).toContain('🕐 Время: 03:30');
+  });
+
+  test('enroll: «Обучение начнётся» — дата по зоне проекта на границе суток', async () => {
+    const { story } = makeStory({
+      stream: makeStream({
+        requiresEnrollmentKey: false,
+        startDate: Date.parse('2026-10-01T22:30:00.000Z'),
+      }),
+    });
+    const response = await story.handleCallback(
+      `enroll:${STREAM_ID}`,
+      guest,
+      session,
+    );
+    expect(String(response.notify?.text)).toContain(
+      'Обучение начнётся: 02\\.10\\.2026',
+    );
+  });
+
   test('view: активный поток — без мёртвой кнопки «🔔 Уведомить о наборе»', async () => {
     const { story } = makeStory({ stream: makeStream({ status: 'active' }) });
     const response = await story.handleCallback(

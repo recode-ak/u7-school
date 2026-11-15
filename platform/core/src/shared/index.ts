@@ -29,5 +29,6 @@ export {
   validateMarkdownV2,
 } from './markdown-validator';
 export { now } from './now';
+export { ProjectZone } from './project-zone';
 export { serializeError } from './serialize-error';
 export { stringUtility, truncateByWords } from './string-utility';

@@ -756,14 +756,22 @@ describe('E2E: инструменты ментора — экранные вет
     return transport.press(tgId, 'Пропустить');
   }
 
-  test('P4-48: wizard с неверной датой — отказ валидации, поток не создан', async () => {
-    const preview = await wizardToPreview(MGMT_TG.mentor, 'не-дата');
-    expect(textOf(preview)).toContain('Превью потока');
+  test('P4-48: wizard с неверной датой — «Некорректная дата» на шаге 3, поток не создан', async () => {
+    const tgId = MGMT_TG.mentor;
+    await transport.handleStart(transport.makeBotContext(tgId));
+    await transport.press(tgId, 'Инструменты ментора');
+    await transport.press(tgId, 'Создать поток');
+    await transport.press(tgId, 'Модуль ментора');
+    await transport.press(tgId, 'Принять');
+    await transport.press(tgId, 'Принять');
 
-    const refused = await transport.press(MGMT_TG.mentor, 'Создать');
+    const refused = await transport.sendText(tgId, 'не-дата');
 
-    expect(refused.notify?.kind).toBe('warn');
-    expect(notifyOf(refused)).toContain('Ошибка валидации');
+    expect(textOf(refused)).toContain('Некорректная дата');
+    expect(textOf(refused)).not.toContain('Превью потока');
+    // Остались на шаге 3: пропуск даты не нужен, валидная дата принимается
+    const accepted = await transport.sendText(tgId, '2026-12-15');
+    expect(textOf(accepted)).not.toContain('Некорректная дата');
   });
 
   test('P4-50: устаревшая кнопка «Создать» после снятия ввода — «Контекст потерян»', async () => {

@@ -7,6 +7,7 @@ import {
   mdInlineCode,
   mdJoin,
   now,
+  ProjectZone,
 } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -393,12 +394,7 @@ export class CreateStreamStory extends U7BotUiStory {
     ctx: CreateStreamWizardContext,
     text: string,
   ): DialogResponse {
-    // Пример даты: сегодня + 5 дней, время 10:00
-    const exampleDate = new Date(now().getTime() + 5 * 24 * 60 * 60 * 1000);
-    const yyyy = exampleDate.getFullYear();
-    const mm = String(exampleDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(exampleDate.getDate()).padStart(2, '0');
-    const exampleStr = mdInlineCode(`${yyyy}-${mm}-${dd}T10:00`);
+    const exampleStr = mdInlineCode(this.#exampleDate());
 
     return this.ask(
       // Композиция MdText — через mdConcat: интерполяция готового MdText
@@ -414,11 +410,30 @@ export class CreateStreamStory extends U7BotUiStory {
     );
   }
 
+  /** Пример ввода: сегодня + 5 дней, 10:00 в зоне проекта. */
+  #exampleDate(): string {
+    const zone = ProjectZone.default();
+    const inFiveDays = zone.formatInput(
+      now().getTime() + 5 * 24 * 60 * 60 * 1000,
+    );
+    return `${inFiveDays.slice(0, 10)}T10:00`;
+  }
+
   #handleDateInput(
     ctx: CreateStreamWizardContext,
     text: string,
   ): DialogResponse {
-    // время старта — по UTC+5 «как есть» (ISO без зоны), вывод — getUTC*.
+    // Контекст хранит дату как местное время зоны проекта; UTC-метка — в confirm
+    if (ProjectZone.default().parseLocal(text) === undefined) {
+      return this.ask(
+        mdConcat(
+          md`⚠️ Некорректная дата\\. Введите \`YYYY-MM-DD\` или \`YYYY-MM-DDTHH:MM\`\\.\nНапример: `,
+          mdInlineCode(this.#exampleDate()),
+          md`\\.`,
+        ),
+        ctx,
+      );
+    }
     const normalizedDate = text.includes('T') ? text : `${text}T00:00`;
 
     // OPTIONAL_FIELDS всегда непустой
@@ -775,12 +790,20 @@ export class CreateStreamStory extends U7BotUiStory {
       };
     }
 
-    // Дата wizard-а — UTC без часового пояса (`YYYY-MM-DDTHH:mm`); поток хранит метку времени
+    const startDate = ProjectZone.default().parseLocal(context.startDate);
+    if (startDate === undefined) {
+      return {
+        ...this.warn(
+          md`⚠️ Дата старта потеряна или некорректна\\. Начните заново\\.`,
+        ),
+        release: true,
+      };
+    }
     const cmd: InputOf<typeof CreateStreamUcDef> = {
       title: context.title,
       description: context.description,
       moduleId: context.moduleId,
-      startDate: new Date(`${context.startDate}Z`).getTime(),
+      startDate,
       telegramGroupId: context.telegramGroupId,
     };
 

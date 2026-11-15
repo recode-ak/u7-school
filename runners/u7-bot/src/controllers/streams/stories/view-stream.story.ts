@@ -161,9 +161,8 @@ export class ViewStreamStory extends U7BotUiStory {
       archived: '⚫ Архивирован',
     };
 
-    const startIso = new Date(stream.startDate).toISOString();
-    const dateStr = this.formatDate(startIso);
-    const timeStr = this.#formatTime(startIso);
+    const dateStr = this.formatDate(stream.startDate);
+    const timeStr = this.formatTime(stream.startDate);
 
     const text = mdJoin([
       md`📋 *${stream.title}*`,
@@ -911,7 +910,7 @@ export class ViewStreamStory extends U7BotUiStory {
       return this.ucErrorNotify(enrolled.error);
     }
 
-    const dateStr = this.formatDate(new Date(stream.startDate).toISOString());
+    const dateStr = this.formatDate(stream.startDate);
     const lines: MdText[] = [
       md`🎉 *Вы успешно записаны на поток\\!*`,
       md``,
@@ -929,16 +928,5 @@ export class ViewStreamStory extends U7BotUiStory {
       ...this.notify(mdJoin(lines)),
       delegate: { path: Routes.app.mainMenu },
     };
-  }
-
-  #formatTime(iso: string): string {
-    try {
-      const d = new Date(iso);
-      const hh = String(d.getUTCHours()).padStart(2, '0');
-      const min = String(d.getUTCMinutes()).padStart(2, '0');
-      return `${hh}:${min}`;
-    } catch {
-      return iso;
-    }
   }
 }

@@ -355,6 +355,83 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
     expect(ctx.step).toBe(4);
   });
 
+  // Невалидный ввод даты — повторный ask того же шага с текстом ошибки
+  // (формат + пример); контекст не меняется, UC не вызывается
+  for (const bad of [
+    '2026-02-31',
+    '2026-09-01T25:00',
+    '2026-09-01T14:00:30',
+    '2026-09-01T14:00Z',
+    '2026-09-01 14:00',
+    'завтра',
+    '   ',
+  ]) {
+    test(`ввод шаг 3 — невалидная дата «${bad}» → тот же шаг, текст ошибки`, async () => {
+      const { story, dispatch } = createStory();
+      const session = wizardSession(3, {
+        title: 'П',
+        description: 'О',
+        ...MOD_FIELDS,
+      });
+      const response = await story.handleMessage(
+        inputMsg(bad),
+        mentorActor,
+        session,
+      );
+      const text = String(response.screen?.text);
+      expect(text).toContain('Некорректная дата');
+      expect(text).toContain('YYYY-MM-DD');
+      expect(text).toContain('T10:00');
+      const ctx = ctxOf(response);
+      expect(ctx.step).toBe(3);
+      expect(ctx.startDate).toBeUndefined();
+      expect(dispatch).not.toHaveBeenCalled();
+    });
+  }
+
+  // Ввод — местное время зоны проекта (UTC+5), в команду уходит UTC-метка
+  const confirmCtx = (startDate: string): WizardCtx => ({
+    moduleId: 'mod-1',
+    title: 'Поток',
+    description: 'Описание',
+    startDate,
+  });
+
+  test('confirm: невалидный startDate в контексте — UC не вызван', async () => {
+    const { story, dispatch } = createStory();
+    const response = await story.handleCallback(
+      'confirm',
+      mentorActor,
+      wizardSession(12, confirmCtx('2026-02-31T10:00')),
+    );
+    expect(response.notify?.kind).toBe('warn');
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  test('confirm: «2026-09-01T23:59» местного → 18:59Z (граница суток)', async () => {
+    const { story, dispatch } = createStory();
+    await story.handleCallback(
+      'confirm',
+      mentorActor,
+      wizardSession(12, confirmCtx('2026-09-01T23:59')),
+    );
+    expect(dispatch.mock.calls[0]?.[1].input).toMatchObject({
+      startDate: Date.parse('2026-09-01T18:59:00.000Z'),
+    });
+  });
+
+  test('confirm: дата без времени → полночь местного (предыдущие сутки в UTC)', async () => {
+    const { story, dispatch } = createStory();
+    await story.handleCallback(
+      'confirm',
+      mentorActor,
+      wizardSession(12, confirmCtx('2026-09-01T00:00')),
+    );
+    expect(dispatch.mock.calls[0]?.[1].input).toMatchObject({
+      startDate: Date.parse('2026-08-31T19:00:00.000Z'),
+    });
+  });
+
   // ── Шаги 4-8: необязательные поля (accept/skip/ввод) ──
 
   const optionalBase = {
@@ -654,7 +731,7 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
         title: 'Мой Поток',
         description: 'Описание',
         moduleId: 'mod-1',
-        startDate: Date.parse('2026-09-01T14:00:00.000Z'),
+        startDate: Date.parse('2026-09-01T09:00:00.000Z'),
         telegramGroupId: '-100123456789',
         goal: 'Цель',
         result: 'Результат',
@@ -674,7 +751,7 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
     const response = await story.handleCallback(
       'confirm',
       mentorActor,
-      wizardSession(12, { moduleId: 'mod-1', title: 'Поток' }),
+      wizardSession(12, confirmCtx('2026-09-01T10:00')),
     );
     expect(response.notify?.kind).toBe('warn');
     expect(String(response.notify?.text)).toContain('Модуль не найден');

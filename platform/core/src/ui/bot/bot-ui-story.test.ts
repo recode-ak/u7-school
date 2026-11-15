@@ -117,8 +117,11 @@ class TestStory extends BotUiStory<TestActor> {
   ): ReturnType<TestStory['unknownCommand']> {
     return this.unknownCommand(action, actor, session);
   }
-  callFormatDate(iso: string): string {
-    return this.formatDate(iso);
+  callFormatDate(at: number): string {
+    return this.formatDate(at);
+  }
+  callFormatTime(at: number): string {
+    return this.formatTime(at);
   }
   // Делегаты билдеров ответов (ФР-2) — экспонирование для тестов
   callScreen(
@@ -456,9 +459,12 @@ describe('BotUiStory — колбэк-хелперы', () => {
     expect(story.callStripPrefix('other:view:1')).toBe('other:view:1');
   });
 
-  test('formatDate: ISO → дд.мм.гггг', () => {
+  // Сама логика зоны — в project-zone.test.ts (TST-08); здесь — делегирование
+  test('formatDate/formatTime: Timestamp показывается по зоне проекта', () => {
     const story = new TestStory();
-    expect(story.callFormatDate('2026-09-05T00:00:00Z')).toBe('05.09.2026');
+    const at = Date.parse('2026-09-17T05:00:00.000Z');
+    expect(story.callFormatDate(at)).toBe('17.09.2026');
+    expect(story.callFormatTime(at)).toBe('10:00');
   });
 });
 

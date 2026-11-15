@@ -166,7 +166,7 @@ describe('WishInviteStory', () => {
     expect(text).toContain('JavaScript Основы — Поток 1');
     // Дата и время старта (точки экранируются MarkdownV2)
     expect(text).toContain('17\\.09\\.2026');
-    expect(text).toContain('10:00');
+    expect(text).toContain('15:00');
     // Ментор с рабочей t.me-ссылкой на ник
     expect(text).toContain('[Dev](https://t.me/devnick)');
     // Подсказка записи с явным именем потока (поток без ключа — запись свободная)

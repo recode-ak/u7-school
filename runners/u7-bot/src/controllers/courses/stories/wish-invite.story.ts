@@ -95,14 +95,13 @@ export class WishInviteStory extends U7BotUiStory {
       ? md`Для записи нужен ключ — его выдаёт ментор\\. Запись: /start → 🏫 Школа → 📚 Потоки → «${stream.title}» → 📝 Записаться\\.`
       : md`Запись свободная: /start → 🏫 Школа → 📚 Потоки → «${stream.title}» → 📝 Записаться\\.`;
 
-    const startIso = new Date(stream.startDate).toISOString();
     const text = mdJoin([
       md`📣 *Открылся набор\\!*`,
       md``,
       subject,
       md``,
       md`📚 Поток: «${stream.title}»`,
-      md`📅 Старт: ${this.formatDate(startIso)}, ${this.#formatTime(startIso)}`,
+      md`📅 Старт: ${this.formatDate(stream.startDate)}, ${this.formatTime(stream.startDate)}`,
       ...mentorLine,
       md``,
       enrollHint,
@@ -194,18 +193,6 @@ export class WishInviteStory extends U7BotUiStory {
       return await this.findUser(uuid);
     } catch {
       return undefined;
-    }
-  }
-
-  /** Форматирует ISO-дату в чч:мм (UTC, как в карточке потока S02). */
-  #formatTime(iso: string): string {
-    try {
-      const d = new Date(iso);
-      const hh = String(d.getUTCHours()).padStart(2, '0');
-      const min = String(d.getUTCMinutes()).padStart(2, '0');
-      return `${hh}:${min}`;
-    } catch {
-      return iso;
     }
   }
 
