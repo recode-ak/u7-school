@@ -44,11 +44,11 @@
 
 **Критерии:** `bun run check` зелёный, тестов не меньше; `bun src/cli/main.ts oplog <dir> --request <id>` печатает цепочку по `at`, `--aggregate <uuid>` — патчи по версиям (критерии spec 5, 6).
 
-## Фаза 3: dmg-core — документы и релиз (критерий 8)
+## Фаза 3: dmg-core — документы и релиз (критерий 8) [checkpoint: d288265]
 
 - [x] Task: S (`documentarian` — аудит; правка — O) [dmg-core f0e38fa, 962046a] — D-86 в `docs/decisions.md` (снять оговорку D-73; baseline по ссылке; пометка `F.sensitive` и маскирование всей записи — `OperationRun` и UoW; порог в Jsonl); новый `docs/reference/oplog.md`; правки `guides/use-case.md`, `guides/app.md`, `llms.txt`, `docs/index.md`, `CHANGELOG`; `bun run docs:impact`
 - [x] Task: O — релиз по `RELEASING.md` [v0.3.0 = 962046a] (minor: новое поле публичного `AggregateWrite` и опция Def), тег и SHA — в `summary.md`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 **Критерии:** `bun run check` (включая `docs:covers`, `docs:jsdoc`) зелёный; аудит `documentarian` без расхождений; D-86 есть, `reference/oplog.md` в `llms.txt`; тег создан.
 
