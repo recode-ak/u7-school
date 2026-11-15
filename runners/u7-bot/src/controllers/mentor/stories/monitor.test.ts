@@ -33,28 +33,27 @@ interface TestStudent {
   uuid: string;
   streamId: string;
   userId: string;
-  enrolledAt: string;
+  enrolledAt: number;
   status: 'enrolled' | 'active' | 'abandoned' | 'advanced' | 'not_advanced';
   currentStepId: string | null;
   steps: Array<{
     stepId: string;
     status: 'issued' | 'completed';
-    issuedAt: string;
-    completedAt?: string;
+    issuedAt: number;
+    completedAt?: number;
   }>;
-  createdAt: string;
+  createdAt: number;
 }
 
 /** Студент с недавними completed шагами (on_track для StreamDs) */
 function makeStudent(overrides: Partial<TestStudent> = {}): TestStudent {
   const now = new Date();
-  const h = (hoursAgo: number) =>
-    new Date(now.getTime() - hoursAgo * 36e5).toISOString().slice(0, 16);
+  const h = (hoursAgo: number) => now.getTime() - hoursAgo * 36e5;
   return {
     uuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001',
     streamId: '11111111-1111-4111-8111-111111111111',
     userId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
-    enrolledAt: '2026-01-01T00:00',
+    enrolledAt: Date.parse('2026-01-01T00:00:00.000Z'),
     status: 'active',
     currentStepId: 'cccc0000-0000-4000-8000-000000000003',
     steps: [
@@ -76,20 +75,19 @@ function makeStudent(overrides: Partial<TestStudent> = {}): TestStudent {
         issuedAt: h(0.2),
       },
     ],
-    createdAt: '2026-01-01T00:00',
+    createdAt: Date.parse('2026-01-01T00:00:00.000Z'),
     ...overrides,
   };
 }
 
 /** Студент с большим отставанием (давние completed) */
 function makeLaggingStudent(): TestStudent {
-  const daysAgo = (d: number) =>
-    new Date(Date.now() - d * 864e5).toISOString().slice(0, 16);
+  const daysAgo = (d: number) => Date.now() - d * 864e5;
   return {
     uuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0009',
     streamId: '11111111-1111-4111-8111-111111111111',
     userId: 'bbbb0000-0000-4000-8000-000000000009',
-    enrolledAt: '2026-01-01T00:00',
+    enrolledAt: Date.parse('2026-01-01T00:00:00.000Z'),
     status: 'active',
     currentStepId: 'cccc0000-0000-4000-8000-000000000001',
     steps: [
@@ -105,7 +103,7 @@ function makeLaggingStudent(): TestStudent {
         issuedAt: daysAgo(9),
       },
     ],
-    createdAt: '2026-01-01T00:00',
+    createdAt: Date.parse('2026-01-01T00:00:00.000Z'),
   };
 }
 

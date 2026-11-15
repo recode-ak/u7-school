@@ -38,7 +38,7 @@ export function legacyReview(over: Record<string, unknown> = {}) {
     authorOutcome: 'completed_passed',
     recipientId: IDS.mentor,
     text: 'Текст отзыва достаточной длины.',
-    createdAt: '2026-09-20T11:00',
+    createdAt: Date.parse('2026-09-20T11:00:00.000Z'),
     ...over,
   };
 }

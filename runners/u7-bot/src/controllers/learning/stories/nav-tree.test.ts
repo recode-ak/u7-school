@@ -87,29 +87,33 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
     streamId: STREAM_ID,
     userId: '11111111-1111-4111-8111-aaaaaaaab003',
     status: 'active',
-    enrolledAt: '2026-01-01T00:00:00.000Z',
-    createdAt: '2026-01-01T00:00:00.000Z',
+    enrolledAt: Date.parse('2026-01-01T00:00:00.000Z'),
+    createdAt: Date.parse('2026-01-01T00:00:00.000Z'),
     currentStepId: STEP4_ID,
     steps: [
       {
         stepId: STEP1_ID,
         status: 'completed',
-        issuedAt: '2026-01-01',
-        completedAt: '2026-01-02',
+        issuedAt: Date.parse('2026-01-01'),
+        completedAt: Date.parse('2026-01-02'),
       },
       {
         stepId: STEP2_ID,
         status: 'completed',
-        issuedAt: '2026-01-02',
-        completedAt: '2026-01-03',
+        issuedAt: Date.parse('2026-01-02'),
+        completedAt: Date.parse('2026-01-03'),
       },
       {
         stepId: STEP3_ID,
         status: 'completed',
-        issuedAt: '2026-01-03',
-        completedAt: '2026-01-04',
+        issuedAt: Date.parse('2026-01-03'),
+        completedAt: Date.parse('2026-01-04'),
       },
-      { stepId: STEP4_ID, status: 'issued', issuedAt: '2026-01-04' },
+      {
+        stepId: STEP4_ID,
+        status: 'issued',
+        issuedAt: Date.parse('2026-01-04'),
+      },
     ],
   };
 
@@ -131,7 +135,7 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
         kind: 'text',
         content: 'Контент первого шага',
         status: 'published',
-        createdAt: '2026-01-01',
+        createdAt: Date.parse('2026-01-01'),
       },
       [STEP2_ID]: {
         uuid: STEP2_ID,
@@ -139,7 +143,7 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
         kind: 'text',
         content: 'Контент второго шага',
         status: 'published',
-        createdAt: '2026-01-02',
+        createdAt: Date.parse('2026-01-02'),
       },
       [STEP3_ID]: {
         uuid: STEP3_ID,
@@ -147,7 +151,7 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
         kind: 'code',
         code: 'const x = 1;',
         status: 'published',
-        createdAt: '2026-01-03',
+        createdAt: Date.parse('2026-01-03'),
       },
       [STEP4_ID]: {
         uuid: STEP4_ID,
@@ -155,7 +159,7 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
         kind: 'text',
         content: 'Контент четвёртого шага',
         status: 'published',
-        createdAt: '2026-01-04',
+        createdAt: Date.parse('2026-01-04'),
       },
       [STEP5_ID]: {
         uuid: STEP5_ID,
@@ -163,7 +167,7 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
         kind: 'text',
         content: '5',
         status: 'published',
-        createdAt: '2026-01-05',
+        createdAt: Date.parse('2026-01-05'),
       },
       [STEP6_ID]: {
         uuid: STEP6_ID,
@@ -171,7 +175,7 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
         kind: 'text',
         content: '6',
         status: 'published',
-        createdAt: '2026-01-06',
+        createdAt: Date.parse('2026-01-06'),
       },
       [STEP7_ID]: {
         uuid: STEP7_ID,
@@ -179,7 +183,7 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
         kind: 'text',
         content: '7',
         status: 'published',
-        createdAt: '2026-01-07',
+        createdAt: Date.parse('2026-01-07'),
       },
       [STEP8_ID]: {
         uuid: STEP8_ID,
@@ -187,7 +191,7 @@ describe('NavTreeStory — drill-down навигация студента (TDD)'
         kind: 'text',
         content: '8',
         status: 'published',
-        createdAt: '2026-01-08',
+        createdAt: Date.parse('2026-01-08'),
       },
     };
 

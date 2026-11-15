@@ -5,7 +5,7 @@ import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
 import type { StreamState, StudentState } from '@u7-scl/domain/stream/testing';
 import type { UserRole } from '@u7-scl/domain/user/testing';
 import { assertWorldInvariants } from './invariants';
-import { isoMinute, resolveRelativeTime, utcMs } from './relative-time';
+import { resolveRelativeTime } from './relative-time';
 import type {
   CampaignDef,
   PersonDef,
@@ -105,6 +105,8 @@ export function buildWorldState(
       telegramId: p.telegramId,
       roles: p.roles as UserRole[],
       createdAt,
+      updatedAt: createdAt,
+      version: 0,
     };
 
     if (p.nick) {
@@ -163,6 +165,8 @@ export function buildWorldState(
               status: Status.PUBLISHED,
               kind: 'text',
               createdAt: resolveRelativeTime('T-120d', anchorDate),
+              updatedAt: resolveRelativeTime('T-120d', anchorDate),
+              version: 0,
             };
             steps.push(stepEntity);
           }
@@ -175,6 +179,8 @@ export function buildWorldState(
             stepIds,
             mentorStepIds: [],
             createdAt: resolveRelativeTime('T-120d', anchorDate),
+            updatedAt: resolveRelativeTime('T-120d', anchorDate),
+            version: 0,
           };
           lessons.push(lessonEntity);
         }
@@ -195,6 +201,8 @@ export function buildWorldState(
         status: Status.PUBLISHED,
         projects: moduleProjects,
         createdAt: resolveRelativeTime('T-120d', anchorDate),
+        updatedAt: resolveRelativeTime('T-120d', anchorDate),
+        version: 0,
       };
       modules.push(moduleEntity);
     }
@@ -210,6 +218,8 @@ export function buildWorldState(
       phases: c.phases ?? defaultPhases(moduleIds),
       status: 'published',
       createdAt: resolveRelativeTime('T-120d', anchorDate),
+      updatedAt: resolveRelativeTime('T-120d', anchorDate),
+      version: 0,
     };
     courses.push(courseEntity);
   }
@@ -260,7 +270,7 @@ export function buildWorldState(
     });
 
     const startDate = resolveRelativeTime(s.startedAt ?? 'T-30d', anchorDate);
-    const createdAt = utcMs(startDate) - 30 * 24 * 60 * 60 * 1000;
+    const createdAt = startDate - 30 * 24 * 60 * 60 * 1000;
 
     const streamEntity: StreamState = {
       uuid: streamUuid,
@@ -269,7 +279,7 @@ export function buildWorldState(
       description: s.description,
       mentorId,
       moduleId,
-      startDate: utcMs(startDate),
+      startDate: startDate,
       status: s.status as StreamState['status'],
       enrollmentKey: s.enrollmentKey,
       telegramGroupId: s.telegramGroupId ?? '-1001111111111',
@@ -299,7 +309,7 @@ export function buildWorldState(
         streamUuidByKey.get(st.streamKey) ??
         deterministicUuid(`stream:${st.streamKey}`);
 
-      const enrolledAt = utcMs(resolveRelativeTime(st.enrolledAt, anchorDate));
+      const enrolledAt = resolveRelativeTime(st.enrolledAt, anchorDate);
 
       // Текущий шаг
       const defaultStepId =
@@ -320,11 +330,12 @@ export function buildWorldState(
         return {
           stepId,
           status: sRec.status,
-          issuedAt: utcMs(
-            resolveRelativeTime(sRec.issuedAt ?? st.enrolledAt, anchorDate),
+          issuedAt: resolveRelativeTime(
+            sRec.issuedAt ?? st.enrolledAt,
+            anchorDate,
           ),
           completedAt: sRec.completedAt
-            ? utcMs(resolveRelativeTime(sRec.completedAt, anchorDate))
+            ? resolveRelativeTime(sRec.completedAt, anchorDate)
             : undefined,
         };
       });
@@ -362,8 +373,8 @@ export function buildWorldState(
         userUuidByKey.get(c.mentorPersonKey) ??
         deterministicUuid(`person:${c.mentorPersonKey}`);
 
-      const createdAt = isoMinute(resolveRelativeTime(c.createdAt, anchorDate));
-      const expiresAt = isoMinute(resolveRelativeTime(c.expiresAt, anchorDate));
+      const createdAt = resolveRelativeTime(c.createdAt, anchorDate);
+      const expiresAt = resolveRelativeTime(c.expiresAt, anchorDate);
 
       const participants = (c.participants ?? []).map(
         (pKey) =>
@@ -414,9 +425,7 @@ export function buildWorldState(
       userUuidByKey.get(r.recipientPersonKey) ??
       deterministicUuid(`person:${r.recipientPersonKey}`);
 
-    const createdAt = isoMinute(
-      resolveRelativeTime(r.createdAt ?? 'T-1d', anchorDate),
-    );
+    const createdAt = resolveRelativeTime(r.createdAt ?? 'T-1d', anchorDate);
 
     const reviewEntity: WorldReview = {
       uuid: reviewUuid,

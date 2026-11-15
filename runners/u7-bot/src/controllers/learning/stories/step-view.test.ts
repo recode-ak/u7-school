@@ -42,14 +42,22 @@ describe('StepViewStory', () => {
     uuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001',
     streamId: STREAM_ID,
     userId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
-    enrolledAt: '2026-01-01T00:00',
+    enrolledAt: Date.parse('2026-01-01T00:00:00.000Z'),
     status: 'active',
     currentStepId: STEP1_ID,
     steps: [
-      { stepId: STEP1_ID, status: 'completed', issuedAt: '2026-01-02T00:00' },
-      { stepId: STEP2_ID, status: 'completed', issuedAt: '2026-01-03T00:00' },
+      {
+        stepId: STEP1_ID,
+        status: 'completed',
+        issuedAt: Date.parse('2026-01-02T00:00:00.000Z'),
+      },
+      {
+        stepId: STEP2_ID,
+        status: 'completed',
+        issuedAt: Date.parse('2026-01-03T00:00:00.000Z'),
+      },
     ],
-    createdAt: '2026-01-01T00:00',
+    createdAt: Date.parse('2026-01-01T00:00:00.000Z'),
   };
 
   const mockStream = {
@@ -104,7 +112,7 @@ describe('StepViewStory', () => {
       description: 'Изучите основы',
       content: 'Контент шага',
       status: 'published',
-      createdAt: '2026-01-01T00:00:00.000Z',
+      createdAt: Date.parse('2026-01-01T00:00:00.000Z'),
     };
     const dispatch = dmgDispatch(
       {
@@ -151,7 +159,7 @@ describe('StepViewStory', () => {
     description: 'Шаг снят с публикации',
     content: 'Тело снятого шага',
     status: 'draft',
-    createdAt: '2026-01-01T00:00:00.000Z',
+    createdAt: Date.parse('2026-01-01T00:00:00.000Z'),
   };
 
   test('Ф4а: шаг, снятый с публикации после сборки снимка, студенту открывается — без отметки статуса', async () => {
@@ -269,7 +277,7 @@ describe('StepViewStory', () => {
       description: 'Напишите код',
       code: 'console.log(1)',
       status: 'published',
-      createdAt: '2026-01-01T00:00:00.000Z',
+      createdAt: Date.parse('2026-01-01T00:00:00.000Z'),
     };
 
     const { story } = makeStory({}, customStep);
@@ -315,7 +323,7 @@ describe('StepViewStory', () => {
       // biome-ignore lint/suspicious/noTemplateCurlyInString: ${y} — код урока с шаблонной строкой, проверяем как есть
       code: 'const s = `x\\n${y}`;',
       status: 'published',
-      createdAt: '2026-01-01T00:00:00.000Z',
+      createdAt: Date.parse('2026-01-01T00:00:00.000Z'),
     };
 
     const { story } = makeStory({}, customStep);
@@ -369,10 +377,26 @@ describe('StepViewStory', () => {
     ...mockStudent,
     currentStepId: STEP3_ID,
     steps: [
-      { stepId: STEP1_ID, status: 'completed', issuedAt: '2026-01-02T00:00' },
-      { stepId: STEP2_ID, status: 'completed', issuedAt: '2026-01-03T00:00' },
-      { stepId: STEP3_ID, status: 'completed', issuedAt: '2026-01-04T00:00' },
-      { stepId: STEP3_ID, status: 'completed', issuedAt: '2026-01-05T00:00' },
+      {
+        stepId: STEP1_ID,
+        status: 'completed',
+        issuedAt: Date.parse('2026-01-02T00:00:00.000Z'),
+      },
+      {
+        stepId: STEP2_ID,
+        status: 'completed',
+        issuedAt: Date.parse('2026-01-03T00:00:00.000Z'),
+      },
+      {
+        stepId: STEP3_ID,
+        status: 'completed',
+        issuedAt: Date.parse('2026-01-04T00:00:00.000Z'),
+      },
+      {
+        stepId: STEP3_ID,
+        status: 'completed',
+        issuedAt: Date.parse('2026-01-05T00:00:00.000Z'),
+      },
     ],
   };
 
@@ -536,7 +560,7 @@ describe('StepViewStory', () => {
       description: 'Второй шаг',
       content: 'Контент 2',
       status: 'published',
-      createdAt: '2026-01-01T00:00:00.000Z',
+      createdAt: Date.parse('2026-01-01T00:00:00.000Z'),
     };
 
     const { story } = makeStory({}, customStep2);

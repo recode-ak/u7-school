@@ -12,21 +12,21 @@ const MS_IN_WEEK = 7 * MS_IN_DAY;
 const RELATIVE_TIME_REGEX = /^T\s*([+-])?\s*(\d+)?\s*([a-zа-яё]+)?$/i;
 
 /**
- * Преобразует относительное время или возвращает абсолютную строку без изменений.
+ * Преобразует относительное время или абсолютную ISO-дату в момент (мс UTC).
  *
  * @param expr Относительное выражение ('T-2d', 'T-2д', 'T', 'T+5д') или абсолютная дата
  * @param anchorDate Опорная дата мира T
- * @returns ISO-строка даты
+ * @returns момент в миллисекундах UTC (`Timestamp`)
  */
 export function resolveRelativeTime(
   expr: string,
   anchorDate: Date = new Date(),
-): string {
+): number {
   const trimmed = expr.trim();
 
   // Если это чисто 'T'
   if (trimmed === 'T') {
-    return isoMinute(anchorDate);
+    return anchorDate.getTime();
   }
 
   const match = trimmed.match(RELATIVE_TIME_REGEX);
@@ -36,7 +36,7 @@ export function resolveRelativeTime(
     const unitStr = match[3]?.toLowerCase();
 
     if (!signStr || !amountStr) {
-      return isoMinute(anchorDate);
+      return anchorDate.getTime();
     }
 
     const sign = signStr === '-' ? -1 : 1;
@@ -79,25 +79,17 @@ export function resolveRelativeTime(
     }
 
     const targetTimestamp = anchorDate.getTime() + sign * amount * unitMs;
-    return isoMinute(new Date(targetTimestamp));
+    return targetTimestamp;
   }
 
   // Если это не относительное выражение, возвращаем как есть (абсолютная дата)
-  return trimmed;
+  return utcMs(trimmed);
 }
 
 /**
- * Форматирует дату в формат ISO минут (YYYY-MM-DDTHH:mm), принятый в домене peer-review.
- */
-export function isoMinute(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toISOString().slice(0, 16);
-}
-
-/**
- * Момент в миллисекундах (UTC). Строка без зоны (`YYYY-MM-DDTHH:mm`) читается
+ * Абсолютная дата → мс UTC. Строка без зоны (`YYYY-MM-DDTHH:mm`) читается
  * как UTC — так же, как состояние по Def (D-36).
  */
-export function utcMs(iso: string): number {
+function utcMs(iso: string): number {
   return Date.parse(/(Z|[+-]\d\d:\d\d)$/.test(iso) ? iso : `${iso}Z`);
 }

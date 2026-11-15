@@ -15,24 +15,22 @@ import type { Role, UserState } from '@u7-scl/domain/user/testing';
 import type { WishState } from '@u7-scl/domain/wish/testing';
 
 /**
- * Кампания в мире — ввод state (не state): даты ISO, как в legacy-файле;
- * `ReviewCampaignArDef.state` переводит их в число UTC при чтении (D-36).
+ * Кампания в мире — state кампании, даты — `Timestamp` (мс UTC).
  */
 export interface WorldCampaign {
   uuid: string;
   context: 'stream_fate';
   scopeId: string;
   subjectId: string;
-  createdAt: string;
-  updatedAt?: string;
-  expiresAt: string;
+  createdAt: number;
+  updatedAt?: number;
+  expiresAt: number;
   participants: string[];
   payload: { subjectOutcome: StudentOutcome; mentorId: string };
 }
 
 /**
- * Отзыв в мире — ввод state (не state): даты ISO, как в legacy-файле;
- * `ReviewArDef.state` переводит их в число UTC и дописывает `updatedAt` (D-36).
+ * Отзыв в мире — state отзыва, даты — `Timestamp` (мс UTC).
  */
 export interface WorldReview {
   uuid: string;
@@ -43,42 +41,16 @@ export interface WorldReview {
   authorOutcome?: StudentOutcome;
   recipientId: string;
   text: string;
-  createdAt: string;
-  updatedAt?: string;
+  createdAt: number;
+  updatedAt?: number;
 }
 
-/**
- * Запись мира — ввод state (не state): структура state агрегата Def, но даты
- * ISO, как в legacy-файле; `ArDef.state` переводит их в число UTC и дописывает
- * `updatedAt`, `version` по умолчанию 0 (D-36). Распределяется по вариантам
- * (шаг).
- */
-type StateInput<T> = T extends unknown
-  ? Omit<T, 'createdAt' | 'updatedAt' | 'version'> & {
-      createdAt: string;
-      updatedAt?: string;
-      version?: number;
-    }
-  : never;
-
-/**
- * Курс в мире: ввод state `CourseArDef` — даты ISO, `version` необязательна.
- */
-export type WorldCourse = StateInput<CourseState>;
-
-/** Модуль в мире: ввод state `ModuleArDef` — даты ISO, `version` необязательна. */
-export type WorldModule = StateInput<ModuleState>;
-
-/** Урок в мире: ввод state `LessonArDef` — даты ISO, `version` необязательна. */
-export type WorldLesson = StateInput<LessonState>;
-
-/** Шаг в мире: ввод state `StepArDef` — даты ISO, `version` необязательна. */
-export type WorldStep = StateInput<StepState>;
-
-/**
- * Пользователь в мире: ввод state `UserArDef` — даты ISO, `version` необязательна.
- */
-export type WorldUser = StateInput<UserState>;
+/** Курс, модуль, урок, шаг, пользователь в мире — state агрегата как есть. */
+export type WorldCourse = CourseState;
+export type WorldModule = ModuleState;
+export type WorldLesson = LessonState;
+export type WorldStep = StepState;
+export type WorldUser = UserState;
 
 /**
  * WorldState — центральный объект состояния мира.

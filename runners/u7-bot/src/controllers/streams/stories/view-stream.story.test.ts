@@ -389,12 +389,12 @@ describe('ViewStreamStory (S02-S04)', () => {
     return {
       uuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001',
       userId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
-      enrolledAt: '2026-01-01T00:00',
+      enrolledAt: Date.parse('2026-01-01T00:00:00.000Z'),
       status: 'active',
       streamId: STREAM_ID,
       currentStepId: 'cccc0000-0000-4000-8000-000000000001',
       steps: [],
-      createdAt: '2026-01-01T00:00',
+      createdAt: Date.parse('2026-01-01T00:00:00.000Z'),
       ...overrides,
     };
   }

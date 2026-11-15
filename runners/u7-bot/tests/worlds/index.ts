@@ -44,7 +44,7 @@ export {
   listWorlds,
   registerWorld,
 } from './registry';
-export { isoMinute, resolveRelativeTime } from './relative-time';
+export { resolveRelativeTime } from './relative-time';
 export * from './types';
 export { deterministicUuid, isUuid } from './uuid';
 export {

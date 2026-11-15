@@ -75,9 +75,10 @@ describe('world-kit: каркас и базовые инварианты', () =>
       );
     });
 
-    it('абсолютная ISO-дата возвращается как есть', () => {
-      const abs = '2026-01-01T00:00:00.000Z';
-      expect(resolveRelativeTime(abs, anchor)).toBe(abs);
+    it('абсолютная ISO-дата переводится в число UTC', () => {
+      expect(resolveRelativeTime('2026-01-01T00:00:00.000Z', anchor)).toBe(
+        Date.parse('2026-01-01T00:00:00.000Z'),
+      );
     });
   });
 

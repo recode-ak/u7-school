@@ -68,12 +68,12 @@ const mockStream = {
 const mockStudent: LegacyStudent = {
   uuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001',
   userId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
-  enrolledAt: '2026-01-01T00:00',
+  enrolledAt: Date.parse('2026-01-01T00:00:00.000Z'),
   status: 'active',
   streamId: '11111111-1111-4111-8111-111111111111',
   currentStepId: 'cccc0000-0000-4000-8000-000000000001',
   steps: [],
-  createdAt: '2026-01-01T00:00',
+  createdAt: Date.parse('2026-01-01T00:00:00.000Z'),
 };
 
 /**

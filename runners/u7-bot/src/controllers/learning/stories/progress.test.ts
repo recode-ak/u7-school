@@ -145,7 +145,9 @@ describe('ProgressStory', () => {
   });
 
   test('progress:{streamId} — дни в обучении считаются от now() (часы приложения)', async () => {
-    const { story } = makeStory({ enrolledAt: '2026-06-01T12:00:00.000Z' });
+    const { story } = makeStory({
+      enrolledAt: Date.parse('2026-06-01T12:00:00.000Z'),
+    });
     const clock = spyOn(Shared, 'now').mockImplementation(
       () => new Date('2026-06-11T12:00:00.000Z'),
     );

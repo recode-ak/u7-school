@@ -13,16 +13,16 @@ export interface LegacyStudent {
   uuid: string;
   streamId: string;
   userId: string;
-  enrolledAt?: string;
+  enrolledAt?: number;
   status: 'enrolled' | 'active' | 'abandoned' | 'advanced' | 'not_advanced';
   currentStepId: string | null;
   steps: Array<{
     stepId: string;
     status: 'issued' | 'completed';
-    issuedAt?: string;
-    completedAt?: string;
+    issuedAt?: number;
+    completedAt?: number;
   }>;
-  createdAt?: string;
+  createdAt?: number;
   abandonDetails?: { who: 'self' | 'mentor'; cause: string };
 }
 
@@ -32,14 +32,8 @@ type Snapshot = Array<{
   lessons: Array<{ lessonId: string; lessonTitle: string; stepIds: string[] }>;
 }>;
 
-/** ISO без часового пояса читается как UTC (как делает state студента). */
-const ms = (iso: string): number =>
-  Date.parse(
-    /T.*(Z|[+-]\d\d:\d\d)$/.test(iso) || iso.length === 10 ? iso : `${iso}Z`,
-  );
-
 /** Дата фикстур, где поле опущено. */
-const DEFAULT_ISO = '2026-01-01T00:00';
+const DEFAULT_AT = Date.parse('2026-01-01T00:00:00.000Z');
 
 /** `StudentView` по записи в прежней форме. */
 export function studentView(input: LegacyStudent) {
@@ -67,17 +61,17 @@ export function studentView(input: LegacyStudent) {
     streamId: s.streamId,
     userId: s.userId,
     currentStepId: s.currentStepId ?? '',
-    enrolledAt: ms(s.enrolledAt ?? DEFAULT_ISO),
+    enrolledAt: s.enrolledAt ?? DEFAULT_AT,
     status: s.status,
     abandonDetails: s.abandonDetails,
     steps: s.steps.map((x) => ({
       stepId: x.stepId,
       status: x.status,
-      issuedAt: ms(x.issuedAt ?? DEFAULT_ISO),
-      completedAt: x.completedAt === undefined ? undefined : ms(x.completedAt),
+      issuedAt: x.issuedAt ?? DEFAULT_AT,
+      completedAt: x.completedAt,
     })),
-    createdAt: ms(s.createdAt ?? DEFAULT_ISO),
-    updatedAt: ms(s.createdAt ?? DEFAULT_ISO),
+    createdAt: s.createdAt ?? DEFAULT_AT,
+    updatedAt: s.createdAt ?? DEFAULT_AT,
     version: 0,
     outcome: { category, signs },
     inProgress,
@@ -195,7 +189,7 @@ export function progressProjection(
 
   const durations = s.steps
     .filter((x) => x.status === 'completed' && x.completedAt !== undefined)
-    .map((x) => ms(x.completedAt as string) - ms(x.issuedAt ?? DEFAULT_ISO))
+    .map((x) => (x.completedAt as number) - (x.issuedAt ?? DEFAULT_AT))
     .filter((d) => d >= 0)
     .sort((a, b) => a - b);
   const counts = [0, 0, 0, 0];
@@ -332,8 +326,8 @@ export function streamMembers(
 ) {
   const views = students.map(studentView);
   const hours = students.map((s) => {
-    const times = (s.steps ?? []).map((x) =>
-      ms(x.completedAt ?? x.issuedAt ?? DEFAULT_ISO),
+    const times = (s.steps ?? []).map(
+      (x) => x.completedAt ?? x.issuedAt ?? DEFAULT_AT,
     );
     return times.length === 0 ? 0 : (now - Math.max(...times)) / HOUR_MS;
   });

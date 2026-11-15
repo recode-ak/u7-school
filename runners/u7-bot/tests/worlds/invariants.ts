@@ -6,7 +6,6 @@ import type { StudentOutcome } from '@u7-scl/domain/peer-review/contract';
 import type { StreamState } from '@u7-scl/domain/stream/testing';
 import { Role } from '@u7-scl/domain/user/testing';
 import * as v from 'valibot';
-import { isoMinute, utcMs } from './relative-time';
 import type { WorldState, WorldUser } from './types';
 
 /** Нарушение инварианта мира */
@@ -53,12 +52,12 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
     }
 
     // Хронология: регистрация пользователя <= зачисление студента
-    const userCreated = utcMs(user.createdAt);
+    const userCreated = user.createdAt;
     const enrolled = st.enrolledAt;
     if (userCreated > enrolled) {
       violations.push({
         code: 'CHRONOLOGY_REGISTRATION_AFTER_ENROLLMENT',
-        message: `Дата регистрации пользователя "${user.name}" (${user.createdAt}) позже даты зачисления в поток (${isoMinute(new Date(st.enrolledAt))})`,
+        message: `Дата регистрации пользователя "${user.name}" (${new Date(user.createdAt).toISOString()}) позже даты зачисления в поток (${new Date(st.enrolledAt).toISOString()})`,
         entity: 'Student',
         id: st.uuid,
       });
@@ -71,7 +70,7 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
       if (userCreated > streamStart) {
         violations.push({
           code: 'CHRONOLOGY_REGISTRATION_AFTER_STREAM_START',
-          message: `Дата регистрации пользователя "${user.name}" (${user.createdAt}) позже старта потока "${streamEntity.title}" (${isoMinute(new Date(streamEntity.startDate))})`,
+          message: `Дата регистрации пользователя "${user.name}" (${new Date(user.createdAt).toISOString()}) позже старта потока "${streamEntity.title}" (${new Date(streamEntity.startDate).toISOString()})`,
           entity: 'Student',
           id: st.uuid,
         });
@@ -149,12 +148,12 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
   // 5. Инварианты кампаний отзывов
   for (const cmp of state.campaigns) {
     // 5.1. Окно кампании: createdAt < expiresAt
-    const createdTime = utcMs(cmp.createdAt);
-    const expiresTime = utcMs(cmp.expiresAt);
+    const createdTime = cmp.createdAt;
+    const expiresTime = cmp.expiresAt;
     if (expiresTime <= createdTime) {
       violations.push({
         code: 'CAMPAIGN_WINDOW_INVALID',
-        message: `Окно кампании ${cmp.uuid}: дата закрытия (${cmp.expiresAt}) не позже даты создания (${cmp.createdAt}) (expiresAt <= createdAt)`,
+        message: `Окно кампании ${cmp.uuid}: дата закрытия (${new Date(cmp.expiresAt).toISOString()}) не позже даты создания (${new Date(cmp.createdAt).toISOString()}) (expiresAt <= createdAt)`,
         entity: 'ReviewCampaign',
         id: cmp.uuid,
       });
@@ -195,7 +194,7 @@ export function checkWorldInvariants(state: WorldState): InvariantViolation[] {
     if (createdTime < enrolledTime) {
       violations.push({
         code: 'CAMPAIGN_CREATED_BEFORE_ENROLLMENT',
-        message: `Окно кампании (${cmp.createdAt}) создано раньше зачисления/исхода студента (${isoMinute(new Date(st.enrolledAt))})`,
+        message: `Окно кампании (${new Date(cmp.createdAt).toISOString()}) создано раньше зачисления/исхода студента (${new Date(st.enrolledAt).toISOString()})`,
         entity: 'ReviewCampaign',
         id: cmp.uuid,
       });
