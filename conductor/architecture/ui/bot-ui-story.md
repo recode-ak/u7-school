@@ -31,6 +31,8 @@
 7. **Кросс-стори вызовы — через `this.cbFor(storyName, action, ...args)`**. Стори не импортируют другие стори напрямую. **Только в пределах одного контроллера** — `storyName` должен быть зарегистрирован в том же контроллере, что и текущая стори.
 8. **Кросс-контроллерные переходы — через реестр `Routes` и готовые кнопки `buttons`.** `cbFor` работает только для стори того же контроллера. Чужие адреса бери из `Routes` (`runners/u7-bot/src/controllers/shared/routes.ts`), готовые кнопки — из `buttons` (`runners/u7-bot/src/controllers/shared/buttons.ts`): `buttons.mainMenu(text?)` возвращает `{ text, code }` (текст по умолчанию «↩️ Главное меню», можно переопределить), `Routes.app.mainMenu` — только адрес. `delegate.path` — всегда полный маршрут: относительный путь (`this.cb`/`this.cbFor`) префиксуется контроллером.
 
+9. **Время — через зону** (правило выбора — D-90): `this.formatDate`/`this.formatTime`/`this.zone` из `U7BotUiStory` — зона школы; показа в личной зоне пользователя пока нет ([dmg-ui-entry.md](../../roadmap/dmg-ui-entry.md) §14). Время — с подписью (`18:00 (UTC+5)`), дата — без. Локальные геттеры `Date` и `toISOString` для показа и разбора ввода не используются.
+
 Живой образец стори на контракте «Диалог и Экран»: `runners/u7-bot/src/controllers/app/stories/community.story.ts`; базовый класс с докой — `platform/core/src/ui/bot/bot-ui-story.ts`.
 
 ---

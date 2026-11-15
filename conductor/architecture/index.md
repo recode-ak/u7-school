@@ -11,7 +11,7 @@
 | Ось ([layers.md](../../node_modules/dmg-core/docs/reference/layers.md)) | Пакеты u7-school |
 |---|---|
 | Платформа | `dmg-core` (репо `~/dev/tools/dmg/dmg-core`, в проекте — `node_modules/dmg-core`, D-61), приложение `@u7-scl/app` (корень сборки `U7App`, `school/`, файловые адаптеры `infra/`); `@u7-scl/core` — только `ui` и `shared`, кандидат на удаление при `dmg-ui` |
-| Домен | `@u7-scl/domain` (`domain/src/<m>`; вход модуля — `@u7-scl/domain/<m>/contract`) |
+| Домен | `@u7-scl/domain` (`domain/src/<m>`; вход модуля — `@u7-scl/domain/<m>/contract`; общий домен — `domain/src/shared`: VO, общие для модулей домена и `@u7-scl/app`, импорт `@u7-scl/domain/shared`) |
 | Прикладной слой | `modules/<m>/src` (1:1 с модулем домена) |
 | Входные адаптеры | `runners/*`: бот `u7-bot`, позже web и транспорты; операции — через `appApi` |
 
@@ -20,7 +20,7 @@
 ## Состояние
 
 - **Модули на Def (DMG):** `wish` (эталон), `peer-review`, `stream`, `questionnaire`, `course`, `user`, `dossier` (пустой модуль без поведения — `modules/dossier/README.md`). Legacy-кода нет; история перехода — `summary.md` трека `legacy-removal` в `conductor/archive/`.
-- **Корень сборки (D-50, D-52):** `@u7-scl/app` (`platform/app`) — `U7App` по `AppEnv`: `AppContext` DMG, модули через `ApiApp` пакета, одна шина, планировщик Job пакета (D-71), резолвер `Caller` (`U7CallerResolver`, субъект `UserAr`); `school/` — конфигурация школы, `infra/` — файловые адаптеры портов пакета. Раннер `u7-bot` и `scripts/` получают приложение из `U7App`.
+- **Корень сборки (D-50, D-52):** `@u7-scl/app` (`platform/app`) — `U7App` по `AppEnv`: `AppContext` DMG, модули через `ApiApp` пакета, одна шина, планировщик Job пакета (D-71), резолвер `Caller` (`U7CallerResolver`, субъект `UserAr`); `school/` — конфигурация школы (с зоной `timeZone`), `zone/` — `LocalZone`, перевод времени в зону и обратно (D-90), `infra/` — файловые адаптеры портов пакета. Раннер `u7-bot` и `scripts/` получают приложение из `U7App`.
 - **Лог операций** (D-43, D-86 пакета): `data/oplog`, патч полей в `writes`, персональные поля помечены `F.sensitive` в state, VO и схемах операций (в логе — `[redacted]`), Telegram ID в `trace` — непрозрачный `VisitorId` (`runners/u7-bot/src/core/visitor-id.ts`), срок 90 дней; чтение — `bun run oplog` ([oplog.md](../../node_modules/dmg-core/docs/reference/oplog.md)). Новое поле с ПД — сразу `F.sensitive`; схема операции, написанная не из полей state/VO, помечается сама.
 - **Граф `dependsOn`** строится из `ModuleDef` (`scripts/domain-arch.ts`); `arch:check` сверяет код с реестром [code.md](../debt/code.md).
 - **Остаток** (владельцы — в [реестрах долга](../debt/README.md) и [roadmap.md](../roadmap.md)): схемы с `F.timestamp` читают ISO-строку и число, пишут число — данные мигрируют лениво до трека `timestamp-data` (комментарии «legacy-запись» в репозиториях — про формат данных); `@u7-scl/core` — только `ui` и `shared`, уходит с `dmg-ui`; `call-uc` — ручной вход до `dmg-cli` (C-DEBT-42).

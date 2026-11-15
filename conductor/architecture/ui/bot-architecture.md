@@ -95,12 +95,13 @@ Grammy (адаптер) → BotTransport (сессии, штампы, ренде
 
 Сценарий одного экрана: `appApi.execute(...)` → `DialogResponse`. Хелперы:
 `cb(action, ...ids)` / `cbFor(story, action, ...ids)`, `confirm(...)`,
-`formatDate`, `handleError` (ошибка-экран), `errorNotify` (warn-реплика поверх
+`handleError` (ошибка-экран), `errorNotify` (warn-реплика поверх
 диалога — ФР-5, для переспросов при живом `awaitInput`).
 
 `U7BotUiStory` добавляет: `dialogPath`/`isActive` (для `/cancel` в pipe —
 сброс себя + stop-реплика), `contextHelp` (контекстная справка), `menuButtons`
-(кнопка главного меню), `errorExitRows` — «⬅️ Меню» на экранах ошибок.
+(кнопка главного меню), `errorExitRows` — «⬅️ Меню» на экранах ошибок,
+`zone`/`formatDate`/`formatTime` — время в зоне школы с подписью (D-90).
 
 ### 2.5. Типы (`platform/core/src/ui/bot/types.ts`)
 
