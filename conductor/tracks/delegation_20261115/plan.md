@@ -89,11 +89,11 @@
 
 **Критерии:** `version` 0.4.0; тег `v0.4.0` на коммите релиза; установка из git проверена по чек-листу.
 
-## Фаза 8: u7-school на v0.4.0 (ФР-11)
+## Фаза 8: u7-school на v0.4.0 (ФР-11) [checkpoint: aced4f5f]
 
 - [x] Task: S (`migrator`) — `#v0.4.0` во всех `package.json`, `bun install`, `dmg:sync`, `agents:sync`; версия в `AGENTS.md`; `--actor` в подсказке `scripts/oplog.ts` `42ff4a2d`
 - [x] Task: S (`dmg-reviewer`) — ревью `42ff4a2d`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 8' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 8' (Protocol in workflow.md)
 
 **Критерии:** одна версия `#v0.4.0` во всех `package.json`; `bun run check`, `CI=true bun test`, `arch:check` зелёные, тестов не меньше базовой линии; `git diff --stat <база> -- domain modules platform/app/src/u7-caller-resolver.ts` пуст.
 
