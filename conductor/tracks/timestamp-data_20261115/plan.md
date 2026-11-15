@@ -90,10 +90,12 @@
 
 ## Фаза 6: u7-school на dmg-core v0.3.2 (после Ф1, Ф5)
 
-- [ ] Task: S (`dmg-test-designer`) — тесты «legacy ISO читается» → «ISO отвергается»: `*.state.test.ts` (8), `*.json-repo.test.ts` (7), `u7-caller-resolver.test.ts:21`; негативный тест чтения ISO на каждый из 11 state; тест контрольного чтения «ловит ISO»; запуск — падают по делу
-- [ ] Task: S (`migrator`) — `#v0.3.2` во всех `package.json`, `bun install`, `dmg:sync`, `agents:sync`; комментарии про legacy ISO (state-файлы, json-repo, `campaign-fields.ts:35`, `worlds/types.ts`); ветки «нет `updatedAt`/`version`» остаются
-- [ ] Task: S (`dmg-reviewer`) — ревью
-- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
+> Бриф — [slices/f6-dmg-core-032.md](./slices/f6-dmg-core-032.md)
+
+- [x] Task: S (`dmg-test-designer`) — `8221233` — тесты «legacy ISO читается» → «ISO отвергается»: `*.state.test.ts` (8), `*.json-repo.test.ts` (7), `u7-caller-resolver.test.ts:21`; негативный тест чтения ISO на каждый из 11 state; тест контрольного чтения «ловит ISO»; запуск — падают по делу
+- [x] Task: S (`migrator`) — `8221233` — `#v0.3.2` во всех `package.json`, `bun install`, `dmg:sync`, `agents:sync`; комментарии про legacy ISO (state-файлы, json-repo, `campaign-fields.ts:35`, `worlds/types.ts`); ветки «нет `updatedAt`/`version`» остаются
+- [x] Task: S (`dmg-reviewer`) — `8221233` — ревью
+- [x] Task: Conductor - User Manual Verification 'Фаза 6' (автопроверка: `check`, `arch:check`) (Protocol in workflow.md)
 
 **Критерии:** одна версия `dmg-core` `#v0.3.2` во всех `package.json`; `bun run check`, `CI=true bun test`, `arch:check` зелёные, тестов не меньше; `grep -rn "legacy ISO" --include=*.ts` пуст.
 
@@ -105,7 +107,7 @@
     - [ ] `git status` / `git diff <тег> -- data/courses` пусты
     - [ ] сверить `ls -R data` с картой скрипта (`DATA_FILES` + `jobs/last-runs.json`)
     - [ ] стоп бота; `bun run backup before-timestamp-data` (имя `before-*` — не пропускается ротацией), `bash scripts/backup.sh --verify data/backup/<снимок>`
-    - [ ] чекаут релиза, `bun install` (бот не стартует)
+    - [ ] чекаут релиза, `bun install` (бот не стартует); «failed to resolve» на `dmg-core#v0.3.2` — ловушка K-20261114-w39q (fetch тегов в кэш bun)
     - [ ] сухой прогон; итог по файлам и счёт `startDate` — Нурболату; **ждать подтверждения**
     - [ ] `--write`, контрольное чтение (0 ошибок), поиск строковых дат в данных — ноль
     - [ ] старт бота; лог, `bun run oplog`; показ потока в UTC+5

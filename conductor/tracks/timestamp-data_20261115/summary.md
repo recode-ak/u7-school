@@ -46,3 +46,8 @@
 - `6794a92`: `data/courses` — 2369 дат числом (diff только `createdAt`/`updatedAt`).
 - `f8672738`: генератор миров на числа, `data/fixtures` пересоздан; ISO в state тестов → числа (9 файлов). Остаток ISO в `.ts`: обёртки `Date.parse`, негативные тесты, тест миграции, ввод визарда, DSL миров, тесты legacy-чтения (Ф6).
 - `check`: 3571 pass / 0 fail.
+
+## Фаза 6: dmg-core v0.3.2
+
+- `8221233`: `#v0.3.2` во всех `package.json` (`bun.lock` → `4df6cbc`); «ISO отвергается» — по одному на 11 state, сквозной в stream json-repo и `DataDirAudit`; удалено 12 дублей (10 json-repo ISO, 2 сценария course).
+- `check`: 3575 pass / 0 fail.
