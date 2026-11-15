@@ -8,7 +8,7 @@
 
 ---
 
-## Фаза 1: сервис зоны и поля зоны (ФР-1–4)
+## Фаза 1: сервис зоны и поля зоны (ФР-1–4) [checkpoint: be5ed3d]
 
 - [x] Task: O — базовая линия: `bun run check`, `CI=true bun test`; числа — в `summary.md` (3511 pass / 0 fail)
 - [x] Task: S (`dmg-test-designer`) — red-тесты `14c1fc2`
