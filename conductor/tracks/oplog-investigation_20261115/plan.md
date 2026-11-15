@@ -46,11 +46,11 @@
 
 ## Фаза 3: dmg-core — документы и релиз (критерий 8)
 
-- [ ] Task: S (`documentarian` — аудит; правка — O) — D-85 в `docs/decisions.md` (снять оговорку D-73; baseline по ссылке; пометка `F.sensitive` и маскирование всей записи — `OperationRun` и UoW; порог в Jsonl); новый `docs/reference/oplog.md`; правки `guides/use-case.md`, `guides/app.md`, `llms.txt`, `docs/index.md`, `CHANGELOG`; `bun run docs:impact`
+- [ ] Task: S (`documentarian` — аудит; правка — O) — D-86 в `docs/decisions.md` (снять оговорку D-73; baseline по ссылке; пометка `F.sensitive` и маскирование всей записи — `OperationRun` и UoW; порог в Jsonl); новый `docs/reference/oplog.md`; правки `guides/use-case.md`, `guides/app.md`, `llms.txt`, `docs/index.md`, `CHANGELOG`; `bun run docs:impact`
 - [ ] Task: O — релиз по `RELEASING.md` (minor: новое поле публичного `AggregateWrite` и опция Def), тег и SHA — в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
-**Критерии:** `bun run check` (включая `docs:covers`, `docs:jsdoc`) зелёный; аудит `documentarian` без расхождений; D-85 есть, `reference/oplog.md` в `llms.txt`; тег создан.
+**Критерии:** `bun run check` (включая `docs:covers`, `docs:jsdoc`) зелёный; аудит `documentarian` без расхождений; D-86 есть, `reference/oplog.md` в `llms.txt`; тег создан.
 
 ## Фаза 4: u7-school — разметка и подключение (ФТ-6, критерии 7, 8)
 
@@ -78,7 +78,7 @@
 | 5 — `retainDays` | 2 |
 | 6 — CLI, фильтры, старые записи | 2 |
 | 7 — u7-school: разметка, `bun run oplog` | 4 |
-| 8 — D-85, документы, тег, u7-school на нём | 3, 4 |
+| 8 — D-86, документы, тег, u7-school на нём | 3, 4 |
 | НФР — без зависимостей, сбой патча, объём | 1 |
 
 ## Риски

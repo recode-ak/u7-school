@@ -4,7 +4,7 @@
 
 ## Границы
 
-Правится только `dmg-core`. u7-school не трогаем (Ф4). Документы и D-85 — Ф3. Релиз и тег — Ф3.
+Правится только `dmg-core`. u7-school не трогаем (Ф4). Документы и D-86 — Ф3. Релиз и тег — Ф3.
 
 | Файл | Что |
 |---|---|
@@ -93,7 +93,7 @@
 9. Слои `ArchChecker`: `kernel` не импортирует `app`/`domain`.
 10. Маскирование ровно один раз — в `OperationRun`; `JsonlOperationLog` схем не знает.
 
-## Расхождения spec с кодом (поправки spec — в Ф3 вместе с D-85)
+## Расхождения spec с кодом (поправки spec — в Ф3 вместе с D-86)
 
 1. ФТ-1: кроме `baseline` нужен `current` (решение 2).
 2. ФТ-2: вход ER — конверт, маскируется только `payload`.
@@ -105,7 +105,7 @@
 
 ## Правила (ID rules.md)
 
-DOM-17, DOM-11 (`F.sensitive` — в `F`), CODE-02, CODE-04 (комментарии: порядок save→diff→markStored, «лист redacted без хеша»), TST-05, TST-06, TST-07, TST-08, слои ARC (`kernel` не знает `app`), D-43/D-73 (оговорку снимает D-85 в Ф3).
+DOM-17, DOM-11 (`F.sensitive` — в `F`), CODE-02, CODE-04 (комментарии: порядок save→diff→markStored, «лист redacted без хеша»), TST-05, TST-06, TST-07, TST-08, слои ARC (`kernel` не знает `app`), D-43/D-73 (оговорку снимает D-86 в Ф3).
 
 ## Критерии приёмки
 
@@ -157,7 +157,7 @@ check 1602 pass / 0 fail, e2e ok. Коммит dmg-core `f509cbf`.
 |---|---|---|---|
 | — | field-diff.ts:37 | state-`variant`/`union` — помеченные поля в `changes` открыты | blocker → закрыто |
 | — | field-diff.ts:62, sensitive-mask.ts:89 | `object_with_rest` — `rest` не учитывается | major → закрыто |
-| CODE-04 | 12 мест | `(F-111)` в комментариях пакета | major → закрыто (D-85) |
+| CODE-04 | 12 мест | `(F-111)` в комментариях пакета | major → закрыто (D-86) |
 | — | operation-run.ts:66 | сбой `RecordMask` вне try | minor → закрыто |
 | TST-08 | use-case-from-def.test.ts:1094 | дубль record-mask | minor → удалён |
 | CODE-04 | unit-of-work.ts:150 | проза в JSDoc `changesOf` | minor → закрыто |
