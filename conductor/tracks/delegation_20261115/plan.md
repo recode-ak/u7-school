@@ -81,11 +81,11 @@
 
 **Критерии:** `bun run docs:covers --strict` без предупреждений; гайд ссылается на `src/testing/example/app`; `documentarian` без расхождений; `grep -rn "'delegate'" docs llms.txt skills agents` — только вид класса и лог.
 
-## Фаза 7: релиз пакета v0.4.0
+## Фаза 7: релиз пакета v0.4.0 [checkpoint: e5898108]
 
 - [x] Task: O — по `RELEASING.md`: `check`, `e2e`, `docs:covers --strict`, версия, тег `v0.4.0` (пакет `c254383`) `c093cd65`
 - [x] Task: O — push `main` и тега — **после подтверждения Нурболата**; тег и SHA — в `summary.md` (`c254383`, подтверждено 2026-11-15)
-- [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
 
 **Критерии:** `version` 0.4.0; тег `v0.4.0` на коммите релиза; установка из git проверена по чек-листу.
 
