@@ -8,7 +8,7 @@
 
 ---
 
-## Фаза 0: Базовая линия
+## Фаза 0: Базовая линия [checkpoint: d541f4d9]
 
 - [x] Task: O — `bun run check` в dmg-core; `CI=true bun run check` и `CI=true bun test` в u7-school; числа (pass/fail, число тестов) — в `summary.md`
 - [x] Task: O — счёт ISO-дат: `data/courses/*.json` (≈2370), литералы в `.ts` (≈61 файл / 160 строк) — точка сравнения для Ф5
