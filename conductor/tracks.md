@@ -8,5 +8,5 @@
 
 ---
 
-- [~] **Track: Часовые зоны школы и пользователя — `School.timeZone` (IANA), необязательное `User.timeZone`, `LocalZone` вместо `ProjectZone`, подпись зоны (timezones)**
+- [x] **Track: Часовые зоны школы и пользователя — `School.timeZone` (IANA), необязательное `User.timeZone`, `LocalZone` вместо `ProjectZone`, подпись зоны (timezones)**
 *Link: [./tracks/timezones_20261115/](./tracks/timezones_20261115/)*
