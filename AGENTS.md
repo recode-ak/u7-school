@@ -91,5 +91,5 @@
 <!-- dmg-core:begin -->
 ## Платформа dmg-core
 
-Модули пишутся на `dmg-core@0.3.2`. Индекс документации для LLM — `node_modules/dmg-core/llms.txt`; перед работой с модулем загрузи скил `dmg-architecture`.
+Модули пишутся на `dmg-core@0.4.0`. Индекс документации для LLM — `node_modules/dmg-core/llms.txt`; перед работой с модулем загрузи скил `dmg-architecture`.
 <!-- dmg-core:end -->

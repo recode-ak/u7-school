@@ -6,6 +6,7 @@
  *   bun run oplog --request <id>
  *   bun run oplog --aggregate <uuid>
  *   bun run oplog --subject <id> --since 2026-11-14
+ *   bun run oplog --actor <id> --since 2026-11-14
  *
  * Флаги — в `node_modules/dmg-core/docs/reference/oplog.md` §3.
  */
@@ -15,7 +16,7 @@ const args = process.argv.slice(2);
 
 if (args.length === 0) {
   console.error(
-    'Использование: bun run oplog [--request <id>] [--aggregate <uuid>] [--subject <id>] [--module <m>] [--op <o>] [--failed] [--since <d>] [--until <d>] [--json]',
+    'Использование: bun run oplog [--request <id>] [--aggregate <uuid>] [--subject <id>] [--actor <id>] [--module <m>] [--op <o>] [--failed] [--since <d>] [--until <d>] [--json]',
   );
   process.exit(2);
 }

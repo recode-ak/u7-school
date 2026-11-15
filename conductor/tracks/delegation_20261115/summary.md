@@ -64,3 +64,7 @@
 - Коммит релиза `c254383` (`version` 0.4.0), тег `v0.4.0` → `c254383` (локально). `check` — 1718 pass / 0 fail (база 1655); `e2e` — ok; `docs:covers --strict` — чисто.
 - Push `main` (`4df6cbc..c254383`) и тега `v0.4.0` → `c254383` — 2026-11-15, с подтверждения Нурболата.
 - Пункт 4 `RELEASING.md` выполнен: пустой каталог → `valibot` → `git+ssh://git@github.com/recode-ak/dmg-core.git#v0.4.0` → `dmg-core init --profile single` → `bun run check` зелёный (28 pass); плагины biome на месте, своей копии `valibot` нет. Ловушка K-20261114-w39q (кеш клона bun без нового тега) — решена по базе: `fetch` тегов в `~/.bun/install/cache/87d38d7e6b301531.git`.
+
+## Фаза 8: u7-school на v0.4.0
+
+- `#v0.4.0` во всех 11 `package.json`, `bun.lock` → `c254383`; `check` — 3511 pass / 0 fail (база 3511), `arch:check` — чисто; исходники `domain`, `modules`, резолвер не тронуты.
