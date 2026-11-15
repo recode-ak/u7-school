@@ -26,16 +26,16 @@
 
 ## Фаза 2: зона школы в раннере, удаление `ProjectZone` (ФР-3, 5–6)
 
-- [ ] Task: S (`dmg-test-designer`) — red-тесты
-    - [ ] `U7BotUiStory.formatDate/formatTime` — зона школы, `18:00 (UTC+5)` (перенос сценария `bot-ui-story.test.ts:463`)
-    - [ ] `view-stream` и `wish-invite` — старт `чч:мм (UTC+5)`
-    - [ ] `reviewDate` с зоной: переписать `review-render.test.ts` на зону школы, сценарии границы суток сохранить; вызывающие стори
-    - [ ] `progress` — дата записи в зоне школы (новый тест, сейчас дата не проверяется)
-    - [ ] мастер потока: подсказка «в зоне школы (UTC+5)»; ввод `2026-12-01T18:00` → `2026-12-01T13:00Z`
-    - [ ] Запуск — падают по делу
-- [ ] Task: S (`dmg-api-author` / автор раннера) — `formatDate/formatTime` из `BotUiStory` в `U7BotUiStory`; `reviewDate`/`renderReviewCard` и стори; `progress.ts`; `create-stream.ts` (зона — поле стори из `this.resolve.school`); удалить `project-zone.ts`, его тест, экспорт из `shared/index.ts`, импорт в `bot-ui-story.ts`
-- [ ] Task: O (`dmg-reviewer`) — ревью; замечания error/warn исправлены
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: S (`dmg-test-designer`) — red-тесты `305e57d`
+    - [x] `U7BotUiStory.formatDate/formatTime` — зона школы, `18:00 (UTC+5)` (перенос сценария `bot-ui-story.test.ts:463`)
+    - [x] `view-stream` и `wish-invite` — старт `чч:мм (UTC+5)`
+    - [x] `reviewDate` с зоной: переписать `review-render.test.ts` на зону школы, сценарии границы суток сохранить; вызывающие стори
+    - [x] `progress` — дата записи в зоне школы (новый тест, сейчас дата не проверяется)
+    - [x] мастер потока: подсказка «в зоне школы (UTC+5)»; ввод `2026-12-01T18:00` → `2026-12-01T13:00Z`
+    - [x] Запуск — падают по делу
+- [x] Task: S (`dmg-api-author` / автор раннера) — `formatDate/formatTime` из `BotUiStory` в `U7BotUiStory`; `reviewDate`/`renderReviewCard` и стори; `progress.ts`; `create-stream.ts` (зона — поле стори из `this.resolve.school`); удалить `project-zone.ts`, его тест, экспорт из `shared/index.ts`, импорт в `bot-ui-story.ts` `305e57d` (+ превью мастера с подписью; `C-DEBT-43` удалён здесь — без класса запись ломает `arch:check`; бриф `slices/f2-runner.md`)
+- [x] Task: O (`dmg-reviewer`) — ревью; замечания error/warn исправлены `305e57d`
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md) — автоматическая (трек без пауз): `CI=true bun test` 3545/0; e2e мастера и `user-notify` — зелёные
 
 **Критерии:** `bun run check` зелёный, тестов не меньше базовой линии, сценарии перенесённых тестов не потеряны; `rg "ProjectZone|DEFAULT_OFFSET_MINUTES" platform runners modules domain --glob '*.ts'` пуст; `rg "getDate\(\)|getHours\(\)|toISOString\(\)\.slice" runners/u7-bot/src --glob '!*.test.ts'` — только `json-file-repo.ts`; тест мастера: `2026-12-01T18:00` → `2026-12-01T13:00Z`.
 
