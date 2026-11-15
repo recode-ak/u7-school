@@ -33,14 +33,16 @@
 
 ## Фаза 2: зона проекта и `stream.startDate` (ФР-7: ввод и вывод)
 
-- [ ] Task: S (`dmg-test-designer`) — red-тесты
-    - [ ] модуль зоны проекта: «10:00 по Уральску ↔ 05:00Z» в обе стороны (разбор локального ввода → `Timestamp`; формат даты и времени), граница суток (22:30Z → следующий день в UTC+5)
-    - [ ] `create-stream`: ввод разбирается как `+05:00`; невалидный ввод — отказ с понятным текстом
-    - [ ] `view-stream`, `wish-invite`: старт показывается в UTC+5 (ожидания «10:00» при `startDate = 10:00Z` → «15:00»)
-    - [ ] Запуск — падают по делу
-- [ ] Task: S (`dmg-api-author`) — модуль зоны в `platform/core/src/shared/` (рядом с `now.ts`): константа UTC+5 и разбор/формат; `BotUiStory.formatDate`, `#formatTime` в `view-stream.story.ts` и `wish-invite.story.ts`, `create-stream.ts:421,783`; запись C-DEBT-43 (Место, Корень, Признак — под новое место)
-- [ ] Task: S (`dmg-reviewer`) — ревью; замечания error/warn исправлены
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+> Бриф — [slices/f2-project-zone.md](./slices/f2-project-zone.md)
+
+- [x] Task: S (`dmg-test-designer`) — `72edbae` — red-тесты
+    - [x] модуль зоны проекта: «10:00 по Уральску ↔ 05:00Z» в обе стороны (разбор локального ввода → `Timestamp`; формат даты и времени), граница суток (22:30Z → следующий день в UTC+5)
+    - [x] `create-stream`: ввод разбирается как `+05:00`; невалидный ввод — отказ с понятным текстом
+    - [x] `view-stream`, `wish-invite`: старт показывается в UTC+5 (ожидания «10:00» при `startDate = 10:00Z` → «15:00»)
+    - [x] Запуск — падают по делу
+- [x] Task: S (`dmg-api-author`) — `72edbae` — модуль зоны в `platform/core/src/shared/` (рядом с `now.ts`): константа UTC+5 и разбор/формат; `BotUiStory.formatDate`, `#formatTime` в `view-stream.story.ts` и `wish-invite.story.ts`, `create-stream.ts:421,783`; запись C-DEBT-43 (Место, Корень, Признак — под новое место)
+- [x] Task: S (`dmg-reviewer`) — `72edbae` — ревью; замечания error/warn исправлены
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (автопроверка: `check`, `arch:check`) (Protocol in workflow.md)
 
 **Критерии:** `bun run check` и `arch:check` зелёные, тестов не меньше; `getUTCHours`/`getUTCDate` в `runners`/`platform/core` — только в модуле зоны и `review-render.ts` (за рамками); тесты в обе стороны есть; C-DEBT-43 соответствует новому Месту.
 

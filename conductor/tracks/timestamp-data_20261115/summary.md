@@ -23,3 +23,8 @@
 - `check` пакета: 1655 pass / 0 fail (база 1648); `e2e` — ok; `docs:covers --strict` — чисто.
 - CHANGELOG в пакете нет — пункт плана неприменим.
 - Пункт 4 `RELEASING.md` (установка из git в пустой каталог) отдельно не выполнялся: установку по тегу проверит переход u7-school в Ф6.
+
+## Фаза 2: зона проекта UTC+5
+
+- `72edbae`: `ProjectZone` (`platform/core/src/shared/project-zone.ts`), показ старта потока и ввод в визарде — в UTC+5; C-DEBT-43 — Место `project-zone.ts`, Признак `DEFAULT_OFFSET_MINUTES`.
+- `check`: 3498 pass / 0 fail (база 3456); `arch:check` — чисто.
