@@ -1,6 +1,6 @@
 # .agents-core — единый источник ролей агентов
 
-Роли платформы (`dmg-tech-lead`, `dmg-test-designer`, `dmg-domain-author`, `dmg-api-author`, `dmg-data-keeper`, `dmg-reviewer`) и их общий блок — из пакета `dmg-core` (формат — `node_modules/dmg-core/agents/README.md`): `bun run dmg:sync` по `dmg-core.json` кладёт их в `roles/` и `dmg-core-common.md` с меткой версии (руками не править, `dmg:check` в `check`). Проектное — роли `roles/migrator.md` и `roles/documentarian.md` (`conductor/architecture/agent-roles.md`) и общий блок проекта `common.md` (привязка ролей пакета к u7-school). `bun run agents:sync` собирает все роли из `roles/` в копии под каждую среду:
+Роли платформы (`dmg-tech-lead`, `dmg-test-designer`, `dmg-domain-author`, `dmg-api-author`, `dmg-data-keeper`, `dmg-reviewer`) и их общий блок — из пакета `dmg-core` (формат — `node_modules/dmg-core/agents/README.md`): `bun run dmg:sync` по `dmg-core.json` кладёт их в `roles/` и `dmg-core-common.md` с меткой версии (руками не править, `dmg:check` в `check`). Проектное — роли `roles/migrator.md`, `roles/documentarian.md` и `roles/dmg-access-auditor.md` (пилот волны 4) (`conductor/architecture/agent-roles.md`) и общий блок проекта `common.md` (привязка ролей пакета к u7-school). `bun run agents:sync` собирает все роли из `roles/` в копии под каждую среду:
 
 - `.claude/agents/<role>.md` — Claude Code;
 - `.pi/agents/<role>.md` — pi.
