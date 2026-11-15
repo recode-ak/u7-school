@@ -1,5 +1,4 @@
 export { appClock } from './app-clock';
-export { DATA_FILES, JOB_RUNS_FILE } from './data-layout';
 export type {
   AuditFile,
   AuditIssue,

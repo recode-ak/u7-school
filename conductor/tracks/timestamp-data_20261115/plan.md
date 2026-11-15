@@ -103,17 +103,16 @@
 
 - [x] Task: O — финальный гейт workflow: `CI=true bun test` полностью, триаж и сравнение с базовой линией — в `summary.md`
 - [x] Task: O — `3bd69bc` (тег v0.4.0) — релиз u7-school (CHANGELOG, версия, тег), push
-- [~] Task: O — прод:
-    - Передача (2026-11-15, claude, 3bd69bc): сделано — релиз v0.4.0 опубликован; на `kalki_server` бот `u7-school-bot` online (v0.3.5). Осталось — всё окно выкатки ниже; ssh-команды к проду отклонены автоматикой прав Claude Code (нужно разрешение Нурболата или выполнение вручную); check — зелёный
-    - [ ] `git status` / `git diff <тег> -- data/courses` пусты
-    - [ ] сверить `ls -R data` с картой скрипта (`DATA_FILES` + `jobs/last-runs.json`)
-    - [ ] стоп бота; `bun run backup before-timestamp-data` (имя `before-*` — не пропускается ротацией), `bash scripts/backup.sh --verify data/backup/<снимок>`
-    - [ ] чекаут релиза, `bun install` (бот не стартует); «failed to resolve» на `dmg-core#v0.3.2` — ловушка K-20261114-w39q (fetch тегов в кэш bun)
-    - [ ] сухой прогон; итог по файлам и счёт `startDate` — Нурболату; **ждать подтверждения**
-    - [ ] `--write`, контрольное чтение (0 ошибок), поиск строковых дат в данных — ноль
-    - [ ] старт бота; лог, `bun run oplog`; показ потока в UTC+5
-    - [ ] при сбое — откат: **весь** снимок (`docs/backup.md`) и предыдущий тег; откат только по коду нельзя — v0.3.5 читает `last-runs.json`-число как NaN (внеплановые sweep). `DB_DIR` задавать явно (`bun run` не грузит `.env.production`)
-- [ ] Task: O — удалить `migrate-timestamps.ts` (тест, скрипт `package.json`); убрать `timestamp-data` из `roadmap.md`; `summary.md`; разбор долга по трём реестрам
+- [x] Task: O — прод (2026-11-15, v0.4.0; снимок `2026-11-15T115224Z-before-timestamp-data`):
+    - [x] `git status` / `git diff <тег> -- data/courses` пусты
+    - [x] сверить `ls -R data` с картой скрипта (`DATA_FILES` + `jobs/last-runs.json`)
+    - [x] стоп бота; `bun run backup before-timestamp-data` (имя `before-*` — не пропускается ротацией), `bash scripts/backup.sh --verify data/backup/<снимок>`
+    - [x] чекаут релиза, `bun install` (бот не стартует); «failed to resolve» на `dmg-core#v0.3.2` — ловушка K-20261114-w39q (fetch тегов в кэш bun)
+    - [x] сухой прогон; итог по файлам и счёт `startDate` — Нурболату; **ждать подтверждения**
+    - [x] `--write`, контрольное чтение (0 ошибок), поиск строковых дат в данных — ноль
+    - [x] старт бота; лог, `bun run oplog`; показ потока в UTC+5
+    - [-] при сбое — откат: **весь** снимок (`docs/backup.md`) и предыдущий тег; откат только по коду нельзя — v0.3.5 читает `last-runs.json`-число как NaN (внеплановые sweep). `DB_DIR` задавать явно (`bun run` не грузит `.env.production`)
+- [x] Task: O — удалить `migrate-timestamps.ts` (тест, скрипт `package.json`); убрать `timestamp-data` из `roadmap.md`; `summary.md`; разбор долга по трём реестрам
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
 
 **Критерии:** сухой прогон `invalid = 0`; контрольное чтение 0 ошибок; `startDate` потоков = местное −5 ч; `last-runs.json` — числа; бот отвечает, в логе нет ошибок чтения; `grep -rn migrate-timestamps scripts package.json` пуст; `check` и `CI=true bun test` зелёные на финальном коммите.
