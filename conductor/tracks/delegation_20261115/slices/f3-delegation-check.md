@@ -36,3 +36,27 @@
 ERR-01, ERR-02, CODE-04, TST-09 (не тестировать ядро: тексты `label`), D-59, D-89.
 
 ## Отчёты
+
+### dmg-test-designer (Sonnet)
+
+`src/app/delegation/delegation-check.test.ts`, 14 тестов: успех (запись как есть, `readOnly` из записи), `invalid` (нет записи, чужой замещаемый, чужой заместитель; чужая пара при отозванной и истёкшей — `invalid`, не `revoked`), `expired` (`clock === expiresAt`, позже; за 1 мс до — успех), `revoked` (и при истёкшем сроке), `disabled`, `kind: 'unauthorized'`, исключение порта пробрасывается. Падает на импорте (модуля нет).
+
+### dmg-api-author (Opus)
+
+`delegation.types.ts` (`DelegationClaim`, `DelegationRecord`, `DelegationStore`), `DelegationCheck` (порядок `disabled` → `invalid` → `revoked` → `expired`, исключение порта не ловится), `DELEGATION_DENIED` после `UNAUTHORIZED`, экспорт из `dmg-core/app`, строка в `reference/errors-result.md`. Отклонение: `core-errors.test.ts` — пара `DELEGATION_DENIED`/`unauthorized` в списке. `docs:impact` — `concepts/errors.md`, `guides/errors.md` сверены без правки (`verified` после коммита). `check`: 1695 pass.
+
+### dmg-reviewer (Opus)
+
+Error нет. Minor (все автору): дубль «за 1 мс до» (TST-08), тест `kind` из Def (TST-09), название теста чужой пары, `DelegationDenied` через `ErrorOf`. Вопрос — в Ф6: `DELEGATION_DENIED` в `CoreErrors` попадает в объединение ошибок каждого UC, хотя `handle` её не возвращает; причина (клиент восстановит код, иначе `SERVER_INTERNAL`) не записана в D-89 и `errors-result.md`.
+
+### dmg-access-auditor (Sonnet, пилот)
+
+Обхода и раскрытия чужой записи нет. Warn (принят): `expiresAt` не числом (`NaN` из JSON приложения) — сравнение `>=` ложно, делегирование бессрочное; проверка — fail-closed. Info для Ф4: пустая заявка, исключение порта не превращать в гостя.
+
+## Открытые вопросы → Ф6
+
+- Причина места `DELEGATION_DENIED` в `CoreErrors` — в D-89 и `reference/errors-result.md`.
+
+### Итог среза
+
+Правки: срок fail-closed (`!(now < expiresAt)`, тест `NaN`), дубли тестов убраны, `DelegationDenied` через `ErrorOf` и экспортирован. Пакет `1d3e613` (срез), `9094e9a` (`verified`). `check` — 1694 pass / 0 fail.

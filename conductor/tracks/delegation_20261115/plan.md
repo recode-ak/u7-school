@@ -45,8 +45,8 @@
 
 ## Фаза 3: проверка заявки (ФР-6) — после Ф1
 
-- [ ] Task: S (`dmg-test-designer`) — red-тесты `DelegationCheck`: успех; нет записи; пара не совпала; срок истёк; отозвано; делегирование не подключено; часы — подставные
-- [ ] Task: O (`dmg-api-author`) — `DelegationClaim`, `DelegationStore`, `DelegationRecord`, `DelegationCheck`, `DELEGATION_DENIED` (`kind: 'unauthorized'`, причина в payload); экспорт из пакета
+- [x] Task: S (`dmg-test-designer`) — red-тесты `DelegationCheck`: успех; нет записи; пара не совпала; срок истёк; отозвано; делегирование не подключено; часы — подставные
+- [~] Task: O (`dmg-api-author`) — `DelegationClaim`, `DelegationStore`, `DelegationRecord`, `DelegationCheck`, `DELEGATION_DENIED` (`kind: 'unauthorized'`, причина в payload); экспорт из пакета
 - [ ] Task: O (`dmg-reviewer`) — ревью
 - [ ] Task: S (`dmg-access-auditor`) — пилот
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
