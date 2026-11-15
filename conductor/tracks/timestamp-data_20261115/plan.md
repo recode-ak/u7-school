@@ -18,16 +18,16 @@
 
 ## Фаза 1: dmg-core v0.3.2 — `F.timestamp` только число (ФР-1)
 
-- [ ] Task: S (`dmg-test-designer`) — red-тесты
-    - [ ] `fields.test.ts`: число принимает; ISO-строка, произвольная строка, `NaN`, `Infinity`, отрицательное, дробное — отвергает
-    - [ ] `withEntityDefaults` (`fields.test.ts:101,115`) и `testing/example/todo/task/task.state.test.ts` — на числах; тесты «ISO-дата → число» переписаны на «ISO отвергается»
-    - [ ] прочие ISO-входы тестов пакета (`grep ISO|T\d\d:\d\d`: `snapshot-json`, `project-scaffold.e2e`, `debt-checker`, `lint-fixtures`)
-    - [ ] Запуск — падают по делу
-- [ ] Task: S (`dmg-domain-author`) — `src/kernel/fields/fields.ts`: убрать `parseIso`, union ISO и `transform`; число `integer`, `minValue(0)`
-- [ ] Task: S (`documentarian` — аудит; правка — O) — D-16 в `decisions.md` (без «переходные схемы читают ISO»), `guides/state.md`, `reference/manifests.md`, `llms.txt`, CHANGELOG пакета (с невыпущенными D-87/D-88); `bun run docs:impact`
-- [ ] Task: S (`dmg-reviewer`) — ревью; замечания error/warn исправлены
-- [ ] Task: O — релиз по `RELEASING.md`: `check` + `e2e`, версия, тег `v0.3.2`, push; тег и SHA — в `summary.md`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: S (`dmg-test-designer`) — red-тесты `a6043b1` (dmg-core)
+    - [x] `fields.test.ts`: число принимает; ISO-строка, произвольная строка, `NaN`, `Infinity`, отрицательное, дробное — отвергает
+    - [x] `withEntityDefaults` (`fields.test.ts:101,115`) и `testing/example/todo/task/task.state.test.ts` — на числах; тесты «ISO-дата → число» переписаны на «ISO отвергается»
+    - [x] прочие ISO-входы тестов пакета (`grep ISO|T\d\d:\d\d`: `snapshot-json`, `project-scaffold.e2e`, `debt-checker`, `lint-fixtures`)
+    - [x] Запуск — падают по делу
+- [x] Task: S (`dmg-domain-author`) — `a6043b1` (dmg-core) — `src/kernel/fields/fields.ts`: убрать `parseIso`, union ISO и `transform`; число `integer`, `minValue(0)`
+- [x] Task: S (`documentarian` — аудит; правка — O) — `6a3e238`, `adb4b8f` (dmg-core); CHANGELOG в пакете нет (D-87/D-88 — в сообщении релиза) — D-16 в `decisions.md` (без «переходные схемы читают ISO»), `guides/state.md`, `reference/manifests.md`, `llms.txt`, CHANGELOG пакета (с невыпущенными D-87/D-88); `bun run docs:impact`
+- [x] Task: S (`dmg-reviewer`) — ревью; замечания error/warn исправлены — error нет; дубли по TST-09 убраны `5302112` (dmg-core)
+- [x] Task: O — релиз `4df6cbc` (dmg-core, тег v0.3.2) — по `RELEASING.md`: `check` + `e2e`, версия, тег `v0.3.2`, push; тег и SHA — в `summary.md`
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 **Критерии:** `bun run check` и `bun run e2e` пакета зелёные, тестов не меньше базовой линии; `grep -rn "isoDateTime\|isoTimestamp\|parseIso" src/kernel/fields` пуст; тест «отвергает ISO-строку» есть; тег `v0.3.2` на коммите с правкой; D-16 обновлён.
 
