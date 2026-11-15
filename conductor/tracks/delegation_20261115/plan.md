@@ -34,12 +34,12 @@
 
 **Критерии:** `bun run check` зелёный, тестов не меньше базовой линии; `grep -rn "'delegate'" src/testing/example src/domain/contracts/contracts.fixture.ts src/graph --include=*.ts` — только вид класса и лог, не `callers`; `grep -n "personal" src/graph/normalize.test.ts` не пуст; `docs:covers --strict` без предупреждений.
 
-## Фаза 2: «query не вызывает command» (ФР-5) — параллельно с Ф1
+## Фаза 2: «query не вызывает command» (ФР-5) — параллельно с Ф1 [checkpoint: ff773410]
 
 - [x] Task: S (`dmg-test-designer`) — red в `def-checker.test.ts`: query с command в `calls` — нарушение; query с query — нет `799f41f0`
 - [x] Task: S (`dmg-api-author`) — проверка по образцу `checkCalls`; MAN-14 в `rules.md` и `violation.ts`; формулировка MAN-05 `799f41f0` (пакет `9994ad8`)
 - [x] Task: S (`dmg-reviewer`) — ревью `799f41f0`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 **Критерии:** `grep -n "MAN-14" docs/reference/rules.md src/arch/violation.ts src/arch/def-checker.test.ts` — во всех трёх; `bun run check` зелёный.
 
