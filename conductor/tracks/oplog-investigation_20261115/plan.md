@@ -31,7 +31,7 @@
 
 **Критерии:** `bun run check` dmg-core зелёный, тестов не меньше базовой линии; критерии spec 1–4 закрыты тестами (маскирование — на example-модуле пакета: UC, ER, ошибка); запись без `changes` принимается типом; `git diff package.json` — без новых зависимостей; замер стоимости сравнения — в `summary.md`.
 
-## Фаза 2: dmg-core — срок хранения и читатель (ФТ-4, ФТ-5)
+## Фаза 2: dmg-core — срок хранения и читатель (ФТ-4, ФТ-5) [checkpoint: 7d7d002]
 
 - [x] Task: S (`dmg-test-designer`) — red-тесты
     - [x] `retainDays` (временной каталог): старше срока — удалены, свежие — нет; срабатывание при смене дня; по умолчанию не удаляет; сбой удаления не блокирует `append`
@@ -40,7 +40,7 @@
     - [x] Запуск — падают по делу
 - [x] Task: S (`dmg-api-author`) — реализация (green) [dmg-core c456e8d]: `retainDays`; `OperationLogReader` и форматтер ленты в `src/app/oplog/`; ветка `oplog` в `src/cli/main.ts` до `PackageSource.load`, `USAGE`; проверить правила слоёв `ArchChecker` (`cli` → `app/oplog`)
 - [x] Task: S (`dmg-reviewer`) — ревью среза; замечания error/warn исправлены [dmg-core c456e8d]
-- [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 **Критерии:** `bun run check` зелёный, тестов не меньше; `bun src/cli/main.ts oplog <dir> --request <id>` печатает цепочку по `at`, `--aggregate <uuid>` — патчи по версиям (критерии spec 5, 6).
 
