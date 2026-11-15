@@ -50,3 +50,11 @@ DOM-11 (`F.sensitive` — из `F`), CODE-02, CODE-04, TST-05..08, ООП вме
 ### dmg-data-keeper (2026-11-15)
 
 Аудит — список выше. Совместимость: старые `data/fixtures/oplog/*.jsonl` (без `writes`/`changes`, есть `at`/`module`/`op`/`kind`) читатель принимает; `F.sensitive` — метаданные схемы, формат state и снимков не меняется, миграция и бэкап не нужны. Риски: union `NOT_FOUND` скрывается целиком (принято); `ownerInfo.courseId` в логе скрыт (принято); `trace.channel.visitorId` = Telegram ID (решение — HMAC); `data/fixtures/oplog/2026-11-13.jsonl` содержит имя и Telegram ID (вне git; проверка ПД — на свежем логе).
+
+### dmg-test-designer (2026-11-15)
+
+Новые тесты: `domain/src/{user/user/user,wish/wish/wish,questionnaire/questionnaire/questionnaire,peer-review/review/review,stream/stream/stream}.sensitive.test.ts`, `platform/app/tests/u7-app.oplog.test.ts` (сквозной + `retainDays: 90`), `runners/u7-bot/src/core/visitor-id.test.ts`, `scripts/oplog.test.ts`. Прогон: 42 fail по делу, 4 охранных зелёных.
+
+API: `VisitorId` (`runners/u7-bot/src/core/visitor-id.ts`): `constructor(key)` (пустой — throw), `of(telegramId): string` — первые 16 hex HMAC-SHA256; ключ — `config.botToken` при старте. `scripts/oplog.ts`: без аргументов — подсказка, код 2; нет каталога — код 2.
+
+Для автора: `u7-bot-ui-story.test.ts:455` ждёт `visitorId: '1'` — поправить на значение `VisitorId` с фиксированным ключом; проверить `toEqual` по `ctx.oplog` в wish ER и stream sync UC.
