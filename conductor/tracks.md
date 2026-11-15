@@ -8,10 +8,5 @@
 
 ---
 
-- [x] **Track: Делегирование в `dmg-core` — заместитель проходит как `user`, «только лично», «только чтение», проверка заявки, гайд (delegation)**
-*Link: [./tracks/delegation_20261115/](./tracks/delegation_20261115/)*
-
----
-
 - [ ] **Track: Часовые зоны школы и пользователя — `School.timeZone` (IANA), необязательное `User.timeZone`, `LocalZone` вместо `ProjectZone`, подпись зоны (timezones)**
 *Link: [./tracks/timezones_20261115/](./tracks/timezones_20261115/)*
