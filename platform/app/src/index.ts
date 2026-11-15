@@ -1,4 +1,11 @@
 export { appClock } from './app-clock';
+export { DATA_FILES, JOB_RUNS_FILE } from './data-layout';
+export type {
+  AuditFile,
+  AuditIssue,
+  AuditReport,
+} from './infra/data-dir-audit';
+export { DataDirAudit } from './infra/data-dir-audit';
 export { FileReplayStore } from './infra/file-replay-store';
 export type { School } from './school';
 export {

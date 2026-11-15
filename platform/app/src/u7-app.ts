@@ -54,6 +54,7 @@ import {
   type ModuleFactory,
 } from 'dmg-core/app';
 import { appClock } from './app-clock';
+import { DATA_FILES, JOB_RUNS_FILE, OPLOG_DIR } from './data-layout';
 import { JobRunJsonRepo } from './infra/job-run-json-repo';
 import { createSchool, type School, TEST_SCHOOL } from './school';
 import type { U7AppEnv, U7AppPorts, U7AppResolver } from './u7-app.types';
@@ -102,26 +103,26 @@ export class U7App {
 
     // ══ Peer-review: репозитории кампаний и отзывов (DMG) ══
     const reviewCampaignRepo = new ReviewCampaignJsonRepo(
-      `${dbDir}/peer-review/campaigns.json`,
+      `${dbDir}/${DATA_FILES['review-campaign']}`,
     );
-    const reviewRepo = new ReviewJsonRepo(`${dbDir}/peer-review/reviews.json`);
+    const reviewRepo = new ReviewJsonRepo(`${dbDir}/${DATA_FILES.review}`);
 
     // ══ DMG: модули по `dependsOn` — каждый на своих репозиториях ══
     const context = U7App.dmgContext(env, bus, appClock, logger);
     const dmg = U7App.dmgApp(context, {
-      users: new UserJsonRepo(`${dbDir}/users/users.json`),
-      courses: new CourseJsonRepo(`${dbDir}/courses/courses.json`),
-      modules: new ModuleJsonRepo(`${dbDir}/courses/modules.json`),
-      lessons: new LessonJsonRepo(`${dbDir}/courses/lessons.json`),
-      steps: new StepJsonRepo(`${dbDir}/courses/steps.json`),
-      wishes: new WishJsonRepo(`${dbDir}/wish/wishes.json`),
+      users: new UserJsonRepo(`${dbDir}/${DATA_FILES.user}`),
+      courses: new CourseJsonRepo(`${dbDir}/${DATA_FILES.course}`),
+      modules: new ModuleJsonRepo(`${dbDir}/${DATA_FILES.module}`),
+      lessons: new LessonJsonRepo(`${dbDir}/${DATA_FILES.lesson}`),
+      steps: new StepJsonRepo(`${dbDir}/${DATA_FILES.step}`),
+      wishes: new WishJsonRepo(`${dbDir}/${DATA_FILES.wish}`),
       questionnaires: new QuestionnaireJsonRepo(
-        `${dbDir}/questionnaires/questionnaires.json`,
+        `${dbDir}/${DATA_FILES.questionnaire}`,
       ),
       campaigns: reviewCampaignRepo,
       reviews: reviewRepo,
-      streams: new StreamJsonRepo(`${dbDir}/streams/streams.json`),
-      students: new StudentJsonRepo(`${dbDir}/streams/students.json`),
+      streams: new StreamJsonRepo(`${dbDir}/${DATA_FILES.stream}`),
+      students: new StudentJsonRepo(`${dbDir}/${DATA_FILES.student}`),
       schoolId: school.id,
     });
 
@@ -132,7 +133,7 @@ export class U7App {
       modules: dmg.modules,
       clock: appClock,
       logger,
-      store: new JobRunJsonRepo(`${dbDir}/jobs/last-runs.json`, logger),
+      store: new JobRunJsonRepo(`${dbDir}/${JOB_RUNS_FILE}`, logger),
       ...(startDelayMs === undefined ? {} : { startDelayMs }),
     });
 
@@ -174,7 +175,9 @@ export class U7App {
       clock,
       logger,
       mode: env.mode,
-      oplog: new JsonlOperationLog(`${env.dbDir}/oplog`, { retainDays: 90 }),
+      oplog: new JsonlOperationLog(`${env.dbDir}/${OPLOG_DIR}`, {
+        retainDays: 90,
+      }),
       replay: env.replay ?? new InProcReplayStore({ clock }),
     };
   }
