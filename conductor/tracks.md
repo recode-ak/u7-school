@@ -8,10 +8,5 @@
 
 ---
 
-- [x] **Track: Даты только числом — миграция данных, строгий `F.timestamp`, `startDate` в UTC (timestamp-data)**
-*Link: [./tracks/timestamp-data_20261115/](./tracks/timestamp-data_20261115/)*
-
----
-
 - [ ] **Track: Делегирование в `dmg-core` — заместитель проходит как `user`, «только лично», «только чтение», проверка заявки, гайд (delegation)**
 *Link: [./tracks/delegation_20261115/](./tracks/delegation_20261115/)*
