@@ -17,16 +17,16 @@
 ## Фаза 1: dmg-core — патч полей и маскирование всей записи (ФТ-1, ФТ-2, ФТ-3)
 
 - [x] Task: S (`dmg-tech-lead`) — бриф среза `slices/patch.md`: `Aggregate.baseline` / `Committable.baseline`; класс сравнения (`FieldDiff`, место — `src/app/oplog/` или `src/domain/aggregate/`); `F.sensitive` и `SensitiveMask` (обход схемы valibot: object, array, optional/nullable/nullish, pipe, record, variant/union, `withEntityDefaults`); точки применения: `OperationRun` (input по схеме UC/события, output, payload ошибки) и UoW (`changes`); `AggregateWrite.changes`; `ValueDigest` и порог в `JsonlOperationLog`; ID `rules.md` (DOM-17 — `snapshot()` только репозиторий: `baseline` через публичный геттер)
-- [~] Task: S (`dmg-test-designer`) — red-тесты
-    - [ ] `baseline`: restore / create (нет) / после `markStored`
-    - [ ] `FieldDiff`: объекты по точке, массив и примитив — лист, созданный — `from: undefined`, без `BaseEntityFields`
-    - [ ] `SensitiveMask`: каждый вид схемы; пометка в производной схеме (выход из state, вход из VO); лишние ключи сырого входа — как есть; сбой — `'[redacted]'` целиком
-    - [ ] запись лога: помеченные поля во `input` UC и ER (payload события), `output`, `payload` ошибки, `changes` (`redacted: true`) — значения нет в строке JSONL
-    - [ ] `UnitOfWork.commit`: `changes` у command, у query нет; сбой расчёта патча не ломает операцию
-    - [ ] `JsonlOperationLog`: значение больше порога — `{ size, hash }`, одинаковые значения — одинаковый hash
-    - [ ] Запуск — падают по делу
-- [ ] Task: S (`dmg-domain-author`) — реализация (green); sha256 — `node:crypto`; замер стоимости сравнения на крупном снимке (`contentSnapshot`-подобное дерево); при дороговизне — порог размера сравнения (сверх — дайджест всего поля)
-- [ ] Task: S (`dmg-reviewer`) — ревью среза по `rules.md`; замечания error/warn исправлены
+- [x] Task: S (`dmg-test-designer`) — red-тесты
+    - [x] `baseline`: restore / create (нет) / после `markStored`
+    - [x] `FieldDiff`: объекты по точке, массив и примитив — лист, созданный — `from: undefined`, без `BaseEntityFields`
+    - [x] `SensitiveMask`: каждый вид схемы; пометка в производной схеме (выход из state, вход из VO); лишние ключи сырого входа — как есть; сбой — `'[redacted]'` целиком
+    - [x] запись лога: помеченные поля во `input` UC и ER (payload события), `output`, `payload` ошибки, `changes` (`redacted: true`) — значения нет в строке JSONL
+    - [x] `UnitOfWork.commit`: `changes` у command, у query нет; сбой расчёта патча не ломает операцию
+    - [x] `JsonlOperationLog`: значение больше порога — `{ size, hash }`, одинаковые значения — одинаковый hash
+    - [x] Запуск — падают по делу
+- [x] Task: S (`dmg-domain-author`) — реализация (green) [dmg-core f509cbf]; sha256 — `node:crypto`; замер стоимости сравнения на крупном снимке (`contentSnapshot`-подобное дерево); при дороговизне — порог размера сравнения (сверх — дайджест всего поля)
+- [x] Task: S (`dmg-reviewer`) — ревью среза по `rules.md`; замечания error/warn исправлены [dmg-core f509cbf]
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 **Критерии:** `bun run check` dmg-core зелёный, тестов не меньше базовой линии; критерии spec 1–4 закрыты тестами (маскирование — на example-модуле пакета: UC, ER, ошибка); запись без `changes` принимается типом; `git diff package.json` — без новых зависимостей; замер стоимости сравнения — в `summary.md`.

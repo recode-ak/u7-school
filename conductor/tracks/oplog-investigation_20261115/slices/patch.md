@@ -119,3 +119,53 @@ DOM-17, DOM-11 (`F.sensitive` — в `F`), CODE-02, CODE-04 (комментар�
 - `bun run e2e` зелёный.
 
 ## Отчёты
+
+### dmg-test-designer (2026-11-15)
+
+Red-тесты: новые `src/kernel/schema/sensitive-mask.test.ts`, `src/app/oplog/field-diff.test.ts`, `src/app/oplog/record-mask.test.ts`; дописаны `aggregate.test.ts`, `unit-of-work.test.ts`, `jsonl-operation-log.test.ts`, `use-case-from-def.test.ts`, `reaction-from-def.test.ts`, `src/testing/example/app/example-app.test.ts` (ждёт `title` → `[redacted]`).
+
+Ожидаемые API:
+- `F.sensitive(schema)` — разбор и тип выхода те же.
+- `SensitiveMask(warn?)`: `apply(schema, value)`, `containsSensitive(schema)`, `isSensitive(schema, path)`; `lazy` → `'[redacted]'` целиком + `warn`.
+- `FieldDiff(stateSchema).between(baseline | undefined, current)`; порядок записей не контракт.
+- `RecordMask.of(def, warn?)`, `apply(record)` — маскирует `input`, `result.output`, `result.error.payload`.
+- `ValueDigest = { digest: true; size; hash }` (`size` — байты UTF-8 JSON), `RedactedChange = { path; redacted: true }` — из `operation-record.ts`.
+- `AggregateWrite.changes?`, `UnitOfWorkContext.warn?`, `JsonlOperationLog(dir, { maxBytes?, valueMaxBytes? })` (по умолчанию 1024).
+- `Aggregate`: публичные `baseline`, `current` (приватное `current` переименовать).
+
+Пометить в example: `TaskState.title` (`todo/task/task.state.ts`) — обязательно; `TaskEvents.created.payload.title` — для согласованности. `UserEvents.removed.payload.userId` не помечать (ломает тест ER «успех»). Для ошибок и ER тесты используют локальные Def.
+
+Не тестировалось отдельно: «у query нет `changes`» (покрыто существующим тестом «writes пустые»); проброс `warn` в `createUow` — на ревью. Место параметра `RecordMask` в `OperationRun` — на выбор автора.
+
+Прогон: 1510 pass, 17 fail, 5 errors (нет модулей/`F.sensitive`) — по делу.
+
+### dmg-domain-author (2026-11-15)
+
+Реализация по брифу, тесты не менялись. Отклонения: `RecordMask` — пятый параметр `OperationRun` (четвёртый — `output`); `user.errors.ts` не помечен (ломает тест ER «успех»; ошибки и ER покрыты локальными Def); у ER и Job нет `errors` — payload их ошибок не из `CoreErrors` скрывается целиком; payload ER с неизвестным событием — целиком. Приватное `current` агрегата → `live`, публичные `baseline`/`current`.
+
+После ревью: `SensitiveMask` — `apply`, `containsSensitive`, `isSensitive`, `branches`, `isObject`, `field`; `FieldDiff` хранит схемы-кандидаты поля (ветки `variant` по дискриминатору `baseline` и `current`, иначе все ветки; `union` — все; `object_with_rest` — `rest`); try/catch в `RecordMask.apply` (сбой — `input`/`output`/`payload` → `'[redacted]'` + `warn`).
+
+Замер (Bun 1.4.2, ~550 КБ JSON): `FieldDiff.between` 0,53–0,73 мс; дайджест 2,6 мс на значение. Порог размера сравнения не нужен.
+
+`docs:impact`: concepts/aggregate-lifecycle, caller, domain, reading-a-module, uc-path; guides/aggregate, state, use-case; reference/testing (+ документы лога — вручную, Ф3).
+
+check 1602 pass / 0 fail, e2e ok. Коммит dmg-core `f509cbf`.
+
+### dmg-reviewer (2026-11-15)
+
+| ID | файл:строка | суть | severity |
+|---|---|---|---|
+| — | field-diff.ts:37 | state-`variant`/`union` — помеченные поля в `changes` открыты | blocker → закрыто |
+| — | field-diff.ts:62, sensitive-mask.ts:89 | `object_with_rest` — `rest` не учитывается | major → закрыто |
+| CODE-04 | 12 мест | `(F-111)` в комментариях пакета | major → закрыто (D-85) |
+| — | operation-run.ts:66 | сбой `RecordMask` вне try | minor → закрыто |
+| TST-08 | use-case-from-def.test.ts:1094 | дубль record-mask | minor → удалён |
+| CODE-04 | unit-of-work.ts:150 | проза в JSDoc `changesOf` | minor → закрыто |
+| — | sensitive-mask.ts:80 | `isSensitive` не вызывается в рабочем коде (публичный API) | minor, оставлено |
+| DOM-17 | aggregate.ts:106,114 | публичные `baseline`/`current` — живые ссылки на state, читаются мимо `view()` | question → Нурболату |
+
+Кандидат в машинную проверку: DOM-17 — обращение к `.baseline`/`.current` агрегата вне `src/app/uow`.
+
+## Открытые вопросы (на контрольную точку)
+
+- DOM-17: публичные `Aggregate.baseline`/`current` (вар. A брифа) — оставить с lint-правилом «только `app/uow`» или скрыть иначе?
