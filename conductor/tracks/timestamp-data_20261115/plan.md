@@ -10,9 +10,9 @@
 
 ## Фаза 0: Базовая линия
 
-- [ ] Task: O — `bun run check` в dmg-core; `CI=true bun run check` и `CI=true bun test` в u7-school; числа (pass/fail, число тестов) — в `summary.md`
-- [ ] Task: O — счёт ISO-дат: `data/courses/*.json` (≈2370), литералы в `.ts` (≈61 файл / 160 строк) — точка сравнения для Ф5
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
+- [x] Task: O — `bun run check` в dmg-core; `CI=true bun run check` и `CI=true bun test` в u7-school; числа (pass/fail, число тестов) — в `summary.md`
+- [x] Task: O — счёт ISO-дат: `data/courses/*.json` (≈2370), литералы в `.ts` (≈61 файл / 160 строк) — точка сравнения для Ф5
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 **Критерии:** числа базовой линии обоих репо и счёт ISO — в `summary.md`.
 
