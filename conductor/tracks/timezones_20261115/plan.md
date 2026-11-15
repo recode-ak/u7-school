@@ -10,7 +10,7 @@
 
 ## Фаза 1: сервис зоны и поля зоны (ФР-1–4)
 
-- [ ] Task: O — базовая линия: `bun run check`, `CI=true bun test`; числа — в `summary.md`
+- [x] Task: O — базовая линия: `bun run check`, `CI=true bun test`; числа — в `summary.md` (3511 pass / 0 fail)
 - [ ] Task: S (`dmg-test-designer`) — red-тесты
     - [ ] `LocalZone`: `parseLocal` ↔ `formatInput`; отказ на `31.02` / `25:00` / секунды / `Z`; зона с летним временем (`Europe/Berlin`) в обоих сезонах; неизвестное имя — отказ `of`
     - [ ] `LocalZone`: время с подписью `18:00 (UTC+5)`, дата без подписи; `Etc/GMT-5` подписан как `UTC+5`
