@@ -33,7 +33,7 @@
 
 ## Фаза 2: dmg-core — срок хранения и читатель (ФТ-4, ФТ-5)
 
-- [~] Task: S (`dmg-test-designer`) — red-тесты
+- [ ] Task: S (`dmg-test-designer`) — red-тесты
     - [ ] `retainDays` (временной каталог): старше срока — удалены, свежие — нет; срабатывание при смене дня; по умолчанию не удаляет; сбой удаления не блокирует `append`
     - [ ] `OperationLogReader`: фильтры `request` (цепочка по `correlationId`: UC → ER → Job → вложенные), `aggregate` (патчи по версиям), `subject`, `module`, `op`, `failed`, `since`/`until`; комбинации; записи без `changes`; битая строка JSONL — пропуск с предупреждением; реальная запись из копии `data/fixtures/oplog/`
     - [ ] CLI `oplog`: лента, `--json`, без аргументов — код 2 и `USAGE`
