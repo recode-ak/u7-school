@@ -102,8 +102,9 @@
 ## Фаза 7: релиз и выкатка (ФР-6) — выполняет O
 
 - [x] Task: O — финальный гейт workflow: `CI=true bun test` полностью, триаж и сравнение с базовой линией — в `summary.md`
-- [ ] Task: O — релиз u7-school (CHANGELOG, версия, тег), push
-- [ ] Task: O — прод:
+- [x] Task: O — `3bd69bc` (тег v0.4.0) — релиз u7-school (CHANGELOG, версия, тег), push
+- [~] Task: O — прод:
+    - Передача (2026-11-15, claude, 3bd69bc): сделано — релиз v0.4.0 опубликован; на `kalki_server` бот `u7-school-bot` online (v0.3.5). Осталось — всё окно выкатки ниже; ssh-команды к проду отклонены автоматикой прав Claude Code (нужно разрешение Нурболата или выполнение вручную); check — зелёный
     - [ ] `git status` / `git diff <тег> -- data/courses` пусты
     - [ ] сверить `ls -R data` с картой скрипта (`DATA_FILES` + `jobs/last-runs.json`)
     - [ ] стоп бота; `bun run backup before-timestamp-data` (имя `before-*` — не пропускается ротацией), `bash scripts/backup.sh --verify data/backup/<снимок>`
