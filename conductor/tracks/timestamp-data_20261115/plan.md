@@ -48,14 +48,18 @@
 
 ## Фаза 3: `JobRunJsonRepo` числом (ФР-2)
 
-- [ ] Task: S (`dmg-test-designer`) — red-тесты `job-run-json-repo.test.ts`: `set` пишет число, `get` читает число; строка в файле — предупреждение и «нет прогона»; формат `{version:1,lastRuns:{<name>:number}}`; запуск — падают по делу
-- [ ] Task: S (`dmg-api-author`) — `lastRuns: Record<string, number>`, без `toISOString`/`Date.parse`
-- [ ] Task: S (`dmg-reviewer`) — ревью
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+> Бриф — [slices/f3-job-run-numbers.md](./slices/f3-job-run-numbers.md)
+
+- [x] Task: S (`dmg-test-designer`) — `46b6a45b` — red-тесты `job-run-json-repo.test.ts`: `set` пишет число, `get` читает число; строка в файле — предупреждение и «нет прогона»; формат `{version:1,lastRuns:{<name>:number}}`; запуск — падают по делу
+- [x] Task: S (`dmg-api-author`) — `46b6a45b` — `lastRuns: Record<string, number>`, без `toISOString`/`Date.parse`
+- [x] Task: S (`dmg-reviewer`) — `46b6a45b` — ревью
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (автопроверка: `check`) (Protocol in workflow.md)
 
 **Критерии:** `bun run check` зелёный; `grep -n "toISOString\|Date.parse" platform/app/src/infra/job-run-json-repo.ts` пуст; `platform/app/tests/u7-app.test.ts` зелёный.
 
 ## Фаза 4: скрипт миграции и контрольное чтение (ФР-3, ФР-4, ФР-7: данные)
+
+> Бриф — [slices/f4-migrate-timestamps.md](./slices/f4-migrate-timestamps.md)
 
 - [ ] Task: S (`dmg-test-designer`) — red-тесты (временной каталог, `DB_DIR`)
     - [ ] смешанный формат: число / ISO с зоной / ISO без зоны (как UTC) / мусор → `invalid`, файл не пишется

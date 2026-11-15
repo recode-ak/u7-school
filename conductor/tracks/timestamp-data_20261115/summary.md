@@ -28,3 +28,8 @@
 
 - `72edbae`: `ProjectZone` (`platform/core/src/shared/project-zone.ts`), показ старта потока и ввод в визарде — в UTC+5; C-DEBT-43 — Место `project-zone.ts`, Признак `DEFAULT_OFFSET_MINUTES`.
 - `check`: 3498 pass / 0 fail (база 3456); `arch:check` — чисто.
+
+## Фаза 3: `last-runs.json` числом
+
+- `46b6a45b`: `JobRunJsonRepo` — `Record<string, number>`, guard Timestamp, без `toISOString`/`Date.parse`.
+- `check`: 3500 pass / 0 fail.
