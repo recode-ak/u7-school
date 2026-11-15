@@ -7,3 +7,6 @@
 > Отказ или завершение трека-наследника — заготовка удаляется, запись снимается.
 
 ---
+
+- [ ] **Track: Даты только числом — миграция данных, строгий `F.timestamp`, `startDate` в UTC (timestamp-data)**
+*Link: [./tracks/timestamp-data_20261115/](./tracks/timestamp-data_20261115/)*
