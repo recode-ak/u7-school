@@ -635,6 +635,20 @@
       ]
     },
     {
+      "includes": [
+        "platform/*/src/**",
+        "domain/src/**",
+        "modules/*/src/**",
+        "authoring/*/src/**",
+        "runners/**",
+        "scripts/**",
+        "!**/*.test.ts"
+      ],
+      "plugins": [
+        "./node_modules/dmg-core/biome-plugins/dom-17-state-uow-only.grit"
+      ]
+    },
+    {
       "includes": ["domain/**/*.state.ts"],
       "plugins": [
         "./node_modules/dmg-core/biome-plugins/dom-11-base-fields.grit"

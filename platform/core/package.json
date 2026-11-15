@@ -15,6 +15,6 @@
     "./shared": "./src/shared/index.ts"
   },
   "dependencies": {
-    "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0"
+    "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1"
   }
 }

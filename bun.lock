@@ -16,7 +16,7 @@
         "@biomejs/biome": "^2.5.13",
         "@types/bun": "latest",
         "@types/markdown-it": "^14.2.0",
-        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1",
       },
     },
     "authoring/video-summarizer": {
@@ -38,7 +38,7 @@
       "name": "@u7-scl/domain",
       "version": "0.1.0",
       "dependencies": {
-        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1",
         "valibot": "^1.0.0",
       },
     },
@@ -47,7 +47,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@u7-scl/domain": "workspace:*",
-        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1",
         "valibot": "^1.0.0",
       },
     },
@@ -55,7 +55,7 @@
       "name": "@u7-scl/dossier",
       "version": "0.1.0",
       "dependencies": {
-        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1",
       },
     },
     "modules/peer-review": {
@@ -71,7 +71,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@u7-scl/domain": "workspace:*",
-        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1",
       },
     },
     "modules/stream": {
@@ -81,7 +81,7 @@
         "@u7-scl/course": "workspace:*",
         "@u7-scl/domain": "workspace:*",
         "@u7-scl/user": "workspace:*",
-        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1",
         "valibot": "^1.0.0",
       },
     },
@@ -90,7 +90,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@u7-scl/domain": "workspace:*",
-        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1",
       },
     },
     "modules/wish": {
@@ -101,7 +101,7 @@
         "@u7-scl/questionnaire": "workspace:*",
         "@u7-scl/stream": "workspace:*",
         "@u7-scl/user": "workspace:*",
-        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1",
       },
     },
     "platform/app": {
@@ -117,14 +117,14 @@
         "@u7-scl/stream": "workspace:*",
         "@u7-scl/user": "workspace:*",
         "@u7-scl/wish": "workspace:*",
-        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1",
       },
     },
     "platform/core": {
       "name": "@u7-scl/core",
       "version": "0.1.0",
       "dependencies": {
-        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1",
       },
     },
     "runners/u7-bot": {
@@ -141,7 +141,7 @@
         "@u7-scl/stream": "workspace:*",
         "@u7-scl/user": "workspace:*",
         "@u7-scl/wish": "workspace:*",
-        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0",
+        "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1",
         "elysia": "^1.4.27",
         "grammy": "^1.41.1",
         "valibot": "^1.2.0",
@@ -329,7 +329,7 @@
 
     "devlop": ["devlop@1.1.0", "", { "dependencies": { "dequal": "^2.0.0" } }, "sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA=="],
 
-    "dmg-core": ["dmg-core@git+ssh://git@github.com/recode-ak/dmg-core.git#962046a5b2daf4f8e90b9a61f36904577dea28fe", { "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }, "962046a5b2daf4f8e90b9a61f36904577dea28fe"],
+    "dmg-core": ["dmg-core@git+ssh://git@github.com/recode-ak/dmg-core.git#a785e66a4c571f2aed469cf2681180c972c872b3", { "peerDependencies": { "@valibot/to-json-schema": "^1.7.1", "valibot": "^1.5.0" }, "bin": { "dmg-core": "src/cli/main.ts" } }, "a785e66a4c571f2aed469cf2681180c972c872b3"],
 
     "dom-serializer": ["dom-serializer@2.0.0", "", { "dependencies": { "domelementtype": "^2.3.0", "domhandler": "^5.0.2", "entities": "^4.2.0" } }, "sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg=="],
 

@@ -16,7 +16,7 @@
     "@u7-scl/course": "workspace:*",
     "valibot": "^1.0.0",
     "@u7-scl/domain": "workspace:*",
-    "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.0"
+    "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1"
   },
   "exports": {
     ".": "./src/index.ts"
