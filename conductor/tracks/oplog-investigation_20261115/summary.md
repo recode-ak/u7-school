@@ -15,3 +15,7 @@
 
 dmg-core `f509cbf`: `bun run check` — 1602 pass, 0 fail, 140 файлов; e2e ok; `package.json` без изменений.
 Замер `FieldDiff.between` на дереве ~550 КБ JSON: 0,53–0,73 мс; дайджест крупного значения — 2,6 мс. Порог размера сравнения не вводился.
+
+## Ф2 (2026-11-15)
+
+dmg-core `c456e8d`: check — 1640 pass, 0 fail; e2e ok. `dmg-core oplog <dir> --request <id>` на фикстуре legacy — цепочка из 5 записей по `at`.

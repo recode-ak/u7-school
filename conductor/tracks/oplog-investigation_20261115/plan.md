@@ -33,13 +33,13 @@
 
 ## Фаза 2: dmg-core — срок хранения и читатель (ФТ-4, ФТ-5)
 
-- [ ] Task: S (`dmg-test-designer`) — red-тесты
-    - [ ] `retainDays` (временной каталог): старше срока — удалены, свежие — нет; срабатывание при смене дня; по умолчанию не удаляет; сбой удаления не блокирует `append`
-    - [ ] `OperationLogReader`: фильтры `request` (цепочка по `correlationId`: UC → ER → Job → вложенные), `aggregate` (патчи по версиям), `subject`, `module`, `op`, `failed`, `since`/`until`; комбинации; записи без `changes`; битая строка JSONL — пропуск с предупреждением; реальная запись из копии `data/fixtures/oplog/`
-    - [ ] CLI `oplog`: лента, `--json`, без аргументов — код 2 и `USAGE`
-    - [ ] Запуск — падают по делу
-- [ ] Task: S (`dmg-api-author`) — реализация (green): `retainDays`; `OperationLogReader` и форматтер ленты в `src/app/oplog/`; ветка `oplog` в `src/cli/main.ts` до `PackageSource.load`, `USAGE`; проверить правила слоёв `ArchChecker` (`cli` → `app/oplog`)
-- [ ] Task: S (`dmg-reviewer`) — ревью среза; замечания error/warn исправлены
+- [x] Task: S (`dmg-test-designer`) — red-тесты
+    - [x] `retainDays` (временной каталог): старше срока — удалены, свежие — нет; срабатывание при смене дня; по умолчанию не удаляет; сбой удаления не блокирует `append`
+    - [x] `OperationLogReader`: фильтры `request` (цепочка по `correlationId`: UC → ER → Job → вложенные), `aggregate` (патчи по версиям), `subject`, `module`, `op`, `failed`, `since`/`until`; комбинации; записи без `changes`; битая строка JSONL — пропуск с предупреждением; реальная запись из копии `data/fixtures/oplog/`
+    - [x] CLI `oplog`: лента, `--json`, без аргументов — код 2 и `USAGE`
+    - [x] Запуск — падают по делу
+- [x] Task: S (`dmg-api-author`) — реализация (green) [dmg-core c456e8d]: `retainDays`; `OperationLogReader` и форматтер ленты в `src/app/oplog/`; ветка `oplog` в `src/cli/main.ts` до `PackageSource.load`, `USAGE`; проверить правила слоёв `ArchChecker` (`cli` → `app/oplog`)
+- [x] Task: S (`dmg-reviewer`) — ревью среза; замечания error/warn исправлены [dmg-core c456e8d]
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 **Критерии:** `bun run check` зелёный, тестов не меньше; `bun src/cli/main.ts oplog <dir> --request <id>` печатает цепочку по `at`, `--aggregate <uuid>` — патчи по версиям (критерии spec 5, 6).
