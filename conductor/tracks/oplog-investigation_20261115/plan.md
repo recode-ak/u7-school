@@ -54,8 +54,8 @@
 
 ## Фаза 4: u7-school — разметка и подключение (ФТ-6, критерии 7, 8)
 
-- [ ] Task: S (`dmg-data-keeper`) — аудит ПД: VO `student` (`abandonDetails`, `completionDetails`, `notices`), `ownerInfo` анкеты; схемы входа и выхода UC, payload событий и ошибок, собранные не из помеченных state/VO (вход регистрации пользователя и др.) — итоговый список мест для `F.sensitive`; совместимость: чтение старых файлов `data/oplog/` новым читателем. Живые `data/` не трогать
-- [ ] Task: S (`dmg-test-designer`) — red-тесты: пометки покрывают список аудита; прогон операций на фикстурах — в строках лога нет имён и Telegram ID; `u7-app` — `retainDays: 90`; `bun run oplog` на `DB_DIR=./data/fixtures`; проверить точные `toEqual` по записи лога в `u7-app*.test.ts` и UC-тестах `writes`
+- [x] Task: S (`dmg-data-keeper`) — аудит ПД: VO `student` (`abandonDetails`, `completionDetails`, `notices`), `ownerInfo` анкеты; схемы входа и выхода UC, payload событий и ошибок, собранные не из помеченных state/VO (вход регистрации пользователя и др.) — итоговый список мест для `F.sensitive`; совместимость: чтение старых файлов `data/oplog/` новым читателем. Живые `data/` не трогать
+- [~] Task: S (`dmg-test-designer`) — red-тесты: пометки покрывают список аудита; прогон операций на фикстурах — в строках лога нет имён и Telegram ID; `u7-app` — `retainDays: 90`; `bun run oplog` на `DB_DIR=./data/fixtures`; проверить точные `toEqual` по записи лога в `u7-app*.test.ts` и UC-тестах `writes`
     - [ ] Запуск — падают по делу
 - [ ] Task: S (`dmg-domain-author`) — обновить тег `dmg-core` (`package.json`, `bun.lock`); `F.sensitive` в state/VO user, questionnaire, review, stream, student и в схемах операций по аудиту; `retainDays: 90` в `platform/app/src/u7-app.ts`; `scripts/oplog.ts` + `"oplog"` в `package.json` (по `DB_DIR/oplog`)
 - [ ] Task: O — документы: `docs/backup.md` (oplog вне бэкапа, срок 90 дней, чтение; предупреждение — удаление при смене дня), раздел данных `AGENTS.md`, `conductor/architecture/index.md`; удалить заготовку `roadmap/oplog-state-patch.md`, снять кандидата F-111 в `tracks.md`
