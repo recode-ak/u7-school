@@ -17,7 +17,7 @@ beforeAll(async () => {
     name: 'Nur',
     telegramId: 1,
     roles: ['ADMIN', 'MENTOR'],
-    createdAt: '2026-06-25T12:00',
+    createdAt: Date.UTC(2026, 5, 25, 12),
   });
   await Bun.write(usersFile, JSON.stringify(users));
 });

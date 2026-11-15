@@ -8,8 +8,8 @@ import { CourseJsonRepo } from './course.json-repo';
 // `infra/db/course-json-repo.test.ts` (12: save/getByUuid, не найден,
 // перезапись, getAll, фильтры status/authorId/title/combined, sort title asc,
 // createdAt desc, limit, нет файла) + контракт нового формата: строгое чтение
-// (старый формат `phases[].moduleIds` — ошибка, файл цел), даты ISO / ISO без
-// секунд / число, нарушения инвариантов программы — ошибка чтения. Каталог —
+// (старый формат `phases[].moduleIds` — ошибка, файл цел), даты числом (ISO
+// отвергается), нарушения инвариантов программы — ошибка чтения. Каталог —
 // Временный каталог: данные проекта не читаются и не пишутся.
 
 let tmpDir: TempDir;
@@ -120,7 +120,7 @@ describe('CourseJsonRepo — save и findById', () => {
   });
 });
 
-describe('CourseJsonRepo — записи прежнего вида: даты', () => {
+describe('CourseJsonRepo — даты записи', () => {
   const record = (uuid: string, extra: Record<string, unknown> = {}) => ({
     uuid,
     title: 'Fullstack JS',
@@ -129,11 +129,11 @@ describe('CourseJsonRepo — записи прежнего вида: даты', 
     moduleIds: [M1, M2],
     phases: [{ title: 'Основы JS', track: 'tech', fromModuleId: M1 }],
     status: 'published',
-    createdAt: '2026-07-08T18:35',
+    createdAt: T0,
     ...extra,
   });
 
-  test('ISO без секунд → число (UTC), updatedAt = createdAt, version = 0', async () => {
+  test('нет updatedAt и version → updatedAt = createdAt, version = 0', async () => {
     const id = crypto.randomUUID();
     const repo = await repoWith('courses-legacy-dates.json', [record(id)]);
 
@@ -144,29 +144,6 @@ describe('CourseJsonRepo — записи прежнего вида: даты', 
       version: 0,
       status: 'published',
     });
-  });
-
-  test('боевые даты курса: createdAt и updatedAt без секунд', async () => {
-    const id = crypto.randomUUID();
-    const repo = await repoWith('courses-live-dates.json', [
-      record(id, { updatedAt: '2026-10-16T17:00' }),
-    ]);
-
-    expect((await repo.findById(id))?.snapshot()).toMatchObject({
-      createdAt: Date.UTC(2026, 6, 8, 18, 35),
-      updatedAt: Date.UTC(2026, 9, 16, 17, 0),
-    });
-  });
-
-  test('ISO с секундами и зоной читается', async () => {
-    const id = crypto.randomUUID();
-    const repo = await repoWith('courses-iso-seconds.json', [
-      record(id, { createdAt: '2026-07-08T18:35:20Z' }),
-    ]);
-
-    expect((await repo.findById(id))?.snapshot().createdAt).toBe(
-      Date.UTC(2026, 6, 8, 18, 35, 20),
-    );
   });
 
   test('запись с числовыми датами и version читается как есть', async () => {
@@ -182,7 +159,7 @@ describe('CourseJsonRepo — записи прежнего вида: даты', 
     });
   });
 
-  test('запись с датами-строками после save становится числовой, соседние целы', async () => {
+  test('запись без version после save получает version 0, соседние целы', async () => {
     const id = crypto.randomUUID();
     const neighbour = crypto.randomUUID();
     const path = filePath('courses-legacy-save.json');
@@ -212,7 +189,7 @@ describe('CourseJsonRepo — строгий формат: старая запи�
     authorId: AUTHOR,
     phases: [{ title: 'Основы JS', track: 'tech', moduleIds: [M1, M2] }],
     status: 'published',
-    createdAt: '2026-07-08T18:35',
+    createdAt: T0,
   });
 
   test('phases[].moduleIds без moduleIds курса — ValiError на чтении и записи', async () => {

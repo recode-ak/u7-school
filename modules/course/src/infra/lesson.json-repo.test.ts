@@ -6,7 +6,7 @@ import { LessonJsonRepo } from './lesson.json-repo';
 
 // Репозиторий уроков (`<dbDir>/courses/lessons.json`, D-36). Перенос
 // `infra/db/lesson-json-repo.test.ts` (save/getByUuid, getByIds) + контракт
-// новой записи: legacy-запись (ISO без секунд → число, version 0, нет
+// новой записи: запись без version (version 0, нет
 // `updatedAt` → `createdAt`), round-trip, битая запись — исключение, файл цел.
 // Каталог — временный: новый репозиторий пишет даты
 // числами и до Ф5 не должен писать в `data/` (Т11).
@@ -169,7 +169,7 @@ describe('LessonJsonRepo — findByIds', () => {
   });
 });
 
-describe('LessonJsonRepo — legacy-записи', () => {
+describe('LessonJsonRepo — записи без version', () => {
   const legacy = (uuid: string, extra: Record<string, unknown> = {}) => ({
     uuid,
     moduleId: MODULE,
@@ -179,12 +179,12 @@ describe('LessonJsonRepo — legacy-записи', () => {
     estimatedMinutes: 15,
     stepIds: [STEP],
     mentorStepIds: [],
-    createdAt: '2026-07-08T18:35',
-    updatedAt: '2026-07-08T18:35',
+    createdAt: T0,
+    updatedAt: T0,
     ...extra,
   });
 
-  test('ISO без секунд → число (UTC), version = 0', async () => {
+  test('нет version → version = 0', async () => {
     const id = crypto.randomUUID();
     const repo = await repoWith('lessons-legacy.json', [legacy(id)]);
 
@@ -223,7 +223,7 @@ describe('LessonJsonRepo — legacy-записи', () => {
     });
   });
 
-  test('legacy-запись после save становится числовой, соседние целы', async () => {
+  test('запись без version после save получает version 0, соседние целы', async () => {
     const id = crypto.randomUUID();
     const neighbour = crypto.randomUUID();
     const path = filePath('lessons-legacy-save.json');

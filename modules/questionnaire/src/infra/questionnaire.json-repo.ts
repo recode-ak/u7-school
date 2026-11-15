@@ -15,8 +15,7 @@ const Rows = v.array(QuestionnaireArDef.state);
 
 /**
  * Анкеты в JSON-файле: массив снапшотов. Только хранение — запись разбирает
- * `QuestionnaireArDef.state` (он же переводит ISO-даты legacy в числа и
- * дописывает `updatedAt`/`version`, D-36), агрегат восстанавливает
+ * `QuestionnaireArDef.state` (он же дописывает `updatedAt`/`version`, D-36), агрегат восстанавливает
  * `QuestionnaireAr.restore`. Битая запись — исключение, файл не
  * перезаписывается. Первая запись переписывает весь файл в новом формате.
  */

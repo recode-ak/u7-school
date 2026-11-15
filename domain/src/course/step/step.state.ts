@@ -75,7 +75,7 @@ export const StepFileState = v.object({
 
 /**
  * Entity шага — единственное место структуры состояния: вид выбирает ветку
- * `variant`. Legacy-записи читаются: ISO-даты → число (UTC), нет `updatedAt` →
+ * `variant`. Записи без полей читаются: нет `updatedAt` →
  * `createdAt`, нет `version` → 0 (D-36).
  */
 export const StepState = v.variant('kind', [

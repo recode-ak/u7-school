@@ -64,6 +64,28 @@ describe('DataDirAudit', () => {
     expect(report.issues[0]?.message.length).toBeGreaterThan(0);
   });
 
+  test('ISO-строка в дате — ошибка записи: ловит остатки до миграции дат', async () => {
+    copyFixtures();
+    const path = tmp.file('users/users.json');
+    const users = JSON.parse(readFileSync(path, 'utf8')) as Array<
+      Record<string, unknown>
+    >;
+    const stale = users[0];
+    if (!stale) throw new Error('в фикстуре нет пользователей');
+    stale.createdAt = '2026-06-25T12:00';
+    writeFileSync(path, JSON.stringify(users));
+
+    const report = await new DataDirAudit(tmp.path).run();
+
+    expect(report.ok).toBe(false);
+    expect(report.issues).toHaveLength(1);
+    expect(report.issues[0]).toMatchObject({
+      file: 'users/users.json',
+      index: 0,
+      uuid: stale.uuid,
+    });
+  });
+
   test('отсутствующий файл — missing, не ошибка', async () => {
     const report = await new DataDirAudit(tmp.path).run();
 

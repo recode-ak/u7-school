@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@u7-scl/domain": "workspace:*",
-    "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1"
+    "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.2"
   },
   "exports": {
     ".": "./src/index.ts"

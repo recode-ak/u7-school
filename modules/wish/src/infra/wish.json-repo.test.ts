@@ -158,8 +158,8 @@ describe('WishJsonRepo', () => {
     });
   });
 
-  describe('legacy-записи', () => {
-    test('читает запись с ISO без зоны, без updatedAt и version', async () => {
+  describe('записи без updatedAt и version', () => {
+    test('читает запись без updatedAt и version: updatedAt = createdAt, version 0', async () => {
       const uuid = crypto.randomUUID();
       const repo = await repoWith('wishes-legacy.json', [
         {
@@ -167,7 +167,7 @@ describe('WishJsonRepo', () => {
           userId: crypto.randomUUID(),
           target: makeTarget(),
           status: 'expressed',
-          createdAt: '2026-05-01T12:00',
+          createdAt: Date.UTC(2026, 4, 1, 12),
         },
       ]);
 
@@ -178,7 +178,7 @@ describe('WishJsonRepo', () => {
       expect(found?.version).toBe(0);
     });
 
-    test('legacy-запись читается после save другой записи', async () => {
+    test('запись без updatedAt и version читается после save другой записи', async () => {
       const uuid = crypto.randomUUID();
       const target = makeTarget();
       const repo = await repoWith('wishes-legacy-save.json', [
@@ -187,7 +187,7 @@ describe('WishJsonRepo', () => {
           userId: crypto.randomUUID(),
           target,
           status: 'expressed',
-          createdAt: '2026-05-01T12:00',
+          createdAt: Date.UTC(2026, 4, 1, 12),
         },
       ]);
       const other = makeWish();

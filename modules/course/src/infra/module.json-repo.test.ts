@@ -6,8 +6,8 @@ import { ModuleJsonRepo } from './module.json-repo';
 
 // Репозиторий модулей (`<dbDir>/courses/modules.json`, D-36). Перенос
 // `infra/db/module-json-repo.test.ts` (save/getByUuid, не найден, getAll,
-// фильтр status, перезапись) + контракт новой записи: legacy-запись
-// (ISO без секунд → число, version 0, updatedAt = createdAt), round-trip,
+// фильтр status, перезапись) + контракт новой записи: запись без version
+// (version 0, updatedAt = createdAt), round-trip,
 // битая запись — исключение, файл цел.
 // Каталог — временный: новый репозиторий пишет даты числами и до Ф5 не
 // должен писать в `data/` (Т11).
@@ -119,7 +119,7 @@ describe('ModuleJsonRepo — save и findById', () => {
   });
 });
 
-describe('ModuleJsonRepo — legacy-записи', () => {
+describe('ModuleJsonRepo — записи без version', () => {
   const legacy = (uuid: string, extra: Record<string, unknown> = {}) => ({
     uuid,
     title: 'Модуль',
@@ -138,12 +138,12 @@ describe('ModuleJsonRepo — legacy-записи', () => {
         lessonIds: [LESSON],
       },
     ],
-    createdAt: '2026-07-08T18:35',
-    updatedAt: '2026-07-08T18:35',
+    createdAt: T0,
+    updatedAt: T0,
     ...extra,
   });
 
-  test('ISO без секунд → число (UTC), version = 0', async () => {
+  test('нет version → version = 0', async () => {
     const id = crypto.randomUUID();
     const repo = await repoWith('modules-legacy.json', [legacy(id)]);
 
@@ -181,7 +181,7 @@ describe('ModuleJsonRepo — legacy-записи', () => {
     });
   });
 
-  test('legacy-запись после save становится числовой, соседние целы', async () => {
+  test('запись без version после save получает version 0, соседние целы', async () => {
     const id = crypto.randomUUID();
     const neighbour = crypto.randomUUID();
     const path = filePath('modules-legacy-save.json');

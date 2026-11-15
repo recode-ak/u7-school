@@ -16,8 +16,7 @@ const Rows = v.array(ReviewArDef.state);
 
 /**
  * Отзывы в JSON-файле: массив снапшотов. Только хранение — запись разбирает
- * `ReviewArDef.state` (он же переводит legacy-даты ISO в число UTC и
- * дописывает `updatedAt`/`version`, D-36), агрегат восстанавливает
+ * `ReviewArDef.state` (он же дописывает `updatedAt`/`version`, D-36), агрегат восстанавливает
  * `ReviewAr.restore`. Битая запись — исключение, файл не читается и
  * не перезаписывается. Запись — под замком.
  *

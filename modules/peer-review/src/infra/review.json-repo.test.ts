@@ -15,7 +15,7 @@ import {
 import { ReviewJsonRepo } from './review.json-repo';
 
 // Перенос `infra/db/review-json-repo.test.ts` (8) на VersionedRepository
-// + legacy-записи, строгий разбор, фильтр ReviewFilter.
+// + записи без updatedAt и version, строгий разбор, фильтр ReviewFilter.
 // Только временный каталог и чтение фикстуры `data/fixtures` (запись — никогда).
 
 const tmpDir = TempDir.create('review-json-repo-');
@@ -203,8 +203,8 @@ describe('ReviewJsonRepo: findByScopes и фильтр', () => {
   });
 });
 
-describe('ReviewJsonRepo: legacy-записи', () => {
-  test('ISO без зоны → число UTC, updatedAt = createdAt, version = 0', async () => {
+describe('ReviewJsonRepo: записи без updatedAt и version', () => {
+  test('updatedAt = createdAt, version = 0', async () => {
     const row = legacyReview();
     const repo = await repoWith('legacy.json', [row]);
     const state = (await repo.findById(row.uuid))?.snapshot();

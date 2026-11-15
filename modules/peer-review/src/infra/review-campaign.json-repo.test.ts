@@ -11,7 +11,7 @@ import { campaign, IDS, T0 } from '../review-campaign/review-campaign.fixture';
 import { ReviewCampaignJsonRepo } from './review-campaign.json-repo';
 
 // Перенос legacy `infra/db/review-campaign-json-repo.test.ts` на VersionedRepository
-// + блок «legacy-записи» (образец — wish.json-repo.test.ts). Только временный каталог
+// + блок «записи без updatedAt и version» (образец — wish.json-repo.test.ts). Только временный каталог
 // и чтение фикстуры `data/fixtures` (запись — никогда).
 
 const tmpDir = TempDir.create('review-campaign-json-repo-');
@@ -46,20 +46,20 @@ function make(
   );
 }
 
-/** Записи «как есть» (в т.ч. legacy-формат) — и репозиторий над ними. */
+/** Записи «как есть» (в т.ч. без updatedAt и version) — и репозиторий над ними. */
 async function repoWith(name: string, rows: unknown[]) {
   await Bun.write(path(name), JSON.stringify(rows));
   return new ReviewCampaignJsonRepo(path(name));
 }
 
-/** Legacy-запись релиза: ISO без зоны, без updatedAt и version. */
+/** Запись без updatedAt и version (даты числом). */
 const legacyRow = (over: Record<string, unknown> = {}) => ({
   uuid: crypto.randomUUID(),
   context: 'stream_fate',
   scopeId: IDS.scope,
   subjectId: IDS.alice,
-  createdAt: '2026-09-20T10:00',
-  expiresAt: '2026-09-27T10:00',
+  createdAt: Date.UTC(2026, 8, 20, 10),
+  expiresAt: Date.UTC(2026, 8, 27, 10),
   participants: [IDS.bob],
   payload: { subjectOutcome: 'completed_passed', mentorId: IDS.mentor },
   ...over,
@@ -161,8 +161,8 @@ describe('ReviewCampaignJsonRepo: save и поиск', () => {
   });
 });
 
-describe('ReviewCampaignJsonRepo: legacy-записи', () => {
-  test('ISO без зоны → число UTC, updatedAt = createdAt, version = 0', async () => {
+describe('ReviewCampaignJsonRepo: записи без updatedAt и version', () => {
+  test('updatedAt = createdAt, version = 0', async () => {
     const row = legacyRow();
     const repo = await repoWith('legacy.json', [row]);
 
@@ -174,7 +174,7 @@ describe('ReviewCampaignJsonRepo: legacy-записи', () => {
     expect(state?.version).toBe(0);
   });
 
-  test('повторный save legacy-записи без изменений остаётся допустимым и сохраняет version 0', async () => {
+  test('повторный save записи без updatedAt и version без изменений остаётся допустимым и сохраняет version 0', async () => {
     const row = legacyRow();
     const repo = await repoWith('legacy-resave.json', [row]);
     const loaded = await repo.findById(row.uuid);
@@ -235,7 +235,7 @@ describe('ReviewCampaignJsonRepo: фикстуры data/fixtures (чтение)'
     await Bun.write(path('fixture-copy.json'), await Bun.file(fixture).text());
   });
 
-  test('все записи фикстуры читаются новой схемой (legacy ISO), version 0, updatedAt = createdAt', async () => {
+  test('все записи фикстуры читаются новой схемой, version 0, updatedAt = createdAt', async () => {
     const repo = new ReviewCampaignJsonRepo(path('fixture-copy.json'));
     expect(rows.length).toBeGreaterThan(0);
     for (const row of rows) {

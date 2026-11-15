@@ -11,15 +11,15 @@ const UUIDS = {
   user2: '44444444-4444-4444-8444-444444444444',
 };
 
-/** Legacy-запись как в `campaigns.json` релиза: ISO без зоны, без `updatedAt` и `version`. */
+/** Запись как в `campaigns.json`: даты числом, без `updatedAt` и `version`. */
 function legacy(overrides: Record<string, unknown> = {}) {
   return {
     uuid: UUIDS.campaign,
     context: 'stream_fate',
     scopeId: UUIDS.scope,
     subjectId: UUIDS.subject,
-    createdAt: '2026-09-20T10:00',
-    expiresAt: '2026-09-27T10:00',
+    createdAt: Date.UTC(2026, 8, 20, 10),
+    expiresAt: Date.UTC(2026, 8, 27, 10),
     participants: [UUIDS.user1, UUIDS.user2],
     payload: { subjectOutcome: 'completed_passed', mentorId: UUIDS.mentor },
     ...overrides,
@@ -44,6 +44,16 @@ describe('ReviewCampaignState — форма (ФР-1, ФР-3)', () => {
       ],
       ['прочий контекст exit', legacy({ context: 'exit' }), false],
       ['не uuid в participants', legacy({ participants: ['x'] }), false],
+      [
+        'ISO-строка в createdAt',
+        legacy({ createdAt: '2026-09-20T10:00' }),
+        false,
+      ],
+      [
+        'ISO-строка в expiresAt',
+        legacy({ expiresAt: '2026-09-27T10:00' }),
+        false,
+      ],
       [
         'списочная форма participants со статусами',
         legacy({ participants: [{ userId: UUIDS.user1, role: 'student' }] }),

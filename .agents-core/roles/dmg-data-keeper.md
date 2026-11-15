@@ -6,7 +6,7 @@ model:
   claude: sonnet
 ---
 
-<!-- dmg-core@0.3.1: сгенерировано `dmg-core sync` — не править -->
+<!-- dmg-core@0.3.2: сгенерировано `dmg-core sync` — не править -->
 
 # Роль: dmg-data-keeper
 

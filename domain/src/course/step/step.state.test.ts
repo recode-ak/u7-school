@@ -4,7 +4,7 @@ import { StepArDef } from './step.ar';
 import { FILE_ID, MODULE, STEP, T0 } from './step.fixture';
 
 // Перенос `entity.test.ts` (StepSchema, 10) на state по Def (D-36): даты —
-// числа (UTC), legacy-запись с ISO читается; variant по `kind`. `FileVo` —
+// числа (UTC), ISO отвергается (D-16); variant по `kind`. `FileVo` —
 // локальная копия `FileMetadataSchema` (Т10).
 
 const base = {
@@ -12,7 +12,7 @@ const base = {
   moduleId: MODULE,
   description: 'Описание шага',
   status: 'draft',
-  createdAt: '2026-07-08T18:35',
+  createdAt: T0,
 };
 
 const validFile = {
@@ -26,8 +26,8 @@ const validFile = {
 // Фолбэк `updatedAt = createdAt` и `version = 0` — только в `StepArDef.state` (D-36).
 const parse = (value: unknown) => v.safeParse(StepArDef.state, value);
 
-describe('StepState — legacy-запись (D-36)', () => {
-  it('ISO без секунд (UTC) → число, updatedAt = createdAt, version = 0', () => {
+describe('StepState — даты и фолбэки (D-36)', () => {
+  it('нет updatedAt и version → updatedAt = createdAt, version = 0', () => {
     const res = parse({ ...base, kind: 'text' });
     expect(res.success).toBe(true);
     expect(res.output).toMatchObject({
@@ -37,11 +37,14 @@ describe('StepState — legacy-запись (D-36)', () => {
     });
   });
 
-  it('legacy updatedAt (ISO без секунд) сохраняется числом', () => {
-    const res = parse({ ...base, kind: 'text', updatedAt: '2026-07-09T08:30' });
-    expect(res.output).toMatchObject({
-      updatedAt: Date.UTC(2026, 6, 9, 8, 30),
-    });
+  it('ISO-строка в дате отвергается', () => {
+    const iso = '2026-07-08T18:35';
+    expect(parse({ ...base, kind: 'text', createdAt: iso }).success).toBe(
+      false,
+    );
+    expect(parse({ ...base, kind: 'text', updatedAt: iso }).success).toBe(
+      false,
+    );
   });
 
   it('запись нового формата (числа, version) проходит как есть', () => {
@@ -62,7 +65,7 @@ describe('StepState — legacy-запись (D-36)', () => {
   });
 
   it.each(['text', 'code', 'file'] as const)(
-    'ISO читается и у шага kind=%s',
+    'нет updatedAt и version → дефолты у шага kind=%s',
     (kind) => {
       const extra =
         kind === 'code'

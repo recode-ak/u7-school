@@ -61,8 +61,7 @@ export const StudentNoticeVo = v.pipe(
 
 /**
  * Entity студента (записи на потоке) — единственное место структуры
- * состояния. Legacy-записи читаются: ISO-даты (в том числе `YYYY-MM-DDTHH:mm`)
- * → число (UTC), нет `updatedAt` → `createdAt`, нет `version` → 0 (D-36).
+ * состояния. Записи без полей читаются: нет `updatedAt` → `createdAt`, нет `version` → 0 (D-36).
  */
 export const StudentState = v.object({
   ...BaseEntityFields,

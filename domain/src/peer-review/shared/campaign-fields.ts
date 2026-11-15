@@ -32,8 +32,7 @@ export type CampaignAuthorRole = v.InferOutput<typeof CampaignAuthorRoleSchema>;
 
 /**
  * Момент времени на выходе (UC, payload ошибок): строго число — мс от эпохи,
- * UTC. `F.timestamp` принимает и ISO-строки (чтение legacy-записей), на
- * выходе это не нужно.
+ * UTC. Для чтения записей — `F.timestamp`.
  */
 export const epochMsField = (label: string) =>
   v.pipe(v.number(), v.integer(), v.description(`Время ${label} (мс, UTC)`));

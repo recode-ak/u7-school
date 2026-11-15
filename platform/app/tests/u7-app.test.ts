@@ -314,7 +314,7 @@ const snapshot: ContentSnapshot = [
   },
 ];
 
-/** Опубликованный модуль и урок в legacy-формате — снимок для `createStream`. */
+/** Опубликованный модуль и урок — снимок для `createStream`. */
 const legacyModule = {
   uuid: MODULE,
   title: 'Основы JS',
@@ -329,25 +329,25 @@ const legacyModule = {
       lessonIds: [snapshot[0]?.lessons[0]?.lessonId],
     },
   ],
-  createdAt: '2026-06-01T10:00',
+  createdAt: Date.UTC(2026, 5, 1, 10),
 };
 const legacyLesson = {
   uuid: snapshot[0]?.lessons[0]?.lessonId,
   moduleId: MODULE,
   title: 'Урок 1',
   status: 'published',
-  createdAt: '2026-06-01T10:00',
+  createdAt: Date.UTC(2026, 5, 1, 10),
   stepIds: [STEP],
   mentorStepIds: [],
 };
 
-/** Желание в анкетной ветке (pending) — legacy-запись wishes.json. */
+/** Желание в анкетной ветке (pending) — запись wishes.json. */
 const pendingWish = (uuid: string, userId: string) => ({
   uuid,
   userId,
   target: { kind: 'course', courseId: COURSE },
   status: 'pending',
-  createdAt: '2026-03-01T10:00',
+  createdAt: Date.UTC(2026, 2, 1, 10),
 });
 
 /** Вызов владельца анкеты (`system`) — как `createCourseWish` в модуле `wish`. */
@@ -393,10 +393,10 @@ const legacyStep = {
   description: 'Шаг 1',
   content: 'Текст шага',
   status: 'published',
-  createdAt: '2026-06-01T10:00',
+  createdAt: Date.UTC(2026, 5, 1, 10),
 };
 
-/** Курс из legacy-файлов — источник снимка для `createStream`. */
+/** Курс из файлов — источник снимка для `createStream`. */
 async function seedCourse(dbDir: string): Promise<void> {
   await mkdir(join(dbDir, 'courses'), { recursive: true });
   await Bun.write(

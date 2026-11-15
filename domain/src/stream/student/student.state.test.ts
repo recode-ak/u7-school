@@ -3,32 +3,33 @@ import * as v from 'valibot';
 import { StudentArDef } from './student.ar';
 import { STEP_1, STREAM, STUDENT, USER } from './student.fixture';
 
-const legacy = {
+const T = Date.UTC(2026, 5, 1, 10);
+
+const record = {
   uuid: STUDENT,
   streamId: STREAM,
   userId: USER,
-  enrolledAt: '2026-06-01T10:00',
+  enrolledAt: T,
   status: 'active',
   currentStepId: STEP_1,
   steps: [
     {
       stepId: STEP_1,
       status: 'completed',
-      issuedAt: '2026-06-01T10:00',
-      completedAt: '2026-06-01T10:30:00.000Z',
+      issuedAt: T,
+      completedAt: T + 30 * 60_000,
     },
   ],
-  createdAt: '2026-06-01T10:00',
+  createdAt: T,
 };
 
 const parse = (value: unknown) => v.safeParse(StudentArDef.state, value);
 
-describe('StudentState — legacy-запись', () => {
-  it('legacy updatedAt (ISO с зоной) сохраняется числом', () => {
-    const res = parse({ ...legacy, updatedAt: '2026-06-02T08:30:00.000Z' });
-    expect(res.success && res.output.updatedAt).toBe(
-      Date.UTC(2026, 5, 2, 8, 30),
-    );
+describe('StudentState — даты', () => {
+  it('ISO-строка в дате отвергается', () => {
+    const iso = '2026-06-02T08:30:00.000Z';
+    expect(parse({ ...record, updatedAt: iso }).success).toBe(false);
+    expect(parse({ ...record, enrolledAt: iso }).success).toBe(false);
   });
 });
 
@@ -73,6 +74,6 @@ describe('StudentState — разбор записи', () => {
       patch: { enrolledAt: 'вчера' },
     },
   ])('$title', ({ patch, valid = false }) => {
-    expect(parse({ ...legacy, ...patch }).success).toBe(valid);
+    expect(parse({ ...record, ...patch }).success).toBe(valid);
   });
 });

@@ -8,7 +8,7 @@ import { QuestionnaireJsonRepo } from './questionnaire.json-repo';
 
 // Репозиторий анкет (`<dbDir>/questionnaires/questionnaires.json`). Перенос
 // `infra/db/questionnaire-json-repo.test.ts` и `questionnaire-repo-idle.test.ts`
-// (`getIdle` → `findIdle`) + контракт новой записи: legacy ISO → число, нет
+// (`getIdle` → `findIdle`) + контракт новой записи: нет
 // `updatedAt` → `createdAt`, нет `version` → 0, round-trip обеих веток `kind`,
 // невалидная запись — исключение, файл цел. `getActive` не переносится (Т18).
 // Каталог — временный, живые данные не читаются.
@@ -81,7 +81,7 @@ async function repoWith(name: string, rows: unknown[]) {
   return { repo: new QuestionnaireJsonRepo(path), path };
 }
 
-const legacy = (uuid: string, extra: Record<string, unknown> = {}) => ({
+const record = (uuid: string, extra: Record<string, unknown> = {}) => ({
   kind: 'standard',
   uuid,
   respondentId: USER,
@@ -89,11 +89,15 @@ const legacy = (uuid: string, extra: Record<string, unknown> = {}) => ({
   currentQuestionCode: 'q1',
   draftAnswers: {},
   answers: [
-    { questionCode: 'q0', answerCode: 'a', answeredAt: '2026-06-01T10:30' },
+    {
+      questionCode: 'q0',
+      answerCode: 'a',
+      answeredAt: Date.UTC(2026, 5, 1, 10, 30),
+    },
   ],
   questionPool: standardPool(),
   ownerInfo: { courseId: 'c-1' },
-  createdAt: '2026-06-01T10:00',
+  createdAt: T0,
   completedAt: null,
   ...extra,
 });
@@ -123,10 +127,10 @@ describe('QuestionnaireJsonRepo — save и findById', () => {
   });
 });
 
-describe('QuestionnaireJsonRepo — legacy-записи', () => {
-  test('ISO → числа (UTC), updatedAt = createdAt, version = 0; даты ответов тоже', async () => {
+describe('QuestionnaireJsonRepo — записи без version', () => {
+  test('нет updatedAt и version → updatedAt = createdAt, version = 0; даты ответов как есть', async () => {
     const id = crypto.randomUUID();
-    const { repo } = await repoWith('legacy.json', [legacy(id)]);
+    const { repo } = await repoWith('record.json', [record(id)]);
     const state = (await repo.findById(id))?.snapshot();
     expect(state).toMatchObject({
       uuid: id,
@@ -138,12 +142,12 @@ describe('QuestionnaireJsonRepo — legacy-записи', () => {
     expect(state?.answers[0]?.answeredAt).toBe(Date.UTC(2026, 5, 1, 10, 30));
   });
 
-  test('legacy-запись после перехода сохраняется с version 1, соседние целы', async () => {
+  test('запись без version после перехода сохраняется с version 1, соседние целы', async () => {
     const id = crypto.randomUUID();
     const neighbour = crypto.randomUUID();
-    const { repo, path } = await repoWith('legacy-transition.json', [
-      legacy(id),
-      legacy(neighbour),
+    const { repo, path } = await repoWith('record-transition.json', [
+      record(id),
+      record(neighbour),
     ]);
 
     const loaded = await repo.findById(id);
@@ -247,10 +251,10 @@ describe('QuestionnaireJsonRepo — findIdle (брошенные анкеты)',
     expect((await idle(repo)).map((q) => q.uuid)).toEqual([stale.uuid]);
   });
 
-  test('legacy-запись без updatedAt: точка отсчёта createdAt', async () => {
+  test('запись без updatedAt: точка отсчёта createdAt', async () => {
     const id = crypto.randomUUID();
-    const { repo } = await repoWith('idle-legacy.json', [
-      legacy(id, { createdAt: '2026-06-01T10:00' }),
+    const { repo } = await repoWith('idle-record.json', [
+      record(id, { createdAt: T0 }),
     ]);
     expect((await idle(repo)).map((q) => q.uuid)).toEqual([id]);
   });
@@ -271,7 +275,7 @@ describe('QuestionnaireJsonRepo — битая запись', () => {
   test('невалидная запись в файле — исключение при чтении, файл не перезаписан', async () => {
     const id = crypto.randomUUID();
     const { repo, path } = await repoWith('invalid.json', [
-      legacy(id),
+      record(id),
       { invalid: 'data' },
     ]);
     const before = await Bun.file(path).text();

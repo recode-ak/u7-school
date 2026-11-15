@@ -6,7 +6,7 @@ import { StepJsonRepo } from './step.json-repo';
 
 // Репозиторий шагов (`<dbDir>/courses/steps.json`, D-36). Перенос
 // `infra/db/step-json-repo.test.ts` (save/getByUuid, getByIds) + контракт
-// новой записи: legacy-запись (ISO без секунд → число, version 0, нет
+// новой записи: запись без version (version 0, нет
 // `updatedAt` → `createdAt`), три вида шага (`kind: file` в данных нет —
 // только в схеме), round-trip, битая запись — исключение,
 // файл цел. Каталог — временный: до Ф5 писать в `data/` нельзя (Т11).
@@ -227,7 +227,7 @@ describe('StepJsonRepo — findByIds', () => {
   });
 });
 
-describe('StepJsonRepo — legacy-записи', () => {
+describe('StepJsonRepo — записи без version', () => {
   const legacy = (uuid: string, extra: Record<string, unknown> = {}) => ({
     uuid,
     moduleId: MODULE,
@@ -235,12 +235,12 @@ describe('StepJsonRepo — legacy-записи', () => {
     description: 'Шаг',
     content: 'Текст',
     status: 'published',
-    createdAt: '2026-07-08T18:35',
-    updatedAt: '2026-07-08T18:35',
+    createdAt: T0,
+    updatedAt: T0,
     ...extra,
   });
 
-  test('ISO без секунд → число (UTC), version = 0', async () => {
+  test('нет version → version = 0', async () => {
     const id = crypto.randomUUID();
     const repo = await repoWith('steps-legacy.json', [legacy(id)]);
 
@@ -278,7 +278,7 @@ describe('StepJsonRepo — legacy-записи', () => {
     });
   });
 
-  test('legacy-запись после save становится числовой, соседние целы', async () => {
+  test('запись без version после save получает version 0, соседние целы', async () => {
     const id = crypto.randomUUID();
     const neighbour = crypto.randomUUID();
     const path = filePath('steps-legacy-save.json');

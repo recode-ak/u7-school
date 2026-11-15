@@ -15,7 +15,7 @@ import {
 import { CourseProgramInvariant, PhaseVo } from './course.state';
 
 // Перенос `entity.test.ts` (CourseSchema — 8, PhaseSchema — 4) на state по Def
-// (D-36, D-64): даты — числа (UTC), legacy-запись с ISO читается; этап — метка
+// (D-36, D-64): даты — числа (UTC), ISO отвергается (D-16); этап — метка
 // `fromModuleId`, а не список модулей. Инварианты меток (Р2, Т3) — отдельная
 // схема, потому что `state` с проверкой не переводится в JSON Schema.
 
@@ -30,7 +30,7 @@ const record = {
   moduleIds: [M1, M2],
   phases: [],
   status: 'draft',
-  createdAt: '2026-07-08T18:35',
+  createdAt: T0,
 };
 
 describe('CourseState — запись (перенос CourseSchema)', () => {
@@ -71,7 +71,7 @@ describe('CourseState — прежний формат записи (старый
 });
 
 describe('CourseState — даты (D-36)', () => {
-  it('ISO без секунд (UTC) → число, updatedAt = createdAt, version = 0', () => {
+  it('нет updatedAt и version → updatedAt = createdAt, version = 0', () => {
     const res = parse(record);
     expect(res.success).toBe(true);
     if (res.success) {
@@ -81,25 +81,13 @@ describe('CourseState — даты (D-36)', () => {
     }
   });
 
-  it('боевые даты курса: createdAt и updatedAt без секунд', () => {
-    const res = parse({
-      ...record,
-      createdAt: '2026-07-08T18:35',
-      updatedAt: '2026-10-16T17:00',
-    });
-    expect(res.success).toBe(true);
-    if (res.success) {
-      expect(res.output.createdAt).toBe(Date.UTC(2026, 6, 8, 18, 35));
-      expect(res.output.updatedAt).toBe(Date.UTC(2026, 9, 16, 17, 0));
-    }
-  });
-
-  it('ISO с секундами и зоной читается', () => {
-    const res = parse({ ...record, createdAt: '2026-07-08T18:35:20Z' });
-    expect(res.success).toBe(true);
-    if (res.success) {
-      expect(res.output.createdAt).toBe(Date.UTC(2026, 6, 8, 18, 35, 20));
-    }
+  it('ISO-строка в дате отвергается', () => {
+    expect(parse({ ...record, createdAt: '2026-07-08T18:35' }).success).toBe(
+      false,
+    );
+    expect(
+      parse({ ...record, updatedAt: '2026-07-08T18:35:20Z' }).success,
+    ).toBe(false);
   });
 
   it('запись нового формата (числа, version) проходит как есть', () => {

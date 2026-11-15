@@ -24,7 +24,7 @@ const trimmed = (label: string) =>
 
 /**
  * Entity пользователя — единственное место структуры состояния. Legacy-записи
- * читаются: ISO-даты → число (UTC), нет `updatedAt` → `createdAt`, нет
+ * читаются: нет `updatedAt` → `createdAt`, нет
  * `version` → 0 (D-36).
  */
 export const UserState = v.object({

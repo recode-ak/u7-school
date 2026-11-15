@@ -7,7 +7,7 @@ import { StudentJsonRepo } from './student.json-repo';
 
 // Репозиторий студентов (`<dbDir>/streams/students.json`). Перенос
 // `infra/db/student-json-repo.test.ts` (выборка по статусам → `findStudying`) +
-// контракт новой записи: legacy-запись (ISO → число, version 0,
+// контракт новой записи: запись без version (version 0,
 // updatedAt = createdAt), round-trip, устаревшая версия, битая запись —
 // исключение, файл цел. Каталог — временный, живые данные не читаются.
 
@@ -125,29 +125,29 @@ describe('StudentJsonRepo — save и findById', () => {
   });
 });
 
-describe('StudentJsonRepo — legacy-записи', () => {
-  const legacy = (uuid: string, extra: Record<string, unknown> = {}) => ({
+describe('StudentJsonRepo — записи без version', () => {
+  const record = (uuid: string, extra: Record<string, unknown> = {}) => ({
     uuid,
     streamId: STREAM,
     userId: USER,
-    enrolledAt: '2026-06-01T10:00',
+    enrolledAt: T0,
     status: 'active',
     currentStepId: STEP,
     steps: [
       {
         stepId: STEP,
         status: 'completed',
-        issuedAt: '2026-06-01T10:00',
-        completedAt: '2026-06-01T10:30',
+        issuedAt: T0,
+        completedAt: Date.UTC(2026, 5, 1, 10, 30),
       },
     ],
-    createdAt: '2026-06-01T10:00',
+    createdAt: T0,
     ...extra,
   });
 
-  test('ISO → числа (UTC), updatedAt = createdAt, version = 0; даты шагов тоже', async () => {
+  test('нет updatedAt и version → updatedAt = createdAt, version = 0; даты шагов как есть', async () => {
     const id = crypto.randomUUID();
-    const repo = await repoWith('students-legacy.json', [legacy(id)]);
+    const repo = await repoWith('students-record.json', [record(id)]);
 
     const state = (await repo.findById(id))?.snapshot();
 
@@ -166,10 +166,10 @@ describe('StudentJsonRepo — legacy-записи', () => {
 
   test('sentAt до минуты и completionDetails читаются', async () => {
     const id = crypto.randomUUID();
-    const repo = await repoWith('students-legacy-notices.json', [
-      legacy(id, {
+    const repo = await repoWith('students-record-notices.json', [
+      record(id, {
         notices: [
-          { kind: 'inactivity_warn_student', sentAt: '2026-06-03T19:00' },
+          { kind: 'inactivity_warn_student', sentAt: Date.UTC(2026, 5, 3, 19) },
         ],
         status: 'advanced',
         completionDetails: { nextPreference: 'wants_next' },
@@ -184,13 +184,13 @@ describe('StudentJsonRepo — legacy-записи', () => {
     expect(state?.completionDetails).toEqual({ nextPreference: 'wants_next' });
   });
 
-  test('legacy-запись после перехода сохраняется с version 1, соседние записи целы', async () => {
+  test('запись без version после перехода сохраняется с version 1, соседние записи целы', async () => {
     const id = crypto.randomUUID();
     const neighbour = crypto.randomUUID();
-    const path = filePath('students-legacy-transition.json');
-    const repo = await repoWith('students-legacy-transition.json', [
-      legacy(id, { status: 'enrolled', steps: [] }),
-      legacy(neighbour),
+    const path = filePath('students-record-transition.json');
+    const repo = await repoWith('students-record-transition.json', [
+      record(id, { status: 'enrolled', steps: [] }),
+      record(neighbour),
     ]);
 
     const loaded = await repo.findById(id);
@@ -209,7 +209,7 @@ describe('StudentJsonRepo — legacy-записи', () => {
 });
 
 describe('StudentJsonRepo — смешанный файл', () => {
-  test('ISO-записи без version и числовые с version читаются целиком, round-trip корректен', async () => {
+  test('записи без version и с version читаются целиком, round-trip корректен', async () => {
     const legacyId = crypto.randomUUID();
     const modernId = crypto.randomUUID();
     const path = filePath('students-mixed.json');
@@ -218,11 +218,11 @@ describe('StudentJsonRepo — смешанный файл', () => {
         uuid: legacyId,
         streamId: STREAM,
         userId: USER,
-        enrolledAt: '2026-06-01T10:00',
+        enrolledAt: T0,
         status: 'enrolled',
         currentStepId: STEP,
         steps: [],
-        createdAt: '2026-06-01T10:00',
+        createdAt: T0,
       },
       makeState({
         uuid: modernId,

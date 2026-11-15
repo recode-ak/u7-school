@@ -5,7 +5,7 @@ import type { UserFilter, UserRepo, UserSort } from '../user/user.repo';
 
 /**
  * Схема файла: разбирает только Def агрегата (D-36) — он же дописывает
- * `updatedAt`/`version` legacy-записям и переводит ISO-даты в числа (DOM-01).
+ * `updatedAt`/`version` legacy-записям (DOM-01).
  */
 const Rows = v.array(UserArDef.state);
 

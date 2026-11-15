@@ -27,7 +27,7 @@ export function review(over: Partial<ReviewState> = {}): ReviewState {
   };
 }
 
-/** Legacy-запись релиза: ISO без зоны, без updatedAt и version. */
+/** Запись без updatedAt и version (даты числом). */
 export function legacyReview(over: Record<string, unknown> = {}) {
   return {
     uuid: crypto.randomUUID(),

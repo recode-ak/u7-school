@@ -18,13 +18,13 @@ import { U7CallerResolver } from './u7-caller-resolver';
 // человек на входе; пользователя читает UC `user.getUser` от системы (D-51),
 // субъект — `UserAr` (D-69).
 
-/** Запись `users.json` в legacy-формате: даты — ISO-строки. */
+/** Запись `users.json`: даты — числа (мс UTC). */
 const KNOWN = {
   uuid: '22222222-2222-4222-8222-222222222222',
   name: 'Известный пользователь',
   telegramId: 1,
   roles: ['MENTOR', 'ADMIN'],
-  createdAt: '2026-06-01T00:00',
+  createdAt: Date.UTC(2026, 5, 1),
 };
 const UNKNOWN = '33333333-3333-4333-8333-333333333333';
 

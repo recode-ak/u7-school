@@ -5,10 +5,9 @@ import { likertPool, simplePool } from './questionnaire.fixture';
 import type { QuestionnaireState } from './questionnaire.state';
 
 // Перенос `entity.test.ts`-контракта на state по Def (DOM-11/12): даты — числа (UTC),
-// legacy-запись с ISO читается, нет `updatedAt` → `createdAt`, нет `version` → 0;
+// ISO отвергается (D-16), нет `updatedAt` → `createdAt`, нет `version` → 0;
 // обе ветки `kind` (variant).
 
-const ISO = '2026-06-01T10:00';
 const T = Date.UTC(2026, 5, 1, 10);
 const legacyStandard = {
   kind: 'standard',
@@ -21,12 +20,12 @@ const legacyStandard = {
     {
       questionCode: 'q0',
       answerCode: 'a',
-      answeredAt: '2026-06-01T10:30:00.000Z',
+      answeredAt: T + 30 * 60_000,
     },
   ],
   questionPool: simplePool(),
   ownerInfo: { courseId: 'c' },
-  createdAt: ISO,
+  createdAt: T,
   completedAt: null,
 };
 const legacyLikert = {
@@ -39,12 +38,12 @@ const legacyLikert = {
 
 const parse = (value: unknown) => v.safeParse(QuestionnaireArDef.state, value);
 
-describe('QuestionnaireState — legacy-запись', () => {
+describe('QuestionnaireState — даты и фолбэки', () => {
   it.each([
     ['standard', legacyStandard],
     ['likert', legacyLikert],
   ] as const)(
-    '%s: ISO → числа UTC, updatedAt = createdAt, version = 0',
+    '%s: нет updatedAt и version → updatedAt = createdAt, version = 0',
     (kind, row) => {
       const res = parse(row);
       expect(res.success).toBe(true);
@@ -58,25 +57,29 @@ describe('QuestionnaireState — legacy-запись', () => {
     },
   );
 
-  it('даты ответов, warnedAt, continueInvitedAt и completedAt — числа', () => {
+  it('даты ответов, warnedAt, continueInvitedAt и completedAt — числа как есть', () => {
     const res = parse({
       ...legacyStandard,
       status: 'completed',
-      updatedAt: '2026-06-01T11:00',
-      warnedAt: '2026-06-01T10:20',
-      continueInvitedAt: '2026-06-01T10:10',
-      completedAt: '2026-06-01T11:00',
+      updatedAt: T + 60 * 60_000,
+      warnedAt: T + 20 * 60_000,
+      continueInvitedAt: T + 10 * 60_000,
+      completedAt: T + 60 * 60_000,
     });
     expect(res.success).toBe(true);
     if (res.success) {
-      expect(res.output.answers[0]?.answeredAt).toBe(
-        Date.UTC(2026, 5, 1, 10, 30),
-      );
-      expect(res.output.updatedAt).toBe(Date.UTC(2026, 5, 1, 11));
-      expect(res.output.warnedAt).toBe(Date.UTC(2026, 5, 1, 10, 20));
-      expect(res.output.continueInvitedAt).toBe(Date.UTC(2026, 5, 1, 10, 10));
-      expect(res.output.completedAt).toBe(Date.UTC(2026, 5, 1, 11));
+      expect(res.output.answers[0]?.answeredAt).toBe(T + 30 * 60_000);
+      expect(res.output.updatedAt).toBe(T + 60 * 60_000);
+      expect(res.output.warnedAt).toBe(T + 20 * 60_000);
+      expect(res.output.continueInvitedAt).toBe(T + 10 * 60_000);
+      expect(res.output.completedAt).toBe(T + 60 * 60_000);
     }
+  });
+
+  it('ISO-строка в дате отвергается', () => {
+    const iso = '2026-06-01T10:00';
+    expect(parse({ ...legacyStandard, createdAt: iso }).success).toBe(false);
+    expect(parse({ ...legacyStandard, updatedAt: iso }).success).toBe(false);
   });
 });
 

@@ -29,7 +29,7 @@ export type ReviewDirection = v.InferOutput<typeof ReviewDirectionSchema>;
 /**
  * Entity отзыва — единственное место структуры состояния. Пара (кампания,
  * автор, адресат) уникальна: повтор перезаписывает `text`. Legacy-записи
- * читаются: ISO-даты → число, нет `updatedAt` → `createdAt` (D-36).
+ * читаются: нет `updatedAt` → `createdAt` (D-36).
  */
 export const ReviewState = v.object({
   ...BaseEntityFields,

@@ -96,8 +96,7 @@ export const LikertQuestionnaireState = v.object({
 });
 
 /**
- * Состояние анкеты: ветка по `kind`. Legacy-запись с ISO-датами читается,
- * отсутствующий `updatedAt` подставляется из `createdAt` при разборе
+ * Состояние анкеты: ветка по `kind`. Отсутствующий `updatedAt` подставляется из `createdAt` при разборе
  * `QuestionnaireArDef.state`.
  */
 export const QuestionnaireState = v.variant('kind', [

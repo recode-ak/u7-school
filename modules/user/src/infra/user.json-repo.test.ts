@@ -279,28 +279,28 @@ describe('UserJsonRepo', () => {
     });
   });
 
-  describe('legacy-записи', () => {
-    const legacy = {
+  describe('записи без updatedAt и version', () => {
+    const record = {
       uuid: crypto.randomUUID(),
       name: 'Старый',
       telegramId: 42,
       roles: ['GUEST'],
-      createdAt: '2026-05-01T12:00',
+      createdAt: Date.UTC(2026, 4, 1, 12),
     };
 
-    test('ISO без зоны, без updatedAt и version — числа, версия 0', async () => {
-      const repo = await repoWith('legacy.json', [legacy]);
+    test('нет updatedAt и version — updatedAt = createdAt, версия 0', async () => {
+      const repo = await repoWith('record.json', [record]);
 
-      const found = (await repo.findById(legacy.uuid))?.snapshot();
+      const found = (await repo.findById(record.uuid))?.snapshot();
 
       expect(found?.createdAt).toBe(Date.UTC(2026, 4, 1, 12));
       expect(found?.updatedAt).toBe(Date.UTC(2026, 4, 1, 12));
       expect(found?.version).toBe(0);
     });
 
-    test('round-trip: после save другой записи legacy-запись в файле — числа', async () => {
-      const path = filePath('legacy-roundtrip.json');
-      const repo = await repoWith('legacy-roundtrip.json', [legacy]);
+    test('round-trip: после save другой записи запись без version в файле получает version 0', async () => {
+      const path = filePath('record-roundtrip.json');
+      const repo = await repoWith('record-roundtrip.json', [record]);
       const other = expectOk(
         UserAr.create(
           { uuid: crypto.randomUUID(), name: 'Новый', telegramId: 43 },
@@ -311,7 +311,7 @@ describe('UserJsonRepo', () => {
       await repo.save(other);
 
       const rows = JSON.parse(await Bun.file(path).text()) as UserState[];
-      const old = rows.find((r) => r.uuid === legacy.uuid);
+      const old = rows.find((r) => r.uuid === record.uuid);
       expect(old?.createdAt).toBe(Date.UTC(2026, 4, 1, 12));
       expect(old?.updatedAt).toBe(Date.UTC(2026, 4, 1, 12));
       expect(old?.version).toBe(0);

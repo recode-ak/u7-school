@@ -19,7 +19,7 @@ const text = (label: string) =>
 
 /**
  * Entity урока — единственное место структуры состояния. Legacy-записи
- * читаются: ISO-даты → число (UTC), нет `updatedAt` → `createdAt`, нет
+ * читаются: нет `updatedAt` → `createdAt`, нет
  * `version` → 0 (D-36).
  */
 export const LessonState = v.object({

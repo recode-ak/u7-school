@@ -7,7 +7,7 @@ import { StreamJsonRepo } from './stream.json-repo';
 
 // Репозиторий потоков (`<dbDir>/streams/streams.json`, D-36). Перенос
 // `infra/db/stream-json-repo.test.ts` (фильтр по schoolId) + контракт новой
-// записи: legacy-запись (ISO → число, version 0, updatedAt = createdAt),
+// записи: запись без version (version 0, updatedAt = createdAt),
 // round-trip, устаревшая версия, битая запись — исключение, файл цел.
 // Каталог — временный, живые данные не читаются.
 
@@ -117,24 +117,24 @@ describe('StreamJsonRepo — версия (D-36)', () => {
   });
 });
 
-describe('StreamJsonRepo — legacy-записи', () => {
-  const legacy = (uuid: string, extra: Record<string, unknown> = {}) => ({
+describe('StreamJsonRepo — записи без version', () => {
+  const record = (uuid: string, extra: Record<string, unknown> = {}) => ({
     uuid,
     schoolId: SCHOOL_A,
     title: 'Поток',
     description: 'Описание',
     mentorId: MENTOR,
     moduleId: MODULE,
-    startDate: '2026-06-01T12:00',
+    startDate: Date.UTC(2026, 5, 1, 12),
     status: 'active',
     contentSnapshot: snapshot,
-    createdAt: '2026-06-01T10:00',
+    createdAt: T0,
     ...extra,
   });
 
-  test('ISO-даты → числа (UTC), updatedAt = createdAt, version = 0', async () => {
+  test('нет updatedAt и version → updatedAt = createdAt, version = 0', async () => {
     const id = crypto.randomUUID();
-    const repo = await repoWith('streams-legacy.json', [legacy(id)]);
+    const repo = await repoWith('streams-record.json', [record(id)]);
 
     const state = (await repo.findById(id))?.snapshot();
 
@@ -148,13 +148,26 @@ describe('StreamJsonRepo — legacy-записи', () => {
     });
   });
 
-  test('legacy-запись после перехода сохраняется с version 1, соседние записи целы', async () => {
+  test('ISO-дата в записи — ValiError на чтении, файл не изменён', async () => {
+    const id = crypto.randomUUID();
+    const path = filePath('streams-iso.json');
+    const text = JSON.stringify([
+      record(id, { startDate: '2026-06-01T12:00' }),
+    ]);
+    await Bun.write(path, text);
+    const repo = new StreamJsonRepo(path);
+
+    await expect(repo.findById(id)).rejects.toBeInstanceOf(ValiError);
+    expect(await Bun.file(path).text()).toBe(text);
+  });
+
+  test('запись без version после перехода сохраняется с version 1, соседние записи целы', async () => {
     const id = crypto.randomUUID();
     const neighbour = crypto.randomUUID();
-    const path = filePath('streams-legacy-transition.json');
-    const repo = await repoWith('streams-legacy-transition.json', [
-      legacy(id, { status: 'active' }),
-      legacy(neighbour),
+    const path = filePath('streams-record-transition.json');
+    const repo = await repoWith('streams-record-transition.json', [
+      record(id, { status: 'active' }),
+      record(neighbour),
     ]);
 
     const loaded = await repo.findById(id);

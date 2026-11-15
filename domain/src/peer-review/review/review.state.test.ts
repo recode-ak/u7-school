@@ -7,7 +7,7 @@ import {
   ReviewDirectionSchema,
 } from './review.state';
 
-// Перенос `entity.test.ts` (ReviewSchema → ReviewArDef.state) + legacy-записи (D-36).
+// Перенос `entity.test.ts` (ReviewSchema → ReviewArDef.state) + фолбэки дат (D-36).
 
 const UUIDS = {
   review: '11111111-1111-4111-8111-111111111111',
@@ -17,8 +17,8 @@ const UUIDS = {
   recipient: '44444444-4444-4444-8444-444444444444',
 };
 
-/** Legacy-запись как в `reviews.json` релиза: ISO без зоны, без `updatedAt` и `version`. */
-function legacy(overrides: Record<string, unknown> = {}) {
+/** Запись как в `reviews.json`: даты числом, без `updatedAt` и `version`. */
+function record(overrides: Record<string, unknown> = {}) {
   return {
     uuid: UUIDS.review,
     scopeId: UUIDS.scope,
@@ -28,7 +28,7 @@ function legacy(overrides: Record<string, unknown> = {}) {
     authorOutcome: 'completed_passed',
     recipientId: UUIDS.recipient,
     text: 'Ровный текст отзыва достаточной длины.',
-    createdAt: '2026-09-20T12:00',
+    createdAt: Date.UTC(2026, 8, 20, 12),
     ...overrides,
   };
 }
@@ -55,6 +55,14 @@ describe('ReviewDirectionSchema', () => {
   });
 });
 
+describe('ReviewState — даты', () => {
+  test('ISO-строка в дате отвергается', () => {
+    expect(parse(record({ createdAt: '2026-09-20T12:00' })).success).toBe(
+      false,
+    );
+  });
+});
+
 describe('ReviewState — форма', () => {
   test('authorOutcome — только 4-значные проекции', () => {
     for (const outcome of [
@@ -63,17 +71,17 @@ describe('ReviewState — форма', () => {
       'dropped',
       'never_started',
     ]) {
-      expect(parse(legacy({ authorOutcome: outcome })).success).toBe(true);
+      expect(parse(record({ authorOutcome: outcome })).success).toBe(true);
     }
     for (const outcome of ['advanced', 'in_progress', 'completed']) {
-      expect(parse(legacy({ authorOutcome: outcome })).success).toBe(false);
+      expect(parse(record({ authorOutcome: outcome })).success).toBe(false);
     }
   });
 });
 
 describe('ReviewState — длина текста', () => {
   test('короче минимума — отказ с сообщением «Отзыв слишком короткий»', () => {
-    const res = parse(legacy({ text: 'а'.repeat(REVIEW_TEXT_MIN_LENGTH - 1) }));
+    const res = parse(record({ text: 'а'.repeat(REVIEW_TEXT_MIN_LENGTH - 1) }));
     expect(res.success).toBe(false);
     if (!res.success) {
       expect(res.issues.map((i) => i.message)).toContain(
@@ -84,15 +92,15 @@ describe('ReviewState — длина текста', () => {
 
   test('ровно минимум и ровно максимум — валидны', () => {
     expect(
-      parse(legacy({ text: 'а'.repeat(REVIEW_TEXT_MIN_LENGTH) })).success,
+      parse(record({ text: 'а'.repeat(REVIEW_TEXT_MIN_LENGTH) })).success,
     ).toBe(true);
     expect(
-      parse(legacy({ text: 'а'.repeat(REVIEW_TEXT_MAX_LENGTH) })).success,
+      parse(record({ text: 'а'.repeat(REVIEW_TEXT_MAX_LENGTH) })).success,
     ).toBe(true);
   });
 
   test('длиннее максимума — отказ с сообщением «Отзыв слишком длинный»', () => {
-    const res = parse(legacy({ text: 'а'.repeat(REVIEW_TEXT_MAX_LENGTH + 1) }));
+    const res = parse(record({ text: 'а'.repeat(REVIEW_TEXT_MAX_LENGTH + 1) }));
     expect(res.success).toBe(false);
     if (!res.success) {
       expect(res.issues.map((i) => i.message)).toContain(

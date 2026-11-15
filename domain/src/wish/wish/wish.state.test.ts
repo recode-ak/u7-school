@@ -47,41 +47,31 @@ describe('WishArDef.state', () => {
     target: validCourseTarget,
   };
 
+  const created = Date.UTC(2026, 7, 26, 10);
+  const updated = Date.UTC(2026, 7, 27, 8, 30);
+
   test.each([
     [
       'полная запись',
-      {
-        ...base,
-        createdAt: '2026-08-26T10:00',
-        updatedAt: '2026-08-27T08:30:00.000Z',
-      },
-      {
-        createdAt: Date.UTC(2026, 7, 26, 10),
-        updatedAt: Date.UTC(2026, 7, 27, 8, 30),
-      },
+      { ...base, createdAt: created, updatedAt: updated },
+      { createdAt: created, updatedAt: updated },
     ],
     [
-      'legacy-запись без updatedAt и version',
-      { ...base, createdAt: '2026-08-26T10:00' },
-      {
-        createdAt: Date.UTC(2026, 7, 26, 10),
-        updatedAt: Date.UTC(2026, 7, 26, 10),
-      },
+      'запись без updatedAt и version',
+      { ...base, createdAt: created },
+      { createdAt: created, updatedAt: created },
     ],
     [
       'список uuid потоков',
       {
         ...base,
-        createdAt: '2026-08-26T10:00',
-        updatedAt: '2026-08-27T08:30:00.000Z',
+        createdAt: created,
+        updatedAt: updated,
         invitedStreamIds: [STREAM],
       },
-      {
-        createdAt: Date.UTC(2026, 7, 26, 10),
-        updatedAt: Date.UTC(2026, 7, 27, 8, 30),
-      },
+      { createdAt: created, updatedAt: updated },
     ],
-  ])('принимает %s: ISO-даты — числа, version 0', (_, input, dates) => {
+  ])('принимает %s: даты как есть, version 0', (_, input, dates) => {
     const result = v.safeParse(WishArDef.state, input);
 
     expect(result.success).toBe(true);
@@ -90,6 +80,20 @@ describe('WishArDef.state', () => {
       expect(result.output.updatedAt).toBe(dates.updatedAt);
       expect(result.output.version).toBe(0);
     }
+  });
+
+  test('ISO-строка в дате отвергается', () => {
+    const iso = '2026-08-26T10:00';
+    expect(
+      v.safeParse(WishArDef.state, { ...base, createdAt: iso }).success,
+    ).toBe(false);
+    expect(
+      v.safeParse(WishArDef.state, {
+        ...base,
+        createdAt: created,
+        updatedAt: iso,
+      }).success,
+    ).toBe(false);
   });
 
   test.each([

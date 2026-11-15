@@ -14,7 +14,7 @@
     "@biomejs/biome": "^2.5.13",
     "@types/bun": "latest",
     "@types/markdown-it": "^14.2.0",
-    "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.1"
+    "dmg-core": "git+ssh://git@github.com/recode-ak/dmg-core.git#v0.3.2"
   },
   "private": true,
   "scripts": {

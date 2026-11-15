@@ -5,7 +5,7 @@ import { AUTHOR, MODULE, PROJECT_PUBLISHED, T0 } from './module.fixture';
 import { ProjectEntity } from './module.state';
 
 // Перенос `entity.test.ts` (ModuleSchema, ProjectSchema) на state по Def (D-36):
-// даты — числа (UTC), legacy-запись с ISO читается. «НЕ содержит kind» не переносится.
+// даты — числа (UTC), ISO отвергается (D-16). «НЕ содержит kind» не переносится.
 
 const legacyProject = {
   uuid: PROJECT_PUBLISHED,
@@ -20,15 +20,15 @@ const legacy = {
   description: 'Описание модуля',
   authorId: AUTHOR,
   status: 'draft',
-  createdAt: '2026-07-08T18:35',
+  createdAt: T0,
   projects: [legacyProject],
 };
 
 // Фолбэк `updatedAt = createdAt` и `version = 0` — только в `ModuleArDef.state` (D-36).
 const parse = (value: unknown) => v.safeParse(ModuleArDef.state, value);
 
-describe('ModuleState — legacy-запись (D-36)', () => {
-  it('ISO без секунд (UTC) → число, updatedAt = createdAt, version = 0', () => {
+describe('ModuleState — даты и фолбэки (D-36)', () => {
+  it('нет updatedAt и version → updatedAt = createdAt, version = 0', () => {
     const res = parse(legacy);
     expect(res.success).toBe(true);
     if (res.success) {
@@ -38,12 +38,10 @@ describe('ModuleState — legacy-запись (D-36)', () => {
     }
   });
 
-  it('legacy updatedAt (ISO без секунд) сохраняется числом', () => {
-    const res = parse({ ...legacy, updatedAt: '2026-07-09T08:30' });
-    expect(res.success).toBe(true);
-    if (res.success) {
-      expect(res.output.updatedAt).toBe(Date.UTC(2026, 6, 9, 8, 30));
-    }
+  it('ISO-строка в дате отвергается', () => {
+    const iso = '2026-07-09T08:30';
+    expect(parse({ ...legacy, createdAt: iso }).success).toBe(false);
+    expect(parse({ ...legacy, updatedAt: iso }).success).toBe(false);
   });
 
   it('запись нового формата (числа, version) проходит как есть', () => {
@@ -91,7 +89,7 @@ describe('ModuleState — поля (перенос entity.test.ts)', () => {
       rules: 'Правила',
       additional: 'Доп',
       tags: ['js', 'web'],
-      updatedAt: '2026-07-09T12:00',
+      updatedAt: T0 + 1,
     });
     expect(res.success).toBe(true);
     if (res.success) {

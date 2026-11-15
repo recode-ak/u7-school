@@ -10,12 +10,11 @@ import { createTestApp } from '@u7-scl/test-helpers/test-app';
 import { expectOk, testTrace } from 'dmg-core/testing';
 
 /**
- * Интеграционный тест чтения и перезаписи legacy-записей желаний:
- * сырой файл `wish/wishes.json` (createdAt — ISO без зоны, без updatedAt и
- * version) → приложение разбирает запись схемой state, а после перехода
+ * Интеграционный тест чтения и перезаписи записей желаний без `updatedAt` и
+ * `version`: сырой файл `wish/wishes.json` (createdAt — число, мс UTC) → приложение разбирает запись схемой state, а после перехода
  * (cancel-wish) переписывает весь файл в формате spec (числа, version).
  */
-describe('Wish: legacy-записи в wishes.json (интеграционный)', () => {
+describe('Wish: записи без updatedAt и version в wishes.json (интеграционный)', () => {
   let app: TestApp;
   let guest: U7BotActor;
 
@@ -23,9 +22,6 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
   const OTHER_COURSE_ID = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
   const TARGET_UUID = '11111111-1111-4111-8111-111111111111';
   const NEIGHBOR_UUID = '22222222-2222-4222-8222-222222222222';
-  const CREATED_ISO = '2026-03-01T10:00';
-  const NEIGHBOR_ISO = '2026-03-02T11:30';
-  // ISO без зоны трактуется как UTC (D-36) — ожидания явно в UTC, не зависят от TZ
   const CREATED_AT = Date.UTC(2026, 2, 1, 10, 0);
   const NEIGHBOR_AT = Date.UTC(2026, 2, 2, 11, 30);
 
@@ -36,7 +32,7 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
     guest = await app.userByTelegramId(1001);
     wishesPath = `${app.fixtures.dbDir}/wish/wishes.json`;
 
-    // Сырые legacy-записи: без updatedAt/version, createdAt — ISO без зоны
+    // Сырые записи: без updatedAt/version, createdAt — число
     await Bun.write(
       wishesPath,
       JSON.stringify([
@@ -45,14 +41,14 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
           userId: guest.user.uuid,
           target: { kind: 'course', courseId: INSTANT_COURSE_ID },
           status: 'expressed',
-          createdAt: CREATED_ISO,
+          createdAt: CREATED_AT,
         },
         {
           uuid: NEIGHBOR_UUID,
           userId: guest.user.uuid,
           target: { kind: 'course', courseId: OTHER_COURSE_ID },
           status: 'expressed',
-          createdAt: NEIGHBOR_ISO,
+          createdAt: NEIGHBOR_AT,
         },
       ]),
     );
@@ -67,7 +63,7 @@ describe('Wish: legacy-записи в wishes.json (интеграционный
   const rawRows = async (): Promise<Array<Record<string, unknown>>> =>
     JSON.parse(await Bun.file(wishesPath).text());
 
-  test('чтение: legacy-запись видна, ISO разобран в число', async () => {
+  test('чтение: запись без updatedAt и version видна, createdAt как есть', async () => {
     const wishes = expectOk(
       await app.apiApp.dispatch(
         WishModuleDef,
