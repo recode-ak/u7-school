@@ -14,7 +14,7 @@
 
 **Критерии:** числа базовой линии обоих репо и размер лога фикстур — в `summary.md`.
 
-## Фаза 1: dmg-core — патч полей и маскирование всей записи (ФТ-1, ФТ-2, ФТ-3)
+## Фаза 1: dmg-core — патч полей и маскирование всей записи (ФТ-1, ФТ-2, ФТ-3) [checkpoint: 1c2cd73]
 
 - [x] Task: S (`dmg-tech-lead`) — бриф среза `slices/patch.md`: `Aggregate.baseline` / `Committable.baseline`; класс сравнения (`FieldDiff`, место — `src/app/oplog/` или `src/domain/aggregate/`); `F.sensitive` и `SensitiveMask` (обход схемы valibot: object, array, optional/nullable/nullish, pipe, record, variant/union, `withEntityDefaults`); точки применения: `OperationRun` (input по схеме UC/события, output, payload ошибки) и UoW (`changes`); `AggregateWrite.changes`; `ValueDigest` и порог в `JsonlOperationLog`; ID `rules.md` (DOM-17 — `snapshot()` только репозиторий: `baseline` через публичный геттер)
 - [x] Task: S (`dmg-test-designer`) — red-тесты
@@ -27,7 +27,7 @@
     - [x] Запуск — падают по делу
 - [x] Task: S (`dmg-domain-author`) — реализация (green) [dmg-core f509cbf]; sha256 — `node:crypto`; замер стоимости сравнения на крупном снимке (`contentSnapshot`-подобное дерево); при дороговизне — порог размера сравнения (сверх — дайджест всего поля)
 - [x] Task: S (`dmg-reviewer`) — ревью среза по `rules.md`; замечания error/warn исправлены [dmg-core f509cbf]
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 **Критерии:** `bun run check` dmg-core зелёный, тестов не меньше базовой линии; критерии spec 1–4 закрыты тестами (маскирование — на example-модуле пакета: UC, ER, ошибка); запись без `changes` принимается типом; `git diff package.json` — без новых зависимостей; замер стоимости сравнения — в `summary.md`.
 
