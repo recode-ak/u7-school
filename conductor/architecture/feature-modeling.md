@@ -82,7 +82,7 @@
 
 - Ведущий — orchestrator ([agents.md](./agents.md) §1); роли агентов — [agent-roles.md](./agent-roles.md) §2, персоны — `.agents-core/personas/`; роли людей и реестр команды — [team-roles.md](./team-roles.md) §6.
 - Модель — `conductor/roadmap/<фича>.md`, строка в [roadmap.md](../roadmap.md); треки карты — кандидаты `[?]` в [tracks.md](../tracks.md), spec — `conductor-newtrack`.
-- Граф — `dmg-core/graph`; запросы CLI — после этапа «граф как продукт» ([vision.md](./vision.md) §8).
+- Граф — `dmg-core/graph`; запросы CLI — этап 4 [порядка работ](../roadmap.md). Пилот методики — этап 5, если выбраны новые фичи.
 
 ## 9. Решено и открыто
 
