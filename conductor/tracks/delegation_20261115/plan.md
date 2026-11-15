@@ -83,7 +83,7 @@
 
 ## Фаза 7: релиз пакета v0.4.0
 
-- [ ] Task: O — по `RELEASING.md`: `check`, `e2e`, `docs:covers --strict`, версия, тег `v0.4.0`
+- [x] Task: O — по `RELEASING.md`: `check`, `e2e`, `docs:covers --strict`, версия, тег `v0.4.0` (пакет `c254383`)
 - [ ] Task: O — push `main` и тега — **после подтверждения Нурболата**; тег и SHA — в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
 
