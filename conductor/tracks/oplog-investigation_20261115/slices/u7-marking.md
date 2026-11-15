@@ -58,3 +58,11 @@ DOM-11 (`F.sensitive` — из `F`), CODE-02, CODE-04, TST-05..08, ООП вме
 API: `VisitorId` (`runners/u7-bot/src/core/visitor-id.ts`): `constructor(key)` (пустой — throw), `of(telegramId): string` — первые 16 hex HMAC-SHA256; ключ — `config.botToken` при старте. `scripts/oplog.ts`: без аргументов — подсказка, код 2; нет каталога — код 2.
 
 Для автора: `u7-bot-ui-story.test.ts:455` ждёт `visitorId: '1'` — поправить на значение `VisitorId` с фиксированным ключом; проверить `toEqual` по `ctx.oplog` в wish ER и stream sync UC.
+
+### dmg-domain-author (2026-11-15)
+
+Пометки по списку; `VisitorId` — процесс-глобальная установка (`install` при старте, повтор с другим ключом — throw; передача через `resolve` ломала ~300 тестов) — долг C-DEBT-57; `retainDays: 90`; `scripts/oplog.ts` через бин пакета. Правки тестов: `u7-bot-ui-story.test.ts:455` (ожидание `VisitorId`), `u7-app.oplog.test.ts` (`previousQuestion` — контент анкеты, не ПД). check 3477/0, test:bot 1244/0. Коммит `08343f47`.
+
+### dmg-reviewer (2026-11-15)
+
+Блокеров нет. Question: глобальный `VisitorId` — принято, C-DEBT-57. Minor: тест статического API, бин пакета в `scripts/oplog.ts`, имя теста `handleAction` — исправлены. Полнота пометок подтверждена, Telegram ID в trace/лог не попадает.
