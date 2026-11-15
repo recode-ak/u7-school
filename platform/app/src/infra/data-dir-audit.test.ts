@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { cpSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { TempDir } from 'dmg-core/testing';
 import { DataDirAudit } from './data-dir-audit';
 
@@ -8,6 +9,9 @@ beforeEach(() => {
   tmp = TempDir.create('data-dir-audit-');
 });
 afterEach(() => tmp.dispose());
+
+/** Фикстуры от корня репо — тест не зависит от каталога запуска (гейт идёт из пакета). */
+const FIXTURES = join(import.meta.dir, '../../../../data/fixtures');
 
 /** Копия тестовых фикстур (генерат `seed:fixtures`, не в git), не живых данных. */
 const copyFixtures = () => {
@@ -19,7 +23,7 @@ const copyFixtures = () => {
     'peer-review',
     'streams',
   ]) {
-    cpSync(`data/fixtures/${dir}`, tmp.file(dir), { recursive: true });
+    cpSync(join(FIXTURES, dir), tmp.file(dir), { recursive: true });
   }
 };
 

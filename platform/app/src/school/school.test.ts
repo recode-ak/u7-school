@@ -11,6 +11,7 @@ describe('SchoolSchema и сущность School', () => {
   const validSchoolData = {
     id: U7_SCHOOL_ID,
     name: 'U7 School',
+    timeZone: 'Asia/Oral',
     description:
       'Развиваем не только хард-скиллы, но и софт-скиллы, придавая последним не меньшее значение. Весь процесс обучения заточен на это.',
     address:
@@ -65,6 +66,24 @@ describe('SchoolSchema и сущность School', () => {
   test('выбрасывает ошибку при невалидном UUID id', () => {
     const invalidId = { ...validSchoolData, id: 'not-a-uuid' };
     expect(() => v.parse(SchoolSchema, invalidId)).toThrow();
+  });
+
+  test('отклоняет неизвестную часовую зону', () => {
+    const bad = { ...validSchoolData, timeZone: 'Foo/Bar' };
+    expect(v.safeParse(SchoolSchema, bad).success).toBe(false);
+  });
+
+  test('выбрасывает ошибку при отсутствии обязательного поля (timeZone)', () => {
+    const { timeZone: _, ...missingZone } = validSchoolData;
+    expect(() => v.parse(SchoolSchema, missingZone)).toThrow();
+  });
+
+  test('createSchool переносит timeZone из статики', () => {
+    const school = createSchool({
+      communityGroup: { id: -1, url: 'https://t.me/+c' },
+      studentGroup: { id: -2, inviteUrl: 'https://t.me/+s' },
+    });
+    expect(school.timeZone).toBe('Asia/Oral');
   });
 
   test('U7_SCHOOL_STATIC содержит ожидаемые статические константы', () => {

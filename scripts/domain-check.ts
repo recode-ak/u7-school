@@ -23,6 +23,11 @@ const DOMAIN_SRC = 'domain/src/';
 const PLATFORM = /^@u7-scl\/core(\/|$)/;
 const DOMAIN_PKG = /^@u7-scl\/domain(?:\/([^/]+)(?:\/(.+))?)?$/;
 const PUBLIC_SUBPATHS = new Set(['contract', 'testing']);
+/**
+ * Общий домен `domain/src/shared/` — поля и VO приложения, общие для модулей
+ * (`naming.md` §2 пакета). Не модуль: `ModuleDef` нет, импорт — напрямую.
+ */
+const SHARED = 'shared';
 const IMPORT_RE =
   /(?:\b(?:import|export)\b[^;'"]*?\bfrom\s*|\bimport\s*(?:\(\s*)?)(['"])([^'"\n]+)\1/g;
 
@@ -55,7 +60,7 @@ export function checkDomainImports(
       out.push(`${id}: ${f.path}: ${msg}`);
 
     const crossModule = (other: string, sub: string, spec: string) => {
-      if (other === own) return;
+      if (other === own || other === SHARED) return;
       if (!deps.includes(other)) {
         fail(
           'ARC-04',
@@ -160,7 +165,7 @@ export function checkContractImports(
     for (const { spec } of importsOf(f.text)) {
       const m = DOMAIN_PKG.exec(spec);
       const other = m?.[1];
-      if (!other || other === own) continue;
+      if (!other || other === own || other === SHARED) continue;
       if (m?.[2] === 'contract' || m?.[2] === 'testing') continue;
       out.push(
         `ARC-04: ${f.path}: модуль ${other} — только через contract (import '${spec}')`,
@@ -177,13 +182,13 @@ export function domainGraphOf(modules: readonly AnyModuleDef[]): DomainGraph {
   );
 }
 
-/** ARC-05: каждый каталог `domain/src/<m>/` — модуль графа. */
+/** ARC-05: каждый каталог `domain/src/<m>/`, кроме общего `shared`, — модуль графа. */
 export function checkDomainDirs(
   dirs: readonly string[],
   graph: DomainGraph,
 ): string[] {
   return dirs
-    .filter((d) => !(d in graph))
+    .filter((d) => d !== SHARED && !(d in graph))
     .map((d) => `ARC-05: ${DOMAIN_SRC}${d}: нет ModuleDef в графе домена`);
 }
 

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'bun:test';
+import { SensitiveMask } from 'dmg-core';
 import * as v from 'valibot';
 import { UserArDef } from './user.ar';
 import { USER } from './user.fixture';
+import { UserState } from './user.state';
 
 // Проверки схемы состояния пользователя (TST-09: логика модуля, не поля).
 // Фолбэки дат работают только в `UserArDef.state` (D-36).
@@ -58,5 +60,31 @@ describe('UserState — роли и имя', () => {
     { title: 'пустой nick после trim', value: { ...record, nick: '  ' } },
   ])('отклоняет: $title', ({ value }) => {
     expect(parse(value).success).toBe(false);
+  });
+});
+
+describe('UserState — часовая зона', () => {
+  it('без timeZone запись принимается, поле не задано', () => {
+    const res = parse(record);
+    expect(res.success).toBe(true);
+    if (res.success) expect(res.output.timeZone).toBeUndefined();
+  });
+
+  it('старая запись без timeZone через UserArDef.state — ключа timeZone нет', () => {
+    const res = parse(record);
+    expect(res.success && 'timeZone' in res.output).toBe(false);
+  });
+
+  it('с timeZone Europe/Berlin принимается', () => {
+    const res = parse({ ...record, timeZone: 'Europe/Berlin' });
+    expect(res.success && res.output.timeZone).toBe('Europe/Berlin');
+  });
+
+  it('с неизвестной зоной Mars/Base отклоняется', () => {
+    expect(parse({ ...record, timeZone: 'Mars/Base' }).success).toBe(false);
+  });
+
+  it('поле не F.sensitive: зона не входит в список чувствительных', () => {
+    expect(new SensitiveMask().isSensitive(UserState, 'timeZone')).toBe(false);
   });
 });

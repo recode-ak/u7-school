@@ -16,3 +16,4 @@ export {
 export { U7App } from './u7-app';
 export type { U7AppEnv, U7AppPorts, U7AppResolver } from './u7-app.types';
 export { U7CallerResolver } from './u7-caller-resolver';
+export { LocalZone } from './zone';

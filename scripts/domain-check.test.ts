@@ -135,6 +135,25 @@ describe('checkDomainImports: ARC-04 / ARC-06', () => {
     expect(checkDomainImports(files, DEPENDS)).toHaveLength(2);
   });
 
+  it('общий домен shared — любому модулю, без dependsOn и подпути', () => {
+    const files = [
+      file(
+        'domain/src/user/user/a.ts',
+        "import { Z } from '../../shared';\nimport { Y } from '@u7-scl/domain/shared';",
+      ),
+    ];
+    expect(checkDomainImports(files, DEPENDS)).toEqual([]);
+  });
+
+  it('общий домен shared сам модули не импортирует — ARC-04', () => {
+    const files = [
+      file('domain/src/shared/a.ts', "import { U } from '../user/contract';"),
+    ];
+    expect(checkDomainImports(files, DEPENDS)).toEqual([
+      "ARC-04: domain/src/shared/a.ts: модуль shared не зависит от user (import '../user/contract')",
+    ]);
+  });
+
   it('файлы вне domain/src/<m>/ игнорируются', () => {
     const files = [file('modules/user/src/a.ts', "import '@u7-scl/core';")];
     expect(checkDomainImports(files, DEPENDS)).toEqual([]);
@@ -270,6 +289,10 @@ describe('checkDomainDirs: ARC-05', () => {
       'ARC-05: domain/src/billing: нет ModuleDef в графе домена',
     ]);
   });
+
+  it('общий домен shared — не модуль, ModuleDef не нужен', () => {
+    expect(checkDomainDirs(['user', 'shared'], DEPENDS)).toEqual([]);
+  });
 });
 
 describe('checkContractImports: ARC-04 (D-45)', () => {
@@ -319,6 +342,15 @@ describe('checkContractImports: ARC-04 (D-45)', () => {
     ).toEqual([
       "ARC-04: domain/src/shared/a.ts: модуль wish — только через contract (import '@u7-scl/domain/wish')",
     ]);
+  });
+
+  it('общий домен shared снаружи — напрямую, не модуль', () => {
+    expect(
+      run(
+        'platform/app/src/a.ts',
+        "import { Z } from '@u7-scl/domain/shared';",
+      ),
+    ).toEqual([]);
   });
 
   it('scripts/ — вне ARC-04: полный вход модуля на Def разрешён', () => {

@@ -1,3 +1,4 @@
+import { TimeZoneVo } from '@u7-scl/domain/shared';
 import { BaseEntityFields, F } from 'dmg-core';
 import * as v from 'valibot';
 
@@ -42,6 +43,8 @@ export const UserState = v.object({
     v.minLength(1, 'Пользователь должен иметь хотя бы одну роль'),
   ),
   nick: v.optional(F.sensitive(trimmed('Ник в Telegram'))),
+  /** Нет поля — зона школы (старые записи читаются без миграции). */
+  timeZone: v.optional(TimeZoneVo),
 });
 
 export type UserState = v.InferOutput<typeof UserState>;

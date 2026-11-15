@@ -1,3 +1,4 @@
+import { TimeZoneVo } from '@u7-scl/domain/shared';
 import * as v from 'valibot';
 
 /** Идентификатор школы U7 в системе (связка со Stream.schoolId) */
@@ -7,6 +8,7 @@ export const U7_SCHOOL_ID = 'a0000000-0000-4000-8000-000000000001';
 export const U7_SCHOOL_STATIC = {
   id: U7_SCHOOL_ID,
   name: 'U7 School',
+  timeZone: 'Asia/Oral',
   description:
     'Мы учим не программированию. Мы учим быть программистом и работать в команде.',
   address:
@@ -25,6 +27,7 @@ export const SchoolSchema = v.object({
     v.trim(),
     v.nonEmpty('Имя школы не может быть пустым'),
   ),
+  timeZone: TimeZoneVo,
   description: v.pipe(
     v.string(),
     v.trim(),
