@@ -45,10 +45,10 @@
 
 ## Фаза 3: проверка заявки (ФР-6) — после Ф1
 
-- [x] Task: S (`dmg-test-designer`) — red-тесты `DelegationCheck`: успех; нет записи; пара не совпала; срок истёк; отозвано; делегирование не подключено; часы — подставные
-- [~] Task: O (`dmg-api-author`) — `DelegationClaim`, `DelegationStore`, `DelegationRecord`, `DelegationCheck`, `DELEGATION_DENIED` (`kind: 'unauthorized'`, причина в payload); экспорт из пакета
-- [ ] Task: O (`dmg-reviewer`) — ревью
-- [ ] Task: S (`dmg-access-auditor`) — пилот
+- [x] Task: S (`dmg-test-designer`) — red-тесты `DelegationCheck`: успех; нет записи; пара не совпала; срок истёк; отозвано; делегирование не подключено; часы — подставные `d5f34ae6`
+- [x] Task: O (`dmg-api-author`) — `DelegationClaim`, `DelegationStore`, `DelegationRecord`, `DelegationCheck`, `DELEGATION_DENIED` (`kind: 'unauthorized'`, причина в payload); экспорт из пакета `d5f34ae6` (пакет `1d3e613`)
+- [x] Task: O (`dmg-reviewer`) — ревью `d5f34ae6`
+- [x] Task: S (`dmg-access-auditor`) — пилот `d5f34ae6`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
 **Критерии:** `bun run check` зелёный; в тесте класса есть случай на каждую из четырёх причин; `DELEGATION_DENIED` в `core-errors.ts` с `kind: 'unauthorized'`.
