@@ -46,7 +46,7 @@
 
 **Критерии:** `bun run check` и `arch:check` зелёные, тестов не меньше; `getUTCHours`/`getUTCDate` в `runners`/`platform/core` — только в модуле зоны и `review-render.ts` (за рамками); тесты в обе стороны есть; C-DEBT-43 соответствует новому Месту.
 
-## Фаза 3: `JobRunJsonRepo` числом (ФР-2)
+## Фаза 3: `JobRunJsonRepo` числом (ФР-2) [checkpoint: ef210d25]
 
 > Бриф — [slices/f3-job-run-numbers.md](./slices/f3-job-run-numbers.md)
 
