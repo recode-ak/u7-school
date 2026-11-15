@@ -24,7 +24,7 @@
 
 **Критерии:** `bun run check` зелёный, тестов не меньше базовой линии; в тесте `LocalZone` есть случаи на `31.02`, `25:00`, оба сезона `Europe/Berlin`, неизвестное имя, подпись; `SchoolSchema` отклоняет `Foo/Bar`; `UserState` принимает запись без поля; `git diff package.json bun.lock` — без новых зависимостей; отчёт `dmg-data-keeper` без блокеров.
 
-## Фаза 2: зона школы в раннере, удаление `ProjectZone` (ФР-3, 5–6)
+## Фаза 2: зона школы в раннере, удаление `ProjectZone` (ФР-3, 5–6) [checkpoint: e34207f]
 
 - [x] Task: S (`dmg-test-designer`) — red-тесты `305e57d`
     - [x] `U7BotUiStory.formatDate/formatTime` — зона школы, `18:00 (UTC+5)` (перенос сценария `bot-ui-story.test.ts:463`)
