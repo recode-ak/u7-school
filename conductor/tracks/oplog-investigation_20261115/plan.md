@@ -52,7 +52,7 @@
 
 **Критерии:** `bun run check` (включая `docs:covers`, `docs:jsdoc`) зелёный; аудит `documentarian` без расхождений; D-86 есть, `reference/oplog.md` в `llms.txt`; тег создан.
 
-## Фаза 4: u7-school — разметка и подключение (ФТ-6, критерии 7, 8)
+## Фаза 4: u7-school — разметка и подключение (ФТ-6, критерии 7, 8) [checkpoint: 5938f3c]
 
 - [x] Task: S (`dmg-data-keeper`) — аудит ПД: VO `student` (`abandonDetails`, `completionDetails`, `notices`), `ownerInfo` анкеты; схемы входа и выхода UC, payload событий и ошибок, собранные не из помеченных state/VO (вход регистрации пользователя и др.) — итоговый список мест для `F.sensitive`; совместимость: чтение старых файлов `data/oplog/` новым читателем. Живые `data/` не трогать
 - [x] Task: S (`dmg-test-designer`) — red-тесты: пометки покрывают список аудита; прогон операций на фикстурах — в строках лога нет имён и Telegram ID; `u7-app` — `retainDays: 90`; `bun run oplog` на `DB_DIR=./data/fixtures`; проверить точные `toEqual` по записи лога в `u7-app*.test.ts` и UC-тестах `writes`
@@ -61,7 +61,7 @@
 - [x] Task: O — документы [08343f47]: `docs/backup.md` (oplog вне бэкапа, срок 90 дней, чтение; предупреждение — удаление при смене дня), раздел данных `AGENTS.md`, `conductor/architecture/index.md`; удалить заготовку `roadmap/oplog-state-patch.md`, снять кандидата F-111 в `tracks.md`
 - [x] Task: S (`dmg-reviewer`) — финальное ревью diff трека [08343f47]
 - [x] Task: O — гейт закрытия (workflow.md): `CI=true bun test`, триаж красных, сравнение с базовой линией Ф0 — в `summary.md`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
 **Критерии:** `bun run check` u7-school зелёный, тестов не меньше базовой линии; `DB_DIR=./data/fixtures bun run oplog --request <id>` выдаёт ленту; все места аудита помечены, в логе фикстур нет ПД; `package.json` на новом теге; заготовка удалена, новый кандидат заведён.
 
