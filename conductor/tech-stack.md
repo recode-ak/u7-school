@@ -5,7 +5,7 @@
 - **Среда выполнения и менеджер пакетов:** Bun
 
 ## Фреймворки и библиотеки
-- **Платформа DMG:** пакет `dmg-core` — отдельный репо `~/dev/tools/dmg/dmg-core`, подключён по git-тегу (`git+ssh…#v0.2.1`, D-61); весь код — на нём, проверки — `dmg-core/arch` (в том числе реестры долга `conductor/debt/`), тестовые хелперы — `dmg-core/testing`; `@u7-scl/core` — только `ui` и `shared`, уходит с `dmg-ui` ([вход](./roadmap/dmg-ui-entry.md) §5)
+- **Платформа DMG:** пакет `dmg-core` — отдельный репо `~/dev/tools/dmg/dmg-core`, подключён по git-тегу (`git+ssh…#v0.3.0`, D-61); весь код — на нём, проверки — `dmg-core/arch` (в том числе реестры долга `conductor/debt/`), тестовые хелперы — `dmg-core/testing`; `@u7-scl/core` — только `ui` и `shared`, уходит с `dmg-ui` ([вход](./roadmap/dmg-ui-entry.md) §5)
 - **Web API / Бэкенд:** Elysia
 - **Telegram Bot:** Grammy
 - **Telegram Conversations:** @grammyjs/conversations
