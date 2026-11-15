@@ -39,7 +39,7 @@
 
 **Критерии:** `bun run check` зелёный, тестов не меньше базовой линии, сценарии перенесённых тестов не потеряны; `rg "ProjectZone|DEFAULT_OFFSET_MINUTES" platform runners modules domain --glob '*.ts'` пуст; `rg "getDate\(\)|getHours\(\)|toISOString\(\)\.slice" runners/u7-bot/src --glob '!*.test.ts'` — только `json-file-repo.ts`; тест мастера: `2026-12-01T18:00` → `2026-12-01T13:00Z`.
 
-## Фаза 3: документация и финал (ФР-7–8)
+## Фаза 3: документация и финал (ФР-7–8) [checkpoint: 2d04c41]
 
 - [x] Task: S — правило выбора зоны в проектной документации (`conductor/architecture/ui/` — гайд экранов бота): время школы — в зоне школы, личное — зона пользователя ?? зона школы, время с подписью
 - [x] Task: S — `decisions.md`: новое D (зона школы, IANA, подпись, место `LocalZone`, расписания job — в UTC с местным временем в комментарии, миры читают UTC по D-36)
