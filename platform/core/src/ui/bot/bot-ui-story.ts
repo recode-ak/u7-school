@@ -1,14 +1,8 @@
-import type {
-  DomainError,
-  Identified,
-  PersonCaller,
-  Timestamp,
-} from 'dmg-core';
+import type { DomainError, Identified, PersonCaller } from 'dmg-core';
 import type { ApiApp } from 'dmg-core/app';
 import type { Logger } from '../../shared/logger';
 import { getGlobalLogger } from '../../shared/logger';
 import { type MdText, md, mdConcat, mdJoin } from '../../shared/markdown';
-import { ProjectZone } from '../../shared/project-zone';
 import { serializeError } from '../../shared/serialize-error';
 import { UiStory } from '../ui-story';
 import type { BotUiAppResolve } from './app-types';
@@ -279,16 +273,6 @@ export abstract class BotUiStory<
       return data.slice(prefix.length);
     }
     return data;
-  }
-
-  /** Дата `дд.мм.гггг` по зоне проекта. */
-  protected formatDate(at: Timestamp): string {
-    return ProjectZone.default().formatDate(at);
-  }
-
-  /** Время `чч:мм` по зоне проекта. */
-  protected formatTime(at: Timestamp): string {
-    return ProjectZone.default().formatTime(at);
   }
 
   /**

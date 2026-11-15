@@ -87,6 +87,7 @@ export class ReviewsForMeStory extends U7BotUiStory {
         streamTitle: titles.get(review.scopeId) ?? 'неизвестно',
         createdAt: review.createdAt,
         text: review.text,
+        zone: this.zone,
       }),
     );
 

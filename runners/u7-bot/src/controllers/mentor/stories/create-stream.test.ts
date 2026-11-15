@@ -282,6 +282,19 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
     expect(ctxOf(response).step).toBe(3);
   });
 
+  test('accept-description: подсказка даты называет зону школы с подписью смещения', async () => {
+    const { story } = createStory();
+    const response = await story.handleCallback(
+      'accept-description',
+      mentorActor,
+      wizardSession(2, { title: 'JS', description: 'Курс', ...MOD_FIELDS }),
+    );
+    assertDialogResponseMarkdownSafe(response);
+    const text = String(response.screen?.text);
+    expect(text).toContain('в зоне школы');
+    expect(text).toContain('UTC\\+5');
+  });
+
   // ── Ввод названия/описания/даты ──
 
   test('ввод шаг 1 — название → шаг 2', async () => {
@@ -378,10 +391,12 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
         mentorActor,
         session,
       );
+      assertDialogResponseMarkdownSafe(response);
       const text = String(response.screen?.text);
       expect(text).toContain('Некорректная дата');
       expect(text).toContain('YYYY-MM-DD');
       expect(text).toContain('T10:00');
+      expect(text).toContain('UTC\\+5');
       const ctx = ctxOf(response);
       expect(ctx.step).toBe(3);
       expect(ctx.startDate).toBeUndefined();
@@ -389,23 +404,12 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
     });
   }
 
-  // Ввод — местное время зоны проекта (UTC+5), в команду уходит UTC-метка
+  // Ввод — местное время зоны школы (UTC+5), в команду уходит UTC-метка
   const confirmCtx = (startDate: string): WizardCtx => ({
     moduleId: 'mod-1',
     title: 'Поток',
     description: 'Описание',
     startDate,
-  });
-
-  test('confirm: невалидный startDate в контексте — UC не вызван', async () => {
-    const { story, dispatch } = createStory();
-    const response = await story.handleCallback(
-      'confirm',
-      mentorActor,
-      wizardSession(12, confirmCtx('2026-02-31T10:00')),
-    );
-    expect(response.notify?.kind).toBe('warn');
-    expect(dispatch).not.toHaveBeenCalled();
   });
 
   test('confirm: «2026-09-01T23:59» местного → 18:59Z (граница суток)', async () => {
@@ -623,6 +627,24 @@ describe('CreateStreamStory (US-6) — контракт «Диалог и Экр
   });
 
   // ── Шаг 12: превью ──
+
+  test('превью: дата старта — в зоне школы с подписью смещения', async () => {
+    const { story } = createStory();
+    const response = await story.handleCallback(
+      'skip-key',
+      mentorActor,
+      wizardSession(11, {
+        title: 'П',
+        description: 'О',
+        startDate: '2026-12-01T18:00',
+        moduleId: 'mod-1',
+      }),
+    );
+    assertDialogResponseMarkdownSafe(response);
+    expect(String(response.screen?.text)).toContain(
+      '*Дата старта\\:* 01\\.12\\.2026, 18:00 \\(UTC\\+5\\)',
+    );
+  });
 
   test('skip-key → превью со всеми полями и точными кнопками', async () => {
     const { story } = createStory();

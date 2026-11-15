@@ -1,3 +1,4 @@
+import type { LocalZone } from '@u7-scl/app';
 import { type MdText, md } from '@u7-scl/core/shared';
 import type {
   ReviewDirection,
@@ -42,14 +43,9 @@ export function authorLabel(args: {
   return `${roles.author}${outcome}`;
 }
 
-/**
- * Дата отзыва из метки времени (мс, UTC) — «21.09.2026». Зона — UTC, как у
- * прежнего ISO-текста; перевод на зону проекта.
- */
-export function reviewDate(createdAt: number): string {
-  const iso = new Date(createdAt).toISOString().slice(0, 10);
-  const [y, m, d] = iso.split('-');
-  return `${d}.${m}.${y}`;
+/** Дата отзыва из метки времени (мс, UTC) в зоне школы — «21.09.2026». */
+export function reviewDate(createdAt: number, zone: LocalZone): string {
+  return zone.formatDate(createdAt);
 }
 
 /** Карточка одного отзыва для S08 «Отзывы мне». */
@@ -60,10 +56,11 @@ export function renderReviewCard(args: {
   streamTitle: string;
   createdAt: number;
   text: string;
+  zone: LocalZone;
 }): MdText {
   return md`👤 От: ${args.authorName} \\(${authorLabel(args)}\\)
 📚 Поток: ${args.streamTitle}
-📅 Дата: ${reviewDate(args.createdAt)}
+📅 Дата: ${reviewDate(args.createdAt, args.zone)}
 
 💬 «${args.text}»`;
 }
@@ -77,11 +74,12 @@ export function renderSchoolReviewCard(args: {
   streamTitle: string;
   createdAt: number;
   text: string;
+  zone: LocalZone;
 }): MdText {
   return md`👨‍🏫 Ментор: ${args.mentorName}
 👤 От: ${args.authorName} \\(${authorLabel(args)}\\)
 📚 Поток: ${args.streamTitle}
-📅 Дата: ${reviewDate(args.createdAt)}
+📅 Дата: ${reviewDate(args.createdAt, args.zone)}
 
 💬 «${args.text}»`;
 }

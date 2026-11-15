@@ -1,4 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
+import { TEST_SCHOOL } from '@u7-scl/app';
 import type { MdText } from '@u7-scl/core/shared';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
 import { StreamModuleDef } from '@u7-scl/domain/stream/contract';
@@ -122,6 +123,7 @@ function setupStory(
         ),
       },
       callers: testCallers,
+      school: TEST_SCHOOL,
     } as never,
     {
       invite: mock(
@@ -166,7 +168,7 @@ describe('WishInviteStory', () => {
     expect(text).toContain('JavaScript Основы — Поток 1');
     // Дата и время старта (точки экранируются MarkdownV2)
     expect(text).toContain('17\\.09\\.2026');
-    expect(text).toContain('15:00');
+    expect(text).toContain('15:00 \\(UTC\\+5\\)');
     // Ментор с рабочей t.me-ссылкой на ник
     expect(text).toContain('[Dev](https://t.me/devnick)');
     // Подсказка записи с явным именем потока (поток без ключа — запись свободная)

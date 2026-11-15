@@ -118,7 +118,7 @@ describe('E2E: адресные уведомления stories (приглаше
     expect(text).toContain('📣 *Открылся набор\\!*');
     expect(text).toContain('У тебя было желание пройти курс');
     expect(text).toContain('Поток: «Основы JS — Поток осени»');
-    expect(text).toContain('Старт: 01\\.10\\.2026, 05:00');
+    expect(text).toContain('Старт: 01\\.10\\.2026, 05:00 \\(UTC\\+5\\)');
     expect(text).toContain('Ментор');
     // Поток создан без enrollmentKey → запись свободная
     expect(text).toContain('Запись свободная');

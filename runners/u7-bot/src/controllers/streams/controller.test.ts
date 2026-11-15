@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { TEST_SCHOOL } from '@u7-scl/app';
 import type { BotSession } from '@u7-scl/core/ui';
 import { userActor } from '../../core/user-actor.test-kit';
 import { testCallers } from '../peer-review/stories/peer-review-dmg.test-kit';
@@ -44,7 +45,11 @@ describe('StreamsController (реестр)', () => {
 
   test('handleCallback форвардит catalog:list', async () => {
     const controller = makeController();
-    controller.init({ appApi: mockAppApi, callers: testCallers } as never);
+    controller.init({
+      appApi: mockAppApi,
+      callers: testCallers,
+      school: TEST_SCHOOL,
+    } as never);
 
     const response = await controller.handleCallback(
       'catalog:list',
@@ -57,7 +62,11 @@ describe('StreamsController (реестр)', () => {
 
   test('handleCallback форвардит view-stream:view', async () => {
     const controller = makeController();
-    controller.init({ appApi: mockAppApi, callers: testCallers } as never);
+    controller.init({
+      appApi: mockAppApi,
+      callers: testCallers,
+      school: TEST_SCHOOL,
+    } as never);
 
     const response = await controller.handleCallback(
       'view-stream:view:s-s-s-s-s-s-s-s-s-s-s-s-s-s-s-s',

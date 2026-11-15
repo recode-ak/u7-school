@@ -7,7 +7,6 @@ import {
   mdInlineCode,
   mdJoin,
   now,
-  ProjectZone,
 } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -395,6 +394,7 @@ export class CreateStreamStory extends U7BotUiStory {
     text: string,
   ): DialogResponse {
     const exampleStr = mdInlineCode(this.#exampleDate());
+    const offset = this.zone.offsetLabel(now().getTime());
 
     return this.ask(
       // Композиция MdText — через mdConcat: интерполяция готового MdText
@@ -402,7 +402,7 @@ export class CreateStreamStory extends U7BotUiStory {
       // и двоеточия не экранируются — по правилам Telegram внутри code
       // обязательны к экранированию только ` и \
       mdConcat(
-        md`📅 Введите дату старта в формате \`YYYY-MM-DD\` или дату время \`YYYY-MM-DDTHH:MM\`\\.\nНапример: `,
+        md`📅 Введите дату старта в формате \`YYYY-MM-DD\` или дату время \`YYYY-MM-DDTHH:MM\` в зоне школы \\(${offset}\\)\\.\nНапример: `,
         exampleStr,
         md`\\.`,
       ),
@@ -410,10 +410,9 @@ export class CreateStreamStory extends U7BotUiStory {
     );
   }
 
-  /** Пример ввода: сегодня + 5 дней, 10:00 в зоне проекта. */
+  /** Пример ввода: сегодня + 5 дней, 10:00 в зоне школы. */
   #exampleDate(): string {
-    const zone = ProjectZone.default();
-    const inFiveDays = zone.formatInput(
+    const inFiveDays = this.zone.formatInput(
       now().getTime() + 5 * 24 * 60 * 60 * 1000,
     );
     return `${inFiveDays.slice(0, 10)}T10:00`;
@@ -423,11 +422,11 @@ export class CreateStreamStory extends U7BotUiStory {
     ctx: CreateStreamWizardContext,
     text: string,
   ): DialogResponse {
-    // Контекст хранит дату как местное время зоны проекта; UTC-метка — в confirm
-    if (ProjectZone.default().parseLocal(text) === undefined) {
+    // Контекст хранит дату как местное время зоны школы; UTC-метка — в confirm
+    if (this.zone.parseLocal(text) === undefined) {
       return this.ask(
         mdConcat(
-          md`⚠️ Некорректная дата\\. Введите \`YYYY-MM-DD\` или \`YYYY-MM-DDTHH:MM\`\\.\nНапример: `,
+          md`⚠️ Некорректная дата\\. Введите \`YYYY-MM-DD\` или \`YYYY-MM-DDTHH:MM\` в зоне школы \\(${this.zone.offsetLabel(now().getTime())}\\)\\.\nНапример: `,
           mdInlineCode(this.#exampleDate()),
           md`\\.`,
         ),
@@ -739,12 +738,18 @@ export class CreateStreamStory extends U7BotUiStory {
   // ── Шаг превью ──
 
   #showPreview(ctx: CreateStreamWizardContext): DialogResponse {
+    // Дата в контексте — ввод в зоне школы; показываем её с подписью смещения
+    const startAt = this.zone.parseLocal(ctx.startDate);
+    const startText =
+      startAt === undefined
+        ? ctx.startDate
+        : `${this.formatDate(startAt)}, ${this.formatTime(startAt)}`;
     const lines: MdText[] = [
       md`📋 *Превью потока*`,
       md``,
       md`*Название\\:* ${ctx.title}`,
       md`*Описание\\:* ${ctx.description}`,
-      md`*Дата старта\\:* ${ctx.startDate}`,
+      md`*Дата старта\\:* ${startText}`,
     ];
 
     if (ctx.telegramGroupId)
@@ -790,7 +795,7 @@ export class CreateStreamStory extends U7BotUiStory {
       };
     }
 
-    const startDate = ProjectZone.default().parseLocal(context.startDate);
+    const startDate = this.zone.parseLocal(context.startDate);
     if (startDate === undefined) {
       return {
         ...this.warn(

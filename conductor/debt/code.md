@@ -24,14 +24,6 @@
 - **Погашает:** `dmg-cli` (кандидат в [roadmap.md](../roadmap.md)) — общий инструмент над `ApiApp.dispatchByName` (D-54: интерактивная консоль и разовый `call`), проект подключает его своим корнем сборки и резолвером `Caller`
 - **Критерий снятия:** один инструмент (или пара с общим ядром) вызывает любой UC по имени (D-54) через корень сборки, `Caller` — через резолвер приложения, каталог данных — из окружения; есть тесты старта и вызова; документ — что это, когда что использовать, как работать с живыми данными безопасно; `scripts/call-uc.ts` удалён или переведён на него
 
-### C-DEBT-43: единая зона проекта UTC+5 вместо персональной зоны пользователя
-- **Место:** `platform/core/src/shared/project-zone.ts` — класс `ProjectZone`: единая зона проекта UTC+5 для разбора ввода и показа старта потока (`BotUiStory.formatDate/formatTime`, `create-stream`). С ним (признаком не ловится): `review-render.ts` (`reviewDate` — дата в UTC через `toISOString`), `progress.ts` (дата записи `enrolledAt` — локальные геттеры, зона процесса)
-- **Признак:** `DEFAULT_OFFSET_MINUTES`
-- **Корень:** `platform/core/src/**`
-- **Причина:** решение Нурболата (2026-10-29): сервер и хранение — UTC; всё, что вводит и видит пользователь, — в зоне проекта UTC+5 (`Asia/Oral`), одной на всех. Персональной зоны у пользователя пока нет.
-- **Погашает:** трек персональных зон — цепочка: зона пользователя → зона школы, с которой он взаимодействует → по умолчанию UTC+5 (Уральск) (Нурболат, 2026-11-12); поле зоны в `user` и в школе, форматирование и разбор ввода по этой цепочке; заготовка — [schools-system](../roadmap/schools-system.md)
-- **Критерий снятия:** даты для пользователя форматируются и разбираются по его зоне из `user`; жёстко заданная UTC+5 остаётся только как значение по умолчанию цепочки
-
 ### C-DEBT-45: проактив с кнопками `invite` (маркер `ФР-6`)
 - **Место:** `platform/core/src/ui/bot/{types,ui-app,bot-controller,bot-controller.test}.ts`, `runners/u7-bot/src/infra/{bot-transport,bot-transport.test}.ts`, `runners/u7-bot/src/controllers/{peer-review/stories/invite.story,courses/stories/wish-invite.story,learning/stories/{hub,hub.test},questionnaire/stories/{invite.story,fill.story,fill.story.events.test}}.ts`
 - **Признак:** `ФР-6`

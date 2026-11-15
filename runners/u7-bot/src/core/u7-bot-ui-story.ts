@@ -1,3 +1,4 @@
+import { LocalZone } from '@u7-scl/app';
 import { type MdText, md, mdConcat, mdRaw } from '@u7-scl/core/shared';
 import type {
   BotSession,
@@ -23,6 +24,7 @@ import type {
   Command,
   OutputOf,
   Result,
+  Timestamp,
   UseCaseErrorOf,
 } from 'dmg-core';
 import { APP_CODES } from '../shared/app-codes';
@@ -117,6 +119,9 @@ export abstract class U7BotUiStory extends BotUiStory<
   /** Имя контроллера-владельца — узнаётся при init. */
   #controllerName?: string;
 
+  /** Кэш зоны школы: форматтер `Intl` создаётся один раз на имя зоны. */
+  #zone?: { name: string; zone: LocalZone };
+
   override init(
     resolve: U7BotUiAppResolve,
     controller?: ProactiveSender & { name?: string },
@@ -133,6 +138,28 @@ export abstract class U7BotUiStory extends BotUiStory<
 
   protected get resolve(): U7BotUiAppResolve {
     return this.resolver;
+  }
+
+  /**
+   * Зона школы (`resolve.school.timeZone`). Кэшируется в экземпляре;
+   * при смене имени зоны в `resolve` пересоздаётся.
+   */
+  protected get zone(): LocalZone {
+    const name = this.resolve.school.timeZone;
+    if (this.#zone?.name !== name) {
+      this.#zone = { name, zone: LocalZone.of(name) };
+    }
+    return this.#zone.zone;
+  }
+
+  /** Дата `дд.мм.гггг` в зоне школы. */
+  protected formatDate(at: Timestamp): string {
+    return this.zone.formatDate(at);
+  }
+
+  /** Время `чч:мм (UTC+5)` в зоне школы. */
+  protected formatTime(at: Timestamp): string {
+    return this.zone.formatTime(at);
   }
 
   /** Открыт ли диалог этой стори (активна ли она). */

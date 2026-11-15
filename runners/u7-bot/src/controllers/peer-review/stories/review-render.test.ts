@@ -1,18 +1,28 @@
 import { describe, expect, test } from 'bun:test';
+import { LocalZone } from '@u7-scl/app';
 import { assertMarkdownV2Safe } from '@u7-scl/core/shared';
 import {
   authorLabel,
   OUTCOME_LABELS,
   renderReviewCard,
+  renderSchoolReviewCard,
   reviewDate,
   rolesOf,
 } from './review-render';
 
-describe('reviewDate — дата по UTC из числа', () => {
-  test('около полуночи UTC дата не сдвигается зоной процесса', () => {
-    expect(reviewDate(Date.UTC(2026, 8, 21, 10, 0))).toBe('21.09.2026');
-    expect(reviewDate(Date.parse('2026-09-21T23:30:00Z'))).toBe('21.09.2026');
-    expect(reviewDate(Date.parse('2026-09-22T00:00:00Z'))).toBe('22.09.2026');
+const ZONE = LocalZone.of('Asia/Oral');
+
+describe('reviewDate — дата в зоне школы', () => {
+  test('граница суток сдвинута на зону: 18:59Z — 21.09, 19:00Z — уже 22.09', () => {
+    expect(reviewDate(Date.parse('2026-09-21T10:00:00Z'), ZONE)).toBe(
+      '21.09.2026',
+    );
+    expect(reviewDate(Date.parse('2026-09-21T18:59:00Z'), ZONE)).toBe(
+      '21.09.2026',
+    );
+    expect(reviewDate(Date.parse('2026-09-21T19:00:00Z'), ZONE)).toBe(
+      '22.09.2026',
+    );
   });
 });
 
@@ -58,6 +68,7 @@ describe('рендер карточек (MarkdownV2)', () => {
       authorOutcome: 'completed_passed',
       streamTitle: 'JS Core (поток 1)',
       createdAt,
+      zone: ZONE,
       text: 'Отлично! 5+ баллов - *супер*.',
     });
     assertMarkdownV2Safe(text);
@@ -66,5 +77,19 @@ describe('рендер карточек (MarkdownV2)', () => {
     expect(s).toContain('📚 Поток: JS Core \\(поток 1\\)');
     expect(s).toContain('📅 Дата: 21\\.09\\.2026');
     expect(s).toContain('\\*супер\\*');
+  });
+
+  test('renderSchoolReviewCard: дата — в зоне школы (19:00Z — уже следующие сутки)', () => {
+    const text = renderSchoolReviewCard({
+      mentorName: 'Ментор',
+      authorName: 'Анна',
+      direction: 'student_mentor',
+      streamTitle: 'JS',
+      createdAt: Date.parse('2026-09-21T19:00:00Z'),
+      zone: ZONE,
+      text: 'Хорошо',
+    });
+    assertMarkdownV2Safe(text);
+    expect(String(text)).toContain('📅 Дата: 22\\.09\\.2026');
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { TEST_SCHOOL } from '@u7-scl/app';
 import {
   assertDialogResponseMarkdownSafe,
   type BotSession,
@@ -94,7 +95,7 @@ function makeStory(
 ) {
   const appApi = makeAppApi(reviews, opts);
   const story = new ReviewsForMeStory();
-  story.init({ appApi, callers: testCallers } as never);
+  story.init({ appApi, callers: testCallers, school: TEST_SCHOOL } as never);
   return { story, appApi };
 }
 

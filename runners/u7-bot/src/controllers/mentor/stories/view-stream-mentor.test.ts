@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { TEST_SCHOOL } from '@u7-scl/app';
 import type { BotSession, DialogResponse } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import { CourseModuleDef } from '@u7-scl/domain/course/contract';
@@ -138,7 +139,11 @@ function createStory(handler?: Handler) {
     },
     MODULES,
   );
-  story.init({ appApi: { dispatch }, callers: testCallers } as never);
+  story.init({
+    appApi: { dispatch },
+    callers: testCallers,
+    school: TEST_SCHOOL,
+  } as never);
   return { story, dispatch };
 }
 

@@ -117,12 +117,6 @@ class TestStory extends BotUiStory<TestActor> {
   ): ReturnType<TestStory['unknownCommand']> {
     return this.unknownCommand(action, actor, session);
   }
-  callFormatDate(at: number): string {
-    return this.formatDate(at);
-  }
-  callFormatTime(at: number): string {
-    return this.formatTime(at);
-  }
   // Делегаты билдеров ответов (ФР-2) — экспонирование для тестов
   callScreen(
     text: ReturnType<typeof mdRaw>,
@@ -457,14 +451,6 @@ describe('BotUiStory — колбэк-хелперы', () => {
     const story = new TestStory();
     expect(story.callStripPrefix('anketa:view:1')).toBe('view:1');
     expect(story.callStripPrefix('other:view:1')).toBe('other:view:1');
-  });
-
-  // Сама логика зоны — в project-zone.test.ts (TST-08); здесь — делегирование
-  test('formatDate/formatTime: Timestamp показывается по зоне проекта', () => {
-    const story = new TestStory();
-    const at = Date.parse('2026-09-17T05:00:00.000Z');
-    expect(story.callFormatDate(at)).toBe('17.09.2026');
-    expect(story.callFormatTime(at)).toBe('10:00');
   });
 });
 

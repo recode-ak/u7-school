@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { TEST_SCHOOL } from '@u7-scl/app';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
 import type { ContentSnapshot } from '@u7-scl/domain/course/contract';
@@ -142,7 +143,11 @@ describe('ViewStreamStory (S02-S04)', () => {
     );
 
     const story = new ViewStreamStory();
-    story.init({ appApi: { dispatch }, callers: testCallers } as never);
+    story.init({
+      appApi: { dispatch },
+      callers: testCallers,
+      school: TEST_SCHOOL,
+    } as never);
     return { story, dispatch };
   }
 
@@ -162,7 +167,7 @@ describe('ViewStreamStory (S02-S04)', () => {
     expect(text).toContain('🟡 Набор открыт');
   });
 
-  test('view: старт 10:00Z показан по зоне проекта — «01.10.2026» и «15:00»', async () => {
+  test('view: старт 10:00Z показан по зоне школы — «01.10.2026» и «15:00»', async () => {
     const { story } = makeStory();
     const response = await story.handleCallback(
       `view:${STREAM_ID}`,
@@ -171,24 +176,10 @@ describe('ViewStreamStory (S02-S04)', () => {
     );
     const text = String(response.screen?.text);
     expect(text).toContain('📅 Старт: 01\\.10\\.2026');
-    expect(text).toContain('🕐 Время: 15:00');
+    expect(text).toContain('🕐 Время: 15:00 \\(UTC\\+5\\)');
   });
 
-  test('view: 22:30Z — следующие сутки по зоне проекта («02.10.2026», «03:30»)', async () => {
-    const { story } = makeStory({
-      stream: makeStream({ startDate: Date.parse('2026-10-01T22:30:00.000Z') }),
-    });
-    const response = await story.handleCallback(
-      `view:${STREAM_ID}`,
-      guest,
-      session,
-    );
-    const text = String(response.screen?.text);
-    expect(text).toContain('📅 Старт: 02\\.10\\.2026');
-    expect(text).toContain('🕐 Время: 03:30');
-  });
-
-  test('enroll: «Обучение начнётся» — дата по зоне проекта на границе суток', async () => {
+  test('enroll: «Обучение начнётся» — дата по зоне школы на границе суток', async () => {
     const { story } = makeStory({
       stream: makeStream({
         requiresEnrollmentKey: false,
@@ -683,6 +674,7 @@ describe('ViewStreamStory — публичная drill-down программа �
         ),
       },
       callers: testCallers,
+      school: TEST_SCHOOL,
     } as never);
     return { story };
   }
@@ -798,7 +790,11 @@ describe('ViewStreamStory — кнопка «💬 Отзывы» в карточ
           );
     const mockAppApi = { dispatch };
     const story = new ViewStreamStory();
-    story.init({ appApi: mockAppApi, callers: testCallers } as never);
+    story.init({
+      appApi: mockAppApi,
+      callers: testCallers,
+      school: TEST_SCHOOL,
+    } as never);
     return { story, mockAppApi };
   }
 

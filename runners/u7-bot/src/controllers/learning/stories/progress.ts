@@ -140,15 +140,11 @@ export class ProgressStory extends U7BotUiStory {
     }
 
     if (student.enrolledAt) {
-      const enrolledDate = new Date(student.enrolledAt);
-      const day = String(enrolledDate.getDate()).padStart(2, '0');
-      const month = String(enrolledDate.getMonth() + 1).padStart(2, '0');
-      const year = enrolledDate.getFullYear();
-      const dateStr = `${day}.${month}.${year}`;
+      const dateStr = this.formatDate(student.enrolledAt);
       const days = Math.max(
         1,
         Math.floor(
-          (now().getTime() - enrolledDate.getTime()) / (1000 * 60 * 60 * 24),
+          (now().getTime() - student.enrolledAt) / (1000 * 60 * 60 * 24),
         ),
       );
       lines.push(

@@ -110,6 +110,7 @@ export class SchoolReviewsStory extends U7BotUiStory {
           streamTitle: streamTitles.get(review.scopeId) ?? 'неизвестно',
           createdAt: review.createdAt,
           text: review.text,
+          zone: this.zone,
         }),
       ),
     );

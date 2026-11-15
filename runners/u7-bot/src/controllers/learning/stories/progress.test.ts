@@ -1,4 +1,5 @@
 import { describe, expect, spyOn, test } from 'bun:test';
+import { TEST_SCHOOL } from '@u7-scl/app';
 import * as Shared from '@u7-scl/core/shared';
 import type { BotSession } from '@u7-scl/core/ui';
 import { assertDialogResponseMarkdownSafe } from '@u7-scl/core/ui';
@@ -74,6 +75,7 @@ describe('ProgressStory', () => {
         }),
       },
       callers: testCallers,
+      school: TEST_SCHOOL,
     } as never);
     return { story };
   }
@@ -161,5 +163,18 @@ describe('ProgressStory', () => {
     } finally {
       clock.mockRestore();
     }
+  });
+
+  test('progress:{streamId} — дата записи показана в зоне школы («с 06.09.2026»)', async () => {
+    // 19:30Z — в Asia/Oral (UTC+5) уже 06.09; в UTC было бы 05.09
+    const { story } = makeStory({
+      enrolledAt: Date.parse('2026-09-05T19:30:00.000Z'),
+    });
+    const response = await story.handleCallback(
+      `progress:${STREAM_ID}`,
+      studentActor,
+      session,
+    );
+    expect(String(response.screen?.text)).toContain('с 06\\.09\\.2026');
   });
 });

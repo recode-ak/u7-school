@@ -760,3 +760,42 @@ describe('U7BotUiStory.findUser / findUsers', () => {
     expect(sent[1]?.caller).toBe(actor);
   });
 });
+
+describe('U7BotUiStory — зона школы (formatDate/formatTime)', () => {
+  /** Доступ к protected formatDate/formatTime. */
+  class FormatStory extends U7BotUiStory {
+    readonly name = 'test-format';
+
+    handleCallback(): Promise<DialogResponse> {
+      throw new Error('Не используется');
+    }
+
+    callFormatDate(at: number): string {
+      return this.formatDate(at);
+    }
+
+    callFormatTime(at: number): string {
+      return this.formatTime(at);
+    }
+  }
+
+  function makeStory(timeZone: string): FormatStory {
+    const story = new FormatStory();
+    story.init({ school: { timeZone } } as never);
+    return story;
+  }
+
+  test('Asia/Oral: Timestamp показывается по зоне школы с подписью смещения', () => {
+    const story = makeStory('Asia/Oral');
+    const at = Date.parse('2026-09-17T05:00:00.000Z');
+    expect(story.callFormatDate(at)).toBe('17.09.2026');
+    expect(story.callFormatTime(at)).toBe('10:00 (UTC+5)');
+  });
+
+  test('другая зона школы (Europe/Berlin, лето): зона берётся из resolve.school', () => {
+    const story = makeStory('Europe/Berlin');
+    const at = Date.parse('2026-07-01T05:00:00.000Z');
+    expect(story.callFormatDate(at)).toBe('01.07.2026');
+    expect(story.callFormatTime(at)).toBe('07:00 (UTC+2)');
+  });
+});
