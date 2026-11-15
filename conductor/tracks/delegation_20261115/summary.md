@@ -68,3 +68,31 @@
 ## Фаза 8: u7-school на v0.4.0
 
 - `#v0.4.0` во всех 11 `package.json`, `bun.lock` → `c254383`; `check` — 3511 pass / 0 fail (база 3511), `arch:check` — чисто; исходники `domain`, `modules`, резолвер не тронуты.
+
+## Фаза 9: записи и финальный гейт
+
+- Записи: D-DEBT-9 (служебный доступ в боте) в `conductor/debt/product.md`; `conductor/roadmap/dmg-ui-entry.md` §11 — заместитель как актор сторис; `conductor/roadmap.md` — хвосты этапа 1 закрыты, состояние по `dmg-core@0.4.0`; итог пилота `dmg-access-auditor` — выше и в `agent-roles.md` §4.
+
+### Финальный гейт (2026-11-15)
+
+| Репо | Команда | Результат | База |
+|---|---|---|---|
+| u7-school | `CI=true bun test` | 3511 pass / 0 fail, 335 файлов | 3511 / 0 |
+| u7-school | `bun run check` | зелёный | зелёный |
+| u7-school | `bun run arch:check` | нарушений нет (в т. ч. MAN-14) | нет |
+| dmg-core `v0.4.0` | `bun run check` | 1718 pass / 0 fail | 1655 / 0 |
+| dmg-core | `bun run e2e`, `docs:covers --strict` | ok, чисто | ok |
+
+Триаж: красных тестов нет — промежуточных состояний и регрессов нет. Тестовые файлы u7-school не удалялись и не переписывались.
+
+### Реестры долга
+
+- `conductor/debt/code.md` — трек записей не задевает (Caller и резолвер проекта не менялись).
+- `conductor/debt/tests.md` — пуст, кандидатов в чистку от ревьюеров вне diff нет.
+- `conductor/debt/product.md` — новая D-DEBT-9.
+- Пакет: DEBT-1 закрыт (Ф5), DEBT-2 открыт (запись из query UC при «только чтение», триггер — первое приложение с `readOnly`).
+
+### Вопросы Нурболату на итог
+
+- Ratchet от `dmg-reviewer` Ф4: число `D-NN` на блок JSDoc (CODE-04) — машинной проверкой в `docs:jsdoc` пакета? Не взят в трек.
+- Правка промпта `dmg-access-auditor` перед вторым треком пилота (читать решения из брифа, короче info) — кандидат выше.
