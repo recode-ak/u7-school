@@ -76,7 +76,7 @@
 
 **Критерии:** `bun run check` и `arch:check` зелёные, тестов не меньше; `grep -n "@u7-scl/domain" scripts/migrate-timestamps.ts` пуст; сухой прогон на копии `data/courses` — ≈2370 «переведено», `invalid = 0`.
 
-## Фаза 5: контент, миры и литералы тестов (ФР-5)
+## Фаза 5: контент, миры и литералы тестов (ФР-5) [checkpoint: 19e385b9]
 
 > Бриф — [slices/f5-content-worlds.md](./slices/f5-content-worlds.md)
 
