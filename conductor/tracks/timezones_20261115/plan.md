@@ -41,13 +41,13 @@
 
 ## Фаза 3: документация и финал (ФР-7–8)
 
-- [ ] Task: S — правило выбора зоны в проектной документации (`conductor/architecture/ui/` — гайд экранов бота): время школы — в зоне школы, личное — зона пользователя ?? зона школы, время с подписью
-- [ ] Task: S — `decisions.md`: новое D (зона школы, IANA, подпись, место `LocalZone`, расписания job — в UTC с местным временем в комментарии, миры читают UTC по D-36)
-- [ ] Task: S — `dmg-ui-entry.md`: пункт о зоне (поле времени берёт зону из контекста и подписывает; экран личной зоны; ввод кнопками частых зон, запасной — смещения как `Etc/GMT∓N`; Telegram зону не передаёт)
-- [ ] Task: S — удалить `C-DEBT-43` из `conductor/debt/code.md`; `conductor/architecture/index.md` (раздел о раскладке — `zone/` в `platform/app`); `CHANGELOG.md`
-- [ ] Task: O (`dmg-reviewer`) — ревью текстов и ссылок
-- [ ] Task: O — финальный гейт (`workflow.md`, «Гейт качества»): `bun run check`, `CI=true bun test`, сравнение с базовой линией, триаж — в `summary.md`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
+- [x] Task: S — правило выбора зоны в проектной документации (`conductor/architecture/ui/` — гайд экранов бота): время школы — в зоне школы, личное — зона пользователя ?? зона школы, время с подписью
+- [x] Task: S — `decisions.md`: новое D (зона школы, IANA, подпись, место `LocalZone`, расписания job — в UTC с местным временем в комментарии, миры читают UTC по D-36)
+- [x] Task: S — `dmg-ui-entry.md`: пункт о зоне (поле времени берёт зону из контекста и подписывает; экран личной зоны; ввод кнопками частых зон, запасной — смещения как `Etc/GMT∓N`; Telegram зону не передаёт)
+- [x] Task: S — удалить `C-DEBT-43` из `conductor/debt/code.md` (сделано в Ф2, `305e57d`); `conductor/architecture/index.md` (раздел о раскладке — `zone/` в `platform/app`); `CHANGELOG.md`
+- [x] Task: O (`dmg-reviewer`) — ревью текстов и ссылок `98208b9`
+- [x] Task: O — финальный гейт (`workflow.md`, «Гейт качества»): `bun run check`, `CI=true bun test`, сравнение с базовой линией, триаж — в `summary.md` `98208b9` (3545/0)
+- [x] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md) — автоматическая (трек без пауз): критерии фазы проверены `grep`, ревью текстов без error
 
 **Критерии:** `grep -n "зон" conductor/roadmap/dmg-ui-entry.md` находит пункт со способом ввода; `grep -n "C-DEBT-43" conductor/debt/code.md` пуст; новое D в `decisions.md`; правило выбора зоны записано; `bun run check` зелёный, тестов не меньше базовой линии.
 
