@@ -36,8 +36,8 @@
 
 ## Фаза 2: «query не вызывает command» (ФР-5) — параллельно с Ф1
 
-- [ ] Task: S (`dmg-test-designer`) — red в `def-checker.test.ts`: query с command в `calls` — нарушение; query с query — нет
-- [ ] Task: S (`dmg-api-author`) — проверка по образцу `checkCalls`; MAN-14 в `rules.md` и `violation.ts`; формулировка MAN-05
+- [x] Task: S (`dmg-test-designer`) — red в `def-checker.test.ts`: query с command в `calls` — нарушение; query с query — нет
+- [~] Task: S (`dmg-api-author`) — проверка по образцу `checkCalls`; MAN-14 в `rules.md` и `violation.ts`; формулировка MAN-05
 - [ ] Task: S (`dmg-reviewer`) — ревью
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
