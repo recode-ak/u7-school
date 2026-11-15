@@ -5,6 +5,7 @@ import {
   type ErrorOf,
   type ErrorsOf,
   ok,
+  type ReadonlyAr,
   type RejectOf,
   type Result,
   type Timestamp,
@@ -234,13 +235,14 @@ export class WishAr extends Aggregate<typeof WishArDef> {
    * Текущее (активное) желание пользователя на цель среди загруженных.
    * Активное на пару одно (`WishRules.unique`), но не обязательно первое:
    * завершённые желания той же пары остаются. Фильтр по пользователю и цели
-   * свой — не доверяет выборке вызывающего.
+   * свой — не доверяет выборке вызывающего. Принимает и `ReadonlyAr` — так
+   * клиент (каталог бота) решает тем же вопросом (D-72).
    */
-  static current(
-    wishes: readonly WishAr[],
+  static current<W extends ReadonlyAr<WishAr>>(
+    wishes: readonly W[],
     userId: string,
     target: WishTargetVo,
-  ): WishAr | undefined {
+  ): W | undefined {
     return wishes.find(
       (wish) => wish.isOwnedBy(userId) && wish.isFor(target) && wish.isActive(),
     );

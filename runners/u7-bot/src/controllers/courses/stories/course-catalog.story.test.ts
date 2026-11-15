@@ -121,8 +121,17 @@ describe('CourseCatalogStory', () => {
           lessonIds.filter((id) => steps[id]).map((id) => [id, steps[id]]),
         );
       },
+      // Полный state желания: каталог восстанавливает `ReadonlyAr` (D-72).
       [ListUserWishesUcDef.name]: (_input, caller) =>
-        wishes.filter((w) => w.userId === callerOf(caller).user.uuid),
+        wishes
+          .filter((w) => w.userId === callerOf(caller).user.uuid)
+          .map((w, i) => ({
+            uuid: crypto.randomUUID(),
+            createdAt: Date.UTC(2026, 0, 1, i),
+            updatedAt: Date.UTC(2026, 0, 1, i),
+            version: 0,
+            ...w,
+          })),
       ...overrides,
     });
   }
@@ -833,7 +842,7 @@ describe('CourseCatalogStory', () => {
   // ── Желание пройти курс (кнопка apply на карточке курса) ──
 
   describe('apply — желание пройти курс', () => {
-    const courseId = 'c1';
+    const courseId = '22222222-2222-4222-8222-c0c0c0c0c001';
 
     function makeApplyApi(answer: Result<unknown, DomainError>) {
       return dmgDispatch({
@@ -910,6 +919,26 @@ describe('CourseCatalogStory', () => {
         );
       },
     );
+
+    test('list: отменённое раньше + подтверждённое желание → кнопка отмены, а не записи', async () => {
+      const target = { kind: 'course', courseId } as const;
+      const appApi = makeCatalogApi([
+        { userId: actor.user.uuid, target, status: 'cancelled' },
+        { userId: actor.user.uuid, target, status: 'confirmed' },
+      ]);
+      const story = new CourseCatalogStory();
+      initStory(story, appApi);
+
+      const response = await story.handleCallback('list', actor, session);
+      const buttons = (response.screen?.keyboard?.rows ?? []).flat();
+
+      expect(
+        buttons.some((b) => b.code === `course-catalog:cancel:${courseId}`),
+      ).toBe(true);
+      expect(buttons.some((b) => b.text.includes('Хочу пройти курс'))).toBe(
+        false,
+      );
+    });
 
     test('apply instant: вызывает create-course-wish и рендерит W03', async () => {
       const appApi = makeApplyApi(ok({ outcome: 'instant' }));
