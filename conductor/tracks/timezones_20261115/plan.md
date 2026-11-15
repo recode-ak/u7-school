@@ -24,7 +24,7 @@
 
 **Критерии:** `bun run check` зелёный, тестов не меньше базовой линии; в тесте `LocalZone` есть случаи на `31.02`, `25:00`, оба сезона `Europe/Berlin`, неизвестное имя, подпись; `SchoolSchema` отклоняет `Foo/Bar`; `UserState` принимает запись без поля; `git diff package.json bun.lock` — без новых зависимостей; отчёт `dmg-data-keeper` без блокеров.
 
-## Фаза 2: зона школы в раннере, удаление `ProjectZone`, job (ФР-3, 5–7)
+## Фаза 2: зона школы в раннере, удаление `ProjectZone` (ФР-3, 5–6)
 
 - [ ] Task: S (`dmg-test-designer`) — red-тесты
     - [ ] `U7BotUiStory.formatDate/formatTime` — зона школы, `18:00 (UTC+5)` (перенос сценария `bot-ui-story.test.ts:463`)
@@ -32,18 +32,17 @@
     - [ ] `reviewDate` с зоной: переписать `review-render.test.ts` на зону школы, сценарии границы суток сохранить; вызывающие стори
     - [ ] `progress` — дата записи в зоне школы (новый тест, сейчас дата не проверяется)
     - [ ] мастер потока: подсказка «в зоне школы (UTC+5)»; ввод `2026-12-01T18:00` → `2026-12-01T13:00Z`
-    - [ ] `InactivitySweepJobDef.schedule` — `dailyAt 00:00` (правка `inactivity-sweep.job.test.ts`)
     - [ ] Запуск — падают по делу
-- [ ] Task: S (`dmg-api-author` / автор раннера) — `formatDate/formatTime` из `BotUiStory` в `U7BotUiStory`; `reviewDate`/`renderReviewCard` и стори; `progress.ts`; `create-stream.ts` (зона — поле стори из `this.resolve.school`); `InactivitySweepJobDef` (`hour: 0`, комментарий); удалить `project-zone.ts`, его тест, экспорт из `shared/index.ts`, импорт в `bot-ui-story.ts`
+- [ ] Task: S (`dmg-api-author` / автор раннера) — `formatDate/formatTime` из `BotUiStory` в `U7BotUiStory`; `reviewDate`/`renderReviewCard` и стори; `progress.ts`; `create-stream.ts` (зона — поле стори из `this.resolve.school`); удалить `project-zone.ts`, его тест, экспорт из `shared/index.ts`, импорт в `bot-ui-story.ts`
 - [ ] Task: O (`dmg-reviewer`) — ревью; замечания error/warn исправлены
 - [ ] Task: Conductor - User Manual Verification 'Фаза 2' (Protocol in workflow.md)
 
 **Критерии:** `bun run check` зелёный, тестов не меньше базовой линии, сценарии перенесённых тестов не потеряны; `rg "ProjectZone|DEFAULT_OFFSET_MINUTES" platform runners modules domain --glob '*.ts'` пуст; `rg "getDate\(\)|getHours\(\)|toISOString\(\)\.slice" runners/u7-bot/src --glob '!*.test.ts'` — только `json-file-repo.ts`; тест мастера: `2026-12-01T18:00` → `2026-12-01T13:00Z`.
 
-## Фаза 3: документация и финал (ФР-8)
+## Фаза 3: документация и финал (ФР-7–8)
 
 - [ ] Task: S — правило выбора зоны в проектной документации (`conductor/architecture/ui/` — гайд экранов бота): время школы — в зоне школы, личное — зона пользователя ?? зона школы, время с подписью
-- [ ] Task: S — `decisions.md`: новое D (зона школы, IANA, подпись, место `LocalZone`, миры читают UTC по D-36)
+- [ ] Task: S — `decisions.md`: новое D (зона школы, IANA, подпись, место `LocalZone`, расписания job — в UTC с местным временем в комментарии, миры читают UTC по D-36)
 - [ ] Task: S — `dmg-ui-entry.md`: пункт о зоне (поле времени берёт зону из контекста и подписывает; экран личной зоны; ввод кнопками частых зон, запасной — смещения как `Etc/GMT∓N`; Telegram зону не передаёт)
 - [ ] Task: S — удалить `C-DEBT-43` из `conductor/debt/code.md`; `conductor/architecture/index.md` (раздел о раскладке — `zone/` в `platform/app`); `CHANGELOG.md`
 - [ ] Task: O (`dmg-reviewer`) — ревью текстов и ссылок
@@ -62,7 +61,7 @@
 | 4 тесты сервиса | Ф1 |
 | 5 экраны и даты | Ф2 |
 | 6 мастер | Ф2 |
-| 7 job 00:00 UTC | Ф2 |
+| 7 job — правило UTC в D | Ф3 |
 | 8 документация, D, C-DEBT-43 | Ф3 |
 | 9 гейт | каждая фаза, финал — Ф3 |
 

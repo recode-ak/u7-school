@@ -1,0 +1,8 @@
+{
+  "track_id": "timezones_20261115",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-11-15T12:59:45Z",
+  "updated_at": "2026-11-15T12:59:45Z",
+  "description": "Часовые зоны школы и пользователя: School.timeZone (IANA, обязательное), необязательное User.timeZone, сервис LocalZone вместо ProjectZone, подпись зоны при показе времени, исправление вывода в обход зоны; экраны — в dmg-ui"
+}
