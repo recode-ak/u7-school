@@ -32,7 +32,6 @@
     "gen": "dmg-core gen",
     "oplog": "bun run scripts/oplog.ts",
     "deploy": "bash scripts/deploy.sh",
-    "migrate:streams-school-id": "bun run scripts/migrate-streams-school-id.ts",
     "seed:fixtures": "bun run runners/u7-bot/scripts/seed-fixtures.ts",
     "world:check": "bun run runners/u7-bot/scripts/world-check.ts",
     "world:list": "bun run runners/u7-bot/scripts/world-list.ts",
