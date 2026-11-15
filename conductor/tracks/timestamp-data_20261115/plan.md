@@ -57,7 +57,7 @@
 
 **Критерии:** `bun run check` зелёный; `grep -n "toISOString\|Date.parse" platform/app/src/infra/job-run-json-repo.ts` пуст; `platform/app/tests/u7-app.test.ts` зелёный.
 
-## Фаза 4: скрипт миграции и контрольное чтение (ФР-3, ФР-4, ФР-7: данные)
+## Фаза 4: скрипт миграции и контрольное чтение (ФР-3, ФР-4, ФР-7: данные) [checkpoint: dbb0f25b]
 
 > Бриф — [slices/f4-migrate-timestamps.md](./slices/f4-migrate-timestamps.md)
 
