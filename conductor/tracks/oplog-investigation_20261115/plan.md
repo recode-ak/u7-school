@@ -16,8 +16,8 @@
 
 ## Фаза 1: dmg-core — патч полей и маскирование всей записи (ФТ-1, ФТ-2, ФТ-3)
 
-- [ ] Task: S (`dmg-tech-lead`) — бриф среза `slices/patch.md`: `Aggregate.baseline` / `Committable.baseline`; класс сравнения (`FieldDiff`, место — `src/app/oplog/` или `src/domain/aggregate/`); `F.sensitive` и `SensitiveMask` (обход схемы valibot: object, array, optional/nullable/nullish, pipe, record, variant/union, `withEntityDefaults`); точки применения: `OperationRun` (input по схеме UC/события, output, payload ошибки) и UoW (`changes`); `AggregateWrite.changes`; `ValueDigest` и порог в `JsonlOperationLog`; ID `rules.md` (DOM-17 — `snapshot()` только репозиторий: `baseline` через публичный геттер)
-- [ ] Task: S (`dmg-test-designer`) — red-тесты
+- [x] Task: S (`dmg-tech-lead`) — бриф среза `slices/patch.md`: `Aggregate.baseline` / `Committable.baseline`; класс сравнения (`FieldDiff`, место — `src/app/oplog/` или `src/domain/aggregate/`); `F.sensitive` и `SensitiveMask` (обход схемы valibot: object, array, optional/nullable/nullish, pipe, record, variant/union, `withEntityDefaults`); точки применения: `OperationRun` (input по схеме UC/события, output, payload ошибки) и UoW (`changes`); `AggregateWrite.changes`; `ValueDigest` и порог в `JsonlOperationLog`; ID `rules.md` (DOM-17 — `snapshot()` только репозиторий: `baseline` через публичный геттер)
+- [~] Task: S (`dmg-test-designer`) — red-тесты
     - [ ] `baseline`: restore / create (нет) / после `markStored`
     - [ ] `FieldDiff`: объекты по точке, массив и примитив — лист, созданный — `from: undefined`, без `BaseEntityFields`
     - [ ] `SensitiveMask`: каждый вид схемы; пометка в производной схеме (выход из state, вход из VO); лишние ключи сырого входа — как есть; сбой — `'[redacted]'` целиком
@@ -33,7 +33,7 @@
 
 ## Фаза 2: dmg-core — срок хранения и читатель (ФТ-4, ФТ-5)
 
-- [ ] Task: S (`dmg-test-designer`) — red-тесты
+- [~] Task: S (`dmg-test-designer`) — red-тесты
     - [ ] `retainDays` (временной каталог): старше срока — удалены, свежие — нет; срабатывание при смене дня; по умолчанию не удаляет; сбой удаления не блокирует `append`
     - [ ] `OperationLogReader`: фильтры `request` (цепочка по `correlationId`: UC → ER → Job → вложенные), `aggregate` (патчи по версиям), `subject`, `module`, `op`, `failed`, `since`/`until`; комбинации; записи без `changes`; битая строка JSONL — пропуск с предупреждением; реальная запись из копии `data/fixtures/oplog/`
     - [ ] CLI `oplog`: лента, `--json`, без аргументов — код 2 и `USAGE`
