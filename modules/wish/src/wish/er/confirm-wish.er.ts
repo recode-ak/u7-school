@@ -1,7 +1,8 @@
 import {
   ConfirmWishErDef,
-  WishAr,
   type WishModuleDef,
+  WishQuestionnaireOwner,
+  WishSelectionDqs,
 } from '@u7-scl/domain/wish';
 import { ok } from 'dmg-core';
 import {
@@ -24,14 +25,12 @@ export class ConfirmWishEr extends ReactionFromDef<Def, WishDeps> {
 
   protected async react(event: ReactionEnvelopeOf<Def>, uow: UnitOfWork) {
     const { respondentId: userId, ownerInfo } = event.payload;
-    const target = WishAr.questionnaireTarget(ownerInfo);
+    const target = WishQuestionnaireOwner.parse(ownerInfo)?.target();
     if (!target) return ok();
     const { wishes } = this.resolve;
-    const wish = WishAr.current(
+    const wish = new WishSelectionDqs(
       await wishes.findAllByUserAndTarget(userId, target),
-      userId,
-      target,
-    );
+    ).current(userId, target);
     if (!wish?.canConfirm()) return ok();
     const confirmed = wish.confirm(this.now());
     if (!confirmed.ok) return confirmed;

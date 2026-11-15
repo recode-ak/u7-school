@@ -5,18 +5,17 @@ import {
   type ErrorOf,
   type ErrorsOf,
   ok,
-  type ReadonlyAr,
   type RejectOf,
   type Result,
   type Timestamp,
   type TransitionOf,
 } from 'dmg-core';
-import * as v from 'valibot';
 import { findCoursePool } from './pools/course-pool';
-import { WishErrors } from './wish.errors';
+import { WishErrors, WishPairErrors } from './wish.errors';
 import { WishEvents } from './wish.events';
 import { WishState, type WishStatus, type WishTargetVo } from './wish.state';
 import type { FulfillmentTargets } from './wish.types';
+import { WishQuestionnaireOwner } from './wish-questionnaire-owner';
 
 const {
   NOT_CONFIRMABLE,
@@ -141,14 +140,6 @@ export type WishQuestionnaire = {
 };
 
 /**
- * Формат `ownerInfo` анкеты желания — тот же, что строит `questionnaire()`.
- * Единственное место разбора: события анкеты возвращают `ownerInfo` как есть.
- */
-const QuestionnaireOwner = v.object({
-  courseId: v.pipe(v.string(), v.minLength(1)),
-});
-
-/**
  * Агрегат Wish — желание пользователя в отношении цели (target).
  *
  * Жизненный цикл (правила — в `WishArDef.transitions`), две ветки:
@@ -218,56 +209,16 @@ export class WishAr extends Aggregate<typeof WishArDef> {
     return new WishAr(snapshot);
   }
 
-  /**
-   * Цель желания по `ownerInfo` события анкеты: обратное к
-   * `questionnaire().owner`.
-   * Чужой или битый `ownerInfo` (анкета не `wish`) — `undefined`, реакции
-   * такое событие игнорируют.
-   */
-  static questionnaireTarget(ownerInfo: unknown): WishTargetVo | undefined {
-    const parsed = v.safeParse(QuestionnaireOwner, ownerInfo);
-    return parsed.success
-      ? { kind: 'course', courseId: parsed.output.courseId }
-      : undefined;
-  }
-
-  /**
-   * Текущее (активное) желание пользователя на цель среди загруженных.
-   * Активное на пару одно (`WishRules.unique`), но не обязательно первое:
-   * завершённые желания той же пары остаются. Фильтр по пользователю и цели
-   * свой — не доверяет выборке вызывающего. Принимает и `ReadonlyAr` — так
-   * клиент (каталог бота) решает тем же вопросом (D-72).
-   */
-  static current<W extends ReadonlyAr<WishAr>>(
-    wishes: readonly W[],
-    userId: string,
-    target: WishTargetVo,
-  ): W | undefined {
-    return wishes.find(
-      (wish) => wish.isOwnedBy(userId) && wish.isFor(target) && wish.isActive(),
-    );
-  }
-
-  /**
-   * Последнее желание из загруженных (отмена): среди активных — последнее созданное,
-   * иначе последнее созданное из всех; пусто — `undefined`. Фильтр по
-   * пользователю и цели — у выборки (`findAllByUserAndTarget`), метод его не
-   * повторяет.
-   */
-  static latest(wishes: readonly WishAr[]): WishAr | undefined {
-    const active = wishes.filter((wish) => wish.isActive());
-    const pool = active.length > 0 ? active : wishes;
-    if (pool.length === 0) return undefined;
-    return pool.reduce((latest, wish) =>
-      wish.state.createdAt > latest.state.createdAt ? wish : latest,
-    );
-  }
-
   // ── Вопросы ──
 
   /** Активно ли желание (expressed | pending | confirmed) — занимает ли цель. */
   isActive(): boolean {
     return ACTIVE_STATUSES.includes(this.state.status);
+  }
+
+  /** Создано ли желание позже другого — порядок для `WishSelectionDqs.latest`. */
+  isCreatedAfter(other: Pick<WishAr, 'view'>): boolean {
+    return this.state.createdAt > other.view().createdAt;
   }
 
   /** Принадлежит ли желание пользователю. */
@@ -293,9 +244,7 @@ export class WishAr extends Aggregate<typeof WishArDef> {
    */
   alreadyExists(): ErrorOf<typeof ALREADY_EXISTS> {
     const { userId, target, status } = this.state;
-    return target.kind === 'course'
-      ? ALREADY_EXISTS.make({ userId, courseId: target.courseId, status })
-      : ALREADY_EXISTS.make({ userId, moduleId: target.moduleId, status });
+    return new WishPairErrors(userId, target).alreadyExists(status);
   }
 
   /**
@@ -307,20 +256,7 @@ export class WishAr extends Aggregate<typeof WishArDef> {
    */
   notFound(): ErrorOf<typeof NOT_FOUND> {
     const { userId, target } = this.state;
-    return WishAr.notFoundFor(userId, target);
-  }
-
-  /**
-   * Ошибка «желание не найдено» для пары (пользователь, цель), когда самого
-   * желания нет (UC не загрузил агрегат). Единственное место сборки payload.
-   */
-  static notFoundFor(
-    userId: string,
-    target: WishTargetVo,
-  ): ErrorOf<typeof NOT_FOUND> {
-    return target.kind === 'course'
-      ? NOT_FOUND.make({ userId, courseId: target.courseId })
-      : NOT_FOUND.make({ userId, moduleId: target.moduleId });
+    return new WishPairErrors(userId, target).notFound();
   }
 
   /**
@@ -332,7 +268,11 @@ export class WishAr extends Aggregate<typeof WishArDef> {
     const { status, target } = this.state;
     if (status !== 'pending' || target.kind !== 'course') return undefined;
     const pool = findCoursePool(target.courseId);
-    return pool ? { pool, owner: { courseId: target.courseId } } : undefined;
+    if (!pool) return undefined;
+    return {
+      pool,
+      owner: WishQuestionnaireOwner.forCourse(target.courseId).info(),
+    };
   }
 
   /** Исход создания для вызывающего: `questionnaire`, если нужна анкета. */

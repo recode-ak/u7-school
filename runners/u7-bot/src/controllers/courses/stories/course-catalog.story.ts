@@ -26,6 +26,7 @@ import {
   WishAr,
   WishErrors,
   WishModuleDef,
+  WishSelectionDqs,
 } from '@u7-scl/domain/wish/contract';
 import { buttons } from '../../shared/buttons';
 import { Routes } from '../../shared/routes';
@@ -243,11 +244,14 @@ export class CourseCatalogStory extends U7BotUiStory {
     if (!wishes.ok) return this.ucErrorNotify(wishes.error);
     // Текущее желание — вопрос домена: прошлые (отменённые) желания на тот
     // же курс остаются в списке и не должны его заслонять.
-    const wishStatus = WishAr.current(
+    const wishStatus = new WishSelectionDqs(
       wishes.value.map((w) => WishAr.readonly(w)),
-      actor.user.uuid,
-      { kind: 'course', courseId: currentCourse.uuid },
-    )?.view().status;
+    )
+      .current(actor.user.uuid, {
+        kind: 'course',
+        courseId: currentCourse.uuid,
+      })
+      ?.view().status;
 
     const navLevel = resolveCourseNavLevel({
       level: 'course',

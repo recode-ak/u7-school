@@ -3,6 +3,7 @@ import type {
   ModuleEnrollment,
 } from '@u7-scl/domain/course/contract';
 import { DomainRuleDef, err, ok, type ReadonlyAr, RulesDef } from 'dmg-core';
+import { WishSelectionDqs } from '../wish-selection.dqs';
 import type { CreateWish, WishAr } from './wish.ar';
 import { WishErrors } from './wish.errors';
 
@@ -32,9 +33,7 @@ const unique = DomainRuleDef.define({
     'Новое желание выражается, только если у пользователя нет активного (expressed | pending | confirmed) желания на тот же курс или модуль.',
   error: WishErrors.ALREADY_EXISTS,
   check: ({ userId, target, wishes }: UniqueWishCtx) => {
-    const active = wishes.find(
-      (wish) => wish.isOwnedBy(userId) && wish.isFor(target) && wish.isActive(),
-    );
+    const active = new WishSelectionDqs(wishes).current(userId, target);
     return active === undefined ? ok() : err(active.alreadyExists());
   },
 });

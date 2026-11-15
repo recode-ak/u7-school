@@ -12,12 +12,13 @@ export { CreateModuleWishUcDef } from './wish/uc/create-module-wish.uc';
 /** Кто: stories бота, `scripts/call-uc.ts`. Зачем: список желаний пользователя. */
 export { ListUserWishesUcDef } from './wish/uc/list-user-wishes.uc';
 /**
- * Агрегат желания: каталог курсов бота выбирает текущее желание на курс
- * (`WishAr.current`) среди выхода `listUserWishes`; чужой код видит
- * `ReadonlyAr<WishAr>` (D-69).
+ * Агрегат желания и выбор из загруженных: каталог курсов бота восстанавливает
+ * `ReadonlyAr<WishAr>` из выхода `listUserWishes` (D-69) и выбирает текущее
+ * желание на курс `WishSelectionDqs.current` (D-72).
  */
 export { WishAr } from './wish/wish.ar';
 export { WishErrors } from './wish/wish.errors';
 export { WishEvents } from './wish/wish.events';
 /** Кто: сборка приложения (`scripts/call-uc.ts`) и `dependsOn` других модулей. Зачем: паспорт модуля. */
 export { WishModuleDef } from './wish.module';
+export { WishSelectionDqs } from './wish-selection.dqs';

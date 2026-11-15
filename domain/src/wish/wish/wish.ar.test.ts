@@ -12,7 +12,7 @@ import {
   USER,
   WISH,
 } from './wish.fixture';
-import type { WishState, WishStatus, WishTargetVo } from './wish.state';
+import type { WishStatus, WishTargetVo } from './wish.state';
 
 const restore = (status: WishStatus) => WishAr.restore(stored(status));
 
@@ -411,87 +411,17 @@ describe('WishAr.fulfillmentTargets / isFulfilledBy — реализация з�
   );
 });
 
-describe('WishAr.questionnaireTarget — разбор owner анкеты', () => {
-  it.each([
-    ['пустой объект', {}],
-    ['не строка', { courseId: 42 }],
-    ['пустая строка', { courseId: '' }],
-    ['чужой формат', { lessonId: 'x' }],
-    ['null', null],
-    ['строка', 'x'],
-    ['undefined', undefined],
-  ])('чужой или битый owner (%s) — не наша анкета', (_, owner) => {
-    expect(WishAr.questionnaireTarget(owner)).toBeUndefined();
-  });
-});
+describe('WishAr.isCreatedAfter — порядок создания', () => {
+  const at = (createdAt: number) =>
+    WishAr.restore({
+      ...stored('cancelled'),
+      uuid: crypto.randomUUID(),
+      createdAt,
+    });
 
-describe('WishAr.current — активное желание пользователя на цель', () => {
-  const OTHER_USER = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
-  const OTHER_TARGET: WishTargetVo = {
-    kind: 'course',
-    courseId: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
-  };
-  const wish = (status: WishStatus, over: Partial<WishState> = {}): WishAr =>
-    WishAr.restore({ ...stored(status), uuid: crypto.randomUUID(), ...over });
-
-  it('нет желаний — нет текущего', () => {
-    expect(WishAr.current([], USER, target)).toBeUndefined();
-  });
-
-  it('находит активное, даже если оно не первое (завершённые раньше)', () => {
-    const active = wish('pending');
-    const found = WishAr.current(
-      [wish('abandoned'), wish('cancelled'), active, wish('fulfilled')],
-      USER,
-      target,
-    );
-    expect(found).toBe(active);
-  });
-
-  // `current` не доверяет выборке вызывающего: фильтрует сам.
-  it.each([
-    [
-      'только завершённые',
-      () => [wish('abandoned'), wish('cancelled'), wish('fulfilled')],
-    ],
-    [
-      'чужой пользователь и чужая цель',
-      () => [
-        wish('pending', { userId: OTHER_USER }),
-        wish('pending', { target: OTHER_TARGET }),
-      ],
-    ],
-  ])('%s — нет текущего', (_, list) => {
-    expect(WishAr.current(list(), USER, target)).toBeUndefined();
-  });
-});
-
-// Выбор «текущего» — решение домена, а не хранилища: среди активных —
-// последнее созданное, иначе последнее созданное из всех.
-describe('WishAr.latest — последнее желание, активные в приоритете', () => {
-  const wish = (status: WishStatus, createdAt: number): WishAr =>
-    WishAr.restore({ ...stored(status), uuid: crypto.randomUUID(), createdAt });
-
-  it('нет желаний — нет текущего', () => {
-    expect(WishAr.latest([])).toBeUndefined();
-  });
-
-  it('активных нет — последнее созданное из всех', () => {
-    const older = wish('cancelled', T0);
-    const newer = wish('abandoned', T1);
-    expect(WishAr.latest([newer, older])).toBe(newer);
-  });
-
-  it('активное предпочитается более позднему неактивному', () => {
-    const active = wish('confirmed', T0);
-    const cancelled = wish('cancelled', T1);
-    expect(WishAr.latest([cancelled, active])).toBe(active);
-  });
-
-  it('несколько активных — последнее созданное', () => {
-    const first = wish('expressed', T0);
-    const middle = wish('pending', T1);
-    const last = wish('confirmed', T1 + 1);
-    expect(WishAr.latest([middle, last, first])).toBe(last);
+  it('позже — да, раньше и одновременно — нет', () => {
+    expect(at(T1).isCreatedAfter(at(T0))).toBe(true);
+    expect(at(T0).isCreatedAfter(at(T1))).toBe(false);
+    expect(at(T0).isCreatedAfter(at(T0))).toBe(false);
   });
 });

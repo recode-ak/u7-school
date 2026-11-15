@@ -1,7 +1,9 @@
 import {
   CancelWishUcDef,
-  WishAr,
+  type WishAr,
   type WishModuleDef,
+  WishPairErrors,
+  WishSelectionDqs,
 } from '@u7-scl/domain/wish';
 import { type Caller, err, type Identified, ok } from 'dmg-core';
 import {
@@ -33,9 +35,9 @@ export class CancelWishUc extends UseCaseFromDef<
       userId,
       target,
     );
-    const wish = WishAr.latest(wishes);
+    const wish = new WishSelectionDqs(wishes).latest();
     if (wish) return ok({ wish });
-    return err(WishAr.notFoundFor(userId, target));
+    return err(new WishPairErrors(userId, target).notFound());
   }
 
   protected async execute(

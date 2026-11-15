@@ -1,6 +1,6 @@
-import { ErrorDef, F } from 'dmg-core';
+import { ErrorDef, type ErrorOf, F } from 'dmg-core';
 import * as v from 'valibot';
-import { WishStatus } from './wish.state';
+import { WishStatus, type WishTargetVo } from './wish.state';
 
 const userId = F.uuid('пользователя-желающего');
 const courseId = F.uuid('курса из цели желания');
@@ -105,3 +105,32 @@ export const WishErrors = ErrorDef.define('WISH', {
     payload: v.object({ moduleId }),
   },
 });
+
+const { ALREADY_EXISTS, NOT_FOUND } = WishErrors;
+
+/**
+ * Ошибки о паре (пользователь, цель): цель в payload — плоский `courseId`
+ * или `moduleId`. Единственное место сборки payload этих ошибок.
+ */
+export class WishPairErrors {
+  constructor(
+    private readonly userId: string,
+    private readonly target: WishTargetVo,
+  ) {}
+
+  /** «Желание не найдено» — в том числе когда самого желания нет. */
+  notFound(): ErrorOf<typeof NOT_FOUND> {
+    const { userId, target } = this;
+    return target.kind === 'course'
+      ? NOT_FOUND.make({ userId, courseId: target.courseId })
+      : NOT_FOUND.make({ userId, moduleId: target.moduleId });
+  }
+
+  /** «Желание уже выражено» со статусом действующего желания. */
+  alreadyExists(status: WishStatus): ErrorOf<typeof ALREADY_EXISTS> {
+    const { userId, target } = this;
+    return target.kind === 'course'
+      ? ALREADY_EXISTS.make({ userId, courseId: target.courseId, status })
+      : ALREADY_EXISTS.make({ userId, moduleId: target.moduleId, status });
+  }
+}
