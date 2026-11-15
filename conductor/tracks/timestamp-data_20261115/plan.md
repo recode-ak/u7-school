@@ -16,7 +16,7 @@
 
 **Критерии:** числа базовой линии обоих репо и счёт ISO — в `summary.md`.
 
-## Фаза 1: dmg-core v0.3.2 — `F.timestamp` только число (ФР-1)
+## Фаза 1: dmg-core v0.3.2 — `F.timestamp` только число (ФР-1) [checkpoint: 37498819]
 
 - [x] Task: S (`dmg-test-designer`) — red-тесты `a6043b1` (dmg-core)
     - [x] `fields.test.ts`: число принимает; ISO-строка, произвольная строка, `NaN`, `Infinity`, отрицательное, дробное — отвергает
