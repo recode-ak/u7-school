@@ -101,7 +101,7 @@
 
 ## Фаза 7: релиз и выкатка (ФР-6) — выполняет O
 
-- [ ] Task: O — финальный гейт workflow: `CI=true bun test` полностью, триаж и сравнение с базовой линией — в `summary.md`
+- [x] Task: O — финальный гейт workflow: `CI=true bun test` полностью, триаж и сравнение с базовой линией — в `summary.md`
 - [ ] Task: O — релиз u7-school (CHANGELOG, версия, тег), push
 - [ ] Task: O — прод:
     - [ ] `git status` / `git diff <тег> -- data/courses` пусты
