@@ -281,3 +281,14 @@ describe('QuestionnaireAr.restore и инвариант хранилища', () 
     expect(() => QuestionnaireAr.restore(corrupted)).toThrow();
   });
 });
+
+describe('QuestionnaireAr.isOpen', () => {
+  it('приглашена и заполняется — открыта; завершена и прервана — нет', () => {
+    expect(restore('invited').isOpen()).toBe(true);
+    expect(restore('in_progress').isOpen()).toBe(true);
+    expect(restore('completed').isOpen()).toBe(false);
+    expect(restore('abandoned', { abandonReason: 'timeout' }).isOpen()).toBe(
+      false,
+    );
+  });
+});

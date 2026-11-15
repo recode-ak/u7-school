@@ -56,13 +56,11 @@ export class QuestionnaireJsonRepo
     kinds,
   }: QuestionnaireIdle): Promise<QuestionnaireAr[]> {
     const rows = (await this.rows()).filter(
-      (r) =>
-        (r.status === 'invited' || r.status === 'in_progress') &&
-        (kinds === undefined || kinds.includes(r.kind)),
+      (r) => kinds === undefined || kinds.includes(r.kind),
     );
     return rows
       .map(QuestionnaireAr.restore)
-      .filter((ar) => ar.idleFor(at) >= idleMs);
+      .filter((ar) => ar.isOpen() && ar.idleFor(at) >= idleMs);
   }
 
   protected async stored(uuid: string): Promise<StoredRecord | undefined> {

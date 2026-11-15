@@ -2,7 +2,6 @@ import {
   WishAr,
   WishArDef,
   type WishState,
-  type WishStatus,
   type WishTargetVo,
 } from '@u7-scl/domain/wish';
 import { MemoryRepo } from 'dmg-core/testing';
@@ -23,11 +22,8 @@ export class WishRepoFake
 
   findById = async (uuid: string) => this.restored(uuid);
   findByUser = async (userId: string) => this.where((s) => s.userId === userId);
-  findAllByKind = async (kind: 'course' | 'module', statuses?: WishStatus[]) =>
-    this.where(
-      (s) =>
-        s.target.kind === kind && (!statuses || statuses.includes(s.status)),
-    );
+  findAllByKind = async (kind: 'course' | 'module') =>
+    this.where((s) => s.target.kind === kind);
   findAllByUserAndTarget = this.unanswered<
     [userId: string, target: WishTargetVo],
     WishAr[]

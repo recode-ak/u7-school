@@ -315,27 +315,10 @@ describe('WishJsonRepo', () => {
       expect(found[0]?.snapshot().target.kind).toBe('module');
     });
 
-    test('фильтрует по статусам, если они заданы', async () => {
-      const repo = await repoWith('wishes-kind-statuses.json', [
-        makeState({ status: 'expressed' }),
-        makeState({ status: 'confirmed' }),
-        makeState({ status: 'fulfilled' }),
-      ]);
-
-      const found = await repo.findAllByKind('course', [
-        'expressed',
-        'confirmed',
-      ]);
-      expect(found).toHaveLength(2);
-      for (const w of found) {
-        expect(['expressed', 'confirmed']).toContain(w.snapshot().status);
-      }
-    });
-
     test('нет совпадений — пустой массив', async () => {
       const repo = new WishJsonRepo(filePath('wishes-kind-empty.json'));
 
-      expect(await repo.findAllByKind('course', ['confirmed'])).toEqual([]);
+      expect(await repo.findAllByKind('course')).toEqual([]);
     });
   });
 });

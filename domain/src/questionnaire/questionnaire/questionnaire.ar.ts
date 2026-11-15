@@ -229,6 +229,13 @@ export class QuestionnaireAr extends Aggregate<typeof QuestionnaireArDef> {
     return this.state.respondentId === userId;
   }
 
+  /** Открыта ли анкета: приглашена или заполняется (не завершена и не прервана). */
+  isOpen(): boolean {
+    return (
+      this.state.status === 'invited' || this.state.status === 'in_progress'
+    );
+  }
+
   /** Простой в мс от последней активности; флаги простоя его не сдвигают. */
   idleFor(at: Timestamp): number {
     return at - this.lastActivityAt();
@@ -236,12 +243,7 @@ export class QuestionnaireAr extends Aggregate<typeof QuestionnaireArDef> {
 
   /** Нужен ли обход: достигнута ступень без выставленного флага. */
   needsSweep(at: Timestamp): boolean {
-    if (
-      this.state.status === 'completed' ||
-      this.state.status === 'abandoned'
-    ) {
-      return false;
-    }
+    if (!this.isOpen()) return false;
     const idle = this.idleFor(at);
     if (idle >= ABANDON_AFTER_IDLE_MS) return true;
     if (this.state.status === 'invited') return false;

@@ -1,4 +1,4 @@
-import type { WishAr, WishStatus, WishTargetVo } from '@u7-scl/domain/wish';
+import type { WishAr, WishTargetVo } from '@u7-scl/domain/wish';
 import type { Repository } from 'dmg-core/app';
 
 /** Порт репозитория желаний: принимает и возвращает Ar (API-03). */
@@ -16,12 +16,9 @@ export type WishRepo = Repository<WishAr> & {
   findByUser(userId: string): Promise<WishAr[]>;
 
   /**
-   * Все желания по виду цели (независимо от пользователя).
-   * statuses не задан — все статусы; задан — фильтр на стороне хранилища.
+   * Все желания по виду цели (независимо от пользователя, все статусы);
+   * признак — вопросом `WishAr` у вызывающего (D-87 пакета).
    * Идентичность цели (форки) решается фасадом курсов, не выборкой.
    */
-  findAllByKind(
-    kind: 'course' | 'module',
-    statuses?: WishStatus[],
-  ): Promise<WishAr[]>;
+  findAllByKind(kind: 'course' | 'module'): Promise<WishAr[]>;
 };

@@ -40,7 +40,8 @@ export class StudentJsonRepo
   }
 
   async findStudying(): Promise<StudentAr[]> {
-    return this.select((r) => r.status === 'active' || r.status === 'enrolled');
+    const all = await this.select(() => true);
+    return all.filter((student) => student.isInProgress());
   }
 
   protected async stored(uuid: string): Promise<StoredRecord | undefined> {

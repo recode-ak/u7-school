@@ -1,4 +1,4 @@
-import type { WishState, WishStatus, WishTargetVo } from '@u7-scl/domain/wish';
+import type { WishState, WishTargetVo } from '@u7-scl/domain/wish';
 import { WishAr, WishArDef } from '@u7-scl/domain/wish';
 import { type StoredRecord, VersionedRepository } from 'dmg-core/app';
 import * as v from 'valibot';
@@ -55,14 +55,8 @@ export class WishJsonRepo
     return this.where((r) => r.userId === userId);
   }
 
-  async findAllByKind(
-    kind: 'course' | 'module',
-    statuses?: WishStatus[],
-  ): Promise<WishAr[]> {
-    return this.where(
-      (r) =>
-        r.target.kind === kind && (!statuses || statuses.includes(r.status)),
-    );
+  async findAllByKind(kind: 'course' | 'module'): Promise<WishAr[]> {
+    return this.where((r) => r.target.kind === kind);
   }
 
   protected async stored(uuid: string): Promise<StoredRecord | undefined> {

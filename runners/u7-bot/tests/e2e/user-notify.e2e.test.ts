@@ -147,11 +147,11 @@ describe('E2E: адресные уведомления stories (приглаше
     expect(String(done.screen?.text)).toContain('отменено');
 
     // Желание в репозитории отменено
-    const wishes = await app.wishRepo.findAllByKind('course', ['cancelled']);
+    const wishes = await app.wishRepo.findAllByKind('course');
     expect(
       wishes.some((ar) => {
         const w = ar.snapshot();
-        return w.userId === wisher.user.uuid && w.target.kind === 'course';
+        return w.userId === wisher.user.uuid && w.status === 'cancelled';
       }),
     ).toBe(true);
 
