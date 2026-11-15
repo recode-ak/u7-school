@@ -17,7 +17,7 @@
 
 **Критерии:** числа обоих репо в `summary.md`; `grep -n "D-89" docs/decisions.md` не пуст; файл роли есть, субагент `dmg-access-auditor` запускается.
 
-## Фаза 1: допуск заместителя (ФР-1–4)
+## Фаза 1: допуск заместителя (ФР-1–4) [checkpoint: faec80c9]
 
 - [x] Task: S (`dmg-test-designer`) — red-тесты
     - [x] `DelegateCaller` проходит `callers: ['user']`; Policy получает замещаемого; в записи oplog оба идентификатора
@@ -30,7 +30,7 @@
 - [x] Task: O (`dmg-api-author`) — тип `DeclaredCaller` и метод вида у `Caller`; `readOnly` у `DelegateCaller`; приватный шаг допуска в `UseCaseFromDef` (не в `protected checkCaller`); нормализация; описание `UNAUTHORIZED`; образец и фикстуры без `delegate` в `callers`; документы — по `bun run docs:impact` `187c98bc` (пакет `64af7d9`, `484db75`)
 - [x] Task: O (`dmg-reviewer`) — ревью; замечания error/warn исправлены `187c98bc`
 - [x] Task: S (`dmg-access-auditor`) — пилот: нет ли обхода допуска; запись в «Пилот ролей» `187c98bc`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
 **Критерии:** `bun run check` зелёный, тестов не меньше базовой линии; `grep -rn "'delegate'" src/testing/example src/domain/contracts/contracts.fixture.ts src/graph --include=*.ts` — только вид класса и лог, не `callers`; `grep -n "personal" src/graph/normalize.test.ts` не пуст; `docs:covers --strict` без предупреждений.
 
