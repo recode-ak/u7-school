@@ -6,7 +6,7 @@
 
 ---
 
-## Фаза 0: Базовая линия [checkpoint: —]
+## Фаза 0: Базовая линия [checkpoint: 34162d9f]
 
 - [x] Task: O — `bun run check` в dmg-core; `CI=true bun run check` и `bun run test:bot` в u7-school; числа (pass/fail, число тестов) — в `summary.md`
 - [x] Task: O — замер: размер `data/fixtures/oplog/*.jsonl` (копия в scratchpad) — точка сравнения объёма для Ф1
