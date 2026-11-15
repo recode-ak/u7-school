@@ -99,7 +99,7 @@
 
 **Критерии:** одна версия `dmg-core` `#v0.3.2` во всех `package.json`; `bun run check`, `CI=true bun test`, `arch:check` зелёные, тестов не меньше; `grep -rn "legacy ISO" --include=*.ts` пуст.
 
-## Фаза 7: релиз и выкатка (ФР-6) — выполняет O
+## Фаза 7: релиз и выкатка (ФР-6) — выполняет O [checkpoint: 66dd18fb]
 
 - [x] Task: O — финальный гейт workflow: `CI=true bun test` полностью, триаж и сравнение с базовой линией — в `summary.md`
 - [x] Task: O — `3bd69bc` (тег v0.4.0) — релиз u7-school (CHANGELOG, версия, тег), push
