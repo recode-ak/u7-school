@@ -1,4 +1,4 @@
-import { allowAll, UseCaseDef } from 'dmg-core';
+import { allowAll, F, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { UserArDef, UserView } from '../user.ar';
 import { UserRoleName, UserState } from '../user.state';
@@ -32,7 +32,9 @@ export const ListUsersUcDef = UseCaseDef.define({
       20,
     ),
     role: v.optional(UserRoleName),
-    name: v.optional(v.pipe(v.string(), v.description('Подстрока имени'))),
+    name: v.optional(
+      F.sensitive(v.pipe(v.string(), v.description('Подстрока имени'))),
+    ),
     telegramId: v.optional(UserState.entries.telegramId),
     sort: v.optional(
       v.pipe(UserSort, v.description('Поле и направление сортировки')),

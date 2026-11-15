@@ -4,10 +4,12 @@ import { LikertScoreSchema } from './likert/likert-question';
 
 const kind = F.picklist(['standard', 'likert'], 'вида анкеты');
 
-const ownerInfo = v.pipe(
-  v.record(v.string(), v.unknown()),
-  v.description(
-    'Данные владельца анкеты: модуль анкет их не толкует и передаёт как есть',
+const ownerInfo = F.sensitive(
+  v.pipe(
+    v.record(v.string(), v.unknown()),
+    v.description(
+      'Данные владельца анкеты: модуль анкет их не толкует и передаёт как есть',
+    ),
   ),
 );
 

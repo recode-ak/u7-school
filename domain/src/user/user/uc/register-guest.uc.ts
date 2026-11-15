@@ -1,4 +1,4 @@
-import { UseCaseDef } from 'dmg-core';
+import { F, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { UserArDef, UserView } from '../user.ar';
 import { UserErrors } from '../user.errors';
@@ -24,7 +24,9 @@ export const RegisterGuestUcDef = UseCaseDef.define({
   input: v.object({
     telegramId: UserState.entries.telegramId,
     name: UserState.entries.name,
-    nick: v.optional(v.pipe(v.string(), v.description('Ник в Telegram'))),
+    nick: v.optional(
+      F.sensitive(v.pipe(v.string(), v.description('Ник в Telegram'))),
+    ),
   }),
   output: UserView,
   errors: [UserErrors.TELEGRAM_ID_TAKEN],

@@ -14,13 +14,17 @@ export const UserErrors = ErrorDef.define('USER', {
     // Ровно один идентификатор: пользователя ищут либо по uuid, либо по telegramId.
     payload: v.union([
       v.strictObject({ uuid: F.uuid('пользователя') }),
-      v.strictObject({ telegramId: F.int('telegramId пользователя') }),
+      v.strictObject({
+        telegramId: F.sensitive(F.int('telegramId пользователя')),
+      }),
     ]),
   },
   TELEGRAM_ID_TAKEN: {
     kind: 'conflict',
     label: 'Этот Telegram ID уже занят',
     description: 'Telegram ID принадлежит другому пользователю.',
-    payload: v.object({ telegramId: F.int('telegramId пользователя') }),
+    payload: v.object({
+      telegramId: F.sensitive(F.int('telegramId пользователя')),
+    }),
   },
 });

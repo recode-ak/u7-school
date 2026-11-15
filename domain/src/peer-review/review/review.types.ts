@@ -25,7 +25,7 @@ export const ReviewSnapshotSchema = v.object({
   authorId: F.uuid('автора'),
   direction: ReviewDirectionSchema,
   authorOutcome: v.optional(StudentOutcomeSchema),
-  text: v.pipe(v.string(), v.description('Текст отзыва')),
+  text: F.sensitive(v.pipe(v.string(), v.description('Текст отзыва'))),
   createdAt: epochMsField('создания отзыва'),
 });
 

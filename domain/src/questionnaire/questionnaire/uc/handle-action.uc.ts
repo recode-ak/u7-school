@@ -22,7 +22,9 @@ export const HandleActionUcDef = UseCaseDef.define({
       v.picklist(['callback', 'text']),
       v.description('Вид действия: кнопка или свободный текст'),
     ),
-    value: v.pipe(v.string(), v.description('Код ответа или текст')),
+    value: F.sensitive(
+      v.pipe(v.string(), v.description('Код ответа или текст')),
+    ),
   }),
   output: QuestionnaireActionResponseSchema,
   errors: [

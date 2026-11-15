@@ -56,13 +56,13 @@
 
 **Где данные.** Данные БД — JSON-файлы в `data/` (каталог задаётся переменной `DB_DIR`, по умолчанию `./data`).
 
-- **НЕ защищены git (живые данные, git их не хранит):** `data/users/`, `data/streams/`, `data/jobs/`, `data/wish/`, `data/questionnaires/`, `data/peer-review/`, `data/bot/`, `data/backup/`, `data/backup-adhoc/`, `data/oplog/` (лог операций DMG, JSONL по дням; в бэкап не входит, D-43), `data/replay/` (записи отсева повторов команд DMG, TTL 24 ч, D-56 пакета `dmg-core`; в бэкап не входит, просроченные удаляет сам бот). Удаление или перезапись = безвозвратная потеря.
+- **НЕ защищены git (живые данные, git их не хранит):** `data/users/`, `data/streams/`, `data/jobs/`, `data/wish/`, `data/questionnaires/`, `data/peer-review/`, `data/bot/`, `data/backup/`, `data/backup-adhoc/`, `data/oplog/` (лог операций DMG, JSONL по дням; в бэкап не входит, D-43; хранится 90 дней — старше бот удаляет сам, D-86 пакета; чтение — `bun run oplog`), `data/replay/` (записи отсева повторов команд DMG, TTL 24 ч, D-56 пакета `dmg-core`; в бэкап не входит, просроченные удаляет сам бот). Удаление или перезапись = безвозвратная потеря.
 - **Защищены git (контент):** `data/courses/*.json`, `data/sources/`, `data/fullstack-js/` — с ними обычный gitflow, но не затирать незакоммиченные правки.
 - Если не уверен, отслеживается ли файл — проверь `git ls-files <путь>`; при сомнениях считай файл незащищённым.
 
 **Спец-скрипты и команды (использовать их, а не ручные операции):**
 - `bun run backup` (= `bash scripts/backup.sh <причина>`) — **системный** бэкап в `data/backup/` (ротация, offsite; server-ops). `bun run backup:adhoc <причина> <путь...>` (или `--courses`) — ручная копия «на всякий случай» в `data/backup-adhoc/`. Это разные каталоги: ad-hoc не попадает в ротацию/offsite. Детали и восстановление — `docs/backup.md`.
-- Точечные операции с данными — через готовые скрипты `scripts/` (`call-uc.ts`, `distribute-lesson.ts`, `distribute-mentor.ts`, `update-stream-snapshot.ts`, `list-lessons.ts`), а не через ручное редактирование JSON. `update-stream-snapshot.ts` — привести идущий поток к текущей версии модуля через UC `stream` (предпросмотр → подтверждение → применение, `--dry-run` — только предпросмотр); перед применением на живых данных — остановить бота и `bun run backup`.
+- Точечные операции с данными — через готовые скрипты `scripts/` (`call-uc.ts`, `distribute-lesson.ts`, `distribute-mentor.ts`, `update-stream-snapshot.ts`, `list-lessons.ts`; чтение лога операций — `bun run oplog`), а не через ручное редактирование JSON. `update-stream-snapshot.ts` — привести идущий поток к текущей версии модуля через UC `stream` (предпросмотр → подтверждение → применение, `--dry-run` — только предпросмотр); перед применением на живых данных — остановить бота и `bun run backup`.
 - `bun run seed:fixtures` и `DB_DIR=./data/fixtures` — тестовые фикстуры; НИКОГДА не запускать генерацию/seed в сторону реальных данных.
 - `bun run start:prod` / `start:prod:stop` / `start:prod:restart` — прод работает под pm2; перезапуск влияет на живой сервис.
 

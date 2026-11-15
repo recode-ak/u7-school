@@ -174,7 +174,7 @@ export class U7App {
       clock,
       logger,
       mode: env.mode,
-      oplog: new JsonlOperationLog(`${env.dbDir}/oplog`),
+      oplog: new JsonlOperationLog(`${env.dbDir}/oplog`, { retainDays: 90 }),
       replay: env.replay ?? new InProcReplayStore({ clock }),
     };
   }

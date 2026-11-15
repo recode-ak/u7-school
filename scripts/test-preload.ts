@@ -7,6 +7,10 @@
  */
 
 import { ConsoleLogger, LogLevel, parseLogLevel } from '@u7-scl/core/shared';
+import { VisitorId } from '../runners/u7-bot/src/core/visitor-id';
 
 ConsoleLogger.defaultLevel =
   parseLogLevel(process.env.LOG_LEVEL ?? '') ?? LogLevel.WARN;
+
+// Ключ `VisitorId` бота (D-86) в тестах фиксирован: id посетителя воспроизводим.
+VisitorId.install('test-bot-token');

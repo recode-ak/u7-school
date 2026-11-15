@@ -9,6 +9,7 @@ import type {
 } from 'dmg-core';
 import { Trace } from 'dmg-core/app';
 import type { U7BotUiAppResolve } from './u7-bot-app-meta';
+import { VisitorId } from './visitor-id';
 
 /** Кто и в каком запросе исполняет команду DMG. */
 interface DispatchOpts {
@@ -27,7 +28,8 @@ interface DispatchOpts {
  * реакция ближе апдейта, поэтому приоритетнее. Иначе — запрос канала
  * telegram: `requestId` и `correlationId` — из контекста апдейта Telegram
  * (`BotRequestContext`, транспорт); вне апдейта контекста нет — id создаётся
- * на вызов с `warn` (ERR-07, caller.md §2).
+ * на вызов с `warn` (ERR-07, caller.md §2). Посетитель — непрозрачный
+ * `VisitorId`, не Telegram ID (D-86).
  * Единый способ построения следа для вызова UC и для резолва субъекта.
  */
 export function requestTrace(
@@ -43,7 +45,10 @@ export function requestTrace(
       correlationId: request?.correlationId,
       channel: {
         name: 'telegram',
-        visitorId: telegramId === undefined ? undefined : String(telegramId),
+        visitorId:
+          telegramId === undefined
+            ? undefined
+            : VisitorId.installed().of(telegramId),
       },
     },
     warn,

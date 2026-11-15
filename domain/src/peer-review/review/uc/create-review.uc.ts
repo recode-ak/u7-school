@@ -31,7 +31,7 @@ export const CreateReviewUcDef = UseCaseDef.define({
   input: v.object({
     campaignId: F.uuid('кампании отзывов'),
     recipientId: F.uuid('адресата отзыва'),
-    text: v.pipe(v.string(), v.description('Текст отзыва')),
+    text: F.sensitive(v.pipe(v.string(), v.description('Текст отзыва'))),
   }),
   output: v.object({
     reviewId: F.uuid('отзыва'),

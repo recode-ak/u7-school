@@ -29,17 +29,19 @@ const trimmed = (label: string) =>
  */
 export const UserState = v.object({
   ...BaseEntityFields,
-  name: trimmed('Имя пользователя'),
-  telegramId: v.pipe(
-    F.int('telegramId пользователя'),
-    v.minValue(1, 'telegramId должен быть положительным'),
+  name: F.sensitive(trimmed('Имя пользователя')),
+  telegramId: F.sensitive(
+    v.pipe(
+      F.int('telegramId пользователя'),
+      v.minValue(1, 'telegramId должен быть положительным'),
+    ),
   ),
   roles: v.pipe(
     v.array(UserRoleName),
     v.description('Роли пользователя в порядке выдачи'),
     v.minLength(1, 'Пользователь должен иметь хотя бы одну роль'),
   ),
-  nick: v.optional(trimmed('Ник в Telegram')),
+  nick: v.optional(F.sensitive(trimmed('Ник в Telegram'))),
 });
 
 export type UserState = v.InferOutput<typeof UserState>;

@@ -13,6 +13,7 @@ import { webhookCallback } from 'grammy';
 import type { DevPersonaPanel } from '../scripts/dev-persona';
 import { createBot } from './bot';
 import { loadConfig } from './config';
+import { VisitorId } from './core/visitor-id';
 import { createUiApp } from './create-ui-app';
 import { BotTransport } from './infra/bot-transport';
 import { JsonBotSessionRepo } from './infra/json-bot-session-repo';
@@ -51,6 +52,8 @@ try {
   // На проде или без тестового мира — файла нет, это ожидаемо
 }
 
+// Посетитель в следе вызова — HMAC от Telegram ID с ключом из токена (D-86).
+VisitorId.install(config.botToken);
 const bot = createBot(config.botToken);
 
 // Отсев повторов команд DMG (D-56) переживает рестарт: Telegram повторно

@@ -1,4 +1,4 @@
-import { UseCaseDef } from 'dmg-core';
+import { F, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { QuestionnairePoolSchema } from '../question';
 import { QuestionnaireArDef } from '../questionnaire.ar';
@@ -17,10 +17,12 @@ export const StartQuestionnaireUcDef = UseCaseDef.define({
   policy: QuestionnairePolicy.rules.hasRespondent,
   input: v.object({
     pool: v.pipe(QuestionnairePoolSchema, v.description('Пул вопросов анкеты')),
-    ownerInfo: v.pipe(
-      v.record(v.string(), v.unknown()),
-      v.description(
-        'Данные владельца анкеты: модуль анкет их не толкует и передаёт как есть',
+    ownerInfo: F.sensitive(
+      v.pipe(
+        v.record(v.string(), v.unknown()),
+        v.description(
+          'Данные владельца анкеты: модуль анкет их не толкует и передаёт как есть',
+        ),
       ),
     ),
   }),

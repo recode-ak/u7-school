@@ -1,3 +1,4 @@
+import { F } from 'dmg-core';
 import * as v from 'valibot';
 import type { Question } from './question';
 import { QuestionSchema } from './question';
@@ -92,9 +93,8 @@ export const WaitNextResponseSchema = v.object({
   ),
   questionnaireId: v.pipe(v.string(), v.description('Идентификатор анкеты')),
   currentQuestion: v.pipe(QuestionSchema, v.description('Текущий вопрос')),
-  selectedAnswers: v.pipe(
-    v.array(v.string()),
-    v.description('Выбранные коды ответов'),
+  selectedAnswers: F.sensitive(
+    v.pipe(v.array(v.string()), v.description('Выбранные коды ответов')),
   ),
   nextButton: v.optional(
     v.pipe(v.string(), v.description('Значение кнопки «Далее»')),
@@ -117,17 +117,21 @@ export const NewQuestionResponseSchema = v.object({
   ),
   questionnaireId: v.pipe(v.string(), v.description('Идентификатор анкеты')),
   question: v.pipe(QuestionSchema, v.description('Новый вопрос')),
-  selectedAnswers: v.optional(
-    v.pipe(
-      v.array(v.string()),
-      v.description('Выбранные коды ответов в черновике'),
+  selectedAnswers: F.sensitive(
+    v.optional(
+      v.pipe(
+        v.array(v.string()),
+        v.description('Выбранные коды ответов в черновике'),
+      ),
     ),
   ),
   previousQuestion: v.optional(
     v.pipe(QuestionSchema, v.description('Предыдущий вопрос')),
   ),
-  previousSelectedAnswers: v.optional(
-    v.pipe(v.array(v.string()), v.description('Ответ на предыдущий вопрос')),
+  previousSelectedAnswers: F.sensitive(
+    v.optional(
+      v.pipe(v.array(v.string()), v.description('Ответ на предыдущий вопрос')),
+    ),
   ),
   cancelWarning: v.optional(
     v.pipe(v.string(), v.description('Предупреждение при отмене анкеты')),
@@ -146,14 +150,18 @@ export const CompletedResponseSchema = v.object({
     v.description('Вид экрана: анкета завершена'),
   ),
   questionnaireId: v.pipe(v.string(), v.description('Идентификатор анкеты')),
-  selectedAnswers: v.optional(
-    v.pipe(v.array(v.string()), v.description('Ответ на последний вопрос')),
+  selectedAnswers: F.sensitive(
+    v.optional(
+      v.pipe(v.array(v.string()), v.description('Ответ на последний вопрос')),
+    ),
   ),
   previousQuestion: v.optional(
     v.pipe(QuestionSchema, v.description('Последний вопрос анкеты')),
   ),
-  previousSelectedAnswers: v.optional(
-    v.pipe(v.array(v.string()), v.description('Ответ на последний вопрос')),
+  previousSelectedAnswers: F.sensitive(
+    v.optional(
+      v.pipe(v.array(v.string()), v.description('Ответ на последний вопрос')),
+    ),
   ),
   completionText: v.optional(
     v.pipe(v.string(), v.description('Текст после завершения анкеты')),
@@ -167,9 +175,11 @@ export const StaleAnswerResponseSchema = v.object({
   ),
   questionnaireId: v.pipe(v.string(), v.description('Идентификатор анкеты')),
   question: v.pipe(QuestionSchema, v.description('Актуальный вопрос')),
-  selectedAnswers: v.pipe(
-    v.array(v.string()),
-    v.description('Выбранные коды ответов в черновике'),
+  selectedAnswers: F.sensitive(
+    v.pipe(
+      v.array(v.string()),
+      v.description('Выбранные коды ответов в черновике'),
+    ),
   ),
   cancelWarning: v.optional(
     v.pipe(v.string(), v.description('Предупреждение при отмене анкеты')),

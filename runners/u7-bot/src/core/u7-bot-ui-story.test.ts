@@ -41,6 +41,7 @@ import type { U7BotActor } from './u7-bot-app-meta';
 import { U7BotController } from './u7-bot-controller';
 import { U7BotUiStory } from './u7-bot-ui-story';
 import { userActor } from './user-actor.test-kit';
+import { VisitorId } from './visitor-id';
 
 /**
  * Заглушка для доступа к protected методу handleError.
@@ -452,7 +453,10 @@ describe('U7BotUiStory.dispatchUc', () => {
     expect(call.command).toEqual(ListUserWishesUcDef.command({}));
     expect(call.caller).toBe(actor);
     expect(call.trace.cause.kind).toBe('request');
-    expect(call.trace.channel).toEqual({ name: 'telegram', visitorId: '1' });
+    expect(call.trace.channel).toEqual({
+      name: 'telegram',
+      visitorId: VisitorId.installed().of(1),
+    });
   });
 
   test('caller — сам актор: без повторного резолва по uuid', async () => {

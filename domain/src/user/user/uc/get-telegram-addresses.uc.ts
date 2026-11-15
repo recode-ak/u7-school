@@ -31,7 +31,7 @@ export const GetTelegramAddressesUcDef = UseCaseDef.define({
       v.array(
         v.object({
           userId: F.uuid('пользователя'),
-          telegramId: F.int('telegramId пользователя'),
+          telegramId: F.sensitive(F.int('telegramId пользователя')),
         }),
       ),
       v.description('Адреса пользователей, у которых есть telegramId'),

@@ -36,13 +36,15 @@ export const StreamState = v.object({
     'Статус потока: набор, идёт, завершён, в архиве',
   ),
   telegramGroupId: text('Идентификатор Telegram-группы потока'),
-  telegramGroupInvite: text('Ссылка-приглашение в Telegram-группу потока'),
+  telegramGroupInvite: F.sensitive(
+    text('Ссылка-приглашение в Telegram-группу потока'),
+  ),
   goal: text('Цель обучения'),
   result: text('Результат обучения'),
   rules: text('Правила прохождения'),
   additional: text('Дополнительные материалы'),
   targetAudience: text('Целевая аудитория'),
-  enrollmentKey: text('Кодовое слово для зачисления'),
+  enrollmentKey: F.sensitive(text('Кодовое слово для зачисления')),
   contentSnapshot: v.pipe(
     ContentSnapshotVo,
     v.description('Снимок контента модуля на момент создания потока'),

@@ -6,8 +6,10 @@ const userId = F.uuid('пользователя-желающего');
 /** Адресат приглашения: пользователь, его Telegram и поток с набором. */
 const addressee = {
   userId,
-  telegramId: F.int(
-    'telegramId адресата: резолвит ER из профиля пользователя, по нему UI отправляет карточку',
+  telegramId: F.sensitive(
+    F.int(
+      'telegramId адресата: резолвит ER из профиля пользователя, по нему UI отправляет карточку',
+    ),
   ),
   streamId: F.uuid('потока с открытым набором'),
 };

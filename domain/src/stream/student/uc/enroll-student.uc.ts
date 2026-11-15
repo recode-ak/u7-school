@@ -34,9 +34,11 @@ export const EnrollStudentUcDef = UseCaseDef.define({
   calls: [GetModulePrerequisiteUcDef],
   input: v.object({
     streamId: F.uuid('потока'),
-    enrollmentKey: v.pipe(
-      v.optional(v.string()),
-      v.description('Кодовое слово потока, если оно задано'),
+    enrollmentKey: F.sensitive(
+      v.pipe(
+        v.optional(v.string()),
+        v.description('Кодовое слово потока, если оно задано'),
+      ),
     ),
   }),
   output: v.object({ studentId: F.uuid('записи студента') }),

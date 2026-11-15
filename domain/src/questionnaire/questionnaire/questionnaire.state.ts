@@ -35,15 +35,23 @@ const baseEntries = {
       'Код текущего вопроса; null — вопроса нет (приглашение или завершение)',
     ),
   ),
-  draftAnswers: v.pipe(
-    v.record(v.string(), v.string()),
-    v.description('Черновик выбранных кодов по коду вопроса (multiple-выбор)'),
+  draftAnswers: F.sensitive(
+    v.pipe(
+      v.record(v.string(), v.string()),
+      v.description(
+        'Черновик выбранных кодов по коду вопроса (multiple-выбор)',
+      ),
+    ),
   ),
-  answers: v.pipe(v.array(AnswerVo), v.description('Полученные ответы')),
-  ownerInfo: v.pipe(
-    v.record(v.string(), v.unknown()),
-    v.description(
-      'Данные владельца анкеты; `courseId` — известный ключ, по нему модуль фильтрует, прочее модуль не толкует и передаёт как есть',
+  answers: F.sensitive(
+    v.pipe(v.array(AnswerVo), v.description('Полученные ответы')),
+  ),
+  ownerInfo: F.sensitive(
+    v.pipe(
+      v.record(v.string(), v.unknown()),
+      v.description(
+        'Данные владельца анкеты; `courseId` — известный ключ, по нему модуль фильтрует, прочее модуль не толкует и передаёт как есть',
+      ),
     ),
   ),
   warnedAt: v.optional(

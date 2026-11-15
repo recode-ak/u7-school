@@ -1,4 +1,4 @@
-import { UseCaseDef } from 'dmg-core';
+import { F, UseCaseDef } from 'dmg-core';
 import * as v from 'valibot';
 import { LikertQuestionPoolSchema } from '../likert/likert-question';
 import { QuestionnaireArDef } from '../questionnaire.ar';
@@ -20,10 +20,12 @@ export const SendLikertInviteUcDef = UseCaseDef.define({
       LikertQuestionPoolSchema,
       v.description('Пул likert-вопросов анкеты'),
     ),
-    ownerInfo: v.pipe(
-      v.record(v.string(), v.unknown()),
-      v.description(
-        'Данные владельца анкеты: модуль анкет их не толкует и передаёт как есть',
+    ownerInfo: F.sensitive(
+      v.pipe(
+        v.record(v.string(), v.unknown()),
+        v.description(
+          'Данные владельца анкеты: модуль анкет их не толкует и передаёт как есть',
+        ),
       ),
     ),
   }),

@@ -20,7 +20,9 @@ export const GetMyReviewUcDef = UseCaseDef.define({
   }),
   output: v.object({
     found: F.boolean('отзыв найден'),
-    text: v.optional(v.pipe(v.string(), v.description('Текст отзыва'))),
+    text: v.optional(
+      F.sensitive(v.pipe(v.string(), v.description('Текст отзыва'))),
+    ),
   }),
   errors: [],
 });

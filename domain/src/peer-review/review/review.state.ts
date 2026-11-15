@@ -42,9 +42,8 @@ export const ReviewState = v.object({
     v.description('Снимок исхода автора-студента; у ментора его нет'),
   ),
   recipientId: F.uuid('адресата отзыва'),
-  text: v.pipe(
-    ReviewTextSchema,
-    v.description('Текст отзыва (10–3500 символов)'),
+  text: F.sensitive(
+    v.pipe(ReviewTextSchema, v.description('Текст отзыва (10–3500 символов)')),
   ),
 });
 
