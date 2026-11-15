@@ -88,7 +88,7 @@
 
 **Критерии:** ISO-дат в `data/courses`, `data/fixtures` (кроме логов) и `tests/worlds` нет; в `.ts` — только обёртки `Date.parse` и нарочные негативные тесты (список — в отчёте); `bun run check` и `CI=true bun test` зелёные, тестов не меньше.
 
-## Фаза 6: u7-school на dmg-core v0.3.2 (после Ф1, Ф5)
+## Фаза 6: u7-school на dmg-core v0.3.2 (после Ф1, Ф5) [checkpoint: 6d86a5df]
 
 > Бриф — [slices/f6-dmg-core-032.md](./slices/f6-dmg-core-032.md)
 
