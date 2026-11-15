@@ -14,13 +14,14 @@
 
 **Критерии:** числа базовой линии обоих репо и размер лога фикстур — в `summary.md`.
 
-## Фаза 1: dmg-core — патч полей и маскирование (ФТ-1, ФТ-2, ФТ-3)
+## Фаза 1: dmg-core — патч полей и маскирование всей записи (ФТ-1, ФТ-2, ФТ-3)
 
-- [ ] Task: S (`dmg-tech-lead`) — бриф среза `slices/patch.md`: `Aggregate.baseline` / `Committable.baseline`; класс сравнения (`FieldDiff`, место — `src/app/oplog/` или `src/domain/aggregate/`); `AggregateSpec.sensitive` и проверка путей по JSON Schema (record/unknown/union); `AggregateWrite.changes`; `ValueDigest` и порог в `JsonlOperationLog`; ID `rules.md` (DOM-17 — `snapshot()` только репозиторий: `baseline` через публичный геттер)
+- [ ] Task: S (`dmg-tech-lead`) — бриф среза `slices/patch.md`: `Aggregate.baseline` / `Committable.baseline`; класс сравнения (`FieldDiff`, место — `src/app/oplog/` или `src/domain/aggregate/`); `F.sensitive` и `SensitiveMask` (обход схемы valibot: object, array, optional/nullable/nullish, pipe, record, variant/union, `withEntityDefaults`); точки применения: `OperationRun` (input по схеме UC/события, output, payload ошибки) и UoW (`changes`); `AggregateWrite.changes`; `ValueDigest` и порог в `JsonlOperationLog`; ID `rules.md` (DOM-17 — `snapshot()` только репозиторий: `baseline` через публичный геттер)
 - [ ] Task: S (`dmg-test-designer`) — red-тесты
     - [ ] `baseline`: restore / create (нет) / после `markStored`
     - [ ] `FieldDiff`: объекты по точке, массив и примитив — лист, созданный — `from: undefined`, без `BaseEntityFields`
-    - [ ] `sensitive`: `redacted: true`, значение не встречается в строке JSONL; префикс покрывает поддерево; неизвестный путь — ошибка `define`; record/union
+    - [ ] `SensitiveMask`: каждый вид схемы; пометка в производной схеме (выход из state, вход из VO); лишние ключи сырого входа — как есть; сбой — `'[redacted]'` целиком
+    - [ ] запись лога: помеченные поля во `input` UC и ER (payload события), `output`, `payload` ошибки, `changes` (`redacted: true`) — значения нет в строке JSONL
     - [ ] `UnitOfWork.commit`: `changes` у command, у query нет; сбой расчёта патча не ломает операцию
     - [ ] `JsonlOperationLog`: значение больше порога — `{ size, hash }`, одинаковые значения — одинаковый hash
     - [ ] Запуск — падают по делу
@@ -28,7 +29,7 @@
 - [ ] Task: S (`dmg-reviewer`) — ревью среза по `rules.md`; замечания error/warn исправлены
 - [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
 
-**Критерии:** `bun run check` dmg-core зелёный, тестов не меньше базовой линии; критерии spec 1–4 закрыты тестами; запись без `changes` принимается типом; `git diff package.json` — без новых зависимостей; замер стоимости сравнения — в `summary.md`.
+**Критерии:** `bun run check` dmg-core зелёный, тестов не меньше базовой линии; критерии spec 1–4 закрыты тестами (маскирование — на example-модуле пакета: UC, ER, ошибка); запись без `changes` принимается типом; `git diff package.json` — без новых зависимостей; замер стоимости сравнения — в `summary.md`.
 
 ## Фаза 2: dmg-core — срок хранения и читатель (ФТ-4, ФТ-5)
 
@@ -45,7 +46,7 @@
 
 ## Фаза 3: dmg-core — документы и релиз (критерий 8)
 
-- [ ] Task: S (`documentarian` — аудит; правка — O) — D-85 в `docs/decisions.md` (снять оговорку D-73; baseline по ссылке; маскирование в UoW, порог в Jsonl; граница ПД в `input`/`output`); новый `docs/reference/oplog.md`; правки `guides/use-case.md`, `guides/app.md`, `llms.txt`, `docs/index.md`, `CHANGELOG`; `bun run docs:impact`
+- [ ] Task: S (`documentarian` — аудит; правка — O) — D-85 в `docs/decisions.md` (снять оговорку D-73; baseline по ссылке; пометка `F.sensitive` и маскирование всей записи — `OperationRun` и UoW; порог в Jsonl); новый `docs/reference/oplog.md`; правки `guides/use-case.md`, `guides/app.md`, `llms.txt`, `docs/index.md`, `CHANGELOG`; `bun run docs:impact`
 - [ ] Task: O — релиз по `RELEASING.md` (minor: новое поле публичного `AggregateWrite` и опция Def), тег и SHA — в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 3' (Protocol in workflow.md)
 
@@ -53,16 +54,16 @@
 
 ## Фаза 4: u7-school — разметка и подключение (ФТ-6, критерии 7, 8)
 
-- [ ] Task: S (`dmg-data-keeper`) — аудит VO `student` (`abandonDetails`, `completionDetails`, `notices`) и `ownerInfo` анкеты, итоговый список `sensitive`; совместимость: чтение старых файлов `data/oplog/` новым читателем. Живые `data/` не трогать
-- [ ] Task: S (`dmg-test-designer`) — red-тесты: разметка покрывает список аудита; `u7-app` — `retainDays: 90`; `bun run oplog` на `DB_DIR=./data/fixtures`; проверить точные `toEqual` по записи лога в `u7-app*.test.ts` и UC-тестах `writes`
+- [ ] Task: S (`dmg-data-keeper`) — аудит ПД: VO `student` (`abandonDetails`, `completionDetails`, `notices`), `ownerInfo` анкеты; схемы входа и выхода UC, payload событий и ошибок, собранные не из помеченных state/VO (вход регистрации пользователя и др.) — итоговый список мест для `F.sensitive`; совместимость: чтение старых файлов `data/oplog/` новым читателем. Живые `data/` не трогать
+- [ ] Task: S (`dmg-test-designer`) — red-тесты: пометки покрывают список аудита; прогон операций на фикстурах — в строках лога нет имён и Telegram ID; `u7-app` — `retainDays: 90`; `bun run oplog` на `DB_DIR=./data/fixtures`; проверить точные `toEqual` по записи лога в `u7-app*.test.ts` и UC-тестах `writes`
     - [ ] Запуск — падают по делу
-- [ ] Task: S (`dmg-domain-author`) — обновить тег `dmg-core` (`package.json`, `bun.lock`); `sensitive` в Def user, questionnaire, review, stream, student; `retainDays: 90` в `platform/app/src/u7-app.ts`; `scripts/oplog.ts` + `"oplog"` в `package.json` (по `DB_DIR/oplog`)
-- [ ] Task: O — документы: `docs/backup.md` (oplog вне бэкапа, срок 90 дней, чтение; предупреждение — удаление при смене дня), раздел данных `AGENTS.md`, `conductor/architecture/index.md`; удалить заготовку `roadmap/oplog-state-patch.md`, снять кандидата F-111 в `tracks.md`; завести кандидата «маскирование ПД во `input`/`output`»
+- [ ] Task: S (`dmg-domain-author`) — обновить тег `dmg-core` (`package.json`, `bun.lock`); `F.sensitive` в state/VO user, questionnaire, review, stream, student и в схемах операций по аудиту; `retainDays: 90` в `platform/app/src/u7-app.ts`; `scripts/oplog.ts` + `"oplog"` в `package.json` (по `DB_DIR/oplog`)
+- [ ] Task: O — документы: `docs/backup.md` (oplog вне бэкапа, срок 90 дней, чтение; предупреждение — удаление при смене дня), раздел данных `AGENTS.md`, `conductor/architecture/index.md`; удалить заготовку `roadmap/oplog-state-patch.md`, снять кандидата F-111 в `tracks.md`
 - [ ] Task: S (`dmg-reviewer`) — финальное ревью diff трека
 - [ ] Task: O — гейт закрытия (workflow.md): `CI=true bun test`, триаж красных, сравнение с базовой линией Ф0 — в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 4' (Protocol in workflow.md)
 
-**Критерии:** `bun run check` u7-school зелёный, тестов не меньше базовой линии; `DB_DIR=./data/fixtures bun run oplog --request <id>` выдаёт ленту; все поля аудита — в `sensitive`; `package.json` на новом теге; заготовка удалена, новый кандидат заведён.
+**Критерии:** `bun run check` u7-school зелёный, тестов не меньше базовой линии; `DB_DIR=./data/fixtures bun run oplog --request <id>` выдаёт ленту; все места аудита помечены, в логе фикстур нет ПД; `package.json` на новом теге; заготовка удалена, новый кандидат заведён.
 
 ---
 
@@ -71,8 +72,8 @@
 | Критерий spec | Фаза |
 |---|---|
 | 1 — `changes` у command, нет у query | 1 |
-| 2 — `redacted`, значения нет | 1 (механика), 4 (разметка) |
-| 3 — неизвестный путь → ошибка `define` | 1 |
+| 2 — маскирование всей записи | 1 (механика), 4 (разметка) |
+| 3 — пометка в производных схемах, виды схем | 1 |
 | 4 — `{ size, hash }` | 1 |
 | 5 — `retainDays` | 2 |
 | 6 — CLI, фильтры, старые записи | 2 |
@@ -85,4 +86,5 @@
 - **Стоимость сравнения** на крупных снимках (`stream.contentSnapshot`) — замер в Ф1, при необходимости порог размера сравнения.
 - **Объём лога** — массивы пишутся листом (`answers` анкеты — под `redacted`); сравнить с замером Ф0.
 - **`retainDays` удаляет файлы** — тесты только во временном каталоге; сейчас самые старые файлы `data/oplog` — от 2026-11-11, первый запуск ничего не удалит.
-- **ПД во `input`/`output`** остаются — осознанная граница (D-85), отдельный кандидат.
+- **Схемы, собранные заново из `entries`**, теряют обёртку, но не пометку поля — проверить тестом; ручные схемы выхода без пометки — закрывает аудит Ф4.
+- **Размер трека** вырос (маскирование всей записи); если Ф1 не укладывается в сессию — делить на Ф1а (патч) и Ф1б (маскирование).
