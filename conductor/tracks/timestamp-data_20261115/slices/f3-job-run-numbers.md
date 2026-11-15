@@ -50,3 +50,17 @@
 —
 
 ## Отчёты
+
+### Ф3 шаг 1 — dmg-test-designer
+
+`job-run-json-repo.test.ts`: «set пишет число», keep-keys на числах, «ISO → undefined и warn; соседний числовой ключ читается» (инверсия), отрицательное/дробное/`null` → warn, `0` — корректный. `u7-app.test.ts`: хелперы на числах. Red: 7 из 24 по делу.
+
+### Ф3 шаг 2 — dmg-api-author
+
+`lastRuns: Record<string, number>`, guard `isSafeInteger && >= 0`, запись `at` как есть. `grep toISOString|Date.parse` пуст. Формат хранения меняется намеренно: `last-runs.json` на проде переводит скрипт Ф4 в окне Ф7.
+
+### Ф3 шаг 3 — dmg-reviewer
+
+Error/major нет. Minor CODE-04 (JSDoc «нечитаемая дата», тип с диска не проверен) — JSDoc уточнён оркестратором; minor «слить тест `0`» — оставлено (отдельный класс входа — граница).
+
+Итог: `CI=true bun run check` — 3500 pass / 0 fail.

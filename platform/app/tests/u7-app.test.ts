@@ -622,23 +622,22 @@ const lastRunsPath = (dir: string) => join(dir, 'jobs', 'last-runs.json');
 /** Записывает историю «оба задания упущены» — даты давно в прошлом. */
 async function seedLongAgoRuns(dir: string): Promise<void> {
   await mkdir(join(dir, 'jobs'), { recursive: true });
-  const longAgo = new Date(LONG_AGO).toISOString();
   await Bun.write(
     lastRunsPath(dir),
     JSON.stringify({
       version: 1,
       lastRuns: {
-        inactivitySweep: longAgo,
-        sweepAbandonedQuestionnaires: longAgo,
+        inactivitySweep: LONG_AGO,
+        sweepAbandonedQuestionnaires: LONG_AGO,
       },
     }),
   );
 }
 
-/** История прогонов из файла: имя задания → ISO-дата. */
-async function readLastRuns(dir: string): Promise<Record<string, string>> {
+/** История прогонов из файла: имя задания → Timestamp. */
+async function readLastRuns(dir: string): Promise<Record<string, number>> {
   const parsed = JSON.parse(await readFile(lastRunsPath(dir), 'utf8')) as {
-    lastRuns: Record<string, string>;
+    lastRuns: Record<string, number>;
   };
   return parsed.lastRuns;
 }
@@ -648,7 +647,7 @@ async function waitRunsAfter(dir: string, after: Timestamp): Promise<void> {
   const deadline = Date.now() + 3000;
   while (Date.now() < deadline) {
     const runs = await readLastRuns(dir);
-    if (JOBS.every((name) => Date.parse(runs[name] ?? '') > after)) return;
+    if (JOBS.every((name) => (runs[name] ?? 0) > after)) return;
     await new Promise((r) => setTimeout(r, 10));
   }
 }
@@ -680,7 +679,7 @@ describe('U7App: планировщик заданий', () => {
     const runs = await readLastRuns(dir);
     expect(Object.keys(runs).sort()).toEqual([...JOBS].sort());
     for (const name of JOBS) {
-      expect(Date.parse(runs[name] ?? '')).toBeGreaterThan(LONG_AGO);
+      expect(runs[name] ?? 0).toBeGreaterThan(LONG_AGO);
     }
   });
 
@@ -703,7 +702,7 @@ describe('U7App: планировщик заданий', () => {
 
     const runs = await readLastRuns(dir);
     for (const name of JOBS) {
-      expect(Date.parse(runs[name] ?? '')).toBeGreaterThan(LONG_AGO);
+      expect(runs[name] ?? 0).toBeGreaterThan(LONG_AGO);
     }
   });
 

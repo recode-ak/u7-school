@@ -66,7 +66,7 @@ describe('JobRunJsonRepo', () => {
     ).toBe(at);
   });
 
-  test('set пишет в файл ISO-строку формата { version: 1, lastRuns }', () => {
+  test('set пишет в файл число формата { version: 1, lastRuns }', () => {
     const path = tmpDir.file('format', 'last-runs.json');
     new JobRunJsonRepo(path, recordingLogger()).setLastRunAt(
       'job-a',
@@ -75,7 +75,7 @@ describe('JobRunJsonRepo', () => {
 
     expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({
       version: 1,
-      lastRuns: { 'job-a': '2026-01-01T12:00:00.000Z' },
+      lastRuns: { 'job-a': Date.UTC(2026, 0, 1, 12) },
     });
   });
 
@@ -87,8 +87,8 @@ describe('JobRunJsonRepo', () => {
       JSON.stringify({
         version: 1,
         lastRuns: {
-          'job-a': '2026-01-01T12:00:00.000Z',
-          'job-b': '2026-02-01T12:00:00.000Z',
+          'job-a': Date.UTC(2026, 0, 1, 12),
+          'job-b': Date.UTC(2026, 1, 1, 12),
         },
       }),
     );
@@ -101,21 +101,21 @@ describe('JobRunJsonRepo', () => {
     expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({
       version: 1,
       lastRuns: {
-        'job-a': '2026-03-01T00:00:00.000Z',
-        'job-b': '2026-02-01T12:00:00.000Z',
+        'job-a': Date.UTC(2026, 2, 1),
+        'job-b': Date.UTC(2026, 1, 1, 12),
       },
     });
   });
 
-  test('get читает ISO-строку прежнего файла как число; нечитаемая дата — undefined и предупреждение', () => {
+  test('get: ISO-строка → undefined и предупреждение; соседние числовые ключи читаются', () => {
     const path = tmpDir.file('legacy-file.json');
     writeFileSync(
       path,
       JSON.stringify({
         version: 1,
         lastRuns: {
-          'job-a': '2026-01-01T12:00:00.000Z',
-          'job-bad': 'не-дата',
+          'job-a': Date.UTC(2026, 0, 1, 12),
+          'job-iso': '2026-01-01T12:00:00.000Z',
         },
       }),
     );
@@ -125,10 +125,43 @@ describe('JobRunJsonRepo', () => {
     expect(store.getLastRunAt('job-a')).toBe(Date.UTC(2026, 0, 1, 12));
     expect(logger.warnings).toEqual([]);
 
-    expect(store.getLastRunAt('job-bad')).toBeUndefined();
+    expect(store.getLastRunAt('job-iso')).toBeUndefined();
     expect(logger.warnings).toHaveLength(1);
     expect(logger.warnings[0]).toContain('job-run-repo:');
-    expect(logger.warnings[0]).toContain('job-bad');
+    expect(logger.warnings[0]).toContain('job-iso');
     expect(logger.warnings[0]).toContain(path);
+  });
+
+  test('get: отрицательное, дробное и не-число → undefined и предупреждение', () => {
+    const path = tmpDir.file('invalid-values.json');
+    writeFileSync(
+      path,
+      JSON.stringify({
+        version: 1,
+        lastRuns: { 'job-neg': -1, 'job-frac': 1.5, 'job-null': null },
+      }),
+    );
+
+    const logger = recordingLogger();
+    const store = new JobRunJsonRepo(path, logger);
+    for (const name of ['job-neg', 'job-frac', 'job-null']) {
+      expect(store.getLastRunAt(name)).toBeUndefined();
+    }
+    expect(logger.warnings).toHaveLength(3);
+    expect(logger.warnings[0]).toContain('job-neg');
+    expect(logger.warnings[1]).toContain('job-frac');
+    expect(logger.warnings[2]).toContain('job-null');
+  });
+
+  test('get: ноль — корректный Timestamp', () => {
+    const path = tmpDir.file('zero.json');
+    writeFileSync(
+      path,
+      JSON.stringify({ version: 1, lastRuns: { 'job-z': 0 } }),
+    );
+
+    const logger = recordingLogger();
+    expect(new JobRunJsonRepo(path, logger).getLastRunAt('job-z')).toBe(0);
+    expect(logger.warnings).toEqual([]);
   });
 });

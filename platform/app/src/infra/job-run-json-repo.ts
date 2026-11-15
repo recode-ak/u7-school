@@ -7,10 +7,10 @@ import type { JobRunRepo } from 'dmg-core/app';
 /** Источник записей хранилища в логгере. */
 const SOURCE = 'job-run-repo';
 
-/** Формат файла истории: имя задания → ISO-дата последнего прогона. */
+/** Формат файла истории: имя задания → Timestamp последнего прогона (с диска не проверен — guard в `getLastRunAt`). */
 type JobRunFile = {
   readonly version: 1;
-  readonly lastRuns: Record<string, string>;
+  readonly lastRuns: Record<string, number>;
 };
 
 /**
@@ -30,12 +30,11 @@ export class JobRunJsonRepo implements JobRunRepo {
     this.#logger = logger;
   }
 
-  /** Момент последнего прогона; нечитаемая дата — `undefined` и предупреждение. */
+  /** Момент последнего прогона; значение не Timestamp (строка, дробное, отрицательное, `null`) — `undefined` и предупреждение. */
   getLastRunAt(jobName: string): Timestamp | undefined {
     const at = this.#read().lastRuns[jobName];
     if (at === undefined) return undefined;
-    const ms = Date.parse(at);
-    if (Number.isNaN(ms)) {
+    if (!Number.isSafeInteger(at) || at < 0) {
       this.#logger.warn(
         SOURCE,
         `Дата последнего прогона задания '${jobName}' в файле ${this.#filePath} не читается, прогон считается отсутствующим`,
@@ -43,7 +42,7 @@ export class JobRunJsonRepo implements JobRunRepo {
       );
       return undefined;
     }
-    return ms;
+    return at;
   }
 
   setLastRunAt(jobName: string, at: Timestamp): void {
@@ -51,7 +50,7 @@ export class JobRunJsonRepo implements JobRunRepo {
       version: 1,
       lastRuns: {
         ...this.#read().lastRuns,
-        [jobName]: new Date(at).toISOString(),
+        [jobName]: at,
       },
     });
   }
