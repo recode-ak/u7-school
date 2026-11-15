@@ -72,12 +72,12 @@
 
 **Критерии:** `grep -n "### DEBT-1" debt.md` пуст; `grep -rn "correlationId !== f.request" src/app/oplog` пуст; `bun test src/cli src/app/oplog` зелёные.
 
-## Фаза 6: документы (ФР-9) — после Ф1–Ф5
+## Фаза 6: документы (ФР-9) — после Ф1–Ф5 [checkpoint: 8e2cf229]
 
 - [x] Task: O — гайд `docs/guides/delegation.md`: что завести в приложении, рекомендованная запись (выдавший, причина), два сценария, какие UC пометить `personal`; D-25 и D-89 окончательно; `docs/index.md`, `docs/guides/index.md` `9e234e72`
 - [x] Task: O — запись в `debt.md` пакета: запись из query UC не запрещена (триггер — первое приложение включает «только чтение») `9e234e72`
 - [x] Task: S (`documentarian`, аудит; правка — O) — `concepts/caller.md`, `reference/{caller,transport,oplog}.md`, `rules.md` (MAN-11), `guides/use-case.md`, `llms.txt`, скил `dmg-architecture`, роли `agents/roles/` `9e234e72`
-- [ ] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Фаза 6' (Protocol in workflow.md)
 
 **Критерии:** `bun run docs:covers --strict` без предупреждений; гайд ссылается на `src/testing/example/app`; `documentarian` без расхождений; `grep -rn "'delegate'" docs llms.txt skills agents` — только вид класса и лог.
 
