@@ -83,7 +83,7 @@
 
 ## Фаза 7: релиз пакета v0.4.0
 
-- [x] Task: O — по `RELEASING.md`: `check`, `e2e`, `docs:covers --strict`, версия, тег `v0.4.0` (пакет `c254383`)
+- [x] Task: O — по `RELEASING.md`: `check`, `e2e`, `docs:covers --strict`, версия, тег `v0.4.0` (пакет `c254383`) `c093cd65`
 - [ ] Task: O — push `main` и тега — **после подтверждения Нурболата**; тег и SHA — в `summary.md`
 - [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
 
@@ -99,9 +99,9 @@
 
 ## Фаза 9: записи и итог (ФР-12, ФР-10)
 
-- [ ] Task: O — `conductor/debt/product.md`: служебный доступ в боте (погашает трек после пилота `dmg-ui`)
-- [ ] Task: O — `conductor/roadmap/dmg-ui-entry.md` (актор сторис — возможно заместитель); `conductor/roadmap.md` (delegation убран из этапа 1)
-- [ ] Task: O — итог пилота `dmg-access-auditor`: `summary.md` и `conductor/architecture/agent-roles.md`
+- [x] Task: O — `conductor/debt/product.md`: служебный доступ в боте (погашает трек после пилота `dmg-ui`) `c093cd65`
+- [x] Task: O — `conductor/roadmap/dmg-ui-entry.md` (актор сторис — возможно заместитель); `conductor/roadmap.md` (delegation убран из этапа 1) `c093cd65`
+- [x] Task: O — итог пилота `dmg-access-auditor`: `summary.md` и `conductor/architecture/agent-roles.md` `c093cd65`
 - [ ] Task: O — финальный гейт workflow: полный `CI=true bun test`, триаж и сравнение с базовой линией — в `summary.md`; разбор трёх реестров долга
 - [ ] Task: Conductor - User Manual Verification 'Фаза 9' (Protocol in workflow.md)
 
