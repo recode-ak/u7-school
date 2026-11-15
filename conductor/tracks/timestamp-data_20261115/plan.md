@@ -112,7 +112,7 @@
     - [x] `--write`, контрольное чтение (0 ошибок), поиск строковых дат в данных — ноль
     - [x] старт бота; лог, `bun run oplog`; показ потока в UTC+5
     - [-] при сбое — откат: **весь** снимок (`docs/backup.md`) и предыдущий тег; откат только по коду нельзя — v0.3.5 читает `last-runs.json`-число как NaN (внеплановые sweep). `DB_DIR` задавать явно (`bun run` не грузит `.env.production`)
-- [x] Task: O — удалить `migrate-timestamps.ts` (тест, скрипт `package.json`); убрать `timestamp-data` из `roadmap.md`; `summary.md`; разбор долга по трём реестрам
-- [ ] Task: Conductor - User Manual Verification 'Фаза 7' (Protocol in workflow.md)
+- [x] Task: O — `07cc048f` — удалить `migrate-timestamps.ts` (тест, скрипт `package.json`); убрать `timestamp-data` из `roadmap.md`; `summary.md`; разбор долга по трём реестрам
+- [x] Task: Conductor - User Manual Verification 'Фаза 7' (прод проверен: лог, oplog, last-runs, показ UTC+5)
 
 **Критерии:** сухой прогон `invalid = 0`; контрольное чтение 0 ошибок; `startDate` потоков = местное −5 ч; `last-runs.json` — числа; бот отвечает, в логе нет ошибок чтения; `grep -rn migrate-timestamps scripts package.json` пуст; `check` и `CI=true bun test` зелёные на финальном коммите.
