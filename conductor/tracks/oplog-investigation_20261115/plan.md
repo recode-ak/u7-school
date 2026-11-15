@@ -6,11 +6,11 @@
 
 ---
 
-## Фаза 0: Базовая линия
+## Фаза 0: Базовая линия [checkpoint: —]
 
-- [ ] Task: O — `bun run check` в dmg-core; `CI=true bun run check` и `bun run test:bot` в u7-school; числа (pass/fail, число тестов) — в `summary.md`
-- [ ] Task: O — замер: размер `data/fixtures/oplog/*.jsonl` (копия в scratchpad) — точка сравнения объёма для Ф1
-- [ ] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
+- [x] Task: O — `bun run check` в dmg-core; `CI=true bun run check` и `bun run test:bot` в u7-school; числа (pass/fail, число тестов) — в `summary.md`
+- [x] Task: O — замер: размер `data/fixtures/oplog/*.jsonl` (копия в scratchpad) — точка сравнения объёма для Ф1
+- [x] Task: Conductor - User Manual Verification 'Фаза 0' (Protocol in workflow.md)
 
 **Критерии:** числа базовой линии обоих репо и размер лога фикстур — в `summary.md`.
 
