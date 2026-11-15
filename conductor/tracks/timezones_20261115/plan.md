@@ -11,16 +11,16 @@
 ## Фаза 1: сервис зоны и поля зоны (ФР-1–4)
 
 - [x] Task: O — базовая линия: `bun run check`, `CI=true bun test`; числа — в `summary.md` (3511 pass / 0 fail)
-- [ ] Task: S (`dmg-test-designer`) — red-тесты
-    - [ ] `LocalZone`: `parseLocal` ↔ `formatInput`; отказ на `31.02` / `25:00` / секунды / `Z`; зона с летним временем (`Europe/Berlin`) в обоих сезонах; неизвестное имя — отказ `of`
-    - [ ] `LocalZone`: время с подписью `18:00 (UTC+5)`, дата без подписи; `Etc/GMT-5` подписан как `UTC+5`
-    - [ ] Перенос сценариев `platform/core/src/shared/project-zone.test.ts` в тест `LocalZone` на `Asia/Oral` (список сценариев сверен)
-    - [ ] Валидатор имени IANA; `UserState` без `timeZone`, с `Europe/Berlin`, с `Mars/Base` (отказ); `SchoolSchema` отклоняет неизвестную зону; `U7_SCHOOL_STATIC.timeZone === 'Asia/Oral'` (`school.test.ts`)
-    - [ ] Запуск — падают по делу
-- [ ] Task: O (`dmg-domain-author` / автор `platform/app`) — валидатор IANA → `UserState.timeZone` (optional, не `F.sensitive`) → `School.timeZone` (`U7_SCHOOL_STATIC`, `SchoolSchema`, `createSchool`) → `LocalZone` с кэшем форматтера `Intl`; экспорт из `@u7-scl/app`
-- [ ] Task: S (`dmg-data-keeper`) — старые записи `UserState` без поля читаются без миграции (только чтение; `data/fixtures`, живой `data/` не трогать)
-- [ ] Task: O (`dmg-reviewer`) — ревью; замечания error/warn исправлены
-- [ ] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md)
+- [x] Task: S (`dmg-test-designer`) — red-тесты `14c1fc2`
+    - [x] `LocalZone`: `parseLocal` ↔ `formatInput`; отказ на `31.02` / `25:00` / секунды / `Z`; зона с летним временем (`Europe/Berlin`) в обоих сезонах; неизвестное имя — отказ `of`
+    - [x] `LocalZone`: время с подписью `18:00 (UTC+5)`, дата без подписи; `Etc/GMT-5` подписан как `UTC+5`
+    - [x] Перенос сценариев `platform/core/src/shared/project-zone.test.ts` в тест `LocalZone` на `Asia/Oral` (список сценариев сверен)
+    - [x] Валидатор имени IANA; `UserState` без `timeZone`, с `Europe/Berlin`, с `Mars/Base` (отказ); `SchoolSchema` отклоняет неизвестную зону; `U7_SCHOOL_STATIC.timeZone === 'Asia/Oral'` (`school.test.ts`)
+    - [x] Запуск — падают по делу
+- [x] Task: O (`dmg-domain-author` / автор `platform/app`) — валидатор IANA → `UserState.timeZone` (optional, не `F.sensitive`) → `School.timeZone` (`U7_SCHOOL_STATIC`, `SchoolSchema`, `createSchool`) → `LocalZone` с кэшем форматтера `Intl`; экспорт из `@u7-scl/app` `14c1fc2` (валидатор — `TimeZoneVo` в `domain/src/shared`, бриф `slices/f1-zone.md`)
+- [x] Task: S (`dmg-data-keeper`) — старые записи `UserState` без поля читаются без миграции (только чтение; `data/fixtures`, живой `data/` не трогать) `14c1fc2` — без блокеров
+- [x] Task: O (`dmg-reviewer`) — ревью; замечания error/warn исправлены `14c1fc2`
+- [x] Task: Conductor - User Manual Verification 'Фаза 1' (Protocol in workflow.md) — автоматическая (по указанию Нурболата трек идёт без пауз): `CI=true bun test` 3571/0; `School.timeZone` → `2026-12-01T18:00` = `13:00Z`, `18:00 (UTC+5)`
 
 **Критерии:** `bun run check` зелёный, тестов не меньше базовой линии; в тесте `LocalZone` есть случаи на `31.02`, `25:00`, оба сезона `Europe/Berlin`, неизвестное имя, подпись; `SchoolSchema` отклоняет `Foo/Bar`; `UserState` принимает запись без поля; `git diff package.json bun.lock` — без новых зависимостей; отчёт `dmg-data-keeper` без блокеров.
 
